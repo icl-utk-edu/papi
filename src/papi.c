@@ -1695,6 +1695,11 @@ void PAPI_shutdown(void)
 {
   int i, status;
 
+  if(init_retval == DEADBEEF) {
+    fprintf(stderr,"PAPI ERROR: PAPI_shutdown error. PAPI currently not initialized\n");
+    return;
+  }
+
   for (i=0;i<PAPI_EVENTSET_MAP->totalSlots;i++) 
     {
       if (PAPI_EVENTSET_MAP->dataSlotArray[i]) 
