@@ -2,9 +2,9 @@ PAPIINC = ..
 PAPILIB = ../libpapi.a
 CC = gcc
 CFLAGS += -I$(PAPIINC)
-LDFLAGS =  $(PAPILIB)
+LDFLAGS =  $(PAPILIB) -lpthread
 
-TARGETS = PAPI_get_virt_cyc PAPI_get_real_cyc PAPI_get_opt PAPI_hw_info PAPI_get_executable_info PAPI_ipc PAPI_flops PAPI_flips PAPI_overflow PAPI_add_remove_event high_level PAPI_add_remove_events
+TARGETS = multiplex overflow_pthreads PAPI_state PAPI_reset PAPI_profil PAPI_perror PAPI_get_virt_cyc PAPI_get_real_cyc PAPI_get_opt PAPI_hw_info PAPI_get_executable_info PAPI_ipc PAPI_flops PAPI_flips PAPI_overflow PAPI_add_remove_event high_level PAPI_add_remove_events
 
 all: $(TARGETS)
 

@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "papi.h" /* This needs to be included everytime you use PAPI */
+#include "papi.h" /* This needs to be included every time you use PAPI */
 
 int i;
 double tmp;

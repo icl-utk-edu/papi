@@ -4,7 +4,7 @@
 ******************************************************************************/
 
 #include <stdio.h>
-#include "papi.h"		/* This needs to be included anytime you use PAPI */
+#include "papi.h"		/* This needs to be included every time you use PAPI */
 #include <pthread.h>
 
 #define OVER_FMT    "handler(%d ) Overflow at %p! bit=0x%llx \n"
@@ -44,10 +44,13 @@ int main ()
    ****************************************************************************/
 
    if ((retval = PAPI_library_init (PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
-      ERROR_RETURN(retval);
+   {
+      printf("Library initialization error! \n");
+      exit(1);
+   }
 
    /* Here we create the eventset */
-   if (PAPI_create_eventset (&EventSet) != PAPI_OK)
+   if ((retval=PAPI_create_eventset (&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    PAPI_event = PAPI_FP_INS;
@@ -57,7 +60,7 @@ int main ()
    {
       PAPI_event = PAPI_TOT_CYC;
 
-      if (PAPI_query_event (PAPI_TOT_INS) != PAPI_OK)
+      if ((retval=PAPI_query_event (PAPI_TOT_INS)) != PAPI_OK)
          ERROR_RETURN(retval);
 
       printf ("PAPI_FP_INS not available on this platform.");
@@ -69,7 +72,7 @@ int main ()
    /* PAPI_event_code_to_name is used to convert a PAPI preset from 
      its integer value to its string name. */
    if ((retval = PAPI_event_code_to_name (PAPI_event, event_name)) != PAPI_OK)
-      printf ("PAPI_event_code_to_name failed : %d", retval);
+      ERROR_RETURN(retval);
 
    /* add event to the event set */
    if ((retval = PAPI_add_event (EventSet, PAPI_event)) != PAPI_OK)

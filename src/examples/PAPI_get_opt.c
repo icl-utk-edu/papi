@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "papi.h" /* This needs to be included everytime you use PAPI */
+#include "papi.h" /* This needs to be included every time you use PAPI */
 
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
 
