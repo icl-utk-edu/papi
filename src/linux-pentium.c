@@ -8,8 +8,9 @@
 
 /* PAPI stuff */
 
-#include "papi.h"
 #include "papi_internal.h"
+#include "papi.h"
+#include "papiStdEventDefs.h"
 #include "perf.h" /* substrate */
 
 /* The following structure holds preset values for that defined in the 
@@ -46,7 +47,6 @@ typedef struct _hwd_preset {
   int counter_code2;
   int sp_sode;   /* possibly needed for setting certain registers to 
                     enable special purpose counters */
-  int pad;
 } hwd_control_state;
 
 
@@ -178,6 +178,7 @@ int _papi_hwd_add_event(void *machdep, int event)
         if((this_state->number == 0) ||
            (this_state->number == 2)) 
         { this_state->counter_code1 = preset_map[preset]->counter_code1;
+          this_state->sp_code = 1;
           this_state->number += 5;
           return 0;
         }
@@ -186,6 +187,7 @@ int _papi_hwd_add_event(void *machdep, int event)
         if((this_state->number == 0) ||
            (this_state->number == 4))
         { this_state->counter_code2 = preset_map[preset]->counter_code2;
+          this_state->sp_code = 1;
           this_state->number += 3;
           return 0;
         }
@@ -194,6 +196,7 @@ int _papi_hwd_add_event(void *machdep, int event)
         if(this_state->number == 0) 
         { this_state->counter_code1 = preset_map[preset]->counter_code1;
           this_state->counter_code2 = preset_map[preset]->counter_code2;
+          this_state->sp_code = 1;
           this_state->number += 7;
           return 0;
         }
@@ -202,17 +205,20 @@ int _papi_hwd_add_event(void *machdep, int event)
         if((this_state->number == 0) ||
            (this_state->number == 2))
         { this_state->counter_code1 = preset_map[preset]->counter_code1;
+          this_state->sp_code = 1;
           this_state->number += 5;
           return 0;
         }
         if(this_state->number == 4) 
         { this_state->counter_code2 = preset_map[preset]->counter_code2;
+          this_state->sp_code = 1;
           this_state->number += 3;
           return 0;
         }
         else return(PAPI_ECNFLCT);
       case 9 :
         if(this_state->number % 2) return(PAPI_ECNFLCT);
+        this_state->sp_code = 1;
         this_state->number += 1;
         return 0; 
      }
@@ -287,6 +293,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
       case 5 :
         if(this_state->counter_code1 == preset_map[preset]->counter_code1)
         { this_state->counter_code1 = -1;
+          this_state->sp_code = -1;
           this_state->number -= 5;
           return 0;
         }
@@ -295,6 +302,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
       case 6 :
         if(this_state->counter_code2 == preset_map[preset]->counter_code2)
         { this_state->counter_code2 = -1;
+          this_state->sp_code = -1;
           this_state->number -= 3;
           return 0;
         }
@@ -305,6 +313,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
         { if(this_state->counter_code2 == preset_map[preset]->counter_code2)
           { this_state->counter_code1 = -1;
             this_state->counter_code2 = -1;
+            this_state->sp_code = -1;
             this_state->number -= 7;
             return 0;
           }
@@ -315,11 +324,13 @@ int _papi_hwd_rem_event(void *machdep, int event)
       case 8 :
         if(this_state->counter_code1 == preset_map[preset]->counter_code1;
         { this_state->counter_code1 = -1;
+          this_state->sp_code = -1;
           this_state->number -= 5;
           return 0;
         }
         if(this_state->counter_code2 == preset_map[preset]->counter_code2)
         { this_state->counter_code2 = -1;
+          this_state->sp_code = -1;
           this_state->number -= 3;
           return 0;
         }
@@ -328,6 +339,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
       case 9 :
         if(this_state->number % 2) 
         { this_state->number -= 1;
+          this_state->sp_code = -1;
           return 0;
         }
         return(PAPI_ENOTRUN); 
@@ -357,77 +369,22 @@ int _papi_hwd_start(void *machdep)
   hwd_control_state *this_state = (hwd_control_state *)machdep;
   int retval;
 
-/* to explain the value for machdep->number briefly:
-	I used the same values for counter 1, counter 2, and TSC 
-	as UNIX permissions read, write, execute
-	(4, 2, 1).
-*/
-
-  switch (machdep->number)
-  { case 6 :
-      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
-      if(retval) = return(PAPI_EBUG); 
-      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);  
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_START, 0, 0);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 4 :
-      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_START, 0, 0);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 2 :
-      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_START, 0, 0);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 5 :
-      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_SET_CONFIG, 2, 1);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_START, 0, 0);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 3 :
-      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_SET_CONFIG, 2, 1);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_START, 0, 0);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 7 :
-      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_SET_CONFIG, 2, 1);
-      if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_START, 0, 0);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 1 :
-      retval = perf(PERF_SET_CONFIG, 2, 1);
-      if(retval) = return(PAPI_EBUG);
-      break;
-
-    case 0 :
-      return(PAPI_ENOTRUN);
-
-    default:
-      return(PAPI_EBUG);
+  if(this_state->counter_code1 >= 0)
+  { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
+    if(retval) = return(PAPI_EBUG);
   }
-  return(retval);
+
+  if(this_state->counter_code1 >= 0)
+  { retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
+    if(retval) = return(PAPI_EBUG);
+  }
+
+  if(this_state->sp_code >= 0)
+  { retval = perf(PERF_SET_CONFIG, 2, 1);
+    if(retval) = return(PAPI_EBUG);
+  }
+
+  return (retval);
 }
 
 
@@ -435,15 +392,9 @@ int _papi_hwd_stop(void *machdep, long long events[])
 { hwd_control_state *this_state = (hwd_control_state *)machdep;
   int retval;
 
-  if(this_state->number == 0) return(PAPI_ENOTRUN);
-
   retval = perf(PERF_STOP, 0, 0);
   if(retval) return(PAPI_EBUG); 
-
-  retval = _papi_hwd_read(this_state, events);
-  if(retval) return(PAPI_EBUG);
-  
-  return 0;
+  return (_papi_hwd_read(this_state, events));
 }
 
 
@@ -474,16 +425,12 @@ int _papi_hwd_read(void *machdep, long long events[])
   if(retval) return(PAPI_EBUG);
   retval = perf(PERF_READ, 1, events[1]);
   if(retval) return(PAPI_EBUG);
-  retval = perf(PERF_READ, 2, events[2]);
-  if(retval) return(PAPI_EBUG);
+  //read TSC value into events[2];
   return 0;
 }
 
 int _papi_hwd_write(void *machdep, long long events[])
-{
-  /* copy appropriate events from *events into kernel */
-
-  hwd_control_state *this_state = (hwd_control_state *)machdep;
+{ hwd_control_state *this_state = (hwd_control_state *)machdep;
   int retval;
 
   switch (machdep->number)
@@ -507,13 +454,15 @@ int _papi_hwd_write(void *machdep, long long events[])
     case 5 :
       retval = perf(PERF_WRITE, 0, events[0]);
       if(retval) = return(PAPI_EBUG);
-      // set TSC to events[2];
+      retval = perf(PERF_WRITE, 2, events[2]);
+      if(retval) = return(PAPI_EBUG);
       break;
 
     case 3 :
       retval = perf(PERF_WRITE, 1, events[1]);
       if(retval) = return(PAPI_EBUG);
-      // set TSC to events[2];
+      retval = perf(PERF_WRITE, 2, events[2]);
+      if(retval) = return(PAPI_EBUG);
       break;
 
     case 7 :
@@ -521,11 +470,13 @@ int _papi_hwd_write(void *machdep, long long events[])
       if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_WRITE, 1, events[1]);
       if(retval) = return(PAPI_EBUG);
-      // set TSC to events[2];
+      retval = perf(PERF_WRITE, 2, events[2]);
+      if(retval) = return(PAPI_EBUG);
       break;
 
     case 1 :
-      // set TSC to events[2];
+      retval = perf(PERF_WRITE, 2, events[2]);
+      if(retval) = return(PAPI_EBUG);
       break;
 
     case 0 :
@@ -566,27 +517,22 @@ int _papi_hwd_getopt(int code, void *option)
   /* probably the same info as above */
 }
 
-int papi_err_level(int level)
-{
-  /* if the level = 0, return current value of error level, make no changes
-            level = 1, set error level to PAPI_QUIET, return 1
-            level = 2, set error level to PAPI_VERB_ECONT, return 2
-            level = 3, set error level to PAPI_VERB_ESTOP, return 3
-  */
-}
+#endif
+
 
 /* For linux/x86 sample fields */
 
+/*
 papi_mdi _papi_system_info = { "Curtis Jansens Perf library + GLUE",
 			        1.0,
-			        2, /* 2 way SMP */
-			        PAPI_CHIP_PENTIUM_II,
-			        PAPI_VENDOR_INTEL,
+			        2, 
+			        "PAPI_CHIP_PENTIUM_II",
+			        "PAPI_VENDOR_INTEL",
 			        450,
 			        2,
 			        0,
 			        1,
-			        16, /* Approx */
-			        68, /* Approx */
+			        16, 
+			        68,
 			        sizeof(hwd_control_state)  };
-
+*/
