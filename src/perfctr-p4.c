@@ -680,21 +680,24 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
 	{
 	  int j;
 
-	  if ((ev_info->hardware_event[i].pebs_enable != bits->pebs_enable) ||
-	      (ev_info->hardware_event[i].pebs_matrix_vert != bits->pebs_matrix_vert))
-	    return(PAPI_ECNFLCT);
+	  /* If any of the counters is sharing our ESCR and our masks are different, we're in trouble */
 
 	  for (j=0;j<evset_info->control.cpu_control.nractrs+evset_info->control.cpu_control.nrictrs;j++)
 	    {
 	      if (ESCR_OF(preset->info->data[i].evntsel) == 
 		  ESCR_OF(evset_info->control.cpu_control.evntsel[j]))
 		{
+		  SUBDBG("event esrc %x, set escr %x\n",
+			 ESCR_OF(preset->info->data[i].evntsel),
+			 ESCR_OF(evset_info->control.cpu_control.evntsel[j]));
 		  if (EVENT_OF(preset->info->data[i].evntsel_aux) ==
 		      EVENT_OF(evset_info->control.cpu_control.evntsel_aux[j]))
 		    {
+		      SUBDBG("event %x, set event %x\n",EVENT_OF(preset->info->data[i].evntsel_aux),ESCR_OF(evset_info->control.cpu_control.evntsel_aux[j]));
 		      if (EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux) != 
-			  EVENTMASKTAG_OF(EVENT_OF(evset_info->control.cpu_control.evntsel_aux[j])))
+			  EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel_aux[j]))
 			  {
+			    SUBDBG("eventmasktag %x, set eventmasktag %x\n",EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux),EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel_aux[j]));
 			    return(PAPI_ECNFLCT);
 			  }
 		    }
@@ -795,8 +798,8 @@ int _papi3_hwd_remove_event(P4_regmap_t *ev_info, int perfctr_index, P4_perfctr_
     }
   SUBDBG("Allocated counters now: %08x\n",bits->selector);
   
-/* If the event set is now empty, and it's events used PEBS, we
-   can clear the entry. */
+  /* If the event set is now empty, and it's events used PEBS, we
+     can clear the entry. */
   if (bits->selector == 0)
     {
       if (ev_info->hardware_event[i].pebs_enable)

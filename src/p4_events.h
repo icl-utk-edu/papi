@@ -259,10 +259,12 @@
 /* ESCR bit fields */
 
 #define ESCR_EVENT_SEL(a) (a << 25)
-#define EVENT_OF(a) (a & ESCR_EVENT_SEL(0x3f))
+#define EVENT_OF(a) ((a >> 25) & 0x3f)
+
 #define ESCR_EVENT_MASK(a) (a << 9)
 #define ESCR_TAG_VAL(a) (a << 5)
-#define EVENTMASKTAG_OF(a) (a & ESCR_TAG_VAL(0xfffff))
+#define EVENTMASKTAG_OF(a) ((a >> 9) & 0xffff)
+
 #define ESCR_TAG_ENABLE (1 << 4)
 #define ESCR_T0_OS (1 << 3)
 #define ESCR_T0_USR (1 << 2)
@@ -273,7 +275,8 @@
 
 #define CCCR_ENABLE (1 << 12)
 #define CCCR_ESCR_SEL(a) (a << 13)
-#define ESCR_OF(a) (a & CCCR_ESCR_SEL(0x7))
+#define ESCR_OF(a) ((a >> 13) & 0x7)
+
 #define CCCR_THR_ANY 0x3
 #define CCCR_THR_MODE(a) (a << 16)
 #define CCCR_COMPARE (1 << 18)
