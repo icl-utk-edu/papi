@@ -2,33 +2,34 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
 MSUBSTR  = linux-ia64-pfmon-1.1
-DESCR	= "Stock Linux 2.4.x for the Intel IA64"
-LIBS	= static shared 
+DESCR	= "Stock Linux 2.4.18 for the Intel IA64"
+LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-1.1/include -Ipfmon-1.1/libpfm -I. -Wall -DDEBUG
+CFLAGS  = -Ipfmon-1.1/include -I. -Wall -g
+# -DDEBUG
+OPTFLAGS= -O2
+TOPTFLAGS = $(OPTFLAGS)
+FFLAGS	=
+#  -Vaxlib
+LDFLAGS = 
+# -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
 LIBPFM  = pfmon-1.1/libpfm
-TOPTFLAGS  = -O0 -g0
-FFLAGS	=  -Vaxlib
-LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
-OPTFLAGS= -O3 -g0
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
-CC_SHR  = gcc -shared -fpic
+CC_SHR  = gcc -shared -fpic -DCONFIG_PFMLIB_GENERIC -DCONFIG_PFMLIB_ITANIUM -DCONFIG_PFMLIB_ITANIUM2
 CC_R	= gcc -pthread
 CC	= gcc
-# use the Intel Fortran compiler 5.0 
-#F77	= /opt/intel/compiler50/ia64/bin/efc
-F77	= /usr/local/intel/compiler50/ia64/bin/efc
-#F77     = f77
-MISCOBJS= pfmlib_itanium2.o pfmlib_itanium.o pfmlib_common.o pfmlib_generic.o 
-MISCSRCS= $(LIBPFM)/pfmlib_itanium.c $(LIBPFM)/pfmlib_common.c $(LIBPFM)/pfmlib_generic.c $(LIBPFM)/pfmlib_itanium2.c
+#F77	= /usr/local/intel/compiler50/ia64/bin/efc
+F77     = g77
+MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o
+MISCSRCS= $(LIBPFM)/pfmlib_itanium.c $(LIBPFM)/pfmlib_itanium2.c $(LIBPFM)/pfmlib_common.c $(LIBPFM)/pfmlib_generic.c
 
 include Makefile.inc
 
 $(MISCOBJS): $(MISCSRCS)
 	$(MAKE) -C $(LIBPFM)
-	cd $(LIBPFM); cp $(MISCOBJS) $(PAPI_SRCDIR)
+	ar xv $(LIBPFM)/libpfm.a
 
 native_clean:
 	rm -f $(MISCOBJS); cd $(LIBPFM); $(MAKE) clean

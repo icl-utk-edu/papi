@@ -570,21 +570,6 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
       return PAPI_ESYS;
     }
 
-  /* We need to scale FP_OPS_HI, dammit */ 
-
-  for(i=0; i < PMU_MAX_COUNTERS; i++)
-    {
-#ifdef PFM06A
-      flop_hack.pmu_reg = machdep->pc[i].pfr_reg.reg_value;
-      if (flop_hack.pmc_es == 0xa)
-	readem[i].pfr_reg.reg_value = readem[i].pfr_reg.reg_value * 4;
-#else
-      flop_hack.reg_val = machdep->pc[i].reg_value;
-      if (flop_hack.pmc_es == 0xa)
-	readem[i].reg_value = readem[i].reg_value * 4;
-#endif
-    }
-
   if (local->state & PAPI_OVERFLOWING)
 
     {
@@ -602,14 +587,29 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
 	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
 #else
-	      readem[i-1-PMU_MAX_COUNTERS].reg_value -= ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
+	      readem[i-1-PMU_MAX_COUNTERS].reg_value += (unsigned long)local->overflow.threshold;
 	      /* Ready the new structure */
-	      writeem[i-1-PMU_MAX_COUNTERS].reg_value = ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
-	      writeem[i-1-PMU_MAX_COUNTERS].reg_long_reset = ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
+	      writeem[i-1-PMU_MAX_COUNTERS].reg_value = (~0UL) - (unsigned long)local->overflow.threshold;
+	      writeem[i-1-PMU_MAX_COUNTERS].reg_long_reset = (~0UL) - (unsigned long)local->overflow.threshold;
 #endif
 	    }
 	  selector ^= 1 << (i-1); 
 	}
+    }
+
+  /* We need to scale FP_OPS_HI, dammit */ 
+
+  for(i=0; i < PMU_MAX_COUNTERS; i++)
+    {
+#ifdef PFM06A
+      flop_hack.pmu_reg = machdep->pc[i].pfr_reg.reg_value;
+      if (flop_hack.pmc_es == 0xa)
+	readem[i].pfr_reg.reg_value = readem[i].pfr_reg.reg_value * 4;
+#else
+      flop_hack.reg_val = machdep->pc[i].reg_value;
+      if (flop_hack.pmc_es == 0xa)
+	readem[i].reg_value = readem[i].reg_value * 4;
+#endif
     }
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
@@ -694,22 +694,20 @@ int _papi_hwd_init_global(void)
 {
   int retval;
   pfmlib_options_t pfmlib_options;
+#ifdef DEBUG
+  extern int papi_debug;
+#endif
 
   /* Opened once for all threads. */
 
 #ifndef PFM06A
-  {
-   int cnt;
-   if ((cnt=pfm_initialize()) != PFMLIB_SUCCESS ) {
-    printf("Cnt: %d  PFMLIB_SUCCESS: %d\n", cnt,PFMLIB_SUCCESS );
+  if (pfm_initialize() != PFMLIB_SUCCESS ) 
     return(PAPI_ESYS);
-  }
-  }
 #endif
 
   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
-  if (getenv("PAPI_DEBUG"))
+  if (papi_debug)
     pfmlib_options.pfm_debug = 1;
 #endif
 #ifdef PFM06A
@@ -1050,8 +1048,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = (unsigned long)0x100000000 - (unsigned long)ESI->overflow.threshold;
 		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = (unsigned long)0x100000000 - (unsigned long)ESI->overflow.threshold;
 #else
-		  pd[i-1-PMU_MAX_COUNTERS].reg_value = (unsigned long)0x100000000 - (unsigned long)ESI->overflow.threshold;
-		  pd[i-1-PMU_MAX_COUNTERS].reg_long_reset = (unsigned long)0x100000000 - (unsigned long)ESI->overflow.threshold;
+		  pd[i-1-PMU_MAX_COUNTERS].reg_value = (~0UL) - (unsigned long)ESI->overflow.threshold;
+		  pd[i-1-PMU_MAX_COUNTERS].reg_long_reset = (~0UL) - (unsigned long)ESI->overflow.threshold;
 #endif
 		}
 	      selector ^= 1 << (i-1); 
@@ -1061,7 +1059,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 #ifdef PFM06A
       if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, 0, pd, PMU_MAX_COUNTERS) == -1) {
 #else
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS) == -1) {
+      if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, current_state->evt.pfp_count) == -1) {
 #endif
 	fprintf(stderr,"child: perfmonctl error WRITE_PMDS errno %d\n",errno); pfm_start(); return(PAPI_ESYS);
       }
@@ -1523,6 +1521,10 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
 #endif
 {
   pfm_stop();
+  if (info->sy_code != PROF_OVFL) {
+    fprintf(stderr,"PAPI: received spurious SIGPROF si_code=%d\n", info->sy_code);
+    return;
+  } 
 #ifdef PFM06A
   DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
 #else
