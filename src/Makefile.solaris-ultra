@@ -4,9 +4,10 @@ LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
 
 #CFLAGS	=
-CFLAGS  = -xarch=v8plusa
+CFLAGS  = -xarch=v8plusa -g -DDEBUG -DMPX_DEBUG -DMPX_TIMER_DEBUG
 #OPTFLAGS= -fpic -O3
-OPTFLAGS= -xO3
+OPTFLAGS= 
+#-xO3
 #NOOPT	= 
 NOOPT 	= -xO0
 FFLAGS	= $(CFLAGS)
@@ -31,3 +32,4 @@ include Makefile.inc
 get_tick.o: solaris-ultra/get_tick.S
 	cc -c -D_ASM -xarch=v8plusa solaris-ultra/get_tick.S
 
+native_clean:

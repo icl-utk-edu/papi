@@ -10,4 +10,5 @@ F77	= g77
 
 include Makefile.inc
 
+native_clean:
 

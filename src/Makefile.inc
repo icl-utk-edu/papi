@@ -1,3 +1,4 @@
+PAPI_SRCDIR = $(PWD)	
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SOURCES	  = $(MISCSRCS) papi.c papi_hl.c $(SUBSTR).c extras.c multiplex.c \
@@ -18,16 +19,13 @@ showconf:
 
 static: $(LIBRARY)
 
+shared: $(SHLIB)
+
 $(LIBRARY): $(OBJECTS) 
 	ar ruv $(LIBRARY) $(OBJECTS) 
 
-shared: $(SHLIB)
-
-aix-shared: $(OBJECTS)
-	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
-
-$(SHLIB): $(OBJECTS) 
-	-$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(MISCOBJS) $(MISCLIBS) -o $@
+$(SHLIB): $(SOURCES) 
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
@@ -73,16 +71,10 @@ tests: null
 ftests: null
 	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(OPTFLAGS)" FOPTFLAGS="$(FOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" SUBSTR="$(SUBSTR)"
 
-
-libclean:
+clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
-
-clean: libclean
 	cd tests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
-	@if [ `uname -s` = "Linux" ]; then cd perfctr-2.3; $(MAKE) clean; fi;
-	@if [ `uname -s` = "Linux" ]; then cd perfctr; $(MAKE) clean; fi;
-	@if [ `uname -s` = "Linux" ]; then cd perf; $(MAKE) clean; fi;
 
 clobber: clean
 	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) fpapi.h

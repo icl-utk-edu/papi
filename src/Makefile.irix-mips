@@ -26,3 +26,5 @@ libpapi64.a:
 
 libpapi64.so: 
 	$(CC_SHR) -r -64 $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
+
+native_clean:

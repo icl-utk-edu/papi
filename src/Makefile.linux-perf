@@ -14,4 +14,4 @@ CC_R	= $(CC) -pthread
 
 include Makefile.inc
 
-
+native_clean:

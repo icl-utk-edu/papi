@@ -20,3 +20,8 @@ F77	= xlf
 CPP	= xlc -E
 
 include Makefile.inc
+
+aix-shared: $(SOURCES)
+	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
+
+native_clean:

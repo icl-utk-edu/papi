@@ -28,7 +28,7 @@ libperfctr.o: $(PERFCTR)
 $(PERFCTR): null
 	$(MAKE) -C $(PERFCTR)
 
-clean-perfctr:
+native_clean:
 	$(MAKE) -C $(PERFCTR) clean
 
 null:

@@ -29,3 +29,5 @@ cpu_version.o: alpha/cpu_version.s
 
 #read_cycle_counter.o: alpha/read_cycle_counter.s
 #	cc -O -c alpha/read_cycle_counter.s
+
+native_clean:

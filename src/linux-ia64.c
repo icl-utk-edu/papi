@@ -652,6 +652,8 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       pme_entry_code_t tmp;
       extern int pfm_findeventbyvcode(int code);
 
+      tmp.pme_vcode = 0;
+
       /* Support for native events here, only 1 counter at a time. */
 
       hwcntr_num = EventCode & 0xff;  
@@ -1319,27 +1321,38 @@ void *_papi_hwd_get_overflow_address(void *context)
 }
 
 #define __SMP__
+#define CONFIG_SMP
 #include <asm/atomic.h>
 static atomic_t lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,0);
+  atomic_set(&lock,1);
 }
 
 void _papi_hwd_lock(void)
 {
-  atomic_inc(&lock);
-  while (atomic_read(&lock) > 1)
+  if (atomic_dec_and_test(&lock))
+    return;
+  else
     {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
+#ifdef DEBUG
+      volatile int waitcyc = 0;
+#endif
+      while (atomic_dec_and_test(&lock))
+	{
+	  DBG((stderr,"Waiting..."));
+#ifdef DEBUG
+	  waitcyc++;
+#endif
+	  atomic_inc(&lock);
+	}
     }
 }
 
 void _papi_hwd_unlock(void)
 {
-  atomic_dec(&lock);
+  atomic_set(&lock, 1);
 }
 
 /* Machine info structure. -1 is unused. */
