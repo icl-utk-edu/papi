@@ -1,17 +1,17 @@
-#if defined(sgi) && defined(mips)
+/* $Id$ */
+
+#if defined(sun) && defined(__SVR4) && defined(sparc)
 
 #include <time.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
-#define PAPI_NULL -1
-
 typedef struct _hwd_preset {
-  int counter_code1;
-  int counter_code2; } hwd_control_state;
+  /* Fill in lots of stuff here */
+  int counter_code; } hwd_control_state;
 
-static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { { -1, -1 }, };
+static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { { -1 }, };
 
 static hwd_control_state current; /* not yet used. */
 
@@ -35,32 +35,11 @@ int _papi_hwd_add_event(void *machdep, int event)
   if (foo & PRESET_MASK)
     { 
       preset = foo ^= PRESET_MASK; 
-      this_state->counter_code1 = preset_map[preset].counter_code1;
-      this_state->counter_code2 = preset_map[preset].counter_code2;
       return(PAPI_OK);
     }
   else
     {
-      if ((event >= 0) && (event <= 15))
-	{
-	  if (this_state->counter_code1 == PAPI_NULL)
-	    {
-	      this_state->counter_code1 = event;
-	      return(PAPI_OK);
-	    }
-	  return(PAPI_ECNFLCT);
-	}
-      else if ((event >= 16) && (event <= 31))
-	{
-	  if (this_state->counter_code2 == PAPI_NULL)
-	    {
-	      this_state->counter_code2 = event;
-	      return(PAPI_OK);
-	    }
-	  return(PAPI_ECNFLCT);
-	}
-      else
-	return(PAPI_ENOEVNT);
+      return(PAPI_ECNFLCT);
     }
 }
 
@@ -72,35 +51,11 @@ int _papi_hwd_rem_event(void *machdep, int event)
 
   if (foo & PRESET_MASK)
     { 
-      preset = foo ^= PRESET_MASK; 
-      if (preset_map[preset].counter_code1 != PAPI_NULL)
-	this_state->counter_code1 = PAPI_NULL;
-      if (preset_map[preset].counter_code2 != PAPI_NULL)
-	this_state->counter_code2 = PAPI_NULL;
       return(PAPI_OK);
     }
   else
     {
-      if ((event >= 0) && (event <= 15))
-	{
-	  if (this_state->counter_code1 != PAPI_NULL)
-	    {
-	      this_state->counter_code1 = PAPI_NULL;
-	      return(PAPI_OK);
-	    }
-	  return(PAPI_ECNFLCT);
-	}
-      else if ((event >= 16) && (event <= 31))
-	{
-	  if (this_state->counter_code2 != PAPI_NULL)
-	    {
-	      this_state->counter_code2 = PAPI_NULL;
-	      return(PAPI_OK);
-	    }
-	  return(PAPI_ECNFLCT);
-	}
-      else
-	return(PAPI_ENOEVNT);
+      return(PAPI_ECNFLCT);
     }
 }
 
