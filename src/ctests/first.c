@@ -106,11 +106,11 @@ int main(int argc, char **argv)
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");
 
-	printf("Test type   : \t1\t\t2\t\t3\t\t4\t\t5\n");
-	sprintf(add_event_str, "%s : ", event_name);
+	printf("Test type   :        1           2           3           4           5\n");
+	sprintf(add_event_str, "%s :", event_name);
 	printf(TAB5, add_event_str,
 	 (values[0])[0],(values[1])[0],(values[2])[0],(values[3])[0],(values[4])[0]);
-	printf(TAB5, "PAPI_TOT_CYC: ",
+	printf(TAB5, "PAPI_TOT_CYC:",
 	 (values[0])[1],(values[1])[1],(values[2])[1],(values[3])[1],(values[4])[1]);
 	printf("-------------------------------------------------------------------------\n");
 

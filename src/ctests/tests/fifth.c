@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");
 
-	printf("Test type   : \t1\t\t2\t\t3\t\t4\n");
+	printf("Test type   : %12s%12s%12s%12s\n", "1", "2", "3", "4");
 	sprintf(add_event_str, "%s : ", event_name);
 	printf(TAB4, add_event_str,
 	 (values[0])[0],(values[1])[0],(values[2])[0],(values[3])[0]);

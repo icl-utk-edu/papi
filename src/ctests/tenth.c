@@ -128,8 +128,8 @@ int main(int argc, char **argv)
   remove_test_events(&EventSet3, mask3);
 
   if ( !TESTS_QUIET ) {
-	printf("Test case 9: start, stop for derived event %s.\n", CACHE_LEVEL);
-	printf("------------------------------------------------------\n");
+	printf("Test case 10: start, stop for derived event %s.\n", CACHE_LEVEL);
+	printf("--------------------------------------------------------\n");
 	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
 	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
 	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");
 
-	printf("Test type   :         1           2           3\n");
+	printf("Test type   : %12s%12s%12s\n", "1", "2", "3");
 #if defined(sun) && defined(sparc)
 	printf(TAB3, "PAPI_L2_TCM : ", (values[0])[0], (long_long)0, (long_long)0);
 	printf(TAB3, "PAPI_L2_TCA : ", (long_long)0, (values[1])[0], (long_long)0);

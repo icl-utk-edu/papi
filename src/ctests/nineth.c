@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");
 
-	printf("Test type   : \t1\t\t2\n");
+	printf("Test type   : %12s%12s\n", "1", "2");
 	printf(TAB2, "PAPI_FP_INS : ", (values[0])[0], (long_long)0);
 	printf(TAB2, "PAPI_TOT_CYC: ", (values[0])[1], (long_long)0);
 	printf(TAB2, "PAPI_FLOPS  : ", (long_long)0, (values[1])[0]);

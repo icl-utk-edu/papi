@@ -17,6 +17,12 @@
 
 #include "papi_test.h"
 
+#ifdef _WIN32
+	#define TAB_DOM	"%s%12I64d%15I64d%17I64d\n"
+#else
+	#define TAB_DOM	"%s%12lld%15lld%17lld\n"
+#endif
+
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
@@ -124,11 +130,11 @@ int main(int argc, char **argv)
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------\n");
 
-	printf("Test type   : \tPAPI_DOM_ALL\tPAPI_DOM_KERNEL\tPAPI_DOM_USER\n");
+	printf("Test type   :   PAPI_DOM_ALL  PAPI_DOM_KERNEL  PAPI_DOM_USER\n");
 	sprintf(add_event_str, "%s : ", event_name);
-	printf(TAB3, add_event_str,
+	printf(TAB_DOM, add_event_str,
 	 (values[0])[0],(values[1])[0],(values[2])[0]);
-	printf(TAB3, "PAPI_TOT_CYC: ",
+	printf(TAB_DOM, "PAPI_TOT_CYC: ",
 	 (values[0])[1],(values[1])[1],(values[2])[1]);
 	printf("-------------------------------------------------------------\n");
 

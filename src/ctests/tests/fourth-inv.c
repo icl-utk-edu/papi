@@ -120,8 +120,8 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
   
   if ( !TESTS_QUIET ) {
-	printf("Test case 4: Overlapping start and stop of 2 (inversed) eventsets.\n");
-	printf("-------------------------------------------------------\n");
+	printf("Test case 4: Overlapping start and stop of 2 (inverted) eventsets.\n");
+	printf("------------------------------------------------------------------\n");
 	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
 	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
 	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);

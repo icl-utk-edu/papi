@@ -79,8 +79,8 @@ int main(int argc, char **argv)
 
   if ( !TESTS_QUIET ) {
   printf("----------------------------------\n");  
-  printf("Verification: The last line in each experiment was intended\n");
-  printf("to become approximately three the value of the first line.\n");
+  printf("Verification: The last line in each experiment should be\n");
+  printf("approximately three times the value of the first line.\n");
   }
   
   {
