@@ -143,7 +143,7 @@ int main(int argc, char **argv)
      flops[i] = NUM_FLOPS * (i+1);
       rc = pthread_create(&id[i], &attr, Thread, (void *)&flops[i]);
       if (rc)
-         return (FAILURE);
+         test_fail(__FILE__, __LINE__, "pthread_create", PAPI_ESYS);
    }
    for (i = 0; i < NUM_THREADS; i++)
       pthread_join(id[i], NULL);

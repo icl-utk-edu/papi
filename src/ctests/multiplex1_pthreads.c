@@ -104,7 +104,6 @@ void *case1_pthreads(void *arg)
 {
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
-   char out[PAPI_MAX_STR_LEN];
 
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
@@ -147,7 +146,6 @@ void *case2_pthreads(void *arg)
 {
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
-   char out[PAPI_MAX_STR_LEN];
 
    PAPI_events_len = 2;
    init_papi_pthreads(PAPI_events, &PAPI_events_len);
@@ -196,7 +194,6 @@ void *case3_pthreads(void *arg)
 {
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
-   char out[PAPI_MAX_STR_LEN];
 
    PAPI_events_len = 2;
    init_papi_pthreads(PAPI_events, &PAPI_events_len);
@@ -341,7 +338,7 @@ int case4(void)
    init_papi_pthreads(PAPI_events, &PAPI_events_len);
 
    retval = do_pthreads(case4_pthreads);
-
+     
    PAPI_shutdown();
 
    return (retval);
@@ -356,21 +353,23 @@ int main(int argc, char **argv)
    test_pass(__FILE__, NULL, 0);
 #endif
 
-   if (!TESTS_QUIET) {
-      printf("%s: Using %d threads\n\n", argv[0], NUM_THREADS);
-      printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
-   }
-  case1();
-  if(!TESTS_QUIET )
-     printf("case2: Does setmpx/add work?\n");
+   printf("%s: Using %d threads\n\n", argv[0], NUM_THREADS);
 
-   case2();
-   if (!TESTS_QUIET)
-      printf("case3: Does add/setmpx work?\n");
-   case3();
-   if (!TESTS_QUIET)
-      printf("case4: Does add/setmpx/add work?\n");
-   case4();
+   printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
+   if (case1() != SUCCESS)
+      test_fail(__FILE__, __LINE__, "case1", PAPI_ESYS);
+     
+   printf("case2: Does setmpx/add work?\n");
+   if (case2() != SUCCESS)
+      test_fail(__FILE__, __LINE__, "case2", PAPI_ESYS);
+
+   printf("case3: Does add/setmpx work?\n");
+   if (case3() != SUCCESS)
+      test_fail(__FILE__, __LINE__, "case3", PAPI_ESYS);
+
+   printf("case4: Does add/setmpx/add work?\n");
+   if (case4() != SUCCESS)
+      test_fail(__FILE__, __LINE__, "case4", PAPI_ESYS);
 
    PAPI_library_init(PAPI_VER_CURRENT);
    test_pass(__FILE__, NULL, 0);
