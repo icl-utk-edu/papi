@@ -138,7 +138,7 @@ case "$OS" in
            fi
          fi
          ;;
-  irix) CPU=`hinv -t cpu | cut -d ' ' -f 3`;;
+  irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr A-Z a-z`;;
   osf1) CPU=`uname -p`;;
   unicos)
         if test "`uname -a | grep crayx1`" != ""; then
