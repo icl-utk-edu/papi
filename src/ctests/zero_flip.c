@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   /* query and set up the right instruction to monitor */
   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) PAPI_event = PAPI_FP_INS;
-  else PAPI_event = PAPI_TOT_INS;
+  else PAPI_event = PAPI_TOT_CYC;
 
   retval = PAPI_event_code_to_name(PAPI_event, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
