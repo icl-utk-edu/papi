@@ -12,13 +12,13 @@ void addaixevents(int *EventSet, int *retval)
 #if defined(_POWER4)
    /* defined in Makefile.aix.power4 */
    /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
-   *retval = PAPI_event_name_to_code("PM_FPU0_DIV", &native);
+   *retval = PAPI_event_name_to_code("PM_FPU0_FDIV", &native);
    /*if (*retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
 
-   *retval = PAPI_event_name_to_code("PM_FPU1_DIV", &native);
+   *retval = PAPI_event_name_to_code("PM_FPU1_FDIV", &native);
    /*if (*retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
