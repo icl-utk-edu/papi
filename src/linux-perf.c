@@ -716,7 +716,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 
   /* Clear out counters that are part of this event. */
 
-  this_state->selector = this_state->selector ^ selector;
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
