@@ -59,7 +59,12 @@
 #define PNE_page_walk_type_instr_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
 #define PNE_page_walk_type_all (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
 #define PNE_x87_FP_uop_tag0 (NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0) + (1<<ALL))
+#define PNE_64bit_MMX_uop_tag1 (NATIVE_MASK + (P4_64bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
+#define PNE_128bit_MMX_uop_tag1 (NATIVE_MASK + (P4_128bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
 #define PNE_execution_event_nbogus0 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
+#define PNE_execution_event_nbogus1 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS1))
+#define PNE_execution_event_nbogus2 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS2))
+#define PNE_execution_event_nbogus3 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS3))
 #define PNE_replay_event (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
 #define PNE_replay_event_L1_load_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
@@ -92,6 +97,7 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {PAPI_FP_INS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
    {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   {PAPI_VEC_INS, {0, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
@@ -118,6 +124,7 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
    {PAPI_FP_INS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
    {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   {PAPI_VEC_INS, {0, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
