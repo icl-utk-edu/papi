@@ -65,6 +65,8 @@ case "$OS" in
                CPU=itanium2 
              elif test "`cat /proc/cpuinfo | grep Itanium`" != ""; then
                CPU=itanium
+             elif test "`cat /proc/cpuinfo | grep "Pentium II"`" != ""; then
+               CPU=p2
              else CPU=p3
              fi
            fi 
@@ -88,7 +90,7 @@ case "$OS" in
          processor=`uname -p`
            #this determines if its an Ultrasparc I,II,or III
          if test "$processor" = "sparc"; then
-           CPU=`/bin/uname -a | egrep Ultra`
+           CPU=`/bin/uname -a | egrep sun4u`
            if test "$CPU" = ""; then
              echo "Sorry but for Solaris you need to have an Ultrasparc for PAPI to work"
              exit 1
@@ -178,6 +180,12 @@ case "$OS" in
        fi
        ;;
    solaris)
+       if test "${bitmode}" = "64"; then
+          if test "`isainfo -v | grep "64"`" = ""; then
+             echo "The bitmode "$with_bitmode" you specified is not supported"
+             exit -1
+          fi
+       fi
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux) 
@@ -189,13 +197,13 @@ case "$OS" in
                  fi
                  MAKEVER="$OS"-"$CPU" ;;
             itanium)
-                 if test "${bitmode}" = "32"; then
+                 if test "${with_bitmode}" = "32"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
                  fi
                  MAKEVER="$OS"-pfm-"$CPU" ;;
             itanium2)
-                 if test "${bitmode}" = "32"; then
+                 if test "${with_bitmode}" = "32"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
                  fi
@@ -207,7 +215,7 @@ case "$OS" in
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             opteron)
-                 if test "${bitmode}" = "32"; then
+                 if test "${with_bitmode}" = "32"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
                  fi
@@ -219,6 +227,12 @@ case "$OS" in
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             p3)
+                 if test "${bitmode}" = "64"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+            p2)
                  if test "${bitmode}" = "64"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
@@ -252,6 +266,7 @@ case "$MAKEVER" in
     linux-perfctr-athlon);;
     linux-perfctr-em64t);;
     linux-perfctr-opteron);;
+    linux-perfctr-p2);;
     linux-perfctr-p3);;
     linux-perfctr-p4);;
     linux-pfm-itanium);;
@@ -282,7 +297,10 @@ AC_PROG_RANLIB
 
 # Checks for libraries.
 if test "$OS" = "solaris"; then
-AC_CHECK_LIB([cpc], [cpc_take_sample])
+AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
+      echo "Error, libcpc.a is needed on solaris!"
+      exit -1
+      ])
 fi
 
 AC_CHECK_LIB([dl], [dlopen])
@@ -291,13 +309,24 @@ AC_CHECK_LIB([m], [sqrt])
 
 if test "$CPU" = "itanium"; then
 AC_CHECK_LIB([pfm], [pfm_initialize])
+#AC_CHECK_LIB([pfm], [pfm_initialize], [], [
+#      echo "Error, libpfm.a is needed on itanium!"
+#      exit -1
+#      ])
 fi
 if test "$CPU" = "itanium2"; then
 AC_CHECK_LIB([pfm], [pfm_initialize])
+#AC_CHECK_LIB([pfm], [pfm_initialize], [], [
+#      echo "Error, libpfm.a is needed on itanium2!"
+#      exit -1
+#      ])
 fi
 
 if test "$OS" = "aix"; then
-AC_CHECK_LIB([pmapi], [pm_init])
+AC_CHECK_LIB([pmapi], [pm_init], [], [
+      echo "Error, libpmapi.a is needed on power!"
+      exit -1
+      ])
 fi
 
 AC_CHECK_LIB([pthread], [pthread_self])
