@@ -280,11 +280,12 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    return (PAPI_OK);
 }
 
-extern int _papi_hwd_mdi_init() 
+int _papi_hwd_mdi_init() 
 {
   /* Name of the substrate we're using */
   strcpy(_papi_hwi_system_info.substrate, "$Id$");          
   
+  _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.supports_hw_overflow = 1;
   _papi_hwi_system_info.supports_64bit_counters = 1;
   _papi_hwi_system_info.supports_inheritance = 1;
@@ -378,14 +379,7 @@ int _papi_hwd_init_global(void)
    retval = _papi_hwd_get_system_info();
    if (retval)
       return (retval);
-
-   /* Setup presets */
-   retval = generate_preset_search_map(ia_preset_search_map);
-   if (retval)
-      return (retval);
-   retval = _papi_hwi_setup_all_presets(preset_search_map);
-   if (retval)
-      return (retval);
+    _papi_hwd_mdi_init();
 
    /* get_memory_info has a CPU model argument that is not used,
     * fakining it here with hw_info.model which is not set by this
@@ -393,6 +387,16 @@ int _papi_hwd_init_global(void)
     */
    retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
                             _papi_hwi_system_info.hw_info.model);
+   if (retval)
+      return (retval);
+
+   /* Setup presets */
+
+   retval = generate_preset_search_map(ia_preset_search_map);
+   if (retval)
+      return (retval);
+
+   retval = _papi_hwi_setup_all_presets(preset_search_map);
    if (retval)
       return (retval);
 
@@ -748,7 +752,6 @@ static int ia64_process_profile_entry(void *papiContext)
    this_state = &ESI->machdep;
 
    hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
-#ifdef PFM20
    /*
     * Make sure the kernel uses the format we understand
     */
@@ -757,9 +760,6 @@ static int ia64_process_profile_entry(void *papiContext)
               PFM_VERSION_MAJOR(hdr->hdr_version), PFM_VERSION_MINOR(hdr->hdr_version));
    }
    entry_size = hdr->hdr_entry_size;
-#else  /* PFM30 */
-   entry_size = sizeof(pfmw_smpl_entry_t)+(hweight64(DEAR_REGS_MASK)<<3);
-#endif
 
    /*
     * walk through all the entries recorded in the buffer
@@ -881,7 +881,6 @@ static int ia64_process_profile_entry(void *papiContext)
     * walk through all the entries recorded in the buffer
     */
    buf_pos = (unsigned long) (hdr + 1);
-   printf("hdr_count = %d \n", hdr->hdr_count);
    for (i = 0; i < hdr->hdr_count; i++) {
       ret = 0;
       ent = (pfmw_smpl_entry_t *) buf_pos;

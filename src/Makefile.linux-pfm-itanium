@@ -1,8 +1,6 @@
 LIBPFMHOME = libpfm-2.0
 PFM_LIB_PATH = ./$(LIBPFMHOME)/libpfm
 PFM_INC_PATH = ./$(LIBPFMHOME)/include
-MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o 
-NATIVE_CLEAN = rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
 
 # Uncomment below and comment out the lines above to use a 
 # natively installed libpfm
@@ -23,6 +21,10 @@ DESCR	?= "Stock Linux 2.4.18 + for the Intel Itanium"
 LIBS	= static shared
 # shared
 TARGETS = serial multiplex_and_pthreads
+
+MISCSRCS= linux.c
+MISCOBJS=  linux.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o  
+NATIVE_CLEAN = rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
 
 CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall  -DPFM20 -DPAPI3 -g -DDEBUG 
 TOOLPATH = ../$(LIBPFMHOME)

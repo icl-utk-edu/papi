@@ -58,6 +58,7 @@ extern void _papi_hwi_cleanup_thread_list(void);
 extern int _papi_hwi_insert_in_thread_list(ThreadInfo_t * ptr);
 extern ThreadInfo_t *_papi_hwi_lookup_in_thread_list();
 extern void _papi_hwi_shutdown_the_thread_list(void);
+extern int  _papi_hwi_get_thr_context(void ** );
 
 /* The following PAPI internal functions are defined by the extras.c file. */
 

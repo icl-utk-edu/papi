@@ -33,6 +33,7 @@ F77     = g77
 MISCOBJS= linux.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic_ia64.o pfmlib_os.o 
 MISCHDRS= 
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+MISCSRCS= linux.c
 
 include Makefile.inc
 

@@ -96,8 +96,10 @@ static int get_system_info(void)
       return (PAPI_ESYS);
    strcat(_papi_hwi_system_info.exe_info.fullname, "/");
    strcat(_papi_hwi_system_info.exe_info.fullname, info.pr_fname);
+/*
    strncpy(_papi_hwi_system_info.exe_info.name, info.pr_fname,
            PAPI_MAX_STR_LEN);
+*/
 
    if (getsysinfo
        (GSI_CPU_INFO, (char *) &cpuinfo, sizeof(cpuinfo), NULL, NULL,

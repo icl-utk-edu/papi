@@ -309,7 +309,7 @@ int _papi_hwd_get_system_info(void)
    _papi_hwi_system_info.hw_info.vendor = -1;
 
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-      error_return(PAPI_ESYS, FOPEN_ERROR, "/proc/cpuinfo");
+      error_return(PAPI_ESYS, "fopen(%s) returned NULL", "/proc/cpuinfo");
 
    rewind(f);
    s = search_cpu_info(f, "cpu MHz", maxargs);

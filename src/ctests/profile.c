@@ -75,7 +75,6 @@ int main(int argc, char **argv)
          mask = MASK_TOT_INS | MASK_TOT_CYC;
       }
    }
-
    if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
