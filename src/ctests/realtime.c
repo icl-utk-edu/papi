@@ -38,12 +38,18 @@ int main(int argc, char **argv)
    printf("%lld us. %lld cyc.\n",elapsed_us,elapsed_cyc);
    printf("%f Computed MHz.\n",(float)elapsed_cyc/(float)elapsed_us);
 
-   if ((elapsed_us / (long_long)1000000) < 10)
-     test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
-
+   {
+     float rsec = ((float)elapsed_us / (float)1000000.0);
+     if (rsec < (float)10.0)
+     {
+       printf("Real time %f seconds\n",rsec);
+       test_fail(__FILE__, __LINE__, "Real time < 10 seconds, SpeedStep?", PAPI_EMISC);
+     }
+   }
    /* We'll accept 1 part per thousand error here (to allow Pentium 4 to pass) */
-   if ((10.0 * hw_info->mhz * 1000000.0) > (((float)elapsed_cyc) + ((float)elapsed_cyc)/1000))
-     test_fail(__FILE__, __LINE__, "Real cycles less than 10*MHz*1000000.0!", PAPI_EMISC);
+   if ((10.0 * hw_info->mhz * 1000000.0) > 
+       (((float)elapsed_cyc) + ((float)elapsed_cyc)/(float)1000))
+     test_fail(__FILE__, __LINE__, "Real cycles < 10*MHz*1000000.0, SpeedStep?", PAPI_EMISC);
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
