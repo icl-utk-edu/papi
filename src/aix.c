@@ -288,6 +288,7 @@ static int get_system_info(void)
    pid = getpid();
    if (pid == -1)
       return (PAPI_ESYS);
+   _papi_hwi_system_info.pid = pid;
    psi.pi_pid = pid;
    retval = getargs(&psi, sizeof(psi), maxargs, PATH_MAX);
    if (retval == -1)
@@ -624,13 +625,12 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * cntrl)
    retval = pm_set_program_mythread(&current_state->counter_cmd);
  if (retval != 0)
    {
-     extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
-     if ((retval == 13) && (_papi_hwi_thread_id_fn))
+     if (retval == 13)
        {
-	 pm_delete_program_mythread();
-	 retval = pm_set_program_mythread(&current_state->counter_cmd);
-	 if (retval != 0)
-	   return(retval);
+	    pm_delete_program_mythread();
+	    retval = pm_set_program_mythread(&current_state->counter_cmd);
+	    if (retval != 0)
+	       return(retval);
        }
      else
        return(retval);
