@@ -138,8 +138,8 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
       while (tmp != NULL) {
          THRDBG("%lld:%s:%d:0x%lx:Examining master at %p,tid 0x%x.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
          if (tmp->master->tid == id_to_find) {
-              _papi_hwd_unlock(PAPI_INTERNAL_LOCK); /* KSL */
             head = tmp;
+	    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
             return (tmp->master);
          }
          tmp = tmp->next;
