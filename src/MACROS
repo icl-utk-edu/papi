@@ -1,0 +1,21 @@
+/* 
+* File:    MACROS
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+*/
+
+This file is to document all of our CPP macros for eventual removal by
+using GNU autoconf/libtool to build the PAPI library.
+
+NO_DLFCN
+
+The platform has no dlopen(),dlsym(),dlfcn.h
+
+NO_VARARG_MACRO
+
+The CPP compiler has no variable argument macros.
+
+NO_FUNCTION_MACRO
+
+The CPP compiler has no __FUNCTION__ argument macros.
