@@ -621,7 +621,7 @@ size: number of native events to add
 */
 static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
 {
-	int nidx, i, j, remap=0;
+	int nidx, i, j, remap=0, retval;
 	
 	/* Need to decide what needs to be preserved so we can roll back state
 	   if the add event fails...
@@ -658,8 +658,11 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	/* if remap!=0, we need reallocate counters */
 	if(remap){
 		if(_papi_hwd_allocate_registers(ESI)){
-		    _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
-		    return 1;
+		   retval= _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
+           if (retval != PAPI_OK)
+             return retval;
+           else
+		     return 1;
 		}
 		else{
 			for(i=0;i<size;i++){
@@ -804,7 +807,7 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
     hwd_control_state_t *this_state= &ESI->machdep;
     NativeInfo_t *native = ESI->NativeInfoArray;
-    int i, j, zero=0;
+    int i, j, zero=0, retval;
 
     /* Remove the references to this event from the native events:
        for all the metrics in this event,
@@ -858,7 +861,9 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 	clear the now empty slots, reinitialize the index, and update the count.
 	Then send the info down to the substrate to update the hwd control structure. */
     if (zero) {
-      _papi_hwd_update_control_state(this_state, native, ESI->NativeCount);
+      retval=_papi_hwd_update_control_state(this_state, native, ESI->NativeCount);
+      if (retval != PAPI_OK)
+         return retval;
     }
 
     return(PAPI_OK);
@@ -1235,7 +1240,7 @@ static int counter_read(EventSetInfo_t *ESI, long_long *hw_counter, long_long *v
      EventInfoArray[i] entries may not be contiguous because the user
      has the right to remove an event.
      But if we do compaction after remove event, this function can be 
-     changed.  ----Min
+     changed.  
    */
 
   for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
