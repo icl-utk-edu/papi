@@ -1,7 +1,5 @@
 CC = gcc
-FOR_USED = -DFORTRANUNDERSCORE
-CFLAGS = -O -DONT_WRAP -g $(FOR_USED)
-F77 = f77
+CFLAGS = -O -DONT_WRAP -g
 
 INCLUDE = -I..
 TESTS 	= zero first \
@@ -10,13 +8,10 @@ TESTS 	= zero first \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops strtest
 
-FTEST_DEPENDENCE=ftests_wrappers.o ftests_util.o
-PAPILIB=ftests_wrappers.o ftests_util.o ../libpapi.a
+FTEST_DEPENDENCE=ftests_util.o
+PAPILIB=ftests_util.o ../libpapi.a
 
 default: $(TESTS)
-
-ftests_wrappers.o: ftests_wrappers.c
-	$(CC) $(INCLUDE) $(CFLAGS) -c ftests_wrappers.c -o ftests_wrappers.o
 
 ftests_util.o: ftests_util.F
 	$(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F
