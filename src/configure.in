@@ -257,23 +257,31 @@ AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-lcpc':
-AC_CHECK_LIB([cpc], [main])
-# FIXME: Replace `main' with a function in `-ldl':
-AC_CHECK_LIB([dl], [main])
-# FIXME: Replace `main' with a function in `-lm':
-AC_CHECK_LIB([m], [main])
-# FIXME: Replace `main' with a function in `-lpfm':
-AC_CHECK_LIB([pfm], [main])
+if test "$OS" = "solaris"; then
+AC_CHECK_LIB([cpc], [cpc_take_sample])
+fi
+
+AC_CHECK_LIB([dl], [dlopen])
+
+AC_CHECK_LIB([m], [sqrt])
+
+if test "$CPU" = "itanium"; then
+AC_CHECK_LIB([pfm], [pfm_initialize])
+fi
+if test "$CPU" = "itanium2"; then
+AC_CHECK_LIB([pfm], [pfm_initialize])
+fi
 
 if test "$OS" = "aix"; then
 AC_CHECK_LIB([pmapi], [pm_init])
 fi
 
-# FIXME: Replace `main' with a function in `-lpthread':
-AC_CHECK_LIB([pthread], [main])
-# FIXME: Replace `main' with a function in `-lrt':
-AC_CHECK_LIB([rt], [main])
+AC_CHECK_LIB([pthread], [pthread_self])
+
+if test "$OS" = "osf1"; then
+AC_CHECK_LIB([rt], [clock_gettime])
+fi
+
 # FIXME: Replace `main' with a function in `-llipr':
 AC_CHECK_LIB([lipr], [main])
 
