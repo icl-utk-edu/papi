@@ -51,12 +51,12 @@ C 2 counters.
      *retval)
       end if
 
-      call PAPIf_query_event(PAPI_L2_TCM, retval)
+      call PAPIf_query_event(PAPI_BR_CN, retval)
       if (retval .EQ. PAPI_OK) then
         j = j + 1
       end if
       if (j .NE. 0) then
-        call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
+        call PAPIf_add_event( EventSet, PAPI_BR_CN, retval )
         if ( retval .NE. PAPI_OK ) then
            call PAPIf_perror( retval, errorstring, errorcode)
            if (tests_quiet .EQ. 0) then
@@ -89,13 +89,15 @@ C 2 counters.
         j = j + 1
       end if
       if (j .EQ. i+1) then
-         call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
+         call PAPIf_add_event(EventSet,PAPI_TOT_INS,retval)
          if ( retval .NE. PAPI_OK )then
+           if ( retval .NE. PAPI_ECNFLCT ) then
             call PAPIf_perror( retval, errorstring, errorcode)
             if (tests_quiet .EQ. 0) then
-               print *, 'Can not add PAPI_FP_INS: '//
+               print *, 'Can not add PAPI_TOT_INS: '//
      $              errorstring(1:len_trim(errorstring))
             end if
+          end if
          end if
       end if
 
