@@ -11,22 +11,6 @@
 #include "papi_test.h"
 int TESTS_QUIET=0; /* Tests in Verbose mode? */
 
-void handle_error(char *file,int line,char *msg,int errcode)
-{
-  char errstring[PAPI_MAX_STR_LEN];
-
-  printf("high-level:		FAILED\n");
-  if ( errcode == PAPI_ESYS ) {
-        sprintf(errstring, "System error in %s:", msg );
-        perror(errstring);
-  }
-  else {
-        PAPI_perror(errcode, errstring, PAPI_MAX_STR_LEN );
-        printf("Error in %s: %s\n", msg, errstring );
-  }
-  exit(1);
-}
-
 int main(int argc, char **argv) 
 {
   int retval;
@@ -38,7 +22,6 @@ int main(int argc, char **argv)
 #else
   int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
 #endif
-  char *mytmp,buf[128];
 
 
   if ( argc > 1 ) {
@@ -48,18 +31,17 @@ int main(int argc, char **argv)
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
-    handle_error(__FILE__,__LINE__,"PAPI_library_init",retval);
-
+    test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
   retval = PAPI_start_counters(Events,NUM_EVENTS);
   if (retval != PAPI_OK)
-    handle_error(__FILE__,__LINE__,"PAPI_start_counters",retval);
+    test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
 
   /* Loop 1*/
   do_flops(NUM_FLOPS);
   
   retval = PAPI_read_counters(values,NUM_EVENTS);
   if (retval != PAPI_OK)
-    handle_error(__FILE__,__LINE__,"PAPI_read_counters",retval); 
+    test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval); 
 
   if ( !TESTS_QUIET )
      printf(TWO12, values[0], values[1], "(Counters continuing...)\n");
@@ -71,7 +53,7 @@ int main(int argc, char **argv)
   
   retval = PAPI_accum_counters(values,NUM_EVENTS);
   if (retval != PAPI_OK)
-    handle_error(__FILE__,__LINE__,"PAPI_accum_counters",retval); 
+    test_fail(__FILE__,__LINE__,"PAPI_accum_counters",retval); 
 
   if ( !TESTS_QUIET )
      printf(TWO12, values[0], values[1], "(Counters being ''held'')\n");
@@ -82,7 +64,7 @@ int main(int argc, char **argv)
   
   retval = PAPI_read_counters(dummyvalues,NUM_EVENTS);
   if (retval != PAPI_OK)
-    handle_error(__FILE__,__LINE__,"PAPI_read_counters",retval); 
+    test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval); 
   if ( !TESTS_QUIET )
      printf(TWO12, dummyvalues[0], dummyvalues[1], "(Skipped counts)\n");
 
@@ -93,7 +75,7 @@ int main(int argc, char **argv)
   
   retval = PAPI_accum_counters(values,NUM_EVENTS);
   if (retval != PAPI_OK)
-    handle_error(__FILE__,__LINE__,"PAPI_accum_counters",retval); 
+    test_fail(__FILE__,__LINE__,"PAPI_accum_counters",retval); 
 
   if ( !TESTS_QUIET )
      printf(TWO12, values[0], values[1], "");
@@ -111,38 +93,19 @@ int main(int argc, char **argv)
 	min = myvalues[0]*.9;
 	max = myvalues[0]*1.1;
 	if ( values[0]<(3*min)||values[0]>(3*max)){
-#ifndef NO_FLOPS
-                mytmp = strdup("PAPI_FP_INS");
-#else
-                mytmp = strdup("PAPI_TOT_INS");
-#endif
                 retval = 1;
-                goto FAILED;
+#ifndef NO_FLOPS
+		test_fail(__FILE__,__LINE__,"PAPI_FP_INS");
+#else
+		test_fail(__FILE__,__LINE__,"PAPI_TOT_INS");
+#endif
 	}
 	min = myvalues[1]*.9;
 	max = myvalues[1]*1.1;
 	if ( values[1]<(3*min)||values[1]>(3*max)){
-	        mytmp = strdup("PAPI_TOT_CYC");
                 retval = 1;
-                goto FAILED;
+		test_fail(__FILE__,__LINE__,"PAPI_TOT_CYC");
 	}
   }
-  printf("high-level:		PASSED\n");
-  exit(0);
-FAILED:
-  printf("high-level:                FAILED\n");
-  if ( retval == PAPI_ESYS ) {
-        sprintf(buf, "System error in %s:", mytmp );
-        perror(buf);
-  }
-  else if ( retval > 0 ) {
-        printf("Error calculating: %s\n", mytmp );
-  }
-  else {
-        char errstring[PAPI_MAX_STR_LEN];
-        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
-        printf("Error in %s: %s\n", mytmp, errstring );
-  }
-  free(mytmp);
-  exit(1);
+  test_pass(__FILE__,values,NUM_EVENTS);
 }

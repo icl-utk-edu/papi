@@ -8,22 +8,6 @@
 	char format_string2[] = {"%lld total cyc,\n%f %s\n"};
 #endif
 
-void err_exit(int code, char *str)
-{
-  char out[PAPI_MAX_STR_LEN];
-
-  printf("cost:		FAILED\n");
-  if ( code == PAPI_ESYS ) {
-        sprintf(out, "System error in %s:", str );
-        perror(out);
-  }
-  else {
-     PAPI_perror(code, out, PAPI_MAX_STR_LEN);
-     printf("Error in %s: %s\n",str,out);
-  }
-  exit(1);
-}
-
 int TESTS_QUIET=0;
 
 int main(int argc, char **argv)
@@ -43,56 +27,52 @@ int main(int argc, char **argv)
   }
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
-     err_exit(retval, "PAPI_library_init(PAPI_VER_CURRENT)");
-
+	test_fail(__FILE__,__LINE__,"PAPI_library_init", retval );
    if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-     err_exit(retval, "PAPI_set_debug(PAPI_VERB_ECONT)");
-
+	test_fail(__FILE__,__LINE__,"PAPI_set_debug", retval );
    if ((retval = PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK)
-     err_exit(retval, "PAPI_query_event(PAPI_TOT_CYC)");
-
+	test_fail(__FILE__,__LINE__,"PAPI_query_event", retval );
    if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
-     err_exit(retval, "PAPI_query_event(PAPI_TOT_INS)");
-
+	test_fail(__FILE__,__LINE__,"PAPI_query_event", retval );
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_create_eventset(&EventSet)");
+	test_fail(__FILE__,__LINE__,"PAPI_create_eventset", retval );
 
    if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC)) != PAPI_OK)
-     err_exit(retval, "PAPI_add_event(&EventSet, PAPI_TOT_CYC)");
+	test_fail(__FILE__,__LINE__,"PAPI_add_event", retval );
 
    if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS)) != PAPI_OK)
-     err_exit(retval, "PAPI_add_event(&EventSet, PAPI_TOT_INS)");
+	test_fail(__FILE__,__LINE__,"PAPI_add_event", retval );
 
    if ((retval = PAPI_create_eventset(&CostEventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_create_eventset(&CostEventSet)");
+	test_fail(__FILE__,__LINE__,"PAPI_create_eventset", retval );
 
    if ((retval = PAPI_add_event(&CostEventSet, PAPI_TOT_CYC)) != PAPI_OK)
-     err_exit(retval, "PAPI_add_event(&CostEventSet, PAPI_TOT_CYC)");
+	test_fail(__FILE__,__LINE__,"PAPI_add_event", retval );
 
    if ((retval = PAPI_add_event(&CostEventSet, PAPI_TOT_INS)) != PAPI_OK)
-     err_exit(retval, "PAPI_add_event(&CostEventSet, PAPI_TOT_INS)");
+	test_fail(__FILE__,__LINE__,"PAPI_add_event", retval );
 
    /* Make sure no errors */
 
    if ((retval = PAPI_start(CostEventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_start(CostEventSet)");
+	test_fail(__FILE_,__LINE__,"PAPI_start", retval );
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_start(EventSet)");
+	test_fail(__FILE__,__LINE__,"PAPI_start",retval );
    if ((retval = PAPI_stop(EventSet, NULL)) != PAPI_OK)
-     err_exit(retval, "PAPI_stop(EventSet, NULL)");
+	test_fail(__FILE__,__LINE__,"PAPI_stop",retval );
    if ((retval = PAPI_stop(CostEventSet, NULL)) != PAPI_OK)
-     err_exit(retval, "PAPI_stop(CostEventSet, NULL)");
+	test_fail(__FILE__,__LINE__,"PAPI_stop",retval );
 
    /* Start the start/stop eval */
 
    if ((retval = PAPI_reset(CostEventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_reset(CostEventSet)");
+	test_fail(__FILE__,__LINE__,"PAPI_reset",retval );
 
   if ( !TESTS_QUIET ) 
        printf("Performing start/stop test...\n");
    totcyc = PAPI_get_real_cyc();
    if ((retval = PAPI_start(CostEventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_start(CostEventSet)");
+	test_fail(__FILE__,__LINE__,"PAPI_start",retval );
 
      for (i=0;i<50000;i++)
      {
@@ -101,7 +81,7 @@ int main(int argc, char **argv)
      }
 
    if ((retval = PAPI_stop(CostEventSet, values)) != PAPI_OK)
-     err_exit(retval, "PAPI_stop(CostEventSet, values)");
+	test_fail(__FILE__,__LINE__,"PAPI_stop",retval );
    totcyc = PAPI_get_real_cyc() - totcyc;
 
    if ( !TESTS_QUIET ) {
@@ -117,12 +97,12 @@ int main(int argc, char **argv)
    printf("\n\nPerforming read test...\n");
    }
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_start(EventSet)");
+     test_fail(__FILE__,__LINE__,"PAPI_start", retval );
    if( (retval = PAPI_reset(CostEventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_reset(CostEventSet)");
+     test_fail(__FILE__,__LINE__,"PAPI_reset", retval );
    totcyc = PAPI_get_real_cyc();
    if ((retval = PAPI_start(CostEventSet)) != PAPI_OK)
-     err_exit(retval, "PAPI_start(CostEventSet)");
+     test_fail(__FILE__,__LINE__,"PAPI_start", retval );
 
 	for (i=0;i<50000;i++)
      {
@@ -130,7 +110,7 @@ int main(int argc, char **argv)
      }
 
    if ((retval = PAPI_stop(CostEventSet, readvalues)) != PAPI_OK)
-     err_exit(retval, "PAPI_stop(CostEventSet, readvalues)");
+     test_fail(__FILE__,__LINE__,"PAPI_stop", retval );
    totcyc = PAPI_get_real_cyc() - totcyc;
 
    if ( !TESTS_QUIET ) {
@@ -140,6 +120,5 @@ int main(int argc, char **argv)
    printf("\nTotal cost for PAPI_read(2 counters) over 50000 iterations\n");
    printf(format_string2,totcyc,((float)totcyc)/50001.0,"cyc/call");
    }
-   printf("cost:		PASSED\n");
-   exit(0);
+   test_pass(__FILE__,0,0);
 }

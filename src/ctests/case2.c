@@ -22,27 +22,20 @@ int main(int argc, char **argv)
    int retval;
    int j = 0,i;
    long_long g1[3];
-   char *tmp,buf[128];
 
 
-  if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
-        tmp = strdup("PAPI_library_init");
-        goto FAILED;
-  }
+  if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+	tests_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
-   if ( (retval = PAPI_create_eventset(&EventSet) ) != PAPI_OK ) {
-        tmp = strdup("PAPI_create_eventset");
-        goto FAILED;
-   }
+   if ( (retval = PAPI_create_eventset(&EventSet) ) != PAPI_OK ) 
+	tests_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
    if (PAPI_query_event(PAPI_BR_CN) == PAPI_OK)
      j++;
 
   if(j==1&&(retval = PAPI_add_event(&EventSet, PAPI_BR_CN)) != PAPI_OK) {
-        if ( retval != PAPI_ECNFLCT ){
-          tmp = strdup("PAPI_add_event[PAPI_BR_CN]");
-          goto FAILED;
-	}
+        if ( retval != PAPI_ECNFLCT )
+	   tests_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
    }
 
    i = j;
@@ -50,10 +43,8 @@ int main(int argc, char **argv)
      j++;
 
    if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC)) != PAPI_OK){
-        if ( retval != PAPI_ECNFLCT ){
-        tmp = strdup("PAPI_add_event[PAPI_TOT_CYC]");
-        goto FAILED;
-	}
+        if ( retval != PAPI_ECNFLCT )
+	   tests_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
    }
 
    i = j;
@@ -61,41 +52,21 @@ int main(int argc, char **argv)
      j++;
 
    if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_TOT_INS)) != PAPI_OK){
-        if ( retval != PAPI_ECNFLCT ){
-           tmp = strdup("PAPI_add_event[PAPI_TOT_INS]");
-           goto FAILED;
-        }
+        if ( retval != PAPI_ECNFLCT )
+	   tests_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
    }
 
    if (j)
      {
-       if ( (retval = PAPI_start(EventSet) ) != PAPI_OK ) {
-            tmp = strdup("PAPI_start");
-            goto FAILED;
-        }
+       if ( (retval = PAPI_start(EventSet) ) != PAPI_OK ) 
+	    tests_fail(__FILE__,__LINE__,"PAPI_start",retval);
+
        for ( i = 0; i < n; i++ )
 	 {
 	   c = a * b;
 	 }
-       if ( (retval = PAPI_stop(EventSet, g1) ) != PAPI_OK ) {
-            tmp = strdup("PAPI_stop");
-            goto FAILED;
-        }
+       if ( (retval = PAPI_stop(EventSet, g1) ) != PAPI_OK ) 
+	    tests_fail(__FILE__,__LINE__,"PAPI_stop",retval);
      }
-  printf("case2:                PASSED\n");
-  exit(0);
-FAILED:
-  printf("case2:                FAILED\n");
-  if ( retval == PAPI_ESYS ) {
-        sprintf(buf, "System error in %s:", tmp );
-        perror(buf);
-  }
-  else {
-        char errstring[PAPI_MAX_STR_LEN];
-        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
-        printf("Error in %s: %s\n", tmp, errstring );
-  }
-  free(tmp);
-  exit(1);
-
+   tests_passed(__FILE__,0,0);
 }

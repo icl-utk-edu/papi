@@ -4,46 +4,21 @@ int main()
 {
   int retval;
   int preset;
-  char *tmp,buf[128];
 
 
   retval = PAPI_event_name_to_code( "PAPI_FP_INS", &preset );
-  if (retval != PAPI_OK){
-	tmp = strdup("PAPI_event_name_to_code[PAPI_FP_INS]");
-	goto FAILED;
-  }
-  if (preset != PAPI_FP_INS){
-	printf("eventname:		FAILED\n");
-	printf("*preset returned did not equal PAPI_FP_INS\n");
-        exit(1);
-  }
+  if (retval != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_event_name_to_code",retval);
+  if (preset != PAPI_FP_INS)
+	test_fail(__FILE__,__LINE__,"Wrong preset returned",retval);
 
   retval = PAPI_event_name_to_code( "PAPI_TOT_CYC", &preset );
-  if (retval != PAPI_OK){
-	tmp = strdup("PAPI_event_name_to_code[PAPI_TOT_CYC]");
-	goto FAILED;
-  }
+  if (retval != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_event_name_to_code",retval);
   if (preset != PAPI_TOT_CYC){
-	printf("eventname:		FAILED\n");
-	printf("*preset returned did not equal PAPI_TOT_CYC\n");
-        exit(1);
-  }
+	test_fail(__FILE__,__LINE__,"*preset returned did not equal PAPI_TOT_CYC",retval);
 
-  printf("eventname:		PASSED\n");
-  exit(0);
-FAILED:
-  printf("eventname:                FAILED\n");
-  if ( retval == PAPI_ESYS ) {
-        sprintf(buf, "System error in %s:", tmp );
-        perror(buf);
-  }
-  else {
-        char errstring[PAPI_MAX_STR_LEN];
-        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
-        printf("Error in %s: %s\n", tmp, errstring );
-  }
-  free(tmp);
-  exit(1);
+  test_pass(__FILE__,0,0);
 }
 
 
