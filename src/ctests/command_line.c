@@ -52,15 +52,19 @@ int main(int argc, char **argv)
      }
      else {
         success[i] = 1;
-        printf("Sucessfully added: %s\n", argv[i]);
+        printf("Successfully added: %s\n", argv[i]);
      }
    }
    printf("\n");
+
+   do_flops(1);
+   do_flush();
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_flops(NUM_FLOPS);
+   do_misses(1,L1_MISS_BUFFER_SIZE_INTS);
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

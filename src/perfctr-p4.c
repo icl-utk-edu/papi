@@ -31,13 +31,13 @@
 
 /* CPUID model < 2 */
 extern hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[];
-/* CPUID model >= 2 */
-extern hwi_search_t _papi_hwd_pentium4_mge2_preset_map[];
-
-/* developer notes table common to all models (for now) */
-extern hwi_dev_notes_t _papi_hwd_pentium4_dev_notes[];
-
-extern papi_mdi_t _papi_hwi_system_info;
+extern hwi_dev_notes_t _papi_hwd_pentium4_mlt2_dev_notes[];
+/* CPUID model == 2 */
+extern hwi_search_t _papi_hwd_pentium4_m2_preset_map[];
+extern hwi_dev_notes_t _papi_hwd_pentium4_m2_dev_notes[];
+/* CPUID model == 3 */
+extern hwi_search_t _papi_hwd_pentium4_m3_preset_map[];
+extern hwi_dev_notes_t _papi_hwd_pentium4_m3_dev_notes[];
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -87,12 +87,12 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
 inline static int setup_p4_presets(int cputype)
 {
    if (cputype == PERFCTR_X86_INTEL_P4)
-      return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_pentium4_dev_notes));
+      return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_pentium4_mlt2_dev_notes));
    else if (cputype == PERFCTR_X86_INTEL_P4M2)
-      return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_pentium4_dev_notes));
+      return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_m2_preset_map, _papi_hwd_pentium4_m2_dev_notes));
 #ifdef PERFCTR_X86_INTEL_P4M3
    else if (cputype == PERFCTR_X86_INTEL_P4M3)
-      return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_pentium4_dev_notes));
+      return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_m3_preset_map, _papi_hwd_pentium4_m3_dev_notes));
 #endif
    else
      { PAPIERROR(MODEL_ERROR); return(PAPI_ESBSTR); }
@@ -855,7 +855,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
    /* The correct event to overflow is EventIndex */
 
-#ifdef DEBUG
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
@@ -863,7 +862,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
        return PAPI_EBUG;
      }
-#endif
 
    if (threshold != 0) {        /* Set an overflow threshold */
       if ((ESI->EventInfoArray[EventIndex].derived) &&

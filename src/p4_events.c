@@ -60,9 +60,13 @@
 #define PNE_replay_event_L1_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_access (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT))
 #define PNE_replay_event_L2_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L2_MISS_BIT))
+#define PNE_replay_event_L2_store_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_STORE_BIT)  + (1<<PEBS_L2_MISS_BIT))
 #define PNE_replay_event_L2_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
 #define PNE_instr_retired_non_bogus (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
 #define PNE_instr_retired_all (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
+
+#define PNE_scalar_DP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_DP_uop<<16) + (1<<TAG0) + (1<<ALL))
+#define PNE_scalar_SP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_SP_uop<<16) + (1<<TAG0) + (1<<ALL))
 
 /*
    PAPI preset events are defined in the tables below.
@@ -99,7 +103,7 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {0, {0, {0,}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
+const hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
 /* preset, derived, native index array */
 //   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
@@ -129,16 +133,58 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
    {0, {0, {0,}, {0,}}}
 };
 
+const hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
+/* preset, derived, native index array */
+//   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
+   {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
+   {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
+   {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
+   {PAPI_BR_MSP, {0, {PNE_branch_retired_mispredicted, PAPI_NULL,}, {0,}}},
+   {PAPI_BR_PRC, {0, {PNE_branch_retired_predicted, PAPI_NULL,}, {0,}}},
+   {PAPI_TLB_DM, {0, {PNE_page_walk_type_data_miss, PAPI_NULL,}, {0,}}},
+   {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
+   {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
+   {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
+   {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
+   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}},
+   /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}},
+   {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
+//   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
+   {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
+   {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
+//  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
+   {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
+// This event fails on Jon Burgoyne's Xeon. 12/05/03
+//   {PAPI_L1_DCA, {0, {PNE_replay_event_L1_data_access, PAPI_NULL,}, {0,}}},
+   {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
+   //   {PAPI_L2_STM, {0, {PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
+   {PAPI_L2_DCM, {0, {PNE_replay_event_L2_data_miss, PAPI_NULL,}, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
 /* This is an example of a dense developer notes array. It consists of an array
    of structures containing an event and a note string. Pointers to these strings 
    are inserted into a sparse event description structure at init time. This allows
    the use of rare developer strings with no string copies and very little space
    wasted on unused structure elements.
 */
-const hwi_dev_notes_t _papi_hwd_pentium4_dev_notes[] = {
+const hwi_dev_notes_t _papi_hwd_pentium4_mlt2_dev_notes[] = {
 /* preset, note */
    {PAPI_FP_INS, "PAPI_FP_INS is currently implemented identically to PAPI_FP_OPS"},
    {PAPI_FP_OPS, "PAPI_FP_OPS is currently implemented identically to PAPI_FP_INS"},
+   {0, NULL}
+};
+const hwi_dev_notes_t _papi_hwd_pentium4_m2_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_INS, "PAPI_FP_INS is currently implemented identically to PAPI_FP_OPS"},
+   {PAPI_FP_OPS, "PAPI_FP_OPS is currently implemented identically to PAPI_FP_INS"},
+   {0, NULL}
+};
+const hwi_dev_notes_t _papi_hwd_pentium4_m3_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_INS, "double precision unpacked SSE and x87"},
+   {PAPI_FP_OPS, "double precision unpacked SSE and x87"},
    {0, NULL}
 };
 
