@@ -523,7 +523,8 @@ enum {
    PNE_OPT_NB_HT_BUS2_COMMAND,
    PNE_OPT_NB_HT_BUS2_DATA,
    PNE_OPT_NB_HT_BUS2_BUFF,
-   PNE_OPT_NB_HT_BUS2_NOP
+   PNE_OPT_NB_HT_BUS2_NOP,
+   PNE_OPT_CYCLES_PROCESSOR_IS_RUNNING
 };
 
 /* PAPI preset events are defined in the tables below.
@@ -721,7 +722,7 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
    {PAPI_VEC_INS, {DERIVED_ADD, {PNE_OPT_FR_FPU_MMX_3D, PNE_OPT_FR_FPU_SSE_SSE2_PACKED, PNE_OPT_FR_FPU_SSE_SSE2_SCALAR, PAPI_NULL}, {0,}}},
    {PAPI_RES_STL, {0, {PNE_OPT_FR_DISPATCH_STALLS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_FP_STAL, {0, {PNE_OPT_FP_NONE_RET, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_CYC, {0, {PNE_OPT_FR_X86_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_CYC, {0, {PNE_OPT_CYCLES_PROCESSOR_IS_RUNNING, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_DCH,  {DERIVED_SUB, {PNE_OPT_DC_ACCESS,PNE_OPT_DC_MISS,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L2_DCH,  {0, {PNE_OPT_DC_L2_REFILL_TOT,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L1_DCA, {0, {PNE_OPT_DC_ACCESS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
@@ -2196,6 +2197,9 @@ const native_event_entry_t _papi_hwd_k8_native_map[] = {
    {"NB_HT_BUS2_NOP",
     "HyperTransport bus 2 bandwidth - Nop sent.",
     {ALLCNTRS, 0x8F8}},
+   {"CYCLES_PROCESSOR_IS_RUNNING",
+    "Cycles processor is running.",
+    {ALLCNTRS, 0x76}},
    {"", "", {0, 0}}
 };
 
