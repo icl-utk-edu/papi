@@ -19,6 +19,7 @@ F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
 CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
+SHLIBOBJS = $(MISCOBJS)
 
 include Makefile.inc
 
