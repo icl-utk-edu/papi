@@ -1232,7 +1232,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 }
 
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
+                    NativeInfo_t * native, int count, hwd_context_t * zero)
 {
    int i, nidx1, nidx2, hwcntr;
    uint64_t tmp, cmd0, cmd1, pcr;
