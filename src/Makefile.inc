@@ -27,7 +27,7 @@ $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
 	ar ruv $(LIBRARY) $(OBJECTS) 
 
-$(SHLIB): $(SOURCES) $(SHLIBOBJS) $(SHLIBDEPS)
+$(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)

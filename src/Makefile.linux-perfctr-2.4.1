@@ -1,5 +1,6 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR	= ./perfctr-2.4.1
+PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -Wall -O3 -fomit-frame-pointer -mpentiumpro
 TOPTFLAGS= -g -Wall -O0 -mpentiumpro
 #
@@ -45,7 +46,7 @@ CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPER
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
 MISCHDRS= x86-events.h ia32_presets.h
-SHLIBDEPS = $(PERFCTR)/usr.lib/libperfctr.so
+SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
 
@@ -57,7 +58,9 @@ libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o
 
 $(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)
-	-$(MAKE) -C $(PERFCTR)/usr.lib -f Makefile.shared LDFLAGS="-Xlinker '-soname' -Xlinker 'libperfctr.so' -Xlinker '-rpath' -Xlinker '$(DESTDIR)/lib'" libperfctr.so
+
+lib $(SHLIBDEPS):
+	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
 native_clean:
 	$(MAKE) -C $(PERFCTR) clean

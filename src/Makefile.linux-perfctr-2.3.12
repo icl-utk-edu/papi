@@ -1,6 +1,7 @@
 KERNINC	= /usr/src/linux-2.4.13/include
 PERFCTR	= ./perfctr-2.3.12
-OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
+PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
+OPTFLAGS= -Wall -O3 -fomit-frame-pointer -mpentiumpro
 TOPTFLAGS= -g -Wall -O0 -mpentiumpro
 #
 # GNU G77 section
@@ -8,7 +9,7 @@ TOPTFLAGS= -g -Wall -O0 -mpentiumpro
 F77   = g77
 FFLAGS        = -Dlinux
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS=$(TOPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS)
 # #
 # #  Portland Group PGF77 section
 # #
@@ -45,7 +46,8 @@ CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPER
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
 MISCHDRS= x86-events.h ia32_presets.h
-SHLIBDEPS = $(PERFCTR)/usr.lib/libperfctr.so
+SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+
 
 include Makefile.inc
 

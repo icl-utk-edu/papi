@@ -63,4 +63,3 @@
 #endif
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
-
