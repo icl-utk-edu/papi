@@ -33,7 +33,8 @@ int TESTS_QUIET=0; /*Run tests in verbose mode?*/
 
 static void sigprof_handler(int sig)
 {
-  fprintf(stderr,"sigprof_handler(), PID %d TID %d\n",
+  if ( !TESTS_QUIET )
+     fprintf(stderr,"sigprof_handler(), PID %d TID %d\n",
 	  getpid(),(int)pthread_self());
 }
 
@@ -68,6 +69,7 @@ void start_timer(int milliseconds)
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {
+  if ( !TESTS_QUIET ) {
 #ifdef _CRAYT3E
   fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x, thread %lu!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context),PAPI_thread_id());
@@ -75,6 +77,7 @@ void handler(int EventSet, int EventCode, int EventIndex, long long *values, int
   fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p, thread %lu!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context),PAPI_thread_id());
 #endif
+  }
   total++;
 }
 

@@ -19,6 +19,7 @@ echo "";
 for i in $ALLTESTS;
 do
 if [ -x $i ]; then
+echo -n "Running $i: ";
 ./$i TESTS_QUIET
 fi;
 done

@@ -42,7 +42,7 @@ int TESTS_QUIET=0;
 
 int main(int argc, char **argv) 
 {
-#ifdef NO_FLOPS
+#ifndef NO_FLOPS
   int i, num_events, num_tests = 6, mask = MASK_FP_INS|MASK_TOT_CYC;
 #else
   int i, num_events, num_tests = 6, mask = MASK_TOT_INS|MASK_TOT_CYC;

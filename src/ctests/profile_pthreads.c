@@ -27,6 +27,8 @@ void *Thread(void *arg)
   long long elapsed_us, elapsed_cyc;
   unsigned short *profbuf;
   
+/*  if ( 20000001 == *arg || 10000001 == *arg) TESTS_QUIET=1;*/
+
   profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
   if (profbuf == NULL)
     exit(1);
@@ -133,13 +135,22 @@ int main(int argc, char **argv)
   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
+/*
+  if ( !TESTS_QUIET ) flops1 = 10000000;
+  else flops1 = 10000001;
+*/
   flops1 = 10000000;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
   if (rc){
 	retval=PAPI_ESYS;
 	test_fail(__FILE__,__LINE__,"pthread_create",retval);
   }
+/*
+  if ( !TESTS_QUIET ) flops2 = 20000000;
+  else flops2 = 20000001;
+*/
   flops2 = 20000000;
+
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
   if (rc){
 	retval=PAPI_ESYS;
@@ -161,7 +172,7 @@ int main(int argc, char **argv)
 	 elapsed_cyc);
   }
 
-  pthread_exit(NULL);
   test_pass(__FILE__,NULL,0);
+  pthread_exit(NULL);
 }
 
