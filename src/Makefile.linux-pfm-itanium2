@@ -1,4 +1,6 @@
-CFLAGS	= -DITANIUM2
-DESCR	= "Stock Linux 2.4.18 + for the Intel Itanium 2"
+# Libpfm version is set automatically by the Rules.libpfm file
+# Override on command line or in this makefile
+# VERSION	= 2.0
+CPU	= 2
 
-include Makefile.linux-ia64-libpfm2.0
+include Rules.pfm
