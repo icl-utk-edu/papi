@@ -1,4 +1,0 @@
-- Implement gethrvtime(). Don't ever STOP the counters. To stop PMC
-  updates, call CONTROL with an all-zero evntsel[]. The driver will
-  continue sampling the TSC. Then gethrvtime() reduces to grabbing
-  counter #0 (the TSC) and scaling with cpu_khz.
