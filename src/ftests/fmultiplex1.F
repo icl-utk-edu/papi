@@ -39,7 +39,7 @@ C Skip Alpha till multiplex is fixed. -KSL
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPI_library_init', retval)
+     &      'PAPI_library_init', retval)
       end if
       call ftests_pass(__FILE__)
 
@@ -54,13 +54,13 @@ C Skip Alpha till multiplex is fixed. -KSL
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPI_library_init', retval)
+     &      'PAPI_library_init', retval)
       end if
       if (tests_quiet .EQ. 0) then
          call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
          if ( retval.NE.PAPI_OK) then
             call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_set_debug', retval)
+     &         'PAPIf_set_debug', retval)
          end if
       end if
         call PAPIf_query_event(PAPI_FP_INS, retval)
@@ -84,21 +84,19 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_multiplex_init', retval)
+     &      'papif_multiplex_init', retval)
       end if
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_create_eventset',
-     *retval)
+     &      'PAPIf_create_eventset', retval)
       end if
 
       call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
@@ -106,8 +104,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval )
         if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &        'PAPIf_add_event', retval)
         end if
       end if
 
@@ -119,7 +116,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_start', retval)
+     &      'PAPIf_start', retval)
       end if
 
       fd = 1
@@ -133,7 +130,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_stop', retval)
+     &      'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -143,8 +140,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       call PAPIf_cleanup_eventset(EventSet, retval)
       if (retval .NE. PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_cleanup_eventset',
-     *retval)
+     &      'PAPIf_cleanup_eventset', retval)
       end if
 
       call PAPIF_shutdown()
@@ -164,27 +160,25 @@ C     Tests that PAPI_set_multiplex() works before adding events
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_multiplex_init', retval)
+     &      'papif_multiplex_init', retval)
       end if
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_create_eventset',
-     *retval)
+     &      'PAPIf_create_eventset', retval)
       end if
 
       call PAPIf_set_multiplex(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_set_multiplex', retval)
+     &      'papif_set_multiplex', retval)
       end if
 
       call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
@@ -192,8 +186,7 @@ C     Tests that PAPI_set_multiplex() works before adding events
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval)
         if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &        'PAPIf_add_event', retval)
         end if
       end if
 
@@ -207,7 +200,7 @@ C  for multiplexed event sets (change -4711 to 0 when it is working)
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_start', retval)
+     &      'PAPIf_start', retval)
       end if
 
       fd = 1
@@ -223,7 +216,7 @@ C  for multiplexed event sets (change -4711 to 0 when it is working)
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_stop', retval)
+     &      'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -233,8 +226,7 @@ C  for multiplexed event sets (change -4711 to 0 when it is working)
       call PAPIf_cleanup_eventset(EventSet, retval)
       if (retval .NE. PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_cleanup_eventset',
-     *retval)
+     &      'PAPIf_cleanup_eventset', retval)
       end if
 
       call PAPIF_shutdown()
@@ -254,21 +246,19 @@ C     Tests that PAPI_set_multiplex() works after adding events
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_multiplex_init', retval)
+     &      'papif_multiplex_init', retval)
       end if
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_create_eventset',
-     *retval)
+     &      'PAPIf_create_eventset', retval)
       end if
 
       call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
 #ifdef _CRAYT3E
@@ -278,8 +268,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
 #endif
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
       if(tests_quiet .EQ. 0) then
@@ -290,7 +279,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       call PAPIf_set_multiplex(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_set_multiplex', retval)
+     &      'papif_set_multiplex', retval)
       end if
 
       if(tests_quiet .EQ. 0) then
@@ -301,7 +290,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_start', retval)
+     &      'PAPIf_start', retval)
       end if
 
       fd = 1
@@ -315,7 +304,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_stop', retval)
+     &      'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -325,8 +314,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       call PAPIf_cleanup_eventset(EventSet, retval)
       if (retval .NE. PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_cleanup_eventset',
-     *retval)
+     &      'PAPIf_cleanup_eventset', retval)
       end if
 
       call PAPIF_shutdown()
@@ -348,21 +336,19 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_multiplex_init', retval)
+     &      'papif_multiplex_init', retval)
       end if
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_create_eventset',
-     *retval)
+     &      'PAPIf_create_eventset', retval)
       end if
 
       call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
 #ifdef _CRAYT3E
@@ -374,8 +360,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval )
         if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &        'PAPIf_add_event', retval)
         end if
       end if
 
@@ -387,7 +372,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       call PAPIf_set_multiplex(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'papif_set_multiplex', retval)
+     &      'papif_set_multiplex', retval)
       end if
 
       if(tests_quiet .EQ. 0) then
@@ -397,41 +382,37 @@ C     PAPI_add_event()/PAPI_set_multiplex()
 
 #if (defined(i386)&&defined(linux))||defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || (SUBSTR==aix-power)
       call PAPIf_add_event( EventSet, PAPI_L1_DCM, retval )
-      if ( retval .NE. PAPI_OK ) then
+      if ( retval .EQ. PAPI_ECNFLCT .OR. retval .EQ. PAPI_ENOEVNT ) then
         call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
-        if ( retval .NE. PAPI_OK ) then
-           call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
-        end if
       end if
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__,
+     &      'PAPIf_add_event', retval)
+      end if
+
       call PAPIf_add_event( EventSet, PAPI_L1_ICM, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
 #elif (defined(sparc) && defined(sun))
       call PAPIf_add_event( EventSet, PAPI_LD_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
       call PAPIf_add_event( EventSet, PAPI_SR_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
 #elif (defined(__alpha)&&defined(__osf__))
       call PAPIf_add_event( EventSet, PAPI_RES_STL, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
+     &      'PAPIf_add_event', retval)
       end if
 
 #else
@@ -446,7 +427,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_start', retval)
+     &      'PAPIf_start', retval)
       end if
 
       fd = 1
@@ -460,7 +441,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_stop', retval)
+     &      'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -468,15 +449,14 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       write (*, *) "case4: ", values(1), values(2), values(3)
 #else
       write (*, *) "case4: ", values(1), values(2), values(3), 
-     *values(4)
+     *    values(4)
 #endif
       end if
 
       call PAPIf_cleanup_eventset(EventSet, retval)
       if (retval .NE. PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_cleanup_eventset',
-     *retval)
+     &      'PAPIf_cleanup_eventset', retval)
       end if
 
       call PAPIF_shutdown()
