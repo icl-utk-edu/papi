@@ -73,7 +73,7 @@ void clockcore(void)
 
    if (PAPI_get_virt_cyc() != -1) {
       for (i = 0; i < ITERS; i++)
-         elapsed_cyc[i] = (long_long) PAPI_get_virt_cyc();
+         elapsed_cyc[i] = PAPI_get_virt_cyc();
 
       for (i = 1; i < ITERS; i++) {
          if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0)
