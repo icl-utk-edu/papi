@@ -19,14 +19,13 @@ C 2 counters.
       INTEGER n
       INTEGER EventSet
       INTEGER retval
-      INTEGER I,length,errorcode
+      INTEGER I,errorcode
       INTEGER*8 gl(3)
       CHARACTER*(PAPI_MAX_STR_LEN) errorstring
 
       a=0.999
       b=1.001
       n=1000
-      length=len(errorstring)
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
@@ -41,7 +40,7 @@ C 2 counters.
       call PAPIf_add_event( EventSet, PAPI_L2_TCM,retval )
       if ( retval .NE. PAPI_OK ) then
         print *, 'error adding PAPI_L2_TCM'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
+        call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring
       else
         print *,'Added PAPI_L2_TCM'
@@ -50,7 +49,7 @@ C 2 counters.
       call PAPIf_add_event(EventSet, PAPI_TOT_CYC,retval)
       if ( retval .NE. PAPI_OK ) then
         print *, 'error adding PAPI_TOT_CYC'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
+        call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring
       else
         print *,'Added PAPI_TOT_CYC'
@@ -59,7 +58,7 @@ C 2 counters.
       call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
       if ( retval .NE. PAPI_OK ) then
         print *, 'error adding PAPI_FP_INS'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
+        call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring
       else
         print *,'Added PAPI_FP_INS'

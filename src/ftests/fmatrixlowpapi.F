@@ -13,7 +13,7 @@ C ****************************************************************************
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
-      INTEGER i,j,k,check,nchr,numevents,errorcode,EventSet,length
+      INTEGER i,j,k,check,nchr,numevents,errorcode,EventSet
       CHARACTER*(PAPI_MAX_STR_LEN)  errorstring,vstring,mstring
 C   PAPI values of the counters
       INTEGER*8 values(2)
@@ -28,7 +28,6 @@ C   Setup default values
       numevents=0
       starttime=0
       stoptime=0
-      length=100
 
       check = PAPI_VER_CURRENT
       call PAPIf_library_init( check )
@@ -40,7 +39,7 @@ C   Setup default values
 C     Create the eventset
       call PAPIf_create_eventset(EventSet,check)
       if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
+        call PAPIf_perror( check, errorstring, errorcode)
         print *, errorstring
         stop 'PAPIf_create_eventset failed'
       endif 
@@ -48,7 +47,7 @@ C     Create the eventset
 C   Total cycles
       call PAPIf_add_event(EventSet,PAPI_TOT_CYC,check)
       if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
+        call PAPIf_perror( check, errorstring, errorcode)
         print *, errorstring
         stop 'PAPIf_add_event PAPI_TOT_CYC failed'
       endif 
@@ -56,7 +55,7 @@ C   Total cycles
 C   Total floating point instructions
       call PAPIf_add_event(EventSet,PAPI_FP_INS,check)
       if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
+        call PAPIf_perror( check, errorstring, errorcode)
         print *, errorstring
         stop 'PAPIf_add_event PAPI_FP_INS failed'
       endif 
@@ -140,6 +139,9 @@ C  Stop the counters and put the results in the array values
 
       call PAPIf_get_real_usec( stoptime )
       finaltime = (stoptime/1000000.0) - (starttime/1000000.0)
+
+C  Make sure the compiler does not optimize away the multiplication
+      call dummy(r)
 
       print *, 'Time: ', finaltime, 'seconds'
       print *, 'Cycles: ', values(1)

@@ -13,7 +13,7 @@ C ****************************************************************************
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
-      INTEGER i,j,k,num_events,check,errorcode,length
+      INTEGER i,j,k,num_events,check,errorcode
       CHARACTER*(PAPI_MAX_STR_LEN) errorstring
 C   PAPI standardized event to be monitored
       INTEGER event(2)
@@ -24,7 +24,6 @@ C   PAPI values of the counters
 
 C   Setup default values
       num_events=0
-      length = 100
 
 C   Open matrix file number 1 for reading
 C      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
@@ -71,7 +70,7 @@ C  Set up the counters
       num_events = 2
       call PAPIf_start_counters( event, num_events, check)
       if  ( check .LT. PAPI_OK ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
+        call PAPIf_perror( check, errorstring, errorcode)
         print *, errorstring
         stop 'PAPIf_start_counters failed'
       end if
@@ -79,7 +78,7 @@ C  Set up the counters
 C  Clear the counter values
       call PAPIf_read_counters(values, num_events,check)
       if ( check .LT. PAPI_OK) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
+        call PAPIf_perror( check, errorstring, errorcode)
         print *, errorstring
         stop 'PAPIf_read_counters failed'
       end if
@@ -96,10 +95,13 @@ C  Compute the matrix-matrix multiplication
 C  Stop the counters and put the results in the array values 
       call PAPIf_stop_counters(values,num_events,check)
       if ( check .LT. PAPI_OK ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
+        call PAPIf_perror( check, errorstring, errorcode)
         print *, errorstring
         stop 'PAPIf_stop_counters failed'
       end if
+
+C  Make sure the compiler does not optimize away the multiplication
+      call dummy(r)
 
       print *, 'FP Instructions:  ',values(1)
       print *, 'Cycles: ',values(2)

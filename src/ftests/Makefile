@@ -1,6 +1,6 @@
 INCLUDE = -I..
 TESTS 	= avail case1 case2 clockres eventname fmatrixlowpapi \
-          fmatrixpapi flops
+          fmatrixpapi flops strtest
 PAPILIB	= ../libpapi.a
 
 default: $(TESTS)
@@ -20,11 +20,17 @@ case1: case1.F $(PAPILIB)
 case2: case2.F $(PAPILIB)
 	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
 
-fmatrixlowpapi: fmatrixlowpapi.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
+dummy.o: dummy.F
+	$(F77) -c $(FFLAGS) dummy.F -o dummy.o
 
-fmatrixpapi: fmatrixpapi.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
+fmatrixlowpapi: fmatrixlowpapi.F dummy.o $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F dummy.o $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
+
+fmatrixpapi: fmatrixpapi.F dummy.o $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F dummy.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
+
+strtest: strtest.F $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
 
 flops: flops.F $(PAPILIB)
 	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops

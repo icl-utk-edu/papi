@@ -1,0 +1,179 @@
+#include "fpapi.h"
+#define MSGLEN 11
+#define MSGCODE PAPI_L1_DCM
+#define ERRCODE PAPI_EINVAL
+      
+      program strtest
+      implicit none
+      
+      CHARACTER*(PAPI_MAX_STR_LEN) papistr,papierr
+      CHARACTER*(PAPI_MAX_STR_LEN/2) papihalfstr
+      CHARACTER*(PAPI_MAX_STR_LEN*2) papidblstr
+
+      CHARACTER*(MSGLEN) invstr1
+      CHARACTER*(MSGLEN+1) invstr2
+      CHARACTER*(MSGLEN+2) invstr3
+      CHARACTER*(MSGLEN-1) invstr4
+      CHARACTER*(MSGLEN-2) invstr5
+
+      integer i,check,len,code,code2,retcode,lastchar
+      integer getstrlen
+      external getstrlen
+
+      check=PAPI_VER_CURRENT
+      call PAPIF_library_init(check)
+      if(check.ne.PAPI_VER_CURRENT)then
+        call PAPIF_perror(check,papierr,code)
+        print *,papierr
+        stop 'Library init error.'
+      end if
+
+      print *,'---------------------------------------------------'
+      print *,'   Testing PAPIF_name_to_code/PAPIF_code_to_name   '
+      print *,'---------------------------------------------------'
+      print *,' These tests look up an event name and event code'
+      print *,' On no occasion a NULL character should be found(+)'
+      print *,' When too short strings are used, the lookup should fail'
+      print *
+
+ 100  format(t1,a,i4)
+      print 100,"Testing string length ",len(papistr)
+      call checkstr(MSGCODE,papistr,retcode,check)
+      print *
+      lastchar=getstrlen(papistr)
+      
+      print 100,"Testing string length ",len(invstr1)
+      if(len(invstr1).lt.lastchar)then
+        print *,'This call should return an error code.'
+      end if
+      call checkstr(MSGCODE,invstr1,retcode,check)
+      print *
+
+      print 100,"Testing string length ",len(invstr2)
+      if(len(invstr2).lt.lastchar)then
+        print *,'This call should return an error code.'
+      end if
+      call checkstr(MSGCODE,invstr2,retcode,check)
+      print *
+
+      print 100,"Testing string length ",len(invstr3)
+      if(len(invstr3).lt.lastchar)then
+        print *,'This call should return an error code.'
+      end if
+      call checkstr(MSGCODE,invstr3,retcode,check)
+      print *
+
+      print 100,"Testing string length ",len(invstr4)
+      if(len(invstr4).lt.lastchar)then
+        print *,'This call should return an error code.'
+      end if
+      call checkstr(MSGCODE,invstr4,retcode,check)
+      print *
+
+      print 100,"Testing string length ",len(invstr5)
+      if(len(invstr5).lt.lastchar)then
+        print *,'This call should return an error code.'
+      end if
+      call checkstr(MSGCODE,invstr5,retcode,check)
+      print *
+
+      print *,'---------------------------------------------------'
+      print *,'          Testing PAPIF_perror                     '
+      print *,'---------------------------------------------------'
+      print 100,' These tests should return a PAPI error string for'//
+     $    ' error',ERRCODE
+      print *,' On no occasion a NULL character should be found(+)'
+      print *
+
+      call test_papif_perror(ERRCODE,papistr,check)
+      print *
+
+      call test_papif_perror(ERRCODE,papihalfstr,check)
+      print *
+
+      call test_papif_perror(ERRCODE,papidblstr,check)
+      print *
+
+      call test_papif_perror(ERRCODE,invstr1,check)
+      print *
+
+      print *,'---------------------------------------------------'
+      print *,'(+) Fortran implementations that do not provide the'
+      print *,'    string argument length might show NULL characters.'
+      print *,'    This may or may not be OK depending on the Fortran'
+      print *,'    compiler. See papi_fwrappers.c and your Fortran'
+      print *,'    compiler reference manual.'
+      end
+
+      subroutine checkstr(incode,string,outcode,check)
+      implicit none
+      integer incode,outcode,check
+      character*(*) string
+      character*(PAPI_MAX_STR_LEN) papierr
+      integer code,i
+      integer getstrlen
+      external getstrlen
+
+      code=incode
+      call PAPIF_event_code_to_name(code,string,check)
+      if(check.ne.PAPI_OK)then
+        call PAPIF_perror(check,papierr,code)
+        print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+        print *,'******* '//'Error in checkstr using '//
+     $      'PAPIF_event_code_to_name'
+      end if
+      i=index(string,char(0))
+      if(i.gt.0)then
+        print *,'NULL character found in string!!!'
+      end if
+      
+      call PAPIF_event_name_to_code(string,code,check)
+      if(check.ne.PAPI_OK)then
+        call PAPIF_perror(check,papierr,code)
+        print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+        print *,'******* '//'Error in checkstr using '//
+     $      'PAPIF_event_name_to_code'
+      end if
+      
+      return
+      end
+
+      subroutine test_papif_perror(incode,string,check)
+      implicit none
+      integer incode,check
+      character*(*) string
+      integer code,i
+      integer getstrlen
+      external getstrlen
+
+      code=incode
+      call PAPIF_perror(code,string,check)
+      print 100,'Testing string of length ',len(string)
+      i=getstrlen(string)
+      print *,'"1234567890....5...20....5...30....5...40....5...50...'
+      print *,'"'//string(1:i)//'"'
+      i=index(string,char(0))
+      if(i.gt.0)then
+        print *,'NULL character found in string!!!'
+      end if
+      
+ 100  format(t1,a,i4)
+      end
+
+      integer function getstrlen(string)
+      implicit none
+      character*(*) string
+      integer i
+
+      do i=len(string),1,-1
+        if(string(i:i).ne.' ') then 
+          goto 20
+        end if
+      end do
+      getstrlen=0
+      return
+
+ 20   continue
+      getstrlen=i
+      return
+      end

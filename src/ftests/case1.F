@@ -15,7 +15,7 @@ C count the first event?
 
       INTEGER EventSet
       INTEGER retval
-      INTEGER i,length,errorcode
+      INTEGER i,errorcode
       CHARACTER*(PAPI_MAX_STR_LEN) errorstring
       INTEGER*8 gl(2)
       INTEGER n
@@ -38,7 +38,7 @@ C count the first event?
       call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
       if ( retval .NE. PAPI_OK ) then
         print *, 'error adding PAPI_L2_TCM'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
+        call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring
       else
         print *,'Added PAPI_L2_TCM'
@@ -47,7 +47,7 @@ C count the first event?
       call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
       if ( retval .NE. PAPI_OK )then
          print *, 'error adding PAPI_L2_DCM'
-         call PAPIf_perror( retval, errorstring, length, errorcode)
+         call PAPIf_perror( retval, errorstring, errorcode)
          print *, errorstring
       else
          print *,'Added PAPI_L2_DCM'
