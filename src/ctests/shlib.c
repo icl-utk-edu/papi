@@ -82,7 +82,10 @@ int main(int argc, char **argv)
      handle = dlopen (libname, RTLD_NOW);
      if (!handle) {
        if (errno==2)
-          test_skip(__FILE__, __LINE__, "dlopen", 1);
+	 {
+	   printf("Could not find the libpapi.so library!\n");
+	   test_skip(__FILE__, __LINE__, "dlopen", 1);
+	 }
        else
           test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
