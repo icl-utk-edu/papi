@@ -25,7 +25,7 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include ../config.mk
 include ../rules.mk
 
-LDFLAGS+=-static 
+LDFLAGS+= 
 
 INCDIR=-I$(PFM_INC_DIR) 
 
