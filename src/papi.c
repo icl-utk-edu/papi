@@ -1405,7 +1405,8 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
   }
 
   if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
-                 | PAPI_PROFIL_COMPRESS))
+                 | PAPI_PROFIL_COMPRESS|PAPI_PROFIL_BUCKET_16|
+                 PAPI_PROFIL_BUCKET_32|PAPI_PROFIL_BUCKET_64))
     papi_return(PAPI_EINVAL);
 
   /* Set up the option structure for the low level */
@@ -1429,7 +1430,7 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
   papi_return(PAPI_OK);
 }
 
-int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, 
+int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset, 
          unsigned scale,int EventSet, int EventCode, int threshold, int flags)
 {
 
@@ -1658,23 +1659,4 @@ int PAPI_encode_native(char *str, int *code)
 {
   return(_papi_hwi_native_name_to_code(str, code));
 }
-
-#if 0
-int PAPI_get_overflow_ctrs(int EventSet, void *context, int *papi_event_indices)
-{
-  int i;
-  unsigned bits, papi_index, total = 0;
-
-  bits = GET_OVERFLOW_CTR_BITS(context); 
-  do {
-    i = ffs(bits)-1;
-    printf("index=%d i=%d\n", _papi_hwi_event_index_map[1],i);
-    bits ^= (1 << i);
-    papi_index = HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(i);
-    papi_event_indices[total] = papi_index;
-    total++;
-  } while (bits);
-  return(total);
-}
-#endif
 

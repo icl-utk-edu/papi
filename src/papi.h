@@ -183,6 +183,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_RANDOM   0x1 /* Drop a random 25% of the samples. */
 #define PAPI_PROFIL_WEIGHTED 0x2 /* Weight the samples by their value. */
 #define PAPI_PROFIL_COMPRESS 0x4 /* Ignore samples if hash buckets get big. */
+#define PAPI_PROFIL_BUCKET_16 0x8  
+#define PAPI_PROFIL_BUCKET_32 0x10  
+#define PAPI_PROFIL_BUCKET_64 0x20 
 
 #define PAPI_PRELOAD 		13     /* Option to find out the environment variable that can preload libraries */
 
@@ -241,7 +244,7 @@ typedef void (*PAPI_overflow_handler_t)(int EventSet, void *address,
                                       long_long overflow_vector);
 
 typedef struct _papi_sprofil {
-  unsigned short *pr_base;      /* buffer base */
+  void *pr_base;      /* buffer base */
   unsigned pr_size;   /* buffer size */
   caddr_t pr_off;     /* pc offset */
   unsigned pr_scale;  /* pc scaling */ } PAPI_sprofil_t;
@@ -432,9 +435,7 @@ int PAPI_get_multiplex(int EventSet);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 		  int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);
-int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
-		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
-int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
+int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset, \
 		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
 /*
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);

@@ -66,17 +66,13 @@ static unsigned short random_ushort(void)
   return (unsigned short)(rnum = 1664525 * rnum + 1013904223);
 }
 
-static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
+static void posix_profil_16(caddr_t address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
 {
   int increment = 1;
   unsigned short *buf = prof->pr_base;
   unsigned long addr;
-  u_long_long laddr;
 
   addr = (unsigned long)(address - prof->pr_off);
-  laddr = addr / 2;
-  laddr = laddr * prof->pr_scale;
-  addr = (unsigned long)(laddr >> 16);
 
   if (addr >= prof->pr_size)
     {
@@ -84,7 +80,63 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
       DBG((stderr,"outside bucket at %p = %u\n",outside_bin,*outside_bin));
       return;
     }
+  addr = addr / sizeof(unsigned short);  /* get the index */
 
+  if (flags == PAPI_PROFIL_POSIX)
+    {
+      buf[addr]++;
+      DBG((stderr,"bucket %lu = %u\n",addr,buf[addr]));
+      return;
+    }
+    
+  if (flags & PAPI_PROFIL_RANDOM)
+    {
+      if (random_ushort() <= (USHRT_MAX/4))
+	    return;
+    }
+
+  if (flags & PAPI_PROFIL_COMPRESS)
+    {
+      /* We're likely to ignore the sample if buf[address] gets big. */
+
+       if (random_ushort() < buf[addr]) 
+	 {
+	   return;
+	 }
+    }
+
+  if (flags & PAPI_PROFIL_WEIGHTED)     /* Increment is between 1 and 255 */
+    {
+      if (excess <= (long_long)1)
+	    increment = 1;
+      else if (excess > threshold)
+	         increment = 255;
+           else
+	       {
+	         threshold = threshold / (long_long)255;
+	         increment = (int)(excess / threshold);
+	       }	
+    }
+
+  buf[addr] += increment;
+  DBG((stderr,"posix_profile() bucket %lu = %u\n",addr,buf[addr]));
+}
+
+static void posix_profil_32(caddr_t address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
+{
+  int increment = 1;
+  unsigned int *buf = prof->pr_base;
+  unsigned long addr;
+
+  addr = (unsigned long)(address - prof->pr_off);
+
+  if (addr >= prof->pr_size)
+    {
+      *outside_bin = *outside_bin + 1;
+      DBG((stderr,"outside bucket at %p = %u\n",outside_bin,*outside_bin));
+      return;
+    }
+  addr = addr / sizeof(unsigned int);  /* get the index */
   if (flags == PAPI_PROFIL_POSIX)
     {
       buf[addr]++;
@@ -123,6 +175,72 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
 
   buf[addr] += increment;
   DBG((stderr,"posix_profile() bucket %lu = %u\n",addr,buf[addr]));
+}
+
+static void posix_profil_64(caddr_t address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
+{
+  int increment = 1;
+  unsigned long long *buf = prof->pr_base;
+  unsigned long addr;
+
+  addr = (unsigned long)(address - prof->pr_off);
+
+  if (addr >= prof->pr_size)
+    {
+      *outside_bin = *outside_bin + 1;
+      DBG((stderr,"outside bucket at %p = %u\n",outside_bin,*outside_bin));
+      return;
+    }
+  addr = addr / sizeof( long long);  /* get the index */
+  if (flags == PAPI_PROFIL_POSIX)
+    {
+      buf[addr]++;
+      DBG((stderr,"bucket %lu = %lld\n",addr,buf[addr]));
+      return;
+    }
+    
+  if (flags & PAPI_PROFIL_RANDOM)
+    {
+      if (random_ushort() <= (USHRT_MAX/4))
+	    return;
+    }
+
+  if (flags & PAPI_PROFIL_COMPRESS)
+    {
+      /* We're likely to ignore the sample if buf[address] gets big. */
+
+       if (random_ushort() < buf[addr]) 
+	 {
+	   return;
+	 }
+    }
+
+  if (flags & PAPI_PROFIL_WEIGHTED)     /* Increment is between 1 and 255 */
+    {
+      if (excess <= (long_long)1)
+	    increment = 1;
+      else if (excess > threshold)
+	         increment = 255;
+           else
+	       {
+	         threshold = threshold / (long_long)255;
+	         increment = (int)(excess / threshold);
+	       }	
+    }
+
+  buf[addr] += increment;
+  DBG((stderr,"posix_profile() bucket %lu = %lld\n",addr,buf[addr]));
+}
+
+static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
+{
+  if (flags & PAPI_PROFIL_BUCKET_32) 
+    posix_profil_32(address, prof, outside_bin, flags, excess, threshold);
+  else if ( flags & PAPI_PROFIL_BUCKET_64) 
+    posix_profil_64(address, prof, outside_bin, flags, excess, threshold);
+   else 
+    posix_profil_16(address, prof, outside_bin, flags, excess, threshold);
+
 }
 
 void dispatch_profile(EventSetInfo_t *ESI, void *context,

@@ -64,8 +64,8 @@ static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_FLOPS,DERIVED_ADD_PS,{"CPU_CYCLES","FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0}},
   {0,0,{0,0,0,0}}};
   #define NUM_OF_PRESET_EVENTS 41
-  hwi_preset_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS+1];
-  hwi_preset_t *preset_search_map=ia_preset_search_map_bycode;
+  hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS+1];
+  hwi_search_t *preset_search_map=ia_preset_search_map_bycode;
 #else
 static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_CA_SNP,0,{"BUS_SNOOPS_SELF",0,0,0}},
@@ -126,8 +126,8 @@ static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
   {0,0,{0,0,0,0}}};
   #define NUM_OF_PRESET_EVENTS 56
-  hwi_preset_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS+1];
-  hwi_preset_t *preset_search_map=ia_preset_search_map_bycode;
+  hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS+1];
+  hwi_search_t *preset_search_map=ia_preset_search_map_bycode;
 #endif
 
 
@@ -188,20 +188,20 @@ int generate_preset_search_map(itanium_preset_search_t *oldmap)
 	  break;
     pnum++;
     preset_search_map[i].event_code=oldmap[i].preset;
-    preset_search_map[i].derived = oldmap[i].derived;
+    preset_search_map[i].data.derived = oldmap[i].derived;
     findme = oldmap[i].findme;
     cnt=0;
     while (*findme!= NULL )
     {
       if (cnt == MAX_COUNTER_TERMS) abort();
-      if (pfm_find_event_byname(*findme, &preset_search_map[i].nativeEvent[cnt]) != PFMLIB_SUCCESS) 
+      if (pfm_find_event_byname(*findme, &preset_search_map[i].data.native[cnt]) != PFMLIB_SUCCESS) 
         return(PAPI_ENOEVNT);
       else 
-        preset_search_map[i].nativeEvent[cnt] ^= NATIVE_MASK;
+        preset_search_map[i].data.native[cnt] ^= NATIVE_MASK;
       findme++;
       cnt++;
     }
-    preset_search_map[i].nativeEvent[cnt]=0;
+    preset_search_map[i].data.native[cnt]=0;
   }
   if (NUM_OF_PRESET_EVENTS != pnum) 
     abort();
@@ -1167,7 +1167,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   struct sigaction act;
   void *tmp;
-  int i, *pos;
+  int i;
   hwd_control_state_t *this_state = &ESI->machdep;
   pfarg_context_t ctx[1];
   int EventCode = ESI->EventInfoArray[EventIndex].event_code;
