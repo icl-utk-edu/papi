@@ -16,7 +16,7 @@ SPECIAL_REMOVE =
 # For version 1.2.1 add -DPMTOOLKIT_1_2_1
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=pwr3 
-CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= 

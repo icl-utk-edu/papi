@@ -12,7 +12,7 @@ POST_BUILD =
 SPECIAL_REMOVE =
 
 FLAGS  	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qtune=pwr3 -qlanglvl=extended 
-CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3
+CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS= 
 FFLAGS  = $(FLAGS) -WF,-DPOWER3
@@ -24,7 +24,8 @@ LDFLAGS = -L$(PMAPI)/lib -lpmapi
 ARG64	= 
 CC_R    = xlc_r
 CC      = xlc  
-CC_SHR  = xlc -G -bnoentry
+CC_SHR  = xlc -bnoentry -bE:libpapi.exp -bM:SHR
+#CC_SHR  = xlc -G -bnoentry
 MPICC   = mpcc
 F77     = xlf
 CPP     = xlc -E
