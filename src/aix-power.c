@@ -5,13 +5,13 @@
 
 /* These defines smooth out the differences between pmtoolkit v1.2 and v1.3 */
 #ifdef PMTOOLKIT_1_2
-#define PM_SNOOP     "PM_SNOOP_RECV"
-#define PM_LSU_EXEC  "PM_LS_EXEC"
-#define PM_ST_L1MISS "PM_ST_MISS"
+#define PM_SNOOP      "PM_SNOOP_RECV"
+#define PM_LSU_EXEC   "PM_LS_EXEC"
+#define PM_ST_MISS_L1 "PM_ST_MISS"
 #else
-#define PM_SNOOP     "PM_SNOOP"
-#define PM_LSU_EXEC  "PM_LSU_EXEC"
-#define PM_ST_L1MISS "PM_ST_L1MISS"
+#define PM_SNOOP      "PM_SNOOP"
+#define PM_LSU_EXEC   "PM_LSU_EXEC"
+#define PM_ST_MISS_L1 "PM_ST_L1MISS"
 #endif /*PMTOOLKIT_1_2*/
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
@@ -20,7 +20,7 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_L1_DCM,0,{"PM_DC_MISS",0,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
   {PAPI_L1_TCM,DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}}, /*Level 1 total cache misses*/
-  {PAPI_CA_SNP,0,{"PM_SNOOP",0,0,0,0,0,0,0}}, /*Snoops*/
+  {PAPI_CA_SNP,0,{PM_SNOOP,0,0,0,0,0,0,0}}, /*Snoops*/
   {PAPI_TLB_DM,0,{"PM_DTLB_MISS",0,0,0,0,0,0,0}}, /*Data translation lookaside buffer misses*/	
   {PAPI_TLB_IM,0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}}, /*Instr translation lookaside buffer misses*/
   {PAPI_TLB_TL,DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/	
@@ -41,7 +41,7 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_FLOPS,DERIVED_PS,{"PM_CYC","PM_FPU_CMPL",0,0,0,0,0,0}},	/*Floating Point instructions per second*/ 
   {PAPI_TOT_CYC,0,{"PM_CYC",0,0,0,0,0,0,0}}, /*Total cycles*/
   {PAPI_IPS,DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}}, /*Instructions executed per second*/
-  {PAPI_LST_INS,0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}}, /*Total load/store inst. executed*/
+  {PAPI_LST_INS,0,{PM_LSU_EXEC,0,0,0,0,0,0,0}}, /*Total load/store inst. executed*/
   {PAPI_SYC_INS,0,{"PM_SYNC",0,0,0,0,0,0,0}}, /*Sync. inst. executed */
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
@@ -50,7 +50,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_L1_DCM,0,{"PM_DC_MISS",0,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
   {PAPI_L1_TCM,DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}}, /*Level 1 total cache misses*/
-  {PAPI_CA_SNP,0,{"PM_SNOOP",0,0,0,0,0,0,0}}, /*Snoops*/
+  {PAPI_CA_SNP,0,{PM_SNOOP,0,0,0,0,0,0,0}}, /*Snoops*/
   {PAPI_CA_SHR,0,{"PM_LD_MISS_DC_SHR",0,0,0,0,0,0,0}}, /*Request for shared cache line (SMP)*/		 	
   {PAPI_CA_INV,0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}}, /*Request for cache line Invalidation (SMP)*/	
   {PAPI_CA_ITV,0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}}, /*Request for cache line Intervention (SMP)*/
@@ -85,16 +85,16 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_FP_STAL,0,{"PM_FPU_WT",0,0,0,0,0,0,0}},	/*Cycles any FP units are stalled */	
   {PAPI_TOT_CYC,0,{"PM_CYC",0,0,0,0,0,0,0}}, /*Total cycles*/
   {PAPI_IPS,DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}}, /*Instructions executed per second*/
-  {PAPI_LST_INS,0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}}, /*Total load/store inst. executed*/
+  {PAPI_LST_INS,0,{PM_LSU_EXEC,0,0,0,0,0,0,0}}, /*Total load/store inst. executed*/
   {PAPI_SYC_INS,0,{"PM_SYNC",0,0,0,0,0,0,0}}, /*Sync. inst. executed */
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
 
 static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
-  {PAPI_L1_DCM,DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0,0}}, /*Level 1 data cache misses*/
+  {PAPI_L1_DCM,DERIVED_ADD,{"PM_LD_MISS_L1",PM_ST_MISS_L1,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
-  {PAPI_L1_TCM,DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0}}, /*Level 1 total cache misses*/
-  {PAPI_CA_SNP,0,{"PM_SNOOP",0,0,0,0,0,0,0}}, /*Snoops*/
+  {PAPI_L1_TCM,DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1",PM_ST_MISS_L1,0,0,0,0,0}}, /*Level 1 total cache misses*/
+  {PAPI_CA_SNP,0,{PM_SNOOP,0,0,0,0,0,0,0}}, /*Snoops*/
   {PAPI_CA_SHR,0,{"PM_SNOOP_E_TO_S",0,0,0,0,0,0,0}}, /*Request for shared cache line (SMP)*/
   {PAPI_CA_ITV,0,{"PM_SNOOP_PUSH_INT",0,0,0,0,0,0,0}}, /*Request for cache line Intervention (SMP)*/
   {PAPI_BRU_IDL,0,{"PM_BRU_IDLE",0,0,0,0,0,0,0}}, /*Cycles branch units are idle*/
@@ -103,7 +103,7 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_LSU_IDL,0,{"PM_LSU_IDLE",0,0,0,0,0,0,0}}, /*Cycles load/store units are idle*/
   {PAPI_TLB_TL,0,{"PM_TLB_MISS",0,0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/
   {PAPI_L1_LDM,0,{"PM_LD_MISS_L1",0,0,0,0,0,0,0}}, /*Level 1 load misses */
-  {PAPI_L1_STM,0,{"PM_ST_L1MISS",0,0,0,0,0,0,0}}, /*Level 1 store misses */
+  {PAPI_L1_STM,0,{PM_ST_MISS_L1,0,0,0,0,0,0,0}}, /*Level 1 store misses */
   {PAPI_L2_LDM,0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 load misses */		
   {PAPI_L2_STM,0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 store misses */		
   {PAPI_BTAC_M,0,{"PM_BTAC_MISS",0,0,0,0,0,0,0}}, /*BTAC miss*/
@@ -327,8 +327,10 @@ static int update_global_hwcounters(EventSetInfo *global)
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
+#if 0
       DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",i,
 	   global->hw_start[i]+data.accu[i],global->hw_start[i],data.accu[i]));
+#endif
       global->hw_start[i] = global->hw_start[i] + data.accu[i];
     }
 
@@ -345,8 +347,10 @@ static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, l
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
+#if 0
       DBG((stderr,"correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n",i,
 	   global->hw_start[i]-local->hw_start[i],global->hw_start[i],local->hw_start[i]));
+#endif
       correct[i] = global->hw_start[i] - local->hw_start[i];
     }
 
@@ -610,7 +614,7 @@ static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
 }
 
 
-#if 0
+/*#if 0*/
 static void dump_state(hwd_control_state_t *s)
 {
   fprintf(stderr,"master_selector %x\n",s->master_selector);
@@ -623,17 +627,19 @@ static void dump_state(hwd_control_state_t *s)
     s->counter_cmd.events[4],s->counter_cmd.events[5],s->counter_cmd.events[6],
     s->counter_cmd.events[7]);
 }
-#endif
+/*#endif*/
 
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
   int selector;
   int avail;
+  int out_command, out_operand_index;
   hwd_control_state_t tmp_state;
   hwd_preset_t *this_preset;
-  int hwd_idx = 0;
+  int hwd_idx = 0, i;
   unsigned int event_code;
   int hwcntr_num, rank, metric, max_rank, total_metrics;
+  EventInfo_t *zeroth;
 
   DBG((stderr,"EventCode %x \n",EventCode));
   /* Do a preliminary check to eliminate preset events that aren't
@@ -670,7 +676,6 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   /* Add the new event code to the list and out structure */
   tmp_state.preset[hwd_idx] = EventCode;
-  out->code = EventCode;
 
 #if 0
   DBG((stderr,"hwd_idx %d \n",hwd_idx));
@@ -705,11 +710,11 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 	  /* capture the derived state of the current event code */
 	  if (event_code == EventCode)
-	    out->command = preset_map[event_code ^ PRESET_MASK].derived;
+	    out_command = preset_map[event_code ^ PRESET_MASK].derived;
 
 	  /* Dereference for cleaner access */
-	  this_rank = &(preset_map[event_code ^ PRESET_MASK].rank);
-	  this_selector = &(preset_map[event_code ^ PRESET_MASK].selector);
+	  this_rank = (unsigned char *)&(preset_map[event_code ^ PRESET_MASK].rank);
+	  this_selector = (unsigned char *)&(preset_map[event_code ^ PRESET_MASK].selector);
 
 	  /* Process all available metrics for this event.
 	     This may be as many as 8 for derived events */
@@ -768,6 +773,18 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 		      avail = this_preset->selector[metric] & ~tmp_state.master_selector;
 		      selector = get_avail_hwcntr_bits(avail);
 
+		      /* if no empty counter, look for a counter already containing this event */
+		      if (selector == 0) {
+			for (i=0;i<POWER_MAX_COUNTERS; i++) {
+			  if (tmp_state.master_selector & (1<<i)) {
+			    if (tmp_state.counter_cmd.events[i] 
+			      == this_preset->counter_cmd[metric][i])
+				break;
+			  }
+			}
+			if (i<POWER_MAX_COUNTERS) selector = (1<<i);
+		      }
+
   DBG((stderr,"metric: %d rank: %d avail: %x selector: %x\n", metric, rank, avail, selector));
 		      /* if a valid counter exists, add it to the counter 
 			 command list and mark it as occupied */
@@ -778,8 +795,8 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 			  tmp_state.counter_cmd.events[hwcntr_num] = this_preset->counter_cmd[metric][hwcntr_num];
 			  tmp_state.selector[hwd_idx] |= selector;
 			  tmp_state.master_selector |= selector;
-			  if (out->command && metric == 0)
-			    out->operand_index = hwcntr_num;
+			  if (out_command && metric == 0)
+			    out_operand_index = hwcntr_num;
 			}
 		      else return (PAPI_ECNFLCT);
 		    }
@@ -788,14 +805,30 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 	}
     }
 
-  /* Inform the upper level of the selector bits for this event. */
+  /* Everything worked. Copy temporary state back to current state */
+
+  /* First, find out which event in the event array is this one */
   for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++) /* scan across available events */
     {
       if (EventCode == tmp_state.preset[hwd_idx]) break;
     }
-  out->selector = tmp_state.selector[hwd_idx];
   
-  /* Everything worked. Copy temporary state back to current state */
+  /* Next, update the high level selectors for all earlier events, 
+     in case a remapping occurred. This is REALLY UGLY code, because it
+     requires that one assume the out pointer is the ith member of a 
+     contiguous array of EventInfo_t structures and computes the address
+     of the 0th member... */
+  zeroth = &(out[-hwd_idx]);
+  for (i=0; i<hwd_idx; i++)
+    {
+      zeroth[i].selector = tmp_state.selector[i];
+    }
+
+  /* Finally, inform the upper level of the necessary info for this event. */
+  out->code = EventCode;
+  out->selector = tmp_state.selector[hwd_idx];
+  out->command = out_command;
+  out->operand_index = out_operand_index;
   *this_state = tmp_state;
 
 #if 0
@@ -822,14 +855,18 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
     }
 
   /* Make sure the event was found */
-  if (i == POWER_MAX_COUNTERS)
+  if (i == POWER_MAX_COUNTERS) {
+    printf("i == POWER_MAX_COUNTERS; EventCode = %x\n", EventCode);
+    dump_state(this_state);
     return(PAPI_ENOEVNT);
+  }
 
   selector = this_state->selector[i];
 
   /* Make sure the selector is set. */
-  if (selector == 0)
+  if (selector == 0) {
     return(PAPI_ENOEVNT);
+  }
 
   /* Check if these counters aren't used. */
   if ((used & selector) != used)
@@ -1122,6 +1159,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
   long long correct[POWER_MAX_COUNTERS];
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
 
   retval = update_global_hwcounters(zero);
   if (retval)
@@ -1139,11 +1177,20 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
       selector = ESI->EventInfoArray[i].selector;
-      if (selector == PAPI_NULL)
+      if (selector == 0)
 	continue;
 
-      assert(selector != 0);
-      DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
+      if (selector == 0) {
+	printf("ESI Selectors: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
+	  ESI->EventInfoArray[0].selector, ESI->EventInfoArray[1].selector,
+	  ESI->EventInfoArray[2].selector, ESI->EventInfoArray[3].selector,
+	  ESI->EventInfoArray[4].selector, ESI->EventInfoArray[5].selector,
+	  ESI->EventInfoArray[6].selector, ESI->EventInfoArray[7].selector);
+	dump_state(this_state);
+      }
+
+     DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
+     assert(selector != 0);
 
       /* If this is not a derived event */
 
