@@ -26,27 +26,30 @@ extern void do_flops(int);
 extern void do_reads(int);
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
+static int PAPI_event;	/* Event to use in all cases; initialized in init_papi() */
 
 void init_papi(void)
 {
   int retval;
 
   /* Initialize the library */
-
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
   /* Turn on automatic error reporting */
-
   retval = PAPI_set_debug(PAPI_VERB_ECONT);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
+
+  /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) PAPI_event = PAPI_FP_INS;
+  else PAPI_event = PAPI_TOT_INS;
 }
 
 /* Tests that PAPI_multiplex_init does not mess with normal operation. */
 
-int case1(void) 
+int case1() 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[2];
@@ -61,11 +64,7 @@ int case1(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-#ifndef NO_FLOPS
-  retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-#endif
+  retval = PAPI_add_event(&EventSet, PAPI_event);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -98,7 +97,7 @@ int case1(void)
 
 /* Tests that PAPI_set_multiplex() works before adding events */
 
-int case2(void) 
+int case2() 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[2];
@@ -117,11 +116,7 @@ int case2(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-#ifndef NO_FLOPS
-  retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-#endif
+  retval = PAPI_add_event(&EventSet, PAPI_event);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -158,7 +153,7 @@ int case2(void)
 
 /* Tests that PAPI_set_multiplex() works after adding events */
 
-int case3(void) 
+int case3() 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[2];
@@ -173,11 +168,7 @@ int case3(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-#ifndef NO_FLOPS
-  retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-#endif
+  retval = PAPI_add_event(&EventSet, PAPI_event);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -220,7 +211,7 @@ int case3(void)
 /* Tests that PAPI_add_event() works after
    PAPI_add_event()/PAPI_set_multiplex() */
 
-int case4(void) 
+int case4() 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[4];
@@ -235,11 +226,7 @@ int case4(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-#ifndef NO_FLOPS
-  retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-#endif
+  retval = PAPI_add_event(&EventSet, PAPI_event);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 

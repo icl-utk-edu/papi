@@ -28,14 +28,6 @@
 
 #include "papi_test.h"
 
-#ifdef NO_FLOPS
-  #define PAPI_EVENT 		PAPI_TOT_INS
-  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
-#else
-  #define PAPI_EVENT 		PAPI_FP_INS
-  #define MASK				MASK_FP_INS | MASK_TOT_CYC
-#endif
-
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
@@ -43,7 +35,7 @@ int main(int argc, char **argv)
   int retval, num_tests = 4, tmp;
   long_long **values;
   int EventSet1, EventSet2;
-  int mask1 = MASK, mask2 = MASK;
+  int PAPI_event, mask1, mask2;
   int num_events1, num_events2;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
@@ -58,7 +50,17 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+	  PAPI_event = PAPI_FP_INS;
+	  mask1 = mask2 = MASK_FP_INS | MASK_TOT_CYC;
+  }
+  else {
+	  PAPI_event = PAPI_TOT_INS;
+	  mask1 = mask2 = MASK_TOT_INS | MASK_TOT_CYC;
+  }
+
+  retval = PAPI_event_code_to_name(PAPI_event, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 

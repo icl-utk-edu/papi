@@ -36,11 +36,6 @@ int main(int argc, char *argv[]) {
   int i,j,k,n,t;
   int retval = PAPI_OK;
 
-/* If this platform doesn't support floating point, skip the test */
-#ifdef NO_FLOPS
-   test_skip(__FILE__,__LINE__,"NO_FLOPS",PAPI_ENOEVNT);
-#endif
-
    /*
   Check for inputs of 1, 2, or 3. If TRUE, do that test only.
   Otherwise, do all three tests.
@@ -60,6 +55,11 @@ int main(int argc, char *argv[]) {
   /* Initialize PAPI */
   retval = PAPI_library_init( PAPI_VER_CURRENT );
   if ( retval != PAPI_VER_CURRENT) test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+/* If this platform doesn't support floating point, skip the test */
+  if (PAPI_query_event(PAPI_FP_INS) != PAPI_OK) {
+	test_skip(__FILE__,__LINE__,"PAPI_query_event",PAPI_ENOEVNT);
+  }
 
   /* Initialize memory pointers */
   a=b=c=0;

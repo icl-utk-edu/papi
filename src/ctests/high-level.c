@@ -5,6 +5,7 @@
 
     To accomplish this PAPI_read_counters is used as a counter
     reset function, while PAPI_accum_counters is used to sum
+
     the contributions of loops 2 and 4 into the total count.
 */
 
@@ -13,22 +14,27 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
 {
-  int retval;
 #define NUM_EVENTS 2
+  int retval;
   long_long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
   long_long myvalues[NUM_EVENTS];
-#ifndef NO_FLOPS
-  unsigned int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_CYC};
-#else
-  unsigned int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
-#endif
-
+  unsigned int Events[NUM_EVENTS];
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
+
+  /* query and set up the right events to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+	  Events[0] = PAPI_FP_INS;
+  }
+  else {
+	  Events[0] = PAPI_TOT_INS;
+  }
+  Events[1] = PAPI_TOT_CYC;
+
   retval = PAPI_start_counters((int *)Events,NUM_EVENTS);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
@@ -87,13 +93,14 @@ int main(int argc, char **argv)
 	long_long min, max;
 	min = (long_long)(myvalues[0]*.9);
 	max = (long_long)(myvalues[0]*1.1);
-	if ( values[0]<(3*min)||values[0]>(3*max)){
-                retval = 1;
-#ifndef NO_FLOPS
-		test_fail(__FILE__,__LINE__,"PAPI_FP_INS",1);
-#else
-		test_fail(__FILE__,__LINE__,"PAPI_TOT_INS",1);
-#endif
+	if ( values[0]<(3*min)||values[0]>(3*max)) {
+		retval = 1;
+		if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+			test_fail(__FILE__,__LINE__,"PAPI_FP_INS",1);
+		}
+		else {
+			test_fail(__FILE__,__LINE__,"PAPI_TOT_INS",1);
+		}
 	}
 	min = (long_long)(myvalues[1]*.9);
 	max = (long_long)(myvalues[1]*1.1);

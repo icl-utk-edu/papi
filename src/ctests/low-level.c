@@ -28,11 +28,7 @@ int main(int argc, char **argv)
   int retval;
 #define NUM_EVENTS 2
   long_long values[NUM_EVENTS],dummyvalues[NUM_EVENTS];
-#ifndef NO_FLOPS
-  unsigned int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_INS};
-#else
-  unsigned int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
-#endif
+  unsigned int Events[NUM_EVENTS];
   int EventSet=PAPI_NULL;
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
@@ -41,6 +37,15 @@ int main(int argc, char **argv)
   if( (retval = PAPI_library_init(PAPI_VER_CURRENT)) !=PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
+  /* query and set up the right events to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+	  Events[0] = PAPI_FP_INS;
+	  Events[1] = PAPI_TOT_INS;
+  }
+  else {
+	  Events[0] = PAPI_TOT_INS;
+	  Events[1] = PAPI_TOT_CYC;
+  }
 
   if( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
