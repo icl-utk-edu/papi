@@ -207,7 +207,7 @@ run:
 install: $(TARGETS)
 	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	mkdir -p $(DESTDIR)/ctests
+	-mkdir -p $(DESTDIR)/ctests
 	chmod go+rx $(DESTDIR)/ctests
 	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ctests \;
 	chmod go+rx $(DESTDIR)/ctests/*
