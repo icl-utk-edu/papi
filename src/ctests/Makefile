@@ -118,3 +118,4 @@ install: $(TARGETS)
 	chmod go+rx $(DESTDIR)/ctests
 	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ctests \;
 	chmod go+rx $(DESTDIR)/ctests/*
+	find . -name "*.[ch]" -type f -exec cp {} $(DESTDIR)/ctests \;
