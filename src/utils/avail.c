@@ -55,60 +55,30 @@ int main(int argc, char **argv)
          printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
       i = PRESET_MASK;
       do {
-         if (PAPI_get_event_info(i, &info) == PAPI_OK) {
-            if (print_avail_only)
-               printf("%s\t%s\t%s (%s)\n",
-                      info.symbol,
-                      (info.count > 1 ? "Yes" : "No"),
-                      info.long_descr, (info.vendor_name ? info.vendor_name : ""));
+         if (PAPI_get_event_info(i, &info) == PAPI_OK) 
+	   {
+	     if (print_avail_only)
+               {
+		 printf("%s\t%s\t%s (%s)\n",
+			info.symbol,
+			(info.count > 1 ? "Yes" : "No"),
+			info.long_descr, (info.vendor_name ? info.vendor_name : ""));
+	       }
             else
-               printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
-                      info.symbol,
-                      info.event_code,
-                      (info.count ? "Yes" : "No"),
-                      (info.count > 1 ? "Yes" : "No"),
-                      info.long_descr, (info.vendor_name ? info.vendor_name : ""));
-         };
-      } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
-      printf
-          ("-------------------------------------------------------------------------\n");
-
-/*
-    } else {
-      if (print_avail_only == 0)
-	    {
-	  printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
-
-	  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-	    if (PAPI_get_event_info(i, &info) == PAPI_OK) {
+	      {
 		printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
 		       info.symbol,
 		       info.event_code,
 		       (info.count ? "Yes" : "No"),
 		       (info.count > 1 ? "Yes" : "No"),
-		       info.long_descr,
-		       (info.vendor_name ? info.vendor_name : ""));
+		       info.long_descr, (info.vendor_name ? info.vendor_name : ""));
 	      }
-	  printf("-------------------------------------------------------------------------\n");
-	    }
-	  else
-	    {
-	  printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
-
-	  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-	    if ((PAPI_get_event_info(i, &info) == PAPI_OK) && (info.count))
-	      {
-		printf("%s\t%s\t%s (%s)\n",
-		       info.symbol,
-		       (info.count > 1 ? "Yes" : "No"),
-		       info.long_descr,
-		       (info.vendor_name ? info.vendor_name : ""));
-	      }
-	  exit(0);
-	    }
-      }
-*/
+	   }
+      } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
+      printf
+          ("-------------------------------------------------------------------------\n");
    }
+
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
