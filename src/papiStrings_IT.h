@@ -263,6 +263,8 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_ENOTPRESET_dsc "l' evento nell' argomento non e un valido ha prestabilito"
 #define PAPI_ENOCNTR_dsc    "il hardware non sostiene i contatori di prestazioni"
 #define PAPI_EMISC_dsc      "codice di errore sconosciuto"
+/* Someone want to translate? */
+#define PAPI_EPERM_dsc	    ""Permission level does not permit operation"
 
 
 /********************************************************/

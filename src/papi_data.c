@@ -282,7 +282,8 @@ const char *_papi_hwi_errNam[PAPI_NUM_ERRORS] = {
    PAPI_ENOEVST_nm,
    PAPI_ENOTPRESET_nm,
    PAPI_ENOCNTR_nm,
-   PAPI_EMISC_nm
+   PAPI_EMISC_nm,
+   PAPI_EPERM_nm
 };
 
 const char *_papi_hwi_errStr[PAPI_NUM_ERRORS] = {
@@ -300,7 +301,8 @@ const char *_papi_hwi_errStr[PAPI_NUM_ERRORS] = {
    PAPI_ENOEVST_dsc,
    PAPI_ENOTPRESET_dsc,
    PAPI_ENOCNTR_dsc,
-   PAPI_EMISC_dsc
+   PAPI_EMISC_dsc,
+   PAPI_EPERM_dsc
 };
 
 

@@ -397,7 +397,8 @@ void test_fail(char *file, int line, char *call, int retval)
 {
    char buf[128];
 
-   if (retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT || retval == PAPI_ECNFLCT)
+   if (retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT || retval == PAPI_ECNFLCT || 
+       retval == PAPI_EPERM)
       test_skip(file, line, call, retval);
    memset(buf, '\0', sizeof(buf));
    if (retval != 0)
@@ -435,6 +436,9 @@ void test_skip(char *file, int line, char *call, int retval)
          fprintf(stdout,"Line # %d\n", line);
          sprintf(buf, "System error in %s:", call);
          perror(buf);
+      } else if ( retval == PAPI_EPERM ){
+         fprintf(stdout,"Line # %d\n", line);
+         fprintf(stdout, "Invalid permissions for %s.",call);
       } else if (retval >= 0) {
          fprintf(stdout,"Line # %d\n", line);
          fprintf(stdout,"Error calculating: %s\n", call);

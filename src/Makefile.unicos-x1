@@ -1,21 +1,26 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
-SUBSTR  = unicos-x1
-MSUBSTR  = unicos-x1
+SUBSTR  = x1
+MSUBSTR  = x1
 MEMSUBSTR= unicosmp
 DESCR	= "Unicos/MP Cray X1"
-LIBS	= static shared 
-TARGETS	= serial multiplex_and_pthreads smp omp 
+LIBS	= static  
+TARGETS	= serial multiplex_and_pthreads 
 FLAGS  	= 
-CFLAGS  = $(FLAGS) 
-TOPTFLAGS= -O0
-OPTFLAGS= -O
+# MSP Mode 
+CFLAGS  = $(FLAGS) -DNO_VARARG_MACRO -DDEBUG -DNO_FUNCTION_MACRO -DNO_DLFCN -DMSP -DDEBUG -DNEED_FFSLL -DNUM_SSP=4
+# SSP Mode 
+#CFLAGS  = $(FLAGS) -DNO_VARARG_MACRO -DDEBUG -DNO_FUNCTION_MACRO -DNO_DLFCN -DDEBUG -DNEED_FFSLL -h ssp -DNUM_SSP=1
+TOPTFLAGS= -g 
+#TOPTFLAGS= -O0
+#OPTFLAGS= -O
+OPTFLAGS= -g
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS) 
 FFLAGS	= $(FLAGS) 
 SMPCFLGS= -mp
 OMPCFLGS= -mp
-CC_SHR  = cc -shared -all -check_registry /usr/lib32/so_locations -soname $(SHLIB)
+CC_SHR  = cc
 CC_R	= cc
 CC	= cc
 CPP	= cc -E

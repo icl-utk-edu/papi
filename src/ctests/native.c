@@ -62,6 +62,10 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 #endif
 
+#if defined (__crayx1)
+  /* arbitrarily code 1 event from p, e and m chips */
+  static char *native_name[] = {"X1_P_EV_INST_S_FP", "X1_E_EV_REQUESTS", "X1_M_EV_REQUESTS", NULL,NULL,NULL};
+#endif
 #if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
    static char *native_name[6] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 #endif
@@ -142,6 +146,7 @@ void papimon_start(void)
        (defined(linux) && defined(__ia64__)) || \
        (defined(mips) && defined(sgi) && defined(unix)) || \
        (defined(sun) && defined(sparc)) || \
+       (defined(__crayx1)) ||\
        (defined(__ALPHA) && defined(__osf__)))
 
       for (i = 0; native_name[i] != NULL; i++) {
@@ -228,6 +233,7 @@ void papimon_stop(void)
        (defined(linux) && defined(__ia64__)) || \
        (defined(mips) && defined(sgi)) || \
        (defined(sun) && defined(sparc)) || \
+       (defined(__crayx1))|| \
        (defined(__ALPHA) && defined(__osf__)))
       for (i = 0; native_name[i] != NULL; i++) {
          fprintf(stderr, "%-40s: ", native_name[i]);

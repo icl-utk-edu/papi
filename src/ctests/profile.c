@@ -97,13 +97,14 @@ int main(int argc, char **argv)
    if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-/* use these lines to profile entire code address space
+/* use these lines to profile entire code address space */
    start = prginfo->address_info.text_start;
    end = prginfo->address_info.text_end;
-*/
 /* use these lines to profile only do_flops address space */
+/*
    start = (caddr_t)do_flops;
    end = (caddr_t)fdo_flops;
+*/
 
 /* Itanium returns function descriptors instead of function addresses.
    You must dereference the descriptor to get the address.

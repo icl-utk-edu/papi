@@ -455,6 +455,7 @@ static int _internal_get_system_info(void)
   _papi_hwi_system_info.hw_info.ncpu = get_cpu();
 */
    _papi_hwi_system_info.supports_hw_overflow = 1;
+   _papi_hwi_system_info.using_hw_overflow = 1;
 
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
@@ -724,9 +725,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 
    ctx.si = si;
    ctx.ucontext = info;
-/*
-  _papi_hwi_dispatch_overflow_signal((void *)info); 
-*/
+
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                       _papi_hwi_system_info.supports_hw_overflow, 0, 1);
 }

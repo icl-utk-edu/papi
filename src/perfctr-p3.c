@@ -163,6 +163,7 @@ inline_static int setup_p3_presets(int cputype) {
     strcpy(_papi_hwi_system_info.substrate, "$Id$");       
 
    _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
+   _papi_hwi_system_info.using_hw_overflow = HW_OVERFLOW;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
    _papi_hwi_system_info.supports_real_usec = 1;

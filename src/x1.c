@@ -1,4 +1,4 @@
-#include <mutex.h>
+#include "x1.h"
 
 /*
  * This function has to set the bits needed to count different domains
@@ -11,51 +11,78 @@
  * and set_default_domain which are all functions within x1.c
  */
 
+int _papi_hwd_init_preset_search_map();
+hwi_search_t *preset_search_map;
+
 /* Valid values for hwp_enable are as follows: 
  * HWPERF_ENABLE_USER,HWPERF_ENABLE_KERNEL,HWPERF_ENABLE_EXCEPTION
  * For HWPERF_ENABLE_KERNEL and HWPERF_ENABLE_EXCEPTION the user
  * must have PROC_CAP_MGT capability.
  * This only works on P-Chip and not on M-Chip or E-Chip counters
  */
-static int _internal_set_domain(hwd_control_state_t * this_state, int domain)
+static int set_domain(hwd_context_t * this_state, int domain)
 {
-   int found = 0;
+   hwperf_x1_t p_evtctr[NUM_SSP];
+   int i,found=0,ret;
+   u_long_long enablebits = HWPERF_ENABLE_RW;
+
    if (PAPI_DOM_USER & domain) {
-      found = 1;
+     enablebits |= HWPERF_ENABLE_USER;
+     found=1;
    }
    if (PAPI_DOM_KERNEL & domain) {
-      found = 1;
+     enablebits |= HWPERF_ENABLE_KERNEL;
+     found=1;
    }
    if (PAPI_DOM_OTHER & domain) {
-      found = 1;
+     enablebits |= HWPERF_ENABLE_EXCEPTION;
+     found=1;
    }
-   if (!found)
+   if ( !found ) {
+      SUBDBG("Invalid domain: %d\n", domain);
       return (PAPI_EINVAL);
+   }
+   for(i=0;i<NUM_SSP;i++){
+     p_evtctr[i].hwp_enable = enablebits;
+   }
+   if ( ret=ioctl(this_state->fd, PIOCSETPERFENABLE, (void *) &p_evtctr) < 0 )
+   {
+     if(ret==EPERM) {
+       SUBDBG("Not enough permissions to enable domain: %d\n", domain);
+       return(PAPI_EPERM);
+     }
+     else {
+       SUBDBG("Error changing to domain %d, error returned: %d\n", domain, oserror());
+       return (PAPI_ESYS);
+     }
+   }
    return (PAPI_OK);
 }
 
 /* 
  * This calls set_domain to set the default domain being monitored
  */
-static int set_default_domain(EventSetInfo_t * zero, int domain)
+static int set_default_domain(hwd_context_t * ptr, int domain)
 {
-   hwd_control_state_t *current_state = (hwd_control_state_t *) zero->machdep;
-   return (set_domain(current_state, domain));
+   return (set_domain(ptr, domain));
 }
 
 /*
  * This function sets the granularity of 
  * This is called from set_default_granularity, init_config,
  * and _papi_hwd_ctl
- * Currently the X1 does not support granularity so OK is returned
- * If the granularity state is valid.
+ * Currently the X1 only supports process granularity so OK is returned
+ * for that, otherwise not supported by substrate is returned. 
  */
-static int _internal_set_granularity(hwd_control_state_t * this_state, int granularity)
+static int set_granularity(hwd_context_t * this_state, int granularity)
 {
    switch (granularity) {
    case PAPI_GRN_THR:
-   case PAPI_GRN_PROC:
    case PAPI_GRN_PROCG:
+   case PAPI_GRN_SYS:
+   case PAPI_GRN_SYS_CPU:
+      return(PAPI_ESBSTR);
+   case PAPI_GRN_PROC:
       break;
    default:
       return (PAPI_EINVAL);
@@ -66,7 +93,7 @@ static int _internal_set_granularity(hwd_control_state_t * this_state, int granu
 /*
  * This calls set_granularity to set the default granularity being monitored 
  */
-static int set_default_granularity(hwd_control_state_t * current_state, int granularity)
+static int set_default_granularity(hwd_context_t * current_state, int granularity)
 {
    return (set_granularity(current_state, granularity));
 }
@@ -74,37 +101,723 @@ static int set_default_granularity(hwd_control_state_t * current_state, int gran
 /* This function should tell your kernel extension that your children
  * inherit performance register information and propagate the values up
  * upon child exit and parent wait. 
+ * This is the default for Cray X1
  */
-static int set_inherit(EventSetInfo_t * global, int arg)
+static int set_inherit(hwd_context_t *ptr)
 {
-   return (PAPI_ESBSTR);
+   int flags;
+   if ( ioctl(ptr->fd, PIOCSETPERFFLAGS, &flags)<0 ){
+      SUBDBG("Error getting perf flags.  Return code: %d\n", oserror());
+      return(PAPI_ESYS);
+   }
+   /* Toggle bits */
+   flags ^= (HWPERF_CURTHREAD_COUNTS|EPERF_CURTHREAD_COUNTS|MPERF_CURTHREAD_COUNTS);
+   if ( ioctl(ptr->fd, PIOCSETPERFFLAGS, &flags)<0 ){
+      SUBDBG("Error setting perf flags.  Return code: %d\n", oserror());
+      return(PAPI_ESYS);
+   }
+   return (PAPI_OK);
 }
 
 /*
  * This function takes care of setting various features
  */
-int _papi_hwd_ctl(EventSetInfo_t * zero, int code, _papi_int_option_t * option)
+int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
 {
    switch (code) {
-   case PAPI_SET_DEFDOM:
-      return (set_default_domain(zero, option->domain.domain));
-   case PAPI_SET_DOMAIN:
-      return (set_domain(option->domain.ESI->machdep, option->domain.domain));
-   case PAPI_SET_DEFGRN:
-      return (set_default_granularity(zero, option->granularity.granularity));
-   case PAPI_SET_GRANUL:
-      return (set_granularity
-              (option->granularity.ESI->machdep, option->granularity.granularity));
-   case PAPI_SET_INHERIT:
-      return (set_inherit(option->inherit.inherit));
+   case PAPI_DEFDOM:
+      return (set_default_domain(ptr, option->domain.domain));
+   case PAPI_DOMAIN:
+      return (set_domain(ptr, option->domain.domain));
+   case PAPI_DEFGRN:
+      return (set_default_granularity(ptr, option->granularity.granularity));
+   case PAPI_GRANUL:
+      return (set_granularity (ptr, option->granularity.granularity));
+   case PAPI_INHERIT:
+      return (set_inherit(ptr));
    default:
       return (PAPI_EINVAL);
    }
 }
 
+/*
+ * This function should return the highest resolution wallclock timer available
+ * in usecs.  The Cray X1 does not have a high resolution timer so we have to
+ * use gettimeofday.
+ */
+long_long _papi_hwd_get_real_usec(void)
+{
+   struct timespec tp;
+
+   clock_gettime(CLOCK_REALTIME, &tp);
+   return (((tp.tv_sec*1000000)+(tp.tv_nsec/1000)));
+}
+
+/*
+ * This function should return the highest resolution wallclock timer available
+ * in cycles. Since the Cray X1 does not have a high resolution we have to
+ * use gettimeofday.
+ */
+long_long _papi_hwd_get_real_cycles(void)
+{
+   long_long usec, cyc;
+
+   usec = (long_long) _papi_hwd_get_real_usec();
+   cyc = usec *  (long_long) _papi_hwi_system_info.hw_info.mhz;
+   return ((long long) cyc);
+}
+
+/*
+ * This function should return the highest resolution processor timer available
+ * in usecs.
+ */
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+{
+   long long retval;
+   struct tms buffer;
+
+   times(&buffer);
+   retval = (long long) buffer.tms_utime * (long long) (1000000 / sysconf(_SC_CLK_TCK));
+   return (retval);
+}
+
+/*
+ * This function should return the highest resolution processor timer available
+ * in cycles.
+ */
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+{
+   float usec, cyc;
+
+   usec = (float) _papi_hwd_get_virt_usec(zero);
+   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
+   return ((long long) cyc);
+}
+
 void _papi_hwd_error(int error, char *where)
 {
    sprintf(where, "Substrate error: %s", strerror(error));
+}
+
+/*
+ * Start the hardware counters
+ */
+int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+{
+  int retval;
+  
+  if ( ctrl->has_p ){
+     int i;
+     for(i=0;i<NUM_SSP;i++){
+       ctrl->p_evtctr[i].hwp_control &= ~HWPERF_CNTRL_STOP; 
+       ctrl->p_evtctr[i].hwp_control |= HWPERF_CNTRL_START|HWPERF_CNTRL_CLRALL; 
+     } 
+     if ( (retval = ioctl(ctx->fd, PIOCSETPERFCONTROL, (void *)ctrl->p_evtctr) )<0 ){
+        SUBDBG("Starting counters returned error: %d\n", oserror());
+     }
+     for(i=0;i<NUM_SSP;i++)
+       ctrl->p_evtctr[i].hwp_control &= ~HWPERF_CNTRL_CLRALL; 
+  }
+  if ( ctrl->has_e ) {
+     ctrl->e_evtctr.ep_control &= ~EPERF_CNTRL_STOP;
+     ctrl->e_evtctr.ep_control |= EPERF_CNTRL_START|EPERF_CNTRL_CLRALL;
+     if ( (retval = ioctl(ctx->fd, PIOCSETEPERFCONTROL, (void *)&ctrl->e_evtctr) )<0 ){
+        SUBDBG("Starting counters returned error: %d\n", oserror());
+     }
+     ctrl->m_evtctr.mp_control &= ~EPERF_CNTRL_CLRALL;
+  }
+  if ( ctrl->has_m ) {
+     ctrl->m_evtctr.mp_control &= ~MPERF_CNTRL_STOP;
+     ctrl->m_evtctr.mp_control |= MPERF_CNTRL_START|MPERF_CNTRL_CLRALL;
+     if ( (retval = ioctl(ctx->fd, PIOCSETMPERFCONTROL, (void *)&ctrl->m_evtctr) )<0 ){
+        SUBDBG("Starting counters returned error: %d\n", oserror());
+     }
+     ctrl->m_evtctr.mp_control &= ~MPERF_CNTRL_CLRALL;
+  }
+  return (PAPI_OK);
+}
+
+/*
+ * Read the hardware counters
+ */
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events)
+{
+   int i,j;
+   if ( ctrl->has_p ){
+      if ( ioctl(ctx->fd, PIOCGETPERFCOUNTVAL, (void *) (ctrl->p_evtctr)) < 0){  
+  	SUBDBG("Error reading the counters, error returned: %d\n", oserror());
+        return(PAPI_ESYS);
+      }
+      memcpy(ctrl->values,&ctrl->p_evtctr[0].hwp_countval[0],sizeof(long_long)*HWPERF_COUNTMAX);
+      for (i=1;i<NUM_SSP;i++){
+        for(j=0;j<HWPERF_COUNTMAX;j++) 
+           ctrl->values[j] += ctrl->p_evtctr[i].hwp_countval[j];
+      }
+   }
+   if ( ctrl->has_e ){
+      if ( ioctl(ctx->fd, PIOCGETEPERFCOUNTVAL, (void *) (&ctrl->e_evtctr)) < 0){  
+  	SUBDBG("Error reading the counters, error returned: %d\n", oserror());
+        return(PAPI_ESYS);
+      }
+      for(i=0,j=HWPERF_COUNTMAX;i<EPERF_COUNTMAX;i++,j++)
+	ctrl->values[j] = ctrl->e_evtctr.ep_countval[i];
+   }
+   if ( ctrl->has_m ){
+      if ( ioctl(ctx->fd, PIOCGETMPERFCOUNTVAL, (void *) (&ctrl->m_evtctr)) < 0){  
+  	SUBDBG("Error reading the counters, error returned: %d\n", oserror());
+        return(PAPI_ESYS);
+      }
+      for(i=0,j=HWPERF_COUNTMAX+EPERF_COUNTMAX;i<MPERF_COUNTMAX;i++,j++)
+	ctrl->values[j] = ctrl->m_evtctr.mp_countval[i];
+   }
+   *events = (long long *) &ctrl->values[0];
+#ifdef DEBUG
+   if ( ISLEVEL(DEBUG_SUBSTRATE) )
+   {
+   int st,en;
+   if ( ctrl->has_p ){ 
+      st = 0;
+      if ( ctrl->has_m )
+        en = 64;
+      else if ( ctrl->has_e )
+        en = 48;
+      else
+        en = 32;
+   }
+   else if ( ctrl->has_e ){
+      st = 32;
+      if ( ctrl->has_m)
+        en = 64;
+      else
+        en = 48;
+   }
+   else {
+      st = 48;
+      en = 64;
+   }
+   fprintf(stderr, "Counter values in read: \n");
+   for(i=st;i<en;i++){
+      if ( i==0 ) fprintf(stderr,"P-Chip: ");
+      if ( i==32) fprintf(stderr,"\nE-Chip: ");
+      if ( i==48) fprintf(stderr,"\nM-Chip: ");
+      fprintf(stderr,"[%d]=%lld ", i, ctrl->values[i]);
+      if ( i!= 0 && i%6 == 0 )
+         fprintf(stderr,"\n        "); 
+   }
+   fprintf(stderr,"\n");
+  }
+#endif
+}
+
+/*
+ * Reset the hardware counters
+ */
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+{
+  /* Right now I stop and restart the counters, but perhaps I can just
+   * call control with reset, or start/reset.  I must test and change
+   * this if I can.
+   */
+  if ( ctrl->has_p ){
+    int i;
+    for(i=0;i<NUM_SSP;i++){
+      ctrl->p_evtctr[i].hwp_control &= ~HWPERF_CNTRL_START;
+      ctrl->p_evtctr[i].hwp_control |= HWPERF_CNTRL_STOP;
+    }
+    if ( ioctl(ctx->fd, PIOCSETPERFCONTROL, (void *) (ctrl->p_evtctr)) < 0){  
+	SUBDBG("Error stopping p-chip counters for a reset, error returned: %d\n",oserror());
+        return(PAPI_ESYS);
+    }
+    for(i=0;i<NUM_SSP;i++){
+      ctrl->p_evtctr[i].hwp_control &= ~HWPERF_CNTRL_STOP;
+      ctrl->p_evtctr[i].hwp_control |= (HWPERF_CNTRL_START|HWPERF_CNTRL_CLRALL);
+    }
+    if ( ioctl(ctx->fd, PIOCSETPERFCONTROL, (void *) (ctrl->p_evtctr)) < 0){  
+	SUBDBG("Error re-starting p-chip counters for a reset, error returned: %d\n", oserror());
+        return(PAPI_ESYS);
+    }
+    for(i=0;i<NUM_SSP;i++){
+      ctrl->p_evtctr[i].hwp_control &= ~HWPERF_CNTRL_CLRALL;
+    }
+  }
+  if ( ctrl->has_e ){
+    ctrl->e_evtctr.ep_control &= ~EPERF_CNTRL_START|~EPERF_CNTRL_EVENTS;
+    ctrl->e_evtctr.ep_control |= EPERF_CNTRL_STOP|EPERF_CNTRL_CLRALL;
+    if ( ioctl(ctx->fd, PIOCSETEPERFCONTROL, (void *) (&ctrl->e_evtctr)) < 0){  
+	SUBDBG("Error stopping e-chip counters for a reset, error returned: %d\n",oserror());
+        return(PAPI_ESYS);
+    }
+    ctrl->e_evtctr.ep_control &= ~EPERF_CNTRL_STOP|~EPERF_CNTRL_CLRALL;
+    ctrl->e_evtctr.ep_control |= EPERF_CNTRL_START;
+    if ( ioctl(ctx->fd, PIOCSETEPERFCONTROL, (void *) (&ctrl->e_evtctr)) < 0){  
+	SUBDBG("Error re-starting e-chip counters for a reset, error returned: %d\n",oserror());
+        return(PAPI_ESYS);
+    }
+  }
+  if ( ctrl->has_m){
+    ctrl->m_evtctr.mp_control &= ~MPERF_CNTRL_START|~MPERF_CNTRL_EVENTS;
+    ctrl->m_evtctr.mp_control |= MPERF_CNTRL_STOP|MPERF_CNTRL_CLRALL;
+    if ( ioctl(ctx->fd, PIOCSETMPERFCONTROL, (void *) (&ctrl->m_evtctr)) < 0){  
+	SUBDBG("Error stopping e-chip counters for a reset, error returned: %d\n",oserror());
+        return(PAPI_ESYS);
+    }
+    ctrl->m_evtctr.mp_control &= ~MPERF_CNTRL_STOP|~MPERF_CNTRL_CLRALL;
+    ctrl->m_evtctr.mp_control |= MPERF_CNTRL_START;
+    if ( ioctl(ctx->fd, PIOCSETMPERFCONTROL, (void *) (&ctrl->m_evtctr)) < 0){  
+	SUBDBG("Error re-starting e-chip counters for a reset, error returned: %d\n",oserror());
+        return(PAPI_ESYS);
+    }
+  }
+  return (PAPI_OK);
+}
+
+/*
+ * Stop the hardware counters
+ */
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+{
+  if( ctrl->has_p ) {
+    int i;
+    for(i=0;i<NUM_SSP;i++){
+      ctrl->p_evtctr[i].hwp_control &= ~HWPERF_CNTRL_START;
+      ctrl->p_evtctr[i].hwp_control |= HWPERF_CNTRL_STOP;
+    }
+    if ( ioctl(ctx->fd, PIOCSETPERFCONTROL, (void *)ctrl->p_evtctr) < 0 ){
+      SUBDBG("Error stopping p-chip counters, returned code: %d\n", oserror());
+      return(PAPI_ESYS);
+    }
+  }
+  if ( ctrl->has_e ){
+    ctrl->e_evtctr.ep_control &= ~EPERF_CNTRL_START;
+    ctrl->e_evtctr.ep_control |= EPERF_CNTRL_STOP;
+    if ( ioctl(ctx->fd, PIOCSETEPERFCONTROL, (void *)&ctrl->e_evtctr) < 0 ){
+      SUBDBG("Error stopping e-chip counters, returned code: %d\n", oserror());
+      return(PAPI_ESYS);
+    }
+  }
+  if ( ctrl->has_m ){
+    ctrl->m_evtctr.mp_control &= ~MPERF_CNTRL_START;
+    ctrl->m_evtctr.mp_control |= MPERF_CNTRL_STOP;
+    if ( ioctl(ctx->fd, PIOCSETMPERFCONTROL, (void *)&ctrl->m_evtctr) < 0 ){
+      SUBDBG("Error stopping m-chip counters, returned code: %d\n", oserror());
+      return(PAPI_ESYS);
+    }
+  }
+  return (PAPI_OK);
+}
+
+/*
+ * Write a value into the hardware counters
+ */
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
+{
+  int i,j;
+  if ( ctrl->has_p )
+  {
+    for(i=0;i<NUM_SSP;i++){
+      for(j=0;j<HWPERF_COUNTMAX;j++)
+         ctrl->p_evtctr[i].hwp_countval[j] = from[j];
+    }
+    if ( ioctl(ctx->fd, PIOCSETPERFCOUNTVAL, (void *)&ctrl->p_evtctr) < 0 ) {
+       SUBDBG("Error writing p-chip counter values, error returned: %d.\n", oserror());
+       return(PAPI_ESYS); 
+    }
+  }
+  if ( ctrl->has_e )
+  {
+    for(i=HWPERF_COUNTMAX,j=0;j<EPERF_COUNTMAX;i++,j++)
+         ctrl->e_evtctr.ep_countval[j] = from[i];
+    if ( ioctl(ctx->fd, PIOCSETEPERFCOUNTVAL, (void *)&ctrl->e_evtctr) < 0 ) {
+       SUBDBG("Error writing e-chip counter values, error returned: %d.\n", oserror());
+       return(PAPI_ESYS); 
+    }
+  }
+  if ( ctrl->has_m )
+  {
+    for(i=HWPERF_COUNTMAX+EPERF_COUNTMAX,j=0;j<MPERF_COUNTMAX;i++,j++)
+         ctrl->m_evtctr.mp_countval[j] = from[i];
+    if ( ioctl(ctx->fd, PIOCSETMPERFCOUNTVAL, (void *)&ctrl->m_evtctr) < 0 ) {
+       SUBDBG("Error writing e-chip counter values, error returned: %d.\n", oserror());
+       return(PAPI_ESYS); 
+    }
+  }
+  return (PAPI_OK);
+}
+
+int _papi_hwd_shutdown(hwd_context_t *ctx)
+{
+  hwperf_x1_t p_evtctr[NUM_SSP];
+  eperf_x1_t e_evtctr;
+  mperf_x1_t m_evtctr;
+  int i;
+
+  if ( ioctl(ctx->fd, PIOCGETPERFCONTROL, (void *) &p_evtctr) < 0 ) 
+    SUBDBG("Error getting perf control in hwd_shutdown, error: %d\n", oserror());
+  else {
+    if ( p_evtctr[0].hwp_control&HWPERF_CNTRL_START ){
+       for(i=0;i<NUM_SSP;i++){
+          p_evtctr[i].hwp_control = HWPERF_CNTRL_STOP;
+       }
+       if ( ioctl(ctx->fd, PIOCSETPERFCONTROL, (void *) &p_evtctr) < 0 )
+          SUBDBG("Error stopping p-chip counters in hwd_shutdown, error: %d\n", oserror());
+    }
+  }
+  if ( ioctl(ctx->fd, PIOCGETEPERFCONTROL, (void *) &e_evtctr) < 0 ) 
+    SUBDBG("Error getting e-chip control in hwd_shutdown, error: %d\n", oserror());
+  else {
+    if ( e_evtctr.ep_control&EPERF_CNTRL_START ){
+       e_evtctr.ep_control = EPERF_CNTRL_STOP;
+       if ( ioctl(ctx->fd, PIOCSETEPERFCONTROL, (void *) &e_evtctr) < 0 )
+          SUBDBG("Error stopping e-chip counters in hwd_shutdown, error: %d\n", oserror());
+    }
+  }
+  if ( ioctl(ctx->fd, PIOCGETMPERFCONTROL, (void *) &m_evtctr) < 0 ) 
+    SUBDBG("Error getting m-chip control in hwd_shutdown, error: %d\n", oserror());
+  else {
+    if ( m_evtctr.mp_control&MPERF_CNTRL_START ){
+       m_evtctr.mp_control = MPERF_CNTRL_STOP;
+       if ( ioctl(ctx->fd, PIOCSETEPERFCONTROL, (void *) &m_evtctr) < 0 )
+          SUBDBG("Error stopping e-chip counters in hwd_shutdown, error: %d\n", oserror());
+    }
+  }
+  close(ctx->fd); 
+  return (PAPI_OK);
+}
+
+/*
+ * Shutdown anything that needs it
+ * Called once per process.
+ */
+int _papi_hwd_shutdown_global(void)
+{
+  return (PAPI_OK);
+}
+
+/*
+ * Set an event to overflow
+ */
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
+{
+  extern int _papi_hwi_using_signal;
+  hwd_control_state_t *this_state = &ESI->machdep;
+  hwd_context_t *ctx = &ESI->master->context;
+  int retval = PAPI_OK;
+  int event,counter;
+  int i;
+
+  counter = ESI->EventInfoArray[EventIndex].pos[0];
+  event = ESI->EventInfoArray[EventIndex].event_code;
+
+  SUBDBG("Setting overflow for event %x on counter %d with threshold of %d\n",event,counter,threshold);
+  if ( counter > 31 && threshold != 0) {
+    _papi_hwi_system_info.using_hw_overflow = 0;
+    return(PAPI_OK);
+  }
+  if ( threshold == 0 )
+  {
+      if ( counter > 31 ) {
+         int found_soft=0;
+         for(i=0; i<ESI->overflow.event_counter; i++ ) {
+            if ( ESI->EventInfoArray[ESI->overflow.EventIndex[i]].pos[0] > 31 ){
+              found_soft = 1;
+              break;
+            } 
+         }
+         if ( found_soft ) 
+            _papi_hwi_system_info.using_hw_overflow = 0;
+         else
+            _papi_hwi_system_info.using_hw_overflow = 1;
+         return ( PAPI_OK );
+      }
+      /* Clear overflow vector */
+      for(i=0;i<NUM_SSP;i++){
+        this_state->p_evtctr[i].hwp_overflow_freq[counter] = 0;
+      }
+      if ( ioctl(ctx->fd, PIOCSETPERFOVRFLWFREQ, this_state->p_evtctr) < 0 ){
+         SUBDBG("Error resetting overflow to 0 for event on counter %d. Error: %d\n",counter,oserror());
+         return(PAPI_ESYS);
+      }
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_using_signal--;
+      if (_papi_hwi_using_signal == 0) {
+         if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+            retval = PAPI_ESYS;
+      }
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+  }
+  else {
+      struct sigaction act;
+      void *tmp;
+
+      tmp = (void *) signal(PAPI_SIGNAL, SIG_IGN);
+      if ((tmp != (void *) SIG_DFL) && (tmp != (void *) _papi_hwd_dispatch_timer))
+         return (PAPI_EMISC);
+
+      memset(&act, 0x0, sizeof(struct sigaction));
+      act.sa_handler = _papi_hwd_dispatch_timer;
+      act.sa_flags = SA_RESTART|SA_SIGINFO;
+      if (sigaction(PAPI_SIGNAL, &act, NULL) == -1)
+         return (PAPI_ESYS);
+      /* Setup Overflow */
+      for(i=0;i<NUM_SSP;i++){
+        this_state->p_evtctr[i].hwp_overflow_freq[counter] = threshold;
+        this_state->p_evtctr[i].hwp_overflow_sig = PAPI_SIGNAL;
+      }
+      if ( ioctl(ctx->fd, PIOCSETPERFOVRFLWFREQ, this_state->p_evtctr) < 0 ){
+         SUBDBG("Error setting overflow to %d for event on counter %d. Error: %d\n",threshold,counter,oserror());
+         return(PAPI_ESYS);
+      }
+
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_using_signal++;
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+  }
+  return(retval);
+}
+
+/*
+ * Set an event to profile
+ */
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
+{
+  /* This function is not used and shouldn't be called. */
+  return(PAPI_ESBSTR);
+}
+
+/*
+ * Stop an event from being profiled
+ */
+int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
+{
+  return(PAPI_OK);
+}
+
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
+{
+   _papi_hwi_context_t ctx;
+
+   ctx.si = si;
+   ctx.ucontext = info;
+   SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, _papi_hwi_system_info.supports_hw_overflow, (long_long) si->si_overflow, 0);
+}
+
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
+{
+  return 1;
+};
+
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+{
+  int i;
+  for(i=0; ;i++ ){
+    if ( native_map[i].resources.event == -1 )
+	break;
+    if ( native_map[i].resources.event == (EventCode) )
+       return(native_map[i].event_name);
+  }
+  return(NULL);
+}
+
+char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+{
+  int i;
+  for(i=0; ;i++ ){
+    if ( native_map[i].resources.event == -1 )
+	break;
+    if ( native_map[i].resources.event == (EventCode) )
+       return(native_map[i].event_descr);
+  }
+  return(NULL);
+}
+
+/*
+ * Native Enumerate Events
+ */
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+{
+  int i;
+  
+  if ( modifier == 0 ) {
+    if ( (*EventCode&~PAPI_NATIVE_MASK) == 0 ){
+	*EventCode = native_map[0].resources.event;
+	return(PAPI_OK);
+    }
+    for(i=0; ;i++ ){
+      if ( native_map[i].resources.event == -1 ){
+          return(PAPI_ENOEVNT);
+      }
+      if ( native_map[i].resources.event == *EventCode ){
+	     if ( native_map[i+1].resources.event == -1 )
+		return (PAPI_ENOEVNT);
+	     else {
+                *EventCode = native_map[i+1].resources.event;
+                return(PAPI_OK);
+	     }
+      }
+    }
+  }
+  else 
+    return(PAPI_EINVAL);
+}
+
+/*
+ * Bipartite scheduling scheme, only needed if using bipartite
+ * scheduling.
+ */
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
+{
+  return(0);
+}
+
+/*
+ * This function forces the event to be mapped to only counter ctr.
+ */
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+  return;
+}
+
+/*
+ * This function examines the event to determine if it has
+ * a single exclusive mapping.  Returns true if exclusive,
+ * false if non-exclusive.
+ */
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
+{
+ return(0);
+}
+
+/*
+ * This function compares the dst and src events to determine
+ * if any counters are shared.  Typically the src event is 
+ * exclusive, so this detects a conflict if true. Returns
+ * true if conflict, false if no conflict.
+ */
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+  return(0);
+}
+
+/*
+ * This function removes the counters available to the src event
+ * from the counters available to the dst event, and reduces
+ * the rank of the dst event accordingly.  Typically, the
+ * src event will be exclusive, the the code shouldn't assume it.
+ */
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+  return;
+} 
+
+/* This function updates the selection status of the dst
+ * event based on information in the src event.
+ */
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+ 
+int _papi_hwd_setmaxmem()
+{
+  return (PAPI_ESBSTR);
+}
+
+
+void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
+{
+  int i;
+  unsigned long enable=0;
+  unsigned long enable_reg;
+
+  if ( _papi_hwi_system_info.default_domain & PAPI_DOM_KERNEL )
+     enable_reg |= HWPERF_ENABLE_KERNEL;
+  else if ( _papi_hwi_system_info.default_domain & PAPI_DOM_OTHER )
+     enable_reg |= HWPERF_ENABLE_EXCEPTION;
+  else
+     enable_reg |= HWPERF_ENABLE_USER;
+
+  for(i=0; i<NUM_SSP;i++){
+    ptr->p_evtctr[i].hwp_control = HWPERF_CNTRL_START;
+    ptr->p_evtctr[i].hwp_enable = ~HWPERF_ENABLE_MBZ & (HWPERF_ENABLE_RW|enable_reg);
+  }
+}
+
+/*
+ * This Function will be called when adding events to the eventset and
+ * deleting events from the eventset
+ */
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count, 
+	hwd_context_t *ctx)
+{
+  int i,j;
+  int counter=0;
+  int found_p=0,found_e=0,found_m=0;
+
+  for( j=0; j<NUM_SSP; j++) {
+     this_state->p_evtctr[j].hwp_events  = 0;
+  }
+  this_state->e_evtctr.ep_control = EPERF_CNTRL_START|EPERF_CNTRL_EVENTS;
+  this_state->m_evtctr.mp_control = MPERF_CNTRL_START|MPERF_CNTRL_EVENTS;
+  this_state->has_p = 0;
+  this_state->has_e = 0;
+  this_state->has_m = 0;
+
+  for ( i=0; i < count; i++ )
+  {
+    SUBDBG("Map Event Decode: code 0x%x, chip %d, counter %d, event %d\n", native[i].ni_event,  X1_CHIP_DECODE(native[i].ni_event), X1_COUNTER_DECODE(native[i].ni_event),  X1_EVENT_DECODE(native[i].ni_event));
+
+    switch ( X1_CHIP_DECODE(native[i].ni_event) ) {
+	case (_P_):
+           counter = X1_COUNTER_DECODE(native[i].ni_event);
+           if ( count < 0 || counter > 31 ){
+              SUBDBG("Invalid counter: %d for event: %d\n",counter,native[i].ni_event);
+              return(PAPI_ENOEVNT);
+           }
+           /* Default to ssp 0, since we don't map different ssp's to different events */
+           if ( (counter<<X1_EVENT_DECODE(native[i].ni_event)<<1)&this_state->p_evtctr[0].hwp_events){
+              SUBDBG("Conflict adding event: %d.\n", native[i].ni_event);
+              return(PAPI_ECNFLCT);
+           }
+           for( j=0; j<NUM_SSP; j++) {
+              this_state->p_evtctr[j].hwp_events |= (counter<<X1_EVENT_DECODE(native[i].ni_event)<<1); 
+           }   
+           native[i].ni_position = counter;
+           found_p = 1;
+           break;
+	case (_E_):
+           found_e = 1;
+           this_state->e_evtctr.ep_control |= (X1_EVENT_DECODE(native[i].ni_event)<<(counter<<1));
+          /* P-chip fills the first HWPERF_COUNTMAX counters slots */
+           native[i].ni_position = HWPERF_COUNTMAX+counter;
+           break;
+	case (_M_):
+           found_m = 1;
+           this_state->m_evtctr.mp_control |= (X1_EVENT_DECODE(native[i].ni_event)<<(counter<<1));
+          /* P-chip fills the first HWPERF_COUNTMAX counters slots and E-chip fills the next 16*/
+           native[i].ni_position = HWPERF_COUNTMAX+EPERF_COUNTMAX+counter;
+           break;
+	default:
+           SUBDBG("Invalid chip decode [%d] for event: %d\n", X1_CHIP_DECODE(native[i].ni_event),native[i].ni_event);
+           return(PAPI_ENOEVNT);
+    } 
+  }
+  if ( found_p ){
+    this_state->has_p = 1;
+    if ( ioctl(ctx->fd, PIOCSETPERFEVENTS, (void *) this_state->p_evtctr) < 0 ){
+        SUBDBG("Setting events returned: %d\n", oserror());
+    } 
+  }
+  /* E and M chips set their events at start time, so nothing to do here for them */
+  if ( found_e )
+    this_state->has_e = 1;
+  if ( found_m )
+    this_state->has_m = 1;
+  return(PAPI_OK);
+}
+
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, unsigned int event, void *extra,
+	EventInfo_t *out)
+{
 }
 
 
@@ -121,17 +834,69 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   retval = _papi_get_memory_info(&_papi_system_info.mem_info);
+   retval = get_memory_info(&_papi_hwi_system_info.hw_info);
    if (retval)
       return (retval);
 
 
    DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
-        _papi_system_info.hw_info.totalcpus,
-        _papi_system_info.hw_info.vendor_string,
-        _papi_system_info.hw_info.model_string, _papi_system_info.hw_info.mhz));
+        _papi_hwi_system_info.hw_info.totalcpus,
+        _papi_hwi_system_info.hw_info.vendor_string,
+        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz));
+
+   if (_papi_hwd_mdi_init() != PAPI_OK) {
+      return (PAPI_ESBSTR);
+   }
+
+   _papi_hwd_init_preset_search_map();
+
+   retval = _papi_hwi_setup_all_presets(preset_search_map);
+   return (retval);
+}
+
+extern int _papi_hwd_mdi_init()
+{
+  /* Name of the substrate we're using */
+   _papi_hwi_system_info.supports_write = 1;
+   _papi_hwi_system_info.supports_hw_overflow = 1;
+   _papi_hwi_system_info.supports_hw_profile = 0;
+   _papi_hwi_system_info.supports_multiple_threads = 1;
+   _papi_hwi_system_info.supports_64bit_counters = 1;
+   _papi_hwi_system_info.supports_inheritance = 1;
+   _papi_hwi_system_info.supports_attach = 0;
+   _papi_hwi_system_info.supports_real_usec = 1;
+   _papi_hwi_system_info.supports_real_cyc = 1;
+   _papi_hwi_system_info.supports_virt_usec = 1;
+   _papi_hwi_system_info.supports_virt_cyc = 1;
 
    return (PAPI_OK);
+}
+
+/* Initialize preset_search_map table by type of CPU *Planning for X2* */
+int _papi_hwd_init_preset_search_map()
+{
+  preset_search_map = preset_name_map_x1;
+  return(1);
+}
+
+static int _internal_scan_cpu_info(inventory_t * item, void *foo)
+{
+#define IPSTRPOS 8
+   char *ip_str_pos = &_papi_hwi_system_info.hw_info.model_string[IPSTRPOS];
+   char *cptr;
+   int i;
+   /* If the string is untouched fill the chip part with spaces */
+   if ((item->inv_class == INV_PROCESSOR) &&
+       (!_papi_hwi_system_info.hw_info.model_string[0])) {
+      for (cptr = _papi_hwi_system_info.hw_info.model_string;
+           cptr != ip_str_pos; *cptr++ = ' ');
+   }
+   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD)) {
+      SUBDBG("scan_system_info(%p,%p) Board: %ld, %d, %ld\n",
+             item, foo, item->inv_controller, item->inv_state, item->inv_unit);
+
+      _papi_hwi_system_info.hw_info.mhz = (int) item->inv_controller;
+   }
 }
 
 static int _internal_get_system_info(void)
@@ -142,8 +907,8 @@ static int _internal_get_system_info(void)
    char pname[PATH_MAX];
    prpsinfo_t psi;
 
-   if (scaninvent(scan_cpu_info, NULL) == -1)
-      return (PAPI_ESBSTR);
+   if ( scaninvent(_internal_scan_cpu_info, NULL) == -1 )
+     return (PAPI_ESBSTR);
 
    pid = getpid();
    if (pid == -1)
@@ -159,34 +924,49 @@ static int _internal_get_system_info(void)
    close(fd);
 
    /* EXEinfo */
+   /* Cut off any arguments to exe */
+   {
+     char *tmp;
+     tmp = strchr(psi.pr_psargs, ' ');
+     if (tmp != NULL)
+       *tmp = '\0';
+   }
 
    if (realpath(psi.pr_psargs,pname))
      strncpy(_papi_hwi_system_info.exe_info.fullname, pname, PAPI_HUGE_STR_LEN);
    else
      strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_HUGE_STR_LEN);
 
-   strncpy(_papi_system_info.exe_info.name, psi.pr_fname, PAPI_MAX_STR_LEN);
+   strncpy(_papi_hwi_system_info.exe_info.address_info.name, psi.pr_fname, PAPI_MAX_STR_LEN);
+
+   /* Preload info */
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "_RLD_LIST");
+   _papi_hwi_system_info.preload_info.lib_preload_sep = ':';
+   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
 
    /* HWinfo */
-
-   _papi_system_info.cpunum = psi.pr_sonproc;
-   _papi_system_info.hw_info.totalcpus = sysmp(MP_NPROCS);
-   if (_papi_system_info.hw_info.totalcpus > 3) {
-      _papi_system_info.hw_info.ncpu = 4;
-      _papi_system_info.hw_info.nnodes = _papi_system_info.hw_info.totalcpus / 16;
+   _papi_hwi_system_info.hw_info.totalcpus = sysmp(MP_NPROCS);
+   if (_papi_hwi_system_info.hw_info.totalcpus > 3) {
+      _papi_hwi_system_info.hw_info.ncpu = 4;
+      _papi_hwi_system_info.hw_info.nnodes = _papi_hwi_system_info.hw_info.totalcpus / 16;
    } else {
-      _papi_system_info.hw_info.ncpu = 0;
-      _papi_system_info.hw_info.nnodes = 0;
+      _papi_hwi_system_info.hw_info.ncpu = 0;
+      _papi_hwi_system_info.hw_info.nnodes = 0;
    }
 
-  /*_papi_system_info.hw_info.mhz = getmhz();*/
-   strcpy(_papi_system_info.hw_info.vendor_string, "Cray");
-   _papi_system_info.hw_info.vendor = -1;
 
    /* Generic info */
    /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
-   _papi_system_info.num_cntrs = 64;
-   _papi_system_info.cpunum = get_cpu();
+   _papi_hwi_system_info.num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
+   strcpy(_papi_hwi_system_info.hw_info.vendor_string, "Cray");
+   _papi_hwi_system_info.hw_info.vendor = -1;
+   strcpy(_papi_hwi_system_info.hw_info.model_string ,"X1");
+   _papi_hwi_system_info.hw_info.model = -1;
+   _papi_hwi_system_info.supports_hw_overflow = 1;
+
+   _papi_hwd_update_shlib_info();
+
 
    return (PAPI_OK);
 }
@@ -195,96 +975,94 @@ static int _internal_get_system_info(void)
 /*
  * This is called whenever a thread is initialized
  */
-int _papi_hwd_init(EventSetInfo_t * global)
+int _papi_hwd_init(hwd_context_t * ptr)
 {
+   char pidstr[PAPI_MAX_STR_LEN];
+   hwperf_x1_t evtctr[NUM_SSP];
+   int i,perfset=1,ret;
+   int fd;
+
+   sprintf(pidstr, "/proc/%d", (int) getpid());
+   if ( (fd = open(pidstr, O_RDONLY)) < 0 ){
+      SUBDBG("Error opening /proc/%d with error code: %d\n",(int)getpid(),oserror());
+      return (PAPI_ESYS);
+   }
+
+   if ((ret = ioctl(fd, PIOCGETPERFENABLE, (void *)&evtctr)) < 0 )
+   {
+     SUBDBG("Error Getting Enable bits: %d\n", oserror());
+     return(PAPI_ESYS);
+   }
+   for(i=0; i<NUM_SSP;i++){
+      if ( !(evtctr[i].hwp_enable & HWPERF_ENABLE_RW) ){
+	 perfset = 0;
+         break;
+      }
+   }
+   if ( !perfset ) {
+     for(i=0; i<NUM_SSP;i++){
+       evtctr[i].hwp_enable = HWPERF_ENABLE_RW|HWPERF_ENABLE_USER;
+     }
+     if ( (ret = ioctl(fd, PIOCSETPERFENABLE, (void *)&evtctr)) < 0 )
+     {
+        SUBDBG("Error setting perf enable bit.  Return Code: %d\n", oserror());
+        return(PAPI_ESYS);
+     }
+   }
+   {
+   int flags = HWPERF_CURTHREAD_COUNTS|EPERF_CURTHREAD_COUNTS|MPERF_CURTHREAD_COUNTS;
+   if ( (ret = ioctl(fd, PIOCSETPERFFLAGS, &flags)) <0 )
+   {
+	SUBDBG("Error setting per thread counts. Return Code: %d\n", oserror());
+        return(PAPI_ESYS);
+   }
+   }
+   ptr->fd = fd;
    return (PAPI_OK);
 }
 
+/*
+ * Shared objects are not supported on the X1
+ * so we use the normal addresses
+ */
+int _papi_hwd_update_shlib_info()
+{
+   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _ftext;
+   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
+   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _fdata;
+   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
+   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _fbss;
+   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
+  return(PAPI_OK);
+}
 
 /*
  * Utility Functions
  */
-
-static mutexlock_t lck;
+static mutexlock_t lck[PAPI_MAX_LOCK];
 
 void _papi_hwd_lock_init(void)
 {
-   init_lock(&lck);
-}
-
-void _papi_hwd_lock(void)
-{
    int i;
-   /* This will always aquire a lock, while acquire_lock is not
-    * guaranteed, while spin_lock states:
-    * If the lock isnot immediately available, the calling process will either 
-    * spin (busywait) or be suspended until the lock becomes available.
-    * I will try that first and check the performance and load -KSL
-    */
-   spin_lock(&lck);
-/*
-  while (acquire_lock(&lck) != 0)
-  {
-    DBG((stderr,"Waiting..."));
-    nap(1000); 
-  }
-*/
+   for ( i=0; i<PAPI_MAX_LOCK;i++)
+      init_lock(&lck[i]);
 }
 
-void _papi_hwd_unlock(void)
-{
-   /* This call uncoditionally unlocks the mutex
-    * caller beware
-    */
-   release_lock(&lck);
-}
-
-/*
- * This function should return the highest resolution wallclock timer available
- * in usecs.  The Cray X1 does not have a high resolution timer so we have to
- * use gettimeofday.
+/* This will always aquire a lock, while acquire_lock is not
+ * guaranteed, while spin_lock states:
+ * If the lock isnot immediately available, the calling process will either
+ * spin (busywait) or be suspended until the lock becomes available.
+ * I will try that first and check the performance and load -KSL
  */
-long_long _papi_hwd_get_real_usec(void)
+void _papi_hwd_lock(int index)
 {
-   struct timeval tv;
-
-   gettimeofday(&tv, NULL);
-   return (((long_long)tv.tv_sec * (long_long)1000000) + (long_long)tv.tv_usec);
+  spin_lock(&lck[index]);
 }
 
-/*
- * This function should return the highest resolution wallclock timer available
- * in cycles. Since the Cray X1 does not have a high resolution we have to
- * use gettimeofday.
- */
-long_long _papi_hwd_get_real_cycles(void)
+void _papi_hwd_unlock(int index)
 {
-   struct timeval tv;
-
-   gettimeofday(&tv, NULL);
-   return ((((long_long)tv.tv_sec * (long_long)1000000) + (long_long)tv.tv_usec) * (long_long)_papi_system_info.hw_info.mhz);
-}
-
-/*
- * This function should return the highest resolution processor timer available
- * in usecs.
+/* This call uncoditionally unlocks the mutex
+ * caller beware
  */
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
-{
-   struct tms buffer;
-
-   times(&buffer);
-   return(((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)sysconf(_SC_CLK_TCK));
-}
-
-/*
- * This function should return the highest resolution processor timer available
- * in cycles.
- */
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
-{
-   struct tms buffer;
-
-   times(&buffer);
-   return((((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)sysconf(_SC_CLK_TCK)) * (long_long)_papi_system_info.hw_info.mhz);
+  release_lock(&lck[index]);
 }

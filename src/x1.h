@@ -1,13 +1,32 @@
-#ifndef _PAPI_X1_H                /* _PAPI_X1 */
-#define _PAPI_X1_H
+#ifndef _PAPI_X1                /* _PAPI_X1 */
+#define _PAPI_X1
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <sys/siginfo.h>
+#include <sys/ucontext.h>
+#include <sys/hwperftypes.h>
+#include <sys/hwperfmacros.h>
+#include <mutex.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/sysmp.h>
+#include <sys/sysinfo.h>
+#include <sys/procfs.h>
+#include <sys/times.h>
+#include <sys/errno.h>
+#include <assert.h>
+#include <invent.h>
+#include "papi.h"
 
-#include "unicosMP.h"
-#include  "x1-native.h"
-
-#include "papi_internal.h"
-#define inline_static inline static
+#define inline_static static
 #define X1_MAX_COUNTERS 64
 #define MAX_COUNTERS X1_MAX_COUNTERS
+#define MAX_COUNTER_TERMS 8  /* Number of Native events that can be used for a derived event */
+
+#include "papi_preset.h"
 
 typedef struct X1_control {
    /* If the derived event is not associative, this index is the lead operand */
@@ -20,33 +39,47 @@ typedef struct X1_control {
    u_long_long event_mask[3];
 
    /* P-Chip Hardware control Information to pass to the ioctl call */
-   hwperf_x1_t p_evtctr;
+   hwperf_x1_t p_evtctr[NUM_SSP];
+   short has_p;
 
    /* E-Chip Hardware control Information to pass to the ioctl call */
    eperf_x1_t e_evtctr;
+   short has_e;
 
    /* M-Chip Hardware control Information to pass to the ioctl call */
    mperf_x1_t m_evtctr;
+   short has_m;
 
+   long_long values[64];
+} X1_control_t;
+
+typedef struct X1_reg_alloc {
+ int placeholder;
+} X1_reg_alloc_t;
+
+typedef struct X1_regmap {
+ int placeholder;
+} X1_regmap_t;
+
+typedef struct X1_context {
    /* Process File Descriptor for passing to the ioctl call,
     * this should be opened at start time so that reads don't have to
     * reopen the file.
     */
    int fd;
-} X1_control_t;
-
-typedef struct X1_regmap {
-} X1_regmap_t;
-
-typedef struct X1 X1_context {
 } X1_context_t;
 
+typedef struct X1_register{
+ int event;
+} X1_register_t;
+
 typedef X1_control_t hwd_control_state_t;
-
 typedef X1_regmap_t hwd_register_map_t;
-
 typedef X1_context_t hwd_context_t;
+typedef X1_register_t hwd_register_t;
 
+typedef siginfo_t hwd_siginfo_t;
+typedef ucontext_t hwd_ucontext_t;
 
 typedef struct hwd_preset {
    /* Is this event derived? */
@@ -68,26 +101,31 @@ typedef struct hwd_native_info {
    char *event_descr;
 } hwd_native_info_t;
 
+typedef X1_reg_alloc_t hwd_reg_alloc_t;
 
-/* Can these thread structures be moved out of the substrate?
- */
-typedef struct _ThreadInfo {
-   unsigned pid;
-   unsigned tid;
-   hwd_context_t context;
-   void *event_set_overflowing;
-   void *event_set_profiling;
-   int domain;
-} ThreadInfo_t;
 
-typedef struct _thread_list {
-   ThreadInfo_t *master;
-   struct _thread_list *next;
-} ThreadInfoList_t;
+/*
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[ctx->si->si_ssp].uc_mcontext.scontext[CTX_EPC])
+*/
+#ifdef MSP
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[0].uc_mcontext.scontext[CTX_EPC])
+#else
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[0].uc_mcontext.scontext[CTX_EPC])
+#endif
+
+#include  "x1-native.h"
+#include "x1-native-presets.h"
+#include "x1-presets.h"
+#include "papi_internal.h"
+
+extern int _etext[], _ftext[];
+extern int _edata[], _fdata[];
+extern int _fbss[], _end[];
 
 
 /* Prototypes */
-extern int set_domain(hwd_control_state_t * this_state, int domain);
-extern int set_granularity(hwd_control_state_t * this_state, int domain);
-
+extern int set_domain(hwd_context_t * this_state, int domain);
+extern int set_granularity(hwd_context_t * this_state, int domain);
+void _papi_hwd_lock(int index);
+void _papi_hwd_unlock(int index);
 #endif                          /* _PAPI_X1 */

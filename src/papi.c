@@ -48,8 +48,8 @@ extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 extern int _papi_hwi_error_level;
 extern char *_papi_hwi_errStr[];
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
-extern PAPI_overflow_handler_t _papi_hwi_dummy_handler;
 extern papi_mdi_t _papi_hwi_system_info;
+void _papi_hwi_dummy_handler(int EventSet, void *address, long_long  overflow_vector);
 
 /* papi_data.c */
 
@@ -673,7 +673,7 @@ int PAPI_reset(int EventSet)
          retval = _papi_hwd_reset(&thread->context, &ESI->machdep);
 
          if ((ESI->state & PAPI_OVERFLOWING) &&
-             (_papi_hwi_system_info.supports_hw_overflow))
+             (_papi_hwi_system_info.using_hw_overflow))
             ESI->overflow.count = 0;
 
          if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.supports_hw_profile))
@@ -1311,11 +1311,10 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    /* Set up the option structure for the low level */
 
    if (_papi_hwi_system_info.supports_hw_overflow) {
-/*
-    retval = _papi_hwd_set_overflow(ESI, &ESI->overflow);
-*/
       retval = _papi_hwd_set_overflow(ESI, index, threshold);
-      if (retval < PAPI_OK)
+      if ( !_papi_hwi_system_info.using_hw_overflow )
+         ESI->overflow.timer_ms = PAPI_ITIMER_MS;
+      else if (retval < PAPI_OK)
          papi_return(retval);
    } else
       ESI->overflow.timer_ms = PAPI_ITIMER_MS;
@@ -1679,7 +1678,7 @@ int PAPI_get_overflow_event_index(int EventSet, long_long overflow_vector, int *
    if (ESI->NumberOfEvents == 0 )
       papi_return(PAPI_EINVAL);
 
-   while ((set_bit = _papi_hwi_ffsll(overflow_vector)))
+   while ((set_bit = ffsll(overflow_vector)))
    {
 	   set_bit -= 1;
 	   overflow_vector ^= (long_long)1 << set_bit;

@@ -85,6 +85,7 @@ extern int _papi_hwi_debug;
 #endif
 
 #ifdef NO_VARARG_MACRO          /* Prototypes */
+  #define ISLEVEL(a) (_papi_hwi_debug&a)
   void SUBDBG(char *, ...);
   void APIDBG(char *, ...);
   void INTDBG(char *, ...);
@@ -422,6 +423,9 @@ typedef struct _papi_mdi {
    int supports_program;        /* We can use programmable events */
    int supports_write;          /* We can write the counters */
    int supports_hw_overflow;    /* Needs overflow to be emulated */
+   int using_hw_overflow;       /* For platforms that support 2 models such as the
+                                 * X1 with hw support on p-chip, but sw support on e,m-chip
+  				 */
    int supports_hw_profile;     /* Needs profile to be emulated */
    int supports_multiple_threads;     /* hardware counters support 
                                          multiple threads */

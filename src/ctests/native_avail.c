@@ -58,6 +58,9 @@ int main(int argc, char **argv)
    }
    i = 0 | PAPI_NATIVE_MASK;
    j = 0;
+#ifdef __crayx1
+   PAPI_enum_event(&i, 0);
+#endif
    do {
 #ifdef _POWER4
       group = (i & 0x00FF0000) >> 16;

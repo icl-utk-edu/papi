@@ -394,6 +394,7 @@ extern int _papi_hwd_mdi_init()
      /* Name of the substrate we're using */
     strcpy(_papi_hwi_system_info.substrate, "$Id$");
    _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
+   _papi_hwi_system_info.using_hw_overflow = HW_OVERFLOW;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
    _papi_hwi_system_info.supports_real_cyc = 1;

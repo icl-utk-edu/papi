@@ -97,8 +97,6 @@ static hwd_native_info_t native_map[] = {
    {X1_P_EV_STALL_VLSU_VM, "X1_P_EV_STALL_VLSU_VM",
     "CPs VLSU stalled waiting for VU vector mask (VM)"},
    /* Processor Counter 13 */
-   {X1_P_EV_BRANCH_MISPREDICT, "X1_P_EV_BRANCH_MISPREDICT",
-    "No. of mispredicted branches"},
    {X1_P_EV_DCACHE_INVALIDATE_V, "X1_P_EV_DCACHE_INVALIDATE_V",
     "No. of Dcache invalidates from VLSU"},
    {X1_P_EV_STALL_DU_INST_HOLD, "X1_P_EV_STALL_DU_INST_HOLD",
@@ -475,5 +473,5 @@ static hwd_native_info_t native_map[] = {
     "Hits out of a transient buffer line buffer (sum=4)"},
    {X1_M_EV_NTWK_OUT_BLOCK_1, "X1_M_EV_NTWK_OUT_BLOCK_1",
     "Cycles network output 1 blocked (no flow control credits) (sum=1)"},
-   {0, NULL, NULL}
+   {-1, NULL, NULL}
 };

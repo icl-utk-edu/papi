@@ -646,7 +646,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
       if (_papi_hwd_allocate_registers(ESI)) {
          retval =
              _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray,
-                                            ESI->NativeCount);
+                                            ESI->NativeCount,&ESI->master->context);
          if (retval != PAPI_OK)
             return (retval);
 
@@ -861,7 +861,8 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
       clear the now empty slots, reinitialize the index, and update the count.
       Then send the info down to the substrate to update the hwd control structure. */
    if (zero) {
-      retval = _papi_hwd_update_control_state(this_state, native, ESI->NativeCount);
+      retval = _papi_hwd_update_control_state(this_state, native, ESI->NativeCount,
+		&ESI->master->context);
       if (retval != PAPI_OK)
          return (retval);
    }
@@ -1132,6 +1133,7 @@ int _papi_hwi_mdi_init()
    _papi_hwi_system_info.supports_program = 0;
    _papi_hwi_system_info.supports_write = 0;
    _papi_hwi_system_info.supports_hw_overflow = 0;
+   _papi_hwi_system_info.using_hw_overflow = 0;
    _papi_hwi_system_info.supports_hw_profile = 0;
    _papi_hwi_system_info.supports_multiple_threads = 1;
    _papi_hwi_system_info.supports_64bit_counters = 0;
@@ -1448,8 +1450,6 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
  */
 
 #ifdef NO_VARARG_MACRO
-#define ISLEVEL(a) (_papi_hwi_debug&level)
-
 void PAPIDEBUG(int level, char *format, ...)
 {
 #ifdef DEBUG

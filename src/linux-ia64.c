@@ -289,6 +289,7 @@ inline static int mdi_init()
   
   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.supports_hw_overflow = 1;
+  _papi_hwi_system_info.using_hw_overflow = 1;
   _papi_hwi_system_info.supports_hw_profile = 0;
   _papi_hwi_system_info.supports_64bit_counters = 1;
   _papi_hwi_system_info.supports_inheritance = 1;

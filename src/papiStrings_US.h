@@ -257,6 +257,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_ENOTPRESET_dsc "Event in argument is not a valid preset"
 #define PAPI_ENOCNTR_dsc    "Hardware does not support performance counters"
 #define PAPI_EMISC_dsc      "Unknown error code"
+#define PAPI_EPERM_dsc      "Permission level does not permit operation"
 
 /********************************************************/
 /* This block provides general strings used in PAPI     */

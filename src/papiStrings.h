@@ -174,3 +174,4 @@ To create a version of PAPI in your native language, do the following:
 #define PAPI_ENOTPRESET_nm "PAPI_ENOTPRESET"
 #define PAPI_ENOCNTR_nm    "PAPI_ENOCNTR"
 #define PAPI_EMISC_nm      "PAPI_EMISC"
+#define PAPI_EPERM_nm	   "PAPI_EPERM"

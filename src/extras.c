@@ -9,6 +9,8 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Kevin London
+*          london@cs.utk.edu
 */
 
 /* This file contains portable routines to do things that we wish the
@@ -297,7 +299,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
          if (ESI->state & PAPI_PROFILING) {
             int k = 0;
             while (overflow_vector) {
-               i = _papi_hwi_ffsll(overflow_vector) - 1;
+               i = ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
                  /* This loop is here ONLY because Pentium 4 can have tagged *
@@ -524,7 +526,7 @@ int _papi_hwi_start_overflow_timer(ThreadInfo_t * thread, EventSetInfo_t * ESI)
    int retval = PAPI_OK;
 
    thread->event_set_overflowing = ESI;
-   if (_papi_hwi_system_info.supports_hw_overflow == 0)
+   if (_papi_hwi_system_info.using_hw_overflow == 0)
 #ifdef OVERFLOW_DEBUG
       retval = start_timer(500);
 #else
@@ -537,7 +539,7 @@ int _papi_hwi_stop_overflow_timer(ThreadInfo_t * thread, EventSetInfo_t * ESI)
 {
    int retval = PAPI_OK;
 
-   if (_papi_hwi_system_info.supports_hw_overflow == 0)
+   if (_papi_hwi_system_info.using_hw_overflow == 0)
       retval = stop_timer();
    thread->event_set_overflowing = NULL;
    return (retval);
@@ -602,6 +604,12 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    char *name;
    unsigned int i = 0 | PAPI_NATIVE_MASK;
+/* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
+ * first call to enum_events with a 0 will give a valid code
+ */
+#if defined(__crayx1)
+ _papi_hwd_ntv_enum_events(&i, 0);
+#endif
    do {
       name = _papi_hwd_ntv_code_to_name(i);
 /*
@@ -660,6 +668,29 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
    }
    return (PAPI_ENOEVNT);
 }
+
+#ifdef NEED_FFSLL
+/* find the first set bit in long long */
+
+int ffsll(long_long lli)
+{
+   int i, num, t, tmpint, len;
+
+   num = sizeof(long_long)/sizeof(int);
+   len = sizeof(int)*CHAR_BIT;
+
+   for(i=0; i< num; i++ ) {
+      tmpint = (int)( ( (lli>>len)<<len) ^ lli );
+
+      t=ffs(tmpint);
+      if ( t ) {
+         return(t+i*len);
+      }
+      lli = lli>>len;
+   }
+   return PAPI_OK;
+}
+#endif
 
 
 /**********************************************************************

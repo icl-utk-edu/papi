@@ -19,7 +19,7 @@
 #define _E_ 0x2000
 #define _M_ 0x3000
 
-#define X1_CHIP_DECODE(code)	(((code >> 12) & 0xf) - 1)
+#define X1_CHIP_DECODE(code)	(code & 0xf000)
 #define X1_COUNTER_DECODE(code) ((code >> 4) & 0xff)
 #define X1_EVENT_DECODE(code)	(code & 0xf)
 

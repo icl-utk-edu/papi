@@ -608,11 +608,13 @@ static int get_system_info(void)
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
       _papi_hwi_system_info.supports_hw_overflow = 0;
+      _papi_hwi_system_info.using_hw_overflow = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
       _papi_hwi_system_info.supports_hw_overflow = 1;
+      _papi_hwi_system_info.using_hw_overflow = 1;
    } else
       return (PAPI_ESBSTR);
 

@@ -82,7 +82,7 @@ extern int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int si
 */
 extern void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
 extern int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                          NativeInfo_t * native, int count);
+                                          NativeInfo_t * native, int count, hwd_context_t *);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *,
                                     EventInfo_t *);
 extern int _papi_hwd_allocate_registers(EventSetInfo_t * ESI);
@@ -211,31 +211,6 @@ extern int _papi_hwd_get_memory_info(PAPI_hw_info_t *, int);
 #ifdef linux
 extern int sighold(int);
 extern int sigrelse(int);
-#endif
-
-/* find the first set bit in long long */
-
-#ifndef HAVE_FFSLL
-inline_static int _papi_hwi_ffsll(long_long lli)
-{
-   int i, num, t, tmpint, len;
-
-   num = sizeof(long_long)/sizeof(int);
-   len = sizeof(int)*CHAR_BIT;
-
-   for(i=0; i< num; i++ ) {
-      tmpint = (int)( ( (lli>>len)<<len) ^ lli );
- 
-      t=ffs(tmpint);
-      if ( t ) {
-         return(t+i*len);
-      }
-      lli = lli>>len;
-   }
-   return PAPI_OK;
-}
-#else
-#define _papi_hwi_ffsll ffsll
 #endif
 
 #endif                          /* PAPI_PROTOS_H */

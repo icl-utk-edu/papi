@@ -222,7 +222,8 @@ const char *papi_errorNam[] = {
    PAPI_ENOEVST_nm,
    PAPI_ENOTPRESET_nm,
    PAPI_ENOCNTR_nm,
-   PAPI_EMISC_nm
+   PAPI_EMISC_nm,
+   PAPI_EPERM_nm
 };
 
 const int papi_errorNum[] = {
@@ -240,7 +241,8 @@ const int papi_errorNum[] = {
    PAPI_ENOEVST,
    PAPI_ENOTPRESET,
    PAPI_ENOCNTR,
-   PAPI_EMISC
+   PAPI_EMISC,
+   PAPI_EPERM
 };
 
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
