@@ -236,7 +236,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
    }
 }
 
-static void copy_value(int val, char *nam, char *names, int *values, int len)
+static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
 {
    *values = val;
    strncpy(names, nam, len);
