@@ -240,7 +240,11 @@ int remove_test_events(int *EventSet, int mask)
 
   if (mask & 0x4) 
     {
+#if defined(__digital__)
+      retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
+#else
       retval = PAPI_rem_event(EventSet, PAPI_FP_INS);
+#endif
       if (retval < PAPI_OK) return(retval);
     }
 
