@@ -1,0 +1,27 @@
+.\" $Id$
+.TH COMMAND_LINE 1 "March, 2005"
+.SH NAME
+command_line \- executes PAPI preset or native events from the command line.
+
+.SH SYNOPSIS
+
+\fBcommand_line\fP <event> <event> ...
+
+
+.SH DESCRIPTION
+\fBcommand_line\fP is a PAPI utility program that adds named events from the command line to a PAPI EventSet
+and does some work with that EventSet. This serves as a handy way to see if events can be counted together,
+and if they give reasonable results for known work.  
+
+
+.SH OPTIONS
+
+This utility has no command line options.
+
+.SH BUGS 
+There are no known bugs in this utility. 
+.LP
+If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+
+.SH SEE ALSO
+.BR PAPI "(3), " avail "(1), " clockres "(1), " cost "(1), " event_chooser "(1), " mem_info "(1), " native_avail "(1)"
