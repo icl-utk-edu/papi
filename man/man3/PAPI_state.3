@@ -2,27 +2,30 @@
 .TH PAPI_state 3
 
 .SH NAME
-PAPI_state \- start counting events contained in an EventSet
+PAPI_state \- return the counting state of an EventSet
 
 .SH SYNOPSIS
 .B #include <papi.h>
 
-.BI "int\ PAPI_state (int " EventSet ", int *" status);
+.BI "int\ PAPI_state (int " EventSet ", int *" status ");"
 
 .SH DESCRIPTION
+.B PAPI_state() 
+returns the counting state of 
+.I EventSet
+in the form of indicator bits in 
+.IR status "."
 .LP
-int EventSet --  a reference to an EventSetInfo structure
-.LP
-.LP
-.B PAPI_state(\|) 
-returns the counting state of the EventSet in
-.I status.
-If the call succeeds, then
-.I status
-is either 
-.I PAPI_RUNNING
-or
-.I PAPI_STOPPED.
+The values can be boolean combinations of one or more of the following
+nonzero constants as defined in the PAPI header file, 
+.BR papi.h "."
+
+.nf
+.B PAPI_STOPPED
+.B PAPI_RUNNING      
+.B PAPI_OVERFLOWING  
+.B PAPI_PROFILING    
+.if
 
 .SH RETURN VALUES
 On success, this function returns
@@ -38,13 +41,10 @@ One or more of the arguments is invalid.
 The EventSet specified does not exist.
 
 .SH EXAMPLES
-.LP
-.PP
-.RS
 .nf
 int EventSet = PAPI_NULL;
 int status = 0;  
-.LP
+
 if (PAPI_create_eventset(&EventSet) != PAPI_OK)
   handle_error(1);
 
@@ -68,8 +68,6 @@ if (PAPI_state(EventSet, &status) != PAPI_OK)
 
 printf("State is now %d\en",status);
 .fi
-.RE
-.PP
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

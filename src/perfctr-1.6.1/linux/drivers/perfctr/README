@@ -10,7 +10,7 @@ Supported processors
   and 6 processors (Pentium/MMX/Pro/II/III/Celeron/Xeon)
   the AMD K7 Athlon, and the Cyrix 6x86MX/MII/III processors.
 
-- The WinChip C6, 2, and 3 processors are supported, if the
+- The WinChip C6/2/2A/3 processors are supported, if the
   kernel was built with the CONFIG_PERFCTR_WINCHIP
   option and without the CONFIG_X86_TSC option.
 
@@ -44,5 +44,5 @@ Preliminary Information, AMD Publication #22007, Revision H.
 
 [WinChip C6] "WinChip C6 Processor Data Sheet".
 [WinChip 2A] "WinChip 2 Processor Version A Data Sheet".
-[WinChip BIOS] "WinChip Processor Family BIOS Writers Guide v4.0".
-(at http://www.centtech.com/)
+[WinChip BIOS] "WinChip Processor Family BIOS Writers Guide".
+(unknown URL; formerly at http://www.winchip.com/)

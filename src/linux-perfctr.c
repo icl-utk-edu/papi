@@ -79,7 +79,7 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 {0,0,0,{{0,0,0x0,0x0}},""},			// Cycles FPU stalled
 		{CNTR2|CNTR1,0,0,{{0x79,0x79,0x0,0x0}},""},	// Total cycles
 		{CNTR2|CNTR1,DERIVED_PS,1,{{0xC0,0x79,0x0,0x0}},""},	// IPS
-                {CNTR2|CNTR1,0,0,{{0x43,0x43,0x0,0x0}},""},	// Total load/store inst. exec
+                {0,0,0,{{0,0,0,0}},""},	// Total load/store inst. exec
                 {0,0,0,{{0,0,0x0,0x0}},""}, // SYnc exec.
 		{CNTR2|CNTR1,DERIVED_SUB,0,{{0x43,0x45,0x0,0x0}},""}, // L1_DCH
 		{CNTR2|CNTR1,DERIVED_SUB,0,{{0xf2e,0xf24,0x0,0x0}},""}, // L2_DCH

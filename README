@@ -9,10 +9,14 @@
 
 This directory contains:
 
-buglist		Bug handling and reports.
+README		
+COPYRIGHT	
+INSTALL		
+buglist		Fixed bug list, bug handling and reporting.
 man/ 		Unformatted manual pages and associated macros.
-src/ 		The library and test cases.
-spec/		The API specification.
+src/ 		The PAPI library and test cases.
+spec/		The outdated API specification.
 tools/		Sample tools using PAPI.
-perf/		The Linux 2.0-2.2 kernel patch for PAPI. (2.4 is 
-		at http://www.csd.uu.se/~mikpe/linux/perfctr)
+perf/		The Linux 2.0-2.2 kernel patch for PAPI. 
+perfctr/	The most recent tested 2.4 kernel patch set for PAPI.
+		(Home site is at http://www.csd.uu.se/~mikpe/linux/perfctr)

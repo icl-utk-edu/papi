@@ -5,6 +5,14 @@
 PAPI_reset \- reset the hardware event counts in an EventSet
 
 .SH SYNOPSIS
+.B #include <papi.h>
+
+.BI "int\ PAPI_reset (int " EventSet ");"
+
+.SH DESCRIPTION
+.B PAPI_reset()
+zeroes the values contained in 
+.IR EventSet "."
 
 .SH RETURN VALUES
 On success, this function returns
@@ -22,35 +30,34 @@ variable.
 The EventSet specified does not exist.
 
 .SH EXAMPLES
-.LP
+.nf
+int EventSet = PAPI_NULL;
+unsigned int native = 0x0;
+long long values[1];
+ 	
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
 
-  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-  long long values[1];
-.LP
-	
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
+/* Add Total Instructions Executed to our EventSet */
 
-  /* Add Total Instructions Executed to our EventSet */
+if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
+/* Start counting */
 
-  /* Start counting */
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
+poorly_tuned_function();
 
-  poorly_tuned_function();
+if (PAPI_stop(EventSet, values) != PAPI_OK)
+  handle_error(1);
 
-  if (PAPI_stop(EventSet, values) != PAPI_OK)
-    handle_error(1);
+printf("%lld\n",values[0]);
 
-  printf("%lld\n",values[0]);
-
-  if (PAPI_reset(EventSet, values) != PAPI_OK)
-    handle_error(1);
+if (PAPI_reset(EventSet, values) != PAPI_OK)
+  handle_error(1);
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

@@ -24,10 +24,19 @@ addressed the bug in a timely manner.
 3) Bug included in the Errata-FAQ on the web site.
 4) Credits given to the contributors on the web site.
 
-
-BUG HISTORY
+ACTIVE BUGS
 -----------
 
+11/1/00 - Fortran 95 bindings for P.G. Fortran compilers under Linux
+11/1/00	- Alpha port still returns wrong results from hardware sometimes
+
+FIXED BUG HISTORY
+-----------------
+
+11/1/00	- Removed PAPI_LST_INS from x86 platform
+10/1/00	- Fixed native encoding bug on all platforms
+9/1/00	- Fixed T3E Mhz bug
+8/1/00	- T3E Fortran bugs fixed
 7/1/00  - Fortran string handling is seriously inept. (fixed thanks
 	  to Nils Smeds, Anders Nilsson)
 5/31/00 - John May: expand_dynamic_array is broken. (fixed in 1.1)

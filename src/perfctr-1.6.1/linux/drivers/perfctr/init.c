@@ -21,7 +21,7 @@
 
 #define VERSION_MAJOR	1
 #define VERSION_MINOR	5
-#define VERSION_MICRO	2
+#define VERSION_MICRO	1
 
 static struct perfctr_info perfctr_info;
 

@@ -2,6 +2,7 @@ This directory contains some example programs which illustrate how
 the Linux x86 performance-monitoring counters interface may be used.
 
 command/
+	NOT OPERATIONAL, USES OBSOLETE DRIVER FACILITIES
 	Shows how a program can run another program
 	while controlling its perfctrs.
 	Fully developed, this would be a perfctr

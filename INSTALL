@@ -1,0 +1,11 @@
+/* 
+* File:    INSTALL
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+To install the various components of PAPI, please see the INSTALL
+files in each of the subdirectories.

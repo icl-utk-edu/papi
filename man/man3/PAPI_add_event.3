@@ -7,10 +7,11 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent \- add PAPI preset or native ha
 .SH SYNOPSIS
 .B #include <papi.h>
 
-.BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode);
-.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int "num);
-.in \\n
-.BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc);
+.nf
+.BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode ");"
+.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int "num ");"
+.BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc ");"
+.if
 
 .SH DESCRIPTION
 .B PAPI_add_event()

@@ -1,8 +1,5 @@
 $Id$
 
-- Check how the VIA Cyrix III really identifies itself.
-  Alan Cox has stated that cpuid actually returns "CentaurHauls".
-
 - add inode_count() and dentry_count() wrappers to compat.h
 
 - 2.4.0-test4 dropped the big kernel lock around file operations.

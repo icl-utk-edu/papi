@@ -1225,7 +1225,7 @@ int PAPI_write(int EventSet, long long *values)
   if (values == NULL)
     papi_return(PAPI_EINVAL);
 
-  if (ESI->state == PAPI_RUNNING)
+  if (ESI->state & PAPI_RUNNING)
     {
       retval = _papi_hwd_write(thread_master_eventset, ESI, values);
       if (retval!=PAPI_OK)
