@@ -122,6 +122,7 @@ static int default_debug_handler(int errorCode)
 static int allocate_eventset_map(DynamicArray_t *map)
 {
    /* Allocate and clear the Dynamic Array structure */
+   if(map->dataSlotArray!=NULL) free(map->dataSlotArray);
    memset(map, 0x00, sizeof(DynamicArray_t));
 
    /* Allocate space for the EventSetInfo_t pointers */
@@ -1076,6 +1077,9 @@ int _papi_hwi_init_global_internal(void)
 void _papi_hwi_shutdown_global_internal(void)
 {
   free_eventset_map(&_papi_hwi_system_info.global_eventset_map);
+  if (_papi_hwi_system_info.shlib_info.map){
+     free(_papi_hwi_system_info.shlib_info.map);
+  }
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 }
 
