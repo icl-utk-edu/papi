@@ -3,7 +3,7 @@
 # GNU G77/GCC section
 #
 F77   		= g77 -Wall
-CC		= gcc -Wall
+CC		= gcc -Wall 
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
@@ -50,12 +50,12 @@ SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
 LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads
+TARGETS = serial multiplex_and_pthreads shared
 
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) 
 
-CFLAGS-2.0 := -DPFM20
-CFLAGS-3.0 := -DPFM30 -D_GNU_SOURCE -g -DDEBUG 
+CFLAGS-2.0 := -DPFM20 -D_GNU_SOURCE
+CFLAGS-3.0 := -DPFM30 -D_GNU_SOURCE  
 
 PFM_OBJS-2.0 := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 PFM_OBJS-3.0 := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 

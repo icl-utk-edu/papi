@@ -392,7 +392,7 @@ int _papi_hwd_init_global(void)
 
    /* Setup presets */
 
-   retval = generate_preset_search_map(ia_preset_search_map);
+   retval = generate_preset_search_map((itanium_preset_search_t *)ia_preset_search_map);
    if (retval)
       return (retval);
 
@@ -904,6 +904,7 @@ static int ia64_process_profile_entry(void *papiContext)
 
          /* * print entry header */
          info->sc_ip = ent->ip;
+         printf("ent->ip = 0x%lx \n", ent->ip);
 #ifdef ITANIUM2
          if (pfm_ita2_is_dear(native_index)) {
 #else
@@ -921,6 +922,7 @@ static int ia64_process_profile_entry(void *papiContext)
             info->sc_ip = (reg->pmd17_ita_reg.dear_iaddr << 4)
                 | (reg->pmd17_ita_reg.dear_slot);
 #endif
+            printf("info->sc_ip = 0x%lx \n", info->sc_ip);
             /* adjust pointer position */
             buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          };
@@ -1264,7 +1266,7 @@ void _papi_hwd_remove_native(hwd_control_state_t * this_state, NativeInfo_t * na
 }
 
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
+                   NativeInfo_t * native, int count, hwd_context_t * zero )
 {
    int i, org_cnt;
    pfmw_param_t *evt = &this_state->evt;

@@ -176,10 +176,8 @@
 #ifndef PFM30
 #warning Maybe you should set -DPFM30 in your Makefile?
 #endif
-/*
+#include <sys/syscall.h>
 #include <linux/unistd.h>
-_syscall0(pid_t,gettid)
-*/
 
 #if defined(__ECC) && defined(__INTEL_COMPILER)
 
@@ -337,7 +335,7 @@ hweight64 (unsigned long x)
       }
       ctx_fd = ctx[0].ctx_fd;
       thr_ctx->fd = ctx_fd;
-      thr_ctx->tid = getpid();
+      thr_ctx->tid = syscall(1105); /* should be __NR_gettid */
 
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
