@@ -131,3 +131,76 @@ int PAPI_state(int EventSet, int *status)
     return(PAPI_OK);
 }
 
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function: static int _papi_allocate_EventSet(void);              */
+/*                                                                        */
+/* This function allocates space for one EventSetInfo structure and for   */
+/* all of the pointers in this structure.  If any malloc in this function */
+/* fails, NULL is returned.  Upon success, a pointer to the EventSetInfo  */
+/* data structure is returned.                                            */
+/*========================================================================*/
+
+static EventSetInfo *_papi_allocate_EventSet(void) {
+
+EventSetInfo *ESI;
+int counterArrayLength;
+
+counterArrayLength=_papi_system_info.num_gp_cntrs+_papi_system_info.num_sp_cntrs;
+
+if(!ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo))) return(NULL); 
+
+ESI->EventSetIndex=0;     /*this is N index from DA->dataSlotArray[N] */
+ESI->NumberOfCounters=0;  /*number of counters*/
+ESI->EventCodeArray=NULL; /* array of codes for events in this set from AddEvent*/
+
+if(!ESI->machdep)=(void *)malloc(_papi_system_info.size_machdep)) return(NULL);
+
+if(!ESI->start =(long long *)malloc(counterArrayLength*sizeof(long long)))
+	return(NULL);
+if(!ESI->stop  =(long long *)malloc(counterArrayLength*sizeof(long long)))
+	return(NULL);
+if(!ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long)))
+	return(NULL);
+
+return(ESI);
+}
+/*========================================================================*/
+/*end function: _papi_allocate_EventSet                                   */
+/*========================================================================*/
+/*========================================================================*/
+
+
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function: static int _papi_free_EventSet();                      */
+/*                                                                        */ 
+/* This function should free memory for one EventSetInfo structure.       */
+/* The argument list consists of a pointer to the EventSetInfo            */
+/* structure, *ESI.                                                       */
+/* If ESI==NULL	before free operation, return 0.                          */
+/* Else, return 1.                                                        */
+/*========================================================================*/
+
+static int free_EventSet(EventSetInfo *ESI) {
+
+if(!ESI) return 0; /*ESI not exist*/
+
+if(ESI->EventCodeArray) free(ESI->EventCodeArray);
+if(ESI->machdep)        free(ESI->machdep);
+if(ESI->start)          free(ESI->start);
+if(ESI->stop)           free(ESI->stop);
+if(ESI->latest)         free(ESI->latest);
+
+free(ESI);
+
+return(1); /* normal return */
+}
+/*========================================================================*/
+/*end function: _papi_free_EventSet                                       */
+/*========================================================================*/
+/*========================================================================*/
