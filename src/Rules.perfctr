@@ -75,8 +75,16 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 $(CPU)_events.o: $(CPU)_events.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
+ifeq (${VERSION},2.6.x)
+ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+linux.o: linux.c
+	rm -f $(PERFCTR)/linux/include/asm
+	ln -s asm-${ARCH} $(PERFCTR)/linux/include/asm
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+else
 linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
+endif
 
 native_clean:
 	$(MAKE) -C $(PERFCTR) clean
