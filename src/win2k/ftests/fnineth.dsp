@@ -134,10 +134,6 @@ SOURCE=..\..\ftests\nineth.F
 SOURCE=..\..\fpapi.h
 # End Source File
 # End Group
-# Begin Group "Resource Files"
-
-# PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# End Group
 # Begin Source File
 
 SOURCE=..\substrate\Release\WinPAPI.lib
