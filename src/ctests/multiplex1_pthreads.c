@@ -33,23 +33,9 @@ extern void do_reads(int);
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-#if defined(sparc) && defined(sun)
-const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-   PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L2_TCM, 0,
-};
-#elif defined (PENTIUM4) || defined(_POWER4)
-const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-   PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_LDM, PAPI_L1_DCM, 0,
-};
-#elif defined (__ATHLON__)
-const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-  PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_LDM, PAPI_L1_DCM,0,
-};
-#else
-const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, 0,
 };
-#endif
 static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int num_PAPI_events = 0;
 
@@ -58,12 +44,26 @@ void init_papi_pthreads(void)
    int retval;
    const unsigned int *inev;
    unsigned int *outev;
+   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
 
    /* Initialize the library */
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+   if(!(strncmp(hw_info->model_string, "AMD K7", 6))) {
+      preset_PAPI_events[0] = PAPI_TOT_INS;
+   }
+   printf("%s   %s\n", hw_info->vendor_string, hw_info->model_string);
+   /* String results can vary, so we're looking at the important portion */
+   if(!(strncmp(hw_info->model_string, "UltraSPARC", 10)) && !(strncmp(hw_info->vendor_string, "SUN", 3))) {
+      preset_PAPI_events[0] = PAPI_TOT_INS;
+      preset_PAPI_events[2] = PAPI_L1_ICM;
+      preset_PAPI_events[3] = PAPI_L2_TCM;
+   }
+   if(!(strcmp(hw_info->model_string, "Intel Pentium 4")) || !(strcmp(hw_info->model_string, "power4"))) {
+      preset_PAPI_events[2] = PAPI_L1_LDM;
+   }
    /* Investigate the set of candidate events */
    num_PAPI_events = 0;
    for (inev = preset_PAPI_events, outev = PAPI_events; *inev; inev++) {
