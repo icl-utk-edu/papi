@@ -976,9 +976,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
    ctx.si = info;
    ctx.ucontext = (hwd_ucontext_t *) context;
 
-#ifdef PFM20
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) tmp->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &t);
-#endif
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
    return;
  }
 
