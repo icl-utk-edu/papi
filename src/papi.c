@@ -342,9 +342,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
             }
             for (j=0; j < (int)info->count; j++) {
                info->code[j] = _papi_hwi_presets.data[i]->native[j];
-               if (_papi_hwi_native_code_to_name(info->code[j]) == NULL) info->name[j][0] = 0;
-               else strncpy(info->name[j], 
-                  _papi_hwi_native_code_to_name(info->code[j]), PAPI_MIN_STR_LEN);
+               _papi_hwi_native_code_to_name(info->code[j], info->name[j], PAPI_MIN_STR_LEN);
             }
          }
          if (_papi_hwi_presets.dev_note[i]) { /* if a developer's note exists for this event */
@@ -379,10 +377,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
    }
 
    if (EventCode & PAPI_NATIVE_MASK) {
-      if (_papi_hwi_native_code_to_name(EventCode) != NULL) {
-         strncpy(out, _papi_hwi_native_code_to_name(EventCode), PAPI_MAX_STR_LEN);
-         return(PAPI_OK);
-      }
+      return(_papi_hwi_native_code_to_name(EventCode, out, PAPI_MAX_STR_LEN));
    }
 
    papi_return(PAPI_ENOEVNT);

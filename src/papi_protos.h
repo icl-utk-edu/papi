@@ -123,8 +123,8 @@ extern int _papi_hwi_query_native_event(unsigned int EventCode);
 extern int _papi_hwi_get_native_event_info(unsigned int EventCode,
                                            PAPI_event_info_t * info);
 extern int _papi_hwi_native_name_to_code(char *in, int *out);
-extern char *_papi_hwi_native_code_to_name(unsigned int EventCode);
-extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
+extern int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len);
+extern int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len);
 
 /* The following functions implement the hardware dependent native event table access.
    The first four routines are required. The next two are optional.

@@ -1148,10 +1148,14 @@ hwd_p4_mask_t *mask_array[] = {
 // This defines the number of events in the custom native event table
 #define _papi_hwd_pentium4_custom_count (sizeof(_papi_hwd_pentium4_custom_map) / sizeof(hwd_p4_native_map_t))
 
-/* **THREAD SAFE STATIC**
+/* **NOT THREAD SAFE STATIC!!**
    The name and description strings below are both declared static. 
-   This is thread- and fork-safe, because these values are set before each use. 
-   They must be declared static to reserve non-volatile space for constructed strings.
+   This is NOT thread-safe, because these values are returned 
+     for use by the calling program, and could be trashed by another thread
+     before they are used. To prevent this, any call to routines using these
+     variables (_papi_hwd_code_to_{name,descr}) should be wrapped in 
+     _papi_hwi_{lock,unlock} calls.
+   They are declared static to reserve non-volatile space for constructed strings.
 */
 static char name[128];
 static char description[1024];
@@ -1256,7 +1260,7 @@ static char *internal_translate_code(int event, int mask, char *str, char *separ
       return (NULL);
 
    if (*separator != '_')       // implied flag for name
-      strcat(str, " Mask bits");
+      strcat(str, " Mask bits: ");
 
    for (i = 0; i < 16 && mask != 0; i++) {
       if (mask & (1 << i)) {
