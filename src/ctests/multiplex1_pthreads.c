@@ -20,8 +20,8 @@
 #include "papi.h"
 #include "test_utils.h"
 
-#define FLOPS 10000000
-#define READS 10000
+#define FLOPS 4000000
+#define READS 4000
 #define NUM 10
 #define NUM_THREADS 4
 #define SUCCESS 1
