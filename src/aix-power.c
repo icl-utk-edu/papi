@@ -2116,5 +2116,5 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* We can use the virt_cyc call */
 			        0,  /* HW Read also resets the counters */
 			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        { 0, } };
 

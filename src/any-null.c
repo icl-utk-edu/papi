@@ -17,7 +17,7 @@ static hwd_search_t findem_foobar[] = {
 
 /* Low level functions, should not handle errors, just return codes. */
 
-inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
+static char *search_cpu_info(FILE *f, char *search_str, char *line)
 {
   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
   /* See the PCL home page for the German version of PAPI. */
@@ -92,7 +92,7 @@ static int setup_all_presets(void)
 /* Go from highest counter to lowest counter. Why? Because there are usually
    more counters on #1, so we try the least probable first. */
 
-inline static int get_avail_hwcntr_bits(int cntr_avail_bits)
+static int get_avail_hwcntr_bits(int cntr_avail_bits)
 {
   int tmp = 0, i = 1 << (MAX_COUNTERS-1);
   
@@ -106,7 +106,7 @@ inline static int get_avail_hwcntr_bits(int cntr_avail_bits)
   return(0);
 }
 
-inline static void set_hwcntr_codes(int selector, unsigned int *from, int *to)
+static void set_hwcntr_codes(int selector, unsigned int *from, int *to)
 {
   int useme, i;
   
@@ -121,7 +121,7 @@ inline static void set_hwcntr_codes(int selector, unsigned int *from, int *to)
     }
 }
 
-inline static void init_config(hwd_control_state_t *ptr)
+static void init_config(hwd_control_state_t *ptr)
 {
   int def_mode;
 
@@ -159,9 +159,9 @@ static int get_system_info(void)
 
   /* Hardware info */
 
-  _papi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+  _papi_system_info.hw_info.ncpu = 1;
   _papi_system_info.hw_info.nnodes = 1;
-  _papi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+  _papi_system_info.hw_info.totalcpus = 1;
   _papi_system_info.hw_info.vendor = -1;
 
   strcpy(_papi_system_info.hw_info.model_string,"Foo");
@@ -190,7 +190,7 @@ static int get_system_info(void)
 
   /* Setup memory info */
 
-  tmp = get_memory_info(&_papi_system_info.mem_info, 0/*(int)info.cpu_type*/);
+  tmp = get_memory_info(&_papi_system_info.mem_info);
   if (tmp)
     return(tmp);
 
@@ -203,7 +203,7 @@ static int get_system_info(void)
   return(PAPI_OK);
 } 
 
-inline static int counter_event_shared(const int *a, const int *b, int cntr)
+static int counter_event_shared(const int *a, const int *b, int cntr)
 {
   if (a[cntr] == b[cntr])
     return(1);
@@ -211,7 +211,7 @@ inline static int counter_event_shared(const int *a, const int *b, int cntr)
   return(0);
 }
 
-inline static int counter_event_compat(const int *a, const int *b, int cntr)
+static int counter_event_compat(const int *a, const int *b, int cntr)
 {
   unsigned int priv_mask = ~PERF_EVNT_MASK;
 
@@ -221,12 +221,12 @@ inline static int counter_event_compat(const int *a, const int *b, int cntr)
   return(0);
 }
 
-inline static void counter_event_copy(const int *a, int *b, int cntr)
+static void counter_event_copy(const int *a, int *b, int cntr)
 {
   b[cntr] = a[cntr];
 }
 
-inline static int update_global_hwcounters(EventSetInfo_t *global)
+static int update_global_hwcounters(EventSetInfo_t *global)
 {
   /* hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep; */
   u_long_long events[MAX_COUNTERS];
@@ -256,7 +256,7 @@ inline static int update_global_hwcounters(EventSetInfo_t *global)
   return(PAPI_OK);
 }
 
-inline static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long long *correct)
+static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long long *correct)
 {
   int i;
 
@@ -270,7 +270,7 @@ inline static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_
   return(0);
 }
 
-inline static int set_domain(hwd_control_state_t *this_state, int domain)
+static int set_domain(hwd_control_state_t *this_state, int domain)
 {
   int mode0 = 0, mode1 = 0, did = 0;
   
@@ -298,7 +298,7 @@ inline static int set_domain(hwd_control_state_t *this_state, int domain)
   return(PAPI_OK);
 }
 
-inline static int set_granularity(hwd_control_state_t *this_state, int domain)
+static int set_granularity(hwd_control_state_t *this_state, int domain)
 {
   switch (domain)
     {
@@ -314,7 +314,7 @@ inline static int set_granularity(hwd_control_state_t *this_state, int domain)
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
 
-inline static int set_inherit(int arg)
+static int set_inherit(int arg)
 {
   /* int r;
 
@@ -328,13 +328,13 @@ inline static int set_inherit(int arg)
   return(PAPI_ESBSTR);
 }
 
-inline static int set_default_domain(EventSetInfo_t *zero, int domain)
+static int set_default_domain(EventSetInfo_t *zero, int domain)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_domain(current_state,domain));
 }
 
-inline static int set_default_granularity(EventSetInfo_t *zero, int granularity)
+static int set_default_granularity(EventSetInfo_t *zero, int granularity)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_granularity(current_state,granularity));
@@ -970,3 +970,16 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        { 0, } };
+
+/* Two unapproved additions to substrate */
+
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  /* This function is not used and shouldn't be called. */
+
+  abort();
+}
+
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}
