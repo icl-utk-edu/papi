@@ -30,7 +30,11 @@
 #include "pfmlib.h"
 #else
 #include "perfmon/pfmlib.h"
+#ifdef ITANIUM2
+#include "perfmon/pfmlib_itanium2.h"
+#else
 #include "perfmon/pfmlib_itanium.h"
+#endif
 #endif
 #include "papi.h"
 
@@ -76,7 +80,11 @@ typedef struct hwd_control_state {
   perfmon_req_t pc[PMU_MAX_COUNTERS];
   pfm_event_config_t evt;
 #else
+#ifdef ITANIUM2
+  pfarg_reg_t pc[PMU_ITA2_MAX_COUNTERS];
+#else
   pfarg_reg_t pc[PMU_ITA_MAX_COUNTERS];
+#endif
   pfmlib_param_t evt;
 #endif
   /* Buffer to pass to library to control the counters */
@@ -96,7 +104,11 @@ typedef struct preset_search {
 #ifdef PFM06A
   char *(findme[PMU_MAX_COUNTERS]);
 #else
+#ifdef ITANIUM2
+  char *(findme[PMU_ITA2_MAX_COUNTERS]);
+#else
   char *(findme[PMU_ITA_MAX_COUNTERS]);
+#endif
 #endif
 } preset_search_t;
 
@@ -120,7 +132,11 @@ typedef struct hwd_preset {
 #include "papi_internal.h"
 
 #ifndef PFM06A
+#ifdef ITANIUM2
+#define PMU_MAX_COUNTERS PMU_ITA2_MAX_COUNTERS
+#else
 #define PMU_MAX_COUNTERS PMU_ITA_MAX_COUNTERS
+#endif
 #endif
 
 extern char *basename(char *);

@@ -1,3 +1,10 @@
+/*
+ * File:   	linux-ia64.c
+ *
+ * Mods:	Kevin London
+ *		london@cs.utk.edu
+ */
+
 #include SUBSTRATE
 
 #ifdef PFM06A
@@ -47,6 +54,7 @@ static preset_search_t preset_search_map[] = {
   {PAPI_FLOPS,DERIVED_ADD_PS,{"CPU_CYCLES","FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0}},
   {0,0,{0,0,0,0}}};
 #else
+#ifndef ITANIUM2
 static preset_search_t preset_search_map[] = { 
   {PAPI_L1_TCM,DERIVED_ADD,{"L1D_READ_MISSES_RETIRED","L2_INST_DEMAND_READS",0,0}},
   {PAPI_L1_ICM,0,{"L2_INST_DEMAND_READS",0,0,0}},
@@ -92,6 +100,60 @@ static preset_search_t preset_search_map[] = {
   {PAPI_LST_INS,DERIVED_ADD,{"LOADS_RETIRED","STORES_RETIRED",0,0}},
   {PAPI_FLOPS,DERIVED_ADD_PS,{"CPU_CYCLES","FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0}},
   {0,0,{0,0,0,0}}};
+#else
+static preset_search_t preset_search_map[] = {
+  {PAPI_L1_TCM,DERIVED_ADD,{"L1D_READ_MISSES_ALL","L2_INST_DEMAND_READS",0,0}},
+  {PAPI_L1_ICM,0,{"L2_INST_DEMAND_READS",0,0,0}},
+  {PAPI_L1_DCM,0,{"L1D_READ_MISSES_ALL",0,0,0}},
+  {PAPI_L2_TCM,0,{"L2_MISSES",0,0,0}},
+  {PAPI_L2_DCM,0,{"L3_READS_DATA_READ_ALL",0,0,0}},
+  {PAPI_L2_ICM,0,{"L3_READS_INST_FETCH_ALL",0,0,0}},
+  {PAPI_L3_TCM,0,{"L3_MISSES",0,0,0}},
+  {PAPI_L3_ICM,0,{"L3_READS_INST_FETCH_MISS",0,0,0}},
+  {PAPI_L3_DCM,DERIVED_ADD,{"L3_READS_DATA_READ_MISS","L3_WRITES_DATA_WRITE_MISS",0,0}},
+  {PAPI_L3_LDM,0,{"L3_READS_ALL_MISS",0,0,0}},
+  {PAPI_L3_STM,0,{"L3_WRITES_DATA_WRITE_MISS",0,0,0}},
+  {PAPI_L1_LDM,DERIVED_ADD,{"L1D_READ_MISSES_ALL","L2_INST_DEMAND_READS",0,0}},
+  {PAPI_L2_LDM,0,{"L3_READS_ALL_ALL",0,0,0}},
+  {PAPI_L2_STM,0,{"L3_WRITES_ALL_ALL",0,0,0}},
+  {PAPI_L1_DCH,DERIVED_SUB,{"L1D_READS_SET0","L1D_READ_MISSES_ALL",0,0}},
+  {PAPI_L2_DCH,DERIVED_SUB,{"L2_DATA_REFERENCES_L2_ALL","L2_MISSES",0,0}},
+  {PAPI_L3_DCH,DERIVED_ADD,{"L3_READS_DATA_READ_HIT","L3_WRITES_DATA_WRITE_HIT",0,0}},
+  {PAPI_L1_DCA,0,{"L1D_READS_SET1",0,0,0}},
+  {PAPI_L2_DCA,0,{"L2_DATA_REFERENCES_L2_ALL",0,0,0}},
+  {PAPI_L3_DCA,0,{"L3_REFERENCES",0,0,0}},
+  {PAPI_L1_DCR,0,{"L1D_READS_SET1",0,0,0}},
+  {PAPI_L2_DCR,0,{"L2_DATA_REFERENCES_L2_DATA_READS",0,0,0}},
+  {PAPI_L3_DCR,0,{"L3_READS_DATA_READ_ALL",0,0,0}},
+  {PAPI_L2_DCW,0,{"L2_DATA_REFERENCES_L2_DATA_WRITES",0,0,0}},
+  {PAPI_L3_DCW,0,{"L3_WRITES_DATA_WRITE_ALL",0,0,0}},
+  {PAPI_L3_ICH,0,{"L3_READS_DINST_FETCH_HIT",0,0,0}},
+  {PAPI_L1_ICR,DERIVED_ADD,{"L1I_PREFETCHES","L1I_READS",0,0}},
+  {PAPI_L2_ICR,DERIVED_ADD,{"L2_INST_DEMAND_READS","L2_INST_PREFETCHES",0,0}},
+  {PAPI_L3_ICR,0,{"L3_READS_INST_FETCH_ALL",0,0,0}},
+  {PAPI_L1_ICA,DERIVED_ADD,{"L1I_PREFETCHES","L1I_READS",0,0}},
+  {PAPI_L2_TCH,DERIVED_SUB,{"L2_REFERENCES","L2_MISSES",0,0}},
+  {PAPI_L3_TCH,DERIVED_SUB,{"L3_REFERENCES","L3_MISSES",0,0}},
+  {PAPI_L2_TCA,0,{"L2_REFERENCES",0,0,0}},
+  {PAPI_L3_TCA,0,{"L3_REFERENCES",0,0,0}},
+  {PAPI_L3_TCR,0,{"L3_READS_ALL_ALL",0,0,0}},
+  {PAPI_L3_TCW,0,{"L3_WRITES_ALL_ALL",0,0,0}},
+  {PAPI_TLB_DM,DERIVED_ADD,{"L1DTLB_TRANSFER","L2DTLB_MISSES",0,0}},
+  {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH_L1ITLB",0,0,0}},
+  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}},
+  {PAPI_BR_NTK,DERIVED_ADD,{"BR_PATH_PRED_ALL_MISPRED_NOTTAKEN","BR_PATH_PRED_ALL_OKPRED_NOTTAKEN",0,0}},
+  {PAPI_BR_TKN,DERIVED_ADD,{"BR_PATH_PRED_ALL_OKPRED_TAKEN","BR_PATH_PRED_ALL_MISPRED_TAKEN",0,0}},
+  {PAPI_BR_PRC,0,{"BR_MISPRED_DETAIL_ALL_CORRECT_PRED",0,0,0}},
+  {PAPI_BR_MSP,DERIVED_ADD,{"BR_MISPRED_DETAIL_ALL_WRONG_PATH","BR_MISPRED_DETAIL_ALL_WRONG_TARGET",0,0}},
+  {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
+  {PAPI_FP_INS,0,{"FP_OPS_RETIRED",0,0,0}},
+  {PAPI_TOT_INS,DERIVED_ADD,{"IA64_INST_RETIRED","IA32_INST_RETIRED",0,0}},
+  {PAPI_LD_INS,0,{"LOADS_RETIRED",0,0,0}},
+  {PAPI_SR_INS,0,{"STORES_RETIRED",0,0,0}},
+  {PAPI_LST_INS,DERIVED_ADD,{"LOADS_RETIRED","STORES_RETIRED",0,0}},
+  {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
+  {0,0,{0,0,0,0}}};
+#endif
 #endif
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
 
@@ -227,12 +289,13 @@ too_many:
  * Copyright (C) 2001 Hewlett-Packard Co
  * Copyright (C) 2001 Stephane Eranian <eranian@hpl.hp.com> */
 
-static inline int setup_all_presets(void)
+static inline int setup_all_presets()
 {
   int pnum, i, preset_index;
   char **name = NULL, note[PAPI_MAX_STR_LEN];
 
   memset(preset_map,0x0,sizeof(preset_map));
+
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
     {
       if (preset_search_map[pnum].preset == 0)
@@ -534,7 +597,11 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   perfmon_req_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
   memset(writeem,0x0,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
 #else
+#ifdef ITANIUM2
+  pfm_ita2_reg_t flop_hack;
+#else
   pfm_ita_reg_t flop_hack;
+#endif
   pfarg_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
   memset(writeem,0x0,sizeof(pfarg_reg_t)*PMU_MAX_COUNTERS);
 #endif
@@ -563,7 +630,11 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 #ifdef PFM06A
   if (perfmonctl(machdep->pid, PFM_READ_PMDS, 0, readem, PMU_MAX_COUNTERS) == -1) 
 #else
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, PMU_MAX_COUNTERS) == -1) 
+#ifdef ITANIUM2
+  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, local->NumberOfEvents) == -1)
+#else
+  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, PMU_MAX_COUNTERS) == -1)
+#endif
 #endif
     {
       DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
