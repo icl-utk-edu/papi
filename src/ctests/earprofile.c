@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
 
-#if defined(linux) && defined(__ia64__)
+#if defined(linux) && defined(__ia64__) && !defined(ITANIUM2)
 	sprintf(event_name, "data_ear_cache_lat4");
   {
     typedef union {
