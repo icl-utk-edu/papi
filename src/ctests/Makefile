@@ -3,8 +3,8 @@ SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
 MPX	= multiplex1 multiplex1_pthreads
-SERIAL  = low-level high-level sprofile eventname case1 case2 flops avail \
-	zero first second third third-inv fourth fourth-inv cost \
+SERIAL  = zero low-level high-level sprofile eventname case1 case2 flops avail \
+	first second third third-inv fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native 
 BROKEN	= inherit pernode

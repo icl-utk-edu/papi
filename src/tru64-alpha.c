@@ -365,29 +365,30 @@ static int get_system_info(void)
 extern u_int read_cycle_counter(void);
 extern u_int read_virt_cycle_counter(void);
 
+#if 0
 static long long real_time = 0;
 static long long virt_time = 0;
 static long long real_then = 0;
 static long long virt_then = 0;
-static const long long time_max = 0xffffffff;
+static const long long time_max = 0x7fffffff;
 
 static void update_global_time(void)
 {
   long long real_now = (long long)read_cycle_counter();
-  long long virt_now = (long long)read_cycle_counter();
+  long long virt_now = (long long)read_virt_cycle_counter();
 
-  DBG((stderr,"REAL: %lld %lld %lld\n",real_time,real_now,real_then));
+  DBG((stderr,"REAL: %lld %lld %lld %lld\n",real_time,real_now,real_then,real_now-real_then));
   if (real_now < real_then)
     real_time += real_now + (time_max - real_then);
   else
     real_time += real_now - real_then;
   real_then = real_now;
 
-  DBG((stderr,"VIRT: %lld %lld %lld\n",virt_time,virt_now,virt_then));
+  DBG((stderr,"VIRT: %lld %lld %lld %lld\n",virt_time,virt_now,virt_then,virt_now-virt_then));
   if (virt_now < virt_then)
     virt_time += virt_now + (time_max - virt_then);
   else
-    virt_time += real_now - real_then;
+    virt_time += virt_now - virt_then;
   virt_then = virt_now;
 }
 
@@ -422,9 +423,11 @@ int start_overflow_timer(void)
 
       update_global_time();
 }
+#endif
 
 long long _papi_hwd_get_real_usec (void)
 {
+#if 0
   if (real_then)
     {
       update_global_time();
@@ -432,11 +435,13 @@ long long _papi_hwd_get_real_usec (void)
     }
   else
     start_overflow_timer();
-  return(real_time / _papi_system_info.hw_info.mhz);
+#endif
+  return((long long)read_cycle_counter() / _papi_system_info.hw_info.mhz);
 }
 
 long long _papi_hwd_get_real_cycles (void)
 {
+#if 0
   if (real_then)
     {
       update_global_time();
@@ -444,11 +449,13 @@ long long _papi_hwd_get_real_cycles (void)
     }
   else
     start_overflow_timer();
-  return(real_time);
+#endif
+  return((long long)read_cycle_counter());
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
+#if 0
   if (virt_then)
     {
       update_global_time();
@@ -456,11 +463,13 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
     }
   else
     start_overflow_timer();
-  return(virt_time / _papi_system_info.hw_info.mhz);
+#endif
+  return((long long)read_virt_cycle_counter() / _papi_system_info.hw_info.mhz);
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
+#if 0
   if (virt_then)
     {
       update_global_time();
@@ -468,7 +477,8 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
     }
   else
     start_overflow_timer();
-  return(virt_time);
+#endif
+  return((long long)read_virt_cycle_counter());
 }
 
 void _papi_hwd_error(int error, char *where)
