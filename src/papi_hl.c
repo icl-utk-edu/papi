@@ -115,7 +115,7 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    }
    else {
 	retval = PAPI_stop( EventSet, values );
-        if (*real_time==-1 && *proc_time==0 && *flpins == 1 && *mflops == 2){
+        if (*(int*)real_time==-1 && *(int*)proc_time==0 && *(int*)flpins == 1 && *(int*)mflops == 2){
 		initialized = 1;
 		return PAPI_OK;
    	}		
