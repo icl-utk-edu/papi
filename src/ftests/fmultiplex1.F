@@ -69,7 +69,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       subroutine case1(ret, tests_quiet)
       IMPLICIT NONE
       integer ret, tests_quiet, event
-      integer retval, i, EventSet
+      integer retval, EventSet
       INTEGER*8 values(4)
       integer fd
 
@@ -114,11 +114,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       end if
 
       fd = 1
-      do i=0, NUM_ITERS, 1
-         call do_flops(NUM_FLOPS)
-         call do_reads(NUM_READS)
-      end do
-
+      call do_both(NUM_ITERS)
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -143,7 +139,7 @@ C     Tests that PAPI_set_multiplex() works before adding events
       subroutine case2(ret, tests_quiet)
       IMPLICIT NONE
       integer ret, tests_quiet, event
-      integer retval, i, EventSet
+      integer retval, EventSet
       INTEGER*8 values(4)
       integer fd
 
@@ -196,11 +192,7 @@ C  for multiplexed event sets (change -4711 to 0 when it is working)
       end if
 
       fd = 1
-      do i=0, NUM_ITERS, 1
-         call do_flops(NUM_FLOPS)
-         call do_reads(NUM_READS)
-      end do
-
+      call do_both(NUM_ITERS)
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -225,7 +217,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       subroutine case3(ret, tests_quiet)
       IMPLICIT NONE
       integer ret, tests_quiet, event
-      integer retval, i, EventSet
+      integer retval, EventSet
       INTEGER*8 values(4)
       integer fd
 
@@ -282,11 +274,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       end if
 
       fd = 1
-      do i=0, NUM_ITERS, 1
-         call do_flops(NUM_FLOPS)
-         call do_reads(NUM_READS)
-      end do
-
+      call do_both(NUM_ITERS)
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -313,7 +301,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       subroutine case4(ret, tests_quiet)
       IMPLICIT NONE
       integer ret, tests_quiet, event
-      integer retval, i, EventSet
+      integer retval, EventSet
       INTEGER*8 values(4)
       integer fd
 
@@ -426,11 +414,7 @@ C Try alternative event if the above is not possible to use...
       end if
 
       fd = 1
-      do i=0, NUM_ITERS, 1
-         call do_flops(NUM_FLOPS)
-         call do_reads(NUM_READS)
-      end do
-
+      call do_both(NUM_ITERS)
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

@@ -1,5 +1,4 @@
 #include "fpapi_test.h"
-#define MAX_TO_ADD 9
 
       program multiplex2
       IMPLICIT NONE
@@ -133,10 +132,7 @@
       end if
 
       fd = 1
-      do i=0, NUM_ITERS, 1
-        call do_flops(NUM_FLOPS)
-        call do_reads(NUM_READS)
-      end do
+      call do_both(NUM_ITERS)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then

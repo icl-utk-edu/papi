@@ -3,7 +3,7 @@ TESTS 	= zero first  second tenth description \
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
-PAPILIB=do_loops.o ftests_util.o dummy.o ../$(LIBRARY)
+PAPILIB=../ctests/do_loops.o ../ctests/dummy.o ftests_util.o ../$(LIBRARY)
 FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 
 default: $(TESTS)
