@@ -64,14 +64,7 @@ $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
 
 genpapifdef: genpapifdef.c $(LIBRARY)
-ifeq ($(DESCR),"Alpha Linux for Alpha 21164EV5 and Alpha 21264EV6")
-	$(CC) $(CFLAGS) -static $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
-else
 	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
-endif
-
-
-
 
 fpapi.h: genpapifdef
 	./genpapifdef -c > fpapi.h
