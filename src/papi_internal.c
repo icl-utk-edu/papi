@@ -316,7 +316,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
    if ((EventSet == NULL) || (handle == NULL))
       return (PAPI_EINVAL);
 
-   if ( EventSet != PAPI_NULL )
+   if ( *EventSet != PAPI_NULL )
       return (PAPI_EINVAL);
    /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
