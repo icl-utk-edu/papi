@@ -265,7 +265,8 @@ static int get_system_info(void)
    /* pm_info_t pminfo; */
    struct procsinfo psi = { 0 };
    pid_t pid;
-   char maxargs[PAPI_MAX_STR_LEN];
+   char maxargs[PATH_MAX];
+   char pname[PATH_MAX];
 
 #ifndef _POWER4
 #ifdef _AIXVERSION_510
@@ -277,14 +278,16 @@ static int get_system_info(void)
    if (pid == -1)
       return (PAPI_ESYS);
    psi.pi_pid = pid;
-   retval = getargs(&psi, sizeof(psi), maxargs, PAPI_MAX_STR_LEN);
+   retval = getargs(&psi, sizeof(psi), maxargs, PATH_MAX);
    if (retval == -1)
       return (PAPI_ESYS);
-   if (getcwd(_papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == NULL)
-      return (PAPI_ESYS);
-   strcat(_papi_hwi_system_info.exe_info.fullname, "/");
-   strcat(_papi_hwi_system_info.exe_info.fullname, maxargs);
-   strncpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs), PAPI_MAX_STR_LEN);
+
+   if (realpath(maxargs,pname))
+     strncpy(_papi_hwi_system_info.exe_info.fullname, pname, PAPI_HUGE_STR_LEN);
+   else
+     strncpy(_papi_hwi_system_info.exe_info.fullname, maxargs, PAPI_HUGE_STR_LEN);
+
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name,basename(maxargs));
 
 #ifdef _AIXVERSION_510
    DBG((stderr, "Calling AIX 5 version of pm_init...\n"));

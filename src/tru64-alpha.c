@@ -81,7 +81,7 @@ static int get_system_info(void)
    struct cpu_info cpuinfo;
    long proc_type;
    pid_t pid;
-   char pname[PAPI_MAX_STR_LEN], *ptr;
+   char pname[PATH_MAX], *ptr;
 
    pid = getpid();
    if (pid == -1)
@@ -95,11 +95,19 @@ static int get_system_info(void)
       return (PAPI_ESYS);
    close(fd);
 
-   if (getcwd(_papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) ==
-       NULL)
-      return (PAPI_ESYS);
-   strcat(_papi_hwi_system_info.exe_info.fullname, "/");
-   strcat(_papi_hwi_system_info.exe_info.fullname, info.pr_fname);
+   /* Cut off any arguments to exe */
+   {
+     char *tmp;
+     tmp = strchr(psi.pr_psargs, ' ');
+     if (tmp != NULL)
+       *tmp = '\0';
+   }
+
+   if (realpath(info.pr_psargs,pname))
+     strncpy(_papi_hwi_system_info.exe_info.fullname, pname, PAPI_HUGE_STR_LEN);
+   else
+     strncpy(_papi_hwi_system_info.exe_info.fullname, info.pr_psargs, PAPI_HUGE_STR_LEN);
+
    strcpy(_papi_hwi_system_info.exe_info.address_info.name, info.pr_fname);
 
    /* retval = pm_init(0,&tmp);

@@ -552,7 +552,7 @@ static int get_system_info(void)
    psinfo_t psi;
    int fd;
    int i, hz, version;
-   char cpuname[PAPI_MAX_STR_LEN];
+   char cpuname[PAPI_MAX_STR_LEN], pname[PATH_MAX];
    const char *name;
 
    /* Check counter access */
@@ -649,16 +649,22 @@ static int get_system_info(void)
       return (PAPI_ESYS);
    read(fd, &psi, sizeof(psi));
    close(fd);
-   {
-      char *tmp;
 
-      tmp = strchr(psi.pr_psargs, ' ');
-      if (tmp != NULL)
-         *tmp = '\0';
+   /* Cut off any arguments to exe */
+   {
+     char *tmp;
+     tmp = strchr(psi.pr_psargs, ' ');
+     if (tmp != NULL)
+       *tmp = '\0';
    }
-   strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_MAX_STR_LEN);
-   strcpy(_papi_hwi_system_info.exe_info.address_info.name, 
-           getbasename(_papi_hwi_system_info.exe_info.fullname));
+
+   if (realpath(psi.pr_psargs,pname))
+     strncpy(_papi_hwi_system_info.exe_info.fullname, pname, PAPI_HUGE_STR_LEN);
+   else
+     strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_HUGE_STR_LEN);
+
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name,psi.pr_fname);
+
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
    /* Hardware info */

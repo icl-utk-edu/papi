@@ -193,8 +193,8 @@ static int _internal_get_system_info(void)
    int fd, retval;
    pid_t pid;
    char pidstr[PAPI_MAX_STR_LEN];
+   char pname[PATH_MAX];
    prpsinfo_t psi;
-
 
    if (scaninvent(scan_cpu_info, NULL) == -1)
       return (PAPI_ESBSTR);
@@ -214,16 +214,16 @@ static int _internal_get_system_info(void)
 
    /* EXEinfo */
 
-   if (getcwd(_papi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == NULL)
-      return (PAPI_ESYS);
+   if (realpath(psi.pr_psargs,pname))
+     strncpy(_papi_hwi_system_info.exe_info.fullname, pname, PAPI_HUGE_STR_LEN);
+   else
+     strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_HUGE_STR_LEN);
 
-   _papi_system_info.cpunum = psi.pr_sonproc;
-   strcat(_papi_system_info.exe_info.fullname, "/");
-   strcat(_papi_system_info.exe_info.fullname, psi.pr_fname);
    strncpy(_papi_system_info.exe_info.name, psi.pr_fname, PAPI_MAX_STR_LEN);
 
    /* HWinfo */
 
+   _papi_system_info.cpunum = psi.pr_sonproc;
    _papi_system_info.hw_info.totalcpus = sysmp(MP_NPROCS);
    if (_papi_system_info.hw_info.totalcpus > 3) {
       _papi_system_info.hw_info.ncpu = 4;

@@ -286,7 +286,7 @@ read the documentation carefully.  */
    } PAPI_debug_option_t;
 
    typedef struct _papi_address_map {
-      char name[PAPI_MAX_STR_LEN];
+      char name[PAPI_HUGE_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */
@@ -296,7 +296,7 @@ read the documentation carefully.  */
    } PAPI_address_map_t;
 
    typedef struct _papi_program_info {
-      char fullname[PAPI_MAX_STR_LEN];  /* path+name */
+      char fullname[PAPI_HUGE_STR_LEN];  /* path+name */
       PAPI_address_map_t address_info;
    } PAPI_exe_info_t;
 

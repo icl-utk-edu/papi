@@ -300,7 +300,7 @@ int _papi_hwd_get_system_info(void)
    _papi_hwi_system_info.pid = pid;
 
    sprintf(maxargs, "/proc/%d/exe", (int) pid);
-   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) < 0)
+   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
       error_return(PAPI_ESYS, "readlink(%s) returned < 0", maxargs);
    
    /* basename can modify it's argument */
@@ -310,10 +310,6 @@ int _papi_hwd_get_system_info(void)
    /* Executable regions, may require reading /proc/pid/maps file */
 
    retval = _papi_hwd_update_shlib_info();
-   if (retval < 0) {
-      memset(&_papi_hwi_system_info.exe_info.address_info, 0x0,
-             sizeof(_papi_hwi_system_info.exe_info.address_info));
-   }
 
    /* PAPI_preload_option information */
 

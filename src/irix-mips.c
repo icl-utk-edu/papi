@@ -391,6 +391,7 @@ static int _internal_get_system_info(void)
    int fd, retval;
    pid_t pid;
    char pidstr[PAPI_MAX_STR_LEN];
+   char pname[PATH_MAX];
    prpsinfo_t psi;
 
    if (scaninvent(_internal_scan_cpu_info, NULL) == -1)
@@ -411,14 +412,19 @@ static int _internal_get_system_info(void)
 
    /* EXEinfo */
 
-   if (getcwd(_papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == NULL)
-      return (PAPI_ESYS);
+   /* Cut off any arguments to exe */
+   {
+     char *tmp;
+     tmp = strchr(psi.pr_psargs, ' ');
+     if (tmp != NULL)
+       *tmp = '\0';
+   }
 
-/*
-  _papi_hwi_system_info.hw_info.ncpu = psi.pr_sonproc;
-*/
-   strcat(_papi_hwi_system_info.exe_info.fullname, "/");
-   strcat(_papi_hwi_system_info.exe_info.fullname, psi.pr_fname);
+   if (realpath(psi.pr_psargs,pname))
+     strncpy(_papi_hwi_system_info.exe_info.fullname, pname, PAPI_HUGE_STR_LEN);
+   else
+     strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_HUGE_STR_LEN);
+
    strcpy(_papi_hwi_system_info.exe_info.address_info.name,psi.pr_fname);
 
    /* HWinfo */

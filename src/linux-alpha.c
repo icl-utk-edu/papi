@@ -260,7 +260,7 @@ static int get_system_info(void)
    prpsinfo_t info;
    long proc_type;
    pid_t pid;
-   char pname[PAPI_MAX_STR_LEN], *ptr;
+   char *ptr;
    FILE *f;
    float mhz;
    char maxargs[PAPI_MAX_STR_LEN], *t, *s, *sproc;
@@ -268,15 +268,18 @@ static int get_system_info(void)
    pid = getpid();
    if (pid == -1)
       return (PAPI_ESYS);
+   _papi_hwi_system_info.pid = pid;
 
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-      return -1;
-
-   if (getcwd(_papi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == NULL)
       return (PAPI_ESYS);
-   strcat(_papi_system_info.exe_info.fullname, "/");
-   strcat(_papi_system_info.exe_info.fullname, info.pr_fname);
-   strncpy(_papi_system_info.exe_info.name, info.pr_fname, PAPI_MAX_STR_LEN);
+
+   sprintf(maxargs, "/proc/%d/exe", (int) pid);
+   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
+     return(PAPI_ESYS);
+   
+   /* basename can modify it's argument */
+   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
 
    _papi_system_info.cpunum = 0;
    _papi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
