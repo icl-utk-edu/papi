@@ -204,8 +204,10 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
       findme = oldmap[i].findme;
       cnt = 0;
       while (*findme != NULL) {
-         if (cnt == MAX_COUNTER_TERMS)
+         if (cnt == MAX_COUNTER_TERMS){
+	    SUBDBG("Count (%d) == MAX_COUNTER_TERMS (%d)\n",cnt,MAX_COUNTER_TERMS);
             abort();
+         }
          if (pfm_find_event_byname(*findme, &preset_search_map[i].data.native[cnt]) !=
              PFMLIB_SUCCESS)
             return (PAPI_ENOEVNT);
@@ -216,8 +218,10 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
       }
       preset_search_map[i].data.native[cnt] = PAPI_NULL;
    }
-   if (NUM_OF_PRESET_EVENTS != pnum)
+   if (NUM_OF_PRESET_EVENTS != pnum){
+      SUBDBG("NUM_OF_PRESET_EVENTS (%d) != pnum (%d)\n", NUM_OF_PRESET_EVENTS,pnum);
       abort();
+   }
    return (PAPI_OK);
 }
 
@@ -626,8 +630,7 @@ int _papi_hwd_init(hwd_context_t * zero)
    ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
    if (perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-      fprintf(stderr, "PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", getpid(),
-              errno);
+      SUBDBG("PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", getpid(), errno);
    }
 
    /* 
@@ -672,7 +675,8 @@ u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
    float usec, cyc;
 
-   usec = (float) _papi_hwd_get_virt_usec(zero);
+   /*usec = (float) _papi_hwd_get_virt_usec(zero);*/
+   usec = 1000;
    cyc = usec * _papi_hwi_system_info.hw_info.mhz;
    return ((long long) cyc);
 }
@@ -944,7 +948,7 @@ static int ia64_process_profile_entry(void *papiContext)
    perfmon_smpl_hdr_t *hdr;
    perfmon_smpl_entry_t *ent;
    unsigned long pos;
-   int i, ret, reg_num, overflow_vector, count, EventCode, eventindex;
+   int i, ret, reg_num, overflow_vector, count, EventCode=0, eventindex;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
    hwd_control_state_t *this_state;
@@ -996,8 +1000,10 @@ static int ia64_process_profile_entry(void *papiContext)
             }
          }
          /* something is wrong */
-         if (count == ESI->profile.event_counter)
+         if (count == ESI->profile.event_counter){
+	    SUBDBG("Something is wrong with count: %d  ESI->event_counter: %d\n", count, ESI->profile.event_counter);
             abort();
+          }
 
          /* * print entry header */
          info->sc_ip = ent->ip;
@@ -1218,8 +1224,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
 
       if (perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-         fprintf(stderr, "PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n",
-                 getpid(), errno);
+         SUBDBG("PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n",getpid(),errno);
          return (PAPI_ESYS);
       }
       SUBDBG("Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr);
