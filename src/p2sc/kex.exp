@@ -1,8 +1,0 @@
-#!/unix
-rdcntrs       syscall
-wr_mmcr       syscall
-rd_mmcr       syscall
-accumulate    syscall
-read_long     syscall
-read_long_nc  syscall
-rltest        syscall
