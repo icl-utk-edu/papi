@@ -14,6 +14,8 @@
 #include <machine/hal_sysinfo.h>
 #include <machine/cpuconf.h>
 #include <assert.h>
+/* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
+#include <sys/resource.h>
 
 #include "papi.h"
 

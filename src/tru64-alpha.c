@@ -436,7 +436,14 @@ long long _papi_hwd_get_real_usec (void)
   else
     start_overflow_timer();
 #endif
+#ifdef O
   return((long long)read_cycle_counter() / _papi_system_info.hw_info.mhz);
+#endif
+  struct timespec res;
+
+  if ( (clock_gettime( CLOCK_REALTIME,  &res ) == -1 ) )
+	return (PAPI_ESYS);
+  return (res.tv_sec * 1000000) + (res.tv_nsec/1000);
 }
 
 long long _papi_hwd_get_real_cycles (void)
@@ -464,7 +471,14 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
   else
     start_overflow_timer();
 #endif
+#ifdef O
   return((long long)read_virt_cycle_counter() / _papi_system_info.hw_info.mhz);
+#endif
+  struct rusage res;
+
+  if ( (getrusage ( RUSAGE_SELF, &res )== -1 ) )
+	return (PAPI_ESYS);
+  return ( (res.ru_utime.tv_sec*1000000)+res.ru_utime.tv_usec);
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
