@@ -85,35 +85,19 @@ typedef struct _papi_options{
 /* static void PAPI_shutdown (void);                                      */
 /*                                                                        */
 /* This function provides a graceful exit to the PAPI tool.               */
-/*  a. all memory associated with the PAPI tool is freed.                 */
-/*  b. a shutdown message is written to stderr                            */
+/* a. All memory associated with the PAPI tool is freed.                  */
+/*  b. a shutdown message is written to stderr                            */ 
 /*                                                                        */
-/* Need to free:     
-
-1. typedef struct _EventSetInfo {
-  int EventSetIndex;       ** Index of the EventSet in the array  **
-
-  int NumberOfCounters;    ** Number of counters used- usu. the number of 
-                              events added **
-  int *EventCodeArray;     ** PAPI/Native codes for events in this set from 
-                              AddEvent **
-  void *machdep;      ** A pointer to memory of size 
-                         _papi_system_info.size_machdep bytes. This 
-                         will contain the encoding necessary for the 
-                         hardware to set the counters to the appropriate
-                         conditions**
-  long long *start;   ** Array of length _papi_system_info.num_gp_cntrs
-                         + _papi_system_info.num_sp_cntrs 
-                         This will most likely be zero for most cases**
-  long long *stop;    ** Array of the same length as above, but 
-                         containing the values of the counters when 
-                         stopped **
-  long long *latest;  ** Array of the same length as above, containing 
-                         the values of the counters when last read ** 
-  int state           ** The state of this entire EventSet; can be
-			 PAPI_RUNNING or PAPI_STOPPED. ** 
-} EventSetInfo;
-*/
+/* Free the elements of EM->dataSlotArray by calling papi_freeEventSet.   */
+/* The function _papi_free_EventSet frees the _EventSetInfo structure     */ 
+/* in two stages:                                                         */
+/*    1. Free the internal pointers.                                      */  
+/*    2. Free the pointer to the _EventSetInfo structure itself.          */ 
+/*                                                                        */
+/* Once the EM->dataSlotArray has had all its elements removed, then      */
+/* the EM->dataSlotArray itself may be freed.                             */
+/* The EM pointer itself does not have to be freed because it points to   */
+/* the static memory location of PAPI_EVENT_MAP.                          */
 /*========================================================================*/
 static void PAPI_shutdown(void) {
 
@@ -128,19 +112,9 @@ static void PAPI_shutdown(void) {
     /* free all the EventInfo Structures in the EM->dataSlotArray*/
     for(i=0;i<EM->totalSlots;i++) {
 	if(EM->dataSlotArray[i]) {
-	  if(EM->dataSlotArray[i]->EventCodeArray)
-	    free(EM->dataSlotArray[i]->EventCodeArray);
-	  if(EM->dataSlotArray[i]->machdep)
-	    free(EM->dataSlotArray[i]->machdep);
-	  if(EM->dataSlotArray[i]->start)
-	    free(EM->dataSlotArray[i]->start);
-	  if(EM->dataSlotArray[i]->stop)
-	    free(EM->dataSlotArray[i]->stop);
-	  if(EM->dataSlotArray[i]->latest)
-	    free(EM->dataSlotArray[i]->latest);
-	  free(EM->dataSlotArray[i]);
-	  }/***/
-	}/***/
+ 	  _papi_free_EventSet(EM->dataSlotArray[i]); 
+	  }/* end if */
+	}/* end for */ 
 		 
 	free(EM->dataSlotArray);
 
@@ -162,72 +136,31 @@ static void PAPI_shutdown(void) {
 /*========================================================================*/
 /*========================================================================*/
 /* begin function:                                                        */
-/* static int PAPI_perror(int, char *, int );                             */
+/* static int PAPI_error(int PAPI_errorCode, char *errorMessage);         */
 /*                                                                        */
-/* The function PAPI_perror (int, char *, int) is similar to the unix     */
-/* function perror(const char *msg).                                      */
-/* The function PAPI_perror gets the error description string by calling  */
-/* PAPI_strerror(int code), which returns a null terminated string.       */
+/* The function PAPI_error (int, char *) provides error handling for      */
+/* both the user and the internal functions.                              */
 /*                                                                        */
-/* If the calling function specifies int length greater than zero,        */
-/* "length" number of characters from "code" are copied to the buffer     */
-/* named "destination".  If int length equals zero, the "code" string     */
-/* is both printed to stderr and copied to "destination.                  */ 
+/* A one line or multiple line error message is printed to stderr.        */ 
+/*                                                                        */
+/* The first line of the error message will be the character string       */
+/* from errStr[N] where N is the absolute value of the PAPI_errorCode     */
+/* passed to the function.                                                */  
+/*                                                                        */
+/* If *errorMessage is set to NULL, there is no further error message.    */
+/* If *errorMessage points to a character string, this will be printed    */
+/* to stderr.                                                             */
 /*                                                                        */
 /* The global value PAPI_ERR_LEVEL determines whether this error will     */
-/* shutdown the program.                                                  */
+/* cause shutdown of the papi tool.                                       */
 /*========================================================================*/
 
-int PAPI_perror (int code, char *destination, int length) {
+int PAPI_error (int PAPI_errorCode, char *errorMessage) {
 
-int icode;
-char buff[100];
+int N; /* absolute value of PAPI_errorCode */
 
-strcpy(buff, PAPI_strerror(code));
-
-if(length==0) {
-fprintf(stderr, " %s\n", PAPI_strerror(code));
-strcpy(destination,PAPI_strerror(code));
-}/**/
-
-else
-strncpy(destination,PAPI_strerror(code),length);
-
-if (PAPI_ERR_LEVEL==PAPI_VERB_STOP) {
-	PAPI_shutdown();
-	}
-return(code);
-
-return(1);
-
-}/***/
-/*========================================================================*/
-/*end function: PAPI_error                                                */
-/*========================================================================*/
-/*========================================================================*/
-
-
-/*========================================================================*/
-/*========================================================================*/
-/*========================================================================*/
-/* begin function:                                                        */
-/* char *PAPI_strerror (int errnum)                                       */
-/*                                                                        */
-/* The function PAPI_strerror(int errnum) is analogous to the unix        */
-/* function strerror(int errnum).  Here, the errnum maps to a PAPI error  */
-/* code defined in papi.h.  The function PAPI_strerror returns a char *   */
-/* pointer to the appropriate PAPI error code.                            */
-/*                                                                        */
-/* This function is meant to be called by PAPI_perror(), but can also be  */
-/* called directly by the user for specialized error handling.            */
-/*========================================================================*/
-char *PAPI_strerror (int errnum) {
-
-int   ecode;
-char *retStr;
-
-char *errStr[11] = {
-" Call to PAPI_strerror made with no error ",
+char *papi_errStr[11] = {
+" Call to PAPI_error made with no error ",
 " Invalid argument ",
 " Insufficient memory ",
 " A System C library call failed: \n\t\t",
@@ -240,27 +173,31 @@ char *errStr[11] = {
 " Invalid Error Code ",
 };
 
-
-retStr=(char *)malloc(120*sizeof(char));
-
 /* check for valid error code */
-if (ecode==1)  ecode=0;
-ecode=errnum*(-1);
-if (ecode>9)  ecode=10;
+N=PAPI_errorCode; 
+if (N==1)  N = 0;
+if (N<0)   N*= (-1);
+if (N>9)   N = 10;
 
-
-strcpy(retStr,errStr[ecode]);
+/* print standard papi error message */
+fprintf(stderr, " %s\n", papi_errStr[N]);
 
 /* check for failed C library call*/
-if ( ecode==3 ) {
-	strcat(retStr,strerror(errno));
+if ( N==3 ) fprintf(" %s\n",strerror(errno));
+
+/* check for user supplied error message */
+if(errorMessage) fprintf(stderr, " %s\n", errorMessage);
+
+
+if (PAPI_ERR_LEVEL==PAPI_VERB_STOP) {
+	PAPI_shutdown();
 	}
 
-return(retStr);
+return(PAPI_errorCode);
 
-}/* end PAPI_strerror */
+}/***/
 /*========================================================================*/
-/*end function: PAPI_strerror                                             */
+/*end function: PAPI_error                                                */
 /*========================================================================*/
 /*========================================================================*/
 
@@ -386,7 +323,7 @@ int PAPI_state(int EventSetIndex, int *status) {
     if(   (EM->dataSlotArray[EventSetIndex])->state !=PAPI_RUNNING)
         &&(EM->dataSlotArray[EventSetIndex])->state !=PAPI_STOPPED) ) {
            /* if this error is ignored, need to set value of *status */ 
-	   *status=PAPI_STOPPED;
+	   *status=PAPI_EINVAL;
            return(PAPI_EBUG); 
 	   }
 	   

@@ -28,9 +28,15 @@ typedef struct _dynamic_array{
 	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
 } DynamicArray;
 
-/* function prototype */
+/* -----function prototypes from papi.c------------------------ */
+static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE); 
+static void PAPI_shutdown(void);
+int PAPI_error (int PAPI_errorCode, char *errorMessage);
+static int _papi_expandDA(DynamicArray *EM);
+int PAPI_state(int EventSetIndex, int *status);
+static EventSetInfo *papi_allocate_EventSet(void);
+static void free_EventSet(EventSetInfo *ESI);
 
-static int _papi_expandDA(DynamicArray *DA);
 
 extern DynamicArray evmap;
 
@@ -133,3 +139,11 @@ extern int _papi_hwd_getopt(int code, void *option);
 
 
 
+/* function prototypes from papi.c */
+static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE); 
+static void PAPI_shutdown(void);
+int PAPI_error (int PAPI_errorCode, char *errorMessage);
+static int _papi_expandDA(DynamicArray *EM);
+int PAPI_state(int EventSetIndex, int *status);
+static EventSetInfo *papi_allocate_EventSet(void);
+static void free_EventSet(EventSetInfo *ESI);
