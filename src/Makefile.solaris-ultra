@@ -42,6 +42,8 @@ FOPTFLAGS	= $(OPTFLAGS)
 LDFLAGS 	= -lcpc -ldl 
 MISCSRCS	=  
 MISCOBJS	=  
+POST_BUILD =
+SPECIAL_REMOVE =
 
 include Makefile.inc
 

@@ -20,6 +20,8 @@ CC_R	= cc
 CC	= cc
 CPP	= cc -E
 F77	= f77
+POST_BUILD =
+SPECIAL_REMOVE =
 
 include ./Makefile.inc
 

@@ -30,6 +30,7 @@ $(LIBRARY): $(OBJECTS)
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
+	-$(POST_BUILD)
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
@@ -115,7 +116,7 @@ clean: native_clean
 	cd ftests; $(MAKE) clean
 
 clobber: clean
-	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS)
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS) $(SPECIAL_REMOVE)
 null:
 
 dist: 

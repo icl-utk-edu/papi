@@ -5,6 +5,8 @@ MEMSUBSTR 	= any-null
 DESCR		= "Sample substrate: Any hardware platform with GNU compilers"
 LIBS		= static shared
 TARGETS 	= serial multiplex_and_pthreads
+POST_BUILD =
+SPECIAL_REMOVE =
 
 F77		= g77
 CC		= gcc

@@ -27,6 +27,7 @@ F77	= f90
 MISCOBJS= cpu_version.o
 #MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
 MISCSRCS= alpha/cpu_version.s
+POST_BUILD =
 
 include Makefile.inc
 

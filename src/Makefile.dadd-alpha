@@ -6,6 +6,8 @@ MEMSUBSTR= alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial multiplex
+POST_BUILD =
+SPECIAL_REMOVE =
 
 CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO 
 FFLAGS	= 

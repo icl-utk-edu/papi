@@ -7,6 +7,8 @@ CC		= gcc -Wall
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
+POST_BUILD	=
+SPECIAL_REMOVE =
 
 ifeq (4,$(KERNMINVER)) 
 VERSION	?= 2.0

@@ -36,8 +36,17 @@ if [ -x $i ]; then
 if [ "$i" = "ctests/timer_overflow" ]; then
   echo Skipping test $i, it takes too long...
 else
+if [ "$i" = "ctests/shlib" ]; then
+  echo -n "Running $i: ";
+  LD_LIBRARY_PATH=.
+  export LD_LIBRARY_PATH
+  LIBPATH=.
+  export LIBPATH
+  ./$i $TESTS_QUIET
+else
 echo -n "Running $i: ";
 ./$i $TESTS_QUIET
+fi;
 fi;
 fi;
 done

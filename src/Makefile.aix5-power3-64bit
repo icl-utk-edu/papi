@@ -8,6 +8,8 @@ LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads smp omp
 PMAPI   = /usr/pmapi
 SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
+POST_BUILD =
+SPECIAL_REMOVE =
 
 FLAGS  	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qtune=pwr3 -qlanglvl=extended -q64 
 CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 

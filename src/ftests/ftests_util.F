@@ -24,6 +24,7 @@ C     And also to make the test code read cleaner
 #else 
       call getarg(1,chbuf)
 #endif
+      get_quiet = 0
       if (LGE(chbuf, 'TESTS_QUIET')) then
         get_quiet=1
       end if

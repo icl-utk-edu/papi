@@ -17,6 +17,8 @@ SMPCFLGS= -mp
 OMPCFLGS= -mp
 MISCSRCS    =  
 MISCOBJS    =  
+POST_BUILD =
+SPECIAL_REMOVE =
 
 CC_SHR  = cc -shared -all -check_registry /usr/lib64/so_locations -soname $(SHLIB)
 CC_R	= cc -D_SGI_MP_SOURCE

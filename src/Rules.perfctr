@@ -58,6 +58,10 @@ MEMSUBSTR= linux
 LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads
 
+POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.5
+SPECIAL_REMOVE = rm -f libperfctr.so libperfctr.so.5
+
+
 CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH)
 
 CFLAGS-2.6.x := -DPERFCTR26

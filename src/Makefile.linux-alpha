@@ -6,6 +6,8 @@ DESCR   = "Alpha Linux for Alpha 21164EV5 and Alpha 21264EV6"
 
 LIBS	= static shared
 TARGETS	= serial
+POST_BUILD =
+SPECIAL_REMOVE =
 
 IPROBE_HOME = /Net/pecos/home1/galagun/test/iprobe_4.3
 

@@ -19,6 +19,8 @@ CC	= cc
 CPP	= $(CC) -E
 F77	= f90
 MISCOBJS= perfctrl.o
+POST_BUILD =
+SPECIAL_REMOVE =
 
 include Makefile.inc
 
