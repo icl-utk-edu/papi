@@ -6,14 +6,7 @@
 * Mods:    <your name here>
 *          <your email address>
 */
-#include <stdlib.h>
-#include <stdio.h>
 #include "papi_test.h"
-
-#ifndef NO_DLFCN
-#include <dlfcn.h>
-#endif
-extern errno;
 
 int main(int argc, char **argv)
 {

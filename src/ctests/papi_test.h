@@ -8,6 +8,9 @@
   /* Windows doesn't have a unistd.h */
 #ifndef _WIN32
 #include <unistd.h>
+#ifndef NO_DLFCN
+#include <dlfcn.h>
+#endif
 #endif
 
 #include <errno.h>
