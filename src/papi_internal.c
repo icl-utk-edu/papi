@@ -895,8 +895,14 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
       else /* If this is a derived event */ 
 	{ 
          values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
-	 if (values[j] < (long_long)0)
-	   return(PAPI_EBUG);
+	 if (values[j] < (long_long)0){
+           if ( values[j] <= -10 )
+	     return(PAPI_EBUG);
+           else {
+             INTDBG("Derived Event is negative!!: %lld\n", values[j]);
+             values[j] = 0;
+           }
+         }
 
 	}
 	   
