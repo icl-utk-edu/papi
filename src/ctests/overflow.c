@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 {
   int EventSet;
   long_long (values[2])[2];
+  long_long min, max;
   int num_flops, retval;
 
   if ( argc > 1 ) {
@@ -134,29 +135,28 @@ int main(int argc, char **argv)
 	printf("Column 1 approximately equals column 2\n");
 	printf(TAB1, "Row 3 approximately equals",(values[0])[1]/THRESHOLD);
   }
-  {
- 	long_long min, max;
+
 #ifndef NO_FLOPS
-	min = (long_long)(num_flops*.9);
- 	max = (long_long)(num_flops*1.1);
-	if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
-		test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
+  min = (long_long)(num_flops*.9);
+  max = (long_long)(num_flops*1.1);
+  if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
+	test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
 #endif
-	min = (long_long)(values[0][0]*.9);
-	max = (long_long)(values[0][0]*1.1);
-	if ( values[1][0] > max || values[1][0] < min )
-  		test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+  min = (long_long)(values[0][0]*.9);
+  max = (long_long)(values[0][0]*1.1);
+  if ( values[1][0] > max || values[1][0] < min )
+  	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
 
-	min = (long_long)(values[0][1]*.9);
-	max = (long_long)(values[0][1]*1.1);
-	if ( values[1][1] > max || values[1][1] < min )
-  		test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
+  min = (long_long)(values[0][1]*.9);
+  max = (long_long)(values[0][1]*1.1);
+  if ( values[1][1] > max || values[1][1] < min )
+  	test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
 
-	min = (long_long)((values[0][1]*.9)/THRESHOLD);
-	max = (long_long)((values[0][1]*1.1)/THRESHOLD);
-	if ( total > max || total < min )
-  		test_fail(__FILE__, __LINE__, "Overflows", 1);
-  }
+  min = (long_long)((values[0][1]*.9)/THRESHOLD);
+  max = (long_long)((values[0][1]*1.1)/THRESHOLD);
+  if ( total > max || total < min )
+  	test_fail(__FILE__, __LINE__, "Overflows", 1);
+
   printf("\n%s:  PASSED\n\n", __FILE__);
   PAPI_shutdown();
   exit(0);
