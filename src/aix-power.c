@@ -117,9 +117,9 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_MEM_SCY,DERIVED_ADD,{"PM_CMPLU_WT_LD","PM_CMPLU_WT_ST",0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Access*/
   {PAPI_MEM_RCY,0,{"PM_CMPLU_WT_LD",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Read*/
   {PAPI_MEM_WCY,0,{"PM_CMPLU_WT_ST",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Write*/
-  {PAPI_STL_ICY,0,{"PM_1INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Issue*/
+  {PAPI_STL_ICY,0,{"PM_DPU_WT_IC_MISS",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Issue*/
   {PAPI_FUL_ICY,0,{"PM_4INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with Maximum Instruction Issue*/
-  {PAPI_STL_CCY,0,{"PM_1INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Completion*/
+  {PAPI_STL_CCY,0,{"PM_CMPLU_WT_UNF_INST",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Completion*/
   {PAPI_FUL_CCY,0,{"PM_4INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with Maximum Instruction Completion*/
   {PAPI_BR_CN,0,{PM_BR_FINISH,0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
   {PAPI_BR_MSP,0,{"PM_BR_MPRED",0,0,0,0,0,0,0}}, /*Conditional branch instructions mispred*/
