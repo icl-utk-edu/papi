@@ -1,0 +1,67 @@
+.\" $Id$
+.TH PAPI_multiplex_init 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+
+.SH NAME
+PAPI_multiplex_init \- initialize multiplex support in the PAPI library
+
+.SH SYNOPSIS
+.B #include <papi.h>
+
+.nf
+.BI "int PAPI_multiplex_init (void);"
+.fi
+
+.SH DESCRIPTION
+.B "PAPI_multiplex_init"
+enables and initializes multiplex support in the PAPI library.
+Applications that make no use of multiplexs do not need to call
+this routine.
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.fi
+
+.SH EXAMPLES
+.nf         
+.if t .ft CW
+  /* Initialize the library */
+
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if (retval != PAPI_VER_CURRENT)
+    handle_error("PAPI_library_init",__LINE__,retval);
+
+  /* Enable multiplexing support */
+
+  retval = PAPI_multiplex_init();
+  if (retval != PAPI_OK)
+    handle_error("PAPI_multiplex_init",__LINE__,retval);
+  
+  /* Turn on automatic error reporting */
+
+  retval = PAPI_set_debug(PAPI_VERB_ECONT);
+  if (retval != PAPI_OK)
+    handle_error("PAPI_set_debug",__LINE__,retval);
+
+  /* Turn on thread support in PAPI */
+
+  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
+    handle_error("PAPI_thread_init",__LINE__,retval);
+.if t .ft P
+.fi
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+This function causes the application to exit if it is called more than once.
+
+.SH SEE ALSO
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,0 +1,63 @@
+.\" $Id$
+.TH PAPI_write 3 "June, 2001" "PAPI Programmer's Manual" "PAPI"
+
+.SH NAME
+.nf
+PAPI_write \- Write counter values into counters
+.fi
+
+.SH SYNOPSIS
+.B #include <papi.h>
+
+.nf
+.BI "int PAPI_write(int " EventSet ", long long *" values ");"
+.fi
+
+.SH DESCRIPTION
+.B "PAPI_write()"
+writes the counter values provided in the array 
+.I values
+in to the event set
+.I EventSet.
+The virtual counters managed by the PAPI library will be set to the 
+values provided. If the event set is running an attempt will be made 
+write the values to the running counters as well. This operation is
+not permitted by all substrates and may result in a run-time error.
+
+.SH RETURN VALUES
+On success, 
+.BR PAPI_write  " returns"
+.IR "PAPI_OK" ,
+and on error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_ESBSTR"
+The EventSet is currently counting events and the substrate could
+not change the values of the running counters.
+
+.SH EXAMPLES
+.LP
+.nf
+.if t .ft CW
+
+/* Yet to be written */
+
+.if t .ft P
+.fi
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+These functions have no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_accum "(3)"
+.LP
+The\ PAPI\ Web\ Site: 
+.B http://icl.cs.utk.edu/projects/papi
+

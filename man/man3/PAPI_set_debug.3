@@ -1,0 +1,52 @@
+.\" $Id$
+.TH PAPI_set_debug 3 "March, 2001" "PAPI Programmer's Manual" "PAPI"
+
+.SH NAME
+PAPI_set_debug \- set the current debug level for PAPI
+
+.SH SYNOPSIS
+.B #include <papi.h>
+
+.BI "int PAPI_set_debug(int " debuglevel ");"
+
+.SH DESCRIPTION
+.B "PAPI_set_debug" 
+sets the default debug level for the PAPI library.
+Here
+.I "debuglevel"
+is one of the following constants as defined in the papi.h header file.
+The current debug level is internally stored in the PAPI library and
+is used by the default internal PAPI error handler subroutine. 
+The error handler is called by library routines
+on the occurence of recoverable errors.
+The default PAPI error handler handles the possible debug levels in
+the following manner. 
+.TS
+allbox tab($);
+lB l.
+PAPI_QUIET$Quietly handle errors
+PAPI_VERB_ECONT$Print error message and continue
+PAPI_VERB_ESTOP$Print error message and exit
+.TE
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+The default error handler is currently not possible to substitute by
+the user. It is also only activated when PAPI is compiled with
+debugging enabled.
+
+.SH SEE ALSO
+.BR PAPI_set_opt "(3)," 
+.RB The\ PAPI\ Web\ Site: \ http://icl.cs.utk.edu/projects/papi
