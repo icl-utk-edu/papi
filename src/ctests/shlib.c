@@ -42,6 +42,11 @@ int main(int argc, char **argv)
    map = shinfo->map;
    for (i=0;i<shinfo->count;i++)
      {
+       printf("Library: %s\n",map->mapname);
+       printf("Text start: %p, Text end: %p\n",map->text_start,map->text_end);
+       printf("Data start: %p, Data end: %p\n",map->data_start,map->data_end);
+       printf("Bss start: %p, Bss end: %p\n",map->bss_start,map->bss_end);
+
        if ((map->mapname == NULL) || (strlen(map->mapname) == 0))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
        if ((map->text_start == 0x0) || (map->text_end == 0x0) ||
@@ -54,10 +59,6 @@ int main(int argc, char **argv)
 	   (map->bss_start >= map->bss_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
 
-       printf("Library: %s\n",map->mapname);
-       printf("Text start: %p, Text end: %p\n",map->text_start,map->text_end);
-       printf("Data start: %p, Data end: %p\n",map->data_start,map->data_end);
-       printf("Bss start: %p, Bss end: %p\n",map->bss_start,map->bss_end);
        map++;
      }
 
@@ -103,6 +104,15 @@ int main(int argc, char **argv)
    map = shinfo->map;
    for (i=0;i<shinfo->count;i++)
      {
+       if (strstr(map->mapname,libname))
+	 {
+	   printf("New Library: %s\n",map->mapname);
+	   printf("Text start: %p, Text end: %p\n",map->text_start,map->text_end);
+	   printf("Data start: %p, Data end: %p\n",map->data_start,map->data_end);
+	   printf("Bss start: %p, Bss end: %p\n",map->bss_start,map->bss_end);
+	   foundit = 1;
+	 }
+
        if ((map->mapname == NULL) || (strlen(map->mapname) == 0))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
        if ((map->text_start == 0x0) || (map->text_end == 0x0) ||
@@ -115,14 +125,6 @@ int main(int argc, char **argv)
 	   (map->bss_start >= map->bss_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
 
-       if (strstr(map->mapname,libname))
-	 {
-	   printf("New Library: %s\n",map->mapname);
-	   printf("Text start: %p, Text end: %p\n",map->text_start,map->text_end);
-	   printf("Data start: %p, Data end: %p\n",map->data_start,map->data_end);
-	   printf("Bss start: %p, Bss end: %p\n",map->bss_start,map->bss_end);
-	   foundit = 1;
-	 }
        map++;
      }
    
