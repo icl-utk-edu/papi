@@ -1,41 +1,6 @@
-LIBRARY = libpapi.a
-SHLIB   = libpapi.so
-SUBSTR	= perfctr-p3
-MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr 2.6.x patch for Opteron"
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads 
-PERFCTR_PREFIX ?= /usr
-
-OPTFLAGS= -O3 -g -Wall
-TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS 
-FFLAGS        = -Dlinux
-FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(TOPTFLAGS)
-
-CC	= gcc
-CC_SHR  = $(CC) -shared -fPIC
-CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR_PREFIX)/include -I$(KERNINC) -I. -DPERFCTR26 -DDEBUG
-MISCSRCS= linux.c p3_events.c
-MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o x86.o
-MISCHDRS= perfctr-p3.h
-SHLIBDEPS = -lperfctr
-ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
-
-include Makefile.inc
-
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
-
-p3_events.o: p3_events.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c p3_events.c -o $@
-
-marshal.o global.o misc.o virtual.o x86.o: $(PERFCTR_PREFIX)/lib/libperfctr.a
-	ar x $(PERFCTR_PREFIX)/lib/libperfctr.a
-
-native_clean:
-	rm -f marshal.o global.o misc.o virtual.o x86.o
-	
-native_install:
-	
+OPTFLAGS= -g -Wall -O3
+TOPTFLAGS= -g -Wall -O1 -D__x86_64__
+F77	= g77 gcc
+CC      = gcc
+CC_SHR  = $(CC) -shared -fPIC -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
+include Makefile.perfctr-2.6.x
