@@ -187,7 +187,11 @@ static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
                 {  0,{ 5,-1}},			/* Failed store conditional*/
                 { DERIVED_SUB,{20,5}},		/* Successful store conditional*/
                 {  0,{-1,20}},			/* Total store conditional*/
-                { DERIVED_SUB,{0,14}},		/* cycles stalled for memory*/
+/* According to the man page, event 14 ALU/FPU progress cycles is always 0
+ * on current R12K processors, taking this out till I can verify -KSL 
+                { DERIVED_SUB,{0,14}},*/	/* cycles stalled for memory*/
+                { -1,{-1,-1}},			/* cycles stalled for memory*/
+
                 { -1,{-1,-1}},			/* cycles stalled for memory read*/
                 { -1,{-1,-1}},			/* cycles stalled for memory write*/
                 { -1,{-1,-1}},			/* cycles no instructions issued*/
@@ -196,11 +200,11 @@ static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
 		{ -1,{-1,-1}},			/* cycles max instructions exe*/
 		{ -1,{-1,-1}},			/* hardware interrupts*/
 		{ -1,{-1,-1}},			/* Uncond. branches executed */
-		{ -1,{-1,-1}},			/* Cond. branch inst. exe*/
+		{ 0,{6,-1}},			/* Cond. branch inst. exe*/
 		{ -1,{-1,-1}},			/* Cond. branch inst. taken*/
 		{ -1,{-1,-1}},			/* Cond. branch inst. not taken*/
                 {  0,{-1,24}},			/* Cond. branch inst. mispred*/
-                { -1,{-1,-1}},			/* Cond. branch inst. correctly pred*/
+                { DERIVED_SUB,{6,24}},			/* Cond. branch inst. correctly pred*/
                 { -1,{-1,-1}},			/* FMA*/
                 {  0,{ 1,-1}},			/* Total inst. issued*/
 		{  0,{15,-1}},			/* Total inst. executed*/
@@ -208,7 +212,7 @@ static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
 		{  0,{-1,21}},			/* Floating Pt. inst. executed*/
 		{  0,{-1,18}},			/* Loads executed*/
 		{  0,{-1,19}},			/* Stores executed*/
-		{  0,{ 6,-1}},			/* Branch inst. executed*/
+		{  -1,{-1,-1}},			/* Branch inst. executed*/
 		{ -1,{-1,-1}},			/* Vector/SIMD inst. executed */
 		{ DERIVED_PS,{0,21}},		/* FLOPS */
                 { -1,{-1,-1}},			/* Any res stalled */
