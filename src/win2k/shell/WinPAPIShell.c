@@ -744,8 +744,8 @@ static void centerDialog(HWND hdlg)
 	GetWindowRect(hdlg, &r);
 	screenWd = GetSystemMetrics(SM_CXSCREEN);
 	screenHt = GetSystemMetrics(SM_CYSCREEN);
-	left = (screenWd - (r.right  - r.left)) / 2;
-	top  = (screenHt - (r.bottom - r.top)) / 3;
+	left = (short)(screenWd - (r.right  - r.left)) / 2;
+	top  = (short)(screenHt - (r.bottom - r.top)) / 3;
 	bottom = top + (short)(r.bottom - r.top);
 	SetWindowPos(hdlg, NULL, left, top, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
 }
