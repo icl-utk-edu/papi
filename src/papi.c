@@ -1475,7 +1475,7 @@ int PAPI_set_multiplex(int *EventSet)
 {
   PAPI_option_t mpx;
 
-  if (EventSet == NULL)
+  if (EventSet == NULL) 
     papi_return(PAPI_EINVAL);
 
   mpx.multiplex.eventset = *EventSet;
@@ -1550,8 +1550,9 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
 	if (ptr->multiplex.us < 1)
 	  papi_return(PAPI_EINVAL);
-	if (ptr->multiplex.max_degree <= _papi_system_info.num_cntrs)
-	  papi_return(PAPI_EINVAL);
+	if (ptr->multiplex.max_degree <= _papi_system_info.num_cntrs) {
+	  papi_return(PAPI_OK);
+        }
         ESI = lookup_EventSet(PAPI_EVENTSET_MAP, ptr->multiplex.eventset);
 	if (ESI == NULL)
 	  papi_return(PAPI_ENOEVST);
