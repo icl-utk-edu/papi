@@ -86,6 +86,7 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
  	*proc_time = 0.0;
 	*flpins = 0;
         if ( !initialized ) {
+		PAPI_num_counters();
 		retval = PAPI_library_init( PAPI_VER_CURRENT );
 		if ( retval != PAPI_VER_CURRENT )
 	   	return(retval);
@@ -163,7 +164,7 @@ int PAPI_num_counters(void)
 {
   int retval;
 
-  if (!initialized)
+  if (!initialized )
     {
       if ( !initialized ){
          retval = PAPI_library_init(PAPI_VER_CURRENT);

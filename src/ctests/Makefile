@@ -10,7 +10,7 @@ SERIAL  = derived high-level2 describe mem_info zero zero_flip low-level high-le
 	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory \
-	timer_overflow overflow2
+	timer_overflow overflow2 matrix-hl
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -179,6 +179,9 @@ case2: case2.c $(PAPILIB)  $(UTILOBJS)
 
 low-level: low-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
+
+matrix-hl: matrix-hl.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
 
 high-level: high-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
