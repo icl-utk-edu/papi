@@ -54,6 +54,9 @@ int main(int argc, char **argv)
    }
    if (!TESTS_QUIET)
       printf("Succesfully added,started and stopped %d events.\n", count);
-   test_pass(__FILE__, NULL, 0);
+   if ( count > 0 )
+      test_pass(__FILE__, NULL, 0);
+   else
+      test_fail(__FILE__, __LINE__, "No events added", 1);
    exit(1);
 }
