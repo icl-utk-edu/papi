@@ -326,14 +326,16 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       return 0;
 }
 
-static void clear_control_state(hwd_control_state_t *this_state) {
+static void clear_cs_events(hwd_control_state_t *this_state) {
    unsigned int i;
 
    /* Remove all counter control command values from eventset. */
    for(i = 0; i < this_state->control.cpu_control.nractrs; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = 0;
-      this_state->control.cpu_control.evntsel[i] = this_state->control.cpu_control.evntsel[i] & (PERF_OS|PERF_USR);
+
+      this_state->control.cpu_control.pmc_map[i] = i;
+      this_state->control.cpu_control.evntsel[i] 
+         = this_state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
    this_state->control.cpu_control.nractrs = 0;
@@ -346,11 +348,10 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t *ctx) {
    int i;
 
-   /* clear out everything currently coded */
+   /* clear out the events from the control state */
    clear_control_state(this_state);
 
    /* fill the counters we're using */
-   _papi_hwd_init_control_state(this_state);
    for (i = 0; i < count; i++) {
       /* Add counter control command values to eventset */
       this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
