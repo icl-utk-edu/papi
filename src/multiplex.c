@@ -731,6 +731,7 @@ int MPX_start(MPX_EventSet * mpx_events)
   long_long values[2];
   long_long cycles_this_slice,current_thread_mpx_c=0;
   Threadlist * t;
+  long_long prev_total_c;
         
   t = mpx_events->mythr;
 
@@ -810,6 +811,8 @@ int MPX_start(MPX_EventSet * mpx_events)
   }
 
   mpx_events->status = MPX_RUNNING;
+
+  prev_total_c = mpx_events->stop_c - mpx_events->start_c;
 
   /* Start first counter if one isn't already running */
   if( t->cur_event == NULL ) {
@@ -1454,7 +1457,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
    * of multiplexing events, so we can just delete that
    */
   if(mev && mev->papi_event) {
-    PAPI_cleanup_eventset(&(mev->papi_event));
+    PAPI_cleanup_eventset(mev->papi_event);
     PAPI_destroy_eventset(&(mev->papi_event));
   }
   if(mev)
