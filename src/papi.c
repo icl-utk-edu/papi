@@ -15,7 +15,7 @@
 *          <your email address>
 */  
 
-#ifdef PAPI3.0                           /* JT */
+#ifdef PAPI30                           /* JT */
 #include "papi.h"                        /* JT */
 #include "papi_internal.h"               /* JT */
 #include "papi_protos.h"                 /* JT */
@@ -1143,7 +1143,7 @@ int PAPI_rem_event(int *EventSet, int EventCode)
   papi_return(remove_event(ESI,EventCode));
 }
 
-#ifdef PAPI3.0
+#ifdef PAPI30
 int PAPI_remove_event(int EventSet, int EventCode)       /* JT */
 {
   EventSetInfo_t *ESI;
@@ -1902,7 +1902,7 @@ int PAPI_num_hw_counters(void)                               /* JT */
   return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 }
 
-#ifdef PAPI3.0
+#ifdef PAPI30
 int PAPI_num_events(int EventSet)                            /* JT */
 {
   EventSetInfo_t *ESI;
@@ -2238,7 +2238,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)    /* JT */
   papi_return(PAPI_OK);
 }
 
-#ifdef PAPI3.0
+#ifdef PAPI30
 int PAPI_remove_events(int EventSet, int *Events, int number)       /* JT */
 {
   int i, retval;

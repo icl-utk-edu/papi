@@ -16,15 +16,12 @@
 
 #ifdef DEBUG
 /* add Win32 to the debug list */
-#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__
-) \
+#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__) \
         || defined(__osf__)) || (defined(sun) && defined(sparc)) || defined(_WIN
 32)
-#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:
-%s:%d: ",__FILE__,__LINE__); fprintf a; } }
+#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else /* SV2,SV1 ? */
-#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:
-%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
+#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #endif
 #else
 #define DBG(a)
@@ -257,7 +254,7 @@ typedef struct _papi_granularity_option {
 
 typedef struct _papi_preload_option {
   char lib_preload_env[PAPI_MAX_STR_LEN];    /* Model string of CPU */
-#ifdef PAPI3.0
+#ifdef PAPI30
   char lib_preload_sep;                      /* JT */
   char lib_dir_env[PAPI_MAX_STR_LEN];        /* JT */
   char lib_dir_sep;                          /* JT */
@@ -280,7 +277,7 @@ typedef struct _papi_address_map {                                     /* JT */
   caddr_t bss_end;      /* End address of program bss segment */       /* JT */
 } PAPI_address_map_t;                                                  /* JT */
 
-#ifdef PAPI3.0
+#ifdef PAPI30
 typedef struct _papi_program_info {                                    /* JT */
   char fullname[PAPI_MAX_STR_LEN];      /* path+name */                /* JT */
   char name[PAPI_MAX_STR_LEN];          /* name */                     /* JT */
@@ -441,7 +438,7 @@ int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
 int PAPI_read(int EventSet, long_long *values);
-#ifdef PAPI3.0
+#ifdef PAPI30
 int PAPI_remove_event(int EventSet, int EventCode);
 int PAPI_remove_events(int EventSet, int *Events, int number);
 #endif
