@@ -22,6 +22,7 @@ perl manserver_papi.pl -o html man3/papi_get_virt_usec.3
 perl manserver_papi.pl -o html man3/papi_help.3
 perl manserver_papi.pl -o html man3/papi_library_init.3
 perl manserver_papi.pl -o html man3/papi_list_events.3
+perl manserver_papi.pl -o html man3/papi_lock.3
 perl manserver_papi.pl -o html man3/papi_multiplex_init.3
 perl manserver_papi.pl -o html man3/papi_num_counters.3
 perl manserver_papi.pl -o html man3/papi_overflow.3
@@ -36,7 +37,9 @@ perl manserver_papi.pl -o html man3/papi_read_counters.3
 perl manserver_papi.pl -o html man3/papi_rem_event.3
 perl manserver_papi.pl -o html man3/papi_rem_events.3
 perl manserver_papi.pl -o html man3/papi_rem_pevent.3
+perl manserver_papi.pl -o html man3/papi_restore.3
 perl manserver_papi.pl -o html man3/papi_reset.3
+perl manserver_papi.pl -o html man3/papi_save.3
 perl manserver_papi.pl -o html man3/papi_set_debug.3
 perl manserver_papi.pl -o html man3/papi_set_domain.3
 perl manserver_papi.pl -o html man3/papi_set_granularity.3
@@ -51,5 +54,6 @@ perl manserver_papi.pl -o html man3/papi_stop_counters.3
 perl manserver_papi.pl -o html man3/papi_strerror.3
 perl manserver_papi.pl -o html man3/papi_thread_id.3
 perl manserver_papi.pl -o html man3/papi_thread_init.3
+perl manserver_papi.pl -o html man3/papi_unlock.3
 perl manserver_papi.pl -o html man3/papi_write.3
 perl manserver_papi.pl -o html man3/papif.3
