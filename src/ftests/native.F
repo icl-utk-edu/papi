@@ -181,13 +181,15 @@ C     TLB
 
 #if defined(linux) && defined(__i386__)
 #if defined(PENTIUM4)
-      call PAPIf_event_name_to_code('retired_mispred_branch_type_CONDITIONAL', nativees, retval )
+      call PAPIf_event_name_to_code(                                    &
+     & 'retired_mispred_branch_type_CONDITIONAL', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_event_name_to_code('resource_stall_SBFULL', nativees, retval )
+      call PAPIf_event_name_to_code('resource_stall_SBFULL',            &
+     &  nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -199,13 +201,15 @@ C     TLB
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_event_name_to_code('instr_retired_BOGUSNTAG_BOGUSTAG', nativees, retval )
+      call PAPIf_event_name_to_code('instr_retired_BOGUSNTAG_BOGUSTAG', &
+     & nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_event_name_to_code('BSQ_cache_reference_RD_2ndL_HITS', nativees, retval )
+      call PAPIf_event_name_to_code('BSQ_cache_reference_RD_2ndL_HITS', &
+     & nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -275,7 +279,8 @@ C     Execution latency stall cycles
 #if defined(ITANIUM2)
       call PAPIf_event_name_to_code('CPU_CYCLES', nativees, retval )
 #else
-      call PAPIf_event_name_to_code('DEPENDENCY_SCOREBOARD_CYCLE', nativees, retval )
+      call PAPIf_event_name_to_code('DEPENDENCY_SCOREBOARD_CYCLE',      &
+     &    nativees, retval )
 #endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -286,7 +291,8 @@ C     Combined execution stall cycles
 #if defined(ITANIUM2)
       call PAPIf_event_name_to_code('L1I_READS', nativees, retval )
 #else
-      call PAPIf_event_name_to_code('DEPENDENCY_ALL_CYCLE', nativees, retval )
+      call PAPIf_event_name_to_code('DEPENDENCY_ALL_CYCLE',             &
+     &       nativees, retval )
 #endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -295,9 +301,10 @@ C     Combined execution stall cycles
 
 C     Combined instruction fetch stall cycles
 #if defined(ITANIUM2)
-      call PAPIf_event_name_to_code('L1D_READS_SET0', nativees, retval )
+      call PAPIf_event_name_to_code('L1D_READS_SET0', nativees, retval)
 #else
-      call PAPIf_event_name_to_code('UNSTALLED_BACKEND_CYCLE', nativees, retval )
+      call PAPIf_event_name_to_code('UNSTALLED_BACKEND_CYCLE',          &
+     &  nativees, retval )
 #endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -306,7 +313,7 @@ C     Combined instruction fetch stall cycles
 
 C     Combined memory stall cycles
 #if defined(ITANIUM2)
-      call PAPIf_event_name_to_code('IA64_INST_RETIRED', nativees, retval )
+      call PAPIf_event_name_to_code('IA64_INST_RETIRED',nativees,retval)
 #else
       call PAPIf_event_name_to_code('MEMORY_CYCLE', nativees, retval )
 #endif
@@ -318,7 +325,8 @@ C     Combined memory stall cycles
 #if (defined(mips) && defined(sgi) && defined(unix))
 C     L1 I Miss
 C      nativees = 9*2**8
-      call PAPIf_event_name_to_code('Primary_instruction_cache_misse', nativees, retval )
+      call PAPIf_event_name_to_code('Primary_instruction_cache_misse',  &
+     &  nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -326,7 +334,8 @@ C      nativees = 9*2**8
 
 C     L1 D Miss
 C      nativees = 9 * 2**8 + 1
-      call PAPIf_event_name_to_code('Primary_data_cache_misses', nativees, retval )
+      call PAPIf_event_name_to_code('Primary_data_cache_misses',        &
+     &  nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
