@@ -50,7 +50,7 @@ if number == 9, then only the special purpose counter is needed.
 
 /*example values for now */
 
-static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { 
+static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
                 { },				// L1 D-Cache misses 
                 { 4, 0x28, 0xC0,},		// L1 I-Cache misses 
 		{ 4, 0x24, 0x2E,},		// L2 Cache misses
@@ -118,7 +118,7 @@ static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = {
              };
 
 
-static hwd_control_state current; /* not yet used. */
+static hwd_control_state_t current; /* not yet used. */
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -143,7 +143,7 @@ int _papi_hwd_init(EventSetInfo *zero)
 
 int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
 {
-  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;
   unsigned int preset;
 
@@ -250,7 +250,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
 
 int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
-  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;
   unsigned int preset;
 
@@ -375,7 +375,7 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
 
 int _papi_hwd_start(EventSetInfo *EventSet)
 {
-  hwd_control_state *this_state = EventSet->machdep;
+  hwd_control_state_t *this_state = EventSet->machdep;
   int retval, code1, code2, code3;
 
   code1 = this_state->counter_code1;
@@ -429,7 +429,7 @@ int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
 
 int _papi_hwd_reset(EventSetInfo *ESI)
 {
-  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
 
   if(this_state->number == 0) return(PAPI_ENOTRUN);
 
@@ -438,7 +438,7 @@ int _papi_hwd_reset(EventSetInfo *ESI)
 
 int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 {
-  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int retval, machnum, i;
 
   for(i=0; i<3; i++) events[i] = -1;
@@ -468,7 +468,7 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 
 int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
 { 
-  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int retval;
 
   switch (this_state->number)
@@ -566,7 +566,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			         1,
 			        -1, 
 			        -1,
-			        sizeof(hwd_control_state), 
+			        sizeof(hwd_control_state_t), 
 			        NULL };
 #endif
 #endif

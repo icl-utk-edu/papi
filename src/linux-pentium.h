@@ -10,7 +10,7 @@ typedef struct _hwd_preset {
   int counter_code2;
   int sp_code;   /* possibly needed for setting certain registers to 
                     enable special purpose counters */
-} hwd_control_state;
+} hwd_control_state_t;
 
 
 

@@ -15,13 +15,19 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+#if defined(mips) && defined(unix) && defined(sgi)
+#include "irix-mips.h"
+#elif defined(i386) && defined(unix) && defined(linux)
 #include "linux-pentium.h"
+#else
+#include "any-null.h"
+#endif
 
 void main() {
   int r, i;
   double a, b, c;
   unsigned long long  ct[2];
-  hwd_control_state test;
+  hwd_control_state_t test;
   EventSetInfo EventSet;
  
   test.number = 0;
