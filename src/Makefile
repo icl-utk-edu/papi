@@ -6,6 +6,7 @@ all:
 	@echo "make -f Makefile.unicos-t3e";
 	@echo "make -f Makefile.aix5-power3";
 	@echo "make -f Makefile.aix-power4";
+	@echo "make -f Makefile.aix-power4-64bit";
 	@echo "make -f Makefile.aix-power";
 	@echo "make -f Makefile.solaris-ultra";
 	@echo "make -f Makefile.irix64-mips";

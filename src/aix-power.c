@@ -18,6 +18,22 @@
 
 #include "aix-power.h"
 
+/* 
+ some heap information, start_of_text, start_of_data .....
+ ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV 
+*/
+#ifndef _P64
+  #define START_OF_TEXT 0x10000000
+  #define END_OF_TEXT   &_etext-1
+  #define START_OF_DATA 0x20000000
+  #define END_OF_DATA   &_end-1
+#else
+  #define START_OF_TEXT 0x100000000
+  #define END_OF_TEXT   &_etext-1
+  #define START_OF_DATA 0x110000000
+  #define END_OF_DATA   &_end-1
+#endif
+
 static int maxgroups = 0;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -836,7 +852,7 @@ static int get_system_info(void)
   _papi_system_info.num_gp_cntrs = pminfo.maxpmcs;
   _papi_system_info.num_cntrs = pminfo.maxpmcs;
   _papi_system_info.cpunum = mycpu();
-  _papi_system_info.exe_info.text_end = (caddr_t)&_etext;
+/*  _papi_system_info.exe_info.text_end = (caddr_t)&_etext;*/
 
 #ifdef _POWER4
   retval = setup_p4_presets(&pminfo, &pmgroups);
@@ -2064,10 +2080,10 @@ papi_mdi _papi_system_info = { "$Id$",
 			       {
 				 "",
 				 "",
-				 (caddr_t)0x10000200,
-				 (caddr_t)-1,
-				 (caddr_t)-1,
-				 (caddr_t)-1,
+				 (caddr_t)START_OF_TEXT,
+				 (caddr_t)END_OF_TEXT,
+				 (caddr_t)START_OF_DATA,
+				 (caddr_t)END_OF_DATA,
 				 (caddr_t)-1,
 				 (caddr_t)-1,
 				 ""
