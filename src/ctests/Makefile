@@ -11,7 +11,7 @@ SERIAL  = realtime first memory exeinfo shlib zero zero_fork avail branches dmem
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth \
 	profile  sprofile profile_32 profile_64 profile_twoevents earprofile\
-	ipc native native_avail
+	ipc native native_avail overflow_index
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) 
@@ -159,6 +159,9 @@ overflow: overflow.c $(UTILOBJS) $(PAPILIB)
 
 overflow_twoevents: overflow_twoevents.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_twoevents.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_twoevents
+
+overflow_index: overflow_index.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_index.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_index
 
 overflow2: overflow2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow2
