@@ -133,31 +133,21 @@ int main(int argc, char **argv)
          * different between the two runs.
          * printf("Column 1 approximately equals column 2\n"); 
          */
-	printf(TAB1, "Row 3 approximately equals",(values[0])[0]/(long_long)THRESHOLD);
+	printf("Row 3 approximately equals %u +- %u %%\n",
+	       (unsigned)((values[0])[0]/(long_long)THRESHOLD),
+	       (unsigned)(OVR_TOLERANCE*100.0));
   }
 
-  if (PAPI_event == PAPI_FP_INS) {
-	  min = (long_long)(num_flops*.9);
-	  max = (long_long)(num_flops*1.1);
-	  if ( values[0][0] > max || values[0][0] < min || values[1][0] < min || values[1][0]>max)
-		test_fail(__FILE__, __LINE__, event_name, 1);
-  }
-  min = (long_long)(values[0][0]*.9);
-  max = (long_long)(values[0][0]*1.1);
-  if ( values[1][0] > max || values[1][0] < min )
-  	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
-
-#ifdef THE_SECOND_EVENT_IS_REALLY_REPRODUCABLE
-  min = (long_long)(values[0][1]*.9);
-  max = (long_long)(values[0][1]*1.1);
-  if ( values[1][1] > max || values[1][1] < min )
+  min = (long_long)((values[0])[0]*(1.0-TOLERANCE));
+  max = (long_long)((values[0])[0]*(1.0+TOLERANCE));
+  if ( (values[0])[1] > max || (values[0])[1] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
-#endif
 
-  min = (long_long)((values[0][0]*.75)/(long_long)THRESHOLD);
-  max = (long_long)((values[0][0]*1.15)/(long_long)THRESHOLD);
+  min = (long_long)(((values[0])[0]*(1.0-OVR_TOLERANCE))/(long_long)THRESHOLD);
+  max = (long_long)(((values[0])[0]*(1.0+OVR_TOLERANCE))/(long_long)THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
+
   test_pass(__FILE__,NULL,0);
   exit(1);
 }

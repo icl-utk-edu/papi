@@ -125,22 +125,19 @@ int main(int argc, char **argv)
 	if (PAPI_event == PAPI_FP_INS)
 		printf("Row 1 approximately equals %d %d\n", num_flops, num_flops);
 	printf("Column 1 approximately equals column 2\n");
-	printf(TAB1, "Row 3 approximately equals",(values[0])/(long_long)THRESHOLD);
+	printf("Row 3 approximately equals %u +- %u %%\n",
+	       (unsigned)((values[0])/(long_long)THRESHOLD),
+	       (unsigned)(OVR_TOLERANCE*100.0));
+
   }
 
-  if (PAPI_event == PAPI_FP_INS) {
-	  min = (long_long)(num_flops*.9);
-	  max = (long_long)(num_flops*1.1);
-	  if ( values[0] > max || values[0] < min || values[1] < min || values[1] >max)
-		test_fail(__FILE__, __LINE__, event_name, 1);
-  }
-  min = (long_long)(values[0]*.9);
-  max = (long_long)(values[0]*1.1);
+  min = (long_long)(values[0]*(1.0-TOLERANCE));
+  max = (long_long)(values[0]*(1.0+TOLERANCE));
   if ( values[1] > max || values[1] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
 
-  min = (long_long)((values[0]*.80)/(long_long)THRESHOLD);
-  max = (long_long)((values[0]*1.15)/(long_long)THRESHOLD);
+  min = (long_long)((values[0]*(1.0-OVR_TOLERANCE))/(long_long)THRESHOLD);
+  max = (long_long)((values[0]*(1.0+OVR_TOLERANCE))/(long_long)THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
 

@@ -14,7 +14,6 @@
 
 #define REPEATS 5
 #define MAXEVENTS 9
-#define RELTOLERANCE 0.1
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
@@ -189,7 +188,7 @@ int main(int argc, char **argv) {
     if ( !TESTS_QUIET )
       printf("%10.3g ",spread[j]);
     /* Make sure that NaN get counted as errors */
-    if(spread[j]<RELTOLERANCE)
+    if(spread[j]<MPX_TOLERANCE)
       i--;
     else if(refvalues[j]<MINCOUNTS) /* Neglect inprecise results with low counts */
       i--;

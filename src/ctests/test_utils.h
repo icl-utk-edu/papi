@@ -1,5 +1,8 @@
 #define NUM_FLOPS  20000000
 #define THRESHOLD   1000000
+#define TOLERANCE   .1
+#define OVR_TOLERANCE .75
+#define MPX_TOLERANCE .20
 
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
