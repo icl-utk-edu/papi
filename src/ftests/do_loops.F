@@ -46,8 +46,10 @@ c  Rewind the file as this function may be called more than once
       implicit none      
       integer n
       real*8 a,b,c
-      common a, b
+c     common a, b
       integer i
+      a = 0.5
+      b = 6.2
       c = 0.11
       do i = 1, n
         c = c + a * b
