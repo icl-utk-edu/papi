@@ -163,6 +163,9 @@ can be determined by running 'lslpp -a -l | grep -i xlc'. If you have version
 
 Linux - Alpha
 *****************************************************************************
+PAPI 3.0 and Linux/Alpha hasn't been tested nor active supported for a while.
+If you are interested, please send mail to ptools-perfapi@ptools.org.
+
 PAPI on Alpha Linux requires the iprobe driver patch from Compaq/HP, which 
 requires a minimum kernel version of 2.1.132. For details on installing this 
 kernel driver see the README at: 
@@ -224,7 +227,9 @@ directory.
 
 PAPI supports 2 versions of PerfCtr. The 2.4.x series and the 2.6.x series.
 By default, PAPI assumes 2.6.x. You can change this by setting the
-VERSION flag on the make line to either 2.4.x or 2.6.x.
+VERSION flag on the make line to either 2.4.x or 2.6.x. NOTE: THE VERSIONS
+OF PERFCTR DO NOT CORRESPOND TO LINUX KERNEL VERSIONS. PLEASE USE PERFCTR 
+2.6.x ALWAYS UNLESS YOU ARE RUNNING A VERY OLD (AND UNSUPPORTED) KERNEL.
 
 make -f Makefile.linux-<processor> VERSION=2.4.x
 
