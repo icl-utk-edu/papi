@@ -521,7 +521,7 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
   if (retval > 0)
     {
       if (_papi_hwi_error_level != PAPI_QUIET)
-	pm_error("PAPI Error: pm_reset_data_mythread",retval);
+	pm_error("PAPI Error: pm_delete_program_mythread",retval);
       return(retval);
     }
   return (PAPI_OK);
