@@ -1,5 +1,5 @@
-EXAMPLES = first 
-EXOBS    = first.o
+EXAMPLES = first third
+EXOBS    = first.o third.o
 
 all: $(EXAMPLES)
 

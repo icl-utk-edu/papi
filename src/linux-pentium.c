@@ -116,8 +116,6 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 {0,-1,-1,-1},			// 63
              };
 
-
-hwd_control_state_t *array[PAPI_INIT_SLOTS];
 static hwd_control_state_t current;
 
 /* Low level functions, should not handle errors, just return codes. */
@@ -151,8 +149,6 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
   unsigned int foo = event;
   unsigned int preset;
   unsigned int tmp_event, tmp_code;
-
-  if(foo & SHARED_MASK) foo = foo ^= SHARED_MASK;
 
   if (foo & PRESET_MASK)
   { preset = foo ^= PRESET_MASK; 
@@ -272,7 +268,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 
 
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;

@@ -281,7 +281,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
   return(insertev(machdep,ESI->NumberOfCounters,event));
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
   hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
 

@@ -80,8 +80,15 @@ typedef struct _EventSetInfo {
 
   int NumberOfCounters;    /* Number of counters added to EventSet */
 
-  int *EventCodeArray;     /* PAPI/Native codes for events in this set */
-  int *EventSelectArray;   /* Index into hardware for events in this set */
+  int *EventCodeArray;     /* PAPI/Native codes for events in this set 
+                              as passed to PAPI_add_event() */
+ 
+  int *EventSelectArray;   /* This array contains the mapping from 
+                              events added into the API into hardware 
+                              specific encoding as returned by the 
+                              kernel or the code that directly 
+                              accesses the counters. */
+
 
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
@@ -156,7 +163,7 @@ extern int _papi_hwd_init(EventSetInfo *zero);   /* members start,
                          For use in keeping track of overlapping 
                          multiple running EventSets */
 extern int _papi_hwd_add_event(EventSetInfo *machdep, int index, unsigned int event);
-extern int _papi_hwd_rem_event(EventSetInfo *machdep, int index, unsigned int event);
+extern int _papi_hwd_rem_event(EventSetInfo *machdep, unsigned int event);
 extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, unsigned int event, void *extra); 
                       /* the extra will be for programmable events 
                          such as the threshold setting on IBM cache 
