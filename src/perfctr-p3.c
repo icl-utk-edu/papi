@@ -57,12 +57,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 extern int p3_size, p2_size, ath_size, opt_size;
 int NATIVE_TABLE_SIZE;
 
-#ifdef __x86_64__
-#include <linux/spinlock.h>
-spinlock_t lock[PAPI_MAX_LOCK];
-#else
 volatile unsigned int lock[PAPI_MAX_LOCK] = { 0, };
-#endif
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
@@ -297,11 +292,7 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
 void _papi_hwd_lock_init(void) {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++) {
-#ifdef __x86_64__
-      spin_lock_init(&lock[i]);
-#else
       lock[i] = MUTEX_OPEN;
-#endif
    }
 }
 

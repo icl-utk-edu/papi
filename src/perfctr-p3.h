@@ -50,13 +50,7 @@
 #include "papi_preset.h"
 
 /* Lock macros. */
-#ifdef __x86_64__
-#include <linux/spinlock.h>
-extern spinlock_t lock[PAPI_MAX_LOCK];
-#else
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
-#endif
-
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 #include <inttypes.h>
@@ -67,13 +61,17 @@ extern volatile unsigned int lock[PAPI_MAX_LOCK];
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
 {                                               \
-   spin_lock(&lock[lck]);                       \
+   unsigned long res = 0;                       \
+   do {                                         \
+      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
+   } while(res != (unsigned long)MUTEX_OPEN);   \
 } while(0)
 
 #define  _papi_hwd_unlock(lck)                  \
 do                                              \
 {                                               \
-   spin_unlock(&lock[lck]);                     \
+   unsigned long res = 0;                       \
+   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #else
 #define _papi_hwd_lock(lck)                                     \
