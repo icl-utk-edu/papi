@@ -117,12 +117,6 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 
-/* Overflow-related defines and declarations */
-typedef struct {
-   siginfo_t *si;
-   struct sigcontext *ucontext;
-} _papi_hwd_context_t;
-
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
