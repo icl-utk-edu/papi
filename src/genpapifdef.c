@@ -243,14 +243,6 @@ const int papi_errorNum[] = {
    PAPI_EMISC
 };
 
-const char *papi_miscNam[] = {
-   "NUM_FLOPS"
-};
-
-const int papi_miscNum[] = {
-   10000000
-};
-
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';
 
@@ -319,8 +311,6 @@ int main(int argc, char **argv)
    createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum),
              deftype);
    createDef("Error defines.", papi_errorNam, papi_errorNum, sizeof(papi_errorNum),
-             deftype);
-   createDef("Miscellaneous defines.", papi_miscNam, papi_miscNum, sizeof(papi_miscNum),
              deftype);
 
    /* create defines for each member of the PRESET array */
