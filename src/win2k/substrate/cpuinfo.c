@@ -157,6 +157,8 @@ int init_hwinfo( struct wininfo * hwinfo) {
 
 	}
 
+	hwinfo->ext_family=((val&((1<<27)|(1<<26)|(1<<25)|(1<<24)|(1<<23)|(1<<22)|(1<<21)|(1<<20)))>>20);
+	hwinfo->ext_model=((val&((1<<19)|(1<<18)|(1<<17)|(1<<16)))>>16);
 	hwinfo->family=((val&((1<<11)|(1<<10)|(1<<9)|(1<<8)))>>8);
 	hwinfo->processor_type=((val&((1<<13)|(1<<12)))>>12);
 	hwinfo->model=((val&((1<<7)|(1<<6)|(1<<5)|(1<<4)))>>4);
@@ -567,6 +569,9 @@ static int init_intel ( struct wininfo * hwinfo ) {
 	};
    }
     model[47] = '\0';
+    i = 0;
+    while (model[i++] < 'A'); /* strip leading format chars */
+    strcpy( hwinfo->model_string, &model[i-1]);
   }
   else {
     if ( IS_P4(hwinfo) )
@@ -575,6 +580,8 @@ static int init_intel ( struct wininfo * hwinfo ) {
 	  strcpy( hwinfo->model_string, "Pentium III");
     else if ( IS_P2(hwinfo) )
 	  strcpy( hwinfo->model_string, "Pentium II");
+    else if ( IS_MOBILE(hwinfo) )
+	  strcpy( hwinfo->model_string, "Pentium Mobile");
     else if ( IS_CELERON(hwinfo) ){
 	  if ( hwinfo->model == 6 || hwinfo->model == 5)
 		strcpy( hwinfo->model_string, "Celeron Pentium II");
@@ -628,10 +635,28 @@ static int intel_proc( struct wininfo * hwinfo ) {
 			return INTEL_P3_XEON;
 		case 0x4:
 			return INTEL_P3;
-		case 0x5:
+		case 0x6:
+			return INTEL_P3;
+		case 0x7:
+			return INTEL_CELERON;
+		case 0x8:
 			return INTEL_P4;
-		case 0xE:
+		case 0x9:
+			return INTEL_P4;
+		case 0xA:
+			return INTEL_CELERON;
+		case 0xB:
 			return INTEL_XEON;
+		case 0xC:
+			return INTEL_XEON;
+		case 0xE:
+			return INTEL_P4;
+		case 0xF:
+			return INTEL_CELERON;
+		case 0x13:
+			return INTEL_CELERON;
+		case 0x16:
+			return INTEL_MOBILE;
 		default:
 			break;
 	}

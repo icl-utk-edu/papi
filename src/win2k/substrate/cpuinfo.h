@@ -19,6 +19,7 @@
 #define INTEL_P4			9
 #define INTEL_XEON			10
 #define INTEL_CELERON		11
+#define INTEL_MOBILE		12
 #define AMD_486				100
 #define AMD_K5				101
 #define AMD_K6				102
@@ -32,8 +33,10 @@ struct wininfo {
 	int vendor;
 	unsigned int processor_id;
 	unsigned int family;
+	unsigned int ext_family;
 	unsigned int brand_id;
 	unsigned int model;
+	unsigned int ext_model;
 	unsigned int stepping;
 	unsigned int processor_type;
 	unsigned int feature_flag;
@@ -113,8 +116,9 @@ struct wininfo {
 #define IS_P2_XEON(hwinfo)		((hwinfo)->processor_id==INTEL_P2_XEON)
 #define IS_P3(hwinfo)			((hwinfo)->processor_id==INTEL_P3)
 #define IS_P3_XEON(hwinfo)		((hwinfo)->processor_id==INTEL_P3_XEON)
-#define IS_P4(hwinfo)			((hwinfo)->processor_id==INTEL_XEON)
+#define IS_P4(hwinfo)			((hwinfo)->processor_id==INTEL_P4)
 #define IS_CELERON(hwinfo)		((hwinfo)->processor_id==INTEL_CELERON)
+#define IS_MOBILE(hwinfo)		((hwinfo)->processor_id==INTEL_MOBILE)
 
 
 int init_hwinfo( struct wininfo *);
