@@ -1,6 +1,5 @@
 /* $Id$ */
 
-
 /* some members of structs and/or function parameters may or may not be
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
@@ -21,22 +20,20 @@
 
 typedef struct {
   int eventindex; /* In EventCodeArray, < 0 means no overflow active */
-  papi_overflow_option_t option; 
-} _papi_overflow_info_t;
+  long long deadline; /* Next expiration */
+  int milliseconds;   /* Interval in milliseconds of simulated overflow */
+  papi_overflow_option_t option; } _papi_overflow_info_t;
+
+typedef struct {
+  papi_multiplex_option_t option; } _papi_multiplex_info_t;
 
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
   int NumberOfCounters;    /* Number of counters used- usu. the number of 
                               events added */
-
-  int *EventCodeArray;     /* A ptr to an array of integer 
-                         representing the  PAPIor Native code
-                         for the event in this EventSetInfo struct set from 
+  int *EventCodeArray;     /* PAPI/Native codes for events in this set from 
                               AddEvent */
-			   /***multiple EventCodes per EventSetInfo struct*****/
-	                
-	                
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
                          will contain the encoding necessary for the 
@@ -52,14 +49,15 @@ typedef struct _EventSetInfo {
                          the values of the counters when last read */ 
   int state;          /* The state of this entire EventSet; can be
 			 PAPI_RUNNING or PAPI_STOPPED. */
-  _papi_overflow_info_t overflow; /* Overflow option */ 
+  _papi_overflow_info_t overflow; /* Overflow information and user options */ 
+  _papi_multiplex_info_t multiplex; /* Overflow information and user options */ 
 } EventSetInfo;
-
 
 typedef struct _dynamic_array{
 	EventSetInfo   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
 	int    totalSlots;      /* number of slots in dataSlotArrays      */
 	int    availSlots;      /* number of open slots in dataSlotArrays */
+	int    fullSlots;       /* number of full slots in dataSlotArray    */
 	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
 } DynamicArray;
 
@@ -119,20 +117,12 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
                          context and granularity functions available
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
-extern int _papi_hwd_setopt(int code, int value, PAPI_option_t *option);
-extern int _papi_hwd_getopt(int code, int *value, PAPI_option_t *option);
+extern int _papi_hwd_setopt(int code, EventSetInfo *value, PAPI_option_t *option);
+extern int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option);
 
+/* Portable overflow routines */
 
-/* utility functions*/
-
-/* see if (Event==validValue)*/
-int checkTargetEventValue(int Event); 
-
-/*locate target index in EventCodeArray*/ 
-/* if ID==-1, looking for unused index */
-/* if ID>0,   looking for EventCode match*/
-int locateTargetIndexECA (EventSetInfo *ESI,int EventID) ;
-
-/* Given an EventID, locate matching integer value in
-   in standardEventDef_INT[j] and return j value */ 
-int locateIndexStdEventDef(int EventID);
+extern int _papi_portable_set_overflow(EventSetInfo *value, papi_overflow_option_t *ptr);
+extern int _papi_portable_get_overflow(EventSetInfo *value, papi_overflow_option_t *ptr);
+extern int _papi_portable_set_multiplex(EventSetInfo *value, papi_multiplex_option_t *ptr);
+extern int _papi_portable_get_multiplex(EventSetInfo *value, papi_multiplex_option_t *ptr);

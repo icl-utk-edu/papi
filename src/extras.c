@@ -1,4 +1,4 @@
-/* extras.c */
+/* $Id$ */
 
 /* This file contains portable routines to do things that we wish the
 vendors did in the kernel extensions or performance libraries. This includes
@@ -20,62 +20,67 @@ the following:
 #include "papi.h"
 #include "papi_internal.h"
 
-#if 0
+extern DynamicArray PAPI_EVENTSET_MAP;    
 
-int _papi_portable_set_multiplex(int value, PAPI_option_t *ptr)
+static void dispatch_eventset(EventSetInfo *ESI, void *context)
 {
-  return(PAPI_ESUBSTR);
+  long long latest;
+  int retval;
+
+  if (ESI->state & PAPI_ACCUMULATING) /* Not implemented */
+    return;
+  if (ESI->state & PAPI_MULTIPLEXING) /* Not implemented */
+    return;
+  if (ESI->state & PAPI_OVERFLOWING)
+    ;
+
+  /* First get the latest counters */
+
+  /* This doesn't work until George fixes the substrate 
+
+  retval = _papi_hwd_read(ESI->machdep, ESI->latest); */
+
+  if (retval < 0)
+    return;
+
+  /* Get the latest counter value */
+  latest = ESI->latest[ESI->overflow.eventindex];
+
+  /* Is it bigger than the deadline? */
+  if (latest > ESI->overflow.deadline)
+    {
+      ESI->overflow.option.handler(ESI,context);
+      ESI->overflow.deadline = latest + ESI->overflow.option.threshold;
+    }
 }
 
-int _papi_portable_get_multiplex(int *value, PAPI_option_t *ptr)
-{
-  return(PAPI_ESUBSTR);
-}
-
-int _papi_portable_set_overflow(int value, PAPI_option_t *ptr)
-{
-  return(PAPI_OK);
-}
-
-int _papi_portable_get_overflow(int *value, PAPI_option_t *ptr)
-{
-  return(PAPI_OK);
-}
-
-static int time_for_accumulate_64()
-{
-  return(PAPI_OK);
-}
-
-static int time_for_multiplex()
-{
-  return(PAPI_OK);
-}
-static int time_for_overflow()
-{
-  return(PAPI_OK);
-}
-
-int _papi_dispatch_timer(int signal, siginfo_t *sip, ucontext_t *uap)
+static void dispatch_timer(int signal, struct sigcontext_struct info)
 {
   int i;
+  int total = 0;
+  EventSetInfo *t;
 
-  for (i=0;i<=PAPI_EVENTSET_MAP.totalSlots-PAPI_EVENTSET_MAP.availSlots;i++)
-    {
-      if ((PAPI_EVENTSET_MAP.dataSlotArray[i]) && (PAPI_EVENTSET_MAP.dataSlotArray[i]->state != PAPI_STOPPED))
   /* for each running eventset */
-  if (time_for_accumulate_64())
-    ;
-  if (time_for_overflow())
-    /* call ESI->sigaction */
-    ;
-  if (time_for_multiplex())
-    ;
-  return(PAPI_OK);
+  for (i=1;i<=PAPI_EVENTSET_MAP.totalSlots-PAPI_EVENTSET_MAP.availSlots;i++)
+    {
+      /* If we exist */
+      if ((t = PAPI_EVENTSET_MAP.dataSlotArray[i])) {
+	  /* and if we're running and doing something funny */
+	if ((t->state & PAPI_RUNNING) &&
+	    ((t->state & PAPI_ACCUMULATING) ||
+	     (t->state & PAPI_OVERFLOWING) || 
+	     (t->state & PAPI_MULTIPLEXING)))
+	  dispatch_eventset(t,&info); 
+	/* Short circuit */
+	if ((++total) == PAPI_EVENTSET_MAP.fullSlots)
+	  return;
+      }
+    }
 }
 
-static int start_timer(int milliseconds, struct sigaction *old)
+static int start_timer(int milliseconds)
 {
+  int retval;
   struct itimerval value;
   struct sigaction action;
 
@@ -83,27 +88,34 @@ static int start_timer(int milliseconds, struct sigaction *old)
   value.it_interval.tv_usec = milliseconds * 1000;
   value.it_value.tv_sec = 0;
   value.it_value.tv_usec = milliseconds * 1000;
-  action.sa_sigaction = dispatch_timer;
-  action.sa_mask = 0;
-  action.sa_flags = SA_RESTART | SA_ONSTACK | SA_SIGINFO;
+  action.sa_handler = (void *)dispatch_timer;
+  sigemptyset(&action.sa_mask);
+#ifdef SA_ONSTACK
+  action.sa_flags |= SA_ONSTACK;
+#endif
+#ifdef SA_SIGINFO
+  action.sa_flags |= SA_SIGINFO;
+#endif
+  action.sa_flags |= SA_RESTART;
   
 #ifdef ITIMER_REALPROF
-  retval = setitimer(ITIMER_REALPROF, &value, old);
+  retval = setitimer(ITIMER_REALPROF, &value, NULL);
 #else
-  retval = setitimer(ITIMER_PROF, &value, old);
+  retval = setitimer(ITIMER_PROF, &value, NULL);
 #endif
 
   if (retval == -1)
-    return(PAPI_error(PAPI_ESYS,NULL));
+    return(PAPI_ESYS);
 
-  if (sigaction(SIGPROF, action, NULL) < 0)
-    return(PAPI_error(PAPI_ESYS,NULL));
+  if (sigaction(SIGPROF, &action, NULL) < 0)
+    return(PAPI_ESYS);
   
   return(PAPI_OK);
 }
 
-static int stop_timer(struct sigaction *old)
+static int stop_timer(void)
 {
+  int retval;
   struct itimerval value;
 
   value.it_interval.tv_sec = 0;
@@ -112,28 +124,39 @@ static int stop_timer(struct sigaction *old)
   value.it_value.tv_usec = 0;
   
 #ifdef ITIMER_REALPROF
-  retval = setitimer(ITIMER_REALPROF, old, NULL);
+  retval = setitimer(ITIMER_REALPROF, &value, NULL);
 #else
-  retval = setitimer(ITIMER_PROF, old, NULL);
+  retval = setitimer(ITIMER_PROF, &value, NULL);
 #endif
 
   if (retval == -1)
-    return(PAPI_error(PAPI_ESYS,NULL));
+    return(PAPI_ESYS);
 
   if (signal(SIGPROF,SIG_DFL) == SIG_ERR)
-    return(PAPI_error(PAPI_ESYS,NULL));
+    return(PAPI_ESYS);
 
   return(PAPI_OK);
 }
 
-int _papi_portable_enable_overflow(int hardware_event, papi_overflow_option_t *ptr)
+int _papi_portable_set_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)
 {
-  return(start_timer(ptr->milliseconds));
+  return(PAPI_ESBSTR);
 }
 
-int _papi_portable_disable_overflow(int hardware_event, papi_overflow_option_t *ptr)
+int _papi_portable_set_overflow(EventSetInfo *ESI, papi_overflow_option_t *ptr)
 {
-  return(stop_timer());
+  return(PAPI_ESBSTR);
 }
 
-#endif
+int _papi_portable_get_overflow(EventSetInfo *ESI, papi_overflow_option_t *ptr)
+{
+  memcpy(ptr,&ESI->overflow.option,sizeof(*ptr));
+  return(PAPI_OK);
+}
+
+int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)
+{
+  memcpy(ptr,&ESI->multiplex.option,sizeof(*ptr));
+  return(PAPI_ESBSTR);
+}
+

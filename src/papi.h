@@ -44,14 +44,13 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PER_NODE    3    /*Counts are accumulated on a per node or 
 				processor basis*/ 
 
-#define PAPI_RUNNING     1    /*EventSet is running*/
-#define PAPI_STOPPED     2    /*EventSet is stopped*/ 
-#define PAPI_PAUSED      3    /*EventSet is temporarily disabled by the library*/
-#define PAPI_NOT_INIT    4    /*EventSet defined, but has not yet been initiated*/
-			      /* :::::PAPI_NOT_INIT NOT IN STANDARD:::::   	
-				The constant PAPI_NOT_INIT is not in the standard, 
-				but this definition is reserved for future use.*/  
-
+#define PAPI_STOPPED     0x00    /* EventSet stopped */ 
+#define PAPI_RUNNING     0x01    /* EventSet running */
+#define PAPI_PAUSED      0x02    /* EventSet temp. disabled by the library */
+#define PAPI_NOT_INIT    0x04    /* EventSet defined, but not initialized */
+#define PAPI_OVERFLOWING 0x10    /* EventSet has overflowing enabled */
+#define PAPI_MULTIPLEXING 0x20   /* EventSet has multiplexing enabled */
+#define PAPI_ACCUMULATING 0x40   /* EventSet has accumulating enabled */
 #define PAPI_NUM_ERRORS  11   /* Number of error messages spec'd */
 #define PAPI_QUIET       0    /*Option to not do any automatic error reporting 
 				to stderr*/
@@ -112,7 +111,7 @@ The user is encouraged to read the documentation carefully.
 typedef struct _papi_overflow_option_t {
   int event;
   long long threshold; 
-  struct sigaction action; } papi_overflow_option_t;
+  void (*handler)(void *, void *); } papi_overflow_option_t;
 
 typedef struct _papi_multiplex_option_t {
   int milliseconds; } papi_multiplex_option_t;
