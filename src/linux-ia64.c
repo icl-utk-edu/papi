@@ -1838,7 +1838,7 @@ papi_mdi _papi_system_info = { "$Id$",
 				 (caddr_t)&_edata,
 				 (caddr_t)&__bss_start,
 				 (caddr_t)NULL,
-				 "LD_PRELOAD", /* How to preload libs */
+				 "LD_PRELOAD" /* How to preload libs */
 			       },
 			       -1,  /*  num_cntrs */
 			       -1,  /*  num_gp_cntrs */
