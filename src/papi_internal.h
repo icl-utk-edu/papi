@@ -4,8 +4,10 @@
 #else
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #endif
+#define papi_return(a) return(handle_error(a))
 #else
 #define DBG(a)
+#define papi_return(a) return(a)
 #endif
 
 /* some members of structs and/or function parameters may or may not be
@@ -66,10 +68,8 @@ typedef struct _EventSetInheritInfo {
   int inherit; } EventSetInheritInfo_t;
 
 typedef struct _EventSetProfileInfo {
-  void *buf;
-  int bufsiz;
-  caddr_t offset;
-  int scale;
+  PAPI_sprofil_t *prof;
+  int count; /* Number of buffers */
   int flags;
 } EventSetProfileInfo_t;
 

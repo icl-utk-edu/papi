@@ -19,16 +19,19 @@ int main()
    if (PAPI_query_event(PAPI_FP_INS) != PAPI_OK)
      exit(1);
 
+   if (PAPI_create_eventset(&FPEventSet) != PAPI_OK)
+     exit(1);
+
    if (PAPI_add_event(&FPEventSet, PAPI_FP_INS) != PAPI_OK)
      exit(1);
 
    if (PAPI_start(FPEventSet) != PAPI_OK)
      exit(1);
 
-   if (PAPI_cleanup_eventset(&FPEventSet) != PAPI_EINVAL)
+   if (PAPI_cleanup_eventset(&FPEventSet) != PAPI_EISRUN)
      exit(1);
 
-   if (PAPI_destroy_eventset(&FPEventSet) != PAPI_EINVAL)
+   if (PAPI_destroy_eventset(&FPEventSet) != PAPI_EISRUN)
      exit(1);
 
    do_flops(1000000);
@@ -56,7 +59,9 @@ int main()
 
   printf("Verification:\n");
   printf("Row 1 approximately equals %d\n",1000000);
-  printf("This error message 3 times: PAPI Error Code -1: Invalid argument\n");
-
+  printf("These error messages:\n");
+  printf("PAPI Error Code -10: PAPI_EISRUN: EventSet is currently counting\n");
+  printf("PAPI Error Code -10: PAPI_EISRUN: EventSet is currently counting\n");
+  printf("PAPI Error Code -1: PAPI_EINVAL: Invalid argument\n");
   exit(0);
 }

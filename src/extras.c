@@ -20,36 +20,36 @@ the following:
 #include "papi.h"
 #include "papi_internal.h"
 
-typedef union {
-  PAPI_timer_handler_t timer_handler;
-  PAPI_sample_handler_t sample_handler;
-  PAPI_overflow_handler_t overflow_handler;
-  PAPI_notify_handler_t notify_handler; } PAPI_handler_t;
-
-typedef struct {
-  int deadline;
-  int current_ms;
-  int emulated_interval_ms;
-  PAPI_handler_t fn;
-} PAPI_timer_t;
-
 static unsigned int rnum = 0xdeadbeef;
 
-unsigned short random_ushort(void)
+static unsigned short random_ushort(void)
 {
   return (unsigned short)(rnum = 1664525 * rnum + 1013904223);
 }
 
-unsigned char random_uchar(void)
-{
-  return (unsigned char)(rnum = 1664525 * rnum + 1013904223);
-}
-
-void posix_profil(int flags, long long excess, long long threshold, 
-		  unsigned short *buf, unsigned long address)
+static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long long excess, long long threshold)
 {
   int increment = 1;
+  unsigned short *buf = prof->pr_base;
 
+  address = (address - prof->pr_off)/2;
+  address = address * prof->pr_scale;
+  address = address >> 16;
+
+  if (address >= prof->pr_size)
+    {
+      (*outside_bin)++;
+      DBG((stderr,"outside bucket = %u\n",*outside_bin));
+      return;
+    }
+
+  if (flags == PAPI_PROFIL_POSIX)
+    {
+      buf[address]++;
+      DBG((stderr,"bucket %lu = %u\n",address,buf[address]));
+      return;
+    }
+    
   if (flags & PAPI_PROFIL_RANDOM)
     {
       if (random_ushort() <= (USHRT_MAX/4))
@@ -79,13 +79,8 @@ void posix_profil(int flags, long long excess, long long threshold,
 	}	
     }
 
-  if (buf[address] + (unsigned short)1) /* Guard against overflow */
-    {
-      buf[address] += increment;
-      DBG((stderr,"posix_profile() bucket %lu = %u\n",address,buf[address]));
-      return;
-    }
-  DBG((stderr,"posix_profile() bucket overflow %lu = %u\n",address,buf[address]));
+  buf[address] += increment;
+  DBG((stderr,"posix_profile() bucket %lu = %u\n",address,buf[address]));
 }
 
 static void dispatch_profile(EventSetInfo *ESI, void *context,
@@ -93,19 +88,40 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
   unsigned long pc;
+  unsigned offset = 0;
+  unsigned count;
+  unsigned best_offset = 0;
+  int best_index = -1;
+  unsigned short overflow_dummy;
+  unsigned short *overflow_bin = NULL;
+  int i;
 
   pc = (unsigned long)_papi_hwd_get_overflow_address(context);
   DBG((stderr,"handled at 0x%lx\n",pc));
 
-  pc = (pc - (unsigned long)profile->offset)/2;
-  pc = pc * profile->scale;
-  pc = pc >> 16;
-  if (pc < profile->bufsiz)
+  count = profile->count - 1;
+  if ((profile->prof[count].pr_off == 0) &&
+      (profile->prof[count].pr_scale == 0x2))
     {
-      posix_profil(profile->flags, over, threshold, profile->buf, pc);
-      return;
+      overflow_bin = profile->prof[count].pr_base;
+      count--;
     }
-  DBG((stderr,"bucket %lu out of range\n",pc));
+  else
+    {
+      overflow_bin = &overflow_dummy;
+    }
+    
+  for (i = 0; i < count; i++)
+    {
+      offset = profile->prof[i].pr_off;
+      if ((pc < offset) && (offset > best_offset))
+	{
+	  best_index = i;
+	  best_offset = offset;
+	}
+    }
+
+  posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }
 
 typedef struct _thread_list {

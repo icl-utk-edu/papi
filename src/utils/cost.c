@@ -7,7 +7,7 @@
 
 int main()
 {
-   int i, EventSet, CostEventSet;
+   int i, EventSet = PAPI_NULL, CostEventSet = PAPI_NULL;
    long long int totcyc, values[2], readvalues[2];
 
    if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
@@ -19,13 +19,19 @@ int main()
    if (PAPI_query_event(PAPI_TOT_CYC) != PAPI_OK)
      exit(1);
 
-   if (PAPI_add_event(&EventSet, PAPI_TOT_CYC) != PAPI_OK)
-     exit(1);
-
    if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK)
      exit(1);
 
+   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+     exit(1);
+
+   if (PAPI_add_event(&EventSet, PAPI_TOT_CYC) != PAPI_OK)
+     exit(1);
+
    if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+     exit(1);
+
+   if (PAPI_create_eventset(&CostEventSet) != PAPI_OK)
      exit(1);
 
    if (PAPI_add_event(&CostEventSet, PAPI_TOT_CYC) != PAPI_OK)

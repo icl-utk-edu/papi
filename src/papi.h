@@ -108,14 +108,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes < 0 to stderr and continue. */ 
 #define PAPI_VERB_ESTOP  2     /* Option to automatically report any return codes < 0 to stderr and exit. */
 
-#define PAPI_SET_MPXRES  0     /* Option to enable and set the resolution of the multiplexing hardware*/
-#define PAPI_GET_MPXRES  1     /* Option to query the status of the multiplexing software*/
-
 #define PAPI_SET_DEBUG	 2     /* Option to turn on debugging features of the PAPI library*/
 #define PAPI_GET_DEBUG   3     /* Option to query debugging features of the PAPI library*/
-
-#define PAPI_SET_OVRFLO  4     /* Option to turn on the overflow reporting software */
-#define PAPI_GET_OVRFLO  5     /* Option to query the status of the overflow reporting software */
 
 #define PAPI_SET_DEFDOM  6     /* Domain for all new eventsets. Takes non-NULL option pointer. */    
 #define PAPI_GET_DEFDOM  7     /* Domain for all new eventsets. Takes NULL as option pointer. */    
@@ -135,17 +129,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_INHERIT_ALL  1    /* The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0    /* The flag to this to inherit none of the children's counters */
 				   
-#define PAPI_SET_BIND    17    /* Set the function that binds our thread to the CPU it's on */
-#define PAPI_GET_BIND    18    /* Get the function that binds our thread to the CPU it's on */
-
-#define PAPI_SET_THRID   19    /* Set the function that returns an int of the current thread */
-#define PAPI_GET_THRID   20    /* Get the function that returns an int of the current thread */
-
 #define PAPI_GET_CPUS    21    /* Return the maximum number of CPU's usable/detected */
-#define PAPI_SET_CPUS    22    /* Set the maximum number of CPU's usable/detected */
 
 #define PAPI_GET_THREADS 23    /* Return the number of threads usable/detected by PAPI */
-#define PAPI_SET_THREADS 24    /* Set the maximum number of threads usable by PAPI */
 
 #define PAPI_GET_NUMCTRS 25    /* The number of counters returned by reading this eventset */
 #define PAPI_SET_NUMCTRS 26    /* The number of counters returned by reading this eventset */
@@ -189,10 +175,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_DERIVED            0x1 /* Flag to indicate that the event is derived */
 
-#define PAPI_THREAD_CREATE      0x1
-
-#define PAPI_THREAD_DESTROY     0x2
-
 /* 
 The Low Level API
 
@@ -212,21 +194,11 @@ read the documentation carefully.  */
 typedef void (*PAPI_overflow_handler_t)(int EventSet, int EventCode, int index,
 					long long *latest, int *threshold, void *context);
 
-typedef void (*PAPI_sample_handler_t)(int EventSet, long long *values, int *ms, void *extra);
-
-typedef void (*PAPI_timer_handler_t)(int *ms, void *extra);
-
-typedef void (*PAPI_notify_handler_t)(int what, void *data);
-
-typedef struct _papi_overflow_option {
-  int eventset;
-  int event;
-  long long threshold; 
-  PAPI_overflow_handler_t handler; } PAPI_overflow_option_t;
-
-typedef struct _papi_multiplex_option {
-  int eventset;
-  int milliseconds; } PAPI_multiplex_option_t;
+typedef struct _papi_sprofil {
+  unsigned short *pr_base;      /* buffer base */
+  unsigned pr_size;   /* buffer size */
+  unsigned long pr_off;     /* pc offset */
+  unsigned pr_scale;  /* pc scaling */ } PAPI_sprofil_t;
 
 typedef struct _papi_inherit_option {
   void *thread_handle;
@@ -311,14 +283,15 @@ long long PAPI_get_real_usec(void);
 long long PAPI_get_virt_cyc(void);
 long long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
+unsigned long int PAPI_thread_id(void);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
 void PAPI_lock(void);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 		  int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);
-int PAPI_profil(void *buf, int bufsiz, caddr_t offset, \
-		int scale, int EventSet, int EventCode, int threshold, int flags);
+int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
+		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
 int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
@@ -335,6 +308,7 @@ int PAPI_set_domain(int domain);
 int PAPI_set_granularity(int granularity);
 int PAPI_set_opt(int option, PAPI_option_t *ptr); 
 void PAPI_shutdown(void);
+int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode, int threshold, int flags);
 int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
 int PAPI_state(int EventSetIndex, int *status);

@@ -1,8 +1,8 @@
 OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= zero_pthreads
-SERIAL  = cost johnmay2 johnmay inherit clockres avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2
+PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
+SERIAL  = sprofile cost johnmay2 johnmay inherit clockres avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2
 ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
 INCLUDE = -I..
@@ -16,6 +16,12 @@ pthreads: $(PTHREADS)
 shmem: $(SHMEM)
 
 serial: $(SERIAL)
+
+profile_pthreads: profile_pthreads.c $(UTILOBJS) ../libpapi.a
+	-$(CC_R) $(CFLAGS) $(INCLUDE) profile_pthreads.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o profile_pthreads -lpthread
+
+overflow_pthreads: overflow_pthreads.c $(UTILOBJS) ../libpapi.a
+	-$(CC_R) $(CFLAGS) $(INCLUDE) overflow_pthreads.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o overflow_pthreads -lpthread
 
 zero_pthreads: zero_pthreads.c $(UTILOBJS) ../libpapi.a
 	-$(CC_R) $(CFLAGS) $(INCLUDE) zero_pthreads.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_pthreads -lpthread
@@ -31,6 +37,9 @@ zero_omp: zero_omp.c $(UTILOBJS) ../libpapi.a
 
 clockres: clockres.c ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) clockres.c ../libpapi.a $(LDFLAGS) -o clockres
+
+sprofile: sprofile.c $(UTILOBJS) ../libpapi.a
+	$(CC) $(CFLAGS) $(INCLUDE) sprofile.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o sprofile
 
 cost: cost.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) cost.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o cost

@@ -19,10 +19,16 @@ int main()
    if (PAPI_query_event(PAPI_TOT_CYC) != PAPI_OK)
      exit(1);
 
+   if (PAPI_create_eventset(&CycEventSet) != PAPI_OK)
+     exit(1);
+
    if (PAPI_add_event(&CycEventSet, PAPI_TOT_CYC) != PAPI_OK)
      exit(1);
 
    if (PAPI_query_event(PAPI_FP_INS) != PAPI_OK)
+     exit(1);
+
+   if (PAPI_create_eventset(&FPEventSet) != PAPI_OK)
      exit(1);
 
    if (PAPI_add_event(&FPEventSet, PAPI_FP_INS) != PAPI_OK)

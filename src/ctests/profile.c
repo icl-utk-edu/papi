@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   unsigned short *profbuf4;
   unsigned short *profbuf5;
   unsigned long length;
-  caddr_t start, end;
+  unsigned long start, end;
   long long **values;
   const PAPI_exe_info_t *prginfo = NULL;
   int retval;
@@ -49,8 +49,8 @@ int main(int argc, char **argv)
   assert(retval >= PAPI_OK);
 
   assert(prginfo = PAPI_get_executable_info());
-  start = prginfo->text_start;
-  end =  prginfo->text_end;
+  start = (unsigned long)prginfo->text_start;
+  end =  (unsigned long)prginfo->text_end;
   length = end - start;
 
   profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));

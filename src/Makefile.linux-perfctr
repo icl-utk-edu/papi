@@ -1,0 +1,18 @@
+SUBSTR  = linux-2.4-x86
+DESCR	= "Patched linux 2.4 with any Intel Compatible Processor"
+LIBS	= static shared
+TARGETS = serial pthreads
+
+FOR_USED= -DFORTRANDOUBLEUNDERSCORE
+CFLAGS  = -Wall -Ilibperfctr 
+OPTFLAGS= -O6 -mpentiumpro -DNDEBUG
+CC_SHR  = gcc -shared
+CC_R	= gcc
+CC	= gcc
+F77	= g77
+MISCOBJS= libperfctr.o
+
+include Makefile.inc
+
+libperfctr.o: libperfctr/libperfctr.c libperfctr/libperfctr.h
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c libperfctr/libperfctr.c -o libperfctr.o
