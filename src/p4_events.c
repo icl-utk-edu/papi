@@ -61,11 +61,9 @@ clock cycle. */
 #define PNE_execution_event_nbogus0 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
 #define PNE_replay_event (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
 #define PNE_replay_event_L1_load_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
-#define PNE_replay_event_L1_store_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_access (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT))
 #define PNE_replay_event_L2_load_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L2_MISS_BIT))
-#define PNE_replay_event_L2_store_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
 #define PNE_replay_event_L2_data_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
 #define PNE_instr_retired_non_bogus (NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
 #define PNE_instr_retired_all (NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
@@ -86,10 +84,8 @@ const preset_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
   {PAPI_FP_INS,  0, { PNE_execution_event_nbogus0,PNE_x87_FP_uop_tag0,0,0,0,0,0,0}},
   {PAPI_TOT_CYC, 0, { PNE_cycles,0,0,0,0,0,0,0}},
   {PAPI_L1_LDM,  0, { PNE_replay_event_L1_load_miss,0,0,0,0,0,0,0}},
-  {PAPI_L1_STM,  0, { PNE_replay_event_L1_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L1_DCM,  0, { PNE_replay_event_L1_data_miss,0,0,0,0,0,0,0}},
   {PAPI_L2_LDM,  0, { PNE_replay_event_L2_load_miss,0,0,0,0,0,0,0}},
-  {PAPI_L2_STM,  0, { PNE_replay_event_L2_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L2_DCM,  0, { PNE_replay_event_L2_data_miss,0,0,0,0,0,0,0}},
   { 0,		 0, { 0,0,0,0,0,0,0,0}}
 };
@@ -110,11 +106,9 @@ const preset_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
   {PAPI_FP_INS,  0, { PNE_execution_event_nbogus0,PNE_x87_FP_uop_tag0,0,0,0,0,0,0}},
   {PAPI_TOT_CYC, 0, { PNE_cycles,0,0,0,0,0,0,0}},
   {PAPI_L1_LDM,  0, { PNE_replay_event_L1_load_miss,0,0,0,0,0,0,0}},
-  {PAPI_L1_STM,  0, { PNE_replay_event_L1_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L1_DCM,  0, { PNE_replay_event_L1_data_miss,0,0,0,0,0,0,0}},
   {PAPI_L1_DCA,  0, { PNE_replay_event_L1_data_access,0,0,0,0,0,0,0}},
   {PAPI_L2_LDM,  0, { PNE_replay_event_L2_load_miss,0,0,0,0,0,0,0}},
-  {PAPI_L2_STM,  0, { PNE_replay_event_L2_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L2_DCM,  0, { PNE_replay_event_L2_data_miss,0,0,0,0,0,0,0}},
   { 0,		 0, { 0,0,0,0,0,0,0,0}}
 };
