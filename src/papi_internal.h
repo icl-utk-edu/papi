@@ -1,5 +1,6 @@
 /* $Id$ */
 
+
 /* some members of structs and/or function parameters may or may not be
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
@@ -20,15 +21,22 @@
 
 typedef struct {
   int eventindex; /* In EventCodeArray, < 0 means no overflow active */
-  papi_overflow_option_t option; } _papi_overflow_info_t;
+  papi_overflow_option_t option; 
+} _papi_overflow_info_t;
 
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
   int NumberOfCounters;    /* Number of counters used- usu. the number of 
                               events added */
-  int *EventCodeArray;     /* PAPI/Native codes for events in this set from 
+
+  int *EventCodeArray;     /* A ptr to an array of integer 
+                         representing the  PAPIor Native code
+                         for the event in this EventSetInfo struct set from 
                               AddEvent */
+			   /***multiple EventCodes per EventSetInfo struct*****/
+	                
+	                
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
                          will contain the encoding necessary for the 
@@ -114,3 +122,17 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
 extern int _papi_hwd_setopt(int code, int value, PAPI_option_t *option);
 extern int _papi_hwd_getopt(int code, int *value, PAPI_option_t *option);
 
+
+/* utility functions*/
+
+/* see if (Event==validValue)*/
+int checkTargetEventValue(int Event); 
+
+/*locate target index in EventCodeArray*/ 
+/* if ID==-1, looking for unused index */
+/* if ID>0,   looking for EventCode match*/
+int locateTargetIndexECA (EventSetInfo *ESI,int EventID) ;
+
+/* Given an EventID, locate matching integer value in
+   in standardEventDef_INT[j] and return j value */ 
+int locateIndexStdEventDef(int EventID);

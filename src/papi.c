@@ -19,14 +19,8 @@
 /* Static prototypes */
 
 static int expand_dynamic_array();
-/*
---------------------------------------------------
-I think these should be non-static. chd.
---------------------------------------------------
 static EventSetInfo *allocate_EventSet(void);
 static int add_EventSet(EventSetInfo *);
---------------------------------------------------
-*/
 EventSetInfo *allocate_EventSet(void);
 int add_EventSet(EventSetInfo *);
 static int remove_EventSet(int);
@@ -201,7 +195,9 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
       fprintf(stderr, "%s", get_error_string(PAPI_errorCode));
 
       /* check for failed C library call*/
-      if ( PAPI_errorCode==PAPI_ESYS ) fprintf(stderr,": %s",strerror(errno));
+      if ( PAPI_errorCode==PAPI_ESYS ) perror(errorMessage);
+      /* this not compile: 
+       if(PAPPI_errorCode==PAPU_ESYS)fprintf(stderr,": %s",strerror(errno));*/
 
       /* check for user supplied error message */
       if (errorMessage) fprintf(stderr, ": %s", errorMessage);
@@ -325,31 +321,27 @@ EventSetInfo *allocate_EventSet(void)
     return(NULL); 
   memset(&ESI,0x00,sizeof(ESI));
 
-  ESI->EventCode=(int *)malloc(sizeof(int));
-
-  /* note: each machdep points to corresponding data 
-           in a hwd_control_state structure specified by
-           EventCode*/ 
+  ESI->EventCodeArray=(int *)malloc(counterArrayLength*sizeof(int));
   ESI->machdep=(void *)malloc(_papi_system_info.size_machdep);
-  ESI->start = (long long *) malloc(counterArrayLength*sizeof(long long));
-  ESI->stop = (long long *)  malloc(counterArrayLength*sizeof(long long));
-  ESI->latest = (long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->start =(long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->stop  =(long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long));
 
   if ((ESI->machdep   == NULL) || 
       (ESI->start     == NULL) || 
       (ESI->stop      == NULL) || 
       (ESI->latest    == NULL) ||
-      (ESI->EventCode == NULL))
+      (ESI->EventCodeArray == NULL))
     {
       if (ESI->machdep) free(ESI->machdep);
       if (ESI->start) free(ESI->start);
       if (ESI->stop) free(ESI->stop);
       if (ESI->latest) free(ESI->latest);
-      if (ESI->EventCode) free(ESI->EventCode);
+      if (ESI->EventCodeArray) free(ESI->EventCodeArray);
       free(ESI);
       return(NULL);
     }
-  memset(ESI->EventCode,0x00,sizeof(int));
+  memset(ESI->EventCodeArray,0x00,counterArrayLength*sizeof(int));
   memset(ESI->machdep,0x00,_papi_system_info.size_machdep);
   memset(ESI->start,  0x00,counterArrayLength*sizeof(long long));
   memset(ESI->stop,   0x00,counterArrayLength*sizeof(long long));
@@ -378,7 +370,7 @@ static void free_EventSet(EventSetInfo *ESI)
 {
   if(!ESI)return;
   
-  if (ESI->EventCode)      free(ESI->EventCode);
+  if (ESI->EventCodeArray) free(ESI->EventCodeArray);
   if (ESI->machdep)        free(ESI->machdep);
   if (ESI->start)          free(ESI->start);
   if (ESI->stop)           free(ESI->stop);
@@ -412,15 +404,13 @@ int PAPI_add_event(int *EventSet, int Event)
 int PAPI_add_event(int *EventSet, int Event) {
 EventSetInfo *ESI;
 int errorCode;
-int goodValue=0;
-int j,k;
+int k;
 /****PAPI_option_t *ptr;  needed for overflow****/
 
-   /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
+
    /* Determine if target Event value is valid standard value*/ 
-      for(j=0;j<25;j++) 
-      if(Event==standardEventDef_INT[j])goodValue++;
-      if(!goodValue)PAPI_perror(PAPI_EINVAL,NULL,0);
+      errorCode=checkTargetEventValue(Event);
+      if(errorCode!=PAPI_OK) PAPI_perror(PAPI_EINVAL,NULL,0);
 
 if(EventSet==NULL) {/*create new ESI*/
 ESI=allocate_EventSet();
@@ -431,22 +421,108 @@ if(errorCode!=PAPI_OK) return(errorCode);
 
 }/* new ESI created and loaded to PAPI_EVENTSET_MAP.dataSlotArray */
 
+/*determine the lowest open slot in EventCodeArray*/
+k=locateTargetIndexECA(ESI,-1);
+/*check if you ran out of counters*/
+if(k<0)
+return(handle_error(PAPI_EINVAL," ran out of counters "));
 
-/*set EventCode to hold value of Event*/
-ESI->EventCode=&Event;
-k=ESI->NumberOfCounters;
+/*set EventCodeArray[k] to hold value of Event*/
+ESI->EventCodeArray[k]=Event;
+ESI->NumberOfCounters++;
 
 errorCode=_papi_hwd_add_event(ESI->machdep,Event);
 if(errorCode!=PAPI_OK) return(errorCode);
-ESI->start[0]=0;
-ESI->stop[0]=0;
-ESI->latest[0]=0;
+ESI->start[k]=0;
+ESI->stop[k]=0;
+ESI->latest[k]=0;
 /****ESI->overflow=get_overflow(EventSet,ptr);****/                   
-ESI->NumberOfCounters++;
 
 return(PAPI_OK);
 
 }/* end PAPI_add_event */
+
+/*========================================================================*/
+/* This function determines which standardEventDef_INT[j] matches the     */
+/* value EventID.  
+
+   The index value "j" is returned.  
+   If no match is found, -1 is returned. 
+*/
+
+	
+int locateIndexStdEventDef(int EventID) {
+
+int j=0;
+for(j=0;j<24;j++)
+if(EventID==standardEventDef_INT[j])return(j);
+
+return(-1);
+
+}
+
+
+/*========================================================================*/
+/* This function returns the index of the lowest empty array slot in      */
+/* ESI->EventCodeArray                                                    */ 
+/* The length of ESI->EventCodeArray is the value:
+  counterArrayLength=_papi_system_info.num_gp_cntrs
+		    +_papi_system_info.num_sp_cntrs;
+
+  The function returns the integer value of the target slot index.
+
+  If (ID==-1), look for lowest empty slot.
+  If there are NO empty slots, a value of -1 is returned.
+
+  If (ID>0) return the index of the slot that matches ID.
+  If no match is found, return a value of -1.
+*/
+
+int locateTargetIndexECA (EventSetInfo *ESI,int EventID) {
+
+int j, counterArrayLength;
+counterArrayLength=_papi_system_info.num_gp_cntrs
+		  +_papi_system_info.num_sp_cntrs;
+j=0;
+
+if(EventID==-1) {
+while (j<counterArrayLength) {
+if(  (ESI->EventCodeArray[j]<1) 
+   ||(ESI->EventCodeArray[j]==NULL) ) return(j);
+j++;
+}
+}
+
+else {
+while (j<counterArrayLength) {
+if(ESI->EventCodeArray[j]==EventID) return(j);
+j++;
+}
+}
+
+return(-1);
+}
+
+/*========================================================================*/
+/* This function checks to see if the target Event or Event[n] value      */
+/* is a valid standard value. 
+
+   Detection of valid standard value causes return of PAPI_OK.
+  
+   No detection of valid standard value causes return of PAPI_EINVAL.
+*/
+
+int checkTargetEventValue(int Event) {
+
+      int j;
+      j=0;
+
+      for(j=0;j<24;j++) 
+      if(Event==standardEventDef_INT[j])return(PAPI_OK);
+ 
+      return(PAPI_EINVAL);
+}
+
 
 
 
@@ -469,34 +545,43 @@ return(PAPI_OK);
 int PAPI_add_events(int *EventSet, int *Events, int number) {
 EventSetInfo *ESI;
 int errorCode;
-int j,k;
-int goodValue=0;
-
-   /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
+int k,m;
 
 if(EventSet==NULL) {/*create new ESI*/
 ESI=allocate_EventSet();
 if(!ESI) return(PAPI_ENOMEM);
 }
 
-for(k=0;k<number;k++) {/* add Events*/
+for(m=0;m<number;m++) {/* add Events[m]*/
 
-/* Determine if target Events[k] value is valid standard value*/ 
-      goodValue=0;
-      for(j=0;j<25;j++) 
-      if(Events[k]==standardEventDef_INT[j])goodValue++;
-      if(!goodValue)PAPI_perror(PAPI_EINVAL,NULL,0);
+/* Determine if target Events[m] value is valid standard value*/ 
+      errorCode=checkTargetEventValue(Events[m]);
+      if(errorCode!=PAPI_OK) PAPI_perror(PAPI_EINVAL,NULL,0);
 
-/* Add ESI for Events[k] to PAPI_EVENTSET_MAP.dataSlotArray*/
-errorCode=add_EventSet(ESI);
+/*determine the lowest open slot in EventCodeArray*/
+      k=locateTargetIndexECA(ESI,-1);
+/*check if you ran out of counters*/
+if(k<0)
+return(handle_error(PAPI_EINVAL," ran out of counters "));
+
+/*set ESI->EventCodeArray[k] to hold value of Event m*/
+ESI->EventCodeArray[k]=Events[m];
+
+errorCode=_papi_hwd_add_event(ESI->machdep,Events[m]);
 if(errorCode!=PAPI_OK) return(errorCode);
+ESI->start[k]=0;
+ESI->stop[k]=0;
+ESI->latest[k]=0;
+/****ESI->overflow=get_overflow(EventSet,ptr);****/                   
 
-
-}/*end for k*/
+ESI->NumberOfCounters++;
+}/*end for m*/
 
 return(PAPI_OK);
 
 }/* end PAPI_add_events */
+
+
 
 
 /*========================================================================*/
@@ -515,9 +600,12 @@ return(PAPI_OK);
 
 int PAPI_add_pevent(int *EventSet, int code, void *inout)
 {
+/* This is the function where I think we should add a registry
+   of user-prgrammable events. chd.*/
+
    
 EventSetInfo *ESI;
-int errorCode;
+int errorCode,k;
 void *extra; /*needed to call _papi_hwd_add_prog_event*/
 /****PAPI_option_t *ptr;  needed for overflow****/
 
@@ -530,16 +618,22 @@ if(errorCode!=PAPI_OK) return(errorCode);
 
 }/* new ESI created and loaded to PAPI_EVENTSET_MAP.dataSlotArray */
 
-/*set EventCode to hold value of Event*/
-ESI->EventCode=&code;
+/* determine lowest empty slot in ESI->EventCodeArray*/
+k=locateTargetIndexECA(ESI,-1);
+/*check if you ran out of counters*/
+if(k<0)
+return(handle_error(PAPI_EINVAL," ran out of counters "));
+
+/*set ESI->EventCodeArray[k] to hold value of Event*/
+ESI->EventCodeArray[k]=code;
 
 /* Add ESI for (pevent) code to PAPI_EVENTSET_MAP.dataSlotArray*/
 
 errorCode=_papi_hwd_add_prog_event(ESI->machdep,code,extra);
 if(errorCode!=PAPI_OK) return(errorCode);
-ESI->start[0]=0;
-ESI->stop[0]=0;
-ESI->latest[0]=0;
+ESI->start[k]=0;
+ESI->stop[k]=0;
+ESI->latest[k]=0;
 /****ESI->overflow=get_overflow(EventSet,ptr);****/                   
 ESI->NumberOfCounters++;
 
@@ -598,33 +692,26 @@ int add_EventSet(EventSetInfo *ESI)
 int PAPI_rem_event(int EventSet, int Event) 
 {
   EventSetInfo *ESI;
-  int i,j,k;
-  int goodValue=0;
+  int k;
   int errorCode;
 
+  /* Would you like this function to also remove Pevents????*/
 
    /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
 
    /* Determine if target Event value is valid standard value*/ 
-      for(j=0;j<25;j++) 
-      if(Event==standardEventDef_INT[j])goodValue++;
-      if(!goodValue) {
-      PAPI_perror(PAPI_EINVAL,NULL,0);
-      return(PAPI_EINVAL);
-      }
+      errorCode=checkTargetEventValue(Event);
+      if(errorCode!=PAPI_OK) PAPI_perror(PAPI_EINVAL,NULL,0);
         
  
   /* determine target ESI structure */
   ESI=PAPI_EVENTSET_MAP.dataSlotArray[EventSet];
 
-  /* determine target event k */
-  i=0; k=0;
-  while (k==0) {
-  if(*ESI->EventCode==Event) k=i; 
-  i++;
-  }
+  /* determine index of target event k */
+      k=locateTargetIndexECA(ESI,Event);
+      if(k<0) return(PAPI_EINVAL);
 
-  *ESI->EventCode= -1; /* EventCode not active*/
+  *ESI->EventCodeArray= -1; /* EventCodeArray not active*/
   errorCode=_papi_hwd_rem_event(ESI->machdep,Event);
   if(errorCode!=PAPI_OK)return(errorCode);
   ESI->start [k]=-1; /* remove start */ 
@@ -647,34 +734,31 @@ int PAPI_rem_event(int EventSet, int Event)
 */
 /*========================================================================*/
 
-int PAPI_rem_events(int EventSet, int *Events, int number) 
+int PAPI_rem_events(int EventSet, int *RemEvents, int number) 
 {
   EventSetInfo *ESI;
-  int k;
+  int k,j;
   int nActive;
 
   nActive=number;
-   /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
   
   /* determine target ESI structure */
   ESI=PAPI_EVENTSET_MAP.dataSlotArray[EventSet];
 
+
   nActive=0;/*count number of active events*/
-  /* analyze target event k */
-  for(k=0;k<number;k++) {
 
-
-  /* determine target ESI structure */
-      ESI=PAPI_EVENTSET_MAP.dataSlotArray[EventSet];
-
-  /* determine if ESI->EventCode is active, then remove */
-      if(*ESI->EventCode>-1) {
-      PAPI_rem_event(EventSet,Events[k]);
-      *ESI->EventCode=-1;
+  j=0;
+  while(RemEvents[j]) { 
+     /* determine index of target event k */
+      k=locateTargetIndexECA(ESI,RemEvents[j]);
+      if(k>0) {
+      PAPI_rem_event(EventSet,RemEvents[j]);
+      ESI->EventCodeArray[k]=-1;
       nActive--;
-      }/* end if active */
-
-  }/*end k*/
+      }
+  j++;
+  }/*end j*/
 
   number=nActive;
 
@@ -700,7 +784,7 @@ int PAPI_rem_events(int EventSet, int *Events, int number)
 int PAPI_list_events(int EventSet, int *Events, int *number)   
 {
    EventSetInfo *ESI;
-   int i,j,nActive;
+   int i,j,k,nActive,errorCode;
    /*char *standardEventDef[25]    added to papiStdDefs.h*/
    /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
 
@@ -709,14 +793,31 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
    /* Determine target EventSet */ 
       ESI=PAPI_EVENTSET_MAP.dataSlotArray[EventSet];
     
+
      nActive=0;
      for(i=0;i<*number;i++) {
-     for(j=0;j<25;j++) {
-       if(ESI->EventCode[i]==standardEventDef_INT[j]) {
-       printf("\n EventCode[%d]: %s : %lld", 
-       i, standardEventDef[j],ESI->latest[i]); 
-       nActive++;
-	}}}
+
+   /* Determine if target Event value is valid standard value*/ 
+      errorCode=checkTargetEventValue(Events[i]);
+      if(errorCode!=PAPI_OK) PAPI_perror(PAPI_EINVAL,NULL,0);
+     
+     else {
+    
+     
+     j=locateTargetIndexECA(ESI,Events[i]);
+     if(j==-1){
+     printf("\n Events[%d]=%d not found in EventCodeArray", i,Events[i]);
+     }
+     else {
+
+     /* get index k for print string value */
+     k=locateIndexStdEventDef(Events[i]);
+     printf("\n EventCodeArray[%d]: %s : %lld", 
+     i, standardEventDef[k],ESI->latest[i]); 
+      nActive++;
+     }
+     }/* end else on good Events[i] */
+     }/* end for i */
 	
    *number=nActive;
    
@@ -739,7 +840,6 @@ static int remove_EventSet(int eventset)
       PAPI_perror(PAPI_EINVAL,NULL,0);
       return(PAPI_OK);
       }
-
 
    /* Free target EventSet*/
       free_EventSet(PAPI_EVENTSET_MAP.dataSlotArray[eventset]); 
@@ -769,7 +869,7 @@ static EventSetInfo *lookup_EventSet(int eventset)
 static int event_is_in_eventset(int event, EventSetInfo *ESI)
 {
   int i = ESI->NumberOfCounters;
-  int *events_in_set = ESI->EventCode;
+  int *events_in_set = ESI->EventCodeArray;
 
   while ((--i) >= 0)
     {
@@ -821,7 +921,7 @@ static int set_overflow(int eventset, PAPI_option_t *ptr)
   if (ind < 0)
     return(ind);
 
-  retval = _papi_hwd_setopt(PAPI_SET_OVRFLO,ESI->EventCode[ind],ptr);
+  retval = _papi_hwd_setopt(PAPI_SET_OVRFLO,ESI->EventCodeArray[ind],ptr);
   if (retval < 0)
     return(retval);
 
