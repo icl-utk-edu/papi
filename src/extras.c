@@ -424,4 +424,20 @@ extern int ffs(int i)
 	return(0);
 }
 
+/*
+ Another Unix routine that I can't find in Windows
+ This one should return a pseudo-random integer
+ given an unsigned int seed. For now it just returns 1
+*/
+/*
+ This routine is called only once and only by MPX_start.
+ If it isn't implemented, stuff will still work, but the
+ starting event won't be randomized, reducing the validity
+ of the statistics...
+*/
+extern int rand_r (unsigned int *Seed)
+{
+	return (1);
+}
+
 #endif /* _WIN32 */
