@@ -365,11 +365,6 @@ int _papi_hwd_shutdown_global(void)
    return (PAPI_OK);
 }
 
-int _papi_hwd_setmaxmem()
-{
-   return (PAPI_OK);
-}
-
 int _papi_hwd_ctl(hwd_context_t * ctx, int code,
                   _papi_int_option_t * option)
 {

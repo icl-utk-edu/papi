@@ -568,11 +568,6 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
    return 1;
 }
 
-int _papi_hwd_setmaxmem()
-{
-   return (PAPI_OK);
-}
-
 int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 {
    switch (code) {

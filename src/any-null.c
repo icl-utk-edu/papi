@@ -432,10 +432,6 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_setmaxmem() {
-   return (PAPI_OK);
-}
-
 int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
    return(PAPI_ESBSTR);
 }

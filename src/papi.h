@@ -198,7 +198,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_HWINFO  		16      /* Hardware information */
 #define PAPI_EXEINFO  		17      /* Executable information */
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
-#define PAPI_MAXMEM             19      /* Setup Maximum Memory if no hardware support */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
 #define PAPI_FORCE_SW_OVERFLOW  22      /* Change Overflow to use software even if supports hardware */

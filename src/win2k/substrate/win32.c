@@ -1014,10 +1014,6 @@ int _papi_hwd_read(hwd_context_t *context, hwd_control_state_t *control, u_long_
   return(PAPI_EBUG);
 }
 
-int _papi_hwd_setmaxmem(){
-  return(PAPI_OK);
-}
-
 //int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option)
 int _papi_hwd_ctl(hwd_context_t *context, int code, _papi_int_option_t *option)
 {

@@ -718,12 +718,6 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
 }
  
-int _papi_hwd_setmaxmem()
-{
-  return (PAPI_ESBSTR);
-}
-
-
 void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
   int i;

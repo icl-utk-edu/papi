@@ -915,10 +915,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    memset(&internal, 0x0, sizeof(_papi_int_option_t));
 
    switch (option) {
-   case PAPI_MAXMEM:
-      {
-         papi_return(_papi_hwd_setmaxmem());
-      }
    case PAPI_MULTIPLEX:
       {
          EventSetInfo_t *ESI;

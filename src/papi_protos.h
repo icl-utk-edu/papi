@@ -107,7 +107,6 @@ extern void _papi_hwd_error(int error, char *);
 extern void _papi_hwd_lock_init(void);
 extern int _papi_hwd_shutdown_global(void);
 extern int _papi_hwd_set_domain(hwd_control_state_t *, int);
-extern int _papi_hwd_setmaxmem();
 extern int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
 extern int _papi_hwd_mdi_init(void);
 

@@ -506,11 +506,6 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long *
    return (PAPI_OK);
 }
 
-int _papi_hwd_setmaxmem()
-{
-   return (PAPI_OK);
-}
-
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {

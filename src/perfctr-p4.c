@@ -276,11 +276,6 @@ int _papi_hwd_init(P4_perfctr_context_t * ctx)
    return (PAPI_OK);
 }
 
-int _papi_hwd_setmaxmem()
-{
-   return (PAPI_OK);
-}
-
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control)
 {
