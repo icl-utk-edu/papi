@@ -14,16 +14,22 @@ unsigned long my_start, my_end;
 void *Thread(void *arg)
 {
    int retval, num_tests = 1, i;
-   int EventSet1;
-#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun)) 
-   int mask1 = 0x3;
-#else
-   int mask1 = 0x5;
-#endif
+   int EventSet1, mask1;
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc;
    unsigned short *profbuf;
+   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+
+   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
+      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
+      (!strcmp(hw_info->model_string, "POWER3"))) {
+      mask1 = 0x3;
+   }
+   else {
+      mask1 = 0x5;
+   }
 
 /*  if ( 20000001 == *arg || 10000001 == *arg) TESTS_QUIET=1;*/
 
@@ -42,18 +48,18 @@ void *Thread(void *arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun))
-   retval = PAPI_profil(profbuf, length, my_start, 65536,
-                        EventSet1, PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX);
-   if (retval)
-      test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
-#else
-   retval = PAPI_profil(profbuf, length, my_start, 65536,
-                        EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX);
-   if (retval)
-      test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
-#endif
-
+   if(mask1 == 0x3) {
+      retval = PAPI_profil(profbuf, length, my_start, 65536,
+                           EventSet1, PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX);
+      if (retval)
+         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+   }
+   else {
+      retval = PAPI_profil(profbuf, length, my_start, 65536,
+                           EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX);
+      if (retval)
+         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+   }
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
@@ -67,27 +73,29 @@ void *Thread(void *arg)
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
    /* to remove the profile flag */
-#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun))
-   retval = PAPI_profil(profbuf, length, my_start, 65536,
-                        EventSet1, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX);
-   if (retval)
-      test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
-#else
-   retval = PAPI_profil(profbuf, length, my_start, 65536,
-                        EventSet1, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX);
-   if (retval)
-      test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
-#endif
+   if(mask1 == 0x3) {
+      retval = PAPI_profil(profbuf, length, my_start, 65536,
+                           EventSet1, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX);
+      if (retval)
+         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+   }
+   else {
+      retval = PAPI_profil(profbuf, length, my_start, 65536,
+                           EventSet1, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX);
+      if (retval)
+         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+   }
 
 
    remove_test_events(&EventSet1, mask1);
 
    if (!TESTS_QUIET) {
-#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun))
-      printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-#else
-      printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-#endif
+      if(mask1 = 0x3) {
+         printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+      }
+      else {
+         printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+      }
       printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", (int) pthread_self(), (values[0])[1]);
       printf("Thread 0x%x Real usec   : \t%lld\n", (int) pthread_self(), elapsed_us);
       printf("Thread 0x%x Real cycles : \t%lld\n", (int) pthread_self(), elapsed_cyc);
