@@ -114,12 +114,12 @@ dist:
 install: all install_tree native_install
 	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	chmod go+rx $(DESTDIR)/lib
-	chmod go+rx $(DESTDIR)/include
+	-chmod go+rx $(DESTDIR)/lib
+	-chmod go+rx $(DESTDIR)/include
 	-cp $(LIBRARY) $(SHLIB) $(DESTDIR)/lib
-	chmod go+r $(DESTDIR)/lib/*
+	-chmod go+r $(DESTDIR)/lib/*
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
-	chmod go+r $(DESTDIR)/include/*
+	-chmod go+r $(DESTDIR)/include/*
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
 	cd tests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
 	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
