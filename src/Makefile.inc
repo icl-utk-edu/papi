@@ -47,10 +47,18 @@ PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o
 
 papi.o: papi.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o papi_hl.o: papi_hl.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o extras.o: extras.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o multiplex.o: multiplex.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o 
+
+papi_hl.o: papi_hl.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o 
+
+extras.o: extras.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
+
+multiplex.o: multiplex.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o 
+
+$(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
 
 genpapifdef: genpapifdef.c $(LIBRARY)
