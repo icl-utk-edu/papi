@@ -192,7 +192,7 @@ static void createDef(char *title, const char **names, const int *nums, int size
 
 int main(int argc, char **argv) 
 {
-  int i,j;
+  int i;
   const PAPI_preset_info_t *info = NULL;
 
   assert(info = PAPI_query_all_events_verbose());
