@@ -753,10 +753,6 @@ int MPX_start(MPX_EventSet * mpx_events)
    */
   for( i = 0; i < mpx_events->num_events; i++ ) {
     MasterEvent * mev = mpx_events->mev[i];
-    long_long prev_count;
-
-    prev_count = mpx_events->stop_values[i]
-      - mpx_events->start_values[i];
 
     if( mev->active++ ) {
       mpx_events->start_values[i] = mev->count_estimate;
@@ -830,11 +826,6 @@ int MPX_start(MPX_EventSet * mpx_events)
      */
     mpx_events->start_c = t->total_c + cycles_this_slice;
   }
-
-  /* Adjust the total cycle count for this event set to include
-   * cycles counted in previous instantiations.
-   */
-  mpx_events->start_c -= prev_total_c;
 
 #ifdef MPX_DEBUG
   fprintf(stderr,"%s:: start_c=%lld  thread->total_c=%lld\n",__FUNCTION__,
@@ -1454,7 +1445,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
    * of multiplexing events, so we can just delete that
    */
   if(mev && mev->papi_event) {
-    PAPI_cleanup_eventset(&(mev->papi_event));
+    PAPI_cleanup_eventset(mev->papi_event);
     PAPI_destroy_eventset(&(mev->papi_event));
   }
   if(mev)
