@@ -1,5 +1,4 @@
 LIBRARY   WINPAPI
-DESCRIPTION "Implements the Windows PAPI Library as a DLL."
 EXPORTS
 ;
 ;PAPI 3 C Interface in the order they appear in papi.h
@@ -16,7 +15,7 @@ EXPORTS
 	PAPI_get_executable_info		@108
 	PAPI_get_hardware_info			@109
 	PAPI_get_opt				@110
-        PAPI_get_dmem_info                      @111
+;	PAPI_get_dmem_info			@111
 	PAPI_get_real_cyc			@112
 	PAPI_get_real_usec			@113
 	PAPI_get_virt_cyc			@114
