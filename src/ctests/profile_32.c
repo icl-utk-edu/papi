@@ -59,7 +59,7 @@ int main(int argc, char **argv)
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
        !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
       (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (!strcmp(hw_info->model_string, "POWER3"))) {
+      (strstr(hw_info->model_string, "POWER3"))) {
       if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
          PAPI_event = PAPI_TOT_INS;
          mask = MASK_TOT_INS | MASK_TOT_CYC;
