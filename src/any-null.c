@@ -159,9 +159,9 @@ static int get_system_info(void)
 
   /* Hardware info */
 
-  _papi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+  _papi_system_info.hw_info.ncpu = 1;
   _papi_system_info.hw_info.nnodes = 1;
-  _papi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+  _papi_system_info.hw_info.totalcpus = 1;
   _papi_system_info.hw_info.vendor = -1;
 
   strcpy(_papi_system_info.hw_info.model_string,"Foo");
@@ -190,7 +190,7 @@ static int get_system_info(void)
 
   /* Setup memory info */
 
-  tmp = get_memory_info(&_papi_system_info.mem_info, 0/*(int)info.cpu_type*/);
+  tmp = get_memory_info(&_papi_system_info.mem_info);
   if (tmp)
     return(tmp);
 
@@ -970,3 +970,16 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        { 0, } };
+
+/* Two unapproved additions to substrate */
+
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  /* This function is not used and shouldn't be called. */
+
+  abort();
+}
+
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}

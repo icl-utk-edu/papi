@@ -703,7 +703,6 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
 	}    
       else
 	{
-	  abort();
 	  /* Check the case that if not all the counters 
 	     required for the derived event are available */
 
