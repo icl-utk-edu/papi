@@ -24,14 +24,14 @@
 */
 #ifndef _P64
   #define START_OF_TEXT 0x10000000
-  #define END_OF_TEXT   &_etext-1
+  #define END_OF_TEXT   &_etext
   #define START_OF_DATA 0x20000000
-  #define END_OF_DATA   &_end-1
+  #define END_OF_DATA   &_end
 #else
   #define START_OF_TEXT 0x100000000
-  #define END_OF_TEXT   &_etext-1
+  #define END_OF_TEXT   &_etext
   #define START_OF_DATA 0x110000000
-  #define END_OF_DATA   &_end-1
+  #define END_OF_DATA   &_end
 #endif
 
 static int maxgroups = 0;
