@@ -2,7 +2,7 @@
 
 #include "papi_test.h"
 
-#define OLD_TEST_DRIVER
+/*#define OLD_TEST_DRIVER*/
 
 #ifdef OLD_TEST_DRIVER
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
@@ -15,7 +15,7 @@
 #endif
 
 #define QUIETPRINTF if (!TESTS_QUIET) printf
-const static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L2_DCM, 0 };
+unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, 0 };
 const static int PAPI_events_len = 1;
 extern int TESTS_QUIET;
 
@@ -24,13 +24,14 @@ int main(int argc, char **argv)
    int retval, tmp;
    int EventSet;
    int i;
+   PAPI_event_info_t info;
    long_long values;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
-#if !defined(i386) || !defined(linux)
+/*#if !defined(i386) || !defined(linux)
    CPP_TEST_SKIP();
 #endif
-
+*/
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -50,6 +51,19 @@ int main(int argc, char **argv)
    tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
    QUIETPRINTF("Default granularity is: %d (%s)\n\n", tmp, stringify_granularity(tmp));
 
+   i = PRESET_MASK;
+   do {
+      if (PAPI_get_event_info(i, &info) == PAPI_OK){
+         if (info.count>1){
+	    PAPI_events[0]=info.event_code;
+	    break;
+	 }
+      }
+   } while (PAPI_enum_event(&i, 0) == PAPI_OK);
+
+   if(PAPI_events[0]==0)
+      CPP_TEST_SKIP();
+      
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_create_eventset", retval);
@@ -94,9 +108,9 @@ int main(int argc, char **argv)
    QUIETPRINTF("Verification: Does it produce a non-zero value?\n");
 
    if (values == 0)
-      CPP_TEST_FAIL("Zero count returned", 0);
+      CPP_TEST_FAIL("Zero count returned", 0)
    else {
-      QUIETPRINTF("Yes: %d\n", values);
+      QUIETPRINTF("Yes: %lld\n", values);
    }
 
    CPP_TEST_PASS();
