@@ -1085,7 +1085,7 @@ int _papi_hwi_mdi_init()
    _papi_hwi_system_info.version = 1.0; /* version */
    _papi_hwi_system_info.pid = 0;       /* Process identifier */
 
-   memset(&_papi_hwi_system_info.hw_info, sizeof(PAPI_hw_info_t), 0);
+   memset(&_papi_hwi_system_info.hw_info, 0, sizeof(PAPI_hw_info_t));
 
    /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu = -1;     /* ncpu */
@@ -1100,13 +1100,13 @@ int _papi_hwi_mdi_init()
 
 
    /* The PAPI_exe_info_t struct defined in papi.h */
-   memset(&_papi_hwi_system_info.exe_info, sizeof(PAPI_exe_info_t), 0);
-
+   memset(&_papi_hwi_system_info.exe_info, 0, sizeof(PAPI_exe_info_t));
 
    /* The PAPI_shlib_info_t struct defined in papi.h */
-   memset(&_papi_hwi_system_info.shlib_info, sizeof(PAPI_shlib_info_t), 0);
-   _papi_hwi_system_info.shlib_info.map =
-       (PAPI_address_map_t *) malloc(sizeof(PAPI_address_map_t));
+   memset(&_papi_hwi_system_info.shlib_info, 0, sizeof(PAPI_shlib_info_t));
+
+   /* The PAPI_shlib_info_t struct defined in papi.h */
+   memset(&_papi_hwi_system_info.preload_info, 0, sizeof(PAPI_preload_info_t));
 
    /* The following variables define the length of the arrays in the
       EventSetInfo_t structure. Each array is of length num_gp_cntrs +
