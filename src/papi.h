@@ -160,7 +160,6 @@ int PAPI_stop_counters(long long *values, int array_len);
 PAPI_shutdown.
 This function provides graceful shutdown of PAPI tool.
  a. All memory associated with PAPI tool is freed.
- b. A message is written to stderr based upon the value
-    of shutdownCode.
+ b. A shutdown message is written to stderr. 
 */
-static void PAPI_shutdown(int shutdownCode);
+static void PAPI_shutdown(void);

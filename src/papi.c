@@ -73,33 +73,23 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 /*========================================================================*/
 /*========================================================================*/
 /* begin function:                                                        */    
-/* static void PAPI_shutdown (int shutdownCode);                          */
+/* static void PAPI_shutdown (void);                                      */
 /*                                                                        */
 /* This function provides a graceful exit to the PAPI tool.               */
 /*  a. all memory associated with the PAPI tool is freed.                 */
-/*  b. a shutdown message is written to stderr, based upon the value      */
-/*     of shutdownCode.                                                   */
+/*  b. a shutdown message is written to stderr                            */
 /*                                                                        */
-/*  shutdownCode=PAPI_OK means the shutdown is normal, not due to error.  */
-/*  shutdownCode<0 means the shutdown is due to an error and the value    */
-/*  of shutdownCode corresponds to some standard PAPI error code.         */
 /*========================================================================*/
-static void PAPI_shutdown(int shutdownCode) {
+static void PAPI_shutdown(void) {
 
     DynamicArray *xEM;
     xEM=&PAPI_EVENT_MAP;
     /* close all memory pointed to by xEM */
     /* this code under construction       */
 
-    /* shutdown message for normal case*/
-    if(shutdownCode==PAPI_OK)
-    fprintf(stderr,"\n\n NORMAL PAPI SHUTDOWN. \n\n");
+    /* shutdown message */
+    fprintf(stderr,"\n\n PAPI SHUTDOWN. \n\n");
 
-    /* shutdown message for error case */
-    else {
-    fprintf(stderr,"\n\n %s ",PAPI_strerror(shutdownCode));
-    fprintf(stderr,"\n PAPI SHUTDOWN DUE TO ABOVE ERROR.\n\n");
-    }/***/
 
     return;
 }/***/
