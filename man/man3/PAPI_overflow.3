@@ -41,8 +41,13 @@ or small number for the result of the overflow events, don't be surprised.  To r
 -- the overflow threshold value to use
 .LP
 .I flags 
--- bit map that controls the overflow mode of operation. This is
-currently not used and should be set to 0.
+-- bit map that controls the overflow mode of operation. 
+-- If the flags has the bit PAPI_OVERFLOW_FORCE_SW set, then the substrate 
+will use software overflowing, even if hardware overflow support is available.  
+This will also, allow the user to overflow on derived events, which is not
+possible using hardware overflow.  Only one type of overflow is allowed 
+per eventset, so setting 1 event to hardware overflow and another to 
+forced software overflow will result in an error being returned.
 .LP
 .I handler 
 -- the handler function to call upon overflow
@@ -69,7 +74,8 @@ The EventSet is currently counting events.
 .TP
 .B "PAPI_ECNFLCT"
 The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously.
+in the EventSet simultaneously. Or you are trying to overflow both by
+hardware and by forced software at the same time.
 .TP
 .B "PAPI_ENOEVNT"
 The PAPI preset is not available on the underlying hardware. 
