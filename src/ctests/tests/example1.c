@@ -13,37 +13,9 @@
 #include <errno.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
+#include "papi_internal.h"
 
-typedef struct _hwd_preset {
-  int number;
-  int counter_code1;
-  int counter_code2;
-  int sp_code;   
-} hwd_control_state;
-
-typedef struct {
-  int eventindex;
-  long long deadline;
-  int milliseconds;
-  papi_overflow_option_t option; } _papi_overflow_info_t;
-
-typedef struct {
-  papi_multiplex_option_t option; } _papi_multiplex_info_t;
-
-typedef struct _EventSetInfo {
-  int EventSetIndex;
-  int NumberOfCounters;
-  int *EventCodeArray;
-  void *machdep;
-  long long *start;
-  long long *stop;
-  long long *latest;
-  int state;
-  _papi_overflow_info_t overflow;
-  _papi_multiplex_info_t multiplex;
-  int granularity;
-  int domain;
-} EventSetInfo;
+#include "linux-pentium.h"
 
 void main() {
   int r, i;
@@ -56,12 +28,12 @@ void main() {
   test.counter_code1 = test.counter_code2 = test.sp_code = -1;
 
   EventSet.machdep = &test;
-  EventSet.domain = 1;       // set to default PAPI_USR
+  EventSet.all_options.domain.domain.domain = 1;       /* set to default PAPI_USR */
 
-  _papi_hwd_reset(&test);
-  _papi_hwd_add_event(&test, PAPI_FP_INS);
-  _papi_hwd_add_event(&test, PAPI_TOT_INS);
-  _papi_hwd_add_event(&test, PAPI_TOT_CYC);
+  _papi_hwd_reset(&EventSet);
+  _papi_hwd_add_event(&EventSet, PAPI_FP_INS);
+  _papi_hwd_add_event(&EventSet, PAPI_TOT_INS);
+  _papi_hwd_add_event(&EventSet, PAPI_TOT_CYC);
   _papi_hwd_start(&EventSet);
 
   a = 0.5;
@@ -70,7 +42,7 @@ void main() {
     c = a*b;
   }
 
-  _papi_hwd_stop(&test, ct);
+  _papi_hwd_stop(&EventSet, ct);
   
   printf("\tFloating point ins.: 	%lld\n", ct[0]);
   printf("\tTotal Instructions : 	%lld\n", ct[1]);

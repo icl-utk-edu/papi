@@ -1,5 +1,3 @@
-#ifdef LINUX_PENTIUM
-
 /* $Id$ */
 
 /* This file contains portable routines to do things that we wish the
@@ -161,5 +159,3 @@ int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr
   memcpy(ptr,&ESI->multiplex.option,sizeof(*ptr));
   return(PAPI_ESBSTR);
 }
-
-#endif

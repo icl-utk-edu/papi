@@ -12,13 +12,10 @@
 /* PAPI stuff */
 
 #include <stdio.h>
-#include <sys/types.h>
-#include <linux/unistd.h>	/* For syscall numbers */
-#include <perf.h>
-#include <asm/system.h>
 #include <unistd.h>
+#include "linux-pentium.h"
 
-_syscall3(int, perf, int, op, int, counter, int, event);
+_syscall3(int, perf, int, op, int, counter, int, event); 
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -51,16 +48,8 @@ if number == 9, then only the special purpose counter is needed.
 /* For PII/PPRO Linux, we need to compute a couple of presets (Like L2 
    cache misses) */
 
-typedef struct _hwd_preset {
-  int number;                
-  int counter_code1;
-  int counter_code2;
-  int sp_code;   /* possibly needed for setting certain registers to 
-                    enable special purpose counters */
-} hwd_control_state;
-
-
 /*example values for now */
+
 static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { 
                 { },				// L1 D-Cache misses 
                 { 4, 0x28, 0xC0,},		// L1 I-Cache misses 
@@ -542,13 +531,13 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
   switch (code)
     {
     case PAPI_SET_MPXRES:
-      return(_papi_portable_set_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex));
+      /* return(_papi_portable_set_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex)); */
     case PAPI_SET_OVRFLO:
-      return(_papi_portable_set_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow));
+      /* return(_papi_portable_set_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow)); */
     case PAPI_GET_MPXRES:
-      return(_papi_portable_get_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex));
+      /* return(_papi_portable_get_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex)); */
     case PAPI_GET_OVRFLO:
-      return(_papi_portable_get_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow));
+      /* return(_papi_portable_get_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow)); */
     case PAPI_SET_DEFDOM:
     case PAPI_SET_DEFGRN:
     case PAPI_SET_DOMAIN:
