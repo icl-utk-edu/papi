@@ -699,8 +699,7 @@ void dump_state(hwd_control_state_t *s)
 
 int _papi_hwd_update_shlib_info(void)
 {
-   if (AixVer.version[0] == '5' )
-   { 
+#if ( ( defined( _AIXVERSION_510) || defined(_AIXVERSION_520)))
       struct ma_msg_s {
           long flag;
           char *name;
@@ -821,7 +820,7 @@ int _papi_hwd_update_shlib_info(void)
       _papi_hwi_system_info.shlib_info.count = t_index+1;
 
       return(PAPI_OK);
-   } else {  /* not AIX 5.1 or later version */
+#else
       return PAPI_ESBSTR;
-   }
+#endif
 }

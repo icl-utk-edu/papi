@@ -15,7 +15,9 @@
 #include <sys/times.h>
 #include <procinfo.h>
 #include <sys/atomic_op.h>
+#if( ( defined( _AIXVERSION_510) || defined(_AIXVERSION_520)))
 #include <sys/procfs.h>
+#endif
 #include <sys/utsname.h>
 
 #define ANY_THREAD_GETS_SIGNAL
