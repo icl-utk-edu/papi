@@ -1207,7 +1207,11 @@ void PAPI_shutdown(void)
 
    /* Clean up thread stuff */
 
+   #if defined(__ALPHA) && defined(__osf__)
+   _papi_hwd_shutdown(&(default_master_thread->context));
+   #else
    PAPI_thread_init(NULL);
+   #endif 
 
    /* Free up some memory */
 
