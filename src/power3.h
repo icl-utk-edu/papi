@@ -38,6 +38,8 @@ typedef PWR3_pmapi_control_t hwd_control_state_t;
 
 typedef PWR3_register_t hwd_register_t;
 
+typedef PWR3_reg_alloc_t hwd_reg_alloc_t;
+
 typedef PWR3_pmapi_context_t hwd_context_t;
 
 /* ... for PAPI3

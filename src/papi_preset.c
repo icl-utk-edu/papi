@@ -1,3 +1,12 @@
+/* 
+* File:    papi_preset.c
+* CVS:     
+* Author:  Haihang You
+*          you@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_preset.h"

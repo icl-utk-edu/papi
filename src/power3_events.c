@@ -1,3 +1,12 @@
+/* 
+* File:    power3_events.c
+* CVS:     
+* Author:  Haihang You
+*          you@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #include "power3_events.h"
 
 PWR3_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS] = {

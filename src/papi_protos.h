@@ -10,7 +10,9 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
+* Mods:    Haihang You
+*          you@cs.utk.edu
+*          <your name here>
 *          <your email address>
 */  
 
@@ -133,6 +135,55 @@ extern int _papi_hwd_native_code_to_bits(unsigned int EventCode, hwd_register_t 
     _papi_hwd_encode_native();
     _papi_hwd_decode_native();
 */
+
+/* the following functions are counter allocation functions */
+/* this function recusively does Modified Bipartite Graph counter allocation 
+    success  return 1
+    fail     return 0
+	Author: Haihang You  you@cs.utk.edu
+	Mods  : Dan Terpstra terpstra@cs.utk.edu
+*/
+extern int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count);
+
+/* following functions called by bipartite_counter_allocation(), they are implemented 
+   differently on different platform.
+ */
+
+/* This function examines the event to determine
+    if it can be mapped to counter ctr. 
+    Returns true if it can, false if it can't.
+*/
+extern int map_avail(hwd_reg_alloc_t *dst, int ctr);
+/* This function forces the event to
+    be mapped to only counter ctr. 
+    Returns nothing.
+*/
+extern void map_set(hwd_reg_alloc_t *dst, int ctr);
+/* This function examines the event to determine
+    if it has a single exclusive mapping. 
+    Returns true if exlusive, false if non-exclusive.
+*/
+extern int map_exclusive(hwd_reg_alloc_t *dst);
+/* This function compares the dst and src events
+    to determine if any counters are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+extern int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
+/* This function removes the counters available to the src event
+    from the counters available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+extern void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
+/* This function updates the selection status of 
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+extern void map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
+
+
 
 /* The following functions are defined by the memory file. */
 

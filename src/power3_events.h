@@ -1,6 +1,15 @@
 #ifndef _PAPI_POWER3_EVENTS  
 #define _PAPI_POWER3_EVENTS
 
+/* 
+* File:    power3_events.h
+* CVS:     
+* Author:  Haihang You
+*          you@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #include SUBSTRATE
 
 #define PAPI_MAX_NATIVE_EVENTS 197

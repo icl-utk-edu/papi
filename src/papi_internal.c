@@ -12,9 +12,11 @@
 * Mods:    Min Zhou
 *          min@cs.utk.edu
 * Mods:    Kevin London
-*	   london@cs.utk.edu
+*	       london@cs.utk.edu
 * Mods:    Per Ekman
 *          pek@pdc.kth.se
+* Mods:    Haihang You
+*          you@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */  
@@ -774,7 +776,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 	
 	/* Bump the number of events */
 	ESI->NumberOfEvents++;
-			/*print_state(ESI);*/
+		/*	print_state(ESI);*/
 	
 	return(retval);
 }
@@ -1276,7 +1278,7 @@ static int counter_read(EventSetInfo_t *ESI, long_long *hw_counter, long_long *v
   return(PAPI_OK);
 }
 
-/*
+
 void print_state(EventSetInfo_t *ESI)
 {
   int i;
@@ -1310,6 +1312,93 @@ void print_state(EventSetInfo_t *ESI)
   fprintf(stderr,"\n");
   
 }
+
+/* this function recusively does Modified Bipartite Graph counter allocation 
+    success  return 1
+    fail     return 0
 */
+int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
+{
+    int i,j;
+    int idx_q[MAX_COUNTERS];  /* queue of indexes of lowest rank events */
+    int map_q[MAX_COUNTERS];  /* queue of mapped events (TRUE if mapped) */
+    int head, tail;
+    
+    /* build a queue of indexes to all events 
+    that live on one counter only (rank == 1) */
+    head=0; /* points to top of queue */
+    tail=0; /* points to bottom of queue */
+    for(i=0;i<count;i++){
+	map_q[i] = FALSE;
+	if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
+    }
+    
+    /* scan the single counter queue looking for events that share counters.
+    If two events can live only on one counter, return failure.
+    If the second event lives on more than one counter, remove shared counter
+    from its selector and reduce its rank. 
+    Mark first event as mapped to its counter. */
+    while(head<tail){
+	for(i=0;i<count;i++){
+	    if(i!=idx_q[head]){
+		if(map_shared(&event_list[i], &event_list[idx_q[head]])) {
+		    /* both share a counter; if second is exclusive, mapping fails */
+		    if(map_exclusive(&event_list[i])) return 0;
+		    else{
+			map_preempt(&event_list[i], &event_list[idx_q[head]]);
+			if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
+		    }
+		}
+	    }
+	}
+	map_q[idx_q[head]] = TRUE;	/* mark this event as mapped */
+	head++;
+    }
+    if(tail==count){
+	return 1; /* idx_q includes all events; everything is successfully mapped */
+    }
+    else{
+	hwd_reg_alloc_t rest_event_list[MAX_COUNTERS];
+	hwd_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
+	int remainder;
+	
+	/* copy all unmapped events to a second list and make a backup */
+	for(i=0,j=0;i<count;i++) {
+	    if(map_q[i] == FALSE) {
+		memcpy(&copy_rest_event_list[j++], &event_list[i], sizeof(hwd_reg_alloc_t));
+	    }
+	}
+	remainder=j;
+	
+	memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_reg_alloc_t)*(remainder));
+	
+	/* try each possible mapping until you fail or find one that works */
+	for(i=0;i<MAX_COUNTERS;i++){
+	    /* for the first unmapped event, try every possible counter */
+	    if(map_avail(rest_event_list, i)){
+		map_set(rest_event_list, i);
+		/* remove selected counter from all other unmapped events */
+		for(j=1;j<remainder;j++){
+  		    if(map_shared(&rest_event_list[j], rest_event_list))
+			map_preempt(&rest_event_list[j], rest_event_list);
+		}
+		/* if recursive call to allocation works, break out of the loop */
+		if(bipartite_counter_allocation(rest_event_list, remainder))
+		    break;
+
+		/* recursive mapping failed; copy the backup list and try the next combination */
+		memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_reg_alloc_t)*(remainder));
+	    }
+	}
+	if(i==MAX_COUNTERS){
+	    return 0; /* fail to find mapping */
+	}
+	for(i=0,j=0;i<count;i++) {
+	    if(map_q[i] == FALSE)
+		map_update(&event_list[i], &rest_event_list[j++]);
+	}
+	return 1;		
+    }
+}	
 
 

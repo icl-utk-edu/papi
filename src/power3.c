@@ -184,97 +184,66 @@ preset_search_t *preset_search_map=preset_name_map_630;
 
  #define DEBUG_SETUP 
 
-/* this function recusively does Modified Bipartite Graph counter allocation 
-     success  return 1
-	 fail     return 0
+	
+/* This function examines the event to determine
+    if it can be mapped to counter ctr. 
+    Returns true if it can, false if it can't.
 */
-static int do_counter_allocation(PWR3_reg_alloc_t *event_list, int size)
+int map_avail(hwd_reg_alloc_t *dst, int ctr)
 {
-    int i,j;
-    PWR3_reg_alloc_t *queue[MAX_COUNTERS];
-    int head, tail;
-    
-    /* if the event competes 1 counter only, it has priority, map it */
-    head=0;
-    tail=0;
-    for(i=0;i<size;i++){ /* push rank=1 into queue */
-	event_list[i].ra_mod=-1;
-	if(event_list[i].ra_rank==1){
-	    queue[tail]=&event_list[i];
-	    event_list[i].ra_mod=i;
-	    tail++;
-	}
-    }
-    
-    while(head<tail){
-	for(i=0;i<size;i++){
-	    if(i!=(*queue[head]).ra_mod){
-		if(event_list[i].ra_selector & (*queue[head]).ra_selector){
-		    if(event_list[i].ra_rank==1){
-			return 0; /* mapping fail, 2 events compete 1 counter only */
-		    }
-		    else{
-			event_list[i].ra_selector ^= (*queue[head]).ra_selector;
-			event_list[i].ra_rank--;
-			if(event_list[i].ra_rank==1){
-			    queue[tail]=&event_list[i];
-			    event_list[i].ra_mod=i;
-			    tail++;
-			}
-		    }
-		}
-	    }
-	}
-	head++;
-    }
-    if(tail==size){
-	return 1; /* successfully mapped */
-    }
-    else{
-	PWR3_reg_alloc_t rest_event_list[MAX_COUNTERS];
-	PWR3_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
-	
-	j=0;
-	for(i=0;i<size;i++){
-	    if(event_list[i].ra_mod<0){
-		memcpy(copy_rest_event_list+j, event_list+i, sizeof(PWR3_reg_alloc_t));
-		copy_rest_event_list[j].ra_mod=i;
-		j++;
-	    }
-	}
-	
-	memcpy(rest_event_list, copy_rest_event_list, sizeof(PWR3_reg_alloc_t)*(size-tail));
-	
-	for(i=0;i<MAX_COUNTERS;i++){
-	    if(rest_event_list[0].ra_selector & (1<<i)){ /* pick first event on the list, set 1 to 0, to see whether there is an answer */
-		for(j=0;j<size-tail;j++){
-		    if(j==0){
-			    rest_event_list[j].ra_selector = 1<<i;
-			    rest_event_list[j].ra_rank = 1;
-		    }
-		    else{
-			if(rest_event_list[j].ra_selector & (1<<i)){
-			    rest_event_list[j].ra_selector ^= 1<<i;
-			    rest_event_list[j].ra_rank--;
-			}
-		    }
-		}
-		if(do_counter_allocation(rest_event_list, size-tail))
-		    break;
-		
-		memcpy(rest_event_list, copy_rest_event_list, sizeof(PWR3_reg_alloc_t)*(size-tail));
-	    }
-	}
-	if(i==MAX_COUNTERS){
-	    return 0; /* fail to find mapping */
-	}
-	for(i=0;i<size-tail;i++){
-	    event_list[copy_rest_event_list[i].ra_mod].ra_selector=rest_event_list[i].ra_selector;
-	}
-	return 1;		
-    }
-}	
-	
+    return(dst->ra_selector  & (1<<ctr));
+}
+
+/* This function forces the event to
+    be mapped to only counter ctr. 
+    Returns nothing.
+*/
+void map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+    dst->ra_selector = (1<<ctr);
+    dst->ra_rank = 1;
+}
+
+/* This function examines the event to determine
+    if it has a single exclusive mapping. 
+    Returns true if exlusive, false if non-exclusive.
+*/
+int map_exclusive(hwd_reg_alloc_t *dst)
+{
+    return(dst->ra_rank==1);
+}
+
+/* This function compares the dst and src events
+    to determine if any counters are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+    return(dst->ra_selector & src->ra_selector);
+}
+
+/* This function removes the counters available to the src event
+    from the counters available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+    dst->ra_selector ^= src->ra_selector;
+    dst->ra_rank -= src->ra_rank;
+}
+
+/* This function updates the selection status of 
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+void map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+    dst->ra_selector = src->ra_selector;
+}
+
 
 /* this function will be called when there are counters available 
      success  return 1
@@ -284,8 +253,8 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 {
   hwd_control_state_t *this_state = &ESI->machdep;
   unsigned char selector;
-  int i, j, natNum;
-  PWR3_reg_alloc_t event_list[MAX_COUNTERS];
+  int i, j, natNum, index;
+  hwd_reg_alloc_t event_list[MAX_COUNTERS];
   int position;
 
   /* not yet successfully mapped, but have enough slots for events */
@@ -296,7 +265,9 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   for(i=0;i<natNum;i++){
     /* CAUTION: Since this is in the hardware layer, it's ok 
        to access the native table directly, but in general this is a bad idea */
-    event_list[i].ra_selector = native_table[native_name_map[ESI->NativeInfoArray[i].ni_index].index].resources.selector;
+		if((index=native_name_map[ESI->NativeInfoArray[i].ni_index].index)<0)
+			return 0;
+    event_list[i].ra_selector = native_table[index].resources.selector;
     /* calculate native event rank, which is number of counters it can live on, this is power3 specific */
     event_list[i].ra_rank=0;
 	for(j=0;j<MAX_COUNTERS;j++) {
@@ -306,7 +277,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     /*event_list[i].ra_mod = -1;*/
   }
 
-  if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
+  if(bipartite_counter_allocation(event_list, natNum)){ /* successfully mapped */
       /* copy counter allocations info back into NativeInfoArray */
       for(i=0;i<natNum;i++)
 	  ESI->NativeInfoArray[i].ni_position = ffs(event_list[i].ra_selector)-1;
@@ -340,7 +311,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
     for all the native events in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
 {
-    int i;
+    int i, index;
 
     /* empty all the counters */
     for (i = 0; i <MAX_COUNTERS; i++) {
@@ -351,8 +322,10 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
     for(i=0;i<count;i++){
 	/* CAUTION: Since this is in the hardware layer, it's ok 
 	   to access the native table directly, but in general this is a bad idea */
-	this_state->counter_cmd.events[native[i].ni_position] = 
-	    native_table[native_name_map[native[i].ni_index].index].resources.counter_cmd[native[i].ni_position];
+		if((index=native_name_map[native[i].ni_index].index)<0)
+			return PAPI_ENOEVNT;
+		this_state->counter_cmd.events[native[i].ni_position] = 
+	    native_table[index].resources.counter_cmd[native[i].ni_position];
     }
 
 	return PAPI_OK;
