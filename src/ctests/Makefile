@@ -234,10 +234,10 @@ exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
 dummy.o: dummy.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c dummy.c
 
 do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c do_loops.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c do_loops.c
 
 test_utils.o: test_utils.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
