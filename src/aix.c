@@ -8,10 +8,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 /* Machine dependent info structure */
 extern papi_mdi_t _papi_hwi_system_info;
@@ -129,10 +126,8 @@ int update_global_hwcounters(EventSetInfo_t * global)
       return (retval);
 
    for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-#if 0
-      DBG((stderr, "update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", i,
-           global->hw_start[i] + data.accu[i], global->hw_start[i], data.accu[i]));
-#endif
+      SUBDBG("update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", i,
+           global->hw_start[i] + data.accu[i], global->hw_start[i], data.accu[i]);
       global->hw_start[i] = global->hw_start[i] + data.accu[i];
    }
 
@@ -149,11 +144,9 @@ static int correct_local_hwcounters(EventSetInfo_t * global, EventSetInfo_t * lo
    int i;
 
    for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-#if 0
-      DBG((stderr, "correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n", i,
+      SUBDBG("%d: L%lld = G%lld - L%lld\n", i,
            global->hw_start[i] - local->hw_start[i], global->hw_start[i],
-           local->hw_start[i]));
-#endif
+           local->hw_start[i]);
       correct[i] = global->hw_start[i] - local->hw_start[i];
    }
 
@@ -302,13 +295,13 @@ static int get_system_info(void)
    strcpy(_papi_hwi_system_info.exe_info.address_info.name,basename(maxargs));
 
 #ifdef _AIXVERSION_510
-   DBG((stderr, "Calling AIX 5 version of pm_init...\n"));
+   SUBDBG("Calling AIX 5 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
 #else
-   DBG((stderr, "Calling AIX 4 version of pm_init...\n"));
+   SUBDBG("Calling AIX 4 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo);
 #endif
-   DBG((stderr, "...Back from pm_init\n"));
+   SUBDBG("...Back from pm_init\n");
 
    if (retval > 0)
       return (retval);
@@ -378,6 +371,13 @@ void _papi_hwd_error(int error, char *where)
    pm_error(where, error);
 }
 
+static void lock_init(void)
+{
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++)
+      lock[i] = (int *) (lock_var + i);
+}
+
 int _papi_hwd_init_global(void)
 {
    int retval=PAPI_OK;
@@ -392,15 +392,18 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
+   SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_hwi_system_info.hw_info.totalcpus,
         _papi_hwi_system_info.hw_info.vendor_string,
-        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz));
+        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
    setup_native_table();
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
+
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+
+   lock_init();
 
    return (retval);
 }
@@ -451,22 +454,22 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
 #if 1
 void dump_cmd(pm_prog_t * t)
 {
-   fprintf(stderr, "mode.b.threshold %d\n", t->mode.b.threshold);
-   fprintf(stderr, "mode.b.spare %d\n", t->mode.b.spare);
-   fprintf(stderr, "mode.b.process %d\n", t->mode.b.process);
-   fprintf(stderr, "mode.b.kernel %d\n", t->mode.b.kernel);
-   fprintf(stderr, "mode.b.user %d\n", t->mode.b.user);
-   fprintf(stderr, "mode.b.count %d\n", t->mode.b.count);
-   fprintf(stderr, "mode.b.proctree %d\n", t->mode.b.proctree);
-   fprintf(stderr, "events[0] %d\n", t->events[0]);
-   fprintf(stderr, "events[1] %d\n", t->events[1]);
-   fprintf(stderr, "events[2] %d\n", t->events[2]);
-   fprintf(stderr, "events[3] %d\n", t->events[3]);
-   fprintf(stderr, "events[4] %d\n", t->events[4]);
-   fprintf(stderr, "events[5] %d\n", t->events[5]);
-   fprintf(stderr, "events[6] %d\n", t->events[6]);
-   fprintf(stderr, "events[7] %d\n", t->events[7]);
-   fprintf(stderr, "reserved %d\n", t->reserved);
+   SUBDBG("mode.b.threshold %d\n", t->mode.b.threshold);
+   SUBDBG("mode.b.spare %d\n", t->mode.b.spare);
+   SUBDBG("mode.b.process %d\n", t->mode.b.process);
+   SUBDBG("mode.b.kernel %d\n", t->mode.b.kernel);
+   SUBDBG("mode.b.user %d\n", t->mode.b.user);
+   SUBDBG("mode.b.count %d\n", t->mode.b.count);
+   SUBDBG("mode.b.proctree %d\n", t->mode.b.proctree);
+   SUBDBG("events[0] %d\n", t->events[0]);
+   SUBDBG("events[1] %d\n", t->events[1]);
+   SUBDBG("events[2] %d\n", t->events[2]);
+   SUBDBG("events[3] %d\n", t->events[3]);
+   SUBDBG("events[4] %d\n", t->events[4]);
+   SUBDBG("events[5] %d\n", t->events[5]);
+   SUBDBG("events[6] %d\n", t->events[6]);
+   SUBDBG("events[7] %d\n", t->events[7]);
+   SUBDBG("reserved %d\n", t->reserved);
 }
 
 void dump_data(pm_data_t * d)
@@ -474,7 +477,7 @@ void dump_data(pm_data_t * d)
    int i;
 
    for (i = 0; i < MAX_COUNTERS; i++) {
-      fprintf(stderr, "accu[%d] = %lld\n", i, d->accu[i]);
+      SUBDBG("accu[%d] = %lld\n", i, d->accu[i]);
    }
 }
 #endif
@@ -551,14 +554,13 @@ int _papi_hwd_shutdown_global(void)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *i)
 {
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
 
    ctx.si = si;
    ctx.ucontext = (hwd_ucontext_t *) i;
-   _papi_hwi_dispatch_overflow_signal(&ctx, _papi_hwi_system_info.supports_hw_overflow, 0,
-                                      0);
+   _papi_hwi_dispatch_overflow_signal(&ctx, _papi_hwi_system_info.supports_hw_overflow, 0, 0, &t);
 }
 
-/*int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)*/
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    hwd_control_state_t *this_state = &ESI->machdep;
@@ -608,13 +610,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * cntrl)
    /* If we are nested, merge the global counter structure
       with the current eventset */
 
-#if 1
-   DBG((stderr, "Start\n"));
-#endif
+   SUBDBG("Start\n");
 
    /* Copy the global counter structure to the current eventset */
 
-   DBG((stderr, "Copying states\n"));
+   SUBDBG("Copying states\n");
    memcpy(current_state, cntrl, sizeof(hwd_control_state_t));
 
    retval = pm_set_program_mythread(&current_state->counter_cmd);
@@ -661,29 +661,6 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * cntrl)
    return (PAPI_OK);
 }
 
-void _papi_hwd_lock_init(void)
-{
-   int i;
-   for (i = 0; i < PAPI_MAX_LOCK; i++)
-      lock[i] = (int *) (lock_var + i);
-}
-
-/*#if 0
-void dump_state(hwd_control_state_t *s)
-{
-  fprintf(stderr,"master_selector %x\n",s->master_selector);
-  fprintf(stderr,"event_codes %x %x %x %x %x %x %x %x\n",s->preset[0],s->preset[1],
-    s->preset[2],s->preset[3],s->preset[4],s->preset[5],s->preset[6],s->preset[7]);
-  fprintf(stderr,"event_selectors %x %x %x %x %x %x %x %x\n",s->selector[0],s->selector[1],
-    s->selector[2],s->selector[3],s->selector[4],s->selector[5],s->selector[6],s->selector[7]);
-  fprintf(stderr,"counters %x %x %x %x %x %x %x %x\n",s->counter_cmd.events[0],
-    s->counter_cmd.events[1],s->counter_cmd.events[2],s->counter_cmd.events[3],
-    s->counter_cmd.events[4],s->counter_cmd.events[5],s->counter_cmd.events[6],
-    s->counter_cmd.events[7]);
-}
-#endif
-*/
-
 int _papi_hwd_update_shlib_info(void)
 {
 #if ( ( defined( _AIXVERSION_510) || defined(_AIXVERSION_520)))
@@ -721,8 +698,8 @@ int _papi_hwd_update_shlib_info(void)
             if ( newp.pr_mflags & MA_STACK ) continue;
 
             count++;
-            SUBDBG((stderr, "count=%d offset=%ld map=%s\n", count, 
-              newp.pr_pathoff, newp.pr_mapname));
+            SUBDBG("count=%d offset=%ld map=%s\n", count, 
+              newp.pr_pathoff, newp.pr_mapname);
 
             if ((newp.pr_mflags &MA_READ)&&(newp.pr_mflags&MA_EXEC))
                t_index++;
@@ -749,21 +726,6 @@ int _papi_hwd_update_shlib_info(void)
          retval=fseek(map_f, tmp1[i].pr_pathoff, SEEK_SET); 
          if (retval != 0) return(PAPI_ESYS);
          fscanf(map_f, "%s", name);
-/*
-         SUBDBG((stderr, "name=%s  info.name=%s  ", name, 
-            _papi_hwi_system_info.exe_info.address_info.name));
-
-         for (j = 0, not_first_flag_bit = 0;
-              j < (sizeof ma_msgs / sizeof (struct ma_msg_s)); ++j) 
-         {
-            if (tmp1[i].pr_mflags & ma_msgs[j].flag) 
-            {
-               if (not_first_flag_bit++) printf(",");
-               printf("%s", ma_msgs[j].name);
-            }
-         }
-         printf("\n");
-*/
 
          if (strcmp(_papi_hwi_system_info.exe_info.address_info.name,
                           basename(name))== 0 )

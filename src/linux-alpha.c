@@ -3,10 +3,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 #define PF5_SEL_COUNTER_0	1       /* Op applies to counter 0 */
 #define PF5_SEL_COUNTER_1	2       /* Op applies to counter 1 */
@@ -79,17 +76,16 @@ static int setup_all_presets(int family, int model)
    int num = _papi_system_info.num_gp_cntrs;
    int code;
 
-   DBG((stderr, "Family %d, model %d\n", family, model));
+   SUBDBG("Family %d, model %d\n", family, model);
 
    if (family == 2)
       findem = findem_ev6;
    else if (family == 1)
       findem = findem_ev5;
    else {
-      fprintf(stderr, "PAPI: Don't know processor family %d, model %d\n", family, model);
+      PAPIERROR("Unknown processor family %d, model %d", family, model);
       return (PAPI_ESBSTR);
    }
-
 
    while ((code = findem->papi_code) != -1) {
       int i, index;
@@ -108,8 +104,8 @@ static int setup_all_presets(int family, int model)
          }
       }
       if (preset_map[index].selector != 0) {
-         DBG((stderr, "Preset %d found, selector 0x%x\n",
-              index, preset_map[index].selector));
+         SUBDBG("Preset %d found, selector 0x%x\n",
+              index, preset_map[index].selector);
       }
       findem++;
    }
@@ -126,7 +122,7 @@ static void counter_event_copy(ev_control_t * a, const ev_control_t * b, int cnt
    long al = a->ev6;
    long bl = b->ev6;
    long mask = 0xf0 >> cntr;
-   DBG((stderr, "copy: A %x B %x C %d M %x\n", al, bl, cntr, mask));
+   SUBDBG("copy: A %x B %x C %d M %x\n", al, bl, cntr, mask);
 
    bl = bl & mask;
    al = al | mask;
@@ -134,7 +130,7 @@ static void counter_event_copy(ev_control_t * a, const ev_control_t * b, int cnt
    al = al & bl;
    a->ev6 = al;
 
-   DBG((stderr, "A is now %x\n", al));
+   SUBDBG("A is now %x\n", al);
 }
 
 static int counter_event_shared(const ev_control_t * a, const ev_control_t * b, int cntr)
@@ -142,16 +138,16 @@ static int counter_event_shared(const ev_control_t * a, const ev_control_t * b, 
    long al = a->ev6;
    long bl = b->ev6;
    long mask = 0xf0 >> cntr;
-   DBG((stderr, "shared?: A %x B %x C %d M %x\n", al, bl, cntr, mask));
+   SUBDBG("shared?: A %x B %x C %d M %x\n", al, bl, cntr, mask);
 
    bl = bl & mask;
    al = al & mask;
 
    if (al == bl) {
-      DBG((stderr, "shared!\n", al, bl));
+      SUBDBG("shared!\n", al, bl);
       return (1);
    } else {
-      DBG((stderr, "not shared!\n", al, bl));
+      SUBDBG("not shared!\n", al, bl);
       return (0);
    }
 }
@@ -168,23 +164,23 @@ static int update_global_hwcounters(EventSetInfo_t * global)
    if (retval == -1)
       return PAPI_ESYS;
 
-   DBG((stderr, "Actual values %ld %ld \n", counter_values[0], counter_values[1]));
+   SUBDBG("Actual values %ld %ld \n", counter_values[0], counter_values[1]);
 
-   DBG((stderr, "update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",
+   SUBDBG("update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",
         0,
-        global->hw_start[0] + counter_values[0], global->hw_start[0], counter_values[0]));
+        global->hw_start[0] + counter_values[0], global->hw_start[0], counter_values[0]);
 
    if (current_state->selector & 0x1) {
-      DBG((stderr, "update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", 0,
+      SUBDBG("update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", 0,
            global->hw_start[0] + counter_values[0], global->hw_start[0],
-           counter_values[0]));
+           counter_values[0]);
       global->hw_start[0] = counter_values[0];
    }
 
    if (current_state->selector & 0x2) {
-      DBG((stderr, "update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", 1,
+      SUBDBG("update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", 1,
            global->hw_start[1] + counter_values[1], global->hw_start[1],
-           counter_values[1]));
+           counter_values[1]);
       global->hw_start[1] = counter_values[1];
    }
 
@@ -203,9 +199,9 @@ static int correct_local_hwcounters(EventSetInfo_t * global, EventSetInfo_t * lo
    int i;
 
    for (i = 0; i < _papi_system_info.num_cntrs; i++) {
-      DBG((stderr, "correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n", i,
+      SUBDBG("correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n", i,
            global->hw_start[i] - local->hw_start[i], global->hw_start[i],
-           local->hw_start[i]));
+           local->hw_start[i]);
       correct[i] = global->hw_start[i] - local->hw_start[i];
    }
 
@@ -374,6 +370,10 @@ void _papi_hwd_error(int error, char *where)
    sprintf(where, "Substrate error");
 }
 
+static void lock_init(void)
+{
+}
+
 int _papi_hwd_init_global(void)
 {
    int retval;
@@ -384,10 +384,12 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
+   lock_init();
+
+   SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_system_info.hw_info.totalcpus,
         _papi_system_info.hw_info.vendor_string,
-        _papi_system_info.hw_info.model_string, _papi_system_info.hw_info.mhz));
+        _papi_system_info.hw_info.model_string, _papi_system_info.hw_info.mhz);
 
    return (PAPI_OK);
 }
@@ -555,7 +557,7 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
 
 void dump_cmd(ev_control_t * t)
 {
-   DBG((stderr, "Command block at %p: 0x%x\n", t, t->ev6));
+   SUBDBG("Command block at %p: 0x%x\n", t, t->ev6);
 }
 
 /* EventSet zero contains the 'current' state of the counting hardware */
@@ -573,7 +575,7 @@ int _papi_hwd_merge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
 
 
    /* select events */
-   DBG((stderr, "PCNT6MUX command %lx\n", current_state->counter_cmd.ev6));
+   SUBDBG("PCNT6MUX command %lx\n", current_state->counter_cmd.ev6);
    commands[0] = current_state->counter_cmd.ev6;
    commands[1] = commands[2] = 0;
 
@@ -614,7 +616,7 @@ static long long handle_derived_add(int selector, long long *from)
    long long retval = 0;
 
    while ((pos = ffs(selector))) {
-      DBG((stderr, "Compound event, adding %lld to %lld\n", from[pos - 1], retval));
+      SUBDBG("Compound event, adding %lld to %lld\n", from[pos - 1], retval);
       retval += from[pos - 1];
       selector ^= 1 << pos - 1;
    }
@@ -628,7 +630,7 @@ static long long handle_derived_subtract(int operand_index, int selector, long l
 
    selector = selector ^ (1 << operand_index);
    while (pos = ffs(selector)) {
-      DBG((stderr, "Compound event, subtracting %lld to %lld\n", from[pos - 1], retval));
+      SUBDBG("Compound event, subtracting %lld to %lld\n", from[pos - 1], retval);
       retval -= from[pos - 1];
       selector ^= 1 << pos - 1;
    }
@@ -670,7 +672,8 @@ static long long handle_derived(EventInfo_t * cmd, long long *from)
    case DERIVED_PS:
       return (handle_derived_ps(cmd->operand_index, cmd->selector, from));
    default:
-      abort();
+      PAPIERROR("BUG! Unknown derived command %d, returning 0",evi->derived);
+      return((long_long)0);
    }
 }
 
@@ -699,7 +702,7 @@ int _papi_hwd_read(EventSetInfo_t * ESI, EventSetInfo_t * zero, long long *event
          continue;
 
       assert(selector != 0);
-      DBG((stderr, "Event index %d, selector is 0x%x\n", j, selector));
+      SUBDBG("Event index %d, selector is 0x%x\n", j, selector);
 
       /* If this is not a derived event */
 
@@ -815,10 +818,6 @@ void *_papi_hwd_get_overflow_address(void *context)
    location = (void *) info->sc_pc;
 
    return (location);
-}
-
-void _papi_hwd_lock_init(void)
-{
 }
 
 void _papi_hwd_lock(void)

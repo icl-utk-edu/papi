@@ -17,10 +17,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 #ifdef CPC_ULTRA3_I
 #define LASTULTRA3 CPC_ULTRA3_I
@@ -345,10 +342,10 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
    if (sip->si_code == EMT_CPCOVF) {
       papi_cpc_event_t *sample;
       EventSetInfo_t *ESI;
-      ThreadInfo_t *thread;
+      ThreadInfo_t *thread = NULL;
       int t, overflow_vector, readvalue;
 
-      thread = _papi_hwi_lookup_in_thread_list();
+      thread = _papi_hwi_lookup_thread();
       ESI = (EventSetInfo_t *) thread->event_set_overflowing;
 
       event_counter = ESI->overflow.event_counter;
@@ -405,12 +402,15 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
          SUBDBG("overflow_vector, = %d\n", overflow_vector);
          /* something is wrong here */
          if (overflow_vector == 0)
-            abort();
+	   {
+	     PAPIERROR("BUG! overflow_vector is 0, dropping interrupt");
+	     return;
+	   }
       }
 
       /* Call the regular overflow function in extras.c */
       _papi_hwi_dispatch_overflow_signal(&ctx, 
-           _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0);
+           _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0, &thread);
 
 #if DEBUG
       dump_cmd(sample);
@@ -551,7 +551,7 @@ static int set_granularity(hwd_control_state_t * this_state, int domain)
 /* This is a wrapper arount fprintf(stderr,...) for cpc_walk_events() */
 void print_walk_names(void *arg, int regno, const char *name, uint8_t bits)
 {
-   fprintf(stderr, arg, regno, name, bits);
+   SUBDBG(arg, regno, name, bits);
 }
 
 static char * getbasename(char *fname)
@@ -592,18 +592,18 @@ static int get_system_info(void)
 
 #ifdef DEBUG
    {
-      if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
+      if (ISLEVEL(DEBUG_SUBSTRATE)) {
          name = cpc_getcpuref(cpuver);
          if (name)
-            fprintf(stderr, "CPC CPU reference: %s\n", name);
+            SUBDBG("CPC CPU reference: %s\n", name);
          else
-            fprintf(stderr, "Could not get a CPC CPU reference.\n");
+            SUBDBG("Could not get a CPC CPU reference\n");
 
          for (i = 0; i < cpc_getnpic(cpuver); i++) {
-            fprintf(stderr, "\n%6s %-40s %8s\n", "Reg", "Symbolic name", "Code");
+	   SUBDBG("\n%6s %-40s %8s\n", "Reg", "Symbolic name", "Code");
             cpc_walk_names(cpuver, i, "%6d %-40s %02x\n", print_walk_names);
          }
-         fprintf(stderr, "\n");
+         SUBDBG("\n");
       }
    }
 #endif
@@ -759,7 +759,7 @@ build_tables(void)
     }
     SUBDBG("%d counters\n", nctrs);
 #if DEBUG
-    if (_papi_hwi_debug * DEBUG_SUBSTRATE) {
+    if (ISLEVEL(DEBUG_SUBSTRATE)) {
     for (i = 0; i < nctrs; ++i) {
 	SUBDBG("%s: bits (%x,%x) pics %x\n", ctrs[i].name, ctrs[i].bits[0],
 	    ctrs[i].bits[1],
@@ -804,7 +804,7 @@ build_tables(void)
     memset(&preset_table[npresets], 0, sizeof(hwi_search_t));
 
 #ifdef DEBUG
-    if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
+    if (ISLEVEL(DEBUG_SUBSTRATE)) {
     SUBDBG("Native table: %d\n", nctrs);
     for (i = 0; i < nctrs; ++i) {
 	SUBDBG("%40s: %8x %8x\n", native_table[i].name,
@@ -812,7 +812,7 @@ build_tables(void)
     }
     SUBDBG("\nPreset table: %d\n", npresets);
     for (i = 0; preset_table[i].event_code != 0; ++i) {
-	fprintf(stderr, "%8x: op %2d e0 %8x e1 %8x\n",
+	SUBDBG("%8x: op %2d e0 %8x e1 %8x\n",
 		preset_table[i].event_code,
 		preset_table[i].data.derived,
 		preset_table[i].data.native[0],
@@ -979,9 +979,13 @@ static int set_default_granularity(hwd_control_state_t * current_state, int gran
    return (set_granularity(current_state, granularity));
 }
 
-/* Low level functions, should not handle errors, just return codes. */
+rwlock_t lock[PAPI_MAX_LOCK];
 
-/* this function is called by PAPI_library_init */
+static void lock_init(void)
+{
+  memset(lock,0x0,sizeof(rwlock_t)*PAPI_MAX_LOCK);
+}
+
 int _papi_hwd_init_global(void)
 {
    int retval;
@@ -991,6 +995,8 @@ int _papi_hwd_init_global(void)
    retval = get_system_info();
    if (retval)
       return (retval);
+
+   lock_init();
 
    SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
           _papi_hwi_system_info.hw_info.totalcpus,
@@ -1083,19 +1089,13 @@ int _papi_hwd_shutdown_global(void)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
-/*
-  SUBDBG("_papi_hwd_dispatch_timer() at 0x%lx\n", 
-        info->uc_mcontext.gregs[REG_PC]);
-*/
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
 
    ctx.si = si;
    ctx.ucontext = info;
-/*
-  _papi_hwi_dispatch_overflow_signal((void *)info); 
-*/
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.supports_hw_overflow, 0, 0);
+                                      _papi_hwi_system_info.supports_hw_overflow, 0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -1157,12 +1157,6 @@ void *_papi_hwd_get_overflow_address(void *context)
    return (location);
 }
 */
-
-rwlock_t lock[PAPI_MAX_LOCK];
-
-void _papi_hwd_lock_init(void)
-{
-}
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
@@ -1527,7 +1521,7 @@ int _papi_hwd_update_shlib_info(void)
    tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
 
    if (tmp == NULL)
-      error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+     { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
    
    t_index = -1;
    tmpr = curr = head;
@@ -1629,7 +1623,7 @@ int _papi_hwd_update_shlib_info(void)
    tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
 
    if (tmp == NULL)
-      error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+     { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
    t_index=-1;
    while ( fread(&newp, sizeof(prmap_t), 1, map_f) > 0 ) {
       vaddr = (void*)(1+(newp.pr_vaddr)); // map base address

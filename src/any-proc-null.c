@@ -207,7 +207,7 @@ int _papi_hwd_init()
  * This initializes any variables that or anything else
  * that needs to be done to call hwd_lock and hwd_unlock
  */
-void _papi_hwd_lock_init(void)
+static void _papi_hwd_lock_init(void)
 {
 }
 

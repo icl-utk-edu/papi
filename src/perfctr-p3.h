@@ -1,14 +1,15 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
-#ifdef __GNUC__
 #define HAVE_FFSLL
 #define _GNU_SOURCE
 #define __USE_GNU
-#endif
+#define __USE_UNIX98
+#define __USE_XOPEN_EXTENDED
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <signal.h>
 #include <malloc.h>
 #include <assert.h>

@@ -20,7 +20,6 @@
 extern int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI,
                           long_long * values);
 extern int _papi_hwi_allocate_eventset_map(void);
-extern int _papi_hwi_initialize_thread(ThreadInfo_t ** master);
 extern int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
 extern int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
 extern int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
@@ -35,8 +34,9 @@ extern EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
 extern EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 extern int _papi_hwi_remove_EventSet(EventSetInfo_t *);
 extern EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *);
-extern int _papi_hwi_mdi_init(void);
 extern void print_state(EventSetInfo_t * ESI);
+extern int _papi_hwi_init_global_internal(void);
+extern void _papi_hwi_shutdown_global_internal(void);
 
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
@@ -62,13 +62,15 @@ extern int  _papi_hwi_get_thr_context(void ** );
 
 /* The following PAPI internal functions are defined by the extras.c file. */
 
-extern int _papi_hwi_stop_overflow_timer(ThreadInfo_t * master, EventSetInfo_t * ESI);
-extern int _papi_hwi_start_overflow_timer(ThreadInfo_t * master, EventSetInfo_t * ESI);
+extern int _papi_hwi_stop_timer(void);
+extern int _papi_hwi_start_timer(int);
+extern int _papi_hwi_stop_signal(int);
+extern int _papi_hwi_start_signal(int, int);
 extern int _papi_hwi_initialize(DynamicArray_t **);
 /*
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
 */
-extern void _papi_hwi_dispatch_overflow_signal(void *context, int, long_long, int);
+extern int _papi_hwi_dispatch_overflow_signal(void *context, int, long_long, int, ThreadInfo_t **master);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
@@ -104,11 +106,9 @@ extern int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int thre
 extern int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold);
 extern void *_papi_hwd_get_overflow_address(void *context);
 extern void _papi_hwd_error(int error, char *);
-extern void _papi_hwd_lock_init(void);
 extern int _papi_hwd_shutdown_global(void);
 extern int _papi_hwd_set_domain(hwd_control_state_t *, int);
 extern int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
-extern int _papi_hwd_mdi_init(void);
 
 #ifdef _WIN32
 /* Callback routine for Windows timers */
@@ -208,14 +208,12 @@ extern int _papi_hwd_get_system_info(void);
 /* Defined in a memory file, could be processor or OS specific */
 extern int _papi_hwd_get_memory_info(PAPI_hw_info_t *, int);
 
-/* Linux defines; may also appear in substrates */
-#ifdef linux
-extern int sighold(int);
-extern int sigrelse(int);
-#endif
+/* PAPI Internal Error message logger */
+
+extern void PAPIERROR(char *, ...);
 
 #ifdef NEED_FFSLL
-int ffsll(long_long lli);
+extern int ffsll(long_long lli);
 #endif
 
 #endif                          /* PAPI_PROTOS_H */

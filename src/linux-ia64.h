@@ -9,12 +9,13 @@
 *          Kevin London
 *	   london@cs.utk.edu
 *
-* Mods:    Per Eckman
+* Mods:    Per Ekman
 *          pek@pdc.kth.se
 */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
@@ -26,10 +27,17 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <libgen.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
+
+#ifdef __INTEL_COMPILER
+#include <ia64intrin.h>
+#include <ia64regs.h>
+#endif
+
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 #ifdef PFM30
@@ -138,21 +146,17 @@ typedef struct sigcontext hwd_ucontext_t;
 
 extern caddr_t _init, _fini, _etext, _edata, __bss_start;
 
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-extern volatile uint32_t lock[PAPI_MAX_LOCK];
+#define MUTEX_OPEN (unsigned int)1
+#define MUTEX_CLOSED (unsigned int)0
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
 
 #ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck)			 			      \
-    while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) \
-        != (uint64_t)MUTEX_OPEN);
+#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
 
-#define _papi_hwd_unlock(lck)						\
-    _InterlockedExchange(&lock[lck], (unsigned __int64)MUTEX_OPEN);
-
+#define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&lock[lck], MUTEX_OPEN); }
 #else                           /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
    { uint64_t res = 0;							      \

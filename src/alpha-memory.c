@@ -8,12 +8,7 @@
 */
 
 #include "papi.h"
-#include <sys/procfs.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 int get_memory_info(PAPI_hw_info_t * mem_info)
 {

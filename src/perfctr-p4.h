@@ -1,18 +1,17 @@
 #ifndef _PAPI_PENTIUM4_H
 #define _PAPI_PENTIUM4_H
 
-#ifdef __GNUC__
 #define HAVE_FFSLL
 #define _GNU_SOURCE
 #define __USE_GNU
-#endif
+#define __USE_UNIX98
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <signal.h>
-#include <unistd.h>
 #include <malloc.h>
+#include <unistd.h>
 #include <assert.h>
 #include <string.h>
 #include <math.h>

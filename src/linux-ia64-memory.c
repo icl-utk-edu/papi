@@ -8,10 +8,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev);
 void fline ( FILE *fp, char *buf );
@@ -37,7 +34,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
    f = fopen("/proc/pal/cpu0/cache_info","r");
 
    if (!f)
-      error_return(PAPI_ESYS, "fopen(/proc/pal/cpu0/cache_info returned < 0");
+     { PAPIERROR("fopen(/proc/pal/cpu0/cache_info returned < 0"); return(PAPI_ESYS); }
 
    while (!feof(f)) {
       fline(f, buf);
@@ -59,7 +56,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
       }
       else {
          if ( (clevel == 0 || clevel > 3) && cindex >= 0)
-            error_return(PAPI_EBUG, "Cache type could not be recognized, send /proc/pal/cpu0/cache_info");
+	   { PAPIERROR("Cache type could not be recognized, please send /proc/pal/cpu0/cache_info"); return(PAPI_EBUG); }
 
          if ( !strncmp(buf, "Size", 4) ) {
             num = get_number( buf );
@@ -99,7 +96,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
          }
          else {
 	         if ( (clevel == 0 || clevel > 2) && cindex >= 0)
-	            error_return(PAPI_EBUG, "TLB type could not be recognized, send /proc/pal/cpu0/vm_info");
+		   { PAPIERROR("TLB type could not be recognized, send /proc/pal/cpu0/vm_info"); return(PAPI_EBUG); }
 
 	         if ( !strncmp(buf, "Number of entries", 17) ){
 	            num = get_number( buf );
@@ -140,10 +137,9 @@ int get_number( char *buf ){
         num = atoi(tmp);
         return(num);
     }
-    else {
-        error_return(PAPI_EBUG, "Cache type could not be recognized, send /proc/pal/cpu0/cache_info");
-    }
-  return(-1);
+
+   PAPIERROR("Number could not be parsed from %s",buf);
+   return(-1);
 }
 
 long _papi_hwd_get_dmem_info(int option)
@@ -154,7 +150,7 @@ long _papi_hwd_get_dmem_info(int option)
    unsigned int vsize, rss;
 
    if ((fd = fopen("/proc/self/stat", "r")) == NULL) {
-      DBG((stderr, "PAPI_get_dmem_info can't open /proc/self/stat\n"));
+      SUBDBG("PAPI_get_dmem_info can't open /proc/self/stat\n");
       return (PAPI_ESYS);
    }
    fgets(pfile, 256, fd);
@@ -214,7 +210,11 @@ inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *f
 {
         unsigned long r;
 
+#ifdef __INTEL_COMPILER
+	r = __getIndReg(_IA64_REG_INDR_CPUID, 0);
+#else
         asm ("mov %0=cpuid[%r1]" : "=r"(r) : "rO"(3));
+#endif
         *rev = (r>>8)&0xff;
         *model = (r>>16)&0xff;
         *family = (r>>24)&0xff;

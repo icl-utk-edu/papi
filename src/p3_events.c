@@ -8,9 +8,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;

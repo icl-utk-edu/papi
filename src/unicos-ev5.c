@@ -2,10 +2,7 @@
    done by the high level API. */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 extern hwi_search_t *preset_search_map;
 extern native_event_entry_t *native_table;
@@ -63,7 +60,9 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
       }
       break;
    default:
-      abort();
+      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
+      kill_user = 1;
+      break;
    }
    ptr->counter_cmd.Kp = kill_pal;
    ptr->counter_cmd.Ku = kill_user;
@@ -277,6 +276,8 @@ int _papi_hwd_init_global(void) {
    if(_papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, 0))
       return (retval);
 
+   lock_init();
+
    return(PAPI_OK);
 }
 
@@ -330,8 +331,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    ctrl->values[2] = (pc_data[3] << 14) + (long_long)pmctr->CTR2;
    *events = ctrl->values;
 #ifdef DEBUG
-   if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
-      SUBDBG("raw val hardware index 0 is %lld\n",
+   if (ISLEVEL(DEBUG_SUBSTRATE)) 0 is %lld\n",
             (long_long) ctrl->values[0]);
       SUBDBG("raw val hardware index 1 is %lld\n",
             (long_long) ctrl->values[1]);
@@ -373,13 +373,14 @@ int _papi_hwd_shutdown(hwd_context_t * ctx) {
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
 {
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                      _papi_hwi_system_info.supports_hw_overflow,
-                                      0, 0);
+                                      0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -408,7 +409,7 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
    return (PAPI_OK);
 }
 
-void _papi_hwd_lock_init(void)
+static void lock_init(void)
 {
 }
 

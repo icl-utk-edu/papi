@@ -19,7 +19,6 @@
    BASIC is a high level language. ;-) */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
 
 /* high level papi functions*/
@@ -110,16 +109,16 @@ int _internal_check_state(HighLevelInfo ** outgoing)
       if (retval != PAPI_VER_CURRENT) {
          return (PAPI_EINVAL);
       } else {
-         PAPI_lock(PAPI_HIGHLEVEL_LOCK);
+         PAPI_lock(HIGHLEVEL_LOCK);
          init_level = PAPI_HIGH_LEVEL_INITED;
-         PAPI_unlock(PAPI_HIGHLEVEL_LOCK);
+         PAPI_unlock(HIGHLEVEL_LOCK);
       }
    }
 
    /*
     * Do we have the thread specific data setup yet?
     */
-   if ((retval = PAPI_get_thr_specific(PAPI_TLS_HIGH_LEVEL, (void *) &state))
+   if ((retval = PAPI_get_thr_specific(PAPI_HIGH_LEVEL_TLS, (void *) &state))
        != PAPI_OK || state == NULL) {
       state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
       if (state == NULL)
@@ -131,7 +130,7 @@ int _internal_check_state(HighLevelInfo ** outgoing)
       if ((retval = PAPI_create_eventset(&state->EventSet)) != PAPI_OK)
          return (PAPI_ESYS);
 
-      if ((retval = PAPI_set_thr_specific(PAPI_TLS_HIGH_LEVEL, state)) != PAPI_OK)
+      if ((retval = PAPI_set_thr_specific(PAPI_HIGH_LEVEL_TLS, state)) != PAPI_OK)
          return (retval);
    }
    *outgoing = state;
@@ -404,6 +403,6 @@ int PAPI_stop_counters(long_long * values, int array_len)
       PAPI_cleanup_eventset(state->EventSet);
       return retval;
    }
-   DBG((stderr, "PAPI_stop_counters returns %d\n", retval));
+   APIDBG("PAPI_stop_counters returns %d\n", retval);
    return (PAPI_OK);
 }

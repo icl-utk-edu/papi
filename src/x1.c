@@ -272,7 +272,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
    }
    *events = (long long *) &ctrl->values[0];
 #ifdef DEBUG
-   if ( ISLEVEL(DEBUG_SUBSTRATE) )
+   if (ISLEVEL(DEBUG_SUBSTRATE) )
    {
    int st,en;
    if ( ctrl->has_p ){ 
@@ -295,16 +295,16 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
       st = 48;
       en = 64;
    }
-   fprintf(stderr, "Counter values in read: \n");
+   SUBDBG("Counter values in read: \n");
    for(i=st;i<en;i++){
-      if ( i==0 ) fprintf(stderr,"P-Chip: ");
-      if ( i==32) fprintf(stderr,"\nE-Chip: ");
-      if ( i==48) fprintf(stderr,"\nM-Chip: ");
-      fprintf(stderr,"[%d]=%lld ", i, ctrl->values[i]);
+      if ( i==0 ) SUBDBG("P-Chip: ");
+      if ( i==32) SUBDBG("\nE-Chip: ");
+      if ( i==48) SUBDBG("\nM-Chip: ");
+      SUBDBG("[%d]=%lld ", i, ctrl->values[i]);
       if ( i!= 0 && i%6 == 0 )
-         fprintf(stderr,"\n        "); 
+         SUBDBG("\n        "); 
    }
-   fprintf(stderr,"\n");
+   SUBDBG("\n");
   }
 #endif
 }
@@ -596,11 +596,12 @@ int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
 
    ctx.si = si;
    ctx.ucontext = info;
    SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, _papi_hwi_system_info.supports_hw_overflow, (long_long) si->si_overflow, 0);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, _papi_hwi_system_info.supports_hw_overflow, (long_long) si->si_overflow, 0, &t);
 }
 
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
@@ -817,6 +818,14 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, unsigned int event
 {
 }
 
+static mutexlock_t lck[PAPI_MAX_LOCK];
+
+static void lock_init(void)
+{
+   int i;
+   for ( i=0; i<PAPI_MAX_LOCK;i++)
+      init_lock(&lck[i]);
+}
 
 /* Initialize hardware counters and get information, this is called
  * when the PAPI/process is initialized
@@ -836,10 +845,10 @@ int _papi_hwd_init_global(void)
       return (retval);
 
 
-   DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
+   SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_hwi_system_info.hw_info.totalcpus,
         _papi_hwi_system_info.hw_info.vendor_string,
-        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz));
+        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
    if (_papi_hwd_mdi_init() != PAPI_OK) {
       return (PAPI_ESBSTR);
@@ -848,6 +857,9 @@ int _papi_hwd_init_global(void)
    _papi_hwd_init_preset_search_map();
 
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+
+   lock_init();
+   
    return (retval);
 }
 
@@ -1036,14 +1048,6 @@ int _papi_hwd_update_shlib_info()
 /*
  * Utility Functions
  */
-static mutexlock_t lck[PAPI_MAX_LOCK];
-
-void _papi_hwd_lock_init(void)
-{
-   int i;
-   for ( i=0; i<PAPI_MAX_LOCK;i++)
-      init_lock(&lck[i]);
-}
 
 /* This will always aquire a lock, while acquire_lock is not
  * guaranteed, while spin_lock states:

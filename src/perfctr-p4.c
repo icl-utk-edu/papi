@@ -9,18 +9,8 @@
 *          <your email address>
 */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 #if defined(PERFCTR26)
 #define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
@@ -56,7 +46,9 @@ extern papi_mdi_t _papi_hwi_system_info;
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */
 /****************************/
-// static int local_dbg = 0;
+
+volatile unsigned int lock[PAPI_MAX_LOCK];
+
 /**************************/
 /* END LOCAL DECLARATIONS */
 /**************************/
@@ -103,7 +95,7 @@ inline static int setup_p4_presets(int cputype)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_pentium4_dev_notes));
 #endif
    else
-      error_return(PAPI_ESBSTR, MODEL_ERROR);
+     { PAPIERROR(MODEL_ERROR); return(PAPI_ESBSTR); }
    return (PAPI_OK);
 }
 
@@ -124,7 +116,9 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
       def_mode = ESCR_T0_OS | ESCR_T0_USR;
       break;
    default:
-      abort();
+      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
+      def_mode = ESCR_T0_USR;
+      break;
    }
    for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
       ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
@@ -173,6 +167,17 @@ extern int _papi_hwd_mdi_init()
    return (PAPI_OK);
 }
 
+/* volatile uint32_t lock; */
+
+#include <inttypes.h>
+
+static void lock_init()
+{
+   int lck;
+   for (lck = 0; lck < PAPI_MAX_LOCK; lck++)
+      lock[lck] = MUTEX_OPEN;
+}
+
 /* Called when PAPI/process is initialized */
 
 int _papi_hwd_init_global(void)
@@ -184,13 +189,13 @@ int _papi_hwd_init_global(void)
    /* Opened once just to get system info */
 
    if ((dev = vperfctr_open()) == NULL)
-      error_return(PAPI_ESYS, VOPEN_ERROR);
+     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
 
    /* Get info from the kernel */
 
    if (vperfctr_info(dev, &info) < 0)
-      error_return(PAPI_ESYS, VINFO_ERROR);
+     { PAPIERROR(VINFO_ERROR); return(PAPI_ESYS); }
 
    /* Initialize outstanding values in machine info structure */
 
@@ -230,7 +235,10 @@ int _papi_hwd_init_global(void)
 
     SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
     vperfctr_close(dev);
-   return (PAPI_OK);
+
+    lock_init();
+
+    return (PAPI_OK);
 }
 
 /* Called when thread is initialized */
@@ -246,18 +254,18 @@ int _papi_hwd_init(P4_perfctr_context_t * ctx)
        (struct vperfctr_control *) malloc(sizeof(struct vperfctr_control));
    ctx->start.state = (struct perfctr_sum_ctrs *) malloc(sizeof(struct perfctr_sum_ctrs));
    if ((ctx->start.control == NULL) || (ctx->start.state == NULL))
-      error_return(PAPI_ENOMEM, STATE_MAL_ERROR);
+     { PAPIERROR(STATE_MAL_ERROR); return(PAPI_ENOMEM); }
 #endif
 
    /* Initialize our thread/process pointer. */
 
    if ((ctx->perfctr = vperfctr_open()) == NULL)
-      error_return(PAPI_ESYS, VOPEN_ERROR);
+     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
 
 #if 0
    if ((ctx->perfctr = gperfctr_open()) == NULL)
-      error_return(PAPI_ESYS, GOPEN_ERROR);
+     { PAPIERROR(GOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_papi_hwd_init gperfctr_open() = %p\n", ctx->perfctr);
 #endif
 
@@ -267,10 +275,10 @@ int _papi_hwd_init(P4_perfctr_context_t * ctx)
 
    /* Start the per thread/process virtualized TSC */
    if (vperfctr_control(ctx->perfctr, &tmp) < 0)
-      error_return(PAPI_ESYS, VCNTRL_ERROR);
+     { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
 #if 0
    if (gperfctr_control(ctx->perfctr, &tmp) < 0)
-      error_return(PAPI_ESYS, GCNTRL_ERROR);
+     { PAPIERROR(GCNTRL_ERROR); return(PAPI_ESYS); }
 #endif
 
    return (PAPI_OK);
@@ -320,11 +328,11 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
    error = vperfctr_control(ctx->perfctr, &state->control);
    if (error < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
-      error_return(PAPI_ESYS, VCNTRL_ERROR);
+      { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
    }
 #if 0
    if (gperfctr_control(ctx->perfctr, &state->control) < 0)
-      error_return(PAPI_ESYS, GCNTRL_ERROR);
+     { PAPIERROR(GCNTRL_ERROR); return(PAPI_ESYS); }
 #endif
 
    return (PAPI_OK);
@@ -333,10 +341,10 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 {
    if (vperfctr_stop(ctx->perfctr) < 0)
-      error_return(PAPI_ESYS, VCNTRL_ERROR);
+     { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
 #if 0
    if (gperfctr_stop(ctx->perfctr) < 0)
-      error_return(PAPI_ESYS, GCNTRL_ERROR);
+     { PAPIERROR(GCNTRL_ERROR); return(PAPI_ESYS); }
 #endif
 
    return (PAPI_OK);
@@ -350,7 +358,7 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
-      if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
+      if (ISLEVEL(DEBUG_SUBSTRATE)) {
          int i;
          for (i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
@@ -760,19 +768,6 @@ int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
       return(PAPI_OK);
 }
 
-volatile unsigned int lock[PAPI_MAX_LOCK] = { 0, };
-
-/* volatile uint32_t lock; */
-
-#include <inttypes.h>
-
-void _papi_hwd_lock_init()
-{
-   int lck;
-   for (lck = 0; lck < PAPI_MAX_LOCK; lck++)
-      lock[lck] = MUTEX_OPEN;
-}
-
 int _papi_hwd_reset(P4_perfctr_context_t * ctx, P4_perfctr_control_t * cntrl)
 {
    /* this is what I gleaned from PAPI 2.3.4... is it right??? dkt */
@@ -852,7 +847,6 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    struct vperfctr_control *contr = &this_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
@@ -860,22 +854,26 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    OVFDBG("EventIndex=%d\n", EventIndex);
 
    /* The correct event to overflow is EventIndex */
+
+#ifdef DEBUG
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
-   if (i >= ncntrs) {
-      OVFDBG("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
-      return PAPI_EINVAL;
-   }
+   if (i >= ncntrs) 
+     {
+       PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
+       return PAPI_EBUG;
+     }
+#endif
 
    if (threshold != 0) {        /* Set an overflow threshold */
-      struct sigaction sa;
-      int err;
-
       if ((ESI->EventInfoArray[EventIndex].derived) &&
           (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
          OVFDBG("Can't overflow on a derived event.\n");
          return PAPI_EINVAL;
       }
+
+      if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
+	return(retval);
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
@@ -890,19 +888,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs)
          swap_events(ESI, contr, i, nracntrs);
-
-      memset(&sa, 0, sizeof sa);
-      sa.sa_sigaction = _papi_hwd_dispatch_timer;
-      sa.sa_flags = SA_SIGINFO | SA_RESTART;
-      if ((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0) {
-         OVFDBG("Setting sigaction failed: SYSERR %d: %s", errno, strerror(errno));
-         return (PAPI_ESYS);
-      }
-
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
-      _papi_hwi_using_signal++;
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
-
       OVFDBG("Modified event set\n");
    } else {
       if (contr->cpu_control.evntsel[i] & CCCR_OVF_PMI_T0) {
@@ -923,13 +908,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       OVFDBG("Modified event set\n");
 
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
-      _papi_hwi_using_signal--;
-      if (_papi_hwi_using_signal == 0) {
-         if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
-            retval = PAPI_ESYS;
-      }
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
    }
 
    OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
@@ -940,28 +919,20 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
 {
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *master = NULL;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                       _papi_hwi_system_info.supports_hw_overflow,
-                                      si->si_pmc_ovf_mask, 0);
+                                      si->si_pmc_ovf_mask, 0, &master);
 
    /* We are done, resume interrupting counters */
 
    if (_papi_hwi_system_info.supports_hw_overflow) {
-      ThreadInfo_t *master;
-
-      master = _papi_hwi_lookup_in_thread_list();
-      if (master == NULL) {
-         fprintf(stderr, "%s:%d: master event lookup failure! abort()\n",
-                 __FILE__, __LINE__);
-         abort();
-      }
       if (vperfctr_iresume(master->context.perfctr) < 0) {
-         fprintf(stderr, "%s:%d: vperfctr_iresume %s\n",
-                 __FILE__, __LINE__, strerror(errno));
+         PAPIERROR("vperfctr_iresume errno %d",errno);
       }
    }
 }

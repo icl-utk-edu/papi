@@ -2,10 +2,7 @@
    done by the high level API. */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 extern EventSetInfo_t *default_master_eventset;
 
@@ -183,7 +180,7 @@ static int get_system_info(void)
       return (PAPI_ESBSTR);
 
    if (family != 2) {
-      fprintf(stderr, "PAPI: Don't know processor family %d\n", family);
+      PAPIERROR("Unknown processor family %d", family);
       return (PAPI_ESBSTR);
    }
    /* never tested in EV67_CPU */
@@ -243,6 +240,10 @@ void _papi_hwd_error(int error, char *where)
    sprintf(where, "Substrate error");
 }
 
+static void lock_init(void)
+{
+}
+
 int _papi_hwd_init_global(void)
 {
    int retval;
@@ -253,6 +254,8 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
+   lock_init();
+   
    SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_hwi_system_info.hw_info.totalcpus,
         _papi_hwi_system_info.hw_info.vendor_string,
@@ -661,31 +664,26 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
-
-void _papi_hwd_lock_init(void)
-{
-}
-
 void _papi_hwd_lock(int lck)
 {
-   return;
 }
 
 void _papi_hwd_unlock(int lck)
 {
-   return;
 }
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
                               void * info)
 {
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
+
    ctx.si = si;
    ctx.ucontext = info;
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                       _papi_hwi_system_info.
-                                      supports_hw_overflow, 0, 0);
+                                      supports_hw_overflow, 0, 0, &t);
 }
 
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)

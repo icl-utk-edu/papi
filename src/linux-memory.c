@@ -11,16 +11,9 @@
 *          <your email address>
 */
 
-#ifdef __LINUX__
-#include <limits.h>
-#endif
-
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
-#include <stdio.h>
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
 static int init_intel(PAPI_mh_info_t * mh_info);
@@ -78,10 +71,10 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
    }
 
    /* This works only because an empty cache element is initialized to 0 */
-   DBG((stderr, "Detected L1: %d L2: %d  L3: %d\n",
+   SUBDBG("Detected L1: %d L2: %d  L3: %d\n",
         hw_info->mem_hierarchy.level[0].cache[0].size + hw_info->mem_hierarchy.level[0].cache[1].size, 
         hw_info->mem_hierarchy.level[1].cache[0].size + hw_info->mem_hierarchy.level[1].cache[1].size, 
-        hw_info->mem_hierarchy.level[2].cache[0].size + hw_info->mem_hierarchy.level[2].cache[1].size));
+        hw_info->mem_hierarchy.level[2].cache[0].size + hw_info->mem_hierarchy.level[2].cache[1].size);
    return retval;
 }
 
@@ -96,13 +89,13 @@ static int init_amd(PAPI_mh_info_t * mh_info)
     * "AMD Processor Recognition Application Note", 20734W-1 November 2002 
     */
 
-   DBG((stderr, "Initializing AMD (K7) memory\n"));
+   SUBDBG("Initializing AMD (K7) memory\n");
    /* AMD level 1 cache info */
    reg_eax = 0x80000005;
    cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
 
-   DBG((stderr, "eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
-        reg_eax, reg_ebx, reg_ecx, reg_edx));
+   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
+        reg_eax, reg_ebx, reg_ecx, reg_edx);
    /* TLB info in L1-cache */
 
    /* 2MB memory page information, 4MB pages has half the number of entries */
@@ -139,10 +132,11 @@ static int init_amd(PAPI_mh_info_t * mh_info)
       L[0].tlb[1].associativity = SHRT_MAX;
       break;
    }
-   DBG((stderr, "L1 TLB info (to be over-written by L2:\n"
-        "\tI-num_entries %d,  I-assoc %d\n\tD-num_entries %d,  D-assoc %d\n",
+
+   SUBDBG("L1 TLB info (to be over-written by L2):\n");
+   SUBDBG("\tI-num_entries %d,  I-assoc %d\n\tD-num_entries %d,  D-assoc %d\n",
         L[0].tlb[0].num_entries, L[0].tlb[0].associativity,
-        L[0].tlb[1].num_entries, L[0].tlb[1].associativity))
+	  L[0].tlb[1].num_entries, L[0].tlb[1].associativity);
 
    /* L1 D-cache/I-cache info */
 
@@ -179,8 +173,8 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    reg_eax = 0x80000006;
    cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
 
-   DBG((stderr, "eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
-        reg_eax, reg_ebx, reg_ecx, reg_edx));
+   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
+        reg_eax, reg_ebx, reg_ecx, reg_edx);
 
    /* AMD level 2 cache info */
    L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
@@ -266,14 +260,14 @@ static int init_intel(PAPI_mh_info_t * mh_info)
     * Application Note, AP-485, Nov 2002, 241618-022
     */
 
-   DBG((stderr, "Initializing Intel Memory\n"));
+   SUBDBG("Initializing Intel Memory\n");
    /* All of Intels cache info is in 1 call to cpuid
     * however it is a table lookup :(
     */
    reg_eax = 0x2;
    cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
-   DBG((stderr, "eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
-        reg_eax, reg_ebx, reg_ecx, reg_edx));
+   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
+        reg_eax, reg_ebx, reg_ecx, reg_edx);
 
    count = (0xff & reg_eax);
    for (j = 0; j < count; j++) {
@@ -287,8 +281,8 @@ static int init_intel(PAPI_mh_info_t * mh_info)
          else
             value = reg_edx;
          if (value & (1 << 31)) {       /* Bit 31 is 0 if information is valid */
-            DBG((stderr, "Register %d does not contain valid information (skipped)\n",
-                 i));
+            SUBDBG("Register %d does not contain valid information (skipped)\n",
+                 i);
             continue;
          }
          for (k = 0; k <= 4; k++) {
@@ -770,7 +764,7 @@ long _papi_hwd_get_dmem_info(int option)
 
    sprintf(pfile, "/proc/%d/stat", pid);
    if ((fd = fopen(pfile, "r")) == NULL) {
-      DBG((stderr, "PAPI_get_dmem_info can't open /proc/%d/stat\n", pid));
+      SUBDBG("PAPI_get_dmem_info can't open /proc/%d/stat\n", pid);
       return (PAPI_ESYS);
    }
    fgets(pfile, 256, fd);

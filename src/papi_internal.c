@@ -22,9 +22,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-
 
 /********************/
 /* BEGIN PROTOTYPES */
@@ -46,9 +44,6 @@ extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 
 /* Defined in papi_data.c */
 extern hwi_presets_t _papi_hwi_presets;
-
-
-ThreadInfo_t *default_master_thread = NULL;
 
 /* Machine dependent info structure */
 extern papi_mdi_t _papi_hwi_system_info;
@@ -80,7 +75,10 @@ int default_error_handler(int errorCode)
       return (errorCode);
 
    if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
-      abort();
+     {
+       PAPIERROR("BUG! Unknown error code set by library %d",errorCode);
+       return(errorCode);
+     }
 
    switch (_papi_hwi_error_level) {
    case PAPI_VERB_ECONT:
@@ -102,20 +100,14 @@ int default_error_handler(int errorCode)
          return errorCode;
       break;
    case PAPI_QUIET:
-      return errorCode;
    default:
-      abort();
+      return errorCode;
    }
-   return (PAPI_EBUG);
 }
 
-int _papi_hwi_allocate_eventset_map(void)
+static int allocate_eventset_map(DynamicArray_t *map)
 {
-   DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
-
    /* Allocate and clear the Dynamic Array structure */
-   if(map->dataSlotArray)
-      free(map->dataSlotArray);
    memset(map, 0x00, sizeof(DynamicArray_t));
 
    /* Allocate space for the EventSetInfo_t pointers */
@@ -123,65 +115,21 @@ int _papi_hwi_allocate_eventset_map(void)
    map->dataSlotArray =
        (EventSetInfo_t **) malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
    if (map->dataSlotArray == NULL) {
-      free(map);
-      return (1);
+      return (PAPI_ENOMEM);
    }
    memset(map->dataSlotArray, 0x00, PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
-
    map->totalSlots = PAPI_INIT_SLOTS;
    map->availSlots = PAPI_INIT_SLOTS;
    map->fullSlots = 0;
    map->lowestEmptySlot = 0;
 
-   return (0);
-}
-
-static void free_thread(ThreadInfo_t ** master)
-{
-   memset(*master, 0x00, sizeof(ThreadInfo_t));
-   free(*master);
-   *master = NULL;
-}
-
-static ThreadInfo_t *allocate_new_thread(void)
-{
-   ThreadInfo_t *master;
-
-   /* The Master EventSet is special. It is not in the EventSet list, but is pointed
-      to by each EventSet of that particular thread. */
-
-   master = (ThreadInfo_t *) malloc(sizeof(ThreadInfo_t));
-   if (master == NULL)
-      return (NULL);
-   memset(master, 0x00, sizeof(ThreadInfo_t));
-
-   return (master);
-}
-
-int _papi_hwi_initialize_thread(ThreadInfo_t ** master)
-{
-   int retval;
-
-   if ((*master = allocate_new_thread()) == NULL)
-      papi_return(PAPI_ENOMEM);
-   
-   (*master)->pid = getpid();
-
-   if (_papi_hwi_thread_id_fn)
-      (*master)->tid = (*_papi_hwi_thread_id_fn) ();
-
-
-   /* set the running eventset to -1 */
-   (*master)->running_eventset = PAPI_NULL;
-
-   /* Call the substrate to fill in anything special. */
-   retval = _papi_hwd_init(&((*master)->context));
-   if (retval) {
-      free_thread(master);
-      return (retval);
-   }
-
    return (PAPI_OK);
+}
+
+static void free_eventset_map(DynamicArray_t *map)
+{
+   free(map->dataSlotArray);
+   memset(map, 0x00, sizeof(DynamicArray_t));
 }
 
 static int expand_dynamic_array(DynamicArray_t * DA)
@@ -329,7 +277,7 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
    DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
    int i, errorCode;
 
-   _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+   _papi_hwi_lock(INTERNAL_LOCK);
 
    /* Update the values for lowestEmptySlot, num of availSlots */
 
@@ -342,7 +290,7 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
    if (map->availSlots == 0) {
       errorCode = expand_dynamic_array(map);
       if (errorCode != PAPI_OK) {
-         _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+         _papi_hwi_unlock(INTERNAL_LOCK);
          return (errorCode);
       }
    }
@@ -353,7 +301,7 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
    INTDBG("Empty slot for lowest available EventSet is at %d\n", i);
    map->lowestEmptySlot = i;
 
-   _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+   _papi_hwi_unlock(INTERNAL_LOCK);
    papi_return(PAPI_OK);
 }
 
@@ -768,7 +716,6 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    /* Bump the number of events */
    ESI->NumberOfEvents++;
-   /*      print_state(ESI); */
 
    return (retval);
 }
@@ -928,7 +875,6 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
       array[thisindex].ops = NULL;
       array[thisindex].derived = NOT_DERIVED;
    ESI->NumberOfEvents--;
-   /* print_state(ESI); */
 
    return (PAPI_OK);
 }
@@ -1087,13 +1033,21 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
 
 /* Machine info struct initialization using defaults */
 /* See _papi_mdi definition in papi_internal.h       */
-int _papi_hwi_mdi_init()
+
+int _papi_hwi_init_global_internal(void)
 {
+  int retval;
+
+  memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
+
+   /* Global struct to maintain EventSet mapping */
+   retval = allocate_eventset_map(&_papi_hwi_system_info.global_eventset_map);
+   if (retval != PAPI_OK)
+     return(retval);
+
    _papi_hwi_system_info.substrate[0] = '\0';   /* Name of the substrate we're using */
    _papi_hwi_system_info.version = 1.0; /* version */
    _papi_hwi_system_info.pid = 0;       /* Process identifier */
-
-   memset(&_papi_hwi_system_info.hw_info, 0, sizeof(PAPI_hw_info_t));
 
    /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu = -1;     /* ncpu */
@@ -1105,16 +1059,6 @@ int _papi_hwi_mdi_init()
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
-
-
-   /* The PAPI_exe_info_t struct defined in papi.h */
-   memset(&_papi_hwi_system_info.exe_info, 0, sizeof(PAPI_exe_info_t));
-
-   /* The PAPI_shlib_info_t struct defined in papi.h */
-   memset(&_papi_hwi_system_info.shlib_info, 0, sizeof(PAPI_shlib_info_t));
-
-   /* The PAPI_shlib_info_t struct defined in papi.h */
-   memset(&_papi_hwi_system_info.preload_info, 0, sizeof(PAPI_preload_info_t));
 
    /* The following variables define the length of the arrays in the
       EventSetInfo_t structure. Each array is of length num_gp_cntrs +
@@ -1147,15 +1091,14 @@ int _papi_hwi_mdi_init()
 
    /* Size of the substrate's control struct in bytes */
    _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
-
-   /* Global struct to maintain EventSet mapping */
-   _papi_hwi_system_info.global_eventset_map.dataSlotArray = NULL;
-   _papi_hwi_system_info.global_eventset_map.totalSlots = 0;
-   _papi_hwi_system_info.global_eventset_map.availSlots = 0;
-   _papi_hwi_system_info.global_eventset_map.fullSlots = 0;
-   _papi_hwi_system_info.global_eventset_map.lowestEmptySlot = 0;
-
+  
    return (PAPI_OK);
+}
+
+void _papi_hwi_shutdown_global_internal(void)
+{
+  free_eventset_map(&_papi_hwi_system_info.global_eventset_map);
+  memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 }
 
 void _papi_hwi_dummy_handler(int EventSet, void *address, long_long  overflow_vector, void * context)
@@ -1314,49 +1257,51 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
                          Pentium 4 for testing...dkt */
       return (from[evi->pos[0]]);
    default:
-      abort();
+      PAPIERROR("BUG! Unknown derived command %d, returning 0",evi->derived);
+      return((long_long)0);
    }
-   return(-1);
 }
 
+#if 0
 void print_state(EventSetInfo_t * ESI)
 {
    int i;
 
-   fprintf(stderr, "\n\n-----------------------------------------\n");
-   fprintf(stderr, "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
+   APIDBG( "\n\n-----------------------------------------\n");
+   APIDBG( "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
            ESI->NativeCount);
 
-   fprintf(stderr, "\nnative_event_name       ");
+   APIDBG( "\nnative_event_name       ");
    for (i = 0; i < MAX_COUNTERS; i++)
-      fprintf(stderr, "%15s",
+      APIDBG( "%15s",
               _papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
-   fprintf(stderr, "\n");
+   APIDBG( "\n");
 
-   fprintf(stderr, "native_event_position     ");
+   APIDBG( "native_event_position     ");
    for (i = 0; i < MAX_COUNTERS; i++)
-      fprintf(stderr, "%15d", ESI->NativeInfoArray[i].ni_position);
-   fprintf(stderr, "\n");
+      APIDBG( "%15d", ESI->NativeInfoArray[i].ni_position);
+   APIDBG( "\n");
 
 #if 0                           /* This code is specific to POWER */
-   fprintf(stderr, "native_event_selectors    ");
+   APIDBG( "native_event_selectors    ");
    for (i = 0; i < MAX_COUNTERS; i++)
-      fprintf(stderr, "%15d",
+      APIDBG( "%15d",
               native_table[ESI->NativeInfoArray[i].ni_event].resources.selector);
-   fprintf(stderr, "\n");
+   APIDBG( "\n");
 
-   fprintf(stderr, "counter_cmd               ");
+   APIDBG( "counter_cmd               ");
    for (i = 0; i < MAX_COUNTERS; i++)
-      fprintf(stderr, "%15d", (&(ESI->machdep))->counter_cmd.events[i]);
-   fprintf(stderr, "\n");
+      APIDBG( "%15d", (&(ESI->machdep))->counter_cmd.events[i]);
+   APIDBG( "\n");
 #endif
 
-   fprintf(stderr, "native links              ");
+   APIDBG( "native links              ");
    for (i = 0; i < MAX_COUNTERS; i++)
-      fprintf(stderr, "%15d", ESI->NativeInfoArray[i].ni_owners);
-   fprintf(stderr, "\n");
+      APIDBG( "%15d", ESI->NativeInfoArray[i].ni_owners);
+   APIDBG( "\n");
 
 }
+#endif
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
     success  return 1
@@ -1446,6 +1391,16 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
       }
       return 1;
    }
+}
+
+void PAPIERROR(char *format, ...)
+{
+   va_list args;
+   va_start(args, format); 
+   fprintf(stderr, "PAPI Error: ");
+   vfprintf(stderr, format, args);
+   fprintf(stderr,".\n");
+   va_end(args);
 }
 
 /*
@@ -1550,6 +1505,22 @@ void OVFDBG(char *format, ...)
 #ifdef DEBUG
    va_list args;
    int level = DEBUG_OVERFLOW;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+void PRFDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_PROFILE;
 
    if (ISLEVEL(level)) {
       va_start(args, format);

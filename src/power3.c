@@ -2,9 +2,7 @@
    done by the high level API. */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 /* These defines smooth out the differences between versions of pmtoolkit */
 #if defined(PMTOOLKIT_1_2_1)

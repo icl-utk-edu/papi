@@ -10,8 +10,6 @@
 */
 
 #include "papi.h"
-#include <invent.h>
-#include <sys/systeminfo.h>
 #include SUBSTRATE
 #include "papi_internal.h"
 #include "papi_protos.h"

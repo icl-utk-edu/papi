@@ -10,6 +10,17 @@
 *          min@cs.utk.edu
 */
 
+inline pid_t mygettid(void)
+{
+#ifdef SYS_gettid
+  return(syscall(SYS_gettid));
+#elif defined(__NR_gettid)
+  return(syscall(__NR_gettid));
+#else
+  return(syscall(1105));  
+#endif
+}
+
 #if defined(PFM20)
    #define OVFL_SIGNAL SIGPROF
    #define PFMW_PEVT_EVTCOUNT(evt)            (evt->pfp_event_count)
@@ -44,11 +55,11 @@
 
 
 
-   inline void pfmw_start(hwd_context_t *ctx) {
+   static inline void pfmw_start(hwd_context_t *ctx) {
       pfm_start();
    }
 
-   inline void pfmw_stop(hwd_context_t * ctx) {
+   static inline void pfmw_stop(hwd_context_t * ctx) {
       pfm_stop();
    }
 
@@ -64,13 +75,12 @@
       return(perfmonctl(pid, cmd, arg, narg));
    }
 
-   inline int pfmw_destroy_context(void) {
+   inline int pfmw_destroy_context(hwd_context_t *thr_ctx) {
       int ret;
 
-      ret=perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0);
+      ret=perfmonctl(thr_ctx->tid, PFM_DESTROY_CONTEXT, NULL, 0);
       if (ret) {   
-         fprintf(stderr, "PID %d: perfmonctl error PFM_DESTROY_CONTEXT %d\n",
-                 getpid(), errno);
+         PAPIERROR("perfmonctl(PFM_DESTROY_CONTEXT) errno %d", errno);
          return PAPI_ESYS;
       } else return PAPI_OK;
    }
@@ -79,12 +89,12 @@
       pfarg_context_t ctx[1];
       memset(ctx, 0, sizeof(ctx));
 
-      ctx[0].ctx_notify_pid = getpid();
+      thr_ctx->tid = mygettid();
+      ctx[0].ctx_notify_pid = thr_ctx->tid;
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
-      if (perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-         fprintf(stderr, "PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", 
-              getpid(), errno);
+      if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
+         PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
          return(PAPI_ESYS);
       }
 
@@ -93,14 +103,15 @@
        * must be done before writing to any PMC/PMD
        */
 
-      if (perfmonctl(getpid(), PFM_ENABLE, 0, 0) == -1) {
+      if (perfmonctl(thr_ctx->tid, PFM_ENABLE, 0, 0) == -1) {
          if (errno == ENOSYS)
-            fprintf(stderr, "Your kernel does not have performance monitoring support !\n");
-         fprintf(stderr, "PID %d: perfmonctl error PFM_ENABLE %d\n", getpid(), errno);
+	   PAPIERROR("Your kernel does not have performance monitoring support");
+	 else
+	   PAPIERROR("perfmonctl(PFM_ENABLE) errno %d", errno);
          return(PAPI_ESYS);
       }
 
-      return(0);
+      return(PAPI_OK);
    }
 
    inline int pfmw_recreate_context(EventSetInfo_t *ESI, void **smpl_vaddr, 
@@ -114,7 +125,7 @@
       native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
 
       memset(ctx, 0, sizeof(ctx));
-      ctx[0].ctx_notify_pid = getpid();
+      ctx[0].ctx_notify_pid = mygettid();
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
       ctx[0].ctx_smpl_entries = SMPL_BUF_NENTRIES;
@@ -135,29 +146,26 @@
          ctx[0].ctx_smpl_regs[0] = BTB_REGS_MASK;
 #endif
 
-      if (pfmw_perfmonctl(getpid(), 0, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-         fprintf(stderr, "PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n",
-                 getpid(), errno);
+      if (pfmw_perfmonctl(mygettid(), 0, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
+         PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
          return (PAPI_ESYS);
       }
       SUBDBG("Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr);
 
       *smpl_vaddr = ctx[0].ctx_smpl_vaddr;
 
-
       /*
        * reset PMU (guarantee not active on return) and unfreeze
        * must be done before writing to any PMC/PMD
        */
-      if (pfmw_perfmonctl(getpid(), 0, PFM_ENABLE, 0, 0) == -1) {
-         if (errno == ENOSYS) {
-            fprintf(stderr,
-              "Your kernel does not have performance monitoring support !\n");
-            fprintf(stderr, "PID %d: perfmonctl error PFM_ENABLE %d\n", 
-                  getpid(), errno);
-            return (PAPI_ESYS);
-         }
-      }
+      if (pfmw_perfmonctl(mygettid(), 0, PFM_ENABLE, 0, 0) == -1) 
+	{
+	  if (errno == ENOSYS) 
+	    PAPIERROR("Your kernel does not have performance monitoring support");
+	  else
+	    PAPIERROR("perfmonctl(PFM_ENABLE) errno %d", errno);
+	  return (PAPI_ESYS);
+	}
       return(PAPI_OK);
    }
    
@@ -176,13 +184,8 @@
 #ifndef PFM30
 #warning Maybe you should set -DPFM30 in your Makefile?
 #endif
-#include <sys/syscall.h>
-#include <linux/unistd.h>
 
-#if defined(__ECC) && defined(__INTEL_COMPILER)
-
-/* if you do not have this file, your compiler is too old */
-#include <ia64intrin.h>
+#if defined(__INTEL_COMPILER)
 
 #define hweight64(x)    _m64_popcnt(x)
 
@@ -231,11 +234,11 @@ hweight64 (unsigned long x)
       typedef pfm_ita_pmd_reg_t pfmw_arch_pmd_reg_t;
    #endif
 
-   inline void pfmw_start(hwd_context_t * ctx) {
+   static inline void pfmw_start(hwd_context_t * ctx) {
       pfm_self_start(ctx->fd);
    }
 
-   inline void pfmw_stop(hwd_context_t * ctx) {
+   static inline void pfmw_stop(hwd_context_t * ctx) {
       pfm_self_stop(ctx->fd);
    }
 
@@ -243,15 +246,8 @@ hweight64 (unsigned long x)
       return(perfmonctl(fd, cmd, arg, narg));
    }
 
-   inline int pfmw_destroy_context(void) {
+   inline int pfmw_destroy_context(hwd_context_t *thr_ctx) {
       int ret;
-      hwd_context_t *thr_ctx; 
-      void *tmp;
-      _papi_hwi_get_thr_context(&tmp);
-/*
-      printf("fd of the thread = %d\n", *fd);
-*/
-      thr_ctx = (hwd_context_t *)tmp;
       ret=close(thr_ctx->fd);
       if (ret) return PAPI_ESYS;
       else return PAPI_OK;
@@ -284,13 +280,11 @@ hweight64 (unsigned long x)
       /*
        * we want to monitor ourself
        */
-/*
-      load_args.load_pid = getpid();
-*/
+
       load_args.load_pid = ctx->tid;
 
       if (perfmonctl(ctx->fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-         fprintf(stderr,"perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
+         PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d",errno);
          return(PAPI_ESYS);
       }
       /*
@@ -298,22 +292,23 @@ hweight64 (unsigned long x)
        */
       ret = fcntl(ctx->fd, F_SETFL, fcntl(ctx->fd, F_GETFL, 0) | O_ASYNC);
       if (ret == -1) {
-         fprintf(stderr,"cannot set ASYNC: %s\n", strerror(errno));
+         PAPIERROR("fcntl(%d,F_SETFL,O_ASYNC) errno %d", ctx->fd, errno);
          return(PAPI_ESYS);
       }
 
       /*
        * get ownership of the descriptor
        */
+
       ret = fcntl(ctx->fd, F_SETOWN, ctx->tid);
       if (ret == -1) {
-         fprintf(stderr,"cannot setown: %s\n", strerror(errno));
+         PAPIERROR("fcntl(%d,F_SETOWN) errno %d", ctx->fd, errno);
          return(PAPI_ESYS);
       }
 
       ret = fcntl(ctx->fd, F_SETSIG, SIGIO);
       if (ret == -1) {
-        fprintf(stderr, "cannot setsig: %s\n", strerror(errno));
+         PAPIERROR("fcntl(%d,F_SETSIG) errno %d", ctx->fd, errno);
         return(PAPI_ESYS);
       }
 
@@ -330,14 +325,13 @@ hweight64 (unsigned long x)
       memset(ctx, 0, sizeof(ctx));
       memset(&load_args, 0, sizeof(load_args));
 
-      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-         fprintf(stderr, "PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", 
-              getpid(), errno);
+      if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
+         PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
          return(PAPI_ESYS);
       }
       ctx_fd = ctx[0].ctx_fd;
       thr_ctx->fd = ctx_fd;
-      thr_ctx->tid = syscall(1105); /* should be __NR_gettid */
+      thr_ctx->tid = mygettid();
 
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
@@ -370,7 +364,7 @@ hweight64 (unsigned long x)
       pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
       int ctx_fd;
       int native_index, EventCode, pos;
-      hwd_context_t *thr_ctx;
+      hwd_context_t *thr_ctx = &ESI->master->context;
       void *tmp_ptr;
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
@@ -392,12 +386,11 @@ hweight64 (unsigned long x)
       /*
        * now create the context for self monitoring/per-task
        */
-      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
-         if (errno == ENOSYS) {
-            fprintf(stderr, 
-              "Your kernel does not have performance monitoring support!\n");
-         }
-         fprintf(stderr,"Can't create PFM context %s\n", strerror(errno));
+      if (perfmonctl(thr_ctx->fd, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+         if (errno == ENOSYS) 
+	   PAPIERROR("Your kernel does not have performance monitoring support");
+	 else
+	   PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
          return(PAPI_ESYS);
       }
       /*
@@ -406,8 +399,6 @@ hweight64 (unsigned long x)
        */
       ctx_fd = ctx[0].ctx_arg.ctx_fd;
       /* save the fd into the thread context struct */
-      _papi_hwi_get_thr_context(&tmp_ptr);
-      thr_ctx = (hwd_context_t *) tmp_ptr;
       thr_ctx->fd=ctx_fd;
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */

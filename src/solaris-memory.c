@@ -8,10 +8,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 int get_memory_info(PAPI_hw_info_t * mem_info)
 {
@@ -26,7 +23,7 @@ long _papi_hwd_get_dmem_info(int option)
    long pgsz = getpagesize();
 
    if ((fd = fopen("/proc/self/psinfo", "r")) == NULL) {
-      SUBDBG((stderr, "PAPI_get_dmem_info can't open /proc/self\n"));
+      SUBDBG("fopen(/proc/self) errno %d",errno);
       return (PAPI_ESYS);
    }
 

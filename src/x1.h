@@ -116,7 +116,6 @@ typedef X1_reg_alloc_t hwd_reg_alloc_t;
 #include  "x1-native.h"
 #include "x1-native-presets.h"
 #include "x1-presets.h"
-#include "papi_internal.h"
 
 extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];

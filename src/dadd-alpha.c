@@ -2,11 +2,7 @@
    done by the high level API. */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
-
 
 extern EventSetInfo_t *default_master_eventset;
 
@@ -226,6 +222,10 @@ void _papi_hwd_error(int error, char *where)
    sprintf(where, "Substrate error");
 }
 
+static void lock_init(void)
+{
+}
+
 int _papi_hwd_init_global(void)
 {
    int retval;
@@ -238,6 +238,8 @@ int _papi_hwd_init_global(void)
    retval = get_system_info();
    if (retval)
       return (retval);
+
+   lock_init();
 
    SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_hwi_system_info.hw_info.totalcpus,
@@ -393,10 +395,6 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
    return (PAPI_OK);
 }
 
-void _papi_hwd_lock_init(void)
-{
-}
-
 void _papi_hwd_lock(int lck)
 {
 }
@@ -409,12 +407,14 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
                               void *info)
 {
    _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
+
    ctx.si = si;
    ctx.ucontext = info;
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                       _papi_hwi_system_info.
-                                      supports_hw_overflow, 0, 0);
+                                      supports_hw_overflow, 0, 0, &t);
 }
 
 /* start the hardware counting, in this substrate, we just need

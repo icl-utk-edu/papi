@@ -20,15 +20,11 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
-
-/* papi_internal.c */
 
 #ifdef DEBUG
 #define papi_return(a) return(_papi_hwi_debug_handler(a))
@@ -72,56 +68,25 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 /*    END LOCALS    */
 /********************/
 
-
 int PAPI_thread_init(unsigned long int (*id_fn) (void))
 {
-   int changed_id_fn = 0;
-/* Thread support not implemented on Alpha/OSF because the OSF pfm
- * counter device driver does not support per-thread counters.
- * When this is updated, we can remove this if statement
- */
-   if ( ! _papi_hwi_system_info.supports_multiple_threads )
+  /* Thread support not implemented on Alpha/OSF because the OSF pfm
+   * counter device driver does not support per-thread counters.
+   * When this is updated, we can remove this if statement
+   */
+
+   if (! _papi_hwi_system_info.supports_multiple_threads)
       papi_return(PAPI_ESBSTR);
 
-   if (default_master_thread == NULL)
-      papi_return(PAPI_EINVAL);
-
-   /* They had better be compatible thread packages if you change thread thread packages without
-      shutting down PAPI first. This means tid of package a = tid of package b */
-
-   if ((id_fn != NULL) && (_papi_hwi_thread_id_fn != NULL)
-       && (id_fn != _papi_hwi_thread_id_fn))
-      changed_id_fn = 1;
-
-   _papi_hwi_thread_id_fn = id_fn;
-
-   /* When we shutdown threading, let's clear both function pointers. */
-
-#if defined(ANY_THREAD_GETS_SIGNAL)
-   if (id_fn == NULL)
-      _papi_hwi_thread_kill_fn = NULL;
-#endif
-
-   /* Now change the master event's thread id from getpid() to the
-      real thread id */
-
-   /* By default, the initial master eventset has TID of getpid(). This will
-      get changed if the user enables threads with PAPI_thread_init(). */
-
-   if ((_papi_hwi_thread_id_fn) && (changed_id_fn == 0)) {
-      default_master_thread->tid = (*_papi_hwi_thread_id_fn) ();
-      _papi_hwi_insert_in_thread_list(default_master_thread);
-   }
-
-   papi_return(PAPI_OK);
+   papi_return(_papi_hwi_set_thread_id_fn(id_fn));
 }
 
 unsigned long PAPI_thread_id(void)
 {
    if (_papi_hwi_thread_id_fn != NULL)
-      return ((*_papi_hwi_thread_id_fn) ());
+     return ((*_papi_hwi_thread_id_fn) ());
    else
-      return (PAPI_EINVAL);
+     papi_return (PAPI_EMISC);
 }
 
 /* Thread Functions */
@@ -130,18 +95,27 @@ unsigned long PAPI_thread_id(void)
  * Notify PAPI that a thread has 'appeared'
  * We lookup the thread, if it does not exist we create it
  */
+
 int PAPI_register_thread(void)
 {
-   ThreadInfo_t *thread = _papi_hwi_lookup_in_thread_list();
-   int retval;
+   ThreadInfo_t *thread;
 
-   if (thread == NULL) {
-      retval = _papi_hwi_initialize_thread(&thread);
-      if (retval)
-         papi_return(retval);
-      _papi_hwi_insert_in_thread_list(thread);
-   }
-   papi_return(PAPI_OK);
+   papi_return(_papi_hwi_lookup_or_create_thread(&thread));
+}
+
+/* 
+ * Notify PAPI that a thread has 'disappeared'
+ * We lookup the thread, if it does not exist we return an error
+ */
+
+int PAPI_unregister_thread(void)
+{
+   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+   
+   if (thread)
+     papi_return(_papi_hwi_shutdown_thread(thread));
+
+   papi_return(PAPI_EMISC);
 }
 
 /*
@@ -150,11 +124,16 @@ int PAPI_register_thread(void)
 int PAPI_get_thr_specific(int tag, void **ptr)
 {
    ThreadInfo_t *thread;
-   if (tag < 0 || tag > PAPI_MAX_THREAD_STORAGE)
+   int retval = PAPI_OK;
+
+   if ((tag < 0) || (tag > PAPI_NUM_TLS))
       papi_return(PAPI_EINVAL);
-   thread = _papi_hwi_lookup_in_thread_list();
-   *ptr = thread->thread_storage[tag];
-   papi_return(PAPI_OK);
+
+   retval = _papi_hwi_lookup_or_create_thread(&thread);
+   if (retval == PAPI_OK)
+     *ptr = thread->thread_storage[tag];
+
+   return(retval);
 }
 
 /*
@@ -163,15 +142,16 @@ int PAPI_get_thr_specific(int tag, void **ptr)
 int PAPI_set_thr_specific(int tag, void *ptr)
 {
    ThreadInfo_t *thread;
-   if (tag < 0 || tag > PAPI_MAX_THREAD_STORAGE)
+   int retval = PAPI_OK;
+
+   if ((tag < 0) || (tag > PAPI_NUM_TLS))
       papi_return(PAPI_EINVAL);
-   thread = _papi_hwi_lookup_in_thread_list();
-   if (thread == NULL) {
-      printf("error in set_thr_specific\n");
-      papi_return(PAPI_EBUG);
-   }
-   thread->thread_storage[tag] = ptr;
-   papi_return(PAPI_OK);
+
+   retval = _papi_hwi_lookup_or_create_thread(&thread);
+   if (retval == PAPI_OK)
+     thread->thread_storage[tag] = ptr;
+
+   return(PAPI_OK);
 }
 
 
@@ -180,30 +160,36 @@ int PAPI_library_init(int version)
    int tmp = 0;
 
 #ifdef DEBUG
-   char *var;
+   char *var = (char *)getenv("PAPI_DEBUG");
    _papi_hwi_debug = 0;
-   if ((var = (char *)getenv("PAPI_DEBUG")) && var != NULL ) {
-      _papi_hwi_debug |= DEBUG_ON;
-      if (strlen(var) > 1 && var[1] == 'x')
-         sscanf(var, "%x", &tmp);
-      else
-         tmp = atoi(var);
-      _papi_hwi_debug |= tmp;
-   }
-   if (getenv("PAPI_DEBUG_SUBSTRATE"))
-      _papi_hwi_debug |= DEBUG_SUBSTRATE;
-   if (getenv("PAPI_DEBUG_API"))
-      _papi_hwi_debug |= DEBUG_API;
-   if (getenv("PAPI_DEBUG_INTERNAL"))
-      _papi_hwi_debug |= DEBUG_INTERNAL;
-   if (getenv("PAPI_DEBUG_THREADS"))
-      _papi_hwi_debug |= DEBUG_THREADS;
-   if (getenv("PAPI_DEBUG_MULTIPLEX"))
-      _papi_hwi_debug |= DEBUG_MULTIPLEX;
-   if (getenv("PAPI_DEBUG_OVERFLOW"))
-      _papi_hwi_debug |= DEBUG_OVERFLOW;
+
+   if (var != NULL) 
+     {
+       if (strlen(var) != 0)
+	 {
+	   if (strstr(var,"SUBSTRATE"))
+	     _papi_hwi_debug |= DEBUG_SUBSTRATE;
+	   if (strstr(var,"API"))
+	     _papi_hwi_debug |= DEBUG_API;
+	   if (strstr(var,"INTERNAL"))
+	     _papi_hwi_debug |= DEBUG_INTERNAL;
+	   if (strstr(var,"THREADS"))
+	     _papi_hwi_debug |= DEBUG_THREADS;
+	   if (strstr(var,"MULTIPLEX"))
+	     _papi_hwi_debug |= DEBUG_MULTIPLEX;
+	   if (strstr(var,"OVERFLOW"))
+	     _papi_hwi_debug |= DEBUG_OVERFLOW;
+	   if (strstr(var,"PROFILE"))
+	     _papi_hwi_debug |= DEBUG_PROFILE;
+	   if (strstr(var,"ALL"))
+	     _papi_hwi_debug |= DEBUG_ALL;
+	 }
+
+       if (_papi_hwi_debug == 0)
+	 _papi_hwi_debug |= DEBUG_API;
+     }
 #endif
-   DBG((stderr, "Initialize master thread, PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid));
+   APIDBG("Initialize master thread, PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid);
 
 #ifndef _WIN32
    if (_papi_hwi_system_info.pid == getpid())
@@ -222,30 +208,29 @@ int PAPI_library_init(int version)
       papi_return(PAPI_EINVAL);
    }
 
-   _papi_hwd_lock_init();
+   /* Initialize internal globals */
 
-   if (_papi_hwi_mdi_init() != PAPI_OK) {
+   if (_papi_hwi_init_global_internal() != PAPI_OK) {
       papi_return(PAPI_EINVAL);
    }
+
+   /* Initialize substrate globals */
+
    tmp = _papi_hwd_init_global();
    if (tmp) {
       init_retval = tmp;
+      _papi_hwi_shutdown_global_internal();
       papi_return(init_retval);
    }
 
-   if (_papi_hwi_allocate_eventset_map()) {
-      _papi_hwd_shutdown_global();
-      init_retval = PAPI_ENOMEM;
-      papi_return(init_retval);
-   }
+   /* Initialize thread globals, including the main threads
+      substrate */
 
-   if(default_master_thread)
-      free(default_master_thread);
-
-   tmp = _papi_hwi_initialize_thread(&default_master_thread);
+   tmp = _papi_hwi_init_global_threads();
    if (tmp) {
-      _papi_hwd_shutdown_global();
       init_retval = tmp;
+      _papi_hwi_shutdown_global_internal();
+      _papi_hwd_shutdown_global();
       papi_return(init_retval);
    }
 
@@ -344,7 +329,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
    if (EventCode & PAPI_NATIVE_MASK) {
       if (_papi_hwi_native_code_to_name(EventCode) != NULL) {
          strncpy(out, _papi_hwi_native_code_to_name(EventCode), PAPI_MAX_STR_LEN);
-         papi_return(PAPI_OK);
+         return(PAPI_OK);
       }
    }
 
@@ -396,15 +381,12 @@ int PAPI_enum_event(int *EventCode, int modifier)
 
 int PAPI_create_eventset(int *EventSet)
 {
-   ThreadInfo_t *master = _papi_hwi_lookup_in_thread_list();
+   ThreadInfo_t *master;
    int retval;
-   if (master == NULL) {
-      DBG((stderr, "PAPI_create_eventset(%p): new thread found\n", (void *) EventSet));
-      retval = _papi_hwi_initialize_thread(&master);
-      if (retval)
-         return (retval);
-      _papi_hwi_insert_in_thread_list(master);
-   }
+
+   retval = _papi_hwi_lookup_or_create_thread(&master);
+   if (retval)
+     return(retval);
 
    return (_papi_hwi_create_eventset(EventSet, master));
 }
@@ -508,7 +490,7 @@ int PAPI_destroy_eventset(int *EventSet)
    _papi_hwi_remove_EventSet(ESI);
    *EventSet = PAPI_NULL;
 
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 /* simply checks for valid EventSet, calls substrate start() call */
@@ -519,21 +501,21 @@ int PAPI_start(int EventSet)
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
 
-   DBG((stderr, "PAPI_start\n"));
+   APIDBG("PAPI_start\n");
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
-      papi_return(PAPI_ENOEVST);
+     papi_return(PAPI_ENOEVST);
+
    thread = ESI->master;
 
    /* only one event set can be running at any time, so if another event
       set is running, the user must stop that event set explicitly */
-   if ( thread->running_eventset != PAPI_NULL )
+
+   if (thread->running_eventset)
       papi_return(PAPI_EISRUN);
-/*
-   if (!(ESI->state & PAPI_STOPPED))
-      papi_return(PAPI_EISRUN);
-*/
+
+   /* Check that there are added events */
 
    if (ESI->NumberOfEvents < 1)
       papi_return(PAPI_EINVAL);
@@ -541,7 +523,8 @@ int PAPI_start(int EventSet)
    /* If multiplexing is enabled for this eventset,
       call John May's code. */
 
-   if (ESI->state & PAPI_MULTIPLEXING) {
+   if (ESI->state & PAPI_MULTIPLEXING) 
+     {
       retval = MPX_start(ESI->multiplex);
       if (retval != PAPI_OK)
          papi_return(retval);
@@ -558,14 +541,21 @@ int PAPI_start(int EventSet)
 
    /* If overflowing is enabled, turn it on */
 
-   if (ESI->state & PAPI_OVERFLOWING) {
-      retval = _papi_hwi_start_overflow_timer(thread, ESI);
-      if (retval < PAPI_OK)
-         papi_return(retval);
-   }
-
-   if (ESI->state & PAPI_PROFILING)
-      thread->event_set_profiling = ESI;
+   if (ESI->state & PAPI_OVERFLOWING) 
+     {
+       if (_papi_hwi_system_info.using_hw_overflow == 0)
+	 {
+	   retval = _papi_hwi_start_signal(PAPI_SIGNAL, NEED_CONTEXT);
+	   if (retval != PAPI_OK)
+	     papi_return(retval);
+	   retval = _papi_hwi_start_timer(ESI->overflow.timer_ms);
+	   if (retval != PAPI_OK)
+	     {
+	       _papi_hwi_stop_signal(PAPI_SIGNAL);
+	       papi_return(retval);
+	     }
+	 }
+     }
 
    /* Merge the control bits from the new EventSet into the active counter config. */
 
@@ -579,9 +569,9 @@ int PAPI_start(int EventSet)
    ESI->state |= PAPI_RUNNING;
 
    /* Update the running event set  for this thread */
-   thread->running_eventset = EventSet;
+   thread->running_eventset = ESI;
 
-   DBG((stderr, "PAPI_start returns %d\n", retval));
+   APIDBG("PAPI_start returns %d\n", retval);
    return (retval);
 }
 
@@ -593,7 +583,7 @@ int PAPI_stop(int EventSet, long_long * values)
    ThreadInfo_t *thread;
    int retval;
 
-   DBG((stderr, "PAPI_stop\n"));
+   APIDBG("PAPI_stop\n");
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
@@ -610,8 +600,21 @@ int PAPI_stop(int EventSet, long_long * values)
       }
    }
 
-   /* If multiplexing is enabled for this eventset,
-      call John May's code. */
+   /* If overflowing is enabled, turn it off */
+
+   if (ESI->state & PAPI_OVERFLOWING) 
+     {
+       ESI->overflow.count = 0;
+       if (_papi_hwi_system_info.using_hw_overflow == 0)
+	 {
+	   retval = _papi_hwi_stop_timer();
+	   if (retval != PAPI_OK)
+	     papi_return(retval);
+	   _papi_hwi_stop_signal(PAPI_SIGNAL);
+	 }
+     }
+
+   /* If multiplexing is enabled for this eventset, turn if off */
 
    if (ESI->state & PAPI_MULTIPLEXING) {
       retval = MPX_stop(ESI->multiplex, values);
@@ -632,15 +635,6 @@ int PAPI_stop(int EventSet, long_long * values)
    if (retval != PAPI_OK)
       papi_return(retval);
 
-   /* If overflowing is enabled, turn it off */
-
-   if (ESI->state & PAPI_OVERFLOWING) {
-      ESI->overflow.count = 0;
-      retval = _papi_hwi_stop_overflow_timer(thread, ESI);
-      if (retval < PAPI_OK)
-         papi_return(retval);
-   }
-
    /* Remove the control bits from the active counter config. */
 
    retval = _papi_hwd_stop(&thread->context, &ESI->machdep);
@@ -655,17 +649,18 @@ int PAPI_stop(int EventSet, long_long * values)
    ESI->state |= PAPI_STOPPED;
 
    /* Update the running event set  for this thread */
-   thread->running_eventset = PAPI_NULL ;
+   thread->running_eventset = NULL ;
 
 #if defined(DEBUG)
-   {
-      int i;
-      for (i = 0; i < ESI->NumberOfEvents; i++)
-         DBG((stderr, "PAPI_stop ESI->sw_stop[%d]:\t%llu\n", i, ESI->sw_stop[i]));
-   }
+     if (_papi_hwi_debug & DEBUG_API)
+       {
+	 int i;
+	 for (i = 0; i < ESI->NumberOfEvents; i++)
+	   APIDBG("PAPI_stop ESI->sw_stop[%d]:\t%llu\n", i, ESI->sw_stop[i]);
+       }
 #endif
 
-   DBG((stderr, "PAPI_stop returns %d\n", retval));
+   APIDBG("PAPI_stop returns %d\n", retval);
 
    return (retval);
 }
@@ -703,7 +698,7 @@ int PAPI_reset(int EventSet)
       memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long_long));
    }
 
-   DBG((stderr, "PAPI_reset returns %d\n", retval));
+   APIDBG("PAPI_reset returns %d\n", retval);
    papi_return(retval);
 }
 
@@ -733,14 +728,15 @@ int PAPI_read(int EventSet, long_long * values)
    }
 
 #if defined(DEBUG)
+   if (ISLEVEL(DEBUG_API))
    {
       int i;
       for (i = 0; i < ESI->NumberOfEvents; i++)
-         DBG((stderr, "PAPI_read values[%d]:\t%lld\n", i, values[i]));
+         APIDBG("PAPI_read values[%d]:\t%lld\n", i, values[i]);
    }
 #endif
 
-   DBG((stderr, "PAPI_read returns %d\n", retval));
+   APIDBG("PAPI_read returns %d\n", retval);
    return (retval);
 }
 
@@ -875,7 +871,7 @@ int PAPI_state(int EventSet, int *status)
 
    *status = ESI->state;
 
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 int PAPI_set_debug(int level)
@@ -885,7 +881,7 @@ int PAPI_set_debug(int level)
    case PAPI_VERB_ESTOP:
    case PAPI_VERB_ECONT:
       _papi_hwi_error_level = level;
-      papi_return(PAPI_OK);
+      return(PAPI_OK);
    default:
       papi_return(PAPI_EINVAL);
    }
@@ -922,7 +918,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if (ptr->multiplex.us < 1)
             papi_return(PAPI_EINVAL);
          if (ptr->multiplex.max_degree <= _papi_hwi_system_info.num_cntrs) {
-            papi_return(PAPI_OK);
+            return(PAPI_OK);
          }
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
          if (ESI == NULL)
@@ -959,20 +955,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
             papi_return(PAPI_EINVAL);
 
-         thread = _papi_hwi_lookup_in_thread_list();
-
-         /* Try to change the domain of the eventset in the hardware */
-
-         internal.defdomain.defdomain = dom;
-
-         /* Change the domain of the master eventset in this thread */
-
-         thread->domain = dom;
-
-         /* Change the global structure. This should be removed but is
-            necessary since the _papi_hwd_init_control_state function 
-            (formerly init_config) in the substrates
-            gets information from the global structure instead of
+         /* Change the global structure. The _papi_hwd_init_control_state function 
+	    in the substrates gets information from the global structure instead of
             per-thread information. */
 
          _papi_hwi_system_info.default_domain = dom;
@@ -1147,7 +1131,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
    default:
       papi_return(PAPI_EINVAL);
    }
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 int PAPI_num_events(int EventSet)
@@ -1175,13 +1159,13 @@ void PAPI_shutdown(void)
    ThreadInfo_t *master;
 
    if (init_retval == DEADBEEF) {
-      fprintf(stderr, PAPI_SHUTDOWN_str);
+      PAPIERROR(PAPI_SHUTDOWN_str);
       return;
    }
 
    MPX_shutdown();
 
-   master = _papi_hwi_lookup_in_thread_list();
+   master = _papi_hwi_lookup_thread();
 
    /* Count number of running EventSets AND */
    /* Stop any running EventSets in this thread */
@@ -1205,7 +1189,7 @@ void PAPI_shutdown(void)
       to call shutdown or stop their eventsets. */
 
    if (j != 0) {
-      fprintf(stderr, PAPI_SHUTDOWN_SYNC_str);
+      PAPIERROR(PAPI_SHUTDOWN_SYNC_str);
 #ifdef _WIN32
       Sleep(1);
 #else
@@ -1215,32 +1199,11 @@ void PAPI_shutdown(void)
       goto again;
    }
 
-   /* Here call shutdown on the other threads */
-
-   _papi_hwi_shutdown_the_thread_list();
-   _papi_hwi_cleanup_thread_list();
-
-   /* Clean up thread stuff */
-
-   if (_papi_hwi_system_info.supports_multiple_threads )
-      PAPI_thread_init(NULL);
-   else /* if the platform doesn't support multiple threads to
-           operate the device driver, then _papi_hwi_shutdown_the_thread_list
-           will just return, so this function is necessary */
-      _papi_hwd_shutdown(&(default_master_thread->context));
-
-   /* Free up some memory */
-
-   free(map->dataSlotArray);
-   memset(map, 0x0, sizeof(DynamicArray_t));
-
    /* Shutdown the entire substrate */
 
+   _papi_hwi_shutdown_global_internal();
+   _papi_hwi_shutdown_global_threads();
    _papi_hwd_shutdown_global();
-
-   /* Clean up process stuff */
-
-   memset(&_papi_hwi_system_info, 0x0, sizeof(_papi_hwi_system_info));
 
    /* Now it is safe to call re-init */
 
@@ -1269,7 +1232,7 @@ int PAPI_perror(int code, char *destination, int length)
    else
       fprintf(stderr, "%s\n", foo);
 
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 /* This function sets up an EventSet such that when it is PAPI_start()'ed, it
@@ -1366,7 +1329,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
        (ESI->overflow.event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_OVERFLOWING;
 
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, 
@@ -1468,7 +1431,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
        (ESI->profile.event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_PROFILING;
 
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
@@ -1524,7 +1487,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)
       if (retval != PAPI_OK)
          return (retval);
    }
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 int PAPI_remove_events(int EventSet, int *Events, int number)
@@ -1567,7 +1530,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 
   *number = j;
 
-  papi_return(PAPI_OK);
+  return(PAPI_OK);
 }
 
 #ifdef PAPI_DMEM_INFO
@@ -1628,60 +1591,51 @@ long_long PAPI_get_real_usec(void)
 
 long_long PAPI_get_virt_cyc(void)
 {
-   ThreadInfo_t *master = _papi_hwi_lookup_in_thread_list();
+   ThreadInfo_t *master;
+   int retval;
+   
+   if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
+     papi_return(retval);
 
-   if (master)
-      return (_papi_hwd_get_virt_cycles(&master->context));
-   else if (_papi_hwi_thread_id_fn != NULL) {
-      int retval;
-      DBG((stderr, "PAPI_get_virt_cyc(): new thread found\n"));
-      retval = _papi_hwi_initialize_thread(&master);
-      if (retval)
-         papi_return(retval);
-
-      _papi_hwi_insert_in_thread_list(master);
-      return ((long_long)_papi_hwd_get_virt_cycles(&master->context));
-   }
-   return PAPI_ECNFLCT;
+   return ((long_long)_papi_hwd_get_virt_cycles(&master->context));
 }
 
 long_long PAPI_get_virt_usec(void)
 {
-   ThreadInfo_t *master = _papi_hwi_lookup_in_thread_list();
+   ThreadInfo_t *master;
+   int retval;
 
-   if (master)
-      return (_papi_hwd_get_virt_usec(&master->context));
-   else if (_papi_hwi_thread_id_fn != NULL) {
-      int retval;
-      DBG((stderr, "PAPI_get_virt_usec(): new thread found\n"));
-      retval = _papi_hwi_initialize_thread(&master);
-      if (retval)
-         papi_return(retval);
-      _papi_hwi_insert_in_thread_list(master);
-      return ((long_long)_papi_hwd_get_virt_usec(&master->context));
-   } else
-      return PAPI_ECNFLCT;
+   if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
+     papi_return(retval);
+
+   return ((long_long)_papi_hwd_get_virt_usec(&master->context));
 }
 
 int PAPI_restore(void)
 {
-   fprintf(stderr, "PAPI_restore is currently not implemented\n");
+   PAPIERROR("PAPI_restore is currently not implemented");
    return (PAPI_ESBSTR);
 }
 int PAPI_save(void)
 {
-   fprintf(stderr, "PAPI_save is currently not implemented\n");
+  PAPIERROR("PAPI_save is currently not implemented");
    return (PAPI_ESBSTR);
 }
 
-void PAPI_lock(int lck)
+int PAPI_lock(int lck)
 {
-   _papi_hwd_lock(lck);
+  if ((lck < 0) || (lck >= PAPI_NUM_LOCK))
+    papi_return(PAPI_EINVAL);
+
+  papi_return(_papi_hwi_lock(lck));
 }
 
-void PAPI_unlock(int lck)
+int PAPI_unlock(int lck)
 {
-   _papi_hwd_unlock(lck);
+  if ((lck < 0) || (lck >= PAPI_NUM_LOCK))
+    papi_return(PAPI_EINVAL);
+
+  papi_return(_papi_hwi_unlock(lck));
 }
 
 int PAPI_is_initialized(void)

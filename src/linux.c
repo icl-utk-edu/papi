@@ -8,10 +8,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_preset.h"
-#include "papi_protos.h"
 
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
@@ -71,8 +68,8 @@ int _papi_hwd_get_system_info(void)
   if (len) splitpath(_papi_hwi_system_info.exe_info.fullname, _papi_hwi_system_info.exe_info.address_info.name);
   else return(PAPI_ESYS);
 
-  DBG((stderr, "Executable is %s\n",_papi_hwi_system_info.exe_info.address_info.name));
-  DBG((stderr, "Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname));
+  SUBDBG("Executable is %s\n",_papi_hwi_system_info.exe_info.address_info.name);
+  SUBDBG("Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname);
 
   /* Hardware info */
   if (!init_hwinfo(&win_hwinfo))
@@ -129,7 +126,7 @@ int _papi_hwd_update_shlib_info(void)
    f = fopen(fname, "r");
 
    if (!f)
-      error_return(PAPI_ESYS, "fopen(%s) returned < 0", fname);
+     { PAPIERROR("fopen(%s) returned < 0", fname); return(PAPI_ESYS); }
 
  again:
    while (!feof(f)) {
@@ -216,7 +213,7 @@ int _papi_hwd_update_shlib_info(void)
 
       tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
-         error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+	{ PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
       t_index = 0;
       rewind(f);
       counting = 0;
@@ -307,12 +304,12 @@ int _papi_hwd_get_system_info(void)
 
    pid = getpid();
    if (pid < 0)
-      error_return(PAPI_ESYS, "getpid() returned < 0");
+     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
    _papi_hwi_system_info.pid = pid;
 
    sprintf(maxargs, "/proc/%d/exe", (int) pid);
    if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
-      error_return(PAPI_ESYS, "readlink(%s) returned < 0", maxargs);
+     { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
    
    /* basename can modify it's argument */
    strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
@@ -355,7 +352,7 @@ int _papi_hwd_get_system_info(void)
    _papi_hwi_system_info.hw_info.vendor = -1;
 
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-      error_return(PAPI_ESYS, "fopen(%s) returned NULL", "/proc/cpuinfo");
+     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
 
    /* All of this information maybe overwritten by the substrate */ 
 

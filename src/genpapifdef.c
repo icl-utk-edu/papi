@@ -57,8 +57,6 @@ const char *papi_defNam[] = {
    "PAPI_OVERFLOWING",
    "PAPI_PROFILING",
    "PAPI_MULTIPLEXING",
-   "PAPI_ACCUMULATING",
-   "PAPI_HWPROFILING",
 
    "PAPI_QUIET",
    "PAPI_VERB_ECONT",
@@ -143,8 +141,6 @@ const int papi_defNum[] = {
    PAPI_OVERFLOWING,
    PAPI_PROFILING,
    PAPI_MULTIPLEXING,
-   PAPI_ACCUMULATING,
-   PAPI_HWPROFILING,
 
    PAPI_QUIET,
    PAPI_VERB_ECONT,
@@ -200,8 +196,8 @@ const int papi_defNum[] = {
    PAPI_USR1_LOCK,
    PAPI_USR2_LOCK,
 
-   PAPI_TLS_USER_LEVEL1,
-   PAPI_TLS_USER_LEVEL2
+   PAPI_USR1_TLS,
+   PAPI_USR2_TLS
 };
 
 const int papi_errorNum[] = {

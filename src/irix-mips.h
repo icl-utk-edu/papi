@@ -25,7 +25,7 @@
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
 #include <sys/syscall.h>
-
+#include <sys/systeminfo.h>
 
 #define inline_static static
 #define MAX_COUNTERS HWPERF_EVENTMAX
@@ -77,10 +77,9 @@ extern int _fbss[], _end[];
 extern volatile int lock[PAPI_MAX_LOCK];
 
 #define _papi_hwd_lock(lck)         \
-while (__lock_test_and_set(&lock[lck],1) != 0)  \
-{                       \
-    usleep(1000);               \
-}
+{                                   \
+  while (__lock_test_and_set(&lock[lck],1) != 0) { ; } \
+} 
 
 #define _papi_hwd_unlock(lck) {__lock_release(&lock[lck]);}
 

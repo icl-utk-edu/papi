@@ -20,19 +20,13 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 /********************/
 /*  BEGIN GLOBALS   */
 /********************/
 
 EventSetInfo_t *default_master_eventset = NULL;
-#if defined(ANY_THREAD_GETS_SIGNAL)
-int (*_papi_hwi_thread_kill_fn) (int, int) = NULL;
-#endif
-unsigned long int (*_papi_hwi_thread_id_fn) (void) = NULL;
 int init_retval = DEADBEEF;
 int init_level = PAPI_NOT_INITED;
 #ifdef DEBUG

@@ -15,7 +15,7 @@ fi
 
 CTESTS=`find ctests -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
-ALLTESTS="$FTESTS $CTESTS";
+ALLTESTS="$CTESTS $FTESTS";
 x=0;
 CWD=`pwd`
 

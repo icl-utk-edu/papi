@@ -7,10 +7,7 @@
    done by the high level API. */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 char *(r10k_native_events_table[]) = {
    /* 0  */ "Cycles",
@@ -540,7 +537,17 @@ void _papi_hwd_error(int error, char *where)
    sprintf(where, "Substrate error: %s", strerror(error));
 }
 
+volatile int lock[PAPI_MAX_LOCK] = { 0, };
+
+static void lock_init(void)
+{
+   int lck;
+   for (lck = 0; lck < PAPI_MAX_LOCK; lck++)
+      lock[lck] = MUTEX_OPEN;
+}
+
 /* this function is called by PAPI_library_init */
+
 int _papi_hwd_init_global(void)
 {
    int retval;
@@ -556,6 +563,7 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
+   lock_init();
 
    SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
           _papi_hwi_system_info.hw_info.totalcpus,
@@ -628,10 +636,10 @@ void dump_cmd(hwperf_profevctrarg_t * t)
 {
    int i;
 
-   fprintf(stderr, "Command block at %p: Signal %d\n", t, t->hwp_ovflw_sig);
+   SUBDBG("Command block at %p: Signal %d\n", t, t->hwp_ovflw_sig);
    for (i = 0; i < HWPERF_EVENTMAX; i++) {
       if (t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_mode)
-         fprintf(stderr,
+	SUBDBG(
                  "Event %d: hwp_ev %d hwp_ie %d hwp_mode %d hwp_ovflw_freq %d\n", i,
                        (int) t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ev,
                        (int) t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie,
@@ -662,8 +670,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
 
 /* generation number should be the same */
    if (retval != ctrl->generation) {
-      fprintf(stderr, "program lost event counters\n");
-      return (PAPI_ESYS);
+      PAPIERROR("This process lost access to the event counters");
+      return (PAPI_ESBSTR);
    }
    /* adjust the read value by how many events in count 0 and count 1 */
    if (ctrl->num_on_counter[0]>1 || ctrl->num_on_counter[1]>1) {
@@ -723,15 +731,30 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    EventSetInfo_t *ESI;
-   ThreadInfo_t *thread;
+   ThreadInfo_t *thread = NULL;
    int overflow_vector=0, generation2,i;
    hwperf_cntr_t cnts;
    hwd_context_t *hwd_ctx;
    hwd_control_state_t *machdep;
    
 
-   thread = _papi_hwi_lookup_in_thread_list();
-   ESI = (EventSetInfo_t *) thread->event_set_overflowing;
+   thread = _papi_hwi_lookup_thread();
+   if (thread == NULL)
+     return;
+
+   ESI = (EventSetInfo_t *) thread->running_eventset;
+   if (ESI->master != thread)
+     {
+       PAPIERROR("eventset->thread 0x%lx vs. current thread 0x%lx mismatch",ESI->master,thread);
+       return;
+     }
+
+   if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
+     {
+       OVFDBG("Thread 0x%lx: Either no eventset or eventset not set to overflow.\n",(*_papi_hwi_thread_id_fn)());
+       return;
+     }
+
    hwd_ctx = &thread->context;
    machdep = &ESI->machdep;
 
@@ -739,8 +762,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    ctx.ucontext = info;
 
    if ((generation2 = ioctl(hwd_ctx->fd, PIOCGETEVCTRS, (void *)&cnts)) < 0) {
-       perror("PIOCGETEVCTRS returns error");
-       exit(-1);
+       PAPIERROR("ioctl(PIOCGETEVCTRS) errno %d",errno);
+       return;
    }
 
    for (i=0; i < HWPERF_EVENTMAX; i++) {
@@ -755,7 +778,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    machdep->cntrs_last_read = cnts;
    if (overflow_vector)
       _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-              _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0);
+              _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0, &thread);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -865,12 +888,6 @@ void *_papi_hwd_get_overflow_address(void *context)
    return ((void *) info->sc_pc);
 }
 */
-
-volatile int lock[PAPI_MAX_LOCK] = { 0, };
-
-void _papi_hwd_lock_init(void)
-{
-}
 
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)

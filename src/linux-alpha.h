@@ -55,8 +55,6 @@ typedef struct hwd_control_state {
    int timer_ms;
 } hwd_control_state_t;
 
-#include "papi_internal.h"
-
 /* Preset structure */
 
 typedef struct hwd_preset {

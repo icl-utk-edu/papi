@@ -8,8 +8,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-
+#include "papi_internal.h"
 
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu)
 {

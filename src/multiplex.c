@@ -97,14 +97,8 @@
  * (LLNL).
  */
 
-#ifdef PTHREADS
-#include <pthread.h>
-#endif
-
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 #define MPX_SIGNAL PAPI_SIGNAL
 #define MPX_ITIMER PAPI_ITIMER
@@ -201,7 +195,9 @@ static int mpx_startup_itimer(void)
 static void mpx_shutdown_itimer(void)
 {
    if (timeKillEvent(mpxTimerID) != TIMERR_NOERROR)
-      DBG((stderr, "setitimer(MPX_ITIMER) in mpx_shutdown_itimer"));
+      {
+	MPXDBG("setitimer(MPX_ITIMER) in mpx_shutdown_itimer");
+      }
 }
 
 static void mpx_release(void)
@@ -253,35 +249,39 @@ static void mpx_init_timers(int interval)
 
 static int mpx_startup_itimer(void)
 {
-   int retval;
    struct sigaction sigact;
 
    /* Set up the signal handler and the timer that triggers it */
+
    memset(&sigact, 0, sizeof(sigact));
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
-   retval = sigaction(MPX_SIGNAL, &sigact, &oaction);
-   assert(retval == 0);
 
-   retval = setitimer(MPX_ITIMER, &itime, NULL);
-   if (retval != 0)
-      perror("setitimer(MPX_ITIMER) in mpx_startup_itimer");
-   assert(retval == 0);
-   return (retval);
+   if (sigaction(MPX_SIGNAL, &sigact, &oaction) == -1)
+     {
+        PAPIERROR("sigaction start errno %d",errno);
+	return PAPI_ESYS;
+     }
+
+   if (setitimer(MPX_ITIMER, &itime, NULL) == -1)
+     {
+       sigaction(MPX_SIGNAL, &oaction, NULL);
+       PAPIERROR("setitimer start errno %d",errno);
+       return PAPI_ESYS;
+     }
+   return (PAPI_OK);
 }
 
 static void mpx_restore_signal(void)
 {
-   int retval;
-
-   retval = sigaction(MPX_SIGNAL, &oaction, NULL);
-   assert(retval == 0);
+   if (sigaction(MPX_SIGNAL, &oaction, NULL) == -1)
+     PAPIERROR("sigaction stop errno %d",errno);
 }
 
 static void mpx_shutdown_itimer(void)
 {
    if (setitimer(MPX_ITIMER, &itimestop, NULL) == -1)
-      DBG((stderr, "setitimer(MPX_ITIMER) in mpx_shutdown_itimer"));
+     PAPIERROR("setitimer stop errno %d",errno);
 }
 
 static void mpx_hold(void)
@@ -333,7 +333,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 
    /* Get the global list of threads */
 
-   _papi_hwd_lock(PAPI_MULTIPLEX_LOCK);
+   _papi_hwi_lock(MULTIPLEX_LOCK);
    t = tlist;
 
    /* If there are no threads in the list at all, then allocate the new Threadlist */
@@ -342,7 +342,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
     new_thread:
       t = (Threadlist *) malloc(sizeof(Threadlist));
       if (t == NULL) {
-         _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
+         _papi_hwi_unlock(MULTIPLEX_LOCK);
          return (PAPI_ENOMEM);
       }
 
@@ -351,14 +351,10 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
        * use getpid() as a placeholder. */
 
       if (_papi_hwi_thread_id_fn) {
-#ifdef MPX_DEBUG
-         fprintf(stderr, "New thread %lx at %p\n", _papi_hwi_thread_id_fn(), t);
-#endif
+         MPXDBG("New thread %lx at %p\n", _papi_hwi_thread_id_fn(), t);
          t->tid = _papi_hwi_thread_id_fn();
       } else {
-#ifdef MPX_DEBUG
-         fprintf(stderr, "New process %x at %p\n", getpid(), t);
-#endif
+         MPXDBG("New process %x at %p\n", getpid(), t);
          t->tid = getpid();
       }
 
@@ -368,9 +364,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
       t->cur_event = NULL;
       t->next = tlist;
       tlist = t;
-#ifdef MPX_DEBUG
-      fprintf(stderr, "New head is at %p(%lu).\n", tlist, (long unsigned) tlist->tid);
-#endif
+      MPXDBG("New head is at %p(%lu).\n", tlist, (long unsigned) tlist->tid);
       alloced_thread = 1;
    } else if (_papi_hwi_thread_id_fn) {
 
@@ -381,9 +375,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 
       while (t) {
          if (t->tid == tid) {
-#ifdef MPX_DEBUG
-            fprintf(stderr, "Found thread %x\n", t->tid);
-#endif
+            MPXDBG("Found thread 0x%lx\n", t->tid);
             break;
          }
          t = t->next;
@@ -393,9 +385,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
        * thread entry. */
 
       if (t == NULL) {
-#ifdef MPX_DEBUG
-         fprintf(stderr, "New thread %lx\n", tid);
-#endif
+         MPXDBG("New thread %lx\n", tid);
          goto new_thread;
       }
    }
@@ -407,7 +397,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
    if (newset == NULL) {
       newset = mpx_malloc(t);
       if (newset == NULL) {
-         _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
+         _papi_hwi_unlock(MULTIPLEX_LOCK);
          return (PAPI_ENOMEM);
       }
       alloced_newset = 1;
@@ -415,7 +405,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 
    /* Now we're finished playing with the thread list */
 
-   _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
+   _papi_hwi_unlock(MULTIPLEX_LOCK);
 
    /* Removed newset->num_events++, moved to mpx_insert_events() */
 
@@ -477,10 +467,10 @@ static void mpx_handler(int signal)
 
    signal = signal;             /* unused */
 
-#ifdef MPX_DEBUG_HANDLER
    if (_papi_hwi_thread_id_fn)
-      fprintf(stderr, "Handler in thread %lx\n", _papi_hwi_thread_id_fn());
-#endif
+     {
+       MPXDBG("Handler in thread %lx\n", _papi_hwi_thread_id_fn());
+     }
 
    /* This handler can be invoked either when a timer expires
     * or when another thread in this handler responding to the
@@ -515,17 +505,17 @@ static void mpx_handler(int signal)
     */
 
 #ifdef PTHREADS
-   _papi_hwd_lock(PAPI_MULTIPLEX_LOCK);
+   _papi_hwi_lock(MULTIPLEX_LOCK);
 
    if (threads_responding == 0) {       /* this thread caught the timer sig */
       /* Signal the other threads with event lists */
 #ifdef MPX_DEBUG_TIMER
       thiscall = _papi_hwd_get_real_usec();
-      fprintf(stderr, "last signal was %lld usec ago\n", thiscall - lastcall);
+      MPXDBG("last signal was %lld usec ago\n", thiscall - lastcall);
       lastcall = thiscall;
 #endif
 #ifdef MPX_DEBUG_SIGNALS
-      fprintf(stderr, "%x caught it\n", self);
+      MPXDBG("%x caught it\n", self);
 #endif
       for (t = tlist; t != NULL; t = t->next) {
          if (pthread_equal(t->thr, self) == 0) {
@@ -533,20 +523,20 @@ static void mpx_handler(int signal)
             retval = pthread_kill(t->thr, MPX_SIGNAL);
             assert(retval == 0);
 #ifdef MPX_DEBUG_SIGNALS
-            fprintf(stderr, "%x signaling %x\n", self, t->thr);
+            MPXDBG("%x signaling %x\n", self, t->thr);
 #endif
          }
       }
    } else {
 #ifdef MPX_DEBUG_SIGNALS
-      fprintf(stderr, "%x was tapped, tr = %d\n", self, threads_responding);
+      MPXDBG("%x was tapped, tr = %d\n", self, threads_responding);
 #endif
       --threads_responding;
    }
 #ifdef REGENERATE
    lastthread = (threads_responding == 0);
 #endif
-   _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
+   _papi_hwi_unlock(MULTIPLEX_LOCK);
 #endif
 
    /* See if this thread has an active event list */
@@ -571,11 +561,9 @@ static void mpx_handler(int signal)
 
          retval = PAPI_stop(cur_event->papi_event, counts);
          assert(retval == PAPI_OK);
-#ifdef MPX_DEBUG_HANDLER
-         fprintf(stderr, "retval=%d, cur_event=%p, I'm tid=%lx\n",
+         MPXDBG("retval=%d, cur_event=%p, I'm tid=%lx\n",
                  retval, cur_event, me->tid);
-         fprintf(stderr, "counts[0] = %lld counts[1] = %lld\n", counts[0], counts[1]);
-#endif
+         MPXDBG("counts[0] = %lld counts[1] = %lld\n", counts[0], counts[1]);
 
          cur_event->count += counts[0];
          cycles = (cur_event->pi.event_type == PAPI_TOT_CYC)
@@ -606,18 +594,16 @@ static void mpx_handler(int signal)
                }
             }
          } else {
-            fprintf(stderr, "%lx retval = %d, skipping\n", me->tid, retval);
-            fprintf(stderr,
+            MPXDBG("%lx retval = %d, skipping\n", me->tid, retval);
+            MPXDBG(
                     "%lx value = %lld cycles = %lld\n\n",
                     me->tid, cur_event->count, cur_event->cycles);
          }
 
-#ifdef MPX_DEBUG_HANDLER
-         fprintf(stderr,
+         MPXDBG(
                  "tid(%lx): value = %lld (%lld) cycles = %lld (%lld) rate = %lf\n\n",
                  me->tid, cur_event->count, cur_event->count_estimate, cur_event->cycles,
                  total_cycles, cur_event->rate_estimate);
-#endif
          /* Start running the next event; look for the
           * next one in the list that's marked active.
           * It's possible that this event is the only
@@ -649,17 +635,17 @@ static void mpx_handler(int signal)
    else {
       Threadlist *t;
 #ifdef MPX_DEBUG_TIMER
-      fprintf(stderr, "nothing to do in thread %x\n", (*_papi_hwi_thread_id_fn) ());
+      MPXDBG("nothing to do in thread %x\n", (*_papi_hwi_thread_id_fn) ());
 #endif
       for (t = tlist; t != NULL; t = t->next) {
 #ifdef MPX_DEBUG_TIMER
-         fprintf(stderr, "%lx forwarding signal to thread %lx\n",
+         MPXDBG("%lx forwarding signal to thread %lx\n",
                  (*_papi_hwi_thread_id_fn) (), t->tid);
 #endif
          retval = (*_papi_hwi_thread_kill_fn) (t->tid, MPX_SIGNAL);
          if (retval != 0) {
 #ifdef MPX_DEBUG_SIGNAL
-            fprintf(stderr, "%lx forwarding signal to thread %lx returned %d\n",
+            MPXDBG("%lx forwarding signal to thread %lx returned %d\n",
                     (*_papi_hwi_thread_id_fn) (), t->tid, retval);
 #endif
             perror("_papi_hwi_thread_kill_fn");
@@ -684,14 +670,14 @@ static void mpx_handler(int signal)
       retval = setitimer(MPX_ITIMER, &itime, NULL);
       assert(retval == 0);
 #ifdef MPX_DEBUG_TIMER
-      fprintf(stderr, "timer restarted by %lx\n", me->tid);
+      MPXDBG("timer restarted by %lx\n", me->tid);
 #endif
    }
 #endif
 
 #ifdef MPX_DEBUG_OVERHEAD
    usec = _papi_hwd_get_real_usec() - usec;
-   fprintf(stderr, "handler %x did %swork in %lld usec\n",
+   MPXDBG("handler %x did %swork in %lld usec\n",
            self, (didwork ? "" : "no "), usec);
 #endif
 }
@@ -811,16 +797,17 @@ int MPX_start(MPX_EventSet * mpx_events)
       mpx_events->start_c = t->total_c + cycles_this_slice;
    }
 
-#ifdef MPX_DEBUG
-   fprintf(stderr, "%s:%d:: start_c=%lld  thread->total_c=%lld\n", __FILE__, __LINE__,
+#if defined(DEBUG)
+   if (ISLEVEL(DEBUG_MULTIPLEX)) {
+   MPXDBG("%s:%d:: start_c=%lld  thread->total_c=%lld\n", __FILE__, __LINE__,
            mpx_events->start_c, t->total_c);
    for (i = 0; i < mpx_events->num_events; i++) {
-      fprintf(stderr,
+      MPXDBG(
               "%s:%d:: start_values[%d]=%lld  estimate=%lld rate=%g last active=%lld\n",
               __FILE__, __LINE__, i, mpx_events->start_values[i],
               mpx_events->mev[i]->count_estimate, mpx_events->mev[i]->rate_estimate,
               mpx_events->mev[i]->prev_total_c);
-   }
+   } }
 #endif
 
    mpx_release();
@@ -878,23 +865,19 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
                    (long_long) (mev->rate_estimate *
                                 (cycles_this_slice + thread_data->total_c -
                                  mev->prev_total_c));
-#ifdef MPX_DEBUG
-               fprintf(stderr,
+               MPXDBG(
                        "%s:%d:: Inactive %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
                        __FILE__, __LINE__, i, mpx_events->stop_values[i], mev->count_estimate,
                        mev->rate_estimate,
                        cycles_this_slice + thread_data->total_c - mev->prev_total_c);
-#endif
             } else {
                mpx_events->stop_values[i] += last_value[0] +
                    (long_long) (mev->rate_estimate *
                                 (thread_data->total_c - mev->prev_total_c));
-#ifdef MPX_DEBUG
-               fprintf(stderr,
+               MPXDBG(
                        "%s:%d:: -Active- %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
                        __FILE__, __LINE__, i, mpx_events->stop_values[i], mev->count_estimate,
                        mev->rate_estimate, thread_data->total_c - mev->prev_total_c);
-#endif
             }
          }
 #endif
@@ -909,7 +892,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
    /* Store the values in user array. */
    for (i = 0; i < mpx_events->num_events; i++) {
       MasterEvent *mev = mpx_events->mev[i];
-      long_long elapsed_slices;
+      long_long elapsed_slices = 0;
       long_long elapsed_values = mpx_events->stop_values[i]
           - mpx_events->start_values[i];
 
@@ -924,13 +907,11 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
          elapsed_slices = mev->cycles - mpx_events->start_hc[i];
          values[i] = elapsed_slices ? (elapsed_values / elapsed_slices) : 0;
       }
-#ifdef MPX_DEBUG
-      fprintf(stderr, "%s:%d:: event %d, values=%lld ( %lld - %lld), cycles %lld\n",
+      MPXDBG("%s:%d:: event %d, values=%lld ( %lld - %lld), cycles %lld\n",
               __FILE__, __LINE__, i,
               elapsed_values,
               mpx_events->stop_values[i], mpx_events->start_values[i],
               mev->is_a_rate ? elapsed_slices : 0);
-#endif
    }
 
    return PAPI_OK;
@@ -987,9 +968,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
       return PAPI_ENOTRUN;
 
    /* Read the counter values, this updates mpx_events->stop_values[] */
-#ifdef MPX_DEBUG
-   fprintf(stderr, "%s:%d:: Start\n", __FILE__, __LINE__);
-#endif
+   MPXDBG("Start\n");
    retval = MPX_read(mpx_events, values);
    if (retval != PAPI_OK)
       return retval;
@@ -1053,9 +1032,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
    }
    mpx_events->status = MPX_STOPPED;
 
-#ifdef MPX_DEBUG
-   fprintf(stderr, "%s:%d:: End\n", __FILE__, __LINE__);
-#endif
+   MPXDBG("End\n");
 
    /* Restore the timer (for other event sets that may be running) */
    mpx_release();
@@ -1093,29 +1070,11 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
 void MPX_shutdown(void)
 {
-   Threadlist *t, *nextthr;
-   if (tlist) {
+  if (tlist) 
+    {
       mpx_shutdown_itimer();
-
-      _papi_hwd_lock(PAPI_MULTIPLEX_LOCK);
-
-      for (t = tlist; t != NULL; t = nextthr) {
-         /* Removing this assert allows MPX_shutdown to proceed even if counters
-            are running */
-#if 0
-         assert(t->cur_event == NULL);  /* should be no active events */
-#endif
-         nextthr = t->next;
-#ifdef MPX_DEBUG
-         fprintf(stderr, "%s:%d:: Freeing thread %lx\n", __FILE__, __LINE__, t->tid);
-#endif
-         free(t);
-      }
-      tlist = NULL;
-      _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
-
       mpx_restore_signal();
-   }
+    }
 }
 
 
@@ -1333,17 +1292,13 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          mev->papi_event = PAPI_NULL;
          retval = PAPI_create_eventset(&(mev->papi_event));
          if (retval != PAPI_OK) {
-#ifdef MPX_DEBUG
-            fprintf(stderr, "Event %d could not be counted.\n", event_list[i]);
-#endif
+            MPXDBG("Event %d could not be counted.\n", event_list[i]);
             goto bail;
          }
 
          retval = PAPI_add_event(mev->papi_event, event_list[i]);
          if (retval != PAPI_OK) {
-#ifdef MPX_DEBUG
-            fprintf(stderr, "Event %d could not be counted.\n", event_list[i]);
-#endif
+            MPXDBG("Event %d could not be counted.\n", event_list[i]);
             goto bail;
          }
 
@@ -1353,9 +1308,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          if (event_list[i] != PAPI_TOT_CYC) {
             retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC);
             if (retval != PAPI_OK) {
-#ifdef MPX_DEBUG
-               fprintf(stderr, "PAPI_TOT_CYC could not be counted at the same time.\n");
-#endif
+               MPXDBG("PAPI_TOT_CYC could not be counted at the same time.\n");
                goto bail;
             }
          }
@@ -1366,9 +1319,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          options.domain.domain = domain;
          retval = PAPI_set_opt(PAPI_DOMAIN, &options);
          if (retval != PAPI_OK) {
-#ifdef MPX_DEBUG
-            fprintf(stderr, "PAPI_set_opt(PAPI_DOMAIN) failed.\n");
-#endif
+            MPXDBG("PAPI_set_opt(PAPI_DOMAIN) failed.\n");
             goto bail;
          }
 #endif
@@ -1377,9 +1328,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          options.granularity.granularity = granularity;
          retval = PAPI_set_opt(PAPI_GRANUL, &options);
          if (retval != PAPI_OK) {
-#ifdef MPX_DEBUG
-            fprintf(stderr, "PAPI_set_opt(PAPI_GRANUL) failed.\n");
-#endif
+            MPXDBG("PAPI_set_opt(PAPI_GRANUL) failed.\n");
             goto bail;
          }
 #endif
@@ -1408,9 +1357,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
    if (*head != NULL) {
       (*head)->mythr = mpx_events->mythr;
    }
-#ifdef MPX_DEBUG
-   fprintf(stderr, "%d of %d events were added.\n", num_events_success, num_events);
-#endif
+   MPXDBG("%d of %d events were added.\n", num_events_success, num_events);
    mpx_events->num_events += num_events_success;
    return (PAPI_OK);
 

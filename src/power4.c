@@ -2,9 +2,7 @@
    done by the high level API. */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 extern hwd_groups_t group_map[];
 
