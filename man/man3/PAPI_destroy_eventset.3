@@ -2,7 +2,7 @@
 .TH PAPI_destroy_eventset 3 "September, 2004"  "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_cleanup_eventset, PAPI_destroy_eventset  \-  empty and destroy an EventSet
+PAPI_destroy_eventset, PAPI_cleanup_eventset  \-  empty and destroy an EventSet
 
 .SH SYNOPSIS
 .B C Interface
@@ -20,7 +20,9 @@ PAPI_cleanup_eventset, PAPI_destroy_eventset  \-  empty and destroy an EventSet
 
 .SH DESCRIPTION
 .B PAPI_cleanup_eventset()
-removes all events from a PAPI event set. 
+removes all events from a PAPI event set and turns off profiling
+and overflow for all events in the eventset. This can not be 
+called if the EventSet is not stopped.
 
 .B PAPI_destroy_eventset()
 deallocates the memory associated with an empty PAPI event set.
@@ -28,19 +30,24 @@ deallocates the memory associated with an empty PAPI event set.
 .SH ARGUMENTS
 .I "EventSet"
 --  an integer handle for a PAPI event set as created by
-.BR "PAPI_create_eventset" (3)
+.BR "PAPI_create_eventset" (3).
+
+.I "*EventSet"
+--  a pointer to the integer handle for a PAPI event set as created by 
+.BR "PAPI_create_eventset" (3).
+The value pointed to by EventSet is then set to PAPI_NULL on success.
 
 .SH RETURN VALUES
-.nf
-On success, these functions return PAPI_OK.
-On error, a non-zero error code is returned.
-.fi
-
+ On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
+                                                                                
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid. Attempting to
-destroy a non-empty event set is one such case.
+destroy a non-empty event set or passing in a null pointer
+to be destroyed.
 .TP
 .B "PAPI_ENOEVST"
 The EventSet specified does not exist.
@@ -54,9 +61,6 @@ Internal error, send mail to ptools-perfapi@ptools.org and complain.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-if (PAPI_stop(EventSet, values) != PAPI_OK)
-  handle_error(1);
-
 /* Remove all events in the eventset */
 
 if (PAPI_cleanup_eventset(EventSet) != PAPI_OK)
@@ -70,9 +74,15 @@ if (PAPI_destroy_eventset(&EventSet) != PAPI_OK)
 .fi
 
 .SH BUGS
-These functions have no known bugs.
+If the user has set profile on an event with the
+.BR "PAPI_profil "(3) 
+call, then when destroying
+the EventSet the memory allocated by 
+.BR "PAPI_profil "(3) 
+will not be freed. The user should turn off 
+profiling on the Events before destroying the 
+EventSet to prevent this behavior.
 
 .SH SEE ALSO
-.BR PAPI_create_eventset "(3), " PAPI_query_event "(3), "
-.BR PAPI_add_event "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_remove_events "(3), " PAPI_shutdown "(3)"
+.BR PAPI_create_eventset "(3), "PAPI_add_event "(3), " PAPI_stop "(3), " 
+.BR PAPI_profil "(3) "
