@@ -71,6 +71,9 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->counter_cmd.CTL0 = CTL_OFF;
    ptr->counter_cmd.CTL1 = CTL_OFF;
    ptr->counter_cmd.CTL2 = CTL_OFF;
+   ptr->counter_cmd.SEL0 = 0x0;
+   ptr->counter_cmd.SEL1 = 0x0;
+   ptr->counter_cmd.SEL2 = 0x0;
 }
 
 /* This function clears the current contents of the control structure and
@@ -78,49 +81,55 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t *ctx) {
-   return(PAPI_OK);
-}
-
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    int i, index;
-   hwd_control_state_t *this_state = &ESI->machdep;
 
-   /* fill the counters we're using */
    _papi_hwd_init_control_state(this_state);
-   for(i = 0; i < ESI->NativeCount; i++) {
-      index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
-      ESI->NativeInfoArray[i].ni_bits.selector[0] = native_table[index].resources.selector[0];
-      ESI->NativeInfoArray[i].ni_bits.selector[1] = native_table[index].resources.selector[1];
-      ESI->NativeInfoArray[i].ni_bits.selector[2] = native_table[index].resources.selector[2];
+   for(i = 0; i < count; i++) {
+      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+      native[i].ni_bits.selector[0] = native_table[index].resources.selector[0];
+      native[i].ni_bits.selector[1] = native_table[index].resources.selector[1];
+      native[i].ni_bits.selector[2] = native_table[index].resources.selector[2];
       /* Add counter control command values to eventset */
-      if(ESI->NativeInfoArray[i].ni_bits.selector[0] != -1) {
-         if(this_state->counter_cmd.CTL0) {
-            return (PAPI_ECNFLCT);
-         }
-         ESI->NativeInfoArray[i].ni_position = 0;
-         this_state->counter_cmd.SEL0 = ESI->NativeInfoArray[i].ni_bits.selector[0];
+      if(native[i].ni_bits.selector[0] != -1) {
+         native[i].ni_position = 0;
+         this_state->counter_cmd.SEL0 = native[i].ni_bits.selector[0];
          this_state->counter_cmd.CTL0 = CTL_ON;
       }
-      if(ESI->NativeInfoArray[i].ni_bits.selector[1] != -1) {
-         if(this_state->counter_cmd.CTL1) {
-            return (PAPI_ECNFLCT);
-         }
-         ESI->NativeInfoArray[i].ni_position = 1;
-         this_state->counter_cmd.SEL1 = ESI->NativeInfoArray[i].ni_bits.selector[1];
+      if(native[i].ni_bits.selector[1] != -1) {
+         native[i].ni_position = 1;
+         this_state->counter_cmd.SEL1 = native[i].ni_bits.selector[1];
          this_state->counter_cmd.CTL1 = CTL_ON;
       }
-      if(ESI->NativeInfoArray[i].ni_bits.selector[2] != -1) {
-         if(this_state->counter_cmd.CTL2) {
-            return (PAPI_ECNFLCT);
-         }
-         ESI->NativeInfoArray[i].ni_position = 2;
-         this_state->counter_cmd.SEL2 = ESI->NativeInfoArray[i].ni_bits.selector[2];
+      if(native[i].ni_bits.selector[2] != -1) {
+         native[i].ni_position = 2;
+         this_state->counter_cmd.SEL2 = native[i].ni_bits.selector[2];
          this_state->counter_cmd.CTL2 = CTL_ON;
       }
    }
 #ifdef DEBUG
    print_control(&this_state->counter_cmd);
 #endif
+   return(PAPI_OK);
+}
+
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
+   int i, index, sel0=0, sel1=0, sel2=0, flag=0;
+
+   for(i = 0; i < ESI->NativeCount; i++) {
+      index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
+      if(native_table[index].resources.selector[0] != -1) {
+         if(sel0) return(PAPI_ECNFLCT);
+         sel0 = CTL_ON;
+      }
+      if(native_table[index].resources.selector[1] != -1) {
+         if(sel1) return(PAPI_ECNFLCT);
+         sel1 = CTL_ON;
+      }
+      if(native_table[index].resources.selector[2] != -1) {
+         if(sel2) return(PAPI_ECNFLCT);
+         sel2 = CTL_ON;
+      }
+   }
    return(1);
 }
 
@@ -268,7 +277,8 @@ int _papi_hwd_init(hwd_context_t *ctx)
 }
 
 int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
-                             unsigned int event, void *extra, EventInfo_t * out){
+                             unsigned int event, void *extra, EventInfo_t * out)
+{
    return (PAPI_ESBSTR);
 }
 
@@ -379,7 +389,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
-
    /* This function is not used and shouldn't be called. */
 
    return (PAPI_ESBSTR);
