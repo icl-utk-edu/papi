@@ -19,7 +19,7 @@ C 2 counters.
       INTEGER n
       INTEGER EventSet
       INTEGER retval
-      INTEGER I,errorcode
+      INTEGER I,j, errorcode
       INTEGER*8 gl(3)
       CHARACTER*(PAPI_MAX_STR_LEN) errorstring
 
@@ -27,6 +27,7 @@ C 2 counters.
       EXTERNAL len_trim
 
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -35,10 +36,11 @@ C 2 counters.
          tests_quiet=1
       end if
 
-
       a=0.999
       b=1.001
       n=1000
+      i=0
+      j=0
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
@@ -53,55 +55,80 @@ C 2 counters.
         call ftests_fail(__FILE__,retval)
       end if
 
-      call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-         print *, 'Can not add PAPI_L2_TCM: '//
-     $       errorstring(1:len_trim(errorstring))
-        endif
-      else if (tests_quiet .EQ. 0) then
-        print *,'Added PAPI_L2_TCM'
+      call PAPIf_query_event(PAPI_L2_TCM, retval)
+      if (retval .EQ. PAPI_OK) then
+        j = j + 1
+      end if
+      if (j .NE. 0) then
+        call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
+        if ( retval .NE. PAPI_OK ) then
+           call PAPIf_perror( retval, errorstring, errorcode)
+           if (tests_quiet .EQ. 0) then
+              print *, 'Can not add PAPI_L2_TCM: '//
+     $             errorstring(1:len_trim(errorstring))
+           endif
+        else if (tests_quiet .EQ. 0) then
+           print *,'Added PAPI_L2_TCM'
+        end if
       end if
 
-      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
-      if ( retval .NE. PAPI_OK )then
-         call PAPIf_perror( retval, errorstring, errorcode)
-         if (tests_quiet .EQ. 0) then
-         print *, 'Can not add PAPI_TOT_CYC: '//
-     $       errorstring(1:len_trim(errorstring))
-         end if 
-      else if (tests_quiet .EQ. 0) then
-         print *,'Added PAPI_TOT_CYC'
+      i = j
+
+      call PAPIf_query_event(PAPI_TOT_CYC, retval)
+      if (retval .EQ. PAPI_OK) then
+        j = j + 1
+      end if
+      if (j .EQ. i+1) then
+         call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
+         if ( retval .NE. PAPI_OK )then
+            call PAPIf_perror( retval, errorstring, errorcode)
+            if (tests_quiet .EQ. 0) then
+               print *, 'Can not add PAPI_TOT_CYC: '//
+     $              errorstring(1:len_trim(errorstring))
+            end if 
+         else if (tests_quiet .EQ. 0) then
+            print *,'Added PAPI_TOT_CYC'
+         end if
       end if
  
-      call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
-      if ( retval .NE. PAPI_OK )then
-         call PAPIf_perror( retval, errorstring, errorcode)
-         if (tests_quiet .EQ. 0) then
-         print *, 'Can not add PAPI_FP_INS: '//
-     $       errorstring(1:len_trim(errorstring))
-         end if
-      else
-         if (tests_quiet .EQ. 0) then
-         print *,'Added PAPI_FP_INS'
+      i = j
+      call PAPIf_query_event(PAPI_FP_INS, retval)
+      if (retval .EQ. PAPI_OK) then
+        j = j + 1
+      end if
+      if (j .EQ. i+1) then
+         call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
+         if ( retval .NE. PAPI_OK )then
+            call PAPIf_perror( retval, errorstring, errorcode)
+            if (tests_quiet .EQ. 0) then
+               print *, 'Can not add PAPI_FP_INS: '//
+     $              errorstring(1:len_trim(errorstring))
+            end if
+         else
+            if (tests_quiet .EQ. 0) then
+               print *,'Added PAPI_FP_INS'
+            end if
          end if
       end if
 
-      call PAPIf_start(EventSet, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error starting counter')
-        call ftests_fail(__FILE__,retval)
+      if (J .GT. 0) then
+         call PAPIf_start(EventSet, retval )
+         if ( retval .NE. PAPI_OK ) then
+            call ftests_perror(__LINE__,'error starting counter')
+            call ftests_fail(__FILE__,retval)
+         end if
       end if
 
       do i=1,n
        c = a * b
       end do
 
-      call PAPIf_stop( EventSet, gl, retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error stopping counter')
-        call ftests_fail(__FILE__,retval)
+      if (J .GT. 0) then
+         call PAPIf_stop( EventSet, gl, retval)
+         if ( retval .NE. PAPI_OK ) then
+            call ftests_perror(__LINE__,'error stopping counter')
+            call ftests_fail(__FILE__,retval)
+         end if
       end if
       
       call ftests_pass(__FILE__)

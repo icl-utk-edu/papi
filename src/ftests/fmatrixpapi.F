@@ -21,6 +21,7 @@ C   PAPI values of the counters
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -37,8 +38,13 @@ C      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
 C   Open matrix file number 2 for reading
 C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
+#if defined (NO_FLOPS)
+      event(1) = PAPI_TOT_INS
+#else
 C   Total floating point operations
       event(1) = PAPI_FP_INS
+#endif
+
 C  Time used
       event(2) = PAPI_TOT_CYC
 
@@ -115,10 +121,19 @@ C  Make sure the compiler does not optimize away the multiplication
       call dummy(r)
 
       if (tests_quiet .EQ. 0) then
+
+#if defined (NO_FLOPS)
+      print *, 'TOT Instructions:  ',values(1)
+#else
       print *, 'FP Instructions:  ',values(1)
+#endif
+
       print *, 'Cycles: ',values(2)
+
+#ifndef NO_FLOPS
       write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
+#endif
       end if
 
       call ftests_pass(__FILE__)

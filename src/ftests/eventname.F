@@ -6,6 +6,7 @@
       INTEGER retval, handle
       INTEGER preset
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -29,7 +30,8 @@
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, 'PAPI_FP_INS code is',preset
+      write (*, 100) preset
+ 100  format ('PAPI_FP_INS code is', Z10)
       end if
       call ftests_pass(__FILE__)
       end

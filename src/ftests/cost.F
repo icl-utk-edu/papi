@@ -13,6 +13,7 @@
       Integer len_trim
       External len_trim
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -20,7 +21,6 @@
       if (LGE(chbuf, 'TESTS_QUIET')) then
          tests_quiet=1
       end if
-
 
       if (tests_quiet .EQ. 0) then
       print *, "Cost of execution for PAPI start/stop",
@@ -146,15 +146,20 @@
       ntotcyc=ntotcyc-ototcyc
 
       if (tests_quiet .EQ. 0) then
+      print *, ""
       print *, "User level cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
-      print *, " ", values(1), " total cyc\n", "  ", values(2), 
-     *" total ins\n", values(1)/50000.0, " cyc/call pair\n", 
-     *values(2)/50000.0, " ins/call pair"
+      write (*, 100) values(1), "total cyc"
+      write (*, 100) values(2), "total ins"
+      write (*, 200) values(1)/50000.0, "cyc/call pair"
+      write (*, 200) values(2)/50000.0, "ins/call pair"
+      print *, ""
       print *, "Total cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
-      print *, " ", ntotcyc, " total cyc\n", ntotcyc/50001.0, 
-     *" cyc/call pair"
+      write (*, 100) ntotcyc, "total cyc"
+      write (*, 200) ntotcyc/50001.0, "cyc/call pair"
+      print *, ""
+      print *, ""
       
 C     Start the read val
       
@@ -202,17 +207,22 @@ C     Start the read val
       ntotcyc=ntotcyc-ototcyc
 
       if (tests_quiet .EQ. 0) then
+      print *, ""
       print *, "User level cost for PAPI_read(2 counters) over",
      *" 50000 iterations:"
-      print *, " ", values(1), " total cyc\n", values(2), "  ",
-     *" total ins\n", values(1)/50000.0, " cyc/call\n", 
-     *values(2)/50000.0, " ins/call"
+      write (*, 100) values(1), "total cyc"
+      write (*, 100) values(2), "total ins"
+      write (*, 200) values(1)/50000.0, "cyc/call"
+      write (*, 200) values(2)/50000.0, "ins/call"
+      print *, ""
       print *, "Total cost for PAPI_read(2 counters) over ",
      *"50000 iterations:"
-      print *, " ", ntotcyc, " total cyc\n", ntotcyc/50001.0, 
-     *" cyc/call"
+      write (*, 100) ntotcyc, "total cyc"
+      write (*, 200) ntotcyc/50001.0, "cyc/call"
       end if
 
+ 100  format (I15, A15)
+ 200  format (F15.6, A15)
       call ftests_pass(__FILE__)
       end
 

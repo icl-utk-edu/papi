@@ -21,6 +21,12 @@ C -Kevin London
          tests_quiet=1
       end if
 
+
+#ifdef NO_FLOPS
+      print *, "Test Skipped"
+      stop 
+#endif
+
 C Initialize the Matrix arrays
       do i=1,index
         do j=1,index
@@ -36,6 +42,7 @@ C Setup PAPI library and begin collecting data from the counters
         call ftests_perror(__LINE__,'Error starting PAPI_flops ')
         call ftests_fail(__FILE__,retval)
       end if
+
 C Matrix-Matrix Multiply
       do i=1,index
         do j=1,index
@@ -52,8 +59,10 @@ C Collect the data into the Variables passed in
         call ftests_fail(__FILE__,retval)
       end if
       if (tests_quiet .EQ. 0) then
-      print *, 'Real_time: ', real_time, ' Proc_time: ', proc_time,
-     & ' Total flpins: ', flpins, ' MFLOPS: ', mflops
+      print *, 'Real_time: ', real_time
+      print *, ' Proc_time: ', proc_time
+      print *, ' Total flpins: ', flpins
+      print *, ' MFLOPS: ', mflops
       end if
       call dummy(mres)
 

@@ -1,7 +1,7 @@
 #include "fpapi.h"
 #define NUM 1000
 #define THR 10000
-#define BUFSIZE 81920
+#define BUFSIZE 81920*2
 
       program profile
       implicit none
@@ -22,6 +22,7 @@
       character*(PAPI_MAX_STR_LEN) fullname, name, lib_preload_env
       integer text_start, text_end, data_start, data_end, bss_start
       integer bss_end, check
+
       character*25 chbuf
 
       tests_quiet=0
@@ -115,7 +116,7 @@ C      print *, "length=", length
       if (tests_quiet .EQ. 0) then
       print *, "Test case 7: SVR4 compatible hardware profiling."
       print *, "------------------------------------------------"
- 100  format(A12, Z8, A12, Z8, A12, Z8)
+ 100  format(A12, Z8, A12, Z8, A15, Z20)
       write (*, 100) "Text start:", text_start, "; Text end:", text_end,
      *"; Text length:", length
  200  format(A12, Z8, A12, Z8)

@@ -16,6 +16,7 @@ C Hardware info
      *event_label, event_note
       CHARACTER*(10) avail_str, flags_str
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -38,8 +39,8 @@ C         call ftests_fail(__FILE__'PAPI_library_init',check)
       print *, 'Hardware information and available events'
       print *, '------------------------------------------------'
       n=len_trim(vstring)
-      print *, 'Vendor string and code   : ',vstring(1:n)
-     & ,' (',vendor,')'
+      print *, 'Vendor string and code   : ',vstring(1:n),
+     &' (',vendor,')'
       n=len_trim(mstring)
       print *, 'Model string and code    : ',mstring(1:n),' (',model,')'
       print *, 'CPU revision             : ',revision 
@@ -49,7 +50,9 @@ C         call ftests_fail(__FILE__'PAPI_library_init',check)
       print *, 'Total CPUs in the system : ',totalcpus
       print *, '------------------------------------------------'
 
-      print *, 'Name\t\tCode\t\tAvail\tDeriv\tDescription(note)'
+      write (*,200) 'Name', 'Code', 'Avail', 'Deriv', 
+     *'Description(note)'
+ 200  format(A10, A9, A8, A8, A20)
       end if
       do i=0, PAPI_MAX_PRESET_EVENTS-1
          call papif_query_all_event_verbose(z'80000000'+i, event_name, 
@@ -69,8 +72,7 @@ C         call ftests_fail(__FILE__'PAPI_library_init',check)
          if (check.EQ.PAPI_OK .and. tests_quiet .EQ. 0) then
             write (*, 100) event_name, z'80000000'+i, avail_str, 
      *       flags_str, event_descr, event_note
- 100  format(A20, '\t', Z8, '\t', A5, '\t',  A5, '\t', A50, 
-     *'(', A30, ')') 
+ 100  format(A13, Z9, '   ', A6, '   ', A6, A50, '(', A8, ')') 
          end if
       end do
       if (tests_quiet .EQ. 0) then 

@@ -23,12 +23,11 @@
          tests_quiet=1
       end if
 
-
       if (tests_quiet .EQ. 0) then
-      print *, "Test case descriptions: Test of functions:\n",
-     *"\t\tPAPI_add_events, PAPI_rem_events,\n",
-     *"\t\tPAPI_list_events, PAPI_describe_event,\n",
-     *"\t\tPAPI_state."
+      print *, "Test case descriptions: Test of functions:"
+      print *, "    PAPI_add_events, PAPI_rem_events,"
+      print *, "    PAPI_list_events, PAPI_describe_event,"
+      print *, "    PAPI_state"
       end if
 
       retval = PAPI_VER_CURRENT
@@ -51,7 +50,12 @@
       end if
 
       number=2
+
+#if defined(NO_FLOPS)
+      events(1) = PAPI_TOT_INS 
+#else
       events(1) = PAPI_FP_INS 
+#endif
       events(2) = PAPI_TOT_CYC
 
       call PAPIf_add_events( es1, events, number, retval )
@@ -68,10 +72,11 @@
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "\nEvent List:"
-      print *, "---------------------------------------",
-     *"---------------------------"
-      print *, "Event Name\tCode"
+         print *, " "
+         print *, "Event List:"
+         print *, "---------------------------------------",
+     *        "---------------------------"
+         print *, "Event Name       Code"
       end if
       do i = 1, eventtotal
          call PAPIf_event_code_to_name (eventlist(i), name, retval)
@@ -159,16 +164,22 @@
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "\nResults:"
+      print *, " "
+      print *, "Results:"
       print *, "---------------------------------------",
      *"---------------------------"
-      print *, "Test type   : \t1"
-      print *, "PAPI_FP_INS : \t", values(1)
-      print *, "PAPI_TOT_CYC: \t", values(2)
+      print *, "Test type    :               1"
+#if defined(NO_FLOPS)
+      print *, "PAPI_TOT_INS : ", values(1)
+#else
+      print *, "PAPI_FP_INS : ", values(1)
+#endif
+      print *, "PAPI_TOT_CYC : ", values(2)
       print *, "---------------------------------------",
      *"---------------------------"
 
-      print *, "\nVerification:"
+      print *, " "
+      print *, "Verification:"
       print *, "1. The events listed by PAPI_describe_event",
      *"should be exactly the same events added by PAPI_add_events."
       print *, "2. The PAPI_state should be PAPI_RUNNING after ",

@@ -24,6 +24,7 @@ C   PAPI values of the counters
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -60,12 +61,21 @@ C   Total cycles
       end if
 
 C   Total floating point instructions
+#if defined (NO_FLOPS)
+      call PAPIf_add_event(EventSet,PAPI_TOT_INS,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,
+     *'PAPIf_add_event PAPI_TOT_INS failed')
+        call ftests_fail(__FILE__,retval)
+      end if
+#else
       call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,
      *'PAPIf_add_event PAPI_FP_INS failed')
         call ftests_fail(__FILE__,retval)
       end if
+#endif
 
 C   Grab the hardware info
       call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
@@ -91,7 +101,7 @@ C   Grab the hardware info
       end if
  100  format(i5,' CPU(s) ',a,' at ',f7.2,' MHz')
  101  format(a9,' =',i6,7x,a9,' =',i5,5x,a9,'=',i5)
- 102  format(a9,' =',f7.2,6x,a9,' =',f7.2)
+ 102  format(a9,' =',f7.2,6x,a9,' =',f15.5)
  103  format(a9,' =',i6,7x,a9,' =',a40)
  104  format(a9,' =',i6,7x,a9,' =',a40)
 C   Open matrix file number 1 for reading
@@ -155,9 +165,14 @@ C  Make sure the compiler does not optimize away the multiplication
       if (tests_quiet .EQ. 0) then
       print *, 'Time: ', finaltime, 'seconds'
       print *, 'Cycles: ', values(1)
+
+#if defined (NO_FLOPS)
+      print *, 'Total Instructions: ', values(2)
+#else
       print *, 'FP Instructions: ', values(2)
       write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
+#endif
       end if
 
       call ftests_pass(__FILE__)

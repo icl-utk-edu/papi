@@ -24,6 +24,7 @@ C   PAPI values of the counters
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet
+
       character*25 chbuf
 
       tests_quiet=0
@@ -31,6 +32,7 @@ C   PAPI values of the counters
       if (LGE(chbuf, 'TESTS_QUIET')) then
          tests_quiet=1
       end if
+
 
 C   Setup default values
       num_events=0
@@ -41,7 +43,12 @@ C   Open matrix file number 2 for reading
 C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
 C   Total floating point operations
+#if defined (NO_FLOPS)
+      event(1) = PAPI_TOT_INS
+#else
       event(1) = PAPI_FP_INS
+#endif
+
 C  Time used
       event(2) = PAPI_TOT_CYC
 
@@ -98,10 +105,16 @@ C  Read and clear the counter values
 
       if (tests_quiet .EQ. 0) then
       print *
+#if defined (NO_FLOPS)
+      print *, 'TOT Instructions:  ',values(1)
+#else
       print *, 'FP Instructions:  ',values(1)
+#endif
       print *, 'Cycles: ',values(2)
+#ifndef NO_FLOPS
       write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
+#endif
       end if
 
 C  We don't wish to count the events for this call
@@ -133,10 +146,16 @@ C  Stop the counters and put the results in the array values
 
       if (tests_quiet .EQ. 0) then
       print *
+#if defined (NO_FLOPS)
+      print *, 'TOT Instructions:  ',values(1)
+#else
       print *, 'FP Instructions:  ',values(1)
+#endif
       print *, 'Cycles: ',values(2)
+#ifndef NO_FLOPS
       write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
+#endif
 
       print *
       print *,'----------------------------------------------------'
