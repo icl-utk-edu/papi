@@ -37,7 +37,9 @@
 #include "perfmon/pfmlib_itanium.h"
 #endif
 #endif
+
 #include "papi.h"
+#include "linux-ia64-memory.h"
 
 #ifndef PFM06A
 typedef struct {
@@ -76,14 +78,22 @@ typedef struct hwd_control_state {
   pid_t pid;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   int selector;  
+  /* Number of values in pc */
+  int pc_count;
   /* Buffer to pass to kernel to control the counters */
 #ifdef PFM06A
   perfmon_req_t pc[PMU_MAX_COUNTERS];
   pfm_event_config_t evt;
 #else
 #ifdef ITANIUM2
+  #ifndef PMU_ITA2_MAX_COUNTERS
+   #define PMU_ITA2_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+  #endif
   pfarg_reg_t pc[PMU_ITA2_MAX_COUNTERS];
 #else
+  #ifndef PMU_ITA_MAX_COUNTERS
+   #define PMU_ITA_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+  #endif
   pfarg_reg_t pc[PMU_ITA_MAX_COUNTERS];
 #endif
   pfmlib_param_t evt;

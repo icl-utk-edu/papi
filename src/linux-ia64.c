@@ -3,9 +3,13 @@
  *
  * Mods:	Kevin London
  *		london@cs.utk.edu
+ *              Per Ekman
+ *              pek@pdc.kth.se
  */
 
 #include SUBSTRATE
+
+#include "pfmwrap.h"
 
 #ifdef PFM06A
 static preset_search_t preset_search_map[] = { 
@@ -101,6 +105,15 @@ static preset_search_t preset_search_map[] = {
   {0,0,{0,0,0,0}}};
 #else
 static preset_search_t preset_search_map[] = {
+  {PAPI_CA_SNP,0,{"BUS_SNOOPS_SELF",0,0,0}},
+  {PAPI_CA_INV,DERIVED_ADD,{"BUS_MEM_READ_BRIL_SELF","BUS_MEM_READ_BIL_SELF",0,0}},
+  {PAPI_TLB_TL,DERIVED_ADD,{"ITLB_MISSES_FETCH_L2ITLB","L2DTLB_MISSES",0,0}},
+  {PAPI_STL_ICY,0,{"DISP_STALLED",0,0,0}},
+  {PAPI_STL_CCY,0,{"BACK_END_BUBBLE_ALL",0,0,0}},
+  {PAPI_TOT_IIS,0,{"INST_DISPERSED",0,0,0}},
+  {PAPI_RES_STL,0,{"BE_EXE_BUBBLE_ALL",0,0,0}},
+  {PAPI_FP_STAL,0,{"BE_EXE_BUBBLE_FRALL",0,0,0}},
+  {PAPI_L2_TCR,DERIVED_ADD,{"L2_DATA_REFERENCES_L2_DATA_READS","L2_INST_DEMAND_READS","L2_INST_PREFETCHES",0}},
   {PAPI_L1_TCM,DERIVED_ADD,{"L2_INST_DEMAND_READS","L1D_READ_MISSES_ALL",0,0}},
   {PAPI_L1_ICM,0,{"L2_INST_DEMAND_READS",0,0,0}},
   {PAPI_L1_DCM,0,{"L1D_READ_MISSES_ALL",0,0,0}},
@@ -150,10 +163,18 @@ static preset_search_t preset_search_map[] = {
   {PAPI_LD_INS,0,{"LOADS_RETIRED",0,0,0}},
   {PAPI_SR_INS,0,{"STORES_RETIRED",0,0,0}},
   {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
+  /* First byte selects type (M, I, F, B), bits 3-30 set to 1 to mask the whole opcode,
+   * bits 1 (ig_ad) and 2 (mandatory 1) are set */
+  {PAPI_INT_INS,0,{"400000003FFFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
+  {PAPI_FSQ_INS,0,{"2890000001BFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
   {0,0,{0,0,0,0}}};
 #endif
 #endif
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
+
+#ifdef ITANIUM2
+static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
+#endif
 
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
@@ -244,38 +265,43 @@ inline static float calc_mhz(void)
  * Copyright (C) 2001 Hewlett-Packard Co
  * Copyright (C) 2001 Stephane Eranian <eranian@hpl.hp.com> */
 
-#ifdef PFM06A
 static inline int
-gen_events(char **arg, pfm_event_config_t *evt)
-#else
-static inline int
-gen_events(char **arg, pfmlib_param_t *evt)
-#endif
+gen_events(char **arg, pfmw_param_t *evt)
 {
 	int ev;
 	int cnt=0;
+        char *p;
+        unsigned long mask = 0;
 
 	if (arg == NULL) return -1;
 
 	while (*arg) {
-
+		p = *arg;
 		if (cnt == PMU_MAX_COUNTERS) goto too_many;
-		/* must match vcode only */
-#ifdef PFM06A
-		if ((ev = pfm_findevent(*arg,0)) == -1) goto error;
-		evt->pec_evt[cnt++] = ev;
-#else
-		if ((ev = pfm_find_event(*arg,0,&(evt->pfp_evt[cnt++]))) 
-			!= PFMLIB_SUCCESS) goto error;
+#ifdef ITANIUM2 /* The following case was added by pek@pdc.kth.se. Don't
+		   blame Stephane Eranian for it. */
+		/* Hack to extract the mask for opcode matching */
+		mask = strtol(*arg, &p, 16);
+		if (p && p[0] == '@') {
+			((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+			((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_ita2_pmc8.opcm_used = 1;
+			((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_ita2_pmc8.pmc_val = mask;
+			p++;
+	    	}
+		else {
+			mask = 0;
+			p = *arg;
+			evt->pfp_model = NULL;
+	    	}
 #endif
-
+		/* must match vcode only */
+		if ((ev = pfmw_find_event(p,0,&(PFMW_PEVT_EVENT(evt, cnt)))) 
+	    		!= PFMLIB_SUCCESS) goto error;
+		cnt++;
 		arg++;
 	}
-#ifdef PFM06A
-	evt->pec_count = cnt;
-#else
-	evt->pfp_count = cnt;
-#endif
+	PFMW_PEVT_EVTCOUNT(evt) = cnt;
+
 	return 0;
 error:
 	return -1;
@@ -299,6 +325,9 @@ static inline int setup_all_presets()
       if (preset_search_map[pnum].preset == 0)
 	break;
       preset_index = preset_search_map[pnum].preset & PRESET_AND_MASK; 
+#ifdef ITANIUM2
+      preset_map[preset_index].evt.pfp_model = &ita2_param[pnum];
+#endif
       if (gen_events(preset_search_map[pnum].findme, &preset_map[preset_index].evt) == -1)
 	abort();
       preset_map[preset_index].present = 1;
@@ -332,22 +361,12 @@ static inline int setup_all_presets()
 /* Utility functions */
 
 /* Return new counter mask */
-
-#ifdef PFM06A
-inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfm_event_config_t *from)
-#else
-inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmlib_param_t *from)
-#endif
+inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_param_t *from)
 {
-#ifdef PFM06A
-  perfmon_req_t *pc = this_state->pc;
-  pfm_event_config_t *evt = &this_state->evt;
-  int i, orig_cnt = evt->pec_count;
-#else
-  pfarg_reg_t *pc = this_state->pc;
-  pfmlib_param_t *evt = &this_state->evt;
-  int i, orig_cnt = evt->pfp_count;
-#endif
+  pfmw_reg_t *pc = this_state->pc;
+  pfmw_param_t *evt = &this_state->evt;
+  int i, orig_cnt = PFMW_PEVT_EVTCOUNT(evt);  
+  int cnt = PMU_MAX_PMCS;
   int selector = 0;
 
   if (from)
@@ -355,48 +374,34 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmlib
       /* Called from add_event */
       /* Merge the two evt structures into the old one */
       
-#ifdef PFM06A
-      for (i=0;i<from->pec_count;i++)
-	evt->pec_evt[evt->pec_count++] = from->pec_evt[i];
+      for (i=0;i<PFMW_PEVT_EVTCOUNT(from);i++) {
+	PFMW_PEVT_EVENT(evt,PFMW_PEVT_EVTCOUNT(evt)) = PFMW_PEVT_EVENT(from,i);
+	PFMW_PEVT_EVTCOUNT(evt)++;
+      }
       
-      if ((from->pec_count) > PMU_MAX_COUNTERS)
+      if ((PFMW_PEVT_EVTCOUNT(evt)) > PMU_MAX_COUNTERS)
 	{
 	bail:
-	  evt->pec_count = orig_cnt;
+	  PFMW_PEVT_EVTCOUNT(evt) = orig_cnt;
 	  return(PAPI_ECNFLCT);
-#else
-      for (i=0;i<from->pfp_count;i++)
-	evt->pfp_evt[evt->pfp_count++] = from->pfp_evt[i];
-      
-      if ((from->pfp_count) > PMU_MAX_COUNTERS)
-	{
-	bail:
-	  evt->pfp_count = orig_cnt;
-	  return(PAPI_ECNFLCT);
-#endif
 	}
+#ifdef ITANIUM2
+      evt->pfp_model = from->pfp_model;
+#endif
     }
 
-  /* Recalcuate the perfmon_req_t structure, may also signal conflict */
-#ifdef PFM06A
-  if (pfm_dispatch_events(evt,pc,&evt->pec_count))
-#else
-  if (pfm_dispatch_events(evt,pc,&evt->pfp_count))
-#endif
+  /* Recalcuate the pfmw_param_t structure, may also signal conflict */
+  if (pfmw_dispatch_events(evt,pc,&cnt))
     {
       goto bail;
       return(PAPI_ECNFLCT);
     }
 
-#ifdef PFM06A
-   for (i=0;i<evt->pec_count;i++)
+   this_state->pc_count = cnt;
+   for (i=0;i<PFMW_PEVT_EVTCOUNT(evt);i++)
     {
-      selector |= 1 << pc[i].pfr_reg.reg_num;
-#else
-   for (i=0;i<evt->pfp_count;i++)
-    {
-      selector |= 1 << pc[i].reg_num;
-#endif
+      selector |= 1 << PFMW_REG_REGNUM(pc[i]);
+
       DBG((stderr,"Selector is now 0x%x\n",selector));
     }
 
@@ -421,50 +426,26 @@ inline static int set_domain(hwd_control_state_t *this_state, int domain)
   if (!did)
     return(PAPI_EINVAL);
 
-#ifdef PFM06A
-  this_state->evt.pec_plm = mode;
-#else
-  this_state->evt.pfp_dfl_plm = mode;
-#endif
+  PFMW_EVT_DFLPLM(this_state->evt) = mode;
 
-  /* Bug fix in case we don't call pfm_dispatch_events after this code */
+  /* Bug fix in case we don't call pfmw_dispatch_events after this code */
 
   for (i=0;i<PMU_MAX_COUNTERS;i++)
     {
-#ifdef PFM06A
-      if (this_state->pc[i].pfr_reg.reg_num)
+      if (PFMW_REG_REGNUM(this_state->pc[i]))
 	{
-	  perfmon_reg_t value;
-	  DBG((stderr,"slot %d, register %ld active, config value 0x%lx\n",
-	       i,this_state->pc[i].pfr_reg.reg_num,this_state->pc[i].pfr_reg.reg_value));
+	  pfmw_arch_reg_t value;
+	  DBG((stderr,"slot %d, register %lud active, config value 0x%lx\n",
+	       i,(unsigned long)PFMW_REG_REGNUM(this_state->pc[i]),PFMW_REG_REGVAL(this_state->pc[i])));
 
-	  value.pmu_reg = 
-	    this_state->pc[i].pfr_reg.reg_value;
-	  value.pmc_plm = mode;
-	  this_state->pc[i].pfr_reg.reg_value = 
-	    value.pmu_reg;
+	  PFMW_ARCH_REG_REGVAL(value) = 
+	    PFMW_REG_REGVAL(this_state->pc[i]);
+	  PFMW_ARCH_REG_PMCPLM(value) = mode;
+	  PFMW_REG_REGVAL(this_state->pc[i]) = 
+	    PFMW_ARCH_REG_REGVAL(value);
 
-	  DBG((stderr,"new config value 0x%lx\n",this_state->pc[i].pfr_reg.reg_value));
+	  DBG((stderr,"new config value 0x%lx\n",PFMW_REG_REGVAL(this_state->pc[i])));
 	}
-#else
-      if (this_state->pc[i].reg_num)
-	{
-#if defined(ITANIUM2)
-	  pfm_ita2_reg_t value;
-#else
-	  pfm_ita_reg_t value;
-#endif
-
-	  DBG((stderr,"slot %d, register %d active, config value 0x%lx\n",
-	       i,this_state->pc[i].reg_num,this_state->pc[i].reg_value));
-
-	  value.reg_val = this_state->pc[i].reg_value;
-	  value.pmc_plm = mode;
-	  this_state->pc[i].reg_value = value.reg_val;
-
-	  DBG((stderr,"new config value 0x%lx\n",this_state->pc[i].reg_value));
-	}
-#endif
     }
 	
   return(PAPI_OK);
@@ -558,106 +539,54 @@ static int get_system_info(void)
   return(PAPI_OK);
 } 
 
-#ifdef PFM06A
-inline static int counter_event_shared(const pfm_event_config_t *a, const pfm_event_config_t *b, int cntr)
-#else
-inline static int counter_event_shared(const pfmlib_param_t *a, const pfmlib_param_t *b, int cntr)
-#endif
+inline static int counter_event_shared(const pfmw_param_t *a, const pfmw_param_t *b, int cntr)
 {
-#ifdef PFM06A
-  DBG((stderr,"%d %x vs %x \n",cntr,a->pec_evt[cntr],b->pec_evt[cntr]));
-  if (a->pec_evt[cntr] == b->pec_evt[cntr])
-#else
-  DBG((stderr,"%d %x vs %x \n",cntr,a->pfp_evt[cntr],b->pfp_evt[cntr]));
-  if (a->pfp_evt[cntr] == b->pfp_evt[cntr])
-#endif
+  DBG((stderr,"%d %x vs %x \n",cntr,PFMW_PEVT_EVENT(a,cntr),PFMW_PEVT_EVENT(b,cntr)));
+  if (PFMW_PEVT_EVENT(a,cntr) == PFMW_PEVT_EVENT(b,cntr))
     return(1);
 
   return(0);
 }
 
-#ifdef PFM06A
-inline static int counter_event_compat(const pfm_event_config_t *a, const pfm_event_config_t *b, int cntr)
-#else
-inline static int counter_event_compat(const pfmlib_param_t *a, const pfmlib_param_t *b, int cntr)
-#endif
+inline static int counter_event_compat
+(const pfmw_param_t *a, const pfmw_param_t *b, int cntr)
 {
-#ifdef PFM06A
-  DBG((stderr,"%d %d vs. %d\n",cntr,a->pec_plm,b->pec_plm));
-  if (a->pec_plm == b->pec_plm)
-#else
-  DBG((stderr,"%d %d vs. %d\n",cntr,a->pfp_dfl_plm,b->pfp_dfl_plm));
-  if (a->pfp_plm == b->pfp_plm)
-#endif
+  DBG((stderr,"%d %d vs. %d\n",cntr,PFMW_PEVT_PLM(a,cntr),PFMW_PEVT_PLM(b,cntr)));
+  if (PFMW_PEVT_PLM(a,cntr) == PFMW_PEVT_PLM(b,cntr))
     return(1);
 
   return(0);
 }
 
-#ifdef PFM06A
-inline static void counter_event_copy(const pfm_event_config_t *a, pfm_event_config_t *b, int cntr)
-#else
-inline static void counter_event_copy(const pfmlib_param_t *a, pfmlib_param_t *b, int cntr)
-#endif
+inline static void counter_event_copy(const pfmw_param_t *a, pfmw_param_t *b, int cntr)
 {
   DBG((stderr,"%d\n",cntr));
-#ifdef PFM06A
-  b->pec_evt[cntr] = a->pec_evt[cntr];
-  b->pec_count++;
-#else
-  b->pfp_evt[cntr] = a->pfp_evt[cntr];
-  b->pfp_count++;
-#endif
+  PFMW_PEVT_EVENT(b,cntr) = PFMW_PEVT_EVENT(a,cntr);
+  PFMW_PEVT_EVTCOUNT(b)++;
 }
 
 inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *global)
 {
   hwd_control_state_t *machdep = global->machdep;
   int i, selector = 0, hwcntr;
-#ifdef PFM06A
-  perfmon_reg_t flop_hack;
-  perfmon_req_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
-  memset(writeem,0x0,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
-#else
-#ifdef ITANIUM2
-  pfm_ita2_reg_t flop_hack;
-#else
-  pfm_ita_reg_t flop_hack;
-#endif
-  pfarg_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
-  memset(writeem,0x0,sizeof(pfarg_reg_t)*PMU_MAX_COUNTERS);
-#endif
-
+  pfmw_arch_reg_t flop_hack;
+  pfmw_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
+  memset(writeem, 0x0, sizeof writeem);
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
       /* Bug fix, we must read the counters out in the same order we programmed them. */
-      /* pfm_dispatch_events may request registers out of order. */
+      /* pfmw_dispatch_events may request registers out of order. */
 
-#ifdef PFM06A
-      readem[i].pfr_reg.reg_num = machdep->pc[i].pfr_reg.reg_num;
-
-      /* Writing doesn't matter, we're just zeroing the counter. */ 
-
-      writeem[i].pfr_reg.reg_num = PMU_MAX_COUNTERS+i;
-#else
-      readem[i].reg_num = machdep->pc[i].reg_num;
+      PFMW_REG_REGNUM(readem[i]) = PFMW_REG_REGNUM(machdep->pc[i]);
 
       /* Writing doesn't matter, we're just zeroing the counter. */ 
 
-      writeem[i].reg_num = PMU_MAX_COUNTERS+i;
-#endif
+      PFMW_REG_REGNUM(writeem[i]) = PMU_MAX_COUNTERS+i;
+
     }
 
-#ifdef PFM06A
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, 0, readem, PMU_MAX_COUNTERS) == -1) 
-#else
-#ifdef ITANIUM2
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, machdep->evt.pfp_count) == -1)
-#else
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, PMU_MAX_COUNTERS) == -1)
-#endif
-#endif
+  if (pfmw_perfmonctl(machdep->pid, PFM_READ_PMDS, readem, PFMW_EVT_EVTCOUNT(machdep->evt)) == -1) 
     {
       DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
       return PAPI_ESYS;
@@ -674,17 +603,10 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 	    {
 	      DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,local->overflow.threshold));
 	      /* Correct value read from kernel */
-#ifdef PFM06A
-	      readem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value += (unsigned long)local->overflow.threshold;
+	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->overflow.threshold;
 	      /* Ready the new structure */
-	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = (~0UL) - (unsigned long)local->overflow.threshold;
-	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = (~0UL) - (unsigned long)local->overflow.threshold;
-#else
-	      readem[i-1-PMU_MAX_COUNTERS].reg_value += (unsigned long)local->overflow.threshold;
-	      /* Ready the new structure */
-	      writeem[i-1-PMU_MAX_COUNTERS].reg_value = (~0UL) - (unsigned long)local->overflow.threshold;
-	      writeem[i-1-PMU_MAX_COUNTERS].reg_long_reset = (~0UL) - (unsigned long)local->overflow.threshold;
-#endif
+	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
+	      PFMW_REG_SMPLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
 	    }
 	  selector ^= 1 << (i-1); 
 	}
@@ -694,30 +616,18 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
-#ifdef PFM06A
-      flop_hack.pmu_reg = machdep->pc[i].pfr_reg.reg_value;
-      if (flop_hack.pmc_es == 0xa)
-	readem[i].pfr_reg.reg_value = readem[i].pfr_reg.reg_value * 4;
-#else
-      flop_hack.reg_val = machdep->pc[i].reg_value;
-      if (flop_hack.pmc_es == 0xa)
-	readem[i].reg_value = readem[i].reg_value * 4;
-#endif
+      PFMW_ARCH_REG_REGVAL(flop_hack) = PFMW_REG_REGVAL(machdep->pc[i]);
+      if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
+	PFMW_REG_REGVAL(readem[i]) = PFMW_REG_REGVAL(readem[i]) * 4;
     }
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
-#ifdef PFM06A
       DBG((stderr,"update_global_hwcounters() %d: G%ld = G%lld + C%ld\n",i+4,
-	   global->hw_start[i]+readem[i].pfr_reg.reg_value,
-	   global->hw_start[i],readem[i].pfr_reg.reg_value));
-      global->hw_start[i] = global->hw_start[i] + readem[i].pfr_reg.reg_value;
-#else
-      DBG((stderr,"update_global_hwcounters() %d: G%ld = G%lld + C%ld\n",i+4,
-	   global->hw_start[i]+readem[i].reg_value,
-	   global->hw_start[i],readem[i].reg_value));
-      global->hw_start[i] = global->hw_start[i] + readem[i].reg_value;
-#endif
+	   global->hw_start[i]+PFMW_REG_REGVAL(readem[i]),
+	   global->hw_start[i],PFMW_REG_REGVAL(readem[i])));
+      global->hw_start[i] = global->hw_start[i] + PFMW_REG_REGVAL(readem[i]);
+
     }
 
 #ifdef PFM06A
@@ -803,11 +713,8 @@ int _papi_hwd_init_global(void)
   if (papi_debug)
     pfmlib_options.pfm_debug = 1;
 #endif
-#ifdef PFM06A
-  if (pfmlib_config(&pfmlib_options))
-#else
-  if (pfm_set_options(&pfmlib_options))
-#endif
+
+  if (pfmw_set_options(&pfmlib_options))
     return(PAPI_ESYS);
 
   /* Fill in what we can of the papi_system_info. */
@@ -816,7 +723,12 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
-  retval = get_memory_info(&_papi_system_info.mem_info);
+  /* get_memory_info has a CPU model argument that is not used,
+   * fakining it here with hw_info.model which is not set by this
+   * substrate 
+   */
+  retval = get_memory_info(&_papi_system_info.mem_info,
+			   _papi_system_info.hw_info.model);
   if (retval)
     return(retval);
 
@@ -832,39 +744,26 @@ int _papi_hwd_init_global(void)
 int _papi_hwd_shutdown_global(void)
 {
   /* Need to pass in pid for _papi_hwd_shutdown_globabl in the future -KSL */
-#ifdef PFM06A
-  perfmonctl(getpid(), PFM_DISABLE, 0, NULL, 0);
-#else
-  perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0);
-#endif
+  pfmw_perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0);
+
   return(PAPI_OK);
 }
 
 int _papi_hwd_init(EventSetInfo *zero)
 {
-#ifdef PFM06A
-  perfmon_req_t ctx[1];
-#else
-  pfarg_context_t ctx[1];
-#endif
+  pfmw_context_t ctx[1];
   hwd_control_state_t *machdep = zero->machdep;
   
   memset(ctx, 0, sizeof(ctx));
+
+  PFMW_CTX_NOTIFYPID(ctx[0]) = getpid();
+  PFMW_CTX_FLAGS(ctx[0])     = PFM_FL_INHERIT_NONE;
 #ifdef PFM06A
-  ctx[0].pfr_ctx.notify_pid = getpid();
   ctx[0].pfr_ctx.notify_sig = SIGPROF;
-  ctx[0].pfr_ctx.flags      = PFM_FL_INHERIT_NONE; 
-#else
-  ctx[0].ctx_notify_pid = getpid();
-  ctx[0].ctx_flags      = PFM_FL_INHERIT_NONE; 
 #endif
 
-#ifdef PFM06A
-  if (perfmonctl(getpid(), PFM_CREATE_CONTEXT, 0 , ctx, 1) == -1 ) {
-#else
-  if (perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
-#endif
-    fprintf(stderr,"PID %d: perfmonctl error PFM_CREATE_CONTENT %d\n", getpid(), errno);
+  if (pfmw_perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+    fprintf(stderr,"PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", getpid(), errno);
   }
 
   /* 
@@ -872,11 +771,7 @@ int _papi_hwd_init(EventSetInfo *zero)
    * must be done before writing to any PMC/PMD
    */ 
 
-#ifdef PFM06A
-  if (perfmonctl(getpid(), PFM_ENABLE, 0, 0, 0) == -1) {
-#else
-  if (perfmonctl(getpid(), PFM_ENABLE, 0, 0) == -1) {
-#endif
+  if (pfmw_perfmonctl(getpid(), PFM_ENABLE, 0, 0) == -1) {
     if (errno == ENOSYS) 
       fprintf(stderr,"Your kernel does not have performance monitoring support !\n");
     fprintf(stderr,"PID %d: perfmonctl error PFM_ENABLE %d\n",getpid(),errno);
@@ -932,11 +827,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   int nselector = 0;
   int retval = 0;
   int selector = 0;
-#ifdef PFM06A
-  pfm_event_config_t tmp_cmd, *codes;
-#else
-  pfmlib_param_t tmp_cmd, *codes;
-#endif
+  pfmw_param_t tmp_cmd, *codes;
 
   if (EventCode & PRESET_MASK)
     { 
@@ -961,11 +852,10 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     {
       unsigned long hwcntr_num;
       int ev;
+      pfmw_code_t tmp;
 #ifdef PFM06A
-      pme_entry_code_t tmp;
       extern int pfm_findeventbyvcode(int code);
 #else
-      pme_ita_code_t tmp;
       extern int pfm_find_event_byvcode(int code, int *idx);
 #endif
 
@@ -993,9 +883,19 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       ev = pfm_findeventbyvcode(tmp.pme_vcode);
       if (ev == -1)
 	return(PAPI_EINVAL);
-      tmp_cmd.pec_count = 1;
       tmp_cmd.pec_evt[0] = ev;
+#elif PFM20
+      memset(&tmp_cmd, 0, sizeof tmp_cmd);
+      tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
+      tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
+      tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
+      tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
+      tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
+      ev = pfm_find_event_bycode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
+      if (ev != PFMLIB_SUCCESS )
+	return(PAPI_EINVAL);
 #else
+      memset(&tmp_cmd, 0, sizeof tmp_cmd);
       tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
       tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
       tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
@@ -1004,8 +904,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       ev = pfm_find_event_byvcode(tmp.pme_vcode, &(tmp_cmd.pfp_evt[0]));
       if (ev != PFMLIB_SUCCESS )
 	return(PAPI_EINVAL);
-      tmp_cmd.pfp_count = 1;
 #endif
+      PFMW_EVT_EVTCOUNT(tmp_cmd) = 1;
+
       codes = &tmp_cmd;
     }
 
@@ -1056,22 +957,12 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
    * Apparently so. -KSL */
   preset_index = in->code & PRESET_AND_MASK;
   for(i=0;i<PMU_MAX_COUNTERS;i++){
-#ifdef PFM06A
-    if ( this_state->evt.pec_evt[i] & used ) {
-       for ( j=i;j<(PMU_MAX_COUNTERS-1);j++ )
-           this_state->evt.pec_evt[j] = this_state->evt.pec_evt[j+1];
-#else
-    if ( this_state->evt.pfp_evt[i] & used ) {
-       for ( j=i;j<(PMU_MAX_COUNTERS-1);j++ )
-           this_state->evt.pfp_evt[j] = this_state->evt.pfp_evt[j+1];
-#endif
+    if ( PFMW_EVT_EVENT(this_state->evt,i) & used ) {
+      for ( j=i;j<(PMU_MAX_COUNTERS-1);j++ )
+         PFMW_EVT_EVENT(this_state->evt,j) = PFMW_EVT_EVENT(this_state->evt,j+1);
     }
   } 
-#ifdef PFM06A
-  this_state->evt.pec_count-=preset_map[preset_index].evt.pec_count;
-#else
-  this_state->evt.pfp_count-=preset_map[preset_index].evt.pfp_count;
-#endif
+  PFMW_EVT_EVTCOUNT(this_state->evt)-=PFMW_EVT_EVTCOUNT(preset_map[preset_index].evt);
 
   return(PAPI_OK);
 }
@@ -1089,12 +980,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   int i, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-#ifdef PFM06A
-  perfmon_req_t pd[PMU_MAX_COUNTERS];
-#else
-  pfarg_reg_t pd[PMU_MAX_COUNTERS];
-#endif
-
+  pfmw_reg_t pd[PMU_MAX_COUNTERS];
+  
   /* If we ARE NOT nested, 
      just copy the global counter structure to the current eventset */
 
@@ -1105,36 +992,22 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       pfm_stop();
 
       current_state->selector = this_state->selector;
-#ifdef PFM06A
-      memcpy(&current_state->evt,&this_state->evt,sizeof(pfm_event_config_t));
-      memcpy(current_state->pc,this_state->pc,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
-#else
-      memcpy(&current_state->evt,&this_state->evt,sizeof(pfmlib_param_t));
-      memcpy(current_state->pc,this_state->pc,sizeof(pfarg_reg_t)*PMU_MAX_COUNTERS);
-#endif
+
+      memcpy(&current_state->evt,&this_state->evt,sizeof this_state->evt);
+      memcpy(current_state->pc,this_state->pc,sizeof this_state->pc);
+      current_state->pc_count = this_state->pc_count;
 
     restart_pm_hardware:
 
-#ifdef PFM06A
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMCS, 0, current_state->pc, current_state->evt.pec_count) == -1) {
-#else
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->pc, current_state->evt.pfp_count) == -1) {
-#endif
+      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->pc, current_state->pc_count) == -1) {
 	fprintf(stderr,"child: perfmonctl error WRITE_PMCS errno %d\n",errno); pfm_start(); return(PAPI_ESYS);
       }
 
-#ifdef PFM06A
-      memset(pd, 0, sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
-#else
-      memset(pd, 0, sizeof(pfarg_context_t)*PMU_MAX_COUNTERS);
-#endif
+      memset(pd, 0, sizeof pd);
+
       for(i=0; i < PMU_MAX_COUNTERS; i++) 
 	{
-#ifdef PFM06A
-	  pd[i].pfr_reg.reg_num = PMU_MAX_COUNTERS+i;
-#else
-	  pd[i].reg_num = PMU_MAX_COUNTERS+i;
-#endif
+	  PFMW_REG_REGNUM(pd[i]) = PMU_MAX_COUNTERS+i;  
 	}
 
       if ((ESI->state & PAPI_OVERFLOWING) && (_papi_system_info.supports_hw_overflow))
@@ -1146,23 +1019,14 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	      if (hwcntr & selector)
 		{
 		  DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,ESI->overflow.threshold));
-#ifdef PFM06A
-		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = (~0UL) - (unsigned long)ESI->overflow.threshold;
-		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = (~0UL) - (unsigned long)ESI->overflow.threshold;
-#else
-		  pd[i-1-PMU_MAX_COUNTERS].reg_value = (~0UL) - (unsigned long)ESI->overflow.threshold;
-		  pd[i-1-PMU_MAX_COUNTERS].reg_long_reset = (~0UL) - (unsigned long)ESI->overflow.threshold;
-#endif
+		  PFMW_REG_REGVAL(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
+		  PFMW_REG_SMPLRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
 		}
 	      selector ^= 1 << (i-1); 
 	    }
 	}
       
-#ifdef PFM06A
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, 0, pd, PMU_MAX_COUNTERS) == -1) {
-#else
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, current_state->evt.pfp_count) == -1) {
-#endif
+      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS) == -1) {
 	fprintf(stderr,"child: perfmonctl error WRITE_PMDS errno %d\n",errno); pfm_start(); return(PAPI_ESYS);
       }
       
@@ -1224,19 +1088,11 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
 	/* How many and where are the shared and unshared events */
 
-#ifdef PFM06A
-	for (j=0;j<this_state->evt.pec_count;j++)
+	for (j=0;j<PFMW_EVT_EVTCOUNT(this_state->evt);j++)
 	  {
-	    for (i=0;i<current_state->evt.pec_count;i++)
+	    for (i=0;i<PFMW_EVT_EVTCOUNT(current_state->evt);i++)
 	      {
-		if (this_state->evt.pec_evt[j] == current_state->evt.pec_evt[i])
-#else
-	for (j=0;j<this_state->evt.pfp_count;j++)
-	  {
-	    for (i=0;i<current_state->evt.pfp_count;i++)
-	      {
-		if (this_state->evt.pfp_evt[j] == current_state->evt.pfp_evt[i])
-#endif
+		if (PFMW_EVT_EVENT(this_state->evt,j) == PFMW_EVT_EVENT(current_state->evt,i))
 		  {
 		    index_in_current[shared] = i+PMU_FIRST_COUNTER;
 		    index_in_this[shared] = j+PMU_FIRST_COUNTER;
@@ -1266,13 +1122,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 		    if (ESI->EventInfoArray[i].selector & (1 << index_in_this_not_shared[j]))
 		      {
 			ESI->EventInfoArray[i].selector ^= 1 << index_in_this_not_shared[j];
-#ifdef PFM06A
-			new_selector_in_this_not_shared[i] |= 1 << (current_state->evt.pec_count+j+PMU_FIRST_COUNTER);
-			new_operand_in_this_not_shared[i] = current_state->evt.pec_count+j+PMU_FIRST_COUNTER;
-#else
-			new_selector_in_this_not_shared[i] |= 1 << (current_state->evt.pfp_count+j+PMU_FIRST_COUNTER);
-			new_operand_in_this_not_shared[i] = current_state->evt.pfp_count+j+PMU_FIRST_COUNTER;
-#endif
+			new_selector_in_this_not_shared[i] |= 1 << (PFMW_EVT_EVTCOUNT(current_state->evt)+j+PMU_FIRST_COUNTER);
+			new_operand_in_this_not_shared[i] = PFMW_EVT_EVTCOUNT(current_state->evt)+j+PMU_FIRST_COUNTER;
 		      }
 		  }
 	      }
@@ -1311,11 +1162,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	  {
 	    if (index_in_current[i])
 	      {
-#ifdef PFM06A
-		this_state->pc[index_in_this[i]-PMU_FIRST_COUNTER].pfr_reg.reg_num = index_in_current[i];
-#else
-		this_state->pc[index_in_this[i]-PMU_FIRST_COUNTER].reg_num = index_in_current[i];
-#endif
+		PFMW_REG_REGNUM(this_state->pc[index_in_this[i]-PMU_FIRST_COUNTER]) = index_in_current[i];
 		this_state->selector ^= 1 << index_in_this[i];
 	      }
 	  }
@@ -1323,11 +1170,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	  {
 	    if (index_in_this_not_shared[i])
 	      {
-#ifdef PFM06A
-		this_state->pc[index_in_this_not_shared[i]-PMU_FIRST_COUNTER].pfr_reg.reg_num = current_state->evt.pec_count+i+PMU_FIRST_COUNTER;
-#else
-		this_state->pc[index_in_this_not_shared[i]-PMU_FIRST_COUNTER].reg_num = current_state->evt.pfp_count+i+PMU_FIRST_COUNTER;
-#endif
+		PFMW_REG_REGNUM(this_state->pc[index_in_this_not_shared[i]-PMU_FIRST_COUNTER]) = 
+		    PFMW_EVT_EVTCOUNT(current_state->evt)+i+PMU_FIRST_COUNTER;
 		this_state->selector ^= 1 << index_in_this_not_shared[i];
 	      }
 	  }
@@ -1335,19 +1179,12 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	  this_state->selector |= 1 << index_in_current[i];
 	for (i=0;i<not_shared;i++)
 	  {
-#ifdef PFM06A
-	    this_state->selector |= 1 << (current_state->evt.pec_count+i+PMU_FIRST_COUNTER);
+	    this_state->selector |= 1 << (PFMW_EVT_EVTCOUNT(current_state->evt)+i+PMU_FIRST_COUNTER);
 	    /* Add the not shared events to the end of the list of the current structure running */
-	    current_state->evt.pec_evt[current_state->evt.pec_count+i] = this_state->evt.pec_evt[index_in_this_not_shared[i]-PMU_FIRST_COUNTER];
+	    PFMW_EVT_EVENT(current_state->evt,PFMW_EVT_EVTCOUNT(current_state->evt)+i) = 
+		PFMW_EVT_EVENT(this_state->evt,index_in_this_not_shared[i]-PMU_FIRST_COUNTER);
 	  }
-	current_state->evt.pec_count += not_shared;
-#else
-	    this_state->selector |= 1 << (current_state->evt.pfp_count+i+PMU_FIRST_COUNTER);
-	    /* Add the not shared events to the end of the list of the current structure running */
-	    current_state->evt.pfp_evt[current_state->evt.pfp_count+i] = this_state->evt.pfp_evt[index_in_this_not_shared[i]-PMU_FIRST_COUNTER];
-	  }
-	current_state->evt.pfp_count += not_shared;
-#endif
+	PFMW_EVT_EVTCOUNT(current_state->evt) += not_shared;
 
 	/* Re-encode the command structure, return the new selector */
 	nselector = set_hwcntr_codes(current_state,NULL);
@@ -1653,11 +1490,8 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
   } 
 #endif
   _papi_hwi_dispatch_overflow_signal((void *)context); 
-#ifdef PFM06A
-  perfmonctl(info->sy_pid, PFM_RESTART, 0, 0, 0);
-#else
-  perfmonctl(info->sy_pid, PFM_RESTART, 0, 0);
-#endif
+  pfmw_perfmonctl(info->sy_pid, PFM_RESTART, 0, 0);
+
   pfm_start();
 }
 
@@ -1665,11 +1499,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 {
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-#ifdef PFM06A
-  perfmon_req_t *pc = this_state->pc;
-#else
-  pfarg_reg_t *pc = this_state->pc;
-#endif
+  pfmw_reg_t *pc = this_state->pc;
   int i, selector, hwcntr, retval = PAPI_OK;
 
   if (overflow_option->threshold == 0)
@@ -1683,17 +1513,10 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  hwcntr = hwcntr - 1;
 	  for (i=0;i<PMU_MAX_COUNTERS;i++)
 	    {
-#ifdef PFM06A
-	      if (pc[i].pfr_reg.reg_num == hwcntr)
+	      if (PFMW_REG_REGNUM(pc[i]) == hwcntr)
 		{
-		  DBG((stderr,"Found hw counter %d in %d, flags %d\n",hwcntr,i,pc[i].pfr_reg.reg_flags));
-		  pc[i].pfr_reg.reg_flags = 0;
-#else
-	      if (pc[i].reg_num == hwcntr)
-		{
-		  DBG((stderr,"Found hw counter %d in %d, flags %d\n",hwcntr,i,pc[i].reg_flags));
-		  pc[i].reg_flags = 0;
-#endif
+		  DBG((stderr,"Found hw counter %d in %d, flags %d\n",hwcntr,i,PFMW_REG_REGNUM(pc[i])));
+		  PFMW_REG_REGFLAGS(pc[i]) = 0;
 		  break;
 		}
 	    }
@@ -1737,21 +1560,12 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  hwcntr = hwcntr - 1;
 	  for (i=0;i<PMU_MAX_COUNTERS;i++)
 	    {
-#ifdef PFM06A
-	      if (pc[i].pfr_reg.reg_num == hwcntr)
+	      if (PFMW_REG_REGNUM(pc[i]) == hwcntr)
 		{
 		  DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
-		  pc[i].pfr_reg.reg_flags = PFM_REGFL_OVFL_NOTIFY;
+		  PFMW_REG_REGFLAGS(pc[i]) = PFM_REGFL_OVFL_NOTIFY;
 		  break;
 		}
-#else
-	      if (pc[i].reg_num == hwcntr)
-		{
-		  DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
-		  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
-		  break;
-		}
-#endif
 	    }
 	  selector ^= 1 << hwcntr;
 	}
