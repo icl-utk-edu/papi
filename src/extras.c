@@ -17,6 +17,7 @@ vendors did in the kernel extensions or performance libraries. */
   #include SUBSTRATE
 #else
   #include "win32.h"
+//  #include <winbase.h>
 #endif
 
 
@@ -243,17 +244,23 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 #ifdef _WIN32
 
 static MMRESULT	wTimerID;	// unique ID for referencing this timer
+static UINT		wTimerRes;	// resolution for this timer
 
 static int start_timer(int milliseconds)
 {
   int retval = PAPI_OK;
 
   TIMECAPS	tc;
-  UINT		wTimerRes;
+  DWORD		threadID;
 
   // get the timer resolution capability on this system
   if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) return(PAPI_ESYS);
   
+  // get the ID of the current thread to read the context later
+  // NOTE: Use of this code is restricted to W2000 and later...
+  threadID = GetCurrentThreadId();
+
+  // set the minimum usable resolution of the timer
   wTimerRes = min(max(tc.wPeriodMin, 1), tc.wPeriodMax);
   timeBeginPeriod(wTimerRes);
   
@@ -262,7 +269,7 @@ static int start_timer(int milliseconds)
   //	and calling (_papi_hwd_timer_callback())
   //	with no data
   wTimerID = timeSetEvent(milliseconds, wTimerRes, 
-		_papi_hwd_timer_callback, (DWORD)NULL, TIME_PERIODIC);
+		_papi_hwd_timer_callback, threadID, TIME_PERIODIC);
   if(!wTimerID) return PAPI_ESYS;
 
   return(retval);
@@ -270,8 +277,11 @@ static int start_timer(int milliseconds)
 
 static int stop_timer(void)
 {
-  if (timeKillEvent(wTimerID) != TIMERR_NOERROR) return(PAPI_ESYS);
-  return(PAPI_OK);
+  int retval = PAPI_OK;
+
+  if (timeKillEvent(wTimerID) != TIMERR_NOERROR) retval = PAPI_ESYS;
+  timeEndPeriod(wTimerRes);
+  return(retval);
 }
 
 #else
