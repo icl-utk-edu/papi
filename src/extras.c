@@ -24,8 +24,6 @@ vendors did in the kernel extensions or performance libraries. */
 #include <limits.h>
 #endif
 
-#define DEBUG
-
 #ifdef ANY_THREAD_GETS_SIGNAL
 extern void _papi_hwi_lookup_thread_symbols(void);
 #endif
