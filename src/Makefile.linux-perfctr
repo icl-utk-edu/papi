@@ -45,19 +45,15 @@ CC_R	= $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DPAPI_PERFCTR_INTR_SUPPORT
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
-MISCHDRS= x86-events.h ia32_presets.h
+MISCHDRS= ia32_presets.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
 
-x86-events.h: $(PERFCTR)/usr.lib/event_codes.h
-	cp $(PERFCTR)/usr.lib/event_codes.h $@
-
 libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o $(PERFCTR)/usr.lib/libperfctr.so
 	cp $(PERFCTR)/usr.lib/libperfctr.o .
-	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
-$(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o:
+$(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)
 
 $(PERFCTR)/usr.lib/libperfctr.so:
@@ -69,4 +65,5 @@ native_clean:
 
 native_install:
 	cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
+	cp -p $(PERFCTR)/usr.lib/event_codes.h $(DESTDIR)/include
 	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
