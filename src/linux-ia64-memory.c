@@ -1,3 +1,12 @@
+/*
+* File:    linux-ia64-memory.c
+* Author:  Kevin London
+*          london@cs.utk.edu
+*
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 #ifdef __LINUX__
 #include <limits.h>
@@ -14,24 +23,32 @@ int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 
 long _papi_hwd_get_dmem_info(int option){
    pid_t pid = getpid();
-   prpsinfo_t info;
    char pfile[256];
-   int fd;
+   FILE * fd;
+   int tmp;
+   unsigned int vsize,rss;
 
-   sprintf(pfile, "/proc/%05d", pid);
-   if((fd=open(pfile,O_RDONLY)) <0 ) {
-        DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d\n",pid));
+   sprintf(pfile, "/proc/%d/stat", pid);
+   if((fd=fopen(pfile,"r")) == NULL ) {
+        DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d/stat\n",pid));
         return(PAPI_ESYS);
    }
-   if(ioctl(fd, PIOCPSINFO,  &info)<0){
-        return(PAPI_ESYS);
-   }
-   close(fd);
+  fgets(pfile, 256, fd);
+  fclose(fd);
+  
+   /* Scan through the information */
+  sscanf(pfile,"%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %
+d %u %u", 
+        &tmp,pfile,pfile,&tmp,&tmp,&tmp,&tmp,&tmp,
+        &tmp,&tmp,&tmp,&tmp, &tmp,&tmp,&tmp,&tmp,
+        &tmp, &tmp,&tmp,&tmp,&tmp,&tmp, &vsize,&rss );
  switch(option){
    case PAPI_GET_RESSIZE:
-        return(info.pr_rssize);
+        return(rss);
    case PAPI_GET_SIZE:
-        return(info.pr_size);
+        tmp=getpagesize();
+        if ( tmp == 0 ) tmp = 1;
+        return((vsize/tmp));
    default:
         return(PAPI_EINVAL);
   }

@@ -1,3 +1,14 @@
+/*
+* File:    irix-memory.c
+* Author:  Kevin London
+*          london@cs.utk.edu
+* Author:  Zhou Min
+*	   min@cs.utk.edu
+*
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 #include <invent.h>
 #include <sys/systeminfo.h>

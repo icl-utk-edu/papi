@@ -1,3 +1,12 @@
+/*
+* File:    aix-memory.c
+* Author:  Kevin London
+*          london@cs.utk.edu
+*
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 #include <sys/systemcfg.h>
 #include <procinfo.h>

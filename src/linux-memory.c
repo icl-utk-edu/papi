@@ -399,11 +399,6 @@ long _papi_hwd_get_dmem_info(int option){
 	&tmp,pfile,pfile,&tmp,&tmp,&tmp,&tmp,&tmp,
 	&tmp,&tmp,&tmp,&tmp, &tmp,&tmp,&tmp,&tmp,
 	&tmp, &tmp,&tmp,&tmp,&tmp,&tmp, &vsize,&rss );
-/*
-	&tmp[0],pfile,pfile,&tmp[1],&tmp[2],&tmp[3],&tmp[4],&tmp[5],
-	&tmp[6],&tmp[7],&tmp[8],&tmp[9], &tmp[10],&tmp[11],&tmp[12],&tmp[13],
-	&tmp[14], &tmp[15],&tmp[16],&tmp[17],&tmp[18],&tmp[19], &vsize,&rss );
-*/
  switch(option){
    case PAPI_GET_RESSIZE:
         return(rss);

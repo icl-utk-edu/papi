@@ -1,3 +1,12 @@
+/*
+* File:    alpha-memory.c
+* Author:  Kevin London
+*          london@cs.utk.edu
+*
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 #include <sys/procfs.h>
 #include <stdio.h>

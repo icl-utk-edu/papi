@@ -1,3 +1,12 @@
+/*
+* File:    unicos-memory.c
+* Author:  Kevin London
+*          london@cs.utk.edu
+*
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 
 int get_memory_info( PAPI_mem_info_t * mem_info ){
