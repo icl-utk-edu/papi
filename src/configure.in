@@ -212,11 +212,7 @@ case "$OS" in
        esac
        ;;
   unicos)
-       case "$CPU" in
-            x1-msp)
                  MAKEVER="$OS"-"$CPU" ;;
-       esac
-       ;;
 esac
 #echo $MAKEVER
 case "$MAKEVER" in 
