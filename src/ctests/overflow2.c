@@ -1,8 +1,8 @@
 /* 
 * File:    overflow.c
 * CVS:     $Id$
-* Author:  Philip Mucci
-*          mucci@cs.utk.edu
+* Author:  Nils Smeds  [Based on tests/overflow.c by Philip Mucci]
+*          smeds@pdc.kth.se
 * Mods:    <your name here>
 *          <your email address>
 */  
@@ -10,8 +10,8 @@
 /* This file performs the following test: overflow dispatch
 
      The Eventset contains:
-     + PAPI_TOT_CYC
-     + PAPI_FP_INS (overflow monitor)
+     + PAPI_TOT_CYC (overflow monitor)
+     + PAPI_FP_INS
 
    - Start eventset 1
    - Do flops
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet, values[0]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0, handler);
+  retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, THRESHOLD, 0, handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
   retval = PAPI_start(EventSet);
@@ -132,14 +132,14 @@ int main(int argc, char **argv)
 	 (values[0])[0],(values[1])[0]);
 	printf(OUT_FMT, event_name,
 	 (values[0])[1],(values[1])[1]);
-        printf("Overflows    : %16s%16d\n","",total);
+	printf("Overflows    : %16s%16d\n","",total);
 	printf("-----------------------------------------------\n");
 
 	printf("Verification:\n");
 	if (PAPI_event == PAPI_FP_INS)
 		printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
 	printf("Column 1 approximately equals column 2\n");
-	printf(TAB1, "Row 3 approximately equals",(values[0])[1]/THRESHOLD);
+	printf(TAB1, "Row 3 approximately equals",(values[0])[0]/THRESHOLD);
   }
 
   if (PAPI_event == PAPI_FP_INS) {
@@ -160,8 +160,8 @@ int main(int argc, char **argv)
   if ( values[1][1] > max || values[1][1] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
 
-  min = (long_long)((values[0][1]*.85)/THRESHOLD);
-  max = (long_long)((values[0][1]*1.15)/THRESHOLD);
+  min = (long_long)((values[0][0]*.85)/THRESHOLD);
+  max = (long_long)((values[0][0]*1.15)/THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
   test_pass(__FILE__,NULL,0);

@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 	printf("Test type    : %16d%16d\n",1,2);
 	printf(OUT_FMT, event_name,
 	 values[0],values[1]);
-	printf("Overflows    : %16d\n",total);
+        printf("Overflows    : %16s%16d\n","",total);
 	printf("-----------------------------------------------\n");
 
 	printf("Verification:\n");
