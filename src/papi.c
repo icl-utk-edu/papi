@@ -1563,12 +1563,10 @@ int PAPI_add_events(int EventSet, int *Events, int number)
        retval = PAPI_add_event(EventSet, Events[i]);
        if (retval != PAPI_OK)
 	 {
-	   while (i != 0)
-	     {
-	       i--;
-	       PAPI_remove_event(EventSet, Events[i]);
-	     }
-	   papi_return(retval);
+	   if (i == 0)
+	     papi_return(retval);
+	   else
+	     return(i);
 	 }
      }
    return(PAPI_OK);
@@ -1581,13 +1579,18 @@ int PAPI_remove_events(int EventSet, int *Events, int number)
    if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
 
-   for (i = 0; i < number; i++) {
-      retval = PAPI_remove_event(EventSet, Events[i]);
-      if ((retval != PAPI_OK) && (err_retval == PAPI_OK))
-	err_retval = retval;
-   }
-
-   return (err_retval);
+   for (i = 0; i < number; i++) 
+     {
+       retval = PAPI_remove_event(EventSet, Events[i]);
+       if (retval != PAPI_OK)
+	 {
+	   if (i == 0)
+	     papi_return(retval);
+	   else
+	     return(i);
+	 }
+     }
+   return(PAPI_OK);
 }
 
 int PAPI_list_events(int EventSet, int *Events, int *number)
