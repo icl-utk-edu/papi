@@ -26,21 +26,43 @@
 #define NUM_THREADS 4
 #define SUCCESS 1
 #define FAILURE 0
-
+//#define METRIC PAPI_FP_INS
+#define METRIC PAPI_L1_DCM
 extern void do_flops(int);
 extern void do_reads(int);
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
+#if defined(sparc) && defined(sun)
+const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { 
+  PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, PAPI_LD_INS,
+  PAPI_SR_INS, PAPI_L2_TCM, 0, };
+#else
+const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { 
+  PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, PAPI_L2_TCM, 
+  PAPI_BR_CN, PAPI_RES_STL, 0, };
+#endif
+static int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
+static int num_PAPI_events = 0;
+
 void init_papi_pthreads(void)
 {
   int retval;
+  const int *inev;
+  int *outev;
 
   /* Initialize the library */
 
   if((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
+  /* Investigate the set of candidate events */
+  num_PAPI_events = 0;
+  for(inev=preset_PAPI_events,outev=PAPI_events;*inev;inev++) {
+    if(PAPI_query_event(*inev) == PAPI_OK) {
+      *outev++=*inev;num_PAPI_events++;
+    }
+  }
   /* Enable multiplexing support */
 
   if( (retval = PAPI_multiplex_init()) != PAPI_OK )
@@ -60,6 +82,7 @@ void init_papi_pthreads(void)
      else
         test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
   }
+
 }
 
 int do_pthreads(void *(*fn)(void *))
@@ -100,15 +123,10 @@ void *case1_pthreads(void *arg)
   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-#if defined(sun) && defined(sparc)
-  if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS))!=PAPI_OK )
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-#else
-  if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS))!=PAPI_OK )
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-#endif
-  if((retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for(i=0;i<2;i++) {
+    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+      test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  }
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
@@ -147,11 +165,10 @@ void *case2_pthreads(void *arg)
   if((retval = PAPI_set_multiplex(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-  if((retval = PAPI_add_event(&EventSet, PAPI_FP_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
-  if((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for(i=0;i<2;i++) {
+    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+      test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  }
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
@@ -188,11 +205,10 @@ void *case3_pthreads(void *arg)
   if((retval = PAPI_create_eventset(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-  if((retval = PAPI_add_event(&EventSet, PAPI_FP_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
-  if((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for(i=0;i<2;i++) {
+    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+      test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  }
 
   if((retval = PAPI_set_multiplex(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
@@ -232,41 +248,18 @@ void *case4_pthreads(void *arg)
   if((retval = PAPI_create_eventset(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-  if((retval = PAPI_add_event(&EventSet, PAPI_FP_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
-  if((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for(i=0;i<2;i++) {
+    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+      test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  }
 
   if((retval = PAPI_set_multiplex(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || (defined(__ia64__) && defined(linux))
-  if((retval = PAPI_add_event(&EventSet, PAPI_L1_DCM))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
- #if defined(_POWER4)
-  if((retval = PAPI_add_event(&EventSet, PAPI_L1_DCA))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
- #else
-  if((retval = PAPI_add_event(&EventSet, PAPI_L1_ICM))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
- #endif
-#elif  defined(sparc) && defined(sun)
-  if((retval = PAPI_add_event(&EventSet, PAPI_LD_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
-  if((retval = PAPI_add_event(&EventSet, PAPI_SR_INS))!=PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-#elif defined(__ALPHA) && defined(__osf__)
-  retval = PAPI_add_event(&EventSet, PAPI_BR_CN);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-  retval = PAPI_add_event(&EventSet, PAPI_RES_STL);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-#else
-#error "Architecture not ported yet"
-#endif
+  for(i=2;i<4;i++) {
+    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+      test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  }
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
