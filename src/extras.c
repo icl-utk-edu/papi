@@ -416,7 +416,7 @@ int _papi_hwi_start_timer(int milliseconds)
 
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
-   if (_papi_hwi_using_signal)
+   if ((_papi_hwi_using_signal-1))
      {
        INTDBG("itimer already installed\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
