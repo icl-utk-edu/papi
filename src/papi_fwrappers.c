@@ -146,20 +146,20 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
 }
 
 #if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_hardware_info, PAPIF_HARDWARE_INFO, (int *ncpu,
+PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
                                                           int *nnodes, int *totalcpus,
                                                           int *vendor, _fcd vendor_fcd,
                                                           int *model, _fcd model_fcd,
                                                           double *revision, double *mhz))
 #elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_get_hardware_info, PAPIF_HARDWARE_INFO, (int *ncpu,
+PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
                                                           int *nnodes, int *totalcpus,
                                                           int *vendor, char *vendor_str,
                                                           int *model, char *model_str,
                                                           float *revision, float *mhz,
                                                           int vendor_len, int model_len))
 #else
-PAPI_FCALL(papif_get_hardware_info, PAPIF_HARDWARE_INFO, (int *ncpu,
+PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
                                                           int *nnodes, int *totalcpus,
                                                           int *vendor,
                                                           char *vendor_string, int *model,
