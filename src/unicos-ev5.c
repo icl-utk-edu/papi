@@ -117,16 +117,25 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 
    for(i = 0; i < ESI->NativeCount; i++) {
       index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
+   /* Check for conflicts: These 3 events can form
+      another event when 21 && 12 or 22 && 12 are
+      in the same eventset, t3e doesn't realize this
+      is what the user wants.  Instead, it considers
+      this the event 10 or 11. */
+      if(index == 21 || index == 22 || index == 12) {
+         if(flag) return(0);
+         flag = 1;
+      }
       if(native_table[index].resources.selector[0] != -1) {
-         if(sel0) return(PAPI_ECNFLCT);
+         if(sel0) return(0);
          sel0 = CTL_ON;
       }
       if(native_table[index].resources.selector[1] != -1) {
-         if(sel1) return(PAPI_ECNFLCT);
+         if(sel1) return(0);
          sel1 = CTL_ON;
       }
       if(native_table[index].resources.selector[2] != -1) {
-         if(sel2) return(PAPI_ECNFLCT);
+         if(sel2) return(0);
          sel2 = CTL_ON;
       }
    }
