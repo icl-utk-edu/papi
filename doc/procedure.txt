@@ -1,7 +1,11 @@
-Creating HTML Man Pages and Programmer's Reference Materials
+Creating PAPI Documentation
+
 
 One way to use this procedure is to print a copy and check off
 the lines as they are completed to avoid confusion.
+
+Creating HTML Man Pages and Programmer's Reference Materials
+
 NOTE: Steps 1 - 8 can be done on Linux or Windows; 
   the rest require Windows, Microsoft Word, and Adobe Distiller.
 
@@ -34,9 +38,9 @@ __8.  execute cat_progref.bat (on Windows)
 	papif_get_preload.html		papi_label_event.html
 	papi_library_init.html		papi_list_events.html
 	papi_lock.html			papi_multiplex_init.html
-	papi_num_counters.html		papi_overflow.html
-	papi_perror.html		papi_profil.html
-	papi_query_all_events_verbose.html
+	papi_num_counters.html		papi_num_hwctrs.html
+	papi_overflow.html		papi_perror.html
+	papi_profil.html		papi_query_all_events_verbose.html
 	papi_query_event.html		papi_query_event_verbose.html
 	papi_read.html			papi_read_counters.html
 	papi_rem_event.html		papi_rem_events.html
@@ -66,8 +70,7 @@ __16. Run the ProgRef_Replacements Macro by double-clicking it,
       This macro will insert page breaks at the end of each man page,
       and eliminate a bunch of extraneous empty paragraphs.
 __17. Scan the document for any other formatting changes (page breaks, etc.)
-__18. Save As... the document as "PAPI_Prog_Ref.doc" 
-      or another name of your choice.
+__18. Save As... "PAPI_Prog_Ref.doc" or another name of your choice.
 __19. Use Adobe Acrobat Distiller to create both ps and pdf formats:
 __19a. For ps, General should optimize for print, and ps file should not be deleted.
       Display options Links should be set to 'invisible'.
@@ -76,3 +79,15 @@ __19b. For pdf, General should optimize for screen. Display options Links set to
 __20. Save As HTML. Change the 'Title' field of the document to 'PAPI Programmer's Reference'.
 __21. Close Word; copy target documents to their appropriate locations.
 
+
+Creating User's Guide and Software Specification Materials
+
+__1. Open Word and open PAPI_USERS_GUIDE.doc.
+__2. Make any changes needed for current release.
+__3. Commit changes to cvs.
+__4. Save As... under a version specific name such as PAPI_USERS_GUIDE_23.doc.
+__5. Use Adobe Acrobat Distiller to create both ps and pdf formats, following
+	step 19 above.
+__6. Save As HTML. Change the 'Title' field of the document to 'PAPI User's Guide'.
+__7. Repeat steps 2 - 6 for PAPI_Software_Spec.doc.
+__8. Close Word; copy target documents to their appropriate locations.
