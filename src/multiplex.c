@@ -417,7 +417,7 @@ static void mpx_handler(int signal)
 #endif
 
 	signal = signal;	/* unused */
-
+	fprintf(stderr,"%lu\n",thread_id_fn());
 
 	/* This handler can be invoked either when a timer expires
 	 * or when another thread in this handler responding to the
@@ -1210,7 +1210,7 @@ int mpx_init(int interval)
 static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 		int num_events, int domain, int granularity)
 {
-	int i, retval;
+	int i, retval, num_events_success = 0;
 	MasterEvent * mev;
 #if 0
 	PAPI_option_t options;
@@ -1245,45 +1245,95 @@ static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 					|| event_list[i] == PAPI_IPS ); 
 
 			retval = PAPI_create_eventset(&(mev->papi_event));
-			assert(retval == PAPI_OK);
-			retval = PAPI_add_event(&(mev->papi_event),
-					event_list[i]);
-			assert(retval == PAPI_OK);
+			if (retval != PAPI_OK)
+			  {
+#ifdef MPX_DEBUG
+			    fprintf(stderr,"Event %d could not be counted.\n",event_list[i]);
+#endif
+			  bail:
+			    PAPI_cleanup_eventset(&(mev->papi_event));
+			    PAPI_destroy_eventset(&(mev->papi_event));
+			    free(mev);
+			    mev = NULL;
+			    break;
+			  }
+
+			retval = PAPI_add_event(&(mev->papi_event),event_list[i]);
+			if (retval != PAPI_OK)
+			  {
+#ifdef MPX_DEBUG
+			    fprintf(stderr,"Event %d could not be counted.\n",event_list[i]);
+#endif
+			    goto bail;
+			  }
 
 			/* Always count total cycles so we can scale results.
-			 * If user just requested cycles, don't add that
-			 * event again.
-			 */
-			if( event_list[i] != PAPI_TOT_CYC ) {
-				retval = PAPI_add_event(&(mev->papi_event),
-						PAPI_TOT_CYC); 
-				assert(retval == PAPI_OK);
-			}
+			 * If user just requested cycles, don't add that event again. */
+
+			if (event_list[i] != PAPI_TOT_CYC) 
+			  {
+			    retval = PAPI_add_event(&(mev->papi_event), PAPI_TOT_CYC); 
+			    if (retval != PAPI_OK)
+			      {
+#ifdef MPX_DEBUG
+				fprintf(stderr,"PAPI_TOT_CYC could not be counted at the same time.\n");
+#endif
+				goto bail;
+			      }
+			  }
+
+			/* Set the options for the event set */
 #if 0
 			options.domain.eventset = mev->papi_event;
 			options.domain.domain = domain;
 			retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-			assert(retval == PAPI_OK);
+			if (retval != PAPI_OK)
+			  {
+#ifdef MPX_DEBUG
+			    fprintf(stderr,"PAPI_set_opt(PAPI_SET_DOMAIN) failed.\n");
+#endif
+			    goto bail;
+			  }
 #endif
 #if 0
 			options.granularity.eventset = mev->papi_event;
 			options.granularity.granularity = granularity;
 			retval = PAPI_set_opt(PAPI_SET_GRANUL, &options);
-			assert(retval == PAPI_OK);
+			if (retval != PAPI_OK)
+			  {
+#ifdef MPX_DEBUG
+			    fprintf(stderr,"PAPI_set_opt(PAPI_SET_GRANUL) failed.\n");
 #endif
+			    goto bail;
+			  }
+#endif
+
+			/* Chain the event set into the 
+			 * master list of event sets used in
+			 * multiplexing. */
+
 			mev->next = *head;
 			*head = mev;
 		}
 
-		mpx_events->mev[mpx_events->num_events+i] = mev;
-		mpx_events->mev[mpx_events->num_events+i]->uses++;
+		/* If we created a new event set, or we found a matching
+		 * eventset already in the list, then add the pointer in
+		 * the master list to this threads list. Then we bump the
+		 * number of successfully added events. */
+
+		mpx_events->mev[mpx_events->num_events+num_events_success] = mev;
+		mpx_events->mev[mpx_events->num_events+num_events_success]->uses++;
+		num_events_success++;
 	}
 
 	/* Always be sure the head master event points to the thread */
-	if( *head != NULL ) {
+	if ( *head != NULL ) {
 		(*head)->mythr = mpx_events->mythr;
 	}
-	mpx_events->num_events += num_events;
+#ifdef MPX_DEBUG
+	fprintf(stderr,"%d of %d events were added successfully.\n",num_events,num_events_success);
+#endif
+	mpx_events->num_events += num_events_success;
 
 }
 
@@ -1320,10 +1370,8 @@ static void mpx_delete_events(MPX_EventSet * mpx_events)
 			} else {
 				lastmev->next = nextmev;
 			}
-			retval = PAPI_cleanup_eventset(&(mev->papi_event));
-			assert(retval == PAPI_OK);
-			retval = PAPI_destroy_eventset(&(mev->papi_event));
-			assert(retval == PAPI_OK);
+			PAPI_cleanup_eventset(&(mev->papi_event));
+			PAPI_destroy_eventset(&(mev->papi_event));
 			free(mev);
 		} else {
 			lastmev = mev;
