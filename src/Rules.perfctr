@@ -81,13 +81,17 @@ linux.o: linux.c
 native_clean:
 	$(MAKE) -C $(PERFCTR) distclean
 
-ifeq (${VERSION},2.6.x)
-native_install:
-	-$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
-else
+ifeq (,${PERFCTR_PREFIX})
+ifeq (${VERSION},2.4.x)
 native_install:
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib
 	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
+else
+native_install:
+	-$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
+endif
+else
+native_install:
 endif
 
