@@ -54,6 +54,11 @@ int get_memory_info(PAPI_hw_info_t * mem_info)
    L[1].cache[0].size = _system_configuration.L2_cache_size;
    L[1].cache[0].associativity = _system_configuration.L2_cache_asc;
    /* is there a line size for Level 2 cache? */
+
+   /* it looks like we've always got at least 2 levels of info */
+   /* what about level 3 cache? */
+   mem_info->mem_hierarchy.levels = 2;
+
    return PAPI_OK;
 }
 
