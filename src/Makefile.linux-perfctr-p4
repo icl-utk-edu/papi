@@ -1,7 +1,7 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR	= ./perfctr-2.3.12
 OPTFLAGS= -g -Wall -DDEBUG
-TOPTFLAGS= -g -Wall
+TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS
 #
 # GNU G77 section
 #

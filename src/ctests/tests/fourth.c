@@ -45,6 +45,10 @@ int main(int argc, char **argv)
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+#ifdef NO_SIMULT_EVENTSETS
+        test_skip(__FILE__,__LINE__,"No Simultaneous EventSet support", PAPI_ESBSTR);
+#endif
+
   if ( !TESTS_QUIET ) {
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
