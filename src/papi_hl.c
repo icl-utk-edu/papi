@@ -107,7 +107,7 @@ int _internal_check_state(HighLevelInfo ** outgoing)
    if (init_level == PAPI_NOT_INITED) {
       retval = PAPI_library_init(PAPI_VER_CURRENT);
       if (retval != PAPI_VER_CURRENT) {
-         return (PAPI_EINVAL);
+         return (retval);
       } else {
          PAPI_lock(HIGHLEVEL_LOCK);
          init_level = PAPI_HIGH_LEVEL_INITED;
@@ -122,13 +122,13 @@ int _internal_check_state(HighLevelInfo ** outgoing)
        != PAPI_OK || state == NULL) {
       state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
       if (state == NULL)
-         return (PAPI_ESYS);
+         return (PAPI_ENOMEM);
 
       memset(state, 0, sizeof(HighLevelInfo));
       state->EventSet = -1;
 
       if ((retval = PAPI_create_eventset(&state->EventSet)) != PAPI_OK)
-         return (PAPI_ESYS);
+         return (retval);
 
       if ((retval = PAPI_set_thr_specific(PAPI_HIGH_LEVEL_TLS, state)) != PAPI_OK)
          return (retval);
@@ -226,21 +226,21 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
 
    if (state->running == 0) {
       if (PAPI_query_event(EVENT) != PAPI_OK)
-         return (PAPI_ESBSTR);
+         return (PAPI_ENOEVNT);
 
       if ((retval = PAPI_add_event(state->EventSet, EVENT)) != PAPI_OK) {
          _internal_cleanup_hl_info(state);
          PAPI_cleanup_eventset(state->EventSet);
-         return (PAPI_ESBSTR);
+         return (retval);
       }
 
       if (PAPI_query_event(PAPI_TOT_CYC) != PAPI_OK)
-         return (PAPI_ESBSTR);
+         return (PAPI_ENOEVNT);
 
       if ((retval = PAPI_add_event(state->EventSet, PAPI_TOT_CYC)) != PAPI_OK) {
          _internal_cleanup_hl_info(state);
          PAPI_cleanup_eventset(state->EventSet);
-         return (PAPI_ESBSTR);
+         return (retval);
       }
 
       state->initial_time = PAPI_get_real_usec();
