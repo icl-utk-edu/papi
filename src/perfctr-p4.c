@@ -53,8 +53,6 @@ extern papi_mdi_t _papi_hwi_system_info;
 /* BEGIN LOCAL DECLARATIONS */
 /****************************/
 
-P4_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
-
 /**************************/
 /* END LOCAL DECLARATIONS */
 /**************************/
@@ -77,11 +75,14 @@ inline static int setup_p4_presets(int cputype)
   return(PAPI_OK);
 }
 
-inline static void init_config(struct vperfctr_control *ptr)
+/* This used to be init_config, static to the substrate.
+   Now its exposed to the hwi layer and called when an EventSet is allocated.
+*/
+void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
-  ptr->cpu_control.tsc_on = 1;
-  ptr->cpu_control.nractrs = 0;
-  ptr->cpu_control.nrictrs = 0;
+  ptr->control.cpu_control.tsc_on = 1;
+  ptr->control.cpu_control.nractrs = 0;
+  ptr->control.cpu_control.nrictrs = 0;
 #if 0
   ptr->interval_usec = sampling_interval;
   ptr->nrcpus = all_cpus;
@@ -274,12 +275,10 @@ int _papi_hwd_init(P4_perfctr_context_t *ctx)
 #endif
 
   /* Initialize the per thread/process virtualized TSC */
-
   memset(&tmp,0x0,sizeof(tmp));
-  init_config(&tmp);
- 
-  /* Start the per thread/process virtualized TSC */
+  tmp.cpu_control.tsc_on = 1;
 
+  /* Start the per thread/process virtualized TSC */
   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
     error_return(PAPI_ESYS,VCNTRL_ERROR);
 #if 0
@@ -293,34 +292,6 @@ int _papi_hwd_init(P4_perfctr_context_t *ctx)
 int _papi_hwd_setmaxmem(){
   return(PAPI_OK);
 }
-
-#if 0
-int _papi_hwd_allocate_hwcounters(const P4_perfctr_control_t *state, const P4_perfctr_event_t *add)
-{
-  int i, num = state->control.cpu_control.nractrs + state->control.cpu_control.nrictrs;
-
-  /* Here we should analyze the current state and the preset and choose the best registers */
-  /* Instead everything is hard coded. */
-
-  // memcpy(add,preset,sizeof(P4_perfctr_event_t));
-
-  /* if adding a a-mode after adding both an i-mode, then error
-     instead of shuffling the whole structure around */
-
-  if ((state->control.cpu_control.nrictrs) && (add->ireset == 0))
-    error_return(PAPI_ECNFLCT, AI_ERROR);
-     
-  for (i=0;i<num;i++)
-    {
-      if (state->control.cpu_control.pmc_map[i] ==
-	  add->pmc_map)
-	error_return(PAPI_ECNFLCT,"current %#08x vs. to add %#08x",
-		     state->control.cpu_control.pmc_map[i],
-		     add->pmc_map);
-    }
-  return(PAPI_OK);
-}
-#endif
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control)
@@ -431,19 +402,6 @@ int _papi_hwd_shutdown(P4_perfctr_context_t *ctx)
   return(PAPI_OK);
 }
 
-int _papi_hwd_query(int preset_index, int *flags, char **note)
-{
-  P4_preset_t *preset_map = _papi_hwd_preset_map;
-
-  if (preset_map[preset_index].number < 1)
-    return(0);
-  if (preset_map[preset_index].derived)
-    *flags = PAPI_DERIVED;
-  if (preset_map[preset_index].note)
-    *note = preset_map[preset_index].note;
-  return(1);
-} 
-
 /* Called once per process. */
 
 int _papi_hwd_shutdown_global(void)
@@ -473,218 +431,367 @@ u_long_long _papi_hwd_get_virt_usec (const P4_perfctr_context_t *ctx)
   return(_papi_hwd_get_virt_cycles(ctx) / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
+#ifdef DEBUG
+static void print_bits(P4_register_t *b) {
+    SUBDBG("P4_register:\n  counter[0,1]: 0x%x, 0x%x\n", b->counter[0], b->counter[1]);
+    SUBDBG("  escr[0,1]: 0x%x, 0x%x,", b->escr[0], b->escr[1]);
+    SUBDBG("  cccr: 0x%x,  event: 0x%x\n", b->cccr, b->event);
+    SUBDBG("  pebs_enable: 0x%x,  pebs_matrix_vert: 0x%x,  ireset: 0x%x\n", b->pebs_enable, b->pebs_matrix_vert, b->ireset);
+}
+
+static void print_alloc(P4_reg_alloc_t *a){
+    SUBDBG("P4_reg_alloc:\n");
+    print_bits(&(a->ra_bits));
+    SUBDBG("  selector: 0x%x,  rank: 0x%x,  escr: 0x%x %x\n", a->ra_selector, a->ra_rank, a->ra_escr[0], a->ra_escr[1]);
+}
+#endif
+
+/* This function examines the event to determine
+    if it can be mapped to counter ctr. 
+    Returns true if it can, false if it can't.
+*/
+static int map_avail(hwd_reg_alloc_t *dst, int ctr)
+{
+    return(dst->ra_selector  & (1<<ctr));
+}
+
+/* This function forces the event to
+    be mapped to only counter ctr. 
+    Returns nothing.
+*/
+static void map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+    dst->ra_selector = (1<<ctr);
+    dst->ra_rank = 1;
+    /* Pentium 4 requires that both an escr and a counter are selected.
+       Find which counter mask contains this counter and set its escr */
+    if (dst->ra_bits.counter[0] & dst->ra_selector)
+	dst->ra_escr[dst->ra_bits.escr[0] >> 5] = (1 << (dst->ra_bits.escr[0] & 31));
+    else
+	dst->ra_escr[dst->ra_bits.escr[0] >> 5] = (1 << (dst->ra_bits.escr[1] & 31));
+}
+
+/* This function examines the event to determine
+    if it has a single exclusive mapping. 
+    Returns true if exlusive, false if non-exclusive.
+*/
+static int map_exclusive(hwd_reg_alloc_t *dst)
+{
+    return(dst->ra_rank==1);
+}
+
+/* This function compares the dst and src events
+    to determine if any resources are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+static int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+  /* Pentium 4 needs to check for conflict of both counters and esc registers */
+    return((dst->ra_selector & src->ra_selector) 
+      || (dst->ra_escr[0] & src->ra_escr[0]) || (dst->ra_escr[1] & src->ra_escr[1]));
+}
+
+/* This function removes shared resources available to the src event
+    from the resources available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+static void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+    int i, j;
+    unsigned shared;
+    
+    /* On Pentium 4, shared resources include both escrs and counters */
+#ifdef DEBUG
+	  SUBDBG("src, dst\n");
+	  print_alloc(src);
+	  print_alloc(dst);
+#endif
+
+    /* remove counters referenced by any shared escrs */
+    for (i=0;i<2;i++) {
+      shared = dst->ra_escr[i] & src->ra_escr[i];
+      while (shared) {
+	  j = ffs(shared) - 1;
+	  shared ^= 1<<j;
+	  if (dst->ra_bits.escr[0] == j)
+	      dst->ra_selector ^= dst->ra_bits.counter[0];
+	  else
+	      dst->ra_selector ^= dst->ra_bits.counter[1];
+	  dst->ra_escr[i] ^= 1<<j;
+      }
+    }
+#ifdef DEBUG
+	  SUBDBG("new dst\n");
+	  print_alloc(dst);
+#endif
+    /* remove any remaining shared counters */
+    shared = dst->ra_selector & src->ra_selector;
+    if (shared) dst->ra_selector ^= shared;
+#ifdef DEBUG
+	  SUBDBG("new dst\n");
+	  print_alloc(dst);
+#endif
+
+    /* recompute rank */
+    for (i=0,dst->ra_rank=0;i<MAX_COUNTERS;i++)
+      if(dst->ra_selector & (1<<i)) dst->ra_rank++;
+#ifdef DEBUG
+	  SUBDBG("new dst\n");
+	  print_alloc(dst);
+#endif
+}
+
+/* This function updates the selection status of 
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+static void map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+    dst->ra_selector = src->ra_selector;
+    dst->ra_escr[0] = src->ra_escr[0];
+    dst->ra_escr[1] = src->ra_escr[1];
+}
+
+/* this function recusively does Modified Bipartite Graph counter allocation 
+    success  return 1
+    fail     return 0
+    This function is now hardware independent and should be moved up 
+    to the hwi layer. However, it's still being debugged on power3 
+    and should wait until that effort is complete
+*/
+static int do_counter_allocation(hwd_reg_alloc_t *event_list, int count)
+{
+    int i,j;
+    int idx_q[MAX_COUNTERS];  /* queue of indexes of lowest rank events */
+    int map_q[MAX_COUNTERS];  /* queue of mapped events (TRUE if mapped) */
+    int head, tail;
+    
+    /* build a queue of indexes to all events 
+    that live on one counter only (rank == 1) */
+    head=0; /* points to top of queue */
+    tail=0; /* points to bottom of queue */
+    for(i=0;i<count;i++){
+	map_q[i] = 0;
+	if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
+    }
+    
+    /* scan the single counter queue looking for events that share counters.
+    If two events can live only on one counter, return failure.
+    If the second event lives on more than one counter, remove shared counter
+    from its selector and reduce its rank. 
+    Mark first event as mapped to its counter. */
+    while(head<tail){
+	for(i=0;i<count;i++){
+	    if(i!=idx_q[head]){
+		if(map_shared(&event_list[i], &event_list[idx_q[head]])) {
+		    /* both share a counter; if second is exclusive, mapping fails */
+		    if(map_exclusive(&event_list[i])) return 0;
+		    else{
+			map_preempt(&event_list[i], &event_list[idx_q[head]]);
+			if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
+		    }
+		}
+	    }
+	}
+	map_q[idx_q[head]] = 1;	/* mark this event as mapped */
+	head++;
+    }
+    if(tail==count){
+	return 1; /* idx_q includes all events; everything is successfully mapped */
+    }
+    else{
+	hwd_reg_alloc_t rest_event_list[MAX_COUNTERS];
+	hwd_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
+	int remainder;
+	
+	/* copy all unmapped events to a second list and make a backup */
+	for(i=0,j=0;i<count;i++) {
+	    if(map_q[i] == 0) {
+		memcpy(&copy_rest_event_list[j++], &event_list[i], sizeof(hwd_reg_alloc_t));
+	    }
+	}
+	remainder=j;
+	
+	memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_reg_alloc_t)*(remainder));
+	
+	/* try each possible mapping until you fail or find one that works */
+	for(i=0;i<MAX_COUNTERS;i++){
+	    /* for the first unmapped event, try every possible counter */
+	    if(map_avail(rest_event_list, i)){
+		map_set(rest_event_list, i);
+		/* remove selected counter from all other unmapped events */
+		for(j=1;j<remainder;j++){
+  		    if(map_shared(&rest_event_list[j], rest_event_list))
+			map_preempt(&rest_event_list[j], rest_event_list);
+		}
+		/* if recursive call to allocation works, break out of the loop */
+		if(do_counter_allocation(rest_event_list, remainder))
+		    break;
+
+		/* recursive mapping failed; copy the backup list and try the next combination */
+		memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_reg_alloc_t)*(remainder));
+	    }
+	}
+	if(i==MAX_COUNTERS){
+	    return 0; /* fail to find mapping */
+	}
+	for(i=0,j=0;i<count;i++) {
+	    if(map_q[i] == 0)
+		map_update(&event_list[i], &rest_event_list[j++]);
+	}
+	return 1;		
+    }
+}	
+	
 /* Register allocation */
 
-int _papi_hwd_allocate_registers(hwd_control_state_t *evset_info)
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 {
-  /* This routine should be far more complex than below. See papiv3 branch, for instance.
-     For now, we just provide the minimum info from the preset map. */
-//  *out = from->possible_registers;
-//  SUBDBG("Selector %08x\n",out->hardware_event[0].selector);
+  int i, j, natNum;
+  P4_reg_alloc_t event_list[MAX_COUNTERS], *e;
+
+  /* not yet successfully mapped, but have enough slots for events */
+	
+  /* Initialize the local structure needed 
+     for counter allocation and optimization. */
+  natNum=ESI->NativeCount;
+  SUBDBG("native event count: %d\n",natNum);
+  for(i=0;i<natNum;i++){
+    /* dereference event_list so code is easier to read */
+    e = &event_list[i];
+
+    /* retrieve the mapping information about this native event */
+    _papi_hwd_native_code_to_bits(ESI->NativeInfoArray[i].ni_index, &e->ra_bits);
+
+    /* combine counter bit masks for both esc registers into selector */
+    e->ra_selector = e->ra_bits.counter[0] | e->ra_bits.counter[1];
+    /* calculate native event rank, which is number of counters it can live on */
+    e->ra_rank = 0;
+    for(j=0;j<MAX_COUNTERS;j++) {
+      if(e->ra_selector & (1<<j)) {
+	e->ra_rank++;
+      }
+    }
+    /* set the bits for the two esc registers this event can live on */
+    e->ra_escr[0] = e->ra_escr[1] = 0;
+    for(j=0;j<2;j++) {
+      e->ra_escr[e->ra_bits.escr[j] >> 5] |= (1 << (e->ra_bits.escr[j] & 31));
+    }
+#ifdef DEBUG
+    SUBDBG("i: %d\n",i);
+    print_alloc(e);
+#endif
+  }
+
+  if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
+    for(i=0;i<natNum;i++) {
+#ifdef DEBUG
+	  SUBDBG("i: %d\n",i);
+	  print_alloc(&event_list[i]);
+#endif
+	  /* Copy all the info about this native event to the NativeInfo struct */
+	  ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
+
+	  /* The selector contains the counter bit position. Turn it into a number
+	     and store it in the first counter value, zeroing the second. */
+	  ESI->NativeInfoArray[i].ni_bits.counter[0] = ffs(event_list[i].ra_selector)-1;
+	  ESI->NativeInfoArray[i].ni_bits.counter[1] = 0;
+
+	  /* Array order on perfctr is event ADD order, not counter #... */
+	  ESI->NativeInfoArray[i].ni_position = i;
+      }
+      return 1;
+  }
 
   return(PAPI_OK);
 }
 
-/* After this function is called, ESI->machdep has everything it needs to do a start/read/stop 
-   as quickly as possible. This returns the position in the array output by _papi_hwd_read that
-   this register lives in. */
 
-//int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_control_t *evset_info)
-//int _papi_hwd_add_event(hwd_control_state_t *evset_info, unsigned int EventCode, EventInfo_t * ev_info)
-int _papi_hwd_add_event(hwd_control_state_t *evset_info, int *nix, int size, EventInfo_t *ev_info)
+static void clear_control_state(hwd_control_state_t *this_state)
 {
-#if 0
-  int i, index, mask = 0;
-  P4_preset_t *preset;
-  P4_register_t *bits = &evset_info->allocated_registers;
-  unsigned avail, already_used = bits->selector, need_one, allocated[P4_MAX_REGS_PER_EVENT];
+  int i;
+
+  /* Remove all counter control command values from eventset. */
   
-  SUBDBG("Allocated counters: already_used %08x\n",already_used);
-
-  /* dereference the address of this element in the preset array */
-  preset = &_papi_hwd_preset_map[(EventCode & PRESET_AND_MASK)];
-
-  /* Add allocated register bits to this events bits */
-
-  for (i=0;i<preset->number;i++)
+  for (i=0;i<this_state->control.cpu_control.nractrs;i++)
     {
-      need_one = preset->possible_registers.hardware_event[i].selector;
-      SUBDBG("Needed one of counters: need_one %d %08x\n",i,need_one);
-
-      avail = need_one & (~already_used);
-      SUBDBG("Available counters: avail %08x\n",avail);
-
-      if (avail == 0)
-	return(PAPI_ECNFLCT);
-
-      allocated[i] = ffs(avail) - 1;
-      SUBDBG("Allocated counter: allocated %d %08x\n",i,allocated[i]);
-
-     /* this line maps the selected register back into the event structure */
-     ev_info->bits.hardware_event[i].selector = 1 << allocated[i];
-     /* This shouldn't be necessary, should it? */
-     ev_info->hwd_selector = ev_info->bits.hardware_event[i].selector;
-
-     if (ev_info->bits.hardware_event[i].uses_pebs)
-	{
-#if 0
-	  if (bits->uses_pebs)
-	    return(PAPI_ECNFLCT);
+      SUBDBG("Clearing pmc event entry %d\n",i);
+      this_state->control.cpu_control.pmc_map[i] = 0;
+      this_state->control.cpu_control.evntsel[i] = 0;
+#ifdef __i386__
+      this_state->control.cpu_control.evntsel_aux[i] = 0;
 #endif
-	  bits->uses_pebs = 1;
-	}
-      if (ev_info->bits.hardware_event[i].uses_pebs_matrix_vert)
-	{
-#if 0
-	  if (bits->uses_pebs_matrix_vert)
-	    return(PAPI_ECNFLCT);
-#endif
-	  bits->uses_pebs_matrix_vert = 1;
-	}
+      this_state->control.cpu_control.ireset[i] = 0;
     }
 
-  /* Add counter control command values to eventset */
-
-  index = evset_info->control.cpu_control.nractrs;
-  for (i=0;i<preset->number;i++)
-    {
-      evset_info->allocated_registers.selector |= 1 << allocated[i];
-      evset_info->control.cpu_control.pmc_map[index] = allocated[i];
-#ifdef __i386__
-      evset_info->control.cpu_control.pmc_map[index] |= FAST_RDPMC;
-#endif
-      evset_info->control.cpu_control.evntsel[index] = preset->info->data[i].evntsel;
-#ifdef __x86_64__
-      /* This sets Enable, USR-mode and SYS-mode. The latter two should really 
-	 be taken from the current event set scope though
-      */
-      evset_info->control.cpu_control.evntsel[index] |= (1<<22)|(1<<16)|(1<<17);
-#endif
-#ifdef __i386__
-      evset_info->control.cpu_control.evntsel_aux[index] = preset->info->data[i].evntsel_aux;
-#endif
-      evset_info->control.cpu_control.ireset[index] = 0;
-#ifdef __i386__
-      if (preset->info->data[i].pebs_enable)
-	evset_info->control.cpu_control.p4.pebs_enable = preset->info->data[i].pebs_enable;
-      if (preset->info->data[i].pebs_matrix_vert)
-	evset_info->control.cpu_control.p4.pebs_matrix_vert = preset->info->data[i].pebs_matrix_vert;
-#endif
-      mask |= 1 << index;
-      index++;
-    }
-  evset_info->control.cpu_control.nractrs = index;
-  
-  /* Make sure the TSC is always on */
-
-  evset_info->control.cpu_control.tsc_on = 1;
-
-#ifdef DEBUG
-  print_control(&evset_info->control.cpu_control);
-#endif
-
-  /* Update this specific events structure containing number of events. For compound events like
-     PAPI_FP_INS on the Pentium 4, this is > 1. */
-
-#if 0
-  /* This statement is bogus I think. */
-  ev_info->num_hardware_events += preset->number;
-#endif
-
-/* Events that require tagging should be ordered such that the
-   first event is the one that is read. See PAPI_FP_INS for an example. */
-  
-  /* Here we return the hardware index of the event we are reading. */
-  return(index-preset->number);
-#endif
-  return(0);
-}
-
-int _papi_hwd_remove_event(hwd_control_state_t *evset_info, int *nix, int size)
-//int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perfctr_control_t *evset_info)
-{
-#if 0
-  int i, j, new_nractrs, nractrs, clear_pebs = 0, clear_pebs_matrix_vert = 0;
-  P4_register_t *bits = &evset_info->allocated_registers;
-
-  /* Remove allocation/usage info for this event from bits */
-  for (i=0;i<ev_info->num_hardware_events;i++)
-    {
-      SUBDBG("Allocated registers (before):  %d %08x\n",i,evset_info->allocated_registers.selector);
-      evset_info->allocated_registers.selector &= !(ev_info->hardware_event[i].selector);
-      SUBDBG("Allocated registers (after):  %d %08x\n",i,evset_info->allocated_registers.selector);
-     
-      if (ev_info->hardware_event[i].uses_pebs)
-	{
-	  clear_pebs = 1;
-	  bits->uses_pebs = 0;
-	}
-      if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
-	{
-	  clear_pebs_matrix_vert = 1;
-	  bits->uses_pebs_matrix_vert = 0;
-	}
-    }
-
-  /* Remove counter control command values from eventset. We must do this
-     very carefully. As the command structure passed to perfctr must be 
-     a densely populated array, we need to shift our entries back to
-     the front of the array. */
-  
-  nractrs = evset_info->control.cpu_control.nractrs;
-
-  /* Zero the control entries that were used */
-
-  for (j=perfctr_index;j<ev_info->num_hardware_events+perfctr_index;j++)
-    {
-      SUBDBG("Clearing pmc event entry %d\n",j);
-      evset_info->control.cpu_control.pmc_map[j] = 0;
-      evset_info->control.cpu_control.evntsel[j] = 0;
-#ifdef __i386__
-      evset_info->control.cpu_control.evntsel_aux[j] = 0;
-#endif
-      evset_info->control.cpu_control.ireset[j] = 0;
-    }
-
-  /* Clear pebs stuff if we used it */
+  /* Clear pebs stuff */
 
 #ifdef __i386__
-  if (clear_pebs)
-    evset_info->control.cpu_control.p4.pebs_enable = 0;
-  if (clear_pebs_matrix_vert)
-    evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
+    this_state->control.cpu_control.p4.pebs_enable = 0;
+    this_state->control.cpu_control.p4.pebs_matrix_vert = 0;
 #endif
-
-  /* Shift the perfctr buffer's entries if necessary, i.e. if we removed
-     counter(s) in the middle of the buffer. 
-     A, B, C, 0 must now be A, B, C
-     A, B, 0, C must now be A, B, C 
-     A, B, 0, 0, C must now be A, B, C */
-
-  new_nractrs = nractrs - ev_info->num_hardware_events;
-  for (j=perfctr_index;j<new_nractrs;j++)
-    {
-      evset_info->control.cpu_control.pmc_map[j] = 
-	evset_info->control.cpu_control.pmc_map[j+ev_info->num_hardware_events];
-      evset_info->control.cpu_control.evntsel[j] = 
-	evset_info->control.cpu_control.evntsel[j+ev_info->num_hardware_events];
-#ifdef __i386__
-      evset_info->control.cpu_control.evntsel_aux[j] = 
-	evset_info->control.cpu_control.evntsel_aux[j+ev_info->num_hardware_events];
-#endif
-      evset_info->control.cpu_control.ireset[j] = 
-	evset_info->control.cpu_control.ireset[j+ev_info->num_hardware_events];
-    }
 	  
-  evset_info->control.cpu_control.nractrs = new_nractrs;
+  this_state->control.cpu_control.nractrs = 0;
   
 #ifdef DEBUG
-  print_control(&evset_info->control.cpu_control);
+  print_control(&this_state->control.cpu_control);
 #endif
-
-#endif
-  return(PAPI_OK);
 }
+
+
+/* This function clears the current contents of the control structure and updates it 
+   with whatever resources are allocated for all the native events 
+   in the native info structure array. */
+void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
+{
+    int i, nractrs;
+
+    P4_register_t *bits;
+   
+    /* clear out everything currently coded */
+    clear_control_state(this_state);
+
+    /* fill the counters we're using */
+    nractrs = this_state->control.cpu_control.nractrs;
+    for(i=0;i<count;i++){
+	/* dereference the mapping information about this native event */
+	bits = &native[i].ni_bits;
+
+	/* Add counter control command values to eventset */
+
+	this_state->control.cpu_control.pmc_map[nractrs] = bits->counter[0];
+        this_state->control.cpu_control.evntsel[nractrs] = bits->cccr;
+	this_state->control.cpu_control.ireset[nractrs] = bits->ireset;
+#ifdef __x86_64__
+	/* This sets Enable, USR-mode and SYS-mode. The latter two should really 
+	   be taken from the current event set scope though */
+	this_state->control.cpu_control.evntsel[nractrs] |= (1<<22)|(1<<16)|(1<<17);
+#endif
+#ifdef __i386__
+        this_state->control.cpu_control.pmc_map[nractrs] |= FAST_RDPMC;
+	this_state->control.cpu_control.evntsel_aux[nractrs] = bits->event;
+	/* What happens if more than one native event has pebs_enable or pebs_matrix_vert?
+	   Are these just binary enables or can they actually have conflicting values? */
+	if (bits->pebs_enable)
+	  this_state->control.cpu_control.p4.pebs_enable = bits->pebs_enable;
+	if (bits->pebs_matrix_vert)
+	  this_state->control.cpu_control.p4.pebs_matrix_vert = bits->pebs_matrix_vert;
+#endif
+	nractrs++;
+    }
+    this_state->control.cpu_control.nractrs = nractrs;
+  
+    /* Make sure the TSC is always on */
+    this_state->control.cpu_control.tsc_on = 1;
+
+#ifdef DEBUG
+    print_control(&this_state->control.cpu_control);
+#endif
+}
+
 
 int _papi_hwd_add_prog_event(P4_perfctr_control_t *state, unsigned int code, void *tmp, 
 			      EventInfo_t *tmp2)
@@ -692,26 +799,6 @@ int _papi_hwd_add_prog_event(P4_perfctr_control_t *state, unsigned int code, voi
   return(PAPI_ESBSTR);
 }
 
-
-#if 0 
-int _papi_hwd_add_event(P4_perfctr_control_t *state, const P4_perfctr_event_t *add)
-{ 
-  int num = state->control.cpu_control.nractrs + state->control.cpu_control.nrictrs;
-  
-  state->control.cpu_control.pmc_map[num] = add->pmc_map;
-  state->control.cpu_control.evntsel[num] = add->evntsel;
-  state->control.cpu_control.evntsel_aux[num] = add->evntsel_aux;
-  if (add->ireset)
-    {
-      state->control.cpu_control.ireset[num] = add->ireset;
-      state->control.cpu_control.nrictrs++;
-    }
-  else
-    state->control.cpu_control.nractrs++;
- 
-  return(PAPI_OK);
-}
-#endif 
 
 int _papi_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain)
 {
@@ -724,10 +811,12 @@ int _papi_hwd_reset(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl)
   return(_papi_hwd_start(ctx, cntrl));
 }
 
+
 int _papi_hwd_write(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl, long long *from)
 {
   return(PAPI_ESBSTR);
 }
+
 
 int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
 {
@@ -735,6 +824,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 
   return(PAPI_ESBSTR);
 }
+
 
 int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
@@ -783,7 +873,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   hwd_control_state_t *this_state = &ESI->machdep;
   struct vperfctr_control *contr = &this_state->control;
   int i, ncntrs, nricntrs = 0, nracntrs, retval=0;
-  unsigned int selector;
 
   SUBDBG("overflow_option->EventIndex=%d\n",overflow_option->EventIndex);
   if( overflow_option->threshold != 0)  /* Set an overflow threshold */
@@ -791,23 +880,22 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       struct sigaction sa;
       int err;
 
-      if (ESI->NumberOfEvents > 1)
+      if (ESI->EventInfoArray[overflow_option->EventIndex].derived)
 	{
-	  fprintf(stderr,"Must have only one counter in event set.\n");
+	  fprintf(stderr,"Can't overflow on a derived event.\n");
 	  return PAPI_EINVAL;
 	}
 
       /* The correct event to overflow is overflow_option->EventIndex */
 
       ncntrs = _papi_hwi_system_info.num_cntrs;
-      selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
-      SUBDBG("selector id is 0x%x.\n",selector);
-      i = ffs(selector) - 1;
+      i = ESI->EventInfoArray[overflow_option->EventIndex].pos[0];
       if (i >= ncntrs)
 	{
-	  fprintf(stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs);
+	  fprintf(stderr,"Selector id (%d) larger than ncntrs (%d)\n",i,ncntrs);
 	  return PAPI_EINVAL;
 	}
+/* Neither of these conditions should hold...
       if (contr->cpu_control.nrictrs)
 	{
 	  fprintf(stderr,"Only one interrupting counter in event set.\n");
@@ -818,7 +906,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	  fprintf(stderr,"Must have only one counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
-
+*/
       contr->cpu_control.ireset[i] = -overflow_option->threshold;
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
       nricntrs = ++contr->cpu_control.nrictrs;
@@ -926,6 +1014,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
     }
   DBG((stderr,"Finished, returning to address 0x%lx\n",(unsigned long)(*gs)[15]));
 }
+
 
 void *_papi_hwd_get_overflow_address(void *context)
 {

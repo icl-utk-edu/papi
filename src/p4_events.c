@@ -554,7 +554,7 @@ char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
 
 int _papi_hwd_native_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
-  bits = &_papi_hwd_pentium4_native_map[EventCode & NATIVE_AND_MASK].resources;
+  *bits = _papi_hwd_pentium4_native_map[EventCode & NATIVE_AND_MASK].resources;
   return(PAPI_OK);
 }
 

@@ -110,10 +110,14 @@ typedef struct P4_register {
   unsigned ireset;	    // I don't really know what this does
 } P4_register_t;
 
-typedef struct P4_regmap {
-  unsigned num_hardware_events;
-  P4_register_t hardware_event[MAX_COUNTER_TERMS];
-} P4_regmap_t;
+/* defines the fields needed by _papi_hwd_allocate_registers
+   to map the counter set */
+typedef struct P4_reg_alloc {
+  P4_register_t ra_bits;    /* Info about this native event mapping */
+  unsigned ra_selector;	    /* Bit mask showing which counters can carry this metric */
+  unsigned ra_rank;	    /* How many counters can carry this metric */
+  unsigned ra_escr[2];	    /* Bit field array showing which (of 45) esc registers can carry this metric */
+} P4_reg_alloc_t;
 
 typedef struct hwd_p4_native_map {
   char *name;		    // ASCII name of the native event
@@ -122,30 +126,15 @@ typedef struct hwd_p4_native_map {
   int synonym;		    // index of next synonym if event can be multiply encoded 
 } hwd_p4_native_map_t;
 
-/* Per eventset data structure for thread level counters */
-
-typedef struct hwd_native {
-  /* index in the native table, required */
-  int index;
-  /* Which counters can be used?  */
-  unsigned int selector;  
-  /* Rank determines how many counters carry each metric */
-  unsigned char rank;
-  /* which counter this native event stays */
-  int position;
-  int mod;
-  int link;
-} hwd_native_t;
-
 typedef struct P4_perfctr_control {
   /* add this array to hold native events info */
-  hwd_native_t native[MAX_COUNTERS];
+// hwd_native_t native[MAX_COUNTERS];
   
   /* total_events: number of added events
      native_idx:   number of all native events 
 	 both are required */
-  int native_idx; 
-  P4_register_t allocated_registers;
+//  int native_idx; 
+//  P4_register_t allocated_registers;
   struct vperfctr_control control; 
   struct perfctr_sum_ctrs state;
 } P4_perfctr_control_t;
@@ -157,9 +146,11 @@ typedef struct P4_perfctr_context {
 /*  P4_perfctr_control_t start; */
 } P4_perfctr_context_t;
 
+typedef P4_reg_alloc_t hwd_reg_alloc_t;
+
 typedef P4_perfctr_control_t hwd_control_state_t;
 
-typedef P4_regmap_t hwd_register_map_t;
+//typedef P4_regmap_t hwd_register_map_t;
 
 typedef P4_register_t hwd_register_t;
 
@@ -195,7 +186,7 @@ typedef struct P4_search {
 
 /* Per preset data structure dynamically defined in sparse array by substrate
    from array of P4_search_t's. */
-
+#if 0
 typedef struct P4_preset {
   /* Is this event derived? */
   unsigned derived;   
@@ -210,6 +201,7 @@ typedef struct P4_preset {
 } P4_preset_t;
 
 typedef P4_preset_t hwd_preset_t;
+#endif
 
 typedef struct _ThreadInfo {
   unsigned pid;
