@@ -50,8 +50,8 @@ int main(int argc, char **argv)
    /* Execution latency stall cycles */
    PAPI_event_name_to_code("DATA_EAR_CACHE_LAT4", &PAPI_event);
 #else
-//   PAPI_event = PAPI_FP_INS;
-//   sprintf(event_name, "papi_fp_ins");
+/*   PAPI_event = PAPI_FP_INS;
+   sprintf(event_name, "papi_fp_ins");*/
    test_fail(__FILE__, __LINE__, "earprofile; event address register", PAPI_ESBSTR);
 #endif
 
