@@ -25,7 +25,7 @@
 
 #include "pmapi.h"
 
-#define inline_static __inline
+#define inline_static static __inline
 
 #define ANY_THREAD_GETS_SIGNAL
 #define POWER_MAX_COUNTERS MAX_COUNTERS
