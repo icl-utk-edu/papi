@@ -1,0 +1,12 @@
+
+2001-01-25 Stephane Eranian <eranian@hpl.hp.com>
+
+	* fixed the L3_MISSES event. The code was incorrect. We were
+	  counting the number of loads retired.
+
+	* cleaned the perfmon.database: unified name of some events
+
+	* remove some of the extra printf. Converted into debug or verbose
+	  mode prints.
+
+	* release 0.05b
