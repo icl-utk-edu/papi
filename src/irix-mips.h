@@ -19,6 +19,8 @@
 #include <sys/sbd.h>
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
+#include <rld_interface.h>
+#include <ctype.h>
 
 #include "papi.h"
 

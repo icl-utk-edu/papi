@@ -93,6 +93,7 @@ int _papi_hwd_update_shlib_info(void)
 
 #include <sys/syscall.h>
 #include <dlfcn.h>
+/*
 typedef struct DL_INFO {
      const char * dli_fname;
      void       * dli_fbase;
@@ -102,12 +103,10 @@ typedef struct DL_INFO {
      int          dli_reserved1;
      long         dli_reserved[4];
 } Dl_info;
-#define _RLD_DLADDR             14
-int dladdr(void *address, Dl_info *dl)
+*/
+void * dladdr(void *address, Dl_info *dl)
 {
-   int v;
-   v = _rld_new_interface(_RLD_DLADDR,address,dl);
-   return v;
+   return( _rld_new_interface(_RLD_DLADDR,address,dl));
 }
 
 const char * getbasename(const char *fname)
