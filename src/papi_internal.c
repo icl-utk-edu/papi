@@ -245,7 +245,6 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
 
   for (i=0;i<limit;i++)
     {
-      ESI->EventInfoArray[i].ESIhead = ESI; /* always points to EventSetInfo_t *ESI */
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
       for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
      	  ESI->EventInfoArray[i].pos[j] = -1;

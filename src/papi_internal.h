@@ -97,7 +97,6 @@ typedef struct _EventSetProfileInfo {
  */
 
 typedef struct _EventInfo {
-  struct _EventSetInfo *ESIhead;  /* Always points back to &EventSetInfo for this EventSet.  Used to optimize register allocation across an event set */
   unsigned int event_code;  /* Preset or native code for this event as passed to PAPI_add_event() */
   int pos[MAX_COUNTERS];    /* position in the counter array for this events components */
   char *ops;                /* operation string of preset */

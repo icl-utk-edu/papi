@@ -55,7 +55,7 @@ linux.o: linux.c
 	$(CC) $(CFLAGS) -c linux.c -o $@
 
 p4_events.o: p4_events.c p4_events.h
-	$(CC) $(CFLAGS) -c p4_events.c -o $@
+	$(CC) $(CFLAGS) -c -g p4_events.c -o $@
 
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)/usr.lib
