@@ -1,0 +1,69 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi_set_debug(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPI_set_debug 3 "March, 2001" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI_set_debug (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI_set_debug - set the current debug level for PAPI
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Return Values</A><BR>
+<A HREF=#4>Errors</A><BR>
+<A HREF=#5>Author</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> <P>
+<!-- .BI "int PAPI_set_debug(int " debuglevel ");" -->
+<B>int PAPI_set_debug(int </B><I>debuglevel</I><B>);</B> <P>
+<!-- .SH DESCRIPTION -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B "PAPI_set_debug"  -->
+<B>PAPI_set_debug</B> sets the default debug level for the PAPI library.
+Here
+<!-- .I "debuglevel" -->
+<I>debuglevel</I> is one of the following constants as defined in the papi.h header file.
+The current debug level is internally stored in the PAPI library and
+is used by the default internal PAPI error handler subroutine.
+The error handler is called by library routines
+on the occurence of recoverable errors.
+The default PAPI error handler handles the possible debug levels in
+the following manner.
+<!-- .TS -->
+<P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
+<!-- allbox tab($); -->
+<!-- lB l. -->
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI_set_debug (3)</TD> <TD align=right width=33%><I>March, 2001</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:05:17 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi_set_debug.3 using man macros with tbl support.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>

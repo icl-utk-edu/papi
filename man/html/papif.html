@@ -1,0 +1,80 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papif(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPIF 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPIF (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI - Performance Application Programming Interface Library
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Fortran calling interface</A><BR>
+<A HREF=#3>PAPI High Level Functions</A><BR>
+<A HREF=#4>PAPI Low Level Functions</A><BR>
+<A HREF=#5>See Also</A><BR>
+<A HREF=#6>Diagnostics</A><BR>
+<A HREF=#7>Bugs</A><BR>
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include "fpapi.h" -->
+<B>#include fpapi.h</B> <P>
+<!-- .B call PAPIF_function_name(arg1,arg2,...,check) -->
+<B>call PAPIF_function_name(arg1,arg2,...,check)</B> <P>
+<P>
+<!-- .SH Fortran calling interface -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>Fortran calling interface</H3>
+
+</A>
+<BLOCKQUOTE>
+The PAPI library comes with a specific Fortran library interface. The
+Fortran interface covers the complete library with a few minor
+exceptions. The most important omission is the profiling library
+utility routines that are not very relevant in the Fortran version.
+Functions returning C pointers to structures, such as
+<!-- .BR PAPI_get_opt() \ and\  PAPI_get_executable_info() , -->
+<B>PAPI_get_opt()</B> and <B>PAPI_get_executable_info()</B>, are also excluded from the Fortran interface.
+<P>
+The following lists the functions in the Fortran interface. For
+details about each function see the corresponding C function. I.e. the
+functionality of
+<!-- .B PAPIF_accum -->
+<B>PAPIF_accum</B> is covered in the
+<!-- .B PAPI_accum(3) -->
+<B>PAPI_accum(3)</B> man page.
+<P>
+The Fortran calling interface is described below. For most
+architectures the following relation holds between the pseudo-types
+listed and Fortran variable types.
+<P>
+<!-- .TS -->
+<P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
+<!-- box, tab($); -->
+<!-- c  | c  | c -->
+<!-- lt | lt | lt. -->
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPIF (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:05:21 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papif.3 using man macros with tbl support.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>

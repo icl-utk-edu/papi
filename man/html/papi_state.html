@@ -1,0 +1,195 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi_state(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPI_state 3 "Date??" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI_state (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI_state - return the counting state of an EventSet
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Return Values</A><BR>
+<A HREF=#4>Errors</A><BR>
+<A HREF=#5>Examples</A><BR>
+<A HREF=#6>Author</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=9>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> <P>
+<!-- .BI "int\ PAPI_state (int " EventSet ", int *" status ");" -->
+<B>int PAPI_state (int </B><I>EventSet</I><B>, int *</B><I>status</I><B>);</B> <P>
+<!-- .SH DESCRIPTION -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B PAPI_state()  -->
+<B>PAPI_state()</B> returns the counting state of
+<!-- .I EventSet -->
+<I>EventSet</I> in the form of indicator bits in
+<!-- .IR status "." -->
+<I>status</I>. <!-- .LP -->
+<P>
+The values is a boolean combination of one or more of the following
+nonzero constants as defined in the PAPI header file
+<!-- .BR papi.h "." -->
+<B>papi.h</B>. <P>
+<!-- .nf -->
+<PRE>
+<!-- .B PAPI_STOPPED -->
+<B>PAPI_STOPPED</B> 
+<!-- .B PAPI_RUNNING       -->
+<B>PAPI_RUNNING</B> 
+<!-- .B PAPI_PAUSED -->
+<B>PAPI_PAUSED</B> 
+<!-- .B PAPI_NOT_INIT -->
+<B>PAPI_NOT_INIT</B> 
+<!-- .B PAPI_OVERFLOWING   -->
+<B>PAPI_OVERFLOWING</B> 
+<!-- .B PAPI_PROFILING -->
+<B>PAPI_PROFILING</B> 
+<!-- .B PAPI_MULTIPLEXING -->
+<B>PAPI_MULTIPLEXING</B> 
+<!-- .B PAPI_ACCUMULATING     -->
+<B>PAPI_ACCUMULATING</B> 
+<!-- .if -->
+<!-- ignored unsupported tag .if -->
+<P>
+<!-- .SH RETURN VALUES -->
+</PRE>
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>RETURN VALUES</H3>
+
+</A>
+<BLOCKQUOTE>
+On success, this function returns
+<!-- .I "PAPI_OK." -->
+<I>PAPI_OK.</I> On error, a non-zero error code is returned.
+<P>
+<!-- .SH ERRORS -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>ERRORS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EINVAL" -->
+<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+One or more of the arguments is invalid.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOEVST" -->
+<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The EventSet specified does not exist.
+<P>
+<!-- .SH EXAMPLES -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=5>
+
+     <H3>EXAMPLES</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+<!-- .nf          -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>int EventSet = PAPI_NULL;
+int status = 0; 
+<P>
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Add Total Instructions Executed to our EventSet */
+<P>
+if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Start counting */
+<P>
+if (PAPI_state(EventSet, &status) != PAPI_OK)
+  handle_error(1);
+<P>
+printf("State is now %d&#92;n",status);
+<P>
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
+<P>
+if (PAPI_state(EventSet, &status) != PAPI_OK)
+  handle_error(1);
+<P>
+printf("State is now %d&#92;n",status);
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
+<!-- .SH AUTHOR -->
+</BLOCKQUOTE>
+<A name=6>
+
+     <H3>AUTHOR</H3>
+
+</A>
+<BLOCKQUOTE>
+Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=7>
+
+     <H3>BUGS</H3>
+
+</A>
+<BLOCKQUOTE>
+This function has no known bugs.
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .BR PAPI_start "(3), "  -->
+<A HREF="/PAPI_start.html">PAPI_start (3)</A>, <!-- .BR PAPI_stop "(3), " -->
+<A HREF="/PAPI_stop.html">PAPI_stop (3)</A>, The PAPI Web Site:
+<!-- .B http://icl.cs.utk.edu/projects/papi -->
+<B><A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A></B> </BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI_state (3)</TD> <TD align=right width=33%><I>Date??</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:05:19 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi_state.3 using man macros.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>

@@ -1,0 +1,192 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPI 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI - Performance Application Programming Interface
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Author</A><BR>
+<A HREF=#3>Bugs</A><BR>
+<A HREF=#4>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=5>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B High Level Functions  -->
+<B>High Level Functions</B> - Simple interface for single thread applications
+<!-- .LP -->
+<P>
+<!-- .nf -->
+<PRE>
+<!-- .BR "PAPI_num_counters" (3) -->
+<A HREF="PAPI_num_counters.html">PAPI_num_counters (3)</A>
+<!-- .BR "PAPI_flops" (3) -->
+<A HREF="PAPI_flops.html">PAPI_flops (3)</A>
+<!-- .BR "PAPI_accum_counters" (3) -->
+<A HREF="PAPI_accum_counters.html">PAPI_accum_counters (3)</A>
+<!-- .BR "PAPI_read_counters" (3)  -->
+<A HREF="PAPI_read_counters.html">PAPI_read_counters (3)</A>
+<!-- .BR "PAPI_start_counters" (3) -->
+<A HREF="PAPI_start_counters.html">PAPI_start_counters (3)</A>
+<!-- .BR "PAPI_stop_counters" (3) -->
+<A HREF="PAPI_stop_counters.html">PAPI_stop_counters (3)</A>
+<!-- .fi -->
+</PRE>
+<P>
+Note that when using the high-level interface the use of
+<!-- .BR PAPI_library_init (3) -->
+<A HREF="PAPI_library_init.html">PAPI_library_init (3)</A>
+to initialize the library is optional. If, however, explicit initialization
+is not made, either of
+<!-- .BR PAPI_flops "(3) or " PAPI_num_counters (3) -->
+<A HREF="PAPI_flops.html">PAPI_flops (3)</A> or 
+<A HREF="PAPI_num_counters.html">PAPI_num_counters (3)</A>
+<!-- .I must -->
+<I>must</I> be called before any other call to a PAPI function.
+<P>
+<P>
+<!-- .B Low Level Functions  -->
+<B>Low Level Functions</B> - Advanced interface for all applications and performance tools
+<P>
+<!-- .\" The layout of the following list is that functions that are described -->
+<!-- .\" on the same man page are listed in the same group. The order of appearance -->
+<!-- .\" of the group is currently alphabetical, but this could be improved. -->
+<!-- .nf -->
+<PRE>
+<!-- .BR "PAPI_accum" "(3), " "PAPI_read" "(3)" -->
+<A HREF="PAPI_accum.html">PAPI_accum (3)</A>, 
+<A HREF="PAPI_read.html">PAPI_read (3)</A>
+<!-- .BR "PAPI_add_event" "(3), " "PAPI_add_events" "(3), " "PAPI_add_pevent" "(3)" -->
+<A HREF="PAPI_add_event.html">PAPI_add_event (3)</A>, 
+<A HREF="PAPI_add_events.html">PAPI_add_events (3)</A>, 
+<A HREF="PAPI_add_pevent.html">PAPI_add_pevent (3)</A>
+<!-- .BR "PAPI_cleanup_eventset" "(3), " "PAPI_destroy_eventset" "(3)" -->
+<A HREF="PAPI_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
+<A HREF="PAPI_destroy_eventset.html">PAPI_destroy_eventset (3)</A>
+<!-- .BR "PAPI_create_eventset" "(3)" -->
+<A HREF="PAPI_create_eventset.html">PAPI_create_eventset (3)</A>
+<!-- .BR "PAPI_describe_event" "(3), " "PAPI_event_code_to_name" "(3), "  -->
+<A HREF="PAPI_describe_event.html">PAPI_describe_event (3)</A>, 
+<A HREF="PAPI_event_code_to_name.html">PAPI_event_code_to_name (3)</A>, 
+<!-- .ti +3 en -->
+&nbsp; &nbsp;<!-- .BR "PAPI_event_name_to_code" "(3)" -->
+<A HREF="PAPI_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
+<!-- .BR "PAPI_get_executable_info" "(3)" -->
+<A HREF="PAPI_get_executable_info.html">PAPI_get_executable_info (3)</A>
+<!-- .BR "PAPI_get_hardware_info" "(3)" -->
+<A HREF="PAPI_get_hardware_info.html">PAPI_get_hardware_info (3)</A>
+<!-- .BR "PAPI_get_opt" "(3), " "PAPI_set_opt" "(3)" -->
+<A HREF="PAPI_get_opt.html">PAPI_get_opt (3)</A>, 
+<A HREF="PAPI_set_opt.html">PAPI_set_opt (3)</A>
+<!-- .BR "PAPI_get_overflow_address" "(3), " "PAPI_overflow" "(3)" -->
+<A HREF="PAPI_get_overflow_address.html">PAPI_get_overflow_address (3)</A>, 
+<A HREF="PAPI_overflow.html">PAPI_overflow (3)</A>
+<!-- .BR "PAPI_get_real_cyc" "(3), " "PAPI_get_real_usec" "(3)" -->
+<A HREF="PAPI_get_real_cyc.html">PAPI_get_real_cyc (3)</A>, 
+<A HREF="PAPI_get_real_usec.html">PAPI_get_real_usec (3)</A>
+<!-- .BR "PAPI_get_real_virt_cyc" "(3), " "PAPI_get_real_virt_usec" "(3)" -->
+<A HREF="PAPI_get_real_virt_cyc.html">PAPI_get_real_virt_cyc (3)</A>, 
+<A HREF="PAPI_get_real_virt_usec.html">PAPI_get_real_virt_usec (3)</A>
+<!-- .BR "PAPI_library_init" "(3)" -->
+<A HREF="PAPI_library_init.html">PAPI_library_init (3)</A>
+<!-- .BR "PAPI_list_events" "(3)" -->
+<A HREF="PAPI_list_events.html">PAPI_list_events (3)</A>
+<!-- .\" .BR "PAPI_lock" "(3), " "PAPI_unlock" "(3)"   ??obsolete?? -->
+<!-- .BR "PAPI_multiplex_init" "(3)" -->
+<A HREF="PAPI_multiplex_init.html">PAPI_multiplex_init (3)</A>
+<!-- .BR "PAPI_perror" "(3), " "PAPI_strerror" "(3)" -->
+<A HREF="PAPI_perror.html">PAPI_perror (3)</A>, 
+<A HREF="PAPI_strerror.html">PAPI_strerror (3)</A>
+<!-- .BR "PAPI_profil" "(3), " "PAPI_sprofil" "(3)" -->
+<A HREF="PAPI_profil.html">PAPI_profil (3)</A>, 
+<A HREF="PAPI_sprofil.html">PAPI_sprofil (3)</A>
+<!-- .BR "PAPI_query_event" "(3), " "PAPI_query_event_verbose" "(3), "  -->
+<A HREF="PAPI_query_event.html">PAPI_query_event (3)</A>, 
+<A HREF="PAPI_query_event_verbose.html">PAPI_query_event_verbose (3)</A>, 
+<!-- .ti +3 en -->
+&nbsp; &nbsp;<!-- .BR "PAPI_query_all_events_verbose" "(3)" -->
+<A HREF="PAPI_query_all_events_verbose.html">PAPI_query_all_events_verbose (3)</A>
+<!-- .BR "PAPI_rem_event" "(3), " "PAPI_rem_events" "(3), " "PAPI_rem_pevent" "(3)" -->
+<A HREF="PAPI_rem_event.html">PAPI_rem_event (3)</A>, 
+<A HREF="PAPI_rem_events.html">PAPI_rem_events (3)</A>, 
+<A HREF="PAPI_rem_pevent.html">PAPI_rem_pevent (3)</A>
+<!-- .BR "PAPI_reset" "(3)" -->
+<A HREF="PAPI_reset.html">PAPI_reset (3)</A>
+<!-- .\" .BR "PAPI_restore" "(3), " "PAPI_save" "(3)"   ??obsolete?? -->
+<!-- .BR "PAPI_set_debug" "(3)" -->
+<A HREF="PAPI_set_debug.html">PAPI_set_debug (3)</A>
+<!-- .BR "PAPI_set_domain" "(3)" -->
+<A HREF="PAPI_set_domain.html">PAPI_set_domain (3)</A>
+<!-- .BR "PAPI_set_granularity" "(3)" -->
+<A HREF="PAPI_set_granularity.html">PAPI_set_granularity (3)</A>
+<!-- .BR "PAPI_shutdown" "(3)" -->
+<A HREF="PAPI_shutdown.html">PAPI_shutdown (3)</A>
+<!-- .BR "PAPI_start" "(3), " "PAPI_stop" "(3)" -->
+<A HREF="PAPI_start.html">PAPI_start (3)</A>, 
+<A HREF="PAPI_stop.html">PAPI_stop (3)</A>
+<!-- .BR "PAPI_state" "(3)" -->
+<A HREF="PAPI_state.html">PAPI_state (3)</A>
+<!-- .BR "PAPI_thread_id" "(3), " "PAPI_thread_init" "(3)" -->
+<A HREF="PAPI_thread_id.html">PAPI_thread_id (3)</A>, 
+<A HREF="PAPI_thread_init.html">PAPI_thread_init (3)</A>
+<!-- .BR "PAPI_write" "(3)" -->
+<A HREF="PAPI_write.html">PAPI_write (3)</A>
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .SH AUTHOR -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>AUTHOR</H3>
+
+</A>
+<BLOCKQUOTE>
+Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>BUGS</H3>
+
+</A>
+<BLOCKQUOTE>
+This woeful excuse for a man page.
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+The PAPI Web Site:
+<!-- .B http://icl.cs.utk.edu/projects/papi -->
+<B><A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A></B> <P>
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:32:33 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi.3 using man macros.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>

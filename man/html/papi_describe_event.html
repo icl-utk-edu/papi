@@ -1,0 +1,204 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi_describe_event(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPI_describe_eventset 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI_describe_eventset (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI_describe_event, PAPI_event_name_to_code, PAPI_event_code_to_name - convert a hardware event to a description, number or string symbol.
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Return Values</A><BR>
+<A HREF=#4>Errors</A><BR>
+<A HREF=#5>Examples</A><BR>
+<A HREF=#6>Author</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=9>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> <P>
+<!-- .nf -->
+<PRE>
+<!-- .BI "int\ PAPI_describe_event(char *" name ", int *" code ", char *" descr ");" -->
+<B>int PAPI_describe_event(char *</B><I>name</I><B>, int *</B><I>code</I><B>, char *</B><I>descr</I><B>);</B> 
+<!-- .BI "int\ PAPI_event_name_to_code(char *" name ", int *" code ");" -->
+<B>int PAPI_event_name_to_code(char *</B><I>name</I><B>, int *</B><I>code</I><B>);</B> 
+<!-- .BI "int\ PAPI_event_code_to_name(int " code ", char *" name ");" -->
+<B>int PAPI_event_code_to_name(int </B><I>code</I><B>, char *</B><I>name</I><B>);</B> 
+<!-- .if -->
+<!-- ignored unsupported tag .if -->
+<P>
+<!-- .SH DESCRIPTION -->
+</PRE>
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B PAPI_describe_event(\|) -->
+<B>PAPI_describe_event()</B> is used to translate either an ASCII PAPI preset name or an integer
+PAPI preset event code into the corresponding event code or name as
+well as an ASCII description of that event. If the
+<!-- .I name  -->
+<I>name</I> argument is a string of length &gt;0 it is assumed to contain the name
+to look up and the corresponding event code is returned in the
+argument
+<!-- .IR code . -->
+<I>code</I>. Otherwise the
+<!-- .I code -->
+<I>code</I> argument is used to look up the event name which is stored in the
+<!-- .I name -->
+<I>name</I> argument. Finally a descriptive string of lenth
+<!-- .B PAPI_MAX_STR_LEN -->
+<B>PAPI_MAX_STR_LEN</B> is copied to the argument
+<!-- .IR descr. -->
+<I>descr.</I> <P>
+The functionality of this call is a superset of the following two
+calls.
+<P>
+<!-- .B PAPI_event_name_to_code(\|) -->
+<B>PAPI_event_name_to_code()</B> is used to translate an ASCII PAPI preset name into an integer PAPI event code.
+<P>
+<!-- .B PAPI_event_code_to_name(\|) -->
+<B>PAPI_event_code_to_name()</B> is used to translate an integer PAPI event code into an ASCII PAPI preset name.
+<P>
+The
+<!-- .IR name -->
+<I>name</I> argument for the three calls must always be non-NULL and point to a string of at least length
+<!-- .BR PAPI_MAX_STR_LEN . -->
+<B>PAPI_MAX_STR_LEN</B>. <P>
+<!-- .SH RETURN VALUES -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>RETURN VALUES</H3>
+
+</A>
+<BLOCKQUOTE>
+On success, this function returns
+<!-- .IR "PAPI_OK" . -->
+<I>PAPI_OK</I>. On error, a non-zero error code is returned.
+<P>
+<!-- .SH ERRORS -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>ERRORS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EINVAL" -->
+<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+One or more of the arguments is invalid.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOTPRESET" -->
+<B>PAPI_ENOTPRESET</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The hardware event specified is not a valid PAPI preset.
+<P>
+<!-- .SH EXAMPLES -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=5>
+
+     <H3>EXAMPLES</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .LP -->
+<P>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>int EventCode, EventSet = PAPI_NULL;
+char EventCodeStr[PAPI_MAX_STR_LEN];
+char EventDescr[PAPI_MAX_STR_LEN];
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* Convert to integer */
+<P>
+if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Describe event from EventCode */
+*EventCodeStr=&#146;&nbsp;&#146;; /* Erase the name argument to look up the code */
+if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Create the EventSet */
+<P>
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Add Total Instructions Executed to our EventSet */
+<P>
+if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
+  handle_error(1);
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
+<!-- .SH AUTHOR -->
+</BLOCKQUOTE>
+<A name=6>
+
+     <H3>AUTHOR</H3>
+
+</A>
+<BLOCKQUOTE>
+Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=7>
+
+     <H3>BUGS</H3>
+
+</A>
+<BLOCKQUOTE>
+This function has no known bugs.
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .BR PAPI_preset "(3), " PAPI_add_event "(3), "  -->
+<A HREF="/PAPI_preset.html">PAPI_preset (3)</A>, <A HREF="/PAPI_add_event.html">PAPI_add_event (3)</A>, <!-- .BR PAPI_set_opt "(3), " PAPI__events "(3), " PAPI_query "(3), " -->
+<A HREF="/PAPI_set_opt.html">PAPI_set_opt (3)</A>, <A HREF="/PAPI__events.html">PAPI__events (3)</A>, <A HREF="/PAPI_query.html">PAPI_query (3)</A>, The PAPI Web Site:
+<!-- .B http://icl.cs.utk.edu/projects/papi -->
+<B><A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A></B> <P>
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI_describe_eventset (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:05:10 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi_describe_event.3 using man macros.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>

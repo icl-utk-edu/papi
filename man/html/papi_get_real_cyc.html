@@ -1,0 +1,137 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi_get_real_cyc(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPI_get_real_cyc 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI_get_real_cyc (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI_get_real_cyc, PAPI_get_real_usec - get real time counter values
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Errors</A><BR>
+<A HREF=#4>Example</A><BR>
+<A HREF=#5>Author</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> <P>
+<!-- .nf -->
+<PRE>
+<!-- .BI "long long PAPI_get_real_cyc(void);" -->
+<B>long long PAPI_get_real_cyc(void);</B> 
+<!-- .BI "long long PAPI_get_real_usec(void);" -->
+<B>long long PAPI_get_real_usec(void);</B> 
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .SH DESCRIPTION -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+Both of these functions return the total real time passed since
+some arbitrary starting point. The time is returned in clock cycles
+or microseconds respectively. These calls are equivalent to
+wall clock time.
+<P>
+<!-- .SH ERRORS -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>ERRORS</H3>
+
+</A>
+<BLOCKQUOTE>
+This function always succeeds.
+<P>
+<!-- .SH EXAMPLE -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>EXAMPLE</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .LP -->
+<P>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>long long s, e;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+  exit(1);
+<P>
+s = PAPI_get_real_cyc();
+<P>
+your_slow_code();
+<P>
+e = PAPI_get_real_cyc();
+printf("Wallclock cycles: %lld&#92;n",e-s);
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
+<!-- .SH AUTHOR -->
+</BLOCKQUOTE>
+<A name=5>
+
+     <H3>AUTHOR</H3>
+
+</A>
+<BLOCKQUOTE>
+Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=6>
+
+     <H3>BUGS</H3>
+
+</A>
+<BLOCKQUOTE>
+This function has no known bugs.
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=7>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .BR PAPI_library_init "(3), " -->
+<A HREF="/PAPI_library_init.html">PAPI_library_init (3)</A>, <!-- .BR PAPI_get_virt_usec "(3), "  -->
+<A HREF="/PAPI_get_virt_usec.html">PAPI_get_virt_usec (3)</A>, <!-- .BR PAPI_get_virt_cyc "(3), "  -->
+<A HREF="/PAPI_get_virt_cyc.html">PAPI_get_virt_cyc (3)</A>, The PAPI Web Site:
+<!-- .B http://icl.cs.utk.edu/projects/papi -->
+<B><A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A></B> </BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI_get_real_cyc (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:05:12 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi_get_real_cyc.3 using man macros.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>

@@ -1,0 +1,98 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi_get_opt(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH PAPI_get_opt 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI_get_opt (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+PAPI_get_opt, PAPI_set_opt - get/set PAPI library or event set options
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Return Values</A><BR>
+<A HREF=#4>Errors</A><BR>
+<A HREF=#5>Examples</A><BR>
+<A HREF=#6>Author</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=9>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> <P>
+<!-- .nf -->
+<PRE>
+<!-- .BI "int PAPI_get_opt(int " option ", PAPI_option_t *" ptr ");" -->
+<B>int PAPI_get_opt(int </B><I>option</I><B>, PAPI_option_t *</B><I>ptr</I><B>);</B> 
+<!-- .BI "int PAPI_set_opt(int " option ", PAPI_option_t *" ptr ");" -->
+<B>int PAPI_set_opt(int </B><I>option</I><B>, PAPI_option_t *</B><I>ptr</I><B>);</B> 
+<!-- .if -->
+<!-- ignored unsupported tag .if -->
+<P>
+<!-- .SH DESCRIPTION -->
+</PRE>
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B PAPI_get_opt() -->
+<B>PAPI_get_opt()</B> and
+<!-- .B PAPI_set_opt()  -->
+<B>PAPI_set_opt()</B> query or change the options of the PAPI library or a specific event set
+created by
+<!-- .BR "PAPI_create_eventset" (3). -->
+<A HREF="/PAPI_create_eventset.html">PAPI_create_eventset (3)</A>.These functions have a C interface only.
+Not all options require or return information in the
+PAPI_option_t structure. 
+<!-- .LP -->
+<P>
+The reader is urged to see the example code in the PAPI distribution
+for usage of PAPI_get_opt.  The file papi.h contains
+definitions for the structures unioned in the PAPI_option_t structure. 
+<P>
+<!-- .I "option" -->
+<I>option</I> -- is an input parameter describing the course of action. Its possible
+values are defined in
+<!-- .B papi.h -->
+<B>papi.h</B> and briefly described below.
+<!-- .LP -->
+<P>
+<!-- .I "ptr" -->
+<I>ptr</I> -- is both an input and output parameter. It is defined in
+<!-- .B papi.h -->
+<B>papi.h</B> and its definition is enclosed below.
+<P>
+<!-- .LP -->
+<P>
+<!-- .TS H -->
+<P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
+<!-- allbox tab($); -->
+<!-- cB cB -->
+<!-- cI s -->
+<!-- lB lw(45). -->
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI_get_opt (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE><FONT SIZE=-1>Generated on Tuesday, 19 Jun 2001 16:05:11 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi_get_opt.3 using man macros with tbl support.
+<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>
