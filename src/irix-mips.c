@@ -698,21 +698,26 @@ int _papi_hwd_init(EventSetInfo *global)
   char pidstr[PAPI_MAX_STR_LEN];
   hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep;
   hwperf_profevctrarg_t args;
-  int fd, gen;
+  hwperf_eventctrl_t *counter_controls;
+  int i, fd, gen;
 
+  counter_controls = (hwperf_eventctrl_t *)malloc(sizeof(hwperf_eventctrl_t));
   memset(&args,0x0,sizeof(args));
-
-  for (i=0;i<HWPERF_EVENTMAX;i++)
-    args.hwp_evctrl[i].hwperf_creg.hwp_mode = HWPERF_CNTEN_U;
 
   sprintf(pidstr,"/proc/%05d",(int)getpid());
   if ((fd = open(pidstr,O_RDONLY)) == -1)
     return(PAPI_ESYS);
 
-  if ((gen = ioctl(fd, PIOCENEVCTRS, (void *)&args)) == -1)
+  if ((gen = ioctl(fd, PIOCGETEVCTRL, (void *)counter_controls)) == -1)
     {
-      close(fd);
-      return(PAPI_ESYS);
+      for (i=0;i<HWPERF_EVENTMAX;i++)
+        args.hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_mode = HWPERF_CNTEN_U;
+
+      if ((gen = ioctl(fd, PIOCENEVCTRS, (void *)&args)) == -1)
+        {
+          close(fd);
+          return(PAPI_ESYS);
+        }
     }
 
   if (gen <= 0)
@@ -1067,6 +1072,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 #endif
       
   retval = ioctl(current_state->fd,PIOCSETEVCTRL,&current_state->counter_cmd);
+
   if (retval <= 0) 
     {
       memcpy(current_state,&previous_state,sizeof(hwd_control_state_t));
