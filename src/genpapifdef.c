@@ -128,7 +128,7 @@ const int papi_defNum[] = {
   PAPI_PROFIL_COMPRESS
 };
 
-const char *papi_errNam[] = {
+const char *papi_errorNam[] = {
   PAPI_OK_nm,
   PAPI_EINVAL_nm,
   PAPI_ENOMEM_nm,
@@ -146,7 +146,7 @@ const char *papi_errNam[] = {
   PAPI_EMISC_nm 
 };
 
-const int papi_errNum[] = {
+const int papi_errorNum[] = {
   PAPI_OK,
   PAPI_EINVAL,
   PAPI_ENOMEM,
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
 
   /* create defines for the internal array pairs */
   createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum));
-  createDef("Error defines.", papi_errNam, papi_errNum, sizeof(papi_errNum));
+  createDef("Error defines.", papi_errorNam, papi_errorNum, sizeof(papi_errorNum));
   createDef("Miscellaneous defines.", papi_miscNam, papi_miscNum, sizeof(papi_miscNum));
 
   /* create defines for each member of the PRESET array */
