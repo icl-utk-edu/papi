@@ -1,8 +1,11 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR	= ./perfctr
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -Wall -O3 -fomit-frame-pointer -mpentiumpro
-TOPTFLAGS= -g -Wall -O0 -mpentiumpro
+#
+# GNU GCC section
+#
+OPTFLAGS= -Wall -O3 -fomit-frame-pointer -march=pentiumpro
+TOPTFLAGS= -g -Wall -O0 -march=pentiumpro
 #
 # GNU G77 section
 #
@@ -42,8 +45,10 @@ TARGETS = serial multiplex_and_pthreads
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DPAPI_PERFCTR_INTR_SUPPORT
-#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. \
+ -DPERFCTR20 -DPAPI_PERFCTR_INTR_SUPPORT -DMPX_NONDECR
+# Some nice flags to add to CFLAGS when debugging PAPI library itself
+# -g -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
 MISCHDRS= ia32_presets.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
