@@ -1,4 +1,4 @@
-# -*- Makefile -*-
+# $Id$
 #
 # GNU G77/GCC section
 #
@@ -23,7 +23,7 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 # #  Portland Group PGF77 section
 # #
 # F77       = pgf77
-# FFLAGS    = -O3 -tp p6 -Dlinux
+# FFLAGS    = -O3 -Dlinux
 # FTOPTFLAGS= $(FOPTFLAGS)
 # #
 # #  Intel Corp. Fortran compiler
@@ -59,7 +59,6 @@ LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads
 
 CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH)
-#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
@@ -72,7 +71,7 @@ PERFCTR_OBJS-2.7.x := $(PERFCTR_OBJS-2.6.x)
 CFLAGS	+= $(CFLAGS-$(VERSION))
 PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
-MISCHDRS= perfctr-$(CPU).h
+MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 MISCSRCS = linux.c $(CPU)_events.c
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
@@ -87,7 +86,7 @@ else
 endif
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
-	ar x $<
+	ar xv $<
 
 $(CPU)_events.o: $(CPU)_events.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
@@ -97,20 +96,23 @@ linux.o: linux.c
 
 native_clean:
 ifeq (,${PERFCTR_PREFIX})
-	$(MAKE) -C $(PERFCTR) distclean
+	$(MAKE) -C $(PERFCTR) clean
 endif
 
+native_install:
 ifeq (,${PERFCTR_PREFIX})
 ifeq (${VERSION},2.4.x)
 native_install:
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
-	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
+	cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
+	cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
+	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
 else
 native_install:
-	-$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
+	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
 endif
-else
-native_install:
 endif
 
+native_clobber:
+ifeq (,${PFM_PREFIX})
+	$(MAKE) -C $(PERFCTR) distclean
+endif
