@@ -1012,7 +1012,7 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t * info, struct sigcontext
 */
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
               _papi_hwi_system_info.supports_hw_overflow,
-                                      info->sy_pfm_ovfl[0], 0);
+                     info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0);
    if (pfmw_perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1) {
       fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", getpid(), errno);
       return;
@@ -1066,7 +1066,7 @@ static void ia64_dispatch_sigprof(int n, struct siginfo * info, struct sigcontex
    }
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
           _papi_hwi_system_info.supports_hw_overflow, 
-          msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 0);
+          msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0);
    if (pfmw_perfmonctl(getpid(), PFM_RESTART, 0, 0) == -1) {
       fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", 
              getpid(), errno);
