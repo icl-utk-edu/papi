@@ -24,7 +24,7 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 /* Event to use in all cases; initialized in init_papi() */
 
-#if defined(sparc) && defined(sun)
+#if defined(sparc) && defined(sun) || defined(__ALPHA) && defined(__osf__)
 const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L1_ICM, PAPI_TOT_INS, PAPI_TOT_CYC, 0 };
 #else
 const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_DCM, 0 };
@@ -325,7 +325,7 @@ int case4()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)
-  retval = PAPI_add_event(&EventSet, PAPI_RES_STL);
+  retval = PAPI_add_event(&EventSet, PAPI_TLB_DM);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
 #else
@@ -353,13 +353,8 @@ int case4()
     PAPI_event_code_to_name(event_codes[i],evname[i]);
 
   if ( !TESTS_QUIET ) {
-#if defined(__ALPHA) && defined(__osf__)
-     printf(TAB3HDR,"case4:",evname[0],evname[1],evname[3]);
-     printf("case4: %lld %lld %lld\n", values[0], values[1],values[3]);
-#else
      test_print_event_header("case4:",EventSet);
      printf(TAB4,"case4:",values[0],values[1],values[2],values[3]);
-#endif
   }
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
@@ -374,10 +369,6 @@ int main(int argc, char **argv)
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
-/* Skip Alpha till multiplex is fixed. -KSL */
-#if defined(__ALPHA) && defined(__osf__)
-  test_pass(__FILE__, NULL, 0);
-#endif
   if ( !TESTS_QUIET ) {
     printf("%s: Using %d iterations\n\n",argv[0],NUM);
 
