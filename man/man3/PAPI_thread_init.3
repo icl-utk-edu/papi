@@ -18,12 +18,15 @@ PAPI_thread_init \- initialize thread support in the PAPI library
 
 .SH DESCRIPTION
 .B "PAPI_thread_init"
-initializes thread support in the PAPI library. Itshould be called 
-.BR "only once" , 
-just after 
-.BR "PAPI_library_init" (3),
-and before any other PAPI calls. Applications that make no use of threads 
-do not need to call this routine.
+initializes thread support in the PAPI library. Applications that 
+make no use of threads do not need to call this routine. This function
+MUST return a UNIQUE thread ID for every new thread/LWP created. The 
+OpenMP call omp_get_thread_num() violates this rule, as the underlying
+LWPs may have been killed off by the run-time system or by a call to
+omp_set_num_threads(). In that case, it is still possible to use
+omp_get_thread_num() in conjunction with
+.B PAPI_unregister_thread()
+when the OpenMP thread has finished. 
 
 .SH ARGUMENTS
 .I "handle"
@@ -61,11 +64,10 @@ The PAPI Team. See them at the PAPI Web Site:
 http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
-This function causes the application to exit if it is called more than once.
+This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_library_init" (3), "
-.BR PAPI_thread_id" (3), "
-.BR PAPI_get_thr_specific" (3), "
-.BR PAPI_set_thr_specific" (3)"
+.BR PAPI_library_init "(3), " PAPI_thread_id "(3), "
+.BR PAPI_get_thr_specific "(3), " PAPI_set_thr_specific "(3), "
+.BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3) "
 

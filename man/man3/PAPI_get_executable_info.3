@@ -68,8 +68,12 @@ if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
 if ((prginfo = PAPI_get_executable_info()) == NULL)
   exit(1);
 
-printf("Start of user program is at %p\en",prginfo->text_start);
-printf("End of user program is at %p\en",prginfo->text_end);
+printf("Path+Program: %s\n",exeinfo->fullname);
+printf("Program: %s\n",exeinfo->address_info.name);
+printf("Text start: %p, Text end: %p\n",exeinfo->address_info.text_start,exeinfo->address_info.text_end);
+printf("Data start: %p, Data end: %p\n",exeinfo->address_info.data_start,exeinfo->address_info.data_end);
+printf("Bss start: %p, Bss end: %p\n",exeinfo->address_info.bss_start,exeinfo->address_info.bss_end);
+   
 .if t .ft P
 .fi
 

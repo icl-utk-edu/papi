@@ -17,12 +17,17 @@ PAPI_thread_id \- get the thread identifier of the current thread
 .fi
 
 .SH DESCRIPTION
+This function returns a valid thread identifier. It calls the function
+registered with PAPI through a call to 
+.B PAPI_thread_init().
+
+.SH ARGUMENTS
 None.
 
 .SH RETURN VALUES
-On success, this function returns a valid thread 
-identifier.
- On error, (unsigned long int)-1 is returned.
+Return values are identical to the function registered with PAPI 
+through a call to 
+.B PAPI_thread_init().
 
 .SH ERRORS
 None.
