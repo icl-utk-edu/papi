@@ -2,7 +2,8 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
-MPX	= multiplex1 multiplex1_pthreads multiplex2
+MPX	= multiplex1 multiplex2
+MPXPTHR = multiplex1_pthreads
 MPI	= mpifirst
 SERIAL  = zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
