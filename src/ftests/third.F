@@ -140,12 +140,12 @@
      . 'PAPIf_rem_event', retval)
       end if
 
-      zero="  0     "
+      zero='  0     '
       if (tests_quiet .EQ. 0) then
-      print *, "Test case 3: Overlapping start and stop of 2 eventsets",
-     *" with different counters."
-      print *, "----------------------------------------------------------
-     *---------------------"
+      print *, 'Test case 3: Overlapping start and stop of 2 eventsets',
+     *' with different counters.'
+      print *, '-------------------------------------------------'//
+     *  '------------------------------'
       end if
 
       call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
@@ -156,9 +156,9 @@
 
       call stringify_domain(domain, domainstr)
       if (tests_quiet .EQ. 0) then
-      write (*,900) "Default domain is:", domain, domainstr
+      write (*,900) 'Default domain is:', domain, domainstr
       end if
- 900  format(a20, i3, " ", a20)
+ 900  format(a20, i3, ' ', a20)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -170,9 +170,9 @@
 
       call stringify_granularity(granularity, grnstr)
       if (tests_quiet .EQ. 0) then
-      write (*,800) "Default granularity is:", granularity, grnstr
+      write (*,800) 'Default granularity is:', granularity, grnstr
       end if
- 800  format(a25, i3, " ", a20)
+ 800  format(a25, i3, ' ', a20)
 
       if (tests_quiet. EQ. 0) then
         call PAPIf_event_code_to_name (event, name, retval)
@@ -181,24 +181,25 @@
      *       'PAPIf_event_code_to_name', retval)
         end if
         n=len_trim(name)
-      print *, "Using", NUM_FLOPS, " iterations of c += b*c"
+      print *, 'Using', NUM_FLOPS, ' iterations of c += b*c'
 
-      print *, "--------------------------------------------------------------
-     *---------------------"
+      print *, '-------------------------------------------------'//
+     *  '------------------------------'
 
-      write (*,100) "Test type", 1, 2, 3, 4, 5
+      write (*,100) 'Test type', 1, 2, 3, 4, 5
       write (*,100) name(1:n), 0, 0, values(5), 0, values(9)
-      write (*,100) "PAPI_TOT_CYC", values(1), values(3), 0,
+      write (*,100) 'PAPI_TOT_CYC', values(1), values(3), 0,
      *values(7), 0
-      print *, "----------------------------------------------------------
-     *---------------------"
- 100  format(a15, ":", i12, i12, i12, i12, i12)
-      print *, "Verification:"
-      print *, "Row 1 approximately equals 0  0  N  0  N"
-      print *, "Row 2 approximately equals X  X  0  X  0"
-      print *, "Column 1 approximately equals column 2"
-      print *, "Column 4 approximately equals three times column 1"
-      print *, "Column 5 approximately equals column 3"
+      print *, '-------------------------------------------------'//
+     *  '------------------------------'
+
+ 100  format(a15, ':', i12, i12, i12, i12, i12)
+      print *, 'Verification:'
+      print *, 'Row 1 approximately equals 0  0  N  0  N'
+      print *, 'Row 2 approximately equals X  X  0  X  0'
+      print *, 'Column 1 approximately equals column 2'
+      print *, 'Column 4 approximately equals three times column 1'
+      print *, 'Column 5 approximately equals column 3'
       end if
 
       min = values(5)*0.9
