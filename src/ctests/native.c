@@ -114,7 +114,7 @@ void papimon_start(void)
          if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       }
-#elif defined(linux) && defined(__i386__)
+#elif defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )
       for (i = 0; native_name[i] != NULL; i++) {
          retval = PAPI_event_name_to_code(native_name[i], &native);
          /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
@@ -263,7 +263,7 @@ void papimon_stop(void)
       fprintf(stderr, "%% FMA Instructions         : %.2f\n",
               100.0 * (float) values[6] / ((float) values[1] + (float) values[4]));
 #endif
-#elif defined(linux) && defined(__i386__)
+#elif defined(linux) && ( defined(__i386__) || defined(__x86_64__) )
       for (i = 0; native_name[i] != NULL; i++) {
          fprintf(stderr, "%-40s: %lld\n", native_name[i], values[i]);
       }
