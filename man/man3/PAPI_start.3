@@ -2,7 +2,8 @@
 .TH PAPI_start 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_start, PAPI_stop \- start/stop counting hardware events in an event set
+PAPI_start \- start counting hardware events in an event set
+PAPI_stop \- stop counting hardware events in an event set
 
 .SH SYNOPSIS
 .B C Interface
@@ -67,7 +68,8 @@ The EventSet is currently not running.
 .TP
 .B "PAPI_ECNFLCT"
 The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously. (PAPI_start() only)
+in the EventSet simultaneously.
+.BR "" ( "PAPI_start() " only)
 .TP
 .B "PAPI_ENOEVNT"
 The PAPI preset is not available on the underlying hardware. 
