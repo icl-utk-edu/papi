@@ -11,6 +11,9 @@
 *	   london@cs.utk.edu
 */  
 
+#ifdef PERFCTR26
+#define PERFCTR25
+#endif
 #ifdef PERFCTR25
 #define PERFCTR20
 #define PERFCTR_CPU_NAME   perfctr_info_cpu_name
@@ -383,7 +386,8 @@ static int get_system_info(struct perfctr_dev *dev)
       return(PAPI_ESBSTR);
     }
 #else
-  if (strstr(info.driver_version,"2.5") != info.driver_version)
+  if ((strstr(info.driver_version,"2.5") != info.driver_version) &&
+      (strstr(info.driver_version,"2.6") != info.driver_version))
     {
       fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
       return(PAPI_ESBSTR);
