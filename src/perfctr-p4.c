@@ -798,7 +798,8 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
          stuff next pmc slot with data at preset
   */
 
-  if (selector == 0)
+  /*if (selector == 0 ) - I believe this was suppose to be -1 -KSL*/
+  if (selector == -1 )
     return(PAPI_ENOEVNT);
 
   hwindex = _papi3_hwd_add_event(regmap,preset,&this_state->control);
