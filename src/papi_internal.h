@@ -259,7 +259,7 @@ extern int sigrelse(int);
 extern int mpx_init(int);
 extern int mpx_add_event(MPX_EventSet **, int EventCode);
 extern int mpx_remove_event(MPX_EventSet **, int EventCode);
-extern int MPX_add_events(MPX_EventSet ** mpx_events, int * event_list, int num_events);;
+extern int MPX_add_events(MPX_EventSet ** mpx_events, int * event_list, int num_events);
 extern int MPX_stop(MPX_EventSet * mpx_events, long long * values);
 extern int MPX_cleanup(MPX_EventSet ** mpx_events);
 extern void MPX_shutdown(void);

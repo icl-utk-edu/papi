@@ -5,6 +5,7 @@ SOURCES	  = $(MISCSRCS) papi.c papi_hl.c $(SUBSTR).c extras.c multiplex.c \
 OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o multiplex.o \
 	    papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
+CFLAGS	  += -DSUBSTRATE=\"$(SUBSTR).h\"  
 
 all: showconf $(LIBS) fpapi.h examples
 
@@ -76,11 +77,11 @@ libclean:
 clean: libclean
 	cd tests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
-	cd perfctr; $(MAKE) clean
-	cd perf; $(MAKE) clean
+	@if [ `uname -s` = "Linux" ]; then cd perfctr; $(MAKE) clean; fi;
+	@if [ `uname -s` = "Linux" ]; then cd perf; $(MAKE) clean; fi;
 
 clobber: clean
-	rm -f $(LIBRARY) $(SHLIB) fpapi.h
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) fpapi.h
 null:
 
 dist: 

@@ -65,7 +65,7 @@ void init_papi_pthreads(void)
     handle_error("PAPI_thread_init",__LINE__,retval);
 }
 
-int do_pthreads(void *fn)
+int do_pthreads(void *(*fn)(void *))
 {
   int i, rc;
   pthread_attr_t attr;
@@ -95,7 +95,7 @@ int do_pthreads(void *fn)
 
 /* Tests that PAPI_multiplex_init does not mess with normal operation. */
 
-int case1_pthreads(void) 
+void *case1_pthreads(void *arg) 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[2];
@@ -130,12 +130,12 @@ int case1_pthreads(void)
   if (retval != PAPI_OK)
     handle_error("PAPI_cleanup_eventset",__LINE__,retval);
   
-  return(SUCCESS);
+  return((void *)SUCCESS);
 }
 
 /* Tests that PAPI_set_multiplex() works before adding events */
 
-int case2_pthreads(void) 
+void *case2_pthreads(void *arg) 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[2];
@@ -174,12 +174,12 @@ int case2_pthreads(void)
   if (retval != PAPI_OK)
     handle_error("PAPI_cleanup_eventset",__LINE__,retval);
   
-  return(SUCCESS);
+  return((void *)SUCCESS);
 }
 
 /* Tests that PAPI_set_multiplex() works after adding events */
 
-int case3_pthreads(void) 
+void *case3_pthreads(void *arg) 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[2];
@@ -218,12 +218,12 @@ int case3_pthreads(void)
   if (retval != PAPI_OK)
     handle_error("PAPI_cleanup_eventset",__LINE__,retval);
   
-  return(SUCCESS);
+  return((void *)SUCCESS);
 }
 
 /* Tests that PAPI_set_multiplex() works before/after adding events */
 
-int case4_pthreads(void) 
+void *case4_pthreads(void *arg) 
 {
   int retval, i, EventSet = PAPI_NULL;
   long long values[4];
@@ -244,6 +244,7 @@ int case4_pthreads(void)
   if (retval != PAPI_OK)
     handle_error("PAPI_set_multiplex",__LINE__,retval);
 
+#if defined(i386) && defined(linux)
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
     handle_error("PAPI_add_event",__LINE__,retval);
@@ -251,6 +252,17 @@ int case4_pthreads(void)
   retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
   if (retval != PAPI_OK)
     handle_error("PAPI_add_event",__LINE__,retval);
+#elif  defined(sparc) && defined(sun)
+  retval = PAPI_add_event(&EventSet, PAPI_LD_INS);
+  if (retval != PAPI_OK)
+    handle_error("PAPI_add_event",__LINE__,retval);
+
+  retval = PAPI_add_event(&EventSet, PAPI_SR_INS);
+  if (retval != PAPI_OK)
+    handle_error("PAPI_add_event",__LINE__,retval);
+#else
+#error "Architecture not ported yet"
+#endif
 
   if (PAPI_start(EventSet) != PAPI_OK)
     handle_error("PAPI_start",__LINE__,retval);
@@ -270,7 +282,7 @@ int case4_pthreads(void)
   if (retval != PAPI_OK)
     handle_error("PAPI_cleanup_eventset",__LINE__,retval);
   
-  return(SUCCESS);
+  return((void *)SUCCESS);
 }
 
 int case1(void) 

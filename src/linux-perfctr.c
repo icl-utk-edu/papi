@@ -810,8 +810,6 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   return(PAPI_OK);
 }
 
-// 434 6613 muky mtn retret 3bd 
-
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
   int selector, used, preset_index, EventCode;

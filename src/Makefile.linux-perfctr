@@ -3,7 +3,7 @@ DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
 LIBS	= static shared
 TARGETS = multiplex serial pthreads 
 
-CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR18 -I. -DSUBSTRATE=\"$(SUBSTR).h\" -g
+CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR18 -I. -g
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 FFLAGS	= -Wall -g
 OPTFLAGS= -O3 -mpentiumpro

@@ -662,6 +662,7 @@ static int set_inherit(EventSetInfo *global, int arg)
 
   return(PAPI_EINVAL);
 
+#if 0
   if (arg == 0)
     {
       if (command->flags & CPC_BIND_LWP_INHERIT)
@@ -675,6 +676,7 @@ static int set_inherit(EventSetInfo *global, int arg)
     return(PAPI_EINVAL);
 
   return(PAPI_OK);
+#endif
 }
 
 static int set_default_domain(EventSetInfo *zero, int domain)
@@ -762,13 +764,11 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
-  unsigned char tmp_cmd[MAX_COUNTERS];
-  unsigned char *codes;
+  unsigned char tmp_cmd[US_MAX_COUNTERS], *codes;
 
   if (EventCode & PRESET_MASK)
     { 
@@ -808,8 +808,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = preset_map[preset_index].counter_cmd;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
+      out->command = derived;
+      out->operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
@@ -854,20 +854,20 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int selector, used, preset_index;
+  int selector, used, preset_index, EventCode;
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
+  used = in->selector;
+  EventCode = in->code;
  
   if (EventCode & PRESET_MASK)
     { 
@@ -888,7 +888,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
-      old_code = ESI->EventInfoArray[index].command;
+      old_code = in->command;
       code = EventCode >> 8; 
       if (old_code != code)
 	return(PAPI_EINVAL);
@@ -908,7 +908,8 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
 {
   return(PAPI_ESBSTR);
 }
@@ -1124,7 +1125,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
 {
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
-  long long correct[MAX_COUNTERS];
+  long long correct[US_MAX_COUNTERS];
 
   retval = update_global_hwcounters(zero);
   if (retval)
@@ -1184,8 +1185,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(zero,option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }
