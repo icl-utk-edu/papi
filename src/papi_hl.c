@@ -27,6 +27,17 @@ static int initialized = 0;
 static int hl_max_counters = 0;
 
 /* CHANGE LOG:
+  - dkt 08/14/01:
+	Added reinitialization of values and proc_time to new reinit code.
+	Added SLOPE and FMA constants to correct for systemic errors on a
+	platform-by-platform basis.
+	SLOPE is a factor subtracted from flpins on each call to compensate
+	for platform overhead in the call.
+	FMA is a shifter that doubles floating point counts on platforms that
+	count FMA as one op instead of two.
+	NOTE: We are making the FLAWED assumption that ALL flpins are FMA!
+	This will result in counts that are TOO HIGH on the affected platforms
+	in instances where the code is NOT mostly FMA.
   - dkt 08/01/01:
 	NOTE: Calling semantics have changed!
 	Now, if flpins < 0 (an invalid value) a PAPI_reset is issued to reset the
@@ -40,6 +51,23 @@ static int hl_max_counters = 0;
 	-- initial PAPI_get_real_usec() call moved above PAPI_start to avoid unwanted flops.
 	-- PAPI_accum() replaced with PAPI_start() / PAPI_stop pair for same reason.
 */
+#ifdef _WIN32
+  #define SLOPE 0
+  #define FMA 0
+#elif (defined(i386) && defined(linux))
+  #define SLOPE 0
+  #define FMA 0
+#elif(defined(_POWER) && defined(_AIX)) 
+  #define SLOPE 0
+  #define FMA 0
+#elif defined(mips)
+  #define SLOPE 9
+  #define FMA 1
+#elif (defined(sparc) && defined(sun))
+  #define SLOPE 0
+  #define FMA 1
+#endif
+
 int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops)
 {
    static float total_proc_time=0.0; 
@@ -93,23 +121,30 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 	/* If fp instuction count is negative, re-initialize */
 	if ( *flpins < 0 ) {
 		total_flpins = 0;
-		PAPI_reset(EventSet);
+		total_proc_time = 0.0;
+		*mflops = 0.0;
+		*real_time = 0.0;
+		*proc_time = 0.0;
+		*flpins = 0;
 		start_us = PAPI_get_real_usec();
+	} else {
+		*real_time = (float)((PAPI_get_real_usec()-start_us)/1000000.0);
+		PAPI_perror( retval, buf, 500);
+		if ( retval < PAPI_OK ) {
+			 PAPI_shutdown();
+			 initialized = 0;
+			 return retval;
+		}
+
+		*proc_time = (float)(values[1]/(mhz*1000000.0));
+		*mflops = (float)((values[0]<<FMA)/(*proc_time*1000000.0));
+		total_proc_time += *proc_time;
+		total_flpins += values[0];
+		*proc_time = total_proc_time;
+		*flpins = total_flpins<<FMA;
+		total_flpins -= SLOPE;
 	}
-	*real_time = (float)((PAPI_get_real_usec()-start_us)/1000000.0);
-	PAPI_perror( retval, buf, 500);
-	if ( retval < PAPI_OK ) {
-	     PAPI_shutdown();
-	     initialized = 0;
-	     return retval;
-	}
-	*proc_time = (float)(values[1]/(mhz*1000000.0));
-	*mflops = (float)(values[0]/(*proc_time*1000000.0));
-	total_proc_time += *proc_time;
-	total_flpins += values[0];
-	*proc_time = total_proc_time;
-	*flpins = total_flpins;
- 	retval = PAPI_start(EventSet);
+	retval = PAPI_start(EventSet);
 	PAPI_perror(retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
