@@ -660,6 +660,11 @@ long_long _papi_hwd_get_real_usec (void)
 
 long_long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
+	/* This routine needs to be carefully debugged 
+		It currently doesn't seem to work.
+		We'll substitute real_usec instead, since
+		we're measuring system time anyhow...
+
 	// returns user time per thread.
 	// NOTE: we can also get process times with GetCurrentProcess()
 	// and GetProcessTimes()
@@ -669,25 +674,39 @@ long_long _papi_hwd_get_virt_usec (EventSetInfo *zero)
     FILETIME ExitTime;			 // when the thread was destroyed 
     FILETIME KernelTime;		 // time the thread has spent in kernel mode 
     FILETIME UserTime;			 // time the thread has spent in user mode 
-	LARGE_INTEGER largeUser;
-	
-	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
-		GetCurrentProcess(), &hThread, 0, 0, DUPLICATE_SAME_ACCESS);	
-	GetThreadTimes(hThread, &CreationTime, 
+	LARGE_INTEGER largeUser, largeKernel;
+	BOOL success;
+
+
+	success = DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
+		GetCurrentProcess(), &hThread, 0, 0, DUPLICATE_SAME_ACCESS);
+	if (!success) printf("FAILED DuplicateHandle!\n");
+	success = GetThreadTimes(hThread, &CreationTime, 
 			&ExitTime, &KernelTime, &UserTime);
+	largeKernel.LowPart  = KernelTime.dwLowDateTime;
+	largeKernel.HighPart = KernelTime.dwHighDateTime;
 	largeUser.LowPart  = UserTime.dwLowDateTime;
 	largeUser.HighPart = UserTime.dwHighDateTime;
+	if (!success) printf("FAILED GetThreadTimes!\n");
+	printf("largeKernel: %I64d\n", largeKernel.QuadPart);
+	printf("largeUser: %I64d\n", largeUser.QuadPart);
+
 	return (largeUser.QuadPart/10); // time is in 100 ns increments
+	*/
+	return(_papi_hwd_get_real_usec());
 }
 
 
 long_long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
+	/* virt_usec doesn't work yet...
   float usec, cyc;
 
   usec = (float)_papi_hwd_get_virt_usec(zero);
   cyc = usec * _papi_system_info.hw_info.mhz;
   return((long_long)cyc);
+  */
+  return(get_cycles());
 }
 
 long_long _papi_hwd_get_real_cycles (void)
