@@ -83,16 +83,35 @@
 
 #if defined(PAPI_PENTIUM4_FP_X87)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}}
+#define FPU_DESC "x87"
 #elif defined(PAPI_PENTIUM4_FP_X87_SSE_SP)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
+#define FPU_DESC "x87, single precision SSE"
 #elif defined(PAPI_PENTIUM4_FP_X87_SSE_DP)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
+#define FPU_DESC "x87, double precision SSE"
 #elif defined(PAPI_PENTIUM4_FP_SSE_SP_DP)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_scalar_DP_uop_tag0, PAPI_NULL, }, {0,}}}
+#define FPU_DESC "single precision SSE, double precision SSE"
 #else
 #warning "Assuming you meant -DPAPI_PENTIUM4_FP_X87_SSE_DP on the compile line?"
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
+#define FPU_DESC "x87, double precision SSE"
 #endif
+
+#if defined(PAPI_PENTIUM4_VEC_MMX)
+#define VEC(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}}
+#define VEC_DESC "64bit MMX, 128bit MMX"
+#elif defined(PAPI_PENTIUM4_VEC_SSE)
+#define VEC(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_packed_SP_uop_tag0, PNE_packed_DP_uop_tag0, PAPI_NULL, }, {0,}}}
+#define VEC_DESC "packed single precision SSE, packed double precision SSE"
+#else
+#warning "Assuming you meant -DPAPI_PENTIUM4_VEC_SSE on the compile line?"
+#define VEC(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_packed_SP_uop_tag0, PNE_packed_DP_uop_tag0, PAPI_NULL, }, {0,}}}
+#define VEC_DESC "packed single precision SSE, packed double precision SSE"
+#endif
+
+/* END EWWWWW!!! GROSS!!! -pjm */
 
 hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 /* preset, derived, native index array */
@@ -108,7 +127,7 @@ hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
    FPU(PAPI_FP_INS),
    FPU(PAPI_FP_OPS),
-   {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
+   VEC(PAPI_VEC_INS),
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
@@ -135,7 +154,7 @@ hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
    FPU(PAPI_FP_INS),
    FPU(PAPI_FP_OPS),
-   {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
+   VEC(PAPI_VEC_INS),
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
@@ -164,7 +183,7 @@ hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
    FPU(PAPI_FP_INS),
    FPU(PAPI_FP_OPS),
-   {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
+   VEC(PAPI_VEC_INS),
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
@@ -184,22 +203,25 @@ hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
    the use of rare developer strings with no string copies and very little space
    wasted on unused structure elements.
 */
-const hwi_dev_notes_t _papi_hwd_pentium4_mlt2_dev_notes[] = {
+hwi_dev_notes_t _papi_hwd_pentium4_mlt2_dev_notes[] = {
 /* preset, note */
-   {PAPI_FP_INS, "PAPI_FP_INS is currently implemented identically to PAPI_FP_OPS"},
-   {PAPI_FP_OPS, "PAPI_FP_OPS is currently implemented identically to PAPI_FP_INS"},
+   {PAPI_FP_INS, FPU_DESC},
+   {PAPI_FP_OPS, FPU_DESC},
+   {PAPI_VEC_INS, VEC_DESC},
    {0, NULL}
 };
-const hwi_dev_notes_t _papi_hwd_pentium4_m2_dev_notes[] = {
+hwi_dev_notes_t _papi_hwd_pentium4_m2_dev_notes[] = {
 /* preset, note */
-   {PAPI_FP_INS, "PAPI_FP_INS is currently implemented identically to PAPI_FP_OPS"},
-   {PAPI_FP_OPS, "PAPI_FP_OPS is currently implemented identically to PAPI_FP_INS"},
+   {PAPI_FP_INS, FPU_DESC},
+   {PAPI_FP_OPS, FPU_DESC},
+   {PAPI_VEC_INS, VEC_DESC},
    {0, NULL}
 };
-const hwi_dev_notes_t _papi_hwd_pentium4_m3_dev_notes[] = {
+hwi_dev_notes_t _papi_hwd_pentium4_m3_dev_notes[] = {
 /* preset, note */
-   {PAPI_FP_INS, "double precision unpacked SSE and x87"},
-   {PAPI_FP_OPS, "double precision unpacked SSE and x87"},
+   {PAPI_FP_INS, FPU_DESC},
+   {PAPI_FP_OPS, FPU_DESC},
+   {PAPI_VEC_INS, VEC_DESC},
    {0, NULL}
 };
 
@@ -1354,33 +1376,43 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    return(++i);
 }
 
-void _papi_hwd_fixup_fp_events(hwi_search_t *p)
+void _papi_hwd_fixup_presets(hwi_search_t *p, hwi_dev_notes_t *n)
 {
   char *s = getenv("PAPI_PENTIUM4_FP");
   int count = 0;
-  hwi_search_t t, *tmp; 
+  hwi_search_t t, *tmp;
+  hwi_dev_notes_t tn, *tmpn;
+  char note[PAPI_MAX_STR_LEN];
 
   if ((s == NULL) || (strlen(s) == 0))
     return;
 
   memset(&t,0x0,sizeof(t));
-  t.event_code = PAPI_FP_INS;
+  memset(&tn,0x0,sizeof(tn));
+  memset(note,0x0,sizeof(char)*PAPI_MAX_STR_LEN);
   t.data.derived = DERIVED_CMPD;
   t.data.native[count] = PNE_execution_event_nbogus0;
   count++;
   if (strstr(s,"X87"))
     {
       t.data.native[count] = PNE_x87_FP_uop_tag0;
+      strcat(note,"x87");
       count++;
     }
   if (strstr(s,"SSE_UP_SP"))
     {
       t.data.native[count] = PNE_scalar_SP_uop_tag0;
+      if (strlen(note))
+	strcat(note,",");
+      strcat(note,"single precision SSE");
       count++;
     }
   if (strstr(s,"SSE_UP_DP") && (count < 3))
     {
       t.data.native[count] = PNE_scalar_DP_uop_tag0;
+      if (strlen(note))
+	strcat(note,",");
+      strcat(note,"double precision SSE");
       count++;
     }
 #if 0
@@ -1417,6 +1449,23 @@ void _papi_hwd_fixup_fp_events(hwi_search_t *p)
 	  memcpy(tmp,&t,sizeof(t));
 	}
       tmp++;
+    }
+
+  if (strlen(note))
+    {
+      tmpn = n;
+      while (tmpn->event_code)
+	{
+	  if (tmpn->event_code == PAPI_FP_INS) 
+	    {
+	      tmpn->dev_note = strdup(note);
+	    }
+	  if (tmpn->event_code == PAPI_FP_OPS) 
+	    {
+	      tmpn->dev_note = strdup(note);
+	    }
+	  tmpn++;
+	}
     }
 }
 #endif

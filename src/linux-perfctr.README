@@ -126,3 +126,23 @@ we have introduced 2 methods.
    The default for anything else is:
 
 	 -DPAPI_PENTIUM4_FP_X87.
+
+Vector instruction counts on the Pentium 4 series
+-------------------------------------------------
+
+PAPI can count 2 different types of vector instructions on the Pentium 4.
+Either MMX instructions or packed SSE floating point instructions. These
+are controlled with a compile time option.
+
+1) The PAPI_PENTIUM4_VEC_xxx defines.
+
+   Set these in the EVENTFLAGS of either the Makefile.linux-perfctr-p4 or
+   Makefile.linux-perfctr-em64t.
+
+   -DPAPI_PENTIUM4_VEC_MMX
+   -DPAPI_PENTIUM4_VEC_SSE
+
+   The current default for all platforms is:
+
+	 -DPAPI_PENTIUM4_VEC_SSE.
+
