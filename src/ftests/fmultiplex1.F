@@ -82,7 +82,7 @@ C     Print the content of an event set
 
       n=MAXEVENT
       call PAPIf_list_events(ES,codes,n,retval)
-      if(n>MAXEVENT) write(*,100) n,MAXEVENT
+      if(n.gt.MAXEVENT) write(*,100) n,MAXEVENT
   100 format(T1,'There are',i4,' events in the set. Can only print',
      &       i4,'.')
 
