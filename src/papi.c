@@ -2161,7 +2161,7 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsi
       memset(prof,0x0,sizeof(PAPI_sprofil_t));
       prof->pr_base = buf;
       prof->pr_size = bufsiz;
-      prof->pr_off = offset;
+      prof->pr_off = (caddr_t)offset;
       prof->pr_scale = scale;
 
       papi_return(PAPI_sprofil(prof,1,EventSet,EventCode,threshold,flags));
