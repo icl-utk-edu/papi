@@ -9,38 +9,38 @@
 #endif
       implicit none
       character*25 chbuf
-	common quiet
+      common quiet
 #if defined(_CRAYT3E)
       integer ilen,ierror
 #endif
       integer quiet
 
-C	This routine tests for a command line argument
-C	that matches 'TESTS_QUIET'
-C	If found, it returns 1 to set output to quiet
-C	The routine was placed her to hide the ugly
-C	Windows #if stuff from normal view
-C	And also to make the test code read cleaner
+C     This routine tests for a command line argument
+C     that matches 'TESTS_QUIET'
+C     If found, it returns 1 to set output to quiet
+C     The routine was placed her to hide the ugly
+C     Windows #if stuff from normal view
+C     And also to make the test code read cleaner
       get_quiet=0
 #if defined(_CRAYT3E)
       call pxfgetarg(1,chbuf,ilen,ierror)
-#else
+#else 
       call getarg(1,chbuf)
 #endif
       if (LGE(chbuf, 'TESTS_QUIET')) then
-         get_quiet=1
+        get_quiet=1
       end if
-	quiet=get_quiet
-	end
+      quiet=get_quiet
+      end
 
 
       subroutine dummy(array)
       implicit none
       real array
       
-C    This is a dummy routine that can be used to make the
-C    compiler believe that the result of a loop is actually
-C    used in the program. See eg. fmatrixpapi.F
+C     This is a dummy routine that can be used to make the
+C     compiler believe that the result of a loop is actually
+C     used in the program. See eg. fmatrixpapi.F
 
       end
 
@@ -69,7 +69,7 @@ C    used in the program. See eg. fmatrixpapi.F
       integer line
 
       call ftests_perror(line,msg)
-       call pause()
+      call pause()
       stop
       end
 
@@ -80,7 +80,7 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,*) '****  Test error occurred  ****'
       write(*,100) line,msg
-  100 format(t3,'Line # ',i5,':: ',a)
+ 100  format(t3,'Line # ',i5,':: ',a)
 
       end
       
@@ -90,7 +90,7 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,100) test_str,' PASSED'
       call PAPIF_shutdown()
-       call pause()
+      call pause()
       stop
  100  format(a,t41,a)
       end
@@ -111,9 +111,9 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 
       if ( papiretval.ne.0 )then
-          write(*,100) test_str,' FAILED'
+        write(*,100) test_str,' FAILED'
       else
-          write(*,100) test_str,' SKIPPED'
+        write(*,100) test_str,' SKIPPED'
       end if
       if(papiretval.lt.0)then
         call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
@@ -122,7 +122,7 @@ C    used in the program. See eg. fmatrixpapi.F
       if(papiretval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test'
       end if
-       call pause()
+      call pause()
       stop
  100  format(a,t41,a)
       end
@@ -135,16 +135,16 @@ C    used in the program. See eg. fmatrixpapi.F
       integer len_trim
       external len_trim
       integer quiet
-	common quiet
+      common quiet
 
       write(*,100) test_str,' SKIPPED'
-	if (quiet .eq. 0) then
+      if (quiet .eq. 0) then
         if(papiretval.lt.0)then
           call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
           write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
-       call pause()
+      call pause()
       stop
  100  format(a,t41,a)
       end
@@ -167,24 +167,24 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 
       if ( retval.ne.0 )then
-          write(*,100) file,' FAILED'
+        write(*,100) file,' FAILED'
       else
-		write(*,100) file,' SKIPPED'
+        write(*,100) file,' SKIPPED'
       end if
       write(*,*) 'Line #', line
 
       if (retval.eq.PAPI_ESYS) then
-         write(*,*) "System error in ", callstr
+        write(*,*) "System error in ", callstr
       else if (retval.gt.0) then
-         write(*,*) "Error calculating: ", callstr
+        write(*,*) "Error calculating: ", callstr
       else if(retval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test'
       else
         call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
         write(*,*) 'PAPI error in ', callstr, 
-     *': ', papi_errstr(1:len_trim(papi_errstr))
+     *       ': ', papi_errstr(1:len_trim(papi_errstr))
       end if
-	call pause()
+      call pause()
       stop
  100  format(a,t41,a)
       end
@@ -196,7 +196,7 @@ C    used in the program. See eg. fmatrixpapi.F
       character*(*) callstr
       integer retval
       integer quiet
-	common quiet
+      common quiet
 
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer len_trim
@@ -204,26 +204,26 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,100) file, ' SKIPPED'
       write(*,*) 'Line #', line
-	if (quiet .eq. 0) then
-		if(retval.eq.PAPI_ESYS) then
-		   write(*,*) "System error in ", callstr
-		else if (retval.gt.0) then
-		   write(*,*) "Error calculating: ", callstr
-		else
-		  call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
-		  write(*,*) 'Error in ', callstr, ' : ', 
-     *       papi_errstr(1:len_trim(papi_errstr))
-		end if
+      if (quiet .eq. 0) then
+        if(retval.eq.PAPI_ESYS) then
+          write(*,*) "System error in ", callstr
+        else if (retval.gt.0) then
+          write(*,*) "Error calculating: ", callstr
+        else
+          call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
+          write(*,*) 'Error in ', callstr, ' : ', 
+     *         papi_errstr(1:len_trim(papi_errstr))
+        end if
       end if
-       call pause()
+      call pause()
       stop
  100  format(a,t41,a)
       end
 
 
-C
-C  TEST UTILITIES
-C
+C     
+C     TEST UTILITIES
+C     
       subroutine do_flops(n)
       implicit none      
       integer n
@@ -233,7 +233,7 @@ C
       b = 6.2
       c = 0.11
       do i = 1, n
-         c = c + a * b
+        c = c + a * b
       end do
       end
 
@@ -243,9 +243,9 @@ C
       integer i, j
       integer buf(L1_MISS_BUFFER_SIZE_INTS)      
       do i = 1, n
-         do j=1, L1_MISS_BUFFER_SIZE_INTS
-            buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
-         end do
+        do j=1, L1_MISS_BUFFER_SIZE_INTS
+          buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
+        end do
       end do
       end
 
@@ -259,12 +259,12 @@ C
       b = 6.2
       c = 0.11
       do i = 1, n
-         do j=1, n
-            c = c + a * b
-         end do
-         do j=1, L1_MISS_BUFFER_SIZE_INTS
-            buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
-         end do
+        do j=1, n
+          c = c + a * b
+        end do
+        do j=1, L1_MISS_BUFFER_SIZE_INTS
+          buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
+        end do
       end do
       end
 
@@ -274,17 +274,17 @@ C
       character*(PAPI_MAX_STR_LEN) str
 
       if (domain .EQ. PAPI_DOM_USER) then
-         str = "PAPI_DOM_USER"
+        str = "PAPI_DOM_USER"
       else if (domain .EQ. PAPI_DOM_KERNEL) then
-         str = "PAPI_DOM_KERNEL"
+        str = "PAPI_DOM_KERNEL"
       else if (domain .EQ. PAPI_DOM_OTHER) then
-         str = "PAPI_DOM_OTHER"
+        str = "PAPI_DOM_OTHER"
       else if (domain .EQ. PAPI_DOM_ALL) then
-         str = "PAPI_DOM_ALL"
+        str = "PAPI_DOM_ALL"
       else
-         print *, 'error in stringify_domain'
-          call pause()
-         stop
+        print *, 'error in stringify_domain'
+        call pause()
+        stop
       end if
       end
 
@@ -294,35 +294,35 @@ C
       character*(PAPI_MAX_STR_LEN) str
 
       if (granularity .EQ. PAPI_GRN_THR) then
-         str = "PAPI_GRN_THR"
+        str = "PAPI_GRN_THR"
       else if (granularity .EQ. PAPI_GRN_PROC) then
-         str = "PAPI_GRN_PROC"
+        str = "PAPI_GRN_PROC"
       else if (granularity .EQ. PAPI_GRN_PROCG) then
-         str = "PAPI_GRN_PROCG"
+        str = "PAPI_GRN_PROCG"
       else if (granularity .EQ. PAPI_GRN_SYS_CPU) then
-         str = "PAPI_GRN_SYS_CPU"
+        str = "PAPI_GRN_SYS_CPU"
       else if (granularity .EQ. PAPI_GRN_SYS) then
-         str = "PAPI_GRN_SYS"
+        str = "PAPI_GRN_SYS"
       else
-         print *, 'error in stringify_granularity'
-         call pause()
-         stop
+        print *, 'error in stringify_granularity'
+        call pause()
+        stop
       end if
       end
 
-C	This routine provides a bottleneck
-C	at the exit point of a program
-C	For Windows, it links to a simple C routine
-C	that prompts the user for a keypress
-C	For every other platform it is a nop.
+C     This routine provides a bottleneck
+C     at the exit point of a program
+C     For Windows, it links to a simple C routine
+C     that prompts the user for a keypress
+C     For every other platform it is a nop.
       subroutine pause()
       implicit none      
       integer quiet
-	common quiet
+      common quiet
 
 #ifdef _WIN32
-	if (quiet .eq. 0) then
-	  call cpause()
-	end if
+      if (quiet .eq. 0) then
+        call cpause()
+      end if
 #endif
-	end
+      end
