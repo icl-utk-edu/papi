@@ -17,10 +17,13 @@
 #include "papi.h"
 
 typedef struct hwd_control_state {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Is this event derived? */
-  int derived;   
+  /* Indices into preset map for event in order of addition */
+  /* if !PRESET_MASK then native event and counter # */
+  int preset[POWER_MAX_COUNTERS];
+  /* bitmap with all counters currently used */
+  unsigned char master_selector;  
+  /* bitmap with which counters used for which event */
+  unsigned char selector[POWER_MAX_COUNTERS];  
   /* Buffer to pass to the kernel to control the counters */
   pm_prog_t counter_cmd;
   /* Interrupt interval */
@@ -30,19 +33,22 @@ typedef struct hwd_control_state {
 #include "papi_internal.h"
 
 typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;  
   /* Is this event derived? */
   unsigned char derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  unsigned char counter_cmd[POWER_MAX_COUNTERS];
+  /* Which counters can be used? Bits encode counters available
+      Separate selectors for each metric in a derived event;
+      Rank determines how many counters carry each metric */
+  unsigned char selector[POWER_MAX_COUNTERS];  
+  unsigned char rank[POWER_MAX_COUNTERS];  
+  /* Buffers containing counter cmds for each possible metric */
+  unsigned char counter_cmd[POWER_MAX_COUNTERS][POWER_MAX_COUNTERS];
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
 typedef struct pmapi_search {
+  /* Preset code */
+  int preset;
   /* Derived code */
   int derived;
   /* Strings to look for */

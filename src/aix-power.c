@@ -3,690 +3,163 @@
 
 #include "aix-power.h"
 
+/* These defines smooth out the differences between pmtoolkit v1.2 and v1.3 */
+#ifdef PMTOOLKIT_1_2
+#define PM_SNOOP     "PM_SNOOP_RECV"
+#define PM_LSU_EXEC  "PM_LS_EXEC"
+#define PM_ST_L1MISS "PM_ST_MISS"
+#else
+#define PM_SNOOP     "PM_SNOOP"
+#define PM_LSU_EXEC  "PM_LSU_EXEC"
+#define PM_ST_L1MISS "PM_ST_L1MISS"
+#endif /*PMTOOLKIT_1_2*/
+
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
 static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
-  /* L1 Cache Dmisses */
-  {0,{"PM_DC_MISS",0,0,0,0,0,0,0}},		
-  /* L1 Cache Imisses */
-  {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
-  /* L2 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L2 Cache Imisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Cache Imisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L1 Total Cache misses */
-  {DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}},
-  /* L2 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L3 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* Req. for snoop*/
-#ifndef PMTOOLKIT_1_2
-  {0,{"PM_SNOOP",0,0,0,0,0,0,0}},	
-#else /* PMTOOLKIT_1_2 */
-  {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
-#endif /* PMTOOLKIT_1_2 */
-  /* Req. shared cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* Req. clean cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* Req. invalidate cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* Req. intervention cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* L3 Load misses*/
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* L3 Store misses*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* BRU idle cycles*/
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* FXU idle cycles*/
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* FPU idle cycles*/
-  {0,{0,0,0,0,0,0,0,0}},          
-  /* LSU idle cycles*/
-  {0,{0,0,0,0,0,0,0,0}},          
-  /* D-TLB misses*/
-  {0,{"PM_DTLB_MISS",0,0,0,0,0,0,0}},		
-  /* I-TLB misses*/
-  {0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}},		
-  /* Total TLB misses*/
-  {DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}},		
-  /* L1LM*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L1SM*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L2 Load misses */
-  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* L2 Store misses */
-  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* Btacmiss*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* prefmiss*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L3DCH*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* TLB shootdowns*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Suc. store conditional instructions*/
-  {0,{"PM_RESRV_CMPL",0,0,0,0,0,0,0}},	
-  /* Failed store conditional instructions*/
-  {DERIVED_SUB,{"PM_RESRV_RQ","PM_RESRV_CMPL",0,0,0,0,0,0}},	
-  /* Total store conditional instructions*/
-  {0,{"PM_RESRV_RQ",0,0,0,0,0,0,0}},			
-  /* Cycles stalled waiting for memory */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cycles stalled waiting for memory read */
-  {0,{"PM_LD_MISS_CYC",0,0,0,0,0,0,0}},   	
-  /* Cycles stalled waiting for memory write */
-  {0,{0,0,0,0,0,0,0,0}},   	
-  /* Cycles no instructions issued */
-  {0,{0,0,0,0,0,0,0,0}},	
-  /* Cycles max instructions issued */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cycles no instructions completed */
-  {0,{0,0,0,0,0,0,0,0}},	
-  /* Cycles max instructions completed */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Hardware interrupts */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Uncond. branches executed*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. Branch inst. executed*/
-  {0,{"PM_BR_FINISH",0,0,0,0,0,0,0}},		
-  /* Cond. Branch inst. taken*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. Branch inst. not taken*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. branch inst. mispred.*/
-  {0,{"PM_BR_MPRED",0,0,0,0,0,0,0}},          
-  /* Cond. branch inst. pred. */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* FMA's */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Total inst. issued*/
-  {0,{"PM_INST_DISP",0,0,0,0,0,0,0}},		
-  /* Total inst. executed*/
-  {0,{"PM_INST_CMPL",0,0,0,0,0,0,0}},		
-  /* Integer inst. executed*/
-  {0,{"PM_FXU_CMPL",0,0,0,0,0,0,0}},		
-  /* Floating Pt. inst. executed*/
-  {0,{"PM_FPU_CMPL",0,0,0,0,0,0,0}},	        
-  /* Loads executed*/
-  {0,{"PM_LD_CMPL",0,0,0,0,0,0,0}},		
-  /* Stores executed*/
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Branch inst. executed*/
-  {0,{"PM_BR_CMPL",0,0,0,0,0,0,0}},	
-  /* Vector/SIMD inst. executed */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* FLOPS */
-  {DERIVED_PS,{"PM_CYC","PM_FPU_CMPL",0,0,0,0,0,0}},			
-  /* 58*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cycles FP units are stalled*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Total cycles */
-  {0,{"PM_CYC",0,0,0,0,0,0,0}},		
-  /* IPS */
-  {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},			
-  /* load/store*/
-#ifndef PMTOOLKIT_1_2
-  {0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}},		
-#else /* PMTOOLKIT_1_2 */
-  {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
-#endif /* PMTOOLKIT_1_2 */
-  /* Synchronization inst. executed*/
-  {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
-  /* L1 data cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP mult */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP add */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP Div */
-  { 0,{0,0,0,0,0,0,0,0}},
-  /* FP Sqrt */
-  { 0,{0,0,0,0,0,0,0,0}},
-  /* FP inv */
-  {0,{0,0,0,0,0,0,0,0}}
+  {PAPI_L1_DCM,0,{"PM_DC_MISS",0,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
+  {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
+  {PAPI_L1_TCM,DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}}, /*Level 1 total cache misses*/
+  {PAPI_CA_SNP,0,{"PM_SNOOP",0,0,0,0,0,0,0}}, /*Snoops*/
+  {PAPI_TLB_DM,0,{"PM_DTLB_MISS",0,0,0,0,0,0,0}}, /*Data translation lookaside buffer misses*/	
+  {PAPI_TLB_IM,0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}}, /*Instr translation lookaside buffer misses*/
+  {PAPI_TLB_TL,DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/	
+  {PAPI_L2_LDM,0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 load misses */		
+  {PAPI_L2_STM,0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 store misses */		
+  {PAPI_CSR_SUC,0,{"PM_RESRV_CMPL",0,0,0,0,0,0,0}}, /*Successful store conditional instructions*/	
+  {PAPI_CSR_FAL,DERIVED_SUB,{"PM_RESRV_RQ","PM_RESRV_CMPL",0,0,0,0,0,0}}, /*Failed store conditional instructions*/	
+  {PAPI_CSR_TOT,0,{"PM_RESRV_RQ",0,0,0,0,0,0,0}}, /*Total store conditional instructions*/		
+  {PAPI_MEM_RCY,0,{"PM_LD_MISS_CYC",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Read*/
+  {PAPI_BR_CN,0,{"PM_BR_FINISH",0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
+  {PAPI_BR_MSP,0,{"PM_BR_MPRED",0,0,0,0,0,0,0}}, /*Conditional branch instructions mispred*/
+  {PAPI_TOT_IIS,0,{"PM_INST_DISP",0,0,0,0,0,0,0}}, /*Total instructions issued*/
+  {PAPI_TOT_INS,0,{"PM_INST_CMPL",0,0,0,0,0,0,0}}, /*Total instructions executed*/
+  {PAPI_INT_INS,0,{"PM_FXU_CMPL",0,0,0,0,0,0,0}}, /*Integer instructions executed*/
+  {PAPI_FP_INS,0,{"PM_FPU_CMPL",0,0,0,0,0,0,0}}, /*Floating point instructions executed*/
+  {PAPI_LD_INS,0,{"PM_LD_CMPL",0,0,0,0,0,0,0}}, /*Load instructions executed*/
+  {PAPI_BR_INS,0,{"PM_BR_CMPL",0,0,0,0,0,0,0}},	/*Total branch instructions executed*/
+  {PAPI_FLOPS,DERIVED_PS,{"PM_CYC","PM_FPU_CMPL",0,0,0,0,0,0}},	/*Floating Point instructions per second*/ 
+  {PAPI_TOT_CYC,0,{"PM_CYC",0,0,0,0,0,0,0}}, /*Total cycles*/
+  {PAPI_IPS,DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}}, /*Instructions executed per second*/
+  {PAPI_LST_INS,0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}}, /*Total load/store inst. executed*/
+  {PAPI_SYC_INS,0,{"PM_SYNC",0,0,0,0,0,0,0}}, /*Sync. inst. executed */
+  {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
 
 static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
-  /* L1 Cache Dmisses */
-  {0,{"PM_DC_MISS",0,0,0,0,0,0,0}},		
-  /* L1 Cache Imisses */
-  {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
-  /* L2 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L2 Cache Imisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Cache Imisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L1 Total Cache misses */
-  {DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}},
-  /* L2 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Total Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* Req. for snoop*/
-#ifndef PMTOOLKIT_1_2
-  {0,{"PM_SNOOP",0,0,0,0,0,0,0}},	
-#else /* PMTOOLKIT_1_2 */
-  {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
-#endif /* PMTOOLKIT_1_2 */
-  /* Req. shared cache line*/
-  {0,{"PM_LD_MISS_DC_SHR",0,0,0,0,0,0,0}},		 	
-  /* Req. clean cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* Req. invalidate cache line*/
-  {0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}},		 	
-  /* Req. intervention cache line*/
-  {0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}},		 	
-  /* L3 load misses */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L3 store misses */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* BRU idle cycles*/
-  {0,{"PM_BRU_IDLE",0,0,0,0,0,0,0}},		
-  /* FXU idle cycles*/
-  {0,{"PM_MCI_IDLE",0,0,0,0,0,0,0}},		
-  /* FPU idle cycles*/
-  {0,{"PM_FPU_IDLE",0,0,0,0,0,0,0}},          
-  /* LSU idle cycles*/
-  {0,{"PM_LSU_IDLE",0,0,0,0,0,0,0}},          
-  /* D-TLB misses*/
-  {0,{"PM_DTLB_MISS",0,0,0,0,0,0,0}},		
-  /* I-TLB misses*/
-  {0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}},		
-  /* Total TLB misses*/
-  {DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}},
-  /* L1 Load misses */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L1 Store misses */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L2 Load misses */
-  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* L2 Store misses */
-  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* BTACmiss*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Prefmiss*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* L3DCH*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* TLB shootdowns*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Suc. store conditional instructions*/
-  {0,{"PM_RESRV_CMPL",0,0,0,0,0,0,0}},	
-  /* Failed store conditional instructions*/
-  {DERIVED_SUB,{"PM_RESRV_RQ","PM_RESRV_CMPL",0,0,0,0,0,0}},	
-  /* Total store conditional instructions*/
-  {0,{"PM_RESRV_RQ",0,0,0,0,0,0,0}},			
-  /* Cycles stalled waiting for memory */
-  {DERIVED_ADD,{"PM_CMPLU_WT_LD","PM_CMPLU_WT_ST",0,0,0,0,0,0}},
-  /* Cycles stalled waiting for memory read */
-  {0,{"PM_CMPLU_WT_LD",0,0,0,0,0,0,0}},   	
-  /* Cycles stalled waiting for memory write */
-  {0,{"PM_CMPLU_WT_ST",0,0,0,0,0,0,0}},   	
-  /* Cycles no/min instructions issued */
-  {0,{"PM_1INST_DISP",0,0,0,0,0,0,0}},	
-  /* Cycles max instructions issued */
-  {0,{"PM_4INST_DISP",0,0,0,0,0,0,0}},	
-  /* Cycles no/min instructions completed */
-  {0,{"PM_1INST_DISP",0,0,0,0,0,0,0}},	
-  /* Cycles max instructions completed */
-  {0,{"PM_4INST_DISP",0,0,0,0,0,0,0}},	
-  /* Hardware interrupts */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Uncond. branches executed*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. Branch inst. executed*/
-  {0,{"PM_BR_FINISH",0,0,0,0,0,0,0}},		
-  /* Cond. Branch inst. taken*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. Branch inst. not taken*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. branch inst. mispred.*/
-  {0,{"PM_BR_MPRED",0,0,0,0,0,0,0}},          
-  /* Cond. branch inst. pred. */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* FMA's */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Total inst. issued*/
-  {0,{"PM_INST_DISP",0,0,0,0,0,0,0}},		
-  /* Total inst. executed*/
-  {0,{"PM_INST_CMPL",0,0,0,0,0,0,0}},		
-  /* Integer inst. executed*/
-  {0,{"PM_FXU_CMPL",0,0,0,0,0,0,0}},		
-  /* Floating Pt. inst. executed*/
-  {0,{"PM_FPU_CMPL",0,0,0,0,0,0,0}},	        
-  /* Loads executed*/
-  {0,{"PM_LD_CMPL",0,0,0,0,0,0,0}},		
-  /* Stores executed*/
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Branch inst. executed*/
-  {0,{"PM_BR_CMPL",0,0,0,0,0,0,0}},		
-  /* Vector/SIMD inst. executed */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* FLOPS */
-  {DERIVED_PS,{"PM_CYC","PM_FPU_CMPL",0,0,0,0,0,0}},			
-  /* CPU stall cycles*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cycles FP units are stalled*/
-  {0,{"PM_FPU_WT",0,0,0,0,0,0,0}},		
-  /* Total cycles */
-  {0,{"PM_CYC",0,0,0,0,0,0,0}},		
-  /* IPS */
-  {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},
-  /* load/stores executed*/
-#ifndef PMTOOLKIT_1_2
-  {0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}},		
-#else /* PMTOOLKIT_1_2 */
-  {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
-#endif /* PMTOOLKIT_1_2 */
-  /* Synchronization inst. executed */
-  {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
-  /* L1 data cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP mult */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP add */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP Div */
-  { 0,{0,0,0,0,0,0,0,0}},
-  /* FP Sqrt */
-  { 0,{0,0,0,0,0,0,0,0}},
-  /* FP inv */
-  {0,{0,0,0,0,0,0,0,0}}
+  {PAPI_L1_DCM,0,{"PM_DC_MISS",0,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
+  {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
+  {PAPI_L1_TCM,DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}}, /*Level 1 total cache misses*/
+  {PAPI_CA_SNP,0,{"PM_SNOOP",0,0,0,0,0,0,0}}, /*Snoops*/
+  {PAPI_CA_SHR,0,{"PM_LD_MISS_DC_SHR",0,0,0,0,0,0,0}}, /*Request for shared cache line (SMP)*/		 	
+  {PAPI_CA_INV,0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}}, /*Request for cache line Invalidation (SMP)*/	
+  {PAPI_CA_ITV,0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}}, /*Request for cache line Intervention (SMP)*/
+  {PAPI_BRU_IDL,0,{"PM_BRU_IDLE",0,0,0,0,0,0,0}}, /*Cycles branch units are idle*/
+  {PAPI_FXU_IDL,0,{"PM_MCI_IDLE",0,0,0,0,0,0,0}}, /*Cycles integer units are idle*/	
+  {PAPI_FPU_IDL,0,{"PM_FPU_IDLE",0,0,0,0,0,0,0}}, /*Cycles floating point units are idle*/
+  {PAPI_LSU_IDL,0,{"PM_LSU_IDLE",0,0,0,0,0,0,0}}, /*Cycles load/store units are idle*/
+  {PAPI_TLB_DM,0,{"PM_DTLB_MISS",0,0,0,0,0,0,0}}, /*Data translation lookaside buffer misses*/	
+  {PAPI_TLB_IM,0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}}, /*Instr translation lookaside buffer misses*/
+  {PAPI_TLB_TL,DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/	
+  {PAPI_L2_LDM,0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 load misses */		
+  {PAPI_L2_STM,0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 store misses */		
+  {PAPI_CSR_SUC,0,{"PM_RESRV_CMPL",0,0,0,0,0,0,0}}, /*Successful store conditional instructions*/	
+  {PAPI_CSR_FAL,DERIVED_SUB,{"PM_RESRV_RQ","PM_RESRV_CMPL",0,0,0,0,0,0}}, /*Failed store conditional instructions*/	
+  {PAPI_CSR_TOT,0,{"PM_RESRV_RQ",0,0,0,0,0,0,0}}, /*Total store conditional instructions*/		
+  {PAPI_MEM_SCY,DERIVED_ADD,{"PM_CMPLU_WT_LD","PM_CMPLU_WT_ST",0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Access*/
+  {PAPI_MEM_RCY,0,{"PM_CMPLU_WT_LD",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Read*/
+  {PAPI_MEM_WCY,0,{"PM_CMPLU_WT_ST",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Write*/
+  {PAPI_STL_ICY,0,{"PM_1INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Issue*/
+  {PAPI_FUL_ICY,0,{"PM_4INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with Maximum Instruction Issue*/
+  {PAPI_STL_CCY,0,{"PM_1INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Completion*/
+  {PAPI_FUL_CCY,0,{"PM_4INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with Maximum Instruction Completion*/
+  {PAPI_BR_CN,0,{"PM_BR_FINISH",0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
+  {PAPI_BR_MSP,0,{"PM_BR_MPRED",0,0,0,0,0,0,0}}, /*Conditional branch instructions mispred*/
+  {PAPI_TOT_IIS,0,{"PM_INST_DISP",0,0,0,0,0,0,0}}, /*Total instructions issued*/
+  {PAPI_TOT_INS,0,{"PM_INST_CMPL",0,0,0,0,0,0,0}}, /*Total instructions executed*/
+  {PAPI_INT_INS,0,{"PM_FXU_CMPL",0,0,0,0,0,0,0}}, /*Integer instructions executed*/
+  {PAPI_FP_INS,0,{"PM_FPU_CMPL",0,0,0,0,0,0,0}}, /*Floating point instructions executed*/
+  {PAPI_LD_INS,0,{"PM_LD_CMPL",0,0,0,0,0,0,0}}, /*Load instructions executed*/
+  {PAPI_BR_INS,0,{"PM_BR_CMPL",0,0,0,0,0,0,0}},	/*Total branch instructions executed*/
+  {PAPI_FLOPS,DERIVED_PS,{"PM_CYC","PM_FPU_CMPL",0,0,0,0,0,0}},	/*Floating Point instructions per second*/ 
+  {PAPI_FP_STAL,0,{"PM_FPU_WT",0,0,0,0,0,0,0}},	/*Cycles any FP units are stalled */	
+  {PAPI_TOT_CYC,0,{"PM_CYC",0,0,0,0,0,0,0}}, /*Total cycles*/
+  {PAPI_IPS,DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}}, /*Instructions executed per second*/
+  {PAPI_LST_INS,0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}}, /*Total load/store inst. executed*/
+  {PAPI_SYC_INS,0,{"PM_SYNC",0,0,0,0,0,0,0}}, /*Sync. inst. executed */
+  {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
 
 static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
-  /* L1 Cache Dmisses */
-#ifndef PMTOOLKIT_1_2
-  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0,0}},
-#else /* PMTOOLKIT_1_2 */
-  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0,0}},
-#endif /* PMTOOLKIT_1_2 */
-  /* L1 Cache Imisses */
-  {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
-  /* L2 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L2 Cache Imisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L3 Cache Imisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* L1 Total Cache misses */
-#ifndef PMTOOLKIT_1_2
-  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0}},
-#else /* PMTOOLKIT_1_2 */
-  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0}},
-#endif /* PMTOOLKIT_1_2 */
-  /* L2 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 Total Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
-  /* Req. for snoop*/
-  {0,{"PM_SNOOP",0,0,0,0,0,0,0}},		
-  /* Req. shared cache line*/
-  {0,{"PM_SNOOP_E_TO_S",0,0,0,0,0,0,0}},		 	
-  /* Req. clean cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* Req. invalidate cache line*/
-  {0,{0,0,0,0,0,0,0,0}},		 	
-  /* Req. intervention cache line*/
-  {0,{"PM_SNOOP_PUSH_INT",0,0,0,0,0,0,0}},		 	
-  /* L3 load misses */
-  {0,{0,0,0,0,0,0,0,0}},	
-  /* L3 store misses */
-  {0,{0,0,0,0,0,0,0,0}},	
-  /* BRU idle cycles*/
-  {0,{"PM_BRU_IDLE",0,0,0,0,0,0,0}},		
-  /* FXU idle cycles*/
-  {0,{"PM_FXU_IDLE",0,0,0,0,0,0,0}},		
-  /* FPU idle cycles*/
-  {0,{"PM_FPU_IDLE",0,0,0,0,0,0,0}},          
-  /* LSU idle cycles*/
-  {0,{"PM_LSU_IDLE",0,0,0,0,0,0,0}},          
-  /* D-TLB misses*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* I-TLB misses*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Total TLB misses*/
-  {0,{"PM_TLB_MISS",0,0,0,0,0,0,0}},		
-  /* L1 Load misses */
-  {0,{"PM_LD_MISS_L1",0,0,0,0,0,0,0}},			
-  /* L1 Store misses */
-#ifndef PMTOOLKIT_1_2
-  {0,{"PM_ST_L1MISS",0,0,0,0,0,0,0}},			
-#else /* PMTOOLKIT_1_2 */
-  {0,{"PM_ST_MISS",0,0,0,0,0,0,0}},			
-#endif /* PMTOOLKIT_1_2 */
-  /* L2 Load misses */
-  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* L2 Store misses */
-  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* BTAC misses*/
-  {0,{"PM_BTAC_MISS",0,0,0,0,0,0,0}},			
-  /* unused */
-  {0,{"PM_PREF_MATCH_DEM_MISS",0,0,0,0,0,0,0}},			
-  /* unused */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* TLB shootdowns*/
-  {0,{"PM_TLBSYNC_RERUN",0,0,0,0,0,0,0}},			
-  /* Suc. store conditional instructions*/
-  {0,{"PM_RESRV_CMPL",0,0,0,0,0,0,0}},	
-  /* Failed store conditional instructions*/
-  {0,{"PM_ST_COND_FAIL",0,0,0,0,0,0,0}},	
-  /* Total store conditional instructions*/
-  {0,{"PM_RESRV_RQ",0,0,0,0,0,0}},			
-  /* Cycles stalled waiting for memory */
-  {DERIVED_ADD,{"PM_CMPLU_WT_LD","PM_CMPLU_WT_ST",0,0,0,0,0,0}},
-  /* Cycles stalled waiting for memory read */
-  {0,{"PM_CMPLU_WT_LD",0,0,0,0,0,0,0}},   	
-  /* Cycles stalled waiting for memory write */
-  {0,{"PM_CMPLU_WT_ST",0,0,0,0,0,0,0}},   	
-  /* Cycles no instructions issued */
-  {0,{"PM_0INST_DISP",0,0,0,0,0,0,0}},	
-  /* Cycles max instructions issued */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cycles no instructions completed */
-  {0,{"PM_0INST_CMPL",0,0,0,0,0,0,0}},	
-  /* Cycles max instructions completed */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Hardware interrupts */
-  {0,{0,0,0,0,0,0,0,0}},		
-  /* Uncond. branches executed*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. Branch inst. executed*/
-  {0,{"PM_CBR_DISP",0,0,0,0,0,0}},		        
-  /* Cond. Branch inst. taken*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. Branch inst. not taken*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cond. branch inst. mispred.*/
-  {0,{"PM_MPRED_BR_CAUSED_GC",0,0,0,0,0,0,0}},
-  /* Cond. branch inst. pred. */
-  {0,{"PM_BR_PRED",0,0,0,0,0,0,0}},		
-  /* FMA's */
-  {0,{"PM_EXEC_FMA",0,0,0,0,0,0,0}},		
-  /* Total inst. issued*/
-  {0,{"PM_INST_DISP",0,0,0,0,0,0,0}},		
-  /* Total inst. executed*/
-  {0,{"PM_INST_CMPL",0,0,0,0,0,0,0}},		
-  /* Integer inst. executed*/
-  {DERIVED_ADD,{"PM_FXU0_PROD_RESULT","PM_FXU1_PROD_RESULT","PM_FXU2_PROD_RESULT",0,0,0,0,0}},
-  /* Floating Pt. inst. executed*/
-  {DERIVED_ADD,{"PM_FPU0_CMPL","PM_FPU1_CMPL",0,0,0,0,0,0}},	
-  /* Loads executed*/
-  {0,{"PM_LD_CMPL",0,0,0,0,0,0,0}},		
-  /* Stores executed*/
-  {0,{"PM_ST_CMPL",0,0,0,0,0,0,0}},		
-  /* Branch inst. executed*/
-  {0,{"PM_BR_CMPL",0,0,0,0,0,0,0}},		
-  /* Vector/SIMD inst. executed */
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* FLOPS */
-  {DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_CMPL","PM_FPU1_CMPL",0,0,0,0,0}},
-  /* 58*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Cycles FP units are stalled*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* Total cycles */
-  {0,{"PM_CYC",0,0,0,0,0,0,0}},		
-  /* IPS */
-  {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},
-  /* load/stores */
-  {DERIVED_ADD,{"PM_LD_CMPL","PM_ST_CMPL",0,0,0,0,0,0}},
-  /* Synchronization inst. executed */
-  {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
-  /* L1 data cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 data cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 instruction cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache hits */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache accesses */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache reads */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L1 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L2 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* L3 total cache writes */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP mult */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP add */
-  {0,{0,0,0,0,0,0,0,0}},
-  /* FP Div */
-  { 0,{"PM_FPU_FDIV",0,0,0,0,0,0,0}},
-  /* FP Sqrt */
-  { 0,{"PM_FPU_FSQRT",0,0,0,0,0,0,0}},
-  /* FP inv */
-  {0,{0,0,0,0,0,0,0,0}}
+  {PAPI_L1_DCM,DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0,0}}, /*Level 1 data cache misses*/
+  {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
+  {PAPI_L1_TCM,DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0}}, /*Level 1 total cache misses*/
+  {PAPI_CA_SNP,0,{"PM_SNOOP",0,0,0,0,0,0,0}}, /*Snoops*/
+  {PAPI_CA_SHR,0,{"PM_SNOOP_E_TO_S",0,0,0,0,0,0,0}}, /*Request for shared cache line (SMP)*/
+  {PAPI_CA_ITV,0,{"PM_SNOOP_PUSH_INT",0,0,0,0,0,0,0}}, /*Request for cache line Intervention (SMP)*/
+  {PAPI_BRU_IDL,0,{"PM_BRU_IDLE",0,0,0,0,0,0,0}}, /*Cycles branch units are idle*/
+  {PAPI_FXU_IDL,0,{"PM_FXU_IDLE",0,0,0,0,0,0,0}}, /*Cycles integer units are idle*/
+  {PAPI_FPU_IDL,0,{"PM_FPU_IDLE",0,0,0,0,0,0,0}}, /*Cycles floating point units are idle*/
+  {PAPI_LSU_IDL,0,{"PM_LSU_IDLE",0,0,0,0,0,0,0}}, /*Cycles load/store units are idle*/
+  {PAPI_TLB_TL,0,{"PM_TLB_MISS",0,0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/
+  {PAPI_L1_LDM,0,{"PM_LD_MISS_L1",0,0,0,0,0,0,0}}, /*Level 1 load misses */
+  {PAPI_L1_STM,0,{"PM_ST_L1MISS",0,0,0,0,0,0,0}}, /*Level 1 store misses */
+  {PAPI_L2_LDM,0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 load misses */		
+  {PAPI_L2_STM,0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 store misses */		
+  {PAPI_BTAC_M,0,{"PM_BTAC_MISS",0,0,0,0,0,0,0}}, /*BTAC miss*/
+  {PAPI_PRF_DM,0,{"PM_PREF_MATCH_DEM_MISS",0,0,0,0,0,0,0}}, /*Prefetch data instruction caused a miss */
+  {PAPI_TLB_SD,0,{"PM_TLBSYNC_RERUN",0,0,0,0,0,0,0}}, /*Xlation lookaside buffer shootdowns (SMP)*/
+  {PAPI_CSR_SUC,0,{"PM_RESRV_CMPL",0,0,0,0,0,0,0}}, /*Successful store conditional instructions*/	
+  {PAPI_CSR_FAL,0,{"PM_ST_COND_FAIL",0,0,0,0,0,0,0}}, /*Failed store conditional instructions*/	
+  {PAPI_CSR_TOT,0,{"PM_RESRV_RQ",0,0,0,0,0,0,0}}, /*Total store conditional instructions*/		
+  {PAPI_MEM_SCY,DERIVED_ADD,{"PM_CMPLU_WT_LD","PM_CMPLU_WT_ST",0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Access*/
+  {PAPI_MEM_RCY,0,{"PM_CMPLU_WT_LD",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Read*/
+  {PAPI_MEM_WCY,0,{"PM_CMPLU_WT_ST",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Write*/
+  {PAPI_STL_ICY,0,{"PM_0INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Issue*/
+  {PAPI_STL_CCY,0,{"PM_0INST_CMPL",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Completion*/
+  {PAPI_BR_CN,0,{"PM_CBR_DISP",0,0,0,0,0,0}}, /*Conditional branch instructions executed*/    
+  {PAPI_BR_MSP,0,{"PM_MPRED_BR_CAUSED_GC",0,0,0,0,0,0,0}}, /*Conditional branch instructions mispred*/
+  {PAPI_BR_PRC,0,{"PM_BR_PRED",0,0,0,0,0,0,0}}, /*Conditional branch instructions corr. pred*/
+  {PAPI_FMA_INS,0,{"PM_EXEC_FMA",0,0,0,0,0,0,0}}, /*FMA instructions completed*/
+  {PAPI_TOT_IIS,0,{"PM_INST_DISP",0,0,0,0,0,0,0}}, /*Total instructions issued*/
+  {PAPI_TOT_INS,0,{"PM_INST_CMPL",0,0,0,0,0,0,0}}, /*Total instructions executed*/
+  {PAPI_INT_INS,DERIVED_ADD,{"PM_FXU0_PROD_RESULT","PM_FXU1_PROD_RESULT","PM_FXU2_PROD_RESULT",0,0,0,0,0}}, /*Integer instructions executed*/
+  {PAPI_FP_INS,DERIVED_ADD,{"PM_FPU0_CMPL","PM_FPU1_CMPL",0,0,0,0,0,0}}, /*Floating point instructions executed*/	
+  {PAPI_LD_INS,0,{"PM_LD_CMPL",0,0,0,0,0,0,0}},	/*Load instructions executed*/
+  {PAPI_SR_INS,0,{"PM_ST_CMPL",0,0,0,0,0,0,0}}, /*Store instructions executed*/
+  {PAPI_BR_INS,0,{"PM_BR_CMPL",0,0,0,0,0,0,0}}, /*Total branch instructions executed*/
+  {PAPI_FLOPS,DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_CMPL","PM_FPU1_CMPL",0,0,0,0,0}}, /*Floating Point instructions per second*/ 
+  {PAPI_TOT_CYC,0,{"PM_CYC",0,0,0,0,0,0,0}}, /*Total cycles*/
+  {PAPI_IPS,DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}}, /*Instructions executed per second*/
+  {PAPI_LST_INS,DERIVED_ADD,{"PM_LD_CMPL","PM_ST_CMPL",0,0,0,0,0,0}}, /*Total load/store inst. executed*/
+  {PAPI_SYC_INS,0,{"PM_SYNC",0,0,0,0,0,0,0}}, /*Sync. inst. executed */
+  {PAPI_FDV_INS,0,{"PM_FPU_FDIV",0,0,0,0,0,0,0}}, /*FD ins */
+  {PAPI_FSQ_INS,0,{"PM_FPU_FSQRT",0,0,0,0,0,0,0}}, /*FSq ins */
+  {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
 
 /* Utility functions */
 
 /* Find all the hwcntrs that name lives on */
 
-static int find_hwcounter(pm_info_t *info, char *name, hwd_preset_t *preset)
+static int find_hwcounter(pm_info_t *info, char *name, hwd_preset_t *preset, int index)
 {
-  int index, did_something = 0, pmc, ev, found = 0;
+  int did_something = 0, pmc, ev;
   pm_events_t *wevp;
-  char *note = NULL;
 
+  preset->rank[index] = 0;  /* this value accumulates if initializes more than once */
   for (pmc = 0; pmc < info->maxpmcs; pmc++) 
     {
+      preset->counter_cmd[index][pmc] = COUNT_NOTHING;
       wevp = info->list_events[pmc];
       for (ev = 0; ev < info->maxevents[pmc]; ev++, wevp++) 
 	{
 	  if (strcmp(name, wevp->short_name) == 0) 
 	    {
-	      preset->counter_cmd[pmc] = wevp->event_id;
-	      preset->selector |= 1 << pmc;
+	      preset->counter_cmd[index][pmc] = wevp->event_id;
+	      preset->selector[index] |= 1 << pmc;
+	      preset->rank[index]++;
 	      did_something++;
-	      DBG((stderr,"Found %s on hardware counter %d, event %d\n",name,pmc,wevp->event_id));
 	      break;
 	    }
 	}
@@ -694,18 +167,20 @@ static int find_hwcounter(pm_info_t *info, char *name, hwd_preset_t *preset)
 
   if (did_something)
     {
-      strncpy(preset->note,name,PAPI_MAX_STR_LEN);
       return(1);
     }
   else
     abort();
 }
 
+/* #define DEBUG_SETUP */
+
 static int setup_all_presets(pm_info_t *info)
 {
   pmapi_search_t *findem;
   int pnum,did_something = 0,pmc,derived;
-  
+  int preset_index;
+
   if (__power_630())
     findem = preset_name_map_630;
   else if (__power_604())
@@ -720,82 +195,104 @@ static int setup_all_presets(pm_info_t *info)
 
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
     {
-      /* Events are always stored in the first slot onward*/
-      if (findem[pnum].findme[0])
-	{
-	  /* If we have a name for it and not derived */
-	  if (findem[pnum].derived == 0)
-	    {
-	      /* If we find it, then on to the next preset */
-	      DBG((stderr,"Looking for preset %d, %s\n",pnum,findem[pnum].findme[0]));
-	      find_hwcounter(info,findem[pnum].findme[0],&preset_map[pnum]);
-	      did_something++;
-	    }
-	  else 
-	    {
-	      hwd_preset_t tmp;
-	      int free_hwcntrs, need_one_hwcntr, hwcntr_num, err = 0, all_selector = 0, first = -1;
-	      unsigned char all_command[POWER_MAX_COUNTERS];
-	      char note[PAPI_MAX_STR_LEN];
-	      
-	      pmc = 0;
-	      note[0] = '\0';
-	      memset(all_command,0x00,sizeof(unsigned char)*POWER_MAX_COUNTERS);
-	      DBG((stderr,"Looking for preset %d, compound event\n",pnum,findem[pnum].findme[0]));
-	      while (findem[pnum].findme[pmc])
-		{
-		  memset(&tmp,0x00,sizeof(tmp));
-		  DBG((stderr,"Looking for preset %d, %s\n",pnum,findem[pnum].findme[pmc]));
-		  if (find_hwcounter(info,findem[pnum].findme[pmc],&tmp) == 0)
-		    {
-		      err = 1;
-		      break;
-		    }
-		  /* tmp.selector now contains all the counters with findme */
-		  /* first, find what's currently available */
-		  free_hwcntrs = ~all_selector;
-		  /* second, of those available, what can we choose */
-		  need_one_hwcntr = free_hwcntrs & tmp.selector;
-		  if (need_one_hwcntr == 0)
-		    {
-		      err = 1;
-		      break;
-		    }
-		  /* third, pick one */
-		  hwcntr_num = get_avail_hwcntr_num(need_one_hwcntr);
-		  need_one_hwcntr = 1 << hwcntr_num;
-		  /* fourth, add it to our set */
-		  all_selector |= need_one_hwcntr;
-		  all_command[hwcntr_num] = tmp.counter_cmd[hwcntr_num];
-		  if (strlen(note)+strlen(findem[pnum].findme[pmc]+1) < PAPI_MAX_STR_LEN)
-		    {
-		      strcat(note,findem[pnum].findme[pmc]);
-		      strcat(note,",");
-		    }
-		  /* Fifth, if it's the first one, then set the operand index */
-		  if (first == -1)
-		    first = hwcntr_num;
-		  /* On to the next register */
-		  pmc++;
-		}
+      /* dense array of events is terminated with a 0 preset */
+      if (findem[pnum].preset == 0)
+	break;
 
-	      /* If we're successful */
-	      
-	      if (err == 0)
+      preset_index = findem[pnum].preset ^ PRESET_MASK; 
+      /* If it's not derived */
+      if (findem[pnum].derived == 0)
+	{
+	  /* If we find it, then on to the next preset */
+#if DEBUG_SETUP
+	  DBG((stderr,"Looking for preset %d, %s\n",preset_index,findem[pnum].findme[0]));
+#endif
+	  find_hwcounter(info,findem[pnum].findme[0],&preset_map[preset_index], 0);
+	  strncpy(preset_map[preset_index].note,findem[pnum].findme[0], PAPI_MAX_STR_LEN);
+	  did_something++;
+	}
+      else 
+	{
+	  hwd_preset_t tmp;
+	  int free_hwcntrs, need_one_hwcntr, hwcntr_num, err = 0, all_selector = 0;
+	  int i,j;
+	  
+	  memset(&tmp,0x00,sizeof(tmp));
+	  tmp.derived = findem[pnum].derived;
+	  /* Find info for all the metrics (up to 8!) in this derived event */
+	  pmc = 0;
+	  while (findem[pnum].findme[pmc])
+	    {
+#if DEBUG_SETUP
+	      DBG((stderr,"Looking for preset %d, %s\n",pnum,findem[pnum].findme[pmc]));
+#endif
+	      find_hwcounter(info,findem[pnum].findme[pmc],&tmp, pmc);
+	      /* append the metric name to the event descriptor */
+	      if (strlen(tmp.note)+strlen(findem[pnum].findme[pmc]+1) < PAPI_MAX_STR_LEN)
 		{
-		  memcpy(preset_map[pnum].counter_cmd,all_command,sizeof(unsigned char)*POWER_MAX_COUNTERS);
-		  preset_map[pnum].selector = all_selector;
-		  preset_map[pnum].derived = findem[pnum].derived;
-		  preset_map[pnum].operand_index = first;
-		  note[strlen(note)-1] = '\0';
-		  strcpy(preset_map[pnum].note,note);
-		  DBG((stderr,"Found compound preset %d on 0x%x, first operand is %d\n",pnum,all_selector,first));
-		  did_something++;
-		  continue;
+		  strcat(tmp.note,findem[pnum].findme[pmc]);
+		  strcat(tmp.note,",");
 		}
-	      fprintf(stderr,"Did not find compound preset %d on 0x%x\n",pnum,all_selector);	  
-	      abort();
+#if DEBUG_SETUP
+	    if (findem[pnum].preset == PAPI_TOT_CYC) {
+	      DBG((stderr,"selector[%d] = 0x%x, rank[%d] = %d\n",pmc,tmp.selector[pmc],pmc,tmp.rank[pmc]));
+	      DBG((stderr,"cmd[%d][] = %d %d %d %d %d %d %d %d\n",pmc,tmp.counter_cmd[pmc][0],
+		tmp.counter_cmd[pmc][1],tmp.counter_cmd[pmc][2],tmp.counter_cmd[pmc][3],
+		tmp.counter_cmd[pmc][4],tmp.counter_cmd[pmc][5],tmp.counter_cmd[pmc][6],
+		tmp.counter_cmd[pmc][7]));
 	    }
+#endif
+	      pmc++;
+	    }
+	  /* For all the metrics, verify that a valid counter mapping exists.
+	      Rank is the number of counters a metric can live on.
+	      Scan metrics from lowest to highest rank, assigning counters
+	      as you go. This guarantees that the most restricted metrics get
+	      mapped first. The result may not be the only valid mapping, and
+	      may not find all possible mappings, but should do a pretty good job,
+	      esp if metrics are mapped sparsely onto counters.
+	  */
+	  for (i=1; i<POWER_MAX_COUNTERS+1 && !err; i++) /* scan across rank */
+	    {
+	      for (j=0; j<pmc && !err; j++) /* scan across available metrics */
+		{
+		  if (tmp.rank[j] == i)
+		    {
+		      /* selector[j] contains all the counters with findme[j] */
+		      /* first, find what's currently available */
+		      free_hwcntrs = ~all_selector;
+		      /* second, of those available, what can we choose */
+		      need_one_hwcntr = free_hwcntrs & tmp.selector[j];
+#if DEBUG_SETUP
+		      DBG((stderr,"rank %d = %d; need_one = 0x%x\n",j, i, need_one_hwcntr));
+#endif
+		      if (need_one_hwcntr == 0)
+			{
+			  err = 1;
+			  break;
+			}
+		      /* third, pick one */
+		      hwcntr_num = get_avail_hwcntr_num(need_one_hwcntr);
+		      need_one_hwcntr = 1 << hwcntr_num;
+		      /* fourth, add it to our set */
+		      all_selector |= need_one_hwcntr;
+		    }
+		}
+	    }
+
+	  /* If we're successful */
+	  if (err == 0)
+	    {
+	      tmp.note[strlen(tmp.note)-1] = '\0';
+	      preset_map[preset_index] = tmp;
+#if DEBUG_SETUP
+	      DBG((stderr,"Found compound preset %d on 0x%x\n",preset_index,all_selector));
+#endif
+	      did_something++;
+	      continue;
+	    }
+	  fprintf(stderr,"Did not find compound preset %d on 0x%x\n",preset_index,all_selector);	  
+	  abort();
 	}
     }
   return(did_something ? 0 : PAPI_ESBSTR);
@@ -923,14 +420,22 @@ static int set_inherit(int arg)
 
 static void init_config(hwd_control_state_t *ptr)
 {
-  ptr->counter_cmd.events[0] = -1;
-  ptr->counter_cmd.events[1] = -1;
-  ptr->counter_cmd.events[2] = -1;
-  ptr->counter_cmd.events[3] = -1;
-  ptr->counter_cmd.events[4] = -1;
-  ptr->counter_cmd.events[5] = -1;
-  ptr->counter_cmd.events[6] = -1;
-  ptr->counter_cmd.events[7] = -1;
+  ptr->preset[0] = COUNT_NOTHING;
+  ptr->preset[1] = COUNT_NOTHING;
+  ptr->preset[2] = COUNT_NOTHING;
+  ptr->preset[3] = COUNT_NOTHING;
+  ptr->preset[4] = COUNT_NOTHING;
+  ptr->preset[5] = COUNT_NOTHING;
+  ptr->preset[6] = COUNT_NOTHING;
+  ptr->preset[7] = COUNT_NOTHING;
+  ptr->counter_cmd.events[0] = COUNT_NOTHING;
+  ptr->counter_cmd.events[1] = COUNT_NOTHING;
+  ptr->counter_cmd.events[2] = COUNT_NOTHING;
+  ptr->counter_cmd.events[3] = COUNT_NOTHING;
+  ptr->counter_cmd.events[4] = COUNT_NOTHING;
+  ptr->counter_cmd.events[5] = COUNT_NOTHING;
+  ptr->counter_cmd.events[6] = COUNT_NOTHING;
+  ptr->counter_cmd.events[7] = COUNT_NOTHING;
   set_domain(ptr,_papi_system_info.default_domain);
   set_granularity(ptr,_papi_system_info.default_granularity);
 }
@@ -1104,151 +609,254 @@ static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
     }
 }
 
+
+#if 0
+static void dump_state(hwd_control_state_t *s)
+{
+  fprintf(stderr,"master_selector %x\n",s->master_selector);
+  fprintf(stderr,"event_codes %x %x %x %x %x %x %x %x\n",s->preset[0],s->preset[1],
+    s->preset[2],s->preset[3],s->preset[4],s->preset[5],s->preset[6],s->preset[7]);
+  fprintf(stderr,"event_selectors %x %x %x %x %x %x %x %x\n",s->selector[0],s->selector[1],
+    s->selector[2],s->selector[3],s->selector[4],s->selector[5],s->selector[6],s->selector[7]);
+  fprintf(stderr,"counters %x %x %x %x %x %x %x %x\n",s->counter_cmd.events[0],
+    s->counter_cmd.events[1],s->counter_cmd.events[2],s->counter_cmd.events[3],
+    s->counter_cmd.events[4],s->counter_cmd.events[5],s->counter_cmd.events[6],
+    s->counter_cmd.events[7]);
+}
+#endif
+
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  int selector = 0;
-  int avail = 0;
-  unsigned char tmp_cmd[POWER_MAX_COUNTERS], *codes;
+  int selector;
+  int avail;
+  hwd_control_state_t tmp_state;
+  hwd_preset_t *this_preset;
+  int hwd_idx = 0;
+  unsigned int event_code;
+  int hwcntr_num, rank, metric, max_rank, total_metrics;
 
+  DBG((stderr,"EventCode %x \n",EventCode));
+  /* Do a preliminary check to eliminate preset events that aren't
+     supported on this platform */
   if (EventCode & PRESET_MASK)
-    { 
-      int preset_index;
-      int derived;
-
-      preset_index = EventCode ^ PRESET_MASK; 
-
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-	return(PAPI_ENOEVNT);
-      derived = preset_map[preset_index].derived;
-
-      /* Find out which counters are available. */
-
-      avail = selector & ~this_state->selector;
-
-      /* If not derived */
-
-      if (preset_map[preset_index].derived == 0) 
-	{
-	  /* Pick any counter available */
-
-	  selector = get_avail_hwcntr_bits(avail);
-	  if (selector == 0)
-	    return(PAPI_ECNFLCT);
-	}    
-      else
-	{
-	  /* Check the case that if not all the counters 
-	     required for the derived event are available */
-
-	  if ((avail & selector) != selector)
-	    return(PAPI_ECNFLCT);	    
-	}
-
-      /* Get the codes used for this event */
-
-      codes = preset_map[preset_index].counter_cmd;
-      out->command = derived;
-      out->operand_index = preset_map[preset_index].operand_index;
-    }
-  else
     {
-      int hwcntr_num;
-
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0xff;  /* 0 through 7 */ 
-      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) || 
-	  (hwcntr_num < 0))
-	return(PAPI_EINVAL);
-
-      tmp_cmd[hwcntr_num] = EventCode >> 8; /* 0 through 50 */
-      if (tmp_cmd[hwcntr_num] > 50)
-	return(PAPI_EINVAL); 
-
-      selector = 1 << hwcntr_num;
-
-      /* Check if the counter is available */
-      
-      if (this_state->selector & selector)
-	return(PAPI_ECNFLCT);	    
-
-      codes = tmp_cmd;
+      if (preset_map[(EventCode ^ PRESET_MASK)].selector[0] == 0)
+	return(PAPI_ENOEVNT);
     }
 
-  /* Lower eight bits tell us what counters we need */
+  /* Copy this_state into tmp_state. We can muck around with tmp and
+     bail in case of failure and leave things unchanged. tmp_state 
+     gets written back to this_state only if everything goes OK. */
+  tmp_state = *this_state;
 
-  assert((this_state->selector | 0xff) == 0xff);
+  /* If all slots are empty, initialize the state. */
+  if (tmp_state.master_selector == 0)
+    init_config(&tmp_state);
 
-  /* Perform any initialization of the control bits */
+  /* If all counters are full, return a conflict error. */
+  if ((tmp_state.master_selector & 0xff) == 0xff)
+    return(PAPI_ECNFLCT);
 
-  if (this_state->selector == 0)
-    init_config(this_state);
-  
-  /* Turn on the bits for this counter */
+  /* Find the first available slot in the state map. Each filled slot
+     has a non-zero selector associated with it. Slots can be filled
+     with simple events, derived events (multiple metrics), or native
+     events. Because of derived events, the counters may fill before
+     all slots are full. */ 
+  while ((tmp_state.selector[hwd_idx]) && (hwd_idx < POWER_MAX_COUNTERS))
+    hwd_idx++;
 
-  set_hwcntr_codes(selector,codes,this_state->counter_cmd.events);
+  if (hwd_idx == POWER_MAX_COUNTERS) 
+    return(PAPI_ECNFLCT); /* This should never happen unless the mapping code fails */
 
-  /* Update the new counter select field. */
-
-  this_state->selector |= selector;
-
-  /* Inform the upper level that the software event 'index' 
-     consists of the following information. */
-
+  /* Add the new event code to the list and out structure */
+  tmp_state.preset[hwd_idx] = EventCode;
   out->code = EventCode;
-  out->selector = selector;
+
+#if 0
+  DBG((stderr,"hwd_idx %d \n",hwd_idx));
+  dump_state(this_state);
+#endif
+
+  /* Scan the list and map all metrics to their best locations */
+
+  /* first, clear all selectors and counter commands */
+  tmp_state.master_selector = 0;
+  for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++)
+    {
+      tmp_state.counter_cmd.events[hwd_idx] = COUNT_NOTHING;
+      tmp_state.selector[hwd_idx] = 0;
+    }
+
+  /* second, prescan all available events for max rank and total metrics */
+  for (hwd_idx=0, max_rank = 1, total_metrics = 0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++)
+    {
+      event_code = tmp_state.preset[hwd_idx];
+      if (event_code == COUNT_NOTHING) break;
+
+      /* look for native events */
+      if ((event_code & PRESET_MASK) == 0)
+	{
+	  total_metrics++;
+	}
+      else /* its a preset event */
+	{
+	  unsigned char *this_rank;
+	  unsigned char *this_selector;
+
+	  /* capture the derived state of the current event code */
+	  if (event_code == EventCode)
+	    out->command = preset_map[event_code ^ PRESET_MASK].derived;
+
+	  /* Dereference for cleaner access */
+	  this_rank = &(preset_map[event_code ^ PRESET_MASK].rank);
+	  this_selector = &(preset_map[event_code ^ PRESET_MASK].selector);
+
+	  /* Process all available metrics for this event.
+	     This may be as many as 8 for derived events */
+	  for (metric=0; metric<POWER_MAX_COUNTERS && this_selector[metric] != 0; metric++)
+	    {
+		max_rank = (this_rank[metric] > max_rank) ? this_rank[metric] : max_rank;
+	    }
+	  total_metrics += metric;
+	}
+    }
+  DBG((stderr,"max_rank: %d total_metrics: %d\n", max_rank, total_metrics));
+
+  /* third, map the metrics for all other events in order of rank,
+     where rank is the number of counters a metric can live on.
+     Assume native events have rank one, since they specify a single counter */
+  for (rank=1; rank<=max_rank; rank++) /* scan across rank */
+    {
+      for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++) /* scan across available events */
+	{
+	  event_code = tmp_state.preset[hwd_idx];
+	  if (event_code == COUNT_NOTHING) break;
+  DBG((stderr,"scanning events. code: %x idx: %d rank: %d\n",(event_code),hwd_idx, rank));
+
+	  /* look for native events */
+	  if ((event_code & PRESET_MASK) == 0)
+	    {
+	      /* only process native events in rank 1 */
+	      if (rank == 1)
+		{
+		  hwcntr_num = event_code & 0xff;
+  DBG((stderr,"adding native event. code: %x counter: %d\n",(event_code >> 8),hwcntr_num));
+		  /* Check if this counter is available */
+		  selector = 1 << hwcntr_num;
+		  if (tmp_state.master_selector & selector)
+		    return(PAPI_ECNFLCT); /* The solo counter is full */	    
+		  else
+		    {
+		      tmp_state.counter_cmd.events[hwcntr_num] = (event_code >> 8);
+		      tmp_state.selector[hwd_idx] = selector;
+		      tmp_state.master_selector |= selector;
+		    }
+		}
+	    }
+	  else /* its a preset event */
+	    {
+	      /* Dereference this preset for cleaner access */
+	      this_preset = &(preset_map[event_code ^ PRESET_MASK]);
+
+	      /* Process all available metrics for this event.
+		 This may be as many as 8 for derived events */
+	      for (metric=0; metric<POWER_MAX_COUNTERS && this_preset->selector[metric] != 0; metric++)
+		{
+		  if (this_preset->rank[metric] == rank)
+		    {
+		      /* Select highest counter available for this metric. */
+		      avail = this_preset->selector[metric] & ~tmp_state.master_selector;
+		      selector = get_avail_hwcntr_bits(avail);
+
+  DBG((stderr,"metric: %d rank: %d avail: %x selector: %x\n", metric, rank, avail, selector));
+		      /* if a valid counter exists, add it to the counter 
+			 command list and mark it as occupied */
+		      if (selector != 0)
+			{
+			  /* turn selector into a number and get that counter command */
+			  hwcntr_num = get_avail_hwcntr_num(selector);
+			  tmp_state.counter_cmd.events[hwcntr_num] = this_preset->counter_cmd[metric][hwcntr_num];
+			  tmp_state.selector[hwd_idx] |= selector;
+			  tmp_state.master_selector |= selector;
+			  if (out->command && metric == 0)
+			    out->operand_index = hwcntr_num;
+			}
+		      else return (PAPI_ECNFLCT);
+		    }
+		}
+	    }
+	}
+    }
+
+  /* Inform the upper level of the selector bits for this event. */
+  for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++) /* scan across available events */
+    {
+      if (EventCode == tmp_state.preset[hwd_idx]) break;
+    }
+  out->selector = tmp_state.selector[hwd_idx];
+  
+  /* Everything worked. Copy temporary state back to current state */
+  *this_state = tmp_state;
+
+#if 0
+  DBG((stderr,"success \n"));
+  dump_state(this_state);
+#endif
 
   return(PAPI_OK);
 }
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int selector, used, preset_index, EventCode;
+  int i, selector, used, preset_index, EventCode;
 
   /* Find out which counters used. */
   
   used = in->selector;
   EventCode = in->code;
- 
-  if (EventCode & PRESET_MASK)
-    { 
-      preset_index = EventCode ^ PRESET_MASK; 
 
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-	return(PAPI_ENOEVNT);
-    }
-  else
+  /* scan across events in this set */
+  for (i=0; i<POWER_MAX_COUNTERS; i++)
     {
-      int hwcntr_num, code, old_code;
-      
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0xff;  /* 0 through 7 */ 
-      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) ||
-	  (hwcntr_num < 0))
-	return(PAPI_EINVAL);
-
-      old_code = in->command;
-      code = EventCode >> 8; /* 0 through 50 */
-      if (old_code != code)
-	return(PAPI_EINVAL); 
-
-      selector = 1 << hwcntr_num;
+      if (EventCode == this_state->preset[i]) break;
     }
+
+  /* Make sure the event was found */
+  if (i == POWER_MAX_COUNTERS)
+    return(PAPI_ENOEVNT);
+
+  selector = this_state->selector[i];
+
+  /* Make sure the selector is set. */
+  if (selector == 0)
+    return(PAPI_ENOEVNT);
 
   /* Check if these counters aren't used. */
-
   if ((used & selector) != used)
     return(PAPI_EINVAL);
 
+  /* Clear out selector bits that are part of this event. */
+  this_state->master_selector ^= selector;
+  this_state->selector[i] = 0;
+
+  /* Clear out the preset for this event */
+  this_state->preset[i] = COUNT_NOTHING;
+
   /* Clear out counters that are part of this event. */
-  
-  this_state->selector = this_state->selector ^ used;
+  for (i=0; selector && i < POWER_MAX_COUNTERS; i++)
+    {
+      if (selector & (1 << i))
+        this_state->counter_cmd.events[i] = COUNT_NOTHING;
+      selector ^= (1 << i);
+    }
+
+#if 0
+  dump_state(this_state);
+#endif
 
   return(PAPI_OK);
 }
+
 
 int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
 			     unsigned int event, void *extra, EventInfo_t *out)
@@ -1278,7 +886,6 @@ void dump_cmd(pm_prog_t *t)
 }
 
 /* EventSet zero contains the 'current' state of the counting hardware */
-
 int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 { 
   int i, retval;
@@ -1288,18 +895,24 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   /* If we are nested, merge the global counter structure
      with the current eventset */
 
-  if (current_state->selector)
+#if 0
+dump_state(this_state);
+dump_state(current_state);
+#endif
+
+  if (current_state->master_selector)
     {
       int hwcntrs_in_both, hwcntr;
 
       /* Stop the current context */
 
+      DBG((stderr,"Stopping the thread\n"));
       retval = pm_stop_mythread();
       if (retval > 0) 
 	return(retval); 
   
       /* Update the global values */
-
+      DBG((stderr,"Updating Global hwcounters\n"));
       retval = update_global_hwcounters(zero);
       if (retval)
 	return(retval);
@@ -1310,7 +923,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       if (retval > 0)
 	return(retval);
 
-      hwcntrs_in_both = this_state->selector & current_state->selector;
+      hwcntrs_in_both = this_state->master_selector & current_state->master_selector;
 
       for (i = 0; i < _papi_system_info.num_cntrs; i++)
 	{
@@ -1329,9 +942,9 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
 	  /* Merge the unshared configuration registers. */
 	  
-	  else if (this_state->selector & hwcntr)
+	  else if (this_state->master_selector & hwcntr)
 	    {
-	      current_state->selector |= hwcntr;
+	      current_state->master_selector |= hwcntr;
 	      current_state->counter_cmd.mode.w = this_state->counter_cmd.mode.w;
 	      current_state->counter_cmd.events[i] = this_state->counter_cmd.events[i];
 	      ESI->hw_start[i] = 0;
@@ -1343,8 +956,9 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
     {
       /* If we are NOT nested, just copy the global counter 
 	 structure to the current eventset */
+      DBG((stderr,"Copying states\n"));
 
-      current_state->selector = this_state->selector;
+      current_state->master_selector = this_state->master_selector;
       memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(pm_prog_t));
 
     }
@@ -1352,6 +966,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   /* Set up the new merged control structure */
   
 #if 0
+  dump_state(this_state);
+  dump_state(current_state);
   dump_cmd(&current_state->counter_cmd);
 #endif
       
@@ -1384,10 +1000,10 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
 	 therefore require modification to the control state. */
       
       hwcntr = 1 << i;
-      if (hwcntr & this_state->selector)
+      if (hwcntr & this_state->master_selector)
 	{
 	  if (zero->multistart.SharedDepth[i] - 1 < 0)
-	    current_state->selector ^= hwcntr;
+	    current_state->master_selector ^= hwcntr;
 	  else
 	    zero->multistart.SharedDepth[i]--;
 	}
@@ -1593,7 +1209,7 @@ int _papi_hwd_shutdown_global(void)
 
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
-  if (preset_map[preset_index].selector == 0)
+  if (preset_map[preset_index].selector[0] == 0)
     return(0);
   if (preset_map[preset_index].derived)
     *flags = PAPI_DERIVED;
@@ -1671,11 +1287,7 @@ void _papi_hwd_unlock(void)
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
 
-#ifndef PMTOOLKIT_1_2
 papi_mdi _papi_system_info = { "$Id$",
-#else /* PMTOOLKIT_1_2 */
-papi_mdi _papi_system_info = { "$Id$",
-#endif /* PMTOOLKIT_1_2 */
 			      1.0, /*  version */
 			       -1,  /*  cpunum */
 			       { 
