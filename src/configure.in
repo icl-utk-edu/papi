@@ -120,8 +120,31 @@ case "$bitmode" in
       ;;
 esac
 
-#AC_MSG_RESULT($bitmode)
-AC_SUBST($bitmode)
+AC_ARG_WITH(pmapi,
+            [  --with-pmapi=<path>     Specify path of pmapi on aix system ],
+            [pmapi=$withval],
+            [pmapi=default]
+            )
+case "$OS" in
+   aix)
+      case "$pmapi" in
+         default)
+             case "$CPU" in
+                power3) PMAPI="/usr/lpp/pmtoolkit" ;;
+                power4) PMAPI="/usr/pmapi" ;;
+             esac
+	     ;;
+         *)
+             PMAPI="$pmapi" ;;
+      esac
+      ;;
+   *)
+      echo "pmapi is not needed on this platform"
+      PMAPI=""
+      ;;
+esac 
+#AC_MSG_RESULT($PMAPI)
+AC_SUBST(PMAPI)
 
 case "$OS" in
    aix)
@@ -235,8 +258,11 @@ AC_CHECK_LIB([dl], [main])
 AC_CHECK_LIB([m], [main])
 # FIXME: Replace `main' with a function in `-lpfm':
 AC_CHECK_LIB([pfm], [main])
-# FIXME: Replace `main' with a function in `-lpmapi':
-AC_CHECK_LIB([pmapi], [main])
+
+if test "$OS" = "aix"; then
+AC_CHECK_LIB([pmapi], [pm_init])
+fi
+
 # FIXME: Replace `main' with a function in `-lpthread':
 AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-lrt':

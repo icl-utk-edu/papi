@@ -1,4 +1,5 @@
 MAKEVER   = @MAKEVER@
 PREFIX    = @prefix@
+PMAPI     = @PMAPI@
 
 include ./Makefile.$(MAKEVER)
