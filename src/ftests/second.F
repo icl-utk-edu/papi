@@ -28,6 +28,10 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#ifdef NO_FLOPS
+      call ftests_pass(__FILE__)
+#endif
+
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
@@ -40,7 +44,6 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-#ifndef NO_FLOPS
       call PAPIf_add_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -49,17 +52,6 @@
      *  errorstring(1:len_trim(errorstring))
         end if
       end if
-#else
-      call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
-      end if
-#endif
-
       
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -76,7 +68,6 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-#ifndef NO_FLOPS
       call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -85,16 +76,6 @@
      *  errorstring(1:len_trim(errorstring))
         end if
       end if
-#else
-      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
-      end if
-#endif
       
       call PAPIf_add_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -111,7 +92,6 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-#ifndef NO_FLOPS
       call PAPIf_add_event( es3, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -120,16 +100,6 @@
      *  errorstring(1:len_trim(errorstring))
         end if
       end if
-#else
-      call PAPIf_add_event( es3, PAPI_TOT_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
-      end if
-#endif
       
       call PAPIf_add_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then

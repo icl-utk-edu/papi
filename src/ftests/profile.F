@@ -65,6 +65,16 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( es, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+        end if
+      end if
+#else
       call PAPIf_add_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -73,6 +83,7 @@ C      print *, "length=", length
      *  errorstring(1:len_trim(errorstring))
         end if
       end if
+#endif
       
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -106,18 +117,30 @@ C      print *, "length=", length
  200  format(A12, Z8, A12, Z8)
       write (*, 200) "Data start:", data_start, "; Data end:", data_end
       write (*, 200) "BSS start:", bss_start, "; BSS end:", bss_end
-      print *, "Dynamic Library Preload Env. Var.:", lib_preload_env
+      write (*, 300) lib_preload_env
+ 300  format("Dynamic Library Preload Env. Var.:", A20)
       print *, "------------------------------------------------"
-      print *, "Test type   : \t No profiling"
-      print *, "PAPI_FP_INS : \t ", values(1)
-      print *, "PAPI_TOT_CYC: \t ", values(2)
-      print *, "\n"
+      print *, "Test type: No profiling"
 
-      print *, "Test type   : \tPAPI_PROFIL_POSIX"
+#if defined(NO_FLOPS)
+      write (*, 400) "PAPI_TOT_INS", values(1)
+ 400  format (A12, ":  ", I11)
+#else
+      write (*, 400) "PAPI_FP_INS", values(1)
+#endif
+      write (*, 400) "PAPI_TOT_CYC", values(2)
+      print *, ""
+
+      print *, "Test type: PAPI_PROFIL_POSIX"
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf1, length, start, 65536, es, 
+     *PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX, retval)
+#else
       call PAPIf_profil(profbuf1, length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
@@ -138,23 +161,37 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "PAPI_FP_INS : \t ", values(3)
-      print *, "PAPI_TOT_CYC: \t ", values(4)
-      print *, "\n"
+#if defined(NO_FLOPS)
+      write (*, 400) "PAPI_TOT_INS", values(3)
+#else
+      write (*, 400) "PAPI_FP_INS", values(3)
+#endif
+      write (*, 400) "PAPI_TOT_CYC", values(4)
+      print *, ""
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf1(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX, retval)
+#else
       call PAPIf_profil(profbuf1(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "Test type   : \tPAPI_PROFIL_RANDOM"
+      print *, "Test type: PAPI_PROFIL_RANDOM"
       end if
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf2(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
+#else
       call PAPIf_profil(profbuf2(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
@@ -175,23 +212,37 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "PAPI_FP_INS : \t ", values(5)
-      print *, "PAPI_TOT_CYC: \t ", values(6)
-      print *, "\n"
+#if defined(NO_FLOPS)
+      write (*, 400) "PAPI_TOT_INS", values(5)
+#else
+      write (*, 400) "PAPI_FP_INS", values(5)
+#endif
+      write (*, 400) "PAPI_TOT_CYC", values(6)
+      print *, ""
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf2(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
+#else
       call PAPIf_profil(profbuf2(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "Test type   : \tPAPI_PROFIL_WEIGHTED"
+      print *, "Test type: PAPI_PROFIL_WEIGHTED"
       end if
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
+#else
       call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
@@ -212,23 +263,38 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "PAPI_FP_INS : \t ", values(7)
-      print *, "PAPI_TOT_CYC: \t ", values(8)
-      print *, "\n"
+
+#if defined(NO_FLOPS)
+      write (*, 400) "PAPI_TOT_INS", values(7)
+#else
+      write (*, 400) "PAPI_FP_INS", values(7)
+#endif
+      write (*, 400) "PAPI_TOT_CYC", values(8)
+      print *, ""
       end if
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
+#else
       call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "Test type   : \tPAPI_PROFIL_COMPRESS"
+      print *, "Test type: PAPI_PROFIL_COMPRESS"
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
+#else
       call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
@@ -248,24 +314,39 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "PAPI_FP_INS : \t ", values(9)
-      print *, "PAPI_TOT_CYC: \t ", values(10)
-      print *, "\n"
+#if defined(NO_FLOPS)
+      write (*, 400) "PAPI_TOT_INS", values(9)
+#else
+      write (*, 400) "PAPI_FP_INS", values(9)
+#endif
+      write (*, 400) "PAPI_TOT_CYC", values(10)
+      print *, ""
       end if
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
+#else
       call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "Test type   : \tPAPI_PROFIL_<all>"
+      print *, "Test type: PAPI_PROFIL_<all>"
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS+
+     *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
+#else
       call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS+
      *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
@@ -285,13 +366,23 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *, "PAPI_FP_INS : \t ", values(11)
-      print *, "PAPI_TOT_CYC: \t ", values(12)
-      print *, "\n"
+#if defined(NO_FLOPS)
+      write (*, 400) "PAPI_TOT_INS", values(11)
+#else
+      write (*, 400) "PAPI_FP_INS", values(11)
+#endif
+      write (*, 400) "PAPI_TOT_CYC", values(12)
+      print *, ""
       end if
+#if defined(NO_FLOPS)
+      call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
+     *PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS+
+     *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
+#else
       call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS+
      *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
+#endif
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_profil')
         call ftests_fail(__FILE__,retval)
@@ -300,25 +391,35 @@ C      print *, "length=", length
       if (tests_quiet .EQ. 0) then
       print *, "----------------------------------------------"
       print *, "PAPI_profil() hash table."
-      print *, "address\tflat\trandom\tweight\tcompress\tall"
+      write (*, 500) "address", "flat", "random", "weight", 
+     *"compress", "all"
+ 500  format(A15, A15, A15, A15, A15, A15)
       do i=1, length
          if ((profbuf1(i) .NE. 0) .OR. (profbuf2(i) .NE. 0) .OR. 
      *       (profbuf3(i) .NE. 0) .OR. (profbuf4(i) .NE. 0) .OR. 
      *       (profbuf5(i) .NE. 0)) then
-          print *, start+2*i, profbuf1(i), "\t",
-     *     start+profbuf2(i), "\t", start+profbuf3(i), "\t",
-     *     start+profbuf4(i), "\t", start+profbuf5(i)
+          write (*, 600) start+2*i, profbuf1(i),
+     *     start+profbuf2(i), start+profbuf3(i),
+     *     start+profbuf4(i), start+profbuf5(i)
          end if
       end do
-
+ 600  format(I15, I15, I15, I15, I15, I15)
       print *, "----------------------------------------------"
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_rem_event( es, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
+        call ftests_fail(__FILE__,retval)
+      end if
+#else
       call PAPIf_rem_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_rem_event')
         call ftests_fail(__FILE__,retval)
       end if
+#endif
 
       call PAPIf_rem_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -328,5 +429,3 @@ C      print *, "length=", length
 
       call ftests_pass(__FILE__)
       end
-
-

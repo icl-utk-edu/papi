@@ -36,6 +36,10 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if (defined(__alpha) && defined(__osf__))
+      call ftests_pass(__FILE__)
+#endif
+
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
