@@ -34,7 +34,7 @@
 
 #ifdef _WIN32
   #define inline_static static __inline 
-//  #include "cpuinfo.h"
+  #include "cpuinfo.h"
   #include "pmclib.h"
 #else
   #define inline_static inline static  

@@ -11,18 +11,20 @@
 #ifdef __LINUX__
 #include <limits.h>
 #endif
+
 #ifdef _WIN32
 /* Define SUBSTRATE to map to linux-perfctr.h
  * since we haven't figured out how to assign a value 
  * to a label at make inside the Windows IDE */
 #define SUBSTRATE "linux-perfctr.h"
 #endif
+
 #include SUBSTRATE
 #include <stdio.h>
-int init_amd( PAPI_mem_info_t * mem_info );
-short int init_amd_L2_assoc_inf(unsigned short int pattern);
-int init_intel( PAPI_mem_info_t * mem_info );
-static inline void cpuid(unsigned int *, unsigned int *,
+static int init_amd( PAPI_mem_info_t * mem_info );
+static short int init_amd_L2_assoc_inf(unsigned short int pattern);
+static int init_intel( PAPI_mem_info_t * mem_info );
+inline_static void cpuid(unsigned int *, unsigned int *,
 				 unsigned int *,unsigned int *);
 
 int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
@@ -36,7 +38,11 @@ int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 
   /* Defaults to Intel which is *probably* a safe assumption -KSL */
   switch ( cpu_type ) {
+#ifdef _WIN32
+  case AMD:
+#else
   case PERFCTR_X86_AMD_K7:
+#endif
     retval = init_amd(mem_info);
     break;
   default:
@@ -50,7 +56,7 @@ int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 }
 
 /* Cache configuration for AMD AThlon/Duron */
-int init_amd( PAPI_mem_info_t * mem_info ) {
+static int init_amd( PAPI_mem_info_t * mem_info ) {
   unsigned int reg_eax,reg_ebx,reg_ecx,reg_edx;
   unsigned short int pattern;
   
@@ -185,7 +191,7 @@ int init_amd( PAPI_mem_info_t * mem_info ) {
   return PAPI_OK;
 }
 
-short int init_amd_L2_assoc_inf(unsigned short int pattern) {
+static short int init_amd_L2_assoc_inf(unsigned short int pattern) {
   short int assoc;
   /* "AMD Processor Recognition Application Note", 20734W-1 November 2002 */
   switch(pattern) {
@@ -214,7 +220,7 @@ short int init_amd_L2_assoc_inf(unsigned short int pattern) {
 return assoc;
 }
 
-int init_intel( PAPI_mem_info_t * mem_info ) {
+static int init_intel( PAPI_mem_info_t * mem_info ) {
   unsigned int reg_eax,reg_ebx,reg_ecx,reg_edx,value;
   int i,j,k,count;
 
@@ -563,8 +569,27 @@ int init_intel( PAPI_mem_info_t * mem_info ) {
  * support.
  */
 
-int  check_cpuid(){
+static int  check_cpuid(){
   volatile unsigned long val;
+#ifdef _WIN32
+	__asm {
+		pushfd
+		pop eax
+		mov ebx, eax
+		xor eax, 00200000h
+		push eax
+		popfd
+		pushfd
+		pop eax
+		cmp eax, ebx
+		jz NO_CPUID
+		mov val, 1
+		jmp END
+	NO_CPUID:
+		mov val, 0
+	END:
+	}
+#else
   __asm__ __volatile__("pushfl;"
 		       "pop %%eax;"
 		       "movl %%eax, %%ebx;"
@@ -580,10 +605,26 @@ int  check_cpuid(){
 		       "movl $0, %0;"
 		       "END:"
 		       :"=r"(val));
+#endif
   return (int) val;
 }
 
-static inline void cpuid(unsigned int *eax, unsigned int *ebx,
+#ifdef _WIN32
+inline_static void cpuid(unsigned int *a, unsigned int *b,
+			 unsigned int *c, unsigned int *d)
+{
+  __asm {
+	  mov eax, [a];
+	  cpuid;
+	  mov [a], eax;
+	  mov [b], ebx;
+	  mov [c], ecx;
+	  mov [d], edx;
+	}
+
+}
+#else
+inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
 			 unsigned int *ecx, unsigned int *edx)
 {
   __asm__ ("cpuid"
@@ -591,7 +632,7 @@ static inline void cpuid(unsigned int *eax, unsigned int *ebx,
 	   :
 	   );
 }
-
+#endif
 
 long _papi_hwd_get_dmem_info(int option){
   pid_t pid = getpid();
