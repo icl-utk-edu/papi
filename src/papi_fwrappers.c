@@ -349,9 +349,8 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
       strncpy(short_descr, info.short_descr, short_descr_len);
       for (i = strlen(info.short_descr); i < short_descr_len; short_descr[i++] = ' ');
       *count = info.count;
-/*    strncpy(event_note, info.event_note, event_note_len);
-    for(i=strlen(info.event_note);i<event_note_len;event_note[i++]=' ');
-*/
+      strncpy(event_note, info.note, event_note_len);
+      for(i=strlen(info.note);i<event_note_len;event_note[i++]=' ');
    }
 #else
 /* printf("EventCode: %d\n", *EventCode ); -KSL */
@@ -360,7 +359,7 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
       strncpy(long_descr, info.long_descr, PAPI_MAX_STR_LEN);
       strncpy(short_descr, info.short_descr, PAPI_MAX_STR_LEN);
       *count = info.count;
-/*    strncpy(event_note, info.event_note, PAPI_MAX_STR_LEN); */
+      strncpy(event_note, info.event_note, PAPI_MAX_STR_LEN);
    }
 /*  printf("Check: %d\n", *check); -KSL */
 #endif
