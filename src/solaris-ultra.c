@@ -38,14 +38,10 @@ static hwd_search_t usii_preset_search_map[] = {
   {PAPI_TOT_IIS,0,{0x1,0x1}},		
   /* Total inst. executed*/
   {PAPI_TOT_INS,0,{0x1,0x1}},		
-  /* Floating Pt. inst. executed*/
-  {PAPI_FP_INS,0,{-1,0x3}},	        
   /* Loads executed*/
   {PAPI_LD_INS,0,{0x9,-1}},		
   /* Stores executed*/
   {PAPI_SR_INS,0,{0xa,-1}},		
-  /* FLOPS */
-  {PAPI_FLOPS,DERIVED_PS,{0,0x3}},
   /* Total cycles */
   {PAPI_TOT_CYC,0,{0,0}},		
   /* IPS */
