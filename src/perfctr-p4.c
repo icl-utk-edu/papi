@@ -33,82 +33,7 @@ extern P4_search_t _papi_hwd_pentium4_mlt2_preset_map[];
 /* CPUID model >= 2 */
 extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
 
-#ifdef PAPI3
 extern papi_mdi_t _papi_hwi_system_info;
-#else
-#define _papi_hwi_system_info _papi_system_info
-papi_mdi_t _papi_system_info = { "$Id$", 
-			      1.0, /*  version */
-			       -1,  /*  cpunum */
-			       { 
-				 -1,  /*  ncpu */
-				  1,  /*  nnodes */
-				 -1,  /*  totalcpus */
-				 -1,  /*  vendor */
-				 "",  /*  vendor string */
-				 -1,  /*  model */
-				 "",  /*  model string */
-				0.0,  /*  revision */
-				0.0  /*  mhz */ 
-			       },
-			       {
-				 "",
-				 "",
-				 (caddr_t)&_init,
-				 (caddr_t)&_etext,
-				 (caddr_t)&_etext+1,
-				 (caddr_t)&_edata,
-				 (caddr_t)NULL,
-				 (caddr_t)NULL,
-				 "LD_PRELOAD", /* How to preload libs */
-			       },
-                               { 0,  /*total_tlb_size*/
-                                 0,  /*itlb_size */
-                                 0,  /*itlb_assoc*/
-                                 0,  /*dtlb_size */
-                                 0, /*dtlb_assoc*/
-                                 0, /*total_L1_size*/
-                                 0, /*L1_icache_size*/
-                                 0, /*L1_icache_assoc*/
-                                 0, /*L1_icache_lines*/
-                                 0, /*L1_icache_linesize*/
-                                 0, /*L1_dcache_size */
-                                 0, /*L1_dcache_assoc*/
-                                 0, /*L1_dcache_lines*/
-                                 0, /*L1_dcache_linesize*/
-                                 0, /*L2_cache_size*/
-                                 0, /*L2_cache_assoc*/
-                                 0, /*L2_cache_lines*/
-                                 0, /*L2_cache_linesize*/
-                                 0, /*L3_cache_size*/
-                                 0, /*L3_cache_assoc*/
-                                 0, /*L3_cache_lines*/
-                                 0  /*L3_cache_linesize*/
-                               },
-			       -1,  /*  num_cntrs */
-			       -1,  /*  num_gp_cntrs */
-			       -1,  /*  grouped_counters */
-			       -1,  /*  num_sp_cntrs */
-			       -1,  /*  total_presets */
-			       -1,  /*  total_events */
-			        PAPI_DOM_USER, /* default domain */
-			        PAPI_GRN_THR,  /* default granularity */
-			        0,  /* We can use add_prog_event */
-			        0,  /* We can write the counters */
-			        1,  /* supports HW overflow */
-			        0,  /* supports HW profile */
-			        1,  /* supports 64 bit virtual counters */
-			        1,  /* supports child inheritance */
-			        0,  /* supports attaching to another process */
-			        1,  /* We can use the real_usec call */
-			        1,  /* We can use the real_cyc call */
-			        1,  /* We can use the virt_usec call */
-			        1,  /* We can use the virt_cyc call */
-			        0,  /* HW read resets the counters */
-			        sizeof(hwd_control_state_t), 
-			        { 0, }
-};
-#endif
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -143,6 +68,14 @@ int _papi_hwd_allocate_registers(hwd_control_state_t *control, hwd_preset_t *pre
 {
   return(PAPI_OK);
 }
+
+static void _papi_hwd_init_system_info() {
+//     _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_init;
+//     _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)&_etext;
+//     _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_etext+1;
+//     _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t)&_edata;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
@@ -300,6 +233,9 @@ int _papi_hwd_init_global(void)
 
   if (vperfctr_info(dev, &info) < 0)
     error_return(PAPI_ESYS,VINFO_ERROR);
+
+  /* Initialize outstanding values in machine info structure */
+  _papi_hwd_init_system_info();
 
   strcpy(_papi_hwi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
   _papi_hwi_system_info.supports_hw_overflow = 

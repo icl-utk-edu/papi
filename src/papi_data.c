@@ -47,8 +47,93 @@ int init_retval = DEADBEEF;
 int _papi_hwi_debug = 0;
 #endif
 
+
+
 /* Machine dependent info structure */
-papi_mdi_t _papi_hwi_system_info;
+papi_mdi_t _papi_hwi_system_info = { "$Id$", 
+			      1.0, /*  version */
+			       -1,  /*  cpunum */
+			       { 
+				 -1,  /*  ncpu */
+				  1,  /*  nnodes */
+				 -1,  /*  totalcpus */
+				 -1,  /*  vendor */
+				 "",  /*  vendor string */
+				 -1,  /*  model */
+				 "",  /*  model string */
+				0.0,  /*  revision */
+				0.0  /*  mhz */ 
+			       },
+			       {
+				 "",
+				 "",
+				 {
+				   "",
+				   (caddr_t)NULL,	/* Start address of program text segment */
+				   (caddr_t)NULL,	/* End address of program text segment */
+				   (caddr_t)NULL,	/* Start address of program data segment */
+				   (caddr_t)NULL,	/* End address of program data segment */
+				   (caddr_t)NULL,	/* Start address of program bss segment */
+				   (caddr_t)NULL	/* End address of program bss segment */
+				 },
+				 {
+				   "LD_PRELOAD", /* How to preload libs */
+				   0,
+				   "",
+				   0
+				 }
+			       },
+                               { 0,  /*total_tlb_size*/
+                                 0,  /*itlb_size */
+                                 0,  /*itlb_assoc*/
+                                 0,  /*dtlb_size */
+                                 0, /*dtlb_assoc*/
+                                 0, /*total_L1_size*/
+                                 0, /*L1_icache_size*/
+                                 0, /*L1_icache_assoc*/
+                                 0, /*L1_icache_lines*/
+                                 0, /*L1_icache_linesize*/
+                                 0, /*L1_dcache_size */
+                                 0, /*L1_dcache_assoc*/
+                                 0, /*L1_dcache_lines*/
+                                 0, /*L1_dcache_linesize*/
+                                 0, /*L2_cache_size*/
+                                 0, /*L2_cache_assoc*/
+                                 0, /*L2_cache_lines*/
+                                 0, /*L2_cache_linesize*/
+                                 0, /*L3_cache_size*/
+                                 0, /*L3_cache_assoc*/
+                                 0, /*L3_cache_lines*/
+                                 0  /*L3_cache_linesize*/
+                               },
+			       {
+				 NULL,
+				 0
+			       },
+			       -1,  /*  num_cntrs */
+			       -1,  /*  num_gp_cntrs */
+			       -1,  /*  grouped_counters */
+			       -1,  /*  num_sp_cntrs */
+			       -1,  /*  total_presets */
+			       -1,  /*  total_events */
+			        PAPI_DOM_USER, /* default domain */
+			        PAPI_GRN_THR,  /* default granularity */
+			        0,  /* We can use add_prog_event */
+			        0,  /* We can write the counters */
+			        1,  /* supports HW overflow */
+			        0,  /* supports HW profile */
+			        1,  /* supports 64 bit virtual counters */
+			        1,  /* supports child inheritance */
+			        0,  /* supports attaching to another process */
+			        1,  /* We can use the real_usec call */
+			        1,  /* We can use the real_cyc call */
+			        1,  /* We can use the virt_usec call */
+			        1,  /* We can use the virt_cyc call */
+			        0,  /* HW read resets the counters */
+			        sizeof(hwd_control_state_t), 
+			        { 0, }
+};
+
 
 /* Our informative table */
 #define PAPI_PRESET(function)\

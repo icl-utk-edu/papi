@@ -24,13 +24,6 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
-//#ifdef PAPI3
-extern papi_mdi_t _papi_hwi_system_info;
-//#else
-//#define _papi_hwi_system_info _papi_system_info
-//extern papi_mdi_t _papi_system_info;
-//#endif
-
 extern papi_mdi_t _papi_hwi_system_info;
 
 /*****************************/
