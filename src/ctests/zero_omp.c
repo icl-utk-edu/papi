@@ -44,10 +44,8 @@ Master serial thread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#undef NDEBUG
-#include "papiStdEventDefs.h"
+
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 #ifdef _OPENMP
 #include <omp.h>

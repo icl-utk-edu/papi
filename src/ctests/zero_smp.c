@@ -36,10 +36,8 @@ Master pthread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#undef NDEBUG
-#include "papiStdEventDefs.h"
+
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 #if defined(sun) && defined(sparc)
 #include <thread.h>
