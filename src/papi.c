@@ -1280,6 +1280,13 @@ int PAPI_stop(int EventSet, long_long *values)
   if (!(ESI->state & PAPI_RUNNING))
     papi_return(PAPI_ENOTRUN);
 
+  if (ESI->state & PAPI_HWPROFILING) 
+    {
+      	retval = _papi_hwd_stop_profiling(ESI, thread_master_eventset);
+      	if (retval < PAPI_OK)
+		papi_return(retval);
+    }
+
   /* If multiplexing is enabled for this eventset,
      call John May's code. */
 
@@ -1297,13 +1304,6 @@ int PAPI_stop(int EventSet, long_long *values)
       return(PAPI_OK);
     }
       
-  if (ESI->state & PAPI_HWPROFILING) 
-    {
-      	retval = _papi_hwd_stop_profiling(ESI, thread_master_eventset);
-      	if (retval < PAPI_OK)
-		papi_return(retval);
-    }
-
   /* Read the current counter values into the EventSet */
 
   retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);

@@ -132,6 +132,10 @@ static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
 
 extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
                  long_long over, long_long threshold);
+static unsigned long  
+check_btb(pfmw_arch_reg_t *, pfmw_arch_reg_t *);
+static unsigned long
+check_btb_reg(pfmw_arch_reg_t );
 
 /* This function set the parameters which needed by DATA EAR */
 int set_dear_ita_param(pfmw_ita_param_t *ita_lib_param, int EventCode)
@@ -551,9 +555,9 @@ inline static int update_global_hwcounters(EventSetInfo_t *local, EventSetInfo_t
 {
   hwd_control_state_t *machdep = global->machdep;
   hwd_control_state_t *local_machdep = local->machdep;
-  int i, selector = 0, hwcntr,j;
+  int i, selector = 0, hwcntr,j, branch_event=0;
   pfmw_arch_reg_t flop_hack;
-  pfmw_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
+  pfmw_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS+1];
   memset(writeem, 0x0, sizeof writeem);
   memset(readem, 0x0, sizeof readem);
 
@@ -593,6 +597,16 @@ inline static int update_global_hwcounters(EventSetInfo_t *local, EventSetInfo_t
 	      PFMW_REG_SMPLSRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
 	    }
 	  selector ^= 1 << (i-1); 
+	}
+/* reset pmd16,When our counter overflows, we want to BTB index to be reset */
+#ifdef ITANIUM2 
+     if ( pfm_ita2_is_btb( local->profile.EventCode ) || local->profile.EventCode ==PAPI_BR_INS) {
+#else
+   if ( pfm_ita_is_btb( local->profile.EventCode)|| local->profile.EventCode ==PAPI_BR_INS ) {
+#endif
+          PFMW_REG_REGNUM(writeem[PMU_MAX_COUNTERS]) = 16;
+          PFMW_REG_REGVAL(writeem[PMU_MAX_COUNTERS]) = 0UL;
+		  branch_event = 1;
 	}
    }
 
@@ -658,9 +672,19 @@ inline static int update_global_hwcounters(EventSetInfo_t *local, EventSetInfo_t
       global->hw_start[papireg] += PFMW_REG_REGVAL(readem[i]);
     }
 
-  if (perfmonctl(machdep->pid, PFM_WRITE_PMDS, writeem, PMU_MAX_COUNTERS) == -1) {
+  if ( (local->state & PAPI_HWPROFILING) && branch_event ) {
+/*  write one more pd for pmd16 */
+    if (perfmonctl(machdep->pid,PFM_WRITE_PMDS,writeem, PMU_MAX_COUNTERS+1) == -1)
+     {
     fprintf(stderr, "child: perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
     return PAPI_ESYS;
+     }
+  } else { 
+    if (perfmonctl(machdep->pid,PFM_WRITE_PMDS,writeem, PMU_MAX_COUNTERS) == -1)
+     {
+    fprintf(stderr, "child: perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
+    return PAPI_ESYS;
+     }
   }
 
   return(PAPI_OK);
@@ -1008,7 +1032,8 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
   int i, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-  pfmw_reg_t pd[PMU_MAX_COUNTERS];
+  pfmw_reg_t pd[PMU_MAX_COUNTERS+1];
+/* pd or pc may contain more elements than events */
   
 /* for hardware profile, currently only support one eventset */
   if (ESI->state & PAPI_HWPROFILING) 
@@ -1046,7 +1071,17 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
           }
           selector ^= 1 << (i-1);
         }
-      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS) == -1) {
+
+/* reset pmd16,When our counter overflows, we want to BTB index to be reset */
+#ifdef ITANIUM2 
+   if ( pfm_ita2_is_btb( ESI->profile.EventCode ) || ESI->profile.EventCode ==PAPI_BR_INS) {
+#else
+   if ( pfm_ita_is_btb( ESI->profile.EventCode)|| ESI->profile.EventCode ==PAPI_BR_INS ) {
+#endif
+          PFMW_REG_REGNUM(pd[PMU_MAX_COUNTERS]) = 16;
+          PFMW_REG_REGVAL(pd[PMU_MAX_COUNTERS]) = 0UL;
+	}
+      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS+1) == -1) {
          fprintf(stderr,"child: perfmonctl error WRITE_PMDS errno %d\n",errno);
 		 pfm_start(); return(PAPI_ESYS);
       }
@@ -1586,19 +1621,24 @@ int ia64_process_profile_entry()
     for(i=0; i < hdr->hdr_count; i++) {
         ret = 0;
         ent = (perfmon_smpl_entry_t *)pos;
-/* record  each register's overflow times  */
-		if ( ent->regs != 0 ) {
-			reg_num= ffs(ent->regs)-1;
-			this_state->overflowcount[reg_num-PMU_MAX_COUNTERS]++;
+		if ( ent->regs == 0 ) {
+        	pos += hdr->hdr_entry_size;
+			continue;
 		}
+
+/* record  each register's overflow times  */
+		reg_num= ffs(ent->regs)-1;
+		this_state->overflowcount[reg_num-PMU_MAX_COUNTERS]++;
 
         /*
          * print entry header
          */
+		info.sc_ip=ent->ip;
+
 #ifdef ITANIUM2 
-   if ( pfm_ita2_is_dear( ESI->profile.EventCode ) ) {
+   		if ( pfm_ita2_is_dear( ESI->profile.EventCode ) ) {
 #else
-   if ( pfm_ita_is_dear( ESI->profile.EventCode) ) {
+   		if ( pfm_ita_is_dear( ESI->profile.EventCode) ) {
 #endif
 			reg = (pfmw_arch_reg_t*)(ent+1);
 			reg++;
@@ -1609,8 +1649,16 @@ int ia64_process_profile_entry()
 #else
 			info.sc_ip= (reg->pmd17_ita_reg.dear_iaddr<<4) | (reg->pmd17_ita_reg.dear_slot);
 #endif
-		} else info.sc_ip=ent->ip;
+		} ;
 
+#ifdef ITANIUM2 
+   if ( pfm_ita2_is_btb( ESI->profile.EventCode ) || ESI->profile.EventCode ==PAPI_BR_INS) {
+#else
+   if ( pfm_ita_is_btb( ESI->profile.EventCode)|| ESI->profile.EventCode ==PAPI_BR_INS ) {
+#endif
+			reg = (pfmw_arch_reg_t*)(ent+1);
+			info.sc_ip= check_btb(reg, reg+8);
+	}
 /*
         printf("Entry %ld PID:%d CPU:%d regs:0x%lx IIP:0x%016lx\n",
             smpl_entry++,
@@ -1627,6 +1675,61 @@ int ia64_process_profile_entry()
         pos += hdr->hdr_entry_size;
 	}
     return(PAPI_OK);
+}
+
+static unsigned long  
+check_btb(pfmw_arch_reg_t *btb, pfmw_arch_reg_t *pmd16)
+{
+    int i, last;
+	unsigned long addr, lastaddr;
+
+#ifdef ITANIUM2
+    i = (pmd16->pmd16_ita2_reg.btbi_full) ? pmd16->pmd16_ita2_reg.btbi_bbi : 0;
+    last = pmd16->pmd16_ita2_reg.btbi_bbi;
+#else
+    i = (pmd16->pmd16_ita_reg.btbi_full) ? pmd16->pmd16_ita_reg.btbi_bbi : 0;
+    last = pmd16->pmd16_ita_reg.btbi_bbi;
+#endif
+
+    do {
+        lastaddr=check_btb_reg(btb[i]);
+		if (lastaddr) addr=lastaddr;
+        i = (i+1) % 8;
+    } while (i != last);
+	if (addr) return addr;
+	else return PAPI_ESYS;
+}
+
+static unsigned long
+check_btb_reg(pfmw_arch_reg_t reg)
+{
+#ifdef ITANIUM2
+    int is_valid = reg.pmd8_15_ita2_reg.btb_b == 0 && reg.pmd8_15_ita2_reg.btb_mp == 0 ? 0 :1;
+#else
+    int is_valid = reg.pmd8_15_ita_reg.btb_b == 0 && reg.pmd8_15_ita_reg.btb_mp
+== 0 ? 0 :1;
+#endif
+
+    if (!is_valid) return 0;
+
+#ifdef ITANIUM2
+    if (reg.pmd8_15_ita2_reg.btb_b) {
+        unsigned long addr;
+
+        addr =  reg.pmd8_15_ita2_reg.btb_addr<<4;
+        addr |= reg.pmd8_15_ita2_reg.btb_slot < 3 ?  reg.pmd8_15_ita2_reg.btb_slot : 0;
+		return addr;
+    } else return 0;
+#else
+    if (reg.pmd8_15_ita_reg.btb_b) {
+        unsigned long addr;
+
+        addr =  reg.pmd8_15_ita_reg.btb_addr<<4;
+        addr |= reg.pmd8_15_ita_reg.btb_slot < 3 ?  reg.pmd8_15_ita_reg.btb_slot
+ : 0;
+		return addr;
+    } else return 0;
+#endif
 }
 
 static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
@@ -1685,6 +1788,7 @@ int set_notify(EventSetInfo_t *ESI, int index, int value)
 
 int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
+   pfm_stop();
    ia64_process_profile_entry();
    master->event_set_profiling=NULL;
    return(PAPI_OK);
@@ -1736,13 +1840,17 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 
 /* DEAR events */
 #ifdef ITANIUM2
-   if ( pfm_ita2_is_dear( profile_option->EventCode ) ) {
+   if ( pfm_ita2_is_dear( profile_option->EventCode ) ) 
+        ctx[0].ctx_smpl_regs[0] = DEAR_REGS_MASK;
+   else if (pfm_ita2_is_btb(profile_option->EventCode )|| profile_option->EventCode ==PAPI_BR_INS)
+        ctx[0].ctx_smpl_regs[0] = BTB_REGS_MASK;
 #else
-   if ( pfm_ita_is_dear( profile_option->EventCode ) ) {
+   if ( pfm_ita_is_dear( profile_option->EventCode ) ) 
+        ctx[0].ctx_smpl_regs[0] = DEAR_REGS_MASK;
+   else if (pfm_ita_is_btb(profile_option->EventCode )|| profile_option->EventCode ==PAPI_BR_INS)
+        ctx[0].ctx_smpl_regs[0] = BTB_REGS_MASK;
 #endif
 
-        ctx[0].ctx_smpl_regs[0] = DEAR_REGS_MASK;
-	}
 
  if (pfmw_perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
     fprintf(stderr,"PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", getpid(),
