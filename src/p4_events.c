@@ -55,6 +55,7 @@
 #define PNE_branch_retired_taken_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTM))
 #define PNE_branch_retired_not_taken_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM))
 #define PNE_cycles (NATIVE_MASK + (P4_custom_event<<16) + 0)    // this is the first custom entry
+#define PNE_global_power_running (NATIVE_MASK + (P4_global_power_events<<16) + (1<<RUNNING))    // this is the first custom entry
 #define PNE_page_walk_type_data_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS))
 #define PNE_page_walk_type_instr_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
 #define PNE_page_walk_type_all (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
@@ -98,7 +99,8 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
    {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    {PAPI_VEC_INS, {0, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
+//   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
+   {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
    {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
@@ -125,7 +127,8 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
    /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
    {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    {PAPI_VEC_INS, {0, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
+//   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
+   {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
    {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
