@@ -22,6 +22,7 @@
 */
 
 #include "papi.h"
+#include SUBSTRATE
 #include "papi_internal.h"
 
 
