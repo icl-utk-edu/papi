@@ -1,5 +1,4 @@
-#include "../papiStdEventDefs.h"
-#include "../papi.h"
+#include "../ctests/papi_test.h"
 
 void addaixevents(int *EventSet, int *retval)
 {
@@ -13,53 +12,103 @@ void addaixevents(int *EventSet, int *retval)
 #if defined(_POWER4)
    /* defined in Makefile.aix.power4 */
    /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
-   native = 0 | 10 << 8 | 0;    /* PM_FPU0_DIV */
+   *retval = PAPI_event_name_to_code("PM_FPU0_DIV", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 19 << 8 | 1;    /* PM_FPU1_DIV */
+
+   *retval = PAPI_event_name_to_code("PM_FPU1_DIV", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 25 << 8 | 2;    /* PM_FPU0_FRSP_FCONV */
+
+   *retval = PAPI_event_name_to_code("PM_FPU0_FRSP_FCONV", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 29 << 8 | 3;    /* PM_FPU1_FRSP_FCONV */
+
+   *retval = PAPI_event_name_to_code("PM_FPU1_FRSP_FCONV", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 11 << 8 | 4;    /* PM_FPU0_FMA */
+
+   *retval = PAPI_event_name_to_code("PM_FPU0_FMA", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 20 << 8 | 5;    /* PM_FPU1_FMA */
+
+   *retval = PAPI_event_name_to_code("PM_FPU1_FMA", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 78 << 8 | 6;    /* PM_INST_CMPL */
+
+   *retval = PAPI_event_name_to_code("PM_INST_CMPL", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
-   native = 0 | 74 << 8 | 7;    /* PM_CYC */
+
+   *retval = PAPI_event_name_to_code("PM_CYC", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;                   /* JT */
 #else
-   native = 0 | 5 << 8 | 0;     /* ICM */
+   *retval = PAPI_event_name_to_code("PM_IC_MISS", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 35 << 8 | 1;    /* FPU1CMPL */
+
+   *retval = PAPI_event_name_to_code("PM_FPU1_CMPL", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 5 << 8 | 2;     /* LDCM */
+
+   *retval = PAPI_event_name_to_code("PM_LD_MISS_L1", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 5 << 8 | 3;     /* LDCMPL */
+
+   *retval = PAPI_event_name_to_code("PM_LD_CMPL", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 5 << 8 | 4;     /* FPU0CMPL */
+
+   *retval = PAPI_event_name_to_code("PM_FPU0_CMPL", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 12 << 8 | 5;    /* CYC */
+
+   *retval = PAPI_event_name_to_code("PM_CYC", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 9 << 8 | 6;     /* FMA */
+
+#ifdef PMTOOLKIT_1_2
+   *retval = PAPI_event_name_to_code("PM_FPU_FMA", &native);
+#else   
+   *retval = PAPI_event_name_to_code("PM_EXEC_FMA", &native);
+#endif
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
-   native = 0 | 0 << 8 | 7;     /* TLB */
+
+   *retval = PAPI_event_name_to_code("PM_TLB_MISS", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
 #endif
