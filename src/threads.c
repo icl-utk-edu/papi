@@ -264,19 +264,13 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
 
   return(PAPI_OK);
 }
-
-int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
-{
-  return(PAPI_OK);
-}
-#else
+#endif
 
 /* This is undefined for systems that enable ANY_THREAD_GETS_SIGNAL
    since we always must enable threads for safety. */
 
 int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
 {
-#if !defined(ANY_THREAD_GETS_SIGNAL)
   /* Check for multiple threads still in the list, if so, we can't change it */
 
   if (_papi_hwi_thread_head->next != _papi_hwi_thread_head)
@@ -288,6 +282,7 @@ int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
   if ((id_fn != NULL) && (_papi_hwi_thread_id_fn != NULL))
     return(PAPI_EINVAL);
   
+#if !defined(ANY_THREAD_GETS_SIGNAL)
   _papi_hwi_thread_id_fn = id_fn;
 
   THRDBG("Set new thread id function to %p\n",id_fn);
@@ -298,10 +293,12 @@ int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
     _papi_hwi_thread_head->tid = getpid();
 
   THRDBG("New master tid is 0x%lx\n",_papi_hwi_thread_head->tid);
+#else
+  THRDBG("Skipping set of thread id function\n");
 #endif
+
   return(PAPI_OK);
 }
-#endif
 
 int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
 {
