@@ -9,18 +9,8 @@ FTEST_DEPENDENCE=$(PAPILIB)
 
 default: $(TESTS)
 
-ftests_util.o: ftests_util.F
-	if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
-	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
-
-dummy.o: dummy.F
-	$(F77) $(FFLAGS) $(INCLUDE) -c dummy.F
-
 addAIXevents.o: addAIXevents.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c addAIXevents.c
-
-do_loops.o: do_loops.F
-	$(F77) $(FFLAGS) $(INCLUDE) -c do_loops.F
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
@@ -89,14 +79,24 @@ fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE)
 fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
 
+ftests_util.o: ftests_util.F
+	if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
+	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
+
+do_loops.o: do_loops.F
+	$(F77) $(FFLAGS) $(INCLUDE) -c do_loops.F
+
+dummy.o: dummy.F
+	$(F77) $(FFLAGS) $(INCLUDE) -c dummy.F
+
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
-install: default
-	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	-mkdir -p $(DESTDIR)/ftests
-	-chmod go+rx $(DESTDIR)/ftests
-	-find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
-	-chmod go+rx $(DESTDIR)/ftests/*
-	-find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;
+install: $(TARGETS)
+	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
+	@echo "Root of destination directory is: \"$(PREFIX)\""; 
+	-mkdir -p $(PREFIX)/share/papi/ftests
+	-chmod go+rx $(PREFIX)/share/papi/ftests
+	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/ftests \;
+	-chmod go+rx $(PREFIX)/share/papi/ftests/*
+	-find . -name "*.F" -type f -exec cp {} $(PREFIX)/share/papi/ftests \;

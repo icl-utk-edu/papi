@@ -41,7 +41,7 @@ General Installation
 
 	To directly install PAPI from the build tree:
 
-	% make -f Makefile.<arch> DESTDIR=<install-dir> install
+	% make -f Makefile.<arch> PREFIX=<install-dir> install
 
 	Please use an absolute pathname for <install-dir>, not a relative 
 	pathname.
@@ -173,6 +173,16 @@ the following two variables:
 PERFCTR	      - should be the absolute path to your PerfCtr build directory
 KERNINC	      - should be the absolute path to your Kernel include files
 	        (thanks to Redhat for breaking the /usr/src/linux convention)
+
+Opteron
+*******
+
+On the Opteron, you should go ahead and use PerfCtr 2.6.x and use the
+'make install' target as specified in the PerfCtr INSTALL file. If you have
+installed it into anywhere other than the standard /usr directory, you
+should set the PERFCTR_PREFIX directory on the make line.
+
+make -f Makefile.linux-opteron PERFCTR_PREFIX=/usr/local
 
 MIPS - IRIX 6.5
 *****************************************************************************

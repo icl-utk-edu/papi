@@ -6,5 +6,5 @@ install:
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
 	-mkdir -p $(DESTDIR)/man/man3
 	-chmod go+rx $(DESTDIR)/man/man3
-	-cp man3/*.3 $(DESTDIR)/man/man3
-	-chmod go+r $(DESTDIR)/man/man3/*
+	-cp man3/PAPI*.3 $(DESTDIR)/man/man3
+	-chmod go+r $(DESTDIR)/man/man3/PAPI*.3

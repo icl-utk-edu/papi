@@ -24,7 +24,7 @@ all:
 	@echo "<none>		- Compiles the library and tests";
 	@echo "test		- Runs the simplest test case";
 	@echo "fulltest	- Runs the all the test cases";
-	@echo "install		- Installs in make variable DESTDIR"; 
+	@echo "install PREFIX=<dir> - Installs in directory PREFIX/lib, PREFIX/man, PREFIX/share/papi"; 
 	@echo "clean		- Removes object files and executables";
 	@echo "dist		- Prepares a tarball";
 

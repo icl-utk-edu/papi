@@ -14,7 +14,7 @@ SERIAL  = exeinfo shlib zero avail branches dmem_info all_events derived high-le
 	ipc native native_avail
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-ALL 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) 
+TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) 
 INCLUDE = -I.. -I/usr/include -I$(TOOLPATH)/libpfm
 PAPILIB	= ../$(LIBRARY)
 
@@ -233,26 +233,23 @@ shlib: shlib.c $(PAPILIB) $(UTILOBJS)
 exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
-dummy.o: dummy.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c dummy.c
+test_utils.o: test_utils.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
 
 do_loops.o: do_loops.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c do_loops.c
 
-test_utils.o: test_utils.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
+dummy.o: dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c dummy.c
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(ALL)
-
-run: 
-	sh ./run_tests.sh
+	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
 install: $(TARGETS)
-	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	-mkdir -p $(DESTDIR)/ctests
-	-chmod go+rx $(DESTDIR)/ctests
-	-find . -perm -100 -type f -exec cp {} $(DESTDIR)/ctests \;
-	-chmod go+rx $(DESTDIR)/ctests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(DESTDIR)/ctests \;
+	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
+	@echo "Root of destination directory is: \"$(PREFIX)\""; 
+	-mkdir -p $(PREFIX)/share/papi/ctests
+	-chmod go+rx $(PREFIX)/share/papi/ctests
+	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/ctests \;
+	-chmod go+rx $(PREFIX)/share/papi/ctests/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(PREFIX)/share/papi/ctests \;

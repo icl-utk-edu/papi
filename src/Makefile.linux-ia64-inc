@@ -55,6 +55,6 @@ native_clean:
 	rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
 
 native_install:
-	-cp -p $(PFM_LIB_PATH)/libpfm.so.2 $(DESTDIR)/lib
-	-cp -p $(PFM_INC_PATH)/*.h $(DESTDIR)/include
+	-cp -p $(PFM_LIB_PATH)/libpfm.so.2 $(PREFIX)/lib
+	-cp -p $(PFM_INC_PATH)/*.h $(PREFIX)/include
 
