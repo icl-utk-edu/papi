@@ -11,7 +11,7 @@
 #define _PAPI_PRESET
 
 
-#define OPS MAX_COUNTERS*3
+#define OPS MAX_COUNTERS*5
 
 typedef struct hwi_preset_data {
   int  derived;	/* Derived code */
