@@ -1,19 +1,6 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-/* This is a cloned file that handles the POWER3 architectures. These changes mostly involve naming differences in the event map.
-  The switch between POWER3 and POWER4 is driven by the value _POWER4 which must be defined
-  in the make file to conditionally compile for POWER3 or POWER4. Differences between these
-  two counting architectures are substantial. Major blocks of conditional code are set off
-  by comment lines containing '~~~~~~~~~~~~' characters. Routines that are significantly
-  different (in addition to the event map) include:
-    find_hwcounter -> find_hwcounter_gps
-    setup_all_presets -> setup_p4_presets
-    _papi_hwd_add_event
-    _papi_hwd_merge
-  Other routines also include minor conditionally compiled differences.
-*/
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
