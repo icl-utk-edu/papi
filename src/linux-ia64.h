@@ -33,6 +33,12 @@
 #include <sys/times.h>
 #include <sys/ucontext.h>
 
+#ifdef ALTIX
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sn/mmtimer.h>
+#endif
+
 #ifdef __INTEL_COMPILER
 #include <ia64intrin.h>
 #include <ia64regs.h>

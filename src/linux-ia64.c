@@ -143,6 +143,11 @@ static const itanium_preset_search_t ia2_preset_search_map[] = {
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 
+#ifdef ALTIX
+static unsigned long mmdev_clicks_per_tick;
+static volatile unsigned long *mmdev_timer_addr;
+#endif
+
 /* Machine info structure. -1 is unused. */
 extern papi_mdi_t _papi_hwi_system_info;
 extern hwi_preset_data_t _papi_hwi_preset_data[PAPI_MAX_PRESET_EVENTS];
@@ -228,14 +233,14 @@ static inline char *search_cpu_info(FILE * f, char *search_str, char *line)
 inline_static unsigned long get_cycles(void)
 {
    unsigned long tmp;
-#ifdef __INTEL_COMPILER
+#ifdef ALTIX
+   tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
+#elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
-
 #else                           /* GCC */
    /* XXX: need more to adjust for Itanium itc bug */
    __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
 #endif
-
    return tmp;
 }
 
@@ -399,6 +404,32 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
+#if defined(ALTIX)
+   {
+     int fd;
+     unsigned long femtosecs_per_tick = 0;
+     int offset;
+     
+     if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
+       PAPIERROR("Failed to open MM timer");
+       return(PAPI_ESBSTR);
+     }
+     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) == -ENOSYS) {
+       PAPIERROR("Failed to get offset of MM timer");
+       return(PAPI_ESBSTR);
+     }
+     if ((mmdev_timer_addr = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, fd, 0)) == NULL) {
+       PAPIERROR("Failed to mmap MM timer");
+       return(PAPI_ESBSTR);
+     }
+
+     mmdev_timer_addr += offset;
+     ioctl(fd, MMTIMER_GETRES, &femtosecs_per_tick);
+     mmdev_clicks_per_tick = (_papi_hwi_system_info.hw_info.mhz * 1.0e-9) * femtosecs_per_tick;
+     close(fd);
+   }
+#endif
+
    _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
@@ -439,16 +470,12 @@ int _papi_hwd_init(hwd_context_t * zero)
 
 long_long _papi_hwd_get_real_usec(void)
 {
-   long_long cyc;
-
-   cyc = get_cycles() * (long_long) 1000;
-   cyc = cyc / (long_long) _papi_hwi_system_info.hw_info.mhz;
-   return (cyc / (long_long) 1000);
+  return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 long_long _papi_hwd_get_real_cycles(void)
 {
-   return (get_cycles());
+   return ((long_long)get_cycles());
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
