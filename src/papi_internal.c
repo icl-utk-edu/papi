@@ -396,8 +396,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
    *EventSet = ESI->EventSetIndex;
    INTDBG("_papi_hwi_create_eventset(%p,%p): new EventSet in slot %d\n",
           (void *) EventSet, handle, *EventSet);
-   if (*EventSet > 100)
-      exit(0);
+   assert (*EventSet < 100);
    return (retval);
 }
 
