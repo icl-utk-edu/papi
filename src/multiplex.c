@@ -1,3 +1,7 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
 /* 
  * File:    multiplex.c
  * CVS:     $Id$
@@ -103,13 +107,18 @@
   #define SUBSTRATE "linux-perfctr.h"
 #endif
 
+#include "papi.h"
 #include SUBSTRATE
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 #define MPX_SIGNAL PAPI_SIGNAL
 #define MPX_ITIMER PAPI_ITIMER
 #define MPX_MINCYC 25000
 
 /* Globals for this file. */
+
+extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* List of threads that are multiplexing. */
 
@@ -140,7 +149,7 @@ static int mpx_insert_events(MPX_EventSet *, int * event_list, int num_events,
 static void mpx_handler(int signal);
 
 #if defined(ANY_THREAD_GETS_SIGNAL)
-extern int (*thread_kill_fn)(int, int);
+extern int (*_papi_hwi_thread_kill_fn)(int, int);
 #endif
 
 #ifdef _WIN32
@@ -295,10 +304,10 @@ static MasterEvent *get_my_threads_master_event_list(void)
   Threadlist *t = tlist;
   unsigned long tid;
 
-  if (thread_id_fn == NULL)
+  if (_papi_hwi_thread_id_fn == NULL)
     return(tlist->head);
 
-  tid = thread_id_fn();
+  tid = _papi_hwi_thread_id_fn();
 
   while (t)
     {
@@ -347,12 +356,12 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
        * field with the thread_id otherwise
        * use getpid() as a placeholder. */
 
-      if (thread_id_fn)
+      if (_papi_hwi_thread_id_fn)
         {
 #ifdef MPX_DEBUG
-          fprintf(stderr,"New thread %lx at %p\n",thread_id_fn(),t);
+          fprintf(stderr,"New thread %lx at %p\n",_papi_hwi_thread_id_fn(),t);
 #endif
-          t->pid = thread_id_fn();
+          t->pid = _papi_hwi_thread_id_fn();
         }
       else 
         {
@@ -373,13 +382,13 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 #endif
       alloced_thread = 1;
     }
-  else if (thread_id_fn)
+  else if (_papi_hwi_thread_id_fn)
     {
 
       /* If we are threaded, AND there exists threads in the list, 
        *  then try to find our thread in the list. */
 
-      unsigned long tid = thread_id_fn();
+      unsigned long tid = _papi_hwi_thread_id_fn();
 
       while (t)
         {
@@ -487,8 +496,8 @@ static void mpx_handler(int signal)
   signal = signal;      /* unused */
 
 #ifdef MPX_DEBUG_HANDLER
-  if (thread_id_fn)
-    fprintf(stderr,"Handler in thread %lx\n",thread_id_fn());
+  if (_papi_hwi_thread_id_fn)
+    fprintf(stderr,"Handler in thread %lx\n",_papi_hwi_thread_id_fn());
 #endif
 
   /* This handler can be invoked either when a timer expires
@@ -665,19 +674,19 @@ static void mpx_handler(int signal)
   else {
     Threadlist *t;
 #ifdef MPX_DEBUG_TIMER
-    fprintf(stderr,"nothing to do in thread %x\n", (*thread_id_fn)());
+    fprintf(stderr,"nothing to do in thread %x\n", (*_papi_hwi_thread_id_fn)());
 #endif
     for( t = tlist; t != NULL; t = t->next ) {
 #ifdef MPX_DEBUG_TIMER
-      fprintf(stderr,"%x forwarding signal to thread %x\n",(*thread_id_fn)(), t->pid);
+      fprintf(stderr,"%x forwarding signal to thread %x\n",(*_papi_hwi_thread_id_fn)(), t->pid);
 #endif
-      retval = (*thread_kill_fn)(t->pid, MPX_SIGNAL);
+      retval = (*_papi_hwi_thread_kill_fn)(t->pid, MPX_SIGNAL);
       if (retval != 0)
         {
 #ifdef MPX_DEBUG_SIGNAL
-          fprintf(stderr,"%x forwarding signal to thread %x returned %d\n",(*thread_id_fn)(), t->pid, retval);
+          fprintf(stderr,"%x forwarding signal to thread %x returned %d\n",(*_papi_hwi_thread_id_fn)(), t->pid, retval);
 #endif
-          perror("thread_kill_fn");
+          perror("_papi_hwi_thread_kill_fn");
         }
     }
   }
@@ -1229,7 +1238,7 @@ void _papi_hwi_lookup_thread_symbols(void)
   handle = dlopen(NULL,RTLD_LAZY);
   assert(handle != NULL);
 
-  if (thread_id_fn == NULL)
+  if (_papi_hwi_thread_id_fn == NULL)
     {
 #if defined(sun)
       symbol = dlsym(handle,"thr_self");
@@ -1247,10 +1256,10 @@ void _papi_hwi_lookup_thread_symbols(void)
           assert(retval == 0);
         }
       else
-          thread_id_fn = (unsigned long (*)(void))symbol;
+          _papi_hwi_thread_id_fn = (unsigned long (*)(void))symbol;
     }
 
-  if (thread_kill_fn == NULL)
+  if (_papi_hwi_thread_kill_fn == NULL)
     {
 #if defined(sun)
       symbol = dlsym(handle,"thr_kill");
@@ -1262,11 +1271,11 @@ void _papi_hwi_lookup_thread_symbols(void)
       error = dlerror();
       if ((error == NULL) && (symbol))
         {
-          thread_kill_fn = (int (*)(int, int))symbol;
+          _papi_hwi_thread_kill_fn = (int (*)(int, int))symbol;
         }
     }
   
-  assert(((thread_id_fn == NULL) && (thread_kill_fn == NULL)) || ((thread_id_fn) && (thread_kill_fn)));
+  assert(((_papi_hwi_thread_id_fn == NULL) && (_papi_hwi_thread_kill_fn == NULL)) || ((_papi_hwi_thread_id_fn) && (_papi_hwi_thread_kill_fn)));
   dlclose(handle);
 }
 #endif
@@ -1367,7 +1376,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 	  goto bail;
         }
 
-      retval = PAPI_add_event(mev->papi_event,event_list[i]);   /* JT */
+      retval = PAPI_add_event(mev->papi_event,event_list[i]);
       if (retval != PAPI_OK)
         {
 #ifdef MPX_DEBUG
@@ -1381,7 +1390,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 
       if (event_list[i] != PAPI_TOT_CYC) 
         {
-          retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC);    /* JT */
+          retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC);
           if (retval != PAPI_OK)
             {
 #ifdef MPX_DEBUG
@@ -1554,7 +1563,7 @@ static void mpx_remove_unused(MasterEvent **head)
       } else {
         lastmev->next = nextmev;
       }
-      PAPI_cleanup_eventset(mev->papi_event);     /* JT */
+      PAPI_cleanup_eventset(mev->papi_event);
       PAPI_destroy_eventset(&(mev->papi_event));
       free(mev);
     } else {
