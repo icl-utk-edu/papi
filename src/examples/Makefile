@@ -1,0 +1,16 @@
+PAPIINC = ..
+PAPILIB = ../libpapi.a
+CC = gcc
+CFLAGS += -I$(PAPIINC)
+LDFLAGS =  $(PAPILIB)
+
+TARGETS = PAPI_get_virt_cyc PAPI_get_real_cyc PAPI_get_opt PAPI_hw_info PAPI_get_executable_info PAPI_ipc PAPI_flops PAPI_flips PAPI_overflow PAPI_add_remove_event high_level PAPI_add_remove_events
+
+all: $(TARGETS)
+
+$(TARGETS):  %:%.o 
+	$(CC) -o $@ $(CFLAGS) $^  $(LDFLAGS)
+
+clean:
+	$(RM) -f *.o $(TARGETS)
+
