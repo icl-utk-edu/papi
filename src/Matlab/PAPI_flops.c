@@ -36,7 +36,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(PAPI_flops( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
       mexErrMsgTxt("Error getting flops.");
     }
-//    mexPrintf("real: %f, proc: %f, rate: %f, ins: %lld\n", real_time, proc_time, rate, ins);
+/*    mexPrintf("real: %f, proc: %f, rate: %f, ins: %lld\n", real_time, proc_time, rate, ins); */
 
     if(nlhs > 0) {
       plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
