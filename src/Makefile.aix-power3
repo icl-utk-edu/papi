@@ -12,7 +12,7 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 # For version 1.2.1 add -DPMTOOLKIT_1_2_1
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=pwr3 
-CFLAGS	= $(FLAGS) -DNO_VARARG_MACRO
+CFLAGS	= $(FLAGS) -DNO_VARARG_MACRO -DPOWER3
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= -g
