@@ -36,6 +36,8 @@ static int _papi_expandDA(DynamicArray *EM);
 int PAPI_state(int EventSetIndex, int *status);
 static EventSetInfo *papi_allocate_EventSet(void);
 static void free_EventSet(EventSetInfo *ESI);
+int PAPI_load_event(EventSetInfo *thisESI, int EventSetIndex);
+int PAPI_load_dataSlotArrayElement(EventSetInfo *ESI);
 
 
 extern DynamicArray evmap;

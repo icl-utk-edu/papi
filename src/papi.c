@@ -99,6 +99,7 @@ typedef struct _papi_options{
 /* The EM pointer itself does not have to be freed because it points to   */
 /* the static memory location of PAPI_EVENT_MAP.                          */
 /*========================================================================*/
+
 static void PAPI_shutdown(void) {
 
     int i;
@@ -365,6 +366,8 @@ if(!ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo))) return(NULL);
 bzero(ESI,sizeof(ESI));
 
 ESI->EventSetIndex=0;     /*this is N index from EM->dataSlotArray[N] */
+			  /*0 is the initialization value to denote that
+			    this ESI is not yet loaded int EM->dataSlotArray */
 ESI->NumberOfCounters=0;  /*number of counters*/
 
 /*this ptr needs more work ******************************************************/
@@ -400,7 +403,7 @@ if(!ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long))){
 	}
 bzero(ESI->latest,sizeof(ESI->latest));
 
-ESI->state=PAPI_RUNNING; /*[or PAPI_STOPED]*/
+ESI->state=PAPI_RUNNING; /*[or PAPI_STOPPED]*/
 
 return(ESI);
 }
@@ -438,5 +441,125 @@ return; /* normal return */
 }
 /*========================================================================*/
 /*end function: _papi_free_EventSet                                       */
+/*========================================================================*/
+/*========================================================================*/
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function:                                                        */
+/* int PAPI_load_event(EventSetInfo *thisEventSet, int EventSetIndex)     */
+/*                                                                        */
+/* The function PAPI_load_event is derived from PAPI_add_event,           */ 
+/* which is described below [from papi draft standard ].                  */ 
+/*                                                                        */
+/* Note that the first argument for PAPI_load_Event is a ptr to a         */
+/* previously allocated EventSetInfo structure that was returned by       */
+/* PAPI_allocate_EventSet.                                                */
+/*                                                                        */
+/* PAPI_load_event sets up a new EventSetInfo structure or modifies an    */
+/* existing EventSetInfo structure.  In the case of a new EventSetInfo    */
+/* structure, PAPI_load_event loads the new EventSetInfo pointer to the   */
+/* EM->dataSlotArray by calling PAPI_load_dataSlotArrayElement.           */
+/*                                                                        */
+/* from the papi draft standard:
+int PAPI_add_event(int *EventSet, int Event) 
+
+          This function sets up a new EventSet or modifies an existing
+     one. To create a new EventSet, EventSet must be set to
+     PAPI_NULL. Separate EventSets containing events that require
+     use of the same hardware may exist, but may not be started if a
+     conflicting EventSet is running. Returns PAPI_ENOEVNT if
+     Event cannot be counted on this platform. The addition of a
+     conflicting event to an event set will return an error unless
+     PAPI_SET_MPXRES has been set. Note: EventSet 0 may not be
+     used; it has been reserved for internal use.
+*/
+/*========================================================================*/
+
+
+int PAPI_load_event(EventSetInfo *thisESI, int EventSetIndex) {
+
+DynamicArray *EM=PAPI_EVENT_MAP;
+int returnCode;
+
+/* if thisESI is new */
+if(thisESI->EventSetIndex==0) { 
+	returnCode=PAPI_load_dataSlotArrayElement(thisESI);
+	if(returnCode!=PAPI_OK) {
+	PAPI_error(returnCode," PAPI_load_event error on new *EventSetInfo");
+	}}
+
+/* hardware dependent information */
+
+/*
+-------------------------------------------------------------------
+Some of these are ints, some are ptrs.  I put the data type to the
+right of the assignment statement.
+
+The writing of this function needs to be coordinated with the
+hardware dependent information.  I need help to do this. c! 
+-------------------------------------------------------------------
+thisESI->NumberOfCounters= _______;  int 
+thisESI->EventCodeArray  = _______;  int *
+thisESI->machdep         = _______;  void *
+thisESI->start           = _______;  long long *
+thisESI->stop            = _______;  long long *
+thisESI->latest          = _______;  long long *
+thisESI->state           = PAPI_RUNNING; [ or PAPI_STOPPED ]   int
+-------------------------------------------------------------------
+*/
+
+
+return (PAPI_OK);
+}
+/*========================================================================*/
+/*end function: PAPI_load_event                                           */
+/*========================================================================*/
+/*========================================================================*/
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function:                                                        */
+/* int PAPI_load_dataSlotArrayElement(EventSetInfo *ESI)                  */
+/*                                                                        */
+/* This function determines the value of the lowestEmptySlot in the       */
+/* EM->dataSlotArray.  If the dataSlotArray is full, a call to expand is  */
+/* made to papi_expandDA.  The EventSetInfo *ESI is loaded to the lowest  */
+/* empty slot, and the value of ESI->EventSetIndex set to self-reference  */
+/* EM->lowestEmptySlot.                                                   */
+/* bookkeeping is performed on the DynamicArray *EM to update the values  */
+/* of EM->lowestEmptySlot and EM->availSlots.                             */
+/*========================================================================*/
+   
+
+
+int PAPI_load_dataSlotArrayElement(EventSetInfo *ESI) {
+
+DynamicArray *EM = &PAPI_EVENT_MAP;
+int N; /* temp value for bookkeeping */
+
+if(EM->availSlots==0) _papi_expandDA(EM);
+
+/*load ESI, failure indicates internal error */
+if(!EM->dataSlotArray[EM->lowestEmptySlot]=ESI) {
+	PAPI_error(PAPI_EBUG,NULL);
+	return(PAPI_EINVAL); /* return invalid flag*/
+	}
+
+/*load ESI->EventSetIndex*/
+ESI->EventSetIndex=EM->lowestEmptySlot;
+
+/*bookkeeping*/
+N=EM->lowestEmptySlot;
+while(EM->dataSlotArray[N]!=NULL)N++;
+EM->lowestEmptySlot=N;
+EM->availSlots--;
+
+return(PAPI_OK);
+}
+/*========================================================================*/
+/*end function: PAPI_load_dataSlotArrayElement                            */
 /*========================================================================*/
 /*========================================================================*/
