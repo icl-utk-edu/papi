@@ -86,16 +86,16 @@ int main(int argc, char **argv)
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");
 
-	printf("Test type   : \t1\n");
+	printf("Test type    : \t           1\n");
 
-	sprintf(add_event_str, "%s : \t", event_name);
-	printf(TAB1, event_name,
+	sprintf(add_event_str, "%-12s : \t", event_name);
+	printf(TAB1, add_event_str,
 	 (values[0])[0]);
-	printf(TAB1, "PAPI_TOT_CYC: \t",
+	printf(TAB1, "PAPI_TOT_CYC : \t",
 	 (values[0])[1]);
-	printf(TAB1, "Real usec   : \t",
+	printf(TAB1, "Real usec    : \t",
 	 elapsed_us);
-	printf(TAB1, "Real cycles : \t",
+	printf(TAB1, "Real cycles  : \t",
 	 elapsed_cyc);
 
 	printf("-------------------------------------------------------------------------\n");
