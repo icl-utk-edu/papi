@@ -1175,12 +1175,12 @@ static long_long handle_derived_add(int *position, long_long *from)
   long_long retval = 0;
 
   i=0;
-  pos=position[i++];
-  while (pos != -1 )
+  while ( i<MAX_COUNTERS )
   {
+    pos=position[i++];
+    if (pos == -1 ) break;
     DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos],retval));
     retval += from[pos];
-    pos=position[i++];
   }
   return(retval);
 }
@@ -1191,12 +1191,12 @@ static long_long handle_derived_subtract(int *position, long_long *from)
   long_long retval = from[position[0]];
 
   i=1;
-  pos=position[i++];
-  while (pos != -1)
+  while ( i<MAX_COUNTERS )
   {
+    pos=position[i++];
+    if (pos == -1 ) break;
     DBG((stderr,"Compound event, subtracting pos=%d  %lld to %lld\n",pos, from[pos],retval));
     retval -= from[pos];
-    pos=position[i++];
   }
   return(retval);
 }

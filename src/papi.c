@@ -89,7 +89,7 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
 #if defined(__ALPHA) && defined(__osf__)
     papi_return(PAPI_ESBSTR);
 #endif
-  if ((id_fn == NULL) || (flag != 0) || (default_master_thread == NULL))
+  if (default_master_thread == NULL)
     papi_return(PAPI_EINVAL);
     
    /* They had better be compatible thread packages if you change thread thread packages without
