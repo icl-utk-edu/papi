@@ -1360,8 +1360,7 @@ case "$OS" in
            if test "$family" = "15"; then
              if test "$model" = "3"; then
                CPU=em64t
-             fi
-             if test "$model" = "2"; then
+             elif test "$model" = "2"; then
                CPU=p4
              fi
            fi
@@ -1538,6 +1537,13 @@ case "$OS" in
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             opteron)
+                 if test "${with_bitmode}" = "32"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+
+            em64t)
                  if test "${with_bitmode}" = "32"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
