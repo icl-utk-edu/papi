@@ -594,6 +594,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
 
+   SUBDBG("si: %x\n", si);
    ctx.si = si;
    ctx.ucontext = info;
    if ( si ) {
