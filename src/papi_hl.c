@@ -45,7 +45,7 @@ static int hl_max_counters = 0;
 	benign change, exept in the rare case where a user passes an uninitialized
 	(and possibly negative) value for flpins to the routine *AFTER* it has been
 	called the first time. This is unlikely, since the first call clears and
-	returns this value.
+	returns th is value.
   - dkt 08/01/01:
 	Internal sequencing changes:
 	-- initial PAPI_get_real_usec() call moved above PAPI_start to avoid unwanted flops.
