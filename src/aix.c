@@ -775,7 +775,8 @@ int _papi_hwd_update_shlib_info(void)
          free(_papi_hwi_system_info.shlib_info.map);
       _papi_hwi_system_info.shlib_info.map = tmp2;
       _papi_hwi_system_info.shlib_info.count = t_index+1;
-
+      free(tmp1);
+      
       return(PAPI_OK);
 #else
       return PAPI_ESBSTR;
