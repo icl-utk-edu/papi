@@ -6,11 +6,12 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DPFM06A 
+CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DPFM06A -O2
+# -DDEBUG
 LIBPFM  = pfmon-0.06a/libpfm
 TOPTFLAGS  = 
 LDFLAGS	= 
-OPTFLAGS= -O2
+OPTFLAGS= 
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 #
@@ -36,7 +37,7 @@ MISCSRCS= $(LIBPFM)/pfmlib.c $(LIBPFM)/pfmusr.c $(LIBPFM)/pfmerror.c
 include Makefile.inc
 
 $(MISCOBJS): $(MISCSRCS)
-	$(MAKE) CFLAGS="$(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" -C $(LIBPFM)
+	$(MAKE) -C $(LIBPFM)
 	cd $(LIBPFM); cp $(MISCOBJS) $(PAPI_SRCDIR)
 
 native_clean:

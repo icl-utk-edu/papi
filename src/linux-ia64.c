@@ -641,7 +641,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
       return PAPI_ESYS;
     }
 
-  if (local->state & PAPI_OVERFLOWING)
+  if ((local->state & PAPI_OVERFLOWING) && (_papi_system_info.supports_hw_overflow))
 
     {
       selector = local->EventInfoArray[local->overflow.EventIndex].selector;
@@ -805,6 +805,7 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_shutdown_global(void)
 {
+  /* Need to pass in pid for _papi_hwd_shutdown_globabl in the future -KSL */
 #ifdef PFM06A
   perfmonctl(getpid(), PFM_DISABLE, 0, NULL, 0);
 #else
@@ -1109,7 +1110,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 #endif
 	}
 
-      if (ESI->state & PAPI_OVERFLOWING)
+      if ((ESI->state & PAPI_OVERFLOWING) && (_papi_system_info.supports_hw_overflow))
 	{
 	  selector = ESI->EventInfoArray[ESI->overflow.EventIndex].selector;
 	  while ((i = ffs(selector)))
@@ -1119,8 +1120,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 		{
 		  DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,ESI->overflow.threshold));
 #ifdef PFM06A
-		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = (unsigned long)0x100000000 - (unsigned long)ESI->overflow.threshold;
-		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = (unsigned long)0x100000000 - (unsigned long)ESI->overflow.threshold;
+		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = (~0UL) - (unsigned long)ESI->overflow.threshold;
+		  pd[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = (~0UL) - (unsigned long)ESI->overflow.threshold;
 #else
 		  pd[i-1-PMU_MAX_COUNTERS].reg_value = (~0UL) - (unsigned long)ESI->overflow.threshold;
 		  pd[i-1-PMU_MAX_COUNTERS].reg_long_reset = (~0UL) - (unsigned long)ESI->overflow.threshold;
@@ -1588,6 +1589,26 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+/* This function only used when hardware interrupts ARE NOT working */
+
+void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
+{
+  struct ucontext *uc;
+  struct sigcontext *mc;
+  struct ucontext realc;
+
+  pfm_stop();
+  uc = (struct ucontext *) tmp;
+  realc = *uc;
+  mc = &uc->uc_mcontext;
+  DBG((stderr,"Start at 0x%lx\n",mc->sc_ip));
+  _papi_hwi_dispatch_overflow_signal((void *)mc); 
+  DBG((stderr,"Finished at 0x%lx\n",mc->sc_ip));
+  pfm_start();
+}
+
+/* This function only used when hardware interrupts ARE working */
+
 #ifdef PFM06A
 static void ia64_dispatch_sigprof(int n, struct mysiginfo *info, struct sigcontext *context)
 #else
@@ -1595,14 +1616,14 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
 #endif
 {
   pfm_stop();
-#ifndef PFM06A
+#ifdef PFM06A
+  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
+#else
+  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]));
   if (info->sy_code != PROF_OVFL) {
     fprintf(stderr,"PAPI: received spurious SIGPROF si_code=%d\n", info->sy_code);
     return;
   } 
-  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]));
-#else
-  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
 #endif
   _papi_hwi_dispatch_overflow_signal((void *)context); 
 #ifdef PFM06A
@@ -1700,7 +1721,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	      if (pc[i].reg_num == hwcntr)
 		{
 		  DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
-                  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+		  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 		  break;
 		}
 #endif

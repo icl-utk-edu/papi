@@ -1,11 +1,12 @@
 /* Compile me with -O0 or else you'll get none. */
 
 #include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #if defined ( _CRAYT3E ) 
-#include  <stdlib.h>
 #include  <fortran.h>  
 #endif
 #include "papi.h"

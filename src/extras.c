@@ -319,10 +319,7 @@ static int start_timer(int milliseconds)
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_flags = SA_RESTART;
-#if defined(_AIX) || defined(_CRAYT3E) || defined(sun)
-  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))_papi_hwd_dispatch_timer;
-  action.sa_flags |= SA_SIGINFO;
-#elif defined(linux) && !defined(__ia64)
+#if defined(_AIX) || defined(_CRAYT3E) || defined(sun) || defined(linux)
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))_papi_hwd_dispatch_timer;
   action.sa_flags |= SA_SIGINFO;
 #elif defined(__ALPHA) && defined(__osf__)
