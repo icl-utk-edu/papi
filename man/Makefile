@@ -8,3 +8,7 @@ install:
 	-chmod go+rx $(PREFIX)/man/man3
 	-cp man3/PAPI*.3 $(PREFIX)/man/man3
 	-chmod go+r $(PREFIX)/man/man3/PAPI*.3
+	-mkdir -p $(PREFIX)/man/man1
+	-chmod go+rx $(PREFIX)/man/man1
+	-cp man1/PAPI*.1 $(PREFIX)/man/man1
+	-chmod go+r $(PREFIX)/man/man1/PAPI*.1
