@@ -1,0 +1,772 @@
+            ------------------------------------------------------
+                                 pfmon-2.0
+	               Itanium specific documentation
+            ------------------------------------------------------
+		   Copyright (c) 2001-2002 Hewlett-Packard Company
+		                 Stephane Eranian <eranian@hpl.hp.com>
+
+This document describes pfmon features which are specific to the Itanium PMU. 
+For information about the generic support refer to usersguide.txt.
+
+1/ Itanium features supported by pfmon
+
+   Pfmon provides access to ALL the Itanium PMU specific features. This includes:
+
+   	- Event Address Registers (Data & Code)
+	- Opcode matching (PMC8, PMC9)
+	- Address range restrictions (Data & Code)
+	- Branch Trace Buffer (BTB)
+	- Event thresholds
+	- IA-32 execution monitoring
+
+   The Itanium specific options of pfmon are as follows:
+   --event-thresholds=thr1,thr2,...	set event thresholds (no space)
+   --opc-match8=val			set opcode match for PMC8
+   --opc-match9=val			set opcode match for PMC9
+   --btb-no-tar				don't capture TAR predictions
+   --btb-no-bac				don't capture BAC predictions
+   --btb-no-tac				don't capture TAC predictions
+   --btb-tm-tk				capture taken IA-64 branches only
+   --btb-tm-ntk				capture not taken IA-64 branches only
+   --btb-ptm-correct			capture branch if target predicted correctly
+   --btb-ptm-incorrect			capture branch if target is mispredicted
+   --btb-ppm-correct			capture branch if path is predicted correctly
+   --btb-ppm-incorrect			capture branch if path is mispredicted
+   --btb-all-mispredicted		capture all mispredicted branches
+   --irange=start-end			specify an instruction address range constraint
+   --drange=start-end			specify a data address range constraint
+   --checkpoint-func=addr		a bundle address to use as checkpoint
+   --ia32				monitor IA-32 execution only
+   --ia64				monitor IA-64 execution only
+   --insn-sets=set1,set2,...            set per event instruction set (setX=[ia32|ia64|both])
+
+   In this section, we review how each feature and related options are used.
+
+2/ Event thresholds
+
+   Pfmon has support for event thresholds. It is possible to further refine certain events
+   using a threshold. If an event as a threshold set to n, it means that the PMU will not
+   count the occurrences of that event unless it happens more  than n times per cycles. So, if
+   the threshold is zero, which is the default, then ALL occurrences are recorded. But
+   if it is set to 3, then the counter will be increased by one only when more the event
+   happens more than 3 times per cycle. Not all events have the same threshold value. 
+   You can determine the maximum increment per cycle for each event using 
+   the event info (-i) option of pfmon:
+
+   % pfmon -i NOPS_RETIRED
+   Name   : NOPS_RETIRED
+   VCode  : 0x30
+   Code   : 0x30
+   PMD/PMC: [ 4 5 ]
+   EAR    : No (N/A)
+   Umask  : None
+   BTB    : No
+   MaxIncr: 6  (Threshold [0-5])
+   Qual   : [Instruction Address Range] [OpCode Match] 
+
+
+   The information includes the maximum increment for the event. Here 6 means that the CPU can execute up to 6 nop per cycle
+   which corresponds to the two bundles maximum window of Itanium. This combination is possible when using the right template
+   to fill all the execution units. Next to it you see the allowed values for the threshold which go from
+   0 to max increment-1.
+
+   Now if you want to count the number of times 6 nops are executed in a single cycle, you can do:
+
+   % pfmon --event-threshold=5 -e nops_retired ls /dev/null
+      0 NOPS_RETIRED
+
+   Luckily enough, there is no such bundle executed with the invocation of ls!
+
+   You can specify the threshold for every event you use. They MUST be specified in the same order as the event.
+
+3/ Opcode matchers (PMC8, PMC9)
+
+   The opcode matcher feature allows constraining of what is being monitored
+   based on the instruction opcode, opcode pattern or functional unit.
+
+   Pfmon has two options to support this features:
+      	--opc-match8: set the value for PMC8 (first opcode matcher)
+	--opc-match9: set the valuer for PMC9 (second opcode matcher)
+
+   These options constrain what is included in the measurement but they do not set what is to be measured, 
+   i.e. which event. Many times, the user just wants to count the number of occurrences of a certain instructions 
+   or instruction patterns. For this, you need to combine PMC8/PMC9 with an event. To count the number of 
+   machine instruction constrained by:
+
+      	- PMC8 you need to use the IA64_TAGGED_INST_RETIRED_PMC8 event
+	- PMC9 you need to use the IA64_TAGGED_INST_RETIRED_PMC9 event
+
+   For instance, if you want to count the number of br.cloop executed in a program using PMC8, you can do:
+
+   % pfmon --opc-match8=0x1400028003fff1f8 -e ia64_inst_retired,IA64_TAGGED_INST_RETIRED_PMC8 ls /dev/null
+   /dev/null
+                     940023 IA64_INST_RETIRED
+                       3338 IA64_TAGGED_INST_RETIRED_PMC8
+
+   The IA64_INST_RETIRED event captured the total number of instructions executed whereas the other event
+   counted only the one matched by PMC8.
+
+   The two opcode matchers are not symmetrical in what they can constrain, please refer to documentation for 
+   further information.
+
+   Not all events can be constrained with the opcode matchers. Pfmon will reject any invalid combination.
+   You can figure out if an event support the opcode matcher feature using the event info option of pfmon:
+
+   % pfmon -i cpu_cycles
+   Name   : CPU_CYCLES
+   VCode  : 0x12
+   Code   : 0x12
+   PMD/PMC: [ 4 5 6 7 ]
+   EAR    : No (N/A)
+   Umask  : None
+   BTB    : No
+   MaxIncr: 1  (Threshold 0)
+   Qual   : None
+
+   Here you see on the Qual line that CPU_CYCLES does not support any constraint at all. But if we look at
+   NOPS_RETIRED: 
+   % pfmon -i nops_retired
+   Name   : NOPS_RETIRED
+   VCode  : 0x30
+   Code   : 0x30
+   PMD/PMC: [ 4 5 ]
+   EAR    : No (N/A)
+   Umask  : None
+   BTB    : No
+   MaxIncr: 6 (Threshold [0-5])
+   Qual   : [Instruction Address Range] [OpCode Match] 
+
+   You see that this event supports opcode matching: 'OpCode Match'
+
+   Pfmon supports two ways of specifying the value to load into PMC8 or PMC9: a numerical value or a logical name.
+
+   a/ Using a numerical value 
+
+   The numerical value can be entered in hexadecimal or decimal form. 
+   Internally pfmon does not verify the validity of the value provided by the 
+   user.
+
+   For instance, if you want to count the number of ld1.* that you execute
+   when running ls /dev/null, then you can type as follows:
+
+    % pfmon --opc-match8=0x8400000007e7fffb -e ia64_tagged_inst_retired_pmc8 ls /dev/null
+    /dev/null
+                      40353 IA64_TAGGED_INST_RETIRED_PMC8
+
+   b/ Using a logical name
+
+   Constructing the value to load into PMC8 or PMC9 is a tedious process as the structure 
+   is quite complicated and the process is prone to errors. 
+
+   This version of pfmon comes with a primitive configuration file which at
+   this point is only used for opcode matching.
+   
+   Pfmon allows you to specify a logical name, i.e. a string, instead of a numerical value. 
+   The configuration file contains a small database of logical names for the
+   opcode matchers. The database is in clear text and has a simple name,value
+   structure. 
+
+   Pfmon supports two configuration files, a system wide file and a user specific
+   file. Pfmon uses only one of the two. It first looks for a user specific
+   file called .pfmon.conf in the user's home directory. If found, it is used,
+   otherwise, pfmon looks at the system wide configuration file in $prefix/lib/pfmon/pfmon.conf, 
+   where prefix depends on the installation, usually prefix=/usr.
+
+   The format of the configuiration is fairly trivial at this point, it is a
+   just a collection of name,value pairs. There MUST be one pair per line, and
+   the value MUST be in hexadecimal:
+
+   % cat ~/.pfmon.conf
+   iload1	0x8400000007e7fffb
+   br.cloop	0x1400028003fff1fb 
+
+   Pfmon does not come with a pre-established configuration file, so it is up
+   to the user to define the name,value pairs that are of interest.
+
+   With the database above, you can then invoke pfmon as follows:
+
+   % pfmon --opc-match8=iload1 -e ia64_tagged_inst_retired_pmc8 ls /dev/null
+	40352 IA64_TAGGED_INST_RETIRED_PMC8
+
+3/ Address Range Restrictions
+
+   a/ Introduction
+
+   Pfmon allows the monitoring to be constrained to a certain range of data or 
+   code addresses and provides the following set of options:
+
+   	--irange=start-end|code_symbol		: specify a code address range
+   	--drange=start-end|data_symbol 		: specify a data address range
+	--checkpoint-func=code_addr|code_symbol	: specify a checkpoint address
+
+   The third option is a refinement of the first option as we will see shortly.
+
+   The range can be specified in hexadecimal or decimal. Alternatively, the
+   range can be specified using symbols from the program. 
+      
+   Pfmon currently supports only one range per type at a time, e.g., you cannot 
+   specify two instruction ranges.  When a range is specified using a numerical 
+   value, pfmon does not try to see if the range represents a valid part of the 
+   address space of the process. It will simply do sanity check on the bounds. 
+   It is possible to specify code or data ranges inside the kernel. When symbols 
+   are used, then pfmon checks that the symbol corresponds to data for --drange 
+   and code for --irange and --checkpoint-func. For a code range pfmon verifies
+   that the bounds are bundle-aligned.
+
+
+   The range can be delimited by two symbols, but pfmon also supports using
+   a single symbol. In this case, it will use the size of the symbol which is
+   encoded in the symbol table.
+
+   NOTE: earlier versions of the IA-64 GNU toolchain did not generate the size
+   in the symbol table. In this case, pfmon will try to approximate the size
+   of a symbol by using the next symbol given that the symbol table is sorted
+   by increasing address values. This mechanism is not always accurate, you
+   can check the numerical values used for the range by turning on the 
+   verbose mode (--verbose). You can also check your binaries with the 
+   readelf -s command.
+
+
+   b/ Itanium PMU limitations
+
+   The Itanium PMU imposes some restrictions on alignment of the ranges due to 
+   the way they are implemented, i.e., using the debug registers. It is 
+   possible that the programmed range will be slightly larger than what was 
+   asked for. Pfmon takes care of programming the debug registers given the 
+   bounds of the range. In some cases, more than one debug register is needed 
+   to cover a range of addresses. You can determine by how much the debug 
+   registers will 'bleed' from the specified range by using the --verbose 
+   option of pfmon:
+
+   % pfmon --verbose --irange=0x1000-0x1590 -e ia64_inst_retired /bin/ls /dev/null
+   ...
+   irange is [0x1000-0x1590)=1424 bytes
+   ...
+   [0x1000-0x1590): 3 register pair(s)
+   start offset: -0x0 end_offset: +0x70
+   brp0:  db0: 0x0000000000001000 db1: plm=0x8 mask=0x00fffffffffffc00 end=0x00000000000013ff
+   brp1:  db2: 0x0000000000001400 db3: plm=0x8 mask=0x00ffffffffffff00 end=0x00000000000014ff
+   brp2:  db4: 0x0000000000001500 db5: plm=0x8 mask=0x00ffffffffffff00 end=0x00000000000015ff
+   ...
+   As you can see here, the programmed range ends 112 (0x70) bytes after the 
+   specified range for size and alignment reasons.  Most of the time, this is 
+   harmless except in situations where the excess range is heavily used as 
+   this would cause noise to be included in the final counts.
+   
+   Just like for the opcode matcher, not all events support address range 
+   restrictions, you can use the event info option (-i) to verify.
+
+   The --drange options works just like the --irange options. In fact, both can be combined as they rely
+   on distinct sets of debug registers.
+
+   IMPORTANT: The program being monitored by pfmon MUST NOT be using the 
+   	      debug registers.
+
+   c/ privilege level mask of range
+
+   The range restriction also uses a privilege level mask. It has the same role
+   as the one for events. Pfmon uses the default global privilege level to setup
+   the range restrictions.  For instance, the following example:
+
+   % pfmon --irange=main --verbose -eloads_retired,nops_retired,loads_retired noploop 1000000000
+   ...
+   start offset: -0x0 end_offset: +0x0
+   brp0:  db0: 0x4000000000000500 db1: plm=0x8 mask=0x00ffffffffffff00 end=0x40000000000005ff
+   brp1:  db2: 0x40000000000004c0 db3: plm=0x8 mask=0x00ffffffffffffc0 end=0x40000000000004ff
+   brp2:  db4: 0x4000000000000600 db5: plm=0x8 mask=0x00ffffffffffff80 end=0x400000000000067f
+   brp3:  db6: 0x4000000000000680 db7: plm=0x8 mask=0x00fffffffffffff0 end=0x400000000000068f
+   ...
+
+   uses user privilege level only (pfmon default) for the range as indicated by plm=8.
+   This is even more apparent in the following example:
+
+   % pfmon -k --irange=main --verbose -eloads_retired,nops_retired,loads_retired noploop 1000000000
+   ...
+   start offset: -0x0 end_offset: +0x0
+   brp0:  db0: 0x4000000000000500 db1: plm=0x1 mask=0x00ffffffffffff00 end=0x40000000000005ff
+   brp1:  db2: 0x40000000000004c0 db3: plm=0x1 mask=0x00ffffffffffffc0 end=0x40000000000004ff
+   brp2:  db4: 0x4000000000000600 db5: plm=0x1 mask=0x00ffffffffffff80 end=0x400000000000067f
+   brp3:  db6: 0x4000000000000680 db7: plm=0x1 mask=0x00fffffffffffff0 end=0x400000000000068f
+   ...
+   
+   But when privilege level masks are set per event, there can be confusion as the range is 
+   systematically applied to all events. Therefore pfmon disallow the use of the --priv-levels
+   option when a range is provided and vice-versa.
+   
+   d/ Some examples
+
+   Let us look at some more examples which use symbols directly. 
+   
+   First suppose we have a program which contains a data array called B and
+   we want to know the number of loads from the array:
+
+   % pfmon --verb --drange=B -e loads_retired my_test_program
+   ...
+   symbol B (data): [0x600000000001c000-0x600000000003c000)=131072 bytes
+   drange is [0x600000000001c000-0x600000000003c000)=131072 bytes
+   [0x600000000001c000-0x600000000003c000): 4 register pair(s)
+   start offset: -0x0 end_offset: +0x0
+   brp0:  db0: 0x6000000000020000 db1: plm=0x8 mask=0x00ffffffffff0000 end=0x600000000002ffff
+   brp1:  db2: 0x600000000001c000 db3: plm=0x8 mask=0x00ffffffffffc000 end=0x600000000001ffff
+   brp2:  db4: 0x6000000000030000 db5: plm=0x8 mask=0x00ffffffffff8000 end=0x6000000000037fff
+   brp3:  db6: 0x6000000000038000 db7: plm=0x8 mask=0x00ffffffffffc000 end=0x600000000003bfff
+   ...
+                   99999842 LOADS_RETIRED
+   Here pfmon was able to extract the size of B directly from the symbol
+   table. The array is aligned properly for its size, therefore both start
+   and end offset are 0.
+
+   Now suppose we want to know the number of loads from B which where executed
+   in function doit(). We can combine --irange with --drange for LOADS_RETIRED:
+
+   % pfmon --verb --irange=doit --drange=B -e loads_retired my_test_program
+   ...
+   symbol doit (code): [0x4000000000003000-0x40000000000030f0)=240 bytes
+   irange is [0x4000000000003000-0x40000000000030f0)=240 bytes
+   [0x4000000000003000-0x40000000000030f0): 3 register pair(s)
+   start offset: -0x0 end_offset: +0x10
+   brp0:  db0: 0x4000000000003000 db1: plm=0x8 mask=0x00ffffffffffff80 end=0x400000000000307f
+   brp1:  db2: 0x4000000000003080 db3: plm=0x8 mask=0x00ffffffffffffc0 end=0x40000000000030bf
+   brp2:  db4: 0x40000000000030c0 db5: plm=0x8 mask=0x00ffffffffffffc0 end=0x40000000000030ff
+   ...
+   symbol B (data): [0x600000000001c000-0x600000000003c000)=131072 bytes
+   drange is [0x600000000001c000-0x600000000003c000)=131072 bytes
+   [0x600000000001c000-0x600000000003c000): 4 register pair(s)
+   start offset: -0x0 end_offset: +0x0
+   brp0:  db0: 0x6000000000020000 db1: plm=0x8 mask=0x00ffffffffff0000 end=0x600000000002ffff
+   brp1:  db2: 0x600000000001c000 db3: plm=0x8 mask=0x00ffffffffffc000 end=0x600000000001ffff
+   brp2:  db4: 0x6000000000030000 db5: plm=0x8 mask=0x00ffffffffff8000 end=0x6000000000037fff
+   brp3:  db6: 0x6000000000038000 db7: plm=0x8 mask=0x00ffffffffffc000 end=0x600000000003bfff
+                   99999877 LOADS_RETIRED
+
+   Here, pfmon extracted the size of function doit() from the symbol table and
+   its is not quite aligned on its size, therefore there is a small offset at
+   the end. The run shows that most of the loads are coming from doit().
+
+
+   e/ The checkpoint-func option
+
+   The --checkpoint-func option is a variation of the --irange option as such
+   it cannot be used in conjunction with --irange. It allows a user to specify  
+   a bundle address and can be used to verify that execution crosses a certain 
+   point (bundle). When the bundle is the first of a function, you can check 
+   how many times the function was called. You need to combine the constraint 
+   with the IA64_INST_RETIRED event. The result then needs to be divided by 
+   three to get the number of calls. Note that pfmon does not impose that the 
+   bundle be the first of a function, in fact, it can be anything. There is no 
+   equivalent of this option for data.
+
+   With this option, you can easily determine the number of times a particular
+   system call is invoked. For instance, to count the number of times 
+   sys_open() (function which implements open(2)) is called:
+
+   % pfmon --verb --symbol-file=vmlinux -k --checkpoint-func=sys_open -e ia64_inst_retired ls /dev/null
+   ...
+   vmlinux 18355 symbols
+   symbol sys_open (code): [0xe0000000044ae980-0xe0000000044aebd0)=592 bytes
+   checkpoint function at 0xe0000000044ae980
+   [0xe0000000044ae980-0xe0000000044ae990): 1 register pair(s)
+   start offset: -0x0 end_offset: +0x0
+   brp0:  db0: 0xe0000000044ae980 db1: plm=0x1 mask=0x00fffffffffffff0 end=0xe0000000044ae98f
+                         54 IA64_INST_RETIRED
+
+   Here we specified, -k to monitor at the kernel level given that sys_open()
+   is a kernel function. The count is 54 which indicates that the function
+   was called 18 times (18=54/3). The result is ALWAYS a multiple of 3 as you 
+   have 3 instructions per bundle (predicated off instruction are counted here). 
+
+  The use of any other event is possible here if that event supports the 
+  instruction address range restriction (see pfmon -i).  But to count the 
+  number of time the function is invoked you MUST use IA64_INST_RETIRED.
+
+  At this point only one checkpoint per session is supported.
+
+   
+4/ Event Address Registers (EARS)
+
+   The Event Address Registers provide a way to capture where cache and TLB
+   misses occur. For each captured miss, you get the instruction address, the
+   data address (when relevant), the latency of the miss (when relevant), the
+   TLB level at which the miss was resolved (if relevant).
+
+   Let us first look at cache misses. You can filter out which misses you are
+   interested in based on the miss latency. EARS DO NOT CAPTURE NON MISSING
+   cache accesses. For instance you can say that you want misses that take
+   more than 16 cycles to resolve. The Itanium PMU supports a fixed set of 
+   latencies going from 4 to 4096. Of course not all latencies are possible,
+   they are usually powers of two. The Itanium PMU uses two events to indicate
+   the type of cache misses: code or data. The INSTRUCTION_EAR_CACHE is used
+   for instruction and DATA_EAR_CACHE is used for data cache misses.
+   Theoretically, the latency is programmed in one the field on the PMC
+   controlling the monitor. However to make it easier to use, the library
+   on which pfmon is built encapsulates the latency with the event by
+   creating 'virtual events'. If you list the events using pfmon -l and 
+   a regular expression of '_ear_', you get:
+
+   % pfmon -l_ear_
+   DATA_EAR_CACHE_LAT1024
+   DATA_EAR_CACHE_LAT128
+   DATA_EAR_CACHE_LAT16
+   DATA_EAR_CACHE_LAT2048
+   DATA_EAR_CACHE_LAT256
+   DATA_EAR_CACHE_LAT32
+   DATA_EAR_CACHE_LAT4
+   DATA_EAR_CACHE_LAT512
+   DATA_EAR_CACHE_LAT64
+   DATA_EAR_CACHE_LAT8
+   DATA_EAR_CACHE_LAT_NONE
+   DATA_EAR_EVENTS
+   DATA_EAR_TLB_L2
+   DATA_EAR_TLB_SW
+   DATA_EAR_TLB_VHPT
+   INSTRUCTION_EAR_CACHE_LAT1024
+   INSTRUCTION_EAR_CACHE_LAT128
+   INSTRUCTION_EAR_CACHE_LAT16
+   INSTRUCTION_EAR_CACHE_LAT2048
+   INSTRUCTION_EAR_CACHE_LAT256
+   INSTRUCTION_EAR_CACHE_LAT32
+   INSTRUCTION_EAR_CACHE_LAT4096
+   INSTRUCTION_EAR_CACHE_LAT4
+   INSTRUCTION_EAR_CACHE_LAT512
+   INSTRUCTION_EAR_CACHE_LAT64
+   INSTRUCTION_EAR_CACHE_LAT8
+   INSTRUCTION_EAR_CACHE_LAT_NONE
+   INSTRUCTION_EAR_EVENTS
+   INSTRUCTION_EAR_TLB_SW
+   INSTRUCTION_EAR_TLB_VHPT
+
+
+   You see the events for both TLB and caches. For instance, 
+   DATA_EAR_CACHE_LAT64 is the event used to capture data cache misses with a 
+   latency of 64 cycles OR more. Similarly, the DATA_EAR_TLB_VHPT is used to 
+   capture TLB misses that were resolved by the hardware walker (VHPT).
+   The Data EAR events are all subevents of DATA_EAR_EVENTS. Similarly the
+   Instruction EAR events are all subevents of INSTRUCTION_EAR_EVENTS.
+
+   You can get detailed information about EAR events using the event info (-i) option
+   of pfmon:
+
+   % pfmon -i DATA_EAR_CACHE_LAT_NONE
+   Name   : DATA_EAR_CACHE_LAT_NONE
+   VCode  : 0xf0367
+   Code   : 0x67
+   PMD/PMC: [ 4 5 6 7 ]
+   EAR    : Data (Cache Mode)
+   Umask  : None
+   BTB    : No
+   MaxIncr: 1  (Threshold 0)
+   Qual   : [Instruction Address Range] [OpCode Match] 
+
+
+   The EARs are mostly used for sampling, therefore you typically associate a
+   sampling period to them. You configure a sampling period with EAR just like
+   you would do with regular counters.
+
+   But let us take a simple example to help visualize the difference. Let us
+   suppose you want to capture the data cache misses that take more than 8
+   cycles. The sampling period is set to 2000 which is quite small but is just
+   used to show the sampling output:
+
+   % pfmon --smpl-output-format=detailed-itanium --long-smpl-periods=2000 -e DATA_EAR_CACHE_LAT8 -- ls -l /dev/null
+   crw-rw-rw-    1 root     root       1,   3 Mar 24  2001 /dev/null
+   entry 0 PID:1606 CPU:0 STAMP:0x5ac62454a37 IIP:0x2000000000017300
+        PMD OVFL: 4       LAST_VAL: 2000
+        PMD2 : 0x2000000000080614
+        PMD3 : 0x0000000000000014 , latency 20
+        PMD17: 0x20000000000172c5, valid Y, address 0x20000000000172c1
+   entry 1 PID:1606 CPU:0 STAMP:0x5ac6252ef46 IIP:0x20000000000aafd0
+        PMD OVFL: 4       LAST_VAL: 2000
+        PMD2 : 0x20000000002cc550
+        PMD3 : 0x0000000000000019 , latency 25
+        PMD17: 0x20000000000c2381, valid Y, address 0x20000000000c2380
+   entry 2 PID:1606 CPU:0 STAMP:0x5ac62689d73 IIP:0x2000000000013d90
+        PMD OVFL: 4      LAST_VAL: 2000
+        PMD2 : 0x200000000008815a
+        PMD3 : 0x0000000000000014 , latency 20
+        PMD17: 0x2000000000025e11, valid Y, address 0x2000000000025e10
+       18446744073709549976 DATA_EAR_CACHE_LAT8
+
+   Here again, we get sampling entries which the usual header. However the
+   information in the body of each sample is quite different from what we saw 
+   earlier. With the detailed output format, pfmon will decode the meaning of 
+   each PMD which contains EAR information.  For instance, with EAR and data 
+   cache misses, PMD3 contains the latency of the miss. In Entry 0, the miss 
+   took 20 cycles to resolve. The data that was being access was at address 
+   0x2000000000080614 (PMD2) and the instruction which generated the access 
+   what at 0x20000000000172c1, WHICH YOU NEED TO INTERPRET as bundle address 
+   0x20000000000172c0 slot 1. 
+
+   If we look at the TLB instead, we get samples that look as follows:
+
+   % pfmon --smpl-output-format=detailed-itanium --long-smpl-periods=50 -e DATA_EAR_TLB_VHPT -- ls -l /dev/null
+   crw-rw-rw-    1 root     root       1,   3 Mar 24  2001 /dev/null
+   entry 0 PID:1612 CPU:0 STAMP:0x5dbaf458c2f IIP:0xe0000000044012a0
+        PMD OVFL: 4     LAST_VAL: 50
+        PMD2 : 0x2000000000034388
+        PMD3 : 0x8000000000000001 , TLB VHPT
+        PMD17: 0x2000000000024f41, valid Y, address 0x2000000000024f40
+   entry 1 PID:1612 CPU:0 STAMP:0x5dbaf59ea07 IIP:0xe0000000044012a0
+        PMD OVFL: 4      LAST_VAL: 50
+        PMD2 : 0x2000000000054000
+        PMD3 : 0x8000000000000001 , TLB VHPT
+        PMD17: 0x20000000000c5051, valid Y, address 0x20000000000c5050
+   entry 2 PID:1612 CPU:0 STAMP:0x5dbaf6a2f69 IIP:0x2000000000024910
+        PMD OVFL: 4      LAST_VAL: 50
+        PMD2 : 0x2000000000324420
+        PMD3 : 0x8000000000000001 , TLB VHPT
+        PMD17: 0x2000000000024f85, valid Y, address 0x2000000000024f81
+       18446744073709551574 DATA_EAR_TLB_VHPT
+
+
+   Note that this time the interpretation of PMD3 has changed. In TLB mode, you 
+   specify the level at which you want to capture the misses. Here we wanted
+   TLB request that missed in L1 and hit in VHPT and that is what is reflected
+   by PMD3. There is no latency information on TLB misses. PMD17 contains the 
+   address of the instruction that caused the TLB miss. And PMD2 is the address
+   of the data that was being accessed.
+
+   Cache and TLB misses can also be captured for instructions. Pfmon operates
+   in the same manner for instructions. The difference is in the information
+   that is captured. 
+
+   For instance, if we want to capture the instruction TLB misses that hit in the VHPT
+   you can do as follows:
+
+   % pfmon --smpl-output-format=detailed-itanium --long-smpl-periods=50 -e INSTRUCTION_EAR_TLB_VHPT -- ls -l /dev/null
+   crw-rw-rw-    1 root     root       1,   3 Mar 24  2001 /dev/null
+   entry 0 PID:1620 CPU:0 STAMP:0x5efa274ae83 IIP:0xe0000000044012a0
+        PMD OVFL: 4   LAST_VAL: 50
+        PMD0 : 0x200000000017b781, valid Y, cache line 0x200000000017b780, TLB VHPT
+   entry 1 PID:1620 CPU:0 STAMP:0x5efa2826794 IIP:0x2000000000214750
+        PMD OVFL: 4    LAST_VAL: 50
+        PMD0 : 0x2000000000214741, valid Y, cache line 0x2000000000214740, TLB VHPT
+   entry 2 PID:1620 CPU:0 STAMP:0x5efa287241e IIP:0x2000000000004380
+        PMD OVFL: 4    LAST_VAL: 50
+        PMD0 : 0x2000000000004381, valid Y, cache line 0x2000000000004380, TLB VHPT
+   entry 3 PID:1620 CPU:0 STAMP:0x5efa291787f IIP:0x2000000000161ea0
+        PMD OVFL: 4    LAST_VAL: 50
+        PMD0 : 0x2000000000161e81, valid Y, cache line 0x2000000000161e80, TLB VHPT
+       18446744073709551605 INSTRUCTION_EAR_TLB_VHPT
+
+   This time, the set of PMDs used to capture the information is different, allowing
+   both data and instruction EAR to operate in parallel. In our example, PMD0 contains
+   the address of the cache line that caused the TLB miss (which was resolved by the VHPT).
+
+   For instruction cache misses, you can do:
+
+   % pfmon --smpl-output-format=detailed-itanium --long-smpl-periods=5000 -e INSTRUCTION_EAR_CACHE_LAT8 -- ls -l /dev/null
+   crw-rw-rw-    1 root     root       1,   3 Mar 24  2001 /dev/null
+   entry 0 PID:1627 CPU:0 STAMP:0x6012795ef56 IIP:0x2000000000174ba0
+        PMD OVFL: 4    LAST_VAL: 5000
+        PMD0 : 0x2000000000174701, valid Y, cache line 0x2000000000174700
+        PMD1 : 0x000000000000002d, latency 45
+   entry 1 PID:1627 CPU:0 STAMP:0x60127a552e4 IIP:0x200000000033ef80
+        PMD OVFL: 4     LAST_VAL: 5000
+        PMD0 : 0x200000000033ef61, valid Y, cache line 0x200000000033ef60
+        PMD1 : 0x000000000000001b, latency 27
+       18446744073709550119 INSTRUCTION_EAR_CACHE_LAT8
+
+   This time both PMD0 and PMD1 contains relevant information. PMD0 contains the address
+   of the cache line that caused the miss and PMD1 the latency to resolve it.
+
+5/ Branch Trace Buffer (BTB)
+
+   The BTB is used to capture branch events. Depending on the configuration of the BTB,
+   it is possible to record the source and target of each branch instruction. It is possible
+   to filter out branches based on how they were predicted by the hardware, whether they
+   were taken or not taken, and so on. Each qualified branch is recorded into the branch
+   buffer and usually each takes two entries (a pair) one for the source 
+   (the branch instruction itself) and one for the target of the branch.  The hardware buffer
+   has a size of 8 meaning that it can hold up to 4 branch events.  The buffer is managed like
+   a ring buffer, once it is full the oldest entries is overwritten. The PMD16 register
+   is used to maintain the index, i.e., where to write next. It also contains a flag indicating
+   whether or not the buffer wrapped around. 
+
+   You can count how many branch are captured using the BRANCH_EVENT event. You MUST 
+   use this event if you want to sample with the BTB. Because the BTB can hold 4 branches,
+   sampling with the BTB means that at the end of each sampling period, up to the last
+   4 branches are recorded.
+
+   By default, pfmon will capture ALL branches (taken, not taken, predicted correctly or mispredicted).
+   Let us take a look at a simple example:
+
+   % pfmon --smpl-output-format=detailed-itanium --long-smpl-periods=5000 -e branch_event -- ls -l /dev/null
+   crw-rw-rw-    1 root     root       1,   3 Mar 24  2001 /dev/null
+   entry 0 PID:823 CPU:0 STAMP:0xb47a16c27e IIP:0x2000000000017170
+        PMD OVFL: 4   LAST_VAL: 5000
+        PMD9 : 0x2000000000017199 b=1 mp=0 valid=Y
+               Source Address: 0x2000000000017192
+               Taken=Y Prediction: Success
+
+        PMD10: 0x2000000000017172 b=0 mp=1 valid=Y
+               Target Address: 0x2000000000017170
+
+        PMD11: 0x2000000000017199 b=1 mp=0 valid=Y
+               Source Address: 0x2000000000017192
+               Taken=Y Prediction: Success
+
+        PMD12: 0x2000000000017172 b=0 mp=1 valid=Y
+               Target Address: 0x2000000000017170
+
+        PMD13: 0x2000000000017199 b=1 mp=0 valid=Y
+               Source Address: 0x2000000000017192
+               Taken=Y Prediction: Success
+
+        PMD14: 0x2000000000017172 b=0 mp=1 valid=Y
+               Target Address: 0x2000000000017170
+
+        PMD15: 0x2000000000017199 b=1 mp=0 valid=Y
+               Source Address: 0x2000000000017192
+               Taken=Y Prediction: Success
+
+        PMD8 : 0x2000000000017172 b=0 mp=1 valid=Y
+               Target Address: 0x2000000000017170
+	....
+
+   This time, each entry contains as many as 8 PMDs. Because of wrap around conditions, there
+   is no guarantee that the buffer will be full. It depends of the sampling period and
+   how it compares to the size of the BTB. The BRANCH_EVENT counter is incremented by 1 
+   FOR EACH PAIR OF ENTRIES (each branch event). So if BRANCH_EVENT is equal to 4, then 8
+   4 branches (or 8 entries) are in the BTB.
+
+   The branches are recorded one after the other. But because of wrap around conditions, you
+   can have situations where PMD8 is not necessarily the first, i.e., the oldest branch
+   event in the buffer. This can easily be seen in the example above. The detailed-itanium 
+   output format prints the BTB in sequential order, i.e., in the order in which the 
+   branches occurred. Note that this is not necessarily true of all output
+   formats. It is always possible to reconstruct the sequential order if PMD16
+   is present in the entry (which pfmon ensures).
+
+   If we look at Entry 0, PMD9 is the oldest branch in the buffer. It contains a branch
+   source that was located at address 0x2000000000017190  in slot 2 of the bundle. It was
+   taken and predicted correctly (success) by the hardware and it branched to address
+   0x2000000000017170.
+
+   It is possible to vary the kind of branches that are recorded using the following options:
+   --btb-no-tar				don't capture TAR predictions
+   --btb-no-bac				don't capture BAC predictions
+   --btb-no-tac				don't capture TAC predictions
+
+   These three options relate to the Itanium branch architecture. Please refer to proper 
+   documentation for further information on the TAR, BAC, and TAC.
+   Furthermore, you also have:
+
+   --btb-tm-tk				capture taken IA-64 branches only
+   --btb-tm-ntk				capture not taken IA-64 branches only
+
+   These are easy to understand!
+
+   --btb-ptm-correct			capture branch if target predicted correctly
+   --btb-ptm-incorrect			capture branch if target is mispredicted
+   --btb-ppm-correct			capture branch if path is predicted correctly
+   --btb-ppm-incorrect			capture branch if path is mispredicted
+
+   Same here.
+
+   --btb-all-mispredicted		capture all mispredicted branches
+ 
+   This one is a freebie, it combines the other to capture only the mispredicted branches.
+
+
+   It possible to combine BTB and EAR sampling. One interesting case is when you combine
+   the BTB (taken branches) with the instruction cache misses. For each cache miss captured,
+   you will get the last 4 branches that led to the misses. So you will have the last few
+   steps in the path that led to the miss. With this information, one can imagine possible
+   optimizations such as prefetching.
+
+6/ IA-32 monitoring
+
+   a/ Introduction
+
+   By default, pfmon captures events for both IA-32 and IA-64 programs. Not all events
+   are functional in IA-32 mode. The following features are not available when monitoring
+   in IA-32 mode ONLY:
+   	- The Branch Trace Buffer  (BRANCH_EVENT)
+	- Code range restriction (--irange, --checkpoint-func)
+	- Data range restriction (--drange)
+	- Opcode matchers (--opc-match8, --opc-match9)
+
+   However those features are accepted when monitoring for both IA-64 and
+   IA-32 (default). The results will ONLY represent what was generated by the
+   IA-64 execution.
+
+   b/ The --ia32 and --ia64 options
+
+   Using the --ia32 option, the user restricts monitoring to execution occuring while
+   psr.is = 1, i.e., for IA-32 code. Using the --ia64 restricts monitoring to IA-64
+   code only, i.e., psr.is = 0. Note that those options do apply to ALL
+   specified events.
+
+   c/ Per event instruction set tuning
+
+   Pfmon also provides a way to fine-tune the instruction set on a per event
+   basis using the --insn-sets option. The order in which the events are 
+   listed determines to which event does each instruction set option apply. 
+   The first event gets the first instruction set option specified and so on.
+   You do not need to specify all instruction set option for all events. In
+   this case the event for which no instruction set is specified will use
+   whatever the "global" option, i.e. --ia64 or --ia32 is set to. Note that
+   by default, pfmon does both IA-64 and IA-32 at the same time. You can skip
+   certains events, for instance:
+
+   % pfmon --insn-sets=,ia64 -e l2_misses,l2_misses hello
+
+   This will have the first l2_misses event use the default mode, i.e. IA-64 &
+   IA32, while the second l2_misses will be configured for IA-64 only.
+   Similarly, the following command:
+
+   % pfmon --insn-sets=ia32 -e l2_misses,l2_misses hello
+
+   will set the first l2_misses event for IA-32 only and the second for both
+   IA-64 and IA-32.
+
+   d/ Some examples
+
+   Let us look at a simple example with two hello program, one an IA-64 binary
+   (hello) and the same program compiled as an IA-32 binary (hello.x86):
+
+   % file hello
+   hello: ELF 64-bit LSB executable, IA-64, version 1, statically linked, not stripped
+   % pfmon --insn-sets=ia32,ia64 -e l2_misses,l2_misses hello
+   Hello world
+    	   0 L2_MISSES
+	1302 L2_MISSES
+
+   Here we measure twice the same event, but the first one is configured to
+   monitor IA-32 execution whereas the second monitors IA-64. 
+   When running an IA=64 binary, the counter is 0. Now let us see what happens 
+   with an IA-32 binary:
+
+   % file hello.x86
+   hello: ELF 32-bit LSB executable, Intel 80386, version 1, statically linked, not stripped
+   % pfmon --insn-sets=ia32,ia64 -e l2_misses,l2_misses hello.x86
+   Hello world
+         414 L2_MISSES
+           0 L2_MISSES
+
+   Now the first counter reports a non zero value.
+
+   e/ Limitations
+
+   Linux/ia64 does not currently support processes where both instructions set are
+   mixed. However the dual mode (IA-32, IA-64) is interesting when running system
+   wide monitoring where all execution is captured. The Linux/ia64 kernel execution
+   ALWAYS happens in IA-64 mode, therefore using --ia32 to monitor kernel level execution
+   has no effect.
+
+   Similarly, some events are only relevant in one mode. For instance, IA32_INST_RETIRED
+   only counts IA-32 instructions. Conversly, IA64_INST_RETIRED will return 0 on an IA-32 program.
+
+7/ References
+
+   The Itanium PMU is described in details in the micro-architecture manual
+   entitled: 'Intel Itanium  Processor Reference Manual for Software Development'
+
+   Additional information can be found in the IA-64 architecture manuals.
+
+   All the documents are available from Intel Developer's web site at:
+
+   	http://developer.intel.com/design/itanium/manuals/
+ 
+11/20/2002
+S.Eranian <eranian@hpl.hp.com>
