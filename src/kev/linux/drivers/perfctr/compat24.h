@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Compatibility definitions for 2.4 kernels.
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #include <linux/mm.h>	/* for remap_page_range() [redefined here] */
 
@@ -86,3 +86,12 @@ perfctr_on_each_cpu(void (*func) (void *info), void *info,
 }
 #undef on_each_cpu
 #define on_each_cpu(f,i,r,w)	perfctr_on_each_cpu((f),(i),(r),(w))
+
+/* 2.6.4 added 'noinline' */
+#if !defined(noinline)
+#if __GNUC__ == 3 && __GNUC_MINOR__ >= 1
+#define noinline	__attribute__((noinline))
+#else
+#define noinline	/* unimplemented */
+#endif
+#endif

@@ -5,6 +5,15 @@ ifeq ($(VERSION)$(PATCHLEVEL),24)
 include Makefile24
 else
 
+# We need -fno-unit-at-a-time with gcc-3.4 on x86 to avoid stack overflow.
+# Kernels >= 2.6.6 do that automatically but older ones do not, so we
+# unconditionally add that option here just in case.
+my_check_gcc = $(shell if $(CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+EXTRA_CFLAGS_$(CONFIG_X86) := $(call my_check_gcc,-fno-unit-at-a-time,)
+EXTRA_CFLAGS_$(CONFIG_X86_64) :=
+EXTRA_CFLAGS_$(CONFIG_PPC32) :=
+EXTRA_CFLAGS := $(EXTRA_CFLAGS_y)
+
 # construct various object file lists:
 # kernel-objs-y		kernel objects
 # m-objs-m		perfctr.o if driver is module, empty otherwise

@@ -6,7 +6,7 @@
  */
 
 #ifdef CONFIG_PERFCTR_INIT_TESTS
-extern void perfctr_ppc_init_tests(void);
+extern void perfctr_ppc_init_tests(int have_mmcr1);
 #else
-#define perfctr_ppc_init_tests()
+static inline void perfctr_ppc_init_tests(int have_mmcr1) { }
 #endif

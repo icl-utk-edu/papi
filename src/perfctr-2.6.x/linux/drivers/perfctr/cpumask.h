@@ -49,6 +49,21 @@ typedef unsigned long cpumask_t;
 
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,8) && !defined(cpus_andnot)
+#define cpus_andnot(dst, src1, src2) \
+do { \
+    cpumask_t _tmp2; \
+    _tmp2 = (src2); \
+    cpus_complement(_tmp2); \
+    cpus_and((dst), (src1), _tmp2); \
+} while(0)
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8) && !defined(CONFIG_SMP)
+#undef cpu_online_map
+#define cpu_online_map	cpumask_of_cpu(0)
+#endif
+
 #ifdef CPU_ARRAY_SIZE
 #define PERFCTR_CPUMASK_NRLONGS	CPU_ARRAY_SIZE
 #else

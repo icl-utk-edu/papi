@@ -3,6 +3,37 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.9, 2004-07-27
+- Fix ppc_check_control() to allow 7400/7410 processors to
+  specify MMCR2[THRESHMULT].
+- PPC32 cleanups: make get_cpu_cache() return pointer not lvalue,
+  eliminate duplicated initialisation/cleanup code.
+- Makefile: enforce -fno-unit-at-a-time with gcc-3.4 on x86,
+  to prevent stack overflow in 2.6 kernels < 2.6.6.
+- Do sync_core() before rdtsc() in x86_tests, to avoid bogus
+  benchmarking data on K8. Add sync_core() implementation for
+  the 32-bit kernel. Add sync_core() benchmark.
+- Added __perfctr_mk_cstatus() to allow x86.c:finalise_backpatching()
+  to create a cstatus with i-mode counters marked as present, but
+  with zero actual counters. This prevents perfctr_cpu_isuspend()
+  from clearing the control register for counter #0 at init-time,
+  when the hardware doesn't belong to this driver. On AMD and P6
+  this would accidentally disable the NMI watchdog.
+- x86: Marked initial targets of backpatchable calls
+  'noinline' to prevent gcc from inlining them, which
+  completely breaks the backpatching mechanism.
+- x86_tests: fix CONFIG_X86_LOCAL_APIC=n linkage error.
+- 2.6.8-rc1 no longer makes cpu_online_map a #define on UP,
+  breaking modules. Reintroduce the macro.
+- 2.6.8-rc1 changed cpus_complement() calling convention.
+  Replace cpus_complement();cpus_and() with cpus_andnot(),
+  and provide cpus_andnot() compat macro.
+- PPC32: support generic CPUs using only the TB.
+- PPC32: query OF for CPU/TB frequencies, drop /proc/cpuinfo
+  parsing code.
+- PPC32: avoid CPU re-detection in tests code.
+- PPC32: clean up and sync with current perfctr-2.7 code.
+
 Version 2.6.8, 2004-05-29
 - Added recognition of PowerPC 750GX.
 - Changes for the {reserve,release}_lapic_nmi() API added in

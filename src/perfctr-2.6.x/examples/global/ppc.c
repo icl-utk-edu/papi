@@ -14,8 +14,10 @@ void setup_control(const struct perfctr_info *info,
 {
     memset(control, 0, sizeof *control);
     control->tsc_on = 1;
-    control->nractrs = 1;
-    control->pmc_map[0] = 0;
-    control->evntsel[0] = 0x02; /* INSTRUCTIONS_COMPLETED */
-    counting_mips = 1;
+    if (info->cpu_type > PERFCTR_PPC_GENERIC) {
+	control->nractrs = 1;
+	control->pmc_map[0] = 0;
+	control->evntsel[0] = 0x02; /* INSTRUCTIONS_COMPLETED */
+	counting_mips = 1;
+    }
 }

@@ -35,7 +35,7 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
 	cpu_type = PERFCTR_PPC_7450;
 	break;
       default:
-	cpu_type = 0;
+	cpu_type = PERFCTR_PPC_GENERIC;
     }
     info->cpu_type = cpu_type;
 }
@@ -59,6 +59,8 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 {
     switch( info->cpu_type ) {
+      case PERFCTR_PPC_GENERIC:
+	return "Generic PowerPC with TB";
       case PERFCTR_PPC_604:
 	return "PowerPC 604";
       case PERFCTR_PPC_604e:

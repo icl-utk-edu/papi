@@ -461,12 +461,10 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 		return err;
 
 	if( control.cpu_control.nractrs || control.cpu_control.nrictrs ) {
-		cpumask_t tmp, old_mask, new_mask;
+		cpumask_t old_mask, new_mask;
 
-		tmp = perfctr_cpus_forbidden_mask;
-		cpus_complement(tmp);
 		old_mask = tsk->cpus_allowed;
-		cpus_and(new_mask, old_mask, tmp);
+		cpus_andnot(new_mask, old_mask, perfctr_cpus_forbidden_mask);
 
 		if( cpus_empty(new_mask) )
 			return -EINVAL;

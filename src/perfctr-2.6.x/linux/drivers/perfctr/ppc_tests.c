@@ -13,6 +13,7 @@
 #include <linux/perfctr.h>
 #include <asm/processor.h>
 #include <asm/time.h>	/* for tb_ticks_per_jiffy */
+#include "compat.h"
 #include "ppc_compat.h"
 #include "ppc_tests.h"
 
@@ -138,11 +139,11 @@ static void __init clear(int have_mmcr1)
 	mtspr(SPRN_MMCR0, 0);
 	mtspr(SPRN_PMC1, 0);
 	mtspr(SPRN_PMC2, 0);
-	if( have_mmcr1 ) {
+	if (have_mmcr1) {
 		mtspr(SPRN_MMCR1, 0);
 		mtspr(SPRN_PMC3, 0);
 		mtspr(SPRN_PMC4, 0);
-	}		
+	}
 }
 
 static void __init check_fcece(unsigned int pmc1ce)
@@ -168,12 +169,12 @@ static void __init check_fcece(unsigned int pmc1ce)
 	 */
 	mtspr(SPRN_PMC1, 0x80000000-100);
 	mmcr0 = (1<<(31-6)) | (0x01 << 6);
-	if( pmc1ce )
+	if (pmc1ce)
 		mmcr0 |= (1<<(31-16));
 	mtspr(SPRN_MMCR0, mmcr0);
 	do {
 		do_empty_loop(0);
-	} while( !(mfspr(SPRN_PMC1) & 0x80000000) );
+	} while (!(mfspr(SPRN_PMC1) & 0x80000000));
 	do_empty_loop(0);
 	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[FC] is %u, PMC1 is %#x\n",
 	       __FUNCTION__, pmc1ce,
@@ -206,12 +207,12 @@ static void __init check_trigger(unsigned int pmc1ce)
 	mtspr(SPRN_PMC2, 0);
 	mtspr(SPRN_PMC1, 0x80000000-100);
 	mmcr0 = (1<<(31-18)) | (0x01 << 6) | (0x01 << 0);
-	if( pmc1ce )
+	if (pmc1ce)
 		mmcr0 |= (1<<(31-16));
 	mtspr(SPRN_MMCR0, mmcr0);
 	do {
 		do_empty_loop(0);
-	} while( !(mfspr(SPRN_PMC1) & 0x80000000) );
+	} while (!(mfspr(SPRN_PMC1) & 0x80000000));
 	do_empty_loop(0);
 	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[TRIGGER] is %u, PMC1 is %#x, PMC2 is %#x\n",
 	       __FUNCTION__, pmc1ce,
@@ -271,7 +272,7 @@ measure_overheads(int have_mmcr1)
 	printk(KERN_INFO "PERFCTR INIT: loop overhead is %u cycles\n", loop);
 	for(i = 0; i < ARRAY_SIZE(ticks); ++i) {
 		unsigned int x;
-		if( !ticks[i] )
+		if (!ticks[i])
 			continue;
 		x = ((ticks[i] - loop) * 10) / NITER;
 		printk(KERN_INFO "PERFCTR INIT: %s cost is %u.%u cycles (%u total)\n",
@@ -283,7 +284,9 @@ measure_overheads(int have_mmcr1)
 	check_trigger(1);
 }
 
-void __init perfctr_ppc_init_tests(void)
+void __init perfctr_ppc_init_tests(int have_mmcr1)
 {
-	measure_overheads(PVR_VER(mfspr(SPRN_PVR)) != 0x0004);
+	preempt_disable();
+	measure_overheads(have_mmcr1);
+	preempt_enable();
 }

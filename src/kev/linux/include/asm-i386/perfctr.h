@@ -54,10 +54,17 @@ struct perfctr_cpu_state {
    which should have less overhead in most cases */
 
 static inline
+unsigned int __perfctr_mk_cstatus(unsigned int tsc_on, unsigned int have_ictrs,
+				  unsigned int nrictrs, unsigned int nractrs)
+{
+	return (tsc_on<<31) | (have_ictrs<<16) | ((nractrs+nrictrs)<<8) | nractrs;
+}
+
+static inline
 unsigned int perfctr_mk_cstatus(unsigned int tsc_on, unsigned int nractrs,
 				unsigned int nrictrs)
 {
-	return (tsc_on<<31) | (nrictrs<<16) | ((nractrs+nrictrs)<<8) | nractrs;
+	return __perfctr_mk_cstatus(tsc_on, nrictrs, nrictrs, nractrs);
 }
 
 static inline unsigned int perfctr_cstatus_enabled(unsigned int cstatus)

@@ -7,6 +7,7 @@
 #define _ASM_PPC_PERFCTR_H
 
 /* perfctr_info.cpu_type values */
+#define PERFCTR_PPC_GENERIC	0
 #define PERFCTR_PPC_604		1
 #define PERFCTR_PPC_604e	2
 #define PERFCTR_PPC_750		3
@@ -40,7 +41,7 @@ struct perfctr_cpu_state {
 	unsigned int cstatus;
 	struct {	/* k1 is opaque in the user ABI */
 		unsigned int id;
-		const void *isuspend_cpu;
+		int isuspend_cpu;
 	} k1;
 	/* The two tsc fields must be inlined. Placing them in a
 	   sub-struct causes unwanted internal padding on x86-64. */
@@ -155,7 +156,7 @@ typedef void (*perfctr_ihandler_t)(unsigned long pc);
    does not yet enable this due to an erratum in 750/7400/7410. */
 //#define PERFCTR_INTERRUPT_SUPPORT 1
 
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef PERFCTR_INTERRUPT_SUPPORT
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);

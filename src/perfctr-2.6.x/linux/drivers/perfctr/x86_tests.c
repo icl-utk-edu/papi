@@ -46,6 +46,20 @@
 #define CR4MOV	"movl"
 #endif
 
+#ifndef PERFCTR_INTERRUPT_SUPPORT
+#undef apic_write
+#define apic_write(reg,vector)			do{}while(0)
+#endif
+
+#if !defined(__x86_64__)
+/* Avoid speculative execution by the CPU */
+extern inline void sync_core(void)
+{ 
+	int tmp;
+	asm volatile("cpuid" : "=a" (tmp) : "0" (1) : "ebx","ecx","edx","memory");
+} 
+#endif
+
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
 {
 	unsigned i;
@@ -104,6 +118,21 @@ static void __init do_wrlvtpc(unsigned val, unsigned unused2)
 	}
 }
 
+static void __init do_sync_core(unsigned unused1, unsigned unused2)
+{
+	unsigned i;
+	for(i = 0; i < NITER/8; ++i) {
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+	}
+}
+
 static void __init do_empty_loop(unsigned unused1, unsigned unused2)
 {
 	unsigned i;
@@ -115,8 +144,10 @@ static unsigned __init run(void (*doit)(unsigned, unsigned),
 			   unsigned arg1, unsigned arg2)
 {
 	unsigned start, dummy, stop;
+	sync_core();
 	rdtsc(start, dummy);
 	(*doit)(arg1, arg2);	/* should take < 2^32 cycles to complete */
+	sync_core();
 	rdtsc(stop, dummy);
 	return stop - start;
 }
@@ -140,8 +171,8 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 		  unsigned msr_cccr, unsigned cccr_val)
 {
 	int i;
-	unsigned int loop, ticks[12];
-	const char *name[12];
+	unsigned int loop, ticks[13];
+	const char *name[13];
 
 	if( msr_evntsel0 )
 		wrmsr(msr_evntsel0, 0, 0);
@@ -174,6 +205,8 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	name[11] = "write LVTPC";
 	ticks[11] = (perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
 		? run(do_wrlvtpc, APIC_DM_NMI|APIC_LVT_MASKED, 0) : 0;
+	name[12] = "sync_core";
+	ticks[12] = run(do_sync_core, 0, 0);
 
 	loop = run(do_empty_loop, 0, 0);
 

@@ -905,11 +905,15 @@ static void generic_clear_counters(void)
  * modification doesn't work in multiprocessor systems, due to
  * Intel P6 errata. Consequently, all backpatchable call sites
  * must be known and local to this file.
+ *
+ * Backpatchable calls must initially be to 'noinline' stubs.
+ * Otherwise the compiler may inline the stubs, which breaks
+ * redirect_call() and finalise_backpatching().
  */
 
 static int redirect_call_disable;
 
-static void redirect_call(void *ra, void *to)
+static noinline void redirect_call(void *ra, void *to)
 {
 	/* XXX: make this function __init later */
 	if( redirect_call_disable )
@@ -925,7 +929,7 @@ static void redirect_call(void *ra, void *to)
 }
 
 static void (*write_control)(const struct perfctr_cpu_state*);
-static void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
+static noinline void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), write_control);
 	return write_control(state);
@@ -933,8 +937,8 @@ static void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
 
 static void (*read_counters)(const struct perfctr_cpu_state*,
 			     struct perfctr_low_ctrs*);
-static void perfctr_cpu_read_counters(const struct perfctr_cpu_state *state,
-				      struct perfctr_low_ctrs *ctrs)
+static noinline void perfctr_cpu_read_counters(const struct perfctr_cpu_state *state,
+					       struct perfctr_low_ctrs *ctrs)
 {
 	redirect_call(__builtin_return_address(0), read_counters);
 	return read_counters(state, ctrs);
@@ -942,14 +946,14 @@ static void perfctr_cpu_read_counters(const struct perfctr_cpu_state *state,
 
 #if PERFCTR_INTERRUPT_SUPPORT
 static void (*cpu_isuspend)(struct perfctr_cpu_state*);
-static void perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
+static noinline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), cpu_isuspend);
 	return cpu_isuspend(state);
 }
 
 static void (*cpu_iresume)(const struct perfctr_cpu_state*);
-static void perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
+static noinline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), cpu_iresume);
 	return cpu_iresume(state);
@@ -1158,7 +1162,7 @@ static void __init finalise_backpatching(void)
 	memset(&state, 0, sizeof state);
 	state.cstatus =
 		(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
-		? perfctr_mk_cstatus(0, 0, 1)
+		? __perfctr_mk_cstatus(0, 1, 0, 0)
 		: 0;
 	perfctr_cpu_sample(&state);
 	perfctr_cpu_resume(&state);

@@ -6,6 +6,21 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.9, 2004-07-27
+- Updated kernel support: 2.4.27-rc3, 2.6.7, 2.6.8-rc2,
+  2.4.21-15.0.3 (RHEL3), 2.6.5-7.95 (SuSE).
+- x86: enforce -fno-unit-at-a-time with gcc-3.4, to prevent
+  kernel crashes due to stack overflow in 2.6 kernels < 2.6.6.
+- x86: do sync_core() before rdtsc() in the internal micro-
+  benchmarking code, to avoid bogus data on K8 processors.
+- x86: prevent stray WRMSR at driver init time, which could
+  disable the NMI watchdog or Oprofile.
+- x86: prevent inlining from breaking code backpatching mechanism.
+- x86: fix CONFIG_X86_LOCAL_APIC=n linkage error in init tests.
+- PPC32: fix to allow 7400/7410 to specify MMCR2[THRESHMULT].
+- PPC32: add support for generic processors using only the
+  timebase register for high-resolution time measurements.
+
 Version 2.6.8, 2004-05-29
 - Added support for the IBM PowerPC 750GX processor.
 - Updated kernel support: 2.4.27-pre3, 2.6.7-rc1, 2.6.7-rc1-mm1,
