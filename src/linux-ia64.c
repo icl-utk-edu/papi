@@ -985,6 +985,8 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     }
   else
     {
+      int ev;
+      pfmw_code_t tmp;  
       /* Support for native events here, only 1 counter at a time. */
 
       memset(&tmp_cmd, 0, sizeof tmp_cmd);
@@ -996,15 +998,15 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 #ifdef PFM20
 	  return(PAPI_ESBSTR);
       memset(&tmp_cmd, 0, sizeof tmp_cmd);
-      tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
-      tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
-      tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
-      tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
-      tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
+      tmp.pme_codes.pme_mcode = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
+      tmp.pme_codes.pme_ear = (EventCode >> 16) & 0x1; 
+      tmp.pme_codes.pme_dear = (EventCode >> 17) & 0x1; 
+      tmp.pme_codes.pme_tlb = (EventCode >> 18) & 0x1; 
+      tmp.pme_codes.pme_umask = (EventCode >> 19) & 0x1fff; 
 /*
       ev = pfm_find_event_byvcode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
 */
-      ev = pfm_find_event_bycode(tmp.pme_ita_code.pme_code, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
+      ev = pfm_find_event_bycode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
       if (ev != PFMLIB_SUCCESS )
 	return(PAPI_EINVAL);
 #else
@@ -1669,14 +1671,10 @@ int ia64_process_profile_entry()
     perfmon_smpl_hdr_t *hdr ;
     perfmon_smpl_entry_t *ent;
     unsigned long pos;
-	hwd_control_state_t *this_state;
-
-/*
-    unsigned long smpl_entry = 0;
-*/
     int i, ret, reg_num;
     struct sigcontext info;
-    hwd_control_state_t *this_state ; 
+    hwd_control_state_t *this_state;
+    pfmw_arch_reg_t *reg;
 
 	master_event_set = _papi_hwi_lookup_in_master_list();
     if (master_event_set == NULL)

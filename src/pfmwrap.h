@@ -11,6 +11,7 @@
  typedef pfmlib_param_t pfmw_param_t;
  typedef pfarg_reg_t pfmw_reg_t;
  typedef pfarg_context_t pfmw_context_t;
+ typedef pme_entry_code_t pfmw_code_t;
 
  #ifdef ITANIUM2
   #ifndef PMU_ITA2_MAX_PMCS
