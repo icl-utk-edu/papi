@@ -1,7 +1,7 @@
 /*
  * pfmlib_itanium2.c : support for the Itanium2 PMU family
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (C) 2002-2004 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -209,22 +209,31 @@ check_prefetch_events(pfmlib_input_param_t *inp)
  * 4 IBR when non-fine mode is not possible.
  *
  * This function returns:
- * 	the number of events match the IA64_INST_RETIRED code
+ * 	- the number of events match the IA64_INST_RETIRED code
+ * 	- in retired_mask the bottom 4 bits indicates which of the 4 INST_RETIRED event
+ * 	is present
  */
 static unsigned int
-check_inst_retired_events(pfmlib_input_param_t *inp)
+check_inst_retired_events(pfmlib_input_param_t *inp, unsigned long *retired_mask)
 {
 	int code;
 	int c;
 	unsigned int i, count, found = 0;
+	unsigned long umask, mask;
 
 	pfm_get_event_code(PME_ITA2_IA64_INST_RETIRED_THIS, &code);
 
 	count = inp->pfp_event_count;
+	mask  = 0;
 	for(i=0; i < count; i++) {
 		pfm_get_event_code(inp->pfp_events[i].event, &c);
-		if (c == code)  found++;
+		if (c == code)  {
+			pfm_ita2_get_event_umask(inp->pfp_events[i].event, &umask);
+			mask |= umask;
+			found++;
+		}
 	}
+	if (retired_mask) *retired_mask = mask;
 	return found;
 }
 
@@ -562,9 +571,6 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		DPRINT(("I-EAR event with no info\n"));
 	}
 
-	/* sanity check on the mode */
-	if (param->pfp_ita2_iear.ear_mode < 0 || param->pfp_ita2_iear.ear_mode > 2) return PFMLIB_ERR_INVAL;
-
 	/*
 	 * case 2: ear_used=1, event is defined, we use the param info as it is more precise
 	 * case 4: ear_used=1, no event (free running I-EAR), use param info
@@ -578,13 +584,16 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		reg.pmc10_ita2_tlb_reg.iear_ct      = 0x0;
 		reg.pmc10_ita2_tlb_reg.iear_umask   = param->pfp_ita2_iear.ear_umask;
 		reg.pmc10_ita2_tlb_reg.iear_ism     = param->pfp_ita2_iear.ear_ism;
-	} else {
+	} else if (param->pfp_ita2_iear.ear_mode == PFMLIB_ITA2_EAR_CACHE_MODE) {
 		/* if plm is 0, then assume not specified per-event and use default */
 		reg.pmc10_ita2_cache_reg.iear_plm   = param->pfp_ita2_iear.ear_plm ? param->pfp_ita2_iear.ear_plm : inp->pfp_dfl_plm;
 		reg.pmc10_ita2_cache_reg.iear_pm    = inp->pfp_flags & PFMLIB_PFP_SYSTEMWIDE ? 1 : 0;
 		reg.pmc10_ita2_cache_reg.iear_ct    = 0x1;
 		reg.pmc10_ita2_cache_reg.iear_umask = param->pfp_ita2_iear.ear_umask;
 		reg.pmc10_ita2_cache_reg.iear_ism   = param->pfp_ita2_iear.ear_ism;
+	} else {
+		DPRINT(("ALAT mode not supported in I-EAR mode\n"));
+		return PFMLIB_ERR_INVAL;
 	}
 
 	pc[pos].reg_num     = 10; /* PMC10 is I-EAR config register */
@@ -649,7 +658,10 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 	}
 
 	/* sanity check on the mode */
-	if (param->pfp_ita2_dear.ear_mode > 2) return PFMLIB_ERR_INVAL;
+	if (   param->pfp_ita2_dear.ear_mode != PFMLIB_ITA2_EAR_CACHE_MODE
+	    && param->pfp_ita2_dear.ear_mode != PFMLIB_ITA2_EAR_TLB_MODE
+	    && param->pfp_ita2_dear.ear_mode != PFMLIB_ITA2_EAR_ALAT_MODE)
+		return PFMLIB_ERR_INVAL;
 
 	/*
 	 * case 2: ear_used=1, event is defined, we use the param info as it is more precise
@@ -723,8 +735,8 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		/*
 		 * will be constrained by PMC8
 		 */
-		has_1st_pair = has_2nd_pair = 0;
 		if (param->pfp_ita2_pmc8.opcm_used) {
+			has_1st_pair = has_2nd_pair = 0;
 			count = inp->pfp_event_count;
 			for(i=0; i < count; i++) {
 				if (inp->pfp_events[i].event == PME_ITA2_IA64_TAGGED_INST_RETIRED_IBRP0_PMC8) has_1st_pair=1;
@@ -750,7 +762,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		/*
 		 * PMC9 can only be used to qualify IA64_INST_RETIRED_* events
 		 */
-		if (check_inst_retired_events(inp) != inp->pfp_event_count) return PFMLIB_ERR_FEATCOMB;
+		if (check_inst_retired_events(inp, NULL) != inp->pfp_event_count) return PFMLIB_ERR_FEATCOMB;
 
 		memset(pc+pos, 0, sizeof(pfmlib_reg_t));
 
@@ -1318,6 +1330,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 	unsigned int retired_only, retired_count, fine_mode, prefetch_count;
 	unsigned int n_intervals;
 	int base_idx = 0;
+	unsigned long retired_mask;
 
 	if (param == NULL) return PFMLIB_SUCCESS;
 
@@ -1333,7 +1346,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 
 	if (n_intervals < 1) return PFMLIB_ERR_IRRINVAL;
 	
-	retired_count  = check_inst_retired_events(inp);
+	retired_count  = check_inst_retired_events(inp, &retired_mask);
 	retired_only   = retired_count == inp->pfp_event_count;
 	prefetch_count = check_prefetch_events(inp);
 	fine_mode      = irr->rr_flags & PFMLIB_ITA2_RR_NO_FINE_MODE ?
@@ -1402,10 +1415,20 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 
 	count = orr->rr_nbr_used;
 	for (i=0; i < count; i++) {
-		if (orr->rr_br[i].reg_num == 0) reg.pmc14_ita2_reg.iarc_ibrp0 = 0;
-		if (orr->rr_br[i].reg_num == 2) reg.pmc14_ita2_reg.iarc_ibrp1 = 0;
-		if (orr->rr_br[i].reg_num == 4) reg.pmc14_ita2_reg.iarc_ibrp2 = 0;
-		if (orr->rr_br[i].reg_num == 6) reg.pmc14_ita2_reg.iarc_ibrp3 = 0;
+		switch(orr->rr_br[i].reg_num) {
+			case 0:
+				reg.pmc14_ita2_reg.iarc_ibrp0 = 0;
+				break;
+			case 2:
+				reg.pmc14_ita2_reg.iarc_ibrp1 = 0;
+				break;
+			case 4: 
+				reg.pmc14_ita2_reg.iarc_ibrp2 = 0;
+				break;
+			case 6:
+				reg.pmc14_ita2_reg.iarc_ibrp3 = 0;
+				break;
+		}
 	}
 
 	if (retired_only && (param->pfp_ita2_pmc8.opcm_used ||param->pfp_ita2_pmc9.opcm_used)) {
@@ -1425,6 +1448,16 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 
 	if (fine_mode) {
 		reg.pmc14_ita2_reg.iarc_fine = 1;
+	} else if (retired_only) {
+		unsigned long m;
+		/*
+		 * we need to check that the user provided all the events needed to cover
+		 * all the ibr pairs used to cover the range
+		 */
+		for(i=0; i < 4; i++) {
+			m = 1UL << i;
+			if ((reg.pmc_val & m) && (retired_mask & m) == 0) return PFMLIB_ERR_IRRINVAL;
+		}
 	}
 
 	/* initialize pmc request slot */
@@ -1471,7 +1504,7 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 	pfm_ita2_pmc_reg_t pmc13;
 	pfm_ita2_pmc_reg_t pmc14;
 	unsigned int i, pos = outp->pfp_pmc_count;
-	int iod_codes[4], dfl_val;
+	int iod_codes[4], dfl_val_pmc8, dfl_val_pmc9;
 	unsigned int n_intervals;
 	int ret;
 	int base_idx = 0;
@@ -1505,7 +1538,8 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 	 * if drange is used we do not know in advance which DBR will be used
 	 * therefore we need to apply dfl_val later
 	 */
-	dfl_val = param->pfp_ita2_pmc8.opcm_used || param->pfp_ita2_pmc9.opcm_used ? OP_USED : 0;
+	dfl_val_pmc8 = param->pfp_ita2_pmc8.opcm_used ? OP_USED : 0;
+	dfl_val_pmc9 = param->pfp_ita2_pmc9.opcm_used ? OP_USED : 0;
 
 	if (param->pfp_ita2_drange.rr_used == 1) {
 
@@ -1528,10 +1562,10 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 		 * Update iod_codes to reflect the use of the DBR constraint.
 		 */
 		for (i=0; i < orr->rr_nbr_used; i++) {
-			if (orr->rr_br[i].reg_num == 0) iod_codes[0] |= DR_USED | dfl_val;
-			if (orr->rr_br[i].reg_num == 2) iod_codes[1] |= DR_USED | dfl_val;
-			if (orr->rr_br[i].reg_num == 4) iod_codes[2] |= DR_USED | dfl_val;
-			if (orr->rr_br[i].reg_num == 6) iod_codes[3] |= DR_USED | dfl_val;
+			if (orr->rr_br[i].reg_num == 0) iod_codes[0] |= DR_USED | dfl_val_pmc8;
+			if (orr->rr_br[i].reg_num == 2) iod_codes[1] |= DR_USED | dfl_val_pmc9;
+			if (orr->rr_br[i].reg_num == 4) iod_codes[2] |= DR_USED | dfl_val_pmc8;
+			if (orr->rr_br[i].reg_num == 6) iod_codes[3] |= DR_USED | dfl_val_pmc9;
 		}
 
 	}
@@ -1565,11 +1599,16 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 		 * Update to reflect the use of the IBR constraint
 		 */
 		for (i=0; i < orr2->rr_nbr_used; i++) {
-			if (orr2->rr_br[i].reg_num == 0) iod_codes[0] |= IR_USED | dfl_val;
-			if (orr2->rr_br[i].reg_num == 2) iod_codes[1] |= IR_USED | dfl_val;
-			if (fine_mode == 0 && orr2->rr_br[i].reg_num == 4) iod_codes[2] |= IR_USED | dfl_val;
-			if (fine_mode == 0 && orr2->rr_br[i].reg_num == 6) iod_codes[3] |= IR_USED | dfl_val;
+			if (orr2->rr_br[i].reg_num == 0) iod_codes[0] |= IR_USED | dfl_val_pmc8;
+			if (orr2->rr_br[i].reg_num == 2) iod_codes[1] |= IR_USED | dfl_val_pmc9;
+			if (fine_mode == 0 && orr2->rr_br[i].reg_num == 4) iod_codes[2] |= IR_USED | dfl_val_pmc8;
+			if (fine_mode == 0 && orr2->rr_br[i].reg_num == 6) iod_codes[3] |= IR_USED | dfl_val_pmc9;
 		}
+	}
+
+	if (param->pfp_ita2_irange.rr_used == 0 && param->pfp_ita2_drange.rr_used ==0) {
+		iod_codes[0] = iod_codes[2] = dfl_val_pmc8;
+		iod_codes[1] = iod_codes[3] = dfl_val_pmc9;
 	}
 
 	/*
@@ -1867,7 +1906,7 @@ pfm_ita2_print_info(unsigned int v, int (*pf)(const char *fmt,...))
 		(*pf)("Group  : None\n");
 	else {
 		unsigned long g = e->pme_qualifiers.pme_qual.pme_group;
-		const char *str =  g < 3 ? groups[g]: 0;
+		const char *str =  g < 3 ? groups[g]: "none";
 		(*pf)("Group  : %s\n", str);
 	}
 	if (e->pme_qualifiers.pme_qual.pme_set == 0xf)
@@ -1955,13 +1994,13 @@ pfm_ita2_get_event_name(unsigned int i)
 static void
 pfm_ita2_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
-	unsigned int i = 0;
+	unsigned int i;
 	unsigned long m;
 
 	memset(counters, 0, sizeof(*counters));
 
-	m =itanium2_pe[i].pme_counters;
-	for(; m ; i++, m>>=1) {
+	m =itanium2_pe[j].pme_counters;
+	for(i=0; m ; i++, m>>=1) {
 		if (m & 0x1) PFMLIB_REGMASK_SET(counters, i);
 	}
 }
@@ -2012,15 +2051,15 @@ pfm_ita2_get_hw_counter_width(unsigned int *width)
 }
 
 static void
-pfm_ita2_num_pmcs(unsigned int *width)
+pfm_ita2_num_pmcs(unsigned int *num)
 {
-	*width = PMU_ITA2_NUM_PMCS;
+	*num = PMU_ITA2_NUM_PMCS;
 }
 
 static void
-pfm_ita2_num_pmds(unsigned int *width)
+pfm_ita2_num_pmds(unsigned int *num)
 {
-	*width = PMU_ITA2_NUM_PMDS;
+	*num = PMU_ITA2_NUM_PMDS;
 }
 
 
