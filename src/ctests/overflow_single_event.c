@@ -70,7 +70,7 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
-#ifdef PENTIUM4
+#if defined(PENTIUM4) || defined(POWER3)
    PAPI_event = PAPI_TOT_INS;
 #else
    /* query and set up the right instruction to monitor */

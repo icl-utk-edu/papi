@@ -54,7 +54,7 @@ int main(int argc, char **argv)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
-#if defined(sun) && defined(sparc)
+#if defined(sun) && defined(sparc) || defined(POWER3)
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
       PAPI_event = PAPI_TOT_INS;

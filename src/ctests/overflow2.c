@@ -67,11 +67,15 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
+#if defined(POWER3)
+   PAPI_event = PAPI_TOT_INS;
+#else
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
       PAPI_event = PAPI_FP_INS;
    else
       PAPI_event = PAPI_TOT_INS;
+#endif
 
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
