@@ -29,7 +29,12 @@ to monitor PAPI_FP_INS or PAPI_FP_OPS and PAPI_TOT_CYC events and start the coun
 Subsequent calls will read the counters and return total real time,
 total process time, total floating point instructions or operations since the start
 of the measurement and the Mflip/s or Mflop/s rate since latest call to
-.B PAPI_flops(\|) "or" PAPI_flops(\|).                
+.B PAPI_flips(\|) "or" PAPI_flops(\|).                
+A call to
+.B PAPI_stop_counters(\|) "
+will stop the counters from running and then calls such as
+.B PAPI_start_counters(\|) "
+can safely be used.
 
 .SH ARGUMENTS
 .I *rtime 
@@ -48,6 +53,22 @@ of the measurement and the Mflip/s or Mflop/s rate since latest call to
 On success, this function returns
 .B "PAPI_OK."
  On error, a non-zero error code is returned. 
+
+.SH ERRORS
+ In addition to the possible errors returned by the various PAPI
+low level calls, the following errors could also be returned:
+.TP
+.B "PAPI_EINVAL"
+The counters were already started by something other than:
+.B PAPI_flips(\|) "or" PAPI_flops(\|).                
+.TP
+.B "PAPI_ENOEVNT"
+The floating point operations,floating point instruction or
+total cycles event does not exist.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+
 
 .SH NOTES
 .LP
@@ -88,4 +109,4 @@ loads and stores if necessary.
 These functions have no known bugs.
 
 .SH SEE ALSO
-.BR "PAPI_accum (3)", "PAPI_ipc (3)"
+.BR "PAPI_stop_counters (3)", "PAPI_ipc (3)", "PAPI_set_opt (3)"
