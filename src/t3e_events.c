@@ -232,3 +232,33 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
       return (PAPI_ENOEVNT);
    }
 }
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+{
+   if(native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector[0
+]) {
+      *EventCode = *EventCode + 1;
+      return (PAPI_OK);
+   } else {
+      return (PAPI_ENOEVNT);
+   }
+}
+
+static void copy_value(int val, char *nam, char *names, int *values, int len)
+{
+   *values = val;
+   strncpy(names, nam, len);
+   names[len-1] = 0;
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+   int i = 0;
+   copy_value(bits->selector[0], "T3E Ctr 0", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->selector[1], "T3E Ctr 1", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->selector[2], "T3E Ctr 2", &names[i*name_len], &values[i], name_len);
+   return(++i);
+}
