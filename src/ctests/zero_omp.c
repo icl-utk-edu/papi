@@ -79,7 +79,7 @@ void Thread(int n)
   if (retval != PAPI_OK) {
     tmp=PAPI_MAX_STR_LEN;
     PAPI_perror(retval,errstring,tmp);
-    printf("PAPI_start failed. %s\n",errstring);
+    printf("PAPI_start failed. %d %s\n",retval,errstring);
     exit(1);
     }
 
@@ -89,7 +89,7 @@ void Thread(int n)
   if (retval != PAPI_OK){
     tmp=PAPI_MAX_STR_LEN;
     PAPI_perror(retval,errstring,tmp);
-    printf("PAPI_stop failed. %s\n",errstring);
+    printf("PAPI_stop failed. %d %s\n",retval,errstring);
     exit(1);
     }
 
@@ -120,14 +120,17 @@ int main()
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT){
     PAPI_perror(retval,errstring,PAPI_MAX_STR_LEN);
-    printf("%s:%d::PAPI_library_init failed. %s\n",__FILE__,__LINE__,errstring);
+    printf("%s:%d::PAPI_library_init failed. %d %s\n",__FILE__,__LINE__,retval,errstring);
     exit(1);
   }
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   retval = PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num),0);
   if (retval != PAPI_OK){
     PAPI_perror(retval,errstring,PAPI_MAX_STR_LEN);
-    printf("%s:%d::PAPI_thread_init failed. %s\n",__FILE__,__LINE__,errstring);
+    printf("%s:%d::PAPI_thread_init failed. %d %s\n",__FILE__,__LINE__,retval,errstring);
     exit(1);
   }
 
