@@ -762,7 +762,7 @@ long long _papi_hwd_get_real_usec (void)
   if (clock_gettime(CLOCK_SGI_CYCLE, &t) == -1)
     return(PAPI_ESYS);
 
-  retval = (t.tv_sec * 1000000) + t.tv_nsec / 1000;
+  retval = ((long long)t.tv_sec * (long long)1000000) + (long long)(t.tv_nsec / 1000);
   return(retval);
 }
 
