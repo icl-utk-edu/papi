@@ -3016,8 +3016,19 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 /* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
    Maximum string length is name_len; Maximum number of values is count.
 */
+static void copy_value(int val, char *nam, char *names, int *values, int len)
+{
+   *values = val;
+   strncpy(names, nam, len);
+   names[len-1] = 0;
+}
+
 int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
-   return(PAPI_ESBSTR);
+   int i = 0;
+   copy_value(bits->selector, "P3 Ctr Mask", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->counter_cmd, "P3 Ctr Code", &names[i*name_len], &values[i], name_len);
+   return(++i);
 }
