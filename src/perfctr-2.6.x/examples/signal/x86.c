@@ -56,6 +56,7 @@ void do_setup(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+      case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 1;
 	/* PMC(0) produces tagged x87_FP_uop:s (FLAME_CCCR0, FIRM_ESCR0) */
 	cpu_control->pmc_map[0] = 0x8 | (1 << 31);

@@ -967,7 +967,7 @@ void perfctr_cpu_ireload(struct perfctr_cpu_state *state)
 }
 
 /* PRE: the counters have been suspended and sampled by perfctr_cpu_suspend() */
-static int is_p4;
+static int lvtpc_reinit_needed;
 unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 {
 	unsigned int cstatus, nrctrs, pmc, pmc_mask;
@@ -987,7 +987,7 @@ unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 			   in order to stop the i-mode counters. */
 		}
 	}
-	if( is_p4 )
+	if( lvtpc_reinit_needed )
 		apic_write(APIC_LVTPC, LOCAL_PERFCTR_VECTOR);
 	return pmc_mask;
 }
@@ -1234,6 +1234,7 @@ static int __init intel_init(void)
 	static char p4_name[] __initdata = "Intel Pentium 4";
 	static char p4m2_name[] __initdata = "Intel Pentium 4 Model 2";
 	static char pentm_name[] __initdata = "Intel Pentium M";
+	static char p4m3_name[] __initdata = "Intel Pentium 4 Model 3";
 	unsigned int misc_enable;
 
 	if( !cpu_has_tsc )
@@ -1295,6 +1296,9 @@ static int __init intel_init(void)
 			perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
 			cpu_isuspend = p6_isuspend;
 			cpu_iresume = p6_iresume;
+			/* P-M apparently inherited P4's LVTPC auto-masking :-( */
+			if( current_cpu_data.x86_model == 9 )
+				lvtpc_reinit_needed = 1;
 		}
 #endif
 		perfctr_p6_init_tests();
@@ -1307,7 +1311,11 @@ static int __init intel_init(void)
 			break;
 		if( current_cpu_data.x86_model <= 2 )
 			p4_IQ_ESCR_ok = 1;
-		if( current_cpu_data.x86_model >= 2 ) {
+		if( current_cpu_data.x86_model >= 3 ) {
+			/* Model 3 removes IQ_ESCR{0,1} and adds one event. */
+			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M3;
+			perfctr_cpu_name = p4m3_name;
+		} else if( current_cpu_data.x86_model >= 2 ) {
 			/* Model 2 changed the ESCR Event Mask programming
 			   details for several events. */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M2;
@@ -1325,7 +1333,7 @@ static int __init intel_init(void)
 			perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
 			cpu_isuspend = p4_isuspend;
 			cpu_iresume = p4_iresume;
-			is_p4 = 1;
+			lvtpc_reinit_needed = 1;
 		}
 #endif
 		perfctr_p4_init_tests();

@@ -68,6 +68,7 @@ void setup_control(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+      case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 2;
 	/* set up PMC(1) to produce tagged x87_FP_uop:s */
 	control->pmc_map[1] = 0x8 | (1 << 31);

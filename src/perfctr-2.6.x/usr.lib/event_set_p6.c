@@ -1,12 +1,12 @@
 /* $Id$
  * Performance counter event descriptions for the Intel P6 family.
  *
- * Copyright (C) 2003  Mikael Pettersson
+ * Copyright (C) 2003-2004  Mikael Pettersson
  *
  * References
  * ----------
  * [IA32, Volume 3] "Intel Architecture Software Developer's Manual,
- * Volume 3: System Programming Guide". Intel document number 245472-011.
+ * Volume 3: System Programming Guide". Intel document number 25366813.
  * (at http://developer.intel.com/)
  */
 #include <stddef.h>	/* for NULL */
@@ -300,8 +300,8 @@ static const struct perfctr_unit_mask_4 pentm_um_sse_inst_ret = {
     { .type = perfctr_um_type_exclusive,
       .default_value = 0x00,
       .nvalues = 4 },
-    { { 0x00, "SSE Packed Single" },
-      { 0x01, "SSE Packed-Single and Scalar-Single" },
+    { { 0x00, "SSE Packed Single and Scalar Single" },
+      { 0x01, "SSE Packed-Single" },
       { 0x02, "SSE2 Packed-Double" },
       { 0x03, "SSE2 Scalar-Double" } }
 };
@@ -343,7 +343,7 @@ static const struct perfctr_event pentm_events[] = {
     { 0x8D, 0x3, NULL, "BR_IND_EXEC" },
     { 0x8E, 0x3, NULL, "BR_IND_MISSP_EXEC" },
     { 0x8F, 0x3, NULL, "BR_RET_EXEC" },
-    { 0x90, 0x3, NULL, "BR_RE_MISSP_EXEC" },
+    { 0x90, 0x3, NULL, "BR_RET_MISSP_EXEC" },
     { 0x91, 0x3, NULL, "BR_RET_BAC_MISSP_EXEC" },
     { 0x92, 0x3, NULL, "BR_CALL_EXEC" },
     { 0x93, 0x3, NULL, "BR_CALL_MISSP_EXEC" },

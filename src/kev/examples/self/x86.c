@@ -58,6 +58,7 @@ void do_setup(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+      case PERFCTR_X86_INTEL_P4M3:
 	/* PMC0: IQ_COUNTER0 with fast RDPMC */
 	pmc_map0 = 0x0C | (1 << 31);
 	/* IQ_CCCR0: required flags, ESCR 4 (CRU_ESCR0), Enable */

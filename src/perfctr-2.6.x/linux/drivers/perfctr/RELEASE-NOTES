@@ -3,6 +3,21 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.6, 2004-02-21
+- Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels,
+  causing it to pass the wrong value for "struct pt_regs*". This
+  was harmless since the retrieved "rip" was unused, but still wrong.
+  Renamed do_perfctr_interrupt to smp_perfctr_interrupt to allow
+  using the 2.4 kernel's standard BUILD_SMP_INTERRUPT macro.
+- Unmask LVTPC after interrupt on Pentium-M. An oprofile user
+  reports that P-M auto-masks LVTPC just like P4. Preliminary
+  measurements indicate a 40 to 60 cycle cost for the apic write
+  on P4s and P6s, so the unmask is not done unconditionally.
+- Measure LVTPC write overhead in x86{,_64}_tests.c.
+- Add Pentium 4 Model 3 detection.
+- The 2.4.21-193 SuSE kernel does EXPORT_SYMBOL(mmu_cr4_features).
+  Add compat24.h workaround for this.
+
 Version 2.6.5, 2004-01-26
 - Added perfctr_info.cpu_type constants to <asm-ppc/perfctr.h>.
 - Init filp->f_mapping in virtual.c for 2.6.2-rc1+ kernels.

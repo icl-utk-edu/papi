@@ -46,7 +46,7 @@ static inline int perfctr_remap_page_range(struct vm_area_struct *vma, unsigned 
 #endif
 
 /* 2.4.22-rc1 added EXPORT_SYMBOL(mmu_cr4_features) */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,22)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,22) || defined(HAVE_EXPORT_mmu_cr4_features)
 #define EXPORT_SYMBOL_mmu_cr4_features	/*empty*/
 #else
 #define EXPORT_SYMBOL_mmu_cr4_features	EXPORT_SYMBOL(mmu_cr4_features)

@@ -26,6 +26,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 	return 4;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+      case PERFCTR_X86_INTEL_P4M3:
 	return 18;
       default:
 	return 2;
@@ -65,6 +66,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "Intel Pentium 4 Model 2";
       case PERFCTR_X86_INTEL_PENTM:
 	return "Intel Pentium M";
+      case PERFCTR_X86_INTEL_P4M3:
+	return "Intel Pentium 4 Model 3";
 #endif
       case PERFCTR_X86_AMD_K8:
 	return "AMD K8";

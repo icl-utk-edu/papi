@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Optional x86-specific init-time tests.
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -15,6 +15,8 @@
 #undef MSR_P6_PERFCTR0
 #undef MSR_P4_IQ_CCCR0
 #undef MSR_P4_CRU_ESCR0
+#include <asm/fixmap.h>
+#include <asm/apic.h>
 #include "compat.h"
 #include "x86_compat.h"
 #include "x86_tests.h"
@@ -82,6 +84,21 @@ static void __init do_rdtsc(unsigned unused1, unsigned unused2)
 		__asm__ __volatile__(X8("rdtsc") : : : "eax", "edx");
 }
 
+static void __init do_wrlvtpc(unsigned val, unsigned unused2)
+{
+	unsigned i;
+	for(i = 0; i < NITER/8; ++i) {
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+	}
+}
+
 static void __init do_empty_loop(unsigned unused1, unsigned unused2)
 {
 	unsigned i;
@@ -118,8 +135,8 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 		  unsigned msr_cccr, unsigned cccr_val)
 {
 	int i;
-	unsigned int loop, ticks[11];
-	const char *name[11];
+	unsigned int loop, ticks[12];
+	const char *name[12];
 
 	if( msr_evntsel0 )
 		wrmsr(msr_evntsel0, 0, 0);
@@ -149,6 +166,9 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	ticks[9] = msr_cccr ? run(do_rdmsr, msr_cccr, 0) : 0;
 	name[10] = "wrmsr (cccr)";
 	ticks[10] = msr_cccr ? run(do_wrmsr, msr_cccr, cccr_val) : 0;
+	name[11] = "write LVTPC";
+	ticks[11] = (perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
+		? run(do_wrlvtpc, APIC_DM_NMI|APIC_LVT_MASKED, 0) : 0;
 
 	loop = run(do_empty_loop, 0, 0);
 

@@ -193,7 +193,7 @@
  				
 +#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_KPERFCTR)
 +ENTRY(perfctr_interrupt)
-+	apicinterrupt LOCAL_PERFCTR_VECTOR,do_perfctr_interrupt
++	apicinterrupt LOCAL_PERFCTR_VECTOR,smp_perfctr_interrupt
 +#endif
 + 		
  /*

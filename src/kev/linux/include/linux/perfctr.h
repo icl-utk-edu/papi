@@ -1,7 +1,7 @@
 /* $Id$
  * Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #ifndef _LINUX_PERFCTR_H
 #define _LINUX_PERFCTR_H
@@ -46,10 +46,11 @@ struct perfctr_cpu_mask {
 #define PERFCTR_X86_AMD_K7	9
 #define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
 #define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
-#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 and above */
+#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 */
 #define PERFCTR_X86_AMD_K8	13
 #define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
 #define PERFCTR_X86_AMD_K8C	15	/* Revision C */
+#define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
 
 /* cpu_features flag bits */
 #define PERFCTR_FEATURE_RDPMC	0x01

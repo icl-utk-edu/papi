@@ -6,6 +6,18 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.6, 2004-02-21
+- Pentium-M has an undocumented local APIC quirk which can stop
+  perfctr interrupt delivery. Added workaround to prevent this.
+- Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels.
+  Luckily, the bug turned out to be harmless (a bogus "rip" value was
+  retrieved, but never used by the higher-level interrupt handler).
+- Added support for Pentium 4 Model 3 processors, which have slight
+  event set changes from earlier models.
+- Updated kernel support: 2.6.3, 2.4.25, 2.4.22-1.2174.nptl (FC1),
+  2.4.20-30.9 (RH9), and 2.4.21-193 (SuSE). Removed support for some
+  obsolete FC1 and RH update kernels.
+
 Version 2.6.5, 2004-01-26
 - Relaxed and corrected control checks on Pentium 4:
   * Allow ESCR.CPL_T1 to be non-zero when using global-mode

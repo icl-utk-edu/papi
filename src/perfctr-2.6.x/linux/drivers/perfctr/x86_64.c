@@ -1,7 +1,7 @@
 /* $Id$
  * x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 2003  Mikael Pettersson
+ * Copyright (C) 2003-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
