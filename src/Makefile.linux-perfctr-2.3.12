@@ -17,7 +17,7 @@ CC	= gcc
 F77   = g77
 FFLAGS        = -Dlinux
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(FOPTFLAGS)
+FTOPTFLAGS= -O0
 # #
 # #  Portland Group PGF77 section
 # F77       = pgf77
