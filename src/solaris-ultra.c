@@ -358,7 +358,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
          the overflow and reads the values, it gets the correct ones.
        */
 
-      /* Find which HW counter is overflowing */
+      /* Find which HW counter overflowed */
 
       if (ESI->EventInfoArray[ESI->overflow.EventIndex[0]].pos[0] == 0)
          t = 0;
@@ -368,13 +368,22 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
       if (cpc_take_sample(&sample->cmd) == -1)
          return;
       if (event_counter == 1) {
+         /* only one event is set to be the overflow monitor */ 
+
+         /* generate the overflow vector */
          overflow_vector = 1 << t;
+         /* reset the threshold */
          sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold[0];
       } else {
+         /* two events are set to be the overflow monitors */ 
          overflow_vector = 0;
          readvalue = sample->cmd.ce_pic[0];
          if (readvalue >= 0) {
+            /* the first counter overflowed */
+
+            /* generate the overflow vector */
             overflow_vector = 1;
+            /* reset the threshold */
             if (t == 0)
                sample->cmd.ce_pic[0] = UINT64_MAX - ESI->overflow.threshold[0];
             else
@@ -382,32 +391,30 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
          }
          readvalue = sample->cmd.ce_pic[1];
          if (readvalue >= 0) {
+            /* the second counter overflowed */
+
+            /* generate the overflow vector */
             overflow_vector ^= 1 << 1;
+            /* reset the threshold */
             if (t == 0)
                sample->cmd.ce_pic[1] = UINT64_MAX - ESI->overflow.threshold[1];
             else
                sample->cmd.ce_pic[1] = UINT64_MAX - ESI->overflow.threshold[0];
          }
          SUBDBG("overflow_vector, = %d\n", overflow_vector);
+         /* something is wrong here */
          if (overflow_vector == 0)
             abort();
       }
 
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, _papi_hwi_system_info.supports_hw_overflow,
-                                         overflow_vector, 0);
-
-#if 0
-      /* Reset the threshold */
-
-      if (cpc_take_sample(&sample->cmd) == -1)
-         return;
-      sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold[0];
-#endif
+      _papi_hwi_dispatch_overflow_signal(&ctx, 
+           _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0);
 
 #if DEBUG
       dump_cmd(sample);
 #endif
+      /* push back the correct values and start counting again*/
       if (cpc_bind_event(&sample->cmd, sample->flags) == -1)
          return;
    } else {
@@ -995,18 +1002,10 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
    return (PAPI_ESBSTR);
 }
 
-/* reset the starting number */
+/* reset the hardware counter */
 int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-   int retval;
-
-   retval = cpc_take_sample(&ctrl->counter_cmd.cmd);
-   if (retval == -1)
-      return (PAPI_ESYS);
-   ctrl->values[0] = ctrl->counter_cmd.cmd.ce_pic[0];
-   ctrl->values[1] = ctrl->counter_cmd.cmd.ce_pic[1];
-
-   return (PAPI_OK);
+   return( _papi_hwd_start(ctx, ctrl));
 }
 
 
@@ -1017,8 +1016,6 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    retval = cpc_take_sample(&ctrl->counter_cmd.cmd);
    if (retval == -1)
       return (PAPI_ESYS);
-   ctrl->counter_cmd.cmd.ce_pic[0] -= (u_long_long) ctrl->values[0];
-   ctrl->counter_cmd.cmd.ce_pic[1] -= (u_long_long) ctrl->values[1];
 
    *events = (long_long *)ctrl->counter_cmd.cmd.ce_pic;
 
@@ -1152,30 +1149,20 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
    int retval;
 
+   /* reset the hardware counter */
+   ctrl->counter_cmd.cmd.ce_pic[0] = 0;
+   ctrl->counter_cmd.cmd.ce_pic[1] = 0;
+   /* let's rock and roll */
    retval = cpc_bind_event(&ctrl->counter_cmd.cmd, ctrl->counter_cmd.flags);
    if (retval == -1)
       return (PAPI_ESYS);
-
-   retval = cpc_take_sample(&ctrl->counter_cmd.cmd);
-   if (retval == -1)
-      return (PAPI_ESYS);
-
-   ctrl->values[0] = ctrl->counter_cmd.cmd.ce_pic[0];
-   ctrl->values[1] = ctrl->counter_cmd.cmd.ce_pic[1];
 
    return (PAPI_OK);
 }
 
 int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-   /* in order to reduce the overhead, we don't actually stop the 
-      physical counter, but  
-      when the eventset state is overflowing, we need to stop the counter,
-      or else the overflow handler will be called.
-   */
-
-   if (ctrl->overflow_num > 0)
-      cpc_bind_event(NULL, 0);
+   cpc_bind_event(NULL, 0);
    return PAPI_OK;
 }
 

@@ -45,8 +45,6 @@ typedef struct papi_cpc_event {
 typedef struct hwd_control_state {
    /* Buffer to pass to the kernel to control the counters */
    papi_cpc_event_t counter_cmd;
-   /* Buffer to save the values read from the hardware counter */
-   long_long values[MAX_COUNTERS];
    /* overflow event counter */
    int overflow_num;
 } hwd_control_state_t;
