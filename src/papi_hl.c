@@ -51,38 +51,6 @@ int PAPI_start_counters(int *events, int array_len)
 
 
 
-/* see if all the values in the events array are papi standard values*/
-  eventName=(char *)malloc(32*sizeof(char));
-  for(i=0;i<array_len;i++) 
-   {  
-     *eventName=NULL;
-     r=PAPI_describe_event(eventName,events[i],NULL);
-     if(r==0) 
-         {
-          printf("\n events[%d] not a papi standard event\n",i);
-	  exit(0);
-         }
-   }
-
-
-
-/* see if all the values in events array are supported on local platform */ 
-/* 
-  ---------------------------------------------------------------------
-  This code to be added once all of the query interfaces are completed.
-  for(i=0;i<array_len;i++) 
-   { 
-    r=PAPI_query_event(events[i]);
-    if(r<PAPI_OK) 
-    	{
-	  printf("\n events[%d] not supported on this platform\n",i);
-          exit(0);
-	}
-   }
-  ---------------------------------------------------------------------
-*/
-
-
   /*initialize value for EventSet integer*/
 
   EventSet=PAPI_EINVAL;
