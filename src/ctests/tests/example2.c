@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "papiStdEventDefs.h"
+#include "papi.h"
 
 typedef struct _hwd_preset {
   int number;
@@ -20,20 +21,48 @@ typedef struct _hwd_preset {
   int sp_code;  
 } hwd_control_state;
 
+typedef struct {
+  int eventindex;
+  long long deadline;
+  int milliseconds;
+  papi_overflow_option_t option; } _papi_overflow_info_t;
+
+typedef struct {
+  papi_multiplex_option_t option; } _papi_multiplex_info_t;
+
+typedef struct _EventSetInfo {
+  int EventSetIndex;
+  int NumberOfCounters;
+  int *EventCodeArray;
+  void *machdep;
+  long long *start;
+  long long *stop;
+  long long *latest;
+  int state;
+  _papi_overflow_info_t overflow;
+  _papi_multiplex_info_t multiplex;
+  int granularity;
+  int domain;
+} EventSetInfo;
+
 void main() {
   int r, i, j;
   double a, b, c;
   unsigned long long  ct[2];
   hwd_control_state test;
+  EventSetInfo EventSet;
  
   test.number = 0;
   test.counter_code1 = test.counter_code2 = test.sp_code = -1;
+
+  EventSet.machdep = &test;
+  EventSet.domain = 1;		// set to default PAPI_USR
 
   _papi_hwd_reset(&test);
   _papi_hwd_add_event(&test, PAPI_FP_INS);
   _papi_hwd_add_event(&test, PAPI_TOT_INS);
   _papi_hwd_add_event(&test, PAPI_TOT_CYC);
-  _papi_hwd_start(&test);
+  _papi_hwd_start(&EventSet);
 
   a = 0.5;
   b = 6.2;
