@@ -147,9 +147,6 @@ void *case2_pthreads(void *arg)
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
 
-   PAPI_events_len = 2;
-   init_papi_pthreads(PAPI_events, &PAPI_events_len);
-
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
@@ -194,9 +191,6 @@ void *case3_pthreads(void *arg)
 {
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
-
-   PAPI_events_len = 2;
-   init_papi_pthreads(PAPI_events, &PAPI_events_len);
 
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
@@ -243,9 +237,6 @@ void *case4_pthreads(void *arg)
    int retval, i, EventSet = PAPI_NULL;
    long long values[4];
    char out[PAPI_MAX_STR_LEN];
-
-   PAPI_events_len = 2;
-   init_papi_pthreads(PAPI_events, &PAPI_events_len);
 
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
