@@ -6,12 +6,12 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DPFM06A -O2
+CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DPFM06A
 # -DDEBUG
 LIBPFM  = pfmon-0.06a/libpfm
 TOPTFLAGS  = 
 LDFLAGS	= 
-OPTFLAGS= 
+OPTFLAGS= -O2
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 #
