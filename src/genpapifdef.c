@@ -25,9 +25,6 @@
 #undef NDEBUG
 #include <assert.h>
 
-/* define the following to work around Cray Fortran problem */
-/* #define __X1__ */
-
 /*
 	The following arrays are used to create a series of defines
 	for use with PAPI in Fortran programs.
@@ -231,6 +228,7 @@ const int papi_errorNum[] = {
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';
 
+#ifdef __crayx1
 static void define_max_cray_val(const char *val_string, enum deftype_t deftype)
 {
    /* Cray FORTRAN cannot properly assign the maximum negative value of -2147483648
@@ -250,10 +248,11 @@ static void define_max_cray_val(const char *val_string, enum deftype_t deftype)
    }
    printf("(-2)*(2**30)\n");
 }
+#endif
 
 static void define_val(const char *val_string, int val, enum deftype_t deftype)
 {
-#ifdef __X1__
+#ifdef __crayx1
    /* special case for Cray Fortran */
    if (((unsigned)val) == 0x80000000) {
       define_max_cray_val(val_string, deftype);
