@@ -1065,13 +1065,10 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
       struct sigaction sa;
       int err;
 
-      memset(&sa, 0, sizeof sa);
-      sa.sa_sigaction = _papi_hwd_dispatch_timer;
-      sa.sa_flags = SA_SIGINFO;
-      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0)
+      if (ESI->NumberOfEvents > 1)
 	{
-	  SUBDBG("Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno));
-	  return(PAPI_ESYS);
+	  fprintf(stderr,"Must have one counter in event set.\n");
+	  return PAPI_EINVAL;
 	}
 
       /* The correct event to overflow is overflow_option->EventIndex */
@@ -1085,6 +1082,21 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  fprintf(stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs);
 	  return PAPI_EINVAL;
 	}
+      if (contr->cpu_control.nrictrs)
+	{
+	  fprintf(stderr,"Only one interrupting counter in event set.\n");
+	  return PAPI_EINVAL;
+	}
+      if (contr->cpu_control.nractrs < 1)
+	{
+	  fprintf(stderr,"Must have one counter in event set.\n");
+	  return PAPI_EINVAL;
+	}
+      if ((contr->cpu_control.nractrs > 1) && (ESI->EventInfoArray[i].code != PAPI_FP_INS))
+	{
+	  fprintf(stderr,"Only PAPI events with single events are supported.\n");
+	  return PAPI_EINVAL;
+	}
 
       contr->cpu_control.ireset[i] = -overflow_option->threshold;
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
@@ -1096,24 +1108,16 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	 in evntsel, swap events that do not fulfill this criterion. This
 	 will yield a non-monotonic pmc_map array */
 
-      for(i=nricntrs;i>0;i--)
+      if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
+	swap_pmc_map_events(contr,0,1);	
+
+      memset(&sa, 0, sizeof sa);
+      sa.sa_sigaction = _papi_hwd_dispatch_timer;
+      sa.sa_flags = SA_SIGINFO;
+      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0)
 	{
-	  cntr = nracntrs + i - 1;
-	  if( !(contr->cpu_control.evntsel[cntr] & PERF_INT_ENABLE))
-	    { /* A non-interrupting counter was found among the icounters
-		 Locate an interrupting counter in the acounters and swap */
-	      for(cntr2=0;cntr2<nracntrs;cntr2++)
-		{
-		  if( (contr->cpu_control.evntsel[cntr2] & PERF_INT_ENABLE))
-		    break;
-		}
-	      if(cntr2==nracntrs)
-		{
-		  fprintf(stderr,"No icounter to swap with!\n");
-		  return(PAPI_EMISC);
-		}
-	      swap_pmc_map_events(contr,cntr,cntr2);
-	    }
+	  SUBDBG("Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno));
+	  return(PAPI_ESYS);
 	}
 
       PAPI_lock();
@@ -1135,30 +1139,13 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	    nracntrs=++contr->cpu_control.nractrs;
 	    contr->si_signo = 0;
 	  }
-      /* The current implementation only supports one interrupting counter */
-      if(nricntrs)
-	{
-	  fprintf(stderr,"%s %s\n","PAPI internal error.",
-		  "Only one interrupting counter is supported!");
-	  return(PAPI_ESBSTR);
-	}
 
       /* perfctr 2.x requires the interrupting counters to be placed last
-	 in evntsel, when the counter is non-interupting, move the order
-	 back into the default monotonic pmc_map */
+	 in evntsel, swap events that do not fulfill this criterion. This
+	 will yield a non-monotonic pmc_map array */
 
-      for(cntr=0;cntr<ncntrs;cntr++)
-	if(contr->cpu_control.pmc_map[cntr]!=cntr)
-	  { /* This counter is out-of-order. Swap with the correct one*/
-	    for(cntr2=cntr+1;cntr2<ncntrs;cntr2++)
-	      if(contr->cpu_control.pmc_map[cntr2]==cntr) break;
-	    if(cntr2==ncntrs)
-	      {
-		fprintf(stderr,"No icounter to swap with!\n");
-		return(PAPI_EMISC);
-	      }
-	    swap_pmc_map_events(contr,cntr,cntr2);
-	  }
+      if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
+	swap_pmc_map_events(contr,1,0);	
 
       SUBDBG("Modified event set\n");
 
