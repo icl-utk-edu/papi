@@ -64,8 +64,10 @@ inline static int setup_p4_presets(int cputype)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map));
    else if (cputype == PERFCTR_X86_INTEL_P4M2)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
+#ifdef PERFCTR26
    else if (cputype == PERFCTR_X86_INTEL_P4M3)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
+#endif
    else
       error_return(PAPI_ESBSTR, MODEL_ERROR);
    return (PAPI_OK);
