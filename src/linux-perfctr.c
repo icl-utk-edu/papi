@@ -271,7 +271,7 @@ static int get_system_info(struct perfctr_dev *dev)
   int tmp;
   float mhz;
   char maxargs[PAPI_MAX_STR_LEN], *t, *s;
-  FILE *f;
+  FILE *cpuinfo;
 
   /* Path and args */
 
@@ -287,8 +287,8 @@ static int get_system_info(struct perfctr_dev *dev)
   DBG((stderr,"Executable is %s\n",_papi_system_info.exe_info.name));
   DBG((stderr,"Full Executable is %s\n",_papi_system_info.exe_info.fullname));
 
-  if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-    return -1;
+  if ((cpuinfo = fopen("/proc/cpuinfo", "r")) == NULL)
+    return PAPI_ESYS;
  
   /* Hardware info */
 
@@ -297,19 +297,21 @@ static int get_system_info(struct perfctr_dev *dev)
   _papi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
   _papi_system_info.hw_info.vendor = -1;
 
-  rewind(f);
-  s = search_cpu_info(f,"vendor_id",maxargs);
+  rewind(cpuinfo);
+  s = search_cpu_info(cpuinfo,"vendor_id",maxargs);
   if (s && (t = strchr(s+2,'\n')))
     {
       *t = '\0';
       strcpy(_papi_system_info.hw_info.vendor_string,s+2);
     }
 
-  rewind(f);
-  s = search_cpu_info(f,"stepping",maxargs);
+  rewind(cpuinfo);
+  s = search_cpu_info(cpuinfo,"stepping",maxargs);
   if (s)
     sscanf(s+1, "%d", &tmp);
   _papi_system_info.hw_info.revision = (float)tmp;
+
+  fclose(cpuinfo);
 
 #ifdef PERFCTR18  /* And PERFCTR20 */
   if (vperfctr_info(dev, &info) < 0)
