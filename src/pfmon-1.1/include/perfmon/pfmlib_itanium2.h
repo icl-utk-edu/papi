@@ -104,7 +104,7 @@ typedef union {
 		unsigned long iarc_ibrp3:1;	/* constrained by ibr3 */
 		unsigned long iarc_ig5:2;
 		unsigned long iarc_fine:1;	/* fine mode */
-		unsigned long iarc_ig6:51;
+		unsigned long iarc_ig6:50;
 	} pmc14_ita2_reg;
 
 	/* opcode matcher configuration register */
@@ -140,10 +140,10 @@ typedef union {
 
 	/* data event address register: data address register */
 	struct {
-		unsigned long dear_latency:12;	/* latency */
+		unsigned long dear_latency:12;	/* latency  */
 		unsigned long dear_overflow:1;	/* overflow */
-		unsigned long dear_stat:2;	/* status */
-		unsigned long dear_ig1:50;	/* level */
+		unsigned long dear_stat:2;	/* status   */
+		unsigned long dear_ig1:49;	/* ignored  */
 	} pmd3_ita2_reg;
 
 	/* data event address register: data address register */

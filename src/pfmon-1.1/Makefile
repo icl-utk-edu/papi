@@ -27,7 +27,7 @@
 #
 TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
-DIRS=libpfm examples tests scripts include
+DIRS=libpfm pfmon examples tests scripts include
 
 include config.mk
 
