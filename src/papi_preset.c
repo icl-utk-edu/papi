@@ -13,6 +13,8 @@ int setup_all_presets(preset_search_t *findem)
   char *name;
 
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++){
+      DBG((stderr,"pnum =  %d; findem[pnum].preset = %x\n",pnum, findem[pnum].preset));
+
       /* dense array of events is terminated with a 0 preset */
       if (findem[pnum].preset == 0)
 	  	break;
@@ -32,14 +34,15 @@ int setup_all_presets(preset_search_t *findem)
       pmc=0;
       _papi_hwi_preset_map[preset_index].derived=findem[pnum].derived;
       while((findem[pnum].natEvent[pmc] > 0) && (pmc < MAX_COUNTER_TERMS)){
-	      _papi_hwi_preset_map[preset_index].metric_count++;
-	      _papi_hwi_preset_map[preset_index].natIndex[pmc]=findem[pnum].natEvent[pmc] ^ NATIVE_MASK;
-	      name = _papi_hwd_native_code_to_name(findem[pnum].natEvent[pmc]);
-	      if (strlen(_papi_hwi_preset_map[preset_index].note)+strlen(name)+1 < PAPI_MAX_STR_LEN){
-		      strcat(_papi_hwi_preset_map[preset_index].note,name);
-		      strcat(_papi_hwi_preset_map[preset_index].note,",");
-	      }
-	      pmc++;
+	_papi_hwi_preset_map[preset_index].metric_count++;
+	_papi_hwi_preset_map[preset_index].natIndex[pmc]=findem[pnum].natEvent[pmc] ^ NATIVE_MASK;
+	name = _papi_hwd_native_code_to_name(findem[pnum].natEvent[pmc]);
+	DBG((stderr,"pmc: %d\nnative index: 0x%x\nname: %s\n\n",pmc, findem[pnum].natEvent[pmc], name));
+	if (strlen(_papi_hwi_preset_map[preset_index].note)+strlen(name)+1 < PAPI_MAX_STR_LEN){
+	  if (pmc) strcat(_papi_hwi_preset_map[preset_index].note,", ");
+	  strcat(_papi_hwi_preset_map[preset_index].note,name);
+	}
+	pmc++;
       }
       did_something++;
   }

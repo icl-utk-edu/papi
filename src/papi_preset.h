@@ -9,8 +9,8 @@ typedef struct preset_search {
   int preset;
   /* Derived code */
   int derived;
-  /* native event codes */
-  unsigned int natEvent[MAX_COUNTER_TERMS];
+  /* native event codes: must be signed since -1 is used as a terminator flag */
+  int natEvent[MAX_COUNTER_TERMS];
 } preset_search_t;
 
 typedef struct hwi_preset {

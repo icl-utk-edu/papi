@@ -483,12 +483,14 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
   return(PAPI_ENOEVNT);
 }
 
-/* Converts an ASCII name into a native event code usable by other routines */
+/* Converts an ASCII name into a native event code usable by other routines
+   Returns code = 0 and PAPI_OK if name not found.
+   This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
 #ifdef HAS_NATIVE_MAP
   char *name;
-  int i = 0;
+  int i;
   for(i=0;i<PAPI_MAX_NATIVE_EVENTS;i++){
     name = _papi_hwd_native_code_to_name(i | NATIVE_MASK);
     if (name != NULL) {
@@ -497,13 +499,18 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 	return(PAPI_OK);
       }
     }
+    else {
+      *out = 0;
+      return(PAPI_OK);
+    }
   }
 #endif
   return(PAPI_ENOEVNT);
 }
 
 
-/* Returns event name based on native event code. */
+/* Returns event name based on native event code. 
+   Returns NULL if name not found */
 char *_papi_hwi_native_code_to_name(unsigned int EventCode)
 {
 #ifdef HAS_NATIVE_MAP
@@ -515,7 +522,8 @@ char *_papi_hwi_native_code_to_name(unsigned int EventCode)
 }
 
 
-/* Returns event description based on native event code. */
+/* Returns event description based on native event code.
+   Returns NULL if description not found */
 char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 {
 #ifdef HAS_NATIVE_MAP
@@ -533,7 +541,7 @@ int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_inf
 {
 #ifdef HAS_NATIVE_MAP
 
-  if (EventCode & NATIVE_MASK) {
+  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
     info->event_name = _papi_hwi_native_code_to_name(EventCode);
     if (info->event_name != NULL) {
       /* Fill in the info structure */
