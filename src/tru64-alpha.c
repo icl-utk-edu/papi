@@ -3,6 +3,8 @@
 
 #include "tru64-alpha.h"
 
+extern EventSetInfo *default_master_eventset;
+
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
 #if 0
@@ -1066,11 +1068,29 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
+  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
+  int retval;
+
+  if (current_state && current_state->fd) {
+    retval = close(current_state->fd);
+    if (retval == -1)
+      return(PAPI_ESYS);
+  }
   return(PAPI_OK);
 }
 
 int _papi_hwd_shutdown_global(void)
 {
+  hwd_control_state_t *current_state;
+  int retval;
+
+  if (default_master_eventset)
+    current_state = (hwd_control_state_t *)default_master_eventset->machdep;
+  if (current_state && current_state->fd) {
+    retval = close(current_state->fd);
+    if (retval == -1)
+      return(PAPI_ESYS);
+  }
   return(PAPI_OK);
 }
 

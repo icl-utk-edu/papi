@@ -1702,6 +1702,7 @@ void PAPI_shutdown(void)
 	  PAPI_state(i,&status);
 	  if (status & PAPI_RUNNING)
 	    PAPI_stop(i,NULL);
+          _papi_hwd_shutdown(PAPI_EVENTSET_MAP->dataSlotArray[i]);
 	  free_EventSet(PAPI_EVENTSET_MAP->dataSlotArray[i]);
 	  PAPI_EVENTSET_MAP->dataSlotArray[i] = NULL;
 	}
