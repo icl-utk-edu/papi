@@ -176,7 +176,7 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
      /* Name of the substrate we're using */
     strcpy(_papi_hwi_system_info.substrate, "$Id$");       
 
-   _papi_hwi_system_info.supports_hw_overflow = 1;
+   _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
@@ -825,7 +825,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
       contr->cpu_control.ireset[i] = (-threshold + 1);
+/******* can't enable the interrupt bit for windows
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+*******/
       nricntrs = ++contr->cpu_control.nrictrs;
       nracntrs = --contr->cpu_control.nractrs;
 /*******

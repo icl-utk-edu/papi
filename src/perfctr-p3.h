@@ -83,6 +83,9 @@ typedef CONTEXT hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)(ctx->ucontext->Eip))
 
+/* Windows DOES NOT support hardware overflow */
+#define HW_OVERFLOW 0
+
 #else
 
 #define inline_static inline static
@@ -128,6 +131,9 @@ typedef ucontext_t hwd_ucontext_t;
 #endif
 #define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
 #define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) _papi_hwi_event_index_map[bit]
+
+/* Linux DOES support hardware overflow */
+#define HW_OVERFLOW 1
 
 #define inline_static inline static
 
