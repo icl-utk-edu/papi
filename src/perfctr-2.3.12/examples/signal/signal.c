@@ -118,6 +118,7 @@ static void do_control(void)
 	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
 	break;
       case PERFCTR_X86_INTEL_P4:
+      case PERFCTR_X86_INTEL_P4M2:
 	nractrs = 1;
 	/* PMC(0) produces tagged x87_FP_uop:s (FLAME_CCCR0, FIRM_ESCR0) */
 	control.cpu_control.pmc_map[0] = 0x8 | (1 << 31);

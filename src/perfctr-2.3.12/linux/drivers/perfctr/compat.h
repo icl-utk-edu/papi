@@ -101,6 +101,7 @@ static inline int request_module(const char *name) { return -ENOSYS; }
 #define DECLARE_MUTEX(name)	struct semaphore name = MUTEX
 #endif /* < 2.2.18 */
 
+/* {get,put}_task_struct() are unsafe no-ops */
 #define get_task_struct(tsk)	do{}while(0)
 #define put_task_struct(tsk)	do{}while(0)
 #define EXPORT_SYMBOL___put_task_struct	/* empty */

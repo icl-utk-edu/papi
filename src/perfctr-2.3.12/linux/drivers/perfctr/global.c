@@ -160,8 +160,8 @@ static int gperfctr_control(struct gperfctr_control *argp)
 		perfctr = &per_cpu_gperfctr[cpu_logical_map(i)];
 		spin_lock(&perfctr->lock);
 		memset(&perfctr->cpu_state.sum, 0, sizeof perfctr->cpu_state.sum);
-		ret = perfctr_cpu_update_control(&perfctr->cpu_state,
-						 &cpu_control);
+		perfctr->cpu_state.control = cpu_control;
+		ret = perfctr_cpu_update_control(&perfctr->cpu_state);
 		spin_unlock(&perfctr->lock);
 		if( ret < 0 )
 			goto out_up;

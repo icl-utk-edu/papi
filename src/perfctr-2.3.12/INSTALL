@@ -12,51 +12,63 @@ versions of the kernel.
 The recommended kernel build and installation procedure is as follows:
 
 1. Get the source code for the kernel of your choice, and unpack it
-   in any directory.
+   in some directory.
 
-   In your shell, `cd' to the kernel source directory.
+   Let KDIR be the root directory of the kernel source, and PDIR be
+   the root directory of the unpacked perfctr package.
+
+   Supported kernel versions are those that have a corresponding patch
+   file in $PDIR/patches/. Currently, supported kernels include
+   standard kernels from www.kernel.org and some RedHat update kernels.
+   The naming convention is that patches for RedHat kernels include a
+   "-redhat" suffix in their names.
+
+   ** Using this package with a kernel not listed in $PDIR/patches is
+   ** UNSUPPORTED. You are strongly advised to choose a supported kernel.
+
+   ** RedHat users: Please note that RedHat kernels are extensively
+   ** modified compared to their baseline standard kernels, and that
+   ** patches for standard kernels often do NOT work for RedHat kernels
+   ** even if the version numbers are similar. If your current kernel
+   ** is unsupported, then upgrading to a newer RedHat "update" kernel
+   ** may be required.
+
+   In your shell, `cd' to $KDIR.
 
    Save a copy of the .config file if it exists and you need it later.
    Then `make mrproper' (this is VERY important).
 
 2. Apply all patches for all add-on features you want in this kernel.
 
-   The perfctr patch files are located in the `patches' directory in
-   this package. Assume this package was unpacked as directory PDIR,
-   your kernel version is KVER, and there is a file in `patches' named:
+   With the current directory being $KDIR, execute:
 
-	patch-kernel-$KVER
+	$PDIR/update-kernel
 
-   In your shell, `cd' to your kernel source directory and apply this
-   patch with `patch -p1 < $PDIR/patches/patch-kernel-$KVER'.
+   This will apply the patch file that matches the kernel version,
+   and install the new files for the perfctr driver.
 
-   This may cause some warnings if your kernel source code is not
-   identical to the one for which the patch was created, but as long
-   as there are no rejects, things should be Ok.
+   If update-kernel does not find a matching patch file, it will fail
+   with an error message. If you insist on using an unsupported kernel
+   version V1, but you believe the patch file for version V2 will work,
+   then you can try it as follows:
 
-   Note: Vendor kernels can be very different from standard kernels, so
-   make sure you apply the correct patch file! patches/patch-kernel-2.x.y
-   won't necessarily work with a vendor kernel named 2.x.y-something!
+	$PDIR/update-kernel --test --patch=$V2
 
-   IF ANY PART OF THE PATCH IS REJECTED, IT IS IMPERATIVE THAT YOU
-   RESOLVE THE PROBLEM BEFORE ATTEMPTING TO BUILD AND USE THE KERNEL.
+   This applies the patch in testing mode, without actually altering
+   any files. If the patch applies cleanly without any rejects, then
+   you can force the use of this patch simply by removing the --test
+   option to update-kernel. This usage mode is intended for experienced
+   kernel builders only.
 
-   The driver source code proper is located in the `linux' directory
-   in this package. This directory contains new files to be added
-   to your kernel source code. In your shell, `cd' to your kernel source
-   directory and copy the files by executing:
-
-	tar -C $PDIR/linux -cf - . | tar -xvf -
-
-   In the kernel source directory, edit Makefile and change EXTRAVERSION
-   to include something unique for THIS kernel, for example by appending
-   "-perfctr" (without the quotes). While not strictly necessary, this
-   step is strongly recommended if you are adding the perfctr driver to
+   Finally, edit $KDIR/Makefile and change EXTRAVERSION to include
+   something unique for THIS kernel, for example by appending "-perfctr"
+   (without the quotes). While not strictly necessary, this step is
+   strongly recommended if you are adding the perfctr driver to
    a kernel version which is already installed on the machine.
 
-3. If you have a saved .config file, copy it to the kernel source directory.
+3. If you have a saved .config file, copy it to $KDIR.
    Then configure the kernel using your favorite kernel configuration tool,
-   for instance `make menuconfig' or `make config'.
+   for instance `make menuconfig', `make config', or `make oldconfig'.
 
    You should either configure with modules (CONFIG_MODULES=y) AND module
    versions (CONFIG_MODVERSIONS=y), or completely without modules

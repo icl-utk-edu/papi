@@ -78,6 +78,9 @@ int vperfctr_info(const struct vperfctr *vperfctr, struct perfctr_info *info)
 #define __builtin_expect(x, expected_value) (x)
 #endif
 
+#define likely(x)	__builtin_expect((x),1)
+#define unlikely(x)	__builtin_expect((x),0)
+
 unsigned long long vperfctr_read_tsc(const struct vperfctr *self)
 {
     unsigned long long sum;
@@ -85,13 +88,13 @@ unsigned long long vperfctr_read_tsc(const struct vperfctr *self)
     volatile const struct vperfctr_state *kstate;
 
     kstate = self->kstate;
-    if( __builtin_expect(kstate->cpu_state.cstatus != 0, 1) ) {
+    if( likely(kstate->cpu_state.cstatus != 0) ) {
 	tsc0 = kstate->cpu_state.start.tsc;
     retry:
 	rdtscl(now);
 	sum = kstate->cpu_state.sum.tsc;
 	tsc1 = kstate->cpu_state.start.tsc;
-	if( __builtin_expect(tsc1 == tsc0, 1) )
+	if( likely(tsc1 == tsc0) )
 	    return sum += (now - tsc0);
 	tsc0 = tsc1;
 	goto retry; /* better gcc code than with a do{}while() loop */
@@ -109,7 +112,7 @@ unsigned long long vperfctr_read_pmc(const struct vperfctr *self, unsigned i)
 
     kstate = self->kstate;
     cstatus = kstate->cpu_state.cstatus;
-    /* gcc 3.0 generates crap code for __builtin_expect(E1 && E2) :-( */
+    /* gcc 3.0 generates crap code for likely(E1 && E2) :-( */
     if( perfctr_cstatus_has_tsc(cstatus) && self->have_rdpmc ) {
 	 tsc0 = kstate->cpu_state.start.tsc;
     retry:
@@ -117,7 +120,7 @@ unsigned long long vperfctr_read_pmc(const struct vperfctr *self, unsigned i)
 	 start = kstate->cpu_state.start.pmc[i];
 	 sum = kstate->cpu_state.sum.pmc[i];
 	 tsc1 = kstate->cpu_state.start.tsc;
-	 if( __builtin_expect(tsc1 == tsc0, 1) ) {
+	 if( likely(tsc1 == tsc0) ) {
 	      return sum += (now - start);
 	 }
 	 tsc0 = tsc1;
@@ -141,7 +144,7 @@ void vperfctr_read_ctrs(const struct vperfctr *self,
        enabled but the CPU doesn't have RDPMC. */
     kstate = self->kstate;
     cstatus = kstate->cpu_state.cstatus;
-    nrctrs = perfctr_cstatus_nractrs(cstatus);
+    nrctrs = perfctr_cstatus_nrctrs(cstatus);
     if( perfctr_cstatus_has_tsc(cstatus) && (!nrctrs || self->have_rdpmc) ) {
     retry:
 	tsc0 = kstate->cpu_state.start.tsc;
@@ -151,7 +154,7 @@ void vperfctr_read_ctrs(const struct vperfctr *self,
 	    rdpmcl(kstate->cpu_state.control.pmc_map[i], now);
 	    sum->pmc[i] = kstate->cpu_state.sum.pmc[i] + (now - kstate->cpu_state.start.pmc[i]);
 	}
-	if( __builtin_expect(tsc0 == kstate->cpu_state.start.tsc, 1) )
+	if( likely(tsc0 == kstate->cpu_state.start.tsc) )
 	    return;
 	goto retry;
     }
@@ -286,6 +289,7 @@ unsigned perfctr_cpu_nrctrs(const struct perfctr_info *info)
       case PERFCTR_X86_AMD_K7:
 	return 4;
       case PERFCTR_X86_INTEL_P4:
+      case PERFCTR_X86_INTEL_P4M2:
 	return 18;
       default:
 	return 2;
@@ -319,6 +323,8 @@ const char *perfctr_cpu_name(const struct perfctr_info *info)
 	return "VIA C3";
       case PERFCTR_X86_INTEL_P4:
 	return "Intel Pentium 4";
+      case PERFCTR_X86_INTEL_P4M2:
+	return "Intel Pentium 4 Model 2";
       default:
         return "?";
     }

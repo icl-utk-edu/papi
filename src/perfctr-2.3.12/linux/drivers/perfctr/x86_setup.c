@@ -66,10 +66,12 @@ static perfctr_ihandler_t perfctr_ihandler = perfctr_default_ihandler;
 
 void do_perfctr_interrupt(struct pt_regs *regs)
 {
+	/* XXX: 2.5.28+: irq_enter() or preempt_disable() here */
 	/* XXX: should be rewritten in assembly and inlined below */
 	/* XXX: recursive interrupts? delay the ACK, mask LVTPC, or queue? */
 	ack_APIC_irq();
 	(*perfctr_ihandler)(regs->eip);
+	/* XXX: 2.5.28+: irq_exit() or preempt_enable() here */
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,8)

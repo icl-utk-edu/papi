@@ -3,6 +3,33 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.3.12, 2002-08-12
+- Trivial comment fixes in compat.h and x86_compat.h.
+- Removed __vperfctr_sample(), vperfctr_stub.sample, and bug_sample()
+  from UP builds, since they are needed only on SMP.
+
+Version 2.3.11, 2002-07-21
+- Accumulated sums are now maintained for interrupt-mode perfctrs.
+  User-space can use the standard syscall-less algorithm for computing
+  these counters' current sums, should that be needed.
+
+Version 2.3.10, 2002-07-19
+- Added PERFCTR_X86_INTEL_P4M2 CPU type for Model 2 P4s, since
+  they have ESCR Event Mask changes in a few events.
+- The driver now supports replay tagging events on P4, using the
+  pebs_enable and pebs_matrix_vert control fields added in 2.3.8.
+- Some Pentium MMX and Pentium Pro processors have an erratum
+  (Pentium erratum #74, Pentium Pro erratum 26) which causes SMM
+  to shut down if CR4.PCE is set. intel_init() now clears the
+  RDPMC feature on the affected steppings, to avoid the problem.
+- perfctr_cpu_release() now clears the hardware registers and
+  invalidates the per-cpu cache. This should allow the counter
+  hardware to power down when not used, especially on P4.
+- Callers of update_control() have no active i-mode counters.
+  Documented this as a precondition, and changed update_control()
+  to not call isuspend(). update_control() no longer needs hardware
+  access, which should ease a port to CONFIG_PREEMPT=y.
+
 Version 2.3.9, 2002-06-27
 - Updated p4_escr_addr() in x86.c to match the latest revision of
   Intel's IA32 Volume 3 manual, #245472-007. An error in previous

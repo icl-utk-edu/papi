@@ -6,6 +6,43 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.3.12, 2002-08-12
+- Updated patch kit for the 2.4.19 final kernel.
+- Spelling fix in INSTALL.
+- Minor driver code size reduction on uniprocessor kernels.
+
+Version 2.3.11, 2002-07-21
+- Interrupt-mode performance counters now have accumulated sums.
+  The library procedures vperfctr_read_pmc() and vperfctr_read_ctrs()
+  can now retrieve the sums of interrupt-mode counters.
+- Corrected the name of K7 event 0x42 to DATA_CACHE_REFILLS_FROM_L2.
+
+Version 2.3.10, 2002-07-19
+- Added a script, `update-kernel', to simplify the process of
+  patching the kernel source code. See INSTALL for details.
+- The counter and control registers are now cleared when the
+  driver is idle. This should allow the counter hardware to
+  power down when not used, especially on P4.
+- Some Pentium MMX and Pentium Pro processors have an erratum
+  which causes System Management Mode to shut down if user-space
+  has been granted access to the RDPMC instruction. The driver
+  now avoids granting RDPMC access on the affected processors.
+  The user-space library makes this change transparent.
+- New CPU type code for Model 2 Pentium 4s, due to a few but
+  significant changes between Model 0 and 1 and Model 2 CPUs.  
+- The driver now supports Replay Tagging on the Pentium 4.
+  The perfex program has been updated to allow users to specify
+  values to store in PEBS_ENABLE and PEBS_MATRIX_VERT.
+  For example, the following command could be use to count the
+  number of L1 cache read misses on a Pentium 4:
+
+  perfex -e 0x0003B000/0x12000204@0x8000000C --p4pe=0x01000001 --p4pmv=0x1 some_program
+
+  Explanation: IQ_CCCR0 is bound to CRU_ESCR2, CRU_ESCR2 is set up
+  for replay_event with non-bogus uops and CPL>0, and PEBS_ENABLE
+  and PEBS_MATRIX_VERT are set up for the 1stL_cache_load_miss_retired
+  metric. Note that bit 25 is NOT set in PEBS_ENABLE.
+
 Version 2.3.9, 2002-06-27
 - Pentium 4 bug fix: An error in older revisions of Intel's IA32
   Volume 3 manual caused the driver to program the wrong control

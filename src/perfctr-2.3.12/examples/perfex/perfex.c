@@ -5,7 +5,7 @@
  *	perfex - a command-line interface to x86 performance counters
  *
  * SYNOPSIS
- *	perfex [-e event] .. [-o file] command
+ *	perfex [-e event] .. [--p4pe=value] [--p4pmv=value] [-o file] command
  *	perfex { -i | -l | -L }
  *
  * DESCRIPTION
@@ -40,6 +40,15 @@
  *		The counts, together with an event description are written
  *		to the result file (default is stderr).
  *
+ *	--p4pe=value | --p4_pebs_enable=value
+ *	--p4pmv=value | --p4_pebs_matrix_vert=value
+ *		Specify the value to be stored in the auxiliary control
+ *		register PEBS_ENABLE or PEBS_MATRIX_VERT, which are used
+ *		for replay tagging events on Pentium 4 processors.
+ *		Note: Intel's documentation states that bit 25 should be
+ *		set in PEBS_ENABLE, but this is not true and the driver
+ *		will disallow it.
+ *
  *	-i | --info
  *		Instead of running a command, generate output which
  *		identifies the current processor and its capabilities.
@@ -55,7 +64,7 @@
  *	-o file | --output=file
  *		Write the results to file instead of stderr.
  *
- * EXAMPLE
+ * EXAMPLES
  *	The following commands count the number of retired instructions
  *	in user-mode on an Intel P6 processor:
  *
@@ -70,6 +79,16 @@
  *	(== CRU_ESCR0), and Enable. Program CRU_ESCR0 with event 2
  *	(instr_retired), NBOGUSNTAG, CPL>0. Map this event to IQ_COUNTER0
  *	(0xC) with fast RDPMC enabled.
+ *
+ *	The following command counts the number of L1 cache read misses
+ *	on a Pentium 4 processor:
+ *
+ *	perfex -e 0x0003B000/0x12000204@0x8000000C --p4pe=0x01000001 --p4pmv=0x1 some_program
+ *
+ *	Explanation: IQ_CCCR0 is bound to CRU_ESCR2, CRU_ESCR2 is set up
+ *	for replay_event with non-bogus uops and CPL>0, and PEBS_ENABLE
+ *	and PEBS_MATRIX_VERT are set up for the 1stL_cache_load_miss_retired
+ *	metric. Note that bit 25 is NOT set in PEBS_ENABLE.
  *
  * DEPENDENCIES
  *	perfex only works on Linux/x86 systems which have been modified
@@ -281,6 +300,12 @@ static int do_parent(int sock, int child_pid, FILE *resfile)
 		    kstate->cpu_state.control.evntsel_aux[i]);
 	fprintf(resfile, "\t%19lld\n", kstate->cpu_state.sum.pmc[i]);
     }
+    if( kstate->cpu_state.control.p4.pebs_enable )
+	fprintf(resfile, "PEBS_ENABLE 0x%08X\n",
+		kstate->cpu_state.control.p4.pebs_enable);
+    if( kstate->cpu_state.control.p4.pebs_matrix_vert )
+	fprintf(resfile, "PEBS_MATRIX_VERT 0x%08X\n",
+		kstate->cpu_state.control.p4.pebs_matrix_vert);
 
     munmap((void*)kstate, PAGE_SIZE);
     return WEXITSTATUS(child_status);
@@ -377,6 +402,8 @@ static int do_list(const struct perfctr_info *info, int long_format)
 
 static const struct option long_options[] = {
     { "event", 1, NULL, 'e' },
+    { "p4pe", 1, NULL, 1 }, { "p4_pebs_enable", 1, NULL, 1 },
+    { "p4pmv", 1, NULL, 2 }, { "p4_pebs_matrix_vert", 1, NULL, 2 },
     { "info", 0, NULL, 'i' },
     { "list", 0, NULL, 'l' },
     { "long-list", 0, NULL, 'L' },
@@ -386,7 +413,7 @@ static const struct option long_options[] = {
 
 static void do_usage(void)
 {
-    fprintf(stderr, "Usage:  perfex [-e <event>] ... [-o <file>] <command> [<command arg>] ...\n");
+    fprintf(stderr, "Usage:  perfex [options] <command> [<command arg>] ...\n");
     fprintf(stderr, "\tperfex -i\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options:\n");
@@ -395,6 +422,10 @@ static void do_usage(void)
     fprintf(stderr, "\t-i | --info\t\t\tPrint PerfCtr driver information\n");
     fprintf(stderr, "\t-l | --list\t\t\tList available events\n");
     fprintf(stderr, "\t-L | --long-list\t\tList available events in long format\n");
+    fprintf(stderr, "\t--p4pe=<value>\t\t\tValue for PEBS_ENABLE (P4 only)\n");
+    fprintf(stderr, "\t--p4_pebs_enable=<value>\tSame as --p4pe=<value>\n");
+    fprintf(stderr, "\t--p4pmv=<value>\t\t\tValue for PEBS_MATRIX_VERT (P4 only)\n");
+    fprintf(stderr, "\t--p4_pebs_matrix_vert=<value>\tSame as --p4pmv=<value>\n");
 }
 
 static int parse_event_spec(const char *arg, unsigned int *evntsel,
@@ -418,12 +449,21 @@ static int parse_event_spec(const char *arg, unsigned int *evntsel,
     return endp[0] != '\0';
 }
 
+static int parse_value(const char *arg, unsigned int *value)
+{
+    char *endp;
+
+    *value = strtoul(arg, &endp, 16);
+    return endp[0] != '\0';
+}
+
 int main(int argc, char **argv)
 {
     struct perfctr_info info;
     struct vperfctr_control control;
     int n;
     unsigned int spec_evntsel, spec_aux, spec_pmc;
+    unsigned int spec_value;
     FILE *resfile;
 
     /* prime info, as we'll need it in most cases */
@@ -475,6 +515,20 @@ int main(int argc, char **argv)
 	    control.cpu_control.evntsel_aux[n] = spec_aux;
 	    control.cpu_control.pmc_map[n] = spec_pmc;
 	    control.cpu_control.nractrs = ++n;
+	    continue;
+	  case 1:
+	    if( parse_value(optarg, &spec_value) ) {
+		fprintf(stderr, "perfex: invalid value: '%s'\n", optarg);
+		return 1;
+	    }
+	    control.cpu_control.p4.pebs_enable = spec_value;
+	    continue;
+	  case 2:
+	    if( parse_value(optarg, &spec_value) ) {
+		fprintf(stderr, "perfex: invalid value: '%s'\n", optarg);
+		return 1;
+	    }
+	    control.cpu_control.p4.pebs_matrix_vert = spec_value;
 	    continue;
 	  default:
 	    do_usage();

@@ -28,7 +28,8 @@ struct perfctr_info {
 #define PERFCTR_X86_WINCHIP_2	8	/* no rdtsc */
 #define PERFCTR_X86_AMD_K7	9
 #define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
-#define PERFCTR_X86_INTEL_P4	11
+#define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
+#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 and above */
 
 /* cpu_features flag bits */
 #define PERFCTR_FEATURE_RDPMC	0x01
@@ -108,7 +109,9 @@ extern struct vperfctr_stub {
 	void (*exit)(struct vperfctr*);
 	void (*suspend)(struct vperfctr*);
 	void (*resume)(struct vperfctr*);
+#ifdef CONFIG_SMP
 	void (*sample)(struct vperfctr*);
+#endif
 	struct file_operations *file_ops;
 } vperfctr_stub;
 /* lock taken on module load/unload and ->file_ops access;

@@ -35,10 +35,12 @@ static void bug_resume(struct vperfctr *perfctr)
 	bug("resume", __builtin_return_address(0));
 }
 
+#ifdef CONFIG_SMP
 static void bug_sample(struct vperfctr *perfctr)
 {
 	bug("sample", __builtin_return_address(0));
 }
+#endif
 
 static int vperfctr_stub_open(struct inode *inode, struct file *filp)
 {
@@ -84,7 +86,9 @@ struct vperfctr_stub vperfctr_stub = {
 	.exit = bug_exit,
 	.suspend = bug_suspend,
 	.resume = bug_resume,
+#ifdef CONFIG_SMP
 	.sample = bug_sample,
+#endif
 	.file_ops = NULL,
 };
 rwlock_t vperfctr_stub_lock = RW_LOCK_UNLOCKED;

@@ -140,6 +140,7 @@ void print_control(const struct perfctr_cpu_control *control)
 	if( control->evntsel_aux[i] )
 	    printf("evntsel_aux[%u]\t\t0x%08X\n", i, control->evntsel_aux[i]);
     }
+    /* XXX: print control->p4 fields too */
 }
 
 void setup_control(struct perfctr_cpu_control *control)
@@ -191,6 +192,7 @@ void setup_control(struct perfctr_cpu_control *control)
 	evntsel0 = 0xC0;	/* INSTRUCTIONS_EXECUTED */
 	break;
       case PERFCTR_X86_INTEL_P4:
+      case PERFCTR_X86_INTEL_P4M2:
 	nractrs = 2;
 	/* set up PMC(1) to produce tagged x87_FP_uop:s */
 	control->pmc_map[1] = 0x8 | (1 << 31);

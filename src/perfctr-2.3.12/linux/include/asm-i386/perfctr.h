@@ -116,11 +116,11 @@ extern char *perfctr_cpu_name[];
 extern const char *perfctr_cpu_reserve(const char *service);
 extern void perfctr_cpu_release(const char *service);
 
-/* Check that the new control data is valid.
+/* PRE: state has no running interrupt-mode counters.
+   Check that the new control data is valid.
    Update the driver's private control data.
    Returns a negative error code if the control data is invalid. */
-extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state,
-				      const struct perfctr_cpu_control *control);
+extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state);
 
 /* Read a-mode counters. Subtract from start and accumulate into sums. */
 extern void perfctr_cpu_suspend(struct perfctr_cpu_state *state);

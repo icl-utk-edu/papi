@@ -27,6 +27,8 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 		/* NOTE: these caches have physical indices, not virtual */
 		unsigned int evntsel[18];
 		unsigned int escr[0x3E2-0x3A0];
+		unsigned int pebs_enable;
+		unsigned int pebs_matrix_vert;
 	} control;
 } __attribute__((__aligned__(SMP_CACHE_BYTES)));
 static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
@@ -59,6 +61,15 @@ static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 #define MSR_P4_PERFCTR0		0x300		/* .. 0x311 */
 #define MSR_P4_CCCR0		0x360		/* .. 0x371 */
 #define MSR_P4_ESCR0		0x3A0		/* .. 0x3E1, with some gaps */
+
+#define MSR_P4_PEBS_ENABLE	0x3F1
+#define P4_PE_REPLAY_TAG_BITS	0x00000607
+#define P4_PE_UOP_TAG		0x01000000
+#define P4_PE_RESERVED		0xFEFFF9F8	/* only allow ReplayTagging */
+
+#define MSR_P4_PEBS_MATRIX_VERT	0x3F2
+#define P4_PMV_REPLAY_TAG_BITS	0x00000003
+#define P4_PMV_RESERVED		0xFFFFFFFC
 
 #define P4_CCCR_OVF		0x80000000
 #define P4_CCCR_CASCADE		0x40000000
@@ -421,16 +432,13 @@ static void p6_like_isuspend(struct perfctr_cpu_state *state,
 	cstatus = state->cstatus;
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
 	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
-		unsigned int pmc = state->control.pmc_map[i];
+		unsigned int pmc, now;
+		pmc = state->control.pmc_map[i];
 		cpu->control.evntsel[pmc] = 0;
 		wrmsr(msr_evntsel0+pmc, 0, 0);
-		rdpmcl(pmc, state->start.pmc[i]);
-#if 0	/* XXX: to support sums for i-mode PMCs */
-		unsigned int now;
 		rdpmcl(pmc, now);
 		state->sum.pmc[i] += now - state->start.pmc[i];
 		state->start.pmc[i] = now;
-#endif
 	}
 	/* cpu->k1.id is still == state->k1.id */
 	set_isuspend_cpu(state, cpu);
@@ -583,8 +591,6 @@ static void vc3_clear_counters(void)
 /*
  * Intel Pentium 4.
  * Current implementation restrictions:
- * - No overflow interrupts support.
- * - No tagging of micro-ops support.
  * - No DS/PEBS support.
  */
 
@@ -706,6 +712,22 @@ static int p4_check_control(struct perfctr_cpu_state *state)
 		   check that they use the same ESCR value? */
 		state->k2.p4_escr_map[i] = escr_addr - MSR_P4_ESCR0;
 	}
+	/* check ReplayTagging control (PEBS_ENABLE and PEBS_MATRIX_VERT) */
+	if( state->control.p4.pebs_enable ) {
+		if( !nrctrs )
+			return -EPERM;
+		if( state->control.p4.pebs_enable & P4_PE_RESERVED )
+			return -EPERM;
+		if( !(state->control.p4.pebs_enable & P4_PE_UOP_TAG ) )
+			return -EINVAL;
+		if( !(state->control.p4.pebs_enable & P4_PE_REPLAY_TAG_BITS) )
+			return -EINVAL;
+		if( state->control.p4.pebs_matrix_vert & P4_PMV_RESERVED )
+			return -EPERM;
+		if( !(state->control.p4.pebs_matrix_vert & P4_PMV_REPLAY_TAG_BITS) )
+			return -EINVAL;
+	} else if( state->control.p4.pebs_matrix_vert )
+		return -EPERM;
 	state->k1.id = new_id();
 	return 0;
 }
@@ -722,20 +744,14 @@ static void p4_isuspend(struct perfctr_cpu_state *state)
 	cstatus = state->cstatus;
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
 	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
-		unsigned int pmc_raw = state->control.pmc_map[i];
-		unsigned int pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
-		/* Clearing the counter's CCCR both stops the counter
-		   and clears the OVF flag which prevents the interrupt
-		   from being re-asserted (a P4 quirk). */
+		unsigned int pmc_raw, pmc_idx, now;
+		pmc_raw = state->control.pmc_map[i];
+		pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
 		cpu->control.evntsel[pmc_idx] = 0;
-		wrmsr(MSR_P4_CCCR0+pmc_idx, 0, 0);
-		rdpmcl(pmc_raw, state->start.pmc[i]);
-#if 0	/* XXX: to support sums for i-mode PMCs */
-		unsigned int now;
+		wrmsr(MSR_P4_CCCR0+pmc_idx, 0, 0); /* P4 quirk: also clear OVF */
 		rdpmcl(pmc_raw, now);
 		state->sum.pmc[i] += now - state->start.pmc[i];
 		state->start.pmc[i] = now;
-#endif
 	}
 	/* cpu->k1.id is still == state->k1.id */
 	set_isuspend_cpu(state, cpu);
@@ -792,18 +808,24 @@ static void p4_write_control(const struct perfctr_cpu_state *state)
 			wrmsr(MSR_P4_CCCR0+pmc, cccr_val, 0);
 		}
 	}
+	if( state->control.p4.pebs_enable != cpu->control.pebs_enable ) {
+		cpu->control.pebs_enable = state->control.p4.pebs_enable;
+		wrmsr(MSR_P4_PEBS_ENABLE, cpu->control.pebs_enable, 0);
+	}
+	if( state->control.p4.pebs_matrix_vert != cpu->control.pebs_matrix_vert ) {
+		cpu->control.pebs_matrix_vert = state->control.p4.pebs_matrix_vert;
+		wrmsr(MSR_P4_PEBS_MATRIX_VERT, cpu->control.pebs_matrix_vert, 0);
+	}
 	cpu->k1.id = state->k1.id;
 }
 
 static void p4_clear_counters(void)
 {
-	unsigned int misc_enable;
-
-	rdmsrl(MSR_P4_MISC_ENABLE, misc_enable);
-	if( !(misc_enable & MSR_P4_MISC_ENABLE_PEBS_UNAVAIL) )
-		clear_msr_range(0x3F1, 2);
 	/* MSR 0x3F0 seems to have a default value of 0xFC00, but current
 	   docs doesn't fully define it, so leave it alone for now. */
+	/* clear PEBS_ENABLE and PEBS_MATRIX_VERT; they handle both PEBS
+	   and ReplayTagging, and should exist even if PEBS is disabled */
+	clear_msr_range(0x3F1, 2);
 	clear_msr_range(0x3A0, 31);
 	clear_msr_range(0x3C0, 6);
 	clear_msr_range(0x3C8, 6);
@@ -959,24 +981,32 @@ static inline void setup_imode_start_values(struct perfctr_cpu_state *state)
 #endif
 }
 
+static inline void debug_no_imode(const struct perfctr_cpu_state *state)
+{
+#ifdef CONFIG_PERFCTR_DEBUG
+	if( perfctr_cstatus_has_ictrs(state->cstatus) )
+		printk(KERN_ERR "perfctr/x86.c: BUG! updating control in"
+		       " perfctr %p on cpu %u while it has cstatus %x"
+		       " (pid %d, comm %s)\n",
+		       state, smp_processor_id(), state->cstatus,
+		       current->pid, current->comm);
+#endif
+}
+
 static int (*check_control)(struct perfctr_cpu_state*);
-int perfctr_cpu_update_control(struct perfctr_cpu_state *state,
-			       const struct perfctr_cpu_control *control)
+int perfctr_cpu_update_control(struct perfctr_cpu_state *state)
 {
 	int err;
 
-#if PERFCTR_INTERRUPT_SUPPORT
-	if( perfctr_cstatus_has_ictrs(state->cstatus) )
-	    perfctr_cpu_isuspend(state);
-#endif
+	debug_no_imode(state);
 	clear_isuspend_cpu(state);
-	state->control = *control;
 	state->cstatus = 0;
-	if( !(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT) ) {
-		/* disallow i-mode counters if we cannot catch the interrupts */
-		if( state->control.nrictrs )
-			return -EPERM;
-	}
+
+	/* disallow i-mode counters if we cannot catch the interrupts */
+	if( !(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
+	    && state->control.nrictrs )
+		return -EPERM;
+
 	err = check_control(state);
 	if( err < 0 )
 		return err;
@@ -1067,7 +1097,6 @@ static void __init finalise_backpatching(void)
 	perfctr_cpu_sample(&state);
 	perfctr_cpu_resume(&state);
 	perfctr_cpu_suspend(&state);
-	perfctr_cpu_update_control(&state, &state.control);
 
 	redirect_call_disable = 1;
 }
@@ -1083,6 +1112,13 @@ static int __init intel_init(void)
 		if( cpu_has_mmx ) {
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5MMX;
 			read_counters = rdpmc_read_counters;
+
+			/* Avoid Pentium Erratum 74. */
+			if( current_cpu_data.x86_model == 4 &&
+			    (current_cpu_data.x86_mask == 4 ||
+			     (current_cpu_data.x86_mask == 3 &&
+			      ((cpuid_eax(1) >> 12) & 0x3) == 1)) )
+				perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
 		} else {
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5;
 			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
@@ -1098,8 +1134,13 @@ static int __init intel_init(void)
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
 		else if( current_cpu_data.x86_model >= 3 )	/* PII or Celeron */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
-		else
+		else {
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
+
+			/* Avoid Pentium Pro Erratum 26. */
+			if( current_cpu_data.x86_mask < 9 )
+				perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
+		}
 		read_counters = rdpmc_read_counters;
 		write_control = p6_write_control;
 		check_control = p6_check_control;
@@ -1117,7 +1158,12 @@ static int __init intel_init(void)
 		rdmsrl(MSR_P4_MISC_ENABLE, misc_enable);
 		if( !(misc_enable & MSR_P4_MISC_ENABLE_PERF_AVAIL) )
 			break;
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4;
+		if( current_cpu_data.x86_model >= 2 )
+			/* Model 2 changed the ESCR Event Mask programming
+			   details for several events. */
+			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M2;
+		else
+			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4;
 		read_counters = rdpmc_read_counters;
 		write_control = p4_write_control;
 		check_control = p4_check_control;
@@ -1255,6 +1301,7 @@ static char wc2_name[] __initdata = "WinChip 2/3";
 static char k7_name[] __initdata = "AMD K7";
 static char vc3_name[] __initdata = "VIA C3";
 static char p4_name[] __initdata = "Intel Pentium 4";
+static char p4m2_name[] __initdata = "Intel Pentium 4 Model 2";
 
 char *perfctr_cpu_name[] __initdata = {
 	[PERFCTR_X86_GENERIC] generic_name,
@@ -1269,6 +1316,7 @@ char *perfctr_cpu_name[] __initdata = {
 	[PERFCTR_X86_AMD_K7] k7_name,
 	[PERFCTR_X86_VIA_C3] vc3_name,
 	[PERFCTR_X86_INTEL_P4] p4_name,
+	[PERFCTR_X86_INTEL_P4M2] p4m2_name,
 };
 
 static void __init perfctr_cpu_init_one(void *ignore)
@@ -1349,6 +1397,20 @@ static inline void disable_nmi_watchdog(void) { }
 
 #endif
 
+static void invalidate_per_cpu_cache(void)
+{
+	/*
+	 * per_cpu_cache[] is initialised to contain "impossible"
+	 * evntsel values guaranteed to differ from anything accepted
+	 * by perfctr_cpu_update_control(). This way, initialisation of
+	 * a CPU's evntsel MSRs will happen automatically the first time
+	 * perfctr_cpu_write_control() executes on it.
+	 * All-bits-one works for all currently supported processors.
+	 * The memset also sets the ids to -1, which is intentional.
+	 */
+	memset(per_cpu_cache, ~0, sizeof per_cpu_cache);
+}
+
 int __init perfctr_cpu_init(void)
 {
 	int err = -ENODEV;
@@ -1398,16 +1460,8 @@ int __init perfctr_cpu_init(void)
 	 */
 	disable_nmi_watchdog();
 	x86_pm_init();
-	/*
-	 * per_cpu_cache[] is initialised to contain "impossible"
-	 * evntsel values guaranteed to differ from anything accepted
-	 * by perfctr_cpu_check_control(). This way, initialisation of
-	 * a CPU's evntsel MSRs will happen automatically the first time
-	 * perfctr_cpu_write_control() executes on it.
-	 * All-bits-one works for all currently supported processors.
-	 * The memset also sets the ids to -1, which is intentional.
-	 */
-	memset(per_cpu_cache, ~0, sizeof per_cpu_cache);
+
+	invalidate_per_cpu_cache();
 
 	perfctr_info.cpu_khz = cpu_khz;
 	/* XXX: TDB */
@@ -1448,13 +1502,22 @@ const char *perfctr_cpu_reserve(const char *service)
 	return 0;
 }
 
+static void perfctr_cpu_clear_one(void *ignore)
+{
+	perfctr_cpu_clear_counters();
+}
+
 void perfctr_cpu_release(const char *service)
 {
 	if( service != current_service ) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
 	} else {
-		/* XXX: clear_counters() on all CPUs */
+		/* power down the counters */
+		invalidate_per_cpu_cache();
+		perfctr_cpu_clear_one(NULL);
+		smp_call_function(perfctr_cpu_clear_one, NULL, 1, 1);
+
 		perfctr_cpu_set_ihandler(NULL);
 		current_service = 0;
 		MOD_DEC_USE_COUNT;

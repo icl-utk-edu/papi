@@ -1,6 +1,6 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * x86-specific compatibility definitions for 2.2/2.4 kernels.
+ * x86-specific compatibility definitions for 2.2/2.4/2.5 kernels.
  *
  * Copyright (C) 2000-2002  Mikael Pettersson
  */
@@ -34,6 +34,19 @@ static inline unsigned int read_cr4(void)
 #define cpu_has_msr	(test_bit(X86_FEATURE_MSR,  boot_cpu_data.x86_capability))
 
 #else	/* 2.4 simulation for 2.2 */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,2,21)
+static inline unsigned int cpuid_eax(unsigned int op)
+{
+	unsigned int eax;
+
+	__asm__("cpuid"
+		: "=a" (eax)
+		: "0" (op)
+		: "bx", "cx", "dx");
+	return eax;
+}
+#endif
 
 #define cpu_has_mmx	(boot_cpu_data.x86_capability & X86_FEATURE_MMX)
 #define cpu_has_msr	(boot_cpu_data.x86_capability & X86_FEATURE_MSR)

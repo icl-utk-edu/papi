@@ -298,6 +298,7 @@ void __vperfctr_resume(struct vperfctr *perfctr)
 		vperfctr_resume(perfctr);
 }
 
+#ifdef CONFIG_SMP
 /* Called from update_one_process() [triggered by timer interrupt].
  * PRE: perfctr == TASK_VPERFCTR(current).
  * Sample the counters but do not suspend them.
@@ -306,11 +307,10 @@ void __vperfctr_resume(struct vperfctr *perfctr)
  */
 void __vperfctr_sample(struct vperfctr *perfctr)
 {
-#ifdef CONFIG_SMP
 	if( --perfctr->sampling_timer == 0 )
 		vperfctr_sample(perfctr);
-#endif
 }
+#endif
 
 /****************************************************************
  *								*
@@ -341,8 +341,8 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct vperfctr_control *argp)
 	if( copy_from_user(&control, argp, sizeof control) )
 		return -EFAULT;
 	sys_vperfctr_stop(perfctr);
-	err = perfctr_cpu_update_control(&perfctr->state.cpu_state,
-					 &control.cpu_control);
+	perfctr->state.cpu_state.control = control.cpu_control;
+	err = perfctr_cpu_update_control(&perfctr->state.cpu_state);
 	if( err < 0 )
 		return err;
 	next_cstatus = perfctr->state.cpu_state.cstatus;
@@ -605,7 +605,9 @@ static void vperfctr_stub_init(void)
 	vperfctr_stub.exit = __vperfctr_exit;
 	vperfctr_stub.suspend = __vperfctr_suspend;
 	vperfctr_stub.resume = __vperfctr_resume;
+#ifdef CONFIG_SMP
 	vperfctr_stub.sample = __vperfctr_sample;
+#endif
 	vperfctr_stub.file_ops = &vperfctr_file_ops;
 	write_unlock(&vperfctr_stub_lock);
 }

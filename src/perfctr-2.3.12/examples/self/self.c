@@ -68,6 +68,7 @@ void print_control(const struct perfctr_cpu_control *control)
 	if( control->evntsel_aux[i] )
 	    printf("evntsel_aux[%u]\t\t0x%08X\n", i, control->evntsel_aux[i]);
     }
+    /* XXX: print control->p4 fields too */
 }
 
 void do_setup(void)
@@ -112,6 +113,7 @@ void do_setup(void)
 	evntsel0 = 0xC0;	/* INSTRUCTIONS_EXECUTED */
 	break;
       case PERFCTR_X86_INTEL_P4:
+      case PERFCTR_X86_INTEL_P4M2:
 	/* PMC0: IQ_COUNTER0 with fast RDPMC */
 	pmc_map0 = 0x0C | (1 << 31);
 	/* IQ_CCCR0: required flags, ESCR 4 (CRU_ESCR0), Enable */
