@@ -1,5 +1,17 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <string.h>
+#include <libgen.h>
+#include <sys/systemcfg.h>
+#include <sys/processor.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <procinfo.h>
+#include <sys/atomic_op.h>
+#include <dlfcn.h>
+#include <stdlib.h>
 #include <string.h>
 #include "pmapi.h"
 /*#include "papi.h"*/
@@ -143,11 +155,24 @@ void main()
   fprintf(fp[0], "#ifndef _PAPI_NATIVE  /* _PAPI_NATIVE */\n");
   fprintf(fp[0], "#define _PAPI_NATIVE\n\n");
   fprintf(fp[0], "#include SUBSTRATE\n\n");
-  fprintf(fp[0], "#define MAX_NATIVE_EVENT %d\n", total);
+  fprintf(fp[0], "#define PAPI_MAX_NATIVE_EVENTS %d\n", total);
 #ifdef _POWER4
   fprintf(fp[0], "#define GROUP_INTS 2\n");
   fprintf(fp[0], "#define MAX_GROUPS (GROUP_INTS * 32)\n");
 #endif
+
+  if (__power_630())
+    fprintf(fp[0], "#define PAPI_POWER_630\n");
+  else{
+    if (__power_604())
+    {
+      if (strstr(pminfo.proc_name,"604e"))
+	     fprintf(fp[0], "#define PAPI_POWER_604e\n");
+      else
+	     fprintf(fp[0], "#define PAPI_POWER_604\n");
+    }
+  }
+
   fprintf(fp[0], "\ntypedef struct native_event_entry{\n");
   fprintf(fp[0], "  /* indicate which counters this event can live on */\n");
   fprintf(fp[0], "  unsigned int selector;\n");
@@ -163,7 +188,7 @@ void main()
   fprintf(fp[0], "  char *description;\n");
   fprintf(fp[0], "} native_event_entry_t;\n\n"); 
 
-  fprintf(fp[0], "extern native_event_entry_t native_table[MAX_NATIVE_EVENT];\n\n"); 
+  fprintf(fp[0], "extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];\n\n"); 
 
   for(i=0;i<total;i++){
   	fprintf(fp[0], "#define PNE_%-40s 0x%x\n", native_table[i].name, NATIVE_MASK+i);
@@ -177,7 +202,7 @@ void main()
 
   /* write into native.c */
   fprintf(fp[1], "#include \"native.h\"\n\n");
-  fprintf(fp[1], "native_event_entry_t native_table[MAX_NATIVE_EVENT] = {");
+  fprintf(fp[1], "native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS] = {");
   for(i=0;i<total;i++){
   	if(i==0)
 		fprintf(fp[1], "\n	{0x%x, {%d", native_table[i].selector, native_table[i].counter_cmd[0]);
