@@ -809,26 +809,25 @@ long long _papi_hwd_get_real_cycles (void)
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   long long retval;
-/*  struct tms buffer; */
+#ifdef PERFCTR16
+  struct tms buffer;
 
-  retval = _papi_hwd_get_virt_cycles(zero);
-  retval = retval / _papi_system_info.hw_info.mhz;
-  return(retval);
-
-  /*
   times(&buffer);
   retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
   return(retval);
-   */
+#else
+  retval = _papi_hwd_get_virt_cycles(zero);
+  retval = retval / _papi_system_info.hw_info.mhz;
+  return(retval);
+#endif
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
+#ifdef PERFCTR16
 /* (NCSA change)
    Reverted back to prior version 2/2/02
 */
-#ifdef PERFCTR16
-
   float usec, cyc;
 
   usec = (float)_papi_hwd_get_virt_usec(zero);
@@ -838,7 +837,6 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 #else
   unsigned long long lcyc;
   hwd_control_state_t *machdep = zero->machdep;
-/*  float usec, cyc; */
 
   lcyc = vperfctr_read_tsc(machdep->self);
   DBG((stderr,"Read virt. cycles is %llu (%p -> %p)\n",lcyc,machdep,machdep->self));
