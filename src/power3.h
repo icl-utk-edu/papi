@@ -7,11 +7,10 @@
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
 
 typedef struct PWR3_pmapi_control {
-   /* Buffer to pass to the kernel to control the counters */
-   pm_prog_t counter_cmd;
-
-   /* Interrupt interval */
-   int timer_ms;
+  /* Buffer to pass to the kernel to control the counters */
+  pm_prog_t counter_cmd;
+/* Space to read the counters */
+  pm_data_t state;
 } PWR3_pmapi_control_t;
 
 /* defines the fields needed by _papi_hwd_allocate_registers

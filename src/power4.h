@@ -12,11 +12,9 @@
 typedef struct PWR4_pmapi_control {
    /* Buffer to pass to the kernel to control the counters */
    pm_prog_t counter_cmd;
-
    int group_id;
-   /* Interrupt interval */
-   int timer_ms;
-
+   /* Space to read the counters */
+   pm_data_t state;
 } PWR4_pmapi_control_t;
 
 typedef struct PWR4_reg_alloc {
