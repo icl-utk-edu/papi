@@ -1,8 +1,8 @@
             ------------------------------------------------------
-                                    libpfm-3.0:
+                                    libpfm-3.1:
 	           a helper library to program the IA-64 PMU 
             ------------------------------------------------------
-	  Copyright (c) 2001-2003 Hewlett-Packard Company
+           Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
 	                Stephane Eranian <eranian@hpl.hp.com>
 	
 

@@ -1,7 +1,7 @@
 /*
  * syst.c - example of a simple system wide monitoring program
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2004 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -71,14 +71,13 @@ fatal_error(char *fmt, ...)
 #else
 #error "you need to figure out the syscall number for sched_setaffinity"
 #endif
+#endif
+
 int
 my_setaffinity(pid_t pid, unsigned int len, unsigned long *mask)
 {
 	return syscall(__NR_sched_setaffinity, pid, len, mask);
 }
-#else
-#define my_setaffinity(pid, len, mask)	sched_setaffinity(pid, len, mask)
-#endif
 
 
 
@@ -86,7 +85,7 @@ int
 main(int argc, char **argv)
 {
 	char **p;
-	unsigned long my_mask;
+	unsigned long my_mask[2];
 	pfarg_reg_t pc[NUM_PMCS];
 	pfarg_reg_t pd[NUM_PMDS];
 	pfarg_context_t ctx[1];
@@ -189,12 +188,17 @@ main(int argc, char **argv)
 	 *
 	 * On RHAS and 2.5/2.6, this can be easily achieved using the
 	 * sched_setaffinity() system call.
+	 *
+	 * The mask needs to be at least 2 long because SLES9 seems to be
+	 * checking against NR_CPUS (128), must have enough bits to cover
+	 * max number of supported CPUS.
 	 */
-	my_mask = 1UL << which_cpu;
+	my_mask[0] = 1UL << which_cpu;
+	my_mask[1] = 0;
 
-	ret = my_setaffinity(getpid(), sizeof(unsigned long), &my_mask);
+	ret = my_setaffinity(getpid(), sizeof(my_mask), my_mask);
 	if (ret == -1) {
-		fatal_error("cannot set affinity to 0x%lx: %s\n", my_mask, strerror(errno));
+		fatal_error("cannot set affinity to CPU%d: %s\n", which_cpu, strerror(errno));
 	}
 	/*
 	 * after the call the task is pinned to which_cpu

@@ -1,7 +1,7 @@
 /*
  * pfmlib_itanium.c : support for Itanium-family PMU
  *
- * Copyright (C) 2001-2003 Hewlett-Packard Co
+ * Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

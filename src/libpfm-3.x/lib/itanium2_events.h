@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002-2004 Hewlett-Packard Co
+ * Copyright (c) 2002-2004 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

@@ -58,8 +58,8 @@ OPTIM=-O2
 # ecc the Intel Itanium Compiler (7.x or 8.x)
 # gcc-3.2, 3.4, 3.1
 #
-#CC=icc
-CC=gcc -Wall
+CC=icc
+#CC=gcc -Wall
 
 CFLAGS=$(OPTIM) -g $(CONFIG_FLAGS)
 LDFLAGS=-L$(TOPDIR)/libpfm

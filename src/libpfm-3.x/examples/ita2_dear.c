@@ -1,7 +1,7 @@
 /*
  * ita2_dear.c - example of how use the D-EAR with the Itanium 2 PMU
  *
- * Copyright (C) 2003 Hewlett-Packard Co
+ * Copyright (c) 2003-2004 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -118,6 +118,16 @@ fatal_error(char *fmt, ...)
 	exit(1);
 }
 
+static void
+warning(char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
 /*
  * print content of sampling buffer
  *
@@ -129,32 +139,44 @@ fatal_error(char *fmt, ...)
 static void
 process_smpl_buffer(void)
 {
+	static unsigned long last_overflow = ~0UL; /* initialize to biggest value possible */
+	static unsigned long last_count;
+	static unsigned long smpl_entry;
+
 	dear_hdr_t *hdr;
 	dear_entry_t *ent;
 	unsigned long pos;
-	unsigned long smpl_entry = 0;
+	unsigned long count;
 	pfm_ita2_pmd_reg_t *reg;
 	int ret;
 	unsigned int i;
-	static unsigned long last_ovfl = ~0UL;
 
 	hdr = (dear_hdr_t *)smpl_vaddr;
 
+	count = hdr->hdr_count;
+
 	/*
-	 * check that we are not diplaying the previous set of samples again.
-	 * Required to take care of the last batch of samples.
+	 * check that we are not inspecting the same set of samples twice. This can happen
+	 * the last time this function is called, i.e., to parse the last set of samples
+	 *
+	 * hdr_overflows: incremented each time the buffer becomes full
+	 * hdr_count    : number of valid samples in the buffer
 	 */
-	if (hdr->hdr_overflows <= last_ovfl && last_ovfl != ~0UL) {
-		printf("skipping identical set of samples %lu <= %lu\n", hdr->hdr_overflows, last_ovfl);
-		return;
+	if (hdr->hdr_overflows == last_overflow && last_count == count && last_overflow != ~0) {
+		warning("skipping identical set of samples ovfl=%lu count=%lu\n",
+			last_overflow, last_count);
+		return;	
 	}
+
+	last_overflow = hdr->hdr_overflows;
+	last_count    = count;
 
 	pos = (unsigned long)(hdr+1);
 
 	/*
 	 * walk through all the entries recored in the buffer
 	 */
-	for(i=0; i < hdr->hdr_count; i++) {
+	for(i=0; i < count; i++) {
 
 		ret = 0;
 

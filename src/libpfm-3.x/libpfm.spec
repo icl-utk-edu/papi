@@ -1,6 +1,6 @@
 Summary: a performance monitoring library for Linux/ia64
 Name: libpfm
-Version: 3.0
+Version: 3.1
 Release: 1
 License: MIT-style
 Group: Development/Libraries
@@ -90,6 +90,9 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_mandir}/man3/*
 
 %changelog
+* Tue Dec 21  2004 Stephane Eranian <eranian@hpl.hp.com>
+- release 3.1 
+- see ChangeLog for actual log
 * Mon Dec 1  2003 Stephane Eranian <eranian@hpl.hp.com>
 - release 3.0 final version
 * Thu Jan 02  2003 Stephane Eranian <eranian@hpl.hp.com>

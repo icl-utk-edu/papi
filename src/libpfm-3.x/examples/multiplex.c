@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <setjmp.h>
 #include <stdarg.h>
 #include <getopt.h>
@@ -205,6 +206,34 @@ update_set(pfm_ctxid_t ctxid, int set_idx)
 		cset->pmds[i].reg_value = 0UL; /* reset for next round */
 	}
 }
+
+
+#if 0
+static void
+update_last_set(pfm_ctxid_t ctxid, int set_idx)
+{
+	event_set_t *cset = events + set_idx;
+	unsigned long cycles;
+	int i;
+
+	/*
+	 * this time we read ALL the counters (including CPU_CYCLES) because we
+	 * need it to scale the last period
+	 */
+	if (perfmonctl(ctxid, PFM_READ_PMDS, cset->pmds, cset->n_counters) == -1) {
+		fatal_error("update_last_set reading set %d\n", set_idx);
+	}
+	
+	cycles = ~0UL - cset->pmds[cset->n_counters-1].reg_value;
+
+	printf("last period = %4.1f%% of full period\n", (cycles*100.0)/options.smpl_period);
+
+	/* this time we scale the value to the length of this last period */
+	for (i=0; i < cset->n_counters-1; i++) {
+		cset->values[i] += (cset->pmds[i].reg_value*cycles)/options.smpl_period;
+	}
+}
+#endif
 
 int
 child(char **arg)
@@ -466,6 +495,14 @@ parent(char **arg)
 	 * extract context id
 	 */
 	ctxid = ctx[0].ctx_fd;
+
+	/*
+	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
+	 * fd not visible to child.
+	 */
+	if (fcntl(ctxid, F_SETFD, FD_CLOEXEC))
+		fatal_error("cannot set CLOEXEC: %s\n", strerror(errno));
+
 
 	ctx_pollfd.fd     = ctxid;
 	ctx_pollfd.events = POLLIN;

@@ -1,4 +1,18 @@
+2004-12-21 Stephane Eranian <eranian@hpl.hp.com>
+	* updated task_smpl.c for CLOEXEC
+
+	* updated examples/syst.c to used two long
+	for cpu mask in affinity call. Needed on SLES9
+
+	* updated all sampling examples to have the correct
+	last_overflow checking. We were missing the last set
+	of samples with a partially filled buffer
+
 2004-06-24 Stephane Eranian <eranian@hpl.hp.com>
+	* fixed pfm_print_event_info(), it was not printing
+	  the correct information
+	* fixed pfm_print_event_info_byindex(), it was not printing
+	  the correct information
 	* fixed Itanium2 events tables L2_FORCE_RECIRC_*
 	and L2_L3ACCESS_* events can only be measured by PMC4
 

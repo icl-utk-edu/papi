@@ -1,7 +1,7 @@
 /*
  * IA-64 compiler specific macros
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2004 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

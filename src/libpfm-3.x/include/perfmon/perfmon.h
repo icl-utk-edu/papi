@@ -2,7 +2,7 @@
  * This file contains the interface description for
  * the perfmon-2.x interface on Linux/ia64.
  *
- * Copyright (C) 2001-2003 Hewlett-Packard Co
+ * Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
  *               Stephane Eranian <eranian@hpl.hp.com>
  */
 
@@ -49,11 +49,6 @@ extern "C" {
 #define PFM_FL_NOTIFY_BLOCK    	 0x01	/* block task on user level notifications */
 #define PFM_FL_SYSTEM_WIDE	 0x02	/* create a system wide context */
 #define PFM_FL_OVFL_NO_MSG	 0x80   /* do not post overflow/end messages for notification */
-
-/*
- * event set flags
- */
-#define PFM_SETFL_EXCL_IDLE      0x01   /* exclude idle task (syswide only) XXX: DO NOT USE YET */
 
 /*
  * PMC flags
@@ -244,6 +239,8 @@ extern int pfm_unregister_buffer_fmt(pfm_uuid_t uuid);
 extern long pfm_mod_fast_read_pmds(struct task_struct *, unsigned long mask[4], unsigned long *addr, struct pt_regs *regs);
 extern long pfm_mod_read_pmds(struct task_struct *, pfarg_reg_t *req, unsigned int nreq, struct pt_regs *regs);
 extern long pfm_mod_write_pmcs(struct task_struct *, pfarg_reg_t *req, unsigned int nreq, struct pt_regs *regs);
+extern int pfm_mod_write_ibrs(struct task_struct *task, void *req, unsigned int nreq, struct pt_regs *regs);
+extern int pfm_mod_write_dbrs(struct task_struct *task, void *req, unsigned int nreq, struct pt_regs *regs);
 
 #endif /* __KERNEL__ */
 

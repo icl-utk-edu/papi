@@ -1,7 +1,7 @@
 /*
  * task_smpl.c - example of a task sampling another one using a randomized sampling period
  *
- * Copyright (C) 2003 Hewlett-Packard Co
+ * Copyright (c) 2003-2004 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -113,9 +113,10 @@ bit_weight(unsigned long x)
 }
 
 static void
-process_smpl_buf(int id, unsigned long smpl_pmd_mask, int need_restart)
+process_smpl_buf(int fd, unsigned long smpl_pmd_mask, int need_restart)
 {
 	static unsigned long last_overflow = ~0UL; /* initialize to biggest value possible */
+	static unsigned long last_count;
 	smpl_hdr_t *hdr = (smpl_hdr_t *)buf_addr;
 	smpl_entry_t *ent;
 	unsigned long count, entry, *reg, pos, msk;
@@ -125,14 +126,24 @@ process_smpl_buf(int id, unsigned long smpl_pmd_mask, int need_restart)
 
 
 	printf("processing %s buffer at %p\n", need_restart==0 ? "leftover" : "", hdr);
-	if (hdr->hdr_overflows <= last_overflow && last_overflow != ~0UL) {
-		warning("skipping identical set of samples %lu <= %lu\n",
-			hdr->hdr_overflows, last_overflow);
-		return;	
-	}
-	last_overflow = hdr->hdr_overflows;
 
 	count = hdr->hdr_count;
+
+	/*
+	 * check that we are not inspecting the same set of samples twice. This can happen
+	 * the last time this function is called, i.e., to parse the last set of samples
+	 *
+	 * hdr_overflows: incremented each time the buffer becomes full
+	 * hdr_count    : number of valid samples in the buffer
+	 */
+	if (hdr->hdr_overflows == last_overflow && last_count == count && last_overflow != ~0) {
+		warning("skipping identical set of samples ovfl=%lu count=%lu\n",
+			last_overflow, last_count);
+		return;	
+	}
+
+	last_overflow = hdr->hdr_overflows;
+	last_count    = count;
 
 	ent   = (smpl_entry_t *)(hdr+1);
 	pos   = (unsigned long)ent;
@@ -143,7 +154,7 @@ process_smpl_buf(int id, unsigned long smpl_pmd_mask, int need_restart)
 	 * can compute the entry size in advance. Perfmon-2 supports variable
 	 * size entries.
 	 */
-	entry_size = sizeof(pfm_default_smpl_entry_t)+(bit_weight(smpl_pmd_mask)<<3);
+	entry_size = sizeof(smpl_entry_t)+(bit_weight(smpl_pmd_mask)<<3);
 
 	while(count--) {
 		printf("entry %ld PID:%d CPU:%d IIP:0x%016lx\n",
@@ -183,7 +194,7 @@ process_smpl_buf(int id, unsigned long smpl_pmd_mask, int need_restart)
 	 * as the task may have disappeared while we were processing
 	 * the samples.
 	 */
-	if (need_restart && perfmonctl(id, PFM_RESTART, 0, 0) == -1) {
+	if (need_restart && perfmonctl(fd, PFM_RESTART, 0, 0) == -1) {
 		if (errno != EBUSY)
 			fatal_error("perfmonctl error PFM_RESTART errno %d\n",errno);
 		else
@@ -206,7 +217,7 @@ mainloop(char **arg)
 	unsigned long sample_period;
 	unsigned long smpl_pmd_mask = 0UL;
 	pid_t pid;
-	int status, ret, id;
+	int status, ret, fd;
 	unsigned int i;
 
 	/*
@@ -356,7 +367,7 @@ mainloop(char **arg)
 	 * extract the file descriptor we will use to
 	 * identify this newly created context
 	 */
-	id = ctx.ctx_arg.ctx_fd;
+	fd = ctx.ctx_arg.ctx_fd;
 
 	/*
 	 * retrieve the virtual address at which the sampling
@@ -364,18 +375,18 @@ mainloop(char **arg)
 	 */
 	buf_addr = ctx.ctx_arg.ctx_smpl_vaddr;
 
-	printf("context [%d] buffer mapped @%p\n", id, buf_addr);
+	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
 
 	/*
 	 * Now program the registers
 	 */
-	if (perfmonctl(id, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count) == -1) {
+	if (perfmonctl(fd, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count) == -1) {
 		fatal_error("perfmonctl error PFM_WRITE_PMCS errno %d\n",errno);
 	}
 	/*
 	 * initialize the PMDs
 	 */
-	if (perfmonctl(id, PFM_WRITE_PMDS, pd, inp.pfp_event_count) == -1) {
+	if (perfmonctl(fd, PFM_WRITE_PMDS, pd, inp.pfp_event_count) == -1) {
 		fatal_error("perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
 	}
 
@@ -385,9 +396,17 @@ mainloop(char **arg)
 	if ((pid=fork()) == -1) fatal_error("Cannot fork process\n");
 
 	/*
-	 * and launch the child code
+	 * In order to get the PFM_END_MSG message, it is important
+	 * to ensure that the child task does not inherit the file
+	 * descriptor of the context. By default, file descriptor
+	 * are inherited during exec(). We explicitely close it
+	 * here. We could have set it up through fcntl(FD_CLOEXEC)
+	 * to achieve the same thing.
 	 */
-	if (pid == 0) child(arg);
+	if (pid == 0) {
+		close(fd);
+		child(arg);
+	}
 
 	/*
 	 * wait for the child to exec
@@ -406,14 +425,14 @@ mainloop(char **arg)
 	 * attach context to stopped task
 	 */
 	load_args.load_pid = pid;
-	if (perfmonctl(id, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
+	if (perfmonctl(fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
 		fatal_error("perfmonctl error PFM_LOAD_CONTEXT errno %d\n",errno);
 	}
 	/*
 	 * activate monitoring for stopped task.
 	 * (nothing will be measured at this point
 	 */
-	if (perfmonctl(id, PFM_START, NULL, 0) == -1) {
+	if (perfmonctl(fd, PFM_START, NULL, 0) == -1) {
 		fatal_error(" perfmonctl error PFM_START errno %d\n",errno);
 	}
 	/*
@@ -429,13 +448,13 @@ mainloop(char **arg)
 		/*
 		 * wait for overflow/end notification messages
 		 */
-		ret = read(id, &msg, sizeof(msg));
+		ret = read(fd, &msg, sizeof(msg));
 		if (ret == -1) {
 			fatal_error("cannot read perfmon msg: %s\n", strerror(errno));
 		}
 		switch(msg.pfm_gen_msg.msg_type) {
 			case PFM_MSG_OVFL: /* the sampling buffer is full */
-				process_smpl_buf(id, smpl_pmd_mask, 1);
+				process_smpl_buf(fd, smpl_pmd_mask, 1);
 				ovfl_count++;
 				break;
 			case PFM_MSG_END: /* monitored task terminated */
@@ -453,12 +472,12 @@ terminate_session:
 	/*
 	 * check for any leftover samples
 	 */
-	process_smpl_buf(id, smpl_pmd_mask, 0);
+	process_smpl_buf(fd, smpl_pmd_mask, 0);
 
 	/*
 	 * destroy perfmon context
 	 */
-	close(id);
+	close(fd);
 
 	printf("%lu samples collected in %lu buffer overflows\n", collect_samples, ovfl_count);
 
