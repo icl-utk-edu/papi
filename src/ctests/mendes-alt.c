@@ -32,6 +32,10 @@ int main(argc, argv)
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
+  for(i=0;i<MAX;i++) {
+    a[i]=0.0; b[i]=0.;
+  }
+
     for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
       PAPI_values1[i] = PAPI_values2[i] = 0;
 
