@@ -110,10 +110,10 @@ hwi_search_t findem_r10k[] = {
    {PAPI_CSR_TOT, {0, {NATIVE_MASK | 20, PAPI_NULL}}},  /* Total store conditional */
    {PAPI_BR_MSP, {0, {NATIVE_MASK | 24, PAPI_NULL}}},   /* Cond. branch inst. mispred */
    {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
+   {PAPI_TOT_INS, {0, {NATIVE_MASK | 17, PAPI_NULL}}},  /* Total inst. executed */
    {PAPI_FP_INS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
    {PAPI_FP_OPS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
-   {PAPI_LD_INS, {0, {NATIVE_MASK | 8, PAPI_NULL}}},    /* Loads executed */
+   {PAPI_LD_INS, {0, {NATIVE_MASK | 18, PAPI_NULL}}},    /* Loads executed */
    {PAPI_SR_INS, {0, {NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
    {PAPI_BR_INS, {0, {NATIVE_MASK | 6, PAPI_NULL}}},    /* Branch inst. executed */
    {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},   /* Total cycles */

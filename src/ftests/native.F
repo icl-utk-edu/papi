@@ -168,10 +168,6 @@ C     CPU cyc
       n = 2
 #endif
 
-      print *, eventname(1)
-      print *, eventname(2)
-      print *, eventname(3)
-      print *, eventname(4)
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
