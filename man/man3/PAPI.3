@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI 3 "March, 2005" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI \- Performance Application Programming Interface
@@ -123,6 +123,21 @@ See individual functions for details on usage and support.
 .BR PAPI_unregister_thread(3) " - inform PAPI that a previously registered thread is disappearing"
 .BR PAPI_write(3) " - write counter values into counters"
 .fi
+
+.SH PAPI Utility Commands 
+A collection of simple utility commands is available in the \\utils directory.
+See individual utilities for details on usage.
+.LP
+.nf
+.BR avail(1) " - gprovides availability and detail information for PAPI preset events"
+.BR clockres(1) " - provides availability and detail information for PAPI preset events"
+.BR cost(1) " - provides availability and detail information for PAPI preset events"
+.BR command_line(1) " - executes PAPI preset or native events from the command line"
+.BR event_chooser(1) " - given a list of named events, lists other events that can be counted with them"
+.BR mem_info(1) " - provides information on the memory architecture of the current processor"
+.BR native_avail(1) " - provides detailed information for PAPI native events"
+.fi
+
 
 .SH SEE ALSO
 The PAPI Web site: http://icl.cs.utk.edu/papi
