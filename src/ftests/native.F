@@ -199,19 +199,24 @@ C     Lines out
       end if
 #endif
 
-#if defined(linux) && defined(__ia64__) && defined(ITANIUM2)
-      call ftest_fail(__FILE__,__LINE__,'Native events not supported',PAPI_ESBSTR)
-#endif
 #if defined(linux) && defined(__ia64__)
 C     Data mem refs
-      nativees = 516
+#if defined(ITANIUM2)
+      nativees = 324
+#else
+      nativees = 132 
+#endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     Lines out
-      nativees = 1541
+#if defined(ITANIUM2)
+      nativees = 291
+#else
+      nativees = 131
+#endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -359,8 +364,13 @@ C     call sleep(1)
       print *, "DCU Lines out              : ", values(2)
 #endif
 #if defined(linux) && defined(__ia64__)
+#if defined(ITANIUM2)
+      print *, "L1 Instruction Cache Reads  : ", values(1)
+      print *, "L1 Data Cache Reads         : ", values(2)
+#else
       print *, "Execution latency stall cyc        : ", values(1)
       print *, "Combined execution stall cycles    : ", values(2)
+#endif
 #endif
 
 #if (defined(mips) && defined(sgi))
