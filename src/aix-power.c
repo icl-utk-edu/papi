@@ -25,7 +25,11 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Total Cache misses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
+#ifndef PMTOOLKIT_1_2
   {0,{"PM_SNOOP",0,0,0,0,0,0,0}},	
+#else /* PMTOOLKIT_1_2 */
+  {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
+#endif /* PMTOOLKIT_1_2 */
   /* Req. shared cache line*/
   {0,{0,0,0,0,0,0,0,0}},		 	
   /* Req. clean cache line*/
@@ -131,7 +135,11 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* IPS */
   {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},			
   /* load/store*/
+#ifndef PMTOOLKIT_1_2
   {0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}},		
+#else /* PMTOOLKIT_1_2 */
+  {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
+#endif /* PMTOOLKIT_1_2 */
   /* Synchronization inst. executed*/
   {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
   /* L1 data cache hits */
@@ -236,7 +244,11 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Total Cache Dmisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
+#ifndef PMTOOLKIT_1_2
   {0,{"PM_SNOOP",0,0,0,0,0,0,0}},	
+#else /* PMTOOLKIT_1_2 */
+  {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
+#endif /* PMTOOLKIT_1_2 */
   /* Req. shared cache line*/
   {0,{"PM_LD_MISS_DC_SHR",0,0,0,0,0,0,0}},		 	
   /* Req. clean cache line*/
@@ -342,7 +354,11 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   /* IPS */
   {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},
   /* load/stores executed*/
+#ifndef PMTOOLKIT_1_2
   {0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}},		
+#else /* PMTOOLKIT_1_2 */
+  {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
+#endif /* PMTOOLKIT_1_2 */
   /* Synchronization inst. executed */
   {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
   /* L1 data cache hits */
@@ -429,7 +445,11 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
 
 static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
   /* L1 Cache Dmisses */
+#ifndef PMTOOLKIT_1_2
   {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0,0}},
+#else /* PMTOOLKIT_1_2 */
+  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0,0}},
+#endif /* PMTOOLKIT_1_2 */
   /* L1 Cache Imisses */
   {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
   /* L2 Cache Dmisses*/
@@ -441,7 +461,11 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L1 Total Cache misses */
+#ifndef PMTOOLKIT_1_2
   {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0}},
+#else /* PMTOOLKIT_1_2 */
+  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0}},
+#endif /* PMTOOLKIT_1_2 */
   /* L2 Total Cache misses*/
   {0,{0,0,0,0,0,0,0,0}},
   /* L3 Total Cache Dmisses*/
@@ -477,7 +501,11 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* L1 Load misses */
   {0,{"PM_LD_MISS_L1",0,0,0,0,0,0,0}},			
   /* L1 Store misses */
+#ifndef PMTOOLKIT_1_2
   {0,{"PM_ST_L1MISS",0,0,0,0,0,0,0}},			
+#else /* PMTOOLKIT_1_2 */
+  {0,{"PM_ST_MISS",0,0,0,0,0,0,0}},			
+#endif /* PMTOOLKIT_1_2 */
   /* L2 Load misses */
   {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
   /* L2 Store misses */
@@ -1643,7 +1671,11 @@ void _papi_hwd_unlock(void)
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
 
+#ifndef PMTOOLKIT_1_2
 papi_mdi _papi_system_info = { "$Id$",
+#else /* PMTOOLKIT_1_2 */
+papi_mdi _papi_system_info = { "$Id$",
+#endif /* PMTOOLKIT_1_2 */
 			      1.0, /*  version */
 			       -1,  /*  cpunum */
 			       { 
