@@ -59,10 +59,19 @@ On success, this function returns
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
-One or more of the arguments is invalid.
+The debuglevel is invalid.
+
+.SH EXAMPLES
+.nf
+.if t .ft CW
+  if ( PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK )
+     handle_error();
+.if t .ft CW
+.fi
 
 .SH BUGS
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_set_opt "(3)" 
+.BR PAPI_set_opt "(3), "
+.BR PAPI_get_opt "(3) "
