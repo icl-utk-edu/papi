@@ -446,7 +446,7 @@ read the documentation carefully.  */
    int   PAPI_set_debug(int level);
    int   PAPI_set_domain(int domain);
    int   PAPI_set_granularity(int granularity);
-   int   PAPI_set_multiplex(int *);
+   int   PAPI_set_multiplex(int EventSet);
    int   PAPI_set_opt(int option, PAPI_option_t * ptr);
    int   PAPI_set_thr_specific(int tag, void *ptr);
    void  PAPI_shutdown(void);

@@ -883,14 +883,11 @@ int PAPI_set_debug(int level)
    }
 }
 
-int PAPI_set_multiplex(int *EventSet)
+int PAPI_set_multiplex(int EventSet)
 {
    PAPI_option_t mpx;
 
-   if (EventSet == NULL)
-      papi_return(PAPI_EINVAL);
-
-   mpx.multiplex.eventset = *EventSet;
+   mpx.multiplex.eventset = EventSet;
    mpx.multiplex.us = PAPI_MPX_DEF_US;
    mpx.multiplex.max_degree = PAPI_MPX_DEF_DEG;
 
