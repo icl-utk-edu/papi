@@ -6,82 +6,96 @@
 
 /* Non-retirement events */
 
+/* branch_retired */
 #define BR_RET_ESCR 0x6
 #define BR_RET_ESCR_MASK_NT_PR 0x1
 #define BR_RET_ESCR_MASK_NT_MPR 0x2
 #define BR_RET_ESCR_MASK_T_PR 0x4
 #define BR_RET_ESCR_MASK_T_MPR 0x8
 #define BR_RET_CCCR 0x5
-/* ESCR2: 12, 13, 16
-   ESCR3: 14, 15, 17 */
+/* CRU_ESCR2: 12, 13, 16
+   CRU_ESCR3: 14, 15, 17 */
 
+/* mispred_branch_retired */
 #define MPR_BR_RET_ESCR 0x3
 #define MPR_BR_RET_ESCR_MASK_NBOGUS 0x1
 #define MPR_BR_RET_CCCR 0x4
-/* ESCR0: 12, 13, 16
-   ESCR1: 14, 15, 17 */
+/* CRU_ESCR0: 12, 13, 16
+   CRU_ESCR1: 14, 15, 17 */
 
+/* TC_deliver_mode */
 #define TC_DLVR_ESCR 0x1
 #define TC_DLVR_ESCR_MASK_DLVR 0x4
 #define TC_DLVR_ESCR_MASK_BUILD 0x20
 #define TC_DLVR_CCCR 0x1
-/* ESCR0: 4, 5
-   ESCR1: 6, 7 */
+/* TC_ESCR0: 4, 5
+   TC_ESCR1: 6, 7 */
 
+/* BPU_fetch_request */
 #define BPU_FETCH_RQST_ESCR 0x3
 #define BPU_FETCH_RQST_ESCR_MASK_TCMISS 0x1
 #define BPU_FETCH_RQST_CCCR 0x0
-/* ESCR0: 0, 1
-   ESCR1: 2, 3 */
+/* BPU_ESCR0: 0, 1
+   BPU_ESCR1: 2, 3 */
 
+/* ITLB_reference */
 #define ITLB_REF_ESCR 0x18
 #define ITLB_REF_ESCR_MASK_HIT 0x1
 #define ITLB_REF_ESCR_MASK_MISS 0x2
 #define ITLB_REF_ESCR_MASK_UCHIT 0x4
 #define ITLB_REF_CCCR 0x03
-/* ESCR0: 0, 1
-   ESCR1: 2, 3 */
+/* ITLB_ESCR0: 0, 1
+   ITLB_ESCR1: 2, 3 */
 
+/* memory_cancel */
 #define MEM_CANCEL_ESCR 0x2
 #define MEM_CANCEL_ESCR_MASK_ST_RB_FULL 0x4
 #define MEM_CANCEL_ESCR_MASK_64K_CONF 0x8
 #define MEM_CANCEL_CCCR 0x5
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* DAC_ESCR0: 8, 9
+   DAC_ESCR1: 10, 11 */
 
+/* memory_complete */
 #define MEM_CMPL_ESCR 0x8
 #define MEM_CMPL_ESCR_MASK_LSC 0x1
 #define MEM_CMPL_ESCR_MASK_SSC 0x2
 #define MEM_CMPL_CCCR 0x2
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* SAAT_ESCR0: 8, 9
+   SAAT_ESCR1: 10, 11 */
 
+/* load_port_replay */
 #define LDPRT_RPL_ESCR 0x4
 #define LDPRT_RPL_ESCR_MASK_SPLIT_LD 0x2
 #define LDPRT_RPL_CCCR 0x2
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* SAAT_ESCR0: 8, 9
+   SAAT_ESCR1: 10, 11 */
 
+/* store_port_replay */
 #define SRPRT_RPL_ESCR 0x4
 #define SRPRT_RPL_ESCR_MASK_SPLIT_SR 0x2
 #define SRPRT_RPL_CCCR 0x2
+/* SAAT_ESCR0: 8, 9
+   SAAT_ESCR1: 10, 11 */
 
+/* MOB_load_replay */
 #define MOB_LD_RPL_ESCR 0x3
 #define MOB_LD_RPL_ESCR_MASK_NO_STA 0x2
 #define MOB_LD_RPL_ESCR_MASK_NO_STD 0x8
 #define MOB_LD_RPL_ESCR_MASK_PARTIAL_DATA 0x10
 #define MOB_LD_RPL_ESCR_MASK_UNALGN_ADDR 0x20
 #define MOB_LD_RPL_CCCR 0x2
-/* ESCR0: 0, 1
-   ESCR1: 2, 3 */
+/* MOB_ESCR0: 0, 1
+   MOB_ESCR1: 2, 3 */
 
+/* page_walk_type */
 #define PG_WLK_ESCR 0x1
 #define PG_WLK_ESCR_MASK_DTMISS 0x1
 #define PG_WLK_ESCR_MASK_ITMISS 0x2
 #define PG_WLK_CCCR 0x4
-/* ESCR0: 0, 1
-   ESCR1: 2, 3 */
+/* PMH_CR_ESCR0: 0, 1
+   PMH_CR_ESCR1: 2, 3 */
 
+/* BSQ_cache_reference */
 #define BSQ_CREF_ESCR 0xc
 #define BSQ_CREF_ESCR_MASK_2L_HT_SHR 0x1
 #define BSQ_CREF_ESCR_MASK_2L_HT_EXC 0x2
@@ -89,9 +103,10 @@
 #define BSQ_CREF_ESCR_MASK_2L_RD_MISS 0x100
 #define BSQ_CREF_ESCR_MASK_2L_WR_MISS 0x400
 #define BSQ_CREF_CCCR 0x7
-/* ESCR0: 0, 1
-   ESCR1: 2, 3 */
+/* BSU_CR_ESCR0: 0, 1
+   BSU_CR_ESCR1: 2, 3 */
 
+/* IOQ_allocation */
 #define IOQ_ALLOC_ESCR 0x3
 #define IOQ_ALLOC_ESCR_MASK_ALL_READ 0x20
 #define IOQ_ALLOC_ESCR_MASK_ALL_WRITE 0x40
@@ -101,8 +116,9 @@
 #define IOQ_ALLOC_ESCR_MASK_OTHER 0x4000
 #define IOQ_ALLOC_ESCR_MASK_PREFETCH 0x8000
 #define IOQ_ALLOC_CCCR 0x6
-/* ESCR0: 0, 1 */
+/* MSR_FSB_ESCR0: 0, 1 */
 
+/* FSB_data_activity */
 #define FSB_DATA_ESCR 0x17
 #define FSB_DATA_ESCR_MASK_DRDY_DRV 0x1
 #define FSB_DATA_ESCR_MASK_DRDY_OWN 0x2
@@ -111,9 +127,10 @@
 #define FSB_DATA_ESCR_MASK_DBSY_OWN 0x10
 #define FSB_DATA_ESCR_MASK_DBSY_OTHER 0x20
 #define FSB_DATA_CCCR 0x6
-/* ESCR0: 0, 1
-   ESCR1: 2, 3 */
+/* MSR_FSB_ESCR0: 0, 1
+   MSR_FSB_ESCR1: 2, 3 */
 
+/* BSQ_allocation */
 #define BSQ_ALLOC_ESCR 0x5
 #define BSQ_ALLOC_ESCR_MASK_RQ_TYPE0 0x1
 #define BSQ_ALLOC_ESCR_MASK_RQ_TYPE1 0x2
@@ -129,8 +146,9 @@
 #define BSQ_ALLOC_ESCR_MASK_MEM_TYPE1 0x1000
 #define BSQ_ALLOC_ESCR_MASK_MEM_TYPE2 0x2000
 #define BSQ_ALLOC_CCCR 0x7
-/* ESCR0: 0, 1 */
+/* MSR_BSU_ESCR0: 0, 1 */
 
+/* x87_assist */
 #define X87_ASSIST_ESCR 0x3
 #define X87_ASSIST_ESCR_MASK_FPSU 0x1
 #define X87_ASSIST_ESCR_MASK_FPSO 0x2
@@ -138,81 +156,93 @@
 #define X87_ASSIST_ESCR_MASK_POAU 0x8
 #define X87_ASSIST_ESCR_MASK_PREA 0x10
 #define X87_ASSIST_CCCR 0x5
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR2: 12, 13, 16 */
+/* MSR_CRU_ESCR3: 14, 15, 17 */
 
+/* SSE_input_assist */
 #define SSE_ASSIST_ESCR 0x34
 #define SSE_ASSIST_ESCR_MASK_ALL 0x8000
 #define SSE_ASSIST_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* packed_SP_uop */
 #define PACKED_SP_UOP_ESCR 0x8
 #define PACKED_SP_UOP_ESCR_MASK_ALL 0x8000
 #define PACKED_SP_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* packed_DP_uop */
 #define PACKED_DP_UOP_ESCR 0xC
 #define PACKED_DP_UOP_ESCR_MASK_ALL 0x8000
 #define PACKED_DP_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* scalar_SP_uop */
 #define SCALAR_SP_UOP_ESCR 0xA
 #define SCALAR_SP_UOP_ESCR_MASK_ALL 0x8000
 #define SCALAR_SP_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* scalar_DP_uop */
 #define SCALAR_DP_UOP_ESCR 0xE
 #define SCALAR_DP_UOP_ESCR_MASK_ALL 0x8000
 #define SCALAR_DP_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   USER1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* 64bit_MMX_uop */
 #define MMX_64_UOP_ESCR 0x2
 #define MMX_64_UOP_ESCR_MASK_ALL 0x8000
 #define MMX_64_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* 128bit_MMX_uop */
 #define MMX_128_UOP_ESCR 0x1A
 #define MMX_128_UOP_ESCR_MASK_ALL 0x8000
 #define MMX_128_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* x87_FP_uop */
 #define X87_FP_UOP_ESCR 0x4
 #define X87_FP_UOP_ESCR_MASK_ALL 0x8000
 #define X87_FP_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* x87_SIMD_moves_uop */
 #define X87_SIMD_UOP_ESCR 0x2E
 #define X87_SIMD_UOP_ESCR_MASK_ALLP0 0x8
 #define X87_SIMD_UOP_ESCR_MASK_ALLP2 0x10
 #define X87_SIMD_UOP_CCCR 0x1
-/* ESCR0: 8, 9
-   ESCR1: 10, 11 */
+/* MSR_FIRM_ESCR0: 8, 9
+   MSR_FIRM_ESCR1: 10, 11 */
 
+/* machine_clear */
 #define MACHINE_CLEAR_ESCR 0x2
 #define MACHINE_CLEAR_ESCR_MASK_CLEAR 0x1
 #define MACHINE_CLEAR_ESCR_MASK_MOCLEAR 0x4
 #define MACHINE_CLEAR_ESCR_MASK_SMCLEAR 0x8
 #define MACHINE_CLEAR_CCCR 0x5
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR2: 12, 13, 16
+   MSR_CRU_ESCR3: 14, 15, 17 */
 
 /* At-retirement events */
 
+/* front_end_events */
 #define FRONT_END_ESCR 0x8
 #define FRONT_END_ESCR_MASK_NBOGUS 0x1
 #define FRONT_END_ESCR_MASK_BOGUS 0x2
 #define FRONT_END_CCCR 0x5
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR2: 12, 13, 16
+   MSR_CRU_ESCR3: 14, 15, 17 */
 
+/* execution_event */
 #define EXECUTION_ESCR 0xC
 #define EXECUTION_ESCR_MASK_NBOGUS0 0x1
 #define EXECUTION_ESCR_MASK_NBOGUS1 0x2
@@ -223,44 +253,52 @@
 #define EXECUTION_ESCR_MASK_BOGUS2 0x40
 #define EXECUTION_ESCR_MASK_BOGUS3 0x80
 #define EXECUTION_CCCR 0x5
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR2: 12, 13, 16
+   MSR_CRU_ESCR3: 14, 15, 17 */
 
+/* replay_event */
 #define REPLAY_ESCR 0x9
 #define REPLAY_ESCR_MASK_NBOGUS 0x1
 #define REPLAY_ESCR_MASK_BOGUS 0x2
 #define REPLAY_CCCR 0x5
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR2: 12, 13, 16
+   MSR_CRU_ESCR3: 14, 15, 17 */
 
+/* instr_retired */
 #define INSTR_RET_ESCR 0x2
 #define INSTR_RET_ESCR_MASK_NBOGUSNTAG 0x1
 #define INSTR_RET_ESCR_MASK_NBOGUSTAG 0x2
 #define INSTR_RET_ESCR_MASK_BOGUSNTAG 0x4
 #define INSTR_RET_ESCR_MASK_BOGUSTAG 0x8
 #define INSTR_RET_CCCR 0x4
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR0: 12, 13, 16
+   MSR_CRU_ESCR1: 14, 15, 17 */
 
+/* uops_retired */
 #define UOPS_RET_ESCR 0x1
 #define UOPS_RET_ESCR_MASK_NBOGUS 0x1
 #define UOPS_RET_ESCR_MASK_BOGUS 0x2
 #define UOPS_RET_CCCR 0x4
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_CRU_ESCR0: 12, 13, 16
+   MSR_CRU_ESCR1: 14, 15, 17 */
 
+/* uop_type */
 #define UOP_TYPE_ESCR 0x2
 #define UOP_TYPE_ESCR_MASK_TAGLOADS 0x2
 #define UOP_TYPE_ESCR_MASK_TAGSTORES 0x4
 #define UOP_TYPE_CCCR 0x2
-/* ESCR2: 12, 13, 16 */
-/* ESCR3: 14, 15, 17 */
+/* MSR_RAT_ESCR0: 12, 13, 16
+   MSR_RAT_ESCR1: 14, 15, 17 */
 
 /* ESCR bit fields */
 
 #define ESCR_EVENT_SEL(a) (a << 25)
+#define EVENT_OF(a) ((a >> 25) & 0x3f)
+
 #define ESCR_EVENT_MASK(a) (a << 9)
 #define ESCR_TAG_VAL(a) (a << 5)
+#define EVENTMASKTAG_OF(a) ((a >> 9) & 0xffff)
+
 #define ESCR_TAG_ENABLE (1 << 4)
 #define ESCR_T0_OS (1 << 3)
 #define ESCR_T0_USR (1 << 2)
@@ -271,6 +309,8 @@
 
 #define CCCR_ENABLE (1 << 12)
 #define CCCR_ESCR_SEL(a) (a << 13)
+#define ESCR_OF(a) ((a >> 13) & 0x7)
+
 #define CCCR_THR_ANY 0x3
 #define CCCR_THR_MODE(a) (a << 16)
 #define CCCR_COMPARE (1 << 18)
@@ -284,7 +324,7 @@
 #define CCCR_OVF (1 << 31)
 
 /* Old defs */
-
+/*
 #define EVENT(a) ESCR_EVENT_SEL(a)
 #define EVENTMASK(a) ESCR_EVENT_MASK(a)
 #define ENABLE CCCR_ENABLE
@@ -293,6 +333,7 @@
 #define COMPARE CCCR_COMPARE
 #define COMPLEMENT CCCR_COMPLEMENT
 #define THRESHOLD(a) CCCR_THRESHOLD(a)
+*/
 
 #define COUNTER(a) (1 << a)
 #define NBOGUSNTAG (1 << 9)
@@ -302,4 +343,14 @@
 #define PEBS_L2_MISS (1 << 1)
 #define PEBS_MV_LOAD (1)
 #define PEBS_MV_STORE (1 << 1)
+
+/* Counter Groups */
+#define MSR_BPU_COUNTER01 COUNTER(0) | COUNTER(1)
+#define MSR_BPU_COUNTER23 COUNTER(2) | COUNTER(3)
+#define MSR_MS_COUNTER01  COUNTER(4) | COUNTER(5)
+#define MSR_MS_COUNTER23  COUNTER(6) | COUNTER(7)
+#define MSR_FLAME_COUNTER01  COUNTER(8) | COUNTER(9)
+#define MSR_FLAME_COUNTER23  COUNTER(10) | COUNTER(11)
+#define MSR_IQ_COUNTER014  COUNTER(12) | COUNTER(13) | COUNTER(16)
+#define MSR_IQ_COUNTER235  COUNTER(14) | COUNTER(15) | COUNTER(17)
 
