@@ -6,68 +6,61 @@ OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o multiplex.o \
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 
-	all: showconf $(LIBS) fpapi.h examples
+all: showconf $(LIBS) fpapi.h examples
 
-	showconf:
+showconf:
 		@echo; 
 		@echo "Host architecture: $(DESCR)"; 
 		@echo "Host substrate   : $(SUBSTR).c"; 
 		@echo "Host examples    : $(TARGETS)";
 		@echo
 
-	static: $(LIBRARY)
+static: $(LIBRARY)
 
-	shared: $(SHLIB)
+shared: $(SHLIB)
 
-	$(LIBRARY): $(OBJECTS) 
-		ar ruv $(LIBRARY) $(OBJECTS) 
+$(LIBRARY): $(OBJECTS) 
+	ar ruv $(LIBRARY) $(OBJECTS) 
 
-	$(SHLIB): $(SOURCES) 
-		$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
+$(SHLIB): $(SOURCES) 
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
 
-	papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
-		$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
-	papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
-		$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.c
-	PAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
-		$(CPP) -DFORTRANCAPS papi_fwrappers.c > PAPI_FWRAPPERS.c
+papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.cPAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANCAPS papi_fwrappers.c > PAPI_FWRAPPERS.c
 
-	papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
-	papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o
-	papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
-	PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o
-	papi.o: papi.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o
-	papi_hl.o: papi_hl.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o
-	extras.o: extras.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o
-	multiplex.o: multiplex.c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o
-	$(SUBSTR).o: $(SUBSTR).c $(HEADERS)
-		$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o
-	genpapifdef: genpapifdef.c $(LIBRARY)
-		$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
-	fpapi.h: genpapifdef
-		./genpapifdef > fpapi.h
+papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
 
-	examples: tests ftests
+papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS) $(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
 
-	test: examples
-		tests/zero
+PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o papi.o: papi.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o papi_hl.o: papi_hl.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o extras.o: extras.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o multiplex.o: multiplex.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o genpapifdef: genpapifdef.c $(LIBRARY)
+	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
 
-	fulltest: examples
-		sh run_tests.sh
+fpapi.h: genpapifdef
+	./genpapifdef > fpapi.h
 
-	tests: null
-		cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' $(TARGETS)
+examples: tests ftests
 
-	ftests: null
-		cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)"
+test: examples
+	tests/zero
+
+fulltest: examples
+	sh run_tests.sh
+
+tests: null
+	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' $(TARGETS)
+
+ftests: null
+	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)"
 
 clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
