@@ -5,7 +5,8 @@
 PAPI \- Performance Application Programming Interface
 
 .SH SYNOPSIS
-High Level Functions \- Simple interface for single thread applications
+.B High Level Functions 
+\- Simple interface for single thread applications
 .LP
 .nf
 .BR "PAPI_num_counters" (3)
@@ -19,13 +20,14 @@ High Level Functions \- Simple interface for single thread applications
 Note that when using the high-level interface the use of 
 .BR PAPI_library_init (3)
 to initialize the library is optional. If, however, explicit initialization
-is not made a call to either of
+is not made, either of
 .BR PAPI_flops "(3) or " PAPI_num_counters (3)
 .I must
 be called before any other call to a PAPI function.
 
 
-Low Level Functions \- Advanced interface for all applications and performance tools
+.B Low Level Functions 
+\- Advanced interface for all applications and performance tools
 
 .\" The layout of the following list is that functions that are described
 .\" on the same man page are listed in the same group. The order of appearance
@@ -46,7 +48,7 @@ Low Level Functions \- Advanced interface for all applications and performance t
 .BR "PAPI_get_real_virt_cyc" "(3), " "PAPI_get_real_virt_usec" "(3)"
 .BR "PAPI_library_init" "(3)"
 .BR "PAPI_list_events" "(3)"
-.BR "PAPI_lock" "(3), " "PAPI_unlock" "(3)"
+.\" .BR "PAPI_lock" "(3), " "PAPI_unlock" "(3)"   ??obsolete??
 .BR "PAPI_multiplex_init" "(3)"
 .BR "PAPI_perror" "(3), " "PAPI_strerror" "(3)"
 .BR "PAPI_profil" "(3), " "PAPI_sprofil" "(3)"
@@ -55,14 +57,14 @@ Low Level Functions \- Advanced interface for all applications and performance t
 .BR "PAPI_query_all_events_verbose" "(3)"
 .BR "PAPI_rem_event" "(3), " "PAPI_rem_events" "(3), " "PAPI_rem_pevent" "(3)"
 .BR "PAPI_reset" "(3)"
-.BR "PAPI_restore" "(3), " "PAPI_save" "(3)"
+.\" .BR "PAPI_restore" "(3), " "PAPI_save" "(3)"   ??obsolete??
 .BR "PAPI_set_debug" "(3)"
 .BR "PAPI_set_domain" "(3)"
 .BR "PAPI_set_granularity" "(3)"
 .BR "PAPI_shutdown" "(3)"
 .BR "PAPI_start" "(3), " "PAPI_stop" "(3)"
 .BR "PAPI_state" "(3)"
-.BR "PAPI_thread_init" "(3)"
+.BR "PAPI_thread_id" "(3), " "PAPI_thread_init" "(3)"
 .BR "PAPI_write" "(3)"
 .fi
 
