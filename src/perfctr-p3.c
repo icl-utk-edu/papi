@@ -489,9 +489,12 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
    for(i = 0; i < natNum; i++) {
-      index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
-      event_list[i].ra_bits = native_table[index].resources;
-      event_list[i].ra_selector = event_list[i].ra_bits.selector;
+      /* retrieve the mapping information about this native event */
+      _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
+
+      /* make sure register allocator only looks at legal registers */
+      event_list[i].ra_selector = event_list[i].ra_bits.selector & ALLCNTRS;
+
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
       for(j = 0; j < MAX_COUNTERS; j++) {
