@@ -13,8 +13,8 @@ C ****************************************************************************
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
-      INTEGER i,j,k,retval,nchr,numevents,errorcode,EventSet
-      CHARACTER*(PAPI_MAX_STR_LEN)  errorstring,vstring,mstring
+      INTEGER i,j,k,retval,nchr,numevents,EventSet
+      CHARACTER*(PAPI_MAX_STR_LEN)  vstring,mstring
 C   PAPI values of the counters
       INTEGER*8 values(2)
       INTEGER*8 starttime,stoptime
@@ -46,14 +46,16 @@ C     Create the eventset
 C   Total cycles
       call PAPIf_add_event(EventSet,PAPI_TOT_CYC,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'PAPIf_add_event PAPI_TOT_CYC failed')
+        call ftests_perror(__LINE__,
+     *'PAPIf_add_event PAPI_TOT_CYC failed')
         call ftests_fail(__FILE__,retval)
       end if
 
 C   Total floating point instructions
       call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'PAPIf_add_event PAPI_FP_INS failed')
+        call ftests_perror(__LINE__,
+     *'PAPIf_add_event PAPI_FP_INS failed')
         call ftests_fail(__FILE__,retval)
       end if
 
