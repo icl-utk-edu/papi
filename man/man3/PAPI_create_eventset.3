@@ -1,58 +1,65 @@
-.\" @(#)PAPI_create_eventset    0.10 00/05/17 CHD; from S5
-.TH PAPI_create_eventset 0 "17 May 2000"
+.\" $Id$
+.TH PAPI_create_eventset 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_create_eventset \- set up a new or modify an existing EventSet 
+PAPI_create_eventset \- create an EventSet 
+
 .SH SYNOPSIS
-.LP
-int PAPI_create_eventset (int *EventSet, void *handle)
-.LP
-int *EventSet -- a reference to an EventSetInfo structure
-.LP
-void *handle -- the handle returned from PAPI_thread_init
-.LP
+.B #include <papi.h>
+
+.BI "PAPI_create_eventset (int *" handle ");"
+
 .SH DESCRIPTION
+.B "PAPI_create_eventset()"
+creates a new EventSet pointed to by 
+.I "handle,"
+which must be initialized to 
+.I "PAPI_NULL"
+before calling this routine. The user adds hardware events by calling
+.BR "PAPI_add_event" (3) 
+or similar routines. It takes the following arguments:
 .LP
-.B PAPI_create_eventset (\|)
-This function sets up a new EventSet or modifies an
-existing one. To create a new EventSet, EventSet
-must be set to PAPI_NULL. Separate EventSets
-containing events that require use of the same hardware
-may exist, but may not be started if a conflicting EventSet is
-running. Returns the error code PAPI_ENOEVNT if Event
-cannot be counted on this platform. The addition of a
-conflicting event to an event set will return an error unless
-PAPI_SET_MPXRES has been set. Note:
-EventSet 0 may not be used; it has been reserved for
-internal use.
+.I EventSet
+-- Address of an integer location to store the new EventSet handle
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+The argument
+.I handle
+has not been initialized to 
+.I PAPI_NULL.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+
+.SH EXAMPLES
 .LP
-The return value is an integer that indicates whether the call
-succeeded (a positive integer corresponding to the index in the
-EventCodeArray where this event is stored) or failed (an error code).  
-.LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_add_event may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_start_counters
-.B  \tPAPI_add_events 
-.B  \tPAPI_thread_init 
-.fi
-.nf
-.B  \t
-.B  PAPI_add_event contains calls to:
-.B  \t
-.B  \tallocate_EventSet 
-.B  \thandle_error
-.B  \tadd_EventSet
-.B  \tfree_EventSet
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+
+  int EventSet = PAPI_NULL;
+
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), " 
+.BR PAPI_rem_event "(3), " PAPI_add_event "(3), " 
+.BR PAPI_add_events "(3), " PAPI_add_pevent "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi
