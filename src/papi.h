@@ -158,7 +158,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
 
-/* dmem_info definitions */
+/* dmem_info definitions, these should change. */
 #define PAPI_GET_SIZE        1  /* Size of process image in pages */
 #define PAPI_GET_RESSIZE     2  /* Resident set size in pages */
 #define PAPI_GET_PAGESIZE    3  /* Pagesize in bytes */
@@ -334,6 +334,38 @@ read the documentation carefully.  */
       int count;
    } PAPI_shlib_info_t;
 
+#ifdef NEW_PAPI_MEM_INFO
+
+#define PAPI_MAX_MEM_HEIRARCHY_LEVELS 	3
+  /* All sizes are in BYTES */
+#define PAPI_MH_TYPE_UNIFIED 		0x0
+#define PAPI_MH_TYPE_SPLIT 		0x1
+#define PAPI_MH_TYPE_SET_ASSOCIATIVE 	0x2
+
+  typedef struct _papi_mh_tlb_info {
+    unsigned flags; /* Unified, split, set associative */
+    int size;
+    int associativity;
+  } PAPI_mh_tlb_info_t;
+
+  typedef struct _papi_mh_cache_info {
+    unsigned flags; /* Unified, split, set associative */
+    int size;
+    int line_size;
+    int associativity;
+  } PAPI_mh_cache_info_t;
+
+  typedef struct _papi_mh_level_info {
+    PAPI_mh_tlb_info_t tlb;
+    PAPI_mh_cache_info_t cache;
+  } PAPI_mh_level_t;
+
+  typedef struct _papi_mh_info { /* mh for mem heirarchy maybe? */
+    int levels;
+    PAPI_mh_level_t level[PAPI_MAX_MEM_HEIRARCHY_LEVELS];
+  } PAPI_mh_info_t;
+#endif
+
    typedef struct _papi_hw_info {
       int ncpu;                 /* Number of CPU's in an SMP Node */
       int nnodes;               /* Number of Nodes in the entire system */
@@ -346,6 +378,7 @@ read the documentation carefully.  */
       float mhz;                /* Cycle time of this CPU, *may* be estimated at 
                                    init time with a quick timing routine */
 
+#ifndef NEW_PAPI_MEM_INFO
       /* Memory Information */
       int L1_tlb_size;          /*Data + Instruction Size */
       int L1_itlb_size;         /*Instruction TLB size in KB */
@@ -379,6 +412,9 @@ read the documentation carefully.  */
       short int L3_cache_assoc; /*Level 3 cache associtivity */
       int L3_cache_lines;       /*Number of lines in Level 3 cache */
       int L3_cache_linesize;    /*Line size of Level 3 cache */
+#else
+     PAPI_mh_info_t mem_hierarchy;
+#endif
    } PAPI_hw_info_t;
 
 
@@ -406,6 +442,7 @@ read the documentation carefully.  */
       PAPI_exe_info_t *exe_info;
    } PAPI_option_t;
 
+#ifdef PAPI_DMEM_INFO
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
    typedef struct _dmem_t {
       long_long total_memory;
@@ -413,7 +450,9 @@ read the documentation carefully.  */
       long_long total_swapping;
       /* Memory Locality */
    } PAPI_dmem_t;
+#endif
 
+#ifndef NEW_PAPI_EVENT_INFO
   /* If you change this, please update test *avail* test cases! */
   /* Whatever you do, don't reorder the fields. All hell will break
      loose due to static initializers in the substrates. */
@@ -427,6 +466,41 @@ read the documentation carefully.  */
       char vendor_name[PAPI_MAX_STR_LEN];
       char vendor_descr[PAPI_HUGE_STR_LEN];
    } PAPI_event_info_t;
+#else
+   typedef struct event_info {
+     /* The PAPI code to PAPI_add_event() */
+      unsigned int event_code;
+      unsigned int count;
+      char symbol[PAPI_MIN_STR_LEN];
+      struct {
+       char short_descr[PAPI_MIN_STR_LEN];
+       char long_descr[PAPI_MAX_STR_LEN];
+      } papi;
+      struct {
+	char symbols[PAPI_MAX_STR_LEN];
+	char codes[PAPI_MAX_STR_LEN];
+	char long_descr[PAPI_HUGE_STR_LEN];
+	char qualifier_descr[PAPI_MAX_STR_LEN];
+      } vendor;
+     char note[PAPI_MAX_STR_LEN];
+   } PAPI_event_info_t;
+
+/* Explanation of the fields.
+   1-3, same as before. 
+   4,5 defined only for PAPI events, not NATIVE events. 
+   6, same as before EXCEPT it contains stringified derived information.
+      i.e. FP_OPS + INS * CYC. 
+   7, register codes of the above. No derived info, but comma separated. 
+      (could contain derived info)
+   8, same as vendor_descr before, except it doesn't contain MASK or subevent
+      information.
+   9, this contains subevent information, like masks or group info. 
+   10, special notes from us PAPI folks like "This event overcounts by 2!"
+
+   Comments welcome to mucci@cs.utk.edu.
+*/
+
+#endif
 
 /* Locking Mechanisms defines 
  * This can never go over 31, because of the Cray T3E uses
@@ -451,7 +525,9 @@ read the documentation carefully.  */
    int   PAPI_enum_event(int *EventCode, int modifier);
    int   PAPI_event_code_to_name(int EventCode, char *out);
    int   PAPI_event_name_to_code(char *in, int *out);
+#if PAPI_DMEM_INFO
    long  PAPI_get_dmem_info(int option);
+#endif
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t  *PAPI_get_hardware_info(void);

@@ -1546,6 +1546,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
   papi_return(PAPI_OK);
 }
 
+#ifdef PAPI_DMEM_INFO
 long PAPI_get_dmem_info(int option)
 {
    if (option != PAPI_GET_PAGESIZE) {
@@ -1553,6 +1554,7 @@ long PAPI_get_dmem_info(int option)
    } else
       return ((long) getpagesize());
 }
+#endif
 
 const PAPI_exe_info_t *PAPI_get_executable_info(void)
 {
