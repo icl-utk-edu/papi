@@ -286,31 +286,31 @@ char *stringify_granularity(int granularity)
   return(NULL);
 }
 
-void test_pass(char *test_str, long_long **values, int num_tests)
+void test_pass(char *file, long_long **values, int num_tests)
 {
-	printf("%s:                PASSED\n", test_str);
+	printf("\n%s:  PASSED\n\n", file);
 	if (values) free_test_space(values, num_tests);
 	PAPI_shutdown();
 	exit(0);
 }
 
-void test_fail(char *test_str, char *err_str, int retval)
+void test_fail(char *file, int line, char *call, int retval)
 {
 	char buf[128];
 
 	memset( buf, '\0', sizeof(buf) );
-	printf("%s:                FAILED\n", test_str);
+	printf("%s:  FAILED\nLine # %d\n", file, line);
 	if ( retval == PAPI_ESYS ) {
-		sprintf(buf, "System error in %s:", err_str );
+		sprintf(buf, "System error in %s:", call );
 		perror(buf);
 	}
 	else if ( retval > 0 ) {
-		printf("Error calculating: %s\n", err_str );
+		printf("Error calculating: %s\n", call );
 	}
 	else {
 		char errstring[PAPI_MAX_STR_LEN];
 		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
-		printf("Error in %s: %s\n", err_str, errstring );
+		printf("Error in %s: %s\n", call, errstring );
 		/* if the error is because it's not supported or doesn't exist
 			log the error message, but return with no error condition
 		*/

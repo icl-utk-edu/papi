@@ -52,8 +52,6 @@ for i = 1:n; for j = 1:n; for k = 1:n; c(i,j) = c(i,j) + a(i,k)*b(k,j); end; end
 
 #include "papi_test.h"
 
-#define TEST_NAME "calibrate"
-
 static int l_PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops);
 
 static void resultline(int i, int j)
@@ -109,7 +107,7 @@ int main(int argc, char *argv[]) {
   int i,j,k,t;
 
 #ifdef NO_FLOPS
-  test_fail(__FILE__, "main - flops not supported on this architecture", PAPI_ENOEVNT);
+  test_fail(__FILE__, __LINE__,"main - flops not supported on this architecture", PAPI_ENOEVNT);
 #endif
 
   t = 0;

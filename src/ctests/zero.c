@@ -15,8 +15,6 @@
 
 #include "papi_test.h"
 
-#define TEST_NAME "zero"
-
 #ifdef NO_FLOPS
   #define PAPI_EVENT 		PAPI_TOT_INS
   #define MASK				MASK_TOT_INS | MASK_TOT_CYC
@@ -44,15 +42,15 @@ int main(int argc, char **argv)
 
   if ( !TESTS_QUIET ) {
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
-	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_debug", retval);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
   retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_event_code_to_name", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if ( retval != PAPI_VER_CURRENT)  test_fail(TEST_NAME, "PAPI_library_init", retval);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
   EventSet1 = add_test_events(&num_events1,&mask1);
 
@@ -65,12 +63,12 @@ int main(int argc, char **argv)
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS);
  
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -104,5 +102,5 @@ int main(int argc, char **argv)
 
 	printf("Verification: none\n");
   }
-  test_pass(TEST_NAME, values, num_tests);
+  test_pass(__FILE__, values, num_tests);
 }

@@ -15,8 +15,6 @@
 
 #include "papi_test.h"
 
-#define TEST_NAME "tenth"
-
 int TESTS_QUIET=0; /* Tests in Verbose mode? */
 
 int main(int argc, char **argv) 
@@ -48,11 +46,11 @@ int main(int argc, char **argv)
 
   if ( !TESTS_QUIET ) {
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
-	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_debug", retval);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if ( retval != PAPI_VER_CURRENT)  test_fail(TEST_NAME, "PAPI_library_init", retval);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
 
 #ifndef _CRAYT3E
@@ -69,31 +67,31 @@ int main(int argc, char **argv)
 
 #ifndef _CRAYT3E 
   retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 #else
   (values[0])[0] = 0LL;
 #endif
 
   retval = PAPI_start(EventSet2);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet2, values[1]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   retval = PAPI_start(EventSet3);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet3, values[2]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
 #ifndef _CRAYT3E
   remove_test_events(&EventSet1, mask1);
@@ -143,7 +141,7 @@ int main(int argc, char **argv)
 	min = (long_long)(max * 0.9);
 	max = (long_long)(max * 1.1);
   	if ( values[0][0] > max || values[0][0] < min)
-		test_fail(TEST_NAME, CACHE_LEVEL, 1);
+		test_fail(__FILE__, __LINE__, CACHE_LEVEL, 1);
   }
-  test_pass(TEST_NAME, values, num_tests);
+  test_pass(__FILE__, values, num_tests);
 }

@@ -28,8 +28,6 @@
 
 #include "papi_test.h"
 
-#define TEST_NAME "fifth"
-
 #ifdef NO_FLOPS
   #define PAPI_EVENT 		PAPI_TOT_INS
   #define MASK				MASK_TOT_INS | MASK_TOT_CYC
@@ -57,15 +55,15 @@ int main(int argc, char **argv)
 
   if ( !TESTS_QUIET ) {
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
-	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_debug", retval);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
   retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_event_code_to_name", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if ( retval != PAPI_VER_CURRENT)  test_fail(TEST_NAME, "PAPI_library_init", retval);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
 
   EventSet1 = add_test_events(&num_events1,&mask1);
@@ -76,41 +74,41 @@ int main(int argc, char **argv)
   values = allocate_test_space(num_tests, num_events1);
 
   retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS);
  
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_start(EventSet2);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   retval = PAPI_reset(EventSet1);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_reset", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_reset", retval);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet2, values[1]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet1, values[2]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   retval = PAPI_start(EventSet2);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet2, values[3]);
-  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
   
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);
@@ -146,15 +144,15 @@ int main(int argc, char **argv)
 	if ( values[0][0] > max || values[0][0] < min || values[2][0]>(2*max)
 	  || values[2][0] < (min*2) || values[3][0] < min || values[3][0]>max)
 		{
-			test_fail(TEST_NAME, event_name, 1);
+			test_fail(__FILE__, __LINE__, event_name, 1);
 		}
 	min = (long_long)(values[1][1]*.9);
 	max = (long_long)(values[1][1]*1.1);
 	if ( values[0][1] > max || values[0][1] < min || values[2][1]>(2*max)
 	  || values[2][1] < (min*2) || values[3][1] < min || values[3][1]>max)
  		{
-  			test_fail(TEST_NAME, "PAPI_TOT_CYC", 1);
+  			test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
 		}
   }
-  test_pass(TEST_NAME, values, num_tests);
+  test_pass(__FILE__, values, num_tests);
 }
