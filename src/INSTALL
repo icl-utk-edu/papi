@@ -19,9 +19,13 @@ How to install PAPI on your system
 2) Check for errors. Look for the libpapi.a and libpapi.so 
    in the current directory. Optionally run the test programs
    in the 'ftests' and 'tests' directories. Not all tests will
-   succeed on all platforms. 
+   succeed on all platforms.  
 
    % ./run_tests.sh
+  
+   will run the tests in quiet mode, which will print PASSED, FAILED, or
+   SKIPPED.  Tests are SKIPPED if the functionality being tested is not
+   supported by that platform.
 
 3) Create a PAPI binary distribution or install PAPI directly.
 
