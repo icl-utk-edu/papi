@@ -281,6 +281,119 @@ static int add_event(EventSetInfo *ESI, int EventCode)
   return(k); 
 }
 
+/* Describe the event. name is input/output, eventcode is input/output,
+   description is output */
+
+typedef struct pre_info {
+  char *name;
+  unsigned int code;
+  char *descr; } preset_info_t; 
+
+static preset_info_t papi_preset_info[PAPI_MAX_PRESET_EVENTS] = { 
+  { "PAPI_L1_DCM", 0x80000000, "Level 1 Data Cache Misses" },
+  { "PAPI_L1_ICM", 0x80000001, "Level 1 Instruction Cache Misses" },
+  { "PAPI_L2_DCM", 0x80000002, "Level 2 Data Cache Misses" },
+  { "PAPI_L2_ICM", 0x80000003, "Level 2 Instruction Cache Misses" },
+  { "PAPI_L3_DCM", 0x80000004, "Level 3 Data Cache Misses" },
+  { "PAPI_L3_ICM", 0x80000005, "Level 3 Instruction Cache Misses" },
+  { NULL, 0x80000006, NULL },
+  { NULL, 0x80000007, NULL },
+  { NULL, 0x80000008, NULL },
+  { NULL, 0x80000009, NULL },
+  { "PAPI_CA_SHR", 0x8000000A, "Requests for Shared Cache Line" },
+  { "PAPI_CA_CLN", 0x8000000B, "Requests for Clean Cache Line" },
+  { "PAPI_CA_INV", 0x8000000C, "Cache Line Invalidation Requests" },
+  { NULL, 0x8000000D, NULL },
+  { NULL, 0x8000000E, NULL },
+  { NULL, 0x8000000F, NULL },
+  { NULL, 0x80000010, NULL },
+  { NULL, 0x80000011, NULL },
+  { NULL, 0x80000012, NULL },
+  { NULL, 0x80000013, NULL },
+  { "PAPI_TLB_DM", 0x80000014, "Data Translation Lookaside Buffer Misses" },
+  { "PAPI_TLB_IM", 0x80000015, "Instruction Translation Lookaside Buffer Misses" },
+  { "PAPI_TLB_TOT", 0x80000016, "Total Translation Lookaside Buffer Misses" },
+  { NULL,  0x80000017, NULL },
+  { NULL,  0x80000018, NULL },
+  { NULL,  0x80000019, NULL },
+  { NULL,  0x8000001A, NULL },
+  { NULL,  0x8000001B, NULL },
+  { NULL,  0x8000001C, NULL },
+  { NULL,  0x8000001D, NULL },
+  { "PAPI_TLB_SD", 0x8000001E, "Translation Lookaside Buffer Shootdowns" },
+  { NULL,  0x8000001F, NULL },
+  { NULL,  0x80000020, NULL },
+  { NULL,  0x80000021, NULL },
+  { NULL,  0x80000022, NULL },
+  { NULL,  0x80000023, NULL },
+  { NULL,  0x80000024, NULL },
+  { NULL,  0x80000025, NULL },
+  { NULL,  0x80000026, NULL },
+  { NULL,  0x80000027, NULL },
+  { NULL,  0x80000028, NULL },
+  { NULL,  0x80000029, NULL },
+  { "PAPI_BR_UCN", 0x8000002A, "Unconditional Branch Instructions" },
+  { "PAPI_BR_CN", 0x8000002B, "Conditional Branch Instructions" },
+  { "PAPI_BR_TKN", 0x8000002C, "Conditional Branch Instructions Taken" }, 
+  { "PAPI_BR_NTK", 0x8000002D, "Conditional Branch Instructions Not Taken" }, 
+  { "PAPI_BR_MSP", 0x8000002E, "Conditional Branch Instructions Mispredicted" },
+  { NULL,  0x8000002F, NULL },
+  { NULL,  0x80000030, NULL },
+  { NULL,  0x80000031, NULL },
+  { "PAPI_TOT_INS", 0x80000032, "Total Instructions" },
+  { "PAPI_INT_INS", 0x80000033, "Integer Instructions" },
+  { "PAPI_FP_INS", 0x80000034, "Floating Point Instructions" },
+  { "PAPI_LD_INS", 0x80000035, "Load Instructions" },
+  { "PAPI_SR_INS", 0x80000036, "Store Instructions" },
+  { "PAPI_BR_INS", 0x80000037, "Branch Instructions" },
+  { "PAPI_VEC_INS", 0x80000038, "Vector Instructions" },
+  { "PAPI_FLOPS", 0x80000039, "Floating Point Instructions per Second" },
+  { NULL,  0x8000003A, NULL },
+  { NULL,  0x8000003B, NULL },
+  { "PAPI_TOT_CYC",  0x8000003C, "Total Cycles" },
+  { "PAPI_MIPS", 0x8000003D, "Millions of Instructions per Second" },
+  { NULL,  0x8000003E, NULL },
+  { NULL,  0x8000003, NULL } };
+
+int PAPI_describe_event(char *name, int *EventCode, char *description)
+{
+  if (*name)
+    {
+      int i;
+      
+      for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
+	{
+	  if (strcmp(papi_preset_info[i].name,name) == 0)
+	    {
+	      if (description)
+		strcpy(description,papi_preset_info[i].descr);
+	      *EventCode = papi_preset_info[i].code;
+	      return(PAPI_OK);
+	    }
+	}
+      return(PAPI_EINVAL);
+    }
+  if ((*EventCode > 0) && (*EventCode < PAPI_MAX_PRESET_EVENTS))
+    {
+      if (description)
+	strcpy(description,papi_preset_info[*EventCode].descr);
+      if (name)
+	strcpy(name,papi_preset_info[*EventCode].name);
+      return(PAPI_OK);
+    }
+  return(PAPI_EINVAL);
+}
+
+int PAPI_query_event(int EventCode)
+{
+  int retval;
+
+  retval = _papi_hwd_query(EventCode);
+  if (retval != PAPI_OK)
+    return(handle_error(retval,"Event does not exist on this substrate"));
+  return(retval);
+}
+
 /* add_event checks to see whether the ESI structure has been 
    created already for this EventSet, adds the event */
 

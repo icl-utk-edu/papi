@@ -899,6 +899,24 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
+  memset(&_papi_system_info,0x00,sizeof(_papi_system_info));
+  return(PAPI_OK);
+}
+
+int _papi_hwd_query(int preset)
+{
+  int group;
+
+  if (preset & PRESET_MASK)
+    { 
+      preset ^= PRESET_MASK; 
+
+      group = preset_map[preset].group;
+      if (group == PAPI_NULL)
+	return(PAPI_EINVAL);
+      else
+	return(PAPI_OK);
+    }
   return(PAPI_OK);
 }
 

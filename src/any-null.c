@@ -3,6 +3,7 @@
 /* Null substrate that does nothing */
 
 #include <stdio.h>
+#include <memory.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
@@ -202,6 +203,30 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
     default:
       return(PAPI_EINVAL);
     }
+}
+
+int _papi_hwd_shutdown(EventSetInfo *zero)
+{
+  zero->machdep = NULL;
+  memset(&_papi_system_info,0x00,sizeof(_papi_system_info));
+  return(PAPI_OK);
+}
+
+int _papi_hwd_query(int preset)
+{
+  int code;
+
+  if (preset & PRESET_MASK)
+    { 
+      preset ^= PRESET_MASK; 
+
+      code = preset_map[preset].code;
+      if (code == PAPI_NULL)
+	return(PAPI_EINVAL);
+      else
+	return(PAPI_OK);
+    }
+  return(PAPI_OK);
 }
 
 /* Machine info structure. -1 is unused. */

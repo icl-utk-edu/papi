@@ -163,7 +163,8 @@ extern int _papi_hwd_write(EventSetInfo *, unsigned long long events[]);
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
 extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
-extern int _papi_set_domain(EventSetInfo *, _papi_int_domain_t *);
+extern int _papi_hwd_shutdown(EventSetInfo *zero);
+extern int _papi_hwd_query(int preset);
 
 /* Portable overflow routines */
 

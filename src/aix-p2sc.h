@@ -6,7 +6,6 @@ typedef struct hwd_control_state {
 
 /* Preset structure */
 
-#define GROUP_NONE -1
 #define GROUP_ALL -2
 
 #define UNIT_FXU 0
