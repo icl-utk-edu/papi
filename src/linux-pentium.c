@@ -390,7 +390,8 @@ int _papi_hwd_start(void *machdep)
     case 5 :
       retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
       if(retval) = return(PAPI_EBUG);
-      // start TSC;
+      retval = perf(PERF_SET_CONFIG, 2, 1);
+      if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_START, 0, 0);
       if(retval) = return(PAPI_EBUG);
       break;
@@ -398,7 +399,8 @@ int _papi_hwd_start(void *machdep)
     case 3 :
       retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
       if(retval) = return(PAPI_EBUG);
-      // start TSC;
+      retval = perf(PERF_SET_CONFIG, 2, 1);
+      if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_START, 0, 0);
       if(retval) = return(PAPI_EBUG);
       break;
@@ -408,13 +410,15 @@ int _papi_hwd_start(void *machdep)
       if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
       if(retval) = return(PAPI_EBUG);
-      // start TSC;
+      retval = perf(PERF_SET_CONFIG, 2, 1);
+      if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_START, 0, 0);
       if(retval) = return(PAPI_EBUG);
       break;
 
     case 1 :
-      // start TSC;
+      retval = perf(PERF_SET_CONFIG, 2, 1);
+      if(retval) = return(PAPI_EBUG);
       break;
 
     case 0 :
@@ -470,7 +474,8 @@ int _papi_hwd_read(void *machdep, long long events[])
   if(retval) return(PAPI_EBUG);
   retval = perf(PERF_READ, 1, events[1]);
   if(retval) return(PAPI_EBUG);
-  //read TSC value into events[2];
+  retval = perf(PERF_READ, 2, events[2]);
+  if(retval) return(PAPI_EBUG);
   return 0;
 }
 
