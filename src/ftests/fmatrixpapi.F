@@ -9,30 +9,22 @@ C ****************************************************************************
 #include "fpapi.h"
 
       program fmatrixpapi
-      INTEGER i, j, k, numevents, ncols1,ncols2,nrows1,nrows2,check
-      INTEGER errorcode,length,handle
-      CHARACTER*128 errorstring
+      IMPLICIT NONE
+
+      INTEGER ncols1,nrows1,ncols2,nrows2
+      PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
+      INTEGER i,j,k,num_events,check,errorcode,length
+      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
 C   PAPI standardized event to be monitored
-      INTEGER event(3)
+      INTEGER event(2)
 C   PAPI values of the counters
-      INTEGER*8 values(3)
-      DOUBLE PRECISION p(175,225),q(225,150),r(175,150)
+      INTEGER*8 values(2)
+      DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
+     &                 r(nrows1,ncols2)
 
 C   Setup default values
-      numevents=0
-      ncols1=175
-      nrows1=225
-      ncols2=225
-      nrows2=150
+      num_events=0
       length = 100
-      handle=0
-
-      call PAPIf_library_init( check )
-      if ( check.NE.PAPI_VER_CURRENT) then
-         print *, 'Error in PAPI_library_init '
-         stop
-      end if
-
 
 C   Open matrix file number 1 for reading
       OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
@@ -40,48 +32,48 @@ C   Open matrix file number 2 for reading
       OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
 C   Total floating point operations
-      event(1) = PAPI_FLOPS
-C   Level 1 cache misses
-      event(2) = PAPI_L1_TCM
-C   Level 2 cache misses
-      event(3) = PAPI_L2_TCM
-      num_events = 3
+      event(1) = PAPI_FP_INS
+C  Time used
+      event(2) = PAPI_TOT_CYC
+      num_events = 2
 
 C   See how many hardware events at one time are supported
-      call PAPIf_num_counters( numevents )
-      if ( numevents .LT. 3 ) then
-          print *, 'Can only monitor ', numevents, ' events.'
-          num_events = numevents
+      call PAPIf_num_counters( num_events )
+      if ( num_events .LT. 2 ) then
+          print *,'This example program requries the architecture ',
+     .    'to support 2 simultaneous hardware events...shutting down.'
+      stop
       end if
-      print *, 'number of hardware counters supported: ', numevents
+
+      print *, 'Number of hardware counters supported: ', num_events
 
 C   matrix 1: read in the matrix values
-      do j=1,ncols1
-        do i=1, nrows1
-          READ (1,*) p(j,i)
-        end do
+      do i=1, nrows1
+         do j=1,ncols1
+            READ (1,*) p(i,j)
+         end do
       end do
 
 C   matrix 2: read in the matrix values
-      do j=1,ncols2
-        do i=1, nrows2
-          READ (2,*) q(j,i)
-        end do
+      do i=1, nrows2
+         do j=1,ncols2
+            READ (2,*) q(i,j)
+         end do
       end do
 
 C  Initialize the result matrix 
       do i=1,nrows1
-        do j=1, ncols2
-	   r(i,j)=0
-        end do
+         do j=1, ncols2
+            r(i,j)=0
+         end do
       end do
-
+      
 C  Set up the counters
       call PAPIf_start_counters( event, num_events, check)
       if  ( check .LT. 0 ) then
         call PAPIf_perror( check, errorstring, length, errorcode)
         print *, errorstring
-        stop
+        stop 'PAPIf_start_counters failed'
       end if
 
 C  Clear the counter values
@@ -89,13 +81,13 @@ C  Clear the counter values
       if ( check .LT. 0) then
         call PAPIf_perror( check, errorstring, length, errorcode)
         print *, errorstring
-        stop
+        stop 'PAPIf_read_counters failed'
       end if
 
 C  Compute the matrix-matrix multiplication
-      do i=1,ncols1 
-       do j=1,nrows2 
-         do k=1,nrows1 
+      do i=1,nrows1
+       do j=1,ncols2
+         do k=1,ncols1
 	   r(i,j)=r(i,j) + p(i,k)*q(k,j)
          end do
        end do
@@ -106,15 +98,12 @@ C  Stop the counters and put the results in the array values
       if ( check .LT. 0 ) then
         call PAPIf_perror( check, errorstring, length, errorcode)
         print *, errorstring
-        stop
+        stop 'PAPIf_stop_counters failed'
       end if
 
-      print *, 'FLOPS: ', values(1)
-      if ( num_events .GT. 1 ) then
-        print *, 'Total Level 1 Data cache misses: ', values(2)
-      endif
-      if ( num_events .GT. 2 ) then
-         print *, 'Total Level 2 Data cache misses: ', values(3)
-      endif
+      print *, 'Floating Point Instructions:  ',values(1)
+      print *, 'Cycles: ',values(2)
+      write(*,'(a,1p,f9.6)') 'Efficiency (flops/cycles):',
+     &                         real(values(1))/real(values(2))
       stop
       end

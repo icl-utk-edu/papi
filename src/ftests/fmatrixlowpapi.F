@@ -9,93 +9,98 @@ C ****************************************************************************
 #include "fpapi.h"
 
       program fmatrixlowpapi
-      INTEGER i, j, k, ncols1,ncols2,nrows1,nrows2,check
-      INTEGER EventSet, length, handle
-      CHARACTER*128  errorstring 
-      CHARACTER*40 vstring, mstring
+      IMPLICIT NONE
+
+      INTEGER ncols1,nrows1,ncols2,nrows2
+      PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
+      INTEGER i,j,k,check,nchr,numevents,errorcode,EventSet,length
+      CHARACTER*(PAPI_MAX_STR_LEN)  errorstring,vstring,mstring
 C   PAPI values of the counters
-      INTEGER*8 values(3)
-      DOUBLE PRECISION p(175,225),q(225,150),r(175,150)
+      INTEGER*8 values(2)
       INTEGER*8 starttime,stoptime
       DOUBLE PRECISION finaltime
       INTEGER ncpu,nnodes,totalcpus,vendor,model
       REAL revision, mhz
+      DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
+     &                 r(nrows1,ncols2)
 
+C   Setup default values
       numevents=0
-      ncols1=175
-      nrows1=225
-      ncols2=225
-      nrows2=150
-      EventSet=-1
       starttime=0
       stoptime=0
       length=100
-      handle=0
 
+      check = PAPI_VER_CURRENT
       call PAPIf_library_init( check )
       if ( check.NE.PAPI_VER_CURRENT) then
          print *, 'Error in PAPI_library_init '
          stop
       end if
 
-C   See how many hardware events at one time are supported
-      call PAPIf_num_counters( numevents )
+C     Create the eventset
+      call PAPIf_create_eventset(EventSet,check)
+      if ( check .LT. 0 ) then
+        call PAPIf_perror( check, errorstring, length, errorcode)
+        print *, errorstring
+        stop 'PAPIf_create_eventset failed'
+      endif 
 
-      if ( numevents .LT. 3 ) then
-          print *,'This example program requries the architecture ',
-     .    'to support 3 simultanious hardware events...shutting down.'
-      stop
+C   Total cycles
+      call PAPIf_add_event(EventSet,PAPI_TOT_CYC,check)
+      if ( check .LT. 0 ) then
+        call PAPIf_perror( check, errorstring, length, errorcode)
+        print *, errorstring
+        stop 'PAPIf_add_event PAPI_TOT_CYC failed'
+      endif 
+
+C   Total floating point instructions
+      call PAPIf_add_event(EventSet,PAPI_FP_INS,check)
+      if ( check .LT. 0 ) then
+        call PAPIf_perror( check, errorstring, length, errorcode)
+        print *, errorstring
+        stop 'PAPIf_add_event PAPI_FP_INS failed'
+      endif 
+
+C   Grab the hardware info
+      call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
+     .   vstring, model, mstring, revision, mhz )
+      do i=len(mstring),1,-1
+        if(mstring(i:i).NE.' ') goto 10
+      end do
+ 10   if(i.LT.1)then 
+        nchr=1
+      else
+        nchr=i
       end if
 
-      print *, 'number of hardware counters supported: ', numevents
+      print *
+      print 100, totalcpus,mstring(1:nchr), mhz
+ 100   format(i5,' CPU(s) ',a,' at ',f8.3,' MHz')
+      print 101, 'ncpu',ncpu, 'nnodes',nnodes, 'totalcpus',totalcpus,
+     $      'mhz',mhz,'revision',revision
+ 101  format(3(a10,'=',i5),2(a10,'=',f8.3))
+      print 102, 'vendor',vendor, 'vstring',vstring,
+     $      'model',model, 'mstring',mstring
+ 102  format(a10,'= ',i6,5x,a10,'= ',a40)
+      print *
+
 C   Open matrix file number 1 for reading
       OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
 C   Open matrix file number 2 for reading
       OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
-C   Total floating point operations
-      call PAPIf_add_event(EventSet,PAPI_FLOPS,check)
-      if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
-        print *, errorstring
-        stop
-      endif 
-
-C   Level 1 cache misses
-      call PAPIf_add_event(EventSet,PAPI_L1_TCM,check)
-      if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
-        print *, errorstring
-        stop
-      endif 
-
-C   Level 2 cache misses
-      call PAPIf_add_event(EventSet,PAPI_L2_TCM,check)
-      if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, length, errorcode)
-        print *, errorstring
-        stop
-      endif
-
-C   Grab the hardware info
-      call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
-     .   vstring, model, mstring, revision, mhz )
-      print *, 'A', totalcpus, ' CPU ', mstring, ' at', mhz, 'Mhz.'
-      print *, ncpu, nnodes, totalcpus, vendor, vstring, model, 
-     .   mstring, revision, mhz
-
 C   matrix 1: read in the matrix values
-      do j=1,ncols1
-        do i=1, nrows1
-          READ (1,*) p(j,i)
-        end do
+      do i=1, nrows1
+         do j=1,ncols1
+            READ (1,*) p(i,j)
+         end do
       end do
 
-C   matrix 2: read in the matrix values
-      do j=1,nrcols2
-        do i=1, nrows2
-          READ (2,*) q(j,i)
-        end do
+C     matrix 2: read in the matrix values
+      do i=1, nrows2
+         do j=1,ncols2
+            READ (2,*) q(i,j)
+         end do
       end do
 
 C  Initialize the result matrix 
@@ -104,21 +109,21 @@ C  Initialize the result matrix
 	   r(i,j)=0
         end do
       end do
-
+      
 C  Grab the beginning time
       call PAPIf_get_real_usec( starttime )
  
 C  Start the event counters
       call PAPIf_start( EventSet, check )
       if ( EventSet .LT. 0 ) then
-        print *, 'Error starting counters'
-        stop
+         print *, 'Error starting counters'
+         stop 'PAPIf_start failed'
       end if
 
 C  Compute the matrix-matrix multiplication
-      do i=1,ncols1 
-       do j=1,nrows2 
-         do k=1,nrows1 
+      do i=1,nrows1 
+       do j=1,ncols2 
+         do k=1,ncols1 
 	   r(i,j)=r(i,j) + p(i,k)*q(k,j)
          end do
        end do
@@ -128,15 +133,17 @@ C  Stop the counters and put the results in the array values
       call PAPIf_stop(EventSet,values,check)
       if ( check .LT. 0 ) then
         print *, 'Error stopping counters'
-        stop
+        stop 'PAPIf_stop failed'
       end if
 
       call PAPIf_get_real_usec( stoptime )
       finaltime = (stoptime/1000000.0) - (starttime/1000000.0)
 
       print *, 'Time: ', finaltime
-      print *, 'FLOPS: ', values(1)
-      print *, 'Total Level 1 Data cache misses: ', values(2)
-      print *, 'Total Level 2 Data cache misses: ', values(3)
+      print *, 'Cycles: ', values(1)
+      print *, 'Floating Point Instructions: ', values(2)
+      write(*,'(a,1p,f9.6)') 'Efficiency (flops/cycles):',
+     &                         real(values(2))/real(values(1))
       stop
       end
+

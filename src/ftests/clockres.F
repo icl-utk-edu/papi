@@ -1,6 +1,7 @@
 #include "fpapi.h"
 
       program clockres
+      IMPLICIT NONE
 
       INTEGER*8 elapsed_usec(10000), elapsed_cyc(10000)
       INTEGER*8 total_usec, total_cyc
@@ -13,6 +14,7 @@
       ITERS=10000.0
       handle=0
 
+      retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
          print *, 'Error in PAPI_library_init '

@@ -11,10 +11,12 @@ C count the first event?
 #include  "fpapi.h"
 
       program case1
+      IMPLICIT NONE
 
-      INTEGER EventSet, handle
+      INTEGER EventSet
       INTEGER retval
-      INTEGER i
+      INTEGER i,length,errorcode
+      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
       INTEGER*8 gl(2)
       INTEGER n
       REAL c,a,b
@@ -22,19 +24,35 @@ C count the first event?
       n = 1000
       a = 0.999
       b = 1.001
-      handle = 0
 
+      retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
          print *, 'Error in PAPI_library_init '
          stop
       end if
+
+      call PAPIf_create_eventset( EventSet, retval )
+      if ( retval .NE. PAPI_OK ) print *, 'error creating EventSet'
+
       call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
-      if ( retval .NE. PAPI_OK ) print *, 'error adding L2 TCM'
+      if ( retval .NE. PAPI_OK ) then
+        print *, 'error adding PAPI_L2_TCM'
+        call PAPIf_perror( retval, errorstring, length, errorcode)
+        print *, errorstring
+      else
+        print *,'Added PAPI_L2_TCM'
+      end if
 
       call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
-      if ( retval .NE. PAPI_OK ) print *, 'error adding L2 DCM'
-
+      if ( retval .NE. PAPI_OK )then
+         print *, 'error adding PAPI_L2_DCM'
+         call PAPIf_perror( retval, errorstring, length, errorcode)
+         print *, errorstring
+      else
+         print *,'Added PAPI_L2_DCM'
+      end if
+  
       call PAPIf_start( EventSet, retval )
 
 

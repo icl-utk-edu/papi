@@ -13,29 +13,57 @@ C 2 counters.
 #include "fpapi.h"
 
       program case2
+      IMPLICIT NONE
 
       REAL c,a,b
-      INTEGER n, handle
+      INTEGER n
       INTEGER EventSet
       INTEGER retval
-      INTEGER I
+      INTEGER I,length,errorcode
       INTEGER*8 gl(3)
+      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
+
       a=0.999
       b=1.001
       n=1000
-      handle=0
+      length=len(errorstring)
 
+      retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
          print *, 'Error in PAPI_library_init '
          stop
       end if
+
+      call PAPIf_create_eventset( EventSet, retval)
+      if (retval.NE.PAPI_OK) print *, 'error creating EventSet'
+
       call PAPIf_add_event( EventSet, PAPI_L2_TCM,retval )
-      if (retval.NE.PAPI_OK) print *, 'error adding L2 TCM'
+      if ( retval .NE. PAPI_OK ) then
+        print *, 'error adding PAPI_L2_TCM'
+        call PAPIf_perror( retval, errorstring, length, errorcode)
+        print *, errorstring
+      else
+        print *,'Added PAPI_L2_TCM'
+      end if
+ 
       call PAPIf_add_event(EventSet, PAPI_TOT_CYC,retval)
-      if (retval.NE.PAPI_OK) print *, 'error adding TOT_CYC'
+      if ( retval .NE. PAPI_OK ) then
+        print *, 'error adding PAPI_TOT_CYC'
+        call PAPIf_perror( retval, errorstring, length, errorcode)
+        print *, errorstring
+      else
+        print *,'Added PAPI_TOT_CYC'
+      end if
+  
       call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
-      if (retval.NE.PAPI_OK) print *, 'error adding FP_INS'
+      if ( retval .NE. PAPI_OK ) then
+        print *, 'error adding PAPI_FP_INS'
+        call PAPIf_perror( retval, errorstring, length, errorcode)
+        print *, errorstring
+      else
+        print *,'Added PAPI_FP_INS'
+      end if
 
       call PAPIf_start(EventSet, retval )
 

@@ -4,11 +4,16 @@ C Hardware info
 #include "fpapi.h"
 
       program avail
-      INTEGER ncpu,nnodes,totalcpus,vendor,model, check, handle
-      CHARACTER*20 vstring, mstring
+      IMPLICIT NONE
+
+      INTEGER ncpu,nnodes,totalcpus,vendor,model, check, handle, n
+      CHARACTER*(PAPI_MAX_STR_LEN) vstring, mstring
       REAL revision, mhz
+      integer len_trim
+      external len_trim
 
       handle=0 
+      check = PAPI_VER_CURRENT
       call PAPIf_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
          print *, 'Error in PAPI_library_init '
@@ -19,12 +24,25 @@ C Hardware info
 
       print *, 'Test case 8: Hardware information'
       print *, '------------------------------------------------'
-      print *, 'Vendor string and code   : ',vstring,' (',vendor,')'
-      print *, 'Model string and code    : ',mstring,' (',model,')'
+      n=len_trim(vstring)
+      print *, 'Vendor string and code   : ',vstring(1:n)
+     & ,' (',vendor,')'
+      n=len_trim(mstring)
+      print *, 'Model string and code    : ',mstring(1:n),' (',model,')'
       print *, 'CPU revision             : ',revision 
       print *, 'CPU Megahertz            : ',mhz
-      print *, 'CPUs in an SMP node     : ',ncpu
+      print *, 'CPUs in an SMP node      : ',ncpu
       print *, 'Nodes in the system      : ',nnodes
-      print *, 'Total CPUs in the system: ',totalcpus
+      print *, 'Total CPUs in the system : ',totalcpus
       print *, '------------------------------------------------'
+      end
+
+      integer function len_trim(string)
+      implicit none
+      character*(*) string
+      
+      do len_trim=len(string),1,-1
+        if(string(len_trim:len_trim).NE.' ') return
+      end do
+      len_trim=0
       end

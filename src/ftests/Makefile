@@ -1,8 +1,8 @@
 INCLUDE = -I..
-TARGETS = avail case1 case2 clockres eventname fmatrixlowpapi \
+TESTS 	= avail case1 case2 clockres eventname fmatrixlowpapi \
           fmatrixpapi
 
-default: $(TARGETS)
+default: $(TESTS)
 
 clockres: clockres.F ../libpapi.a
 	$(F77) $(FFLAGS) $(INCLUDE) clockres.F ../libpapi.a $(LDFLAGS) -o clockres
@@ -26,4 +26,13 @@ fmatrixpapi: fmatrixpapi.F ../libpapi.a
 	$(F77) $(FFLAGS) $(INCLUDE) fmatrixpapi.F ../libpapi.a $(LDFLAGS) -o fmatrixpapi
 
 clean:
-	rm -f *.o $(TARGETS) core *~
+	rm -f *.o $(TESTS) core *~
+
+install: default
+	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
+	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
+	mkdir -p $(DESTDIR)/ftests
+	chmod go+rx $(DESTDIR)/ftests
+	find . -perm +1 -type f -exec cp {} $(DESTDIR)/ftests \;
+	cp fmt1 fmt2 $(DESTDIR)/ftests
+	chmod go+rx $(DESTDIR)/ftests/*
