@@ -44,8 +44,8 @@ typedef struct P4_perfctr_avail {
   unsigned cccr_num;            /* Only filled when registers are allocated. */
   unsigned escr_low_bits;       /* What we write for control 0-31 */
   unsigned escr_low_num;        /* Only filled when registers are allocated. */
-  unsigned escr_high_bits;      /* What we write for control 0-31 */
-  unsigned escr_high_num;       /* Only filled when registers are allocated. */
+  unsigned uses_pebs;           /* What we write for control 0-31 */
+  unsigned uses_pebs_matrix_vert;  /* Only filled when registers are allocated. */
 } P4_register_t;
 
 typedef struct P4_regmap {
@@ -182,7 +182,7 @@ typedef P4_preset_t hwd_preset_t;
 #define THRESHOLD(a) (a << 20)
 #define PEBS_TAG (1 << 24)
 #define PEBS_L1_MISS (1)
-#define PEBS_L2_MISS (1)
+#define PEBS_L2_MISS (1 << 1)
 #define PEBS_MV_LOAD (1)
 #define PEBS_MV_STORE (1 << 1)
 

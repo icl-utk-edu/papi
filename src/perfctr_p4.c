@@ -79,8 +79,10 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 	  SUBDBG("cccr_bits[%d] %#08x\n",unum,tmp->cccr_bits);
 	  tmp->escr_low_bits = ESCR_LOW_BITS_FROM_EVNTSEL(tmp2->evntsel);
 	  SUBDBG("escr_low_bits[%d] %#08x\n",unum,tmp->escr_low_bits);
-	  tmp->escr_high_bits = ESCR_HIGH_BITS_FROM_EVNTSEL(tmp2->evntsel);
-	  SUBDBG("escr_high_bits[%d] %#08x\n",unum,tmp->escr_high_bits);
+	  tmp->uses_pebs = (tmp2->pebs_enable ? 1 : 0);
+	  SUBDBG("uses_pebs[%d] %#08x\n",unum,tmp->uses_pebs);
+	  tmp->uses_pebs_matrix_vert = (tmp2->pebs_matrix_vert ? 1 : 0);
+	  SUBDBG("uses_pebs_matrix_vert[%d] %#08x\n",unum,tmp->uses_pebs_matrix_vert);
 
 	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x",
 		  (unum >= 1) ? " " : "",
@@ -313,6 +315,36 @@ int _papi_hwd_allocate_hwcounters(const P4_perfctr_control_t *state, const P4_pe
 }
 #endif
 
+#ifdef DEBUG
+void print_control(const struct perfctr_cpu_control *control)
+{
+    unsigned int i;
+
+    SUBDBG("Control used:\n");
+    SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
+    SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
+    for(i = 0; i < control->nractrs; ++i) {
+	if( control->pmc_map[i] >= 18 )
+	  {
+	    SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+	  }
+	else
+	  {
+	    SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+	  }
+	SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+	if( control->evntsel_aux[i] )
+	    SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
+    }
+    if( control->p4.pebs_enable )
+      SUBDBG("pebs_enable\t0x%08X\n", 
+	     control->p4.pebs_enable);
+    if( control->p4.pebs_matrix_vert )
+      SUBDBG("pebs_matrix_vert\t0x%08X\n", 
+	     control->p4.pebs_matrix_vert);
+}
+#endif
+
 int _papi_hwd_start(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 {
   if (vperfctr_control(ctx->perfctr, &state->control) < 0)
@@ -320,6 +352,10 @@ int _papi_hwd_start(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 #if 0
   if (gperfctr_control(ctx->perfctr, &state->control) < 0)
     error_return(PAPI_ESYS,GCNTRL_ERROR);
+#endif
+
+#ifdef DEBUG
+  print_control(&state->control.cpu_control);
 #endif
 
   return(PAPI_OK);
@@ -402,7 +438,7 @@ int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *
 {
   int i, num;
   unsigned tmp_u = 0x0;
-  unsigned tmp_u_high = 0x0;
+//  unsigned tmp_u_high = 0x0;
   P4_register_t *needed_tmp;
   P4_regmap_t *needed;
   P4_register_t *already_taken;
@@ -435,52 +471,33 @@ int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *
       /* Now the ESCR's */
 
       tmp_u = needed_tmp->escr_low_bits & already_taken->escr_low_bits;
-      tmp_u_high = needed_tmp->escr_high_bits & already_taken->escr_high_bits;
       if (!tmp_u)
 	{
 	  out->hardware_event[i].escr_low_bits = 1 << (ffs(needed_tmp->escr_low_bits) - 1);
 	}
-      else if (!tmp_u_high)
+//      tmp_u_high = needed_tmp->escr_high_bits & already_taken->escr_high_bits;
+/*      else if (!tmp_u_high)
 	{
 	  out->hardware_event[i].escr_high_bits = 1 << (ffs(needed_tmp->escr_high_bits) - 1);
-	}
+	} */
       else
-	error_return(PAPI_ECNFLCT,"needed %#08x,%#08x vs. already_taken %#08x,%#08x",
-		     needed_tmp->escr_high_bits, needed_tmp->escr_low_bits, 
-		     already_taken->escr_high_bits, already_taken->escr_low_bits);
+	error_return(PAPI_ECNFLCT,"needed %#08x vs. already_taken %#08x",
+		     needed_tmp->escr_low_bits, already_taken->escr_low_bits);
+
+      /* Now the PEBS goodies */
+
+      if (!(needed_tmp->uses_pebs & already_taken->uses_pebs))
+	out->hardware_event[i].uses_pebs = 1;
+      else
+	error_return(PAPI_ECNFLCT,"PEBS already in use");
+
+      if (!(needed_tmp->uses_pebs_matrix_vert & already_taken->uses_pebs_matrix_vert))
+	out->hardware_event[i].uses_pebs_matrix_vert = 1;
+      else
+	error_return(PAPI_ECNFLCT,"PEBS MATRIX VERT already in use");
     }
   return(PAPI_OK);
 }
-
-#ifdef DEBUG
-void print_control(const struct perfctr_cpu_control *control)
-{
-    unsigned int i;
-
-    SUBDBG("Control used:\n");
-    SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
-    SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-    for(i = 0; i < control->nractrs; ++i) {
-	if( control->pmc_map[i] >= 18 )
-	  {
-	    SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
-	  }
-	else
-	  {
-	    SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
-	  }
-	SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
-	if( control->evntsel_aux[i] )
-	    SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
-    }
-    if( control->p4.pebs_enable )
-      SUBDBG("pebs_enable[%u]\t0x%08X\n", i, 
-	     control->p4.pebs_enable);
-    if( control->p4.pebs_matrix_vert )
-      SUBDBG("pebs_matrix_vert[%u]\t0x%08X\n", i, 
-	     control->p4.pebs_matrix_vert);
-}
-#endif
 
 /* After this function is called, ESI->machdep has everything it needs to do a start/read/stop 
    as quickly as possible. This returns the position in the array output by _papi_hwd_read that
@@ -491,7 +508,7 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
   int i, index;
   P4_register_t *bits = &evset_info->allocated_registers;
   
-  /* Add allocated register bits to eventset bits */
+  /* Add allocated register bits to this events bits */
 
   for (i=0;i<preset->number;i++)
     {
@@ -505,17 +522,24 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
 	  bits->escr_low_bits |= ev_info->hardware_event[i].escr_low_bits;
 	  bits->escr_low_num += 1;
 	}
+      if (ev_info->hardware_event[i].uses_pebs)
+	{
+	  bits->uses_pebs = 1;
+	}
+      if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
+	{
+	  bits->uses_pebs_matrix_vert = 1;
+	}
+#if 0      
       if (ev_info->hardware_event[i].escr_high_bits)
 	{
 	  bits->escr_high_bits |= ev_info->hardware_event[i].escr_high_bits;
 	  bits->escr_high_num += 1;
-	}
+	} 
+#endif
     }
 
   /* Add counter control command values to eventset */
-
-  evset_info->control.cpu_control.p4.pebs_enable = 0;
-  evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
 
   index = evset_info->control.cpu_control.nractrs;
   for (i=0;i<preset->number;i++)
@@ -555,10 +579,10 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
 
 int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned hardware_index, P4_perfctr_control_t *evset_info)
 {
-  int i, j, index;
+  int i, j, index, clear_pebs = 0, clear_pebs_matrix_vert = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
   
-  /* Remove allocated register bits for this event from eventset bits */
+  /* Remove allocation/usage info for this event from bits */
 
   for (i=0;i<ev_info->num_hardware_events;i++)
     {
@@ -572,10 +596,20 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned hardware_index, P4_per
 	  bits->escr_low_bits ^= ev_info->hardware_event[i].escr_low_bits;
 	  bits->escr_low_num -= 1;
 	}
-      if (ev_info->hardware_event[i].escr_high_bits)
+/*      if (ev_info->hardware_event[i].escr_high_bits)
 	{
 	  bits->escr_high_bits ^= ev_info->hardware_event[i].escr_high_bits;
 	  bits->escr_high_num -= 1;
+	} */
+      if (ev_info->hardware_event[i].uses_pebs)
+	{
+	  clear_pebs = 1;
+	  bits->uses_pebs = 0;
+	}
+      if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
+	{
+	  clear_pebs_matrix_vert = 1;
+	  bits->uses_pebs_matrix_vert = 0;
 	}
     }
 
@@ -586,7 +620,7 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned hardware_index, P4_per
   
   index = evset_info->control.cpu_control.nractrs;
 
-  /* Zero the entries */
+  /* Zero the control entries that were used */
 
   for (j=hardware_index;j<ev_info->num_hardware_events+hardware_index;j++)
     {
@@ -595,6 +629,13 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned hardware_index, P4_per
       evset_info->control.cpu_control.evntsel_aux[j] = 0;
       evset_info->control.cpu_control.ireset[j] = 0;
     }
+
+  /* Clear pebs stuff if we used it */
+
+  if (clear_pebs)
+    evset_info->control.cpu_control.p4.pebs_enable = 0;
+  if (clear_pebs_matrix_vert)
+    evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
 
   /* Shift the entries */
 
