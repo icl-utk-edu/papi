@@ -7,12 +7,15 @@ static long_long accum_error = 0;
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]) {
   float real_time, proc_time, rate;
-  double *x;
-  unsigned int i, mrows, ncols, nchars;
+  int i;
+  unsigned int mrows, nchars;
   unsigned int *events;
   long_long ins = 0, *values;
   int result;
   char *input, *temp;
+  char one_output[]	= "This function produces one output per running counter.";
+  char no_input[]	= "This function expects no input.";
+  char error_reading[]	= "Error reading the running counters.";
 
   /* Check for proper number of arguments. */
   if(nrhs < 1) {
@@ -21,44 +24,41 @@ void mexFunction(int nlhs, mxArray *plhs[],
   nchars = mxGetNumberOfElements(prhs[0]);
   input = (char *)mxCalloc(nchars, sizeof(char) + 1);
   input = mxArrayToString(prhs[0]);
-  if(!strcmp(input, "num")) {
+
+  if(!strncmp(input, "num", 3)) {
     if(nrhs != 1) {
-      mexErrMsgTxt("This function expects no input.");
+      mexErrMsgTxt(no_input);
     }
     else if(nlhs != 1) {
       mexErrMsgTxt("This function produces one and only one output: counters.");
     }
     result = PAPI_num_counters();
     if(result < PAPI_OK) {
+      mexPrintf("Error code: %d\n", result);
       mexErrMsgTxt("Error reading counters.");
     }
     plhs[0] = mxCreateScalarDouble((double)result);
   }
 
-  else if(!strcmp(input, "flips")) {
-    if(nrhs > 2) {
-      mexErrMsgTxt("This function expects one optional input.");
+  else if((!strncmp(input, "flip", 4)) || (!strncmp(input, "flop", 4))) {
+    if(nrhs != 1) {
+      mexErrMsgTxt(no_input);
     } else if(nlhs > 2) {
-      mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflips].");
+      if (input[2] == 'i')
+	mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflips].");
+      else
+	mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflops].");
     }
-    /* The input must be a noncomplex scalar double.*/
-    if(nrhs == 2) {
-      mrows = mxGetM(prhs[1]);
-      ncols = mxGetN(prhs[1]);
-      if(!mxIsDouble(prhs[1]) || mxIsComplex(prhs[1]) || !(mrows == 1 && ncols == 1)) {
-        mexErrMsgTxt("Input must be a noncomplex scalar double.");
+    if (input[2] == 'i') {
+      if(result = PAPI_flips( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+        mexPrintf("Error code: %d\n", result);
+	mexErrMsgTxt("Error getting flips.");
       }
-      /* Assign a pointer to the input. */
-      x = mxGetPr(prhs[1]);
-
-      /* if input is 0, reset the counters by passing -1 in ins */
-      if(*x == 0) {
-        ins = -1;
-        accum_error = 0;
+    } else {
+      if(result = PAPI_flops( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+        mexPrintf("Error code: %d\n", result);
+	mexErrMsgTxt("Error getting flops.");
       }
-    }
-    if(PAPI_flips( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
-      mexErrMsgTxt("Error getting flops.");
     }
     if(nlhs > 0) {
       plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
@@ -72,12 +72,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
   }
 
-  else if(!strcmp(input, "start")) {
+  else if(!strncmp(input, "start", 5)) {
     if(nlhs != 0) {
       mexErrMsgTxt("This function produces no output.");
     }
     if(nrhs > (PAPI_num_counters() + 1)) {
-      mexErrMsgTxt("This function produces one output per running counter.");
+      mexErrMsgTxt(one_output);
     }
     mrows = mxGetM(prhs[1]);
     events = (unsigned int *)mxCalloc(nrhs - 1, sizeof(int) + 1);
@@ -89,10 +89,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
         nchars = mxGetNumberOfElements(prhs[i]);
         temp = (char *)mxCalloc(nchars, sizeof(char) + 1);
         temp = mxArrayToString(prhs[i]);
-        if(PAPI_event_name_to_code(temp, &(events[i - 1])) < PAPI_OK) {
+        if(result = PAPI_event_name_to_code(temp, &(events[i - 1])) < PAPI_OK) {
           mxFree(temp);
+	  mexPrintf("Error code: %d\n", result);
           mexErrMsgTxt("Incorrect PAPI code given.");
-        }
+       }
         mxFree(temp);
       }
       else {
@@ -101,41 +102,45 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
     if((result = PAPI_start_counters(events, nrhs - 1)) < PAPI_OK) {
       mxFree(events);
-      mexPrintf("Error code: %u\n", result);
+      mexPrintf("Error code: %d\n", result);
       mexErrMsgTxt("Error initializing counters.");
     }
     mxFree(events);
   }
 
-  else if(!strcmp(input, "stop")) {
+  else if(!strncmp(input, "stop", 4)) {
     if(nrhs != 1) {
-      mexErrMsgTxt("This function expects no input.");
+      mexErrMsgTxt(no_input);
     }
     if(nlhs > PAPI_num_counters()) {
-      mexErrMsgTxt("This function produces one output per running counter.");
+      mexErrMsgTxt(one_output);
     }
-    values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
+    if (nlhs == 0) values = NULL;
+    else values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
     if((result = PAPI_stop_counters(values, nlhs)) < PAPI_OK) {
-      mexPrintf("%d\n", result);
-      mexErrMsgTxt("Error stopping the running counters.");
+      if(result != PAPI_ENOTRUN) {
+	mexPrintf("Error code: %d\n", result);
+	mexErrMsgTxt("Error stopping the running counters.");
+      }
     }
+    accum_error = 0;
     for(i = 0; i < nlhs; i++) {
       plhs[i] = mxCreateScalarDouble((double)values[i]);
     }
     mxFree(values);
   }
 
-  else if(!strcmp(input, "read")) {
+  else if(!strncmp(input, "read", 4)) {
     if(nrhs != 1) {
-      mexErrMsgTxt("This function expects no input.");
+      mexErrMsgTxt(no_input);
     }
     if(nlhs > PAPI_num_counters()) {
-      mexErrMsgTxt("This function produces one output per running counter.");
+      mexErrMsgTxt(one_output);
     }
     values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
     if((result = PAPI_read_counters(values, nlhs)) < PAPI_OK) {
       mexPrintf("%d\n", result);
-      mexErrMsgTxt("Error reading the running counters.");
+      mexErrMsgTxt(error_reading);
     }
     for(i = 0; i < nlhs; i++) {
       plhs[i] = mxCreateScalarDouble((double)values[i]);
@@ -143,20 +148,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxFree(values);
   }
 
-  else if(!strcmp(input, "accum")) {
+  else if(!strncmp(input, "accum", 5)) {
     if(nrhs > PAPI_num_counters() + 1) {
-      mexErrMsgTxt("This function expects no input.");
+      mexErrMsgTxt(no_input);
     }
     if(nlhs > PAPI_num_counters()) {
-      mexErrMsgTxt("This function produces one output per running counter.");
+      mexErrMsgTxt(one_output);
     }
     values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
     for(i = 0; i < nrhs - 1; i++) {
-      values[i] = *(mxGetPr(prhs[i + 1]));
+      values[i] = (long_long)(*(mxGetPr(prhs[i + 1])));
     }
-    if(PAPI_accum_counters(values, nlhs) < PAPI_OK) {
-      mexPrintf("%d\n", result);
-      mexErrMsgTxt("Error reading the running counters.");
+    if(result = PAPI_accum_counters(values, nlhs) < PAPI_OK) {
+      mexPrintf("Error code: %d\n", result);
+      mexErrMsgTxt(error_reading);
     }
     for(i = 0; i < nlhs; i++) {
       plhs[i] = mxCreateScalarDouble((double)values[i]);
@@ -164,39 +169,19 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxFree(values);
   }
 
-  else if(!strcmp(input, "ipc")) {
-    if(nrhs > 2) {
-      mexErrMsgTxt("This function expects one optional input.");
+  else if(!strncmp(input, "ipc", 3)) {
+    if(nrhs != 1) {
+      mexErrMsgTxt(no_input);
     } else if(nlhs > 2) {
       mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, ipc].");
     }
-    /* The input must be a noncomplex scalar double.*/
-    if(nrhs == 2) {
-      mrows = mxGetM(prhs[1]);
-      ncols = mxGetN(prhs[1]);
-      if(!mxIsDouble(prhs[1]) || mxIsComplex(prhs[1]) || !(mrows == 1 && ncols == 1)) {
-        mexErrMsgTxt("Input must be a noncomplex scalar double.");
-      }
-      /* Assign a pointer to the input. */
-      x = mxGetPr(prhs[1]);
-
-      /* if input is 0, reset the counters by passing -1 in ins */
-      if(*x == 0) {
-        ins = -1;
-        accum_error = 0;
-      }
-    }
     if(PAPI_ipc(&real_time, &proc_time, &ins, &rate)<PAPI_OK) {
-      mexErrMsgTxt("Error getting flops.");
+      mexErrMsgTxt("Error getting instruction rate.");
     }
     if(nlhs > 0) {
-      plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
-      /* this call adds 7 fp instructions to the total */
-      accum_error += 7;
+      plhs[0] = mxCreateScalarDouble((double)ins);
       if(nlhs == 2) {
         plhs[1] = mxCreateScalarDouble((double)rate);
-        /* the second call adds 4 fp instructions to the total */
-        accum_error += 4;
       }
     }
   }

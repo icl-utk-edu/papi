@@ -20,31 +20,36 @@ and then the arguments to each.  Here are some examples:
 PAPI_num_counters - Returns the number of available
   hardware counters on the system.
 
-Ex:  num_counters = PAPI_Matlab('num')
+Ex:  num_counters = PAPI('num')
 
 
 PAPI_flips - Has 3 possibilities:
   Initialize FLIP counting with:
-    PAPI_Matlab('flips', 0)
+    PAPI('flips')
   Record the number of floating point instructions since
   initialization:
-    ops = PAPI_Matlab('flips')
+    ops = PAPI('flips')
   Record the number of floating point instructions and
   the incremental rate of floating point execution
   since initialization:
-    [ops, mflips] = PAPI_Matlab('flips')
+    [ops, mflips] = PAPI('flips')
+  Use PAPI_stop_counters to stop counting flips and reset the counters.
 
+PAPI_flops - Identical to PAPI_flips,
+  but counts floating point *operations* rather than instructions.
+  In most cases, these two are identical, but some instructions
+  (e.g. FMA) might contain multiple operations or vice versa.
 
 PAPI_ipc - Has 3 possibilities:
   Initialize instruction per cycle counting with:
-    PAPI_Matlab('ipc', 0)
+    PAPI('ipc', 0)
   Record the number of instructions since
   initialization:
-    ins = PAPI_Matlab('ipc')
+    ins = PAPI('ipc')
   Record the number of instructions and
   the incremental rate of instructions per cycle
   since initialization:
-    [ins, ipc] = PAPI_Matlab('ipc')
+    [ins, ipc] = PAPI('ipc')
   
 
 PAPI_start_counters - Specify the events to count
@@ -53,7 +58,7 @@ PAPI_start_counters - Specify the events to count
   specify more events than there are hardware counters.
 
   To begin counting cycles and instructions:
-    PAPI_Matlab('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS');
+    PAPI('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS');
 
 
 PAPI_read_counters - Simply specify the variables to read
@@ -62,7 +67,7 @@ PAPI_read_counters - Simply specify the variables to read
   counters.
 
   To read the above events you just started:
-    [cycles, instructions] = PAPI_Matlab('read');
+    [cycles, instructions] = PAPI('read');
 
 
 PAPI_accum_counters - This function adds the value you
@@ -72,7 +77,7 @@ PAPI_accum_counters - This function adds the value you
 
   To add the values currently in the counters to the
   previously read values:
-    [cycles, instructions] = PAPI_Matlab('accum', cycles, instructions);
+    [cycles, instructions] = PAPI('accum', cycles, instructions);
 
 
 PAPI_stop_counters - This function reads the value of
@@ -82,7 +87,7 @@ PAPI_stop_counters - This function reads the value of
 
   To stop the running counters you previously started
   and record their values:
-    [cycles, instructions] = PAPI_Matlab('stop');
+    [cycles, instructions] = PAPI('stop');
 
 
 PAPI_Matlab.c, when compiled, functions simply as a
@@ -101,9 +106,11 @@ environment, but in this case, it is recommended that you
 compile outside of Matlab.  For some reason, compiling 
 inside does not work on some systems.
 
-So far, only the Linux environment has been tested, but
-_in theory_ this code should work anywhere PAPI and Matlab
-both work.
+So far, the Linux environment and the Windows environment
+have been tested, but _in theory_ this code should work anywhere 
+PAPI and Matlab both work.
+
+The following instructions are for a Linux/Unix environment:
 
 Assuming papi.h is present in /usr/local/include and libpapi.a
 is present in /usr/local/lib, the below should work.  If not,
@@ -124,39 +131,49 @@ matlab
 
 3.  Run the code:
 a.  Find the number of hardware counters on your system:
-num_counters = PAPI_Matlab('num')
+num_counters = PAPI('num')
 
 
-b.  Play with flips - the first initializes the counting;
-    the second returns the number of floating point instructions
-    since the first call, and the third line does the same as the
-    first AND reports the incremental rate of floating point
+b.  Play with flips - the first makes sure the counters are stopped and clear;
+    the second initializes the counting;
+    the third returns the number of floating point instructions
+    since the first call, and the fourth line does the same as the
+    second AND reports the incremental rate of floating point
     execution since the last call:
-PAPI_Matlab('flips', 0)
-ins = PAPI_Matlab('flips')
-[ins, mflips] = PAPI_Matlab('flips')
+PAPI('stop')
+PAPI('flips')
+ins = PAPI('flips')
+[ins, mflips] = PAPI('flips')
 
-c.  Play with instructions per cycle - the first initializes counting;
-    the second returns the number of instructions
-    since the first call, and the third line does the same as the
-    first AND reports the incremental rate of instructions per
+c.  Play with instructions per cycle - the first makes sure the 
+    counters are stopped and clear; the second initializes counting;
+    the third returns the number of instructions
+    since the first call, and the fourth line does the same as the
+    second AND reports the incremental rate of instructions per
     cycle since the last call:
-PAPI_Matlab('ipc', 0)
-ins = PAPI_Matlab('ipc')
-[ins, ipc] = PAPI_Matlab('ipc')
+PAPI('stop')
+PAPI('ipc')
+ins = PAPI('ipc')
+[ins, ipc] = PAPI('ipc')
 
-d.  Start counting:
-PAPI_Matlab('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS')
+d. Try the example m files included with the distribution:
+FlopsInnerProduct.m
+FlopsMatrixVector.m
+FlopsMatrixMatrix.m
+FlopsSampler.m
 
-e.  Read the counters and reset:
-[cycles, instr] = PAPI_Matlab('read')
+e.  Start counting:
+PAPI('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS')
 
-f.  Add the current value of the counters to a previous read
+f.  Read the counters and reset:
+[cycles, instr] = PAPI('read')
+
+g.  Add the current value of the counters to a previous read
     and reset:
-[cycles, instr] = PAPI_Matlab('accum', cycles, instr)
+[cycles, instr] = PAPI('accum', cycles, instr)
 
-g.  Read the counters and stop them:
-[cycles, instr] = PAPI_Matlab('stop')
+h.  Read the counters and stop them:
+[cycles, instr] = PAPI('stop')
 
 You can pass as many events as you like to be counted or
 recorded, as long as that number does not exceed the number
