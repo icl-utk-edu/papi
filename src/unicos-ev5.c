@@ -3,7 +3,7 @@
 
 /* PAPI stuff */
 
-#include "unicos-ev5.h"
+#include SUBSTRATE
 
 /* First entry is counter code 1, counter code 2 and counter code 3.
    Then is the mask. There are no derived metrics for the T3E.
@@ -423,14 +423,12 @@ static void set_hwcntr_codes(int selector, unsigned char *from, pmctr_t *to)
     }
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
   unsigned char tmp_cmd[3];
   unsigned char *codes;
-
 
   if (EventCode & PRESET_MASK)
     { 
@@ -470,8 +468,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = preset_map[preset_index].counter_cmd;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
+      out->command = derived;
+      out->operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
@@ -517,8 +515,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   return(PAPI_OK);
 }
@@ -531,49 +529,17 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
+  used = in->selector;
  
-  if (EventCode & PRESET_MASK)
-    { 
-      preset_index = EventCode ^ PRESET_MASK; 
-
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-	return(PAPI_ENOEVNT);
-    }
-  else
-    {
-      int hwcntr_num, code;
-      
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0xff;  /* 0 through 2 */ 
-      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) ||
-	  (hwcntr_num < 0))
-	return(PAPI_EINVAL);
-
-      code = EventCode >> 8; /* 0 through 50 */
-      if (code > 0xff)
-	return(PAPI_EINVAL); 
-
-      selector = 1 << hwcntr_num;
-    }
-
-  /* Check if these counters aren't used. */
-
-  if ((used & selector) != used)
-    return(PAPI_EINVAL);
-
   /* Clear out counters that are part of this event. */
-  /* Remember, that selector might encode duplicate events
-     so we need to know only the ones that are used. */
-  
-  this_state->selector = this_state->selector ^ (selector & used);
+
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
 {
   return(PAPI_ESBSTR);
 }

@@ -5,9 +5,8 @@
 #include <mpp/globals.h> 
 #include <sys/ucontext.h>
 #include <sys/times.h>
+
 #include "papi.h"
-#include "papi_internal.h"
-#include "papiStdEventDefs.h"
 
 #define PERFCNT_ON      1
 #define PERFCNT_OFF     2
@@ -107,3 +106,4 @@ typedef struct hwd_preset {
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
+#include "papi_internal.h"

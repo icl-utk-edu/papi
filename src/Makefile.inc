@@ -24,7 +24,7 @@ $(LIBRARY): $(OBJECTS)
 shared: $(SHLIB)
 
 $(SHLIB): $(OBJECTS) 
-	-$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(MISCOBJS) $(MISCLIBS) -o $@
+	-$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(MISCLIBS) -o $@
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c

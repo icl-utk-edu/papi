@@ -101,7 +101,7 @@ PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *check))
   /* Assume that the underlying Fortran implementation 
      can handle \0 terminated strings and that the 
      passed array is of sufficient size */
-  *check = PAPI_perror(*code, destination, PAPI_MAX_STRLEN);
+  *check = PAPI_perror(*code, destination, PAPI_MAX_STR_LEN);
 #endif
 }
 

@@ -1,42 +1,4 @@
-#include "linux-ia64.h"
-
-#define EVENT_CONFIG_T pfm_event_config_t
-#define MAX_COUNTERS 4
-
-typedef struct preset_search {
-  /* Preset code */
-  int preset;
-  /* Derived code */
-  int derived;
-  /* Strings to look for */
-  char *(findme[PMU_MAX_COUNTERS]);
-} preset_search_t;
-
-typedef struct hwd_preset {
-  /* Is this event here? */
-  int present;   
-  /* Is this event derived? */
-  int derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  int operand_index;
-  /* Buffer to pass to library to control the counters */
-  pfm_event_config_t evt;
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
-
-typedef struct hwd_control_state {
-  /* Arg to perfmonctl */
-  pid_t pid;
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Buffer to pass to kernel to control the counters */
-  perfmon_req_t pc[PMU_MAX_COUNTERS];
-  /* Buffer to pass to library to control the counters */
-  pfm_event_config_t evt;
-  /* Is this event derived? */
-  int derived; 
-} hwd_control_state_t;
+#include SUBSTRATE
 
 static preset_search_t preset_search_map[] = { 
   {PAPI_L1_TCM,DERIVED_ADD,{"L1D_READ_MISSES_RETIRED","L2_INST_DEMAND_READS",0,0}},
@@ -619,9 +581,8 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int nselector = 0;
   int retval = 0;
   int selector = 0;
@@ -642,8 +603,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = &preset_map[preset_index].evt;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index 
+      out->command = derived;
+      out->operand_index 
 	= preset_map[preset_index].operand_index;
     }
   else
@@ -702,8 +663,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   /* Update the new counter select field */
 
@@ -712,14 +673,13 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int used;
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
+  used = in->selector;
 
   /* Clear out counters that are part of this event. */
 
@@ -728,7 +688,8 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
 {
   return(PAPI_ESBSTR);
 }
@@ -1176,8 +1137,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }

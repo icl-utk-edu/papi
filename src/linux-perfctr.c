@@ -812,48 +812,15 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int selector, used, preset_index, EventCode;
+  int used;
 
   /* Find out which counters used. */
   
   used = in->selector;
-  EventCode = in->code;
-
-  if (EventCode & PRESET_MASK)
-    { 
-      preset_index = EventCode ^ PRESET_MASK; 
-
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-	return(PAPI_ENOEVNT);
-    }
-  else
-    {
-      int hwcntr_num, code, old_code; 
-
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0x3; 
-      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) ||
-	  (hwcntr_num < 0))
-	return(PAPI_EINVAL);
-
-      old_code = in->command;
-      code = EventCode >> 8; 
-      if (old_code != code)
-	return(PAPI_EINVAL);
-
-      selector = 1 << hwcntr_num;
-    }
-
-  /* Check if these counters aren't used. */
-
-  if ((used & selector) != used)
-    return(PAPI_EINVAL);
 
   /* Clear out counters that are part of this event. */
 
-  this_state->selector = this_state->selector ^ selector;
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
