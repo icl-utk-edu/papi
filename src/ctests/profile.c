@@ -57,7 +57,13 @@ int main(int argc, char **argv)
     if ((retval=PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval );
 
+#if defined(sun) && defined(sparc)
    /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+	  PAPI_event = PAPI_TOT_INS;
+	  mask = MASK_TOT_INS | MASK_TOT_CYC;
+  } else     test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!",0);
+#else
   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
 	  PAPI_event = PAPI_FP_INS;
 	  mask = MASK_FP_INS | MASK_TOT_CYC;
@@ -66,6 +72,8 @@ int main(int argc, char **argv)
 	  PAPI_event = PAPI_TOT_INS;
 	  mask = MASK_TOT_INS | MASK_TOT_CYC;
   }
+#endif
+
   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
 	  test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 

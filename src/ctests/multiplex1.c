@@ -24,7 +24,12 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 /* Event to use in all cases; initialized in init_papi() */
 
+#if defined(sparc) && defined(sun)
+static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L1_ICM, PAPI_TOT_INS, PAPI_TOT_CYC };
+#else
 static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_FP_INS, PAPI_TOT_INS, PAPI_TOT_CYC };
+#endif
+
 static int PAPI_events_len = 2;
 
 #ifdef TEST_DRIVER

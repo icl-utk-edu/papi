@@ -125,8 +125,9 @@ static void dump_cmd(papi_cpc_event_t *t)
 static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
 {
 #ifdef DEBUG
-  psignal(signal, "dispatch_emt");
-  psiginfo(sip, "dispatch_emt");
+  extern int papi_debug;
+  if (papi_debug)
+    psignal(signal, "dispatch_emt");
 #endif
 
   if (sip->si_code == EMT_CPCOVF)

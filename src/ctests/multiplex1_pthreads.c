@@ -100,10 +100,14 @@ void *case1_pthreads(void *arg)
   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
+#if defined(sun) && defined(sparc)
+  if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS))!=PAPI_OK )
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+#else
   if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS))!=PAPI_OK )
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
-  if((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS))!=PAPI_OK)
+#endif
+  if((retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
