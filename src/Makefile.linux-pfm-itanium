@@ -1,13 +1,6 @@
-CFLAGS  = -DITANIUM  -DPFM20
-FFLAGS  = -DITANIUM  -DPFM20
-DESCR   = "Stock Linux 2.4.18 + for the Intel Itanium"
+# Libpfm version is set automatically by the Rules.libpfm file
+# Override on command line or in this makefile
+# VERSION	= 2.0
 
-LIBPFMHOME = libpfm-2.0
-PFM_LIB_PATH = ./$(LIBPFMHOME)/libpfm
-PFM_INC_PATH = ./$(LIBPFMHOME)/include
-MSUBSTR  = linux-ia64-libpfm2.0
-
-PFMOBJS = pfmlib_generic.o 
-
-include Rules.linux-libpfm
+include Rules.libpfm
 
