@@ -11,7 +11,7 @@ int *EventSet --  a reference to an EventSetInfo structure
 .LP
 .SH DESCRIPTION
 .LP
-.B PAPI_cleanup(\|)
+.B PAPI_cleanup_eventset(\|)
 This function effectively cleans the target EventSet. 
 Which can then be removed from existance with a call to PAPI_destroy_eventset
 The EventSet must be stopped in order for this call to succeed.
@@ -29,7 +29,7 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .fi
 .nf
 .B  \t
-.B  PAPI_cleanup contains calls to:
+.B  PAPI_cleanup_eventset contains calls to:
 .B  \t
 .B  \tlookup_EventSet 
 .B  \thandle_error

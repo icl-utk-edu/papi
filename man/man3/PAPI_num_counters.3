@@ -4,11 +4,11 @@
 PAPI_num_counters \- get number of hardware counters available
 .SH SYNOPSIS
 .LP
-int PAPI_num_events (void)
+int PAPI_num_counters (void)
 .LP
 .SH DESCRIPTION
 .LP
-.B PAPI_num_events(\|)
+.B PAPI_num_counters(\|)
 This function returns the optimal length of the values array for the
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
@@ -16,7 +16,7 @@ counters supported by the current substrate.
 .SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
 .nf
 .B  \t
-.B  PAPI_num_events may be called by:
+.B  PAPI_num_counters may be called by:
 .B  \t
 .B  \tPAPI_read_counters
 .B  \tPAPI_start_counters
@@ -25,7 +25,7 @@ counters supported by the current substrate.
 .fi
 .nf
 .B  \t
-.B  PAPI_num_events contains calls to:
+.B  PAPI_num_counters contains calls to:
 .B  \t
 .B  \tPAPI_get_opt
 .fi
