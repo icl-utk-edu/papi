@@ -84,6 +84,7 @@ int case1(void)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_both(NUM_ITERS);
+   do_misses(10, 1024*1024*4);
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)
