@@ -797,13 +797,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info)
   _papi_hwi_dispatch_overflow_signal((void *)&ctx, _papi_hwi_system_info.supports_hw_overflow, 0, 0); 
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   hwd_control_state_t *this_state = &ESI->machdep;
   papi_cpc_event_t *arg = &this_state->counter_cmd;
   int hwcntr;
 
-  if (overflow_option->threshold == 0)
+  if (threshold == 0)
   {
     arg->flags ^= CPC_BIND_EMT_OVF;
     if (sigaction(SIGEMT, NULL, NULL) == -1)
@@ -821,11 +821,11 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
 
     arg->flags |= CPC_BIND_EMT_OVF;
-    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex[0]].pos[0];
+    hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
     if (hwcntr == 0)
-      arg->cmd.ce_pic[0] = UINT64_MAX - (uint64_t)overflow_option->threshold[0];
+      arg->cmd.ce_pic[0] = UINT64_MAX - (uint64_t)threshold;
     else if (hwcntr == 1)
-      arg->cmd.ce_pic[1] = UINT64_MAX - (uint64_t)overflow_option->threshold[0];
+      arg->cmd.ce_pic[1] = UINT64_MAX - (uint64_t)threshold;
   }
 
   return(PAPI_OK);

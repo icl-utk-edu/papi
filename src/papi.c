@@ -1299,7 +1299,7 @@ int PAPI_perror(int code, char *destination, int length)
 
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
-  int retval, index, event_counter;
+  int retval, index, event_counter, i;
   EventSetInfo_t *ESI;
   ThreadInfo_t *thread;
 
@@ -1329,25 +1329,53 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
     if (threshold == 0)
       papi_return(PAPI_EINVAL);
   }
-  if (threshold ==0 ) ESI->overflow.event_counter--;
-  else ESI->overflow.event_counter++;
-  if (threshold > 0 && ESI->overflow.event_counter>MAX_COUNTERS)
+  if (threshold > 0 && ESI->overflow.event_counter>=MAX_COUNTERS)
     papi_return(PAPI_ECNFLCT);
 
-  /* Set up the option structure for the low level */
+  if (threshold ==0 ) {
+    for(i=0; i<ESI->overflow.event_counter; i++)
+    {
+      if (ESI->overflow.EventCode[i]== EventCode) break;
+    }
+    /* EventCode not found */
+    if (i==ESI->overflow.event_counter) papi_return(PAPI_EINVAL);
+    /* compact these arrays */
+    while(i< ESI->overflow.event_counter - 1) 
+    {
+      ESI->overflow.deadline[i] = ESI->overflow.deadline[i+1];
+      ESI->overflow.threshold[i] = ESI->overflow.threshold[i+1];
+      ESI->overflow.EventIndex[i] = ESI->overflow.EventIndex[i+1];
+      ESI->overflow.EventCode[i] = ESI->overflow.EventCode[i+1];
+      i++;
+    }
+    ESI->overflow.deadline[i] = 0;
+    ESI->overflow.threshold[i] = 0;
+    ESI->overflow.EventIndex[i] = 0;
+    ESI->overflow.EventCode[i] = 0;
 
-  event_counter=ESI->overflow.event_counter;
-  ESI->overflow.deadline[event_counter-1] = threshold;
-  ESI->overflow.threshold[event_counter-1] = threshold;
-  ESI->overflow.EventIndex[event_counter-1] = index;
-  ESI->overflow.EventCode[event_counter-1] = EventCode;
+    ESI->overflow.event_counter--;
+  }
+  else 
+  {
+    ESI->overflow.event_counter++;
+    event_counter=ESI->overflow.event_counter;
+    ESI->overflow.deadline[event_counter-1] = threshold;
+    ESI->overflow.threshold[event_counter-1] = threshold;
+    ESI->overflow.EventIndex[event_counter-1] = index;
+    ESI->overflow.EventCode[event_counter-1] = EventCode;
+  }
   ESI->overflow.flags = flags;
   ESI->overflow.handler = handler;
   ESI->overflow.count = 0;
 
+  /* Set up the option structure for the low level */
+
   if (_papi_hwi_system_info.supports_hw_overflow)
   {
+/*
     retval = _papi_hwd_set_overflow(ESI, &ESI->overflow);
+*/
+    retval = _papi_hwd_set_overflow(ESI, index, threshold);
     if (retval < PAPI_OK)
 	  papi_return(retval);
   }

@@ -1208,8 +1208,8 @@ int _papi_hwi_mdi_init() {
   return(PAPI_OK);
 }
 
-void _papi_hwi_dummy_handler(int EventSet, int EventCode, int EventIndex,
-                          long_long *values, int *threshold, void *context)
+void _papi_hwi_dummy_handler(int EventSet, void *address,
+                       long_long *overflow_vector)
 {
   /* This function is not used and shouldn't be called. */
 

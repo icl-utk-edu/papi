@@ -538,6 +538,7 @@ int _papi_hwd_init_global(void)
   unsigned int version;
   pfmlib_options_t pfmlib_options;
 
+
   /* Opened once for all threads. */
 
   if (pfm_initialize() != PFMLIB_SUCCESS ) 
@@ -618,7 +619,9 @@ int _papi_hwd_shutdown_global(void)
 int _papi_hwd_init(hwd_context_t *zero)
 {
   pfarg_context_t ctx[1];
+
   
+
   memset(ctx, 0, sizeof(ctx));
 
   ctx[0].ctx_notify_pid = getpid();
@@ -1241,27 +1244,47 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_OK);
 }
 
+/*
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
+*/
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = &ESI->machdep;
   int j, index, retval = PAPI_OK, *pos, event_index;
   int event_counter;
+  EventSetOverflowInfo_t *overflow_option= &ESI->overflow;
 
-  event_counter=overflow_option->event_counter;
-  if (overflow_option->threshold[event_counter-1] == 0)
+  if (threshold == 0)
   {
   /* Remove the overflow notifier on the proper event. 
   */
+/*
      event_index= overflow_option->EventIndex[event_counter-1];
-     set_notify(ESI, event_index, 0);
+*/
+     set_notify(ESI, EventIndex, 0);
+
+       pos = ESI->EventInfoArray[EventIndex].pos;
+       index=0;
+       while ( pos[index] != -1 )
+       {
+         j = pos[index];
+         DBG((stderr,"counter %d used in overflow, threshold %d\n",
+           j+PMU_FIRST_COUNTER,threshold));
+         this_state->pd[j].reg_value = 0;
+         this_state->pd[j].reg_long_reset = 0;
+         this_state->pd[j].reg_short_reset = 0;
+         index++;
+       }
 
      /* Remove the signal handler */
 
      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
      _papi_hwi_using_signal--;
+     DBG(("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal));
      if (_papi_hwi_using_signal == 0)
 	 {
+
 	   if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
 	     retval = PAPI_ESYS;
 	 }
@@ -1286,22 +1309,24 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
   /*Set the overflow notifier on the proper event. Remember that selector
   */
+/*
     event_index= overflow_option->EventIndex[event_counter-1];
-    set_notify(ESI, event_index, PFM_REGFL_OVFL_NOTIFY);
+*/
+    set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
 
 /* set initial value in pd array */
 
-      pos = ESI->EventInfoArray[event_index].pos;
+      pos = ESI->EventInfoArray[EventIndex].pos;
       index=0;
       while ( pos[index] != -1 )
       {
         j = pos[index];
         DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           j+PMU_FIRST_COUNTER,overflow_option->threshold[event_counter-1]));
+           j+PMU_FIRST_COUNTER,threshold));
         this_state->pd[j].reg_value = (~0UL) -
-                              (unsigned long)overflow_option->threshold[event_counter-1]+1;
+                              (unsigned long)threshold+1;
         this_state->pd[j].reg_long_reset = (~0UL) -
-                               (unsigned long)overflow_option->threshold[event_counter-1]+1;
+                               (unsigned long)threshold+1;
         index++;
       }
 
