@@ -11,7 +11,7 @@ SHLIBDEPS = $(PMAPI)/lib -lpmapi
 # Default source is for pmapi 1.5.x and above.
 
 FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3
-CFLAGS  = $(FLAGS) -DDEBUG -DHAS_NATIVE_MAP
+CFLAGS  = $(FLAGS) -DDEBUG
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS= -qnostdinc
 FFLAGS  = $(FLAGS)

@@ -661,8 +661,6 @@ int _papi_portable_get_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *p
 
 /*
   Hardware independent routines to support an opaque native event table.
-  #define HAS_NATIVE_MAP for these functions to be active.
-  Otherwise they return benign values (PAPI_ENOEVNT)
   These routines assume the existence of two hardware dependent routines:
     _papi_hwd_native_code_to_name()
     _papi_hwd_native_code_to_descr()
@@ -680,7 +678,6 @@ int _papi_portable_get_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *p
    Used to enumerate the entire array, e.g. for native_avail.c */
 int _papi_hwi_query_native_event(unsigned int EventCode)
 {
-#ifdef HAS_NATIVE_MAP
    char *name;
 
    if (EventCode & NATIVE_MASK) {
@@ -688,7 +685,6 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
       if (name)
          return (PAPI_OK);
    }
-#endif
    return (PAPI_ENOEVNT);
 }
 
@@ -697,7 +693,6 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
-#ifdef HAS_NATIVE_MAP
    char *name;
    unsigned int i = 0 | NATIVE_MASK;
    do {
@@ -712,7 +707,6 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
          return (PAPI_OK);
       }
    } while (_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK);
-#endif
    return (PAPI_ENOEVNT);
 }
 
@@ -721,11 +715,9 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    Returns NULL if name not found */
 char *_papi_hwi_native_code_to_name(unsigned int EventCode)
 {
-#ifdef HAS_NATIVE_MAP
    if (EventCode & NATIVE_MASK) {
       return (_papi_hwd_ntv_code_to_name(EventCode));
    }
-#endif
    return (NULL);
 }
 
@@ -734,12 +726,9 @@ char *_papi_hwi_native_code_to_name(unsigned int EventCode)
    Returns NULL if description not found */
 char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 {
-#ifdef HAS_NATIVE_MAP
-
    if (EventCode & NATIVE_MASK) {
       return (_papi_hwd_ntv_code_to_descr(EventCode));
    }
-#endif
    return (NULL);
 }
 
@@ -747,8 +736,6 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 /* The native event equivalent of PAPI_get_event_info */
 int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * info)
 {
-#ifdef HAS_NATIVE_MAP
-
    if (EventCode & NATIVE_MASK) {
       strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MIN_STR_LEN);
       if (&info->symbol) {
@@ -761,7 +748,6 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
          return (PAPI_OK);
       }
    }
-#endif
    return (PAPI_ENOEVNT);
 }
 
