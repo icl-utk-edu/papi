@@ -566,7 +566,7 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
          preset_index = head[j].event_code & PRESET_AND_MASK;
          for (k = 0; k < MAX_COUNTER_TERMS; k++) {
             nevt = _papi_hwi_preset_data[preset_index].native[k];
-            if (nevt == 0)
+            if (nevt == PAPI_NULL)
                break;
             for (n = 0; n < ESI->NativeCount; n++) {
                if (nevt == ESI->NativeInfoArray[n].ni_event) {

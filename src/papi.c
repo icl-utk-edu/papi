@@ -250,9 +250,10 @@ int PAPI_library_init(int version)
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
       if (_papi_hwi_presets[i].symbol)  /* If the preset is part of the API */
-         for (_papi_hwi_presets[i].count = 0, j = 0; j < MAX_COUNTER_TERMS; j++)
-            if (_papi_hwi_preset_data[i].native[j] != 0)
-               _papi_hwi_presets[i].count++;
+         for (_papi_hwi_presets[i].count = 0, j = 0; j < MAX_COUNTER_TERMS; j++) {
+            if (_papi_hwi_preset_data[i].native[j] == PAPI_NULL) break;
+            _papi_hwi_presets[i].count++;
+         }
    }
 
    init_level = PAPI_LOW_LEVEL_INITED;

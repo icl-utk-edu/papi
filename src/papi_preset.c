@@ -25,6 +25,11 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem)
    char *str;
    hwi_preset_data_t *data;
 
+   /* make sure every native event array is terminated */
+   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++) {
+      _papi_hwi_preset_data[pnum].native[0] = PAPI_NULL;
+   }
+
    /* dense array of events is terminated with a 0 preset */
    for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0);
         pnum++) {
@@ -41,7 +46,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem)
        */
       pmc = 0;
       data = &findem[pnum].data;
-      while ((data->native[pmc]) && (pmc < MAX_COUNTER_TERMS)) {
+      while ((data->native[pmc] != PAPI_NULL) && (pmc < MAX_COUNTER_TERMS)) {
          str = _papi_hwd_ntv_code_to_name(data->native[pmc]);
          if (strlen(_papi_hwi_presets[preset_index].vendor_name) + strlen(str) + 1 <
              PAPI_MAX_STR_LEN) {
