@@ -85,13 +85,19 @@ int main(int argc, char **argv)
    if ( PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS ) 
       mythreshold = THRESHOLD;
    else
+#if defined(linux)
+      mythreshold = hw_info->mhz*10000*2;
+#else
       mythreshold = THRESHOLD*2;
+#endif
+
+   num_flops = NUM_FLOPS*2;
 
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(NUM_FLOPS);
+   do_flops(num_flops);
 
    retval = PAPI_stop(EventSet, values[0]);
    if (retval != PAPI_OK)
@@ -105,7 +111,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(NUM_FLOPS);
+   do_flops(num_flops);
 
    retval = PAPI_stop(EventSet, values[1]);
    if (retval != PAPI_OK)
@@ -114,11 +120,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-   num_flops = NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
-   num_flops *= 2;
-#endif
-
    if (!TESTS_QUIET) {
       if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
@@ -126,7 +127,7 @@ int main(int argc, char **argv)
       printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
       printf("---------------------------------------------------------------\n");
       printf("Threshold for overflow is: %d\n", mythreshold);
-      printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
+      printf("Using %d iterations of c += a*b\n", num_flops);
       printf("-----------------------------------------------\n");
 
       printf("Test type    : %16d%16d\n", 1, 2);
@@ -136,6 +137,9 @@ int main(int argc, char **argv)
       printf("-----------------------------------------------\n");
 
       printf("Verification:\n");
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
+   num_flops *= 2;
+#endif
       if (PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS){
 #if defined(__crayx1)
          printf("Row 1 approximately equals %d %d\n", num_flops, 0);
