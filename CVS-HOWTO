@@ -18,6 +18,7 @@ The last time: :-(
 > cd <directory>
 > cvs logout
 
+
 How do I add a user 'username' to CVS?
 --------------------------------------
 
@@ -50,3 +51,23 @@ Added password for user 'username'
 .
 .
 cvs commit: Rebuilding administrative file database
+
+
+How do I merge branches of the PAPI project back to the main trunk?
+-------------------------------------------------------------------
+1) Check out the main trunk of the PAPI project:
+	> cvs checkout -P papi
+2) Update the main trunk by joining with the branch:
+	> cvs update -j papi-2-3-3
+3) Tag the branch for future updates:
+	> cvs tag papi-2-3-3m1
+4) Resolve any outstanding conflicts
+
+5) Commit the modified files back to the main trunk:
+	> cvs commit ...
+...later...
+6) To merge from the same branch again, repeat the steps above,
+	but update from the tag created in step 3 rather than 
+	the branch point. This gaurantees that only the changes
+	made since the last merge are merged.
+	
