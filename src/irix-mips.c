@@ -721,7 +721,7 @@ int _papi_hwd_init(EventSetInfo *global)
 
 static int get_avail_hwcntr_bits(int cntr_avail_bits)
 {
-  int tmp = 0, i = 1 << (HWPERF_EVENTMAX-1);
+  unsigned int tmp = 0, i = 1 << (HWPERF_EVENTMAX-1);
   
   while (i)
     {
