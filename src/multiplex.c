@@ -1105,7 +1105,9 @@ static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 {
 	int i, retval;
 	MasterEvent * mev;
+#if 0
 	PAPI_option_t options;
+#endif
 	MasterEvent **head = &mpx_events->mythr->head;
 
 	/* For each event, see if there is already a corresponding
