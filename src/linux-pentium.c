@@ -393,7 +393,7 @@ int _papi_hwd_start(void *machdep)
     if(retval) return(PAPI_EBUG);
   }
 
-  if(this_state->counter_code1 >= 0)
+  if(this_state->counter_code2 >= 0)
   { retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
     if(retval) return(PAPI_EBUG);
   }
@@ -402,7 +402,7 @@ int _papi_hwd_start(void *machdep)
   { retval = perf(PERF_SET_CONFIG, 2, 1);
     if(retval) return(PAPI_EBUG);
   }
-
+  retval = perf(PERF_START, 0, 0);
   return (retval);
 }
 
@@ -436,21 +436,21 @@ int _papi_hwd_read(void *machdep, long long events[])
   machnum = this_state->number;
   if(machnum == 0) return(PAPI_ENOTRUN);
   if(machnum >= 4)
-  { retval = perf(PERF_READ, 0, events[0]);
+  { retval = perf(PERF_READ, 0, &events[0]);
     if(retval) return(PAPI_EBUG);
   }
   if((machnum == 3) || (machnum == 7))
-  { retval = perf(PERF_READ, 1, events[1]);
+  { retval = perf(PERF_READ, 1, &events[1]);
     if(retval) return(PAPI_EBUG);
-    retval = perf(PERF_READ, 2, events[2]);
+    retval = perf(PERF_READ, 2, &events[2]);
     if(retval) return(PAPI_EBUG);
   }
   if((machnum == 2) || (machnum == 6))
-  { retval = perf(PERF_READ, 1, events[1]);
+  { retval = perf(PERF_READ, 1, &events[1]);
     if(retval) return(PAPI_EBUG);
   }
   else 
-  { retval = perf(PERF_READ, 2, events[2]);
+  { retval = perf(PERF_READ, 2, &events[2]);
     if(retval) return(PAPI_EBUG);
   }
   return 0;
