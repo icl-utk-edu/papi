@@ -1186,7 +1186,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
       // at retirement compound events; from Table A-2
    case P4_replay_event:
       // add the PEBS enable and cache stuff here
-      // this stuff comes from Intel Table A-5
+      // this stuff comes from Intel Table A-6
       // it is encoded by shifting into unused mask bits
       // for the replay_event mask list
       tags = (mask >> PEBS_ENB_SHIFT) & PEBS_ENB_MASK;

@@ -109,6 +109,8 @@ enum {
    P4_mispred_branch_retired,
    P4_x87_assist,
    P4_machine_clear,
+// Table A-3. Model-Specific Events (Model 3 Only)
+   P4_instr_completed,
 // vectors for custom and user tables
    P4_custom_event = 0xFE,
    P4_user_event = 0xFF
@@ -535,7 +537,7 @@ enum {
 
 // mask bits for replay_event
 // these bits are encoded into the pebs registers for replay events
-// see Intel Table A-5
+// see Intel Table A-6
 #define PEBS_MV_LOAD_BIT    (0 + PEBS_MV_SHIFT)
 #define PEBS_MV_STORE_BIT   (1 + PEBS_MV_SHIFT)
 #define PEBS_L1_MISS_BIT    (0 + PEBS_ENB_SHIFT)
@@ -629,6 +631,17 @@ enum {
    SMCLEAR
 };
 
+// Table A-3. Model-Specific Events (Model 3 Only)
+/* instr_completed */
+#define INSTR_COMPLETED_ESCR 0x7
+#define INSTR_COMPLETED_CCCR 0x4
+// MSR_CRU_ESCR0: 12, 13, 16
+// MSR_CRU_ESCR1: 14, 15, 17
+
+// mask bits for instr_completed
+// see front_end_events
+
+
 /* ESCR bit fields */
 
 #define ESCR_EVENT_SEL(a) (a << 25)
@@ -664,7 +677,7 @@ enum {
 
 #define CPL(a) (a << 2)
 
-/* replay tagging defines from Intel Table A-5 */
+/* replay tagging defines from Intel Table A-6 */
 #define PEBS_UOP_TAG (1 << 24)
 #define PEBS_L1_MISS (1)
 #define PEBS_L2_MISS (1 << 1)
