@@ -47,7 +47,7 @@ int main(int argc, char **argv)
    unsigned short *profbuf4;
    unsigned short *profbuf5;
    unsigned long length;
-   unsigned long start, end;
+   caddr_t start, end;
    long_long **values;
    const PAPI_exe_info_t *prginfo = NULL;
    int retval;
@@ -96,8 +96,8 @@ int main(int argc, char **argv)
       retval = 1;
       test_fail(__FILE__, __LINE__, "PAPI_get_executable_info", retval);
    }
-   start = (unsigned long) prginfo->address_info.text_start;
-   end = (unsigned long) prginfo->address_info.text_end;
+   start = prginfo->address_info.text_start;
+   end = prginfo->address_info.text_end;
    length = end - start;
 
    profbuf = (unsigned short *) malloc(length * sizeof(unsigned short));
