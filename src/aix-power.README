@@ -1,11 +1,15 @@
-Title: Native Encoding for AIX 4.3.x on IBM Power 630, 604 and 604e
+Title: Notes for AIX 4.3.x and AIX 5.x on IBM Power 630, 604, 604e (POWER3)
+	and AIX 5.x on POWER4
 
 The encoding for native (NON-PAPI) events is:
 
 		Low 8 bits indicate which counter number: 0 - 7
-		Bits 8-16 indicate which event number: 0 - 50
+		Bits 8-16 indicate which event number: 
+			  0 - 50 on POWER3
+			  0 - 94 on POWER4
 
-See: /usr/lpp/pmtoolkit/lib/<arch>.evs
+See: /usr/lpp/pmtoolkit/lib/<arch>.evs for POWER3;
+     /usr/pmapi/lib/POWER4.evs and /POWER4.gps for POWER4
 
 For threaded programs, you had better:
 
@@ -13,8 +17,9 @@ setenv AIXTHREAD_SCOPE S
 
 Installation notes:
 
-The current source is for pmtoolkit 1.3. If you have pmtoolkit 1.2 the
-test cases will fail. For example:
+AIX 4.3.x:
+The current source and Makefile is for pmtoolkit 1.3. 
+If you have pmtoolkit 1.2 the test cases will fail. For example:
 
       ./tests/avail
       IOT trap
@@ -22,20 +27,46 @@ test cases will fail. For example:
 This can be remdied by recompiling the PAPI library with the option
 -DPMTOOLKIT_1_2 set.
 
+AIX 5.x:
+The current source is for pmapi 1.4
+
+The aix-power substrate is contained in a single source file, but targets
+three different configurations.
+Conditional compilation directed by three different make files determines
+which configuration is targetted. Make sure you select the Makefile that
+matches your configuration:
+- Makefile.aix-power	for AIX 4.3.x on POWER3
+- Makefile.aix5-power3	for AIX 5.x   on POWER3
+- Makefile.aix-power4	for AIX 5.x   on POWER4
+
 Test case notes:
 
-The Power3 has a FMADD instruction. Because of this, in some situations 
-PAPI_FP_INS may produce fewer Floating Point counts than expected. 
-Note that Power3 also supports an FMA counter (PAPI_FMA_INS). 
+The POWER3 and POWER4 have a FMADD instruction. Although this instruction
+performs two Floating Point operations, it is counted as one Floating Point
+instruction. Because of this, there are situations where PAPI_FP_INS may 
+produce fewer Floating Point counts than expected.
+Further, the Floating Point Instruction event on POWER3 and POWER4 also
+counts Floating Point Stores, leading to higher Floating Point counts than
+expected. There are occasions where these two effects can cancel each other
+out, to produce the right result for the wrong reason!
+Note that POWER3 and POWER4 also support an FMA counter (PAPI_FMA_INS).
 Thus, a more accurate count of Floating Point Operations can be obtained
 by PAPI_FP_INS + PAPI_FMA_INS.
+Correcting for the overcount by Floating Point Stores is more difficult,
+requiring the use of the native events: PM_FPU_LD_ST_ISSUES and PM_FPU_LD.
+The complete expression for Floating Point Operations then becomes:
+PAPI_FP_INS + PAPI_FMA_INS - (PM_FPU_LD_ST_ISSUES - PM_FPU_LD)
 
 Counter notes:
 
-The Power architecture supports up to 8 counters. However, in many cases
-events are mutually exclusive and can't be counted simultaneously on a 
-Power3 system. The following table, submitted by Joel Malard indicates 
-events that cannot be counted simultaneously:
+The POWER architecture supports up to 8 counters. However, in many cases
+events are mutually exclusive and can't be counted simultaneously.
+
+On POWER4, events are available only as members of predefined groups. 
+For more on these groups, see /usr/pmapi/lib/POWER4.gps.
+
+The following table, submitted by Joel Malard, indicates 
+events that cannot be counted simultaneously on POWER3:
 
 --------------------------------------------------------------------------
 Vendor string and code   : IBM (-1)
