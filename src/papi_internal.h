@@ -1,4 +1,4 @@
-/* $Id */
+/* $Id$ */
 
 /* some members of structs and/or function parameters may or may not be
    necessary, but at this point, we have included anything that might 

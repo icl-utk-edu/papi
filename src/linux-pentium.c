@@ -1,4 +1,4 @@
-/* $Id */
+/* $Id$ */
 
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
