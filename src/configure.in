@@ -134,6 +134,16 @@ case "$bitmode" in
       ;;
 esac
 
+dnl AC_ARG_WITH(perfctr,
+dnl             [  --with-perfctr=<path>     Specify path of pmapi on linux/x86/x86_64/PPC/PPC64 system ],
+dnl             [perfctr=$withval],
+dnl             [perfctr=./perfctr-2.6.x]
+dnl             )
+dnl AC_ARG_WITH(pfm,
+dnl             [  --with-pfm=<path>     Specify path of pfm build tree on linux/ia64 system ],
+dnl             [pfm=$withval],
+dnl             [pfm=default]
+dnl             )
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>     Specify path of pmapi on aix system ],
             [pmapi=$withval],
@@ -326,11 +336,17 @@ AC_CHECK_LIB([pfm], [pfm_initialize])
 #      ])
 fi
 if test "$CPU" = "itanium2"; then
-AC_CHECK_LIB([pfm], [pfm_initialize])
 #AC_CHECK_LIB([pfm], [pfm_initialize], [], [
 #      echo "Error, libpfm.a is needed on itanium2!"
 #      exit -1
 #      ])
+AC_CHECK_FILE(/etc/sgi-release,[
+	AC_CHECK_LIB([pfm], [pfm_initialize],[
+	altix="-DALTIX"
+	pfm_prefix="/usr"],[
+	altix=""
+	pfm_prefix=""],[])
+	])
 fi
 
 if test "$OS" = "aix"; then
@@ -471,7 +487,11 @@ case "$tls" in
 
 #AC_MSG_RESULT($NOTLS)
 AC_SUBST(NOTLS)
-
+AC_SUBST(altix)
+# AC_SUBST(perfctr_prefix)
+# AC_SUBST(perfctr)
+# AC_SUBST(pfm_prefix)
+# AC_SUBST(pfm)
 
 get_bitmode()
 {

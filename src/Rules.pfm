@@ -13,8 +13,8 @@ TARGETS = serial multiplex_and_pthreads shared
 #
 
 F77   		= g77 -Wall
-CC		= gcc -Wall $(NOTLS)
-CC_R    	= $(CC) -pthread $(NOTLS)
+CC		= gcc -Wall 
+CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(NOTLS) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 FFLAGS		= -ffixed-line-length-132
 
@@ -62,20 +62,28 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
-ifeq (,$(PFM_PREFIX))
-PFM ?= ./libpfm-$(VERSION)
-ifeq (2.0,$(VERSION))
-PFM_LIB_PATH ?= $(PFM)/libpfm
-else
-PFM_LIB_PATH ?= $(PFM)/lib
-endif
-PFM_INC_PATH ?= $(PFM)/include
-else
-PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
-PFM_INC_PATH ?= $(PFM_PREFIX)/include
+# If Altix, always build with PFM provided by the system
+# unless forced to override
+
+ifneq (,$(wildcard /etc/sgi-release))
+	PFM_PREFIX ?= /usr
+	ALTIX ?= -DALTIX
 endif
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) 
+ifeq (,$(PFM_PREFIX))
+	PFM ?= ./libpfm-$(VERSION)
+ifeq (2.0,$(VERSION))
+	PFM_LIB_PATH ?= $(PFM)/libpfm
+else
+	PFM_LIB_PATH ?= $(PFM)/lib
+endif
+	PFM_INC_PATH ?= $(PFM)/include
+else
+	PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
+	PFM_INC_PATH ?= $(PFM_PREFIX)/include
+endif
+
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX)
 
 CFLAGS-2.0 := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.0 := -DPFM30 -D_GNU_SOURCE  
