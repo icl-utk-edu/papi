@@ -15,11 +15,11 @@
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 #if (defined(linux) && defined(__ia64__)) || (defined(_AIX))
-#define DO_FLOPS1 (unsigned long)(*(void **)do_flops1)
-#define DO_FLOPS2 (unsigned long)(*(void **)do_flops2)
+#define DO_FLOPS1 (caddr_t)(*(void **)do_flops1)
+#define DO_FLOPS2 (caddr_t)(*(void **)do_flops2)
 #else
-#define DO_FLOPS1 (unsigned long)(do_flops1)
-#define DO_FLOPS2 (unsigned long)(do_flops2)
+#define DO_FLOPS1 (caddr_t)(do_flops1)
+#define DO_FLOPS2 (caddr_t)(do_flops2)
 #endif
 
 void do_flops2(int);
@@ -96,16 +96,16 @@ int main(int argc, char **argv)
    /* First half */
    sprof[0].pr_base = profbuf;
    sprof[0].pr_size = length / 2;
-   sprof[0].pr_off = (caddr_t) DO_FLOPS2;
+   sprof[0].pr_off = DO_FLOPS2;
       fprintf(stderr, "do_flops is at %p %lx\n", &do_flops2, sprof[0].pr_off);
 
-   sprof[0].pr_scale = 65536;  /* constant needed by PAPI_sprofil */
+   sprof[0].pr_scale = 65535;  /* constant needed by PAPI_sprofil */
    /* Second half */
    sprof[1].pr_base = profbuf2;
    sprof[1].pr_size = length / 2;
-   sprof[1].pr_off = (caddr_t) DO_FLOPS1;
+   sprof[1].pr_off = DO_FLOPS1;
       fprintf(stderr, "do_flops1 is at %p %lx\n", &do_flops1, sprof[1].pr_off);
-   sprof[1].pr_scale = 65536; /* constant needed by PAPI_sprofil */
+   sprof[1].pr_scale = 65535; /* constant needed by PAPI_sprofil */
 
    /* Overflow bin */
    sprof[2].pr_base = profbuf3;
@@ -161,13 +161,14 @@ int main(int argc, char **argv)
          printf("0x%lx\t%d\n", DO_FLOPS1 + 2 * i, profbuf2[i]);
    }
    printf("-------------------------\n");
-   printf("%u samples that fell outside the regions.\n", *profbuf3);
+   printf("%u samples fell outside the regions.\n", *profbuf3);
 
    exit(0);
 }
 
-/* here declare a and b to be volatile is to try to let the
-   compiler not to optimize the loop */
+/* Declare a and b to be volatile.
+   This is to try to keep the
+   compiler from optimizing the loop */
 volatile double a = 0.5, b = 2.2;
 void do_flops2(int n)
 {
