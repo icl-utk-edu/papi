@@ -68,8 +68,6 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
    {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0}},
-   {PAPI_FLOPS, DERIVED_ADD_PS,
-    {"CPU_CYCLES", "FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0}},
    {0, 0, {0, 0, 0, 0}}
 };
 #define NUM_OF_PRESET_EVENTS 42
@@ -138,7 +136,6 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
-   {PAPI_FLOPS, DERIVED_PS, {"CPU_CYCLES", "FP_OPS_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
 #define NUM_OF_PRESET_EVENTS 57

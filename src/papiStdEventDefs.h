@@ -88,11 +88,9 @@ platform's documentation carefully.
 #define PAPI_SR_INS  (PRESET_MASK | 0x36)       /*Store instructions executed */
 #define PAPI_BR_INS  (PRESET_MASK | 0x37)       /*Total branch instructions executed */
 #define PAPI_VEC_INS (PRESET_MASK | 0x38)       /*Vector/SIMD instructions executed */
-#define PAPI_FLOPS   (PRESET_MASK | 0x39)       /*Floating Point instructions per second */
 #define PAPI_RES_STL (PRESET_MASK | 0x3A)       /*Cycles processor is stalled on resource */
 #define PAPI_FP_STAL (PRESET_MASK | 0x3B)       /*Cycles any FP units are stalled */
 #define PAPI_TOT_CYC (PRESET_MASK | 0x3C)       /*Total cycles */
-#define PAPI_IPS     (PRESET_MASK | 0x3D)       /*Instructions executed per second */
 #define PAPI_LST_INS (PRESET_MASK | 0x3E)       /*Total load/store inst. executed */
 #define PAPI_SYC_INS (PRESET_MASK | 0x3F)       /*Sync. inst. executed */
 #define PAPI_L1_DCH  (PRESET_MASK | 0x40)       /*L1 D Cache Hit */

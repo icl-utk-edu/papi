@@ -238,15 +238,11 @@ PAPI_event_info_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = {
    ,
    {PAPI_PRESET(PAPI_VEC_INS)}
    ,
-   {PAPI_PRESET(PAPI_FLOPS)}
-   ,
    {PAPI_PRESET(PAPI_RES_STL)}
    ,
    {PAPI_PRESET(PAPI_FP_STAL)}
    ,
    {PAPI_PRESET(PAPI_TOT_CYC)}
-   ,
-   {PAPI_PRESET(PAPI_IPS)}
    ,
    {PAPI_PRESET(PAPI_LST_INS)}
    ,

@@ -106,11 +106,9 @@ To create a version of PAPI in your native language, do the following:
 #define PAPI_SR_INS_nm  "PAPI_SR_INS"   /*Store instructions executed */
 #define PAPI_BR_INS_nm  "PAPI_BR_INS"   /*Total branch instructions executed */
 #define PAPI_VEC_INS_nm "PAPI_VEC_INS"  /*Vector/SIMD instructions executed */
-#define PAPI_FLOPS_nm   "PAPI_FLOPS"    /*Floating Point instructions per second */
 #define PAPI_RES_STL_nm "PAPI_RES_STL"  /*Cycles processor is stalled on resource */
 #define PAPI_FP_STAL_nm "PAPI_FP_STAL"  /*Cycles any FP units are stalled */
 #define PAPI_TOT_CYC_nm "PAPI_TOT_CYC"  /*Total cycles */
-#define PAPI_IPS_nm     "PAPI_IPS"      /*Instructions executed per second */
 #define PAPI_LST_INS_nm "PAPI_LST_INS"  /*Total load/store inst. executed */
 #define PAPI_SYC_INS_nm "PAPI_SYC_INS"  /*Sync. inst. executed */
 #define PAPI_L1_DCH_nm  "PAPI_L1_DCH"   /*L1 D Cache Hit */
@@ -153,7 +151,7 @@ To create a version of PAPI in your native language, do the following:
 #define PAPI_FDV_INS_nm "PAPI_FDV_INS"  /*FD ins */
 #define PAPI_FSQ_INS_nm "PAPI_FSQ_INS"  /*FSq ins */
 #define PAPI_FNV_INS_nm "PAPI_FNV_INS"  /*Finv ins */
-#define PAPI_FP_OPS_nm "PAPI_FP_OPS"  /*Floating point operations executed */
+#define PAPI_FP_OPS_nm  "PAPI_FP_OPS"   /*Floating point operations executed */
 
 /*****************************************************/
 /* This block provides names for of each PAPI return */

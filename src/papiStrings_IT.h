@@ -85,11 +85,9 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_SR_INS_dsc  "memorizzare le istruzioni"
 #define PAPI_BR_INS_dsc  "istruzioni di ramo"
 #define PAPI_VEC_INS_dsc "istruzioni di Vector/SIMD"
-#define PAPI_FLOPS_dsc   "istruzioni della virgola mobile al secondo"
 #define PAPI_RES_STL_dsc "cicli arrestati su qualsiasi risorsa"
 #define PAPI_FP_STAL_dsc "cicla il unit(s) della virgola mobile si arrestano"
 #define PAPI_TOT_CYC_dsc "cicli totali"
-#define PAPI_IPS_dsc     "istruzioni al secondo"
 #define PAPI_LST_INS_dsc "istruzioni deposito / del carico completate"
 #define PAPI_SYC_INS_dsc "istruzioni di sincronizzazione completate"
 #define PAPI_L1_DCH_dsc  "i colpi di 1 nascondiglio Livelli di dati"
@@ -132,7 +130,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_FDV_INS_dsc "la virgola mobile divide le istruzioni"
 #define PAPI_FSQ_INS_dsc "istruzioni della radice quadrata della virgola mobile"
 #define PAPI_FNV_INS_dsc "istruzioni inverse della virgola mobile"
-#define PAPI_FP_OPS_dsc  "istruzioni della virgola mobile"
+#define PAPI_FP_OPS_dsc  "funzionamenti della virgola mobile"
 
 /*************************************************************/
 /* This block provides short descriptions of each PAPI event */
@@ -198,11 +196,9 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_SR_INS_lbl  "Stores"
 #define PAPI_BR_INS_lbl  "Branches"
 #define PAPI_VEC_INS_lbl "Vector/SIMD instr"
-#define PAPI_FLOPS_lbl   "FP instr / second"
 #define PAPI_RES_STL_lbl "Stalled res cycles"
 #define PAPI_FP_STAL_lbl "Stalled FPU cycles"
 #define PAPI_TOT_CYC_lbl "Total cycles"
-#define PAPI_IPS_lbl     "Instr / second"
 #define PAPI_LST_INS_lbl "L/S completed"
 #define PAPI_SYC_INS_lbl "Syncs completed"
 #define PAPI_L1_DCH_lbl  "L1D cache hits"

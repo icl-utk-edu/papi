@@ -60,8 +60,6 @@ hwi_search_t usii_preset_search_map[] = {
    {PAPI_SR_INS, {0, {NATIVE_MASK | 6, PAPI_NULL}}},
    /* Total cycles */
    {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},
-   /* IPS */
-   {PAPI_IPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 1}}},
    /* L1 data cache reads */
    {PAPI_L1_DCR, {0, {NATIVE_MASK | 5, PAPI_NULL}}},
    /* L1 data cache writes */
@@ -111,8 +109,6 @@ hwi_search_t usiii_preset_search_map[] = {
    {PAPI_L1_STM, {0, {NATIVE_MASK | 40, PAPI_NULL}}},   /* pic1 DC_wr_miss */
    /* Cond. branch inst. mispred. */
    {PAPI_BR_MSP, {0, {NATIVE_MASK | 32, PAPI_NULL}}},   /* pic1 Dispatch0_mispred */
-   /* IPS */
-   {PAPI_IPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 1}}},
    /* pic0 Cycle_cnt, pic1 Instr_cnt */
    /* L1 data cache reads */
    {PAPI_L1_DCR, {0, {NATIVE_MASK | 8, PAPI_NULL}}},    /* pic0 DC_rd */

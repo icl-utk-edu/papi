@@ -1336,9 +1336,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          mev->rate_estimate = 0.0;
          mev->count_estimate = 0;
          mev->papi_event = PAPI_NULL;
-         /* Scale rate measurements differently from counts */
-         mev->is_a_rate = ((event_list[i] == PAPI_FLOPS)
-                           || (event_list[i] == PAPI_IPS));
          retval = PAPI_create_eventset(&(mev->papi_event));
          if (retval != PAPI_OK) {
 #ifdef MPX_DEBUG

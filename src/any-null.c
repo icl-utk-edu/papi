@@ -12,7 +12,6 @@ static hwd_search_t findem_foobar[] = {
    {PAPI_L1_TCM, DERIVED_ADD, -1, {0x4, 0xa4}},
    {PAPI_L1_DCM, NOT_DERIVED, -1, {0x5, -1}},
    {PAPI_L1_ICM, NOT_DERIVED, -1, {-1, 0x6}},
-   {PAPI_FLOPS, DERIVED_PS, 0, {0x1, 0x2}},
    {-1, NOT_DERIVED, -1, {-1, -1}}
 };
 
