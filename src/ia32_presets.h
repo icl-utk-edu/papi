@@ -17,7 +17,7 @@
 static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
   {CNTR2|CNTR1,0,0,{{0x45,0x45,0x0,0x0}},""},	// L1 Cache Dmisses
   {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L1 Cache Imisses 
-  {0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Cache Dmisses
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{P6_L2_LINES_IN,P6_BUS_TRAN_IFETCH,0x0,0x0}},"P6_L2_LINES_IN - P6_BUS_TRAN_IFETCH"}, // L2 Cache Dmisses
   {CNTR2|CNTR1,0,0,{{0x68,0x68,0x0,0x0}},""},	// L2 Cache Imisses 
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Dmisses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Imisses
