@@ -71,14 +71,12 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    const PAPI_hw_info_t *hwinfo = NULL;
    long_long values[2] = {0,0};
    char buf[500];
-   int retval,check=0;
+   int retval;
 
    if ( initialized == 2 ) /* Start counters */ {
 	return PAPI_EINVAL;
    }
 
-   if ( *real_time==-1 && *proc_time==0 && *flpins == 1 && *mflops == 2 )
-	check = 1;
    if ( !initialized || initialized == 1) {
 	mhz = 0.0;
 	*mflops = 0.0;
@@ -120,7 +118,7 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    }
    else {
 	retval = PAPI_stop( EventSet, values );
-        if ( check ){
+        if (*real_time==-1 && *proc_time==0 && *flpins == 1 && *mflops == 2){
 		initialized = 1;
 		return PAPI_OK;
    	}		
