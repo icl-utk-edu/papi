@@ -44,7 +44,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "WinPAPI_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /D "HAS_NATIVE_MAP" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -75,7 +75,7 @@ PostBuild_Cmds=copy release\WinPAPI.dll ..\shell\release	copy release\WinPAPI.dl
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "WinPAPI_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /D "HAS_NATIVE_MAP" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -135,12 +135,7 @@ SOURCE=..\winpmc\pmclib.c
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\unicos-x1.c"
-# End Source File
-# Begin Source File
-
 SOURCE=.\win32.c
-# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
@@ -169,7 +164,6 @@ SOURCE=..\..\ia32_presets.h
 # Begin Source File
 
 SOURCE="..\..\linux-perfctr.h"
-# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
@@ -190,10 +184,6 @@ SOURCE=..\..\papiStrings.h
 # Begin Source File
 
 SOURCE=..\winpmc\pmclib.h
-# End Source File
-# Begin Source File
-
-SOURCE="..\..\unicos-x1.h"
 # End Source File
 # Begin Source File
 
