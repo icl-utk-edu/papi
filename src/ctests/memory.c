@@ -105,8 +105,9 @@ int main(int argc, char **argv)
     PAPI_event_code_to_name(eventlist[i],descr);
     if(PAPI_add_event(&EventSet, eventlist[i]) != PAPI_OK)
     {
-       printf("%3d: Test 0x%08x %-12s %14s\n",i,eventlist[i],descr,
-              "Not available");
+       if (!TESTS_QUIET)
+         printf("%3d: Test 0x%08x %-12s %14s\n",i,eventlist[i],descr,
+                "Not available");
       continue;  /* All events may not be available */
     }
 
