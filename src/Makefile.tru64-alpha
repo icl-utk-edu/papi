@@ -1,7 +1,7 @@
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial pthreads omp smp
+TARGETS	= serial pthreads omp smp multiplex
 
 CFLAGS 	= -g -DDEBUG -Zp8 -DNO_FLOPS 
 FFLAGS	= -g
@@ -16,13 +16,15 @@ CC_R	= cc
 CC	= cc
 CPP	= cc -E
 F77	= f90
-MISCOBJS= cpu_version.o read_cycle_counter.o
-MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
+#MISCOBJS= cpu_version.o read_cycle_counter.o
+MISCOBJS= cpu_version.o
+#MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
+MISCSRCS= alpha/cpu_version.s
 
 include Makefile.inc
 
 cpu_version.o: alpha/cpu_version.s
 	cc -O -c alpha/cpu_version.s 
 
-read_cycle_counter.o: alpha/read_cycle_counter.s
-	cc -O -c alpha/read_cycle_counter.s
+#read_cycle_counter.o: alpha/read_cycle_counter.s
+#	cc -O -c alpha/read_cycle_counter.s

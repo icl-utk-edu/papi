@@ -18,8 +18,7 @@ How to install PAPI on your system
 2) Check for errors. Look for the libpapi.a and libpapi.so 
    in the current directory. Optionally run the test programs
    in the 'ftests' and 'tests' directories. Not all tests will
-   succeed on all platforms. Chances are, if 'tests/zero' works,
-   everything is ok.
+   succeed on all platforms. 
 
    % ./run_tests.sh
 
@@ -27,7 +26,9 @@ How to install PAPI on your system
 
    To directly install PAPI from the build tree:
 
-   % make -f Makefile.<arch> DESTDIR=/usr/local install
+   % make -f Makefile.<arch> DESTDIR=<install-dir> install
+
+   Please use an absolute pathname for <install-dir>, not a relative pathname.
 
    To create a binary kit, papi-<arch>.tgz:
 
