@@ -20,24 +20,31 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-/* Events that require tagging should be ordered such that the
-   first event is the one that is read. See PAPI_FP_INS for an example. */
-
-/* You requested all the ESCR/CCCR/Counter triplets that allow one to
-count cycles.  Well, this is a special case in that an ESCR is not
-needed at all. By configuring the threshold comparison appropriately
-in a CCCR, you can get the counter to count every cycle, independent
-of whatever ESCR the CCCR happens to be listening to.  To do this, set
-the COMPARE and COMPLEMENT bits in the CCCR and set the THRESHOLD
-value to "1111" (binary).  This works because the setting the
-COMPLEMENT bit makes the threshold comparison to be "less than or
-equal" and, with THRESHOLD set to its maximum value, the comparison
-will always succeed and the counter will increment by one on every
-clock cycle. */
 
 #ifdef __i386__
+/*
+    Native event index structure:
 
-// Definitions of the virtual indexes of all P4 native events used in the preset tables.
+   +----------+--------+----------------+
+   |0100000000| event  |      mask      |
+   +----------+--------+----------------+
+    31   -  24 23 -- 16 15    ----      0
+*/
+
+
+/*  Definitions of the virtual indexes of all P4 native events used in the preset tables.
+    To create a new native event index, make up an appropriate name (used only internally);
+    the definition for the name consists of:
+    - the NATIVE_MASK bit;
+    - one of the event group names from the enum table in p4_events.h, shifted to the 3rd byte;
+    - any required mask bits from that event group, shifted into position;
+      valid mask bits for each group are defined in p4_events.h
+
+   Definitive descriptions of the event groups can be found in:
+    IA32 Intel Arch. SW. Dev. Man. V3: Appendix A, Table A-1
+    Order Number 245472-012, 2003.
+*/
+
 #define PNE_branch_retired_all (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM) + (1<<MMTP) + (1<<MMTM))
 #define PNE_branch_retired_not_taken (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM))
 #define PNE_branch_retired_taken (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP) + (1<<MMTM))
@@ -47,17 +54,11 @@ clock cycle. */
 #define PNE_branch_retired_taken_predicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP))
 #define PNE_branch_retired_taken_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTM))
 #define PNE_branch_retired_not_taken_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM))
-  /* The next one's a bit of a hack.
-  It can live on ANY counter and use ANY ESCR, but it must be a valid pairing.
-  For now, let's just code it using the TC_deliver_mode group, because that one
-  doesn't seem to be used for much else...
-  This is a good opportunity to define synonyms for use with other groups...
-  */
-#define PNE_cycles (NATIVE_MASK + (P4_TC_deliver_mode<<16))
+#define PNE_cycles (NATIVE_MASK + (P4_custom_event<<16) + 0) // this is the first custom entry
 #define PNE_page_walk_type_data_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS))
 #define PNE_page_walk_type_instr_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
 #define PNE_page_walk_type_all (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
-#define PNE_x87_FP_uop_tag0 (NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0))
+#define PNE_x87_FP_uop_tag0 (NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0) + (1<<ALL))
 #define PNE_execution_event_nbogus0 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
 #define PNE_replay_event (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
 #define PNE_replay_event_L1_load_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
@@ -68,6 +69,13 @@ clock cycle. */
 #define PNE_instr_retired_non_bogus (NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
 #define PNE_instr_retired_all (NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
 
+/*
+   PAPI preset events are defined in the tables below.
+   Each entry consists of a PAPI name, derived info, and up to eight native event indexes
+   as defined above.
+   Events that require tagging should be ordered such that the
+   first event is the one that is read. See PAPI_FP_INS for an example.
+*/
 
 const preset_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 /* preset, derived, native index array */
@@ -84,8 +92,10 @@ const preset_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
   {PAPI_FP_INS,  0, { PNE_execution_event_nbogus0,PNE_x87_FP_uop_tag0,0,0,0,0,0,0}},
   {PAPI_TOT_CYC, 0, { PNE_cycles,0,0,0,0,0,0,0}},
   {PAPI_L1_LDM,  0, { PNE_replay_event_L1_load_miss,0,0,0,0,0,0,0}},
+//  {PAPI_L1_STM,  0, { PNE_replay_event_L1_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L1_DCM,  0, { PNE_replay_event_L1_data_miss,0,0,0,0,0,0,0}},
   {PAPI_L2_LDM,  0, { PNE_replay_event_L2_load_miss,0,0,0,0,0,0,0}},
+//  {PAPI_L2_STM,  0, { PNE_replay_event_L2_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L2_DCM,  0, { PNE_replay_event_L2_data_miss,0,0,0,0,0,0,0}},
   { 0,		 0, { 0,0,0,0,0,0,0,0}}
 };
@@ -106,21 +116,66 @@ const preset_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
   {PAPI_FP_INS,  0, { PNE_execution_event_nbogus0,PNE_x87_FP_uop_tag0,0,0,0,0,0,0}},
   {PAPI_TOT_CYC, 0, { PNE_cycles,0,0,0,0,0,0,0}},
   {PAPI_L1_LDM,  0, { PNE_replay_event_L1_load_miss,0,0,0,0,0,0,0}},
+//  {PAPI_L1_STM,  0, { PNE_replay_event_L1_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L1_DCM,  0, { PNE_replay_event_L1_data_miss,0,0,0,0,0,0,0}},
   {PAPI_L1_DCA,  0, { PNE_replay_event_L1_data_access,0,0,0,0,0,0,0}},
   {PAPI_L2_LDM,  0, { PNE_replay_event_L2_load_miss,0,0,0,0,0,0,0}},
+//  {PAPI_L2_STM,  0, { PNE_replay_event_L2_store_miss,0,0,0,0,0,0,0}},
   {PAPI_L2_DCM,  0, { PNE_replay_event_L2_data_miss,0,0,0,0,0,0,0}},
   { 0,		 0, { 0,0,0,0,0,0,0,0}}
 };
 
 /*
-   +----------+--------+----------------+
-   |0100000000| event  |      mask      |
-   +----------+--------+----------------+
-    31   -  24 23 -- 16 15    ----      0
+  Pentium 4 supports 3 separate native event tables, each an array of 
+  hwd_p4_native_map_t structures. 
+  - The first is a user table consisting of up to 128 user definable entries.
+  The count of entries is also maintained. The mechanism for modifying this
+  table has not yet been fully elucidated.
+  - The second table is a custom table of entries defined for specific purposes.
+  Cycles is an example of an exception that falls into this table. Other special
+  cases e.g., using PEBS or tags, can also be envisioned for this table.
+  - The third table is actually a virtual table. It consists of entries for the
+  45 or so event groups defined by Intel, with a portion of the index bits used
+  to specific mask bits that modify the event group. _papi_hwd_ntv_code_to_bits()
+  dynamically uses this information to assemble the event structure at run-time.
 */
 
-hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
+static int _papi_hwd_pentium4_user_count = 0;
+static hwd_p4_native_map_t _papi_hwd_pentium4_user_map[128] = {{0,},};
+
+
+static hwd_p4_native_map_t _papi_hwd_pentium4_custom_map[] = {
+// following are custom defined events that don't fit the normal structure
+  {
+    /* cycles is a special case in that an ESCR is not
+    needed at all. By configuring the threshold comparison appropriately
+    in a CCCR, you can get the counter to count every cycle, independent
+    of whatever ESCR the CCCR happens to be listening to.  To do this, set
+    the COMPARE and COMPLEMENT bits in the CCCR and set the THRESHOLD
+    value to "1111" (binary).  This works because the setting the
+    COMPLEMENT bit makes the threshold comparison to be "less than or
+    equal" and, with THRESHOLD set to its maximum value, the comparison
+    will always succeed and the counter will increment by one on every
+    clock cycle. */
+    /* Cycles can live on ANY counter and use ANY ESCR, but it must be a valid pairing.
+    For now, we'll code it using the TC_deliver_mode group, because that one
+    doesn't seem to be used for much else...
+    This is a good candidate for defining synonyms for use with other groups...
+    */
+    "cycles",
+    "This event counts every cycle by setting the threshold of the TC_deliver_mode event to count every tick.",
+    {
+      {CTR45, CTR67}, {MSR_TC_ESCR0, MSR_TC_ESCR1},
+      CCCR_ESCR_SEL(TC_DLVR_CCCR) | CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ENABLE | CCCR_COMPARE | CCCR_COMPLEMENT | CCCR_THRESHOLD(0xf), 
+      ESCR_EVENT_SEL(TC_DLVR_ESCR) | CPL(1),
+      0,0,0
+    },
+    0,
+    0
+  },
+};
+
+static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
 // following are the non-retirement events
   {
     "TC_deliver_mode",
@@ -953,98 +1008,138 @@ hwd_p4_mask_t *mask_array[] = {
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
-// Gotta add support for a custom table and a user table...
+// This defines the number of events in the custom native event table
+#define _papi_hwd_pentium4_custom_count (sizeof(_papi_hwd_pentium4_custom_map) / sizeof(hwd_p4_native_map_t))
 
 static char name[128];
 static char description[1024];
 
-int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifer)
+static inline void internal_decode_event(unsigned int EventCode, int *event, int *mask)
+{
+  *event = (EventCode & NATIVE_AND_MASK) >> 16;	// event is in the third byte
+  *mask = (EventCode & 0xffff);			// mask bits are in the first two bytes
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifier)
 {
   /* returns the next valid native event code following the one passed in
      modifier can have different meaning on different platforms 
      for p4, (modifier==0) scans major groups; (modifier==1) scans all variations of the groups.
      this can be important for platforms such as pentium 4 that have event groups and variations
   */
+  /* UNTESTED: write high level PAPI_enum_events(); rewrite avail and native_avail; test */
+
   int event, mask, this_mask;
 
-  event = (EventCode & NATIVE_AND_MASK) >> 16;		  // event is in the third byte
-  mask = (EventCode & 0xffff);				 // mask bits are in the first two bytes
-  this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
+  internal_decode_event(EventCode, &event, &mask);
 
-  switch (event) {
-  case P4_custom_event:
-    return(PAPI_ENOEVNT);
-    break;
-
-  case P4_user_event:
-    return(PAPI_ENOEVNT);
-    break;
-
-  default:
-    if (event > P4_machine_clear) return(PAPI_ENOEVNT);
-
-    while (((++mask) & this_mask) != mask) {
-      if (mask > this_mask) {
-	mask = 0;
-	if(++event > P4_machine_clear) return(PAPI_ENOEVNT);
-	this_mask = _papi_hwd_pentium4_native_map[event].mask;
+  if (event <= P4_machine_clear) {
+    if (modifier & 1) { // look only at major event groups
+      if(++event > P4_machine_clear) event = P4_custom_event;
+    }
+    else {
+      this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
+      while (((++mask) & this_mask) != mask) {
+	if (mask > this_mask) {
+	  mask = 0;
+	  if(++event > P4_machine_clear) {
+	    event = P4_custom_event;
+	    break;
+	  }
+	  this_mask = _papi_hwd_pentium4_native_map[event].mask;
+	}
       }
     }
-    return((event<<16) + mask + NATIVE_MASK);
-    break;
   }
+
+  if (event == P4_custom_event) {
+    if (++mask >= _papi_hwd_pentium4_custom_count) {
+      event = P4_user_event;
+      mask = 0;
+    }
+  }
+  
+  if (event == P4_user_event) {
+    if (++mask >= _papi_hwd_pentium4_user_count) return(PAPI_ENOEVNT);
+  }
+
+  return((event<<16) + mask + NATIVE_MASK);
+}
+
+/* Called by _papi_hwd_ntv_code_to_{name,descr}() to build the return string */
+static char *internal_translate_code(int event, int mask, char *str, char *separator)
+{
+  int i, j;
+
+  if (*separator == '_') // implied flag for name
+    strcpy(str, _papi_hwd_pentium4_native_map[event].name);
+  else
+    strcpy(str, _papi_hwd_pentium4_native_map[event].description);
+
+  // do some sanity checks for valid mask bits
+  if (!mask) return(str);
+  if ((_papi_hwd_pentium4_native_map[event].mask & mask) != mask) return(NULL);
+
+  if (*separator != '_') // implied flag for name
+    strcat(str, " Mask bits: ");
+
+  for (i=0;i<16 && mask != 0;i++) {
+    if (mask & (1 << i)) {
+      mask ^= (1 << i); // turn off the found bit
+      for (j=0;j<16;j++) {
+	if (mask_array[event][j].bit_pos == i) {
+	  strcat(str, separator);
+	  if (*separator == '_') // implied flag for name
+	    strcat(str, mask_array[event][j].name);
+	  else
+	    strcat(str, mask_array[event][j].description);
+	  break;
+	}
+	if (mask_array[event][j].bit_pos == -1) return(NULL);
+      }
+    }
+  }
+  return(str);
 }
 
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-  int event, mask, i, j;
+  int event, mask;
 
-  event = (EventCode & NATIVE_AND_MASK) >> 16; // event is in the third byte
-  mask = (EventCode & 0xffff);	// mask bits are in the first two bytes
-  
-  strcpy(name, _papi_hwd_pentium4_native_map[event].name);
+  internal_decode_event(EventCode, &event, &mask);
 
-  if (mask_array[event] && mask) {
-    for (i=0;i<16;i++) {
-      if (mask & (1 << i)) {
-	for (j=0;j<16;j++) {
-	  if (mask_array[event][j].bit_pos == i) {
-	    strcat(name, "_");
-	    strcat(name, mask_array[event][j].name);
-	  }
-	  if (mask_array[event][j].bit_pos == -1) return(NULL);
-	}
-      }
-    }
+  if (event == P4_custom_event) {
+    if (mask >= _papi_hwd_pentium4_custom_count) return(NULL);
+    return(_papi_hwd_pentium4_custom_map[mask].name);
   }
-  return(name);
+
+  if (event == P4_user_event) {
+    if (mask >= _papi_hwd_pentium4_user_count) return(NULL);
+    return(_papi_hwd_pentium4_user_map[mask].name);
+  }
+
+  return(internal_translate_code(event, mask, name, "_"));
 }
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-  int event, mask, i, j;
+  int event, mask;
 
-  event = (EventCode & NATIVE_AND_MASK) >> 16; // event is in the third byte
-  mask = (EventCode & 0xffff);	// mask bits are in the first two bytes
-  
-  strcpy(name, _papi_hwd_pentium4_native_map[event].description);
+  internal_decode_event(EventCode, &event, &mask);
 
-  if (mask_array[event]) {
-    strcat(description, "Mask bits: ");
-    for (i=0;i<16;i++) {
-      if (mask & (1 << i)) {
-	for (j=0;j<16;j++) {
-	  if (mask_array[event][j].bit_pos == i) {
-	    strcat(description, "; ");
-	    strcat(description, mask_array[event][j].description);
-	  }
-	  if (mask_array[event][j].bit_pos == -1) return(NULL);
-	}
-      }
-    }
+  if (event == P4_custom_event) {
+    if (mask >= _papi_hwd_pentium4_custom_count) return(NULL);
+    return(_papi_hwd_pentium4_custom_map[mask].description);
   }
-  return(description);
+
+  if (event == P4_user_event) {
+    if (mask >= _papi_hwd_pentium4_user_count) return(NULL);
+    return(_papi_hwd_pentium4_user_map[mask].description);
+  }
+
+  return(internal_translate_code(event, mask, description, ": "));
 }
+
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
@@ -1056,6 +1151,16 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   *bits = _papi_hwd_pentium4_native_map[event].bits;
 
   switch (event) {
+    case P4_custom_event:
+      if (mask > _papi_hwd_pentium4_custom_count) return(PAPI_ENOEVNT);
+      *bits = _papi_hwd_pentium4_custom_map[mask].bits;
+      return(PAPI_OK);
+
+    case P4_user_event:
+      if (mask > _papi_hwd_pentium4_user_count) return(PAPI_ENOEVNT);
+      *bits = _papi_hwd_pentium4_user_map[mask].bits;
+      return(PAPI_OK);
+
     case P4_packed_SP_uop:
     case P4_packed_DP_uop:
     case P4_scalar_SP_uop:
@@ -1114,566 +1219,39 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   return(PAPI_OK);
 }
 
-//    _papi_hwd_encode_native();
-//    _papi_hwd_decode_native();
+int _papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description, hwd_register_t *bits)
+{
+  hwd_p4_native_map_t *new_event;
 
+  if (_papi_hwd_pentium4_user_count >= (sizeof(_papi_hwd_pentium4_user_map) / sizeof(hwd_p4_native_map_t)))
+    return(PAPI_ENOEVNT);
 
+  *EventCode = NATIVE_MASK + (P4_user_event << 16) + _papi_hwd_pentium4_user_count;
+  new_event = &(_papi_hwd_pentium4_user_map[_papi_hwd_pentium4_user_count]);
+  _papi_hwd_pentium4_user_count += 1;
 
-/*
+  strcpy(new_event->name, name);
+  strcpy(new_event->description, description);
+  new_event->bits = *bits;
 
-hwd_p4_native_map_t _papi_hwd_pentium4_native_map[PAPI_MAX_NATIVE_EVENTS] = {
-  {
-    "branch_retired_all",
-    "This event counts the retirement of all taken, not-taken, predicted and mispredicted branches.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK(0xf) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_not_taken",
-    "This event counts the retirement of branches not-taken.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK((BR_RET_ESCR_MASK_NT_PR | BR_RET_ESCR_MASK_NT_MPR)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_taken",
-    "This event counts the retirement of branches taken.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK((BR_RET_ESCR_MASK_T_PR | BR_RET_ESCR_MASK_T_MPR)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_predicted",
-    "This event counts the retirement of branches predicted.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK((BR_RET_ESCR_MASK_T_PR | BR_RET_ESCR_MASK_NT_PR)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_mispredicted",
-    "This event counts the retirement of branches mispredicted.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK((BR_RET_ESCR_MASK_NT_MPR | BR_RET_ESCR_MASK_T_MPR)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_not_taken_predicted",
-    "This event counts the retirement of branches not-taken and predicted.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK(BR_RET_ESCR_MASK_NT_PR) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_taken_predicted",
-    "This event counts the retirement of branches taken and predicted.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK(BR_RET_ESCR_MASK_T_PR) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_taken_mispredicted",
-    "This event counts the retirement of branches taken and mispredicted.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK(BR_RET_ESCR_MASK_T_MPR) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "branch_retired_not_taken_mispredicted",
-    "This event counts the retirement of branches not taken and mispredicted.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(BR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(BR_RET_ESCR) | 
-      ESCR_EVENT_MASK(BR_RET_ESCR_MASK_NT_MPR) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-*/
+  return(PAPI_OK);
+}
 
-  /* This one's a bit of a hack.
-  It can live on ANY counter and use ANY ESCR, but it must be a valid pairing.
-  For now, let's just code it using the TC_deliver_mode group, because that one
-  doesn't seem to be used for much else...
-  This is a good opportunity to define synonyms for use with other groups...
-  */
- /* {
-    "cycles",
-    "This event counts every cycle by setting the threshold of a random event to count every tick.",
-    {
-      { CTR01, CTR23 },
-      { MSR_TC_ESCR0,	MSR_TC_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(TC_DLVR_CCCR) | CCCR_ENABLE | CCCR_COMPARE | CCCR_COMPLEMENT | CCCR_THRESHOLD(0xf), 
-      ESCR_EVENT_SEL(TC_DLVR_ESCR) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "page_walk_type_data_miss",
-    "This event counts data TLB page walks that the page miss handler (PMH) performs.",
-    {
-      { CTR01, CTR23 },
-      { MSR_PMH_ESCR0,	 MSR_PMH_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(PG_WLK_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(PG_WLK_ESCR) | 
-      ESCR_EVENT_MASK(PG_WLK_ESCR_MASK_DTMISS) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "page_walk_type_instr_miss",
-    "This event counts instruction TLB page walks that the page miss handler (PMH) performs.",
-    {
-      { CTR01, CTR23 },
-      { MSR_PMH_ESCR0,	 MSR_PMH_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(PG_WLK_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(PG_WLK_ESCR) | 
-      ESCR_EVENT_MASK(PG_WLK_ESCR_MASK_ITMISS) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "page_walk_type_all",
-    "This event counts data and instruction page walks that the page miss handler (PMH) performs.",
-    {
-      { CTR01, CTR23 },
-      { MSR_PMH_ESCR0,	 MSR_PMH_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(PG_WLK_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(PG_WLK_ESCR) | 
-      ESCR_EVENT_MASK((PG_WLK_ESCR_MASK_DTMISS | PG_WLK_ESCR_MASK_ITMISS)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "x87_FP_uop_tag0",
-    "This event increments for each x87 floating-point uop, specified through the event mask for detection.",
-    {
-      { CTR01, CTR23 },
-      { MSR_FIRM_ESCR0,	   MSR_FIRM_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(X87_FP_UOP_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(X87_FP_UOP_ESCR) | 
-      ESCR_EVENT_MASK(X87_FP_UOP_ESCR_MASK_ALL) | ESCR_TAG_ENABLE | ESCR_TAG_VAL(1) |
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "execution_event_nbogus0",
-    "This event counts the retirement of tagged uops, which are specified through the execution tagging mechanism. The event mask allows from one to four types of uops to be specified as either bogus or non-bogus uops to be tagged.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(EXECUTION_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(EXECUTION_ESCR) | 
-      ESCR_EVENT_MASK(EXECUTION_ESCR_MASK_NBOGUS0) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "replay_event",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "replay_event_L1_load_miss",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG | PEBS_L1_MISS, PEBS_MV_LOAD, 0
-    },
-    0
-  },
-  {
-    "replay_event_L1_store_miss",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG | PEBS_L1_MISS, PEBS_MV_STORE, 0
-    },
-    0
-  },
-  {
-    "replay_event_L1_data_miss",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG | PEBS_L1_MISS, PEBS_MV_STORE | PEBS_MV_LOAD, 0
-    },
-    0
-  },
-  {
-    "replay_event_L1_data_access",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG, PEBS_MV_STORE | PEBS_MV_LOAD, 0
-    },
-    0
-  },
-  {
-    "replay_event_L2_load_miss",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG | PEBS_L2_MISS, PEBS_MV_LOAD, 0
-    },
-    0
-  },
-  {
-    "replay_event_L2_store_miss",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG | PEBS_L2_MISS, PEBS_MV_STORE, 0
-    },
-    0
-  },
-  {
-    "replay_event_L2_data_miss",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops..",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR2,	 MSR_CRU_ESCR3 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(REPLAY_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(REPLAY_ESCR) | 
-      ESCR_EVENT_MASK(REPLAY_ESCR_MASK_NBOGUS) | 
-      CPL(1),
-      PEBS_UOP_TAG | PEBS_L2_MISS, PEBS_MV_STORE | PEBS_MV_LOAD, 0
-    },
-    0
-  },
-  {
-    "instr_retired_non_bogus",
-    "This event counts instructions that are retired during a clock cycle. Mask bits specify bogus or non-bogus (and whether they are tagged via the front-end tagging mechanism.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR0,	 MSR_CRU_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(INSTR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(INSTR_RET_ESCR) | 
-      ESCR_EVENT_MASK((INSTR_RET_ESCR_MASK_NBOGUSNTAG | INSTR_RET_ESCR_MASK_NBOGUSTAG)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  },
-  {
-    "instr_retired_all",
-    "This event counts instructions that are retired during a clock cycle. Mask bits specify bogus or non-bogus (and whether they are tagged via the front-end tagging mechanism.",
-    {
-      { CTR014, CTR235 },
-      { MSR_CRU_ESCR0,	 MSR_CRU_ESCR1 },
-      CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ESCR_SEL(INSTR_RET_CCCR) | CCCR_ENABLE, 
-      ESCR_EVENT_SEL(INSTR_RET_ESCR) | 
-      ESCR_EVENT_MASK((INSTR_RET_ESCR_MASK_NBOGUSNTAG | INSTR_RET_ESCR_MASK_NBOGUSTAG | INSTR_RET_ESCR_MASK_BOGUSNTAG | INSTR_RET_ESCR_MASK_BOGUSTAG)) | 
-      CPL(1),
-      0,0,0
-    },
-    0
-  }
-};
-*/
-/*
-  Not sure how to encode this one; can live on ANY counter and use ANY ESCR.
-  Problem is, you have to pick a valid pairing between counter and ESCR
-  { PAPI_TOT_CYC, NULL, 1,
-    {{{ COUNTER(4), 
-	CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ENABLE | CCCR_COMPARE | CCCR_COMPLEMENT | CCCR_THRESHOLD(0xf), 
-	CPL(1)} }}},
-  { 0, NULL, }
-*/
+int _papi_hwd_ntv_decode(unsigned int EventCode, char *name, char *description, hwd_register_t *bits)
+{
+  char *str;
 
+  str = _papi_hwd_ntv_code_to_name(EventCode);
+  if (!str) return(PAPI_ENOEVNT);
+  strcpy(name, str);
 
+  str = _papi_hwd_ntv_code_to_descr(EventCode);
+  if (!str) return(PAPI_ENOEVNT);
+  strcpy(description, str);
 
+  return(_papi_hwd_ntv_code_to_bits(EventCode, bits));
+}
 
-/* These table are the deprecated way of doing things & need to be deleted...
-const P4_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
-  { PAPI_RES_STL, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x9) | ESCR_EVENT_MASK(0x1) | CPL(1)} }}},
-  { PAPI_BR_INS, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0xf) | CPL(1)} }}},
-  { PAPI_BR_TKN, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0xc) | CPL(1)} }}},
-  { PAPI_BR_NTK, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0x3) | CPL(1)} }}},
-  { PAPI_BR_MSP, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0xa) | CPL(1)} }}},
-  { PAPI_BR_PRC, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0x5) | CPL(1)} }}},
-  { PAPI_TLB_DM, NULL, 1,
-   {{{ COUNTER(0) | COUNTER(1), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x1) | ESCR_EVENT_MASK(0x1) | CPL(1)} }}},
-  { PAPI_TLB_IM, NULL, 1,
-   {{{ COUNTER(0) | COUNTER(1), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x1) | ESCR_EVENT_MASK(0x2) | CPL(1)} }}},
-  { PAPI_TLB_TL, NULL, 1,
-   {{{ COUNTER(0) | COUNTER(1), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x1) | ESCR_EVENT_MASK(0x3) | CPL(1)} }}},
-  { PAPI_TOT_INS, NULL, 1,
-   {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x2) | NBOGUSNTAG | CPL(1)} }}},
-  { PAPI_FP_INS,  NULL, 2,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(0xC) | NBOGUSNTAG | CPL(1) }, 
-      { COUNTER(8) | COUNTER(9), 
-	HYPERTHREAD_ANY | ESCR(1) | ENABLE, 
-	EVENT(0x4) | (1 << 24) | (1 << 5) | (1 << 4) | CPL(1)} }}},
-  { PAPI_TOT_CYC, NULL, 1,
-    {{{ COUNTER(4), 
-	HYPERTHREAD_ANY | ENABLE | COMPARE | COMPLEMENT | THRESHOLD(0xf), 
-	CPL(1)} }}},
-  { PAPI_L1_LDM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L1_MISS, PEBS_MV_LOAD} }}},
-  { PAPI_L1_STM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L1_MISS, PEBS_MV_STORE} }}},
-  { PAPI_L1_DCM, NULL, 1,
-   {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-       PEBS_TAG | PEBS_L1_MISS, PEBS_MV_STORE | PEBS_MV_LOAD} }}},
-  { PAPI_L2_LDM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L2_MISS, PEBS_MV_LOAD} }}},
-  { PAPI_L2_STM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L2_MISS, PEBS_MV_STORE} }}},
-  { PAPI_L2_DCM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L2_MISS, PEBS_MV_STORE | PEBS_MV_LOAD} }}},
-  { 0, NULL, }
-};
-
-const P4_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
-  { PAPI_RES_STL, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x9) | ESCR_EVENT_MASK(0x1) | CPL(1)} }}},
-  { PAPI_BR_INS, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0xf) | CPL(1)} }}},
-  { PAPI_BR_TKN, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0xc) | CPL(1)} }}},
-  { PAPI_BR_NTK, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0x3) | CPL(1)} }}},
-  { PAPI_BR_MSP, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0xa) | CPL(1)} }}},
-  { PAPI_BR_PRC, NULL, 1,
-   {{{ COUNTER(14) | COUNTER(15) | COUNTER(17), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(0x6) | ESCR_EVENT_MASK(0x5) | CPL(1)} }}},
-  { PAPI_TLB_DM, NULL, 1,
-   {{{ COUNTER(0) | COUNTER(1), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x1) | ESCR_EVENT_MASK(0x1) | CPL(1)} }}},
-  { PAPI_TLB_IM, NULL, 1,
-   {{{ COUNTER(0) | COUNTER(1), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x1) | ESCR_EVENT_MASK(0x2) | CPL(1)} }}},
-  { PAPI_TLB_TL, NULL, 1,
-   {{{ COUNTER(0) | COUNTER(1), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x1) | ESCR_EVENT_MASK(0x3) | CPL(1)} }}},
-  { PAPI_TOT_INS, NULL, 1,
-   {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x2) | NBOGUSNTAG | CPL(1)} }}},
-  { PAPI_TOT_IIS, NULL, 1,
-   {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
-       EVENT(0x2) | ESCR_EVENT_MASK(0xf) | CPL(1)} }}},
-  { PAPI_FP_INS,  NULL, 2,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(0xC) | NBOGUSNTAG | CPL(1) }, 
-      { COUNTER(8) | COUNTER(9), 
-	HYPERTHREAD_ANY | ESCR(1) | ENABLE, 
-	EVENT(0x4) | (1 << 24) | (1 << 5) | (1 << 4) | CPL(1)} }}},
-  { PAPI_TOT_CYC, NULL, 1,
-    {{{ COUNTER(4), 
-	HYPERTHREAD_ANY | ENABLE | COMPARE | COMPLEMENT | THRESHOLD(0xf), 
-	CPL(1)} }}},
-  { PAPI_L1_LDM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16),  
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L1_MISS, PEBS_MV_LOAD} }}},
-  { PAPI_L1_STM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16),  
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L1_MISS, PEBS_MV_STORE} }}},
-  { PAPI_L1_DCM, NULL, 1,
-   {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-       PEBS_TAG | PEBS_L1_MISS, PEBS_MV_STORE | PEBS_MV_LOAD} }}},
-  { PAPI_L1_DCA, NULL, 1,
-   {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-       HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-       EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-       PEBS_TAG , PEBS_MV_STORE | PEBS_MV_LOAD} }}},
-  { PAPI_L2_LDM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L2_MISS, PEBS_MV_LOAD} }}},
-  { PAPI_L2_STM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L2_MISS, PEBS_MV_STORE} }}},
-  { PAPI_L2_DCM, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
-	EVENT(9) | EVENTMASK(0x1) | CPL(1), 
-	PEBS_TAG | PEBS_L2_MISS, PEBS_MV_STORE | PEBS_MV_LOAD} }}},
-  { 0, NULL, }
-};
-*/
 
 #endif
 
