@@ -274,15 +274,14 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
                     latest, ESI->overflow.deadline[i], ESI->overflow.threshold[i]);
                pos = ESI->EventInfoArray[papi_index].pos[0];
                overflow_vector ^= (long long )1 << pos;
-               temp[i] = latest - ESI->overflow.threshold[i];
+               temp[i] = latest - ESI->overflow.deadline[i];
                overflow_flag = 1;
                /* adjust the deadline */
                ESI->overflow.deadline[i] = latest + ESI->overflow.threshold[i];
             }
          }
       }
-
-      if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) && genOverflowBit) {
+      else if ( genOverflowBit) {
          /* we had assumed the overflow event can't be derived event */
          papi_index = ESI->overflow.EventIndex[0];
 
@@ -292,8 +291,9 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
           */
          pos = ESI->EventInfoArray[papi_index].pos[0];
          overflow_vector = (long long )1 << pos;
-      } else if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
+      } else 
          overflow_vector = overflow_bit;
+
       if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) || overflow_flag) {
          ESI->overflow.count++;
          if (ESI->state & PAPI_PROFILING) {
