@@ -11,7 +11,10 @@
 int main(int argc, char **argv)
 {
    int retval;
-   int i;
+   int i, index;
+   char fullname[PAPI_HUGE_STR_LEN+4];
+   const char *temp;
+   FILE *f;
 
    const PAPI_shlib_info_t *shinfo;
    PAPI_address_map_t *map;
@@ -24,7 +27,7 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   sleep(2);
+
    if ((shinfo = PAPI_get_shared_lib_info()) == NULL) {
       test_skip(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
    }
@@ -64,47 +67,51 @@ int main(int argc, char **argv)
 #ifndef NO_DLFCN
    {
      char *libname = 
-#if defined(_AIX)  
      "libpapi.so";
-#else
-     "libm.so";
-#endif     
+     void *handle ;
+/*
      void *handle = dlopen("libm.so", RTLD_LAZY);
-#if defined(_AIX)
-     int (*is_initialized)(void);
-#else
-     double (*cosine)(double);
-#endif
+*/
+     int (*num_hwctrs)(void);
      int oldcount;
 
      printf("\nLoading %s with dlopen().\n",libname);
 
-     handle = dlopen (libname, RTLD_NOW);
+     /* get current directory */
+     if ( getcwd(fullname, PAPI_HUGE_STR_LEN) == NULL ) 
+          test_skip(__FILE__, __LINE__, "getcwd", 1);
+     if ( (f = fopen(libname, "r")) == NULL ) 
+     {  /* assume you are in ctests directory */
+        temp = strrchr(fullname, '/');
+        if( temp == NULL) 
+           test_skip(__FILE__, __LINE__, "getcwd", 1);
+        else {
+           index=(int)(temp-fullname);
+           fullname[index+1]='\0'; /* get the absolute path of libpapi.so */
+           strcat(fullname, libname);  
+        }
+     } else {  /* assume you are in the src directory */
+        strcat(fullname, "/");  
+        strcat(fullname, libname);  
+        fclose(f);
+     }
+     printf("fullname = %s \n", fullname);
+
+     handle = dlopen (fullname, RTLD_NOW);
      if (!handle) {
-       if (errno==2)
-          test_skip(__FILE__, __LINE__, "dlopen", 1);
-       else
+          printf("error: %s \n", dlerror());
+          printf(" Did you forget to set the environmental variable LIBPATH (in AIX) or LD_LIBRARY_PATH (in linux) ?\n");
           test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
      
-#if defined(_AIX)  
-     printf("Looking up PAPI_is_initialized() \n");
-     is_initialized = ( int (*) (void)) dlsym(handle, "PAPI_is_initialized");
-     if (is_initialized == NULL)  {
+     printf("Looking up PAPI_num_counters() \n");
+     num_hwctrs = ( int (*) (void)) dlsym(handle, "PAPI_num_counters");
+     if (num_hwctrs == NULL)  {
+       printf("error: %s \n", dlerror());
        test_fail(__FILE__, __LINE__, "dlsym", 1);
      }
      
-     printf ("PAPI status is = %d\n\n", (*is_initialized)());
-#else
-     printf("Looking up cos() function with dlsym().\n");
-
-     cosine = ( double (*) (double)) dlsym(handle, "cos");
-     if (cosine == NULL)  {
-       test_fail(__FILE__, __LINE__, "dlsym", 1);
-     }
-     
-     printf ("cos(2.0) = %f\n\n", (*cosine)(2.0));
-#endif
+     printf ("There are %d hardware counters \n", (*num_hwctrs)());
  
    oldcount = shinfo->count;
 
