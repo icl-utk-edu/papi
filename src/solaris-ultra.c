@@ -665,7 +665,9 @@ static int get_system_info(void)
    else
      strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_HUGE_STR_LEN);
 
-   strcpy(_papi_hwi_system_info.exe_info.address_info.name,psi.pr_fname);
+   /* please don't use pr_fname here, because it can only store less that 
+      16 characters */
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name,basename(_papi_hwi_system_info.exe_info.fullname));
 
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
@@ -1417,4 +1419,5 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
    return (((long long) gethrvtime() / (long long) 1000) * (long long) _papi_hwi_system_info.hw_info.mhz);
 }
+
 
