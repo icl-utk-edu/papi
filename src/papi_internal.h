@@ -5,7 +5,7 @@
    possibly be useful later, and will remove them as we progress */
 
 /* Number of preset events - more than we will probably ever need, 
-   currently the draft has only 25*/
+   currently the draft has only 25 */
 
 #define PAPI_MAX_PRESET_EVENTS 64
 
@@ -16,24 +16,27 @@
 #define PRESET_MASK 0x80000000
 
  
-extern int _papi_err_level;/* defined twice in this function*/
+typedef struct _papi_options{
+	int error_level;
+	} papi_options;
 
 
-typedef struct _dynamic_array {
+typedef struct _dynamic_array{
 	void   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
 	int    totalSlots;      /* number of slots in dataSlotArrays      */
 	int    availSlots;      /* number of open slots in dataSlotArrays */
 	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
 } DynamicArray;
 
-/*function prototype*/
-static int _papi_expandDA(DynamicArray *DA); 
+/* function prototype */
+
+static int _papi_expandDA(DynamicArray *DA);
 
 extern DynamicArray evmap;
 
 /* this is not the final version of this data structure*/
+
 typedef struct _papi_option_t  {
-/*papi_handler   handlerStructure; use dummy arg to test compile*/
 int            handlerStructure; 
 int            count;
 int            signal;
