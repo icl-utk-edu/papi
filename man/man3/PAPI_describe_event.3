@@ -15,7 +15,25 @@ PAPI_describe_event, PAPI_event_name_to_code, PAPI_event_code_to_name \- convert
 
 .SH DESCRIPTION
 .B PAPI_describe_event(\|)
-is used to translate either an ASCII PAPI preset name or an integer PAPI preset event code into an ASCII description of that event. The functionality of this call is a superset of the following two calls. 
+is used to translate either an ASCII PAPI preset name or an integer
+PAPI preset event code into the corresponding event code or name as
+well as an ASCII description of that event. If the 
+.I name 
+argument is a string of length >0 it is assumed to contain the name 
+to look up and the corresponding event code is returned in the
+argument
+.IR code .
+Otherwise the 
+.I code
+argument is used to look up the event name which is stored in the 
+.I name
+argument. Finally a descriptive string of lenth 
+.B PAPI_MAX_STR_LEN
+is copied to the argument 
+.IR descr.
+
+The functionality of this call is a superset of the following two
+calls.
 
 .B PAPI_event_name_to_code(\|)
 is used to translate an ASCII PAPI preset name into an integer PAPI event code.
@@ -55,7 +73,7 @@ if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
   handle_error(1);
 
 /* Describe event from EventCode */
-
+*EventCodeStr='\0'; /* Erase the name argument to look up the code */
 if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
   handle_error(1);
 
