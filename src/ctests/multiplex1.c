@@ -34,10 +34,9 @@ static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int PAPI_events_len;
 
 #ifdef TEST_DRIVER
-#define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
-#else
 #define CPP_TEST_FAIL(function, retval) { fprintf(stderr,"%s:%d:%s:%d:%s:%s\n",__FILE__,__LINE__,function,retval,PAPI_strerror(retval),"$Id$"); test_fail(__FILE__, __LINE__, function, retval); }
-
+#else
+#define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
 #endif
 
 void init_papi(unsigned int *out_events, int *len)
@@ -52,9 +51,11 @@ void init_papi(unsigned int *out_events, int *len)
     CPP_TEST_FAIL("PAPI_library_init",retval);
 
   /* Turn on automatic error reporting */
-  retval = PAPI_set_debug(PAPI_VERB_ECONT);
-  if (retval != PAPI_OK)
-    CPP_TEST_FAIL("PAPI_set_debug",retval);
+  if ( !TESTS_QUIET ) {
+     retval = PAPI_set_debug(PAPI_VERB_ECONT);
+     if (retval != PAPI_OK)
+    	CPP_TEST_FAIL("PAPI_set_debug",retval);
+  }
 
   for (i=0;in_events[i]!=0;i++)
     {
