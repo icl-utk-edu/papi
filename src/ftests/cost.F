@@ -3,7 +3,7 @@
       program cost
       implicit none
       
-      integer es, costes
+      integer es
       integer*8 values(10)
       integer*8 ototcyc, ntotcyc
       integer*4 i
@@ -72,37 +72,8 @@
      . 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_create_eventset(costes, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
-     *retval)
-      end if
-
-      call PAPIf_add_event( costes, PAPI_TOT_CYC, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_add_event', retval)
-      end if
-
-#ifdef _CRAYT3E
-      call PAPIf_add_event( costes, PAPI_TOT_IIS, retval )
-#else
-      call PAPIf_add_event( costes, PAPI_TOT_INS, retval )
-#endif
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_add_event', retval)
-      end if
-
       if (tests_quiet .EQ. 0) then
       print *, "Performing start/stop test..."
-      end if
-
-      call PAPIf_start(costes, retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_start', retval)
       end if
 
       call PAPIf_start(es, retval)
@@ -117,12 +88,6 @@
      . 'PAPIf_stop', retval)
       end if
 
-      call PAPIf_reset(costes, retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_stop', retval)
-      end if
-
       call PAPIf_get_real_cyc(ototcyc)
       
       do i=0, 50000
@@ -130,23 +95,11 @@
          call PAPIf_stop(es, values(1), retval)
       end do
       
-      call PAPIf_stop(costes, values(1), retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_stop', retval)
-      end if
-
       call PAPIf_get_real_cyc(ntotcyc)
       ntotcyc=ntotcyc-ototcyc
 
       if (tests_quiet .EQ. 0) then
       print *
-      print *, "User level cost for PAPI_start/stop(2 counters) over",
-     *" 50000 iterations:"
-      write (*, 100) values(1), "total cyc"
-      write (*, 100) values(2), "total ins"
-      write (*, 200) values(1)/50000.0, "cyc/call pair"
-      write (*, 200) values(2)/50000.0, "ins/call pair"
       print *
       print *, "Total cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
@@ -166,25 +119,13 @@ C     Start the read val
      . 'PAPIf_start', retval)
       end if
 
-      call PAPIf_reset(costes, retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_reset', retval)
-      end if
-
-      call PAPIf_start(costes, retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_start', retval)
-      end if
-
       call PAPIf_get_real_cyc(ototcyc)
 
       do i=0, 50000
          call PAPIf_read(es, values(1), retval)
       end do
       
-      call PAPIf_stop(costes, values(1), retval)
+      call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_stop', retval)
@@ -192,11 +133,6 @@ C     Start the read val
 
       call PAPIf_get_real_cyc(ntotcyc)
 
-      call PAPIf_stop(es, values(1), retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_stop', retval)
-      end if
 
       ntotcyc=ntotcyc-ototcyc
 
@@ -204,10 +140,6 @@ C     Start the read val
       print *
       print *, "User level cost for PAPI_read(2 counters) over",
      *" 50000 iterations:"
-      write (*, 100) values(1), "total cyc"
-      write (*, 100) values(2), "total ins"
-      write (*, 200) values(1)/50000.0, "cyc/call"
-      write (*, 200) values(2)/50000.0, "ins/call"
       print *
       print *, "Total cost for PAPI_read(2 counters) over ",
      *"50000 iterations:"
