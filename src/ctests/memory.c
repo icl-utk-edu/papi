@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     PAPI_MEM_WCY ,
     PAPI_LD_INS  ,
     PAPI_SR_INS  ,
-    PAPI_LST_INS ,
+    PAPI_LST_INS , 
     PAPI_L1_DCM  ,
     PAPI_L1_ICM  ,
     PAPI_L1_TCM  ,
