@@ -3,12 +3,16 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    dan terpstra
+*          terpstra.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */  
 
 #ifdef DEBUG
-#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__) || defined(__osf__)) || (defined(sun) && defined(sparc))
+/* add Win32 to the debug list */
+#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__) \
+	|| defined(__osf__)) || (defined(sun) && defined(sparc)) || defined(_WIN32)
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else /* SV2,SV1 ? */
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
@@ -57,7 +61,7 @@ typedef struct _EventSetGranularityInfo {
   int granularity; } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-  long long deadline;
+  long_long deadline;
   int count;
   int threshold;
   int EventIndex;
@@ -106,9 +110,9 @@ typedef struct _masterevent {
 	int is_a_rate;
 	int papi_event;
 	PapiInfo pi;
-        long long count;
-        long long cycles;
-	long long handler_count;
+        long_long count;
+        long_long cycles;
+	long_long handler_count;
 	struct _threadlist * mythr;
         struct _masterevent * next;
 } MasterEvent;
@@ -120,7 +124,7 @@ typedef struct _threadlist {
         pid_t pid;
 #endif
         /* Total cycles for this thread */
-	long long total_c;
+	long_long total_c;
         /* Pointer to event in use */
 	MasterEvent * cur_event;
         /* List of multiplexing events for this thread */
@@ -143,12 +147,12 @@ typedef struct _MPX_EventSet {
         /* Number of entries in above list */
 	int	num_events;
         /* Not sure... */
-	long long start_c, stop_c;
-	long long start_values[PAPI_MPX_DEF_DEG];
-	long long start_cycles[PAPI_MPX_DEF_DEG];
-	long long stop_values[PAPI_MPX_DEF_DEG];
-	long long stop_cycles[PAPI_MPX_DEF_DEG];
-	long long start_hc[PAPI_MPX_DEF_DEG];
+	long_long start_c, stop_c;
+	long_long start_values[PAPI_MPX_DEF_DEG];
+	long_long start_cycles[PAPI_MPX_DEF_DEG];
+	long_long stop_values[PAPI_MPX_DEF_DEG];
+	long_long stop_cycles[PAPI_MPX_DEF_DEG];
+	long_long start_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
 typedef MPX_EventSet * EventSetMultiplexInfo_t;
@@ -166,13 +170,13 @@ typedef struct _EventSetInfo {
                          hardware to set the counters to the appropriate
                          conditions*/
 
-  long long *hw_start;   /* Array of length _papi_system_info.num_cntrs that contains
-			    unprocessed, out of order, long long counter registers */
+  long_long *hw_start;   /* Array of length _papi_system_info.num_cntrs that contains
+			    unprocessed, out of order, long_long counter registers */
 
-  long long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
+  long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
 			    processed, in order, PAPI counter values when used or stopped */
 
-  /* long long *latest;   Array of the same length as above, containing 
+  /* long_long *latest;   Array of the same length as above, containing 
 				  the values of the counters when last read */ 
 
   int state;          /* The state of this entire EventSet; can be
@@ -264,11 +268,11 @@ extern int mpx_init(int);
 extern int mpx_add_event(MPX_EventSet **, int EventCode);
 extern int mpx_remove_event(MPX_EventSet **, int EventCode);
 extern int MPX_add_events(MPX_EventSet ** mpx_events, int * event_list, int num_events);
-extern int MPX_stop(MPX_EventSet * mpx_events, long long * values);
+extern int MPX_stop(MPX_EventSet * mpx_events, long_long * values);
 extern int MPX_cleanup(MPX_EventSet ** mpx_events);
 extern void MPX_shutdown(void);
 extern int MPX_reset(MPX_EventSet * mpx_events);
-extern int MPX_read(MPX_EventSet * mpx_events, long long * values);
+extern int MPX_read(MPX_EventSet * mpx_events, long_long * values);
 extern int MPX_start(MPX_EventSet * mpx_events);
 
 /* The following functions are defined by the extras.c file. */
@@ -283,12 +287,17 @@ extern void _papi_hwi_dispatch_overflow_signal(void *context);
 
 /* The following functions are defined by the substrate file. */
 
+#ifdef _WIN32
+/* Callback routine for Windows timers */
+void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
+#endif
+
 /* New syntax! */
+
 extern int _papi_hwd_add_event(hwd_control_state_t *, unsigned int, EventInfo_t *);
-/* New syntax! */
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *extra, EventInfo_t *); 
-/* New syntax! */
 extern int _papi_hwd_rem_event(hwd_control_state_t *, EventInfo_t *);
+
 /* Old syntax! */
 extern int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option);
 extern void _papi_hwd_dispatch_timer();
@@ -296,18 +305,18 @@ extern int _papi_hwd_init(EventSetInfo *zero);
 extern int _papi_hwd_init_global(void);
 extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);
 extern int _papi_hwd_query(int preset, int *flags, char **note_loc);
-extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, long long events[]);
+extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, long_long events[]);
 extern int _papi_hwd_reset(EventSetInfo *, EventSetInfo *zero);
 extern int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option);
 extern int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero);
-extern int _papi_hwd_write(EventSetInfo *, EventSetInfo *, long long events[]);
+extern int _papi_hwd_write(EventSetInfo *, EventSetInfo *, long_long events[]);
 extern void *_papi_hwd_get_overflow_address(void *context);
-extern long long _papi_hwd_get_real_cycles (void);
-extern long long _papi_hwd_get_real_usec (void);
-extern long long _papi_hwd_get_virt_cycles (EventSetInfo *zero);
-extern long long _papi_hwd_get_virt_usec (EventSetInfo *zero);
+extern long_long _papi_hwd_get_real_cycles (void);
+extern long_long _papi_hwd_get_real_usec (void);
+extern long_long _papi_hwd_get_virt_cycles (EventSetInfo *zero);
+extern long_long _papi_hwd_get_virt_usec (EventSetInfo *zero);
 extern void _papi_hwd_error(int error, char *);
 extern void _papi_hwd_lock_init(void);
 extern void _papi_hwd_lock(void);
@@ -323,7 +332,7 @@ typedef struct _papi_mdi {
 
   /* The following variables define the length of the arrays in the 
      EventSetInfo structure. Each array is of length num_gp_cntrs + 
-     num_sp_cntrs * sizeof(long long) */
+     num_sp_cntrs * sizeof(long_long) */
 
   int num_cntrs;   /* Number of counters returned by a substrate read/write */
                       
