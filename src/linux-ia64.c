@@ -165,8 +165,12 @@ static preset_search_t preset_search_map[] = {
   {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
   /* First byte selects type (M, I, F, B), bits 3-30 set to 1 to mask the whole opcode,
    * bits 1 (ig_ad) and 2 (mandatory 1) are set */
+  /* These are commented out as the substrate breaks when
+     these events are multiplexed. */
+#if 0
   {PAPI_INT_INS,0,{"400000003FFFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
   {PAPI_FSQ_INS,0,{"2890000001BFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
+#endif
   {0,0,{0,0,0,0}}};
 #endif
 #endif
