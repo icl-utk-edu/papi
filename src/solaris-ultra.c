@@ -191,7 +191,7 @@ static int scan_prtconf(char *cpuname,int len_cpuname,int *hz, int *ver)
   /*           "name"            = (Any value)              */
   /*           "sparc-version"   = (Any value)              */
   /*           "clock-frequency" = (Any value)              */
-  int ihz;
+  int ihz, version;
   char line[256], cmd[80], name[256];
   FILE *f;
   char cmd_line[80], fname[L_tmpnam];
@@ -221,40 +221,44 @@ static int scan_prtconf(char *cpuname,int len_cpuname,int *hz, int *ver)
     {
       /* DBG((stderr,">>> %s",line)); */
       if((sscanf(line, "%s", cmd) == 1)
-	 && !strcmp(cmd, "Node 0x")) {
-        /* DBG((stderr,"Found 'Node' -- search reset.\n")); */
+	 && strstr(line, "Node 0x")) {
 	matched = 0x0;
+        /* DBG((stderr,"Found 'Node' -- search reset. (0x%2.2x)\n",matched)); */
         }
       else {
 	 if (strstr(cmd, "device_type:") &&
              strstr(line, "'cpu'" )) {
-            /* DBG((stderr,"Found 'cpu'\n")); */
             matched |= 0x1;
+            /* DBG((stderr,"Found 'cpu'. (0x%2.2x)\n",matched)); */
             }
 	 else if (!strcmp(cmd, "sparc-version:") &&
-               (sscanf(line, "%s %x", cmd, ver) == 2) ) {
-            /* DBG((stderr,"Found version=%d\n", ihz)); */
+               (sscanf(line, "%s %x", cmd, &version) == 2) ) {
             matched |= 0x2;
+            /* DBG((stderr,"Found version=%d. (0x%2.2x)\n", version, matched)); */
             }
 	 else if (!strcmp(cmd, "clock-frequency:") &&
                (sscanf(line, "%s %x", cmd, &ihz) == 2) ) {
-            /* DBG((stderr,"Found ihz=%d\n", ihz)); */
             matched |= 0x4;
+            /* DBG((stderr,"Found ihz=%d. (0x%2.2x)\n", ihz,matched)); */
             }
 	 else if (!strcmp(cmd, "name:") &&
                (sscanf(line, "%s %s", cmd, name) == 2) ) {
-            /* DBG((stderr,"Found name: %s\n", name)); */
             matched |= 0x8;
+            /* DBG((stderr,"Found name: %s. (0x%2.2x)\n", name,matched)); */
             }
       }
-     if(matched & 0xF == 0xF ) break;
+     if((matched & 0xF) == 0xF ) break;
     }
-  DBG((stderr,"Parsing gave name=%s, speed=%dHz, version=%d\n", name, ihz,*ver));
+  DBG((stderr,"Parsing found name=%s, speed=%dHz, version=%d\n", name, ihz,version));
   
-  if(matched & 0x7 == 0x7 )  {
+  if(matched ^ 0x0F)
+    ihz = -1;
+  else {
     *hz = (float) ihz;
+    *ver = version;
     strncpy(cpuname,name,len_cpuname);
     }
+
   return ihz;
 
   /* End stolen code */
