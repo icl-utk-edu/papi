@@ -682,6 +682,7 @@ int _papi_hwd_update_shlib_info(void)
 
       sprintf(fname, "/proc/%d/map", getpid());
       map_f = fopen(fname, "r");
+      if ( !mapf ) return (PAPI_EINVAL);
 
       /* count the entries we need */
       count =0;
