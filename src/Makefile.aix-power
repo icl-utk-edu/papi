@@ -1,11 +1,11 @@
 SUBSTR  = aix-power
 DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
-LIBS	= static shared
-TARGETS	= multiplex serial pthreads smp omp
+LIBS	= static aix-shared
+TARGETS	= mpi multiplex serial pthreads smp omp
 
-FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com
+FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com -DDEBUG
 CFLAGS	= $(FLAGS) -g
-OPTFLAGS= -O3 -qstrict
+OPTFLAGS= 
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 NOOPT	= 
@@ -14,7 +14,8 @@ OMPCFLGS= -qsmp=omp
 LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi
 CC_R	= xlc_r
 CC	= xlc
-CC_SHR	= xlc -G -r
+CC_SHR	= ld -G -r
+MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
 

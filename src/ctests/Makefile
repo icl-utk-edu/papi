@@ -3,15 +3,18 @@ SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
 MPX	= multiplex1 multiplex1_pthreads
+MPI	= mpifirst
 SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third third-inv fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
+ALL 	= $(MPI) $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 INCLUDE = -I..
 PAPILIB	= ../libpapi.a
+
+mpi: $(MPI)
 
 multiplex: $(MPX) 
 
@@ -75,6 +78,9 @@ zero: zero.c $(UTILOBJS) $(PAPILIB)
 
 first: first.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) first.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first
+
+mpifirst: mpifirst.c $(UTILOBJS) $(PAPILIB)
+	$(MPICC) $(MPFLAGS) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) first.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o mpifirst
 
 first-twice: first-twice.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) first-twice.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first-twice
