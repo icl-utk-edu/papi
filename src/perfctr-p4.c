@@ -335,6 +335,12 @@ int _papi_hwd_init_global(void)
   if (retval != PAPI_OK)
     return(retval);
   
+  /* Setup memory info */
+
+  retval = get_memory_info(&_papi_system_info.mem_info, (int)info.cpu_type);
+  if (retval)
+    return(retval);
+
   vperfctr_close(dev);
   SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n",dev);
 
