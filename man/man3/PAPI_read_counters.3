@@ -2,12 +2,14 @@
 .TH PAPI_read_counters "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_read_counters \- PAPI High Level: read counting hardware events
+PAPI_read_counters, PAPI_accum_counters \- PAPI High Level: read counting 
+hardware events
 
 .SH SYNOPSIS
 .B #include <papi.h>
 
 .BI "int\ PAPI_read_counters(long long *" values ", int " array_len ");"
+.BI "int\ PAPI_accum_counters(long long *" values ", int " array_len ");"
 
 .SH DESCRIPTION
 .LP
@@ -16,8 +18,13 @@ reads the event counters and stores the values in the array
 values. The counters are reset with the counters left running after
 the call to the function.
 .LP
-.I *events 
--- an array of codes for events, such as PAPI_INT_INS
+.B PAPI_accum_counters(\|)
+reads the event counters and stores the values in the array
+values. The counters are reset with the counters left running after
+the call to the function.
+.LP
+.I *values 
+-- an array to hold the counter values of the counting events
 .LP
 .I array_len 
 -- the number of items in the *events array

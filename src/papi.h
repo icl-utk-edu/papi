@@ -344,6 +344,7 @@ conjunction with the low level API. */
 int PAPI_start_counters(int *events, int array_len);
 int PAPI_read_counters(long long *values, int array_len);
 int PAPI_stop_counters(long long *values, int array_len);
+int PAPI_accum_counters(long long *values, int array_len);
 int PAPI_num_counters(void);
 int PAPI_flops(float *rtime, float *ptime, long long *flpins, float *mflops);
 

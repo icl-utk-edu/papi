@@ -181,6 +181,21 @@ int PAPI_read_counters(long long *values, int array_len)
   return(PAPI_reset(PAPI_EVENTSET_INUSE));
 }
 
+int PAPI_accum_counters(long long *values, int array_len) 
+{
+  int retval;
+
+  if (!initialized)
+    return(PAPI_EINVAL);
+
+  if (array_len > hl_max_counters)
+    return(PAPI_EINVAL);
+
+  retval = PAPI_accum(PAPI_EVENTSET_INUSE,values);
+  return(retval);
+  /* PAPI_accum implies a PAPI_reset so no explicit PAPI_reset needed */
+}
+
 /*========================================================================*/
 /* int PAPI_stop_counters(long long *values, int array_len)               */
 /*                                                                        */ 
@@ -206,7 +221,3 @@ int PAPI_stop_counters(long long *values, int array_len)
 
   return(PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE));
 } 
-
-
-
-

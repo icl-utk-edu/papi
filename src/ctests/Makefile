@@ -3,7 +3,10 @@ SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
 MPX	= multiplex1 multiplex1_pthreads
-SERIAL  = sprofile eventname case1 case2 flops avail zero first second third third-inv fourth fourth-inv cost johnmay2 johnmay clockres fourth fifth nineth overflow_single_event overflow profile tenth native 
+SERIAL  = low-level high-level sprofile eventname case1 case2 flops avail \
+	zero first second third third-inv fourth fourth-inv cost \
+	johnmay2 johnmay clockres fourth fifth nineth \
+	overflow_single_event overflow profile tenth native 
 BROKEN	= inherit pernode
 ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 UTILOBJS= do_loops.o test_utils.o dummy.o
@@ -123,6 +126,12 @@ case1: case1.c $(PAPILIB)
 
 case2: case2.c $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case2.c $(PAPILIB) $(LDFLAGS) -o case2
+
+low-level: low-level.c do_loops.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) low-level.c do_loops.o $(PAPILIB) $(LDFLAGS) -o low-level
+
+high-level: high-level.c do_loops.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level.c do_loops.o $(PAPILIB) $(LDFLAGS) -o high-level
 
 dummy.o: dummy.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c dummy.c

@@ -359,6 +359,11 @@ PAPI_FCALL(papif_read_counters,PAPIF_READ_COUNTERS,(long long *values, int *arra
   *check = PAPI_read_counters(values, *array_len);
 }
 
+PAPI_FCALL(papif_accum_counters,PAPIF_ACCUM_COUNTERS,(long long *values, int *array_len, int *check))
+{
+  *check = PAPI_accum_counters(values, *array_len);
+}
+
 PAPI_FCALL(papif_stop_counters,PAPIF_STOP_COUNTERS,(long long *values, int *array_len, int *check))
 {
   *check = PAPI_stop_counters(values, *array_len);
