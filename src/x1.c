@@ -596,8 +596,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 
    ctx.si = si;
    ctx.ucontext = info;
-   SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t);
+   if ( si ) {
+      SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t);
+   }
+   else { /* Software overflow */
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
+   }
 }
 
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
