@@ -51,7 +51,9 @@ static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 #define MSR_K7_PERFCTR0		0xC0010004	/* .. 0xC0010007 */
 
 /* Intel P4 */
-#define MSR_IA32_MISC_ENABLE	0x1A0
+#define MSR_P4_MISC_ENABLE	0x1A0
+#define MSR_P4_MISC_ENABLE_PERF_AVAIL (1<<7)	/* read-only status bit */
+#define MSR_P4_MISC_ENABLE_PEBS_UNAVAIL (1<<12) /* read-only status bit */
 #define MSR_P4_PERFCTR0		0x300		/* .. 0x311 */
 #define MSR_P4_CCCR0		0x360		/* .. 0x371 */
 #define P4_CCCR_RESERVED	0xB8000FFF	/* must be zeros */
@@ -69,6 +71,14 @@ static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 	__asm__ __volatile__("rdmsr" : "=a"(low) : "c"(msr) : "edx")
 #define rdpmcl(ctr,low) \
 	__asm__ __volatile__("rdpmc" : "=a"(low) : "c"(ctr) : "edx")
+
+static void clear_msr_range(unsigned int base, unsigned int n)
+{
+	unsigned int i;
+
+	for(i = 0; i < n; ++i)
+		wrmsr(base+i, 0, 0);
+}
 
 static inline void set_in_cr4_local(unsigned int mask)
 {
@@ -208,9 +218,7 @@ static void p5mmx_read_counters(const struct perfctr_cpu_state *state,
 /* shared with MII and C6 */
 static void p5_clear_counters(void)
 {
-	wrmsr(MSR_P5_CESR, 0, 0);
-	wrmsr(MSR_P5_CTR0+0, 0, 0);
-	wrmsr(MSR_P5_CTR0+1, 0, 0);
+	clear_msr_range(MSR_P5_CESR, 1+2);
 }
 
 /*
@@ -407,12 +415,8 @@ static void p6_read_counters(const struct perfctr_cpu_state *state,
 
 static void p6_clear_counters(void)
 {
-	int i;
-
-	for(i = 0; i < 2; ++i) {
-		wrmsr(MSR_P6_EVNTSEL0+i, 0, 0);
-		wrmsr(MSR_P6_PERFCTR0+i, 0, 0);
-	}
+	clear_msr_range(MSR_P6_EVNTSEL0, 2);
+	clear_msr_range(MSR_P6_PERFCTR0, 2);
 }
 
 #if PERFCTR_INTERRUPT_SUPPORT
@@ -501,12 +505,7 @@ static void k7_write_control(const struct perfctr_cpu_state *state)
 
 static void k7_clear_counters(void)
 {
-	int i;
-
-	for(i = 0; i < 4; ++i) {
-		wrmsr(MSR_K7_EVNTSEL0+i, 0, 0);
-		wrmsr(MSR_K7_PERFCTR0+i, 0, 0);
-	}
+	clear_msr_range(MSR_K7_EVNTSEL0, 4+4);
 }
 
 #if PERFCTR_INTERRUPT_SUPPORT
@@ -617,7 +616,7 @@ static void vc3_write_control(const struct perfctr_cpu_state *state)
  * actual ESCR MSR number. This mapping contains some repeated patterns,
  * so we can compact it to a 5x8 table of MSR offsets:
  *
- * 1. CCCRs 16 and 17 are mapped just like CCCRs 12 and 13, respectively.
+ * 1. CCCRs 16 and 17 are mapped just like CCCRs 13 and 14, respectively.
  *    Thus, we only consider the 16 CCCRs 0-15.
  * 2. The CCCRs are organised in pairs, and both CCCRs in a pair use the
  *    same mapping. Thus, we only consider the 8 pairs 0-7.
@@ -676,7 +675,7 @@ static unsigned int p4_escr_addr(unsigned int pmc, unsigned int cccr_val)
 	if( pmc > 0x11 )
 		return 0;	/* pmc range error */
 	if( pmc > 0x0F )
-		pmc -= 4;	/* 0 <= pmc <= 0x0F */
+		pmc -= 3;	/* 0 <= pmc <= 0x0F */
 	pair = pmc / 2;		/* 0 <= pair <= 7 */
 	index = (pair == 7) ? 4 : (pair / 2);	/* 0 <= index <= 4 */
 	escr_offset = p4_cccr_escr_map[index][P4_CCCR_ESCR_SELECT(cccr_val)];
@@ -699,7 +698,7 @@ static int p4_check_control(struct perfctr_cpu_state *state)
 	for(i = 0; i < nrctrs; ++i) {
 		/* check that pmc_map[] is well-defined;
 		   pmc_map[i] is what we pass to RDPMC, the PMC itself
-		   is extracted by masking off the FAST RDPMC flag */
+		   is extracted by masking off the FAST_RDPMC flag */
 		pmc = state->control.pmc_map[i] & ~P4_FAST_RDPMC;
 		if( pmc >= 18 || (pmc_mask & (1<<pmc)) )
 			return -EINVAL;
@@ -781,21 +780,19 @@ static void p4_read_counters(const struct perfctr_cpu_state *state,
 
 static void p4_clear_counters(void)
 {
-	int i;
+	unsigned int misc_enable;
 
-	for(i = 0; i < 18; ++i) {
-		wrmsr(MSR_P4_PERFCTR0+i, 0, 0);
-		wrmsr(MSR_P4_CCCR0+i, 0, 0);
-	}
-	for(i = 0x3A0; i <= 0x3BE; ++i)
-		wrmsr(i, 0, 0);
-	for(i = 0x3C0; i <= 0x3C5; ++i)
-		wrmsr(i, 0, 0);
-	for(i = 0x3C8; i <= 0x3CD; ++i)
-		wrmsr(i, 0, 0);
-	for(i = 0x3E0; i <= 0x3E1; ++i)
-		wrmsr(i, 0, 0);
-	/* XXX: 0x3F0, 0x3F1, 0x3F2 ??? */
+	rdmsrl(MSR_P4_MISC_ENABLE, misc_enable);
+	if( !(misc_enable & MSR_P4_MISC_ENABLE_PEBS_UNAVAIL) )
+		clear_msr_range(0x3F1, 2);
+	/* MSR 0x3F0 seems to have a default value of 0xFC00, but current
+	   docs doesn't fully define it, so leave it alone for now. */
+	clear_msr_range(0x3A0, 31);
+	clear_msr_range(0x3C0, 6);
+	clear_msr_range(0x3C8, 6);
+	clear_msr_range(0x3E0, 2);
+	clear_msr_range(MSR_P4_CCCR0, 18);
+	clear_msr_range(MSR_P4_PERFCTR0, 18);
 }
 
 /*
@@ -1101,18 +1098,16 @@ static int __init intel_init(void)
 		perfctr_p6_init_tests();
 		return 0;
 	case 15:	/* Pentium 4 */
-		printk("perfctr: Pentium 4 detected\n");
-		rdmsrl(0x1A0, misc_enable);
-		if( !(misc_enable & (1 << 7)) ) {
-			printk("perfctr: Performance Monitoring is unavailable\n");
-			return -ENODEV;
-		}
+		rdmsrl(MSR_P4_MISC_ENABLE, misc_enable);
+		if( !(misc_enable & MSR_P4_MISC_ENABLE_PERF_AVAIL) )
+			break;
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4;
 		read_counters = p4_read_counters;
 		write_control = p4_write_control;
 		check_control = p4_check_control;
 		clear_counters = p4_clear_counters;
 		/* XXX: set up isuspend/iresume here later */
+		/* XXX: call perfctr_p4_init_tests() here later */
 		return 0;
 	}
 	return -ENODEV;

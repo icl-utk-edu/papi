@@ -3,6 +3,17 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.3.2, 2001-11-19
+- P4 fix: the mapping from CCCR 17 to its associated ESCRs was
+  wrong due to an off-by-one error in x86.c:p4_escr_addr().
+- P4 fix: also clear the PEBS MSRs when initialising the driver.
+- Minor cleanup in x86.c: replaced the "clear MSRs" loops with
+  calls to a helper procedure.
+
+Version 2.3.1, 2001-11-06
+- Microscopic P4 cleanups. Testing on my new P4 box has confirmed
+  that the PMAVAIL flag in MSR_IA32_MISC_ENABLE is read-only.
+
 Version 2.3, 2001-10-24
 - Added support for multiple interrupt-mode virtual perfctrs
   with automatic restart. Added an identify_overflow() method

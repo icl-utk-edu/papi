@@ -6,6 +6,16 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.3.2, 2001-11-19
+- Corrected an error in the driver's mapping from counter number
+  to control registers on the Pentium 4. Counter 17 didn't work,
+  and attempts to use it could have disturbed other counters as well.
+- Fixed a minor omission in the Pentium 4 initialisation code.
+
+Version 2.3.1, 2001-11-06
+- New patches for kernels 2.2.20, 2.4.9-13 (RedHat 7.2 update),
+  2.4.13-ac5, and 2.4.14. Minor cleanup in the P4 driver code.
+
 Version 2.3, 2001-10-24
 - Added support for multiple interrupt-mode virtual perfctrs
   with automatic restart. Updated the signal delivery interface
