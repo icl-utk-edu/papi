@@ -7,8 +7,7 @@ MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SERIAL  = dmem_info all_events derived high-level2 describe mem_info zero \
 	zero_flip low-level high-level sprofile eventname case1 case2 \
-	calibrate flops avail first second third fourth fourth-inv cost \
-	johnmay2 johnmay clockres fourth fifth nineth \
+	calibrate flops avail first second cost johnmay2 clockres nineth \
 	overflow_single_event overflow profile tenth native memory \
 	timer_overflow overflow2 matrix-hl earprofile profilehw 
 BROKEN	= inherit pernode
@@ -90,9 +89,6 @@ cost: cost.c $(UTILOBJS) $(PAPILIB)
 inherit: inherit.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) inherit.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o inherit
 
-johnmay: johnmay.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) johnmay.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o johnmay
-
 johnmay2: johnmay2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) johnmay2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o johnmay2
 
@@ -125,18 +121,6 @@ second: second.c $(UTILOBJS) $(PAPILIB)
 
 flops: flops.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) flops.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o flops
-
-third: third.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) third.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o third
-
-fourth: fourth.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) fourth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fourth
-
-fourth-inv: fourth-inv.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) fourth-inv.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fourth-inv
-
-fifth: fifth.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) fifth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fifth
 
 overflow: overflow.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow
