@@ -155,6 +155,7 @@ inline static int setup_all_presets(int cpu_type)
 
 #if defined(PERFCTR_X86_AMD_K8)
     case PERFCTR_X86_AMD_K8:
+    case PERFCTR_X86_AMD_K8C:
       preset_map = k8_preset_map;
       break;
 #endif
@@ -304,6 +305,7 @@ inline static void init_config(hwd_control_state_t *ptr)
     case PERFCTR_X86_AMD_K7:
 #if defined(PERFCTR_X86_AMD_K8)
     case PERFCTR_X86_AMD_K8:
+    case PERFCTR_X86_AMD_K8C:
 #endif
       ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
