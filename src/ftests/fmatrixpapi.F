@@ -108,11 +108,6 @@ C     Stop the counters and put the results in the array values
         call ftest_fail(__FILE__, __LINE__, 
      *       'PAPIf_stop_counters', retval)
       end if
-      call PAPIf_read_counters(values, num_events,retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 
-     *       'PAPIf_read_counters', retval)
-      end if
 
 C     Make sure the compiler does not optimize away the multiplication
       call dummy(r)
