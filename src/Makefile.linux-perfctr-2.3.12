@@ -37,6 +37,7 @@ CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
 MISCHDRS= x86-events.h ia32_presets.h
 SHLIBOBJS = $(MISCOBJS)
+SHLIBDEPS = -L$(PERFCTR)/usr.lib -lperfctr
 
 include Makefile.inc
 
