@@ -74,10 +74,16 @@ int PAPI_thread_init(unsigned long int (*id_fn) (void))
    * counter device driver does not support per-thread counters.
    * When this is updated, we can remove this if statement
    */
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_EINVAL);
+
+   if ((init_level&PAPI_THREAD_LEVEL_INITED))
+      papi_return(PAPI_OK);
 
    if (! _papi_hwi_system_info.supports_multiple_threads)
       papi_return(PAPI_ESBSTR);
 
+   init_level |= PAPI_THREAD_LEVEL_INITED;
    papi_return(_papi_hwi_set_thread_id_fn(id_fn));
 }
 

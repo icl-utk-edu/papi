@@ -72,6 +72,7 @@ failure.
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
 #define PAPI_HIGH_LEVEL_INITED 	2       /* High level has called library init */
+#define PAPI_THREAD_LEVEL_INITED 4      /* Threads have been inited */
 
 /*
 Constants
