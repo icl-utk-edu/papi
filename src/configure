@@ -7078,7 +7078,12 @@ esac
 R="(R)"
 TM="(tm)"
 case "$OS" in
-  aix) CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`";;
+  aix)
+         CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
+         if test "$CPU" = ""; then
+         CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
+         fi
+         ;;
   linux)
          if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
            made=GenuineIntel
