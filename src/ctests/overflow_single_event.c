@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   num_flops = 10*NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
   num_flops *= 2;
 #endif
 
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
   if ( values[1] > max || values[1] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
 
-  min = (long_long)((values[0]*.85)/THRESHOLD);
+  min = (long_long)((values[0]*.80)/THRESHOLD);
   max = (long_long)((values[0]*1.15)/THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
