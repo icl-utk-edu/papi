@@ -21,11 +21,8 @@
 
 #include "papi.h"
 #include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
 #include "papi_protos.h"
-
-#include "papiStrings.h"        /* for language independent string support. */
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -53,7 +50,9 @@ extern void _papi_hwi_dummy_handler(int,void*,long_long,void*);
 
 /* papi_data.c */
 
-extern PAPI_event_info_t _papi_hwi_presets[];
+extern hwi_presets_t _papi_hwi_presets;
+extern const hwi_derived_info_t _papi_hwi_derived[];
+
 extern int init_retval;
 extern int init_level;
 
@@ -178,7 +177,7 @@ int PAPI_set_thr_specific(int tag, void *ptr)
 
 int PAPI_library_init(int version)
 {
-   int i, j, tmp = 0;
+   int tmp = 0;
 
 #ifdef DEBUG
    char *var;
@@ -250,14 +249,6 @@ int PAPI_library_init(int version)
       papi_return(init_retval);
    }
 
-   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      if (_papi_hwi_presets[i].symbol)  /* If the preset is part of the API */
-         for (_papi_hwi_presets[i].count = 0, j = 0; j < MAX_COUNTER_TERMS; j++) {
-            if (_papi_hwi_preset_data[i].native[j] == PAPI_NULL) break;
-            _papi_hwi_presets[i].count++;
-         }
-   }
-
    init_level = PAPI_LOW_LEVEL_INITED;
    return (init_retval = PAPI_VER_CURRENT);
 }
@@ -269,7 +260,7 @@ int PAPI_query_event(int EventCode)
       if (EventCode >= PAPI_MAX_PRESET_EVENTS)
          papi_return(PAPI_ENOTPRESET);
 
-      if (_papi_hwi_presets[EventCode].count)
+      if (_papi_hwi_presets.count[EventCode])
          papi_return(PAPI_OK);
       else
          return(PAPI_ENOEVNT);
@@ -284,21 +275,50 @@ int PAPI_query_event(int EventCode)
 
 int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
 {
+   int i = EventCode & PAPI_PRESET_AND_MASK;
+   int j, type;
+
    if (info == NULL)
       papi_return(PAPI_EINVAL);
 
    if (EventCode & PAPI_PRESET_MASK) {
-      EventCode &= PAPI_PRESET_AND_MASK;
       if (EventCode >= PAPI_MAX_PRESET_EVENTS)
          papi_return(PAPI_ENOTPRESET);
 
-      if (_papi_hwi_presets[EventCode].symbol[0]) {
-         memcpy(info, &_papi_hwi_presets[EventCode], sizeof(PAPI_event_info_t));
+     if (_papi_hwi_presets.info[i].symbol[0] != 0) { /* if the event is in the preset table */
+         info->event_code = EventCode;
+         info->count = _papi_hwi_presets.count[i];
+         strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
+         strncpy(info->short_descr, _papi_hwi_presets.info[i].short_descr, PAPI_MIN_STR_LEN);
+         strncpy(info->long_descr, _papi_hwi_presets.info[i].long_descr, PAPI_HUGE_STR_LEN);
+         info->derived[0] = 0;
+         info->postfix[0] = 0;
+         if (_papi_hwi_presets.data[i]) { /* if the event exists on this platform */
+            strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, PAPI_MIN_STR_LEN);
+            type = _papi_hwi_presets.data[i]->derived;
+            if(type) {
+               for(j = 1; _papi_hwi_derived[j].type != -1; j++) {
+                  if (_papi_hwi_derived[j].type == type) {
+                     strncpy(info->derived, _papi_hwi_derived[j].name, PAPI_MIN_STR_LEN);
+                  }
+               }
+            }
+            for (j=0; j < info->count; j++) {
+               info->code[j] = _papi_hwi_presets.data[i]->native[j];
+               if (_papi_hwi_native_code_to_name(info->code[j]) == NULL) info->name[j][0] = 0;
+               else strncpy(info->name[j], 
+                  _papi_hwi_native_code_to_name(info->code[j]), PAPI_MIN_STR_LEN);
+            }
+         }
+         if (_papi_hwi_presets.dev_note[i]) { /* if a developer's note exists for this event */
+            strncpy(info->note, _papi_hwi_presets.dev_note[i], PAPI_HUGE_STR_LEN);
+         } else info->note[0] = 0;
+
          papi_return(PAPI_OK);
       } else
          papi_return(PAPI_ENOEVNT);
    }
-
+ 
    if (EventCode & PAPI_NATIVE_MASK) {
       papi_return(_papi_hwi_get_native_event_info(EventCode, info));
    }
@@ -314,10 +334,10 @@ int PAPI_event_code_to_name(int EventCode, char *out)
    if (EventCode & PAPI_PRESET_MASK) {
       EventCode &= PAPI_PRESET_AND_MASK;
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS)
-          || (_papi_hwi_presets[EventCode].symbol == NULL))
+          || (_papi_hwi_presets.info[EventCode].symbol == NULL))
          papi_return(PAPI_ENOTPRESET);
 
-      strncpy(out, _papi_hwi_presets[EventCode].symbol, PAPI_MAX_STR_LEN);
+      strncpy(out, _papi_hwi_presets.info[EventCode].symbol, PAPI_MAX_STR_LEN);
       papi_return(PAPI_OK);
    }
 
@@ -340,9 +360,9 @@ int PAPI_event_name_to_code(char *in, int *out)
 
    if (strncmp(in, "PAPI", 4) == 0) {
       for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-         if ((_papi_hwi_presets[i].symbol)
-             && (strcasecmp(_papi_hwi_presets[i].symbol, in) == 0)) {
-            *out = _papi_hwi_presets[i].event_code;
+         if ((_papi_hwi_presets.info[i].symbol)
+             && (strcasecmp(_papi_hwi_presets.info[i].symbol, in) == 0)) {
+            *out = (i | PAPI_PRESET_MASK);
             papi_return(PAPI_OK);
          }
       }
@@ -360,9 +380,9 @@ int PAPI_enum_event(int *EventCode, int modifier)
    if (i & PAPI_PRESET_MASK) {
       i &= PAPI_PRESET_AND_MASK;
       while (++i < PAPI_MAX_PRESET_EVENTS) {
-         if ((!modifier) || (_papi_hwi_presets[i].count)) {
+         if ((!modifier) || (_papi_hwi_presets.count[i])) {
             *EventCode = i | PAPI_PRESET_MASK;
-            if (_papi_hwi_presets[i].symbol[0])
+            if (_papi_hwi_presets.info[i].symbol[0])
                return (PAPI_OK);
             else
                return (PAPI_ENOEVNT);

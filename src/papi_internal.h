@@ -21,7 +21,6 @@
 #define _PAPI_INTERNAL_H
 
 #include SUBSTRATE
-#include "papiStrings.h"
 #include "papi_preset.h"
 
 #ifndef __func__
@@ -98,6 +97,17 @@ extern int _papi_hwi_debug;
 
 #define DEADBEEF 0xdedbeef
 
+  /********************************************************/
+/* This block provides general strings used in PAPI     */
+/* If a new string is needed for PAPI prompts           */
+/* it should be placed in this file and referenced by   */
+/* label.                                               */
+/********************************************************/
+#define PAPI_ERROR_CODE_str      "PAPI Error Code"
+#define PAPI_SHUTDOWN_str	      "PAPI_shutdown error: PAPI currently not initialized\n"
+#define PAPI_SHUTDOWN_SYNC_str	"PAPI_shutdown error: Other threads still have running EventSets\n"
+
+
 /* some members of structs and/or function parameters may or may not be
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
@@ -116,7 +126,7 @@ extern int _papi_hwi_debug;
 #define DERIVED_ADD_PS   0x4    /* Add 2 counters then divide by the cycle counter and xl8 to secs. */
 #define DERIVED_CMPD     0x8    /* Event lives in operand index but takes 2 or more codes */
 #define DERIVED_SUB      0x10   /* Sub all counters from counter with operand_index */
-#define DERIVED_POSTFIX  0x20   /* postfix */
+#define DERIVED_POSTFIX  0x20   /* Process counters based on specified postfix string */
 
 typedef struct _EventSetDomainInfo {
    int domain;

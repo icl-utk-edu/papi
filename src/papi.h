@@ -420,6 +420,8 @@ read the documentation carefully.  */
    } PAPI_dmem_t;
 #endif
 
+#define NEW_PAPI_EVENT_INFO
+
 #ifndef NEW_PAPI_EVENT_INFO
   /* If you change this, please update test *avail* test cases! */
   /* Whatever you do, don't reorder the fields. All hell will break
@@ -434,25 +436,23 @@ read the documentation carefully.  */
       char vendor_name[PAPI_MAX_STR_LEN];
       char vendor_descr[PAPI_HUGE_STR_LEN];
    } PAPI_event_info_t;
-#else
+#elif defined(PHILS_EVENT_INFO)
    typedef struct event_info {
-     /* The PAPI code to PAPI_add_event() */
       unsigned int event_code;
       unsigned int count;
       char symbol[PAPI_MIN_STR_LEN];
       struct {
-       char short_descr[PAPI_MIN_STR_LEN];
-       char long_descr[PAPI_MAX_STR_LEN];
+         char short_descr[PAPI_MIN_STR_LEN];
+         char long_descr[PAPI_MAX_STR_LEN];
       } papi;
       struct {
-	char symbols[PAPI_MAX_STR_LEN];
-	char codes[PAPI_MAX_STR_LEN];
-	char long_descr[PAPI_HUGE_STR_LEN];
-	char qualifier_descr[PAPI_MAX_STR_LEN];
+         char symbols[PAPI_MAX_STR_LEN];
+         char codes[PAPI_MAX_STR_LEN];
+         char long_descr[PAPI_HUGE_STR_LEN];
+         char qualifier_descr[PAPI_MAX_STR_LEN];
       } vendor;
-     char note[PAPI_MAX_STR_LEN];
+      char note[PAPI_MAX_STR_LEN];
    } PAPI_event_info_t;
-
 /* Explanation of the fields.
    1-3, same as before. 
    4,5 defined only for PAPI events, not NATIVE events. 
@@ -467,7 +467,21 @@ read the documentation carefully.  */
 
    Comments welcome to mucci@cs.utk.edu.
 */
-
+#else
+/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
+#define MAX_TERMS 8
+   typedef struct event_info {
+      unsigned int event_code;
+      unsigned int count;
+      char symbol[PAPI_MAX_STR_LEN];
+      char short_descr[PAPI_MIN_STR_LEN];
+      char long_descr[PAPI_HUGE_STR_LEN];
+      char derived[PAPI_MIN_STR_LEN];
+      char postfix[PAPI_MIN_STR_LEN];
+      unsigned int code[MAX_TERMS];
+      char name[MAX_TERMS][PAPI_MIN_STR_LEN];
+      char note[PAPI_HUGE_STR_LEN];
+   } PAPI_event_info_t;
 #endif
 
 /* Locking Mechanisms defines 

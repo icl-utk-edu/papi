@@ -44,11 +44,8 @@ extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 /*  BEGIN GLOBALS   */
 /********************/
 
-/* Defined by the substrate */
-extern hwi_preset_data_t _papi_hwi_preset_data[];
-
 /* Defined in papi_data.c */
-extern PAPI_event_info_t _papi_hwi_presets[];
+extern hwi_presets_t _papi_hwi_presets;
 
 
 ThreadInfo_t *default_master_thread = NULL;
@@ -556,7 +553,7 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
       if (head[j].event_code & PAPI_PRESET_MASK) {
          preset_index = head[j].event_code & PAPI_PRESET_AND_MASK;
          for (k = 0; k < MAX_COUNTER_TERMS; k++) {
-            nevt = _papi_hwi_preset_data[preset_index].native[k];
+            nevt = _papi_hwi_presets.data[preset_index]->native[k];
             if (nevt == PAPI_NULL)
                break;
             for (n = 0; n < ESI->NativeCount; n++) {
@@ -688,7 +685,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          int preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
          /* count the number of native events in this preset */
-         count = _papi_hwi_presets[preset_index].count;
+         count = _papi_hwi_presets.count[preset_index];
 
          /* Check if it's within the valid range */
          if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
@@ -696,14 +693,14 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
          /* Check if event exists */
 
-         if (!_papi_hwi_presets[preset_index].count)
+         if (!_papi_hwi_presets.count[preset_index])
             return (PAPI_ENOEVNT);
          /* check if the native events have been used as overflow events */
          if (ESI->state & PAPI_OVERFLOWING) {
             for (i = 0; i < count; i++) {
                for (j = 0; j < ESI->overflow.event_counter; j++) {
                   if (ESI->overflow.EventCode[j] ==
-                      (_papi_hwi_preset_data[preset_index].native[i]))
+                      (_papi_hwi_presets.data[preset_index]->native[i]))
                      return (PAPI_ECNFLCT);
                }
             }
@@ -712,7 +709,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          /* Try to add the preset. */
 
          remap =
-             add_native_events(ESI, _papi_hwi_preset_data[preset_index].native, count,
+             add_native_events(ESI, _papi_hwi_presets.data[preset_index]->native, count,
                                &ESI->EventInfoArray[thisindex]);
          if (remap < 0)
             return (PAPI_ECNFLCT);
@@ -721,9 +718,9 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
             ESI->EventInfoArray[thisindex].event_code = EventCode;
             ESI->EventInfoArray[thisindex].derived =
-                _papi_hwi_preset_data[preset_index].derived;
+                _papi_hwi_presets.data[preset_index]->derived;
             ESI->EventInfoArray[thisindex].ops =
-                _papi_hwi_preset_data[preset_index].operation;
+                _papi_hwi_presets.data[preset_index]->operation;
             if (remap)
                remap_event_position(ESI, thisindex);
          }
@@ -897,13 +894,13 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
             return (PAPI_EINVAL);
 
          /* Check if event exists */
-         if (!_papi_hwi_presets[preset_index].count)
+         if (!_papi_hwi_presets.count[preset_index])
             return (PAPI_ENOEVNT);
 
          /* Remove the preset event. */
-         for (j = 0; _papi_hwi_preset_data[preset_index].native[j] != 0; j++);
+         for (j = 0; _papi_hwi_presets.data[preset_index]->native[j] != 0; j++);
          retval =
-             remove_native_events(ESI, _papi_hwi_preset_data[preset_index].native, j);
+             remove_native_events(ESI, _papi_hwi_presets.data[preset_index]->native, j);
          if (retval != PAPI_OK)
             return (retval);
       } else if (EventCode & PAPI_NATIVE_MASK) {
