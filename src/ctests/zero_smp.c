@@ -126,7 +126,7 @@ int main(int argc, char **argv)
    elapsed_cyc = PAPI_get_real_cyc();
 
 #if defined(_AIX)
-   retval = PAPI_thread_init((unsigned long (*)(void)) (pthread_self), 0);
+   retval = PAPI_thread_init((unsigned long (*)(void)) (pthread_self));
    if (retval != PAPI_OK) {
       if (retval == PAPI_ESBSTR)
          test_skip(__FILE__, __LINE__, "PAPI_thread_init", retval);
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
    }
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
-   retval = PAPI_thread_init((unsigned long (*)(void)) (mp_my_threadnum), 0);
+   retval = PAPI_thread_init((unsigned long (*)(void)) (mp_my_threadnum));
    if (retval != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
    }
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 #pragma local(i)
 #pragma pfor
 #elif defined(sun) && defined(sparc)
-   retval = PAPI_thread_init((unsigned long (*)(void)) (thr_self), 0);
+   retval = PAPI_thread_init((unsigned long (*)(void)) (thr_self));
    if (retval != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
    }

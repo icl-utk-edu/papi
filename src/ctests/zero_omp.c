@@ -138,7 +138,7 @@ int main(int argc, char **argv)
    elapsed_cyc = PAPI_get_real_cyc();
 
 
-   retval = PAPI_thread_init((unsigned long (*)(void)) (omp_get_thread_num), 0);
+   retval = PAPI_thread_init((unsigned long (*)(void)) (omp_get_thread_num));
    if (retval != PAPI_OK)
       if (retval == PAPI_ESBSTR)
          test_skip(__FILE__, __LINE__, "PAPI_thread_init", retval);
