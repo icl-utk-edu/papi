@@ -1,6 +1,7 @@
 all:
 	@echo "Please use one of the following commands:";
 	@echo "";
+	@echo "make -f Makefile.linux-perfctr-x86_64 (AMD64)";
 	@echo "make -f Makefile.linux-ia64-libpfm2.0 (see ./pfmon-2.0)";
 	@echo "make -f Makefile.linux-ia64-itanium2-libpfm2.0 (see ./pfmon-2.0)";
 	@echo "make -f Makefile.unicos-t3e";
@@ -27,5 +28,4 @@ all:
 	@echo "install		- Installs in make variable DESTDIR"; 
 	@echo "clean		- Removes object files and executables";
 	@echo "dist		- Prepares a tarball";
-
 

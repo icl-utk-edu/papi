@@ -57,8 +57,8 @@ typedef struct P4_perfctr_codes {
 
 typedef struct P4_perfctr_avail {
   unsigned selector;               /* Mask for which counters in use */
-  unsigned uses_pebs;              /* Binary flag for PEBS */
-  unsigned uses_pebs_matrix_vert;  /* Binary flag for PEBS_MATRIX_VERT */
+  unsigned pebs_enable;            /* PEBS */
+  unsigned pebs_matrix_vert;       /* PEBS_MATRIX_VERT */
 } P4_register_t;
 
 typedef struct P4_regmap {

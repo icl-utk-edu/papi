@@ -1,12 +1,10 @@
-PERFCTR=perfctr-20030509
-
-DESCR	= "Linux with PerfCtr 2.5 patch for all Opterons"
+DESCR	= "Linux with PerfCtr 2.5 patch for AMD Opteron and Athlon HX"
 
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	?= ./perfctr-2.4.5
+PERFCTR	?= ./perfctr-2.5.4
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -g -Wall -O3 
-TOPTFLAGS= -g -Wall -O0 
+TOPTFLAGS= -g -Wall -O1
 #
 # GNU G77 section
 #
@@ -49,20 +47,17 @@ CC_R	= $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR25 -DPAPI_PERFCTR_INTR_SUPPORT
 # Some nice flags to add to CFLAGS when debugging PAPI library itself
 # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-MISCOBJS= libperfctr.so
+MISCOBJS= global.o misc.o virtual.o event_set.o event_set_amd.o
 MISCHDRS= ia32_presets.h 
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
 
-libperfctr.so: $(PERFCTR)/usr.lib/libperfctr.o $(PERFCTR)/usr.lib/libperfctr.so
-	cp $(PERFCTR)/usr.lib/libperfctr.so .
+global.o misc.o virtual.o event_set.o event_set_amd.o: $(PERFCTR)/usr.lib/libperfctr.a
+	ar x $(PERFCTR)/usr.lib/libperfctr.a
 
-$(PERFCTR)/usr.lib/libperfctr.so:
+$(PERFCTR)/usr.lib/libperfctr.a:
 	$(MAKE) -C $(PERFCTR)
-
-lib $(PERFCTR)/usr.lib/libperfctr.so:
-	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
 native_clean:
 	$(MAKE) -C $(PERFCTR) clean

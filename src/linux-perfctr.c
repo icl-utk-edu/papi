@@ -142,10 +142,11 @@ inline static int setup_all_presets(int cpu_type)
       preset_map = k7_preset_map;
       break;
 
+#if defined(PERFCTR_X86_AMD_K8)
     case PERFCTR_X86_AMD_K8:
       preset_map = k8_preset_map;
       break;
-
+#endif
     case PERFCTR_X86_VIA_C3:
       fprintf(stderr,"This platform is not supported by PAPI\n");
       /* This is most probably wrong, but it is backwards compatible to 
@@ -290,7 +291,9 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
     case PERFCTR_X86_AMD_K7:
+#if defined(PERFCTR_X86_AMD_K8)
     case PERFCTR_X86_AMD_K8:
+#endif
       ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[2] |= def_mode | PERF_ENABLE;

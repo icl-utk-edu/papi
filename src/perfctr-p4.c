@@ -166,10 +166,10 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 	  tmp->selector = tmp2->pmc_map;
 	  SUBDBG("selector[%d] %#08x\n",unum,tmp->selector);
-	  tmp->uses_pebs = (tmp2->pebs_enable ? 1 : 0);
-	  SUBDBG("uses_pebs[%d] %#08x\n",unum,tmp->uses_pebs);
-	  tmp->uses_pebs_matrix_vert = (tmp2->pebs_matrix_vert ? 1 : 0);
-	  SUBDBG("uses_pebs_matrix_vert[%d] %#08x\n",unum,tmp->uses_pebs_matrix_vert);
+	  tmp->pebs_enable = tmp2->pebs_enable;
+	  SUBDBG("pebs_enable[%d] %#08x\n",unum,tmp->pebs_enable);
+	  tmp->pebs_matrix_vert = tmp2->pebs_matrix_vert;
+	  SUBDBG("pebs_matrix_vert[%d] %#08x\n",unum,tmp->pebs_matrix_vert);
 
 	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x",
 		  (unum >= 1) ? " " : "",
@@ -674,23 +674,36 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
       allocated[i] = ffs(avail) - 1;
       SUBDBG("Allocated counter: allocated %d %08x\n",i,allocated[i]);
 
-      if (ev_info->hardware_event[i].uses_pebs)
+      /* If we're adding to an event set with something in it ... */
+
+      if (bits->selector)
 	{
-#if 0
-	  if (bits->uses_pebs)
+	  int j;
+
+	  if ((ev_info->hardware_event[i].pebs_enable != bits->pebs_enable) ||
+	      (ev_info->hardware_event[i].pebs_matrix_vert != bits->pebs_matrix_vert))
 	    return(PAPI_ECNFLCT);
-#endif
-	  bits->uses_pebs = 1;
-	}
-      if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
-	{
-#if 0
-	  if (bits->uses_pebs_matrix_vert)
-	    return(PAPI_ECNFLCT);
-#endif
-	  bits->uses_pebs_matrix_vert = 1;
+
+	  for (j=0;j<evset_info->control.cpu_control.nractrs+evset_info->control.cpu_control.nrictrs;j++)
+	    {
+	      if (ESCR_OF(preset->info->data[i].evntsel) == 
+		  ESCR_OF(evset_info->control.cpu_control.evntsel[j]))
+		{
+		  if (EVENT_OF(preset->info->data[i].evntsel_aux) ==
+		      EVENT_OF(evset_info->control.cpu_control.evntsel_aux[j]))
+		    {
+		      if (EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux) != 
+			  EVENTMASKTAG_OF(EVENT_OF(evset_info->control.cpu_control.evntsel_aux[j])))
+			  {
+			    return(PAPI_ECNFLCT);
+			  }
+		    }
+		}
+	    }
 	}
     }
+    
+  /* Should move counters here if some are overflowing. */
 
   /* Add counter control command values to eventset */
 
@@ -769,22 +782,32 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
 
 int _papi3_hwd_remove_event(P4_regmap_t *ev_info, int perfctr_index, P4_perfctr_control_t *evset_info)
 {
-  int i, j, new_nractrs, nractrs, clear_pebs = 0, clear_pebs_matrix_vert = 0;
+  int i, j, new_nractrs, nractrs, old_pebs = 0, old_pebs_matrix_vert = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
 
   /* Remove allocation/usage info for this event from bits */
 
+  SUBDBG("Allocated counters: %08x\n",bits->selector);
   for (i=0;i<ev_info->num_hardware_events;i++)
     {
-      if (ev_info->hardware_event[i].uses_pebs)
+       SUBDBG("Removing counter: %08x\n",ev_info->hardware_event[i].selector);
+       bits->selector ^= ev_info->hardware_event[i].selector;
+    }
+  SUBDBG("Allocated counters now: %08x\n",bits->selector);
+  
+/* If the event set is now empty, and it's events used PEBS, we
+   can clear the entry. */
+  if (bits->selector == 0)
+    {
+      if (ev_info->hardware_event[i].pebs_enable)
 	{
-	  clear_pebs = 1;
-	  bits->uses_pebs = 0;
+	  old_pebs = 1;
+	  bits->pebs_enable = 0;
 	}
-      if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
+      if (ev_info->hardware_event[i].pebs_matrix_vert)
 	{
-	  clear_pebs_matrix_vert = 1;
-	  bits->uses_pebs_matrix_vert = 0;
+	  old_pebs_matrix_vert = 1;
+	  bits->pebs_matrix_vert = 0;
 	}
     }
 
@@ -806,11 +829,11 @@ int _papi3_hwd_remove_event(P4_regmap_t *ev_info, int perfctr_index, P4_perfctr_
       evset_info->control.cpu_control.ireset[j] = 0;
     }
 
-  /* Clear pebs stuff if we used it */
+  /* Old pebs stuff if we used it */
 
-  if (clear_pebs)
+  if (old_pebs)
     evset_info->control.cpu_control.p4.pebs_enable = 0;
-  if (clear_pebs_matrix_vert)
+  if (old_pebs_matrix_vert)
     evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
 
   /* Shift the perfctr buffer's entries if necessary, i.e. if we removed
