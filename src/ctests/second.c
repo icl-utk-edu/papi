@@ -2,7 +2,7 @@
 
    - It attempts to use the following two counters. It may use less depending on
      hardware counter resource limitations. 
-     + PAPI_FP_INS
+     + PAPI_TOT_INS
      + PAPI_TOT_CYC
    - Start system domain counters
    - Do flops
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
    long_long **values;
    int EventSet1, EventSet2, EventSet3;
    int num_events1, num_events2, num_events3;
-   int mask1 = 0x5, mask2 = 0x5, mask3 = 0x5;
+   int mask1 = 0x3, mask2 = 0x3, mask3 = 0x3;
    PAPI_option_t options;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 #if defined(sgi) && defined(host_mips)
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-   if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
+   if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
-   retval = PAPI_event_code_to_name(PAPI_FP_INS, event_name);
+   retval = PAPI_event_code_to_name(PAPI_TOT_INS, event_name);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
    sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
