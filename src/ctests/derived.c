@@ -8,8 +8,8 @@
 #define CPP_TEST_SKIP() { test_skip(__FILE__,__LINE__,NULL,0); }
 #else
 #define CPP_TEST_FAIL(function, retval) { fprintf(stderr,"%s:%d:%s:%d:%s:%s\n",__FILE__,__LINE__,function,retval,PAPI_strerror(retval),"$Id$\n"); test_fail(__FILE__, __LINE__, function, retval); }
-#define CPP_TEST_PASS() { fprintf(stderr,"$Id$:PASSED\n"); exit(0); }
-#define CPP_TEST_SKIP() { fprintf(stderr,"$Id$:SKIPPED\n"); exit(0); }
+#define CPP_TEST_PASS() { fprintf(stderr,"$Id$\n%s:\tPASSED\n",__FILE__); exit(0); }
+#define CPP_TEST_SKIP() { fprintf(stderr,"$Id$\n%s:\tSKIPPED\n",__FILE__); exit(0); }
 #endif
 
 #define NUM_ITERS 5000
