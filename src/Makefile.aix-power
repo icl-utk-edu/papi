@@ -13,7 +13,7 @@ ALLOCATE = allocate.o
 # For version 1.2.1 add -DPMTOOLKIT_1_2_1
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
-CFLAGS	= $(FLAGS) 
+CFLAGS	= $(FLAGS) -DHAS_NATIVE_MAP
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= -g

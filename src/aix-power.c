@@ -21,7 +21,7 @@
 static int maxgroups = 0;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-#ifndef _POWER4
+#ifndef _POWER4	/* The following is for POWER3 class hardware */
 
 /* These defines smooth out the differences between versions of pmtoolkit */
 
@@ -49,7 +49,7 @@ static int maxgroups = 0;
     #undef  PM_RESRV_RQ
     #undef  PM_MPRED_BR
     #undef  PM_EXEC_FMA
-    #undef  PM_BR_FINISH
+    #undef  PM_BR_FINISHF
     #define PM_LSU_EXEC   "PM_LSU_CMPL"
     #define PM_ST_MISS_L1 "PM_ST_MISS_L1"
     #define PM_RESRV_CMPL "PM_STCX_SUCCESS"
@@ -353,7 +353,7 @@ static int setup_all_presets(pm_info_t *info)
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-#else
+#else	/* The following is for POWER4 class hardware */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 static hwd_groups_t group_map[MAX_GROUPS] = { 0 };
@@ -547,6 +547,77 @@ static int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
 
 #endif
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/* The following is for any POWER hardware */
+
+/**********************************************************************************/
+/* The next four functions implement the native event interface */
+/* On POWER, native events take the form:
+    0x4000EECC, where 4 is NATIVE_MASK, EE is the event code, and CC is the counter.
+    The same event can often be found on multiple counters, so there can be a
+    one-to-many relationship between event names and native codes.
+    In these cases the first instance found will be the one reported.
+*/
+
+/* Reverse lookup of event code to index */
+unsigned int _papi_hwd_native_code_to_idx(unsigned int event_code)
+{
+  unsigned int idx, counter, pmc;
+
+  idx = (event_code >> 8) & 0xff;
+  counter = event_code & 0xff;
+  if ((counter < pminfo.maxpmcs) && (idx < pminfo.maxevents[counter])) {
+    for (pmc = 1; pmc <= counter; pmc++) {
+      idx += pminfo.maxevents[pmc-1];
+    }
+    return (idx);
+  }
+  return (PAPI_ENOEVNT);
+}
+
+/* Returns event code based on index. NATIVE_MASK bit must be set if not predefined */
+unsigned int _papi_hwd_native_idx_to_code(unsigned int idx)
+{
+  unsigned int pmc;
+
+  for (pmc = 0; pmc < pminfo.maxpmcs; pmc++) {
+    if (idx < pminfo.maxevents[pmc]) break;
+    idx -= pminfo.maxevents[pmc];
+  }
+  if (pmc < pminfo.maxpmcs) {
+    return (NATIVE_MASK | (idx << 8) | pmc);
+  }
+  return(PAPI_ENOEVNT);
+}
+
+/* Returns event name based on index. */
+char *_papi_hwd_native_idx_to_name(unsigned int idx)
+{
+  unsigned int pmc;
+
+  for (pmc = 0; pmc < pminfo.maxpmcs; pmc++) {
+    if (idx < pminfo.maxevents[pmc]) break;
+    idx -= pminfo.maxevents[pmc];
+  }
+  if (pmc < pminfo.maxpmcs) {
+    return (pminfo.list_events[pmc][idx].short_name);
+  }
+}
+
+/* Returns event description based on index. */
+char *_papi_hwd_native_idx_to_descr(unsigned int idx)
+{
+  unsigned int pmc;
+
+  for (pmc = 0; pmc < pminfo.maxpmcs; pmc++) {
+    if (idx < pminfo.maxevents[pmc]) break;
+    idx -= pminfo.maxevents[pmc];
+  }
+  if (pmc < pminfo.maxpmcs) {
+    return (pminfo.list_events[pmc][idx].description);
+  }
+}
+
+/**********************************************************************************/
 
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
@@ -782,10 +853,10 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-u_long_long _papi_hwd_get_real_usec (void)
+long_long _papi_hwd_get_real_usec (void)
 {
   timebasestruct_t t;
-  u_long_long retval;
+  long_long retval;
 
   read_real_time(&t,TIMEBASE_SZ);
   time_base_to_time(&t,TIMEBASE_SZ);
@@ -793,13 +864,13 @@ u_long_long _papi_hwd_get_real_usec (void)
   return(retval);
 }
 
-u_long_long _papi_hwd_get_real_cycles (void)
+long_long _papi_hwd_get_real_cycles (void)
 {
-  u_long_long usec, cyc;
+  long_long usec, cyc;
 
   usec = _papi_hwd_get_real_usec();
   cyc = usec * _papi_system_info.hw_info.mhz;
-  return((u_long_long)cyc);
+  return((long_long)cyc);
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
@@ -975,7 +1046,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   else{ /* also need to check the native event is eligible */ 
 		pm_events_t *pe;
 		int found_native=0, pmc;
-		event_code=EventCode>>8;
+		event_code=(EventCode & NATIVE_AND_MASK)>>8;
 		hwcntr_num = EventCode & 0xff;
 		pe=pminfo.list_events[hwcntr_num];
 		for(i=0;i<pminfo.maxevents[hwcntr_num];i++, pe++){
@@ -1141,7 +1212,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 	  int native_gps[2] = {0, 0};
 
 	  hwcntr_num = event_code & 0xff;
-	  metric = event_code >> 8;
+	  metric = (event_code & NATIVE_AND_MASK) >> 8;
 	  for (g = 0; g < MAX_GROUPS; g++)
 	    {
 	      /* scan all groups for this metric in this counter */
