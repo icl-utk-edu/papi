@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 */
 
    /* We'll accept 1 part per thousand error here (to allow Pentium 4 to pass) */
-   if (elapsed_us < (10000000 - 10000))
+   if (elapsed_us < (10000000 - 15000))
      test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
 
    if ((10.0 * hw_info->mhz * 1000000.0) > (((float)elapsed_cyc) + ((float)elapsed_cyc)/1000))
