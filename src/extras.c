@@ -559,7 +559,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 /* Converts an ASCII name into a native event code usable by other routines
    Returns code = 0 and PAPI_OK if name not found.
    This allows for sparse native event arrays */
-int _papi_hwi_native_name_to_code(char *in, unsigned int *out)
+int _papi_hwi_native_name_to_code(char *in, int *out)
 {
 #ifdef HAS_NATIVE_MAP
   char *name;
