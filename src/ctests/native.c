@@ -82,7 +82,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 #endif
 #ifdef __ATHLON__
-   static char *native_name[] = { "SEG_REG_LOADS", "ST_ACTIVE_IS", "DC_ACCESSES",
+   static char *native_name[] = { "TOT_CYC", "IC_MISSES", "DC_ACCESSES",
       "DC_MISSES", NULL
    };
 #endif
