@@ -1,23 +1,21 @@
-LIBPFMHOME = ./libpfm-2.0
-LIBPFM  = $(LIBPFMHOME)/libpfm
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
-MSUBSTR  = linux-ia64-libpfm2.0
+MSUBSTR  = linux-ia64-pfmon-1.1
 MEMSUBSTR= linux-ia64
-DESCR	= "Stock Linux 2.4.18 for the Intel Itanium 2"
+DESCR	= "Stock Linux 2.4.18 for the Intel IA64"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -I$(LIBPFMHOME)/include -I. -DITANIUM2 -DPFM20 -D_ASM_IA64_PAL_H
-# -DDEBUG -Wall
-OPTFLAGS= -g -DITANIUM2
-TOPTFLAGS = -DITANIUM2 -O0
+CFLAGS  = -Ipfmon-1.1/include -I. -Wall -DPFM11 -g -D_ASM_IA64_PAL_H
+# -DDEBUG
+OPTFLAGS= -g
+TOPTFLAGS = $(OPTFLAGS) -g
 FFLAGS	=
 #  -Vaxlib
-#LDFLAGS =  -lPEPCF90 -lIEPCF90 -lF90 -lintrins
-LDFLAGS =  
+LDFLAGS = 
 # -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90 -lIEPCF90 -lF90 -lintrins
+LIBPFM  = pfmon-1.1/libpfm
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 CC_SHR  = gcc -shared -fpic -DCONFIG_PFMLIB_GENERIC -DCONFIG_PFMLIB_ITANIUM -DCONFIG_PFMLIB_ITANIUM2
@@ -27,7 +25,6 @@ CC	= gcc
 F77     = g77
 MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o
 MISCSRCS= $(LIBPFM)/pfmlib_itanium.c $(LIBPFM)/pfmlib_itanium2.c $(LIBPFM)/pfmlib_common.c $(LIBPFM)/pfmlib_generic.c
-MISCHDRS= pfmwrap.h $(SUBSTR)-memory.h
 
 include Makefile.inc
 

@@ -8,7 +8,6 @@
       INTEGER*8 total_usec, total_cyc
       INTEGER i,handle
       INTEGER retval
-      REAL ITERS
       integer tests_quiet, get_quiet
       external get_quiet
 
@@ -16,7 +15,6 @@
 
       total_usec=0
       total_cyc=0
-      ITERS=ITERS
       handle=0
 
       retval = PAPI_VER_CURRENT
