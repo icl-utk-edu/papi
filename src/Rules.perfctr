@@ -1,3 +1,4 @@
+# -*- Makefile -*-
 #
 # GNU G77/GCC section
 #
@@ -43,9 +44,9 @@ PERFCTR_LIB_PATH ?= $(PERFCTR)/usr.lib
 PERFCTR_INC_PATH ?= $(PERFCTR)/usr.lib
 PERFCTR_KINC_PATH ?= $(PERFCTR)/linux/include
 else
-PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib
+PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib$(LIB_SUFFIX)
 PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
-PERFCTR_KINC_PATH ?= $(PERFCTR_PREFIX)/linux/include
+PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
@@ -60,12 +61,16 @@ TARGETS = serial multiplex_and_pthreads
 CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH)
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 
-ifeq (${VERSION},2.6.x)
-CFLAGS	+= -DPERFCTR26
-PERFCTR_OBJS = marshal.o global.o misc.o virtual.o x86.o
-else
-PERFCTR_OBJS = libperfctr.o
-endif
+CFLAGS-2.6.x := -DPERFCTR26
+CFLAGS-2.7.x := $(CFLAGS-2.6.x)
+
+PERFCTR_OBJS-2.4.5 := libperfctr.o
+PERFCTR_OBJS-2.4.x := $(PERFCTR_OBJS-2.4.5)
+PERFCTR_OBJS-2.6.x := marshal.o global.o misc.o virtual.o x86.o
+PERFCTR_OBJS-2.7.x := $(PERFCTR_OBJS-2.6.x)
+
+CFLAGS	+= $(CFLAGS-$(VERSION))
+PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
 MISCHDRS= perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
@@ -75,7 +80,11 @@ MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o)
 include Makefile.inc
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
+ifeq (,${PERFCTR_PREFIX})
 	$(MAKE) -C $(PERFCTR)
+else
+	@echo '$@ not installed!'; exit 1
+endif
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 	ar x $<
@@ -87,12 +96,14 @@ linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 native_clean:
+ifeq (,${PERFCTR_PREFIX})
 	$(MAKE) -C $(PERFCTR) distclean
+endif
 
 ifeq (,${PERFCTR_PREFIX})
 ifeq (${VERSION},2.4.x)
 native_install:
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
 	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
 else
