@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   char des[128];
   int i, j, retval;
   int iters=10000000;
-  double x,y,dtmp;
+  double x = 1.1,y,dtmp;
   long_long t1,t2;  
   long_long values[MAXEVENTS];
   int sleep_time = SLEEPTIME; 
