@@ -322,7 +322,12 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
-   int profile_index = 0, overflow_vector;
+   int profile_index = 0;
+#ifdef _AIX   
+   int overflow_vector;
+#else
+   long_long overflow_vector;
+#endif
    long_long temp[MAX_COUNTERS], over;
    u_long_long latest = 0;
    ThreadInfo_t *thread;
