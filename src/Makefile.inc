@@ -86,7 +86,7 @@ tests: null
 	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' $(TARGETS)
 
 ftests: null
-	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)"
+	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)"
 
 clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
