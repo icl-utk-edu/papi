@@ -73,6 +73,46 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* IPS */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Total load/stores */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Syncs */ 
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_DCH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_DCH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_DCA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_DCA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_DCA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_DCR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_DCR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_DCR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_DCW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_DCW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_DCW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_ICH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_ICH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_ICH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_ICA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_ICA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_ICA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_ICR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_ICR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_ICR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_ICW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_ICW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_ICW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_TCH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_TCH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_TCH */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_TCA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_TCA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_TCA */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_TCR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_TCR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_TCR */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_TCW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2_TCW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L3_TCW */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* FPM */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* FPA */
+   		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* FPD */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* FPSQ */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* FPI */
 };
 
 /* Utility functions */

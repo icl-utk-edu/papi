@@ -275,6 +275,7 @@ rwlock_t lock;
 #elif defined(sgi) && defined(mips)
 int lock;
 #elif defined(_CRAYT3E)
+#error "fixme"
 #elif defined(_AIX)
 #include <sys/atomic_op.h>
 int lock_var = 0;
@@ -303,6 +304,7 @@ void PAPI_lock(void)
       usleep(1000);
     }
 #elif defined(_CRAYT3E)
+#error "fixme"
 #elif defined(sun) && defined(sparc)
   rw_wrlock(&lock);
 #endif
