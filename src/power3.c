@@ -347,7 +347,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
       for(i=0;i<natNum;i++)
 	  ESI->NativeInfoArray[i].ni_position = ffs(event_list[i].ra_selector)-1;
       /* update the control structure based on the NativeInfoArray */
-      _papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);
+      /*_papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);*/
       return 1;
   }
   else{

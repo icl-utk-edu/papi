@@ -446,14 +446,15 @@ static int get_free_EventCodeIndex(const EventSetInfo_t *ESI, unsigned int Event
 
   /* Check for duplicate events and get the lowest empty slot */
   
-  for (k=0;k<limit;k++) 
-    {
+  for (k=0;k<limit;k++){
       if (ESI->EventInfoArray[k].event_code == EventCode)
-	papi_return(PAPI_ECNFLCT);
-      if ((ESI->EventInfoArray[k].event_code == PAPI_NULL) && (lowslot == PAPI_ECNFLCT))
-	lowslot = k;
-    }
-  
+		papi_return(PAPI_ECNFLCT);
+      /*if ((ESI->EventInfoArray[k].event_code == PAPI_NULL) && (lowslot == PAPI_ECNFLCT))*/
+	  if (ESI->EventInfoArray[k].event_code == PAPI_NULL){
+		  lowslot = k;
+		  break;
+	  }
+  }
   return(lowslot);
 }
 
@@ -592,13 +593,35 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
     }  /* end of for loop */
 }
 
+
+static int add_native_fail_clean(EventSetInfo_t *ESI, int nix)
+{
+	int i;
+	
+	/* to find the native event from the native events list */
+	for(i=0; i<ESI->NativeCount;i++){
+		if(nix==ESI->NativeInfoArray[i].ni_index){
+			ESI->NativeInfoArray[i].ni_owners--;
+			/* to clean the entry in the nativeInfo array */
+			if(ESI->NativeInfoArray[i].ni_owners==0){
+				ESI->NativeInfoArray[i].ni_index = -1;
+				ESI->NativeInfoArray[i].ni_position = -1;
+				ESI->NativeCount --;
+			}
+			DBG((stderr,"add_events fail, and remove added native events of the event: %s\n", _papi_hwd_native_code_to_name(nix & NATIVE_MASK)));
+			return i;
+		}
+	}
+	return -1;
+}	  
+
 /* this function is called by _papi_hwi_add_event when adding native events 
 nix: pointer to array of native event table indexes from the preset entry
 size: number of native events to add
 */
 static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
 {
-	int nidx, i, remap=0;
+	int nidx, i, j, remap=0;
 	
 	/* Need to decide what needs to be preserved so we can roll back state
 	   if the add event fails...
@@ -612,6 +635,14 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 		else{
 			/* all counters have been used, add_native fail */
 			if(ESI->NativeCount==MAX_COUNTERS){
+				/* to clean owners for previous added native events */
+				for(j=0;j<i;j++){
+					if((nidx=add_native_fail_clean(ESI, nix[j]))>=0){
+						out->pos[j]=-1;
+						continue;
+					}
+					DBG((stderr,"should not happen!\n"));
+				}
 				DBG((stderr,"counters are full!\n"));
 				return -1;
 			}
@@ -630,8 +661,16 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 		    _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
 		    return 1;
 		}
-		else
-		    return -1;
+		else{
+			for(i=0;i<size;i++){
+				if((nidx=add_native_fail_clean(ESI, nix[i]))>=0){
+					out->pos[j]=-1;
+					continue;
+				}
+				DBG((stderr,"should not happen!\n"));
+			}
+			return -1;
+		}
 	}
 	
 	return 0;
@@ -929,10 +968,8 @@ int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *value
   if (retval != PAPI_OK)
     return(retval);
 
-  retval = counter_reorder(ESI, dp, values);
-  if (retval != PAPI_OK)
-    return(retval);
-
+  counter_read(ESI, dp, values);
+  
   return(PAPI_OK);
 }
 
@@ -1189,7 +1226,7 @@ static long_long handle_derived(EventInfo_t *evi, long_long *from)
   }
 }
 
-static int counter_reorder(EventSetInfo_t *ESI, long_long *hw_counter, long_long *values)
+static int counter_read(EventSetInfo_t *ESI, long_long *hw_counter, long_long *values)
 {
   int i, j=0, index;
 
