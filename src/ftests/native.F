@@ -11,8 +11,7 @@
       character*20 vendor_string, model_string
       real*4 revision, mhz, rsec
       integer*8 uso, usn 
-      integer retval, errorcode
-      character*(PAPI_MAX_STR_LEN) errorstring
+      integer retval
 
       Integer len_trim
       External len_trim
@@ -30,20 +29,18 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', retval)
       end if
       
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
 #if defined(_AIX)
@@ -52,64 +49,56 @@ C     ICM
       nativees = 5 * 2**8
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     FPU1CMPL   
       nativees = 35 * 2**8 + 1
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     LDCM     
       nativees = 5 * 2**8 + 2
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     LDCMPL
       nativees = 5 * 2**8 + 3
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     FPU0CMPL
       nativees = 5 * 2**8 + 4
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     CYC 
       nativees = 12 * 2**8 + 5
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     FMA
       nativees = 9 * 2**8 + 6
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     TLB
       nativees = 0 * 2**8 + 7
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 #endif
@@ -119,16 +108,14 @@ C     Data mem refs
       nativees = 43 * 2**8 + 0
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     Lines out
       nativees = 47 * 2**8 + 1
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 #endif
 
@@ -137,16 +124,14 @@ C     L1 I Miss
       nativees = 9 * 2**8
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     L1 D Miss
       nativees = 9 * 2**8 + 1
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 #endif
 
@@ -155,24 +140,21 @@ C     Machine cyc
       nativees = 0 * 2**8 + 0
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     Dcache acc
       nativees = 0 * 2**8 + 1
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     CPU cyc
       nativees = 0 * 2**8 + 2
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 #endif
@@ -183,16 +165,14 @@ C     Load_use
       nativees = z'B' * 2**8
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
       
 C     DC_wr_hit
       nativees = z'A' * 2**8 + 1
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        print *, errorstring(1:len_trim(errorstring))
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
       
 #endif
@@ -202,8 +182,7 @@ C     DC_wr_hit
       if (nativees .NE. -1) then
          call PAPIf_add_event( es, nativees, retval )
          if ( retval .NE. PAPI_OK ) then
-            call PAPIf_perror( retval, errorstring, errorcode)
-            print *, errorstring(1:len_trim(errorstring))
+            call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
          end if
       end if
 
@@ -211,8 +190,7 @@ C     DC_wr_hit
       if (nativees .NE. -1) then
          call PAPIf_add_event( es, nativees, retval )
          if ( retval .NE. PAPI_OK ) then
-            call PAPIf_perror( retval, errorstring, errorcode)
-            print *, errorstring(1:len_trim(errorstring))
+            call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
          end if
       end if
 #endif
@@ -224,8 +202,7 @@ C     DC_wr_hit
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+         call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       point = point +1
@@ -234,8 +211,7 @@ C     call sleep(1)
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+         call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_get_real_usec(usn)
@@ -299,7 +275,7 @@ C     NOT TESTED YET
       subroutine get_instr(integer nativees)
       integer cpu
       retval = PAPI_ESBSTR
-      call ftests_fail(__FILE__,retval)
+      call ftest_fail(__FILE__, __LINE__, 'get_instr', retval)
 c     call GET_CPU_FAMILY(cpu)
 c     if (cpu .EQ. EV6_CPU) nativees = PF6_MUX0_RET_INSTRUCTIONS *
 c    *                               2**8 + 0

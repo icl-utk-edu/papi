@@ -85,15 +85,15 @@ C  Set up the counters
       num_events = 2
       call PAPIf_start_counters( event, num_events, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error starting counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_start_counters', retval)
       end if
 
 C  Clear the counter values
       call PAPIf_read_counters(values, num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error reading counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_read_counters', retval)
       end if
 
 C  Compute the matrix-matrix multiplication
@@ -108,13 +108,13 @@ C  Compute the matrix-matrix multiplication
 C  Stop the counters and put the results in the array values 
       call PAPIf_stop_counters(values,num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error stopping counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_stop_counters', retval)
       end if
       call PAPIf_read_counters(values, num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error reading counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_read_counters', retval)
       end if
 
 C  Make sure the compiler does not optimize away the multiplication

@@ -107,6 +107,70 @@ C    used in the program. See eg. fmatrixpapi.F
       stop
       end
 
+      subroutine ftest_fail(file, line, callstr, retval)
+      implicit none
+      character*(*) file
+      integer line
+      character*(*) callstr
+      integer retval
+      character*(PAPI_MAX_STR_LEN) papi_errstr
+      integer len_trim
+      external len_trim
+
+      if ( retval.eq.PAPI_ESBSTR ) then
+        call ftest_skip(file, line, callstr, retval)
+      end if
+      if ( retval.eq.PAPI_ENOEVNT ) then
+        call ftest_skip(file, line, callstr, retval)
+      end if
+
+      if ( retval.ne.0 )then
+          write(*,*) file, ': FAILED'
+          write(*,*) 'Line # ', line
+      else
+          write(*,*) file, ': SKIPPED'
+          write(*,*) 'Line #', line
+      end if
+
+      if (retval.eq.PAPI_ESYS) then
+         write(*,*) "System error in ", callstr
+      else if (retval.gt.0) then
+         write(*,*) "Error calculating: ", callstr
+      else if(retval.eq.0)then
+        write(*,*) 'SGI requires root permissions for this test'
+      else
+        call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
+        write(*,*) 'PAPI error in ', callstr, 
+     *': ', papi_errstr(1:len_trim(papi_errstr))
+      end if
+      stop
+      end
+
+      subroutine ftest_skip(file, line, callstr, retval)
+      implicit none
+      character*(*) file
+      integer line
+      character*(*) callstr
+      integer retval
+
+      character*(PAPI_MAX_STR_LEN) papi_errstr
+      integer len_trim
+      external len_trim
+
+      write(*,*) file, ': SKIPPED'
+      write(*,*) 'Line #', line
+      if(retval.eq.PAPI_ESYS) then
+         write(*,*) "System error in ", callstr
+      else if (retval.gt.0) then
+         write(*,*) "Error calculating: ", callstr
+      else
+        call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
+        write(*,*) 'Error in ', callstr, ' : ', 
+     *       papi_errstr(1:len_trim(papi_errstr))
+      end if
+      stop
+      end
+
 
 C
 C  TEST UTILITIES

@@ -23,8 +23,7 @@ C -Kevin London
 
 
 #ifdef NO_FLOPS
-      print *, "Test Skipped"
-      stop 
+      call ftest_skip(__FILE__, __LINE__, 'NO_FLOPS check', PAPI_ENOEVNT)
 #endif
 
 C Initialize the Matrix arrays
@@ -39,8 +38,7 @@ C Initialize the Matrix arrays
 C Setup PAPI library and begin collecting data from the counters
       call PAPIf_flops( real_time, proc_time, flpins, mflops, retval )
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error starting PAPI_flops ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_flops', retval)
       end if
 
 C Matrix-Matrix Multiply
@@ -55,8 +53,7 @@ C Matrix-Matrix Multiply
 C Collect the data into the Variables passed in
       call PAPIf_flops( real_time, proc_time, flpins, mflops, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error stopping PAPI_flops ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_flops', retval)
       end if
       if (tests_quiet .EQ. 0) then
       print *, 'Real_time: ', real_time

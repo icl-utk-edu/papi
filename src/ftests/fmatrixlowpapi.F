@@ -41,39 +41,36 @@ C   Setup default values
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPI_library_init', retval)
       end if
 
 C     Create the eventset
       call PAPIf_create_eventset(EventSet,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'PAPIf_create_eventset failed')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_create_eventset', retval)
       end if
 
 C   Total cycles
       call PAPIf_add_event(EventSet,PAPI_TOT_CYC,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,
-     *'PAPIf_add_event PAPI_TOT_CYC failed')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_add_event PAPI_TOT_CYC', retval)
       end if
 
 C   Total floating point instructions
 #if defined (NO_FLOPS)
       call PAPIf_add_event(EventSet,PAPI_TOT_INS,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,
-     *'PAPIf_add_event PAPI_TOT_INS failed')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_add_event PAPI_TOT_INS', retval)
       end if
 #else
       call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,
-     *'PAPIf_add_event PAPI_FP_INS failed')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_add_event PAPI_FP_INS', retval)
       end if
 #endif
 
@@ -136,8 +133,7 @@ C  Grab the beginning time
 C  Start the event counters
       call PAPIf_start( EventSet, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error starting counter')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
 C  Compute the matrix-matrix multiplication
@@ -152,8 +148,7 @@ C  Compute the matrix-matrix multiplication
 C  Stop the counters and put the results in the array values 
       call PAPIf_stop(EventSet,values,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error stopping counter')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_get_real_usec( stoptime )

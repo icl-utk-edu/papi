@@ -45,14 +45,13 @@ C 2 counters.
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
       call PAPIf_create_eventset( EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
       call PAPIf_query_event(PAPI_L2_TCM, retval)
@@ -67,8 +66,6 @@ C 2 counters.
               print *, 'Can not add PAPI_L2_TCM: '//
      $             errorstring(1:len_trim(errorstring))
            endif
-        else if (tests_quiet .EQ. 0) then
-           print *,'Added PAPI_L2_TCM'
         end if
       end if
 
@@ -86,8 +83,6 @@ C 2 counters.
                print *, 'Can not add PAPI_TOT_CYC: '//
      $              errorstring(1:len_trim(errorstring))
             end if 
-         else if (tests_quiet .EQ. 0) then
-            print *,'Added PAPI_TOT_CYC'
          end if
       end if
  
@@ -104,18 +99,13 @@ C 2 counters.
                print *, 'Can not add PAPI_FP_INS: '//
      $              errorstring(1:len_trim(errorstring))
             end if
-         else
-            if (tests_quiet .EQ. 0) then
-               print *,'Added PAPI_FP_INS'
-            end if
          end if
       end if
 
       if (J .GT. 0) then
          call PAPIf_start(EventSet, retval )
          if ( retval .NE. PAPI_OK ) then
-            call ftests_perror(__LINE__,'error starting counter')
-            call ftests_fail(__FILE__,retval)
+            call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
          end if
       end if
 
@@ -126,8 +116,7 @@ C 2 counters.
       if (J .GT. 0) then
          call PAPIf_stop( EventSet, gl, retval)
          if ( retval .NE. PAPI_OK ) then
-            call ftests_perror(__LINE__,'error stopping counter')
-            call ftests_fail(__FILE__,retval)
+            call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
          end if
       end if
       

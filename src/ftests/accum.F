@@ -19,20 +19,18 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', retval)
       end if
       
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
       number=2
@@ -45,43 +43,37 @@
       events(2) = PAPI_TOT_CYC
       call PAPIf_add_events( es1, events, number, retval )
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in adding EventSets')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_events', retval)
       end if
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_accum')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_accum', retval)
       end if
 
       values(1)=values(7)
       values(2)=values(8)
       call PAPIf_stop(es1, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_accum')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_accum', retval)
       end if
 
       values(5)=values(7)
@@ -91,22 +83,19 @@
 
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_accum')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_accum', retval)
       end if
 
       call do_flops(NUM_FLOPS)      
 
       call PAPIf_stop(es1, values(9), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_rem_events( es1, events, number, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_rem_events')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_rem_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -127,7 +116,8 @@
       print *, "------------------------------------------",
      *"------------------------"
  100  format(a15, ":", i12, i12, i12, i12, i12)
-      print *, "\nVerification:"
+      print *
+      print *, "Verification:"
       print *, "Column 2 approximately equals to 0;"
       print *, "Column 3 approximately equals 2 * Column 1;"
       print *, "Column 4 approximately equals 3 * Column 1;"

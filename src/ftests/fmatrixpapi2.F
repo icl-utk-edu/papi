@@ -89,8 +89,8 @@ C  Set up the counters
       num_events = 2
       call PAPIf_start_counters( event, num_events, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error starting counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_start_counters', retval)
       end if
 
 C  We wish to count the events for this call
@@ -99,8 +99,8 @@ C  We wish to count the events for this call
 C  Read and clear the counter values
       call PAPIf_read_counters(values, num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error reading counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_read_counters', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -123,8 +123,8 @@ C  We don't wish to count the events for this call
 C  Clear the counter values
       call PAPIf_read_counters(dummies, num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error reading counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_read_counters', retval)
       end if
 
 C  We wish to count the events for this call
@@ -133,15 +133,15 @@ C  We wish to count the events for this call
 C  Read the counter values
       call PAPIf_accum_counters(values, num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error accumulating counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_accum_counters', retval)
       end if
 
 C  Stop the counters and put the results in the array values 
       call PAPIf_stop_counters(dummies,num_events,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Error stopping counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_stop_counters', retval)
       end if
 
       if (tests_quiet .EQ. 0) then

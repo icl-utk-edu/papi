@@ -7,8 +7,6 @@
       INTEGER*8 values(10)
       INTEGER*8 max, min
       INTEGER EventSet
-      INTEGER errorcode    
-      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
 
@@ -26,99 +24,84 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
-      call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
-        call ftests_fail(__FILE__,retval)
+      if (tests_quiet .EQ. 0) then
+         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
+         if ( retval.NE.PAPI_OK) then
+            call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', 
+     *retval)
+         end if
       end if
       
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
 #if defined(NO_FLOPS)
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Cannot add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', 
+     *retval)
       end if
 #else
       call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_FP_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', 
+     *retval)
       end if
 #endif
  
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_CYC: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', 
+     *retval)
       end if
       
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_read')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_read', retval)
       end if
 
       call PAPIf_reset(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_reset')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_reset', retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_read')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_read', retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(5), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_read')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_read', retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_stop(EventSet, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_read(EventSet, values(9), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_read')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_read', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -129,8 +112,7 @@
 
       call PAPIf_get_domain(EventSet, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_get_domain')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_get_domain', retval)
       end if
 
       call stringify_domain(domain, domainstr)
@@ -142,8 +124,8 @@
       call PAPIf_get_granularity(eventset, granularity, PAPI_GET_DEFGRN, 
      *retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_get_granularity')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_get_granularity', 
+     *retval)
       end if
 
       call stringify_granularity(granularity, grnstr)
@@ -185,8 +167,11 @@
      *(values(5).gt.(max*2)) .OR. (values(5).lt.(min*2)) .OR.
      *(values(7).gt.(max*3)) .OR. (values(7).lt.(min*3)) .OR.
      *(values(7).NE.values(9))) then
-        call ftests_perror(__LINE__,'Verification Failed')
-        call ftests_fail(__FILE__,1)
+#if defined(NO_FLOPS)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_TOT_INS', 1)
+#else
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_FP_INS', 1)
+#endif
       end if
 
       min = values(4)*0.9
@@ -195,8 +180,7 @@
      *(values(6).gt.(max*2)) .OR. (values(6).lt.(min*2)) .OR.
      *(values(8).gt.(max*3)) .OR. (values(8).lt.(min*3)) .OR.
      *(values(8).NE.values(10))) then
-        call ftests_perror(__LINE__,'Verification Failed')
-        call ftests_fail(__FILE__,1)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_TOT_CYC', 1)
       end if
 
       call ftests_pass(__FILE__)

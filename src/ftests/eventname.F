@@ -19,14 +19,13 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
       call PAPIf_event_name_to_code( 'PAPI_FP_INS',preset,retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'Event name to code')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_event_name_to_code', 
+     *retval)
       end if
 
       if (tests_quiet .EQ. 0) then

@@ -12,8 +12,7 @@
       integer*2 profbuf4(BUFSIZE), profbuf5(BUFSIZE)
       integer*8 length, start, end
       integer i
-      integer retval, errorcode
-      character*(PAPI_MAX_STR_LEN) errorstring
+      integer retval
 
       Integer len_trim
       External len_trim
@@ -34,14 +33,12 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', retval)
       end if
       
       call papif_get_exe_info(fullname, name, text_start, text_end,
@@ -66,51 +63,37 @@ C      print *, "length=", length
 
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
 #if defined(NO_FLOPS)
       call PAPIf_add_event( es, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 #else
       call PAPIf_add_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_FP_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 #endif
       
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_CYC: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_both(NUM)
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -147,22 +130,19 @@ C      print *, "length=", length
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_both(NUM)
 
       call PAPIf_stop(es, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -183,8 +163,7 @@ C      print *, "length=", length
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -198,22 +177,19 @@ C      print *, "length=", length
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_both(NUM)
 
       call PAPIf_stop(es, values(5), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -234,8 +210,7 @@ C      print *, "length=", length
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -249,22 +224,19 @@ C      print *, "length=", length
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_both(NUM)
 
       call PAPIf_stop(es, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -285,8 +257,7 @@ C      print *, "length=", length
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -301,21 +272,18 @@ C      print *, "length=", length
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_both(NUM)
       call PAPIf_stop(es, values(9), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -335,8 +303,7 @@ C      print *, "length=", length
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -353,21 +320,18 @@ C      print *, "length=", length
      *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_both(NUM)
       call PAPIf_stop(es, values(11), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -389,8 +353,7 @@ C      print *, "length=", length
      *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
 #endif
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_profil')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_profil', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -415,21 +378,18 @@ C      print *, "length=", length
 #if defined(NO_FLOPS)
       call PAPIf_rem_event( es, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_rem_event', retval)
       end if
 #else
       call PAPIf_rem_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_rem_event', retval)
       end if
 #endif
 
       call PAPIf_rem_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_rem_event', retval)
       end if
 
       call ftests_pass(__FILE__)

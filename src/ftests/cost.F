@@ -7,8 +7,7 @@
       integer*8 values(10)
       integer*8 ototcyc, ntotcyc
       integer*4 i
-      integer retval, errorcode
-      character*(PAPI_MAX_STR_LEN) errorstring
+      integer retval
 
       Integer len_trim
       External len_trim
@@ -31,74 +30,54 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', retval)
       end if
       
       call PAPIf_query_event(PAPI_TOT_CYC, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_query_event')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_query_event', retval)
       end if
 
       call PAPIf_query_event(PAPI_TOT_INS, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_query_event')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_query_event', retval)
       end if
 
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_CYC: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
       call PAPIf_add_event( es, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
       call PAPIf_create_eventset(costes, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
       call PAPIf_add_event( costes, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_CYC: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
       call PAPIf_add_event( costes, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
-        print *, 'Can not add PAPI_TOT_INS: '//
-     *  errorstring(1:len_trim(errorstring))
-        end if
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -107,26 +86,22 @@
 
       call PAPIf_start(costes, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_reset(costes, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_get_real_cyc(ototcyc)
@@ -138,28 +113,27 @@
       
       call PAPIf_stop(costes, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_get_real_cyc(ntotcyc)
       ntotcyc=ntotcyc-ototcyc
 
       if (tests_quiet .EQ. 0) then
-      print *, ""
+      print *
       print *, "User level cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
       write (*, 100) values(1), "total cyc"
       write (*, 100) values(2), "total ins"
       write (*, 200) values(1)/50000.0, "cyc/call pair"
       write (*, 200) values(2)/50000.0, "ins/call pair"
-      print *, ""
+      print *
       print *, "Total cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
       write (*, 100) ntotcyc, "total cyc"
       write (*, 200) ntotcyc/50001.0, "cyc/call pair"
-      print *, ""
-      print *, ""
+      print *
+      print *
       
 C     Start the read val
       
@@ -168,20 +142,17 @@ C     Start the read val
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call PAPIf_reset(costes, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_reset', retval)
       end if
 
       call PAPIf_start(costes, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call PAPIf_get_real_cyc(ototcyc)
@@ -192,29 +163,27 @@ C     Start the read val
       
       call PAPIf_stop(costes, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       call PAPIf_get_real_cyc(ntotcyc)
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       ntotcyc=ntotcyc-ototcyc
 
       if (tests_quiet .EQ. 0) then
-      print *, ""
+      print *
       print *, "User level cost for PAPI_read(2 counters) over",
      *" 50000 iterations:"
       write (*, 100) values(1), "total cyc"
       write (*, 100) values(2), "total ins"
       write (*, 200) values(1)/50000.0, "cyc/call"
       write (*, 200) values(2)/50000.0, "ins/call"
-      print *, ""
+      print *
       print *, "Total cost for PAPI_read(2 counters) over ",
      *"50000 iterations:"
       write (*, 100) ntotcyc, "total cyc"

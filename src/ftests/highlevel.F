@@ -33,24 +33,24 @@
 
       call PAPIf_start_counters(events, eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__, 'error in PAPIf_start_counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start_counters', 
+     *retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_read_counters(values(1), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__, 'error in PAPIf_read_counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_read_counters', 
+     *retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_stop_counters(values(3), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__, 'error in PAPIf_stop_counters')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop_counters', 
+     *retval)
       end if
       
       if (tests_quiet .EQ. 0) then

@@ -33,20 +33,19 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPI_library_init', retval)
       end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', retval)
       end if
       
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in creating EventSet')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+     *retval)
       end if
 
       number=2
@@ -60,15 +59,15 @@
 
       call PAPIf_add_events( es1, events, number, retval )
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in adding EventSets')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_add_event', retval)
       end if
 
       eventtotal=5
       call PAPIf_list_events(es1, eventlist, eventtotal, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in listing EventSets')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_list_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -81,8 +80,8 @@
       do i = 1, eventtotal
          call PAPIf_event_code_to_name (eventlist(i), name, retval)
          if ( retval.NE.PAPI_OK) then
-            call ftests_perror(__LINE__,'Error in listing EventSets')
-            call ftests_fail(__FILE__,retval)
+            call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_event_code_to_name', retval)
          end if
          if (tests_quiet .EQ. 0) then
          write (*, 100) name, eventlist(i)
@@ -96,8 +95,7 @@
       
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_state')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_state', retval)
       end if
 
       if (status .NE. PAPI_STOPPED) then
@@ -110,8 +108,7 @@
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
       if (tests_quiet .EQ. 0) then
       print *, "PAPI_start"
@@ -119,8 +116,7 @@
 
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_state')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_state', retval)
       end if
 
       if (status .NE. PAPI_RUNNING) then
@@ -135,8 +131,7 @@
 
       call PAPIf_stop(es1, values, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_stop')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -145,8 +140,7 @@
 
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftests_perror(__LINE__,'Error in PAPIf_state')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_state', retval)
       end if
 
       if (status .NE. PAPI_STOPPED) then
@@ -159,8 +153,8 @@
 
       call PAPIf_rem_events( es1, events, number, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_rem_events')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 
+     *'PAPIf_rem_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
