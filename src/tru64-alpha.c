@@ -150,7 +150,8 @@ static int get_system_info(void)
    _papi_hwi_system_info.exe_info.address_info.data_start = 
                                             (caddr_t) & _fdata;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
-
+   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _fbss;
+   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _ebss;
 
    if (family == 0) {
       strcat(_papi_hwi_system_info.hw_info.model_string, "21064");
@@ -801,7 +802,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 
 int _papi_hwd_update_shlib_info(void)
 {
-   return PAPI_OK;
+   return (PAPI_ESBSTR);
 }
 
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)

@@ -102,4 +102,4 @@ typedef struct native_info_t {
    int encode[MAX_COUNTERS];
 } native_info_t;
 
-extern unsigned long _etext, _ftext, _edata, _fdata;
+extern unsigned long _etext, _ftext, _edata, _fdata, _fbss, _ebss;

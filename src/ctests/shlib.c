@@ -68,8 +68,8 @@ int main(int argc, char **argv)
 #ifndef NO_DLFCN
    {
      char *libname = 
-#ifdef _AIX
-       "libm.a";
+#if defined(_AIX) || defined(__ALPHA) && defined(__osf__) 
+     "libm.a";
 #else
      "libm.so";
 #endif     

@@ -453,7 +453,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 
 int _papi_hwd_update_shlib_info(void)
 {
-   return PAPI_OK;
+   return (PAPI_ESBSTR);
 }
 
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
