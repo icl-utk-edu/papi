@@ -282,7 +282,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
       papi_return(PAPI_EINVAL);
 
    if (EventCode & PAPI_PRESET_MASK) {
-      if (EventCode >= PAPI_MAX_PRESET_EVENTS)
+      if (i >= PAPI_MAX_PRESET_EVENTS)
          papi_return(PAPI_ENOTPRESET);
 
      if (_papi_hwi_presets.info[i].symbol[0] != 0) { /* if the event is in the preset table */
