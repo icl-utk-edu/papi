@@ -137,6 +137,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_MAX_ERROR   10   /*Highest number of defined error messages.*/ 	
 
+#define PAPI_GET_CLOCKRATE  70 /* clock rate MHz, this platform*/  
+
+#define PAPI_GET_MAX_HWCTRS 71 /* max num hw counters, this platform */
+
 /* 
 The Low Level API
 
@@ -189,6 +193,8 @@ typedef union {
   int num_substrate_counters;
   int debug; } PAPI_option_t;
   
+int PAPI_init(void);
+
 int PAPI_set_granularity(int granularity);
 int PAPI_set_domain(int domain);
 int PAPI_perror(int code, char *destination, int length);
@@ -203,6 +209,7 @@ int PAPI_stop(int EventSet, unsigned long long *values);
 int PAPI_read(int EventSet, unsigned long long *values);
 int PAPI_accum(int EventSet, unsigned long long *values);
 int PAPI_write(int EventSet, unsigned long long *values);
+int PAPI_state(int EventSetIndex, int *status);
 int PAPI_reset(int EventSet);
 int PAPI_cleanup(int *EventSet);
 void PAPI_shutdown(void);
