@@ -372,10 +372,8 @@ void test_fail(char *file, int line, char *call, int retval)
 	if ( retval != 0 )
 	   printf("%-40s FAILED\nLine # %d\n", file, line);
 	else{
-           if ( !TESTS_QUIET )
-	       printf("%-40s SKIPPED\nLine # %d\n",file,line );
-	   else
 	       printf("%-40s SKIPPED\n",file );
+           if ( !TESTS_QUIET ) printf("Line # %d\n",line );
         }
 	if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
@@ -401,8 +399,9 @@ void test_skip(char *file, int line, char *call, int retval)
 	char buf[128];
 
 	memset( buf, '\0', sizeof(buf) );
-	printf("%-40s SKIPPED\nLine # %d\n", file, line);
-        if ( !TESTS_QUIET ) {
+	printf("%-40s SKIPPED\n",file );
+    if ( !TESTS_QUIET ) {
+      printf("Line # %d\n",line );
 	  if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
 		perror(buf);
