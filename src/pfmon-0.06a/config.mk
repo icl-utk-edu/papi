@@ -28,7 +28,7 @@
 CFLAGS=-O2 -Wall -g
 LDFLAGS=
 MKDEP=makedepend
-CC=gcc -static
+CC=gcc
 
 #
 # you shouldn't have to touch anything beyond this point
