@@ -218,7 +218,7 @@ EventSetInfo *_papi_hwi_lookup_in_master_list(void)
     {
       unsigned long int id_to_find = (*thread_id_fn)();
       EventSetInfoList *tmp;
-
+      DBG((stderr,"LOOKING FOR THREAD %u\n",id_to_find));
       _papi_hwd_lock();
       tmp = head;
       while (tmp != NULL)
@@ -228,6 +228,7 @@ EventSetInfo *_papi_hwi_lookup_in_master_list(void)
 #endif
 	  if (tmp->master->tid == id_to_find)
 	    {
+      	      DBG((stderr,"FOUND THREAD %u\n",id_to_find));
 	      _papi_hwd_unlock();
 	      return(tmp->master);
 	    }

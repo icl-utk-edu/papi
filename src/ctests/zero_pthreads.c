@@ -75,7 +75,10 @@ void *Thread(void *arg)
   retval = PAPI_start(EventSet1);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-  do_flops(*(int *)arg);
+  if (arg != NULL)
+    do_flops(*(int *)arg);
+  else
+    do_flops(1000000);
   
   retval = PAPI_stop(EventSet1, values[0]);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -99,7 +102,8 @@ void *Thread(void *arg)
 
   free_test_space(values, num_tests);
 
-  pthread_exit(NULL);
+  if (arg != NULL)
+    pthread_exit(NULL);
   return(NULL);
 }
 
@@ -122,6 +126,8 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
+  /* Test for bad interaction by using PAPI first, then threads...*/
+  Thread(NULL);
 
   retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0);
   if ( retval != PAPI_OK ) {

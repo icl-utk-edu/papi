@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 #pragma omp parallel private(maxthr,retval)
 {
   maxthr = omp_get_num_threads();
-  Thread(1000000*omp_get_thread_num());
+  Thread(1000000*(omp_get_thread_num()+1));
 }
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;

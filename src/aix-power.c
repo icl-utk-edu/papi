@@ -1935,15 +1935,23 @@ dump_state(current_state);
 
   /* Set up the new merged control structure */
   
-  retval = pm_set_program_mythread(&current_state->counter_cmd);
-  if (retval > 0) 
-    return(retval);
-
 #if 0
-  dump_state(this_state);
-  dump_state(current_state);
   dump_cmd(&current_state->counter_cmd);
 #endif
+  retval = pm_set_program_mythread(&current_state->counter_cmd);
+  if (retval != 0)
+    {
+      extern unsigned long int (*thread_id_fn)(void);
+      if ((retval == 13) && (thread_id_fn))
+	{
+	  pm_delete_program_mythread();
+	  retval = pm_set_program_mythread(&current_state->counter_cmd);
+	  if (retval != 0)
+	    return(retval);
+	}
+      else
+	return(retval);
+    }
      
   /* (Re)start the counters */
   
@@ -2028,8 +2036,10 @@ dump_state(current_state);
 
       retval = pm_set_program_mythread(&current_state->counter_cmd);
       if (retval > 0) 
-        return(retval);
-
+        {
+	  pm_error("pm_set_program_mythread",retval);
+	  return(retval);
+	}
    }
 
   /* Set up the new merged control structure */
@@ -2044,8 +2054,10 @@ dump_state(current_state);
   
   retval = pm_start_mythread();
   if (retval > 0) 
-    return(retval);
-
+    {
+      pm_error("pm_start_mythread()",retval);
+      return(retval);
+    }
   return(PAPI_OK);
 } 
 

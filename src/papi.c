@@ -244,30 +244,41 @@ const char *papi_errStr[PAPI_NUM_ERRORS] = {
 
 static int default_error_handler(int errorCode)
 {
+  char out_desc[PAPI_MAX_STR_LEN];
+  char out_nam[PAPI_MAX_STR_LEN];
+
   if (errorCode == PAPI_OK)
     return(errorCode);
 
   if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
-    abort();
+    {
+      strcpy(out_nam,"PAPI_ESBSTR");
+      memset(out_desc,0x0,sizeof(out_desc));
+      _papi_hwd_error(errorCode,out_desc);
+    }
+  else
+    {
+      strcpy(out_nam,papi_errNam[-errorCode]);
+      strcpy(out_desc,papi_errStr[-errorCode]);
+    }
 
   switch (PAPI_ERR_LEVEL)
     {
     case PAPI_VERB_ECONT:
-      /*fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
-      */if (errorCode == PAPI_ESYS)
+      fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,out_nam,out_desc);
+      if (errorCode == PAPI_ESYS)
 	perror("");
       return errorCode;
       break;
     case PAPI_VERB_ESTOP:
-      fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
+      fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,out_nam,out_desc);
       if (errorCode == PAPI_ESYS)
 	perror("");
       exit(-errorCode);
       break;
     case PAPI_QUIET:
-      return errorCode;
     default:
-      abort();
+      return errorCode;
     }
   return(PAPI_EBUG);
 }
@@ -388,6 +399,7 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
   if ((thread_id_fn) && (changed_id_fn == 0))
     { 
       default_master_eventset->tid = (*thread_id_fn)();
+      DBG((stderr,"Default Master THREAD %d\n",default_master_eventset->tid));
       _papi_hwi_insert_in_master_list(default_master_eventset); 
     }
   
@@ -423,6 +435,8 @@ static int initialize_master_eventset(EventSetInfo **master)
     (*master)->tid = (*thread_id_fn)();
   else
     (*master)->tid = getpid();
+
+  DBG((stderr,"New Master THREAD %d\n",(*master)->tid));
 	
   papi_return(PAPI_OK);
 }
@@ -2051,8 +2065,6 @@ static void dummy_handler(int EventSet, int EventCode, int EventIndex,
                           long_long *values, int *threshold, void *context)
 {
   /* This function is not used and shouldn't be called. */
-
-  abort();
 }
 
 int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode, int threshold, int flags)
