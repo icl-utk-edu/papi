@@ -31,7 +31,7 @@
 	#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
 	#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
-	#define OVER_FMT	"handler(%d, %p) Overflow at %p!\n"
+	#define OVER_FMT	"handler(%d, %p) Overflow at %p! \n"
 	#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
@@ -40,11 +40,23 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void handler(int EventSet, void *address, void *context)
 {
-  if ( !TESTS_QUIET )
+  int i,event_indices[8];
+
+  for(i=0;i<8;i++)
+    event_indices[i]=-1;
+
+  PAPI_get_overflow_ctrs(EventSet, context, event_indices);
+
+  if ( !TESTS_QUIET ) {
     fprintf(stderr,OVER_FMT,EventSet,
-	  context,PAPI_get_overflow_address(context));
-  else
-	PAPI_get_overflow_address(context);
+	  context,address);
+    i=0;
+    while( event_indices[i]!=-1 && i<8) { 
+      printf("event_index=%d ",event_indices[i]);
+      i++;
+    }
+    printf("\n");
+  }
   total++;
 }
 

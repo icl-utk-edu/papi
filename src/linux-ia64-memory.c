@@ -14,7 +14,6 @@
 #include SUBSTRATE
 #include <stdio.h>
 
-
 int get_memory_info( PAPI_hw_info_t * mem_info, int cpu_type ){
    int retval = 0;
    return retval;

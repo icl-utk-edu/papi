@@ -40,11 +40,21 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void handler(int EventSet, void *address, void *context)
 {
-  if ( !TESTS_QUIET )
+  int i, event_indices[8];
+
+  for(i=0;i<8;i++)
+    event_indices[i]=-1;
+  PAPI_get_overflow_ctrs(EventSet, context, event_indices);
+
+  if ( !TESTS_QUIET ) {
     fprintf(stderr,OVER_FMT,EventSet,
 	  context,PAPI_get_overflow_address(context));
-  else
-	PAPI_get_overflow_address(context);
+    i=0;
+    while(event_indices[i]!=-1 && i<8)
+      printf("event_index=%d ",event_indices[i++]);
+    printf("\n");   
+  }
+
   total++;
 }
 
@@ -52,9 +62,11 @@ int main(int argc, char **argv)
 {
   int EventSet;
   long_long (values[2])[2];
+/*
   long_long min, max;
+*/
   int num_flops, retval;
-  int PAPI_event, threshold;
+  int PAPI_event;
   char event_name[PAPI_MAX_STR_LEN];
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */

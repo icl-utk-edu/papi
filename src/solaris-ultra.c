@@ -255,6 +255,7 @@ static void dump_cmd(papi_cpc_event_t *t)
 
 static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
 {
+  int event_counter;
 #ifdef DEBUG
   if (papi_debug)
     psignal(signal, "dispatch_emt");
@@ -270,6 +271,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
     thread = _papi_hwi_lookup_in_thread_list();
     ESI = (EventSetInfo_t *)thread->event_set_overflowing;
 
+    event_counter=ESI->overflow.event_counter;
     sample = &(ESI->machdep.counter_cmd);
 
     /* GROSS! This is a hack to 'push' the correct values 
@@ -279,7 +281,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       
     /* Find which HW counter is overflowing */
       
-    if (ESI->EventInfoArray[ESI->overflow.EventIndex].pos[0] == 0)
+    if (ESI->EventInfoArray[ESI->overflow.EventIndex[0]].pos[0] == 0)
       t = 0;
     else
       t = 1;
@@ -305,7 +307,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
     if ( cpc_take_sample(&sample->cmd) == -1)
       return;
 
-    sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold;
+    sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold[0];
       
 #if DEBUG
     dump_cmd(sample);
@@ -816,15 +818,15 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	  return(PAPI_ESYS);
 
     /* check whether the event is derived event or not */
-    if (ESI->EventInfoArray[overflow_option->EventIndex].derived !=NOT_DERIVED)
+    if (ESI->EventInfoArray[overflow_option->EventIndex[0]].derived !=NOT_DERIVED)
       return(PAPI_ECNFLCT);
 
     arg->flags |= CPC_BIND_EMT_OVF;
-    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex].pos[0];
+    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex[0]].pos[0];
     if (hwcntr == 0)
-      arg->cmd.ce_pic[0] = UINT64_MAX - (uint64_t)overflow_option->threshold;
+      arg->cmd.ce_pic[0] = UINT64_MAX - (uint64_t)overflow_option->threshold[0];
     else if (hwcntr == 1)
-      arg->cmd.ce_pic[1] = UINT64_MAX - (uint64_t)overflow_option->threshold;
+      arg->cmd.ce_pic[1] = UINT64_MAX - (uint64_t)overflow_option->threshold[0];
   }
 
   return(PAPI_OK);

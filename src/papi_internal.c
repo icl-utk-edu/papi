@@ -556,6 +556,7 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 	j=0;
 	for(i=0;i<=total_events;i++)
     {
+      
       /* find the added event in EventInfoArray */
 	  while(head[j].event_code==PAPI_NULL) 
 	    j++;
@@ -579,6 +580,7 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 	  }
 	  else
       {
+
 	    nix = head[j].event_code & NATIVE_AND_MASK;
 	    for(n=0;n<ESI->NativeCount;n++)
         {
@@ -592,6 +594,28 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 	  }  /* end of if */
 	  j++;
     }  /* end of for loop */
+}
+
+/* this function must be called after remap_event_position */
+static void map_papi_event_index(EventSetInfo_t *ESI, int thisindex)
+{
+	EventInfo_t *head;
+	int i, preset_index, total_events;
+
+	head = ESI->EventInfoArray;
+	total_events=ESI->NumberOfEvents;
+
+	for(i=0;i<=total_events;i++)
+    {
+	  /* fill in the new information */
+	  if(head[i].event_code & PRESET_MASK)
+      {
+	    preset_index = head[i].event_code & PRESET_AND_MASK;
+        if (_papi_hwi_preset_map[preset_index].derived != NOT_DERIVED)
+           continue;
+	  }
+      _papi_hwi_event_index_map[head[i].pos[0]]=i;
+    }
 }
 
 
@@ -726,6 +750,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_map[preset_index].operation; 
 				if(remap)
 					remap_event_position(ESI, thisindex);
+                map_papi_event_index(ESI,thisindex);
 			}
 		}
 		else if(EventCode & NATIVE_MASK)
@@ -753,6 +778,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
 				if(remap)
 					remap_event_position(ESI, thisindex);
+                map_papi_event_index(ESI,thisindex);
 			}
 		}
 		else

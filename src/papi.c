@@ -1338,14 +1338,14 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 
   /* Set up the option structure for the low level */
 
-  opt.deadline = threshold;
-  opt.threshold = threshold;
-  opt.EventIndex = index;
-  opt.EventCode = EventCode;
+  opt.event_counter = ESI->overflow.event_counter;
+  opt.deadline[opt.event_counter-1] = threshold;
+  opt.threshold[opt.event_counter-1] = threshold;
+  opt.EventIndex[opt.event_counter-1] = index;
+  opt.EventCode[opt.event_counter-1] = EventCode;
   opt.flags = flags;
   opt.handler = handler;
   opt.count = 0;
-  opt.event_counter = ESI->overflow.event_counter;
 
   if (_papi_hwi_system_info.supports_hw_overflow)
   {
@@ -1662,3 +1662,22 @@ int PAPI_encode_native(char *str, int *code)
 {
   return(_papi_hwi_native_name_to_code(str, code));
 }
+
+int PAPI_get_overflow_ctrs(int EventSet, void *context, int *papi_event_indices)
+{
+  int i;
+  unsigned bits, papi_index, total = 0;
+  /* All CAPITALIZED functions are implemented as Macros! */
+
+  bits = GET_OVERFLOW_CTR_BITS(context); 
+  do {
+    i = ffs(bits)-1;
+    printf("index=%d i=%d\n", _papi_hwi_event_index_map[1],i);
+    bits ^= (1 << i);
+    papi_index = HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(i);
+    papi_event_indices[total] = papi_index;
+    total++;
+  } while (bits);
+  return(total);
+}
+

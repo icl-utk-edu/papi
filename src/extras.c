@@ -176,10 +176,11 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 
 void _papi_hwi_dispatch_overflow_signal(void *context)
 {
-  int retval;
-  u_long_long latest=0;
+  int retval, event_counter, i, overflow_flag;
+  u_long_long latest=0, temp[MAX_COUNTERS];
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
+  papi_hwd_context_t *ctx = (papi_hwd_context_t*)context;
 
 #ifdef OVERFLOW_DEBUG_TIMER
   if (_papi_hwi_thread_id_fn)
@@ -205,32 +206,46 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 	  abort();
       
     /* Get the latest counter value */
+   event_counter = ESI->overflow.event_counter;
       
   /* if you want to change this, please discuss with me .  -- Min */
+    overflow_flag = 0;
     if (_papi_hwi_system_info.supports_hw_overflow==0)
     {
       retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
       if (retval < PAPI_OK)
 	    return;
-      latest = ESI->sw_stop[ESI->overflow.EventIndex];
+      for(i=0; i<event_counter; i++) {
+        latest = ESI->sw_stop[ESI->overflow.EventIndex[i]];
+        if (latest >= ESI->overflow.deadline[i])
+        {
+          temp[i] = latest - ESI->overflow.threshold[i];
+          overflow_flag=1;
+      /* adjust the deadline */
+          ESI->overflow.deadline[i] = latest + ESI->overflow.threshold[i];
+        }
+      }
+    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline[i],ESI->overflow.threshold[i]));
     }
       
-      
-    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline,ESI->overflow.threshold));
-  
   /* Is it bigger than the deadline? */
   
-    if ((_papi_hwi_system_info.supports_hw_overflow) || 
-             (latest > ESI->overflow.deadline))
+    if ((_papi_hwi_system_info.supports_hw_overflow) || overflow_flag )
     {
       ESI->overflow.count++;
       if (ESI->state & PAPI_PROFILING)
+/*
 	    dispatch_profile(ESI, (caddr_t)context, 
-             latest - ESI->overflow.deadline, ESI->overflow.threshold); 
+             latest - ESI->overflow.deadline[event_counter-1], ESI->overflow.threshold[event_counter-1]); 
+*/
+      for(i=0; i<event_counter; i++) {
+        if (temp[i] > 0)
+	      dispatch_profile(ESI, (caddr_t)context, 
+             temp[i], ESI->overflow.threshold[i]); 
+      }
       else
 	    ESI->overflow.handler(ESI->EventSetIndex,  
-                context, context);
-      ESI->overflow.deadline = latest + ESI->overflow.threshold;
+                GET_OVERFLOW_ADDRESS(ctx), context);
     }
   }
 #ifdef ANY_THREAD_GETS_SIGNAL

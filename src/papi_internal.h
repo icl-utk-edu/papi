@@ -88,11 +88,11 @@ typedef struct _EventSetGranularityInfo {
   int granularity; } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-  long_long deadline;
+  long_long deadline[MAX_COUNTERS];
   int count;
-  int threshold;
-  int EventIndex;
-  int EventCode;
+  int threshold[MAX_COUNTERS];
+  int EventIndex[MAX_COUNTERS];
+  int EventCode[MAX_COUNTERS];
   int event_counter;
   int flags;
   int timer_ms;
@@ -397,5 +397,5 @@ typedef struct _papi_mdi {
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
-/*extern hwi_preset_t _papi_hwi_preset_map[];*/
+extern int _papi_hwi_event_index_map[MAX_COUNTERS];
 #endif /* PAPI_INTERNAL_H */

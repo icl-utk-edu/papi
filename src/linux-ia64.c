@@ -136,6 +136,8 @@ static itanium_preset_search_t ia_preset_search_map[] = {
 extern papi_mdi_t _papi_hwi_system_info; 
 extern hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS];
 
+int _papi_hwi_event_index_map[MAX_COUNTERS];
+
 extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
                  long_long over, long_long threshold);
 
@@ -1061,10 +1063,15 @@ static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
 }
 
 
-/* This function only used when hardware interrupts ARE working */
+/* This function only used when hardware overflows ARE working */
 
 static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext *context)
 {
+  papi_hwd_context_t ctx;
+
+  ctx.si = info;
+  ctx.ucontext = context;
+
   pfm_stop();
   DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, 
       info->sy_pfm_ovfl[0]));
@@ -1074,8 +1081,10 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
                   info->sy_code);
     return;
   } 
-
+/*
   _papi_hwi_dispatch_overflow_signal((void *)context); 
+*/
+  _papi_hwi_dispatch_overflow_signal((void *)&ctx); 
   if ( perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1 )
   {
     fprintf(stderr,"PID %d: perfmonctl error PFM_RESTART %d\n",
@@ -1237,25 +1246,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = &ESI->machdep;
   int j, index, retval = PAPI_OK, *pos, event_index;
+  int event_counter;
 
-  /* when hardware supports overflow, it is only meaningful
-     for non derived event
-  */
-    if ( _papi_hwi_system_info.supports_hw_overflow )
-    {
-      if ( overflow_option->EventCode & PRESET_MASK) 
-      {
-        index = overflow_option->EventCode & PRESET_AND_MASK;
-        if  ( _papi_hwi_preset_map[index].derived != NOT_DERIVED) 
-          return (PAPI_EINVAL);
-      }
-    }
-
-  if (overflow_option->threshold == 0)
+  event_counter=overflow_option->event_counter;
+  if (overflow_option->threshold[event_counter-1] == 0)
   {
   /* Remove the overflow notifier on the proper event. 
   */
-     event_index= overflow_option->EventIndex;
+     event_index= overflow_option->EventIndex[event_counter-1];
      set_notify(ESI, event_index, 0);
 
      /* Remove the signal handler */
@@ -1288,7 +1286,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
   /*Set the overflow notifier on the proper event. Remember that selector
   */
-    event_index= overflow_option->EventIndex;
+    event_index= overflow_option->EventIndex[event_counter-1];
     set_notify(ESI, event_index, PFM_REGFL_OVFL_NOTIFY);
 
 /* set initial value in pd array */
@@ -1299,11 +1297,11 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       {
         j = pos[index];
         DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           j+PMU_FIRST_COUNTER,overflow_option->threshold));
+           j+PMU_FIRST_COUNTER,overflow_option->threshold[event_counter-1]));
         this_state->pd[j].reg_value = (~0UL) -
-                              (unsigned long)overflow_option->threshold+1;
+                              (unsigned long)overflow_option->threshold[event_counter-1]+1;
         this_state->pd[j].reg_long_reset = (~0UL) -
-                               (unsigned long)overflow_option->threshold+1;
+                               (unsigned long)overflow_option->threshold[event_counter-1]+1;
         index++;
       }
 
@@ -1323,6 +1321,7 @@ void *_papi_hwd_get_overflow_address(void *context)
 
   return(location);
 }
+
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 #define MAX_PAPI_LOCK 4
