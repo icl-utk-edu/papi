@@ -176,7 +176,9 @@ void main()
   
   initialize_native_table();
   total=setup_native_table();
+#ifdef _POWER4
   maxgroups=pmgroups.maxgroups;
+#endif
 
   /* write into native.h */
   fprintf(fp[0], "#ifndef _PAPI_NATIVE  /* _PAPI_NATIVE */\n");
@@ -237,7 +239,9 @@ void main()
   fprintf(fp[0], "} native_event_entry_t;\n\n"); 
 
   fprintf(fp[0], "extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];\n\n"); 
+#ifdef _POWER4
   fprintf(fp[0], "extern hwd_groups_t group_map[MAX_GROUPS];\n\n"); 
+#endif
 
   for(i=0;i<total;i++){
   	fprintf(fp[0], "#define PNE_%-40s 0x%x\n", native_table[i].name, NATIVE_MASK+i);

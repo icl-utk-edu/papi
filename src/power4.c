@@ -77,12 +77,14 @@ static int do_counter_allocation(PWR4_reg_alloc_t *event_list, int size)
 	}
 	
     for(i=0;i<GROUP_INTS;i++){
-		if(map[i])
+		if(map[i]){
 			group=ffs(map[i])-1+i*32;
+			break;
+		}
 	}
 
 	if(group<0)
-		return 0;  /* allocation fail */
+		return group;  /* allocation fail */
 	else{
 		for(i=0;i<size;i++){
 			for(j=0;j<MAX_COUNTERS;j++){
@@ -90,7 +92,7 @@ static int do_counter_allocation(PWR4_reg_alloc_t *event_list, int size)
 					event_list[i].ra_position = j;
 			}
 		}
-		return 1;
+		return group;
 	}
 }	
 	
@@ -105,7 +107,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   unsigned char selector;
   int i, j, natNum;
   PWR4_reg_alloc_t event_list[MAX_COUNTERS];
-  int position;
+  int position, group;
 
   
   /* not yet successfully mapped, but have enough slots for events */
@@ -127,9 +129,10 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     /*event_list[i].ra_mod = -1;*/
   }
 
-  if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
+  if((group=do_counter_allocation(event_list, natNum))>=0){ /* successfully mapped */
       /* copy counter allocations info back into NativeInfoArray */
-      for(i=0;i<natNum;i++)
+      this_state->group_id=group;
+	  for(i=0;i<natNum;i++)
 	  ESI->NativeInfoArray[i].ni_position = event_list[i].ra_position;
       /* update the control structure based on the NativeInfoArray */
       /*_papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);*/
@@ -151,6 +154,8 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
     ptr->counter_cmd.events[i] = COUNT_NOTHING;
   }
+    ptr->counter_cmd.mode.b.is_group = 1;
+
   set_domain(ptr,_papi_hwi_system_info.default_domain);
   set_granularity(ptr,_papi_hwi_system_info.default_granularity);
 }
@@ -158,22 +163,11 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 
 /* This function updates the control structure with whatever resources are allocated
     for all the native events in the native info structure array. */
-void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
 {
-    int i;
-
-    /* empty all the counters */
-    for (i = 0; i <MAX_COUNTERS; i++) {
-	this_state->counter_cmd.events[i] = COUNT_NOTHING;
-    }
     
-    /* refill the counters we're using */
-    for(i=0;i<count;i++){
-	/* CAUTION: Since this is in the hardware layer, it's ok 
-	   to access the native table directly, but in general this is a bad idea */
-	this_state->counter_cmd.events[native[i].ni_position] = 
-	    native_table[native[i].ni_index].resources.counter_cmd[native[i].ni_position];
-    }
+	this_state->counter_cmd.events[0]=this_state->group_id;
+	return PAPI_OK;
 }
 
 int _papi_hwd_update_shlib_info(void)

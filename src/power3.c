@@ -337,7 +337,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 
 /* This function updates the control structure with whatever resources are allocated
     for all the native events in the native info structure array. */
-void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
 {
     int i;
 
@@ -353,6 +353,8 @@ void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_
 	this_state->counter_cmd.events[native[i].ni_position] = 
 	    native_table[native[i].ni_index].resources.counter_cmd[native[i].ni_position];
     }
+
+	return PAPI_OK;
 }
 
 int _papi_hwd_update_shlib_info(void)
