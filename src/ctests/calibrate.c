@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
   int i,j,k,t;
 
 #ifdef NO_FLOPS
-  test_fail(TEST_NAME, "Error: flops not supported on this architecture.", PAPI_ENOEVNT);
+  test_fail(__FILE__, "main - flops not supported on this architecture", PAPI_ENOEVNT);
 #endif
 
   t = 0;
