@@ -91,8 +91,6 @@ typedef int hwd_reg_alloc_t;
 #endif
 
 typedef struct hwd_control_state {
-   /* Arg to perfmonctl */
-   pid_t pid;
    /* Which counters to use? Bits encode counters to use, may be duplicates */
    hwd_register_map_t bits;
 

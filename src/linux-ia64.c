@@ -491,7 +491,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
       /* Writing doesn't matter, we're just zeroing the counter. */
       writeem[i].reg_num = MAX_COUNTERS + i;
    }
-   if (pfmw_perfmonctl(machdep->pid, ctx->fd, PFM_WRITE_PMDS, writeem, MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, writeem, MAX_COUNTERS) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d", errno);
       return PAPI_ESYS;
    }
@@ -514,7 +514,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
       readem[i].reg_num = MAX_COUNTERS + i;
    }
 
-   if (pfmw_perfmonctl(machdep->pid, ctx->fd, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) {
       SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
       return PAPI_ESYS;
    }
@@ -549,7 +549,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
    pfmw_stop(ctx);
 
 /* write PMCS */
-   if (pfmw_perfmonctl(current_state->pid, ctx->fd, PFM_WRITE_PMCS,
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMCS,
         PFMW_PEVT_PFPPC(pevt), 
         PFMW_PEVT_PFPPC_COUNT(pevt)) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMCS) errno %d", errno);
@@ -562,7 +562,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
    for (i = 0; i < MAX_COUNTERS; i++)
       current_state->pd[i].reg_num = MAX_COUNTERS + i;
 
-   if (pfmw_perfmonctl(current_state->pid, ctx->fd, 
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, 
            PFM_WRITE_PMDS, current_state->pd, MAX_COUNTERS) == -1) {
       PAPIERROR("perfmonctl(WRITE_PMDS) errno %d", errno);
       return (PAPI_ESYS);
@@ -958,7 +958,7 @@ static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
    ia64_process_profile_entry(&ctx);
-   if (pfmw_perfmonctl(getpid(), 0, PFM_RESTART, NULL, 0) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, 0, PFM_RESTART, NULL, 0) == -1) {
      PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
    }
 }
@@ -1233,7 +1233,6 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
-   ptr->pid = getpid();
    set_domain(ptr, _papi_hwi_system_info.default_domain);
 /* set library parameter pointer */
 #ifdef PFM20

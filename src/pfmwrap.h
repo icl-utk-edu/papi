@@ -71,8 +71,8 @@ inline pid_t mygettid(void)
       else return PAPI_OK;
    }
    /* the parameter fd is useless in libpfm2.0 */
-   inline int pfmw_perfmonctl(pid_t pid, int fd, int cmd, void *arg, int narg) {
-      return(perfmonctl(pid, cmd, arg, narg));
+   inline int pfmw_perfmonctl(pid_t tid, int fd, int cmd, void *arg, int narg) {
+      return(perfmonctl(tid, cmd, arg, narg));
    }
 
    inline int pfmw_destroy_context(hwd_context_t *thr_ctx) {
@@ -250,7 +250,7 @@ hweight64 (unsigned long x)
       pfm_self_stop(ctx->fd);
    }
 
-   inline int pfmw_perfmonctl(pid_t pid, int fd , int cmd, void *arg, int narg) {
+   inline int pfmw_perfmonctl(pid_t tid, int fd , int cmd, void *arg, int narg) {
       return(perfmonctl(fd, cmd, arg, narg));
    }
 
