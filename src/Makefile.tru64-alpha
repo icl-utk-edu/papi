@@ -1,17 +1,17 @@
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial pthreads omp smp multiplex
+TARGETS	= serial pthreads omp multiplex
 
-CFLAGS 	= -g -DDEBUG -Zp8 -DNO_FLOPS 
-FFLAGS	= -g
+CFLAGS 	= -DDEBUG -Zp8 -DNO_FLOPS 
+FFLAGS	= 
 OPTFLAGS= 
 FOPTFLAGS= $(OPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
 MISCLIBS= 
 LDFLAGS = -lrt
-CC_SHR	= cc -shared -all -rpath $(PWD) -soname libpapi.so -lrt
+CC_SHR	= cc -shared -all -rpath $(PWD) -lrt
 CC_R	= cc
 CC	= cc
 CPP	= cc -E
