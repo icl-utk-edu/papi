@@ -39,14 +39,14 @@
 
 #ifdef _WIN32
 	#define TAB1	"%s %I64d\n"
-	#define TAB2	"%s\t%I64d\t%I64d\n"
+	#define TAB2	"%s%12I64d%12I64d\n"
 	#define TAB3	"%s%12I64d%12I64d%12I64d\n"
 	#define TAB4	"%s\t%I64d\t%I64d\t%I64d\t%I64d\n"
 	#define TAB5	"%s%12I64d%12I64d%12I64d%12I64d%12I64d\n"
 	#define TWO12	"%12I64d %12I64d  %s"
 #else
 	#define TAB1	"%s %lld\n"
-	#define TAB2	"%s\t%lld\t%lld\n"
+	#define TAB2	"%s%12lld%12lld\n"
 	#define TAB3	"%s%12lld%12lld%12lld\n"
 	#define TAB4	"%s\t%lld\t%lld\t%lld\t%lld\n"
 	#define TAB5	"%s%12lld%12lld%12lld%12lld%12lld\n"

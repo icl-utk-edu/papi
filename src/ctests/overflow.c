@@ -30,18 +30,28 @@
 #define THRESHOLD  1000000
 #define EVENT_NAME_1 PAPI_TOT_CYC
 #define EVENT_STRING_1 "PAPI_TOT_CYC"
-#define EVENT_NAME_2 PAPI_FP_INS
-#define EVENT_STRING_2 "PAPI_FP_INS"
+
+#ifdef NO_FLOPS
+  #define EVENT_NAME_2 PAPI_TOT_INS
+  #define EVENT_STRING_2 "PAPI_TOT_INS"
+#else
+  #define EVENT_NAME_2 PAPI_FP_INS
+  #define EVENT_STRING_2 "PAPI_FP_INS"
+#endif
 
 #ifdef _CRAYT3E
 	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
+	#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #elif defined(_WIN32)
-	#define OVER_FMT	"handler(%d, %x, %d, %I64, %d, %p) Overflow at %p!\n"
+	#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
+	#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
 	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p!\n"
+	#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
-int total = 0;
+int total = 0;		/* total overflows */
+int TESTS_QUIET=0;	/* Tests in Verbose mode? */
 
 void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
 {
@@ -54,67 +64,100 @@ int main(int argc, char **argv)
 {
   int EventSet;
   long_long (values[2])[2];
-  int retval;
+  int num_flops, retval;
+
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+
+  if ( !TESTS_QUIET ) {
+	retval = PAPI_set_debug(PAPI_VERB_ECONT);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+  }
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    exit(1);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  retval = PAPI_create_eventset(&EventSet);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    exit(1);
+  retval = PAPI_add_event(&EventSet, EVENT_NAME_1);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-  if (PAPI_add_event(&EventSet, EVENT_NAME_1) != PAPI_OK)
-    exit(1);
+  retval = PAPI_add_event(&EventSet, EVENT_NAME_2);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-  if (PAPI_add_event(&EventSet, EVENT_NAME_2) != PAPI_OK)
-    exit(1);
-
-  if (PAPI_start(EventSet) != PAPI_OK)
-    exit(1);
+  retval = PAPI_start(EventSet);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_start", retval);
   
   do_flops(NUM_FLOPS*10);
   
-  if (PAPI_stop(EventSet, values[0]) != PAPI_OK)
-    exit(1); 
+  retval = PAPI_stop(EventSet, values[0]);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  if (PAPI_overflow(EventSet, EVENT_NAME_2, THRESHOLD, 0, handler) != PAPI_OK)
-    exit(1);
+  retval = PAPI_overflow(EventSet, EVENT_NAME_2, THRESHOLD, 0, handler);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    exit(1);
+  retval = PAPI_start(EventSet);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS*10);
 
-  if (PAPI_stop(EventSet, values[1]) != PAPI_OK)
-    exit(1);
+  retval = PAPI_stop(EventSet, values[1]);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
-  printf("---------------------------------------------------------------\n");
-  printf("Threshold for overflow is: %d\n",THRESHOLD);
-  printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
-  printf("-----------------------------------------\n");
-
-  printf("Test type   : \t%-16d\t%-16d\n",1,2);
-  printf("PAPI_TOT_CYC: \t%-16lld\t%-16lld\n",
-	 (values[0])[0],(values[1])[0]);
-  printf("PAPI_FP_INS : \t%-16lld\t%-16lld\n",
-	 (values[0])[1],(values[1])[1]);
-  printf("Overflows   : \t%d\n",total);
-  printf("-----------------------------------------\n");
-
-  printf("Verification:\n");
-#if defined(linux) || defined(__ia64__)
-  printf("Row 2 approximately equals %d %d\n",2*10*NUM_FLOPS,2*10*NUM_FLOPS);
-#else
-  printf("Row 2 approximately equals %d %d\n",10*NUM_FLOPS,10*NUM_FLOPS);
+  num_flops = 10*NUM_FLOPS;
+#if defined(linux) || defined(__ia64__) || defined(_WIN32)
+  num_flops *= 2;
 #endif
-  printf("Column 1 approximately equals column 2\n");
-  printf(TAB1, "Row 3 approximate equals",(values[0])[1]/THRESHOLD);
 
+  if ( !TESTS_QUIET ) {
+	printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
+	printf("---------------------------------------------------------------\n");
+	printf("Threshold for overflow is: %d\n",THRESHOLD);
+	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
+	printf("-----------------------------------------------\n");
+
+	printf("Test type    : %16d%16d\n",1,2);
+	printf(OUT_FMT, "PAPI_TOT_CYC",
+	 (values[0])[0],(values[1])[0]);
+	printf(OUT_FMT, EVENT_STRING_2,
+	 (values[0])[1],(values[1])[1]);
+	printf("Overflows    : %16d\n",total);
+	printf("-----------------------------------------------\n");
+
+	printf("Verification:\n");
+#ifndef NO_FLOPS
+	printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
+#endif
+	printf("Column 1 approximately equals column 2\n");
+	printf(TAB1, "Row 3 approximately equals",(values[0])[1]/THRESHOLD);
+  }
+  {
+ 	long_long min, max;
+#ifndef NO_FLOPS
+	min = (long_long)(num_flops*.9);
+ 	max = (long_long)(num_flops*1.1);
+	if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
+		test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
+#endif
+	min = (long_long)(values[0][0]*.9);
+	max = (long_long)(values[0][0]*1.1);
+	if ( values[1][0] > max || values[1][0] < min )
+  		test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+
+	min = (long_long)(values[0][1]*.9);
+	max = (long_long)(values[0][1]*1.1);
+	if ( values[1][1] > max || values[1][1] < min )
+  		test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
+
+	min = (long_long)((values[0][1]*.9)/THRESHOLD);
+	max = (long_long)((values[0][1]*1.1)/THRESHOLD);
+	if ( total > max || total < min )
+  		test_fail(__FILE__, __LINE__, "Overflows", 1);
+  }
+  printf("\n%s:  PASSED\n\n", __FILE__);
   PAPI_shutdown();
-
   exit(0);
 }
