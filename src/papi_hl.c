@@ -26,12 +26,27 @@ static int PAPI_EVENTSET_INUSE = PAPI_NULL;
 static int initialized = 0;
 static int hl_max_counters = 0;
 
+/* CHANGE LOG:
+  - dkt 08/01/01:
+	NOTE: Calling semantics have changed!
+	Now, if flpins < 0 (an invalid value) a PAPI_reset is issued to reset the
+	counter values. The internal start time is also reset. This should be a 
+	benign change, exept in the rare case where a user passes an uninitialized
+	(and possibly negative) value for flpins to the routine *AFTER* it has been
+	called the first time. This is unlikely, since the first call clears and
+	returns this value.
+  - dkt 08/01/01:
+	Internal sequencing changes:
+	-- initial PAPI_get_real_usec() call moved above PAPI_start to avoid unwanted flops.
+	-- PAPI_accum() replaced with PAPI_start() / PAPI_stop pair for same reason.
+*/
 int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops)
 {
    static float total_proc_time=0.0; 
    static int EventSet = PAPI_NULL;
    static float mhz;
-   static long_long start_us=0, total_flpins=-4;
+   static long_long start_us = 0;
+   static long_long total_flpins = 0;
    const PAPI_hw_info_t *hwinfo = NULL;
    long_long values[2] = {0,0};
    char buf[500];
@@ -64,18 +79,24 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 	     PAPI_shutdown();
 	     return retval;
 	}
+	initialized = 1;
+	start_us = PAPI_get_real_usec();
 	retval = PAPI_start(EventSet);
 	PAPI_perror(retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
 	     return retval;
 	}
-	start_us = PAPI_get_real_usec();
-	initialized = 1;
    }
    else {
+	retval = PAPI_stop( EventSet, values );
+	/* If fp instuction count is negative, re-initialize */
+	if ( *flpins < 0 ) {
+		total_flpins = 0;
+		PAPI_reset(EventSet);
+		start_us = PAPI_get_real_usec();
+	}
 	*real_time = (float)((PAPI_get_real_usec()-start_us)/1000000.0);
-	retval = PAPI_accum( EventSet, values );
 	PAPI_perror( retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
@@ -88,7 +109,12 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 	total_flpins += values[0];
 	*proc_time = total_proc_time;
 	*flpins = total_flpins;
-	total_flpins-=19;
+ 	retval = PAPI_start(EventSet);
+	PAPI_perror(retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
    }
    return PAPI_OK;
 }
