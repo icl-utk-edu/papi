@@ -57,7 +57,66 @@ C So we'll just do AIX initialization in a C subroutine...
         call ftest_fail(__FILE__, __LINE__, 'addAIXevents', retval)
       end if
 #if defined(_AIX)
-      print *, "AIX"
+#if defined(_AIXVERSION_510)
+      print *, "AIX POWER4"
+C     PM_FPU0_DIV      
+      nativees = 10 * 2**8
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_FPU1_DIV   
+      nativees = 19 * 2**8 + 1
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_FPU0_FRSP_FCONV     
+      nativees = 25 * 2**8 + 2
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_FPU1_FRSP_FCONV
+      nativees = 29 * 2**8 + 3
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_FPU0_FMA
+      nativees = 11 * 2**8 + 4
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_FPU1_FMA 
+      nativees = 20 * 2**8 + 5
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_INST_CMPL
+      nativees = 78 * 2**8 + 6
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     PM_CYC
+      nativees = 74 * 2**8 + 7
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+#else
+      print *, "AIX POWER3"
 C     ICM      
       nativees = 5 * 2**8
       call PAPIf_add_event( es, nativees, retval )
@@ -114,6 +173,7 @@ C     TLB
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
+#endif
 #endif
 
 #if defined(linux) && defined(__i386__)
@@ -245,6 +305,23 @@ C     call sleep(1)
       if (tests_quiet .EQ. 0) then
       print *, "Real Elapsed Time in sec.  : ", rsec
 #if defined(_AIX)
+#if defined(_AIXVERSION_510)
+      csec = values(8)/ (mhz*1000000.0)
+      print *, "CPU Elapsed Time in sec.   : ", csec
+      print *, "FPU0 DIV Instructions      : ", values(1)
+      print *, "FPU1 DIV Instructions      : ", values(2)
+      print *, "FPU0 FRSP & FCONV Instr.   : ", values(3)
+      print *, "FPU1 FRSP & FCONV Instr.   : ", values(4)
+      print *, "FPU0 FMA Instructions      : ", values(5)
+      print *, "FPU1 FMA Instructions      : ", values(6)
+      print *, "Instructions Completed     : ", values(7)
+      print *, "CPU Cycles                 : ", values(8)
+      print *, "------------------------------------------"
+      print *, "CPU MFLOPS                 : ",
+     *((values(5)+values(6))/1000000.0)/csec
+      print *, "%% FMA Instructions         : ",
+     *100.0*(values(5) + values(6))/(values(7)
+#else
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "L1 Instruction Cache Misses: ", values(1)
@@ -263,7 +340,8 @@ C     call sleep(1)
       print *, "%% L1 Load Hit Rate         : ",
      *100.0*(1.0 - (values(3)/values(4)))
       print *, "%% FMA Instructions         : ",
-     *100.0*values(6)/(values(2)+values(5))
+     *100.0*values(7)/(values(2)+values(5))
+#endif
 #endif
 
 #if defined(linux) && defined(__i386__)

@@ -24,6 +24,26 @@ void addaixevents(int *EventSet, int *retval)
 	  return;
   }
 
+   #if defined(_POWER4)
+      /* defined in Makefile.aix.power4 */
+      /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
+      native = 0 | 10 << 8  | 0; /* PM_FPU0_DIV */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 19 << 8 | 1; /* PM_FPU1_DIV */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 25 << 8  | 2; /* PM_FPU0_FRSP_FCONV */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 29 << 8  | 3; /* PM_FPU1_FRSP_FCONV */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 11 << 8  | 4; /* PM_FPU0_FMA */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 20 << 8 | 5; /* PM_FPU1_FMA */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 78 << 8  | 6; /* PM_INST_CMPL */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+      native = 0 | 74 << 8  | 7; /* PM_CYC */
+      if((*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+  #else
       native = 0 | 5 << 8  | 0; /* ICM */
       if ( (*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
       native = 0 | 35 << 8 | 1; /* FPU1CMPL */
@@ -40,6 +60,7 @@ void addaixevents(int *EventSet, int *retval)
       if ( (*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
       native = 0 | 0 << 8  | 7; /* TLB */
       if ( (*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
+  #endif
 #endif
 }
 
