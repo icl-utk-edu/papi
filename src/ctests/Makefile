@@ -5,9 +5,9 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = memory exeinfo shlib zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info  \
+SERIAL  = first memory exeinfo shlib zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops first second cost johnmay2 clockres \
+	calibrate flops second cost johnmay2 clockres \
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth \
 	profile  sprofile profile_32 profile_64 profile_twoevents earprofile branchprofile \
@@ -236,10 +236,10 @@ shlib: shlib.c $(PAPILIB) $(UTILOBJS)
 exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
-test_utils.o: test_utils.c
+test_utils.o: test_utils.c papi_test.h test_utils.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
 
-do_loops.o: do_loops.c
+do_loops.o: do_loops.c papi_test.h test_utils.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c do_loops.c
 
 dummy.o: dummy.c
