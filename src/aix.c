@@ -256,7 +256,7 @@ static int get_system_info(void)
 #ifdef _POWER4
   retval = setup_p4_presets(&pminfo, &pmgroups);
 #else
-  retval = setup_all_presets(&pminfo);
+  retval = setup_all_presets(preset_search_map);
 #endif
 
   if (retval)
@@ -445,7 +445,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *cntrl, long_long **v
   if (retval > 0)
     return(retval);
 
-#if 1
+#if 0
   dump_data(&data);
 #endif
 
@@ -587,8 +587,8 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *cntrl)
 
 #if 1
 DBG((stderr, "Start\n"));
-dump_state(cntrl);
-dump_state(current_state);
+/*dump_state(cntrl);
+dump_state(current_state);*/
 #endif
   
       /* Copy the global counter structure to the current eventset */
@@ -601,9 +601,9 @@ dump_state(current_state);
 
   /* Set up the new merged control structure */
   
-#if 1
-  dump_state(cntrl);
-  dump_state(current_state);
+#if 0
+/*  dump_state(cntrl);
+  dump_state(current_state);*/
   dump_cmd(&current_state->counter_cmd);
 #endif
       
@@ -644,7 +644,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *cntrl)
   return(PAPI_OK);
 }
 
-#if 1
+/*#if 1
 void dump_state(hwd_control_state_t *s)
 {
   fprintf(stderr,"master_selector %x\n",s->master_selector);
@@ -658,5 +658,5 @@ void dump_state(hwd_control_state_t *s)
     s->counter_cmd.events[7]);
 }
 #endif
-
+*/
 

@@ -24,6 +24,7 @@
 
 #include "papi.h"
 #include "native.h"
+#include "preset.h"
 
 
 extern _etext;
