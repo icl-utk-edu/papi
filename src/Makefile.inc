@@ -120,6 +120,7 @@ clean: native_clean
 
 clobber: clean
 	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS) $(SPECIAL_REMOVE)
+	cd utils;  $(MAKE) clobber
 null:
 
 dist: 
