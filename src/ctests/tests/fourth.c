@@ -25,6 +25,7 @@
    - Stop eventset 2
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>

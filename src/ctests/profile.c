@@ -1,3 +1,12 @@
+/* 
+* File:    profile.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #define NUM 1000
 #define THR 10000
 
@@ -18,6 +27,7 @@
    - Stop eventset 1
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -97,16 +107,14 @@ int main(int argc, char **argv)
 
   printf("Test case 7: SVR4 compatible hardware profiling.\n");
   printf("------------------------------------------------\n");
-  tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
-  printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
-  tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
-  printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
   printf("Text start: %p, Text end: %p, Text length: %lx\n",
 	 prginfo->text_start,prginfo->text_end,length);
   printf("Data start: %p, Data end: %p\n",
 	 prginfo->data_start,prginfo->data_end);
   printf("BSS start: %p, BSS end: %p\n",
 	 prginfo->bss_start,prginfo->bss_end);
+  printf("Dynamic Library Preload Env. Var.: %s\n",
+	 prginfo->lib_preload_env);
 
   printf("-----------------------------------------\n");
 
@@ -222,7 +230,7 @@ int main(int argc, char **argv)
   for (i=0;i<length;i++)
     {
       if ((profbuf[i])||(profbuf2[i])||(profbuf3[i])||(profbuf4[i])||(profbuf5[i]))
-	printf("0x%x\t%d\t%d\t%d\t%d\t%d\n",(unsigned int)start + 2*i,
+	printf("0x%lx\t%d\t%d\t%d\t%d\t%d\n",(unsigned long)start + (unsigned long)(2*i),
 	       profbuf[i],profbuf2[i],profbuf3[i],profbuf4[i],profbuf5[i]);
     }
 

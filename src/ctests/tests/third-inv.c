@@ -43,7 +43,7 @@ int main(int argc, char **argv)
   int retval, num_tests = 5, tmp;
   long long **values;
   int EventSet1, EventSet2;
-  int mask1 = 0x1, mask2 = 0x4;
+  int mask1 = 0x4, mask2 = 0x1;
   int num_events1, num_events2;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet1, values[0]);
   if (retval != PAPI_OK)
     exit(1); 
-    
+
   retval = PAPI_start(EventSet1);
   if (retval != PAPI_OK)
     exit(1);
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);
 
-  printf("Test case 3: Overlapping start and stop of 2 eventsets with different counters.\n");
+  printf("Test case 3i: Overlapping start and stop of 2 eventsets with different counters.\n");
   printf("-------------------------------------------------------------------------------\n");
   tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
@@ -119,9 +119,9 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\t\t3\t\t4\t\t5\n");
-  printf("PAPI_FP_INS : \t%d\t\t%d\t\t%lld\t%d\t\t%lld\n",
+  printf("PAPI_TOT_CYC: \t%d\t\t%d\t\t%lld\t%d\t\t%lld\n",
 	 0,0,(values[2])[0],0,(values[4])[0]);
-  printf("PAPI_TOT_CYC: \t%lld\t%lld\t%d\t\t%lld\t%d\n",
+  printf("PAPI_FP_INS : \t%lld\t%lld\t%d\t\t%lld\t%d\n",
 	 (values[0])[0],(values[1])[0],0,(values[3])[0],0);
   printf("-------------------------------------------------------------------------\n");
 

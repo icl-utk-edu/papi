@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -79,7 +80,7 @@ void papimon_start(void)
       retval = PAPI_add_event(&EventSet, native);
       if  (retval != PAPI_OK)
 	exit(1);
-#elif defined(linux)
+#elif defined(linux) && defined(__i386__)
       native = 0 | 0x43 << 8 | 0; /* Data mem refs */
       retval = PAPI_add_event(&EventSet, native);
       if  (retval != PAPI_OK)
@@ -92,6 +93,54 @@ void papimon_start(void)
 	 retval = PAPI_add_event(&EventSet, native);
 	 if  (retval != PAPI_OK)
       exit(1);*/
+#elif defined(linux) && defined(__ia64__)
+      {
+	typedef union {
+	  unsigned int  papi_native_all;	/* integer encoding */
+	  struct	{
+	    unsigned int register_no:8;	/* 4, 5, 6 or 7 */
+	    unsigned int pme_mcode:8;	/* major event code */
+	    unsigned int pme_ear:1;		/* is EAR event */
+	    unsigned int pme_dear:1;	/* 1=Data 0=Instr */
+	    unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
+	    unsigned int pme_umask:13;	/* unit mask */
+	  } papi_native_bits;
+	} papi_native_code_t;
+
+	/* Execution latency stall cycles */
+	papi_native_code_t real_native;
+	real_native.papi_native_all = 0;
+	real_native.papi_native_bits.register_no = 4;
+	real_native.papi_native_bits.pme_mcode = 0x02;
+	native = real_native.papi_native_all;
+	retval = PAPI_add_event(&EventSet, native);
+	if  (retval != PAPI_OK)
+	  exit(1);
+	/* Combined execution stall cycles */
+	real_native.papi_native_all = 0;
+	real_native.papi_native_bits.register_no = 5;
+	real_native.papi_native_bits.pme_mcode = 0x06;
+	native = real_native.papi_native_all;
+	retval = PAPI_add_event(&EventSet, native);
+	if  (retval != PAPI_OK)
+	  exit(1);
+	/* Combined instruction fetch stall cycles */
+	real_native.papi_native_all = 0;
+	real_native.papi_native_bits.register_no = 6;
+	real_native.papi_native_bits.pme_mcode = 0x05;
+	native = real_native.papi_native_all;
+	retval = PAPI_add_event(&EventSet, native);
+	if  (retval != PAPI_OK)
+	  exit(1);
+	/* Combined memory stall cycles */
+	real_native.papi_native_all = 0;
+	real_native.papi_native_bits.register_no = 7;
+	real_native.papi_native_bits.pme_mcode = 0x07;
+	native = real_native.papi_native_all;
+	retval = PAPI_add_event(&EventSet, native);
+	if  (retval != PAPI_OK)
+	  exit(1);
+      }
 #elif defined(mips) && defined(sgi) && defined(unix)
       native = 0 | 0x9 << 8 | 0; /* L1 I Miss */
       retval = PAPI_add_event(&EventSet, native);
@@ -209,11 +258,16 @@ void papimon_stop(void)
 	  100.0*(1.0 - ((float)values[2]/(float)values[3])));
   fprintf(stderr,"%% FMA Instructions         : %.2f\n",
 	  100.0*(float)values[6]/((float)values[1]+(float)values[4]));
-#elif defined(linux)
+#elif defined(linux) && defined(__i386__)
   /* csec = (float)values[2]/(hwinfo->mhz*1000000.0); */
   /* fprintf(stderr,"Virtual TSC Time in sec.   : %f\n",csec); */
   fprintf(stderr,"DCU Memory references      : %lld\n",values[0]);
   fprintf(stderr,"DCU Lines out              : %lld\n",values[1]);
+#elif defined(linux) && defined(__ia64__)
+  fprintf(stderr,"Execution latency stall cyc         : %lld\n",values[0]);
+  fprintf(stderr,"Combined execution stall cycles     : %lld\n",values[1]);
+  fprintf(stderr,"Combined instr. fetch stall cycles  : %lld\n",values[2]);
+  fprintf(stderr,"Combined memory stall cycles        : %lld\n",values[3]);
 #elif defined(mips) && defined(sgi)
   fprintf(stderr,"L1 Instruction cache misses       : %lld\n",values[0]);
   fprintf(stderr,"L1 Data cache misses              : %lld\n",values[1]);

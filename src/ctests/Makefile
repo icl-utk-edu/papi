@@ -2,7 +2,8 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
-SERIAL  = pernode avail zero sprofile cost johnmay2 johnmay inherit clockres first second third fourth fifth overflow profile nineth tenth native eventname case1 case2 flops
+SERIAL  = sprofile eventname case1 case2 flops avail zero first second third third-inv fourth fourth-inv cost johnmay2 johnmay clockres fourth fifth nineth overflow_single_event overflow profile tenth native 
+BROKEN	= inherit pernode
 ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
 INCLUDE = -I..
@@ -68,14 +69,23 @@ flops: flops.c $(UTILOBJS) ../libpapi.a
 third: third.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) third.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o third
 
+third-inv: third-inv.c $(UTILOBJS) ../libpapi.a
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) third-inv.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o third-inv
+
 fourth: fourth.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) fourth.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o fourth
+
+fourth-inv: fourth-inv.c $(UTILOBJS) ../libpapi.a
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) fourth-inv.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o fourth-inv
 
 fifth: fifth.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) fifth.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o fifth
 
 overflow: overflow.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) overflow.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o overflow
+
+overflow_single_event: overflow_single_event.c $(UTILOBJS) ../libpapi.a
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) overflow_single_event.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o overflow_single_event
 
 profile: profile.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) profile.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o profile

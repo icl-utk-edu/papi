@@ -8,6 +8,7 @@ event, then the 2nd one get an error when I tried to add it, is it possible for
 PAPI_start to work but just count the first event?
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"

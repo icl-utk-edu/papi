@@ -1,14 +1,14 @@
-/* This file performs the following test: nested eventsets that do not share any counter values
+/* This file performs the following test: nested eventsets that share 
+   all counter values, but added in reverse order.
 
-   - It attempts to use two eventsets simultaneously. These are counted in the default counting
-     domain and default granularity, depending on the platform. Usually this is the user domain 
-     (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
+   - It attempts to use two eventsets simultaneously. These are counted 
+   in the default counting domain and default granularity, depending on 
+   the platform. Usually this is the user domain (PAPI_DOM_USER) and 
+   thread context (PAPI_GRN_THR).
 
-     Eventset 1 has:
-     + PAPI_TOT_CYC
-
-     EventSet 2 has:
+     Eventset 1 and 2 both have:
      + PAPI_FP_INS
+     + PAPI_TOT_CYC
 
    - Start eventset 1
    - Do flops
@@ -16,7 +16,6 @@
    - Start eventset 1
    - Do flops
    - Start eventset 2
-   - Read eventset 1
    - Do flops
    - Stop and read eventset 2
    - Do flops
@@ -40,11 +39,10 @@
 
 int main(int argc, char **argv) 
 {
-  int retval, num_tests = 5, tmp;
+  int retval, num_tests = 4, tmp;
   long long **values;
   int EventSet1, EventSet2;
-  int mask1 = 0x1, mask2 = 0x4;
-  int num_events1, num_events2;
+  int num_events = 2;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
@@ -53,12 +51,23 @@ int main(int argc, char **argv)
   if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
     exit(1);
 
-  EventSet1 = add_test_events(&num_events1,&mask1);
-  EventSet2 = add_test_events(&num_events2,&mask2);
+  if (PAPI_create_eventset(&EventSet1) != PAPI_OK)
+    exit(1);
+  if (PAPI_create_eventset(&EventSet2) != PAPI_OK)
+    exit(1);
+
+  if (PAPI_add_event(&EventSet1, PAPI_TOT_CYC) != PAPI_OK)
+    exit(1);
+  if (PAPI_add_event(&EventSet1, PAPI_FP_INS) != PAPI_OK)
+    exit(1);
+  if (PAPI_add_event(&EventSet2, PAPI_FP_INS) != PAPI_OK)
+    exit(1);
+  if (PAPI_add_event(&EventSet2, PAPI_TOT_CYC) != PAPI_OK)
+    exit(1);
 
   /* num_events1 is greater than num_events2 so don't worry. */
 
-  values = allocate_test_space(num_tests, num_events1);
+  values = allocate_test_space(num_tests, num_events);
 
   retval = PAPI_start(EventSet1);
   if (retval != PAPI_OK)
@@ -68,8 +77,8 @@ int main(int argc, char **argv)
   
   retval = PAPI_stop(EventSet1, values[0]);
   if (retval != PAPI_OK)
-    exit(1); 
-    
+    exit(1);
+
   retval = PAPI_start(EventSet1);
   if (retval != PAPI_OK)
     exit(1);
@@ -80,19 +89,15 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK)
     exit(1);
 
-  retval = PAPI_read(EventSet1, values[1]);
+  do_flops(NUM_FLOPS);
+
+  retval = PAPI_stop(EventSet2, values[1]);
   if (retval != PAPI_OK)
     exit(1);
 
   do_flops(NUM_FLOPS);
 
-  retval = PAPI_stop(EventSet2, values[2]);
-  if (retval != PAPI_OK)
-    exit(1);
-
-  do_flops(NUM_FLOPS);
-
-  retval = PAPI_stop(EventSet1, values[3]);
+  retval = PAPI_stop(EventSet1, values[2]);
   if (retval != PAPI_OK)
     exit(1);
 
@@ -102,15 +107,12 @@ int main(int argc, char **argv)
 
   do_flops(NUM_FLOPS);
   
-  retval = PAPI_stop(EventSet2, values[4]);
+  retval = PAPI_stop(EventSet2, values[3]);
   if (retval != PAPI_OK)
     exit(1); 
 
-  remove_test_events(&EventSet1, mask1);
-  remove_test_events(&EventSet2, mask2);
-
-  printf("Test case 3: Overlapping start and stop of 2 eventsets with different counters.\n");
-  printf("-------------------------------------------------------------------------------\n");
+  printf("Test case 4: Overlapping start and stop of 2 eventsets.\n");
+  printf("-------------------------------------------------------\n");
   tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
@@ -118,19 +120,17 @@ int main(int argc, char **argv)
   printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
   printf("-------------------------------------------------------------------------\n");
 
-  printf("Test type   : \t1\t\t2\t\t3\t\t4\t\t5\n");
-  printf("PAPI_FP_INS : \t%d\t\t%d\t\t%lld\t%d\t\t%lld\n",
-	 0,0,(values[2])[0],0,(values[4])[0]);
-  printf("PAPI_TOT_CYC: \t%lld\t%lld\t%d\t\t%lld\t%d\n",
-	 (values[0])[0],(values[1])[0],0,(values[3])[0],0);
+  printf("Test type   : \t1\t\t2\t\t3\t\t4\n");
+  printf("PAPI_FP_INS : \t%lld\t%lld\t%lld\t%lld\n",
+	 (values[0])[1],(values[1])[0],(values[2])[1],(values[3])[0]);
+  printf("PAPI_TOT_CYC: \t%lld\t%lld\t%lld\t%lld\n",
+	 (values[0])[0],(values[1])[1],(values[2])[0],(values[3])[1]);
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d N %d N\n",0,0,0);
-  printf("Row 2 approximately equals X X %d X %d\n",0,0);
   printf("Column 1 approximately equals column 2\n");
-  printf("Column 4 approximately equals three times column 1\n");
-  printf("Column 5 approximately equals column 3\n");
+  printf("Column 3 approximately equals three times column 2\n");
+  printf("Column 4 approximately equals column 2\n");
 
   free_test_space(values, num_tests);
 

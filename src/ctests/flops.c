@@ -5,11 +5,12 @@
  * -Kevin London
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "papi.h"
 #define INDEX 100
 
-main(){
+int main(){
   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
   float real_time, proc_time, mflops;
   long long flpins;
@@ -36,6 +37,7 @@ main(){
  
   printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n",
 	real_time, proc_time, flpins, mflops);
+  exit(0);
 }
 
 

@@ -1,5 +1,5 @@
 /* 
-* File:    overflow.c
+* File:    overflow_single_event.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -7,10 +7,10 @@
 *          <your email address>
 */  
 
-/* This file performs the following test: overflow dispatch
+/* This file performs the following test: overflow dispatch of an eventset
+   with just a single event. 
 
      The Eventset contains:
-     + PAPI_TOT_CYC
      + PAPI_FP_INS (overflow monitor)
 
    - Start eventset 1
@@ -37,10 +37,8 @@
 
 #define NUM_FLOPS 10000000
 #define THRESHOLD  1000000
-#define EVENT_NAME_1 PAPI_TOT_CYC
-#define EVENT_STRING_1 "PAPI_TOT_CYC"
-#define EVENT_NAME_2 PAPI_FP_INS
-#define EVENT_STRING_2 "PAPI_FP_INS"
+#define EVENT_NAME PAPI_FP_INS
+#define EVENT_STRING "PAPI_FP_INS"
 
 int total = 0;
 
@@ -59,7 +57,7 @@ void handler(int EventSet, int EventCode, int EventIndex, long long *values, int
 int main(int argc, char **argv) 
 {
   int EventSet;
-  long long (values[2])[2];
+  long long values[2] = { 0, 0 };
   int retval;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -72,21 +70,18 @@ int main(int argc, char **argv)
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     exit(1);
 
-  if (PAPI_add_event(&EventSet, EVENT_NAME_1) != PAPI_OK)
-    exit(1);
-
-  if (PAPI_add_event(&EventSet, EVENT_NAME_2) != PAPI_OK)
+  if (PAPI_add_event(&EventSet, EVENT_NAME) != PAPI_OK)
     exit(1);
 
   if (PAPI_start(EventSet) != PAPI_OK)
     exit(1);
   
   do_flops(NUM_FLOPS*10);
-  
-  if (PAPI_stop(EventSet, values[0]) != PAPI_OK)
+
+  if (PAPI_stop(EventSet, &values[0]) != PAPI_OK)
     exit(1); 
 
-  if (PAPI_overflow(EventSet, EVENT_NAME_2, THRESHOLD, 0, handler) != PAPI_OK)
+  if (PAPI_overflow(EventSet, EVENT_NAME, THRESHOLD, 0, handler) != PAPI_OK)
     exit(1);
 
   if (PAPI_start(EventSet) != PAPI_OK)
@@ -94,20 +89,18 @@ int main(int argc, char **argv)
 
   do_flops(NUM_FLOPS*10);
 
-  if (PAPI_stop(EventSet, values[1]) != PAPI_OK)
+  if (PAPI_stop(EventSet, &values[1]) != PAPI_OK)
     exit(1);
 
-  printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
-  printf("---------------------------------------------------------------\n");
+  printf("Test case: Overflow dispatch of 1st event in set with 1 event.\n");
+  printf("--------------------------------------------------------------\n");
   printf("Threshold for overflow is: %d\n",THRESHOLD);
   printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
   printf("-----------------------------------------\n");
 
   printf("Test type   : \t%-16d\t%-16d\n",1,2);
-  printf("PAPI_TOT_CYC: \t%-16lld\t%-16lld\n",
-	 (values[0])[0],(values[1])[0]);
-  printf("PAPI_FP_INS : \t%-16lld\t%-16lld\n",
-	 (values[0])[1],(values[1])[1]);
+  printf("%s : \t%-16lld%-16lld\n",EVENT_STRING,
+	 values[0],values[1]);
   printf("Overflows   : \t%d\n",total);
   printf("-----------------------------------------\n");
 
@@ -118,7 +111,7 @@ int main(int argc, char **argv)
   printf("Row 1 approximately equals %d %d\n",10*NUM_FLOPS,10*NUM_FLOPS);
 #endif
   printf("Column 1 approximately equals column 2\n");
-  printf("Row 3 approximate equals %lld\n",(values[0])[1]/THRESHOLD);
+  printf("Row 3 approximate equals %lld\n",(values[0])/THRESHOLD);
 
   PAPI_shutdown();
 

@@ -10,6 +10,7 @@ events. I still have a problem if someone adds Level 2 cache misses
 and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 2 counters. */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"

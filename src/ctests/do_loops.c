@@ -1,5 +1,6 @@
 /* Compile me with -O0 or else you'll get none. */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

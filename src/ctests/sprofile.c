@@ -1,8 +1,18 @@
+/* 
+* File:    profile.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #define NUM 1000
 #define THR 100000
 
 /* This file performs the following test: sprofile */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -60,11 +70,17 @@ int main(int argc, char **argv)
   sprof[0].pr_base = profbuf;
   sprof[0].pr_size = length/2;
   sprof[0].pr_off = (unsigned long)do_flops;
+#if defined(linux) && defined(__ia64__)
+  fprintf(stderr,"do_flops is at %p %lx\n",&do_flops,sprof[0].pr_off);
+#endif
   sprof[0].pr_scale = 65536;
   /* Second half */
   sprof[1].pr_base = profbuf2;
   sprof[1].pr_size = length/2;
   sprof[1].pr_off = (unsigned long)do_reads;
+#if defined(linux) && defined(__ia64__)
+  fprintf(stderr,"do_reads is at %p %lx\n",&do_reads,sprof[1].pr_off);
+#endif
   sprof[1].pr_scale = 65536;
   /* Overflow bin */
   sprof[2].pr_base = profbuf3;
