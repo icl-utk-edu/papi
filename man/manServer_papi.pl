@@ -4,6 +4,10 @@
 # manServer - Unix man page to HTML converter
 # Rolf Howarth, rolf@squarebox.co.uk
 # Version 1.06  30 November 1999
+  
+
+$rolf  = "Rolf Howarth <rolf\@squarebox.co.uk>";
+$dan   = "dan terpstra <terpstra\@cs.utk.edu>";
 
 $version = "1.06";
 $manServerUrl = "<A HREF=\"http://www.squarebox.co.uk/download/manServer.shtml\">manServer</A> $version";
@@ -47,6 +51,7 @@ $ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>I
 	if ($outdir ne "") {
 		$dir = $outdir;
 	}
+	$name =lc($name);
 	$OUTfile = "$dir/$name.html";
 
 	$OUT = new FileHandle "> $OUTfile";
@@ -54,7 +59,7 @@ $ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>I
 	  croak "Unable to open output file: $OUTfile.";
 	  exit(1);
 	}
-	man2html($file);
+	man2html($file, $OUTfile);
 	exit(0);
 
 
@@ -64,6 +69,7 @@ $ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>I
 sub man2html
 {
 	$file = $_[0];
+	$out = $_[1];
 	$srcfile = $file;
 	$zfile = $file;
 	if (! -f $file && -f "$file.gz")
@@ -73,7 +79,7 @@ sub man2html
 		$srcfile =~ m/^(.*)$/;
 		$srcfile = $1;	# untaint
 	}
-	print LOG "man2html $file\n";
+	print LOG "man2html $file -> $out\n";
 	$foundNroffTag = 0;
 	loadContents($file);
 	unless (open(SRC, $srcfile))
@@ -102,7 +108,7 @@ sub man2html
 	$_ = getLine();
 	if (m/^.so (man.*)$/)
 	{
-		man2html($root.$1);
+		man2html($root.$1, "");
 		return;
 	}
 
@@ -769,7 +775,7 @@ sub processMacro
 					$lowname = $name;
 					$level = $2;
 					$extra = $3;
-					$lowname =~ s/PAPI/papi/;
+					$lowname = lc($name);
 					outputLine( "<A HREF=\"$root$lowname.html\">$name ($level)</A>$extra\n" );
 				}
 			}
@@ -1511,7 +1517,6 @@ sub processTable
 	s/$troffSeparator/\t/g;
 	if ($_ eq ".TE")
 	{
-	print LOG "found .TE\n";
 		endTblRow();
 		flushTable();
 		$troffTable = 0;
@@ -1636,14 +1641,14 @@ sub endTblRow
 	return if ($troffCol == 0);
 	while ($troffCol <= $#troffColDefs)
 	{
-		$rowref->[$troffCol] = "<TD>&nbsp;</TD>";
-		#print $OUT "<TD>&nbsp;</TD>";
-		print $OUT "<TD>&nbsp;</TD>";
+# Don't know why these are here, but they add three empty cells to the end of each row...
+#		$rowref->[$troffCol] = "<TD>&nbsp;</TD>";
+#		#print $OUT "<TD>&nbsp;</TD>";
+#		print $OUT "<TD>&nbsp;</TD>";
 		++$troffCol;
 	}
 	$troffCol = 0;
-	#print $OUT "</TR>\n"
-	print $OUT "</TR>\n"
+#	print $OUT "</TR>\n";
 }
 
 sub flushTable
@@ -2402,8 +2407,8 @@ Description:
 
 Version:
   $version
-  Patterned after manServer by Rolf Howarth <rolf@squarebox.co.uk>
-  by dan terpstra <terpstra@cs.utk.edu>
+  Patterned after manServer by $rolf
+  by $dan
   Innovative Computing Laboratory <http://www.icl.cs.utk.edu>
 
 EndOfUsage
