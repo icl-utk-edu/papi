@@ -55,7 +55,7 @@ C   Level 2 cache misses
 C   See how many hardware events at one time are supported
       call PAPIf_num_counters( numevents )
       if ( numevents .LT. 3 ) then
-          print *, 'Can only monitor ', num_events, ' events.'
+          print *, 'Can only monitor ', numevents, ' events.'
           num_events = numevents
       end if
       print *, 'number of hardware counters supported: ', numevents
