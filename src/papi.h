@@ -163,13 +163,14 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_RESSIZE     2  /* Resident set size in pages */
 #define PAPI_GET_PAGESIZE    3  /* Pagesize in bytes */
 
-#define PAPI_PROFIL_POSIX    0x0        /* Default type of profiling, similar to 'man profil'. */
-#define PAPI_PROFIL_RANDOM   0x1        /* Drop a random 25% of the samples. */
-#define PAPI_PROFIL_WEIGHTED 0x2        /* Weight the samples by their value. */
-#define PAPI_PROFIL_COMPRESS 0x4        /* Ignore samples if hash buckets get big. */
-#define PAPI_PROFIL_BUCKET_16 0x8
-#define PAPI_PROFIL_BUCKET_32 0x10
-#define PAPI_PROFIL_BUCKET_64 0x20
+#define PAPI_PROFIL_POSIX     0x0        /* Default type of profiling, similar to 'man profil'. */
+#define PAPI_PROFIL_RANDOM    0x1        /* Drop a random 25% of the samples. */
+#define PAPI_PROFIL_WEIGHTED  0x2        /* Weight the samples by their value. */
+#define PAPI_PROFIL_COMPRESS  0x4        /* Ignore samples if hash buckets get big. */
+#define PAPI_PROFIL_BUCKET_16 0x8        /* Use 16 bit buckets to accumulate profile info (default) */
+#define PAPI_PROFIL_BUCKET_32 0x10       /* Use 32 bit buckets to accumulate profile info */
+#define PAPI_PROFIL_BUCKET_64 0x20       /* Use 64 bit buckets to accumulate profile info */
+#define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
 
 /* Option definitions */
 
@@ -266,16 +267,16 @@ read the documentation carefully.  */
 #define u_long_long unsigned long long
 #endif
 
-#define NEW_PAPI_MEM_INFO
-
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                               long_long overflow_vector, void *context);
 
    typedef struct _papi_sprofil {
-      void *pr_base;            /* buffer base */
-      unsigned pr_size;         /* buffer size */
-      caddr_t pr_off;           /* pc offset */
-      unsigned pr_scale;        /* pc scaling */
+      void *pr_base;          /* buffer base */
+      unsigned pr_size;       /* buffer size */
+      caddr_t pr_off;         /* pc start address (offset) */
+      unsigned pr_scale;      /* pc scaling factor: 
+                                 fixed point fraction
+                                 0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc. */
    } PAPI_sprofil_t;
 
    typedef struct _papi_inherit_option {
@@ -326,8 +327,6 @@ read the documentation carefully.  */
       int count;
    } PAPI_shlib_info_t;
 
-#ifdef NEW_PAPI_MEM_INFO
-
    /* All sizes are in BYTES */
    /* Except tlb size, which is in entries */
 
@@ -360,57 +359,19 @@ read the documentation carefully.  */
       int levels;
       PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
    } PAPI_mh_info_t;
-#endif
 
    typedef struct _papi_hw_info {
-      int ncpu;                 /* Number of CPU's in an SMP Node */
-      int nnodes;               /* Number of Nodes in the entire system */
-      int totalcpus;            /* Total number of CPU's in the entire system */
-      int vendor;               /* Vendor number of CPU */
+      int ncpu;                     /* Number of CPU's in an SMP Node */
+      int nnodes;                   /* Number of Nodes in the entire system */
+      int totalcpus;                /* Total number of CPU's in the entire system */
+      int vendor;                   /* Vendor number of CPU */
       char vendor_string[PAPI_MAX_STR_LEN];     /* Vendor string of CPU */
-      int model;                /* Model number of CPU */
+      int model;                    /* Model number of CPU */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
-      float revision;           /* Revision of CPU */
-      float mhz;                /* Cycle time of this CPU, *may* be estimated at 
-                                   init time with a quick timing routine */
-
-#ifndef NEW_PAPI_MEM_INFO
-      /* Memory Information */
-      int L1_tlb_size;          /*Data + Instruction Size */
-      int L1_itlb_size;         /*Instruction TLB size in KB */
-      short int L1_itlb_assoc;  /*Instruction TLB associtivity */
-      int L1_dtlb_size;         /*Data TLB size in KB */
-      short L1_dtlb_assoc;      /*Data TLB associtivity */
-
-      int L2_tlb_size;          /*Data + Instruction Size */
-      int L2_itlb_size;         /*Instruction TLB size in KB */
-      short int L2_itlb_assoc;  /*Instruction TLB associtivity */
-      int L2_dtlb_size;         /*Data TLB size in KB */
-      short L2_dtlb_assoc;      /*Data TLB associtivity */
-
-      int L1_size;              /* I+D */
-      int L1_icache_size;       /*Level 1 instruction cache size in KB */
-      short int L1_icache_assoc;        /*Level 1 instruction cache associtivity */
-      int L1_icache_lines;      /*Number of lines in Level 1 instruction cache */
-      int L1_icache_linesize;   /*Line size in KB of Level 1 instruction cache */
-
-      int L1_dcache_size;       /*Level 1 data cache size in KB */
-      short int L1_dcache_assoc;        /*Level 1 data cache associtivity */
-      int L1_dcache_lines;      /*Number of lines in Level 1 data cache */
-      int L1_dcache_linesize;   /*Line size in KB of Level 1 data cache */
-
-      int L2_cache_size;        /*Level 2 cache size in KB */
-      short int L2_cache_assoc; /*Level 2 cache associtivity */
-      int L2_cache_lines;       /*Number of lines in Level 2 cache */
-      int L2_cache_linesize;    /*Line size in KB of Level 2 cache */
-
-      int L3_cache_size;        /*Level 3 cache size in KB */
-      short int L3_cache_assoc; /*Level 3 cache associtivity */
-      int L3_cache_lines;       /*Number of lines in Level 3 cache */
-      int L3_cache_linesize;    /*Line size of Level 3 cache */
-#else
-     PAPI_mh_info_t mem_hierarchy;
-#endif
+      float revision;               /* Revision of CPU */
+      float mhz;                    /* Cycle time of this CPU, *may* be estimated at 
+                                       init time with a quick timing routine */
+     PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
 
@@ -546,7 +507,7 @@ read the documentation carefully.  */
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
    int   PAPI_perror(int code, char *destination, int length);
-   int   PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags);
+   int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags);
    int   PAPI_query_event(int EventCode);
    int   PAPI_read(int EventSet, long_long * values);
    int   PAPI_register_thread(void);
@@ -570,7 +531,7 @@ read the documentation carefully.  */
    void  PAPI_unlock(int);
    int   PAPI_write(int EventSet, long_long * values);
 
-   /* These function is implemented in the hwi layers, but not the hwd layers.
+   /* These functions are implemented in the hwi layers, but not the hwd layers.
       They shouldn't be exposed to the UI until they are needed somewhere.
    int PAPI_add_pevent(int EventSet, int code, void *inout);
    int PAPI_restore(void);
