@@ -1,5 +1,6 @@
 /* This file performs the following test: hardware info and which events are available */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>

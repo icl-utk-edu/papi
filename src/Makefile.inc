@@ -1,7 +1,8 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
+SOURCES	  = $(MISCSRCS) papi_fwrappers.c papi.c papi_hl.c $(SUBSTR).c extras.c
 OBJECTS   = $(MISCOBJS) papi_fwrappers.o papi.o papi_hl.o $(SUBSTR).o extras.o
-HEADERS   = papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
 all: showconf $(LIBS) fpapi.h examples
 
@@ -20,7 +21,7 @@ $(LIBRARY): $(OBJECTS)
 shared: $(SHLIB)
 
 $(SHLIB): $(OBJECTS) 
-	-$(CC_SHR) -o $(SHLIB) $(OBJECTS)
+	-$(CC_SHR) $(CFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
 
 papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(FOR_USED) -c papi_fwrappers.c -o papi_fwrappers.o

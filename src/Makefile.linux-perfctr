@@ -15,11 +15,14 @@ MISCOBJS= libperfctr.o
 
 include Makefile.inc
 
-x86-events.h: ../perfctr/etc/mk-events-h.awk ../perfctr/etc/perfctr-events.tab
-	awk -f ../perfctr/etc/mk-events-h.awk ../perfctr/etc/perfctr-events.tab > $@
+x86-events.h: ./perfctr/etc/mk-events-h.awk ./perfctr/etc/perfctr-events.tab
+	awk -f ./perfctr/etc/mk-events-h.awk ./perfctr/etc/perfctr-events.tab > $@
 
-libperfctr.o: ../perfctr/usr.lib/libperfctr.o x86-events.h
-	cp ../perfctr/usr.lib/libperfctr.o .
+libperfctr.o: ./perfctr/usr.lib/libperfctr.o x86-events.h
+	cp ./perfctr/usr.lib/libperfctr.o .
 
-../perfctr/usr.lib/libperfctr.o: 
-	$(MAKE) -C ../perfctr
+./perfctr/usr.lib/libperfctr.o: ./perfctr/config.out
+	$(MAKE) -C perfctr
+
+./perfctr/config.out:
+       cd perfctr; ./configure

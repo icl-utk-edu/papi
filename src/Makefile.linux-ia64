@@ -1,0 +1,20 @@
+SUBSTR  = linux-ia64
+DESCR	= "Stock Linux 2.4.x for the Intel IA64"
+LIBS	= static shared
+TARGETS = serial pthreads
+
+FOR_USED= -DFORTRANUNDERSCORE
+CFLAGS  = -Wall -Ilibpfm -I. -ggdb -DDEBUG
+FFLAGS	= -g3 
+OPTFLAGS= -O2
+CC_SHR  = gcc -shared -fpic
+CC_R	= gcc
+CC	= gcc
+F77	= sgif90 -macro_expand
+MISCOBJS= libpfm/pfmlib.o libpfm/pfmusr.o libpfm/pfmerror.o
+MISCSRCS= libpfm/pfmlib.c libpfm/pfmusr.c libpfm/pfmerror.c
+
+include Makefile.inc
+
+libpfm/pfmlib.o libpfm/pfmusr.o libpfm/pfmerror.o:
+	$(MAKE) CFLAGS="$(OPTFLAGS) $(CFLAGS)" -C libpfm

@@ -1,0 +1,68 @@
+/* 
+* File:    linux-ia64.README
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+Bugs
+----
+
+tests/sprofile does not work, due to an apparent bug in gcc.
+Note the following function:
+
+#include <stdlib.h>
+#include <stdio.h>
+int do_flops(int n)
+{
+  int i;
+  double c = (double)n;
+  for (i=0;i<n;i++)
+    c = c + (double)i;
+}
+
+main()
+{
+  printf("%p %x %lx\n",do_flops,do_flops,do_flops);
+}
+
+When run, the address of do_flops is different than
+the actual address of do_flops as shown by nm or 
+gdb.
+
+Linux/IA64 2.4 Kernel Notes
+---------------------------
+
+In order to use this software, you may have to patch your 
+kernel with the latest patches from the following web site.
+
+		http://www.kernel.org/pub/linux/kernel/ports/ia64
+
+If you're not sure how to patch, recompile and reinstall your linux
+kernel, check the Linux HOWTO's on the web. 
+
+		http://www.linuxhq.com.
+
+Linux/IA64 2.4 Native Event Notes
+---------------------------------
+
+For *all* the native event codes, see the pme_list.h header file in the
+libpfm subdirectory.
+
+		http://www.sandpile.org
+
+The native event counter format is as follows: (fits in 32 bits *)
+
+typedef union {
+	unsigned int  papi_native_all;	/* integer encoding */
+	struct	{
+	unsigned int register_no:8;	/* 4, 5, 6 or 7 */
+	unsigned int pme_mcode:8;	/* major event code */
+	unsigned int pme_ear:1;		/* is EAR event */
+	unsigned int pme_dear:1;	/* 1=Data 0=Instr */
+	unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
+	unsigned int pme_umask:13;	/* unit mask */
+	} papi_native_bits;
+} papi_native_code_t;

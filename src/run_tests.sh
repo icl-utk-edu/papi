@@ -1,11 +1,23 @@
 #!/bin/sh
 
-FTESTS="ftests/avail ftests/case1 ftests/case2 ftests/clockres ftests/eventname ftests/fmatrixlowpapi ftests/fmatrixpapi"
-CTESTS="tests/zero_omp tests/zero_smp tests/zero_shmem tests/profile_pthreads tests/overflow_pthreads tests/zero_pthreads tests/avail tests/zero tests/sprofile tests/cost tests/johnmay2 tests/johnmay tests/inherit tests/clockres tests/first tests/second tests/third tests/fourth tests/fifth tests/overflow tests/profile tests/nineth tests/tenth tests/native tests/eventname tests/case1 tests/case2"
-ALLTESTS="$FTESTS $CTESTS"
+# File:    papi.c
+# CVS:     $Id$
+# Author:  Philip Mucci
+#          mucci@cs.utk.edu
+# Mods:    <your name here>
+#          <your email address>
+
+CTESTS=`find tests -perm +u+x -type f`;
+FTESTS=`find ftests -perm +u+x -type f`;
+ALLTESTS="$FTESTS $CTESTS";
 x=0;
 
 echo "PAPI library test suite: All logs in <test>.stdout and <test>.stderr";
+echo "";
+echo "The following test cases will be run";
+echo $ALLTESTS;
+echo "";
+exit 0;
 
 for i in $ALLTESTS;
 do

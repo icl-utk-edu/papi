@@ -248,7 +248,7 @@ static int start_timer(int milliseconds)
 #if defined(_AIX) || defined(_CRAYT3E) || defined(sun)
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))_papi_hwd_dispatch_timer;
   action.sa_flags |= SA_SIGINFO;
-#elif defined(linux)
+#elif defined(linux) && !defined(__ia64)
   action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
 

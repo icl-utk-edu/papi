@@ -660,6 +660,8 @@ static int set_inherit(EventSetInfo *global, int arg)
   hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep;
   papi_cpc_event_t *command= &machdep->counter_cmd;
 
+  return(PAPI_EINVAL);
+
   if (arg == 0)
     {
       if (command->flags & CPC_BIND_LWP_INHERIT)

@@ -738,7 +738,7 @@ int create_eventset(int *EventSet, void *handle)
     }
   
   *EventSet = ESI->EventSetIndex;
-  DBG((stderr,"create_eventset(%p,%p): new EventSet in slot %d\n",EventSet,handle,*EventSet));
+  DBG((stderr,"create_eventset(%p,%p): new EventSet in slot %d\n",(void *)EventSet,handle,*EventSet));
 
   return(retval);
 }
@@ -749,7 +749,7 @@ int PAPI_create_eventset(int *EventSet)
   int retval;
   if (master == NULL)
     {
-      DBG((stderr,"PAPI_create_eventset(%p): new thread found\n",EventSet));
+      DBG((stderr,"PAPI_create_eventset(%p): new thread found\n",(void *)EventSet));
       retval = initialize_master_eventset(&master);
       if (retval)
 	return(retval);
@@ -813,7 +813,7 @@ static int get_free_EventCodeIndex(EventSetInfo *ESI, int EventCode)
 {
   int k;
   int lowslot = -1;
-  
+
   /* Check for duplicate events and get the lowest empty slot */
   
   for (k=0;k<_papi_system_info.num_cntrs;k++) 
@@ -1350,7 +1350,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
         internal.granularity.granularity = grn;
         internal.granularity.eventset = ptr->granularity.eventset;
-        retval = _papi_hwd_ctl(thread_master_eventset, PAPI_SET_GRANUL, &internal);
+        retval = _papi_hwd_ctl(NULL, PAPI_SET_GRANUL, &internal);
         if (retval < PAPI_OK)
           return(retval);
 
