@@ -533,11 +533,17 @@ static int set_domain(hwd_control_state_t * this_state, int domain)
 static int set_granularity(hwd_control_state_t * this_state, int domain)
 {
    switch (domain) {
+   case PAPI_GRN_PROCG:
+   case PAPI_GRN_SYS:
+   case PAPI_GRN_SYS_CPU:
+   case PAPI_GRN_PROC:
+      return(PAPI_ESBSTR);
    case PAPI_GRN_THR:
-      return (PAPI_OK);
+      break;
    default:
       return (PAPI_EINVAL);
    }
+   return (PAPI_OK);
 }
 
 /* Utility functions */
