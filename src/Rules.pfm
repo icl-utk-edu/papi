@@ -21,7 +21,7 @@ endif
 OPTFLAGS	+= -O3
 
 # Flags for test programs
-FFLAGS        	+= -Dlinux -ffixed-line-length-132
+FFLAGS        	+= -Dlinux -ffixed-line-length-132  -DITANIUM$(CPU)
 TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
@@ -50,7 +50,7 @@ MEMSUBSTR= linux-ia64
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU)
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) 
 
 CFLAGS-2.0 := -DPFM20
 CFLAGS-3.0 := -DPFM30
