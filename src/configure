@@ -1457,7 +1457,11 @@ case "$OS" in
       esac
       ;;
    *)
-      echo "pmapi is not needed on this platform"
+      case "$pmapi" in
+         default) ;;
+         *)  echo "pmapi is not needed on this platform"
+	     ;;
+      esac
       PMAPI=""
       ;;
 esac
@@ -1485,7 +1489,7 @@ case "$OS" in
        fi
        ;;
    solaris)
-       MAKEVER="$OS"-"$CPU""BM"
+       MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
        if test "${bitmode}" = "64"; then
@@ -1510,7 +1514,7 @@ case "$OS" in
        esac
        ;;
   irix)
-       MAKEVER="$OS"-"$CPU""BM"
+       MAKEVER="$OS"-"$CPU""$BM"
        ;;
   osf1)
        case "$CPU" in
