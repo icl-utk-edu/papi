@@ -29,15 +29,9 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
-/* CPUID model < 2 */
-extern hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[];
-extern hwi_dev_notes_t _papi_hwd_pentium4_mlt2_dev_notes[];
-/* CPUID model == 2 */
-extern hwi_search_t _papi_hwd_pentium4_m2_preset_map[];
-extern hwi_dev_notes_t _papi_hwd_pentium4_m2_dev_notes[];
-/* CPUID model == 3 */
-extern hwi_search_t _papi_hwd_pentium4_m3_preset_map[];
-extern hwi_dev_notes_t _papi_hwd_pentium4_m3_dev_notes[];
+extern hwi_search_t _papi_hwd_pentium4_base_preset_map[];
+extern hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[];
+extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -86,27 +80,36 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
 
 inline static int setup_p4_presets(int cputype)
 {
-  extern void _papi_hwd_fixup_presets(hwi_search_t *, hwi_dev_notes_t *);
+   hwi_search_t *s;
+   hwi_dev_notes_t *n;
+   extern void _papi_hwd_fixup_fp(hwi_search_t **s, hwi_dev_notes_t **n);
+   extern void _papi_hwd_fixup_vec(hwi_search_t **s, hwi_dev_notes_t **n);
 
-   if (cputype == PERFCTR_X86_INTEL_P4)
-     {
-       _papi_hwd_fixup_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_pentium4_mlt2_dev_notes);
-       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_pentium4_mlt2_dev_notes));
-     }
-   else if (cputype == PERFCTR_X86_INTEL_P4M2)
-     {
-       _papi_hwd_fixup_presets(_papi_hwd_pentium4_m2_preset_map,_papi_hwd_pentium4_m2_dev_notes);
-       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_m2_preset_map, _papi_hwd_pentium4_m2_dev_notes));
-     }
+   /* load the baseline event map for all Pentium 4s */
+   _papi_hwi_setup_all_presets(_papi_hwd_pentium4_base_preset_map, _papi_hwd_pentium4_base_dev_notes);
+
+   /* fix up the floating point and vector ops */
+   _papi_hwd_fixup_fp(&s, &n);
+   _papi_hwi_setup_all_presets(s,n);
+   _papi_hwd_fixup_vec(&s, &n);
+   _papi_hwi_setup_all_presets(s,n);
+
+   /* overload with any model dependent events */
+   if (cputype == PERFCTR_X86_INTEL_P4) {
+     /* do nothing besides the base map */
+   }
+   else if (cputype == PERFCTR_X86_INTEL_P4M2) {
+      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_tot_iis_preset_map, NULL);
+   }
 #ifdef PERFCTR_X86_INTEL_P4M3
-   else if (cputype == PERFCTR_X86_INTEL_P4M3)
-     {
-       _papi_hwd_fixup_presets(_papi_hwd_pentium4_m3_preset_map,_papi_hwd_pentium4_m3_dev_notes);
-       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_m3_preset_map, _papi_hwd_pentium4_m3_dev_notes));
-     }
+   else if (cputype == PERFCTR_X86_INTEL_P4M3) {
+      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_tot_iis_preset_map, NULL);
+   }
 #endif
-   else
-     { PAPIERROR(MODEL_ERROR); return(PAPI_ESBSTR); }
+   else {
+      PAPIERROR(MODEL_ERROR);
+      return(PAPI_ESBSTR);
+   }
    return (PAPI_OK);
 }
 

@@ -34,6 +34,7 @@
     Order Number 245472-012, 2003.
 */
 
+/* branch events */
 #define PNE_branch_retired_all (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM) + (1<<MMTP) + (1<<MMTM))
 #define PNE_branch_retired_not_taken (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM))
 #define PNE_branch_retired_taken (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP) + (1<<MMTM))
@@ -43,33 +44,56 @@
 #define PNE_branch_retired_taken_predicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP))
 #define PNE_branch_retired_taken_mispredicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTM))
 #define PNE_branch_retired_not_taken_mispredicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM))
-#define PNE_cycles (PAPI_NATIVE_MASK + (P4_custom_event<<16) + 0)    // this is the first custom entry
-#define PNE_global_power_running (PAPI_NATIVE_MASK + (P4_global_power_events<<16) + (1<<RUNNING))    // this is the first custom entry
+
+/* TLB events */
 #define PNE_page_walk_type_data_miss (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS))
 #define PNE_page_walk_type_instr_miss (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
 #define PNE_page_walk_type_all (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
-#define PNE_x87_FP_uop_tag0 (PAPI_NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0) + (1<<ALL))
-#define PNE_64bit_MMX_uop_tag1 (PAPI_NATIVE_MASK + (P4_64bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
-#define PNE_128bit_MMX_uop_tag1 (PAPI_NATIVE_MASK + (P4_128bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
-#define PNE_execution_event_nbogus0 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
-#define PNE_execution_event_nbogus1 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS1))
-#define PNE_execution_event_nbogus2 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS2))
-#define PNE_execution_event_nbogus3 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS3))
-#define PNE_replay_event (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
+
+/* cache events */
 #define PNE_replay_event_L1_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_access (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT))
 #define PNE_replay_event_L2_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L2_MISS_BIT))
 #define PNE_replay_event_L2_store_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_STORE_BIT)  + (1<<PEBS_L2_MISS_BIT))
 #define PNE_replay_event_L2_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
+#define PNE_replay_event (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
+
+/* instruction events */
 #define PNE_instr_retired_non_bogus (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
 #define PNE_instr_retired_all (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
+
+/* miscellaneous events */
+#define PNE_cycles (PAPI_NATIVE_MASK + (P4_custom_event<<16) + 0)    // this is the first custom entry
+#define PNE_global_power_running (PAPI_NATIVE_MASK + (P4_global_power_events<<16) + (1<<RUNNING))    // this is the first custom entry
 #define PNE_resource_stall (PAPI_NATIVE_MASK + (P4_resource_stall<<16) + (1<<SBFULL))
 
-#define PNE_scalar_DP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_DP_uop<<16) + (1<<TAG0) + (1<<ALL))
-#define PNE_scalar_SP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_SP_uop<<16) + (1<<TAG0) + (1<<ALL))
-#define PNE_packed_DP_uop_tag0 (PAPI_NATIVE_MASK + (P4_packed_DP_uop<<16) + (1<<TAG0) + (1<<ALL))
-#define PNE_packed_SP_uop_tag0 (PAPI_NATIVE_MASK + (P4_packed_SP_uop<<16) + (1<<TAG0) + (1<<ALL))
+/* uop tagging events for use with execution event
+   Which (of 4) tag to use is arbitrary.
+   Orthogonal usage allows events to be mixed without polluting each other.
+   Current convention uses the following assignments:
+   - Tag 0: x87 uops used to count PAPI_FP_INS
+      other Tag 0 native events could be added to the event set to provide interesting results
+   - Tag 1: uops useful for PAPI_FP_OPS, like x87, scalar SP and DP
+   - Tag 2: uops useful for PAPI_VEC_INS, like MMX uops and packed SP and DP
+   - Tag 3: currently unused.
+*/
+#define PNE_x87_FP_uop_tag0 (PAPI_NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0) + (1<<ALL))
+#define PNE_x87_FP_uop_tag1 (PAPI_NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG1) + (1<<ALL))
+#define PNE_scalar_DP_uop_tag1 (PAPI_NATIVE_MASK + (P4_scalar_DP_uop<<16) + (1<<TAG1) + (1<<ALL))
+#define PNE_scalar_SP_uop_tag1 (PAPI_NATIVE_MASK + (P4_scalar_SP_uop<<16) + (1<<TAG1) + (1<<ALL))
+#define PNE_packed_SP_uop_tag2 (PAPI_NATIVE_MASK + (P4_packed_SP_uop<<16) + (1<<TAG2) + (1<<ALL))
+#define PNE_packed_DP_uop_tag2 (PAPI_NATIVE_MASK + (P4_packed_DP_uop<<16) + (1<<TAG2) + (1<<ALL))
+#define PNE_64bit_MMX_uop_tag2 (PAPI_NATIVE_MASK + (P4_64bit_MMX_uop<<16) + (1<<TAG2) + (1<<ALL))
+#define PNE_128bit_MMX_uop_tag2 (PAPI_NATIVE_MASK + (P4_128bit_MMX_uop<<16) + (1<<TAG2) + (1<<ALL))
+
+/* execution events to count retired tagged uops with each of the 4 possible tags */
+/* other events could be defined that count combinations of tags */
+#define PNE_execution_event_nbogus0 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
+#define PNE_execution_event_nbogus1 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS1))
+#define PNE_execution_event_nbogus2 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS2))
+#define PNE_execution_event_nbogus3 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS3))
+
 
 /*
    PAPI preset events are defined in the tables below.
@@ -79,41 +103,42 @@
    first event is the one that is read. See PAPI_FP_INS for an example.
 */
 
-/* EWWWWW!!! GROSS!!! -pjm */
-
 #if defined(PAPI_PENTIUM4_FP_X87)
-#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}}
-#define FPU_DESC "x87"
+   #define FPU _papi_hwd_pentium4_FP_X87
+   #define FPU_DESC _papi_hwd_pentium4_FP_X87_dev_notes
 #elif defined(PAPI_PENTIUM4_FP_X87_SSE_SP)
-#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
-#define FPU_DESC "x87, single precision SSE"
-#elif defined(PAPI_PENTIUM4_FP_X87_SSE_DP)
-#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
-#define FPU_DESC "x87, double precision SSE"
+   #define FPU _papi_hwd_pentium4_FP_X87_SSE_SP
+   #define FPU_DESC _papi_hwd_pentium4_FP_X87_SSE_SP_dev_notes
 #elif defined(PAPI_PENTIUM4_FP_SSE_SP_DP)
-#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_scalar_DP_uop_tag0, PAPI_NULL, }, {0,}}}
-#define FPU_DESC "single precision SSE, double precision SSE"
+   #define FPU _papi_hwd_pentium4_FP_SSE_SP_DP
+   #define FPU_DESC _papi_hwd_pentium4_FP_SSE_SP_DP_dev_notes
 #else
-#warning "Assuming you meant -DPAPI_PENTIUM4_FP_X87_SSE_DP on the compile line?"
-#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
-#define FPU_DESC "x87, double precision SSE"
+   #define FPU _papi_hwd_pentium4_FP_X87_SSE_DP
+   #define FPU_DESC _papi_hwd_pentium4_FP_X87_SSE_DP_dev_notes
 #endif
 
 #if defined(PAPI_PENTIUM4_VEC_MMX)
-#define VEC(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}}
-#define VEC_DESC "64bit MMX, 128bit MMX"
-#elif defined(PAPI_PENTIUM4_VEC_SSE)
-#define VEC(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_packed_SP_uop_tag0, PNE_packed_DP_uop_tag0, PAPI_NULL, }, {0,}}}
-#define VEC_DESC "packed single precision SSE, packed double precision SSE"
+   #define VEC _papi_hwd_pentium4_VEC_MMX
+   #define VEC_DESC _papi_hwd_pentium4_VEC_MMX_dev_notes
 #else
-#warning "Assuming you meant -DPAPI_PENTIUM4_VEC_SSE on the compile line?"
-#define VEC(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_packed_SP_uop_tag0, PNE_packed_DP_uop_tag0, PAPI_NULL, }, {0,}}}
-#define VEC_DESC "packed single precision SSE, packed double precision SSE"
+   #define VEC _papi_hwd_pentium4_VEC_SSE
+   #define VEC_DESC _papi_hwd_pentium4_VEC_SSE_dev_notes
 #endif
 
-/* END EWWWWW!!! GROSS!!! -pjm */
+/*
+   PAPI preset events are defined in the tables below.
+   Each entry consists of a PAPI name, derived info, and up to eight native event indexes
+   as defined above.
+   Events that require tagging should be defined as DERIVED_CMPD and ordered such that the
+   first event is the one that is read. See PAPI_FP_INS for an example.
+   The tables are defined as a base table that is loaded onto all P4s, followed by a series
+   of small tables that can be overloaded onto the base table to customize events for model
+   or compiler switch differences.
+   Generally, new events should be added to the base table, unless they are specific for a
+   certain model.
+*/
 
-hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
+hwi_search_t _papi_hwd_pentium4_base_preset_map[] = {
 /* preset, derived, native index array */
    {PAPI_RES_STL, {0, {PNE_resource_stall, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
@@ -125,9 +150,7 @@ hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
-   FPU(PAPI_FP_INS),
-   FPU(PAPI_FP_OPS),
-   VEC(PAPI_VEC_INS),
+   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
@@ -139,89 +162,129 @@ hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {0, {0, {0,}, {0,}}}
 };
 
-hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
-/* preset, derived, native index array */
-   {PAPI_RES_STL, {0, {PNE_resource_stall, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_MSP, {0, {PNE_branch_retired_mispredicted, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_PRC, {0, {PNE_branch_retired_predicted, PAPI_NULL,}, {0,}}},
-   {PAPI_TLB_DM, {0, {PNE_page_walk_type_data_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
+/* Table defining PAPI_TOT_IIS for Pentium 4s >= model 2 */
+hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[] = {
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
-   FPU(PAPI_FP_INS),
-   FPU(PAPI_FP_OPS),
-   VEC(PAPI_VEC_INS),
-//   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
-   {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
-//  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
-// This event fails on Jon Burgoyne's Xeon. 12/05/03
-//   {PAPI_L1_DCA, {0, {PNE_replay_event_L1_data_access, PAPI_NULL,}, {0,}}},
-   {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
-//  {PAPI_L2_STM,  {0, { PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L2_DCM, {0, {PNE_replay_event_L2_data_miss, PAPI_NULL,}, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
-hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
-/* preset, derived, native index array */
-//   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_MSP, {0, {PNE_branch_retired_mispredicted, PAPI_NULL,}, {0,}}},
-   {PAPI_BR_PRC, {0, {PNE_branch_retired_predicted, PAPI_NULL,}, {0,}}},
-   {PAPI_TLB_DM, {0, {PNE_page_walk_type_data_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
-   FPU(PAPI_FP_INS),
-   FPU(PAPI_FP_OPS),
-   VEC(PAPI_VEC_INS),
-//   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
-   {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
-   {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
-//  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
-// This event fails on Jon Burgoyne's Xeon. 12/05/03
-//   {PAPI_L1_DCA, {0, {PNE_replay_event_L1_data_access, PAPI_NULL,}, {0,}}},
-   {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
-   //   {PAPI_L2_STM, {0, {PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L2_DCM, {0, {PNE_replay_event_L2_data_miss, PAPI_NULL,}, {0,}}},
+/* Table defining PAPI_FP_OPS as x87 uops retired */
+hwi_search_t _papi_hwd_pentium4_FP_X87[] = {
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_x87_FP_uop_tag1, PAPI_NULL, }, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
-/* This is an example of a dense developer notes array. It consists of an array
+/* Table defining PAPI_FP_OPS as SSE_SP uops retired */
+hwi_search_t _papi_hwd_pentium4_FP_SSE_SP[] = {
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_scalar_SP_uop_tag1, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as SSE_DP uops retired */
+hwi_search_t _papi_hwd_pentium4_FP_SSE_DP[] = {
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_scalar_DP_uop_tag1, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as x87 and scalar_SP SSE uops retired */
+hwi_search_t _papi_hwd_pentium4_FP_X87_SSE_SP[] = {
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_scalar_SP_uop_tag1, PNE_x87_FP_uop_tag1, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as x87 and scalar_DP SSE uops retired */
+hwi_search_t _papi_hwd_pentium4_FP_X87_SSE_DP[] = {
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_scalar_DP_uop_tag1, PNE_x87_FP_uop_tag1, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as scalar_SP SSE and scalar_DP SSE uops retired */
+hwi_search_t _papi_hwd_pentium4_FP_SSE_SP_DP[] = {
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus1, PNE_scalar_SP_uop_tag1, PNE_scalar_DP_uop_tag1, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table undefining PAPI_FP_OPS, just as a test */
+hwi_search_t _papi_hwd_pentium4_FP_null[] = {
+   {PAPI_FP_OPS, {0, {PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_VEC_INS as MMX uops */
+hwi_search_t _papi_hwd_pentium4_VEC_MMX[] = {
+   {PAPI_VEC_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus2, PNE_64bit_MMX_uop_tag2, PNE_128bit_MMX_uop_tag2, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_VEC_INS as SSE uops */
+hwi_search_t _papi_hwd_pentium4_VEC_SSE[] = {
+   {PAPI_VEC_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus2, PNE_packed_SP_uop_tag2, PNE_packed_DP_uop_tag2, PAPI_NULL, }, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* These are examples of dense developer notes arrays. Each consists of an array
    of structures containing an event and a note string. Pointers to these strings 
    are inserted into a sparse event description structure at init time. This allows
    the use of rare developer strings with no string copies and very little space
    wasted on unused structure elements.
 */
-hwi_dev_notes_t _papi_hwd_pentium4_mlt2_dev_notes[] = {
+const hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[] = {
 /* preset, note */
-   {PAPI_FP_INS, FPU_DESC},
-   {PAPI_FP_OPS, FPU_DESC},
-   {PAPI_VEC_INS, VEC_DESC},
+   {PAPI_FP_INS, "PAPI_FP_INS counts only retired x87 uops tagged with 0. If you add other native events tagged with 0, their counts will be included in PAPI_FP_INS"},
    {0, NULL}
 };
-hwi_dev_notes_t _papi_hwd_pentium4_m2_dev_notes[] = {
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_X87_dev_notes[] = {
 /* preset, note */
-   {PAPI_FP_INS, FPU_DESC},
-   {PAPI_FP_OPS, FPU_DESC},
-   {PAPI_VEC_INS, VEC_DESC},
+   {PAPI_FP_OPS, "PAPI_FP_OPS counts retired x87 uops tagged with 1."},
    {0, NULL}
 };
-hwi_dev_notes_t _papi_hwd_pentium4_m3_dev_notes[] = {
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_SSE_SP_dev_notes[] = {
 /* preset, note */
-   {PAPI_FP_INS, FPU_DESC},
-   {PAPI_FP_OPS, FPU_DESC},
-   {PAPI_VEC_INS, VEC_DESC},
+   {PAPI_FP_OPS, "PAPI_FP_OPS counts retired scalar_SP SSE uops tagged with 1."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_SSE_DP_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "PAPI_FP_OPS counts retired scalar_DP SSE uops tagged with 1."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_X87_SSE_SP_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "PAPI_FP_OPS counts retired x87 and scalar_SP SSE uops tagged with 1."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_X87_SSE_DP_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "PAPI_FP_OPS counts retired x87 and scalar_DP SSE uops tagged with 1."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_SSE_SP_DP_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "PAPI_FP_OPS counts retired scalar_SP and scalar_DP SSE uops tagged with 1."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_FP_null_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, NULL},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_VEC_MMX_dev_notes[] = {
+/* preset, note */
+   {PAPI_VEC_INS, "PAPI_VEC_INS counts retired 64bit and 128bit MMX uops tagged with 2."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_pentium4_VEC_SSE_dev_notes[] = {
+/* preset, note */
+   {PAPI_VEC_INS, "PAPI_VEC_INS counts retired packed single and double precision SSE uops tagged with 2."},
    {0, NULL}
 };
 
@@ -1376,96 +1439,95 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    return(++i);
 }
 
-void _papi_hwd_fixup_presets(hwi_search_t *p, hwi_dev_notes_t *n)
+#define FP_NONE 0
+#define  FP_X87 1
+#define   FP_SP 2
+#define   FP_DP 4
+void _papi_hwd_fixup_fp(hwi_search_t **s, const hwi_dev_notes_t **n)
 {
-  char *s = getenv("PAPI_PENTIUM4_FP");
-  int count = 0;
-  hwi_search_t t, *tmp;
-  hwi_dev_notes_t tn, *tmpn;
-  char note[PAPI_MAX_STR_LEN];
+   char *str = getenv("PAPI_PENTIUM4_FP");
+   int mask = FP_NONE;
 
-  if ((s == NULL) || (strlen(s) == 0))
-    return;
-
-  memset(&t,0x0,sizeof(t));
-  memset(&tn,0x0,sizeof(tn));
-  memset(note,0x0,sizeof(char)*PAPI_MAX_STR_LEN);
-  t.data.derived = DERIVED_CMPD;
-  t.data.native[count] = PNE_execution_event_nbogus0;
-  count++;
-  if (strstr(s,"X87"))
-    {
-      t.data.native[count] = PNE_x87_FP_uop_tag0;
-      strcat(note,"x87");
-      count++;
-    }
-  if (strstr(s,"SSE_UP_SP"))
-    {
-      t.data.native[count] = PNE_scalar_SP_uop_tag0;
-      if (strlen(note))
-	strcat(note,",");
-      strcat(note,"single precision SSE");
-      count++;
-    }
-  if (strstr(s,"SSE_UP_DP") && (count < 3))
-    {
-      t.data.native[count] = PNE_scalar_DP_uop_tag0;
-      if (strlen(note))
-	strcat(note,",");
-      strcat(note,"double precision SSE");
-      count++;
-    }
-#if 0
-  if (strstr(s,"SSE_P_SP") && (count < 3))
-    {
-      t.data.native[count] = PNE_packed_SP_uop_tag0;
-      count++;
-    }
-  if (strstr(s,"SSE_P_DP") && (count < 3))
-    {
-      t.data.native[count] = PNE_packed_DP_uop_tag0;
-      count++;
-    }
-#endif
-
-  if ((count <= 1) || (count > 3))
-    {
-      PAPIERROR("Improper usage of PAPI_PENTIUM4_FP environment variable");
-      PAPIERROR("Use one or two of X87,SSE_UP_SP,SSE_UP_DP");
+   /* if the env variable isn't set, return the defaults */
+   if ((str == NULL) || (strlen(str) == 0)) {
+      *s = FPU;
+      *n = FPU_DESC;
       return;
-    }
+   }
 
-  tmp = p;
-  while (tmp->event_code)
-    {
-      if (tmp->event_code == PAPI_FP_INS) 
-	{
-	  t.event_code = PAPI_FP_INS;
-	  memcpy(tmp,&t,sizeof(t));
-	}
-      if (tmp->event_code == PAPI_FP_OPS) 
-	{
-	  t.event_code = PAPI_FP_OPS;
-	  memcpy(tmp,&t,sizeof(t));
-	}
-      tmp++;
-    }
+   if (strstr(str,"X87"))    mask |= FP_X87;
+   if (strstr(str,"SSE_SP")) mask |=  FP_SP;
+   if (strstr(str,"SSE_DP")) mask |=  FP_DP;
 
-  if (strlen(note))
-    {
-      tmpn = n;
-      while (tmpn->event_code)
-	{
-	  if (tmpn->event_code == PAPI_FP_INS) 
-	    {
-	      tmpn->dev_note = strdup(note);
-	    }
-	  if (tmpn->event_code == PAPI_FP_OPS) 
-	    {
-	      tmpn->dev_note = strdup(note);
-	    }
-	  tmpn++;
-	}
-    }
+   switch (mask) {
+     case FP_X87:
+        *s = _papi_hwd_pentium4_FP_X87;
+        *n = _papi_hwd_pentium4_FP_X87_dev_notes;
+        break;
+     case FP_SP:
+        *s = _papi_hwd_pentium4_FP_SSE_SP;
+        *n = _papi_hwd_pentium4_FP_SSE_SP_dev_notes;
+        break;
+     case FP_DP:
+        *s = _papi_hwd_pentium4_FP_SSE_DP;
+        *n = _papi_hwd_pentium4_FP_SSE_DP_dev_notes;
+        break;
+     case FP_X87+FP_SP:
+        *s = _papi_hwd_pentium4_FP_X87_SSE_SP;
+        *n = _papi_hwd_pentium4_FP_X87_SSE_SP_dev_notes;
+        break;
+     case FP_X87+FP_DP:
+        *s = _papi_hwd_pentium4_FP_X87_SSE_DP;
+        *n = _papi_hwd_pentium4_FP_X87_SSE_DP_dev_notes;
+        break;
+     case FP_SP+FP_DP:
+        *s = _papi_hwd_pentium4_FP_SSE_SP_DP;
+        *n = _papi_hwd_pentium4_FP_SSE_SP_DP_dev_notes;
+        break;
+     default:
+        PAPIERROR("Improper usage of PAPI_PENTIUM4_FP environment variable");
+        PAPIERROR("Use one or two of X87,SSE_SP,SSE_DP");
+        *s = NULL;
+        *n = NULL;
+/* for testing purposes: can we delete an existing event? 
+        *s = _papi_hwd_pentium4_FP_null;
+        *n = _papi_hwd_pentium4_FP_null_dev_notes;
+*/
+   }
 }
+#define VEC_NONE 0
+#define  VEC_MMX 1
+#define  VEC_SSE 2
+void _papi_hwd_fixup_vec(hwi_search_t **s, const hwi_dev_notes_t **n)
+{
+   char *str = getenv("PAPI_PENTIUM4_VEC");
+   int mask = VEC_NONE;
+
+   /* if the env variable isn't set, return the default */
+   if ((str == NULL) || (strlen(str) == 0)) {
+      *s = VEC;
+      *n = VEC_DESC;
+      return;
+   }
+
+   if (strstr(str,"MMX"))    mask = VEC_MMX;
+   else if (strstr(str,"SSE")) mask |=  VEC_SSE;
+
+   switch (mask) {
+     case VEC_MMX:
+        *s = _papi_hwd_pentium4_VEC_MMX;
+        *n = _papi_hwd_pentium4_VEC_MMX_dev_notes;
+        break;
+     case VEC_SSE:
+        *s = _papi_hwd_pentium4_VEC_SSE;
+        *n = _papi_hwd_pentium4_VEC_SSE_dev_notes;
+        break;
+     default:
+        PAPIERROR("Improper usage of PAPI_PENTIUM4_VEC environment variable");
+        PAPIERROR("Use either SSE or MMX");
+        *s = NULL;
+        *n = NULL;
+   }
+}
+
 #endif

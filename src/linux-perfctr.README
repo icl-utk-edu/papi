@@ -90,26 +90,26 @@ you need to recompile your kernel or buy a real CPU. ;-)
 Floating point counts on the Pentium 4 series
 ---------------------------------------------
 
-As you may or may not know, the Pentium 4 can generate floating point
-instructions either through the x87 hardware or with SSE. Furthermore with
-SSE it can generate packed (multiple operands in one 128-bit register) or
-unpacked (signal operand in one 128-bit register). Depending on your compiler
-you will get different instructions. In order to enable PAPI to count these,
-we have introduced 2 methods.
+The Pentium 4 can generate floating point
+instructions either through the x87 floating point unit or with SSE instructions.
+Furthermore SSE can generate either packed (multiple operands in one 128-bit 
+register) or unpacked (signal operand in one 128-bit register) instructions. 
+Depending on your compiler and settings you will get different instruction mixes. 
 
-1) The PAPI_PENTIUM4_FP environment variable.
+PAPI provides 2 preset events to count floating point operations:
+- PAPI_FP_INS counts intstructions passing through the floating point unit;
+- PAPI_FP_OPS counts something closer to theoretical floating point operations.
 
-   Set this to one or two of the following, and it will change the
-   behavior of PAPI_FP_INS and PAPI_FP_OPS.
+To minimize the overlap and maximize the usefulness of these two events on 
+Pentium 4, we have made the following choices:
+- PAPI_FP_INS always counts only x87 floating point operations.
+- PAPI_FP_OPS counts can be customized as discussed below. 
 
-   X87: count all x87 instructions
-   SSE_UP_SP: count all unpacked SSE single precision instructions
-   SSE_UP_DP: count all unpacked SSE double precision instructions
+Further complicating things is that the Pentium 4 hardware is too restrictive 
+to count all these modes at once, so a decision must be made about what to count.
+In order to enable PAPI to count these various mixes, we support 2 methods.
 
-   Do to the design of the register set, only 2 of the three are countable
-   at one time. Sorry folks.
-
-2) The PAPI_PENTIUM4_FP_xxx defines.
+1) The PAPI_PENTIUM4_FP_xxx defines.
 
    Set these in the EVENTFLAGS of either the Makefile.linux-perfctr-p4 or
    Makefile.linux-perfctr-em64t.
@@ -119,20 +119,37 @@ we have introduced 2 methods.
    -DPAPI_PENTIUM4_FP_X87_SSE_DP
    -DPAPI_PENTIUM4_FP_SSE_SP_DP
 
-   The default for Nocona/EM64T/Pentium 4 Model 3 is:
+   The predefined value for Nocona/EM64T/Pentium 4 Model 3 is:
 
 	 -DPAPI_PENTIUM4_FP_X87_SSE_DP.
 
-   The default for anything else is:
+   The predefined value for anything else is:
 
 	 -DPAPI_PENTIUM4_FP_X87.
+
+   If nothing is defined, the substrate defaults to:
+
+	 -DPAPI_PENTIUM4_FP_X87_SSE_DP.
+
+2) The PAPI_PENTIUM4_FP environment variable.
+
+   Set this to one or two of the following, and it will change the
+   behavior of PAPI_FP_OPS.
+
+   X87: count all x87 instructions
+   SSE_SP: count all unpacked SSE single precision instructions
+   SSE_DP: count all unpacked SSE double precision instructions
+
+   Due to the design of the register set, only 2 of the three are countable
+   at one time. Sorry folks.
+
 
 Vector instruction counts on the Pentium 4 series
 -------------------------------------------------
 
 PAPI can count 2 different types of vector instructions on the Pentium 4.
 Either MMX instructions or packed SSE floating point instructions. These
-are controlled with a compile time option.
+are supported with 2 methods, in a similar fashion to floating point events described above.
 
 1) The PAPI_PENTIUM4_VEC_xxx defines.
 
@@ -145,4 +162,16 @@ are controlled with a compile time option.
    The current default for all platforms is:
 
 	 -DPAPI_PENTIUM4_VEC_SSE.
+
+   If nothing is defined, the substrate defaults to:
+
+	 -DPAPI_PENTIUM4_VEC_SSE.
+
+2) The PAPI_PENTIUM4_VEC environment variable.
+
+   Set this to either of the following, and it will change the
+   behavior of PAPI_VEC_INS.
+
+   SSE: count all packed SSE SP and DP instructions
+   MMX: count all 64 and 128 bit MMX instructions
 
