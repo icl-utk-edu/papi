@@ -8,12 +8,10 @@ TARGETS = serial multiplex_and_pthreads
 
 CFLAGS  = -Ipfmon-1.1/include -Ipfmon-1.1/libpfm -I. -Wall -DDEBUG
 LIBPFM  = pfmon-1.1/libpfm
-#TOPTFLAGS  = -O0 -g0
-TOPTFLAGS  = -O0 -g3
+TOPTFLAGS  = -O0 -g0
 FFLAGS	=  -Vaxlib
 LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
-#OPTFLAGS= -O3 -g0
-OPTFLAGS= -g3
+OPTFLAGS= -O3 -g0
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 CC_SHR  = gcc -shared -fpic
