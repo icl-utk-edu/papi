@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <sys/ucontext.h>
 
-#include <linux/unistd.h>	
+#include <linux/unistd.h>
 #include <asm/bitops.h>
 #include <asm/system.h>
 
@@ -32,32 +32,32 @@
 #endif
 
 #ifdef _WIN32
-  #define inline_static static __inline
-  #include "cpuinfo.h"
-  #include "pmclib.h"
+#define inline_static static __inline
+#include "cpuinfo.h"
+#include "pmclib.h"
 #else
-  #define inline_static inline static
+#define inline_static inline static
 #endif
 
 /* Per event data structure for each event */
 
 #ifdef __i386__
 typedef struct P4_perfctr_event {
-  unsigned pmc_map;
-  unsigned evntsel;
-  unsigned evntsel_aux;
-  unsigned pebs_enable;
-  unsigned pebs_matrix_vert;
-  unsigned ireset;
+   unsigned pmc_map;
+   unsigned evntsel;
+   unsigned evntsel_aux;
+   unsigned pebs_enable;
+   unsigned pebs_matrix_vert;
+   unsigned ireset;
 } P4_perfctr_event_t;
 #endif
 
 #ifdef __x86_64__
 typedef struct P4_perfctr_event {
-  unsigned pmc_map;
-  unsigned evntsel;
-  unsigned evntsel_aux;
-  unsigned ireset;
+   unsigned pmc_map;
+   unsigned evntsel;
+   unsigned evntsel_aux;
+   unsigned ireset;
 } P4_perfctr_event_t;
 #endif
 
@@ -94,51 +94,51 @@ any other native event.
 */
 
 typedef struct P4_perfctr_codes {
-  P4_perfctr_event_t data[MAX_COUNTER_TERMS];
+   P4_perfctr_event_t data[MAX_COUNTER_TERMS];
 } P4_perfctr_preset_t;
 
 typedef struct P4_register {
-  unsigned counter[2];	    // bitmap of valid counters for each escr
-  unsigned escr[2];	    // bit offset for each of 2 valid escrs
-  unsigned cccr;	    // value to be loaded into cccr register
-  unsigned event;	    // value defining event to be loaded into escr register
-  unsigned pebs_enable;	    // flag for PEBS counting
-  unsigned pebs_matrix_vert;// flag for PEBS_MATRIX_VERT, whatever that is 
-  unsigned ireset;	    // I don't really know what this does
+   unsigned counter[2];         // bitmap of valid counters for each escr
+   unsigned escr[2];            // bit offset for each of 2 valid escrs
+   unsigned cccr;               // value to be loaded into cccr register
+   unsigned event;              // value defining event to be loaded into escr register
+   unsigned pebs_enable;        // flag for PEBS counting
+   unsigned pebs_matrix_vert;   // flag for PEBS_MATRIX_VERT, whatever that is 
+   unsigned ireset;             // I don't really know what this does
 } P4_register_t;
 
 /* defines the fields needed by _papi_hwd_allocate_registers
    to map the counter set */
 typedef struct P4_reg_alloc {
-  P4_register_t ra_bits;    /* Info about this native event mapping */
-  unsigned ra_selector;	    /* Bit mask showing which counters can carry this metric */
-  unsigned ra_rank;	    /* How many counters can carry this metric */
-  unsigned ra_escr[2];	    /* Bit field array showing which (of 45) esc registers can carry this metric */
+   P4_register_t ra_bits;       /* Info about this native event mapping */
+   unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
+   unsigned ra_rank;            /* How many counters can carry this metric */
+   unsigned ra_escr[2];         /* Bit field array showing which (of 45) esc registers can carry this metric */
 } P4_reg_alloc_t;
 
 typedef struct hwd_p4_native_map {
-  char *name;		// ASCII name of the native event
-  char *description;	// ASCII description of the native event
-  P4_register_t bits;	// description of resources needed by this event
-  int mask;		// contains all valid mask bits for this event group
-  int synonym;		// index of next synonym if event can be multiply encoded 
+   char *name;                  // ASCII name of the native event
+   char *description;           // ASCII description of the native event
+   P4_register_t bits;          // description of resources needed by this event
+   int mask;                    // contains all valid mask bits for this event group
+   int synonym;                 // index of next synonym if event can be multiply encoded 
 } hwd_p4_native_map_t;
 
 typedef struct hwd_p4_mask {
-  int bit_pos;		    // bit position of mask bit
-  char *name;		    // ASCII name of the native event
-  char *description;	    // ASCII description of the native event
+   int bit_pos;                 // bit position of mask bit
+   char *name;                  // ASCII name of the native event
+   char *description;           // ASCII description of the native event
 } hwd_p4_mask_t;
 
 typedef struct P4_perfctr_control {
-  struct vperfctr_control control; 
-  struct perfctr_sum_ctrs state;
+   struct vperfctr_control control;
+   struct perfctr_sum_ctrs state;
 } P4_perfctr_control_t;
 
 /* Per thread data structure for thread level counters */
 
 typedef struct P4_perfctr_context {
-  struct vperfctr *perfctr;
+   struct vperfctr *perfctr;
 /*  P4_perfctr_control_t start; */
 } P4_perfctr_context_t;
 
@@ -162,7 +162,7 @@ typedef P4_perfctr_event_t hwd_event_t;
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium 4"
- 
+
 #define PAPI_VENDOR_UNKNOWN -1
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
@@ -234,5 +234,3 @@ extern int sigrelse(int);
 
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
 extern int _papi_hwd_get_system_info(void);
-
-

@@ -11,107 +11,107 @@
 // list of all possible (45) ESCR registers
 // these values are used as bit-shifters to build a mask of ESCRs in use
 // the ESCR is a limiting resource, just like counters
-enum { 
-  MSR_BSU_ESCR0 = 0,
-  MSR_BSU_ESCR1,
-  MSR_FSB_ESCR0,
-  MSR_FSB_ESCR1,
-  MSR_FIRM_ESCR0,
-  MSR_FIRM_ESCR1,
-  MSR_FLAME_ESCR0,
-  MSR_FLAME_ESCR1,
-  MSR_DAC_ESCR0,
-  MSR_DAC_ESCR1,
-  MSR_MOB_ESCR0,
-  MSR_MOB_ESCR1,
-  MSR_PMH_ESCR0,
-  MSR_PMH_ESCR1,
-  MSR_SAAT_ESCR0,
-  MSR_SAAT_ESCR1,
-  MSR_U2L_ESCR0,
-  MSR_U2L_ESCR1,
-  MSR_BPU_ESCR0,
-  MSR_BPU_ESCR1,
-  MSR_IS_ESCR0,
-  MSR_IS_ESCR1,
-  MSR_ITLB_ESCR0,
-  MSR_ITLB_ESCR1,
-  MSR_CRU_ESCR0,
-  MSR_CRU_ESCR1,
-  MSR_IQ_ESCR0,
-  MSR_IQ_ESCR1,
-  MSR_RAT_ESCR0,
-  MSR_RAT_ESCR1,
-  MSR_SSU_ESCR0,
-  MSR_MS_ESCR0,
-  MSR_MS_ESCR1,
-  MSR_TBPU_ESCR0,
-  MSR_TBPU_ESCR1,
-  MSR_TC_ESCR0,
-  MSR_TC_ESCR1,
-  MSR_IX_ESCR0,
-  MSR_IX_ESCR1,
-  MSR_ALF_ESCR0,
-  MSR_ALF_ESCR1,
-  MSR_CRU_ESCR2,
-  MSR_CRU_ESCR3,
-  MSR_CRU_ESCR4,
-  MSR_CRU_ESCR5
+enum {
+   MSR_BSU_ESCR0 = 0,
+   MSR_BSU_ESCR1,
+   MSR_FSB_ESCR0,
+   MSR_FSB_ESCR1,
+   MSR_FIRM_ESCR0,
+   MSR_FIRM_ESCR1,
+   MSR_FLAME_ESCR0,
+   MSR_FLAME_ESCR1,
+   MSR_DAC_ESCR0,
+   MSR_DAC_ESCR1,
+   MSR_MOB_ESCR0,
+   MSR_MOB_ESCR1,
+   MSR_PMH_ESCR0,
+   MSR_PMH_ESCR1,
+   MSR_SAAT_ESCR0,
+   MSR_SAAT_ESCR1,
+   MSR_U2L_ESCR0,
+   MSR_U2L_ESCR1,
+   MSR_BPU_ESCR0,
+   MSR_BPU_ESCR1,
+   MSR_IS_ESCR0,
+   MSR_IS_ESCR1,
+   MSR_ITLB_ESCR0,
+   MSR_ITLB_ESCR1,
+   MSR_CRU_ESCR0,
+   MSR_CRU_ESCR1,
+   MSR_IQ_ESCR0,
+   MSR_IQ_ESCR1,
+   MSR_RAT_ESCR0,
+   MSR_RAT_ESCR1,
+   MSR_SSU_ESCR0,
+   MSR_MS_ESCR0,
+   MSR_MS_ESCR1,
+   MSR_TBPU_ESCR0,
+   MSR_TBPU_ESCR1,
+   MSR_TC_ESCR0,
+   MSR_TC_ESCR1,
+   MSR_IX_ESCR0,
+   MSR_IX_ESCR1,
+   MSR_ALF_ESCR0,
+   MSR_ALF_ESCR1,
+   MSR_CRU_ESCR2,
+   MSR_CRU_ESCR3,
+   MSR_CRU_ESCR4,
+   MSR_CRU_ESCR5
 };
 
 
 
 enum {
 // non-retirement events; from Table A-1
-  P4_TC_deliver_mode = 0,
-  P4_BPU_fetch_request,
-  P4_ITLB_reference,
-  P4_memory_cancel,
-  P4_memory_complete,
-  P4_load_port_replay,
-  P4_store_port_replay,
-  P4_MOB_load_replay,
-  P4_page_walk_type,
-  P4_BSQ_cache_reference,
-  P4_IOQ_allocation,
-  P4_IOQ_active_entries,
-  P4_FSB_data_activity,
-  P4_BSQ_allocation,
-  P4_bsq_active_entries,
-  P4_SSE_input_assist,
-  P4_packed_SP_uop,
-  P4_packed_DP_uop,
-  P4_scalar_SP_uop,
-  P4_scalar_DP_uop,
-  P4_64bit_MMX_uop,
-  P4_128bit_MMX_uop,
-  P4_x87_FP_uop,
-  P4_x87_SIMD_moves_uop,
-  P4_global_power_events,
-  P4_tc_ms_xfer,
-  P4_uop_queue_writes,
-  P4_retired_mispred_branch_type,
-  P4_retired_branch_type,
-  P4_resource_stall,
-  P4_WC_Buffer,
-  P4_b2b_cycles,
-  P4_bnr,
-  P4_snoop,
-  P4_response,
+   P4_TC_deliver_mode = 0,
+   P4_BPU_fetch_request,
+   P4_ITLB_reference,
+   P4_memory_cancel,
+   P4_memory_complete,
+   P4_load_port_replay,
+   P4_store_port_replay,
+   P4_MOB_load_replay,
+   P4_page_walk_type,
+   P4_BSQ_cache_reference,
+   P4_IOQ_allocation,
+   P4_IOQ_active_entries,
+   P4_FSB_data_activity,
+   P4_BSQ_allocation,
+   P4_bsq_active_entries,
+   P4_SSE_input_assist,
+   P4_packed_SP_uop,
+   P4_packed_DP_uop,
+   P4_scalar_SP_uop,
+   P4_scalar_DP_uop,
+   P4_64bit_MMX_uop,
+   P4_128bit_MMX_uop,
+   P4_x87_FP_uop,
+   P4_x87_SIMD_moves_uop,
+   P4_global_power_events,
+   P4_tc_ms_xfer,
+   P4_uop_queue_writes,
+   P4_retired_mispred_branch_type,
+   P4_retired_branch_type,
+   P4_resource_stall,
+   P4_WC_Buffer,
+   P4_b2b_cycles,
+   P4_bnr,
+   P4_snoop,
+   P4_response,
 // at retirement events; from Table A-2
-  P4_front_end_event,
-  P4_execution_event,
-  P4_replay_event,
-  P4_instr_retired,
-  P4_uops_retired,
-  P4_uop_type,
-  P4_branch_retired,
-  P4_mispred_branch_retired,
-  P4_x87_assist,
-  P4_machine_clear,
+   P4_front_end_event,
+   P4_execution_event,
+   P4_replay_event,
+   P4_instr_retired,
+   P4_uops_retired,
+   P4_uop_type,
+   P4_branch_retired,
+   P4_mispred_branch_retired,
+   P4_x87_assist,
+   P4_machine_clear,
 // vectors for custom and user tables
-  P4_custom_event = 0xFE,
-  P4_user_event = 0xFF
+   P4_custom_event = 0xFE,
+   P4_user_event = 0xFF
 };
 
 
@@ -126,14 +126,14 @@ enum {
 
 // mask bits for TC_deliver_mode
 enum {
-  DD = 0,
-  DB,
-  DI,
-  BD,
-  BB,
-  BI,
-  ID,
-  IB
+   DD = 0,
+   DB,
+   DI,
+   BD,
+   BB,
+   BI,
+   ID,
+   IB
 };
 
 /* BPU_fetch_request */
@@ -153,9 +153,9 @@ enum {
 
 // mask bits for ITLB_reference
 enum {
-  HIT = 0,
-  MISS,
-  HIT_UC
+   HIT = 0,
+   MISS,
+   HIT_UC
 };
 
 /* memory_cancel */
@@ -166,8 +166,8 @@ enum {
 
 // mask bits for memory_cancel
 enum {
-  ST_RB_FULL = 2,
-  CONF_64K
+   ST_RB_FULL = 2,
+   CONF_64K
 };
 
 /* memory_complete */
@@ -178,8 +178,8 @@ enum {
 
 // mask bits for memory_complete
 enum {
-  LSC = 0,
-  SSC
+   LSC = 0,
+   SSC
 };
 
 /* load_port_replay */
@@ -208,10 +208,10 @@ enum {
 
 // mask bits for MOB_load_replay
 enum {
-  NO_STA = 1,
-  NO_STD = 3,
-  PARTIAL_DATA,
-  UNALGN_ADDR
+   NO_STA = 1,
+   NO_STD = 3,
+   PARTIAL_DATA,
+   UNALGN_ADDR
 };
 
 /* page_walk_type */
@@ -222,8 +222,8 @@ enum {
 
 // mask bits for page_walk_type
 enum {
-  DTMISS = 0,
-  ITMISS
+   DTMISS = 0,
+   ITMISS
 };
 
 /* BSQ_cache_reference */
@@ -234,15 +234,15 @@ enum {
 
 // mask bits for BSQ_cache_reference
 enum {
-  RD_2ndL_HITS = 0,
-  RD_2ndL_HITE,
-  RD_2ndL_HITM,
-  RD_3rdL_HITS,
-  RD_3rdL_HITE,
-  RD_3rdL_HITM,
-  RD_2ndL_MISS = 8,
-  RD_3rdL_MISS,
-  WR_2ndL_MISS
+   RD_2ndL_HITS = 0,
+   RD_2ndL_HITE,
+   RD_2ndL_HITM,
+   RD_3rdL_HITS,
+   RD_3rdL_HITE,
+   RD_3rdL_HITM,
+   RD_2ndL_MISS = 8,
+   RD_3rdL_MISS,
+   WR_2ndL_MISS
 };
 
 /* IOQ_allocation */
@@ -253,22 +253,22 @@ enum {
 
 // mask bits for IOQ_allocation
 enum {
-  BUS_RQ_TYP0 = 0,
-  BUS_RQ_TYP1,
-  BUS_RQ_TYP2,
-  BUS_RQ_TYP3,
-  BUS_RQ_TYP4,
-  ALL_READ,
-  ALL_WRITE,
-  MEM_UC,
-  MEM_WC,
-  MEM_WT,
-  MEM_WP,
-  MEM_WB,
+   BUS_RQ_TYP0 = 0,
+   BUS_RQ_TYP1,
+   BUS_RQ_TYP2,
+   BUS_RQ_TYP3,
+   BUS_RQ_TYP4,
+   ALL_READ,
+   ALL_WRITE,
+   MEM_UC,
+   MEM_WC,
+   MEM_WT,
+   MEM_WP,
+   MEM_WB,
 
-  OWN = 13,
-  OTHER,
-  PREFETCH
+   OWN = 13,
+   OTHER,
+   PREFETCH
 };
 
 /* IOQ_active_entries */
@@ -287,12 +287,12 @@ enum {
 
 // mask bits for FSB_data_activity
 enum {
-  DRDY_DRV = 0,
-  DRDY_OWN,
-  DRDY_OTHER,
-  DBSY_DRV,
-  DBSY_OWN,
-  DBSY_OTHER
+   DRDY_DRV = 0,
+   DRDY_OWN,
+   DRDY_OTHER,
+   DBSY_DRV,
+   DBSY_OWN,
+   DBSY_OTHER
 };
 
 /* BSQ_allocation */
@@ -302,20 +302,20 @@ enum {
 
 // mask bits for BSQ_allocation
 enum {
-  REQ_TYPE0 = 0,
-  REQ_TYPE1,
-  REQ_LEN0,
-  REQ_LEN1,
+   REQ_TYPE0 = 0,
+   REQ_TYPE1,
+   REQ_LEN0,
+   REQ_LEN1,
 
-  REQ_IO_TYPE = 5,
-  REQ_LOCK_TYPE,
-  REQ_CACHE_TYPE,
-  REQ_SPLIT_TYPE,
-  REQ_DEM_TYPE,
-  REQ_ORD_TYPE,
-  MEM_TYPE0,
-  MEM_TYPE1,
-  MEM_TYPE2,
+   REQ_IO_TYPE = 5,
+   REQ_LOCK_TYPE,
+   REQ_CACHE_TYPE,
+   REQ_SPLIT_TYPE,
+   REQ_DEM_TYPE,
+   REQ_ORD_TYPE,
+   MEM_TYPE0,
+   MEM_TYPE1,
+   MEM_TYPE2,
 };
 
 /* bsq_active_entries */
@@ -334,11 +334,11 @@ enum {
 
 // mask bits for many uop types
 enum {
-  TAG0 = 5, // the tag bits get mapped into the ESCR Tag Value bits,
-  TAG1,	    // not the ESCR Event Mask bits like all other tags.
-  TAG2,
-  TAG3,
-  ALL = 15
+   TAG0 = 5,                    // the tag bits get mapped into the ESCR Tag Value bits,
+   TAG1,                        // not the ESCR Event Mask bits like all other tags.
+   TAG2,
+   TAG3,
+   ALL = 15
 };
 
 /* packed_SP_uop */
@@ -391,8 +391,8 @@ enum {
 
 // mask bits for x87_SIMD_moves_uop
 enum {
-  ALLP0 = 3,
-  ALLP2
+   ALLP0 = 3,
+   ALLP2
 };
 
 /* global_power_events	*/
@@ -421,9 +421,9 @@ enum {
 
 // mask bits for uop_queue_writes
 enum {
-  FROM_TC_BUILD = 0,
-  FROM_TC_DELIVER,
-  FROM_ROM
+   FROM_TC_BUILD = 0,
+   FROM_TC_DELIVER,
+   FROM_ROM
 };
 
 /* retired_mispred_branch_type */
@@ -434,10 +434,10 @@ enum {
 
 // mask bits for retired_mispred_branch_type
 enum {
-  CONDITIONAL = 1,
-  CALL,
-  RETURN,
-  INDIRECT
+   CONDITIONAL = 1,
+   CALL,
+   RETURN,
+   INDIRECT
 };
 
 /* retired_branch_type */
@@ -466,8 +466,8 @@ enum {
 
 // mask bits for WC_Buffer
 enum {
-  WCB_EVICTS = 0,
-  WCB_FULL_EVICT
+   WCB_EVICTS = 0,
+   WCB_FULL_EVICT
 };
 
 /* b2b_cycles */
@@ -505,8 +505,8 @@ enum {
 
 // mask bits for front_end_events
 enum {
-  NBOGUS = 0,
-  BOGUS
+   NBOGUS = 0,
+   BOGUS
 };
 
 /* execution_event */
@@ -517,14 +517,14 @@ enum {
 
 // mask bits for execution_event
 enum {
-  NBOGUS0 = 0,
-  NBOGUS1,
-  NBOGUS2,
-  NBOGUS3,
-  BOGUS0,
-  BOGUS1,
-  BOGUS2,
-  BOGUS3
+   NBOGUS0 = 0,
+   NBOGUS1,
+   NBOGUS2,
+   NBOGUS3,
+   BOGUS0,
+   BOGUS1,
+   BOGUS2,
+   BOGUS3
 };
 
 /* replay_event */
@@ -553,10 +553,10 @@ enum {
 
 // mask bits for instr_retired
 enum {
-  NBOGUSNTAG = 0,
-  NBOGUSTAG,
-  BOGUSNTAG,
-  BOGUSTAG
+   NBOGUSNTAG = 0,
+   NBOGUSTAG,
+   BOGUSNTAG,
+   BOGUSTAG
 };
 
 /* uops_retired */
@@ -576,8 +576,8 @@ enum {
 
 // mask bits for uop_type
 enum {
-  TAGLOADS = 1,
-  TAGSTORES
+   TAGLOADS = 1,
+   TAGSTORES
 };
 
 /* branch_retired */
@@ -588,10 +588,10 @@ enum {
 
 // mask bits for uop_type
 enum {
-  MMNP = 0,
-  MMNM,
-  MMTP,
-  MMTM
+   MMNP = 0,
+   MMNM,
+   MMTP,
+   MMTM
 };
 
 /* mispred_branch_retired */
@@ -609,11 +609,11 @@ enum {
 
 // mask bits for x87_assist
 enum {
-  FPSU = 0,
-  FPSO,
-  POAO,
-  POAU,
-  PREA
+   FPSU = 0,
+   FPSO,
+   POAO,
+   POAU,
+   PREA
 };
 
 /* machine_clear */
@@ -624,9 +624,9 @@ enum {
 
 // mask bits for machine_clear
 enum {
-  CLEAR = 0,
-  MOCLEAR = 2,
-  SMCLEAR
+   CLEAR = 0,
+   MOCLEAR = 2,
+   SMCLEAR
 };
 
 /* ESCR bit fields */
@@ -690,5 +690,4 @@ enum {
 #define CTR236  COUNTER(12) | COUNTER(13) | COUNTER(16)
 #define CTR457  COUNTER(14) | COUNTER(15) | COUNTER(17)
 
-#endif // _P4_EVENTS
-
+#endif                          // _P4_EVENTS

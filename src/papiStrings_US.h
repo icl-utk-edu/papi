@@ -66,8 +66,8 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_HW_INT_dsc  "Hardware interrupts"
 #define PAPI_BR_UCN_dsc  "Unconditional branch instructions"
 #define PAPI_BR_CN_dsc   "Conditional branch instructions"
-#define PAPI_BR_TKN_dsc  "Conditional branch instructions taken" 
-#define PAPI_BR_NTK_dsc  "Conditional branch instructions not taken" 
+#define PAPI_BR_TKN_dsc  "Conditional branch instructions taken"
+#define PAPI_BR_NTK_dsc  "Conditional branch instructions not taken"
 #define PAPI_BR_MSP_dsc  "Conditional branch instructions mispredicted"
 #define PAPI_BR_PRC_dsc  "Conditional branch instructions correctly predicted"
 #define PAPI_FMA_INS_dsc "FMA instructions completed"
@@ -133,7 +133,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 /* labels for GUI-based performance monitoring tools         */
 /* It should be synchronized with "papiStdEventDefs.h"       */
 /*************************************************************/
-/*                        1234567890123456789                */ 
+/*                        1234567890123456789                */
 #define PAPI_L1_DCM_lbl  "L1D cache misses"
 #define PAPI_L1_ICM_lbl  "L1I cache misses"
 #define PAPI_L2_DCM_lbl  "L2D cache misses"
@@ -178,8 +178,8 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_HW_INT_lbl  "Hdw interrupts"
 #define PAPI_BR_UCN_lbl  "Uncond branch"
 #define PAPI_BR_CN_lbl   "Cond branch"
-#define PAPI_BR_TKN_lbl  "Cond branch taken" 
-#define PAPI_BR_NTK_lbl  "Cond br not taken" 
+#define PAPI_BR_TKN_lbl  "Cond branch taken"
+#define PAPI_BR_NTK_lbl  "Cond br not taken"
 #define PAPI_BR_MSP_lbl  "Cond br mspredictd"
 #define PAPI_BR_PRC_lbl  "Cond br predicted"
 #define PAPI_FMA_INS_lbl "FMAs completed"
@@ -248,11 +248,11 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_EINVAL_dsc     "Invalid argument"
 #define PAPI_ENOMEM_dsc     "Insufficient memory"
 #define PAPI_ESYS_dsc       "A System/C library call failed"
-#define PAPI_ESBSTR_dsc     "Not supported by substrate" 
+#define PAPI_ESBSTR_dsc     "Not supported by substrate"
 #define PAPI_ECLOST_dsc     "Access to the counters was lost or interrupted"
 #define PAPI_EBUG_dsc       "Internal error, please send mail to the developers"
 #define PAPI_ENOEVNT_dsc    "Event does not exist"
-#define PAPI_ECNFLCT_dsc    "Event exists, but cannot be counted due to hardware resource limits" 
+#define PAPI_ECNFLCT_dsc    "Event exists, but cannot be counted due to hardware resource limits"
 #define PAPI_ENOTRUN_dsc    "EventSet is currently not running"
 #define PAPI_EISRUN_dsc     "EventSet is currently counting"
 #define PAPI_ENOEVST_dsc    "No such EventSet available"

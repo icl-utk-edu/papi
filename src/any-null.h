@@ -19,41 +19,40 @@
 #define PERF_EVNT_MASK 0xff
 
 typedef struct _any_command {
-  unsigned int cmd[MAX_COUNTERS];
+   unsigned int cmd[MAX_COUNTERS];
 } any_command_t;
 
 typedef struct hwd_control_state {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Is this event derived? */
-  int derived;   
-  /* Buffer to pass to the kernel to control the counters */
-  any_command_t counter_cmd;
+   /* Which counters to use? Bits encode counters to use, may be duplicates */
+   int selector;
+   /* Is this event derived? */
+   int derived;
+   /* Buffer to pass to the kernel to control the counters */
+   any_command_t counter_cmd;
 } hwd_control_state_t;
 
 #include "papi_internal.h"
 
 typedef struct hwd_search {
-  /* PAPI preset code */
-  unsigned int papi_code;
-  /* Is this derived */
-  int derived_op;
-  /* If so, what is the index of the operand */
-  int operand_index;
-  /* Events to encode */
-  unsigned int findme[MAX_COUNTERS];
+   /* PAPI preset code */
+   unsigned int papi_code;
+   /* Is this derived */
+   int derived_op;
+   /* If so, what is the index of the operand */
+   int operand_index;
+   /* Events to encode */
+   unsigned int findme[MAX_COUNTERS];
 } hwd_search_t;
 
 typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;  
-  /* Is this event derived? */
-  unsigned char derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  any_command_t counter_cmd;
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
+   /* Which counters to use? Bits encode counters to use, may be duplicates */
+   unsigned char selector;
+   /* Is this event derived? */
+   unsigned char derived;
+   /* If the derived event is not associative, this index is the lead operand */
+   unsigned char operand_index;
+   /* Buffer to pass to the kernel to control the counters */
+   any_command_t counter_cmd;
+   /* If it exists, then this is the description of this event */
+   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
-

@@ -30,30 +30,30 @@ typedef int hwd_register_t;
 typedef int hwd_reg_alloc_t;
 
 typedef struct papi_cpc_event {
-  /* Structure to libcpc */
-  cpc_event_t cmd;
-  /* Flags to kernel */
-  int flags;  
+   /* Structure to libcpc */
+   cpc_event_t cmd;
+   /* Flags to kernel */
+   int flags;
 } papi_cpc_event_t;
 
 typedef struct hwd_control_state {
-  /* Buffer to pass to the kernel to control the counters */
-  papi_cpc_event_t counter_cmd;
-  /* Buffer to save the values read from the hardware counter */
-  long_long values[MAX_COUNTERS];
+   /* Buffer to pass to the kernel to control the counters */
+   papi_cpc_event_t counter_cmd;
+   /* Buffer to save the values read from the hardware counter */
+   long_long values[MAX_COUNTERS];
 } hwd_control_state_t;
 
 typedef int hwd_register_map_t;
 
 typedef struct _native_info {
-  /* native name */
-  char name[40];
-  /* Buffer to pass to the kernel to control the counters */
-  int encoding[MAX_COUNTERS];
+   /* native name */
+   char name[40];
+   /* Buffer to pass to the kernel to control the counters */
+   int encoding[MAX_COUNTERS];
 } native_info_t;
 
-typedef siginfo_t  hwd_siginfo_t;
-typedef ucontext_t  hwd_ucontext_t;
+typedef siginfo_t hwd_siginfo_t;
+typedef ucontext_t hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->uc_mcontext.gregs[REG_PC])
 #define GET_OVERFLOW_CTR_BITS(context) \
@@ -77,5 +77,4 @@ extern rwlock_t lock[PAPI_MAX_LOCK];
 
 #define _papi_hwd_lock(lck) rw_wrlock(&lock[lck]);
 
-#define _papi_hwd_unlock(lck)   rw_unlock(&lock[lck]); 
-
+#define _papi_hwd_unlock(lck)   rw_unlock(&lock[lck]);

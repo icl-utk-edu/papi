@@ -5,13 +5,13 @@
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
-*/  
+*/
 
 #ifdef _WIN32
   /* Define SUBSTRATE to map to linux-perfctr.h
    * since we haven't figured out how to assign a value 
    * to a label at make inside the Windows IDE */
-  #define SUBSTRATE "linux-perfctr.h"
+#define SUBSTRATE "linux-perfctr.h"
 #endif
 
 #include "papi.h"
@@ -39,7 +39,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 /**************************/
 
 /******************************/
-/* BEGIN STOLEN/MODIFIED CODE */ 
+/* BEGIN STOLEN/MODIFIED CODE */
 /******************************/
 
 /*
@@ -71,225 +71,216 @@ extern papi_mdi_t _papi_hwi_system_info;
 
 inline int _papi_hwd_update_shlib_info(void)
 {
-    char fname[PATH_MAX];
-    unsigned long writable = 0, total = 0, shared = 0, l_index = 0, counting = 1;
-    PAPI_address_map_t *tmp = NULL;
-    FILE *f;
+   char fname[PATH_MAX];
+   unsigned long writable = 0, total = 0, shared = 0, l_index = 0, counting = 1;
+   PAPI_address_map_t *tmp = NULL;
+   FILE *f;
 
-    sprintf(fname, "/proc/%ld/maps", (long)_papi_hwi_system_info.pid);
-    f = fopen(fname, "r");
+   sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
+   f = fopen(fname, "r");
 
-    if(!f)
-      error_return(PAPI_ESYS,"fopen(%s) returned < 0",fname);      
+   if (!f)
+      error_return(PAPI_ESYS, "fopen(%s) returned < 0", fname);
 
-again:
-    while(!feof(f)) {
-	char buf[PATH_MAX+100], perm[5], dev[6], mapname[PATH_MAX];
-	unsigned long begin, end, size, inode, foo;
+ again:
+   while (!feof(f)) {
+      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX];
+      unsigned long begin, end, size, inode, foo;
 
-	if(fgets(buf, sizeof(buf), f) == 0)
-	    break;
-	mapname[0] = '\0';
-	sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
-		&foo, dev, &inode, mapname);
-	size = end - begin;
-	total += size;
-	/* the permission string looks like "rwxp", where each character can
-	 * be either the letter, or a hyphen.  The final character is either
-	 * p for private or s for shared.  We want to add up private writable
-	 * mappings, to get a feel for how much private memory this process
-	 * is taking.
-	 *
-	 * Also, we add up the shared mappings, to see how much this process
-	 * is sharing with others.
-	 */
-	if(perm[3] == 'p') {
-	    if(perm[1] == 'w')
-		writable += size;
-	} else if(perm[3] == 's')
-	    shared += size;
-	else
-	  error_return(PAPI_EBUG, "Unable to parse permission string: '%s'\n", perm);
+      if (fgets(buf, sizeof(buf), f) == 0)
+         break;
+      mapname[0] = '\0';
+      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
+             &foo, dev, &inode, mapname);
+      size = end - begin;
+      total += size;
+      /* the permission string looks like "rwxp", where each character can
+       * be either the letter, or a hyphen.  The final character is either
+       * p for private or s for shared.  We want to add up private writable
+       * mappings, to get a feel for how much private memory this process
+       * is taking.
+       *
+       * Also, we add up the shared mappings, to see how much this process
+       * is sharing with others.
+       */
+      if (perm[3] == 'p') {
+         if (perm[1] == 'w')
+            writable += size;
+      } else if (perm[3] == 's')
+         shared += size;
+      else
+         error_return(PAPI_EBUG, "Unable to parse permission string: '%s'\n", perm);
 
 #ifdef DEBUG
-	SUBDBG("%08lx (%ld KB) %s (%s %ld) %s\n", begin, (end - begin)/1024, perm, dev, inode, mapname);
+      SUBDBG("%08lx (%ld KB) %s (%s %ld) %s\n", begin, (end - begin) / 1024, perm, dev,
+             inode, mapname);
 #endif
-	if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
-	  {
-	    if ((l_index == 0) && (counting))
-	      {
-		_papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)begin;
-		_papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)(begin+size);
-		strcpy(_papi_hwi_system_info.exe_info.address_info.mapname,_papi_hwi_system_info.exe_info.name);
-	      }
-	    if ((!counting) && (l_index > 0))
-	      {
-		tmp[l_index-1].text_start = (caddr_t)begin;
-		tmp[l_index-1].text_end = (caddr_t)(begin + size);
-		strncpy(tmp[l_index-1].mapname,mapname,PAPI_MAX_STR_LEN);
-	      }
-	    l_index++;
-	  }
-    }
+      if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0)) {
+         if ((l_index == 0) && (counting)) {
+            _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
+            _papi_hwi_system_info.exe_info.address_info.text_end =
+                (caddr_t) (begin + size);
+            strcpy(_papi_hwi_system_info.exe_info.address_info.mapname,
+                   _papi_hwi_system_info.exe_info.name);
+         }
+         if ((!counting) && (l_index > 0)) {
+            tmp[l_index - 1].text_start = (caddr_t) begin;
+            tmp[l_index - 1].text_end = (caddr_t) (begin + size);
+            strncpy(tmp[l_index - 1].mapname, mapname, PAPI_MAX_STR_LEN);
+         }
+         l_index++;
+      }
+   }
 #ifdef DEBUG
-    SUBDBG("mapped:   %ld KB writable/private: %ld KB shared: %ld KB\n",
-	    total/1024, writable/1024, shared/1024);
+   SUBDBG("mapped:   %ld KB writable/private: %ld KB shared: %ld KB\n",
+          total / 1024, writable / 1024, shared / 1024);
 #endif
-    if (counting)
-      {
-	/* When we get here, we have counted the number of entries in the map
-	   for us to allocate */
-	
-	tmp = (PAPI_address_map_t *)calloc(l_index,sizeof(PAPI_address_map_t));
-	if (tmp == NULL)
-	  error_return(PAPI_ENOMEM, "Error allocating shared library address map");
-	l_index = 0;
-	rewind(f);
-	counting = 0;
-	goto again;
-      }
-    else
-      {
-	if (_papi_hwi_system_info.shlib_info.map)
-	  free(_papi_hwi_system_info.shlib_info.map);
-	_papi_hwi_system_info.shlib_info.map = tmp;
-	_papi_hwi_system_info.shlib_info.count = l_index;
+   if (counting) {
+      /* When we get here, we have counted the number of entries in the map
+         for us to allocate */
 
-	fclose(f);
-      }
-    return(PAPI_OK);
+      tmp = (PAPI_address_map_t *) calloc(l_index, sizeof(PAPI_address_map_t));
+      if (tmp == NULL)
+         error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+      l_index = 0;
+      rewind(f);
+      counting = 0;
+      goto again;
+   } else {
+      if (_papi_hwi_system_info.shlib_info.map)
+         free(_papi_hwi_system_info.shlib_info.map);
+      _papi_hwi_system_info.shlib_info.map = tmp;
+      _papi_hwi_system_info.shlib_info.count = l_index;
+
+      fclose(f);
+   }
+   return (PAPI_OK);
 }
 
 /****************************/
-/* END STOLEN/MODIFIED CODE */ 
+/* END STOLEN/MODIFIED CODE */
 /****************************/
 
-inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
+inline static char *search_cpu_info(FILE * f, char *search_str, char *line)
 {
-  /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
-  /* See the PCL home page for the German version of PAPI. */
+   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
+   /* See the PCL home page for the German version of PAPI. */
 
-  char *s;
+   char *s;
 
-  while (fgets(line, 256, f) != NULL)
-    {
-      if (strstr(line, search_str) != NULL)
-	{
-	  /* ignore all characters in line up to : */
-	  for (s = line; *s && (*s != ':'); ++s)
-	    ;
-	  if (*s)
-	    return(s);
-	}
-    }
-  return(NULL);
+   while (fgets(line, 256, f) != NULL) {
+      if (strstr(line, search_str) != NULL) {
+         /* ignore all characters in line up to : */
+         for (s = line; *s && (*s != ':'); ++s);
+         if (*s)
+            return (s);
+      }
+   }
+   return (NULL);
 
-  /* End stolen code */
+   /* End stolen code */
 }
 
 int _papi_hwd_get_system_info(void)
 {
-  int tmp, retval;
-  char maxargs[PAPI_MAX_STR_LEN], *t, *s;
-  pid_t pid;
-  FILE *f;
+   int tmp, retval;
+   char maxargs[PAPI_MAX_STR_LEN], *t, *s;
+   pid_t pid;
+   FILE *f;
 
-  /* Software info */
+   /* Software info */
 
-  /* Path and args */
+   /* Path and args */
 
-  pid = getpid();
-  if (pid < 0)
-    error_return(PAPI_ESYS,"getpid() returned < 0");
-  _papi_hwi_system_info.pid = pid;
+   pid = getpid();
+   if (pid < 0)
+      error_return(PAPI_ESYS, "getpid() returned < 0");
+   _papi_hwi_system_info.pid = pid;
 
-  sprintf(maxargs,"/proc/%d/exe",(int)pid);
-  if (readlink(maxargs,_papi_hwi_system_info.exe_info.fullname,PAPI_MAX_STR_LEN) < 0)
-    error_return(PAPI_ESYS, "readlink(%s) returned < 0", maxargs);
-  sprintf(_papi_hwi_system_info.exe_info.name,"%s",basename(_papi_hwi_system_info.exe_info.fullname));
+   sprintf(maxargs, "/proc/%d/exe", (int) pid);
+   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) < 0)
+      error_return(PAPI_ESYS, "readlink(%s) returned < 0", maxargs);
+   sprintf(_papi_hwi_system_info.exe_info.name, "%s",
+           basename(_papi_hwi_system_info.exe_info.fullname));
 
-  /* Executable regions, may require reading /proc/pid/maps file */
+   /* Executable regions, may require reading /proc/pid/maps file */
 
-  retval = _papi_hwd_update_shlib_info();
-  if (retval == 0)
-    {
-      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&__data_start;
-      _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t)&_edata;
-      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t)&__bss_start;
-      _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t)&_end;
-    }
-  else if (retval < 0)
-    {
-      memset(&_papi_hwi_system_info.exe_info.address_info,0x0,sizeof(_papi_hwi_system_info.exe_info.address_info));
-    }
+   retval = _papi_hwd_update_shlib_info();
+   if (retval == 0) {
+      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & __data_start;
+      _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
+      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & __bss_start;
+      _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
+   } else if (retval < 0) {
+      memset(&_papi_hwi_system_info.exe_info.address_info, 0x0,
+             sizeof(_papi_hwi_system_info.exe_info.address_info));
+   }
 
-  /* PAPI_preload_option information */
+   /* PAPI_preload_option information */
 
-  strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_preload_env,"LD_PRELOAD");
-  _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep = ' ';
-  strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_dir_env,"LD_LIBRARY_PATH");
-  _papi_hwi_system_info.exe_info.preload_info.lib_dir_sep = ':';
+   strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_preload_env, "LD_PRELOAD");
+   _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep = ' ';
+   strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.exe_info.preload_info.lib_dir_sep = ':';
 
-  SUBDBG("Executable is %s\n",_papi_hwi_system_info.exe_info.name);
-  SUBDBG("Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname);
-  SUBDBG("Text: Start %p, End %p, length %d\n",
-       _papi_hwi_system_info.exe_info.address_info.text_start,
-       _papi_hwi_system_info.exe_info.address_info.text_end,
-      _papi_hwi_system_info.exe_info.address_info.text_end - _papi_hwi_system_info.exe_info.address_info.text_start);
-  SUBDBG("Data: Start %p, End %p, length %d\n",
-       _papi_hwi_system_info.exe_info.address_info.data_start,
-       _papi_hwi_system_info.exe_info.address_info.data_end,
-      _papi_hwi_system_info.exe_info.address_info.data_end - _papi_hwi_system_info.exe_info.address_info.data_start);       
-  SUBDBG("Bss: Start %p, End %p, length %d\n",
-       _papi_hwi_system_info.exe_info.address_info.bss_start,
-       _papi_hwi_system_info.exe_info.address_info.bss_end,
-       _papi_hwi_system_info.exe_info.address_info.bss_end - _papi_hwi_system_info.exe_info.address_info.bss_start);       
+   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.name);
+   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
+   SUBDBG("Text: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.text_start,
+          _papi_hwi_system_info.exe_info.address_info.text_end,
+          _papi_hwi_system_info.exe_info.address_info.text_end -
+          _papi_hwi_system_info.exe_info.address_info.text_start);
+   SUBDBG("Data: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.data_start,
+          _papi_hwi_system_info.exe_info.address_info.data_end,
+          _papi_hwi_system_info.exe_info.address_info.data_end -
+          _papi_hwi_system_info.exe_info.address_info.data_start);
+   SUBDBG("Bss: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.bss_start,
+          _papi_hwi_system_info.exe_info.address_info.bss_end,
+          _papi_hwi_system_info.exe_info.address_info.bss_end -
+          _papi_hwi_system_info.exe_info.address_info.bss_start);
 
-  /* Hardware info */
+   /* Hardware info */
 
-  _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-  _papi_hwi_system_info.hw_info.nnodes = 1;
-  _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+   _papi_hwi_system_info.hw_info.nnodes = 1;
+   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
 
-  if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-    error_return(PAPI_ESYS, FOPEN_ERROR, "/proc/cpuinfo");
-  rewind(f);
-  s = search_cpu_info(f,"vendor_id",maxargs);
-  if (s && (t = strchr(s+2,'\n')))
-    {
+   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
+      error_return(PAPI_ESYS, FOPEN_ERROR, "/proc/cpuinfo");
+   rewind(f);
+   s = search_cpu_info(f, "vendor_id", maxargs);
+   if (s && (t = strchr(s + 2, '\n'))) {
       *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.vendor_string,s+2);
-    }
-  rewind(f);
-  s = search_cpu_info(f,"stepping",maxargs);
-  if (s)
-    sscanf(s+1, "%d", &tmp);
-  fclose(f);
-  _papi_hwi_system_info.hw_info.revision = (float)tmp;
+      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+   }
+   rewind(f);
+   s = search_cpu_info(f, "stepping", maxargs);
+   if (s)
+      sscanf(s + 1, "%d", &tmp);
+   fclose(f);
+   _papi_hwi_system_info.hw_info.revision = (float) tmp;
 
-  /* cut */
+   /* cut */
 
-  SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
-       _papi_hwi_system_info.hw_info.totalcpus,
-       _papi_hwi_system_info.hw_info.vendor_string,
-       _papi_hwi_system_info.hw_info.vendor,
-       _papi_hwi_system_info.hw_info.model_string,
-       _papi_hwi_system_info.hw_info.model,
-       _papi_hwi_system_info.hw_info.mhz);
+   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
+          _papi_hwi_system_info.hw_info.totalcpus,
+          _papi_hwi_system_info.hw_info.vendor_string,
+          _papi_hwi_system_info.hw_info.vendor,
+          _papi_hwi_system_info.hw_info.model_string,
+          _papi_hwi_system_info.hw_info.model, _papi_hwi_system_info.hw_info.mhz);
 
-  return(PAPI_OK);
-} 
-
-int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
-{
-  extern int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain);
-  switch (code)
-    {
-    case PAPI_DOMAIN:
-      return(_papi_hwd_set_domain(&option->domain.ESI->machdep, 
-				   option->domain.domain));
-    default:
-      return(PAPI_EINVAL);
-    }
+   return (PAPI_OK);
 }
 
+int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+{
+   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
+   switch (code) {
+   case PAPI_DOMAIN:
+      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+   default:
+      return (PAPI_EINVAL);
+   }
+}

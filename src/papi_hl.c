@@ -13,7 +13,7 @@
 *          terpstra@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
-*/  
+*/
 
 /* This file contains the 'high level' interface to PAPI. 
    BASIC is a high level language. ;-) */
@@ -22,7 +22,7 @@
   /* Define SUBSTRATE to map to linux-perfctr.h
    * since we haven't figured out how to assign a value 
    * to a label at make inside the Windows IDE */
-  #define SUBSTRATE "linux-perfctr.h"
+#define SUBSTRATE "linux-perfctr.h"
 #endif
 
 #include "papi.h"
@@ -46,21 +46,22 @@
  * This is stored per thread
  */
 typedef struct _HighLevelInfo {
-  int EventSet;          /* EventSet of the thread */
-  short int num_evts;
-  short int running;
-  short int mhz;
-  u_long_long initial_time;    /* Start time */
-  float total_proc_time;       /* Total processor time */
-  float total_ins;             /* Total instructions */
+   int EventSet;                /* EventSet of the thread */
+   short int num_evts;
+   short int running;
+   short int mhz;
+   u_long_long initial_time;    /* Start time */
+   float total_proc_time;       /* Total processor time */
+   float total_ins;             /* Total instructions */
 } HighLevelInfo;
 
 extern int init_level;
-int _hl_rate_calls(float *real_time, float *proc_time, long_long *ins, float *rate, int EVENT, HighLevelInfo *state);
-void _internal_cleanup_hl_info( HighLevelInfo *state );
-int _internal_check_state(HighLevelInfo **state);
-int _internal_start_hl_counters( HighLevelInfo *state );
-int _internal_hl_read_cnts(long_long *values, int array_len, int flag);
+int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *rate,
+                   int EVENT, HighLevelInfo * state);
+void _internal_cleanup_hl_info(HighLevelInfo * state);
+int _internal_check_state(HighLevelInfo ** state);
+int _internal_start_hl_counters(HighLevelInfo * state);
+int _internal_hl_read_cnts(long_long * values, int array_len, int flag);
 
 /* CHANGE LOG:
   - ksl 10/17/03
@@ -104,151 +105,150 @@ int _internal_hl_read_cnts(long_long *values, int array_len, int flag);
  * We may as well set the HighLevelInfo so you don't have to look it
  * up again.
  */
-int _internal_check_state(HighLevelInfo **outgoing)
+int _internal_check_state(HighLevelInfo ** outgoing)
 {
-  int retval;
-  HighLevelInfo *state = NULL;
-  state = NULL;
+   int retval;
+   HighLevelInfo *state = NULL;
+   state = NULL;
 
-  /* Only allow one thread at a time in here */
-  if ( init_level  == PAPI_NOT_INITED ){
-        retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if ( retval != PAPI_VER_CURRENT ){
-      return(PAPI_EINVAL);
-    }
-   else{
-      PAPI_lock( PAPI_HIGHLEVEL_LOCK );
-      init_level = PAPI_HIGH_LEVEL_INITED;
-      PAPI_unlock( PAPI_HIGHLEVEL_LOCK );
+   /* Only allow one thread at a time in here */
+   if (init_level == PAPI_NOT_INITED) {
+      retval = PAPI_library_init(PAPI_VER_CURRENT);
+      if (retval != PAPI_VER_CURRENT) {
+         return (PAPI_EINVAL);
+      } else {
+         PAPI_lock(PAPI_HIGHLEVEL_LOCK);
+         init_level = PAPI_HIGH_LEVEL_INITED;
+         PAPI_unlock(PAPI_HIGHLEVEL_LOCK);
+      }
    }
-  }
-  
-  /*
-   * Do we have the thread specific data setup yet?
-   */
-  if ((retval = PAPI_get_thr_specific( PAPI_TLS_HIGH_LEVEL, (void *)&state)) 
-         != PAPI_OK || state == NULL )
-  {
-   state =  (HighLevelInfo *) malloc (sizeof(HighLevelInfo) );
-   if ( state == NULL )
-    return ( PAPI_ESYS );
 
-   memset(state, 0, sizeof(HighLevelInfo) );
-   state->EventSet = -1;
-   
-   if ( (retval = PAPI_create_eventset(&state->EventSet)) != PAPI_OK )
-      return ( PAPI_ESYS );
+   /*
+    * Do we have the thread specific data setup yet?
+    */
+   if ((retval = PAPI_get_thr_specific(PAPI_TLS_HIGH_LEVEL, (void *) &state))
+       != PAPI_OK || state == NULL) {
+      state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+      if (state == NULL)
+         return (PAPI_ESYS);
 
-   if ((retval=PAPI_set_thr_specific(PAPI_TLS_HIGH_LEVEL,state))!=PAPI_OK)
-      return ( retval );
-  }
-  *outgoing = state;
-  return(PAPI_OK);
+      memset(state, 0, sizeof(HighLevelInfo));
+      state->EventSet = -1;
+
+      if ((retval = PAPI_create_eventset(&state->EventSet)) != PAPI_OK)
+         return (PAPI_ESYS);
+
+      if ((retval = PAPI_set_thr_specific(PAPI_TLS_HIGH_LEVEL, state)) != PAPI_OK)
+         return (retval);
+   }
+   *outgoing = state;
+   return (PAPI_OK);
 }
 
 /*
  * Make sure to allocate space for values 
  */
-int _internal_start_hl_counters( HighLevelInfo *state )
+int _internal_start_hl_counters(HighLevelInfo * state)
 {
-  return(PAPI_start(state->EventSet));
+   return (PAPI_start(state->EventSet));
 }
 
-void _internal_cleanup_hl_info( HighLevelInfo *state )
+void _internal_cleanup_hl_info(HighLevelInfo * state)
 {
-  state->num_evts	= 0;
-  state->total_ins	= 0;      
-  state->initial_time   = -1;
-  state->total_proc_time= 0;       
-  state->running	= 0;
-  state->mhz		= 0;
-  return;
+   state->num_evts = 0;
+   state->total_ins = 0;
+   state->initial_time = -1;
+   state->total_proc_time = 0;
+   state->running = 0;
+   state->mhz = 0;
+   return;
 }
 
-int PAPI_flips(float *rtime, float *ptime, long_long *flpins, float *mflops)
+int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflops)
 {
-   HighLevelInfo *state=NULL;
+   HighLevelInfo *state = NULL;
    int retval;
 
-   if ( (retval = _internal_check_state(&state)) != PAPI_OK )
-	return ( retval );
+   if ((retval = _internal_check_state(&state)) != PAPI_OK)
+      return (retval);
 
-   if ( state->mhz == 0 )
+   if (state->mhz == 0)
       state->mhz = (short int) PAPI_get_opt(PAPI_CLOCKRATE, NULL);
 
-   if((retval=_hl_rate_calls(rtime,ptime,flpins,mflops,PAPI_FP_INS,state))!=PAPI_OK )
-	return(retval);
+   if ((retval =
+        _hl_rate_calls(rtime, ptime, flpins, mflops, PAPI_FP_INS, state)) != PAPI_OK)
+      return (retval);
 
-   *mflops = *mflops*state->mhz;
-   return(PAPI_OK);
+   *mflops = *mflops * state->mhz;
+   return (PAPI_OK);
 }
 
-int PAPI_ipc(float *rtime, float *ptime, long_long *ins, float *ipc)
+int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc)
 {
-   HighLevelInfo *state=NULL;
+   HighLevelInfo *state = NULL;
    int retval;
 
-   if ( (retval = _internal_check_state(&state)) != PAPI_OK )
-	return ( retval );
+   if ((retval = _internal_check_state(&state)) != PAPI_OK)
+      return (retval);
 
-   return(_hl_rate_calls(rtime,ptime,ins,ipc,PAPI_TOT_INS,state));
+   return (_hl_rate_calls(rtime, ptime, ins, ipc, PAPI_TOT_INS, state));
 }
 
-int _hl_rate_calls(float *real_time, float *proc_time, long_long *ins, float *rate, int EVENT, HighLevelInfo *state)
+int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *rate,
+                   int EVENT, HighLevelInfo * state)
 {
-   long_long values[2] = {0,0};
-   int retval=0;
-   int level=0;
+   long_long values[2] = { 0, 0 };
+   int retval = 0;
+   int level = 0;
 
 
-   if ( EVENT == PAPI_FP_INS )
-	level = HL_FLIPS;
-   else if ( EVENT == PAPI_TOT_INS )
-	level = HL_IPC;
+   if (EVENT == PAPI_FP_INS)
+      level = HL_FLIPS;
+   else if (EVENT == PAPI_TOT_INS)
+      level = HL_IPC;
 
-   if ( state->running != 0 && state->running != level )
-	return (PAPI_EINVAL);
+   if (state->running != 0 && state->running != level)
+      return (PAPI_EINVAL);
 
-   if ( state->running == 0 ){
-      if ( PAPI_query_event( EVENT ) != PAPI_OK )
-	return(PAPI_ESBSTR);
+   if (state->running == 0) {
+      if (PAPI_query_event(EVENT) != PAPI_OK)
+         return (PAPI_ESBSTR);
 
-      if((retval=PAPI_add_event(state->EventSet, EVENT)) != PAPI_OK ){
-        _internal_cleanup_hl_info(state);
-	PAPI_cleanup_eventset(state->EventSet);
-	return(PAPI_ESBSTR);
+      if ((retval = PAPI_add_event(state->EventSet, EVENT)) != PAPI_OK) {
+         _internal_cleanup_hl_info(state);
+         PAPI_cleanup_eventset(state->EventSet);
+         return (PAPI_ESBSTR);
       }
 
-      if ( PAPI_query_event( PAPI_TOT_CYC ) != PAPI_OK )
-	return(PAPI_ESBSTR);
+      if (PAPI_query_event(PAPI_TOT_CYC) != PAPI_OK)
+         return (PAPI_ESBSTR);
 
-      if((retval=PAPI_add_event(state->EventSet, PAPI_TOT_CYC)) != PAPI_OK ){
-        _internal_cleanup_hl_info(state);
-	PAPI_cleanup_eventset(state->EventSet);
-	return(PAPI_ESBSTR);
+      if ((retval = PAPI_add_event(state->EventSet, PAPI_TOT_CYC)) != PAPI_OK) {
+         _internal_cleanup_hl_info(state);
+         PAPI_cleanup_eventset(state->EventSet);
+         return (PAPI_ESBSTR);
       }
 
       state->initial_time = PAPI_get_real_usec();
-      if ( (retval= PAPI_start(state->EventSet)) != PAPI_OK )
-	return(retval);
+      if ((retval = PAPI_start(state->EventSet)) != PAPI_OK)
+         return (retval);
       state->running = level;
-   }
-   else {
-    if((retval = PAPI_stop( state->EventSet, values )) != PAPI_OK)
-	return(retval);
-    /* Use Multiplication because it is much faster */
-    *real_time = (float)((PAPI_get_real_usec()-state->initial_time)*.000001);
-    *proc_time = (float)(values[1]*.000001/state->mhz);
-    if ( *proc_time > 0)
-         *rate = (float)((float)values[0]/values[1]);
-    state->total_proc_time += *proc_time;
-    state->total_ins += values[0];
-    *proc_time = state->total_proc_time;
-    *ins = state->total_ins;
-     if ((retval = PAPI_start(state->EventSet))!= PAPI_OK ){
-	state->running = 0;
-	return(retval);
-     }
+   } else {
+      if ((retval = PAPI_stop(state->EventSet, values)) != PAPI_OK)
+         return (retval);
+      /* Use Multiplication because it is much faster */
+      *real_time = (float) ((PAPI_get_real_usec() - state->initial_time) * .000001);
+      *proc_time = (float) (values[1] * .000001 / state->mhz);
+      if (*proc_time > 0)
+         *rate = (float) ((float) values[0] / values[1]);
+      state->total_proc_time += *proc_time;
+      state->total_ins += values[0];
+      *proc_time = state->total_proc_time;
+      *ins = state->total_ins;
+      if ((retval = PAPI_start(state->EventSet)) != PAPI_OK) {
+         state->running = 0;
+         return (retval);
+      }
    }
    return PAPI_OK;
 }
@@ -256,137 +256,134 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long *ins, float *ra
 /*
  * How many hardware counters does this platform support?
  */
-int PAPI_num_counters(void) 
+int PAPI_num_counters(void)
 {
-  int retval;
-  HighLevelInfo *tmp=NULL;
+   int retval;
+   HighLevelInfo *tmp = NULL;
 
-  /* Make sure the Library is initialized, etc... */
-  if( (retval = _internal_check_state(&tmp)) != PAPI_OK )
-      return ( retval );
-      
-  return( PAPI_get_opt(PAPI_MAX_HWCTRS,NULL) );
+   /* Make sure the Library is initialized, etc... */
+   if ((retval = _internal_check_state(&tmp)) != PAPI_OK)
+      return (retval);
+
+   return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
 }
 
 /*========================================================================*/
 /* int PAPI_start_counters(int *events, int array_len)                    */
-/* from draft standard:                                                   */ 
+/* from draft standard:                                                   */
 /* Start counting the events named in the events array. This function     */
 /* implicitly stops and initializes any counters running as the result    */
 /* of a previous call to PAPI_start_counters(). It is the user's          */
 /* responsibility to choose events that can be counted simultaneously     */
 /* by reading the vendor's documentation. The length of this array        */
-/* should be no longer than PAPI_num_counters()                           */ 
+/* should be no longer than PAPI_num_counters()                           */
 /* This will fail if flips or ipc is already running			  */
 /*========================================================================*/
 
-int PAPI_start_counters(int *events, int array_len) 
+int PAPI_start_counters(int *events, int array_len)
 {
-  int i,retval;
-  HighLevelInfo *state=NULL;
+   int i, retval;
+   HighLevelInfo *state = NULL;
 
-   if ( (retval = _internal_check_state(&state)) != PAPI_OK )
-        return( retval );
+   if ((retval = _internal_check_state(&state)) != PAPI_OK)
+      return (retval);
 
-  /* load events to the new EventSet */   
-  for (i=0;i<array_len;i++) 
-  {
-      retval = PAPI_add_event(state->EventSet,events[i]);
-      if ( retval == PAPI_EISRUN )
-	return(retval);
+   /* load events to the new EventSet */
+   for (i = 0; i < array_len; i++) {
+      retval = PAPI_add_event(state->EventSet, events[i]);
+      if (retval == PAPI_EISRUN)
+         return (retval);
 
       if (retval) {
-        /* remove any prior events that may have been added 
-         * and cleanup the high level information
-         */
+         /* remove any prior events that may have been added 
+          * and cleanup the high level information
+          */
          _internal_cleanup_hl_info(state);
          PAPI_cleanup_eventset(state->EventSet);
-         return(retval);
+         return (retval);
       }
-  }
-  /* start the EventSet*/
-  if((retval=_internal_start_hl_counters( state ))==PAPI_OK){
-     state->running = HL_START_COUNTERS;
-     state->num_evts = array_len;
-  }
-  return(retval);
+   }
+   /* start the EventSet */
+   if ((retval = _internal_start_hl_counters(state)) == PAPI_OK) {
+      state->running = HL_START_COUNTERS;
+      state->num_evts = array_len;
+   }
+   return (retval);
 }
 
 /*========================================================================*/
 /* int PAPI_read_counters(long long *values, int array_len)      */
-/*                                                                        */ 
+/*                                                                        */
 /* Read the running counters into the values array. This call             */
 /* implicitly initializes the internal counters to zero and allows        */
 /* them continue to run upon return.                                      */
 /*========================================================================*/
 
-int _internal_hl_read_cnts(long_long *values, int array_len, int flag)
+int _internal_hl_read_cnts(long_long * values, int array_len, int flag)
 {
-  int retval;
-  HighLevelInfo *state=NULL;
+   int retval;
+   HighLevelInfo *state = NULL;
 
-  if ( (retval = _internal_check_state(&state)) != PAPI_OK )
-    return(retval);
+   if ((retval = _internal_check_state(&state)) != PAPI_OK)
+      return (retval);
 
-  if ( state->running != HL_START_COUNTERS || array_len < state->num_evts)
-    return(PAPI_EINVAL);
+   if (state->running != HL_START_COUNTERS || array_len < state->num_evts)
+      return (PAPI_EINVAL);
 
-  if ( flag == PAPI_HL_ACCUM )
-      return(PAPI_accum(state->EventSet,values));
-  else if ( flag == PAPI_HL_READ ){
-      if( (retval = PAPI_read(state->EventSet,values)) != PAPI_OK )
-        return(retval);
-      return(PAPI_reset(state->EventSet));
-  }
+   if (flag == PAPI_HL_ACCUM)
+      return (PAPI_accum(state->EventSet, values));
+   else if (flag == PAPI_HL_READ) {
+      if ((retval = PAPI_read(state->EventSet, values)) != PAPI_OK)
+         return (retval);
+      return (PAPI_reset(state->EventSet));
+   }
 
-  /* Invalid flag passed in */
-  return(PAPI_EINVAL);
+   /* Invalid flag passed in */
+   return (PAPI_EINVAL);
 }
 
-int PAPI_read_counters(long_long *values, int array_len) 
+int PAPI_read_counters(long_long * values, int array_len)
 {
-  return(_internal_hl_read_cnts(values,array_len, PAPI_HL_READ));
+   return (_internal_hl_read_cnts(values, array_len, PAPI_HL_READ));
 }
 
-int PAPI_accum_counters(long_long *values, int array_len) 
+int PAPI_accum_counters(long_long * values, int array_len)
 {
-  return(_internal_hl_read_cnts(values,array_len, PAPI_HL_ACCUM));
+   return (_internal_hl_read_cnts(values, array_len, PAPI_HL_ACCUM));
 }
 
 
 /*========================================================================*/
 /* int PAPI_stop_counters(long long *values, int array_len)               */
-/*                                                                        */ 
-/* Stop the running counters and copy the counts into the values array.   */ 
-/* Reset the counters to 0.                                               */       
+/*                                                                        */
+/* Stop the running counters and copy the counts into the values array.   */
+/* Reset the counters to 0.                                               */
 /*========================================================================*/
 
-int PAPI_stop_counters(long_long *values, int array_len) 
+int PAPI_stop_counters(long_long * values, int array_len)
 {
-  int retval;
-  HighLevelInfo *state=NULL;
+   int retval;
+   HighLevelInfo *state = NULL;
 
-  if ( (retval = _internal_check_state(&state)) != PAPI_OK )
-    return(retval);
+   if ((retval = _internal_check_state(&state)) != PAPI_OK)
+      return (retval);
 
-  if ( state->running == 0 )
-    return(PAPI_ENOTRUN);
+   if (state->running == 0)
+      return (PAPI_ENOTRUN);
 
-  if ( state->running == HL_FLIPS || state->running == HL_IPC ){
+   if (state->running == HL_FLIPS || state->running == HL_IPC) {
       long_long tmp_values;
       retval = PAPI_stop(state->EventSet, &tmp_values);
-  }
-  else if ( state->running != HL_START_COUNTERS || array_len < state->num_evts)
-    return(PAPI_EINVAL);
-  else
+   } else if (state->running != HL_START_COUNTERS || array_len < state->num_evts)
+      return (PAPI_EINVAL);
+   else
       retval = PAPI_stop(state->EventSet, values);
 
-  if (!retval) {
-    _internal_cleanup_hl_info(state);
-    PAPI_cleanup_eventset(state->EventSet);
-    return retval; 
-  }
-  DBG((stderr,"PAPI_stop_counters returns %d\n",retval));
-  return (PAPI_OK);
+   if (!retval) {
+      _internal_cleanup_hl_info(state);
+      PAPI_cleanup_eventset(state->EventSet);
+      return retval;
+   }
+   DBG((stderr, "PAPI_stop_counters returns %d\n", retval));
+   return (PAPI_OK);
 }
-

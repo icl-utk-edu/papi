@@ -1,4 +1,4 @@
-#ifndef _PAPI_AIX  /* _PAPI_AIX */
+#ifndef _PAPI_AIX               /* _PAPI_AIX */
 #define _PAPI_AIX
 
 #include <stdio.h>
@@ -39,9 +39,9 @@ pm_info_t pminfo;
 extern atomic_p lock[];
 
 #define _papi_hwd_lock(lck)                     \
-while(_check_lock(lock[lck],0,1) == TRUE)       \ 
-{                                               \
-      usleep(1000);                             \
+while(_check_lock(lock[lck],0,1) == TRUE)       \
+{
+   usleep(1000);
 }
 
 #define _papi_hwd_unlock(lck)                   \
@@ -57,4 +57,4 @@ typedef struct sigcontext hwd_ucontext_t;
 
 /* prototypes */
 
-#endif  /* _PAPI_AIX */
+#endif                          /* _PAPI_AIX */

@@ -13,7 +13,7 @@
 
   /* Windows doesn't have a unistd.h */
 #ifndef _WIN32
-  #include <unistd.h>
+#include <unistd.h>
 #endif
 
 #include <errno.h>
@@ -34,207 +34,218 @@
 	These pairs of arrays MUST be kept synchonized. Sizes are computed automagically. */
 
 const char *papi_defNam[] = {
-  "PAPI_NULL",
-  "PAPI_VER_CURRENT",
-  "PAPI_MAX_PRESET_EVENTS",
+   "PAPI_NULL",
+   "PAPI_VER_CURRENT",
+   "PAPI_MAX_PRESET_EVENTS",
 
-  "PAPI_DOM_USER",
-  "PAPI_DOM_KERNEL",
-  "PAPI_DOM_OTHER",
-  "PAPI_DOM_ALL",
-  "PAPI_DOM_MIN",
-  "PAPI_DOM_MAX",
-  "PAPI_DOM_HWSPEC", 
+   "PAPI_DOM_USER",
+   "PAPI_DOM_KERNEL",
+   "PAPI_DOM_OTHER",
+   "PAPI_DOM_ALL",
+   "PAPI_DOM_MIN",
+   "PAPI_DOM_MAX",
+   "PAPI_DOM_HWSPEC",
 
-  "PAPI_STOPPED",
-  "PAPI_RUNNING",
-  "PAPI_OVERFLOWING",
-  "PAPI_PROFILING",
+   "PAPI_STOPPED",
+   "PAPI_RUNNING",
+   "PAPI_OVERFLOWING",
+   "PAPI_PROFILING",
 
-  "PAPI_QUIET",
-  "PAPI_VERB_ECONT",
-  "PAPI_VERB_ESTOP",
+   "PAPI_QUIET",
+   "PAPI_VERB_ECONT",
+   "PAPI_VERB_ESTOP",
 
-  "PAPI_MAX_STR_LEN",
-  "PAPI_NUM_ERRORS",
+   "PAPI_MAX_STR_LEN",
+   "PAPI_NUM_ERRORS",
 
-  "PAPI_DEBUG",
-  "PAPI_DEFDOM",
-  "PAPI_DOMAIN",
-  "PAPI_DEFGRN",
-  "PAPI_GRANUL",
-  "PAPI_INHERIT",
+   "PAPI_DEBUG",
+   "PAPI_DEFDOM",
+   "PAPI_DOMAIN",
+   "PAPI_DEFGRN",
+   "PAPI_GRANUL",
+   "PAPI_INHERIT",
 
-  "PAPI_GRN_THR",
-  "PAPI_GRN_MIN",
-  "PAPI_GRN_PROC",
-  "PAPI_GRN_PROCG ",
-  "PAPI_GRN_SYS",
-  "PAPI_GRN_SYS_CPU",
-  "PAPI_GRN_MAX",
+   "PAPI_GRN_THR",
+   "PAPI_GRN_MIN",
+   "PAPI_GRN_PROC",
+   "PAPI_GRN_PROCG ",
+   "PAPI_GRN_SYS",
+   "PAPI_GRN_SYS_CPU",
+   "PAPI_GRN_MAX",
 
-  "PAPI_PROFIL_POSIX",
-  "PAPI_PROFIL_RANDOM",
-  "PAPI_PROFIL_WEIGHTED",
-  "PAPI_PROFIL_COMPRESS"
+   "PAPI_PROFIL_POSIX",
+   "PAPI_PROFIL_RANDOM",
+   "PAPI_PROFIL_WEIGHTED",
+   "PAPI_PROFIL_COMPRESS"
 };
 
 const int papi_defNum[] = {
-  PAPI_NULL,
-  PAPI_VER_CURRENT,
-  PAPI_MAX_PRESET_EVENTS,
+   PAPI_NULL,
+   PAPI_VER_CURRENT,
+   PAPI_MAX_PRESET_EVENTS,
 
-  PAPI_DOM_USER,
-  PAPI_DOM_KERNEL,
-  PAPI_DOM_OTHER,
-  PAPI_DOM_ALL,
-  PAPI_DOM_MIN,
-  PAPI_DOM_MAX,
-  PAPI_DOM_HWSPEC, 
+   PAPI_DOM_USER,
+   PAPI_DOM_KERNEL,
+   PAPI_DOM_OTHER,
+   PAPI_DOM_ALL,
+   PAPI_DOM_MIN,
+   PAPI_DOM_MAX,
+   PAPI_DOM_HWSPEC,
 
-  PAPI_STOPPED,
-  PAPI_RUNNING,
-  PAPI_OVERFLOWING,
-  PAPI_PROFILING,
-  PAPI_QUIET,
-  PAPI_VERB_ECONT,
-  PAPI_VERB_ESTOP,
+   PAPI_STOPPED,
+   PAPI_RUNNING,
+   PAPI_OVERFLOWING,
+   PAPI_PROFILING,
+   PAPI_QUIET,
+   PAPI_VERB_ECONT,
+   PAPI_VERB_ESTOP,
 
-  PAPI_MAX_STR_LEN,
-  PAPI_NUM_ERRORS,
+   PAPI_MAX_STR_LEN,
+   PAPI_NUM_ERRORS,
 
-  PAPI_DEBUG,
-  PAPI_DEFDOM,
-  PAPI_DOMAIN,
-  PAPI_DEFGRN,
-  PAPI_GRANUL,
-  PAPI_INHERIT,
+   PAPI_DEBUG,
+   PAPI_DEFDOM,
+   PAPI_DOMAIN,
+   PAPI_DEFGRN,
+   PAPI_GRANUL,
+   PAPI_INHERIT,
 
-  PAPI_GRN_THR,
-  PAPI_GRN_MIN,
-  PAPI_GRN_PROC,
-  PAPI_GRN_PROCG ,
-  PAPI_GRN_SYS,
-  PAPI_GRN_SYS_CPU,
-  PAPI_GRN_MAX,
+   PAPI_GRN_THR,
+   PAPI_GRN_MIN,
+   PAPI_GRN_PROC,
+   PAPI_GRN_PROCG,
+   PAPI_GRN_SYS,
+   PAPI_GRN_SYS_CPU,
+   PAPI_GRN_MAX,
 
-  PAPI_PROFIL_POSIX,
-  PAPI_PROFIL_RANDOM,
-  PAPI_PROFIL_WEIGHTED,
-  PAPI_PROFIL_COMPRESS
+   PAPI_PROFIL_POSIX,
+   PAPI_PROFIL_RANDOM,
+   PAPI_PROFIL_WEIGHTED,
+   PAPI_PROFIL_COMPRESS
 };
 
 const char *papi_errorNam[] = {
-  PAPI_OK_nm,
-  PAPI_EINVAL_nm,
-  PAPI_ENOMEM_nm,
-  PAPI_ESYS_nm,
-  PAPI_ESBSTR_nm,
-  PAPI_ECLOST_nm,
-  PAPI_EBUG_nm,
-  PAPI_ENOEVNT_nm,
-  PAPI_ECNFLCT_nm,
-  PAPI_ENOTRUN_nm,
-  PAPI_EISRUN_nm,
-  PAPI_ENOEVST_nm,
-  PAPI_ENOTPRESET_nm,
-  PAPI_ENOCNTR_nm,
-  PAPI_EMISC_nm 
+   PAPI_OK_nm,
+   PAPI_EINVAL_nm,
+   PAPI_ENOMEM_nm,
+   PAPI_ESYS_nm,
+   PAPI_ESBSTR_nm,
+   PAPI_ECLOST_nm,
+   PAPI_EBUG_nm,
+   PAPI_ENOEVNT_nm,
+   PAPI_ECNFLCT_nm,
+   PAPI_ENOTRUN_nm,
+   PAPI_EISRUN_nm,
+   PAPI_ENOEVST_nm,
+   PAPI_ENOTPRESET_nm,
+   PAPI_ENOCNTR_nm,
+   PAPI_EMISC_nm
 };
 
 const int papi_errorNum[] = {
-  PAPI_OK,
-  PAPI_EINVAL,
-  PAPI_ENOMEM,
-  PAPI_ESYS,
-  PAPI_ESBSTR,
-  PAPI_ECLOST,
-  PAPI_EBUG,
-  PAPI_ENOEVNT,
-  PAPI_ECNFLCT,
-  PAPI_ENOTRUN,
-  PAPI_EISRUN,
-  PAPI_ENOEVST,
-  PAPI_ENOTPRESET,
-  PAPI_ENOCNTR,
-  PAPI_EMISC 
+   PAPI_OK,
+   PAPI_EINVAL,
+   PAPI_ENOMEM,
+   PAPI_ESYS,
+   PAPI_ESBSTR,
+   PAPI_ECLOST,
+   PAPI_EBUG,
+   PAPI_ENOEVNT,
+   PAPI_ECNFLCT,
+   PAPI_ENOTRUN,
+   PAPI_EISRUN,
+   PAPI_ENOEVST,
+   PAPI_ENOTPRESET,
+   PAPI_ENOCNTR,
+   PAPI_EMISC
 };
 
 const char *papi_miscNam[] = {
-  "NUM_FLOPS" 
+   "NUM_FLOPS"
 };
 
 const int papi_miscNum[] = {
-  10000000 
+   10000000
 };
 
-enum deftype_t {CDEFINE, F77DEFINE, F90DEFINE};
+enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';
 
-static void define_val(const char *val_string, int val, enum deftype_t deftype) {
-  switch (deftype) {
-  case CDEFINE:
-      printf("#define %-18s %d\n",val_string,val);
-      break;
-  case F77DEFINE:
-    printf("      INTEGER %-18s\n",val_string);
-    printf("      PARAMETER (%s=%d)\n",val_string,val);
-    break;
-  case F90DEFINE:
-    printf("      INTEGER, PARAMETER :: %-18s = %d\n",val_string,val);
-    break;
-  }
-}
-
-static void createDef(char *title, const char **names, const int *nums, int size, enum deftype_t deftype) {
-  int i,j;
-  /* compute the size of the predefined arrays */
-  j = size/sizeof(int);
-
-  /* create defines for each line in the general arrays */
-  printf("\n%c\n%c\t%s\n%c\n\n", comment_char,comment_char,title,comment_char);
-  for (i=0;i<j;i++) define_val(names[i],nums[i],deftype);
-}
-
-
-int main(int argc, char **argv) 
+static void define_val(const char *val_string, int val, enum deftype_t deftype)
 {
-  int i;
-  PAPI_event_info_t info;
-  enum deftype_t deftype=CDEFINE;
+   switch (deftype) {
+   case CDEFINE:
+      printf("#define %-18s %d\n", val_string, val);
+      break;
+   case F77DEFINE:
+      printf("      INTEGER %-18s\n", val_string);
+      printf("      PARAMETER (%s=%d)\n", val_string, val);
+      break;
+   case F90DEFINE:
+      printf("      INTEGER, PARAMETER :: %-18s = %d\n", val_string, val);
+      break;
+   }
+}
 
-  if (argc > 1) {
-    if (strcmp(argv[1],"-f77") == 0) {
-      deftype = F77DEFINE;
-      comment_char='!';
-    } else if (strcmp(argv[1],"-f90") == 0) {
-      deftype = F90DEFINE;
-      comment_char='!';
-    } else if (strcmp(argv[1],"-c") == 0) {
-      deftype = CDEFINE;
-      comment_char='C';
-    } else {
-      fprintf(stderr,"Usage: %s [ -c | -f77 | -f90 ]\n", argv[0]);
-      exit(1);
-    }
-  }
+static void createDef(char *title, const char **names, const int *nums, int size,
+                      enum deftype_t deftype)
+{
+   int i, j;
+   /* compute the size of the predefined arrays */
+   j = size / sizeof(int);
 
-  /* print a file header block */
-  printf("%c\n%c\tThis file contains defines required by the PAPI Fortran interface.\n",comment_char,comment_char);
-  printf("%c\tIt is automagically generated by genpapifdef.c\n", comment_char);
-  printf("%c\tDO NOT modify its contents and expect the changes to stick.\n",comment_char);
-  printf("%c\tChanges MUST be made in genpapifdef.c instead.\n%c\n\n",comment_char,comment_char);
+   /* create defines for each line in the general arrays */
+   printf("\n%c\n%c\t%s\n%c\n\n", comment_char, comment_char, title, comment_char);
+   for (i = 0; i < j; i++)
+      define_val(names[i], nums[i], deftype);
+}
 
-  /* create defines for the internal array pairs */
-  createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum),deftype);
-  createDef("Error defines.", papi_errorNam, papi_errorNum, sizeof(papi_errorNum),deftype);
-  createDef("Miscellaneous defines.", papi_miscNam, papi_miscNum, sizeof(papi_miscNum),deftype);
 
-  /* create defines for each member of the PRESET array */
-  printf("\n%c\n%c\tPAPI preset event values.\n%c\n\n",comment_char,comment_char,comment_char);
-  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-    if (PAPI_get_event_info(i | PRESET_MASK, &info) == PAPI_OK)
-      define_val(info.symbol, info.event_code, deftype);
+int main(int argc, char **argv)
+{
+   int i;
+   PAPI_event_info_t info;
+   enum deftype_t deftype = CDEFINE;
 
-  exit(0);
+   if (argc > 1) {
+      if (strcmp(argv[1], "-f77") == 0) {
+         deftype = F77DEFINE;
+         comment_char = '!';
+      } else if (strcmp(argv[1], "-f90") == 0) {
+         deftype = F90DEFINE;
+         comment_char = '!';
+      } else if (strcmp(argv[1], "-c") == 0) {
+         deftype = CDEFINE;
+         comment_char = 'C';
+      } else {
+         fprintf(stderr, "Usage: %s [ -c | -f77 | -f90 ]\n", argv[0]);
+         exit(1);
+      }
+   }
+
+   /* print a file header block */
+   printf("%c\n%c\tThis file contains defines required by the PAPI Fortran interface.\n",
+          comment_char, comment_char);
+   printf("%c\tIt is automagically generated by genpapifdef.c\n", comment_char);
+   printf("%c\tDO NOT modify its contents and expect the changes to stick.\n",
+          comment_char);
+   printf("%c\tChanges MUST be made in genpapifdef.c instead.\n%c\n\n", comment_char,
+          comment_char);
+
+   /* create defines for the internal array pairs */
+   createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum),
+             deftype);
+   createDef("Error defines.", papi_errorNam, papi_errorNum, sizeof(papi_errorNum),
+             deftype);
+   createDef("Miscellaneous defines.", papi_miscNam, papi_miscNum, sizeof(papi_miscNum),
+             deftype);
+
+   /* create defines for each member of the PRESET array */
+   printf("\n%c\n%c\tPAPI preset event values.\n%c\n\n", comment_char, comment_char,
+          comment_char);
+   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
+      if (PAPI_get_event_info(i | PRESET_MASK, &info) == PAPI_OK)
+         define_val(info.symbol, info.event_code, deftype);
+
+   exit(0);
 }

@@ -7,7 +7,7 @@
 
   /* Windows doesn't have a unistd.h */
 #ifndef _WIN32
-  #include <unistd.h>
+#include <unistd.h>
 #endif
 
 #include <errno.h>
@@ -25,8 +25,8 @@
 	This gives you a chance to read the results!
 */
 #ifdef _WIN32
-	int wait_exit(int);
-	#define exit wait_exit
+int wait_exit(int);
+#define exit wait_exit
 #endif
 
 /* Unix systems use %lld to display long long values
@@ -37,29 +37,29 @@
 	for both platforms.
 */
 
-	#define ONEHDR  " %12s"
+#define ONEHDR  " %12s"
 #ifdef _WIN32
-	#define ONENUM  " %12I64d"
-	#define TAB1	"%s %12I64d\n"
-	#define TAB2HDR	"%s %12s %12s\n"
-	#define TAB2	"%s %12I64d %12I64d\n"
-	#define TAB3HDR	"%s %12s %12s %12s\n"
-	#define TAB3	"%s %12I64d %12I64d %12I64d\n"
-	#define TAB4HDR	"%s %12s %12s %12s %12s\n"
-	#define TAB4	"%s %12I64d %12I64d %12I64d %12I64d\n"
-	#define TAB5	"%s %12I64d %12I64d %12I64d %12I64d %12I64d\n"
-	#define TWO12	"%12I64d %12I64d  %s"
+#define ONENUM  " %12I64d"
+#define TAB1	"%s %12I64d\n"
+#define TAB2HDR	"%s %12s %12s\n"
+#define TAB2	"%s %12I64d %12I64d\n"
+#define TAB3HDR	"%s %12s %12s %12s\n"
+#define TAB3	"%s %12I64d %12I64d %12I64d\n"
+#define TAB4HDR	"%s %12s %12s %12s %12s\n"
+#define TAB4	"%s %12I64d %12I64d %12I64d %12I64d\n"
+#define TAB5	"%s %12I64d %12I64d %12I64d %12I64d %12I64d\n"
+#define TWO12	"%12I64d %12I64d  %s"
 #else
-	#define ONENUM  " %12lld"
-	#define TAB1	"%s %12lld\n"
-	#define TAB2HDR	"%s %12s %12s\n"
-	#define TAB2	"%s %12lld %12lld\n"
-	#define TAB3HDR	"%s %12s %12s %12s\n"
-	#define TAB3	"%s %12lld %12lld %12lld\n"
-	#define TAB4HDR	"%s %12s %12s %12s %12s\n"
-	#define TAB4	"%s %12lld %12lld %12lld %12lld\n"
-	#define TAB5	"%s %12lld %12lld %12lld %12lld %12lld\n"
-	#define TWO12	"%12lld %12lld  %s"
+#define ONENUM  " %12lld"
+#define TAB1	"%s %12lld\n"
+#define TAB2HDR	"%s %12s %12s\n"
+#define TAB2	"%s %12lld %12lld\n"
+#define TAB3HDR	"%s %12s %12s %12s\n"
+#define TAB3	"%s %12lld %12lld %12lld\n"
+#define TAB4HDR	"%s %12s %12s %12s %12s\n"
+#define TAB4	"%s %12lld %12lld %12lld %12lld\n"
+#define TAB5	"%s %12lld %12lld %12lld %12lld %12lld\n"
+#define TWO12	"%12lld %12lld  %s"
 #endif
 
-extern int TESTS_QUIET; /* Declared in test_utils.c */
+extern int TESTS_QUIET;         /* Declared in test_utils.c */

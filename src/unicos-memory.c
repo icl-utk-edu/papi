@@ -11,10 +11,12 @@
 #include SUBSTRATE
 
 
-int get_memory_info( PAPI_hw_info_t * mem_info ){
+int get_memory_info(PAPI_hw_info_t * mem_info)
+{
    int retval = 0;
    return PAPI_OK;
 }
 
-long _papi_hwd_get_dmem_info(int option){
+long _papi_hwd_get_dmem_info(int option)
+{
 }

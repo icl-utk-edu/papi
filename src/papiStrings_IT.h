@@ -114,7 +114,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_L3_ICR_dsc  "un nascondiglio Livello di 3 istruzioni legge"
 #define PAPI_L1_ICW_dsc  "il 1 nascondiglio Livello di istruzione scrive"
 #define PAPI_L2_ICW_dsc  "un nascondiglio Livello di 2 istruzioni scrive"
-#define PAPI_L3_ICW_dsc  "un nascondiglio Livello di 3 istruzioni scrive" 
+#define PAPI_L3_ICW_dsc  "un nascondiglio Livello di 3 istruzioni scrive"
 #define PAPI_L1_TCH_dsc  "i colpi di 1 nascondiglio totali Livelli"
 #define PAPI_L2_TCH_dsc  "2 colpi di nascondiglio totali Livelli"
 #define PAPI_L3_TCH_dsc  "3 colpi di nascondiglio totali Livelli"
@@ -139,7 +139,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 /* labels for GUI-based performance monitoring tools         */
 /* It should be synchronized with "papiStdEventDefs.h"       */
 /*************************************************************/
-/*                        1234567890123456789                */ 
+/*                        1234567890123456789                */
 #define PAPI_L1_DCM_lbl  "L1D cache misses"
 #define PAPI_L1_ICM_lbl  "L1I cache misses"
 #define PAPI_L2_DCM_lbl  "L2D cache misses"
@@ -184,8 +184,8 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_HW_INT_lbl  "Hdw interrupts"
 #define PAPI_BR_UCN_lbl  "Uncond branch"
 #define PAPI_BR_CN_lbl   "Cond branch"
-#define PAPI_BR_TKN_lbl  "Cond branch taken" 
-#define PAPI_BR_NTK_lbl  "Cond br not taken" 
+#define PAPI_BR_TKN_lbl  "Cond branch taken"
+#define PAPI_BR_NTK_lbl  "Cond br not taken"
 #define PAPI_BR_MSP_lbl  "Cond br mspredictd"
 #define PAPI_BR_PRC_lbl  "Cond br predicted"
 #define PAPI_FMA_INS_lbl "FMAs completed"
@@ -274,10 +274,8 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 /* label. In that way it can be translated as needed.   */
 /********************************************************/
 #define PAPI_ERROR_CODE_str  "Codice Di Errore Di PAPI"
-#define PAPI_THREAD_INIT_str "PAPI_thread_init: dovrebbe soltanto essere chiamato once\n" 
+#define PAPI_THREAD_INIT_str "PAPI_thread_init: dovrebbe soltanto essere chiamato once\n"
 #define PAPI_SHUTDOWN_str	 "Errore di PAPI_shutdown: PAPI attualmente non inizializzato\n"
 #define PAPI_NO_RESTORE_str	 "PAPI_restore attualmente non è effettuato\n"
 #define PAPI_NO_SAVE_str	 "PAPI_save attualmente non è effettuato\n"
 #define PAPI_SHUTDOWN_SYNC_str	 "Errore di PAPI_shutdown: Other threads still have running EventSets\n"
-
-

@@ -15,62 +15,61 @@
 
 
 
-int get_memory_info( PAPI_hw_info_t * mem_info ) {
-  if ( _system_configuration.tlb_attrib & (1<<30) ){
-   mem_info->L1_tlb_size=_system_configuration.itlb_size;
-  }
-  else{
-   mem_info->L1_itlb_size=_system_configuration.itlb_size;
-   mem_info->L1_itlb_assoc=_system_configuration.itlb_asc;
-   mem_info->L1_dtlb_size=_system_configuration.dtlb_size;
-   mem_info->L1_dtlb_assoc=_system_configuration.dtlb_asc;
-   mem_info->L1_tlb_size=_system_configuration.itlb_size+
-	_system_configuration.dtlb_size;
-  }
-  if ( _system_configuration.cache_attrib & (1<<30) ) {
-   mem_info->L1_size=_system_configuration.icache_size/1024;
-   mem_info->L1_icache_assoc=_system_configuration.icache_asc;
-   mem_info->L1_icache_linesize=_system_configuration.icache_line;
-  }
-  else {
-   mem_info->L1_icache_size=_system_configuration.icache_size/1024;
-   mem_info->L1_icache_assoc=_system_configuration.icache_asc;
-   mem_info->L1_icache_linesize=_system_configuration.icache_line;
-   mem_info->L1_dcache_size=_system_configuration.dcache_size/1024;
-   mem_info->L1_dcache_assoc=_system_configuration.dcache_asc;
-   mem_info->L1_dcache_linesize=_system_configuration.dcache_line;
-   mem_info->L1_size=mem_info->L1_icache_size+mem_info->L1_dcache_size;
-  }
- mem_info->L2_cache_size=_system_configuration.L2_cache_size/1024;
- mem_info->L2_cache_assoc=_system_configuration.L2_cache_asc;
- return PAPI_OK;
+int get_memory_info(PAPI_hw_info_t * mem_info)
+{
+   if (_system_configuration.tlb_attrib & (1 << 30)) {
+      mem_info->L1_tlb_size = _system_configuration.itlb_size;
+   } else {
+      mem_info->L1_itlb_size = _system_configuration.itlb_size;
+      mem_info->L1_itlb_assoc = _system_configuration.itlb_asc;
+      mem_info->L1_dtlb_size = _system_configuration.dtlb_size;
+      mem_info->L1_dtlb_assoc = _system_configuration.dtlb_asc;
+      mem_info->L1_tlb_size = _system_configuration.itlb_size +
+          _system_configuration.dtlb_size;
+   }
+   if (_system_configuration.cache_attrib & (1 << 30)) {
+      mem_info->L1_size = _system_configuration.icache_size / 1024;
+      mem_info->L1_icache_assoc = _system_configuration.icache_asc;
+      mem_info->L1_icache_linesize = _system_configuration.icache_line;
+   } else {
+      mem_info->L1_icache_size = _system_configuration.icache_size / 1024;
+      mem_info->L1_icache_assoc = _system_configuration.icache_asc;
+      mem_info->L1_icache_linesize = _system_configuration.icache_line;
+      mem_info->L1_dcache_size = _system_configuration.dcache_size / 1024;
+      mem_info->L1_dcache_assoc = _system_configuration.dcache_asc;
+      mem_info->L1_dcache_linesize = _system_configuration.dcache_line;
+      mem_info->L1_size = mem_info->L1_icache_size + mem_info->L1_dcache_size;
+   }
+   mem_info->L2_cache_size = _system_configuration.L2_cache_size / 1024;
+   mem_info->L2_cache_assoc = _system_configuration.L2_cache_asc;
+   return PAPI_OK;
 }
 
-long _papi_hwd_get_dmem_info(int option){
- struct procsinfo   pi;
- pid_t              mypid = getpid();
- pid_t              pid;
- int 		    found=0;
+long _papi_hwd_get_dmem_info(int option)
+{
+   struct procsinfo pi;
+   pid_t mypid = getpid();
+   pid_t pid;
+   int found = 0;
 
- pid = 0;
- while(1) {
-  if (getprocs(&pi, sizeof(pi),0,0,&pid,1) != 1)
-	break;
-  if( mypid == pi.pi_pid ){
-	found=1;
-	break;
-  }
- }
- if ( !found )
-	return(PAPI_ESYS);
+   pid = 0;
+   while (1) {
+      if (getprocs(&pi, sizeof(pi), 0, 0, &pid, 1) != 1)
+         break;
+      if (mypid == pi.pi_pid) {
+         found = 1;
+         break;
+      }
+   }
+   if (!found)
+      return (PAPI_ESYS);
 
- switch(option){
+   switch (option) {
    case PAPI_GET_RESSIZE:
-        return(pi.pi_drss+pi.pi_trss);
+      return (pi.pi_drss + pi.pi_trss);
    case PAPI_GET_SIZE:
-        return(pi.pi_size);
+      return (pi.pi_size);
    default:
-        return(PAPI_EINVAL);
-  }
+      return (PAPI_EINVAL);
+   }
 }
-

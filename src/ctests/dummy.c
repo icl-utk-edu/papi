@@ -1,6 +1,7 @@
 #include "papi_test.h"
 
-void dummy(void *array) {
+void dummy(void *array)
+{
 
 /* Confuse the compiler so as not to optimize
    away the flops in the calling routine    */
@@ -10,10 +11,10 @@ void dummy(void *array) {
  * systems, so they actually allocate the memory.
  * -KSL
  */
-void touch_dummy( double *array, int size)
+void touch_dummy(double *array, int size)
 {
-  int i;
-  double *tmp=array;
-  for(i=0;i<size;i++,tmp++)
-	*tmp=(double)rand();
+   int i;
+   double *tmp = array;
+   for (i = 0; i < size; i++, tmp++)
+      *tmp = (double) rand();
 }

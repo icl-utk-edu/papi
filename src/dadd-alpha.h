@@ -56,35 +56,35 @@
 #define MAX_COUNTER_TERMS	8
 
 typedef struct dadd_alpha_control_state {
-  virtual_counters *ptr_vc;
-  /* Interrupt interval */
-  int timer_ms;
-  /* latest value for cycles */
-  long_long latestcycles;
+   virtual_counters *ptr_vc;
+   /* Interrupt interval */
+   int timer_ms;
+   /* latest value for cycles */
+   long_long latestcycles;
 } dadd_alpha_control_state_t;
 
 typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;
-  /* Is this event derived? */
-  unsigned char derived;
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  long counter_cmd;
-  long counter_cmd2;
-  /* Footnote to append to the description of this event */
-  char note[PAPI_MAX_STR_LEN];
+   /* Which counters to use? Bits encode counters to use, may be duplicates */
+   unsigned char selector;
+   /* Is this event derived? */
+   unsigned char derived;
+   /* If the derived event is not associative, this index is the lead operand */
+   unsigned char operand_index;
+   /* Buffer to pass to the kernel to control the counters */
+   long counter_cmd;
+   long counter_cmd2;
+   /* Footnote to append to the description of this event */
+   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
 typedef struct dadd_alpha_register {
-  /* DADD event code(s) */
-  long dadd_code;
-  long dadd_code2;
+   /* DADD event code(s) */
+   long dadd_code;
+   long dadd_code2;
 } dadd_alpha_register_t;
 
 typedef struct dadd_alpha_context {
-  virtual_counters *ptr_vc;
+   virtual_counters *ptr_vc;
 } dadd_alpha_context_t;
 
 
@@ -94,7 +94,7 @@ typedef dadd_alpha_register_t hwd_register_t;
 
 typedef dadd_alpha_context_t hwd_context_t;
 
-typedef int hwd_reg_alloc_t;  /* don't need this structure on dadd-alpha */
+typedef int hwd_reg_alloc_t;    /* don't need this structure on dadd-alpha */
 
 
 /*
@@ -102,4 +102,3 @@ typedef int hwd_reg_alloc_t;  /* don't need this structure on dadd-alpha */
 */
 
 extern unsigned long _etext, _ftext;
-

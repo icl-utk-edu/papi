@@ -23,21 +23,21 @@ typedef unsigned long ulong_t;
 #define EV_MAX_CPUS 32
 
 typedef union {
-  long ev6;
-  long ev5;
+   long ev6;
+   long ev5;
 } ev_control_t;
 
 typedef struct hwd_control_state {
-  /* File descriptor controlling the counters; */
-  int fd;
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Is this event derived? */
-  int derived;   
-  /* Buffer to pass to the kernel to control the counters */
-  ev_control_t counter_cmd;
-  /* Interrupt interval */
-  int timer_ms;  
+   /* File descriptor controlling the counters; */
+   int fd;
+   /* Which counters to use? Bits encode counters to use, may be duplicates */
+   int selector;
+   /* Is this event derived? */
+   int derived;
+   /* Buffer to pass to the kernel to control the counters */
+   ev_control_t counter_cmd;
+   /* Interrupt interval */
+   int timer_ms;
 } hwd_control_state_t;
 
 #include "papi_internal.h"
@@ -45,23 +45,23 @@ typedef struct hwd_control_state {
 /* Preset structure */
 
 typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;  
-  /* Is this event derived? */
-  unsigned char derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  long counter_cmd[EV_MAX_COUNTERS];
-  /* Footnote to append to the description of this event */
-  char note[PAPI_MAX_STR_LEN];
+   /* Which counters to use? Bits encode counters to use, may be duplicates */
+   unsigned char selector;
+   /* Is this event derived? */
+   unsigned char derived;
+   /* If the derived event is not associative, this index is the lead operand */
+   unsigned char operand_index;
+   /* Buffer to pass to the kernel to control the counters */
+   long counter_cmd[EV_MAX_COUNTERS];
+   /* Footnote to append to the description of this event */
+   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
 typedef struct hwd_search {
-  /* PAPI preset code */
-  unsigned int papi_code;
-  /* Events to encode */
-  long findme[EV_MAX_COUNTERS];
+   /* PAPI preset code */
+   unsigned int papi_code;
+   /* Events to encode */
+   long findme[EV_MAX_COUNTERS];
 } hwd_search_t;
 
 extern unsigned long _etext, _ftext;
