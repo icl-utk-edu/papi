@@ -1,6 +1,3 @@
-#ifndef _PAPI
-#define _PAPI
-
 /* 
 * File:    papi.h
 * CVS:     $Id$
@@ -10,7 +7,14 @@
 *          <your email address>
 */  
 
+#ifndef _PAPI
+#define _PAPI
+
 #define PAPI_VER_CURRENT 1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Include files */
 
@@ -317,6 +321,10 @@ int PAPI_start_counters(int *events, int array_len);
 int PAPI_read_counters(long long *values, int array_len);
 int PAPI_stop_counters(long long *values, int array_len);
 int PAPI_num_counters(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
