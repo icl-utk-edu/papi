@@ -50,6 +50,9 @@ on that link below:</font>
 <font color="#FFFF99"><a href="#tenth.exe">tenth.exe</a></font></li>
 
 <li>
+<font color="#FFFF99"><a href="#calibrate.exe">calibrate.exe</a></font></li>
+
+<li>
 <font color="#FFFF99"><a href="#avail.exe">avail.exe</a></font></li>
 
 <li>
@@ -78,866 +81,1002 @@ on that link below:</font>
 </ul>
 
 <h1>
-<a NAME="zero.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">zero.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 0: start,
-stop.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-----------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40022117</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Real usec&nbsp;&nbsp;
-:&nbsp;&nbsp; 47453</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Real cycles
-:&nbsp;&nbsp; 40191409</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="zero.exe"></a><tt><font color="#FFFF99">zero.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 0: start, stop.</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40022117</font></tt>
+<br><tt><font color="#FFFF99">Real usec&nbsp;&nbsp; :&nbsp;&nbsp; 47453</font></tt>
+<br><tt><font color="#FFFF99">Real cycles :&nbsp;&nbsp; 40191409</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="first.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">first.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 1: Non-overlapping
-start, stop, read.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-----------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="first.exe"></a><tt><font color="#FFFF99">first.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 1: Non-overlapping start, stop, read.</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-4</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">5</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-40000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 60000017</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">60000017</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40005931&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40020551&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-80130522&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 120182521</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">120182521</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 3 approximately
-equals 2 * column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 approximately
-equals 3 * column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 exactly
-equals column 5</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+4</font></tt>
+<br><tt><font color="#FFFF99">5</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+60000017</font></tt>
+<br><tt><font color="#FFFF99">60000017</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40005931&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40020551&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80130522&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+120182521</font></tt>
+<br><tt><font color="#FFFF99">120182521</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 3 approximately equals 2 * column
+2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 approximately equals 3 * column
+2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 exactly equals column 5</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="second.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">second.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 2: Non-overlapping
-start, stop, read for all 3 domains.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-----------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; PAPI_DOM_ALL&nbsp;&nbsp;&nbsp; PAPI_DOM_KERNEL PAPI_DOM_USER</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-20000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40305283&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 116141&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-40107432</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 1 approximately
-equals N 0 N</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2 plus column 3</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="second.exe"></a><tt><font color="#FFFF99">second.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 2: Non-overlapping start, stop, read
+for all 3 domains.</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; PAPI_DOM_ALL&nbsp;&nbsp;&nbsp;
+PAPI_DOM_KERNEL PAPI_DOM_USER</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40305283&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+116141&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40107432</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Row 1 approximately equals N 0 N</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2 plus
+column 3</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="third.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">third.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 3: Overlapping
-start and stop of 2 eventsets with different counters.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="third.exe"></a><tt><font color="#FFFF99">third.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 3: Overlapping start and stop of 2
+eventsets with different counters.</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-4</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">5</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4</font></tt>
+<br><tt><font color="#FFFF99">5</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40077111&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40039693&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+120074971&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Row 1 approximately equals 0 0 N 0 N</font></tt>
+<br><tt><font color="#FFFF99">Row 2 approximately equals X X 0 X 0</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 approximately equals three times
+column 1</font></tt>
+<br><tt><font color="#FFFF99">Column 5 approximately equals column 3</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
+<h1>
+<a NAME="third_inv.exe"></a><tt><font color="#FFFF99">third_inv.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 3i: Overlapping start and stop of 2
+eventsets with different counters.</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">-------------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4</font></tt>
+<br><tt><font color="#FFFF99">5</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40063499&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40060133</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-20000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40077111&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40039693&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 120074971&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 1 approximately
-equals 0 0 N 0 N</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 2 approximately
-equals X X 0 X 0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 approximately
-equals three times column 1</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 5 approximately
-equals column 3</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+60000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Row 1 approximately equals 0 0 N 0 N</font></tt>
+<br><tt><font color="#FFFF99">Row 2 approximately equals X X 0 X 0</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 approximately equals three times
+column 1</font></tt>
+<br><tt><font color="#FFFF99">Column 5 approximately equals column 3</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="third_inv.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">third_inv.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 3i: Overlapping
-start and stop of 2 eventsets with different counters.</font></font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="fourth.exe"></a><tt><font color="#FFFF99">fourth.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 4: Overlapping start and stop of 2
+eventsets.</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-4</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">5</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-40063499&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-40060133</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 60000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 1 approximately
-equals 0 0 N 0 N</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 2 approximately
-equals X X 0 X 0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 approximately
-equals three times column 1</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 5 approximately
-equals column 3</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+4</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 60000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40022003&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40047248&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 120173139&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40017875</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 3 approximately equals three times
+column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="fourth.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">fourth.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 4: Overlapping
-start and stop of 2 eventsets.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="fourth_inv.exe"></a><tt><font color="#FFFF99">fourth_inv.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 4: Overlapping start and stop of 2
+eventsets.</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-4</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-60000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40022003&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40047248&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-120173139&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40017875</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 3 approximately
-equals three times column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+4</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 60000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40058641&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40102891&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 120166167&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40048906</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 3 approximately equals three times
+column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="fourth_inv.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">fourth_inv.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 4: Overlapping
-start and stop of 2 eventsets.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="fifth.exe"></a><tt><font color="#FFFF99">fifth.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 5: Overlapping start and stop of 2
+eventsets with reset.</font></tt>
+<br><tt><font color="#FFFF99">------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-4</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-60000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40058641&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40102891&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-120166167&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40048906</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 3 approximately
-equals three times column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+4</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40085090&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40028456&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80054486&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40236800</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Column 3 approximately equals two times column
+2</font></tt>
+<br><tt><font color="#FFFF99">Column 4 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="fifth.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">fifth.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 5: Overlapping
-start and stop of 2 eventsets with reset.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="nineth.exe"></a><tt><font color="#FFFF99">nineth.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 9: start, stop for derived event PAPI_FLOPS.</font></tt>
+<br><tt><font color="#FFFF99">------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 40023856&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FLOPS&nbsp; :&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+421479293</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Last number in row 3 approximately equals
+422248171.190702</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
+<h1>
+<a NAME="tenth.exe"></a><tt><font color="#FFFF99">tenth.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 9: start, stop for derived event PAPI_L1_TCM.</font></tt>
+<br><tt><font color="#FFFF99">------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Default domain is: 1 (PAPI_DOM_USER)</font></tt>
+<br><tt><font color="#FFFF99">Default granularity is: 1 (PAPI_GRN_THR)</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-4</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-40000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40085090&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40028456&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-80054486&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 40236800</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 3 approximately
-equals two times column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 4 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+3</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_TCM :&nbsp;&nbsp; 3204207 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_ICM :&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3021&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_DCM :&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3183376</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">First number row 1 approximately equals (2,2)
++ (3,3) or 3186397</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="nineth.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">nineth.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 9: start,
-stop for derived event PAPI_FLOPS.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-40023856&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FLOPS&nbsp;
-:&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 421479293</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Last number
-in row 3 approximately equals 422248171.190702</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="calibrate.exe"></a><tt><font color="#FFFF99">calibrate.exe</font></tt></h1>
+<tt><font color="#FFFF99">-----------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Vendor string and code&nbsp;&nbsp; : GenuineIntel
+(-1)</font></tt>
+<br><tt><font color="#FFFF99">Model string and code&nbsp;&nbsp;&nbsp; :
+Pentium III (8) (8)</font></tt>
+<br><tt><font color="#FFFF99">CPU revision&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 6.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU Megahertz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 846.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU's in an SMP node&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Nodes in the system&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Total CPU's in the system: 1</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------------------------</font></tt><tt><font color="#FFFF99"></font></tt>
+<p><tt><font color="#FFFF99">Inner Product Test:</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+papi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; theory&nbsp;&nbsp;&nbsp;&nbsp;
+diff&nbsp;&nbsp; %error</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+12&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 12&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+16&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 16&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+18&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 18&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 96&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+192&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 192&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 97&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+194&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 194&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 98&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+196&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 196&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+198&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 198&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+600&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 600&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+700&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 700&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt><tt><font color="#FFFF99"></font></tt>
+<p><tt><font color="#FFFF99">-------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Vendor string and code&nbsp;&nbsp; : GenuineIntel
+(-1)</font></tt>
+<br><tt><font color="#FFFF99">Model string and code&nbsp;&nbsp;&nbsp; :
+Pentium III (8) (8)</font></tt>
+<br><tt><font color="#FFFF99">CPU revision&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 6.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU Megahertz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 846.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU's in an SMP node&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Nodes in the system&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Total CPU's in the system: 1</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------</font></tt><tt><font color="#FFFF99"></font></tt>
+<p><tt><font color="#FFFF99">Matrix Vector Test:</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+papi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; theory&nbsp;&nbsp;&nbsp;&nbsp;
+diff&nbsp;&nbsp; %error</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+5000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+7000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+8000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+9000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+10000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 96&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+96000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 96000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 97&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+97000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 97000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 98&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+98000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 98000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+99000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 99000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+100000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+150000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+200000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+300000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+350000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+400000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+450000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt><tt><font color="#FFFF99"></font></tt>
+<p><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Vendor string and code&nbsp;&nbsp; : GenuineIntel
+(-1)</font></tt>
+<br><tt><font color="#FFFF99">Model string and code&nbsp;&nbsp;&nbsp; :
+Pentium III (8) (8)</font></tt>
+<br><tt><font color="#FFFF99">CPU revision&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 6.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU Megahertz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 846.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU's in an SMP node&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Nodes in the system&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Total CPU's in the system: 1</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt><tt><font color="#FFFF99"></font></tt>
+<p><tt><font color="#FFFF99">Matrix Multiply Test:</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+papi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; theory&nbsp;&nbsp;&nbsp;&nbsp;
+diff&nbsp;&nbsp; %error</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0&nbsp;&nbsp;&nbsp;&nbsp; 0.0000</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2500017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+17&nbsp;&nbsp;&nbsp;&nbsp; 0.0006</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+17&nbsp;&nbsp;&nbsp;&nbsp; 0.0005</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3500017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+17&nbsp;&nbsp;&nbsp;&nbsp; 0.0004</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+17&nbsp;&nbsp;&nbsp;&nbsp; 0.0004</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4500034&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+34&nbsp;&nbsp;&nbsp;&nbsp; 0.0007</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+5000051&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+51&nbsp;&nbsp;&nbsp;&nbsp; 0.0010</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">.</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 96&nbsp;&nbsp;&nbsp;&nbsp;
+48000459&nbsp;&nbsp;&nbsp;&nbsp; 48000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+459&nbsp;&nbsp;&nbsp;&nbsp; 0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 97&nbsp;&nbsp;&nbsp;&nbsp;
+48500467&nbsp;&nbsp;&nbsp;&nbsp; 48500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp; 0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 98&nbsp;&nbsp;&nbsp;&nbsp;
+49000467&nbsp;&nbsp;&nbsp;&nbsp; 49000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp; 0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 99&nbsp;&nbsp;&nbsp;&nbsp;
+49500467&nbsp;&nbsp;&nbsp;&nbsp; 49500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp; 0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;
+50000467&nbsp;&nbsp;&nbsp;&nbsp; 50000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp; 0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;
+75000739&nbsp;&nbsp;&nbsp;&nbsp; 75000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+739&nbsp;&nbsp;&nbsp;&nbsp; 0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;
+100000985&nbsp;&nbsp;&nbsp; 100000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 985&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;
+125001240&nbsp;&nbsp;&nbsp; 125000000&nbsp;&nbsp;&nbsp;&nbsp; 1240&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;
+150001478&nbsp;&nbsp;&nbsp; 150000000&nbsp;&nbsp;&nbsp;&nbsp; 1478&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;
+175001699&nbsp;&nbsp;&nbsp; 175000000&nbsp;&nbsp;&nbsp;&nbsp; 1699&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;
+200001954&nbsp;&nbsp;&nbsp; 200000000&nbsp;&nbsp;&nbsp;&nbsp; 1954&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;
+225002192&nbsp;&nbsp;&nbsp; 225000000&nbsp;&nbsp;&nbsp;&nbsp; 2192&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;
+250002413&nbsp;&nbsp;&nbsp; 250000000&nbsp;&nbsp;&nbsp;&nbsp; 2413&nbsp;&nbsp;&nbsp;&nbsp;
+0.0009</font></tt>
+<br><tt><font color="#FFFF99"></font></tt>&nbsp;
+<br><tt><font color="#FFFF99"></font></tt>&nbsp;
 <h1>
-<a NAME="tenth.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">tenth.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 9: start,
-stop for derived event PAPI_L1_TCM.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default domain
-is: 1 (PAPI_DOM_USER)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Default granularity
-is: 1 (PAPI_GRN_THR)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-3</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_TCM
-:&nbsp;&nbsp; 3204207 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_ICM
-:&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3021&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_DCM
-:&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-3183376</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">First number
-row 1 approximately equals (2,2) + (3,3) or 3186397</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
-<h1>
-<a NAME="avail.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">avail.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case 8: Available
-events and hardware information.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Vendor string
-and code&nbsp;&nbsp; : GenuineIntel (-1)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Model string
-and code&nbsp;&nbsp;&nbsp; : Pentium III (8) (8)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">CPU revision&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-: 6.000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">CPU Megahertz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-: 845.000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">CPU's in an
-SMP node&nbsp;&nbsp;&nbsp;&nbsp; : 1</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Nodes in the
-system&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : 1</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Total CPU's
-in the system: 1</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="avail.exe"></a><tt><font color="#FFFF99">avail.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case 8: Available events and hardware information.</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Vendor string and code&nbsp;&nbsp; : GenuineIntel
+(-1)</font></tt>
+<br><tt><font color="#FFFF99">Model string and code&nbsp;&nbsp;&nbsp; :
+Pentium III (8) (8)</font></tt>
+<br><tt><font color="#FFFF99">CPU revision&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 6.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU Megahertz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 845.000000</font></tt>
+<br><tt><font color="#FFFF99">CPU's in an SMP node&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Nodes in the system&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+: 1</font></tt>
+<br><tt><font color="#FFFF99">Total CPU's in the system: 1</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 Code&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Avail&nbsp;&nbsp; Deriv&nbsp;&nbsp; Description (Note)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_DCM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Level 1 data cache misses (0x45,0x45)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_ICM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000001&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Level 1 instruction cache misses (0x81,0x81)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_DCM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000002&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 2 data cache misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_ICM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000003&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 2 instruction cache misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_DCM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000004&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 3 data cache misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_ICM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000005&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 3 instruction cache misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_TCM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Level 1 cache misses (0xf2e,0xf2e)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_TCM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000007&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Level 2 cache misses (0x24,0x24)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_TCM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 3 cache misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CA_SNP&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests for a snoop ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CA_SHR&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000000a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Requests for exclusive access to shared cache line (0x222e,0x222e)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CA_CLN&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000000b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Requests for exclusive access to clean cache line (0x212e,0x212e)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CA_INV&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000000c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Requests for cache line invalidation (0x2069,0x2069)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CA_ITV&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000000d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Requests for cache line intervention (0x2e2e,0x2e2e)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_LDM&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000000e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 3 load misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_STM&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000000f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 3 store misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BRU_IDL&nbsp;&nbsp;&nbsp;
-0x80000010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles branch units are idle ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FXU_IDL&nbsp;&nbsp;&nbsp;
-0x80000011&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles integer units are idle ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FPU_IDL&nbsp;&nbsp;&nbsp;
-0x80000012&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles floating point units are idle ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_LSU_IDL&nbsp;&nbsp;&nbsp;
-0x80000013&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles load/store units are idle()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TLB_DM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000014&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data translation lookaside buffer misses
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TLB_IM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000015&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Instruction translation lookaside buffer misses (0x85,0x85)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TLB_TL&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000016&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total translation lookaside buffer misses
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_LDM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Level 1 load misses (0xf29,0xf29)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_STM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000018&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Level 1 store misses (0xf2a,0xf2a)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_LDM&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000019&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 2 load misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_STM&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000001a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 2 store misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BTAC_M&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000001b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Branch target address cache misses (0xe2,0xe2)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_PRF_DM&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000001c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data prefetch cache misses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_DCH&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000001d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 3 Data Cache Hits ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TLB_SD&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000001e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Translation lookaside buffer shootdowns
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CSR_FAL&nbsp;&nbsp;&nbsp;
-0x8000001f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Failed store conditional instructions
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CSR_SUC&nbsp;&nbsp;&nbsp;
-0x80000020&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Successful store conditional instructions
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_CSR_TOT&nbsp;&nbsp;&nbsp;
-0x80000021&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total store conditional instructions ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_MEM_SCY&nbsp;&nbsp;&nbsp;
-0x80000022&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles Stalled Waiting for memory accesses
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_MEM_RCY&nbsp;&nbsp;&nbsp;
-0x80000023&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles Stalled Waiting for memory Reads
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_MEM_WCY&nbsp;&nbsp;&nbsp;
-0x80000024&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles Stalled Waiting for memory writes
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_STL_ICY&nbsp;&nbsp;&nbsp;
-0x80000025&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles with no instruction issue()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FUL_ICY&nbsp;&nbsp;&nbsp;
-0x80000026&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles with maximum instruction issue
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_STL_CCY&nbsp;&nbsp;&nbsp;
-0x80000027&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles with no instructions completed
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FUL_CCY&nbsp;&nbsp;&nbsp;
-0x80000028&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles with maximum instructions completed
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_HW_INT&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000029&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Hardware interrupts (0xc8,0xc8)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_UCN&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000002a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Unconditional branch instructions ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_CN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Avail&nbsp;&nbsp; Deriv&nbsp;&nbsp; Description (Note)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_DCM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 1 data
+cache misses (0x45,0x45)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_ICM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000001&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 1 instruction
+cache misses (0x81,0x81)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_DCM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000002&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+2 data cache misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_ICM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000003&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+2 instruction cache misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_DCM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000004&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+3 data cache misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_ICM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000005&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+3 instruction cache misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_TCM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 1 cache
+misses (0xf2e,0xf2e)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_TCM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000007&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 2 cache
+misses (0x24,0x24)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_TCM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+3 cache misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CA_SNP&nbsp;&nbsp;&nbsp;&nbsp; 0x80000009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests
+for a snoop ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CA_SHR&nbsp;&nbsp;&nbsp;&nbsp; 0x8000000a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests for
+exclusive access to shared cache line (0x222e,0x222e)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CA_CLN&nbsp;&nbsp;&nbsp;&nbsp; 0x8000000b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests for
+exclusive access to clean cache line (0x212e,0x212e)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CA_INV&nbsp;&nbsp;&nbsp;&nbsp; 0x8000000c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests for
+cache line invalidation (0x2069,0x2069)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CA_ITV&nbsp;&nbsp;&nbsp;&nbsp; 0x8000000d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests for
+cache line intervention (0x2e2e,0x2e2e)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_LDM&nbsp;&nbsp;&nbsp;&nbsp; 0x8000000e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+3 load misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_STM&nbsp;&nbsp;&nbsp;&nbsp; 0x8000000f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+3 store misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BRU_IDL&nbsp;&nbsp;&nbsp; 0x80000010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+branch units are idle ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FXU_IDL&nbsp;&nbsp;&nbsp; 0x80000011&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+integer units are idle ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FPU_IDL&nbsp;&nbsp;&nbsp; 0x80000012&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+floating point units are idle ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_LSU_IDL&nbsp;&nbsp;&nbsp; 0x80000013&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+load/store units are idle()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TLB_DM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000014&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data
+translation lookaside buffer misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TLB_IM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000015&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Instruction
+translation lookaside buffer misses (0x85,0x85)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TLB_TL&nbsp;&nbsp;&nbsp;&nbsp; 0x80000016&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total
+translation lookaside buffer misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_LDM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 1 load
+misses (0xf29,0xf29)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_STM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000018&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level 1 store
+misses (0xf2a,0xf2a)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_LDM&nbsp;&nbsp;&nbsp;&nbsp; 0x80000019&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+2 load misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_STM&nbsp;&nbsp;&nbsp;&nbsp; 0x8000001a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+2 store misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BTAC_M&nbsp;&nbsp;&nbsp;&nbsp; 0x8000001b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Branch target
+address cache misses (0xe2,0xe2)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_PRF_DM&nbsp;&nbsp;&nbsp;&nbsp; 0x8000001c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data
+prefetch cache misses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_DCH&nbsp;&nbsp;&nbsp;&nbsp; 0x8000001d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Level
+3 Data Cache Hits ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TLB_SD&nbsp;&nbsp;&nbsp;&nbsp; 0x8000001e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Translation
+lookaside buffer shootdowns ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CSR_FAL&nbsp;&nbsp;&nbsp; 0x8000001f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Failed
+store conditional instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CSR_SUC&nbsp;&nbsp;&nbsp; 0x80000020&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Successful
+store conditional instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_CSR_TOT&nbsp;&nbsp;&nbsp; 0x80000021&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total
+store conditional instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_MEM_SCY&nbsp;&nbsp;&nbsp; 0x80000022&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+Stalled Waiting for memory accesses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_MEM_RCY&nbsp;&nbsp;&nbsp; 0x80000023&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+Stalled Waiting for memory Reads ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_MEM_WCY&nbsp;&nbsp;&nbsp; 0x80000024&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+Stalled Waiting for memory writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_STL_ICY&nbsp;&nbsp;&nbsp; 0x80000025&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+with no instruction issue()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FUL_ICY&nbsp;&nbsp;&nbsp; 0x80000026&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+with maximum instruction issue ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_STL_CCY&nbsp;&nbsp;&nbsp; 0x80000027&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+with no instructions completed ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FUL_CCY&nbsp;&nbsp;&nbsp; 0x80000028&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+with maximum instructions completed ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_HW_INT&nbsp;&nbsp;&nbsp;&nbsp; 0x80000029&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Hardware interrupts
+(0xc8,0xc8)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_UCN&nbsp;&nbsp;&nbsp;&nbsp; 0x8000002a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Unconditional
+branch instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_CN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 0x8000002b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Conditional branch instructions(0xc4,0xc4)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_TKN&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000002c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Conditional branch instructions taken (0xc9,0xc9)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_NTK&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000002d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-Conditional branch instructions not taken (0xc4,0xc9)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_MSP&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000002e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Conditional branch instructions mispredicted (0xc5,0xc5)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_PRC&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000002f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-Conditional branch instructions correctly predicted (0xc4,0xc5)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FMA_INS&nbsp;&nbsp;&nbsp;
-0x80000030&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FMA instructions completed ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_IIS&nbsp;&nbsp;&nbsp;
-0x80000031&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Instructions issued (0xd0,0xd0)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_INS&nbsp;&nbsp;&nbsp;
-0x80000032&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Instructions completed (0xc0,0xc0)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_INT_INS&nbsp;&nbsp;&nbsp;
-0x80000033&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Integer instructions ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000034&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Floating point instructions (0xc1,0x0)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_LD_INS&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000035&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Load instructions ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_SR_INS&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000036&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Store instructions ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_BR_INS&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000037&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Branch instructions (0xc4,0xc4)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_VEC_INS&nbsp;&nbsp;&nbsp;
-0x80000038&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Vector/SIMD instructions (0xb0,0xb0)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FLOPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Conditional branch instructions(0xc4,0xc4)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_TKN&nbsp;&nbsp;&nbsp;&nbsp; 0x8000002c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Conditional
+branch instructions taken (0xc9,0xc9)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_NTK&nbsp;&nbsp;&nbsp;&nbsp; 0x8000002d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Conditional branch
+instructions not taken (0xc4,0xc9)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_MSP&nbsp;&nbsp;&nbsp;&nbsp; 0x8000002e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Conditional
+branch instructions mispredicted (0xc5,0xc5)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_PRC&nbsp;&nbsp;&nbsp;&nbsp; 0x8000002f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Conditional branch
+instructions correctly predicted (0xc4,0xc5)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FMA_INS&nbsp;&nbsp;&nbsp; 0x80000030&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FMA instructions
+completed ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_IIS&nbsp;&nbsp;&nbsp; 0x80000031&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Instructions
+issued (0xd0,0xd0)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_INS&nbsp;&nbsp;&nbsp; 0x80000032&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Instructions
+completed (0xc0,0xc0)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_INT_INS&nbsp;&nbsp;&nbsp; 0x80000033&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Integer
+instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS&nbsp;&nbsp;&nbsp;&nbsp; 0x80000034&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating point
+instructions (0xc1,0x0)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_LD_INS&nbsp;&nbsp;&nbsp;&nbsp; 0x80000035&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Load
+instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_SR_INS&nbsp;&nbsp;&nbsp;&nbsp; 0x80000036&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Store
+instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_BR_INS&nbsp;&nbsp;&nbsp;&nbsp; 0x80000037&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Branch instructions
+(0xc4,0xc4)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_VEC_INS&nbsp;&nbsp;&nbsp; 0x80000038&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Vector/SIMD
+instructions (0xb0,0xb0)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FLOPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 0x80000039&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-Floating point instructions per second (0xc1,0x79)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_RES_STL&nbsp;&nbsp;&nbsp;
-0x8000003a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Cycles stalled on any resource (0xa2,0xa2)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_STAL&nbsp;&nbsp;&nbsp;
-0x8000003b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles the FP unit(s) are stalled ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC&nbsp;&nbsp;&nbsp;
-0x8000003c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Total cycles (0x79,0x79)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_IPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Floating point instructions per second (0xc1,0x79)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_RES_STL&nbsp;&nbsp;&nbsp; 0x8000003a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles stalled
+on any resource (0xa2,0xa2)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_STAL&nbsp;&nbsp;&nbsp; 0x8000003b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Cycles
+the FP unit(s) are stalled ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC&nbsp;&nbsp;&nbsp; 0x8000003c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total cycles
+(0x79,0x79)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_IPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 0x8000003d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-Instructions per second (0xc0,0x79)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_LST_INS&nbsp;&nbsp;&nbsp;
-0x8000003e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Load/store instructions completed ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_SYC_INS&nbsp;&nbsp;&nbsp;
-0x8000003f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Synchronization instructions completed
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_DCH&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000040&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-L1 data cache hits (0x43,0x45)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_DCH&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000041&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-L2 data cache hits (0xf2e,0xf24)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_DCA&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000042&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L1 data cache accesses (0x43,0x43)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_DCA&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000043&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-L2 data cache accesses (0xf29,0xf2a)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_DCA&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000044&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 data cache accesses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_DCR&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000045&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 data cache reads ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_DCR&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000046&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L2 data cache reads (0xf29,0xf29)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_DCR&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000047&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 data cache reads ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_DCW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000048&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 data cache writes ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_DCW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000049&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L2 data cache writes (0xf2a,0xf2a)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_DCW&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000004a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 data cache writes ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_ICH&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000004b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-L1 instruction cache hits (0x80,0x81)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_ICH&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000004c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 instruction cache hits ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_ICH&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000004d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction cache hits ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_ICA&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000004e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L1 instruction cache accesses (0x80,0x80)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_ICA&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000004f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L2 instruction cache accesses (0xf28,0xf28)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_ICA&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000050&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction cache accesses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_ICR&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000051&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L1 instruction cache reads (0x80,0x80)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_ICR&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000052&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L2 instruction cache reads (0xf28,0xf28)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_ICR&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction cache reads ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_ICW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000054&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L1 instruction cache writes (0x81,0x81)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_ICW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000055&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 instruction cache writes ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_ICW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000056&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction cache writes ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_TCH&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000057&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 total cache hits ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_TCH&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000058&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 total cache hits ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_TCH&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000059&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total cache hits ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_TCA&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000005a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-L1 total cache accesses (0x43,0x80)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_TCA&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000005b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L2 total cache accesses (0xf2e,0xf2e)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_TCA&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000005c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total cache accesses ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_TCR&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000005d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 total cache reads ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_TCR&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000005e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp;
-L2 total cache reads (0xf29,0xf28)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_TCR&nbsp;&nbsp;&nbsp;&nbsp;
-0x8000005f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total cache reads ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L1_TCW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000060&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 total cache writes ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L2_TCW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000061&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-L2 total cache writes (0xf2a,0xf2a)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_L3_TCW&nbsp;&nbsp;&nbsp;&nbsp;
-0x80000062&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total cache writes ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FML_INS&nbsp;&nbsp;
-0x80000063&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Floating point multiply instructions (0x0,0x12)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FAD_INS&nbsp;&nbsp;&nbsp;
-0x80000064&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating point add instructions()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FDV_INS&nbsp;&nbsp;&nbsp;
-0x80000065&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Floating point divide instructions (0x0,0x13)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FSQ_INS&nbsp;&nbsp;&nbsp;
-0x80000066&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating point square root instructions
-()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FNV_INS&nbsp;&nbsp;&nbsp;
-0x80000067&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating point inverse instructions ()</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-------------------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Check your architecture
-and substrate file</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+Instructions per second (0xc0,0x79)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_LST_INS&nbsp;&nbsp;&nbsp; 0x8000003e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Load/store
+instructions completed ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_SYC_INS&nbsp;&nbsp;&nbsp; 0x8000003f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Synchronization
+instructions completed ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_DCH&nbsp;&nbsp;&nbsp;&nbsp; 0x80000040&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; L1 data cache hits
+(0x43,0x45)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_DCH&nbsp;&nbsp;&nbsp;&nbsp; 0x80000041&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; L2 data cache hits
+(0xf2e,0xf24)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_DCA&nbsp;&nbsp;&nbsp;&nbsp; 0x80000042&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 data cache
+accesses (0x43,0x43)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_DCA&nbsp;&nbsp;&nbsp;&nbsp; 0x80000043&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; L2 data cache accesses
+(0xf29,0xf2a)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_DCA&nbsp;&nbsp;&nbsp;&nbsp; 0x80000044&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 data
+cache accesses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_DCR&nbsp;&nbsp;&nbsp;&nbsp; 0x80000045&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 data
+cache reads ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_DCR&nbsp;&nbsp;&nbsp;&nbsp; 0x80000046&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 data cache
+reads (0xf29,0xf29)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_DCR&nbsp;&nbsp;&nbsp;&nbsp; 0x80000047&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 data
+cache reads ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_DCW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000048&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 data
+cache writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_DCW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000049&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 data cache
+writes (0xf2a,0xf2a)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_DCW&nbsp;&nbsp;&nbsp;&nbsp; 0x8000004a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 data
+cache writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_ICH&nbsp;&nbsp;&nbsp;&nbsp; 0x8000004b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; L1 instruction
+cache hits (0x80,0x81)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_ICH&nbsp;&nbsp;&nbsp;&nbsp; 0x8000004c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 instruction
+cache hits ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_ICH&nbsp;&nbsp;&nbsp;&nbsp; 0x8000004d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction
+cache hits ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_ICA&nbsp;&nbsp;&nbsp;&nbsp; 0x8000004e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 instruction
+cache accesses (0x80,0x80)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_ICA&nbsp;&nbsp;&nbsp;&nbsp; 0x8000004f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 instruction
+cache accesses (0xf28,0xf28)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_ICA&nbsp;&nbsp;&nbsp;&nbsp; 0x80000050&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction
+cache accesses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_ICR&nbsp;&nbsp;&nbsp;&nbsp; 0x80000051&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 instruction
+cache reads (0x80,0x80)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_ICR&nbsp;&nbsp;&nbsp;&nbsp; 0x80000052&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 instruction
+cache reads (0xf28,0xf28)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_ICR&nbsp;&nbsp;&nbsp;&nbsp; 0x80000053&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction
+cache reads ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_ICW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000054&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 instruction
+cache writes (0x81,0x81)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_ICW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000055&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 instruction
+cache writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_ICW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000056&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 instruction
+cache writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_TCH&nbsp;&nbsp;&nbsp;&nbsp; 0x80000057&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 total
+cache hits ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_TCH&nbsp;&nbsp;&nbsp;&nbsp; 0x80000058&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 total
+cache hits ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_TCH&nbsp;&nbsp;&nbsp;&nbsp; 0x80000059&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total
+cache hits ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_TCA&nbsp;&nbsp;&nbsp;&nbsp; 0x8000005a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; L1 total cache
+accesses (0x43,0x80)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_TCA&nbsp;&nbsp;&nbsp;&nbsp; 0x8000005b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 total cache
+accesses (0xf2e,0xf2e)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_TCA&nbsp;&nbsp;&nbsp;&nbsp; 0x8000005c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total
+cache accesses ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_TCR&nbsp;&nbsp;&nbsp;&nbsp; 0x8000005d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 total
+cache reads ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_TCR&nbsp;&nbsp;&nbsp;&nbsp; 0x8000005e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; Yes&nbsp;&nbsp;&nbsp;&nbsp; L2 total cache
+reads (0xf29,0xf28)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_TCR&nbsp;&nbsp;&nbsp;&nbsp; 0x8000005f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total
+cache reads ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L1_TCW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000060&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L1 total
+cache writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L2_TCW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000061&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L2 total cache
+writes (0xf2a,0xf2a)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_L3_TCW&nbsp;&nbsp;&nbsp;&nbsp; 0x80000062&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; L3 total
+cache writes ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FML_INS&nbsp;&nbsp; 0x80000063&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating point
+multiply instructions (0x0,0x12)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FAD_INS&nbsp;&nbsp;&nbsp; 0x80000064&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating
+point add instructions()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FDV_INS&nbsp;&nbsp;&nbsp; 0x80000065&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Yes&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating point
+divide instructions (0x0,0x13)</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FSQ_INS&nbsp;&nbsp;&nbsp; 0x80000066&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating
+point square root instructions ()</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FNV_INS&nbsp;&nbsp;&nbsp; 0x80000067&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Floating
+point inverse instructions ()</font></tt>
+<br><tt><font color="#FFFF99">-------------------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Check your architecture and substrate file</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="case1.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">case1.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Error adding L2
-TCM (OK)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Error adding
-L2 DCM (OK)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="case1.exe"></a><tt><font color="#FFFF99">case1.exe</font></tt></h1>
+<tt><font color="#FFFF99">Error adding L2 TCM (OK)</font></tt>
+<br><tt><font color="#FFFF99">Error adding L2 DCM (OK)</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="case2.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">case2.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Error adding L2
-TCM (OK)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Error adding
-TOT_CYC (OK)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Error adding
-FP_INS (OK)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="case2.exe"></a><tt><font color="#FFFF99">case2.exe</font></tt></h1>
+<tt><font color="#FFFF99">Error adding L2 TCM (OK)</font></tt>
+<br><tt><font color="#FFFF99">Error adding TOT_CYC (OK)</font></tt>
+<br><tt><font color="#FFFF99">Error adding FP_INS (OK)</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="clockres.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">clockres.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Test case: Clock
-latency and resolution.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-----------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_get_real_cyc
-: 46.022800 46.022800</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_get_real_usec:
-0.369900 0.999730</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">my_real_cyc:
-48.277200</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">my_virt_cyc:
-0.000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">my_real_usec:
-0.370400</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">my_virt_usec:
-0.000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_get_virt_cyc
-: 1742.394400 5807981.333333</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_get_virt_usec:
-0.369900 3699.000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="clockres.exe"></a><tt><font color="#FFFF99">clockres.exe</font></tt></h1>
+<tt><font color="#FFFF99">Test case: Clock latency and resolution.</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">PAPI_get_real_cyc : 46.022800 46.022800</font></tt>
+<br><tt><font color="#FFFF99">PAPI_get_real_usec: 0.369900 0.999730</font></tt>
+<br><tt><font color="#FFFF99">my_real_cyc: 48.277200</font></tt>
+<br><tt><font color="#FFFF99">my_virt_cyc: 0.000000</font></tt>
+<br><tt><font color="#FFFF99">my_real_usec: 0.370400</font></tt>
+<br><tt><font color="#FFFF99">my_virt_usec: 0.000000</font></tt>
+<br><tt><font color="#FFFF99">PAPI_get_virt_cyc : 1742.394400 5807981.333333</font></tt>
+<br><tt><font color="#FFFF99">PAPI_get_virt_usec: 0.369900 3699.000000</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="cost.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">cost.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Cost of execution
-for PAPI start/stop and PAPI read.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">This test takes
-a while. Please be patient...</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Performing start/stop
-test...</font></font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">User level cost
-for PAPI_start/stop(2 counters) over 1000000 iterations</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">1091197601 total
-cyc,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">478474726 total
-ins,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">1091.197601
-cyc/call pair,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">478.474726 ins/call
-pair</font></font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">Total cost for
-PAPI_start/stop(2 counters) over 1000000 iterations</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">31806136081
-total cyc,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">31806.104275
-cyc/call pair</font></font>
-<br>&nbsp;
-<p><font face="Courier New,Courier"><font color="#FFFF99">Performing read
-test...</font></font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">User level cost
-for PAPI_read(2 counters) over 1000000 iterations</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">573414288 total
-cyc,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">229081816 total
-ins,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">573.414288 cyc/call,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">229.081816 ins/call</font></font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">Total cost for
-PAPI_read(2 counters) over 1000000 iterations</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">10807059306
-total cyc,</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">10807.048499
-cyc/call</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="cost.exe"></a><tt><font color="#FFFF99">cost.exe</font></tt></h1>
+<tt><font color="#FFFF99">Cost of execution for PAPI start/stop and PAPI
+read.</font></tt>
+<br><tt><font color="#FFFF99">This test takes a while. Please be patient...</font></tt>
+<br><tt><font color="#FFFF99">Performing start/stop test...</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">User level cost for PAPI_start/stop(2 counters)
+over 1000000 iterations</font></tt>
+<br><tt><font color="#FFFF99">1091197601 total cyc,</font></tt>
+<br><tt><font color="#FFFF99">478474726 total ins,</font></tt>
+<br><tt><font color="#FFFF99">1091.197601 cyc/call pair,</font></tt>
+<br><tt><font color="#FFFF99">478.474726 ins/call pair</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">Total cost for PAPI_start/stop(2 counters)
+over 1000000 iterations</font></tt>
+<br><tt><font color="#FFFF99">31806136081 total cyc,</font></tt>
+<br><tt><font color="#FFFF99">31806.104275 cyc/call pair</font></tt>
+<br><tt></tt>&nbsp;<tt></tt>
+<p><tt><font color="#FFFF99">Performing read test...</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">User level cost for PAPI_read(2 counters)
+over 1000000 iterations</font></tt>
+<br><tt><font color="#FFFF99">573414288 total cyc,</font></tt>
+<br><tt><font color="#FFFF99">229081816 total ins,</font></tt>
+<br><tt><font color="#FFFF99">573.414288 cyc/call,</font></tt>
+<br><tt><font color="#FFFF99">229.081816 ins/call</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">Total cost for PAPI_read(2 counters) over
+1000000 iterations</font></tt>
+<br><tt><font color="#FFFF99">10807059306 total cyc,</font></tt>
+<br><tt><font color="#FFFF99">10807.048499 cyc/call</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="flops.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">flops.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">Real_time: 0.005446
-Proc_time: 0.005449 Total flpins: 2000000 MFLOPS: 367.054108</font></font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="flops.exe"></a><tt><font color="#FFFF99">flops.exe</font></tt></h1>
+<tt><font color="#FFFF99">Real_time: 0.005446 Proc_time: 0.005449 Total
+flpins: 2000000 MFLOPS: 367.054108</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="high_level.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">high_level.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-20000000&nbsp;&nbsp;&nbsp;&nbsp; 40073576&nbsp; (Counters continuing...)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-40000000&nbsp;&nbsp;&nbsp;&nbsp; 80216678&nbsp; (Counters being ''held'')</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-20000000&nbsp;&nbsp;&nbsp;&nbsp; 40197117&nbsp; (Skipped counts)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="high_level.exe"></a><tt><font color="#FFFF99">high_level.exe</font></tt></h1>
+<tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;
+40073576&nbsp; (Counters continuing...)</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 40000000&nbsp;&nbsp;&nbsp;&nbsp;
+80216678&nbsp; (Counters being ''held'')</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;
+40197117&nbsp; (Skipped counts)</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 xxx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; xxx&nbsp; (''Continuing''
-counting)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-60000000&nbsp;&nbsp;&nbsp; 120421261&nbsp; ----------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:
-The last line in each experiment was intended</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">to become approximately
-three the value of the first line.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+counting)</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 60000000&nbsp;&nbsp;&nbsp;
+120421261&nbsp; ----------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification: The last line in each experiment
+was intended</font></tt>
+<br><tt><font color="#FFFF99">to become approximately three the value of
+the first line.</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="low_level.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">low_level.exe</font></font></h1>
-<font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-20000000&nbsp;&nbsp;&nbsp;&nbsp; 40073576&nbsp; (Counters continuing...)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-40000000&nbsp;&nbsp;&nbsp;&nbsp; 80216678&nbsp; (Counters being ''held'')</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-20000000&nbsp;&nbsp;&nbsp;&nbsp; 40197117&nbsp; (Skipped counts)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a NAME="low_level.exe"></a><tt><font color="#FFFF99">low_level.exe</font></tt></h1>
+<tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;
+40073576&nbsp; (Counters continuing...)</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 40000000&nbsp;&nbsp;&nbsp;&nbsp;
+80216678&nbsp; (Counters being ''held'')</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 20000000&nbsp;&nbsp;&nbsp;&nbsp;
+40197117&nbsp; (Skipped counts)</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 xxx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; xxx&nbsp; (''Continuing''
-counting)</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-60000000&nbsp;&nbsp;&nbsp; 120421261&nbsp; ----------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:
-The last line in each experiment was intended</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">to become approximately
-three the value of the first line.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+counting)</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; 60000000&nbsp;&nbsp;&nbsp;
+120421261&nbsp; ----------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification: The last line in each experiment
+was intended</font></tt>
+<br><tt><font color="#FFFF99">to become approximately three the value of
+the first line.</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 <h1>
-<a NAME="overflow.exe"></a><font face="Courier New,Courier"><font color="#FFFF99">overflow.exe</font></font></h1>
-<font color="#FFFF99">(This test does not perform successfully on this
-Windows version)</font>
-<p><font face="Courier New,Courier"><font color="#FFFF99">handler(0, 80000034,
-1, , 1005346, 00000000) Overflow at 000F4240!</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">handler(0, 80000034,
-1, , 2170644, 00000000) Overflow at 000F4240!</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">handler(0, 80000034,
-1, , 3469283, 00000000) Overflow at 000F4240!</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">&nbsp;&nbsp;&nbsp;
-.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">handler(0, 80000034,
-1, , 197252915, 00000000) Overflow at 000F4240!</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">handler(0, 80000034,
-1, , 198593102, 00000000) Overflow at 000F4240!</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">handler(0, 80000034,
-1, , 199836690, 00000000) Overflow at 000F4240!</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test case: Overflow
-dispatch of 2nd event in set with 2 events.</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">---------------------------------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Threshold for
-overflow is: 1000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Using 10000000
-iterations of c += a*b</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-----------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Test type&nbsp;&nbsp;
-:&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp;
-401310164&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">PAPI_FP_INS
-:&nbsp;&nbsp; 200000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-0</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Overflows&nbsp;&nbsp;
-:&nbsp;&nbsp; 155</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">-----------------------------------------</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Verification:</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 2 approximately
-equals 100000000 100000000</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Column 1 approximately
-equals column 2</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Row 3 approximate
-equals 200</font></font>
-<br><font face="Courier New,Courier"><font color="#FFFF99">Press any key
-to continue...</font></font>
+<a NAME="overflow.exe"></a><tt><font color="#FFFF99">overflow.exe</font></tt></h1>
+<tt><font color="#FFFF99">(This test does not perform successfully on this
+Windows version)</font></tt><tt></tt>
+<p><tt><font color="#FFFF99">handler(0, 80000034, 1, , 1005346, 00000000)
+Overflow at 000F4240!</font></tt>
+<br><tt><font color="#FFFF99">handler(0, 80000034, 1, , 2170644, 00000000)
+Overflow at 000F4240!</font></tt>
+<br><tt><font color="#FFFF99">handler(0, 80000034, 1, , 3469283, 00000000)
+Overflow at 000F4240!</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; .</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; .</font></tt>
+<br><tt><font color="#FFFF99">&nbsp;&nbsp;&nbsp; .</font></tt>
+<br><tt><font color="#FFFF99">handler(0, 80000034, 1, , 197252915, 00000000)
+Overflow at 000F4240!</font></tt>
+<br><tt><font color="#FFFF99">handler(0, 80000034, 1, , 198593102, 00000000)
+Overflow at 000F4240!</font></tt>
+<br><tt><font color="#FFFF99">handler(0, 80000034, 1, , 199836690, 00000000)
+Overflow at 000F4240!</font></tt>
+<br><tt><font color="#FFFF99">Test case: Overflow dispatch of 2nd event
+in set with 2 events.</font></tt>
+<br><tt><font color="#FFFF99">---------------------------------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Threshold for overflow is: 1000000</font></tt>
+<br><tt><font color="#FFFF99">Using 10000000 iterations of c += a*b</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Test type&nbsp;&nbsp; :&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2</font></tt>
+<br><tt><font color="#FFFF99">PAPI_TOT_CYC:&nbsp;&nbsp; 401310164&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0</font></tt>
+<br><tt><font color="#FFFF99">PAPI_FP_INS :&nbsp;&nbsp; 200000017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0</font></tt>
+<br><tt><font color="#FFFF99">Overflows&nbsp;&nbsp; :&nbsp;&nbsp; 155</font></tt>
+<br><tt><font color="#FFFF99">-----------------------------------------</font></tt>
+<br><tt><font color="#FFFF99">Verification:</font></tt>
+<br><tt><font color="#FFFF99">Row 2 approximately equals 100000000 100000000</font></tt>
+<br><tt><font color="#FFFF99">Column 1 approximately equals column 2</font></tt>
+<br><tt><font color="#FFFF99">Row 3 approximate equals 200</font></tt>
+<br><tt><font color="#FFFF99">Press any key to continue...</font></tt>
 </body>
 </html>

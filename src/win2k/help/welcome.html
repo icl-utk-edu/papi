@@ -12,7 +12,7 @@
 </head>
 <body text="#000000" bgcolor="#FFFFFF" link="#660000" vlink="#003399" alink="#999933" background="fader-blue.gif">
 &nbsp;
-<table BORDER=0 CELLPADDING=2 WIDTH="720" HEIGHT="75" >
+<table BORDER=0 CELLPADDING=2 WIDTH="806" HEIGHT="75" >
 <tr>
 <td ROWSPAN="2" WIDTH="126" HEIGHT="119">
 <center><img SRC="papitrans2.gif" ALT="papitrans2.gif (3813 bytes)" height=117 width=102></center>
@@ -22,7 +22,8 @@
 <center>
 <h1>
 PAPI For Windows</h1></center>
-<script LANGUAGE="JavaScript">
+
+<center><script LANGUAGE="JavaScript">
 
    var date = new Date(document.lastModified);
 
@@ -31,11 +32,15 @@ PAPI For Windows</h1></center>
    + date.getDate()+ "/" + date.getFullYear() + ""); 
 
 </script>
+</center>
 </td>
 
 <td WIDTH="200" HEIGHT="85">
 <center><a href="http://icl.cs.utk.edu"><img SRC="200x85white.jpg" ALT="icl_logo2.gif (1905 bytes)" BORDER=0 height=85 width=200></a></center>
 </td>
+
+<td><img SRC="rd.jpg" height=75 width=140>
+<br>&nbsp;</td>
 </tr>
 </table>
 
@@ -57,6 +62,9 @@ machine.
 
 <li>
 <a href="#shell">The WinPAPI Shell Application</a></li>
+
+<li>
+<a href="welcome.html#matlab">MatLab Support</a></li>
 
 <li>
 <a href="#reference">The PAPI Programmer's Reference</a></li>
@@ -108,6 +116,11 @@ that can be modified and rebuilt using Microsoft Visual C++ 6.0 or higher.</li>
 <li>
 A <a href="#shell">WinPAPI Shell Application</a> that provides simple button
 access to a variety of functions.</li>
+
+<li>
+A <a href="welcome.html#matlab">MatLab</a> support folder that contains
+tools to call PAPI functions from MatLab, and example programs to show
+you how.</li>
 </ul>
 
 <h3>
@@ -130,7 +143,7 @@ path, or by double-clicking the icon in the directory where WinPAPI was
 installed. The Shell consists of a splash screen with five buttons, as
 described below:
 <center>
-<p><img SRC="imageUS2.JPG" height=457 width=582></center>
+<p><img SRC="PAPISplash.jpg" height=457 width=582></center>
 
 <h3>
 Exit</h3>
@@ -163,6 +176,44 @@ If your browser is already open, the proper page may not be displayed.</li>
 <h3>
 Web</h3>
 Links to the PAPI home page on the World Wide Web.
+<h2>
+<a NAME="matlab"></a>MatLab Support</h2>
+Two external PAPI function calls are provided for users of MatLab.With
+these calls you can&nbsp; monitor the number of floating point instructions
+executed and the instantaneous MegaFLOPS rate between any two points in
+your MatLab code. Three m-files are also included to provide examples of
+using the function calls. These examples can also help you calibrate the
+performance of your system.
+<br>To use these resources, open MatLab, change directory to %root%\MatLab
+(where %root% is typically 'C:\Program Files\ICL\WinPAPI\'), and type the
+name of an m-file. You can also copy the Mex files to a directory on the
+MatLab search path so they will be found automatically.
+<br>The files provided include:
+<h3>
+Mex External Functions</h3>
+
+<ul>
+<li>
+<a href="papi_matlab.html#PAPI_start_flops">PAPI_start_flops</a></li>
+
+<li>
+[ops, mflops] = <a href="papi_matlab.html#PAPI_count_flops">PAPI_count_flops</a></li>
+</ul>
+
+<h3>
+Example M-Files</h3>
+
+<ul>
+<li>
+<a href="papi_matlab.html#PAPI_InnerProduct">PAPI_InnerProduct.m</a></li>
+
+<li>
+<a href="papi_matlab.html#PAPI_VectorMatrix">PAPI_VectorMatrix.m</a></li>
+
+<li>
+<a href="papi_matlab.html#PAPI_MatrixMatrix">PAPI_MatrixMatrix.m</a></li>
+</ul>
+
 <h2>
 <a NAME="reference"></a>The PAPI Programmer's Reference</h2>
 The PAPI programming interface consists of a collection of 6 high-level
@@ -262,9 +313,8 @@ the folder structure of the development environment in order for the test
 applications to build successfully. The structure of the default install
 is shown graphically below:
 <center>
-<p><img SRC="imageJOB.JPG" height=295 width=425></center>
+<p><img SRC="PAPIDir.jpg" height=343 width=502></center>
 
-<p><br>
 <h2>
 <a NAME="cvs"></a>CVS access to the complete sources for PAPI</h2>
 Access to all of the PAPI sources for Windows and all other supported platforms
