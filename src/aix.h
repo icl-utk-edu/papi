@@ -9,7 +9,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <time.h>
-#if defined( _AIX51) || defined(_AIX52)
+#if defined( _AIXVERSION_510) || defined(_AIXVERSION_520)
 #include <sys/procfs.h>
 #include <sys/cred.h>
 #endif
