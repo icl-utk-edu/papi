@@ -445,16 +445,6 @@ extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern int _papi_hwi_using_signal;
 
-inline_static void PAPIERROR(char *format, ...)
-{
-   va_list args;
-   va_start(args, format); 
-   fprintf(stderr, "PAPI Error: ");
-   vfprintf(stderr, format, args);
-   fprintf(stderr,".\n");
-   va_end(args);
-}
-
 /*
  * Debug functions for platforms without vararg macro support
  */

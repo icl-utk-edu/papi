@@ -1393,3 +1393,14 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
       return 1;
    }
 }
+
+void PAPIERROR(char *format, ...)
+{
+   va_list args;
+   va_start(args, format); 
+   fprintf(stderr, "PAPI Error: ");
+   vfprintf(stderr, format, args);
+   fprintf(stderr,".\n");
+   va_end(args);
+}
+
