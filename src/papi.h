@@ -3,8 +3,8 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    dan terpstra
+*          terpstra@cs.utk.edu
 */  
 
 #ifndef _PAPI
@@ -191,10 +191,22 @@ converse may also be true, that more advanced features may be
 available and defined in the header file.  The user is encouraged to
 read the documentation carefully.  */
 
-#include <signal.h>
+/*  ANSI doesn't define a 'long long' data type as is used in gcc.
+	The Microsoft compiler doesn't support 'long long' syntax.
+	Thus, we define an os-agnostic long_long and u_long_long type
+	that can map onto the platform of choice. Windows also needs
+	a few other headers, and doesn't understand signals. - dkt
+*/
+#ifdef _WIN32	// Windows specific definitions are included below
+  #include "win_extras.h"
+#else			// This stuff is specific to Linux/Unix
+  #include <signal.h>
+  #define long_long long long
+  #define u_long_long unsigned long long
+#endif
 
 typedef void (*PAPI_overflow_handler_t)(int EventSet, int EventCode, int index,
-					long long *latest, int *threshold, void *context);
+					long_long *latest, int *threshold, void *context);
 
 typedef struct _papi_sprofil {
   unsigned short *pr_base;      /* buffer base */
@@ -281,7 +293,7 @@ typedef struct pre_info {
 
 /* The Low Level API */
 
-int PAPI_accum(int EventSet, long long *values);
+int PAPI_accum(int EventSet, long_long *values);
 int PAPI_add_event(int *EventSet, int Event);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
@@ -292,10 +304,10 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 void *PAPI_get_overflow_address(void *context);
-long long PAPI_get_real_cyc(void);
-long long PAPI_get_real_usec(void);
-long long PAPI_get_virt_cyc(void);
-long long PAPI_get_virt_usec(void);
+long_long PAPI_get_real_cyc(void);
+long_long PAPI_get_real_usec(void);
+long_long PAPI_get_virt_cyc(void);
+long_long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
 unsigned long int PAPI_thread_id(void);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
@@ -314,7 +326,7 @@ int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
-int PAPI_read(int EventSet, long long *values);
+int PAPI_read(int EventSet, long_long *values);
 int PAPI_rem_event(int *EventSet, int Event); 
 int PAPI_rem_events(int *EventSet, int *Events, int number); 
 int PAPI_reset(int EventSet);
@@ -329,10 +341,10 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
 int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
 int PAPI_state(int EventSetIndex, int *status);
-int PAPI_stop(int EventSet, long long *values);
+int PAPI_stop(int EventSet, long_long *values);
 char *PAPI_strerror(int);
 void PAPI_unlock(void);
-int PAPI_write(int EventSet, long long *values);
+int PAPI_write(int EventSet, long_long *values);
 
 /* The High Level API
 
@@ -342,11 +354,11 @@ both C and Fortran. It should be noted that this API can be used in
 conjunction with the low level API. */
 
 int PAPI_start_counters(int *events, int array_len);
-int PAPI_read_counters(long long *values, int array_len);
-int PAPI_stop_counters(long long *values, int array_len);
-int PAPI_accum_counters(long long *values, int array_len);
+int PAPI_read_counters(long_long *values, int array_len);
+int PAPI_stop_counters(long_long *values, int array_len);
+int PAPI_accum_counters(long_long *values, int array_len);
 int PAPI_num_counters(void);
-int PAPI_flops(float *rtime, float *ptime, long long *flpins, float *mflops);
+int PAPI_flops(float *rtime, float *ptime, long_long *flpins, float *mflops);
 
 #ifdef __cplusplus
 }
