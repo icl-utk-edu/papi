@@ -72,10 +72,15 @@ if (retval < 0)
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-If you don't call this, you're application could core dump.
+If you don't call this before using any of the low level PAPI calls,
+you're application could core dump.
 
 .SH SEE ALSO
 .BR PAPI_thread_init "(3),"
-The PAPI Web Site: 
+.BR PAPI_preset "(3),"
+.BR PAPI_low_level "(3),"
+.BR PAPI_high_level "(3),"
+.BR PAPI "(3),"
+The\ PAPI\ Web\ Site: 
 .B http://icl.cs.utk.edu/projects/papi
 

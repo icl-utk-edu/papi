@@ -5,15 +5,21 @@
 PAPI_get_virt_cyc, PAPI_get_virt_usec \- get virtual time counter values
 
 .SH SYNOPSIS
+.B #include <papi.h>
+
 .BI "long long PAPI_get_virt_cyc(void);"
 .BI "long long PAPI_get_virt_usec(void);"
 
 .SH DESCRIPTION
-None.
+Both of these functions return the total number of virtual units 
+from some arbitrary starting point. Virtual units accrue every time the
+process is running in user-mode on behalf of the process. Like the real time
+counters, these are guaranteed to exist on every platform PAPI supports. However
+on some platforms, the resolution can be as bad as 1/HZ as defined by the operating
+system.
 
 .SH RETURN VALUES
-On success, this function returns a value greater than or equal to zero.
-On error, a -1 error code is returned.
+This function always succeeds.
 
 .SH ERRORS
 None.

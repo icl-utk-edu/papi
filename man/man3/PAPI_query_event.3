@@ -2,23 +2,20 @@
 .TH PAPI_query_event 3 "October, 2000" "" "PAPI"
 
 .SH NAME
-PAPI_query_event \- query to see if a PAPI Preset hardware event exists on the current architecture.
-
-.LP
+PAPI_query_event \- query if PAPI event exists
 
 .SH SYNOPSIS
-.LP
-int PAPI_query_event (int EventCode)
-.LP
-int EventCode -- the numeric value of a PerfAPI Event
-.LP
+.B #include <papi.h>
+
+.BI "int PAPI_query_event (int " EventCode ");"
 
 .SH DESCRIPTION
-.B PAPI_query_event(\|)
-This function tests if the event designated by EventCode is supported by the current substrate. 
-.LP
-If the answer is yes, the function returns PAPI_OK. 
-If the answer is no, the function returns an error code. 
+.B "PAPI_query_event"
+asks the hardware if the PAPI Preset event can be counted on this
+architecture. If the event CAN be counted, the function returns PAPI_OK. 
+If the event CANNOT be counted, the function returns an error code. 
+On some platforms, this function can be used to check the syntax of
+a native event. 
 
 .SH RETURN VALUES
 On success, this function returns
@@ -48,29 +45,51 @@ The PAPI preset is not available on the underlying hardware.
 
 .SH EXAMPLES
 .LP
+.nf
+.if t .ft CW
+int EventSet = PAPI_NULL;
+unsigned int native = 0x0;
+int retval;
 
-  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-.LP
+/* Initialize the library */
+
+retval = PAPI_library_init(PAPI_VER_CURRENT);
+
+if (retval != PAPI_VER_CURRENT) {
+  fprintf(stderr,"PAPI library init error!\n");
+  exit(1); }
 	
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
+/* Create the event set */
 
-  /* Add Total Instructions Executed to our EventSet */
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
+/* Check if the event PAPI_TOT_INS or
+   Total Instructions Executed exists */
 
-  /* Add native event (0xc1 on hardware counter 1) */
+if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
+  fprintf(stderr,"No instruction counter? How lame.\n");
+  exit(1);
+  }
+	
+/* Add the event PAPI_TOT_INS or
+   Total Instructions Executed to the EventSet */
 
-  native = (0xc1 << 8) | 1;
-  if (PAPI_add_event(&EventSet, native) != PAPI_OK)
-    handle_error(1);
+if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
 
-  /* Start counting */
+/* Add native event (0xc1 on hardware counter 1) */
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
+native = (0xc1 << 8) | 1;
+if (PAPI_add_event(&EventSet, native) != PAPI_OK)
+  handle_error(1);
+
+/* Start counting */
+
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
@@ -79,10 +98,10 @@ Philip J. Mucci <mucci@cs.utk.edu>
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), "
+.BR PAPI_preset "(3), " PAPI_native "(3), "
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_rem_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
+The\ PAPI\ Web\ Site: 
 .B http://icl.cs.utk.edu/projects/papi
 
