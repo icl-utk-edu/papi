@@ -77,6 +77,14 @@ int main(int argc, char **argv)
                      printf(" |Native Event Description: |%s|\n\n", n_info.long_descr);
                  }
                }
+               else { /* must be a native event code */
+                  printf("%s\t0x%x\n |%s|\n",
+		               info.symbol,
+		               info.event_code,
+		               info.long_descr);
+                  for (k=0;k<info.count;k++)
+                     printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
+               }
 	         }
          }
          else printf("Sorry, an event by the name '%s' could not be found. Is it typed correctly?\n\n",name);
