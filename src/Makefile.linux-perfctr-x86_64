@@ -1,0 +1,74 @@
+PERFCTR=perfctr-20030509
+
+DESCR	= "Linux with PerfCtr 2.5 patch for all Opterons"
+
+KERNINC	= /usr/src/linux-2.4/include
+PERFCTR	?= ./perfctr-2.4.5
+PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
+OPTFLAGS= -g -Wall -O3 
+TOPTFLAGS= -g -Wall -O0 
+#
+# GNU G77 section
+#
+F77   = g77
+FFLAGS        = -Dlinux
+FOPTFLAGS= $(OPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS)
+# #
+# #  Portland Group PGF77 section
+# #
+# F77       = pgf77
+# FFLAGS    = -Dlinux
+# FOPTFLAGS = -O3 -tp p6
+# FTOPTFLAGS= $(FOPTFLAGS)
+# #
+# #  Intel Corp. Fortran compiler
+# #
+# F77      = ifc
+# FFLAGS   = -Dlinux
+# LDFLAGS  = -lPEPCF90 -lIEPCF90 -lF90 -lintrins  # Intel portability library (getarg_
+# FOPTFLAGS= -O3 -tpp6
+# FTOPTFLAGS= $(FOPTFLAGS)
+
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+SUBSTR	= linux-perfctr
+MSUBSTR	= linux-memory
+MEMSUBSTR= linux
+DESCR	= "Linux with PerfCtr 2.4.1 patch for all Pentiums and the AMD K7"
+LIBS	= static shared
+TARGETS = serial multiplex_and_pthreads 
+
+CC	= gcc
+CC_SHR  = $(CC) -shared -fPIC -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
+CC_R	= $(CC) -pthread
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR25 -DPAPI_PERFCTR_INTR_SUPPORT
+# Some nice flags to add to CFLAGS when debugging PAPI library itself
+# -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+MISCOBJS= libperfctr.so
+MISCHDRS= ia32_presets.h 
+SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+
+include Makefile.inc
+
+libperfctr.so: $(PERFCTR)/usr.lib/libperfctr.o $(PERFCTR)/usr.lib/libperfctr.so
+	cp $(PERFCTR)/usr.lib/libperfctr.so .
+
+$(PERFCTR)/usr.lib/libperfctr.so:
+	$(MAKE) -C $(PERFCTR)
+
+lib $(PERFCTR)/usr.lib/libperfctr.so:
+	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
+
+native_clean:
+	$(MAKE) -C $(PERFCTR) clean
+	-$(MAKE) -C $(PERFCTR)/usr.lib -f Makefile.shared clean
+
+native_install:
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
+	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(DESTDIR)/include
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
