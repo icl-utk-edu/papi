@@ -548,16 +548,19 @@ static EventSetInfo *allocate_EventSet(void)
   ESI->machdep = (void *)malloc(_papi_system_info.size_machdep);
   ESI->sw_stop = (long_long *)malloc(max_counters*sizeof(long_long)); 
   ESI->hw_start = (long_long *)malloc(max_counters*sizeof(long_long));
+  ESI->latest = (long_long *)malloc(max_counters*sizeof(long_long));
   ESI->EventInfoArray = (EventInfo_t *)malloc(max_counters*sizeof(EventInfo_t));
 
   if ((ESI->machdep        == NULL )  || 
       (ESI->sw_stop           == NULL )  || 
       (ESI->hw_start         == NULL )  ||
+      (ESI->latest         == NULL )  ||
       (ESI->EventInfoArray == NULL ))
     {
       if (ESI->machdep)        free(ESI->machdep);
       if (ESI->sw_stop)           free(ESI->sw_stop); 
       if (ESI->hw_start)         free(ESI->hw_start);
+      if (ESI->latest)         free(ESI->latest);
       if (ESI->EventInfoArray) free(ESI->EventInfoArray);
       free(ESI);
       return(NULL);
@@ -565,6 +568,7 @@ static EventSetInfo *allocate_EventSet(void)
   memset(ESI->machdep,       0x00,_papi_system_info.size_machdep);
   memset(ESI->sw_stop,          0x00,max_counters*sizeof(long_long)); 
   memset(ESI->hw_start,        0x00,max_counters*sizeof(long_long));
+  memset(ESI->latest,        0x00,max_counters*sizeof(long_long));
 
   initialize_EventInfoArray(ESI);
 
@@ -589,6 +593,7 @@ static void free_EventSet(EventSetInfo *ESI)
   if (ESI->machdep)        free(ESI->machdep);
   if (ESI->sw_stop)        free(ESI->sw_stop); 
   if (ESI->hw_start)       free(ESI->hw_start);
+  if (ESI->latest)       free(ESI->latest);
 #ifdef DEBUG
   memset(ESI,0x00,sizeof(EventSetInfo));
 #endif
