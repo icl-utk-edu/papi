@@ -58,25 +58,24 @@ int main(int argc, char **argv)
   info.event_name = name;
   info.event_descr = descr;
   info.event_note = NULL;
-  while (PAPI_native_event_index_to_code(i++, &code) == PAPI_OK) {
+  for(i=0;i<hwinfo->max_native_events;i++) {
     if (print_by_name) {
-      info.event_code = code;
-      retval = PAPI_event_code_to_name(code, name);
-      if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", 1);
-      retval = PAPI_describe_event(name, &code, descr);
-      if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_describe_event", 1);
+      info.event_code = i | NATIVE_MASK;
+      retval = PAPI_event_code_to_name(info.event_code, name);
+      if (retval == PAPI_OK) {
+	retval = PAPI_describe_event(name, (int *)&info.event_code, descr);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_describe_event", 1);
+      }
     }
     else if (print_describe) {
-      info.event_code = code;
+      info.event_code =  i | NATIVE_MASK;
       name[0] = 0;
-      retval = PAPI_describe_event(name, &code, descr);
-      if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_describe_event", 1);
+      retval = PAPI_describe_event(name, (int *)&info.event_code, descr);
     }
     else {
-      retval = PAPI_query_event_verbose(code, &info);
-      if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_query_event_verbose", 1);
+      retval = PAPI_query_event_verbose(i | NATIVE_MASK, &info);
     }
-    if ( !TESTS_QUIET ) {
+    if ( !TESTS_QUIET && retval == PAPI_OK) {
 		printf("%-30s 0x%-10x\n%s\n", \
 	       info.event_name, info.event_code, info.event_descr);
     }
