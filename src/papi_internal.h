@@ -15,9 +15,9 @@
 
 #define PRESET_MASK 0x80000000
 
-/* 
-extern int _papi_err_level; defined twice in this function
-*/
+ 
+extern int _papi_err_level;/* defined twice in this function*/
+
 
 typedef struct _dynamic_array {
 	void   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
@@ -125,6 +125,8 @@ extern int _papi_hwd_write(void *machdep, long long *events);
                          overflow thresholds and multiplexing */
 extern int _papi_hwd_setopt(int code, void *option);
 extern int _papi_hwd_getopt(int code, void *option);
-extern int _papi_err_level(int level); /* get/set error level */
 
+/*
+extern int _papi_err_level(int level); ** get/set error level **
+*/
 
