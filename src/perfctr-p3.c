@@ -39,13 +39,14 @@ extern hwi_search_t _papi_hwd_p2_preset_map;
 extern hwi_search_t _papi_hwd_ath_preset_map;
 extern hwi_search_t _papi_hwd_opt_preset_map;
 extern hwi_search_t *preset_search_map;
-extern native_event_entry_t _papi_hwd_pentium3_native_map;
+extern native_event_entry_t _papi_hwd_p3_native_map;
 extern native_event_entry_t _papi_hwd_p2_native_map;
 extern native_event_entry_t _papi_hwd_k7_native_map;
-extern native_event_entry_t _papi_hwd_opt_native_map;
+extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
 extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
+extern int p3_size, p2_size, ath_size, opt_size;
 int NATIVE_TABLE_SIZE;
 
 #ifdef __x86_64__
@@ -77,6 +78,8 @@ void print_control(const struct perfctr_cpu_control *control) {
 }
 #endif
 
+/* Assign the global native and preset table pointers, find the native
+   table's size in memory and then call the preset setup routine. */
 inline static int setup_p3_presets(int cputype) {
    switch(_papi_hwi_system_info.hw_info.model)
     {
@@ -88,43 +91,43 @@ inline static int setup_p3_presets(int cputype) {
     case PERFCTR_X86_INTEL_P5:
     case PERFCTR_X86_INTEL_P5MMX:
     case PERFCTR_X86_INTEL_PII:
-      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_p2_native_map) / sizeof(native_event_entry_t);
+      NATIVE_TABLE_SIZE = p2_size;
       native_table = &_papi_hwd_p2_native_map;
       preset_search_map = &_papi_hwd_p2_preset_map;
       break;
     case PERFCTR_X86_INTEL_P6:
     case PERFCTR_X86_INTEL_PIII:
-      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_pentium3_native_map) / sizeof(native_event_entry_t);
-      native_table = &_papi_hwd_pentium3_native_map;
+      NATIVE_TABLE_SIZE = p3_size;
+      native_table = &_papi_hwd_p3_native_map;
       preset_search_map = &_papi_hwd_p3_preset_map;
       break;
     case PERFCTR_X86_AMD_K7:
-      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_k7_native_map) / sizeof(native_event_entry_t);
+      NATIVE_TABLE_SIZE = ath_size;
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
  /*   case PERFCTR_X86_AMD_K8:
-      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_opt_native_map) / sizeof(native_event_entry_t);
-      native_table = &_papi_hwd_opt_native_map;
+      NATIVE_TABLE_SIZE = opt_size;
+      native_table = &_papi_hwd_k8_native_map;
       preset_search_map = &_papi_hwd_opt_preset_map;
-      break;    */
+      break;
+  */
     }
+printf("%d\n", sizeof(&_papi_hwd_p3_native_map));
+printf("%d\n", sizeof(native_event_entry_t));
    return(_papi_hwi_setup_all_presets(preset_search_map));
 }
 
 /* Low level functions, should not handle errors, just return codes. */
-
-static inline u_long_long get_cycles (void)
-{
-	u_long_long ret;
-        __asm__ __volatile__("rdtsc"
-			    : "=A" (ret)
-			    : /* no inputs */);
-        return ret;
+static inline u_long_long get_cycles (void) {
+   u_long_long ret;
+   __asm__ __volatile__("rdtsc"
+   : "=A" (ret)
+   : /* no inputs */);
+   return ret;
 }
 
-inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
-{
+inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
   switch (perfctr_cpu_type)
     {
     case PERFCTR_X86_INTEL_P5:
@@ -134,6 +137,7 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
     case PERFCTR_X86_INTEL_PIII:
     case PERFCTR_X86_INTEL_P4:
       return(PAPI_VENDOR_INTEL);
+  /*  case PERFCTR_X86_AMD_K8:   */
     case PERFCTR_X86_AMD_K7:
       return(PAPI_VENDOR_AMD);
     case PERFCTR_X86_CYRIX_MII:
@@ -145,14 +149,12 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
 
 /* Dumb hack to make sure I get the cycle time correct. */
 
-static float calc_mhz(void)
-{
+static float calc_mhz(void) {
   u_long_long ostamp;
   u_long_long stamp;
   float correction = 4000.0, mhz;
 
   /* Warm the cache */
-
   ostamp = get_cycles();
   usleep(1);
   stamp = get_cycles();
@@ -232,7 +234,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr) {
             ptr->control.cpu_control.pmc_map[i] = i;
          }
          break;
- /*     case PERFCTR_X86_AMD_K8:       */
+   /*   case PERFCTR_X86_AMD_K8:   */
       case PERFCTR_X86_AMD_K7:
          for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
             ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
@@ -244,13 +246,11 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr) {
    ptr->control.cpu_control.tsc_on = 1;
 }
 
-int _papi_hwd_add_prog_event(hwd_control_state_t *state, unsigned int code, void *tmp, EventInfo_t *tmp2)
-{
+int _papi_hwd_add_prog_event(hwd_control_state_t *state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
-{
+int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain) {
   return(PAPI_ESBSTR);
 }
 
@@ -267,9 +267,7 @@ void _papi_hwd_lock_init(void) {
 
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
-
-int _papi_hwd_init_global(void)
-{
+int _papi_hwd_init_global(void) {
    int retval;
    struct perfctr_info info;
    float mhz;
@@ -367,16 +365,14 @@ u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t *ctx) {
 
 /* This function examines the event to determine
     if it can be mapped to counter ctr.
-    Returns true if it can, false if it can't.
-*/
+    Returns true if it can, false if it can't. */
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
    return(dst->ra_selector & (1<<ctr));
 }
 
 /* This function forces the event to
     be mapped to only counter ctr.
-    Returns nothing.
-*/
+    Returns nothing.  */
 void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
    dst->ra_selector = (1<<ctr);
    dst->ra_rank = 1;
@@ -384,8 +380,7 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
 
 /* This function examines the event to determine
    if it has a single exclusive mapping.
-   Returns true if exlusive, false if non-exclusive.
-*/
+   Returns true if exlusive, false if non-exclusive.  */
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst) {
    return(dst->ra_rank==1);
 }
@@ -393,8 +388,7 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst) {
 /* This function compares the dst and src events
     to determine if any resources are shared. Typically the src event
     is exclusive, so this detects a conflict if true.
-    Returns true if conflict, false if no conflict.
-*/
+    Returns true if conflict, false if no conflict.  */
 int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    return(dst->ra_selector & src->ra_selector);
 }
@@ -403,8 +397,7 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
     from the resources available to the dst event,
     and reduces the rank of the dst event accordingly. Typically,
     the src event will be exclusive, but the code shouldn't assume it.
-    Returns nothing.
-*/
+    Returns nothing.  */
 void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    int i;
    unsigned shared;
@@ -420,7 +413,6 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
 }
 
 /* Register allocation */
-
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    int index, i, j, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
@@ -484,8 +476,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
    return(PAPI_OK);
 }
 
-int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *state)
-{
+int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *state) {
   int error;
   if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
     SUBDBG("vperfctr_control returns: %d\n",error);
@@ -494,21 +485,17 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *state)
   return(PAPI_OK);
 }
 
-int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state)
-{
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
   if(vperfctr_stop(ctx->perfctr) < 0)
     error_return(PAPI_ESYS,VCNTRL_ERROR);
-
   return(PAPI_OK);
 }
 
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl)
-{
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
   return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *spc, long_long **dp)
-{
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *spc, long_long **dp) {
    vperfctr_read_ctrs(ctx->perfctr, &spc->state);
    *dp = (long_long*) spc->state.pmc;
 #ifdef DEBUG
@@ -529,23 +516,18 @@ int _papi_hwd_setmaxmem(){
   return(PAPI_OK);
 }
 
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *cntrl, long_long *from)
-{ 
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *cntrl, long_long *from) {
   return(PAPI_ESBSTR);
 }
 
 /* Called once per process. */
-
-int _papi_hwd_shutdown_global(void)
-{
+int _papi_hwd_shutdown_global(void) {
   return(PAPI_OK);
 }
 
 /* This routine is for shutting down threads, including the
    master thread. */
-
-int _papi_hwd_shutdown(hwd_context_t *ctx)
-{
+int _papi_hwd_shutdown(hwd_context_t *ctx) {
   int retval = vperfctr_unlink(ctx->perfctr);
   SUBDBG("_papi_hwd_init_global vperfctr_unlink(%p) = %d\n",ctx->perfctr,retval);
   vperfctr_close(ctx->perfctr);
@@ -565,164 +547,113 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info) {
    _papi_hwi_dispatch_overflow_signal((void *)&ctx, _papi_hwi_system_info.supports_hw_overflow, 0, 0);
 }
 
-static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
-{
-  unsigned int ui; int si;
+/* Perfctr requires that interrupting counters appear at the end of the pmc list
+   In the case a user wants to interrupt on a counter in an evntset that is not
+   among the last events, we need to move the perfctr virtual events around to
+   make it last. This function swaps two perfctr events, and then adjust the
+   position entries in both the NativeInfoArray and the EventInfoArray to keep
+   everything consistent.
+*/
+static void swap_events(EventSetInfo_t *ESI, struct vperfctr_control *contr,int cntr1,int cntr2) {
+   unsigned int ui; int si, i, j;
 
-  /* In the case a user wants to interrupt on a counter in an evntsel
-     that is not among the last events, we need to move the perfctr 
-     virtual events around to make it last. This function swaps two
-     perfctr events */
+   for(i=0; i<ESI->NativeCount; i++) {
+      if (ESI->NativeInfoArray[i].ni_position == cntr1)
+         ESI->NativeInfoArray[i].ni_position = cntr2;
+      if(ESI->NativeInfoArray[i].ni_position == cntr2)
+         ESI->NativeInfoArray[i].ni_position = cntr1;
+   }
+   for(i=0; i<ESI->NumberOfEvents; i++) {
+      for (j=0; ESI->EventInfoArray[i].pos[j] >= 0; j++) {
+         if(ESI->EventInfoArray[i].pos[j] == cntr1)
+            ESI->EventInfoArray[i].pos[j] = cntr2;
+         if(ESI->EventInfoArray[i].pos[j] == cntr2)
+            ESI->EventInfoArray[i].pos[j] = cntr1;
+      }
+   }
+   ui=contr->cpu_control.pmc_map[cntr1];
+   contr->cpu_control.pmc_map[cntr1]=contr->cpu_control.pmc_map[cntr2];
+   contr->cpu_control.pmc_map[cntr2] = ui;
 
-  ui=contr->cpu_control.pmc_map[cntr1];
-  contr->cpu_control.pmc_map[cntr1]=contr->cpu_control.pmc_map[cntr2];
-  contr->cpu_control.pmc_map[cntr2] = ui;
+   ui=contr->cpu_control.evntsel[cntr1];
+   contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
+   contr->cpu_control.evntsel[cntr2] = ui;
 
-  ui=contr->cpu_control.evntsel[cntr1];
-  contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
-  contr->cpu_control.evntsel[cntr2] = ui;
-
-  ui=contr->cpu_control.evntsel_aux[cntr1];
-  contr->cpu_control.evntsel_aux[cntr1]=contr->cpu_control.evntsel_aux[cntr2];
-  contr->cpu_control.evntsel_aux[cntr2] = ui;
-
-  si=contr->cpu_control.ireset[cntr1];
-  contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
-  contr->cpu_control.ireset[cntr2] = si;
+   si=contr->cpu_control.ireset[cntr1];
+   contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
+   contr->cpu_control.ireset[cntr2] = si;
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold) {
-#ifdef PAPI_PERFCTR_INTR_SUPPORT
-  extern int _papi_hwi_using_signal;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  struct vperfctr_control *contr = &this_state->counter_cmd;
-  int i, ncntrs, nricntrs = 0, nracntrs, cntr, cntr2, retval=0;
-  unsigned int selector;
+   extern int _papi_hwi_using_signal;
+   hwd_control_state_t *this_state = &ESI->machdep;
+   struct vperfctr_control *contr = &this_state->control;
+   int i, ncntrs, nricntrs = 0, nracntrs = 0, retval=0;
 
-  if(overflow_option->threshold != 0)  /* Set an overflow threshold */
-    {
+   OVFDBG("EventIndex=%d\n",EventIndex);
+
+   /* The correct event to overflow is EventIndex */
+   ncntrs = _papi_hwi_system_info.num_cntrs;
+   i = ESI->EventInfoArray[EventIndex].pos[0];
+   if(i >= ncntrs) {
+        OVFDBG("Selector id (%d) larger than ncntrs (%d)\n",i,ncntrs);
+        return PAPI_EINVAL;
+   }
+   if(threshold != 0) {              /* Set an overflow threshold */
       struct sigaction sa;
       int err;
+      if(ESI->EventInfoArray[EventIndex].derived) {
+         OVFDBG("Can't overflow on a derived event.\n");
+         return PAPI_EINVAL;
+      }
+      /* overflow interrupt occurs on the NEXT event after overflow occurs
+          thus we subtract 1 from the threshold. */
+      contr->cpu_control.ireset[i] = (-threshold+1);
+      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+      nricntrs = ++contr->cpu_control.nrictrs;
+      nracntrs = --contr->cpu_control.nractrs;
+      contr->si_signo = PAPI_SIGNAL;
 
-      /* Return error if installed signal is set earlier (!=SIG_DFL) and
-	 it was not set to the PAPI overflow handler */
-      /* The following code is commented out because many C libraries
-	 replace the signal handler when one links with threads. The
-	 name of this signal handler is not exported. So there really
-	 is NO WAY to check if the user has installed a signal. */
-      /*
-      void *tmp;
-      tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
-      if ((tmp != (void *)SIG_DFL) && (tmp != (void *)_papi_hwd_dispatch_timer))
-	return(PAPI_EMISC);
-      */
+      /* move this event to the bottom part of the list if needed */
+      if(i < nracntrs) swap_events(ESI, contr, i, nracntrs);
 
       memset(&sa, 0, sizeof sa);
       sa.sa_sigaction = _papi_hwd_dispatch_timer;
       sa.sa_flags = SA_SIGINFO;
-      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0)
-	{
-	  DBG((stderr,"Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno)));
-	  return(PAPI_ESYS);
-	}
-
-      /* The correct event to overflow is overflow_option->EventIndex */
-      ncntrs=_papi_hwi_system_info.num_cntrs;
-      selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
-      DBG((stderr,"selector id is %d.\n",selector));
-      i=ffs(selector)-1;
-      if(i>=ncntrs)
-	{
-	  DBG((stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs));
-	  return PAPI_EINVAL;
-	}
-      contr->cpu_control.ireset[i] = -overflow_option->threshold;
-      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
-      nricntrs=++contr->cpu_control.nrictrs;
-      nracntrs=--contr->cpu_control.nractrs;
-      contr->si_signo = PAPI_SIGNAL;
-
-      /* perfctr 2.x requires the interrupting counters to be placed last
-	 in evntsel, swap events that do not fulfill this criterion. This
-	 will yield a non-monotonic pmc_map array */
-      for(i=nricntrs;i>0;i--)
-	{
-	  cntr = nracntrs + i - 1;
-	  if( !(contr->cpu_control.evntsel[cntr] & PERF_INT_ENABLE))
-	    { /* A non-interrupting counter was found among the icounters
-		 Locate an interrupting counter in the acounters and swap */
-	      for(cntr2=0;cntr2<nracntrs;cntr2++)
-		{
-		  if( (contr->cpu_control.evntsel[cntr2] & PERF_INT_ENABLE))
-		    break;
-		}
-	      if(cntr2==nracntrs)
-		{
-		  DBG((stderr,"No icounter to swap with!\n"));
-		  return(PAPI_EMISC);
-		}
-	      swap_pmc_map_events(contr,cntr,cntr2);
-	    }
-	}
-
-      PAPI_lock();
+      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0) {
+         OVFDBG("Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno));
+         return(PAPI_ESYS);
+      }
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       _papi_hwi_using_signal++;
-      PAPI_unlock();
-    }
-  else   /* Disable overflow */
-    {
-      /* The correct event to overflow is overflow_option->EventIndex */
-      ncntrs=_papi_hwi_system_info.num_cntrs;
-      for(i=0;i<ncntrs;i++) 
-	if(contr->cpu_control.evntsel[i] & PERF_INT_ENABLE)
-	  {
-	    contr->cpu_control.ireset[i] = 0;
-	    contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-	    nricntrs=--contr->cpu_control.nrictrs;
-	    nracntrs=++contr->cpu_control.nractrs;
-	    contr->si_signo = 0;
-	  }
-      /* The current implementation only supports one interrupting counter */
-      if(nricntrs)
-	{
-	  fprintf(stderr,"%s %s\n","PAPI internal error.",
-		  "Only one interrupting counter is supported!");
-	  return(PAPI_ESBSTR);
-	}
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 
-      /* perfctr 2.x requires the interrupting counters to be placed last
-	 in evntsel, when the counter is non-interupting, move the order
-	 back into the default monotonic pmc_map */
-      for(cntr=0;cntr<ncntrs;cntr++)
-	if(contr->cpu_control.pmc_map[cntr]!=cntr)
-	  { /* This counter is out-of-order. Swap with the correct one*/
-	    for(cntr2=cntr+1;cntr2<ncntrs;cntr2++)
-	      if(contr->cpu_control.pmc_map[cntr2]==cntr) break;
-	    if(cntr2==ncntrs)
-	      {
-		DBG((stderr,"No icounter to swap with!\n"));
-		return(PAPI_EMISC);
-	      }
-	    swap_pmc_map_events(contr,cntr,cntr2);
-	  }
-      PAPI_lock();
+      OVFDBG("Modified event set\n");
+   }
+   else {
+      if(contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
+         contr->cpu_control.ireset[i] = 0;
+         contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
+         nricntrs=--contr->cpu_control.nrictrs;
+         nracntrs=++contr->cpu_control.nractrs;
+      }
+      /* move this event to the top part of the list if needed */
+      if(i >= nracntrs) swap_events(ESI, contr, i, nracntrs - 1);
+      if (!nricntrs) contr->si_signo = 0;
+
+      OVFDBG("Modified event set\n");
+
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       _papi_hwi_using_signal--;
-      if (_papi_hwi_using_signal == 0)
-	{
-	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
-	    retval = PAPI_ESYS;
-	}
-      PAPI_unlock();
-    }
-
-  DBG((stderr,"%s (%s): Hardware overflow is still experimental.\n",
-	  __FILE__,__FUNCTION__));
-  DBG((stderr,"End of call. Exit code: %d\n",retval));
-  return(retval);
-#else
-  /* This function is not used and shouldn't be called. */
-  return(PAPI_ESBSTR);
-#endif
+      if (_papi_hwi_using_signal == 0) {
+         if(sigaction(PAPI_SIGNAL, NULL, NULL) == -1) retval = PAPI_ESYS;
+      }
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+   }
+   OVFDBG("%s (%s): Hardware overflow is still experimental.\n",
+          __FILE__,__FUNCTION__);
+   OVFDBG("End of call. Exit code: %d\n",retval);
+   return(retval);
 }
 
 int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold) {

@@ -39,6 +39,13 @@ extern int NATIVE_TABLE_SIZE;
           have been left to the user to simply OR together.
 */
 
+/* These enumeration tables will be used to define the location
+   in the native event tables.  Each even has a unique name so as
+   to not interfere with location of other events in other native
+   tables.  The preset tables use these enumerations to lookup
+   native events.
+*/
+/* Pentium III enumerations */
 enum {
    PNE_P3_DATA_MEM_REFS = 0x40000000,
    PNE_P3_DCU_LINES_IN,
@@ -174,6 +181,7 @@ enum {
    PNE_P3_RET_SEG_RENAMES
 };
 
+/* Pentium II enumerations */
 enum {
    PNE_P2_DATA_MEM_REFS = 0x40000000,
    PNE_P2_DCU_LINES_IN,
@@ -294,6 +302,7 @@ enum {
    PNE_P2_RET_SEG_RENAMES
 };
 
+/* Athlon enumerations */
 enum {
    PNE_ATH_SEG_REG_LOADS = 0x40000000,
    PNE_ATH_ST_ACTIVE_IS,
@@ -369,6 +378,7 @@ enum {
    PNE_ATH_BP_DR3
 };
 
+/* Opteron enumerations */
 enum {
    PNE_OPT_FP_ADD_PIPE = 0x40000000,
    PNE_OPT_FP_MULT_PIPE,
@@ -522,6 +532,13 @@ enum {
    PNE_OPT_NB_HT_BUS2_BUFF,
    PNE_OPT_NB_HT_BUS2_NOP
 };
+
+/* PAPI preset events are defined in the tables below.
+   Each entry consists of a PAPI name, derived info, and up to four
+   native event indeces as defined above.
+   Events that require tagging should be ordered such that the
+   first event is the one that is read. See PAPI_FP_INS for an example.
+*/
 
 const hwi_search_t _papi_hwd_p3_preset_map[] = {
    { PAPI_L1_DCM,        {0, {PNE_P3_DCU_LINES_IN,0,0,0},{0,}}},
@@ -707,10 +724,16 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
    { 0,                      {0, { 0,0,0,0},{0,}}}
 };
  
+/* The following are the (huge) native tables.  They contain the 
+   following:
+   A short text description of the native event,
+   A longer more descriptive text of the native event,
+   Information on which counter the native can live,
+   and the Native Event Code.                                           */
 /* The notes/descriptions of these events have sometimes been truncated */
 /* Please see the architecture's manual for any clarifications.         */
 
-const native_event_entry_t _papi_hwd_pentium3_native_map[] = {
+const native_event_entry_t _papi_hwd_p3_native_map[] = {
   { "DATA_MEM_REFS",
     "All loads/stores from/to any memory type.",
     { CNTR2|CNTR1, 0x43}},
@@ -1707,7 +1730,7 @@ const native_event_entry_t _papi_hwd_k7_native_map[] = {
 /* The first two letters in each entry indicate to which unit
    the event refers. */
 
-const native_event_entry_t _papi_hwd_opt_native_map[] = {
+const native_event_entry_t _papi_hwd_k8_native_map[] = {
   { "FP_ADD_PIPE",
     "Dispatched FPU ops - Revision B and later revisions - Add pipe ops excluding junk ops.",
     { ALLCNTRS, 0x00}},
@@ -2168,14 +2191,24 @@ const native_event_entry_t _papi_hwd_opt_native_map[] = {
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
+int p3_size = sizeof(_papi_hwd_p3_native_map)/sizeof(native_event_entry_t);
+int p2_size = sizeof(_papi_hwd_p2_native_map)/sizeof(native_event_entry_t);
+int ath_size = sizeof(_papi_hwd_k7_native_map)/sizeof(native_event_entry_t);
+int opt_size = sizeof(_papi_hwd_k8_native_map)/sizeof(native_event_entry_t);
+
+/* Given a native event code, returns the short text label. */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode) {
    return(native_table[EventCode & NATIVE_AND_MASK].name);
 }
 
+/* Given a native event code, returns the longer native event
+   description. */
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode) {
    return(native_table[EventCode & NATIVE_AND_MASK].description);
 }
 
+/* Given a native event code, assigns the native event's 
+   information to a given pointer. */
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits) {
    if((EventCode & NATIVE_AND_MASK) >= NATIVE_TABLE_SIZE) {
       return(PAPI_ENOEVNT);
@@ -2184,8 +2217,10 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits) {
    return(PAPI_OK);
 }
 
+/* Given a native event code, looks for the next event in the table
+   if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier) {
-   if((*EventCode & NATIVE_AND_MASK) < NATIVE_TABLE_SIZE) {
+   if(((*EventCode & NATIVE_AND_MASK) + 1) < NATIVE_TABLE_SIZE) {
       *EventCode = *EventCode + 1;
       return(PAPI_OK);
    }

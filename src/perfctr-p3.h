@@ -4,7 +4,6 @@
 /****************************/
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
-
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,7 +13,6 @@
 #include <math.h>
 #include <limits.h>
 #include <sys/types.h>
-
 #ifdef _WIN32
   #include <errno.h>
   #include "cpuinfo.h"
@@ -43,16 +41,13 @@
 
 #define PERF_MAX_COUNTERS 4
 #define MAX_COUNTERS PERF_MAX_COUNTERS
-#define PAPI_MAX_NATIVE_EVENTS 140
-#define MAX_NATIVE_EVENT 140
 #define MAX_COUNTER_TERMS  MAX_COUNTERS
-/* Per event data structure for each event */
 #define P3_MAX_REGS_PER_EVENT 2
 
 #include "papi.h"
 #include "papi_preset.h"
 
-/* Locks */
+/* Lock macros. */
 #ifdef __x86_64__
 #include <linux/spinlock.h>
 extern spinlock_t lock[PAPI_MAX_LOCK];
@@ -76,7 +71,7 @@ do                                              \
 #define  _papi_hwd_unlock(lck)                  \
 do                                              \
 {                                               \
-   spin_unlock(&lock[lck]);                             \
+   spin_unlock(&lock[lck]);                     \
 } while(0)
 #else
 #define _papi_hwd_lock(lck)                                     \
@@ -105,6 +100,7 @@ typedef struct {
 typedef siginfo_t  hwd_siginfo_t;
 typedef struct sigcontext  hwd_ucontext_t;
 
+/* Overflow macros */
 #ifdef __x86_64__
 #define GET_OVERFLOW_ADDRESS(ctx) (void *)((_papi_hwd_context_t *)ctx)->ucontext->rip
 #else
@@ -121,7 +117,7 @@ typedef struct sigcontext  hwd_ucontext_t;
 
 typedef struct P3_register {
   unsigned int selector;           /* Mask for which counters in use */
-  int counter_cmd;                 /* Mask for which counters in use */
+  int counter_cmd;                 /* The event code */
 } P3_register_t;
 
 typedef struct P3_reg_alloc {
@@ -191,12 +187,14 @@ typedef struct P3_perfctr_context {
 /*  P3_perfctr_control_t start; */
 } P3_perfctr_context_t;
 
+/* typedefs to conform to hardware independent PAPI code. */
 typedef P3_reg_alloc_t hwd_reg_alloc_t;
 typedef P3_perfctr_control_t hwd_control_state_t;
 typedef P3_register_t hwd_register_t;
 typedef P3_perfctr_context_t hwd_context_t;
 #endif
 
+/* Used in determining on which counters an event can live. */
 #define CNTR1 0x1
 #define CNTR2 0x2
 #define CNTR3 0x4
@@ -204,6 +202,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define CNTRS12 (CNTR1|CNTR2)
 #define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
+/* Masks to craft an eventcode to perfctr's liking */
 #define PERF_CTR_MASK          0xFF000000
 #define PERF_INV_CTR_MASK      0x00800000
 #define PERF_ENABLE            0x00400000
@@ -232,7 +231,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
-extern int NATIVE_TABLE_SIZE;
+extern int p3_size, p2_size, ath_size, opt_size, NATIVE_TABLE_SIZE;
 extern char *basename(char *);
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
 #endif
