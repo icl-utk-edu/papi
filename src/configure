@@ -6772,6 +6772,12 @@ case "$OS" in
   irix64)  OS=irix ;;
   "unicos/mp") OS=unicos;;
 esac
+
+T3EOS="`uname -a | tr A-Z a-z | grep unicos`"
+if test "$T3EOS" != ""; then
+   OS=unicos
+fi
+
 #echo $OS
 #AC_SUBST($OS)
 
@@ -6832,8 +6838,11 @@ case "$OS" in
   irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr A-Z a-z`;;
   osf1) CPU=`uname -p`;;
   unicos)
-        if test "`uname -a | grep crayx1`" != ""; then
+        if test "`uname -a | tr A-Z a-z | grep crayx1`" != ""; then
           CPU=x1-msp
+        fi
+        if test "`uname -a | tr A-Z a-z | grep t3e`" != ""; then
+          CPU=t3e
         fi
         ;;
 esac
