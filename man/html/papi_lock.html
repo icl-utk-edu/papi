@@ -1,0 +1,137 @@
+<HTML><HEAD>
+<TITLE>Manual Page - papi_lock(3)</TITLE>
+<BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
+<!-- .\" $Id$ -->
+<!-- .TH "PAPI_lock" 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
+<CENTER>
+<H1><HR><I>PAPI Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>PAPI_lock (3)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
+PAPI_lock - Lock the PAPI internal mutex variable
+PAPI_unlock - Unlock the PAPI internal mutex variable
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Return Values</A><BR>
+<A HREF=#4>Notes</A><BR>
+<A HREF=#5>Author</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> <P>
+<!-- .nf -->
+<PRE>
+<!-- .BI void\ PAPI_lock(void); -->
+<B>void PAPI_lock(void);</B> 
+<!-- .BI void\ PAPI_unlock(void); -->
+<B>void PAPI_unlock(void);</B> 
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .SH DESCRIPTION -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .B "PAPI_lock()" -->
+<B>PAPI_lock()</B> Grabs access to the PAPI mutex variable. This function is provided to the
+user to have a platform independent call to an (hopefully) efficiently
+implemented mutex.
+<!-- .LP -->
+<P>
+<!-- .B "PAPI_unlock()" -->
+<B>PAPI_unlock()</B> unlocks the mutex acquired by a call to
+<!-- .BR PAPI_lock . -->
+<B>PAPI_lock</B>. <P>
+<!-- .SH RETURN VALUES -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>RETURN VALUES</H3>
+
+</A>
+<BLOCKQUOTE>
+There are no return values for these calls. Upon return from
+<!-- .B PAPI_lock -->
+<B>PAPI_lock</B> the current thread has acquired exclusive access to the PAPI mutex.
+<P>
+<!-- .SH NOTES -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>NOTES</H3>
+
+</A>
+<BLOCKQUOTE>
+Care must be taken since the mutex variable used is the internal PAPI
+mutex variable. The thread that has acquired the mutex should be
+designed so as not to call any PAPI library functions until a call to
+<!-- .B PAPI_unlock -->
+<B>PAPI_unlock</B> has been made. Also, other threads that call PAPI library functions may
+be blocked until the thread that has grabbed the mutex has released it.
+<P>
+<!-- .SH AUTHOR -->
+</BLOCKQUOTE>
+<A name=5>
+
+     <H3>AUTHOR</H3>
+
+</A>
+<BLOCKQUOTE>
+Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=6>
+
+     <H3>BUGS</H3>
+
+</A>
+<BLOCKQUOTE>
+Due to its possible interference with internal PAPI and that there is only
+one mutex available through this interface some care must be observed by
+the programmer using these calls.
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=7>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+The PAPI Web Site:
+<!-- .B http://icl.cs.utk.edu/projects/papi -->
+<B><A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A></B> <P>
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPI_lock (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE>
+<FONT SIZE=-1>Generated on Friday, 22 Jun 2001 14:56:45 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papi_lock.3 using man macros.
+<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
+</FONT>
+</BODY></HTML>
