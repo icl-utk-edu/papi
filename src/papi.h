@@ -14,19 +14,6 @@
 
 #define PAPI_VER_CURRENT 2
 
-#ifdef DEBUG
-/* add Win32 to the debug list */
-#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__) \
-        || defined(__osf__)) || (defined(sun) && defined(sparc)) || defined(_WIN
-32)
-#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
-#else /* SV2,SV1 ? */
-#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
-#endif
-#else
-#define DBG(a)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -239,7 +226,7 @@ typedef void (*PAPI_overflow_handler_t)(int EventSet, int EventCode, int index,
 typedef struct _papi_sprofil {
   unsigned short *pr_base;      /* buffer base */
   unsigned pr_size;   /* buffer size */
-  unsigned long pr_off;     /* pc offset */
+  caddr_t pr_off;     /* pc offset */
   unsigned pr_scale;  /* pc scaling */ } PAPI_sprofil_t;
 
 typedef struct _papi_inherit_option {
