@@ -9,6 +9,8 @@ are not guaranteed to be present on all platforms.  Please check your
 platform's documentation carefully.
 
 */
+#ifndef _PAPISTDEVENTDEFS
+#define _PAPISTDEVENTDEFS
 
 /*
    Masks to indicate the event is a preset- the presets will have 
@@ -42,106 +44,111 @@ platform's documentation carefully.
    other event.
 */
 
-#define PAPI_L1_DCM  (PRESET_MASK | 0x00)       /*Level 1 data cache misses */
-#define PAPI_L1_ICM  (PRESET_MASK | 0x01)       /*Level 1 instruction cache misses */
-#define PAPI_L2_DCM  (PRESET_MASK | 0x02)       /*Level 2 data cache misses */
-#define PAPI_L2_ICM  (PRESET_MASK | 0x03)       /*Level 2 instruction cache misses */
-#define PAPI_L3_DCM  (PRESET_MASK | 0x04)       /*Level 3 data cache misses */
-#define PAPI_L3_ICM  (PRESET_MASK | 0x05)       /*Level 3 instruction cache misses */
-#define PAPI_L1_TCM  (PRESET_MASK | 0x06)       /*Level 1 total cache misses */
-#define PAPI_L2_TCM  (PRESET_MASK | 0x07)       /*Level 2 total cache misses */
-#define PAPI_L3_TCM  (PRESET_MASK | 0x08)       /*Level 3 total cache misses */
-#define PAPI_CA_SNP  (PRESET_MASK | 0x09)       /*Snoops */
-#define PAPI_CA_SHR  (PRESET_MASK | 0x0A)       /*Request for shared cache line (SMP) */
-#define PAPI_CA_CLN  (PRESET_MASK | 0x0B)       /*Request for clean cache line (SMP) */
-#define PAPI_CA_INV  (PRESET_MASK | 0x0C)       /*Request for cache line Invalidation (SMP) */
-#define PAPI_CA_ITV  (PRESET_MASK | 0x0D)       /*Request for cache line Intervention (SMP) */
-#define PAPI_L3_LDM  (PRESET_MASK | 0x0E)       /*Level 3 load misses */
-#define PAPI_L3_STM  (PRESET_MASK | 0x0F)       /*Level 3 store misses */
-#define PAPI_BRU_IDL (PRESET_MASK | 0x10)       /*Cycles branch units are idle */
-#define PAPI_FXU_IDL (PRESET_MASK | 0x11)       /*Cycles integer units are idle */
-#define PAPI_FPU_IDL (PRESET_MASK | 0x12)       /*Cycles floating point units are idle */
-#define PAPI_LSU_IDL (PRESET_MASK | 0x13)       /*Cycles load/store units are idle */
-#define PAPI_TLB_DM  (PRESET_MASK | 0x14)       /*Data translation lookaside buffer misses */
-#define PAPI_TLB_IM  (PRESET_MASK | 0x15)       /*Instr translation lookaside buffer misses */
-#define PAPI_TLB_TL  (PRESET_MASK | 0x16)       /*Total translation lookaside buffer misses */
-#define PAPI_L1_LDM  (PRESET_MASK | 0x17)       /*Level 1 load misses */
-#define PAPI_L1_STM  (PRESET_MASK | 0x18)       /*Level 1 store misses */
-#define PAPI_L2_LDM  (PRESET_MASK | 0x19)       /*Level 2 load misses */
-#define PAPI_L2_STM  (PRESET_MASK | 0x1A)       /*Level 2 store misses */
-#define PAPI_BTAC_M  (PRESET_MASK | 0x1B)       /*BTAC miss */
-#define PAPI_PRF_DM  (PRESET_MASK | 0x1C)       /*Prefetch data instruction caused a miss */
-#define PAPI_L3_DCH  (PRESET_MASK | 0x1D)       /*Level 3 Data Cache Hit */
-#define PAPI_TLB_SD  (PRESET_MASK | 0x1E)       /*Xlation lookaside buffer shootdowns (SMP) */
-#define PAPI_CSR_FAL (PRESET_MASK | 0x1F)       /*Failed store conditional instructions */
-#define PAPI_CSR_SUC (PRESET_MASK | 0x20)       /*Successful store conditional instructions */
-#define PAPI_CSR_TOT (PRESET_MASK | 0x21)       /*Total store conditional instructions */
-#define PAPI_MEM_SCY (PRESET_MASK | 0x22)       /*Cycles Stalled Waiting for Memory Access */
-#define PAPI_MEM_RCY (PRESET_MASK | 0x23)       /*Cycles Stalled Waiting for Memory Read */
-#define PAPI_MEM_WCY (PRESET_MASK | 0x24)       /*Cycles Stalled Waiting for Memory Write */
-#define PAPI_STL_ICY (PRESET_MASK | 0x25)       /*Cycles with No Instruction Issue */
-#define PAPI_FUL_ICY (PRESET_MASK | 0x26)       /*Cycles with Maximum Instruction Issue */
-#define PAPI_STL_CCY (PRESET_MASK | 0x27)       /*Cycles with No Instruction Completion */
-#define PAPI_FUL_CCY (PRESET_MASK | 0x28)       /*Cycles with Maximum Instruction Completion */
-#define PAPI_HW_INT  (PRESET_MASK | 0x29)       /*Hardware interrupts */
-#define PAPI_BR_UCN  (PRESET_MASK | 0x2A)       /*Unconditional branch instructions executed */
-#define PAPI_BR_CN   (PRESET_MASK | 0x2B)       /*Conditional branch instructions executed */
-#define PAPI_BR_TKN  (PRESET_MASK | 0x2C)       /*Conditional branch instructions taken */
-#define PAPI_BR_NTK  (PRESET_MASK | 0x2D)       /*Conditional branch instructions not taken */
-#define PAPI_BR_MSP  (PRESET_MASK | 0x2E)       /*Conditional branch instructions mispred */
-#define PAPI_BR_PRC  (PRESET_MASK | 0x2F)       /*Conditional branch instructions corr. pred */
-#define PAPI_FMA_INS (PRESET_MASK | 0x30)       /*FMA instructions completed */
-#define PAPI_TOT_IIS (PRESET_MASK | 0x31)       /*Total instructions issued */
-#define PAPI_TOT_INS (PRESET_MASK | 0x32)       /*Total instructions executed */
-#define PAPI_INT_INS (PRESET_MASK | 0x33)       /*Integer instructions executed */
-#define PAPI_FP_INS  (PRESET_MASK | 0x34)       /*Floating point instructions executed */
-#define PAPI_LD_INS  (PRESET_MASK | 0x35)       /*Load instructions executed */
-#define PAPI_SR_INS  (PRESET_MASK | 0x36)       /*Store instructions executed */
-#define PAPI_BR_INS  (PRESET_MASK | 0x37)       /*Total branch instructions executed */
-#define PAPI_VEC_INS (PRESET_MASK | 0x38)       /*Vector/SIMD instructions executed */
-#define PAPI_RES_STL (PRESET_MASK | 0x39)       /*Cycles processor is stalled on resource */
-#define PAPI_FP_STAL (PRESET_MASK | 0x3A)       /*Cycles any FP units are stalled */
-#define PAPI_TOT_CYC (PRESET_MASK | 0x3B)       /*Total cycles */
-#define PAPI_LST_INS (PRESET_MASK | 0x3C)       /*Total load/store inst. executed */
-#define PAPI_SYC_INS (PRESET_MASK | 0x3D)       /*Sync. inst. executed */
-#define PAPI_L1_DCH  (PRESET_MASK | 0x3E)       /*L1 D Cache Hit */
-#define PAPI_L2_DCH  (PRESET_MASK | 0x3F)       /*L2 D Cache Hit */
-#define PAPI_L1_DCA  (PRESET_MASK | 0x40)       /*L1 D Cache Access */
-#define PAPI_L2_DCA  (PRESET_MASK | 0x41)       /*L2 D Cache Access */
-#define PAPI_L3_DCA  (PRESET_MASK | 0x42)       /*L3 D Cache Access */
-#define PAPI_L1_DCR  (PRESET_MASK | 0x43)       /*L1 D Cache Read */
-#define PAPI_L2_DCR  (PRESET_MASK | 0x44)       /*L2 D Cache Read */
-#define PAPI_L3_DCR  (PRESET_MASK | 0x45)       /*L3 D Cache Read */
-#define PAPI_L1_DCW  (PRESET_MASK | 0x46)       /*L1 D Cache Write */
-#define PAPI_L2_DCW  (PRESET_MASK | 0x47)       /*L2 D Cache Write */
-#define PAPI_L3_DCW  (PRESET_MASK | 0x48)       /*L3 D Cache Write */
-#define PAPI_L1_ICH  (PRESET_MASK | 0x49)       /*L1 instruction cache hits */
-#define PAPI_L2_ICH  (PRESET_MASK | 0x4A)       /*L2 instruction cache hits */
-#define PAPI_L3_ICH  (PRESET_MASK | 0x4B)       /*L3 instruction cache hits */
-#define PAPI_L1_ICA  (PRESET_MASK | 0x4C)       /*L1 instruction cache accesses */
-#define PAPI_L2_ICA  (PRESET_MASK | 0x4D)       /*L2 instruction cache accesses */
-#define PAPI_L3_ICA  (PRESET_MASK | 0x4E)       /*L3 instruction cache accesses */
-#define PAPI_L1_ICR  (PRESET_MASK | 0x4F)       /*L1 instruction cache reads */
-#define PAPI_L2_ICR  (PRESET_MASK | 0x50)       /*L2 instruction cache reads */
-#define PAPI_L3_ICR  (PRESET_MASK | 0x51)       /*L3 instruction cache reads */
-#define PAPI_L1_ICW  (PRESET_MASK | 0x52)       /*L1 instruction cache writes */
-#define PAPI_L2_ICW  (PRESET_MASK | 0x53)       /*L2 instruction cache writes */
-#define PAPI_L3_ICW  (PRESET_MASK | 0x54)       /*L3 instruction cache writes */
-#define PAPI_L1_TCH  (PRESET_MASK | 0x55)       /*L1 total cache hits */
-#define PAPI_L2_TCH  (PRESET_MASK | 0x56)       /*L2 total cache hits */
-#define PAPI_L3_TCH  (PRESET_MASK | 0x57)       /*L3 total cache hits */
-#define PAPI_L1_TCA  (PRESET_MASK | 0x58)       /*L1 total cache accesses */
-#define PAPI_L2_TCA  (PRESET_MASK | 0x59)       /*L2 total cache accesses */
-#define PAPI_L3_TCA  (PRESET_MASK | 0x5A)       /*L3 total cache accesses */
-#define PAPI_L1_TCR  (PRESET_MASK | 0x5B)       /*L1 total cache reads */
-#define PAPI_L2_TCR  (PRESET_MASK | 0x5C)       /*L2 total cache reads */
-#define PAPI_L3_TCR  (PRESET_MASK | 0x5D)       /*L3 total cache reads */
-#define PAPI_L1_TCW  (PRESET_MASK | 0x5E)       /*L1 total cache writes */
-#define PAPI_L2_TCW  (PRESET_MASK | 0x5F)       /*L2 total cache writes */
-#define PAPI_L3_TCW  (PRESET_MASK | 0x60)       /*L3 total cache writes */
-#define PAPI_FML_INS (PRESET_MASK | 0x61)       /*FM ins */
-#define PAPI_FAD_INS (PRESET_MASK | 0x62)       /*FA ins */
-#define PAPI_FDV_INS (PRESET_MASK | 0x63)       /*FD ins */
-#define PAPI_FSQ_INS (PRESET_MASK | 0x64)       /*FSq ins */
-#define PAPI_FNV_INS (PRESET_MASK | 0x65)       /*Finv ins */
-#define PAPI_FP_OPS  (PRESET_MASK | 0x66)       /*Floating point operations executed */
+enum {
+   PAPI_L1_DCM = PRESET_MASK, /*Level 1 data cache misses */
+   PAPI_L1_ICM,  /*Level 1 instruction cache misses */
+   PAPI_L2_DCM,  /*Level 2 data cache misses */
+   PAPI_L2_ICM,  /*Level 2 instruction cache misses */
+   PAPI_L3_DCM,  /*Level 3 data cache misses */
+   PAPI_L3_ICM,  /*Level 3 instruction cache misses */
+   PAPI_L1_TCM,  /*Level 1 total cache misses */
+   PAPI_L2_TCM,  /*Level 2 total cache misses */
+   PAPI_L3_TCM,  /*Level 3 total cache misses */
+   PAPI_CA_SNP,  /*Snoops */
+   PAPI_CA_SHR,  /*Request for shared cache line (SMP) */
+   PAPI_CA_CLN,  /*Request for clean cache line (SMP) */
+   PAPI_CA_INV,  /*Request for cache line Invalidation (SMP) */
+   PAPI_CA_ITV,  /*Request for cache line Intervention (SMP) */
+   PAPI_L3_LDM,  /*Level 3 load misses */
+   PAPI_L3_STM,  /*Level 3 store misses */
+   PAPI_BRU_IDL, /*Cycles branch units are idle */
+   PAPI_FXU_IDL, /*Cycles integer units are idle */
+   PAPI_FPU_IDL, /*Cycles floating point units are idle */
+   PAPI_LSU_IDL, /*Cycles load/store units are idle */
+   PAPI_TLB_DM,  /*Data translation lookaside buffer misses */
+   PAPI_TLB_IM,  /*Instr translation lookaside buffer misses */
+   PAPI_TLB_TL,  /*Total translation lookaside buffer misses */
+   PAPI_L1_LDM,  /*Level 1 load misses */
+   PAPI_L1_STM,  /*Level 1 store misses */
+   PAPI_L2_LDM,  /*Level 2 load misses */
+   PAPI_L2_STM,  /*Level 2 store misses */
+   PAPI_BTAC_M,  /*BTAC miss */
+   PAPI_PRF_DM,  /*Prefetch data instruction caused a miss */
+   PAPI_L3_DCH,  /*Level 3 Data Cache Hit */
+   PAPI_TLB_SD,  /*Xlation lookaside buffer shootdowns (SMP) */
+   PAPI_CSR_FAL, /*Failed store conditional instructions */
+   PAPI_CSR_SUC, /*Successful store conditional instructions */
+   PAPI_CSR_TOT, /*Total store conditional instructions */
+   PAPI_MEM_SCY, /*Cycles Stalled Waiting for Memory Access */
+   PAPI_MEM_RCY, /*Cycles Stalled Waiting for Memory Read */
+   PAPI_MEM_WCY, /*Cycles Stalled Waiting for Memory Write */
+   PAPI_STL_ICY, /*Cycles with No Instruction Issue */
+   PAPI_FUL_ICY, /*Cycles with Maximum Instruction Issue */
+   PAPI_STL_CCY, /*Cycles with No Instruction Completion */
+   PAPI_FUL_CCY, /*Cycles with Maximum Instruction Completion */
+   PAPI_HW_INT,  /*Hardware interrupts */
+   PAPI_BR_UCN,  /*Unconditional branch instructions executed */
+   PAPI_BR_CN,   /*Conditional branch instructions executed */
+   PAPI_BR_TKN,  /*Conditional branch instructions taken */
+   PAPI_BR_NTK,  /*Conditional branch instructions not taken */
+   PAPI_BR_MSP,  /*Conditional branch instructions mispred */
+   PAPI_BR_PRC,  /*Conditional branch instructions corr. pred */
+   PAPI_FMA_INS, /*FMA instructions completed */
+   PAPI_TOT_IIS, /*Total instructions issued */
+   PAPI_TOT_INS, /*Total instructions executed */
+   PAPI_INT_INS, /*Integer instructions executed */
+   PAPI_FP_INS,  /*Floating point instructions executed */
+   PAPI_LD_INS,  /*Load instructions executed */
+   PAPI_SR_INS,  /*Store instructions executed */
+   PAPI_BR_INS,  /*Total branch instructions executed */
+   PAPI_VEC_INS, /*Vector/SIMD instructions executed */
+   PAPI_RES_STL, /*Cycles processor is stalled on resource */
+   PAPI_FP_STAL, /*Cycles any FP units are stalled */
+   PAPI_TOT_CYC, /*Total cycles */
+   PAPI_LST_INS, /*Total load/store inst. executed */
+   PAPI_SYC_INS, /*Sync. inst. executed */
+   PAPI_L1_DCH,  /*L1 D Cache Hit */
+   PAPI_L2_DCH,  /*L2 D Cache Hit */
+   PAPI_L1_DCA,  /*L1 D Cache Access */
+   PAPI_L2_DCA,  /*L2 D Cache Access */
+   PAPI_L3_DCA,  /*L3 D Cache Access */
+   PAPI_L1_DCR,  /*L1 D Cache Read */
+   PAPI_L2_DCR,  /*L2 D Cache Read */
+   PAPI_L3_DCR,  /*L3 D Cache Read */
+   PAPI_L1_DCW,  /*L1 D Cache Write */
+   PAPI_L2_DCW,  /*L2 D Cache Write */
+   PAPI_L3_DCW,  /*L3 D Cache Write */
+   PAPI_L1_ICH,  /*L1 instruction cache hits */
+   PAPI_L2_ICH,  /*L2 instruction cache hits */
+   PAPI_L3_ICH,  /*L3 instruction cache hits */
+   PAPI_L1_ICA,  /*L1 instruction cache accesses */
+   PAPI_L2_ICA,  /*L2 instruction cache accesses */
+   PAPI_L3_ICA,  /*L3 instruction cache accesses */
+   PAPI_L1_ICR,  /*L1 instruction cache reads */
+   PAPI_L2_ICR,  /*L2 instruction cache reads */
+   PAPI_L3_ICR,  /*L3 instruction cache reads */
+   PAPI_L1_ICW,  /*L1 instruction cache writes */
+   PAPI_L2_ICW,  /*L2 instruction cache writes */
+   PAPI_L3_ICW,  /*L3 instruction cache writes */
+   PAPI_L1_TCH,  /*L1 total cache hits */
+   PAPI_L2_TCH,  /*L2 total cache hits */
+   PAPI_L3_TCH,  /*L3 total cache hits */
+   PAPI_L1_TCA,  /*L1 total cache accesses */
+   PAPI_L2_TCA,  /*L2 total cache accesses */
+   PAPI_L3_TCA,  /*L3 total cache accesses */
+   PAPI_L1_TCR,  /*L1 total cache reads */
+   PAPI_L2_TCR,  /*L2 total cache reads */
+   PAPI_L3_TCR,  /*L3 total cache reads */
+   PAPI_L1_TCW,  /*L1 total cache writes */
+   PAPI_L2_TCW,  /*L2 total cache writes */
+   PAPI_L3_TCW,  /*L3 total cache writes */
+   PAPI_FML_INS, /*FM ins */
+   PAPI_FAD_INS, /*FA ins */
+   PAPI_FDV_INS, /*FD ins */
+   PAPI_FSQ_INS, /*FSq ins */
+   PAPI_FNV_INS, /*Finv ins */
+   PAPI_FP_OPS,  /*Floating point operations executed */
+};
+
+#endif
+
