@@ -19,10 +19,10 @@ CFLAGS  	= -DNO_VARARG_MACRO -DNEED_FFSLL
 SMPCFLGS	= -xexplicitpar
 OMPCFLGS	= -xopenmp
 F77		= f90
-FFLAGS		= $(CFLAGS)
-TOPTFLAGS	= 
+FFLAGS		= $(CFLAGS) -xarch=v9
+TOPTFLAGS	= -xarch=v9
 NOOPT		= -xO0 
-OPTFLAGS	= -fast -xarch=v9 -xtarget=ultra
+OPTFLAGS	= -fast -xarch=v9 
 #
 # gcc
 #
