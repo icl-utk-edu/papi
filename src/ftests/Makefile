@@ -11,7 +11,9 @@ PAPILIB=ftests_util.o ../libpapi.a
 default: $(TESTS)
 
 ftests_util.o: ftests_util.F
-	@if [ $(SUBSTR) = tru64-alpha ]; then $(F77) -g2 $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; else $(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
+	@if [ $(SUBSTR) = tru64-alpha ]; then $(F77) -g2 $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
+	else if [ $(SUBSTR) = solaris-ultra ]; then $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
+	else $(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi; fi
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
