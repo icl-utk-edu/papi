@@ -55,11 +55,11 @@ General Installation
 3.	Create a PAPI binary distribution or install PAPI directly.
 
 	a) To install PAPI libraries and header files from the build tree:
+
         If you created the Makefile with configure:
         % make install
    
         Otherwise:
-
 	% make -f Makefile.<arch> PREFIX=<install-dir> install
 
 	Please use an absolute pathname for <install-dir>, not a relative 
@@ -74,35 +74,32 @@ General Installation
 	% make -f Makefile.<arch> PREFIX=<install-dir> install-man
 
 	c) To install PAPI test programs from the build tree:
+
         If you created the Makefile with configure:
         % make install-tests
    
         Otherwise:
-
 	% make -f Makefile.<arch> PREFIX=<install-dir> install-tests
 
 	d) To install all of the above in one step from the build tree:
+
         If you created the Makefile with configure:
         % make install-all
    
         Otherwise:
-
 	% make -f Makefile.<arch> PREFIX=<install-dir> install-all
 
 	e) To create a binary kit, papi-<arch>.tgz:
+
         If you created the Makefile with configure:
         % make dist
-   
+  
         Otherwise:
-
 	% make -f Makefile.<arch> dist
-
-
 
 *****************************************************************************
 Operating System Specific Installation Steps (In Alphabetical Order by OS)
 *****************************************************************************
-
 
 AIX - IBM POWER3 and POWER4
 *****************************************************************************
