@@ -53,3 +53,5 @@
 	#define TWO12	"%12lld %12lld  %s"
 #endif
 
+extern int TESTS_QUIET; /* Declared in test_utils.c */
+
