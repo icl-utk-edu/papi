@@ -1488,7 +1488,7 @@ static int cleanup_eventset(EventSetInfo *ESI)
 	return(retval);
     }
   
-  for(i=0;i<tmp;i++) 
+  for(i=(tmp-1);i>=0;i--) 
     {
       if (ESI->EventInfoArray[i].code != PAPI_NULL)
 	{
