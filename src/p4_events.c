@@ -21,9 +21,19 @@
 #endif
 
 /* Events that require tagging should be ordered such that the
-   first event is the one that is read. See PAPI_FP_INS for an example. 
+   first event is the one that is read. See PAPI_FP_INS for an example. */
 
-   The third field is meant to be the 'read selector' but it is not implemented. */
+/* You requested all the ESCR/CCCR/Counter triplets that allow one to
+count cycles.  Well, this is a special case in that an ESCR is not
+needed at all. By configuring the threshold comparison appropriately
+in a CCCR, you can get the counter to count every cycle, independent
+of whatever ESCR the CCCR happens to be listening to.  To do this, set
+the COMPARE and COMPLEMENT bits in the CCCR and set the THRESHOLD
+value to "1111" (binary).  This works because the setting the
+COMPLEMENT bit makes the threshold comparison to be "less than or
+equal" and, with THRESHOLD set to its maximum value, the comparison
+will always succeed and the counter will increment by one on every
+clock cycle. */
 
 const P4_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
   { PAPI_TOT_INS, NULL, 1,
@@ -38,9 +48,9 @@ const P4_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 	HYPERTHREAD_ANY | ESCR(1) | ENABLE, 
 	EVENT(0x4) | (1 << 24) | (1 << 5) | (1 << 4) | CPL(1)} }}},
   { PAPI_TOT_CYC, NULL, 1,
-    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
-	HYPERTHREAD_ANY | ESCR(4) | ENABLE | COMPARE | COMPLEMENT | THRESHOLD(0xf), 
-	EVENT(0x3f) | CPL(1)} }}},
+    {{{ COUNTER(4), 
+	HYPERTHREAD_ANY | ENABLE | COMPARE | COMPLEMENT | THRESHOLD(0xf), 
+	CPL(1)} }}},
   { PAPI_L1_LDM, NULL, 1,
     {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
 	HYPERTHREAD_ANY | ESCR(5) | ENABLE, 
