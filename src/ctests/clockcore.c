@@ -11,8 +11,8 @@ void clockcore(void)
     total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
   int i;
 
-  elapsed_usec = (long_long *)malloc(ITERS*sizeof(u_long_long));
-  elapsed_cyc = (long_long *)malloc(ITERS*sizeof(u_long_long));
+  elapsed_usec = (long_long *)malloc(ITERS*sizeof(long_long));
+  elapsed_cyc = (long_long *)malloc(ITERS*sizeof(long_long));
   
  /* Real */
 
