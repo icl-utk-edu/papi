@@ -12,18 +12,20 @@ To create a version of PAPI in your native language, do the following:
 	perfapi-devel@nacse.org
 */
 
-/* Either create a command line or environment variable matching one  
+/*
+	Either create a command line or environment variable matching one  
 	of the #defines below, or comment in ONE of the following defines.
 	If neither is done, the strings will default to English
- */
-// #define LANGUAGE_US		// American English
-// #define LANGUAGE_FR		// French
-// #define LANGUAGE_DE		// Deutsch
-// #define LANGUAGE_IT		// Italian
-// #define LANGUAGE_SE		// Swedish
-// #define LANGUAGE_ES		// Espanol
-// #define LANGUAGE_NL		// Dutch
-// #define LANGUAGE_AU		// Australian
+*/
+
+/* #define LANGUAGE_US		/* American English	*/
+/* #define LANGUAGE_FR		/* French			*/
+/* #define LANGUAGE_DE		/* Deutsch			*/
+/* #define LANGUAGE_IT		/* Italian			*/
+/* #define LANGUAGE_SE		/* Swedish			*/
+/* #define LANGUAGE_ES		/* Espanol			*/
+/* #define LANGUAGE_NL		/* Dutch			*/
+/* #define LANGUAGE_AU		/* Australian		*/
 
 #ifdef LANGUAGE_FR
   #include "papiStrings_FR.h"
