@@ -62,10 +62,11 @@ install: all
 	chmod go+rx $(DESTDIR)/lib
 	mkdir -p $(DESTDIR)/include
 	chmod go+rx $(DESTDIR)/include
-	cp libpapi.a libpapi.so $(DESTDIR)/lib
+	-cp libpapi.a libpapi.so $(DESTDIR)/lib
 	chmod go+r $(DESTDIR)/lib/*
 	cp papi.h papiStdEventDefs.h $(DESTDIR)/include
 	chmod go+r $(DESTDIR)/include/*
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
 	cd tests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install
 	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install
+	cp $(SUBSTR).README $(DESTDIR)
