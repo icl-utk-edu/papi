@@ -454,8 +454,7 @@ u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
    float usec, cyc;
 
-   /*usec = (float) _papi_hwd_get_virt_usec(zero);*/
-   usec = 1000;
+   usec = (float) _papi_hwd_get_virt_usec(zero);
    cyc = usec * _papi_hwi_system_info.hw_info.mhz;
    return ((long long) cyc);
 }
