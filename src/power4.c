@@ -10,7 +10,7 @@ extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 extern hwd_groups_t group_map[];
 
-static const hwi_search_t _papi_hwd_PWR4_preset_map[] = {
+static hwi_search_t _papi_hwd_PWR4_preset_map[] = {
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L2_DCM, {0, {PNE_PM_DATA_FROM_L3, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache access */
@@ -215,7 +215,8 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 /* This function updates the control structure with whatever resources are allocated
     for all the native events in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
+                                   NativeInfo_t * native, int count,
+				   hwd_context_t *context)
 {
 
    this_state->counter_cmd.events[0] = this_state->group_id;
