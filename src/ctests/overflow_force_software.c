@@ -116,100 +116,70 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-printf("TEST: Adding PAPI_event\n");
-fflush(stdout);
    retval = PAPI_add_event(EventSet, PAPI_event);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-printf("TEST: Starting PAPI_event\n");
-fflush(stdout);
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_flops(NUM_FLOPS);
 
-printf("TEST: Stopping PAPI_event\n");
-fflush(stdout);
    retval = PAPI_stop(EventSet, &values[0]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-printf("TEST: Setting Overflow PAPI_event to default\n");
-fflush(stdout);
    retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, 0, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-printf("TEST: Starting Overflow PAPI_event to default\n");
-fflush(stdout);
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_flops(NUM_FLOPS);
 
-printf("TEST: Stopping Overflow PAPI_event to default\n");
-fflush(stdout);
    retval = PAPI_stop(EventSet, &values[1]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    use_total = 1;
 
-printf("TEST: Setting overflow PAPI_event to threshold 0\n");
-fflush(stdout);
    retval = PAPI_overflow(EventSet, PAPI_event, 0, 0, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-printf("TEST: Adding TOT_CYC to default\n");
-fflush(stdout);
    retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-printf("TEST: Setting overflow PAPI_event to forced SW\n");
-fflush(stdout);
    retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-printf("TEST: Setting overflow TOT_CYC to Hardware\n");
-fflush(stdout);
    retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, 0, handler);
    if (retval == PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
 
-printf("TEST: Setting overflow PAPI_event to Forced SW, threshold 0\n");
-fflush(stdout);
    retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
 
-printf("TEST: Removing event PAPI_TOT_CYC\n");
-fflush(stdout);
    retval = PAPI_remove_event(EventSet, PAPI_TOT_CYC);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
 
-printf("TEST: Setting overflow event PAPI_event with Forced SW\n");
-fflush(stdout);
    retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-printf("TEST: PAPI_start\n");
-fflush(stdout);
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_flops(NUM_FLOPS);
 
-printf("TEST: PAPI_stop\n");
-fflush(stdout);
    retval = PAPI_stop(EventSet, &values[2]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
