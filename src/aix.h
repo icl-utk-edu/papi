@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <string.h>
 #include <libgen.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <sys/systemcfg.h>
 #include <sys/processor.h>
 #include <time.h>
@@ -13,6 +15,8 @@
 #include <sys/times.h>
 #include <procinfo.h>
 #include <sys/atomic_op.h>
+#include <sys/procfs.h>
+#include <sys/utsname.h>
 
 #define ANY_THREAD_GETS_SIGNAL
 #include <dlfcn.h>

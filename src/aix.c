@@ -32,6 +32,7 @@ atomic_p lock[PAPI_MAX_LOCK];
 #define END_OF_BSS    &_end
 
 static int maxgroups = 0;
+struct utsname AixVer;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
         /* The following is for any POWER hardware */
@@ -244,20 +245,26 @@ static int set_inherit(int arg)
 /* Machine info structure. -1 is unused. */
 int _papi_hwd_mdi_init()
 {
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");  /* Name of the substrate we're using */
+   int retval;
 
-   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) START_OF_TEXT;
-   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) END_OF_TEXT;
-   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) START_OF_DATA;
-   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) END_OF_DATA;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) START_OF_BSS;
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) END_OF_BSS;
+   if ( (retval = uname( &AixVer)) < 0 )
+      return(PAPI_ESYS); 
+   if (AixVer.version[0] == '4' ) 
+   {
+      _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) START_OF_TEXT;
+      _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) END_OF_TEXT;
+      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) START_OF_DATA;
+      _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) END_OF_DATA;
+      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) START_OF_BSS;
+      _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) END_OF_BSS;
+   } else {
+      _papi_hwd_update_shlib_info();
+   }
 
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
    _papi_hwi_system_info.supports_real_cyc = 1;
 
-   _papi_hwi_system_info.shlib_info.map = &(_papi_hwi_system_info.exe_info.address_info);
 
    return (PAPI_OK);
 }
@@ -307,18 +314,7 @@ static int get_system_info(void)
 
    strcpy(_papi_hwi_system_info.substrate, "$Id$");  /* Name of the substrate we're using */
 
-   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) START_OF_TEXT;
-   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) END_OF_TEXT;
-   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) START_OF_DATA;
-   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) END_OF_DATA;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) START_OF_BSS;
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) END_OF_BSS;
-
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-
-   _papi_hwi_system_info.shlib_info.map = &(_papi_hwi_system_info.exe_info.address_info);
+   _papi_hwd_mdi_init();
 
    _papi_hwi_system_info.hw_info.ncpu = _system_configuration.ncpus;
    _papi_hwi_system_info.hw_info.totalcpus =
@@ -700,3 +696,132 @@ void dump_state(hwd_control_state_t *s)
 }
 #endif
 */
+
+int _papi_hwd_update_shlib_info(void)
+{
+   if (AixVer.version[0] == '5' )
+   { 
+      struct ma_msg_s {
+          long flag;
+          char *name;
+      } ma_msgs[] = {
+          {MA_MAINEXEC,  "MAINEXEC"},
+          {MA_KERNTEXT,  "KERNTEXT"},
+          {MA_READ,      "READ"},
+          {MA_WRITE,     "WRITE"},
+          {MA_EXEC,      "EXEC"},
+          {MA_SHARED,    "SHARED"},
+          {MA_BREAK,     "BREAK"},
+          {MA_STACK,     "STACK"},
+      };
+
+      char fname[80], name[PATH_MAX];
+      prmap_t newp;
+      int count, t_index, retval, i, j, not_first_flag_bit;
+      FILE * map_f;
+      void * vaddr;
+      prmap_t *tmp1 = NULL;
+      PAPI_address_map_t *tmp2 = NULL;
+
+      sprintf(fname, "/proc/%d/map", getpid());
+      map_f = fopen(fname, "r");
+
+      /* count the entries we need */
+      count =0;
+      t_index=0;
+      while ( (retval=fread(&newp, sizeof(prmap_t), 1, map_f)) > 0 ) {
+         if (newp.pr_pathoff > 0 && newp.pr_mapname[0]!='\0' ) 
+         {
+            if ( newp.pr_mflags & MA_STACK ) continue;
+
+            count++;
+            SUBDBG((stderr, "count=%d offset=%ld map=%s\n", count, 
+              newp.pr_pathoff, newp.pr_mapname));
+
+            if ((newp.pr_mflags &MA_READ)&&(newp.pr_mflags&MA_EXEC))
+               t_index++;
+         }
+      }
+      rewind(map_f);
+      tmp1 = (prmap_t *) calloc((count+1), sizeof(prmap_t));
+      if (tmp1 == NULL)
+         return(PAPI_ENOMEM);
+
+      tmp2 = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+      if (tmp2 == NULL)
+         return(PAPI_ENOMEM);
+
+      i=0;
+      t_index=-1;
+      while ( (retval=fread(&tmp1[i], sizeof(prmap_t), 1, map_f)) > 0 ) {
+         if (tmp1[i].pr_pathoff > 0 && tmp1[i].pr_mapname[0]!='\0') 
+            if (!( tmp1[i].pr_mflags & MA_STACK )) 
+               i++;
+      }
+      for(i=0; i< count; i++ )
+      {
+         retval=fseek(map_f, tmp1[i].pr_pathoff, SEEK_SET); 
+         if (retval != 0) return(PAPI_ESYS);
+         fscanf(map_f, "%s", name);
+/*
+         SUBDBG((stderr, "name=%s  info.name=%s  ", name, 
+            _papi_hwi_system_info.exe_info.address_info.name));
+
+         for (j = 0, not_first_flag_bit = 0;
+              j < (sizeof ma_msgs / sizeof (struct ma_msg_s)); ++j) 
+         {
+            if (tmp1[i].pr_mflags & ma_msgs[j].flag) 
+            {
+               if (not_first_flag_bit++) printf(",");
+               printf("%s", ma_msgs[j].name);
+            }
+         }
+         printf("\n");
+*/
+
+         if (strcmp(_papi_hwi_system_info.exe_info.address_info.name,
+                          basename(name))== 0 )
+         {
+            if (tmp1[i].pr_mflags & MA_READ) {
+               if ( tmp1[i].pr_mflags & MA_EXEC ) {
+                  _papi_hwi_system_info.exe_info.address_info.text_start =
+                                      (caddr_t) tmp1[i].pr_vaddr;
+                  _papi_hwi_system_info.exe_info.address_info.text_end =
+                                 (caddr_t) (tmp1[i].pr_vaddr+tmp1[i].pr_size);
+               } else if (tmp1[i].pr_mflags &MA_WRITE ) {
+                  _papi_hwi_system_info.exe_info.address_info.data_start =
+                                   (caddr_t) tmp1[i].pr_vaddr;
+                  _papi_hwi_system_info.exe_info.address_info.data_end =
+                                (caddr_t) (tmp1[i].pr_vaddr+tmp1[i].pr_size);
+               }
+            }
+
+         } else {
+            if (tmp1[i].pr_mflags & MA_READ ) {
+               if ( tmp1[i].pr_mflags & MA_EXEC ) {
+                  t_index++;
+                  tmp2[t_index].text_start = (caddr_t) tmp1[i].pr_vaddr;
+                  tmp2[t_index].text_end =(caddr_t) (tmp1[i].pr_vaddr +
+                                                  tmp1[i].pr_size);
+                  strncpy(tmp2[t_index].name, name, PAPI_MAX_STR_LEN);
+               } else if ( tmp1[i].pr_mflags & MA_WRITE) {
+                  tmp2[t_index].data_start = (caddr_t) tmp1[i].pr_vaddr;
+                  tmp2[t_index].data_end = (caddr_t) (tmp1[i].pr_vaddr+
+                                                tmp1[i].pr_size);
+               }
+            }
+
+         }
+      }
+      fclose(map_f);
+
+      if (_papi_hwi_system_info.shlib_info.map)
+         free(_papi_hwi_system_info.shlib_info.map);
+      _papi_hwi_system_info.shlib_info.map = tmp2;
+      _papi_hwi_system_info.shlib_info.count = t_index+1;
+
+      return(PAPI_OK);
+   } else {  /* not AIX 5.1 or later version */
+      return PAPI_ESBSTR;
+   }
+}
