@@ -25,26 +25,31 @@
 #include "papi_test.h"
 
 #ifdef _CRAYT3E
-	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
+	#define OVER_FMT	"handler(%d ) Overflow at %x! overflow_vector=0x%x!\n"
 	#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #elif defined(_WIN32)
-	#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
+	#define OVER_FMT	"handler(%d ) Overflow at %p! overflow_vector=0x%x!\n"
 	#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
-	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p!\n"
+	#define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=0x%x!\n"
 	#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
 int total = 0;		/* total overflows */
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
-void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
+void handler(int EventSet, void *address, long_long overflow_vector)
 {
-  if ( !TESTS_QUIET )
-    fprintf(stderr,OVER_FMT,EventSet,EventCode,EventIndex,
-	  values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
+  int i;
+
+  if ( !TESTS_QUIET ) {
+    fprintf(stderr,OVER_FMT,EventSet,
+      address, overflow_vector);
+  }
+
   total++;
 }
+
 
 int main(int argc, char **argv) 
 {
