@@ -68,6 +68,34 @@ How do I merge branches of the PAPI project back to the main trunk?
 ...later...
 6) To merge from the same branch again, repeat the steps above,
 	but update from the tag created in step 3 rather than 
-	the branch point. This gaurantees that only the changes
+	the branch point. This guarantees that only the changes
 	made since the last merge are merged.
+
+
+How do I add external code (like perfctr) to the papi cvs project?
+------------------------------------------------------------------
+The correct way to do it is:
+
+untar the new distribution
+cd <dir of new dist>
+cvs import -ko -m "Blah blah" papi/src/perfctr perfctr_dist
+perfctr_x_y_z
+
+Here perfctr_dist is the "vendor tag" and perfctr_x_y_z is the release
+version like perfctr_2_4_1
+
+Then if we have locally modified our copy (made changes to the distro)
+CVS will warn us to merge in our changes. We do this by
+
+cvs checkout -jperfctr_dist:yesterday -jperfctr_dist papi/src/perfctr
+
+CVS will then do the merge for us. If there are any conflicts, we fix
+them, then cvs commit them.
+
+Got it? Good.
+
+We should follow this model for all 3rd party sources in the source tree.
+
+This is all available in further detail in the CVS Manual, under 'import'.
+
 	
