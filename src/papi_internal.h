@@ -101,8 +101,6 @@ typedef struct _EventInfo {
 			       This is also used for order dependent derived events to indicate
 			       the first operand (replaces PAPI 2 operand_index) */
   int pos[MAX_COUNTERS];    /* position in the counter array for this events components */
-  hwd_register_map_t regs;  /* Substrate defined collection of register number that keep track of resources 
-			                   used by this event */
   char *ops;                /* operation string of preset */
   unsigned hwd_selector;    /* Counter select bits used by the substrate (Replaced by bits??) */
   int derived;		    /* Counter derivation command used for derived events */
@@ -115,8 +113,9 @@ typedef struct _EventInfo {
 
 typedef struct _NativeInfo {
   int ni_index;		    /* index into the native table; -1 == empty */
-  int ni_position;	    /* on which counter this native event stays */
+  int ni_position;	    /* counter array position where this native event lives */
   int ni_owners;	    /* specifies how many owners share this native event */
+  hwd_register_map_t regs;  /* Substrate defined resources used by this native event */
 } NativeInfo_t;
 
 

@@ -614,11 +614,8 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	
 	/* if the native event is already mapped, fill in */
 	for(i=0;i<size;i++){
-		if((nidx=_papi_hwi_add_native_precheck(ESI, nix[i]))>=0){
-			/* CAUTION: regs is hardware dependent. */
-			out->regs.pos[i]=ESI->NativeInfoArray[nidx].ni_position;
-		}
-		else{
+		/* only try to add the native event if it isn't already mapped */
+		if((nidx=_papi_hwi_add_native_precheck(ESI, nix[i]))<0){
 			/* all counters have been used, add_native fail */
 			if(ESI->NativeCount==MAX_COUNTERS){
 				DBG((stderr,"counters are full!\n"));
@@ -635,10 +632,11 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	/* if remap!=0, we need reallocate counters */
 	if(remap){
 		if(_papi_hwd_allocate_registers(ESI)){
-			return 1;
+		    _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
+		    return 1;
 		}
 		else
-			return -1;
+		    return -1;
 	}
 	
 	return 0;
@@ -767,27 +765,31 @@ int _papi_hwi_add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout)
 
 int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
-	hwd_control_state_t *this_state= &ESI->machdep;
-	NativeInfo_t *native = ESI->NativeInfoArray;
-	int i, j, zero=0;
+    hwd_control_state_t *this_state= &ESI->machdep;
+    NativeInfo_t *native = ESI->NativeInfoArray;
+    int i, j, zero=0, count;
 
-	for(i=0;i<size;i++){
-		for(j=0;j<ESI->NativeCount;j++){
-			if(native[j].ni_index==nix[i]){
-				native[j].ni_owners--;
-				if(native[j].ni_owners==0){
-					zero++;
-				}
-				break;
-			}
-		}
+    /* Remove the references to this event from the native events:
+       for all the metrics in this event,
+	compare to each native event in this event set,
+	and decrement owners if they match  */
+    for(i=0;i<size;i++){
+	for(j=0;j<ESI->NativeCount;j++){ 
+	    if(native[j].ni_index==nix[i]){
+		native[j].ni_owners--;
+		break;
+	    }
 	}
-
+    }
+#if 0
+	/* scan the native event list for this event set */
 	for(i=0;i<ESI->NativeCount;i++){
 		if(native[i].ni_index==-1)
 			continue;
 		if(native[i].ni_owners==0){
 			int copy=0;
+	    		/* if no more owners, mark for removal */
+			zero++;
 			_papi_hwd_remove_native(this_state, &native[i]);
 			for(j=ESI->NativeCount-1;j>i;j--){
 				if(native[j].ni_index==-1)
@@ -809,7 +811,31 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 
 	/* to reset hwd_control_state values */
 	ESI->NativeCount-=zero;
-	return(PAPI_OK);
+#endif
+
+    /* Remove any native events from the array if owners dropped to zero.
+	The NativeInfoArray must be dense, with no empty slots, so if we
+	remove an element, we must compact the list */
+    count = ESI->NativeCount;
+    for(i=0;i<count;i++){
+	if(native[i].ni_owners==0){
+	    /* if no more owners, decrement the count and shift remaining elements */
+	    count--;
+	    memcpy(&native[i], &native[i+1], sizeof(NativeInfo_t) * (count-i));
+	}
+    }
+
+    /* If we removed any elements, 
+	clear the now empty slots, reinitialize the index, and update the count.
+	Then send the info down to the substrate to update the hwd control structure. */
+    if (count < ESI->NativeCount) {
+      memset(&native[count], 0, sizeof(NativeInfo_t) * (ESI->NativeCount - count));
+      for (i=count;i<ESI->NativeCount;i++) native[i].ni_index = -1;
+      ESI->NativeCount = count;
+      _papi_hwd_update_control_state(this_state, native, count);
+    }
+
+    return(PAPI_OK);
 }
 
 int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
@@ -861,7 +887,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 			if ((native_index < 0) || (native_index >= PAPI_MAX_NATIVE_EVENTS))
 				return(PAPI_EINVAL);
 
-			/* Try to add the native. */
+			/* Try to remove the native. */
 			
 			remove_native_events(ESI, &native_index, 1);
 		}

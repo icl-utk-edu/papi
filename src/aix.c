@@ -649,7 +649,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *cntrl)
   return(PAPI_OK);
 }
 
-/*#if 1
+/*#if 0
 void dump_state(hwd_control_state_t *s)
 {
   fprintf(stderr,"master_selector %x\n",s->master_selector);

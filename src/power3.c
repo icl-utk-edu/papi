@@ -330,7 +330,7 @@ static int do_counter_allocation(PWR3_reg_alloc_t *event_list, int size)
 */      
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 {
-  hwd_control_state_t *tmp_state = &ESI->machdep;
+  hwd_control_state_t *this_state = &ESI->machdep;
   unsigned char selector;
   int i, j, natNum;
   PWR3_reg_alloc_t event_list[MAX_COUNTERS];
@@ -355,35 +355,13 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   }
 
   if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
-	/* update tmp_state, reset... */
-	for (i = 0; i <MAX_COUNTERS; i++) {
-	    tmp_state->counter_cmd.events[i] = COUNT_NOTHING;
-	}
-		
-	for(i=0;i<natNum;i++){
-		/* update tmp_state->native->position */
-		position=get_avail_hwcntr_num(event_list[i].ra_selector);
-		ESI->NativeInfoArray[i].ni_position=position; 
-		/* update tmp_state->counter_cmd */
-		/* CAUTION: Since this is in the hardware layer, it's ok 
-		   to access the native table directly, but in general this is a bad idea */
-		tmp_state->counter_cmd.events[position] = native_table[ESI->NativeInfoArray[i].ni_index].resources.counter_cmd[position];
-	}
-	return 1;
+
+      _papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);
+      return 1;
   }
   else{
 	return 0;
   }
-}
-
-/* This function clears out in the control structure whatever resources are allocated
-    for this native event in the native info structure. */
-void _papi_hwd_remove_native(hwd_control_state_t *this_state, NativeInfo_t *nativeInfo)
-{
-    /* POWER3 has an array of counter values that is sent to the driver. */
-
-    /* Clear the counter command for this counter position */
-    this_state->counter_cmd.events[nativeInfo->ni_position]=COUNT_NOTHING;
 }
 
 
@@ -396,11 +374,31 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 
   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
     ptr->counter_cmd.events[i] = COUNT_NOTHING;
- }
+  }
   set_domain(ptr,_papi_hwi_system_info.default_domain);
   set_granularity(ptr,_papi_hwi_system_info.default_granularity);
 }
 
+
+/* This function updates the control structure with whatever resources are allocated
+    for all the native events in the native info structure array. */
+void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
+{
+    int i;
+
+    /* empty all the counters */
+    for (i = 0; i <MAX_COUNTERS; i++) {
+	this_state->counter_cmd.events[i] = COUNT_NOTHING;
+    }
+    
+    /* refill the counters we're using */
+    for(i=0;i<count;i++){
+	/* CAUTION: Since this is in the hardware layer, it's ok 
+	   to access the native table directly, but in general this is a bad idea */
+	this_state->counter_cmd.events[native[i].ni_position] = 
+	    native_table[native[i].ni_index].resources.counter_cmd[native[i].ni_position];
+    }
+}
 
 int _papi_hwd_update_shlib_info(void)
 {
