@@ -300,15 +300,15 @@ inline static int set_domain(hwd_control_state_t *this_state, int domain)
     if (this_state->evt.pfp_pc[i].reg_num)
 	{
 	  pfmw_arch_reg_t value;
-	  DBG((stderr,"slot %d, register %lud active, config value 0x%lx\n",
+	  SUBDBG("slot %d, register %lud active, config value 0x%lx\n",
 	       i,(unsigned long)(this_state->evt.pfp_pc[i].reg_num),
-           this_state->evt.pfp_pc[i].reg_value));
+           this_state->evt.pfp_pc[i].reg_value);
 
 	  value.reg_val = this_state->evt.pfp_pc[i].reg_value;
 	  PFMW_ARCH_REG_PMCPLM(value) = mode;
 	  this_state->evt.pfp_pc[i].reg_value = value.reg_val;
 
-	  DBG((stderr,"new config value 0x%lx\n",this_state->evt.pfp_pc[i].reg_value));
+	  SUBDBG("new config value 0x%lx\n",this_state->evt.pfp_pc[i].reg_value);
 	}
   }
 	
@@ -429,8 +429,8 @@ static int get_system_info(void)
     return(PAPI_ESYS);
   sprintf(_papi_hwi_system_info.exe_info.name,"%s",basename(_papi_hwi_system_info.exe_info.fullname));
 
-  DBG((stderr,"Executable is %s\n",_papi_hwi_system_info.exe_info.name));
-  DBG((stderr,"Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname));
+  SUBDBG("Executable is %s\n",_papi_hwi_system_info.exe_info.name);
+  SUBDBG("Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname);
 
   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
     return -1;
@@ -470,16 +470,16 @@ static int get_system_info(void)
     sscanf(s+1, "%f", &mhz);
   _papi_hwi_system_info.hw_info.mhz = mhz;
 
-  DBG((stderr,"Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz));
+  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
   mhz = calc_mhz();
-  DBG((stderr,"Calculated MHZ is %f\n",mhz));
+  SUBDBG("Calculated MHZ is %f\n",mhz);
   if (_papi_hwi_system_info.hw_info.mhz < mhz)
     _papi_hwi_system_info.hw_info.mhz = mhz;
   {
     int tmp = (int)_papi_hwi_system_info.hw_info.mhz;
     _papi_hwi_system_info.hw_info.mhz = (float)tmp;
   }
-  DBG((stderr,"Actual MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz));
+  SUBDBG("Actual MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
 
@@ -599,11 +599,11 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
 
-  DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
+  SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
        _papi_hwi_system_info.hw_info.totalcpus,
        _papi_hwi_system_info.hw_info.vendor_string,
        _papi_hwi_system_info.hw_info.model_string,
-       _papi_hwi_system_info.hw_info.mhz));
+       _papi_hwi_system_info.hw_info.mhz);
 
   return(PAPI_OK);
 }
@@ -621,7 +621,7 @@ int _papi_hwd_init(hwd_context_t *zero)
   pfarg_context_t ctx[1];
 
   
-
+  SUBDBG("perfmonctl create context\n");
   memset(ctx, 0, sizeof(ctx));
 
   ctx[0].ctx_notify_pid = getpid();
@@ -729,14 +729,14 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long *
 
   if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) 
   {
-    DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
+    SUBDBG("perfmonctl error READ_PMDS errno %d\n",errno);
     return PAPI_ESYS;
   }
 
   for(i=0; i < _papi_hwi_system_info.num_cntrs; i++)
   {
 	machdep->counters[i] = readem[i].reg_value;
-	DBG((stderr, "read counters is %ld\n", readem[i].reg_value));
+	SUBDBG( "read counters is %ld\n", readem[i].reg_value);
   }
 
 #if 0
@@ -880,9 +880,9 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
   uc = (struct ucontext *) tmp;
   realc = *uc;
   mc = &uc->uc_mcontext;
-  DBG((stderr,"Start at 0x%lx\n",mc->sc_ip));
+  SUBDBG("Start at 0x%lx\n",mc->sc_ip);
   _papi_hwi_dispatch_overflow_signal((void *)mc); 
-  DBG((stderr,"Finished at 0x%lx\n",mc->sc_ip));
+  SUBDBG("Finished at 0x%lx\n",mc->sc_ip);
   pfm_start();
 */
 }
@@ -1103,8 +1103,8 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
   ctx.ucontext = context;
 
   pfm_stop();
-  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, 
-      info->sy_pfm_ovfl[0]));
+  SUBDBG("pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, 
+      info->sy_pfm_ovfl[0]);
   if (info->sy_code != PROF_OVFL) 
   {
     fprintf(stderr,"PAPI: received spurious SIGPROF si_code=%d\n", 
@@ -1138,8 +1138,8 @@ static int set_notify(EventSetInfo_t *ESI, int index, int value)
     {
       if (pc[i].reg_num == hwcntr)
       {
-        DBG((stderr,"Found hw counter %d in %d, flags %d\n",
-               hwcntr,i,value));
+        SUBDBG("Found hw counter %d in %d, flags %d\n",
+               hwcntr,i,value);
         pc[i].reg_flags = value;
         break;
       }
@@ -1178,8 +1178,8 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
     set_notify(ESI, EventIndex, 0);
 /* reset the initial value */
        i= ESI->EventInfoArray[EventIndex].pos[0];
-       DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i+PMU_FIRST_COUNTER,threshold));
+       SUBDBG("counter %d used in overflow, threshold %d\n",
+           i+PMU_FIRST_COUNTER,threshold);
        this_state->pd[i].reg_value = 0;
        this_state->pd[i].reg_long_reset = 0;
        this_state->pd[i].reg_short_reset = 0;
@@ -1208,8 +1208,8 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
     set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
 /* set initial value in pd array */
     i= ESI->EventInfoArray[EventIndex].pos[0];
-      DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i+PMU_FIRST_COUNTER,threshold));
+      SUBDBG("counter %d used in overflow, threshold %d\n",
+           i+PMU_FIRST_COUNTER,threshold);
       this_state->pd[i].reg_value = (~0UL) -
                                   (unsigned long)threshold+1;
       this_state->pd[i].reg_long_reset = (~0UL) -
@@ -1256,7 +1256,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
            getpid(),errno);
       return(PAPI_ESYS);
     }
-    DBG((stderr,"Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr));
+    SUBDBG("Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr);
 
     this_state->smpl_vaddr = ctx[0].ctx_smpl_vaddr;
 
@@ -1293,8 +1293,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 
        pos = ESI->EventInfoArray[EventIndex].pos;
          j = pos[0];
-         DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           j+PMU_FIRST_COUNTER,threshold));
+         SUBDBG("counter %d used in overflow, threshold %d\n",
+           j+PMU_FIRST_COUNTER,threshold);
          this_state->pd[j].reg_value = 0;
          this_state->pd[j].reg_long_reset = 0;
          this_state->pd[j].reg_short_reset = 0;
@@ -1303,7 +1303,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 
      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
      _papi_hwi_using_signal--;
-     DBG((stderr, "_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal));
+     SUBDBG("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal);
      if (_papi_hwi_using_signal == 0)
 	 {
 
@@ -1337,8 +1337,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 
       pos = ESI->EventInfoArray[EventIndex].pos;
         j = pos[0];
-        DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           j+PMU_FIRST_COUNTER,threshold));
+        SUBDBG("counter %d used in overflow, threshold %d\n",
+           j+PMU_FIRST_COUNTER,threshold);
         this_state->pd[j].reg_value = (~0UL) -
                               (unsigned long)threshold+1;
         this_state->pd[j].reg_long_reset = (~0UL) -
@@ -1365,7 +1365,7 @@ void *_papi_hwd_get_overflow_address(void *context)
 #define MUTEX_CLOSED 0
 #define MAX_PAPI_LOCK 4
 #include <inttypes.h>
-volatile uint32_t lock[MAX_PAPI_LOCK] = {MUTEX_OPEN,};
+volatile uint32_t lock[MAX_PAPI_LOCK] = {MUTEX_OPEN,MUTEX_OPEN, MUTEX_OPEN, MUTEX_OPEN};
 
 void _papi_hwd_lock_init(void)
 {
@@ -1439,7 +1439,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
   evt->pfp_event_count=0;
   memset(evt->pfp_pc, 0 , sizeof(evt->pfp_pc));
 
-  DBG((stderr," original count is %d\n", org_cnt));
+  SUBDBG(" original count is %d\n", org_cnt);
 
 /* add new native events to the evt structure */
   for(i=0; i< count; i++ )
@@ -1463,12 +1463,12 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
       evt->pfp_events[i].event = events[i];
     return(PAPI_ECNFLCT);
   }
-  DBG((stderr, "event_count=%d\n", evt->pfp_event_count));
+  SUBDBG("event_count=%d\n", evt->pfp_event_count);
 
   for(i=0; i<evt->pfp_event_count; i++)
   {
     native[i].ni_position = evt->pfp_pc[i].reg_num -PMU_FIRST_COUNTER;
-    DBG((stderr, "event_code is %d, reg_num is %d\n", native[i].ni_event& NATIVE_AND_MASK, native[i].ni_position));
+    SUBDBG( "event_code is %d, reg_num is %d\n", native[i].ni_event& NATIVE_AND_MASK, native[i].ni_position);
   }
 
   return(PAPI_OK);

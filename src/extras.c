@@ -71,6 +71,7 @@ static void posix_profil_16(caddr_t address, PAPI_sprofil_t *prof, unsigned shor
   int increment = 1;
   unsigned short *buf = prof->pr_base;
   unsigned long addr;
+  unsigned long_long laddr;
 
   addr = (unsigned long)(address - prof->pr_off);
 
@@ -81,6 +82,9 @@ static void posix_profil_16(caddr_t address, PAPI_sprofil_t *prof, unsigned shor
       return;
     }
   addr = addr / sizeof(unsigned short);  /* get the index */
+  laddr = addr * prof->pr_scale;
+  addr = laddr >> 16;
+
 
   if (flags == PAPI_PROFIL_POSIX)
     {
@@ -127,6 +131,7 @@ static void posix_profil_32(caddr_t address, PAPI_sprofil_t *prof, unsigned shor
   int increment = 1;
   unsigned int *buf = prof->pr_base;
   unsigned long addr;
+  unsigned long_long laddr;
 
   addr = (unsigned long)(address - prof->pr_off);
 
@@ -137,6 +142,8 @@ static void posix_profil_32(caddr_t address, PAPI_sprofil_t *prof, unsigned shor
       return;
     }
   addr = addr / sizeof(unsigned int);  /* get the index */
+  laddr = addr * prof->pr_scale;
+  addr = laddr >> 16;
   if (flags == PAPI_PROFIL_POSIX)
     {
       buf[addr]++;
@@ -182,6 +189,7 @@ static void posix_profil_64(caddr_t address, PAPI_sprofil_t *prof, unsigned shor
   int increment = 1;
   unsigned long long *buf = prof->pr_base;
   unsigned long addr;
+  unsigned long_long laddr;
 
   addr = (unsigned long)(address - prof->pr_off);
 
@@ -192,6 +200,8 @@ static void posix_profil_64(caddr_t address, PAPI_sprofil_t *prof, unsigned shor
       return;
     }
   addr = addr / sizeof( long long);  /* get the index */
+  laddr = addr * prof->pr_scale;
+  addr = laddr >> 16;
   if (flags == PAPI_PROFIL_POSIX)
     {
       buf[addr]++;

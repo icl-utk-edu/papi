@@ -248,11 +248,11 @@ static native_info_t *native_table;
 #ifdef DEBUG
 static void dump_cmd(papi_cpc_event_t *t)
 {
-  DBG((stderr,"cpc_event_t.ce_cpuver %d\n",t->cmd.ce_cpuver));
-  DBG((stderr,"ce_tick %llu\n",t->cmd.ce_tick));
-  DBG((stderr,"ce_pic[0] %llu ce_pic[1] %llu\n",t->cmd.ce_pic[0],t->cmd.ce_pic[1]));
-  DBG((stderr,"ce_pcr 0x%llx\n",t->cmd.ce_pcr));
-  DBG((stderr,"flags %x\n",t->flags));
+  SUBDBG("cpc_event_t.ce_cpuver %d\n",t->cmd.ce_cpuver);
+  SUBDBG("ce_tick %llu\n",t->cmd.ce_tick);
+  SUBDBG("ce_pic[0] %llu ce_pic[1] %llu\n",t->cmd.ce_pic[0],t->cmd.ce_pic[1]);
+  SUBDBG("ce_pcr 0x%llx\n",t->cmd.ce_pcr);
+  SUBDBG("flags %x\n",t->flags);
 }
 #endif 
 
@@ -320,7 +320,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
           else
             sample->cmd.ce_pic[1] = UINT64_MAX - ESI->overflow.threshold[0];
       }
-      DBG((stderr,"overflow_vector, = %d\n",overflow_vector));
+      SUBDBG("overflow_vector, = %d\n",overflow_vector);
       if (overflow_vector==0) abort();
     }
 
@@ -343,7 +343,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
   }
   else
   {
-    DBG((stderr,"dispatch_emt() dropped, si_code = %d\n",sip->si_code));
+    SUBDBG("dispatch_emt() dropped, si_code = %d\n",sip->si_code);
     return;
   }
 }
@@ -367,7 +367,7 @@ static int scan_prtconf(char *cpuname,int len_cpuname,int *hz, int *ver)
   /*??? system call takes very long */
   /* get system configuration and put output into file */
   sprintf(cmd_line, "/usr/sbin/prtconf -vp >%s", tmpnam(fname));
-  DBG((stderr,"/usr/sbin/prtconf -vp > %s \n", fname));
+  SUBDBG("/usr/sbin/prtconf -vp > %s \n", fname);
   if(system(cmd_line) == -1)
     {
       remove(fname);
@@ -381,42 +381,42 @@ static int scan_prtconf(char *cpuname,int len_cpuname,int *hz, int *ver)
       return -1;
     }
   
-  DBG((stderr,"Parsing %s...\n", fname));
+  SUBDBG("Parsing %s...\n", fname);
   /* ignore all lines until we reach something with a sparc line */
   matched = 0x0; ihz = -1;
   while(fgets(line, 256, f) != NULL)
     {
-      /* DBG((stderr,">>> %s",line)); */
+      /* SUBDBG(">>> %s",line); */
       if((sscanf(line, "%s", cmd) == 1)
 	 && strstr(line, "Node 0x")) {
 	matched = 0x0;
-        /* DBG((stderr,"Found 'Node' -- search reset. (0x%2.2x)\n",matched)); */
+        /* SUBDBG("Found 'Node' -- search reset. (0x%2.2x)\n",matched); */
         }
       else {
 	 if (strstr(cmd, "device_type:") &&
              strstr(line, "'cpu'" )) {
             matched |= 0x1;
-            /* DBG((stderr,"Found 'cpu'. (0x%2.2x)\n",matched)); */
+            /* SUBDBG("Found 'cpu'. (0x%2.2x)\n",matched); */
             }
 	 else if (!strcmp(cmd, "sparc-version:") &&
                (sscanf(line, "%s %x", cmd, &version) == 2) ) {
             matched |= 0x2;
-            /* DBG((stderr,"Found version=%d. (0x%2.2x)\n", version, matched)); */
+            /* SUBDBG("Found version=%d. (0x%2.2x)\n", version, matched); */
             }
 	 else if (!strcmp(cmd, "clock-frequency:") &&
                (sscanf(line, "%s %x", cmd, &ihz) == 2) ) {
             matched |= 0x4;
-            /* DBG((stderr,"Found ihz=%d. (0x%2.2x)\n", ihz,matched)); */
+            /* SUBDBG("Found ihz=%d. (0x%2.2x)\n", ihz,matched); */
             }
 	 else if (!strcmp(cmd, "name:") &&
                (sscanf(line, "%s %s", cmd, name) == 2) ) {
             matched |= 0x8;
-            /* DBG((stderr,"Found name: %s. (0x%2.2x)\n", name,matched)); */
+            /* SUBDBG("Found name: %s. (0x%2.2x)\n", name,matched); */
             }
       }
      if((matched & 0xF) == 0xF ) break;
     }
-  DBG((stderr,"Parsing found name=%s, speed=%dHz, version=%d\n", name, ihz,version));
+  SUBDBG("Parsing found name=%s, speed=%dHz, version=%d\n", name, ihz,version);
   
   if(matched ^ 0x0F)
     ihz = -1;
@@ -482,7 +482,7 @@ static int get_system_info(void)
 
   if (cpc_version(CPC_VER_CURRENT) != CPC_VER_CURRENT)
     return(PAPI_ESBSTR);
-  DBG((stderr,"CPC version %d successfully opened\n",CPC_VER_CURRENT));
+  SUBDBG("CPC version %d successfully opened\n",CPC_VER_CURRENT);
 
   if (cpc_access() == -1)
     return(PAPI_ESBSTR);
@@ -490,7 +490,7 @@ static int get_system_info(void)
   /* Global variable cpuver */
 
   cpuver = cpc_getcpuver();
-  DBG((stderr,"Got %d from cpc_getcpuver()\n",cpuver));
+  SUBDBG("Got %d from cpc_getcpuver()\n",cpuver);
   if (cpuver == -1)
     return(PAPI_ESBSTR);
 
@@ -519,7 +519,7 @@ static int get_system_info(void)
 
   if (cpuver <= CPC_ULTRA2)
   {
-    DBG((stderr,"cpuver (==%d) <= CPC_ULTRA2 (==%d)\n",cpuver,CPC_ULTRA2));
+    SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n",cpuver,CPC_ULTRA2);
     pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
     pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
     pcr_event_mask[0] = (CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
@@ -531,7 +531,7 @@ static int get_system_info(void)
   }
   else if (cpuver == CPC_ULTRA3)
     {
-      DBG((stderr,"cpuver (==%d) == CPC_ULTRA3 (==%d)\n",cpuver,CPC_ULTRA3));
+      SUBDBG("cpuver (==%d) == CPC_ULTRA3 (==%d)\n",cpuver,CPC_ULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
       pcr_event_mask[0] = (CPC_ULTRA3_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
@@ -563,7 +563,7 @@ static int get_system_info(void)
     cmd.flags = PR_MSACCT | PR_MSFORK;
     retval = write(fd,&cmd,sizeof(cmd));
     close(fd);
-    DBG((stderr,"Write PCSET returned %d\n",retval));
+    SUBDBG("Write PCSET returned %d\n",retval);
     if (retval != sizeof(cmd))
       return(PAPI_ESYS);
   }
@@ -584,8 +584,8 @@ static int get_system_info(void)
   }
   strncpy(_papi_hwi_system_info.exe_info.fullname,psi.pr_psargs,PAPI_MAX_STR_LEN);
   strncpy(_papi_hwi_system_info.exe_info.name,basename(psi.pr_psargs),PAPI_MAX_STR_LEN);
-  DBG((stderr,"Executable is %s\n",_papi_hwi_system_info.exe_info.name));
-  DBG((stderr,"Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname));
+  SUBDBG("Executable is %s\n",_papi_hwi_system_info.exe_info.name);
+  SUBDBG("Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname);
 
   /* Hardware info */
 
@@ -604,7 +604,7 @@ static int get_system_info(void)
   _papi_hwi_system_info.hw_info.revision = version;
 
   _papi_hwi_system_info.hw_info.mhz = ( (float) hz / 1.0e6 );
-  DBG((stderr,"hw_info.mhz = %f\n",_papi_hwi_system_info.hw_info.mhz));
+  SUBDBG("hw_info.mhz = %f\n",_papi_hwi_system_info.hw_info.mhz);
 
   /* Number of PMCs */
 
@@ -613,7 +613,7 @@ static int get_system_info(void)
     return(PAPI_ESBSTR);
   _papi_hwi_system_info.num_gp_cntrs = retval;
   _papi_hwi_system_info.num_cntrs = retval;
-  DBG((stderr,"num_cntrs = %d\n",_papi_hwi_system_info.num_cntrs));
+  SUBDBG("num_cntrs = %d\n",_papi_hwi_system_info.num_cntrs);
 
   /* program text segment, data segment  address info */
   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_start;
@@ -692,11 +692,11 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
-  DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
+  SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
        _papi_hwi_system_info.hw_info.totalcpus,
        _papi_hwi_system_info.hw_info.vendor_string,
        _papi_hwi_system_info.hw_info.model_string,
-       _papi_hwi_system_info.hw_info.mhz));
+       _papi_hwi_system_info.hw_info.mhz);
 
   return(PAPI_OK);
 }
@@ -815,8 +815,8 @@ int _papi_hwd_shutdown_global(void)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info)
 {
 /*
-  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n", 
-        info->uc_mcontext.gregs[REG_PC]));
+  SUBDBG("_papi_hwd_dispatch_timer() at 0x%lx\n", 
+        info->uc_mcontext.gregs[REG_PC]);
 */
   _papi_hwi_context_t ctx;
 

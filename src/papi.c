@@ -1442,6 +1442,8 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
 int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset, 
          unsigned scale,int EventSet, int EventCode, int threshold, int flags)
 {
+  if (scale > 65536 || scale < 0x0002)
+     papi_return (PAPI_EINVAL);
 
   if (threshold > 0)
   {

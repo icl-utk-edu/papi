@@ -195,8 +195,8 @@ static int _internal_scan_cpu_info(inventory_t *item, void *foo)
 
   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD)) 
     {
-      DBG((stderr,"scan_system_info(%p,%p) Board: %ld, %d, %ld\n",
-	   item,foo,item->inv_controller,item->inv_state,item->inv_unit));
+      SUBDBG("scan_system_info(%p,%p) Board: %ld, %d, %ld\n",
+	   item,foo,item->inv_controller,item->inv_state,item->inv_unit);
 
       _papi_hwi_system_info.hw_info.mhz = (int)item->inv_controller;
 
@@ -267,17 +267,17 @@ static int _internal_scan_cpu_info(inventory_t *item, void *foo)
 	strcpy(ip_str_pos,"Unknown cpu board");
 	_papi_hwi_system_info.hw_info.model = PAPI_EINVAL;
       }
-      DBG((stderr,"scan_system_info:       Board: 0x%x, %s\n",
+      SUBDBG("scan_system_info:       Board: 0x%x, %s\n",
 	   _papi_hwi_system_info.hw_info.model,
-	   _papi_hwi_system_info.hw_info.model_string));
+	   _papi_hwi_system_info.hw_info.model_string);
     }
 
   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUCHIP))
     {
       unsigned int imp,majrev,minrev;
 
-      DBG((stderr,"scan_system_info(%p,%p) CPU: %ld, %d, %ld\n",
-	   item,foo,item->inv_controller,item->inv_state,item->inv_unit)); 
+      SUBDBG("scan_system_info(%p,%p) CPU: %ld, %d, %ld\n",
+	   item,foo,item->inv_controller,item->inv_state,item->inv_unit); 
 
       imp=(item->inv_state & C0_IMPMASK ) >> C0_IMPSHIFT;
       majrev=(item->inv_state & C0_MAJREVMASK ) >> C0_MAJREVSHIFT;
@@ -310,8 +310,8 @@ static int _internal_scan_cpu_info(inventory_t *item, void *foo)
       for(i=strlen(_papi_hwi_system_info.hw_info.model_string);i<IPSTRPOS;i++)
 	_papi_hwi_system_info.hw_info.model_string[i]=' ';
 
-    DBG((stderr,"scan_system_info:       CPU: 0x%.2x, 0x%.2x, 0x%.2x, %s\n",
-	 imp,majrev,minrev,_papi_hwi_system_info.hw_info.model_string));
+    SUBDBG("scan_system_info:       CPU: 0x%.2x, 0x%.2x, 0x%.2x, %s\n",
+	 imp,majrev,minrev,_papi_hwi_system_info.hw_info.model_string);
     }	  
 
   /* FPU CHIP is not used now, but who knows about the future? */
@@ -319,13 +319,13 @@ static int _internal_scan_cpu_info(inventory_t *item, void *foo)
     {
       unsigned int imp,majrev,minrev;
 
-      DBG((stderr,"scan_system_info(%p,%p) FPU: %ld, %d, %ld\n",
-	   item,foo,item->inv_controller,item->inv_state,item->inv_unit)); 
+      SUBDBG("scan_system_info(%p,%p) FPU: %ld, %d, %ld\n",
+	   item,foo,item->inv_controller,item->inv_state,item->inv_unit); 
       imp=(item->inv_state & C0_IMPMASK ) >> C0_IMPSHIFT;
       majrev=(item->inv_state & C0_MAJREVMASK ) >> C0_MAJREVSHIFT;
       minrev=(item->inv_state & C0_MINREVMASK ) >> C0_MINREVSHIFT;
-      DBG((stderr,"scan_system_info        FPU: 0x%.2x, 0x%.2x, 0x%.2x\n",
-	   imp,majrev,minrev))
+      SUBDBG("scan_system_info        FPU: 0x%.2x, 0x%.2x, 0x%.2x\n",
+	   imp,majrev,minrev);
     }
   return(0);
 }
@@ -545,11 +545,11 @@ int _papi_hwd_init_global(void)
     return(retval);
 
   
-  DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
+  SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
        _papi_hwi_system_info.hw_info.totalcpus,
        _papi_hwi_system_info.hw_info.vendor_string,
        _papi_hwi_system_info.hw_info.model_string,
-       _papi_hwi_system_info.hw_info.mhz));
+       _papi_hwi_system_info.hw_info.mhz);
 
   return(PAPI_OK);
 }
@@ -861,7 +861,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
   {
     index = native[i].ni_event & NATIVE_AND_MASK;
     selector |= 1<<index;
-    DBG((stderr,"update_control_state index = %d mode=0x%x\n",index, mode));
+    SUBDBG("update_control_state index = %d mode=0x%x\n",index, mode);
     if (index > HWPERF_MAXEVENT)
       to->hwp_evctrl[index].hwperf_creg.hwp_ev = index-HWPERF_CNT1BASE;
     else
