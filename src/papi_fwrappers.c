@@ -7,6 +7,8 @@
 *          smeds@pdc.kth.se
 *          Anders Nilsson
 *          anni@pdc.kth.se
+*	   Kevin London
+*	   london@cs.utk.edu
 */  
 
 #include <stdio.h>
@@ -297,6 +299,11 @@ PAPI_FCALL(papif_destroy_eventset,PAPIF_DESTROY_EVENTSET,(int *EventSet, int *ch
 PAPI_FCALL(papif_num_counters,PAPIF_NUM_COUNTERS,(int *numevents))
 {
   *numevents = PAPI_num_counters();
+}
+ 
+PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long long *flpins, float *mflops, int *check )) 
+{
+  *check = PAPI_flops( real_time, proc_time, flpins, mflops);
 }
 
 PAPI_FCALL(papif_start_counters,PAPIF_START_COUNTERS,(int *events, int *array_len, int *check))
