@@ -631,7 +631,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   if (perfmonctl(machdep->pid, PFM_READ_PMDS, 0, readem, PMU_MAX_COUNTERS) == -1) 
 #else
 #ifdef ITANIUM2
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, local->NumberOfEvents) == -1)
+  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, machdep->evt.pfp_count) == -1)
 #else
   if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, PMU_MAX_COUNTERS) == -1)
 #endif
