@@ -74,7 +74,10 @@ int main(int argc, char **argv)
    if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
       PAPI_event = PAPI_FP_INS;
    else
-      PAPI_event = PAPI_TOT_INS;
+      if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK)
+         PAPI_event = PAPI_FP_OPS;
+      else
+         PAPI_event = PAPI_TOT_INS;
 #endif
 
    if ( PAPI_event == PAPI_FP_INS )

@@ -47,6 +47,7 @@ Master serial thread:
 #endif
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
+const PAPI_hw_info_t *hw_info = NULL;
 
 void Thread(int n)
 {
@@ -63,22 +64,14 @@ void Thread(int n)
    else
       num_events1 = (int) omp_get_thread_num();
 
-   /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-      PAPI_event = PAPI_FP_INS;
-      mask1 = MASK_FP_INS | MASK_TOT_CYC;
-   } else {
-      PAPI_event = PAPI_TOT_INS;
-      mask1 = MASK_TOT_INS | MASK_TOT_CYC;
-   }
+    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+      PAPI_TOT_INS, depending on the availability of the event on the
+      platform */
+   EventSet1 = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
 
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
-
-   EventSet1 = add_test_events(&num_events1, &mask1);
-
-   /* num_events1 is greater than num_events2 so don't worry. */
 
    values = allocate_test_space(num_tests, num_events1);
 
@@ -131,7 +124,9 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
-
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    elapsed_us = PAPI_get_real_usec();
 

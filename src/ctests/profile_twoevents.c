@@ -14,7 +14,7 @@
 int main(int argc, char **argv)
 {
    int i, num_events, num_tests = 6;
-   int PAPI_event=PAPI_FP_INS, mask;
+   int PAPI_event, mask;
    char event_name[PAPI_MAX_STR_LEN];
    int EventSet = PAPI_NULL;
    unsigned short *profbuf;
@@ -39,30 +39,6 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
-       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (strstr(hw_info->model_string, "POWER3"))) {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         PAPI_event = PAPI_TOT_INS;
-         mask = MASK_TOT_INS | MASK_TOT_CYC;
-      } else
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
-   }
-   else {
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-         PAPI_event = PAPI_FP_INS;
-         mask = MASK_FP_INS | MASK_TOT_CYC;
-      } else {
-         PAPI_event = PAPI_TOT_INS;
-         mask = MASK_TOT_INS | MASK_TOT_CYC;
-      }
-   }
-
-   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
-
    if ((prginfo = PAPI_get_executable_info()) == NULL) {
       retval = 1;
       test_fail(__FILE__, __LINE__, "PAPI_get_executable_info", retval);
@@ -80,7 +56,13 @@ int main(int argc, char **argv)
    memset(profbuf, 0x00, length * sizeof(unsigned short));
    memset(profbuf4, 0x00, length * sizeof(unsigned short));
 
-   EventSet = add_test_events(&num_events, &mask);
+    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+      PAPI_TOT_INS, depends on the availability of the event on the
+      platform */
+   EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
+
+   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
    values = allocate_test_space(num_tests, num_events);
 

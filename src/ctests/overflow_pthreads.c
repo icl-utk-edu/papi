@@ -39,39 +39,19 @@ void *Thread(void *arg)
 {
    int retval, num_tests = 1;
    int EventSet1;
-   int mask1;
+   int mask1, papi_event;
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc;
+   char event_name[PAPI_MAX_STR_LEN];
 
-   if (!TESTS_QUIET) {
+   if (!TESTS_QUIET) 
       printf("Thread 0x%x \n", (int) pthread_self());
-   } else {
-      num_events1 = (int) pthread_self();
-   }
 
-   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
-       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (strstr(hw_info->model_string, "POWER3"))) {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         mask1 = MASK_TOT_INS | MASK_TOT_CYC;
-      } else {
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
-      }
-   } else {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-         mask1 = MASK_FP_INS | MASK_TOT_CYC;
-      } else {
-         mask1 = MASK_TOT_INS | MASK_TOT_CYC;
-      }
-   }
-
-   EventSet1 = add_test_events(&num_events1, &mask1);
-
-   /* num_events1 is greater than num_events2 so don't worry. */
+   /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+      PAPI_TOT_INS, depends on the availability of the event on the 
+      platform */
+   EventSet1 = add_two_events(&num_events1, &papi_event, hw_info, &mask1);
 
    values = allocate_test_space(num_tests, num_events1);
 
@@ -79,14 +59,10 @@ void *Thread(void *arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-   if(mask1 == 0x3) {
-      if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, THRESHOLD, 0, handler)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-   }
-   else {
-      if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-   }
+   if ((retval = PAPI_overflow(EventSet1, papi_event, THRESHOLD, 0, handler))
+                 != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+
    /* start_timer(1); */
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -99,24 +75,18 @@ void *Thread(void *arg)
    elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-   if(mask1 == 0x3) {
-      if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, 0, 0, NULL)) != PAPI_OK)
+
+   if ((retval = PAPI_overflow(EventSet1, papi_event, 0, 0, NULL)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-   }
-   else {
-      if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, 0, 0, NULL)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-   }
 
    remove_test_events(&EventSet1, mask1);
 
+   if ((retval = PAPI_event_code_to_name(papi_event, event_name)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+
    if (!TESTS_QUIET) {
-      if(mask1 == 0x3) {
-         printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-      }
-      else {
-         printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-      }
+      printf("Thread 0x%x %s : \t%lld\n", (int) pthread_self(), 
+                     event_name, (values[0])[0]);
       printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", (int) pthread_self(), (values[0])[1]);
       printf("Thread 0x%x Real usec   : \t%lld\n", (int) pthread_self(), elapsed_us);
       printf("Thread 0x%x Real cycles : \t%lld\n", (int) pthread_self(), elapsed_cyc);

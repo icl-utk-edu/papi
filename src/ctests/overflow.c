@@ -55,6 +55,7 @@ int main(int argc, char **argv)
    int PAPI_event, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = NULL;
+   int num_events, mask; 
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -72,41 +73,19 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
-       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (strstr(hw_info->model_string, "POWER3"))) {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         PAPI_event = PAPI_TOT_INS;
-      } else {
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
-      }
-   } else {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-         PAPI_event = PAPI_FP_INS;
-      } else {
-         PAPI_event = PAPI_TOT_INS;
-      }
-   }
+   retval = PAPI_create_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+   /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+      PAPI_TOT_INS, depending on the availability of the event on the
+      platform */
+   EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
 
    if ( PAPI_event == PAPI_FP_INS ) 
       mythreshold = THRESHOLD;
    else
       mythreshold = THRESHOLD*2;
-
-   retval = PAPI_create_eventset(&EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
-   retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-
-   retval = PAPI_add_event(EventSet, PAPI_event);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
@@ -157,7 +136,7 @@ int main(int argc, char **argv)
       printf("-----------------------------------------------\n");
 
       printf("Verification:\n");
-      if (PAPI_event == PAPI_FP_INS)
+      if (PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS)
          printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
       printf("Column 1 approximately equals column 2\n");
       printf("Row 3 approximately equals %u +- %u %%\n",

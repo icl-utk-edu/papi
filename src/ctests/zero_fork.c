@@ -20,6 +20,7 @@ long_long elapsed_us, elapsed_cyc;
 long_long **values;
 char event_name[PAPI_MAX_STR_LEN];
 int retval, num_tests = 1;
+const PAPI_hw_info_t *hw_info = NULL;
 
 void process_init(void)
 {
@@ -35,24 +36,21 @@ void process_init(void)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-   /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-      PAPI_event = PAPI_FP_INS;
-      mask1 = MASK_FP_INS | MASK_TOT_CYC;
-   } else {
-      PAPI_event = PAPI_TOT_INS;
-      mask1 = MASK_TOT_INS | MASK_TOT_CYC;
-   }
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+ 
+    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+      PAPI_TOT_INS, depends on the availability of the event on the
+      platform */
+   EventSet1 = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
+
+   values = allocate_test_space(num_tests, num_events1);
 
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
-   EventSet1 = add_test_events(&num_events1, &mask1);
-
-   /* num_events1 is greater than num_events2 so don't worry. */
-
-   values = allocate_test_space(num_tests, num_events1);
 
    elapsed_us = PAPI_get_real_usec();
 
