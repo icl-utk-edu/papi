@@ -648,9 +648,6 @@ static int get_system_info(void)
          *tmp = '\0';
    }
    strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_MAX_STR_LEN);
-   strncpy(_papi_hwi_system_info.exe_info.name, basename(psi.pr_psargs),
-           PAPI_MAX_STR_LEN);
-   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.name);
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
    /* Hardware info */

@@ -419,7 +419,6 @@ static int _internal_get_system_info(void)
 */
    strcat(_papi_hwi_system_info.exe_info.fullname, "/");
    strcat(_papi_hwi_system_info.exe_info.fullname, psi.pr_fname);
-   strncpy(_papi_hwi_system_info.exe_info.name, psi.pr_fname, PAPI_MAX_STR_LEN);
 
    /* HWinfo */
 
