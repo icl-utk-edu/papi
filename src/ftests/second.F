@@ -97,19 +97,19 @@
      .	 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_set_domain1(es1, PAPI_DOM_ALL, retval)
+      call PAPIf_set_domain(es1, PAPI_DOM_ALL, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_set_domain', retval)
       end if
 
-      call PAPIf_set_domain1(es2, PAPI_DOM_KERNEL, retval)
+      call PAPIf_set_domain(es2, PAPI_DOM_KERNEL, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_set_domain', retval)
       end if
 
-      call PAPIf_set_domain1(es3, PAPI_DOM_USER, retval)
+      call PAPIf_set_domain(es3, PAPI_DOM_USER, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_set_domain', retval)
