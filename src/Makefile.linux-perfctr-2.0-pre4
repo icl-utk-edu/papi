@@ -1,0 +1,32 @@
+SUBSTR  = linux-perfctr-2.0-pre4
+DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
+LIBS	= static shared
+TARGETS = multiplex serial pthreads 
+
+PERFCTRDIR=perfctr-2.0-pre4
+#CFLAGS  = -Wall -I./$(PERFCTRDIR)/usr.lib -DPERFCTR18 -g -DDEBUG
+CFLAGS  = -Wall -I./$(PERFCTRDIR)/usr.lib -g -DDEBUG -DPERFCTR20PRE4
+FFLAGS	= -g
+OPTFLAGS= -O6 -mpentiumpro
+FOPTFLAGS= -fast -tp p6
+CC_SHR  = gcc -shared
+CC_R	= gcc
+CC	= gcc
+F77	= pgf77
+CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
+CC_R	= $(CC) -pthread
+MISCOBJS= libperfctr.o
+
+include Makefile.inc
+
+x86-events.h: ./$(PERFCTRDIR)/etc/mk-events-h.awk ./$(PERFCTRDIR)/etc/perfctr-events.tab
+	awk -f ./$(PERFCTRDIR)/etc/mk-events-h.awk ./$(PERFCTRDIR)/etc/perfctr-events.tab > $@
+
+libperfctr.o: ./$(PERFCTRDIR)/usr.lib/libperfctr.o x86-events.h
+	cp ./$(PERFCTRDIR)/usr.lib/libperfctr.o .
+
+./$(PERFCTRDIR)/usr.lib/libperfctr.o: ./$(PERFCTRDIR)/config.out
+	$(MAKE) -C $(PERFCTRDIR)
+
+./$(PERFCTRDIR)/config.out:
+	-cd $(PERFCTRDIR); ./configure
