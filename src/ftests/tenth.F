@@ -45,6 +45,7 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+      es = PAPI_NULL
 
       mask1 = EVT1
       mask2 = EVT2
