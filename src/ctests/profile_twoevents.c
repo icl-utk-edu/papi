@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
    sprintf(title,"   \t\t    %s\tPAPI_TOT_CYC\naddress\t\t\tcounts\tcounts\n", event_name);
    prof_head(blength, PAPI_PROFIL_BUCKET_16, num_buckets, title);
-   prof_out(2, PAPI_PROFIL_BUCKET_16, num_buckets);
+   prof_out(2, PAPI_PROFIL_BUCKET_16, num_buckets, FULL_SCALE);
 
    remove_test_events(&EventSet, mask);
 

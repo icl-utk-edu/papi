@@ -111,7 +111,6 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    ear_no_profile();
    blength = prof_size(plength, scale, bucket, &num_buckets);
    prof_alloc(5, blength);
-   prof_out(5, bucket, num_buckets);
 
    for (i=0;i<5;i++) {
       if (!TESTS_QUIET)
@@ -141,7 +140,7 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
 
    prof_head(blength, bucket, num_buckets, 
       "address\t\t\tflat\trandom\tweight\tcomprs\tall\n");
-   prof_out(5, bucket, num_buckets);
+   prof_out(5, bucket, num_buckets, scale);
 
    retval = prof_check(5, bucket, num_buckets);
 

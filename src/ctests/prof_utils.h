@@ -30,7 +30,7 @@ void prof_print_address(caddr_t start, caddr_t end, char *title);
 void prof_print_prof_info(void);
 void prof_alloc(int num, unsigned long plength);
 void prof_head(unsigned long blength, int bucket_size, int num_buckets, char *header);
-void prof_out(int n, int bucket, int num_buckets);
+void prof_out(int n, int bucket, int num_buckets, int scale);
 unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *num_buckets);
 int prof_check(int n, int bucket, int num_buckets);
 int prof_buckets(int bucket);

@@ -187,7 +187,7 @@ void prof_head(unsigned long blength, int bucket, int num_buckets, char *header)
    address with at least one non-zero bucket.
    Assumes global profbuf[] array pointers.
 */
-void prof_out(int n, int bucket, int num_buckets) {
+void prof_out(int n, int bucket, int num_buckets, int scale) {
    int i,j;
    unsigned short buf_16;
    unsigned int   buf_32;
@@ -203,7 +203,7 @@ void prof_out(int n, int bucket, int num_buckets) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_16=0;j<n;j++) buf_16 |= (buf16[j])[i];
                if (buf_16) {
-                  printf("%-16p", start + (2 * i));
+                  printf("%-16p", start + (int)(((long_long)i * scale)>>17)); 
                   for(j=0,buf_16=0;j<n;j++)
                      printf("\t%d", (buf16[j])[i]);
                   printf("\n");
@@ -214,7 +214,7 @@ void prof_out(int n, int bucket, int num_buckets) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_32=0;j<n;j++) buf_32 |= (buf32[j])[i];
                if (buf_32) {
-                  printf("%-16p", start + (2 * i));
+                  printf("%-16p", start + (int)(((long_long)i * scale)>>17));
                   for(j=0,buf_32=0;j<n;j++)
                      printf("\t%d", (buf32[j])[i]);
                   printf("\n");
@@ -225,7 +225,7 @@ void prof_out(int n, int bucket, int num_buckets) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_64=0;j<n;j++) buf_64 |= (buf64[j])[i];
                if (buf_64) {
-                  printf("%-16p", start + (2 * i));
+                  printf("%-16p", start + (int)(((long_long)i * scale)>>17));
                   for(j=0,buf_64=0;j<n;j++)
                      printf("\t%lld", (buf64[j])[i]);
                   printf("\n");
