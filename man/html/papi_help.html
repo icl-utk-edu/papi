@@ -395,12 +395,16 @@ See individual functions for details on usage and support.
 <A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>  - translate an integer PAPI event code into an ASCII PAPI preset or native name
 <!-- .BR PAPI_event_name_to_code(3) " - translate an ASCII PAPI preset or native name into an integer PAPI event code" -->
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>  - translate an ASCII PAPI preset or native name into an integer PAPI event code
+<!-- .BR PAPI_get_dmem_info(3) " - get information about the dynamic memory usage of the current program" -->
+<A HREF="papi_get_dmem_info.html">PAPI_get_dmem_info (3)</A>  - get information about the dynamic memory usage of the current program
 <!-- .BR PAPI_get_event_info(3) " - get the name and descriptions for a given preset or native event code" -->
 <A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>  - get the name and descriptions for a given preset or native event code
 <!-- .BR PAPI_get_executable_info(3) " - get the executable’s address space information" -->
 <A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>  - get the executable’s address space information
 <!-- .BR PAPI_get_hardware_info(3) " - get information about the system hardware" -->
 <A HREF="papi_get_hardware_info.html">PAPI_get_hardware_info (3)</A>  - get information about the system hardware
+<!-- .BR PAPI_get_multiplex(3) " - get the multiplexing status of specified event set" -->
+<A HREF="papi_get_multiplex.html">PAPI_get_multiplex (3)</A>  - get the multiplexing status of specified event set
 <!-- .BR PAPI_get_opt(3) " - query the option settings of the PAPI library or a specific event set" -->
 <A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>  - query the option settings of the PAPI library or a specific event set
 <!-- .BR PAPIF_get_clockrate(3) " - get the processor clockrate in MHz. Fortran only." -->
@@ -415,8 +419,8 @@ See individual functions for details on usage and support.
 <A HREF="papi_get_real_cyc.html">PAPI_get_real_cyc (3)</A>  - return the total number of cycles since some arbitrary starting point
 <!-- .BR PAPI_get_real_usec(3) " - return the total number of microseconds since some arbitrary starting point" -->
 <A HREF="papi_get_real_usec.html">PAPI_get_real_usec (3)</A>  - return the total number of microseconds since some arbitrary starting point
-<!-- .BR PAPI_get_shared_lib_info(3) " - get information about the system hardware" -->
-<A HREF="papi_get_shared_lib_info.html">PAPI_get_shared_lib_info (3)</A>  - get information about the system hardware
+<!-- .BR PAPI_get_shared_lib_info(3) " - get information about the shared libraries used by the process" -->
+<A HREF="papi_get_shared_lib_info.html">PAPI_get_shared_lib_info (3)</A>  - get information about the shared libraries used by the process
 <!-- .BR PAPI_get_thr_specific(3) " - return a pointer to a thread specific stored data structure" -->
 <A HREF="papi_get_thr_specific.html">PAPI_get_thr_specific (3)</A>  - return a pointer to a thread specific stored data structure
 <!-- .BR PAPI_get_virt_cyc(3) " - return the process cycles since some arbitrary starting point" -->
@@ -434,6 +438,14 @@ See individual functions for details on usage and support.
 <!-- .BR PAPI_multiplex_init(3) " - initialize multiplex support in the PAPI library" ror code" -->
 <A HREF="papi_multiplex_init.html">PAPI_multiplex_init (3)</A>  - initialize multiplex support in the PAPI library
 ror code
+<!-- .BR PAPI_num_hwctrs(3) " - return the number of hardware counters" -->
+<A HREF="papi_num_hwctrs.html">PAPI_num_hwctrs (3)</A>  - return the number of hardware counters
+<!-- .BR PAPI_num_events(3) " - return the number of events in an event set" -->
+<A HREF="papi_num_events.html">PAPI_num_events (3)</A>  - return the number of events in an event set
+<!-- .BR PAPI_overflow(3) " - set up an event set to begin registering overflows" -->
+<A HREF="papi_overflow.html">PAPI_overflow (3)</A>  - set up an event set to begin registering overflows
+<!-- .BR PAPI_perror(3) " - convert PAPI error codes to strings" -->
+<A HREF="papi_perror.html">PAPI_perror (3)</A>  - convert PAPI error codes to strings
 <!-- .BR PAPI_profil(3) " - generate PC histogram data where hardware counter overflow occurs" -->
 <A HREF="papi_profil.html">PAPI_profil (3)</A>  - generate PC histogram data where hardware counter overflow occurs
 <!-- .BR PAPI_query_event(3) " - query if a PAPI event exists" -->

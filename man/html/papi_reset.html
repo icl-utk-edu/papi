@@ -394,7 +394,7 @@ if (PAPI_stop(EventSet, values) != PAPI_OK)
 <P>
 printf("%lld&#92;n",values[0]);
 <P>
-if (PAPI_reset(EventSet, values) != PAPI_OK)
+if (PAPI_reset(EventSet) != PAPI_OK)
   handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->

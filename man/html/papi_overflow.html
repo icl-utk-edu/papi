@@ -312,9 +312,10 @@ to begin registering overflows;
 <I>EventSet</I> to generate an overflow signal after every
 <!-- .I threshold -->
 <I>threshold</I> events are counted. More than one event in an event set can be used as
-an overflow trigger.
-<!-- .B To turn off overflow, set the threshold to 0. If you see negative number -->
-<B>To turn off overflow, set the threshold to 0. If you see negative number</B> or small number for the result of the overflow events, don&#146;t be surprised.  To reduce the overhead of PAPI_read, we don&#146;t adjust the number. If the platform use hardware overflow, then you can based on the threshold and how many times it overflowed, you can get an approximate number.
+overflow triggers, in such case, the user must call this function several
+times.
+<!-- .B To turn off overflow, set the threshold to 0. If the user get negative number -->
+<B>To turn off overflow, set the threshold to 0. If the user get negative number</B> or small number for the result of the overflow events, don&#146;t be surprised.  To reduce the overhead of PAPI_read, we don&#146;t adjust the number. If the platform use hardware overflow, then based on the threshold and how many times it overflowed, you can get an approximate number.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -345,9 +346,6 @@ currently not used and should be set to 0.
 <I>handler</I> -- the handler function to call upon overflow
 <!-- .LP -->
 <P>
-<!-- .I context  -->
-<I>context</I> -- a platform dependent structure containing information about the overflow event.
-This structure is typically returned automatically by the signal handler.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -420,7 +418,7 @@ The PAPI preset is not available on the underlying hardware.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>void handler(int EventSet, void *address, long_long overflow_vector)
+<TT>void handler(int EventSet, void *address, long_long overflow_vector, void *context)
 {
   fprintf(stderr,"Overflow at %p! bit=0x%llx &#92;n",
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  address,overflow_vector);

@@ -301,8 +301,8 @@ PAPI_get_executable_info - get the executable&#146;s address space info
            C_LONG_LONG  data_end,
 <!-- .BI \tC_LONG_LONG\  bss_start,\  C_LONG_LONG\  bss_end,\  -->
 <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_LONG_LONG </B><B>C_LONG_LONG </B><I>bss_end,</I> 
-<!-- .BI \tC_STRING\  lib_preload_env,\ C_INT\  check) -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_STRING </B><B>check)</B> 
+<!-- .BI \tC_INT\  check) -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_INT </B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -347,10 +347,6 @@ or explicitly returned by Fortran.
 <P>
 <!-- .I bss_start, bss_end -->
 <I>bss_start, bss_end</I> --  Start and End addresses of program bss segment
-<!-- .LP -->
-<P>
-<!-- .I lib_preload_env -->
-<I>lib_preload_env</I> --  environment variable for preloading libraries
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -423,17 +419,9 @@ printf("End of user program is at %p&#92;n",prginfo-&gt;text_end);
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>   typedef struct _papi_preload_option {
-      char lib_preload_env[PAPI_MAX_STR_LEN];   /* Model string of CPU */
-      char lib_preload_sep;
-      char lib_dir_env[PAPI_MAX_STR_LEN];
-      char lib_dir_sep;
-   } PAPI_preload_option_t;
-<P>
-   typedef int (*PAPI_debug_handler_t) (int code);
-<P>
+<TT><P>
    typedef struct _papi_address_map {
-      char mapname[PAPI_MAX_STR_LEN];
+      char name[PAPI_MAX_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */
@@ -444,9 +432,7 @@ printf("End of user program is at %p&#92;n",prginfo-&gt;text_end);
 <P>
    typedef struct _papi_program_info {
       char fullname[PAPI_MAX_STR_LEN];  /* path+name */
-      char name[PAPI_MAX_STR_LEN];      /* name */
       PAPI_address_map_t address_info;
-      PAPI_preload_option_t preload_info;
    } PAPI_exe_info_t;
 <!-- .if t .ft P -->
 </TT><!-- .fi -->

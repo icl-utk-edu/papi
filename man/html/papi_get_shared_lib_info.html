@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_get_shared_lib_info - get the info about the system memory hardware
+PAPI_get_shared_lib_info - get address info about the shared libraries used by the process
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -296,7 +296,7 @@ PAPI_get_shared_lib_info - get the info about the system memory hardware
 </A>
 <BLOCKQUOTE>
 In C, this function returns a pointer to a structure containing information
-about the memory hardware on which the program runs. There is no Fortran equivalent call.
+about the shared library used by the program. There is no Fortran equivalent call.
 <P>
 <!-- .SH NOTE -->
 </BLOCKQUOTE>
@@ -340,7 +340,7 @@ On success, the function returns a non-NULL pointer.
 <PRE>
 <!-- .if t .ft CW -->
 <TT>   typedef struct _papi_address_map {
-      char mapname[PAPI_MAX_STR_LEN];
+      char name[PAPI_MAX_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */

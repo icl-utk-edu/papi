@@ -312,10 +312,7 @@ PAPI_start, PAPI_stop - start/stop counting hardware events in an event set
 <!-- .B PAPI_start -->
 <B>PAPI_start</B> starts counting all of the hardware events contained in the previously
 defined EventSet.
-All counters are implicitly set to zero.
-<!-- .B PAPI_start() -->
-<B>PAPI_start()</B> will not start the hardware counters if a conflicting EventSet is already running
-and the counters are already in use.
+All counters are implicitly set to zero before counting.
 <!-- .LP -->
 <P>
 <!-- .B PAPI_stop -->

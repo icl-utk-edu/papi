@@ -312,11 +312,11 @@ PAPI_write - Write counter values into counters
 <!-- .B "PAPI_write()" -->
 <B>PAPI_write()</B> writes the counter values provided in the array
 <!-- .I values -->
-<I>values</I> in to the event set
+<I>values</I> into the event set
 <!-- .I EventSet. -->
 <I>EventSet.</I> The virtual counters managed by the PAPI library will be set to the
-values provided. If the event set is running an attempt will be made
-write the values to the running counters as well. This operation is
+values provided. If the event set is running, an attempt will be made
+to write the values to the running counters. This operation is
 not permitted by all substrates and may result in a run-time error.
 <P>
 <!-- .SH ARGUMENTS -->
@@ -409,7 +409,7 @@ The PAPI Team. See them at the PAPI Web Site:
 
 </A>
 <BLOCKQUOTE>
-Theis function has no known bugs.
+This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>

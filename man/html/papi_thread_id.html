@@ -282,8 +282,8 @@ PAPI_thread_id - get the thread identifier of the current thread
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "unsigned long int PAPI_thread_id(void);" -->
-<B>unsigned long int PAPI_thread_id(void);</B> 
+<!-- .BI "unsigned long PAPI_thread_id(void);" -->
+<B>unsigned long PAPI_thread_id(void);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -340,7 +340,7 @@ None.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>unsigned long int tid;
+<TT>unsigned long tid;
 <P>
 if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);

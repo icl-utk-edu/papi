@@ -310,9 +310,9 @@ PAPI_lock - Lock one of two mutex variables defined in papi.h
 </A>
 <BLOCKQUOTE>
 <!-- .B "PAPI_lock()" -->
-<B>PAPI_lock()</B> Grabs access to one of two PAPI mutex variables. This function is provided to the
+<B>PAPI_lock()</B> Grabs access to one of the two PAPI mutex variables. This function is provided to the
 user to have a platform independent call to  (hopefully) efficiently
-implemented mutex variables.
+implemented mutex.
 <!-- .LP -->
 <P>
 <!-- .B "PAPI_unlock()" -->
@@ -328,7 +328,7 @@ implemented mutex variables.
 </A>
 <BLOCKQUOTE>
 <!-- .I lock -->
-<I>lock</I> --  an integer value specifying one of two user locks:
+<I>lock</I> --  an integer value specifying one of the two user locks:
 <!-- .B "PAPI_USR1_LOCK" or "PAPI_USR2_LOCK" -->
 <B>PAPI_USR1_LOCK or PAPI_USR2_LOCK</B> <P>
 <!-- .SH RETURN VALUES -->

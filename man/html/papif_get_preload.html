@@ -331,7 +331,7 @@ the C interface. Not all options in C are available in Fortran.
 <!-- .LP -->
 <P>
 <!-- .B NOTE: -->
-<B>NOTE:</B> /  Some options, such as PAPI_SET_DOMAIN and PAPI_SET_MULTIPLEX, are also
+<B>NOTE:</B> Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, are also
 available as separate entry points in both C and Fortran.
 <!-- .LP -->
 <P>
@@ -404,74 +404,62 @@ or for the current event set
 <TR valign=top>
 <TD align=center colspan=2><I>General information requests</I></TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_CLOCKRATE</B></TD><TD>Return clockrate in MHz.
+<TD><B>PAPI_MAXMEM</B></TD><TD> not implemented yet.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_MAX_CPUS</B></TD><TD>Return number of CPUs.
+<TD><B>PAPI_CLOCKRATE</B></TD><TD>Get clockrate in MHz.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_MAX_HWCTRS</B></TD><TD>Return number of counters.
+<TD><B>PAPI_MAX_CPUS</B></TD><TD>Get number of CPUs.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_EXEINFO</B></TD><TD>Addresses for text/data/bss.
+<TD><B>PAPI_MAX_HWCTRS</B></TD><TD>Get number of counters.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_HWINFO</B></TD><TD>Info. about hardware.
+<TD><B>PAPI_EXEINFO</B></TD><TD>Get Addresses for text/data/bss.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_PRELOAD</B></TD><TD>Get &#145;&#145;LD_PRELOAD&#146;&#146; environment equivalent.
+<TD><B>PAPI_HWINFO</B></TD><TD>Get Info. about hardware.
+</TD></TR>
+<TR valign=top>
+<TD><B>PAPI_SHLIBINFO</B></TD><TD>Get shared library Info. used by the program.
+</TD></TR>
+<TR valign=top>
+<TD><B>PAPI_PRELOAD</B></TD><TD>Get &#145;&#145;LD_PRELOAD&#146;&#146; environment equivalent.
 </TD></TR>
 <!-- cI s -->
 <!-- lB lw(45). -->
 <TR valign=top>
 <TD align=center colspan=2><I>Defaults for the global library</I></TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_DEFDOM</B></TD><TD>Return default counting domain for newly created event sets.
+<TD><B>PAPI_DEFDOM</B></TD><TD>Get/Set default counting domain for newly created event sets.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_SET_DEFDOM</B></TD><TD>Set default counting domain.
+<TD><B>PAPI_DEFGRN</B></TD><TD>Get/Set default counting granularity.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_DEFGRN</B></TD><TD>Return default counting granularity.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_SET_DEFGRN</B></TD><TD>Set default counting granularity.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_GET_DEBUG</B></TD><TD>Get the PAPI debug state. The available debug states are
+<TD><B>PAPI_DEBUG</B></TD><TD>Get/Set the PAPI debug state. The available debug states are
 defined in papi.h.
-The debug state is available in ptr-&gt;debug.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_SET_DEBUG</B></TD><TD>Set the PAPI debug state
+The debug state is available in ptr-&gt;debug.level.
 </TD></TR>
 <!-- cI s -->
 <!-- lB lw(45). -->
 <TR valign=top>
 <TD align=center colspan=2><I>Multiplexing control</I></TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_MULTIPLEX</B></TD><TD>Get options for multiplexing. Currently not implemented.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_SET_MULTIPLEX</B></TD><TD>Set options for multiplexing
+<TD><B>PAPI_MULTIPLEX</B></TD><TD>Get/Set options for multiplexing.
 </TD></TR>
 <!-- cI s -->
 <!-- lB lw(45). -->
 <TR valign=top>
 <TD align=center colspan=2><I>Manipulating individual event sets</I></TD></TR>
 <TR valign=top>
-<TD><B>PAPI_GET_DOMAIN</B></TD><TD>Get domain for a single event set. The event set is specified
+<TD><B>PAPI_DOMAIN</B></TD><TD>Get/Set domain for a single event set. The event set is specified
 in ptr-&gt;domain.eventset
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_SET_DOMAIN</B></TD><TD>Set the domain for a single event set.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_GET_GRANUL</B></TD><TD>Get granularity for a single event set. The event set is specified
-in ptr-&gt;granularity.eventset
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_SET_GRANUL</B></TD><TD>Set the granularity for a single event set.
+<TD><B>PAPI_GRANUL</B></TD><TD>Get/Set granularity for a single event set. The event set is specified
+in ptr-&gt;granularity.eventset. Not implemented yet.
 </TD></TR>
 </TABLE></BLOCKQUOTE>
 <P>
@@ -562,7 +550,7 @@ The event set is currently counting events.
 <TT>int num, EventSet = PAPI_NULL;
 PAPI_option_t options;
 <P>
-if ((num = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL)) &lt;= 0)
+if ((num = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL)) &lt;= 0)
   handle_error();
 <P>
 printf("This machine has %d counters.0,num);
@@ -578,7 +566,7 @@ memset(&options,0x0,sizeof(options));
 <P>
 options.domain.eventset = EventSet;
 options.domain.domain = PAPI_DOM_ALL;
-if (PAPI_set_opt(PAPI_SET_DOMAIN, &options) != PAPI_OK)
+if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
   handle_error();
 <!-- .if t .ft P -->
 </TT><!-- .fi -->

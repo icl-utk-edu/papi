@@ -445,7 +445,7 @@ if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
 if (PAPI_event_name_to_code("PM_CYC",&native) != PAPI_OK)
   handle_error(1);
 <P>
-if (PAPI_add_event(&EventSet, native) != PAPI_OK)
+if (PAPI_add_event(EventSet, native) != PAPI_OK)
   handle_error(1);
 <P>
 /* Start counting */
