@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -1242,7 +1240,7 @@ int PAPI_set_domain(int domain)
 }
 
 int PAPI_add_pevent(int *EventSet, int code, void *inout)
-{ int retval;
+{ int retval, indextohw;
   EventSetInfo *ESI, *n = NULL;
   
   retval = PAPI_init();

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <mpp/globals.h>
 #include <stdio.h>
 #include <unistd.h>

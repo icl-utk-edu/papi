@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* Null substrate. This file is intended as an example for 
    substrate designers. This file assumes the following
    hardware. 2 general purpose counters supporting ALL

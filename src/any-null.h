@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <stdio.h>
 #include <memory.h>
 #include <time.h>

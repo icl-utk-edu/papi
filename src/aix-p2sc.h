@@ -1,5 +1,3 @@
-/* $Id$ */
-
 typedef struct hwd_control_state {
   int mask;             /* Counter select mask */
   int mmcr;             /* Counter control register */ } hwd_control_state_t;

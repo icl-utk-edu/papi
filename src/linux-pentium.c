@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
@@ -233,11 +231,11 @@ int _papi_hwd_init(EventSetInfo *zero)
 {
   /* Fill in what we can of the papi_system_info. */
   
-  unsigned long stamp;
+  unsigned long long stamp;
 
-  stamp = get_cycles();
+  stamp = perf_get_cycles();
   sleep(1);
-  stamp = (get_cycles() - stamp)/1000000;
+  stamp = (perf_get_cycles() - stamp)/1000000;
 
   _papi_system_info.mhz = stamp;
   _papi_system_info.ncpu = NR_CPUS;

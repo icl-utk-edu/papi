@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #if defined(sgi) && defined(mips)
 #define R10000
 

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #if defined(sun) && defined(__SVR4) && defined(sparc)
 
 #include <time.h>

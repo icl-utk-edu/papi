@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #ifdef DEBUG
 #define DBG(a) { fprintf(stderr,"DEBUG: "); fprintf a; }
 #endif

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* This file contains portable routines to do things that we wish the
 vendors did in the kernel extensions or performance libraries. This includes
 the following:
@@ -35,20 +33,20 @@ static void dispatch_profile(EventSetInfo *ESI, caddr_t eip)
   address = (unsigned long)(eip - profile->offset);
   address *= profile->scale;
   address /= profile->divisor;
-
+  
   switch (profile->flags)
     {
     case PAPI_PROFIL_POSIX:
     default:
       {
-        unsigned short *buf = (unsigned short *)profile->buf;
-        if (address < profile->bufsiz)
-          {
-            DBG((stderr,"dispatch_profile() handled at eip %p, bucket %lu\n",eip,address));
-            buf[address]++;
-          }
-        else
-          DBG((stderr,"dispatch_profile() ignored at eip %p, bucket %lu\n",eip,address));       
+	unsigned short *buf = (unsigned short *)profile->buf;
+	if (address < profile->bufsiz)
+	  {
+	    DBG((stderr,"dispatch_profile() handled at eip %p, bucket %lu\n",eip,address));
+	    buf[address]++;
+	  }
+	else
+	  DBG((stderr,"dispatch_profile() ignored at eip %p, bucket %lu\n",eip,address));	  
       }
     }
 }
@@ -58,8 +56,6 @@ static void dispatch_overflow_signal(EventSetInfo *ESI, void *context)
   int retval;
   unsigned long long latest;
 
-  assert(ESI->state & PAPI_OVERFLOWING);
-
   retval = _papi_hwd_read(ESI, event_set_zero, ESI->latest); 
   if (retval < PAPI_OK)
     return;
@@ -67,29 +63,33 @@ static void dispatch_overflow_signal(EventSetInfo *ESI, void *context)
   /* Get the latest counter value */
   latest = ESI->latest[ESI->overflow.EventIndex];
 
+  DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",
+       latest,ESI->overflow.deadline,ESI->overflow.threshold));
+
   /* Is it bigger than the deadline? */
   if (latest > ESI->overflow.deadline)
     {
       ESI->overflow.count++;
-      ESI->overflow.handler(ESI->overflow.count, ESI->overflow.EventCode, ESI->overflow.EventIndex, ESI->latest, ESI->NumberOfCounters, context);
+      if (ESI->state & PAPI_PROFILING)
+	dispatch_profile(ESI, (caddr_t)context); 
+      else
+	ESI->overflow.handler(ESI->EventSetIndex, ESI->overflow.count, ESI->overflow.EventCode, 
+			      latest, &ESI->overflow.threshold, context);
       ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
 }
 
-#ifdef __linux__
 static void dispatch_timer(int signal, struct sigcontext info)
 {
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info.eip));
-  dispatch_overflow_signal(event_set_overflowing, (void *)&info); 
+
+  if (event_set_overflowing->state & PAPI_OVERFLOWING)
+    {
+      dispatch_overflow_signal(event_set_overflowing, (void *)info.eip); 
+      return;
+    }
+  abort();
 }
-#else
-#include <ucontext.h>
-static void dispatch_timer(int signal, siginfo_t *info, ucontext_t *context)
-{
-  DBG((stderr,"dispatch_timer() at %p\n",info->_data._prof._faddr));
-  dispatch_overflow_signal(event_set_overflowing, (void *)&info); 
-}
-#endif
 
 static int start_timer(int milliseconds)
 {

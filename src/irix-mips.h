@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
 

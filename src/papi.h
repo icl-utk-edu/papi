@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
 Return Codes
 
@@ -205,7 +203,6 @@ int PAPI_accum(int EventSet, unsigned long long *values);
 int PAPI_add_event(int *EventSet, int Event);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
-int PAPI_cleanup(int *EventSet);
 int PAPI_cleanup(int *EventSet); 
 int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
