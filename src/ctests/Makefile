@@ -10,7 +10,7 @@ SERIAL  = realtime first memory exeinfo shlib zero zero_fork avail branches dmem
 	calibrate flops second cost johnmay2 clockres \
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth \
-	profile  sprofile profile_32 profile_64 profile_twoevents earprofile branchprofile \
+	profile  sprofile profile_32 profile_64 profile_twoevents earprofile\
 	ipc native native_avail
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
@@ -177,9 +177,6 @@ profile_64: profile_64.c $(UTILOBJS) $(PAPILIB)
 
 profile_twoevents: profile_twoevents.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_twoevents.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
-
-branchprofile: branchprofile.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) branchprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o branchprofile
 
 earprofile: earprofile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) earprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o earprofile
