@@ -10,26 +10,9 @@
 /* This file tests the multiplex pthread functionality */
 
 #include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
 #include "papi_test.h"
-#include "test_utils.h"
 
-#define FLOPS 4000000
-#define READS 4000
-#define NUM 10
-#define NUM_THREADS 4
-#define SUCCESS 1
-#define FAILURE 0
-/*#define METRIC PAPI_FP_INS */
 #define METRIC PAPI_L1_DCM
-extern void do_flops(int);
-extern void do_reads(int);
 
 unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, 0,
@@ -144,10 +127,7 @@ void *case1_pthreads(void *arg)
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   for (i = 0; i < NUM; i++) {
-      do_flops(FLOPS);
-      do_reads(READS);
-   }
+   do_both(NUM_ITERS);
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -185,10 +165,7 @@ void *case2_pthreads(void *arg)
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   for (i = 0; i < NUM; i++) {
-      do_flops(FLOPS);
-      do_reads(READS);
-   }
+   do_both(NUM_ITERS);
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -227,10 +204,7 @@ void *case3_pthreads(void *arg)
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   for (i = 0; i < NUM; i++) {
-      do_flops(FLOPS);
-      do_reads(READS);
-   }
+   do_both(NUM_ITERS);
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -274,10 +248,7 @@ void *case4_pthreads(void *arg)
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   for (i = 0; i < NUM; i++) {
-      do_flops(FLOPS);
-      do_reads(READS);
-   }
+   do_both(NUM_ITERS);
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -358,7 +329,7 @@ int main(int argc, char **argv)
 #endif
 
    if (!TESTS_QUIET) {
-      printf("%s: Using %d threads, %d iterations\n\n", argv[0], NUM_THREADS, NUM);
+      printf("%s: Using %d threads\n\n", argv[0], NUM_THREADS);
       printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
    }
   case1();

@@ -74,7 +74,6 @@ int main(int argc, char **argv)
    long_long(values[3])[2];
    int retval;
    int PAPI_event,k ;
-   long long vector;
    char event_name[PAPI_MAX_STR_LEN];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -169,7 +168,7 @@ int main(int argc, char **argv)
    for(k=0; k<3; k++ )
    {
       if (overflow_counts[k].mask) 
-         printf("Overflows vector 0x%x: %d\n", overflow_counts[k].mask,
+         printf("Overflows vector 0x%llx: %d\n", (long_long)overflow_counts[k].mask,
             overflow_counts[k].count);
    }
    printf("Case 2 %s Overflows: %d\n", "Unknown", total_unknown);
