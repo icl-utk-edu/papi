@@ -15,6 +15,13 @@ PAPI_get_shared_lib_info \- get the info about the system memory hardware
 In C, this function returns a pointer to a structure containing information
 about the memory hardware on which the program runs. There is no Fortran equivalent call.
 
+.SH NOTE
+This data will be incorporated into the
+.B PAPI_get_executable_info 
+call in the future. 
+.PAPI_get_shared_lib_info 
+will be deprecated and should be used with caution.
+
 
 .SH RETURN VALUES
 On success, the function returns a non-NULL pointer.
