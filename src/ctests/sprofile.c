@@ -124,7 +124,9 @@ int main(int argc, char **argv)
   for (i=0;i<NUM;i++)
     {
       do_flops(100000);
+#ifndef __CRAYT3E
       do_reads(1000);
+#endif
     }
 
   if ((retval=PAPI_stop(EventSet, values[1])) != PAPI_OK)

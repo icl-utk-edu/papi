@@ -80,7 +80,9 @@ int case1()
   for (i=0;i<NUM;i++)
     {
       do_flops(1000000);
+#ifndef _CRAYT3E
       do_reads(1000);
+#endif
     }
 
   retval = PAPI_stop(EventSet, values);
@@ -136,7 +138,9 @@ int case2()
   for (i=0;i<NUM;i++)
     {
       do_flops(1000000);
+#ifndef _CRAYT3E
       do_reads(1000);
+#endif
     }
 
   retval = PAPI_stop(EventSet, values);
@@ -192,7 +196,9 @@ int case3()
   for (i=0;i<NUM;i++)
     {
       do_flops(1000000);
+#ifndef _CRAYT3E
       do_reads(1000);
+#endif
     }
 
   retval = PAPI_stop(EventSet, values);
@@ -275,7 +281,9 @@ int case4()
   for (i=0;i<NUM;i++)
     {
       do_flops(1000000);
+#ifndef _CRAYT3E
       do_reads(1000);
+#endif
     }
 
   retval = PAPI_stop(EventSet, values);

@@ -109,7 +109,9 @@ int case1(void)
   for (i=0;i<NUM;i++)
     {
       do_flops(1000000);
+#ifndef _CRAYT3E
       do_reads(1000);
+#endif
     }
 
   retval = PAPI_stop(EventSet, values);
