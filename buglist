@@ -27,12 +27,14 @@ addressed the bug in a timely manner.
 ACTIVE BUGS
 -----------
 
-11/1/00 - Fortran 95 bindings for P.G. Fortran compilers under Linux
+3/1/00  - Linux build does not link with shared library properly
+3/1/00  - Pentium stall metrics are broken
 11/1/00	- Alpha port still returns wrong results from hardware sometimes
 
 FIXED BUG HISTORY
 -----------------
 
+11/1/00 - Fortran 95 bindings for P.G. Fortran compilers under Linux
 11/1/00	- Removed PAPI_LST_INS from x86 platform
 10/1/00	- Fixed native encoding bug on all platforms
 9/1/00	- Fixed T3E Mhz bug
