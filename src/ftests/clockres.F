@@ -8,15 +8,10 @@
       INTEGER i,handle
       INTEGER retval
       REAL ITERS
-      integer tests_quiet
-      character*25 chbuf
+      integer tests_quiet, get_quiet
+	external get_quiet
 
-      tests_quiet=0
-      call getarg(1,chbuf)
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
-
+	tests_quiet = get_quiet()
 
       total_usec=0
       total_cyc=0
@@ -26,7 +21,8 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPI_library_init', retval)
       end if
 
       if (tests_quiet .EQ. 0) then

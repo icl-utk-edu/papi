@@ -8,14 +8,10 @@
       integer eventnum
       integer availcounters
       integer retval
-      integer tests_quiet
-      character*25 chbuf
+      integer tests_quiet, get_quiet
+	external get_quiet
 
-      tests_quiet=0
-      call getarg(1,chbuf)
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
+	tests_quiet = get_quiet()
 
       eventnum = 2
       call PAPIf_num_counters(availcounters)
@@ -33,7 +29,8 @@
 
       call PAPIf_start_counters(events, eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start_counters', 
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_start_counters', 
      *retval)
       end if
 
@@ -41,7 +38,8 @@
 
       call PAPIf_read_counters(values(1), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_read_counters', 
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_read_counters', 
      *retval)
       end if
 
@@ -49,7 +47,8 @@
 
       call PAPIf_stop_counters(values(3), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop_counters', 
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_stop_counters', 
      *retval)
       end if
       

@@ -76,7 +76,7 @@ C    used in the program. See eg. fmatrixpapi.F
       implicit none
       character*(*) test_str
 
-      write(*,100) test_str,':                PASSED'
+      write(*,*) test_str,':                PASSED'
       call PAPIF_shutdown()
       stop
  100  format(/,t1,a,a)
@@ -146,10 +146,10 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 
       if ( retval.ne.0 )then
-          write(*,*) file, ': FAILED'
+          write(*,*) file, ':                FAILED'
           write(*,*) 'Line # ', line
       else
-          write(*,*) file, ': SKIPPED'
+          write(*,*) file, ':                SKIPPED'
           write(*,*) 'Line #', line
       end if
 

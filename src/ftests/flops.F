@@ -12,14 +12,10 @@ C -Kevin London
       REAL*4 proc_time, mflops, real_time
       INTEGER*8 flpins
       INTEGER i,j,k, retval
-      integer tests_quiet
-      character*25 chbuf
+      integer tests_quiet, get_quiet
+	external get_quiet
 
-      tests_quiet=0
-      call getarg(1,chbuf)
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
+	tests_quiet = get_quiet()
 
 
 #ifdef NO_FLOPS

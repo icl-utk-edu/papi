@@ -26,15 +26,10 @@ C 2 counters.
       INTEGER len_trim
       EXTERNAL len_trim
 
-      integer tests_quiet
+      integer tests_quiet, get_quiet
+	external get_quiet
 
-      character*25 chbuf
-
-      tests_quiet=0
-      call getarg(1,chbuf)
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
+	tests_quiet = get_quiet()
 
       a=0.999
       b=1.001
@@ -45,12 +40,14 @@ C 2 counters.
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	  'PAPI_library_init', retval)
       end if
 
       call PAPIf_create_eventset( EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+        call ftest_fail(__FILE__, __LINE__,
+     .	'PAPIf_create_eventset', 
      *retval)
       end if
 
@@ -105,7 +102,8 @@ C 2 counters.
       if (J .GT. 0) then
          call PAPIf_start(EventSet, retval )
          if ( retval .NE. PAPI_OK ) then
-            call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
+            call ftest_fail(__FILE__, __LINE__,
+     .		 'PAPIf_start', retval)
          end if
       end if
 
@@ -116,7 +114,8 @@ C 2 counters.
       if (J .GT. 0) then
          call PAPIf_stop( EventSet, gl, retval)
          if ( retval .NE. PAPI_OK ) then
-            call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
+            call ftest_fail(__FILE__, __LINE__,
+     .		 'PAPIf_stop', retval)
          end if
       end if
       

@@ -23,16 +23,10 @@ C   PAPI values of the counters
       INTEGER*8 values(2), dummies(2)
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
-      integer tests_quiet
+      integer tests_quiet, get_quiet
+	external get_quiet
 
-      character*25 chbuf
-
-      tests_quiet=0
-      call getarg(1,chbuf)
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
-
+	tests_quiet = get_quiet()
 
 C   Setup default values
       num_events=0

@@ -14,14 +14,10 @@
 
       Integer len_trim
       External len_trim
-      integer tests_quiet
-      character*25 chbuf
+      integer tests_quiet, get_quiet
+	external get_quiet
 
-      tests_quiet=0
-      call getarg(1,chbuf)
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
+	tests_quiet = get_quiet()
 
       if (tests_quiet .EQ. 0) then
       print *, "Test case descriptions: Test of functions:"
@@ -39,12 +35,14 @@
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_debug', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_set_debug', retval)
       end if
       
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_create_eventset', 
      *retval)
       end if
 
@@ -95,7 +93,8 @@
       
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_state', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_state', retval)
       end if
 
       if (status .NE. PAPI_STOPPED) then
@@ -108,7 +107,8 @@
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_start', retval)
       end if
       if (tests_quiet .EQ. 0) then
       print *, "PAPI_start"
@@ -116,7 +116,8 @@
 
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_state', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_state', retval)
       end if
 
       if (status .NE. PAPI_RUNNING) then
@@ -131,7 +132,8 @@
 
       call PAPIf_stop(es1, values, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_stop', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_stop', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -140,7 +142,8 @@
 
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_state', retval)
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPIf_state', retval)
       end if
 
       if (status .NE. PAPI_STOPPED) then
