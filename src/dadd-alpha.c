@@ -412,9 +412,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
    ctx.si = si;
    ctx.ucontext = info;
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.
-                                      supports_hw_overflow, 0, 0, &t);
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
 }
 
 /* start the hardware counting, in this substrate, we just need

@@ -507,7 +507,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 
   SUBDBG("Setting overflow for event %x on counter %d with threshold of %d\n",event,counter,threshold);
   if ( counter > 31 && threshold != 0) {
-    _papi_hwi_system_info.using_hw_overflow = 0;
+    ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
     return(PAPI_OK);
   }
   if ( threshold == 0 )
@@ -521,9 +521,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
             } 
          }
          if ( found_soft ) 
-            _papi_hwi_system_info.using_hw_overflow = 0;
+            ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
          else
-            _papi_hwi_system_info.using_hw_overflow = 1;
+            ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
          return ( PAPI_OK );
       }
       /* Clear overflow vector */
@@ -568,7 +568,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
       _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal++;
       _papi_hwi_unlock(INTERNAL_LOCK);
-      _papi_hwi_system_info.using_hw_overflow = 1;
+      ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
   }
   return(retval);
 }

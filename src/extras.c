@@ -207,8 +207,7 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
-                           long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
@@ -247,13 +246,19 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
 	   return(PAPI_EBUG);
 	 }
 
+      if ( isHardware ) {
+         if ( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE )
+             *isHardware = 1;
+         else
+             *isHardware = 0;
+      }
       /* Get the latest counter value */
       event_counter = ESI->overflow.event_counter;
 
       overflow_flag = 0;
       overflow_vector = 0;
 
-      if (isHardware == 0) {
+      if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE)) {
          retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
          if (retval < PAPI_OK)
 	   return(retval);
@@ -275,7 +280,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
          }
       }
 
-      if (isHardware && genOverflowBit) {
+      if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) && genOverflowBit) {
          /* we had assumed the overflow event can't be derived event */
          papi_index = ESI->overflow.EventIndex[0];
 
@@ -285,9 +290,9 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
           */
          pos = ESI->EventInfoArray[papi_index].pos[0];
          overflow_vector = (long long )1 << pos;
-      } else if (isHardware)
+      } else if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
          overflow_vector = overflow_bit;
-      if (isHardware || overflow_flag) {
+      if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) || overflow_flag) {
          ESI->overflow.count++;
          if (ESI->state & PAPI_PROFILING) {
             int k = 0;
@@ -314,7 +319,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
 		 }
 
 foundit:
-               if (isHardware)
+               if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
                   over = 0;
                else
                   over = temp[profile_index];

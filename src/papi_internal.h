@@ -414,11 +414,7 @@ typedef struct _papi_mdi {
    int supports_program;        /* We can use programmable events */
    int supports_write;          /* We can write the counters */
    int supports_hw_overflow;    /* Needs overflow to be emulated */
-   int using_hw_overflow;       /* For platforms that support 2 models such as the
-                                 * X1 with hw support on p-chip, but sw support on e,m-chip
-  				 */
    int supports_hw_profile;     /* Needs profile to be emulated */
-   int force_sw_overflow;       /* Force using sw overflow */
    int supports_multiple_threads;     /* hardware counters support 
                                          multiple threads */
    int supports_64bit_counters; /* Only limited precision is available from hardware */

@@ -6768,7 +6768,6 @@ fi;
 OS="`uname | tr 'A-Z' 'a-z'`"
 case "$OS" in
   cygwin*) OS=cygwin;;
-  SunOS)   OS=solaris ;;
   sunos)   OS=solaris ;;
   irix64)  OS=irix ;;
   "unicos/mp") OS=unicos;;

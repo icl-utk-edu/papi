@@ -1072,8 +1072,6 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.supports_program = 0;
    _papi_hwi_system_info.supports_write = 0;
    _papi_hwi_system_info.supports_hw_overflow = 0;
-   _papi_hwi_system_info.force_sw_overflow = 0;
-   _papi_hwi_system_info.using_hw_overflow = 0;
    _papi_hwi_system_info.supports_hw_profile = 0;
    _papi_hwi_system_info.supports_multiple_threads = 1;
    _papi_hwi_system_info.supports_64bit_counters = 0;

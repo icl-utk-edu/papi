@@ -96,6 +96,8 @@ const char *papi_defNam[] = {
    "PAPI_EXEINFO",
    "PAPI_MAX_CPUS",
    "PAPI_SHLIBINFO",
+   "PAPI_LIB_VERSION",
+   "PAPI_SUBSTRATE_SUPPORT",
   
    "PAPI_DERIVED",
 
@@ -180,6 +182,8 @@ const int papi_defNum[] = {
    PAPI_EXEINFO,
    PAPI_MAX_CPUS,
    PAPI_SHLIBINFO,
+   PAPI_LIB_VERSION,
+   PAPI_SUBSTRATE_SUPPORT,
   
    PAPI_DERIVED,
 

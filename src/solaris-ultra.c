@@ -420,8 +420,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
       }
 
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, 
-           _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal(&ctx, overflow_vector, 0, &thread);
 
 #if DEBUG
       dump_cmd(sample);
@@ -621,13 +620,11 @@ static int get_system_info(void)
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
       _papi_hwi_system_info.supports_hw_overflow = 0;
-      _papi_hwi_system_info.using_hw_overflow = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
       _papi_hwi_system_info.supports_hw_overflow = 1;
-      _papi_hwi_system_info.using_hw_overflow = 1;
    } else
       return (PAPI_ESBSTR);
 
@@ -1095,8 +1092,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 
    ctx.si = si;
    ctx.ucontext = info;
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.supports_hw_overflow, 0, 0, &t);
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)

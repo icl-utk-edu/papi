@@ -160,7 +160,6 @@ static int mdi_init()
     strcpy(_papi_hwi_system_info.substrate, "$Id$");       
 
    _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
-   _papi_hwi_system_info.using_hw_overflow = HW_OVERFLOW;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
@@ -677,7 +676,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg,
     CloseHandle(threadHandle);
 
     // pass a void pointer to cpu register data here
-    _papi_hwi_dispatch_overflow_signal((void *)(&ctx), 0, 0, 0, &t); 
+    _papi_hwi_dispatch_overflow_signal((void *)(&ctx), NULL, 0, 0, &t); 
 }
 #else
 
@@ -698,16 +697,16 @@ int _papi_hwd_shutdown(hwd_context_t * ctx) {
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
+   int isHardware = 0;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                     _papi_hwi_system_info.supports_hw_overflow,
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
                                       si->si_pmc_ovf_mask, 0, &master);
 
    /* We are done, resume interrupting counters */
-   if (_papi_hwi_system_info.supports_hw_overflow) {
+   if (isHardware) {
       if (vperfctr_iresume(master->context.perfctr) < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
       }

@@ -161,7 +161,6 @@ static int get_system_info(void)
 
    _papi_hwi_system_info.supports_multiple_threads = 0;
    _papi_hwi_system_info.supports_hw_overflow = 0;
-   _papi_hwi_system_info.using_hw_overflow = 0;
 
    if (family == 0) {
       strcat(_papi_hwi_system_info.hw_info.model_string, "21064");
@@ -673,9 +672,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
    ctx.si = si;
    ctx.ucontext = info;
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.
-                                      supports_hw_overflow, 0, 0, &t);
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
 }
 
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)

@@ -67,10 +67,7 @@ extern int _papi_hwi_start_timer(int);
 extern int _papi_hwi_stop_signal(int);
 extern int _papi_hwi_start_signal(int, int);
 extern int _papi_hwi_initialize(DynamicArray_t **);
-/*
-extern void _papi_hwi_dispatch_overflow_signal(void *context);
-*/
-extern int _papi_hwi_dispatch_overflow_signal(void *context, int, long_long, int, ThreadInfo_t **master);
+extern int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 

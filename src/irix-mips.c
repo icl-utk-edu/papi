@@ -457,7 +457,6 @@ static int _internal_get_system_info(void)
   _papi_hwi_system_info.hw_info.ncpu = get_cpu();
 */
    _papi_hwi_system_info.supports_hw_overflow = 1;
-   _papi_hwi_system_info.using_hw_overflow = 1;
 
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
@@ -777,8 +776,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    }
    machdep->cntrs_last_read = cnts;
    if (overflow_vector)
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-              _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, overflow_vector, 0, &thread);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)

@@ -173,6 +173,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_RESSIZE     2  /* Resident set size in pages */
 #define PAPI_GET_PAGESIZE    3  /* Pagesize in bytes */
 
+/* Profile definitions */
 #define PAPI_PROFIL_POSIX     0x0        /* Default type of profiling, similar to 'man profil'. */
 #define PAPI_PROFIL_RANDOM    0x1        /* Drop a random 25% of the samples. */
 #define PAPI_PROFIL_WEIGHTED  0x2        /* Weight the samples by their value. */
@@ -181,6 +182,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_BUCKET_32 0x10       /* Use 32 bit buckets to accumulate profile info */
 #define PAPI_PROFIL_BUCKET_64 0x20       /* Use 64 bit buckets to accumulate profile info */
 #define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
+
+/* Overflow definitions */
+#define PAPI_OVERFLOW_FORCE_SW 0x1	/* Force using Software */
+#define PAPI_OVERFLOW_HARDWARE 0x2	/* Using Hardware */
 
 /* Option definitions */
 
@@ -201,7 +206,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_NUMCTRS 		11      /* The number of counters returned by reading this eventset */
 #define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
-
 #define PAPI_CLOCKRATE  	14      /* Clock rate in MHz */
 #define PAPI_MAX_HWCTRS 	15      /* Number of physical hardware counters */
 #define PAPI_HWINFO  		16      /* Hardware information */
@@ -209,7 +213,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
-#define PAPI_FORCE_SW_OVERFLOW  22      /* Change Overflow to use software even if supports hardware */
+#define PAPI_SUBSTRATE_SUPPORT  22      /* Find out what the substrate supports */
 
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
@@ -290,7 +294,7 @@ read the documentation carefully.  */
    } PAPI_sprofil_t;
 
    typedef struct _papi_overflow_option {
-      int force_software;
+      int type;
    } PAPI_overflow_option_t;
 
    typedef struct _papi_inherit_option {
@@ -313,6 +317,22 @@ read the documentation carefully.  */
       char lib_dir_env[PAPI_MAX_STR_LEN];
       char lib_dir_sep;
    } PAPI_preload_info_t;
+
+   typedef struct _papi_substrate_option {
+      int supports_program;        /* We can use programmable events */
+      int supports_write;          /* We can write the counters */
+      int supports_hw_overflow;    /* Needs overflow to be emulated */
+      int supports_hw_profile;     /* Needs profile to be emulated */
+      int supports_multiple_threads;     /* hardware counters support
+                                            multiple threads */
+      int supports_64bit_counters; /* Only limited precision is available from hardware */
+      int supports_inheritance;    /* We can pass on and inherit child counters/values */
+      int supports_attach;         /* We can attach PAPI to another process */
+      int supports_real_usec;      /* We can use the real_usec call */
+      int supports_real_cyc;       /* We can use the real_cyc call */
+      int supports_virt_usec;      /* We can use the virt_usec call */
+      int supports_virt_cyc;       /* We can use the virt_cyc call */
+   } PAPI_substrate_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -416,6 +436,7 @@ read the documentation carefully.  */
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
       PAPI_overflow_option_t ovf_info;
+      PAPI_substrate_info_t sub_info;
    } PAPI_option_t;
 
 #ifdef PAPI_DMEM_INFO

@@ -554,8 +554,9 @@ int PAPI_start(int EventSet)
 
    if (ESI->state & PAPI_OVERFLOWING) 
      {
-       if (_papi_hwi_system_info.using_hw_overflow == 0)
+       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
 	 {
+           APIDBG("Overflow using: %s\n", (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)?"[Forced Software]":"Software");
 	   retval = _papi_hwi_start_signal(PAPI_SIGNAL, NEED_CONTEXT);
 	   if (retval != PAPI_OK)
 	     papi_return(retval);
@@ -566,6 +567,9 @@ int PAPI_start(int EventSet)
 	       papi_return(retval);
 	     }
 	 }
+        else {
+           APIDBG("Overflow using: [Hardware]\n");
+        }
      }
 
    /* Merge the control bits from the new EventSet into the active counter config. */
@@ -616,7 +620,7 @@ int PAPI_stop(int EventSet, long_long * values)
    if (ESI->state & PAPI_OVERFLOWING) 
      {
        ESI->overflow.count = 0;
-       if (_papi_hwi_system_info.using_hw_overflow == 0)
+       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
 	 {
 	   retval = _papi_hwi_stop_timer();
 	   if (retval != PAPI_OK)
@@ -699,7 +703,7 @@ int PAPI_reset(int EventSet)
          retval = _papi_hwd_reset(&thread->context, &ESI->machdep);
 
          if ((ESI->state & PAPI_OVERFLOWING) &&
-             (_papi_hwi_system_info.using_hw_overflow))
+             (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
             ESI->overflow.count = 0;
 
          if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.supports_hw_profile))
@@ -941,21 +945,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          papi_return(_papi_hwi_convert_eventset_to_multiplex(ESI));
       }
-   case PAPI_FORCE_SW_OVERFLOW:
-      {
-        if(ptr->ovf_info.force_software!=0 && ptr->ovf_info.force_software!=1) {
-           APIDBG("Invalid option for forcing software overflow: %d\n",ptr->ovf_info.force_software);
-           return(PAPI_EINVAL);
-        }
-        if ( ptr->ovf_info.force_software == 0 ){
-           _papi_hwi_system_info.using_hw_overflow = _papi_hwi_system_info.supports_hw_overflow;
-        }
-        else {
-           _papi_hwi_system_info.using_hw_overflow = 0;
-        }
-        _papi_hwi_system_info.force_sw_overflow = ptr->ovf_info.force_software; 
-        return(PAPI_OK);
-      }
    case PAPI_DEBUG: 
       {
         papi_return(PAPI_set_debug(ptr->debug.level));
@@ -1076,11 +1065,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
       break;
-   case PAPI_FORCE_SW_OVERFLOW:
-      {
-        ptr->ovf_info.force_software = _papi_hwi_system_info.force_sw_overflow;
-        return(PAPI_OK);
-      }
    case PAPI_PRELOAD:
      memcpy(&ptr->preload,&_papi_hwi_system_info.preload_info,sizeof(PAPI_preload_info_t));
       break;
@@ -1137,6 +1121,21 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
       return (_papi_hwi_get_domain(&ptr->domain));
+   case PAPI_SUBSTRATE_SUPPORT:
+      if (ptr == NULL)
+         papi_return(PAPI_EINVAL);
+      ptr->sub_info.supports_program = _papi_hwi_system_info.supports_program;
+      ptr->sub_info.supports_write = _papi_hwi_system_info.supports_write;
+      ptr->sub_info.supports_hw_overflow = _papi_hwi_system_info.supports_hw_overflow;
+      ptr->sub_info.supports_hw_profile = _papi_hwi_system_info.supports_hw_profile;
+      ptr->sub_info.supports_multiple_threads = _papi_hwi_system_info.supports_multiple_threads;
+      ptr->sub_info.supports_64bit_counters = _papi_hwi_system_info.supports_64bit_counters;
+      ptr->sub_info.supports_inheritance = _papi_hwi_system_info.supports_inheritance;
+      ptr->sub_info.supports_attach = _papi_hwi_system_info.supports_attach;
+      ptr->sub_info.supports_real_usec = _papi_hwi_system_info.supports_real_usec;
+      ptr->sub_info.supports_virt_usec = _papi_hwi_system_info.supports_virt_usec;
+      ptr->sub_info.supports_virt_cyc = _papi_hwi_system_info.supports_virt_cyc;
+      return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
    default:
@@ -1274,7 +1273,8 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    /* We do not support derived events in overflow */
    /* Unless it's DERIVED_CMPD in which no calculations are done */
-   if ((ESI->EventInfoArray[index].derived) && 
+   if ( !(flags&PAPI_OVERFLOW_FORCE_SW)&&
+       (ESI->EventInfoArray[index].derived) && 
        (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
 
@@ -1308,6 +1308,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       ESI->overflow.threshold[i] = 0;
       ESI->overflow.EventIndex[i] = 0;
       ESI->overflow.EventCode[i] = 0;
+      ESI->overflow.flags = 0;
 
       ESI->overflow.event_counter--;
    } else {
@@ -1317,24 +1318,27 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       ESI->overflow.threshold[event_counter - 1] = threshold;
       ESI->overflow.EventIndex[event_counter - 1] = index;
       ESI->overflow.EventCode[event_counter - 1] = EventCode;
+      ESI->overflow.flags = flags;
    }
-   ESI->overflow.flags = flags;
    ESI->overflow.handler = handler;
    ESI->overflow.count = 0;
 
    /* Set up the option structure for the low level */
 
    if (_papi_hwi_system_info.supports_hw_overflow && 
-       !_papi_hwi_system_info.force_sw_overflow) {
+       !(ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)) {
+      ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
       retval = _papi_hwd_set_overflow(ESI, index, threshold);
-      if ( !_papi_hwi_system_info.using_hw_overflow )
+      if ( !(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) )
          ESI->overflow.timer_ms = PAPI_ITIMER_MS;
       else if (retval < PAPI_OK)
          papi_return(retval);
-   } else
+   } else{
       ESI->overflow.timer_ms = PAPI_ITIMER_MS;
+      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
+   }
 
-   APIDBG("Overflow using: %s\n", (_papi_hwi_system_info.using_hw_overflow?"[Hardware]":"[Software]"));
+   APIDBG("Overflow using: %s\n", (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
    /* Toggle the overflow flag */
    if ((ESI->overflow.event_counter == 1 && threshold > 0) ||
        (ESI->overflow.event_counter == 0 && threshold == 0))

@@ -558,7 +558,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *i)
 
    ctx.si = si;
    ctx.ucontext = (hwd_ucontext_t *) i;
-   _papi_hwi_dispatch_overflow_signal(&ctx, _papi_hwi_system_info.supports_hw_overflow, 0, 0, &t);
+   _papi_hwi_dispatch_overflow_signal(&ctx, NULL, 0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)

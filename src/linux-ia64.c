@@ -286,7 +286,6 @@ inline static int mdi_init()
   
   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.supports_hw_overflow = 1;
-  _papi_hwi_system_info.using_hw_overflow = 1;
   _papi_hwi_system_info.supports_hw_profile = 0;
   _papi_hwi_system_info.supports_64bit_counters = 1;
   _papi_hwi_system_info.supports_inheritance = 1;
@@ -937,7 +936,7 @@ static int ia64_process_profile_entry(void *papiContext)
 
 /* This function only used when hardware overflows ARE working */
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp)
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
  {
    return;
  }
@@ -974,8 +973,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       PAPIERROR("received spurious SIGPROF, si_code = %d", info->sy_code);
       return;
    }
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-              _papi_hwi_system_info.supports_hw_overflow,
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
                      info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &master);
 
    if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
@@ -1022,8 +1020,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-          _papi_hwi_system_info.supports_hw_overflow, 
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
           msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &master);
  
   if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
