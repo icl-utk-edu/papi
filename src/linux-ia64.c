@@ -1981,17 +1981,12 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   else
     {
       struct sigaction act;
-      void *tmp;
-
-      tmp = (void *)signal(SIGPROF, SIG_IGN);
-      if ((tmp != (void *)SIG_DFL) && (tmp != (void *)ia64_dispatch_sigprof))
-	return(PAPI_EMISC);
 
       /* Set up the signal handler */
 
       memset(&act,0x0,sizeof(struct sigaction));
       act.sa_handler = (sig_t)ia64_dispatch_sigprof;
-      act.sa_flags = SA_SIGINFO;
+      act.sa_flags = SA_RESTART|SA_SIGINFO;
       if (sigaction(SIGPROF, &act, NULL) == -1)
 	return(PAPI_ESYS);
 
