@@ -107,27 +107,23 @@ SOURCE=..\PAPI_flops.c
 # PROP Default_Filter ".m"
 # Begin Source File
 
-SOURCE=..\Contents.m
-# End Source File
-# Begin Source File
-
 SOURCE=..\flops.m
 # End Source File
 # Begin Source File
 
-SOURCE=.\InnerProduct.m
+SOURCE=.\PAPIInnerProduct.m
 # End Source File
 # Begin Source File
 
-SOURCE=.\MatrixMatrix.m
+SOURCE=.\PAPIMatrixMatrix.m
 # End Source File
 # Begin Source File
 
-SOURCE=.\MatrixVector.m
+SOURCE=.\PAPIMatrixVector.m
 # End Source File
 # Begin Source File
 
-SOURCE=.\trythis.m
+SOURCE=.\PAPISampler.m
 # End Source File
 # End Group
 # Begin Source File
