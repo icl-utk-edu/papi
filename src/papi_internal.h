@@ -216,7 +216,7 @@ typedef struct _threadlist {
 #ifdef PTHREADS
    pthread_t thr;
 #else
-   pid_t pid;
+   unsigned long int tid;
 #endif
    /* Total cycles for this thread */
    long_long total_c;
@@ -262,8 +262,8 @@ typedef MPX_EventSet *EventSetMultiplexInfo_t;
 
 
 typedef struct _ThreadInfo {
-   unsigned pid;
-   unsigned tid;
+   pid_t pid;
+   unsigned long int tid;
    hwd_context_t context;
    void *event_set_overflowing;
    void *event_set_profiling;

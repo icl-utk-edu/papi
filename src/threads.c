@@ -50,12 +50,12 @@ void _papi_hwi_shutdown_the_thread_list(void)
    tmp = head->next;
    while (tmp != head) {
       nxt = tmp->next;
-      THRDBG("%llu:%s:%d:0x%lx:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+      THRDBG("%llu:%s:%d:0x%lx:Shutting down master thread %lx at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
       _papi_hwd_shutdown(&tmp->master->context);
       tmp = nxt;
    }
    if (tmp) {
-      THRDBG("%lld:%s:%d:0x%lx:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+      THRDBG("%lld:%s:%d:0x%lx:Shutting down master thread %lx at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
       _papi_hwd_shutdown(&tmp->master->context);
    }
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -80,13 +80,13 @@ void _papi_hwi_cleanup_thread_list(void)
    tmp = head->next;
    while (tmp != head) {
       nxt = tmp->next;
-      THRDBG("%lld:%s:%d:0x%lx:Freeing master thread %d at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp); 
+      THRDBG("%lld:%s:%d:0x%lx:Freeing master thread 0x%lx at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp); 
       THRDBG( "%p->%p: %p->%p: %p->%p", prev, prev->next, tmp, tmp->next, nxt, nxt->next);
       free(tmp);
       prev->next = nxt;
       tmp = nxt;
    }
-   THRDBG( "%lld:%s:%d:0x%lx:Freeing master thread %d at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+   THRDBG( "%lld:%s:%d:0x%lx:Freeing master thread 0x%lx at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
    free(tmp);
    head = NULL;
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -136,7 +136,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
       _papi_hwd_lock(PAPI_INTERNAL_LOCK); /* KSL */
       tmp = head;
       while (tmp != NULL) {
-         THRDBG("%lld:%s:%d:0x%lx:Examining master at %p,tid 0x%x.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
+         THRDBG("%lld:%s:%d:0x%lx:Examining master at %p,tid 0x%lx.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
          if (tmp->master->tid == id_to_find) {
             head = tmp;
 	    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);

@@ -307,7 +307,7 @@ static MasterEvent *get_my_threads_master_event_list(void)
    tid = _papi_hwi_thread_id_fn();
 
    while (t) {
-      if (t->pid == tid)
+      if (t->tid == tid)
          return (t->head);
       t = t->next;
    }
@@ -354,12 +354,12 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 #ifdef MPX_DEBUG
          fprintf(stderr, "New thread %lx at %p\n", _papi_hwi_thread_id_fn(), t);
 #endif
-         t->pid = _papi_hwi_thread_id_fn();
+         t->tid = _papi_hwi_thread_id_fn();
       } else {
 #ifdef MPX_DEBUG
          fprintf(stderr, "New process %x at %p\n", getpid(), t);
 #endif
-         t->pid = getpid();
+         t->tid = getpid();
       }
 
       /* Fill in the fields */
@@ -369,7 +369,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
       t->next = tlist;
       tlist = t;
 #ifdef MPX_DEBUG
-      fprintf(stderr, "New head is at %p(%lu).\n", tlist, (long unsigned) tlist->pid);
+      fprintf(stderr, "New head is at %p(%lu).\n", tlist, (long unsigned) tlist->tid);
 #endif
       alloced_thread = 1;
    } else if (_papi_hwi_thread_id_fn) {
@@ -380,9 +380,9 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
       unsigned long tid = _papi_hwi_thread_id_fn();
 
       while (t) {
-         if (t->pid == tid) {
+         if (t->tid == tid) {
 #ifdef MPX_DEBUG
-            fprintf(stderr, "Found thread %x\n", t->pid);
+            fprintf(stderr, "Found thread %x\n", t->tid);
 #endif
             break;
          }
@@ -572,8 +572,8 @@ static void mpx_handler(int signal)
          retval = PAPI_stop(cur_event->papi_event, counts);
          assert(retval == PAPI_OK);
 #ifdef MPX_DEBUG_HANDLER
-         fprintf(stderr, "retval=%d, cur_event=%p, I'm pid=%x\n",
-                 retval, cur_event, me->pid);
+         fprintf(stderr, "retval=%d, cur_event=%p, I'm tid=%lx\n",
+                 retval, cur_event, me->tid);
          fprintf(stderr, "counts[0] = %lld counts[1] = %lld\n", counts[0], counts[1]);
 #endif
 
@@ -606,16 +606,16 @@ static void mpx_handler(int signal)
                }
             }
          } else {
-            fprintf(stderr, "%x retval = %d, skipping\n", me->pid, retval);
+            fprintf(stderr, "%lx retval = %d, skipping\n", me->tid, retval);
             fprintf(stderr,
-                    "%x value = %lld cycles = %lld\n\n",
-                    me->pid, cur_event->count, cur_event->cycles);
+                    "%lx value = %lld cycles = %lld\n\n",
+                    me->tid, cur_event->count, cur_event->cycles);
          }
 
 #ifdef MPX_DEBUG_HANDLER
          fprintf(stderr,
-                 "Pid(%x): value = %lld (%lld) cycles = %lld (%lld) rate = %lf\n\n",
-                 me->pid, cur_event->count, cur_event->count_estimate, cur_event->cycles,
+                 "tid(%lx): value = %lld (%lld) cycles = %lld (%lld) rate = %lf\n\n",
+                 me->tid, cur_event->count, cur_event->count_estimate, cur_event->cycles,
                  total_cycles, cur_event->rate_estimate);
 #endif
          /* Start running the next event; look for the
@@ -653,14 +653,14 @@ static void mpx_handler(int signal)
 #endif
       for (t = tlist; t != NULL; t = t->next) {
 #ifdef MPX_DEBUG_TIMER
-         fprintf(stderr, "%x forwarding signal to thread %x\n",
-                 (*_papi_hwi_thread_id_fn) (), t->pid);
+         fprintf(stderr, "%lx forwarding signal to thread %lx\n",
+                 (*_papi_hwi_thread_id_fn) (), t->tid);
 #endif
-         retval = (*_papi_hwi_thread_kill_fn) (t->pid, MPX_SIGNAL);
+         retval = (*_papi_hwi_thread_kill_fn) (t->tid, MPX_SIGNAL);
          if (retval != 0) {
 #ifdef MPX_DEBUG_SIGNAL
-            fprintf(stderr, "%x forwarding signal to thread %x returned %d\n",
-                    (*_papi_hwi_thread_id_fn) (), t->pid, retval);
+            fprintf(stderr, "%lx forwarding signal to thread %lx returned %d\n",
+                    (*_papi_hwi_thread_id_fn) (), t->tid, retval);
 #endif
             perror("_papi_hwi_thread_kill_fn");
          }
@@ -684,7 +684,7 @@ static void mpx_handler(int signal)
       retval = setitimer(MPX_ITIMER, &itime, NULL);
       assert(retval == 0);
 #ifdef MPX_DEBUG_TIMER
-      fprintf(stderr, "timer restarted by %x\n", me->pid);
+      fprintf(stderr, "timer restarted by %lx\n", me->tid);
 #endif
    }
 #endif
@@ -1107,7 +1107,7 @@ void MPX_shutdown(void)
 #endif
          nextthr = t->next;
 #ifdef MPX_DEBUG
-         fprintf(stderr, "%s:%d:: Freeing thread %x\n", __FILE__, __LINE__, t->pid);
+         fprintf(stderr, "%s:%d:: Freeing thread %lx\n", __FILE__, __LINE__, t->tid);
 #endif
          free(t);
       }
