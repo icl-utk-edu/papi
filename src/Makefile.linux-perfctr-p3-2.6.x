@@ -1,8 +1,8 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR = ./perfctr-2.6.x
+PERFCTR ?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -O3 -g -Wall -mpentiumpro
-TOPTFLAGS= -g -Wall -mpentiumpro -DNO_SIMULT_EVENTSETS
+OPTFLAGS= -O3 -g -Wall
+TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS
 #
 # GNU G77 section
 #
@@ -40,12 +40,12 @@ LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
 CC	= gcc
-CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
+CC_SHR  = $(CC) -shared -fPIC -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG -DHAS_NATIVE_MAP
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DPERFCTR25 -D__x86_64__ -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c p3_events.c
-MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p3_events.o
+MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o event_set.o event_set_amd.o
 MISCHDRS= perfctr-p3.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
@@ -57,13 +57,16 @@ linux.o: linux.c
 p3_events.o: p3_events.c
 	$(CC) $(CFLAGS) -c p3_events.c -o $@
 
-$(PERFCTR)/usr.lib/libperfctr.o:
-	$(MAKE) -C $(PERFCTR)/usr.lib
+marshal.o global.o misc.o virtual.o event_set.o event_set_amd.o: $(PERFCTR)/usr.lib/libperfctr.a
+	ar x $(PERFCTR)/usr.lib/libperfctr.a
+
+$(PERFCTR)/usr.lib/libperfctr.a:
+	$(MAKE) -C $(PERFCTR)
 
 native_clean:
 	$(MAKE) -C $(PERFCTR) clean
 
 native_install:
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
-	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(DESTDIR)/include
+	-cp -p $(PERFCTR)/usr.lib/perfctr_event_codes.h $(DESTDIR)/include
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include

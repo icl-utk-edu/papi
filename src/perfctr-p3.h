@@ -24,9 +24,11 @@
 #include <errno.h>
 #include <sys/times.h>
 #include <sys/time.h>
+#ifndef __x86_64__
 #include <asm/system.h>
 #include <asm/param.h>
 #include <asm/bitops.h>
+#endif
 #include <linux/unistd.h>
 
 #ifndef CONFIG_SMP
@@ -98,13 +100,13 @@ typedef struct {
 } _papi_hwd_context_t;
 
 typedef siginfo_t hwd_siginfo_t;
-typedef struct sigcontext hwd_ucontext_t;
+typedef ucontext_t hwd_ucontext_t;
 
 /* Overflow macros */
 #ifdef __x86_64__
 #define GET_OVERFLOW_ADDRESS(ctx) (void *)((_papi_hwd_context_t *)ctx)->ucontext->rip
 #else
-#define GET_OVERFLOW_ADDRESS(ctx) (void *)((_papi_hwd_context_t *)ctx)->ucontext->eip
+#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
 #define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
 #define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) _papi_hwi_event_index_map[bit]

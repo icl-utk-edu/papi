@@ -126,8 +126,17 @@ inline static int setup_p3_presets(int cputype) {
 /* Low level functions, should not handle errors, just return codes. */
 static inline u_long_long get_cycles(void) {
    u_long_long ret;
-   __asm__ __volatile__("rdtsc":"=A"(ret)
-                        : /* no inputs */ );
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
+   } while(0);
+#else
+   __asm__ __volatile__("rdtsc"
+                       : "=A" (ret)
+                       : /* no inputs */);
+#endif
    return ret;
 }
 
@@ -549,13 +558,31 @@ int _papi_hwd_shutdown(hwd_context_t * ctx) {
    return(PAPI_OK);
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info) {
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
 
    ctx.si = si;
-   ctx.ucontext = info;
+   ctx.ucontext = (ucontext_t *)context;
+
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.supports_hw_overflow, 0, 0);
+                                     _papi_hwi_system_info.supports_hw_overflow,
+                                      si->si_pmc_ovf_mask, 0);
+
+   /* We are done, resume interrupting counters */
+   if (_papi_hwi_system_info.supports_hw_overflow) {
+      ThreadInfo_t *master;
+
+      master = _papi_hwi_lookup_in_thread_list();
+      if (master == NULL) {
+         fprintf(stderr, "%s():%d: master event lookup failure! abort()\n",
+                 __FUNCTION__, __LINE__);
+         abort();
+      }
+      if (vperfctr_iresume(master->context.perfctr) < 0) {
+         fprintf(stderr, "%s():%d: vperfctr_iresume %s\n",
+                 __FUNCTION__, __LINE__, strerror(errno));
+      }
+   }
 }
 
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
@@ -569,17 +596,17 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
    unsigned int ui;
    int si, i, j;
 
-   for (i = 0; i < ESI->NativeCount; i++) {
-      if (ESI->NativeInfoArray[i].ni_position == cntr1)
+   for(i = 0; i < ESI->NativeCount; i++) {
+      if(ESI->NativeInfoArray[i].ni_position == cntr1)
          ESI->NativeInfoArray[i].ni_position = cntr2;
-      if (ESI->NativeInfoArray[i].ni_position == cntr2)
+      else if(ESI->NativeInfoArray[i].ni_position == cntr2)
          ESI->NativeInfoArray[i].ni_position = cntr1;
    }
-   for (i = 0; i < ESI->NumberOfEvents; i++) {
-      for (j = 0; ESI->EventInfoArray[i].pos[j] >= 0; j++) {
-         if (ESI->EventInfoArray[i].pos[j] == cntr1)
+   for(i = 0; i < ESI->NumberOfEvents; i++) {
+      for(j = 0; ESI->EventInfoArray[i].pos[j] >= 0; j++) {
+         if(ESI->EventInfoArray[i].pos[j] == cntr1)
             ESI->EventInfoArray[i].pos[j] = cntr2;
-         if (ESI->EventInfoArray[i].pos[j] == cntr2)
+         else if(ESI->EventInfoArray[i].pos[j] == cntr2)
             ESI->EventInfoArray[i].pos[j] = cntr1;
       }
    }
