@@ -152,7 +152,77 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
    f = fopen("/proc/pal/cpu0/vm_info","r");
    /* No errors on fopen as I am not sure this is always on the systems */
    if ( f != NULL ){
-	
+     ctype = 0;
+     clevel = 0;
+     while (!feof(f)) {
+	  fline(f, buf);
+	  if ( buf[0] == '\0' ) break;
+	  if (  !strncmp(buf, "Data Translation", 16) ) {
+  	     ctype = C_DATA;
+	     clevel = get_number( buf );
+	  }
+	  else if ( !strncmp(buf, "Instruction Translation", 23) ){
+   	     ctype = C_INSTRUCTION;
+	     clevel = get_number( buf );
+	  }
+	  else {
+	     if ( (clevel == 0 || clevel > 2) && ctype != 0)
+	       error_return(PAPI_EBUG, "TLB type could not be recognized, send /proc/pal/cpu0/vm_info");
+	     if ( !strncmp(buf, "Number of entries", 17) ){
+		  num = get_number( buf );
+		  switch(clevel){
+		    case 1:
+		      if ( ctype == C_INSTRUCTION ){
+       			  mem_info->L1_tlb_size += num;
+       			  mem_info->L1_itlb_size = num;
+		      }
+		      else if ( ctype == C_DATA ){
+       			  mem_info->L1_tlb_size += num;
+       			  mem_info->L1_dtlb_size = num;
+		      }
+		      break;
+		    case 2:
+		      if ( ctype == C_INSTRUCTION ){
+       			  mem_info->L2_tlb_size += num;
+       			  mem_info->L2_itlb_size = num;
+		      }
+		      else if ( ctype == C_DATA ){
+       			  mem_info->L2_tlb_size += num;
+       			  mem_info->L2_dtlb_size = num;
+		      }
+		      break;
+		    default:
+		      break;
+		  }
+	     }
+  	     else if ( !strncmp(buf, "Associativity", 13) ) {
+	   	  num = get_number( buf );
+		  switch(clevel){
+		    case 1:
+		      if ( ctype == C_INSTRUCTION ){
+       			  mem_info->L1_itlb_assoc = num;
+		      }
+		      else if ( ctype == C_DATA ){
+       			  mem_info->L1_dtlb_assoc = num;
+		      }
+		      break;
+		    case 2:
+		      if ( ctype == C_INSTRUCTION ){
+       			  mem_info->L2_itlb_assoc = num;
+		      }
+		      else if ( ctype == C_DATA ){
+       			  mem_info->L2_dtlb_assoc = num;
+		      }
+		      break;
+		    default:
+		      break;
+		  }
+	     }
+	     else
+	       continue;
+	  }
+     } 
+
      fclose(f);
    }
    
