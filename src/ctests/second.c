@@ -51,7 +51,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-#if defined(sgi) && defined(host_mips)
+#if ((defined(sgi) && defined(host_mips)) || defined(_CRAYT3E))
    mask1=mask2=mask3=0x5;
    if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
