@@ -7,8 +7,8 @@
 *          Kevin London
 *	   london@cs.utk.edu
 *
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    Per Eckman
+*          pek@pdc.kth.se
 */  
 
 #include <stdio.h>
@@ -24,10 +24,6 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
-#include <asm/bitops.h>
-/* Include -D_ASM_IA64_PAL_H instead
-#include <asm/system.h>
-*/
 
 #ifdef PFM06A
 #include "mysiginfo.h"

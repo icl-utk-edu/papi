@@ -92,7 +92,7 @@ static preset_search_t preset_search_map[] = {
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH",0,0,0}},
   {PAPI_MEM_SCY,0,{"MEMORY_CYCLE",0,0,0}},
   {PAPI_STL_ICY,0,{"UNSTALLED_BACKEND_CYCLE",0,0,0}},
-  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}},
+/*  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, Broken */
   {PAPI_BR_PRC,0,{"BRANCH_PREDICTOR_ALL_ALL_PREDICTIONS",0,0,0}}, 
   {PAPI_BR_MSP,DERIVED_ADD,{"BRANCH_PREDICTOR_ALL_WRONG_PATH","BRANCH_PREDICTOR_ALL_WRONG_TARGET",0,0}},
   {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
@@ -152,7 +152,9 @@ static preset_search_t preset_search_map[] = {
   {PAPI_L3_TCW,0,{"L3_WRITES_ALL_ALL",0,0,0}},
   {PAPI_TLB_DM,0,{"L2DTLB_MISSES",0,0,0}},
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH_L2ITLB",0,0,0}},
-  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}},
+  {PAPI_BR_INS,0,{"BR_MISPRED_DETAIL_ALL_ALL_PRED",0,0,0}},
+/*  {PAPI_BR_INS,0,{"1000000037FFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}}, */
+/*  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, Broken */
   {PAPI_BR_PRC,0,{"BR_MISPRED_DETAIL_ALL_CORRECT_PRED",0,0,0}},
   {PAPI_BR_MSP,DERIVED_ADD,{"BR_MISPRED_DETAIL_ALL_WRONG_PATH","BR_MISPRED_DETAIL_ALL_WRONG_TARGET",0,0}},
   {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
@@ -1982,29 +1984,43 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static volatile unsigned int lock = 0;
-static volatile unsigned int *lock_addr = &lock;
-
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+volatile uint32_t lock;
+ 
 void _papi_hwd_lock_init(void)
 {
+    lock = MUTEX_OPEN;
 }
-
+ 
 void _papi_hwd_lock(void)
 {
-  while (1)
-    {
-      if (test_and_set_bit(0,lock_addr))
-	{
-	  __asm__ __volatile__ ("mf" ::: "memory");
-	  return;
-	}
-    }
+    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+     * else val = MUTEX_CLOSED */
+#ifdef __INTEL_COMPILER
+    while(_InterlockedCompareExchange_acq(&lock, MUTEX_CLOSED, MUTEX_OPEN) 
+	    != (uint64_t)MUTEX_OPEN)
+      ;
+#else /* GCC */
+    uint64_t res = 0;
+    do {
+      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));
+      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock), "r"(MUTEX_CLOSED) : "memory");
+    } while (res != (uint64_t)MUTEX_OPEN);
+#endif /* __INTEL_COMPILER */
+    return;
 }
-
+ 
 void _papi_hwd_unlock(void)
 {
-  clear_bit(0, lock_addr);
-  __asm__ __volatile__ ("mf" ::: "memory");
+#ifdef __INTEL_COMPILER
+    _InterlockedExchange(&lock, (unsigned __int64)MUTEX_OPEN); 
+#else /* GCC */
+    uint64_t res = 0;
+ 
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock), "r"(MUTEX_OPEN) : "memory"); 
+#endif /* __INTEL_COMPILER */ 
 }
 
 /* Machine info structure. -1 is unused. */
