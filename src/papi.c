@@ -1798,7 +1798,7 @@ again:
 	      if (ESI->master == master)
 		{
 		  PAPI_stop(i,NULL);
-		  PAPI_cleanup_eventset(i);
+		  PAPI_cleanup_eventset(&i);
 		}
 	      else
 		j++;
