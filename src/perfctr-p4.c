@@ -953,6 +953,9 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_DOMAIN:
    case PAPI_DEFDOM:
       return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+   case PAPI_GRANUL:
+   case PAPI_DEFGRN:
+      return(PAPI_ESBSTR);
    default:
       return (PAPI_EINVAL);
    }

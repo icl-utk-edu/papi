@@ -358,7 +358,6 @@ int _papi_hwi_get_domain(PAPI_domain_option_t * opt)
    return (PAPI_OK);
 }
 
-#if 0
 int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt)
 {
    EventSetInfo_t *ESI;
@@ -370,8 +369,6 @@ int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt)
    opt->granularity = ESI->granularity.granularity;
    papi_return(PAPI_OK);
 }
-#endif
-
 
 /* This function returns the index of the the next free slot
    in the EventInfoArray. If EventCode is already in the list,

@@ -1002,7 +1002,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          return (retval);
       }
-#if 0
    case PAPI_GRANUL:
       {
          int grn = ptr->granularity.granularity;
@@ -1023,6 +1022,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          internal.granularity.ESI->granularity.granularity = grn;
          return (retval);
       }
+#if 0
    case PAPI_INHERIT:
       {
          EventSetInfo_t *tmp = _papi_hwi_lookup_in_thread_list();
@@ -1108,11 +1108,11 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
 
          return (tmp->inherit.inherit);
       }
+#endif
    case PAPI_GRANUL:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
       return (_papi_hwi_get_granularity(&ptr->granularity));
-#endif
    case PAPI_SHLIBINFO:
       {
          int retval;
