@@ -791,6 +791,7 @@ int _papi_hwd_init_global(void)
     }
 #endif
 
+#ifdef PFM20 /* Version 1.1 doesn't have this */
   if (pfm_get_version(&version) != PFMLIB_SUCCESS)
     return(PAPI_ESBSTR);
 
@@ -799,6 +800,8 @@ int _papi_hwd_init_global(void)
       fprintf(stderr,"Version mismatch of libpfm: compiled %x vs. installed %x\n",PFM_VERSION_MAJOR(PFMLIB_VERSION),PFM_VERSION_MAJOR(version));
       return(PAPI_ESBSTR);
     }
+#endif
+
   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
   if (papi_debug)
