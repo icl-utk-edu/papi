@@ -40,9 +40,10 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE F90 /compile_only /nologo /warn:nofileopt
-# ADD F90 /compile_only /iface:nomixed_str_len_arg /iface:cref /include:"c:\papi\src" /include:"..\.." /nologo /warn:nofileopt /fpp:"/m"
+# ADD F90 /compile_only /iface:nomixed_str_len_arg /iface:cref /include:"c:\papi\src" /include:"..\.." /nologo /optimize:4 /warn:nofileopt /fpp:"/m"
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -53,6 +54,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# SUBTRACT LINK32 /incremental:yes
 
 !ELSEIF  "$(CFG)" == "fzero - Win32 Debug"
 
@@ -68,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE F90 /check:bounds /compile_only /debug:full /nologo /traceback /warn:argument_checking /warn:nofileopt
-# ADD F90 /check:bounds /compile_only /debug:full /iface:nomixed_str_len_arg /iface:cref /include:"..\.." /names:uppercase /nologo /traceback /warn:argument_checking /warn:nofileopt /fpp:"/m"
+# ADD F90 /check:bounds /compile_only /debug:full /iface:nomixed_str_len_arg /iface:cref /include:"..\.." /nologo /traceback /warn:argument_checking /warn:nofileopt /fpp:"/m"
 # SUBTRACT F90 /assume:underscore
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 # ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
@@ -79,7 +81,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"libcd.lib" /pdbtype:sept
+# SUBTRACT LINK32 /incremental:no
 
 !ENDIF 
 
@@ -92,6 +95,25 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp;f90;for;f;fpp"
 # Begin Source File
 
+SOURCE=..\..\ftests\cpause.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\ftests\ftests_util.F
+
+!IF  "$(CFG)" == "fzero - Win32 Release"
+
+# ADD F90 /optimize:0
+
+!ELSEIF  "$(CFG)" == "fzero - Win32 Debug"
+
+# ADD F90 /fpp
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\ftests\zero.F
 
 !IF  "$(CFG)" == "fzero - Win32 Release"
@@ -100,19 +122,6 @@ SOURCE=..\..\ftests\zero.F
 
 # ADD F90 /fpp
 # SUBTRACT F90 /nodefine
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\ftests\ftests_util.F
-
-!IF  "$(CFG)" == "fzero - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "fzero - Win32 Debug"
-
-# ADD F90 /fpp
 
 !ENDIF 
 
