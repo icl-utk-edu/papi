@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_read 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_read 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_read, PAPI_accum \- read hardware events, accumulate and reset hardware
@@ -24,19 +24,13 @@ events from an event set
 copies the counters of the indicated event set into 
 the array
 .IR values .
-The counters are left counting after the read.
+The counters continue counting after the read.
 .LP
 .B PAPI_accum()
 adds the counters of the indicated event set into the array
 .IR values .
-The counters are zeroed and left counting after the operation.
+The counters are zeroed and continue counting after the operation.
 .B NOTE:
-Unexpected values will result from using
-.B PAPI_accum()
-on rate-based derived events, such as 
-.B PAPI_FLOPS 
-and 
-.B PAPI_IPS .
 
 .SH ARGUMENTS
 .I EventSet
@@ -100,15 +94,14 @@ The event set specified does not exist.
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_add_event "(3), " PAPI_reset "(3), "
-.BR PAPI_set_opt "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_set_opt "(3), " PAPI_remove_event "(3), " 
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi

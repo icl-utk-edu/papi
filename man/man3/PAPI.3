@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI \- Performance Application Programming Interface
@@ -19,27 +19,33 @@ An extensive list of predefined events is implemented on all systems where
 they can be supported. For a list of these events, see: 
 .BR PAPI_presets(3)
 
+.SH PAPI Native Events 
+PAPI also supports interface functions for discovering the native events on
+a given platform. For more information on native events, see: 
+.BR PAPI_native(3)
+
 .SH High Level Functions 
-A simple interface for single thread applications.
+A simple interface for instrumenting end-user applications.
 Fully supported on both C and Fortran.
 See individual functions for details on usage.
 .LP
 .nf
 .BR PAPI_num_counters(3) " - get the number of hardware counters available on the system"
-.BR PAPI_flops(3) " - simplified call to get Mflops/s, real and processor time"
+.BR PAPI_flips(3) " - simplified call to get Mflips/s (floating point instruction rate), real and processor time"
+.BR PAPI_flops(3) " - simplified call to get Mflops/s (floating point operation rate), real and processor time"
+.BR PAPI_ipc(3) " - gets instructions per cycle, real and processor time"
 .BR PAPI_accum_counters(3) " - add current counts to array and reset counters"
 .BR PAPI_read_counters(3) " - copy current counts to array and reset counters"
 .BR PAPI_start_counters(3) " - start counting hardware events"
 .BR PAPI_stop_counters(3) " - stop counters and return current counts"
 .fi
 
-Note that when using the high-level interface the use of 
-.BR PAPI_library_init (3)
-to initialize the library is optional. If, however, explicit initialization
-is not made, either of
-.BR PAPI_flops "(3) or " PAPI_num_counters (3)
+Note that the high-level interface is self-initializing.
+You can mix high and low level calls, but you
 .I must
-be called before any other call to a PAPI function.
+call either
+.BR PAPI_library_init (3) or a high level routine before 
+calling a low level routine.
 
 
 .SH Low Level Functions 
@@ -56,13 +62,13 @@ See individual functions for details on usage and support.
 .BR PAPI_accum(3) " - accumulate and reset hardware events from an event set"
 .BR PAPI_add_event(3) " - add single PAPI preset or native hardware event to an event set"
 .BR PAPI_add_events(3) " - add array of PAPI preset or native hardware events to an event set"
-.BR PAPI_add_pevent(3) " - reserved for future use"
 .BR PAPI_cleanup_eventset(3) " - remove all PAPI events from an event set"
 .BR PAPI_create_eventset(3) " - create a new empty PAPI event set"
-.BR PAPI_describe_event(3) " - return description of event given the name or event code"
 .BR PAPI_destroy_eventset(3) " - deallocates memory associated with an empty PAPI event set"
-.BR PAPI_event_code_to_name(3) " - translate an integer PAPI event code into an ASCII PAPI preset name"
-.BR PAPI_event_name_to_code(3) " - translate an ASCII PAPI preset name into an integer PAPI event code"
+.BR PAPI_enum_event(3) " - return the event code for the next available preset or natvie event"
+.BR PAPI_event_code_to_name(3) " - translate an integer PAPI event code into an ASCII PAPI preset or native name"
+.BR PAPI_event_name_to_code(3) " - translate an ASCII PAPI preset or native name into an integer PAPI event code"
+.BR PAPI_get_event_info(3) " - get the name and descriptions for a given preset or native event code"
 .BR PAPI_get_executable_info(3) " - get the executable’s address space information"
 .BR PAPI_get_hardware_info(3) " - get information about the system hardware"
 .BR PAPI_get_opt(3) " - query the option settings of the PAPI library or a specific event set"
@@ -70,36 +76,31 @@ See individual functions for details on usage and support.
 .BR PAPIF_get_domain(3) " - get the domain of the specified eventset. Fortran only."
 .BR PAPIF_get_granularity(3) " - get the granularity of the specified eventset. Fortran only."
 .BR PAPIF_get_preload(3) " - get the 'LD_PRELOAD' environment equivalent. Fortran only."
-.BR PAPI_get_overflow_address(3) " - return the address at which overflow occurred for profiling"
 .BR PAPI_get_real_cyc(3) " - return the total number of cycles since some arbitrary starting point"
 .BR PAPI_get_real_usec(3) " - return the total number of microseconds since some arbitrary starting point"
+.BR PAPI_get_shared_lib_info(3) " - get information about the system hardware"
+.BR PAPI_get_thr_specific(3) " - return a pointer to a thread specific stored data structure"
 .BR PAPI_get_virt_cyc(3) " - return the process cycles since some arbitrary starting point"
 .BR PAPI_get_virt_usec(3) " - return the process microseconds since some arbitrary starting point"
-.BR PAPI_label_event(3) " - return a short label for an event given the event code"
+.BR PAPI_is_initialized(3) " - return the initialized state of the PAPI library"
 .BR PAPI_library_init(3) " - initialize the PAPI library"
 .BR PAPI_list_events(3) " - list the events defined in an event set"
-.BR PAPI_lock(3) " - lock the PAPI internal mutex variable"
-.BR PAPI_multiplex_init(3) " - initialize multiplex support in the PAPI library"
-.BR PAPI_num_hwctrs(3) " - return the number of physical hardware counters available"
-.BR PAPI_overflow(3) " - set up an event set to begin registering overflows"
-.BR PAPI_perror(3) " - return a copy of the error message corresponding to a specified error code"
+.BR PAPI_lock(3) " - lock one of two PAPI internal user mutex variables"
+.BR PAPI_multiplex_init(3) " - initialize multiplex support in the PAPI library" ror code"
 .BR PAPI_profil(3) " - generate PC histogram data where hardware counter overflow occurs"
-.BR PAPI_query_all_events_verbose(3) " - request detailed information on all PAPI events" 
 .BR PAPI_query_event(3) " - query if a PAPI event exists"
-.BR PAPI_query_event_verbose(3) " - request detailed information on a PAPI event" 
 .BR PAPI_read(3) " - read hardware events from an event set with no reset"
-.BR PAPI_rem_event(3) " - remove a hardware event from a PAPI event set"
-.BR PAPI_rem_events(3) " - remove an array of hardware events from a PAPI event set"
-.BR PAPI_rem_pevent(3) " - reserved for future use"
-.BR PAPI_reset(3) " - reset the hardware event counts in an EventSet"
-.BR PAPI_restore(3) " - Restore the saved state of the PAPI library"
-.BR PAPI_save(3) " - Restore the saved state of the PAPI library"
+.BR PAPI_register_thread(3) " - read hardware events from an event set with no reset"
+.BR PAPI_remove_event(3) " - remove a hardware event from a PAPI event set"
+.BR PAPI_remove_events(3) " - remove an array of hardware events from a PAPI event set"
+.BR PAPI_reset(3) " - reset the hardware event counts in an event set"
 .BR PAPI_set_debug(3) " - set the current debug level for PAPI"
 .BR PAPI_set_domain(3) " - set the default execution domain for new event sets"
 .BR PAPIF_set_event_domain(3) " - set the execution domain for a specific event set. Fortran only."
 .BR PAPI_set_granularity(3) " - set the default granularity for new event sets"
-.BR PAPI_set_opt(3) " - change the option settings of the PAPI library or a specific event set"
 .BR PAPI_set_multiplex(3) " - convert a standard event set to a multiplexed event set"
+.BR PAPI_set_opt(3) " - change the option settings of the PAPI library or a specific event set"
+.BR PAPI_set_thr_specific(3) " - save a pointer as a thread specific stored data structure"
 .BR PAPI_shutdown(3) " - finish using PAPI and free all related resources"
 .BR PAPI_sprofil(3) " - generate PC histogram data where hardware counter overflow occurs"
 .BR PAPI_start(3) " - start counting hardware events in an event set"
@@ -108,17 +109,16 @@ See individual functions for details on usage and support.
 .BR PAPI_strerror(3) " - return a pointer to the error message corresponding to a specified error code"
 .BR PAPI_thread_id(3) " - get the thread identifier of the current thread"
 .BR PAPI_thread_init(3) " - initialize thread support in the PAPI library"
-.BR PAPI_unlock(3) " - unlock the PAPI internal mutex variable"
+.BR PAPI_unlock(3) " - unlock one of two PAPI internal user mutex variables"
 .BR PAPI_write(3) " - write counter values into counters"
 .fi
 
 .SH AUTHORS
-Philip J. Mucci <mucci@cs.utk.edu>
- Kevin London <london@cs.utk.edu>
- Dan Terpstra <terpstra@cs.utk.edu>
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH SEE ALSO
-The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPIF "(3), " PAPI_presets "(3), " PAPI_native "(3)"
+
 
 

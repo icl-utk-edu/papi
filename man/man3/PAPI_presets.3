@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_presets 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_presets 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_presets \- PAPI predefined named events
@@ -11,7 +11,7 @@ PAPI_presets \- PAPI predefined named events
 The PAPI library names a number of predefined events. This set
 is a collection of events typically found in many
 CPUs that provide performance counters. A PAPI preset event name is
-mapped onto one or more of the countable events on each hardware platform.
+mapped onto one or more of the countable native events on each hardware platform.
 On any particular platform, the preset can either be directly available 
 as a single counter, derived using a combination of counters or unavailable.
 .LP
@@ -112,10 +112,6 @@ PAPI_FDV_INS$T{
 Floating point divide instructions 
 T}
 _
-PAPI_FLOPS$T{
-Floating point instructions per second 
-T}
-_
 PAPI_FMA_INS$T{
 FMA instructions completed 
 T}
@@ -130,6 +126,10 @@ T}
 _
 PAPI_FP_INS$T{
 Floating point instructions 
+T}
+_
+PAPI_FP_OPS$T{
+Floating point operations 
 T}
 _
 PAPI_FP_STAL$T{
@@ -165,10 +165,6 @@ T}
 _
 PAPI_INT_INS$T{
 Integer instructions 
-T}
-_
-PAPI_IPS$T{
-Instructions per second 
 T}
 _
 PAPI_TOT_CYC$T{
@@ -466,8 +462,10 @@ T}
 .TE
 .LP
 
-.SH AUTHOR
+.SH AUTHORS
 Nils Smeds <smeds@cs.utk.edu>
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 The exact semantics of an event counter are platform dependent.  PAPI
@@ -478,6 +476,5 @@ necessarily possible to directly compare the counts of a particular
 PAPI event obtained on different hardware platforms.
 
 .SH SEE ALSO
-.BR PAPI "(3), " PAPI_query_event "(3)"
-The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI "(3), " PAPI_native "(3), " PAPI_enum_event "(3), " PAPI_get_event_info "(3), "
+.BR PAPI_event_code_to_name "(3), " PAPI_event_name_to_code "(3)"
