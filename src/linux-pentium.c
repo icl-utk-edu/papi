@@ -8,6 +8,7 @@
 
 /* PAPI stuff */
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <linux/unistd.h>	/* For syscall numbers */
 #include <perf.h>
@@ -539,19 +540,18 @@ int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option)
     }
 }
 
-/* For linux/x86 sample fields */
+/* Machine info structure. -1 is unused. */
 
-/*
-papi_mdi _papi_system_info = { "Curtis Jansens Perf library + GLUE",
-			        1.0,
-			        2, 
-			        "PAPI_CHIP_PENTIUM_II",
-			        "PAPI_VENDOR_INTEL",
-			        450,
+papi_mdi _papi_system_info = { "$Id$",
+			        -1,
+			        -1, 
+			        -1,
+			        -1,
+			        -1,
 			        2,
 			        0,
 			        1,
-			        16, 
-			        68,
-			        sizeof(hwd_control_state)  };
-*/
+			        -1, 
+			        -1,
+			       sizeof(hwd_control_state), 
+			       NULL };
