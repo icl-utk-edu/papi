@@ -29,6 +29,10 @@
 #endif
 #endif
 
+#if defined(_POWER4) || defined(POWER3)
+#define do_l1misses do_l1misses_
+#endif
+
       program tenth
       implicit none
 
