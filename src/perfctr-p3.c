@@ -108,7 +108,7 @@ inline_static int setup_p3_presets(void) {
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
-#ifdef PERFCTR25
+#ifdef PERFCTR26
    case PERFCTR_X86_AMD_K8:
    case PERFCTR_X86_AMD_K8C:
       NATIVE_TABLE_SIZE = opt_size;
@@ -156,7 +156,7 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    case PERFCTR_X86_INTEL_PIII:
    case PERFCTR_X86_INTEL_P4:
       return (PAPI_VENDOR_INTEL);
-#ifdef PERFCTR25
+#ifdef PERFCTR26
    case PERFCTR_X86_AMD_K8:
    case PERFCTR_X86_AMD_K8C:
 #endif
@@ -262,7 +262,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
          ptr->control.cpu_control.pmc_map[i] = i;
       }
       break;
-#ifdef PERFCTR25
+#ifdef PERFCTR26
    case PERFCTR_X86_AMD_K8:
    case PERFCTR_X86_AMD_K8C:
 #endif
