@@ -19,6 +19,9 @@
 
 #include "papi_test.h"
 
+/* value for scale parameter that sets scale to 1 */
+#define FULL_SCALE 65536
+
 /* Internal prototype */
 void prof_init(int argc, char **argv);
 int prof_events(int num_tests);

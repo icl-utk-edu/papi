@@ -40,7 +40,6 @@ int main(int argc, char **argv)
 {
    int num_events, num_tests = 6;
    long length;
-   int mask;
    int retval, retval2;
 
    init_array();
@@ -51,9 +50,9 @@ int main(int argc, char **argv)
    /* Execution latency stall cycles */
    PAPI_event_name_to_code("DATA_EAR_CACHE_LAT4", &PAPI_event);
 #else
-   PAPI_event = PAPI_FP_INS;
-   sprintf(event_name, "papi_fp_ins");
-//   test_fail(__FILE__, __LINE__, "earprofile; event address register", PAPI_ESBSTR);
+//   PAPI_event = PAPI_FP_INS;
+//   sprintf(event_name, "papi_fp_ins");
+   test_fail(__FILE__, __LINE__, "earprofile; event address register", PAPI_ESBSTR);
 #endif
 
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
@@ -76,7 +75,7 @@ int main(int argc, char **argv)
    prof_print_address(start, end,
       "Test earprofile: POSIX compatible event address register profiling.\n");
    prof_print_prof_info();
-   retval = do_profile(length, 65535, THR, PAPI_PROFIL_BUCKET_16);
+   retval = do_profile(length, FULL_SCALE, THR, PAPI_PROFIL_BUCKET_16);
 
    retval2 = PAPI_remove_event(EventSet, PAPI_event);
    if (retval2 == PAPI_OK)

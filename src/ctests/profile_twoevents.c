@@ -38,18 +38,18 @@ int main(int argc, char **argv)
    prof_print_prof_info();
    prof_alloc(2, length);
 
-   blength = prof_size(length, 65535, PAPI_PROFIL_BUCKET_16, &num_buckets);
+   blength = prof_size(length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets);
    do_no_profile();
 
    if (!TESTS_QUIET) {
       printf("Test type   : \tPAPI_PROFIL_POSIX\n");
    }
-   if ((retval = PAPI_profil(profbuf[0], blength, start, 65535,
+   if ((retval = PAPI_profil(profbuf[0], blength, start, FULL_SCALE,
                              EventSet, PAPI_event, THRESHOLD,
                              PAPI_PROFIL_POSIX)) != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }
-   if ((retval = PAPI_profil(profbuf[1], blength, start, 65535,
+   if ((retval = PAPI_profil(profbuf[1], blength, start, FULL_SCALE,
                              EventSet, PAPI_TOT_CYC, THRESHOLD,
                              PAPI_PROFIL_POSIX)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
@@ -66,11 +66,11 @@ int main(int argc, char **argv)
       printf(TAB1, event_name, (values[1])[0]);
       printf(TAB1, "PAPI_TOT_CYC:", (values[1])[1]);
    }
-   if ((retval = PAPI_profil(profbuf[0], blength, start, 65535,
+   if ((retval = PAPI_profil(profbuf[0], blength, start, FULL_SCALE,
                              EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
 
-   if ((retval = PAPI_profil(profbuf[1], blength, start, 65535,
+   if ((retval = PAPI_profil(profbuf[1], blength, start, FULL_SCALE,
                              EventSet, PAPI_TOT_CYC, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
 

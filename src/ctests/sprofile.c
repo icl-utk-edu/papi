@@ -40,7 +40,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
    prof_print_address(start, end,
                "Test case sprofile: POSIX compatible profiling over multiple regions.\n");
-   blength = prof_size(length, 65535, PAPI_PROFIL_BUCKET_16, &num_buckets);
+   blength = prof_size(length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets);
    prof_alloc(3, blength);
 
    /* First half */
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       fprintf(stderr, "do_flops is at %p %p\n", &do_flops, sprof[0].pr_off);
 #endif
-   sprof[0].pr_scale = 65535;
+   sprof[0].pr_scale = FULL_SCALE;
    /* Second half */
    sprof[1].pr_base = buf[1];
    sprof[1].pr_size = blength;
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       fprintf(stderr, "do_reads is at %p %p\n", &do_reads, sprof[1].pr_off);
 #endif
-   sprof[1].pr_scale = 65535;
+   sprof[1].pr_scale = FULL_SCALE;
    /* Overflow bin */
    sprof[2].pr_base = buf[2];
    sprof[2].pr_size = 1;
