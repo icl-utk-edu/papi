@@ -535,6 +535,15 @@ void print_walk_names(void *arg, int regno, const char *name, uint8_t bits)
    fprintf(stderr, arg, regno, name, bits);
 }
 
+static char * getbasename(char *fname)
+{
+    char *temp;
+ 
+    temp = strrchr(fname, '/');
+    if( temp == NULL) return fname;
+       else return temp+1;
+}
+
 static int get_system_info(void)
 {
    int retval;
@@ -648,6 +657,8 @@ static int get_system_info(void)
          *tmp = '\0';
    }
    strncpy(_papi_hwi_system_info.exe_info.fullname, psi.pr_psargs, PAPI_MAX_STR_LEN);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, 
+           getbasename(_papi_hwi_system_info.exe_info.fullname));
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
    /* Hardware info */
