@@ -1,15 +1,14 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR	= ./perfctr-2.4.1
 OPTFLAGS= -Wall -O3 -fomit-frame-pointer -mpentiumpro
-TOPTFLAGS= -g -Wall -O0 -fomit-frame-pointer -mpentiumpro
+TOPTFLAGS= -g -Wall -O0 -mpentiumpro
 #
 # GNU G77 section
 #
 F77   = g77
 FFLAGS        = -Dlinux
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= -g -O0
-FTOPTFLAGS= -g
+FTOPTFLAGS= $(TOPTFLAGS)
 # #
 # #  Portland Group PGF77 section
 # #

@@ -8,8 +8,7 @@ TOPTFLAGS= -g -Wall
 F77   = g77
 FFLAGS        = -Dlinux
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= -g -O0
-FTOPTFLAGS= -g
+FTOPTFLAGS= $(TOPTFLAGS)
 # #
 # #  Portland Group PGF77 section
 # #

@@ -13,9 +13,9 @@ CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -Wall
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 FFLAGS	= -Dlinux -Wall
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
-TOPTFLAGS= -O0 -fomit-frame-pointer -mpentiumpro
+TOPTFLAGS= -g -Wall -O0 -mpentiumpro
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= -O0
+FTOPTFLAGS= $(TOPTFLAGS)
 CC	= gcc
 F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
