@@ -22,20 +22,17 @@ F77		= f90
 FFLAGS		= $(CFLAGS)
 TOPTFLAGS	= 
 NOOPT		= -xO0 
-OPTFLAGS	= -fast -xarch=v8plus -mt
-#for 64-bit use:
-#OPTFLAGS = -fast -xarch=v9
+OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
 #
-# GNU gcc 2.95.3
+# gcc 
 #
-#TARGETS	+= smp
 #CC		= gcc
 #F77		= g77
 #CPP		= $(CC) -E
 #CC_R		= $(CC) 
 #CC_SHR		= $(CC) -shared -fpic
 #OPTFLAGS	= -O3
-#CFLAGS  	= -DNO_VARARG_MACRO -DNEED_FFSLL
+#CFLAGS  	= 
 #FFLAGS		= $(CFLAGS)
 #
 # Do not touch below here 
