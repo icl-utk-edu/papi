@@ -60,11 +60,13 @@ void init_papi(void)
 
 /* Runs a bunch of multiplexed events */
 
-int case1(void) 
+int allvalid = 1;
+long long *values;
+int EventSet = PAPI_NULL, max_to_add = 6;
+
+int case1_first_half(void) 
 {
-  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 2;
-  int allvalid = 1;
-  long long *values;
+  int retval, i, j = 2;
   const PAPI_preset_info_t *pset;
 
   init_papi();
@@ -139,6 +141,11 @@ int case1(void)
 
   if (PAPI_start(EventSet) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
+}
+
+int case1_last_half(void) 
+{
+  int i, retval;
 
   for (i=0;i<NUM;i++)
     {
@@ -184,12 +191,7 @@ int main(int argc, char **argv)
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
-#if defined(sun)
-	printf("%-40s SKIPPED\n",__FILE__);
-    if ( !TESTS_QUIET )
-      printf("Line # %d: Solaris doesn't cope well with virtual timers. \n",__LINE__);
-	exit(0);
-#endif
+  case1_first_half();
 
   /* Create a bunch of unused pthreads, to simulate threads created
    * by the system that the user doesn't know about.
@@ -212,7 +214,7 @@ int main(int argc, char **argv)
 
     printf("case1: Does multiplexing work with extraneous threads present?\n");
   }
-  case1();
+  case1_last_half();
   test_pass(__FILE__,NULL,0);
 
   pthread_attr_destroy(&attr);

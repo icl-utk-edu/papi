@@ -27,7 +27,7 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 #if defined(sparc) && defined(sun)
 static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L1_ICM, PAPI_TOT_INS, PAPI_TOT_CYC };
 #else
-static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_FP_INS, PAPI_TOT_INS, PAPI_TOT_CYC };
+static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_DCM };
 #endif
 
 static int PAPI_events_len = 2;
@@ -54,16 +54,23 @@ void init_papi(const int *events, int *len)
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_set_debug",retval);
 
-  for (i=0;i<*len;i++)
+  for (i=0;events[i]!=0;i++)
     {
+       char out[PAPI_MAX_STR_LEN];
       /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(events[i]) == PAPI_OK) 
+      retval = PAPI_query_event(events[i]);
+	if (retval == PAPI_OK) 
 	{
-	  char out[PAPI_MAX_STR_LEN];
-
 	  PAPI_events[real_len++] = events[i];
 	  PAPI_event_code_to_name(events[i],out);
-	  printf("Queried %s\n",out);
+	  printf("%s exists\n",out);
+	if (real_len == *len)
+	break;
+	}
+	else
+	{
+	  PAPI_event_code_to_name(events[i],out);
+	  printf("%s does not exist\n",out);
 	}
     }
   if (real_len < 1) 
