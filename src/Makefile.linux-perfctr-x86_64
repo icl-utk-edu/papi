@@ -1,7 +1,7 @@
-DESCR	= "Linux with PerfCtr 2.5 patch for AMD Opteron and Athlon HX"
+DESCR	= "Linux with PerfCtr 2.6 patch for AMD Opteron and Athlon HX"
 
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	?= ./perfctr-2.5.4
+PERFCTR	?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -g -Wall -O3 
 TOPTFLAGS= -g -Wall -O1
@@ -37,7 +37,7 @@ SHLIB   = libpapi.so
 SUBSTR	= linux-perfctr
 MSUBSTR	= linux-memory
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr 2.4.1 patch for all Pentiums and the AMD K7"
+DESCR	= "Linux with PerfCtr 2.6.2 patch for all Pentiums and the AMD K7/K8"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
@@ -47,13 +47,13 @@ CC_R	= $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR25 -DPAPI_PERFCTR_INTR_SUPPORT
 # Some nice flags to add to CFLAGS when debugging PAPI library itself
 # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-MISCOBJS= global.o misc.o virtual.o event_set.o event_set_amd.o
+MISCOBJS= marshal.o global.o misc.o virtual.o
 MISCHDRS= ia32_presets.h 
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
 
-global.o misc.o virtual.o event_set.o event_set_amd.o: $(PERFCTR)/usr.lib/libperfctr.a
+marshal.o global.o misc.o virtual.o: $(PERFCTR)/usr.lib/libperfctr.a
 	ar x $(PERFCTR)/usr.lib/libperfctr.a
 
 $(PERFCTR)/usr.lib/libperfctr.a:
