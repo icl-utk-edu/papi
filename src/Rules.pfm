@@ -12,7 +12,6 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
-MSUBSTR  = linux-ia64-libpfm2.0
 MEMSUBSTR= linux-ia64
 LIBS	= static shared
 # shared

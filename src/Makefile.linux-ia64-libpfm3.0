@@ -5,8 +5,9 @@ DESCR   = "Stock Linux 2.6.x + for the Intel Itanium"
 LIBPFMHOME = libpfm-3.0
 PFM_LIB_PATH = ./$(LIBPFMHOME)/lib
 PFM_INC_PATH = ./$(LIBPFMHOME)/include
+MSUBSTR  = linux-ia64-libpfm3.0
 
 PFMOBJS = pfmlib_generic_ia64.o pfmlib_os.o
 
-include Makefile.linux-ia64-inc
+include Rules.linux-libpfm
 
