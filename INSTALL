@@ -16,11 +16,11 @@ MIPS R10K, R12K on Irix
 Power 3,604,604e on AIX 4.3
 UltraSparc I,II,III on Solaris 2.8 
 
-Some of these you can compile PAPI right out of the box without any
-additional setup, others require drivers or patches to be installed
-first.  The general installation steps are below, but first find your
-particular Operating System's section for any additional Steps that
-may be necessary.
+On some of these systems, you can compile PAPI right out of the box 
+without any additional setup. Others require drivers or patches to be 
+installed first.  The general installation steps are below, but first find 
+your particular Operating System's section for any additional Steps 
+that may be necessary.
 
 General Installation
 -------------
@@ -64,8 +64,8 @@ compiling PAPI.  Pmtoolkit must be installed by root.  The file can
 be downloaded from the following URL:
 http://www.alphaworks.ibm.com/aw.nsf/download/pmapi
 
-Currently the only supported OS if AIX 4.3.3 for pmtoolkit.  The installation
-of pmtoolkit is described below, and as said before it must be installed
+Currently the only supported OS is AIX 4.3.3 for pmtoolkit.  The installation
+of pmtoolkit is described below, and as indicated earlier, it must be installed
 by root.
 
 Installations instructions for the PMTOOLKIT.
@@ -80,7 +80,7 @@ Installations instructions for the PMTOOLKIT.
 5. A simple way of testing the installation and load is by running pmcycles.
     It should return: This machine runs at xxx MHz
 
-Notice that whenever the machine is rebooted, one need to reload the 
+Notice that whenever the machine is rebooted, one needs to reload the 
 pmtoolkit. This step can be done automatically at boot time by putting the
 line: /usr/lpp/pmtoolkit/bin/pmloadsvcs at the end of the /etc/rc.net file.
 
@@ -98,31 +98,31 @@ needed are provided by perfctr.
 
 Installation of Perfctr
 
-1. cd into the patches director which can be found in 
+1. cd into the patches directory which can be found in 
    papi/src/perfctr-2.3/patches and find the patch for your kernel
 
-2. Copy the patch file into your kernel source directory, this can
-   usually be loacted in /usr/src/kernel-version, where 
+2. Copy the patch file into your kernel source directory. This can
+   usually be located in /usr/src/kernel-version, where 
    kernel-version will most likeley be named something like:
    linux-2.4  (If your system does not provide kernel source code
    you can download a new kernel at: ftp.kernel.org )
 
-3. cd into your kernel source directory for example the kernel source
+3. cd into your kernel source directory. For example the kernel source
    directory in the above example would be /usr/src/linux-2.4
 
 4. Apply the patch with the following command:
    patch -p1 < patch-kernel-$KVER  
-   where $KVER is the kernel version you are using, for example 2.4.2 would
-   be patch-kernel-2.4.2, basically it is the name of the patch file you
-   copied in step 2.  Examine the output if any hunks failed you need to
-   patch them by hand, for more information on this see the patch man page.
+   where $KVER is the kernel version you are using. For example, 2.4.2 would
+   be patch-kernel-2.4.2. Basically it is the name of the patch file you
+   copied in step 2.  Examine the output. If any hunks failed, you need to
+   patch them by hand. For more information on this see the patch man page.
 
 5. cd back to papi/src/perfctr-2.3/linux and copy the files by issuing the
    following command:
    tar cf - . | tar -C /usr/src/linux-2.4 -xvf -
    Replace /usr/src/linux-2.4 with the location of your kernel source.
 
-6. Next you have to reconfigure your kernel, cd to the kernel source code
+6. Next you have to reconfigure your kernel. cd to the kernel source code
    directory and issue the following command:
    make xconfig 
 
@@ -137,11 +137,10 @@ Installation of Perfctr
 	make install
 	make modules
 	make modules_install
-   Make sure that all the makes don't have any errors in them.  The next 
-   step is to add this linux version to lilo.
+   Make sure that all the makes don't have any errors in them. 
 
-9. If using lilo, edit /etc/lilo.conf and make an entry that will look
-   similar to:
+9. Add this linux version to lilo. If using lilo, edit /etc/lilo.conf and 
+   make an entry that will look similar to:
 	image=/boot/vmlinuz-2.4.2
 	label=papi-linux
 	read-only
@@ -176,13 +175,19 @@ or newer.  As long as that requirement is met, no additional steps are
 required to get PAPI working and you can follow the general installation
 guide.
 
-*NOTE about Ultrasparc III, while the mapping and code is here, we have
+*NOTE: The Ultrasparc III mapping and code is here, but we have
 *not tested this implementation, as we don't have access to a Ultrasparc III
 *So consider it beta ;)
+*If you have access to an Ultrsparc III on which you would like to run PAPI,
+*run the test suite and let us know the results.
 
 
 Tru64 - Alpha
 -------------
+A patch for the pfm device driver is required from Compaq 
+to run PAPI on Tru64-Alpha.
+Contact Bill Gray <bgray@zk3.dec.com> at Compaq for details.
+
 
 Unicos - Cray 
 -------------
@@ -192,9 +197,11 @@ Follow the general installation guide, and everything should work.
 
 Windows XP/2000 - Intel and AMD
 -------------------------------
-You should download out self-installing executable from the PAPI site.
-This executable includes binaries for the library, examples, perfometer and
-the device driver needed to access the counters.  This installation has
-to be installed by a user that has administrator privellages, as it installs
-a device driver.  You do not have to follow the general installation on
-windows, just follow the online prompts.
+Download the self-installing executable from the PAPI site.
+Double-click it and follow the prompts.
+The installer requires administrator privileges, since it installs
+a device driver to access the counters.
+This executable includes binaries for the library, device driver,
+examples, and perfometer as well as source code for the examples.
+The general installation instructions are irrelevant for Windows.
+
