@@ -32,25 +32,25 @@ eventname: eventname.F $(FTEST_DEPENDENCE)
 	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o eventname
 
 case1: case1.F $(FTEST_DEPENDENCE) 
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o case1
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
 
 case2: case2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o case2
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
 
 fmatrixlowpapi: fmatrixlowpapi.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
 
 fmatrixpapi: fmatrixpapi.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
 
 fmatrixpapi2: fmatrixpapi2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
 
 strtest: strtest.F $(FTEST_DEPENDENCE)  
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
 
 flops: flops.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o flops
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
 
 description: description.F $(FTEST_DEPENDENCE)
 	$(F77) $(INCLUDE) description.F $(PAPILIB) -o description
