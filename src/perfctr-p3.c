@@ -34,9 +34,9 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-extern preset_search_t _papi_hwd_p3_preset_map;
-extern preset_search_t _papi_hwd_amd_preset_map;
-extern preset_search_t *preset_search_map;
+extern hwi_preset_t _papi_hwd_p3_preset_map;
+extern hwi_preset_t _papi_hwd_amd_preset_map;
+extern hwi_preset_t *preset_search_map;
 extern native_event_entry_t _papi_hwd_pentium3_native_map;
 extern native_event_entry_t _papi_hwd_p2_native_map;
 extern native_event_entry_t _papi_hwd_k7_native_map;

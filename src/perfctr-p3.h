@@ -74,6 +74,15 @@ do                                                             \
    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                              \
 }while(0);
 
+/* Overflow-related defines and declarations */
+
+typedef siginfo_t  hwd_siginfo_t;
+typedef ucontext_t  hwd_ucontext_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx) (void *)NULL
+#define GET_OVERFLOW_CTR_BITS(context) (1)
+#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) (1)
+
 #ifdef _WIN32
   #define inline_static static __inline 
 #else
@@ -147,8 +156,6 @@ typedef struct P3_perfctr_control {
   struct perfctr_sum_ctrs state;
 } P3_perfctr_control_t;
 
-/* Per thread data structure for thread level counters */
-
 typedef struct P3_perfctr_context {
   struct vperfctr *perfctr;
 /*  P3_perfctr_control_t start; */
@@ -164,7 +171,6 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define CNTR2 0x2
 #define CNTR3 0x4
 #define CNTR4 0x8
-
 #define CNTRS12 (CNTR1|CNTR2)
 #define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
@@ -196,10 +202,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
 extern native_event_entry_t *native_table;
-extern preset_search_t *preset_search_map;
-
+extern hwi_preset_t *preset_search_map;
 extern char *basename(char *);
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
-extern int _papi_hwd_get_system_info(void);
-
 #endif

@@ -21,7 +21,7 @@
 #include "papi_protos.h"
 
 native_event_entry_t *native_table;
-preset_search_t *preset_search_map;
+hwi_preset_t *preset_search_map;
 
 /* Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example. */
@@ -238,7 +238,7 @@ enum {
    PNE_BP_DR3
 };
 
-const preset_search_t _papi_hwd_p3_preset_map[] = {
+const hwi_preset_t _papi_hwd_p3_preset_map[] = {
    { PAPI_L1_DCM,         0, { PNE_DCU_LINES_IN,0,0,0}},
    { PAPI_L1_ICM,         0, { PNE_L2_IFETCH_TOT,0,0,0}},
    { PAPI_L2_DCM,         DERIVED_SUB, { PNE_L2_LINES_IN,PNE_BUS_TRAN_IFETCH_SELF,0,0}},
@@ -291,7 +291,7 @@ const preset_search_t _papi_hwd_p3_preset_map[] = {
    { 0,                   0, { 0,0,0,0}}
 };
 
-const preset_search_t _papi_hwd_amd_preset_map[] = {
+const hwi_preset_t _papi_hwd_amd_preset_map[] = {
    { PAPI_L1_DCM,             0, { PNE_DATA_CACHE_MISSES,0,0,0}},
    { PAPI_L1_ICM,             0, { PNE_IC_MISSES,0,0,0}},
    { PAPI_L2_DCM,             0, { PNE_SYS_DC_REFILLS_TOT,0,0,0}},
