@@ -263,7 +263,7 @@ PAPI_FCALL(papif_multiplex_init, PAPIF_MULTIPLEX_INIT, (int *check))
 
 PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check))
 {
-   *check = PAPI_set_multiplex(EventSet);
+   *check = PAPI_set_multiplex(*EventSet);
 }
 
 #if defined ( _CRAYT3E )
