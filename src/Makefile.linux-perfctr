@@ -21,7 +21,7 @@ FTOPTFLAGS= $(TOPTFLAGS)
 # #
 # F77      = ifc
 # FFLAGS   = -Dlinux
-# LDFLAGS  = -lPEPCF90  # Intel portability library (getarg_)
+# LDFLAGS  = -lPEPCF90 -lIEPCF90 -lF90 -lintrins  # Intel portability library (getarg_
 # FOPTFLAGS= -O3 -tpp6
 # FTOPTFLAGS= $(FOPTFLAGS)
 

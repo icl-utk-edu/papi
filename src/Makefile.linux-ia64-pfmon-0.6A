@@ -28,7 +28,7 @@ F77     = g77
 #
 #F77	= /usr/local/intel/compiler50/ia64/bin/efc
 #FFLAGS	=  -Vaxlib
-#LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
+#LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90 -lIEPCF90 -lF90 -lintrins
 #
 # Do not touch
 #

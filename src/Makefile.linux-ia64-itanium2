@@ -14,7 +14,7 @@ TOPTFLAGS = $(OPTFLAGS)
 FFLAGS	=
 #  -Vaxlib
 LDFLAGS = 
-# -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
+# -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90 -lIEPCF90 -lF90 -lintrins
 LIBPFM  = pfmon-1.1/libpfm
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
