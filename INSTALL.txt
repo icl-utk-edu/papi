@@ -25,7 +25,12 @@ Operating System's section for any additional steps that may be necessary.
 
 General Installation
 
-1.	Pick the appropriate Makefile.<arch> for your system in the papi 
+1.      % ./configure
+        % make
+
+        OR	
+
+        Pick the appropriate Makefile.<arch> for your system in the papi 
 	source distribution, edit it (if necessary) and compile.
 
 	% make -f Makefile.<arch>
@@ -50,6 +55,10 @@ General Installation
 3.	Create a PAPI binary distribution or install PAPI directly.
 
 	a) To install PAPI libraries and header files from the build tree:
+        If you created the Makefile with configure:
+        % make PREFIX=<install-dir> install
+   
+        Otherwise:
 
 	% make -f Makefile.<arch> PREFIX=<install-dir> install
 
@@ -57,18 +66,34 @@ General Installation
 	pathname.
 
 	b) To install PAPI manual pages from the build tree:
+        If you created the Makefile with configure:
+        % make PREFIX=<install-dir> install-man
+   
+        Otherwise:
 
 	% make -f Makefile.<arch> PREFIX=<install-dir> install-man
 
 	c) To install PAPI test programs from the build tree:
+        If you created the Makefile with configure:
+        % make PREFIX=<install-dir> install-tests
+   
+        Otherwise:
 
 	% make -f Makefile.<arch> PREFIX=<install-dir> install-tests
 
 	d) To install all of the above in one step from the build tree:
+        If you created the Makefile with configure:
+        % make PREFIX=<install-dir> install-all
+   
+        Otherwise:
 
 	% make -f Makefile.<arch> PREFIX=<install-dir> install-all
 
 	e) To create a binary kit, papi-<arch>.tgz:
+        If you created the Makefile with configure:
+        % make dist
+   
+        Otherwise:
 
 	% make -f Makefile.<arch> dist
 
