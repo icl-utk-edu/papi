@@ -1,0 +1,48 @@
+$Id$
+
+Performance-Monitoring Counters Driver
+Copyright (C) 1999-2000  Mikael Pettersson <mikpe@csd.uu.se>
+
+Supported processors
+====================
+- This driver supports all x86-type processors known to have
+  performance-monitoring counters, i.e. all Intel family 5
+  and 6 processors (Pentium/MMX/Pro/II/III/Celeron/Xeon)
+  the AMD K7 Athlon, and the Cyrix 6x86MX/MII/III processors.
+
+- The WinChip C6/2/2A/3 processors are supported, if the
+  kernel was built with the CONFIG_PERFCTR_WINCHIP
+  option and without the CONFIG_X86_TSC option.
+
+- Generic x86 processors with a time-stamp counter but no
+  performance-monitoring counters, such as the AMD K6 family.
+  For these processors, only TSC-based cycle-count measurements
+  are possible.
+
+Supported services
+==================
+- Virtualised per-process performance-monitoring counters are
+  supported, if the driver was built with CONFIG_PERFCTR_VIRTUAL.
+- Global-mode performance-monitoring counters for UP and SMP are
+  supported, if the driver was built with CONFIG_PERFCTR_GLOBAL.
+
+References
+==========
+[IA32, Volume 3] "Intel Architecture Software Developer's Manual,
+Volume 3: System Programming Guide". Intel document number 243192-02.
+(at http://developer.intel.com/)
+
+[K7] "AMD Athlon Processor x86 Code Optimization Guide",
+Appendix F: "Performance Monitoring Counters".
+Preliminary Information, AMD Publication #22007, Revision H.
+(at http://www.amd.com/)
+
+[Cyrix 6x86MX] "Cyrix 6x86MX Processor".
+[Cyrix MII] "Cyrix M II Data Book".
+[Cyrix III] "Cyrix III Processor DataBook".
+(MII and III docs at http://www.viatech.com/)
+
+[WinChip C6] "WinChip C6 Processor Data Sheet".
+[WinChip 2A] "WinChip 2 Processor Version A Data Sheet".
+[WinChip BIOS] "WinChip Processor Family BIOS Writers Guide".
+(unknown URL; formerly at http://www.winchip.com/)

@@ -1,0 +1,80 @@
+		    INSTALLATION INSTRUCTIONS
+		    =========================
+
+KERNEL
+------
+The kernel source code of this package consists of two parts:
+the driver proper, and patches to integrate it into various
+versions of the kernel.
+
+The patch files are located in the `patches' directory in this
+package. Assume your kernel version is KVER, and there is a
+file in `patches' named:
+
+	patch-kernel-$KVER
+
+`cd' to your kernel source directory and apply this patch with
+`patch -p1'. This may cause some warnings if your kernel source
+code is not identical to the one for which the patch was created,
+but as long as there are no rejects, things should be Ok.
+
+If any part of the patch is rejected, it is imperative that you
+resolve the problem before attempting to build and use the kernel.
+
+The driver source code proper is located in the `linux' directory
+in this package. This directory contains new files to be added
+to your kernel source code. Let KDIR be the path to your kernel
+source directory. `cd' to the `linux' directory in this package,
+and copy the files by executing:
+
+	tar cf - . | tar -C $KDIR -xvf -
+
+Configure the modified kernel with CONFIG_PERFCTR=y, and compile,
+install, reboot as usual. If you use modules, be advised that the
+modified kernel will not be binary compatible with an unmodified one.
+However, modified kernels will be binary compatible with each other,
+regardless of the value of CONFIG_PERFCTR. (The patch adds one word
+to the `thread_struct' type.)
+
+You may also select CONFIG_PERFCTR=m to build the bulk of the driver
+as a loadable kernel module; the module will be named `perfctr.o'.
+
+DEVICE FILE
+-----------
+The kernel-side of this package is implemented as a character device
+driver, which has been assigned major number 10 and minor number 182.
+The first time you install the package, a special file representing
+this device must be created. As root, execute:
+
+	mknod /dev/perfctr c 10 182
+	chmod 644 /dev/perfctr
+
+If the driver was built as a module, it will be have to be loaded
+into the kernel before it can be used. This will happen automatically
+if the kernel was built with support for the kernel module loader
+(CONFIG_KMOD=y), and you add the following to /etc/modules.conf
+(or conf.modules, if you're using old module utilities):
+
+	alias char-major-10-182 perfctr
+
+LIBRARY
+-------
+Let INCLDIR be the path to the `include' directory within the
+source directory for the kernel you modified and built above.
+
+To configure the user-space library, you must run the configure
+script in the root directory of this package. Run
+
+	./configure
+
+and answer its questions. As a short-cut, you can also run
+
+	./configure --incldir=$INCLDIR
+
+to skip the questions (if the given path is correct).
+
+Afterwards, run
+
+	make
+
+to build the user-space library and the example programs.

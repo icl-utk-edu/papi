@@ -1,0 +1,13 @@
+# $Id$
+# Performance-monitoring counters driver configuration
+#
+
+tristate 'Performance-monitoring counters support' CONFIG_PERFCTR
+if [ "$CONFIG_PERFCTR" != "n" ]; then
+   bool '  Init-time hardware tests' CONFIG_PERFCTR_INIT_TESTS
+   if [ "$CONFIG_X86" = "y" -a "$CONFIG_X86_TSC" != "y" ]; then
+      bool '  Support WinChip processors' CONFIG_PERFCTR_WINCHIP
+   fi
+   bool '  Virtual performance counters support' CONFIG_PERFCTR_VIRTUAL $CONFIG_PERFCTR
+   bool '  Global performance counters support' CONFIG_PERFCTR_GLOBAL $CONFIG_PERFCTR
+fi

@@ -1,0 +1,200 @@
+	   Linux x86 Performance-Monitoring Counters Driver
+		by Mikael Pettersson <mikpe@csd.uu.se>
+		       [Last updated 2000-09-03]
+========================================================================
+
+
+Latest Updates
+--------------
+Version 1.5, 2000-09-03
+- The virtual perfctr "remote control" facility has been removed,
+  resulting in major simplifications in the driver.
+  Since version 1.3 of the driver, the most common application of
+  the remote control facility (to record events from unmodified
+  applications) can be more easily implemented using the perfctr
+  inheritance facility (perfctr control setup is inherited from parent
+  to child processes, and a child's event counts are propagated back
+  to its parent). Removing the remote control facility simplified
+  resource management and eliminated a number of concurrency issues.
+- Code cleanups. Dropped support for intermediate 2.3 and early 2.4
+  kernels. The code now supports kernels 2.2.xx and 2.4.0-test7 or
+  later only (via a 2.4-on-2.2 simulation layer).
+- A number of changes to the user-space library. The API is now thread-
+  safe (the library has no internal state), and the naming scheme has
+  been simplified due to the removal of the remote-control facility.
+  The zero-syscall perfctr sampling code has been rewritten and should
+  be faster and more robust. (It fixed a sampling problem one user had
+  on a 4-way MP box.)
+
+
+Overview
+--------
+This package adds support to the Linux kernel for using the
+Performance-Monitoring Counters (PMCs) found in many modern
+x86-class processors. Supported processors are:
+- All Intel family 5 and 6 processors, i.e. Pentium, Pentium MMX,
+  Pentium Pro, Pentium II, Celeron, and Pentium III.
+- AMD K7 Athlon.
+- Cyrix 6x86MX, MII, and III.
+- WinChip C6, 2, 2A, and 3.
+
+PMCs are "event counters" capable of recording any of a large
+number of performance-related events during execution.
+These events typically include instructions executed, cache
+misses, TLB misses, stalls, and other events specific to
+the microarchitecture of the processor being used.
+
+PMCs are primarily used by compiler writers, runtime system
+developers, and kernel developers, to identify code sections
+exhibiting low-level performance problems, and to validate
+code changes intended to improve performance.
+
+Limited support is available for generic x86 processors with
+a Time-Stamp Counter but no PMCs, such as the AMD K6 family.
+For these processors, only TSC-based cycle-count measurements
+are possible. However, all high-level facilities implemented
+by the driver are still available.
+
+
+Features
+--------
+Each Linux process has its own set of "virtual" PMCs. That is,
+to a process the PMCs appear to be private and unrelated to the
+activities of other processes in the system. The virtual PMCs
+have 64-bit precision, even though current processors only
+implement 40 or 48-bit PMCs. Each process also has a virtual
+Time-Stamp Counter (TSC). On most machines, the virtual PMCs can
+be sampled entirely in user-space without incurring the overhead
+of a system call.
+
+Virtual PMCs are inherited from parent to child processes, and
+a child's final accumulated counts are attributed to its parent.
+This requires no cooperation from the monitored processes.
+Inheritance is disabled if either parent or child explicitly
+reprograms its PMCs.
+
+The driver also supports global-mode or system-wide PMCs.
+In this mode, each PMC on each processor can be controlled
+and read. The PMCs and TSC on active processors are sampled
+periodically and the accumulated sums have 64-bit precision.
+
+
+Limitations
+-----------
+- Almost no documentation. "Use the source, Luke."
+- Neither the kernel driver nor the sample user-space library
+  attempt to hide any processor-specific details from the user.
+- The local APIC perfctr interrupt feature in P6 and K7 Model 2
+  processors is not yet used.
+- This package makes it possible to compute aggregate event and
+  cycle counts for sections of code. Since many x86-type processors
+  use out-of-order execution, it is impossible to attribute exact
+  event or cycle counts to individual instructions.
+  See the "Continuous Profiling" and "ProfileMe" papers at Compaq's
+  DCPI web site (URL below) for more information on this issue.
+
+
+Availability
+------------
+This and future versions of this package can be downloaded from
+http://www.csd.uu.se/~mikpe/linux/perfctr/.
+
+
+Licensing
+---------
+Copyright (C) 1999-2000  Mikael Pettersson <mikpe@csd.uu.se>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+Related packages
+----------------
+(Incomplete URLs. Sorry about that.)
+
+msr (by Stephan.Meyer@pobox.com)
+	http://pobox.com/~smeyer/msr.html [page seems dead now]
+	Supports kernels up to 2.2.6. No longer actively developed.
+	Adds /dev/msr as a raw interface to the CPUs MSRs.
+	No virtual PMCs.
+
+proc_sr (by bosch@lri.fr)
+	Patch for kernel 2.0.27.
+	Adds a bunch of files under /proc/Intel/, which allow
+	global access to MSRs and control registers.
+	No virtual PMCs.
+
+vtimer (by dadkins@mit.edu and bsong@supertech.lcs.mit.edu)
+	Patch for kernel 2.3.6.
+	Adds per-process virtual TSC support.
+
+msr_patch-2.1.126 (by Harald Hoyer, HarryH@Royal.Net)
+	Patch for kernel 2.1.126.
+	Adds /proc/<pid>/msr text file with read/write
+	access to per-process PMC MSRs
+	Only supports the Intel P5MMX.
+	Does not handle counter overflow.
+
+hardcntr-2 (by David.Mentre@irisa.fr)
+	http://www.irisa.fr/prive/mentre/linux-counters/hardctr-2.patch
+	Patch for kernel 2.1.65.
+	Adds some text files under /proc/<pid>/hardcntr/, which
+	allow read/write access for per-process PMC MSRs.
+	Only supports the Intel P6.
+	Does not handle counter overflow.
+	Deprecated by author.
+
+perf-0.7 (by Erik Hendriks, hendriks@cesdis.gsfc.nasa.gov)
+	Patches for kernels 2.0.36, 2.2.2, and 2.2.9.
+	Does support both per-process and global PMCs.
+	Does handle counter overflow.
+	No virtual TSC.
+	Only supports Intel P6.
+
+msr-patch-2.3.1 (by Richard Gooch, http://www.atnf.csiro.au/~rgooch/linux/)
+	Adds /dev/<cpu>/perfmon with access to per-CPU PMCs.
+	Does not implement virtual-mode PMCs.
+	Does not handle counter overflow.
+	Part of bigger package (MSRs, requires devfs).
+
+pperf/libpperf (by M. Patrick Goda, http://qso.lanl.gov/~mpg/pperf.html)
+	Based on Stephan Meyer's msr patch, and shares its limitations.
+	Emphasis on user-space tools.
+
+pcl	(by Rudolf Berrendorf and Heinz Ziegler,
+	 http://www.fz-juelich.de/zam/PCL/)
+	User-space tools, based on libpperf.
+
+PAPI (http://icl.cs.utk.edu/projects/papi/)
+	"Portable Interface to Hardware Performance Counters"
+	Common interface to the perfctr facilities on several
+	operating systems and processor architectures.
+	On Linux, uses Hendriks' "perf" patch for Intel P6 processor.
+	User-space tools. Implements both overflow signals and
+	event multiplexing.
+
+pmc-1.02 (by Don Heller, dheller@scl.ameslab.gov)
+	http://www.scl.ameslab.gov/Projects/Rabbit/index.html
+	Derived from pperf by M. Patrick Goda and Michael S. Warren.
+	Global-mode counters access via /dev/pmc.
+	Supports Intel P5 and P6 via compiler option.
+	No virtual counters.
+	Emphasis on user-space tools.
+
+Using hardware performance counters with Linux (by David Mentré)
+	http://www.irisa.fr/prive/mentre/linux-counters/
+	A page with info and links.
+
+Compaq Continuous Profiling Infrastructure Project
+	http://www.research.digital.com/SRC/dcpi/
