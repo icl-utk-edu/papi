@@ -20,6 +20,8 @@ int main(int argc, char **argv)
    const PAPI_hw_info_t *hwinfo = NULL;
    char descr[PAPI_MAX_STR_LEN];
    PAPI_event_info_t evinfo;
+   PAPI_mh_level_t *L;
+
 
    const unsigned int eventlist[] = {
       PAPI_L1_DCA,
@@ -85,8 +87,32 @@ int main(int argc, char **argv)
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
+   /* Extract and report the cache information */
+   L = &(hwinfo->mem_hierarchy.level[0]);
+   for (i=0; i<hwinfo->mem_hierarchy.levels; i++) {
+      for (j=0; j<2; j++) {
+         switch (L[i].cache[j].type) {
+            case PAPI_MH_TYPE_UNIFIED:
+               printf("L%d Unified Cache:\n", i+1);
+               break;
+            case PAPI_MH_TYPE_DATA:
+               printf("L%d Data Cache:\n", i+1);
+               break;
+            case PAPI_MH_TYPE_INST:
+               printf("L%d Instruction Cache:\n", i+1);
+               break;
+         }
+         if (L[i].cache[j].type) {
+            printf("  Total size: %dKB\n  Line size: %dB\n  Number of Lines: %d\n  Associativity: %d\n\n",
+               (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, L[i].cache[j].associativity);
+         }
+      }
+   }
+   
+/* ...old way
    printf("L1 Cache Total size: %dKB\nL1 Cache Line size: %dB\n",hwinfo->L1_dcache_size,hwinfo->L1_dcache_linesize);
    printf("L2 Cache Total size: %dKB\nL2 Cache Line size: %dB\n",hwinfo->L2_cache_size,hwinfo->L2_cache_linesize);
+*/
    for (i = 0; eventlist[i] != 0; i++) 
      {
        PAPI_event_code_to_name(eventlist[i], descr);

@@ -10,7 +10,8 @@ extern int TESTS_QUIET;         /*Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    const PAPI_hw_info_t *meminfo = NULL;
-   int retval;
+   PAPI_mh_level_t *L;
+   int i,j,retval;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
    retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -24,33 +25,48 @@ int main(int argc, char **argv)
       printf("Test case:  Memory Information.\n");
       printf
           ("------------------------------------------------------------------------\n");
-      printf("Total TLB size:  %d.\n", meminfo->L1_tlb_size);
-      if (meminfo->L1_itlb_size)
-         printf("Instruction TLB: %d entries, %d-way associative.\n",
-                meminfo->L1_itlb_size, meminfo->L1_itlb_assoc);
-      if (meminfo->L1_dtlb_size)
-         printf("Data TLB: %d entries, %d-way associative.\n",
-                meminfo->L1_dtlb_size, meminfo->L1_dtlb_assoc);
-
-      if (meminfo->L1_size)
-         printf("Total L1 cache: %d KB.\n", meminfo->L1_size);
-      if (meminfo->L1_icache_size)
-         printf("Instruction L1 cache: %d KB of %d-way associative and %d B lines.\n",
-                meminfo->L1_icache_size, meminfo->L1_icache_assoc,
-                meminfo->L1_icache_linesize);
-      if (meminfo->L1_dcache_size)
-         printf("Data L1 cache: %d KB of %d-way associative and %d B lines.\n",
-                meminfo->L1_dcache_size, meminfo->L1_dcache_assoc,
-                meminfo->L1_dcache_linesize);
-
-      if (meminfo->L2_cache_size)
-         printf("L2 cache: %d KB of %d-way associative and %d B lines.\n",
-                meminfo->L2_cache_size, meminfo->L2_cache_assoc,
-                meminfo->L2_cache_linesize);
-      if (meminfo->L3_cache_size)
-         printf("L3 cache: %d KB of %d-way associative and %d B lines.\n",
-                meminfo->L3_cache_size, meminfo->L3_cache_assoc,
-                meminfo->L3_cache_linesize);
+      /* Extract and report the tlb and cache information */
+      L = &(meminfo->mem_hierarchy.level[0]);
+      /* Scan the TLB structures */
+     for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
+         for (j=0; j<2; j++) {
+            switch (L[i].tlb[j].type) {
+               case PAPI_MH_TYPE_UNIFIED:
+                  printf("L%d Unified TLB:", i+1);
+                  break;
+               case PAPI_MH_TYPE_DATA:
+                  printf("L%d Data TLB:", i+1);
+                  break;
+               case PAPI_MH_TYPE_INST:
+                  printf("L%d Instruction TLB:", i+1);
+                  break;
+            }
+            if (L[i].tlb[j].type) {
+               printf("  Number of Entries: %d;  Associativity: %d\n\n",
+                  L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+            }
+         }
+      }
+      /* Scan the Cache structures */
+      for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
+         for (j=0; j<2; j++) {
+            switch (L[i].cache[j].type) {
+               case PAPI_MH_TYPE_UNIFIED:
+                  printf("L%d Unified Cache:\n", i+1);
+                  break;
+               case PAPI_MH_TYPE_DATA:
+                  printf("L%d Data Cache:\n", i+1);
+                  break;
+               case PAPI_MH_TYPE_INST:
+                  printf("L%d Instruction Cache:\n", i+1);
+                  break;
+            }
+            if (L[i].cache[j].type) {
+               printf("  Total size: %dKB\n  Line size: %dB\n  Number of Lines: %d\n  Associativity: %d\n\n",
+                  (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, L[i].cache[j].associativity);
+            }
+         }
+      }
    }
    test_pass(__FILE__, NULL, 0);
    exit(1);
