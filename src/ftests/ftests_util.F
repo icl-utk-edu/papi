@@ -163,10 +163,10 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 
       if ( retval.ne.0 )then
-          write(*,*) file, ':                FAILED'
+		write(*,100) file,' FAILED'
           write(*,*) 'Line # ', line
       else
-          write(*,*) file, ':                SKIPPED'
+		write(*,100) file,' SKIPPED'
           write(*,*) 'Line #', line
       end if
 
@@ -183,6 +183,7 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 	call pause()
       stop
+ 100  format(a,t41,a)
       end
 
       subroutine ftest_skip(file, line, callstr, retval)
