@@ -6839,7 +6839,7 @@ case "$OS" in
          processor=`uname -p`
            #this determines if its an Ultrasparc I,II,or III
          if test "$processor" = "sparc"; then
-           CPU=`uname -a | egrep Ultra`
+           CPU=`/bin/uname -a | egrep Ultra`
            if test "$CPU" = ""; then
              echo "Sorry but for Solaris you need to have an Ultrasparc for PAPI to work"
              exit 1
