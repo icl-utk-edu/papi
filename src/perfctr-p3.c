@@ -513,16 +513,22 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 }
 
 static void clear_control_state(hwd_control_state_t *this_state) {
-   unsigned int i;
+   int i,j;
+
+   /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
+   j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
 
    /* Remove all counter control command values from eventset. */
-   for(i = 0; i < this_state->control.cpu_control.nractrs; i++) {
+   for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
       this_state->control.cpu_control.pmc_map[i] = 0;
       this_state->control.cpu_control.evntsel[i] = this_state->control.cpu_control.evntsel[i] & (PERF_OS|PERF_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
+
+   /* clear both a and i counter counts */
    this_state->control.cpu_control.nractrs = 0;
+   this_state->control.cpu_control.nrictrs = 0;
 }
 
 /* This function clears the current contents of the control structure and 
@@ -766,51 +772,41 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) {
-      OVFDBG("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
-      return PAPI_EINVAL;
+      PAPIERROR("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
+      return PAPI_EBUG;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
-/*******
-      struct sigaction sa;
-      int err;
-*******/
       if ((ESI->EventInfoArray[EventIndex].derived) &&
           (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
          OVFDBG("Can't overflow on a derived event.\n");
          return PAPI_EINVAL;
       }
+
+      if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
+	      return(retval);
+
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
       contr->cpu_control.ireset[i] = (-threshold + 1);
-/******* can't enable the interrupt bit for windows
-      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
-*******/
-      nricntrs = ++contr->cpu_control.nrictrs;
-      nracntrs = --contr->cpu_control.nractrs;
-/*******
-      contr->si_signo = PAPI_SIGNAL;
-*******/
+      contr->cpu_control.nrictrs++;
+      contr->cpu_control.nractrs--;
+      nricntrs = contr->cpu_control.nrictrs;
+      nracntrs = contr->cpu_control.nractrs;
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs)
          swap_events(ESI, contr, i, nracntrs);
-/*******
-      memset(&sa, 0, sizeof sa);
-      sa.sa_sigaction = _papi_hwd_dispatch_timer;
-      sa.sa_flags = SA_SIGINFO;
-      if ((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0) {
-         OVFDBG("Setting sigaction failed: SYSERR %d: %s", errno, strerror(errno));
-         return (PAPI_ESYS);
-      }
-*******/
       OVFDBG("Modified event set\n");
    } else {
       if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
          contr->cpu_control.ireset[i] = 0;
          contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-         nricntrs = --contr->cpu_control.nrictrs;
-         nracntrs = ++contr->cpu_control.nractrs;
+         contr->cpu_control.nrictrs--;
+         contr->cpu_control.nractrs++;
       }
+      nricntrs = contr->cpu_control.nrictrs;
+      nracntrs = contr->cpu_control.nractrs;
+
       /* move this event to the top part of the list if needed */
       if (i >= nracntrs)
          swap_events(ESI, contr, i, nracntrs - 1);
@@ -818,9 +814,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
          contr->si_signo = 0;
 
       OVFDBG("Modified event set\n");
-
    }
-   OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
@@ -838,8 +832,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) {
-      OVFDBG("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
-      return PAPI_EINVAL;
+       PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
+       return PAPI_EBUG;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
       if ((ESI->EventInfoArray[EventIndex].derived) &&
@@ -849,14 +843,16 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       }
 
       if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
-	return(retval);
+         return(retval);
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
       contr->cpu_control.ireset[i] = (-threshold + 1);
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
-      nricntrs = ++contr->cpu_control.nrictrs;
-      nracntrs = --contr->cpu_control.nractrs;
+      contr->cpu_control.nrictrs++;
+      contr->cpu_control.nractrs--;
+      nricntrs = contr->cpu_control.nrictrs;
+      nracntrs = contr->cpu_control.nractrs;
       contr->si_signo = PAPI_SIGNAL;
 
       /* move this event to the bottom part of the list if needed */
@@ -867,9 +863,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
          contr->cpu_control.ireset[i] = 0;
          contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-         nricntrs = --contr->cpu_control.nrictrs;
-         nracntrs = ++contr->cpu_control.nractrs;
+         contr->cpu_control.nrictrs--;
+         contr->cpu_control.nractrs++;
       }
+      nricntrs = contr->cpu_control.nrictrs;
+      nracntrs = contr->cpu_control.nractrs;
+
       /* move this event to the top part of the list if needed */
       if (i >= nracntrs)
          swap_events(ESI, contr, i, nracntrs - 1);
@@ -881,7 +880,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
 
       retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
    }
-   OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
