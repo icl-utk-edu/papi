@@ -21,6 +21,14 @@
 
 /* PAPI stuff */
 
+#ifdef PERFCTR25
+#define PERFCTR_CPU_NAME   perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
+#else
+#define PERFCTR_CPU_NAME perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS perfctr_cpu_nrctrs
+#endif
+
 #ifdef _WIN32
   /* Define SUBSTRATE to map to linux-perfctr.h
    * since we haven't figured out how to assign a value
@@ -104,12 +112,13 @@ inline static int setup_p3_presets(int cputype) {
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
-      /*   case PERFCTR_X86_AMD_K8:
-         NATIVE_TABLE_SIZE = opt_size;
-         native_table = &_papi_hwd_k8_native_map;
-         preset_search_map = &_papi_hwd_opt_preset_map;
-         break;
-       */
+#ifdef PERFCTR25
+   case PERFCTR_X86_AMD_K8:
+      NATIVE_TABLE_SIZE = opt_size;
+      native_table = &_papi_hwd_k8_native_map;
+      preset_search_map = &_papi_hwd_opt_preset_map;
+      break;
+#endif
    }
    return (_papi_hwi_setup_all_presets(preset_search_map));
 }
@@ -131,7 +140,9 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    case PERFCTR_X86_INTEL_PIII:
    case PERFCTR_X86_INTEL_P4:
       return (PAPI_VENDOR_INTEL);
-      /*  case PERFCTR_X86_AMD_K8:   */
+#ifdef PERFCTR25
+   case PERFCTR_X86_AMD_K8:
+#endif
    case PERFCTR_X86_AMD_K7:
       return (PAPI_VENDOR_AMD);
    case PERFCTR_X86_CYRIX_MII:
@@ -278,14 +289,14 @@ int _papi_hwd_init_global(void) {
    if (_papi_hwd_mdi_init() != PAPI_OK) {
       return (PAPI_EINVAL);
    }
-   strcpy(_papi_hwi_system_info.hw_info.model_string, perfctr_cpu_name(&info));
+   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
    _papi_hwi_system_info.supports_hw_overflow =
        (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
    SUBDBG("Hardware/OS %s support counter generated interrupts\n",
           _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
 
-   _papi_hwi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info);
-   _papi_hwi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info);
+   _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
    _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0;
