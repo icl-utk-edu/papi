@@ -275,52 +275,19 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long **dp)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events)
 {
-   int shift_cnt = 0;
-   int retval, selector, j = 0, i;
-   long long correct[3];
+   pmctr_t *pmctr;
+   long pc_data[4];
 
-   retval = update_global_hwcounters(zero);
-   if (retval)
-      return (retval);
+   if(_rdperf(pc_data))
+      return(PAPI_ESBSTR);
 
-   retval = correct_local_hwcounters(zero, ESI, correct);
-   if (retval)
-      return (retval);
-
-   /* This routine distributes hardware counters to software counters in the
-      order that they were added. Note that the higher level 
-      EventSelectArray[i] entries may not be contiguous because the user
-      has the right to remove an event. */
-
-   for (i = 0; i < _papi_system_info.num_cntrs; i++) {
-      selector = ESI->EventInfoArray[i].selector;
-      if (selector == PAPI_NULL)
-         continue;
-
-      DBG((stderr, "Event %d, mask is 0x%x\n", j, selector));
-
-      if (ESI->EventInfoArray[i].command == NOT_DERIVED) {
-         shift_cnt = ffs(selector) - 1;
-         assert(shift_cnt >= 0);
-         events[j] = correct[shift_cnt];
-      }
-
-      /* If this is a derived event */
-
-      else
-         events[j] = handle_derived(&ESI->EventInfoArray[i], correct);
-
-      /* Early exit! */
-
-      if (++j == ESI->NumberOfEvents)
-         return (PAPI_OK);
-   }
-
-   /* Should never get here */
-
-   return (PAPI_EBUG);
+   pmctr = (pmctr_t *) & pc_data[0];
+   events[0] = (pc_data[1] << 16) + pmctr->CTR0;
+   events[1] = (pc_data[2] << 16) + pmctr->CTR1;
+   events[2] = (pc_data[3] << 14) + pmctr->CTR2;
+   return(PAPI_OK);
 }
 
 int _papi_hwd_setmaxmem()
