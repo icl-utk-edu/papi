@@ -1,21 +1,31 @@
 # $Id$
+
+DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+SUBSTR  = perfctr-$(CPU)
+MSUBSTR = linux-perfctr-$(CPU)
+MEMSUBSTR= linux
+LIBS    = static shared
+TARGETS = serial multiplex_and_pthreads shared
+
 #
 # GNU G77/GCC section
 #
+
 F77   		= g77 -Wall
 CC		= gcc -Wall
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
 ifeq (,$(GCCVER3))
-OPTFLAGS	+= -g -DDEBUG
-# -O -g -DDEBUG
+OPTFLAGS	= 
 else
 GCCVER33	= $(shell gcc -v 2>&1 | tail -n 1 | grep version | cut -f3 -d" " | cut -f2 -d"." | grep "^3")
 ifeq (,$(GCCVER33))
-OPTFLAGS	+= $(GCC3ARGS) -g -DDEBUG
+OPTFLAGS	= $(GCC3ARGS)
 else
-OPTFLAGS	+= $(GCC3ARGS) -g -DDEBUG
+OPTFLAGS	= $(GCC3ARGS)
 endif
 endif
 
@@ -25,24 +35,55 @@ SHRFLAGS	:= -fPIC
 LIB_SUFFIX	:= 64
 endif
 
-# Flags for test programs
-FFLAGS        	+= -Dlinux -ffixed-line-length-132
-TOPTFLAGS	+= -O -g 
-FTOPTFLAGS	= $(TOPTFLAGS)
 # 
-# #  Portland Group PGF77 section
-# #
-# F77       = pgf77
-# FFLAGS    = -O3 -Dlinux
-# FTOPTFLAGS= $(FOPTFLAGS)
-# #
-# #  Intel Corp. Fortran compiler
-# #
-# F77      = ifc
-# FFLAGS   = -Dlinux
-# LDFLAGS  = -lPEPCF90 -lIEPCF90 -lF90 -lintrins # Intel portability library (getarg_)
-# FOPTFLAGS= -O3 -tpp6
-# FTOPTFLAGS= $(FOPTFLAGS)
+# Portland Group section
+# 
+
+ifeq (PGROUP, $(COMPILER))
+F77       = pgf77
+CC	  = pgcc
+FFLAGS    = 
+OPTFLAGS  =
+TARGETS	  += omp
+endif
+
+# 
+# Pathscale Group PGF77 section
+# 
+
+ifeq (PATHSCALE, $(COMPILER))
+F77       = pathf90
+CC	  = pathcc
+CC_R      = pathcc
+FFLAGS    = 
+OPTFLAGS  =
+endif
+
+#
+#  Intel compilers
+#
+
+ifeq (INTEL, $(COMPILER))
+IFCVER7  = $(shell ifc -V 2>&1 | grep "Version 7")
+ifneq (,$(IFCVER7))
+F77      = ifc
+LDFLAGS  = -Vaxlib
+else
+F77      = ifort
+endif
+CC	 = icc
+CC_R	 = $(CC) -pthread
+CC_SHR	 = $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+OMPCFLGS = -openmp
+OPTFLAGS = -ip
+FFLAGS   = -132
+TARGETS	 += omp
+endif
+
+OPTFLAGS	+= -O3
+FFLAGS        	+= -Dlinux
+TOPTFLAGS	+= -O  
+FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -58,15 +99,6 @@ PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib$(LIB_SUFFIX)
 PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
 PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
-
-DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
-LIBRARY = libpapi.a
-SHLIB   = libpapi.so
-SUBSTR  = perfctr-$(CPU)
-MSUBSTR = linux-perfctr-$(CPU)
-MEMSUBSTR= linux
-LIBS    = static shared
-TARGETS = serial multiplex_and_pthreads shared
 
 # This is a terrible idea
 # Lines like this are a hack and should never be included.

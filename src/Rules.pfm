@@ -1,11 +1,44 @@
 # $Id$
+
+DESCR   = "Linux with PFM $(VERSION) kernel support and library"
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
+SUBSTR  = linux-ia64
+MEMSUBSTR= linux-ia64
+LIBS	= static shared
+TARGETS = serial multiplex_and_pthreads shared
+
 #
 # GNU G77/GCC section
 #
+
 F77   		= g77 -Wall
 CC		= gcc -Wall 
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+FFLAGS		= -ffixed-line-length-132
+
+#
+#  Intel compilers
+#
+
+ifeq (INTEL, $(COMPILER))
+IFCVER7  = $(shell efc -V 2>&1 | grep "Version 7")
+ifneq (,$(IFCVER7))
+F77      = efc
+CC	 = ecc 
+else
+F77      = ifort
+CC	 = icc
+endif
+CC_R	 = $(CC) -pthread
+CC_SHR	 = $(CC) $(SHRFLAGS) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+OMPCFLGS = -openmp
+OPTFLAGS = -ip
+FFLAGS   = -132
+TARGETS	 += omp
+endif
+
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
 POST_BUILD	=
 SPECIAL_REMOVE =
@@ -20,10 +53,8 @@ VERSION ?= 3.0
 endif
 endif
 	
-OPTFLAGS	+= -O3
-
-# Flags for test programs
-FFLAGS        	+= -Dlinux -ffixed-line-length-132  -DITANIUM$(CPU)
+OPTFLAGS	+= -O3 # -DDEBUG -g
+FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
 TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
@@ -44,14 +75,6 @@ PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
 PFM_INC_PATH ?= $(PFM_PREFIX)/include
 endif
 
-DESCR   = "Linux with PFM $(VERSION) kernel support and library"
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
-SUBSTR  = linux-ia64
-MEMSUBSTR= linux-ia64
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads shared
-
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) 
 
 CFLAGS-2.0 := -DPFM20 -D_GNU_SOURCE
@@ -63,7 +86,7 @@ PFM_OBJS-3.0 := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itaniu
 CFLAGS += $(CFLAGS-$(VERSION))
 PFM_OBJS := $(PFM_OBJS-$(VERSION))  
 
-MISCHDRS = 
+MISCHDRS = pfmwrap.h
 MISCSRCS = linux.c
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
