@@ -19,13 +19,47 @@
    substrate. */
 
 typedef struct {
+  struct _EventSetInfo *ESI;
   int eventindex; /* In EventCodeArray, < 0 means no overflow active */
-  long long deadline; /* Next expiration */
+  unsigned long long deadline; /* Next expiration */
   int milliseconds;   /* Interval in milliseconds of simulated overflow */
-  papi_overflow_option_t option; } _papi_overflow_info_t;
+  PAPI_overflow_option_t overflow; } _papi_int_overflow_t;
 
 typedef struct {
-  papi_multiplex_option_t option; } _papi_multiplex_info_t;
+  struct _EventSetInfo *ESI;
+  PAPI_multiplex_option_t multiplex; } _papi_int_multiplex_t;
+
+typedef struct {
+  struct _EventSetInfo *ESI;
+  PAPI_domain_option_t domain; } _papi_int_domain_t;
+
+typedef struct {
+  PAPI_defdomain_option_t defdomain; } _papi_int_defdomain_t;
+
+typedef struct {
+  struct _EventSetInfo *ESI;
+  PAPI_granularity_option_t granularity; } _papi_int_granularity_t;
+
+typedef struct {
+  PAPI_defgranularity_option_t defgranularity; } _papi_int_defgranularity_t;
+
+/* The following is stored in each EventSetInfo */
+
+typedef struct {
+  _papi_int_overflow_t overflow;
+  _papi_int_multiplex_t multiplex;
+  _papi_int_domain_t domain; 
+  _papi_int_granularity_t granularity; } _papi_int_alloptions_t;
+
+/* A pointer to the following is passed to _papi_hwd_ctl() */
+
+typedef union {
+  _papi_int_overflow_t overflow;
+  _papi_int_multiplex_t multiplex;
+  _papi_int_defdomain_t defdomain; 
+  _papi_int_domain_t domain; 
+  _papi_int_defgranularity_t defgranularity; 
+  _papi_int_granularity_t granularity; } _papi_int_option_t;
 
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
@@ -38,20 +72,19 @@ typedef struct _EventSetInfo {
                          will contain the encoding necessary for the 
                          hardware to set the counters to the appropriate
                          conditions*/
-  long long *start;   /* Array of length _papi_system_info.num_gp_cntrs
+  unsigned long long *start;   /* Array of length _papi_system_info.num_gp_cntrs
                          + _papi_system_info.num_sp_cntrs 
                          This will most likely be zero for most cases*/
-  long long *stop;    /* Array of the same length as above, but 
+  unsigned long long *stop;    /* Array of the same length as above, but 
                          containing the values of the counters when 
                          stopped */
-  long long *latest;  /* Array of the same length as above, containing 
+  unsigned long long *latest;  /* Array of the same length as above, containing 
                          the values of the counters when last read */ 
   int state;          /* The state of this entire EventSet; can be
 			 PAPI_RUNNING or PAPI_STOPPED. */
-  _papi_overflow_info_t overflow; /* Overflow information and user options */ 
-  _papi_multiplex_info_t multiplex; /* Overflow information and user options */ 
-  int granularity;
-  int domain;
+
+  _papi_int_alloptions_t all_options; /* All options */
+
 } EventSetInfo;
 
 typedef struct _dynamic_array{
@@ -74,7 +107,7 @@ typedef struct _papi_mdi {
   
 /* The following variables define the length of the arrays in the 
    EventSetInfo structure. Each array is of length num_gp_cntrs + 
-   num_sp_cntrs * sizeof(long long) */
+   num_sp_cntrs * sizeof(unsigned long long) */
 
   int num_cntrs;   /* Number of counters returned by a substrate read/write */
                       
@@ -104,32 +137,28 @@ extern int _papi_hwd_init(EventSetInfo *zero);   /* members start,
                          stop, and latest not defined. 
                          For use in keeping track of overlapping 
                          multiple running EventSets */
-extern int _papi_hwd_add_event(void *machdep, int event);
-extern int _papi_hwd_rem_event(void *machdep, int event);
-extern int _papi_hwd_add_prog_event(void *machdep, int event, void *extra); 
+extern int _papi_hwd_add_event(EventSetInfo *machdep, unsigned int event);
+extern int _papi_hwd_rem_event(EventSetInfo *machdep, unsigned int event);
+extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, unsigned int event, void *extra); 
                       /* the extra will be for programmable events 
                          such as the threshold setting on IBM cache 
                          misses */
-extern int _papi_hwd_start(EventSetInfo *value);
-extern int _papi_hwd_stop(void *machdep, long long events[]); 
+extern int _papi_hwd_start(EventSetInfo *);
+extern int _papi_hwd_stop(EventSetInfo *, unsigned long long events[]); 
                       /* counters will be read in stop call */
-extern int _papi_hwd_reset(void *machdep);
-extern int _papi_hwd_read(void *machdep, long long events[]);
-extern int _papi_hwd_write(void *machdep, long long events[]);
+extern int _papi_hwd_reset(EventSetInfo *);
+extern int _papi_hwd_read(EventSetInfo *, unsigned long long events[]);
+extern int _papi_hwd_write(EventSetInfo *, unsigned long long events[]);
                       /* the following two functions will be used to
                          set machine dependent options such as the 
                          context and granularity functions available
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
-extern int _papi_hwd_setopt(int code, EventSetInfo *value, PAPI_option_t *option);
-extern int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option);
-extern int _papi_hwd_set_gran(int code, EventSetInfo *value);
-extern int _papi_hwd_set_domain(int code, EventSetInfo *value);
-
+extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
 
 /* Portable overflow routines */
 
-extern int _papi_portable_set_overflow(EventSetInfo *value, papi_overflow_option_t *ptr);
-extern int _papi_portable_get_overflow(EventSetInfo *value, papi_overflow_option_t *ptr);
-extern int _papi_portable_set_multiplex(EventSetInfo *value, papi_multiplex_option_t *ptr);
-extern int _papi_portable_get_multiplex(EventSetInfo *value, papi_multiplex_option_t *ptr);
+extern int _papi_portable_set_overflow(EventSetInfo *value, _papi_int_overflow_t *ptr);
+extern int _papi_portable_get_overflow(EventSetInfo *value, _papi_int_overflow_t *ptr);
+extern int _papi_portable_set_multiplex(EventSetInfo *value, _papi_int_multiplex_t *ptr);
+extern int _papi_portable_get_multiplex(EventSetInfo *value, _papi_int_multiplex_t *ptr);
