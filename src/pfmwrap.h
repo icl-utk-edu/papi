@@ -244,13 +244,15 @@ hweight64 (unsigned long x)
    }
 
    inline int pfmw_destroy_context(void) {
-      int *fd, ret;
-      _papi_hwi_get_thr_context((void **)&fd);
+      int ret;
+      hwd_context_t *thr_ctx; 
+      void *tmp;
+      _papi_hwi_get_thr_context(&tmp);
 /*
       printf("fd of the thread = %d\n", *fd);
 */
-
-      ret=close(*fd);
+      thr_ctx = (hwd_context_t *)tmp;
+      ret=close(thr_ctx->fd);
       if (ret) return PAPI_ESYS;
       else return PAPI_OK;
    }
@@ -369,6 +371,7 @@ hweight64 (unsigned long x)
       int ctx_fd;
       int native_index, EventCode, pos;
       hwd_context_t *thr_ctx;
+      void *tmp_ptr;
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
@@ -403,7 +406,8 @@ hweight64 (unsigned long x)
        */
       ctx_fd = ctx[0].ctx_arg.ctx_fd;
       /* save the fd into the thread context struct */
-      _papi_hwi_get_thr_context((void **)&thr_ctx);
+      _papi_hwi_get_thr_context(&tmp_ptr);
+      thr_ctx = (hwd_context_t *) tmp_ptr;
       thr_ctx->fd=ctx_fd;
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */
