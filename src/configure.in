@@ -36,7 +36,7 @@ AC_CHECK_LIB([lipr], [main])
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h memory.h stddef.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/systeminfo.h sys/time.h unistd.h])
+#AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h memory.h stddef.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/systeminfo.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -63,7 +63,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRCOLL
 AC_FUNC_STRERROR_R
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
+#AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
 
 AC_ARG_WITH(bitmode,
             [  --with-bitmode=bitmode              32/64 bit mode library],
@@ -77,7 +77,7 @@ AC_SUBST($bitmode)
 OS="`uname | tr A-Z a-z`"
 case "$OS" in
   cygwin*) OS=cygwin;;
-  sunos)   OS=solaris ;;
+  SunOS)   OS=solaris ;;
   irix64)  OS=irix ;;
   "unicos/mp") OS=unicos;;
 esac
@@ -130,7 +130,7 @@ case "$OS" in
          processor=`uname -p`
            #this determines if its an Ultrasparc I,II,or III
          if test "$processor" = "sparc"; then
-           CPU=`sysinfo | egrep UltraSPARC | cut -d '"' -f 2 | cut -d ' ' -f 2`
+           CPU=`uname -a | egrep Ultra`
            if test "$CPU" = ""; then
              echo "Sorry but for Solaris you need to have an Ultrasparc for PAPI to work"
              exit 1
