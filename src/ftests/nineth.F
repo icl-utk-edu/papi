@@ -113,8 +113,8 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-      test_flops = values(1)*clockrate*1000000.0;
-      test_flops = test_flops / values(2);
+      test_flops = values(1)*clockrate*1000000.0
+      test_flops = test_flops / values(2)
     
 
       print *, "Test case 9: start, stop for derived event PAPI_FLOPS"

@@ -45,7 +45,5 @@
       print *,'PAPIf_get_real_cyc : ',(total_cyc/(ITERS-1))
       print *,'PAPIf_get_real_usec: ',(total_usec/(ITERS-1))
 
-      call PAPIf_shutdown()
-  
       call ftests_pass(__FILE__)
       end

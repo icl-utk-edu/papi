@@ -148,8 +148,6 @@
       write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
      *          values(6), values(8), values(10)
 
-      write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
-     *          values(6), values(8), values(10)
  100  format(a13, ":  ", i11, i11, i11, i11, i11)
       print *, "--------------------------------------------------------------
      *--------------------"

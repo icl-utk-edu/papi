@@ -13,7 +13,7 @@
       External len_trim
 
 #if (defined(sgi) && defined(host_mips))
-      integer id
+      integer id, getuid 
       id = getuid()
 #endif
 
@@ -23,10 +23,6 @@
         call ftests_perror(__LINE__,'Error in PAPI_library_init ')
         call ftests_fail(__FILE__,retval)
       end if
-
-#if defined(NO_FLOPS)
-      call ftests_pass(__FILE__)
-#endif
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
@@ -40,12 +36,22 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#ifndef NO_FLOPS
       call PAPIf_add_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
+#else
+      call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#endif
+
       
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -60,12 +66,21 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#ifndef NO_FLOPS
       call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
+#else
+      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#endif
       
       call PAPIf_add_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -80,12 +95,21 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#ifndef NO_FLOPS
       call PAPIf_add_event( es3, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
+#else
+      call PAPIf_add_event( es3, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#endif
       
       call PAPIf_add_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -251,7 +275,7 @@
          min = values(2)*0.9
          max = values(2)*1.1
          if (((values(4)+values(6)) .lt. min) .OR. 
-        *    ((values(4)+values(6)) .gt. max)) then
+     *       ((values(4)+values(6)) .gt. max)) then
             call ftests_perror(__LINE__,'Verification Failed')
             call ftests_fail(__FILE__,1)
          end if            

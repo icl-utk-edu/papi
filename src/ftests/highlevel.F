@@ -10,13 +10,13 @@
       integer retval, errorcode
       character*(PAPI_MAX_STR_LEN) errorstring
 
+      eventnum = 2
       call PAPIf_num_counters(availcounters)
       if (eventnum .GT. availcounters) then
          print *, "Not enough hardware counters!"
          stop
       end if
 
-      eventnum = 2
 #if defined(NO_FLOPS)
       events(1)=PAPI_TOT_INS
 #else

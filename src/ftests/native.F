@@ -235,7 +235,7 @@ C     DC_wr_hit
 
       print *, "-------------Monitor Point ", point,
      *"-------------"
-      rsec = usn/1000000.0;
+      rsec = usn/1000000.0
       print *, "Real Elapsed Time in sec.  : ", rsec
 #if defined(_AIX)
       csec = values(5)/ (mhz*1000000.0)
@@ -265,8 +265,8 @@ C     DC_wr_hit
 #endif
 
 #if (defined(mips) && defined(sgi))
-      print *, "L1 Instruction cache misses       : ", values(0)
-      print *, "L1 Data cache misses              : ", values(1)      
+      print *, "L1 Instruction cache misses       : ", values(1)
+      print *, "L1 Data cache misses              : ", values(2)      
 #endif
 
 #if defined(_CRAYT3E)

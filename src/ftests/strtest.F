@@ -34,7 +34,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       CHARACTER*(MSGLEN-1) invstr4
       CHARACTER*(MSGLEN-2) invstr5
 
-      integer i,check,len,code,retcode,lastchar,papicode
+      integer i,check,len,retcode,lastchar
+      integer*8 code,papicode
       integer getstrlen
       external getstrlen
 
