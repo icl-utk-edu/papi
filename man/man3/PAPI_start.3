@@ -5,6 +5,12 @@
 PAPI_start, PAPI_stop \- start/stop counting hardware events in an EventSet
 
 .SH SYNOPSIS
+.B #include <papi.h>
+
+.BI "int\ PAPI_start(int " EventSet ");"
+
+.BI "int\ PAPI_stop(int " EventSet ", long long *" values ");"
+
 
 .SH RETURN VALUES
 On success, this function returns
@@ -29,7 +35,7 @@ The EventSet is currently counting events.
 .B (PAPI_start() only)
 .TP
 .B "PAPI_ENOTRUN"
-The EventSet is currently counting events. 
+The EventSet is currently not running.
 .B (PAPI_stop() only)
 .TP
 .B "PAPI_ECNFLCT"

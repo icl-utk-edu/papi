@@ -2,9 +2,14 @@
 .TH PAPI_read "October, 2000" "" "PAPI"
 
 .SH NAME
-PAPI_read, PAPI_accum \- read, accumulate and reset hardware events from an EventSet
+PAPI_read, PAPI_accum \- read and reset, accumulate and reset hardware events from an EventSet
 
 .SH SYNOPSIS
+
+.BI "int\ PAPI_read(int " EventSet ", long long *" values ");"
+
+.BI "int\ PAPI_accum(int " EventSet ", long long *" values ");"
+
 
 .SH RETURN VALUES
 On success, this function returns
