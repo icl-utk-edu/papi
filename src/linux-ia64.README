@@ -19,6 +19,7 @@ PAPI_FLOPS or PAPI_FP_INS.
 
 Linux/IA64 2.4 Kernel Notes
 ---------------------------
+  papi3.0 with libpfm2.0 can be run with this kernel
 
 In order to use this software, you may have to patch your 
 kernel with the latest patches from the following web site.
@@ -30,92 +31,36 @@ kernel, check the Linux HOWTO's on the web.
 
 		http://www.linuxhq.com.
 
-Linux/IA64 2.4 Native Event Notes
+Linux/IA64 2.6 Kernel Notes
+  This kernel is needed to run papi3.0 with libpfm3.0
+
+Linux/IA64  Native Event Notes
 ---------------------------------
 
-For *all* the native event codes, see the pme_list.h header file in the
-libpfm subdirectory.
-
-The native event counter format is as follows: (fits in 32 bits *)
-
-typedef union {
-	unsigned int  papi_native_all;	/* integer encoding */
-	struct	{
-	unsigned int register_no:8;	/* 4, 5, 6 or 7 */
-	unsigned int pme_mcode:8;	/* major event code */
-	unsigned int pme_ear:1;		/* is EAR event */
-	unsigned int pme_dear:1;	/* 1=Data 0=Instr */
-	unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
-	unsigned int pme_umask:13;	/* unit mask */
-	} papi_native_bits;
-} papi_native_code_t;
+For *all* the native event names, run native_avail under ctests 
+subdirectory.
 
 
 Known Problems
 --------------
 
-- Overflow is not working correctly on the itanium and will be fixed
-  in the next release.
 
 Notes on PAPI->Native event mappings
 ------------------------------------
+
 PAPI_CA_SNP
 PAPI_CA_INV
  Only counts snoops and invalidations from the local processor.
 PAPI_TLB_TL
  Counts "real" TLB misses, i.e. misses that cause a VHPT walk or a TLB
  miss trap to the OS. Misses in the L1 TLBs are not counted.
-PAPI_INT_INS
- Counts instructions retired by the I-units. Since some types of
- integer instructions can be executed on M-units this counter may
- understate the actual amount of integer instructions retired.
 PAPI_FP_STAL
  Counts stalls due to register dependencies and load latencies.
  If the FP pipeline can stall for some other reason (I don't know)
  then those stall cycles won't be counted.
-PAPI_FSQ_INS
- Counts frsqrta and fprsqrta instructions.
 
 
 Notes on Itanium counter encoding used in linux-ia64.c
 ------------------------------------------------------
 
-The IA64 instructions are 41 bits long and issue to specific
-functional units depending on the template bits in a instruction
-bundle.
-
-The format for opcode matching is <match pattern>@<eventname> where the
-match pattern is the hexadecimal representation of the following bit
-pattern:
-
-        6..6 5........54........43.....3 3.3 2........21........10.....0 0 00
-Bit     3210 987654321098765432109876543 210 987654321098765432109876543 2 10
-Value:  MIFB <--------- match ---------> 000 <-------- mask -----------> 1 11 
-
-Bit 63:60 select the functional unit (memory, integer, floating point
-or branch) that the operation should be assigned to (note that some
-integer operations may be executed on memory units). A bit set to
-one in the mask part means that the corresponding bit in the opcode
-will be ignored in the match comparison.
-
-Bits 59:46 specify a pattern to match for in bits 40:27 of the opcode.
-Bits 45:33 specify a pattern to match for in bits 12:0 of the opcode.
-Bits 32:30 are reserved and should be zero.
-Bits 29:16 specify a mask to apply to bits 40:27 of the opcode.
-Bits 15:3 specify a mask to apply to bits 12:0 of the opcode.
-Bit 2 must always be set to 1
-Bit 1:0 specify instruction address range checking parameters and
- should be set to 1 when this features is not used.
-
-For example:
- PAPI_INT_INS: "400000003FFFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8"
-
-
-See "Intel Itanium 2 Processor Reference Manual : For Software
-Development and Optimization" for information about the opcode matcher.
-See "Intel Itanium Architecture Software Developer's Manual : Volume
-3: Instruction Set Reference" for information about the instruction
-encodings. 
-As of january 2003 these can be found at
-http://developer.intel.com/design/itanium/arch_spec.htm
 
