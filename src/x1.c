@@ -1063,3 +1063,32 @@ void _papi_hwd_unlock(int index)
  */
   release_lock(&lck[index]);
 }
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+  char buf[128];
+  int chip;
+  
+  if ( count == 0 ) return(0);
+
+  chip = X1_CHIP_DECODE(bits->event);
+  sprintf(buf, "Chip: %d", ((chip==_P_)?"P":(chip==_E_)?"E":"M"));
+  strncpy(names, buf, name_len);
+  if ( count==1 ) return(1);
+
+  sprintf(buf, "Counter: %d", X1_CHIP_DECODE(bits->event));
+  strncpy(&names[name_len], buf, name_len);
+  if ( count==2 ) return(2);
+
+  sprintf(buf, "Event: %d", X1_EVENT_DECODE(bits->event));
+  strncpy(&names[name_len*2], buf, name_len);
+
+  return(3);  
+}
+
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+{
+   bits->event = EventCode;
+}
+
