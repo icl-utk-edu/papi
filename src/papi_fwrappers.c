@@ -257,7 +257,7 @@ PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *check))
   *check = PAPI_perror(*code, tmp, PAPI_MAX_STR_LEN);
   /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
   strncpy(destination_str,tmp,destination_len);
-  /* overwrite any NULLs and trailing garbage in destinaion_str */
+  /* overwrite any NULLs and trailing garbage in destination_str */
   for(i=strlen(tmp);i<destination_len;destination_str[i++]=' ');
 #else
   /* Assume that the underlying Fortran implementation 
