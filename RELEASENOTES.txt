@@ -217,12 +217,3 @@ Known Bugs:
   IA64 update. 2.6 kernels do not have this issue. If you have a kernel
   that exhibits this problem, please send the name to us.
 
-* src/aix.c:
-  - On AIX/Power 4 systems, using highly threaded programs and multiplexing
-  occasionally fails. We believe this is due to a bug in the underlying PMAPI
-  subsystem that loses context. With low number of threads, this doesn't
-  happen. This can be seen by running the kufrin test case. This has been 
-  verified on a system with 5.2.0.50 of the Base Operating System and
-  5.2.0.40 of the Performance Monitor API Kernel.
-
-  
