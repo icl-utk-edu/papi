@@ -107,7 +107,7 @@ fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) do_loops.o
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) do_loops.o -o fmultiplex2 $(LDFLAGS)
 
 clean:
-	rm -f *.o $(TESTS) core *~
+	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
 install: default
 	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
