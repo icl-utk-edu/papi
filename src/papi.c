@@ -1595,7 +1595,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
    EventSetInfo_t *ESI;
    int i,j;
 
-   if ((Events == NULL) || (number <= 0))
+   if ((Events == NULL) || (*number <= 0))
       papi_return(PAPI_EINVAL);
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
