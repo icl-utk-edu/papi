@@ -11,12 +11,13 @@ volatile long_long z = -101010101;
 
 void do_flops(int n)
 {
-  int i;
+  extern void dummy(void *);
+  int i; 
   double c = 0.11;
 
-  for (i=0; i < n; i++) {
+  for (i=0; i < n; i++)
     c += a * b;
-  }
+  dummy((void*) &c);
 }
 
 void do_reads(int n)
@@ -52,7 +53,7 @@ void do_l1misses(int n)
 
   for (j=0; j < n; j++) 
     for (i=0; i < L1_MISS_BUFFER_SIZE_INTS; i++) 
-      buf[i] = buf[L1_MISS_BUFFER_SIZE_INTS-i-1] + 1;
+      buf[i] = buf[L1_MISS_BUFFER_SIZE_INTS-i] + 1;
 }	
 
 void do_both(int n)
@@ -65,6 +66,7 @@ void do_both(int n)
       for (j=0; j < n; j++) 
 	c += a*b;
       for (j=0;j<L1_MISS_BUFFER_SIZE_INTS;j++)
-	buf[j] = buf[L1_MISS_BUFFER_SIZE_INTS-j-1] + 1;
+	buf[j] = buf[L1_MISS_BUFFER_SIZE_INTS-j] + 1;
     }
 }
+
