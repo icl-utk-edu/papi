@@ -1342,7 +1342,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    } else
       ESI->overflow.timer_ms = PAPI_ITIMER_MS;
 
-
+   APIDBG("Overflow using: %s\n", (_papi_hwi_system_info.using_hw_overflow?"[Hardware]":"[Software]"));
    /* Toggle the overflow flag */
    if ((ESI->overflow.event_counter == 1 && threshold > 0) ||
        (ESI->overflow.event_counter == 0 && threshold == 0))

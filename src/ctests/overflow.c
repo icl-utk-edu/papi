@@ -115,7 +115,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
    num_flops = NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
    num_flops *= 2;
 #endif
 
@@ -136,8 +136,13 @@ int main(int argc, char **argv)
       printf("-----------------------------------------------\n");
 
       printf("Verification:\n");
-      if (PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS)
+      if (PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS){
+#if defined(__crayx1)
+         printf("Row 1 approximately equals %d %d\n", num_flops, 0);
+#else
          printf("Row 1 approximately equals %d %d\n", num_flops, num_flops);
+#endif
+      }
       printf("Column 1 approximately equals column 2\n");
       printf("Row 3 approximately equals %u +- %u %%\n",
              (unsigned) ((values[0])[0] / (long_long) mythreshold),

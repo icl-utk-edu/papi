@@ -571,6 +571,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
       _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       _papi_hwi_using_signal++;
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_system_info.using_hw_overflow = 1;
   }
   return(retval);
 }
@@ -774,10 +775,12 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
               return(PAPI_ENOEVNT);
            }
            /* Default to ssp 0, since we don't map different ssp's to different events */
+/*
            if ( (counter<<X1_EVENT_DECODE(native[i].ni_event)<<1)&this_state->p_evtctr[0].hwp_events){
               SUBDBG("Conflict adding event: %d.\n", native[i].ni_event);
               return(PAPI_ECNFLCT);
            }
+*/
            for( j=0; j<NUM_SSP; j++) {
               this_state->p_evtctr[j].hwp_events |= (counter<<X1_EVENT_DECODE(native[i].ni_event)<<1); 
            }   
