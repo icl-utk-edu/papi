@@ -151,8 +151,6 @@ static void enableButtons(HWND hDlg) {
 	}
 	// if we don't have the driver, we shouldn't run any examples
 	if (!findDriver()) {
-		itemHndl = GetDlgItem(hDlg, IDSMOKE);
-		EnableWindow(itemHndl, 0);
 		itemHndl = GetDlgItem(hDlg, IDCEX);
 		EnableWindow(itemHndl, 0);
 		itemHndl = GetDlgItem(hDlg, IDFORTRANEX);
@@ -387,7 +385,7 @@ static BOOL UniProcessorBuild(void)
 			 0);                    // No template
 
 	if (hDriver == INVALID_HANDLE_VALUE)
-		MessageBox(NULL,"Bummer","Driver Load Failed.",MB_OK);
+		MessageBox(NULL,"Bummer...","PMC Kernel Driver Load Failed.",MB_OK);
 	else {
 		// Send a request to the driver. The request code is TASKSWITCH, no parameters
 		bReturnCode = DeviceIoControl(hDriver, TASKSWITCH, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
