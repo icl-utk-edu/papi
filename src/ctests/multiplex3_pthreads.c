@@ -117,7 +117,7 @@ void mainloop(int arg)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   test_print_event_header("multiplex3_pthreads:", EventSet);
+   test_print_event_header("multiplex3_pthreads:\n", EventSet);
    for (i = 0; i < MAX_TO_ADD; i++) {
      printf(ONENUM, values[i]);
      if (values[i] == 0)

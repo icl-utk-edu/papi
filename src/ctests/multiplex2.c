@@ -93,7 +93,7 @@ int case1(void)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   test_print_event_header("multiplex2:", EventSet);
+   test_print_event_header("multiplex2:\n", EventSet);
    for (i = 0; i < MAX_TO_ADD; i++) {
      printf(ONENUM, values[i]);
      if (values[i] == 0)
