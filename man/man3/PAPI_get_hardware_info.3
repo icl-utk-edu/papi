@@ -60,6 +60,9 @@ or explicitly returned by Fortran.
 .I mhz
 --  Cycle time of this CPU; *may* be an estimate
 generated at init time with a quick timing routine
+.LP
+.I mem_hierarchy
+-- PAPI memory heirarchy description
 
 .SH RETURN VALUES
 On success, the C function returns a non-NULL pointer, 
@@ -95,52 +98,44 @@ The C data structure returned by this function is found in
 .LP
 .nf
 .if t .ft CW
+   typedef struct _papi_mh_tlb_info {
+      int type; /* Empty, instr, data, vector, unified */
+      int num_entries;
+      int associativity;
+   } PAPI_mh_tlb_info_t;
+
+   typedef struct _papi_mh_cache_info {
+      int type; /* Empty, instr, data, vector, unified */
+      int size;
+      int line_size;
+      int num_lines;
+      int associativity;
+   } PAPI_mh_cache_info_t;
+
+   typedef struct _papi_mh_level_info {
+      PAPI_mh_tlb_info_t   tlb[2];
+      PAPI_mh_cache_info_t cache[2];
+   } PAPI_mh_level_t;
+
+   typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
+      int levels;
+      PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+   } PAPI_mh_info_t;
+
    typedef struct _papi_hw_info {
-      int ncpu;                 /* Number of CPU's in an SMP Node */
-      int nnodes;               /* Number of Nodes in the entire system */
-      int totalcpus;            /* Total number of CPU's in the entire system */
-      int vendor;               /* Vendor number of CPU */
+      int ncpu;                     /* Number of CPU's in an SMP Node */
+      int nnodes;                   /* Number of Nodes in the entire system */
+      int totalcpus;                /* Total number of CPU's in the entire system */
+      int vendor;                   /* Vendor number of CPU */
       char vendor_string[PAPI_MAX_STR_LEN];     /* Vendor string of CPU */
-      int model;                /* Model number of CPU */
+      int model;                    /* Model number of CPU */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
-      float revision;           /* Revision of CPU */
-      float mhz;                /* Cycle time of this CPU, *may* be estimated at 
-                                   init time with a quick timing routine */
-
-      /* Memory Information */
-      int L1_tlb_size;          /*Data + Instruction Size */
-      int L1_itlb_size;         /*Instruction TLB size in KB */
-      short int L1_itlb_assoc;  /*Instruction TLB associtivity */
-      int L1_dtlb_size;         /*Data TLB size in KB */
-      short L1_dtlb_assoc;      /*Data TLB associtivity */
-
-      int L2_tlb_size;          /*Data + Instruction Size */
-      int L2_itlb_size;         /*Instruction TLB size in KB */
-      short int L2_itlb_assoc;  /*Instruction TLB associtivity */
-      int L2_dtlb_size;         /*Data TLB size in KB */
-      short L2_dtlb_assoc;      /*Data TLB associtivity */
-
-      int L1_size;              /* I+D */
-      int L1_icache_size;       /*Level 1 instruction cache size in KB */
-      short int L1_icache_assoc; /*Level 1 instruction cache associtivity */
-      int L1_icache_lines;      /*Number of lines in Level 1 instruction cache */
-      int L1_icache_linesize;   /*Line size in KB of Level 1 instruction cache */
-
-      int L1_dcache_size;       /*Level 1 data cache size in KB */
-      short int L1_dcache_assoc; /*Level 1 data cache associtivity */
-      int L1_dcache_lines;      /*Number of lines in Level 1 data cache */
-      int L1_dcache_linesize;   /*Line size in KB of Level 1 data cache */
-
-      int L2_cache_size;        /*Level 2 cache size in KB */
-      short int L2_cache_assoc; /*Level 2 cache associtivity */
-      int L2_cache_lines;       /*Number of lines in Level 2 cache */
-      int L2_cache_linesize;    /*Line size in KB of Level 2 cache */
-
-      int L3_cache_size;        /*Level 3 cache size in KB */
-      short int L3_cache_assoc; /*Level 3 cache associtivity */
-      int L3_cache_lines;       /*Number of lines in Level 3 cache */
-      int L3_cache_linesize;    /*Line size of Level 3 cache */
+      float revision;               /* Revision of CPU */
+      float mhz;                    /* Cycle time of this CPU, *may* be estimated at 
+                                       init time with a quick timing routine */
+     PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
+
 .if t .ft P
 .fi
 
@@ -151,6 +146,6 @@ the behavior of the routine is undefined.
 
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
-.BR PAPI_get_opt "(3), " 
 .BR PAPI_get_dmem_info "(3), "
+.BR PAPI_get_opt "(3), "
 .BR PAPI_get_executable_info "(3)"
