@@ -1,8 +1,8 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
-SOURCES	  = $(MISCSRCS) papi.c papi_hl.c $(SUBSTR).c extras.c \
+SOURCES	  = $(MISCSRCS) papi.c papi_hl.c $(SUBSTR).c extras.c multiplex.c \
 	    papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
-OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o \
+OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o multiplex.o \
 	    papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
@@ -46,6 +46,8 @@ papi_hl.o: papi_hl.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o
 extras.o: extras.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c extras.c -o extras.o
+multiplex.o: multiplex.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o
 genpapifdef: genpapifdef.c $(LIBRARY)

@@ -10,7 +10,6 @@
 #undef NDEBUG
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 
 #define THR 1000000

@@ -619,8 +619,6 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-/* Do not ever use ESI->NumberOfCounters in here. */
-
 int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -876,7 +874,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	  {
 	    for (j=0;j<not_shared;j++)
 	      {
-		for (i=0;i<ESI->NumberOfCounters;i++)
+		for (i=0;i<ESI->NumberOfEvents;i++)
 		  {
 		    if (ESI->EventInfoArray[i].selector & (1 << index_in_this_not_shared[j]))
 		      {
@@ -896,7 +894,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	    /* Turn off the old bits and gather the new ones */
 	    for (j=0;j<shared;j++)
 	      {
-		for (i=0;i<ESI->NumberOfCounters;i++)
+		for (i=0;i<ESI->NumberOfEvents;i++)
 		  {
 		    if (ESI->EventInfoArray[i].selector & (1 << index_in_this[j]))
 		      {
@@ -910,7 +908,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
 	/* Turn on the new bits in the modified structure to be merged with */
       
-	for (i=0;i<ESI->NumberOfCounters;i++)
+	for (i=0;i<ESI->NumberOfEvents;i++)
 	  {
 	    DBG((stderr,"new_selector_in_this[%d] = 0x%x, new_selector_in_this_not_shared[%d] = 0x%x\n",i,new_selector_in_this[i],i,new_selector_in_this_not_shared[i]));
 	    ESI->EventInfoArray[i].selector = new_selector_in_this[i] | new_selector_in_this_not_shared[i];
@@ -1157,7 +1155,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
 
       /* Early exit! */
 
-      if (++j == ESI->NumberOfCounters)
+      if (++j == ESI->NumberOfEvents)
 	return(PAPI_OK);
     }
 

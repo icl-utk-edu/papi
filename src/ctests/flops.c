@@ -11,6 +11,7 @@
 #define INDEX 100
 
 int main(){
+  extern void dummy(void *);
   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
   float real_time, proc_time, mflops;
   long long flpins;

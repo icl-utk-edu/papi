@@ -24,7 +24,6 @@
 #include <malloc.h>
 #include <sys/time.h>
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 
 #define THRESHOLD 100000

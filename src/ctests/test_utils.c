@@ -5,10 +5,7 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#undef NDEBUG
-#include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 
 long long **allocate_test_space(int num_tests, int num_events)

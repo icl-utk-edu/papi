@@ -12,18 +12,7 @@
 /* This file contains the 'high level' interface to PAPI. 
    BASIC is a high level language. ;-) */
 
-#include <stdio.h>
-#include <malloc.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
-#include <strings.h>
-#include <errno.h>
-
-#include "papi.h"
-#include "papi_internal.h"
-#include "papiStdEventDefs.h"
+#include SUBSTRATE
 
 /* high level papi functions*/
 

@@ -88,13 +88,15 @@ All of the functions in the PerfAPI should use the following set of constants.
 			 	either the user context or the kernel context*/
 #define PAPI_PER_THR     0    /*Counts are accumulated on a per kernel thread basis*/ 	
 #define PAPI_PER_PROC    1    /*Counts are accumulated on a per process basis*/
-#endif
-
 #define PAPI_ONESHOT	 1    /*Option to the overflow handler 2b called once*/
 #define PAPI_RANDOMIZE	 2    /*Option to have the threshold of the overflow
 				handler randomized*/
-#define PAPI_DEF_MPXRES  1000 /*Default resolution in microseconds of the 
-				multiplexing software*/
+#endif
+
+/* Multiplex definitions */
+
+#define PAPI_MPX_DEF_US 10000 /*Default resolution in us. of mpx handler */
+#define PAPI_MPX_DEF_DEG 32 /* Maximum number of counters we can mpx */
 
 /* States of an EventSet */
 
@@ -114,8 +116,14 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes < 0 to stderr and continue. */ 
 #define PAPI_VERB_ESTOP  2     /* Option to automatically report any return codes < 0 to stderr and exit. */
 
+/* Option definitions */
+
 #define PAPI_SET_DEBUG	 2     /* Option to turn on debugging features of the PAPI library*/
 #define PAPI_GET_DEBUG   3     /* Option to query debugging features of the PAPI library*/
+
+#define PAPI_SET_MULTIPLEX 4   /* Turn on/off multiplexing for an eventset */
+
+#define PAPI_GET_MULTIPLEX 5   /* Query multiplexing status for an eventset */
 
 #define PAPI_SET_DEFDOM  6     /* Domain for all new eventsets. Takes non-NULL option pointer. */    
 #define PAPI_GET_DEFDOM  7     /* Domain for all new eventsets. Takes NULL as option pointer. */    
@@ -240,16 +248,25 @@ typedef struct _papi_hw_info {
                                init time with a quick timing routine */
 } PAPI_hw_info_t;
   
+typedef struct _papi_multiplex_option {
+  int eventset;
+  int us;
+  int max_degree; 
+} PAPI_multiplex_option_t;
+
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
 typedef union {
   PAPI_preload_option_t preload;
   PAPI_debug_option_t debug;
+#if 0
   PAPI_inherit_option_t inherit;
+#endif
   PAPI_granularity_option_t granularity; 
   PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
   PAPI_domain_option_t defdomain; 
+  PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 
@@ -284,6 +301,8 @@ unsigned long int PAPI_thread_id(void);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
 void PAPI_lock(void);
+int PAPI_multiplex_init(void);
+int PAPI_set_multiplex(int *);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 		  int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);

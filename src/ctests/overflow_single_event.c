@@ -31,7 +31,6 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 #undef NUM_FLOPS
 

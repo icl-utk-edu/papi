@@ -572,8 +572,6 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-/* Do not ever use ESI->NumberOfCounters in here. */
-
 int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -1002,7 +1000,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
 
       /* Early exit! */
 
-      if (++j == ESI->NumberOfCounters)
+      if (++j == ESI->NumberOfEvents)
 	return(PAPI_OK);
     }
 

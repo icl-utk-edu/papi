@@ -7,7 +7,7 @@
 
 /* PAPI stuff */
 
-#include "linux-perfctr.h"
+#include SUBSTRATE
 
 /* First entry is mask, counter code 1, counter code 2, and TSC. 
 A high bit in the mask entry means it is an OR mask, not an
@@ -715,11 +715,8 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-/* Do not ever use ESI->NumberOfCounters in here. */
-
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
   struct perfctr_control tmp_cmd, *codes;
@@ -762,8 +759,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = &preset_map[preset_index].counter_cmd;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
+      out->command = derived;
+      out->operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
@@ -807,20 +804,22 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+// 434 6613 muky mtn retret 3bd 
+
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int selector, used, preset_index;
+  int selector, used, preset_index, EventCode;
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
+  used = in->selector;
+  EventCode = in->code;
 
   if (EventCode & PRESET_MASK)
     { 
@@ -832,7 +831,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
     }
   else
     {
-      int hwcntr_num, code, old_code;
+      int hwcntr_num, code, old_code; 
 
       /* Support for native events here, only 1 counter at a time. */
 
@@ -841,7 +840,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
-      old_code = ESI->EventInfoArray[index].command;
+      old_code = in->command;
       code = EventCode >> 8; 
       if (old_code != code)
 	return(PAPI_EINVAL);
@@ -861,7 +860,8 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
 {
   return(PAPI_ESBSTR);
 }
@@ -1103,7 +1103,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
 {
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
-  long long correct[MAX_COUNTERS];
+  long long correct[PERF_MAX_COUNTERS];
 
   retval = update_global_hwcounters(zero);
   if (retval)
@@ -1142,7 +1142,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
 
       /* Early exit! */
 
-      if (++j == ESI->NumberOfCounters)
+      if (++j == ESI->NumberOfEvents)
 	return(PAPI_OK);
     }
 
@@ -1163,8 +1163,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }

@@ -31,7 +31,6 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 #undef NUM_FLOPS
 
@@ -112,10 +111,10 @@ int main(int argc, char **argv)
   printf("-----------------------------------------\n");
 
   printf("Verification:\n");
-#if defined(linux) && defined(__ia64__)
-  printf("Row 1 approximately equals %d %d\n",2*10*NUM_FLOPS,2*10*NUM_FLOPS);
+#if defined(linux) || defined(__ia64__)
+  printf("Row 2 approximately equals %d %d\n",2*10*NUM_FLOPS,2*10*NUM_FLOPS);
 #else
-  printf("Row 1 approximately equals %d %d\n",10*NUM_FLOPS,10*NUM_FLOPS);
+  printf("Row 2 approximately equals %d %d\n",10*NUM_FLOPS,10*NUM_FLOPS);
 #endif
   printf("Column 1 approximately equals column 2\n");
   printf("Row 3 approximate equals %lld\n",(values[0])[1]/THRESHOLD);

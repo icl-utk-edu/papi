@@ -1518,7 +1518,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
 	
       /* Early exit! */
 
-      if (++j == ESI->NumberOfCounters)
+      if (++j == ESI->NumberOfEvents)
 	return(PAPI_OK);
     }
 

@@ -23,7 +23,6 @@
 #include <sys/types.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 
 int main(int argc, char **argv) 

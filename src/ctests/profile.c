@@ -36,12 +36,11 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 
 int main(int argc, char **argv) 
 {
-  int i, tmp, num_events, num_tests = 6, mask = 0x5;
+  int i, num_events, num_tests = 6, mask = 0x5;
   int EventSet = PAPI_NULL;
   unsigned short *profbuf;
   unsigned short *profbuf2;

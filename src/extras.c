@@ -7,22 +7,10 @@
 *          <your email address>
 */  
 
+#include SUBSTRATE
+
 /* This file contains portable routines to do things that we wish the
 vendors did in the kernel extensions or performance libraries. */
-
-#include <stdio.h>
-#include <malloc.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <string.h>
-#include <strings.h>
-#include <limits.h>
-
-#include "papi.h"
-#include "papi_internal.h"
 
 static unsigned int rnum = 0xdeadbeef;
 
@@ -138,6 +126,19 @@ typedef struct _thread_list {
 
 static EventSetInfoList *head = NULL;
 extern unsigned long int (*thread_id_fn)(void);
+
+void _papi_hwi_cleanup_master_list(void)
+{
+  EventSetInfoList *tmp;
+
+  while (head)
+    {
+      tmp = head;
+      head = head->next;
+      DBG((stderr,"Freeing master EventSet for thread %ld at %p\n",tmp->master->tid,tmp));
+      free(tmp);
+    }
+}
 
 int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)
 {

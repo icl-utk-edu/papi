@@ -34,7 +34,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       CHARACTER*(MSGLEN-1) invstr4
       CHARACTER*(MSGLEN-2) invstr5
 
-      integer i,check,len,code,code2,retcode,lastchar,papicode
+      integer i,check,len,code,retcode,lastchar,papicode
       integer getstrlen
       external getstrlen
 
@@ -231,7 +231,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
         print *,'NULL character found in string!!!'
       end if
 
-      print *,'The event name is: "'//string(1:getstrlen(string))//'"'
+      print *,'The event name is: "',string(1:getstrlen(string)),'"'
       
       call PAPIF_event_name_to_code(string,code,check)
       if(check.ne.PAPI_OK)then
@@ -257,7 +257,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       print 100,'Testing string of length ',len(string)
       i=getstrlen(string)
       print *,'"1234567890....5...20....5...30....5...40....5...50...'
-      print *,'"'//string(1:i)//'"'
+      print *,'"',string(1:i),'"'
       i=index(string,char(0))
       if(i.gt.0)then
         print *,'NULL character found in string!!!'
@@ -277,8 +277,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       external getstrlen
 
       call PAPIF_describe_event(name,code,string,check)
-      print *,'The event description is: "'//
-     $    string(1:getstrlen(string))//'"'
+      print *,'The event description is: "',
+     $    string(1:getstrlen(string)),'"'
       
       if(check.ne.PAPI_OK)then
         call PAPIF_perror(check,papierr,code)

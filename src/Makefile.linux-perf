@@ -9,7 +9,7 @@ OPTFLAGS= -O3
 CC	= gcc
 F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
-CC_R	= $(CC)
+CC_R	= $(CC) -pthread
 
 include Makefile.inc
 

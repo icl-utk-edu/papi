@@ -7,24 +7,14 @@
 *          <your email address>
 */  
 
-#include <stdio.h>
-#include <malloc.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
-#include <strings.h>
-#include <errno.h>
-#include <assert.h>
-#include <unistd.h>
-
-#include "papi.h"
-#include "papi_internal.h"
-#include "papiStdEventDefs.h"
+#include SUBSTRATE
 
 /********************/
 /* BEGIN PROTOTYPES */
 /********************/
+
+#define DEADBEEF 0xdedbeef
+#define PAPI_EVENTSET_MAP (&_papi_system_info.global_eventset_map)
 
 /* Utility functions */
 
@@ -42,8 +32,8 @@ static void free_EventSet(EventSetInfo *);
 
 static int add_event(EventSetInfo *ESI, int EventCode);
 static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout);
-static int get_free_EventCodeIndex(EventSetInfo *ESI, int EventCode);
-static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode);
+static int get_free_EventCodeIndex(const EventSetInfo *ESI, int EventCode);
+static int lookup_EventCodeIndex(const EventSetInfo *ESI,int EventCode);
 static int remove_event(EventSetInfo *ESI, int EventCode);
 static int default_error_handler(int errorCode);
 
@@ -55,9 +45,9 @@ static int default_error_handler(int errorCode);
 /*  BEGIN GLOBALS   */ 
 /********************/
 
-#define PAPI_EVENTSET_MAP (&_papi_system_info.global_eventset_map)
 EventSetInfo *default_master_eventset = NULL; 
 unsigned long int (*thread_id_fn)(void) = NULL;
+static int init_retval = DEADBEEF;
 #ifdef DEBUG
 int papi_debug = 0;
 #endif
@@ -406,7 +396,7 @@ void PAPI_unlock(void)
 
 int PAPI_library_init(int version)
 {
-  static int init_retval = 0xdedbeef, i, tmp;
+  int i, tmp;
 
 #ifdef DEBUG
   if (getenv("PAPI_DEBUG"))
@@ -487,10 +477,31 @@ static int expand_dynamic_array(DynamicArray *DA)
 /* structure is returned.                                                 */
 /*========================================================================*/
 
+static int EventInfoArrayLength(const EventSetInfo *ESI)
+{
+  if (ESI->state & PAPI_MULTIPLEXING)
+    return(PAPI_MPX_DEF_DEG);
+  else
+    return(_papi_system_info.num_cntrs);
+}
+ 
+static void initialize_EventInfoArray(EventSetInfo *ESI)
+{
+  int i, limit = EventInfoArrayLength(ESI);
+
+  for (i=0;i<limit;i++)
+    {
+      ESI->EventInfoArray[i].code = PAPI_NULL;
+      ESI->EventInfoArray[i].selector = 0;
+      ESI->EventInfoArray[i].command = NOT_DERIVED;
+      ESI->EventInfoArray[i].operand_index = -1;
+    }
+}
+
 static EventSetInfo *allocate_EventSet(void) 
 {
   EventSetInfo *ESI;
-  int i, max_counters;
+  int max_counters;
   
   ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo));
   if (ESI==NULL) 
@@ -519,13 +530,7 @@ static EventSetInfo *allocate_EventSet(void)
   memset(ESI->sw_stop,          0x00,max_counters*sizeof(long long)); 
   memset(ESI->hw_start,        0x00,max_counters*sizeof(long long));
 
-  for (i=0;i<max_counters;i++)
-    {
-      ESI->EventInfoArray[i].code = PAPI_NULL;
-      ESI->EventInfoArray[i].selector = 0;
-      ESI->EventInfoArray[i].command = NOT_DERIVED;
-      ESI->EventInfoArray[i].operand_index = -1;
-    }
+  initialize_EventInfoArray(ESI);
 
   ESI->state = PAPI_STOPPED; 
 
@@ -599,6 +604,7 @@ static int get_domain(DynamicArray *map, PAPI_domain_option_t *opt)
   papi_return(PAPI_OK);
 }
 
+#if 0
 static int get_granularity(DynamicArray *map, PAPI_granularity_option_t *opt)
 {
   EventSetInfo *ESI;
@@ -610,6 +616,7 @@ static int get_granularity(DynamicArray *map, PAPI_granularity_option_t *opt)
   opt->granularity = ESI->granularity.granularity;
   papi_return(PAPI_OK);
 }
+#endif
 
 /* From Anders Nilsson's (anni@pdc.kth.se) */
 
@@ -782,6 +789,11 @@ int PAPI_add_pevent(int *EventSet, int code, void *inout)
   if (!(ESI->state & PAPI_STOPPED))
     papi_return(PAPI_EISRUN);
 
+  /* No multiplexing pevents. */
+
+  if (ESI->state & PAPI_MULTIPLEXING)
+    papi_return(PAPI_EINVAL);
+
   /* Now do the magic. */
 
   return(add_pevent(ESI,code,inout));
@@ -802,54 +814,53 @@ int PAPI_add_event(int *EventSet, int EventCode)
 
   /* Of course, it must be stopped in order to modify it. */
 
-  if (!(ESI->state & PAPI_STOPPED))
+  if (ESI->state & PAPI_RUNNING)
     papi_return(PAPI_EISRUN);
 
   /* Now do the magic. */
 
-  return(add_event(ESI,EventCode));
+  papi_return(add_event(ESI,EventCode));
 }
 
-/* This function returns the index of the EventCode or error */
-/* Index to what? The index to everything stored EventCode in the */
-/* EventSet. */  
+/* This function returns the index of the the next free slot
+   in the EventInfoArray. If EventCode is already in the list,
+   it returns PAPI_ECNFLCT. */
 
-static int get_free_EventCodeIndex(EventSetInfo *ESI, int EventCode)
+static int get_free_EventCodeIndex(const EventSetInfo *ESI, int EventCode)
 {
   int k;
-  int lowslot = -1;
+  int lowslot = PAPI_ECNFLCT;
+  int limit = EventInfoArrayLength(ESI);
 
   /* Check for duplicate events and get the lowest empty slot */
   
-  for (k=0;k<_papi_system_info.num_cntrs;k++) 
+  for (k=0;k<limit;k++) 
     {
       if (ESI->EventInfoArray[k].code == EventCode)
 	papi_return(PAPI_ECNFLCT);
-      if ((ESI->EventInfoArray[k].code == PAPI_NULL) && (lowslot == -1))
+      if ((ESI->EventInfoArray[k].code == PAPI_NULL) && (lowslot == PAPI_ECNFLCT))
 	lowslot = k;
     }
   
-  if (lowslot != -1)
-    return(lowslot);
-  else
-    papi_return(PAPI_ECNFLCT);
+  return(lowslot);
 }
 
 /* This function returns the index of the EventCode or error */
 /* Index to what? The index to everything stored EventCode in the */
 /* EventSet. */  
 
-static int lookup_EventCodeIndex(EventSetInfo *ESI, int EventCode)
+static int lookup_EventCodeIndex(const EventSetInfo *ESI, int EventCode)
 {
   int i;
+  int limit = EventInfoArrayLength(ESI);
 
-  for(i=0;i<_papi_system_info.num_cntrs;i++) 
+  for(i=0;i<limit;i++) 
     { 
       if (ESI->EventInfoArray[i].code == EventCode) 
 	return(i);
     }
 
-  papi_return(PAPI_EINVAL);
+  return(PAPI_EINVAL);
 } 
 
 static EventSetInfo *lookup_EventSet(const DynamicArray *map, int eventset)
@@ -865,7 +876,7 @@ static int remove_EventSet(DynamicArray *map, EventSetInfo *ESI)
 {
   int i;
 
-  assert(ESI->NumberOfCounters == 0);
+  assert(ESI->NumberOfEvents == 0);
 
   i = ESI->EventSetIndex;
 
@@ -884,80 +895,121 @@ static int remove_EventSet(DynamicArray *map, EventSetInfo *ESI)
 
 static int add_event(EventSetInfo *ESI, int EventCode)
 {
-  int hwindex, retval;
+  int thisindex, retval;
 
-  /* Make sure the event is not present and get a free slot. */
+  /* Make sure the event is not present and get the next
+     free slot. */
 
   retval = get_free_EventCodeIndex(ESI,EventCode);
   if (retval < PAPI_OK)
     return(retval);
-    
-  /* Fill in machine depending info including the EventInfoArray. */
+  thisindex = retval;
 
-  hwindex = retval;
-  retval = _papi_hwd_add_event(ESI,hwindex,EventCode);
-  if (retval < PAPI_OK)
-    return(retval);
+  /* If it is a MPX EventSet, add it to the multiplex data structure and
+     this threads multiplex list */
 
-  /* Initialize everything left over. */
+  if (ESI->state & PAPI_MULTIPLEXING)
+    {
+      retval = mpx_add_event(&ESI->multiplex,EventCode);
+      if (retval < PAPI_OK)
+	return(retval);
 
-  /* ESI->sw_stop[hwindex]     = 0; */
-  ESI->hw_start[hwindex]   = 0;
-  ESI->NumberOfCounters++;
+      /* just fill in the EventSetInfo array
+	 with the relevant information. */
+
+      ESI->EventInfoArray[thisindex].code = EventCode;      /* Relevant */
+      ESI->EventInfoArray[thisindex].command = NOT_DERIVED; 
+      ESI->EventInfoArray[thisindex].selector = 0;          
+      ESI->EventInfoArray[thisindex].operand_index = -1;    
+    }
+  else
+    {
+
+      /* If this is a real EventSet, predecode the event into the 
+	 machine dependent structure and then fill in the
+	 EventInfoArray. */
+      
+      retval = _papi_hwd_add_event(ESI->machdep,EventCode,&ESI->EventInfoArray[thisindex]);
+      if (retval < PAPI_OK)
+	return(retval);
+
+      /* The following may not be necessary */ 
+
+      /* ESI->hw_start[thisindex]   = 0; */
+      /* ESI->sw_stop[hwindex]     = 0; */
+    }
+
+  ESI->NumberOfEvents++;
 
   return(retval);
 }
 
 static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout)
 {
-  int hwindex, retval;
+  int thisindex, retval;
 
   /* Make sure the event is not present and get a free slot. */
 
   retval = get_free_EventCodeIndex(ESI,EventCode);
   if (retval < PAPI_OK)
     return(retval);
-    
+  thisindex = retval;
+
   /* Fill in machine depending info including the EventInfoArray. */
 
-  hwindex = retval;
-  retval = _papi_hwd_add_prog_event(ESI,hwindex,EventCode,inout);
+  retval = _papi_hwd_add_prog_event(ESI->machdep,EventCode,inout,&ESI->EventInfoArray[thisindex]);
   if (retval < PAPI_OK)
     return(retval);
 
   /* Initialize everything left over. */
 
-  /* ESI->sw_stop[hwindex]     = 0; */
-  ESI->hw_start[hwindex]   = 0;
-  ESI->NumberOfCounters++;
+  /* ESI->sw_stop[thisindex]     = 0; */
+  /* ESI->hw_start[thisindex]   = 0; */
+
+  ESI->NumberOfEvents++;
 
   return(retval);
 }
 
 static int remove_event(EventSetInfo *ESI, int EventCode)
 {
-  int retval, hwindex;
+  int retval, thisindex;
 
   /* Make sure the event is preset. */
 
   retval = lookup_EventCodeIndex(ESI,EventCode);
   if (retval < PAPI_OK)
     return(retval);
+  thisindex = retval;
 
-  hwindex = retval;
-  retval = _papi_hwd_rem_event(ESI,hwindex,EventCode);
-  if (retval < PAPI_OK)
-    return(retval);
+  /* If it is a MPX EventSet, remove it from the multiplex data structure and
+     this threads multiplex list */
 
-  /* Zero everything left over. */
+  if (ESI->state & PAPI_MULTIPLEXING)
+    {
+      retval = mpx_remove_event(&ESI->multiplex,EventCode); 
+      if (retval < PAPI_OK)
+	return(retval);
+   }
+  else    
+    /* Remove the events hardware dependant stuff from the EventSet */
+    {
+      retval = _papi_hwd_rem_event(ESI->machdep,&ESI->EventInfoArray[thisindex]);
+      if (retval < PAPI_OK)
+	return(retval);
+    }
 
-  ESI->EventInfoArray[hwindex].code = PAPI_NULL;
-  ESI->EventInfoArray[hwindex].selector = 0;
-  ESI->EventInfoArray[hwindex].command = NOT_DERIVED;
-  ESI->EventInfoArray[hwindex].operand_index = -1;
+  /* Zero the EventInfoArray. */
+
+  ESI->EventInfoArray[thisindex].code = PAPI_NULL;
+  ESI->EventInfoArray[thisindex].command = NOT_DERIVED;
+  ESI->EventInfoArray[thisindex].selector = 0;
+  ESI->EventInfoArray[thisindex].operand_index = -1;
+
   /* ESI->sw_stop[hwindex]           = 0; */
-  ESI->hw_start[hwindex]         = 0;
-  ESI->NumberOfCounters--;
+  /* ESI->hw_start[hwindex]         = 0; */
+
+  ESI->NumberOfEvents--;
 
   return(retval);
 }
@@ -965,7 +1017,6 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
 int PAPI_rem_event(int *EventSet, int EventCode)
 {
   EventSetInfo *ESI;
-  int retval;
 
   /* check for pre-existing ESI */
 
@@ -976,14 +1027,19 @@ int PAPI_rem_event(int *EventSet, int EventCode)
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
 
+  /* Of course, it must be stopped in order to modify it. */
+
   if (!(ESI->state & PAPI_STOPPED))
     papi_return(PAPI_EISRUN);
 
-  retval = remove_event(ESI,EventCode);
-  if (retval < PAPI_OK)
-    return(retval);
+  /* If it is a MPX EventSet, do the right thing */
 
-  return(retval);
+  if (ESI->state & PAPI_MULTIPLEXING)
+    papi_return(mpx_remove_event(&ESI->multiplex,EventCode));
+
+  /* Now do the magic. */
+
+  papi_return(remove_event(ESI,EventCode));
 }
 
 int PAPI_destroy_eventset(int *EventSet)
@@ -1002,7 +1058,7 @@ int PAPI_destroy_eventset(int *EventSet)
   if (!(ESI->state & PAPI_STOPPED))
     papi_return(PAPI_EISRUN);
 
-  if (ESI->NumberOfCounters)
+  if (ESI->NumberOfEvents)
     papi_return(PAPI_EINVAL);
 
   remove_EventSet(PAPI_EVENTSET_MAP, ESI);
@@ -1027,11 +1083,28 @@ int PAPI_start(int EventSet)
   if (!(ESI->state & PAPI_STOPPED))
     papi_return(PAPI_EISRUN);
 
-  if (ESI->NumberOfCounters < 1)
+  if (ESI->NumberOfEvents < 1)
     papi_return(PAPI_EINVAL);
 
-  /* Short circuit this stuff if there's nothing running */
+  /* If multiplexing is enabled for this eventset,
+     call John May's code. */
 
+  if (ESI->state & PAPI_MULTIPLEXING)
+    {
+      retval = MPX_start(ESI->multiplex);
+      if (retval != PAPI_OK)
+	papi_return(retval);
+
+      /* Update the state of this EventSet */
+      
+      ESI->state ^= PAPI_STOPPED;
+      ESI->state |= PAPI_RUNNING;
+
+      return(PAPI_OK);
+    }
+
+  /* Short circuit this stuff if there's nothing running */
+  
   if (thread_master_eventset->multistart.num_runners == 0)
     {
       for (i=0;i<_papi_system_info.num_cntrs;i++)
@@ -1040,7 +1113,7 @@ int PAPI_start(int EventSet)
 	  thread_master_eventset->hw_start[i] = 0;
 	}
     }
-
+  
   /* If overflowing is enabled, turn it on */
   
   if (ESI->state & PAPI_OVERFLOWING)
@@ -1049,15 +1122,22 @@ int PAPI_start(int EventSet)
       if (retval < PAPI_OK)
 	papi_return(retval);
     }
-
+  
+  /* Merge the control bits from the new EventSet into the active counter config. */
+  
   retval = _papi_hwd_merge(ESI, thread_master_eventset);
   if (retval != PAPI_OK)
     papi_return(retval);
-
+  
+  /* Update the state of this EventSet */
+  
   ESI->state ^= PAPI_STOPPED;
   ESI->state |= PAPI_RUNNING;
+  
+  /* Update the number of active EventSets for this thread */
+  
   thread_master_eventset->multistart.num_runners++;
-
+  
   DBG((stderr,"PAPI_start returns %d\n",retval));
   return(retval);
 }
@@ -1078,6 +1158,25 @@ int PAPI_stop(int EventSet, long long *values)
   if (!(ESI->state & PAPI_RUNNING))
     papi_return(PAPI_ENOTRUN);
 
+  /* If multiplexing is enabled for this eventset,
+     call John May's code. */
+
+  if (ESI->state & PAPI_MULTIPLEXING)
+    {
+      retval = MPX_stop(ESI->multiplex, values);
+      if (retval != PAPI_OK)
+	papi_return(retval);
+
+      /* Update the state of this EventSet */
+
+      ESI->state ^= PAPI_RUNNING;
+      ESI->state |= PAPI_STOPPED;
+
+      return(PAPI_OK);
+    }
+      
+  /* Read the current counter values into the EventSet */
+
   retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);
   if (retval != PAPI_OK)
     papi_return(retval);
@@ -1091,21 +1190,28 @@ int PAPI_stop(int EventSet, long long *values)
 	papi_return(retval);
     }
   
+  /* Remove the control bits from the active counter config. */
+
   retval = _papi_hwd_unmerge(ESI, thread_master_eventset);
   if (retval != PAPI_OK)
     papi_return(retval);
 
   if (values)
-    memcpy(values,ESI->sw_stop,ESI->NumberOfCounters*sizeof(long long)); 
+    memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long long)); 
+
+  /* Update the state of this EventSet */
 
   ESI->state ^= PAPI_RUNNING;
   ESI->state |= PAPI_STOPPED;
+
+  /* Update the number of active EventSets for this thread */
+
   thread_master_eventset->multistart.num_runners --;
 
 #if defined(DEBUG)
   {
     int i;
-    for (i=0;i<ESI->NumberOfCounters;i++)
+    for (i=0;i<ESI->NumberOfEvents;i++)
       DBG((stderr,"PAPI_stop ESI->sw_stop[%d]:\t%llu\n",i,ESI->sw_stop[i]));
   }
 #endif 
@@ -1128,18 +1234,23 @@ int PAPI_reset(int EventSet)
 
   if (ESI->state & PAPI_RUNNING)
     {
-      /* If we're not the only one running, then just
-         read the current values into the ESI->start
-         array. This holds the starting value for counters
-         that are shared. */
-
-      retval = _papi_hwd_reset(ESI, thread_master_eventset);
+      if (ESI->state & PAPI_MULTIPLEXING)
+	retval = MPX_reset(ESI->multiplex);
+      else
+	{
+	  /* If we're not the only one running, then just
+	     read the current values into the ESI->start
+	     array. This holds the starting value for counters
+	     that are shared. */
+	  
+	  retval = _papi_hwd_reset(ESI, thread_master_eventset);
+	}
       if (retval != PAPI_OK)
 	papi_return(retval);
     }
   else
     {
-      memset(ESI->sw_stop,0x00,ESI->NumberOfCounters*sizeof(long long)); 
+      memset(ESI->sw_stop,0x00,ESI->NumberOfEvents*sizeof(long long)); 
     }
 
   DBG((stderr,"PAPI_reset returns %d\n",retval));
@@ -1162,19 +1273,22 @@ int PAPI_read(int EventSet, long long *values)
 
   if (ESI->state & PAPI_RUNNING)
     {
-      retval = _papi_hwd_read(ESI, thread_master_eventset, values);
+      if (ESI->state & PAPI_MULTIPLEXING)
+	retval = MPX_read(ESI->multiplex, values);
+      else
+	retval = _papi_hwd_read(ESI, thread_master_eventset, values);
       if (retval != PAPI_OK)
         papi_return(retval);
     }
   else
     {
-      memcpy(values,ESI->sw_stop,ESI->NumberOfCounters*sizeof(long long)); 
+      memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long long)); 
     }
 
 #if defined(DEBUG)
   {
     int i;
-    for (i=0;i<ESI->NumberOfCounters;i++)
+    for (i=0;i<ESI->NumberOfEvents;i++)
     DBG((stderr,"PAPI_read values[%d]:\t%llu\n",i,values[i]));
   }
 #endif
@@ -1205,7 +1319,7 @@ int PAPI_accum(int EventSet, long long *values)
         papi_return(retval);
     }
   
-  for (i=0 ; i < ESI->NumberOfCounters; i++)
+  for (i=0 ; i < ESI->NumberOfEvents; i++)
     {
       a = ESI->sw_stop[i];
       b = values[i];
@@ -1242,13 +1356,35 @@ int PAPI_write(int EventSet, long long *values)
   return(retval);
 }
 
+static int cleanup_eventset(EventSetInfo *ESI)
+{
+  int retval, i, tmp = ESI->NumberOfEvents;
+
+  if (ESI->state & PAPI_MULTIPLEXING)
+    {
+      retval = MPX_cleanup(&ESI->multiplex);
+      if (retval != PAPI_OK)
+	return(retval);
+    }
+  
+  for(i=0;i<tmp;i++) 
+    {
+      retval = remove_event(ESI, ESI->EventInfoArray[i].code);
+      if (retval != PAPI_OK)
+	return(retval);
+    }
+
+  return(PAPI_OK);
+}
+
 /*  The function PAPI_cleanup removes a stopped EventSet from existence. */
 
 int PAPI_cleanup_eventset(int *EventSet) 
 { 
-  int i, tmp;
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
+
+  /* Is the EventSet already in existence? */
 
   if (EventSet == NULL)
     papi_return(PAPI_EINVAL);
@@ -1258,19 +1394,24 @@ int PAPI_cleanup_eventset(int *EventSet)
     papi_return(PAPI_ENOEVST);
   thread_master_eventset = ESI->master;
 
-  if (ESI->state != PAPI_STOPPED) 
+  /* Of course, it must be stopped in order to modify it. */
+
+  if (ESI->state & PAPI_RUNNING) 
     papi_return(PAPI_EISRUN);
   
-  tmp = ESI->NumberOfCounters;
-  for(i=0;i<tmp;i++) 
-    {
-      if (remove_event(ESI, ESI->EventInfoArray[i].code))
-	papi_return(PAPI_EBUG);
-    }
-  
-  papi_return(PAPI_OK);
+  /* Now do the magic */
+
+  papi_return(cleanup_eventset(ESI));
 }
  
+int PAPI_multiplex_init(void)
+{
+  int retval;
+
+  retval = mpx_init(PAPI_MPX_DEF_US);
+  papi_return(retval);
+}
+
 int PAPI_state(int EventSet, int *status)
 {
   EventSetInfo *ESI;
@@ -1305,6 +1446,68 @@ int PAPI_set_debug(int level)
     }
 }
 
+int PAPI_set_multiplex(int *EventSet)
+{
+  PAPI_option_t mpx;
+
+  if (EventSet == NULL)
+    papi_return(PAPI_EINVAL);
+
+  mpx.multiplex.eventset = *EventSet;
+  mpx.multiplex.us = PAPI_MPX_DEF_US;
+  mpx.multiplex.max_degree = PAPI_MPX_DEF_DEG;
+  
+  return(PAPI_set_opt(PAPI_SET_MULTIPLEX,&mpx));
+}
+
+static int convert_eventset_to_multiplex(EventSetInfo *ESI)
+{
+  EventInfo_t *tmp;
+
+  tmp = (EventInfo_t *)malloc(PAPI_MPX_DEF_DEG*sizeof(EventInfo_t));
+  if (tmp == NULL)
+    return(PAPI_ENOMEM);
+
+  /* If there are any events in the EventSet, 
+     convert them to multiplex events */
+
+  if (ESI->NumberOfEvents)
+    {
+      int retval, i, *mpxlist = (int *)malloc(sizeof(int)*ESI->NumberOfEvents);
+      if (mpxlist == NULL)
+	{
+	  free(tmp);
+	  return(PAPI_ENOMEM);
+	}
+
+      /* Build the args to MPX_add_events(). */
+      
+      for (i=0;i<ESI->NumberOfEvents;i++)
+	mpxlist[i] = ESI->EventInfoArray[i].code;	      
+      
+      retval = MPX_add_events(&ESI->multiplex,mpxlist,i);
+      if (retval != PAPI_OK)
+	{
+	  free(mpxlist);
+	  free(tmp);
+	  return(retval);
+	}
+      free(mpxlist);
+    }
+  
+  /* Resize the EventInfo_t array */
+  
+  free(ESI->EventInfoArray);
+  ESI->EventInfoArray = tmp;
+  initialize_EventInfoArray(ESI);
+
+  /* Update the state */
+  
+  ESI->state |= PAPI_MULTIPLEXING;
+  
+  return(PAPI_OK);
+}
+
 int PAPI_set_opt(int option, PAPI_option_t *ptr)
 { 
   _papi_int_option_t internal;
@@ -1316,6 +1519,24 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
   switch(option)
     { 
+    case PAPI_SET_MULTIPLEX:
+      {
+	EventSetInfo *ESI;
+
+	if (ptr->multiplex.us < 1)
+	  papi_return(PAPI_EINVAL);
+	if (ptr->multiplex.max_degree <= _papi_system_info.num_cntrs)
+	  papi_return(PAPI_EINVAL);
+        ESI = lookup_EventSet(PAPI_EVENTSET_MAP, ptr->multiplex.eventset);
+	if (ESI == NULL)
+	  papi_return(PAPI_ENOEVST);
+	if (!(ESI->state & PAPI_STOPPED))
+	  papi_return(PAPI_EISRUN);
+	if (ESI->state & PAPI_MULTIPLEXING)
+	  papi_return(PAPI_EINVAL);
+
+	papi_return(convert_eventset_to_multiplex(ESI));
+      }
     case PAPI_SET_DEBUG:
       papi_return(PAPI_set_debug(ptr->debug.level));
     case PAPI_SET_DOMAIN:
@@ -1342,6 +1563,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         internal.domain.ESI->domain.domain = dom;
         return(retval);
       }
+#if 0
     case PAPI_SET_GRANUL:
       {
         int grn = ptr->granularity.granularity;
@@ -1378,6 +1600,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 	tmp->inherit.inherit = ptr->inherit.inherit;
         return(retval);
       } 
+#endif
     default:
       papi_return(PAPI_EINVAL);
     }
@@ -1387,6 +1610,8 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 { 
   switch(option)
     {
+    case PAPI_GET_MULTIPLEX:
+      break;
     case PAPI_GET_PRELOAD:
       strncpy(ptr->preload.lib_preload_env,_papi_system_info.exe_info.lib_preload_env,
 	      PAPI_MAX_STR_LEN);
@@ -1405,6 +1630,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
       return(_papi_system_info.default_domain);
     case PAPI_GET_DEFGRN:
       return(_papi_system_info.default_granularity);
+#if 0
     case PAPI_GET_INHERIT:
       {
 	EventSetInfo *tmp;
@@ -1414,6 +1640,11 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 	
 	return(tmp->inherit.inherit); 
       }
+    case PAPI_GET_GRANUL:
+      if (ptr == NULL)
+	papi_return(PAPI_EINVAL);
+      return(get_granularity(PAPI_EVENTSET_MAP, &ptr->granularity));
+#endif
     case PAPI_GET_EXEINFO:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
@@ -1428,10 +1659,6 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
       return(get_domain(PAPI_EVENTSET_MAP, &ptr->domain));
-    case PAPI_GET_GRANUL:
-      if (ptr == NULL)
-	papi_return(PAPI_EINVAL);
-      return(get_granularity(PAPI_EVENTSET_MAP, &ptr->granularity));
     default:
       papi_return(PAPI_EINVAL);
     }
@@ -1461,6 +1688,12 @@ void PAPI_shutdown(void)
   free(PAPI_EVENTSET_MAP);
   PAPI_EVENTSET_MAP = NULL;
 #endif
+  _papi_hwd_shutdown_global();
+  init_retval = DEADBEEF;
+
+  /* Clean up thread stuff */
+
+  thread_id_fn = NULL;
 }
 
 char *PAPI_strerror(int errorCode)
@@ -1688,11 +1921,11 @@ int PAPI_rem_events(int *EventSet, int *Events, int number)
 
 #ifdef DEBUG
   /* Not necessary */
-  if (ESI->NumberOfCounters == 0)
+  if (ESI->NumberOfEvents == 0)
     papi_return(PAPI_EINVAL);
 #endif
 
-  if ((number > ESI->NumberOfCounters) || (number < 0))
+  if ((number > ESI->NumberOfEvents) || (number < 0))
     papi_return(PAPI_EINVAL);
 
   for (i=0; i<number; i++)
@@ -1719,19 +1952,19 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 
 #ifdef DEBUG
   /* Not necessary */
-  if (ESI->NumberOfCounters == 0)
+  if (ESI->NumberOfEvents == 0)
     papi_return(PAPI_EINVAL);
 #endif
 
-  if (*number < ESI->NumberOfCounters)
+  if (*number < ESI->NumberOfEvents)
     num = *number;
   else
-    num = ESI->NumberOfCounters;
+    num = ESI->NumberOfEvents;
 
   for(i=0; i<num; i++)
     Events[i] = ESI->EventInfoArray[i].code;
 
-  *number = ESI->NumberOfCounters;
+  *number = ESI->NumberOfEvents;
 
   papi_return(PAPI_OK);
 }

@@ -2,12 +2,15 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
+MPX	= multiplex1 multiplex1_pthreads
 SERIAL  = sprofile eventname case1 case2 flops avail zero first second third third-inv fourth fourth-inv cost johnmay2 johnmay clockres fourth fifth nineth overflow_single_event overflow profile tenth native 
 BROKEN	= inherit pernode
-ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
+ALL 	= $(MULTIPLEX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 UTILOBJS= do_loops.o test_utils.o dummy.o
 INCLUDE = -I..
 PAPILIB	= ../libpapi.a
+
+multiplex: $(MPX)
 
 omp: $(OMP)
 
@@ -18,6 +21,12 @@ pthreads: $(PTHREADS)
 shmem: $(SHMEM)
 
 serial: $(SERIAL)
+
+multiplex1: multiplex1.c do_loops.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c do_loops.o $(PAPILIB) $(LDFLAGS) -o $@ 
+
+multiplex1_pthreads: multiplex1_pthreads.c do_loops.o $(PAPILIB)
+	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -DPTHREADS multiplex1_pthreads.c do_loops.o $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) profile_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
@@ -64,7 +73,7 @@ first: first.c $(UTILOBJS) $(PAPILIB)
 second: second.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) second.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o second
 
-flops: flops.c $(UTILOBJS) $(PAPILIB)
+flops: flops.c dummy.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) flops.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o flops
 
 third: third.c $(UTILOBJS) $(PAPILIB)

@@ -1,15 +1,16 @@
 SUBSTR  = linux-perfctr
 DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
 LIBS	= static shared
-TARGETS = serial pthreads
+TARGETS = multiplex serial pthreads 
 
-CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR18 -g -DDEBUG
+CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR18 -I. -DSUBSTRATE=\"$(SUBSTR).h\" -g
+#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 FFLAGS	= -Wall -g
-OPTFLAGS= -O3
+OPTFLAGS= -O3 -mpentiumpro
 CC	= gcc
 F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
-CC_R	= $(CC)
+CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
 
 include Makefile.inc

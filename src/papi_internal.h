@@ -63,11 +63,10 @@ typedef struct _EventSetOverflowInfo {
   PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
 
-typedef struct _EventSetMultiplexInfo {
-  int timer_ms; } EventSetMultiplexInfo_t;
-
+#if 0
 typedef struct _EventSetInheritInfo {
   int inherit; } EventSetInheritInfo_t;
+#endif
 
 typedef struct _EventSetProfileInfo {
   PAPI_sprofil_t *prof;
@@ -84,12 +83,78 @@ typedef struct _EventInfo {
   int operand_index; /* Counter derivation data used in the lower level */
 } EventInfo_t;
 
+/* Multiplex definitions */
+
+/* This contains only the information about an event that
+ * would cause two events to be counted separately.  Options
+ * that don't affect an event aren't included here.
+ */
+
+typedef struct _papi_info {
+	int event_type;
+	int domain;
+	int granularity;
+} PapiInfo;
+
+typedef struct _masterevent {
+        int uses;
+        int active;
+	int is_a_rate;
+	int papi_event;
+	PapiInfo pi;
+        long long count;
+        long long cycles;
+	long long handler_count;
+	struct _threadlist * mythr;
+        struct _masterevent * next;
+} MasterEvent;
+
+typedef struct _threadlist {
+#ifdef PTHREADS
+	pthread_t thr;
+#else
+        pid_t pid;
+#endif
+        /* Total cycles for this thread */
+	long long total_c;
+        /* Pointer to event in use */
+	MasterEvent * cur_event;
+        /* List of multiplexing events for this thread */
+	MasterEvent * head;
+        /* Pointer to next thread */
+	struct _threadlist * next;
+} Threadlist;
+
+/* Structure contained in the EventSet structure that
+   holds information about multiplexing. */
+
+typedef enum { MPX_STOPPED, MPX_RUNNING } MPX_status;
+
+typedef struct _MPX_EventSet {
+	MPX_status status;
+        /* Pointer to this thread's structure */
+	struct _threadlist * mythr;
+        /* Pointers to this EventSet's MPX entries in the master list for this thread */
+	struct _masterevent *(mev[PAPI_MPX_DEF_DEG]);
+        /* Number of entries in above list */
+	int	num_events;
+        /* Not sure... */
+	long long start_c, stop_c;
+	long long start_values[PAPI_MPX_DEF_DEG];
+	long long start_cycles[PAPI_MPX_DEF_DEG];
+	long long stop_values[PAPI_MPX_DEF_DEG];
+	long long stop_cycles[PAPI_MPX_DEF_DEG];
+	long long start_hc[PAPI_MPX_DEF_DEG];
+} MPX_EventSet;
+
+typedef MPX_EventSet * EventSetMultiplexInfo_t;
+
 typedef struct _EventSetInfo {
   unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
 
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
-  int NumberOfCounters;    /* Number of counters added to EventSet */
+  int NumberOfEvents;    /* Number of counters added to EventSet */
 
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
@@ -127,7 +192,9 @@ typedef struct _EventSetInfo {
 
   EventSetProfileInfo_t profile;
   
+#if 0
   EventSetInheritInfo_t inherit;
+#endif
 
   struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
 
@@ -162,19 +229,47 @@ typedef struct _papi_int_profile {
   EventSetInfo *ESI;
   EventSetProfileInfo_t profile; } _papi_int_profile_t;
 
+#if 0
 typedef struct _papi_int_inherit {
   EventSetInfo *master;
   int inherit; } _papi_int_inherit_t;
+#endif
 
 typedef union _papi_int_option_t {
   _papi_int_overflow_t overflow;
   _papi_int_profile_t profile;
-  _papi_int_inherit_t inherit;
   _papi_int_domain_t domain;
-  _papi_int_granularity_t granularity; } _papi_int_option_t;
+#if 0
+  _papi_int_inherit_t inherit;
+#endif
+  _papi_int_granularity_t granularity; 
+} _papi_int_option_t;
+
+/* The following functions are defined by the papi.c file. */
+
+extern unsigned long int (*thread_id_fn)(void);
+
+/* The following functions are defined by the multiplex.c file. */
+
+#ifdef linux
+extern int sighold(int);
+extern int sigrelse(int);
+#endif
+
+extern int mpx_init(int);
+extern int mpx_add_event(MPX_EventSet **, int EventCode);
+extern int mpx_remove_event(MPX_EventSet **, int EventCode);
+extern int MPX_add_events(MPX_EventSet ** mpx_events, int * event_list, int num_events);;
+extern int MPX_stop(MPX_EventSet * mpx_events, long long * values);
+extern int MPX_cleanup(MPX_EventSet ** mpx_events);
+extern void MPX_shutdown(void);
+extern int MPX_reset(MPX_EventSet * mpx_events);
+extern int MPX_read(MPX_EventSet * mpx_events, long long * values);
+extern int MPX_start(MPX_EventSet * mpx_events);
 
 /* The following functions are defined by the extras.c file. */
 
+void _papi_hwi_cleanup_master_list(void);
 extern int _papi_hwi_insert_in_master_list(EventSetInfo *ptr);
 extern EventSetInfo *_papi_hwi_lookup_in_master_list();
 extern int _papi_hwi_stop_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
@@ -184,8 +279,13 @@ extern void _papi_hwi_dispatch_overflow_signal(void *context);
 
 /* The following functions are defined by the substrate file. */
 
-extern int _papi_hwd_add_event(EventSetInfo *machdep, int index, unsigned int event);
-extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, int index, unsigned int event, void *extra); 
+/* New syntax! */
+extern int _papi_hwd_add_event(hwd_control_state_t *, unsigned int, EventInfo_t *);
+/* New syntax! */
+extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *extra, EventInfo_t *); 
+/* New syntax! */
+extern int _papi_hwd_rem_event(hwd_control_state_t *, EventInfo_t *);
+/* Old syntax! */
 extern int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option);
 extern void _papi_hwd_dispatch_timer();
 extern int _papi_hwd_init(EventSetInfo *zero);
@@ -193,7 +293,6 @@ extern int _papi_hwd_init_global(void);
 extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);
 extern int _papi_hwd_query(int preset, int *flags, char **note_loc);
 extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, long long events[]);
-extern int _papi_hwd_rem_event(EventSetInfo *machdep, int index, unsigned int event);
 extern int _papi_hwd_reset(EventSetInfo *, EventSetInfo *zero);
 extern int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option);
 extern int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option);
@@ -234,6 +333,7 @@ typedef struct _papi_mdi {
   int total_events;   /* Number of native events supported. */
 
   const int default_domain; /* The default domain when this substrate is used */
+
   const int default_granularity; /* The default granularity when this substrate is used */
 
   /* Begin public feature flags */

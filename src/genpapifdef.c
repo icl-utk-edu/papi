@@ -11,7 +11,6 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 
 int main(int argc, char **argv) 
 {
