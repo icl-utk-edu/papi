@@ -67,6 +67,6 @@ native_clean:
 	$(MAKE) -C $(PERFCTR) clean
 
 native_install:
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
-	-cp -p $(PERFCTR)/usr.lib/perfctr_event_codes.h $(DESTDIR)/include
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib
+	-cp -p $(PERFCTR)/usr.lib/perfctr_event_codes.h $(PREFIX)/include
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
