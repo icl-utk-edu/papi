@@ -50,7 +50,11 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      printf("Name\t\t\t       Code\t   Description\n");
+      printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
+      
+      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Vendor Name|\n |Vendor Description|\n");
+      printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
+
    }
    i = 0 | PAPI_NATIVE_MASK;
    j = 0;
@@ -66,14 +70,16 @@ int main(int argc, char **argv)
 #endif
          j++;
          retval = PAPI_get_event_info(i, &info);
-#ifndef _POWER4
-         if (!TESTS_QUIET && retval == PAPI_OK) {
-            printf("%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr);
-         }
-#else
-         if (!TESTS_QUIET && retval == PAPI_OK) {
-            printf("%-30s 0x%-10x\n%s", info.symbol, info.event_code, info.long_descr);
-         }
+
+	 printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n",
+		info.symbol,
+		info.event_code,
+		info.count,
+		info.short_descr,
+		info.long_descr,
+		info.vendor_name,
+		info.vendor_descr);
+#ifdef _POWER4
          if (!TESTS_QUIET)
             printf("Groups: ");
       }

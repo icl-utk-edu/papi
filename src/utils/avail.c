@@ -16,7 +16,7 @@ int main(int argc, char **argv)
    for (i = 0; i < argc; i++)
       if (argv[i]) {
          if (strstr(argv[i], "-a"))
-            print_avail_only = 1;
+            print_avail_only = PAPI_PRESET_ENUM_AVAIL;
       }
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -49,31 +49,23 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      if (print_avail_only) {
-         printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
-      } else {
-         printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
-      }
+      printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
+      
+      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Vendor Name|\n |Vendor Description|\n");
+      printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
+
       i = PAPI_PRESET_MASK;
       do {
          if (PAPI_get_event_info(i, &info) == PAPI_OK) 
 	   {
-	     if (print_avail_only)
-               {
-		 printf("%s\t%s\t%s (%s)\n",
-			info.symbol,
-			(info.count > 1 ? "Yes" : "No"),
-			info.long_descr, (info.vendor_name ? info.vendor_name : ""));
-	       }
-            else
-	      {
-		printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
-		       info.symbol,
-		       info.event_code,
-		       (info.count ? "Yes" : "No"),
-		       (info.count > 1 ? "Yes" : "No"),
-		       info.long_descr, (info.vendor_name ? info.vendor_name : ""));
-	      }
+	     printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n",
+		    info.symbol,
+		    info.event_code,
+		    info.count,
+		    info.short_descr,
+		    info.long_descr,
+		    info.vendor_name,
+		    info.vendor_descr);
 	   }
       } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
       printf
