@@ -177,7 +177,7 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval;
-  u_long_long latest;
+  u_long_long latest=0;
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
 
@@ -206,11 +206,15 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
       
     /* Get the latest counter value */
       
-    retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
-    if (retval < PAPI_OK)
-	  return;
+  /* if you want to change this, please discuss with me .  -- Min */
+    if (!_papi_hwi_system_info.supports_hw_overflow)
+    {
+      retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
+      if (retval < PAPI_OK)
+	    return;
+      latest = ESI->sw_stop[ESI->overflow.EventIndex];
+    }
       
-    latest = ESI->sw_stop[ESI->overflow.EventIndex];
       
     DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline,ESI->overflow.threshold));
   
@@ -556,6 +560,34 @@ int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_inf
   }
 #endif
   return(PAPI_ENOEVNT);
+}
+
+/* Reverse lookup of event code to index */
+int _papi_hwi_native_code_to_idx(unsigned int EventCode)
+{
+  int index;
+  
+  if (EventCode & NATIVE_MASK) {
+  	index=EventCode ^ NATIVE_MASK;
+  
+  	if(index<MAX_NATIVE_EVENT){
+  		return(index);
+  	}
+  }
+  return (PAPI_ENOEVNT);
+}
+
+/* Returns event code based on index. NATIVE_MASK bit must be set if not predefined */
+unsigned int _papi_hwi_native_idx_to_code(unsigned int idx)
+{
+  unsigned int EventCode;
+  
+  EventCode =idx | NATIVE_MASK;
+  
+  if(idx<MAX_NATIVE_EVENT){
+  	return(EventCode);
+  }
+  return (PAPI_ENOEVNT);
 }
 
 

@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 
 
 #if defined(linux) && defined(__ia64__) 
-	sprintf(event_name, "data_ear_cache_lat4");
+	sprintf(event_name, "branch_event");
   {
 
     /* Execution latency stall cycles */
@@ -86,6 +86,7 @@ int main(int argc, char **argv)
 /* index for branch_event in itanium*/ 
     native = 10;
 #endif
+    PAPI_encode_native("BRANCH_EVENT", &native);
     if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     if((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC))!=PAPI_OK)

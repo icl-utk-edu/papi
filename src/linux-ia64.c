@@ -17,7 +17,7 @@
 int papi_debug;
 
 #ifndef ITANIUM2
-static preset_search_t preset_search_map[] = { 
+static itanium_preset_search_t ia_preset_search_map[] = { 
   {PAPI_L1_TCM,DERIVED_ADD,{"L1D_READ_MISSES_RETIRED","L2_INST_DEMAND_READS",0,0}},
   {PAPI_L1_ICM,0,{"L2_INST_DEMAND_READS",0,0,0}},
   {PAPI_L1_DCM,0,{"L1D_READ_MISSES_RETIRED",0,0,0}},
@@ -60,8 +60,11 @@ static preset_search_t preset_search_map[] = {
   {PAPI_LST_INS,DERIVED_ADD,{"LOADS_RETIRED","STORES_RETIRED",0,0}},
   {PAPI_FLOPS,DERIVED_ADD_PS,{"CPU_CYCLES","FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0}},
   {0,0,{0,0,0,0}}};
+  #define NUM_OF_PRESET_EVENTS 41
+  preset_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS];
+  preset_search_t *preset_search_map=ia_preset_search_map_bycode;
 #else
-static preset_search_t preset_search_map[] = {
+static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_CA_SNP,0,{"BUS_SNOOPS_SELF",0,0,0}},
   {PAPI_CA_INV,DERIVED_ADD,{"BUS_MEM_READ_BRIL_SELF","BUS_MEM_READ_BIL_SELF",0,0}},
   {PAPI_TLB_TL,DERIVED_ADD,{"ITLB_MISSES_FETCH_L2ITLB","L2DTLB_MISSES",0,0}},
@@ -129,15 +132,21 @@ static preset_search_t preset_search_map[] = {
   {PAPI_FSQ_INS,0,{"2890000001BFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
 #endif
   {0,0,{0,0,0,0}}};
+  #define NUM_OF_PRESET_EVENTS 56
+  preset_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS];
+  preset_search_t *preset_search_map=ia_preset_search_map_bycode;
 #endif
 
 hwd_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
 
+
+/*
 #ifdef ITANIUM2
 static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
 #else
 static pfmlib_ita_param_t ita_param[PAPI_MAX_PRESET_EVENTS];
 #endif
+*/
 
 /* Machine info structure. -1 is unused. */
 extern papi_mdi_t _papi_hwi_system_info; 
@@ -168,6 +177,42 @@ int set_dear_ita_param(pfmw_ita_param_t *ita_lib_param, int EventCode)
   pfm_ita_get_event_umask(EventCode,&ita_lib_param->pfp_ita_dear.ear_umask);
 #endif
   return PAPI_OK;
+}
+
+/* I want to keep the old way to define the preset search map,
+   so I add this function to generate the preset search map in papi3 
+*/
+int generate_preset_search_map(itanium_preset_search_t *oldmap)
+{
+  int pnum, i, cnt;
+  char **findme;
+
+  pnum=0;  /* preset event counter */
+  memset(ia_preset_search_map_bycode,0x0,sizeof(ia_preset_search_map_bycode));
+  for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
+  {
+    if (oldmap[i].preset == 0)
+	  break;
+    pnum++;
+    preset_search_map[i].preset=oldmap[i].preset;
+    preset_search_map[i].derived = oldmap[i].derived;
+    findme = oldmap[i].findme;
+    cnt=0;
+    while (*findme!= NULL )
+    {
+      if (cnt == MAX_COUNTER_TERMS) abort();
+      if (pfm_find_event_byname(*findme, &preset_search_map[i].natEvent[cnt]) != PFMLIB_SUCCESS) 
+        return(PAPI_ENOEVNT);
+      else 
+        preset_search_map[i].natEvent[cnt] ^= NATIVE_MASK;
+      findme++;
+      cnt++;
+    }
+    preset_search_map[i].natEvent[cnt]=-1;
+  }
+  if (NUM_OF_PRESET_EVENTS != pnum) 
+    abort();
+  return(PAPI_OK);
 }
 
 /* This substrate should never malloc anything. All allocation should be
@@ -299,6 +344,7 @@ too_many:
  * Copyright (C) 2001 Hewlett-Packard Co
  * Copyright (C) 2001 Stephane Eranian <eranian@hpl.hp.com> */
 
+#if 0
 static inline int setup_all_presets()
 {
   int pnum, i, preset_index;
@@ -343,228 +389,25 @@ static inline int setup_all_presets()
     abort();
   return(PAPI_OK);
 }
+#endif
 
 /* Utility functions */
 
-inline static int set_hwcntr_codes(hwd_control_state_t *this_state, hwd_preset_t*preset)
+static int set_hwcntr_codes(EventSetInfo_t *ESI)
 {
-  pfarg_reg_t *pc = this_state->evt.pfp_pc;
-  pfmlib_param_t *evt = &this_state->evt;
-  pfmlib_param_t *from = &preset->evt;
+  pfmlib_param_t *evt = &ESI->machdep.evt;
+  int i;   
 
-  int i, orig_cnt = evt->pfp_event_count;   
-  int selector = 0;
-
-  /* Merge the two evt structures into the old one */
-   for (i=0;i<from->pfp_event_count;i++) {
-	 evt->pfp_events[evt->pfp_event_count].event= from->pfp_events[i].event;
-	 evt->pfp_event_count++;
-   }
-   if (evt->pfp_event_count > PMU_MAX_COUNTERS)
-	{
-	  evt->pfp_event_count = orig_cnt;
-	  return(PAPI_ECNFLCT);
-	}
-#ifdef ITANIUM2
-   if (from->pfp_model!=NULL) {
-	  if (evt->pfp_model != NULL) {
-          ((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_magic  = 
-            ((pfmlib_ita2_param_t *)from->pfp_model)->pfp_magic;
-          ((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_ita2_pmc8.opcm_used  = 
-            ((pfmlib_ita2_param_t *)from->pfp_model)->pfp_ita2_pmc8.opcm_used;
-          ((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_ita2_pmc8.pmc_val  = 
-            ((pfmlib_ita2_param_t *)from->pfp_model)->pfp_ita2_pmc8.pmc_val;
-	  } else 
- 	  evt->pfp_model = from->pfp_model;
-   }
-#endif
   /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
   if (pfm_dispatch_events(evt))
-    {
-	  evt->pfp_event_count = orig_cnt;
-      return(PAPI_ECNFLCT);
-    }
+    return(PAPI_ECNFLCT);
 
-/* this line can be deleted */
-   this_state->pc_count = evt->pfp_pc_count;
+  for(i=0; i<evt->pfp_event_count; i++)
+    ESI->NativeInfoArray[i].ni_position = evt->pfp_pc[i].reg_num
+                                          -PMU_FIRST_COUNTER;
 
-   for (i=0;i< evt->pfp_pc_count;i++)
-    {
-      selector |= 1 << (pc[i].reg_num-PMU_FIRST_COUNTER);
-    }
-   DBG((stderr,"Selector is now 0x%x\n",selector));
-   this_state->bits.selector = selector;
-
-   return(selector);
+  return(PAPI_OK);
 }
-
-static int recalc_selectors(EventInfo_t *EVI, hwd_control_state_t *this_state)
-{
-  int i, j, k;
-  unsigned int EventCode, preset_index;
-  pfmlib_param_t *old_evt, *cur_evt = &this_state->evt;
-  int numberofevents, selector, eventset_selector;
-  EventInfo_t *EventInfoArray;
-
-  if (EVI == NULL)
-    return(PAPI_EBUG);
-  EventInfoArray = EVI->head;
-
-  numberofevents = 0;
-  eventset_selector=0;
-  /* get the number of events in the event set */
-  for(i=0; i< _papi_hwi_system_info.num_cntrs; i++)
-	if (EventInfoArray[i].event_code != PAPI_NULL) numberofevents++;
-    
-  for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) 
-  {
-    if (i==numberofevents) break;   /* early exit */
-    EventCode = EventInfoArray[i].event_code;
-    if (EventCode == PAPI_NULL ) continue;
-    selector = 0;
-    if (EventCode & PRESET_MASK) 
-    { /* preset event */
-      preset_index = EventCode & PRESET_AND_MASK; 
-      old_evt = &_papi_hwd_preset_map[preset_index].evt;
-      for (j = 0; j < PFMW_PEVT_EVTCOUNT(old_evt); j++) 
-      {
-        for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) 
-        {
-          if (PFMW_PEVT_EVENT(old_evt,j) == PFMW_PEVT_EVENT(cur_evt,k))
-            selector |= (1 << (PFMW_REG_REGNUM(this_state->evt.pfp_pc[k])
-                                      -PMU_FIRST_COUNTER));
-        }
-      }
-      EventInfoArray[i].bits.selector |= selector;
-      EventInfoArray[i].hwd_selector = selector;
-      EventInfoArray[i].counter_index = ffs(selector)-1;
-      eventset_selector |= selector;
-    } else {
-	    selector = 0;
-        for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) 
-        {
-          if (PFMW_PEVT_EVENT(cur_evt,k)==EventCode) 
-          {
-            selector |= (1 << (PFMW_REG_REGNUM(this_state->evt.pfp_pc[k])
-                                         -PMU_FIRST_COUNTER));
-		    break;
-		  }
-		}
-        EventInfoArray[i].bits.selector |= selector;
-        EventInfoArray[i].hwd_selector = selector;
-        EventInfoArray[i].counter_index = ffs(selector)-1;
-        eventset_selector |= selector;
-    }  /* end of else */
-  }
-  return eventset_selector;
-}
-
-#if 0
-static int recalc_selectors(EventSetInfo_t *ESI, hwd_control_state_t *this_state){
-    int i, j, k;
-    unsigned int EventCode, preset_index;
-    pfmlib_param_t *old_evt, *cur_evt = &this_state->evt;
-    int selector;
-
-    if (ESI == NULL)
-        return(PAPI_ESBSTR);
-    
-    for (i = 0; i < ESI->NumberOfEvents; i++) {
-        EventCode = ESI->EventInfoArray[i].event_code;
-        selector = 0;
-        if (EventCode & PRESET_MASK) { /* preset event */
-            preset_index = EventCode & PRESET_AND_MASK; 
-            old_evt = &_papi_hwd_preset_map[preset_index].evt;
-            for (j = 0; j < PFMW_PEVT_EVTCOUNT(old_evt); j++) {
-                for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) {
-                    if (PFMW_PEVT_EVENT(old_evt,j) == PFMW_PEVT_EVENT(cur_evt,k))
-                        selector |= (1 << (PFMW_REG_REGNUM(this_state->evt.pfp_pc[k])-PMU_FIRST_COUNTER));
-                }
-            }
-            ESI->EventInfoArray[i].bits.selector = selector;
-            ESI->EventInfoArray[i].hwd_selector = selector;
-            ESI->EventInfoArray[i].counter_index = ffs(selector)-1;
-
-        }
-        else {
-			selector = 0;
-            for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) {
-              if (PFMW_PEVT_EVENT(cur_evt,k)==EventCode) {
-                  selector |= (1 << (PFMW_REG_REGNUM(this_state->evt.pfp_pc[k])-PMU_FIRST_COUNTER));
-				  break;
-			  }
-			}
-            ESI->EventInfoArray[i].bits.selector = selector;
-            ESI->EventInfoArray[i].hwd_selector = selector;
-            ESI->EventInfoArray[i].counter_index = ffs(selector)-1;
-        }
-    }
-    return PAPI_OK;
-}
-#endif
-
-#if 0
-/* Return new counter mask */
-inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_param_t *from, EventInfo_t *out)
-{
-  pfmw_reg_t *pc = this_state->evt.pfp_pc;
-  pfmw_param_t *evt = &this_state->evt;
-  int i, orig_cnt = PFMW_PEVT_EVTCOUNT(evt);  
-  int cnt = PMU_MAX_PMCS;
-  int selector = 0;
-  int pos = 0;
-
-  if (from)
-    {
-      /* Called from add_event */
-      /* Merge the two evt structures into the old one */
-      pos=PFMW_PEVT_EVTCOUNT(evt);
-      for (i=0;i<PFMW_PEVT_EVTCOUNT(from);i++) {
-	PFMW_PEVT_EVENT(evt,PFMW_PEVT_EVTCOUNT(evt)) = PFMW_PEVT_EVENT(from,i);
-	PFMW_PEVT_EVTCOUNT(evt)++;
-      }
-      
-      if ((PFMW_PEVT_EVTCOUNT(evt)) > PMU_MAX_COUNTERS)
-	{
-	bail:
-	  PFMW_PEVT_EVTCOUNT(evt) = orig_cnt;
-	  return(PAPI_ECNFLCT);
-	}
-#ifdef ITANIUM2
-   if (from->pfp_model!=NULL) {
-	  if (evt->pfp_model != NULL) {
-          ((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_magic  = 
-            ((pfmlib_ita2_param_t *)from->pfp_model)->pfp_magic;
-          ((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_ita2_pmc8.opcm_used  = 
-            ((pfmlib_ita2_param_t *)from->pfp_model)->pfp_ita2_pmc8.opcm_used;
-          ((pfmlib_ita2_param_t *)evt->pfp_model)->pfp_ita2_pmc8.pmc_val  = 
-            ((pfmlib_ita2_param_t *)from->pfp_model)->pfp_ita2_pmc8.pmc_val;
-	  } else 
- 	  evt->pfp_model = from->pfp_model;
-   }
-#endif
-    }
-
-  /* Recalcuate the pfmw_param_t structure, may also signal conflict */
-  if (pfm_dispatch_events(evt))
-    {
-      goto bail;
-      return(PAPI_ECNFLCT);
-    }
-
-   this_state->pc_count = evt->pfp_pc_count;
-   for (i=0;i<PFMW_PEVT_EVTCOUNT(evt);i++)
-    {
-      selector |= 1 << PFMW_REG_REGNUM(pc[i]);
-	  if(out && i==pos)
-	  out->counter_index=PFMW_REG_REGNUM(pc[i])-4;
-
-      DBG((stderr,"Selector is now 0x%x\n",selector));
-    }
-
-  return(selector);
-} 
-#endif
 
 inline static int set_domain(hwd_control_state_t *this_state, int domain)
 {
@@ -798,193 +641,15 @@ static int get_system_info(void)
 
   /* Setup presets */
 
-  tmp = setup_all_presets();
+  tmp=generate_preset_search_map(ia_preset_search_map);
+  if (tmp) return(tmp);
+
+  tmp = setup_all_presets(preset_search_map);
   if (tmp)
     return(tmp);
 
   return(PAPI_OK);
 } 
-
-inline static int counter_event_shared(const pfmw_param_t *a, const pfmw_param_t *b, int cntr)
-{
-  DBG((stderr,"%d %x vs %x \n",cntr,PFMW_PEVT_EVENT(a,cntr),PFMW_PEVT_EVENT(b,cntr)));
-  if (PFMW_PEVT_EVENT(a,cntr) == PFMW_PEVT_EVENT(b,cntr))
-    return(1);
-
-  return(0);
-}
-
-inline static int counter_event_compat
-(const pfmw_param_t *a, const pfmw_param_t *b, int cntr)
-{
-  DBG((stderr,"%d %d vs. %d\n",cntr,PFMW_PEVT_PLM(a,cntr),PFMW_PEVT_PLM(b,cntr)));
-  if (PFMW_PEVT_PLM(a,cntr) == PFMW_PEVT_PLM(b,cntr))
-    return(1);
-
-  return(0);
-}
-
-inline static void counter_event_copy(const pfmw_param_t *a, pfmw_param_t *b, int cntr)
-{
-  DBG((stderr,"%d\n",cntr));
-  PFMW_PEVT_EVENT(b,cntr) = PFMW_PEVT_EVENT(a,cntr);
-  PFMW_PEVT_EVTCOUNT(b)++;
-}
-
-#if 0
-inline static int update_global_hwcounters(EventSetInfo_t *local, EventSetInfo_t *global)
-{
-  hwd_control_state_t *machdep = &global->machdep;
-  hwd_control_state_t *local_machdep = &local->machdep;
-  int i, selector = 0, hwcntr,j, branch_event=0;
-  pfmw_arch_reg_t flop_hack;
-  pfmw_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS+1];
-  memset(writeem, 0x0, sizeof writeem);
-  memset(readem, 0x0, sizeof readem);
-
-  for(i=0; i < PMU_MAX_COUNTERS; i++)
-    {
-      /* Bug fix, we must read the counters out in the same order we programmed them. */
-      /* pfmw_dispatch_events may request registers out of order. */
-
-      PFMW_REG_REGNUM(readem[i]) = PFMW_REG_REGNUM(machdep->evt.pfp_pc[i]);
-
-      /* Writing doesn't matter, we're just zeroing the counter. */ 
-
-      PFMW_REG_REGNUM(writeem[i]) = PMU_MAX_COUNTERS+i;
-
-    }
-
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, PFMW_EVT_EVTCOUNT(machdep->evt)) == -1) 
-    {
-      DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
-      return PAPI_ESYS;
-    }
-
-
-  if (local->state & PAPI_HWPROFILING) 
-    {
-      selector = local->EventInfoArray[local->profile.EventIndex].bits.selector;
-      while ((i = ffs(selector)))
-	{
-	  hwcntr = 1 << (i-1);
-	  if (hwcntr & selector)
-	    {
-	      /* Correct value read from kernel */
-	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->profile.threshold ;
-	      /* Ready the new structure */
-	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
-	      PFMW_REG_SMPLLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
-	      PFMW_REG_SMPLSRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
-	    }
-	  selector ^= 1 << (i-1); 
-	}
-/* reset pmd16,When our counter overflows, we want to BTB index to be reset */
-#ifdef ITANIUM2 
-     if ( pfm_ita2_is_btb( local->profile.EventCode ) || local->profile.EventCode ==PAPI_BR_INS) {
-#else
-   if ( pfm_ita_is_btb( local->profile.EventCode)|| local->profile.EventCode ==PAPI_BR_INS ) {
-#endif
-          PFMW_REG_REGNUM(writeem[PMU_MAX_COUNTERS]) = 16;
-          PFMW_REG_REGVAL(writeem[PMU_MAX_COUNTERS]) = 0UL;
-		  branch_event = 1;
-	}
-   }
-
-  if ((local->state & PAPI_OVERFLOWING) && (_papi_hwi_system_info.supports_hw_overflow))
-
-    {
-      selector = local->EventInfoArray[local->overflow.EventIndex].bits.selector;
-      while ((i = ffs(selector)))
-	{
-	  hwcntr = 1 << (i-1);
-	  if (hwcntr & selector)
-	    {
-	      DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,local->overflow.threshold));
-	      /* Correct value read from kernel */
-	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->overflow.threshold;
-	      /* Ready the new structure */
-	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
-	      PFMW_REG_SMPLLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
-	    }
-	  selector ^= 1 << (i-1); 
-	}
-    }
-
-  /* We need to scale FP_OPS_HI */ 
-
-  for(i=0; i < PMU_MAX_COUNTERS; i++)
-    {
-      PFMW_ARCH_REG_REGVAL(flop_hack) = PFMW_REG_REGVAL(machdep->evt.pfp_pc[i]);
-      if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
-	PFMW_REG_REGVAL(readem[i]) = PFMW_REG_REGVAL(readem[i]) * 4;
-    }
-
-/* adjust register value  */
-  if ((local->state & PAPI_PROFILING) && (_papi_hwi_system_info.supports_hw_profile))
-  {
-   selector = local->EventInfoArray[local->profile.EventIndex].bits.selector;
-   while ((i = ffs(selector)))
-    {
-      hwcntr = i-1;
-      for(j=0; j < PMU_MAX_COUNTERS; j++)
-      {
-         if ( PFMW_REG_REGNUM(readem[j]) == hwcntr ) {
-            PFMW_REG_REGVAL(readem[j]) += local->profile.threshold*
-              local_machdep->overflowcount[hwcntr-PMU_MAX_COUNTERS] ;
-		    break;
-		 }
-      }
-	  selector ^= 1 << (i-1); 
-    }
-    for(j=0; j < PMU_MAX_COUNTERS; j++)
-       local_machdep->overflowcount[j]=0 ;
-  }
-
-  /* Store the results in register order (they are read out LSb first from
-     the selector) */
-  for(i=0; i < PMU_MAX_COUNTERS && PFMW_REG_REGNUM(readem[i]); i++)
-    {
-      int papireg;
-      DBG((stderr,"update_global_hwcounters() %d: G%ld = G%lld + C%ld\n",i+4,
-	   global->hw_start[i]+PFMW_REG_REGVAL(readem[i]),
-	   global->hw_start[i],PFMW_REG_REGVAL(readem[i])));
-      papireg = PFMW_REG_REGNUM(readem[i]) - 4;
-      global->hw_start[papireg] += PFMW_REG_REGVAL(readem[i]);
-    }
-
-  if ( (local->state & PAPI_HWPROFILING) && branch_event ) {
-/*  write one more pd for pmd16 */
-    if (perfmonctl(machdep->pid,PFM_WRITE_PMDS,writeem, PMU_MAX_COUNTERS+1) == -1)
-     {
-    fprintf(stderr, "child: perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
-    return PAPI_ESYS;
-     }
-  } else { 
-    if (perfmonctl(machdep->pid,PFM_WRITE_PMDS,writeem, PMU_MAX_COUNTERS) == -1)
-     {
-    fprintf(stderr, "child: perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
-    return PAPI_ESYS;
-     }
-  }
-
-  return(PAPI_OK);
-}
-#endif
-
-inline static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long long *correct)
-{
-  int i;
-
-  for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-    {
-      DBG((stderr,"correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n",i,
-	   global->hw_start[i]-local->hw_start[i],global->hw_start[i],local->hw_start[i]));
-      correct[i] = global->hw_start[i] - local->hw_start[i];
-    }
-
-  return(0);
-}
 
 inline static int set_granularity(hwd_control_state_t *this_state, int domain)
 {
@@ -1007,22 +672,14 @@ inline static int set_inherit(int arg)
   return(PAPI_ESBSTR);
 }
 
-/*
-inline static int set_default_domain(EventSetInfo_t *zero, int domain)
-*/
-inline static int set_default_domain(hwd_context_t *zero, int domain)
+inline static int set_default_domain(hwd_control_state_t *this_state,int domain)
 {
-  hwd_control_state_t *current_state = &zero->cntrl;
-  return(set_domain(current_state,domain));
+  return(set_domain(this_state,domain));
 }
 
-/*
-inline static int set_default_granularity(EventSetInfo_t *zero, int granularity)
-*/
-inline static int set_default_granularity(hwd_context_t *zero, int granularity)
+inline static int set_default_granularity(hwd_control_state_t *this_state, int granularity)
 {
-  hwd_control_state_t *current_state = &zero->cntrl;
-  return(set_granularity(current_state,granularity));
+  return(set_granularity(this_state,granularity));
 }
 
 /* At init time, the higher level library should always allocate and 
@@ -1153,7 +810,7 @@ u_long_long _papi_hwd_get_real_usec (void)
 {
   long long cyc;
 
-  cyc = get_cycles()*(u_long_long)1000;
+  cyc = get_cycles()*(long_long)1000;
   cyc = cyc / (long long)_papi_hwi_system_info.hw_info.mhz;
   return(cyc / (long long)1000);
 }
@@ -1187,176 +844,112 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-
-int _papi_hwd_add_event(EventInfo_t *evi, hwd_preset_t *preset, hwd_control_state_t *this_state)
-{
-	int retval;
-    int nselector = 0;
-
-/* Do I really need this ? Yes */
-   if (this_state->bits.selector == 0)
-    init_config(this_state);
-
-/* Turn on the control codes and get the new bits required */
-
-   nselector = set_hwcntr_codes(this_state, preset);
-   if (nselector < 0)
-     return nselector;
-   if (nselector == 0)
-     abort();
-
-/* get the selector for the events already been added into the eventset */
-   retval = recalc_selectors(evi, this_state);
-
-/* compute the selector for the event been adding */
-   evi->hwd_selector = nselector ^ retval;
-   evi->bits.selector |= evi->hwd_selector;
-   evi->counter_index = ffs(evi->hwd_selector)-1;
-   return evi->counter_index;
-}
-
 #if 0
-int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size , EventInfo_t *evi)
 {
-  int nselector = 0;
-  int retval = 0;
-  int selector = 0;
-  pfmw_param_t tmp_cmd, *codes;
+  int retval, i, events_to_add, ix;
+  int org_cnt;
+  EventSetInfo_t *ESI = evi->ESIhead;
 
-  if (EventCode & PRESET_MASK)
-    { 
-      unsigned int preset_index;
-      int derived;
+  org_cnt = this_state->evt.pfp_event_count;
 
-      preset_index = EventCode & PRESET_AND_MASK; 
+  events_to_add=0;
+  for(i=0; i< size; i++ )
+  {
+    /* first check if the native events already in the array */
+  #ifdef ITANIUM2
+    if ( pfm_ita2_is_dear( nix[i] ) ) 
+  #else
+    if ( pfm_ita_is_dear( nix[i] ) ) 
+  #endif
+      set_dear_ita_param(&this_state->ita_lib_param, nix[i]);
 
-      if (!_papi_hwd_preset_map[preset_index].present)
-	return(PAPI_ENOEVNT);
-
-      derived = _papi_hwd_preset_map[preset_index].derived;
-
-      /* Get the codes used for this event */
-
-      codes = &_papi_hwd_preset_map[preset_index].evt;
-      out->derived = derived;
-      out->counter_index 
-	= _papi_hwd_preset_map[preset_index].counter_index;
-    }
-  else
+    ix=0;
+    while( (ix < ESI->NativeCount ) &&
+            (nix[i] != ESI->NativeInfoArray[ix].ni_index) )
+      ix++;
+    if (ix == ESI->NativeCount) events_to_add++;  /* a new native event */
+    else  /* this native event already in the native array*/
     {
-      int ev;
-      pfmw_code_t tmp;  
-      /* Support for native events here, only 1 counter at a time. */
-
-      memset(&tmp_cmd, 0, sizeof tmp_cmd);
-
-      if (EventCode >0 && EventCode < PME_EVENT_COUNT )
-      		tmp_cmd.pfp_events[0].event=EventCode;
-		else return(PAPI_EINVAL);
-
-#ifdef PFM20
-	  return(PAPI_ESBSTR);
-      memset(&tmp_cmd, 0, sizeof tmp_cmd);
-      tmp.pme_codes.pme_mcode = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
-      tmp.pme_codes.pme_ear = (EventCode >> 16) & 0x1; 
-      tmp.pme_codes.pme_dear = (EventCode >> 17) & 0x1; 
-      tmp.pme_codes.pme_tlb = (EventCode >> 18) & 0x1; 
-      tmp.pme_codes.pme_umask = (EventCode >> 19) & 0x1fff; 
-/*
-      ev = pfm_find_event_byvcode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
-*/
-      ev = pfm_find_event_bycode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
-      if (ev != PFMLIB_SUCCESS )
-	return(PAPI_EINVAL);
-#else
-      memset(&tmp_cmd, 0, sizeof tmp_cmd);
-      tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
-      tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
-      tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
-      tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
-      tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
-      ev = pfm_find_event_byvcode(tmp.pme_vcode, &(tmp_cmd.pfp_evt[0]));
-      if (ev != PFMLIB_SUCCESS )
-	return(PAPI_EINVAL);
-#endif
-      PFMW_EVT_EVTCOUNT(tmp_cmd) = 1;
-
-      codes = &tmp_cmd;
+      evi->pos[i]=ESI->NativeInfoArray[ix].ni_position;
+      continue;
     }
 
-  /* Perform any initialization of the control bits */
-
-  if (this_state->bits.selector == 0)
-    init_config(this_state);
-  
-#ifdef ITANIUM2 
-   if ( pfm_ita2_is_dear( EventCode) ) {
-#else
-   if ( pfm_ita_is_dear( EventCode) ) {
-#endif
-		set_dear_ita_param(&this_state->ita_lib_param, EventCode);
-/*
-		this_state->evt.pfp_model=&this_state->ita_lib_param;
-*/
-	}
-
-  out->code = EventCode;
-  /* Turn on the control codes and get the new bits required */
-
-  nselector = set_hwcntr_codes(this_state,codes,out);
-  if (nselector < 0)
-    return retval;
-  if (nselector == 0)
-    abort();
-
-  /* Recalculate the selectors in this EventSet (the order may have changed). */
-  _papi_recalc_selectors(this_state, out);
-
-  /* Only the new fields */
-
-  selector = this_state->bits.selector ^ nselector;
-  DBG((stderr,"This new event has selector 0x%x of 0x%x\n",selector,nselector));
-
-  /* Inform the upper level that the software event 'index' 
-     consists of the following information. */
-
-/*for native event */
-  if (!(EventCode & PRESET_MASK) ) {
-      out->bits.selector = selector;
+    if ( this_state->evt.pfp_event_count + events_to_add > PMU_MAX_COUNTERS)
+      return(PAPI_ECNFLCT);
+    ESI->NativeInfoArray[ESI->NativeCount++].ni_index=nix[i];
+    this_state->evt.pfp_events[this_state->evt.pfp_event_count].event= nix[i];
+    this_state->evt.pfp_event_count++;
   }
-
-  /* Update the new counter select field */
-
-  this_state->bits.selector = nselector;
-  return(PAPI_OK);
+  
+  if (events_to_add) 
+  {
+    /* Turn on the control codes and get the new bits required */
+    retval = set_hwcntr_codes(this_state, evi, nix, size);
+    if (retval != PAPI_OK )
+    {
+      this_state->evt.pfp_event_count = org_cnt;
+      return retval;
+    }
+    return 1;
+  }
+  return PAPI_OK;
 }
 #endif
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int used,i,j;
+  return(PAPI_OK);
+#if 0
+  int selector,i, index, nevents;
   unsigned int preset_index;
+  int event[PMU_MAX_COUNTERS];
 
   /* Find out which counters used. */
-  
-  used = in->bits.selector;
+ 
+  selector = in->hwd_selector;
 
-  /* Clear out counters that are part of this event. */
-
-  this_state->bits.selector = this_state->bits.selector ^ used;
   /* We need to remove the count from this event, do we need to
-   * reset the index of values too? -KSL 
+   * reset the index of values too? -KSL
    * Apparently so. -KSL */
-  preset_index = in->event_code & PRESET_AND_MASK;
-  for(i=0;i<PMU_MAX_COUNTERS;i++){
-    if ( PFMW_EVT_EVENT(this_state->evt,i) & used ) {
-      for ( j=i;j<(PMU_MAX_COUNTERS-1);j++ )
-         PFMW_EVT_EVENT(this_state->evt,j) = PFMW_EVT_EVENT(this_state->evt,j+1);
-    }
-  } 
-  PFMW_EVT_EVTCOUNT(this_state->evt)-=PFMW_EVT_EVTCOUNT(_papi_hwd_preset_map[preset_index].evt);
+  while ((i = ffs(selector)))
+  {
+    index = (i-1)-PMU_FIRST_COUNTER;
+    PFMW_EVT_EVENT(this_state->evt,index) = -1;
+    selector ^= 1 << (i-1);
+  }
 
-  return(PAPI_OK);
+  index=0;
+  for(i=0; i< PMU_MAX_COUNTERS; i++)
+  {
+    if (PFMW_EVT_EVENT(this_state->evt,i) != -1)
+      event[index++]= PFMW_EVT_EVENT(this_state->evt, i);
+  }
+
+/* get the correct number of events */
+  if (in->event_code & PRESET_MASK)
+  {
+    preset_index = in->event_code & PRESET_AND_MASK;
+    PFMW_EVT_EVTCOUNT(this_state->evt)-=PFMW_EVT_EVTCOUNT(_papi_hwd_preset_map[preset_index].evt);
+  }
+  else PFMW_EVT_EVTCOUNT(this_state->evt) -= 1;
+  nevents = PFMW_EVT_EVTCOUNT(this_state->evt) ;
+
+  PFMW_EVT_EVTCOUNT(this_state->evt) = nevents;
+  for(i=0; i<nevents; i++)
+    PFMW_EVT_EVENT(this_state->evt, i) = event[i];
+
+/* dispatch again */
+  if (pfm_dispatch_events(&this_state->evt))
+    return(PAPI_ECNFLCT);
+
+
+/* recalculate the selector */
+/*
+  recalc_selectors(in, this_state);
+*/
+#endif
+
 }
 
 int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
@@ -1365,153 +958,6 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state,
   return(PAPI_ESBSTR);
 }
 
-
-int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
-{ 
-  int i;
-  hwd_control_state_t *this_state = &ESI->machdep;
-  hwd_control_state_t *current_state = &zero->machdep;
-  pfmw_reg_t pd[PMU_MAX_COUNTERS+1];
-/* pd or pc may contain more elements than events */
-  
-/* for hardware profile, currently only support one eventset */
-  if (ESI->state & PAPI_HWPROFILING) 
-  {
-      int selector, hwcntr;
-
-      pfm_stop();
-      current_state->bits.selector = this_state->bits.selector;
-      memcpy(&current_state->evt,&this_state->evt,sizeof this_state->evt);
-      current_state->pc_count = this_state->pc_count;
-
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->evt.pfp_pc,
- current_state->pc_count) == -1) {
-        fprintf(stderr,"child: perfmonctl error WRITE_PMCS errno %d\n",errno); 
-        pfm_start(); 
-		return(PAPI_ESYS);
-      }
-
-      memset(pd, 0, sizeof pd);
-      for(i=0; i < PMU_MAX_COUNTERS; i++)
-      {
-        PFMW_REG_REGNUM(pd[i]) = PMU_MAX_COUNTERS+i;
-      }
-      selector = ESI->EventInfoArray[ESI->profile.EventIndex].bits.selector;
-      while ((i = ffs(selector)))
-        {
-          hwcntr = 1 << (i-1);
-          if (hwcntr & selector)
-          {
-          DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,ESI->profile.threshold));
-          PFMW_REG_REGVAL(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->profile.threshold;
-          PFMW_REG_SMPLLRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->profile.threshold;
-          PFMW_REG_SMPLSRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->profile.threshold;
-          }
-          selector ^= 1 << (i-1);
-        }
-
-/* reset pmd16,When our counter overflows, we want to BTB index to be reset */
-#ifdef ITANIUM2 
-   if ( pfm_ita2_is_btb( ESI->profile.EventCode ) || ESI->profile.EventCode ==PAPI_BR_INS) {
-#else
-   if ( pfm_ita_is_btb( ESI->profile.EventCode)|| ESI->profile.EventCode ==PAPI_BR_INS ) {
-#endif
-          PFMW_REG_REGNUM(pd[PMU_MAX_COUNTERS]) = 16;
-          PFMW_REG_REGVAL(pd[PMU_MAX_COUNTERS]) = 0UL;
-	}
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS+1) == -1) {
-         fprintf(stderr,"child: perfmonctl error WRITE_PMDS errno %d\n",errno);
-		 pfm_start(); return(PAPI_ESYS);
-      }
-
-    pfm_start();
-    return(PAPI_OK);
-  }
-
-  /* If we ARE NOT nested, 
-     just copy the global counter structure to the current eventset */
-
-/*
-  if (current_state->bits.selector == 0x0)
-*/
-    {
-      int selector, hwcntr;
-
-      pfm_stop();
-
-      current_state->bits.selector = this_state->bits.selector;
-
-      memcpy(&current_state->evt,&this_state->evt,sizeof this_state->evt);
-      current_state->pc_count = this_state->pc_count;
-
-
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->evt.pfp_pc, current_state->pc_count) == -1) {
-	fprintf(stderr,"child: perfmonctl error WRITE_PMCS errno %d\n",errno); pfm_start(); return(PAPI_ESYS);
-      }
-
-      memset(pd, 0, sizeof pd);
-
-      for(i=0; i < PMU_MAX_COUNTERS; i++) 
-	{
-	  PFMW_REG_REGNUM(pd[i]) = PMU_MAX_COUNTERS+i;  
-	}
-
-      if ((ESI->state & PAPI_OVERFLOWING) && (_papi_hwi_system_info.supports_hw_overflow))
-	{
-	  selector = ESI->EventInfoArray[ESI->overflow.EventIndex].bits.selector;
-	  while ((i = ffs(selector)))
-	    {
-	      hwcntr = 1 << (i-1);
-	      if (hwcntr & selector)
-		{
-		  DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,ESI->overflow.threshold));
-		  PFMW_REG_REGVAL(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
-		  PFMW_REG_SMPLLRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
-		}
-	      selector ^= 1 << (i-1); 
-	    }
-	}
-      
-      if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS) == -1) {
-	fprintf(stderr,"child: perfmonctl error WRITE_PMDS errno %d\n",errno); pfm_start(); return(PAPI_ESYS);
-      }
-      
-      pfm_start();
-      
-      return(PAPI_OK);
-    }
-
-} 
-
-int _papi_hwd_unmerge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
-{ 
-  int i, hwcntr, tmp;
-  hwd_control_state_t *this_state = &ESI->machdep;
-  hwd_control_state_t *current_state = &zero->machdep;
-
-  /* Check for events that are NOT shared between eventsets and 
-     therefore require modification to the selection mask. */
-
-  if ((zero->multistart.num_runners - 1) == 0)
-    {
-      current_state->bits.selector = 0;
-      return(PAPI_OK);
-    }
-  else
-    {
-      tmp = this_state->bits.selector;
-      while ((i = ffs(tmp)))
-	{
-	  hwcntr = 1 << (i-1-PMU_MAX_COUNTERS);
-	  if (zero->multistart.SharedDepth[i-1-PMU_MAX_COUNTERS] - 1 < 0)
-	    current_state->bits.selector ^= hwcntr;
-	  else
-	    zero->multistart.SharedDepth[i-1-PMU_MAX_COUNTERS]--;
-	  tmp ^= 1 << (i-1); 
-	}
-      return(PAPI_OK);
-    }
-}
 
 int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *machdep)
 {
@@ -1523,7 +969,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *machdep)
   for(i=0; i < PMU_MAX_COUNTERS; i++)
   {
       /* Writing doesn't matter, we're just zeroing the counter. */
-      PFMW_REG_REGNUM(writeem[i]) = PMU_MAX_COUNTERS+i;
+    PFMW_REG_REGNUM(writeem[i]) = PMU_MAX_COUNTERS+i;
   }
   if (perfmonctl(machdep->pid,PFM_WRITE_PMDS,writeem, PMU_MAX_COUNTERS) == -1)
   {
@@ -1550,11 +996,11 @@ int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 }
 */
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, u_long_long **events)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long **events, int threshold, int multiplier, int *pos)
 {
   int i;
-  pfmw_arch_reg_t flop_hack;
   pfarg_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS+1];
+  pfmw_arch_reg_t flop_hack;
 
   memset(writeem, 0x0, sizeof writeem);
   memset(readem, 0x0, sizeof readem);
@@ -1577,87 +1023,34 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, u_long_long
       return PAPI_ESYS;
     }
 
-#if 0
-  if (ESI->state & PAPI_HWPROFILING) 
-    {
-      selector = ESI->EventInfoArray[ESI->profile.EventIndex].bits.selector;
-      while ((i = ffs(selector)))
-	{
-	  hwcntr = 1 << (i-1);
-	  if (hwcntr & selector)
-	    {
-	      /* Correct value read from kernel */
-	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->profile.threshold ;
-	      /* Ready the new structure */
-	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
-	      PFMW_REG_SMPLLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
-	      PFMW_REG_SMPLSRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
-	    }
-	  selector ^= 1 << (i-1); 
-	}
-/* reset pmd16,When our counter overflows, we want to BTB index to be reset */
-#ifdef ITANIUM2 
-   if ( pfm_ita2_is_btb( local->profile.EventCode ) || local->profile.EventCode ==PAPI_BR_INS) {
-#else
-   if ( pfm_ita_is_btb( local->profile.EventCode)|| local->profile.EventCode ==PAPI_BR_INS ) {
-#endif
-      PFMW_REG_REGNUM(writeem[PMU_MAX_COUNTERS]) = 16;
-      PFMW_REG_REGVAL(writeem[PMU_MAX_COUNTERS]) = 0UL;
-      branch_event = 1;
-	}
-  }
-
-  if ((ESI->state & PAPI_OVERFLOWING) && (_papi_hwi_system_info.supports_hw_overflow))
-
-    {
-      selector = ESI->EventInfoArray[local->overflow.EventIndex].bits.selector;
-      while ((i = ffs(selector)))
-	{
-	  hwcntr = 1 << (i-1);
-	  if (hwcntr & selector)
-	    {
-	      DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,local->overflow.threshold));
-	      /* Correct value read from kernel */
-	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->overflow.threshold;
-	      /* Ready the new structure */
-	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold + 1;
-	      PFMW_REG_SMPLLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold + 1;
-	    }
-	  selector ^= 1 << (i-1); 
-	}
-    }
-
-#endif
-
-  /* We need to scale FP_OPS_HI */ 
-#if 0
-  for(i=0; i < PMU_MAX_COUNTERS; i++)
-  {
-    PFMW_ARCH_REG_REGVAL(flop_hack) = PFMW_REG_REGVAL(machdep->evt.pfp_pc[i]);
-    if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
-	  PFMW_REG_REGVAL(readem[i]) = PFMW_REG_REGVAL(readem[i]) * 4;
-  }
-#endif
-
-  /* Store the results in register order (they are read out LSb first from
-     the selector) */
-/*
-  for(i=0; i < PMU_MAX_COUNTERS && PFMW_REG_REGNUM(readem[i]); i++)
-  for(i=0; i <_papi_hwi_system_info.num_cntrs; i++)
-    {
-      int papireg;
-      DBG((stderr,"read_hwcounters() %d: G%ld = G%lld + C%ld\n",i+4,
-	   ESI->hw_start[i]+PFMW_REG_REGVAL(readem[i]),
-	   ESI->hw_start[i],PFMW_REG_REGVAL(readem[i])));
-      papireg = PFMW_REG_REGNUM(readem[i]) - 4;
-      ESI->hw_start[papireg] += PFMW_REG_REGVAL(readem[i]);
-    }
-*/
-
   for(i=0; i < _papi_hwi_system_info.num_cntrs; i++)
   {
 	machdep->counters[i] = readem[i].reg_value;
 	DBG((stderr, "read counters is %ld\n", readem[i].reg_value));
+  }
+
+  /* if pos is not null, then adjust by threshold */
+  if (pos != NULL )
+  {
+    i=0;
+    while (pos[i]!= -1) 
+    {
+      machdep->counters[pos[i]] += threshold;
+      i++;
+    }
+    /* special case, We need to scale FP_OPS_HI*/ 
+    for(i=0; i < 4; i++)
+    {
+      PFMW_ARCH_REG_REGVAL(flop_hack)=PFMW_REG_REGVAL(machdep->evt.pfp_pc[i]);
+      if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
+        machdep->counters[i] *= 4;
+    }
+
+    i=0;
+    /*  guess why ? at this time just grab one native event, add the sum */
+    if (pos[i]!= -1) 
+      machdep->counters[pos[i]] += threshold * multiplier;
+
   }
 
   *events=machdep->counters;
@@ -1690,28 +1083,6 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *current_state)
   for(i=0; i < PMU_MAX_COUNTERS; i++) 
     PFMW_REG_REGNUM(current_state->pd[i]) = PMU_MAX_COUNTERS+i;  
 
-#if 0
-  if ((ESI->state & PAPI_OVERFLOWING) && 
-            (_papi_hwi_system_info.supports_hw_overflow))
-  {
-	selector = ESI->EventInfoArray[ESI->overflow.EventIndex].hwd_selector;
-	while ((i = ffs(selector)))
-	{
-	  hwcntr = 1 << (i-1);
-	  if (hwcntr & selector)
-	  {
-	    DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i-1+PMU_FIRST_COUNTER,ESI->overflow.threshold));
-		PFMW_REG_REGVAL(pd[i-1]) = (~0UL) - 
-                                  (unsigned long)ESI->overflow.threshold;
-		PFMW_REG_SMPLLRST(pd[i-1]) = (~0UL) - 
-                                  (unsigned long)ESI->overflow.threshold;
-	  }
-	  selector ^= 1 << (i-1); 
-    }
-  }
-#endif
-      
   if (perfmonctl(current_state->pid, PFM_WRITE_PMDS, current_state->pd,
                             PMU_MAX_COUNTERS)== -1)
   {
@@ -1738,12 +1109,44 @@ int _papi_hwd_update_shlib_info(void)
 }
 */
 
-int _papi_hwd_allocate_registers(hwd_control_state_t *ctrl, hwd_preset_t * preset, hwd_register_map_t * regmap)
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI )
 {
-	return PAPI_OK;
+  int retval, i;
+  int org_cnt;
+  NativeInfo_t *native = ESI->NativeInfoArray;
+  pfmlib_param_t *evt = &ESI->machdep.evt;
+
+  org_cnt = evt->pfp_event_count;
+
+/* add new native events to the evt structure */
+  for(i=org_cnt; i< ESI->NativeCount; i++ )
+  {
+  #ifdef ITANIUM2
+    if ( pfm_ita2_is_dear( native[i].ni_index ) )
+  #else
+    if ( pfm_ita_is_dear( native[i].ni_index ) )
+  #endif
+      set_dear_ita_param(&ESI->machdep.ita_lib_param, native[i].ni_index);
+    evt->pfp_events[evt->pfp_event_count].event= native[i].ni_index;
+    evt->pfp_event_count++;
+  }
+    /* Turn on the control codes and get the new bits required */
+  retval = set_hwcntr_codes(ESI);
+  if (retval != PAPI_OK )
+  {
+    evt->pfp_event_count = org_cnt;
+/*
+    return retval;
+*/
+    return 0;
+  }
+  return 1;
+/* the return value will be changed if the test condition in 
+   papi_internal.c can be changed
+*/
 }
 
-int _papi_hwd_remove_event(hwd_register_map_t *chosen, unsigned int counter_index, hwd_control_state_t * out)
+int _papi_hwd_remove_event(hwd_control_state_t *chosen, int *nix, int size)
 {
 	return PAPI_OK;
 }
@@ -1761,11 +1164,11 @@ int _papi_hwd_ctl(hwd_context_t *zero, int code, _papi_int_option_t *option)
   switch (code)
     {
     case PAPI_SET_DEFDOM:
-      return(set_default_domain(zero, option->domain.domain));
+      return(set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
     case PAPI_SET_DOMAIN:
       return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
     case PAPI_SET_DEFGRN:
-      return(set_default_granularity(zero, option->granularity.granularity));
+      return(set_default_granularity(&option->domain.ESI->machdep, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(&option->granularity.ESI->machdep, option->granularity.granularity));
 #if 0
@@ -1985,6 +1388,9 @@ check_btb_reg(pfmw_arch_reg_t reg)
 static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
 *context)
 {
+/*
+  pfm_stop();
+*/
   if (info->sy_code != PROF_OVFL) 
   {
     fprintf(stderr,"PAPI: received spurious SIGPROF si_code=%d\n", 
@@ -1992,9 +1398,9 @@ static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
     return;
   }
   ia64_process_profile_entry();
-  if ( perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1 );
+  if ( perfmonctl(getpid(), PFM_RESTART, NULL, 0) == -1 )
   {
-    fprintf(stderr,"PID %d: perfmonctl error PFM_RESTART %d\n",
+    fprintf(stderr,"PID %d: perfmonctl mmm error PFM_RESTART %d\n",
            getpid(),errno);
     return;
   }
@@ -2022,19 +1428,19 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
            getpid(),errno);
     return;
   }
-  pfm_start();
 }
 
 static int set_notify(EventSetInfo_t *ESI, int index, int value)
 {
-  int selector, hwcntr, i, setbit;
+  int *pos, count, hwcntr, i;
   hwd_control_state_t *this_state = &ESI->machdep;
   pfmw_reg_t *pc = this_state->evt.pfp_pc;
 
-  selector = ESI->EventInfoArray[index].hwd_selector;
-  while ((setbit= ffs(selector)))
+  pos = ESI->EventInfoArray[index].pos;
+  count=0;
+  while ( pos[count] != -1 )
   {
-    hwcntr = setbit - 1 + PMU_FIRST_COUNTER;
+    hwcntr = pos[count] + PMU_FIRST_COUNTER;
     for (i=0;i<PMU_MAX_COUNTERS;i++)
     {
       if (PFMW_REG_REGNUM(pc[i]) == hwcntr)
@@ -2045,7 +1451,7 @@ static int set_notify(EventSetInfo_t *ESI, int index, int value)
         break;
       }
     }
-    selector ^= 1 << (setbit - 1);
+    count++;
   }
   return(PAPI_OK);
 }
@@ -2053,6 +1459,7 @@ static int set_notify(EventSetInfo_t *ESI, int index, int value)
 int _papi_hwd_stop_profiling( ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
    pfm_stop();
+   ESI->profile.overflowcount = 0;
    ia64_process_profile_entry();
    master->event_set_profiling=NULL;
    return(PAPI_OK);
@@ -2063,7 +1470,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 {
   struct sigaction act;
   void *tmp;
-  int i, selector;
+  int i, *pos, index;
   hwd_control_state_t *this_state = &ESI->machdep;
   pfarg_context_t ctx[1];
 
@@ -2093,18 +1500,20 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 
     set_notify(ESI, profile_option->EventIndex, PFM_REGFL_OVFL_NOTIFY);
 /* set initial value in pd array */
-    selector = ESI->EventInfoArray[profile_option->EventIndex].hwd_selector;
-    while ((i = ffs(selector)))
+    pos = ESI->EventInfoArray[profile_option->EventIndex].pos;
+    index=0;
+    while ( pos[index] != -1 )
     {
+      i=pos[index];
       DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i-1+PMU_FIRST_COUNTER,profile_option->threshold));
-      PFMW_REG_REGVAL(this_state->pd[i-1]) = (~0UL) -
+           i+PMU_FIRST_COUNTER,profile_option->threshold));
+      PFMW_REG_REGVAL(this_state->pd[i]) = (~0UL) -
                                   (unsigned long)profile_option->threshold+1;
-      PFMW_REG_SMPLLRST(this_state->pd[i-1]) = (~0UL) -
+      PFMW_REG_SMPLLRST(this_state->pd[i]) = (~0UL) -
                                   (unsigned long)profile_option->threshold+1;
-      PFMW_REG_SMPLSRST(this_state->pd[i-1]) = (~0UL) -
+      PFMW_REG_SMPLSRST(this_state->pd[i]) = (~0UL) -
                                   (unsigned long)profile_option->threshold+1;
-      selector ^= 1 << (i-1);
+      index++;
     }
 
   /* need to rebuild the context */
@@ -2174,7 +1583,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = &ESI->machdep;
   pfmw_reg_t *pc = this_state->evt.pfp_pc;
-  int i, selector, hwcntr, index, retval = PAPI_OK;
+  int i, hwcntr, index, retval = PAPI_OK, *pos;
 
   if ( overflow_option->EventCode & PRESET_MASK) 
   {
@@ -2197,10 +1606,11 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
      to the actual hardware register. 
   */
 
-     selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
-     while ((index = ffs(selector)))
+     pos = ESI->EventInfoArray[overflow_option->EventIndex].pos;
+     index=0;
+     while ( pos[index]!= -1 )
 	 {
-	   hwcntr = index - 1 + PMU_FIRST_COUNTER;
+	   hwcntr = pos[index] + PMU_FIRST_COUNTER;
 	   for (i=0;i<PMU_MAX_COUNTERS;i++)
 	   { 
 	     if (PFMW_REG_REGNUM(pc[i]) == hwcntr)
@@ -2211,7 +1621,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 		   break;
 		 }
 	   }
-	   selector ^= 1 << (index-1);
+	   index++;
 	 }
 
      /* Remove the signal handler */
@@ -2247,10 +1657,11 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
     to the actual hardware register. 
   */
 
-    selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
-    while ((index = ffs(selector)))
+    pos = ESI->EventInfoArray[overflow_option->EventIndex].pos;
+    index = 0;
+    while ( pos[index] != -1 )
 	{
-	  hwcntr = index - 1 + PMU_FIRST_COUNTER;
+	  hwcntr = pos[index] + PMU_FIRST_COUNTER;
 	  for (i=0;i<PMU_MAX_COUNTERS;i++)
 	  {
 	    if (PFMW_REG_REGNUM(pc[i]) == hwcntr)
@@ -2260,28 +1671,22 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 		  break;
 		}
 	  }
-	  selector ^= 1 << (index-1);
+      index++;
 	}
 
 /* set initial value in pd array */
-    selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
-    while ((i = ffs(selector)))
+    pos = ESI->EventInfoArray[overflow_option->EventIndex].pos;
+    index=0;
+    while ( pos[index] != -1 )
     {
-/*
-      hwcntr = 1 << (i-1);
-      if (hwcntr & selector)
-      {
-*/
+        i = pos[index];
         DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i-1+PMU_FIRST_COUNTER,overflow_option->threshold));
-        PFMW_REG_REGVAL(this_state->pd[i-1]) = (~0UL) -
+           i+PMU_FIRST_COUNTER,overflow_option->threshold));
+        PFMW_REG_REGVAL(this_state->pd[i]) = (~0UL) -
                                   (unsigned long)overflow_option->threshold+1;
-        PFMW_REG_SMPLLRST(this_state->pd[i-1]) = (~0UL) -
+        PFMW_REG_SMPLLRST(this_state->pd[i]) = (~0UL) -
                                   (unsigned long)overflow_option->threshold+1;
-/*
-      }
-*/
-      selector ^= 1 << (i-1);
+        index++;
     }
 
     PAPI_lock();
@@ -2338,4 +1743,51 @@ void _papi_hwd_unlock(void)
 
     __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock), "r"(MUTEX_OPEN) : "memory");
 #endif /* __INTEL_COMPILER */
+}
+
+/*
+int _papi_hwd_encode_native(char *name, int *code)
+{
+  if (pfm_find_event_byname(name, code) != PFMLIB_SUCCESS)
+    return( PAPI_ENOEVNT);
+  else 
+    return(PAPI_OK);
+}
+*/
+
+char * _papi_hwd_native_code_to_name(unsigned int EventCode)
+{
+  char *name;
+
+  if (pfm_get_event_name(EventCode^NATIVE_MASK, &name)== PFMLIB_SUCCESS)
+    return name;
+  else return NULL;
+}
+
+char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
+{
+  return(_papi_hwd_native_code_to_name(EventCode));
+}
+
+void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
+{
+  ptr->pid = getpid();
+  set_domain(ptr,_papi_hwi_system_info.default_domain);
+/* set library parameter pointer */
+#ifdef ITANIUM2
+  ptr->ita_lib_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+#else
+  ptr->ita_lib_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
+#endif
+  ptr->evt.pfp_model=&ptr->ita_lib_param;
+}
+
+void  _papi_hwd_remove_native(hwd_control_state_t *this_state, NativeInfo_t *nativeInfo)
+{
+  return;
+}
+
+void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
+{
+  return;
 }

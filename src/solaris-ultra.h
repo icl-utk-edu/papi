@@ -36,6 +36,8 @@ typedef struct hwd_control_state {
   int derived;   
   /* Buffer to pass to the kernel to control the counters */
   papi_cpc_event_t counter_cmd;
+  /* Buffer to save the values read from the hardware counter */
+  u_long_long values[US_MAX_COUNTERS];
 } hwd_control_state_t;
 
 typedef struct Solaris_regmap {
@@ -44,7 +46,6 @@ typedef struct Solaris_regmap {
 
 typedef Solaris_regmap_t hwd_register_map_t;
 
-#include "papi_internal.h"
 
 typedef struct hwd_preset {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
@@ -87,6 +88,8 @@ typedef struct _thread_list {
   ThreadInfo_t *master;
   struct _thread_list *next;
 } ThreadInfoList_t;
+
+#include "papi_internal.h"
 
 /* Assembler prototypes */
 

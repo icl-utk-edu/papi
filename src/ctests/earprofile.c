@@ -79,13 +79,7 @@ int main(int argc, char **argv)
   {
 
     /* Execution latency stall cycles */
-#ifdef ITANIUM2
-/* index for DATA_EAR_CACHE_LAT4 in itanium2*/ 
-    native = 189;
-#else
-/* index for DATA_EAR_CACHE_LAT4 in itanium*/ 
-    native = 121;
-#endif
+    PAPI_encode_native("DATA_EAR_CACHE_LAT4", &native);
     if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     if((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC))!=PAPI_OK)

@@ -579,16 +579,12 @@ int PAPI_stop(int EventSet, long_long *values)
   /* If overflowing is enabled, turn it off */
 
   if (ESI->state & PAPI_OVERFLOWING)
-    {
-      /* adjust the value of the overflowing event */
-      if (_papi_hwi_system_info.supports_hw_overflow )
-        ESI->sw_stop[ESI->overflow.EventIndex] += ESI->overflow.count *
-                                                  ESI->overflow.threshold;
-
-      retval = _papi_hwi_stop_overflow_timer(thread, ESI);
-      if (retval < PAPI_OK)
-	papi_return(retval);
-    }
+  {
+    ESI->overflow.count=0;
+    retval = _papi_hwi_stop_overflow_timer(thread, ESI);
+    if (retval < PAPI_OK)
+	  papi_return(retval);
+  }
   
   /* Remove the control bits from the active counter config. */
 
@@ -635,10 +631,10 @@ int PAPI_reset(int EventSet)
   thread = ESI->master;
 
   if (ESI->state & PAPI_RUNNING)
-    {
-      if (ESI->state & PAPI_MULTIPLEXING)
-	retval = MPX_reset(ESI->multiplex);
-      else
+  {
+    if (ESI->state & PAPI_MULTIPLEXING)
+	  retval = MPX_reset(ESI->multiplex);
+    else
 	{
 	  /* If we're not the only one running, then just
 	     read the current values into the ESI->start
@@ -646,12 +642,20 @@ int PAPI_reset(int EventSet)
 	     that are shared. */
 	  
 	  retval = _papi_hwd_reset(&thread->context, &ESI->machdep);
+
+      if ((ESI->state & PAPI_OVERFLOWING) &&
+          (_papi_hwi_system_info.supports_hw_overflow))
+        ESI->overflow.count = 0;
+
+      if ((ESI->state & PAPI_PROFILING) &&
+          (_papi_hwi_system_info.supports_hw_profile))
+        ESI->profile.overflowcount = 0;
 	}
-    }
+  }
   else
-    {
-      memset(ESI->sw_stop,0x00,ESI->NumberOfEvents*sizeof(long_long)); 
-    }
+  {
+    memset(ESI->sw_stop,0x00,ESI->NumberOfEvents*sizeof(long_long)); 
+  }
 
   DBG((stderr,"PAPI_reset returns %d\n",retval));
   papi_return(retval);
@@ -1225,7 +1229,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 
   ESI = _papi_hwi_lookup_EventSet(EventSet);
   if(ESI == NULL)
-     papi_return(PAPI_ENOEVST);
+    papi_return(PAPI_ENOEVST);
   thread = ESI->master;
 
   if ((ESI->state & PAPI_STOPPED) != PAPI_STOPPED)
@@ -1238,17 +1242,17 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
     papi_return(PAPI_EINVAL);
 
   if (ESI->state & PAPI_OVERFLOWING)
-    {
-      if (threshold)
-        papi_return(PAPI_EINVAL);
-    }
+  {
+    if (threshold)
+      papi_return(PAPI_EINVAL);
+  }
   else
-    {
-      if (handler == NULL)
-        papi_return(PAPI_EINVAL);
-      if (threshold == 0)
-        papi_return(PAPI_EINVAL);
-    }
+  {
+    if (handler == NULL)
+      papi_return(PAPI_EINVAL);
+    if (threshold == 0)
+      papi_return(PAPI_EINVAL);
+  }
 
   /* Set up the option structure for the low level */
 
@@ -1258,13 +1262,14 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
   opt.EventCode = EventCode;
   opt.flags = flags;
   opt.handler = handler;
+  opt.count = 0;
 
   if (_papi_hwi_system_info.supports_hw_overflow)
-    {
-      retval = _papi_hwd_set_overflow(ESI, &opt);
-      if (retval < PAPI_OK)
-	return(retval);
-    }
+  {
+    retval = _papi_hwd_set_overflow(ESI, &opt);
+    if (retval < PAPI_OK)
+	  return(retval);
+  }
   else
     opt.timer_ms = PAPI_ITIMER_MS;
 
@@ -1603,4 +1608,9 @@ int PAPI_save(void)
 int PAPI_initialized(void)
 {
   return (init_retval != DEADBEEF);
+}
+
+int PAPI_encode_native(char *str, int *code)
+{
+  return(_papi_hwi_native_name_to_code(str, code));
 }

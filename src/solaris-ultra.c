@@ -16,6 +16,7 @@ static int cpuver;
 static int pcr_shift[2]; 
 static uint64_t pcr_event_mask[2];
 static uint64_t pcr_inv_mask[2];
+int papi_debug;
 
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
@@ -125,75 +126,73 @@ static void dump_cmd(papi_cpc_event_t *t)
   DBG((stderr,"ce_pcr 0x%llx\n",t->cmd.ce_pcr));
   DBG((stderr,"flags %x\n",t->flags));
 }
-#endif DEBUG
+#endif 
 
 static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
 {
 #ifdef DEBUG
-  extern int papi_debug;
   if (papi_debug)
     psignal(signal, "dispatch_emt");
 #endif
 
   if (sip->si_code == EMT_CPCOVF)
-    {
-      papi_cpc_event_t *sample;
-      EventSetInfo_t *ESI;
-      ThreadInfo_t *thread;
-      int t;
+  {
+    papi_cpc_event_t *sample;
+    EventSetInfo_t *ESI;
+    ThreadInfo_t *thread;
+    int t;
 
-/*
-      master_event_set = _papi_hwi_lookup_in_master_list();
-      ESI = master_event_set->event_set_overflowing;
-*/
-	  thread = _papi_hwi_lookup_in_thread_list();
-      ESI = (EventSetInfo_t *)thread->event_set_overflowing;
+    thread = _papi_hwi_lookup_in_thread_list();
+    ESI = (EventSetInfo_t *)thread->event_set_overflowing;
 
-/*
-      sample = &((hwd_control_state_t *)master_event_set->machdep)->counter_cmd;
-*/
-      sample = &(ESI->machdep.counter_cmd);
+    sample = &(ESI->machdep.counter_cmd);
 
-      /* GROSS! This is a hack to 'push' the correct values 
+    /* GROSS! This is a hack to 'push' the correct values 
 	 back into the hardware, such that when PAPI handles
-         the overflow and reads the values, it gets the correct
-         ones. */
+     the overflow and reads the values, it gets the correct ones.
+    */
       
-      /* Find which HW counter is overflowing */
+    /* Find which HW counter is overflowing */
       
-      if (ESI->EventInfoArray[ESI->overflow.EventIndex].hwd_selector = 0x1)
-	t = 0;
-      else
-	t = 1;
+    if (ESI->EventInfoArray[ESI->overflow.EventIndex].hwd_selector == 0x1)
+      t = 0;
+    else
+      t = 1;
       
-      /* Push the correct value */
-      
-      sample->cmd.ce_pic[t] = ESI->overflow.threshold;
+#if 0
+    /* Push the correct value */
+    sample->cmd.ce_pic[t] = ESI->overflow.threshold;
 #if DEBUG
-      dump_cmd(sample);
+    dump_cmd(sample);
 #endif
-      if (cpc_bind_event(&sample->cmd,0) == -1)
-	return;
-      
-      /* Call the regular overflow function in extras.c */
-
-      _papi_hwi_dispatch_overflow_signal(arg);
-      
-      /* Reset the threshold */
-      
-      sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold;
-      
-#if DEBUG
-      dump_cmd(sample);
-#endif
-      if (cpc_bind_event(&sample->cmd,sample->flags) == -1)
-	return;
-    }
-  else
-    {
-      DBG((stderr,"dispatch_emt() dropped, si_code = %d\n",sip->si_code));
+    if (cpc_bind_event(&sample->cmd,0) == -1)
       return;
-    }
+    ESI->overflow.count++;
+    ESI->overflow.handler(ESI->EventSetIndex, ESI->overflow.EventCode,
+                ESI->overflow.EventIndex, ESI->sw_stop,
+                &ESI->overflow.threshold, arg);
+#endif
+    /* Call the regular overflow function in extras.c */
+    _papi_hwi_dispatch_overflow_signal(arg);
+
+    /* Reset the threshold */
+      
+    if ( cpc_take_sample(&sample->cmd) == -1)
+      return;
+
+    sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold;
+      
+#if DEBUG
+    dump_cmd(sample);
+#endif
+    if (cpc_bind_event(&sample->cmd,sample->flags) == -1)
+       return;
+  }
+  else
+  {
+    DBG((stderr,"dispatch_emt() dropped, si_code = %d\n",sip->si_code));
+    return;
+  }
 }
 
 static int scan_prtconf(char *cpuname,int len_cpuname,int *hz, int *ver)
@@ -406,6 +405,8 @@ static void init_config(hwd_control_state_t *ptr)
   ptr->counter_cmd.flags = 0x0;
   ptr->counter_cmd.cmd.ce_cpuver = cpuver;
   ptr->counter_cmd.cmd.ce_pcr = 0x0;
+  ptr->counter_cmd.cmd.ce_pic[0]=0;
+  ptr->counter_cmd.cmd.ce_pic[1]=0;
   set_domain(ptr,_papi_hwi_system_info.default_domain);
   set_granularity(ptr,_papi_hwi_system_info.default_granularity);
 }
@@ -447,17 +448,18 @@ static int get_system_info(void)
 
 #ifdef DEBUG
   {
-  extern int papi_debug;
-  if (papi_debug) {
-    name = cpc_getcpuref(cpuver);
-    if(name)
-      fprintf(stderr,"CPC CPU reference: %s\n",name);
-    else
-      fprintf(stderr,"Could not get a CPC CPU reference.\n");
+    if (papi_debug) 
+    {
+      name = cpc_getcpuref(cpuver);
+      if(name)
+        fprintf(stderr,"CPC CPU reference: %s\n",name);
+      else
+        fprintf(stderr,"Could not get a CPC CPU reference.\n");
   
-    for(i=0;i<cpc_getnpic(cpuver);i++) {
-      fprintf(stderr,"\n%6s %-40s %8s\n","Reg","Symbolic name","Code");
-      cpc_walk_names(cpuver, i, "%6d %-40s %02x\n",print_walk_names);
+      for(i=0;i<cpc_getnpic(cpuver);i++) 
+      {
+        fprintf(stderr,"\n%6s %-40s %8s\n","Reg","Symbolic name","Code");
+        cpc_walk_names(cpuver, i, "%6d %-40s %02x\n",print_walk_names);
       }
       fprintf(stderr,"\n");
     }
@@ -468,15 +470,15 @@ static int get_system_info(void)
   /* Initialize other globals */
 
   if (cpuver <= CPC_ULTRA2)
-    {
-      DBG((stderr,"cpuver (==%d) <= CPC_ULTRA2 (==%d)\n",cpuver,CPC_ULTRA2));
-      pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
-      pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
-      pcr_event_mask[0] = (CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
-      pcr_event_mask[1] = (CPC_ULTRA2_PCR_PIC1_MASK<<CPC_ULTRA_PCR_PIC1_SHIFT);
-      pcr_inv_mask[0] = ~(pcr_event_mask[0]);
-      pcr_inv_mask[1] = ~(pcr_event_mask[1]);
-    }
+  {
+    DBG((stderr,"cpuver (==%d) <= CPC_ULTRA2 (==%d)\n",cpuver,CPC_ULTRA2));
+    pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
+    pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
+    pcr_event_mask[0] = (CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
+    pcr_event_mask[1] = (CPC_ULTRA2_PCR_PIC1_MASK<<CPC_ULTRA_PCR_PIC1_SHIFT);
+    pcr_inv_mask[0] = ~(pcr_event_mask[0]);
+    pcr_inv_mask[1] = ~(pcr_event_mask[1]);
+  }
   else if (cpuver == CPC_ULTRA3)
     {
       DBG((stderr,"cpuver (==%d) == CPC_ULTRA3 (==%d)\n",cpuver,CPC_ULTRA3));
@@ -488,8 +490,8 @@ static int get_system_info(void)
       pcr_inv_mask[1] = ~(pcr_event_mask[1]);
       _papi_hwi_system_info.supports_hw_overflow = 1;
     }
-  else
-    return(PAPI_ESBSTR);
+    else
+      return(PAPI_ESBSTR);
 
   /* Path and args */
 
@@ -562,6 +564,12 @@ static int get_system_info(void)
   DBG((stderr,"num_cntrs = %d\n",_papi_hwi_system_info.num_cntrs));
 
   /* Software info */
+  _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_start;
+  _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)&_etext;
+  _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_etext+1;
+  _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t)&_edata;
+  _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t)&_edata+1;
+  _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t)&_end;
 
   /* Setup presets */
 
@@ -764,14 +772,14 @@ u_long_long _papi_hwd_get_real_usec (void)
 
 u_long_long _papi_hwd_get_real_cycles (void)
 {
+/*
   return(get_tick());
-#if 0
-  float usec, cyc;
+*/
+  u_long_long usec, cyc;
 
-  usec = (float)_papi_hwd_get_real_usec();
-  cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long long)cyc);
-#endif
+  usec = _papi_hwd_get_real_usec();
+  cyc = usec * (long long)_papi_hwi_system_info.hw_info.mhz;
+  return((u_long_long)cyc);
 }
 
 u_long_long _papi_hwd_get_virt_usec (const hwd_context_t *zero)
@@ -790,20 +798,29 @@ void _papi_hwd_error(int error, char *where)
 }
 
 /*
-int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
-*/
 int _papi_hwd_add_event(EventInfo_t *evi, hwd_preset_t *preset, hwd_control_state_t *this_state)
+*/
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *evi)
 {
   int selector = 0;
   int avail = 0;
   unsigned char tmp_cmd[US_MAX_COUNTERS], *codes;
+  hwd_preset_t * preset;
 
   int preset_index;
   int derived;
 
-  selector = preset->selector;
-  if (selector == 0)
-	return(PAPI_ENOEVNT);
+  if (EventCode & PRESET_MASK)
+  {
+    preset_index = EventCode & PRESET_AND_MASK;
+    preset = &_papi_hwd_preset_map[preset_index];
+    selector = preset->selector;
+    if (selector == 0)
+      return(PAPI_ENOEVNT);
+  }
+  else
+    return(PAPI_ESBSTR);
+
   derived = preset->derived;
 
   /* Find out which counters are available. */
@@ -815,10 +832,9 @@ int _papi_hwd_add_event(EventInfo_t *evi, hwd_preset_t *preset, hwd_control_stat
   if (derived == 0) 
   {
 	  /* Pick any counter available */
-
     selector = get_avail_hwcntr_bits(avail);
-	if (selector == 0)
-	  return(PAPI_ECNFLCT);
+    if (selector == 0)
+      return(PAPI_ECNFLCT);
   }    
   else
   {
@@ -826,14 +842,14 @@ int _papi_hwd_add_event(EventInfo_t *evi, hwd_preset_t *preset, hwd_control_stat
        required for the derived event are available */
 
     if ((avail & selector) != selector)
-	  return(PAPI_ECNFLCT);	    
+      return(PAPI_ECNFLCT);	    
   }
 
       /* Get the codes used for this event */
 
   codes = preset->counter_cmd;
   evi->derived = derived;
-  evi->counter_index = preset->operand_index;
+  evi->counter_index = selector-1;
 
 #if 0
   else
@@ -880,10 +896,11 @@ int _papi_hwd_add_event(EventInfo_t *evi, hwd_preset_t *preset, hwd_control_stat
      consists of the following information. */
 
 /*
-  out->code = EventCode;
+  out->code = evi->event_code;
 */
+
   evi->hwd_selector = selector;
-  return(evi->counter_index); 
+  return(PAPI_OK); 
 }
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
@@ -977,7 +994,6 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
       hwcntrs_in_all  = this_state->selector | current_state->selector;
 #if DEBUG
       {
-        extern int papi_debug;
         if (papi_debug) {
 	  fprintf(stderr,"this selector:    %x\n", this_state->selector);
 	  fprintf(stderr,"current selector: %x\n", current_state->selector);
@@ -1071,76 +1087,33 @@ int _papi_hwd_unmerge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
     }
 }
 
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t * zero)
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t * ctrl)
 {
-  int i, retval;
+  int retval;
 
-#if 0
-  retval = update_global_hwcounters(zero);
-  if (retval)
-    return(retval);
-
-  for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-    ESI->hw_start[i] = zero->hw_start[i];
-#endif
+  retval = cpc_take_sample(&ctrl->counter_cmd.cmd);
+  if (retval == -1)
+    return(PAPI_ESYS);
+  ctrl->values[0] = ctrl->counter_cmd.cmd.ce_pic[0] ;
+  ctrl->values[1] = ctrl->counter_cmd.cmd.ce_pic[1] ;
 
   return(PAPI_OK);
 }
 
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, u_long_long **events)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events)
 {
-  int shift_cnt = 0;
-  int retval, selector, j = 0, i;
-  long long correct[US_MAX_COUNTERS];
+  int retval;
+
+  retval = cpc_take_sample(&ctrl->counter_cmd.cmd);
+  if (retval == -1)
+    return(PAPI_ESYS);
+  ctrl->counter_cmd.cmd.ce_pic[0] -= (u_long_long)ctrl->values[0];
+  ctrl->counter_cmd.cmd.ce_pic[1] -= (u_long_long)ctrl->values[1];
+
+  *events = ctrl->counter_cmd.cmd.ce_pic;
 
   return PAPI_OK;
-#if 0 
-  retval = update_global_hwcounters(zero);
-  if (retval)
-    return(retval);
-
-  retval = correct_local_hwcounters(zero, ESI, correct);
-  if (retval)
-    return(retval);
-
-  /* This routine distributes hardware counters to software counters in the
-     order that they were added. Note that the higher level 
-     EventInfoArray[i] entries may not be contiguous because the user
-     has the right to remove an event. */
-
-  for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-    {
-      selector = ESI->EventInfoArray[i].selector;
-      if (selector == PAPI_NULL)
-	continue;
-
-      DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
-
-      /* If this is not a derived event */
-
-      if (ESI->EventInfoArray[i].command == NOT_DERIVED)
-	{
-	  shift_cnt = ffs(selector) - 1;
-	  assert(shift_cnt >= 0);
-	  events[j] = correct[shift_cnt];
-	}
-      
-      /* If this is a derived event */
-
-      else 
-	events[j] = handle_derived(&ESI->EventInfoArray[i], correct);
-	
-      /* Early exit! */
-
-      if (++j == ESI->NumberOfEvents)
-	return(PAPI_OK);
-    }
-
-  /* Should never get here */
-
-  return(PAPI_EBUG);
-#endif
 }
 
 int _papi_hwd_setmaxmem(){
@@ -1197,7 +1170,10 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info)
 {
-  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[REG_PC]));
+/*
+  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n", 
+        info->uc_mcontext.gregs[REG_PC]));
+*/
   _papi_hwi_dispatch_overflow_signal((void *)info); 
 }
 
@@ -1208,28 +1184,28 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   int selector, hwcntr;
 
   if (overflow_option->threshold == 0)
-    {
-      arg->flags ^= CPC_BIND_EMT_OVF;
-      if (sigaction(SIGEMT, NULL, NULL) == -1)
-	return(PAPI_ESYS);
-    }
+  {
+    arg->flags ^= CPC_BIND_EMT_OVF;
+    if (sigaction(SIGEMT, NULL, NULL) == -1)
+	  return(PAPI_ESYS);
+  }
   else
-    {
-      struct sigaction act;
+  {
+    struct sigaction act;
 
-      act.sa_sigaction = dispatch_emt;
-      memset(&act.sa_mask,0x0,sizeof(act.sa_mask));
-      act.sa_flags = SA_RESTART|SA_SIGINFO;
-      if (sigaction(SIGEMT, &act, NULL) == -1)
-	return(PAPI_ESYS);
+    act.sa_sigaction = dispatch_emt;
+    memset(&act.sa_mask,0x0,sizeof(act.sa_mask));
+    act.sa_flags = SA_RESTART|SA_SIGINFO;
+    if (sigaction(SIGEMT, &act, NULL) == -1)
+	  return(PAPI_ESYS);
 
-      arg->flags |= CPC_BIND_EMT_OVF;
-      selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
-      if (selector == 0x1)
-	arg->cmd.ce_pic[0] = UINT64_MAX	- (uint64_t)overflow_option->threshold;
-      else if (selector == 0x2)
-	arg->cmd.ce_pic[1] = UINT64_MAX	- (uint64_t)overflow_option->threshold;
-    }
+    arg->flags |= CPC_BIND_EMT_OVF;
+    selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
+    if (selector == 0x1)
+      arg->cmd.ce_pic[0] = UINT64_MAX - (uint64_t)overflow_option->threshold;
+    else if (selector == 0x2)
+      arg->cmd.ce_pic[1] = UINT64_MAX - (uint64_t)overflow_option->threshold;
+  }
 
   return(PAPI_OK);
 }
@@ -1244,8 +1220,8 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
   /* This function is not used and shouldn't be called. */
-
-  return(PAPI_ESBSTR);
+  ESI->profile.overflowcount=0;
+  return(PAPI_OK);
 }
 
 
@@ -1283,11 +1259,19 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
   if (retval == -1)
     return(PAPI_ESYS);
 
+  retval = cpc_take_sample(&ctrl->counter_cmd.cmd);
+  if (retval == -1)
+    return(PAPI_ESYS);
+
+  ctrl->values[0]= ctrl->counter_cmd.cmd.ce_pic[0];
+  ctrl->values[1]= ctrl->counter_cmd.cmd.ce_pic[1];
+
   return(PAPI_OK);
 }
 
 int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
+  cpc_bind_event(NULL, 0);
   return PAPI_OK;
 }
 
@@ -1300,6 +1284,12 @@ int _papi_hwd_update_shlib_info(void)
 {
   return PAPI_OK;
 }
+
+int _papi_hwd_encode_native(char *name, int *code)
+{
+  return(PAPI_OK);
+}
+
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
 

@@ -11,6 +11,8 @@
 #endif
 
 #define MAX_COUNTERS 4
+#define MAX_COUNTER_TERMS 4
+#define MAX_NATIVE_EVENT PME_EVENT_COUNT
 
  typedef pfmlib_param_t pfmw_param_t;
  typedef pfarg_reg_t pfmw_reg_t;

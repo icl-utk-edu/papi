@@ -35,7 +35,36 @@ typedef struct hwd_control_state {
   int timer_ms;
   /* Number on each hwcounter */
   unsigned num_on_counter[2];
+  /* Buffer for reading counters */
+  hwperf_cntr_t cntrs_read;
 } hwd_control_state_t;
+
+/* just to make the compile work */
+typedef struct Irix_regmap {
+    unsigned selector;
+} Irix_regmap_t;
+
+typedef Irix_regmap_t  hwd_register_map_t;
+
+typedef struct _Context {
+  int init_flag;
+  /* File descriptor controlling the counters; */
+  int fd;
+}  hwd_context_t;
+
+typedef struct _ThreadInfo {
+    unsigned pid;
+    unsigned tid;
+    hwd_context_t context;
+    void *event_set_overflowing;
+    void *event_set_profiling;
+    int domain;
+} ThreadInfo_t;
+
+typedef struct _thread_list  {
+    ThreadInfo_t *master;
+    struct _thread_list *next;
+}  ThreadInfoList_t;
 
 #include "papi_internal.h"
 
@@ -74,6 +103,8 @@ typedef struct hwd_search {
   /* Events to encode */
   int findme[2];
 } hwd_search_t;
+
+extern ThreadInfo_t *default_master_thread;
 
 int get_memory_info(PAPI_mem_info_t* mem_info);
 

@@ -35,12 +35,21 @@
 #include "papi.h"
 #include "linux-ia64-memory.h"
 #include "pfmwrap.h"
+#include "papi_preset.h"
 
 /* just to make the compile work */
-typedef struct Itanium_regmap {
-    unsigned selector;
+typedef struct Itanium_register {
+  int native_idx; /* native event index */
+  int register_num;  /* register number */
+} Itanium_register_t;
+
+typedef struct P4_regmap {
+  unsigned selector;
+  int native_count;
+  Itanium_register_t hardware_event[MAX_COUNTERS];
 } Itanium_regmap_t;
 
+typedef Itanium_register_t hwd_register_t;
 typedef Itanium_regmap_t  hwd_register_map_t;
 
 typedef struct hwd_control_state {
@@ -48,16 +57,13 @@ typedef struct hwd_control_state {
   pid_t pid;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   hwd_register_map_t bits;
-  /* Number of values in pc */
-  int pc_count;
 
   pfmw_ita_param_t ita_lib_param;
 
   /* Buffer to pass to kernel to control the counters */
   pfmlib_param_t evt;
 
-  int overflowcount[PMU_MAX_COUNTERS];
-  u_long_long counters[PMU_MAX_COUNTERS];
+  long_long counters[PMU_MAX_COUNTERS];
   pfarg_reg_t pd[PMU_MAX_PMCS];
 
 /* sampling buffer address */
@@ -68,14 +74,14 @@ typedef struct hwd_control_state {
 } hwd_control_state_t;
 
 
-typedef struct preset_search {
+typedef struct itanium_preset_search {
   /* Preset code */
   int preset;
   /* Derived code */
   int derived;
   /* Strings to look for */
   char *(findme[PMU_MAX_COUNTERS]);
-} preset_search_t;
+} itanium_preset_search_t;
 
 typedef struct hwd_preset {
   /* If present it is the event code */
@@ -96,7 +102,6 @@ typedef struct Itanium_null {
 
 typedef struct _Context { 
 	int init_flag;
-	hwd_control_state_t cntrl;
 }  hwd_context_t;
 
 typedef struct _ThreadInfo {
@@ -118,6 +123,8 @@ typedef struct _thread_list  {
 
 #include "papi_internal.h"
 
+
+#define PAPI_MAX_NATIVE_EVENTS  MAX_NATIVE_EVENT 
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))

@@ -245,11 +245,9 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
     {
       ESI->EventInfoArray[i].ESIhead = ESI; /* always points to EventSetInfo_t *ESI */
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
-      ESI->EventInfoArray[i].counter_index = -1;
       for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
      	  ESI->EventInfoArray[i].pos[j] = -1;
       ESI->EventInfoArray[i].ops = NULL;
-      ESI->EventInfoArray[i].hwd_selector = 0;
       ESI->EventInfoArray[i].derived = NOT_DERIVED;
     }
 }
@@ -542,10 +540,9 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t *ESI, int nix)
 
 
 /* this function is called after mapping is done
-    if(remap) refill info for every added events
-	else     fill current EventInfo_t *out
+   refill info for every added events
  */
-void _papi_hwi_allocate_after(EventSetInfo_t *ESI, int thisindex, int remap)
+static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 {
 	EventInfo_t *out, *head;
 	int i, j, k, n, preset_index, nix, total_events;
@@ -554,50 +551,45 @@ void _papi_hwi_allocate_after(EventSetInfo_t *ESI, int thisindex, int remap)
 	out  = &head[thisindex];
 	total_events=ESI->NumberOfEvents;
 
-	if(!remap){
-		out->counter_index = out->pos[0];
-		i=0;
-		while(out->pos[i]>=0 && i<MAX_COUNTERS){
-			out->hwd_selector |= 1<<out->pos[i];
-			i++;
-		}
-		return;
-	}
-	
 	j=0;
-	for(i=0;i<=total_events;i++){
-		while(head[j].event_code==PAPI_NULL) /* find the added event in EventInfoArray */
-			j++;
-		/* fill in the new information */
-		head[j].hwd_selector=0;
-		if(head[j].event_code & PRESET_MASK){
-			preset_index = head[j].event_code & PRESET_AND_MASK;
-			for(k=0;k<_papi_hwi_preset_map[preset_index].metric_count;k++){
-				nix=_papi_hwi_preset_map[preset_index].natIndex[k];
-				for(n=0;n<ESI->NativeCount;n++){
-					if(nix==ESI->NativeInfoArray[n].ni_index){
-						head[j].pos[k]=ESI->NativeInfoArray[n].ni_position;
-						head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].ni_position;
-						break;
-					}
-				}
+	for(i=0;i<=total_events;i++)
+    {
+      /* find the added event in EventInfoArray */
+	  while(head[j].event_code==PAPI_NULL) 
+	    j++;
+	  /* fill in the new information */
+	  if(head[j].event_code & PRESET_MASK)
+      {
+	    preset_index = head[j].event_code & PRESET_AND_MASK;
+	    for(k=0;k<_papi_hwi_preset_map[preset_index].metric_count;k++)
+        {
+		  nix=_papi_hwi_preset_map[preset_index].natIndex[k];
+		  for(n=0;n<ESI->NativeCount;n++)
+          {
+		    if(nix==ESI->NativeInfoArray[n].ni_index)
+            {
+		      head[j].pos[k]=ESI->NativeInfoArray[n].ni_position;
+			  break;
 			}
-			head[j].counter_index=head[j].pos[0];
+		  }
 		}
-		else{
-			nix = head[j].event_code & NATIVE_AND_MASK;
-			for(n=0;n<ESI->NativeCount;n++){
-				if(nix==ESI->NativeInfoArray[n].ni_index){
-					head[j].pos[0]=ESI->NativeInfoArray[n].ni_position;
-					head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].ni_position;
-					head[j].counter_index=ESI->NativeInfoArray[n].ni_position;
-					break;
-				}
-				
-			}
+		head[j].pos[k]=-1;
+	  }
+	  else
+      {
+	    nix = head[j].event_code & NATIVE_AND_MASK;
+	    for(n=0;n<ESI->NativeCount;n++)
+        {
+		  if(nix==ESI->NativeInfoArray[n].ni_index)
+          {
+		    head[j].pos[0]=ESI->NativeInfoArray[n].ni_position;
+            head[j].pos[1]=-1;
+		    break;
+		  }
 		}
-		j++;
-	}
+	  }  /* end of if */
+	  j++;
+    }  /* end of for loop */
 }
 
 /* this function is called by _papi_hwi_add_event when adding native events 
@@ -606,7 +598,7 @@ size: number of native events to add
 */
 static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
 {
-	int nidx, ntop, i, j, remap=0;
+	int nidx, i, remap=0;
 	
 	/* Need to decide what needs to be preserved so we can roll back state
 	   if the add event fails...
@@ -614,8 +606,10 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	
 	/* if the native event is already mapped, fill in */
 	for(i=0;i<size;i++){
-		/* only try to add the native event if it isn't already mapped */
-		if((nidx=_papi_hwi_add_native_precheck(ESI, nix[i]))<0){
+		if((nidx=_papi_hwi_add_native_precheck(ESI, nix[i]))>=0){
+			out->pos[i]=ESI->NativeInfoArray[nidx].ni_position;
+		}
+		else{
 			/* all counters have been used, add_native fail */
 			if(ESI->NativeCount==MAX_COUNTERS){
 				DBG((stderr,"counters are full!\n"));
@@ -685,7 +679,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
 				ESI->EventInfoArray[thisindex].derived = _papi_hwi_preset_map[preset_index].derived; 
 				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_map[preset_index].operation; 
-				_papi_hwi_allocate_after(ESI, thisindex, remap);
+				remap_event_position(ESI, thisindex);
 			}
 		}
 		else if(EventCode & NATIVE_MASK)
@@ -711,7 +705,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				/* Fill in the EventCode (machine independent) information */
 			
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
-				_papi_hwi_allocate_after(ESI, thisindex, remap);
+				remap_event_position(ESI, thisindex);
 			}
 		}
 		else
@@ -767,7 +761,7 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
     hwd_control_state_t *this_state= &ESI->machdep;
     NativeInfo_t *native = ESI->NativeInfoArray;
-    int i, j, zero=0, count;
+    int i, j, count;
 
     /* Remove the references to this event from the native events:
        for all the metrics in this event,
@@ -842,7 +836,6 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 {
   int j = 0, retval, thisindex;
 
-  /* Make sure the event is preset. */
 
   thisindex = _papi_hwi_lookup_EventCodeIndex(ESI,EventCode);
   if (thisindex < PAPI_OK)
@@ -860,6 +853,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
   else    
     /* Remove the events hardware dependant stuff from the EventSet */
     {
+        /* Make sure the event is preset. */
 		if (EventCode & PRESET_MASK)
 		{
 			int preset_index = EventCode & PRESET_AND_MASK;
@@ -897,42 +891,12 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 		/* clean the EventCode (machine independent) information */
 
 		ESI->EventInfoArray[thisindex].event_code = PAPI_NULL;
-		ESI->EventInfoArray[thisindex].counter_index = -1;
 		for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
      		ESI->EventInfoArray[thisindex].pos[j] = -1;
 		ESI->EventInfoArray[thisindex].ops = NULL;
-		ESI->EventInfoArray[thisindex].hwd_selector = 0;
 		ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
 	
     }
-
-
-  /* Move the counter_index's around. */
-
- /* for (i=0;i<EventInfoArrayLength(ESI);i++)
-    {
-      if (ESI->EventInfoArray[i].counter_index < ESI->EventInfoArray[thisindex].counter_index)
-	;
-      else if (ESI->EventInfoArray[i].counter_index == ESI->EventInfoArray[thisindex].counter_index)
-	{
-	  ESI->EventInfoArray[i].event_code = PAPI_NULL;
-	  ESI->EventInfoArray[i].counter_index = -1;
-	}
-      else
-	{
-	  ESI->EventInfoArray[i].counter_index = -1;
-	}
-
-      if (++j == ESI->NumberOfEvents)
-	break;
-    }
-	*/
-  /* ESI->EventInfoArray[thisindex].derived = NOT_DERIVED; */
-  /* ESI->EventInfoArray[thisindex].selector = 0; */
-  /* ESI->EventInfoArray[thisindex].operand_index = -1; */
-
-  /* ESI->sw_stop[hwindex]           = 0; */
-  /* ESI->hw_start[hwindex]         = 0; */
 
   ESI->NumberOfEvents--;
 
@@ -941,59 +905,38 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
 int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *values)
 {
-  register int i;
-  int retval, selector;
+  int retval, *pos, threshold, multiplier;
   long_long *dp;
 
-  retval = _papi_hwd_read(context, &ESI->machdep, &dp);
-  if (retval != PAPI_OK)
-    return(retval);
 
+  pos = NULL;
+  threshold = multiplier = 0;
   if ((ESI->state & PAPI_OVERFLOWING) && 
           (_papi_hwi_system_info.supports_hw_overflow)) 
   {
-    selector = ESI->EventInfoArray[ESI->overflow.EventIndex].hwd_selector;
-    while ((i=ffs(selector)))
-    {
-      dp[i-1]+= ESI->overflow.threshold;
-      selector ^= 1<< (i-1);
-    }
+    pos = ESI->EventInfoArray[ESI->overflow.EventIndex].pos;
+    threshold= ESI->overflow.threshold;
+    multiplier = ESI->overflow.count;
   }  
-  if ((ESI->state & PAPI_PROFILING) && 
+  else 
+    if ((ESI->state & PAPI_PROFILING) && 
           (_papi_hwi_system_info.supports_hw_profile)) 
-  {
-    selector = ESI->EventInfoArray[ESI->profile.EventIndex].hwd_selector;
-    while ((i=ffs(selector)))
     {
-      dp[i-1]+= ESI->profile.threshold;
-      selector ^= 1<< (i-1);
-    }
-    selector = ESI->EventInfoArray[ESI->profile.EventIndex].hwd_selector;
-    i = ffs(selector);
-    if ( i ) 
-      dp[i-1] += ESI->profile.threshold * ESI->profile.overflowcount;
-  }  
+      pos = ESI->EventInfoArray[ESI->profile.EventIndex].pos;
+      threshold = ESI->profile.threshold;
+      multiplier =  ESI->profile.overflowcount;
+    };
+
+  retval = _papi_hwd_read(context, &ESI->machdep, &dp, 
+                            threshold, multiplier,pos);
+  if (retval != PAPI_OK)
+    return(retval);
 
   retval = counter_reorder(ESI, dp, values);
   if (retval != PAPI_OK)
     return(retval);
 
   return(PAPI_OK);
-#if 0
-  for (i=0;i<EventInfoArrayLength(ESI);i++)
-    {
-#ifdef DEBUG
-      DBG((stderr,"PAPI counter %d is at hardware index %d, %lld\n",i,ESI->EventInfoArray[i].counter_index,dp[ESI->EventInfoArray[i].counter_index]));
-#endif
-      values[j] = dp[ESI->EventInfoArray[i].counter_index];
-
-      /* Early exit! */
-      
-      if (++j == ESI->NumberOfEvents)
-	return(PAPI_OK);
-    }
-  return(PAPI_EBUG);
-#endif
 }
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t *ESI)
@@ -1180,33 +1123,35 @@ void _papi_hwi_dummy_handler(int EventSet, int EventCode, int EventIndex,
   abort();
 }
 
-static long_long handle_derived_add(int selector, long_long *from)
+static long_long handle_derived_add(int *position, long_long *from)
 {
-  int pos;
+  int pos, i;
   long_long retval = 0;
 
-  while ((pos = ffs(selector)))
-    {
-      DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos-1],retval));
-      retval += from[pos-1];
-      selector ^= 1 << (pos-1);
-    }
+  i=0;
+  pos=position[i++];
+  while (pos != -1 )
+  {
+    DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos],retval));
+    retval += from[pos];
+    pos=position[i++];
+  }
   return(retval);
 }
 
-static long_long handle_derived_subtract(int counter_index, int selector, long_long *from)
+static long_long handle_derived_subtract(int *position, long_long *from)
 {
-  int pos;
-  long_long retval = from[counter_index];
+  int pos, i;
+  long_long retval = from[position[0]];
 
-  DBG((stderr,"counter_index: %d   selector: 0x%x\n",counter_index,selector));
-  selector = selector ^ (1 << counter_index);
-  while ((pos = ffs(selector)))
-    {
-      DBG((stderr,"Compound event, subtracting pos=%d  %lld to %lld\n",pos, from[pos-1],retval));
-      retval -= from[pos-1];
-      selector ^= 1 << (pos-1);
-    }
+  i=1;
+  pos=position[i++];
+  while (pos != -1)
+  {
+    DBG((stderr,"Compound event, subtracting pos=%d  %lld to %lld\n",pos, from[pos],retval));
+    retval -= from[pos];
+    pos=position[i++];
+  }
   return(retval);
 }
 
@@ -1219,21 +1164,15 @@ static long_long units_per_second(long_long units, long_long cycles)
   return((u_long_long)tmp);
 }
 
-static long_long handle_derived_ps(int counter_index, int selector, long_long *from)
+static long_long handle_derived_ps(int *position, long_long *from)
 {
-  int pos;
-
-  pos = ffs(selector ^ (1 << counter_index)) - 1;
-  assert(pos >= 0);
-
-  return(units_per_second(from[pos],from[counter_index]));
+  return(units_per_second(from[position[1]],from[position[0]]));
 }
 
-static long_long handle_derived_add_ps(int counter_index, int selector, long_long *from)
+static long_long handle_derived_add_ps(int *position, long_long *from)
 {
-  int add_selector = selector ^ (1 << counter_index);
-  long_long tmp = handle_derived_add(add_selector, from);
-  return(units_per_second(tmp, from[counter_index]));
+  long_long tmp = handle_derived_add(position+1, from);
+  return(units_per_second(tmp, from[position[0]]));
 }
 
 static long_long handle_derived(EventInfo_t *evi, long_long *from)
@@ -1241,13 +1180,13 @@ static long_long handle_derived(EventInfo_t *evi, long_long *from)
   switch (evi->derived)
   {
     case DERIVED_ADD: 
-      return(handle_derived_add(evi->hwd_selector, from));
+      return(handle_derived_add(evi->pos, from));
     case DERIVED_ADD_PS:
-      return(handle_derived_add_ps(evi->counter_index, evi->hwd_selector, from));
+      return(handle_derived_add_ps(evi->pos, from));
     case DERIVED_SUB:
-      return(handle_derived_subtract(evi->counter_index, evi->hwd_selector, from));
+      return(handle_derived_subtract(evi->pos, from));
     case DERIVED_PS:
-      return(handle_derived_ps(evi->counter_index, evi->hwd_selector, from));
+      return(handle_derived_ps(evi->pos, from));
     default:
       abort();
   }
@@ -1255,7 +1194,7 @@ static long_long handle_derived(EventInfo_t *evi, long_long *from)
 
 static int counter_reorder(EventSetInfo_t *ESI, long_long *hw_counter, long_long *values)
 {
-  int i, j=0, selector, index;
+  int i, j=0, index;
 
   /* This routine distributes hardware counters to software counters in the
      order that they were added. Note that the higher level
@@ -1267,18 +1206,17 @@ static int counter_reorder(EventSetInfo_t *ESI, long_long *hw_counter, long_long
 
   for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
   {
-    selector = ESI->EventInfoArray[i].hwd_selector;
-    if (selector == 0)
+    index = ESI->EventInfoArray[i].pos[0];
+    if (index == -1)
       continue;
-    index = ESI->EventInfoArray[i].counter_index;
 
-    DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
+    DBG((stderr,"Event index %d, position is 0x%x\n",j,index));
 
     /* If this is not a derived event */
 
     if (ESI->EventInfoArray[i].derived == NOT_DERIVED)
     {
-      DBG((stderr,"counter_index is %d\n", index));
+      DBG((stderr,"counter index is %d\n", index));
       values[j] = hw_counter[index];
     }
     else /* If this is a derived event */

@@ -97,12 +97,8 @@ typedef struct _EventSetProfileInfo {
 typedef struct _EventInfo {
   struct _EventSetInfo *ESIhead;  /* Always points back to &EventSetInfo for this EventSet.  Used to optimize register allocation across an event set */
   unsigned int event_code;  /* Preset or native code for this event as passed to PAPI_add_event() */
-  unsigned counter_index;   /* Index of counter to read in buffer returned by the hardware/kernel
-			       This is also used for order dependent derived events to indicate
-			       the first operand (replaces PAPI 2 operand_index) */
   int pos[MAX_COUNTERS];    /* position in the counter array for this events components */
   char *ops;                /* operation string of preset */
-  unsigned hwd_selector;    /* Counter select bits used by the substrate (Replaced by bits??) */
   int derived;		    /* Counter derivation command used for derived events */
 } EventInfo_t;
 
@@ -231,11 +227,11 @@ typedef struct _EventSetInfo {
   
 #if 0
   EventSetInheritInfo_t inherit;
-#endif
 
 /* Are these needed here, or do they occur only in the ThreadInfo structure? */
-/*  struct _EventSetInfo *event_set_overflowing; *//* EventSets that are overflowing */
-/*  struct _EventSetInfo *event_set_profiling; *//* EventSets that are profiling */
+  struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
+  struct _EventSetInfo *event_set_profiling; /* EventSets that are profiling */
+#endif
 
   ThreadInfo_t *master;
 

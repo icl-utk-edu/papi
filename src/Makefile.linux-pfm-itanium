@@ -14,7 +14,7 @@ LIBS	= static shared
 # shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall -g -DPFM20 -DDEBUG -DPAPI3 
+CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall  -DPFM20  -DHAS_NATIVE_MAP -DPAPI3 -g -DDEBUG 
 TOOLPATH = ../$(LIBPFMHOME)
 # -DDEBUG
 OPTFLAGS= -O3
