@@ -1,8 +1,20 @@
-#define NUM_FLOPS 10000000
+/* Definitions for all test values */
+
+#define SUCCESS 1
+#define FAILURE 0
+#define NUM_THREADS 4
+#define NUM_ITERS  1000
+#define NUM_FLOPS  20000000
+#define NUM_READS  4000
+#define THRESHOLD   1000000
+#define TOLERANCE   .1
+#define OVR_TOLERANCE .75
+#define MPX_TOLERANCE .20
 
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
 */
+
 #define MASK_L1_DCA  0x40000	/* three new events for POWER4 */
 #define MASK_L1_DCW  0x20000
 #define MASK_L1_DCR  0x10000

@@ -151,32 +151,32 @@ int main(int argc, char **argv)
 #if defined(sgi) && defined(host_mips)
     long_long min, max;
     if ( id != 0 ) {
-      min = NUM_FLOPS*.9;
-      max = NUM_FLOPS*1.1;   
+      min = NUM_FLOPS*(1.0-TOLERANCE);
+      max = NUM_FLOPS*(1.0+TOLERANCE);   
       if ( values[2][0] < min || values[2][0] > max )
 	test_fail(__FILE__, __LINE__, event_name, 1);
     }
     else {
-       min = (long_long)(values[2][0]*.9);
-       max = (long_long)(values[2][0]*1.1);
+       min = (long_long)(values[2][0]*(1.0-TOLERANCE));
+       max = (long_long)(values[2][0]*(1.0+TOLERANCE));
        if ( values[0][0] > max || values[0][0] < min )
 	   test_fail(__FILE__, __LINE__, event_name, 1);
 
-       min = (long_long)(values[0][1]*.9);
-       max = (long_long)(values[0][1]*1.1);
+       min = (long_long)(values[0][1]*(1.0-TOLERANCE));
+       max = (long_long)(values[0][1]*(1.0+TOLERANCE));
        if ( (values[1][1] + values[2][1]) > max || 
 	   (values[1][1] + values[2][1]) < min )
   	   test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
     }
 #else
     long_long min, max;
-    min = (long_long)(values[2][0]*.9);
-    max = (long_long)(values[2][0]*1.1);
+    min = (long_long)(values[2][0]*(1.0-TOLERANCE));
+    max = (long_long)(values[2][0]*(1.0+TOLERANCE));
     if ( values[0][0] > max || values[0][0] < min )
 	test_fail(__FILE__, __LINE__, event_name, 1);
 
-    min = (long_long)(values[0][1]*.8);
-    max = (long_long)(values[0][1]*1.2);
+    min = (long_long)(values[0][1]*(1.0-TOLERANCE));
+    max = (long_long)(values[0][1]*(1.0+TOLERANCE));
     if ( (values[1][1] + values[2][1]) > max || 
 	(values[1][1] + values[2][1]) < min )
   	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);

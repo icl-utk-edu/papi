@@ -10,11 +10,11 @@
 
 #include "papi_test.h"
 
-#define THRESHOLD 100
+#define TIMER_THRESHOLD 100
 extern int TESTS_QUIET;
 
 int main(int argc, char **argv) {
- int sleep_time = THRESHOLD; 
+ int sleep_time = TIMER_THRESHOLD; 
  int retval,i;
  long_long timer;
 
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 	else {
 	    sleep_time = atoi(argv[1]);
 	    if ( sleep_time <= 0 )
-		sleep_time = THRESHOLD;
+		sleep_time = TIMER_THRESHOLD;
 	}
    }
 
