@@ -52,9 +52,11 @@ int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 #endif
     retval = init_amd(mem_info);
     break;
+#ifdef __x86_64__
   case PERFCTR_X86_AMD_K8:
     retval = init_amd(mem_info);
     break;
+#endif
   default:
     retval = init_intel(mem_info);
     break;

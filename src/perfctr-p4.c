@@ -317,7 +317,6 @@ int _papi_hwd_init_global(void)
 int _papi_hwd_init(P4_perfctr_context_t *ctx)
 {
   struct vperfctr_control tmp;
-  int retval;
 
   /* Malloc the space for our controls */
   
@@ -461,10 +460,10 @@ int _papi_hwd_stop(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 }
 
 
-int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_long **dp)
+int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, long_long **dp)
 {
   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
-  *dp = (u_long_long*) spc->state.pmc;
+  *dp = (long_long*) spc->state.pmc;
 #ifdef DEBUG
  {
    extern int _papi_hwi_debug;
@@ -557,13 +556,17 @@ int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *
    this register lives in. */
 
 //int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_control_t *evset_info)
-int _papi_hwd_add_event(EventInfo_t * ev_info, hwd_preset_t *preset, hwd_control_state_t *evset_info)
+int _papi_hwd_add_event(hwd_control_state_t *evset_info, unsigned int EventCode, EventInfo_t * ev_info)
 {
   int i, index, mask = 0;
+  P4_preset_t *preset;
   P4_register_t *bits = &evset_info->allocated_registers;
   unsigned avail, already_used = bits->selector, need_one, allocated[P4_MAX_REGS_PER_EVENT];
   
   SUBDBG("Allocated counters: already_used %08x\n",already_used);
+
+  /* dereference the address of this element in the preset array */
+  preset = &_papi_hwd_preset_map[(EventCode & PRESET_AND_MASK)];
 
   /* Add allocated register bits to this events bits */
 
@@ -959,7 +962,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
   mc = &uc->uc_mcontext;
   gs = &mc->gregs;
 
-  DBG((stderr,"Start at 0x%lx\n",(*gs)[15]));
+  DBG((stderr,"Start at 0x%lx\n",(unsigned long)(*gs)[15]));
   _papi_hwi_dispatch_overflow_signal(mc); 
 
   /* We are done, resume interrupting counters */
@@ -981,7 +984,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 		  __FUNCTION__,__LINE__,strerror(errno));
 	}
     }
-  DBG((stderr,"Finished, returning to address 0x%lx\n",(*gs)[15]));
+  DBG((stderr,"Finished, returning to address 0x%lx\n",(unsigned long)(*gs)[15]));
 }
 
 void *_papi_hwd_get_overflow_address(void *context)
