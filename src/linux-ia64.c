@@ -1844,7 +1844,7 @@ int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_opti
  errno);
       		return(PAPI_ESYS);
   }
-  printf("Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr);
+  DBG((stderr,"Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr));
 
   smpl_vaddr = ctx[0].ctx_smpl_vaddr;
 
