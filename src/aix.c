@@ -7,7 +7,7 @@
   Other routines also include minor conditionally compiled differences.
 */
 
-#include "aix-power.h"
+#include "aix.h"
 
 /* 
  some heap information, start_of_text, start_of_data .....
