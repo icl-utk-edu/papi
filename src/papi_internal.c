@@ -936,13 +936,13 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
        */
       /* clear the newly empty slot in the array */
       array[thisindex].event_code = PAPI_NULL;
-      for (j = 0; j < _papi_hwi_system_info.num_cntrs; j++)
+      for (j = 0; j < MAX_COUNTER_TERMS; j++)
          array[thisindex].pos[j] = -1;
       array[thisindex].ops = NULL;
       array[thisindex].derived = NOT_DERIVED;
    }
    ESI->NumberOfEvents--;
-   /*print_state(ESI); */
+   /* print_state(ESI); */
 
    return (PAPI_OK);
 }
