@@ -110,7 +110,7 @@ pernode: pernode.c $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
 
 avail: avail.c $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) avail.c $(PAPILIB) $(LDFLAGS) -o avail
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
 
 nineth: nineth.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) nineth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o nineth
