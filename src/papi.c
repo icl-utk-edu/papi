@@ -1750,11 +1750,30 @@ int PAPI_num_hwctrs(void)
   return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 }
 		     
+int PAPI_get_multiplex(int EventSet) {
+  PAPI_option_t popt;
+  int retval;
+
+  popt.multiplex.eventset = EventSet;
+  retval = PAPI_get_opt(PAPI_GET_MULTIPLEX,&popt);
+  if(retval<0) retval=0;
+  return retval;
+}
+
+
 int PAPI_get_opt(int option, PAPI_option_t *ptr) 
 { 
   switch(option)
     {
     case PAPI_GET_MULTIPLEX:
+      {
+	EventSetInfo *ESI;
+
+        ESI = lookup_EventSet(PAPI_EVENTSET_MAP, ptr->multiplex.eventset);
+	if (ESI == NULL)
+	  papi_return(PAPI_ENOEVST);
+	return (ESI->state & PAPI_MULTIPLEXING) != 0;
+      }
       break;
     case PAPI_GET_PRELOAD:
       strncpy(ptr->preload.lib_preload_env,_papi_system_info.exe_info.lib_preload_env,
@@ -2263,4 +2282,8 @@ int PAPI_save(void)
 {
   fprintf(stderr,"PAPI_save is currently not implemented\n");
   return(PAPI_ESBSTR);
+}
+int PAPI_initialized(void)
+{
+  return (init_retval != DEADBEEF);
 }

@@ -354,6 +354,7 @@ void PAPI_lock(void);
 int PAPI_multiplex_init(void);
 int PAPI_num_hwctrs(void);
 int PAPI_set_multiplex(int *);
+int PAPI_get_multiplex(int EventSet);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 		  int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);
@@ -384,6 +385,7 @@ int PAPI_stop(int EventSet, long_long *values);
 char *PAPI_strerror(int);
 void PAPI_unlock(void);
 int PAPI_write(int EventSet, long_long *values);
+int PAPI_initialized(void);
 
 /* The High Level API
 
