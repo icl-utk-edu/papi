@@ -141,7 +141,8 @@ inline static int setup_all_presets(int cpu_type)
       break;
 
     case PERFCTR_X86_INTEL_P4:
-      fprintf(stderr,"Intel P4 is not yet supported by this PAPI substrate.\n");
+    case PERFCTR_X86_INTEL_P4M2:
+      fprintf(stderr,"Intel P4 (and Xeon) is not supported by this PAPI substrate.\n");
       break;
 
     default:
