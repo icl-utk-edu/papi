@@ -22,6 +22,9 @@
 extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 /* These defines smooth out the differences between versions of pmtoolkit */
+#if defined(PMTOOLKIT_1_2_1)
+#define PMTOOLKIT_1_2
+#endif
 
 /* Put any modified metrics in the appropriate spot here */
 #ifdef PMTOOLKIT_1_2

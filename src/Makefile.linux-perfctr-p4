@@ -7,7 +7,7 @@ PERFCTR = ./perfctr-2.4.x
 # PERFCTR = ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -O3 -g -Wall -march=pentiumpro -DDEBUG
-TOPTFLAGS= -g -Wall -march=pentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
+TOPTFLAGS= -O -g -Wall -march=pentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
 #
 # GNU G77 section
 #

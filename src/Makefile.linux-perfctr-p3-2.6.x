@@ -2,7 +2,7 @@ KERNINC	= /usr/src/linux-2.4/include
 PERFCTR ?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -O3 -g -Wall -mpentiumpro
-TOPTFLAGS= -g -Wall -mpentiumpro
+TOPTFLAGS= -O -g -Wall -mpentiumpro
 
 #
 # GNU G77 section

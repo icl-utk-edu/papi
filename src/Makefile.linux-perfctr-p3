@@ -2,7 +2,7 @@ KERNINC	= /usr/src/linux-2.4/include
 PERFCTR = ./perfctr-2.4.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -O3 -g -Wall -mpentiumpro
-TOPTFLAGS= -g -Wall -mpentiumpro
+TOPTFLAGS= -O -g -Wall -mpentiumpro
 
 # GNU G77 section
 #
@@ -37,7 +37,7 @@ MSUBSTR	= linux-perfctr-p3
 MEMSUBSTR= linux
 DESCR	= "Linux with PerfCtr 2.4.5 patch for all Pentium IIIs"
 LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads 
+TARGETS = serial multiplex_and_pthreads
 
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
