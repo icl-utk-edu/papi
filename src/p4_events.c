@@ -156,10 +156,15 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
   dynamically uses this information to assemble the event structure at run-time.
 */
 
+/* **THREAD SAFE STATIC**
+   The entry count and table below are both declared static and initialized to zero. 
+   This is thread- and fork-safe, because inherited values will still be valid. 
+   Also modifications made in the thread or forked copies will stay local to those copies.
+*/
 static int _papi_hwd_pentium4_user_count = 0;
 static hwd_p4_native_map_t _papi_hwd_pentium4_user_map[128] = { {0,}, };
 
-
+/* **THREAD SAFE STATIC** constant preinitialized structure */
 static hwd_p4_native_map_t _papi_hwd_pentium4_custom_map[] = {
 // following are custom defined events that don't fit the normal structure
    {
@@ -190,6 +195,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_custom_map[] = {
     0},
 };
 
+/* **THREAD SAFE STATIC** constant preinitialized structure */
 static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
 // following are the non-retirement events
    {
@@ -963,6 +969,11 @@ hwd_p4_mask_t *mask_array[] = {
 // This defines the number of events in the custom native event table
 #define _papi_hwd_pentium4_custom_count (sizeof(_papi_hwd_pentium4_custom_map) / sizeof(hwd_p4_native_map_t))
 
+/* **THREAD SAFE STATIC**
+   The name and description strings below are both declared static. 
+   This is thread- and fork-safe, because these values are set before each use. 
+   They must be declared static to reserve non-volatile space for constructed strings.
+*/
 static char name[128];
 static char description[1024];
 
