@@ -954,33 +954,39 @@ papi_mdi _papi_system_info = { "$Id$",
 				 -1,  /*  model */
 				 "",  /*  model string */
 				0.0,  /*  revision */
-				 -1  /*  mhz */ 
+				0.0  /*  mhz */ 
 			       },
 			       {
 				 "",
 				 "",
-				 (caddr_t)-1,
-				 (caddr_t)-1,
-				 (caddr_t)-1,
-				 (caddr_t)-1,
-				 (caddr_t)-1,
-				 (caddr_t)-1,
-				 ""
+				 (caddr_t)&_init,
+				 (caddr_t)&_etext,
+				 (caddr_t)&_etext+1,
+				 (caddr_t)&_edata,
+				 (caddr_t)NULL,
+				 (caddr_t)NULL,
+				 "_RLD_LIST", /* How to preload libs */
 			       },
-			        -1,  /*  num_cntrs */
-			        -1,  /*  num_gp_cntrs */
-			        0,  /*  grouped_counters */
-			        0,  /*  num_sp_cntrs */
+			       -1,  /*  num_cntrs */
+			       -1,  /*  num_gp_cntrs */
+			       -1,  /*  grouped_counters */
+			       -1,  /*  num_sp_cntrs */
 			       -1,  /*  total_presets */
 			       -1,  /*  total_events */
-			        1,  /*  needs overflow emulation */
-			        1,  /*  needs profile emulation */
-			        0,  /*  needs 64 bit virtual counters */
-			        0,  /*  supports child inheritance option */
-			        0,  /*  can attach to another process */
-			        0,  /*  read resets the counters */
 			        PAPI_DOM_USER, /* default domain */
 			        PAPI_GRN_THR,  /* default granularity */
+			        0,  /* We can use add_prog_event */
+			        0,  /* We can write the counters */
+			        0,  /* supports HW overflow */
+			        0,  /* supports HW profile */
+			        1,  /* supports 64 bit virtual counters */
+			        0,  /* supports child inheritance */
+			        0,  /* supports attaching to another process */
+			        1,  /* We can use the real_usec call */
+			        1,  /* We can use the real_cyc call */
+			        0,  /* We can use the virt_usec call */
+			        0,  /* We can use the virt_cyc call */
+			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        { 0} };
 

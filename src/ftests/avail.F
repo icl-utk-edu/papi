@@ -15,11 +15,6 @@ C Hardware info
          print *, 'Error in PAPI_library_init '
          stop
       end if
-      call PAPIf_thread_init( handle, handle, check )
-      if ( check.NE.PAPI_OK ) then
-         print *, 'Error in PAPI_thread_init', check, PAPI_OK
-         stop
-      end if
       call PAPIf_get_hardware_info( ncpu,nnodes,totalcpus,vendor,
      .     vstring, model, mstring, revision, mhz )
 

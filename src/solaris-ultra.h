@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/processor.h>
 #include <sys/procset.h>
+#include <sys/ucontext.h>
 #include <synch.h>
 #include <procfs.h>
 #include <libcpc.h>

@@ -83,6 +83,8 @@ typedef struct _EventInfo {
 } EventInfo_t;
 
 typedef struct _EventSetInfo {
+  unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
+
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
   int NumberOfCounters;    /* Number of counters added to EventSet */
@@ -170,16 +172,19 @@ typedef union _papi_int_option_t {
 
 /* The following functions are defined by the extras.c file. */
 
+extern int _papi_hwi_insert_in_master_list(EventSetInfo *ptr);
+extern EventSetInfo *_papi_hwi_lookup_in_master_list();
 extern int _papi_hwi_stop_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
 extern int _papi_hwi_start_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
 extern int _papi_hwi_initialize(DynamicArray **);
-void _papi_hwi_dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_event_set, void *context);
+extern void _papi_hwi_dispatch_overflow_signal(void *context);
 
 /* The following functions are defined by the substrate file. */
 
 extern int _papi_hwd_add_event(EventSetInfo *machdep, int index, unsigned int event);
 extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, int index, unsigned int event, void *extra); 
 extern int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option);
+extern void _papi_hwd_dispatch_timer();
 extern int _papi_hwd_init(EventSetInfo *zero);
 extern int _papi_hwd_init_global(void);
 extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);

@@ -1201,6 +1201,12 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
+{
+  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
+  _papi_hwi_dispatch_overflow_signal((void *)info); 
+}
+
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
 #if 0

@@ -53,9 +53,6 @@ void Thread(int t, int n)
   long long elapsed_us, elapsed_cyc;
   void *handle;
   
-  retval = PAPI_thread_init(&handle, 0);
-  assert(retval >= PAPI_OK);
-
   EventSet1 = add_test_events_r(&num_events1,&mask1,handle);
 
   /* num_events1 is greater than num_events2 so don't worry. */
@@ -104,11 +101,14 @@ int main()
   elapsed_cyc = PAPI_get_real_cyc();
 
 #if defined(_AIX)
+  assert(PAPI_thread_init(pthread_self, 0) == PAPI_OK);
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
+  assert(PAPI_thread_init(mp_my_threadnum, 0) == PAPI_OK);
 #pragma parallel
 #pragma pfor local(i)
 #elif defined(sun) && defined(sparc)
+  assert(PAPI_thread_init(thread_self, 0) == PAPI_OK);
 #pragma MP taskloop private(i)
 #endif
   for (i=1;i<3;i++)

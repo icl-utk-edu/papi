@@ -2,7 +2,6 @@ SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared
 TARGETS	= serial smp omp
-# TARGETS=pthreads
 FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS  = -woff 1552,1174,1116,15
 OPTFLAGS= -O3 -DNDEBUG

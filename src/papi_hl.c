@@ -50,9 +50,6 @@ int PAPI_start_counters(int *events, int array_len)
       retval = PAPI_library_init(PAPI_VER_CURRENT);
       if (retval != PAPI_VER_CURRENT)
 	return(retval);
-      retval = PAPI_thread_init(NULL, 0);
-      if (retval != PAPI_OK)
-	return(retval);
       initialized = 1;
     }
 
@@ -105,9 +102,6 @@ int PAPI_read_counters(long long *values, int array_len)
       retval = PAPI_library_init(PAPI_VER_CURRENT);
       if (retval != PAPI_VER_CURRENT)
 	return(retval);
-      retval = PAPI_thread_init(NULL, 0);
-      if (retval != PAPI_OK)
-	return(retval);
       initialized = 1;
     }
 
@@ -141,9 +135,6 @@ int PAPI_stop_counters(long long *values, int array_len)
     {
       retval = PAPI_library_init(PAPI_VER_CURRENT);
       if (retval != PAPI_VER_CURRENT)
-	return(retval);
-      retval = PAPI_thread_init(NULL, 0);
-      if (retval != PAPI_OK)
 	return(retval);
       initialized = 1;
     }

@@ -52,9 +52,6 @@ int main(int argc, char **argv)
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   assert(retval >= PAPI_OK);
 
-  retval = PAPI_thread_init(NULL, 0);
-  assert(retval >= PAPI_OK);
-
   EventSet = add_test_events(&num_events,&mask);
 
   values = allocate_test_space(num_tests, num_events);

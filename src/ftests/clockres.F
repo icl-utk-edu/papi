@@ -18,11 +18,6 @@
          print *, 'Error in PAPI_library_init '
          stop
       end if
-      call PAPIf_thread_init( handle, handle, retval )
-      if ( retval.NE.PAPI_OK ) then
-        print *, 'Error in PAPI_thread_init'
-        stop
-      end if
 
       print *, 'Test case: Clock resolution.'
       print *,'-----------------------------------------------'

@@ -5,19 +5,18 @@
 PAPI_thread_init \- 
 .SH SYNOPSIS
 .LP
-int PAPI_thread_init (void **handle, int flag)
+int PAPI_thread_init (unsigned long int (*handle)(), int flag)
 .LP
-void **handle --  Send NULL for non threaded programs
+unsigned long int (*handle)() --  Function that returns current thread ID.
 .LP
 int flag --  This is reserved for future use and a zero should be passed in.
 .LP
 .SH DESCRIPTION
 .LP
 .B PAPI_thread_init(\|)
-This function intializes thread support and has to be called by
-non-threaded applications as well. This has to be called
-before any PAPI calls can be used in an application along
-with PAPI_library_init
+This function initializes thread support and has to be called once
+just after PAPI_library_init() before any PAPI calls can be 
+used in an application.
 .LP
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  

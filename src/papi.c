@@ -51,6 +51,8 @@ EventSetInfo *default_master_eventset = NULL; /* For non threaded apps */
 static int PAPI_ERR_LEVEL = PAPI_QUIET; /* Behavior of handle_error() */
 static PAPI_debug_handler_t PAPI_ERR_HANDLER = NULL;
 
+unsigned long int (*thread_id_fn)(void) = NULL;
+
 #ifdef DEBUG
 int papi_debug = 1;
 #endif
@@ -245,30 +247,45 @@ static EventSetInfo *allocate_master_eventset(void)
   return(master);
 }
 
-int PAPI_thread_init(void **handle, int flag)
+int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
+{
+  if ((id_fn == NULL) || (flag != 0) || (default_master_eventset == NULL))
+    return(PAPI_EINVAL);
+    
+  thread_id_fn = id_fn;
+  
+  /* Now change the master event's thread id from 0 to the
+     real thread id */
+
+  /* By default, the initial master eventset has TID of -1. This will
+     get changed if the user enables threads with PAPI_thread_init(). */
+
+  default_master_eventset->tid = (*thread_id_fn)();
+
+  _papi_hwi_insert_in_master_list(default_master_eventset);
+  
+  return(PAPI_OK);
+}
+
+static int initialize_master_eventset(EventSetInfo **master)
 {
   int retval;
-  EventSetInfo *master;
 
-  if ((handle == NULL) && (default_master_eventset))
-    return(PAPI_OK);
-
-  if ((master = allocate_master_eventset()) == NULL)
+  if ((*master = allocate_master_eventset()) == NULL)
     return(PAPI_ENOMEM);
 
   /* Call the substrate to fill in anything special. */
   
-  retval = _papi_hwd_init(master);
+  retval = _papi_hwd_init(*master);
   if (retval)
     {
-      free_master_eventset(master);
+      free_master_eventset(*master);
+      *master = NULL;
       return(retval);
     }
 
-  if (handle == NULL)
-    default_master_eventset = master;
-  else
-    *handle = master;
+  if (thread_id_fn)
+    (*master)->tid = (*thread_id_fn)();
 
   return(PAPI_OK);
 }
@@ -308,25 +325,27 @@ int PAPI_library_init(int version)
     return(init_retval);
   }
 
-  tmp = PAPI_thread_init(NULL, 0);
+  if (allocate_eventset_map(PAPI_EVENTSET_MAP)) 
+    {
+      _papi_hwd_shutdown_global();
+      init_retval = PAPI_ENOMEM;
+      return(init_retval);
+    }
+
+  tmp = initialize_master_eventset(&default_master_eventset);
   if (tmp)
     {
       _papi_hwd_shutdown_global();
       init_retval = tmp;
-      return(init_retval); // Error handled by PAPI_thread_init
+      return(init_retval); 
     }
-  
+
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (papi_presets[i].event_name) /* If the preset is part of the API */
       papi_presets[i].avail = 
 	_papi_hwd_query(papi_presets[i].event_code ^ PRESET_MASK,
 			&papi_presets[i].flags,
 			&papi_presets[i].event_note);
-
-  if (allocate_eventset_map(PAPI_EVENTSET_MAP)) {
-    init_retval = PAPI_ENOMEM;
-    return(init_retval);
-  }
 
   return(init_retval = PAPI_VER_CURRENT);
 }
@@ -566,60 +585,7 @@ int PAPI_event_name_to_code(char *in, int *out)
   return(PAPI_ENOTPRESET);
 }
 
-int PAPI_add_pevent(int *EventSet, int code, void *inout)
-{ 
-  EventSetInfo *ESI, *n = NULL;
-  int retval;
-
-  /* Is the EventSet already in existence? */
-
-  if (EventSet == NULL)
-    return(PAPI_EINVAL);
-
-  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, *EventSet);
-  if (ESI == NULL)
-    {
-      /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
-
-      n = allocate_EventSet();
-      if (n == NULL)
-        return(PAPI_ENOMEM);
-      ESI = n;
-    }
-
-  /* Of course, it must be stopped in order to modify it. */
-
-  if (!(ESI->state & PAPI_STOPPED))
-    {
-      if (n) free(n);
-      return(PAPI_EISRUN);
-    }
-
-  /* Now do the magic. */
-
-  retval = add_pevent(ESI,code,inout);
-  if (retval < PAPI_OK)
-    {
-    heck:
-      if (n) free_EventSet(ESI);
-      return(retval);
-    }
-
-  /* If it's a new one, add it to the global table */
-
-  if (n)
-    {
-      retval = add_EventSet(PAPI_EVENTSET_MAP, ESI, default_master_eventset);
-      if (retval < PAPI_OK)
-        goto heck;
-
-      *EventSet = ESI->EventSetIndex;
-      DBG((stderr,"PAPI_add_pevent new EventSet in slot %d\n",*EventSet));
-    }
-  return(retval);
-}
-
-int PAPI_create_eventset_r(int *EventSet, void *handle)
+int create_eventset(int *EventSet, void *handle)
 {
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset = (EventSetInfo *)handle;
@@ -629,9 +595,6 @@ int PAPI_create_eventset_r(int *EventSet, void *handle)
   
   if ((EventSet == NULL) || (handle == NULL))
     return(PAPI_EINVAL);
-
-  /* if (*EventSet != PAPI_NULL)
-    return(handle_error(PAPI_EINVAL, "EventSet must be initialized to PAPI_NULL")); */
 
   /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
   
@@ -649,20 +612,53 @@ int PAPI_create_eventset_r(int *EventSet, void *handle)
     }
   
   *EventSet = ESI->EventSetIndex;
-  DBG((stderr,"PAPI_add_event new EventSet in slot %d\n",*EventSet));
+  DBG((stderr,"create_eventset(%p,%p): new EventSet in slot %d\n",EventSet,handle,*EventSet));
 
   return(retval);
 }
 
 int PAPI_create_eventset(int *EventSet)
 {
-  return(PAPI_create_eventset_r(EventSet, default_master_eventset));
+  EventSetInfo *master = _papi_hwi_lookup_in_master_list();
+  int retval;
+  if (master == NULL)
+    {
+      DBG((stderr,"PAPI_create_eventset(%p): new thread found\n",EventSet));
+      retval = initialize_master_eventset(&master);
+      if (retval)
+	return(retval);
+      _papi_hwi_insert_in_master_list(master);
+    }
+
+  return(create_eventset(EventSet, master));
+}
+
+int PAPI_add_pevent(int *EventSet, int code, void *inout)
+{ 
+  EventSetInfo *ESI;
+
+  /* Is the EventSet already in existence? */
+
+  if (EventSet == NULL)
+    return(PAPI_EINVAL);
+
+  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, *EventSet);
+  if (ESI == NULL)
+    return(PAPI_ENOEVST);
+
+  /* Of course, it must be stopped in order to modify it. */
+
+  if (!(ESI->state & PAPI_STOPPED))
+    return(PAPI_EISRUN);
+
+  /* Now do the magic. */
+
+  return(add_pevent(ESI,code,inout));
 }
 
 int PAPI_add_event(int *EventSet, int EventCode) 
 { 
-  int retval;
-  EventSetInfo *ESI, *n = NULL;
+  EventSetInfo *ESI;
 
   /* Is the EventSet already in existence? */
   
@@ -671,45 +667,16 @@ int PAPI_add_event(int *EventSet, int EventCode)
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, *EventSet);
   if (ESI == NULL)
-    {
-      /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
-
-      n = allocate_EventSet();
-      if (n == NULL)
-	return(PAPI_ENOMEM);
-      ESI = n;
-    }
+    return(PAPI_ENOEVST);
 
   /* Of course, it must be stopped in order to modify it. */
 
   if (!(ESI->state & PAPI_STOPPED))
-    {
-      if (n) free(n);
-      return(PAPI_EISRUN);
-    }
+    return(PAPI_EISRUN);
 
   /* Now do the magic. */
 
-  retval = add_event(ESI,EventCode);
-  if (retval < PAPI_OK)
-    {
-    heck:
-      if (n) free_EventSet(ESI);
-      return(retval);
-    }
-
-  /* If it's a new one, add it to the global table */
-
-  if (n)
-    {
-      retval = add_EventSet(PAPI_EVENTSET_MAP, ESI, default_master_eventset);
-      if (retval < PAPI_OK)
-	goto heck;
-
-      *EventSet = ESI->EventSetIndex;
-      DBG((stderr,"PAPI_add_event new EventSet in slot %d\n",*EventSet));
-    }
-  return(retval);
+  return(add_event(ESI,EventCode));
 }
 
 /* This function returns the index of the EventCode or error */
@@ -878,7 +845,7 @@ int PAPI_rem_event(int *EventSet, int EventCode)
   if (ESI == NULL)
     return(PAPI_ENOEVST);
 
- if (!(ESI->state & PAPI_STOPPED))
+  if (!(ESI->state & PAPI_STOPPED))
     return(PAPI_EISRUN);
 
   retval = remove_event(ESI,EventCode);
@@ -1594,6 +1561,9 @@ int PAPI_set_domain(int domain)
 int PAPI_add_events(int *EventSet, int *Events, int number)
 {
   int i, retval;
+
+  if (Events == NULL)
+    return(PAPI_EINVAL);
 
   for (i=0;i<number;i++)
     {

@@ -311,7 +311,7 @@ long long PAPI_get_real_usec(void);
 long long PAPI_get_virt_cyc(void);
 long long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
-int PAPI_thread_init(void **handle, int flag);
+int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
 void PAPI_lock(void);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \

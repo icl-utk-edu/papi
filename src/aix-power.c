@@ -1562,6 +1562,17 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *i)
+{
+#ifdef DEBUG
+  ucontext_t *info;
+  info = (ucontext_t *)i;
+  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info->uc_mcontext.jmp_context.iar));
+#endif
+
+  _papi_hwi_dispatch_overflow_signal(i); 
+}
+
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;

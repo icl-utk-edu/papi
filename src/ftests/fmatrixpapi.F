@@ -32,11 +32,6 @@ C   Setup default values
          print *, 'Error in PAPI_library_init '
          stop
       end if
-      call PAPIf_thread_init( handle, handle, check )
-      if ( check.NE.PAPI_OK ) then
-        print *, 'Error in PAPI_thread_init'
-        stop
-      end if
 
 
 C   Open matrix file number 1 for reading

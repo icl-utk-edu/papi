@@ -30,11 +30,6 @@ C 2 counters.
          print *, 'Error in PAPI_library_init '
          stop
       end if
-      call PAPIf_thread_init( handle, handle, retval )
-      if ( retval.NE.PAPI_OK ) then
-        print *, 'Error in PAPI_thread_init'
-        stop
-      end if
       call PAPIf_add_event( EventSet, PAPI_L2_TCM,retval )
       if (retval.NE.PAPI_OK) print *, 'error adding L2 TCM'
       call PAPIf_add_event(EventSet, PAPI_TOT_CYC,retval)

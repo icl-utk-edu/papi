@@ -1049,6 +1049,12 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+void _papi_hwd_dispatch_timer(int signal, struct sigcontext info)
+{
+  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info.eip));
+  _papi_hwi_dispatch_overflow_signal((void *)&info); 
+}
+
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
   /* This function is not used and shouldn't be called. */

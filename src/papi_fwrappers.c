@@ -47,16 +47,11 @@ PAPI_FCALL(papif_library_init,PAPIF_LIBRARY_INIT,(int *check))
     *check = PAPI_VER_CURRENT;
 }
 
-/* Rule for Fortran is, if *handle == 0, then no threads. */
-/* This *may* be a problem for 64 bit machines where 
-   sizeof(int) != sizeof(int *) */
+/* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
 
-PAPI_FCALL(papif_thread_init,PAPIF_THREAD_INIT,(int *handle, int *flag, int *check))
+PAPI_FCALL(papif_thread_init,PAPIF_THREAD_INIT,(unsigned long int (*handle)(), int *flag, int *check))
 {
-  if (*handle == 0)
-    handle = NULL;
-  assert(sizeof(int *) <= sizeof(int));
-  *check = PAPI_thread_init((void **)handle, *flag);
+  *check = PAPI_thread_init(handle, *flag);
 }
 
 PAPI_FCALL(papif_list_events,PAPIF_LIST_EVENTS,(int *EventSet, int *Events, int *number, int *check))
@@ -170,12 +165,6 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, int *nnod
 PAPI_FCALL(papif_create_eventset,PAPIF_CREATE_EVENTSET,(int *EventSet, int *check))
 {
   *check = PAPI_create_eventset(EventSet);
-}
-
-PAPI_FCALL(papif_create_eventset_r,PAPIF_CREATE_EVENTSET_R,(int *EventSet, int *handle, int *check))
-{
-  assert(sizeof(int *) <= sizeof(int));
-  *check = PAPI_create_eventset_r(EventSet, (void **)handle);
 }
 
 PAPI_FCALL(papif_destroy_eventset,PAPIF_DESTROY_EVENTSET,(int *EventSet, int *check))

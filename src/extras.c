@@ -95,7 +95,7 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   unsigned long pc;
 
   pc = (unsigned long)_papi_hwd_get_overflow_address(context);
-  DBG((stderr,"dispatch_profile() handled at 0x%lx\n",pc));
+  DBG((stderr,"handled at 0x%lx\n",pc));
 
   pc = (pc - (unsigned long)profile->offset)/2;
   pc = pc * profile->scale;
@@ -105,13 +105,64 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
       posix_profil(profile->flags, over, threshold, profile->buf, pc);
       return;
     }
-  DBG((stderr,"dispatch_profile() bucket %lu out of range\n",pc));
+  DBG((stderr,"bucket %lu out of range\n",pc));
 }
 
-void _papi_hwi_dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_event_set, void *context)
+typedef struct _thread_list {
+  EventSetInfo *master;
+  struct _thread_list *next; 
+} EventSetInfoList;
+
+static EventSetInfoList *head = NULL;
+extern unsigned long int (*thread_id_fn)(void);
+
+int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)
+{
+  EventSetInfoList *entry = (EventSetInfoList *)malloc(sizeof(EventSetInfoList));
+  if (entry == NULL)
+    return(PAPI_ENOMEM);
+  DBG((stderr,"(%p): New entry is at %p\n",ptr,entry));
+  entry->master = ptr;
+  PAPI_lock();
+  entry->next = head;
+  DBG((stderr,"(%p): Old head is at %p\n",ptr,entry->next));
+  head = entry;
+  DBG((stderr,"(%p): New head is at %p\n",ptr,head));
+  PAPI_unlock();
+  return(PAPI_OK);
+}
+
+EventSetInfo *_papi_hwi_lookup_in_master_list(void)
+{
+  extern EventSetInfo *default_master_eventset;
+  if (thread_id_fn == NULL)
+    return(default_master_eventset);
+  else
+    {
+      unsigned long int id_to_find = (*thread_id_fn)();
+      EventSetInfoList *tmp = head;
+      while (tmp != NULL)
+	{
+	  if (tmp->master->tid == id_to_find)
+	    return(tmp->master);
+	  tmp = tmp->next;
+	}
+      return(NULL);
+    }
+}
+
+void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval;
   long long latest;
+  EventSetInfo *master_event_set;
+  EventSetInfo *ESI;
+
+  master_event_set = _papi_hwi_lookup_in_master_list();
+  ESI = master_event_set->event_set_overflowing;
+
+  if ((ESI->state & PAPI_OVERFLOWING) == 0)
+    abort();
 
   /* Get the latest counter value */
 
@@ -138,59 +189,6 @@ void _papi_hwi_dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_
     }
 }
 
-#if defined(_CRAYT3E)
-#include <sys/ucontext.h>
-static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
-{
-  extern EventSetInfo *default_master_eventset;
-  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
-  DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
-  
-  if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
-  return;
-}
-#elif defined(sun) && defined(sparc)
-#include <sys/ucontext.h>
-static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
-{
-  extern EventSetInfo *default_master_eventset;
-  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
-  DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
-  
-  if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
-  return;
-}
-#elif defined(linux)
-static void dispatch_timer(int signal, struct sigcontext info)
-{
-  extern EventSetInfo *default_master_eventset;
-  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
-  DBG((stderr,"dispatch_timer() at 0x%lx\n",info.eip));
-
-  if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)&info); 
-  return;
-}
-#elif defined(_AIX)
-static void dispatch_timer(int signal, siginfo_t *si, void *i)
-{
-  extern EventSetInfo *default_master_eventset;
-  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
-#ifdef DEBUG
-  ucontext_t *info;
-#endif
-#ifdef DEBUG
-  info = (ucontext_t *)i;
-  DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.jmp_context.iar));
-#endif
-
-  if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, i); 
-}
-#endif
-
 static int start_timer(int milliseconds)
 {
   int retval;
@@ -204,17 +202,11 @@ static int start_timer(int milliseconds)
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_flags = SA_RESTART;
-#if defined(_AIX) 
-  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
-  action.sa_flags |= SA_SIGINFO;
-#elif defined(_CRAYT3E)
-  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
-  action.sa_flags |= SA_SIGINFO;
-#elif defined(sun) && defined(sparc)
-  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
+#if defined(_AIX) || defined(_CRAYT3E) || defined(sun)
+  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))_papi_hwd_dispatch_timer;
   action.sa_flags |= SA_SIGINFO;
 #elif defined(linux)
-  action.sa_handler = (void (*)(int))dispatch_timer;
+  action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
 
   if (sigaction(PAPI_SIGNAL, &action, NULL) < 0)

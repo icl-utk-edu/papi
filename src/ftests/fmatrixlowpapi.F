@@ -39,11 +39,6 @@ C   PAPI values of the counters
          print *, 'Error in PAPI_library_init '
          stop
       end if
-      call PAPIf_thread_init( handle, handle, check )
-      if ( check.NE.PAPI_OK ) then
-        print *, 'Error in PAPI_thread_init'
-        stop
-      end if
 
 C   See how many hardware events at one time are supported
       call PAPIf_num_counters( numevents )

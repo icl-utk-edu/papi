@@ -1,6 +1,6 @@
 #define PAPI_OK 0
 #define PAPI_VER_CURRENT 1
-#define PAPI_NUM_ERRORS 11
+#define PAPI_NUM_ERRORS 15
 #define PAPI_EINVAL -1
 #define PAPI_ENOMEM -2
 #define PAPI_ESYS -3
@@ -10,7 +10,7 @@
 #define PAPI_ENOEVNT -7
 #define PAPI_ECNFLCT -8
 #define PAPI_ENOTRUN -9
-#define PAPI_EMISC -10
+#define PAPI_EMISC -14
 #define PAPI_NULL -1
 #define PAPI_DOM_USER 1
 #define PAPI_DOM_KERNEL	 2

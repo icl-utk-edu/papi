@@ -1,13 +1,12 @@
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21xxx"
-TARGET	= libpapi.a
-TESTS	= serial 
-MISCOBJS= cpu_version.o
+LIBS	= static shared
+TARGETS	= serial smp omp
+FOR_USED=
 CFLAGS 	= -g -DDEBUG 
 OPTFLAGS=
 SMPCFLGS=
 OMPCFLGS=
-LDFLAGS = 
 CC_R	= cc
 CC	= cc
 F77	= f77

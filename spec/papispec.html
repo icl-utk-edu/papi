@@ -744,8 +744,7 @@
       </blockquote>
       <b><tt>int PAPI_add_event(int *EventSet, int Event)</tt></b>
       <blockquote>
-        <p>This function sets up a new EventSet or modifies an existing one. To
-        create a new EventSet, EventSet must be set to PAPI_NULL. Separate
+        <p>This function modifies an existing EventSet. Separate
         EventSets containing events that require use of the same hardware may
         exist, but may not be started if a conflicting EventSet is running.
         Returns the error code PAPI_ENOEVNT if Event cannot be counted on this
@@ -758,8 +757,7 @@
       </blockquote>
       <p><b><tt>int PAPI_add_events(int *EventSet, int *Events, int number)</tt></b></p>
       <blockquote>
-        <p>This function sets up a new EventSet or modifies an existing one. To
-        create a new EventSet, EventSet must be set to PAPI_NULL. The Events
+        <p>This function modifies an existing EventSet. The Events
         contained in *Events will be loaded into the EventSet. Separate
         EventSets containing events that require use of the same hardware may
         exist, but may not be started if a conflicting EventSet is running. If
@@ -776,8 +774,8 @@
       </blockquote>
       <p><b><tt>int PAPI_add_pevent(int *EventSet, int code, void *inout)</tt></b></p>
       <blockquote>
-        <p>This function allocates a new EventSet for a native programmable
-        Event. Such EventSets can only consist of one event, namely that which
+        <p>This function adds a native programmable Event to an existing
+	EventSet. Such EventSets can only consist of one event, namely that which
         is specified in this call. Its semantics are very similar to that of
         ioctl() system call. inout points to an opaque data structure that is
         specific to the value in code. Higher level macros may be provided in
@@ -799,14 +797,6 @@
       <blockquote>
         <p>This function creates a new EventSet for use. This call is
 	not thread safe.</p>
-        <p>The return value is an integer that indicates whether the call
-        succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
-      </blockquote>
-      <p><b><tt>int PAPI_create_eventset_r (int *EventSet, void *handle)</tt></b></p>
-      <blockquote>
-        <p>This function creates a new EventSet for use in a multithreaded
-	environment. The handle argument is an output parameter from the
-	PAPI_thread_init call. </p>
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
@@ -886,7 +876,7 @@
         the low level PAPI can be used. The argument should always be set to PAPI_VER_CURRENT. 
 	The reason for this is that you may be linked with a shared library, so
 	this will detect version skew. Don't forget PAPI_thread_init also has to 
-	be called before low level PAPI calls can be used in an application.
+	be called before low level PAPI calls can be used in a threaded application.
       </blockquote>
       <br>
       <b><tt>int PAPI_list_events(int EventSet, int *Events, int *number)</tt></b>
@@ -1098,11 +1088,11 @@
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
-      <p><b><tt>int PAPI_thread_init (void **handle, int flag)</tt></b></p>
+      <p><b><tt>int PAPI_thread_init (unsigned long int (*handle)(), int flag)</tt></b></p>
       <blockquote>
-        <p>This function initializes thread support and has to be called by
-        applications that plan on using the reentrant interface to PAPI, namely
-	PAPI_create_eventset_r. </p>
+        <p>This function initializes thread support. The first argument is a pointer
+	to a function that returns the Thread ID of the currently running thread. The flag
+	argument is currently not used and should be set to zero.</p>
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
