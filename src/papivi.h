@@ -36,17 +36,25 @@
 #define PAPI_VERSION_MINOR(x)		(((x)>>8)     & 0xff)
 #define PAPI_VERSION_REVISION(x)	((x)          & 0xff)
 
-/* This is the PAPI version with which we are compatible */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,3)
+/* This is the PAPI version on which we are running */
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(2,3,4)
+
+/* This is the PAPI 3 version with which we are compatible */
+#define PAPI_VI_VERSION  			PAPI_VERSION_NUMBER(3,0,6)
+
+/* PAPI 3 has an error code not defined for PAPI 2 */
+#define PAPI_EPERM   PAPI_EMISC        /* You lack the necessary permissions */
 
 /*
 * These are defined in papi_internal.h for PAPI 2.
 * They need to be exposed for version independent PAPI code to work.
 */
-#define PRESET_MASK     0x80000000
-#define PAPI_PRESET_MASK PRESET_MASK
-#define PRESET_AND_MASK 0x7FFFFFFF
-#define PAPI_PRESET_AND_MASK PRESET_AND_MASK
+//#define PRESET_MASK     0x80000000
+#define PAPI_PRESET_MASK 0x80000000
+//#define PRESET_AND_MASK 0x7FFFFFFF
+#define PAPI_PRESET_AND_MASK 0x7FFFFFFF
+#define PAPI_NATIVE_MASK 0x40000000
+#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF
 
 /*
 * Some PAPI 3 definitions for PAPI_{set,get}_opt() map
@@ -96,18 +104,47 @@
 * These structures are reproduced below.
 * They MUST stay synchronized with their counterparts in papi.h
 */
+#define PAPI_MAX_INFO_TERMS 8
 typedef struct event_info {
    unsigned int event_code;
    unsigned int count;
-   char symbol[PAPI_MIN_STR_LEN];
+   char symbol[PAPI_MAX_STR_LEN+3];
    char short_descr[PAPI_MIN_STR_LEN];
-   char long_descr[PAPI_MAX_STR_LEN];
-   char vendor_name[PAPI_MAX_STR_LEN];
-   char vendor_descr[PAPI_HUGE_STR_LEN];
+   char long_descr[PAPI_HUGE_STR_LEN];
+   char derived[PAPI_MIN_STR_LEN];
+   char postfix[PAPI_MIN_STR_LEN]; 
+   unsigned int code[PAPI_MAX_INFO_TERMS];
+   char name[PAPI_MAX_INFO_TERMS]
+            [PAPI_MIN_STR_LEN];
+   char note[PAPI_HUGE_STR_LEN];
 } PAPI_event_info_t;
 
+/* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
+   This enumeration is new in PAPI 3. It will act as a nop in PAPI 2, but
+   must be defined for code compatibility.
+*/
+enum {
+   PAPI_ENUM_ALL = 0,			/* Always enumerate all events */
+   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
+
+   /* PAPI PRESET section */
+   PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
+   PAPI_PRESET_ENUM_BR,			/* branch related preset events */
+   PAPI_PRESET_ENUM_MEM,		/* memory related preset events */
+   PAPI_PRESET_ENUM_TLB,		/* Translation Lookaside Buffer events */
+   PAPI_PRESET_ENUM_FP,			/* Floating Point related preset events */
+
+   /* Pentium 4 specific section */
+   PAPI_PENT4_ENUM_GROUPS = 0x100,      /* 45 groups + custom + user */
+   PAPI_PENT4_ENUM_COMBOS,		/* all combinations of mask bits for given group */
+   PAPI_PENT4_ENUM_BITS,		/* all individual bits for given group */
+
+   /* POWER 4 specific section */
+   PAPI_PWR4_ENUM_GROUPS = 0x200	/* Enumerate groups an event belongs to */
+};
+
 typedef struct _papi_address_map {
-   char mapname[PAPI_MAX_STR_LEN];
+   char mapname[PAPI_HUGE_STR_LEN];
    caddr_t text_start;       /* Start address of program text segment */
    caddr_t text_end;         /* End address of program text segment */
    caddr_t data_start;       /* Start address of program data segment */
@@ -123,8 +160,6 @@ typedef struct _papi_address_map {
  * to describe all levels of the hierarchy.
  * These structures, and the requisite data types are defined below.
  */
-
-#if (PAPI_VERSION_REVISION(PAPI_VERSION)) > 2
 
    /* All sizes are in BYTES */
    /* Except tlb size, which is in entries */
@@ -159,8 +194,6 @@ typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
    PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
 } PAPI_mh_info_t;
 
-#endif
-
 /*
 * Three data structures are modified in PAPI 3
 * These modifications are 
@@ -184,43 +217,7 @@ typedef struct _papi3_hw_info {
    float mhz;                /* Cycle time of this CPU, *may* be estimated at 
                                 init time with a quick timing routine */
 
-#if (PAPI_VERSION_REVISION(PAPI_VERSION)) < 3
-   /* Memory Information */
-   int L1_tlb_size;          /*Data + Instruction Size */
-   int L1_itlb_size;         /*Instruction TLB size in KB */
-   short int L1_itlb_assoc;  /*Instruction TLB associtivity */
-   int L1_dtlb_size;         /*Data TLB size in KB */
-   short L1_dtlb_assoc;      /*Data TLB associtivity */
-
-   int L2_tlb_size;          /*Data + Instruction Size */
-   int L2_itlb_size;         /*Instruction TLB size in KB */
-   short int L2_itlb_assoc;  /*Instruction TLB associtivity */
-   int L2_dtlb_size;         /*Data TLB size in KB */
-   short L2_dtlb_assoc;      /*Data TLB associtivity */
-
-   int L1_size;              /* I+D */
-   int L1_icache_size;       /*Level 1 instruction cache size in KB */
-   short int L1_icache_assoc;        /*Level 1 instruction cache associtivity */
-   int L1_icache_lines;      /*Number of lines in Level 1 instruction cache */
-   int L1_icache_linesize;   /*Line size in KB of Level 1 instruction cache */
-
-   int L1_dcache_size;       /*Level 1 data cache size in KB */
-   short int L1_dcache_assoc;        /*Level 1 data cache associtivity */
-   int L1_dcache_lines;      /*Number of lines in Level 1 data cache */
-   int L1_dcache_linesize;   /*Line size in KB of Level 1 data cache */
-
-   int L2_cache_size;        /*Level 2 cache size in KB */
-   short int L2_cache_assoc; /*Level 2 cache associtivity */
-   int L2_cache_lines;       /*Number of lines in Level 2 cache */
-   int L2_cache_linesize;    /*Line size in KB of Level 2 cache */
-
-   int L3_cache_size;        /*Level 3 cache size in KB */
-   short int L3_cache_assoc; /*Level 3 cache associtivity */
-   int L3_cache_lines;       /*Number of lines in Level 3 cache */
-   int L3_cache_linesize;    /*Line size of Level 3 cache */
-#else
    PAPI_mh_info_t mem_hierarchy;
-#endif
 } PAPIvi_hw_info_t;
 
 typedef struct _papi3_preload_option {
@@ -291,7 +288,7 @@ typedef struct _papi3_program_info {
 #define PAPIvi_lock(lck) \
           PAPI_lock()
 #define PAPIvi_profil(buf, bufsiz, offset, scale, EventSet, EventCode, threshold, flags) \
-          PAPI_profil((unsigned short *)buf, bufsiz, offset, scale, EventSet, EventCode, threshold, flags)
+          PAPI_profil((unsigned short *)buf, bufsiz, (unsigned long)offset, scale, EventSet, EventCode, threshold, flags)
 #define PAPIvi_thread_init(id_fn) \
           PAPI_thread_init(id_fn, 0)
 #define PAPIvi_unlock(lck) \
@@ -328,7 +325,6 @@ static const PAPIvi_hw_info_t *PAPIvi_get_hardware_info(void)
    /* Copy the basic hardware info (same in both structures */
    memcpy(&papi3_hw_info, papi2_hw_info, sizeof(PAPI_hw_info_t));
 
-#if (PAPI_VERSION_REVISION(PAPI_VERSION)) > 2
    memset(&papi3_hw_info.mem_hierarchy, 0, sizeof(PAPI_mh_info_t));
    /* check for a unified tlb */
    if (papi2_mem_info->total_tlb_size && 
@@ -392,35 +388,6 @@ static const PAPIvi_hw_info_t *PAPIvi_get_hardware_info(void)
       papi3_hw_info.mem_hierarchy.level[2].cache[0].line_size = papi2_mem_info->L3_cache_linesize;
    }
 
-#else
-   /* Copy the Memory Information */
-   papi3_hw_info.L1_tlb_size = papi2_mem_info->total_tlb_size;
-   papi3_hw_info.L1_itlb_size = papi2_mem_info->itlb_size;
-   papi3_hw_info.L1_itlb_assoc = papi2_mem_info->itlb_assoc;
-   papi3_hw_info.L1_dtlb_size = papi2_mem_info->dtlb_size;
-   papi3_hw_info.L1_dtlb_assoc = papi2_mem_info->dtlb_assoc;
-
-   papi3_hw_info.L1_size = papi2_mem_info->total_L1_size;
-   papi3_hw_info.L1_icache_size = papi2_mem_info->L1_icache_size;
-   papi3_hw_info.L1_icache_assoc = papi2_mem_info->L1_icache_assoc;
-   papi3_hw_info.L1_icache_lines = papi2_mem_info->L1_icache_lines;
-   papi3_hw_info.L1_icache_linesize = papi2_mem_info->L1_icache_linesize;
-
-   papi3_hw_info.L1_dcache_size = papi2_mem_info->L1_dcache_size;
-   papi3_hw_info.L1_dcache_assoc = papi2_mem_info->L1_dcache_assoc;
-   papi3_hw_info.L1_dcache_lines = papi2_mem_info->L1_dcache_lines;
-   papi3_hw_info.L1_dcache_linesize = papi2_mem_info->L1_dcache_linesize;
-
-   papi3_hw_info.L2_cache_size = papi2_mem_info->L2_cache_size;
-   papi3_hw_info.L2_cache_assoc = papi2_mem_info->L2_cache_assoc;
-   papi3_hw_info.L2_cache_lines = papi2_mem_info->L2_cache_lines;
-   papi3_hw_info.L2_cache_linesize = papi2_mem_info->L2_cache_linesize;
-
-   papi3_hw_info.L3_cache_size = papi2_mem_info->L3_cache_size;
-   papi3_hw_info.L3_cache_assoc = papi2_mem_info->L3_cache_assoc;
-   papi3_hw_info.L3_cache_lines = papi2_mem_info->L3_cache_lines;
-   papi3_hw_info.L3_cache_linesize = papi2_mem_info->L3_cache_linesize;
-#endif
    return(&papi3_hw_info);
 }
 
@@ -462,18 +429,22 @@ static int PAPIvi_get_event_info(int EventCode, PAPI_event_info_t * info)
 
    info->event_code = info2[i].event_code;
    info->count = info2[i].avail;
-   if (info2[i].flags & PAPI_DERIVED) info->count++;
+   if (info2[i].flags & PAPI_DERIVED) {
+      info->count++;
+      strcpy(info->derived, "DERIVED");
+   }
    if (info2[i].event_name == NULL)  info->symbol[0] = 0;
    else strcpy(info->symbol, info2[i].event_name);
    if (info2[i].event_label == NULL)  info->short_descr[0] = 0;
    else strcpy(info->short_descr, info2[i].event_label);
    if (info2[i].event_descr == NULL)  info->long_descr[0] = 0;
    else strcpy(info->long_descr, info2[i].event_descr);
-   if (info2[i].event_note == NULL)  info->vendor_name[0] = 0;
-   else strcpy(info->vendor_name, info2[i].event_note);
+   if (info2[i].event_note == NULL)  info->note[0] = 0;
+   else strcpy(info->note, info2[i].event_note);
    return(PAPI_OK);
 }
 
+/*
 static int PAPI_get_multiplex(int EventSet)
 {
    PAPI_option_t popt;
@@ -485,6 +456,7 @@ static int PAPI_get_multiplex(int EventSet)
       retval = 0;
    return retval;
 }
+*/
 
  /* New Unsupported Functions */
 #define PAPIvi_get_shared_lib_info \
@@ -704,7 +676,7 @@ int PAPI_save(void);
 #define PAPIvi_get_hardware_info \
           PAPI_get_hardware_info
 #define PAPIvi_get_multiplex(EventSet) \
-          PAPIvi_get_multiplex(EventSet)
+          PAPI_get_multiplex(EventSet)
 #define PAPIvi_get_opt(option, ptr) \
           PAPI_get_opt(option, ptr)
 #define PAPIvi_get_real_cyc \
