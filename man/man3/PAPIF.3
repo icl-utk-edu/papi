@@ -32,32 +32,26 @@ architectures the following relation holds between the pseudo-types
 listed and Fortran variable types.
 
 .TS
-box, tab($);
+box, tab(!);
 c  | c  | c
 lt | lt | lt.
-Pseuodo-type$Fortran type$Description
-=
-C_INT$INTEGER$Default Integer type
-_
-C_FLOAT$REAL$Default Real type
-_
-C_LONG_LONG$INTEGER*8$Extended size integer
-_
-C_STRING$CHARACTER*(PAPI_MAX_STR_LEN)$Fortran string
-_
-C_INT FUNCTION$EXTERNAL INTEGER FUNCTION$T{
+Pseuodo-type!Fortran type!Description
+C_INT!INTEGER!Default Integer type
+C_FLOAT!REAL!Default Real type
+C_LONG_LONG!INTEGER*8!Extended size integer
+C_STRING!CHARACTER*(PAPI_MAX_STR_LEN)!Fortran string
+C_INT FUNCTION!EXTERNAL INTEGER FUNCTION!T{
 Fortran function returning integer result 
 T}
-_
-C_INT(*)$T{
+C_INT(*)!T{
 Array of corresponding type
-T}$T{
+T}!T{
 C_TYPE(*) refers to an array of the corresponding Fortan type.
 The length of the array needed is context dependent. It may be 
 e.g. PAPI_MAX_HWCTRS or PAPIF_num_counters.
 T}
-C_FLOAT(*)$\^$\^
-C_LONG_LONG(*)$\^$\^
+C_FLOAT(*)!\^!\^
+C_LONG_LONG(*)!\^!\^
 .TE
 
 
