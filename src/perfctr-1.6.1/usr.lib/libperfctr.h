@@ -35,6 +35,10 @@ int vperfctr_stop(const struct vperfctr*);
 int vperfctr_unlink(const struct vperfctr*);
 void vperfctr_close(struct vperfctr*);
 
+/* Experimental /proc/self/perfctr interface. */
+struct vperfctr *vperfctr_open(void);
+int vperfctr_info(const struct vperfctr*, struct perfctr_info*);
+
 /*
  * Operations on global-mode perfctrs.
  */
@@ -48,8 +52,8 @@ int perfctr_global_stop(const struct perfctr_dev*);
  */
 
 int perfctr_info(const struct perfctr_dev*, struct perfctr_info*);
-unsigned perfctr_cpu_nrctrs(const struct perfctr_dev*);
-const char *perfctr_cpu_name(const struct perfctr_dev*);
-unsigned perfctr_evntsel_num_insns(const struct perfctr_dev*);
+unsigned perfctr_cpu_nrctrs(const struct perfctr_info*);
+const char *perfctr_cpu_name(const struct perfctr_info*);
+unsigned perfctr_evntsel_num_insns(const struct perfctr_info*);
 
 #endif /* __LIB_PERFCTR_H */

@@ -1,6 +1,6 @@
---- linux-2.2.16-perfctr/CREDITS.~1~	Thu Jun  8 09:05:50 2000
-+++ linux-2.2.16-perfctr/CREDITS	Sat Sep  2 21:58:29 2000
-@@ -1607,6 +1607,12 @@
+--- linux-2.2.18pre21-perfctr/CREDITS.~1~	Tue Nov 14 00:40:58 2000
++++ linux-2.2.18pre21-perfctr/CREDITS	Tue Nov 14 00:42:34 2000
+@@ -1716,6 +1716,12 @@
  D: implemented kmod
  D: modularized BSD Unix domain sockets
  
@@ -13,9 +13,9 @@
  N: Reed H. Petty
  E: rhp@draper.net
  W: http://www.draper.net
---- linux-2.2.16-perfctr/Documentation/Configure.help.~1~	Thu Jun  8 09:05:50 2000
-+++ linux-2.2.16-perfctr/Documentation/Configure.help	Sat Sep  2 21:58:29 2000
-@@ -1662,6 +1662,82 @@
+--- linux-2.2.18pre21-perfctr/Documentation/Configure.help.~1~	Tue Nov 14 00:40:58 2000
++++ linux-2.2.18pre21-perfctr/Documentation/Configure.help	Tue Nov 14 00:42:34 2000
+@@ -1771,6 +1771,82 @@
  
    If you don't know what to do, choose "386".
  
@@ -98,18 +98,18 @@
  VGA text console
  CONFIG_VGA_CONSOLE
    Saying Y here will allow you to use Linux in text mode through a
---- linux-2.2.16-perfctr/Documentation/ioctl-number.txt.~1~	Sat Feb 21 02:54:35 1998
-+++ linux-2.2.16-perfctr/Documentation/ioctl-number.txt	Sat Sep  2 21:58:29 2000
-@@ -130,3 +130,5 @@
+--- linux-2.2.18pre21-perfctr/Documentation/ioctl-number.txt.~1~	Tue Nov 14 00:40:58 2000
++++ linux-2.2.18pre21-perfctr/Documentation/ioctl-number.txt	Tue Nov 14 00:42:34 2000
+@@ -131,3 +131,5 @@
  0xA3	90-9F	DoubleTalk driver	in development:
  					<mailto:jrv@vanzandt.mv.com>
  0xAB	00-06	Network block device
 +0xD0	all	performance counters	in development:
 +					<mailto:mikpe@csd.uu.se>
---- linux-2.2.16-perfctr/MAINTAINERS.~1~	Thu Jun  8 09:05:50 2000
-+++ linux-2.2.16-perfctr/MAINTAINERS	Sat Sep  2 21:58:29 2000
-@@ -712,6 +712,12 @@
- L:	linux-net@vger.rutgers.edu
+--- linux-2.2.18pre21-perfctr/MAINTAINERS.~1~	Tue Nov 14 00:40:58 2000
++++ linux-2.2.18pre21-perfctr/MAINTAINERS	Tue Nov 14 00:42:34 2000
+@@ -773,6 +773,12 @@
+ L:	linux-net@vger.kernel.org
  S:	Maintained
  
 +PERFORMANCE-MONITORING COUNTERS DRIVER
@@ -121,9 +121,9 @@
  PNP SUPPORT
  P:	Tom Lees
  M:	tom@lpsg.demon.co.uk
---- linux-2.2.16-perfctr/Makefile.~1~	Thu Jun  8 09:05:50 2000
-+++ linux-2.2.16-perfctr/Makefile	Sat Sep  2 21:58:29 2000
-@@ -210,6 +210,10 @@
+--- linux-2.2.18pre21-perfctr/Makefile.~1~	Tue Nov 14 00:40:58 2000
++++ linux-2.2.18pre21-perfctr/Makefile	Tue Nov 14 00:42:34 2000
+@@ -218,6 +218,10 @@
  DRIVERS := $(DRIVERS) drivers/telephony/telephony.a
  endif
  
@@ -134,8 +134,8 @@
  include arch/$(ARCH)/Makefile
  
  .S.s:
---- linux-2.2.16-perfctr/arch/i386/config.in.~1~	Thu Jun  8 09:05:50 2000
-+++ linux-2.2.16-perfctr/arch/i386/config.in	Sat Sep  2 21:58:29 2000
+--- linux-2.2.18pre21-perfctr/arch/i386/config.in.~1~	Tue Nov 14 00:40:59 2000
++++ linux-2.2.18pre21-perfctr/arch/i386/config.in	Tue Nov 14 00:42:34 2000
 @@ -4,6 +4,8 @@
  #
  mainmenu_name "Linux Kernel Configuration"
@@ -145,7 +145,7 @@
  mainmenu_option next_comment
  comment 'Code maturity level options'
  bool 'Prompt for development and/or incomplete code/drivers' CONFIG_EXPERIMENTAL
-@@ -73,6 +75,7 @@
+@@ -77,6 +79,7 @@
    fi
    bool '   Backward-compatible /proc/pci' CONFIG_PCI_OLD_PROC
  fi
@@ -153,17 +153,17 @@
  bool 'MCA support' CONFIG_MCA
  bool 'SGI Visual Workstation support' CONFIG_VISWS
  if [ "$CONFIG_VISWS" = "y" ]; then
---- linux-2.2.16-perfctr/arch/i386/kernel/process.c.~1~	Thu May  4 16:13:37 2000
-+++ linux-2.2.16-perfctr/arch/i386/kernel/process.c	Sat Sep  2 21:58:29 2000
+--- linux-2.2.18pre21-perfctr/arch/i386/kernel/process.c.~1~	Tue Nov 14 00:41:00 2000
++++ linux-2.2.18pre21-perfctr/arch/i386/kernel/process.c	Tue Nov 14 00:43:30 2000
 @@ -31,6 +31,7 @@
  #include <linux/smp.h>
  #include <linux/reboot.h>
  #include <linux/init.h>
 +#include <linux/perfctr.h>
+ #include <linux/mc146818rtc.h>
  
  #include <asm/uaccess.h>
- #include <asm/pgtable.h>
-@@ -520,7 +521,7 @@
+@@ -524,7 +525,7 @@
   */
  void exit_thread(void)
  {
@@ -172,7 +172,7 @@
  }
  
  void flush_thread(void)
-@@ -540,6 +541,7 @@
+@@ -544,6 +545,7 @@
  
  void release_thread(struct task_struct *dead_task)
  {
@@ -180,7 +180,7 @@
  }
  
  /*
-@@ -606,6 +608,8 @@
+@@ -610,6 +612,8 @@
  	unlazy_fpu(current);
  	p->tss.i387 = current->tss.i387;
  
@@ -189,7 +189,7 @@
  	return 0;
  }
  
-@@ -702,6 +706,8 @@
+@@ -706,6 +710,8 @@
   */
  void __switch_to(struct task_struct *prev, struct task_struct *next)
  {
@@ -198,7 +198,7 @@
  	/* Do the FPU save and set TS if it wasn't set before.. */
  	unlazy_fpu(prev);
  
-@@ -755,11 +761,13 @@
+@@ -759,11 +765,13 @@
  		loaddebug(next,6);
  		loaddebug(next,7);
  	}
@@ -213,7 +213,7 @@
  }
  
  asmlinkage int sys_clone(struct pt_regs regs)
-@@ -786,7 +794,7 @@
+@@ -790,7 +798,7 @@
   */
  asmlinkage int sys_vfork(struct pt_regs regs)
  {
@@ -222,9 +222,9 @@
  }
  
  /*
---- linux-2.2.16-perfctr/arch/i386/kernel/setup.c.~1~	Thu Jun  8 09:05:51 2000
-+++ linux-2.2.16-perfctr/arch/i386/kernel/setup.c	Sat Sep  2 21:58:29 2000
-@@ -61,6 +61,7 @@
+--- linux-2.2.18pre21-perfctr/arch/i386/kernel/setup.c.~1~	Tue Nov 14 00:41:00 2000
++++ linux-2.2.18pre21-perfctr/arch/i386/kernel/setup.c	Tue Nov 14 00:42:34 2000
+@@ -73,6 +73,7 @@
  #include <asm/cobalt.h>
  #include <asm/msr.h>
  #include <asm/dma.h>
@@ -232,7 +232,7 @@
  
  /*
   * Machine setup..
-@@ -917,7 +918,7 @@
+@@ -1096,7 +1097,7 @@
  __initfunc(void dodgy_tsc(void))
  {
  	get_cpu_vendor(&boot_cpu_data);
@@ -241,12 +241,12 @@
  	if(boot_cpu_data.x86_vendor != X86_VENDOR_CYRIX)
  	{
  		return;
---- linux-2.2.16-perfctr/drivers/Makefile.~1~	Thu May  4 16:13:38 2000
-+++ linux-2.2.16-perfctr/drivers/Makefile	Sat Sep  2 21:58:29 2000
+--- linux-2.2.18pre21-perfctr/drivers/Makefile.~1~	Tue Nov 14 00:41:01 2000
++++ linux-2.2.18pre21-perfctr/drivers/Makefile	Tue Nov 14 00:42:34 2000
 @@ -11,6 +11,7 @@
  MOD_SUB_DIRS := $(SUB_DIRS)
  ALL_SUB_DIRS := $(SUB_DIRS) pci sgi scsi sbus cdrom isdn pnp \
- 				macintosh video dio zorro fc4 usb telephony i2o
+ 				macintosh video dio zorro fc4 nubus usb telephony i2o
 +ALL_SUB_DIRS += perfctr
  
  ifdef CONFIG_DIO
@@ -267,28 +267,8 @@
    endif
  endif
  
---- linux-2.2.16-perfctr/drivers/char/misc.c.~1~	Thu Jun  8 09:05:51 2000
-+++ linux-2.2.16-perfctr/drivers/char/misc.c	Sat Sep  2 21:59:27 2000
-@@ -85,6 +85,7 @@
- extern void hfmodem_init(void);
- extern int pc110pad_init(void);
- extern int pmu_device_init(void);
-+extern int perfctr_init(void);
- 
- static int misc_read_proc(char *buf, char **start, off_t offset,
- 			  int len, int *eof, void *private)
-@@ -277,6 +278,9 @@
- #endif
- #ifdef CONFIG_SGI
- 	streamable_init ();
-+#endif
-+#ifdef CONFIG_PERFCTR
-+	perfctr_init();
- #endif
- 	if (register_chrdev(MISC_MAJOR,"misc",&misc_fops)) {
- 		printk("unable to get major %d for misc devices\n",
---- linux-2.2.16-perfctr/include/asm-i386/processor.h.~1~	Wed May 12 18:39:45 1999
-+++ linux-2.2.16-perfctr/include/asm-i386/processor.h	Sat Sep  2 21:58:29 2000
+--- linux-2.2.18pre21-perfctr/include/asm-i386/processor.h.~1~	Tue Nov 14 00:41:12 2000
++++ linux-2.2.18pre21-perfctr/include/asm-i386/processor.h	Tue Nov 14 00:42:34 2000
 @@ -13,6 +13,11 @@
  #include <asm/page.h>
  
@@ -301,7 +281,7 @@
   *  CPU type and hardware bug flags. Kept separately for each CPU.
   *  Members of this structure are referenced in head.S, so think twice
   *  before touching them. [mj]
-@@ -242,6 +247,8 @@
+@@ -244,6 +249,8 @@
  	struct vm86_struct * vm86_info;
  	unsigned long screen_bitmap;
  	unsigned long v86flags, v86mask, v86mode, saved_esp0;
@@ -310,7 +290,7 @@
  };
  
  #define INIT_MMAP \
-@@ -265,6 +272,7 @@
+@@ -267,6 +274,7 @@
  	{ 0, },							\
  	{ { 0, }, },  /* 387 state */				\
  	NULL, 0, 0, 0, 0, 0, /* vm86_info */			\
@@ -318,8 +298,8 @@
  }
  
  #define start_thread(regs, new_eip, new_esp) do {		\
---- linux-2.2.16-perfctr/include/linux/sched.h.~1~	Thu May  4 16:13:42 2000
-+++ linux-2.2.16-perfctr/include/linux/sched.h	Sat Sep  2 21:58:29 2000
+--- linux-2.2.18pre21-perfctr/include/linux/sched.h.~1~	Tue Nov 14 00:41:14 2000
++++ linux-2.2.18pre21-perfctr/include/linux/sched.h	Tue Nov 14 00:42:34 2000
 @@ -34,6 +34,7 @@
  #define CLONE_PID	0x00001000	/* set if pid shared */
  #define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */

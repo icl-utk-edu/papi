@@ -21,7 +21,7 @@ static union {	/* Support for lazy evntsel MSR updates. */
 	char __align[SMP_CACHE_BYTES];	/* 32 bytes */
 } per_cpu_control[NR_CPUS] __cacheline_aligned;
 
-/* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/2A/3 */
+/* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/3 */
 #define MSR_P5_CESR		0x11
 #define MSR_P5_CTR0		0x12
 #define MSR_P5_CTR1		0x13
@@ -293,11 +293,11 @@ void perfctr_cpu_read_counters(int nrctrs, struct perfctr_low_ctrs *ctrs)
 
 static int __init intel_init(void)
 {
-	if( !(boot_cpu_data.x86_capability & X86_FEATURE_TSC) )
+	if( !cpu_has_tsc )
 		return -ENODEV;
 	switch( boot_cpu_data.x86 ) {
 	case 5:
-		if( boot_cpu_data.x86_capability & X86_FEATURE_MMX ) {
+		if( cpu_has_mmx ) {
 			perfctr_cpu_type = PERFCTR_X86_INTEL_P5MMX;
 			read_counters = p5mmx_read_counters;
 		} else {
@@ -327,7 +327,7 @@ static int __init intel_init(void)
 
 static int __init amd_init(void)
 {
-	if( !(boot_cpu_data.x86_capability & X86_FEATURE_TSC) )
+	if( !cpu_has_tsc )
 		return -ENODEV;
 	switch( boot_cpu_data.x86 ) {
 	case 6:	/* K7 Athlon. Model 1 does not have a local APIC. */
@@ -343,7 +343,7 @@ static int __init amd_init(void)
 
 static int __init cyrix_init(void)
 {
-	if( !(boot_cpu_data.x86_capability & X86_FEATURE_TSC) )
+	if( !cpu_has_tsc )
 		return -ENODEV;
 	switch( boot_cpu_data.x86 ) {
 	case 6:	/* 6x86MX, MII, or III */
@@ -366,8 +366,8 @@ static int __init centaur_init(void)
 		case 4: /* WinChip C6 */
 			perfctr_cpu_type = PERFCTR_X86_WINCHIP_C6;
 			break;
-		case 8: /* WinChip 2 or 2A */
-		case 9: /* WinChip 3, a 2A with 128KB L1 cache */
+		case 8: /* WinChip 2, 2A, or 2B */
+		case 9: /* WinChip 3, a 2A with larger cache and lower voltage */
 			perfctr_cpu_type = PERFCTR_X86_WINCHIP_2;
 			break;
 		default:
@@ -376,8 +376,7 @@ static int __init centaur_init(void)
 		/*
 		 * TSC must be inaccessible for perfctrs to work.
 		 */
-		if( !(get_cr4() & X86_CR4_TSD) ||
-		    (boot_cpu_data.x86_capability & X86_FEATURE_TSC) )
+		if( !(get_cr4() & X86_CR4_TSD) || cpu_has_tsc )
 			return -ENODEV;
 		perfctr_cpu_features &= ~PERFCTR_FEATURE_RDTSC;
 		read_counters = c6_read_counters;
@@ -392,7 +391,7 @@ static int __init centaur_init(void)
 
 static int __init generic_init(void)
 {
-	if( !(boot_cpu_data.x86_capability & X86_FEATURE_TSC) )
+	if( !cpu_has_tsc )
 		return -ENODEV;
 	perfctr_cpu_features &= ~PERFCTR_FEATURE_RDPMC;
 	perfctr_cpu_type = PERFCTR_X86_GENERIC;
@@ -411,14 +410,14 @@ char *perfctr_cpu_name[] __initdata = {
 	"Intel Pentium III",
 	"Cyrix 6x86MX/MII/III",
 	"WinChip C6",
-	"WinChip 2",
+	"WinChip 2/3",
 	"AMD K7",
 };
 
 int __init perfctr_cpu_init(void)
 {
 	int err = -ENODEV;
-	if( boot_cpu_data.x86_capability & X86_FEATURE_MSR ) {
+	if( cpu_has_msr ) {
 		switch( boot_cpu_data.x86_vendor ) {
 		case X86_VENDOR_INTEL:
 			err = intel_init();

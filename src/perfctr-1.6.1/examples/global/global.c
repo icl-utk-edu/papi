@@ -20,6 +20,7 @@
 #include "libperfctr.h"
 
 struct perfctr_dev *dev;
+struct perfctr_info info;
 unsigned cpu_type;
 unsigned nrcpus;
 struct gperfctr_control *control;
@@ -37,7 +38,6 @@ void onint(int sig)	/* ^C handler */
 
 void do_init(void)
 {
-    struct perfctr_info info;
     struct sigaction act;
     size_t nbytes;
 
@@ -58,10 +58,10 @@ void do_init(void)
 	printf(".%u", info.version_micro);
     printf("\n");
     printf("nrcpus\t\t\t%u\n", nrcpus);
-    printf("cpu_type\t\t%u (%s)\n", info.cpu_type, perfctr_cpu_name(dev));
+    printf("cpu_type\t\t%u (%s)\n", info.cpu_type, perfctr_cpu_name(&info));
     printf("cpu_features\t\t0x%x\n", info.cpu_features);
     printf("cpu_khz\t\t\t%lu\n", info.cpu_khz);
-    printf("nrctrs\t\t\t%u\n", perfctr_cpu_nrctrs(dev));
+    printf("nrctrs\t\t\t%u\n", perfctr_cpu_nrctrs(&info));
 
     memset(&act, 0, sizeof act);
     act.sa_handler = onint;
@@ -143,7 +143,7 @@ void setup_control(struct perfctr_control *control)
 	break;
       default:
 	fprintf(stderr, "cpu_type %u (%s) not supported\n",
-		cpu_type, perfctr_cpu_name(dev));
+		cpu_type, perfctr_cpu_name(&info));
 	exit(1);
     }
     printf("\nControl used:\n");

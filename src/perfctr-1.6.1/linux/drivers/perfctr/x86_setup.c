@@ -17,14 +17,14 @@
 void __init perfctr_dodgy_tsc(void)
 {
 #if defined(CONFIG_PERFCTR_WINCHIP)
-	/* Check for Centaur WinChip C6/2/2A/3 with broken TSC */
+	/* Check for Centaur WinChip C6/2/3 with broken TSC */
 	if( boot_cpu_data.x86_vendor != X86_VENDOR_CENTAUR )
 		return;
 	if( boot_cpu_data.x86 != 5 )
 		return;
 	switch( boot_cpu_data.x86_model ) {
 	case 4:	break;		/* WinChip C6 */
-	case 8:	break;		/* WinChip 2 or 2A */
+	case 8:	break;		/* WinChip 2 */
 	case 9: break;		/* WinChip 3 */
 	default: return;
 	}
@@ -41,7 +41,7 @@ void __init perfctr_dodgy_tsc(void)
 	 * counters, we have to disable all uses of the TSC.
 	 */
 	set_cr4_tsd_local();
-	boot_cpu_data.x86_capability &= ~X86_FEATURE_TSC;
+	clr_cap_tsc();
 	printk(KERN_INFO "WinChip Time-Stamp Counter disabled\n");
 #endif
 }

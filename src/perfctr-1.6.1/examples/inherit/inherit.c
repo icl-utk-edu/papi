@@ -19,8 +19,10 @@ struct vperfctr *init_parent(const struct perfctr_dev *dev)
 {
     struct perfctr_control control;
     struct vperfctr *perfctr;
+    struct perfctr_info info;
 
-    nrctrs = perfctr_cpu_nrctrs(dev);
+    perfctr_info(dev, &info);
+    nrctrs = perfctr_cpu_nrctrs(&info);
     perfctr = vperfctr_attach(dev);
     if( !perfctr ) {
 	perror("parent: vperfctr_attach");
@@ -28,7 +30,7 @@ struct vperfctr *init_parent(const struct perfctr_dev *dev)
     }
     memset(&control, 0, sizeof control);
     if( nrctrs > 1 )
-	control.evntsel[0] = perfctr_evntsel_num_insns(dev);
+	control.evntsel[0] = perfctr_evntsel_num_insns(&info);
     if( vperfctr_control(perfctr, &control) < 0 ) {
 	perror("perror: vperfctr_control");
 	exit(1);

@@ -64,12 +64,14 @@ struct gperfctr_state {
 
 #ifdef __KERNEL__
 
+extern int sys_perfctr_info(struct perfctr_info*);
+
 /*
  * Virtual per-process performance-monitoring counters.
  */
 struct vperfctr;	/* opaque */
 
-#if defined(CONFIG_PERFCTR_VIRTUAL)
+#ifdef CONFIG_PERFCTR_VIRTUAL
 
 /* process management callbacks */
 extern struct vperfctr *__vperfctr_copy(struct vperfctr*);
@@ -85,7 +87,14 @@ extern struct vperfctr_stub {
 	void (*release)(struct vperfctr*, struct vperfctr*);
 	void (*suspend)(struct vperfctr*);
 	void (*resume)(struct vperfctr*);
+#ifdef CONFIG_VPERFCTR_PROC
+	struct file_operations *file_ops;
+#endif
 } vperfctr_stub;
+/* lock taken on module load/unload and ->file_ops access;
+   the process scheduling callbacks don't take the lock
+   because the module is known to be loaded and in use */
+extern rwlock_t vperfctr_stub_lock;
 #define _vperfctr_copy(x)	vperfctr_stub.copy((x))
 #define _vperfctr_exit(x)	vperfctr_stub.exit((x))
 #define _vperfctr_release(x,y)	vperfctr_stub.release((x),(y))
@@ -141,6 +150,11 @@ static __inline__ void perfctr_resume_thread(struct thread_struct *next)
 	if( perfctr )
 		_vperfctr_resume(perfctr);
 }
+
+#define PERFCTR_PROC_PID_MODE	(0 | S_IRUSR)
+extern void perfctr_set_proc_pid_ops(struct inode *inode);
+/* for 2.2: */
+extern struct inode_operations perfctr_proc_pid_inode_operations;
 
 #else	/* !CONFIG_PERFCTR_VIRTUAL */
 

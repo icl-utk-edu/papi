@@ -20,12 +20,12 @@
 #include "global.h"
 
 #define VERSION_MAJOR	1
-#define VERSION_MINOR	5
-#define VERSION_MICRO	1
+#define VERSION_MINOR	6
+#define VERSION_MICRO	0
 
 static struct perfctr_info perfctr_info;
 
-static int sys_perfctr_info(struct perfctr_info *argp)
+int sys_perfctr_info(struct perfctr_info *argp)
 {
 	if( copy_to_user(argp, &perfctr_info, sizeof perfctr_info) )
 		return -EFAULT;

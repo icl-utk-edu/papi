@@ -3,8 +3,34 @@ $Id$
 RELEASE NOTES
 =============
 
-- Updates for 2.4.0-test8: repaired patch for new parameter in
-  do_fork, and fixed CLONE_PERFCTR conflict with CLONE_THREAD.
+Version 1.6, 2000-11-21
+- Preliminary implementation of /proc/pid/perfctr. Seems to work,
+  but virtual.c and virtual_stub.c is again filled with
+  #if LINUX_VERSION_CODE crap which will need to be cleaned up.
+  The INFO ioctl is now implemented by vperfctrs too, to avoid the
+  need for opening /dev/perfctr.
+- virtual.c now puts the perfctr pointer in filp->private_data
+  instead of inode->u.generic_ip. The main reason for this change
+  is that proc-fs places a dentry pointer in inode->u.generic_ip.
+- sys_vperfctr_control() no longer resets the virtual TSC
+  if it already is active. The virtual TSC therefore runs
+  continuously from its first activation until the process
+  stops or unlinks its vperfctrs.
+- Updates for 2.4.0-test11pre6. Use 2.4-style cpu_has_XXX
+  feature testing macros. Updated x86_compat.h to implement
+  missing cpu_has_mmx and cpu_has_msr, and compatibility
+  macros for 2.2. Changed vperfctr_fs_read_super() to use
+  new_inode(sb) instead of get_empty_inode() + some init code.
+- Updates for 2.4.0-test9. Fixed x86_compat.h for cpu_khz change.
+  Since drivers/Makefile was converted to the new list style,
+  it became more difficult to handle CONFIG_PERFCTR=m. Changed
+  Config.in to set CONFIG_KPERFCTR=y when CONFIG_PERFCTR != n,
+  resulting in a much cleaner kernel patch for 2.4.0-test9.
+- Removed d_alloc_root wrapper since 2.2 doesn't need it any more.
+- When building for 2.2.18pre, use some of its 2.4 compatibility
+  features (module_init, module_exit and DECLARE_MUTEX).
+- Updates for 2.4.0-test8: repaired kernel patch for new parameter
+  in do_fork, and fixed CLONE_PERFCTR conflict with CLONE_THREAD.
 
 Version 1.5, 2000-09-03
 - Dropped support for intermediate 2.3 and early 2.4.0-test kernels.

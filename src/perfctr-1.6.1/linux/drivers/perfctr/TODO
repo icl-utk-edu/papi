@@ -1,5 +1,14 @@
 $Id$
 
+- On 2.4 make /proc/self/perfctr a symlink to "perfctr:[XXXX]"
+  so that the open file descriptor can be identified as a perfctr
+  object, just like those constructed via /dev/perfctr's ATTACH op.
+
+- Put 2.4 and 2.2 VFS code in separate files, at least for virtual.
+
+- Check how the VIA Cyrix III really identifies itself.
+  Alan Cox has stated that cpuid actually returns "CentaurHauls".
+
 - add inode_count() and dentry_count() wrappers to compat.h
 
 - 2.4.0-test4 dropped the big kernel lock around file operations.

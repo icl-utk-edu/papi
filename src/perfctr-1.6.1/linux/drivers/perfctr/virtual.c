@@ -16,6 +16,9 @@
 #include <asm/uaccess.h>
 
 #include "compat.h"
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0)) && defined(CONFIG_VPERFCTR_PROC) && !defined(MODULE)
+#include <linux/proc_fs.h>
+#endif
 #include "virtual.h"
 
 /****************************************************************
@@ -170,6 +173,7 @@ static __inline__ void vperfctr_resume(struct vperfctr *perfctr)
 
 /* do_fork() --> copy_thread() --> perfctr_copy_thread() --> __vperfctr_copy()
  * Copy parent's perfctr setup to a new child.
+ * Note: do not inherit interrupt-mode perfctrs (when implemented).
  */
 struct vperfctr *__vperfctr_copy(struct vperfctr *parent)
 {
@@ -255,6 +259,8 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct perfctr_control *argp)
 {
 	struct perfctr_control control;
 	int status;
+	int prev_status, i;
+	unsigned int prev_start_tsc;
 
 	if( copy_from_user(&control, argp, sizeof control) )
 		return -EFAULT;
@@ -262,11 +268,28 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct perfctr_control *argp)
 		return status;
 	if( status == 0 )
 		return sys_vperfctr_stop(perfctr);
+
+	prev_status = perfctr->state.status;
+	perfctr->state.status = status;
 	perfctr->state.control_id = new_control_id();
 	perfctr->state.control = control;
-	memset(&perfctr->state.sum, 0, sizeof(perfctr->state.sum));
-	perfctr->state.status = status;
-	vperfctr_resume(perfctr);
+
+	/*
+	 * Clear the perfctr sums and restart the perfctrs.
+	 *
+	 * If the counters were running before this control call,
+	 * then don't clear the time-stamp counter's sum and don't
+	 * overwrite its current start value.
+	 */
+	if( prev_status == 0 )
+		perfctr->state.sum.ctr[0] = 0;
+	for(i = 1; i < ARRAY_SIZE(perfctr->state.sum.ctr); ++i)
+		perfctr->state.sum.ctr[i] = 0;
+	prev_start_tsc = perfctr->state.start.ctr[0];
+	vperfctr_resume(perfctr);	/* clobbers start.ctr[0] :-( */
+	if( prev_status > 0 )
+		perfctr->state.start.ctr[0] = prev_start_tsc;
+
 	return 0;
 }
 
@@ -310,16 +333,24 @@ static int vperfctr_mmap(struct file *filp, struct vm_area_struct *vma)
 	    (pgprot_val(vma->vm_page_prot) & _PAGE_RW) ||
 	    (vma->vm_flags & (VM_WRITE | VM_MAYWRITE)) )
 		return -EPERM;
-	perfctr = filp->f_dentry->d_inode->u.generic_ip;
+	perfctr = filp->private_data;
 	return remap_page_range(vma->vm_start, virt_to_phys(perfctr),
 				PAGE_SIZE, vma->vm_page_prot);
 }
 
 static int vperfctr_release(struct inode *inode, struct file *filp)
 {
-	struct vperfctr *perfctr = inode->u.generic_ip;
-	perfctr->filp = NULL;
-	inode->u.generic_ip = NULL;
+	struct vperfctr *perfctr = filp->private_data;
+	/*
+	 * With the addition of /proc/self/perfctr, there is no longer
+	 * a one-to-one perfctr <--> filp correspondence. This may
+	 * change again when /proc/self/perfctr is reimplemented as
+	 * a symbolic link to "perfctr:[...]" and the /dev/perfctr
+	 * interface is dropped.
+	 */
+	if( filp == perfctr->filp )
+		perfctr->filp = NULL;
+	filp->private_data = NULL;
 	put_vperfctr(perfctr);
 	return 0;
 }
@@ -327,11 +358,13 @@ static int vperfctr_release(struct inode *inode, struct file *filp)
 static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 			  unsigned int cmd, unsigned long arg)
 {
-	struct vperfctr *perfctr = inode->u.generic_ip;
+	struct vperfctr *perfctr = filp->private_data;
 
 	if( perfctr != TASK_VPERFCTR(current) )
 		return -EPERM;
 	switch( cmd ) {
+	case PERFCTR_INFO:
+		return sys_perfctr_info((struct perfctr_info*)arg);
 	case VPERFCTR_CONTROL:
 		return sys_vperfctr_control(perfctr, (struct perfctr_control*)arg);
 	case VPERFCTR_STOP:
@@ -344,12 +377,67 @@ static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 	return -EINVAL;
 }
 
+#ifdef CONFIG_VPERFCTR_PROC
+static int vperfctr_open(struct inode *inode, struct file *filp)
+{
+	struct task_struct *tsk;
+	struct vperfctr *perfctr;
+
+	tsk = current;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
+	if( tsk != inode->u.proc_i.task )
+		return -EPERM;
+#else
+	if( tsk->pid != (inode->i_ino >> 16) )
+		return -EPERM;
+#endif
+	perfctr = TASK_VPERFCTR(tsk);
+	if( !perfctr ) {
+		perfctr = get_empty_vperfctr();
+		if( !perfctr )
+			return -ENOMEM;
+		perfctr->filp = filp;
+	}
+	filp->private_data = perfctr;
+	atomic_inc(&perfctr->count);
+	if( !TASK_VPERFCTR(tsk) )
+		TASK_VPERFCTR(tsk) = perfctr;
+	return 0;
+}
+#endif
+
 static struct file_operations vperfctr_file_ops = {
 	OWNER_THIS_MODULE
 	.mmap = vperfctr_mmap,
 	.release = vperfctr_release,
 	.ioctl = vperfctr_ioctl,
+#ifdef CONFIG_VPERFCTR_PROC
+	.open = vperfctr_open,
+#endif
 };
+
+/* XXX: inode->u.proc_i.op.proc_get_link() ought to take a fourth 'follow'
+   parameter indicating whether readlink() or follow_link() is the caller */
+
+#if defined(CONFIG_VPERFCTR_PROC) && !defined(MODULE)
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
+
+void perfctr_set_proc_pid_ops(struct inode *inode)
+{
+	inode->i_fop = &vperfctr_file_ops;
+}
+
+#else	/* 2.2 */
+
+struct inode_operations perfctr_proc_pid_inode_operations = {
+	.default_file_ops = &vperfctr_file_ops,
+	.permission = proc_permission,
+};
+
+#endif	/* LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0) */
+
+#endif	/* defined(CONFIG_VPERFCTR_PROC) && !defined(MODULE) */
 
 /****************************************************************
  *								*
@@ -363,14 +451,12 @@ static struct super_block *
 vperfctr_fs_read_super(struct super_block *sb, void *data, int silent)
 {
 	static const struct qstr qstr = { "vperfctr:", 9, 0 };
-	struct inode *root = get_empty_inode();
+	struct inode *root = new_inode(sb);
 	if( !root )
 		return NULL;
 	root->i_mode = S_IFDIR | S_IRUSR | S_IWUSR;
 	root->i_uid = root->i_gid = 0;
 	root->i_atime = root->i_mtime = root->i_ctime = CURRENT_TIME;
-	root->i_sb = sb;
-	root->i_dev = sb->s_dev;
 	sb->s_blocksize = 0;
 	sb->s_blocksize_bits = 0;
 	sb->s_magic = 0;
@@ -454,7 +540,7 @@ static struct inode_operations vperfctr_inode_ops = {
 #define set_inode_vperfctr_ops(inode)	((inode)->i_op = &vperfctr_inode_ops)
 #define set_inode_vperfctr_sb(inode)	do { } while( 0 )
 #define set_filp_vperfctr_vfsmnt(filp)	do { } while( 0 )
-#define d_alloc_vperfctr_root(inode)	d_alloc_root((inode))
+#define d_alloc_vperfctr_root(inode)	d_alloc_root((inode), NULL)
 
 #endif
 
@@ -476,7 +562,6 @@ static struct file *get_vperfctr_filp(struct vperfctr *perfctr)
 	inode = get_empty_inode();
 	if( !inode )
 		goto out_filp;
-	inode->u.generic_ip = perfctr;
 	set_inode_vperfctr_ops(inode);
 	set_inode_vperfctr_sb(inode);
 	inode->i_state = I_DIRTY;
@@ -497,6 +582,7 @@ static struct file *get_vperfctr_filp(struct vperfctr *perfctr)
 	filp->f_mode = FMODE_READ;
 	filp->f_op = fops_get(&vperfctr_file_ops);
 
+	filp->private_data = perfctr;
 	perfctr->filp = filp;
 	atomic_inc(&perfctr->count);
 
@@ -557,17 +643,24 @@ static struct vperfctr_stub off;
 
 static void vperfctr_stub_init(void)
 {
+	write_lock(&vperfctr_stub_lock);
 	off = vperfctr_stub;
 	vperfctr_stub.copy = __vperfctr_copy;
 	vperfctr_stub.exit = __vperfctr_exit;
 	vperfctr_stub.release = __vperfctr_release;
 	vperfctr_stub.suspend = __vperfctr_suspend;
 	vperfctr_stub.resume = __vperfctr_resume;
+#ifdef CONFIG_VPERFCTR_PROC
+	vperfctr_stub.file_ops = &vperfctr_file_ops;
+#endif
+	write_unlock(&vperfctr_stub_lock);
 }
 
 static void vperfctr_stub_exit(void)
 {
+	write_lock(&vperfctr_stub_lock);
 	vperfctr_stub = off;
+	write_unlock(&vperfctr_stub_lock);
 }
 #else
 static __inline__ void vperfctr_stub_init(void) { }

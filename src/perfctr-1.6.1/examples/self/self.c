@@ -26,37 +26,43 @@ static unsigned evntsel0;
 
 void do_init(void)
 {
-    struct perfctr_dev *dev;
     struct perfctr_info info;
 
-    dev = perfctr_dev_open();
-    if( !dev ) {
-	perror("perfctr_dev_open");
-	exit(1);
+    self = vperfctr_open();
+    if( self ) {			/* /proc/self/perfctr interface */
+	if( vperfctr_info(self, &info) < 0 ) {
+	    perror("vperfctr_info");
+	    exit(1);
+	}
+    } else {				/* /dev/perfctr interface */
+	struct perfctr_dev *dev = perfctr_dev_open();
+	if( !dev ) {
+	    perror("perfctr_dev_open");
+	    exit(1);
+	}
+	if( perfctr_info(dev, &info) < 0 ) {
+	    perror("perfctr_info");
+	    exit(1);
+	}
+	if( (self = vperfctr_attach(dev)) == NULL ) {
+	    perror("vperfctr_attach");
+	    exit(1);
+	}
+	perfctr_dev_close(dev);
     }
-    if( perfctr_info(dev, &info) < 0 ) {
-	perror("perfctr_info");
-	exit(1);
-    }
-    nrctrs = perfctr_cpu_nrctrs(dev);
+    nrctrs = perfctr_cpu_nrctrs(&info);
     if( nrctrs > 1 )
-	evntsel0 = perfctr_evntsel_num_insns(dev);
+	evntsel0 = perfctr_evntsel_num_insns(&info);
     printf("\nPerfCtr Info:\n");
     printf("driver_version\t\t%u.%u", info.version_major, info.version_minor);
     if( info.version_micro )
 	printf(".%u", info.version_micro);
     printf("\n");
     printf("nrcpus\t\t\t%u\n", info.nrcpus);
-    printf("cpu_type\t\t%u (%s)\n", info.cpu_type, perfctr_cpu_name(dev));
+    printf("cpu_type\t\t%u (%s)\n", info.cpu_type, perfctr_cpu_name(&info));
     printf("cpu_features\t\t0x%x\n", info.cpu_features);
     printf("cpu_khz\t\t\t%lu\n", info.cpu_khz);
     printf("nrctrs\t\t\t%u\n", nrctrs);
-
-    if( (self = vperfctr_attach(dev)) == NULL ) {
-	perror("vperfctr_attach");
-	exit(1);
-    }
-    perfctr_dev_close(dev);
 }
 
 void do_read(void)

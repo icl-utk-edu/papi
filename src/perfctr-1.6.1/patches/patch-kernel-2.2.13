@@ -29,7 +29,7 @@
 +
 +  The driver supports all x86-class processors known to have
 +  performance-monitoring counters: Intel Pentium and newer,
-+  AMD K7 Athlon, Cyrix 6x86MX/MII/III, and WinChip C6/2/2A/3.
++  AMD K7 Athlon, Cyrix 6x86MX/MII/III, and WinChip C6/2/3.
 +
 +  On processors which have a time-stamp counter but no performance-
 +  monitoring counters, such as the AMD K6 family, the driver supports
@@ -54,7 +54,7 @@
 +  The time-stamp counter is a standard facility on Pentium-class
 +  processors for counting clock cycles. Normally, the time-stamp
 +  counter is unrelated to the performance-monitoring counters.
-+  However, WinChip C6/2/2A/3 processors implement the time-stamp
++  However, WinChip C6/2/3 processors implement the time-stamp
 +  counter by running the performance-monitoring counters in a
 +  special mode, and then synthesising the 64-bit time-stamp from
 +  the low 32 bits of both performance-monitoring counters.

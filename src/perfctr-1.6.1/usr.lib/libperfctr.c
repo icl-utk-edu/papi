@@ -88,6 +88,42 @@ struct vperfctr *vperfctr_attach(const struct perfctr_dev *dev)
     return NULL;
 }
 
+struct vperfctr *vperfctr_open(void)
+{
+    struct vperfctr *perfctr;
+    struct perfctr_info info;
+
+    perfctr = malloc(sizeof(*perfctr));
+    if( !perfctr )
+	return NULL;
+    perfctr->fd = open("/proc/self/perfctr", O_RDONLY);
+    if( perfctr->fd < 0 ) {
+	perror("/proc/self/perfctr");	/* XXX: temporary */
+	goto out_perfctr;
+    }
+    if( ioctl(perfctr->fd, PERFCTR_INFO, &info) != 0 ) {
+	perror("/proc/self/perfctr");	/* XXX: temporary */
+	goto out_fd;
+    }
+    perfctr->have_rdpmc = (info.cpu_features & PERFCTR_FEATURE_RDPMC) != 0;
+    perfctr->have_rdtsc = (info.cpu_features & PERFCTR_FEATURE_RDTSC) != 0;
+    perfctr->kstate = mmap(NULL, PAGE_SIZE, PROT_READ,
+			   MAP_SHARED, perfctr->fd, 0);
+    if( perfctr->kstate != MAP_FAILED )
+	return perfctr;
+ out_fd:
+    /* XXX: unlink if control_id == 0 ? */
+    close(perfctr->fd);
+ out_perfctr:
+    free(perfctr);
+    return NULL;
+}
+
+int vperfctr_info(const struct vperfctr *vperfctr, struct perfctr_info *info)
+{
+    return ioctl(vperfctr->fd, PERFCTR_INFO, info);
+}
+
 #define rdtscl(low)	\
 	__asm__ __volatile__("rdtsc" : "=a"(low) : : "edx")
 #define rdpmcl(ctr,low)	\
@@ -220,9 +256,9 @@ int perfctr_info(const struct perfctr_dev *dev, struct perfctr_info *info)
     return 0;
 }
 
-unsigned perfctr_cpu_nrctrs(const struct perfctr_dev *dev)
+unsigned perfctr_cpu_nrctrs(const struct perfctr_info *info)
 {
-    switch( dev->info.cpu_type ) {
+    switch( info->cpu_type ) {
       case PERFCTR_X86_GENERIC:
 	return 1;
       case PERFCTR_X86_AMD_K7:
@@ -232,9 +268,9 @@ unsigned perfctr_cpu_nrctrs(const struct perfctr_dev *dev)
     }
 }
 
-const char *perfctr_cpu_name(const struct perfctr_dev *dev)
+const char *perfctr_cpu_name(const struct perfctr_info *info)
 {
-    switch( dev->info.cpu_type ) {
+    switch( info->cpu_type ) {
       case PERFCTR_X86_GENERIC:
 	return "Generic x86 with TSC";
       case PERFCTR_X86_INTEL_P5:
@@ -252,7 +288,7 @@ const char *perfctr_cpu_name(const struct perfctr_dev *dev)
       case PERFCTR_X86_WINCHIP_C6:
 	return "WinChip C6";
       case PERFCTR_X86_WINCHIP_2:
-	return "WinChip 2";
+	return "WinChip 2/3";
       case PERFCTR_X86_AMD_K7:
 	return "AMD K7 Athlon";
       default:
@@ -260,12 +296,12 @@ const char *perfctr_cpu_name(const struct perfctr_dev *dev)
     }
 }
 
-unsigned perfctr_evntsel_num_insns(const struct perfctr_dev *dev)
+unsigned perfctr_evntsel_num_insns(const struct perfctr_info *info)
 {
     /* This is terribly naive. Assumes only one event will be
      * selected, at CPL > 0.
      */
-    switch( dev->info.cpu_type ) {
+    switch( info->cpu_type ) {
       case PERFCTR_X86_INTEL_P5:
       case PERFCTR_X86_INTEL_P5MMX:
       case PERFCTR_X86_CYRIX_MII:
