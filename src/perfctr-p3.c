@@ -46,30 +46,24 @@ extern papi_mdi_t _papi_hwi_system_info;
 volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
 
 #ifdef DEBUG
-void print_control(const struct perfctr_cpu_control *control)
-{
-    unsigned int i;
+void print_control(const struct perfctr_cpu_control *control) {
+   unsigned int i;
 
-    SUBDBG("Control used:\n");
-    SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
-    SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-    SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
-    for(i = 0; i < (control->nractrs+control->nrictrs); ++i) {
-//    for(i = 0; i < 4; ++i) {
-        if( control->pmc_map[i] >= 18 )
-          {
-            SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
-          }
-        else
-          {
-            SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
-          }
-        SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
-        if( control->evntsel_aux[i] )
-            SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
-        if (control->ireset[i])
-          SUBDBG("ireset[%u]\t%d\n",i,control->ireset[i]);
-    }
+   SUBDBG("Control used:\n");
+   SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
+   SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
+   SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
+   for(i = 0; i < (control->nractrs + control->nrictrs); ++i) {
+      if(control->pmc_map[i] >= 18) {
+         SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+      }
+      else {
+         SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+      }
+      SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+      if(control->ireset[i])
+         SUBDBG("ireset[%u]\t%d\n",i,control->ireset[i]);
+   }
 }
 #endif
 
@@ -184,76 +178,30 @@ extern int _papi_hwd_mdi_init() {
    return(PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
-{
-  int def_mode, i;
+void _papi_hwd_init_control_state(hwd_control_state_t *ptr) {
+   int i, def_mode;
 
-  switch (_papi_hwi_system_info.default_domain)
+   switch (_papi_hwi_system_info.default_domain)
     {
-    case PAPI_DOM_USER:
-      def_mode = PERF_USR;
-      break;
-    case PAPI_DOM_KERNEL:
-      def_mode = PERF_OS;
-      break;
-    case PAPI_DOM_ALL:
-      def_mode = PERF_OS | PERF_USR;
-      break;
-    default:
-      abort();
+      case PAPI_DOM_USER:
+         def_mode = PERF_USR;
+         break;
+      case PAPI_DOM_KERNEL:
+         def_mode = PERF_OS;
+         break;
+      case PAPI_DOM_ALL:
+         def_mode = PERF_OS | PERF_USR;
+         break;
+      default:
+         abort();
     }
-  ptr->allocated_registers.selector = 0;
-  switch(_papi_hwi_system_info.hw_info.model)
-    {
-    case PERFCTR_X86_GENERIC:
-    case PERFCTR_X86_CYRIX_MII:
-    case PERFCTR_X86_WINCHIP_C6:
-    case PERFCTR_X86_WINCHIP_2:
-    case PERFCTR_X86_VIA_C3:
-    default:
-      ptr->control.cpu_control.tsc_on=1;
-      ptr->control.cpu_control.nractrs=0;
-      ptr->control.cpu_control.nrictrs=0;
-      break;
-    case PERFCTR_X86_INTEL_P5:
-    case PERFCTR_X86_INTEL_P5MMX:
-    case PERFCTR_X86_INTEL_PII:
-    case PERFCTR_X86_INTEL_P6:
-    case PERFCTR_X86_INTEL_PIII:
-      ptr->control.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
-      ptr->control.cpu_control.evntsel[1] |= def_mode;
-      ptr->control.cpu_control.tsc_on=1;
-      ptr->control.cpu_control.nractrs=_papi_hwi_system_info.num_cntrs;
-      ptr->control.cpu_control.nrictrs=0;
-      break;
-    case PERFCTR_X86_AMD_K7:
-      ptr->control.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
-      ptr->control.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
-      ptr->control.cpu_control.evntsel[2] |= def_mode | PERF_ENABLE;
-      ptr->control.cpu_control.evntsel[3] |= def_mode | PERF_ENABLE;
-      ptr->control.cpu_control.tsc_on=1;
-      ptr->control.cpu_control.nractrs=_papi_hwi_system_info.num_cntrs;
-      ptr->control.cpu_control.nrictrs=0;
-      break;
-    }
-  /* Identity counter map for starters */
-  for(i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-    ptr->control.cpu_control.pmc_map[i]=i;
+   ptr->allocated_registers.selector = 0;
+   ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
+   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      ptr->control.cpu_control.evntsel[i] |= def_mode;
+      ptr->control.cpu_control.pmc_map[i] = i;
+   }
 }
-
-#ifdef DEBUG
-static void dump_cmd(char *str, struct vperfctr_control *t)
-{
-  int i,k;
-
-  DBG((stderr,"%s: tsc_on=0x%x  nractrs=0x%x, nrictrs=0x%x\n",str,t->cpu_control.tsc_on,t->cpu_control.nractrs,t->cpu_control.nrictrs));
-  for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-    {
-      k=t->cpu_control.pmc_map[i];
-      DBG((stderr,"Item %d [map %d]: Evntsel=0x%08x   (ireset=%d)\n",i,k,t->cpu_control.evntsel[i],t->cpu_control.ireset[i]));
-    }
-}
-#endif
 
 int _papi_hwd_add_prog_event(hwd_control_state_t *state, unsigned int code, void *tmp, EventInfo_t *tmp2)
 {
@@ -401,7 +349,6 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
 */
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
 {
-printf("\ndst->rank = %d\n", dst->ra_rank);
    return(dst->ra_rank==1);
 }
 
@@ -422,15 +369,15 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
     Returns nothing.
 */
 void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
- //  int i;
- //  unsigned shared;
+   int i;
+   unsigned shared;
 
- //  shared = dst->ra_selector & src->ra_selector;
- //  if(shared) dst->ra_selector ^= shared;
- //  for(i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
- //     if(dst->ra_selector & (1<<i)) dst->ra_rank++;
-   dst->ra_selector ^= src->ra_selector;
-   dst->ra_rank -= src->ra_rank;
+   shared = dst->ra_selector & src->ra_selector;
+   if(shared) dst->ra_selector ^= shared;
+   for(i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
+      if(dst->ra_selector & (1<<i)) dst->ra_rank++;
+ //  dst->ra_selector ^= src->ra_selector;
+ //  dst->ra_rank -= src->ra_rank;
 }
 
 void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
@@ -458,20 +405,13 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
             event_list[i].ra_rank++;
          }
       }
-printf("native selector = %d\n", native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
-printf("index = %d\n", ESI->NativeInfoArray[i].ni_index);
-printf("selector = %d\n", event_list[i].ra_selector);
-printf("rank = %d\n", event_list[i].ra_rank);
    }
    if(_papi_hwi_bipartite_alloc(event_list, natNum)){ /* successfully mapped */ 
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
-
-         /* The selector contains the counter bit position. */
-//         ESI->NativeInfoArray[i].ni_bits.selector = event_list[i].ra_selector;
          /* Array order on perfctr is event ADD order, not counter #... */
-         ESI->NativeInfoArray[i].ni_position=i;
+         ESI->NativeInfoArray[i].ni_position = i;
       }
       return 1;
    }
@@ -486,9 +426,6 @@ static void clear_control_state(hwd_control_state_t *this_state) {
       SUBDBG("Clearing pmc event entry %d\n",i);
       this_state->control.cpu_control.pmc_map[i] = 0;
       this_state->control.cpu_control.evntsel[i] = 0;
-#ifdef __i386__
-      this_state->control.cpu_control.evntsel_aux[i] = 0;
-#endif
       this_state->control.cpu_control.ireset[i] = 0;
    }
    this_state->control.cpu_control.nractrs = 0;
@@ -505,21 +442,19 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
    clear_control_state(this_state);
 
    /* fill the counters we're using */
-print_control(&this_state->control.cpu_control);
    for(i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
       bits = &native[i].ni_bits;
       /* Add counter control command values to eventset */
-      this_state->control.cpu_control.pmc_map[bits->selector] = i;
-      this_state->control.cpu_control.evntsel[bits->selector] = bits->counter_cmd[bits->selector];
+      this_state->control.cpu_control.pmc_map[i] = i;
+      this_state->control.cpu_control.evntsel[i] = bits->counter_cmd[0];
+      this_state->control.cpu_control.evntsel[i] |= PERF_USR;
    }
+   this_state->control.cpu_control.evntsel[0] |= PERF_ENABLE;
    this_state->control.cpu_control.nractrs = count;
 
    /* Make sure the TSC is always on */
    this_state->control.cpu_control.tsc_on = 1;
-
-printf("Updating:\n");
-print_control(&this_state->control.cpu_control);
 
    return(PAPI_OK);
 }
@@ -667,12 +602,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   int i, ncntrs, nricntrs = 0, nracntrs, cntr, cntr2, retval=0;
   unsigned int selector;
 
-#ifdef DEBUG
-  DBG((stderr,"overflow_option->EventIndex=%d\n",
-       overflow_option->EventIndex));
-  dump_cmd("_papi_hwd_set_overflow",contr);
-#endif 
-  if( overflow_option->threshold != 0)  /* Set an overflow threshold */
+  if(overflow_option->threshold != 0)  /* Set an overflow threshold */
     {
       struct sigaction sa;
       int err;
@@ -741,11 +671,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       PAPI_lock();
       _papi_hwi_using_signal++;
       PAPI_unlock();
-
-#ifdef DEBUG
-      DBG((stderr,"Modified event set\n"));
-      dump_cmd("_papi_hwd_set_overflow",contr);
-#endif 
     }
   else   /* Disable overflow */
     {
@@ -783,12 +708,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	      }
 	    swap_pmc_map_events(contr,cntr,cntr2);
 	  }
-
-#ifdef DEBUG
-      DBG((stderr,"Modified event set\n"));
-      dump_cmd(__FUNCTION__,contr);
-#endif 
-
       PAPI_lock();
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0)

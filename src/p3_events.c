@@ -241,7 +241,7 @@ enum {
 const preset_search_t _papi_hwd_p3_preset_map[] = {
    { PAPI_L1_DCM,         0, { PNE_DCU_LINES_IN,0,0,0}},
    { PAPI_L1_ICM,         0, { PNE_L2_IFETCH_TOT,0,0,0}},
-   { PAPI_L2_DCM,         DERIVED_SUB, { PNE_L2_LINES_IN,PNE_BUS_TRAN_IFETCH_ANY,0,0}},
+   { PAPI_L2_DCM,         DERIVED_SUB, { PNE_L2_LINES_IN,PNE_BUS_TRAN_IFETCH_SELF,0,0}},
    { PAPI_L2_ICM,         0, { PNE_BUS_TRAN_IFETCH_SELF,0,0,0}},
    { PAPI_L1_TCM,         0, { PNE_L2_RQSTS_TOT,0,0,0}},
    { PAPI_L2_TCM,         0, { PNE_L2_LINES_IN,0,0,0}},
