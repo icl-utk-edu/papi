@@ -135,7 +135,6 @@ static int get_system_info(void)
   return(PAPI_OK);
 }
 
-
 long long _papi_hwd_get_real_usec (void)
 {
   struct timespec res;
@@ -244,7 +243,6 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   return(_papi_hwd_reset(ESI, zero));
 }
 
-
 int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
 {
   int i;
@@ -261,8 +259,8 @@ int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
       if (ptr_vc) {
         memcpy(&count,
        (char *)ptr_vc+sizeof(struct timeval)+sizeof(unsigned long)*dadd_code,
-       sizeof(unsigned long)); 
-      
+       sizeof(unsigned long));
+
 /*        switch (dadd_code) {
           case VC_TOTAL_CYCLES:
             count = ptr_vc->vc_total_cycles;
@@ -303,10 +301,10 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
     if (ESI->EventInfoArray[i].code != PAPI_NULL) {
 
     dadd_code = (ESI->EventInfoArray[i]).command;
-    if (ptr_vc) 
+    if (ptr_vc)
         memcpy(&count,
        (char *)ptr_vc+sizeof(struct timeval)+sizeof(unsigned long)*dadd_code,
-       sizeof(unsigned long)); 
+       sizeof(unsigned long));
 
 /*        switch (dadd_code) {
           case VC_TOTAL_CYCLES:
@@ -453,6 +451,29 @@ papi_mdi _papi_system_info = { "dadd-alpha.c 2002/05/28 shirley",
                                  (caddr_t)NULL,
                                  "_RLD_LIST", /* How to preload libs */
                                },
+                               { 0,  /*total_tlb_size*/
+                                 0,  /*itlb_size */
+                                 0,  /*itlb_assoc*/
+                                 0,  /*dtlb_size */
+                                 0, /*dtlb_assoc*/
+                                 0, /*total_L1_size*/
+                                 0, /*L1_icache_size*/
+                                 0, /*L1_icache_assoc*/
+                                 0, /*L1_icache_lines*/
+                                 0, /*L1_icache_linesize*/
+                                 0, /*L1_dcache_size */
+                                 0, /*L1_dcache_assoc*/
+                                 0, /*L1_dcache_lines*/
+                                 0, /*L1_dcache_linesize*/
+                                 0, /*L2_cache_size*/
+                                 0, /*L2_cache_assoc*/
+                                 0, /*L2_cache_lines*/
+                                 0, /*L2_cache_linesize*/
+                                 0, /*L3_cache_size*/
+                                 0, /*L3_cache_assoc*/
+                                 0, /*L3_cache_lines*/
+                                 0  /*L3_cache_linesize*/
+                               },
                                -1,  /*  num_cntrs */
                                -1,  /*  num_gp_cntrs */
                                -1,  /*  grouped_counters */
@@ -475,4 +496,3 @@ papi_mdi _papi_system_info = { "dadd-alpha.c 2002/05/28 shirley",
                                 0,  /* HW read resets the counters */
                                 sizeof(hwd_control_state_t),
                                 { 0} };
-
