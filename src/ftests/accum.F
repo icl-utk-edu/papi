@@ -111,10 +111,10 @@
      .     'PAPIf_stop', retval)
       end if
 
-      call PAPIf_rem_events( es1, events, number, retval )
+      call PAPIf_remove_events( es1, events, number, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .     'PAPIf_rem_events', retval)
+     .     'PAPIf_remove_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -125,7 +125,7 @@
         end if
         n=len_trim(name)
         print *, "Test case accum: Test of PAPI_add_events, ",
-     *  "PAPI_rem_events, PAPI_accum"
+     *  "PAPI_remove_events, PAPI_accum"
         print *, "------------------------------------------",
      *    "------------------------"
         write (*,100) "Test type", 1, 2, 3, 4, 5

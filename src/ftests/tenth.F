@@ -164,22 +164,22 @@
      . 'PAPIf_stop', retval)
       end if
 
-      call PAPIf_rem_event( es1, mask1, retval )
+      call PAPIf_remove_event( es1, mask1, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es2, mask2, retval )
+      call PAPIf_remove_event( es2, mask2, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es3, mask3, retval )
+      call PAPIf_remove_event( es3, mask3, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
       if (tests_quiet .EQ. 0) then

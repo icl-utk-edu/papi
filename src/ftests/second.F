@@ -156,39 +156,39 @@
      . 'PAPIf_stop', retval)
       end if
 
-      call PAPIf_rem_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es1, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es2, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es2, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es3, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es3, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
-      call PAPIf_rem_event( es3, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
       if (tests_quiet .EQ. 0) then

@@ -103,22 +103,22 @@
      . 'PAPIf_stop', retval)
       end if
 
-      call PAPIf_rem_event( es1, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es2, PAPI_FLOPS, retval )
+      call PAPIf_remove_event( es2, PAPI_FLOPS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
       test_flops = tvalues(1)*clockrate*1000000.0

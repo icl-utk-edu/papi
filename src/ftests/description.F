@@ -21,7 +21,7 @@
 
       if (tests_quiet .EQ. 0) then
       print *, "Test case descriptions: Test of functions:"
-      print *, "    PAPI_add_events, PAPI_rem_events,"
+      print *, "    PAPI_add_events, PAPI_remove_events,"
       print *, "    PAPI_list_events, PAPI_describe_event,"
       print *, "    PAPI_state"
       end if
@@ -155,10 +155,10 @@
       print *, "PAPI_state: PAPI_STOPPED"
       end if
 
-      call PAPIf_rem_events( es1, events, number, retval )
+      call PAPIf_remove_events( es1, events, number, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 
-     *'PAPIf_rem_events', retval)
+     *'PAPIf_remove_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
