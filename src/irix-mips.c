@@ -631,7 +631,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events)
 {
-   int retval;
+   int retval, index, selector;
 
    /* now read the counter values */
    retval = ioctl(ctx->fd, PIOCGETEVCTRS, (void *) &ctrl->cntrs_read);
@@ -642,6 +642,19 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **
    if (retval != ctrl->generation) {
       fprintf(stderr, "program lost event counters\n");
       return (PAPI_ESYS);
+   }
+   /* adjust the read value by how many events in count 0 and count 1 */
+   if (ctrl->num_on_counter[0]>1 || ctrl->num_on_counter[1]>1) {
+      selector = ctrl->selector;
+      while ( selector ) {
+         index = ffs(selector)-1;
+         if (index > HWPERF_MAXEVENT) {
+            ctrl->cntrs_read.hwp_evctr[index] *= ctrl->num_on_counter[1];
+         } else {
+            ctrl->cntrs_read.hwp_evctr[index] *= ctrl->num_on_counter[0];
+         }
+         selector ^= 1<<index;
+      }
    }
 /* set the buffer address */
    *events = (long long *) ctrl->cntrs_read.hwp_evctr;
@@ -834,21 +847,29 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
    memset(to, 0, sizeof(hwperf_eventctrl_t));
 
-   if (_papi_hwi_system_info.default_domain & PAPI_DOM_USER)
+   this_state->counter_cmd.hwp_ovflw_sig=0;
+
+   if (_papi_hwi_system_info.default_domain & PAPI_DOM_USER) {
       mode |= HWPERF_CNTEN_U;
+   }
    if (_papi_hwi_system_info.default_domain & PAPI_DOM_KERNEL)
       mode |= HWPERF_CNTEN_K;
    if (_papi_hwi_system_info.default_domain & PAPI_DOM_OTHER)
       mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S;
 
+   this_state->num_on_counter[0]=0;
+   this_state->num_on_counter[1]=0;
    for (i = 0; i < count; i++) {
       index = native[i].ni_event & NATIVE_AND_MASK;
       selector |= 1 << index;
       SUBDBG("update_control_state index = %d mode=0x%x\n", index, mode);
-      if (index > HWPERF_MAXEVENT)
+      if (index > HWPERF_MAXEVENT) {
          to->hwp_evctrl[index].hwperf_creg.hwp_ev = index - HWPERF_CNT1BASE;
-      else
+         this_state->num_on_counter[1]++;
+      } else {
          to->hwp_evctrl[index].hwperf_creg.hwp_ev = index;
+         this_state->num_on_counter[0]++;
+      }
       native[i].ni_position = index;
 
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
