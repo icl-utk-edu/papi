@@ -16,9 +16,9 @@
 
       Integer len_trim
       External len_trim
-      integer tests_quiet
-      character*25 chbuf
       character*50 eventname(10)
+      integer tests_quiet, get_quiet
+      external get_quiet
 
 #if defined(POWER3) || defined (_POWER4)
       real*4 csec
@@ -28,15 +28,7 @@
       integer ilen, ierror
 #endif
 
-      tests_quiet=0
-#if defined(_CRAYT3E)
-      call pxfgetarg(1,chbuf,ilen,ierror)
-#else
-      call getarg(1,chbuf)
-#endif
-      if (LGE(chbuf, 'TESTS_QUIET')) then
-         tests_quiet=1
-      end if
+      tests_quiet = get_quiet()
 
       point = 0
 
@@ -108,7 +100,7 @@ C     CPU cyc
       n = 8 - retval
 #endif
 
-#if defined(linux) && defined(__i386__) || defined(__x86_64__)
+#if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
 #if defined(PENTIUM4)
       eventname(1) = 'retired_mispred_branch_type_CONDITIONAL'
       eventname(2) = 'resource_stall_SBFULL'
@@ -116,25 +108,22 @@ C     CPU cyc
       eventname(4) = 'instr_retired_BOGUSNTAG_BOGUSTAG'
       eventname(5) = 'BSQ_cache_reference_RD_2ndL_HITS'
       n = 5
-#endif
-#ifdef PENTIUM3
-      eventname(1) = 'DATA_MEM_REFS'
-      eventname(2) = 'DCU_LINES_IN'
-      n = 2
-#endif
-#ifdef __ATHLON__
+#elif defined(__ATHLON__)
       eventname(1) = 'TOT_CYC'
       eventname(2) = 'IC_MISSES'
       eventname(3) = 'DC_ACCESSES'
       eventname(4) = 'DC_MISSES'
       n = 4
-#endif
-#ifdef __x86_64__
+#elif defined(__x86_64__)
       eventname(1) = 'FP_ADD_PIPE'
       eventname(2) = 'FP_MULT_PIPE'
       eventname(3) = 'FP_ST_PIPE'
       eventname(4) = 'FP_NONE_RET'
       n = 4
+#else
+      eventname(1) = 'DATA_MEM_REFS'
+      eventname(2) = 'DCU_LINES_IN'
+      n = 2
 #endif
 #endif
 
