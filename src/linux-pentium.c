@@ -10,7 +10,9 @@
 
 #include <sys/types.h>
 #include <linux/unistd.h>	/* For syscall numbers */
-#include "perf.h"
+#include <asm/perf.h>
+
+#include<stdio.h>
 
 _syscall3(int, perf, int, op, int, counter, int, event);
 
@@ -391,8 +393,7 @@ int _papi_hwd_start(void *machdep)
   { retval = perf(PERF_SET_CONFIG, 2, 1);
     if(retval) return(PAPI_EBUG);
   }
-
-  return (retval);
+  return (perf(PERF_START, 0, 0));
 }
 
 
@@ -430,11 +431,12 @@ int _papi_hwd_read(void *machdep, long long events[], int *machnum)
   */
 
   (int)machnum = this_state->number;
-  retval = perf(PERF_READ, 0, events[0]);
+
+  retval = perf(PERF_READ, 0, (int)&events[0]);
   if(retval) return(PAPI_EBUG);
-  retval = perf(PERF_READ, 1, events[1]);
+  retval = perf(PERF_READ, 1, (int)&events[1]);
   if(retval) return(PAPI_EBUG);
-  retval = perf(PERF_READ, 2, events[2]);
+  retval = perf(PERF_READ, 2, (int)&events[2]);
   if(retval) return(PAPI_EBUG);
   return 0;
 }

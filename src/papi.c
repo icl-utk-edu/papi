@@ -346,6 +346,8 @@ int PAPI_state(int EventSetIndex, int *status)
 /* structure is returned.                                                 */
 /*========================================================================*/
 
+
+/*
 static EventSetInfo *allocate_EventSet(void) 
 {
   EventSetInfo *ESI;
@@ -388,6 +390,8 @@ static EventSetInfo *allocate_EventSet(void)
 
   return(ESI);
 }
+*/
+
 
 /*========================================================================*/
 /*========================================================================*/
