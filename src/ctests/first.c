@@ -36,7 +36,7 @@ int main(int argc, char **argv)
    int EventSet;
    int PAPI_event, mask;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-
+   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -49,26 +49,25 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
-
-#if (defined(sparc) && defined(sun)) 
+   if(!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !strncmp(hw_info->vendor_string, "SUN", 3)) {
    /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-      PAPI_event = PAPI_TOT_INS;
-      mask = MASK_TOT_INS | MASK_TOT_CYC;
+      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+         PAPI_event = PAPI_TOT_INS;
+         mask = MASK_TOT_INS | MASK_TOT_CYC;
+      } else {
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
+      }
    } else {
-      test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!",
-                0);
-   }
-#else
    /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-      PAPI_event = PAPI_FP_INS;
-      mask = MASK_FP_INS | MASK_TOT_CYC;
-   } else {
-      PAPI_event = PAPI_TOT_INS;
-      mask = MASK_TOT_INS | MASK_TOT_CYC;
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+         PAPI_event = PAPI_FP_INS;
+         mask = MASK_FP_INS | MASK_TOT_CYC;
+      } else {
+         PAPI_event = PAPI_TOT_INS;
+         mask = MASK_TOT_INS | MASK_TOT_CYC;
+      }
    }
-#endif
 
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
    if (retval != PAPI_OK)
