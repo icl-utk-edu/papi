@@ -37,12 +37,12 @@
 
       number=2
 
-    call PAPIf_query_event(PAPI_FP_INS, retval)
-    if (retval .NE. PAPI_OK) then
+      call PAPIf_query_event(PAPI_FP_INS, retval)
+      if (retval .NE. PAPI_OK) then
         events(1) = PAPI_TOT_INS 
-    else
+      else
         events(1) = PAPI_FP_INS 
-    end if
+      end if
 
       events(2) = PAPI_TOT_CYC
       call PAPIf_add_events( es1, events, number, retval )

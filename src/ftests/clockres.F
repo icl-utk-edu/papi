@@ -9,9 +9,9 @@
       INTEGER retval
       REAL ITERS
       integer tests_quiet, get_quiet
-    external get_quiet
+      external get_quiet
 
-    tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       total_usec=0
       total_cyc=0
