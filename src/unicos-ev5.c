@@ -885,6 +885,7 @@ int _papi_hwd_shutdown_global(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+int _papi_hwd_shutdown(EventSetInfo *zero)
 {
   return(PAPI_OK);
 }
