@@ -1,7 +1,7 @@
 SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
-LIBS	= static shared
-TARGETS	= serial smp omp extra
+LIBS	= static shared extra
+TARGETS	= serial smp omp 
 FLAGS  	= -g3
 CFLAGS  = -DDEBUG -woff 1116,1552 $(FLAGS)
 NOOPT	= -O0
@@ -17,11 +17,11 @@ F77	= f77
 
 include ./Makefile.inc
 
-extra: libpapi64.a libpapi64.so
+extra:	libpapi64.a libpapi64.so
 
 libpapi64.a: 
-	$(CC) -64 $(CFLAGS) $(OPTFLAGS) $(SOURCES) -o libpapi64.o
-	ar ruv $(LIBRARY) libpapi64.o
+	$(CC) -r -64 $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o libpapi64.o
+	ar ruv $@ libpapi64.o
 
 libpapi64.so: 
-	$(CC_SHR) -64 $(CFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
+	$(CC_SHR) -r -64 $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@

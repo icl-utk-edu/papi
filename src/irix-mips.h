@@ -17,21 +17,6 @@
 #include <assert.h>
 
 #include "papi.h"
-#include "papi_internal.h"
-#include "papiStdEventDefs.h"
-
-typedef struct {
-  unsigned int     ri_fill:16,
-    ri_imp:8,		/* implementation id */
-    ri_majrev:4,	/* major revision */
-    ri_minrev:4;	/* minor revision */
-} papi_rev_id_t;
-
-/* Encoding for NON-PAPI events is:
-
-   Low 8 bits indicate which counter number: 0 - 7
-   Bits 8-16 indicate which event number: 0 - 50 */
-
 typedef struct hwd_control_state {
   /* File descriptor controlling the counters; */
   int fd;
@@ -48,6 +33,20 @@ typedef struct hwd_control_state {
   /* Number on each hwcounter */
   int num_on_counter[2];
 } hwd_control_state_t;
+
+#include "papi_internal.h"
+
+typedef struct {
+  unsigned int     ri_fill:16,
+    ri_imp:8,		/* implementation id */
+    ri_majrev:4,	/* major revision */
+    ri_minrev:4;	/* minor revision */
+} papi_rev_id_t;
+
+/* Encoding for NON-PAPI events is:
+
+   Low 8 bits indicate which counter number: 0 - 7
+   Bits 8-16 indicate which event number: 0 - 50 */
 
 typedef struct hwd_preset {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
