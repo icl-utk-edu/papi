@@ -451,6 +451,7 @@ int _papi_portable_get_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *p
 }
 */
 
+#ifdef HAS_NATIVE_MAP
 /* Returns index of native EventCode or error message;
    Used to enumerate the entire array, e.g. for native_avail.c */
 int _papi_hwi_query_native_event(unsigned int EventCode)
@@ -556,7 +557,7 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
   }
   return(NULL);
 }
-
+#endif
 
 /**********************************************************************
 	Windows Compatability stuff
