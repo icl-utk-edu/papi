@@ -1,0 +1,65 @@
+$Id$
+
+Machine specific notes for the Cray T3E
+
+The T3E has 3 counters. The following can be counted, courtesy of
+SGI/Cray of Course.
+
+   /********   "sel0" list   ******************************/
+   /*sel0 = 0x0;*/    /* count machine cycles */
+   /*sel0 = 0x1;*/    /* count instructions */
+
+   /********   "sel1" list   ******************************/
+   /*sel1 = 0x0;*/    /* count non-issue cycles */
+   /*sel1 = 0x1;*/    /* count split-issue cycles */
+   /*sel1 = 0x2;*/    /* count issue-pipe-dry cycles */
+   /*sel1 = 0x3;*/    /* count replay trap cycles */
+   /*sel1 = 0x4;*/    /* count single-issue cycles */
+   /*sel1 = 0x5;*/    /* count dual-issue cycles */
+   /*sel1 = 0x6;*/    /* count triple-issue cycles */
+   /*sel1 = 0x7;*/    /* count quad-issue cycles */
+   /*sel1 = 0x8;*/    /* count jsr-ret, cond-branch, flow-change instrucs */
+   /*sel1 = 0x9;*/    /* count int instructions issued */
+   /*sel1 = 0xA;*/    /* count fp instructions issued */
+   /*sel1 = 0xB;*/    /* count loads issued */
+   /*sel1 = 0xC;*/    /* count stores issued */
+   /*sel1 = 0xD;*/    /* count Icache issued */
+   /*sel1 = 0xE;*/    /* count dcache accesses */
+   /*sel1 = 0xF;*/    /* count Scache accesses, CBOX input 1 */
+   /* for sel1=0x8: count jsr-ret if sel2=0x2 or cond-branch */
+   /*               if sel2=0x3 or all flow change instructions */
+   /*               if sel2!=2 or 3 */
+
+   /********   "sel2" list   ******************************/
+   /*sel2 = 0x0;*/    /* count >15 cycle stalls */
+   /*sel2 = 0x2;*/    /* count PC-mispredicts */
+   /*sel2 = 0x3;*/    /* count BR-mispredicts */
+   /*sel2 = 0x4;*/    /* count icache/RFB misses */
+   /*sel2 = 0x5;*/    /* count ITB misses */
+   /*sel2 = 0x6;*/    /* count dcache misses */
+   /*sel2 = 0x7;*/    /* count DTB misses */
+   /*sel2 = 0x8;*/    /* count LDs merged in MAF */
+   /*sel2 = 0x9;*/    /* count LDU replay traps */
+   /*sel2 = 0xA;*/    /* count WB/MAF full replay traps */
+   /*sel2 = 0xB;*/    /* count perf_mon_h input at sysclock intervals */
+   /*sel2 = 0xC;*/    /* count CPU cycles */
+   /*sel2 = 0xD;*/    /* count MB stall cycles */
+   /*sel2 = 0xE;*/    /* count LDxL instructions issued */
+   /*sel2 = 0xF;*/    /* count Scache misses, CBOX input 2 */
+   /*******************************************************/
+
+To use native with PAPI_add_event(), the format is as follows.
+
+(mask & 0x7) (sel2 & 0xf) (sel1 & 0xf) (sel0 & 0x1)
+
+The mask indicates which of the three counters you want 
+counted. If more than one bit is set in the mask, then
+the counters will be summed into a single event when
+read. The mask must be non-zero!
+
+Use this code to roll your own.
+
+papi_native_event = ((mask & 0x7) << 9) | 
+	             (sel2 & 0x7) << 5) | 
+	             (sel1 & 0x7) << 1) | 
+	             (sel0 & 0x1));

@@ -98,6 +98,8 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+/* Do not ever use ESI->NumberOfCounters in here. */
+
 int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -120,6 +122,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
   else
     return(PAPI_ENOEVNT);
 }
+
+/* Do not ever use ESI->NumberOfCounters in here. */
 
 int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
 {

@@ -87,10 +87,25 @@ static int initialize(void)
    PAPI_EVENTSET_MAP.fullSlots  = 1;
    PAPI_EVENTSET_MAP.lowestEmptySlot = 1;
 
+  PAPI_SHARED_INFO.EvSetArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
+  PAPI_SHARED_INFO.EventsArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
+  PAPI_SHARED_INFO.MachdepArray=(void **)malloc
+        (_papi_system_info.total_events*sizeof(int *));
+  memset(PAPI_SHARED_INFO.MachdepArray, 0x00,
+        _papi_system_info.total_events*sizeof(int *));
+  for(i=0;i<PAPI_INIT_SLOTS;i++) 
+  { *PAPI_SHARED_INFO.EvSetArray[i]=-1;
+    *PAPI_SHARED_INFO.EventsArray[i]=-1;
+  }
+
+#ifdef DEBUG
+   PAPI_ERR_LEVEL = PAPI_VERB_ECONT;
+#else
+   PAPI_ERR_LEVEL = PAPI_QUIET;
+#endif
+
    /* Remember that EventSet zero is reserved */
 
-   PAPI_ERR_LEVEL = PAPI_QUIET;
-   
    zero = (EventSetInfo *)malloc(sizeof(EventSetInfo));
    if (zero == NULL)
      {
@@ -333,11 +348,11 @@ static preset_info_t papi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
   { NULL,  0x8000001F, NULL },
   { NULL,  0x80000020, NULL },
   { NULL,  0x80000021, NULL },
-  { NULL,  0x80000022, NULL },
-  { NULL,  0x80000023, NULL },
-  { NULL,  0x80000024, NULL },
-  { NULL,  0x80000025, NULL },
-  { NULL,  0x80000026, NULL },
+  { "PAPI_MEM_SCY",  0x80000022, "Cycles Stalled Waiting for Memory Access" },
+  { "PAPI_MEM_RCY",  0x80000023, "Cycles Stalled Waiting for Memory Read" },
+  { "PAPI_MEM_WCY",  0x80000024, "Cycles Stalled Waiting for Memory Write" },
+  { "PAPI_STL_SCY",  0x80000025, "Cycles with No Instruction Issue" },
+  { "PAPI_FUL_CYC",  0x80000026, "Cycles with Maximum Instruction Issue" },
   { NULL,  0x80000027, NULL },
   { NULL,  0x80000028, NULL },
   { NULL,  0x80000029, NULL },
@@ -400,6 +415,8 @@ int PAPI_query_event(int EventCode)
   retval = _papi_hwd_query(EventCode);
   if (retval != PAPI_OK)
     return(handle_error(retval,"Event does not exist on this substrate"));
+
+  DBG((stderr,"PAPI_query returns %d\n",retval));  
   return(retval);
 }
 
@@ -415,6 +432,9 @@ int PAPI_add_event(int *EventSet, int EventCode)
   
   /* check for pre-existing ESI*/
   
+  if (EventSet == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
+
   ESI = lookup_EventSet(*EventSet);
   if (ESI == NULL)
     {
@@ -424,7 +444,8 @@ int PAPI_add_event(int *EventSet, int EventCode)
       ESI = n;
     }
 
-  /* This returns index into the map array */
+  /* This returns index into the map array. Note that this routine
+     increments ESI->NumberOfCounters. */
 
   retval = add_event(ESI,EventCode);
   if (retval < PAPI_OK)
@@ -526,6 +547,7 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
     return(k);
 
   ESI->EventCodeArray[k] = PAPI_NULL;
+  ESI->EventSelectArray[k] = PAPI_NULL;
   ESI->start[k]          = 0;
   ESI->stop[k]           = 0;
   ESI->latest[k]         = 0;
@@ -537,22 +559,23 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
 int PAPI_rem_event(int *EventSet, int EventCode)
 {
   EventSetInfo *ESI;
-  int retval, indextohw;
+  int retval;
 
-  /* check for pre-existing ESI*/
+  if (EventSet == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
 
   ESI = lookup_EventSet(*EventSet);
   if (ESI == NULL)
     return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-  /* This returns index into the map array */
+  if (ESI->state != PAPI_STOPPED)
+    return(handle_error(PAPI_EINVAL, "EventSet is not stopped"));
 
   retval = remove_event(ESI,EventCode);
   if (retval < PAPI_OK)
     return(handle_error(retval,NULL));
 
-  indextohw = retval;
-  retval = _papi_hwd_rem_event(ESI,indextohw,EventCode);
+  retval = _papi_hwd_rem_event(ESI,EventCode);
   if (retval < PAPI_OK)
     return(handle_error(retval,NULL));
 
@@ -595,59 +618,88 @@ int PAPI_start(int EventSet)
   EventSetInfo *ESI, *zero;
 
   ESI = lookup_EventSet(EventSet);
-  if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
+  if (ESI == NULL) 
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
-  zero = lookup_EventSet(0);
-  retval=check_runners(&ESI->all_options.multistart.multistart);
+  if (ESI->state != PAPI_STOPPED)
+    return(handle_error(PAPI_EINVAL, "EventSet is not stopped"));
+
+  retval=_papi_hwd_check_runners(&PAPI_SHARED_INFO, &PAPI_EVENTSET_MAP);  
+         // get list of running evsets
+  if (retval<PAPI_OK) 
+    return(handle_error(PAPI_EINVAL, NULL));
 
   retval = _papi_hwd_start(ESI);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (retval<PAPI_OK) 
+    return(handle_error(retval, NULL));
 
-  ESI->state=PAPI_RUNNING;
+  ESI->state = PAPI_RUNNING;
 
   DBG((stderr,"PAPI_start returns %d\n",retval));
   return(retval);
 }
 
 /* checks for valid EventSet, calls substrate stop() fxn. */
+
 int PAPI_stop(int EventSet, unsigned long long *values)
 { 
   int retval;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
-  if(ESI==NULL) return(handle_error(PAPI_EINVAL, NULL));
+  if (ESI==NULL) 
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
-  retval = _papi_hwd_stop(ESI, values);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (ESI->state != PAPI_RUNNING)
+    return(handle_error(PAPI_EINVAL, "EventSet is not running"));
 
-  retval = _papi_hwd_reset(ESI);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  retval = _papi_hwd_stop(ESI, ESI->latest);
+  if (retval<PAPI_OK) 
+    return(handle_error(retval, NULL));
 
+  /* I removed this code. Stop should not reset. Not needed. -Mucci */
+  
+  /* retval = _papi_hwd_reset(ESI);
+     if (retval<PAPI_OK) 
+     return(handle_error(retval, NULL)); */
+
+  if (values)
+    memcpy(values,ESI->latest,_papi_system_info.num_cntrs*sizeof(unsigned long long));
 
 #if defined(DEBUG)
   if (values)
     { 
       int i;
-      for (i=0;i<_papi_system_info.num_cntrs;i++)
-	DBG((stderr,"PAPI_stop values[%d]:\t\t%lld\n",i,values[i]));
+      for (i=0;i<ESI->NumberOfCounters;i++)
+	DBG((stderr,"PAPI_stop values[%d]:\t%lld\n",i,values[i]));
     }
 #endif
 
-  ESI->state=PAPI_STOPPED;
+  ESI->state = PAPI_STOPPED;
 
+  DBG((stderr,"PAPI_stop returns %d\n",retval));
   return(retval);
 }
 
 int PAPI_reset(int EventSet)
-{ int retval;
+{ 
+  int retval = PAPI_OK;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
-  if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
+  if (ESI == NULL) 
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
-  retval = _papi_hwd_reset(ESI);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (ESI->state == PAPI_RUNNING)
+    {
+      retval = _papi_hwd_reset(ESI);
+      if (retval<PAPI_OK) 
+	return(handle_error(retval, NULL));
+    }
+  else
+    {
+      memset(ESI->latest,0x00,_papi_system_info.num_cntrs*sizeof(unsigned long long));
+    }
 
   DBG((stderr,"PAPI_reset returns %d\n",retval));
   return(retval);
@@ -655,58 +707,86 @@ int PAPI_reset(int EventSet)
 
 int PAPI_read(int EventSet, unsigned long long *values)
 { 
-  int retval;
+  int retval = PAPI_OK;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
-  if ( ESI == NULL )
-    return(handle_error(PAPI_EINVAL,NULL));
+  if (ESI == NULL)
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
-  retval = _papi_hwd_read(ESI, values);
-  if(retval<PAPI_OK) 
-    return(handle_error(retval, NULL));
+  if (values == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
 
+  if (ESI->state == PAPI_RUNNING)
+    {    
+      retval = _papi_hwd_read(ESI, ESI->latest);
+      if (retval<PAPI_OK) 
+	return(handle_error(retval, NULL));
+    }
+  memcpy(values,ESI->latest,_papi_system_info.num_cntrs*sizeof(unsigned long long));
+
+  DBG((stderr,"PAPI_read returns %d\n",retval));
   return(retval);
 }
 
 int PAPI_accum(int EventSet, unsigned long long *values)
-{ EventSetInfo *ESI;
-  int retval, i, bound;
-  unsigned long long a,b,c,*increase;
+{ 
+  EventSetInfo *ESI;
+  int retval = PAPI_OK, i;
+  unsigned long long a,b,c;
 
   ESI = lookup_EventSet(EventSet);
-  if ( ESI == NULL ) 
-    return(handle_error(PAPI_EINVAL,NULL));
+  if (ESI == NULL) 
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
-  increase = ESI->latest;
-  bound = num_counters(ESI);
-  for ( i=0 ; i < bound; i++)
+  if (values == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
+
+  if (ESI->state == PAPI_RUNNING)
+    {
+      retval = _papi_hwd_read(ESI, ESI->latest);
+      if (retval < PAPI_OK) 
+	return(handle_error(retval,NULL));
+
+      retval = _papi_hwd_reset(ESI);
+      if (retval < PAPI_OK)
+	return(handle_error(retval,NULL));
+    }
+
+  for (i=0 ; i < ESI->NumberOfCounters; i++)
     { 
-      a = increase[i];
+      a = ESI->latest[i];
       b = values[i];
       c = a + b;
       values[i] = c;
     }
 
-  retval = _papi_hwd_read(ESI, increase);
-  if (retval < PAPI_OK) 
-    return(handle_error(retval,NULL));
-  retval = _papi_hwd_reset(ESI);
-  if (retval < PAPI_OK)
-    return(handle_error(retval,NULL));
+  memset(ESI->latest,0x0,_papi_system_info.num_cntrs*sizeof(unsigned long long));
+
   return(retval);
 }
 
 int PAPI_write(int EventSet, unsigned long long *values)
-{ int retval;
+{ 
+  int retval = PAPI_OK;
   EventSetInfo *ESI; 
 
   ESI = lookup_EventSet(EventSet);
-  if ( ESI == NULL )
-    return(handle_error(PAPI_EINVAL,NULL));
+  if (ESI == NULL) 
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
-  retval = _papi_hwd_write(ESI, values);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (values == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
+
+  if (ESI->state == PAPI_RUNNING)
+    {
+      retval = _papi_hwd_write(ESI, values);
+      if (retval<PAPI_OK) 
+	return(handle_error(retval, NULL));
+    }
+
+  memcpy(ESI->latest,values,_papi_system_info.num_cntrs*sizeof(unsigned long long));
+
   return(retval);
 }
 
@@ -718,6 +798,9 @@ int PAPI_cleanup(int *EventSet)
   int retval;
   EventSetInfo *ESI;
   
+  if (EventSet == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
+
   ESI = lookup_EventSet(*EventSet);
   if (ESI == NULL)
     return(handle_error(PAPI_EINVAL,"No such EventSet"));
@@ -730,6 +813,7 @@ int PAPI_cleanup(int *EventSet)
     return(handle_error(PAPI_EMISC,NULL));
 
   *EventSet = PAPI_NULL;
+
   return(retval);
 }
  
@@ -737,6 +821,9 @@ int PAPI_state(int EventSet, int *status)
 {
   EventSetInfo *ESI;
   
+  if (status == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
+
   /* check for good EventSetIndex value*/
   
   ESI = lookup_EventSet(EventSet);
@@ -869,8 +956,10 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
   if (PAPI_ERR_LEVEL)
     {
       fprintf(stderr, "%s", get_error_string(PAPI_errorCode));
-      if ( PAPI_errorCode==PAPI_ESYS ) perror(errorMessage);
-      if (errorMessage) fprintf(stderr, ": %s", errorMessage);
+      if (PAPI_errorCode==PAPI_ESYS) 
+	perror(errorMessage);
+      if (errorMessage) 
+	fprintf(stderr, ": %s", errorMessage);
       fprintf(stderr,"\n");
       if (PAPI_ERR_LEVEL==PAPI_VERB_ESTOP)
         PAPI_shutdown();
@@ -878,36 +967,43 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
   return(PAPI_errorCode);
 }
 
+static const char *papi_errStr[PAPI_NUM_ERRORS] = {
+  "No error",
+  "Invalid argument",
+  "Insufficient memory",
+  "A System/C library call failed",
+  "Substrate returned an error",
+  "Access to the counters was lost or interrupted",
+  "Internal error, please send mail to the developers",
+  "Hardware Event does not exist",
+  "Hardware Event exists, but cannot be counted due to counter resource limits",
+  "No Events or EventSets are currently counting",
+  "Unknown error code"
+};
+
 static char *get_error_string(int errorCode)
 {
-  static char *papi_errStr[PAPI_NUM_ERRORS] = {
-    "No error",
-    "Invalid argument",
-    "Insufficient memory",
-    "A System/C library call failed",
-    "Substrate returned an error",
-    "Access to the counters was lost or interrupted",
-    "Internal error, please send mail to the developers",
-    "Hardware Event does not exist",
-    "Hardware Event exists, but cannot be counted due to counter resource limits",
-    "No Events or EventSets are currently counting",
-    "Unknown error code"
-  };
-  if(errorCode>PAPI_OK) errorCode=PAPI_OK;
+  if (errorCode>PAPI_OK) 
+    errorCode = PAPI_OK;
   errorCode = - errorCode;
+
   if ((errorCode < 0) || ( errorCode >= PAPI_NUM_ERRORS))
     errorCode = PAPI_EMISC;
+
   return(papi_errStr[errorCode]);
 }
 
 int PAPI_perror(int code, char *destination, int length)
 {
   char *foo;
+
   foo = get_error_string(code);
-  if ((destination) && (length >= 0))
+
+  if (destination && (length >= 0))
     strncpy(destination,foo,length);
   else
     fprintf(stderr,"%s\n",foo);
+
   return(PAPI_OK);
 }
 
