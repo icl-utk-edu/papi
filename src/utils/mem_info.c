@@ -8,7 +8,7 @@
 extern int TESTS_QUIET; /*Declared in test_utils.c */
 
 int main(int argc, char **argv ) {
-  const PAPI_mem_info_t *meminfo = NULL;
+  const PAPI_hw_info_t *meminfo = NULL;
   int retval;
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
@@ -16,8 +16,8 @@ int main(int argc, char **argv ) {
   if ( retval!=PAPI_VER_CURRENT) 
      test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
-  if ((meminfo = PAPI_get_memory_info()) == NULL)
-     test_fail(__FILE__,__LINE__,"PAPI_get_memory_info",2);
+  if ((meminfo = PAPI_get_hardware_info()) == NULL)
+     test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",2);
 
   if ( !TESTS_QUIET ) {
      printf("Test case:  Memory Information.\n");
