@@ -405,6 +405,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   hwd_control_state_t *machdep = global->machdep;
   perfmon_req_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
   int i, selector = 0, hwcntr;
+  perfmon_reg_t flop_hack;
 
   memset(writeem,0x0,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
 
@@ -424,6 +425,15 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
     {
       DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
       return PAPI_ESYS;
+    }
+
+  /* We need to scale FP_OPS_HI, dammit */ 
+
+  for(i=0; i < PMU_MAX_COUNTERS; i++)
+    {
+      flop_hack.pmu_reg = machdep->pc[i].pfr_reg.reg_value;
+      if (flop_hack.pmc_es == 0xa)
+	readem[i].pfr_reg.reg_value = readem[i].pfr_reg.reg_value * 4;
     }
 
   if (local->state & PAPI_OVERFLOWING)

@@ -7,30 +7,13 @@
 *          <your email address>
 */  
 
-Bugs
-----
+NOTE:
 
-tests/sprofile does not work, due to an apparent bug in gcc.
-Note the following function:
-
-#include <stdlib.h>
-#include <stdio.h>
-int do_flops(int n)
-{
-  int i;
-  double c = (double)n;
-  for (i=0;i<n;i++)
-    c = c + (double)i;
-}
-
-main()
-{
-  printf("%p %x %lx\n",do_flops,do_flops,do_flops);
-}
-
-When run, the address of do_flops is different than
-the actual address of do_flops as shown by nm or 
-gdb.
+This version of the substrate always scales PME_FP_OPS_RETIRED_HI, hex code
+0xa, even if you are using it in a NATIVE event set. Previous versions
+of PAPI did not scale this and could produce erroneously low counts for
+PAPI_FLOPS or PAPI_FP_INS.
+ 
 
 Linux/IA64 2.4 Kernel Notes
 ---------------------------
@@ -50,8 +33,6 @@ Linux/IA64 2.4 Native Event Notes
 
 For *all* the native event codes, see the pme_list.h header file in the
 libpfm subdirectory.
-
-		http://www.sandpile.org
 
 The native event counter format is as follows: (fits in 32 bits *)
 
