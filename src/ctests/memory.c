@@ -12,6 +12,13 @@
 
 #include "papi_test.h"
 
+#if defined(_WIN32)
+  #define OUT_FMT		"%12d\t%12I64d\t%12I64d\t%.2f\n"
+#else
+  #define OUT_FMT		"%12d\t%12lld\t%12lld\t%.2f\n"
+#endif
+
+
 int main(int argc, char **argv)
 {
    int retval, i,j;
@@ -180,8 +187,8 @@ int main(int argc, char **argv)
 	  if ((retval = PAPI_read(EventSet,&values[1])) != PAPI_OK)
 	    test_fail(__FILE__, __LINE__, "PAPI_read", retval);
 
-	  printf("%12d\t%12lld\t%12lld\t%.2f\n",
-		 j,values[0],values[1],((float)values[1]/(float)values[0])*100.0);
+	  printf(OUT_FMT, j, values[0], values[1],
+        ((float)values[1]/(float)values[0])*100.0);
 	}
       
       if ((retval = PAPI_stop(EventSet,NULL)) != PAPI_OK)
