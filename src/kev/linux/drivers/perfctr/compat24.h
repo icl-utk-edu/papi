@@ -59,6 +59,7 @@ static inline int perfctr_remap_page_range(struct vm_area_struct *vma, unsigned 
 #ifndef preempt_disable
 #define preempt_disable()	do{}while(0)
 #define preempt_enable()	do{}while(0)
+#define preempt_enable_no_resched() do{}while(0)
 #endif
 
 #ifdef MODULE
@@ -70,6 +71,24 @@ static inline int perfctr_remap_page_range(struct vm_area_struct *vma, unsigned 
 #endif
 
 #define MODULE_ALIAS(alias)	/*empty*/
+
+/* 2.4.20-31.9-redhat and 2.4.21-20.EL-redhat have 2.6-style
+   recalc_sigpending() and sighand->siglock */
+#if defined(HAVE_NOARG_RECALC_SIGPENDING)
+#define task_siglock(tsk)	((tsk)->sighand->siglock)
+#else
+/* 2.5.5 dropped the tsk parameter to recalc_sigpending() */
+static inline void perfctr_recalc_sigpending(void)
+{
+	recalc_sigpending(current);
+}
+#undef recalc_sigpending
+#define recalc_sigpending()	perfctr_recalc_sigpending()
+
+/* tsk->sighand->siglock replaced tsk->sigmask_lock in several
+   steps during 2.5, the last change occurred in 2.5.60 */
+#define task_siglock(tsk)	((tsk)->sigmask_lock)
+#endif /* HAVE_NOARG_RECALC_SIGPENDING */
 
 /* introduced in 2.5.64; backported to 2.4.22-1.2115.nptl (FC1) */
 static inline int
@@ -95,3 +114,11 @@ perfctr_on_each_cpu(void (*func) (void *info), void *info,
 #define noinline	/* unimplemented */
 #endif
 #endif
+
+/* 2.6.10-rc1 replaced remap_page_range() with remap_pfn_range() */
+static inline int
+remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
+		unsigned long pfn, unsigned long size, pgprot_t prot)
+{
+	return remap_page_range(vma, uvaddr, pfn << PAGE_SHIFT, size, prot);
+}

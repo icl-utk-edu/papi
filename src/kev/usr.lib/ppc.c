@@ -32,6 +32,8 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
       case 0x8000: /* 7451/7441 */
       case 0x8001: /* 7455/7445 */
       case 0x8002: /* 7457/7447 */
+      case 0x8003: /* 7447A */
+      case 0x8004: /* 7448 */
 	cpu_type = PERFCTR_PPC_7450;
 	break;
       default:

@@ -152,17 +152,18 @@ extern void perfctr_cpu_sample(struct perfctr_cpu_state *state);
    It will be called in IRQ context, with preemption disabled. */
 typedef void (*perfctr_ihandler_t)(unsigned long pc);
 
-/* XXX: The hardware supports overflow interrupts, but the driver
-   does not yet enable this due to an erratum in 750/7400/7410. */
-//#define PERFCTR_INTERRUPT_SUPPORT 1
-
-#ifdef PERFCTR_INTERRUPT_SUPPORT
+/* Operations related to overflow interrupt handling. */
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);
 #else
 static inline void perfctr_cpu_set_ihandler(perfctr_ihandler_t x) { }
 #endif
+static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
+{
+	return 0;
+}
 
 #endif	/* CONFIG_PERFCTR */
 

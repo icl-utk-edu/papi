@@ -11,5 +11,15 @@ if [ "$CONFIG_PERFCTR" != "n" ]; then
    bool '  Init-time hardware tests' CONFIG_PERFCTR_INIT_TESTS
    bool '  Virtual performance counters support' CONFIG_PERFCTR_VIRTUAL $CONFIG_PERFCTR
    bool '  Global performance counters support' CONFIG_PERFCTR_GLOBAL $CONFIG_PERFCTR
+   if [ "$CONFIG_X86_LOCAL_APIC" = "y" ]; then
+      define_bool CONFIG_PERFCTR_INTERRUPT_SUPPORT y
+   else
+      if [ "$CONFIG_PPC" = "y" ]; then
+	 bool '  Performance counter overflow interrupt support' CONFIG_PERFCTR_INTERRUPT_SUPPORT
+      fi
+   fi
+   if [ "$CONFIG_X86" = "y" -a "$CONFIG_SMP" = "y" ]; then
+      define_bool CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK y
+   fi
 fi
 endmenu

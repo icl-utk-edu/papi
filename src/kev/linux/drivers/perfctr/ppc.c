@@ -26,6 +26,7 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 	unsigned int ppc_mmcr[3];
 } ____cacheline_aligned;
 static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
+#define __get_cpu_cache(cpu) (&per_cpu_cache[cpu])
 #define get_cpu_cache()	(&per_cpu_cache[smp_processor_id()])
 
 /* Structure for counter snapshots, as 32-bit values. */
@@ -45,10 +46,9 @@ enum pm_type {
 static enum pm_type pm_type;
 
 /* Bits users shouldn't set in control.ppc.mmcr0:
- * - PMXE because we don't yet support overflow interrupts
  * - PMC1SEL/PMC2SEL because event selectors are in control.evntsel[]
  */
-#define MMCR0_RESERVED		(MMCR0_PMXE | MMCR0_PMC1SEL | MMCR0_PMC2SEL)
+#define MMCR0_RESERVED		(MMCR0_PMC1SEL | MMCR0_PMC2SEL)
 
 static unsigned int new_id(void)
 {
@@ -62,11 +62,11 @@ static unsigned int new_id(void)
 	return id;
 }
 
-#ifndef PERFCTR_INTERRUPT_SUPPORT
+#ifndef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 #define perfctr_cstatus_has_ictrs(cstatus)	0
 #endif
 
-#if defined(CONFIG_SMP) && defined(PERFCTR_INTERRUPT_SUPPORT)
+#if defined(CONFIG_SMP) && defined(CONFIG_PERFCTR_INTERRUPT_SUPPORT)
 
 static inline void
 set_isuspend_cpu(struct perfctr_cpu_state *state, int cpu)
@@ -134,14 +134,6 @@ static inline int perfctr_cstatus_has_mmcr0_quirk(unsigned int cstatus)
  *   doing this (a) reserves one PMC, and (b) needs indirect accesses
  *   since the SPR number in general isn't known at compile-time.
  *
- * Driver notes
- * ------------
- * - The driver currently does not support performance monitor interrupts,
- *   mostly because of the 750/7400/7410 erratum. Working around it would
- *   require disabling the decrementer interrupt, reserving a performance
- *   counter and setting it up for TBL bit-flip events, and having the PMI
- *   handler invoke the decrementer handler.
- *
  * 604
  * ---
  * 604 has MMCR0, PMC1, PMC2, SIA, and SDA.
@@ -183,6 +175,8 @@ static inline int perfctr_cstatus_has_mmcr0_quirk(unsigned int cstatus)
  * PMIs via TB bit transitions can be used to simulate the decrementer.
  *
  * 750FX adds dual-PLL support and programmable core frequency switching.
+ *
+ * 750FX DD2.3 fixed the DEC/PMI SRR0 corruption erratum.
  *
  * 74xx
  * ----
@@ -277,15 +271,17 @@ static unsigned int get_nr_pmcs(void)
 
 static int ppc_check_control(struct perfctr_cpu_state *state)
 {
-	unsigned int i, nrctrs, pmc_mask, pmc;
+	unsigned int i, nractrs, nrctrs, pmc_mask, pmi_mask, pmc;
 	unsigned int nr_pmcs, evntsel[6];
 
 	nr_pmcs = get_nr_pmcs();
-	nrctrs = state->control.nractrs;
-	if (state->control.nrictrs || nrctrs > nr_pmcs)
+	nractrs = state->control.nractrs;
+	nrctrs = nractrs + state->control.nrictrs;
+	if (nrctrs < nractrs || nrctrs > nr_pmcs)
 		return -EINVAL;
 
 	pmc_mask = 0;
+	pmi_mask = 0;
 	memset(evntsel, 0, sizeof evntsel);
 	for(i = 0; i < nrctrs; ++i) {
 		pmc = state->control.pmc_map[i];
@@ -294,10 +290,17 @@ static int ppc_check_control(struct perfctr_cpu_state *state)
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
 
+		if (i >= nractrs)
+			pmi_mask |= (1<<pmc);
+
 		evntsel[pmc] = state->control.evntsel[i];
 		if (evntsel[pmc] > pmc_max_event(pmc))
 			return -EINVAL;
 	}
+
+	/* XXX: temporary limitation */
+	if ((pmi_mask & ~1) && (pmi_mask & ~1) != (pmc_mask & ~1))
+		return -EINVAL;
 
 	switch (pm_type) {
 	case PM_7450:
@@ -312,6 +315,10 @@ static int ppc_check_control(struct perfctr_cpu_state *state)
 		state->ppc_mmcr[2] = 0;
 	}
 
+	/* We do not yet handle TBEE as the only exception cause,
+	   so PMXE requires at least one interrupt-mode counter. */
+	if ((state->control.ppc.mmcr0 & MMCR0_PMXE) && !state->control.nrictrs)
+		return -EINVAL;
 	if (state->control.ppc.mmcr0 & MMCR0_RESERVED)
 		return -EINVAL;
 	state->ppc_mmcr[0] = (state->control.ppc.mmcr0
@@ -340,18 +347,86 @@ static int ppc_check_control(struct perfctr_cpu_state *state)
 		;
 	}
 
+	/* The MMCR0 handling for FCECE and TRIGGER is also needed for PMXE. */
+	if (state->ppc_mmcr[0] & (MMCR0_PMXE | MMCR0_FCECE | MMCR0_TRIGGER))
+		state->cstatus = perfctr_cstatus_set_mmcr0_quirk(state->cstatus);
+
 	return 0;
 }
 
-#ifdef PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
+/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
+/* PRE: counters frozen */
 static void ppc_isuspend(struct perfctr_cpu_state *state)
 {
-	// XXX
+	struct per_cpu_cache *cache;
+	unsigned int cstatus, nrctrs, i;
+	int cpu;
+
+	cpu = smp_processor_id();
+	set_isuspend_cpu(state, cpu); /* early to limit cpu's live range */
+	cache = __get_cpu_cache(cpu);
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
+		unsigned int pmc = state->pmc[i].map;
+		unsigned int now = read_pmc(pmc);
+		state->pmc[i].sum += now - state->pmc[i].start;
+		state->pmc[i].start = now;
+	}
+	/* cache->k1.id is still == state->k1.id */
 }
 
 static void ppc_iresume(const struct perfctr_cpu_state *state)
 {
-	// XXX
+	struct per_cpu_cache *cache;
+	unsigned int cstatus, nrctrs, i;
+	int cpu;
+	unsigned int pmc[6];
+
+	cpu = smp_processor_id();
+	cache = __get_cpu_cache(cpu);
+	if (cache->k1.id == state->k1.id) {
+		/* Clearing cache->k1.id to force write_control()
+		   to unfreeze MMCR0 would be done here, but it
+		   is subsumed by resume()'s MMCR0 reload logic. */
+		if (is_isuspend_cpu(state, cpu))
+			return; /* skip reload of PMCs */
+	}
+	/*
+	 * The CPU state wasn't ours.
+	 *
+	 * The counters must be frozen before being reinitialised,
+	 * to prevent unexpected increments and missed overflows.
+	 *
+	 * All unused counters must be reset to a non-overflow state.
+	 */
+	if (!(cache->ppc_mmcr[0] & MMCR0_FC)) {
+		cache->ppc_mmcr[0] |= MMCR0_FC;
+		mtspr(SPRN_MMCR0, cache->ppc_mmcr[0]);
+	}
+	memset(&pmc[0], 0, sizeof pmc);
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i)
+		pmc[state->pmc[i].map] = state->pmc[i].start;
+
+	switch (pm_type) {
+	case PM_7450:
+		mtspr(SPRN_PMC6, pmc[6-1]);
+		mtspr(SPRN_PMC5, pmc[5-1]);
+	case PM_7400:
+	case PM_750:
+	case PM_604e:
+		mtspr(SPRN_PMC4, pmc[4-1]);
+		mtspr(SPRN_PMC3, pmc[3-1]);
+	case PM_604:
+		mtspr(SPRN_PMC2, pmc[2-1]);
+		mtspr(SPRN_PMC1, pmc[1-1]);
+	case PM_NONE:
+		;
+	}
+	/* cache->k1.id remains != state->k1.id */
 }
 #endif
 
@@ -441,7 +516,7 @@ static void perfctr_cpu_read_counters(struct perfctr_cpu_state *state,
 	return ppc_read_counters(state, ctrs);
 }
 
-#ifdef PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 static void perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
 {
 	return ppc_isuspend(state);
@@ -456,6 +531,7 @@ static void perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
    bypass internal caching and force a reload if the I-mode PMCs. */
 void perfctr_cpu_ireload(struct perfctr_cpu_state *state)
 {
+	state->ppc_mmcr[0] |= MMCR0_PMXE;
 #ifdef CONFIG_SMP
 	clear_isuspend_cpu(state);
 #else
@@ -479,9 +555,8 @@ unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 			pmc_mask |= (1 << pmc);
 		}
 	}
-	/* XXX: if pmc_mask == 0, then it must have been a TBL bit flip */
-	/* XXX: HW cleared MMCR0[ENINT]. We presumably cleared the entire
-	   MMCR0, so the re-enable occurs automatically later, no? */
+	if (!pmc_mask && (state->ppc_mmcr[0] & MMCR0_TBEE))
+		pmc_mask = (1<<8); /* fake TB bit flip indicator */
 	return pmc_mask;
 }
 
@@ -507,12 +582,12 @@ static inline void setup_imode_start_values(struct perfctr_cpu_state *state)
 		state->pmc[i].start = state->control.ireset[i];
 }
 
-#else	/* PERFCTR_INTERRUPT_SUPPORT */
+#else	/* CONFIG_PERFCTR_INTERRUPT_SUPPORT */
 static inline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state) { }
 static inline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state) { }
 static inline int check_ireset(const struct perfctr_cpu_state *state) { return 0; }
 static inline void setup_imode_start_values(struct perfctr_cpu_state *state) { }
-#endif	/* PERFCTR_INTERRUPT_SUPPORT */
+#endif	/* CONFIG_PERFCTR_INTERRUPT_SUPPORT */
 
 static int check_control(struct perfctr_cpu_state *state)
 {
@@ -798,7 +873,13 @@ static int __init known_init(void)
 		pll_type = PLL_750;
 		break;
 	case 0x7000: case 0x7001: /* IBM750FX */
+		if ((pvr & 0xFF0F) >= 0x0203)
+			features |= PERFCTR_FEATURE_PCINT;
+		pm_type = PM_750;
+		pll_type = PLL_750FX;
+		break;
 	case 0x7002: /* IBM750GX */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_750;
 		pll_type = PLL_750FX;
 		break;
@@ -807,20 +888,31 @@ static int __init known_init(void)
 		pll_type = PLL_7400;
 		break;
 	case 0x800C: /* 7410 */
+		if ((pvr & 0xFFFF) >= 0x1103)
+			features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7400;
 		pll_type = PLL_7400;
 		break;
 	case 0x8000: /* 7451/7441 */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7450;
 		pll_type = PLL_7450;
 		break;
 	case 0x8001: /* 7455/7445 */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7450;
 		pll_type = ((pvr & 0xFFFF) < 0x0303) ? PLL_7450 : PLL_7457;
 		break;
 	case 0x8002: /* 7457/7447 */
+	case 0x8003: /* 7447A */
+		features |= PERFCTR_FEATURE_PCINT;
 		pm_type = PM_7450;
 		pll_type = PLL_7457;
+		break;
+	case 0x8004: /* 7448 */
+		features |= PERFCTR_FEATURE_PCINT;
+		pm_type = PM_7450;
+		pll_type = PLL_NONE; /* known to differ from 7447A, no details yet */
 		break;
 	default:
 		return -ENODEV;

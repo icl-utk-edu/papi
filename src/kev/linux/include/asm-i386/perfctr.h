@@ -6,6 +6,25 @@
 #ifndef _ASM_I386_PERFCTR_H
 #define _ASM_I386_PERFCTR_H
 
+/* cpu_type values */
+#define PERFCTR_X86_GENERIC	0	/* any x86 with rdtsc */
+#define PERFCTR_X86_INTEL_P5	1	/* no rdpmc */
+#define PERFCTR_X86_INTEL_P5MMX	2
+#define PERFCTR_X86_INTEL_P6	3
+#define PERFCTR_X86_INTEL_PII	4
+#define PERFCTR_X86_INTEL_PIII	5
+#define PERFCTR_X86_CYRIX_MII	6
+#define PERFCTR_X86_WINCHIP_C6	7	/* no rdtsc */
+#define PERFCTR_X86_WINCHIP_2	8	/* no rdtsc */
+#define PERFCTR_X86_AMD_K7	9
+#define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
+#define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
+#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 */
+#define PERFCTR_X86_AMD_K8	13
+#define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
+#define PERFCTR_X86_AMD_K8C	15	/* Revision C */
+#define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
+
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
 	unsigned long long pmc[18];
@@ -47,6 +66,9 @@ struct perfctr_cpu_state {
 #ifdef __KERNEL__
 	struct perfctr_cpu_control control;
 	unsigned int p4_escr_map[18];
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
+	unsigned int pending_interrupt;
+#endif
 #endif
 };
 
@@ -152,26 +174,23 @@ extern void perfctr_cpu_sample(struct perfctr_cpu_state *state);
    It will be called in IRQ context, with preemption disabled. */
 typedef void (*perfctr_ihandler_t)(unsigned long pc);
 
-#if defined(CONFIG_X86_LOCAL_APIC)
-#define PERFCTR_INTERRUPT_SUPPORT 1
-#endif
-
 /* Operations related to overflow interrupt handling. */
 #ifdef CONFIG_X86_LOCAL_APIC
+extern void __perfctr_cpu_mask_interrupts(void);
+extern void __perfctr_cpu_unmask_interrupts(void);
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);
+static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
+{
+	return state->pending_interrupt;
+}
 #else
 static inline void perfctr_cpu_set_ihandler(perfctr_ihandler_t x) { }
-#endif
-
-#if defined(CONFIG_SMP)
-/* CPUs in `perfctr_cpus_forbidden_mask' must not use the
-   performance-monitoring counters. TSC use is unrestricted.
-   This is needed to prevent resource conflicts on hyper-threaded P4s.
-   The declaration of `perfctr_cpus_forbidden_mask' is in the driver's
-   private compat.h, since it needs to handle cpumask_t incompatibilities. */
-#define PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED 1
+static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
+{
+	return 0;
+}
 #endif
 
 #endif	/* CONFIG_PERFCTR */

@@ -18,7 +18,7 @@
 #include "compat.h"
 
 /* XXX: belongs to a virtual_compat.c file */
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED && defined(CONFIG_PERFCTR_VIRTUAL) && LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21) && !defined(HAVE_SET_CPUS_ALLOWED)
+#if defined(CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK) && defined(CONFIG_PERFCTR_VIRTUAL) && LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21) && !defined(HAVE_SET_CPUS_ALLOWED)
 /**
  * set_cpus_allowed() - change a given task's processor affinity
  * @p: task to bind
@@ -65,6 +65,17 @@ static void perfctr_default_ihandler(unsigned long pc)
 }
 
 static perfctr_ihandler_t perfctr_ihandler = perfctr_default_ihandler;
+static unsigned int interrupts_masked[NR_CPUS] __cacheline_aligned;
+
+void __perfctr_cpu_mask_interrupts(void)
+{
+	interrupts_masked[smp_processor_id()] = 1;
+}
+
+void __perfctr_cpu_unmask_interrupts(void)
+{
+	interrupts_masked[smp_processor_id()] = 0;
+}
 
 asmlinkage void smp_perfctr_interrupt(struct pt_regs *regs)
 {
@@ -72,6 +83,8 @@ asmlinkage void smp_perfctr_interrupt(struct pt_regs *regs)
 	   masks interrupts. We're still on the originating CPU. */
 	/* XXX: recursive interrupts? delay the ACK, mask LVTPC, or queue? */
 	ack_APIC_irq();
+	if (interrupts_masked[smp_processor_id()])
+		return;
 	irq_enter();
 	(*perfctr_ihandler)(instruction_pointer(regs));
 	irq_exit();
@@ -110,6 +123,8 @@ EXPORT_SYMBOL(apic_pm_unregister);
 EXPORT_SYMBOL(nmi_pmdev);
 #endif
 
+EXPORT_SYMBOL(__perfctr_cpu_mask_interrupts);
+EXPORT_SYMBOL(__perfctr_cpu_unmask_interrupts);
 EXPORT_SYMBOL(perfctr_cpu_set_ihandler);
 #endif /* CONFIG_X86_LOCAL_APIC */
 

@@ -141,7 +141,19 @@ static unsigned int new_id(void)
 	return id;
 }
 
-#if !defined(CONFIG_X86_LOCAL_APIC)
+#if defined(CONFIG_X86_LOCAL_APIC)
+
+static inline void perfctr_cpu_mask_interrupts(const struct per_cpu_cache *cache)
+{
+	__perfctr_cpu_mask_interrupts();
+}
+
+static inline void perfctr_cpu_unmask_interrupts(const struct per_cpu_cache *cache)
+{
+	__perfctr_cpu_unmask_interrupts();
+}
+
+#else
 #define perfctr_cstatus_has_ictrs(cstatus)	0
 #undef cpu_has_apic
 #define cpu_has_apic				0
@@ -428,10 +440,12 @@ static void p6_like_isuspend(struct perfctr_cpu_state *state,
 	struct per_cpu_cache *cache;
 	unsigned int cstatus, nrctrs, i;
 	int cpu;
+	unsigned int pending = 0;
 
 	cpu = smp_processor_id();
 	set_isuspend_cpu(state, cpu); /* early to limit cpu's live range */
 	cache = __get_cpu_cache(cpu);
+	perfctr_cpu_mask_interrupts(cache);
 	cstatus = state->cstatus;
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
 	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
@@ -447,7 +461,10 @@ static void p6_like_isuspend(struct perfctr_cpu_state *state,
 		rdpmc_low(pmc_raw, now);
 		state->pmc[i].sum += now - state->pmc[i].start;
 		state->pmc[i].start = now;
+		if ((int)now >= 0)
+			++pending;
 	}
+	state->pending_interrupt = pending;
 	/* cache->k1.id is still == state->k1.id */
 }
 
@@ -463,6 +480,7 @@ static void p6_like_iresume(const struct perfctr_cpu_state *state,
 
 	cpu = smp_processor_id();
 	cache = __get_cpu_cache(cpu);
+	perfctr_cpu_unmask_interrupts(cache);
 	if (cache->k1.id == state->k1.id) {
 		cache->k1.id = 0; /* force reload of cleared EVNTSELs */
 		if (is_isuspend_cpu(state, cpu))
@@ -960,6 +978,7 @@ unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 	pmc = perfctr_cstatus_nractrs(cstatus);
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
 
+	state->pending_interrupt = 0;
 	for(pmc_mask = 0; pmc < nrctrs; ++pmc) {
 		if ((int)state->pmc[pmc].start >= 0) { /* XXX: ">" ? */
 			/* XXX: "+=" to correct for overshots */

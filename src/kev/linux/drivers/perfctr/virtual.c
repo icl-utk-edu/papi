@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -39,14 +39,14 @@ struct vperfctr {
 	/* sampling_timer and bad_cpus_allowed are frequently
 	   accessed, so they get to share a cache line */
 	unsigned int sampling_timer ____cacheline_aligned;
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	atomic_t bad_cpus_allowed;
 #endif
 #if 0 && defined(CONFIG_PERFCTR_DEBUG)
 	unsigned start_smp_id;
 	unsigned suspended;
 #endif
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 	unsigned int iresume_cstatus;
 #endif
 };
@@ -59,33 +59,33 @@ do { \
 	int i; \
 	for(i = 0; i < PAGE_SIZE/sizeof(int); ++i) \
 		((int*)(perfctr))[i] = 0xfedac0ed; \
-} while( 0 )
-#define debug_init(perfctr)	do { (perfctr)->suspended = 1; } while( 0 )
+} while(0)
+#define debug_init(perfctr)	do { (perfctr)->suspended = 1; } while(0)
 #define debug_suspend(perfctr) \
 do { \
-	if( (perfctr)->suspended ) \
+	if ((perfctr)->suspended) \
 		printk(KERN_ERR "%s: BUG! suspending non-running perfctr (pid %d, comm %s)\n", \
 		       __FUNCTION__, current->pid, current->comm); \
 	(perfctr)->suspended = 1; \
-} while( 0 )
+} while(0)
 #define debug_resume(perfctr) \
 do { \
-	if( !(perfctr)->suspended ) \
+	if (!(perfctr)->suspended) \
 		printk(KERN_ERR "%s: BUG! resuming non-suspended perfctr (pid %d, comm %s)\n", \
 		       __FUNCTION__, current->pid, current->comm); \
 	(perfctr)->suspended = 0; \
-} while( 0 )
+} while(0)
 #define debug_check_smp_id(perfctr) \
 do { \
-	if( (perfctr)->start_smp_id != smp_processor_id() ) { \
+	if ((perfctr)->start_smp_id != smp_processor_id()) { \
 		printk(KERN_ERR "%s: BUG! current cpu %u differs from start cpu %u (pid %d, comm %s)\n", \
 		       __FUNCTION__, smp_processor_id(), (perfctr)->start_smp_id, \
 		       current->pid, current->comm); \
 		return; \
 	} \
-} while( 0 )
+} while(0)
 #define debug_set_smp_id(perfctr) \
-	do { (perfctr)->start_smp_id = smp_processor_id(); } while( 0 )
+	do { (perfctr)->start_smp_id = smp_processor_id(); } while(0)
 #else	/* CONFIG_PERFCTR_DEBUG */
 #define debug_free(perfctr)		do{}while(0)
 #define debug_init(perfctr)		do{}while(0)
@@ -95,9 +95,10 @@ do { \
 #define debug_set_smp_id(perfctr)	do{}while(0)
 #endif	/* CONFIG_PERFCTR_DEBUG */
 
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 
 static void vperfctr_ihandler(unsigned long pc);
+static void vperfctr_handle_overflow(struct task_struct*, struct vperfctr*);
 
 static inline void vperfctr_set_ihandler(void)
 {
@@ -114,7 +115,7 @@ static inline void vperfctr_set_ihandler(void) { }
 static inline void vperfctr_clear_iresume_cstatus(struct vperfctr *perfctr) { }
 #endif
 
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 
 static inline void vperfctr_init_bad_cpus_allowed(struct vperfctr *perfctr)
 {
@@ -135,7 +136,7 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
 	task_unlock(p);
 }
 
-#else	/* !PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED */
+#else	/* !CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK */
 
 static inline void vperfctr_init_bad_cpus_allowed(struct vperfctr *perfctr) { }
 
@@ -152,7 +153,7 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
 	preempt_enable();
 }
 
-#endif	/* !PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED */
+#endif	/* !CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK */
 
 /****************************************************************
  *								*
@@ -171,13 +172,13 @@ static int inc_nrctrs(void)
 
 	other = NULL;
 	down(&nrctrs_mutex);
-	if( ++nrctrs == 1 ) {
+	if (++nrctrs == 1) {
 		other = perfctr_cpu_reserve(this_service);
-		if( other )
+		if (other)
 			nrctrs = 0;
 	}
 	up(&nrctrs_mutex);
-	if( other ) {
+	if (other) {
 		printk(KERN_ERR __FILE__
 		       ": cannot operate, perfctr hardware taken by '%s'\n",
 		       other);
@@ -190,7 +191,7 @@ static int inc_nrctrs(void)
 static void dec_nrctrs(void)
 {
 	down(&nrctrs_mutex);
-	if( --nrctrs == 0 )
+	if (--nrctrs == 0)
 		perfctr_cpu_release(this_service);
 	up(&nrctrs_mutex);
 }
@@ -199,10 +200,10 @@ static struct vperfctr *vperfctr_alloc(void)
 {
 	unsigned long page;
 
-	if( inc_nrctrs() != 0 )
+	if (inc_nrctrs() != 0)
 		return ERR_PTR(-EBUSY);
 	page = get_zeroed_page(GFP_KERNEL);
-	if( !page ) {
+	if (!page) {
 		dec_nrctrs();
 		return ERR_PTR(-ENOMEM);
 	}
@@ -221,7 +222,7 @@ static void vperfctr_free(struct vperfctr *perfctr)
 static struct vperfctr *get_empty_vperfctr(void)
 {
 	struct vperfctr *perfctr = vperfctr_alloc();
-	if( !IS_ERR(perfctr) ) {
+	if (!IS_ERR(perfctr)) {
 		atomic_set(&perfctr->count, 1);
 		vperfctr_init_bad_cpus_allowed(perfctr);
 		spin_lock_init(&perfctr->owner_lock);
@@ -232,7 +233,7 @@ static struct vperfctr *get_empty_vperfctr(void)
 
 static void put_vperfctr(struct vperfctr *perfctr)
 {
-	if( atomic_dec_and_test(&perfctr->count) )
+	if (atomic_dec_and_test(&perfctr->count))
 		vperfctr_free(perfctr);
 }
 
@@ -246,8 +247,6 @@ static void put_vperfctr(struct vperfctr *perfctr)
 
 /* PRE: IS_RUNNING(perfctr)
  * Suspend the counters.
- * XXX: When called from switch_to(), perfctr belongs to 'prev'
- * but current is 'next'. Debug messages will refer to 'next'...
  */
 static inline void vperfctr_suspend(struct vperfctr *perfctr)
 {
@@ -273,40 +272,59 @@ static inline void vperfctr_resume(struct vperfctr *perfctr)
 	debug_set_smp_id(perfctr);
 }
 
+static inline void vperfctr_resume_with_overflow_check(struct vperfctr *perfctr)
+{
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
+	if (perfctr_cpu_has_pending_interrupt(&perfctr->cpu_state)) {
+		vperfctr_handle_overflow(current, perfctr);
+		return;
+	}
+#endif
+	vperfctr_resume(perfctr);
+}
+
 /* Sample the counters but do not suspend them. */
 static void vperfctr_sample(struct vperfctr *perfctr)
 {
-	if( IS_RUNNING(perfctr) ) {
+	if (IS_RUNNING(perfctr)) {
 		debug_check_smp_id(perfctr);
 		perfctr_cpu_sample(&perfctr->cpu_state);
 		vperfctr_reset_sampling_timer(perfctr);
 	}
 }
 
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 /* vperfctr interrupt handler (XXX: add buffering support) */
 /* PREEMPT note: called in IRQ context with preemption disabled. */
 static void vperfctr_ihandler(unsigned long pc)
 {
 	struct task_struct *tsk = current;
 	struct vperfctr *perfctr;
-	unsigned int pmc_mask;
-	siginfo_t si;
 
 	perfctr = tsk->thread.perfctr;
-	if( !perfctr ) {
+	if (!perfctr) {
 		printk(KERN_ERR "%s: BUG! pid %d has no vperfctr\n",
 		       __FUNCTION__, tsk->pid);
 		return;
 	}
-	if( !perfctr_cstatus_has_ictrs(perfctr->cpu_state.cstatus) ) {
+	if (!perfctr_cstatus_has_ictrs(perfctr->cpu_state.cstatus)) {
 		printk(KERN_ERR "%s: BUG! vperfctr has cstatus %#x (pid %d, comm %s)\n",
 		       __FUNCTION__, perfctr->cpu_state.cstatus, tsk->pid, tsk->comm);
 		return;
 	}
 	vperfctr_suspend(perfctr);
+	vperfctr_handle_overflow(tsk, perfctr);
+}
+
+static void vperfctr_handle_overflow(struct task_struct *tsk,
+				     struct vperfctr *perfctr)
+{
+	unsigned int pmc_mask;
+	siginfo_t si;
+	sigset_t old_blocked;
+
 	pmc_mask = perfctr_cpu_identify_overflow(&perfctr->cpu_state);
-	if( !pmc_mask ) {
+	if (!pmc_mask) {
 		printk(KERN_ERR "%s: BUG! pid %d has unidentifiable overflow source\n",
 		       __FUNCTION__, tsk->pid);
 		return;
@@ -314,7 +332,7 @@ static void vperfctr_ihandler(unsigned long pc)
 	/* suspend a-mode and i-mode PMCs, leaving only TSC on */
 	/* XXX: some people also want to suspend the TSC */
 	perfctr->iresume_cstatus = perfctr->cpu_state.cstatus;
-	if( perfctr_cstatus_has_tsc(perfctr->iresume_cstatus) ) {
+	if (perfctr_cstatus_has_tsc(perfctr->iresume_cstatus)) {
 		perfctr->cpu_state.cstatus = perfctr_mk_cstatus(1, 0, 0);
 		vperfctr_resume(perfctr);
 	} else
@@ -323,8 +341,20 @@ static void vperfctr_ihandler(unsigned long pc)
 	si.si_errno = 0;
 	si.si_code = SI_PMC_OVF;
 	si.si_pmc_ovf_mask = pmc_mask;
-	if( !send_sig_info(si.si_signo, &si, tsk) )
+
+	/* deliver signal without waking up the receiver */
+	spin_lock_irq(&task_siglock(tsk));
+	old_blocked = tsk->blocked;
+	sigaddset(&tsk->blocked, si.si_signo);
+	spin_unlock_irq(&task_siglock(tsk));
+
+	if (!send_sig_info(si.si_signo, &si, tsk))
 		send_sig(si.si_signo, tsk, 1);
+
+	spin_lock_irq(&task_siglock(tsk));
+	tsk->blocked = old_blocked;
+	recalc_sigpending();
+	spin_unlock_irq(&task_siglock(tsk));
 }
 #endif
 
@@ -352,7 +382,7 @@ static void vperfctr_unlink(struct task_struct *owner, struct vperfctr *perfctr)
 	/* perfctr suspend+detach must be atomic wrt process suspend */
 	/* this also synchronises with perfctr_set_cpus_allowed() */
 	vperfctr_task_lock(owner);
-	if( IS_RUNNING(perfctr) && owner == current )
+	if (IS_RUNNING(perfctr) && owner == current)
 		vperfctr_suspend(perfctr);
 	owner->thread.perfctr = NULL;
 	vperfctr_task_unlock(owner);
@@ -373,7 +403,7 @@ void __vperfctr_exit(struct vperfctr *perfctr)
  */
 void __vperfctr_suspend(struct vperfctr *perfctr)
 {
-	if( IS_RUNNING(perfctr) )
+	if (IS_RUNNING(perfctr))
 		vperfctr_suspend(perfctr);
 }
 
@@ -384,10 +414,10 @@ void __vperfctr_suspend(struct vperfctr *perfctr)
  */
 void __vperfctr_resume(struct vperfctr *perfctr)
 {
-	if( IS_RUNNING(perfctr) ) {
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
-		if( unlikely(atomic_read(&perfctr->bad_cpus_allowed)) &&
-		    perfctr_cstatus_nrctrs(perfctr->cpu_state.cstatus) ) {
+	if (IS_RUNNING(perfctr)) {
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
+		if (unlikely(atomic_read(&perfctr->bad_cpus_allowed)) &&
+		    perfctr_cstatus_nrctrs(perfctr->cpu_state.cstatus)) {
 			perfctr->cpu_state.cstatus = 0;
 			vperfctr_clear_iresume_cstatus(perfctr);
 			BUG_ON(current->state != TASK_RUNNING);
@@ -395,7 +425,7 @@ void __vperfctr_resume(struct vperfctr *perfctr)
 			return;
 		}
 #endif
-		vperfctr_resume(perfctr);
+		vperfctr_resume_with_overflow_check(perfctr);
 	}
 }
 
@@ -408,11 +438,11 @@ void __vperfctr_resume(struct vperfctr *perfctr)
  */
 void __vperfctr_sample(struct vperfctr *perfctr)
 {
-	if( --perfctr->sampling_timer == 0 )
+	if (--perfctr->sampling_timer == 0)
 		vperfctr_sample(perfctr);
 }
 
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 /* Called from set_cpus_allowed().
  * PRE: current holds task_lock(owner)
  * PRE: owner->thread.perfctr == perfctr
@@ -424,7 +454,7 @@ void __vperfctr_set_cpus_allowed(struct task_struct *owner,
 	cpumask_t tmp;
 
 	cpus_and(tmp, new_mask, perfctr_cpus_forbidden_mask);
-	if( !cpus_empty(tmp) ) {
+	if (!cpus_empty(tmp)) {
 		atomic_set(&perfctr->bad_cpus_allowed, 1);
 		printk(KERN_WARNING "perfctr: process %d (comm %s) issued unsafe"
 		       " set_cpus_allowed() on process %d (comm %s)\n",
@@ -453,30 +483,30 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 	unsigned int next_cstatus;
 	unsigned int nrctrs, i;
 
-	if( !tsk )
+	if (!tsk)
 		return -ESRCH;	/* attempt to update unlinked perfctr */
 
 	err = perfctr_copy_from_user(&control, argp, &vperfctr_control_sdesc);
-	if( err )
+	if (err)
 		return err;
 
-	if( control.cpu_control.nractrs || control.cpu_control.nrictrs ) {
+	if (control.cpu_control.nractrs || control.cpu_control.nrictrs) {
 		cpumask_t old_mask, new_mask;
 
 		old_mask = tsk->cpus_allowed;
 		cpus_andnot(new_mask, old_mask, perfctr_cpus_forbidden_mask);
 
-		if( cpus_empty(new_mask) )
+		if (cpus_empty(new_mask))
 			return -EINVAL;
-		if( !cpus_equal(new_mask, old_mask) )
+		if (!cpus_equal(new_mask, old_mask))
 			set_cpus_allowed(tsk, new_mask);
 	}
 
 	/* PREEMPT note: preemption is disabled over the entire
 	   region since we're updating an active perfctr. */
 	preempt_disable();
-	if( IS_RUNNING(perfctr) ) {
-		if( tsk == current )
+	if (IS_RUNNING(perfctr)) {
+		if (tsk == current)
 			vperfctr_suspend(perfctr);
 		perfctr->cpu_state.cstatus = 0;
 		vperfctr_clear_iresume_cstatus(perfctr);
@@ -484,24 +514,24 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 	perfctr->cpu_state.control = control.cpu_control;
 	/* remote access note: perfctr_cpu_update_control() is ok */
 	err = perfctr_cpu_update_control(&perfctr->cpu_state, 0);
-	if( err < 0 )
+	if (err < 0)
 		goto out;
 	next_cstatus = perfctr->cpu_state.cstatus;
-	if( !perfctr_cstatus_enabled(next_cstatus) )
+	if (!perfctr_cstatus_enabled(next_cstatus))
 		goto out;
 
 	/* XXX: validate si_signo? */
 	perfctr->si_signo = control.si_signo;
 
-	if( !perfctr_cstatus_has_tsc(next_cstatus) )
+	if (!perfctr_cstatus_has_tsc(next_cstatus))
 		perfctr->cpu_state.tsc_sum = 0;
 
 	nrctrs = perfctr_cstatus_nrctrs(next_cstatus);
 	for(i = 0; i < nrctrs; ++i)
-		if( !(control.preserve & (1<<i)) )
+		if (!(control.preserve & (1<<i)))
 			perfctr->cpu_state.pmc[i].sum = 0;
 
-	if( tsk == current )
+	if (tsk == current)
 		vperfctr_resume(perfctr);
 
  out:
@@ -511,21 +541,21 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 
 static int sys_vperfctr_iresume(struct vperfctr *perfctr, const struct task_struct *tsk)
 {
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 	unsigned int iresume_cstatus;
 
-	if( !tsk )
+	if (!tsk)
 		return -ESRCH;	/* attempt to update unlinked perfctr */
 
 	iresume_cstatus = perfctr->iresume_cstatus;
-	if( !perfctr_cstatus_has_ictrs(iresume_cstatus) )
+	if (!perfctr_cstatus_has_ictrs(iresume_cstatus))
 		return -EPERM;
 
 	/* PREEMPT note: preemption is disabled over the entire
 	   region because we're updating an active perfctr. */
 	preempt_disable();
 
-	if( IS_RUNNING(perfctr) && tsk == current )
+	if (IS_RUNNING(perfctr) && tsk == current)
 		vperfctr_suspend(perfctr);
 
 	perfctr->cpu_state.cstatus = iresume_cstatus;
@@ -534,7 +564,7 @@ static int sys_vperfctr_iresume(struct vperfctr *perfctr, const struct task_stru
 	/* remote access note: perfctr_cpu_ireload() is ok */
 	perfctr_cpu_ireload(&perfctr->cpu_state);
 
-	if( tsk == current )
+	if (tsk == current)
 		vperfctr_resume(perfctr);
 
 	preempt_enable();
@@ -547,7 +577,7 @@ static int sys_vperfctr_iresume(struct vperfctr *perfctr, const struct task_stru
 
 static int sys_vperfctr_unlink(struct vperfctr *perfctr, struct task_struct *tsk)
 {
-	if( tsk )
+	if (tsk)
 		vperfctr_unlink(tsk, perfctr);
 	return 0;
 }
@@ -558,7 +588,7 @@ static int sys_vperfctr_read_sum(struct vperfctr *perfctr,
 {
 	struct perfctr_sum_ctrs sum;
 
-	if( tsk == current ) {
+	if (tsk == current) {
 		preempt_disable();
 		vperfctr_sample(perfctr);
 	}
@@ -569,7 +599,7 @@ static int sys_vperfctr_read_sum(struct vperfctr *perfctr,
 		for(j = 0; j < ARRAY_SIZE(sum.pmc); ++j)
 			sum.pmc[j] = perfctr->cpu_state.pmc[j].sum;
 	}
-	if( tsk == current )
+	if (tsk == current)
 		preempt_enable();
 	return perfctr_copy_to_user(argp, &sum, &perfctr_sum_ctrs_sdesc);
 }
@@ -585,11 +615,11 @@ static int sys_vperfctr_read_control(struct vperfctr *perfctr,
 	   Disable preemption to ensure we get a consistent copy.
 	   Not needed for other cases since the perfctr is either
 	   unlinked or its owner is ptrace ATTACH suspended by us. */
-	if( tsk == current )
+	if (tsk == current)
 		preempt_disable();
 	control.si_signo = perfctr->si_signo;
 	control.cpu_control = perfctr->cpu_state.control;
-	if( tsk == current )
+	if (tsk == current)
 		preempt_enable();
 	control.preserve = 0;
 	return perfctr_copy_to_user(argp, &control, &vperfctr_control_sdesc);
@@ -606,23 +636,24 @@ static int vperfctr_mmap(struct file *filp, struct vm_area_struct *vma)
 	struct vperfctr *perfctr;
 
 	/* Only allow read-only mapping of first page. */
-	if( (vma->vm_end - vma->vm_start) != PAGE_SIZE ||
+	if ((vma->vm_end - vma->vm_start) != PAGE_SIZE ||
 	    vma->vm_pgoff != 0 ||
 	    (pgprot_val(vma->vm_page_prot) & _PAGE_RW) ||
-	    (vma->vm_flags & (VM_WRITE | VM_MAYWRITE)) )
+	    (vma->vm_flags & (VM_WRITE | VM_MAYWRITE)))
 		return -EPERM;
 	perfctr = filp->private_data;
-	if( !perfctr )
+	if (!perfctr)
 		return -EPERM;
-	return remap_page_range(vma, vma->vm_start, virt_to_phys(perfctr),
-				PAGE_SIZE, vma->vm_page_prot);
+	return remap_pfn_range(vma, vma->vm_start,
+			       virt_to_phys(perfctr) >> PAGE_SHIFT,
+			       PAGE_SIZE, vma->vm_page_prot);
 }
 
 static int vperfctr_release(struct inode *inode, struct file *filp)
 {
 	struct vperfctr *perfctr = filp->private_data;
 	filp->private_data = NULL;
-	if( perfctr )
+	if (perfctr)
 		put_vperfctr(perfctr);
 	return 0;
 }
@@ -634,7 +665,7 @@ static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 	struct task_struct *tsk;
 	int ret;
 
-	switch( cmd ) {
+	switch (cmd) {
 	case PERFCTR_ABI:
 		return sys_perfctr_abi((unsigned int*)arg);
 	case PERFCTR_INFO:
@@ -645,23 +676,23 @@ static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 		return sys_perfctr_cpus_forbidden((struct perfctr_cpu_mask*)arg);
 	}
 	perfctr = filp->private_data;
-	if( !perfctr )
+	if (!perfctr)
 		return -EINVAL;
 	tsk = current;
-	if( perfctr != current->thread.perfctr ) {
+	if (perfctr != current->thread.perfctr) {
 		/* this synchronises with vperfctr_unlink() and itself */
 		spin_lock(&perfctr->owner_lock);
 		tsk = perfctr->owner;
-		if( tsk )
+		if (tsk)
 			get_task_struct(tsk);
 		spin_unlock(&perfctr->owner_lock);
-		if( tsk ) {
+		if (tsk) {
 			ret = ptrace_check_attach(tsk, 0);
-			if( ret < 0 )
+			if (ret < 0)
 				goto out;
 		}
 	}
-	switch( cmd ) {
+	switch (cmd) {
 	case VPERFCTR_CONTROL:
 		ret = sys_vperfctr_control(perfctr, (struct perfctr_struct_buf*)arg, tsk);
 		break;
@@ -681,7 +712,7 @@ static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 		ret = -EINVAL;
 	}
  out:
-	if( tsk && tsk != current )
+	if (tsk && tsk != current)
 		put_task_struct(tsk);
 	return ret;
 }
@@ -791,7 +822,7 @@ vperfctrfs_read_super(struct super_block *sb, void *data, int silent)
 	struct inode *root;
 
 	root = new_inode(sb);
-	if( !root )
+	if (!root)
 		return NULL;
 	root->i_mode = S_IFDIR | S_IRUSR | S_IWUSR;
 	root->i_uid = root->i_gid = 0;
@@ -801,7 +832,7 @@ vperfctrfs_read_super(struct super_block *sb, void *data, int silent)
 	sb->s_magic = VPERFCTRFS_MAGIC;
 	sb->s_op = &vperfctrfs_ops; /* XXX: check if 2.4 really needs this */
 	sb->s_root = dentry = d_alloc(NULL, &d_name);
-	if( !dentry ) {
+	if (!dentry) {
 		iput(root);
 		return NULL;
 	}
@@ -829,9 +860,9 @@ static struct vfsmount *vperfctr_mnt;
 static int __init vperfctrfs_init(void)
 {
 	int err = register_filesystem(&vperfctrfs_type);
-	if( !err ) {
+	if (!err) {
 		vperfctr_mnt = kern_mount(&vperfctrfs_type);
-		if( !IS_ERR(vperfctr_mnt) )
+		if (!IS_ERR(vperfctr_mnt))
 			return 0;
 		err = PTR_ERR(vperfctr_mnt);
 		unregister_filesystem(&vperfctrfs_type);
@@ -850,7 +881,7 @@ static struct inode *vperfctr_get_inode(void)
 	struct inode *inode;
 
 	inode = new_inode(vperfctr_mnt->mnt_sb);
-	if( !inode )
+	if (!inode)
 		return NULL;
 	inode->i_fop = &vperfctr_file_ops;
 	inode->i_state = I_DIRTY;
@@ -882,7 +913,7 @@ static struct dentry *vperfctr_d_alloc_root(struct inode *inode)
 	this.len = strlen(name);
 	this.hash = inode->i_ino; /* will go */
 	dentry = d_alloc(vperfctr_mnt->mnt_sb->s_root, &this);
-	if( dentry ) {
+	if (dentry) {
 		dentry->d_op = &vperfctrfs_dentry_operations;
 		d_add(dentry, inode);
 	}
@@ -895,15 +926,22 @@ static struct file *vperfctr_get_filp(void)
 	struct inode *inode;
 	struct dentry *dentry;
 
-	filp = get_empty_filp();
-	if( !filp )
-		goto out;
 	inode = vperfctr_get_inode();
-	if( !inode )
-		goto out_filp;
+	if (!inode)
+		goto out;
 	dentry = vperfctr_d_alloc_root(inode);
-	if( !dentry )
+	if (!dentry)
 		goto out_inode;
+	/*
+	 * Create the filp _after_ the inode and dentry, to avoid
+	 * needing access to put_filp(), which is no longer exported
+	 * starting with kernel 2.6.10-rc1. fput() is available but
+	 * doesn't work on incomplete files. We now need access to
+	 * dput() instead, but that's Ok.
+	 */
+	filp = get_empty_filp();
+	if (!filp)
+		goto out_dentry;
 
 	filp->f_vfsmnt = mntget(vperfctr_mnt);
 	filp->f_dentry = dentry;
@@ -919,10 +957,11 @@ static struct file *vperfctr_get_filp(void)
 
 	return filp;
 
+ out_dentry:
+	dput(dentry);
+	goto out; /* dput() also does iput() */
  out_inode:
 	iput(inode);
- out_filp:
-	put_filp(filp);	/* doesn't run ->release() like fput() does */
  out:
 	return NULL;
 }
@@ -938,44 +977,44 @@ int vperfctr_attach(int tid, int creat)
 	int fd;
 
 	filp = vperfctr_get_filp();
-	if( !filp )
+	if (!filp)
 		return -ENOMEM;
 	err = fd = get_unused_fd();
-	if( err < 0 )
+	if (err < 0)
 		goto err_filp;
 	perfctr = NULL;
-	if( creat ) {
+	if (creat) {
 		perfctr = get_empty_vperfctr(); /* may sleep */
-		if( IS_ERR(perfctr) ) {
+		if (IS_ERR(perfctr)) {
 			err = PTR_ERR(perfctr);
 			goto err_fd;
 		}
 	}
 	tsk = current;
-	if( tid != 0 && tid != tsk->pid ) { /* remote? */
+	if (tid != 0 && tid != tsk->pid) { /* remote? */
 		read_lock(&tasklist_lock);
 		tsk = find_task_by_pid(tid);
-		if( tsk )
+		if (tsk)
 			get_task_struct(tsk);
 		read_unlock(&tasklist_lock);
 		err = -ESRCH;
-		if( !tsk )
+		if (!tsk)
 			goto err_perfctr;
 		err = ptrace_check_attach(tsk, 0);
-		if( err < 0 )
+		if (err < 0)
 			goto err_tsk;
 	}
-	if( creat ) {
+	if (creat) {
 		/* check+install must be atomic to prevent remote-control races */
 		vperfctr_task_lock(tsk);
-		if( !tsk->thread.perfctr ) {
+		if (!tsk->thread.perfctr) {
 			perfctr->owner = tsk;
 			tsk->thread.perfctr = perfctr;
 			err = 0;
 		} else
 			err = -EEXIST;
 		vperfctr_task_unlock(tsk);
-		if( err )
+		if (err)
 			goto err_tsk;
 	} else {
 		perfctr = tsk->thread.perfctr;
@@ -983,17 +1022,17 @@ int vperfctr_attach(int tid, int creat)
 		   Hence no non-NULL check here. */
 	}
 	filp->private_data = perfctr;
-	if( perfctr )
+	if (perfctr)
 		atomic_inc(&perfctr->count);
-	if( tsk != current )
+	if (tsk != current)
 		put_task_struct(tsk);
 	fd_install(fd, filp);
 	return fd;
  err_tsk:
-	if( tsk != current )
+	if (tsk != current)
 		put_task_struct(tsk);
  err_perfctr:
-	if( perfctr )	/* can only occur if creat != 0 */
+	if (perfctr)	/* can only occur if creat != 0 */
 		put_vperfctr(perfctr);
  err_fd:
 	put_unused_fd(fd);
@@ -1019,7 +1058,7 @@ static void vperfctr_stub_init(void)
 	vperfctr_stub.suspend = __vperfctr_suspend;
 	vperfctr_stub.resume = __vperfctr_resume;
 	vperfctr_stub.sample = __vperfctr_sample;
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	vperfctr_stub.set_cpus_allowed = __vperfctr_set_cpus_allowed;
 #endif
 }
@@ -1036,7 +1075,7 @@ static inline void vperfctr_stub_exit(void) { }
 int __init vperfctr_init(void)
 {
 	int err = vperfctrfs_init();
-	if( err )
+	if (err)
 		return err;
 	vperfctr_stub_init();
 	return 0;

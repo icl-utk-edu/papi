@@ -6,6 +6,28 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.11, 2004-11-14
+- Workarounds for a hardware quirk on x86 and x86-64, where
+  interrupts can be delivered some time after the counters have
+  been stopped. Due to scheduling, an interrupt could be taken
+  in the context of an unrelated process, which would prematurely
+  terminate interrupt reporting for the original process.
+- Fixed a bug in the x86 and x86-64 kernels where the context-switch
+  path suspended the previous process' performance counters too late.
+  This could allow an overflow interrupt to be taken in the context
+  of an unrelated process, with effects similar to the hardware quirk
+  described above.
+- PPC32 updates: Enable overflow interrupts on all G4 processors
+  starting with the 7410 Rev 1.3, and all IBM G3 processors starting
+  with the 750FX DD2.3. Add support for MPC7447A and MPC7448.
+- Removed patches for obsolete kernels.
+
+Version 2.6.10.3, 2004-10-24
+- Driver modifications to handle two significant changes in
+  the 2.6.10-rc1 kernel.
+- PPC32: added MPC7447A and MPC7448 support.
+- Cleanups to bring the driver closer to the development version.
+
 Version 2.6.10.2, 2004-10-19
 - Updated kernel support: 2.6.9, 2.4.28-pre4.
 - Corrected the PPC32 driver's handling of MMCR0 changes due

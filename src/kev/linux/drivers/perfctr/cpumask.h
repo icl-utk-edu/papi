@@ -70,9 +70,10 @@ do { \
 #define PERFCTR_CPUMASK_NRLONGS	1
 #endif
 
-/* `perfctr_cpus_forbidden_mask' used to be defined in <asm/perfctr.h>,
-   but cpumask_t compatibility issues forced it to be moved here. */
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+/* CPUs in `perfctr_cpus_forbidden_mask' must not use the
+   performance-monitoring counters. TSC use is unrestricted.
+   This is needed to prevent resource conflicts on hyper-threaded P4s. */
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 extern cpumask_t perfctr_cpus_forbidden_mask;
 #define perfctr_cpu_is_forbidden(cpu)	cpu_isset((cpu), perfctr_cpus_forbidden_mask)
 #else

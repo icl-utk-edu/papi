@@ -1,6 +1,6 @@
---- linux-2.4.21.perfctr/CREDITS.~1~	2004-11-14 14:17:33.000000000 +0100
-+++ linux-2.4.21.perfctr/CREDITS	2004-11-14 14:22:36.000000000 +0100
-@@ -2386,6 +2386,7 @@ N: Mikael Pettersson
+--- linux-2.4.20-31.9.perfctr/CREDITS.~1~	2004-04-13 23:07:08.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/CREDITS	2004-11-14 18:31:34.000000000 +0100
+@@ -2367,6 +2367,7 @@ N: Mikael Pettersson
  E: mikpe@csd.uu.se
  W: http://www.csd.uu.se/~mikpe/
  D: Miscellaneous fixes
@@ -8,9 +8,9 @@
  
  N: Reed H. Petty
  E: rhp@draper.net
---- linux-2.4.21.perfctr/Documentation/Configure.help.~1~	2004-11-14 14:17:33.000000000 +0100
-+++ linux-2.4.21.perfctr/Documentation/Configure.help	2004-11-14 14:22:36.000000000 +0100
-@@ -4242,6 +4242,65 @@ CONFIG_PDC_NARROW
+--- linux-2.4.20-31.9.perfctr/Documentation/Configure.help.~1~	2004-04-13 23:07:19.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/Documentation/Configure.help	2004-11-14 18:31:34.000000000 +0100
+@@ -4244,6 +4244,65 @@ CONFIG_PDC_NARROW
  
    If unsure, say N.
  
@@ -76,8 +76,8 @@
  VGA text console
  CONFIG_VGA_CONSOLE
    Saying Y here will allow you to use Linux in text mode through a
---- linux-2.4.21.perfctr/Documentation/ioctl-number.txt.~1~	2004-11-14 14:07:01.000000000 +0100
-+++ linux-2.4.21.perfctr/Documentation/ioctl-number.txt	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/Documentation/ioctl-number.txt.~1~	2001-07-12 01:35:37.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/Documentation/ioctl-number.txt	2004-11-14 18:31:34.000000000 +0100
 @@ -187,5 +187,7 @@ Code	Seq#	Include File		Comments
  0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
  0xCB	00-1F	CBM serial IEC bus	in development:
@@ -86,10 +86,10 @@
 +					<mailto:mikpe@csd.uu.se>
  
  0xFE	00-9F	Logical Volume Manager	<mailto:linux-lvm@sistina.com>
---- linux-2.4.21.perfctr/MAINTAINERS.~1~	2004-11-14 14:17:33.000000000 +0100
-+++ linux-2.4.21.perfctr/MAINTAINERS	2004-11-14 14:22:36.000000000 +0100
-@@ -1352,6 +1352,12 @@ L:	linux-mips@oss.sgi.com
- W:	http://www.realitydiluted.com/projects/nino
+--- linux-2.4.20-31.9.perfctr/MAINTAINERS.~1~	2004-04-13 23:07:17.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/MAINTAINERS	2004-11-14 18:31:34.000000000 +0100
+@@ -1278,6 +1278,12 @@ M:	tsbogend@alpha.franken.de
+ L:	linux-net@vger.kernel.org
  S:	Maintained
  
 +PERFORMANCE-MONITORING COUNTERS DRIVER
@@ -98,22 +98,22 @@
 +W:	http://www.csd.uu.se/~mikpe/linux/perfctr/
 +S:	Maintained
 +
- PNP SUPPORT
- P:	Tom Lees
- M:	tom@lpsg.demon.co.uk
---- linux-2.4.21.perfctr/Makefile.~1~	2004-11-14 14:17:33.000000000 +0100
-+++ linux-2.4.21.perfctr/Makefile	2004-11-14 14:22:36.000000000 +0100
-@@ -190,6 +190,7 @@ DRIVERS-$(CONFIG_GSC) += drivers/gsc/gsc
- DRIVERS-$(CONFIG_BLUEZ) += drivers/bluetooth/bluetooth.o
- DRIVERS-$(CONFIG_HOTPLUG_PCI) += drivers/hotplug/vmlinux-obj.o
+ PERMEDIA 3 FRAMEBUFFER DRIVER
+ P:	Romain Dolbeau
+ M:	dolbeau@irisa.fr
+--- linux-2.4.20-31.9.perfctr/Makefile.~1~	2004-04-14 00:20:42.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/Makefile	2004-11-14 18:31:34.000000000 +0100
+@@ -198,6 +198,7 @@ DRIVERS-$(CONFIG_HOTPLUG_PCI) += drivers
  DRIVERS-$(CONFIG_ISDN_BOOL) += drivers/isdn/vmlinux-obj.o
-+DRIVERS-$(CONFIG_KPERFCTR) += drivers/perfctr/kperfctr.o
  
+ DRIVERS-$(CONFIG_SENSORS) += drivers/sensors/sensor.o
++DRIVERS-$(CONFIG_KPERFCTR) += drivers/perfctr/kperfctr.o
  DRIVERS := $(DRIVERS-y)
  
---- linux-2.4.21.perfctr/arch/i386/config.in.~1~	2004-11-14 14:17:33.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/i386/config.in	2004-11-14 14:22:36.000000000 +0100
-@@ -256,6 +256,9 @@ fi
+ 
+--- linux-2.4.20-31.9.perfctr/arch/i386/config.in.~1~	2004-04-13 23:07:18.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/i386/config.in	2004-11-14 18:31:34.000000000 +0100
+@@ -266,6 +266,9 @@ fi
  if [ "$CONFIG_SMP" = "y" -a "$CONFIG_X86_CMPXCHG" = "y" ]; then
     define_bool CONFIG_HAVE_DEC_LOCK y
  fi
@@ -123,8 +123,8 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.21.perfctr/arch/i386/kernel/i8259.c.~1~	2004-11-14 13:54:06.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/i386/kernel/i8259.c	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/arch/i386/kernel/i8259.c.~1~	2001-09-18 08:03:09.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/i386/kernel/i8259.c	2004-11-14 18:31:34.000000000 +0100
 @@ -21,6 +21,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -152,17 +152,17 @@
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
---- linux-2.4.21.perfctr/arch/i386/kernel/process.c.~1~	2004-11-14 14:17:33.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/i386/kernel/process.c	2004-11-14 14:22:42.000000000 +0100
-@@ -32,6 +32,7 @@
+--- linux-2.4.20-31.9.perfctr/arch/i386/kernel/process.c.~1~	2004-04-13 23:07:19.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/i386/kernel/process.c	2004-11-14 18:31:39.000000000 +0100
+@@ -33,6 +33,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
  #include <linux/init.h>
 +#include <linux/perfctr.h>
  #include <linux/mc146818rtc.h>
- 
- #include <asm/uaccess.h>
-@@ -517,7 +518,7 @@ int arch_kernel_thread(int (*fn)(void *)
+ #include <linux/version.h>
+ #include <linux/elfcore.h>
+@@ -530,7 +531,7 @@ int arch_kernel_thread(int (*fn)(void *)
   */
  void exit_thread(void)
  {
@@ -171,16 +171,16 @@
  }
  
  void flush_thread(void)
-@@ -601,6 +602,8 @@ int copy_thread(int nr, unsigned long cl
- 	unlazy_fpu(current);
- 	struct_cpy(&p->thread.i387, &current->thread.i387);
+@@ -587,6 +588,8 @@ int copy_thread(int nr, unsigned long cl
+ 	savesegment(fs,p->thread.fs);
+ 	savesegment(gs,p->thread.gs);
  
 +	perfctr_copy_task(p, regs);
 +
- 	return 0;
- }
- 
-@@ -738,6 +741,8 @@ void __switch_to(struct task_struct *pre
+ 	tsk = current;
+ 	unlazy_fpu(tsk);
+ 	struct_cpy(&p->thread.i387, &tsk->thread.i387);
+@@ -778,6 +781,8 @@ void __switch_to(struct task_struct *pre
  			 */
  			tss->bitmap = INVALID_IO_BITMAP_OFFSET;
  	}
@@ -189,9 +189,9 @@
  }
  
  asmlinkage int sys_fork(struct pt_regs regs)
---- linux-2.4.21.perfctr/arch/ppc/config.in.~1~	2004-11-14 14:17:34.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/ppc/config.in	2004-11-14 14:22:42.000000000 +0100
-@@ -141,6 +141,9 @@ fi
+--- linux-2.4.20-31.9.perfctr/arch/ppc/config.in.~1~	2002-11-29 00:53:11.000000000 +0100
++++ linux-2.4.20-31.9.perfctr/arch/ppc/config.in	2004-11-14 18:31:39.000000000 +0100
+@@ -129,6 +129,9 @@ fi
  if [ "$CONFIG_8xx" = "y" -o "$CONFIG_8260" = "y" ]; then
      define_bool CONFIG_EMBEDDEDBOOT y
  fi
@@ -201,9 +201,9 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.21.perfctr/arch/ppc/kernel/head.S.~1~	2004-11-14 14:17:34.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/ppc/kernel/head.S	2004-11-14 14:22:42.000000000 +0100
-@@ -492,20 +492,24 @@ SystemCall:
+--- linux-2.4.20-31.9.perfctr/arch/ppc/kernel/head.S.~1~	2002-11-29 00:53:11.000000000 +0100
++++ linux-2.4.20-31.9.perfctr/arch/ppc/kernel/head.S	2004-11-14 18:31:39.000000000 +0100
+@@ -498,20 +498,24 @@ SystemCall:
   */
  	. = 0xf00
  	b	Trap_0f
@@ -236,7 +236,7 @@
  
  /*
   * Handle TLB miss for instruction on 603/603e.
-@@ -747,6 +751,14 @@ AltiVecUnavailable:
+@@ -753,6 +757,14 @@ AltiVecUnavailable:
  	bl	transfer_to_handler	/* if from kernel, take a trap */
  	.long	KernelAltiVec
  	.long	ret_from_except
@@ -251,17 +251,17 @@
  #endif /* CONFIG_ALTIVEC */
  
  #ifdef CONFIG_PPC64BRIDGE
---- linux-2.4.21.perfctr/arch/ppc/kernel/process.c.~1~	2004-11-14 14:17:34.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/ppc/kernel/process.c	2004-11-14 14:22:42.000000000 +0100
-@@ -32,6 +32,7 @@
+--- linux-2.4.20-31.9.perfctr/arch/ppc/kernel/process.c.~1~	2001-11-26 14:29:17.000000000 +0100
++++ linux-2.4.20-31.9.perfctr/arch/ppc/kernel/process.c	2004-11-14 18:31:39.000000000 +0100
+@@ -34,6 +34,7 @@
+ #include <linux/user.h>
  #include <linux/elf.h>
  #include <linux/init.h>
- #include <linux/prctl.h>
 +#include <linux/perfctr.h>
  
  #include <asm/pgtable.h>
  #include <asm/uaccess.h>
-@@ -235,7 +236,9 @@ _switch_to(struct task_struct *prev, str
+@@ -237,7 +238,9 @@ _switch_to(struct task_struct *prev, str
  		new->thread.regs->msr |= MSR_VEC;
  	new_thread = &new->thread;
  	old_thread = &current->thread;
@@ -271,7 +271,7 @@
  	__restore_flags(s);
  }
  
-@@ -298,6 +301,7 @@ void exit_thread(void)
+@@ -300,6 +303,7 @@ void exit_thread(void)
  		last_task_used_math = NULL;
  	if (last_task_used_altivec == current)
  		last_task_used_altivec = NULL;
@@ -279,7 +279,7 @@
  }
  
  void flush_thread(void)
-@@ -380,6 +384,8 @@ copy_thread(int nr, unsigned long clone_
+@@ -382,6 +386,8 @@ copy_thread(int nr, unsigned long clone_
  
  	p->thread.last_syscall = -1;
  
@@ -288,8 +288,8 @@
  	return 0;
  }
  
---- linux-2.4.21.perfctr/arch/x86_64/config.in.~1~	2004-11-14 14:17:34.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/x86_64/config.in	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/arch/x86_64/config.in.~1~	2004-04-13 23:07:15.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/x86_64/config.in	2004-11-14 18:31:34.000000000 +0100
 @@ -75,6 +75,8 @@ if [ "$CONFIG_K8_NUMA" = "y" ]; then
     define_bool CONFIG_NUMA y
  fi
@@ -299,8 +299,8 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.21.perfctr/arch/x86_64/kernel/entry.S.~1~	2004-11-14 14:07:02.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/x86_64/kernel/entry.S	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/arch/x86_64/kernel/entry.S.~1~	2004-04-13 23:07:12.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/x86_64/kernel/entry.S	2004-11-14 18:31:34.000000000 +0100
 @@ -419,6 +419,9 @@ ENTRY(\x)
  	BUILD_SMP_INTERRUPT spurious_interrupt,SPURIOUS_APIC_VECTOR
  #endif
@@ -311,8 +311,8 @@
  		
  /*
   * Exception entry points.
---- linux-2.4.21.perfctr/arch/x86_64/kernel/i8259.c.~1~	2004-11-14 13:54:06.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/x86_64/kernel/i8259.c	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/arch/x86_64/kernel/i8259.c.~1~	2004-04-13 23:07:12.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/x86_64/kernel/i8259.c	2004-11-14 18:31:34.000000000 +0100
 @@ -23,6 +23,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -330,8 +330,8 @@
  #ifndef CONFIG_VISWS
  	setup_irq(2, &irq2);
  #endif
---- linux-2.4.21.perfctr/arch/x86_64/kernel/process.c.~1~	2004-11-14 14:17:34.000000000 +0100
-+++ linux-2.4.21.perfctr/arch/x86_64/kernel/process.c	2004-11-14 14:22:42.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/arch/x86_64/kernel/process.c.~1~	2004-04-13 23:07:19.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/arch/x86_64/kernel/process.c	2004-11-14 18:31:39.000000000 +0100
 @@ -38,6 +38,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
@@ -365,9 +365,9 @@
  
  	return prev_p;
  }
---- linux-2.4.21.perfctr/drivers/Makefile.~1~	2004-11-14 14:17:34.000000000 +0100
-+++ linux-2.4.21.perfctr/drivers/Makefile	2004-11-14 14:22:36.000000000 +0100
-@@ -49,4 +49,7 @@ subdir-$(CONFIG_ACPI)		+= acpi
+--- linux-2.4.20-31.9.perfctr/drivers/Makefile.~1~	2004-04-13 23:07:16.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/drivers/Makefile	2004-11-14 18:31:34.000000000 +0100
+@@ -51,4 +51,7 @@ subdir-$(CONFIG_ACPI)		+= acpi
  
  subdir-$(CONFIG_BLUEZ)		+= bluetooth
  
@@ -375,9 +375,9 @@
 +subdir-$(CONFIG_KPERFCTR)	+= perfctr
 +
  include $(TOPDIR)/Rules.make
---- linux-2.4.21.perfctr/include/asm-i386/apic.h.~1~	2002-08-07 00:52:24.000000000 +0200
-+++ linux-2.4.21.perfctr/include/asm-i386/apic.h	2004-11-14 14:22:36.000000000 +0100
-@@ -94,6 +94,9 @@ extern unsigned int nmi_watchdog;
+--- linux-2.4.20-31.9.perfctr/include/asm-i386/apic.h.~1~	2004-04-13 23:41:43.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-i386/apic.h	2004-11-14 18:31:34.000000000 +0100
+@@ -93,6 +93,9 @@ extern unsigned int nmi_watchdog;
  #define NMI_LOCAL_APIC	2
  #define NMI_INVALID	3
  
@@ -387,9 +387,9 @@
  #endif /* CONFIG_X86_LOCAL_APIC */
  
  #endif /* __ASM_APIC_H */
---- linux-2.4.21.perfctr/include/asm-i386/hw_irq.h.~1~	2004-11-14 14:17:41.000000000 +0100
-+++ linux-2.4.21.perfctr/include/asm-i386/hw_irq.h	2004-11-14 14:22:36.000000000 +0100
-@@ -49,14 +49,15 @@
+--- linux-2.4.20-31.9.perfctr/include/asm-i386/hw_irq.h.~1~	2004-04-13 23:41:43.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-i386/hw_irq.h	2004-11-14 18:31:34.000000000 +0100
+@@ -52,14 +52,15 @@
   * sources per level' errata.
   */
  #define LOCAL_TIMER_VECTOR	0xef
@@ -407,9 +407,9 @@
  
  extern int irq_vector[NR_IRQS];
  #define IO_APIC_VECTOR(irq)	irq_vector[irq]
---- linux-2.4.21.perfctr/include/asm-i386/processor.h.~1~	2004-11-14 14:17:41.000000000 +0100
-+++ linux-2.4.21.perfctr/include/asm-i386/processor.h	2004-11-14 14:22:36.000000000 +0100
-@@ -387,6 +387,8 @@ struct thread_struct {
+--- linux-2.4.20-31.9.perfctr/include/asm-i386/processor.h.~1~	2004-04-13 23:41:43.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-i386/processor.h	2004-11-14 18:31:34.000000000 +0100
+@@ -398,6 +398,8 @@ struct thread_struct {
  /* IO permissions */
  	int		ioperm;
  	unsigned long	io_bitmap[IO_BITMAP_SIZE+1];
@@ -418,19 +418,19 @@
  };
  
  #define INIT_THREAD  {						\
---- linux-2.4.21.perfctr/include/asm-i386/system.h.~1~	2004-11-14 14:17:41.000000000 +0100
-+++ linux-2.4.21.perfctr/include/asm-i386/system.h	2004-11-14 14:22:42.000000000 +0100
-@@ -14,6 +14,7 @@ extern void FASTCALL(__switch_to(struct 
+--- linux-2.4.20-31.9.perfctr/include/asm-i386/system.h.~1~	2004-04-13 23:41:43.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-i386/system.h	2004-11-14 18:31:39.000000000 +0100
+@@ -13,6 +13,7 @@ struct task_struct;	/* one of the strang
+ extern void FASTCALL(__switch_to(struct task_struct *prev, struct task_struct *next));
  
- #define prepare_to_switch()	do { } while(0)
  #define switch_to(prev,next,last) do {					\
 +	perfctr_suspend_thread(&(prev)->thread);			\
  	asm volatile("pushl %%esi\n\t"					\
  		     "pushl %%edi\n\t"					\
  		     "pushl %%ebp\n\t"					\
---- linux-2.4.21.perfctr/include/asm-ppc/processor.h.~1~	2004-11-14 14:17:42.000000000 +0100
-+++ linux-2.4.21.perfctr/include/asm-ppc/processor.h	2004-11-14 14:22:42.000000000 +0100
-@@ -668,6 +668,9 @@ struct thread_struct {
+--- linux-2.4.20-31.9.perfctr/include/asm-ppc/processor.h.~1~	2002-11-29 00:53:15.000000000 +0100
++++ linux-2.4.20-31.9.perfctr/include/asm-ppc/processor.h	2004-11-14 18:31:39.000000000 +0100
+@@ -672,6 +672,9 @@ struct thread_struct {
  	vector128	vscr;		/* AltiVec status */
  	unsigned long	vrsave;
  #endif /* CONFIG_ALTIVEC */
@@ -440,8 +440,8 @@
  };
  
  #define INIT_SP		(sizeof(init_stack) + (unsigned long) &init_stack)
---- linux-2.4.21.perfctr/include/asm-x86_64/apic.h.~1~	2003-06-14 13:30:28.000000000 +0200
-+++ linux-2.4.21.perfctr/include/asm-x86_64/apic.h	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/include/asm-x86_64/apic.h.~1~	2004-04-13 23:07:12.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-x86_64/apic.h	2004-11-14 18:31:34.000000000 +0100
 @@ -96,6 +96,9 @@ extern unsigned int nmi_watchdog;
  #define NMI_LOCAL_APIC	2
  #define NMI_INVALID	3
@@ -452,9 +452,9 @@
  #endif /* CONFIG_X86_LOCAL_APIC */
  
  #define clustered_apic_mode 0
---- linux-2.4.21.perfctr/include/asm-x86_64/hw_irq.h.~1~	2003-06-14 13:30:28.000000000 +0200
-+++ linux-2.4.21.perfctr/include/asm-x86_64/hw_irq.h	2004-11-14 14:22:36.000000000 +0100
-@@ -59,14 +59,15 @@
+--- linux-2.4.20-31.9.perfctr/include/asm-x86_64/hw_irq.h.~1~	2004-04-13 23:07:15.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-x86_64/hw_irq.h	2004-11-14 18:31:34.000000000 +0100
+@@ -60,14 +60,15 @@
   * sources per level' errata.
   */
  #define LOCAL_TIMER_VECTOR	0xef
@@ -472,8 +472,8 @@
  
  #ifndef __ASSEMBLY__
  extern int irq_vector[NR_IRQS];
---- linux-2.4.21.perfctr/include/asm-x86_64/processor.h.~1~	2004-11-14 14:17:42.000000000 +0100
-+++ linux-2.4.21.perfctr/include/asm-x86_64/processor.h	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/include/asm-x86_64/processor.h.~1~	2004-04-13 23:07:18.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-x86_64/processor.h	2004-11-14 18:31:34.000000000 +0100
 @@ -324,6 +324,8 @@ struct thread_struct {
  /* floating point info */
  	union i387_union	i387;
@@ -483,8 +483,8 @@
  };
  
  #define INIT_THREAD  {						\
---- linux-2.4.21.perfctr/include/asm-x86_64/system.h.~1~	2004-11-14 14:07:03.000000000 +0100
-+++ linux-2.4.21.perfctr/include/asm-x86_64/system.h	2004-11-14 14:22:42.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/include/asm-x86_64/system.h.~1~	2004-04-13 23:07:12.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/asm-x86_64/system.h	2004-11-14 18:31:39.000000000 +0100
 @@ -51,6 +51,7 @@ struct save_context_frame { 
  	__POP(rdi) __POP(rsi)
  
@@ -493,45 +493,57 @@
  	asm volatile(SAVE_CONTEXT					\
  		     "movq %%rsp,%0\n\t"	/* save RSP */		\
  		     "movq %3,%%rsp\n\t"	/* restore RSP */	\
---- linux-2.4.21.perfctr/kernel/exit.c.~1~	2002-11-30 17:12:32.000000000 +0100
-+++ linux-2.4.21.perfctr/kernel/exit.c	2004-11-14 14:22:42.000000000 +0100
-@@ -16,6 +16,7 @@
- #ifdef CONFIG_BSD_PROCESS_ACCT
- #include <linux/acct.h>
+--- linux-2.4.20-31.9.perfctr/include/linux/config.h.~1~	2004-04-13 23:41:44.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/include/linux/config.h	2004-11-14 18:31:39.000000000 +0100
+@@ -3,4 +3,9 @@
+ 
+ #include <linux/autoconf.h>
+ 
++/* describe relevant differences from the base kernel */
++#define HAVE_SET_CPUS_ALLOWED 1
++#define HAVE_5ARG_REMAP_PAGE_RANGE 1
++#define HAVE_NOARG_RECALC_SIGPENDING 1
++
  #endif
+--- linux-2.4.20-31.9.perfctr/kernel/exit.c.~1~	2004-04-13 23:07:19.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/kernel/exit.c	2004-11-14 18:31:39.000000000 +0100
+@@ -20,6 +20,7 @@
+ #include <linux/ptrace.h>
+ #include <linux/profile.h>
+ #include <linux/mount.h>
 +#include <linux/perfctr.h>
  
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
-@@ -51,6 +52,7 @@ static void release_task(struct task_str
- 		unhash_process(p);
+@@ -81,6 +82,7 @@ void release_task(struct task_struct * p
+ 	p->parent->cmin_flt += p->min_flt + p->cmin_flt;
+ 	p->parent->cmaj_flt += p->maj_flt + p->cmaj_flt;
+ 	p->parent->cnswap += p->nswap + p->cnswap;
++	perfctr_release_task(p);
+ 	sched_exit(p);
+ 	write_unlock_irq(&tasklist_lock);
  
- 		release_thread(p);
-+		perfctr_release_task(p);
- 		current->cmin_flt += p->min_flt + p->cmin_flt;
- 		current->cmaj_flt += p->maj_flt + p->cmaj_flt;
- 		current->cnswap += p->nswap + p->cnswap;
---- linux-2.4.21.perfctr/kernel/sched.c.~1~	2004-11-14 14:17:42.000000000 +0100
-+++ linux-2.4.21.perfctr/kernel/sched.c	2004-11-14 14:22:36.000000000 +0100
-@@ -29,6 +29,7 @@
- #include <linux/completion.h>
- #include <linux/prefetch.h>
- #include <linux/compiler.h>
+--- linux-2.4.20-31.9.perfctr/kernel/sched.c.~1~	2004-04-13 23:07:19.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/kernel/sched.c	2004-11-14 18:31:34.000000000 +0100
+@@ -30,6 +30,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/delay.h>
+ #include <linux/timer.h>
 +#include <linux/perfctr.h>
  
- #include <asm/uaccess.h>
- #include <asm/mmu_context.h>
-@@ -865,6 +866,8 @@ void set_cpus_allowed(struct task_struct
- 	new_mask &= cpu_online_map;
- 	BUG_ON(!new_mask);
+ /*
+  * Convert user-nice values [ -20 ... 0 ... 19 ]
+@@ -1969,6 +1970,8 @@ void set_cpus_allowed(task_t *p, unsigne
+ 		BUG();
+ #endif
  
 +	perfctr_set_cpus_allowed(p, new_mask);
 +
+ 	rq = task_rq_lock(p, &flags);
  	p->cpus_allowed = new_mask;
- 
  	/*
---- linux-2.4.21.perfctr/kernel/timer.c.~1~	2002-11-30 17:12:32.000000000 +0100
-+++ linux-2.4.21.perfctr/kernel/timer.c	2004-11-14 14:22:36.000000000 +0100
+--- linux-2.4.20-31.9.perfctr/kernel/timer.c.~1~	2004-04-13 23:07:18.000000000 +0200
++++ linux-2.4.20-31.9.perfctr/kernel/timer.c	2004-11-14 18:31:34.000000000 +0100
 @@ -22,6 +22,7 @@
  #include <linux/smp_lock.h>
  #include <linux/interrupt.h>

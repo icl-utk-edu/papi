@@ -36,6 +36,15 @@ static void do_open(void)
 	printf("PCINT not supported -- expect failure\n");
 }
 
+#if defined(__powerpc__)
+/* It seems that the 2.4 PPC32 Linux kernels do not clear the high
+   bits of the si_code when copying the siginfo_t to user-space.
+   This works around that. */
+#define get_si_code(SI)	((SI) & 0xFFFF)
+#else
+#define get_si_code(SI)	((SI))
+#endif
+
 static void on_sigio(int sig, siginfo_t *si, void *puc)
 {
     struct ucontext *uc;
@@ -47,7 +56,7 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
 	printf("%s: unexpected signal %d\n", __FUNCTION__, sig);
 	return;
     }
-    if( si->si_code != SI_PMC_OVF ) {
+    if( get_si_code(si->si_code) != get_si_code(SI_PMC_OVF) ) {
 	printf("%s: unexpected si_code #%x\n", __FUNCTION__, si->si_code);
 	return;
     }

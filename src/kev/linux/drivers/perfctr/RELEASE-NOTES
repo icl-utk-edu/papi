@@ -3,6 +3,39 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.11, 2004-11-14
+- Compat stuff updated for tsk->sighand->siglock,
+  recalc_sigpending(), and preempt_enable_no_resched().
+- Silence compiler warning from compat.h:remap_pfn_range().
+- PPC32 overflow interrupt support backported from perfctr-2.7.
+- Backported inheritance handling calls from perfctr-2.7
+  to kernel patch kit. They are currently stubs, but can be
+  implemented later without having to update the patch kit.
+- Overflow interrupts fixes backported from perfctr-2.7.7:
+  * x86/x86-64: move perfctr_suspend_thread() call from
+    __switch_to() to the start of switch_to()
+  * x86/x86-64: mask interrupts at suspend and record if
+    any overflows are pending; unmask interrupts at resume
+  * virtual: handle pending overflows in resume path
+  * ppc32: provide dummy pending overflow checking function
+
+Version 2.6.10.3, 2004-10-24
+- virtual.c, linux/perfctr.h: reformatted "if( x )" to "if (x)"
+  and similarly for while and switch statements.
+- PPC32: Add support for MPC7447A. Add support for MPC7448,
+  except for decoding its PLL_CFG.
+- Move x86 cpu_type definitions from <linux/perfctr.h>
+  to <asm-i386/perfctr.h>.
+- Make PERFCTR_INTERRUPT_SUPPORT a Kconfig-derived option.
+  Ditto PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED.
+  Also implement this in Config.in for 2.4 kernels.
+- Kernel 2.6.10-rc1 removed the export of put_filp().
+  Reordered the allocations in vperfctr_get_filp() to
+  avoid the need to use put_filp().
+- remap_page_range() was replaced with remap_pfn_range() in
+  kernel 2.6.10-rc1. Updated virtual.c accordingly, and added
+  remap_pfn_range() emulations for older kernels.
+
 Version 2.6.10.2, 2004-10-19
 - virtual.c: replace nrctrs_lock with a mutex. Avoids illegal
   may-sleep-while-holding-lock, caused by mutex operations in
