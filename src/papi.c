@@ -49,7 +49,7 @@ extern int _papi_hwi_error_level;
 extern char *_papi_hwi_errStr[];
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
-void _papi_hwi_dummy_handler(int EventSet, void *address, long_long  overflow_vector);
+extern PAPI_overflow_handler_t _papi_hwi_dummy_handler;
 
 /* papi_data.c */
 
