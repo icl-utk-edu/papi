@@ -5,8 +5,8 @@ TESTS 	= zero first \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
-FTEST_DEPENDENCE=ftests_util.o
 PAPILIB=ftests_util.o ../$(LIBRARY)
+FTEST_DEPENDENCE=$(PAPILIB)
 
 default: $(TESTS)
 
