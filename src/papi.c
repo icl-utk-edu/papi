@@ -861,9 +861,6 @@ int PAPI_add_pevent(int EventSet, int code, void *inout)    /* JT */
 
   /* Is the EventSet already in existence? */
 
-  if (EventSet == NULL)
-    papi_return(PAPI_EINVAL);
-
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);      /* JT */
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
@@ -889,9 +886,6 @@ int PAPI_add_event(int EventSet, int EventCode)      /* JT */
 
   /* Is the EventSet already in existence? */
   
-  if (&EventSet == NULL)                               /* JT */
-    papi_return(PAPI_EINVAL);
-
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);  /* JT */
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
@@ -1526,9 +1520,6 @@ int PAPI_cleanup_eventset(int EventSet)       /* JT */
   EventSetInfo *thread_master_eventset;
 
   /* Is the EventSet already in existence? */
-
-  if (&EventSet == NULL)
-    papi_return(PAPI_EINVAL);
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);    /* JT */
   if (ESI == NULL)
