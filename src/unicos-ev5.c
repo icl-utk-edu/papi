@@ -959,7 +959,7 @@ long long _papi_hwd_get_virt_cycles (void)
   return(-1);
 }
 
-void _papi_hwd_init_lock(void)
+void _papi_hwd_lock_init(void)
 {
 }
 
