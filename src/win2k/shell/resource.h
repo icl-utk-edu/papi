@@ -2,6 +2,7 @@
 // Microsoft Developer Studio generated include file.
 // Used by WinPAPIShell.rc
 //
+#define IDS_STRING1                     1
 #define IDC_MYICON                      2
 #define IDDRIVER                        3
 #define IDWEB                           10
