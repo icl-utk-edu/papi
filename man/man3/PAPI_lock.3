@@ -1,27 +1,27 @@
 .\" $Id$
-.TH "PAPI_lock" 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH "PAPI_lock" 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_lock \- Lock one of the mutex variable defined in papi.h
- PAPI_unlock \- Unlock one of the mutex variable defined in papi.h
+PAPI_lock \- Lock one of two mutex variables defined in papi.h
+ PAPI_unlock \- Unlock one of the mutex variables defined in papi.h
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI void\ PAPI_lock(int lck);
-.BI void\ PAPI_unlock(int lck);
+.BI void\ PAPI_lock(int lock);
+.BI void\ PAPI_unlock(int lock);
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_lock(int lck)
-.BI PAPIF_unlock(int lck)
+.BI PAPIF_lock(C_INT\  lock)
+.BI PAPIF_unlock(C_INT\  lock)
 .fi
 
 .SH DESCRIPTION
 .B "PAPI_lock()"
-Grabs access to the PAPI mutex variables. This function is provided to the 
+Grabs access to one of two PAPI mutex variables. This function is provided to the 
 user to have a platform independent call to  (hopefully) efficiently
 implemented mutex variables.
 .LP
@@ -29,27 +29,22 @@ implemented mutex variables.
 unlocks the mutex acquired by a call to
 .BR PAPI_lock .
 
+.SH ARGUMENT
+.I lock
+--  an integer value specifying one of two user locks: 
+.B "PAPI_USR1_LOCK" or "PAPI_USR2_LOCK"
+
 .SH RETURN VALUES
 There are no return values for these calls. Upon return from
 .B PAPI_lock
-the current thread has acquired exclusive access to the PAPI mutex.
+the current thread has acquired exclusive access to the specified PAPI mutex.
 
-.SH NOTES
-Care must be taken since the mutex variable used is the internal PAPI
-mutex variable. The thread that has acquired the mutex should be
-designed so as not to call any PAPI library functions until a call to
-.B PAPI_unlock
-has been made. Also, other threads that call PAPI library functions may
-be blocked until the thread that has grabbed the mutex has released it.
-PAPI provides two mutex variables to the user, one is PAPI_USR1_LOCK,
-the other is PAPI_USR2_LOCK.
-
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
+These functions have no known bugs.
 
 .SH SEE ALSO
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
 

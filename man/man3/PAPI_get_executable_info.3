@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_get_executable_info 3 "September, 2002" "PAPI Programmer's Reference" PAPI
+.TH PAPI_get_executable_info 3 "November, 2003" "PAPI Programmer's Reference" PAPI
 
 .SH NAME
 PAPI_get_executable_info \- get the executable's address space info
@@ -76,8 +76,9 @@ printf("End of user program is at %p\en",prginfo->text_end);
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 Only the
@@ -88,6 +89,4 @@ fields are filled on every architecture.
 
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
-.BR PAPI_get_opt "(3), " 
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI_get_opt "(3)" 

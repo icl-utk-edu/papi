@@ -1,32 +1,33 @@
 .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5
-.TH PAPI_flops 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_flips 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 .SH NAME
+PAPI_flips \- PAPI High level: Simplified call to get Mflips/s, real and processor time
 PAPI_flops \- PAPI High level: Simplified call to get Mflops/s, real and processor time
+
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflops ");"
+.BI "int PAPI_flips (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflips ");"
+.BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpops ", float *" mflops ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check )
+.BI PAPIF_flips(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflips,\  C_INT\  check )
+.BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpops,\  C_FLOAT\  mflops,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
 .LP
 The first call to
-.B PAPI_flops(\|)
-will initialize PAPI, set up the counters
-to monitor PAPI_FP_INS and PAPI_TOT_CYC events and start the counters.
+.B PAPI_flips(\|) "or" PAPI_flops(\|)
+will initialize the PAPI High Level interface, set up the counters
+to monitor PAPI_FP_INS or PAPI_FP_OPS and PAPI_TOT_CYC events and start the counters.
 Subsequent calls will read the counters and return total real time,
-total process time, total floating point instructions since the start
-of the measurement and Mflops/s rate since latest call to
-.B PAPI_flops(\|)
-\. Any call with
-.I flpins
-= -1 will reinitialize all counters to 0.
+total process time, total floating point instructions or operations since the start
+of the measurement and the Mflip/s or Mflop/s rate since latest call to
+.B PAPI_flops(\|) "or" PAPI_flops(\|).
 
 .SH ARGUMENTS
 .I *rtime 
@@ -35,11 +36,11 @@ of the measurement and Mflops/s rate since latest call to
 .I *ptime 
 -- total process time since the first PAPI_flops() call
 .LP
-.I *flpins 
--- total floating point instructions since the first PAPI_flops() call
+.I *flpins, flpops 
+-- total floating point instructions or operations since the first call
 .LP
-.I *mflops 
--- Mflops/s achieved since the latest PAPI_flops() call
+.I *mflips, *mflops 
+-- Mflip/s or Mflop/s achieved since the previous call
 
 .SH RETURN VALUES
 On success, this function returns
@@ -48,11 +49,17 @@ On success, this function returns
 
 .SH NOTES
 .LP
-Most platforms are only capable of counting the number of floating
-point instructions completed. This may or may not translate to your 
-definition of floating point operations. The measured rate is thus 
-Mflips/s, and will in some circumstances count FMA instructions as one
-operation. Consult the hardware documentation for your system for specifics.
+Mflip/s, or millions of floating point instructions per second, is defined 
+in this context as the number of instructions issued to the floating point 
+unit per second. It is usually calculated directly from a counter measurement 
+and may be different from platform to platform.
+Mflop/s, or millions of floating point operations per second, is intended to 
+represent the number of floating point arithmetic operations per second.
+Attempts are made to massage the counter values to produce the theoreticallly
+expected value by, for instance, doubling FMA counts or subtracting floating point
+loads and stores if necessary.
+.I CAVEAT EMPTOR
+
 .LP
 .nf
 .BR  PAPI_flops() " may be called by:"
@@ -75,10 +82,12 @@ operation. Consult the hardware documentation for your system for specifics.
 .B  \tPAPI_shutdown()
 .fi
 
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
+
 .SH BUGS
-This function has no known bugs.
+These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_accum (3),
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi/
+.BR "PAPI_accum (3)", "PAPI_ipc (3)"

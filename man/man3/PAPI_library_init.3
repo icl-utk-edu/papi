@@ -16,6 +16,7 @@ PAPI_library_init, PAPI_is_initialized \- initialize the PAPI library; check for
 .nf
 .B #include "fpapi.h"
 .BI PAPIF_library_init(C_INT\  check )
+.BI PAPIF_is_initialized(C_INT\  check )
 .fi
 
 .SH DESCRIPTION
@@ -93,8 +94,9 @@ if (retval < 0)
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 If you don't call this before using any of the low level PAPI calls,
@@ -105,7 +107,5 @@ you're application could core dump.
 .BR PAPI_preset "(3),"
 .BR PAPI_low_level "(3),"
 .BR PAPI_high_level "(3),"
-.BR PAPI "(3),"
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI "(3)"
 

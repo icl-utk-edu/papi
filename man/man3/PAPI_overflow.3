@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_overflow 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_overflow 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_overflow \- set up an event set 
@@ -108,8 +108,9 @@ void handler(int EventSet, void *address, long_long overflow_vector)
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 These functions have no known bugs.
@@ -118,6 +119,4 @@ These functions have no known bugs.
 .BR PAPI_preset "(3), "
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
 .BR PAPI_remove_events "(3), " PAPI_query "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3)"

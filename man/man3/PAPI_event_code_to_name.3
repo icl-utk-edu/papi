@@ -68,18 +68,6 @@ char EventLabel[20];
 if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
   handle_error(1);
 
-/* Describe event from EventCode */
-*EventCodeStr='\0'; /* Erase the name argument to look up the code */
-if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
-  handle_error(1);
-
-/* Label event from EventCode */
-if (PAPI_label_event(EventCode,EventLabel) != PAPI_OK)
-  handle_error(1);
-
-/* Print the differing text strings */
-printf("Name: %s\nLabel: %s\nDescription: %s\n",EventCodeStr,EventLabel,EventDescr);
-
 /* Create the EventSet */
 
 if (PAPI_create_eventset(&EventSet) != PAPI_OK)
@@ -92,8 +80,9 @@ if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 These functions have no known bugs.
@@ -101,7 +90,5 @@ These functions have no known bugs.
 .SH SEE ALSO
 .BR PAPI_presets "(3), " PAPI_native "(3), " 
 .BR PAPI_enum_events "(3), " PAPI_add_event "(3), " 
-.BR PAPI_set_opt "(3), " PAPI_get_event_info "(3), "
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI_set_opt "(3), " PAPI_get_event_info "(3)"
 

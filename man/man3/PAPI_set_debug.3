@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_set_debug 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_set_debug 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_set_debug \- set the current debug level for PAPI
@@ -48,15 +48,14 @@ On success, this function returns
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
+.SH AUTHORS
+The PAPI Team. See them at the PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
-The default error handler is currently not possible to substitute by
-the user. It is also only activated when PAPI is compiled with
+It is currently not possible for the user to substitute default error handler.
+ This function is also only activated when PAPI is compiled with
 debugging enabled.
 
 .SH SEE ALSO
-.BR PAPI_set_opt "(3)," 
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI_set_opt "(3)" 
