@@ -874,8 +874,9 @@ static int ia64_process_profile_entry(void *papiContext)
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
    hwd_control_state_t *this_state;
    pfmw_arch_pmd_reg_t *reg;
+/*
    int smpl_entry=0;
-
+*/
    thread = _papi_hwi_lookup_in_thread_list();
    if (thread == NULL)
       return (PAPI_ESYS);
