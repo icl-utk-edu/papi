@@ -51,6 +51,16 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
+#if defined(sgi) && defined(host_mips)
+   mask1=mask2=mask3=0x5;
+   if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
+      test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
+
+   retval = PAPI_event_code_to_name(PAPI_FP_INS, event_name);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
+#else
    if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
@@ -58,6 +68,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
    sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
+#endif
 
 
    memset(&options, 0x0, sizeof(options));
