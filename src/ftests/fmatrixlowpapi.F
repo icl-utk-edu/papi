@@ -75,39 +75,41 @@ C   Grab the hardware info
 
       print *
       print 100, totalcpus,mstring(1:nchr), mhz
- 100   format(i5,' CPU(s) ',a,' at ',f8.3,' MHz')
-      print 101, 'ncpu',ncpu, 'nnodes',nnodes, 'totalcpus',totalcpus,
-     $      'mhz',mhz,'revision',revision
- 101  format(3(a10,'=',i5),2(a10,'=',f8.3))
-      print 102, 'vendor',vendor, 'vstring',vstring,
-     $      'model',model, 'mstring',mstring
- 102  format(a10,'= ',i6,5x,a10,'= ',a40)
       print *
-
+      print 101,'ncpu',ncpu, 'nnodes',nnodes, 'totalcpus',totalcpus
+      print 102,'mhz',mhz,'revision',revision
+      print 103,'vendor',vendor,'vstring',vstring
+      print 104,'model',model,'mstring',mstring
+      print *
+ 100  format(i5,' CPU(s) ',a,' at ',f7.2,' MHz')
+ 101  format(a9,' =',i6,7x,a9,' =',i5,5x,a9,'=',i5)
+ 102  format(a9,' =',f7.2,6x,a9,' =',f7.2)
+ 103  format(a9,' =',i6,7x,a9,' =',a40)
+ 104  format(a9,' =',i6,7x,a9,' =',a40)
 C   Open matrix file number 1 for reading
-      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
+C      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
 C   Open matrix file number 2 for reading
-      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
+C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
 C   matrix 1: read in the matrix values
       do i=1, nrows1
          do j=1,ncols1
-            READ (1,*) p(i,j)
+            p(i,j) = i*j*1.0
          end do
       end do
 
-C     matrix 2: read in the matrix values
+C   matrix 2: read in the matrix values
       do i=1, nrows2
          do j=1,ncols2
-            READ (2,*) q(i,j)
+            q(i,j) = i*j*1.0
          end do
       end do
 
 C  Initialize the result matrix 
       do i=1,nrows1
-        do j=1, ncols2
-	   r(i,j)=0
-        end do
+         do j=1, ncols2
+            r(i,j) = i*j*1.0
+         end do
       end do
       
 C  Grab the beginning time
@@ -139,10 +141,10 @@ C  Stop the counters and put the results in the array values
       call PAPIf_get_real_usec( stoptime )
       finaltime = (stoptime/1000000.0) - (starttime/1000000.0)
 
-      print *, 'Time: ', finaltime
+      print *, 'Time: ', finaltime, 'seconds'
       print *, 'Cycles: ', values(1)
-      print *, 'Floating Point Instructions: ', values(2)
-      write(*,'(a,1p,f9.6)') 'Efficiency (flops/cycles):',
+      print *, 'FP Instructions: ', values(2)
+      write(*,'(a,1p,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
       stop
       end

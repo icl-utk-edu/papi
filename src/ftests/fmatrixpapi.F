@@ -27,9 +27,9 @@ C   Setup default values
       length = 100
 
 C   Open matrix file number 1 for reading
-      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
+C      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
 C   Open matrix file number 2 for reading
-      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
+C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
 C   Total floating point operations
       event(1) = PAPI_FP_INS
@@ -49,21 +49,21 @@ C   See how many hardware events at one time are supported
 C   matrix 1: read in the matrix values
       do i=1, nrows1
          do j=1,ncols1
-            READ (1,*) p(i,j)
+            p(i,j) = i*j*1.0
          end do
       end do
 
 C   matrix 2: read in the matrix values
       do i=1, nrows2
          do j=1,ncols2
-            READ (2,*) q(i,j)
+            q(i,j) = i*j*1.0
          end do
       end do
 
 C  Initialize the result matrix 
       do i=1,nrows1
          do j=1, ncols2
-            r(i,j)=0
+            r(i,j) = i*j*1.0
          end do
       end do
       
@@ -101,9 +101,9 @@ C  Stop the counters and put the results in the array values
         stop 'PAPIf_stop_counters failed'
       end if
 
-      print *, 'Floating Point Instructions:  ',values(1)
+      print *, 'FP Instructions:  ',values(1)
       print *, 'Cycles: ',values(2)
-      write(*,'(a,1p,f9.6)') 'Efficiency (flops/cycles):',
+      write(*,'(a,1p,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
       stop
       end
