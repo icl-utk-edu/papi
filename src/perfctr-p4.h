@@ -120,11 +120,18 @@ typedef struct P4_reg_alloc {
 } P4_reg_alloc_t;
 
 typedef struct hwd_p4_native_map {
+  char *name;		// ASCII name of the native event
+  char *description;	// ASCII description of the native event
+  P4_register_t bits;	// description of resources needed by this event
+  int mask;		// contains all valid mask bits for this event group
+  int synonym;		// index of next synonym if event can be multiply encoded 
+} hwd_p4_native_map_t;
+
+typedef struct hwd_p4_mask {
+  int bit_pos;		    // bit position of mask bit
   char *name;		    // ASCII name of the native event
   char *description;	    // ASCII description of the native event
-  P4_register_t resources;  // description of resources needed by this event
-  int synonym;		    // index of next synonym if event can be multiply encoded 
-} hwd_p4_native_map_t;
+} hwd_p4_mask_t;
 
 typedef struct P4_perfctr_control {
   /* add this array to hold native events info */

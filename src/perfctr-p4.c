@@ -452,7 +452,7 @@ static void print_alloc(P4_reg_alloc_t *a){
     if it can be mapped to counter ctr. 
     Returns true if it can, false if it can't.
 */
-static int map_avail(hwd_reg_alloc_t *dst, int ctr)
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
 {
     return(dst->ra_selector  & (1<<ctr));
 }
@@ -461,7 +461,7 @@ static int map_avail(hwd_reg_alloc_t *dst, int ctr)
     be mapped to only counter ctr. 
     Returns nothing.
 */
-static void map_set(hwd_reg_alloc_t *dst, int ctr)
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
 {
     dst->ra_selector = (1<<ctr);
     dst->ra_rank = 1;
@@ -477,7 +477,7 @@ static void map_set(hwd_reg_alloc_t *dst, int ctr)
     if it has a single exclusive mapping. 
     Returns true if exlusive, false if non-exclusive.
 */
-static int map_exclusive(hwd_reg_alloc_t *dst)
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
 {
     return(dst->ra_rank==1);
 }
@@ -487,7 +487,7 @@ static int map_exclusive(hwd_reg_alloc_t *dst)
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-static int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
   /* Pentium 4 needs to check for conflict of both counters and esc registers */
     return((dst->ra_selector & src->ra_selector) 
@@ -500,7 +500,7 @@ static int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
-static void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
     int i, j;
     unsigned shared;
@@ -550,104 +550,14 @@ static void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
     the dst event based on information in the src event.
     Returns nothing.
 */
-static void map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
     dst->ra_selector = src->ra_selector;
     dst->ra_escr[0] = src->ra_escr[0];
     dst->ra_escr[1] = src->ra_escr[1];
 }
 
-/* this function recusively does Modified Bipartite Graph counter allocation 
-    success  return 1
-    fail     return 0
-    This function is now hardware independent and should be moved up 
-    to the hwi layer. However, it's still being debugged on power3 
-    and should wait until that effort is complete
-*/
-static int do_counter_allocation(hwd_reg_alloc_t *event_list, int count)
-{
-    int i,j;
-    int idx_q[MAX_COUNTERS];  /* queue of indexes of lowest rank events */
-    int map_q[MAX_COUNTERS];  /* queue of mapped events (TRUE if mapped) */
-    int head, tail;
-    
-    /* build a queue of indexes to all events 
-    that live on one counter only (rank == 1) */
-    head=0; /* points to top of queue */
-    tail=0; /* points to bottom of queue */
-    for(i=0;i<count;i++){
-	map_q[i] = 0;
-	if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
-    }
-    
-    /* scan the single counter queue looking for events that share counters.
-    If two events can live only on one counter, return failure.
-    If the second event lives on more than one counter, remove shared counter
-    from its selector and reduce its rank. 
-    Mark first event as mapped to its counter. */
-    while(head<tail){
-	for(i=0;i<count;i++){
-	    if(i!=idx_q[head]){
-		if(map_shared(&event_list[i], &event_list[idx_q[head]])) {
-		    /* both share a counter; if second is exclusive, mapping fails */
-		    if(map_exclusive(&event_list[i])) return 0;
-		    else{
-			map_preempt(&event_list[i], &event_list[idx_q[head]]);
-			if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
-		    }
-		}
-	    }
-	}
-	map_q[idx_q[head]] = 1;	/* mark this event as mapped */
-	head++;
-    }
-    if(tail==count){
-	return 1; /* idx_q includes all events; everything is successfully mapped */
-    }
-    else{
-	hwd_reg_alloc_t rest_event_list[MAX_COUNTERS];
-	hwd_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
-	int remainder;
-	
-	/* copy all unmapped events to a second list and make a backup */
-	for(i=0,j=0;i<count;i++) {
-	    if(map_q[i] == 0) {
-		memcpy(&copy_rest_event_list[j++], &event_list[i], sizeof(hwd_reg_alloc_t));
-	    }
-	}
-	remainder=j;
-	
-	memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_reg_alloc_t)*(remainder));
-	
-	/* try each possible mapping until you fail or find one that works */
-	for(i=0;i<MAX_COUNTERS;i++){
-	    /* for the first unmapped event, try every possible counter */
-	    if(map_avail(rest_event_list, i)){
-		map_set(rest_event_list, i);
-		/* remove selected counter from all other unmapped events */
-		for(j=1;j<remainder;j++){
-  		    if(map_shared(&rest_event_list[j], rest_event_list))
-			map_preempt(&rest_event_list[j], rest_event_list);
-		}
-		/* if recursive call to allocation works, break out of the loop */
-		if(do_counter_allocation(rest_event_list, remainder))
-		    break;
 
-		/* recursive mapping failed; copy the backup list and try the next combination */
-		memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_reg_alloc_t)*(remainder));
-	    }
-	}
-	if(i==MAX_COUNTERS){
-	    return 0; /* fail to find mapping */
-	}
-	for(i=0,j=0;i<count;i++) {
-	    if(map_q[i] == 0)
-		map_update(&event_list[i], &rest_event_list[j++]);
-	}
-	return 1;		
-    }
-}	
-	
 /* Register allocation */
 
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
@@ -666,7 +576,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     e = &event_list[i];
 
     /* retrieve the mapping information about this native event */
-    _papi_hwd_native_code_to_bits(ESI->NativeInfoArray[i].ni_index, &e->ra_bits);
+    _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_index, &e->ra_bits);
 
     /* combine counter bit masks for both esc registers into selector */
     e->ra_selector = e->ra_bits.counter[0] | e->ra_bits.counter[1];
@@ -688,7 +598,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 #endif
   }
 
-  if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
+  if(_papi_hwi_bipartite_alloc(event_list, natNum)){ /* successfully mapped */
     for(i=0;i<natNum;i++) {
 #ifdef DEBUG
 	  SUBDBG("i: %d\n",i);
@@ -747,7 +657,7 @@ static void clear_control_state(hwd_control_state_t *this_state)
 /* This function clears the current contents of the control structure and updates it 
    with whatever resources are allocated for all the native events 
    in the native info structure array. */
-void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
 {
     int i, nractrs;
 
@@ -792,6 +702,7 @@ void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_
 #ifdef DEBUG
     print_control(&this_state->control.cpu_control);
 #endif
+    return(PAPI_OK);
 }
 
 

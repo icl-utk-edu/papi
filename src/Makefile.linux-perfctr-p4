@@ -44,9 +44,9 @@ CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpat
 CC_R	= $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG -DHAS_NATIVE_MAP
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-MISCSRCS= linux.c p4_native.c
+MISCSRCS= linux.c p4_events.c
 MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p4_events.o
-MISCHDRS= perfctr-p4.h
+MISCHDRS= perfctr-p4.h p4_events.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
@@ -54,7 +54,7 @@ include Makefile.inc
 linux.o: linux.c
 	$(CC) $(CFLAGS) -c linux.c -o $@
 
-p4_events.o: p4_events.c
+p4_events.o: p4_events.c p4_events.h
 	$(CC) $(CFLAGS) -c p4_events.c -o $@
 
 $(PERFCTR)/usr.lib/libperfctr.o:

@@ -126,15 +126,15 @@ extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
 
 /* The following functions implement the hardware dependent native event table access.
    The first four routines are required. The next two are optional.
-   All five must at least be stubbed in the substrate file. */
+   All six must at least be stubbed in the substrate file. */
 
-extern int _papi_ntv_enum_events(unsigned int EventCode, int modifer);
-extern char *_papi_ntv_code_to_name(unsigned int EventCode);
-extern char *_papi_ntv_code_to_descr(unsigned int EventCode);
-extern int _papi_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+extern int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifer);
+extern char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
+extern char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
+extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
 /* not completely defined yet... I'm partial to using XML -- dkt
-    _papi_ntv_encode();
-    _papi_ntv_decode();
+    _papi_hwd_ntv_encode();
+    _papi_hwd_ntv_decode();
 */
 
 /* the following functions are counter allocation functions */
@@ -155,35 +155,35 @@ extern int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count);
     if it can be mapped to counter ctr. 
     Returns true if it can, false if it can't.
 */
-extern int _papi_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr);
+extern int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr);
 /* This function forces the event to
     be mapped to only counter ctr. 
     Returns nothing.
 */
-extern void _papi_bpt_map_set(hwd_reg_alloc_t *dst, int ctr);
+extern void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr);
 /* This function examines the event to determine
     if it has a single exclusive mapping. 
     Returns true if exlusive, false if non-exclusive.
 */
-extern int _papi_bpt_map_exclusive(hwd_reg_alloc_t *dst);
+extern int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst);
 /* This function compares the dst and src events
     to determine if any counters are shared. Typically the src event
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-extern int _papi_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
+extern int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
 /* This function removes the counters available to the src event
     from the counters available to the dst event,
     and reduces the rank of the dst event accordingly. Typically,
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
-extern void _papi_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
+extern void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
 /* This function updates the selection status of 
     the dst event based on information in the src event.
     Returns nothing.
 */
-extern void _papi_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
+extern void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src);
 
 
 

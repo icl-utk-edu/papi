@@ -44,7 +44,7 @@ int setup_all_presets(preset_search_t *findem)
     while((findem[pnum].natEvent[pmc] > 0) && (pmc < MAX_COUNTER_TERMS)){
 	  _papi_hwi_preset_map[preset_index].metric_count++;
 	  _papi_hwi_preset_map[preset_index].natIndex[pmc]=findem[pnum].natEvent[pmc] ^ NATIVE_MASK;
-	  name = _papi_ntv_code_to_name(findem[pnum].natEvent[pmc]);
+	  name = _papi_hwd_ntv_code_to_name(findem[pnum].natEvent[pmc]);
 	  if (strlen(_papi_hwi_preset_map[preset_index].note)+strlen(name)+1 < PAPI_MAX_STR_LEN){
 	    if (pmc) strcat(_papi_hwi_preset_map[preset_index].note,", ");
 	    strcat(_papi_hwi_preset_map[preset_index].note,name);

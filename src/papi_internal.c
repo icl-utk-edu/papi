@@ -534,7 +534,7 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t *ESI, int nix)
 	for(i=0; i<ESI->NativeCount;i++){
 		if(nix==ESI->NativeInfoArray[i].ni_index){
 			ESI->NativeInfoArray[i].ni_owners++;
-			DBG((stderr,"found native event already mapped: %s\n", _papi_ntv_code_to_name(nix & NATIVE_MASK)));
+			DBG((stderr,"found native event already mapped: %s\n", _papi_hwd_ntv_code_to_name(nix & NATIVE_MASK)));
 			return i;
 		}
 	}
@@ -610,7 +610,7 @@ static int add_native_fail_clean(EventSetInfo_t *ESI, int nix)
 				ESI->NativeInfoArray[i].ni_position = -1;
 				ESI->NativeCount --;
 			}
-			DBG((stderr,"add_events fail, and remove added native events of the event: %s\n", _papi_ntv_code_to_name(nix & NATIVE_MASK)));
+			DBG((stderr,"add_events fail, and remove added native events of the event: %s\n", _papi_hwd_ntv_code_to_name(nix & NATIVE_MASK)));
 			return i;
 		}
 	}
@@ -1289,7 +1289,7 @@ void print_state(EventSetInfo_t *ESI)
 
   fprintf(stderr,"\nnative_event_name       ");
   for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15s",_papi_ntv_code_to_name(ESI->NativeInfoArray[i].ni_index));
+	  fprintf(stderr,"%15s",_papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_index));
   fprintf(stderr,"\n");
 
   fprintf(stderr,"native_event_position     ");
@@ -1333,7 +1333,7 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count)
     tail=0; /* points to bottom of queue */
     for(i=0;i<count;i++){
 	map_q[i] = 0;
-	if(_papi_bpt_map_exclusive(&event_list[i])) idx_q[tail++]=i;
+	if(_papi_hwd_bpt_map_exclusive(&event_list[i])) idx_q[tail++]=i;
     }
     
     /* scan the single counter queue looking for events that share counters.
@@ -1344,12 +1344,12 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count)
     while(head<tail){
 	for(i=0;i<count;i++){
 	    if(i!=idx_q[head]){
-		if(_papi_bpt_map_shared(&event_list[i], &event_list[idx_q[head]])) {
+		if(_papi_hwd_bpt_map_shared(&event_list[i], &event_list[idx_q[head]])) {
 		    /* both share a counter; if second is exclusive, mapping fails */
-		    if(_papi_bpt_map_exclusive(&event_list[i])) return 0;
+		    if(_papi_hwd_bpt_map_exclusive(&event_list[i])) return 0;
 		    else{
-			_papi_bpt_map_preempt(&event_list[i], &event_list[idx_q[head]]);
-			if(_papi_bpt_map_exclusive(&event_list[i])) idx_q[tail++]=i;
+			_papi_hwd_bpt_map_preempt(&event_list[i], &event_list[idx_q[head]]);
+			if(_papi_hwd_bpt_map_exclusive(&event_list[i])) idx_q[tail++]=i;
 		    }
 		}
 	    }
@@ -1378,12 +1378,12 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count)
 	/* try each possible mapping until you fail or find one that works */
 	for(i=0;i<MAX_COUNTERS;i++){
 	    /* for the first unmapped event, try every possible counter */
-	    if(_papi_bpt_map_avail(rest_event_list, i)){
-		_papi_bpt_map_set(rest_event_list, i);
+	    if(_papi_hwd_bpt_map_avail(rest_event_list, i)){
+		_papi_hwd_bpt_map_set(rest_event_list, i);
 		/* remove selected counter from all other unmapped events */
 		for(j=1;j<remainder;j++){
-  		    if(_papi_bpt_map_shared(&rest_event_list[j], rest_event_list))
-			_papi_bpt_map_preempt(&rest_event_list[j], rest_event_list);
+  		    if(_papi_hwd_bpt_map_shared(&rest_event_list[j], rest_event_list))
+			_papi_hwd_bpt_map_preempt(&rest_event_list[j], rest_event_list);
 		}
 		/* if recursive call to allocation works, break out of the loop */
 		if(_papi_hwi_bipartite_alloc(rest_event_list, remainder))
@@ -1398,7 +1398,7 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count)
 	}
 	for(i=0,j=0;i<count;i++) {
 	    if(map_q[i] == 0)
-		_papi_bpt_map_update(&event_list[i], &rest_event_list[j++]);
+		_papi_hwd_bpt_map_update(&event_list[i], &rest_event_list[j++]);
 	}
 	return 1;		
     }
