@@ -257,8 +257,9 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
       did = 1;
       mode |= PFM_PLM0;
    }
-   if (PAPI_DOM_OTHER & domain) 
-      return (PAPI_EINVAL);
+
+   if (domain == PAPI_DOM_OTHER) 
+      return (PAPI_ESBSTR);
 
    if (!did)
       return (PAPI_EINVAL);
