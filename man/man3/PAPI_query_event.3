@@ -1,11 +1,12 @@
 .\" $Id$
-.TH PAPI_query_event 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_query_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
+.nf
 PAPI_query_event \- query if PAPI event exists
- PAPI_query_event_verbose \- query details of a PAPI event
- PAPI_query_all_events_verbose \- acquire details of all PAPI events
-
+PAPI_query_event_verbose \- query details of a PAPI event
+PAPI_query_all_events_verbose \- acquire details of all PAPI events
+.fi
 
 .SH SYNOPSIS
 .B C Interface
@@ -19,8 +20,8 @@ PAPI_query_event \- query if PAPI event exists
 .nf
 .B #include "fpapi.h"
 .BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check )
-.BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\ \ 
-           C_STRING\ EventDescr,\  C_STRING\ EventLabel,\  C_INT\  avail,\ \
+.BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\  
+           C_STRING\ EventDescr,\  C_STRING\ EventLabel,\  C_INT\  avail,\ 
            C_STRING\ EventNote,\  C_INT\  flags,\  C_INT\  check )
 .fi
 
@@ -29,7 +30,7 @@ PAPI_query_event \- query if PAPI event exists
 asks the PAPI library if the PAPI Preset event can be counted on this
 architecture. If the event CAN be counted, the function returns
 PAPI_OK.  If the event CANNOT be counted, the function returns an
-error code.  On some platforms, this function also can be used to
+error code.  This function also can be used to
 check the syntax of a native event.
 
 .B "PAPI_query_event_verbose()"
@@ -145,9 +146,11 @@ These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_preset "(3), " PAPI_native "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
+.BR PAPI_remove_events "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
- The PAPI Web Site: 
+
+.SH
+The PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi
 
