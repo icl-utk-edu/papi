@@ -435,7 +435,13 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
   { retval = perf(PERF_READ, 0, (int)&events[0]);
     if(retval) return(PAPI_EBUG);
   }
-  if((machnum == 3) || (machnum == 7))
+  if(machnum == 3)
+  { retval = perf(PERF_READ, 1, (int)&events[0]);
+    if(retval) return(PAPI_EBUG);
+    retval = perf(PERF_READ, 2, (int)&events[1]);
+    if(retval) return(PAPI_EBUG);
+  }
+  if(machnum == 7)
   { retval = perf(PERF_READ, 1, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
     retval = perf(PERF_READ, 2, (int)&events[2]);
@@ -445,8 +451,8 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
   { retval = perf(PERF_READ, 1, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
   }
-  else 
-  { retval = perf(PERF_READ, 2, (int)&events[2]);
+  if(machnum == 5) 
+  { retval = perf(PERF_READ, 2, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
   }
 

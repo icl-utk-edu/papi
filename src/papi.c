@@ -284,6 +284,8 @@ int PAPI_add_event(int *EventSet, int EventCode)
   int retval;
   EventSetInfo *ESI,*n = NULL;
 
+  if(EventCode == -1) return(PAPI_OK);
+
   retval = check_initialize();
   if (retval < PAPI_OK)
     return(retval);
