@@ -75,39 +75,25 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) && 
-       !(strncmp(hw_info->vendor_string, "SUN", 3))) || 
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) || 
-      (strstr(hw_info->model_string, "POWER3"))) {
    /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         PAPI_event = PAPI_TOT_INS;
-         mask = MASK_TOT_INS | MASK_TOT_CYC;
-      } else
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
-      }
-   else {
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-         PAPI_event = PAPI_FP_INS;
-         mask = MASK_FP_INS | MASK_TOT_CYC;
-      } else {
-         PAPI_event = PAPI_TOT_INS;
-         mask = MASK_TOT_INS | MASK_TOT_CYC;
-      }
+   if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK) {
+      PAPI_event = PAPI_FP_OPS;
+      mask = MASK_FP_OPS | MASK_TOT_CYC;
+   } else if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+      PAPI_event = PAPI_FP_INS;
+      mask = MASK_FP_INS | MASK_TOT_CYC;
+   } else if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+      PAPI_event = PAPI_TOT_INS;
+      mask = MASK_TOT_INS | MASK_TOT_CYC;
+   } else {
+      test_skip(__FILE__, __LINE__, "An appropriate event --\n (PAPI_FP_OPS, PAPI_FP_INS, or PAPI_TOT_INS)\n is not available on this platform!", 0);
    }
+
    if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
-   /* Must have at least FP instr or Tot ins */
-   if (((mask & MASK_FP_INS) == 0) && ((mask & MASK_TOT_INS) == 0)) {
-      retval = 1;
-      test_pass(__FILE__, NULL, num_events);
-   }
-
-   if ((prginfo = PAPI_get_executable_info()) == NULL) {
-      retval = 1;
-      test_fail(__FILE__, __LINE__, "PAPI_get_executable_info", retval);
-   }
+   if ((prginfo = PAPI_get_executable_info()) == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_executable_info", 1);
 
    EventSet = add_test_events(&num_events, &mask);
    values = allocate_test_space(num_tests, num_events);
@@ -124,8 +110,10 @@ int main(int argc, char **argv)
    start = prginfo->address_info.text_start;
    end = prginfo->address_info.text_end;
 */
+/* use these lines to profile only do_flops address space */
    start = (caddr_t)do_flops;
    end = (caddr_t)fdo_flops;
+
 /* Itanium returns function descriptors instead of function addresses.
    You must dereference the descriptor to get the address.
 */
