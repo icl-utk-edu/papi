@@ -1,3 +1,12 @@
+/* 
+* File:    linux-memory.c
+* Author:  Kevin London
+*          london@cs.utk.edu
+*
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "papi.h"
 #ifdef __LINUX__
 #include <limits.h>
@@ -371,4 +380,38 @@ volatile unsigned long val;
 }
 
 long _papi_hwd_get_dmem_info(int option){
+   pid_t pid = getpid();
+   char pfile[256];
+   FILE * fd;
+   int tmp;
+   unsigned int vsize,rss;
+
+   sprintf(pfile, "/proc/%d/stat", pid);
+   if((fd=fopen(pfile,"r")) == NULL ) {
+        DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d/stat\n",pid));
+        return(PAPI_ESYS);
+   }
+  fgets(pfile, 256, fd);
+  fclose(fd);
+  
+   /* Scan through the information */
+  sscanf(pfile,"%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %d %u %u", 
+	&tmp,pfile,pfile,&tmp,&tmp,&tmp,&tmp,&tmp,
+	&tmp,&tmp,&tmp,&tmp, &tmp,&tmp,&tmp,&tmp,
+	&tmp, &tmp,&tmp,&tmp,&tmp,&tmp, &vsize,&rss );
+/*
+	&tmp[0],pfile,pfile,&tmp[1],&tmp[2],&tmp[3],&tmp[4],&tmp[5],
+	&tmp[6],&tmp[7],&tmp[8],&tmp[9], &tmp[10],&tmp[11],&tmp[12],&tmp[13],
+	&tmp[14], &tmp[15],&tmp[16],&tmp[17],&tmp[18],&tmp[19], &vsize,&rss );
+*/
+ switch(option){
+   case PAPI_GET_RESSIZE:
+        return(rss);
+   case PAPI_GET_SIZE:
+ 	tmp=getpagesize();
+ 	if ( tmp == 0 ) tmp = 1;
+        return((vsize/tmp));
+   default:
+        return(PAPI_EINVAL);
+  }
 }
