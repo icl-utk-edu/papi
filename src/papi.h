@@ -77,6 +77,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_SYS     0x8    /* PAPI counters for the current CPU, are you bound? */
 #define PAPI_GRN_SYS_CPU 0x10   /* PAPI counters for all CPU's individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
+
+#if 0
 /* #define PAPI_GRN_DEFAULT PAPI_GRN_THR NOW DEFINED BY SUBSTRATE */
 
 #define PAPI_PER_CPU     1    /*Counts are accumulated on a per cpu basis*/
@@ -84,9 +86,9 @@ All of the functions in the PerfAPI should use the following set of constants.
                                 processor basis*/
 #define PAPI_SYSTEM	 3    /*Counts are accumulated for events occuring in
 			 	either the user context or the kernel context*/
-
 #define PAPI_PER_THR     0    /*Counts are accumulated on a per kernel thread basis*/ 	
 #define PAPI_PER_PROC    1    /*Counts are accumulated on a per process basis*/
+#endif
 
 #define PAPI_ONESHOT	 1    /*Option to the overflow handler 2b called once*/
 #define PAPI_RANDOMIZE	 2    /*Option to have the threshold of the overflow
@@ -160,6 +162,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_HWINFO  	72 /* Hardware information */  
 
 #define PAPI_GET_EXEINFO  	73 /* Executable information */  
+
+#define PAPI_GET_MAX_CPUS 	74 /* Number of ncpus we can talk to from here */
 
 #define PAPI_MAX_STR_LEN        81 /* Guess what */
 

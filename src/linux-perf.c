@@ -6,7 +6,7 @@
 
 /* PAPI stuff */
 
-#include "linux-x86.h"
+#include "linux-perf.h"
 
 static inline _syscall3(int, perf, int, op, int, counter, int, event);
 

@@ -2,7 +2,7 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
-SERIAL  = avail zero sprofile cost johnmay2 johnmay inherit clockres first second third fourth fifth overflow profile nineth tenth native eventname case1 case2
+SERIAL  = pernode avail zero sprofile cost johnmay2 johnmay inherit clockres first second third fourth fifth overflow profile nineth tenth native eventname case1 case2
 ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
 INCLUDE = -I..
@@ -76,6 +76,9 @@ overflow: overflow.c $(UTILOBJS) ../libpapi.a
 
 profile: profile.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) profile.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o profile
+
+pernode: pernode.c ../libpapi.a
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) pernode.c ../libpapi.a $(LDFLAGS) -o pernode
 
 avail: avail.c ../libpapi.a
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) avail.c ../libpapi.a $(LDFLAGS) -o avail

@@ -1347,10 +1347,6 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         internal.granularity.ESI = lookup_EventSet(PAPI_EVENTSET_MAP, ptr->granularity.eventset);
         if (internal.granularity.ESI == NULL)
           papi_return(PAPI_ENOEVST);
-	thread_master_eventset = internal.granularity.ESI->master;
-
-        if (!(internal.granularity.ESI->state & PAPI_STOPPED))
-          papi_return(PAPI_EISRUN);
 
         internal.granularity.granularity = grn;
         internal.granularity.eventset = ptr->granularity.eventset;
@@ -1396,6 +1392,8 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
       break;
     case PAPI_GET_CLOCKRATE:
       return(_papi_system_info.hw_info.mhz);
+    case PAPI_GET_MAX_CPUS:
+      return(_papi_system_info.hw_info.ncpu);
     case PAPI_GET_MAX_HWCTRS:
       return(_papi_system_info.num_cntrs);
     case PAPI_GET_DEFDOM:

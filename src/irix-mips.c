@@ -702,6 +702,9 @@ int _papi_hwd_init(EventSetInfo *global)
 
   memset(&args,0x0,sizeof(args));
 
+  for (i=0;i<HWPERF_EVENTMAX;i++)
+    args.hwp_evctrl[i].hwperf_creg.hwp_mode = HWPERF_CNTEN_U;
+
   sprintf(pidstr,"/proc/%05d",(int)getpid());
   if ((fd = open(pidstr,O_RDONLY)) == -1)
     return(PAPI_ESYS);
