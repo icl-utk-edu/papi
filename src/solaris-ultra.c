@@ -824,18 +824,23 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    int hwcntr;
 
    if (threshold == 0) {
-      arg->flags ^= CPC_BIND_EMT_OVF;
-      if (sigaction(SIGEMT, NULL, NULL) == -1)
-         return (PAPI_ESYS);
+      if (this_state->overflow_num == 1) {
+         arg->flags ^= CPC_BIND_EMT_OVF;
+         if (sigaction(SIGEMT, NULL, NULL) == -1)
+            return (PAPI_ESYS);
+         this_state->overflow_num = 0;
+      } else this_state->overflow_num--;
+
    } else {
       struct sigaction act;
+      /* increase the counter for overflow events */
+      this_state->overflow_num++;
 
       act.sa_sigaction = dispatch_emt;
       memset(&act.sa_mask, 0x0, sizeof(act.sa_mask));
       act.sa_flags = SA_RESTART | SA_SIGINFO;
       if (sigaction(SIGEMT, &act, NULL) == -1)
          return (PAPI_ESYS);
-
 
       arg->flags |= CPC_BIND_EMT_OVF;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
@@ -897,7 +902,14 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
 int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-   cpc_bind_event(NULL, 0);
+   /* in order to reduce the overhead, we don't actually stop the 
+      physical counter, but  
+      when the eventset state is overflowing, we need to stop the counter,
+      or else the overflow handler will be called.
+   */
+
+   if (ctrl->overflow_num > 0)
+      cpc_bind_event(NULL, 0);
    return PAPI_OK;
 }
 

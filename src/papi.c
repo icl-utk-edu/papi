@@ -435,6 +435,7 @@ int PAPI_add_event(int EventSet, int EventCode)
 int PAPI_remove_event(int EventSet, int EventCode)
 {
    EventSetInfo_t *ESI;
+   int i;
 
    /* check for pre-existing ESI */
 
@@ -446,6 +447,13 @@ int PAPI_remove_event(int EventSet, int EventCode)
 
    if (!(ESI->state & PAPI_STOPPED))
       papi_return(PAPI_EISRUN);
+
+   /* if the state is PAPI_OVERFLOWING, you must first call
+      PAPI_overflow with threshold=0 to remove the overflow flag */
+
+   if (ESI->state & PAPI_OVERFLOWING) 
+      papi_return(PAPI_EINVAL);
+
 
    /* Now do the magic. */
 
