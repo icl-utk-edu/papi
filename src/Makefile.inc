@@ -84,7 +84,7 @@ f77papi.h: genpapifdef
 f90papi.h: genpapifdef
 	./genpapifdef -f90 > f90papi.h
 
-examples: tests
+examples: tests ftests
 
 test: examples
 	tests/zero
