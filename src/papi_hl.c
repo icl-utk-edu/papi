@@ -252,7 +252,7 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
       *real_time = (float) ((PAPI_get_real_usec() - state->initial_time) * .000001);
       *proc_time = (float) (values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
       if (*proc_time > 0)
-         *rate = (float) ((float) values[0]*(EVENT==PAPI_FP_INS?_papi_hwi_system_info.hw_info.mhz:1)/values[1]);
+         *rate = (float) ((float) values[0]*(EVENT==PAPI_FP_INS?_papi_hwi_system_info.hw_info.mhz:1)/(values[1]==0?1:values[1]));
       state->total_proc_time += *proc_time;
       state->total_ins += values[0];
       *proc_time = state->total_proc_time;
