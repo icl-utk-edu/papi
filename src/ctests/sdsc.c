@@ -20,7 +20,7 @@
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[PAPI_MAX_STR_LEN];
+  PAPI_event_info_t info;
   int i, j, retval;
   int iters=NUM_FLOPS;
   double x = 1.1,y;
@@ -126,9 +126,9 @@ int main(int argc, char **argv) {
     printf("PAPI multiplexed measurement:\n");
   }
   for (j=0; j<nevents; j++) {
-    PAPI_label_event(events[j],des);
+    PAPI_get_event_info(events[j], &info);
     if ( !TESTS_QUIET )
-      printf("%20s = %lld\n", des, values[j]);
+      printf("%20s = %lld\n", info.short_descr, values[j]);
   }
   if ( !TESTS_QUIET )
     printf("\n");
@@ -166,9 +166,9 @@ int main(int argc, char **argv) {
       printf("\tOperations= %.1f Mflop",y*1e-6);  
       printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
     }
-    PAPI_label_event(events[i],des);
+    PAPI_get_event_info(events[j], &info);
     if ( !TESTS_QUIET )
-      printf("PAPI results:\n%20s = %lld\n", des, refvalues[i]);
+      printf("PAPI results:\n%20s = %lld\n", info.short_descr, refvalues[i]);
   }
   if ( !TESTS_QUIET )
     printf("\n");
@@ -196,9 +196,9 @@ int main(int argc, char **argv) {
   if ( !TESTS_QUIET ) {
     printf("\n\n");
     for (j=0;j<nevents;j++) {
-      PAPI_label_event(events[j],des);
+      PAPI_get_event_info(events[j], &info);
       printf("Event %.2d: ref=%10lld, diff/ref=%7.2g  -- %s\n",
-	     j,refvalues[j],spread[j],des);
+	     j,refvalues[j],spread[j],info.short_descr);
     }
     printf("\n");
   }

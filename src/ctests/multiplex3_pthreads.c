@@ -52,7 +52,7 @@ int EventSet = PAPI_NULL, max_to_add = 6;
 int case1_first_half(void) 
 {
   int retval, i, j = 2;
-  const PAPI_preset_info_t *pset;
+  PAPI_event_info_t pset;
 
   init_papi();
 
@@ -60,10 +60,6 @@ int case1_first_half(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
   
-  pset = PAPI_query_all_events_verbose();
-  if (pset == NULL)
-    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",0);
-
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
@@ -90,25 +86,29 @@ int case1_first_half(void)
 
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     {
+      retval = PAPI_get_event_info(i | PRESET_MASK, &pset);
+      if (retval != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_get_event_info",retval);
+
 	  /* skip total cycles and some cache events */
-      if ((pset->avail)
-			&& (pset->event_code != PAPI_TOT_CYC)
-			&& (pset->event_code != PAPI_TOT_INS)
-			&& (pset->event_code != PAPI_CA_SHR))
+      if ((pset.count)
+			&& (pset.event_code != PAPI_TOT_CYC)
+			&& (pset.event_code != PAPI_TOT_INS)
+			&& (pset.event_code != PAPI_CA_SHR))
 	{
 	  if ( !TESTS_QUIET ) 
-	    printf("Adding %s\n",pset->event_name);
+	    printf("Adding %s\n",pset.symbol);
 
-	  retval = PAPI_add_event(EventSet, pset->event_code);
+	  retval = PAPI_add_event(EventSet, pset.event_code);
 	  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
 	  if ( !TESTS_QUIET ) 
 	    {
 	      if (retval == PAPI_OK)
-		printf("Added %s\n",pset->event_name);
+		printf("Added %s\n",pset.symbol);
 	      else
-		printf("Could not add %s\n",pset->event_name);
+		printf("Could not add %s\n",pset.symbol);
 	    }
 
 	  if (retval == PAPI_OK)
@@ -117,7 +117,6 @@ int case1_first_half(void)
 		break;
 	    }
 	}
-	pset++;
     }
 
   values = (long long *)malloc(max_to_add*sizeof(long long));

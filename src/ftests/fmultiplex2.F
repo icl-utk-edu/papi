@@ -88,7 +88,7 @@
      *        (EventCode.LT.PAPI_MAX_PRESET_EVENTS))
               mask1 = ((PAPI_L1_DCM)+EventCode) 
           if (mask1.NE.PAPI_TOT_CYC) then
-              call papif_query_event_verbose(mask1, 
+              call papif_get_event_info(mask1, 
      *          event_name, event_descr, event_label, avail_flag, 
      *          event_note, flags, check)
           end if

@@ -21,7 +21,7 @@
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[PAPI_MAX_STR_LEN];
+  PAPI_event_info_t info;
   int i, j, retval;
   int iters=NUM_FLOPS;
   double x = 1.1,y,dtmp;
@@ -141,9 +141,9 @@ int main(int argc, char **argv) {
       printf("PAPI measurements:\n");
     }
     for (j=0; j<nevents; j++) {
-      PAPI_label_event(events[j],des);
+      PAPI_get_event_info(events[j], &info);
       if ( !TESTS_QUIET )
-	printf("%20s = %lld\n", des, values[j]);
+	printf("%20s = %lld\n", info.short_descr, values[j]);
       dtmp = (double) values[j];
       valsum[j] += dtmp;
       valsqsum[j] += dtmp * dtmp;
@@ -179,9 +179,9 @@ int main(int argc, char **argv) {
   if ( !TESTS_QUIET ) {
     printf("\n\n");
     for (j=0;j<nevents;j++) {
-      PAPI_label_event(events[j],des);
+      PAPI_get_event_info(events[j], &info);
       printf("Event %.2d: mean=%10.0f, sdev/mean=%7.2g nrpt=%2d -- %s\n",
-	     j,valsum[j],spread[j],REPEATS,des);
+	     j,valsum[j],spread[j],REPEATS,info.short_descr);
     }
     printf("\n\n");
   }

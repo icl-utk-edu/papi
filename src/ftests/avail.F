@@ -53,7 +53,7 @@ C Hardware info
       end if
       event_name=' '
       do i=0, PAPI_MAX_PRESET_EVENTS-1
-         call papif_query_event_verbose(z'80000000'+i, event_name, 
+         call papif_get_event_info(z'80000000'+i, event_name, 
      *   event_descr, event_label, avail_flag, event_note, flags, check)
          if (avail_flag.EQ.1) then
             avail_str = 'Yes'

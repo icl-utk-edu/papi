@@ -22,7 +22,8 @@
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[PAPI_MAX_STR_LEN],name1[PAPI_MAX_STR_LEN],name2[PAPI_MAX_STR_LEN];
+  PAPI_event_info_t info;
+  char name2[PAPI_MAX_STR_LEN];
   int i, j, retval, idx, repeats;
   int iters=NUM_FLOPS;
   double x = 1.1,y,dtmp;
@@ -159,12 +160,11 @@ int main(int argc, char **argv) {
 
   if ( !TESTS_QUIET ) {
     for (j=0; j<nevents; j++) {
-      PAPI_label_event(events[j],des);
-      PAPI_event_code_to_name(events[j],name1);
+      PAPI_get_event_info(events[j], &info);
       PAPI_event_code_to_name(truelist[j],name2);
       if ( !TESTS_QUIET )
-	printf("%20s = %16lld   %-15s %-15s %s\n", des, refvals[j],
-	       name1, name2, strcmp(name1,name2) ? "*** MISMATCH ***" : "");
+	printf("%20s = %16lld   %-15s %-15s %s\n", info.short_descr, refvals[j],
+	       info.symbol, name2, strcmp(info.symbol,name2) ? "*** MISMATCH ***" : "");
     }
     printf("\n");
   }
@@ -184,9 +184,9 @@ int main(int argc, char **argv) {
     j=eventidx[i%nevents];
 
     if((i/nevents)%2==0) {
-      PAPI_label_event(events[j],des);
+      PAPI_get_event_info(events[j], &info);
       if ( !TESTS_QUIET )
-	printf("Removing event[%d]: %s\n", j, des);
+	printf("Removing event[%d]: %s\n", j, info.short_descr);
       if((retval=PAPI_remove_event(eventset,events[j])))
 	test_fail(__FILE__,__LINE__,"PAPI_remove_event",retval);
       nev1--;
@@ -194,9 +194,9 @@ int main(int argc, char **argv) {
       for(j=idx;j<nev1;j++)
 	eventmap[j]=eventmap[j+1];
     } else {
-      PAPI_label_event(events[j],des);
+      PAPI_get_event_info(events[j], &info);
       if ( !TESTS_QUIET )
-	printf("Adding event[%d]: %s\n", j, des);
+	printf("Adding event[%d]: %s\n", j, info.short_descr);
       if((retval=PAPI_add_event(eventset,events[j])))
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       eventmap[nev1]=j;
@@ -234,12 +234,11 @@ int main(int argc, char **argv) {
     for (j=0; j<nev1; j++) {
       idx=eventmap[j];
       /* printf("Mapping: Counter %d -> slot %d.\n",j,idx); */
-      PAPI_label_event(events[idx],des);
-      PAPI_event_code_to_name(events[idx],name1);
+      PAPI_get_event_info(events[idx], &info);
       PAPI_event_code_to_name(truelist[j],name2);
       if ( !TESTS_QUIET )
-	printf("%20s = %16lld   %-15s %-15s %s\n", des, values[j],
-	       name1, name2, strcmp(name1,name2) ? "*** MISMATCH ***" : "");
+	printf("%20s = %16lld   %-15s %-15s %s\n", info.short_descr, values[j],
+	       info.symbol, name2, strcmp(info.symbol,name2) ? "*** MISMATCH ***" : "");
       dtmp = (double) values[j];
       valsum[idx] += dtmp;
       valsqsum[idx] += dtmp * dtmp;
@@ -276,9 +275,9 @@ int main(int argc, char **argv) {
   if ( !TESTS_QUIET ) {
     printf("\n\n");
     for (j=0;j<nev1;j++) {
-      PAPI_label_event(events[j],des);
+      PAPI_get_event_info(events[j], &info);
       printf("Event %.2d: mean=%10lld, sdev/mean=%7.2g nrpt=%2d -- %s\n",
-	     j,values[j],spread[j],nsamples[j],des);
+	     j,values[j],spread[j],nsamples[j],info.short_descr);
     }
     printf("\n\n");
   }
