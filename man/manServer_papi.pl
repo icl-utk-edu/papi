@@ -30,11 +30,7 @@ use Carp;                          # get standard error / warning messages
 
 $root = "";
 $cgiMode = 0;
-$bodyTag = "BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000";
 
-$Background = 'background="fader-orange.gif"';
-$bodyTag = 'BODY '. $Background . ' bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"';
-$ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>\n";
 	*LOG = *STDOUT;
  
 #	if ($request =~ m/^-?/) { usage(); }
