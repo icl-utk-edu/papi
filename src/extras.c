@@ -147,7 +147,7 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
   if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, master_event_set, (void *)info); 
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
   return;
 }
 #elif defined(sun) && defined(sparc)

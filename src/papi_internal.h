@@ -1,5 +1,5 @@
 #ifdef DEBUG
-#if defined(sgi) && defined(mips)
+#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E)
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
@@ -14,8 +14,8 @@
 
 /* Signal used for overflow delivery */
 
-#define PAPI_ITIMER ITIMER_REAL
-#define PAPI_SIGNAL SIGPROF
+#define PAPI_ITIMER ITIMER_VIRTUAL
+#define PAPI_SIGNAL SIGVTALRM
 #define PAPI_ITIMER_MS 1
 
 /* Number of preset events - more than we will probably ever need, 

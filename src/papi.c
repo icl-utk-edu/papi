@@ -273,9 +273,9 @@ atomic_t lock;
 #include <synch.h>
 rwlock_t lock;
 #elif defined(sgi) && defined(mips)
-int lock;
+int lock = 0;
 #elif defined(_CRAYT3E)
-#error "fixme"
+volatile int lock = 0;
 #elif defined(_AIX)
 #include <sys/atomic_op.h>
 int lock_var = 0;
@@ -304,7 +304,14 @@ void PAPI_lock(void)
       usleep(1000);
     }
 #elif defined(_CRAYT3E)
-#error "fixme"
+  _cmr();
+  lock++;
+  _cmr();
+  while (lock != 1)
+    {
+      DBG((stderr,"Waiting..."));
+      _cmr();
+    }
 #elif defined(sun) && defined(sparc)
   rw_wrlock(&lock);
 #endif
@@ -320,6 +327,10 @@ void PAPI_unlock(void)
   _clear_lock(lock, 0);
 #elif defined(sgi) && defined(mips)
   __lock_release(&lock);
+#elif defined(_CRAYT3E)
+  _cmr();
+  lock--;
+  _cmr();
 #endif
 }
 

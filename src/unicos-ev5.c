@@ -327,9 +327,6 @@ static int get_system_info(void)
   _papi_system_info.exe_info.text_end = (caddr_t)_infoblk.i_segs[0].size;
   _papi_system_info.exe_info.data_end = (caddr_t)_infoblk.i_segs[1].size;
   _papi_system_info.exe_info.bss_end = (caddr_t)_infoblk.i_segs[2].size;
-  _papi_system_info.exe_info.text_end += 0x800000000;
-  _papi_system_info.exe_info.data_end += 0x100000000;
-  _papi_system_info.exe_info.bss_end += 0x200000000;
 
   _papi_system_info.hw_info.ncpu = sysconf(_SC_CRAY_NCPU);
   _papi_system_info.hw_info.totalcpus = sysconf(_SC_CRAY_NCPU);
@@ -934,6 +931,16 @@ long long _papi_hwd_get_real_usec (void)
   return(_rtc()/75);
 }
 
+long long _papi_hwd_get_virt_usec (void)
+{
+  return(-1);
+}
+
+long long _papi_hwd_get_virt_cycles (void)
+{
+  return(-1);
+}
+
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
@@ -963,20 +970,26 @@ papi_mdi _papi_system_info = { "$Id$",
 			       },
 			        3,   /*  num_cntrs */
 			        3,   /*  num_gp_cntrs */
-			        0,   /*  grouped_counters */
-			        0,   /*  num_sp_cntrs */
+			       -1,   /*  grouped_counters */
+			       -1,   /*  num_sp_cntrs */
 			       -1,   /*  total_presets */
 			       -1,   /*  total_events */
-			        1,   /*  needs overflow emulation */
-			        1,   /*  needs profile emulation */
-			        0,   /*  needs 64 bit virtual counters */
-			        0,   /*  supports child inheritance option */
-			        0,   /*  can attach to another process */
-			        0,   /*  read resets the counters */
 			        PAPI_DOM_USER, /* default domain */
 			        PAPI_GRN_THR,  /* default granularity */
+			        0,  /* We can use add_prog_event */
+			        0,  /* We can write the counters */
+			        0,  /* supports HW overflow */
+			        0,  /* supports HW profile */
+			        1,  /* supports 64 bit virtual counters */
+			        0,  /* supports child inheritance */
+			        0,  /* supports attaching to another process */
+			        1,  /* We can use the real_usec call */
+			        1,  /* We can use the real_cyc call */
+			        0,  /* We can use the virt_usec call */
+			        0,  /* We can use the virt_cyc call */
+			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
-				NULL };
+				{ 0, } };
 
 /* Thread hooks */
 

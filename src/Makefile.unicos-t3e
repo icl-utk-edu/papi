@@ -1,14 +1,11 @@
 SUBSTR  = unicos-ev5
 DESCR   = "Cray UNICOS/mk Unix with Alpha 21164"
-TARGET	= libpapi.a
-TESTS	= serial 
+LIBS	= static 
+TARGETS	= serial 
 
-CFLAGS 	= 
-#-DDEBUG 
-OPTFLAGS= -g -O3
-SMPCFLGS=
-OMPCFLGS=
-LDFLAGS = 
+#CFLAGS	= -Gn -DDEBUG
+OPTFLAGS= -O3
+NOOPT	= -O0
 CC_R	= cc
 CC	= cc
 F77	= f77
