@@ -1,7 +1,7 @@
 OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads
+PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
@@ -80,6 +80,9 @@ overflow3_pthreads: overflow3_pthreads.c $(UTILOBJS) $(PAPILIB)
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
+
+locks_pthreads: locks_pthreads.c $(UTILOBJS) $(PAPILIB)
+	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) locks_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o locks_pthreads -lpthread
 
 overflow_pthreads: overflow_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_pthreads -lpthread
