@@ -42,6 +42,17 @@ static int PAPI_event=PAPI_FP_INS;
 static int EventSet = PAPI_NULL;
 static caddr_t start, end;
 
+/* Itanium returns function descriptors instead of function addresses.
+   I couldn't find the following structure in a header file,
+   so I duplicated it below.
+*/
+#if (defined(ITANIUM1) || defined(ITANIUM2))
+   struct fdesc {
+      void *ip;	/* entry point (code address) */
+      void *gp;	/* global-pointer */
+   };
+#endif
+
 
 int main(int argc, char **argv)
 {
@@ -109,12 +120,29 @@ int main(int argc, char **argv)
    if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
+/* use these lines to profile entire code address space
+   start = prginfo->address_info.text_start;
+   end = prginfo->address_info.text_end;
+*/
+   start = (caddr_t)do_flops;
+   end = (caddr_t)fdo_flops;
+/* Itanium returns function descriptors instead of function addresses.
+   You must dereference the descriptor to get the address.
+*/
+#if (defined(ITANIUM1) || defined(ITANIUM2))
+   start = (caddr_t)(((struct fdesc *)start)->ip);
+   end = (caddr_t)(((struct fdesc *)end)->ip);
+#endif
+   length = (end - start);
+   if (length < 0)
+      test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
+
    if (!TESTS_QUIET) {
       printf("Test case profile: POSIX compatible profiling with hardware counters.\n");
       printf("----------------------------------------------------------------\n");
       printf("Text start: %p, Text end: %p, Text length: 0x%x\n",
              prginfo->address_info.text_start, prginfo->address_info.text_end,
-             prginfo->address_info.text_end - prginfo->address_info.text_start);
+             (unsigned int)(prginfo->address_info.text_end - prginfo->address_info.text_start));
       printf("Data start: %p, Data end: %p\n",
              prginfo->address_info.data_start, prginfo->address_info.data_end);
       printf("BSS start : %p, BSS end : %p\n",
@@ -128,12 +156,6 @@ int main(int argc, char **argv)
       printf("----------------------------------------------------------------\n");
       printf("\n");
    }
-
-//   start = prginfo->address_info.text_start;
-//   end = prginfo->address_info.text_end;
-   start = (caddr_t)do_flops;
-   end = (caddr_t)fdo_flops;
-   length = (end - start);
 
    retval = do_profile(length, 65535, THRESHOLD, PAPI_PROFIL_BUCKET_16);
    if (retval)
@@ -242,37 +264,37 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    }
 
    if (!TESTS_QUIET) {
-      printf("\n----------------------------------------------------\n");
+      printf("\n------------------------------------------------------------\n");
       printf("PAPI_profil() hash table, Bucket size: %d bits.\n", size);
       printf("Number of buckets: %d.\nLength of buffer: %ld bytes.\n",num_buckets,plength);
-      printf("----------------------------------------------------\n");
-      printf("address\t\tflat\trandom\tweight\tcomprs\tall\n");
+      printf("------------------------------------------------------------\n");
+      printf("address\t\t\tflat\trandom\tweight\tcomprs\tall\n");
 
       for (i = 0; i < num_buckets; i++) {
          /* printf("0x%lx\n",(unsigned long) start + (unsigned long) (2 * i)); */
          switch (bucket) {
             case PAPI_PROFIL_BUCKET_16:
               if (buf16[0][i] || buf16[1][i] || buf16[2][i] || buf16[3][i] || buf16[4][i])
-                  printf("0x%lx\t%d\t%d\t%d\t%d\t%d\n",
+                  printf("%-16p\t%d\t%d\t%d\t%d\t%d\n",
                         (unsigned long) start + (unsigned long) (2 * i), buf16[0][i],
                         buf16[1][i], buf16[2][i], buf16[3][i], buf16[4][i]);
                break;
             case PAPI_PROFIL_BUCKET_32:
                if (buf32[0][i] || buf32[1][i] || buf32[2][i] || buf32[3][i] || buf32[4][i])
-                  printf("0x%lx\t%d\t%d\t%d\t%d\t%d\n",
+                  printf("%-16p\t%d\t%d\t%d\t%d\t%d\n",
                         (unsigned long) start + (unsigned long) (2 * i), buf32[0][i],
                         buf32[1][i], buf32[2][i], buf32[3][i], buf32[4][i]);
                break;
             case PAPI_PROFIL_BUCKET_64:
                if (buf64[0][i] || buf64[1][i] || buf64[2][i] || buf64[3][i] || buf64[4][i])
-                  printf("0x%lx\t%lld\t%lld\t%lld\t%lld\t%lld\n",
+                  printf("%-16p\t%lld\t%lld\t%lld\t%lld\t%lld\n",
                         (unsigned long) start + (unsigned long) (2 * i), buf64[0][i],
                         buf64[1][i], buf64[2][i], buf64[3][i], buf64[4][i]);
                break;
          }
       }
 
-      printf("----------------------------------------------------\n\n");
+      printf("------------------------------------------------------------\n\n");
    }
    retval = 0;
    for (i = 0; i < num_buckets; i++) {
