@@ -1655,8 +1655,3 @@ int PAPI_is_initialized(void)
   return (init_level);
 }
 
-int PAPI_encode_native(char *str, int *code)
-{
-  return(_papi_hwi_native_name_to_code(str, code));
-}
-
