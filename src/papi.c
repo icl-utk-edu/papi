@@ -110,6 +110,8 @@ typedef struct _papi_options{
                          stopped **
   long long *latest;  ** Array of the same length as above, containing 
                          the values of the counters when last read ** 
+  int state           ** The state of this entire EventSet; can be
+			 PAPI_RUNNING or PAPI_STOPPED. ** 
 } EventSetInfo;
 */
 /*========================================================================*/
@@ -159,7 +161,8 @@ static void PAPI_shutdown(void) {
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static int PAPI_perror(int, char *, int );             */
+/* begin function:                                                        */
+/* static int PAPI_perror(int, char *, int );                             */
 /*                                                                        */
 /* The function PAPI_perror (int, char *, int) is similar to the unix     */
 /* function perror(const char *msg).                                      */
@@ -207,8 +210,9 @@ return(1);
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: char *PAPI_strerror (int errnum)                       */
-/*========================================================================*/
+/* begin function:                                                        */
+/* char *PAPI_strerror (int errnum)                                       */
+/*                                                                        */
 /* The function PAPI_strerror(int errnum) is analogous to the unix        */
 /* function strerror(int errnum).  Here, the errnum maps to a PAPI error  */
 /* code defined in papi.h.  The function PAPI_strerror returns a char *   */
@@ -266,7 +270,8 @@ return(retStr);
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static int _papi_expandDA(DynamicArray *EM);           */
+/* begin function:                                                        */
+/* static int _papi_expandDA(DynamicArray *EM);                           */
 /*                                                                        */
 /* The function _papi_expandDA expands EM->dataSlotArray when the array   */
 /* has become full. The function also does all of the bookkeeping chores  */
@@ -332,40 +337,78 @@ return(PAPI_OK);
 /*========================================================================*/
 
 /*========================================================================*/
-/* Low-level machine-independent routines                                 */
 /*========================================================================*/
+/*========================================================================*/
+/* begin function:                                                        */
+/* int PAPI_state(int EventSetIndex, int *status)                         */
+/*                                                                        */ 
+/* This function reports the state of the entire EventSet designated by   */
+/* EventSetIndex by setting the value of *status.                         */ 
+/* If the call succeeds, then the value of *status is set to:             */
+/*   a.  PAPI_RUNNING=1.                                                  */
+/*   b.  PAPI_STOPPED=2.                                                  */
+/*                                                                        */ 
+/* The return value of this function tells if the call succeeded.         */ 
+/*   a.  return(PAPI_OK) [success]                                        */
+/*   b.  return(PAPI_EINVAL) [invalid argument]                           */
 /*========================================================================*/
 
-int PAPI_state(int EventSet, int *status)
-{
-    if (EventSet < 0 || EventSet >= evmap->totalSlots || 
-                          evmap->dataSlotArray[EventSet] == NULL) {
-        /* invalid argument */
-        if (_papi_err_level == PAPI_VERB_ECONT ||
-                     _papi_err_level == PAPI_VERB_ESTOP) 
-            PAPI_perror(PAPI_EINVAL, NULL, 0);
-        if (_papi_err_level == PAPI_VERB_ESTOP) 
-            exit(PAPI_ERROR);
-        return(PAPI_EINVAL);
-    }
-    *status = (evmap->dataSlotArray[EventSet])->state;
-    if (*status != PAPI_RUNNING && *status != PAPI_STOPPED) {
-        /* internal error */
-        if (_papi_err_level == PAPI_VERB_ECONT ||
-                     _papi_err_level == PAPI_VERB_ESTOP) 
-            PAPI_perror(PAPI_EBUG, NULL, 0);
-        if (_papi_err_level == PAPI_VERB_ESTOP)
-            exit(PAPI_ERROR);
-        return(PAPI_EBUG);
-    }
-    return(PAPI_OK);
+int PAPI_state(int EventSetIndex, int *status) {
+
+	DynamicArray *EM=&PAPI_EVENT_MAP;
+
+ /* EventSetIndex is an integer, the index N of EM->dataSlotArray[N] */ 
+ /* Check if EventSetIndex is a valid value 4 different ways. */ 
+
+    /* 1.   invalid array index less than zero */
+    /*      if (EventSetIndex < 0 ) return( PAPI_EINVAL );*/
+
+    /* 2.   invalid array index 0, reserved for internal use only */ 
+    /*      if(EM->dataSlotArray[EventSet]==0) return (PAPI_EINVAL); */
+
+    /* 3.   invalid array index greater than highest possible value*/
+    /*      if (EventSetIndex => EM->totalSlots ) return (PAPI_EINVAL); */
+
+    /* 4.   valid array index value, but not assigned to any event yet*/
+    /*      if (EM->dataSlotArray[EventSetIndex]==NULL) return(PAPI_EINVAL); */
+
+
+    /* combine all of the above ifs */
+
+    if(   (EventSetIndex < 1 )
+        ||(EventSetIndex => EM->totalSlots )
+	||(EM->dataSlotArray[EventSetIndex]==NULL )) return (PAPI_EINVAL);
+
+    /* check for error in value of 
+       EM->dataSlotArray[EventSetIndex]-> state, 
+       which would be an internal error */
+
+    if(   (EM->dataSlotArray[EventSetIndex])->state !=PAPI_RUNNING)
+        &&(EM->dataSlotArray[EventSetIndex])->state !=PAPI_STOPPED) ) {
+           /* if this error is ignored, need to set value of *status */ 
+	   *status=PAPI_STOPPED;
+           return(PAPI_EBUG); 
+	   }
+	   
+    /* Good value for EM->dataSlotArray[EventSetIndex]-> state */
+
+    *status = (EM->dataSlotArray[EventSetIndex])->state;
+     return(PAPI_OK);
 }
+/*========================================================================*/
+/*end function: PAPI_state                                                */
+/*========================================================================*/
+/*========================================================================*/
 
 
+
+
+
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static EventSetInfo *papi_allocate_EventSet(void);     */
+/* begin function:                                                        */
+/* static EventSetInfo *papi_allocate_EventSet(void);                     */
 /*                                                                        */
 /* This function allocates space for one EventSetInfo structure and for   */
 /* all of the pointers in this structure.  If any malloc in this function */
@@ -420,6 +463,8 @@ if(!ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long))){
 	}
 bzero(ESI->latest,sizeof(ESI->latest));
 
+ESI->state=PAPI_RUNNING; /*[or PAPI_STOPED]*/
+
 return(ESI);
 }
 /*========================================================================*/
@@ -432,7 +477,8 @@ return(ESI);
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static int _papi_free_EventSet();                      */
+/* begin function:                                                        */
+/* static int _papi_free_EventSet();                                      */
 /*                                                                        */ 
 /* This function should free memory for one EventSetInfo structure.       */
 /* The argument list consists of a pointer to the EventSetInfo            */

@@ -67,6 +67,8 @@ typedef struct _EventSetInfo {
                          stopped */
   long long *latest;  /* Array of the same length as above, containing 
                          the values of the counters when last read */ 
+  int state;          /* The state of this entire EventSet; can be
+			 PAPI_RUNNING or PAPI_STOPPED. */
 } EventSetInfo;
 
 
@@ -129,7 +131,5 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
 extern int _papi_hwd_setopt(int code, void *option);
 extern int _papi_hwd_getopt(int code, void *option);
 
-/*
-extern int _papi_err_level(int level); ** get/set error level **
-*/
+
 
