@@ -199,11 +199,17 @@ typedef union {
   PAPI_domain_option_t defdomain; 
   int debug; } PAPI_option_t;
 
+typedef struct pre_info {
+  char *event_name;
+  unsigned int event_code;
+  char *event_text; } PAPI_preset_info_t; 
+
 int PAPI_accum(int EventSet, unsigned long long *values);
 int PAPI_add_event(int *EventSet, int Event);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
 int PAPI_cleanup(int *EventSet); 
+PAPI_preset_info_t *PAPI_describe_all_events(void);
 int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 int PAPI_init(void);

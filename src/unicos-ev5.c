@@ -77,17 +77,17 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { -1, -1, -1, 0 },	/* 62 */
                 { -1, -1, -1, 0 },	/* 63 */ };
 
-/* Global's ugh. */
-
-/* Privilege bits */
-
-static int kill_pal = 1, kill_user = 1, kill_kernel = 1;
-
 /* Utility functions */
 
-static int set_def_domain(int domain)
+static void init_config(hwd_control_state_t *ptr)
 {
-  switch (domain)
+  int kill_pal = 0;
+  int kill_user = 0;
+  int kill_kernel = 0;
+
+  memset(&ptr->pmctr,0x0,sizeof(pmctr_t));
+
+  switch (_papi_system_info.default_domain)
     {
     case PAPI_DOM_USER:
       {
@@ -116,105 +116,32 @@ static int set_def_domain(int domain)
 	kill_pal = 1;
 	kill_user = 1;
       }
-      break;
     default:
-      return(PAPI_EINVAL);
+      abort();
     }
-  return(PAPI_OK);
+
+  ptr->pmctr.Kp = kill_pal;
+  ptr->pmctr.Ku = kill_user;
+  ptr->pmctr.Kk = kill_kernel;
+  ptr->pmctr.CTL0 = CTL_OFF;
+  ptr->pmctr.CTL1 = CTL_OFF;
+  ptr->pmctr.CTL2 = CTL_OFF;
 }
 
-static int set_domain(EventSetInfo *ESI, int domain)
+static int set_default_domain(int domain)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int ret;
-
   switch (domain)
     {
     case PAPI_DOM_USER:
-      {
-	this_state->pmctr.Kk = 0;
-	this_state->pmctr.Kp = 0;
-	this_state->pmctr.Ku = 1;
-      }
-      break;
     case PAPI_DOM_KERNEL:
-      {
-	this_state->pmctr.Kk = 1;
-	this_state->pmctr.Kp = 0;
-	this_state->pmctr.Ku = 0;
-      }
-      break;
     case PAPI_DOM_OTHER:
-      {
-	this_state->pmctr.Kk = 0;
-	this_state->pmctr.Kp = 1;
-	this_state->pmctr.Ku = 0;
-      }
-      break;
     case PAPI_DOM_ALL:
-      {
-	this_state->pmctr.Kk = 1;
-	this_state->pmctr.Kp = 1;
-	this_state->pmctr.Ku = 1;
-      }
+      _papi_system_info.default_domain = domain;
       break;
     default:
       return(PAPI_EINVAL);
     }
   return(PAPI_OK);
-}
-
-static int get_def_domain(void)
-{
-  int retval = 0;
-
-  if (kill_kernel == 1)
-    retval |= PAPI_DOM_KERNEL;
-  if (kill_pal == 1)
-    retval |= PAPI_DOM_OTHER;
-  if (kill_user == 1)
-    retval |= PAPI_DOM_USER;
-
-  return(retval);
-}
-
-static int get_domain(EventSetInfo *ESI)
-{
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-
-  int retval = 0;
-
-  if (this_state->pmctr.Kk == 1)
-    retval |= PAPI_DOM_KERNEL;
-  if (this_state->pmctr.Kp == 1)
-    retval |= PAPI_DOM_OTHER;
-  if (this_state->pmctr.Ku == 1)
-    retval |= PAPI_DOM_USER;
-
-  return(retval);
-}
-
-static int getmhz(void)
-{
-  long sysconf(int request);
-  float p;
-  
-  p = (float) sysconf(_SC_CRAY_CPCYCLE); /* Picoseconds */
-  p = p * 1.0e-12; /* Convert to seconds */
-  p = 1.0 / (p * 1000000.0); /* Convert to MHz */
-  return((int)p);
-}
-
-static void init_pmctr(pmctr_t *pmctr)
-{
-  *(long *)pmctr = 0;
-
-  pmctr.Kp = kill_pal;
-  pmctr.Ku = kill_user;
-  pmctr.Kk = kill_kernel;
-  pmctr.CTL0 = CTL_OFF;
-  pmctr.CTL1 = CTL_OFF;
-  pmctr.CTL2 = CTL_OFF;
 }
 
 static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
@@ -253,15 +180,67 @@ static int update_counters(int events[])
   return(PAPI_OK);
 }
 
+static int set_eventset_domain(EventSetInfo *ESI, int domain)
+{
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  int ret;
+
+  switch (domain)
+    {
+    case PAPI_DOM_USER:
+      {
+	this_state->pmctr.Kk = 0;
+	this_state->pmctr.Kp = 0;
+	this_state->pmctr.Ku = 1;
+      }
+      break;
+    case PAPI_DOM_KERNEL:
+      {
+	this_state->pmctr.Kk = 1;
+	this_state->pmctr.Kp = 0;
+	this_state->pmctr.Ku = 0;
+      }
+      break;
+    case PAPI_DOM_OTHER:
+      {
+	this_state->pmctr.Kk = 0;
+	this_state->pmctr.Kp = 1;
+	this_state->pmctr.Ku = 0;
+      }
+      break;
+    case PAPI_DOM_ALL:
+      {
+	this_state->pmctr.Kk = 1;
+	this_state->pmctr.Kp = 1;
+	this_state->pmctr.Ku = 1;
+      }
+      break;
+    default:
+      return(PAPI_EINVAL);
+    }
+  return(PAPI_OK);
+}
+
+static int getmhz(void)
+{
+  long sysconf(int request);
+  float p;
+  
+  p = (float) sysconf(_SC_CRAY_CPCYCLE); /* Picoseconds */
+  p = p * 1.0e-12; /* Convert to seconds */
+  p = 1.0 / (p * 1000000.0); /* Convert to MHz */
+  return((int)p);
+}
+
 /* Low level functions, should not handle errors, just return codes. */
+
+/* At init time, the higher level library should always allocate and 
+   reserve EventSet zero. */
 
 int _papi_hwd_init(EventSetInfo *zero)
 {
-  /* Fill in papi_mdi */
+  /* Fill in what we can of the papi_system_info. */
   
-  /* At init time, the higher level library should always allocate and 
-     reserve EventSet zero. */
-
   _papi_system_info.ncpu = 1;
   _papi_system_info.type = 0;
   _papi_system_info.cpu = 0;
@@ -273,8 +252,13 @@ int _papi_hwd_init(EventSetInfo *zero)
   DBG((stderr,"Found %d CPU's at %d Mhz.\n",_papi_system_info.ncpu,
        ,_papi_system_info.mhz));
 
+  /* Initialize our global machdep. */
+
+  init_config(zero->machdep);
   return(PAPI_OK);
 }
+
+/* Do not ever use ESI->NumberOfCounters in here. */
 
 int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 {
@@ -407,58 +391,55 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_start(EventSetInfo *ESI, EventSetInfo *zero)
-{
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-  int retval;
-
-  /* If we're the outermost start, we fill the global machdep.
-     Good idea George. */
-
-  if (EventSet->EventSetIndex != 0)
-    {
-      current_state->mask = this_state->mask;
-      current_state->start_conf[0] = this_state->start_conf[0];
-      current_state->start_conf[1] = this_state->start_conf[1];
-      current_state->start_conf[2] = this_state->start_conf[2];
-    }
-
-  retval = _wrperf(this_state->pmctr,0,0,0);
-  if (retval == 0)
-    return(PAPI_OK);
-  else
-    return(PAPI_ESBSTR);
-}
-
 int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 {
   int retval, one_shared = 0, two_shared = 0, three_shared = 0;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
 
-  if (this_state->mask & current_state->mask & 0x1)
+  if (zero->multistart.num_runners)
     {
-      if (counter_shared(this_state, current_state, 0))
+      /* We need the latest values of the shared counters so we can
+	 handle nested, shared, starts. If nothing is shared, 
+         we'll notice later on and this won't hurt us. */
+
+      retval = _papi_hwd_read(ESI, zero, ESI->start);
+      if (retval < PAPI_OK)
+	return(retval);
+
+      /* Check for shared events that require no machdep modification */
+      
+      if (this_state->mask & current_state->mask & 0x1)
 	{
-	  zero->multistart.SharedDepth[0] ++; 
-	  one_shared = 1;
+	  if (counter_shared(this_state, current_state, 0))
+	    {
+	      zero->multistart.SharedDepth[0] ++; 
+	      one_shared = 1;
+	    }
+	  else
+	    return(PAPI_ECNFLCT);
 	}
-    }
-  if (this_state->mask & current_state->mask & 0x2)
-    {
-      if (counter_shared(this_state, current_state, 1))
+
+      if (this_state->mask & current_state->mask & 0x2)
 	{
-	  zero->multistart.SharedDepth[1] ++; 
-	  two_shared = 1;
+	  if (counter_shared(this_state, current_state, 1))
+	    {
+	      zero->multistart.SharedDepth[1] ++; 
+	      two_shared = 1;
+	    }
+	  else
+	    return(PAPI_ECNFLCT);
 	}
-    }
-  if (this_state->mask & current_state->mask & 0x4)
-    {
-      if (counter_shared(this_state, current_state, 1))
+
+      if (this_state->mask & current_state->mask & 0x4)
 	{
-	  zero->multistart.SharedDepth[2] ++; 
-	  three_shared = 1;
+	  if (counter_shared(this_state, current_state, 1))
+	    {
+	      zero->multistart.SharedDepth[2] ++; 
+	      three_shared = 1;
+	    }
+	  else
+	    return(PAPI_ECNFLCT);
 	}
     }
 
@@ -486,7 +467,20 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       current_state->pmctr.SEL2 = this_state->pmctr.SEL2;
     }
 
-  return(_papi_hwd_start(zero));
+  /* Start the counters with the new merged event set machdep structure */
+
+  retval = _wrperf(this_state->pmctr,0,0,0);
+  if (retval)
+    return(PAPI_EBUG);
+
+  if (ESI->state & PAPI_OVERFLOWING)
+    {
+      retval = _papi_hwi_start_overflow_timer(ESI);
+      if (retval < PAPI_OK)
+	return(PAPI_EBUG);
+    }
+
+  return(PAPI_OK);
 } 
 
 int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
@@ -497,9 +491,6 @@ int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
   if (retval < PAPI_OK)
     return(retval);
 
-  retval = perfmonctl(PERFCNT_EV5, PERFCNT_OFF);
-  if (retval != 0)
-    return(PAPI_ESBSTR);
 
   return(PAPI_OK);
 }
@@ -510,9 +501,13 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
 
-  retval=_papi_hwd_stop(ESI, ESI->stop);
+  retval = _papi_hwd_read(ESI, zero, ESI->stop);
   if (retval < PAPI_OK)
     return(retval);
+
+  retval = perfmonctl(PERFCNT_EV5, PERFCNT_OFF);
+  if (retval)
+    return(PAPI_ESBSTR);
 
   if (this_state->mask & 0x1)
     {
@@ -547,7 +542,23 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
 	}
     }
 
-  return(_papi_hwd_start(zero));
+  /* Start the counters with the new unmerged event set machdep structure */
+  /* I'm not going to use this at the moment. The problem is that we need
+     to keep the current values of the shared events. I don't think this
+     will hurt us. */
+
+  retval = _wrperf(this_state->pmctr,0,0,0);
+  if (retval)
+    return(PAPI_EBUG);
+
+  if (ESI->state & PAPI_OVERFLOWING)
+    {
+      retval = _papi_hwi_stop_overflow_timer(ESI);
+      if (retval < PAPI_OK)
+	return(PAPI_EBUG);
+    }
+
+  return(PAPI_OK);
 }
 
 int _papi_hwd_reset(EventSetInfo *ESI)
@@ -561,7 +572,7 @@ int _papi_hwd_reset(EventSetInfo *ESI)
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
+int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long events[])
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int i, j=0, k=0;
@@ -589,20 +600,14 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 
       switch (selector)
 	{
-	  case 0x1:
-	    events[j] = last_read[0];
-	    if (zero->multistart.SharedDepth[0] > 1)
-	      events[j] -= ESI->start[j]; 
+	case 0x1:
+	  events[j] = last_read[0];
 	  break;
 	case 0x2:
 	  events[j] = last_read[1];
-	  if (zero->multistart.SharedDepth[1] > 1)
-	    events[j] -= ESI->start[j]; 
 	  break;
 	case 0x4:
 	  events[j] = last_read[2];
-	  if (zero->multistart.SharedDepth[2] > 1)
-	    events[j] -= ESI->start[j]; 
 	  break;
 	case 0x13:
 	case 0x15:
@@ -630,9 +635,9 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
   switch (code)
     {
     case PAPI_SET_DEFDOM:
-      return(set_def_domain(option->domain.domain));
+      return(set_default_domain(option->domain.domain));
     case PAPI_SET_DOMAIN:
-      return(set_domain(option->domain.ESI,option->domain.domain));
+      return(set_eventset_domain(option->domain.ESI,option->domain.domain));
     default:
       return(PAPI_ESBSTR);
     }
@@ -666,20 +671,25 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
 
-  if ((overflow_option->handler == NULL) || (overflow_option->threshold == 0))
-    this_state->timer_ms = 0;
+  if (overflow_option->threshold == 0)
+    {
+      this_state->timer_ms = 0;
+      overflow_option->timer_ms = 0;
+    }
   else
-    this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
+    {
+      this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
+      overflow_option->timer_ms = 1;
+    }
+
+  return(PAPI_OK);
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *overflow_option)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  /* This function is not used and shouldn't be called. */
 
-  if ((overflow_option->handler == NULL) || (overflow_option->threshold == 0))
-    this_state->timer_ms = 0;
-  else
-    this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
+  abort();
 }
 
 /* Machine info structure. -1 is unused. */

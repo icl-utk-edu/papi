@@ -144,8 +144,9 @@ typedef union _papi_int_option_t {
 
 /* The following functions are defined by the extras.c file. */
 
-extern int stop_overflow_timer(EventSetInfo *ESI);
-extern int start_overflow_timer(EventSetInfo *ESI);
+extern int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI);
+extern int _papi_hwi_start_overflow_timer(EventSetInfo *ESI);
+extern void _papi_hwi_correct_counters(EventSetInfo *ESI, unsigned long long *events);
 
 /* The following functions are defined by the substrate file. */
 
@@ -203,8 +204,8 @@ typedef struct _papi_mdi {
   const int supports_child_inheritance; /* We can pass on and inherit child counters/values */
   const int can_attach; /* We can attach PAPI to another process */
   const int read_also_resets; /* The read call from the kernel resets the counters */
-  const int default_domain; /* The default domain when this substrate is used */
-  const int default_granularity; /* The default granularity when this substrate is used */
+  int default_domain; /* The default domain when this substrate is used */
+  int default_granularity; /* The default granularity when this substrate is used */
 
   /* End feature flags */
 

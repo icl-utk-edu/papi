@@ -59,6 +59,7 @@ static void dispatch_overflow_signal(EventSetInfo *ESI, void *context)
   retval = _papi_hwd_read(ESI, event_set_zero, ESI->latest); 
   if (retval < PAPI_OK)
     return;
+  _papi_hwi_correct_counters(ESI, ESI->latest);
 
   /* Get the latest counter value */
   latest = ESI->latest[ESI->overflow.EventIndex];
@@ -123,7 +124,7 @@ static int start_timer(int milliseconds)
   return(PAPI_OK);
 }
 
-int start_overflow_timer(EventSetInfo *ESI)
+int _papi_hwi_start_overflow_timer(EventSetInfo *ESI)
 {
   event_set_overflowing = ESI;
   return(start_timer(ESI->overflow.timer_ms));
@@ -150,7 +151,7 @@ static int stop_timer(void)
   return(PAPI_OK);
 }
 
-int stop_overflow_timer(EventSetInfo *ESI)
+int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI)
 {
   event_set_overflowing = NULL;
   return(stop_timer());

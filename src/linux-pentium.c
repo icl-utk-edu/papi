@@ -82,11 +82,6 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 {0,-1,-1,-1},			// 63
              };
 
-/* Globals are BAD */
-
-static EventSetInfo *_papi_global = NULL;
-static hwd_control_state_t *_papi_global_machdep = NULL;
-
 /* Utility functions */
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
@@ -118,6 +113,21 @@ static void init_config(hwd_control_state_t *ptr)
   ptr->start_conf[1] |= def_mode;
   ptr->start_conf[2] = 0;
   ptr->domain = def_mode;
+}
+
+static int set_default_domain(int domain)
+{
+  switch (domain)
+    {
+    case PAPI_DOM_USER:
+    case PAPI_DOM_KERNEL:
+    case PAPI_DOM_ALL:
+      _papi_system_info.default_domain = domain;
+      break;
+    default:
+      return(PAPI_EINVAL);
+    }
+  return(PAPI_OK);
 }
 
 static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
@@ -161,27 +171,6 @@ static int set_inherit(int arg)
   return(PAPI_OK);
 }
 
-static int set_default_domain(int domain)
-{
-  int def_mode;
-
-  switch (domain)
-    {
-    case PAPI_DOM_USER:
-      def_mode = PERF_USR;
-      break;
-    case PAPI_DOM_KERNEL:
-      def_mode = PERF_OS;
-      break;
-    case PAPI_DOM_ALL:
-      def_mode = PERF_OS | PERF_USR;
-      break;
-    default:
-      return(PAPI_EINVAL);
-    }
-  return(PAPI_OK);
-}
-
 static int set_eventset_domain(EventSetInfo *ESI, int domain)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -222,6 +211,16 @@ static int set_eventset_domain(EventSetInfo *ESI, int domain)
   return(PAPI_OK);
 }
 
+static int getmhz(void)
+{
+  unsigned long long stamp;
+
+  stamp = perf_get_cycles();
+  sleep(1);
+  stamp = (perf_get_cycles() - stamp)/1000000;
+  return(stamp);
+}
+
 /* Low level functions, should not handle errors, just return codes. */
 
 /* At init time, the higher level library should always allocate and 
@@ -231,28 +230,19 @@ int _papi_hwd_init(EventSetInfo *zero)
 {
   /* Fill in what we can of the papi_system_info. */
   
-  unsigned long long stamp;
-
-  stamp = perf_get_cycles();
-  sleep(1);
-  stamp = (perf_get_cycles() - stamp)/1000000;
-
-  _papi_system_info.mhz = stamp;
-  _papi_system_info.ncpu = NR_CPUS;
+  _papi_system_info.ncpu = 1;
+  _papi_system_info.type = 0;
+  _papi_system_info.cpu = 0;
+  _papi_system_info.mhz = getmhz();
 
   /* As long as MHZ is close, we are fine. We only need it for brain-dead
      kernel modules. Which mine most definitely is not! */
 
   DBG((stderr,"Found %d CPUs at %d Mhz.\n",_papi_system_info.ncpu,_papi_system_info.mhz));
 
-  /* Hook up our static variables. */
-
-  _papi_global = zero;
-  _papi_global_machdep = zero->machdep;
-
   /* Initialize our global machdep. */
 
-  init_config(_papi_global_machdep);
+  init_config(zero->machdep);
   return(PAPI_OK);
 }
 
@@ -518,7 +508,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   if (ESI->state & PAPI_OVERFLOWING)
     {
-      retval = start_overflow_timer(ESI);
+      retval = _papi_hwi_start_overflow_timer(ESI);
       if (retval < PAPI_OK)
 	return(PAPI_EBUG);
     }
@@ -606,7 +596,7 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
 
   if (ESI->state & PAPI_OVERFLOWING)
     {
-      retval = stop_overflow_timer(ESI);
+      retval = _papi_hwi_stop_overflow_timer(ESI);
       if (retval < PAPI_OK)
 	return(PAPI_EBUG);
     }
@@ -629,6 +619,62 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
 {
   int retval, selector, j = 0, i;
   unsigned long long last_read[PERF_COUNTERS];
+
+  retval = update_counters(last_read);
+  if (retval < PAPI_OK)
+    return(retval);
+
+  /* This routine distributes hardware counters to software counters in the
+     order that they were added. Note that the higher level 
+     EventSelectArray[i] entries may not be contiguous because the user
+     has the right to remove an event. */
+
+  for (i=0;i<_papi_system_info.num_cntrs;i++)
+    {
+      selector = ESI->EventSelectArray[i];
+      
+      assert(selector != 0);
+      if (selector == PAPI_NULL)
+	continue;
+
+      DBG((stderr,"Event %d, mask is 0x%x\n",j,selector));
+
+      switch (selector)
+	{
+	case 0x1:
+	  events[j] = last_read[0];
+	  break;
+	case 0x2:
+	  events[j] = last_read[1];
+	  break;
+	case 0x4:
+	  events[j] = last_read[2];
+	  break;
+	case 0x13:
+	case 0x15:
+	case 0x16:
+	  /* Here we could calculate derived metrics based on
+	     ESI->EventCodeArray[i]; But I'm lazy, so someone else
+	     can do it. */
+	default:
+	  return(PAPI_EBUG);
+      }
+
+      /* Early exit! */
+
+      if (++j == ESI->NumberOfCounters)
+	return(PAPI_OK);
+    }
+
+  /* Should never get here */
+
+  return(PAPI_EBUG);
+}
+
+int _old_papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long events[])
+{
+  int retval, selector, j = 0, i;
+  unsigned long long last_read[PERF_COUNTERS];
   unsigned long long a, b, c;
 
   retval = update_counters(last_read);
@@ -641,7 +687,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
      has the right to remove an event. */
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
-  {
+    {
       selector = ESI->EventSelectArray[i];
       
       assert(selector != 0);
@@ -651,32 +697,39 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
       DBG((stderr,"Event %d, mask is 0x%x\n",j,selector));
 
       switch (selector)
-      {
+	{
 	case 0x1:
-	  events[j] = last_read[0];
-	  if (zero->multistart.SharedDepth[0] > 1)
-          { a = events[j];
-            b = ESI->start[j];
-            c = a - b;
-            events[j] = c;
-          }
+	  if (zero->multistart.num_runners > 1)
+	    { 
+	      a = last_read[0];
+	      b = ESI->start[j];
+	      c = a - b;
+	      events[j] = c;
+	    }
+	  else
+	    events[j] = last_read[0];
 	  break;
 	case 0x2:
-	  events[j] = last_read[1];
-	  if (zero->multistart.SharedDepth[1] > 1)
-          { a = events[j];
-            b = ESI->start[j];
-            c = a - b;
-            events[j] = c;
-          }
+	  if (zero->multistart.num_runners > 1)
+	    { 
+	      a = last_read[1];
+	      b = ESI->start[j];
+	      c = a - b;
+	      events[j] = c;
+	    }
+	  else
+	    events[j] = last_read[1];
 	  break;
 	case 0x4:
-	  events[j] = last_read[2];
-	  if (zero->multistart.SharedDepth[2] > 1)
-          { a = events[j];
-            b = ESI->start[j];
-            c = a - b;
-          }
+	  if (zero->multistart.num_runners > 1)
+	    {
+	      a = last_read[2];
+	      b = ESI->start[j];
+	      c = a - b;
+	      events[j] = c;
+	    }
+	  else
+	    events[j] = last_read[2];
 	  break;
 	case 0x13:
 	case 0x15:
@@ -758,7 +811,9 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
 {
-  return(PAPI_ESBSTR);
+  /* This function is not used and shouldn't be called. */
+
+  abort();
 }
 
 /* Machine info structure. -1 is unused. */
