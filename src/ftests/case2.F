@@ -26,6 +26,11 @@ C 2 counters.
       INTEGER len_trim
       EXTERNAL len_trim
 
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 0 for yes, 1 for no)?'
+      read(5,*) tests_quiet
+
       a=0.999
       b=1.001
       n=1000
@@ -46,28 +51,36 @@ C 2 counters.
       call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .NE. 0) then
          print *, 'Can not add PAPI_L2_TCM: '//
      $       errorstring(1:len_trim(errorstring))
-      else
+        endif
+      else if (tests_quiet .NE. 0) then
         print *,'Added PAPI_L2_TCM'
       end if
 
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK )then
          call PAPIf_perror( retval, errorstring, errorcode)
+         if (tests_quiet .NE. 0) then
          print *, 'Can not add PAPI_TOT_CYC: '//
      $       errorstring(1:len_trim(errorstring))
-      else
+         end if 
+      else if (tests_quiet .NE. 0) then
          print *,'Added PAPI_TOT_CYC'
       end if
  
       call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
       if ( retval .NE. PAPI_OK )then
          call PAPIf_perror( retval, errorstring, errorcode)
+         if (tests_quiet .NE. 0) then
          print *, 'Can not add PAPI_FP_INS: '//
      $       errorstring(1:len_trim(errorstring))
+         end if
       else
+         if (tests_quiet .NE. 0) then
          print *,'Added PAPI_FP_INS'
+         end if
       end if
 
       call PAPIf_start(EventSet, retval )

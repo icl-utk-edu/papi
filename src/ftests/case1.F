@@ -23,12 +23,16 @@ C count the first event?
 
       INTEGER len_trim
       EXTERNAL len_trim
+      integer tests_quiet
 
       n = 1000
       a = 0.999
       b = 1.001
       j = 0
       i = 0
+
+      print *, 'Run in quiet mode (enter 0 for yes, 1 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
