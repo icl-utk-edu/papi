@@ -3,12 +3,15 @@ DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
 LIBS	= static aix-shared
 TARGETS	= serial multiplex_and_pthreads smp omp
 
+# Default source is for pmtoolkit 1.3.x. For version 1.2.x add -DPMTOOLKIT_1_2
+
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
 CFLAGS	= $(FLAGS) -g -DDEBUG
 OPTFLAGS= 
 TOPTFLAGS=
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
+FTOPTFLAGS= $(FOPTFLAGS)
 NOOPT	= 
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp

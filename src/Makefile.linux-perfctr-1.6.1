@@ -11,6 +11,7 @@ FFLAGS	= -Dlinux -Wall
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
 TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
+FTOPTFLAGS= $(FOPTFLAGS)
 CC	= gcc
 F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
