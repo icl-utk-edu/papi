@@ -251,7 +251,7 @@ static void headerlines(char * title, int TESTS_QUIET)
   #define FMA 1
 #else
   #define SLOPE 0
-  #define FMA 1
+  #define FMA 0
 #endif
 
 static void resultline(int i, int j, int TESTS_QUIET)
@@ -264,20 +264,19 @@ static void resultline(int i, int j, int TESTS_QUIET)
 	retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "resultline: PAPI_flops", retval);
 
-	if (!TESTS_QUIET) {
-		i++;						/* convert to 1s base  */
-		theory = 2;
-		while (j--) theory *= i;	/* theoretical ops   */
-		papi = (int)(flpins) << FMA;
-		diff = papi - theory;
+	i++;						/* convert to 1s base  */
+	theory = 2;
+	while (j--) theory *= i;	/* theoretical ops   */
+	papi = (int)(flpins) << FMA;
+	diff = papi - theory;
 
-		ferror = ((float)abs(diff)) / ((float)theory) * 100;
+	ferror = ((float)abs(diff)) / ((float)theory) * 100;
+
+	if (!TESTS_QUIET)
 		printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
-	}
 
 	if (TESTS_QUIET && ferror > 10 && diff > 8)
 		test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
- exit(1);
 }
 
 
