@@ -92,6 +92,31 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    };
 #endif
 
+#if defined(linux) && defined(__ia64__)
+#ifdef ITANIUM2
+   static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",
+      "IA64_INST_RETIRED", NULL
+   };
+#else
+   static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE", 
+      "UNSTALLED_BACKEND_CYCLE", "MEMORY_CYCLE", NULL
+   };
+#endif
+
+#if defined(mips) && defined(sgi) && defined(unix)
+   static char *native_name[] = { "Primary_instruction_cache_misses", 
+      "Primary_data_cache_misses", NULL
+   };
+#endif
+
+#if defined(sun) && defined(sparc)
+   static char *native_name[] = { "retinst", "DC_wr_hit", NULL };
+#endif
+
+#elif defined(__ALPHA) && defined(__osf__)
+   static char *native_name[] = { "cycles", "DC_wr_hit", NULL };
+#endif
+
 void papimon_start(void)
 {
    int retval;
@@ -104,72 +129,7 @@ void papimon_start(void)
       if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-#if defined(_AIX)
-      for (i = 0; native_name[i] != NULL; i++) {
-         /* printf("native_name[%d] = %s\n", i, native_name[i]); */
-         retval = PAPI_event_name_to_code(native_name[i], &native);
-         /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
-         if (retval != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      }
-#elif defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )
-      for (i = 0; native_name[i] != NULL; i++) {
-         retval = PAPI_event_name_to_code(native_name[i], &native);
-         /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
-         if (retval != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      }
-#elif defined(linux) && defined(__ia64__)
-      {
-
-         /* Execution latency stall cycles */
-#ifdef ITANIUM2
-         PAPI_event_name_to_code("CPU_CYCLES", &native);
-#else
-         PAPI_event_name_to_code("DEPENDENCY_SCOREBOARD_CYCLE", &native);
-#endif
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-         /* Combined execution stall cycles */
-#ifdef ITANIUM2
-         PAPI_event_name_to_code("L1I_READS", &native);
-#else
-         PAPI_event_name_to_code("DEPENDENCY_ALL_CYCLE", &native);
-#endif
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-         /* Combined instruction fetch stall cycles */
-#ifdef ITANIUM2
-         PAPI_event_name_to_code("L1D_READS_SET0", &native);
-#else
-         PAPI_event_name_to_code("UNSTALLED_BACKEND_CYCLE", &native);
-#endif
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-         /* Combined memory stall cycles */
-#ifdef ITANIUM2
-         PAPI_event_name_to_code("IA64_INST_RETIRED", &native);
-#else
-         PAPI_event_name_to_code("MEMORY_CYCLE", &native);
-#endif
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      }
-#elif defined(mips) && defined(sgi) && defined(unix)
-      /* See man r10k_counters */
-      PAPI_event_name_to_code("Primary_instruction_cache_misses", &native);
-      /* L1 I Miss */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      PAPI_event_name_to_code("Primary_data_cache_misses", &native);
-      /* L1 D Miss */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#elif defined(_CRAYT3E)
+#if defined(_CRAYT3E)
       native = 0 | 0x0 << 8 | 0;        /* Machine cyc */
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
@@ -179,24 +139,22 @@ void papimon_start(void)
       native = 0 | 0xC << 8 | 2;        /* CPU cyc */
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#elif defined(sun) && defined(sparc)
-      PAPI_event_name_to_code("Load_use", &native);
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      PAPI_event_name_to_code("DC_wr_hit", &native);
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#elif defined(__ALPHA) && defined(__osf__)
-      PAPI_event_name_to_code("retinst", &native);
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      PAPI_event_name_to_code("cycles", &native);
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#elif defined(__LINUX__)
-      native = 0x28;
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+#elif ((defined(_AIX)) || \
+       (defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )) || \
+       (defined(linux) && defined(__ia64__)) || \
+       (defined(mips) && defined(sgi) && defined(unix)) || \
+       (defined(sun) && defined(sparc)) || \
+       (defined(__ALPHA) && defined(__osf__)))
+
+      for (i = 0; native_name[i] != NULL; i++) {
+         retval = PAPI_event_name_to_code(native_name[i], &native);
+         /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
+         if (retval != PAPI_OK)
+            test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
+            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+      }
+
 #else
 #error "Architecture not included in this test file yet."
 #endif
@@ -267,33 +225,20 @@ void papimon_stop(void)
       fprintf(stderr, "%% FMA Instructions         : %.2f\n",
               100.0 * (float) values[6] / ((float) values[1] + (float) values[4]));
 #endif
-#elif defined(linux) && ( defined(__i386__) || defined(__x86_64__) )
+#elif ((defined(linux) && ( defined(__i386__) || defined(__x86_64__) )) || \
+       (defined(linux) && defined(__ia64__)) || \
+       (defined(mips) && defined(sgi)) || \
+       (defined(sun) && defined(sparc)) || \
+       (defined(__ALPHA) && defined(__osf__)))
       for (i = 0; native_name[i] != NULL; i++) {
          fprintf(stderr, "%-40s: %lld\n", native_name[i], values[i]);
       }
-#elif defined(linux) && defined(__ia64__)
-#ifdef ITANIUM2
-      fprintf(stderr, "cpu cycles         : %lld\n", values[0]);
-      fprintf(stderr, "L1 Inst cache reads     : %lld\n", values[1]);
-      fprintf(stderr, "L1 data cache reads  : %lld\n", values[2]);
-      fprintf(stderr, "ia64 instructions retired        : %lld\n", values[3]);
-#else
-      fprintf(stderr, "Execution latency stall cyc         : %lld\n", values[0]);
-      fprintf(stderr, "Combined execution stall cycles     : %lld\n", values[1]);
-      fprintf(stderr, "Combined instr. fetch stall cycles  : %lld\n", values[2]);
-      fprintf(stderr, "Combined memory stall cycles        : %lld\n", values[3]);
-#endif
-#elif defined(mips) && defined(sgi)
-      fprintf(stderr, "L1 Instruction cache misses       : %lld\n", values[0]);
-      fprintf(stderr, "L1 Data cache misses              : %lld\n", values[1]);
 #elif defined(_CRAYT3E)
       fprintf(stderr, "Machine Cycles                    : %lld\n", values[0]);
       fprintf(stderr, "DCache accesses                   : %lld\n", values[1]);
       fprintf(stderr, "CPU Cycles                        : %lld\n", values[2]);
-#elif defined(sun) && defined(sparc)
       fprintf(stderr, "Load_use                   : %lld\n", values[0]);
       fprintf(stderr, "DC_wr_hit                  : %lld\n", values[1]);
-#elif defined(__ALPHA) && defined(__osf__)
       fprintf(stderr, "Retired Instructions       : %lld\n", values[0]);
       fprintf(stderr, "Cycles                     : %lld\n", values[1]);
 #endif
