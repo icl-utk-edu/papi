@@ -474,7 +474,7 @@ int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 
 /* The High Level API
 
-The simple interface implemented by the following four routines
+The simple interface implemented by the following eight routines
 allows the user to access and count specific hardware events from
 both C and Fortran. It should be noted that this API can be used in
 conjunction with the low level API. */

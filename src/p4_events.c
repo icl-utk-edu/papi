@@ -90,6 +90,8 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
    {PAPI_FP_INS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
+   {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
@@ -114,6 +116,8 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
    {PAPI_FP_INS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
+   {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
