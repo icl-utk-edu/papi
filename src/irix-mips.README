@@ -1,0 +1,7 @@
+Title: Native Encoding for IRIX v6.x on MIPS R10K and R12K processors
+
+The encoding for native (NON-PAPI) events is:
+	
+		Low 8 bits indicate which event number: 0 - 31
+
+See: man r10k_counters

@@ -1,5 +1,3 @@
-$Id$
-
 Machine specific notes for the Cray T3E
 
 The T3E has 3 counters. The following can be counted, courtesy of

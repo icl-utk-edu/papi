@@ -13,6 +13,68 @@ static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { { -1 }, };
 
 static hwd_control_state current; /* not yet used. */
 
+static int getmhz(void)
+{
+  /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
+  /* See the PCL home page for the German version of PAPI. */
+
+  int mhz;
+  char line[256], cmd[80];
+  FILE *f;
+  char cmd_line[80], fname[L_tmpnam];
+  
+  /*??? system call takes very long */
+  /* get system configuration and put output into file */
+  sprintf(cmd_line, "/usr/sbin/prtconf -vp >%s", tmpnam(fname));
+  if(system(cmd_line) == -1)
+    {
+      remove(fname);
+      return -1;
+    }
+  
+  /* open output file */
+  if((f = fopen(fname, "r")) == NULL)
+    {
+      remove(fname);
+      return -1;
+    }
+  
+  /* ignore all lines until we reach something with a sparc line */
+  while(fgets(line, 256, f) != NULL)
+    {
+      if((sscanf(line, "%s", cmd) == 1)
+	 && !strcmp(cmd, "sparc-version:"))
+	break;
+    }
+  
+  /* then read until we find clock frequency */
+  while(fgets(line, 256, f) != NULL)
+    {
+      if((sscanf(line, "%s %x", cmd, &mhz) == 2)
+	 && !strcmp(cmd, "clock-frequency:"))
+	break;
+    }
+  
+  /* remove temporary file */
+  remove(fname);
+  
+  /* if everything wqent ok, return mhz */
+  if(strcmp(cmd, "clock-frequency:"))
+    return -1;
+  else
+    return mhz / 1000000;
+
+  /* End stolen code */
+}
+
+static int get_cpu_num(void)
+{
+  int cpu;
+
+  processor_bind(P_LWPID, P_MYID, PBIND_QUERY, &cpu);
+  return cpu;
+}
+
 /* Low level functions, should not handle errors, just return codes. */
 
 int _papi_hwd_init(EventSetInfo *zero)

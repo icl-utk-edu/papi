@@ -1,0 +1,14 @@
+SUBSTR  = irix-mips
+DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
+TARGET	= libpapi.a
+TESTS	= serial
+CFLAGS  = -g
+OPTFLAGS= 
+SMPCFLGS= -mp
+OMPCFLGS= -mp
+LDFLAGS = 
+CC_R	= cc
+CC	= cc
+F77	= f77
+
+include Makefile.inc

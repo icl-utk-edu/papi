@@ -1,0 +1,16 @@
+Native event code can be found in /usr/include/asm/perf.h. 
+
+The counter format is:
+
+	(code << 8) | (hw_counter_num).
+
+hw_counter_num is current:
+
+0 - Hardware counter 0
+1 - Hardware counter 1
+2 - Process virtualized TSC
+
+Hardware counter number 2 only counts 1 thing: it counts the cycles 
+your process has been on the run queue. This is not used in PAPI.
+
+

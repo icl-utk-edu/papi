@@ -1,0 +1,18 @@
+SUBSTR  = unicos-ev5
+DESCR   = "Cray UNICOS/mk Unix with Alpha 21164"
+TARGET	= libpapi.a
+TESTS	= serial 
+MISCOBJS= perfctrl.o
+CFLAGS 	= -g -DDEBUG 
+OPTFLAGS=
+SMPCFLGS=
+OMPCFLGS=
+LDFLAGS = 
+CC_R	= cc
+CC	= cc
+F77	= f77
+
+include Makefile.inc
+
+perfctrl.o: t3e/perfctrl.s
+	cam -P t3e/perfctrl.s

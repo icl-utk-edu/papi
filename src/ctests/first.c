@@ -1,3 +1,24 @@
+/* This file performs the following test: start, read, stop and again functionality
+
+   - It attempts to use the following three counters. It may use less depending on
+     hardware counter resource limitations. These are counted in the default counting
+     domain and default granularity, depending on the platform. Usually this is 
+     the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
+     + PAPI_FP_INS
+     + PAPI_TOT_CYC
+   - Start counters
+   - Do flops
+   - Read counters
+   - Reset counters
+   - Do flops
+   - Read counters
+   - Do flops
+   - Read counters
+   - Do flops
+   - Stop and read counters
+   - Read counters
+*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -8,119 +29,76 @@
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
-
-#define TESTNUM 10000000
+#include "test_utils.h"
 
 int main() 
 {
-  int r, i, n = 0;
-  double a, b, c;
-  unsigned long long *cr,*cs,*ct, *cu;
-  int EventSet = PAPI_NULL;
+  int retval, num_tests = 5, num_events, mask = 0x5, tmp;
+  long long **values;
+  int EventSet;
 
-  r = PAPI_num_events();
-  assert(r>=PAPI_OK);
+  EventSet = add_test_events(&num_events,&mask);
 
-  if (PAPI_query_event(PAPI_TOT_CYC) == PAPI_OK)
-    {
-      r=PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-      if (r >= PAPI_OK)
-	n++;
-    }
+  values = allocate_test_space(num_tests, num_events);
 
-  if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK)
-    {
-      r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
-      if (r >= PAPI_OK)
-	n++;
-    }
+  retval = PAPI_start(EventSet);
+  assert(retval >= PAPI_OK);
 
-  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
-    {
-      r=PAPI_add_event(&EventSet, PAPI_FP_INS);
-      if (r >= PAPI_OK)
-	n++;
-    }
+  do_flops(NUM_FLOPS);
 
-  ct = (unsigned long long *)malloc(n*sizeof(unsigned long long));
-  cr = (unsigned long long *)malloc(n*sizeof(unsigned long long));
-  cs = (unsigned long long *)malloc(n*sizeof(unsigned long long));
-  cu = (unsigned long long *)malloc(n*sizeof(unsigned long long));
-  assert(ct!=NULL);
-  assert(cr!=NULL);
-  assert(cs!=NULL);
-  assert(cu!=NULL);
-  memset(ct,0x00,n*sizeof(unsigned long long));
-  memset(cr,0x00,n*sizeof(unsigned long long));
-  memset(cs,0x00,n*sizeof(unsigned long long));
-  memset(cu,0x00,n*sizeof(unsigned long long));
+  retval = PAPI_read(EventSet, values[0]);
+  assert(retval >= PAPI_OK);
 
-  r=PAPI_reset(EventSet);
-  assert(r>=PAPI_OK);
+  retval = PAPI_reset(EventSet);
+  assert(retval >= PAPI_OK);
 
-  r=PAPI_start(EventSet);
-  assert(r>=PAPI_OK);
+  do_flops(NUM_FLOPS);
 
-  a = 0.5;
-  b = 6.2;
-  for (i=0; i < TESTNUM; i++) {
-    c = a*b;
-  }
-  
-  r=PAPI_read(EventSet, cr);
-  assert(r>=PAPI_OK);
+  retval = PAPI_read(EventSet, values[1]);
+  assert(retval >= PAPI_OK);
 
-  r=PAPI_reset(EventSet);
-  assert(r>=PAPI_OK);
+  do_flops(NUM_FLOPS);
 
-  a = 0.5;
-  b = 6.2;
-  for (i=0; i < TESTNUM; i++) {
-    c = a*b;
-  }
+  retval = PAPI_read(EventSet, values[2]);
+  assert(retval >= PAPI_OK);
 
-  r=PAPI_read(EventSet, cs);
-  assert(r>=PAPI_OK);
+  do_flops(NUM_FLOPS);
 
-  a = 0.5;
-  b = 6.2;
-  for (i=0; i < TESTNUM; i++) {
-    c = a*b;
-  }
+  retval = PAPI_stop(EventSet, values[3]);
+  assert(retval >= PAPI_OK);
 
-  r=PAPI_stop(EventSet, ct);
-  assert(r>=PAPI_OK);
+  retval = PAPI_read(EventSet, values[4]);
+  assert(retval >= PAPI_OK);
 
-  r=PAPI_read(EventSet, cu);
-  assert(r>=PAPI_OK);
+  remove_test_events(&EventSet, mask);
 
-  if (n > 2) 
-    {
-      r=PAPI_rem_event(&EventSet, PAPI_FP_INS);
-      assert(r>=PAPI_OK);
-    }
+  printf("Test case 1: Non-overlapping start, stop, read.\n");
+  printf("-----------------------------------------------\n");
+  tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
+  printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
+  tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
+  printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
+  printf("Using %d iterations of c = a*b\n",NUM_FLOPS);
+  printf("-------------------------------------------------------------------------\n");
 
-  if (n > 1) 
-    {
-      r=PAPI_rem_event(&EventSet, PAPI_TOT_INS);
-      assert(r>=PAPI_OK);
-    }
+  printf("Test type   : \t1\t\t2\t\t3\t\t4\t\t5\n");
+  printf("PAPI_FP_INS : \t%lld\t%lld\t%lld\t%lld\t%lld\n",
+	 (values[0])[0],(values[1])[0],(values[2])[0],(values[3])[0],(values[4])[0]);
+  printf("PAPI_TOT_CYC: \t%lld\t%lld\t%lld\t%lld\t%lld\n",
+	 (values[0])[1],(values[1])[1],(values[2])[1],(values[3])[1],(values[4])[1]);
+  printf("-------------------------------------------------------------------------\n");
 
-  r=PAPI_rem_event(&EventSet, PAPI_TOT_CYC);
-  assert(r>=PAPI_OK); 
+  printf("Verification:\n");
+  printf("Row 1 approximately equals %d %d %d %d %d\n",
+	 NUM_FLOPS,NUM_FLOPS,2*NUM_FLOPS,3*NUM_FLOPS,3*NUM_FLOPS);
+  printf("Column 1 approximately equals column 2\n");
+  printf("Column 3 approximately equals 2 * column 2\n");
+  printf("Column 4 approximately equals 3 * column 2\n");
+  printf("Column 4 exactly equals column 5\n");
+
+  free_test_space(values, num_tests);
 
   PAPI_shutdown();
 
-  printf("%d iterations of c = a*b\n",TESTNUM);
-  printf("Cycles: %lld %lld %lld %lld\n",cr[0],cs[0],ct[0],cu[0]);
-  printf("Instrs: %lld %lld %lld %lld\n",cr[1],cs[1],ct[1],cu[1]);
-  printf("Flinst: %lld %lld %lld %lld\n",cr[2],cs[2],ct[2],cu[2]);
-  printf("col 1 ~= col 2, col 2 ~= 2 * col 3, col 3 ~= col4\n");
-
-  free(cr);
-  free(cs);
-  free(ct);
-  free(cu);
-  
   exit(0);
 }

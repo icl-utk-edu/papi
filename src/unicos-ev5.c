@@ -1,9 +1,6 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-/* The values defined in this file may be X86-specific (2 general 
-   purpose counters, 1 special purpose counter, etc.*/
-
 /* PAPI stuff */
 
 #include "unicos-ev5.h"
@@ -11,57 +8,57 @@
 /* First entry is counter code 1, counter code 2 and counter code 3.
    Then is the mask. There are no derived metrics for the T3E. */
 
-static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
+static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
                 { -1, -1, 0x4, 0x4 },   /* L1 D-Cache misses  */
                 { -1, -1, 0x6, 0x4 },	/* L1 I-Cache misses  */
-		{ -1, 0xf, 0xf, 0x6 },	/* L2 Cache misses */
-		{ -1, -1, -1, 0x6 },	/* ditto */
-		{ -1, -1, -1, 0 },	/* L3 misses */
-		{ -1, -1, -1, 0 },	/* ditto */
-		{ -1, -1, -1, 0 },	/* 6	**unused preset map elements** */
-		{ -1, -1, -1, 0 },	/* 7 */
-		{ -1, -1, -1, 0 },	/* 8 */
-		{ -1, -1, -1, 0 },	/* 9 */
+		{ -1, 0xf, 0xf, 0x6 },	/* L2 D-Cache misses */
+		{ -1, -1, -1, 0x6 },	/* L2 I-ditto */
+		{ -1, -1, -1, 0 },	/* L3 D-misses */
+		{ -1, -1, -1, 0 },	/* L3 I-misses */
+		{ -1, -1, -1, 0 },	/* L1 total */
+		{ -1, -1, -1, 0 },	/* L2 total */
+		{ -1, -1, -1, 0 },	/* L3 total */
+		{ -1, -1, -1, 0 },	/* snoop */
 		{ -1, -1, -1, 0 }, 	/* Req. access to shared cache line */
 		{ -1, -1, -1, 0 }, 	/* Req. access to clean cache line */
 		{ -1, -1, -1, 0 }, 	/* Cache Line Invalidation */
-                { -1, -1, -1, 0 },	/* 13 */
-                { -1, -1, -1, 0 },	/* 14 */
-                { -1, -1, -1, 0 },	/* 15 */
-                { -1, -1, -1, 0 },	/* 16 */
-                { -1, -1, -1, 0 },	/* 17 */
-                { -1, -1, -1, 0 },	/* 18 */
-                { -1, -1, -1, 0 },	/* 19 */
+                { -1, -1, -1, 0 },	/* Cache line intervention */
+                { -1, -1, -1, 0 },	/* L3 LM */
+                { -1, -1, -1, 0 },	/* L3 SM */
+                { -1, -1, -1, 0 },	/* BRU idle cyc */
+                { -1, -1, -1, 0 },	/* ALU idle cyc */
+                { -1, -1, -1, 0 },	/* FPU idle cyc */
+                { -1, -1, -1, 0 },	/* LD/ST idle cyc */
 		{ -1, -1, 0x7, 0x4 },   /* D-TLB misses */
 		{ -1, -1, 0x5, 0x4 },	/* I-TLB misses */
                 { -1, -1, -1, 0 },	/* Total TLB misses */
-                { -1, -1, -1, 0 },	/* 23 */
-                { -1, -1, -1, 0 },	/* 24 */
-                { -1, -1, -1, 0 },	/* 25 */
-                { -1, -1, -1, 0 },	/* 26 */
-                { -1, -1, -1, 0 },	/* 27 */
-                { -1, -1, -1, 0 },	/* 28 */
-                { -1, -1, -1, 0 },	/* 29 */
+                { -1, -1, -1, 0 },	/* L1 LM */
+                { -1, -1, -1, 0 },	/* L1 SM */ 
+                { -1, -1, -1, 0 },	/* L2 LM */
+                { -1, -1, -1, 0 },	/* L2 LM */
+                { -1, -1, -1, 0 },	/* BTAC miss */
+                { -1, -1, -1, 0 },	/* Prefetch data caused a miss */
+                { -1, -1, -1, 0 },	
 		{ -1, -1, -1, 0 },	/* TLB shootdowns */
-                { -1, -1, -1, 0 },	/* 31 */
-                { -1, -1, -1, 0 },	/* 32 */
-                { -1, -1, -1, 0 },	/* 33 */
+                { -1, -1, -1, 0 },	/* Failed store cond. */
+                { -1, -1, -1, 0 },	/* Suc. store cond. */
+                { -1, -1, -1, 0 },	/* Tot. store cond. */
                 { -1, -1, 0xa, 0x4 },	/* Cycles stalled waiting for memory */
                 { -1, -1, -1, 0 },	/* Cycles stalled waiting for memory read */
                 { -1, -1, -1, 0 },	/* Cycles stalled waiting for memory write */
                 { -1, 0x0, 0xd, 0x2 },	/* Cycles no instructions issued */
                 { -1, 0x7, -1, 0x2 },	/* Cycles max instructions issued */
-                { -1, -1, -1, 0 },	/* 39 */
-		{ -1, -1, -1, 0 },	/* 40 */
-                { -1, -1, -1, 0 },	/* 41 */
+                { -1, -1, -1, 0 },	/* Cycles no instructions comlpeted */
+		{ -1, -1, -1, 0 },	/* Cycles max instructions completed */
+                { -1, -1, -1, 0 },	/* hardware interrupts */
 		{ -1, -1, -1, 0 },	/* Uncond. branches executed */
 		{ -1, 0x8, 0x3, 0x2 },	/* Cond. branch inst. executed*/
 		{ -1, -1, -1, 0 },	/* Cond. branch inst. taken*/
 		{ -1, -1, -1, 0 },	/* Cond. branch inst. not taken*/
 		{ -1, -1, 0x3, 0x4 },	/* Cond. branch inst. mispred.*/
-                { -1, -1, -1, 0 },	/* 47 */
-                { -1, -1, -1, 0 },	/* 48 */
-                { -1, -1, -1, 0 },	/* 49 */
+                { -1, -1, -1, 0 },	/* Cond. branch inst. corr. pred */
+                { -1, -1, -1, 0 },	/* FMA instructions */
+                { -1, -1, -1, 0 },	/* Total instructions issued */
 		{ 0x1, -1, -1, 0x1 },	/* Total inst. executed */
 		{ -1, 0x9, -1, 0x2 },	/* Integer inst. executed */
 		{ -1, 0xa, -1, 0x2 },	/* Floating Pt. inst. executed */
@@ -70,14 +67,31 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{ -1, 0x8, -1, 0x2 },	/* Branch inst. executed */
 		{ -1, -1, -1, 0 },	/* Vector/SIMD inst. executed  */
 		{ -1, -1, -1, 0 },	/* FLOPS */
-                { -1, -1, -1, 0 },	/* 58 */
-                { -1, -1, -1, 0 },	/* 59 */
+                { -1, -1, -1, 0 },	/* Loads */
+                { -1, -1, -1, 0 },	/* Stores */
 		{ 0x0, -1, -1, 0x1 },	/* Total cycles */
 		{ -1, -1, -1, 0 },	/* MIPS */
-                { -1, -1, -1, 0 },	/* 62 */
-                { -1, -1, -1, 0 },	/* 63 */ };
+                { -1, -1, -1, 0 },	/* Total load/stores */
+                { -1, -1, -1, 0 },	/* Syncs */ };
 
 /* Utility functions */
+
+static int set_default_domain(EventSetInfo *zero, int domain)
+{
+  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
+  return(set_domain(current_state,domain));
+}
+
+static int set_default_granularity(EventSetInfo *zero, int granularity)
+{
+  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
+  return(set_granularity(current_state,granularity));
+}
+
+static int set_inherit(EventSetInfo *zero, pid_t pid)
+{
+  return(PAPI_ESBSTR);
+}
 
 static void init_config(hwd_control_state_t *ptr)
 {
@@ -85,7 +99,7 @@ static void init_config(hwd_control_state_t *ptr)
   int kill_user = 0;
   int kill_kernel = 0;
 
-  memset(&ptr->pmctr,0x0,sizeof(pmctr_t));
+  memset(&ptr->counter_cmd,0x0,sizeof(pmctr_t));
 
   switch (_papi_system_info.default_domain)
     {
@@ -120,108 +134,123 @@ static void init_config(hwd_control_state_t *ptr)
       abort();
     }
 
-  ptr->pmctr.Kp = kill_pal;
-  ptr->pmctr.Ku = kill_user;
-  ptr->pmctr.Kk = kill_kernel;
-  ptr->pmctr.CTL0 = CTL_OFF;
-  ptr->pmctr.CTL1 = CTL_OFF;
-  ptr->pmctr.CTL2 = CTL_OFF;
-}
-
-static int set_default_domain(int domain)
-{
-  switch (domain)
-    {
-    case PAPI_DOM_USER:
-    case PAPI_DOM_KERNEL:
-    case PAPI_DOM_OTHER:
-    case PAPI_DOM_ALL:
-      _papi_system_info.default_domain = domain;
-      break;
-    default:
-      return(PAPI_EINVAL);
-    }
-  return(PAPI_OK);
+  ptr->counter_cmd.Kp = kill_pal;
+  ptr->counter_cmd.Ku = kill_user;
+  ptr->counter_cmd.Kk = kill_kernel;
+  ptr->counter_cmd.CTL0 = CTL_OFF;
+  ptr->counter_cmd.CTL1 = CTL_OFF;
+  ptr->counter_cmd.CTL2 = CTL_OFF;
 }
 
 static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
 {
-  if ((cntr == 0) && (a->pmctr.CTL0 == b->pmctr.CTL0))
+  if ((cntr == 0) && (a->counter_cmd.CTL0 == b->counter_cmd.CTL0))
     return(1);
-  else if ((cntr == 1) && (a->pmctr.CTL1 == b->pmctr.CTL1))
+  else if ((cntr == 1) && (a->counter_cmd.CTL1 == b->counter_cmd.CTL1))
     return(1);
-  else if ((cntr == 2) && (a->pmctr.CTL2 == b->pmctr.CTL2))
+  else if ((cntr == 2) && (a->counter_cmd.CTL2 == b->counter_cmd.CTL2))
     return(1);
 
   return(0);
 }
 
-static int update_counters(int events[])
+static int update_global_hwcounters(EventSetInfo *global)
 {
+  hwd_control_state_t *this_state = (hwd_control_state_t *)global->machdep;
+  int retval, selector;
+  pmctr_t *arg = &machdep->counter_cmd;
   pmctr_t pmctr;
   long pc_data[4];
-  int ret;
 
-  ret = _rdperf(pc_data);
-  if (ret != 0)
+  retval = _rdperf(pc_data);
+  if (retval != 0)
     return(PAPI_ESBSTR);
 
   *(long *) &pmctr = pc_data[0];
 
-  events[0] = (pc_data[1] << 16) + pmctr.CTR0;
-  DBG((stderr,"update_counters() events[0] = %lld\n",events[0]));
-
-  events[1] = (pc_data[2] << 16) + pmctr.CTR1;
-  DBG((stderr,"update_counters() events[1] = %lld\n",events[1]));
-
-  events[2] = (pc_data[3] << 14) + pmctr.CTR2;
-  DBG((stderr,"update_counters() events[2] = %lld\n",events[2]));
+  selector = this_state->selector;
+  if (selector & 0x1)
+    {
+      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",0,
+	   global->hw_start[i]+((pc_data[1] << 16) + pmctr.CTR0),
+	   global->hw_start[i],
+	   ((pc_data[1] << 16) + pmctr.CTR0)));	   
+      global->hw_start[i] = global->hw_start[i] + (pc_data[1] << 16) + pmctr.CTR0;
+    }
+  if (selector & 0x2)
+    {
+      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",0,
+	   global->hw_start[i]+((pc_data[2] << 16) + pmctr.CTR1),
+	   global->hw_start[i],
+	   ((pc_data[2] << 16) + pmctr.CTR1)));	   
+      global->hw_start[i] = global->hw_start[i] + (pc_data[2] << 16) + pmctr.CTR1;
+    }
+  if (selector & 0x4)
+    {
+      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",0,
+	   global->hw_start[i]+((pc_data[3] << 14) + pmctr.CTR2),
+	   global->hw_start[i],
+	   ((pc_data[3] << 14) + pmctr.CTR2)));	   
+      global->hw_start[i] = global->hw_start[i] + (pc_data[3] << 14) + pmctr.CTR2;
+    }
   
+  retval = _wrperf(this_state->counter_cmd,0,0,0);
+  if (retval)
+    return(PAPI_ESBSTR);
+
   return(PAPI_OK);
 }
 
-static int set_eventset_domain(EventSetInfo *ESI, int domain)
+static int set_granularity(EventSetInfo *ESI, int domain)
+{
+  return(PAPI_ESBSTR);
+}
+
+static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, long long *correct)
+{
+  int i;
+  hwd_control_state_t *machdep = (hwd_control_state_t *)local->machdep;
+  int selector = machdep->selector;
+
+  while (i = ffs(selector))
+    {
+      i = i - 1;
+      selector ^= 1 << i;
+      DBG((stderr,"correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n",i,
+	   global->hw_start[i]-local->hw_start[i],global->hw_start[i],local->hw_start[i]));
+      correct[i] = global->hw_start[i] - local->hw_start[i];
+    }
+
+  return(0);
+}
+
+static int set_domain(EventSetInfo *ESI, int domain)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int ret;
 
-  switch (domain)
-    {
-    case PAPI_DOM_USER:
-      {
-	this_state->pmctr.Kk = 0;
-	this_state->pmctr.Kp = 0;
-	this_state->pmctr.Ku = 1;
-      }
-      break;
-    case PAPI_DOM_KERNEL:
-      {
-	this_state->pmctr.Kk = 1;
-	this_state->pmctr.Kp = 0;
-	this_state->pmctr.Ku = 0;
-      }
-      break;
-    case PAPI_DOM_OTHER:
-      {
-	this_state->pmctr.Kk = 0;
-	this_state->pmctr.Kp = 1;
-	this_state->pmctr.Ku = 0;
-      }
-      break;
-    case PAPI_DOM_ALL:
-      {
-	this_state->pmctr.Kk = 1;
-	this_state->pmctr.Kp = 1;
-	this_state->pmctr.Ku = 1;
-      }
-      break;
-    default:
-      return(PAPI_EINVAL);
-    }
+  if (domain & PAPI_DOM_USER)
+    this_state->counter_cmd.Ku = 1;
+  else
+    this_state->counter_cmd.Ku = 0;
+  if (domain & PAPI_DOM_KERNEL)
+    this_state->counter_cmd.Kk = 1;
+  else
+    this_state->counter_cmd.Kk = 0;
+  if (domain & PAPI_DOM_OTHER)
+    this_state->counter_cmd.Kp = 1;
+  else
+    this_state->counter_cmd.Kp = 0;
+
   return(PAPI_OK);
 }
 
-static int getmhz(void)
+static int get_cpu_num(void)
+{
+  return sysconf(_SC_CRAY_PPE);
+}
+
+static float getmhz(void)
 {
   long sysconf(int request);
   float p;
@@ -229,7 +258,33 @@ static int getmhz(void)
   p = (float) sysconf(_SC_CRAY_CPCYCLE); /* Picoseconds */
   p = p * 1.0e-12; /* Convert to seconds */
   p = 1.0 / (p * 1000000.0); /* Convert to MHz */
-  return((int)p);
+  return(p);
+}
+
+static int get_system_info(void)
+{
+  pid_t pid;
+
+  pid = getpid();
+  if (pid == -1)
+    return(PAPI_ESYS);
+
+  /* _papi_system_info.exe_info.fullname; */
+  /* _papi_system_info.exe_info.name; */
+
+  _papi_system_info.hw_info.ncpu = 1;
+  _papi_system_info.hw_info.totalcpus = 1;
+  _papi_system_info.hw_info.nnodes = 1;
+  _papi_system_info.hw_info.mhz = getmhz();
+  strcpy(_papi_system_info.hw_info.vendor_string,"Cray");
+  _papi_system_info.hw_info.vendor = -1;
+  _papi_system_info.hw_info.revision = 0.0;
+  _papi_system_info.hw_info.model = -1;
+  strcpy(_papi_system_info.hw_info.model_string,"Alpha 21164");
+
+  _papi_system_info.cpunum = get_cpu_num();
+
+  return(PAPI_OK);
 }
 
 /* Low level functions, should not handle errors, just return codes. */
@@ -237,350 +292,454 @@ static int getmhz(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-int _papi_hwd_init(EventSetInfo *zero)
+int _papi_hwd_init_global(void)
 {
+  int retval;
+
   /* Fill in what we can of the papi_system_info. */
   
-  _papi_system_info.ncpu = 1;
-  _papi_system_info.type = 0;
-  _papi_system_info.cpu = 0;
-  _papi_system_info.mhz = getmhz();
+  retval = get_system_info();
+  if (retval)
+    return(retval);
 
-  /* As long as MHZ is close, we are fine. We only need it for brain-dead
-     kernel modules. */
+  DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
+       _papi_system_info.hw_info.totalcpus,
+       _papi_system_info.hw_info.vendor_string,
+       _papi_system_info.hw_info.model_string,
+       _papi_system_info.hw_info.mhz));
 
-  DBG((stderr,"Found %d CPU's at %d Mhz.\n",_papi_system_info.ncpu,
-       ,_papi_system_info.mhz));
-
-  /* Initialize our global machdep. */
-
-  init_config(zero->machdep);
   return(PAPI_OK);
+}
+
+int _papi_hwd_init(EventSetInfo *global)
+{
+  return(PAPI_OK);
+}
+
+/* Go from highest counter to lowest counter. Why? Because there are usually
+   more counters on #1, so we try the least probable first. */
+
+static int get_avail_hwcntr_bits(int cntr_avail_bits)
+{
+  int tmp = 0, i = 1 << (3-1);
+  
+  while (i)
+    {
+      tmp = i & cntr_avail_bits;
+      if (tmp)
+	return(tmp);
+      i = i >> 1;
+    }
+  return(0);
+}
+
+static void set_hwcntr_codes(int selector, unsigned char *from, pmctr_t *to)
+{
+  if (selector & 0x1)
+    {
+      to->CTL0 = CTL_ON;
+      to->SEL0 = from[0];
+    }
+  if (selector & 0x2)
+    {
+      to->CTL1 = CTL_ON;
+      to->SEL1 = from[1];
+    }
+  if (selector & 0x4)
+    {
+      to->CTL2 = CTL_ON;
+      to->SEL2 = from[2];
+    }
 }
 
 /* Do not ever use ESI->NumberOfCounters in here. */
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
+int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int sel0, sel1, sel2, mask;
+  int selector = 0;
+  int avail = 0;
+  unsigned char tmp_cmd[3];
+  unsigned char *codes;
 
-  if (event & PRESET_MASK)
+
+  if (EventCode & PRESET_MASK)
     { 
-      event ^= PRESET_MASK; 
+      int preset_index;
+      int derived;
 
-      mask = preset_map[event].mask;
-      if (mask == 0x0)
+      preset_index = EventCode ^ PRESET_MASK; 
+
+      selector = preset_map[preset_index].selector;
+      if (selector == 0x0)
 	return(PAPI_ENOEVNT);
+      derived = preset_map[preset_index].derived;
 
-      sel0 = preset_map[event].sel0;
-      sel1 = preset_map[event].sel1;
-      sel2 = preset_map[event].sel2;
+      /* Find out which counters are available. */
+
+      avail = selector & ~this_state->selector;
+
+      /* If not derived */
+
+      if (derived == 0)
+	{
+	  /* Pick any counter available */
+
+	  selector = get_avail_hwcntr_bits(avail);
+	  if (selector == 0)
+	    return(PAPI_ECNFLCT);
+	}
+      else
+	{
+	  /* Check the case that if not all the counters 
+	     required for the derived event are available */
+
+	  if ((avail & selector) != selector)
+	    return(PAPI_ECNFLCT);	    
+	}
+
+      /* Get the codes used for this event */
+
+      codes = preset_map[preset_index].counter_cmd;
+      ESI->EventInfoArray[index].command = derived;
+      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
-      sel0 = event & 0x1;
-      sel1 = event >> 1 & 0xf;
-      sel2 = event >> 5 & 0xf;
-      mask = event >> 9 & 0x7;
+      int hwcntr_num;
 
-      /* There must be at only one event for custom encodings */
+      /* Support for native events here, only 1 counter at a time. */
 
-      if ((mask != 0x1) && (mask != 0x2) && (mask != 0x4))
+      hwcntr_num = EventCode & 0xff;  /* 0 through 2 */ 
+      if (hwcntr_num > _papi_system_info.num_gp_cntrs)
 	return(PAPI_EINVAL);
+
+      tmp_cmd[hwcntr_num] = EventCode >> 8; /* 0 through 50 */
+      if (tmp_cmd[hwcntr_num] > 0xff)
+	return(PAPI_EINVAL); 
+
+      selector = 1 << hwcntr_num;
+
+      /* Check if the counter is available */
+      
+      if (this_state->selector & selector)
+	return(PAPI_ECNFLCT);	    
+
+      codes = tmp_cmd;
     }
 
   /* Lower three bits tell us what counters we need */
 
-  assert(this_state->mask <= 0x7);
+  assert((this_state->selector | 0x3) == 0x3);
   
-  if (this_state->mask & mask)
-    return(PAPI_ECNFLCT);
+  /* Perform any initialization of the control bits */
 
-  if (this_state->mask == 0)
-    init_pmctr(&this_state->pmctr);
- 
-  if (mask & 0x1)
-    {
-      this_state->pmctr.CTL0 = CTL_ON;
-      this_state->pmctr.SEL0 = *sel0;
-      this_state->mask |= 0x1;
-    }
-  if (mask & 0x2)
-    {
-      this_state->pmctr.CTL1 = CTL_ON;
-      this_state->pmctr.SEL1 = *sel1;
-      this_state->mask |= 0x2;
-    }
-  if (mask & 0x4)
-    {
-      this_state->pmctr.CTL2 = CTL_ON;
-      this_state->pmctr.SEL2 = *sel2;
-      this_state->mask |= 0x4;
-    }
-  
-  /* Inform the upper level that software event 'index' consists of the
-     following hardware counters. Mask is 0x0 through 0x7. */
+  if (this_state->selector == 0)
+    init_config(this_state);
+  /* Turn on the bits for this counter */
 
-  ESI->EventSelectArray[index] = mask;
+  set_hwcntr_codes(selector,codes,&this_state->counter_cmd);
+
+  /* Update the new counter select field. */
+
+  this_state->selector |= selector;
+
+  /* Inform the upper level that the software event 'index' 
+     consists of the following information. */
+
+  ESI->EventInfoArray[index].code = EventCode;
+  ESI->EventInfoArray[index].selector = selector;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
+
+int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int sel0, sel1, sel2, mask;
+  int selector, used, preset_index;
 
-  if (event & PRESET_MASK)
+  /* Find out which counters used. */
+  
+  used = ESI->EventInfoArray[index].selector;
+ 
+  if (EventCode & PRESET_MASK)
     { 
-      event ^= PRESET_MASK; 
+      preset_index = EventCode ^ PRESET_MASK; 
 
-      mask = preset_map[event].mask;
-      if (mask == 0x0)
+      selector = preset_map[preset_index].selector;
+      if (selector == 0)
 	return(PAPI_ENOEVNT);
-
-      sel0 = preset_map[event].sel0;
-      sel1 = preset_map[event].sel1;
-      sel2 = preset_map[event].sel2;
     }
   else
     {
-      sel0 = event & 0x1;
-      sel1 = event >> 1 & 0xf;
-      sel2 = event >> 5 & 0xf;
-      mask = event >> 9 & 0x7;
+      int hwcntr_num, code;
+      
+      /* Support for native events here, only 1 counter at a time. */
 
-      /* There must be at least one event */
-
-      if (mask & 0x7 == 0)
+      hwcntr_num = EventCode & 0xff;  /* 0 through 2 */ 
+      if (hwcntr_num > _papi_system_info.num_gp_cntrs)
 	return(PAPI_EINVAL);
+
+      code = EventCode >> 8; /* 0 through 50 */
+      if (code > 0xff)
+	return(PAPI_EINVAL); 
+
+      selector = 1 << hwcntr_num;
     }
 
-  assert(this_state->mask & 0x7);
-  
-  /* Check if we are removing something that's not preset */
+  /* Check if these counters aren't used. */
 
-  if (this_state->mask & mask != mask)
+  if ((used & selector) != used)
     return(PAPI_EINVAL);
+
+  /* Clear out counters that are part of this event. */
+  /* Remember, that selector might encode duplicate events
+     so we need to know only the ones that are used. */
   
-  if (mask & 0x1)
-    {
-      this_state->pmctr.CTL0 = CTL_OFF;
-      this_state->mask ^= 0x1;
-    }
-  if (mask & 0x2)
-    {
-      this_state->pmctr.CTL1 = CTL_OFF;
-      this_state->mask ^= 0x2;
-    }
-  if (mask & 0x4)
-    {
-      this_state->pmctr.CTL2 = CTL_OFF;
-      this_state->mask ^= 0x4;
-    }
-  
-  /* The following step is not necessary, as it is done by the higher level remove_event() */
-  /* ESI->EventSelectArray[index] = PAPI_NULL */
+  this_state->selector = this_state->selector ^ (selector & used);
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
 {
   return(PAPI_ESBSTR);
+}
+
+void dump_cmd(pmctr_t *t)
+{
+  fprintf(stderr,"Command block at %p\n",t);
+  fprintf(stderr,"SEL0: %d\n",t->SEL0);
+  fprintf(stderr,"SEL1: %d\n",t->SEL1);
+  fprintf(stderr,"SEL2: %d\n",t->SEL2);
+  fprintf(stderr,"CTL0: %d\n",t->CTL0);
+  fprintf(stderr,"CTL1: %d\n",t->CTL1);
+  fprintf(stderr,"CTL2: %d\n",t->CTL2);
+  fprintf(stderr,"Ku: %d\n",t->Ku);
+  fprintf(stderr,"Kp: %d\n",t->Kp);
+  fprintf(stderr,"Kk: %d\n",t->Kk);
 }
 
 int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 {
-  int retval, one_shared = 0, two_shared = 0, three_shared = 0;
+  int i, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
+  
+  /* If we are nested, merge the global counter structure
+     with the current eventset */
 
-  if (zero->multistart.num_runners)
+  if (current_state->selector)
     {
-      /* We need the latest values of the shared counters so we can
-	 handle nested, shared, starts. If nothing is shared, 
-         we'll notice later on and this won't hurt us. */
+      int hwcntrs_in_both, hwcntr;
 
-      retval = _papi_hwd_read(ESI, zero, ESI->start);
-      if (retval < PAPI_OK)
+      /* Stop the current context 
+
+      retval = pm_stop_mythread();
+      if (retval > 0) 
+	return(retval); */
+  
+      /* Update the global values */
+
+      retval = update_global_hwcounters(zero);
+      if (retval)
 	return(retval);
 
-      /* Check for shared events that require no machdep modification */
-      
-      if (this_state->mask & current_state->mask & 0x1)
+      /* Delete the current context 
+
+      retval = pm_delete_program_mythread();
+      if (retval > 0)
+	return(retval); */
+
+      hwcntrs_in_both = this_state->selector & current_state->selector;
+
+      for (i = 0; i < _papi_system_info.num_cntrs; i++)
 	{
-	  if (counter_shared(this_state, current_state, 0))
+	  /* Check for events that are shared between eventsets and 
+	     therefore require no modification to the control state. */
+	  
+	  hwcntr = 1 << i;
+	  if (hwcntr & hwcntrs_in_both)
 	    {
-	      zero->multistart.SharedDepth[0] ++; 
-	      one_shared = 1;
+	      if (counter_shared(this_state, current_state, i))
+		zero->multistart.SharedDepth[i]++;
+	      else
+		return(PAPI_ECNFLCT);
+	      ESI->hw_start[i] = zero->hw_start[i];
 	    }
-	  else
-	    return(PAPI_ECNFLCT);
-	}
 
-      if (this_state->mask & current_state->mask & 0x2)
-	{
-	  if (counter_shared(this_state, current_state, 1))
+	  /* Merge the unshared configuration registers. */
+	  
+	  else if (this_state->selector & hwcntr)
 	    {
-	      zero->multistart.SharedDepth[1] ++; 
-	      two_shared = 1;
+	      current_state->selector |= hwcntr;
+	      current_state->counter_cmd.CTL0 = this_state->counter_cmd.CTL0;
+	      current_state->counter_cmd.SEL0 = this_state->counter_cmd.SEL0;
+	      ESI->hw_start[i] = 0;
 	    }
-	  else
-	    return(PAPI_ECNFLCT);
-	}
-
-      if (this_state->mask & current_state->mask & 0x4)
-	{
-	  if (counter_shared(this_state, current_state, 1))
-	    {
-	      zero->multistart.SharedDepth[2] ++; 
-	      three_shared = 1;
-	    }
-	  else
-	    return(PAPI_ECNFLCT);
 	}
     }
+  else
+    {
+      /* If we are NOT nested, just copy the global counter 
+	 structure to the current eventset */
 
-  /* Merge the unshared configuration registers. */
+      current_state->selector = this_state->selector;
+      memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(pmctr_t));
 
-  if ((this_state->mask & 0x1) && (!one_shared))
-    {
-      zero->multistart.SharedDepth[0] ++; 
-      current_state->mask ^= 0x1;
-      current_state->pmctr.CTL0 = this_state->pmctr.CTL0;
-      current_state->pmctr.SEL0 = this_state->pmctr.SEL0;
-    }
-  if ((this_state->mask & 0x2) && (!two_shared))
-    {
-      zero->multistart.SharedDepth[1] ++; 
-      current_state->mask ^= 0x2;
-      current_state->pmctr.CTL1 = this_state->pmctr.CTL1;
-      current_state->pmctr.SEL1 = this_state->pmctr.SEL1;
-    }
-  if ((this_state->mask & 0x4) && (!three_shared))
-    {
-      zero->multistart.SharedDepth[2] ++; 
-      current_state->mask ^= 0x4;
-      current_state->pmctr.CTL2 = this_state->pmctr.CTL2;
-      current_state->pmctr.SEL2 = this_state->pmctr.SEL2;
     }
 
-  /* Start the counters with the new merged event set machdep structure */
-
-  retval = _wrperf(this_state->pmctr,0,0,0);
-  if (retval)
-    return(PAPI_EBUG);
-
+  /* If overflowing is enabled, turn it on */
+  
   if (ESI->state & PAPI_OVERFLOWING)
     {
-      retval = _papi_hwi_start_overflow_timer(ESI);
+      retval = _papi_hwi_start_overflow_timer(ESI, zero);
       if (retval < PAPI_OK)
 	return(PAPI_EBUG);
     }
 
-  return(PAPI_OK);
-} 
+  /* Set up the new merged control structure */
+  
+#ifdef DEBUG
+  dump_cmd(&current_state->counter_cmd);
+#endif
+      
+  /* Start the counters with the new merged event set machdep structure */
 
-int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
-{ 
-  int retval;
-
-  retval = _papi_hwd_read(ESI,events);
-  if (retval < PAPI_OK)
-    return(retval);
-
-
-  return(PAPI_OK);
-}
-
-int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
-{ 
-  int retval;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-
-  retval = _papi_hwd_read(ESI, zero, ESI->stop);
-  if (retval < PAPI_OK)
-    return(retval);
-
-  retval = perfmonctl(PERFCNT_EV5, PERFCNT_OFF);
+  retval = _wrperf(this_state->counter_cmd,0,0,0);
   if (retval)
     return(PAPI_ESBSTR);
 
-  if (this_state->mask & 0x1)
+  /* (Re)start the counters 
+  
+  retval = pm_start_mythread();
+  if (retval > 0) 
+    return(retval); */
+
+  return(PAPI_OK);
+
+} 
+
+int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
+{ 
+  int i, hwcntr;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
+
+  for (i = 0; i < _papi_system_info.num_cntrs; i++)
     {
-      zero->multistart.SharedDepth[0] --;
-      if (zero->multistart.SharedDepth[0] == 0)
-	{ 
-	  current_state->mask ^= 0x1;
-	  current_state->pmctr.CTL0 = this_state->pmctr.CTL0;
-	  current_state->pmctr.SEL0 = this_state->pmctr.SEL0;
+      /* Check for events that are NOT shared between eventsets and 
+	 therefore require modification to the control state. */
+      
+      hwcntr = 1 << i;
+      if (hwcntr & this_state->selector)
+	{
+	  if (zero->multistart.SharedDepth[i] - 1 < 0)
+	    current_state->selector ^= hwcntr;
+	  else
+	    zero->multistart.SharedDepth[i]--;
 	}
-    }
-
-  if (this_state->mask & 0x2)
-    {
-      zero->multistart.SharedDepth[1] --;
-      if (zero->multistart.SharedDepth[1] == 0)
-	{ 
-	  current_state->mask ^= 0x2;
-	  current_state->pmctr.CTL1 = this_state->pmctr.CTL1;
-	  current_state->pmctr.SEL1 = this_state->pmctr.SEL1;
-	}
-    }
-
-  if (this_state->mask & 0x4)
-    {
-      zero->multistart.SharedDepth[2] --;
-      if (zero->multistart.SharedDepth[2] == 0)
-	{ 
-	  current_state->mask ^= 0x4;
-	  current_state->pmctr.CTL2 = this_state->pmctr.CTL2;
-	  current_state->pmctr.SEL2 = this_state->pmctr.SEL2;
-	}
-    }
-
-  /* Start the counters with the new unmerged event set machdep structure */
-  /* I'm not going to use this at the moment. The problem is that we need
-     to keep the current values of the shared events. I don't think this
-     will hurt us. */
-
-  retval = _wrperf(this_state->pmctr,0,0,0);
-  if (retval)
-    return(PAPI_EBUG);
-
-  if (ESI->state & PAPI_OVERFLOWING)
-    {
-      retval = _papi_hwi_stop_overflow_timer(ESI);
-      if (retval < PAPI_OK)
-	return(PAPI_EBUG);
     }
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_reset(EventSetInfo *ESI)
+int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
 {
-  int ret;
+  int i, retval;
 
-  ret = _wrperf(this_state->pmctr,0,0,0);
-  if (ret == 0)
-    return(PAPI_OK);
+  retval = update_global_hwcounters(zero);
+  if (retval)
+    return(retval);
 
-  return(PAPI_ESBSTR);
+  for (i=0;i<_papi_system_info.num_cntrs;i++)
+    ESI->hw_start[i] = zero->hw_start[i];
+
+  return(PAPI_OK);
 }
 
-int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long events[])
+static long long handle_derived_add(int selector, long long *from)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int i, j=0, k=0;
-  int selector;
-  int last_read[3];
+  int pos;
+  long long retval = 0;
 
-  retval = update_counters(last_read);
-  if (retval < PAPI_OK)
+  while (pos = ffs(selector))
+    {
+      DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos-1],retval));
+      retval += from[pos-1];
+      selector ^= 1 << pos-1;
+    }
+  return(retval);
+}
+
+static long long handle_derived_subtract(int operand_index, int selector, long long *from)
+{
+  int pos;
+  long long retval = from[operand_index];
+
+  selector = selector ^ (1 << operand_index);
+  while (pos = ffs(selector))
+    {
+      DBG((stderr,"Compound event, subtracting %lld to %lld\n",from[pos-1],retval));
+      retval -= from[pos-1];
+      selector ^= 1 << pos-1;
+    }
+  return(retval);
+}
+
+static long long units_per_second(long long units, long long cycles)
+{
+  return((long long)((float)units * _papi_system_info.hw_info.mhz * 1000000.0 / (float)cycles));
+}
+
+static long long handle_derived_ps(int operand_index, int selector, long long *from)
+{
+  int pos;
+
+  pos = ffs(selector ^ (1 << operand_index)) - 1;
+  assert(pos != -1);
+
+  return(units_per_second(from[pos],from[operand_index]));
+}
+
+static long long handle_derived_add_ps(int operand_index, int selector, long long *from)
+{
+  int add_selector = selector ^ (1 << operand_index);
+  long long tmp = handle_derived_add(add_selector, from);
+  return(units_per_second(tmp, from[operand_index]));
+}
+
+static long long handle_derived(EventInfo_t *cmd, long long *from)
+{
+  switch (cmd->command)
+    {
+    case DERIVED_ADD: 
+      return(handle_derived_add(cmd->selector, from));
+    case DERIVED_ADD_PS:
+      return(handle_derived_add_ps(cmd->operand_index, cmd->selector, from));
+    case DERIVED_SUB:
+      return(handle_derived_subtract(cmd->operand_index, cmd->selector, from));
+    case DERIVED_PS:
+      return(handle_derived_ps(cmd->operand_index, cmd->selector, from));
+    default:
+      abort();
+    }
+  return(-1);
+}
+
+int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
+{
+  int shift_cnt = 0;
+  int retval, selector, j = 0, i;
+  long long correct[3];
+
+  retval = update_global_hwcounters(zero);
+  if (retval)
+    return(retval);
+
+  retval = correct_local_hwcounters(zero, ESI, correct);
+  if (retval)
     return(retval);
 
   /* This routine distributes hardware counters to software counters in the
@@ -590,60 +749,55 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
-      selector = ESI->EventSelectArray[i];
-      
-      assert(selector != 0);
+      selector = ESI->EventInfoArray[i].selector;
       if (selector == PAPI_NULL)
 	continue;
 
       DBG((stderr,"Event %d, mask is 0x%x\n",j,selector));
 
-      switch (selector)
+      if (ESI->EventInfoArray[i].command == NOT_DERIVED)
 	{
-	case 0x1:
-	  events[j] = last_read[0];
-	  break;
-	case 0x2:
-	  events[j] = last_read[1];
-	  break;
-	case 0x4:
-	  events[j] = last_read[2];
-	  break;
-	case 0x13:
-	case 0x15:
-	case 0x16:
-	  /* Here we could calculate derived metrics based on
-	     ESI->EventCodeArray[i]; But I'm lazy, so someone else
-	     can do it. */
-	default:
-	  return(PAPI_EBUG);
+	  shift_cnt = ffs(selector) - 1;
+	  assert(shift_cnt >= 0);
+	  events[j] = correct[shift_cnt];
 	}
+      
+      /* If this is a derived event */
 
+      else 
+	events[j] = handle_derived(&ESI->EventInfoArray[i], correct);
+	
       /* Early exit! */
 
       if (++j == ESI->NumberOfCounters)
 	return(PAPI_OK);
-    }      
+    }
 
   /* Should never get here */
-  
+
   return(PAPI_EBUG);
 }
 
-int _papi_hwd_ctl(int code, _papi_int_option_t *option)
+int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
 {
   switch (code)
     {
     case PAPI_SET_DEFDOM:
-      return(set_default_domain(option->domain.domain));
+      return(set_default_domain(zero, option->domain.domain));
     case PAPI_SET_DOMAIN:
-      return(set_eventset_domain(option->domain.ESI,option->domain.domain));
+      return(set_domain(option->domain.ESI->machdep, option->domain.domain));
+    case PAPI_SET_DEFGRN:
+      return(set_default_granularity(zero, option->granularity.granularity));
+    case PAPI_SET_GRANUL:
+      return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+    case PAPI_SET_INHERIT:
+      return(set_inherit(zero, option->inherit.inherit));
     default:
-      return(PAPI_ESBSTR);
+      return(PAPI_EINVAL);
     }
 }
 
-int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
+int _papi_hwd_write(EventSetInfo *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }
@@ -653,18 +807,15 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-int _papi_hwd_query(int preset)
-{
-  if (preset & PRESET_MASK)
-    { 
-      preset ^= PRESET_MASK; 
-
-      if (preset_map[preset].mask == 0)
-	return(PAPI_EINVAL);
-      else
-	return(PAPI_OK);
-    }
-  return(PAPI_OK);
+int _papi_hwd_query(int preset_index, int *flags, char **note)
+{ 
+  if (preset_map[preset_index].selector == 0)
+    return(0);
+  if (preset_map[preset_index].derived)
+    *flags = PAPI_DERIVED;
+  if (preset_map[preset_index].note)
+    *note = preset_map[preset_index].note;
+  return(1);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
@@ -692,15 +843,37 @@ int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *overflow_opt
   abort();
 }
 
+void *_papi_hwd_get_overflow_address(void *context)
+{
+  void *location;
+  ucontext_t *info = (ucontext_t *)context;
+
+  location = (void *)info->uc_mcontext.gregs[31];
+
+  return(location);
+}
+
+int _papi_hwd_get_text_bounds(caddr_t *start, caddr_t *end)
+{
+  *start = (caddr_t)&_infoblk;
+  *end = (caddr_t)&_infoblk;
+  
+  return(PAPI_OK);
+}
+
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
 			       1.0, /*  version */
+			       -1,  /*  cpunum */
 			       -1,  /*  ncpu */
 			       -1,  /*  nnodes */
-			       -1,  /*  type */
-			       -1,  /*  cpu */
-			       -1,  /*  mhz */
+			       -1,  /*  totalcpus */
+			       -1,  /*  vendor */
+			       -1,  /*  vendor string */
+			       -1,  /*  model */
+			       -1,  /*  model string */
+			       
 			       3,   /*  num_cntrs */
 			       3,   /*  num_gp_cntrs */
 			       0,   /*  grouped_counters */

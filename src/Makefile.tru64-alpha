@@ -1,0 +1,21 @@
+SUBSTR  = tru64-alpha
+DESCR   = "Compaq Tru64 Unix with Alpha 21xxx"
+TARGET	= libpapi.a
+TESTS	= serial 
+MISCOBJS= cpu_version.o
+CFLAGS 	= -g -DDEBUG 
+OPTFLAGS=
+SMPCFLGS=
+OMPCFLGS=
+LDFLAGS = 
+CC_R	= cc
+CC	= cc
+F77	= f77
+
+include Makefile.inc
+
+cpu_version.o: alpha/cpu_version.s
+	cc -O -c alpha/cpu_version.s
+
+read_cycle_counter.o: alpha/read_cycle_counter.s
+	cc -O -c alpha/read_cycle_counter.s

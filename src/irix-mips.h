@@ -1,23 +1,74 @@
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
+#include <stdio.h>
+#include <invent.h>
+#include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/procfs.h>
+#include <sys/cpu.h>
+#include <sys/sysmp.h>
+#include <task.h>
+#include <assert.h>
 
-/* A superset of the machine dependent structure passed between 
-   us and the kernel */
+#include "papi.h"
+#include "papi_internal.h"
+#include "papiStdEventDefs.h"
 
-/* You might ask, why do we keep track of the number of running counters when
-   everything's multiplexed anyways? Accuracy. If I can select two events 
-   that run of different counters, then the kernel won't multiplex. */
+typedef struct {
+  unsigned int     ri_fill:16,
+    ri_imp:8,		/* implementation id */
+    ri_majrev:4,	/* major revision */
+    ri_minrev:4;	/* minor revision */
+} papi_rev_id_t;
+
+/* Encoding for NON-PAPI events is:
+
+   Low 8 bits indicate which counter number: 0 - 7
+   Bits 8-16 indicate which event number: 0 - 50 */
 
 typedef struct hwd_control_state {
-  int mask;            /* Which counters are active */
-  int num_on_counter1; /* Number of counters running on hardware counter 0 */
-  int num_on_counter2; /* Number of counters running on hardware counter 1 */
-  int hwindex[HWPERF_EVENTMAX]; /* Staging area */
-  hwperf_profevctrarg_t on; /* Exchange structure with kernel */
+  /* File descriptor controlling the counters; */
+  int fd;
+  /* Generation number of the counters */
+  int generation;
+  /* Native encoding of the default counting domain */
+  int selector;  
+  /* Is this event derived? */
+  int derived;   
+  /* Buffer to pass to the kernel to control the counters */
+  hwperf_profevctrarg_t counter_cmd;
+  /* Interrupt interval */
+  int timer_ms;
+  /* Number on each hwcounter */
+  int num_on_counter[2];
 } hwd_control_state_t;
 
 typedef struct hwd_preset {
-  int mask;          /* Multiple bits mean that they can count same event. */
-  int counter_code1; /* 0 through 15 */
-  int counter_code2; /* 0 through 15 */
-  int pad; } hwd_preset_t;
+  /* Which counters to use? Bits encode counters to use, may be duplicates */
+  unsigned int selector;  
+  /* Is this event derived? */
+  unsigned char derived;   
+  /* If the derived event is not associative, this index is the lead operand */
+  unsigned char operand_index;
+  /* Buffer to pass to the kernel to control the counters */
+  unsigned char counter_cmd[HWPERF_EVENTMAX];
+  /* Number on each hwcounter */
+  int num_on_counter[2];
+  /* If it exists, then this is the description of this event */
+  char note[PAPI_MAX_STR_LEN];
+} hwd_preset_t;
+
+typedef struct hwd_search {
+  /* Derived code */
+  int derived;
+  /* Events to encode */
+  int findme[2];
+} hwd_search_t;
+
+extern int _etext[], _ftext[];
+extern int _edata[], _fdata[];
+extern int _fbss[], _end[];

@@ -8,10 +8,15 @@
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
 
+/* Signal used for overflow delivery */
+
+#define PAPI_ITIMER ITIMER_PROF
+#define PAPI_SIGNAL SIGPROF
+
 /* Number of preset events - more than we will probably ever need, 
    currently the draft has only 25 */
 
-#define PAPI_MAX_PRESET_EVENTS 64
+#define MAX_PRESET_EVENTS 64
 
 /* Mask which indicates the event is a preset- the presets will have 
    the high bit set to one, as the vendors probably won't use the 
@@ -19,8 +24,13 @@
 
 #define PRESET_MASK 0x80000000
 
-/* All memory for this structure should be allocated outside of the 
-   substrate. */
+/* Commands used to compute derived events */
+
+#define NOT_DERIVED      0x0  /* Do nothing */
+#define DERIVED_ADD      0x1  /* Add counters */
+#define DERIVED_PS       0x2  /* Divide by the cycle counter and convert to seconds */
+#define DERIVED_ADD_PS   0x4  /* Add 2 counters then divide by the cycle counter and convert to seconds */
+#define DERIVED_SUB      0x10 /* Sub all counters from counter with operand_index */
 
 typedef struct _EventSetMultistartInfo {
   int num_runners;
@@ -33,7 +43,7 @@ typedef struct _EventSetGranularityInfo {
   int granularity; } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-  unsigned long long deadline;
+  long long deadline;
   int count;
   int threshold;
   int EventIndex;
@@ -54,40 +64,46 @@ typedef struct _EventSetProfileInfo {
   int bufsiz;
   caddr_t offset;
   int scale;
-  int divisor;
   int flags;
 } EventSetProfileInfo_t;
+
+/* PAPI supports derived events that are made up of at most 2 counters. */
+
+typedef struct _EventInfo {
+  int code;          /* Preset or native code for this event as passed to PAPI_add_event() */
+  unsigned int selector;      /* Counter select bits used in the lower level */
+  int command;       /* Counter derivation command used in the lower level */
+  int operand_index; /* Counter derivation data used in the lower level */
+} EventInfo_t;
 
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
   int NumberOfCounters;    /* Number of counters added to EventSet */
 
-  int *EventCodeArray;     /* PAPI/Native codes for events in this set 
-                              as passed to PAPI_add_event() */
- 
-  int *EventSelectArray;   /* This array contains the mapping from 
-                              events added into the API into hardware 
-                              specific encoding as returned by the 
-                              kernel or the code that directly 
-                              accesses the counters. */
-
-
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
                          will contain the encoding necessary for the 
                          hardware to set the counters to the appropriate
                          conditions*/
-  unsigned long long *start;   /* Array of length _papi_system_info.num_gp_cntrs
-				+ _papi_system_info.num_sp_cntrs 
-				UNUSED. */
-  unsigned long long *stop;    /* Array of the same length as above, but 
-				  containing the values of the counters when 
-				  stopped. */
-  unsigned long long *latest;  /* Array of the same length as above, containing 
+
+  long long *hw_start;   /* Array of length _papi_system_info.num_cntrs that contains
+			    unprocessed, out of order, long long counter registers */
+
+  long long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
+			    processed, in order, PAPI counter values when used or stopped */
+
+  /* long long *latest;   Array of the same length as above, containing 
 				  the values of the counters when last read */ 
+
   int state;          /* The state of this entire EventSet; can be
 			 PAPI_RUNNING or PAPI_STOPPED plus flags */
+
+  EventInfo_t *EventInfoArray;   /* This array contains the mapping from 
+                                  events added into the API into hardware 
+                                  specific encoding as returned by the 
+                                  kernel or the code that directly 
+                                  accesses the counters. */
 
   EventSetMultistartInfo_t multistart;
 
@@ -102,6 +118,8 @@ typedef struct _EventSetInfo {
   EventSetProfileInfo_t profile;
   
   EventSetInheritInfo_t inherit;
+
+  struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
 } EventSetInfo;
 
 typedef struct _dynamic_array{
@@ -144,26 +162,31 @@ typedef union _papi_int_option_t {
 
 /* The following functions are defined by the extras.c file. */
 
-extern int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI);
-extern int _papi_hwi_start_overflow_timer(EventSetInfo *ESI);
-extern void _papi_hwi_correct_counters(EventSetInfo *ESI, unsigned long long *events);
+extern int _papi_hwi_stop_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
+extern int _papi_hwi_start_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
+extern int _papi_hwi_initialize(DynamicArray **);
 
 /* The following functions are defined by the substrate file. */
 
 extern int _papi_hwd_add_event(EventSetInfo *machdep, int index, unsigned int event);
 extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, int index, unsigned int event, void *extra); 
-extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
+extern int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option);
 extern int _papi_hwd_init(EventSetInfo *zero);
+extern int _papi_hwd_init_global(void);
 extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);
-extern int _papi_hwd_query(int preset);
-extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, unsigned long long events[]);
+extern int _papi_hwd_query(int preset, int *flags, char **note_loc);
+extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, long long events[]);
 extern int _papi_hwd_rem_event(EventSetInfo *machdep, int index, unsigned int event);
-extern int _papi_hwd_reset(EventSetInfo *);
+extern int _papi_hwd_reset(EventSetInfo *, EventSetInfo *zero);
 extern int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option);
 extern int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero);
-extern int _papi_hwd_write(EventSetInfo *, unsigned long long events[]);
+extern int _papi_hwd_write(EventSetInfo *, long long events[]);
+extern void *_papi_hwd_get_overflow_address(void *context);
+extern long long _papi_hwd_get_real_cycles (void);
+extern long long _papi_hwd_get_real_usec (void);
+extern void _papi_hwd_error(int error, char *);
 
 #ifdef THREADS
 #else
@@ -172,18 +195,15 @@ extern int _papi_hwd_write(EventSetInfo *, unsigned long long events[]);
 #endif
 
 typedef struct _papi_mdi {
-  char substrate[81]; /* Name of the substrate we're using */
-  float version;      /* Version of this substrate */
-  int ncpu;           /* Number of CPU's in an SMP */
-  int nnodes;         /* Number of CPU's per Nodes */
-  int type;           /* Vendor number of CPU */
-  int cpu;            /* Model number of CPU */
-  int mhz;            /* Cycle time of this CPU, to be estimated at 
-                         init time with a quick timing routine */
-  
-/* The following variables define the length of the arrays in the 
-   EventSetInfo structure. Each array is of length num_gp_cntrs + 
-   num_sp_cntrs * sizeof(unsigned long long) */
+  const char substrate[81]; /* Name of the substrate we're using */
+  const float version;      /* Version of this substrate */
+  int cpunum;               /* Index of this CPU, we really should be bound */
+  PAPI_hw_info_t hw_info;   /* See definition in papi.h */
+  PAPI_exe_info_t exe_info;  /* See definition in papi.h */
+
+  /* The following variables define the length of the arrays in the 
+     EventSetInfo structure. Each array is of length num_gp_cntrs + 
+     num_sp_cntrs * sizeof(long long) */
 
   int num_cntrs;   /* Number of counters returned by a substrate read/write */
                       
@@ -204,12 +224,12 @@ typedef struct _papi_mdi {
   const int supports_child_inheritance; /* We can pass on and inherit child counters/values */
   const int can_attach; /* We can attach PAPI to another process */
   const int read_also_resets; /* The read call from the kernel resets the counters */
-  int default_domain; /* The default domain when this substrate is used */
-  int default_granularity; /* The default granularity when this substrate is used */
+  const int default_domain; /* The default domain when this substrate is used */
+  const int default_granularity; /* The default granularity when this substrate is used */
 
   /* End feature flags */
 
-  int size_machdep;   /* Size of the substrate's control structure in 
+  const int size_machdep;   /* Size of the substrate's control structure in 
                          bytes */
   EventSetInfo *zero; /* First element in EventSet array of higher 
                          level, to be maintained for internal use, 
@@ -220,3 +240,18 @@ typedef struct _papi_mdi {
 } papi_mdi;
 
 extern papi_mdi _papi_system_info;
+
+/* Thread support */
+
+#define INIT_MAP            DynamicArray *map; int retval; EventSetInfo *master_event_set, *event_set_overflowing; \
+                            if ((retval = _papi_hwi_initialize(&map))) return(retval); \
+                            master_event_set = map->dataSlotArray[0]; \
+	                    event_set_overflowing = master_event_set->event_set_overflowing;
+#define INIT_MAP_VOID       DynamicArray *map; int retval; EventSetInfo *master_event_set, *event_set_overflowing; \
+                            if ((retval = _papi_hwi_initialize(&map))) return; \
+                            master_event_set = map->dataSlotArray[0]; \
+	                    event_set_overflowing = master_event_set->event_set_overflowing;
+#define INIT_MAP_QUICK_LL   DynamicArray *map; long long retval; if ((retval = _papi_hwi_initialize(&map))) return retval; 
+                            
+
+

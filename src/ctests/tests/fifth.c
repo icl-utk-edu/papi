@@ -1,5 +1,5 @@
 /* This file performs the following test: nested eventsets that share 
-   all counter values
+   all counter values and perform resets.
 
    - It attempts to use two eventsets simultaneously. These are counted 
    in the default counting domain and default granularity, depending on 
@@ -16,6 +16,7 @@
    - Start eventset 1
    - Do flops
    - Start eventset 2
+   - Reset eventset 1
    - Do flops
    - Stop and read eventset 2
    - Do flops
@@ -68,6 +69,9 @@ int main(int argc, char **argv)
   retval = PAPI_start(EventSet2);
   assert(retval >= PAPI_OK);
 
+  retval = PAPI_reset(EventSet1);
+  assert(retval >= PAPI_OK);
+
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet2, values[1]);
@@ -89,8 +93,8 @@ int main(int argc, char **argv)
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);
 
-  printf("Test case 4: Overlapping start and stop of 2 eventsets.\n");
-  printf("-------------------------------------------------------\n");
+  printf("Test case 5: Overlapping start and stop of 2 eventsets with reset.\n");
+  printf("------------------------------------------------------------------\n");
   tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
@@ -108,7 +112,7 @@ int main(int argc, char **argv)
   printf("Verification:\n");
   printf("Row 1 approximately equals %d %d\n",2*NUM_FLOPS,2*NUM_FLOPS);
   printf("Column 1 approximately equals column 2\n");
-  printf("Column 3 approximately equals three times column 2\n");
+  printf("Column 3 approximately equals two times column 2\n");
   printf("Column 4 approximately equals column 2\n");
 
   free_test_space(values, num_tests);

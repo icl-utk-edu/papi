@@ -1,3 +1,8 @@
+/* Include files */
+
+#include <sys/types.h>
+#include "papiStdEventDefs.h"
+
 /*
 Return Codes
 
@@ -6,8 +11,6 @@ Values greater than or equal to zero indicate success, less than zero indicates
 failure. 
 */
 
-#define PAPI_OK_MPX    1  /*No error, multiplexing has been enabled 
-                            and is now active*/
 #define PAPI_OK        0  /*No error*/
 #define PAPI_EINVAL   -1  /*Invalid argument*/
 #define PAPI_ENOMEM   -2  /*Insufficient memory*/
@@ -36,7 +39,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_MIN     PAPI_DOM_USER
 #define PAPI_DOM_KERNEL	 0x2    /* Kernel/OS context counted */
 #define PAPI_DOM_OTHER	 0x4    /* Exception/transient mode (like user TLB misses )*/
-#define PAPI_DOM_ALL	 0x7    /* All contexts counted */
+#define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER)    /* All contexts counted */
 /* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
 #define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000 /* Flag that indicates we are not reading CPU like stuff.
@@ -109,6 +112,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_SET_INHERIT 15    /* Child threads/processes inherit counter config and progate values up upon exit. */
 #define PAPI_GET_INHERIT 16    /* Child threads/processes inherit counter config and progate values up upon exit. */
+#define PAPI_INHERIT_ALL (pid_t)-1    /* The flag to this to inherit all children's counters */
+#define PAPI_INHERIT_NONE (pid_t)0    /* The flag to this to inherit none of the children's counters */
 				   
 #define PAPI_SET_BIND    17    /* Set the function that binds our thread to the CPU it's on */
 #define PAPI_GET_BIND    18    /* Get the function that binds our thread to the CPU it's on */
@@ -127,10 +132,15 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_SET_PROFIL  27     /* Option to turn on the overflow/profil reporting software */
 #define PAPI_GET_PROFIL  28     /* Option to query the status of the overflow/profil reporting software */
-#define PAPI_PROFIL_POSIX 0    /* Default type of profiling, similar to 'man profil'. */
+
+#define PAPI_PROFIL_POSIX    0x0 /* Default type of profiling, similar to 'man profil'. */
+#define PAPI_PROFIL_RANDOM   0x1 /* Add psuedo-random statistical sampling. */
+#define PAPI_PROFIL_WEIGHTED 0x2 /* Add weighted sampling. */
 
 #define PAPI_SET_ATTACH  29     /* Option to attach to another process */
 #define PAPI_GET_ATTACH  30     /* Option to query which process I'm attached */
+
+#define PAPI_GET_PRELOAD 31     /* Option to find out the environment variable that can preload libraries */
 
 #define PAPI_MAX_EVNTS   16   /*The maximum number of spontaneous events 
 				countable by the platform specific hardware 
@@ -146,9 +156,21 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_MAX_ERROR   10   /*Highest number of defined error messages.*/ 	
 
-#define PAPI_GET_CLOCKRATE  70 /* clock rate MHz, this platform*/  
+#define PAPI_GET_CLOCKRATE  	70 /* Clock rate in MHz */  
 
-#define PAPI_GET_MAX_HWCTRS 71 /* max num hw counters, this platform */
+#define PAPI_GET_MAX_HWCTRS 	71 /* Number of physical hardware counters */
+
+#define PAPI_GET_HWINFO  	72 /* Hardware information */  
+
+#define PAPI_GET_EXEINFO  	73 /* Executable information */  
+
+#define PAPI_MAX_STR_LEN        81 /* Guess what */
+
+#define PAPI_DERIVED            0x1 /* Flag to indicate that the event is derived */
+
+#define PAPI_THREAD_CREATE      0x1
+
+#define PAPI_THREAD_DESTROY     0x2
 
 /* 
 The Low Level API
@@ -166,12 +188,19 @@ read the documentation carefully.  */
 
 #include <signal.h>
 
-typedef void (*PAPI_overflow_handler_t)(int, int, int, unsigned long long, int *, void *);
+typedef void (*PAPI_overflow_handler_t)(int EventSet, int EventCode, int index,
+					long long *latest, int *threshold, void *context);
+
+typedef void (*PAPI_sample_handler_t)(int EventSet, long long *values, int *ms, void *extra);
+
+typedef void (*PAPI_timer_handler_t)(int *ms, void *extra);
+
+typedef void (*PAPI_notify_handler_t)(int what, void *data);
 
 typedef struct _papi_overflow_option {
   int eventset;
   int event;
-  unsigned long long threshold; 
+  long long threshold; 
   PAPI_overflow_handler_t handler; } PAPI_overflow_option_t;
 
 typedef struct _papi_multiplex_option {
@@ -179,7 +208,7 @@ typedef struct _papi_multiplex_option {
   int milliseconds; } PAPI_multiplex_option_t;
 
 typedef struct _papi_inherit_option {
-  int inherit; } PAPI_inherit_option_t;
+  pid_t inherit; } PAPI_inherit_option_t;
 
 typedef struct _papi_domain_option {
   int eventset;
@@ -189,6 +218,31 @@ typedef struct _papi_granularity_option {
   int eventset;
   int granularity; } PAPI_granularity_option_t;
 
+typedef struct _papi_program_info {
+  char fullname[PAPI_MAX_STR_LEN];	/* path+name */	
+  char name[PAPI_MAX_STR_LEN];          /* name */
+  caddr_t text_start;   /* Start address of program text segment */
+  caddr_t text_end;     /* End address of program text segment */
+  caddr_t data_start;   /* Start address of program data segment */
+  caddr_t data_end;     /* End address of program data segment */
+  caddr_t bss_start;    /* Start address of program bss segment */
+  caddr_t bss_end;      /* End address of program bss segment */
+  char lib_preload_env[PAPI_MAX_STR_LEN]; /* Environment variable that lets you preload libraries */
+} PAPI_exe_info_t;
+
+typedef struct _papi_hw_info {
+  int ncpu;                 /* Number of CPU's in an SMP Node */
+  int nnodes;               /* Number of Nodes in the entire system */
+  int totalcpus;            /* Total number of CPU's in the entire system */
+  int vendor;               /* Vendor number of CPU */
+  char vendor_string[PAPI_MAX_STR_LEN];   /* Vendor string of CPU */
+  int model;                /* Model number of CPU */
+  char model_string[PAPI_MAX_STR_LEN];    /* Model string of CPU */
+  float revision;           /* Revision of CPU */ 
+  float mhz;                  /* Cycle time of this CPU, *may* be estimated at 
+                               init time with a quick timing routine */
+} PAPI_hw_info_t;
+  
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
 typedef union {
@@ -197,20 +251,24 @@ typedef union {
   PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
   PAPI_domain_option_t defdomain; 
+  PAPI_hw_info_t *hw_info;
+  PAPI_exe_info_t *exe_info;
   int debug; } PAPI_option_t;
 
 typedef struct pre_info {
-  char *event_name;
-  unsigned int event_code;
-  char *event_text; } PAPI_preset_info_t; 
+  const char *event_name;
+  const unsigned int event_code;
+  const char *event_descr;
+  int avail;
+  char *event_note;
+  int flags;
+} PAPI_preset_info_t; 
 
-int PAPI_accum(int EventSet, unsigned long long *values);
+int PAPI_accum(int EventSet, long long *values);
 int PAPI_add_event(int *EventSet, int Event);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
 int PAPI_cleanup(int *EventSet); 
-PAPI_preset_info_t *PAPI_describe_all_events(void);
-int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 int PAPI_init(void);
 int PAPI_list_events(int EventSet, int *Events, int *number);
@@ -218,7 +276,11 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 int PAPI_perror(int code, char *destination, int length);
 int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale, int EventSet, int EventCode, int threshold, int flags);
 int PAPI_query_event(int EventCode);
-int PAPI_read(int EventSet, unsigned long long *values);
+int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
+const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
+int PAPI_event_code_to_name(int EventCode, char *out);
+int PAPI_event_name_to_code(char *in, int *out);
+int PAPI_read(int EventSet, long long *values);
 int PAPI_rem_event(int *EventSet, int Event); 
 int PAPI_rem_events(int *EventSet, int *Events, int number); 
 int PAPI_reset(int EventSet);
@@ -230,9 +292,14 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr);
 int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
 int PAPI_state(int EventSetIndex, int *status);
-int PAPI_stop(int EventSet, unsigned long long *values);
-int PAPI_write(int EventSet, unsigned long long *values);
+int PAPI_stop(int EventSet, long long *values);
+int PAPI_write(int EventSet, long long *values);
 void PAPI_shutdown(void);
+void *PAPI_get_overflow_address(void *context);
+const PAPI_exe_info_t *PAPI_get_executable_info(void);
+const PAPI_hw_info_t *PAPI_get_hardware_info(void);
+int PAPI_create_eventset(int *EventSet);
+int PAPI_destroy_eventset(int *EventSet);
 
 /*
 The High Level API
@@ -247,5 +314,7 @@ events countable simultaneously by the underlying hardware.
 
 int PAPI_num_events(void);
 int PAPI_start_counters(int *events, int array_len);
-int PAPI_read_counters(unsigned long long *values, int array_len);
-int PAPI_stop_counters(unsigned long long *values, int array_len);
+int PAPI_read_counters(long long *values, int array_len);
+int PAPI_stop_counters(long long *values, int array_len);
+long long PAPI_get_real_usec(void);
+long long PAPI_get_real_cyc(void);

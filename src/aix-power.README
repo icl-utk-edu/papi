@@ -1,0 +1,8 @@
+Title: Native Encoding for AIX 4.3.x on IBM Power 630, 604 and 604e
+
+The encoding for native (NON-PAPI) events is:
+
+		Low 8 bits indicate which counter number: 0 - 7
+		Bits 8-16 indicate which event number: 0 - 50
+
+See: /usr/lpp/pmtoolkit/lib
