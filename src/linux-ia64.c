@@ -241,7 +241,8 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfm_ev
       return(PAPI_ECNFLCT);
     }
 
-  for (i=0;i<evt->pec_count;i++)
+  /* for (i=0;i<=evt->pec_count;i++) -KSL */ 
+   for (i=0;i<evt->pec_count;i++)
     {
       selector |= 1 << pc[i].pfr_reg.reg_num;
       DBG((stderr,"Selector is now 0x%x\n",selector));
@@ -712,7 +713,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int used;
+  int used,preset_index;
 
   /* Find out which counters used. */
   
@@ -721,6 +722,10 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
   /* Clear out counters that are part of this event. */
 
   this_state->selector = this_state->selector ^ used;
+  /* We need to remove the count from this event, do we need to
+   * reset the index of values too? -KSL */
+  preset_index = in->code ^ PRESET_MASK;
+  this_state->evt.pec_count-=preset_map[preset_index].evt.pec_count;
 
   return(PAPI_OK);
 }
