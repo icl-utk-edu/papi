@@ -215,5 +215,5 @@ extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern int p3_size, p2_size, ath_size, opt_size, NATIVE_TABLE_SIZE;
 extern char *basename(char *);
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
+extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 #endif

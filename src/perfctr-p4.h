@@ -190,5 +190,5 @@ extern int sigrelse(int);
 
 /* Undefined identifiers in executable */
 
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
+extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 extern int _papi_hwd_get_system_info(void);
