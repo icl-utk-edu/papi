@@ -374,23 +374,19 @@ int _papi_hwd_init_global(void)
    if (pfm_set_options(&pfmlib_options))
       return (PAPI_ESYS);
 
-   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
-   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
+   /* Initialize outstanding values in machine info structure */
+   if (_papi_hwd_mdi_init() != PAPI_OK) {
+      return (PAPI_ESBSTR);
+   }
 
    /* Fill in what we can of the papi_system_info. */
    retval = _papi_hwd_get_system_info();
    if (retval)
       return (retval);
-    _papi_hwd_mdi_init();
 
-   /* get_memory_info has a CPU model argument that is not used,
-    * fakining it here with hw_info.model which is not set by this
-    * substrate 
-    */
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
-                            _papi_hwi_system_info.hw_info.model);
-   if (retval)
-      return (retval);
+   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
+   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
+   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
 
    /* Setup presets */
 
@@ -399,6 +395,15 @@ int _papi_hwd_init_global(void)
       return (retval);
 
    retval = _papi_hwi_setup_all_presets(preset_search_map);
+   if (retval)
+      return (retval);
+
+   /* get_memory_info has a CPU model argument that is not used,
+    * fakining it here with hw_info.model which is not set by this
+    * substrate 
+    */
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
+                            _papi_hwi_system_info.hw_info.model);
    if (retval)
       return (retval);
 

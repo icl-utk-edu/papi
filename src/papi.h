@@ -102,6 +102,12 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_TLS_USER_LEVEL2		3
 #define PAPI_MAX_THREAD_STORAGE		4
 
+/* Vendor definitions */
+
+#define PAPI_VENDOR_UNKNOWN -1
+#define PAPI_VENDOR_INTEL   1
+#define PAPI_VENDOR_AMD     2
+#define PAPI_VENDOR_CYRIX   3
 
 /* Granularity definitions */
 

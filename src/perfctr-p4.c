@@ -151,10 +151,10 @@ int _papi_hwd_init_global(void)
 {
    int retval;
    struct perfctr_info info;
+   struct vperfctr *dev;
 
    /* Opened once just to get system info */
 
-   struct vperfctr *dev;
    if ((dev = vperfctr_open()) == NULL)
       error_return(PAPI_ESYS, VOPEN_ERROR);
    SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
@@ -165,10 +165,20 @@ int _papi_hwd_init_global(void)
       error_return(PAPI_ESYS, VINFO_ERROR);
 
    /* Initialize outstanding values in machine info structure */
+
    if (_papi_hwd_mdi_init() != PAPI_OK) {
-      return (PAPI_EINVAL);
+      return (PAPI_ESBSTR);
    }
+
+   /* Fill in what we can of the papi_system_info. */
+   retval = _papi_hwd_get_system_info();
+   if (retval)
+      return (retval);
+
+   /* Fixup stuff from linux.c */
+
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
+
    _papi_hwi_system_info.supports_hw_overflow =
        (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
    SUBDBG("Hardware/OS %s support counter generated interrupts\n",
@@ -178,14 +188,6 @@ int _papi_hwd_init_global(void)
    _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
-   _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0;
-
-   SUBDBG("Actual MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
-
-   /* Fill in what we can of the papi_system_info. */
-   retval = _papi_hwd_get_system_info();
-   if (retval)
-      return (retval);
 
    /* Setup presets */
    retval = setup_p4_presets(info.cpu_type);
@@ -198,7 +200,8 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   vperfctr_close(dev);
+    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
+    vperfctr_close(dev);
    return (PAPI_OK);
 }
 

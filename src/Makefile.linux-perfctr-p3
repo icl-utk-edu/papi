@@ -1,5 +1,5 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR = ./perfctr-2.4.5
+PERFCTR = ./perfctr-2.4.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -O3 -g -Wall -mpentiumpro
 TOPTFLAGS= -g -Wall -mpentiumpro
@@ -42,7 +42,7 @@ TARGETS = serial multiplex_and_pthreads
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c p3_events.c
 MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p3_events.o

@@ -251,11 +251,6 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium 3"
 
-#define PAPI_VENDOR_UNKNOWN -1
-#define PAPI_VENDOR_INTEL   1
-#define PAPI_VENDOR_AMD     2
-#define PAPI_VENDOR_CYRIX   3
-
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern unsigned int p3_size, p2_size, ath_size, opt_size, NATIVE_TABLE_SIZE;

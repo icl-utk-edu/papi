@@ -144,12 +144,6 @@ typedef P4_perfctr_event_t hwd_event_t;
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium 4"
 
-#define PAPI_VENDOR_UNKNOWN -1
-#define PAPI_VENDOR_INTEL   1
-#define PAPI_VENDOR_AMD     2
-#define PAPI_VENDOR_CYRIX   3
-
-
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 

@@ -93,15 +93,10 @@ f77papi.h: genpapifdef
 f90papi.h: genpapifdef
 	./genpapifdef -f90 > f90papi.h
 
-examples: tests ftests
-
-test: examples
-	ctests/zero
-
 fulltest: examples
 	sh run_tests.sh
 
-tests: null
+ctests: null
 	cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS) TOOLPATH="$(TOOLPATH)"
 
 # LIBCFLAGS='$(CFLAGS)'

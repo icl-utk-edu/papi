@@ -231,7 +231,7 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
    char *s;
 
    while (fgets(line, 256, f) != NULL) {
-      if (strstr(line, search_str) != NULL) {
+      if (strncmp(line, search_str, strlen(search_str)) == 0) {
          /* ignore all characters in line up to : */
          for (s = line; *s && (*s != ':'); ++s);
          if (*s)
@@ -242,6 +242,43 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
 
    /* End stolen code */
 }
+/* Pentium III
+ * processor  : 1
+ * vendor     : GenuineIntel
+ * arch       : IA-64
+ * family     : Itanium 2
+ * model      : 0
+ * revision   : 7
+ * archrev    : 0
+ * features   : branchlong
+ * cpu number : 0
+ * cpu regs   : 4
+ * cpu MHz    : 900.000000
+ * itc MHz    : 900.000000
+ * BogoMIPS   : 1346.37
+ * */
+/* IA64
+ * processor       : 1
+ * vendor_id       : GenuineIntel
+ * cpu family      : 6
+ * model           : 7
+ * model name      : Pentium III (Katmai)
+ * stepping        : 3
+ * cpu MHz         : 547.180
+ * cache size      : 512 KB
+ * physical id     : 0
+ * siblings        : 1
+ * fdiv_bug        : no
+ * hlt_bug         : no
+ * f00f_bug        : no
+ * coma_bug        : no
+ * fpu             : yes
+ * fpu_exception   : yes
+ * cpuid level     : 2
+ * wp              : yes
+ * flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 mmx fxsr sse
+ * bogomips        : 1091.17
+ * */
 
 int _papi_hwd_get_system_info(void)
 {
@@ -311,19 +348,26 @@ int _papi_hwd_get_system_info(void)
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
       error_return(PAPI_ESYS, "fopen(%s) returned NULL", "/proc/cpuinfo");
 
+   /* All of this information maybe overwritten by the substrate */ 
+
+   /* MHZ */
+
    rewind(f);
    s = search_cpu_info(f, "cpu MHz", maxargs);
    if (s)
       sscanf(s + 1, "%f", &mhz);
    _papi_hwi_system_info.hw_info.mhz = mhz;
 
+   /* Vendor Name */
+
    rewind(f);
    s = search_cpu_info(f, "vendor_id", maxargs);
-   if (s && (t = strchr(s + 2, '\n'))) {
+   if (s && (t = strchr(s + 2, '\n'))) 
+     {
       *t = '\0';
       strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-   }
-   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
+     }
+   else 
      {
        rewind(f);
        s = search_cpu_info(f, "vendor", maxargs);
@@ -333,6 +377,8 @@ int _papi_hwd_get_system_info(void)
        }
      }
        
+   /* Revision */
+
    rewind(f);
    s = search_cpu_info(f, "stepping", maxargs);
    if (s)
@@ -350,25 +396,36 @@ int _papi_hwd_get_system_info(void)
 	   _papi_hwi_system_info.hw_info.revision = (float) tmp;
 	 }
      }
-       
+
+   /* Model Name */
+
    rewind(f);
    s = search_cpu_info(f, "family", maxargs);
-   if (s && (t = strchr(s + 2, '\n'))) {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-   }
+   if (s && (t = strchr(s + 2, '\n'))) 
+     {
+       *t = '\0';
+       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
+     }
+   else 
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n'))) 
+	 {
+	   *t = '\0';
+	   strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+	 }
+     }
 
    rewind(f);
    s = search_cpu_info(f, "model", maxargs);
    if (s)
-     {
-       sscanf(s + 1, "%d", &tmp);
-       _papi_hwi_system_info.hw_info.model = tmp;
-     }
+      {
+	sscanf(s + 1, "%d", &tmp);
+	_papi_hwi_system_info.hw_info.model = tmp;
+      }
 
    fclose(f);
-
-   /* cut */
 
    SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
           _papi_hwi_system_info.hw_info.totalcpus,
