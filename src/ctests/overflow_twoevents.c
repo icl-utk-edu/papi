@@ -141,8 +141,8 @@ int main(int argc, char **argv)
    printf("-----------------------------------------------\n");
 
    printf("Test type    : %16d%16d\n", 1, 2);
-   printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0]);
-   printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1]);
+   printf(OUT_FMT, event_name, (values[0])[0], (values[1])[0]);
+   printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[1], (values[1])[1]);
 
    if (overflow_counts[0].count == 0 && overflow_counts[1].count==0)
       test_fail(__FILE__, __LINE__, "one counter had no overflows", 1);
