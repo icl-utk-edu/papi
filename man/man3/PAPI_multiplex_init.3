@@ -1,26 +1,33 @@
 .\" $Id$
-.TH PAPI_multiplex_init 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_multiplex_init 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_multiplex_init \- initialize multiplex support in the PAPI library
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "int PAPI_multiplex_init (void);"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_multiplex_init(C_INT\  check )
 .fi
 
 .SH DESCRIPTION
 .B "PAPI_multiplex_init"
 enables and initializes multiplex support in the PAPI library.
-Applications that make no use of multiplexs do not need to call
+This allows a user to count more events than there are physical counters
+by time sharing the existing counters at some loss in precision.
+Applications that make no use of multiplexing do not need to call
 this routine.
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -63,5 +70,6 @@ Philip J. Mucci <mucci@cs.utk.edu>
 This function causes the application to exit if it is called more than once.
 
 .SH SEE ALSO
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+.BR PAPI_set_multiplex "(3)"
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

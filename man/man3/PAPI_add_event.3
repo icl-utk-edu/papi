@@ -1,32 +1,33 @@
 .\" $Id$
-.TH PAPI_add_event 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_add_event 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_add_event, PAPI_add_events, PAPI_add_pevent \- add PAPI preset or native hardware event to an event set
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode ");"
-.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int " num ");"
+.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int " number ");"
 .BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventSet,\  C_INT\  check )
+.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventSet,\  C_INT\  number,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
-.nf
 .BR "PAPI_add_event() " "adds a hardware event to a PAPI Event Set."
 .BR "PAPI_add_events() " "does the same, but for an array of hardware event codes."
 .BR "PAPI_add_pevent() " "is reserved for future use."
-.fi
-.LP
-Each of these functions takes the following as its first argument:
-.LP
+
+.SH ARGUMENTS
 .I *EventSet
 --  an integer handle for a PAPI Event Set as created by
 .BR "PAPI_create_eventset" (3)
-.LP
-The other arguments are:
 .LP
 .I EventCode
 -- a defined event such as PAPI_TOT_INS.
@@ -34,23 +35,23 @@ The other arguments are:
 .I *EventCode
 -- an array of defined events
 .LP
-.I num
+.I number
 -- an integer indicating the number of events in the array
 .I *EventCode
 .LP
 A hardware event can be either a PAPI preset or a native hardware event code. 
 For a list of PAPI preset events, see
-.BR "PAPI_preset" "(3) or run the"
+.BR "PAPI_presets" "(3) or run the"
 .I avail
 test case in the PAPI distribution. PAPI presets can be passed to
-.BR "PAPI_query" "(3) to see if they exist on the underlying architecture."
+.BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
 For the encoding of native events, see the <arch>.README file
 also included the distribution. 
 
 .SH RETURN VALUES
-On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+On success, these functions return
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -104,12 +105,12 @@ if (PAPI_start(EventSet) != PAPI_OK)
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This function has no known bugs.
+These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), "
+.BR PAPI_presets "(3), "
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_rem_events "(3), " PAPI_query_event "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

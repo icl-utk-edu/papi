@@ -1,18 +1,22 @@
 .\" $Id$
-.TH "PAPI_lock" 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH "PAPI_lock" 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
-.nf
 PAPI_lock \- Lock the PAPI internal mutex variable
-PAPI_unlock \- Unlock the PAPI internal mutex variable
-.fi
+ PAPI_unlock \- Unlock the PAPI internal mutex variable
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI void\ PAPI_lock(void);
 .BI void\ PAPI_unlock(void);
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_lock()
+.BI PAPIF_unlock()
 .fi
 
 .SH DESCRIPTION
@@ -47,6 +51,6 @@ one mutex available through this interface some care must be observed by
 the programmer using these calls.
 
 .SH SEE ALSO
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

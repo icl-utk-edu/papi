@@ -1,23 +1,35 @@
 .\" $Id$
-.TH PAPI_reset 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_reset 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_reset \- reset the hardware event counts in an EventSet
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int\ PAPI_reset (int " EventSet ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_reset(C_INT\  EventSet,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B PAPI_reset()
-zeroes the values contained in 
+zeroes the values of the counters contained in 
 .IR EventSet "."
+
+.SH ARGUMENTS
+.I "EventSet"
+--  an integer handle for a PAPI event set as created by
+.BR "PAPI_create_eventset" (3)
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -34,7 +46,7 @@ The EventSet specified does not exist.
 .if t .ft CW
 int EventSet = PAPI_NULL;
 unsigned int native = 0x0;
-long long values[1];
+long_long values[1];
  	
 if (PAPI_create_eventset(&EventSet) != PAPI_OK)
   handle_error(1);
@@ -71,5 +83,5 @@ This function has no known bugs.
 .BR PAPI_add_event "(3), " PAPI_reset "(3), " PAPI_read "(3), "
 .BR PAPI_set_opt "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

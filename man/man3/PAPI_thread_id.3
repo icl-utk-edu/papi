@@ -1,24 +1,33 @@
 .\" $Id$
-.TH PAPI_thread_id 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_thread_id 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_thread_id \- get the thread identifier of the current thread
 
 .SH SYNOPSIS
+.B C Interface
+.nf
+.B #include <papi.h>
 .BI "unsigned long int PAPI_thread_id(void);"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_thread_id(C_INT\ id )
+.fi
 
 .SH DESCRIPTION
 None.
 
 .SH RETURN VALUES
 On success, this function returns a valid thread 
-identifier. On error, (unsigned long int)-1 is returned.
+identifier.
+ On error, (unsigned long int)-1 is returned.
 
 .SH ERRORS
 None.
 
 .SH EXAMPLE
-.LP
 .nf
 .if t .ft CW
 unsigned long int tid;
@@ -44,5 +53,5 @@ This function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_thread_init "(3), " 
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

@@ -1,22 +1,29 @@
 .\" $Id$
-.TH PAPI_list_events 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_list_events 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_list_events \- list the events defined in an event set
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "int PAPI_list_events(int " EventSet ", int *" Events ", int *" number ");"
-.if
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_list_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .LP
 .B PAPI_list_events(\|)
 decomposes an event set into the hardware events it contains.
-.LP
+
+.SH ARGUMENTS
 .I EventSet 
--- a reference to an EventSetInfo structure
+--  an integer handle for a PAPI event set as created by
+.BR "PAPI_create_eventset" (3)
 .LP
 .I *Events 
 -- an array of codes for events, such as PAPI_INT_INS. No more than 
@@ -36,9 +43,9 @@ is too short to hold all the counters in the event set the
 variable will be larger than the actually stored number of counter codes.
 
 .SH RETURN VALUES
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK). 
-.LP
+On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -52,7 +59,6 @@ The EventSet specified does not exist.
 The hardware event specified is not a PAPI preset for this architecture. 
 
 .SH EXAMPLES
-
 .nf
 .if t .ft CW
   int EventCode, EventSet = PAPI_NULL;
@@ -97,5 +103,5 @@ This function has no known bugs.
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_rem_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

@@ -1,0 +1,110 @@
+.\" $Id$
+.TH PAPI_set_multiplex 3 "December, 2001" "PAPI Function Reference" "PAPI"
+
+.SH NAME
+PAPI_set_multiplex \- convert a standard event set to a multiplexed event set
+
+.SH SYNOPSIS
+.B C Interface
+.nf
+.B #include <papi.h>
+.BI "int PAPI_set_multiplex(int " *EventSet ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_set_multiplex(C_INT\  EventSet )
+.fi
+
+.SH DESCRIPTION
+.B "PAPI_set_multiplex" 
+Converts a standard PAPI event set created by a call to 
+.B PAPI_create_eventset()
+into an event set capable of handling multiplexed events. This must be done 
+after calling 
+.B PAPI_multiplex_init()
+, but prior to calling 
+.B PAPI_start().
+Events can be added to an eventset either before or after converting it into
+a multiplexed set, but the conversion must be done prior to using it as a
+multiplexed set.
+
+.SH ARGUMENTS
+.I "*EventSet"
+--  a pointer to an integer handle for a PAPI event set as created by
+.BR "PAPI_create_eventset" (3)
+
+.SH RETURN VALUES
+On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+
+.SH EXAMPLES
+.nf         
+.if t .ft CW
+  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 0;
+  long_long *values;
+  const PAPI_preset_info_t *pset;
+
+  /* Initialize the library */
+
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if (retval != PAPI_VER_CURRENT)
+    handle_error(1);
+
+  pset = PAPI_query_all_events_verbose();
+  if (pset == NULL)
+    handle_error(1);
+
+  if (PAPI_multiplex_init() != PAPI_OK)
+    handle_error(1);
+  
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  if (PAPI_set_multiplex(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
+  {
+    if ((pset->avail) && (pset->event_code != PAPI_TOT_CYC))
+	{
+	  retval = ;
+	  if (PAPI_add_event(&EventSet, pset->event_code) != PAPI_OK)
+        handle_error(1);
+	  if (++j >= max_to_add)
+	    break;
+	}
+	pset++;
+  }
+
+  values = (long_long *)malloc(max_to_add*sizeof(long_long));
+  if (values == NULL)
+    handle_error(1);
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    handle_error(1);
+.if t .ft P
+.fi         
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_multiplex_init "(3)," PAPI_set_opt "(3),"
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

@@ -1,35 +1,48 @@
 .\" $Id$
-.TH PAPI_read 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_read 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_read, PAPI_accum \- read hardware events, accumulate and reset hardware
 events from an event set
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
-.BI "int\ PAPI_read(int " EventSet ", long long *" values ");"
-.BI "int\ PAPI_accum(int " EventSet ", long long *" values ");"
+.B #include <papi.h>
+.BI "int\ PAPI_read(int " EventSet ", long_long *" values ");"
+.BI "int\ PAPI_accum(int " EventSet ", long_long *" values ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
+.BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
 .B PAPI_read()
-reads the counters of the indicated event set and stores the values in 
+copies the counters of the indicated event set into 
 the array
 .IR values .
 The counters are left counting after the read.
 .LP
 .B PAPI_accum()
-reads the counters of the indicated event set and adds counter values to
-the values in the array
+adds the counters of the indicated event set into the array
 .IR values .
 The counters are zeroed and left counting after the operation.
 
+.SH ARGUMENTS
+.I EventSet
+--  an integer handle for a PAPI Event Set as created by
+.BR "PAPI_create_eventset" (3)
+.LP
+.I *values
+-- an array to hold the counter values of the counting events
+
 .SH RETURN VALUES
-On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+On success, these functions return
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -49,7 +62,7 @@ The event set specified does not exist.
 .if t .ft CW
   int EventSet = PAPI_NULL;
   unsigned int native = 0x0;
-  long long values[1] = (long long) 0;
+  long_long values[1] = (long_long) 0;
 	
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
@@ -84,11 +97,11 @@ The event set specified does not exist.
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This function has no known bugs.
+These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_add_event "(3), " PAPI_reset "(3), " PAPI_read "(3), "
+.BR PAPI_add_event "(3), " PAPI_reset "(3), "
 .BR PAPI_set_opt "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

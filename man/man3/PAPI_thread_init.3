@@ -1,26 +1,31 @@
 .\" $Id$
-.TH PAPI_thread_init 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_thread_init 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_thread_init \- initialize thread support in the PAPI library
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "int PAPI_thread_init (unsigned long int (*" handle ")(), int " flag ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  flag,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
 .B "PAPI_thread_init"
-initializes thread support in the PAPI library. It
-should be called 
+initializes thread support in the PAPI library. Itshould be called 
 .BR "only once" , 
 just after 
 .BR "PAPI_library_init" (3),
-and before any other PAPI calls. Applications that make no use of threads do not need to call
-this routine. It takes the following arguments:
-.LP
+and before any other PAPI calls. Applications that make no use of threads 
+do not need to call this routine.
+
+.SH ARGUMENTS
 .I "handle"
 --  Pointer to a function that returns current thread ID.
 .LP
@@ -29,14 +34,13 @@ this routine. It takes the following arguments:
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
-.fi
 
 .SH EXAMPLES
 .I For Pthreads:
@@ -62,5 +66,5 @@ Philip J. Mucci <mucci@cs.utk.edu>
 This function causes the application to exit if it is called more than once.
 
 .SH SEE ALSO
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

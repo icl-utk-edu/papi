@@ -1,16 +1,26 @@
 .\" $Id$
-.TH PAPI_get_opt 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_get_opt 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_get_opt, PAPI_set_opt \- get/set PAPI library or event set options
+ PAPIF_get_clockrate, PAPIF_get_domain, PAPIF_get_granularity, PAPIF_get_preload
+\- Fortran implementation of some PAPI_get_opt options
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "int PAPI_get_opt(int " option ", PAPI_option_t *" ptr ");"
 .BI "int PAPI_set_opt(int " option ", PAPI_option_t *" ptr ");"
-.if
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_get_clockrate(C_INT\  clockrate )
+.BI PAPIF_get_domain(C_INT\  EventSet,\  C_INT\  domain,\  C_INT\  mode,\  C_INT\  check )
+.BI PAPIF_get_granularity(C_INT\  EventSet,\  C_INT\  granularity,\  C_INT\  mode,\  C_INT\  check )
+.BI PAPIF_get_preload(C_STRING\  preload,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B PAPI_get_opt()
@@ -19,24 +29,57 @@ and
 query or change the options of the PAPI library or a specific event set 
 created by
 .BR "PAPI_create_eventset" (3).
-These functions have a C interface only.
-Not all options require or return information in the
-PAPI_option_t structure.  
+The C interface for these functions passes a pointer to the
+.I PAPI_option_t
+structure. Not all options require or return information in this structure.
+The Fortran interface is a series of calls implementing various subsets of
+the C interface. Not all options in C are available in Fortran.
+.LP
+.B NOTE:
+/  Some options, such as PAPI_SET_DOMAIN, are also available as separate entry points
+in both C and Fortran.
 .LP
 The reader is urged to see the example code in the PAPI distribution
-for usage of PAPI_get_opt.  The file papi.h contains
-definitions for the structures unioned in the PAPI_option_t structure.  
+for usage of PAPI_get_opt.  The file 
+.B papi.h 
+contains definitions for the structures unioned in the  
+.I PAPI_option_t
+structure.
 
-.I "option"
--- is an input parameter describing the course of action. Its possible
+
+.SH ARGUMENTS
+.I option
+-- is an input parameter describing the course of action. Possible
 values are defined in 
 .B papi.h
-and briefly described below.
+and briefly described below. The Fortran calls are
+implementations of specific options.
 .LP
 .I "ptr"
--- is both an input and output parameter. It is defined in
+-- is a pointer to a structure that acts as both an input and output parameter. 
+It is defined in
 .B papi.h
-and its definition is enclosed below.
+and  below.
+.LP
+.I EventSet 
+-- input; a reference to an EventSetInfo structure
+.LP
+.I clockrate
+--  output; cycle time of this CPU in MHz; *may* be an estimate
+generated at init time with a quick timing routine
+.LP
+.I domain
+--  output; execution domain for which events are counted
+.LP
+.I granularity
+--  output; execution granularity for which events are counted
+.LP
+.I mode
+--  input; determines if domain or granularity are default 
+or for the current event set
+.LP
+.I preload
+--  output; environment variable string for preloading libraries
 
 .LP
 .TS H
@@ -195,9 +238,9 @@ if (PAPI_set_opt(PAPI_SET_DOMAIN, &options) != PAPI_OK)
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This woeful excuse for a man page.
+There are no known bugs in these functions.
 
 .SH SEE ALSO
 .BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " PAPI_start "(3), " 
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

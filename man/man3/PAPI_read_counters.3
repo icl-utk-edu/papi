@@ -1,41 +1,50 @@
 .\" $Id$
-.TH PAPI_read_counters "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_read_counters 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_read_counters, PAPI_accum_counters \- PAPI High Level: read counting 
 hardware events
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
-.BI "int\ PAPI_read_counters(long long *" values ", int " array_len ");"
-.BI "int\ PAPI_accum_counters(long long *" values ", int " array_len ");"
+.BI "int\ PAPI_read_counters(long_long *" values ", int " array_len ");"
+.BI "int\ PAPI_accum_counters(long_long *" values ", int " array_len ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_read_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check )
+.BI PAPIF_accum_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .LP
 .B PAPI_read_counters(\|)
-reads the event counters and stores the values in the array
-values. The counters are reset with the counters left running after
-the call to the function.
+copies the event counters into the array
+.I values
+\.
+ The counters are reset and left running after the call.
 .LP
 .B PAPI_accum_counters(\|)
-reads the event counters and stores the values in the array
-values. The counters are reset with the counters left running after
-the call to the function.
-.LP
-.I *values 
+adds the event counters into the array
+.I values
+\.
+ The counters are reset and left running after the call.
+
+.SH ARGUMENTS
+.I *values
 -- an array to hold the counter values of the counting events
 .LP
 .I array_len 
 -- the number of items in the *events array
 .LP
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
 
 .SH RETURN VALUES
-On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+On success, these functions return
+.B "PAPI_OK."
+ On error, a non-zero error code is returned. 
 
 .SH ERRORS
 .TP
@@ -48,11 +57,10 @@ A system or C library call failed inside PAPI, see the
 variable.
 
 .SH EXAMPLES
-
 .nf
 .if t .ft CW
   int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
-  long long values[2];
+  long_long values[2];
   int num_hwcntrs = 0;
 	
   if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
@@ -79,11 +87,11 @@ variable.
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This function has no known bugs.
+These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_num_counters "(3),"
 .BR PAPI_start_counters "(3),"
 .BR PAPI_stop_counters "(3),"
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

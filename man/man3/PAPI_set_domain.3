@@ -1,13 +1,21 @@
 .\" $Id$
-.TH PAPI_set_domain 3 "March, 2001" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_set_domain 3 "March, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_set_domain \- set the default execution domain for new event sets
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int PAPI_set_domain(int " domain ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_set_domain(C_INT\  domain,\  C_INT\  check )
+.BI PAPIF_set_event_domain(C_INT\  EventSet,\  C_INT\  domain,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B "PAPI_set_domain" 
@@ -24,9 +32,9 @@ the system. Thus when requesting
 the user is asking for events that occur on behalf of the process,
 inside the kernel.
 
-Here
+.SH ARGUMENTS
 .I "domain"
-is one of the following constants as defined in the papi.h header file.
+-- one of the following constants as defined in the papi.h header file:
 
 .TS
 allbox tab($);
@@ -41,8 +49,8 @@ PAPI_DOM_MAX$The largest available context
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -56,7 +64,6 @@ The event set specified does not exist.
 The event set is currently counting events.
 
 .SH EXAMPLES
-
 .nf
 .if t .ft CW
 int retval;
@@ -84,9 +91,9 @@ if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This woeful man page.
+This function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_set_opt "(3)," 
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

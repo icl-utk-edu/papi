@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_write 3 "June, 2001" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_write 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 .nf
@@ -7,10 +7,15 @@ PAPI_write \- Write counter values into counters
 .fi
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
-.BI "int PAPI_write(int " EventSet ", long long *" values ");"
+.B #include <papi.h>
+.BI "int PAPI_write(int " EventSet ", long_long *" values ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_write(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
@@ -24,11 +29,18 @@ values provided. If the event set is running an attempt will be made
 write the values to the running counters as well. This operation is
 not permitted by all substrates and may result in a run-time error.
 
+.SH ARGUMENTS
+.I "EventSet"
+--  an integer handle for a PAPI event set as created by
+.BR "PAPI_create_eventset" (3)
+.LP
+.I *values
+-- an array to hold the counter values of the counting events
+
 .SH RETURN VALUES
-On success, 
-.BR PAPI_write  " returns"
-.IR "PAPI_OK" ,
-and on error, a non-zero error code is returned.
+On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -40,7 +52,6 @@ The EventSet is currently counting events and the substrate could
 not change the values of the running counters.
 
 .SH EXAMPLES
-.LP
 .nf
 .if t .ft CW
 
@@ -53,11 +64,10 @@ not change the values of the running counters.
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-These functions have no known bugs.
+Theis function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_accum "(3)"
-.LP
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

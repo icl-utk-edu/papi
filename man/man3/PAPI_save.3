@@ -1,18 +1,16 @@
 .\" $Id$
-.TH "PAPI_save" 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH "PAPI_save" 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
-.nf
 PAPI_save \- Save the current state of the PAPI library
-PAPI_restore \- Restore the saved state of the PAPI library
-.fi
+ PAPI_restore \- Restore the saved state of the PAPI library
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
-.BI int PAPI_save(void);
-.BI int PAPI_restore(void);
+.B #include <papi.h>
+.BI int\ PAPI_save(" void ");"
+.BI int\ PAPI_restore(" void ");"
 .fi
 
 .SH DESCRIPTION
@@ -28,9 +26,9 @@ been saved using
 .BR PAPI_save .
 
 .SH RETURN VALUES
-On success, 
-.IR "PAPI_OK" , 
-is returned and on error, a non-zero error code is returned.
+On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -60,8 +58,13 @@ Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
 These functions are not yet implemented.
+ NOTE: As currently defined, these functions are not necessarily nestable or
+thread safe.
+To become so, PAPI_save should return a void pointer to a platform specific
+structure that can be used by PAPI_restore to restore data on a per thread 
+or per EventSet basis.
 
 .SH SEE ALSO
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

@@ -1,20 +1,33 @@
 .\" @(#)$Id$
-.TH PAPI_profil 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_profil 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_profil, PAPI_sprofil \- generate PC histogram data where hardware counter overflow occurs
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
-.BI "int PAPI_profil(unsigned short *" buf ", unsigned " bufsiz ", unsigned long " offset ", unsigned " scale ", int " EventSet ", int " EventCode ", int " threshold ", int " flags ");"
-.LP
-.BI "int PAPI_sprofil(PAPI_sprofil_t *" prof ", int " profcnt ", int " EventSet ", int " EventCode ", int " threshold ", int " flags ");"
+.BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  unsigned\  scale, \ int \ EventSet, \
+           \  int\  EventCode,\  int\  threshold,\  int\  flags );
+.BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\  int\  EventCode,\  int\  threshold,\  int\  flags\  );
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_profil(C_INT(*)\  buf,\  C_INT\  bufsiz,\  C_INT\  offset,\  C_INT\  scale,\  C_INT\  EventSet, 
+           \  C_INT\  EventCode,\  C_INT\  threshold,\  C_INT\  flags,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
-.B PAPI_profil()
-takes the following arguments:
-.LP
+.B PAPI_profil() 
+uses its first four parameters to create the data structures needed by PAPI_sprofil
+and then calls PAPI_sprofil to do the work.
+
+.B PAPI_sprofil()
+assumes a preinitialized sprofil structure, and initiates profiling based on its values.
+
+.SH ARGUMENTS
 .I *buf
 -- pointer to profile buffer array.
 .LP
@@ -22,10 +35,10 @@ takes the following arguments:
 -- number of entries in *buf.
 .LP
 .I offset
--- starting value of lowest entry in *buf
+-- starting value of lowest memory address to profile.
 .LP
 .I scale
--- 
+-- scaling factor for bin values.
 .LP
 .I EventSet 
 -- The PAPI EventSet to profile when it is started.
@@ -37,38 +50,14 @@ takes the following arguments:
 -- threshold value for the Event triggers the handler. 
 .LP
 .I flags 
--- bit pattern to control the behavior of PAPI_sprofil(). 
-.LP
-
-.B PAPI_sprofil()
-takes the following arguments:
-.LP
-.I *prof
--- pointer to sprofil structure.
-.LP
-.I profcnt
--- 
-.LP
-.I EventSet 
--- The PAPI EventSet to profile when it is started.
-.LP
-.I EventCode
--- Code of the Event in the EventSet to profile.
-.LP
-.I threshold 
--- threshold value for the Event triggers the handler. 
-.LP
-.I flags 
--- bit pattern to control the behavior of PAPI_sprofil(). 
+-- bit pattern to control profiling behavior. Defined values are shown in the table below.
 
 .TS
 allbox tab($);
-cw(40)  s
+cI(40)  s
 lB lw(40).
 T{
-Defined bits for the 
-.I flags 
-varible
+Defined bits for the flags variable
 T}
 PAPI_PROFIL_POSIX$T{
 Default type of profiling, similar to 
@@ -84,11 +73,17 @@ PAPI_PROFIL_COMPRESS$T{
 Ignore samples if hash buckets get big.
 T}
 .TE
+.LP
+.I *prof
+-- pointer to PAPI_sprofil_t structure.
+.LP
+.I profcnt
+-- number of buffers for hardware profiling (*reserved*)
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -164,13 +159,14 @@ if ((retval = PAPI_start(EventSet)) != PAPI_OK)
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This woeful man page.
+These functions have no known bugs.
+
 
 .SH SEE ALSO
 .BR PAPI_preset "(3), " PAPI_get_executable_info "(3), "
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_rem_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

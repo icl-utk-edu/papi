@@ -1,11 +1,20 @@
 .\" $Id$
-.TH PAPI_shutdown 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_shutdown 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_shutdown \- finish using PAPI and free all related resources
 
 .SH SYNOPSIS
+.B C Interface
+.nf
+.B #include <papi.h>
 .BI "void PAPI_shutdown (void);"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_shutdown()
+.fi
 
 .SH DESCRIPTION
 .B PAPI_shutdown(\|)
@@ -22,6 +31,6 @@ This function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

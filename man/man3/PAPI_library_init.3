@@ -1,13 +1,20 @@
 .\" $Id$
-.TH PAPI_library_init 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_library_init 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_library_init \- initialize the PAPI library 
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int PAPI_library_init(int " version ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_library_init(C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B "PAPI_library_init()"
@@ -19,21 +26,22 @@ must also be called prior to making any calls to the library other
 than 
 .BR PAPI_library_init() .
 
+.SH ARGUMENTS
 .I "version"
 -- upon initialization, PAPI checks the argument against the internal value of
-.I "PAPI_VER_CURRENT"
+.B "PAPI_VER_CURRENT"
 when the library was compiled. This guards against portability
 problems when updating the PAPI shared libraries on your system.
 
 .SH RETURN VALUES
 On success, this function returns 
-.IR "PAPI_VER_CURRENT" .
+.B "PAPI_VER_CURRENT" .
 .LP
 A positive return code other than 
-.I PAPI_VER_CURRENT 
+.B PAPI_VER_CURRENT 
 indicates a library version mis-match.
 .LP
-A negative error code indicates an initialisation error.
+A negative error code indicates an initialization error.
 
 .SH ERRORS
 .TP
@@ -85,6 +93,6 @@ you're application could core dump.
 .BR PAPI_low_level "(3),"
 .BR PAPI_high_level "(3),"
 .BR PAPI "(3),"
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

@@ -1,13 +1,21 @@
 .\" $Id$
-.TH PAPI_set_granularity "October, 2000" "" "PAPI"
+.TH PAPI_set_granularity "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
-PAPI_set_granularity \- set the execution domain in which events are counted
+PAPI_set_granularity \- set the execution granularity for which events are counted
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int\ PAPI_set_granularity(int " granularity );
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_set_granularity(C_INT\  granularity,\  C_INT\  check )
+.BR PAPI_set_granularity(3)
+.fi
 
 .SH DESCRIPTION
 This function is currently unimplemented.
@@ -20,9 +28,9 @@ This function is currently unimplemented.
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This function has no known bugs.
+This function is currently unimplemented.
 
 .SH SEE ALSO
 .BR PAPI_set_domain "(3), " PAPI_set_opt "(3), " PAPI_get_opt "(3), "
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

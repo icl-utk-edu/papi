@@ -1,36 +1,45 @@
 .\" $Id$
-.TH PAPI_describe_eventset 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_describe_eventset 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
-PAPI_describe_event, PAPI_event_name_to_code, PAPI_event_code_to_name \- convert a hardware event to a description, number or string symbol.
+PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_label_event \- convert a hardware event to a description, label, number or string symbol.
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
-.BI "int\ PAPI_describe_event(char *" name ", int *" code ", char *" descr ");"
-.BI "int\ PAPI_event_name_to_code(char *" name ", int *" code ");"
-.BI "int\ PAPI_event_code_to_name(int " code ", char *" name ");"
-.if
+.B #include <papi.h>
+.BI "int\ PAPI_describe_event(char *" EventName ", int *" EventCode ", char *" EventDescr ");"
+.BI "int\ PAPI_event_code_to_name(int " EventCode ", char *" EventName ");"
+.BI "int\ PAPI_event_name_to_code(char *" EventName ", int *" EventCode ");"
+.BI "int\ PAPI_label_event(int " EventCode ", char *" EventLabel ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check )
+.BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  EventName,\  C_INT\  check )
+.BI PAPIF_event_name_to_code(C_STRING\  EventName,\  C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_label_event(C_INT\  EventCode,\  C_STRING\  EventLabel,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B PAPI_describe_event(\|)
 is used to translate either an ASCII PAPI preset name or an integer
 PAPI preset event code into the corresponding event code or name as
 well as an ASCII description of that event. If the 
-.I name 
+.I EventName 
 argument is a string of length >0 it is assumed to contain the name 
 to look up and the corresponding event code is returned in the
 argument
-.IR code .
+.IR EventCode .
 Otherwise the 
-.I code
+.I EventCode
 argument is used to look up the event name which is stored in the 
-.I name
-argument. Finally a descriptive string of lenth 
+.I EventName
+argument. Finally a descriptive string of length less than
 .B PAPI_MAX_STR_LEN
 is copied to the argument 
-.IR descr.
+.I EventDescr.
 
 The functionality of this call is a superset of the following two
 calls.
@@ -41,15 +50,31 @@ is used to translate an ASCII PAPI preset name into an integer PAPI event code.
 .B PAPI_event_code_to_name(\|)
 is used to translate an integer PAPI event code into an ASCII PAPI preset name.
 
-The
-.IR name
-argument for the three calls must always be non-NULL and point to a string of at least length
+.B PAPI_label_event(\|)
+is used to translate an integer PAPI event code into a short (<=18 character) 
+ASCII label that is more descriptive than the preset name but shorter than the description.
+These labels can be used as event identifiers in third party tools.
+
+.SH ARGUMENTS
+.I EventName
+-- a string containing the event name as listed in
+.BR PAPI_presets(3)
+.LP
+.I EventCode
+-- the numeric code for the event
+.LP
+.I EventDescr
+-- a descriptive string for the event of length less than
 .BR PAPI_MAX_STR_LEN .
+.LP
+.I EventLabel
+-- a short descriptive label for the event of length less than 18 characters.
+.LP
 
 .SH RETURN VALUES
-On success, this function returns
-.IR "PAPI_OK" .
-On error, a non-zero error code is returned.
+On success, these functions return
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -60,12 +85,12 @@ One or more of the arguments is invalid.
 The hardware event specified is not a valid PAPI preset. 
 
 .SH EXAMPLES
-.LP
 .nf
 .if t .ft CW
 int EventCode, EventSet = PAPI_NULL;
 char EventCodeStr[PAPI_MAX_STR_LEN];
 char EventDescr[PAPI_MAX_STR_LEN];
+char EventLabel[20];
 	
 /* Convert to integer */
 
@@ -76,6 +101,13 @@ if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
 *EventCodeStr='\0'; /* Erase the name argument to look up the code */
 if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
   handle_error(1);
+
+/* Label event from EventCode */
+if (PAPI_label_event(EventCode,EventLabel) != PAPI_OK)
+  handle_error(1);
+
+/* Print the differing text strings */
+printf("Name: %s\nLabel: %s\nDescription: %s\n",EventCodeStr,EventLabel,EventDescr);
 
 /* Create the EventSet */
 
@@ -93,11 +125,11 @@ if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This function has no known bugs.
+These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), " PAPI_add_event "(3), " 
-.BR PAPI_set_opt "(3), " PAPI__events "(3), " PAPI_query "(3), "
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+.BR PAPI_presets "(3), " PAPI_add_event "(3), " 
+.BR PAPI_set_opt "(3), " PAPI_query_event "(3), "
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

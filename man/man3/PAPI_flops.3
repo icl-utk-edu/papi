@@ -1,23 +1,34 @@
 .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5
-.TH PAPI_flops 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_flops 3 "December, 2001" "PAPI Function Reference" "PAPI"
 .SH NAME
 PAPI_flops \- PAPI High level: Simplified call to get Mflops/s, real and processor time
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
-.BI "int PAPI_flops (float *" rtime ", float *" ptime ", long long *" flpins ", float *" mflops ");"
-.if
+.B #include <papi.h>
+.BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflops ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .LP
+The first call to
 .B PAPI_flops(\|)
-The first call to PAPI_flops will initialize PAPI, setup the counters
+will initialize PAPI, set up the counters
 to monitor PAPI_FP_INS and PAPI_TOT_CYC events and start the counters.
 Subsequent calls will read the counters and return total real time,
 total process time, total floating point instructions since the start
-of the measurement and Mflops/s rate since latest call to PAPI_flops().
-.LP
+of the measurement and Mflops/s rate since latest call to
+.B PAPI_flops(\|)
+\. Any call with
+.I flpins
+= -1 will reinitialize all counters to 0.
+
+.SH ARGUMENTS
 .I *rtime 
 -- total realtime since the first PAPI_flops() call
 .LP
@@ -29,19 +40,19 @@ of the measurement and Mflops/s rate since latest call to PAPI_flops().
 .LP
 .I *mflops 
 -- Mflops/s achieved since the latest PAPI_flops() call
-.LP
+
 .SH RETURN VALUES
-.TP
-.B PAPI_OK
-The funtion call was successful. All other return values indicates failure.
+On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned. 
 
 .SH NOTES
 .LP
 Most platforms are only capable of counting the number of floating
-point instructions completed which may not translate to floating point
-operations to all people. The measured rate is thus rather Mflips/s
-and will in most circumstances count FMADD instructions as one
-operation.
+point instructions completed. This may or may not translate to your 
+definition of floating point operations. The measured rate is thus 
+Mflips/s, and will in some circumstances count FMA instructions as one
+operation. Consult the hardware documentation for your system for specifics.
 .LP
 .nf
 .BR  PAPI_flops() " may be called by:"
@@ -63,12 +74,11 @@ operation.
 .B  \tPAPI_accum()
 .B  \tPAPI_shutdown()
 .fi
-.LP
-.SH SEE ALSO
-.BR PAPI_accum (3),
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi/
 
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_accum (3),
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi/

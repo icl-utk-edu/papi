@@ -1,26 +1,35 @@
 .\" $Id$
-.TH PAPI_set_debug 3 "March, 2001" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_set_debug 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_set_debug \- set the current debug level for PAPI
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int PAPI_set_debug(int " debuglevel ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_set_debug(C_INT\  debug,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B "PAPI_set_debug" 
 sets the default debug level for the PAPI library.
-Here
+
+.SH ARGUMENTS
 .I "debuglevel"
-is one of the following constants as defined in the papi.h header file.
+-- one of the constants shown in the table below and defined 
+in the papi.h header file.
 The current debug level is internally stored in the PAPI library and
 is used by the default internal PAPI error handler subroutine. 
 The error handler is called by library routines
 on the occurence of recoverable errors.
-The default PAPI error handler handles the possible debug levels in
-the following manner. 
+The default PAPI error handler handles the possible debug levels 
+shown in the table below.
 .TS
 allbox tab($);
 lB l.
@@ -31,8 +40,8 @@ PAPI_VERB_ESTOP$Print error message and exit
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -49,4 +58,5 @@ debugging enabled.
 
 .SH SEE ALSO
 .BR PAPI_set_opt "(3)," 
-.RB The\ PAPI\ Web\ Site: \ http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

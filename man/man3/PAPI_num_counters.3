@@ -1,13 +1,20 @@
 .\" $Id$
-.TH PAPI_num_counters 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_num_counters 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_num_counters \- PAPI High Level: get the number of hardware counters available on the system
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int\ PAPI_num_counters(void);"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_num_counters(C_INT\  number )
+.fi
 
 .SH DESCRIPTION
 .LP
@@ -15,13 +22,14 @@ PAPI_num_counters \- PAPI High Level: get the number of hardware counters availa
 returns the optimal length of the values array for the
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
-.BR PAPI_num_counters() "initialises the library using"
-.BR PAPI_library_init "if necessary."
+.B PAPI_num_counters()
+initialises the library using
+.B PAPI_library_init
+if necessary.
 
 .SH RETURN VALUES
 On success, this function returns the number of hardware counters available.
-.LP
-On error, a negative error code is returned.
+ On error, a negative error code is returned.
 
 .SH ERRORS
 .TP
@@ -62,11 +70,10 @@ variable.
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-If you don't call this, your application could core dump.
+If you don't call this function, your application could core dump.
 
 .SH SEE ALSO
 .BR PAPI_start_counters "(3),"
 .BR PAPI_read_counters "(3),"
 .BR PAPI_stop_counters "(3),"
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: http://icl.cs.utk.edu/projects/papi

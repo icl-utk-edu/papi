@@ -1,50 +1,86 @@
 .\" $Id$
-.TH PAPI_query_event 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_query_event 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
-.nf
 PAPI_query_event \- query if PAPI event exists
-PAPI_query_event_verbose \- query details of a PAPI event
-PAPI_query_all_events_verbose \- acquire details of all PAPI events
-.fi
+ PAPI_query_event_verbose \- query details of a PAPI event
+ PAPI_query_all_events_verbose \- acquire details of all PAPI events
+
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "int PAPI_query_event(int " EventCode ");"
 .BI "int PAPI_query_event_verbose(int " EventCode ", PAPI_preset_info_t *" info ");"
 .BI "const PAPI_preset_info_t* PAPI_query_all_events_verbose(\|);"
 .fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\ \ 
+           C_STRING\ EventDescr,\  C_STRING\ EventLabel,\  C_INT\  avail,\ \
+           C_STRING\ EventNote,\  C_INT\  flags,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B "PAPI_query_event()"
-asks the hardware if the PAPI Preset event can be counted on this
+asks the PAPI library if the PAPI Preset event can be counted on this
 architecture. If the event CAN be counted, the function returns
 PAPI_OK.  If the event CANNOT be counted, the function returns an
 error code.  On some platforms, this function also can be used to
 check the syntax of a native event.
 
 .B "PAPI_query_event_verbose()"
-asks the PAPI libraryfor a copy of an event descriptor. This
+asks the PAPI library for a copy of an event descriptor. This
 descriptor can then be used to investigate the details about the
-event.
+event. In Fortran, the individual fields in the descriptor are 
+returned as parameters.
 
 .B "PAPI_query_all_events_verbose()"
-asks the PAPI library to return a pointer to an array of event
-descriptors. The number of objects in the array is
+is implemented only in C. It asks the PAPI library to return a pointer 
+to an array of event descriptors. The number of objects in the array is
 .B PAPI_MAX_PRESET_EVENTS
-and each object is a structure as returned by
-PAPI_query_event_verbose(\|).
+and each object is a descriptor as returned by
+.B PAPI_query_event_verbose(\|).
+
+.SH ARGUMENTS
+.I EventCode
+-- a defined event such as PAPI_TOT_INS.
+.LP
+.I EventName
+-- the event name as described in
+.BR PAPI_presets(3) .
+.LP
+.I EventDescr
+-- a descriptive string for the event of length less than
+.BR PAPI_MAX_STR_LEN .
+.LP
+.I EventLabel
+-- a short descriptive label for the event of length less than 18 characters.
+.LP
+.I avail
+-- zero if the event CANNOT be counted.
+.LP
+.I EventNote
+-- additional text information about an event if available.
+.LP
+.I flags
+-- provides additional information about an event, e.g., 
+.B "PAPI_DERIVED" 
+for an event derived from 2 or more other events.
 
 .SH RETURN VALUES
 On success, 
-.BR PAPI_query_event " and " PAPI_query_event_verbose " returns"
-.IR "PAPI_OK" ,
+.BR PAPI_query_event " and " PAPI_query_event_verbose " return"
+.B "PAPI_OK" ,
 and on error, a non-zero error code is returned.
 
 .B PAPI_query_all_events_verbose
-returns a non NULL pointer on success.
+returns a pointer to an array of 
+.I PAPI_preset_info_t 
+structures on success, and a NULL pointer on error.
 
 
 .SH ERRORS
@@ -52,24 +88,13 @@ returns a non NULL pointer on success.
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
 .TP
-.B "PAPI_ENOMEM"
-Insufficient memory to complete the operation.
-.TP
-.B "PAPI_ENOEVST"
-The EventSet specified does not exist.
-.TP
-.B "PAPI_EISRUN"
-The EventSet is currently counting events.
-.TP
-.B "PAPI_ECNFLCT"
-The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously.
+.B "PAPI_ENOTPRESET"
+The hardware event specified is not a valid PAPI preset. 
 .TP
 .B "PAPI_NOEVNT"
 The PAPI preset is not available on the underlying hardware. 
 
 .SH EXAMPLES
-.LP
 .nf
 .if t .ft CW
 int EventSet = PAPI_NULL;
@@ -123,6 +148,6 @@ These functions have no known bugs.
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_rem_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The\ PAPI\ Web\ Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
 

@@ -1,30 +1,73 @@
 .\" $Id$
-.TH PAPI_get_hardware_info 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_get_hardware_info 3 "December, 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_get_hardware_info \- get the info about the system hardware
 
 .SH SYNOPSIS
-.B #include <papi.h>
-
+.B C Interface
 .nf
+.B #include <papi.h>
 .BI "const PAPI_hw_info_t *PAPI_get_hardware_info(void);"
-.if
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_get_hardware_info(C_INT\  ncpu,\  C_INT\  nnodes,\ \
+           C_INT\  totalcpus,\  C_INT\  vendor,\ \
+           C_STRING\  vendor_string, \  C_INT\  model,\ \
+           C_STRING\  model_string,\
+           C_FLOAT\  revision,\  C_FLOAT\  mhz)
+.fi
 
 .SH DESCRIPTION
-The pointer returned points to a structure containing information
-about the hardware on which the program runs. For details about the
-possibly defined values refer to the
-.B papi.h
-include file.
+In C, this function returns a pointer to a structure containing information
+about the hardware on which the program runs. In Fortran, the values 
+of the structure are returned explicitly.
 
+.SH ARGUMENTS
+The following arguments are implicit in the structure returned by the C function,
+or explicitly returned by Fortran.
+.LP
+.I ncpu
+--  number of CPUs in an SMP Node
+.LP
+.I nnodes
+--  number of Nodes in the entire system
+.LP
+.I totalcpus
+--  total number of CPUs in the entire system
+.LP
+.I vendor
+--  vendor id number of CPU
+.LP
+.I vendor_string
+--  vendor id string of CPU
+.LP
+.I model
+--  model number of CPU
+.LP
+.I model_string
+--  model string of CPU
+.LP
+.I revision
+--  Revision number of CPU
+.LP
+.I mhz
+--  Cycle time of this CPU; *may* be an estimate
+generated at init time with a quick timing routine
 
 .SH RETURN VALUES
-On success, this function returns a non-NULL pointer.
-On error, NULL is returned.
+On success, the C function returns a non-NULL pointer, 
+and the Fortran function returns 
+.B PAPI_OK.
+ On error, NULL is returned by the C function, 
+and a non-zero error code is returned by the Fortran function.
 
 .SH ERRORS
-None.
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
 
 .SH EXAMPLE
 .LP
@@ -48,10 +91,10 @@ Philip J. Mucci <mucci@cs.utk.edu>
 .SH BUGS
 If called before 
 .B PAPI_library_init()
-the behaviour of the routine is undefined.
+the behavior of the routine is undefined.
 
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
 .BR PAPI_get_opt "(3), " 
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi

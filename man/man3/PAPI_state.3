@@ -1,40 +1,52 @@
 .\" $Id$
-.TH PAPI_state 3 "Date??" "PAPI Programmer's Manual" "PAPI"
+.TH PAPI_state 3 "December 2001" "PAPI Function Reference" "PAPI"
 
 .SH NAME
 PAPI_state \- return the counting state of an EventSet
 
 .SH SYNOPSIS
+.B C Interface
+.nf
 .B #include <papi.h>
-
 .BI "int\ PAPI_state (int " EventSet ", int *" status ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_state(C_INT\  EventSet,\  C_INT\  status,\  C_INT\  check )
+.fi
 
 .SH DESCRIPTION
 .B PAPI_state() 
-returns the counting state of 
-.I EventSet
-in the form of indicator bits in 
-.IR status "."
-.LP
-The values is a boolean combination of one or more of the following
-nonzero constants as defined in the PAPI header file
-.BR papi.h "."
+returns the counting state of the specified event set.
 
-.nf
-.B PAPI_STOPPED
-.B PAPI_RUNNING      
-.B PAPI_PAUSED
-.B PAPI_NOT_INIT
-.B PAPI_OVERFLOWING  
-.B PAPI_PROFILING
-.B PAPI_MULTIPLEXING
-.B PAPI_ACCUMULATING    
-.if
+.SH ARGUEMENTS
+.I "EventSet"
+--  an integer handle for a PAPI event set as created by
+.BR "PAPI_create_eventset" (3)
+.LP
+.I status
+-- an integer containing a boolean combination of 
+one or more of the following nonzero constants as 
+defined in the PAPI header file papi.h:
+
+.TS
+allbox tab($);
+lB l.
+PAPI_STOPPED$EventSet is stopped
+PAPI_RUNNING$EventSet is running
+PAPI_PAUSED$EventSet temporarily disabled by the library
+PAPI_NOT_INIT$EventSet defined, but not initialized
+PAPI_OVERFLOWING$EventSet has overflowing enabled
+PAPI_PROFILING$EventSet has profiling enabled
+PAPI_MULTIPLEXING$EventSet has multiplexing enabled
+PAPI_ACCUMULATING$EventSet has accumulating enabled
+.TE
 
 .SH RETURN VALUES
 On success, this function returns
-.I "PAPI_OK."
-On error, a non-zero error code is returned.
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
 
 .SH ERRORS
 .TP
@@ -45,7 +57,6 @@ One or more of the arguments is invalid.
 The EventSet specified does not exist.
 
 .SH EXAMPLES
-
 .nf         
 .if t .ft CW
 int EventSet = PAPI_NULL;
@@ -85,5 +96,5 @@ This function has no known bugs.
 .SH SEE ALSO
 .BR PAPI_start "(3), " 
 .BR PAPI_stop "(3), "
-The PAPI Web Site: 
-.B http://icl.cs.utk.edu/projects/papi
+ The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
