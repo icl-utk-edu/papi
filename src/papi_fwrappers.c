@@ -237,7 +237,7 @@ PAPI_FCALL(papif_library_init, PAPIF_LIBRARY_INIT, (int *check))
    *check = PAPI_library_init(*check);
 }
 
-PAPI_FCALL(papif_thread_id, PAPIF_THREAD_ID, (unsigned long int *id))
+PAPI_FCALL(papif_thread_id, PAPIF_THREAD_ID, (unsigned long *id))
 {
    *id = PAPI_thread_id();
 }

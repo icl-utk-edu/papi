@@ -125,7 +125,7 @@ int PAPI_thread_init(unsigned long int (*id_fn) (void), int flag)
    papi_return(PAPI_OK);
 }
 
-unsigned long int PAPI_thread_id(void)
+unsigned long PAPI_thread_id(void)
 {
    if (_papi_hwi_thread_id_fn != NULL)
       return ((*_papi_hwi_thread_id_fn) ());
