@@ -723,9 +723,15 @@ int _papi_hwd_update_shlib_info(void)
       }
       for(i=0; i< count; i++ )
       {
+         char c;
+         int cc=0;
          retval=fseek(map_f, tmp1[i].pr_pathoff, SEEK_SET); 
          if (retval != 0) return(PAPI_ESYS);
-         fscanf(map_f, "%s", name);
+         while((retval=fread(&c, 1, 1, map_f)) > 0 ) {
+             name[cc]=c;
+             cc++;
+             if(c=='\0') break;
+	     }
 
          if (strcmp(_papi_hwi_system_info.exe_info.address_info.name,
                           basename(name))== 0 )
