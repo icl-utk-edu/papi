@@ -28,7 +28,17 @@ PAPI supports. However on some platforms, the resolution can be as bad
 as 1/Hz as defined by the operating system.
 
 .SH ERRORS
-These functions always succeed.
+The functions returns 
+.B PAPI_ECNFLCT 
+if there is no master event set.
+This will happen if the library has not been initialized, or for threaded
+applications, if there has been no thread id function defined by the 
+.BR PAPI_thread_init\  function.
+
+For threaded applications, if there has not yet been any thread
+specific master event created for the current thread, and if the
+allocation of such an event set fails, the call will return
+.BR PAPI_ENOMEM or PAPI_ESYS .
 
 .SH EXAMPLE
 .LP

@@ -429,7 +429,7 @@ int PAPI_library_init(int version)
   #endif
 #endif
 
-  if (init_retval != 0xdedbeef)
+  if (init_retval != DEADBEEF)
     return(init_retval);
 
   if (version != PAPI_VER_CURRENT) {
@@ -2117,7 +2117,7 @@ long_long PAPI_get_virt_cyc(void)
       _papi_hwi_insert_in_master_list(master);
       return(_papi_hwd_get_virt_cycles(master));
     }
-  return(-1);
+  return PAPI_ECNFLCT;
 }
 
 long_long PAPI_get_virt_usec(void)
@@ -2136,7 +2136,7 @@ long_long PAPI_get_virt_usec(void)
       return(_papi_hwd_get_virt_usec(master));
     }
   else
-    return(-1);
+    return PAPI_ECNFLCT;
 }
 
 int PAPI_restore(void)
