@@ -259,7 +259,7 @@ static void initialize_NativeInfoArray(EventSetInfo_t *ESI)
 
   for (i = 0; i < MAX_COUNTERS; i++) {
  	ESI->NativeInfoArray[i].ni_index = -1;
- 	ESI->NativeInfoArray[i].ni_position = 0;
+ 	ESI->NativeInfoArray[i].ni_position = -1;
  	ESI->NativeInfoArray[i].ni_owners = 0;
   }
   ESI->NativeCount = 0;
@@ -573,7 +573,7 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 			}
 		  }
 		}
-		head[j].pos[k]=-1;
+		/*head[j].pos[k]=-1;*/
 	  }
 	  else
       {
@@ -583,7 +583,7 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 		  if(nix==ESI->NativeInfoArray[n].ni_index)
           {
 		    head[j].pos[0]=ESI->NativeInfoArray[n].ni_position;
-            head[j].pos[1]=-1;
+            /*head[j].pos[1]=-1;*/
 		    break;
 		  }
 		}
@@ -618,6 +618,7 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 			/* there is an empty slot for the native event;
 			   initialize the native index for the new added event */
 			ESI->NativeInfoArray[ESI->NativeCount].ni_index=nix[i];
+			ESI->NativeInfoArray[ESI->NativeCount].ni_owners++;
 			ESI->NativeCount++;
 			remap++; 
 		}
@@ -647,7 +648,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 	thisindex = get_free_EventCodeIndex(ESI,EventCode);
 	if (thisindex < PAPI_OK)
 		return(thisindex);
-	
+
 		/* If it is a MPX EventSet, add it to the multiplex data structure and
 	this threads multiplex list */
 	
@@ -679,7 +680,8 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
 				ESI->EventInfoArray[thisindex].derived = _papi_hwi_preset_map[preset_index].derived; 
 				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_map[preset_index].operation; 
-				remap_event_position(ESI, thisindex);
+				if(remap)
+					remap_event_position(ESI, thisindex);
 			}
 		}
 		else if(EventCode & NATIVE_MASK)
@@ -705,7 +707,8 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				/* Fill in the EventCode (machine independent) information */
 			
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
-				remap_event_position(ESI, thisindex);
+				if(remap)
+					remap_event_position(ESI, thisindex);
 			}
 		}
 		else
@@ -726,6 +729,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 	
 	/* Bump the number of events */
 	ESI->NumberOfEvents++;
+			/*print_state(ESI);*/
 	
 	return(retval);
 }
@@ -761,42 +765,61 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
     hwd_control_state_t *this_state= &ESI->machdep;
     NativeInfo_t *native = ESI->NativeInfoArray;
-    int i, j, count;
+    int i, j, count, zero=0;
 
     /* Remove the references to this event from the native events:
        for all the metrics in this event,
 	compare to each native event in this event set,
 	and decrement owners if they match  */
     for(i=0;i<size;i++){
-	for(j=0;j<ESI->NativeCount;j++){ 
-	    if(native[j].ni_index==nix[i]){
-		native[j].ni_owners--;
-		break;
-	    }
-	}
+		for(j=0;j<ESI->NativeCount;j++){ 
+			if(native[j].ni_index==nix[i]){
+				native[j].ni_owners--;
+				if(native[j].ni_owners==0){
+					zero++;
+				}
+				break;
+			}
+		}
     }
 
     /* Remove any native events from the array if owners dropped to zero.
 	The NativeInfoArray must be dense, with no empty slots, so if we
 	remove an element, we must compact the list */
-    count = ESI->NativeCount;
-    for(i=0;i<count;i++){
-	if(native[i].ni_owners==0){
-	    /* if no more owners, decrement the count and shift any remaining elements */
-	    count--;
-	    if (i < count)
-		memcpy(&native[i], &native[i+1], sizeof(NativeInfo_t) * (count-i));
-	}
+    for(i=0;i<ESI->NativeCount;i++){
+		if(native[i].ni_index==-1)
+			continue;
+	
+		if(native[i].ni_owners==0){
+			int copy=0;
+			for(j=ESI->NativeCount-1;j>i;j--){
+				if(native[j].ni_index==-1 || native[j].ni_owners==0)
+					continue;
+				else{
+					memcpy(native+i, native+j, sizeof(NativeInfo_t));
+					memset(native+j, 0, sizeof(NativeInfo_t));
+					native[j].ni_index=-1;
+					native[j].ni_position=-1;
+					copy++;
+					break;
+				}
+			}
+			if(copy==0){
+				memset(native+i, 0, sizeof(NativeInfo_t));
+				native[j].ni_index=-1;
+				native[i].ni_position=-1;
+			}
+		}
     }
+
+	/* to reset hwd_control_state values */
+	ESI->NativeCount-=zero;
 
     /* If we removed any elements, 
 	clear the now empty slots, reinitialize the index, and update the count.
 	Then send the info down to the substrate to update the hwd control structure. */
-    if (count < ESI->NativeCount) {
-      memset(&native[count], 0, sizeof(NativeInfo_t) * (ESI->NativeCount - count));
-      for (i=count;i<ESI->NativeCount;i++) native[i].ni_index = -1;
-      ESI->NativeCount = count;
-      _papi_hwd_update_control_state(this_state, native, count);
+    if (zero) {
+      _papi_hwd_update_control_state(this_state, native, ESI->NativeCount);
     }
 
     return(PAPI_OK);
@@ -850,24 +873,25 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 	  remove_native_events(ESI, &native_index, 1);
       }
       else
-	  return(PAPI_ENOEVNT);
+		return(PAPI_ENOEVNT);
 
       /* dereference a couple values for cleaner code */
-      count = ESI->NumberOfEvents;
+      /*count = ESI->NumberOfEvents;*/
       array = ESI->EventInfoArray;
 
      /* Compact the Event Info Array list if it's not the last event */
-      if (thisindex < (count - 1))
+     /* if (thisindex < (count - 1))
 	  memcpy(&array[thisindex], &array[thisindex+1], sizeof(EventInfo_t) * (count - thisindex - 1));
-
+*/
       /* clear the newly empty slot in the array */
-      array[count].event_code = PAPI_NULL;
+      array[thisindex].event_code = PAPI_NULL;
       for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
-      array[count].pos[j] = -1;
-      array[count].ops = NULL;
-      array[count].derived = NOT_DERIVED;
+		array[thisindex].pos[j] = -1;
+      array[thisindex].ops = NULL;
+      array[thisindex].derived = NOT_DERIVED;
   }
   ESI->NumberOfEvents--;
+  /*print_state(ESI);*/
 
   return(PAPI_OK);
 }

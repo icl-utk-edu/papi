@@ -185,30 +185,40 @@ preset_search_t *preset_search_map=preset_name_map_630;
 
  #define DEBUG_SETUP 
 
-/*static void print_state(hwd_control_state_t *s)
+void print_state(EventSetInfo_t *ESI)
 {
   int i;
   
-  fprintf(stderr,"\n\n-----------------------------------------\nmaster_selector 0x%x\n",s->master_selector);
-  for(i=0;i<POWER_MAX_COUNTERS;i++){
-  	if(s->master_selector & (1<<i)) fprintf(stderr, "  1  ");
-	else fprintf(stderr, "  0  ");
-  }
-  fprintf(stderr,"\nnative_event_name       %12s %12s %12s %12s %12s %12s %12s %12s\n",native_table[s->native[0].index].name,native_table[s->native[1].index].name,
-    native_table[s->native[2].index].name,native_table[s->native[3].index].name,native_table[s->native[4].index].name,native_table[s->native[5].index].name,native_table[s->native[6].index].name,native_table[s->native[7].index].name);
-  fprintf(stderr,"native_event_selectors    %12d %12d %12d %12d %12d %12d %12d %12d\n",native_table[s->native[0].index].selector,native_table[s->native[1].index].selector,
-    native_table[s->native[2].index].selector,native_table[s->native[3].index].selector,native_table[s->native[4].index].selector,native_table[s->native[5].index].selector,native_table[s->native[6].index].selector,native_table[s->native[7].index].selector);
-  fprintf(stderr,"native_event_position     %12d %12d %12d %12d %12d %12d %12d %12d\n",s->native[0].position,s->native[1].position,
-    s->native[2].position,s->native[3].position,s->native[4].position,s->native[5].position,s->native[6].position,s->native[7].position);
-  fprintf(stderr,"counters                  %12d %12d %12d %12d %12d %12d %12d %12d\n",s->counter_cmd.events[0],
-    s->counter_cmd.events[1],s->counter_cmd.events[2],s->counter_cmd.events[3],
-    s->counter_cmd.events[4],s->counter_cmd.events[5],s->counter_cmd.events[6],
-    s->counter_cmd.events[7]);
-  fprintf(stderr,"native links              %12d %12d %12d %12d %12d %12d %12d %12d\n",s->native[0].link,s->native[1].link,
-    s->native[2].link,s->native[3].link,s->native[4].link,s->native[5].link,s->native[6].link,s->native[7].link);
-  }
+  fprintf(stderr,"\n\n-----------------------------------------\n");
+  fprintf(stderr,"numEvent: %d    numNative: %d\n", ESI->NumberOfEvents, ESI->NativeCount);
+
+  fprintf(stderr,"\nnative_event_name       ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15s",native_table[ESI->NativeInfoArray[i].ni_index].name);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"native_event_selectors    ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"native_event_position     ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_position);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"counter_cmd               ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.counter_cmd[ESI->NativeInfoArray[i].ni_position]);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"native links              ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_owners);
+  fprintf(stderr,"\n");
+  
 }
-*/
+
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
@@ -335,7 +345,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
       /* copy counter allocations info back into NativeInfoArray */
       for(i=0;i<natNum;i++)
-	  ESI->NativeInfoArray[i].ni_position = ffs(event_list[i].ra_selector);
+	  ESI->NativeInfoArray[i].ni_position = ffs(event_list[i].ra_selector)-1;
       /* update the control structure based on the NativeInfoArray */
       _papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);
       return 1;
