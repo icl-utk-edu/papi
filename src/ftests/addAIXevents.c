@@ -137,6 +137,7 @@ void pmtoolkit12(int *retval)
   return(1);
 #else
   return(0);
+#endif
 }
 
 void pmtoolkit12_(int *retval)
