@@ -1,7 +1,7 @@
 INCLUDE = -I..
 TESTS 	= zero first \
-	  second third fourth fifth nineth tenth profile description \
-          accum highlevel cost johnmay johnmay2 native profile \
+	  second third fourth fifth nineth tenth description \
+          accum highlevel cost johnmay johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
@@ -94,9 +94,6 @@ johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
 
 native: native.F $(FTEST_DEPENDENCE) addAIXevents.o
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
-
-profile: profile.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) profile.F $(PAPILIB) -o profile $(LDFLAGS)
 
 fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) do_loops.o
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) do_loops.o -o fmultiplex1 $(LDFLAGS)

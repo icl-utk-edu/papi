@@ -8,15 +8,16 @@ PAPI_profil, PAPI_sprofil \- generate PC histogram data where hardware counter o
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  unsigned\  scale, \ int \ EventSet, \
+.BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  
+.BI \tunsigned\  scale, \ int \ EventSet, \
            \  int\  EventCode,\  int\  threshold,\  int\  flags );
-.BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\  int\  EventCode,\  int\  threshold,\  int\  flags\  );
+.BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\  
+.BI \tint\  EventCode,\  int\  threshold,\  int\  flags\  );
 .fi
+.LP
 .B Fortran Interface
 .nf
-.B #include "fpapi.h"
-.BI PAPIF_profil(C_INT(*)\  buf,\  C_INT\  bufsiz,\  C_INT\  offset,\  C_INT\  scale,\  C_INT\  EventSet, 
-           \  C_INT\  EventCode,\  C_INT\  threshold,\  C_INT\  flags,\  C_INT\  check )
+The profiling routines have no Fortran interface.
 .fi
 
 .SH DESCRIPTION
@@ -52,10 +53,17 @@ assumes a preinitialized sprofil structure, and initiates profiling based on its
 .I flags 
 -- bit pattern to control profiling behavior. Defined values are shown in the table below.
 
+.LP
+.I *prof
+-- pointer to PAPI_sprofil_t structure.
+.LP
+.I profcnt
+-- number of buffers for hardware profiling (*reserved*)
+.LP
 .TS
 allbox tab($);
-cI(40)  s
-lB lw(40).
+cI  s
+lB lw.
 T{
 Defined bits for the flags variable
 T}
@@ -73,12 +81,6 @@ PAPI_PROFIL_COMPRESS$T{
 Ignore samples if hash buckets get big.
 T}
 .TE
-.LP
-.I *prof
--- pointer to PAPI_sprofil_t structure.
-.LP
-.I profcnt
--- number of buffers for hardware profiling (*reserved*)
 
 .SH RETURN VALUES
 On success, this function returns

@@ -274,11 +274,13 @@ PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *check))
 #endif
 }
 
-PAPI_FCALL(papif_profil, PAPIF_PROFIL, (unsigned short *buf, unsigned *bufsiz, unsigned long *offset, unsigned *scale, unsigned *eventset, 
-           unsigned *eventcode, unsigned *threshold, unsigned *flags, unsigned *check))
-{
-  *check = PAPI_profil(buf, *bufsiz, *offset, *scale, *eventset, *eventcode, *threshold, *flags);
-}
+/* This will not work until Fortran2000 :)
+ * PAPI_FCALL(papif_profil, PAPIF_PROFIL, (unsigned short *buf, unsigned *bufsiz, unsigned long *offset, unsigned *scale, unsigned *eventset, 
+ *            unsigned *eventcode, unsigned *threshold, unsigned *flags, unsigned *check))
+ * {
+ * *check = PAPI_profil(buf, *bufsiz, *offset, *scale, *eventset, *eventcode, *threshold, *flags);
+ * }
+ */
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check, int name_len))
