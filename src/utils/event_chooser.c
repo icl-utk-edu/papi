@@ -224,9 +224,9 @@ int preset()
    exit(1);
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-  int i, j, jj, k, print_ok, evt;
+  int i;
   int pevent;
 
   if(argc<3){
@@ -252,4 +252,5 @@ main(int argc, char **argv)
     fprintf(stderr, "Usage: eventChooser NATIVE|PRESET evt1 evet2 ... \n");
     exit(1);
   }
+  exit(0);
 }
