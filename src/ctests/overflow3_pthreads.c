@@ -36,15 +36,18 @@ void mainloop(int arg)
 {
    int retval, num_tests = 1;
    int EventSet1;
-#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
-   int mask1 = 0x3;
-#else
    int mask1 = 0x5;
-#endif
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc;
+   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
 
+   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
+      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
+      (strstr(hw_info->model_string, "POWER3"))) {
+      mask1 = 0x3;
+   }
    EventSet1 = add_test_events(&num_events1, &mask1);
 
    /* num_events1 is greater than num_events2 so don't worry. */
@@ -55,13 +58,14 @@ void mainloop(int arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
-   if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, THRESHOLD, 0, handler)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-#else
-    if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-#endif
+   if(mask1 == 0x3) {
+      if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, THRESHOLD, 0, handler)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+   }
+   else {
+      if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+   }
   /* start_timer(1); */
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -75,24 +79,25 @@ void mainloop(int arg)
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
-#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
+   if(mask1 == 0x3) {
    /* clear the papi_overflow event */
-   if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, 0, 0, NULL)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-#else
+      if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, 0, 0, NULL)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+   }
+   else {
    /* clear the papi_overflow event */
-   if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, 0, 0, NULL)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-#endif
-
+      if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, 0, 0, NULL)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+   }
    remove_test_events(&EventSet1, mask1);
 
    if (!TESTS_QUIET) {
-#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
-      printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-#else
-      printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-#endif
+      if(mask1 == 0x3) {
+         printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+      }
+      else {
+         printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+      }
       printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", (int) pthread_self(), (values[0])[1]);
       printf("Thread 0x%x Real usec   : \t%lld\n", (int) pthread_self(), elapsed_us);
       printf("Thread 0x%x Real cycles : \t%lld\n", (int) pthread_self(), elapsed_cyc);
