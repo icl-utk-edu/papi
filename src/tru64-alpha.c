@@ -18,19 +18,18 @@ static hwd_search_t findem_pca[] = {
   { PAPI_TOT_CYC, { PF5_MUX0_CYCLES, -1, PF5_MUX2_C_CYCLES }},
   { PAPI_TOT_INS, { PF5_MUX0_ISSUES, -1, -1 }},
   { -1, {-1, }}};
+static int setmuxcode = -1;
+static int getcntcode = -1;
+static int cntselcode = -1;
+#endif
+
+/* Globals */
+
 static hwd_search_t findem_ev67[] = {
   { PAPI_TOT_CYC, { -1, PF67_RET_INST_AND_CYCLES, -1 }},
   { PAPI_TOT_INS, { PF67_RET_INST_AND_CYCLES, -1, -1 }},
   { PAPI_RES_STL, { -1, PF67_CYCLES_AND_REPLAY_TRAPS, -1 }},
   { -1, {-1, -1, -1}}};
-
-/* Globals */
-
-static int setmuxcode = -1;
-static int getcntcode = -1;
-static int cntselcode = -1;
-
-#endif
 
 static hwd_search_t findem_ev6[] = {
   { PAPI_TOT_CYC, { PF6_MUX0_CYCLES, PF6_MUX1_CYCLES, -1 }},
@@ -62,7 +61,7 @@ static int setup_all_presets(int family, int model)
     findem = findem_ev6;
   else
     {
-      fprintf(stderr,"Unsupported processor family %s, model %d\n",family,model);
+      fprintf(stderr,"Unsupported processor family %d, model %d\n",family,model);
       return(PAPI_ESBSTR);
     }
 
@@ -442,7 +441,7 @@ int _papi_hwd_init(EventSetInfo *zero)
   if (bind_to_cpu(getpid(), cpu_mask, BIND_NO_INHERIT) == -1)
     abort();
 
-  fd = open("/dev/pfcntr",O_RDONLY | PCNTOPENONE);
+  fd = open("/dev/pfcntr",O_RDONLY | PCNTOPENONE,S_IRUSR | S_IRGRP | S_IROTH);
   if (fd == -1)
     return(PAPI_ESYS);
 

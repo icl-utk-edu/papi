@@ -10,9 +10,10 @@ NOOPT	=
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi
-CC_R	= xlc_r -qnolm
-CC	= xlc -qnolm
-CC_SHR	= ld -G -r
-F77	= xlf -qnolm
+CC_R	= xlc_r
+CC	= xlc
+CC_SHR	= xlc -G -r
+F77	= xlf
+CPP	= xlc -E
 
 include Makefile.inc

@@ -7,8 +7,8 @@
 # Mods:    <your name here>
 #          <your email address>
 
-CTESTS=`find tests -perm +u+x -type f`;
-FTESTS=`find ftests -perm +u+x -type f`;
+CTESTS=`find tests -perm -u+x -type f`;
+FTESTS=`find ftests -perm -u+x -type f`;
 ALLTESTS="$FTESTS $CTESTS";
 x=0;
 
@@ -17,7 +17,6 @@ echo "";
 echo "The following test cases will be run";
 echo $ALLTESTS;
 echo "";
-exit 0;
 
 for i in $ALLTESTS;
 do

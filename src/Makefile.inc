@@ -70,10 +70,11 @@ libclean:
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
 
 clean: libclean
-	rm -rf $(LIBRARY) $(SHLIB) $(SHLIB).1 $(SHLIB).1.0 genpapifdef
 	cd tests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
 
+clobber: clean
+	rm -f $(LIBRARY) $(SHLIB) fpapi.h
 null:
 
 dist: 
