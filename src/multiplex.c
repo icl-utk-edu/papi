@@ -550,7 +550,7 @@ static void mpx_handler(int signal)
       if (me != NULL && me->cur_event != NULL) {
          long_long counts[2];
          MasterEvent *cur_event = me->cur_event;
-         long_long cycles, total_cycles;
+         long_long cycles=0, total_cycles=0;
 
          retval = PAPI_stop(cur_event->papi_event, counts);
 	 assert(retval == PAPI_OK);
