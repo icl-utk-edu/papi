@@ -210,16 +210,16 @@
 
       print *, "-----------------------------------------------------",
      *"--------------------"
- 
-      write (*,100), "Test type", 1, 2, 3, 4
+
+      write (*,100) "Test type", 1, 2, 3, 4
 #if defined(NO_FLOPS)
-      write (*,100), "PAPI_TOT_INS", values(1), values(3), 
+      write (*,100) "PAPI_TOT_INS", values(1), values(3), 
      * values(5), values(7)
 #else
-      write (*,100), "PAPI_FP_INS", values(1), values(3), 
+      write(*,100) "PAPI_FP_INS", values(1), values(3), 
      * values(5), values(7)
 #endif
-      write (*,100) "PAPI_TOT_CYC", values(2), values(4),
+      write(*,100) "PAPI_TOT_CYC", values(2), values(4),
      * values(6), values(8)
       print *, "-----------------------------------------------------",
      *"--------------------"
