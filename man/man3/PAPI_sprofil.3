@@ -1,19 +1,15 @@
-.\" @(#)PAPI_profil    0.10 00/05/18 CHD; from S5
-.TH PAPI_profil 0 "18 May 2000"
+.\" @(#)$Id$
+.TH PAPI_profil 3 "1 June 2000"
 .SH NAME
 PAPI_profil \- set values in the EventSetProfileInfo_t strct.
 .LP
 .SH SYNOPSIS
 .LP
-int PAPI_profil (*buf, bufsiz, offset, scale, EventSet, EventNum, threshold, flags) 
+int PAPI_sprofil (prof, profcnt, EventSet, EventNum, threshold, flags)
 .LP
-unsigned short *buf -- pointer to a profile buffer.
+PAPI_sprofil_t *prof -- pointer to array of profile buffers.
 .LP
-unsigned bufsiz -- length of buf in bytes.
-.LP
-unsigned long offset -- start of the region of which to profile.
-.LP
-unsigned scale -- value by which to scale the sampled PC.
+int profcnt -- number of profile buffers in pointed to by prof.
 .LP
 int EventSet -- The PAPI EventSet to profile when it is started.
 .LP
@@ -25,7 +21,7 @@ int flags -- flags to control the behavior of PAPI_sprofil().
 .LP
 .SH DESCRIPTION
 .LP
-.B PAPI_profil(\|)
+.B PAPI_sprofil(\|)
 .LP
 .SH RETURN VALUES
 .LP
