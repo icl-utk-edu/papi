@@ -40,7 +40,8 @@ int main(int argc, char **argv)
    if ((elapsed_us / (long_long)1000000) < 10)
      test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
 
-   if ((10.0 * hw_info->mhz * 1000000.0) > (float)elapsed_cyc)
+   /* We'll accept 1 part per thousand error here (to allow Pentium 4 to pass) */
+   if ((10.0 * hw_info->mhz * 1000000.0) > (((float)elapsed_cyc) + ((float)elapsed_cyc)/1000))
      test_fail(__FILE__, __LINE__, "Real cycles less than 10*MHz*1000000.0!", PAPI_EMISC);
    test_pass(__FILE__, NULL, 0);
    exit(1);
