@@ -1,8 +1,24 @@
-This isn't working yet, but it's close.
 
-Support will include for the EV6 and EV67.
+The PAPI alpha-tru64 substrate requires OSF 5.1 and a pfm device driver
+patch available from Bill Gray at Compaq (bgray@zk3.dec.com).
 
-Note that the test cases report PAPI_FP_INS,
-but in actuality it's PAPI_TOT_INS because of
-the poor design of the test cases, and the
-lack of Floating Point counts on the Alpha.
+The EV6 and EV67 have a very small number of countable events.  Only
+the following PAPI preset events are available:
+
+ EV6
+   - PAPI_TOT_CYC
+   - PAPI_TOT_INS
+   - PAPI_RES_STL
+   - PAPI_BR_CN
+
+  EV67
+   - PAPI_TOT_CYC
+   - PAPI_TOT_INS
+   - PAPI_RES_STL
+
+Known problems:
+ - The EV5 preset map is incomplete.
+ - OSF 5.1 and the pfm device driver do not support saving and restoring the
+   counters on context switch.  Whoever opens the driver owns the counters.
+   A patch to support saving/restoring/virtualizing the counters on a
+   per-thread basis has been requested.
