@@ -14,6 +14,7 @@
 #include "WinPMC.h"                           // contains I/O control codes
 
 #define WELCOME_STRING		"Welcome to the Windows 2000 PMC Driver\n"
+#define VERSION_STRING		"PMC Driver Version: 2003/04/01:1\n"
 
 /* variables */
 
@@ -130,7 +131,7 @@ switch (irpStack->MajorFunction)
 
   case IRP_MJ_CREATE:
 	status = kern_pmc_init();	// check cpu type & enable RDPMC
-	status = STATUS_SUCCESS;
+//	status = STATUS_SUCCESS;
   break;
 
  case IRP_MJ_CLOSE:
@@ -174,6 +175,17 @@ switch (irpStack->MajorFunction)
         Irp->IoStatus.Information = sizeof(TaskSwitchCounter);
         status = STATUS_SUCCESS;
       break;
+
+	// Returns a driver version string to the caller
+	  case IOCTL_PMC_VERSION_STRING:
+		if (outputBufferLength > strlen(VERSION_STRING)+1)
+		{
+			strcpy((char *)ioBuffer, VERSION_STRING);
+			Irp->IoStatus.Information = strlen(VERSION_STRING)+1;
+		    status = STATUS_SUCCESS;
+		}
+		else status = STATUS_BUFFER_TOO_SMALL;
+	  break;
 
 	// Returns a welcome string to the caller
 	  case IOCTL_PMC_READ_TEST_STRING:
