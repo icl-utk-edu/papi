@@ -48,9 +48,9 @@ PAPI_ipc - Has 3 possibilities:
   
 
 PAPI_start_counters - Specify the events to count
-  (in text form - don't bother to look up the codes; 
-  they won't work.)  You cannot specify more events
-  than there are hardware counters.
+  (in text form or the actual numeric code; NOTE: make sure
+  to not confuse normal decimal and hexadecimal.) You cannot
+  specify more events than there are hardware counters.
 
   To begin counting cycles and instructions:
     PAPI_Matlab('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS');
