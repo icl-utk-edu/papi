@@ -90,13 +90,14 @@ typedef struct _EventSetProfileInfo {
 /* PAPI supports derived events that are made up of at most 2 counters. */
 
 typedef struct _EventInfo {
-  unsigned int event_code;    /* Preset or native code for this event as passed to PAPI_add_event() */
+  _EventInfo *head;	    /* points back to EventInfoArray for this EventSet */
+  unsigned int event_code;  /* Preset or native code for this event as passed to PAPI_add_event() */
   unsigned hardware_index;  /* Index of counter to read in buffer returned by the hardware/kernel */
   hwd_register_map_t bits;  /* Bits that keep track of used resources by this event */
-  unsigned int hardware_selector;      /* Counter select bits used in the lower level */
-  int command;       /* Counter derivation command used in the lower level */
-  int operand_index; /* Counter derivation data used in the lower level */
-  int index;         /* added to indicate the position in the array */
+  unsigned int hardware_selector; /* Counter select bits used in the lower level */
+			    /* Replaced by bits?? */
+  int derived;		    /* Counter derivation command used for derived events */
+  int operand_index;	    /* Counter derivation data used for derived events */
 } EventInfo_t;
 
 /* Multiplex definitions */
@@ -179,13 +180,13 @@ typedef struct _EventSetInfo {
                          hardware to set the counters to the appropriate
                          conditions*/
 
-  long_long *hw_start;   /* Array of length _papi_hwi_system_info.num_cntrs that contains
+  u_long_long *hw_start;   /* Array of length _papi_hwi_system_info.num_cntrs that contains
 			    unprocessed, out of order, long_long counter registers */
 
-  long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
+  u_long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
 			    processed, in order, PAPI counter values when used or stopped */
 
-  long_long *latest;     /* Array of the same length as above, containing 
+  u_long_long *latest;     /* Array of the same length as above, containing 
 				  the values of the counters when last read */ 
 
   int state;          /* The state of this entire EventSet; can be

@@ -241,11 +241,13 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
 
   for (i=0;i<limit;i++)
     {
+      ESI->EventInfoArray[i].head = ESI->EventInfoArray; /* always points to top of array */
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
+      ESI->EventInfoArray[i].hardware_index = -1;
+/*      ESI->EventInfoArray[i].bits = ???; */
       ESI->EventInfoArray[i].hardware_selector = 0;
       ESI->EventInfoArray[i].command = NOT_DERIVED;
       ESI->EventInfoArray[i].operand_index = -1;
-      ESI->EventInfoArray[i].index = i;
     }
 }
 
@@ -443,9 +445,9 @@ static int add_preset_event(hwd_control_state_t *machdep, hwd_preset_t *preset, 
      enough registers available to use this preset. Store the allocated
      bits in 'result'. */
 
-  if (_papi_hwd_allocate_registers(machdep, preset, result))
+  /* if (_papi_hwd_allocate_registers(machdep, preset, result))
     return(PAPI_ECNFLCT);
-
+  */
   /* Now we call a machine dependent function to use the allocated
      register bits to stuff the proper values into our counter control
      structure */
@@ -574,8 +576,8 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 
 	  /* Try to add the preset. */
 
-	  retval = add_preset_event((hwd_control_state_t *)(&ESI->machdep), 
-				    &_papi_hwd_preset_map[preset_index], 
+	  retval = add_preset_event(&ESI->machdep,
+				    &_papi_hwd_preset_map[preset_index],
 				    &ESI->EventInfoArray[thisindex]);
 	  if (retval < PAPI_OK)
 	    return(retval);
