@@ -33,38 +33,69 @@ extern int (*_papi_hwi_thread_kill_fn)(int, int);
 
 static ThreadInfoList_t *head = NULL;
 
+/*
+ * Calls _papi_hwd_shutdown on every element of the thread list
+ * but does not free up the memory.
+ */
 void _papi_hwi_shutdown_the_thread_list(void)
 {
   ThreadInfoList_t *tmp;
+  ThreadInfoList_t *nxt;
+
+  if ( head == NULL )
+	return;
 
   _papi_hwd_lock(PAPI_INTERNAL_LOCK);
-  while (head)
-    {
-      tmp = head;
-      head = head->next;
+  tmp = head->next;
+  while (tmp != head)
+  {
+      nxt = tmp->next;
 #ifdef THREAD_DEBUG
       fprintf(stderr,"%lld:%s:0x%x:Shutting down master thread %x at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),tmp->master->tid,tmp);
 #endif
       _papi_hwd_shutdown(&tmp->master->context);
-    }
+      tmp = nxt;
+  }
+  if ( tmp ){
+#ifdef THREAD_DEBUG
+      fprintf(stderr,"%lld:%s:0x%x:Shutting down master thread %x at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),tmp->master->tid,tmp);
+#endif
+      _papi_hwd_shutdown(&tmp->master->context);
+  }
   _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 }
 
+/*
+ * Free's up any memory associated with the list
+ */
 void _papi_hwi_cleanup_thread_list(void)
 {
   ThreadInfoList_t *tmp;
+  ThreadInfoList_t *nxt;
+  ThreadInfoList_t *prev;
+
+  if ( head == NULL )
+	return;
 
   _papi_hwd_lock(PAPI_INTERNAL_LOCK);
-  while (head)
-    {
-      tmp = head;
-      head = head->next;
-      _papi_hwd_shutdown(&tmp->master->context);
+  prev = head;
+  tmp = head->next;
+  while (tmp != head)
+  {
+      nxt = tmp->next;
 #ifdef THREAD_DEBUG
       fprintf(stderr,"%lld:%s:0x%x:Freeing master thread %ld at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),tmp->master->tid,tmp);
+      fprintf(stderr,"%p->%p: %p->%p: %p->%p", prev, prev->next,tmp, tmp->next,nxt,nxt->next);
 #endif
       free(tmp);
-    }
+      prev->next = nxt;
+      tmp = nxt;
+  }
+#ifdef THREAD_DEBUG
+  fprintf(stderr,"%lld:%s:0x%x:Freeing master thread %ld at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),tmp->master->tid,tmp);
+#endif
+  free(tmp);
+  head = NULL;
   _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 }
 
@@ -79,8 +110,15 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
   entry->master = ptr;
 
   _papi_hwd_lock(PAPI_INTERNAL_LOCK);
-  entry->next = head;
-  head = entry;
+  if ( head == NULL ){
+     head = entry;
+     head->next = head;
+  }
+  else{
+    entry->next = head->next;
+    head->next = entry;
+    head = entry;
+  }
 #ifdef THREAD_DEBUG
   fprintf(stderr,"%lld:%s:0x%x:(%p): Old head is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,entry->next);
   fprintf(stderr,"%lld:%s:0x%x:(%p): New head is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,head);
@@ -109,9 +147,12 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 	  if (tmp->master->tid == id_to_find)
 	    {
 	      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+	      head = tmp;
 	      return(tmp->master);
 	    }
 	  tmp = tmp->next;
+          if ( tmp == head )
+	     break;
 	}
 #ifdef OVERFLOW_DEBUG
       fprintf(stderr,"%lld:%s:0x%x:I'm not in the list at %p.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),head);
@@ -146,6 +187,8 @@ void _papi_hwi_broadcast_overflow_signal(unsigned int mytid)
 	  fprintf(stderr,"%lld:%s:0x%x:I'm NOT forwarding signal to thread %x\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),foo->master->tid);
 #endif
 	}
+       if( foo->next == head )
+	 break;
     }
   _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   assert(didsomething);
