@@ -11,7 +11,7 @@
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer retval
 
-      Integer len_trim
+      Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
 	external get_quiet
@@ -32,7 +32,7 @@
       end if
       
 	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+	if (retval.NE.PAPI_OK) then
         event = PAPI_TOT_INS 
 	else
         event = PAPI_FP_INS 
@@ -195,19 +195,20 @@
           call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
         end if
+      n=len_trim(name)
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "-----------------------------------------------------",
      *"--------------------"
 
       write (*,100) "Test type", 1, 2, 3, 4
-      write (*,100) name, values(1), values(3), 
+	write (*,100) name(1:n), values(1), values(3), 
      * values(5), values(7)
       write(*,100) "PAPI_TOT_CYC", values(2), values(4),
      * values(6), values(8)
       print *, "-----------------------------------------------------",
      *"--------------------"
- 100  format (a15, ":", i12, i12, i12, i12)
+ 100  format(a15, ":", i12, i12, i12, i12)
  
       print *, "Verification:"
       print *, "Column 1 approximately equals column 2"

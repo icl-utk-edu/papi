@@ -15,7 +15,7 @@
       integer i
       integer retval
 
-      Integer len_trim
+      Integer len_trim, n
       External len_trim
       character*(PAPI_MAX_STR_LEN) fullname, name, lib_preload_env
       integer text_start, text_end, data_start, data_end, bss_start
@@ -70,6 +70,7 @@ C      print *, "length=", length
         call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
       end if
+      n=len_trim(name)
 
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
@@ -118,7 +119,7 @@ C      print *, "length=", length
       print *, "------------------------------------------------"
       print *, "Test type: No profiling"
 
-      write (*, 400) name, values(1)
+      write (*, 400) name(1:n), values(1)
  400  format (A12, ":  ", I11)
       write (*, 400) "PAPI_TOT_CYC", values(2)
       print *, " "
@@ -148,7 +149,7 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      write (*, 400) name, values(3)
+      write (*, 400) name(1:n), values(3)
       write (*, 400) "PAPI_TOT_CYC", values(4)
       print *, " "
       end if
@@ -185,7 +186,7 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      write (*, 400) name, values(5)
+      write (*, 400) name(1:n), values(5)
       write (*, 400) "PAPI_TOT_CYC", values(6)
       print *, " "
       end if
@@ -223,7 +224,7 @@ C      print *, "length=", length
 
       if (tests_quiet .EQ. 0) then
 
-      write (*, 400) name, values(7)
+      write (*, 400) name(1:n), values(7)
       write (*, 400) "PAPI_TOT_CYC", values(8)
       print *, " "
       end if
@@ -259,7 +260,7 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      write (*, 400) name, values(9)
+      write (*, 400) name(1:n), values(9)
       write (*, 400) "PAPI_TOT_CYC", values(10)
       print *, " "
       end if
@@ -296,7 +297,7 @@ C      print *, "length=", length
       end if
 
       if (tests_quiet .EQ. 0) then
-      write (*, 400) name, values(11)
+      write (*, 400) name(1:n), values(11)
       write (*, 400) "PAPI_TOT_CYC", values(12)
       print *, " "
       end if

@@ -12,7 +12,7 @@
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       character*(PAPI_MAX_STR_LEN) name
 
-      Integer len_trim
+      Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
 	external get_quiet
@@ -141,34 +141,35 @@
 
       call stringify_granularity(granularity, grnstr)
       if (tests_quiet .EQ. 0) then
-         call PAPIf_event_code_to_name (event1, name, retval)
-         if ( retval.NE.PAPI_OK) then
+        call PAPIf_event_code_to_name (event1, name, retval)
+        if ( retval.NE.PAPI_OK) then
             call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
-         end if
-      write (*,800) "Default granularity is:", granularity, grnstr
- 800  format(a25, i3, " ", a20)
+        end if
+        n=len_trim(name)
+        write (*,800) "Default granularity is:", granularity, grnstr
+ 800    format(a25, i3, " ", a20)
 
-      print *, "Using", NUM_FLOPS, " iterations of c += b*c"
-      print *, "--------------------------------------------------------------
+        print *, "Using", NUM_FLOPS, " iterations of c += b*c"
+        print *, "--------------------------------------------------------------
      *--------------------"
  
-      write (*,100) "Test type", 1, 2, 3, 4, 5
-      write (*,100) name, values(1), values(3), 
+        write (*,100) "Test type", 1, 2, 3, 4, 5
+        write (*,100) name(1:n), values(1), values(3), 
      *          values(5), values(7), values(9)
 
-      write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
+        write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
      *          values(6), values(8), values(10)
 
- 100  format(a13, ":  ", i11, i11, i11, i11, i11)
-      print *, "--------------------------------------------------------------
+ 100    format(a13, ":  ", i11, i11, i11, i11, i11)
+        print *, "--------------------------------------------------------------
      *--------------------"
 
-      print *, "Verification:"
-      print *, "Column 1 approximately equals column 2"
-      print *, "Column 3 approximately equals 2 * column 2"
-      print *, "Column 4 approximately equals 3 * column 2"
-      print *, "Column 4 exactly equals column 5"
+        print *, "Verification:"
+        print *, "Column 1 approximately equals column 2"
+        print *, "Column 3 approximately equals 2 * column 2"
+        print *, "Column 4 approximately equals 3 * column 2"
+        print *, "Column 4 exactly equals column 5"
       end if
 
       min = values(3)*0.9

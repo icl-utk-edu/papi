@@ -8,7 +8,7 @@
       integer retval
       character*PAPI_MAX_STR_LEN name
 
-      Integer len_trim
+      Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
 	external get_quiet
@@ -147,13 +147,14 @@
           call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
         end if
+        n=len_trim(name)
         print *, "Test case John May: start & stop of overlapped",
      *	" unshared counters."
         print *, "----------------------------------------------",
      *	"-------------------"
  
         write (*,100) "Test run", 1, 2, 3, 4
-        write (*,100) name, values(1), values(3),
+        write (*,100) name(1:n), values(1), values(3),
      *	values(5), values(7)
         write (*,100) "PAPI_TOT_CYC", 0, 0, 0, values(9)
  100    format(a15, ":", i12, i12, i12, i12)

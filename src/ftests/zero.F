@@ -11,7 +11,7 @@
       character*(PAPI_MAX_STR_LEN) name
       integer retval
 
-      Integer len_trim
+      Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
 	external get_quiet
@@ -109,6 +109,7 @@
           call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
         end if
+        n=len_trim(name)
       write (*,800) "Default granularity is:", granularity, grnstr
  800  format(a25, i3, " (", a13, ")")
 	write (*,810) "Using", NUM_FLOPS, " iterations of c = c + a * b"
@@ -118,7 +119,7 @@
      *"--------------------------"
  
       write (*,100) "Test type", 1
-      write (*,100) name, values(1)
+      write (*,100) name(1:n), values(1)
       write (*,100) "PAPI_TOT_CYC", values(2)
       write (*,100) "Real usec", usn-uso
       write (*,100) "Real cycles", cycn-cyco

@@ -11,6 +11,8 @@
       integer tests_quiet, get_quiet
 	external get_quiet
       character*PAPI_MAX_STR_LEN name
+      integer len_trim, n
+      external len_trim
 
 	tests_quiet = get_quiet()
 
@@ -67,11 +69,12 @@
           call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
         end if
+        n=len_trim(name)
         print *, "Test case highlevel: Test of high-level APIs."
         print *, "---------------------------------------------",
      *    "---------------------"
         write (*,100) "Test type", 1, 2
-        write (*,100) name, values(1), values(3)
+        write (*,100) name(1:n), values(1), values(3)
         write (*,100) "PAPI_TOT_CYC", values(2), values(4)
  100    format(a15, ":", i12, i12)
         print *, "---------------------------------------------",

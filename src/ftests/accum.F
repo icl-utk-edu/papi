@@ -10,6 +10,8 @@
       integer retval
       integer tests_quiet, get_quiet
       external get_quiet
+      integer len_trim, n
+      external len_trim
 
       tests_quiet = get_quiet()
 
@@ -114,17 +116,18 @@
       end if
 
       if (tests_quiet .EQ. 0) then
-         call PAPIf_event_code_to_name (events(1), name, retval)
-         if ( retval.NE.PAPI_OK) then
+        call PAPIf_event_code_to_name (events(1), name, retval)
+        if ( retval.NE.PAPI_OK) then
             call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
-         end if
+        end if
+        n=len_trim(name)
         print *, "Test case accum: Test of PAPI_add_events, ",
      *  "PAPI_rem_events, PAPI_accum"
         print *, "------------------------------------------",
      *    "------------------------"
         write (*,100) "Test type", 1, 2, 3, 4, 5
-        write (*,100) name, values(1), values(3),
+        write (*,100) name(1:n), values(1), values(3),
      *    values(5), values(7), values(9)
         write (*,100) "PAPI_TOT_CYC", values(2), values(4),
      *    values(6), values(8), values(10)

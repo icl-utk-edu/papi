@@ -11,7 +11,7 @@
       character*(PAPI_MAX_STR_LEN) name
       integer retval
 
-      Integer len_trim
+      Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
 	external get_quiet
@@ -180,13 +180,14 @@
           call ftest_fail(__FILE__, __LINE__, 
      *		'PAPIf_event_code_to_name', retval)
         end if
+        n=len_trim(name)
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "--------------------------------------------------------------
      *---------------------"
 
       write (*,100) "Test type", 1, 2, 3, 4, 5
-      write (*,100) name, 0, 0, values(5), 0, values(9)
+      write (*,100) name(1:n), 0, 0, values(5), 0, values(9)
       write (*,100) "PAPI_TOT_CYC", values(1), values(3), 0,
      *values(7), 0
       print *, "----------------------------------------------------------
