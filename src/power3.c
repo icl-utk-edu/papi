@@ -14,11 +14,14 @@
   Other routines also include minor conditionally compiled differences.
 */
 
-#include "power3.h"
+#include "papi.h"
+#include SUBSTRATE
+#include "papi_internal.h"
+#include "papi_protos.h"
 
+#include "allocate.h"
 
-static int maxgroups = 0;
-hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
+hwd_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
 
 /* These defines smooth out the differences between versions of pmtoolkit */
@@ -258,8 +261,8 @@ int setup_all_presets(pm_info_t *info)
 #ifdef DEBUG_SETUP
 	  DBG((stderr,"Looking for preset %d, %s\n",preset_index,findem[pnum].findme[0]));
 #endif
-	  find_hwcounter(info,findem[pnum].findme[0],&preset_map[preset_index], 0);
-	  strncpy(preset_map[preset_index].note,findem[pnum].findme[0], PAPI_MAX_STR_LEN);
+	  find_hwcounter(info,findem[pnum].findme[0],&_papi_hwd_preset_map[preset_index], 0);
+	  strncpy(_papi_hwd_preset_map[preset_index].note,findem[pnum].findme[0], PAPI_MAX_STR_LEN);
 	  did_something++;
 	}
       else 
@@ -335,10 +338,10 @@ int setup_all_presets(pm_info_t *info)
 	  if (err == 0)
 	    {
 	      tmp.note[strlen(tmp.note)-1] = '\0';
-	      preset_map[preset_index] = tmp;
+	      _papi_hwd_preset_map[preset_index] = tmp;
 #ifdef DEBUG_SETUP
 	      DBG((stderr,"Found compound preset %d on 0x%x\n",preset_index,all_selector));
-	      DBG((stderr,"preset->metric_count: %d\n",preset_map[preset_index].metric_count));
+	      DBG((stderr,"preset->metric_count: %d\n",_papi_hwd_preset_map[preset_index].metric_count));
 #endif
 	      did_something++;
 	      continue;
@@ -357,7 +360,7 @@ void init_config(hwd_control_state_t *ptr)
 
   memset(ptr->native, 0, sizeof(hwd_native_t)*POWER_MAX_COUNTERS);
 
-  for (i = 0; i < _papi_system_info.num_cntrs; i++) {
+  for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
     ptr->preset[i] = COUNT_NOTHING;
     ptr->counter_cmd.events[i] = COUNT_NOTHING;
  	ptr->native[i].position=COUNT_NOTHING;
@@ -365,76 +368,17 @@ void init_config(hwd_control_state_t *ptr)
  }
   for(i=0;i<POWER_MAX_COUNTERS_MAPPING;i++){
     ptr->allevent[i]=COUNT_NOTHING;
-	for (j = 0; j < _papi_system_info.num_cntrs; j++) {
+	for (j = 0; j < _papi_hwi_system_info.num_cntrs; j++) {
 	  ptr->emap[i][j]=COUNT_NOTHING;
 	}
   }
   ptr->hwd_idx=0;
   ptr->hwd_idx_a=0;
   ptr->native_idx=0;
-  set_domain(ptr,_papi_system_info.default_domain);
-  set_granularity(ptr,_papi_system_info.default_granularity);
+  set_domain(ptr,_papi_hwi_system_info.default_domain);
+  set_granularity(ptr,_papi_hwi_system_info.default_granularity);
 }
 
-static int get_system_info(void)
-{
-  int retval;
- /* pm_info_t pminfo;*/
-  struct procsinfo psi = { 0 };
-  pid_t pid;
-  char maxargs[PAPI_MAX_STR_LEN];
-
-#ifdef _AIXVERSION_510
-  pm_groups_info_t pmgroups;
-#endif
-
-
-  pid = getpid();
-  if (pid == -1)
-    return(PAPI_ESYS);
-  psi.pi_pid = pid;
-  retval = getargs(&psi,sizeof(psi),maxargs,PAPI_MAX_STR_LEN);
-  if (retval == -1)
-    return(PAPI_ESYS);
-  if (getcwd(_papi_system_info.exe_info.fullname,PAPI_MAX_STR_LEN) == NULL)
-    return(PAPI_ESYS);
-  strcat(_papi_system_info.exe_info.fullname,"/");
-  strcat(_papi_system_info.exe_info.fullname,maxargs);
-  strncpy(_papi_system_info.exe_info.name,basename(maxargs),PAPI_MAX_STR_LEN);
-
-#ifdef _AIXVERSION_510
-  DBG((stderr,"Calling AIX 5 version of pm_init...\n"));
-  retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
-#else
-  DBG((stderr,"Calling AIX 4 version of pm_init...\n"));
-  retval = pm_init(PM_INIT_FLAGS,&pminfo);
-#endif
-  DBG((stderr,"...Back from pm_init\n"));
-
-  if (retval > 0)
-    return(retval);
-
-  _papi_system_info.hw_info.ncpu = _system_configuration.ncpus;
-  _papi_system_info.hw_info.totalcpus = 
-    _papi_system_info.hw_info.ncpu * _papi_system_info.hw_info.nnodes;
-  _papi_system_info.hw_info.vendor = -1;
-  strcpy(_papi_system_info.hw_info.vendor_string,"IBM");
-  _papi_system_info.hw_info.model = _system_configuration.implementation;
-  strcpy(_papi_system_info.hw_info.model_string,pminfo.proc_name);
-  _papi_system_info.hw_info.revision = (float)_system_configuration.version;
-  _papi_system_info.hw_info.mhz = (float)(pm_cycles() / 1000000.0);
-  _papi_system_info.num_gp_cntrs = pminfo.maxpmcs;
-  _papi_system_info.num_cntrs = pminfo.maxpmcs;
-  _papi_system_info.cpunum = mycpu();
-/*  _papi_system_info.exe_info.text_end = (caddr_t)&_etext;*/
-
-  retval = setup_all_presets(&pminfo);
-
-  if (retval)
-    return(retval);
-
-  return(PAPI_OK);
-} 
 
 static void print_state(hwd_control_state_t *s)
 {
@@ -485,7 +429,20 @@ static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cn
 }
 
 
-
+#if 1
+static void dump_state(hwd_control_state_t *s)
+{
+  fprintf(stderr,"master_selector %x\n",s->master_selector);
+  fprintf(stderr,"event_codes %x %x %x %x %x %x %x %x\n",s->preset[0],s->preset[1],
+    s->preset[2],s->preset[3],s->preset[4],s->preset[5],s->preset[6],s->preset[7]);
+  fprintf(stderr,"event_selectors %x %x %x %x %x %x %x %x\n",s->selector[0],s->selector[1],
+    s->selector[2],s->selector[3],s->selector[4],s->selector[5],s->selector[6],s->selector[7]);
+  fprintf(stderr,"counters %x %x %x %x %x %x %x %x\n",s->counter_cmd.events[0],
+    s->counter_cmd.events[1],s->counter_cmd.events[2],s->counter_cmd.events[3],
+    s->counter_cmd.events[4],s->counter_cmd.events[5],s->counter_cmd.events[6],
+    s->counter_cmd.events[7]);
+}
+#endif
 
 
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
@@ -513,7 +470,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
      supported on this platform */
   if (EventCode & PRESET_MASK)
     {
-      if (preset_map[(EventCode & PRESET_AND_MASK)].selector[0] == 0)
+      if (_papi_hwd_preset_map[(EventCode & PRESET_AND_MASK)].selector[0] == 0)
 	 	return(PAPI_ENOEVNT);
     }
   else{ /* also need to check the native event is eligible */ 
@@ -564,7 +521,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     init_config(&tmp_state);
 
   if (EventCode & PRESET_MASK){
-  	this_preset=&(preset_map[EventCode & PRESET_AND_MASK]);
+  	this_preset=&(_papi_hwd_preset_map[EventCode & PRESET_AND_MASK]);
   	v=(void *)this_preset;
   }
   else
@@ -583,6 +540,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   if(_papi_hwd_counter_mapping(&tmp_state, EventCode, out, v)){
 	*this_state=tmp_state;
+	out->bits.event_code = EventCode;
   	return(PAPI_OK);
   }
   else{
@@ -596,40 +554,41 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 
 
-int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
+/*int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)*/
+int _papi_hwd_remove_event(hwd_register_map_t *chosen, unsigned int hardware_index, hwd_control_state_t *out)
 {
   int i, j, selector, used, preset_index, EventCode, metric, zero;
   int allevent[POWER_MAX_COUNTERS_MAPPING];
   int found;
-  EventInfo_t *zeroth;
   hwd_control_state_t new_state;
   hwd_preset_t *this_preset;
   hwd_native_t *this_native;
   
-  zeroth=&(in[-in->index]); 
-  EventCode = in->code;
+
+  EventCode = chosen->event_code;
   zero=0;
 
-	/*print_state(this_state);*/
-  if(EventCode!=this_state->allevent[in->index])
+	/*print_state(out);*/
+
+  if(EventCode!=out->allevent[hardware_index])
   	return(PAPI_ENOEVNT);
 
 	/* preset */
 	if(EventCode & PRESET_MASK){
-		this_preset = &(preset_map[EventCode & PRESET_AND_MASK]);
+		this_preset = &(_papi_hwd_preset_map[EventCode & PRESET_AND_MASK]);
 		for( metric=0; metric<this_preset->metric_count; metric++){
 			for (j=0; j<POWER_MAX_COUNTERS; j++) {
-				if (this_state->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
-					if (this_state->counter_cmd.events[j] == this_preset->counter_cmd[metric][j])
+				if (out->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
+					if (out->counter_cmd.events[j] == this_preset->counter_cmd[metric][j])
 						break;
 			  	}
 			}
 		
 			if(j<POWER_MAX_COUNTERS){ /* found mapping */ 
-				for(i=0;i<this_state->native_idx;i++)
-					if(j==this_state->native[i].position){
-						this_state->native[i].link--;
-						if(this_state->native[i].link==0)
+				for(i=0;i<out->native_idx;i++)
+					if(j==out->native[i].position){
+						out->native[i].link--;
+						if(out->native[i].link==0)
 							zero++;
 						break;
 					}
@@ -648,10 +607,10 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 		hwcntr_num = EventCode & 0xff;
 
 		/* to find the native event from the native events list */
-		for(i=0; i<this_state->native_idx;i++){
-			if(code==this_state->native[i].counter_cmd[hwcntr_num]){
-				this_state->native[i].link--; 
-				if(this_state->native[i].link==0)
+		for(i=0; i<out->native_idx;i++){
+			if(code==out->native[i].counter_cmd[hwcntr_num]){
+				out->native[i].link--; 
+				if(out->native[i].link==0)
 					zero++;
 				break;
 			}
@@ -659,37 +618,37 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 	}
 
 	/* to reset hwd_control_state values */
-	this_state->allevent[in->index]=COUNT_NOTHING;
-	this_state->hwd_idx_a--;
-	this_state->native_idx-=zero;
-	for (j = 0; j < _papi_system_info.num_cntrs; j++) {
-	  this_state->emap[in->index][j]=COUNT_NOTHING;
+	out->allevent[hardware_index]=COUNT_NOTHING;
+	out->hwd_idx_a--;
+	out->native_idx-=zero;
+	for (j = 0; j < _papi_hwi_system_info.num_cntrs; j++) {
+	  out->emap[hardware_index][j]=COUNT_NOTHING;
 	}
 
-	/*	print_state(this_state);*/
+	/*	print_state(out);*/
 /* to move correspond native structures */
 	for(found=0; found<zero; found++){
-	for(i=0;i<_papi_system_info.num_cntrs;i++){
-		if(this_state->native[i].link==0 && this_state->native[i].position!=COUNT_NOTHING ){
+	for(i=0;i<_papi_hwi_system_info.num_cntrs;i++){
+		if(out->native[i].link==0 && out->native[i].position!=COUNT_NOTHING ){
 			int copy=0;
-			this_state->master_selector^=1<<this_state->native[i].position;
-			this_state->counter_cmd.events[this_state->native[i].position]=COUNT_NOTHING;
-			for(j=_papi_system_info.num_cntrs-1;j>i;j--){
-				if(this_state->native[j].position==COUNT_NOTHING)
+			out->master_selector^=1<<out->native[i].position;
+			out->counter_cmd.events[out->native[i].position]=COUNT_NOTHING;
+			for(j=_papi_hwi_system_info.num_cntrs-1;j>i;j--){
+				if(out->native[j].position==COUNT_NOTHING)
 					continue;
 				else{
-					memcpy(this_state->native+i, this_state->native+j, sizeof(hwd_native_t));
-					memset(this_state->native+j, 0, sizeof(hwd_native_t));
-					this_state->native[j].position=COUNT_NOTHING;
-					/*this_state->native[j].link=COUNT_NOTHING;*/
+					memcpy(out->native+i, out->native+j, sizeof(hwd_native_t));
+					memset(out->native+j, 0, sizeof(hwd_native_t));
+					out->native[j].position=COUNT_NOTHING;
+					/*out->native[j].link=COUNT_NOTHING;*/
 					copy++;
 					break;
 				}
 			}
 			if(copy==0){
-				memset(this_state->native+i, 0, sizeof(hwd_native_t));
-				this_state->native[i].position=COUNT_NOTHING;
-				/*this_state->native[i].link=COUNT_NOTHING;*/
+				memset(out->native+i, 0, sizeof(hwd_native_t));
+				out->native[i].position=COUNT_NOTHING;
+				/*out->native[i].link=COUNT_NOTHING;*/
 			}
 			
 			/*found++;
@@ -698,181 +657,35 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 		}
 	}
 	}
-	/*print_state(this_state);
-	fprintf(stderr, "*********this_state->native_idx=%d, zero=%d,  found=%d\n", this_state->native_idx,zero, found); */
+	/*print_state(out);
+	fprintf(stderr, "*********out->native_idx=%d, zero=%d,  found=%d\n", out->native_idx,zero, found); */
 
 
-#if 0
-  dump_state(this_state);
+#if 1
+  dump_state(out);
 #endif
 
   return(PAPI_OK);
 }
 
-
-
-
-/* EventSet zero contains the 'current' state of the counting hardware */
-int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
-{ 
-  int i, retval;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-  
-  /* If we are nested, merge the global counter structure
-     with the current eventset */
-
-#if 0
-DBG((stderr, "Merge\n"));
-dump_state(this_state);
-dump_state(current_state);
-#endif
-
-  if (current_state->master_selector)
-    {
-      int hwcntrs_in_both, hwcntr;
-
-      /* Stop the current context */
-
-      DBG((stderr,"Stopping the thread\n"));
-      retval = pm_stop_mythread();
-      if (retval > 0) 
-	return(retval); 
-  
-      /* Update the global values */
-      DBG((stderr,"Updating Global hwcounters\n"));
-      retval = update_global_hwcounters(zero);
-      if (retval)
-	return(retval);
-
-      /* Delete the current context */
-
-      retval = pm_delete_program_mythread();
-      if (retval > 0)
-	return(retval);
-
-      hwcntrs_in_both = this_state->master_selector & current_state->master_selector;
-
-      for (i = 0; i < _papi_system_info.num_cntrs; i++)
-	{
-	  /* Check for events that are shared between eventsets and 
-	     therefore require no modification to the control state. */
-	  
-	  hwcntr = 1 << i;
-	  if (hwcntr & hwcntrs_in_both)
-	    {
-	      if (counter_shared(this_state, current_state, i))
-		zero->multistart.SharedDepth[i]++;
-	      else
-		return(PAPI_ECNFLCT);
-	      ESI->hw_start[i] = zero->hw_start[i];
-	    }
-
-	  /* Merge the unshared configuration registers. */
-	  
-	  else if (this_state->master_selector & hwcntr)
-	    {
-	      current_state->master_selector |= hwcntr;
-	      current_state->counter_cmd.mode.w = this_state->counter_cmd.mode.w;
-	      current_state->counter_cmd.events[i] = this_state->counter_cmd.events[i];
-	      ESI->hw_start[i] = 0;
-	      zero->hw_start[i] = 0;
-	    }
-	}
-    }
-  else
-    {
-      /* If we are NOT nested, just copy the global counter 
-	 structure to the current eventset */
-      DBG((stderr,"Copying states\n"));
-
-      current_state->master_selector = this_state->master_selector;
-      memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(pm_prog_t));
-
-    }
-
-  /* Set up the new merged control structure */
-  
-#if 0
-  dump_state(this_state);
-  dump_state(current_state);
-  dump_cmd(&current_state->counter_cmd);
-#endif
-      
-  retval = pm_set_program_mythread(&current_state->counter_cmd);
-  if (retval > 0) 
-    return(retval);
-
-  /* (Re)start the counters */
-  
-  retval = pm_start_mythread();
-  if (retval > 0) 
-    return(retval);
-
-  return(PAPI_OK);
-} 
-
-
-
-int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
-{ 
-  int i, hwcntr, retval;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-
-  retval = pm_stop_mythread();
-  if (retval > 0) 
-    return(retval); 
-  
-  for (i = 0; i < _papi_system_info.num_cntrs; i++)
-    {
-      /* Check for events that are NOT shared between eventsets and 
-	 therefore require modification to the control state. */
-      
-      hwcntr = 1 << i;
-      if (hwcntr & this_state->master_selector)
-	{
-	  if (zero->multistart.SharedDepth[i] - 1 < 0)
-	    current_state->master_selector ^= hwcntr;
-	  else
-	    zero->multistart.SharedDepth[i]--;
-	}
-    }
-
-  /* If we're not the outermost EventSet, then we need to start again 
-     because someone is still running. */
-
-  if (zero->multistart.num_runners - 1)
-    {
-      retval = pm_start_mythread();
-      if (retval > 0) 
-	return(retval);
-    }
-  else
-    {
-      retval = pm_delete_program_mythread();
-      if (retval > 0) 
-	return(retval);
-    }
-
-  return(PAPI_OK);
+int _papi_hwd_update_shlib_info(void)
+{
+  return PAPI_ESBSTR;
 }
-
-
 
 
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 {
   int events;
 
-  events = preset_map[preset_index].selector[0];
+  events = _papi_hwd_preset_map[preset_index].selector[0];
 
   if (events == 0)
     return(0);
-  if (preset_map[preset_index].derived)
+  if (_papi_hwd_preset_map[preset_index].derived)
     *flags = PAPI_DERIVED;
-  if (preset_map[preset_index].note)
-    *note = preset_map[preset_index].note;
+  if (_papi_hwd_preset_map[preset_index].note)
+    *note = _papi_hwd_preset_map[preset_index].note;
   return(1);
 }
 

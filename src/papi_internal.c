@@ -40,7 +40,7 @@
 
 /* Defined in this file */
 static int default_error_handler(int errorCode);
-static int counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_long *events);
+static int counter_reorder(EventSetInfo_t *ESI, long_long *hw_counter, long_long *events);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
@@ -263,8 +263,8 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
 
   max_counters = _papi_hwi_system_info.num_cntrs;
 /*  ESI->machdep = (hwd_control_state_t *)malloc(sizeof(hwd_control_state_t)); */
-  ESI->sw_stop = (u_long_long *)malloc(max_counters*sizeof(long_long)); 
-  ESI->hw_start = (u_long_long *)malloc(max_counters*sizeof(long_long));
+  ESI->sw_stop = (long_long *)malloc(max_counters*sizeof(long_long)); 
+  ESI->hw_start = (long_long *)malloc(max_counters*sizeof(long_long));
   ESI->EventInfoArray = (EventInfo_t *)malloc(max_counters*sizeof(EventInfo_t));
 
   if (
@@ -416,51 +416,6 @@ int _papi_hwi_get_granularity(PAPI_granularity_option_t *opt)
 }
 #endif
 
-static int add_preset_event(hwd_control_state_t *machdep, hwd_preset_t *preset, EventInfo_t *evi)
-{
-  hwd_register_map_t *result = &evi->bits;
-
-  memset(result,0x0,sizeof(hwd_register_map_t));
-
-  /* The EventSet must keep an overall 'map' of which registers are in
-     use. This map is machine dependent, and the structure is defined
-     in the substrate include file. Then it is 'typedef'ed to a
-     hwd_register_t. On most systems, this is a single bit mask
-     with an additional field containing the number of bits that
-     are on. On the P4, there are 2 registers to allocate, so it
-     needs 2 masks, and 2 total counts. */
-
-  /* get_allocated_counters_in_eventset(machdep,&already_taken); */
-
-  /* The preset also keeps a 'map', but it is different. The preset's
-     map contains ALL the possible registers that this preset can use. 
-     For events that require more than 1 hardware event, (like derived
-     events and/or the P4 tagging mechanism) we need to have multiple
-     masks, one per register used. So the hwd_register_map_t is 
-     actually an array of hwd_register_t's. */
-
-  /* num = get_needed_counters_in_preset(preset,&needed); */
-
-  /* Now we call a machine dependent function to compare if there are
-     enough registers available to use this preset. Store the allocated
-     bits in 'result'. */
-
-  /* if (_papi_hwd_allocate_registers(machdep, preset, result))
-    return(PAPI_ECNFLCT);
-  */
-  /* Now we call a machine dependent function to use the allocated
-     register bits to stuff the proper values into our counter control
-     structure */
-/*
-  evi->counter_index = _papi_hwd_add_event(result, preset, machdep);
-*/
-  evi->counter_index = _papi_hwd_add_event(evi, preset, machdep);
-
-  /* After this function is called, ESI->machdep has everything it 
-     needs to do a start/read/stop as quickly as possible */
-
-  return(PAPI_OK);
-}
 
 /* This function returns the index of the the next free slot
    in the EventInfoArray. If EventCode is already in the list,
@@ -578,8 +533,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 
 	  /* Try to add the preset. */
 
-	  retval = add_preset_event(&ESI->machdep,
-				    &_papi_hwd_preset_map[preset_index],
+	  retval = _papi_hwd_add_event(&ESI->machdep, EventCode,
 				    &ESI->EventInfoArray[thisindex]);
 	  if (retval < PAPI_OK)
 	    return(retval);
@@ -694,11 +648,11 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
   return(retval);
 }
 
-int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *values)
+int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *values)
 {
   register int i;
   int retval, selector;
-  u_long_long *dp;
+  long_long *dp;
 
   retval = _papi_hwd_read(context, &ESI->machdep, &dp);
   if (retval != PAPI_OK)
@@ -934,10 +888,10 @@ void _papi_hwi_dummy_handler(int EventSet, int EventCode, int EventIndex,
   abort();
 }
 
-static u_long_long handle_derived_add(int selector, u_long_long *from)
+static long_long handle_derived_add(int selector, long_long *from)
 {
   int pos;
-  u_long_long retval = 0;
+  long_long retval = 0;
 
   while ((pos = ffs(selector)))
     {
@@ -948,10 +902,10 @@ static u_long_long handle_derived_add(int selector, u_long_long *from)
   return(retval);
 }
 
-static u_long_long handle_derived_subtract(int counter_index, int selector, u_long_long *from)
+static long_long handle_derived_subtract(int counter_index, int selector, long_long *from)
 {
   int pos;
-  u_long_long retval = from[counter_index];
+  long_long retval = from[counter_index];
 
   DBG((stderr,"counter_index: %d   selector: 0x%x\n",counter_index,selector));
   selector = selector ^ (1 << counter_index);
@@ -964,7 +918,7 @@ static u_long_long handle_derived_subtract(int counter_index, int selector, u_lo
   return(retval);
 }
 
-static u_long_long units_per_second(long long units, long long cycles)
+static long_long units_per_second(long_long units, long_long cycles)
 {
   float tmp;
 
@@ -973,7 +927,7 @@ static u_long_long units_per_second(long long units, long long cycles)
   return((u_long_long)tmp);
 }
 
-static u_long_long handle_derived_ps(int counter_index, int selector, u_long_long *from)
+static long_long handle_derived_ps(int counter_index, int selector, long_long *from)
 {
   int pos;
 
@@ -983,14 +937,14 @@ static u_long_long handle_derived_ps(int counter_index, int selector, u_long_lon
   return(units_per_second(from[pos],from[counter_index]));
 }
 
-static u_long_long handle_derived_add_ps(int counter_index, int selector, u_long_long *from)
+static long_long handle_derived_add_ps(int counter_index, int selector, long_long *from)
 {
   int add_selector = selector ^ (1 << counter_index);
-  u_long_long tmp = handle_derived_add(add_selector, from);
+  long_long tmp = handle_derived_add(add_selector, from);
   return(units_per_second(tmp, from[counter_index]));
 }
 
-static u_long_long handle_derived(EventInfo_t *evi, u_long_long *from)
+static long_long handle_derived(EventInfo_t *evi, long_long *from)
 {
   switch (evi->derived)
   {
@@ -1007,7 +961,7 @@ static u_long_long handle_derived(EventInfo_t *evi, u_long_long *from)
   }
 }
 
-static int counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_long *events)
+static int counter_reorder(EventSetInfo_t *ESI, long_long *hw_counter, long_long *values)
 {
   int i, j=0, selector, index;
 
@@ -1033,12 +987,12 @@ static int counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_l
     if (ESI->EventInfoArray[i].derived == NOT_DERIVED)
     {
       DBG((stderr,"counter_index is %d\n", index));
-      events[j] = hw_counter[index];
+      values[j] = hw_counter[index];
     }
     else /* If this is a derived event */
-      events[j]= handle_derived(&ESI->EventInfoArray[i], hw_counter);
+      values[j]= handle_derived(&ESI->EventInfoArray[i], hw_counter);
 
-    DBG((stderr, "read value is =%lld \n", events[j]));
+    DBG((stderr, "read value is =%lld \n", values[j]));
     /* Early exit! */
     if (++j == ESI->NumberOfEvents)
       break;

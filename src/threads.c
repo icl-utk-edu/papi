@@ -27,6 +27,10 @@
 
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
+#ifdef ANY_THREAD_GETS_SIGNAL
+extern int (*_papi_hwi_thread_kill_fn)(int, int);
+#endif
+
 static ThreadInfoList_t *head = NULL;
 
 void _papi_hwi_shutdown_the_thread_list(void)
@@ -123,7 +127,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 void _papi_hwi_broadcast_overflow_signal(unsigned int mytid)
 {
   int retval, didsomething = 0;
-  EventSetInfoList *foo = NULL;
+  ThreadInfoList_t *foo = NULL;
   _papi_hwd_lock();
   for(foo = head ; foo != NULL; foo = foo->next ) 
     {

@@ -18,13 +18,13 @@
 
 #include "papi.h"
 #include SUBSTRATE
-/*
 #include "papi_internal.h"
 #include "papi_protos.h"
-*/
+
+/* extern int update_global_hwcounters(EventSetInfo_t_t *global); */
 
 static int maxgroups = 0;
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
+hwd_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
 
 static hwd_groups_t group_map[MAX_GROUPS] = { 0 };
@@ -61,6 +61,8 @@ static pmapi_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
 /* Utility functions */
 
 /* Find all the groups that name lives on */
+/* #define GPSDBG(x) DBG(x) */
+   #define GPSDBG(x)
 
 static int find_hwcounter_gps(pm_info_t *pminfo, char *name, hwd_preset_t *preset, int index)
 {
@@ -75,17 +77,17 @@ static int find_hwcounter_gps(pm_info_t *pminfo, char *name, hwd_preset_t *prese
      on all counters (pmc) */
   for (pmc = 0; pmc < pminfo->maxpmcs; pmc++) 
     {
-     DBG((stderr,"maxpmc: %d pmc: %d maxevents: %d\n",pminfo->maxpmcs, pmc, pminfo->maxevents[pmc]));
+     GPSDBG((stderr,"maxpmc: %d pmc: %d maxevents: %d\n",pminfo->maxpmcs, pmc, pminfo->maxevents[pmc]));
      p[pmc] = INVALID_EVENT;
       wevp = pminfo->list_events[pmc];
       for (ev = 0; ev < pminfo->maxevents[pmc]; ev++, wevp++) 
 	{
-	  DBG((stderr,"wevp->short_name[%d, %d] = %s \n",pmc,ev,wevp->short_name));
+	  GPSDBG((stderr,"wevp->short_name[%d, %d] = %s \n",pmc,ev,wevp->short_name));
 	  if (strcmp(name, wevp->short_name) == 0) 
 	    {
 	      p[pmc] = wevp->event_id;
 	      did_something++;
-	      DBG((stderr,"Found %s on hardware counter %d, event %d\n",name,pmc,wevp->event_id));
+	      GPSDBG((stderr,"Found %s on hardware counter %d, event %d\n",name,pmc,wevp->event_id));
 	      break;
 	    }
 	}
@@ -109,12 +111,12 @@ static int find_hwcounter_gps(pm_info_t *pminfo, char *name, hwd_preset_t *prese
 	    {
 	      preset->gps[g/32] |= 1 << (g%32);
 	      did_something++;
-	      DBG((stderr,"Found %s on group %d, counter %d\n",name,g,pmc));
+	      GPSDBG((stderr,"Found %s on group %d, counter %d\n",name,g,pmc));
 	      break;
 	    }
 	}
     }
-    DBG((stderr,"Found %s in groups %x %x\n",name, preset->gps[1], preset->gps[0]));
+    GPSDBG((stderr,"Found %s in groups %x %x\n",name, preset->gps[1], preset->gps[0]));
 
   return(did_something);
 }
@@ -155,13 +157,13 @@ int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
 	{
 	  /* If we find it, then on to the next preset */
 	  DBG((stderr,"Looking for preset %d, %s\n",preset_index,findem[pnum].findme[0]));
-	  found = find_hwcounter_gps(pminfo,findem[pnum].findme[0],&preset_map[preset_index], 0);
+	  found = find_hwcounter_gps(pminfo,findem[pnum].findme[0],&_papi_hwd_preset_map[preset_index], 0);
 	  if (!found) {
 	    fprintf(stderr,"Did not find simple preset %d\n",preset_index);
 	    abort();
 	  }
-	  preset_map[preset_index].metric_count = 1; /* one metric if not derived */
-	  strncpy(preset_map[preset_index].note,findem[pnum].findme[0], PAPI_MAX_STR_LEN);
+	  _papi_hwd_preset_map[preset_index].metric_count = 1; /* one metric if not derived */
+	  strncpy(_papi_hwd_preset_map[preset_index].note,findem[pnum].findme[0], PAPI_MAX_STR_LEN);
 	  did_something++;
 	}
       else 
@@ -204,8 +206,8 @@ int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
 	      tmp.gps[1] = tmp_gps[1];
 	      tmp.note[strlen(tmp.note)-1] = '\0';
 	      tmp.metric_count = pmc;
-	      preset_map[preset_index] = tmp;
-	      DBG((stderr,"Found compound preset %d in groups 0x%x 0x%x\n",preset_index,preset_map[preset_index].gps[1],preset_map[preset_index].gps[0]));
+	      _papi_hwd_preset_map[preset_index] = tmp;
+	      DBG((stderr,"Found compound preset %d in groups 0x%x 0x%x\n",preset_index,_papi_hwd_preset_map[preset_index].gps[1],_papi_hwd_preset_map[preset_index].gps[0]));
 	      did_something++;
 	      continue;
 	    }
@@ -225,15 +227,14 @@ void init_config(hwd_control_state_t *ptr)
   /* Power4 machines must count by groups */
   ptr->counter_cmd.mode.b.is_group = 1;
 
-  for (i = 0; i < _papi_system_info.num_cntrs; i++) {
+  for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
     ptr->preset[i] = COUNT_NOTHING;
     ptr->counter_cmd.events[i] = COUNT_NOTHING;
 	/*ptr->native[i].link=COUNT_NOTHING;*/
  }
-  set_domain(ptr,_papi_system_info.default_domain);
-  set_granularity(ptr,_papi_system_info.default_granularity);
+  set_domain(ptr,_papi_hwi_system_info.default_domain);
+  set_granularity(ptr,_papi_hwi_system_info.default_granularity);
 }
-
 
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
@@ -246,29 +247,27 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   unsigned int event_code;
   unsigned int tmp_gps[2];  
   int hwcntr_num, metric;
-  EventInfo_t *zeroth;
 
   DBG((stderr,"EventCode %x \n",EventCode));
 
   /* mask off the preset bit */
   event_code = EventCode & PRESET_AND_MASK;
 
-  if (EventCode == PAPI_FP_INS)
-    DBG((stderr,"PAPI_FP_INS Groups: 0x%x 0x%x\n", preset_map[event_code].gps[1],preset_map[event_code].gps[0]));
+  DBG((stderr,"Groups: 0x%x 0x%x\n", _papi_hwd_preset_map[event_code].gps[1],_papi_hwd_preset_map[event_code].gps[0]));
 
   /* Do a preliminary check to eliminate preset events that aren't
      supported on this platform */
   if (EventCode & PRESET_MASK)
     {
       /* Make sure it lives in at least one group */
-      if ((preset_map[event_code].gps[0] == 0)
-	&& (preset_map[event_code].gps[1] == 0))
+      if ((_papi_hwd_preset_map[event_code].gps[0] == 0)
+	&& (_papi_hwd_preset_map[event_code].gps[1] == 0))
 	return(PAPI_ENOEVNT);
     }
 
-  /* Copy this_state into tmp_state. We can muck around with tmp and
+  /* Copy this control_state into tmp_state. We can muck around with tmp and
      bail in case of failure and leave things unchanged. tmp_state 
-     gets written back to this_state only if everything goes OK. */
+     gets written back to this control_state only if everything goes OK. */
   tmp_state = *this_state;
 
   /* If all slots are empty, initialize the state. */
@@ -294,8 +293,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   /* Add the new event code to the list */
   tmp_state.preset[hwd_idx] = EventCode;
 
-#if 0
+#if 1
   DBG((stderr,"hwd_idx %d \n",hwd_idx));
+  dump_state(&tmp_state);
   dump_state(this_state);
 #endif
 
@@ -343,8 +343,8 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       else
 	{
 	  event_code &= PRESET_AND_MASK;
-	  tmp_gps[0] &= preset_map[event_code].gps[0];
-	  tmp_gps[1] &= preset_map[event_code].gps[1];
+	  tmp_gps[0] &= _papi_hwd_preset_map[event_code].gps[0];
+	  tmp_gps[1] &= _papi_hwd_preset_map[event_code].gps[1];
           DBG((stderr,"preset -- hwd_idx: %d, Groups: 0x%x 0x%x\n",hwd_idx, tmp_gps[1],tmp_gps[0]));
 	}
     }
@@ -387,22 +387,22 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     {
       /* capture the derived state of the current event code */
       if (event_code == EventCode)
-	out_command = preset_map[event_code & PRESET_AND_MASK].derived;
+	out_command = _papi_hwd_preset_map[event_code & PRESET_AND_MASK].derived;
       else out_command = NOT_DERIVED;
 
       /* Dereference this preset for cleaner access */
-      this_preset = &(preset_map[event_code & PRESET_AND_MASK]);
+      this_preset = &(_papi_hwd_preset_map[event_code & PRESET_AND_MASK]);
 
       /* Process all available metrics for this event.
 	 This may be as many as 8 for derived events */
       for (metric=0; metric < this_preset->metric_count; metric++)
       {
-  DBG((stderr,"pm_codes %d %d %d %d %d %d %d %d\n",
+  DBG((stderr,"preset pm_codes %d %d %d %d %d %d %d %d\n",
     this_preset->counter_cmd[metric][0],this_preset->counter_cmd[metric][1],
     this_preset->counter_cmd[metric][2],this_preset->counter_cmd[metric][3],
     this_preset->counter_cmd[metric][4],this_preset->counter_cmd[metric][5],
     this_preset->counter_cmd[metric][6],this_preset->counter_cmd[metric][7]));
-  DBG((stderr,"pm_codes %d %d %d %d %d %d %d %d\n",
+  DBG((stderr,"group pm_codes %d %d %d %d %d %d %d %d\n",
     group_map[g].counter_cmd[0],group_map[g].counter_cmd[1],
     group_map[g].counter_cmd[2],group_map[g].counter_cmd[3],
     group_map[g].counter_cmd[4],group_map[g].counter_cmd[5],
@@ -429,21 +429,22 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     }
   
   /* Next, update the high level selectors for all earlier events, 
-     in case a remapping occurred. This is REALLY UGLY code, because it
-     requires that one assume the out pointer is the ith member of a 
-     contiguous array of EventInfo_t structures and computes the address
-     of the 0th member... */
-  zeroth = &(out[-hwd_idx]);
+     in case a remapping occurred.
+  */
   for (i=0; i<hwd_idx; i++)
     {
-      zeroth[i].selector = tmp_state.selector[i];
+      (out->head)[i].bits.selector = tmp_state.selector[i];
     }
 
   /* Finally, inform the upper level of the necessary info for this event. */
-  out->code = EventCode;
-  out->selector = tmp_state.selector[hwd_idx];
-  out->command = out_command;
-  out->operand_index = out_operand_index;
+  out->event_code = EventCode;
+  out->bits.selector = tmp_state.selector[hwd_idx];
+  out->hwd_selector = tmp_state.selector[hwd_idx];
+  out->derived = out_command;
+  if (out_command == NOT_DERIVED)
+    out->counter_index = ffs(tmp_state.selector[hwd_idx]) - 1;
+  else
+    out->counter_index = out_operand_index;
   *this_state = tmp_state;
  
 #if 0
@@ -453,201 +454,44 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   return(PAPI_OK);
 }
+/***************************************************************************************/
 
-
-int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
+/*int _papi_hwd_remove_event(hwd_control_state_t *this_state, EventInfo_t *in)*/
+int _papi_hwd_remove_event(hwd_register_map_t *chosen, unsigned int hardware_index, hwd_control_state_t *out)
 {
-  int i, selector, used, preset_index, EventCode;
-  
-  /* Find out which counters used. */
-  used = in->selector;
-  EventCode = in->code;
-
-  /* scan across events in this set */
-  for (i=0; i<POWER_MAX_COUNTERS; i++)
-    {
-      if (EventCode == this_state->preset[i]) break;
-    }
-
-  /* Make sure the event was found */
-  if (i == POWER_MAX_COUNTERS)
-    return(PAPI_ENOEVNT);
-
-  selector = this_state->selector[i];
-
-  /* Make sure the selector is set. */
-  if (selector == 0)
-    return(PAPI_ENOEVNT);
-
-  /* Check if these counters aren't used. */
-  if ((used & selector) != used)
-    return(PAPI_EINVAL);
 
   /* Clear out selector bits that are part of this event. */
-  this_state->master_selector ^= selector;
-  this_state->selector[i] = 0;
+  out->master_selector ^= chosen->selector;
+  out->selector[hardware_index] = 0;
 
   /* Clear out the preset for this event */
-  this_state->preset[i] = COUNT_NOTHING;
+  out->preset[hardware_index] = COUNT_NOTHING;
 
-#if 0
-  dump_state(this_state);
+#if 1
+  dump_state(out);
 #endif
 
   return(PAPI_OK);
 }
 
 
-
-/* EventSet zero contains the 'current' state of the counting hardware */
-int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
-{ 
-  int i, retval;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-  
-  /* If we are nested, merge the global counter structure
-     with the current eventset */
-
-#if 0
-DBG((stderr, "Merge\n"));
-dump_state(this_state);
-dump_state(current_state);
-#endif
-  
-  if (current_state->master_selector)
-    {
-      int hwcntrs_in_both, hwcntr;
-      
-      /* only merge if it's the same group */
-      if (this_state->counter_cmd.events[0] != current_state->counter_cmd.events[0])
-	 return(PAPI_ECNFLCT);
-
-      /* Stop the current context */
-
-      DBG((stderr,"Stopping the thread\n"));
-      retval = pm_stop_mythread();
-      if (retval > 0) 
-	return(retval); 
-  
-      /* Update the global values */
-      DBG((stderr,"Updating Global hwcounters\n"));
-      retval = update_global_hwcounters(zero);
-      if (retval)
-	return(retval);
-
-      hwcntrs_in_both = this_state->master_selector & current_state->master_selector;
-
-      for (i = 0; i < _papi_system_info.num_cntrs; i++)
-	{
-	  /* Check for events that are shared between eventsets and 
-	     therefore require no modification to the control state. */
-	  
-	  hwcntr = 1 << i;
-	  if (hwcntr & hwcntrs_in_both)
-	    {
-	      zero->multistart.SharedDepth[i]++;
-	      ESI->hw_start[i] = zero->hw_start[i];
-	    }
-
-	  /* Merge the unshared configuration registers. */
-	  
-	  else if (this_state->master_selector & hwcntr)
-	    {
-	      current_state->master_selector |= hwcntr;
-	      ESI->hw_start[i] = 0;
-	      zero->hw_start[i] = 0;
-	    }
-	}
-    }
-  else
-    {
-      /* If we are NOT nested, just copy the global counter 
-	 structure to the current eventset */
-      DBG((stderr,"Copying states\n"));
-      memcpy(current_state,this_state,sizeof(hwd_control_state_t));
-
-      retval = pm_set_program_mythread(&current_state->counter_cmd);
-      if (retval > 0) 
-        return(retval);
-
-   }
-
-  /* Set up the new merged control structure */
-  
-#if 0
-  dump_state(this_state);
-  dump_state(current_state);
-  dump_cmd(&current_state->counter_cmd);
-#endif
-      
-  /* (Re)start the counters */
-  
-  retval = pm_start_mythread();
-  if (retval > 0) 
-    return(retval);
-
-  return(PAPI_OK);
-} 
-
-
-
-int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
-{ 
-  int i, hwcntr, retval;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-
-  retval = pm_stop_mythread();
-  if (retval > 0) 
-    return(retval); 
-  
-  for (i = 0; i < _papi_system_info.num_cntrs; i++)
-    {
-      /* Check for events that are NOT shared between eventsets and 
-	 therefore require modification to the control state. */
-      
-      hwcntr = 1 << i;
-      if (hwcntr & this_state->master_selector)
-	{
-	  if (zero->multistart.SharedDepth[i] - 1 < 0)
-	    current_state->master_selector ^= hwcntr;
-	  else
-	    zero->multistart.SharedDepth[i]--;
-	}
-    }
-
-  /* If we're not the outermost EventSet, then we need to start again 
-     because someone is still running. */
-
-  if (zero->multistart.num_runners - 1)
-    {
-      retval = pm_start_mythread();
-      if (retval > 0) 
-	return(retval);
-    }
-  else
-    {
-      retval = pm_delete_program_mythread();
-      if (retval > 0) 
-	return(retval);
-    }
-
-  return(PAPI_OK);
+int _papi_hwd_update_shlib_info(void)
+{
+  return PAPI_ESBSTR;
 }
 
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 {
   int events;
 
-  events = preset_map[preset_index].metric_count;
+  events = _papi_hwd_preset_map[preset_index].metric_count;
 
   if (events == 0)
     return(0);
-  if (preset_map[preset_index].derived)
+  if (_papi_hwd_preset_map[preset_index].derived)
     *flags = PAPI_DERIVED;
-  if (preset_map[preset_index].note)
-    *note = preset_map[preset_index].note;
+  if (_papi_hwd_preset_map[preset_index].note)
+    *note = _papi_hwd_preset_map[preset_index].note;
   return(1);
 }
 

@@ -15,7 +15,7 @@
 */  
 
 /* The following PAPI internal functions are defined by the papi_internal.c file. */
-extern int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *values);
+extern int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *values);
 extern int _papi_hwi_allocate_eventset_map(void);
 extern int _papi_hwi_initialize_thread(ThreadInfo_t **master);
 extern int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t *handle);
@@ -67,10 +67,10 @@ extern int _papi_hwd_init(hwd_context_t *);
 /*
 extern int _papi_hwd_add_event(hwd_register_map_t *chosen, hwd_preset_t *preset, hwd_control_state_t *out);
 */
-extern int _papi_hwd_add_event(EventInfo_t * evi, hwd_preset_t *preset, hwd_control_state_t *out);
+extern int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *, EventInfo_t *); 
 extern int _papi_hwd_allocate_registers(hwd_control_state_t *, hwd_preset_t *, hwd_register_map_t *);
-extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, u_long_long **);
+extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **);
 extern int _papi_hwd_query(int preset_index, int *flags, char **note);
 extern int _papi_hwd_shutdown(hwd_context_t *);
 extern int _papi_hwd_remove_event(hwd_register_map_t *chosen, unsigned int hardware_index, hwd_control_state_t *out);

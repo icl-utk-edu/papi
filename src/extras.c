@@ -42,6 +42,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 
 #ifdef ANY_THREAD_GETS_SIGNAL
 extern void _papi_hwi_lookup_thread_symbols(void);
+extern int (*_papi_hwi_thread_kill_fn)(int, int);
 #endif
 
 /*****************/
@@ -58,9 +59,6 @@ static unsigned int rnum = DEADBEEF;
 /* END LOCALS */
 /**************/
 
-#if defined(ANY_THREAD_GETS_SIGNAL)
-extern int (*_papi_hwi_thread_kill_fn)(int, int);
-#endif
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 static unsigned short random_ushort(void)
@@ -214,8 +212,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
       
     latest = ESI->sw_stop[ESI->overflow.EventIndex];
       
-    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, 
-      threshold %d\n",latest,ESI->overflow.deadline,ESI->overflow.threshold));
+    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline,ESI->overflow.threshold));
   
   /* Is it bigger than the deadline? */
   
@@ -613,3 +610,4 @@ extern int getpagesize(void)
 }
 
 #endif /* _WIN32 */
+

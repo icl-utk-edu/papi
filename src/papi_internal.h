@@ -182,13 +182,14 @@ typedef struct _EventSetInfo {
                          hardware to set the counters to the appropriate
                          conditions*/
 
-  u_long_long *hw_start;   /* Array of length _papi_hwi_system_info.num_cntrs that contains
+  long_long *hw_start;   /* Array of length _papi_hwi_system_info.num_cntrs that contains
 			    unprocessed, out of order, long_long counter registers */
 
-  u_long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
+  long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
 			    processed, in order, PAPI counter values when used or stopped */
 
-  u_long_long *latest;     /* Array of the same length as above, containing 
+/* I don't think this is referenced anymore...
+  u_long_long *latest;     *//* Array of the same length as above, containing 
 				  the values of the counters when last read */ 
 
   int state;          /* The state of this entire EventSet; can be
@@ -216,11 +217,12 @@ typedef struct _EventSetInfo {
   EventSetInheritInfo_t inherit;
 #endif
 
-  struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
-  struct _EventSetInfo *event_set_profiling; /* EventSets that are profiling */
+/* Are these needed here, or do they occur only in the ThreadInfo structure? */
+/*  struct _EventSetInfo *event_set_overflowing; *//* EventSets that are overflowing */
+/*  struct _EventSetInfo *event_set_profiling; *//* EventSets that are profiling */
 
-//  struct _EventSetInfo *master;
-  void *master;
+  ThreadInfo_t *master;
+
 } EventSetInfo_t;
 
 typedef struct _dynamic_array{

@@ -2,9 +2,14 @@
    created by Haihang You < you@cs.utk.edu >
 */
 
+#include "papi.h"
 #include SUBSTRATE
+#include "papi_internal.h"
+#include "papi_protos.h"
 
-extern hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
+#include "allocate.h"
+
+extern hwd_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
 extern pm_info_t pminfo;
 
 /* this function try to find out whether native events contained by this preset have already been mapped. If it is, mapping is done */
@@ -17,7 +22,7 @@ int _papi_hwd_event_precheck(hwd_control_state_t *tmp_state, unsigned int EventC
 	unsigned char selector;
 	  
 	/* to find first empty slot */
-  hwd_idx=out->index;
+  hwd_idx=out->counter_index;
 		
 	/* preset event */
 	if(EventCode & PRESET_MASK){
@@ -52,10 +57,10 @@ int _papi_hwd_event_precheck(hwd_control_state_t *tmp_state, unsigned int EventC
 		}
 	
 		/* update EventInfo_t *out */
-		out->code = EventCode;
-		out->selector = selector;
-		out->command = this_preset->derived;
-		out->operand_index = tmp_state->emap[hwd_idx][0];
+		out->event_code = EventCode;
+		out->bits.selector = selector;
+		out->derived = this_preset->derived;
+		out->counter_index = tmp_state->emap[hwd_idx][0];
 		tmp_state->hwd_idx_a++;
 	
 		return 1;
@@ -75,10 +80,10 @@ int _papi_hwd_event_precheck(hwd_control_state_t *tmp_state, unsigned int EventC
 			tmp_state->emap[hwd_idx][0]=tmp_state->native[i].position;
 			tmp_state->native[i].link++;
 			/* update EventInfo_t *out */
-			out->code = EventCode;
-			out->selector |= 1<<tmp_state->native[i].position;
-			out->command = NOT_DERIVED;
-			out->operand_index = tmp_state->emap[hwd_idx][0];
+			out->event_code = EventCode;
+			out->bits.selector |= 1<<tmp_state->native[i].position;
+			out->derived = NOT_DERIVED;
+			out->counter_index = tmp_state->emap[hwd_idx][0];
 			tmp_state->hwd_idx_a++;
 			return 1;
 		}
@@ -102,7 +107,7 @@ int _papi_hwd_event_mapafter(hwd_control_state_t *tmp_state, int index, EventInf
   	EventCode=tmp_state->allevent[index];
 	/* preset */
 	if(EventCode & PRESET_MASK){
-		this_preset = &(preset_map[EventCode & PRESET_AND_MASK]);
+		this_preset = &(_papi_hwd_preset_map[EventCode & PRESET_AND_MASK]);
 		for( metric=0; metric<this_preset->metric_count; metric++){
 			for (j=0; j<MAX_COUNTERS; j++) {
 				if (tmp_state->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
@@ -126,8 +131,8 @@ int _papi_hwd_event_mapafter(hwd_control_state_t *tmp_state, int index, EventInf
 			selector|=1<<counter_mapping[j];
 		}
 	
-		out->selector = selector;
-		out->operand_index = tmp_state->emap[index][0];
+		out->bits.selector = selector;
+		out->counter_index = tmp_state->emap[index][0];
 		return 1;
 	}
 	else{
@@ -158,8 +163,8 @@ int _papi_hwd_event_mapafter(hwd_control_state_t *tmp_state, int index, EventInf
 			tmp_state->emap[index][0]=tmp_state->native[i].position;
 	
 			/* update EventInfo_t *out */
-			out->selector |= 1<<tmp_state->native[i].position;
-			out->operand_index = tmp_state->emap[index][0];
+			out->bits.selector |= 1<<tmp_state->native[i].position;
+			out->counter_index = tmp_state->emap[index][0];
 			return 1;
 		}
 		else{
@@ -270,7 +275,7 @@ int _papi_hwd_counter_mapping(hwd_control_state_t *tmp_state, unsigned int Event
   EventInfo_t *zeroth;
 
 
-  hwd_idx=out->index;
+  hwd_idx=out->counter_index;
   
   tmp_state->allevent[hwd_idx]=EventCode;
   selector=0;
@@ -356,7 +361,7 @@ int _papi_hwd_counter_mapping(hwd_control_state_t *tmp_state, unsigned int Event
 		}
 		
 		/* copy new value to out */
-		zeroth = out-out->index;
+		zeroth = out->head;
 		j=0;
 		for(i=0;i<=tmp_state->hwd_idx_a;i++){
 			while(tmp_state->allevent[j]==COUNT_NOTHING)
@@ -367,11 +372,11 @@ int _papi_hwd_counter_mapping(hwd_control_state_t *tmp_state, unsigned int Event
 			j++;
 		}
 		
-		out->code = EventCode;
+		out->event_code = EventCode;
 		if(EventCode & PRESET_MASK)
-			out->command = this_preset->derived;
+			out->derived = this_preset->derived;
 		else
-			out->command = NOT_DERIVED;
+			out->derived = NOT_DERIVED;
 		/*out->index=tmp_state->hwd_idx_a;*/
 	
 		tmp_state->hwd_idx++;

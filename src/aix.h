@@ -28,7 +28,6 @@ extern _etext;
 extern _edata;
 extern _end;
 extern _data;
-extern int (*thread_kill_fn)(int, int);
 
 /* globals */
 pm_info_t pminfo;

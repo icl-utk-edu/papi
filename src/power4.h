@@ -20,20 +20,46 @@ typedef struct PWR4_pmapi_control {
   int timer_ms;
 } PWR4_pmapi_control_t;
 
+typedef struct PWR4_regmap {
+  unsigned char selector;  
+} PWR4_regmap_t;
+
+typedef struct PWR4_pmapi_context {
+  /* this structure is a work in progress */
+  PWR4_pmapi_control_t cntrl;
+} PWR4_pmapi_context_t;
 
 typedef PWR4_pmapi_control_t hwd_control_state_t;
 
-/* ... for PAPI3
 typedef PWR4_regmap_t hwd_register_map_t;
 
-typedef PWR4_register_t hwd_register_t;
-
 typedef PWR4_pmapi_context_t hwd_context_t;
+
+/* ... for PAPI3
+typedef PWR4_register_t hwd_register_t;
 
 typedef PWR4_pmapi_event_t hwd_event_t;
 */
 
-#include "papi_internal.h"
+/* Can these thread structures be moved out of the substrate?
+    Or are they platform dependent?
+*/
+typedef struct _ThreadInfo {
+  unsigned pid;
+  unsigned tid;
+  hwd_context_t context;
+  void *event_set_overflowing;
+  void *event_set_profiling;
+  int domain;
+} ThreadInfo_t;
+
+extern ThreadInfo_t *default_master_thread;
+
+typedef struct _thread_list {
+  ThreadInfo_t *master;
+  struct _thread_list *next; 
+} ThreadInfoList_t;
+
 
 typedef struct hwd_preset {
   /* Is this event derived? */
@@ -71,6 +97,6 @@ typedef struct pmapi_search {
 extern int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups);
 extern int set_domain(hwd_control_state_t *this_state, int domain);
 extern int set_granularity(hwd_control_state_t *this_state, int domain);
-extern int update_global_hwcounters(EventSetInfo *global);
 extern void init_config(hwd_control_state_t *ptr);
+void dump_state(hwd_control_state_t *s);
 

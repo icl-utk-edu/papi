@@ -47,6 +47,10 @@ extern int _papi_hwi_debug;
 #endif
 
 
+#ifdef ANY_THREAD_GETS_SIGNAL
+extern int (*_papi_hwi_thread_kill_fn)(int, int);
+#endif
+
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 extern int _papi_hwi_error_level;
 extern char *_papi_hwi_errStr[];
@@ -1366,7 +1370,6 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset,
 
 }
 
-#if 0
 int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
   EventSetInfo_t *ESI;
@@ -1399,7 +1402,6 @@ int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, u
     return(PAPI_OK);
   }
 }
-#endif
 
 int PAPI_set_granularity(int granularity)
 { 

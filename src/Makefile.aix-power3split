@@ -13,7 +13,7 @@ ALLOCATE = allocate
 # For version 1.2.1 add -DPMTOOLKIT_1_2_1
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
-CFLAGS	= $(FLAGS) 
+CFLAGS	= $(FLAGS) -DDEBUG -DHAS_NATIVE_MAP
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= -g
@@ -37,7 +37,7 @@ MISCOBJS= aix.o
 include Makefile.inc
 
 aix.o: aix.c  $(HEADERS)
-	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+	$(CC) $(CFLAGS)  -DDEBUG -DHAS_NATIVE_MAP -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 aix-shared: $(SOURCES)
 	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
