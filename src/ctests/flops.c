@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
   /* Setup PAPI library and begin collecting data from the counters */
   if((retval=PAPI_flips( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
 	test_fail(__FILE__, __LINE__, "PAPI_flips", retval);
-
+  
+   printf("first call PAPI_flips\n");
   /* Matrix-Matrix multiply */
   for (i=0;i<INDEX;i++)
    for(j=0;j<INDEX;j++)
@@ -46,6 +47,7 @@ int main(int argc, char **argv) {
   /* Collect the data into the variables passed in */
   if((retval=PAPI_flips( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
 	test_fail(__FILE__, __LINE__, "PAPI_flips", retval);
+   printf("second call PAPI_flips\n");
   dummy((void*) mresult);
  
   if ( !TESTS_QUIET )

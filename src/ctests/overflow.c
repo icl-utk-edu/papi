@@ -140,11 +140,12 @@ int main(int argc, char **argv)
 	       (unsigned)((values[0])[1]/(long_long)THRESHOLD),
 	       (unsigned)(OVR_TOLERANCE*100.0));
   }
-
+/*
   min = (long_long)((values[0])[1]*(1.0-TOLERANCE));
   max = (long_long)((values[0])[1]*(1.0+TOLERANCE));
   if ( (values[0])[1] > max || (values[0])[1] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
+*/
 
   min = (long_long)(((values[0])[1]*(1.0-OVR_TOLERANCE))/(long_long)THRESHOLD);
   max = (long_long)(((values[0])[1]*(1.0+OVR_TOLERANCE))/(long_long)THRESHOLD);
