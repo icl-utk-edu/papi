@@ -1,5 +1,5 @@
-SUBSTR  = linux-x86
-DESCR	= "Patched linux 2.x with Intel Pentium Pro, II or III"
+SUBSTR  = linux-perf
+DESCR	= "Linux with Perf Kernel Patch for the Pentium Pro, II, III"
 LIBS	= static shared
 TARGETS = serial pthreads
 

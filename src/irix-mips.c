@@ -766,14 +766,12 @@ static void set_hwcntr_codes(int selector, unsigned char *from, hwperf_eventctrl
     mode |= HWPERF_CNTEN_K;
   if (_papi_system_info.default_domain & PAPI_DOM_OTHER)
     mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S; 
-  assert(mode);
   
   while (index = ffs(selector))
     {
       index = index - 1;
       DBG((stderr,"set_hwcntr_codes(%x,%p,%p) index = %d, from %d, mode 0x%x\n",selector,from,to,index,from[index],mode));
       selector ^= 1 << index;
-      assert(from[index] < HWPERF_MAXEVENT);
       to->hwp_evctrl[index].hwperf_creg.hwp_ev = from[index];
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
     }

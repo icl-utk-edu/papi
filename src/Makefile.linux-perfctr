@@ -1,5 +1,5 @@
-SUBSTR  = linux-2.4-x86
-DESCR	= "Patched linux 2.4 with Pentium Pro, II or III"
+SUBSTR  = linux-perfctr
+DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
 LIBS	= static shared
 TARGETS = serial pthreads
 
