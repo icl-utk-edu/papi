@@ -767,7 +767,8 @@ inline static int set_default_granularity(EventSetInfo *zero, int granularity)
 // struct perfctr_dev *dev;
 int _papi_hwd_init_global(void)
 {
-  int retval;
+  int retval, type;
+  unsigned int version;
   pfmlib_options_t pfmlib_options;
 #ifdef DEBUG
   extern int papi_debug;
@@ -775,11 +776,34 @@ int _papi_hwd_init_global(void)
 
   /* Opened once for all threads. */
 
-#ifndef PFM06A
   if (pfm_initialize() != PFMLIB_SUCCESS ) 
     return(PAPI_ESYS);
+
+  if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+
+#ifdef ITANIUM2
+  if (type != PFMLIB_ITANIUM2_PMU)
+    {
+      fprintf(stderr,"Architecture mismatch of libpapi: compiled %x vs. installed %x\n",PFMLIB_ITANIUM2_PMU,type);
+      return(PAPI_ESBSTR);
+    }
+#else
+  if (type != PFMLIB_ITANIUM_PMU)
+    {
+      fprintf(stderr,"Architecture mismatch of libpapi: compiled %x vs. installed %x\n",PFMLIB_ITANIUM_PMU,type);
+      return(PAPI_ESBSTR);
+    }
 #endif
 
+  if (pfm_get_version(&version) != PFMLIB_SUCCESS)
+    return(PAPI_ESBSTR);
+
+  if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION))
+    {
+      fprintf(stderr,"Version mismatch of libpfm: compiled %x vs. installed %x\n",PFM_VERSION_MAJOR(PFMLIB_VERSION),PFM_VERSION_MAJOR(version));
+      return(PAPI_ESBSTR);
+    }
   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
   if (papi_debug)

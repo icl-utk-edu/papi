@@ -52,7 +52,7 @@ CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. \
 # Some nice flags to add to CFLAGS when debugging PAPI library itself
 # -g -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
-MISCHDRS= ia32_presets.h
+MISCHDRS= ia32_presets.h $(SUBSTR)-memory.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
