@@ -20,7 +20,7 @@
 #include "pfmwrap.h"
 
 #ifndef ITANIUM2
-static itanium_preset_search_t ia_preset_search_map[] = {
+static const itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS", 0, 0}},
    {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
    {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_RETIRED", 0, 0, 0}},
@@ -67,11 +67,9 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS (sizeof(ia_preset_search_map)/sizeof(itanium_preset_search_t)-1)
-hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
-hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
+#define ia_preset_search_map ia1_preset_search_map
 #else
-static itanium_preset_search_t ia_preset_search_map[] = {
+static const itanium_preset_search_t ia2_preset_search_map[] = {
    {PAPI_CA_SNP, 0, {"BUS_SNOOPS_SELF", 0, 0, 0}},
    {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0}},
    {PAPI_TLB_TL, DERIVED_ADD, {"ITLB_MISSES_FETCH_L2ITLB", "L2DTLB_MISSES", 0, 0}},
@@ -140,15 +138,12 @@ static itanium_preset_search_t ia_preset_search_map[] = {
 
    {0, 0, {0, 0, 0, 0}}
 };
-/*
-#define NUM_OF_PRESET_EVENTS 61
-*/
-#define NUM_OF_PRESET_EVENTS (sizeof(ia_preset_search_map)/sizeof(itanium_preset_search_t)-1)
-
-hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
-hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
+#define ia_preset_search_map ia2_preset_search_map
 #endif
 
+#define NUM_OF_PRESET_EVENTS (sizeof(ia_preset_search_map)/sizeof(itanium_preset_search_t)-1)
+hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
+hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 
 /* Machine info structure. -1 is unused. */
 extern papi_mdi_t _papi_hwi_system_info;
