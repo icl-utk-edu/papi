@@ -94,6 +94,9 @@ f77papi.h: genpapifdef
 f90papi.h: genpapifdef
 	./genpapifdef -f90 > f90papi.h
 
+test: ctests
+	ctests/zero
+
 fulltest: tests
 	sh run_tests.sh
 
@@ -116,7 +119,7 @@ clobber: clean
 null:
 
 dist: 
-	$(MAKE) -f Makefile.$(MSUBSTR) install PREFIX=`pwd`/papi-$(SUBSTR)
+	$(MAKE) -f Makefile.$(MSUBSTR) install-all PREFIX=`pwd`/papi-$(SUBSTR)
 	tar cfv ./papi-$(SUBSTR).tar ./papi-$(SUBSTR)
 	gzip ./papi-$(SUBSTR).tar
 	rm -rf ./papi-$(SUBSTR)
