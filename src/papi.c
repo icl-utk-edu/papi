@@ -163,6 +163,9 @@ int PAPI_library_init(int version)
       true UNIX semaphore. We cannot use PAPI
       locks here because they are not initialized yet */
    static int _in_papi_library_init_cnt = 0;
+#ifdef DEBUG
+   char *var;
+#endif
 
    ++_in_papi_library_init_cnt;
    while (_in_papi_library_init_cnt > 1)
@@ -172,7 +175,7 @@ int PAPI_library_init(int version)
      }
 
 #ifdef DEBUG
-   char *var = (char *)getenv("PAPI_DEBUG");
+   var = (char *)getenv("PAPI_DEBUG");
    _papi_hwi_debug = 0;
 
    if (var != NULL) 

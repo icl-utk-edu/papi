@@ -271,6 +271,7 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
 
 int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
 {
+#if !defined(ANY_THREAD_GETS_SIGNAL)
   /* Check for multiple threads still in the list, if so, we can't change it */
 
   if (_papi_hwi_thread_head->next != _papi_hwi_thread_head)
@@ -282,7 +283,6 @@ int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
   if ((id_fn != NULL) && (_papi_hwi_thread_id_fn != NULL))
     return(PAPI_EINVAL);
   
-#if !defined(ANY_THREAD_GETS_SIGNAL)
   _papi_hwi_thread_id_fn = id_fn;
 
   THRDBG("Set new thread id function to %p\n",id_fn);
