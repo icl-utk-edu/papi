@@ -1,26 +1,13 @@
 /* 
 * File:    overflow.c
 * CVS:     $Id$
-* Author:  Philip Mucci
+* Author:  min@cs.utk.edu
+*          Min Zhou
+* Mods:    Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
 */
 
-/* This file performs the following test: overflow dispatch
-
-     The Eventset contains:
-     + PAPI_TOT_CYC
-     + PAPI_FP_INS (overflow monitor)
-
-   - Start eventset 1
-   - Do flops
-   - Stop and measure eventset 1
-   - Set up overflow on eventset 1
-   - Start eventset 1
-   - Do flops
-   - Stop eventset 1
-*/
+/* This file performs the following test: overflow dispatch on 2 counters. */
 
 #include "papi_test.h"
 
@@ -35,27 +22,55 @@
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
-int total = 0;                  /* total overflows */
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+typedef struct {
+  long_long mask;
+  int count;
+} ocount_t;
+
+ocount_t overflow_counts[2] = {{0,0}, {0,0}};
+int total_unknown = 0;
 
 void handler(int EventSet, void *address, long_long overflow_vector, void *context)
 {
+  int i;
 
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    }
 
-   total++;
+   /* Look for the overflow_vector entry */
+
+   for (i=0;i<2;i++)
+     {
+       if (overflow_counts[i].mask == overflow_vector)
+	 {
+	   overflow_counts[i].count++;
+	   return;
+	 }
+     }
+
+   /* Didn't find it so add it. */
+
+   for (i=0;i<2;i++)
+     {
+       if (overflow_counts[i].mask == (long_long)0)
+	 {
+	   overflow_counts[i].mask = overflow_vector;
+	   overflow_counts[i].count = 1;
+	   return;
+	 }
+     }
+
+   /* Unknown entry!?! */
+
+   total_unknown++;
 }
 
 int main(int argc, char **argv)
 {
    int EventSet;
    long_long(values[3])[2];
-/*
-  long_long min, max;
-*/
-   int num_flops, retval;
+   int retval;
    int PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];
 
@@ -132,67 +147,29 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-/*
-   retval = PAPI_overflow(EventSet, PAPI_event, 0, 0, handler);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-   retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, 0, 0, handler);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
-   retval = PAPI_start(EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+   printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
+   printf("---------------------------------------------------------------\n");
+   printf("Threshold for overflow is: %d\n", THRESHOLD);
+   printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
+   printf("-----------------------------------------------\n");
 
-   do_flops(NUM_FLOPS);
+   printf("Test type    : %16d%16d\n", 1, 2);
+   printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0]);
+   printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1]);
+   printf("Case 2 %s Overflows: %d\n", "PAPI_TOT_CYC", overflow_counts[0].count);
+   printf("Case 2 %s Overflows: %d\n", event_name, overflow_counts[1].count);
+   printf("Case 2 %s Overflows: %d\n", "Unknown", total_unknown);
+   printf("-----------------------------------------------\n");
 
-   retval = PAPI_stop(EventSet, values[2]);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-*/
-   num_flops = NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
-   num_flops *= 2;
-#endif
-
-   if (!TESTS_QUIET) {
-      if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
-
-      printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
-      printf("---------------------------------------------------------------\n");
-      printf("Threshold for overflow is: %d\n", THRESHOLD);
-      printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
-      printf("-----------------------------------------------\n");
-
-      printf("Test type    : %16d%16d\n", 1, 2);
-      printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0]);
-      printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1]);
-      printf("Overflows    : %16s%16d\n", "", total);
-      printf("-----------------------------------------------\n");
-/*
-      printf("Verification:\n");
-      if (PAPI_event == PAPI_FP_INS)
-         printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
-
-      printf("Column 1 approximately equals column 2\n");
-      printf("Row 3 approximately equals %u +- %u %%\n",
-             (unsigned) ((values[0])[1] / (long_long) THRESHOLD),
-             (unsigned) (OVR_TOLERANCE * 100.0));
-*/
-   }
-
-/*
-  min = (long_long)((values[0])[1]*(1.0-TOLERANCE));
-  max = (long_long)((values[0])[1]*(1.0+TOLERANCE));
-  if ( (values[0])[1] > max || (values[0])[1] < min )
-  	test_fail(__FILE__, __LINE__, event_name, 1);
-
-  min = (long_long)(((values[0])[1]*(1.0-OVR_TOLERANCE))/(long_long)THRESHOLD);
-  max = (long_long)(((values[0])[1]*(1.0+OVR_TOLERANCE))/(long_long)THRESHOLD);
-  if ( total > max || total < min )
-  	test_fail(__FILE__, __LINE__, "Overflows", 1);
-*/
+   if (overflow_counts[0].count == 0)
+      test_fail(__FILE__, __LINE__, "Counter one had no overflows", 1);
+   if (overflow_counts[1].count == 0)
+      test_fail(__FILE__, __LINE__, "Counter two had no overflows", 1);
+   if (total_unknown > 0)
+      test_fail(__FILE__, __LINE__, "Unknown counter had overflows", 1);
 
    test_pass(__FILE__, NULL, 0);
    exit(1);
