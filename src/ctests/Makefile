@@ -5,7 +5,7 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = branches dmem_info all_events derived high-level2 describe mem_info zero \
+SERIAL  = branches dmem_info all_events all_events_by_two derived high-level2 describe mem_info zero \
 	zero_flip low-level high-level sprofile eventname case1 case2 \
 	calibrate flops avail first second cost johnmay2 clockres nineth \
 	overflow_single_event overflow profile tenth native memory \
@@ -169,6 +169,9 @@ mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
 
 all_events: all_events.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_events
+
+all_events_by_two: all_events_by_two.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_events_by_two.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_events_by_two
 
 avail: avail.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
