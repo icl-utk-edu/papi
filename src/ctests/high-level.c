@@ -80,8 +80,6 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET )
      printf(TWO12, values[0], values[1], "");
 
-  PAPI_shutdown();
-
   if ( !TESTS_QUIET ) {
   printf("----------------------------------\n");  
   printf("Verification: The last line in each experiment was intended\n");
@@ -95,17 +93,20 @@ int main(int argc, char **argv)
 	if ( values[0]<(3*min)||values[0]>(3*max)){
                 retval = 1;
 #ifndef NO_FLOPS
-		test_fail(__FILE__,__LINE__,"PAPI_FP_INS");
+		test_fail(__FILE__,__LINE__,"PAPI_FP_INS",1);
 #else
-		test_fail(__FILE__,__LINE__,"PAPI_TOT_INS");
+		test_fail(__FILE__,__LINE__,"PAPI_TOT_INS",1);
 #endif
 	}
 	min = myvalues[1]*.9;
 	max = myvalues[1]*1.1;
 	if ( values[1]<(3*min)||values[1]>(3*max)){
                 retval = 1;
-		test_fail(__FILE__,__LINE__,"PAPI_TOT_CYC");
+		test_fail(__FILE__,__LINE__,"PAPI_TOT_CYC",1);
 	}
   }
-  test_pass(__FILE__,values,NUM_EVENTS);
+  /* The values array is not allocated through allocate_test_space 
+   * so we need to pass NULL here */
+  test_pass(__FILE__,NULL,NUM_EVENTS);
+  exit(0);
 }

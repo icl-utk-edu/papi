@@ -159,6 +159,5 @@ int main(int argc, char **argv)
       printf("PAPI_get_virt_usec: Not supported\n");
     }
 
-  PAPI_shutdown();
   test_pass(__FILE__,0,0);
 }

@@ -55,7 +55,7 @@ int main(int argc, char **argv)
    /* Make sure no errors */
 
    if ((retval = PAPI_start(CostEventSet)) != PAPI_OK)
-	test_fail(__FILE_,__LINE__,"PAPI_start", retval );
+	test_fail(__FILE__,__LINE__,"PAPI_start", retval );
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start",retval );
    if ((retval = PAPI_stop(EventSet, NULL)) != PAPI_OK)

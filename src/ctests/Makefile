@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex1_pthreads
 SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third third-inv fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
-	overflow_single_event overflow profile tenth native  \
+	overflow_single_event overflow profile tenth native \
 	memory
 BROKEN	= inherit pernode
 ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -53,8 +53,8 @@ zero_shmem: zero_shmem.c $(UTILOBJS) $(PAPILIB)
 zero_omp: zero_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) zero_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_omp $(OMPLIBS)
 
-clockres: clockres.c $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) clockres.c $(PAPILIB) $(LDFLAGS) -o clockres
+clockres: clockres.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
 
 sprofile: sprofile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) sprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o sprofile
@@ -125,20 +125,20 @@ native: native.c $(UTILSOBJS) $(PAPILIB)
 memory: memory.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory
 
-eventname: eventname.c $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) eventname.c $(PAPILIB) $(LDFLAGS) -o eventname
+eventname: eventname.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
 
-case1: case1.c $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case1.c $(PAPILIB) $(LDFLAGS) -o case1
+case1: case1.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1
 
-case2: case2.c $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case2.c $(PAPILIB) $(LDFLAGS) -o case2
+case2: case2.c $(PAPILIB)  $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case2
 
-low-level: low-level.c do_loops.o $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) low-level.c do_loops.o $(PAPILIB) $(LDFLAGS) -o low-level
+low-level: low-level.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
 
-high-level: high-level.c do_loops.o $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level.c do_loops.o $(PAPILIB) $(LDFLAGS) -o high-level
+high-level: high-level.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
 
 dummy.o: dummy.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c dummy.c
