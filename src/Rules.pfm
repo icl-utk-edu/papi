@@ -31,11 +31,7 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 
 ifeq (,$(PFM_PREFIX))
 PFM ?= ./libpfm-$(VERSION)
-ifeq (2.0,$(VERSION))
 PFM_LIB_PATH ?= $(PFM)/libpfm
-else
-PFM_LIB_PATH ?= $(PFM)/lib
-endif
 PFM_INC_PATH ?= $(PFM)/include
 else
 PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
