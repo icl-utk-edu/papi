@@ -54,3 +54,18 @@ dist:
 	chmod -R 644 *
 	chgrp -R papi *
 	cd ..; tar cvf papisrc.tar src; gzip papisrc.tar
+
+install: all
+	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
+	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
+	mkdir -p $(DESTDIR)/lib
+	chmod go+rx $(DESTDIR)/lib
+	mkdir -p $(DESTDIR)/include
+	chmod go+rx $(DESTDIR)/include
+	cp libpapi.a libpapi.so $(DESTDIR)/lib
+	chmod go+r $(DESTDIR)/lib/*
+	cp papi.h papiStdEventDefs.h $(DESTDIR)/include
+	chmod go+r $(DESTDIR)/include/*
+	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
+	cd tests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install
+	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install

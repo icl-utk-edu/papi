@@ -205,7 +205,7 @@ const char *papi_errStr[PAPI_NUM_ERRORS] = {
   "Invalid argument",
   "Insufficient memory",
   "A System/C library call failed",
-  "Substrate returned an error",
+  "Not supported by substrate",
   "Access to the counters was lost or interrupted",
   "Internal error, please send mail to the developers",
   "Event does not exist",
@@ -1735,10 +1735,16 @@ long long PAPI_get_real_usec(void)
 
 long long PAPI_get_virt_cyc(void)
 {
-  return(_papi_hwd_get_virt_cycles());
+  EventSetInfo *master = _papi_hwi_lookup_in_master_list();
+  if (master)
+    return(_papi_hwd_get_virt_cycles(master));
+  return(-1);
 }
 
 long long PAPI_get_virt_usec(void)
 {
-  return(_papi_hwd_get_virt_usec());
+  EventSetInfo *master = _papi_hwi_lookup_in_master_list();
+  if (master)
+    return(_papi_hwd_get_virt_usec(master));
+  return(-1);
 }

@@ -10,12 +10,16 @@
 #define PAPI_ENOEVNT -7
 #define PAPI_ECNFLCT -8
 #define PAPI_ENOTRUN -9
+#define PAPI_EISRUN -10
+#define PAPI_ENOEVST -11
+#define PAPI_ENOTPRESET -12
+#define PAPI_ENOCNTR -13
 #define PAPI_EMISC -14
 #define PAPI_NULL -1
 #define PAPI_DOM_USER 1
-#define PAPI_DOM_KERNEL	 2
-#define PAPI_DOM_OTHER	 4
-#define PAPI_DOM_ALL	 7
+#define PAPI_DOM_KERNEL 2
+#define PAPI_DOM_OTHER 4
+#define PAPI_DOM_ALL 7
 #define PAPI_STOPPED 1
 #define PAPI_RUNNING 2
 #define PAPI_OVERFLOWING 16
@@ -23,6 +27,7 @@
 #define PAPI_QUIET 0
 #define PAPI_VERB_ECONT 1
 #define PAPI_VERB_ESTOP 2
+#define PAPI_MAX_STR_LEN 81
 #define PAPI_L1_DCM -2147483648
 #define PAPI_L1_ICM -2147483647
 #define PAPI_L2_DCM -2147483646

@@ -885,11 +885,6 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-int _papi_hwd_shutdown_global(void)
-{
-  return(PAPI_OK);
-}
-
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
   if (preset_map[preset_index].selector == 0)
@@ -954,12 +949,12 @@ long long _papi_hwd_get_real_usec (void)
   return(_rtc()/75);
 }
 
-long long _papi_hwd_get_virt_usec (void)
+long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   return(-1);
 }
 
-long long _papi_hwd_get_virt_cycles (void)
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   return(-1);
 }
@@ -1038,8 +1033,10 @@ papi_mdi _papi_system_info = { "$Id$",
 
 void __pdf_th_create(void)
 {
+  extern PAPI_notify_handler_t thread_notifier;
 }
 
 void __pdf_th_destroy(void)
 {
+  extern PAPI_notify_handler_t thread_notifier;
 }

@@ -1,0 +1,21 @@
+/* 
+* File:    INSTALL
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+How to install PAPI on your system
+----------------------------------
+
+1) Pick the appropriate Makefile.<arch> for your system and compile.
+   OPTIONAL: Edit the Makefile.<arch>
+   % make -f Makefile.<arch>
+2) Check for errors. Look for the libpapi.a and libpapi.so 
+   in the current directory.
+   OPTIONAL: Run the test programs in ftests/ and tests/
+3) Install the distribution where desired.
+   % make -f Makefile.<arch> DESTDIR=<dir where papi tree is to be installed>
+

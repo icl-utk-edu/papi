@@ -1,3 +1,4 @@
+
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
@@ -324,6 +325,7 @@ static int get_system_info(void)
   }
   DBG((stderr,"Actual MHZ is %f\n",_papi_system_info.hw_info.mhz));
   _papi_system_info.num_cntrs = perfctr_cpu_nrctrs() - 1;
+  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs() - 1;
 
   /* Setup presets */
 
@@ -373,7 +375,7 @@ inline static int update_global_hwcounters(EventSetInfo *global)
   struct vperfctr_state state;
   int i;
 
-  if (perfctr_read_self(&state) < 0) // (&machdep->self,
+  if (perfctr_read_self(machdep->self, &state) < 0) 
     return(PAPI_ESYS);
   
   for (i=0;i<_papi_system_info.num_cntrs;i++)
@@ -384,7 +386,7 @@ inline static int update_global_hwcounters(EventSetInfo *global)
       global->hw_start[i] = global->hw_start[i] + state.sum.ctr[i+1];
     }
 
-  if (perfctr_control_self(&machdep->counter_cmd) < 0) // &machdep->self, 
+  if (perfctr_control_self(machdep->self, &machdep->counter_cmd) < 0) 
     return(PAPI_ESYS);
 
   return(PAPI_OK);
@@ -489,11 +491,11 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_init(EventSetInfo *zero)
 {
-  // hwd_control_state_t *machdep = zero->machdep;
+  hwd_control_state_t *machdep = zero->machdep;
   
   /* Initialize our global machdep. */
 
-  if (perfctr_attach_rdwr_self() < 0) // simple(0, NULL, 1, &machdep->self)
+  if ((machdep->self = perfctr_attach_rdwr_self()) == NULL) 
     return(PAPI_ESYS);
 
   /* Initialize the event fields */
@@ -517,22 +519,22 @@ long long _papi_hwd_get_real_cycles (void)
   return(get_cycles());
 }
 
-long long _papi_hwd_get_virt_usec (void)
+long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   long long cyc;
 
-  cyc = _papi_hwd_get_virt_cycles()*(unsigned long long)1000;
+  cyc = _papi_hwd_get_virt_cycles(zero)*(unsigned long long)1000;
   cyc = cyc / (long long)_papi_system_info.hw_info.mhz;
   return(cyc / (long long)1000);
 }
 
-long long _papi_hwd_get_virt_cycles (void)
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   struct vperfctr_state state;
+  hwd_control_state_t *machdep = zero->machdep;
 
-  if (perfctr_read_self(&state) < 0)
+  if (perfctr_read_self(machdep->self, &state) < 0)
     return(PAPI_ESYS);
-
   return(state.sum.ctr[0]);
 }
 
@@ -717,7 +719,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 #ifdef DEBUG
       dump_cmd(&current_state->counter_cmd);
 #endif
-      if (perfctr_control_self(&current_state->counter_cmd) < 0) // &current_state->self, 
+      if (perfctr_control_self(current_state->self, &current_state->counter_cmd) < 0) 
 	return(PAPI_ESYS);
       
       return(PAPI_OK);
@@ -801,7 +803,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   /* (Re)start the counters */
   
-  if (perfctr_control_self(&current_state->counter_cmd) < 0)
+  if (perfctr_control_self(current_state->self, &current_state->counter_cmd) < 0)
     return(PAPI_ESYS);
 
   return(PAPI_OK);
@@ -1001,8 +1003,8 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
-  // hwd_control_state_t *machdep = global->machdep;
-  perfctr_close_self(); // (&machdep->self);
+  hwd_control_state_t *machdep = zero->machdep;
+  perfctr_close_self(machdep->self);
   return(PAPI_OK);
 }
 

@@ -1,14 +1,35 @@
-Some native event code info can be found in /usr/include/asm/perf.h. 
+/* 
+* File:    linux-x86.README
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
 
-The counter format is:
+Linux 2.0-2.2 Kernel Notes
+--------------------------
 
-	(code << 8) | (hw_counter_num).
+If using Linux 2.0, 2.1 or 2.2, patch your kernel using 
+the perf distribution available on our web site. 
+	
+		http://icl.cs.utk.edu/projects/papi
 
-hw_counter_num is current:
 
-0 - Hardware counter 0
-1 - Hardware counter 1
+Linux 2.0-2.2 Native Event Notes
+--------------------------------
 
-Code can be 16 bits corresponding to the 16 bits of the event
-selector and unit mask of the Pentium's registers.
+For *all* the native event codes, see the website at
+
+		http://www.sandpile.org
+
+In incomplete list of x86 event code defines can be 
+found in /usr/include/asm/perf.h. 
+
+The native event counter format is:
+
+	event_code = 16 bit event selector code and unit mask.
+	hw_counter_num = Event register number 0 through 1, (2 or 3 on K7).
+			
+	event = (event_code << 8) | (hw_counter_num).
 

@@ -736,12 +736,12 @@ long long _papi_hwd_get_real_cycles (void)
   return(get_tick());
 }
 
-long long _papi_hwd_get_virt_usec (void)
+long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   return((long long)gethrvtime()/(long long)1000);
 }
 
-long long _papi_hwd_get_virt_cycles (void)
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   return(-1);
 }

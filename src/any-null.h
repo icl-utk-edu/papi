@@ -1,40 +1,53 @@
 #include <stdio.h>
-#include <memory.h>
-#include <time.h>
-#include <assert.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include "papi.h"
 #include "papi_internal.h"
-#include "papiStdEventDefs.h"
 
-/* Preset values and any associated information. Note the padding
-   for faster access. */
+#define CNTR1 0x1
+#define CNTR2 0x2
+#define MAX_COUNTERS 2
+#define PERF_USR       0x300
+#define PERF_OS        0x400
+#define PERF_ENABLE    0x800
+#define PERF_EVNT_MASK 0xff
 
-typedef struct _hwd_preset {
-  unsigned int mask; /* only 0x1, 0x2 or 0x3. 0x3 means either counter. 
-			A one in the 0xf0 spot means
-		        this metric is derived and needs both counters. */
-  char code1;                
-  char code2;
-  unsigned short pad; } hwd_preset_t;
- 
-/* Sample thirty two bit control register. We don't need the mask
-   value because it is stored in ESI->EventSelectArray in
-   _papi_hwd_add_event. */
+typedef struct hwd_search {
+  /* PAPI preset code */
+  int papi_code;
+  /* Is this derived */
+  int derived_op;
+  /* If so, what is the index of the operand */
+  int operand_index;
+  /* Events to encode */
+  unsigned int findme[MAX_COUNTERS];
+} hwd_search_t;
 
-#define ANY_DOM_USER 0 
-#define ANY_DOM_KERNEL 1
-#define ANY_DOM_INTERRUPT 2 
-#define ANY_DOM_ALL 3 
+typedef struct _any_command {
+  unsigned int cmd[MAX_COUNTERS];
+} any_command_t;
 
-typedef struct _fake_cntrl_reg {
-  unsigned int ev0:8;
-  unsigned int ev1:8;
-  unsigned int pad:13;
-  unsigned int enable:1;
-  unsigned int domain:2; } fake_cntrl_reg_t;
-
-typedef struct _hwd_control_state_t {
-  int timer_ms;            /* Milliseconds between timer interrupts for various things */  
-  int mask;                /* Counter select mask. */
-  fake_cntrl_reg_t cntrl;  /* Control register. */
+typedef struct hwd_control_state {
+  /* Which counters to use? Bits encode counters to use, may be duplicates */
+  int selector;  
+  /* Is this event derived? */
+  int derived;   
+  /* Buffer to pass to the kernel to control the counters */
+  any_command_t counter_cmd;
 } hwd_control_state_t;
+
+typedef struct hwd_preset {
+  /* Which counters to use? Bits encode counters to use, may be duplicates */
+  unsigned char selector;  
+  /* Is this event derived? */
+  unsigned char derived;   
+  /* If the derived event is not associative, this index is the lead operand */
+  unsigned char operand_index;
+  /* Buffer to pass to the kernel to control the counters */
+  any_command_t counter_cmd;
+  /* If it exists, then this is the description of this event */
+  char note[PAPI_MAX_STR_LEN];
+} hwd_preset_t;

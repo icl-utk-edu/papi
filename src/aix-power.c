@@ -978,12 +978,12 @@ long long _papi_hwd_get_real_cycles (void)
   return((long long)cyc);
 }
 
-long long _papi_hwd_get_virt_usec (void)
+long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   return(-1);
 }
 
-long long _papi_hwd_get_virt_cycles (void)
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   return(-1);
 }
@@ -1608,11 +1608,11 @@ void *_papi_hwd_get_overflow_address(void *context)
 }
 
 static volatile int lock_var = 0;
-static volatile atomic_p lock;
+static atomic_p lock;
 
 void _papi_hwd_lock_init(void)
 {
-  lock = &lock_var;
+  lock = (int *)&lock_var;
 }
 
 void _papi_hwd_lock(void)

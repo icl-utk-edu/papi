@@ -225,15 +225,23 @@ int _papi_hwi_using_signal = 0;
 static int start_timer(int milliseconds)
 {
   int retval;
-  struct sigaction action;
+  struct sigaction action, oaction;
   struct itimerval value;
-  void *tmp;
 
-  /* If the user has installed a signal, don't do anything */
+  /* If the user has installed a signal, don't do anything
 
-  tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
+     The following code is commented out because many C libraries
+     replace the signal handler when one links with threads. The
+     name of this signal handler is not exported. So there really
+     is NO WAY to check if the user has installed a signal. */
+
+  /* tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
   if ((tmp != (void *)SIG_DFL) && (tmp != (void *)_papi_hwd_dispatch_timer))
-    return(PAPI_EMISC);
+    {
+      fprintf(stderr,"%p %p %p\n",SIG_DFL,_papi_hwd_dispatch_timer,tmp);
+      return(PAPI_EMISC);
+    }
+  */
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_flags = SA_RESTART;
@@ -244,7 +252,7 @@ static int start_timer(int milliseconds)
   action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
 
-  if (sigaction(PAPI_SIGNAL, &action, NULL) < 0)
+  if (sigaction(PAPI_SIGNAL, &action, &oaction) < 0)
     return(PAPI_ESYS);
 
   value.it_interval.tv_sec = 0;
@@ -255,7 +263,7 @@ static int start_timer(int milliseconds)
   retval = setitimer(PAPI_ITIMER, &value, NULL);
   if (retval == -1)
     {
-      signal(PAPI_SIGNAL, SIG_DFL);
+      sigaction(PAPI_SIGNAL, &oaction, NULL);
       return(PAPI_ESYS);
     }
 
@@ -276,11 +284,8 @@ static int stop_timer(void)
   value.it_value.tv_sec = 0;
   value.it_value.tv_usec = 0;
   
-  if (retval != PAPI_OK)
-    setitimer(PAPI_ITIMER, &value, NULL);
-  else
-    if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
-      retval = PAPI_ESYS;
+  if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
+    retval = PAPI_ESYS;
 
   PAPI_lock();
   _papi_hwi_using_signal--;

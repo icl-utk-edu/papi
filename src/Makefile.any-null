@@ -1,0 +1,16 @@
+SUBSTR  = any-null
+DESCR	= "Sample substrate: Any hardware platform with GNU compilers"
+LIBS	= static shared
+TARGETS = serial pthreads
+
+FOR_USED= -DFORTRANDOUBLEUNDERSCORE
+CFLAGS  = -Wall -g -DDEBUG
+OPTFLAGS=
+CC_SHR  = gcc -shared
+CC_R	= gcc
+CC	= gcc
+F77	= g77
+
+include Makefile.inc
+
+

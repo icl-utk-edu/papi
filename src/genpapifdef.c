@@ -31,12 +31,16 @@ int main(int argc, char **argv)
   printf("#define %s %d\n","PAPI_ENOEVNT",PAPI_ENOEVNT);
   printf("#define %s %d\n","PAPI_ECNFLCT",PAPI_ECNFLCT);
   printf("#define %s %d\n","PAPI_ENOTRUN",PAPI_ENOTRUN);
+  printf("#define %s %d\n","PAPI_EISRUN",PAPI_EISRUN);
+  printf("#define %s %d\n","PAPI_ENOEVST",PAPI_ENOEVST);
+  printf("#define %s %d\n","PAPI_ENOTPRESET",PAPI_ENOTPRESET);
+  printf("#define %s %d\n","PAPI_ENOCNTR",PAPI_ENOCNTR);
   printf("#define %s %d\n","PAPI_EMISC",PAPI_EMISC);
   printf("#define %s %d\n","PAPI_NULL",PAPI_NULL);
   printf("#define %s %d\n","PAPI_DOM_USER",PAPI_DOM_USER);
-  printf("#define %s %d\n","PAPI_DOM_KERNEL	",PAPI_DOM_KERNEL	);
-  printf("#define %s %d\n","PAPI_DOM_OTHER	",PAPI_DOM_OTHER	);
-  printf("#define %s %d\n","PAPI_DOM_ALL	",PAPI_DOM_ALL	);
+  printf("#define %s %d\n","PAPI_DOM_KERNEL",PAPI_DOM_KERNEL);
+  printf("#define %s %d\n","PAPI_DOM_OTHER",PAPI_DOM_OTHER);
+  printf("#define %s %d\n","PAPI_DOM_ALL",PAPI_DOM_ALL);
   printf("#define %s %d\n","PAPI_STOPPED",PAPI_STOPPED);
   printf("#define %s %d\n","PAPI_RUNNING",PAPI_RUNNING);
   printf("#define %s %d\n","PAPI_OVERFLOWING",PAPI_OVERFLOWING);
@@ -44,6 +48,7 @@ int main(int argc, char **argv)
   printf("#define %s %d\n","PAPI_QUIET",PAPI_QUIET);
   printf("#define %s %d\n","PAPI_VERB_ECONT",PAPI_VERB_ECONT);
   printf("#define %s %d\n","PAPI_VERB_ESTOP",PAPI_VERB_ESTOP);
+  printf("#define %s %d\n","PAPI_MAX_STR_LEN",PAPI_MAX_STR_LEN);
 
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (info[i].event_name)

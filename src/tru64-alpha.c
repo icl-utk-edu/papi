@@ -320,7 +320,7 @@ long long _papi_hwd_get_real_cycles (void)
   return((long long)cyc);
 }
 
-long long _papi_hwd_get_virt_usec (void)
+long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   struct rusage usage;
   if (getrusage(RUSAGE_SELF, &usage) != -1)
@@ -329,7 +329,7 @@ long long _papi_hwd_get_virt_usec (void)
     return(-1);
 }
 
-long long _papi_hwd_get_virt_cycles (void)
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   return(_papi_hwd_get_virt_usec() * (long long)_papi_system_info.hw_info.mhz);
 }

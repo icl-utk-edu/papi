@@ -27,17 +27,28 @@
 
 static int PAPI_EVENTSET_INUSE = PAPI_NULL;
 static int initialized = 0;
-
-/*========================================================================*/
-/* int PAPI_num_counters()                                                  */
-/*                                                                        */ 
-/* This function returns the optimal length of the values                 */
-/* array used in the high level routines.                                 */ 
-/*========================================================================*/
+static int MAX_COUNTERS = 0;
 
 int PAPI_num_counters(void) 
 {
-  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+  int retval;
+
+  if (!initialized)
+    {
+      retval = PAPI_library_init(PAPI_VER_CURRENT);
+      if (retval != PAPI_VER_CURRENT)
+	return(retval);
+
+      retval = PAPI_create_eventset(&PAPI_EVENTSET_INUSE);
+      if (retval)
+	return(retval);
+      
+      MAX_COUNTERS = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+      
+      initialized = 1;
+    }
+
+  return(MAX_COUNTERS);
 }
 
 /*========================================================================*/
@@ -53,46 +64,36 @@ int PAPI_num_counters(void)
 
 int PAPI_start_counters(int *events, int array_len) 
 {
-  int EventSet;
   int i,retval;
-  int MAX_COUNTERS;
 
   if (!initialized)
     {
-      retval = PAPI_library_init(PAPI_VER_CURRENT);
-      if (retval != PAPI_VER_CURRENT)
-	return(retval);
-      initialized = 1;
+      PAPI_num_counters();
+      if (MAX_COUNTERS < 1)
+	return(PAPI_ENOCNTR);
     }
 
-  MAX_COUNTERS = PAPI_num_counters();
-  if (MAX_COUNTERS < 1)
-    return(PAPI_ENOCNTR);
   if (array_len > MAX_COUNTERS)
     return(PAPI_EINVAL);
-  if (PAPI_EVENTSET_INUSE != PAPI_NULL) 
-    return(PAPI_EISRUN);
-
-  /*initialize value for EventSet integer*/
-
-  EventSet = PAPI_NULL;
 
   /* load events to the new EventSet */   
 
   for (i=0;i<array_len;i++) 
     {
-      retval = PAPI_add_event(&EventSet,events[i]);
+      retval = PAPI_query_event(events[i]);
+      if (retval)
+	return(retval);
+
+      retval = PAPI_add_event(&PAPI_EVENTSET_INUSE,events[i]);
       if (retval)
 	return(retval);
     }
 
   /* start the EventSet*/
 
-  retval = PAPI_start(EventSet);
+  retval = PAPI_start(PAPI_EVENTSET_INUSE);
   if (retval) 
     return(retval);
-
-  PAPI_EVENTSET_INUSE = EventSet;
 
   return(PAPI_OK);
 }
@@ -107,28 +108,18 @@ int PAPI_start_counters(int *events, int array_len)
 
 int PAPI_read_counters(long long *values, int array_len) 
 {
-  int retval, MAX_COUNTERS;
+  int retval;
 
   if (!initialized)
-    {
-      retval = PAPI_library_init(PAPI_VER_CURRENT);
-      if (retval != PAPI_VER_CURRENT)
-	return(retval);
-      initialized = 1;
-    }
+    return(PAPI_EINVAL);
 
-  MAX_COUNTERS = PAPI_num_counters();
-
-  if (MAX_COUNTERS < 1)
-    return(PAPI_ENOCNTR);
   if (array_len > MAX_COUNTERS)
     return(PAPI_EINVAL);
-  if (PAPI_EVENTSET_INUSE == PAPI_NULL)
-    return(PAPI_ENOTRUN);
 
   retval = PAPI_read(PAPI_EVENTSET_INUSE,values);
   if (retval)
     return(retval);
+
   return(PAPI_reset(PAPI_EVENTSET_INUSE));
 }
 
@@ -141,24 +132,15 @@ int PAPI_read_counters(long long *values, int array_len)
 
 int PAPI_stop_counters(long long *values, int array_len) 
 {
-  int retval, MAX_COUNTERS;
+  int retval;
 
   if (!initialized)
-    {
-      retval = PAPI_library_init(PAPI_VER_CURRENT);
-      if (retval != PAPI_VER_CURRENT)
-	return(retval);
-      initialized = 1;
-    }
+    return(PAPI_EINVAL);
 
   MAX_COUNTERS = PAPI_num_counters();
 
-  if (MAX_COUNTERS < 1)
-    return(PAPI_ENOCNTR);
   if (array_len > MAX_COUNTERS)
     return(PAPI_EINVAL);
-  if (PAPI_EVENTSET_INUSE == PAPI_NULL)
-    return(PAPI_ENOTRUN);
 
   retval = PAPI_stop(PAPI_EVENTSET_INUSE, values);
   if (retval) 

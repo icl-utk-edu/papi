@@ -37,7 +37,7 @@ typedef struct hwd_control_state {
   /* Buffer to pass to the kernel to control the counters */
   struct perfctr_control counter_cmd;
   /* Buffer to control the kernel state of the counters */
-  //  struct vperfctr self;
+  struct vperfctr *self;
 } hwd_control_state_t;
 
 typedef struct hwd_preset {

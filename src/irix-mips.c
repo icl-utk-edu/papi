@@ -636,12 +636,12 @@ long long _papi_hwd_get_real_cycles (void)
   return(retval);
 }
 
-long long _papi_hwd_get_virt_usec (void)
+long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   return(-1);
 }
 
-long long _papi_hwd_get_virt_cycles (void)
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   return(-1);
 }

@@ -19,6 +19,10 @@
 #define PAPI_FCALL(function,caps,args) void function##args
 #endif
 
+/* Many Unix systems passes Fortran string lengths as extra arguments */
+#if defined(__i386__) || defined(_AIX) || defined(sun) || defined(mips)
+#define _FORTRAN_STRLEN_AT_END
+#endif
 /* The Low Level Wrappers */
 
 PAPI_FCALL(papif_accum,PAPIF_ACCUM,(int *EventSet, long long *values, int *check))
@@ -43,12 +47,7 @@ PAPI_FCALL(papif_cleanup_eventset,PAPIF_CLEANUP_EVENTSET,(int *EventSet, int *ch
 
 PAPI_FCALL(papif_library_init,PAPIF_LIBRARY_INIT,(int *check))
 {
-  int tmp;
-  tmp = PAPI_library_init(PAPI_VER_CURRENT);
-  if (tmp != PAPI_VER_CURRENT)
-    *check = PAPI_EBUG;
-  else
-    *check = PAPI_VER_CURRENT;
+  *check = PAPI_library_init(*check);
 }
 
 /* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
@@ -65,6 +64,9 @@ PAPI_FCALL(papif_list_events,PAPIF_LIST_EVENTS,(int *EventSet, int *Events, int 
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, _fcd destination, int *length, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *length, int *check, 
+				      int destination_len))
 #else
 PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *length, int *check))
 #endif
@@ -73,6 +75,14 @@ PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *length,
   char tmp[PAPI_MAX_STR_LEN];
   *check = PAPI_perror(*code, tmp, *length);
   strncpy( _fcdtocp(destination), tmp, strlen(tmp));
+#elif defined(_FORTRAN_STRLEN_AT_END)
+  int i;
+  *check = PAPI_perror(*code, destination, destination_len);
+  /*
+    Possibly:  return the real written length:
+    *length = strlen(destination)
+  */
+  for(i=strlen(destination);i<destination_len;destination[i++]=' ');
 #else
   *check = PAPI_perror(*code, destination, *length);
 #endif
@@ -85,6 +95,9 @@ PAPI_FCALL(papif_query_event,PAPIF_QUERY_EVENT,(int *EventCode, int *check))
  
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, _fcd out, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)  
+PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, char *out, int *check,
+							      int out_len))
 #else
 PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, char *out, int *check))
 #endif
@@ -93,6 +106,10 @@ PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, ch
   char tmp[PAPI_MAX_STR_LEN];
   *check = PAPI_event_code_to_name(*EventCode, tmp);
   strncpy( _fcdtocp(out), tmp, strlen(tmp));
+#elif defined(_FORTRAN_STRLEN_AT_END)
+  int i;
+  *check = PAPI_event_code_to_name(*EventCode, out);
+  for(i=strlen(out);i<out_len;out[i++]=' ');
 #else
   *check = PAPI_event_code_to_name(*EventCode, out);
 #endif
@@ -100,6 +117,9 @@ PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, ch
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(_fcd in, int *out, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out, int *check,
+							      int in_len))
 #else
 PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out, int *check))
 #endif
@@ -111,7 +131,13 @@ PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out
   slen = _fcdlen(in);
   strncpy( tmpin, _fcdtocp(in), slen );
   *check= PAPI_event_name_to_code(tmpin, out);
+#elif defined(_FORTRAN_STRLEN_AT_END)
+  char tmpin[PAPI_MAX_STR_LEN+1]; 
+  strncpy( tmpin, in, in_len );
+  tmpin[in_len]='\0';
+  *check= PAPI_event_name_to_code(tmpin, out);
 #else
+  /* This will have trouble if argument in is not null terminated */
   *check= PAPI_event_name_to_code(in, out);
 #endif
 }
@@ -180,6 +206,11 @@ PAPI_FCALL(papif_shutdown,PAPIF_SHUTDOWN,(void))
 PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, _fcd vendor_string, 
 	   int *model, _fcd model_string, float *revision, float *mhz))
+#elif defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
+	   int *model, char *model_string, float *revision, float *mhz,
+	   int vendor_string_len, int model_string_len))
 #else
 PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
@@ -187,6 +218,9 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu,
 #endif
 {
   const PAPI_hw_info_t *hwinfo;
+#if defined(_FORTRAN_STRLEN_AT_END)
+  int i;
+#endif
   hwinfo = PAPI_get_hardware_info();
   if ( hwinfo == NULL ){
     *ncpu = 0;
@@ -202,6 +236,11 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu,
 	     strlen( hwinfo->vendor_string) );
     strncpy( _fcdtocp( model_string), hwinfo->model_string,
 	     strlen( hwinfo->model_string ) );
+#elif defined(_FORTRAN_STRLEN_AT_END)
+    strcpy( vendor_string, hwinfo->vendor_string );
+    strcpy( model_string, hwinfo->model_string );
+    for(i=strlen(vendor_string);i<vendor_string_len;vendor_string[i++]=' ') ;
+    for(i=strlen(model_string);i<model_string_len;model_string[i++]=' ') ;
 #else
     strcpy( vendor_string, hwinfo->vendor_string );
     strcpy( model_string, hwinfo->model_string );

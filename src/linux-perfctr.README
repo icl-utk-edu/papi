@@ -1,0 +1,35 @@
+/* 
+* File:    linux-2.4-x86.README
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+Linux 2.4 Kernel Notes
+----------------------
+
+If using Linux 2.4, patch your kernel with the appropriate patch from the
+1.3 or later perfctr distribution from Mikael Petterson's web site.
+
+		http://www.csd.uu.se/~mikpe/linux/perfctr/
+
+If you're not sure how to patch, recompile and reinstall your linux
+kernel, check the Linux HOWTO's on the web. 
+
+		http://www.linuxhq.com.
+
+Linux 2.4 Native Event Notes
+----------------------------
+
+For *all* the native event codes, see the website at
+
+		http://www.sandpile.org
+
+The native event counter format is:
+
+	event_code = 16 bit event selector code and unit mask.
+	hw_counter_num = Event register number 0 through 1, (2 or 3 on K7).
+			
+	event = (event_code << 8) | (hw_counter_num).

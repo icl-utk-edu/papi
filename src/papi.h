@@ -144,14 +144,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_WEIGHTED 0x2 /* Weight the samples by their value. */
 #define PAPI_PROFIL_COMPRESS 0x4 /* Ignore samples if hash buckets get big. */
 
-#define PAPI_SET_ATTACH  29     /* Option to attach to another process */
-#define PAPI_GET_ATTACH  30     /* Option to query which process I'm attached */
-
 #define PAPI_GET_PRELOAD 31     /* Option to find out the environment variable that can preload libraries */
 
-#define PAPI_MAX_EVNTS   16   /*The maximum number of spontaneous events 
-				countable by the platform specific hardware 
-				without multiplexing*/
 #define PAPI_INIT_SLOTS  64     /*Number of initialized slots in
                                 DynamicArray of EventSets */
 
@@ -319,11 +313,10 @@ allows the user to access and count specific hardware events from
 both C and Fortran. It should be noted that this API can be used in
 conjunction with the low level API. */
 
-int PAPI_num_counters(void);
 int PAPI_start_counters(int *events, int array_len);
-int PAPI_start_counters_r(int *events, int array_len);
 int PAPI_read_counters(long long *values, int array_len);
 int PAPI_stop_counters(long long *values, int array_len);
+int PAPI_num_counters(void);
 
 #endif
 

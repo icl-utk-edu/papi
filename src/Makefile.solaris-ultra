@@ -7,7 +7,7 @@ CFLAGS  = -xarch=v8plusa
 OPTFLAGS= -xO3 -DNDEBUG
 NOOPT 	= -xO0
 SMPCFLGS= -xexplicitpar
-# OMPCFLG S= -xexplicitpar
+OMPCFLGS= -xexplicitpar
 LDFLAGS = -lcpc
 CC_R	= cc -mt
 CC	= cc -mt
