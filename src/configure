@@ -1450,7 +1450,13 @@ case "$OS" in
       case "$pmapi" in
          default)
              case "$CPU" in
-                power3) PMAPI="/usr/lpp/pmtoolkit" ;;
+                power3)
+		  if test "${OSVER}" = "5"; then
+		     PMAPI="/usr/pmapi"
+		  else
+		     PMAPI="/usr/lpp/pmtoolkit"
+		  fi
+		  ;;
                 power4) PMAPI="/usr/pmapi" ;;
              esac
 	     ;;
