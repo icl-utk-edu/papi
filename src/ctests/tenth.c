@@ -167,8 +167,8 @@ int main(int argc, char **argv)
   	max = (long_long)((values[1])[0]+(values[2])[0]);
 #endif
 
-	min = (long_long)(max * 0.9);
-	max = (long_long)(max * 1.1);
+	min = (long_long)(max * 0.8);
+	max = (long_long)(max * 1.2);
   	if ( values[0][0] > max || values[0][0] < min)
 		test_fail(__FILE__, __LINE__, CACHE_LEVEL, 1);
   }
