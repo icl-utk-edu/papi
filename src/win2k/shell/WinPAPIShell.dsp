@@ -103,6 +103,10 @@ SOURCE=.\WinPAPIShell.c
 
 SOURCE=.\WinPAPIShell.rc
 # End Source File
+# Begin Source File
+
+SOURCE=..\substrate\Release\WinPAPI.lib
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -121,11 +125,19 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
+SOURCE=.\bitmap2.bmp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Papismall.ico
 # End Source File
 # Begin Source File
 
 SOURCE=.\splash.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\WinPAPI3splash.bmp
 # End Source File
 # Begin Source File
 

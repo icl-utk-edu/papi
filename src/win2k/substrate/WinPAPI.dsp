@@ -44,7 +44,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "WinPAPI_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /D "NO_VARARG_MACRO" /YX /FD /D SUBSTRATE=<perfctr-p3.h> /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libcmt.lib /nologo /dll /machine:I386
+# ADD LINK32 winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libcmt.lib  psapi.lib /nologo /dll /machine:I386 /out:"Release/WinPAPI.dll"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Copying DLL to target directories
@@ -75,7 +75,7 @@ PostBuild_Cmds=copy release\WinPAPI.dll ..\shell\release	copy release\WinPAPI.dl
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "WinPAPI_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "..\.." /I "..\winpmc" /I "..\winpmc\sys" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FORTRANCAPS" /D "WinPAPI_EXPORTS" /D "NO_VARARG_MACRO" /YX /FD /GZ /D SUBSTRATE=<perfctr-p3.h> /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -85,7 +85,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libcmt.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libcmt.lib psapi.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"libcmtd.lib" /out:"Debug/WinPAPI.dll" /pdbtype:sept
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Installing debug dll
@@ -115,7 +115,15 @@ SOURCE="..\..\linux-memory.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\linux.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\multiplex.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\p3_events.c
 # End Source File
 # Begin Source File
 
@@ -124,7 +132,6 @@ SOURCE=..\..\papi.c
 # Begin Source File
 
 SOURCE=..\..\papi_data.c
-# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
@@ -137,7 +144,14 @@ SOURCE=..\..\papi_hl.c
 # Begin Source File
 
 SOURCE=..\..\papi_internal.c
-# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\papi_preset.c
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\perfctr-p3.c"
 # End Source File
 # Begin Source File
 
@@ -146,11 +160,6 @@ SOURCE=..\winpmc\pmclib.c
 # Begin Source File
 
 SOURCE=..\..\threads.c
-# PROP Exclude_From_Build 1
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32.c
 # End Source File
 # Begin Source File
 
@@ -166,31 +175,6 @@ SOURCE=.\cpuinfo.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\hwperfmacros.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\ia32_native.h
-
-!IF  "$(CFG)" == "WinPAPI - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "WinPAPI - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\ia32_presets.h
-# End Source File
-# Begin Source File
-
-SOURCE="..\..\linux-perfctr.h"
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\papi.h
 # End Source File
 # Begin Source File
@@ -200,7 +184,6 @@ SOURCE=..\..\papi_internal.h
 # Begin Source File
 
 SOURCE=..\..\papi_protos.h
-# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 

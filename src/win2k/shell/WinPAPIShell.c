@@ -6,6 +6,7 @@
 #include <shellapi.h>
 #include <stdio.h>
 #include "resource.h"
+#include "papi.h"
 #include "winpmc.h"
 
 
@@ -25,7 +26,8 @@ LRESULT CALLBACK	Diagnostics(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	getFileHook(HWND, UINT, WPARAM, LPARAM);
 static BOOL		UniProcessorBuild(void);
 static void		exerciseDriver(void);
-static void		getDriverVersion(void);
+static void		getDriverVersion(char *, int);
+static void		showDriverVersion(void);
 static void		centerDialog(HWND hdlg);
 static void		centerDiagnostics(HWND hdlg);
 static void		DiagRDPMC(void);
@@ -312,7 +314,22 @@ static void smokeTest(void)
 	}
 	else MessageBox(NULL, "This version of PAPI doesn't run on the MultiProcessor Build.", "Smoke Test",MB_OK);
 }
-	
+
+
+static void dispVersions(HWND hDlg)
+{
+  int retval;
+  char text[512] = {"Fourscore and seven years ago..."};
+  LPARAM lParam = (LPARAM)text;
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  PAPI_shutdown();
+  sprintf(text, "   PAPI Library Version: %d.%2d.%2d;  ",
+    PAPI_VERSION_MAJOR(retval), PAPI_VERSION_MINOR(retval), PAPI_VERSION_REVISION(retval));
+  getDriverVersion(&text[strlen(text)], sizeof(text) - strlen(text));
+  SendDlgItemMessage(hDlg, IDC_STATIC, WM_SETTEXT, 0, lParam);
+}
+
+
 static HWND diagDlg;
 
 // Message handler for about box, which serves as the main interface
@@ -324,6 +341,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_INITDIALOG:
 	    centerDialog(hDlg);
+	    dispVersions(hDlg);
 	    enableButtons(hDlg);
 	    diagDlg = 0;
 	    return TRUE;
@@ -402,7 +420,7 @@ LRESULT CALLBACK Diagnostics(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		  return TRUE;
 
 		case IDVERSION:
-		  getDriverVersion();
+		  showDriverVersion();
 		  return TRUE;
 
 		case IDTASKSWITCH:
@@ -501,12 +519,11 @@ static HANDLE LoadDriver(void)
 
 
 // get the driver version string; also makes sure it's there and active
-static void getDriverVersion(void)
+static void getDriverVersion(char *version, int size)
 {    
     HANDLE hDriver;
     DWORD dwBytesReturned;
     BOOL  bReturnCode = FALSE;
-    int iobuf[256];     // I/O buffer
 
     // Try opening a static device driver. 
     hDriver = LoadDriver();
@@ -516,14 +533,23 @@ static void getDriverVersion(void)
 	// Dispatch the PMC_VERSION_STRING IOCTL to our NT driver.
 	bReturnCode = DeviceIoControl(hDriver,
 				  IOCTL_PMC_VERSION_STRING,
-				  NULL, 0, iobuf, sizeof(iobuf),
+				  NULL, 0, (int *)version, size,
 				  &dwBytesReturned, NULL);
-
-	// Display the results!
-	MessageBox(NULL,(const char *)iobuf,"WinPMC Version",MB_OK);
-
 	CloseHandle(hDriver);
-    }
+	version[dwBytesReturned-2] = 0; // make sure it's terminated
+    } else version[0] = 0;
+}
+
+// show the driver version string
+static void showDriverVersion(void)
+{    
+    char version[512];     // version string buffer
+
+    getDriverVersion(version, sizeof(version));
+
+    if (strlen(version))
+	// Display the results!
+	MessageBox(NULL,(const char *)version,"WinPMC Version",MB_OK);
 }
 
 

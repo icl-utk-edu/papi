@@ -39,21 +39,22 @@ IDI_SMALL               ICON    DISCARDABLE     "Papismall.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX1 DIALOG DISCARDABLE  0, 0, 384, 266
+IDD_ABOUTBOX1 DIALOGEX 0, 0, 384, 279
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "WinPAPI Version 2.3.4"
+CAPTION "WinPAPI"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         136,IDC_STATIC,"Static",SS_BITMAP | WS_DISABLED,0,0,384,
-                    266
-    DEFPUSHBUTTON   "Exit",IDOK,322,242,50,14
-    PUSHBUTTON      "Diagnostics",IDDIAGNOSTIC,323,220,50,14
-    PUSHBUTTON      "Fortran Examples",IDFORTRANEX,245,242,58,14
-    PUSHBUTTON      "C Examples",IDCEX,246,220,57,14
-    PUSHBUTTON      "Perfometer Examples",IDPERFOMETEREX,154,242,72,14
-    PUSHBUTTON      "Perfometer",IDPERFOMETER,155,220,71,14
-    PUSHBUTTON      "Web",IDWEB,85,242,50,14
-    PUSHBUTTON      "Help",IDHELP,85,220,50,14
+    LTEXT           "Now is the time for all good men",IDC_STATIC,0,0,384,12,
+                    SS_CENTERIMAGE | NOT WS_GROUP,WS_EX_STATICEDGE
+    CONTROL         143,IDC_STATIC,"Static",SS_BITMAP,0,13,384,266
+    DEFPUSHBUTTON   "Exit",IDOK,322,258,50,14
+    PUSHBUTTON      "Diagnostics",IDDIAGNOSTIC,323,236,50,14
+    PUSHBUTTON      "Fortran Examples",IDFORTRANEX,245,258,58,14
+    PUSHBUTTON      "C Examples",IDCEX,246,236,57,14
+    PUSHBUTTON      "Perfometer Examples",IDPERFOMETEREX,154,258,72,14
+    PUSHBUTTON      "Perfometer",IDPERFOMETER,155,236,71,14
+    PUSHBUTTON      "Web",IDWEB,85,258,50,14
+    PUSHBUTTON      "Help",IDHELP,85,236,50,14
 END
 
 IDD_ABOUTBOX2 DIALOG DISCARDABLE  0, 0, 384, 54
@@ -108,7 +109,7 @@ END
 // Bitmap
 //
 
-IDB_BITMAP1             BITMAP  DISCARDABLE     "splash.bmp"
+IDB_BITMAP2             BITMAP  DISCARDABLE     "bitmap2.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -118,13 +119,6 @@ IDB_BITMAP1             BITMAP  DISCARDABLE     "splash.bmp"
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO DISCARDABLE 
 BEGIN
-    IDD_ABOUTBOX1, DIALOG
-    BEGIN
-        RIGHTMARGIN, 377
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 259
-    END
-
     IDD_ABOUTBOX2, DIALOG
     BEGIN
         RIGHTMARGIN, 377
