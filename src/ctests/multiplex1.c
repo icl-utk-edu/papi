@@ -275,6 +275,11 @@ int case4()
 
 #if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || defined(WIN32)
    retval = PAPI_add_event(EventSet, PAPI_L1_DCM);
+   /* Try an alternative event if the above can't be used */
+   if ((retval == PAPI_ECNFLCT) || (retval == PAPI_ENOEVNT))
+      retval = PAPI_add_event(EventSet, PAPI_L2_DCM);
+   if ((retval == PAPI_ECNFLCT) || (retval == PAPI_ENOEVNT))
+      retval = PAPI_add_event(EventSet, PAPI_L2_TCM);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_add_event", retval);
 
@@ -284,6 +289,9 @@ int case4()
       CPP_TEST_FAIL("PAPI_add_event", retval);
 #else
    retval = PAPI_add_event(EventSet, PAPI_L1_ICM);
+   /* Try an alternative event if the above can't be used */
+   if ((retval == PAPI_ECNFLCT) || (retval == PAPI_ENOEVNT))
+      retval = PAPI_add_event(EventSet, PAPI_L1_LDM);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_add_event", retval);
 #endif
