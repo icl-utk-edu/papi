@@ -1,5 +1,5 @@
 #include "fpapi.h"
-
+      
       program zero
       implicit none
 
@@ -91,9 +91,8 @@
 
       call stringify_domain(domain, domainstr)
       if (tests_quiet .EQ. 0) then
-      write (*,900) "Default domain is:", domain, domainstr
+      write (*,800) "Default domain is     :", domain, domainstr
       end if
- 900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -106,16 +105,18 @@
       call stringify_granularity(granularity, grnstr)
       if (tests_quiet .EQ. 0) then
       write (*,800) "Default granularity is:", granularity, grnstr
- 800  format(a25, i3, " ", a20)
+ 800  format(a25, i3, " (", a13, ")")
+	write (*,810) "Using", NUM_FLOPS, " iterations of c = c + a * b"
+ 810  format(a7, i9, a)
 
       print *, "-----------------------------------------------",
      *"--------------------------"
  
       write (*,100) "Test type", 1
 #ifdef NO_FLOPS
-      write (*,100) "PAPI_FP_INS", values(1)
-#else
       write (*,100) "PAPI_TOT_INS", values(1)
+#else
+      write (*,100) "PAPI_FP_INS", values(1)
 #endif
       write (*,100) "PAPI_TOT_CYC", values(2)
       write (*,100) "Real usec", usn-uso
