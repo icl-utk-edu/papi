@@ -1265,6 +1265,11 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+int _papi_hwd_shutdown_global(void)
+{
+  return(PAPI_OK);
+}
+
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
   if (preset_map[preset_index].selector == 0)
@@ -1345,6 +1350,26 @@ void *_papi_hwd_get_overflow_address(void *context)
   struct sigcontext *info = (struct sigcontext *)context;
 
   return((void *)info->sc_pc);
+}
+
+static volatile int lock = 0;
+
+void _papi_hwd_lock_init(void)
+{
+}
+
+void _papi_hwd_lock(void)
+{
+  while (__lock_test_and_set(&lock,1) != 0)
+    {
+      DBG((stderr,"Waiting..."));
+      usleep(1000);
+    }
+}
+
+void _papi_hwd_unlock(void)
+{
+  __lock_release(&lock);
 }
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */

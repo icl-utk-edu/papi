@@ -198,6 +198,10 @@ extern long long _papi_hwd_get_real_usec (void);
 extern long long _papi_hwd_get_virt_cycles (void);
 extern long long _papi_hwd_get_virt_usec (void);
 extern void _papi_hwd_error(int error, char *);
+extern void _papi_hwd_lock_init(void);
+extern void _papi_hwd_lock(void);
+extern void _papi_hwd_unlock(void);
+extern int _papi_hwd_shutdown_global(void);
 
 typedef struct _papi_mdi {
   const char substrate[81]; /* Name of the substrate we're using */

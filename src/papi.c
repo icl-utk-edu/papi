@@ -1,3 +1,12 @@
+/* 
+* File:    papi.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -45,6 +54,7 @@ static int remove_event(EventSetInfo *ESI, int EventCode);
 EventSetInfo *default_master_eventset = NULL; /* For non threaded apps */
 
 static int PAPI_ERR_LEVEL = PAPI_VERB_ECONT; /* Behavior of handle_error() */
+static PAPI_debug_handler_t PAPI_ERR_HANDLER = NULL;
 
 #ifdef DEBUG
 int papi_debug = 1;
@@ -245,6 +255,9 @@ int PAPI_thread_init(void **handle, int flag)
   int retval;
   EventSetInfo *master;
 
+  if ((handle == NULL) && (default_master_eventset))
+    return(PAPI_OK);
+
   if ((master = allocate_master_eventset()) == NULL)
     return(PAPI_ENOMEM);
 
@@ -265,95 +278,44 @@ int PAPI_thread_init(void **handle, int flag)
   return(PAPI_OK);
 }
 
-#if defined(linux)
-#define __SMP__
-#include <asm/atomic.h>
-atomic_t lock;
-#elif defined(sun) && defined(sparc)
-#include <synch.h>
-rwlock_t lock;
-#elif defined(sgi) && defined(mips)
-int lock = 0;
-#elif defined(_CRAYT3E)
-volatile int lock = 0;
-#elif defined(_AIX)
-#include <sys/atomic_op.h>
-int lock_var = 0;
-atomic_p lock = &lock_var;
-#endif
-
 void PAPI_lock(void)
 {
-#if defined(linux)
-  atomic_inc(&lock);
-  while (atomic_read(&lock) > 1)
-    {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
-    }
-#elif defined(_AIX)
-  while (_check_lock(lock,0,1) == TRUE)
-    {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
-    }
-#elif defined(sgi) && defined(mips)
-  while (__lock_test_and_set(&lock,1) != 0)
-    {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
-    }
-#elif defined(_CRAYT3E)
-  _cmr();
-  lock++;
-  _cmr();
-  while (lock != 1)
-    {
-      DBG((stderr,"Waiting..."));
-      _cmr();
-    }
-#elif defined(sun) && defined(sparc)
-  rw_wrlock(&lock);
-#endif
+  _papi_hwd_lock();
 }
 
 void PAPI_unlock(void)
 {
-#if defined(linux)
-  atomic_dec(&lock);
-#elif defined(sun) && defined(sparc)
-  rw_unlock(&lock);
-#elif defined(_AIX)
-  _clear_lock(lock, 0);
-#elif defined(sgi) && defined(mips)
-  __lock_release(&lock);
-#elif defined(_CRAYT3E)
-  _cmr();
-  lock--;
-  _cmr();
-#endif
+  _papi_hwd_unlock();
 }
 
 int PAPI_library_init(int version)
 {
-  int init_retval, i, tmp;
-
-  if (version != PAPI_VER_CURRENT)
-    return(PAPI_EMISC);
+  static int init_retval = 0xdedbeef, i, tmp;
 
 #ifdef DEBUG
   if (getenv("PAPI_NDEBUG"))
     papi_debug = 0;
 #endif
 
-#if defined(linux)
-  atomic_set(&lock,0);
-#endif
+  if (init_retval != 0xdedbeef)
+    return(init_retval);
+
+  if (version != PAPI_VER_CURRENT)
+    return(PAPI_EMISC);
+
+  _papi_hwd_lock_init();
 
   tmp = _papi_hwd_init_global();
   if (tmp)
-    return(tmp);
+    return(init_retval = tmp);
 
+  tmp = PAPI_thread_init(NULL, 0);
+  if (tmp)
+    {
+      _papi_hwd_shutdown_global();
+      return(init_retval = tmp);
+    }
+  
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (papi_presets[i].event_name) /* If the preset is part of the API */
       papi_presets[i].avail = 
@@ -362,10 +324,9 @@ int PAPI_library_init(int version)
 			&papi_presets[i].event_note);
 
   if (allocate_eventset_map(PAPI_EVENTSET_MAP))
-    return(PAPI_ENOMEM);
+    return(init_retval = PAPI_ENOMEM);
 
-  init_retval = PAPI_VER_CURRENT;
-  return(init_retval);
+  return(init_retval = PAPI_VER_CURRENT);
 }
 
 static int expand_dynamic_array(DynamicArray *DA)
@@ -384,7 +345,7 @@ static int expand_dynamic_array(DynamicArray *DA)
 
   DA->dataSlotArray = n;
 
-  memset(DA->dataSlotArray[DA->totalSlots],0x00,DA->totalSlots*sizeof(EventSetInfo *));
+  memset(DA->dataSlotArray+DA->totalSlots,0x00,DA->totalSlots*sizeof(EventSetInfo *));
 
   DA->totalSlots = number;
   DA->availSlots = number - DA->fullSlots;
@@ -472,7 +433,7 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
 {
   int i, errorCode;
 
-  PAPI_lock();
+  _papi_hwd_lock();
 
   /* Update the values for lowestEmptySlot, num of availSlots */
 
@@ -487,7 +448,7 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
       errorCode = expand_dynamic_array(map);
       if (errorCode!=PAPI_OK) 
 	{
-	  PAPI_unlock();
+	  _papi_hwd_unlock();
 	  return(errorCode);
 	}
     }
@@ -497,7 +458,7 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
   DBG((stderr,"Empty slot for lowest available EventSet is at %d\n",i));
   map->lowestEmptySlot = i;
  
-  PAPI_unlock();
+  _papi_hwd_unlock();
   return(PAPI_OK);
 }
 
@@ -667,8 +628,8 @@ int PAPI_create_eventset_r(int *EventSet, void *handle)
   if ((EventSet == NULL) || (handle == NULL))
     return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
 
-  if (*EventSet != PAPI_NULL)
-    return(handle_error(PAPI_EINVAL, "EventSet must be initialized to PAPI_NULL"));
+  /* if (*EventSet != PAPI_NULL)
+    return(handle_error(PAPI_EINVAL, "EventSet must be initialized to PAPI_NULL")); */
 
   /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
   
@@ -1185,7 +1146,7 @@ int PAPI_write(int EventSet, long long *values)
 
 int PAPI_cleanup_eventset(int *EventSet) 
 { 
-  int i;
+  int i, tmp;
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
 
@@ -1200,7 +1161,8 @@ int PAPI_cleanup_eventset(int *EventSet)
   if (ESI->state != PAPI_STOPPED) 
     return(handle_error(PAPI_EINVAL,"EventSet is still running"));
   
-  for(i=0;i<ESI->NumberOfCounters;i++) 
+  tmp = ESI->NumberOfCounters;
+  for(i=0;i<tmp;i++) 
     {
       if (remove_event(ESI, ESI->EventInfoArray[i].code))
 	return(handle_error(PAPI_EBUG,NULL));
@@ -1249,8 +1211,13 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
   int retval;
   EventSetInfo *thread_master_eventset;
 
+  if (ptr == NULL)
+    return(handle_error(PAPI_EINVAL,"NULL pointer passed as argument to PAPI_set_opt"));
+
   switch(option)
     { 
+    case PAPI_SET_DEBUG:
+      return(PAPI_set_debug(ptr->debug.level));
     case PAPI_SET_DOMAIN:
       { 
 	int dom = ptr->defdomain.domain;
@@ -1299,6 +1266,22 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         internal.granularity.ESI->granularity.granularity = grn;
         return(retval);
       }
+    case PAPI_SET_INHERIT:
+      {
+	EventSetInfo *tmp;
+	if (ptr->inherit.thread_handle == NULL)
+	  tmp = default_master_eventset;
+	else
+	  tmp = ptr->inherit.thread_handle;
+
+        internal.inherit.inherit = ptr->inherit.inherit;
+        retval = _papi_hwd_ctl(tmp, PAPI_SET_INHERIT, &internal);
+        if (retval < PAPI_OK)
+          return(handle_error(retval,"Error enabling inheritance"));
+
+	tmp->inherit.inherit = ptr->inherit.inherit;
+        return(retval);
+      } 
     /* case PAPI_SET_DEFDOM:
       {
         int dom = ptr->domain.domain;
@@ -1331,16 +1314,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         thread_master_eventset->granularity.granularity = grn;
         return(retval);
       }
-    case PAPI_SET_INHERIT:
-      {
-        internal.inherit.inherit = ptr->inherit.inherit;
-        retval = _papi_hwd_ctl(thread_master_eventset, PAPI_SET_INHERIT, &internal);
-        if (retval < PAPI_OK)
-          return(handle_error(retval,NULL));
-
-        thread_master_eventset->inherit.inherit = (ptr->inherit.inherit != 0);
-        return(retval);
-      } */
+*/
     default:
       return(handle_error(PAPI_EINVAL,"Invalid option type"));
     }
@@ -1350,6 +1324,10 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 { 
   switch(option)
     {
+    case PAPI_GET_DEBUG:
+      ptr->debug.level = PAPI_ERR_LEVEL;
+      ptr->debug.handler = PAPI_ERR_HANDLER;
+      break;
     case PAPI_GET_CLOCKRATE:
       return(_papi_system_info.hw_info.mhz);
     case PAPI_GET_MAX_HWCTRS:
@@ -1358,10 +1336,14 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
       return(_papi_system_info.default_domain);
     case PAPI_GET_DEFGRN:
       return(_papi_system_info.default_granularity);
-#if 0
     case PAPI_GET_INHERIT:
-      return(thread_master_eventset->inherit.inherit); 
-#endif
+      if (ptr->inherit.thread_handle == NULL)
+	return(default_master_eventset->inherit.inherit); 
+      else
+	{
+	  EventSetInfo *tmp = (EventSetInfo *)ptr->inherit.thread_handle;
+	  return(tmp->inherit.inherit);
+	}
     case PAPI_GET_EXEINFO:
       if (ptr == NULL)
 	return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));

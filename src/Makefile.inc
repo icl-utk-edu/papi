@@ -38,8 +38,8 @@ fpapi.h: genpapifdef
 	./genpapifdef > fpapi.h
 
 examples: 
-	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS) -I.." LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" $(TARGETS)
-	cd ftests; $(MAKE) F77="$(F77)" OPTFLAGS="$(OPTFLAGS)" FFLAGS="$(FFLAGS) -I.." LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" 
+	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" $(TARGETS)
+	cd ftests; $(MAKE) F77="$(F77)" OPTFLAGS="$(OPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" 
 
 
 libclean:

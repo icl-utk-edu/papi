@@ -875,7 +875,11 @@ int _papi_hwd_write(EventSetInfo *ESI, long long events[])
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
-  /* pm_delete_program_mythread(); */
+  return(PAPI_OK);
+}
+
+int _papi_hwd_shutdown_global(void)
+{
   return(PAPI_OK);
 }
 
@@ -922,6 +926,18 @@ void *_papi_hwd_get_overflow_address(void *context)
   location = (void *)info->sc_pc;
 
   return(location);
+}
+
+void _papi_hwd_lock_init(void)
+{
+}
+
+void _papi_hwd_lock(void)
+{
+}
+
+void _papi_hwd_unlock(void)
+{
 }
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */

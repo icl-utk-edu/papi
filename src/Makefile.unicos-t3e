@@ -4,7 +4,7 @@ LIBS	= static
 TARGETS	= serial 
 
 #CFLAGS	= -Gn -DDEBUG
-OPTFLAGS= -O3
+OPTFLAGS= -O3 -h calchars
 NOOPT	= -O0
 CC_R	= cc
 CC	= cc

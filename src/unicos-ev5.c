@@ -6,7 +6,10 @@
 #include "unicos-ev5.h"
 
 /* First entry is counter code 1, counter code 2 and counter code 3.
-   Then is the mask. There are no derived metrics for the T3E. */
+   Then is the mask. There are no derived metrics for the T3E.
+   Notes:
+     Resource stalls only count long(>15 cycle) stalls and not MB stall cycles
+      */
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
                 { CNTR3, NOT_DERIVED, -1, {-1,-1,0x6}, "" },  /* L1 D-Cache misses */
@@ -16,7 +19,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 D-misses */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 I-misses */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L1 total */
-		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0xf}, "" }, /* L2 total */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L2 total */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 total */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* snoop */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, 	/* Req. acc. to shared cache line */
@@ -36,7 +39,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L1 SM */ 
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L2 LM */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L2 SM */
-                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x2}, "" },	/* BTAC miss */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* BTAC miss */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Prefetch data caused a miss */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* 29 */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* TLB shootdowns */
@@ -44,21 +47,21 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Suc. store cond. */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Tot. store cond. */
                 { CNTR3, NOT_DERIVED, -1, {-1,-1,0xd}, "" }, /* Cycles stl. wait for memory */
-                { CNTR3, NOT_DERIVED, -1, {-1,-1,-1}, "" },  /* Cycles stl. wait for memory read */
-                { CNTR3, NOT_DERIVED, -1, {-1,-1,-1}, "" },  /* Cycles stl. wait memory write */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },  /* Cycles stl. wait for memory read */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },  /* Cycles stl. wait memory write */
                 { CNTR2, NOT_DERIVED, -1, {-1,0x0,-1}, "" }, /* Cycles no instructions issued */
                 { CNTR2, NOT_DERIVED, -1, {-1,0x7,-1}, "" }, /* Cycles max instructions issued */
                 { CNTR2, NOT_DERIVED, -1, {-1,0x0,-1}, "" }, /* Cycles no instrs completed */
 		{ CNTR2, NOT_DERIVED, -1, {-1,0x7,-1}, "" }, /* Cycles max instrs completed */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* hardware interrupts */
-		{ CNTR2|CNTR3, DERIVED_CMPD, 1, {-1,0x8,0x2}, "" },/* Uncond. branches executed */
-		{ CNTR2|CNTR3, DERIVED_CMPD, 1, {-1,0x8,0x3}, "" },/* Cond. branch inst. executed*/
+		{ CNTR2|CNTR3, DERIVED_ADD, 1, {-1,0x8,0x2}, "" },/* Uncond. branches executed */
+		{ CNTR2|CNTR3, DERIVED_ADD, 1, {-1,0x8,0x3}, "" },/* Cond. branch inst. executed*/
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cond. branch inst. taken*/
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cond. branch inst. not taken*/
 		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0x3}, "" },  /* Cond. branch inst. mispred.*/
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cond. branch inst. corr. pred */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* FMA instructions */
-                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Total instructions issued */
+                { CNTR2, NOT_DERIVED, -1, {-1,0xd,-1}, "" },	/* Total instructions issued */
 		{ CNTR1, NOT_DERIVED, -1, {0x1,-1,-1}, "" },	/* Total inst. executed */
 		{ CNTR2, NOT_DERIVED, -1, {-1,0x9,-1}, "" },	/* Integer inst. executed */
 		{ CNTR2, NOT_DERIVED, -1, {-1,0xa,-1}, "" },  /* Floating Pt. inst. executed */
@@ -67,10 +70,10 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{ CNTR2, NOT_DERIVED, -1, {-1,0x8,-1}, "" },	/* Branch inst. executed */
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Vector/SIMD inst. executed  */
 		{ CNTR2|CNTR1, DERIVED_PS, 0, {0x0,0xa,-1}, "" },	/* FLOPS */
-                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x0}, "" },	/* Resource stalls */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x0}, "Counts only long (>15cyc) stalls, not MB stalls" },	/* Resource stalls */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* FPU stalled */
-		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0xc}, ""},   /* Total cycles */
-		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* IPS */
+		{ CNTR1, NOT_DERIVED, -1, {0x0,-1,-1}, ""},   /* Total cycles */
+		{ CNTR1|CNTR3, DERIVED_PS, 2, {0x1,-1,0xc}, "" },	/* IPS */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Total load/stores */
                 { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Syncs */ 
 		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, /* L1_DCH */
@@ -125,10 +128,18 @@ static int setup_all_presets(PAPI_hw_info_t *info)
     {
       if (preset_map[pnum].selector)
 	{
-	  sprintf(preset_map[pnum].note,"0x%x,0x%x,0x%x",
+	  char str[PAPI_MAX_STR_LEN];
+	  sprintf(str,"0x%x,0x%x,0x%x",
 		  preset_map[pnum].counter_cmd[0],
 		  preset_map[pnum].counter_cmd[1],
 		  preset_map[pnum].counter_cmd[2]);
+	  if (strlen(preset_map[pnum].note) != 0)
+	    {
+	      strcat(preset_map[pnum].note,str);
+	      strcat(preset_map[pnum].note,":");
+	    }
+	  else
+	    strcpy(preset_map[pnum].note,str);
 	}
     }
   return(PAPI_OK);
@@ -940,6 +951,26 @@ long long _papi_hwd_get_virt_usec (void)
 long long _papi_hwd_get_virt_cycles (void)
 {
   return(-1);
+}
+
+void _papi_hwd_init_lock(void)
+{
+}
+
+#define PIF_LOCK        (010)
+#pragma _CRI soft $MULTION
+
+extern $MULTION(void);
+
+void _papi_hwd_lock(void)
+{
+    if ($MULTION == 0) _semts(PIF_LOCK);
+    return;
+}
+void _papi_hwd_unlock(void)
+{ 
+    if ($MULTION == 0) _semclr(PIF_LOCK);
+    return;
 }
 
 /* Machine info structure. -1 is unused. */

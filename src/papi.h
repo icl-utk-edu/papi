@@ -1,6 +1,15 @@
 #ifndef _PAPI
 #define _PAPI
 
+/* 
+* File:    papi.h
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #define PAPI_VER_CURRENT 1
 
 /* Include files */
@@ -95,10 +104,11 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes < 0 to stderr and continue. */ 
 #define PAPI_VERB_ESTOP  2     /* Option to automatically report any return codes < 0 to stderr and exit. */
 
-#define PAPI_SET_MPXRES  1     /* Option to enable and set the resolution of the multiplexing hardware*/
-#define PAPI_GET_MPXRES  2     /* Option to query the status of the multiplexing software*/
+#define PAPI_SET_MPXRES  0     /* Option to enable and set the resolution of the multiplexing hardware*/
+#define PAPI_GET_MPXRES  1     /* Option to query the status of the multiplexing software*/
 
-#define PAPI_DEBUG	 3     /* Option to turn on debugging features of the PAPI library*/
+#define PAPI_SET_DEBUG	 2     /* Option to turn on debugging features of the PAPI library*/
+#define PAPI_GET_DEBUG   3     /* Option to query debugging features of the PAPI library*/
 
 #define PAPI_SET_OVRFLO  4     /* Option to turn on the overflow reporting software */
 #define PAPI_GET_OVRFLO  5     /* Option to query the status of the overflow reporting software */
@@ -117,8 +127,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_SET_INHERIT 15    /* Child threads/processes inherit counter config and progate values up upon exit. */
 #define PAPI_GET_INHERIT 16    /* Child threads/processes inherit counter config and progate values up upon exit. */
-#define PAPI_INHERIT_ALL (pid_t)-1    /* The flag to this to inherit all children's counters */
-#define PAPI_INHERIT_NONE (pid_t)0    /* The flag to this to inherit none of the children's counters */
+
+#define PAPI_INHERIT_ALL  1    /* The flag to this to inherit all children's counters */
+#define PAPI_INHERIT_NONE 0    /* The flag to this to inherit none of the children's counters */
 				   
 #define PAPI_SET_BIND    17    /* Set the function that binds our thread to the CPU it's on */
 #define PAPI_GET_BIND    18    /* Get the function that binds our thread to the CPU it's on */
@@ -214,7 +225,8 @@ typedef struct _papi_multiplex_option {
   int milliseconds; } PAPI_multiplex_option_t;
 
 typedef struct _papi_inherit_option {
-  pid_t inherit; } PAPI_inherit_option_t;
+  void *thread_handle;
+  int inherit; } PAPI_inherit_option_t;
 
 typedef struct _papi_domain_option {
   int eventset;
@@ -223,6 +235,12 @@ typedef struct _papi_domain_option {
 typedef struct _papi_granularity_option {
   int eventset;
   int granularity; } PAPI_granularity_option_t;
+
+typedef void (*PAPI_debug_handler_t)(int level, int num, char **params);
+  
+typedef struct _papi_debug_option {
+  int level;
+  PAPI_debug_handler_t handler; } PAPI_debug_option_t;
 
 typedef struct _papi_program_info {
   char fullname[PAPI_MAX_STR_LEN];	/* path+name */	
@@ -252,14 +270,14 @@ typedef struct _papi_hw_info {
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
 typedef union {
+  PAPI_debug_option_t debug;
   PAPI_inherit_option_t inherit;
   PAPI_granularity_option_t granularity; 
   PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
   PAPI_domain_option_t defdomain; 
   PAPI_hw_info_t *hw_info;
-  PAPI_exe_info_t *exe_info;
-  int debug; } PAPI_option_t;
+  PAPI_exe_info_t *exe_info; } PAPI_option_t;
 
 typedef struct pre_info {
   const char *event_name;
@@ -329,6 +347,7 @@ conjunction with the low level API. */
 
 int PAPI_num_counters(void);
 int PAPI_start_counters(int *events, int array_len);
+int PAPI_start_counters_r(int *events, int array_len);
 int PAPI_read_counters(long long *values, int array_len);
 int PAPI_stop_counters(long long *values, int array_len);
 

@@ -1181,6 +1181,11 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
+  return(PAPI_OK);
+}
+
+int _papi_hwd_shutdown_global(void)
+{
   (void)cpc_rele();
   return(PAPI_OK);
 }
@@ -1249,6 +1254,22 @@ void *_papi_hwd_get_overflow_address(void *context)
   location = (void *)info->uc_mcontext.gregs[REG_PC];
 
   return(location);
+}
+
+static rwlock_t lock;
+
+void _papi_hwd_lock_init(void)
+{
+}
+
+void _papi_hwd_lock(void)
+{
+  rw_wrlock(&lock);
+}
+
+void _papi_hwd_unlock(void)
+{
+  rw_unlock(&lock);
 }
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */

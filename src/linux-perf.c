@@ -550,12 +550,16 @@ long long _papi_hwd_get_real_cycles (void)
 
 long long _papi_hwd_get_virt_usec (void)
 {
-  return(-1);
+  struct rusage usage;
+  if (getrusage(RUSAGE_SELF, &usage) != -1)
+    return((long long)usage.ru_utime.tv_usec + ((long long)usage.ru_utime.tv_sec * (long long)1000000));
+  else
+    return(-1);
 }
 
 long long _papi_hwd_get_virt_cycles (void)
 {
-  return(-1);
+  return(_papi_hwd_get_virt_usec() * (long long)_papi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -731,7 +735,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
       /* Stop the current context */
 
-      retval = perf(PERF_RESET, 0, 0);
+      retval = perf(PERF_RESET_COUNTERS, 0, 0);
       if (retval) 
 	return(PAPI_ESYS); 
       
@@ -819,7 +823,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       
   /* Stop the current context */
 
-  retval = perf(PERF_RESET, 0, 0);
+  retval = perf(PERF_RESET_COUNTERS, 0, 0);
   if (retval) 
     return(PAPI_ESYS); 
 
@@ -1029,6 +1033,11 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+int _papi_hwd_shutdown_global(void)
+{
+  return(PAPI_OK);
+}
+
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
   if (preset_map[preset_index].selector == 0)
@@ -1061,6 +1070,30 @@ void *_papi_hwd_get_overflow_address(void *context)
   location = (void *)info->eip;
 
   return(location);
+}
+
+#define __SMP__
+#include <asm/atomic.h>
+static atomic_t lock;
+
+void _papi_hwd_lock_init(void)
+{
+  atomic_set(&lock,0);
+}
+
+void _papi_hwd_lock(void)
+{
+  atomic_inc(&lock);
+  while (atomic_read(&lock) > 1)
+    {
+      DBG((stderr,"Waiting..."));
+      usleep(1000);
+    }
+}
+
+void _papi_hwd_unlock(void)
+{
+  atomic_dec(&lock);
 }
 
 /* Machine info structure. -1 is unused. */

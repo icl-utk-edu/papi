@@ -7,6 +7,7 @@
 #include <sys/processor.h>
 #include <sys/time.h>
 #include <procinfo.h>
+#include <sys/atomic_op.h>
 #include "pmapi.h"
 #include "papi.h"
 #include "papi_internal.h"

@@ -4,8 +4,8 @@
 #include <string.h>
 #include <math.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <asm/system.h>
-#include <asm/atomic.h> 
 #include <asm/perf.h>
 #include <linux/unistd.h>	
 #include <linux/tasks.h>	

@@ -1546,6 +1546,11 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+int _papi_hwd_shutdown_global(void)
+{
+  return(PAPI_OK);
+}
+
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
   if (preset_map[preset_index].selector == 0)
@@ -1589,6 +1594,28 @@ void *_papi_hwd_get_overflow_address(void *context)
   location = (void *)info->sc_jmpbuf.jmp_context.iar;
 
   return(location);
+}
+
+static volatile int lock_var = 0;
+static atomic_p lock;
+
+void _papi_hwd_lock_init(void)
+{
+  lock = &lock_var;
+}
+
+void _papi_hwd_lock(void)
+{
+  while (_check_lock(lock,0,1) == TRUE)
+    {
+      DBG((stderr,"Waiting..."));
+      usleep(1000);
+    }
+}
+
+void _papi_hwd_unlock(void)
+{
+  _clear_lock(lock, 0);
 }
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
