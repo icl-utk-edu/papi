@@ -5,8 +5,8 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = derived high-level2 describe mem_info zero zero_flip low-level high-level\
-	sprofile eventname case1 case2 calibrate \
+SERIAL  = all_events derived high-level2 describe mem_info zero zero_flip \
+	low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory \
@@ -76,10 +76,10 @@ zero_omp: zero_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_omp $(OMPLIBS)
 
 clockres: clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
 
 clockres_pthreads: clockcore.c clockres_pthreads.c $(PAPILIB) $(UTILOBJS)
-	$(CC_R) $(CFLAGS) $(INCLUDE) $(NOOPT) clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread
+	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread
 
 sprofile: sprofile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) sprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o sprofile
@@ -100,7 +100,7 @@ describe: describe.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) describe.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o describe
 
 derived: derived.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) derived.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o derived
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) derived.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o derived
 
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
@@ -148,13 +148,16 @@ profile: profile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
 
 pernode: pernode.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
 
 mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o mem_info
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o mem_info
+
+all_events: all_events.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_events
 
 avail: avail.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
 
 nineth: nineth.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) nineth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o nineth
@@ -169,31 +172,31 @@ memory: memory.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory
 
 eventname: eventname.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
 
 case1: case1.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) case1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1
 
 case2: case2.c $(PAPILIB)  $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case2
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) case2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case2
 
 low-level: low-level.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
 
 matrix-hl: matrix-hl.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
 
 high-level: high-level.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
 
 high-level2: high-level2.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level2
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) high-level2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level2
 
 dummy.o: dummy.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c dummy.c
 
 do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c do_loops.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c do_loops.c
 
 test_utils.o: test_utils.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
