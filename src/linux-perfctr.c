@@ -77,9 +77,17 @@ inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
 static inline unsigned long long get_cycles (void)
 {
 	unsigned long long ret;
+#ifdef __x86_64__
+do {
+     unsigned int a,d; 
+     asm volatile("rdtsc" : "=a" (a), "=d" (d)); 
+     (ret) = ((unsigned long)a) | (((unsigned long)d)<<32); 
+} while(0);
+#else
         __asm__ __volatile__("rdtsc"
 			    : "=A" (ret)
 			    : /* no inputs */);
+#endif
         return ret;
 }
 
