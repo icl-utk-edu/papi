@@ -8,6 +8,7 @@
  *C****************************************************************************
  */
 #include "papi.h"
+#include <stdlib.h>
 
 main(int argc, char **argv) {
 
@@ -17,7 +18,7 @@ main(int argc, char **argv) {
       int event[2];
       /*     PAPI values of the counters */
       long_long values[2];
-      double p[nrows1,ncols1],q[nrows2,ncols2], r[nrows1,ncols2],tmp;
+      double p[nrows1][ncols1],q[nrows2][ncols2], r[nrows1][ncols2],tmp;
       extern int TESTS_QUIET;
 
       tests_quiet(argc,argv);
@@ -31,7 +32,7 @@ main(int argc, char **argv) {
       if ( num_events < 2 ) {
         printf("This example program requries the architecture to "
 	       "support 2 simultaneous hardware events...shutting down.\n");
-        test_skip(__FILE__,retval);
+        test_skip(__FILE__,0,"PAPI_num_counters",0);
       }
 
       if (!TESTS_QUIET) 
@@ -48,15 +49,15 @@ main(int argc, char **argv) {
       /*     matrix 1: read in the matrix values */
       for(i=0;i<nrows1;i++)
 	for(j=0;j<nrows1;j++)
-          p[i,j] = i*j*1.0;
+          p[i][j] = i*j*1.0;
 
       for(i=0;i<nrows2;i++)
 	for(j=0;j<ncols2;j++)
-          q[i,j] = i*j*1.0;
+          q[i][j] = i*j*1.0;
 
       for(i=0;i<nrows1;i++)
 	for(j=0;j<ncols2;j++)
-          r[i,j] = i*j*1.0;
+          r[i][j] = i*j*1.0;
 
       /*     Set up the counters */
       num_events = 2;
@@ -75,7 +76,7 @@ main(int argc, char **argv) {
       for(i=0;i<nrows1;i++)
 	for(j=0;j<ncols2;j++)
 	  for(k=0;k<ncols1;k++)
-            r[i,j]=r[i,j] + p[i,k]*q[k,j];
+            r[i][j]=r[i][j] + p[i][k]*q[k][j];
 
       /*     Stop the counters and put the results in the array values  */
       retval=PAPI_stop_counters(values,num_events);    
