@@ -52,9 +52,6 @@ void init_papi_pthreads(void)
   /* Turn on thread support in PAPI */
 
   if ((retval=PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0)) != PAPI_OK){
-    if ( retval == PAPI_ESBSTR )
-        test_pass(__FILE__,NULL,0);
-    else
         test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
   }
 }
@@ -231,6 +228,13 @@ void *case4_pthreads(void *arg)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
   if((retval = PAPI_add_event(&EventSet, PAPI_SR_INS))!=PAPI_OK)
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+#elif defined(__ALPHA) && defined(__osf__)
+  retval = PAPI_add_event(&EventSet, PAPI_BR_CN);
+  if (retval != PAPI_OK)
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  retval = PAPI_add_event(&EventSet, PAPI_RES_STL);
+  if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #else
 #error "Architecture not ported yet"

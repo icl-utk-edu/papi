@@ -66,6 +66,8 @@ void Thread(int n)
   long_long elapsed_us, elapsed_cyc;
   char event_name[PAPI_MAX_STR_LEN];
 
+  printf("Thread 0x%x\n",omp_get_thread_num());
+
   retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
@@ -133,9 +135,7 @@ int main(int argc, char **argv)
 
 
   retval = PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num),0);
-  if ( retval == PAPI_ESBSTR )
-	test_pass(__FILE__, NULL, 0 );
-  else if (retval != PAPI_OK) 
+  if (retval != PAPI_OK) 
 	test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 
 #pragma omp parallel private(maxthr,retval)

@@ -129,18 +129,12 @@ int main(int argc, char **argv)
 #if defined(_AIX)
   retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0);
   if (retval != PAPI_OK){
-	if ( retval == PAPI_ESBSTR )
-	    test_pass(__FILE__, NULL, 0);
-	else 
 	    test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
   }
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
   retval = PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0);
   if (retval != PAPI_OK){
-	if ( retval == PAPI_ESBSTR )
-	    test_pass(__FILE__, NULL, 0);
-	else 
 	    test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
   }
 #pragma parallel
@@ -149,13 +143,9 @@ int main(int argc, char **argv)
 #elif defined(sun) && defined(sparc)
   retval = PAPI_thread_init((unsigned long (*)(void))(thr_self), 0);
   if (retval != PAPI_OK){
-	if ( retval == PAPI_ESBSTR )
-	    test_pass(__FILE__, NULL, 0);
-	else 
 	    test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
   }
 #pragma MP taskloop private(i)
-#elif defined(__ALPHA) && defined(__osf__)
 #else
 #error "Architecture not included in this test file yet."
 #endif

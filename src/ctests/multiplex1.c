@@ -61,7 +61,11 @@ int case1(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
+#ifndef NO_FLOPS
   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+#else
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -113,7 +117,11 @@ int case2(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
+#ifndef NO_FLOPS
   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+#else
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -161,7 +169,11 @@ int case3(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
+#ifndef NO_FLOPS
   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+#else
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -215,7 +227,11 @@ int case4(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
+#ifndef NO_FLOPS
   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+#else
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -244,6 +260,10 @@ int case4(void)
   retval = PAPI_add_event(&EventSet, PAPI_SR_INS);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+#elif defined(__ALPHA) && defined(__osf__)
+  retval = PAPI_add_event(&EventSet, PAPI_RES_STL);
+  if (retval != PAPI_OK)
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #else
 #error "Architecture not ported yet"
 #endif
@@ -262,7 +282,11 @@ int case4(void)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) 
+#if defined(__ALPHA) && defined(__osf__)
+     printf("case4: %lld %lld %lld\n", values[0], values[1],values[3]);
+#else
      printf("case4: %lld %lld %lld %lld\n",values[0],values[1],values[2],values[3]);
+#endif
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);

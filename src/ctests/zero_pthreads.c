@@ -122,9 +122,6 @@ int main(int argc, char **argv)
 
   retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0);
   if ( retval != PAPI_OK ) {
-	if ( retval == PAPI_ESBSTR )
-	   test_pass(__FILE__,NULL,0);
-	else
 	   test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
   }
 
