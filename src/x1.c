@@ -161,7 +161,7 @@ long_long _papi_hwd_get_real_cycles(void)
 
    usec = (long_long) _papi_hwd_get_real_usec();
    cyc = usec *  (long_long) _papi_hwi_system_info.hw_info.mhz;
-   return ((long long) cyc);
+   return ((long_long) cyc);
 }
 
 /*
@@ -170,11 +170,11 @@ long_long _papi_hwd_get_real_cycles(void)
  */
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long long retval;
+   long_long retval;
    struct tms buffer;
 
    times(&buffer);
-   retval = (long long) buffer.tms_utime * (long long) (1000000 / sysconf(_SC_CLK_TCK));
+   retval = (long_long) buffer.tms_utime * (long_long) (1000000 / sysconf(_SC_CLK_TCK));
    return (retval);
 }
 
@@ -188,7 +188,7 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 
    usec = (float) _papi_hwd_get_virt_usec(zero);
    cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-   return ((long long) cyc);
+   return ((long_long) cyc);
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -267,7 +267,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
       for(i=0,j=HWPERF_COUNTMAX+EPERF_COUNTMAX;i<MPERF_COUNTMAX;i++,j++)
 	ctrl->values[j] = ctrl->m_evtctr.mp_countval[i];
    }
-   *events = (long long *) &ctrl->values[0];
+   *events = (long_long *) &ctrl->values[0];
 #ifdef DEBUG
    if (ISLEVEL(DEBUG_SUBSTRATE) )
    {
@@ -406,7 +406,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Write a value into the hardware counters
  */
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
 {
   int i,j;
   if ( ctrl->has_p )

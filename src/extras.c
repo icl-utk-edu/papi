@@ -273,7 +273,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
                OVFDBG("dispatch_overflow() latest %lld, deadline %lld, threshold %d\n",
                     latest, ESI->overflow.deadline[i], ESI->overflow.threshold[i]);
                pos = ESI->EventInfoArray[papi_index].pos[0];
-               overflow_vector ^= (long long )1 << pos;
+               overflow_vector ^= (long_long )1 << pos;
                temp[i] = latest - ESI->overflow.deadline[i];
                overflow_flag = 1;
                /* adjust the deadline */
@@ -290,7 +290,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
           * need us to generate the overflow bit
           */
          pos = ESI->EventInfoArray[papi_index].pos[0];
-         overflow_vector = (long long )1 << pos;
+         overflow_vector = (long_long )1 << pos;
       } else 
          overflow_vector = overflow_bit;
 
@@ -326,7 +326,7 @@ foundit:
                else
                   over = temp[profile_index];
                dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
-               overflow_vector ^= (long long )1 << i;
+               overflow_vector ^= (long_long )1 << i;
             }
             /* do not use overflow_vector after this place */
          } else {
@@ -632,7 +632,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 }
 
 #ifdef NEED_FFSLL
-/* find the first set bit in long long */
+/* find the first set bit in long_long */
 
 int ffsll(long_long lli)
 {

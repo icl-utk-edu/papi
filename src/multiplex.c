@@ -441,7 +441,7 @@ int mpx_remove_event(MPX_EventSet ** mpx_events, int EventCode)
 }
 
 #ifdef MPX_DEBUG_TIMER
-static long long lastcall;
+static long_long lastcall;
 #endif
 
 static void mpx_handler(int signal)
@@ -453,12 +453,12 @@ static void mpx_handler(int signal)
    int lastthread;
 #endif
 #ifdef MPX_DEBUG_OVERHEAD
-   long long usec;
+   long_long usec;
    int didwork = 0;
    usec = PAPI_get_real_usec();
 #endif
 #ifdef MPX_DEBUG_TIMER
-   long long thiscall;
+   long_long thiscall;
 #endif
 
    signal = signal;             /* unused */

@@ -438,11 +438,11 @@ int _papi_hwd_init(hwd_context_t * zero)
 
 long_long _papi_hwd_get_real_usec(void)
 {
-   long long cyc;
+   long_long cyc;
 
    cyc = get_cycles() * (long_long) 1000;
-   cyc = cyc / (long long) _papi_hwi_system_info.hw_info.mhz;
-   return (cyc / (long long) 1000);
+   cyc = cyc / (long_long) _papi_hwi_system_info.hw_info.mhz;
+   return (cyc / (long_long) 1000);
 }
 
 long_long _papi_hwd_get_real_cycles(void)
@@ -452,17 +452,17 @@ long_long _papi_hwd_get_real_cycles(void)
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long long retval;
+   long_long retval;
    struct tms buffer;
 
    times(&buffer);
-   retval = (long long) buffer.tms_utime * (long long)(1000000/CLOCKS_PER_SEC);
+   retval = (long_long) buffer.tms_utime * (long_long)(1000000/CLOCKS_PER_SEC);
    return (retval);
 }
 
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero) * (long long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)

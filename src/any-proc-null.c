@@ -123,7 +123,7 @@ long_long _papi_hwd_get_real_usec(void)
  */
 long_long _papi_hwd_get_real_cycles(void)
 {
-   return (_papi_hwd_get_real_usec() * (long long) _papi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_real_usec() * (long_long) _papi_system_info.hw_info.mhz);
 }
 
 /*
@@ -132,11 +132,11 @@ long_long _papi_hwd_get_real_cycles(void)
  */
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long long retval;
+   long_long retval;
    struct tms buffer;
 
    times(&buffer);
-   retval = (long long) buffer.tms_utime * (long long) (1000000 / sysconf(_SC_CLK_TCK));
+   retval = (long_long) buffer.tms_utime * (long_long) (1000000 / sysconf(_SC_CLK_TCK));
    return (retval);
 }
 

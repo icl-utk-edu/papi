@@ -330,7 +330,7 @@ int PAPI_start_counters(int *events, int array_len)
 }
 
 /*========================================================================*/
-/* int PAPI_read_counters(long long *values, int array_len)      */
+/* int PAPI_read_counters(long_long *values, int array_len)      */
 /*                                                                        */
 /* Read the running counters into the values array. This call             */
 /* implicitly initializes the internal counters to zero and allows        */
@@ -372,7 +372,7 @@ int PAPI_accum_counters(long_long * values, int array_len)
 
 
 /*========================================================================*/
-/* int PAPI_stop_counters(long long *values, int array_len)               */
+/* int PAPI_stop_counters(long_long *values, int array_len)               */
 /*                                                                        */
 /* Stop the running counters and copy the counts into the values array.   */
 /* Reset the counters to 0.                                               */

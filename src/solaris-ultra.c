@@ -1069,7 +1069,7 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long events[])
+int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long events[])
 {
    return (PAPI_ESBSTR);
 }
@@ -1427,17 +1427,17 @@ long_long _papi_hwd_get_real_usec(void)
 
 long_long _papi_hwd_get_real_cycles(void)
 {
-   return(_papi_hwd_get_real_usec() * (long long) _papi_hwi_system_info.hw_info.mhz);
+   return(_papi_hwd_get_real_usec() * (long_long) _papi_hwi_system_info.hw_info.mhz);
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   return ((long long) gethrvtime() / (long long) 1000);
+   return ((long_long) gethrvtime() / (long_long) 1000);
 }
 
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (((long long) gethrvtime() / (long long) 1000) * (long long) _papi_hwi_system_info.hw_info.mhz);
+   return (((long_long) gethrvtime() / (long_long) 1000) * (long_long) _papi_hwi_system_info.hw_info.mhz);
 }
 
 int _papi_hwd_update_shlib_info(void)

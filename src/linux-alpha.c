@@ -194,7 +194,7 @@ static int update_global_hwcounters(EventSetInfo_t * global)
 }
 
 static int correct_local_hwcounters(EventSetInfo_t * global, EventSetInfo_t * local,
-                                    long long *correct)
+                                    long_long *correct)
 {
    int i;
 
@@ -331,10 +331,10 @@ extern u_int read_cycle_counter(void);
 extern u_int read_virt_cycle_counter(void);
 
 
-long long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
 #ifdef O
-   return ((long long) read_cycle_counter() / _papi_system_info.hw_info.mhz);
+   return ((long_long) read_cycle_counter() / _papi_system_info.hw_info.mhz);
 #endif
    struct timeval res;
 
@@ -343,15 +343,15 @@ long long _papi_hwd_get_real_usec(void)
    return (res.tv_sec * 1000000) + (res.tv_usec);
 }
 
-long long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
-   return ((long long) _papi_hwd_get_real_usec() * _papi_system_info.hw_info.mhz);
+   return ((long_long) _papi_hwd_get_real_usec() * _papi_system_info.hw_info.mhz);
 }
 
-long long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
+long_long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
 {
 #ifdef O
-   return ((long long) read_virt_cycle_counter() / _papi_system_info.hw_info.mhz);
+   return ((long_long) read_virt_cycle_counter() / _papi_system_info.hw_info.mhz);
 #endif
    struct rusage res;
 
@@ -360,9 +360,9 @@ long long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
    return ((res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec);
 }
 
-long long _papi_hwd_get_virt_cycles(EventSetInfo_t * zero)
+long_long _papi_hwd_get_virt_cycles(EventSetInfo_t * zero)
 {
-   return ((long long) _papi_hwd_get_virt_usec(zero) * _papi_system_info.hw_info.mhz);
+   return ((long_long) _papi_hwd_get_virt_usec(zero) * _papi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -610,10 +610,10 @@ int _papi_hwd_reset(EventSetInfo_t * ESI, EventSetInfo_t * zero)
    return (PAPI_OK);
 }
 
-static long long handle_derived_add(int selector, long long *from)
+static long_long handle_derived_add(int selector, long_long *from)
 {
    int pos;
-   long long retval = 0;
+   long_long retval = 0;
 
    while ((pos = ffs(selector))) {
       SUBDBG("Compound event, adding %lld to %lld\n", from[pos - 1], retval);
@@ -623,10 +623,10 @@ static long long handle_derived_add(int selector, long long *from)
    return (retval);
 }
 
-static long long handle_derived_subtract(int operand_index, int selector, long long *from)
+static long_long handle_derived_subtract(int operand_index, int selector, long_long *from)
 {
    int pos;
-   long long retval = from[operand_index];
+   long_long retval = from[operand_index];
 
    selector = selector ^ (1 << operand_index);
    while (pos = ffs(selector)) {
@@ -637,13 +637,13 @@ static long long handle_derived_subtract(int operand_index, int selector, long l
    return (retval);
 }
 
-static long long units_per_second(long long units, long long cycles)
+static long_long units_per_second(long_long units, long_long cycles)
 {
-   return ((long long) ((float) units * _papi_system_info.hw_info.mhz * 1000000.0 /
+   return ((long_long) ((float) units * _papi_system_info.hw_info.mhz * 1000000.0 /
                         (float) cycles));
 }
 
-static long long handle_derived_ps(int operand_index, int selector, long long *from)
+static long_long handle_derived_ps(int operand_index, int selector, long_long *from)
 {
    int pos;
 
@@ -653,14 +653,14 @@ static long long handle_derived_ps(int operand_index, int selector, long long *f
    return (units_per_second(from[pos], from[operand_index]));
 }
 
-static long long handle_derived_add_ps(int operand_index, int selector, long long *from)
+static long_long handle_derived_add_ps(int operand_index, int selector, long_long *from)
 {
    int add_selector = selector ^ (1 << operand_index);
-   long long tmp = handle_derived_add(add_selector, from);
+   long_long tmp = handle_derived_add(add_selector, from);
    return (units_per_second(tmp, from[operand_index]));
 }
 
-static long long handle_derived(EventInfo_t * cmd, long long *from)
+static long_long handle_derived(EventInfo_t * cmd, long_long *from)
 {
    switch (cmd->command) {
    case DERIVED_ADD:
@@ -677,11 +677,11 @@ static long long handle_derived(EventInfo_t * cmd, long long *from)
    }
 }
 
-int _papi_hwd_read(EventSetInfo_t * ESI, EventSetInfo_t * zero, long long *events)
+int _papi_hwd_read(EventSetInfo_t * ESI, EventSetInfo_t * zero, long_long *events)
 {
    int shift_cnt = 0;
    int retval, selector, j = 0, i;
-   long long correct[EV_MAX_COUNTERS];
+   long_long correct[EV_MAX_COUNTERS];
 
    retval = update_global_hwcounters(zero);
    if (retval)
@@ -745,7 +745,7 @@ int _papi_hwd_ctl(EventSetInfo_t * zero, int code, _papi_int_option_t * option)
    }
 }
 
-int _papi_hwd_write(EventSetInfo_t * master, EventSetInfo_t * ESI, long long events[])
+int _papi_hwd_write(EventSetInfo_t * master, EventSetInfo_t * ESI, long_long events[])
 {
    return (PAPI_ESBSTR);
 }

@@ -186,7 +186,7 @@ static int get_system_info(void)
    return (PAPI_OK);
 }
 
-long long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
    struct timespec res;
 
@@ -196,13 +196,13 @@ long long _papi_hwd_get_real_usec(void)
    return (( res.tv_sec-1086000000) * 1000000) + (res.tv_nsec / 1000);
 }
 
-long long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
-   return ((long long) _papi_hwd_get_real_usec() *
+   return ((long_long) _papi_hwd_get_real_usec() *
            _papi_hwi_system_info.hw_info.mhz);
 }
 
-long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    struct rusage res;
 
@@ -211,9 +211,9 @@ long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
    return ((res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec);
 }
 
-long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return ((long long) _papi_hwd_get_virt_usec(zero) *
+   return ((long_long) _papi_hwd_get_virt_usec(zero) *
            _papi_hwi_system_info.hw_info.mhz);
 }
 
@@ -277,7 +277,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    virtual_counters *ptr_vc;
 
    ptr_vc = ctx->ptr_vc;
-   ctrl->latestcycles = (long long) ptr_vc->vc_total_cycles;
+   ctrl->latestcycles = (long_long) ptr_vc->vc_total_cycles;
    memcpy(ctrl->start_value, (char *) ctrl->ptr_vc + sizeof(unsigned long)
           + sizeof(struct timeval), sizeof(unsigned long) * MAX_COUNTERS);
 /*
@@ -291,14 +291,14 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     else
       return(PAPI_ESBSTR);
 
-    ctrl->start_value[i] = (long long)(count);
+    ctrl->start_value[i] = (long_long)(count);
   }
 */
    return (PAPI_OK);
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
-                   long long **events)
+                   long_long **events)
 {
    int i;
    unsigned long count;
@@ -317,7 +317,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
     }
     else
       return(PAPI_ESBSTR);
-    this_state->latest[i] = ((long long)(count)) - this_state->start_value[i];
+    this_state->latest[i] = ((long_long)(count)) - this_state->start_value[i];
   }
 */
 #ifdef DEBUG
@@ -334,7 +334,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
 }
 
 int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * ctrl,
-                    long long events[])
+                    long_long events[])
 {
    return (PAPI_ESBSTR);
 }

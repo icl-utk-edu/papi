@@ -269,6 +269,7 @@ converse may also be true, that more advanced features may be
 available and defined in the header file.  The user is encouraged to
 read the documentation carefully.  */
 
+
 /*  ANSI doesn't define a 'long long' data type as is used in gcc.
 	The Microsoft compiler doesn't support 'long long' syntax.
 	Thus, we define an os-agnostic long_long and u_long_long type
@@ -282,6 +283,20 @@ read the documentation carefully.  */
 #define long_long long long
 #define u_long_long unsigned long long
 #endif
+
+/*  In some cases such as the X1, the definition of a size can change
+ *  depending on compile flags, to combat this, and the fact that
+ *  a long long is not always 64 bits and on some platforms it is 128
+ *  bits we need to define our own sizes, to guarantee things like
+ *  the size of a bucket in profiling.
+ */
+
+#define papi_i64  long_long
+#define papi_i32  int
+#define papi_i16  short
+#define papi_ui64  u_long_long
+#define papi_ui32  unsigned int
+#define papi_ui16  unsigned short
 
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                               long_long overflow_vector, void *context);
@@ -524,7 +539,7 @@ read the documentation carefully.  */
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
    int   PAPI_get_thr_specific(int tag, void **ptr);
-   int PAPI_get_overflow_event_index(int Eventset, long long overflow_vector, int *array, int *number);
+   int PAPI_get_overflow_event_index(int Eventset, long_long overflow_vector, int *array, int *number);
    long_long PAPI_get_virt_cyc(void);
    long_long PAPI_get_virt_usec(void);
    int   PAPI_is_initialized(void);
