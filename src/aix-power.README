@@ -7,7 +7,16 @@ The encoding for native (NON-PAPI) events is:
 		Bits 8-16 indicate which event number: 
 			  0 - 50 on POWER3
 			  0 - 94 on POWER4
-
+			  
+For example: native event PM_INST_CMPL can be counted by counter 0-3
+        EventCode = 0|1<<8|0
+        EventCode = 0|0<<8|1
+        EventCode = 0|2<<8|2
+        EventCode = 0|2<<8|3
+These native event codes will all work. The register allocation implementation 
+on Power3 will choose available counter from 0-3 for user, and user need not map
+native events manually.		
+		
 See: /usr/lpp/pmtoolkit/lib/<arch>.evs for POWER3;
      /usr/pmapi/lib/POWER4.evs and /POWER4.gps for POWER4
 
