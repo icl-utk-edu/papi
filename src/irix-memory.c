@@ -82,6 +82,8 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
    }
    if(L[0].tlb[0].num_entries != 0)
       L[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+
+   mem_info->mem_hierarchy.levels = 2;
    return PAPI_OK;
 }
 
