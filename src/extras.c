@@ -3,14 +3,22 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    dan terpstra
+*          terpstra@cs.utk.edu
 */  
-
-#include SUBSTRATE
 
 /* This file contains portable routines to do things that we wish the
 vendors did in the kernel extensions or performance libraries. */
+
+/* It also contains a new section at the end with Windows routines
+ to emulate standard stuff found in Unix/Linux, but not Windows. */
+
+#ifndef _WIN32
+  #include SUBSTRATE
+#else
+  #include "win32.h"
+#endif
+
 
 static unsigned int rnum = 0xdeadbeef;
 
@@ -19,7 +27,7 @@ static unsigned short random_ushort(void)
   return (unsigned short)(rnum = 1664525 * rnum + 1013904223);
 }
 
-static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long long excess, long long threshold)
+static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
 {
   int increment = 1;
   unsigned short *buf = prof->pr_base;
@@ -60,13 +68,13 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
 
   if (flags & PAPI_PROFIL_WEIGHTED)     /* Increment is between 1 and 255 */
     {
-      if (excess <= 1LL)
+      if (excess <= (long_long)1)
 	increment = 1;
       else if (excess > threshold)
 	increment = 255;
       else
 	{
-	  threshold = threshold / 255LL;
+	  threshold = threshold / (long_long)255;
 	  increment = (int)(excess / threshold);
 	}	
     }
@@ -76,7 +84,7 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
 }
 
 static void dispatch_profile(EventSetInfo *ESI, void *context,
-			     long long over, long long threshold)
+			     long_long over, long_long threshold)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
   unsigned long pc;
@@ -179,7 +187,7 @@ EventSetInfo *_papi_hwi_lookup_in_master_list(void)
 void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval;
-  long long latest;
+  long_long latest;
   EventSetInfo *master_event_set;
   EventSetInfo *ESI;
 
@@ -220,6 +228,42 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
       ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
 }
+
+#ifdef _WIN32
+
+static MMRESULT	wTimerID;	// unique ID for referencing this timer
+
+static int start_timer(int milliseconds)
+{
+  int retval = PAPI_OK;
+
+  TIMECAPS	tc;
+  UINT		wTimerRes;
+
+  // get the timer resolution capability on this system
+  if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) return(PAPI_ESYS);
+  
+  wTimerRes = min(max(tc.wPeriodMin, 1), tc.wPeriodMax);
+  timeBeginPeriod(wTimerRes);
+  
+  // initialize a periodic timer
+  //	triggering every (milliseconds) 
+  //	and calling (_papi_hwd_timer_callback())
+  //	with no data
+  wTimerID = timeSetEvent(milliseconds, wTimerRes, 
+		_papi_hwd_timer_callback, (DWORD)NULL, TIME_PERIODIC);
+  if(!wTimerID) return PAPI_ESYS;
+
+  return(retval);
+}
+
+static int stop_timer(void)
+{
+  if (timeKillEvent(wTimerID) != TIMERR_NOERROR) return(PAPI_ESYS);
+  return(PAPI_OK);
+}
+
+#else
 
 int _papi_hwi_using_signal = 0;
 
@@ -300,6 +344,8 @@ static int stop_timer(void)
   return(retval);
 }
 
+#endif /* _WIN32 */
+
 int _papi_hwi_start_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
 {
   int retval = PAPI_OK;
@@ -342,3 +388,26 @@ int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr
   return(PAPI_ESBSTR);
 }
 */
+
+
+/**********************************************************************
+	Windows Compatability stuff
+	Delimited by the _WIN32 define
+**********************************************************************/
+#ifdef _WIN32
+
+// This routine normally lives in <strings> on Unix.
+// Microsoft Visual C++ doesn't have this file.
+extern int ffs(int i)
+{
+	int c = 1;
+	
+	do {
+		if (i & 1) return(c);
+		i = i >> 1;
+		c++;
+	}while (i);
+	return(0);
+}
+
+#endif /* _WIN32 */
