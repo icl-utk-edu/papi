@@ -199,7 +199,7 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
              PFMLIB_SUCCESS)
             return (PAPI_ENOEVNT);
          else
-            preset_search_map[i].data.native[cnt] ^= NATIVE_MASK;
+            preset_search_map[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          findme++;
          cnt++;
       }
@@ -797,7 +797,7 @@ static int ia64_process_profile_entry(void *papiContext)
             if (pos + PMU_FIRST_COUNTER == reg_num) {
                EventCode = ESI->profile.EventCode[count];
                native_index= ESI->NativeInfoArray[pos].ni_event 
-                                 & NATIVE_AND_MASK;
+                                 & PAPI_NATIVE_AND_MASK;
                break;
             }
          }
@@ -921,7 +921,7 @@ static int ia64_process_profile_entry(void *papiContext)
             if (pos + PMU_FIRST_COUNTER == reg_num) {
                EventCode = ESI->profile.EventCode[count];
                native_index= ESI->NativeInfoArray[pos].ni_event 
-                                 & NATIVE_AND_MASK;
+                                 & PAPI_NATIVE_AND_MASK;
                break;
             }
          }
@@ -1261,7 +1261,7 @@ void _papi_hwd_lock_init(void)
 
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   return(pfmw_get_event_name(EventCode^NATIVE_MASK));
+   return(pfmw_get_event_name(EventCode^PAPI_NATIVE_MASK));
 }
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
@@ -1271,7 +1271,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   int index = *EventCode & NATIVE_AND_MASK;
+   int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
    if (index < MAX_NATIVE_EVENT - 1) {
       *EventCode = *EventCode + 1;
@@ -1331,7 +1331,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
 /* add new native events to the evt structure */
    for (i = 0; i < count; i++) {
-      index = native[i].ni_event & NATIVE_AND_MASK;
+      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
 #ifdef PFM20
 #ifdef ITANIUM2
       if (pfm_ita2_is_dear(index))
@@ -1356,7 +1356,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    for (i = 0; i < PFMW_PEVT_EVTCOUNT(evt); i++) {
       native[i].ni_position = PFMW_PEVT_PFPPC_REG_NUM(evt,i) 
                               - PMU_FIRST_COUNTER;
-      SUBDBG("event_code is %d, reg_num is %d\n", native[i].ni_event & NATIVE_AND_MASK,
+      SUBDBG("event_code is %d, reg_num is %d\n", native[i].ni_event & PAPI_NATIVE_AND_MASK,
              native[i].ni_position);
    }
 

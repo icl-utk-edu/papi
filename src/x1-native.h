@@ -23,7 +23,7 @@
 #define X1_COUNTER_DECODE(code) ((code >> 4) & 0xff)
 #define X1_EVENT_DECODE(code)	(code & 0xf)
 
-#define X1_NATIVE(chip, event) (NATIVE_MASK | _##chip | (chip##CNTR_IDX_##event << 4) | (##chip##EV_##event >> (##chip##CNTR_IDX_##event << 1)))
+#define X1_NATIVE(chip, event) (PAPI_NATIVE_MASK | _##chip | (chip##CNTR_IDX_##event << 4) | (##chip##EV_##event >> (##chip##CNTR_IDX_##event << 1)))
 
 /* Defines for counter value retrival from the array of counters */
 

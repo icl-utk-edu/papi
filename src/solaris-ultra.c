@@ -109,49 +109,49 @@ int papi_debug;
    /* Phil says this is false */
 
 /* the number in this preset_search map table is the native event index 
-   in the native event table, when it ORs the NATIVE_MASK, it becomes the
+   in the native event table, when it ORs the PAPI_NATIVE_MASK, it becomes the
    native event code. 
 */
 /* UltraSparc II preset search table */
 hwi_search_t usii_preset_search_map[] = {
    /* L1 Cache Imisses */
-   {PAPI_L1_ICM, {DERIVED_SUB, {NATIVE_MASK | 4, NATIVE_MASK | 14}}},
+   {PAPI_L1_ICM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 4, PAPI_NATIVE_MASK | 14}}},
    /* L2 Total Cache misses */
-   {PAPI_L2_TCM, {DERIVED_SUB, {NATIVE_MASK | 8, NATIVE_MASK | 18}}},
+   {PAPI_L2_TCM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 8, PAPI_NATIVE_MASK | 18}}},
    /* Req. for snoop */
-   {PAPI_CA_SNP, {0, {NATIVE_MASK | 20, PAPI_NULL}}},
+   {PAPI_CA_SNP, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL}}},
    /* Req. invalidate cache line */
-   {PAPI_CA_INV, {0, {NATIVE_MASK | 10, PAPI_NULL}}},
+   {PAPI_CA_INV, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},
    /* L1LM */
-   {PAPI_L1_LDM, {DERIVED_SUB, {NATIVE_MASK | 5, NATIVE_MASK | 15}}},
+   {PAPI_L1_LDM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 5, PAPI_NATIVE_MASK | 15}}},
    /* L1SM */
-   {PAPI_L1_STM, {DERIVED_SUB, {NATIVE_MASK | 6, NATIVE_MASK | 16}}},
+   {PAPI_L1_STM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 6, PAPI_NATIVE_MASK | 16}}},
    /* Cond. branch inst. mispred. */
-   {PAPI_BR_MSP, {0, {NATIVE_MASK | 12, PAPI_NULL}}},
+   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL}}},
    /* Total inst. issued */
-   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},
+   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
    /* Total inst. executed */
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
    /* Loads executed */
-   {PAPI_LD_INS, {0, {NATIVE_MASK | 5, PAPI_NULL}}},
+   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL}}},
    /* Stores executed */
-   {PAPI_SR_INS, {0, {NATIVE_MASK | 6, PAPI_NULL}}},
+   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL}}},
    /* Total cycles */
-   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
    /* L1 data cache reads */
-   {PAPI_L1_DCR, {0, {NATIVE_MASK | 5, PAPI_NULL}}},
+   {PAPI_L1_DCR, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL}}},
    /* L1 data cache writes */
-   {PAPI_L1_DCW, {0, {NATIVE_MASK | 6, PAPI_NULL}}},
+   {PAPI_L1_DCW, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL}}},
    /* L1 instruction cache hits */
-   {PAPI_L1_ICH, {0, {NATIVE_MASK | 14, PAPI_NULL}}},
+   {PAPI_L1_ICH, {0, {PAPI_NATIVE_MASK | 14, PAPI_NULL}}},
    /* L2 instruction cache hits */
-   {PAPI_L2_ICH, {0, {NATIVE_MASK | 21, PAPI_NULL}}},
+   {PAPI_L2_ICH, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},
    /* L1 instruction cache accesses */
-   {PAPI_L1_ICA, {0, {NATIVE_MASK | 4, PAPI_NULL}}},
+   {PAPI_L1_ICA, {0, {PAPI_NATIVE_MASK | 4, PAPI_NULL}}},
    /* L2 total cache hits */
-   {PAPI_L2_TCH, {0, {NATIVE_MASK | 18, PAPI_NULL}}},
+   {PAPI_L2_TCH, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},
    /* L2 total cache accesses */
-   {PAPI_L2_TCA, {0, {NATIVE_MASK | 8, PAPI_NULL}}},
+   {PAPI_L2_TCA, {0, {PAPI_NATIVE_MASK | 8, PAPI_NULL}}},
    /* Terminator */
    {0, {0, {0, 0}}}
 };
@@ -159,49 +159,49 @@ hwi_search_t usii_preset_search_map[] = {
 /* UltraSparc III preset search table */
 hwi_search_t usiii_preset_search_map[] = {
    /* Floating point instructions */
-   {PAPI_FP_INS, {DERIVED_ADD, {NATIVE_MASK | 22, NATIVE_MASK | 68}}},
+   {PAPI_FP_INS, {DERIVED_ADD, {PAPI_NATIVE_MASK | 22, PAPI_NATIVE_MASK | 68}}},
    /* pic0 FA_pipe_completion and pic1 FM_pipe_completion */
    /* Floating point add instructions */
-   {PAPI_FAD_INS, {0, {NATIVE_MASK | 22, PAPI_NULL}}},  /* pic0 FA_pipe_completion */
+   {PAPI_FAD_INS, {0, {PAPI_NATIVE_MASK | 22, PAPI_NULL}}},  /* pic0 FA_pipe_completion */
    /* Floating point multiply instructions */
-   {PAPI_FML_INS, {0, {NATIVE_MASK | 68, PAPI_NULL}}},/* pic1 FM_pipe_completion */
+   {PAPI_FML_INS, {0, {PAPI_NATIVE_MASK | 68, PAPI_NULL}}},/* pic1 FM_pipe_completion */
    /* ITLB */
-   {PAPI_TLB_IM, {0, {NATIVE_MASK | 47, PAPI_NULL}}},/* pic1 ITLB_miss */
+   {PAPI_TLB_IM, {0, {PAPI_NATIVE_MASK | 47, PAPI_NULL}}},/* pic1 ITLB_miss */
    /* DITLB */
-   {PAPI_TLB_DM, {0, {NATIVE_MASK | 48, PAPI_NULL}}},/* pic1 DTLB_miss */
+   {PAPI_TLB_DM, {0, {PAPI_NATIVE_MASK | 48, PAPI_NULL}}},/* pic1 DTLB_miss */
    /* Total cycles */
-   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},/* pic0 and pic1 Cycle_cnt */
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},/* pic0 and pic1 Cycle_cnt */
    /* Total inst. issued */
-   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* pic0 and pic1 Instr_cnt */
+   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* pic0 and pic1 Instr_cnt */
    /* Total inst. executed */
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* pic0 and pic1 Instr_cnt */
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* pic0 and pic1 Instr_cnt */
    /* L2 Total Cache misses */
-   {PAPI_L2_TCM, {0, {NATIVE_MASK | 42, PAPI_NULL}}},   /* pic1 EC_misses */
+   {PAPI_L2_TCM, {0, {PAPI_NATIVE_MASK | 42, PAPI_NULL}}},   /* pic1 EC_misses */
    /* L2 Total ICache misses */
-   {PAPI_L2_ICM, {0, {NATIVE_MASK | 45, PAPI_NULL}}},   /* pic1 EC_ic_miss */
+   {PAPI_L2_ICM, {0, {PAPI_NATIVE_MASK | 45, PAPI_NULL}}},   /* pic1 EC_ic_miss */
    /* L1 Total ICache misses */
-   {PAPI_L1_ICM, {0, {NATIVE_MASK | 38, PAPI_NULL}}},   /* pic1 IC_miss (actually hits) */
+   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 38, PAPI_NULL}}},   /* pic1 IC_miss (actually hits) */
    /* L1 Load Misses */
-   {PAPI_L1_LDM, {0, {NATIVE_MASK | 39, PAPI_NULL}}},   /* pic1 DC_rd_miss */
+   {PAPI_L1_LDM, {0, {PAPI_NATIVE_MASK | 39, PAPI_NULL}}},   /* pic1 DC_rd_miss */
    /* L1 Store Misses */
-   {PAPI_L1_STM, {0, {NATIVE_MASK | 40, PAPI_NULL}}},   /* pic1 DC_wr_miss */
+   {PAPI_L1_STM, {0, {PAPI_NATIVE_MASK | 40, PAPI_NULL}}},   /* pic1 DC_wr_miss */
    /* Cond. branch inst. mispred. */
-   {PAPI_BR_MSP, {0, {NATIVE_MASK | 32, PAPI_NULL}}},   /* pic1 Dispatch0_mispred */
+   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 32, PAPI_NULL}}},   /* pic1 Dispatch0_mispred */
    /* pic0 Cycle_cnt, pic1 Instr_cnt */
    /* L1 data cache reads */
-   {PAPI_L1_DCR, {0, {NATIVE_MASK | 8, PAPI_NULL}}},    /* pic0 DC_rd */
+   {PAPI_L1_DCR, {0, {PAPI_NATIVE_MASK | 8, PAPI_NULL}}},    /* pic0 DC_rd */
    /* L1 data cache writes */
-   {PAPI_L1_DCW, {0, {NATIVE_MASK | 9, PAPI_NULL}}},    /* pic0 DC_wr */
+   {PAPI_L1_DCW, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL}}},    /* pic0 DC_wr */
    /* L1 instruction cache hits */
-   {PAPI_L1_ICH, {0, {NATIVE_MASK | 7, PAPI_NULL}}},    /* pic0 IC_ref (actually hits only) */
+   {PAPI_L1_ICH, {0, {PAPI_NATIVE_MASK | 7, PAPI_NULL}}},    /* pic0 IC_ref (actually hits only) */
    /* L1 instruction cache accesses */
-   {PAPI_L1_ICA, {DERIVED_ADD, {NATIVE_MASK | 7, NATIVE_MASK | 38}}},
+   {PAPI_L1_ICA, {DERIVED_ADD, {PAPI_NATIVE_MASK | 7, PAPI_NATIVE_MASK | 38}}},
    /* pic0 IC_ref (actually hits only) + pic1 IC_miss */
    /* L2 total cache hits */
-   {PAPI_L2_TCH, {DERIVED_SUB, {NATIVE_MASK | 10, NATIVE_MASK | 42}}},
+   {PAPI_L2_TCH, {DERIVED_SUB, {PAPI_NATIVE_MASK | 10, PAPI_NATIVE_MASK | 42}}},
    /* pic0 EC_ref - pic1 EC_misses */
    /* L2 total cache accesses */
-   {PAPI_L2_TCA, {0, {NATIVE_MASK | 10, PAPI_NULL}}},   /* pic0 EC_ref */
+   {PAPI_L2_TCA, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},   /* pic0 EC_ref */
    /* Terminator */
    {0, {0, {0, 0}}}
 };
@@ -874,7 +874,7 @@ add_preset(hwi_search_t *tab, int *np, einfo_t e)
 	    return;
 	tab[*np].event_code = e.papi_event;
 	tab[*np].data.derived = 0;
-	tab[*np].data.native[0] = NATIVE_MASK | ne;
+	tab[*np].data.native[0] = PAPI_NATIVE_MASK | ne;
 	tab[*np].data.native[1] = PAPI_NULL;
 	memset(tab[*np].data.operation, 0, OPS);
 	++*np;
@@ -886,8 +886,8 @@ add_preset(hwi_search_t *tab, int *np, einfo_t e)
 	return;
     tab[*np].event_code = e.papi_event;
     tab[*np].data.derived = (op == '-') ? DERIVED_SUB : DERIVED_ADD;
-    tab[*np].data.native[0] = NATIVE_MASK | ne;
-    tab[*np].data.native[1] = NATIVE_MASK | ne2;
+    tab[*np].data.native[0] = PAPI_NATIVE_MASK | ne;
+    tab[*np].data.native[1] = PAPI_NATIVE_MASK | ne2;
     memset(tab[*np].data.operation, 0, OPS);
     ++*np;
 }
@@ -1235,7 +1235,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   int index = *EventCode & NATIVE_AND_MASK;
+   int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
    if (cpuver <= CPC_ULTRA2) {
       if (index < MAX_NATIVE_EVENT_USII - 1) {
@@ -1257,7 +1257,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
-   nidx = EventCode ^ NATIVE_MASK;
+   nidx = EventCode ^ PAPI_NATIVE_MASK;
    if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
       return (native_table[nidx].name);
    return NULL;
@@ -1300,7 +1300,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    cmd1 = -1;
 /* one native event */
    if (count == 1) {
-      nidx1 = native[0].ni_event & NATIVE_AND_MASK;
+      nidx1 = native[0].ni_event & PAPI_NATIVE_AND_MASK;
       hwcntr = 0;
       cmd0 = native_table[nidx1].encoding[0];
       native[0].ni_position = 0;
@@ -1317,8 +1317,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
       avail1 = 0;
       avail2 = 0;
-      nidx1 = native[0].ni_event & NATIVE_AND_MASK;
-      nidx2 = native[1].ni_event & NATIVE_AND_MASK;
+      nidx1 = native[0].ni_event & PAPI_NATIVE_AND_MASK;
+      nidx2 = native[1].ni_event & PAPI_NATIVE_AND_MASK;
       if (native_table[nidx1].encoding[0] != -1)
          avail1 = 0x1;
       if (native_table[nidx1].encoding[1] != -1)

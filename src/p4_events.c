@@ -35,7 +35,7 @@
 /*  Definitions of the virtual indexes of all P4 native events used in the preset tables.
     To create a new native event index, make up an appropriate name (used only internally);
     the definition for the name consists of:
-    - the NATIVE_MASK bit;
+    - the PAPI_NATIVE_MASK bit;
     - one of the event group names from the enum table in p4_events.h, shifted to the 3rd byte;
     - any required mask bits from that event group, shifted into position;
       valid mask bits for each group are defined in p4_events.h
@@ -45,35 +45,35 @@
     Order Number 245472-012, 2003.
 */
 
-#define PNE_branch_retired_all (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM) + (1<<MMTP) + (1<<MMTM))
-#define PNE_branch_retired_not_taken (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM))
-#define PNE_branch_retired_taken (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP) + (1<<MMTM))
-#define PNE_branch_retired_predicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMTP))
-#define PNE_branch_retired_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM) + (1<<MMTM))
-#define PNE_branch_retired_not_taken_predicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP))
-#define PNE_branch_retired_taken_predicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP))
-#define PNE_branch_retired_taken_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTM))
-#define PNE_branch_retired_not_taken_mispredicted (NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM))
-#define PNE_cycles (NATIVE_MASK + (P4_custom_event<<16) + 0)    // this is the first custom entry
-#define PNE_global_power_running (NATIVE_MASK + (P4_global_power_events<<16) + (1<<RUNNING))    // this is the first custom entry
-#define PNE_page_walk_type_data_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS))
-#define PNE_page_walk_type_instr_miss (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
-#define PNE_page_walk_type_all (NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
-#define PNE_x87_FP_uop_tag0 (NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0) + (1<<ALL))
-#define PNE_64bit_MMX_uop_tag1 (NATIVE_MASK + (P4_64bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
-#define PNE_128bit_MMX_uop_tag1 (NATIVE_MASK + (P4_128bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
-#define PNE_execution_event_nbogus0 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
-#define PNE_execution_event_nbogus1 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS1))
-#define PNE_execution_event_nbogus2 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS2))
-#define PNE_execution_event_nbogus3 (NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS3))
-#define PNE_replay_event (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
-#define PNE_replay_event_L1_load_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
-#define PNE_replay_event_L1_data_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
-#define PNE_replay_event_L1_data_access (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT))
-#define PNE_replay_event_L2_load_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L2_MISS_BIT))
-#define PNE_replay_event_L2_data_miss (NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
-#define PNE_instr_retired_non_bogus (NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
-#define PNE_instr_retired_all (NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
+#define PNE_branch_retired_all (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM) + (1<<MMTP) + (1<<MMTM))
+#define PNE_branch_retired_not_taken (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMNM))
+#define PNE_branch_retired_taken (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP) + (1<<MMTM))
+#define PNE_branch_retired_predicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP) + (1<<MMTP))
+#define PNE_branch_retired_mispredicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM) + (1<<MMTM))
+#define PNE_branch_retired_not_taken_predicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNP))
+#define PNE_branch_retired_taken_predicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTP))
+#define PNE_branch_retired_taken_mispredicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMTM))
+#define PNE_branch_retired_not_taken_mispredicted (PAPI_NATIVE_MASK + (P4_branch_retired<<16) + (1<<MMNM))
+#define PNE_cycles (PAPI_NATIVE_MASK + (P4_custom_event<<16) + 0)    // this is the first custom entry
+#define PNE_global_power_running (PAPI_NATIVE_MASK + (P4_global_power_events<<16) + (1<<RUNNING))    // this is the first custom entry
+#define PNE_page_walk_type_data_miss (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS))
+#define PNE_page_walk_type_instr_miss (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
+#define PNE_page_walk_type_all (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
+#define PNE_x87_FP_uop_tag0 (PAPI_NATIVE_MASK + (P4_x87_FP_uop<<16) + (1<<TAG0) + (1<<ALL))
+#define PNE_64bit_MMX_uop_tag1 (PAPI_NATIVE_MASK + (P4_64bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
+#define PNE_128bit_MMX_uop_tag1 (PAPI_NATIVE_MASK + (P4_128bit_MMX_uop<<16) + (1<<TAG1) + (1<<ALL))
+#define PNE_execution_event_nbogus0 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS0))
+#define PNE_execution_event_nbogus1 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS1))
+#define PNE_execution_event_nbogus2 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS2))
+#define PNE_execution_event_nbogus3 (PAPI_NATIVE_MASK + (P4_execution_event<<16) + (1<<NBOGUS3))
+#define PNE_replay_event (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
+#define PNE_replay_event_L1_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
+#define PNE_replay_event_L1_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
+#define PNE_replay_event_L1_data_access (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT))
+#define PNE_replay_event_L2_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L2_MISS_BIT))
+#define PNE_replay_event_L2_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
+#define PNE_instr_retired_non_bogus (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
+#define PNE_instr_retired_all (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
 
 /*
    PAPI preset events are defined in the tables below.
@@ -968,7 +968,7 @@ static char description[1024];
 
 static inline void internal_decode_event(unsigned int EventCode, int *event, int *mask)
 {
-   *event = (EventCode & NATIVE_AND_MASK) >> 16;        // event is in the third byte
+   *event = (EventCode & PAPI_NATIVE_AND_MASK) >> 16;        // event is in the third byte
    *mask = (EventCode & 0xffff);        // mask bits are in the first two bytes
 }
 
@@ -1045,7 +1045,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          return (PAPI_ENOEVNT);
    }
 
-   *EventCode = (event << 16) + mask + NATIVE_MASK;
+   *EventCode = (event << 16) + mask + PAPI_NATIVE_MASK;
    return (PAPI_OK);
 }
 
@@ -1135,7 +1135,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    int event, mask, tags;
 
-   event = (EventCode & NATIVE_AND_MASK) >> 16; // event is in the third byte
+   event = (EventCode & PAPI_NATIVE_AND_MASK) >> 16; // event is in the third byte
    mask = (EventCode & 0xffff); // mask bits are in the first two bytes
 
    *bits = _papi_hwd_pentium4_native_map[event].bits;
@@ -1220,7 +1220,7 @@ int _papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description,
        (sizeof(_papi_hwd_pentium4_user_map) / sizeof(hwd_p4_native_map_t)))
       return (PAPI_ENOEVNT);
 
-   *EventCode = NATIVE_MASK + (P4_user_event << 16) + _papi_hwd_pentium4_user_count;
+   *EventCode = PAPI_NATIVE_MASK + (P4_user_event << 16) + _papi_hwd_pentium4_user_count;
    new_event = &(_papi_hwd_pentium4_user_map[_papi_hwd_pentium4_user_count]);
    _papi_hwd_pentium4_user_count += 1;
 

@@ -227,6 +227,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 */
 enum {
    PAPI_ENUM_ALL = 0,			/* Always enumerate all events */
+   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
 
    /* PAPI PRESET section */
    PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */

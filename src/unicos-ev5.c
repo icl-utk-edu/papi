@@ -471,24 +471,24 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 /* Given a native event code, returns the short text label. */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   return (native_table[EventCode & NATIVE_AND_MASK].name);
+   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].name);
 }
 
 /* Given a native event code, returns the longer native event
    description. */
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (native_table[EventCode & NATIVE_AND_MASK].description);
+   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].description);
 }
 
 /* Given a native event code, assigns the native event's
    information to a given pointer. */
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   if(native_table[(EventCode & NATIVE_AND_MASK)].resources.selector == 0) {
+   if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector == 0) {
       return (PAPI_ENOEVNT);
    }
-   bits = &native_table[EventCode & NATIVE_AND_MASK].resources;
+   bits = &native_table[EventCode & PAPI_NATIVE_AND_MASK].resources;
    return (PAPI_OK);
 }
 
@@ -496,7 +496,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (native_table[(*EventCode & NATIVE_AND_MASK) + 1].resources.selector) {
+   if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector) {
       *EventCode = *EventCode + 1;
       return (PAPI_OK);
    } else {

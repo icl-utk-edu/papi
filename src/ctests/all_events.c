@@ -27,7 +27,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      if (PAPI_get_event_info(PRESET_MASK|i, &info) != PAPI_OK)
+      if (PAPI_get_event_info(PAPI_PRESET_MASK|i, &info) != PAPI_OK)
          continue;
       if (!(info.count))
          continue;

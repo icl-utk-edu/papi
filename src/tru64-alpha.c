@@ -19,10 +19,10 @@ static hwd_search_t findem_ev67[] = {
 };
 
 static hwi_search_t findem_ev6[] = {
-   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},
-   {PAPI_BR_CN, {0, {NATIVE_MASK | 2, PAPI_NULL}}},
-   {PAPI_RES_STL, {0, {NATIVE_MASK | 7, PAPI_NULL}}},
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
+   {PAPI_BR_CN, {0, {PAPI_NATIVE_MASK | 2, PAPI_NULL}}},
+   {PAPI_RES_STL, {0, {PAPI_NATIVE_MASK | 7, PAPI_NULL}}},
    {0, {0, {0, 0}}}
 };
 
@@ -323,11 +323,11 @@ int _papi_hwd_add_event(hwd_control_state_t * this_state,
    int avail = 0;
    long tmp_cmd[MAX_COUNTERS], *codes;
 
-   if (EventCode & PRESET_MASK) {
+   if (EventCode & PAPI_PRESET_MASK) {
       int preset_index;
       int derived;
 
-      preset_index = EventCode & PRESET_AND_MASK;
+      preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
       selector = preset_map[preset_index].selector;
       if (selector == 0)
@@ -791,7 +791,7 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   int index = *EventCode & NATIVE_AND_MASK;
+   int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
    if (index < MAX_NATIVE_EVENT - 1) {
       *EventCode = *EventCode + 1;
@@ -831,7 +831,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    cmd1 = -1;
    /* one native event */
    if (count == 1) {
-      nidx1 = native[0].ni_event & NATIVE_AND_MASK;
+      nidx1 = native[0].ni_event & PAPI_NATIVE_AND_MASK;
       cmd0 = ev6_native_table[nidx1].encode[0];
       native[0].ni_position = 0;
       if (cmd0 == -1) {
@@ -846,8 +846,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
       avail1 = 0;
       avail2 = 0;
-      nidx1 = native[0].ni_event & NATIVE_AND_MASK;
-      nidx2 = native[1].ni_event & NATIVE_AND_MASK;
+      nidx1 = native[0].ni_event & PAPI_NATIVE_AND_MASK;
+      nidx2 = native[1].ni_event & PAPI_NATIVE_AND_MASK;
       if (ev6_native_table[nidx1].encode[0] != -1)
          avail1 = 0x1;
       if (ev6_native_table[nidx1].encode[1] != -1)
@@ -903,7 +903,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
-   nidx = EventCode ^ NATIVE_MASK;
+   nidx = EventCode ^ PAPI_NATIVE_MASK;
    if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
       return (ev6_native_table[nidx].name);
    else

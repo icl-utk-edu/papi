@@ -35,7 +35,9 @@
 * They need to be exposed for version independent PAPI code to work.
 */
 #define PRESET_MASK     0x80000000
+#define PAPI_PRESET_MASK PRESET_MASK
 #define PRESET_AND_MASK 0x7FFFFFFF
+#define PAPI_PRESET_AND_MASK PRESET_AND_MASK
 
 /*
 * Some PAPI 3 definitions for PAPI_{set,get}_opt() map
@@ -320,10 +322,10 @@ static int PAPIvi_enum_event(int *EventCode, int modifier)
 {
    int i = *EventCode;
    const PAPI_preset_info_t *presets = PAPI_query_all_events_verbose();
-   i &= PRESET_AND_MASK;
+   i &= PAPI_PRESET_AND_MASK;
    while (++i < PAPI_MAX_PRESET_EVENTS) {
       if ((!modifier) || (presets[i].avail)) {
-         *EventCode = i | PRESET_MASK;
+         *EventCode = i | PAPI_PRESET_MASK;
          if (presets[i].event_name != NULL)
             return (PAPI_OK);
          else
@@ -338,7 +340,7 @@ static int PAPIvi_get_event_info(int EventCode, PAPI_event_info_t * info)
    int i;
    const PAPI_preset_info_t *info2 = PAPI_query_all_events_verbose();
 
-   i = EventCode & PRESET_AND_MASK;
+   i = EventCode & PAPI_PRESET_AND_MASK;
    if ((i >= PAPI_MAX_PRESET_EVENTS) || (info2[i].event_name == NULL))
       return(PAPI_ENOTPRESET);
 
@@ -386,6 +388,7 @@ static int PAPI_get_multiplex(int EventSet)
 * revisions, and to simplify the naming conventions for writing 
 * version independent PAPI code.
 */
+
 #define PAPIvi_accum(EventSet, values) \
           PAPI_accum(EventSet, values)
 #define PAPIvi_create_eventset(EventSet) \

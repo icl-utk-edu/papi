@@ -34,7 +34,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem)
    for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0);
         pnum++) {
 
-      preset_index = (findem[pnum].event_code & PRESET_AND_MASK);
+      preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
       _papi_hwi_preset_data[preset_index] = findem[pnum].data;
 
       /* The same block (below) is executed for derived and non-derived events.

@@ -84,7 +84,7 @@ int case1_first_half(void)
    }
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      retval = PAPI_get_event_info(i | PRESET_MASK, &pset);
+      retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
 

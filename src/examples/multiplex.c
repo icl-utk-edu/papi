@@ -68,7 +68,7 @@ int multiplex(void)
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) 
    {
-      retval = PAPI_get_event_info(i | PRESET_MASK, &pset);
+      retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
       if (retval != PAPI_OK)
          ERROR_RETURN(retval);
 

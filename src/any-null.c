@@ -56,7 +56,7 @@ static int setup_all_presets(void)
    while ((code = findem->papi_code) != -1) {
       int i, index;
 
-      index = code & PRESET_AND_MASK;
+      index = code & PAPI_PRESET_AND_MASK;
       preset_map[index].derived = NOT_DERIVED;
       preset_map[index].operand_index = 0;
       for (i = 0; i < num; i++) {
@@ -404,11 +404,11 @@ int _papi_hwd_add_event(hwd_control_state_t * this_state, unsigned int EventCode
    any_command_t tmp_cmd;
    any_command_t *codes;
 
-   if (EventCode & PRESET_MASK) {
+   if (EventCode & PAPI_PRESET_MASK) {
       int preset_index;
       int derived;
 
-      preset_index = EventCode & PRESET_AND_MASK;
+      preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
       selector = preset_map[preset_index].selector;
       if (selector == 0)

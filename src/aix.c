@@ -39,17 +39,17 @@ static int maxgroups = 0;
 /* Routines to support an opaque native event table */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   return (native_name_map[EventCode & NATIVE_AND_MASK].name);
+   return (native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name);
 }
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (native_table[native_name_map[EventCode & NATIVE_AND_MASK].index].description);
+   return (native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description);
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   bits = &native_table[EventCode & NATIVE_AND_MASK].resources; /* it is not right, different type */
+   bits = &native_table[EventCode & PAPI_NATIVE_AND_MASK].resources; /* it is not right, different type */
    return (PAPI_OK);
 }
 
@@ -69,7 +69,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    if (modifer == PAPI_ENUM_ALL) {
-      int index = *EventCode & NATIVE_AND_MASK;
+      int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
       if (native_table[index + 1].resources.selector) {
          *EventCode = *EventCode + 1;

@@ -105,7 +105,7 @@
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
-      native_index= ESI->NativeInfoArray[pos].ni_event & NATIVE_AND_MASK;
+      native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
 
       memset(ctx, 0, sizeof(ctx));
       ctx[0].ctx_notify_pid = getpid();
@@ -360,7 +360,7 @@ hweight64 (unsigned long x)
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
-      native_index= ESI->NativeInfoArray[pos].ni_event & NATIVE_AND_MASK;
+      native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
 
       /*
        * We initialize the format specific information.

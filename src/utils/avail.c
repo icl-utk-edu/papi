@@ -54,7 +54,7 @@ int main(int argc, char **argv)
       } else {
          printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
       }
-      i = PRESET_MASK;
+      i = PAPI_PRESET_MASK;
       do {
          if (PAPI_get_event_info(i, &info) == PAPI_OK) 
 	   {

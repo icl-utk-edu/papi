@@ -716,7 +716,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 {
    char *name;
 
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       name = _papi_hwi_native_code_to_name(EventCode);
       if (name)
          return (PAPI_OK);
@@ -730,7 +730,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    char *name;
-   unsigned int i = 0 | NATIVE_MASK;
+   unsigned int i = 0 | PAPI_NATIVE_MASK;
    do {
       name = _papi_hwd_ntv_code_to_name(i);
 /*
@@ -754,7 +754,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    Returns NULL if name not found */
 char *_papi_hwi_native_code_to_name(unsigned int EventCode)
 {
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       return (_papi_hwd_ntv_code_to_name(EventCode));
    }
    return (NULL);
@@ -765,7 +765,7 @@ char *_papi_hwi_native_code_to_name(unsigned int EventCode)
    Returns NULL if description not found */
 char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 {
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       return (_papi_hwd_ntv_code_to_descr(EventCode));
    }
    return (NULL);
@@ -775,7 +775,7 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 /* The native event equivalent of PAPI_get_event_info */
 int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * info)
 {
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MIN_STR_LEN);
       if (&info->symbol) {
          /* Fill in the info structure */

@@ -557,8 +557,8 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
       while (head[j].event_code == PAPI_NULL)
          j++;
       /* fill in the new information */
-      if (head[j].event_code & PRESET_MASK) {
-         preset_index = head[j].event_code & PRESET_AND_MASK;
+      if (head[j].event_code & PAPI_PRESET_MASK) {
+         preset_index = head[j].event_code & PAPI_PRESET_AND_MASK;
          for (k = 0; k < MAX_COUNTER_TERMS; k++) {
             nevt = _papi_hwi_preset_data[preset_index].native[k];
             if (nevt == PAPI_NULL)
@@ -687,9 +687,9 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    if (!(ESI->state & PAPI_MULTIPLEXING)) {
 
-      if (EventCode & PRESET_MASK) {
+      if (EventCode & PAPI_PRESET_MASK) {
          int count;
-         int preset_index = EventCode & PRESET_AND_MASK;
+         int preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
          /* count the number of native events in this preset */
          count = _papi_hwi_presets[preset_index].count;
@@ -731,7 +731,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
             if (remap)
                remap_event_position(ESI, thisindex);
          }
-      } else if (EventCode & NATIVE_MASK) {
+      } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
          if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);
@@ -892,8 +892,8 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
    } else
       /* Remove the events hardware dependent stuff from the EventSet */
    {
-      if (EventCode & PRESET_MASK) {
-         int preset_index = EventCode & PRESET_AND_MASK;
+      if (EventCode & PAPI_PRESET_MASK) {
+         int preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
          /* Check if it's within the valid range */
          if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
@@ -909,7 +909,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
              remove_native_events(ESI, _papi_hwi_preset_data[preset_index].native, j);
          if (retval != PAPI_OK)
             return (retval);
-      } else if (EventCode & NATIVE_MASK) {
+      } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
          if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);

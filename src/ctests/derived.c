@@ -51,7 +51,7 @@ int main(int argc, char **argv)
    tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
    QUIETPRINTF("Default granularity is: %d (%s)\n\n", tmp, stringify_granularity(tmp));
 
-   i = PRESET_MASK;
+   i = PAPI_PRESET_MASK;
    do {
       if (PAPI_get_event_info(i, &info) == PAPI_OK){
          if (info.count>1){

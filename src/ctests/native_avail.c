@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
       printf("Name\t\t\t       Code\t   Description\n");
    }
-   i = 0 | NATIVE_MASK;
+   i = 0 | PAPI_NATIVE_MASK;
    j = 0;
    do {
 #ifdef _POWER4

@@ -9,32 +9,32 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 extern papi_mdi_t _papi_hwi_system_info;
 
 static hwi_search_t findem_dadd[] = {
-   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},
-   {PAPI_L1_ICM, {0, {NATIVE_MASK | 3, PAPI_NULL}}},
-   {PAPI_L2_TCM, {0, {NATIVE_MASK | 1, PAPI_NULL}}},
-   {PAPI_TLB_DM, {0, {NATIVE_MASK | 2, PAPI_NULL}}},
-   {PAPI_BR_UCN, {0, {NATIVE_MASK | 21, PAPI_NULL}}},
-   {PAPI_BR_CN, {0, {NATIVE_MASK | 22, PAPI_NULL}}},
-   {PAPI_BR_NTK, {0, {NATIVE_MASK | 24, PAPI_NULL}}},
-   {PAPI_BR_MSP, {0, {NATIVE_MASK | 25, PAPI_NULL}}},
-   {PAPI_BR_PRC, {0, {NATIVE_MASK | 26, PAPI_NULL}}},
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 8, PAPI_NULL}}},
-   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 7, PAPI_NULL}}},
-   {PAPI_FP_INS, {0, {NATIVE_MASK | 20, PAPI_NULL}}},
-   {PAPI_FP_OPS, {0, {NATIVE_MASK | 20, PAPI_NULL}}},
-   {PAPI_LD_INS, {0, {NATIVE_MASK | 10, PAPI_NULL}}},
-   {PAPI_SR_INS, {0, {NATIVE_MASK | 11, PAPI_NULL}}},
-   {PAPI_LST_INS, {0, {NATIVE_MASK | 12, PAPI_NULL}}},
-   {PAPI_SYC_INS, {0, {NATIVE_MASK | 13, PAPI_NULL}}},
-   {PAPI_FML_INS, {0, {NATIVE_MASK | 17, PAPI_NULL}}},
-   {PAPI_FAD_INS, {0, {NATIVE_MASK | 16, PAPI_NULL}}},
-   {PAPI_FDV_INS, {0, {NATIVE_MASK | 18, PAPI_NULL}}},
-   {PAPI_FSQ_INS, {0, {NATIVE_MASK | 19, PAPI_NULL}}},
-   {PAPI_INT_INS, {0, {NATIVE_MASK | 9, PAPI_NULL}}},
-   {PAPI_BR_INS, { DERIVED_ADD, {NATIVE_MASK|21, NATIVE_MASK |22}}},
-   {PAPI_TLB_TL, { DERIVED_ADD, {NATIVE_MASK|27, NATIVE_MASK|2}}},
-   {PAPI_TLB_IM, {0, {NATIVE_MASK | 27, PAPI_NULL}}},
-   {PAPI_BR_TKN, {0, {NATIVE_MASK | 23, PAPI_NULL}}},
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
+   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 3, PAPI_NULL}}},
+   {PAPI_L2_TCM, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
+   {PAPI_TLB_DM, {0, {PAPI_NATIVE_MASK | 2, PAPI_NULL}}},
+   {PAPI_BR_UCN, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},
+   {PAPI_BR_CN, {0, {PAPI_NATIVE_MASK | 22, PAPI_NULL}}},
+   {PAPI_BR_NTK, {0, {PAPI_NATIVE_MASK | 24, PAPI_NULL}}},
+   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 25, PAPI_NULL}}},
+   {PAPI_BR_PRC, {0, {PAPI_NATIVE_MASK | 26, PAPI_NULL}}},
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 8, PAPI_NULL}}},
+   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 7, PAPI_NULL}}},
+   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL}}},
+   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL}}},
+   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},
+   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 11, PAPI_NULL}}},
+   {PAPI_LST_INS, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL}}},
+   {PAPI_SYC_INS, {0, {PAPI_NATIVE_MASK | 13, PAPI_NULL}}},
+   {PAPI_FML_INS, {0, {PAPI_NATIVE_MASK | 17, PAPI_NULL}}},
+   {PAPI_FAD_INS, {0, {PAPI_NATIVE_MASK | 16, PAPI_NULL}}},
+   {PAPI_FDV_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},
+   {PAPI_FSQ_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL}}},
+   {PAPI_INT_INS, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL}}},
+   {PAPI_BR_INS, { DERIVED_ADD, {PAPI_NATIVE_MASK|21, PAPI_NATIVE_MASK |22}}},
+   {PAPI_TLB_TL, { DERIVED_ADD, {PAPI_NATIVE_MASK|27, PAPI_NATIVE_MASK|2}}},
+   {PAPI_TLB_IM, {0, {PAPI_NATIVE_MASK | 27, PAPI_NULL}}},
+   {PAPI_BR_TKN, {0, {PAPI_NATIVE_MASK | 23, PAPI_NULL}}},
    {0, {0, {0, 0}}}
 };
 
@@ -442,7 +442,7 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   int index = *EventCode & NATIVE_AND_MASK;
+   int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
    if (index < MAX_NATIVE_EVENT - 1) {
       *EventCode = *EventCode + 1;
@@ -467,7 +467,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    int i, index;
 
    for (i = 0; i < count; i++) {
-      index = native[i].ni_event & NATIVE_AND_MASK;
+      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
       native[i].ni_position = alpha_native_table[index].encode;
    }
    return (PAPI_OK);
@@ -482,7 +482,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
-   nidx = EventCode ^ NATIVE_MASK;
+   nidx = EventCode ^ PAPI_NATIVE_MASK;
    if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
       return (alpha_native_table[nidx].name);
    else

@@ -262,8 +262,8 @@ int PAPI_library_init(int version)
 
 int PAPI_query_event(int EventCode)
 {
-   if (EventCode & PRESET_MASK) {
-      EventCode &= PRESET_AND_MASK;
+   if (EventCode & PAPI_PRESET_MASK) {
+      EventCode &= PAPI_PRESET_AND_MASK;
       if (EventCode >= PAPI_MAX_PRESET_EVENTS)
          papi_return(PAPI_ENOTPRESET);
 
@@ -273,7 +273,7 @@ int PAPI_query_event(int EventCode)
          return(PAPI_ENOEVNT);
    }
 
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       papi_return(_papi_hwi_query_native_event(EventCode));
    }
 
@@ -285,8 +285,8 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
    if (info == NULL)
       papi_return(PAPI_EINVAL);
 
-   if (EventCode & PRESET_MASK) {
-      EventCode &= PRESET_AND_MASK;
+   if (EventCode & PAPI_PRESET_MASK) {
+      EventCode &= PAPI_PRESET_AND_MASK;
       if (EventCode >= PAPI_MAX_PRESET_EVENTS)
          papi_return(PAPI_ENOTPRESET);
 
@@ -297,7 +297,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
          papi_return(PAPI_ENOEVNT);
    }
 
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       papi_return(_papi_hwi_get_native_event_info(EventCode, info));
    }
 
@@ -309,8 +309,8 @@ int PAPI_event_code_to_name(int EventCode, char *out)
    if (out == NULL)
       papi_return(PAPI_EINVAL);
 
-   if (EventCode & PRESET_MASK) {
-      EventCode &= PRESET_AND_MASK;
+   if (EventCode & PAPI_PRESET_MASK) {
+      EventCode &= PAPI_PRESET_AND_MASK;
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS)
           || (_papi_hwi_presets[EventCode].symbol == NULL))
          papi_return(PAPI_ENOTPRESET);
@@ -319,7 +319,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
       papi_return(PAPI_OK);
    }
 
-   if (EventCode & NATIVE_MASK) {
+   if (EventCode & PAPI_NATIVE_MASK) {
       if (_papi_hwi_native_code_to_name(EventCode) != NULL) {
          strncpy(out, _papi_hwi_native_code_to_name(EventCode), PAPI_MAX_STR_LEN);
          papi_return(PAPI_OK);
@@ -355,18 +355,18 @@ int PAPI_enum_event(int *EventCode, int modifier)
 {
    int i = *EventCode;
 
-   if (i & PRESET_MASK) {
-      i &= PRESET_AND_MASK;
+   if (i & PAPI_PRESET_MASK) {
+      i &= PAPI_PRESET_AND_MASK;
       while (++i < PAPI_MAX_PRESET_EVENTS) {
          if ((!modifier) || (_papi_hwi_presets[i].count)) {
-            *EventCode = i | PRESET_MASK;
+            *EventCode = i | PAPI_PRESET_MASK;
             if (_papi_hwi_presets[i].symbol[0])
                return (PAPI_OK);
             else
                return (PAPI_ENOEVNT);
          }
       }
-   } else if (i & NATIVE_MASK) {
+   } else if (i & PAPI_NATIVE_MASK) {
       return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
    }
    return (PAPI_ENOEVNT);

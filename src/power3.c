@@ -277,7 +277,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
       /* CAUTION: Since this is in the hardware layer, it's ok 
          to access the native table directly, but in general this is a bad idea */
       if ((index =
-           native_name_map[ESI->NativeInfoArray[i].ni_event & NATIVE_AND_MASK].index) < 0)
+           native_name_map[ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK].index) < 0)
          return 0;
       event_list[i].ra_selector = native_table[index].resources.selector;
       /* calculate native event rank, which is number of counters it can live on, this is power3 specific */
@@ -333,7 +333,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    for (i = 0; i < count; i++) {
       /* CAUTION: Since this is in the hardware layer, it's ok 
          to access the native table directly, but in general this is a bad idea */
-      if ((index = native_name_map[native[i].ni_event & NATIVE_AND_MASK].index) < 0)
+      if ((index = native_name_map[native[i].ni_event & PAPI_NATIVE_AND_MASK].index) < 0)
          return PAPI_ENOEVNT;
       this_state->counter_cmd.events[native[i].ni_position] =
           native_table[index].resources.counter_cmd[native[i].ni_position];

@@ -317,7 +317,7 @@ int main(int argc, char **argv)
    printf("\n%c\n%c\tPAPI preset event values.\n%c\n\n", comment_char, comment_char,
           comment_char);
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
-      if (PAPI_get_event_info(i | PRESET_MASK, &info) == PAPI_OK)
+      if (PAPI_get_event_info(i | PAPI_PRESET_MASK, &info) == PAPI_OK)
          define_val(info.symbol, info.event_code, deftype);
 
    exit(0);
