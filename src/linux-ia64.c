@@ -91,7 +91,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
    {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_ALL", 0, 0, 0}},
    {PAPI_L2_TCM, 0, {"L2_MISSES", 0, 0, 0}},
-   {PAPI_L2_DCM, 0, {"L3_READS_DATA_READ_ALL", 0, 0, 0}},
+   {PAPI_L2_DCM, DERIVED_SUB, {"L2_MISSES", "L3_READS_INST_FETCH_ALL", 0, 0}},
    {PAPI_L2_ICM, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0}},
    {PAPI_L3_TCM, 0, {"L3_MISSES", 0, 0, 0}},
    {PAPI_L3_ICM, 0, {"L3_READS_INST_FETCH_MISS", 0, 0, 0}},

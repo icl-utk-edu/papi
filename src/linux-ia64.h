@@ -40,10 +40,8 @@
 #include "papi.h"
 #define MAX_COUNTER_TERMS 4
 #ifdef ITANIUM2
-#define MAX_NATIVE_EVENT  475   /* the number comes from itanium_events.h */
 #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
 #else                           /* itanium */
-#define MAX_NATIVE_EVENT  230   /* the number comes from itanium_events.h */
 #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
 #endif
 
@@ -63,10 +61,17 @@ typedef int hwd_reg_alloc_t;
    } pfmw_param_t;
    typedef int pfmw_ita_param_t;
    #define PMU_FIRST_COUNTER  4
+   #ifdef ITANIUM2
+      #define MAX_NATIVE_EVENT  497 /*the number comes from itanium2_events.h*/
+   #else
+      #define MAX_NATIVE_EVENT  230 /*the number comes from itanium_events.h */
+   #endif
 #else
  #ifdef ITANIUM2
       typedef pfmlib_ita2_param_t pfmw_ita_param_t;
+      #define MAX_NATIVE_EVENT  475 /*the number comes from itanium2_events.h*/
  #else
+      #define MAX_NATIVE_EVENT  230 /*the number comes from itanium_events.h */
       typedef pfmlib_ita_param_t pfmw_ita_param_t;
  #endif
    #define NUM_PMCS PMU_MAX_PMCS
