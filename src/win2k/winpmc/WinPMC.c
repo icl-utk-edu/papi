@@ -14,7 +14,7 @@
 #include "WinPMC.h"                           // contains I/O control codes
 
 #define WELCOME_STRING		"Welcome to the Windows 2000 PMC Driver\n"
-#define VERSION_STRING		"PMC Driver Version: 2003/04/10:6  \n"
+#define VERSION_STRING		"PMC Driver Version: 2004/04/06:1  \n"
 
 /* variables */
 
@@ -333,9 +333,11 @@ if (!NT_SUCCESS(ntStatus))
  }
 
 // Here we hook the context switch
+// but only if we're gonna use it in the check build
+// for some reason this works on W2K but not on WXP
 
 TaskSwitchCounter = 0;
-KeSetSwapContextNotifyRoutine(CountSwitches);
+//KeSetSwapContextNotifyRoutine(CountSwitches);
 
 // That's all to initialization!
 
