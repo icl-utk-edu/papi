@@ -3,17 +3,19 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial pthreads
 
-CFLAGS  = -Wall -Ilibpfm -I. -ggdb -DDEBUG
-FFLAGS	= -g3 
-OPTFLAGS= -O2
+CFLAGS  = -Wall -Ipfmon/include -I. -ggdb -DDEBUG
+FFLAGS	= -g 
+LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
+OPTFLAGS= 
 CC_SHR  = gcc -shared -fpic
 CC_R	= gcc
 CC	= gcc
-F77	= sgif90 -macro_expand
-MISCOBJS= libpfm/pfmlib.o libpfm/pfmusr.o libpfm/pfmerror.o
-MISCSRCS= libpfm/pfmlib.c libpfm/pfmusr.c libpfm/pfmerror.c
+F77	= efc
+LIBPFM  = pfmon/libpfm
+MISCOBJS= $(LIBPFM)/pfmlib.o $(LIBPFM)/pfmusr.o $(LIBPFM)/pfmerror.o
+MISCSRCS= $(LIBPFM)/pfmlib.c $(LIBPFM)/pfmusr.c $(LIBPFM)/pfmerror.c
 
 include Makefile.inc
 
-libpfm/pfmlib.o libpfm/pfmusr.o libpfm/pfmerror.o:
-	$(MAKE) CFLAGS="$(OPTFLAGS) $(CFLAGS)" -C libpfm
+$(LIBPFM)/pfmlib.o $(LIBPFM)/pfmusr.o $(LIBPFM)/pfmerror.o:
+	$(MAKE) CFLAGS="$(OPTFLAGS) $(CFLAGS)" -C $(LIBPFM)
