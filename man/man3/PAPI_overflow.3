@@ -7,7 +7,10 @@ PAPI_overflow \- start counting events contained in an EventSet
 .SH SYNOPSIS
 .B #include <papi.h>
 
+.nf
 .BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler ");"
+.BI "void\ *PAPI_get_overflow_address (void *" context );
+.fi
 
 .SH DESCRIPTION
 .B PAPI_overflow()
