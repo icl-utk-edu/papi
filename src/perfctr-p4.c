@@ -870,12 +870,17 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
 {
+   ucontext_t *uc;
+   mcontext_t *mc;
    _papi_hwi_context_t ctx;
 
-   ctx.si = info;
-   ctx.ucontext = (struct sigcontext *) context;
+   uc = (struct ucontext *) context;
+   mc = &uc->uc_mcontext;
+   DBG((stderr,"Start at 0x%lx\n",((struct sigcontext *)mc)->eip));
 
-//  OVFDBG("Start at 0x%lx\n",(unsigned long)(*gs)[15]);
+   ctx.si = info;
+   ctx.ucontext = (struct sigcontext *)mc;
+
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                       _papi_hwi_system_info.supports_hw_overflow,
                                       info->si_pmc_ovf_mask, 0);
