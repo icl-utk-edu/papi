@@ -98,10 +98,9 @@ void *Thread(void *arg)
 
 int main(int argc, char **argv)
 {
-   pthread_t e_th;
-   pthread_t f_th;
-   int flops1, flops2;
-   int rc, retval;
+   pthread_t id[NUM_THREADS];
+   int flops[NUM_THREADS];
+   int i, rc, retval;
    pthread_attr_t attr;
    long long elapsed_us, elapsed_cyc;
 
@@ -140,23 +139,16 @@ int main(int argc, char **argv)
       test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);
 #endif
 
-   flops1 = NUM_FLOPS;
-   rc = pthread_create(&e_th, &attr, Thread, (void *) &flops1);
-   if (rc) {
-      retval = PAPI_ESYS;
-      test_fail(__FILE__, __LINE__, "pthread_create", retval);
+   for (i = 0; i < NUM_THREADS; i++) {
+     flops[i] = NUM_FLOPS * (i+1);
+      rc = pthread_create(&id[i], &attr, Thread, (void *)&flops[i]);
+      if (rc)
+         return (FAILURE);
    }
-
-   flops2 = 5 * NUM_FLOPS;
-   rc = pthread_create(&f_th, &attr, Thread, (void *) &flops2);
-   if (rc) {
-      retval = PAPI_ESYS;
-      test_fail(__FILE__, __LINE__, "pthread_create", retval);
-   }
+   for (i = 0; i < NUM_THREADS; i++)
+      pthread_join(id[i], NULL);
 
    pthread_attr_destroy(&attr);
-   pthread_join(f_th, NULL);
-   pthread_join(e_th, NULL);
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 

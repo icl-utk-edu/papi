@@ -99,7 +99,7 @@ void *Thread(void *arg)
 int main(int argc, char **argv)
 {
    pthread_t e_th, f_th, g_th, h_th;
-   int flops1;
+   int flops1, flops2, flops3, flops4;
    int retval, rc;
    pthread_attr_t attr;
    long long elapsed_us, elapsed_cyc;
@@ -148,22 +148,22 @@ int main(int argc, char **argv)
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "pthread_create", retval);
    }
-   flops1 = 2000000;
-   rc = pthread_create(&f_th, &attr, Thread, (void *) &flops1);
+   flops2 = 2000000;
+   rc = pthread_create(&f_th, &attr, Thread, (void *) &flops2);
    if (rc) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "pthread_create", retval);
    }
 
-   flops1 = 4000000;
-   rc = pthread_create(&g_th, &attr, Thread, (void *) &flops1);
+   flops3 = 4000000;
+   rc = pthread_create(&g_th, &attr, Thread, (void *) &flops3);
    if (rc) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "pthread_create", retval);
    }
 
-   flops1 = 8000000;
-   rc = pthread_create(&h_th, &attr, Thread, (void *) &flops1);
+   flops4 = 8000000;
+   rc = pthread_create(&h_th, &attr, Thread, (void *) &flops4);
    if (rc) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "pthread_create", retval);

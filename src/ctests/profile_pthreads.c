@@ -6,7 +6,7 @@
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 #define THR 1000000
-#define FLOPS 1000000000
+#define FLOPS 100000000
 
 unsigned long length;
 caddr_t my_start, my_end;
@@ -21,8 +21,6 @@ void *Thread(void *arg)
    unsigned short *profbuf;
    const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
    char event_name[PAPI_MAX_STR_LEN];
-
-/*  if ( 20000001 == *arg || 10000001 == *arg) TESTS_QUIET=1;*/
 
    profbuf = (unsigned short *) malloc(length * sizeof(unsigned short));
    if (profbuf == NULL)
@@ -102,10 +100,9 @@ void *Thread(void *arg)
 
 int main(int argc, char **argv)
 {
-   pthread_t e_th;
-   pthread_t f_th;
-   int flops1, flops2;
-   int rc, retval;
+   pthread_t id[NUM_THREADS];
+   int flops[NUM_THREADS];
+   int i, rc, retval;
    pthread_attr_t attr;
    long long elapsed_us, elapsed_cyc;
    const PAPI_exe_info_t *prginfo = NULL;
@@ -146,31 +143,16 @@ int main(int argc, char **argv)
       test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);
 #endif
 
-/*
-  if ( !TESTS_QUIET ) flops1 = 10000000;
-  else flops1 = 10000001;
-*/
-   flops1 = FLOPS;
-   rc = pthread_create(&e_th, &attr, Thread, (void *) &flops1);
-   if (rc) {
-      retval = PAPI_ESYS;
-      test_fail(__FILE__, __LINE__, "pthread_create", retval);
+   for (i = 0; i < NUM_THREADS; i++) {
+     flops[i] = FLOPS * (i+1);
+      rc = pthread_create(&id[i], &attr, Thread, (void *)&flops[i]);
+      if (rc)
+         return (FAILURE);
    }
-/*
-  if ( !TESTS_QUIET ) flops2 = 20000000;
-  else flops2 = 20000001;
-*/
-   flops2 = FLOPS * 2;
-
-   rc = pthread_create(&f_th, &attr, Thread, (void *) &flops2);
-   if (rc) {
-      retval = PAPI_ESYS;
-      test_fail(__FILE__, __LINE__, "pthread_create", retval);
-   }
+   for (i = 0; i < NUM_THREADS; i++)
+      pthread_join(id[i], NULL);
 
    pthread_attr_destroy(&attr);
-   pthread_join(f_th, NULL);
-   pthread_join(e_th, NULL);
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
