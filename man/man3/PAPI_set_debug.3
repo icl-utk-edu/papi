@@ -18,22 +18,35 @@ PAPI_set_debug \- set the current debug level for PAPI
 
 .SH DESCRIPTION
 .B "PAPI_set_debug" 
-sets the debug level for the PAPI library.
+sets the debug level for error output from the PAPI library.
 
 .SH ARGUMENTS
 .I "debuglevel"
 -- one of the constants shown in the table below and defined 
 in the papi.h header file.
-The current debug level is internally stored in the PAPI library and
-is used by the default internal PAPI error handler subroutine. 
-The error handler is called by library routines
-on the occurence of recoverable errors.
-The default PAPI error handler handles the possible debug levels 
-shown in the table below.
+The current debug level is used by both the internal error and debug message
+handler subroutines. The debug handler is only used if the library was compiled
+with -DDEBUG. The debug handler is called when there is an error upon a call 
+to the PAPI API. The error handler is always active and it's behavior cannot
+be modified except for whether or not it prints anything.
+
+The PAPI error handler prints out messages in the following form:
+
+PAPI Error: message.
+
+The default PAPI debug handler prints out messages in the following form:
+
+PAPI Error: Error Code code,symbol,description
+
+If the error was caused from a system call and the return code is PAPI_ESYS,
+the message will have a colon space and the error string as reported by
+strerror() appended to the end.
+
+The possible debug levels for debugging are shown in the table below.
 .TS
 allbox tab($);
 lB l.
-PAPI_QUIET$Quietly handle errors
+PAPI_QUIET$Do not print anything, just return the error code
 PAPI_VERB_ECONT$Print error message and continue
 PAPI_VERB_ESTOP$Print error message and exit
 .TE

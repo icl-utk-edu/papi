@@ -125,9 +125,11 @@ PAPI_DEFGRN$T{
 Get/Set default counting granularity.
 T}
 PAPI_DEBUG$T{
-Get/Set the PAPI debug state. The available debug states are
-defined in papi.h. 
-The debug state is available in ptr->debug.level.
+Get/Set the PAPI debug state and the debug handler. The available debug states are
+defined in papi.h. The debug state is available in ptr->debug.level. The debug
+handler is available in ptr->debug.handler. For information regarding the behavior
+of the handler, please see the man page for
+.BR "PAPI_set_debug" (3)
 T}
 .T&
 cI s
@@ -227,4 +229,4 @@ The domain functions are only implemented on some platforms.
 There are no known bugs in these functions.
 
 .SH SEE ALSO
-.BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " PAPI_start "(3)" 
+.BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " PAPI_start "(3), " PAPI_set_debug "(3)" 
