@@ -1,5 +1,5 @@
 INCLUDE = -I..
-TESTS 	= zero first  second nineth tenth description \
+TESTS 	= zero first  second tenth description \
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
@@ -66,9 +66,6 @@ first: first.F $(FTEST_DEPENDENCE)
 
 second: second.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(PAPILIB) -o second $(LDFLAGS)
-
-nineth: nineth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) nineth.F $(PAPILIB) -o nineth $(LDFLAGS)
 
 tenth: tenth.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) tenth.F $(PAPILIB) -o tenth $(LDFLAGS)
