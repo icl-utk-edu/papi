@@ -9,7 +9,7 @@ extern int TESTS_QUIET; /*Declared in test_utils.c */
 int main(int argc, char **argv )
 {
   int retval;
-  unsigned int Events;
+  int Events;
   long_long values,flpins;
   float real_time,proc_time,mflops;
 
