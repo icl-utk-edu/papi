@@ -37,6 +37,11 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_LD_INS, PAPI_SR_INS, 0,
 };
+#elif defined (PENTIUM4)
+const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+   PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_LDM, PAPI_L1_DCM, 0,
+};
+
 #else
 const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, 0,
@@ -350,10 +355,10 @@ int main(int argc, char **argv)
       printf("%s: Using %d threads, %d iterations\n\n", argv[0], NUM_THREADS, NUM);
       printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
    }
-/*  case1();
+  case1();
   if(!TESTS_QUIET )
      printf("case2: Does setmpx/add work?\n");
-*/
+
    case2();
    if (!TESTS_QUIET)
       printf("case3: Does add/setmpx work?\n");
