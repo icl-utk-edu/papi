@@ -1,3 +1,7 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
 /* 
 * File:    papi.h
 * CVS:     $Id$
@@ -21,7 +25,7 @@ extern "C" {
 /* Include files */
 
 #include <sys/types.h>
-#include <limits.h>          /* JT */
+#include <limits.h>
 #include "papiStdEventDefs.h"
 
 /*
@@ -186,7 +190,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_SET_MAXMEM         76 /* Setup Maximum Memory if no hardware support */
 
-#define PAPI_GET_SHLIBINFO      77 /* Executable information */   /* JT */
+#define PAPI_GET_SHLIBINFO      77 /* Executable information */
 
 #define PAPI_MAX_STR_LEN        129 /* Guess what */
 
@@ -242,11 +246,9 @@ typedef struct _papi_granularity_option {
 
 typedef struct _papi_preload_option {
   char lib_preload_env[PAPI_MAX_STR_LEN];    /* Model string of CPU */
-#ifdef PAPI30
-  char lib_preload_sep;                      /* JT */
-  char lib_dir_env[PAPI_MAX_STR_LEN];        /* JT */
-  char lib_dir_sep;                          /* JT */
-#endif
+  char lib_preload_sep;
+  char lib_dir_env[PAPI_MAX_STR_LEN];
+  char lib_dir_sep;
 } PAPI_preload_option_t;
 
 typedef int (*PAPI_debug_handler_t)(int code);
@@ -255,44 +257,27 @@ typedef struct _papi_debug_option {
   int level;
   PAPI_debug_handler_t handler; } PAPI_debug_option_t;
 
-typedef struct _papi_address_map {                                     /* JT */
-  char mapname[PAPI_MAX_STR_LEN];                                      /* JT */
-  caddr_t text_start;   /* Start address of program text segment */    /* JT */
-  caddr_t text_end;     /* End address of program text segment */      /* JT */
-  caddr_t data_start;   /* Start address of program data segment */    /* JT */
-  caddr_t data_end;     /* End address of program data segment */      /* JT */
-  caddr_t bss_start;    /* Start address of program bss segment */     /* JT */
-  caddr_t bss_end;      /* End address of program bss segment */       /* JT */
-} PAPI_address_map_t;                                                  /* JT */
-
-#ifdef PAPI30
-typedef struct _papi_program_info {                                    /* JT */
-  char fullname[PAPI_MAX_STR_LEN];      /* path+name */                /* JT */
-  char name[PAPI_MAX_STR_LEN];          /* name */                     /* JT */
-  PAPI_address_map_t address_info;                                     /* JT */
-  PAPI_preload_option_t preload_info;                                  /* JT */
-} PAPI_exe_info_t;                                                     /* JT */
-
-#else                                                                  /* JT */
-
-typedef struct _papi_program_info {
-  char fullname[PAPI_MAX_STR_LEN];	/* path+name */	
-  char name[PAPI_MAX_STR_LEN];          /* name */
+typedef struct _papi_address_map {
+  char mapname[PAPI_MAX_STR_LEN];
   caddr_t text_start;   /* Start address of program text segment */
   caddr_t text_end;     /* End address of program text segment */
   caddr_t data_start;   /* Start address of program data segment */
   caddr_t data_end;     /* End address of program data segment */
   caddr_t bss_start;    /* Start address of program bss segment */
   caddr_t bss_end;      /* End address of program bss segment */
-  char lib_preload_env[PAPI_MAX_STR_LEN]; /* Environment variable that lets you preload libraries */
+} PAPI_address_map_t;
+
+typedef struct _papi_program_info {
+  char fullname[PAPI_MAX_STR_LEN];      /* path+name */
+  char name[PAPI_MAX_STR_LEN];          /* name */
+  PAPI_address_map_t address_info;
+  PAPI_preload_option_t preload_info;
 } PAPI_exe_info_t;
 
-#endif
-
-typedef struct _papi_shared_lib_info {                              /* JT */
-  PAPI_address_map_t *map;                                          /* JT */
-  int count;                                                        /* JT */
-} PAPI_shlib_info_t;                                                /* JT */
+typedef struct _papi_shared_lib_info {
+  PAPI_address_map_t *map;
+  int count;
+} PAPI_shlib_info_t;
 
 typedef struct _papi_hw_info {
   int ncpu;                 /* Number of CPU's in an SMP Node */
@@ -358,7 +343,7 @@ typedef union {
   PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
   PAPI_mem_info_t *mem_info;
-  PAPI_shlib_info_t *shlib_info;                              /* JT */
+  PAPI_shlib_info_t *shlib_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
@@ -383,32 +368,32 @@ typedef struct pre_info {
 /* The Low Level API */
 
 int PAPI_accum(int EventSet, long_long *values);
-int PAPI_add_event(int EventSet, int Event);                      /* JT */
-int PAPI_add_events(int EventSet, int *Events, int number);       /* JT */
-int PAPI_add_pevent(int EventSet, int code, void *inout);         /* JT */
-int PAPI_cleanup_eventset(int EventSet);                          /* JT */
+int PAPI_add_event(int EventSet, int Event);
+int PAPI_add_events(int EventSet, int *Events, int number);
+int PAPI_add_pevent(int EventSet, int code, void *inout);
+int PAPI_cleanup_eventset(int EventSet);
 int PAPI_create_eventset(int *EventSet);
 int PAPI_destroy_eventset(int *EventSet);
 const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);
-const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);                /* JT */
+const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
 const PAPI_mem_info_t *PAPI_get_memory_info();
 long PAPI_get_dmem_info(int option);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 void *PAPI_get_overflow_address(void *context);
 long_long PAPI_get_real_cyc(void);
 long_long PAPI_get_real_usec(void);
-u_long_long PAPI_get_virt_cyc(void);        /* JT */
-u_long_long PAPI_get_virt_usec(void);       /* JT */
+u_long_long PAPI_get_virt_cyc(void);
+u_long_long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
 unsigned long int PAPI_thread_id(void);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
 void PAPI_lock(void);
 int PAPI_multiplex_init(void);
-int PAPI_num_hw_counters(void);                                           /* JT */
+int PAPI_num_hw_counters(void);
 int PAPI_num_hwctrs(void);
-int PAPI_num_events(int EventSet);                                        /* JT */
+int PAPI_num_events(int EventSet);
 int PAPI_set_multiplex(int *);
 int PAPI_get_multiplex(int EventSet);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
@@ -427,12 +412,8 @@ int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
 int PAPI_native_event_index_to_code(int in, int *out);
 int PAPI_read(int EventSet, long_long *values);
-#ifdef PAPI30
 int PAPI_remove_event(int EventSet, int EventCode);
 int PAPI_remove_events(int EventSet, int *Events, int number);
-#endif
-int PAPI_rem_event(int *EventSet, int Event); 
-int PAPI_rem_events(int *EventSet, int *Events, int number); 
 int PAPI_reset(int EventSet);
 int PAPI_restore(void);
 int PAPI_save(void);

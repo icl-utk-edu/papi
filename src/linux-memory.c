@@ -1,3 +1,7 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
 /* 
 * File:    linux-memory.c
 * Author:  Kevin London
@@ -7,7 +11,6 @@
 *          <your email address>
 */
 
-#include "papi.h"
 #ifdef __LINUX__
 #include <limits.h>
 #endif
@@ -19,7 +22,11 @@
 #define SUBSTRATE "linux-perfctr.h"
 #endif
 
+#include "papi.h"
 #include SUBSTRATE
+#include "papi_internal.h"
+#include "papi_protos.h"
+
 #include <stdio.h>
 static int init_amd( PAPI_mem_info_t * mem_info );
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
@@ -27,7 +34,7 @@ static int init_intel( PAPI_mem_info_t * mem_info );
 inline_static void cpuid(unsigned int *, unsigned int *,
 				 unsigned int *,unsigned int *);
 
-int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
+int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
   int retval = 0;
 
   /*

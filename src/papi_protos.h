@@ -1,0 +1,137 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+#ifndef PAPI_PROTOS_H
+#define PAPI_PROTOS_H
+
+/* 
+* File:    papi_protos.h
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+/* The following PAPI internal functions are defined by the papi_internal.c file. */
+extern int default_error_handler(int errorCode);
+
+extern int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *values);
+extern int _papi_hwi_allocate_eventset_map(void);
+extern int _papi_hwi_initialize_thread(ThreadInfo_t **master);
+extern int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t *handle);
+extern int _papi_hwi_add_event(EventSetInfo_t *ESI, int index);
+extern int _papi_hwi_add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout);
+extern int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode);
+extern int _papi_hwi_remove_EventSet(EventSetInfo_t *ESI);
+extern int _papi_hwi_cleanup_eventset(EventSetInfo_t *ESI);
+extern int _papi_hwi_get_domain(PAPI_domain_option_t *opt);
+extern int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t *ESI);
+extern int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t *ESI, unsigned int EventCode);
+extern EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
+extern EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
+extern int _papi_hwi_remove_EventSet(EventSetInfo_t *);
+extern int _papi_hwi_query(int preset_index, int *flags, char **note);
+extern EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *);
+
+/* The following PAPI internal functions are defined by the multiplex.c file. */
+
+extern int mpx_init(int);
+extern int mpx_add_event(MPX_EventSet **, int EventCode);
+extern int mpx_remove_event(MPX_EventSet **, int EventCode);
+extern int MPX_add_events(MPX_EventSet ** mpx_events, int * event_list, int num_events);
+extern int MPX_stop(MPX_EventSet * mpx_events, long_long * values);
+extern int MPX_cleanup(MPX_EventSet ** mpx_events);
+extern void MPX_shutdown(void);
+extern int MPX_reset(MPX_EventSet * mpx_events);
+extern int MPX_read(MPX_EventSet * mpx_events, long_long * values);
+extern int MPX_start(MPX_EventSet * mpx_events);
+
+/* The following PAPI internal functions are defined by the threads.c file. */
+
+extern void _papi_hwi_shutdown_the_thread_list(void);
+extern void _papi_hwi_cleanup_thread_list(void);
+extern int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr);
+extern ThreadInfo_t *_papi_hwi_lookup_in_thread_list();
+extern void _papi_hwi_shutdown_the_thread_list(void);
+
+/* The following PAPI internal functions are defined by the extras.c file. */
+
+extern int _papi_hwi_stop_overflow_timer(ThreadInfo_t *master, EventSetInfo_t *ESI);
+extern int _papi_hwi_start_overflow_timer(ThreadInfo_t *master, EventSetInfo_t *ESI);
+extern int _papi_hwi_initialize(DynamicArray_t **);
+extern void _papi_hwi_dispatch_overflow_signal(void *context);
+
+/* The following PAPI internal functions are defined by the substrate file. */
+
+extern int _papi_hwd_init(hwd_context_t *);
+extern int _papi_hwd_add_event(hwd_register_map_t *chosen, hwd_preset_t *preset, hwd_control_state_t *out);
+extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *, EventInfo_t *); 
+extern int _papi_hwd_allocate_registers(hwd_control_state_t *, hwd_preset_t *, hwd_register_map_t *);
+extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, u_long_long **);
+extern int _papi_hwd_shutdown(hwd_context_t *);
+extern int _papi_hwd_remove_event(hwd_register_map_t *chosen, unsigned hardware_index, hwd_control_state_t *out);
+extern u_long_long _papi_hwd_get_real_cycles (void);
+extern u_long_long _papi_hwd_get_real_usec (void);
+extern u_long_long _papi_hwd_get_virt_cycles (const hwd_context_t *);
+extern u_long_long _papi_hwd_get_virt_usec (const hwd_context_t *);
+extern int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
+extern int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
+extern int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);
+extern int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long_long events[]);
+extern int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t *option);
+extern int _papi_hwd_init_global(void);
+extern int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero);
+extern int _papi_hwd_query(int preset, int *flags, char **note_loc);
+extern int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option);
+extern int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option);
+extern void *_papi_hwd_get_overflow_address(void *context);
+extern void _papi_hwd_error(int error, char *);
+extern void _papi_hwd_lock_init(void);
+extern void _papi_hwd_lock(void);
+extern void _papi_hwd_unlock(void);
+extern int _papi_hwd_shutdown_global(void);
+extern int _papi_hwd_set_domain(hwd_control_state_t *, int);
+extern int _papi_hwd_setmaxmem();
+extern int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI);
+
+#ifdef _WIN32
+/* Callback routine for Windows timers */
+void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
+#else
+/* Callback routine for Linux/Unix timers */
+void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp);
+#endif
+
+/* The following functions implement the native event query capability
+   See extras.c or substrates for details... */
+
+extern int _papi_hwi_query_native_event(unsigned int EventCode);
+extern int _papi_hwi_native_code_to_name(unsigned int EventCode, char *out);
+extern int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *description);
+extern int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info);
+extern int _papi_hwi_native_name_to_code(char *in, int *out);
+extern unsigned int _papi_hwd_native_code_to_idx(unsigned int EventCode);
+extern unsigned int _papi_hwd_native_idx_to_code(unsigned int EventCode);
+extern char *_papi_hwd_native_idx_to_name(unsigned int EventCode);
+extern char *_papi_hwd_native_idx_to_descr(unsigned int EventCode);
+
+/* The following functions are defined by the memory file. */
+
+extern int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type );
+extern long _papi_hwd_get_dmem_info(int option);
+
+/* Defined by the OS substrate file */
+
+extern int _papi_hwd_update_shlib_info(void);
+extern int _papi_hwd_get_system_info(void);
+
+/* Linux defines; may also appear in substrates */
+#ifdef linux
+extern int sighold(int);
+extern int sigrelse(int);
+#endif
+
+#endif /* PAPI_PROTOS_H */
+

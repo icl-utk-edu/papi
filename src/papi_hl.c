@@ -1,3 +1,7 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
 /* 
 * File:    papi_hl.c
 * CVS:     $Id$
@@ -21,7 +25,9 @@
   #define SUBSTRATE "linux-perfctr.h"
 #endif
 
+#include "papi.h"
 #include SUBSTRATE
+#include "papi_internal.h"
 
 /* high level papi functions*/
 
@@ -95,13 +101,13 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
         } 
 	mhz = hwinfo->mhz;
 	PAPI_create_eventset( &EventSet );
-	retval = PAPI_add_event(EventSet, PAPI_FP_INS);    /* JT */
+	retval = PAPI_add_event(EventSet, PAPI_FP_INS);
 	PAPI_perror( retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
 	     return retval;
 	}
-	retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);   /* JT */
+	retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
 	PAPI_perror(retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
@@ -217,10 +223,10 @@ int PAPI_start_counters(int *events, int array_len)
       if (retval)
 	return(retval); */
 
-      retval = PAPI_add_event(PAPI_EVENTSET_INUSE,events[i]);  /* JT */
+      retval = PAPI_add_event(PAPI_EVENTSET_INUSE,events[i]);
       if (retval) {
 	/* remove any prior events that may have been added */
-        PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE);        /* JT */
+        PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE);
 	return(retval);
       }
     }
@@ -299,7 +305,7 @@ int PAPI_stop_counters(long_long *values, int array_len)
   retval = PAPI_stop(PAPI_EVENTSET_INUSE, values);
   initialized=1;
   if (!retval) {
-    PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE);    /* JT */
+    PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE);
     return retval; 
   }
   DBG((stderr,"PAPI_stop_counters returns %d\n",retval));
