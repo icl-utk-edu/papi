@@ -61,7 +61,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_L2_TCH is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_L2_TCH is not available.\n");
 	  *mask = *mask ^ MASK_L2_TCH;
 	}
     }
@@ -73,7 +74,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_L2_TCA is not available.\n");
+	  if ( !TESTS_QUIET )
+	      fprintf(stderr,"PAPI_L2_TCA is not available.\n");
 	  *mask = *mask ^ MASK_L2_TCA;
 	}
     }
@@ -85,7 +87,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_L2_TCM is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_L2_TCM is not available.\n");
 	  *mask = *mask ^ MASK_L2_TCM;
 	}
     }
@@ -97,7 +100,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_L1_DCM is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_L1_DCM is not available.\n");
 	  *mask = *mask ^ MASK_L1_DCM;
 	}
     }
@@ -109,7 +113,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_L1_ICM is not available.\n");
+	  if ( !TESTS_QUIET )
+	      fprintf(stderr,"PAPI_L1_ICM is not available.\n");
 	  *mask = *mask ^ MASK_L1_ICM;
 	}
     }
@@ -121,7 +126,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_L1_TCM is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_L1_TCM is not available.\n");
 	  *mask = *mask ^ MASK_L1_TCM;
 	}
     }
@@ -136,8 +142,10 @@ int add_test_events(int *number, int *mask)
 
                 char errstring[PAPI_MAX_STR_LEN];
                 PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
+	  if ( !TESTS_QUIET ){
                 printf("Error: %s\n", errstring );
-	  fprintf(stderr,"PAPI_BR_CN is not available.\n");
+	        fprintf(stderr,"PAPI_BR_CN is not available.\n");
+          }
 	  *mask = *mask ^ MASK_BR_CN;
 	}
     }
@@ -148,7 +156,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_BR_MSP is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_BR_MSP is not available.\n");
 	  *mask = *mask ^ MASK_BR_MSP;
 	}
     }
@@ -159,7 +168,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_BR_PRC is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_BR_PRC is not available.\n");
 	  *mask = *mask ^ MASK_BR_PRC;
 	}
     }
@@ -170,7 +180,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_FLOPS is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_FLOPS is not available.\n");
 	  *mask = *mask ^ MASK_FLOPS;
 	}
     }
@@ -178,7 +189,8 @@ int add_test_events(int *number, int *mask)
   if (*mask & MASK_FP_INS)
     {
 #if defined(__digital__)
-      fprintf(stderr,"Using PAPI_TOT_INS instead of PAPI_FP_INS.\n");
+	  if ( !TESTS_QUIET )
+             fprintf(stderr,"Using PAPI_TOT_INS instead of PAPI_FP_INS.\n");
       retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
 	  *mask = *mask ^ MASK_FP_INS;
 	  *mask = *mask & MASK_TOT_INS;
@@ -189,7 +201,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_FP_INS is not available.\n");
+	  if ( !TESTS_QUIET )
+	      fprintf(stderr,"PAPI_FP_INS is not available.\n");
 	  *mask = *mask ^ MASK_FP_INS;
 	}
     }
@@ -201,7 +214,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_TOT_INS is not available.\n");
+	  if ( !TESTS_QUIET )
+	      fprintf(stderr,"PAPI_TOT_INS is not available.\n");
 	  *mask = *mask ^ MASK_TOT_INS;
 	}
     }
@@ -213,7 +227,8 @@ int add_test_events(int *number, int *mask)
 	(*number)++;
       else
 	{
-	  fprintf(stderr,"PAPI_TOT_CYC is not available.\n");
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_TOT_CYC is not available.\n");
 	  *mask = *mask ^ MASK_TOT_CYC;
 	}
     }
@@ -356,8 +371,12 @@ void test_fail(char *file, int line, char *call, int retval)
 	memset( buf, '\0', sizeof(buf) );
 	if ( retval != 0 )
 	   printf("%-40s FAILED\nLine # %d\n", file, line);
-	else
-	   printf("%-40s SKIPPED\nLine # %d\n",file,line );
+	else{
+           if ( !TESTS_QUIET )
+	       printf("%-40s SKIPPED\nLine # %d\n",file,line );
+	   else
+	       printf("%-40s SKIPPED\n",file,line );
+        }
 	if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
 		perror(buf);
@@ -383,19 +402,21 @@ void test_skip(char *file, int line, char *call, int retval)
 
 	memset( buf, '\0', sizeof(buf) );
 	printf("%-40s SKIPPED\nLine # %d\n", file, line);
-	if ( retval == PAPI_ESYS ) {
+        if ( !TESTS_QUIET ) {
+	  if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
 		perror(buf);
-	}
+	  }
 	else if ( retval > 0 ) {
 		printf("Error calculating: %s\n", call );
-	}
-	else {
+	  }
+	  else {
 		char errstring[PAPI_MAX_STR_LEN];
 		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
 		printf("Error in %s: %s\n", call, errstring );
-	}
-        printf("\n");
+	  }
+          printf("\n");
+         }
 	exit(0);
 }
 
