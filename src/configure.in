@@ -175,10 +175,18 @@ case "$OS" in
    aix)
       if test "${OSVER}" = "5"; then
          #get_bitmode
-         if test "${bitmode}" = "64"; then
-            MAKEVER="$OS""$OSVER"-"$CPU"-"$bitmode"bit
-         else 
-            MAKEVER="$OS""$OSVER"-"$CPU"
+         if test "${CPU}" = "power3"; then 
+            if test "${bitmode}" = "64"; then
+               MAKEVER="$OS""$OSVER"-"$CPU"-"$bitmode"bit
+            else 
+               MAKEVER="$OS""$OSVER"-"$CPU"
+            fi
+         else
+            if test "${bitmode}" = "64"; then
+               MAKEVER="$OS"-"$CPU"-"$bitmode"bit
+            else 
+               MAKEVER="$OS"-"$CPU"
+            fi
          fi
       else
          if test "${CPU}" = "power3"; then   
