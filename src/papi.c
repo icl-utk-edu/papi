@@ -46,7 +46,9 @@ static int PAPI_ERR_LEVEL = PAPI_VERB_ESTOP;
 /* Utility functions */
 
 static int num_counters(EventSetInfo *ESI)
-{
+{/* returns number of counters currently loaded 
+    in specified eventset*/
+
   return(ESI->NumberOfCounters);
 }
 
@@ -56,7 +58,7 @@ static int check_initialize(void)
 
   if (PAPI_EVENTSET_MAP.totalSlots) 
     return(PAPI_OK);
-   
+
   return(initialize()); 
 } 
 
@@ -106,6 +108,18 @@ heck:
 
    return(retval);
 }
+
+int PAPI_init(void)
+{ /* if initialize has never been called, call it */
+int errorCode;
+if(!PAPI_EVENTSET_MAP.dataSlotArray)/* null ptr*/
+   {
+   errorCode=initialize();
+   return(errorCode);
+   }
+return(PAPI_OK);
+} /* end int PAPI_init(void) */
+
 
 static int expand_dynamic_array(DynamicArray *DA)
 {
@@ -241,6 +255,17 @@ static int add_event(EventSetInfo *ESI, int EventCode)
   k = lookup_EventCodeIndex(ESI, EventCode);
   if (k<PAPI_OK) 
     return k; 
+
+  /* Take the lowest empty slot */
+
+  for (k=0;k<_papi_system_info.num_cntrs;k++) {
+  /*if (EventCodeArray[k] == -1)  fix line 248*/
+    if (ESI->EventCodeArray[k] == -1)
+      break;
+  } 
+
+  if (k == _papi_system_info.num_cntrs)
+    return(PAPI_ECNFLCT);
 
   ESI->EventCodeArray[k] = EventCode;
   ESI->start[k]          = 0;
@@ -394,6 +419,8 @@ int PAPI_start(int EventSet)
   retval = _papi_hwd_start(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
 
+  ESI->state=PAPI_RUNNING;
+
   DBG((stderr,"PAPI_start returns %d\n",retval));
   return(retval);
 }
@@ -401,7 +428,7 @@ int PAPI_start(int EventSet)
 /* checks for valid EventSet, calls substrate stop() fxn. */
 int PAPI_stop(int EventSet, unsigned long long *values)
 { 
-  int retval;
+  int retval,MAX_COUNTERS;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
@@ -413,14 +440,18 @@ int PAPI_stop(int EventSet, unsigned long long *values)
   retval = _papi_hwd_reset(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
 
+  MAX_COUNTERS=PAPI_get_opt(PAPI_GET_MAX_HWCTRS, NULL); 
+
 #if defined(DEBUG)
   if (values)
     { 
       int i;
-      for (i=0;i<ESI->NumberOfCounters;i++)
+      for (i=0;i<MAX_COUNTERS;i++)
 	DBG((stderr,"PAPI_stop values[%d]:\t\t%lld\n",i,values[i]));
     }
 #endif
+
+  ESI->state=PAPI_STOPPED;
 
   return(retval);
 }
@@ -495,6 +526,28 @@ int PAPI_write(int EventSet, unsigned long long *values)
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
   return(retval);
 }
+ 
+int PAPI_state(int EventSet, int *status)
+{
+    EventSetInfo *ESI;
+
+    /* check bounds*/
+    if(EventSet>PAPI_EVENTSET_MAP.totalSlots) {
+  	return(PAPI_EMISC);
+	}
+
+
+    /* check for good EventSetIndex value*/
+    ESI = lookup_EventSet(EventSet);
+
+    if(!ESI) return(PAPI_NULL);
+
+    /*read status FROM ESI->state*/
+    *status=ESI->state;
+
+     return(PAPI_OK);
+}
+
 
 int PAPI_set_opt(int option, PAPI_option_t *ptr)
 { int retval;
@@ -523,7 +576,28 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
       return(PAPI_EINVAL);
     }
 }
- 
+
+int PAPI_get_opt(int option, PAPI_option_t *ptr) 
+{ int retval;
+
+  PAPI_init();
+
+  switch(option)
+  {
+    case PAPI_GET_CLOCKRATE:
+	{ retval=_papi_system_info.mhz;
+          return( retval ); 
+        }
+    case PAPI_GET_MAX_HWCTRS: 
+	{ retval =  _papi_system_info.num_gp_cntrs 
+                   +_papi_system_info.num_sp_cntrs;
+          return( retval ); 
+        }
+    }
+
+   return(PAPI_EINVAL);
+} 
+
 void PAPI_shutdown(void) {
     int i;
 
