@@ -22,8 +22,9 @@
  */
 void *thread_fn(void *dummy)
 {
-   while (1)
+   while (1){
       do_both(NUM_ITERS);
+   }
 }
 
 void init_papi(void)
@@ -196,6 +197,7 @@ int main(int argc, char **argv)
 
       printf("case1: Does multiplexing work with extraneous threads present?\n");
    }
+   do_l1misses(NUM_ITERS/10);
    case1_last_half();
    test_pass(__FILE__, NULL, 0);
 
