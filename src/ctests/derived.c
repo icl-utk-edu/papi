@@ -83,12 +83,17 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
 
+#ifndef OLD_TEST_DRIVER
   PAPI_shutdown();
+#endif
   
-  QUIETPRINTF("Verification: Does produce a non-zero value?\n");
+  QUIETPRINTF("Verification: Does it produce a non-zero value?\n");
 
   if (values == 0)
     CPP_TEST_FAIL("Zero count returned",0);
+  else {
+    QUIETPRINTF("Yes: %d\n", values);
+  }
 
   CPP_TEST_PASS();
 }
