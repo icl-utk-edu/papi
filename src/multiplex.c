@@ -148,7 +148,7 @@ static int mpx_startup_itimer(void)
 static void mpx_shutdown_itimer(void)
 {
 	if (timeKillEvent(mpxTimerID) != TIMERR_NOERROR)
-		perror("setitimer(MPX_ITIMER)");
+		perror("setitimer(MPX_ITIMER) in mpx_shutdown_itimer");
 }
 
 static void mpx_release(void)
@@ -211,7 +211,7 @@ static int mpx_startup_itimer(void)
 
 	retval = setitimer(MPX_ITIMER, &itime, NULL);
 	if (retval != 0)
-	  perror("setitimer(MPX_ITIMER)");
+	  perror("setitimer(MPX_ITIMER) in mpx_startup_itimer");
 	assert(retval == 0);
 	return(retval);
 }
@@ -227,7 +227,7 @@ static void mpx_restore_signal(void)
 static void mpx_shutdown_itimer(void)
 {
   if (setitimer(MPX_ITIMER, &itimestop, NULL) == -1)
-    perror("setitimer(MPX_ITIMER)");
+    perror("setitimer(MPX_ITIMER) in mpx_shutdown_itimer");
 }
 
 static void mpx_hold(void)
