@@ -655,14 +655,23 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * info)
 {
    if (EventCode & PAPI_NATIVE_MASK) {
-      strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MIN_STR_LEN);
+      strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MAX_STR_LEN);
       if (&info->symbol) {
          /* Fill in the info structure */
          strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode),
                  PAPI_HUGE_STR_LEN);
-         info->short_descr[0] = '0';
-         info->count = 1;       /* if we found it, it's available */
+         info->short_descr[0] = 0;
          info->event_code = EventCode;
+         /* This needs to be reworked, but will require substrate changes.
+            The intention is for each substrate to return a list of 
+            register names and values that need to be programmed for each native event.
+            This should be a mapping of the stuff found in hwd_register_t.
+            It'll probably involve _papi_hwd_ntv_code_to_bits().
+         */
+/*
+         _papi_hwd_ntv_code_to_bits(EventCode, hwd_register_t * bits)
+*/
+         info->count = 1;       /* if we found it, it's available */
          return (PAPI_OK);
       }
    }
