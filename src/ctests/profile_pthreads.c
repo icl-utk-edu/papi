@@ -12,10 +12,11 @@
 #include "papi.h"
 #include "test_utils.h"
 
+extern int TESTS_QUIET; /* Declared in test_utils.c */
+
 #define THR 1000000
 unsigned long length;
 unsigned long my_start, my_end;
-int TESTS_QUIET=0; /* Tests in verbose mode? */
 
 void *Thread(void *arg)
 {
@@ -99,10 +100,7 @@ int main(int argc, char **argv)
   long long elapsed_us, elapsed_cyc;
   const PAPI_exe_info_t *prginfo = NULL;
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
 	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);

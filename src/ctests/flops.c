@@ -14,7 +14,7 @@
 #else
 	char format_string[] = {"Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n"};
 #endif
-int TESTS_QUIET=0;	/*Tests in Verbose mode? */
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 
 int main(int argc, char **argv) {
@@ -25,10 +25,7 @@ int main(int argc, char **argv) {
   int retval;
   int i,j,k;
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
 
   /* Initialize the Matrix arrays */

@@ -10,7 +10,7 @@ PAPI_start to work but just count the first event?
 
 #include "papi_test.h"
 
-int TESTS_QUIET=0; /* Tests in Verbose mode? */
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
@@ -21,11 +21,7 @@ int main(int argc, char **argv)
    int i, j = 0;
    long_long g1[2];
 
-   if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-   }
-
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
 	test_fail(__FILE__,__LINE__, "PAPI_library_init", retval );

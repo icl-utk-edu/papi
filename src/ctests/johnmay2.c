@@ -1,10 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include "papi.h"
-#include "test_utils.h"
-
-int TESTS_QUIET=0; /*Tests is Verbose mode?*/
+#include "papi_test.h"
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
@@ -12,10 +7,7 @@ int main(int argc, char **argv)
    long long int values;
    int retval;
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
    if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
         test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);

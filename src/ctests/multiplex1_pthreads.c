@@ -28,7 +28,7 @@
 extern void do_flops(int);
 extern void do_reads(int);
 
-int TESTS_QUIET = 0;
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void init_papi_pthreads(void)
 {
@@ -318,10 +318,7 @@ int case4(void)
 
 int main(int argc, char **argv)
 {
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if(!TESTS_QUIET ) {
    printf("%s: Using %d threads, %d iterations\n\n",argv[0],NUM_THREADS,NUM);

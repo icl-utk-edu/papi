@@ -13,11 +13,10 @@
 */
 
 #include "papi_test.h"
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 #define NUMTESTS 41
 #define TEST_NAME "memory"
-
-int TESTS_QUIET=0; /* Tests in verbose mode? */
 
 int main(int argc, char **argv) 
 {
@@ -71,10 +70,7 @@ int main(int argc, char **argv)
     PAPI_L2_TCW
 };
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if ((retval = PAPI_library_init(PAPI_VER_CURRENT))!=PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);

@@ -26,10 +26,11 @@
 #include "papi.h"
 #include "test_utils.h"
 
+extern int TESTS_QUIET; /* Declared in test_utils.c */
+
 #define THRESHOLD 500000
 
 int total = 0;
-int TESTS_QUIET=0; /*Run tests in verbose mode?*/
 
 static void sigprof_handler(int sig)
 {
@@ -141,10 +142,7 @@ int main(int argc, char **argv)
   pthread_attr_t attr;
   long long elapsed_us, elapsed_cyc;
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
 	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);

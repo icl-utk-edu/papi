@@ -57,7 +57,7 @@
 #endif
 
 int total = 0;		/* total overflows */
-int TESTS_QUIET=0;	/* Tests in Verbose mode? */
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
 {
@@ -76,10 +76,7 @@ int main(int argc, char **argv)
   long_long min, max;
   int num_flops, retval;
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);

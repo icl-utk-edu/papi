@@ -26,6 +26,7 @@ void do_both(int n);
 void do_l1misses(int n);
 char *stringify_domain(int domain);
 char *stringify_granularity(int granularity);
+void tests_quiet(int argc, char **argv);
 void test_pass(char *file, long_long **values, int num_tests);
 void test_fail(char *file, int line, char *call, int retval);
 void test_skip(char *file, int line, char *call, int retval);

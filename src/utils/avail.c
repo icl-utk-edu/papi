@@ -1,7 +1,7 @@
 /* This file performs the following test: hardware info and which events are available */
 
 #include "papi_test.h"
-int TESTS_QUIET=0; /* Tests in Verbose mode? */
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 
 int main(int argc, char **argv) 
@@ -11,10 +11,7 @@ int main(int argc, char **argv)
   const PAPI_preset_info_t *info = NULL;
   const PAPI_hw_info_t *hwinfo = NULL;
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);

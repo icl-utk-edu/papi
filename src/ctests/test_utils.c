@@ -1,5 +1,13 @@
 #include "papi_test.h"
 
+/*  Variable to hold reporting status
+	if TRUE, output is suppressed
+	if FALSE output is sent to stdout
+	initialized to FALSE
+	declared here so it can be available globally
+*/
+int TESTS_QUIET=0;
+
 long_long **allocate_test_space(int num_tests, int num_events)
 {
   long_long **values;
@@ -285,6 +293,14 @@ char *stringify_granularity(int granularity)
   return(NULL);
 }
 
+void tests_quiet(int argc, char **argv)
+{
+  if ( argc > 1 ) {
+		if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+		   TESTS_QUIET=1;
+  }
+}
+
 void test_pass(char *file, long_long **values, int num_tests)
 {
 	printf("%-24s: PASSED\n", file);
@@ -354,13 +370,15 @@ void test_skip(char *file, int line, char *call, int retval)
 		BOOL bSuccess;
 		INPUT_RECORD inputBuffer;
 		DWORD dwInputEvents; /* number of events actually read */
-
-		printf("Press any key to continue...\n");
-		hStdIn = GetStdHandle(STD_INPUT_HANDLE);
-		do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
-			1, &dwInputEvents);
-		} while (!(inputBuffer.EventType == KEY_EVENT &&
- 			inputBuffer.Event.KeyEvent.bKeyDown));
+		
+		if (!TESTS_QUIET) {
+			printf("Press any key to continue...\n");
+			hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+			do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
+				1, &dwInputEvents);
+			} while (!(inputBuffer.EventType == KEY_EVENT &&
+ 				inputBuffer.Event.KeyEvent.bKeyDown));
+		}
 		exit(retval);
 	}
 #define exit wait_exit

@@ -8,7 +8,7 @@
 	char format_string2[] = {"%lld total cyc,\n%f %s\n"};
 #endif
 
-int TESTS_QUIET=0;
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
@@ -16,10 +16,7 @@ int main(int argc, char **argv)
    long_long totcyc, values[2], readvalues[2];
 
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if ( !TESTS_QUIET ) {
    printf("Cost of execution for PAPI start/stop and PAPI read.\n");

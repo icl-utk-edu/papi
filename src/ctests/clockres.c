@@ -6,7 +6,7 @@
   #define ITERS 10000
 #endif
 
-int TESTS_QUIET=0; /* Tests in Verbose mode? */
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
@@ -15,11 +15,8 @@ int main(int argc, char **argv)
     total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
   int i,retval;
 
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
   if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
 	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
