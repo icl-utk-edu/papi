@@ -158,9 +158,10 @@ int case1_last_half(void)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) {
+    test_print_event_header("case1:",EventSet);
     printf("case1:");
     for( i = 0; i < max_to_add; i++ ) {
-      printf(" %lld", values[i]);
+      printf(ONENUM, values[i]);
 
     /* There should be some sort of value for all events */
     if( values[i] == 0 ) allvalid = 0;

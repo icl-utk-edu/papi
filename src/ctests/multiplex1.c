@@ -88,6 +88,7 @@ int case1()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
+  char event_name[PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
@@ -127,9 +128,10 @@ int case1()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_stop",retval);
 
-  if ( !TESTS_QUIET )
-     printf(TAB2,"case1:",values[0],values[1]);
-
+  if ( !TESTS_QUIET ) {
+    test_print_event_header("case1:",EventSet);
+    printf(TAB2,"case1:",values[0],values[1]);
+  }
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
@@ -144,6 +146,7 @@ int case2()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
+  char event_name[PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
@@ -187,8 +190,10 @@ int case2()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_stop",retval);
 
-  if ( !TESTS_QUIET ) 
-     printf(TAB2,"case2:",values[0],values[1]);
+  if ( !TESTS_QUIET )  {
+    test_print_event_header("case2:",EventSet);
+    printf(TAB2,"case2:",values[0],values[1]);
+  }
 
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
@@ -204,6 +209,7 @@ int case3()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
+  char event_name[PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
@@ -247,8 +253,10 @@ int case3()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_stop",retval);
 
-  if ( !TESTS_QUIET ) 
-     printf(TAB2,"case3:",values[0],values[1]);
+  if ( !TESTS_QUIET )   {
+    test_print_event_header("case3:",EventSet);
+    printf(TAB2,"case3:",values[0],values[1]);
+  }
 
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
@@ -266,6 +274,8 @@ int case4()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[4];
+  int nev,event_codes[4];
+  char evname[4][PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
@@ -340,10 +350,17 @@ int case4()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_stop",retval);
 
+  nev=4;
+  retval = PAPI_list_events(EventSet, event_codes, &nev);
+  for(i=0;i<nev;i++)
+    PAPI_event_code_to_name(event_codes[i],evname[i]);
+
   if ( !TESTS_QUIET ) 
 #if defined(__ALPHA) && defined(__osf__)
+     printf(TAB3HDR,"case4:",evname[0],evname[1],evname[3]);
      printf("case4: %lld %lld %lld\n", values[0], values[1],values[3]);
 #else
+     test_print_event_header("case4:",EventSet);
      printf(TAB4,"case4:",values[0],values[1],values[2],values[3]);
 #endif
   retval = PAPI_cleanup_eventset(&EventSet);

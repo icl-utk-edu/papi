@@ -506,3 +506,24 @@ void test_skip(char *file, int line, char *call, int retval)
 #define exit wait_exit
 #endif
 
+void test_print_event_header(char *call, int evset)
+{
+  int ev_ids[PAPI_GET_MAX_HWCTRS+PAPI_MPX_DEF_DEG];
+  int i,nev;
+  int retval;
+  char evname[PAPI_MAX_STR_LEN];
+
+  nev=PAPI_GET_MAX_HWCTRS+PAPI_MPX_DEF_DEG;
+  retval=PAPI_list_events(evset,ev_ids,&nev);
+
+  if(*call) printf("%s",call);
+  if(retval==PAPI_OK) {
+    for(i=0;i<nev;i++) {
+      PAPI_event_code_to_name(ev_ids[i],evname);
+      printf(ONEHDR,evname);
+    }
+  } else {
+    printf("Can not list event names (%s)",__FUNCTION__);
+  }
+  printf("\n");
+}

@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include "papi.h"
+#include "papi_test.h"
 #include "test_utils.h"
 
 #define FLOPS 4000000
@@ -122,8 +122,12 @@ void *case1_pthreads(void *arg)
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
-  if ( !TESTS_QUIET )
-     printf("case1 thread %x: %lld %lld\n",(unsigned)pthread_self(),values[0],values[1]);
+  if ( !TESTS_QUIET ) {
+    printf("case1 thread %4x:",(unsigned)pthread_self());
+    test_print_event_header("",EventSet);
+    printf("case1 thread %4x:",(unsigned)pthread_self());
+    printf(TAB2,"",values[0],values[1]);
+  }
   if((retval = PAPI_cleanup_eventset(&EventSet)) !=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
@@ -161,8 +165,13 @@ void *case2_pthreads(void *arg)
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
-  if ( !TESTS_QUIET )
-     printf("case2 thread %x: %lld %lld\n",(unsigned)pthread_self(),values[0],values[1]);
+  if ( !TESTS_QUIET ) {
+    printf("case2 thread %4x:",(unsigned)pthread_self());
+    test_print_event_header("",EventSet);
+    printf("case2 thread %4x:",(unsigned)pthread_self());
+    printf(TAB2,"",values[0],values[1]);
+  }
+
   if((retval = PAPI_cleanup_eventset(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
@@ -200,8 +209,13 @@ void *case3_pthreads(void *arg)
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
-  if ( !TESTS_QUIET ) 
-      printf("case3 thread %x: %lld %lld\n",(unsigned)pthread_self(),values[0],values[1]);
+  if ( !TESTS_QUIET )  {
+    printf("case3 thread %4x:",(unsigned)pthread_self());
+    test_print_event_header("",EventSet);
+    printf("case3 thread %4x:",(unsigned)pthread_self());
+    printf(TAB2,"",values[0],values[1]);
+  }
+
   if((retval = PAPI_cleanup_eventset(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
@@ -266,8 +280,13 @@ void *case4_pthreads(void *arg)
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
-  if ( !TESTS_QUIET )
-     printf("case4 thread %x: %lld %lld %lld %lld\n",(unsigned)pthread_self(),values[0],values[1],values[2],values[3]);
+  if ( !TESTS_QUIET ) {
+    printf("case4 thread %4x:",(unsigned)pthread_self());
+    test_print_event_header("",EventSet);
+    printf("case4 thread %4x:",(unsigned)pthread_self());
+    printf(TAB4,"",values[0],values[1],values[2],values[3]);
+  }
+
   if((retval = PAPI_cleanup_eventset(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
