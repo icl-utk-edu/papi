@@ -1491,6 +1491,35 @@ case "$OS" in
        ;;
 esac
 #echo $MAKEVER
+case "$MAKEVER" in
+    aix-power3);;
+    aix-power4);;
+    aix-power4-64bit);;
+    aix5-power3);;
+    aix5-power3-64bit);;
+    dadd-alpha);;
+    irix-mips);;
+    irix-mips-64bit);;
+    linux-alpha);;
+    linux-perfctr-athlon);;
+    linux-perfctr-em64t);;
+    linux-perfctr-opteron);;
+    linux-perfctr-p3);;
+    linux-perfctr-p4);;
+    linux-pfm-itanium);;
+    linux-pfm-itanium2);;
+    solaris-ultra);;
+    solaris-ultra-64bit);;
+    tru64-alpha);;
+    unicos-t3e);;
+    unicos-x1-msp);;
+    unicos-x1-ssp);;
+    *)
+    echo Platform $MAKEVER is not supported
+    exit -1
+    ;;
+esac
+
 
 
 
