@@ -59,6 +59,8 @@ int remove_test_events(int *EventSet, int mask);
 void do_flush(void);
 void do_misses(int n, int size);
 void do_flops(int n);
+/* export the next symbol as 'end' address of do_flops for profiling */
+void fdo_flops(int *n); 
 void do_reads(int n);
 void do_both(int n);
 void do_l1misses(int n);
