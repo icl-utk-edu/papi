@@ -95,10 +95,10 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
-   {PAPI_FP_INS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
-   {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
-   {PAPI_VEC_INS, {0, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
@@ -123,10 +123,10 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
-   {PAPI_FP_INS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
    /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
-   {PAPI_FP_OPS, {0, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
-   {PAPI_VEC_INS, {0, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
+   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
@@ -138,6 +138,19 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
 //  {PAPI_L2_STM,  {0, { PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
    {PAPI_L2_DCM, {0, {PNE_replay_event_L2_data_miss, PAPI_NULL,}, {0,}}},
    {0, {0, {0,}, {0,}}}
+};
+
+/* This is an example of a dense developer notes array. It consists of an array
+   of structures containing an event and a note string. Pointers to these strings 
+   are inserted into a sparse event description structure at init time. This allows
+   the use of rare developer strings with no string copies and very little space
+   wasted on unused structure elements.
+*/
+const hwi_dev_notes_t _papi_hwd_pentium4_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_INS, "PAPI_FP_INS is currently implemented identically to PAPI_FP_OPS"},
+   {PAPI_FP_OPS, "PAPI_FP_OPS is currently implemented identically to PAPI_FP_INS"},
+   {0, NULL}
 };
 
 
