@@ -427,6 +427,13 @@ static int _internal_get_system_info(void)
 
    strcpy(_papi_hwi_system_info.exe_info.address_info.name,psi.pr_fname);
 
+   /* Preload info */
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_start, "DEFAULT");
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "_RLD_LIST");
+   _papi_hwi_system_info.preload_info.lib_preload_sep = ':';
+   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
+
    /* HWinfo */
 
    _papi_hwi_system_info.hw_info.totalcpus = sysmp(MP_NPROCS);
