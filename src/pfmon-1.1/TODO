@@ -1,8 +1,0 @@
-TODO list:
-----------
-- support for randomized sampling periods in pfmon
-- add support for multi-threaded (multiple tasks) processes
-- separate the library (libpfm) from the tool (pfmon)
-- write documentation for library (libpfm)
-- add some more examples and tests
-- add perfmon support to GNU libc
