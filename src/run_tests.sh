@@ -13,7 +13,7 @@ else
   TESTS_QUIET="TESTS_QUIET"
 fi
 
-CTESTS=`find tests -perm -u+x -type f`;
+CTESTS=`find ctests -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
 ALLTESTS="$FTESTS $CTESTS";
 x=0;

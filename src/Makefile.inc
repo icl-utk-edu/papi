@@ -87,13 +87,13 @@ f90papi.h: genpapifdef
 examples: tests ftests
 
 test: examples
-	tests/zero
+	ctests/zero
 
 fulltest: examples
 	sh run_tests.sh
 
 tests: null
-	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS) TOOLPATH="$(TOOLPATH)"
+	cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS) TOOLPATH="$(TOOLPATH)"
 
 # LIBCFLAGS='$(CFLAGS)'
 ftests: null
@@ -101,7 +101,7 @@ ftests: null
 
 clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
-	cd tests; $(MAKE) clean
+	cd ctests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
 
 clobber: clean
@@ -124,7 +124,7 @@ install: all install_tree native_install
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
 	-chmod go+r $(DESTDIR)/include/*
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
-	cd tests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
+	cd ctests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
 	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
 	cp $(SUBSTR).README $(DESTDIR)
 
