@@ -68,6 +68,8 @@
 
 #define PNE_scalar_DP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_DP_uop<<16) + (1<<TAG0) + (1<<ALL))
 #define PNE_scalar_SP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_SP_uop<<16) + (1<<TAG0) + (1<<ALL))
+#define PNE_packed_DP_uop_tag0 (PAPI_NATIVE_MASK + (P4_packed_DP_uop<<16) + (1<<TAG0) + (1<<ALL))
+#define PNE_packed_SP_uop_tag0 (PAPI_NATIVE_MASK + (P4_packed_SP_uop<<16) + (1<<TAG0) + (1<<ALL))
 
 /*
    PAPI preset events are defined in the tables below.
@@ -77,7 +79,22 @@
    first event is the one that is read. See PAPI_FP_INS for an example.
 */
 
-const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
+/* EWWWWW!!! GROSS!!! -pjm */
+
+#if defined(PAPI_PENTIUM4_FP_X87)
+#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}}
+#elif defined(PAPI_PENTIUM4_X87_SSE_SP)
+#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
+#elif defined(PAPI_PENTIUM4_X87_SSE_DP)
+#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
+#elif defined(PAPI_PENTIUM4_SSE_SP_DP)
+#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_scalar_DP_uop_tag0, PAPI_NULL, }, {0,}}}
+#else
+#warning "Assuming you meant -DPAPI_PENTIUM4_X87_SSE_DP on the compile line?"
+#define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
+#endif
+
+hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 /* preset, derived, native index array */
    {PAPI_RES_STL, {0, {PNE_resource_stall, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
@@ -89,9 +106,8 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
-   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
-   /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
-   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   FPU(PAPI_FP_INS),
+   FPU(PAPI_FP_OPS),
    {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
@@ -104,7 +120,7 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
    {0, {0, {0,}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
+hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
 /* preset, derived, native index array */
    {PAPI_RES_STL, {0, {PNE_resource_stall, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
@@ -117,9 +133,8 @@ const hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
-   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
-   /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
-   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL,}, {0,}}},
+   FPU(PAPI_FP_INS),
+   FPU(PAPI_FP_OPS),
    {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
@@ -134,7 +149,7 @@ const hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
    {0, {0, {0,}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
+hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
 /* preset, derived, native index array */
 //   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
@@ -147,9 +162,8 @@ const hwi_search_t _papi_hwd_pentium4_m3_preset_map[] = {
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_IIS, {0, {PNE_instr_retired_all, PAPI_NULL,}, {0,}}},
-   {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}},
-   /* Initial definition of FP_OPS identical to FP_INS. Could this be tweaked for SSE? */
-   {PAPI_FP_OPS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}},
+   FPU(PAPI_FP_INS),
+   FPU(PAPI_FP_OPS),
    {PAPI_VEC_INS, {DERIVED_ADD, {PNE_execution_event_nbogus1, PNE_64bit_MMX_uop_tag1, PNE_128bit_MMX_uop_tag1, PAPI_NULL,}, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
@@ -1340,5 +1354,69 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    return(++i);
 }
 
+void _papi_hwd_fixup_fp_events(hwi_search_t *p)
+{
+  char *s = getenv("PAPI_PENTIUM4_FP");
+  int count = 0;
+  hwi_search_t t, *tmp; 
 
+  if ((s == NULL) || (strlen(s) == 0))
+    return;
+
+  memset(&t,0x0,sizeof(t));
+  t.event_code = PAPI_FP_INS;
+  t.data.derived = DERIVED_CMPD;
+  t.data.native[count] = PNE_execution_event_nbogus0;
+  count++;
+  if (strstr(s,"X87"))
+    {
+      t.data.native[count] = PNE_x87_FP_uop_tag0;
+      count++;
+    }
+  if (strstr(s,"SSE_UP_SP"))
+    {
+      t.data.native[count] = PNE_scalar_SP_uop_tag0;
+      count++;
+    }
+  if (strstr(s,"SSE_UP_DP") && (count < 3))
+    {
+      t.data.native[count] = PNE_scalar_DP_uop_tag0;
+      count++;
+    }
+#if 0
+  if (strstr(s,"SSE_P_SP") && (count < 3))
+    {
+      t.data.native[count] = PNE_packed_SP_uop_tag0;
+      count++;
+    }
+  if (strstr(s,"SSE_P_DP") && (count < 3))
+    {
+      t.data.native[count] = PNE_packed_DP_uop_tag0;
+      count++;
+    }
+#endif
+
+  if ((count <= 1) || (count > 3))
+    {
+      PAPIERROR("Improper usage of PAPI_PENTIUM4_FP environment variable");
+      PAPIERROR("Use one or two of X87,SSE_UP_SP,SSE_UP_DP");
+      return;
+    }
+
+  tmp = p;
+  while (tmp->event_code)
+    {
+      if (tmp->event_code == PAPI_FP_INS) 
+	{
+	  t.event_code = PAPI_FP_INS;
+	  memcpy(tmp,&t,sizeof(t));
+	}
+      if (tmp->event_code == PAPI_FP_OPS) 
+	{
+	  t.event_code = PAPI_FP_OPS;
+	  memcpy(tmp,&t,sizeof(t));
+	}
+      tmp++;
+    }
+}
 #endif

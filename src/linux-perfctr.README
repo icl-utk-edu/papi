@@ -83,22 +83,46 @@ Your CPU must be a Pentium 686/AMD K7 or similar which can generate APIC
 interrupts for performance counter events. This is _not_ true for some mobile
 Pentiums and early revisions of the AMD K7 or Athlon.
 
-You can verify that all is working by running the perfctr/examples/perfex program
-with the -i flag. If you do not see "pcint" as one of the flags, you need to recompile
-your kernel or buy a real CPU. ;-)
+You can verify that all is working by running the perfctr/examples/perfex 
+program with the -i flag. If you do not see "pcint" as one of the flags, 
+you need to recompile your kernel or buy a real CPU. ;-)
 
-x86 Native Event Notes
-----------------------
+Floating point counts on the Pentium 4 series
+---------------------------------------------
 
-For *all* the native event codes, see the x86-events.h header file and
-the website at
+As you may or may not know, the Pentium 4 can generate floating point
+instructions either through the x87 hardware or with SSE. Furthermore with
+SSE it can generate packed (multiple operands in one 128-bit register) or
+unpacked (signal operand in one 128-bit register). Depending on your compiler
+you will get different instructions. In order to enable PAPI to count these,
+we have introduced 2 methods.
 
-		http://www.sandpile.org
+1) The PAPI_PENTIUM4_FP environment variable.
 
-The native event counter format is:
+   Set this to one or two of the following, and it will change the
+   behavior of PAPI_FP_INS and PAPI_FP_OPS.
 
-	event_code = 16 bit event selector code and MESI unit mask.
-	hw_counter_num = Event register number 0 through 1, (2 or 3 on K7).
-			
-	event = (event_code << 8) | (hw_counter_num).
+   X87: count all x87 instructions
+   SSE_UP_SP: count all unpacked SSE single precision instructions
+   SSE_UP_DP: count all unpacked SSE double precision instructions
 
+   Do to the design of the register set, only 2 of the three are countable
+   at one time. Sorry folks.
+
+2) The PAPI_PENTIUM4_FP_xxx defines.
+
+   Set these in the EVENTFLAGS of either the Makefile.linux-perfctr-p4 or
+   Makefile.linux-perfctr-em64t.
+
+   -DPAPI_PENTIUM4_FP_X87
+   -DPAPI_PENTIUM4_FP_X87_SSE_SP
+   -DPAPI_PENTIUM4_FP_X87_SSE_DP
+   -DPAPI_PENTIUM4_FP_SSE_SP_DP
+
+   The default for Nocona/EM64T/Pentium 4 Model 3 is:
+
+	 -DPAPI_PENTIUM4_FP_X87_SSE_DP.
+
+   The default for anything else is:
+
+	 -DPAPI_PENTIUM4_FP_X87.
