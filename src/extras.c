@@ -455,12 +455,12 @@ int _papi_hwi_start_signal(int signal, int need_context)
 
    memset(&action, 0x00, sizeof(struct sigaction));
    action.sa_flags = SA_RESTART;
-#if defined(_AIX) || defined(_CRAYT3E) || defined(sun) || defined(linux)
+#if defined(__ALPHA) && defined(__osf__)
+   action.sa_handler = (void (*)(int)) _papi_hwd_dispatch_timer;
+#else
    action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd_dispatch_timer;
    if (need_context)
      action.sa_flags |= SA_SIGINFO;
-#elif defined(__ALPHA) && defined(__osf__)
-   action.sa_handler = (void (*)(int)) _papi_hwd_dispatch_timer;
 #endif
 
    INTDBG("installing signal handler\n");

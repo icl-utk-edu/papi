@@ -15,6 +15,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "pfmwrap.h"
+#include "threads.h"
 
 #ifndef ITANIUM2
 static const itanium_preset_search_t ia1_preset_search_map[] = {
@@ -941,6 +942,14 @@ static int ia64_process_profile_entry(void *papiContext)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
  {
+   _papi_hwi_context_t ctx;
+   ThreadInfo_t *t = NULL;
+   hwd_siginfo_t *tmp = info;
+
+   ctx.si = info;
+   ctx.ucontext = (hwd_ucontext_t *) context;
+
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) tmp->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &t);
    return;
  }
 
