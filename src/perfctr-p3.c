@@ -926,7 +926,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
 
       memset(&sa, 0, sizeof sa);
       sa.sa_sigaction = _papi_hwd_dispatch_timer;
-      sa.sa_flags = SA_SIGINFO;
+      sa.sa_flags = SA_SIGINFO | SA_RESTART;
       if ((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0) {
          OVFDBG("Setting sigaction failed: SYSERR %d: %s", errno, strerror(errno));
          return (PAPI_ESYS);
