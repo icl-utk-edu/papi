@@ -1607,5 +1607,19 @@ void PAPIDEBUG(int level, char * format, ...){
   else
 #endif
      return;
+ void OVFDBG(char * format, ...){
+#ifdef DEBUG
+  va_list args;
+  int level = DEBUG_OVERFLOW;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
 }
 #endif

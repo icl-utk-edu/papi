@@ -211,6 +211,8 @@ int PAPI_library_init(int version)
 	  _papi_hwi_debug |= DEBUG_THREADS;
 	if (getenv("PAPI_DEBUG_MULTIPLEX"))
 	  _papi_hwi_debug |= DEBUG_MULTIPLEX;
+	if (getenv("PAPI_DEBUG_OVERFLOW"))
+	  _papi_hwi_debug |= DEBUG_OVERFLOW;
   #endif
 #endif
 
