@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 /* index for branch_event in itanium*/ 
     native = 10;
 #endif
-    PAPI_encode_native("BRANCH_EVENT", &native);
+    PAPI_event_name_to_code("BRANCH_EVENT", &native);
     if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     if((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC))!=PAPI_OK)

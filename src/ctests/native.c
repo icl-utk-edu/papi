@@ -165,44 +165,44 @@ void papimon_start(void)
 
 	/* Execution latency stall cycles */
 #ifdef ITANIUM2
-    PAPI_encode_native("CPU_CYCLES", &native);
+    PAPI_event_name_to_code("CPU_CYCLES", &native);
 #else
-    PAPI_encode_native("DEPENDENCY_SCOREBOARD_CYCLE", &native);
+    PAPI_event_name_to_code("DEPENDENCY_SCOREBOARD_CYCLE", &native);
 #endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined execution stall cycles */
 #ifdef ITANIUM2
-    PAPI_encode_native("L1I_READS", &native);
+    PAPI_event_name_to_code("L1I_READS", &native);
 #else
-    PAPI_encode_native("DEPENDENCY_ALL_CYCLE", &native);
+    PAPI_event_name_to_code("DEPENDENCY_ALL_CYCLE", &native);
 #endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined instruction fetch stall cycles */
 #ifdef ITANIUM2
-    PAPI_encode_native("L1D_READS_SET0", &native);
+    PAPI_event_name_to_code("L1D_READS_SET0", &native);
 #else
-    PAPI_encode_native("UNSTALLED_BACKEND_CYCLE", &native);
+    PAPI_event_name_to_code("UNSTALLED_BACKEND_CYCLE", &native);
 #endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined memory stall cycles */
 #ifdef ITANIUM2
-    PAPI_encode_native("IA64_INST_RETIRED", &native);
+    PAPI_event_name_to_code("IA64_INST_RETIRED", &native);
 #else
-    PAPI_encode_native("MEMORY_CYCLE", &native);
+    PAPI_event_name_to_code("MEMORY_CYCLE", &native);
 #endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       }
 #elif defined(mips) && defined(sgi) && defined(unix)
       /* See man r10k_counters */
-      PAPI_encode_native("Primary_instruction_cache_misses", &native); 
+      PAPI_event_name_to_code("Primary_instruction_cache_misses", &native); 
                                      /* L1 I Miss */
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-      PAPI_encode_native("Primary_data_cache_misses", &native); 
+      PAPI_event_name_to_code("Primary_data_cache_misses", &native); 
                                      /* L1 D Miss */
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
@@ -217,10 +217,10 @@ void papimon_start(void)
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(sun) && defined(sparc)
-      PAPI_encode_native("Load_use", &native); 
+      PAPI_event_name_to_code("Load_use", &native); 
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-      PAPI_encode_native("DC_wr_hit", &native); 
+      PAPI_event_name_to_code("DC_wr_hit", &native); 
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)

@@ -79,7 +79,7 @@ int main(int argc, char **argv)
   {
 
     /* Execution latency stall cycles */
-    PAPI_encode_native("DATA_EAR_CACHE_LAT4", &native);
+    PAPI_event_name_to_code("DATA_EAR_CACHE_LAT4", &native);
     if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     if((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC))!=PAPI_OK)
