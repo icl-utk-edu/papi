@@ -25,12 +25,13 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 /* Event to use in all cases; initialized in init_papi() */
 
 #if defined(sparc) && defined(sun)
-static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L1_ICM, PAPI_TOT_INS, PAPI_TOT_CYC };
+const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L1_ICM, PAPI_TOT_INS, PAPI_TOT_CYC, 0 };
 #else
-static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_DCM };
+const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_DCM, 0 };
 #endif
 
-static int PAPI_events_len = 2;
+static int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
+static int PAPI_events_len;
 
 #ifdef TEST_DRIVER
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
@@ -39,11 +40,12 @@ static int PAPI_events_len = 2;
 
 #endif
 
-void init_papi(const int *events, int *len)
+void init_papi(int *out_events, int *len)
 {
   int retval;
   int i, real_len = 0;
-
+  const int *in_events = preset_PAPI_events;
+ 
   /* Initialize the library */
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
@@ -54,22 +56,22 @@ void init_papi(const int *events, int *len)
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_set_debug",retval);
 
-  for (i=0;events[i]!=0;i++)
+  for (i=0;in_events[i]!=0;i++)
     {
        char out[PAPI_MAX_STR_LEN];
       /* query and set up the right instruction to monitor */
-      retval = PAPI_query_event(events[i]);
+      retval = PAPI_query_event(in_events[i]);
 	if (retval == PAPI_OK) 
 	{
-	  PAPI_events[real_len++] = events[i];
-	  PAPI_event_code_to_name(events[i],out);
+	  out_events[real_len++] = in_events[i];
+	  PAPI_event_code_to_name(in_events[i],out);
 	  printf("%s exists\n",out);
 	if (real_len == *len)
 	break;
 	}
 	else
 	{
-	  PAPI_event_code_to_name(events[i],out);
+	  PAPI_event_code_to_name(in_events[i],out);
 	  printf("%s does not exist\n",out);
 	}
     }
@@ -85,6 +87,7 @@ int case1()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
 
+  PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
@@ -139,6 +142,7 @@ int case2()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
 
+  PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
@@ -197,6 +201,7 @@ int case3()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
 
+  PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
@@ -207,7 +212,7 @@ int case3()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_create_eventset",retval);
 
-  for (i=0;i<PAPI_num_hwctrs();i++)
+  for (i=0;i<PAPI_events_len;i++)
     {
       char out[PAPI_MAX_STR_LEN];
 
@@ -257,6 +262,7 @@ int case4()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[4];
 
+  PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
