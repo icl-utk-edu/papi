@@ -199,6 +199,9 @@ C     Lines out
       end if
 #endif
 
+#if defined(linux) && defined(__ia64__) && defined(ITANIUM2)
+      call ftest_fail(__FILE__,__LINE__,'Native events not supported',PAPI_ESBSTR)
+#endif
 #if defined(linux) && defined(__ia64__)
 C     Data mem refs
       nativees = 516

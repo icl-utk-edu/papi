@@ -11,96 +11,96 @@ FTEST_DEPENDENCE=$(PAPILIB)
 default: $(TESTS)
 
 ftests_util.o: ftests_util.F
-	@if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
+	@if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
 	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
 
 addAIXevents.o: addAIXevents.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c addAIXevents.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c addAIXevents.c
 
 do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c do_loops.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c do_loops.c
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
 
 avail: avail.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) avail.F  $(PAPILIB) $(LDFLAGS) -o avail
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) avail.F  $(PAPILIB) $(LDFLAGS) -o avail
 
 eventname: eventname.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
 
 case1: case1.F $(FTEST_DEPENDENCE) 
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
 
 case2: case2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
 
 fmatrixlowpapi: fmatrixlowpapi.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
 
 fmatrixpapi: fmatrixpapi.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
 
 fmatrixpapi2: fmatrixpapi2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
 
 strtest: strtest.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
 
 flops: flops.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
 
 description: description.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) description.F $(PAPILIB) $(LDFLAGS) -o description
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) description.F $(PAPILIB) $(LDFLAGS) -o description
 
 accum: accum.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) accum.F $(PAPILIB) -o accum $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) accum.F $(PAPILIB) -o accum $(LDFLAGS)
 
 highlevel: highlevel.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) highlevel.F $(PAPILIB) -o highlevel $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) highlevel.F $(PAPILIB) -o highlevel $(LDFLAGS)
 
 zero: zero.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) zero.F $(PAPILIB) -o zero $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) zero.F $(PAPILIB) -o zero $(LDFLAGS)
 
 first: first.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) first.F $(PAPILIB) -o first $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) first.F $(PAPILIB) -o first $(LDFLAGS)
 
 second: second.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(PAPILIB) -o second $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(PAPILIB) -o second $(LDFLAGS)
 
 third: third.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) third.F $(PAPILIB) -o third $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) third.F $(PAPILIB) -o third $(LDFLAGS)
 
 fourth: fourth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fourth.F $(PAPILIB) -o fourth $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fourth.F $(PAPILIB) -o fourth $(LDFLAGS)
 
 fifth: fifth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fifth.F $(PAPILIB) -o fifth $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fifth.F $(PAPILIB) -o fifth $(LDFLAGS)
 
 nineth: nineth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) nineth.F $(PAPILIB) -o nineth $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) nineth.F $(PAPILIB) -o nineth $(LDFLAGS)
 
 tenth: tenth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) tenth.F $(PAPILIB) -o tenth $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) tenth.F $(PAPILIB) -o tenth $(LDFLAGS)
 
 cost: cost.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) cost.F $(PAPILIB) -o cost $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) cost.F $(PAPILIB) -o cost $(LDFLAGS)
 
 johnmay: johnmay.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay.F $(PAPILIB) -o johnmay $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay.F $(PAPILIB) -o johnmay $(LDFLAGS)
 
 johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
 
 native: native.F $(FTEST_DEPENDENCE) addAIXevents.o
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
 
 fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) do_loops.o
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) do_loops.o -o fmultiplex1 $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) do_loops.o -o fmultiplex1 $(LDFLAGS)
 
 
 fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) do_loops.o
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) do_loops.o -o fmultiplex2 $(LDFLAGS)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) do_loops.o -o fmultiplex2 $(LDFLAGS)
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)

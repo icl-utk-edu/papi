@@ -118,6 +118,8 @@ void papimon_start(void)
 	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	}
+#elif defined(linux) && defined(__ia64__) && defined(ITANIUM2)
+      test_fail(__FILE__,__LINE__,"Native Events not supported",PAPI_ESBSTR);
 #elif defined(linux) && defined(__ia64__)
       {
 	typedef union {
