@@ -1213,7 +1213,7 @@ int _papi_hwd_remove_event(hwd_register_map_t * chosen, unsigned int hardware_in
 
 int _papi_hwd_update_shlib_info(void)
 {
-   return PAPI_OK;
+   return (PAPI_ESBSTR);
 }
 
 int _papi_hwd_encode_native(char *name, int *code)

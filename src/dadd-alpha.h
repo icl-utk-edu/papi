@@ -109,4 +109,4 @@ typedef struct native_info_t {
 
 #include "papi_internal.h"
 
-extern unsigned long _etext, _ftext;
+extern unsigned long _etext, _ftext, _fdata, _edata;

@@ -98,7 +98,7 @@ static int get_system_info(void)
    /* Cut off any arguments to exe */
    {
      char *tmp;
-     tmp = strchr(psi.pr_psargs, ' ');
+     tmp = strchr(info.pr_psargs, ' ');
      if (tmp != NULL)
        *tmp = '\0';
    }
@@ -147,6 +147,10 @@ static int get_system_info(void)
        (caddr_t) & _ftext;
    _papi_hwi_system_info.exe_info.address_info.text_end =
        (caddr_t) & _etext;
+   _papi_hwi_system_info.exe_info.address_info.data_start = 
+                                            (caddr_t) & _fdata;
+   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
+
 
    if (family == 0) {
       strcat(_papi_hwi_system_info.hw_info.model_string, "21064");
