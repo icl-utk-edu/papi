@@ -179,8 +179,8 @@ inline static void set_hwcntr_codes(int selector, struct perfctr_control *from, 
       useme = (1 << i) & selector;
       if (useme)
 	{
-	  to->evntsel[i] = to->evntsel[i] & ~PERF_EVNT_MASK;
-	  to->evntsel[i] = to->evntsel[i] | from->evntsel[i];
+	  to->evntsel[i] &= ~(PERF_UNIT_MASK | PERF_EVNT_MASK);
+	  to->evntsel[i] |= from->evntsel[i];
 #ifdef PERFCTR20
 	  to->pmc_map[i] = i;
 #endif
@@ -410,7 +410,7 @@ inline static int counter_event_compat(const struct vperfctr_control *a, const s
 inline static int counter_event_compat(const struct perfctr_control *a, const struct perfctr_control *b, int cntr)
 #endif
 {
-  unsigned int priv_mask = ~PERF_EVNT_MASK;
+  unsigned int priv_mask = ~(PERF_EVNT_MASK|PERF_UNIT_MASK);
 
 #ifdef PERFCTR20
   if ((a->cpu_control.evntsel[cntr] & priv_mask) ==
