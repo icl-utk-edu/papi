@@ -88,7 +88,7 @@ int main(int argc, char **argv)
    printf(format_string1,values[0],values[1],((float)values[0])/50000.0,"cyc/call pair",
 	   ((float)values[1])/50000.0,"ins/call pair");
    printf("\nTotal cost for PAPI_start/stop(2 counters) over 50000 iterations\n");
-   printf(format_string2,totcyc,((float)totcyc)/500001.0,"cyc/call pair");
+   printf(format_string2,totcyc,((float)totcyc)/50001.0,"cyc/call pair");
 
    /* Start the read eval */
    printf("\n\nPerforming read test...\n");
