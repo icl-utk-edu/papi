@@ -25,7 +25,6 @@
 #include "asm/atomic.h"
 
 #include "libperfctr.h"
-#include "x86-events.h"
 #include "papi.h"
 
 typedef struct hwd_control_state {
