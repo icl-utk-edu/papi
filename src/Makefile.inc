@@ -133,7 +133,6 @@ install: install-tree native_install
 
 install-man: install-tree
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
-	cp $(SUBSTR).README $(DESTDIR)/share/papi
 
 install-tests: install-tree
 	-mkdir -p $(DESTDIR)/share/papi/ctests
