@@ -66,10 +66,6 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-#if defined(__ALPHA) && defined(__osf__)
-   test_pass(__FILE__, NULL, 0);
-#endif
-
   /* Make sure that required resources are available */
   retval = PAPI_query_event(EVT1);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, EVT1_STR, retval);
@@ -81,9 +77,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, EVT3_STR, retval);
 
 
-#ifndef _CRAYT3E
   EventSet1 = add_test_events(&num_events1,&mask1);
-#endif
   EventSet2 = add_test_events(&num_events2,&mask2);
   EventSet3 = add_test_events(&num_events3,&mask3);
 
@@ -93,7 +87,6 @@ int main(int argc, char **argv)
 
   do_l1misses(ITERS);
 
-#ifndef _CRAYT3E 
   retval = PAPI_start(EventSet1);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
@@ -101,9 +94,6 @@ int main(int argc, char **argv)
   
   retval = PAPI_stop(EventSet1, values[0]);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-#else
-  (values[0])[0] = 0LL;
-#endif
 
   retval = PAPI_start(EventSet2);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -121,9 +111,7 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet3, values[2]);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-#ifndef _CRAYT3E
   remove_test_events(&EventSet1, mask1);
-#endif
   remove_test_events(&EventSet2, mask2);
   remove_test_events(&EventSet3, mask3);
 
