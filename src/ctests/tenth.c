@@ -114,6 +114,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
       do_l1misses(ITERS);
+      do_misses(1, 1024*1024*4);
 
       retval = PAPI_stop(EventSet1, values[(i*3)+0]);
       if (retval != PAPI_OK)
@@ -124,6 +125,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
       do_l1misses(ITERS);
+      do_misses(1, 1024*1024*4);
 
       retval = PAPI_stop(EventSet2, values[(i*3)+1]);
       if (retval != PAPI_OK)
@@ -134,6 +136,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
       do_l1misses(ITERS);
+      do_misses(1, 1024*1024*4);
 
       retval = PAPI_stop(EventSet3, values[(i*3)+2]);
       if (retval != PAPI_OK)
