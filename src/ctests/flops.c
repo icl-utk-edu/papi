@@ -6,6 +6,9 @@
  */
 
 #include "papi_test.h"
+
+#define TEST_NAME "flops"
+
 #define INDEX 100
 
 #ifdef _WIN32
@@ -14,12 +17,16 @@
 	char format_string[] = {"Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n"};
 #endif
 
-int main(){
+int main(int argc, char **argv) {
   extern void dummy(void *);
   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
   float real_time, proc_time, mflops;
   long_long flpins;
   int i,j,k;
+
+#ifdef NO_FLOPS
+  test_fail(TEST_NAME, "Error: flops not supported on this architecture.", PAPI_ENOEVNT);
+#endif
 
   /* Initialize the Matrix arrays */
   for ( i=0; i<INDEX*INDEX; i++ ){
