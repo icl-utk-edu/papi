@@ -83,9 +83,11 @@ PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *length,
 #endif
 {
 #if defined( _CRAYT3E )
+  int i;
   char tmp[PAPI_MAX_STR_LEN];
   *check = PAPI_perror(*code, tmp, *length);
-  strncpy( _fcdtocp(destination), tmp, strlen(tmp));
+  for ( i=_fcdlen(destination); i>*length;tmp[i--]=' ');
+  strncpy( _fcdtocp(destination), tmp, _fcdlen(destination));
 #elif defined(_FORTRAN_STRLEN_AT_END)
   int i;
   *check = PAPI_perror(*code, destination, destination_len);
@@ -115,12 +117,15 @@ PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, ch
 {
 #if defined( _CRAYT3E )
   char tmp[PAPI_MAX_STR_LEN];
+  int  i,length;
   *check = PAPI_event_code_to_name(*EventCode, tmp);
-  strncpy( _fcdtocp(out), tmp, strlen(tmp));
+  length = strlen( tmp );
+  for ( i=_fcdlen(out);i>length;tmp[i--]=' ');
+  strncpy( _fcdtocp(out), tmp, _fcdlen(out));
 #elif defined(_FORTRAN_STRLEN_AT_END)
   int i;
   *check = PAPI_event_code_to_name(*EventCode, out);
-  for(i=strlen(out);i<out_len;out[i++]=' ');
+  for(i=strlen(out);i<out_len;out[i--]=' ');
 #else
   *check = PAPI_event_code_to_name(*EventCode, out);
 #endif
@@ -231,22 +236,40 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu,
   const PAPI_hw_info_t *hwinfo;
 #if defined(_FORTRAN_STRLEN_AT_END)
   int i;
+#elif defined(_CRAYT3E)
+  int i,len;
+  char tmpstr[PAPI_MAX_STR_LEN];
 #endif
   hwinfo = PAPI_get_hardware_info();
   if ( hwinfo == NULL ){
     *ncpu = 0;
+    *nnodes = 0;
+    *totalcpus = 0;
+    *vendor = 0;
+    *model = 0;
+    *revision=0;
+    *mhz=0;
   }
   else {
+    printf("Mhz %f Revision %f\n", hwinfo->mhz, hwinfo->revision );
     *ncpu = hwinfo->ncpu;
     *nnodes = hwinfo->nnodes;
     *totalcpus = hwinfo->totalcpus;
     *vendor = hwinfo->vendor;
     *model = hwinfo->model;
+    *revision = hwinfo->revision;
+    *mhz = hwinfo->mhz;
 #if defined ( _CRAYT3E )
-    strncpy( _fcdtocp( vendor_string), hwinfo->vendor_string,
-	     strlen( hwinfo->vendor_string) );
-    strncpy( _fcdtocp( model_string), hwinfo->model_string,
-	     strlen( hwinfo->model_string ) );
+    len=strlen(hwinfo->vendor_string);
+    strcpy(tmpstr, hwinfo->vendor_string);
+    for ( i=_fcdlen(vendor_string)-1;i>len;tmpstr[i--]=' ');
+    strncpy( _fcdtocp( vendor_string), tmpstr,
+	   _fcdlen(vendor_string)); 
+    len=strlen(hwinfo->model_string);
+    strcpy(tmpstr, hwinfo->model_string);
+    for ( i=_fcdlen(model_string)-1;i>len;tmpstr[i--]=' ');
+    strncpy( _fcdtocp( model_string), tmpstr,
+	     _fcdlen( model_string ) );
 #elif defined(_FORTRAN_STRLEN_AT_END)
     strcpy( vendor_string, hwinfo->vendor_string );
     strcpy( model_string, hwinfo->model_string );
@@ -256,8 +279,6 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu,
     strcpy( vendor_string, hwinfo->vendor_string );
     strcpy( model_string, hwinfo->model_string );
 #endif    
-    *revision = hwinfo->revision;
-    *mhz = hwinfo->mhz;
   }
   return;
 }
