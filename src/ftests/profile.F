@@ -1,7 +1,7 @@
 #include "fpapi.h"
 #define NUM 1000
 #define THR 10000
-#define BUFSIZE 81920*2
+#define BUFSIZE 81920*2*2*2*2
 
       program profile
       implicit none
@@ -102,10 +102,10 @@ C      print *, "length=", length
       if (tests_quiet .EQ. 0) then
       print *, "Test case 7: SVR4 compatible hardware profiling."
       print *, "------------------------------------------------"
- 100  format(A12, Z8, A12, Z8, A15, Z20)
+ 100  format(A12, Z14, A12, Z14, A15, Z20)
       write (*, 100) "Text start:", text_start, "; Text end:", text_end,
      *"; Text length:", length
- 200  format(A12, Z8, A12, Z8)
+ 200  format(A12, Z14, A12, Z14)
       write (*, 200) "Data start:", data_start, "; Data end:", data_end
       write (*, 200) "BSS start:", bss_start, "; BSS end:", bss_end
       write (*, 300) lib_preload_env
@@ -120,7 +120,7 @@ C      print *, "length=", length
 #endif
  400  format (A12, ":  ", I11)
       write (*, 400) "PAPI_TOT_CYC", values(2)
-      print *, " "
+      print *, ""
 
       print *, "Test type: PAPI_PROFIL_POSIX"
       end if
@@ -158,7 +158,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(3)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(4)
-      print *, " "
+      print *, ""
       end if
 
 #if defined(NO_FLOPS)
@@ -209,7 +209,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(5)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(6)
-      print *, " "
+      print *, ""
       end if
 
 #if defined(NO_FLOPS)
@@ -261,7 +261,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(7)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(8)
-      print *, " "
+      print *, ""
       end if
 #if defined(NO_FLOPS)
       call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
@@ -311,7 +311,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(9)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(10)
-      print *, " "
+      print *, ""
       end if
 #if defined(NO_FLOPS)
       call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
@@ -363,7 +363,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(11)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(12)
-      print *, " "
+      print *, ""
       end if
 #if defined(NO_FLOPS)
       call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
