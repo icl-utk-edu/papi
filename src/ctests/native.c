@@ -62,12 +62,8 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 #endif
 
-#ifdef PENTIUM4
-   static char *native_name[] = { "retired_mispred_branch_type_CONDITIONAL", "resource_stall_SBFULL",
-      "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL
-   };
-#elif ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
-   static char *native_name[5] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
+#if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
+   static char *native_name[6] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 #endif
 
 #if defined(linux) && defined(__ia64__)
@@ -107,7 +103,16 @@ void papimon_start(void)
          test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EMISC);
       if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-      if(!strncmp(hwinfo->model_string, "AMD K7", 6)) {
+      /* printf("Model = %s\n", hwinfo->model_string); */
+      if(!strncmp(hwinfo->model_string, "Intel Pentium 4", 15)) {
+         native_name[0] = "retired_mispred_branch_type_CONDITIONAL";
+         native_name[1] = "resource_stall_SBFULL";
+         native_name[2] = "tc_ms_xfer_CISC";
+         native_name[3] = "instr_retired_BOGUSNTAG_BOGUSTAG";
+         native_name[4] = "BSQ_cache_reference_RD_2ndL_HITS";
+         native_name[5] = NULL;
+     }
+      else if(!strncmp(hwinfo->model_string, "AMD K7", 6)) {
          native_name[0] = "TOT_CYC";
          native_name[1] = "IC_MISSES";
          native_name[2] = "DC_ACCESSES";
