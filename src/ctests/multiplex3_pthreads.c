@@ -165,6 +165,13 @@ int main(int argc, char **argv)
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
+#if defined(sun)
+	printf("%-40s SKIPPED\n",__FILE__);
+    if ( !TESTS_QUIET )
+      printf("Line # %d: Solaris doesn't cope well with virtual timers. \n",__LINE__);
+	exit(0);
+#endif
+
   /* Create a bunch of unused pthreads, to simulate threads created
    * by the system that the user doesn't know about.
    */
