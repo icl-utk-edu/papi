@@ -124,8 +124,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
 
   
-   /* Opened once for all threads. */
+   retval = mdi_init();
+   if ( retval ) 
+     return(retval);
 
+   /* Opened once for all threads. */
    if ((dev = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
@@ -134,10 +137,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    if (vperfctr_info(dev, &info) < 0)
      { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
-
-   retval = mdi_init();
-   if ( retval ) 
-     return(retval);
 
   /* Fill in what we can of the papi_system_info. */
   retval = _papi_hwd_get_system_info();
@@ -161,7 +160,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    }
    else{
      strcpy(_papi_hwi_system_info.substrate, "$Id$");
-     retval = setup_p3_presets(_papi_hwi_system_info.hw_info.model);
+     retval = setup_p3_presets(info.cpu_type);
      if ( retval ) 
        return(retval);
      retval = setup_p3_vector_table(vtable);
