@@ -783,7 +783,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       /* The correct event to overflow is overflow_option->EventIndex */
 
       ncntrs = _papi_hwi_system_info.num_cntrs;
-      selector = ESI->EventInfoArray[overflow_option->EventIndex].hardware_selector;
+      selector = ESI->EventInfoArray[overflow_option->EventIndex].hwd_selector;
       SUBDBG("selector id is 0x%x.\n",selector);
       i = ffs(selector) - 1;
       if (i >= ncntrs)
