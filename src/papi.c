@@ -25,7 +25,7 @@ int          PAPI_ERR_LEVEL;
 /* This function must be called at the beginning of the program.          */
 /* This function performs all initializations to set up PAPI environment. */
 /* The user selects the level of error handling here.                     */
-/* Failure of this function should shutdown the program.                  */
+/* Failure of this function should shutdown the PAPI tool.                */
 /*                                                                        */
 /* Initialize EM.                                                         */
 /* Set pointer to GLOBAL variable PAPI_EVENT_MAP.                         */
@@ -47,7 +47,7 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 /* initialize values in PAPI_EVENT_MAP */ 
 
    EM->dataSlotArray=(void **)malloc(EM->totalSlots*sizeof(void *));
-   if(!EM->dataSlotArray) PAPI_shutdown();
+   if(!EM->dataSlotArray) PAPI_shutdown(PAPI_ENOMEM);
    bzero(EM->dataSlotArray,sizeof(EM->dataSlotArray));
 
    EM->totalSlots = PAPI_INIT_SLOTS;
@@ -56,8 +56,9 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 
 /* initialize PAPI_ERR_LEVEL */
 
-   if(    (ERROR_LEVEL_CHOICE!=PAPI_VERB_ECONT)
-	&&(ERROR_LEVEL_CHOICE!=PAPI_VERB_ESTOP) ) PAPI_shutdown(); 
+   if(   (ERROR_LEVEL_CHOICE!=PAPI_VERB_ECONT)
+       &&(ERROR_LEVEL_CHOICE!=PAPI_VERB_ESTOP) ) 
+          PAPI_shutdown(PAPI_EINVAL); 
 
    PAPI_ERR_LEVEL=ERROR_LEVEL_CHOICE;
 
@@ -72,28 +73,33 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 /*========================================================================*/
 /*========================================================================*/
 /* begin function:                                                        */    
-/* static void PAPI_shutdown (void);                                      */
+/* static void PAPI_shutdown (int shutdownCode);                          */
 /*                                                                        */
-/* This function provides a graceful exit to the program.                 */
-/*  a. all FILES are checked for being open, then are closed.             */
-/*  b. all memory is freed.                                               */
-/*  c. a shutdown message is written to stderr.                           */
-/*  d. a call to the c library function exit terminates the process.      */ 
+/* This function provides a graceful exit to the PAPI tool.               */
+/*  a. all memory associated with the PAPI tool is freed.                 */
+/*  b. a shutdown message is written to stderr, based upon the value      */
+/*     of shutdownCode.                                                   */
+/*                                                                        */
+/*  shutdownCode=PAPI_OK means the shutdown is normal, not due to error.  */
+/*  shutdownCode<0 means the shutdown is due to an error and the value    */
+/*  of shutdownCode corresponds to some standard PAPI error code.         */
 /*========================================================================*/
-static void PAPI_shutdown(void) {
+static void PAPI_shutdown(int shutdownCode) {
 
     DynamicArray *xEM;
-    xEM=&GLOBAL_EVENT_MAP;
+    xEM=&PAPI_EVENT_MAP;
     /* close all memory pointed to by xEM */
+    /* this code under construction       */
 
-    /* close all files */
-    /* code.           */
+    /* shutdown message for normal case*/
+    if(shutdownCode==PAPI_OK)
+    fprintf(stderr,"\n\n NORMAL PAPI SHUTDOWN. \n\n");
 
-    /* shutdown message*/
-    fprintf(stderr,"\n\n PAPI SHUTDOWN MESSAGE \n\n");
-   
-    /* call exit */
-    exit(0);
+    /* shutdown message for error case */
+    else {
+    fprintf(stderr,"\n\n %s ",PAPI_strerror(shutdownCode));
+    fprintf(stderr,"\n PAPI SHUTDOWN DUE TO ABOVE ERROR.\n\n");
+    }/***/
 
     return;
 }/***/
@@ -139,7 +145,6 @@ strncpy(destination,PAPI_strerror(code),length);
 
 if (PAPI_ERR_LEVEL==PAPI_VERB_STOP) {
 	PAPI_shutdown();
-	exit(0);
 	}
 return(code);
 
