@@ -91,17 +91,39 @@ int main(int argc, char **argv)
    L = (PAPI_mh_level_t *) &(hwinfo->mem_hierarchy.level[0]);
    for (i=0; i<hwinfo->mem_hierarchy.levels; i++) {
       for (j=0; j<2; j++) {
-         switch (L[i].cache[j].type) {
-            case PAPI_MH_TYPE_UNIFIED:
-               printf("L%d Unified Cache:\n", i+1);
-               break;
-            case PAPI_MH_TYPE_DATA:
-               printf("L%d Data Cache:\n", i+1);
-               break;
-            case PAPI_MH_TYPE_INST:
-               printf("L%d Instruction Cache:\n", i+1);
-               break;
-         }
+	  int tmp;
+
+	  tmp = PAPI_MH_CACHE_TYPE(L[i].cache[j].type);
+	  if (tmp == PAPI_MH_TYPE_UNIFIED)
+	  { printf("L%d Unified ",i+1);} 
+	  else if (tmp == PAPI_MH_TYPE_DATA)
+	  { 	      printf("L%d Data ",i+1);}
+	  else if (tmp == PAPI_MH_TYPE_INST)
+	  { printf("L%d Instruction ",i+1); } 
+	  else if (tmp == PAPI_MH_TYPE_EMPTY)
+	  { break; }
+	  else
+	  { test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EBUG); }
+
+	  tmp = PAPI_MH_CACHE_WRITE_POLICY(L[i].cache[j].type);
+	  if (tmp == PAPI_MH_TYPE_WB)
+	  { printf("Write back ");} 
+	  else if (tmp == PAPI_MH_TYPE_WT)
+	  { printf("Write through ");} 
+	  else 
+	  { test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EBUG); } 
+
+	  tmp = PAPI_MH_CACHE_REPLACEMENT_POLICY(L[i].cache[j].type);
+	  if (tmp == PAPI_MH_TYPE_PSEUDO_LRU)
+	  { printf("Pseudo LRU policy "); } 
+	  else if (tmp == PAPI_MH_TYPE_LRU)
+	  { printf("LRU policy ");} 
+	  else if (tmp == PAPI_MH_TYPE_UNKNOWN)
+	  { printf("Unknown policy "); }
+	  else
+	  { test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EBUG); }
+
+	  printf("Cache:\n");
          if (L[i].cache[j].type) {
             printf("  Total size: %dKB\n  Line size: %dB\n  Number of Lines: %d\n  Associativity: %d\n\n",
                (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, L[i].cache[j].associativity);
