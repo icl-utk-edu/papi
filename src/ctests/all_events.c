@@ -38,7 +38,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       } else { 
          if (!TESTS_QUIET) 
-            printf("Added %s succesful\n", info.symbol);
+            printf("Added %s successful\n", info.symbol);
          count++;
       }
       retval = PAPI_start(EventSet);
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
    }
    if (!TESTS_QUIET)
-      printf("Succesfully added,started and stopped %d events.\n", count);
+      printf("Successfully added,started and stopped %d events.\n", count);
    if ( count > 0 )
       test_pass(__FILE__, NULL, 0);
    else
