@@ -4,7 +4,7 @@ EXOBS    = first.o
 all: $(EXAMPLES)
 
 first: first.o ../libpapi.a
-	$(CC) $(LDFLAGS) first.o -o $@ -lpapi -bI:kex.exp
+	$(CC) $(LDFLAGS) first.o -o $@ -lpapi -bI:../p2sc/kex.exp
 
 clean:
 	rm -f $(EXOBS) $(EXAMPLES)
