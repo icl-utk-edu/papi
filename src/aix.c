@@ -160,8 +160,22 @@ static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *loca
 
 int set_domain(hwd_control_state_t *this_state, int domain)
 {
-  pm_mode_t *mode = &(this_state->counter_cmd.mode);
+    pm_mode_t *mode = &(this_state->counter_cmd.mode);
+    int did=0;
 
+    mode->b.user = 0;
+    mode->b.kernel = 0;
+    if ( domain & PAPI_DOM_USER ) {
+        did=1;
+        mode->b.user = 1;
+    }
+    if ( domain & PAPI_DOM_KERNEL ) {
+        did=1;
+        mode->b.kernel = 1;
+    }
+    if (did) return (PAPI_OK);
+    else return (PAPI_EINVAL);
+/*
   switch (domain)
     {
     case PAPI_DOM_USER:
@@ -180,6 +194,7 @@ int set_domain(hwd_control_state_t *this_state, int domain)
       return(PAPI_EINVAL);
     }
   return(PAPI_OK);
+*/
 }
 
 int set_granularity(hwd_control_state_t *this_state, int domain)

@@ -294,18 +294,25 @@ static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *loca
 
 static int set_domain(hwd_control_state_t *this_state, int domain)
 {
-  if (domain & PAPI_DOM_USER)
-    this_state->counter_cmd.Ku = 1;
-  else
+  int did=0;
+
     this_state->counter_cmd.Ku = 0;
-  if (domain & PAPI_DOM_KERNEL)
-    this_state->counter_cmd.Kk = 1;
-  else
     this_state->counter_cmd.Kk = 0;
-  if (domain & PAPI_DOM_OTHER)
-    this_state->counter_cmd.Kp = 1;
-  else
     this_state->counter_cmd.Kp = 0;
+
+  if (domain & PAPI_DOM_USER) {
+    this_state->counter_cmd.Ku = 1;
+    did=1;
+  }
+  if (domain & PAPI_DOM_KERNEL) {
+    this_state->counter_cmd.Kk = 1;
+    did=1;
+  }
+  if (domain & PAPI_DOM_OTHER) {
+    this_state->counter_cmd.Kp = 1;
+    did=1;
+  }
+  if (!did) return(PAPI_EINVAL);
 
   return(PAPI_OK);
 }

@@ -436,18 +436,20 @@ static int set_domain(hwd_control_state_t *this_state, int domain)
   papi_cpc_event_t *command= &this_state->counter_cmd;
   cpc_event_t *event = &command->cmd;
   uint64_t pcr = event->ce_pcr;
-
-  /* This doesn't exist on this platform */
-
-  if (domain == PAPI_DOM_OTHER)
-    return(PAPI_EINVAL);
+  int did=0;
 
   pcr = pcr | 0x7;
   pcr = pcr ^ 0x7;
-  if (domain & PAPI_DOM_USER)
+  if (domain & PAPI_DOM_USER) {
     pcr = pcr | 1 << CPC_ULTRA_PCR_USR;
-  if (domain & PAPI_DOM_KERNEL)
+    did=1;
+  }
+  if (domain & PAPI_DOM_KERNEL) {
     pcr = pcr | 1 << CPC_ULTRA_PCR_SYS;
+    did=1;
+  }
+  /* DOMAIN ERROR */
+  if (!did) return(PAPI_EINVAL);
 
   event->ce_pcr = pcr;
 

@@ -93,8 +93,6 @@ typedef  pfm_siginfo_t     hwd_siginfo_t;
 typedef  struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip
-#define GET_OVERFLOW_CTR_BITS(context) \
-  (((_papi_hwi_context_t *)context)->si->sy_pfm_ovfl[0])
 
 #include "papi_internal.h"
 

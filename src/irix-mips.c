@@ -334,14 +334,22 @@ static int set_domain(hwd_control_state_t *this_state, int domain)
 {
   int i, selector = this_state->selector, mode = 0;
   hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
+  int did=0;
 
-  if (domain & PAPI_DOM_USER)
+  if (domain & PAPI_DOM_USER) {
     mode |= HWPERF_CNTEN_U;
-  if (domain & PAPI_DOM_KERNEL)
+    did=1;
+  }
+  if (domain & PAPI_DOM_KERNEL) {
     mode |= HWPERF_CNTEN_K;
-  if (domain & PAPI_DOM_OTHER)
+    did=1;
+  }
+  if (domain & PAPI_DOM_OTHER) {
     mode |= HWPERF_CNTEN_E;
-  
+    did=1;
+  }
+  if (!did) return (PAPI_EINVAL);
+ 
   for (i=0;i<HWPERF_EVENTMAX;i++)
   {
     if (selector & (1 << i))
