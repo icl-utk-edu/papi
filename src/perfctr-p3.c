@@ -81,6 +81,37 @@ void print_control(const struct perfctr_cpu_control *control) {
 }
 #endif
 
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
+   switch (perfctr_cpu_type) {
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+   case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      return (PAPI_VENDOR_AMD);
+   case PERFCTR_X86_CYRIX_MII:
+      return (PAPI_VENDOR_CYRIX);
+   default:
+      return (PAPI_VENDOR_UNKNOWN);
+   }
+}
+
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
 inline_static int setup_p3_presets(int cputype) {
@@ -118,64 +149,10 @@ inline_static int setup_p3_presets(int cputype) {
       preset_search_map = &_papi_hwd_opt_preset_map;
       break;
 #endif
-   case PERFCTR_X86_INTEL_P4:
-   case PERFCTR_X86_INTEL_P4M2:
    default:
      error_return(PAPI_ESBSTR, MODEL_ERROR);
    }
    return (_papi_hwi_setup_all_presets(preset_search_map));
-}
-
-/* Low level functions, should not handle errors, just return codes. */
-
-#ifdef _WIN32
-inline_static u_long_long get_cycles (void)
-{
-   __asm rdtsc		// Read Time Stamp Counter
-   // This assembly instruction places the 64-bit value in edx:eax
-   // Which is exactly where it needs to be for a 64-bit return value...
-}
-#else
-inline_static u_long_long get_cycles(void) {
-   u_long_long ret;
-#ifdef __x86_64__
-   do {
-      unsigned int a,d;
-      asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
-   } while(0);
-#else
-   __asm__ __volatile__("rdtsc"
-                       : "=A" (ret)
-                       : /* no inputs */);
-#endif
-   return ret;
-}
-#endif
-
-inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
-   switch (perfctr_cpu_type) {
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PII:
-   case PERFCTR_X86_INTEL_PIII:
-   case PERFCTR_X86_INTEL_P4:
-#ifdef PERFCTR26
-   case PERFCTR_X86_INTEL_PENTM:
-#endif
-      return (PAPI_VENDOR_INTEL);
-#ifdef PERFCTR26
-   case PERFCTR_X86_AMD_K8:
-   case PERFCTR_X86_AMD_K8C:
-#endif
-   case PERFCTR_X86_AMD_K7:
-      return (PAPI_VENDOR_AMD);
-   case PERFCTR_X86_CYRIX_MII:
-      return (PAPI_VENDOR_CYRIX);
-   default:
-      return (PAPI_VENDOR_UNKNOWN);
-   }
 }
 
 /* Initialize the system-specific settings */
@@ -449,27 +426,6 @@ int _papi_hwd_shutdown_global(void) {
 }
 
 #endif /* _WIN32 */
-
-u_long_long _papi_hwd_get_real_usec(void) {
-   return((u_long_long)get_cycles() / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
-}
-
-u_long_long _papi_hwd_get_real_cycles(void) {
-   return(get_cycles());
-}
-
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
-   return(_papi_hwd_get_virt_cycles(ctx) /
-         (u_long_long)_papi_hwi_system_info.hw_info.mhz);
-}
- 
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
-#ifdef _WIN32
-   return(get_cycles()); // Windows can't read virtual cycles...
-#else
-   return(vperfctr_read_tsc(ctx->perfctr));
-#endif /* _WIN32 */
-}
 
 /* This function examines the event to determine
     if it can be mapped to counter ctr.
@@ -993,3 +949,55 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
       return (PAPI_EINVAL);
    }
 }
+
+#define inline_static inline static
+
+/* Low level functions, should not handle errors, just return codes. */
+
+#ifdef _WIN32
+inline_static long_long get_cycles (void)
+{
+   __asm rdtsc		// Read Time Stamp Counter
+   // This assembly instruction places the 64-bit value in edx:eax
+   // Which is exactly where it needs to be for a 64-bit return value...
+}
+#else
+inline_static long_long get_cycles(void) {
+   long_long ret;
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
+   } while(0);
+#else
+   __asm__ __volatile__("rdtsc"
+                       : "=A" (ret)
+                       : /* no inputs */);
+#endif
+   return ret;
+}
+#endif
+
+long_long _papi_hwd_get_real_usec(void) {
+   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
+long_long _papi_hwd_get_real_cycles(void) {
+   return((long_long)get_cycles());
+}
+
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
+   return((long_long)vperfctr_read_tsc(ctx->perfctr) /
+         (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+ 
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
+#ifdef _WIN32
+   return(PAPI_ESBSTR); // Windows can't read virtual cycles...
+#else
+   return((long_long)vperfctr_read_tsc(ctx->perfctr));
+#endif /* _WIN32 */
+}
+
+

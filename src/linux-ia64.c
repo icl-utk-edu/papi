@@ -233,7 +233,7 @@ static inline char *search_cpu_info(FILE * f, char *search_str, char *line)
    /* End stolen code */
 }
 
-static inline unsigned long get_cycles(void)
+inline_static unsigned long get_cycles(void)
 {
    unsigned long tmp;
 #ifdef __INTEL_COMPILER
@@ -429,7 +429,7 @@ int _papi_hwd_init(hwd_context_t * zero)
    return(pfmw_create_context(zero));
 }
 
-u_long_long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
    long long cyc;
 
@@ -438,12 +438,12 @@ u_long_long _papi_hwd_get_real_usec(void)
    return (cyc / (long long) 1000);
 }
 
-u_long_long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
    return (get_cycles());
 }
 
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    long long retval;
    struct tms buffer;
@@ -453,13 +453,9 @@ u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
    return (retval);
 }
 
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_virt_usec(zero);
-   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-   return ((long long) cyc);
+   return (_papi_hwd_get_virt_usec(zero) * (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)

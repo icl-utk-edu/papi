@@ -22,13 +22,11 @@
 #include <rld_interface.h>
 #include <ctype.h>
 
-#include "papi.h"
-
+#define inline_static __inline
 #define MAX_COUNTERS HWPERF_EVENTMAX
 #define MAX_COUNTER_TERMS 4
 #define MAX_NATIVE_EVENT 32
 #define PAPI_MAX_NATIVE_EVENTS MAX_NATIVE_EVENT
-#include "papi_preset.h"
 
 typedef int hwd_register_t;
 typedef int hwd_reg_alloc_t;

@@ -600,21 +600,8 @@ int _papi_hwd_unmerge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
    hwd_control_state_t *this_state = (hwd_control_state_t *) ESI->machdep;
    hwd_control_state_t *current_state = (hwd_control_state_t *) zero->machdep;
 
-   if ((zero->multistart.num_runners - 1) == 0) {
-      current_state->selector = 0;
-      return (PAPI_OK);
-   } else {
-      tmp = this_state->selector;
-      while ((i = ffs(tmp))) {
-         hwcntr = 1 << (i - 1);
-         if (zero->multistart.SharedDepth[i - 1] - 1 < 0)
-            current_state->selector ^= hwcntr;
-         else
-            zero->multistart.SharedDepth[i - 1]--;
-         tmp ^= hwcntr;
-      }
-      return (PAPI_OK);
-   }
+   current_state->selector = 0;
+   return (PAPI_OK);
 }
 
 int _papi_hwd_reset(EventSetInfo_t * ESI, EventSetInfo_t * zero)
@@ -814,7 +801,7 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
    return (1);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, EventSetOverflowInfo_t * overflow_option)
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    /* This function is not used and shouldn't be called. */
 

@@ -534,17 +534,6 @@ int PAPI_start(int EventSet)
 
    /* Short circuit this stuff if there's nothing running */
 
-/* commented out in Phil's papiv3
-  if (thread->multistart.num_runners == 0)
-    {
-      for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-	{
-	  ESI->hw_start[i] = 0;
-	  thread->hw_start[i] = 0;
-	}
-    }
-*/
-
    /* If overflowing is enabled, turn it on */
 
    if (ESI->state & PAPI_OVERFLOWING) {
@@ -569,10 +558,6 @@ int PAPI_start(int EventSet)
 
    /* Update the running event set  for this thread */
    thread->running_eventset = EventSet;
-
-/* commented out in Phil's papiv3
-  thread->multistart.num_runners++;
-*/
 
    DBG((stderr, "PAPI_start returns %d\n", retval));
    return (retval);
@@ -649,10 +634,6 @@ int PAPI_stop(int EventSet, long_long * values)
 
    /* Update the running event set  for this thread */
    thread->running_eventset = PAPI_NULL ;
-
-/* commented out in Phil's papiv3
-  thread->multistart.num_runners --;
-*/
 
 #if defined(DEBUG)
    {
@@ -944,11 +925,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
             papi_return(PAPI_EINVAL);
 
          thread = _papi_hwi_lookup_in_thread_list();
-
-/* commented out in Phil's papiv3
-	if (thread->multistart.num_runners)
-          papi_return(PAPI_EISRUN);
-*/
 
          /* Try to change the domain of the eventset in the hardware */
 

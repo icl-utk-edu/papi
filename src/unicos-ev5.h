@@ -1,15 +1,16 @@
+#ifndef _PAPI_UNICOS_H
+#define _PAPI_UNICOS_H
+
 #define  UMK
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/unistd.h>
 #include <assert.h>
 #include <infoblk.h>
-#include <mpp/globals.h>
+#include <limits.h>
 #include <sys/ucontext.h>
 #include <sys/times.h>
-#include <limits.h>
-
-#include "papi.h"
+#include <sys/unistd.h>
+#include <mpp/globals.h>
 
 #define PERFCNT_ON      1
 #define PERFCNT_OFF     2
@@ -302,4 +303,4 @@ typedef struct native_event_entry {
 
 #define GET_OVERFLOW_ADDRESS(ctx) (void*)(ctx->uc_mcontext.gregs[31])
 
-#include "papi_internal.h"
+#endif

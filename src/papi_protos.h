@@ -88,10 +88,12 @@ extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *,
 extern int _papi_hwd_allocate_registers(EventSetInfo_t * ESI);
 extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **);
 extern int _papi_hwd_shutdown(hwd_context_t *);
-extern u_long_long _papi_hwd_get_real_cycles(void);
-extern u_long_long _papi_hwd_get_real_usec(void);
-extern u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t *);
-extern u_long_long _papi_hwd_get_virt_usec(const hwd_context_t *);
+/* The following functions are now defined in the substrate header files to be inline_static */
+extern long_long _papi_hwd_get_real_cycles(void);
+extern long_long _papi_hwd_get_real_usec(void);
+extern long_long _papi_hwd_get_virt_cycles(const hwd_context_t *);
+extern long_long _papi_hwd_get_virt_usec(const hwd_context_t *);
+/* End of above */
 extern int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
 extern int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
 extern int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);

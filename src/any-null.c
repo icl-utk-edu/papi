@@ -218,8 +218,8 @@ static void counter_event_copy(const int *a, int *b, int cntr)
 static int update_global_hwcounters(EventSetInfo_t * global)
 {
    /* hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep; */
-   u_long_long events[MAX_COUNTERS];
-   static u_long_long sample = 1;
+   long_long events[MAX_COUNTERS];
+   static long_long sample = 1;
    int i;
 
    /* ret = perf(PERF_FASTREAD, (int)events, 0);
@@ -542,68 +542,6 @@ int _papi_hwd_merge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
       return (PAPI_OK);
    }
 
-   /* If we ARE nested, 
-      carefully merge the global counter structure with the current eventset */
-   else {
-      int tmp, hwcntrs_in_both, hwcntrs_in_all, hwcntr;
-
-      /* Stop the current context */
-
-      /* retval = perf(PERF_STOP, 0, 0);
-         if (retval) 
-         return(PAPI_ESYS); */
-
-      /* Update the global values */
-
-      retval = update_global_hwcounters(zero);
-      if (retval)
-         return (retval);
-
-      /* Delete the current context */
-
-      hwcntrs_in_both = this_state->selector & current_state->selector;
-      hwcntrs_in_all = this_state->selector | current_state->selector;
-
-      /* Check for events that are shared between eventsets and 
-         therefore require no modification to the control state. */
-
-      /* First time through, error check */
-
-      tmp = hwcntrs_in_all;
-      while ((i = ffs(tmp))) {
-         hwcntr = 1 << (i - 1);
-         tmp = tmp ^ hwcntr;
-         if (hwcntr & hwcntrs_in_both) {
-            if (!
-                (counter_event_shared
-                 (this_state->counter_cmd.cmd, current_state->counter_cmd.cmd, i - 1)))
-               return (PAPI_ECNFLCT);
-         } else
-             if (!
-                 (counter_event_compat
-                  (this_state->counter_cmd.cmd, current_state->counter_cmd.cmd, i - 1)))
-            return (PAPI_ECNFLCT);
-      }
-
-      /* Now everything is good, so actually do the merge */
-
-      tmp = hwcntrs_in_all;
-      while ((i = ffs(tmp))) {
-         hwcntr = 1 << (i - 1);
-         tmp = tmp ^ hwcntr;
-         if (hwcntr & hwcntrs_in_both) {
-            ESI->hw_start[i - 1] = zero->hw_start[i - 1];
-            zero->multistart.SharedDepth[i - 1]++;
-         } else if (hwcntr & this_state->selector) {
-            current_state->selector |= hwcntr;
-            counter_event_copy(this_state->counter_cmd.cmd,
-                               current_state->counter_cmd.cmd, i - 1);
-            ESI->hw_start[i - 1] = 0;
-            zero->hw_start[i - 1] = 0;
-         }
-      }
-   }
-
    /* Set up the new merged control structure */
 
 #if 0
@@ -634,21 +572,8 @@ int _papi_hwd_unmerge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
    /* Check for events that are NOT shared between eventsets and 
       therefore require modification to the selection mask. */
 
-   if ((zero->multistart.num_runners - 1) == 0) {
       current_state->selector = 0;
       return (PAPI_OK);
-   } else {
-      tmp = this_state->selector;
-      while ((i = ffs(tmp))) {
-         hwcntr = 1 << (i - 1);
-         if (zero->multistart.SharedDepth[i - 1] - 1 < 0)
-            current_state->selector ^= hwcntr;
-         else
-            zero->multistart.SharedDepth[i - 1]--;
-         tmp ^= hwcntr;
-      }
-      return (PAPI_OK);
-   }
 }
 
 int _papi_hwd_reset(EventSetInfo_t * ESI, EventSetInfo_t * zero)
@@ -833,7 +758,7 @@ void _papi_hwd_dispatch_timer(int signal, void *info)
    _papi_hwi_dispatch_overflow_signal((void *) info);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, EventSetOverflowInfo_t * overflow_option)
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    /* This function is not used and shouldn't be called. */
 

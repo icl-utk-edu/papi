@@ -1,5 +1,5 @@
-#ifndef _PAPI_PENTIUM3
-#define _PAPI_PENTIUM3
+#ifndef _PAPI_PENTIUM3_H
+#define _PAPI_PENTIUM3_H
 
 #ifdef __GNUC__
 #define HAVE_FFSLL
@@ -18,10 +18,12 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
+#define inline_static static __inline
 #include <errno.h>
 #include "cpuinfo.h"
 #include "pmclib.h"
 #else
+#define inline_static inline static
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -135,8 +137,6 @@ typedef ucontext_t hwd_ucontext_t;
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
-
-#define inline_static inline static
 
 #endif /* _WIN32 */
 

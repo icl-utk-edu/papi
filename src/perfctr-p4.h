@@ -1,5 +1,5 @@
-#ifndef _PAPI_PENTIUM4
-#define _PAPI_PENTIUM4
+#ifndef _PAPI_PENTIUM4_H
+#define _PAPI_PENTIUM4_H
 
 #ifdef __GNUC__
 #define HAVE_FFSLL
@@ -20,22 +20,21 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
-
+#include <errno.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
-
 #include <linux/unistd.h>
-#include <errno.h>
-
-#include "libperfctr.h"
 
 #include "p4_events.h"
 
 #ifdef _WIN32
 #include "cpuinfo.h"
 #include "pmclib.h"
+#else
+#include "libperfctr.h"
+#define inline_static inline static
 #endif
 
 /* Per event data structure for each event */

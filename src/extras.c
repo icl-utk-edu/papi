@@ -82,7 +82,7 @@ inline_static unsigned long profil_addr(caddr_t address, PAPI_sprofil_t * prof, 
    this routine is used by all three profiling cases
    it is inlined for speed
 */
-inline_static int profil_increment(u_long_long value,
+inline_static int profil_increment(long_long value,
                             int flags, long_long excess,
                             long_long threshold)
 {
@@ -243,7 +243,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
    long_long overflow_vector;
 
    long_long temp[MAX_COUNTERS], over;
-   u_long_long latest = 0;
+   long_long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
@@ -287,9 +287,9 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
             latest = ESI->sw_stop[papi_index];
             temp[i] = -1;
 
-            if (latest >= (u_long_long)ESI->overflow.deadline[i]) {
+            if (latest >= (long_long)ESI->overflow.deadline[i]) {
                DBG((stderr,
-                    "dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",
+                    "dispatch_overflow() latest %lld, deadline %lld, threshold %d\n",
                     latest, ESI->overflow.deadline[i], ESI->overflow.threshold[i]));
                pos = ESI->EventInfoArray[papi_index].pos[0];
                overflow_vector ^= (long long )1 << pos;

@@ -109,7 +109,7 @@ int _papi_hwd_ctl(EventSetInfo_t * zero, int code, _papi_int_option_t * option)
  * This function should return the highest resolution wallclock timer available
  * in usecs.
  */
-u_long_long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
    struct timeval tv;
 
@@ -121,20 +121,16 @@ u_long_long _papi_hwd_get_real_usec(void)
  * This function should return the highest resolution wallclock timer available
  * in cycles
  */
-u_long_long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_real_usec();
-   cyc = usec * _papi_system_info.hw_info.mhz;
-   return ((long long) cyc);
+   return (_papi_hwd_get_real_usec() * (long long) _papi_system_info.hw_info.mhz);
 }
 
 /*
  * This function should return the highest resolution processor timer available
  * in usecs.
  */
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    long long retval;
    struct tms buffer;
@@ -148,13 +144,9 @@ u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
  * This function should return the highest resolution processor timer available
  * in cycles.
  */
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_virt_usec(zero);
-   cyc = usec * _papi_system_info.hw_info.mhz;
-   return ((long long) cyc);
+   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_system_info.hw_info.mhz);
 }
 
 

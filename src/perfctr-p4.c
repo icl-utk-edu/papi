@@ -58,13 +58,44 @@ extern papi_mdi_t _papi_hwi_system_info;
 /* END LOCAL DECLARATIONS */
 /**************************/
 
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
+   switch (perfctr_cpu_type) {
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+   case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      return (PAPI_VENDOR_AMD);
+   case PERFCTR_X86_CYRIX_MII:
+      return (PAPI_VENDOR_CYRIX);
+   default:
+      return (PAPI_VENDOR_UNKNOWN);
+   }
+}
+
 inline static int setup_p4_presets(int cputype)
 {
    if (cputype == PERFCTR_X86_INTEL_P4)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map));
    else if (cputype == PERFCTR_X86_INTEL_P4M2)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
-#ifdef PERFCTR26
+#ifdef PERFCTR_X86_INTEL_P4M3
    else if (cputype == PERFCTR_X86_INTEL_P4M3)
       return (_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
 #endif
@@ -104,31 +135,12 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 #endif
 }
 
-inline static u_long_long get_cycles(void)
+inline static long_long get_cycles(void)
 {
-   u_long_long ret;
+   long_long ret;
    __asm__ __volatile__("rdtsc":"=A"(ret)
                         : /* no inputs */ );
    return ret;
-}
-
-inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
-{
-   switch (perfctr_cpu_type) {
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PII:
-   case PERFCTR_X86_INTEL_PIII:
-   case PERFCTR_X86_INTEL_P4:
-      return (PAPI_VENDOR_INTEL);
-   case PERFCTR_X86_AMD_K7:
-      return (PAPI_VENDOR_AMD);
-   case PERFCTR_X86_CYRIX_MII:
-      return (PAPI_VENDOR_CYRIX);
-   default:
-      return (PAPI_VENDOR_UNKNOWN);
-   }
 }
 
 /* Initialize the system-specific settings */
@@ -370,25 +382,25 @@ int _papi_hwd_shutdown_global(void)
 
 /* Timers */
 
-u_long_long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
-   return ((u_long_long) get_cycles() / (u_long_long) _papi_hwi_system_info.hw_info.mhz);
+   return ((long_long) get_cycles() / (long_long) _papi_hwi_system_info.hw_info.mhz);
 }
 
-u_long_long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
-   return (get_cycles());
+   return ((long_long)get_cycles());
 }
 
-u_long_long _papi_hwd_get_virt_cycles(const P4_perfctr_context_t * ctx)
+long_long _papi_hwd_get_virt_cycles(const P4_perfctr_context_t * ctx)
 {
-   return (vperfctr_read_tsc(ctx->perfctr));
+   return ((long_long)vperfctr_read_tsc(ctx->perfctr));
 }
 
-u_long_long _papi_hwd_get_virt_usec(const P4_perfctr_context_t * ctx)
+long_long _papi_hwd_get_virt_usec(const P4_perfctr_context_t * ctx)
 {
-   return (_papi_hwd_get_virt_cycles(ctx) /
-           (u_long_long) _papi_hwi_system_info.hw_info.mhz);
+   return ((long_long)vperfctr_read_tsc(ctx->perfctr) /
+           (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 #ifdef DEBUG

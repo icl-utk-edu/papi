@@ -17,25 +17,16 @@
 *          <your email address>
 */
 
-#ifndef PAPI_INTERNAL_H
-#define PAPI_INTERNAL_H
+#ifndef _PAPI_INTERNAL_H
+#define _PAPI_INTERNAL_H
 
-/* Windows has it's own way of declaring inline static routines */
-#ifdef _WIN32
-   #define inline_static static __inline
-#elif defined(_AIX) /* different way to declare inline for xlc */
-   #define inline_static __inline
-#elif ( defined(mips) && defined(sgi) && defined(unix) )
-   #define inline_static __inline
-#else
-   #define inline_static inline static
-#endif
+#include SUBSTRATE
+#include "papiStrings.h"
+#include "papi_preset.h"
 
-#if defined(NO_FUNCTION_MACRO) 
+#ifndef __func__
 #define __func__ "?"
 #endif
-
-/* Could be __func__ as spec'd by C99 standard? */
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
 #define error_return(retval, format, args...){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); } return(retval); }
@@ -121,11 +112,6 @@
 #define DERIVED_CMPD     0x8    /* Event lives in operand index but takes 2 or more codes */
 #define DERIVED_SUB      0x10   /* Sub all counters from counter with operand_index */
 #define DERIVED_POSTFIX  0x20   /* postfix */
-
-typedef struct _EventSetMultistartInfo {
-   int num_runners;
-   int *SharedDepth;
-} EventSetMultistartInfo_t;
 
 typedef struct _EventSetDomainInfo {
    int domain;
@@ -321,8 +307,6 @@ typedef struct _EventSetInfo {
                                    kernel or the code that directly 
                                    accesses the counters. */
 
-   EventSetMultistartInfo_t multistart;
-
    EventSetDomainInfo_t domain;
 
    EventSetGranularityInfo_t granularity;
@@ -461,4 +445,7 @@ typedef struct _papi_mdi {
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern int _papi_hwi_debug; 
+
+#include "papi_protos.h"
+
 #endif                          /* PAPI_INTERNAL_H */

@@ -1,5 +1,5 @@
-#ifndef _PAPI_X1                /* _PAPI_X1 */
-#define _PAPI_X1
+#ifndef _PAPI_X1_H                /* _PAPI_X1 */
+#define _PAPI_X1_H
 
 #include "unicosMP.h"
 #include  "x1-native.h"

@@ -43,7 +43,7 @@ typedef struct _HighLevelInfo {
    int EventSet;                /* EventSet of the thread */
    short int num_evts;
    short int running;
-   u_long_long initial_time;    /* Start time */
+   long_long initial_time;    /* Start time */
    float total_proc_time;       /* Total processor time */
    float total_ins;             /* Total instructions */
 } HighLevelInfo;

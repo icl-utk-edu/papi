@@ -102,60 +102,6 @@ int _papi_hwd_ctl(EventSetInfo_t * zero, int code, _papi_int_option_t * option)
    }
 }
 
-/*
- * This function should return the highest resolution wallclock timer available
- * in usecs.  The Cray X1 does not have a high resolution timer so we have to
- * use gettimeofday.
- */
-u_long_long _papi_hwd_get_real_usec(void)
-{
-   struct timeval tv;
-
-   gettimeofday(&tv, NULL);
-   return ((tv.tv_sec * 1000000) + tv.tv_usec);
-}
-
-/*
- * This function should return the highest resolution wallclock timer available
- * in cycles. Since the Cray X1 does not have a high resolution we have to
- * use gettimeofday.
- */
-u_long_long _papi_hwd_get_real_cycles(void)
-{
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_real_usec();
-   cyc = usec * _papi_system_info.hw_info.mhz;
-   return ((long long) cyc);
-}
-
-/*
- * This function should return the highest resolution processor timer available
- * in usecs.
- */
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
-{
-   long long retval;
-   struct tms buffer;
-
-   times(&buffer);
-   retval = (long long) buffer.tms_utime * (long long) (1000000 / sysconf(_SC_CLK_TCK));
-   return (retval);
-}
-
-/*
- * This function should return the highest resolution processor timer available
- * in cycles.
- */
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
-{
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_virt_usec(zero);
-   cyc = usec * _papi_system_info.hw_info.mhz;
-   return ((long long) cyc);
-}
-
 void _papi_hwd_error(int error, char *where)
 {
    sprintf(where, "Substrate error: %s", strerror(error));
@@ -291,4 +237,54 @@ void _papi_hwd_unlock(void)
     * caller beware
     */
    release_lock(&lck);
+}
+
+/*
+ * This function should return the highest resolution wallclock timer available
+ * in usecs.  The Cray X1 does not have a high resolution timer so we have to
+ * use gettimeofday.
+ */
+long_long _papi_hwd_get_real_usec(void)
+{
+   struct timeval tv;
+
+   gettimeofday(&tv, NULL);
+   return (((long_long)tv.tv_sec * (long_long)1000000) + (long_long)tv.tv_usec);
+}
+
+/*
+ * This function should return the highest resolution wallclock timer available
+ * in cycles. Since the Cray X1 does not have a high resolution we have to
+ * use gettimeofday.
+ */
+long_long _papi_hwd_get_real_cycles(void)
+{
+   struct timeval tv;
+
+   gettimeofday(&tv, NULL);
+   return ((((long_long)tv.tv_sec * (long_long)1000000) + (long_long)tv.tv_usec) * (long_long)_papi_system_info.hw_info.mhz);
+}
+
+/*
+ * This function should return the highest resolution processor timer available
+ * in usecs.
+ */
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+{
+   struct tms buffer;
+
+   times(&buffer);
+   return(((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)sysconf(_SC_CLK_TCK));
+}
+
+/*
+ * This function should return the highest resolution processor timer available
+ * in cycles.
+ */
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+{
+   struct tms buffer;
+
+   times(&buffer);
+   return((((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)sysconf(_SC_CLK_TCK)) * (long_long)_papi_system_info.hw_info.mhz);
 }

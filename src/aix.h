@@ -8,29 +8,27 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <sys/systemcfg.h>
-#include <sys/processor.h>
 #include <time.h>
+#include <procinfo.h>
+#include <dlfcn.h>
 #include <sys/time.h>
 #include <sys/times.h>
-#include <procinfo.h>
+#include <sys/systemcfg.h>
+#include <sys/processor.h>
 #include <sys/atomic_op.h>
 #if( ( defined( _AIXVERSION_510) || defined(_AIXVERSION_520)))
 #include <sys/procfs.h>
 #endif
 #include <sys/utsname.h>
+#include "pmapi.h"
+
+#define inline_static __inline
 
 #define ANY_THREAD_GETS_SIGNAL
-#include <dlfcn.h>
-
-#include "pmapi.h"
 #define POWER_MAX_COUNTERS MAX_COUNTERS
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 #define INVALID_EVENT -2
 #define POWER_MAX_COUNTERS_MAPPING 8
-
-#include "papi.h"
-#include "papi_preset.h"
 
 extern _text;
 extern _etext;

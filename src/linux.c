@@ -8,22 +8,15 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
+#include SUBSTRATE
+#include "papi_mdi.h"
+#include "papi_preset.h"
 #include "papi_protos.h"
+#include "papiStrings.h"
 
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
-
-/*******************************/
-/* BEGIN EXTERNAL DECLARATIONS */
-/*******************************/
-
-extern papi_mdi_t _papi_hwi_system_info;
-
-/*****************************/
-/* END EXTERNAL DECLARATIONS */
-/*****************************/
 
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */

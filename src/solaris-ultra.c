@@ -989,33 +989,6 @@ int _papi_hwd_init(hwd_context_t * zero)
    return (PAPI_OK);
 }
 
-u_long_long _papi_hwd_get_real_usec(void)
-{
-   return ((long long) gethrtime() / (long long) 1000);
-}
-
-u_long_long _papi_hwd_get_real_cycles(void)
-{
-/*
-  return(get_tick());
-*/
-   u_long_long usec, cyc;
-
-   usec = _papi_hwd_get_real_usec();
-   cyc = usec * (long long) _papi_hwi_system_info.hw_info.mhz;
-   return ((u_long_long) cyc);
-}
-
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
-{
-   return ((long long) gethrvtime() / (long long) 1000);
-}
-
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
-{
-   return (_papi_hwd_get_virt_usec(NULL) * (long long) _papi_hwi_system_info.hw_info.mhz);
-}
-
 void _papi_hwd_error(int error, char *where)
 {
    sprintf(where, "Substrate error: %s", strerror(error));
@@ -1421,3 +1394,24 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
 }
+
+long_long _papi_hwd_get_real_usec(void)
+{
+   return ((long_long) gethrtime() / (long_long) 1000);
+}
+
+long_long _papi_hwd_get_real_cycles(void)
+{
+   return(_papi_hwd_get_real_usec() * (long long) _papi_hwi_system_info.hw_info.mhz);
+}
+
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+{
+   return ((long long) gethrvtime() / (long long) 1000);
+}
+
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+{
+   return (((long long) gethrvtime() / (long long) 1000) * (long long) _papi_hwi_system_info.hw_info.mhz);
+}
+

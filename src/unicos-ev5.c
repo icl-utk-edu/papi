@@ -364,35 +364,6 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
    return (PAPI_OK);
 }
 
-/* 75 Mhz sys. clock */
-
-u_long_long _papi_hwd_get_real_cycles(void)
-{
-   return (_rtc() * (u_long_long) (_papi_system_info.hw_info.mhz / 75.0));
-}
-
-u_long_long _papi_hwd_get_real_usec(void)
-{
-   return (_rtc() / 75);
-}
-
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
-{
-   struct tms buffer;
-
-   times(&buffer);
-   return ((u_long_long) buffer.tms_utime * (u_long_long) (1000000 / CLK_TCK));
-}
-
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
-{
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_virt_usec(ctx);
-   cyc = usec * _papi_system_info.hw_info.mhz;
-   return ((u_long_long) cyc);
-}
-
 void _papi_hwd_lock_init(void)
 {
 }
@@ -503,3 +474,32 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
       return (PAPI_ENOEVNT);
    }
 }
+
+/* 75 Mhz sys. clock */
+
+long_long _papi_hwd_get_real_cycles(void)
+{
+   return (((long_long)_rtc() * (long_long)_papi_system_info.hw_info.mhz) / (long_long)75);
+}
+
+long_long _papi_hwd_get_real_usec(void)
+{
+   return ((long_long)_rtc() / (long_long)75);
+}
+
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+{
+   struct tms buffer;
+
+   times(&buffer);
+   return (((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)CLK_TCK);
+}
+
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+{
+   struct tms buffer;
+
+   times(&buffer);
+   return ((((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)CLK_TCK) * (long_long)_papi_system_info.hw_info.mhz);
+}
+

@@ -22,11 +22,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
-#include "papiStrings.h"
 
 
 /********************/
@@ -1202,11 +1198,7 @@ static long_long handle_derived_subtract(int *position, long_long * from)
 
 static long_long units_per_second(long_long units, long_long cycles)
 {
-   float tmp;
-
-   tmp =  units * _papi_hwi_system_info.hw_info.mhz * ((float)1000000.0);
-   tmp = tmp / (float) cycles;
-   return ((u_long_long) tmp);
+   return((units * (long_long)_papi_hwi_system_info.hw_info.mhz * (long_long)1000000)/cycles);
 }
 
 static long_long handle_derived_ps(int *position, long_long * from)
@@ -1299,7 +1291,7 @@ static long_long handle_derived_add_ps(int *position, long_long * from)
          point++;
       }
    }
-   return (u_long_long) stack[0];
+   return (long_long) stack[0];
 }
 
 static long_long handle_derived(EventInfo_t * evi, long_long * from)
