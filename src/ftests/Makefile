@@ -1,6 +1,6 @@
 INCLUDE = -I..
 TESTS 	= avail case1 case2 clockres eventname fmatrixlowpapi \
-          fmatrixpapi fmatrixsimple
+          fmatrixpapi flops
 
 default: $(TESTS)
 
@@ -25,8 +25,8 @@ fmatrixlowpapi: fmatrixlowpapi.F ../libpapi.a
 fmatrixpapi: fmatrixpapi.F ../libpapi.a
 	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F ../libpapi.a $(LDFLAGS) -o fmatrixpapi
 
-fmatrixsimple: fmatrixsimple.F ../libpapi.a
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixsimple.F ../libpapi.a $(LDFLAGS) -o fmatrixsimple
+flops: flops.F ../libpapi.a
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F ../libpapi.a $(LDFLAGS) -o flops
 clean:
 	rm -f *.o $(TESTS) core *~
 

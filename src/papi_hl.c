@@ -35,7 +35,7 @@ int PAPI_flops(float *real_time, float *proc_time, long long *flpins, float *mfl
 {
    static float total_proc_time=0.0; 
    static int EventSet = PAPI_NULL;
-   static float mhz=0.0;
+   static float mhz;
    static long long start_us=0, total_flpins=-4;
    const PAPI_hw_info_t *hwinfo = NULL;
    long long values[2] = {0,0};
@@ -43,6 +43,7 @@ int PAPI_flops(float *real_time, float *proc_time, long long *flpins, float *mfl
    int retval;
 
    if ( !initialized ) {
+	mhz = 0.0;
 	*mflops = 0.0;
  	*real_time = 0.0;
  	*proc_time = 0.0;
@@ -50,8 +51,10 @@ int PAPI_flops(float *real_time, float *proc_time, long long *flpins, float *mfl
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
 	   return(retval);
-	if ( (hwinfo = PAPI_get_hardware_info()) == NULL ) 
+	if ( (hwinfo = PAPI_get_hardware_info()) == NULL ) {
+	   printf("Error getting hw_info\n");
 	   return -1;
+        } 
 	mhz = hwinfo->mhz;
 	PAPI_create_eventset( &EventSet );
 	retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
@@ -84,8 +87,8 @@ int PAPI_flops(float *real_time, float *proc_time, long long *flpins, float *mfl
 	     initialized = 0;
 	     return retval;
 	}
-	*proc_time = values[1]/ (mhz*1000000.0);
-	*mflops = values[0]/(*proc_time*1000000.0);
+	*proc_time = (float)(values[1]/(mhz*1000000.0));
+	*mflops = (float)(values[0]/(*proc_time*1000000.0));
 	total_proc_time += *proc_time;
 	total_flpins += values[0];
 	*proc_time = total_proc_time;
