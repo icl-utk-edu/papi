@@ -19,10 +19,10 @@ C   PAPI values of the counters
       INTEGER event
       INTEGER*8 values(2)
       INTEGER*8 starttime,stoptime
-      DOUBLE PRECISION finaltime
+      REAL*8 finaltime
       INTEGER ncpu,nnodes,totalcpus,vendor,model
       REAL revision, mhz
-      DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
+      REAL*8 p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet, get_quiet
       external get_quiet

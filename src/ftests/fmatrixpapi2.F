@@ -21,7 +21,7 @@ C   PAPI standardized event to be monitored
       INTEGER event(2)
 C   PAPI values of the counters
       INTEGER*8 values(2), dummies(2)
-      DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
+      REAL*8 p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet, get_quiet
       external get_quiet
