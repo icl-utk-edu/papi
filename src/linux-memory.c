@@ -281,18 +281,30 @@ int init_intel( PAPI_mem_info_t * mem_info ) {
 	  break;
 	case 0x10:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 codes, can most likely be moved to the IA64 memory,
+           * If we can't combine the two *Still Hoping ;) * -KSL
+ 	   * This is L1 data cache
+           */
 	  mem_info->L1_dcache_size = 16;
 	  mem_info->L1_dcache_assoc = 4;
 	  mem_info->L1_dcache_linesize = 32;
 	  break;
 	case 0x15:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 codes, can most likely be moved to the IA64 memory,
+           * If we can't combine the two *Still Hoping ;) * -KSL
+ 	   * This is L1 instruction cache
+           */
 	  mem_info->L1_icache_size = 16;
 	  mem_info->L1_icache_assoc = 4;
 	  mem_info->L1_icache_linesize = 32;
 	  break;
 	case 0x1A:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 codes, can most likely be moved to the IA64 memory,
+           * If we can't combine the two *Still Hoping ;) * -KSL
+ 	   * This is L1 instruction AND data cache
+           */
 	  mem_info->L2_cache_size = 96;
 	  mem_info->L2_cache_assoc = 6;
 	  mem_info->L2_cache_linesize = 64;
@@ -436,6 +448,8 @@ int init_intel( PAPI_mem_info_t * mem_info ) {
 	  break;
 	case 0x77:
 	  /* This value is not in my copy of the Intel manual */
+  	  /* Once again IA-64 code, will most likely have to be moved */
+	  /* This is sectored */
 	  mem_info->L1_icache_size = 16;
 	  mem_info->L1_icache_assoc = 4;
 	  mem_info->L1_icache_linesize = 64;
@@ -462,12 +476,17 @@ int init_intel( PAPI_mem_info_t * mem_info ) {
 	  break;
 	case 0x7E:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 value */
 	  mem_info->L2_cache_assoc = 8;
 	  mem_info->L2_cache_linesize = 128;
 	  mem_info->L2_cache_size = 256;
 	  break;
 	case 0x81:
 	  /* This value is not in my copy of the Intel manual */
+          /* This is not listed as IA64, but it might be, 
+	   * Perhaps it is in an errata somewhere, I found the
+	   * info at sandpile.org -KSL
+           */
 	  mem_info->L2_cache_assoc = 8;
 	  mem_info->L2_cache_linesize = 32;
 	  mem_info->L2_cache_size = 128;
@@ -493,28 +512,33 @@ int init_intel( PAPI_mem_info_t * mem_info ) {
 	  break;
 	case 0x88:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 */
 	  mem_info->L3_cache_assoc = 4;
 	  mem_info->L3_cache_linesize = 64;
 	  mem_info->L3_cache_size = 2048;
 	  break;
 	case 0x89:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 */
 	  mem_info->L3_cache_assoc = 4;
 	  mem_info->L3_cache_linesize = 64;
 	  mem_info->L3_cache_size = 4096;
 	  break;
 	case 0x8A:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 */
 	  mem_info->L3_cache_assoc = 4;
 	  mem_info->L3_cache_linesize = 64;
 	  mem_info->L3_cache_size = 8192;
 	  break;
 	case 0x8D:
 	  /* This value is not in my copy of the Intel manual */
+	  /* IA64 */
 	  mem_info->L3_cache_assoc = 12;
 	  mem_info->L3_cache_linesize = 128;
 	  mem_info->L3_cache_size = 3096;
 	  break;
+	  /* Note, there are still various IA64 cases not mapped yet */
 	}
 	value=value>>8;
       }
