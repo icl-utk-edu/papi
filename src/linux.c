@@ -126,7 +126,10 @@ int _papi_hwd_update_shlib_info(void)
    f = fopen(fname, "r");
 
    if (!f)
-     { PAPIERROR("fopen(%s) returned < 0", fname); return(PAPI_ESYS); }
+     { 
+	 PAPIERROR("fopen(%s) returned < 0", fname); 
+	 return(PAPI_OK); 
+     }
 
  again:
    while (!feof(f)) {
@@ -309,11 +312,17 @@ int _papi_hwd_get_system_info(void)
 
    sprintf(maxargs, "/proc/%d/exe", (int) pid);
    if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
-     { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
-   
+   { 
+       PAPIERROR("readlink(%s) returned < 0", maxargs); 
+       strcpy(_papi_hwi_system_info.exe_info.fullname,"");
+       strcpy(_papi_hwi_system_info.exe_info.address_info.name,"");
+   }
+   else
+   {
    /* basename can modify it's argument */
    strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
    strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
+   }
 
    /* Executable regions, may require reading /proc/pid/maps file */
 
