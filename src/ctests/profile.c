@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 {
    int num_events, num_tests = 6;
    int mask;
-   unsigned long length;
+   long length;
    int retval;
 
 
