@@ -1341,15 +1341,15 @@ papi_mdi _papi_system_info = { "$Id$",
 			       {
 				 "",
 				 "",
-				 0,0,0,0,0,0,
 /*
+				 0,0,0,0,0,0,
+*/
 				 (caddr_t)&_start,
 				 (caddr_t)&_etext,
 				 (caddr_t)&_etext+1,
 				 (caddr_t)&_edata,
 				 (caddr_t)&_edata+1,
 				 (caddr_t)&_end,
-*/
 				 "LD_PRELOAD",
 			       },
                                { 0,  /*total_tlb_size*/
