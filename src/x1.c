@@ -143,15 +143,11 @@ int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
 
 /*
  * This function should return the highest resolution wallclock timer available
- * in usecs.  The Cray X1 does not have a high resolution timer so we have to
- * use gettimeofday.
+ * in usecs. 
  */
 long_long _papi_hwd_get_real_usec(void)
 {
-   struct timespec tp;
-
-   clock_gettime(CLOCK_REALTIME, &tp);
-   return (((tp.tv_sec*1000000)+(tp.tv_nsec/1000)));
+   return ((_rtc()/IRTC_RATE())*1000000);
 }
 
 /*

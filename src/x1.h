@@ -19,6 +19,7 @@
 #include <sys/errno.h>
 #include <assert.h>
 #include <invent.h>
+#include <intrinsics.h>
 #include <errno.h>
 #include "papi.h"
 
