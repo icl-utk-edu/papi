@@ -9,10 +9,10 @@ DESCR	= "Stock Linux 2.4.18 for the Intel Itanium 2"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -I$(LIBPFMHOME)/include -I. -Wall -g -DITANIUM2 -DPFM20 -DDEBUG
+CFLAGS  = -I$(LIBPFMHOME)/include -I. -DITANIUM2 -DPFM20 
 # -DDEBUG
-OPTFLAGS= 
-TOPTFLAGS = $(OPTFLAGS)
+OPTFLAGS= -O3
+TOPTFLAGS = -DITANIUM2 -O0
 FFLAGS	=
 #  -Vaxlib
 #LDFLAGS =  -lPEPCF90 -lIEPCF90 -lF90 -lintrins
