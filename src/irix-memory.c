@@ -10,9 +10,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 #define TLB_R4  96
 #define TLB_R5  96

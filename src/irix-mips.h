@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <rld_interface.h>
 #include <dlfcn.h>
+#include <errno.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -543,7 +543,7 @@ static void lock_init(void)
 {
    int lck;
    for (lck = 0; lck < PAPI_MAX_LOCK; lck++)
-      lock[lck] = MUTEX_OPEN;
+      lock[lck] = 0;
 }
 
 /* this function is called by PAPI_library_init */
@@ -743,15 +743,15 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
      return;
 
    ESI = (EventSetInfo_t *) thread->running_eventset;
-   if (ESI->master != thread)
+   if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
      {
-       PAPIERROR("eventset->thread 0x%lx vs. current thread 0x%lx mismatch",ESI->master,thread);
+       OVFDBG("Either no eventset or eventset not set to overflow.\n");
        return;
      }
 
-   if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
+   if (ESI->master != thread)
      {
-       OVFDBG("Thread 0x%lx: Either no eventset or eventset not set to overflow.\n",(*_papi_hwi_thread_id_fn)());
+       PAPIERROR("eventset->thread 0x%lx vs. current thread 0x%lx mismatch",ESI->master,thread);
        return;
      }
 
@@ -801,13 +801,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 0;
       arg->hwp_ovflw_freq[hwcntr] = 0;
 
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0) {
          if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
             retval = PAPI_ESYS;
       }
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_unlock(INTERNAL_LOCK);
    } else {
       struct sigaction act;
       void *tmp;
@@ -860,9 +860,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          arg->hwp_ovflw_freq[hwcntr] = (int) threshold
                                      /this_state->num_on_counter[0];
       }
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal++;
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_unlock(INTERNAL_LOCK);
    }
 
    return (retval);
