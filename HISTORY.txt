@@ -7,112 +7,26 @@
 *          <your email address>
 */  
 
-This file contains a brief history of what's changed in the PAPI project.
-It was created after the fact to try to capture PAPI's evolution.
-Early details may be sketchy; we hope to keep more recent information
-more complete.
+We're software developers.
+That means we're notoriously bad about taking time to document the changes
+in the software we develop.
 
-PAPI Release 3.0: ??????  
-------------------------------
-> overlapping eventsets is no longer supported, this was never used in 
-   practice and allowed call overhead to be lowered.
-> Substantial api changes in this release to make things cleaner,
-   simpler and remove pointers where they are not necessary. See 
-   the PAPI website for more information on the changed API.
-> PAPI_get_mem_info was removed and rolled into PAPI_get_hardware_info
-> added multiple lock support for all platforms, exposed to the user
-   through PAPI_lock(int) and PAPI_unlock(int)
-> All PAPI_GET and PAPI_SET were changed to remove the GET and SET since
-   these are implied through the function call.
-> added native table support, all platforms now support adding native
-   events by name rather than by 32 bit encoding.  This includes a call
-   to list all native entries (see native_avail.c in ctests).
-> added a bitpartite allocation scheme, PAPI now does a much better job
-   at allocating which counters to place events.  This should find
-   a mapping in almost all cases if it is possible.
-> Changed overflow so that now it supports multiple overflow events, but
-   only where hardware supports multiple overflow events.  In addition,
-   it is no longer to overflow on derived events.
-> Threads were change to a circular linked list to support a transient
-   lock-free head pointer that provides amortized constant time lookups.
-> Added int PAPI_register_thread(void).
-> Added int PAPI_get_thr_specific(int tag, void **ptr) and
-   int PAPI_set_thr_specific(int tag, void *ptr).
-> New version macros for PAPI_VERSION_MAJOR, PAPI_VERSION_MINOR,
-   PAPI_VERSION_REVISION, PAPI_VERSION, PAPI_VERSION_NUMBER 
-   and PAPI_VER_CURRENT, allows for things such as:
-   #if (PAPI_VER_CURRENT>=PAPI_VERSION_NUMBER(3,1,0))
+We fully intended to use this file to keep a running history of the changes 
+between versions of PAPI.
 
+We didn't do it.
 
-PAPI Release 2.3.4: April 2003
-------------------------------
-(oops, we let a few minor releases slip in)
+Rather that mislead you with out of date and incomplete information, we
+now provide Change Logs for the most recent versions of PAPI. These logs
+can be automatically generated and are comprehensive records of all changes
+committed to the PAPI source code versioning system (cvs).
 
-GENERAL:
-> Improved multiplex support. Adding and removing events in
-  multiplexed event sets now works. More thorough test cases
-  (sdsc1 - 4) to verify correctness of multiplexed event counting.
-> tests directory renamed to ctests to match installations
-> new test case ctests/branches for testing branch events
-> Early release of memory extensions for static and dynamic memory
-> New test case (all_events) that makes sure all events in a substrate 
-  can be added/started/stopped
-> New examples directory added
-	- first example shows how to change an event based on 
-	  environment variables
-> Various Makefile fixes
+Look for a file of the form: 'ChangeLogPxxx.txt' where xxx is the PAPI 
+version number. You can grep this file for developer or file names, or
+for dates, or for keywords like 'multiplex' or 'overflow' to get an idea
+of changes that have occured to the code since the last release.
 
-IA32:
-> New implementations of PAPI_lock/PAPI_unlock
-> Improved memory detection routines for ia32 and AMD. TLB sizes now
-  reported in number of entries instead of equivalent memory mapped
-  on these CPUs as is the case on other platforms.
-> Added support for perfctr 2.4.5
+This is probably like sipping from a firehose, but at least its accurate
+and complete. The information's in there...
 
-IA64:
-> New implementations of PAPI_lock/PAPI_unlock.
-> Events were sometimes returned on the wrong order on the ia64 
-  substrate. This has now been corrected.
-> Operand order in derived events was not preserved.
-> build/optimization fixes in Makefile
-> First implementation of support for hardware profiling
-> Libpfm 2.0 is now supported
-> Opcode matching support for PAPI events on the Itanium2.
-
-PENTIUM4:
-> Overflow is now supported for event sets with single 
-  events only (for now).
-> Register allocation for at least 3 registers
-> Pentium 4 substrate matches IA32/IA64
-
-ALPHA:
-> EV7 was not being determined correctly
-> DADD directory pathing was fixed
-
-POWER:
-> POWER 3 register allocation scheme improved
-
-
-PAPI Release 2.3: October 2002
-------------------------------
-> added support for IBM AIX 5.1 on POWER 3
-> added support for IBM POWER 4 architecture
-> added support for Linux Itanium II (McKinley)
-> added support for Linux Alpha
-> added support for Tru64 Alpha/DADD
-> deployed multi-format documentation:
-  - User's Guide: doc; html; ps; pdf
-  - Programmer's Reference: doc; html; ps; pdf; man
-> added Java bindings and examples
-
-PAPI Release 2.1: February 2002
--------------------------------
-
-PAPI Release 2.0.1: November 2001
----------------------------------
-> added support for Intel on Windows NT/2K/XP
-> added support for Linux Itanium
-> added support for multiplexed events
-
-PAPI Release 1.1.5: December 2000
----------------------------------
+Enjoy!
