@@ -675,7 +675,7 @@ int PAPI_start(int EventSet)
 /* checks for valid EventSet, calls substrate stop() fxn. */
 int PAPI_stop(int EventSet, unsigned long long *values)
 { 
-  int retval, i;
+  int retval
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
@@ -697,8 +697,11 @@ int PAPI_stop(int EventSet, unsigned long long *values)
   event_set_zero->multistart.num_runners --;
 
 #if defined(DEBUG)
-  for (i=0;i<ESI->NumberOfCounters;i++)
+  {
+    int i;
+    for (i=0;i<ESI->NumberOfCounters;i++)
     DBG((stderr,"PAPI_stop ESI->stop[%d]:\t%llu\n",i,ESI->stop[i]));
+  }
 #endif
 
   DBG((stderr,"PAPI_stop returns %d\n",retval));

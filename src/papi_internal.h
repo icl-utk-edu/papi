@@ -1,5 +1,7 @@
 #ifdef DEBUG
 #define DBG(a) { fprintf(stderr,"DEBUG: "); fprintf a; }
+#else
+#define DBG(a)
 #endif
 
 /* some members of structs and/or function parameters may or may not be
