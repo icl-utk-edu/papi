@@ -43,7 +43,7 @@ void *Thread(void *arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-   retval = PAPI_profil(profbuf, length, my_start, 65536,
+   retval = PAPI_profil(profbuf, length, my_start, 65535,
                         EventSet1, PAPI_event, THR, PAPI_PROFIL_POSIX);
    if (retval)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
@@ -61,7 +61,7 @@ void *Thread(void *arg)
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
    /* to remove the profile flag */
-   retval = PAPI_profil(profbuf, length, my_start, 65536,
+   retval = PAPI_profil(profbuf, length, my_start, 65535,
                         EventSet1, PAPI_event, 0, PAPI_PROFIL_POSIX);
    if (retval)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);

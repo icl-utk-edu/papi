@@ -15,7 +15,7 @@ SERIAL  = realtime first exeinfo zero zero_fork avail branches dmem_info all_eve
 	ipc native native_avail overflow_index command_line
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SHARED)
+TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
 INCLUDE = -I.. -I/usr/include 
 PAPILIB	= ../$(LIBRARY)
 
@@ -106,9 +106,6 @@ clockres: clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
 clockres_pthreads: clockcore.c clockres_pthreads.c $(PAPILIB) $(UTILOBJS)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread -lm
 
-sprofile: sprofile.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) sprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o sprofile
-
 cost: cost.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) cost.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o cost -lm
 
@@ -175,14 +172,17 @@ overflow2: overflow2.c $(UTILOBJS) $(PAPILIB)
 overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_single_event.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_single_event
 
-profile: profile.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
+sprofile: sprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) sprofile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o sprofile
 
-profile_twoevents: profile_twoevents.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_twoevents.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
+profile: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
 
-earprofile: earprofile.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) earprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o earprofile
+profile_twoevents: profile_twoevents.c $(UTILOBJS) prof_utils.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_twoevents.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
+
+earprofile: earprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) earprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB) $(LDFLAGS) -o earprofile
 
 pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
@@ -238,6 +238,9 @@ shlib: shlib.c $(PAPILIB) $(UTILOBJS)
 
 exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
+
+prof_utils.o: prof_utils.c papi_test.h prof_utils.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c prof_utils.c
 
 test_utils.o: test_utils.c papi_test.h test_utils.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
