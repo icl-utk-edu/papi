@@ -59,6 +59,9 @@ static int default_error_handler(int errorCode);
 /********************/
 
 EventSetInfo *default_master_eventset = NULL; 
+#if defined(ANY_THREAD_GETS_SIGNAL)
+int (*thread_kill_fn)(int, int) = NULL;
+#endif
 unsigned long int (*thread_id_fn)(void) = NULL;
 static int init_retval = DEADBEEF;
 #ifdef DEBUG

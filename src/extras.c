@@ -24,8 +24,22 @@ vendors did in the kernel extensions or performance libraries. */
 #include <limits.h>
 #endif
 
+#ifdef ANY_THREAD_GETS_SIGNAL
+extern void _papi_hwi_lookup_thread_symbols(void);
+#endif
 
 static unsigned int rnum = 0xdeadbeef;
+
+typedef struct _thread_list {
+  EventSetInfo *master;
+  struct _thread_list *next; 
+} EventSetInfoList;
+
+static EventSetInfoList *head = NULL;
+#if defined(ANY_THREAD_GETS_SIGNAL)
+extern int (*thread_kill_fn)(int, int);
+#endif
+extern unsigned long int (*thread_id_fn)(void);
 
 static unsigned short random_ushort(void)
 {
@@ -132,14 +146,6 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }
 
-typedef struct _thread_list {
-  EventSetInfo *master;
-  struct _thread_list *next; 
-} EventSetInfoList;
-
-static EventSetInfoList *head = NULL;
-extern unsigned long int (*thread_id_fn)(void);
-
 void _papi_hwi_cleanup_master_list(void)
 {
   EventSetInfoList *tmp;
@@ -210,31 +216,31 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 
   DBG((stderr,"BEGIN\n"));
   master_event_set = _papi_hwi_lookup_in_master_list();
-  if (master_event_set == NULL)
-    return;
-  ESI = master_event_set->event_set_overflowing;
-  if (ESI == NULL)
+  if (master_event_set != NULL)
     {
-      DBG((stderr,"New thread %lu initialized, but not overflowing.\n",(*thread_id_fn)()));
-      return;
-    }
+      ESI = master_event_set->event_set_overflowing;
+      if (ESI == NULL)
+	{
+	  DBG((stderr,"New thread %x initialized, but not overflowing.\n",(*thread_id_fn)()));
+	  return;
+	}
 
-  if ((ESI->state & PAPI_OVERFLOWING) == 0)
-    abort();
-
-  /* Get the latest counter value */
-
-  retval = _papi_hwd_read(ESI, master_event_set, ESI->sw_stop); 
-  if (retval < PAPI_OK)
-    return;
-
-  latest = ESI->sw_stop[ESI->overflow.EventIndex];
-
+      if ((ESI->state & PAPI_OVERFLOWING) == 0)
+	abort();
+      
+      /* Get the latest counter value */
+      
+      retval = _papi_hwd_read(ESI, master_event_set, ESI->sw_stop); 
+      if (retval < PAPI_OK)
+	return;
+      
+      latest = ESI->sw_stop[ESI->overflow.EventIndex];
+      
   DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",
        latest,ESI->overflow.deadline,ESI->overflow.threshold));
-
+  
   /* Is it bigger than the deadline? */
-
+  
   if ((_papi_system_info.supports_hw_overflow) || (latest > ESI->overflow.deadline))
     {
       ESI->overflow.count++;
@@ -245,6 +251,21 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 			      ESI->sw_stop, &ESI->overflow.threshold, context);
       ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
+    }
+#ifdef ANY_THREAD_GETS_SIGNAL
+  else
+    {
+      EventSetInfoList *foo = head;
+      DBG((stderr,"nothing to do in thread %x\n", (*thread_id_fn)()));
+      for( ; foo != NULL; foo = foo->next ) {
+#ifdef MPX_DEBUG_TIMER
+	fprintf(stderr,"forwarding signal to thread %x\n", foo->master->tid);
+#endif
+	retval = (*thread_kill_fn)(foo->master->tid, PAPI_SIGNAL);
+	assert(retval == 0);
+      }
+    }
+#endif
   DBG((stderr,"FINISHED\n"));
 }
 
@@ -326,6 +347,9 @@ static int start_timer(int milliseconds)
   action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
 
+#if defined(ANY_THREAD_GETS_SIGNAL)
+  _papi_hwi_lookup_thread_symbols();
+#endif
 
   if (sigaction(PAPI_SIGNAL, &action, &oaction) < 0)
     return(PAPI_ESYS);

@@ -11,6 +11,9 @@
 #include <procinfo.h>
 #include <sys/atomic_op.h>
 
+#define ANY_THREAD_GETS_SIGNAL
+#include <dlfcn.h>
+
 #include "pmapi.h"
 #define POWER_MAX_COUNTERS MAX_COUNTERS
 #define GROUP_INTS 2

@@ -320,10 +320,10 @@ typedef union {
 
 /* dkt - added a label field to this structure */
 typedef struct pre_info {
-  const char *event_name;
-  const unsigned int event_code;
-  const char *event_descr;
-  const char *event_label;
+  char *event_name;
+  unsigned int event_code;
+  char *event_descr;
+  char *event_label;
   int avail;
   char *event_note;
   int flags;
