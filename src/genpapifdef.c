@@ -25,6 +25,9 @@
 #undef NDEBUG
 #include <assert.h>
 
+/* define the following to work around Cray Fortran problem */
+/* #define __X1__ */
+
 /*
 	The following arrays are used to create a series of defines
 	for use with PAPI in Fortran programs.
@@ -228,22 +231,48 @@ const int papi_errorNum[] = {
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';
 
-static void define_val(const char *val_string, int val, enum deftype_t deftype)
+static void define_max_cray_val(const char *val_string, enum deftype_t deftype)
 {
+   /* Cray FORTRAN cannot properly assign the maximum negative value of -2147483648
+      even though it *can* properly represent it. That value happens to be used for
+      the PAPI preset PAPI_L1_DCM. This hack works around that Cray limitation.
+   */
    switch (deftype) {
-   case CDEFINE:
-      printf("#define %-18s %d\n", val_string, val);
-      break;
-   case F77DEFINE:
-      printf("      INTEGER %-18s\n", val_string);
-      printf("      PARAMETER (%s=%d)\n", val_string, val);
-      break;
-   case F90DEFINE:
-      printf("      INTEGER, PARAMETER :: %-18s = %d\n", val_string, val);
-      break;
+      case CDEFINE:
+         printf("#define %-18s ", val_string);
+         break;
+      case F77DEFINE:
+         printf("      INTEGER %-18s\n      PARAMETER (%s=", val_string, val_string);
+         break;
+      case F90DEFINE:
+         printf("      INTEGER, PARAMETER :: %-18s = (", val_string);
+         break;
    }
+   printf("(-2)*(2**30)\n");
 }
 
+static void define_val(const char *val_string, int val, enum deftype_t deftype)
+{
+#ifdef __X1__
+   /* special case for Cray Fortran */
+   if (((unsigned)val) == 0x80000000) {
+      define_max_cray_val(val_string, deftype);
+      return;
+   }
+#endif
+
+   switch (deftype) {
+      case CDEFINE:
+         printf("#define %-18s %d\n", val_string, val);
+         break;
+      case F77DEFINE:
+         printf("      INTEGER %-18s\n      PARAMETER (%s=%d)\n", val_string, val_string, val);
+         break;
+      case F90DEFINE:
+         printf("      INTEGER, PARAMETER :: %-18s = %d\n", val_string, val);
+         break;
+   }
+}
 static void createDef(char *title, const char **names, const int *nums, int size,
                       enum deftype_t deftype)
 {
@@ -299,9 +328,11 @@ int main(int argc, char **argv)
    /* create defines for each member of the PRESET array */
    printf("\n%c\n%c\tPAPI preset event values.\n%c\n\n", comment_char, comment_char,
           comment_char);
+
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
       if (PAPI_get_event_info(i | PAPI_PRESET_MASK, &info) == PAPI_OK)
          define_val(info.symbol, info.event_code, deftype);
-
    exit(0);
 }
+
+
