@@ -126,6 +126,43 @@ int add_test_events(int *number, int *mask)
 	}
     }
 
+  if (*mask & MASK_BR_CN)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_BR_CN);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+
+                char errstring[PAPI_MAX_STR_LEN];
+                PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
+                printf("Error: %s\n", errstring );
+	  fprintf(stderr,"PAPI_BR_CN is not available.\n");
+	  *mask = *mask ^ MASK_BR_CN;
+	}
+    }
+  if (*mask & MASK_BR_MSP)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_BR_MSP);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+	  fprintf(stderr,"PAPI_BR_MSP is not available.\n");
+	  *mask = *mask ^ MASK_BR_MSP;
+	}
+    }
+  if (*mask & MASK_BR_PRC)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_BR_PRC);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+	  fprintf(stderr,"PAPI_BR_PRC is not available.\n");
+	  *mask = *mask ^ MASK_BR_PRC;
+	}
+    }
   if (*mask & MASK_FLOPS)
     {
       retval = PAPI_add_event(&EventSet, PAPI_FLOPS);

@@ -3,6 +3,9 @@
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
 */
+#define MASK_BR_PRC  0x2000
+#define MASK_BR_MSP  0x1000
+#define MASK_BR_CN   0x0800
 #define MASK_L2_TCH  0x0400
 #define MASK_L2_TCA  0x0200
 #define MASK_L2_TCM  0x0100
