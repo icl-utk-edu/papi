@@ -379,12 +379,8 @@ long long _papi_hwd_get_real_usec (void)
 {
   struct timeval tv;
 
-  if (gettimeofday(&tv,NULL) != -1)
-    {
-      return((tv.tv_sec * 1000000) + tv.tv_usec);
-    }
-  else
-    return(-1);
+  gettimeofday(&tv,NULL);
+  return((tv.tv_sec * 1000000) + tv.tv_usec);
 }
 
 long long _papi_hwd_get_real_cycles (void)
@@ -396,18 +392,32 @@ long long _papi_hwd_get_real_cycles (void)
   return((long long)cyc);
 }
 
+long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
+{
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_real_usec();
+  cyc = usec * _papi_system_info.hw_info.mhz;
+  return((long long)cyc);
+}
+
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
-  struct rusage usage;
-  if (getrusage(RUSAGE_SELF, &usage) != -1)
-    return((long long)usage.ru_utime.tv_usec + ((long long)usage.ru_utime.tv_sec * (long long)1000000));
-  else
-    return(-1);
+  long long retval;
+  struct tms buffer;
+
+  times(&buffer);
+  retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
+  return(retval);
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  return(_papi_hwd_get_virt_usec(zero) * (long long)_papi_system_info.hw_info.mhz);
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_real_usec();
+  cyc = usec * _papi_system_info.hw_info.mhz;
+  return((long long)cyc);
 }
 
 void _papi_hwd_error(int error, char *where)

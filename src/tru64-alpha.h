@@ -7,7 +7,7 @@
 #include <stropts.h>
 #include <unistd.h>
 #include <sys/processor.h>
-#include <sys/resource.h>
+#include <sys/times.h>
 #include <sys/sysinfo.h>
 #include <sys/procfs.h>
 #include <machine/hal_sysinfo.h>

@@ -37,8 +37,12 @@ genpapifdef: genpapifdef.c $(LIBRARY)
 fpapi.h: genpapifdef
 	./genpapifdef > fpapi.h
 
-examples: 
+examples: ftests tests
+
+tests: null
 	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" $(TARGETS)
+
+ftests: null
 	cd ftests; $(MAKE) F77="$(F77)" OPTFLAGS="$(OPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" 
 
 
@@ -49,6 +53,8 @@ clean: libclean
 	rm -rf $(LIBRARY) $(SHLIB) $(SHLIB).1 $(SHLIB).1.0 genpapifdef
 	cd tests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
+
+null:
 
 dist:
 	chmod -R 644 *

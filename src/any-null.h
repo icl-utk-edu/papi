@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/resource.h>
+#include <sys/times.h>
 #include <sys/time.h>
 #include "papi.h"
 #include "papi_internal.h"

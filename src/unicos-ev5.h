@@ -4,6 +4,7 @@
 #include <infoblk.h>
 #include <mpp/globals.h> 
 #include <sys/ucontext.h>
+#include <sys/times.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"

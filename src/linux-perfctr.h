@@ -4,7 +4,8 @@
 #include <string.h>
 #include <math.h>
 #include <sys/types.h>
-#include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/times.h>
 #include <asm/system.h>
 #include <linux/unistd.h>	
 #include <linux/smp.h>

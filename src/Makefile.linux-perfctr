@@ -4,8 +4,8 @@ LIBS	= static shared
 TARGETS = serial pthreads
 
 FOR_USED= -DFORTRANDOUBLEUNDERSCORE
-CFLAGS  = -Wall -Ilibperfctr -g
-FFLAGS	= -Wall -g
+CFLAGS  = -Wall -Ilibperfctr 
+FFLAGS	= -Wall
 OPTFLAGS= -O6 -mpentiumpro 
 CC_SHR  = gcc -shared
 CC_R	= gcc

@@ -5,7 +5,9 @@
 #include <libgen.h>
 #include <sys/systemcfg.h>
 #include <sys/processor.h>
+#include <time.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <procinfo.h>
 #include <sys/atomic_op.h>
 #include "pmapi.h"

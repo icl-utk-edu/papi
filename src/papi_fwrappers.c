@@ -221,7 +221,7 @@ PAPI_FCALL(papif_shutdown,PAPIF_SHUTDOWN,(void))
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, _fcd vendor_string, 
-	   int *model, _fcd model_string, float *revision, float *mhz))
+	   int *model, _fcd model_string, double *revision, double *mhz))
 #elif defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
@@ -251,7 +251,6 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu,
     *mhz=0;
   }
   else {
-    printf("Mhz %f Revision %f\n", hwinfo->mhz, hwinfo->revision );
     *ncpu = hwinfo->ncpu;
     *nnodes = hwinfo->nnodes;
     *totalcpus = hwinfo->totalcpus;

@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <libgen.h>
+#include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/processor.h>

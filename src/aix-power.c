@@ -980,12 +980,21 @@ long long _papi_hwd_get_real_cycles (void)
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
-  return(-1);
+  long long retval;
+  struct tms buffer;
+
+  times(&buffer);
+  retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
+  return(retval);
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  return(-1);
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_real_usec();
+  cyc = usec * _papi_system_info.hw_info.mhz;
+  return((long long)cyc);
 }
 
 void _papi_hwd_error(int error, char *where)

@@ -4,7 +4,7 @@ LIBS	= static shared
 TARGETS = serial pthreads
 
 FOR_USED= -DFORTRANDOUBLEUNDERSCORE
-CFLAGS  = -g
+CFLAGS  = 
 OPTFLAGS= -O3 -DNDEBUG
 CC	= cc
 CC_SHR  = $(CC) -shared
