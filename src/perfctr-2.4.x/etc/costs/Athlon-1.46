@@ -1,0 +1,14 @@
+[data from a 1.46 (1.7 marketing) GHz Athlon]
+
+PERFCTR INIT: vendor 2, family 6, model 6, stepping 2, clock 1466764 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 90 cycles
+PERFCTR INIT: rdtsc cost is 18.6 cycles (1283 total)
+PERFCTR INIT: rdpmc cost is 19.8 cycles (1359 total)
+PERFCTR INIT: rdmsr (counter) cost is 51.5 cycles (3391 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 52.4 cycles (3446 total)
+PERFCTR INIT: wrmsr (counter) cost is 86.6 cycles (5636 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 231.7 cycles (14920 total)
+PERFCTR INIT: read cr4 cost is 5.9 cycles (473 total)
+PERFCTR INIT: write cr4 cost is 64.9 cycles (4246 total)
+perfctr: driver 2.3.9, cpu type AMD K7 at 1466764 kHz
