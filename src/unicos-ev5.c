@@ -321,6 +321,28 @@ static float getmhz(void)
   return(p);
 }
 
+void dump_infoblk(void)
+{
+  int i;
+
+  printf("infoblk:\n");
+  printf("date of program creation: %s\n", _infoblk.i_date);
+  printf("time of program creation: %s\n", _infoblk.i_time);
+  printf("name of generating program: %s\n", _infoblk.i_pid);
+  printf("version of generating program: %s\n", _infoblk.i_pvr);
+  printf("O.S. version at generation time: %s\n", _infoblk.i_osvr);
+  printf("creation timestamp: %d\n", _infoblk.i_udt);
+  for (i=0; i<T3E_NUMBER_OF_SEGMENTS; i++) {
+    printf("i_segs[%u]\n", i);
+    printf("virtual address of segment: %x\n", _infoblk.i_segs[i].vaddr);
+    printf("initial physical memory size: %u\n", _infoblk.i_segs[i].size);
+    printf("place.offset: %x\n", _infoblk.i_segs[i].place.seg_offset);
+    printf("place.length: %u\n", _infoblk.i_segs[i].place.length);
+    printf("zeroed: %u\n", _infoblk.i_segs[i].zeroed);
+    printf("length of uninitialized data: %u\n", _infoblk.i_segs[i].bss);
+  }
+}
+
 static int get_system_info(void)
 {
   pid_t pid;
@@ -330,14 +352,18 @@ static int get_system_info(void)
   if (pid == -1)
     return(PAPI_ESYS);
 
+/*  dump_infoblk(); */
   /* _papi_system_info.exe_info.fullname; */
   /* _papi_system_info.exe_info.name; */
   _papi_system_info.exe_info.text_start = (caddr_t)0x800000000;
   _papi_system_info.exe_info.data_start = (caddr_t)0x100000000;
   _papi_system_info.exe_info.bss_start =  (caddr_t)0x200000000;
-  _papi_system_info.exe_info.text_end = (caddr_t)_infoblk.i_segs[0].size;
-  _papi_system_info.exe_info.data_end = (caddr_t)_infoblk.i_segs[1].size;
-  _papi_system_info.exe_info.bss_end = (caddr_t)_infoblk.i_segs[2].size;
+  _papi_system_info.exe_info.text_end = 
+     (caddr_t)(_infoblk.i_segs[0].size + 0x800000000);
+  _papi_system_info.exe_info.data_end = 
+     (caddr_t)(_infoblk.i_segs[1].size + 0x100000000);
+  _papi_system_info.exe_info.bss_end = 
+     (caddr_t)(_infoblk.i_segs[2].size + 0x200000000);
 
   _papi_system_info.hw_info.ncpu = sysconf(_SC_CRAY_NCPU);
   _papi_system_info.hw_info.totalcpus = sysconf(_SC_CRAY_NCPU);
