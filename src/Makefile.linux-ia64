@@ -3,7 +3,6 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared
 TARGETS = serial pthreads
 
-FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS  = -Wall -Ilibpfm -I. -ggdb -DDEBUG
 FFLAGS	= -g3 
 OPTFLAGS= -O2

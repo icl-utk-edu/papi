@@ -2,7 +2,6 @@ SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared
 TARGETS	= serial smp omp
-FOR_USED= -DFORTRANUNDERSCORE
 FLAGS  	= 
 CFLAGS  = -woff 1116,1552 $(FLAGS)
 NOOPT	= -O0

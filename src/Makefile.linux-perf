@@ -3,7 +3,6 @@ DESCR	= "Linux with Perf Kernel Patch for the Pentium Pro, II, III"
 LIBS	= static shared
 TARGETS = serial pthreads
 
-FOR_USED= -DFORTRANDOUBLEUNDERSCORE
 CFLAGS  = 
 OPTFLAGS= -O3
 CC	= cc

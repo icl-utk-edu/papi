@@ -3,7 +3,6 @@ DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial pthreads omp smp
 
-FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS 	= -g -DDEBUG -Zp8
 FFLAGS	= -g
 OPTFLAGS= 

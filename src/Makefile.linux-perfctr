@@ -3,7 +3,6 @@ DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
 LIBS	= static shared
 TARGETS = serial pthreads
 
-FOR_USED= -DFORTRANDOUBLEUNDERSCORE
 # Add -DPERFCTR18 for PerfCtr distributions > 1.6
 CFLAGS  = -Wall -I./perfctr/usr.lib
 FFLAGS	= -Wall

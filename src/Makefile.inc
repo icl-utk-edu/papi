@@ -1,7 +1,8 @@
 LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
+#SHLIB     = libpapi.so
 SOURCES	  = $(MISCSRCS) papi_fwrappers.c papi.c papi_hl.c $(SUBSTR).c extras.c
-OBJECTS   = $(MISCOBJS) papi_fwrappers.o papi.o papi_hl.o $(SUBSTR).o extras.o
+OBJECTS   = $(MISCOBJS) papi_fwrappers.o papi.o papi_hl.o $(SUBSTR).o extras.o\
+	    papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
 all: showconf $(LIBS) fpapi.h examples
@@ -23,8 +24,17 @@ shared: $(SHLIB)
 $(SHLIB): $(OBJECTS) 
 	-$(CC_SHR) $(CFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
 
+papi_fwrappers_.o: papi_fwrappers.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -DFORTRANUNDERSCORE -c papi_fwrappers.c -o papi_fwrappers_.o
+papi_fwrappers__.o: papi_fwrappers.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -DFORTRANDOUBLEUNDERSCORE -c papi_fwrappers.c -o papi_fwrappers__.o
+
+PAPI_FWRAPPERS.o: papi_fwrappers.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -DFORTRANCAPS -c papi_fwrappers.c -o PAPI_FWRAPPERS.o
+
 papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
-	$(CC) $(CFLAGS) $(OPTFLAGS) $(FOR_USED) -c papi_fwrappers.c -o papi_fwrappers.o
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
+
 papi.o: papi.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi.c -o papi.o
 papi_hl.o: papi_hl.c $(HEADERS)
