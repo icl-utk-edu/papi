@@ -8,9 +8,9 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 
 # Default source is for pmapi 1.5.x and above.
 
-FLAGS  = -I/usr/pmapi/include -qmaxmem=-1 -qarch=com 
-CFLAGS	= $(FLAGS) -DDEBUG
-OPTFLAGS= -O3
+FLAGS  = -I/usr/pmapi/include -qmaxmem=-1 -qarch=pwr3
+CFLAGS	= $(FLAGS) 
+OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
