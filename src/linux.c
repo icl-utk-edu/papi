@@ -12,6 +12,8 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
+/* This should be in a linux.h header file maybe. */
+#define FOPEN_ERROR "fopen(%s) returned NULL"
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -34,33 +36,6 @@ extern papi_mdi_t _papi_hwi_system_info;
 /******************************/
 /* BEGIN STOLEN/MODIFIED CODE */
 /******************************/
-
-/*
- * pmap.c: implementation of something like Solaris' /usr/proc/bin/pmap
- * for linux
- *
- * Author: Andy Isaacson <adi@acm.org>
- * Fri Jun 18 1999
- *
- * Updated Mon Oct 25 1999
- *  - calculate total size of shared mappings
- *  - change output format to read "writable/private" rather than "writable"
- *
- * Updated Sun Jul  8 2001
- *  - enlarge fixed-size buffers to handle long filenames
- *  - update spacing constants
- *  Thanks to Thomas Dorner <dorner@claranet.de> for the bug report
- *
- * Justification:  the formatting available in /proc/<pid>/maps is less
- * than optimal.  It's hard to figure out the size of a mapping from
- * that information (unless you can do 8-digit hex arithmetic in your
- * head) and it's just generally not friendly.  Hence this utility.
- *
- * I hereby place this work in the public domain.
- *
- * Compile with something along the lines of
- * gcc -O pmap.c -o pmap
- */
 
 #ifdef _WIN32
 
@@ -146,11 +121,15 @@ int _papi_hwd_update_shlib_info(void)
 
  again:
    while (!feof(f)) {
-      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX];
+      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PATH_MAX];
       unsigned long begin, end, size, inode, foo;
 
       if (fgets(buf, sizeof(buf), f) == 0)
          break;
+      if (strlen(mapname))
+	strcpy(lastmapname,mapname);
+      else
+	lastmapname[0] = '\0';
       mapname[0] = '\0';
       sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
              &foo, dev, &inode, mapname);
@@ -164,7 +143,7 @@ int _papi_hwd_update_shlib_info(void)
 	{
 	  if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
 	    {
-	      if (t_index == 0)	
+	      if  (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0)
 		{
 		  _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
 		  _papi_hwi_system_info.exe_info.address_info.text_end =
@@ -172,14 +151,14 @@ int _papi_hwd_update_shlib_info(void)
 		}
 	      t_index++;
 	    }
-	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (d_index == 0) && (t_index == 1)) 
+	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0))
 	    {
 	      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) begin;
 	      _papi_hwi_system_info.exe_info.address_info.data_end =
                 (caddr_t) (begin + size);
 	      d_index++;
 	    }
-	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (b_index == 0) && (t_index == 1))
+	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,lastmapname) == 0))
 	    {
 	      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) begin;
 	      _papi_hwi_system_info.exe_info.address_info.bss_end =
@@ -244,7 +223,7 @@ int _papi_hwd_update_shlib_info(void)
 /* END STOLEN/MODIFIED CODE */
 /****************************/
 
-inline_static char *search_cpu_info(FILE * f, char *search_str, char *line)
+static char *search_cpu_info(FILE * f, char *search_str, char *line)
 {
    /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
    /* See the PCL home page for the German version of PAPI. */
@@ -269,6 +248,7 @@ int _papi_hwd_get_system_info(void)
    int tmp, retval;
    char maxargs[PAPI_MAX_STR_LEN], *t, *s;
    pid_t pid;
+   float mhz = 0.0;
    FILE *f;
 
    /* Software info */
@@ -308,39 +288,85 @@ int _papi_hwd_get_system_info(void)
    SUBDBG("Text: Start %p, End %p, length %d\n",
           _papi_hwi_system_info.exe_info.address_info.text_start,
           _papi_hwi_system_info.exe_info.address_info.text_end,
-          _papi_hwi_system_info.exe_info.address_info.text_end -
-          _papi_hwi_system_info.exe_info.address_info.text_start);
+          (int)(_papi_hwi_system_info.exe_info.address_info.text_end -
+          _papi_hwi_system_info.exe_info.address_info.text_start));
    SUBDBG("Data: Start %p, End %p, length %d\n",
           _papi_hwi_system_info.exe_info.address_info.data_start,
           _papi_hwi_system_info.exe_info.address_info.data_end,
-          _papi_hwi_system_info.exe_info.address_info.data_end -
-          _papi_hwi_system_info.exe_info.address_info.data_start);
+          (int)(_papi_hwi_system_info.exe_info.address_info.data_end -
+          _papi_hwi_system_info.exe_info.address_info.data_start));
    SUBDBG("Bss: Start %p, End %p, length %d\n",
           _papi_hwi_system_info.exe_info.address_info.bss_start,
           _papi_hwi_system_info.exe_info.address_info.bss_end,
-          _papi_hwi_system_info.exe_info.address_info.bss_end -
-          _papi_hwi_system_info.exe_info.address_info.bss_start);
+          (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
+          _papi_hwi_system_info.exe_info.address_info.bss_start));
 
    /* Hardware info */
 
    _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
    _papi_hwi_system_info.hw_info.nnodes = 1;
    _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+   _papi_hwi_system_info.hw_info.vendor = -1;
 
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
       error_return(PAPI_ESYS, FOPEN_ERROR, "/proc/cpuinfo");
+
+   rewind(f);
+   s = search_cpu_info(f, "cpu MHz", maxargs);
+   if (s)
+      sscanf(s + 1, "%f", &mhz);
+   _papi_hwi_system_info.hw_info.mhz = mhz;
+
    rewind(f);
    s = search_cpu_info(f, "vendor_id", maxargs);
    if (s && (t = strchr(s + 2, '\n'))) {
       *t = '\0';
       strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
    }
+   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n'))) {
+	 *t = '\0';
+	 strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+       }
+     }
+       
    rewind(f);
    s = search_cpu_info(f, "stepping", maxargs);
    if (s)
-      sscanf(s + 1, "%d", &tmp);
+      {
+	sscanf(s + 1, "%d", &tmp);
+	_papi_hwi_system_info.hw_info.revision = (float) tmp;
+      }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "revision", maxargs);
+       if (s)
+	 {
+	   sscanf(s + 1, "%d", &tmp);
+	   _papi_hwi_system_info.hw_info.revision = (float) tmp;
+	 }
+     }
+       
+   rewind(f);
+   s = search_cpu_info(f, "family", maxargs);
+   if (s && (t = strchr(s + 2, '\n'))) {
+      *t = '\0';
+      strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
+   }
+
+   rewind(f);
+   s = search_cpu_info(f, "model", maxargs);
+   if (s)
+     {
+       sscanf(s + 1, "%d", &tmp);
+       _papi_hwi_system_info.hw_info.model = tmp;
+     }
+
    fclose(f);
-   _papi_hwi_system_info.hw_info.revision = (float) tmp;
 
    /* cut */
 
@@ -355,15 +381,3 @@ int _papi_hwd_get_system_info(void)
 }
 
 #endif /* _WIN32 */
-
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
-{
-   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
-   switch (code) {
-   case PAPI_DOMAIN:
-   case PAPI_DEFDOM:
-      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   default:
-      return (PAPI_EINVAL);
-   }
-}

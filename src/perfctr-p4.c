@@ -131,13 +131,8 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
 /* Machine info structure. -1 is unused. */
 extern int _papi_hwd_mdi_init()
 {
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");      /* Name of the substrate we're using */
-   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _init;
-   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
-   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
-   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) NULL;
+  /* Name of the substrate we're using */
+   strcpy(_papi_hwi_system_info.substrate, "$Id$");      
 
    _papi_hwi_system_info.supports_hw_overflow = 1;
    _papi_hwi_system_info.supports_64bit_counters = 1;
@@ -146,13 +141,6 @@ extern int _papi_hwd_mdi_init()
    _papi_hwi_system_info.supports_real_cyc = 1;
    _papi_hwi_system_info.supports_virt_usec = 1;
    _papi_hwi_system_info.supports_virt_cyc = 1;
-
-   _papi_hwi_system_info.shlib_info.map->text_start = (caddr_t) & _init;
-   _papi_hwi_system_info.shlib_info.map->text_end = (caddr_t) & _etext;
-   _papi_hwi_system_info.shlib_info.map->data_start = (caddr_t) & _etext + 1;
-   _papi_hwi_system_info.shlib_info.map->data_end = (caddr_t) & _edata;
-   _papi_hwi_system_info.shlib_info.map->bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.shlib_info.map->bss_end = (caddr_t) NULL;
 
    return (PAPI_OK);
 }
@@ -188,40 +176,29 @@ int _papi_hwd_init_global(void)
 
    _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
-
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
-
    _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0;
 
    SUBDBG("Actual MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
 
-   /* Setup presets */
+   /* Fill in what we can of the papi_system_info. */
+   retval = _papi_hwd_get_system_info();
+   if (retval)
+      return (retval);
 
+   /* Setup presets */
    retval = setup_p4_presets(info.cpu_type);
    if (retval)
       return (retval);
 
-   /* Fill in what we can of the papi_system_info. */
-
-   retval = _papi_hwd_get_system_info();
-   if (retval != PAPI_OK)
-      return (retval);
-
    /* Setup memory info */
-
    retval =
        _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
    if (retval)
       return (retval);
 
-#ifdef PERFCTR25
-   SUBDBG("perfctr ABI compile time version: %x\n", PERFCTR_ABI_VERSION);
-#endif
-
    vperfctr_close(dev);
-   SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
-
    return (PAPI_OK);
 }
 
@@ -924,5 +901,17 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
          fprintf(stderr, "%s:%d: vperfctr_iresume %s\n",
                  __FILE__, __LINE__, strerror(errno));
       }
+   }
+}
+
+int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+{
+   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
+   switch (code) {
+   case PAPI_DOMAIN:
+   case PAPI_DEFDOM:
+      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+   default:
+      return (PAPI_EINVAL);
    }
 }
