@@ -3,4 +3,4 @@
 # VERSION	= 2.0
 CPU	= 2
 
-include Rules.linux-libpfm
+include Rules.pfm

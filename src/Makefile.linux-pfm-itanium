@@ -2,5 +2,5 @@
 # Override on command line or in this makefile
 # VERSION	= 2.0
 
-include Rules.linux-libpfm
+include Rules.pfm
 
