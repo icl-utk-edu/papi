@@ -116,7 +116,7 @@ int main(int argc, char **argv)
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   num_flops = 10*NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E)
   num_flops *= 2;
 #endif
 
@@ -149,10 +149,12 @@ int main(int argc, char **argv)
   if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
 	test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
 #endif
+#ifndef _CRAYT3E
   min = (long_long)(values[0][0]*.9);
   max = (long_long)(values[0][0]*1.1);
   if ( values[1][0] > max || values[1][0] < min )
   	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+#endif
 
   min = (long_long)(values[0][1]*.9);
   max = (long_long)(values[0][1]*1.1);

@@ -17,9 +17,16 @@
       External len_trim
       integer tests_quiet
       character*25 chbuf
+#if defined(_CRAYT3E)
+      integer ilen, ierror
+#endif
 
       tests_quiet=0
+#if defined(_CRAYT3E)
+      call pfxgetarg(1,chbuf,ilen,ierror)
+#else
       call getarg(1,chbuf)
+#endif
       if (LGE(chbuf, 'TESTS_QUIET')) then
          tests_quiet=1
       end if

@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 		  if (n < INDEX1 || ((n+1) % 50) == 0) {
 
 			/* Initialize the needed arrays at this size */
-			for ( i=0; i<n; i++ ) {
+			for ( i=0; i<=n; i++ ) {
 				x[i] = rand()*(float)1.1;
 				y[i] = rand()*(float)1.1;
 			}
@@ -120,10 +120,10 @@ int main(int argc, char *argv[]) {
 		  if (n < INDEX1 || ((n+1) % 50) == 0) {
 
 			/* Initialize the needed arrays at this size */
-			for ( i=0; i<n; i++ ) {
+			for ( i=0; i<=n; i++ ) {
 				y[i] = 0.0;
 				x[i] = rand()*(float)1.1;
-				for (j=0; j<n; j++)
+				for (j=0; j<=n; j++)
 					a[i*n+j] = rand()*(float)1.1;
 			}
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
 		  if (n < INDEX1 || ((n+1) % 50) == 0) {
 
 			/* Initialize the needed arrays at this size */
-			for ( i=0; i<n*n; i++ ) {
+			for ( i=0; i<=n*n+n; i++ ) {
 				c[i] = 0.0;
 				a[i] = rand()*(float)1.1;
 				b[i] = rand()*(float)1.1;

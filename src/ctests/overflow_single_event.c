@@ -103,7 +103,7 @@ int main(int argc, char **argv)
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   num_flops = 10*NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E)
   num_flops *= 2;
 #endif
 
