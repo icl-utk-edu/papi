@@ -17,7 +17,7 @@ CC_SHR  = cc
 CC_R	= cc
 CC	= cc
 CPP	= cc -E
-F77	= ftn
+F77	= ftn -F
 POST_BUILD =
 SPECIAL_REMOVE =
 
