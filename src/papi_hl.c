@@ -154,15 +154,15 @@ int _internal_start_hl_counters(HighLevelInfo * state)
 
 void _internal_cleanup_hl_info(HighLevelInfo * state)
 {
-   state->num_evts = 0;
-   state->total_ins = 0;
-   state->initial_time = -1;
+   state->num_evts        = 0;
+   state->running         = 0;
+   state->initial_time    = -1;
    state->total_proc_time = 0;
-   state->running = 0;
+   state->total_ins       = 0;
    return;
 }
 
-int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflops)
+int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips)
 {
    HighLevelInfo *state = NULL;
    int retval;
@@ -171,10 +171,10 @@ int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflops)
       return (retval);
 
    if ((retval =
-        _hl_rate_calls(rtime, ptime, flpins, mflops, PAPI_FP_INS, state)) != PAPI_OK)
+        _hl_rate_calls(rtime, ptime, flpins, mflips, PAPI_FP_INS, state)) != PAPI_OK)
       return (retval);
 
-   *mflops = *mflops * _papi_hwi_system_info.hw_info.mhz;
+   *mflips = (*mflips * _papi_hwi_system_info.hw_info.mhz);
    return (PAPI_OK);
 }
 
@@ -240,6 +240,9 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
       state->total_ins += values[0];
       *proc_time = state->total_proc_time;
       *ins = state->total_ins;
+      /* The flips call adds 1 extra flip, we need to subtract that out */
+      if (EVENT == PAPI_FP_INS)
+	*ins -= 1;
       if ((retval = PAPI_start(state->EventSet)) != PAPI_OK) {
          state->running = 0;
          return (retval);
@@ -372,12 +375,13 @@ int PAPI_stop_counters(long_long * values, int array_len)
    if (state->running == HL_FLIPS || state->running == HL_IPC) {
       long_long tmp_values[2];
       retval = PAPI_stop(state->EventSet, tmp_values);
-   } else if(state->running != HL_START_COUNTERS || array_len < state->num_evts)
+   } 
+   else if(state->running != HL_START_COUNTERS || array_len < state->num_evts)
       return (PAPI_EINVAL);
    else
       retval = PAPI_stop(state->EventSet, values);
 
-   if (!retval) {
+   if (retval==PAPI_OK) {
       _internal_cleanup_hl_info(state);
       PAPI_cleanup_eventset(state->EventSet);
       return retval;
