@@ -498,3 +498,39 @@ void test_print_event_header(char *call, int evset)
    }
    fprintf(stdout,"\n");
 }
+
+int add_two_events(int *num_events, int *papi_event, PAPI_hw_info_t *hw_info,
+                   int *mask)
+{
+   int EventSet = PAPI_NULL;
+
+   *mask = 0;
+   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
+      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
+      (strstr(hw_info->model_string, "POWER3"))) {
+   /* query and set up the right instruction to monitor */
+      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+         *mask = MASK_TOT_INS | MASK_TOT_CYC;
+         *papi_event = PAPI_TOT_INS;
+      } else {
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this platform!", 0);
+      }
+   } else {
+   /* query and set up the right event to monitor */
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) { 
+         *mask = MASK_FP_INS | MASK_TOT_CYC;
+         *papi_event = PAPI_FP_INS;
+      } else { 
+         if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK) { 
+            *mask = MASK_FP_OPS | MASK_TOT_CYC;
+            *papi_event = PAPI_FP_OPS;
+         } else {
+            *mask = MASK_TOT_INS | MASK_TOT_CYC;
+            *papi_event = PAPI_TOT_INS;
+         }
+      }
+   }
+   EventSet = add_test_events(num_events, mask);
+   return(EventSet);
+}
