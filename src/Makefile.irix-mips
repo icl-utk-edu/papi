@@ -15,6 +15,9 @@ FTOPTFLAGS= $(TOPTFLAGS)
 FFLAGS	= $(FLAGS) -col120
 SMPCFLGS= -mp
 OMPCFLGS= -mp
+MISCSRCS    =  svr4.c
+MISCOBJS    =  svr4.o
+
 CC_SHR  = cc -shared -all -check_registry /usr/lib32/so_locations -soname $(SHLIB)
 CC_R	= cc -D_SGI_MP_SOURCE
 CC	= cc
@@ -22,6 +25,9 @@ CPP	= cc -E
 F77	= f77
 
 include ./Makefile.inc
+
+svr4.o: svr4.c
+	$(CC) -c svr4.c $(LIBCFLAGS) -o $@
 
 native_clean:
 

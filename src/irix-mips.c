@@ -456,13 +456,20 @@ static int _internal_get_system_info(void)
 */
    _papi_hwi_system_info.supports_hw_overflow = 1;
 
+   retval = _papi_hwd_update_shlib_info();
+   if (retval != PAPI_OK) 
+   {
+      printf("retval=%d\n", retval);
+   }
 /* set text start address and end address, etc */
+/*
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _ftext;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _fdata;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _fbss;
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
+*/
 
 
    if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R10000) {
@@ -846,11 +853,12 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    return PAPI_OK;
 }
 
+/*
 int _papi_hwd_update_shlib_info(void)
 {
    return (PAPI_ESBSTR);
 }
-
+*/
 
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
