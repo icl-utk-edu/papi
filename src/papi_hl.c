@@ -49,7 +49,6 @@ typedef struct _HighLevelInfo {
    int EventSet;                /* EventSet of the thread */
    short int num_evts;
    short int running;
-   short int mhz;
    u_long_long initial_time;    /* Start time */
    float total_proc_time;       /* Total processor time */
    float total_ins;             /* Total instructions */
@@ -160,7 +159,6 @@ void _internal_cleanup_hl_info(HighLevelInfo * state)
    state->initial_time = -1;
    state->total_proc_time = 0;
    state->running = 0;
-   state->mhz = 0;
    return;
 }
 
@@ -172,14 +170,11 @@ int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflops)
    if ((retval = _internal_check_state(&state)) != PAPI_OK)
       return (retval);
 
-   if (state->mhz == 0)
-      state->mhz = (short int) PAPI_get_opt(PAPI_CLOCKRATE, NULL);
-
    if ((retval =
         _hl_rate_calls(rtime, ptime, flpins, mflops, PAPI_FP_INS, state)) != PAPI_OK)
       return (retval);
 
-   *mflops = *mflops * state->mhz;
+   *mflops = *mflops * _papi_hwi_system_info.hw_info.mhz;
    return (PAPI_OK);
 }
 
@@ -190,9 +185,6 @@ int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc)
 
    if ((retval = _internal_check_state(&state)) != PAPI_OK)
       return (retval);
-
-   if ( state->mhz == 0 )
-      state->mhz = (short int) PAPI_get_opt(PAPI_CLOCKRATE, NULL);
 
    return(_hl_rate_calls(rtime,ptime,ins,ipc,PAPI_TOT_INS,state));
 }
@@ -241,7 +233,7 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
          return (retval);
       /* Use Multiplication because it is much faster */
       *real_time = (float) ((PAPI_get_real_usec() - state->initial_time) * .000001);
-      *proc_time = (float) (values[1] * .000001 / state->mhz);
+      *proc_time = (float) (values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
       if (*proc_time > 0)
          *rate = (float) ((float) values[0] / values[1]);
       state->total_proc_time += *proc_time;
@@ -290,6 +282,9 @@ int PAPI_start_counters(int *events, int array_len)
 
    if ((retval = _internal_check_state(&state)) != PAPI_OK)
       return (retval);
+
+   if(state->running != 0)
+	return(PAPI_EINVAL);
 
    /* load events to the new EventSet */
    for (i = 0; i < array_len; i++) {
@@ -375,9 +370,9 @@ int PAPI_stop_counters(long_long * values, int array_len)
       return (PAPI_ENOTRUN);
 
    if (state->running == HL_FLIPS || state->running == HL_IPC) {
-      long_long tmp_values;
-      retval = PAPI_stop(state->EventSet, &tmp_values);
-   } else if (state->running != HL_START_COUNTERS || array_len < state->num_evts)
+      long_long tmp_values[array_len];
+      retval = PAPI_stop(state->EventSet, tmp_values);
+   } else if(state->running != HL_START_COUNTERS || array_len < state->num_evts)
       return (PAPI_EINVAL);
    else
       retval = PAPI_stop(state->EventSet, values);
