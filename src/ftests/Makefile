@@ -23,13 +23,13 @@ ftests_util.o: ftests_util.F
 	$(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o clockres
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
 
 avail: avail.F $(FTEST_DEPENDENCE)  
 	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F  $(PAPILIB) $(LDFLAGS) -o avail
 
 eventname: eventname.F $(FTEST_DEPENDENCE)  
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o eventname
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
 
 case1: case1.F $(FTEST_DEPENDENCE) 
 	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
