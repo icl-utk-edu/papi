@@ -83,10 +83,10 @@ void main()
 
   PAPI_shutdown();
 
-
   printf("%d iterations of c = a*b\n",TESTNUM);
-  printf("Instrs: %lld %lld %lld %lld\n",cr[0],cs[0],ct[0],cu[0]);
-  printf("Flinst: %lld %lld %lld %lld\n",cr[1],cs[1],ct[1],cu[1]);
+  printf("Cycles: %lld %lld %lld %lld\n",cr[0],cs[0],ct[0],cu[0]);
+  printf("Instrs: %lld %lld %lld %lld\n",cr[1],cs[1],ct[1],cu[1]);
+  printf("Flinst: %lld %lld %lld %lld\n",cr[2],cs[2],ct[2],cu[2]);
 
   free(cr);
   free(cs);
