@@ -1,46 +1,35 @@
-To Do List for PAPI Documentation
----------------------------------
+To Do List for PAPI
+-------------------
 
-- Re do the PAPI API Specification/User Manual
+- Docs for trapper, tperfex example
 
-- Make PAPI_native man page that shows how to encode native events on all supported platforms
+- Make PAPI_query_event check the syntax of native events 
+  (will require adding new decoder call to substrate)
+  ** DEFERRED TO PAPI 3.0
 
-- Make PAPI_get_overflow_address man page
+- Implement PAPI_restore/PAPI_save
+  ** DEFERRED TO PAPI 3.0
 
-Comments: Man pages should use the PAPI_query_event page as a template for full markup.
+- Revise the list of options, remove SET & GET from the names. 
+  That should be handled by the appropriate code.
+  ** DEFERRED TO PAPI 3.0
 
-To Do List for PAPI Source Code
--------------------------------
-
-- Make PAPI_query_event check the syntax of native events (will require adding new decoder call to substrate)
-
-- Make PAPI_restore/PAPI_save
-
-1) Revise the list of options, remove SET & GET from the names. That should be
-handled by the appropriate code.
-
-2) Rewrite add_test_events & allocate_test_space in test_utils.c
-   These functions should be merged into 1 function that returns an
-   eventset with some available events added, in addition to memory
-   for those event counters.
-
-3) Add more presets to IA64 substrate
-
-4) Add hw profiling to IA64 / IRIX port
-
-5) Add hw overflow to IA32 and update to PerfCtr 2.0
+- Add hw profiling to IA64 / IRIX port
+  ** DEFERRED TO PAPI 3.0
 
 Multiplexing work:
+------------------
 
 * Implement mpx_remove_event.
 
 * Make mpx_insert_events handle cases where PAPI_add_event and PAPI_start fail.
   This can happen if you want to multiplex a derived event. That event takes up
   two counters, and there is not enough room to add the PAPI_TOT_CYC event.
+  [DONE??]
 
-* Use SIGPROF for both multiplexing and profiling. Both cannot be active at once
-  in the same thread. Since signal handlers are shared by all threads, the
-  code chain the mpx_handler into the profile_handler. 
+* Use SIGPROF for both multiplexing and profiling. Both cannot be active
+  at once in the same thread. Since signal handlers are shared by all threads,
+  the code chain the mpx_handler into the profile_handler. 
   mpx_handler is expensive.
 
   if (my thread is overflowing)
@@ -49,8 +38,9 @@ Multiplexing work:
       mpx_handler
   else if       
 	abort();
+  ** DEFERRED TO PAPI 3.0
 
-* Make IRIX port, do the right thing when you set the multiplexing
+* Make IRIX port do the right thing when you set the multiplexing
   option. It should not use the MPX code, but rather just change it's
   concept of the maximum number of events. (This will mean a realloc for
   the eventset, which is why SET_MULTIPLEX is an EventSet option.)
