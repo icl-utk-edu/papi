@@ -1,5 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html><head><title>PAPI</title></head>
+<html><head>
+<title>PAPI</title></head>
 <body bgcolor="#ffffff" text="#000000">
 
 <a name="top"></a>
@@ -30,9 +31,7 @@
 &nbsp; &nbsp; &nbsp; <a href="#84">How does PAPI handle fork/exec?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#78">Does PAPI support unbound or non-kernel threads?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#74">How do I encode a native event?</a><br>
-&nbsp; &nbsp; &nbsp; <a href="#120">How do I recompile my IA64 kernel for PAPI?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#82">Why is there more than one patch for Linux?</a><br>
-&nbsp; &nbsp; &nbsp; <a href="#121">How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#77">The numbers are funky for event 0xabc on platform XYZ, help me!</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#170">My
 program runs fine when measuring 1 or 2 events, but when I add more I
@@ -48,8 +47,8 @@ get the following error message: Error in PAPI_flops: Event exists, but
 cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#73">Why can't I get my Fortran programs to compile with PAPI on a Cray T3E?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#79">What's wrong with PAPI_LST_INS (hex code 0x43) on my Pentium?</a><br>
-&nbsp; &nbsp; &nbsp; <a href="#76">My Sun box doesn't have libcpc.h. What should I do?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#216">PAPI_create_eventset always returns an error now.</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#233">What's this GCC error about "thread local storage not support for this target"?</a><br>
 <br>
 <strong><a href="#39">The PAPI CVS Source Repository</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#172">How do I access the PAPI CVS tree remotely?</a><br>
@@ -63,6 +62,7 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#178">Installation notes</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#179">Test case notes</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#180">Counter notes</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#235">Things go haywire on my Power/AIX box with threaded programs?</a><br>
 <br>
 <strong><a href="#41">Any-Null</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#181">General Comments</a><br>
@@ -83,10 +83,10 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 <br>
 <strong><a href="#45">Linux-IA64</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#189">Floating Point</a><br>
-&nbsp; &nbsp; &nbsp; <a href="#190">Linux/IA64 2.4 Kernel Notes</a><br>
-&nbsp; &nbsp; &nbsp; <a href="#191">Linux/IA64 2.6 Kernel Notes</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#192">Notes on PAPI-&gt;Native event mappings</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#220">Why am I getting Operation Not Permitted on my Redhat kernels?</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#120">How do/Should I recompile my (Redhat 2.4.x) IA64 kernel for PAPI?</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#234">Counter interrupts seem to have stopped on my threaded programs?</a><br>
 <br>
 <strong><a href="#46">Linux-Perfctr</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#209">PAPI and the Linux Kernel</a><br>
@@ -96,10 +96,12 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#213">Floating point counts on the Pentium 4 series</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#214">Vector instruction counts on the Pentium 4 series</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#215">The memory test sometimes fails on Athlon Processors.</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#121">How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</a><br>
 <br>
 <strong><a href="#47">Solaris-Ultra</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#193">General Comments</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#194">Bugs</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#76">My Sun box doesn't have libcpc.h. What should I do?</a><br>
 <br>
 <strong><a href="#48">Tru64-Alpha</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#195">General Comments</a><br>
@@ -312,15 +314,6 @@ The native events can be listed with the test case 'native_avail' in
 the ctests directory.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
-<a name="120"></a>
-<strong>How do I recompile my IA64 kernel for PAPI?</strong>
-<blockquote><p>First you must apply the software patches at the bottom of the following page: <a href="http://www.hpl.hp.com/research/linux/perfmon/download.php4">www.hpl.hp.com/research/linux/perfmon/download.php4</a></p><p>Then
-you need to reconfigure and rebuild your kernel. Reconfigure your
-kernel and enable PERFMON support. Then rebuild the kernel. On IA-64
-you need to use "make compressed" instead of "make bzImage". You can
-thank HP for that change.</p></blockquote>
-<center><font size="-1"><a href="#top">back to top</a></font></center>
-<br> <br>
 <a name="82"></a>
 <strong>Why is there more than one patch for Linux?</strong>
 <blockquote><p>There are numerous patches designed to provide access to
@@ -333,11 +326,6 @@ designed a performance counter kernel patch, one that used mmap() to
 provide direct access to the virtual counts. Mikael Pettersson provided
 me with exactly that in the form of the perfctr patch. It is also very,
 very stable. It can be found at <a href="http://www.docs.uu.se/%7Emikpe/linux/perfctr">http://www.docs.uu.se/~mikpe/linux/perfctr</a>. If you're starting with PAPI for the first time, we recommend the perfctr patch as included in the papi source distribution.</p></blockquote>
-<center><font size="-1"><a href="#top">back to top</a></font></center>
-<br> <br>
-<a name="121"></a>
-<strong>How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</strong>
-<blockquote><p>See the INSTALL file in papi/src/perfctr-2.4.x or papi/src/perfctr-2.6.x. The instructions are very, very simple.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <a name="77"></a>
@@ -450,16 +438,21 @@ releases of PAPI had this preset available in the Intel ports, but no
 longer. It does appear to work on the AMD Athlon.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
-<a name="76"></a>
-<strong>My Sun box doesn't have libcpc.h. What should I do?</strong>
-<blockquote><p>You didn't check the <a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96">PAPI Supported Platform Matrix</a>.
-The hardware counters on SunOS withUltraSparc are only available on Sun
-OS 5.8 and above. That's Solaris 2.8 for you SVR4 people.</p></blockquote>
-<center><font size="-1"><a href="#top">back to top</a></font></center>
-<br> <br>
 <a name="216"></a>
 <strong>PAPI_create_eventset always returns an error now.</strong>
 <blockquote><p>The EventSet MUST be set to PAPI_NULL before it is passed into PAPI_create_eventset.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="233"></a>
+<strong>What's this GCC error about "thread local storage not support for this target"?</strong>
+<blockquote><p>TLS is thread local storage, a high performance
+mechanism in later GCC's/GLIBC/pthread to do constant time access to
+thread local storage. PAPI uses this if available.</p><p>However, many
+systems (especially IA64 running Debian or SuSE) provide very
+poor/buggy/non-existent support for this. If you're getting an error
+during compile (or seg faults on every program during the run), then
+please rebuild using ./configure.</p><p>Other systems don't bother to ship a gcc with this turned on, so you'll get the above error. </p><p>./configure has a test to make sure that the thread support is working on your platform.</p><p>If you find a case where configure did not detect a broken
+__thread implementation, please report it to us.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <br>
@@ -741,6 +734,12 @@ The following table, submitted by Joel Malard, indicates<br>
 events that cannot be counted simultaneously on POWER3:</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
+<a name="235"></a>
+<strong>Things go haywire on my Power/AIX box with threaded programs?</strong>
+<blockquote><p>It is very important that you set the environment variable
+AIXTHREAD_SCOPE to "S", which disables user level threads.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
 <br>
 <a name="41"></a>
 <h2>Any-Null</h2>
@@ -854,25 +853,6 @@ could produce erroneously low counts for
 PAPI_FP_OPS or PAPI_FP_INS.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
-<a name="190"></a>
-<strong>Linux/IA64 2.4 Kernel Notes</strong>
-<blockquote><p>PAPI 3.0 with libpfm2.0 can be run with this version of the kernel.
- 
-In order to use this software, you may have to patch your
-kernel with the latest patches from the following web site.
- 
-<a href="http://www.kernel.org/pub/linux/kernel/ports/ia64">www.kernel.org/pub/linux/kernel/ports/ia64</a>
- 
-If you're not sure how to patch, recompile and reinstall your linux kernel, check the Linux HOWTO's on the web at:
- 
-<a href="http://www.linuxhq.com/">www.linuxhq.com</a>.</p></blockquote>
-<center><font size="-1"><a href="#top">back to top</a></font></center>
-<br> <br>
-<a name="191"></a>
-<strong>Linux/IA64 2.6 Kernel Notes</strong>
-<blockquote><p>This kernel is needed to run PAPI 3.0 with libpfm3.0.</p></blockquote>
-<center><font size="-1"><a href="#top">back to top</a></font></center>
-<br> <br>
 <a name="192"></a>
 <strong>Notes on PAPI-&gt;Native event mappings</strong>
 <blockquote><p>PAPI_CA_SNP<br>
@@ -894,6 +874,27 @@ kernels and thus only enabled it for root. You can test this by running
 your papi as root, if it works, guess what, you have a broken kernel.</p><p>The
 fix is supposed to be in the latest update to RHEL3. The best thing to
 do would be to download a kernel.org kernel and start from there.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="120"></a>
+<strong>How do/Should I recompile my (Redhat 2.4.x) IA64 kernel for PAPI?</strong>
+<blockquote><p>The below is for 2.4 kernels:</p><p>Rebuilding the IA64
+kernel is only advised if you're using Redhat kernels, particularly
+RedHat Enterprise, which seems to lag in terms of bug support for the
+perfmon subsystem. We highly advise you to:</p><p>1) Download a stock 2.4 kernel
+2) Apply the IA64 specific patches from <a href="http://www.kernel.org/pub/linux/kernel/ports/ia64/v2.4">http://www.kernel.org/pub/linux/kernel/ports/ia64/v2.4</a> .</p><p>Latest info about the 2.4 perfmon support can be found at:
+<a href="http://www.hpl.hp.com/research/linux/perfmon/download.php4">http://www.hpl.hp.com/research/linux/perfmon/download.php4</a></p><p>You'll
+then need to reconfigure and rebuild your kernel. Reconfigure your
+kernel and enable PERFMON support. Then rebuild the kernel. On IA-64
+you need to use "make compressed" instead of "make bzImage". You can
+thank HP for that change.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="234"></a>
+<strong>Counter interrupts seem to have stopped on my threaded programs?</strong>
+<blockquote><p>You are probably on an Altix or a system with a Redhat
+kernel. The solution for the later is replace the kernel you have with
+a patched kernel.org kernel, discussed in this section.</p><p>Please send us the kernel version if this happens to you. You'll notice it by running the profile_pthreads test case.</p><p>If you're an Altix user, then it's best to complain to SGI. But please let us know also.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <br>
@@ -1086,6 +1087,13 @@ Makefile.linux-perfctr-p4 or<br>
 <blockquote><p>This is a known issue and we are looking in to the cause.  Currently, we have no fix or work around.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
+<a name="121"></a>
+<strong>How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</strong>
+<blockquote><p>See the INSTALL file in papi/src/perfctr-2.6.x. The
+instructions are very, very simple. Do not use perfctr-2.4.x unless you
+have to. There is no link of perfctr version to linux kernel version!</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
 <br>
 <a name="47"></a>
 <h2>Solaris-Ultra</h2>
@@ -1110,6 +1118,13 @@ has called pthread() create at any point in time. Therefore if you
 suspect your communication library is multithreaded, you had better
 start the instrumentation before initializing it. See
 multiplex3_pthreads for details.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="76"></a>
+<strong>My Sun box doesn't have libcpc.h. What should I do?</strong>
+<blockquote><p>You didn't check the <a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96">PAPI Supported Platform Matrix</a>.
+The hardware counters on SunOS withUltraSparc are only available on Sun
+OS 5.8 and above. That's Solaris 2.8 for you SVR4 people.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <br>
