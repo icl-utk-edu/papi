@@ -20,8 +20,10 @@ void clockcore(void)
       elapsed_cyc[i] = (long_long) PAPI_get_real_cyc();
 
    for (i = 1; i < ITERS; i++) {
-      if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0)
+      if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0){
+	 fprintf(stderr,"Negative elapsed time, bailing\n");
          abort();
+      }
       diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
       if (diff_cyc != 0)
          uniq_cyc++;
@@ -45,8 +47,10 @@ void clockcore(void)
       elapsed_usec[i] = (long_long) PAPI_get_real_usec();
 
    for (i = 1; i < ITERS; i++) {
-      if (elapsed_usec[i] - elapsed_usec[i - 1] < 0)
+      if (elapsed_usec[i] - elapsed_usec[i - 1] < 0){
+	 fprintf(stderr,"Negative elapsed time, bailing\n");
          abort();
+      }
       diff_usec = elapsed_usec[i] - elapsed_usec[i - 1];
       if (diff_usec != 0)
          uniq_usec++;
@@ -76,8 +80,10 @@ void clockcore(void)
          elapsed_cyc[i] = PAPI_get_virt_cyc();
 
       for (i = 1; i < ITERS; i++) {
-         if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0)
+         if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0){
+	    fprintf(stderr,"Negative elapsed time, bailing.\n");
             abort();
+	 }
          diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
          if (diff_cyc != 0)
             uniq_cyc++;
@@ -98,7 +104,6 @@ void clockcore(void)
       }
    } else
       test_fail(__FILE__, __LINE__, "PAPI_get_virt_cyc", -1);
-
    total_usec = 0;
    uniq_usec = 0;
 
@@ -107,8 +112,10 @@ void clockcore(void)
          elapsed_usec[i] = (long_long) PAPI_get_virt_usec();
 
       for (i = 1; i < ITERS; i++) {
-         if (elapsed_usec[i] - elapsed_usec[i - 1] < 0)
+         if (elapsed_usec[i] - elapsed_usec[i - 1] < 0){
+	    fprintf(stderr,"Negative elapsed time, bailing\n");
             abort();
+	 }
          diff_usec = elapsed_usec[i] - elapsed_usec[i - 1];
          if (diff_usec != 0)
             uniq_usec++;
