@@ -57,16 +57,17 @@ int main(int argc, char **argv)
   do {
 #ifdef _POWER4
     group=(i&0x00FF0000)>>16;
-    if(group)
-    	printf("%10d", group-1);
+    if(group){
+       if ( !TESTS_QUIET) printf("%10d", group-1);
+	}
     else{
-    printf("\n\n");
+       if ( !TESTS_QUIET) printf("\n\n");
 #endif
     j++;
     retval = PAPI_get_event_info(i, &info);
 #ifndef _POWER4
     if ( !TESTS_QUIET && retval == PAPI_OK) {
-		printf("%-30s 0x%-10x\n%s\n", \
+	    printf("%-30s 0x%-10x\n%s\n", \
 	       info.symbol, info.event_code, info.long_descr);
     }
 #else
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
 		printf("%-30s 0x%-10x\n%s", \
 	       info.symbol, info.event_code, info.long_descr);
     }
-    printf("Groups: ");
+    if ( !TESTS_QUIET) printf("Groups: ");
     }
 #endif
 #ifdef PENTIUM4
