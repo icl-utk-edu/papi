@@ -253,9 +253,6 @@ static void exerciseDriver(void)
 
 		// Display the results!
 		MessageBox(NULL,(const char *)iobuf,"WinPMC Welcome",MB_OK);
-		__asm mov ecx, 0x00000000
-		__asm rdpmc
-		MessageBox(NULL,"We can execute RDPMC from user space!","RDPMC Test...",MB_OK);
 /*
 		// Send a request to the driver. The request code is HELLO, no parameters
 		bReturnCode = DeviceIoControl(hDriver, HELLO, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
@@ -279,10 +276,18 @@ static void exerciseDriver(void)
 
 		bReturnCode = DeviceIoControl(hDriver, TASKSWITCH, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
 		if (bReturnCode) {
-			if (iobuf[0] == 0) sprintf(szString, "This machine is running the Uniprocessor Free Build.");
-			else sprintf(szString, 
-				"This machine is running the Multiprocessor or Checked Build.\nThere have been %d task switches since the driver was opened.", iobuf[0]);
-		  	MessageBox(NULL, szString, "TASKSWITCH Test",MB_OK);
+			if (iobuf[0] == 0) {
+				MessageBox(NULL, "This machine is running the Uniprocessor Free Build.","TASKSWITCH Test",MB_OK);
+				__asm mov ecx, 0x00000000
+				__asm rdpmc
+				MessageBox(NULL,"We have successfully executed RDPMC from user space!","RDPMC Test...",MB_OK);
+			}
+			else {
+				strcpy(szString, "This machine is running the Multiprocessor or Checked Build.");
+				strcat(szString, "\n It cannot currently support PAPI.");
+				sprintf(&szString[strlen(szString)], "\nThere have been %d task switches since the driver was opened.", iobuf[0]);
+		  		MessageBox(NULL, szString, "TASKSWITCH Test",MB_OK);
+			}
 		}
 		else MessageBox(NULL,"TASKSWITCH failed.","TASKSWITCH Test",MB_OK);
 
