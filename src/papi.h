@@ -157,6 +157,14 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_RESSIZE     2  /* Resident set size in pages */
 #define PAPI_GET_PAGESIZE    3  /* Pagesize in bytes */
 
+#define PAPI_PROFIL_POSIX    0x0        /* Default type of profiling, similar to 'man profil'. */
+#define PAPI_PROFIL_RANDOM   0x1        /* Drop a random 25% of the samples. */
+#define PAPI_PROFIL_WEIGHTED 0x2        /* Weight the samples by their value. */
+#define PAPI_PROFIL_COMPRESS 0x4        /* Ignore samples if hash buckets get big. */
+#define PAPI_PROFIL_BUCKET_16 0x8
+#define PAPI_PROFIL_BUCKET_32 0x10
+#define PAPI_PROFIL_BUCKET_64 0x20
+
 /* Option definitions */
 
 #define PAPI_DEBUG		2       /* Option to turn on  debugging features of the PAPI library */
@@ -179,13 +187,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
 
-#define PAPI_PROFIL_POSIX    0x0        /* Default type of profiling, similar to 'man profil'. */
-#define PAPI_PROFIL_RANDOM   0x1        /* Drop a random 25% of the samples. */
-#define PAPI_PROFIL_WEIGHTED 0x2        /* Weight the samples by their value. */
-#define PAPI_PROFIL_COMPRESS 0x4        /* Ignore samples if hash buckets get big. */
-#define PAPI_PROFIL_BUCKET_16 0x8
-#define PAPI_PROFIL_BUCKET_32 0x10
-#define PAPI_PROFIL_BUCKET_64 0x20
 
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
 
