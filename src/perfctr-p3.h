@@ -14,11 +14,11 @@
 #include <limits.h>
 #include <sys/types.h>
 #ifdef _WIN32
-  #include <errno.h>
-  #include "cpuinfo.h"
-  #include "pmclib.h"
+#include <errno.h>
+#include "cpuinfo.h"
+#include "pmclib.h"
 #else
-#include <sys/ucontext.h>    /* sys/ucontext.h  apparently broken */
+#include <sys/ucontext.h>       /* sys/ucontext.h  apparently broken */
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -27,7 +27,7 @@
 #include <asm/system.h>
 #include <asm/param.h>
 #include <asm/bitops.h>
-#include <linux/unistd.h>	
+#include <linux/unistd.h>
 
 #ifndef CONFIG_SMP
 /* Assert that CONFIG_SMP is set before including asm/atomic.h to 
@@ -97,8 +97,8 @@ typedef struct {
    struct sigcontext *ucontext;
 } _papi_hwd_context_t;
 
-typedef siginfo_t  hwd_siginfo_t;
-typedef struct sigcontext  hwd_ucontext_t;
+typedef siginfo_t hwd_siginfo_t;
+typedef struct sigcontext hwd_ucontext_t;
 
 /* Overflow macros */
 #ifdef __x86_64__
@@ -110,31 +110,31 @@ typedef struct sigcontext  hwd_ucontext_t;
 #define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) _papi_hwi_event_index_map[bit]
 
 #ifdef _WIN32
-  #define inline_static static __inline 
+#define inline_static static __inline
 #else
-  #define inline_static inline static  
+#define inline_static inline static
 #endif
 
 typedef struct P3_register {
-  unsigned int selector;           /* Mask for which counters in use */
-  int counter_cmd;                 /* The event code */
+   unsigned int selector;       /* Mask for which counters in use */
+   int counter_cmd;             /* The event code */
 } P3_register_t;
 
 typedef struct P3_reg_alloc {
-  P3_register_t ra_bits;    /* Info about this native event mapping */
-  unsigned ra_selector;     /* Bit mask showing which counters can carry this metric */
-  unsigned ra_rank;         /* How many counters can carry this metric */
+   P3_register_t ra_bits;       /* Info about this native event mapping */
+   unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
+   unsigned ra_rank;            /* How many counters can carry this metric */
 } P3_reg_alloc_t;
 
 #ifdef _WIN32
 /* Per eventset data structure for thread level counters */
 
 typedef struct P3_WinPMC_control {
-  P3_register_t allocated_registers;
-  /* Buffer to pass to the kernel to control the counters */
-  struct pmc_control counter_cmd;
-  /* Handle to the open kernel driver */
-  HANDLE self;
+   P3_register_t allocated_registers;
+   /* Buffer to pass to the kernel to control the counters */
+   struct pmc_control counter_cmd;
+   /* Handle to the open kernel driver */
+   HANDLE self;
 } P3_WinPMC_control_t;
 
 typedef P3_WinPMC_control_t hwd_control_state_t;
@@ -142,9 +142,9 @@ typedef P3_WinPMC_control_t hwd_control_state_t;
 /* Per thread data structure for thread level counters */
 
 typedef struct P3_WinPMC_context {
-  /* Handle to the open kernel driver */
-  HANDLE self;
-  P3_WinPMC_control_t start;
+   /* Handle to the open kernel driver */
+   HANDLE self;
+   P3_WinPMC_control_t start;
 } P3_WinPMC_context_t;
 
 typedef P3_WinPMC_context_t hwd_context_t;
@@ -152,38 +152,38 @@ typedef P3_WinPMC_context_t hwd_context_t;
 /* Per eventset data structure for thread level counters */
 
 typedef struct hwd_native {
-  /* index in the native table, required */
-  int index;
-  /* Which counters can be used?  */
-  unsigned int selector;
-  /* Rank determines how many counters carry each metric */
-  unsigned char rank;
-  /* which counter this native event stays */
-  int position;
-  int mod;
-  int link;
+   /* index in the native table, required */
+   int index;
+   /* Which counters can be used?  */
+   unsigned int selector;
+   /* Rank determines how many counters carry each metric */
+   unsigned char rank;
+   /* which counter this native event stays */
+   int position;
+   int mod;
+   int link;
 } hwd_native_t;
 
 typedef struct native_event_entry {
-  /* If it exists, then this is the name of this event */
-  char name[PAPI_MAX_STR_LEN];
-  /* If it exists, then this is the description of this event */
-  char *description;
-  /* description of the resources required by this native event */
-  P3_register_t resources;
+   /* If it exists, then this is the name of this event */
+   char name[PAPI_MAX_STR_LEN];
+   /* If it exists, then this is the description of this event */
+   char *description;
+   /* description of the resources required by this native event */
+   P3_register_t resources;
 } native_event_entry_t;
 
 typedef struct P3_perfctr_control {
-  hwd_native_t native[MAX_COUNTERS];
-  int native_idx;
-  unsigned char master_selector;
-  P3_register_t allocated_registers;
-  struct vperfctr_control control; 
-  struct perfctr_sum_ctrs state;
+   hwd_native_t native[MAX_COUNTERS];
+   int native_idx;
+   unsigned char master_selector;
+   P3_register_t allocated_registers;
+   struct vperfctr_control control;
+   struct perfctr_sum_ctrs state;
 } P3_perfctr_control_t;
 
 typedef struct P3_perfctr_context {
-  struct vperfctr *perfctr;
+   struct vperfctr *perfctr;
 /*  P3_perfctr_control_t start; */
 } P3_perfctr_context_t;
 
