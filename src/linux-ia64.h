@@ -69,16 +69,14 @@ typedef struct hwd_control_state {
   pfarg_reg_t pc[PMU_MAX_PMCS];
 /* specific parameters for the library */
   pfmlib_ita2_param_t ita_lib_param;
-  int overflowcount[PMU_MAX_COUNTERS];
 #else
   pfarg_reg_t pc[PMU_MAX_PMCS];
 /* specific parameters for the library */
   pfmlib_ita_param_t ita_lib_param;
-  int overflowcount[PMU_MAX_COUNTERS];
 #endif
   pfmlib_param_t evt;
-  int overflowcount[MAX_COUNTERS];
 /* sampling buffer address */
+  int overflowcount[PMU_MAX_COUNTERS];
   void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
   /* Is this event derived? */

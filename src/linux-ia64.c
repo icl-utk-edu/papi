@@ -195,9 +195,15 @@ static inline char *search_cpu_info(FILE *f, char *search_str, char *line)
 static inline unsigned long get_cycles(void)
 {
 	unsigned long tmp;
+#ifdef __INTEL_COMPILER
+#include <ia64intrin.h>
+#include <ia64regs.h>
+    tmp = __getReg(_IA64_REG_AR_ITC);
 
+#else /* GCC */
 	/* XXX: need more to adjust for Itanium itc bug */
 	__asm__ __volatile__("mov %0=ar.itc" : "=r"(tmp) :: "memory");
+#endif
 
 	return tmp;
 }
@@ -295,6 +301,10 @@ static inline int setup_all_presets()
       preset_index = preset_search_map[pnum].preset & PRESET_AND_MASK; 
 #ifdef ITANIUM2
       preset_map[preset_index].evt.pfp_model = &ita2_param[pnum];
+	  ita2_param[pnum].pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+#else
+      preset_map[preset_index].evt.pfp_model = &ita_param[pnum];
+      ita_param[pnum].pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
 #endif
       if (gen_events(preset_search_map[pnum].findme, &preset_map[preset_index].evt) == -1)
 	abort();
@@ -336,7 +346,7 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
   int i, orig_cnt = PFMW_PEVT_EVTCOUNT(evt);  
   int cnt = PMU_MAX_PMCS;
   int selector = 0;
-  int pos;
+  int pos = 0;
 
   if (from)
     {
@@ -746,7 +756,8 @@ inline static int set_default_granularity(EventSetInfo_t *zero, int granularity)
 // struct perfctr_dev *dev;
 int _papi_hwd_init_global(void)
 {
-  int retval;
+  int retval,type;
+  unsigned int version;
   pfmlib_options_t pfmlib_options;
 #ifdef DEBUG
   extern int papi_debug;
@@ -757,10 +768,38 @@ int _papi_hwd_init_global(void)
   if (pfm_initialize() != PFMLIB_SUCCESS ) 
     return(PAPI_ESYS);
 
+  if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+
+#ifdef ITANIUM2
+  if (type != PFMLIB_ITANIUM2_PMU)
+    {
+      fprintf(stderr,"Intel Itanium I is not supported by this substrate.\n");
+      return(PAPI_ESBSTR);
+    }
+#else
+  if (type != PFMLIB_ITANIUM_PMU)
+    {
+      fprintf(stderr,"Intel Itanium II is not supported by this substrate.\n");
+      return(PAPI_ESBSTR);
+    }
+#endif
+
+  if (pfm_get_version(&version) != PFMLIB_SUCCESS)
+    return(PAPI_ESBSTR);
+
+  if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION))
+    {
+      fprintf(stderr,"Version mismatch of libpfm: compiled %x vs. installed %x\n",PFM_VERSION_MAJOR(PFMLIB_VERSION),PFM_VERSION_MAJOR(version));
+      return(PAPI_ESBSTR);
+    }
   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
   if (papi_debug)
-    pfmlib_options.pfm_debug = 1;
+	{
+      pfmlib_options.pfm_debug = 1;
+	  pfmlib_options.pfm_verbose = 1;
+	}
 #endif
 
   if (pfmw_set_options(&pfmlib_options))
@@ -1634,7 +1673,7 @@ int ia64_process_profile_entry()
 
 /* record  each register's overflow times  */
 		reg_num= ffs(ent->regs)-1;
-		this_state->overflowcount[reg_num-PMU_MAX_COUNTERS]++;
+		this_state->overflowcount[reg_num-PMU_FIRST_COUNTER]++;
 
         /*
          * print entry header
@@ -1977,39 +2016,44 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-#define __SMP__
-#define CONFIG_SMP
-#include <asm/atomic.h>
-static atomic_t lock;
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+volatile uint32_t lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,1);
+    lock = MUTEX_OPEN;
 }
 
 void _papi_hwd_lock(void)
 {
-  if (atomic_dec_and_test(&lock))
+    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+     * else val = MUTEX_CLOSED */
+#ifdef __INTEL_COMPILER
+    while(_InterlockedCompareExchange_acq(&lock, MUTEX_CLOSED, MUTEX_OPEN)
+        != (uint64_t)MUTEX_OPEN)
+      ;
+#else /* GCC */
+    uint64_t res = 0;
+    do {
+      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));
+      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock), "r"(MUTEX_CLOSED) : "memory");
+    } while (res != (uint64_t)MUTEX_OPEN);
+#endif /* __INTEL_COMPILER */
     return;
-  else
-    {
-#ifdef DEBUG
-      volatile int waitcyc = 0;
-#endif
-      while (atomic_dec_and_test(&lock))
-	{
-	  DBG((stderr,"Waiting..."));
-#ifdef DEBUG
-	  waitcyc++;
-#endif
-	  atomic_inc(&lock);
-	}
-    }
 }
 
 void _papi_hwd_unlock(void)
 {
-  atomic_set(&lock, 1);
+#ifdef __INTEL_COMPILER
+    _InterlockedExchange(&lock, (unsigned __int64)MUTEX_OPEN);
+#else /* GCC */
+    uint64_t res = 0;
+
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock), "r"(MUTEX
+_OPEN) : "memory");
+#endif /* __INTEL_COMPILER */
 }
 
 /* Machine info structure. -1 is unused. */
