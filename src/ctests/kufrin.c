@@ -45,7 +45,7 @@ void *thread(void *arg)
     }
 
     ret = PAPI_add_events(eventset, events, numevents);
-    if ( ret != PAPI_OK ) {
+    if ( ret < PAPI_OK ) {
       test_fail(__FILE__, __LINE__, "PAPI_add_events", ret);
     }
 

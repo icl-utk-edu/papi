@@ -57,7 +57,7 @@
       events(2) = PAPI_TOT_CYC
 
       call PAPIf_add_events( es1, events, number, retval )
-      if ( retval.NE.PAPI_OK) then
+      if ( retval.LT.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__, 
      *'PAPIf_add_event', retval)
       end if
