@@ -829,7 +829,11 @@ static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cnt
 
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
 {
+#ifdef __i386__
   const int PERF_INT_ENABLE = CCCR_OVF_PMI_T0;
+#elif defined(__x86_64__)
+  const int PERF_INT_ENABLE = (1<<20);
+#endif
   /* | CCCR_OVF_PMI_T1 (1 << 27) */
 
   extern int _papi_hwi_using_signal;
@@ -882,12 +886,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	 in evntsel, swap events that do not fulfill this criterion. This
 	 will yield a non-monotonic pmc_map array */
 
-//#if 0
+#if 0
       if (ESI->EventInfoArray[i].event_code == PAPI_FP_INS) {
 	swap_pmc_map_events(contr,0,1);
 	SUBDBG("Swapped events\n");
       }
-//#endif
+#endif
 
       memset(&sa, 0, sizeof sa);
       sa.sa_sigaction = _papi_hwd_dispatch_timer;
@@ -922,8 +926,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	 in evntsel, swap events that do not fulfill this criterion. This
 	 will yield a non-monotonic pmc_map array */
 
+#if 0
       if (ESI->EventInfoArray[i].event_code == PAPI_FP_INS)
 	swap_pmc_map_events(contr,1,0);	
+#endif
 
       SUBDBG("Modified event set\n");
 
