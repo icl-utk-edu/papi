@@ -56,7 +56,7 @@ General Installation
 
 	a) To install PAPI libraries and header files from the build tree:
         If you created the Makefile with configure:
-        % make PREFIX=<install-dir> install
+        % make install
    
         Otherwise:
 
@@ -67,7 +67,7 @@ General Installation
 
 	b) To install PAPI manual pages from the build tree:
         If you created the Makefile with configure:
-        % make PREFIX=<install-dir> install-man
+        % make install-man
    
         Otherwise:
 
@@ -75,7 +75,7 @@ General Installation
 
 	c) To install PAPI test programs from the build tree:
         If you created the Makefile with configure:
-        % make PREFIX=<install-dir> install-tests
+        % make install-tests
    
         Otherwise:
 
@@ -83,7 +83,7 @@ General Installation
 
 	d) To install all of the above in one step from the build tree:
         If you created the Makefile with configure:
-        % make PREFIX=<install-dir> install-all
+        % make install-all
    
         Otherwise:
 
