@@ -1,10 +1,10 @@
 DESCR	= "Linux with PerfCtr 2.6 patch for AMD Opteron and Athlon HX"
 
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	?= ./perfctr-2.6.x
+PERFCTR	= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -g -Wall -O3 
-TOPTFLAGS= -g -Wall -O1
+OPTFLAGS= -g -Wall -O3 -march=pentiumpro $(CCOV)
+TOPTFLAGS= -g -Wall -O1 -march=pentiumpro $(CCOV)
 #
 # GNU G77 section
 #
