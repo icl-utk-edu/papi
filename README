@@ -14,9 +14,8 @@ COPYRIGHT
 INSTALL		
 buglist		Fixed bug list, bug handling and reporting.
 man/ 		Unformatted manual pages and associated macros.
-src/ 		The PAPI library and test cases.
-spec/		The outdated API specification.
+src/ 		The PAPI library, test cases and Linux kernel patches.
+src/perf	The 'old' perf kernel patch for 2.0 and 2.2.
+src/perfctr	The 'new' Linux kernel patch for 2.2 and 2.4.
+spec/		The retired API specification.
 tools/		Sample tools using PAPI.
-perf/		The Linux 2.0-2.2 kernel patch for PAPI. 
-perfctr/	The most recent tested 2.4 kernel patch set for PAPI.
-		(Home site is at http://www.csd.uu.se/~mikpe/linux/perfctr)
