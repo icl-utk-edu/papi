@@ -25,6 +25,7 @@ CC	= gcc
 F77     = g77
 MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o
 MISCSRCS= $(LIBPFM)/pfmlib_itanium.c $(LIBPFM)/pfmlib_itanium2.c $(LIBPFM)/pfmlib_common.c $(LIBPFM)/pfmlib_generic.c
+MISCHDRS= pfmwrap.h $(SUBSTR)-memory.h
 
 include Makefile.inc
 

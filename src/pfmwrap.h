@@ -147,8 +147,10 @@
 
  #ifdef ITANIUM2
   typedef pfm_ita2_reg_t pfmw_arch_reg_t;
+  typedef pfmlib_ita2_param_t pfmw_ita_param_t;
  #else
   typedef pfm_ita_reg_t pfmw_arch_reg_t;
+  typedef pfmlib_ita_param_t pfmw_ita_param_t;
  #endif  
 
  inline int pfmw_find_event(char *v, int r, int *ev) {
