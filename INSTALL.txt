@@ -1,11 +1,15 @@
-/*
- * Installation instructions for PAPI 2.3
- * Updated September 30, 2002
- * Kevin London
- * london@cs.utk.edu
- * Dan Terpstra
- * terpstra@cs.utk.edu
- */
+/* 
+* File:    INSTALL.txt
+* CVS:     $Id$
+* Author:  Kevin London
+*          london@cs.utk.edu
+* Mods:    Dan Terpstra
+*          terpstra@cs.utk.edu
+* Mods:    Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/
 
 
 *****************************************************************************
@@ -26,27 +30,45 @@ General Installation
 
 	% make -f Makefile.<arch>
 
-2.	Check for errors. Look for the libpapi.a and libpapi.so in the 
-	current directory. Optionally, run the test programs in the 'ftests' 
-	and 'tests' directories.
-	**NOTE: Not all tests will succeed on all platforms.**
+2.	Check for errors. 
 
-	% ./run_tests.sh
+	a) Run a simple test case: (This will run ctests/zero)
 
-	This will run the tests in quiet mode, which will print PASSED, 
-	FAILED, or SKIPPED. Tests are SKIPPED if the functionality being 
-	tested is not supported by that platform.
+	% make -f Makefile.<arch> test
+
+	If you get good counts, you can optionally run all the test programs
+	with the include test harness. 	This will run the tests in quiet mode, 
+	which will print PASSED, FAILED, or SKIPPED. Tests are SKIPPED if the
+	functionality being tested is not supported by that platform.
+
+	% make -f Makefile.<arch> test (This will run ./run_tests.sh)
+
+	To run the tests in verbose mode:
+
+	% ./run_tests.sh -v
 
 3.	Create a PAPI binary distribution or install PAPI directly.
 
-	To directly install PAPI from the build tree:
+	a) To install PAPI libraries and header files from the build tree:
 
 	% make -f Makefile.<arch> PREFIX=<install-dir> install
 
 	Please use an absolute pathname for <install-dir>, not a relative 
 	pathname.
 
-	To create a binary kit, papi-<arch>.tgz:
+	b) To install PAPI manual pages from the build tree:
+
+	% make -f Makefile.<arch> PREFIX=<install-dir> install-man
+
+	c) To install PAPI test programs from the build tree:
+
+	% make -f Makefile.<arch> PREFIX=<install-dir> install-tests
+
+	d) To install all of the above in one step from the build tree:
+
+	% make -f Makefile.<arch> PREFIX=<install-dir> install-all
+
+	e) To create a binary kit, papi-<arch>.tgz:
 
 	% make -f Makefile.<arch> dist
 
