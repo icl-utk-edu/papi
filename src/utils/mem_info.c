@@ -29,13 +29,13 @@ int main(int argc, char **argv ) {
      	printf("Data TLB: %d KB of %d-way associative.\n",meminfo->dtlb_size, meminfo->dtlb_assoc );
      printf("Total L1 cache: %d KB.\n",meminfo->total_L1_size );
      if ( meminfo->L1_icache_size )
-     	printf("Instruction L1 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L1_icache_size,meminfo->L1_icache_assoc,meminfo->L1_icache_linesize);
+     	printf("Instruction L1 cache: %d KB of %d-way associative and %d B lines.\n", meminfo->L1_icache_size,meminfo->L1_icache_assoc,meminfo->L1_icache_linesize);
      if ( meminfo->L1_dcache_size )
-     	printf("Data L1 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L1_dcache_size,meminfo->L1_dcache_assoc,meminfo->L1_dcache_linesize);
+     	printf("Data L1 cache: %d KB of %d-way associative and %d B lines.\n", meminfo->L1_dcache_size,meminfo->L1_dcache_assoc,meminfo->L1_dcache_linesize);
      if ( meminfo->L2_cache_size )
-     	printf("L2 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L2_cache_size, meminfo->L2_cache_assoc,meminfo->L2_cache_linesize);
+     	printf("L2 cache: %d KB of %d-way associative and %d B lines.\n", meminfo->L2_cache_size, meminfo->L2_cache_assoc,meminfo->L2_cache_linesize);
      if ( meminfo->L3_cache_size )
-	printf("L3 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L3_cache_size,meminfo->L3_cache_assoc,meminfo->L3_cache_linesize);
+	printf("L3 cache: %d KB of %d-way associative and %d B lines.\n", meminfo->L3_cache_size,meminfo->L3_cache_assoc,meminfo->L3_cache_linesize);
   }
   test_pass(__FILE__,NULL,0);
   exit(1);
