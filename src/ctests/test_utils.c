@@ -188,15 +188,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_FP_INS)
     {
-#if defined(__digital__)
-	  if ( !TESTS_QUIET )
-             fprintf(stderr,"Using PAPI_TOT_INS instead of PAPI_FP_INS.\n");
-      retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
-	  *mask = *mask ^ MASK_FP_INS;
-	  *mask = *mask & MASK_TOT_INS;
-#else
       retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-#endif
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -297,11 +289,7 @@ int remove_test_events(int *EventSet, int mask)
 
   if (mask & MASK_FP_INS) 
     {
-#if defined(__digital__)
-      retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
-#else
       retval = PAPI_rem_event(EventSet, PAPI_FP_INS);
-#endif
       if (retval < PAPI_OK) return(retval);
     }
 
