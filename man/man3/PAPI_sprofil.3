@@ -8,13 +8,13 @@ PAPI_sprofil \- generate PC histogram data from multiple code regions where hard
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\
-.BI \ \ \ int\  EventCode,\  int\  threshold,\  int\  flags\  );
+.BI "int PAPI_sprofil(PAPI_sprofil_t * " prof, " int " profcnt, " int "  EventSet,
+.BI "                 int " EventCode, "  int "  threshold, "  int "  flags "  );
 .fi
 .LP
 .B Fortran Interface
 .nf
-The profiling routines have no Fortran interface.
+.I The profiling routines have no Fortran interface.
 .fi
 
 .SH DESCRIPTION
@@ -89,27 +89,15 @@ Please refer to that page for further details.
 .nf
 .if t .ft CW
 int retval;
-int EventSet = PAPI_NULL;
-unsigned long start, end, length;
+unsigned long length;
 PAPI_exe_info_t *prginfo;
 unsigned short *profbuf1, *profbuf2, profbucket;
 PAPI_sprofil_t sprof[3];
 
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-
-if (retval != PAPI_VER_CURRENT & retval > 0) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
-  exit(1); }
-
-if (retval < 0) 
-  handle_error(retval);
-
 if ((prginfo = PAPI_get_executable_info()) == NULL)
   handle_error(1);
 
-start = (unsigned long)prginfo->text_start;
-end = (unsigned long)prginfo->text_end;
-length = (end - start);
+length = (unsigned long)(prginfo->text_end - prginfo->text_start);
 
 /* Allocate 2 buffers of equal length */
 profbuf1 = (unsigned short *)malloc(length);
@@ -118,14 +106,6 @@ if ((profbuf1 == NULL) || (profbuf2 == NULL))
   handle_error(1);
 memset(profbuf1,0x00,length);
 memset(profbuf2,0x00,length);
-
-/* Create an empty EventSet */
-if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-  handle_error(retval);
-
-/* Add Total FP Instructions Executed to our EventSet */
-if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
-  handle_error(retval);
 
 /* First buffer */
 sprof[0].pr_base = profbuf1;
@@ -148,21 +128,13 @@ sprof[2].pr_scale = 0x0002;
 if ((retval = PAPI_sprofil(sprof, EventSet, PAPI_FP_INS, 1000000,
                  PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
   handle_error(retval);
-
-/* Start counting */
-if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-  handle_error(1);
 .if t .ft P
 .fi
 
 .SH BUGS
 These functions have no known bugs.
 
-
 .SH SEE ALSO
 .BR PAPI_profil "(3), "
-.BR PAPI_preset "(3), " PAPI_get_executable_info "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_remove_events "(3), " PAPI_query "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+.BR PAPI_get_executable_info "(3), "
 .BR PAPI_overflow "(3) "

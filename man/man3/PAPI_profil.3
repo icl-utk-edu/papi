@@ -8,13 +8,14 @@ PAPI_profil \- generate a histogram of hardware counter overflows vs. PC address
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI int\ PAPI_profil(void\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  
-.BI  \ \ \ unsigned\  scale,\  int\  EventSet,\  int\  EventCode,\  int\  threshold,\  int\  flags );
+.BI "int PAPI_profil(void * " buf, " unsigned " bufsiz, " unsigned long " offset, 
+.BI "                unsigned " scale, " int " EventSet, " int " EventCode, "  int "  threshold,
+.BI "                int " flags );
 .fi
 .LP
 .B Fortran Interface
 .nf
-The profiling routines have no Fortran interface.
+.I The profiling routines have no Fortran interface.
 .fi
 
 .SH DESCRIPTION
@@ -72,7 +73,7 @@ histogram buffer. Below is a table of representative values for scale:
 .TS
 allbox tab($);
 cI  s  s
-lB lw  lw.
+lw lw  lw.
 T{
 Representative values for the scale variable
 T}
@@ -90,7 +91,7 @@ HEX$DECIMAL$DEFININTION
 .LP
 Historically, the scale factor was introduced to allow the allocation of buffers smaller than
 the code size to be profiled. Data and instruction sizes were assumed to be multiples of 16-bits.
-These assumptions are no longer true. 
+These assumptions are no longer necessarily true. 
 .B PAPI_profil
 has preserved the traditional definition of scale where appropriate, 
 but deprecated the definitions for 0 and 1 (disable scaling) and extended
@@ -201,47 +202,25 @@ The PAPI preset is not available on the underlying hardware.
 .if t .ft CW
 int retval;
 int EventSet = PAPI_NULL;
-unsigned long start, end, length;
+unsigned long length;
 PAPI_exe_info_t *prginfo;
 unsigned short *profbuf;
-
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-
-if (retval != PAPI_VER_CURRENT & retval > 0) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
-  exit(1); }
-
-if (retval < 0) 
-  handle_error(retval);
 
 if ((prginfo = PAPI_get_executable_info()) == NULL)
   handle_error(1);
 
-start = (unsigned long)prginfo->text_start;
-end = (unsigned long)prginfo->text_end;
-length = (end - start);
+length = (unsigned long)(prginfo->text_end - prginfo->text_start);
 
 profbuf = (unsigned short *)malloc(length);
 if (profbuf == NULL)
   handle_error(1);
 memset(profbuf,0x00,length);
-
-if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-  handle_error(retval);
-
-/* Add Total FP Instructions Executed to our EventSet */
-
-if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
-  handle_error(retval);
-
+ .
+ .
+ .
 if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet, 
                 PAPI_FP_INS, 1000000, PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
   handle_error(retval);
-
-/* Start counting */
-
-if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-  handle_error(1);
 .if t .ft P
 .fi
 
@@ -251,10 +230,7 @@ freed if you call PAPI_shutdown or PAPI_cleanup_eventset.  To clean all
 memory, you must call PAPI_profil on the Events with a 0 threshold.
 
 .SH SEE ALSO
-.BR profil "(3), " PAPI_sprofil "(3), "
-.BR PAPI_preset "(3), " PAPI_get_executable_info "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_remove_events "(3), " PAPI_query "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-.BR PAPI_overflow "(3) "
+.BR PAPI_sprofil "(3), "
+.BR PAPI_overflow "(3), "
+.BR PAPI_get_executable_info "(3) "
 
