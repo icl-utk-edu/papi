@@ -7,7 +7,8 @@
 *          london@cs.utk.edu
 * Mods:    Min Zhou
 *          min@cs.utk.edu
-* Mods:    
+* Mods:    Larry Meadows(helped us to build the native table dynamically)  
+*              
 */
 
 /* to understand this program, first you should read the user's manual
@@ -531,7 +532,12 @@ static int set_domain(hwd_control_state_t * this_state, int domain)
 
 static int set_granularity(hwd_control_state_t * this_state, int domain)
 {
-   return (PAPI_OK);
+   switch (domain) {
+   case PAPI_GRN_THR:
+      return (PAPI_OK);
+   default:
+      return (PAPI_EINVAL);
+   }
 }
 
 /* Utility functions */
