@@ -753,7 +753,7 @@ int _papi_hwd_add_prog_event(EventSetInfo_t *ESI, unsigned int event, void *extr
   return(PAPI_ESBSTR);
 }
 
-static void update_counters(unsigned long long events[])
+static void update_counters(u_long_long events[])
 {
   events[0] += pm_cycles();
   DBG((stderr,"update_counters() events[0] = %lld\n",events[0]));
@@ -771,7 +771,7 @@ static void update_counters(unsigned long long events[])
   DBG((stderr,"update_counters() events[6] = %lld\n",events[6]));
 }
 
-int _papi_hwd_read(EventSetInfo_t *ESI, unsigned long long events[])
+int _papi_hwd_read(EventSetInfo_t *ESI, u_long_long events[])
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int hwsel,i,j = 0, k = 0,retval = PAPI_OK;
@@ -813,7 +813,7 @@ int _papi_hwd_read(EventSetInfo_t *ESI, unsigned long long events[])
   return(retval);
 }
 
-int _papi_hwd_write(EventSetInfo_t *ESI, unsigned long long events[])
+int _papi_hwd_write(EventSetInfo_t *ESI, u_long_long events[])
 { 
   return(PAPI_ESBSTR);
 }
@@ -847,7 +847,7 @@ int _papi_hwd_start(EventSetInfo_t *ESI)
   return(PAPI_OK);
 }
 
-int _papi_hwd_stop(EventSetInfo_t *ESI, unsigned long long events[])
+int _papi_hwd_stop(EventSetInfo_t *ESI, u_long_long events[])
 { 
   int retval = PAPI_OK;
 

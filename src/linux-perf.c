@@ -152,8 +152,8 @@ inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
 
 static float calc_mhz(void)
 {
-  unsigned long long ostamp;
-  unsigned long long stamp;
+  u_long_long ostamp;
+  u_long_long stamp;
   float correction = 4000.0, mhz;
 
   /* Warm the cache */
@@ -397,7 +397,7 @@ inline static void counter_event_copy(const int *a, int *b, int cntr)
 inline static int update_global_hwcounters(EventSetInfo_t *global)
 {
   /* hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep; */
-  unsigned long long events[MAX_COUNTERS];
+  u_long_long events[MAX_COUNTERS];
   int i, ret;
 
   ret = perf(PERF_FASTREAD, (int)events, 0);
@@ -546,7 +546,7 @@ long long _papi_hwd_get_real_usec (void)
 {
   long long cyc;
 
-  cyc = perf_get_cycles()*(unsigned long long)1000;
+  cyc = perf_get_cycles()*(u_long_long)1000;
   cyc = cyc / (long long)_papi_system_info.hw_info.mhz;
   return(cyc / (long long)1000);
 }

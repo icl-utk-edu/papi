@@ -229,9 +229,9 @@ inline static void init_config(struct vperfctr_control *ptr)
 #endif
 }
 
-inline static unsigned long long get_cycles (void)
+inline static u_long_long get_cycles (void)
 {
-	unsigned long long ret;
+	u_long_long ret;
         __asm__ __volatile__("rdtsc"
 			    : "=A" (ret)
 			    : /* no inputs */);
@@ -262,8 +262,8 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
 
 inline static float calc_mhz(void)
 {
-  unsigned long long ostamp;
-  unsigned long long stamp;
+  u_long_long ostamp;
+  u_long_long stamp;
   float correction = 4000.0, mhz;
 
   /* Warm the cache */
@@ -513,7 +513,7 @@ int _papi_hwd_unmerge(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset)
 }
 #endif
 
-int _papi3_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, unsigned long long **dp)
+int _papi3_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_long **dp)
 {
   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
   *dp = spc->state.pmc;
@@ -532,7 +532,7 @@ int _papi3_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, unsign
 #ifndef PAPI3
 int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long events[])
 {
-  unsigned long long *dp;
+  u_long_long *dp;
   int shift_cnt, selector, i, j = 0;
   hwd_control_state_t *machdep = zero->machdep;
   hwd_control_state_t *evset_machdep = ESI->machdep;

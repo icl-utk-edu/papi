@@ -229,8 +229,8 @@ inline static void counter_event_copy(const int *a, int *b, int cntr)
 inline static int update_global_hwcounters(EventSetInfo_t *global)
 {
   /* hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep; */
-  unsigned long long events[MAX_COUNTERS];
-  static unsigned long long sample = 1;
+  u_long_long events[MAX_COUNTERS];
+  static u_long_long sample = 1;
   int i;
 
   /* ret = perf(PERF_FASTREAD, (int)events, 0);

@@ -65,9 +65,9 @@ inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
   /* End stolen code */
 }
 
-static inline unsigned long long get_cycles (void)
+static inline u_long_long get_cycles (void)
 {
-	unsigned long long ret;
+	u_long_long ret;
         __asm__ __volatile__("rdtsc"
 			    : "=A" (ret)
 			    : /* no inputs */);
@@ -78,8 +78,8 @@ static inline unsigned long long get_cycles (void)
 
 static float calc_mhz(void)
 {
-  unsigned long long ostamp;
-  unsigned long long stamp;
+  u_long_long ostamp;
+  u_long_long stamp;
   float correction = 4000.0, mhz;
 
   /* Warm the cache */
@@ -529,7 +529,7 @@ inline static int update_global_hwcounters(EventSetInfo_t *global)
 
   for (i=0;i<nractrs;i++)
     {  
-      unsigned long long ull_count;
+      u_long_long ull_count;
 #ifdef PERFCTR20
       /*      ull_count=sum.pmc[pmc_map[i]]; */
       ull_count=sum.pmc[i];
@@ -544,7 +544,7 @@ inline static int update_global_hwcounters(EventSetInfo_t *global)
 
   for (i=0;i<nrictrs;i++)
     {
-      unsigned long long ull_count;
+      u_long_long ull_count;
       int now;
 
       cntr = nractrs+i;
@@ -727,7 +727,7 @@ long long _papi_hwd_get_real_usec (void)
 {
   long long cyc;
 
-  cyc = get_cycles()*(unsigned long long)1000;
+  cyc = get_cycles()*(u_long_long)1000;
   cyc = cyc / (long long)_papi_system_info.hw_info.mhz;
   return(cyc / (long long)1000);
 }
@@ -766,7 +766,7 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo_t *zero)
   return((long long)cyc);
 
 #else
-  unsigned long long lcyc;
+  u_long_long lcyc;
   hwd_control_state_t *machdep = zero->machdep;
 
   lcyc = vperfctr_read_tsc(machdep->self);

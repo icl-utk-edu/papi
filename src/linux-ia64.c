@@ -202,8 +202,8 @@ static inline unsigned long get_cycles(void)
 
 inline static float calc_mhz(void)
 {
-  unsigned long long ostamp;
-  unsigned long long stamp;
+  u_long_long ostamp;
+  u_long_long stamp;
   float correction = 4000.0, mhz;
 
   /* Warm the cache */
@@ -807,7 +807,7 @@ long long _papi_hwd_get_real_usec (void)
 {
   long long cyc;
 
-  cyc = get_cycles()*(unsigned long long)1000;
+  cyc = get_cycles()*(u_long_long)1000;
   cyc = cyc / (long long)_papi_system_info.hw_info.mhz;
   return(cyc / (long long)1000);
 }

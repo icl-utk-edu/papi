@@ -2403,7 +2403,7 @@ long_long PAPI_get_real_usec(void)
   return(_papi_hwd_get_real_usec());
 }
 
-u_long_long PAPI_get_virt_cyc(void)       /* JT */
+u_long_long PAPI_get_virt_cyc(void)
 {
   EventSetInfo_t *master = _papi_hwi_lookup_in_master_list();
   if (master)
@@ -2421,7 +2421,7 @@ u_long_long PAPI_get_virt_cyc(void)       /* JT */
   return PAPI_ECNFLCT;
 }
 
-u_long_long PAPI_get_virt_usec(void)     /* JT */
+u_long_long PAPI_get_virt_usec(void)
 {
   EventSetInfo_t *master = _papi_hwi_lookup_in_master_list();
   if (master)

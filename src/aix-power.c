@@ -782,10 +782,10 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-long long _papi_hwd_get_real_usec (void)
+u_long_long _papi_hwd_get_real_usec (void)
 {
   timebasestruct_t t;
-  long long retval;
+  u_long_long retval;
 
   read_real_time(&t,TIMEBASE_SZ);
   time_base_to_time(&t,TIMEBASE_SZ);
@@ -793,13 +793,13 @@ long long _papi_hwd_get_real_usec (void)
   return(retval);
 }
 
-long long _papi_hwd_get_real_cycles (void)
+u_long_long _papi_hwd_get_real_cycles (void)
 {
-  float usec, cyc;
+  u_long_long usec, cyc;
 
-  usec = (float)_papi_hwd_get_real_usec();
+  usec = _papi_hwd_get_real_usec();
   cyc = usec * _papi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return((u_long_long)cyc);
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
