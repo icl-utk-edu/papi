@@ -450,7 +450,13 @@ void dump_data(long long *vals)
 /*int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)*/
 int _papi_hwd_reset(hwd_context_t * ESI, hwd_control_state_t * zero)
 {
-   pm_reset_data_mythread();
+  int retval = pm_reset_data_mythread();
+  if (retval > 0)
+    {
+      if (_papi_hwi_error_level != PAPI_QUIET)
+	pm_error("PAPI Error: pm_reset_data_mythread",retval);
+      return(retval);
+    }
    return (PAPI_OK);
 }
 
@@ -461,7 +467,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t *spc, long_long **va
 
    retval = pm_get_data_mythread(&spc->state);
    if (retval > 0)
-      return (retval);
+      { 
+	if (_papi_hwi_error_level != PAPI_QUIET)
+	  pm_error("PAPI Error: pm_get_data_mythread",retval); 
+	return(retval);
+      }
 
   *vals = spc->state.accu;
 
@@ -505,8 +515,16 @@ int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long 
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
-   pm_delete_program_mythread();
-   return (PAPI_OK);
+  int retval;
+  
+  retval = pm_delete_program_mythread();
+  if (retval > 0)
+    {
+      if (_papi_hwi_error_level != PAPI_QUIET)
+	pm_error("PAPI Error: pm_reset_data_mythread",retval);
+      return(retval);
+    }
+  return (PAPI_OK);
 }
 
 int _papi_hwd_shutdown_global(void)
@@ -580,18 +598,32 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * cntrl)
    memcpy(current_state, cntrl, sizeof(hwd_control_state_t));
 
    retval = pm_set_program_mythread(&current_state->counter_cmd);
- if (retval != 0)
-   {
-     if (retval == 13)
-       {
-	    pm_delete_program_mythread();
-	    retval = pm_set_program_mythread(&current_state->counter_cmd);
-	    if (retval != 0)
+   if (retval > 0)
+     {
+       if (retval == 13)
+	 {
+	   retval = pm_delete_program_mythread();
+	   if (retval > 0)
+	     {
+	       if (_papi_hwi_error_level != PAPI_QUIET)
+		 pm_error("PAPI Error: pm_delete_program_mythread",retval);
 	       return(retval);
-       }
-     else
-       return(retval);
-   }
+	     }
+	   retval = pm_set_program_mythread(&current_state->counter_cmd);
+	   if (retval > 0)
+	     {
+	       if (_papi_hwi_error_level != PAPI_QUIET)
+		 pm_error("PAPI Error: pm_set_program_mythread",retval);
+	       return(retval);
+	     }
+	 }
+       else
+	 {
+	   if (_papi_hwi_error_level != PAPI_QUIET)
+	     pm_error("PAPI Error: pm_set_program_mythread",retval);
+	   return(retval);
+	 }
+     }
 
    /* Set up the new merged control structure */
 
@@ -603,7 +635,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * cntrl)
 
    retval = pm_start_mythread();
    if (retval > 0)
-      return (retval);
+     {
+       if (_papi_hwi_error_level != PAPI_QUIET)
+	 pm_error("pm_start_mythread()",retval);
+       return (retval);
+     }
 
    return (PAPI_OK);
 }
@@ -614,11 +650,19 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * cntrl)
 
    retval = pm_stop_mythread();
    if (retval > 0)
-      return (retval);
+      { 
+	if (_papi_hwi_error_level != PAPI_QUIET)
+	  pm_error("pm_stop_mythread()",retval);
+	return(retval);
+      }
 
    retval = pm_delete_program_mythread();
    if (retval > 0)
-      return (retval);
+      { 
+	if (_papi_hwi_error_level != PAPI_QUIET)
+	  pm_error("pm_delete_program_mythread()",retval);
+	return(retval);
+      }
 
    return (PAPI_OK);
 }
