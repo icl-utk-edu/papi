@@ -653,10 +653,10 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 	      DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,local->overflow.threshold));
 	      /* Correct value read from kernel */
 #ifdef PFM06A
-	      readem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value -= ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
+	      readem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value += (unsigned long)local->overflow.threshold;
 	      /* Ready the new structure */
-	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
-	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = ((unsigned long)0x100000000 - (unsigned long)local->overflow.threshold);
+	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_value = (~0UL) - (unsigned long)local->overflow.threshold;
+	      writeem[i-1-PMU_MAX_COUNTERS].pfr_reg.reg_smpl_reset = (~0UL) - (unsigned long)local->overflow.threshold;
 #else
 	      readem[i-1-PMU_MAX_COUNTERS].reg_value += (unsigned long)local->overflow.threshold;
 	      /* Ready the new structure */
@@ -805,8 +805,9 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_shutdown_global(void)
 {
-#ifndef PFM06A
-  /* Need to pass in pid for _papi_hwd_shutdown_globabl in the future -KSL */
+#ifdef PFM06A
+  perfmonctl(getpid(), PFM_DISABLE, 0, NULL, 0);
+#else
   perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0);
 #endif
   return(PAPI_OK);
@@ -1688,20 +1689,21 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  hwcntr = hwcntr - 1;
 	  for (i=0;i<PMU_MAX_COUNTERS;i++)
 	    {
-#ifndef PFM06A
-              if (pc[i].reg_num == hwcntr)
-#else
-              if (pc[i].pfr_reg.reg_num == hwcntr)
-#endif
+#ifdef PFM06A
+	      if (pc[i].pfr_reg.reg_num == hwcntr)
 		{
 		  DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
-#ifndef PFM06A
-                  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
-#else
-                  pc[i].pfr_reg.reg_flags = PFM_REGFL_OVFL_NOTIFY;
-#endif
+		  pc[i].pfr_reg.reg_flags = PFM_REGFL_OVFL_NOTIFY;
 		  break;
 		}
+#else
+	      if (pc[i].reg_num == hwcntr)
+		{
+		  DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
+                  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+		  break;
+		}
+#endif
 	    }
 	  selector ^= 1 << hwcntr;
 	}

@@ -6,21 +6,30 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DPFM06A
+CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DPFM06A 
 LIBPFM  = pfmon-0.06a/libpfm
-TOPTFLAGS  = -O0 -g0
-FFLAGS	=  -Vaxlib
-LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
-OPTFLAGS= -O3 -g0
+TOPTFLAGS  = 
+LDFLAGS	= 
+OPTFLAGS= -O2
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
+#
+# gcc 2.9x
+#
 CC_SHR  = gcc -shared -fpic
 CC_R	= gcc -pthread
 CC	= gcc
+CFLAGS	+= -Wall -g
+F77     = g77
+#
 # use the Intel Fortran compiler 5.0 
-#F77	= /opt/intel/compiler50/ia64/bin/efc
-F77	= /usr/local/intel/compiler50/ia64/bin/efc
-#F77     = f77
+#
+#F77	= /usr/local/intel/compiler50/ia64/bin/efc
+#FFLAGS	=  -Vaxlib
+#LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
+#
+# Do not touch
+#
 MISCOBJS= pfmlib.o pfmusr.o pfmerror.o
 MISCSRCS= $(LIBPFM)/pfmlib.c $(LIBPFM)/pfmusr.c $(LIBPFM)/pfmerror.c
 
