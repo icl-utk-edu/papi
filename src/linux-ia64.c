@@ -241,7 +241,6 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfm_ev
       return(PAPI_ECNFLCT);
     }
 
-  /* for (i=0;i<=evt->pec_count;i++) -KSL */ 
    for (i=0;i<evt->pec_count;i++)
     {
       selector |= 1 << pc[i].pfr_reg.reg_num;
@@ -725,7 +724,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int used,preset_index;
+  int used,preset_index,i,j;
 
   /* Find out which counters used. */
   
@@ -735,8 +734,15 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 
   this_state->selector = this_state->selector ^ used;
   /* We need to remove the count from this event, do we need to
-   * reset the index of values too? -KSL */
+   * reset the index of values too? -KSL 
+   * Apparently so. -KSL */
   preset_index = in->code ^ PRESET_MASK;
+  for(i=0;i<PMU_MAX_COUNTERS;i++){
+    if ( this_state->evt.pec_evt[i] & used ) {
+       for ( j=i;j<(PMU_MAX_COUNTERS-1);j++ )
+           this_state->evt.pec_evt[j] = this_state->evt.pec_evt[j+1];
+    }
+  } 
   this_state->evt.pec_count-=preset_map[preset_index].evt.pec_count;
 
   return(PAPI_OK);
