@@ -24,7 +24,6 @@
 #define POWER_MAX_COUNTERS_MAPPING 8
 
 #include "papi.h"
-#include "native.h"
 #include "papi_preset.h"
 
 

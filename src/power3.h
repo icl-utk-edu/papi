@@ -2,6 +2,7 @@
 #define _PAPI_POWER3
 
 #include "aix.h"
+#include "power3_events.h"
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
 

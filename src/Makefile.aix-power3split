@@ -29,11 +29,15 @@ CC_SHR	= ld -r
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
-MISCSRCS= aix.c native.c #allocate.c native.c
-MISCOBJS= aix.o native.o #allocate.o native.o
+MISCHDRS= aix.h power3_events.h
+MISCSRCS= aix.c power3_events.c 
+MISCOBJS= aix.o power3_events.o 
 NATIVEGEN= nativegen
 
 include Makefile.inc
+
+power3_events.o: power3_events.c  $(HEADERS)
+	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power3_events.c -o power3_events.o
 
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o

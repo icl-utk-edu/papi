@@ -41,12 +41,12 @@ static int maxgroups = 0;
 /* Routines to support an opaque native event table */
 char *_papi_hwd_native_code_to_name(unsigned int EventCode)
 {
-  return(native_table[EventCode & NATIVE_AND_MASK].name);
+  return(native_name_map[EventCode & NATIVE_AND_MASK].name);
 }
 
 char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
 {
-  return(native_table[EventCode & NATIVE_AND_MASK].description);
+  return(native_table[native_name_map[EventCode & NATIVE_AND_MASK].index].description);
 }
 
 int _papi_hwd_native_code_to_bits(unsigned int EventCode, hwd_register_t *bits)

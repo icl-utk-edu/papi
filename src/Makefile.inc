@@ -51,9 +51,6 @@ papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)
 PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o
 
-native.o: native.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c native.c -o native.o 
-
 papi.o: papi.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o 
 
@@ -112,7 +109,7 @@ ftests: null
 	cd ftests; $(MAKE) CC="$(CC)" F77="$(F77)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" CFLAGS="$(CFLAGS)" SUBSTR="$(SUBSTR)"
 
 clean: native_clean
-	rm -rf $(OBJECTS) core rii_files native.* nativegen genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
+	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
 	cd ctests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
 
