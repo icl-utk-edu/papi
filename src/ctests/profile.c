@@ -281,7 +281,11 @@ int main(int argc, char **argv)
 
   remove_test_events(&EventSet, mask);
 
-  if((profbuf[i])||(profbuf2[i])||(profbuf3[i])||(profbuf4[i])||(profbuf5[i]))
+  retval = 0;
+  for (i=0;i<(int)length;i++)
+    retval = retval || (profbuf[i])||(profbuf2[i])||\
+      (profbuf3[i])||(profbuf4[i])||(profbuf5[i]);
+  if(retval)
      test_pass(__FILE__,values, num_tests );
   else
 	test_fail(__FILE__,__LINE__,"No information in buffers",1);
