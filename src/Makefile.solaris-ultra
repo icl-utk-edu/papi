@@ -3,6 +3,7 @@ DESCR	= "Solaris 5.8 or greater with UltraSPARC I or II"
 LIBS	= static shared
 TARGETS	= serial smp pthreads
 # TARGETS = omp
+FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS  = -xarch=v8plusa
 OPTFLAGS= -xO3 -DNDEBUG
 NOOPT 	= -xO0
@@ -12,7 +13,7 @@ LDFLAGS = -lcpc
 CC_R	= cc -mt
 CC	= cc -mt
 CC_SHR	= cc -shared -dy -G
-F77	= 
+F77	= f77
 MISCOBJS= get_tick.o
 
 include Makefile.inc
