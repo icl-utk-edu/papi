@@ -619,7 +619,10 @@ static void free_EventSet(EventSetInfo_t *ESI)
   if (ESI->machdep)        free(ESI->machdep);
   if (ESI->sw_stop)        free(ESI->sw_stop); 
   if (ESI->hw_start)       free(ESI->hw_start);
-  if (ESI->latest)       free(ESI->latest);
+  if (ESI->latest)         free(ESI->latest);
+  if ((ESI->state&PAPI_MULTIPLEXING)&&ESI->multiplex)
+    free(ESI->multiplex);
+
 #ifdef DEBUG
   memset(ESI,0x00,sizeof(EventSetInfo_t));
 #endif
@@ -1130,6 +1133,7 @@ static int remove_event(EventSetInfo_t *ESI, int EventCode)
 int PAPI_rem_event(int *EventSet, int EventCode)
 {
   EventSetInfo_t *ESI;
+  int retval;
 
   /* check for pre-existing ESI */
 
@@ -1147,12 +1151,15 @@ int PAPI_rem_event(int *EventSet, int EventCode)
 
   /* If it is a MPX EventSet, do the right thing */
 
-  if (ESI->state & PAPI_MULTIPLEXING)
-    papi_return(mpx_remove_event(&ESI->multiplex,EventCode));
+  if (ESI->state & PAPI_MULTIPLEXING) {
+    retval=mpx_remove_event(&ESI->multiplex,EventCode);
+    if(retval)
+      papi_return(retval);
+  }
 
   /* Now do the magic. */
-
-  papi_return(remove_event(ESI,EventCode));
+  retval=remove_event(ESI,EventCode);
+  papi_return(retval);
 }
 
 #ifdef PAPI30
