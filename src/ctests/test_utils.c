@@ -54,6 +54,45 @@ int add_test_events(int *number, int *mask)
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
+  if (*mask & MASK_L1_DCA)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCA);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_L1_DCA is not available.\n");
+	  *mask = *mask ^ MASK_L1_DCA;
+	}
+    }
+
+  if (*mask & MASK_L1_DCW)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCW);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+	  if ( !TESTS_QUIET )
+	      fprintf(stderr,"PAPI_L1_DCW is not available.\n");
+	  *mask = *mask ^ MASK_L1_DCW;
+	}
+    }
+
+  if (*mask & MASK_L1_DCR)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCR);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+	  if ( !TESTS_QUIET )
+	     fprintf(stderr,"PAPI_L1_DCR is not available.\n");
+	  *mask = *mask ^ MASK_L1_DCR;
+	}
+    }
+
   if (*mask & MASK_L2_TCH)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L2_TCH);
@@ -245,6 +284,24 @@ int remove_test_events(int *EventSet, int mask)
 {
   int retval = PAPI_OK;
   
+  if (mask & MASK_L1_DCA) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_L1_DCA);
+      if (retval < PAPI_OK) return(retval);
+    }
+
+  if (mask & MASK_L1_DCW) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_L1_DCW);
+      if (retval < PAPI_OK) return(retval);
+    }
+
+  if (mask & MASK_L1_DCR) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_L1_DCR);
+      if (retval < PAPI_OK) return(retval);
+    }
+
   if (mask & MASK_L2_TCH) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L2_TCH);

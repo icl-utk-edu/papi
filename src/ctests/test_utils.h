@@ -3,20 +3,23 @@
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
 */
-#define MASK_TOT_IIS 0x4000	/* Try this if TOT_INS won't work */
-#define MASK_BR_PRC  0x2000
-#define MASK_BR_MSP  0x1000
-#define MASK_BR_CN   0x0800
-#define MASK_L2_TCH  0x0400
-#define MASK_L2_TCA  0x0200
-#define MASK_L2_TCM  0x0100
-#define MASK_L1_DCM  0x0040
-#define MASK_L1_ICM  0x0020
-#define MASK_L1_TCM  0x0010
-#define MASK_FLOPS   0x0008
-#define MASK_FP_INS  0x0004
-#define MASK_TOT_INS 0x0002
-#define MASK_TOT_CYC 0x0001
+#define MASK_L1_DCA  0x40000	/* three new events for POWER4 */
+#define MASK_L1_DCW  0x20000
+#define MASK_L1_DCR  0x10000
+#define MASK_TOT_IIS 0x04000	/* Try this if TOT_INS won't work */
+#define MASK_BR_PRC  0x02000
+#define MASK_BR_MSP  0x01000
+#define MASK_BR_CN   0x00800
+#define MASK_L2_TCH  0x00400
+#define MASK_L2_TCA  0x00200
+#define MASK_L2_TCM  0x00100
+#define MASK_L1_DCM  0x00040
+#define MASK_L1_ICM  0x00020
+#define MASK_L1_TCM  0x00010
+#define MASK_FLOPS   0x00008
+#define MASK_FP_INS  0x00004
+#define MASK_TOT_INS 0x00002
+#define MASK_TOT_CYC 0x00001
 
 void *get_overflow_address(void *context);
 void free_test_space(long_long **values, int num_tests);
