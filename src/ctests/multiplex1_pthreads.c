@@ -61,7 +61,7 @@ void init_papi_pthreads(void)
       preset_PAPI_events[3] = PAPI_L1_ICH;
 
    }
-   if(!(strcmp(hw_info->model_string, "Intel Pentium 4")) || !(strcmp(hw_info->model_string, "power4"))) {
+   if(!(strcmp(hw_info->model_string, "Intel Pentium 4")) || !(strcmp(hw_info->model_string, "POWER4"))) {
       preset_PAPI_events[2] = PAPI_L1_LDM;
    }
    /* Investigate the set of candidate events */
