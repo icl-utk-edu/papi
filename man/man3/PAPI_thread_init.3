@@ -8,12 +8,12 @@ PAPI_thread_init \- initialize thread support in the PAPI library
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int PAPI_thread_init (unsigned long int (*" handle ")(), int " flag ");"
+.BI "int PAPI_thread_init (unsigned long int (*" handle ")());"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  flag,\  C_INT\  check )
+.BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
@@ -28,9 +28,6 @@ do not need to call this routine.
 .SH ARGUMENTS
 .I "handle"
 --  Pointer to a function that returns current thread ID.
-.LP
-.I "flag"
---  This is reserved for future use and should be set to zero.
 
 .SH RETURN VALUES
 On success, this function returns
@@ -46,7 +43,7 @@ One or more of the arguments is invalid.
 .I For Pthreads:
 .nf         
 .if t .ft CW
-if (PAPI_thread_init(pthread_self, 0) != PAPI_OK)
+if (PAPI_thread_init(pthread_self) != PAPI_OK)
   handle_error(1);
 .if t .ft P
 .fi        
@@ -54,7 +51,7 @@ if (PAPI_thread_init(pthread_self, 0) != PAPI_OK)
 .I For OpenMP:
 .nf         
 .if t .ft CW
-if (PAPI_thread_init(omp_get_thread_num,0) != PAPI_OK)
+if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
   handle_error(1);
 .if t .ft P
 .fi
@@ -67,4 +64,8 @@ http://icl.cs.utk.edu/projects/papi
 This function causes the application to exit if it is called more than once.
 
 .SH SEE ALSO
-.BR PAPI_library_init" (3)"
+.BR PAPI_library_init" (3), "
+.BR PAPI_thread_id" (3), "
+.BR PAPI_get_thr_specific" (3), "
+.BR PAPI_set_thr_specific" (3)"
+

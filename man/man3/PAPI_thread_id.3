@@ -35,7 +35,7 @@ unsigned long int tid;
 if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);
 
-if (PAPI_thread_init(pthread_self, 0) != PAPI_OK)
+if (PAPI_thread_init(pthread_self) != PAPI_OK)
   exit(1);
 
 if ((tid = PAPI_thread_id()) == (unsigned long int)-1)
