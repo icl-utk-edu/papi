@@ -5,14 +5,18 @@
 PAPI_thread_init \- initialize thread support in the PAPI library
 
 .SH SYNOPSIS
+.nf
 .B #include <papi.h>
 
-.BI "int PAPI_thread_init (unsigned long int (* " handle ")(), int " flag ");"
+.BI "int PAPI_thread_init (unsigned long int (*" handle ")(), int " flag ");"
+.fi
 
 .SH DESCRIPTION
-.B "PAPI_thread_init()"
+.B "PAPI_thread_init"
 initializes thread support in the PAPI library. It
-should be called only once, just after 
+should be called 
+.BR "only once" , 
+just after 
 .BR "PAPI_library_init" (3),
 and before any other PAPI calls. Applications that make no use of threads do not need to call
 this routine. It takes the following arguments:

@@ -1,49 +1,98 @@
-.\" @(#)PAPI_read_counters    0.10 99/07/28 CHD; from S5
-.TH PAPI_read_counters 0 "28 July 1999"
+.\" $Id$
+.TH PAPI_read_counters "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_read_counters \- read the counters, copy the counts 
+PAPI_read_counters \- PAPI High Level: read counting hardware events
+
 .SH SYNOPSIS
+.B #include <papi.h>
+
+.BI "int\ PAPI_read_counters(long long *" values ", int " array_len ");"
+
 .LP
-int PAPI_read_counters (unsigned long long *values, int array_len)
-.LP
-unsigned long long *values -- an array to hold counts
+int *events -- an array of codes for events, such as PAPI_INT_INS
 .LP
 int array_len -- the number of items in the *events array
 .LP
 .SH DESCRIPTION
 .LP
 .B PAPI_read_counters(\|)
-Read the running counters into the values array.  This call 
-implicitly re-initializes the counters to zero and lets them
-continue to run upon return.
+Read counting the events named in the events array.  This function
+implicitly reads and initializes any counters running as a result of
+a previous call to PAPI_read_coutners().  It is the user's responsibility
+to choose events that can be counted simultaneously by reading the
+vendor's documentation.  The lenght of this array should be no longer
+than PAPI_MAX_EVENTS.
 .LP
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ESYS"
+A system or C library call failed inside PAPI, see the 
+.I "errno"
+variable.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_ECNFLCT"
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+.TP
+.B "PAPI_NOEVNT"
+The PAPI preset is not available on the underlying hardware. 
+
+.SH EXAMPLES
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_read_counters may be called by:
-.B  \t
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_read_counters contains calls to:
-.B  \t
-.B  \tPAPI_library_init
-.B  \tPAPI_thread_init
-.B  \tPAPI_num_counters
-.B  \tPAPI_read       
-.B  \tPAPI_reset       
-.B  \tPAPI_perror
-.fi
+
+  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
+  long long values[2];
+  int num_hwcntrs = 0;
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+	
+  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
+    handle_error(1);
+
+  if (num_hwcntrs > 2)
+    num_hwcntrs = 2;
+
+  /* Start counting events */
+
+  if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
+    handle_error(1);
+
+  your_slow_code();
+
+  /* Start counting events */
+
+  if (PAPI_read_counters(values, num_hwcntrs) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_num_counters "(3),"
+.BR PAPI_start_counters "(3),"
+.BR PAPI_stop_counters "(3),"
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,40 +1,69 @@
-.\" @(#)PAPI_num_counters    0.10 00/05/18 CHD; from S5
-.TH PAPI_num_counters 0 "18 May 2000"
+.\" $Id$
+.TH PAPI_num_counters "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_num_counters \- get number of hardware counters available
+PAPI_num_counters \- PAPI High Level: get the number of hardware counters available on the system
+
 .SH SYNOPSIS
-.LP
-int PAPI_num_counters (void)
-.LP
+.B #include <papi.h>
+
+.BI "int\ PAPI_num_counters(void);"
+
 .SH DESCRIPTION
 .LP
 .B PAPI_num_counters(\|)
 This function returns the optimal length of the values array for the
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
+
+.SH RETURN VALUES
+On success, this function returns 
+.I "PAPI_VER_CURRENT."
+\.
+On error, a non-zero non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+.I "papi.h"
+is different from the version used to 
+compile the PAPI library.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+.TP
+.B "PAPI_ESYS"
+A system or C library call failed inside PAPI, see the 
+.I "errno"
+variable.
+
+.SH EXAMPLES
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_num_counters may be called by:
-.B  \t
-.B  \tPAPI_read_counters
-.B  \tPAPI_start_counters
-.B  \tPAPI_stop_counters
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_num_counters contains calls to:
-.B  \t
-.B  \tPAPI_get_opt
-.fi
+
+  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
+  int num_hwcntrs = 0;
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+	
+  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
+    handle_error(1);
+
+  if (num_hwcntrs > 2)
+    num_hwcntrs = 2;
+
+  /* Start counting events */
+
+  if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
-This function has no known bugs.
+If you don't call this, your application could core dump.
+
+.SH SEE ALSO
+.BR PAPI_start_counters "(3),"
+.BR PAPI_read_counters "(3),"
+.BR PAPI_stop_counters "(3),"
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

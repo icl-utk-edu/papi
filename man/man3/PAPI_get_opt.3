@@ -1,7 +1,9 @@
-.\" @(#)PAPI_get_opt    0.10 99/07/28 CHD; from S5
-.TH PAPI_get_opt 0 "28 July 1999"
+.\" $Id$
+.TH PAPI_get_opt 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_get_opt \- get option for multiplexing, debug, or overflow 
+PAPI_get_opt, PAPI_set_opt \- get/set options to PAPI and PAPI EventSets
+
 .SH SYNOPSIS
 .LP
 int PAPI_get_opt (int option, PAPI_option_t *ptr)
@@ -10,6 +12,7 @@ int option -- integer code for multiplexing or debug or overflow
 .LP
 PAPI_option_t *ptr -- ptr to arguments for different options
 .LP
+
 .SH DESCRIPTION
 .LP
 .B PAPI_get_opt(\|)
@@ -41,29 +44,54 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B PAPI_GET_OVERFLO    \tGet status of overflow reporting
 .fi
 .LP 
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_get_opt may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_get_executable_info
-.B  \tPAPI_get_hardware_info
-.fi
-.nf
-.B  \t
-.B  PAPI_get_opt contains calls to:
-.B  \t
-.B  \thandle_error
-.B  \tget_domain
-.B  \tset_granularity
-.fi
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+
+.SH EXAMPLES
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+
+  int num, EventSet = PAPI_NULL;
+  PAPI_option_t options;
+.LP
+	
+  if ((num = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL)) <= 0)
+    handle_error(1);
+
+  printf("This machine has %d actual hardware counters.\n");
+
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Set the domain of this EventSet to counter user and kernel modes*/
+	
+  memset(&options,0x0,sizeof(options));
+  options.domain.eventset = EventSet;
+  options.domain.domain = PAPI_DOM_ALL;
+  if (PAPI_set_opt(PAPI_SET_DOMAIN, &options) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " PAPI_start "(3), " 
+.BR PAPI_stop "(3), " PAPI_rem_event "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

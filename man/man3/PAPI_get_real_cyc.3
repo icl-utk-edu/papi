@@ -1,0 +1,52 @@
+.\" $Id$
+.TH PAPI_get_real_cyc "October, 2000" PAPI "PAPI Programmer's Manual"
+
+.SH NAME
+PAPI_get_real_cyc, PAPI_get_real_usec \- get real time counter values
+
+.SH SYNOPSIS
+.BI "long long PAPI_get_real_cyc(void);"
+.BI "long long PAPI_get_real_usec(void);"
+
+.SH DESCRIPTION
+None.
+
+.SH RETURN VALUES
+This function always succeeds.
+
+.SH ERRORS
+None.
+
+.SH EXAMPLE
+.LP
+.PP
+.RS
+.nf
+long long s, e;
+.LP
+	
+if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+  exit(1);
+
+s = PAPI_get_real_cyc();
+
+your_slow_code();
+
+e = PAPI_get_real_cyc();
+printf("Wallclock cycles: %lld\en",e-s);
+.fi
+.RE
+.PP
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_library_init "(3), "
+.BR PAPI_get_virt_usec "(3), " 
+.BR PAPI_get_virt_cyc "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,59 +1,103 @@
-.\" @(#)PAPI_add_event    0.10 00/05/17 CHD; from S5
-.TH PAPI_add_event 0 "17 May 2000"
+.\" $Id$
+.TH PAPI_add_event 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_add_event \- set up a new or modify an existing EventSet 
+PAPI_add_event, PAPI_add_events, PAPI_add_pevent \- add PAPI preset or native hardware event to an EventSet
+
 .SH SYNOPSIS
-.LP
-int PAPI_add_event (int *EventSet, int Event)
-.LP
-int *EventSet -- a reference to an EventSetInfo structure
-.LP
-int Event -- code for an event, such as PAPI_INT_INS
-.LP
+.B #include <papi.h>
+
+.BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode);
+.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int "num);
+.in \\n
+.BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc);
+
 .SH DESCRIPTION
+.B PAPI_add_event()
+adds a hardware event to a PAPI Event Set. 
+.B PAPI_add_events()
+does the same, but for an array of hardware event codes.
+.B PAPI_add_pevent() 
+is reserved for future use.
+
+Each of these functions takes the following as its first argument:
 .LP
-.B PAPI_add_event (\|)
-This function sets up a new EventSet or modifies an
-existing one. To create a new EventSet, EventSet
-must be set to PAPI_NULL. Separate EventSets
-containing events that require use of the same hardware
-may exist, but may not be started if a conflicting EventSet is
-running. Returns the error code PAPI_ENOEVNT if Event
-cannot be counted on this platform. The addition of a
-conflicting event to an event set will return an error unless
-PAPI_SET_MPXRES has been set. Note:
-EventSet 0 may not be used; it has been reserved for
-internal use.
+.I "EventSet"
+--  an integer handle for a PAPI Event Set as created by
+.BR "PAPI_create_eventset" (3)
+
+A hardware event can be either a PAPI Preset or a native hardware event code. 
+For a list of PAPI preset events, see
+.BR PAPI_preset "(3)"
+or run the
+.I avail
+test case in the PAPI distribution. PAPI Presets can be passed to
+.BR PAPI_query "(3)"
+to see if they exist on the underlying architecture. For the encoding
+of native events, see the <arch>.README file also included the distribution. 
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_ECNFLCT"
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+.TP
+.B "PAPI_NOEVNT"
+The PAPI preset is not available on the underlying hardware. 
+
+.SH EXAMPLES
 .LP
-The return value is an integer that indicates whether the call
-succeeded (a positive integer corresponding to the index in the
-EventCodeArray where this event is stored) or failed (an error code).  
+
+  int EventSet = PAPI_NULL;
+  unsigned int native = 0x0;
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_add_event may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_start_counters
-.B  \tPAPI_add_events 
-.fi
-.nf
-.B  \t
-.B  PAPI_add_event contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \thandle_error
-.B  \allocate_EventSet
-.B  \tadd_event
-.B  \tfree_EventSet
-.B  \tremove_event
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+	
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+  /* Add native event (0xc1 on hardware counter 1) */
+
+  native = (0xc1 << 8) | 1;
+  if (PAPI_add_event(&EventSet, native) != PAPI_OK)
+    handle_error(1);
+
+  /* Start counting */
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_preset "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,0 +1,51 @@
+.\" $Id$
+.TH PAPI_thread_id "October, 2000" PAPI "PAPI Programmer's Manual"
+
+.SH NAME
+PAPI_thread_id \- get the thread identifier of the current thread
+
+.SH SYNOPSIS
+.BI "unsigned long int PAPI_thread_id(void);"
+
+.SH DESCRIPTION
+None.
+
+.SH RETURN VALUES
+On success, this function returns a valid thread identifier.
+On error, (unsigned long int)-1 is returned.
+
+.SH ERRORS
+None.
+
+.SH EXAMPLE
+.LP
+.PP
+.RS
+.nf
+unsigned long int tid;
+.LP
+	
+if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+  exit(1);
+
+if (PAPI_thread_init(pthread_self, 0) != PAPI_OK)
+  exit(1);
+
+if ((tid = PAPI_thread_id()) == (unsigned long int)-1)
+  exit(1);
+
+printf("Current thread id is: %lu\en",tid);
+.fi
+.RE
+.PP
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_thread_init "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

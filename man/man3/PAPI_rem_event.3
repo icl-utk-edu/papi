@@ -1,45 +1,100 @@
-.\" @(#)PAPI_rem_event    0.10 00/05/18 CHD; from S5
-.TH PAPI_rem_event 0 "18 May 2000"
+.\" $Id$
+.TH PAPI_rem_event 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_rem_event \- remove one Event from an EventSet
+PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent \- add PAPI preset or native hardware event to an EventSet
+
 .SH SYNOPSIS
-.LP
-int PAPI_rem_event (int EventSet, int Event)
-.LP
-int EventSet -- a reference to an EventSetInfo structure
-.LP
-int Event -- code for an event, such as PAPI_INT_INS
-.LP
+.B #include <papi.h>
+
+.BI "int\ PAPI_rem_event(int *" EventSet ", int " EventCode);
+.BI "int\ PAPI_rem_events(int *" EventSet ", int *" EventCode ", int "num);
+
 .SH DESCRIPTION
+.B PAPI_rem_event()
+adds a hardware event to a PAPI Event Set. 
+.B PAPI_rem_events()
+does the same, but for an array of hardware event codes.
+
+Each of these functions takes the following as its first argument:
 .LP
-.B PAPI_rem_event(\|)
-This function removes the hardware counter Event from EventSet.
+.I "EventSet"
+--  an integer handle for a PAPI Event Set as created by
+.BR "PAPI_create_eventset" (3)
+
+A hardware event can be either a PAPI Preset or a native hardware event code. 
+For a list of PAPI preset events, see
+.BR PAPI_preset "(3)"
+or run the
+.I avail
+test case in the PAPI distribution. PAPI Presets can be passed to
+.BR PAPI_query "(3)"
+to see if they exist on the underlying architecture. For the encoding
+of native events, see the <arch>.README file also included the distribution. 
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_ECNFLCT"
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+.TP
+.B "PAPI_NOEVNT"
+The PAPI preset is not available on the underlying hardware. 
+
+.SH EXAMPLES
 .LP
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
+
+  int EventSet = PAPI_NULL;
+  unsigned int native = 0x0;
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_rem_event may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_rem_events 
-.fi
-.nf
-.B  \t
-.B  PAPI_rem_event contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \thandle_error
-.B  \tremove_event
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+	
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+  /* Start counting */
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Stop counting, ignore values */
+
+  if (PAPI_stop(EventSet, NULL) != PAPI_OK)
+    handle_error(1);
+
+  /* Remove event */
+
+  if (PAPI_rem_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_preset "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

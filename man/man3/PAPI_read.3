@@ -1,47 +1,73 @@
-.\" @(#)PAPI_read    0.10 99/07/28 CHD; from S5
-.TH PAPI_read 0 "28 July 1999"
+.\" $Id$
+.TH PAPI_read "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_read \- start counting events contained in an EventSet
+PAPI_read, PAPI_accum \- read, accumulate and reset hardware events from an EventSet
+
 .SH SYNOPSIS
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ESYS"
+A system or C library call failed inside PAPI, see the 
+.I "errno"
+variable.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+
+.SH EXAMPLES
 .LP
-int PAPI_read (int EventSet, unsigned long long *values)
+
+  int EventSet = PAPI_NULL;
+  unsigned int native = 0x0;
+  long long values[1] = (long long)0;
 .LP
-int EventSet --  a reference to an EventSetInfo structure
-.LP
-unsigned long long *values -- array to contain counts
-.LP
-.SH DESCRIPTION
-.LP
-.B PAPI_read(\|)
-This function copies the running or stopped counters in EventSet
-into the values array.  Internal counters will not be 
-re-initialized to zero.
-.LP
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
-.LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_read may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_read_counters
-.fi
-.nf
-.B  \t
-.B  PAPI_read contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \thandle_error
-.B  \t_papi_hwd_read ( a substrate function )
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+	
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+  /* Start counting */
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    handle_error(1);
+
+  poorly_tuned_function();
+
+  if (PAPI_accum(EventSet, values) != PAPI_OK)
+    handle_error(1);
+
+  printf("%lld\n",values[0]);
+
+  poorly_tuned_function();
+
+  if (PAPI_stop(EventSet, values) != PAPI_OK)
+    handle_error(1);
+
+  printf("%lld\n",values[0]);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_add_event "(3), " PAPI_reset "(3), " PAPI_read "(3), "
+.BR PAPI_set_opt "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,10 +1,16 @@
-.\" @(#)PAPI_perror    0.10 99/07/28 CHD; from S5
-.TH PAPI_perror 0 "28 July 1999"
+.\" $Id$
+.TH PAPI_perror 3 "October, 2000" PAPI "PAPI Programmer's Manual"
+
 .SH NAME
-PAPI_perror \- report errors
+PAPI_perror, PAPI_strerror \- convert PAPI error codes to strings
+
 .SH SYNOPSIS
-.LP
-int PAPI_perror (int code,char *destination,int length) 
+.B #include <papi.h>
+
+.BI "int PAPI_perror(int " code ", char *" destination ", int " length ");"
+.BI "char *PAPI_strerror(int " code );
+
+.SH DESCRIPTION
 .LP
 int code -- an error code
 .LP
@@ -12,39 +18,78 @@ char *destination -- "the error message in quotes"
 .LP
 int length -- either 0 or strlen(destination)
 .LP
-.SH DESCRIPTION
 .LP
 .B PAPI_perror(\|)
 This function copies length worth of the error
-description string corresponding to code into
-destination. The resulting string is always null
+description string corresponding to code
+into destination. The resulting string is always null
 terminated. If length is 0, then the string is printed on
 stderr.
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+
+.SH EXAMPLE
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.PP
+.RS
 .nf
-.B  \t
-.B  PAPI_perror may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_start_counters
-.B  \tPAPI_read_counters
-.B  \tPAPI_stop_counters
-.fi
-.nf
-.B  \t
-.B  PAPI_perror contains calls to:
-.B  \t
-.B  \tget_error_string 
-.fi
+int EventSet = PAPI_NULL;
+int native = 0x0;
+char error_str[PAPI_MAX_STR_LEN];
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+	
+if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
+  {
+     fprintf(stderr, "PAPI error %d: %s\n",retval,PAPI_strerror(retval));
+     exit(1);
+  }	
+
+/* Add Total Instructions Executed to our EventSet */
+
+if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  {
+     PAPI_perror(retval,error_str,PAPI_MAX_STR_LEN);
+     fprintf(stderr,"PAPI_error %d: %s\n",retval,error_str);
+     exit(1);
+  }
+
+/* Add native event (0xc1 on hardware counter 1) */
+
+native = (0xc1 << 8) | 1;
+if (PAPI_add_event(&EventSet, native) != PAPI_OK)
+  {
+     /* Dump error string directly to stderr. */
+
+      PAPI_perror(retval,NULL,NULL);
+     exit(1);
+  }
+
+/* Start counting */
+
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
 .fi
+.RE
+.PP
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_set_debug "(3), "
+.BR PAPI_set_opt "(3), " PAPI_get_opt "(3), " PAPI_shutdown "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,14 +1,18 @@
-.\" @(#)PAPI_query_event    0.10 00/05/18 CHD; from S5
-.TH PAPI_query_event 0 "18 May 2000"
+.\" $Id$
+.TH PAPI_query_event 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_query_event \- see if an Event is supported by the local substrate
+PAPI_query_event \- query to see if a PAPI Preset hardware event exists on the current architecture.
+
 .LP
+
 .SH SYNOPSIS
 .LP
 int PAPI_query_event (int EventCode)
 .LP
 int EventCode -- the numeric value of a PerfAPI Event
 .LP
+
 .SH DESCRIPTION
 .B PAPI_query_event(\|)
 This function tests if the event designated by EventCode is supported by the current substrate. 
@@ -16,27 +20,69 @@ This function tests if the event designated by EventCode is supported by the cur
 If the answer is yes, the function returns PAPI_OK. 
 If the answer is no, the function returns an error code. 
 
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_ECNFLCT"
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+.TP
+.B "PAPI_NOEVNT"
+The PAPI preset is not available on the underlying hardware. 
+
+.SH EXAMPLES
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_query_event may be called by:
-.B  \t
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_query_event contains calls to:
-.B  \t
-.B  \tpapi_presets
-.B  \thandle_error
-.fi
+
+  int EventSet = PAPI_NULL;
+  unsigned int native = 0x0;
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+	
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+  /* Add native event (0xc1 on hardware counter 1) */
+
+  native = (0xc1 << 8) | 1;
+  if (PAPI_add_event(&EventSet, native) != PAPI_OK)
+    handle_error(1);
+
+  /* Start counting */
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_preset "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi
+

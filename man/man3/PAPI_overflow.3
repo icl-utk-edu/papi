@@ -1,58 +1,95 @@
-.\" @(#)PAPI_overflow    0.10 00/05/18 CHD; from S5
-.TH PAPI_overflow 0 "18 May 2000"
-.LP
+.\" $Id$
+.TH PAPI_overflow 3 "October, 2000" "" "PAPI"
+
 .SH NAME
 PAPI_overflow \- start counting events contained in an EventSet
-.SH SYNOPSIS
-.LP
-int PAPI_overflow (int EventSet, int EventCode, int threshold, int flags, void *handler) 
-.LP
-int EventSet -- a reference to an EventSetInfo structure
-.LP
-int EventCode -- integer value for a PAPI Event
-.LP
-int threshold -- threshold value in the EventSetOverflowInfo_t structure
-.LP
-int flags -- flags value in the EventSetOverflowInfo_t structure
-.LP
-void *handler -- handler value in the EventSetOverflowInfo_t structure
 
+.SH SYNOPSIS
+.B #include <papi.h>
+
+.BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler);
 .LP
+EventSet -- a reference to an EventSetInfo structure
+.LP
+EventCode -- integer value for a PAPI Event
+.LP
+threshold -- threshold value in the EventSetOverflowInfo_t structure
+.LP
+flags -- flags value in the EventSetOverflowInfo_t structure
+.LP
+handler -- handler value in the EventSetOverflowInfo_t structure
+
 .SH DESCRIPTION
-.LP
 .B PAPI_overflow(\|)
 sets up an EventSet such that when it is PAPI_start()'ed, it begins to register overflows. 
 This EventSet may only have multiple events in it, but only 1 can be an overflow trigger.  
 Subsequent calls to PAPI_overflow replace earlier calls. To turn off overflow, set the 
 handler to NULL. 
-.LP 
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_ECNFLCT"
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+.TP
+.B "PAPI_NOEVNT"
+The PAPI preset is not available on the underlying hardware. 
+
+.SH EXAMPLES
+void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
+{
+  fprintf(stderr,"Value %lld at %p\n",
+	  values[EventIndex],PAPI_get_overflow_address(context));
+#endif
+  total++;
+}
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_overflow may be called by:
-.B  \t
-.B  \tPAPI_profil
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_overflow contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \tlookup_EventCodeIndex
-.B  \thandle_error
-.B  \t_papi_hwd_set_overflow ( a substrate function )
-.fi
+
+  int EventSet = PAPI_NULL;
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+	
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+    handle_error(1);
+
+  /* Call handler every 100000 instructions */
+
+  /* Start counting */
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
 
+.SH SEE ALSO
+.BR PAPI_preset "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

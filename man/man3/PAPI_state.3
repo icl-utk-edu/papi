@@ -1,43 +1,84 @@
-.\" @(#)PAPI_state    0.10 99/07/28 CHD; from S5
-.TH PAPI_state 0 "28 July 1999"
+.\" $Id$
+.TH PAPI_state 3
+
 .SH NAME
 PAPI_state \- start counting events contained in an EventSet
+
 .SH SYNOPSIS
-.LP
-int PAPI_state (int EventSet, int *status)
+.B #include <papi.h>
+
+.BI "int\ PAPI_state (int " EventSet ", int *" status);
+
+.SH DESCRIPTION
 .LP
 int EventSet --  a reference to an EventSetInfo structure
 .LP
-.SH DESCRIPTION
 .LP
-.B PAPI_state(\|)
-This function returns the state of the entire EventSet in status.
-If the call succeeds, then status is either PAPI_RUNNING or
-PAPI_STOPPED.
+.B PAPI_state(\|) 
+returns the counting state of the EventSet in
+.I status.
+If the call succeeds, then
+.I status
+is either 
+.I PAPI_RUNNING
+or
+.I PAPI_STOPPED.
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+
+.SH EXAMPLES
 .LP
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
-.LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.PP
+.RS
 .nf
-.B  \t
-.B  PAPI_state may be called by:
-.B  \t
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_state contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \thandle_error
-.fi
+int EventSet = PAPI_NULL;
+int status = 0;  
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
+
+/* Add Total Instructions Executed to our EventSet */
+
+if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
+
+/* Start counting */
+
+if (PAPI_state(EventSet, &status) != PAPI_OK)
+  handle_error(1);
+
+printf("State is now %d\en",status);
+
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
+
+if (PAPI_state(EventSet, &status) != PAPI_OK)
+  handle_error(1);
+
+printf("State is now %d\en",status);
 .fi
+.RE
+.PP
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_start "(3), " 
+.BR PAPI_stop "(3), "
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,42 +1,76 @@
-.\" @(#)PAPI_destroy_eventset    0.10 00/05/17 CHD; from S5
-.TH PAPI_destroy_eventset 0 "17 May 2000"
+.\" $Id$
+.TH PAPI_destroy_eventset 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_destroy_eventset \-  destroy a stopped and cleaned EventSet
-.SH SYNOPSIS
-.LP
-int PAPI_destroy_eventset (int *EventSet )
-.LP
-int *EventSet -- a reference to an EventSetInfo structure
-.LP
+PAPI_cleanup_eventset, PAPI_destroy_eventset  \-  empty and destroy an EventSet
+
+.nf
+.B #include <papi.h>
+
+.BI "int\ PAPI_cleanup_eventset(int *" EventSet ");"
+.BI "int\ PAPI_destroy_eventset(int *" EventSet ");"
+.if
+
 .SH DESCRIPTION
+.B PAPI_cleanup_eventset
+removes all PAPI events from a PAPI Event Set. 
+
+.B PAPI_destroy_eventset
+deallocates the memory associated with an empty PAPI Event Set.
+
+Each of these functions takes one argument:
 .LP
-.B PAPI_destroy_eventset (\|)
-This function effectively removes an EventSet from existance.
-The EventSet must be empty in order for this call to succeed.
+.I "EventSet"
+--  an integer handle for a PAPI Event Set as created by
+.BR "PAPI_create_eventset" (3)
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_EBUG"
+Internal error, send mail to ptools-perfapi@ptools.org and complain.
+
+.SH EXAMPLES
 .LP
-The return value is an integer that indicates wether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).
-.LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
 .nf
-.B  \t
-.B  PAPI_add_event may be called by:
-.B  \t
-.B  \tthe user application program
+.if t .ft CW
+if (PAPI_stop(EventSet, values) != PAPI_OK)
+  handle_error(1);
+
+/* Remove all events in the eventset */
+
+if (PAPI_cleanup_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
+
+/* Free all memory and data structures, EventSet must be empty. */
+
+if (PAPI_destroy_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
+.if t .ft P
 .fi
-.nf
-.B  \t
-.B  PAPI_add_event contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \thandle_error
-.B  \tremove_EventSet
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_create_eventset "(3), " PAPI_query "(3), "
+.BR PAPI_add_event "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_rem_events "(3), " PAPI_shutdown "(3), "
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

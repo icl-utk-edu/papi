@@ -1,13 +1,16 @@
-.\" @(#)PAPI_set_domain    0.10 99/07/28 CHD; from S5
+.\" $Id$
 .TH PAPI_set_domain 0 "28 July 1999"
+
 .SH NAME
 PAPI_set_domain \- set the execution domain in which events are counted
+
 .SH SYNOPSIS
 .LP
 int PAPI_set_domain (int domain)
 .LP
 int domain -- an integer to select the domain
 .LP
+
 .SH DESCRIPTION
 .LP
 .B PAPI_set_domain(\|)
@@ -30,25 +33,53 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B PAPI_DOM_MAX	\tMaximum Domain value, all contexts counted
 .B PAPI_DOM_HWSPEC\tFlag to indicate special substrate 
 .fi
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_set_domain may be called by:
-.B  \t
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_set_domain contains calls to:
-.B  \t
-.B  \tPAPI_set_opt    
-.fi
+
+.SH RETURN VALUES
+On success, this function returns
+.I "PAPI_OK."
+On error, a non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+
+.SH EXAMPLES
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+
+  int num, EventSet = PAPI_NULL;
+  PAPI_option_t options;
+.LP
+	
+  if ((num = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL)) <= 0)
+    handle_error(1);
+
+  printf("This machine has %d actual hardware counters.\n");
+
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Set the domain of this EventSet to counter user and kernel modes*/
+	
+  memset(&options,0x0,sizeof(options));
+  options.domain.eventset = EventSet;
+  options.domain.domain = PAPI_DOM_ALL;
+  if (PAPI_set_opt(PAPI_SET_DOMAIN, &options) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_set_opt "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

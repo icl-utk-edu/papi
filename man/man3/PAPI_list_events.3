@@ -1,5 +1,6 @@
-.\" @(#)PAPI_list_events    0.10 99/07/28 CHD; from S5
-.TH PAPI_list_events 0 "28 July 1999"
+.\" $Id$
+.TH PAPI_list_events 3 "October, 2000" "" "PAPI"
+
 .SH NAME
 PAPI_list_events \- remove one Event from an EventSet
 .SH SYNOPSIS
@@ -21,26 +22,61 @@ contains. number is both an input and output parameter.
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_list_events may be called by:
-.B  \t
-.B  \tthe user application program
-.fi
-.nf
-.B  \t
-.B  PAPI_list_events contains calls to:
-.B  \t
-.B  \tlookup_EventSet 
-.B  \thandle_error
-.fi
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_ENOTPRESET"
+The hardware event specified is not a PAPI preset for this architecture. 
+
+.SH EXAMPLES
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+
+  int EventCode, EventSet = PAPI_NULL;
+  char EventCodeStr[PAPI_MAX_STR_LEN];
+  char EventDescr[PAPI_MAX_STR_LEN];
+.LP
+	
+  /* Convert to integer */
+
+  if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* Query Total Instructions Executed to our EventSet */
+
+  if (PAPI_query(EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* Describe event from EventCode */
+
+  if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
+    handle_error(1);
+
+  /* Create the EventSet */
+
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    handle_error(1);
+
+  /* Add Total Instructions Executed to our EventSet */
+
+  if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
+    handle_error(1);
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_preset "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi

@@ -1,10 +1,13 @@
-.\" @(#)PAPI_shutdown    0.10 00/05/18 CHD; from S5
-.TH PAPI_shutdown 0 "18 May 2000"
+.\" $Id$
+.TH PAPI_shutdown 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_shutdown \- an exit function to free resources
+PAPI_shutdown \- finish using PAPI and free all related resources
+
 .SH SYNOPSIS
 .LP
-int PAPI_shutdown (void)
+void PAPI_shutdown (void)
+
 .LP
 .SH DESCRIPTION
 .LP
@@ -13,32 +16,15 @@ This is an exit function used by the PAPI Library to free resources
 and shut down when  certain error conditions arise.  This call is
 not necessary, but allows the user the capability to free memory 
 and resources used by the PAPI Library.
-.LP
-The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
-.LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_shutdown may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \thandle_error
-.fi
-.nf
-.B  \t
-.B  PAPI_shutdown contains calls to:
-.B  \t
-.B  \tPAPI_state
-.B  \tPAPI_stop
-.B  \tfree_EventSet 
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
 This function has no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi
+

@@ -10,7 +10,7 @@ PAPI_library_init \- initialize the PAPI library
 .BI "int PAPI_library_init(int " version ");"
 
 .SH DESCRIPTION
-.B "PAPI_library_init()"
+.B "PAPI_library_init"
 initializes the PAPI library. It must be called
 before any PAPI functions can be used. If your application
 is making use of threads, 
@@ -27,7 +27,7 @@ PAPI shared libraries on your system.
 
 .SH RETURN VALUES
 On success, this function returns 
-.I "PAPI_VER_CURRENT."
+.IR "PAPI_VER_CURRENT" .
 \.
 On error, a non-zero non-zero error code is returned.
 
@@ -45,6 +45,25 @@ Insufficient memory to complete the operation.
 A system or C library call failed inside PAPI, see the 
 .I "errno"
 variable.
+
+.SH EXAMPLES
+.LP
+.nf
+.if t .ft CW
+int retval;
+
+/* Initialize the library */
+
+retval = PAPI_library_init(PAPI_VER_CURRENT);
+
+if (retval > 0) {
+  fprintf(stderr,"PAPI library version mismatch!\n");
+  exit(1); }
+
+if (retval < 0) 
+  handle_error(retval);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
