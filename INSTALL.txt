@@ -131,12 +131,24 @@ for Itanium II.
 
 Linux/x86 - Intel and AMD
 *****************************************************************************
-Linux/x86 requires that the kernel be patched and recompiled. The required 
-patches and complete installation instructions are provided in the 
-papi/src/perfctr-x.y directory.
-After successfully patching your kernel with perfctr, follow the general 
-instructions for installing PAPI using Makefile.linux-perfctr-x.y.
+Linux/x86 requires that the kernel be patched and recompiled with the PerfCtr
+patch. The required patches and complete installation instructions are 
+provided in the papi/src/perfctr-x.y directory. Please see the INSTALL file
+in that directory.
 
+*- IF YOU HAVE ALREADY PATCHED YOUR KERNEL WITH PERFCTR -*
+
+WARNING: You should always use a PerfCtr distribution that has been distributed
+with a version of PAPI or your build will fail. The reason for this is that
+PAPI builds a shared library of the Perfctr runtime, on which libpapi.so
+depends.
+
+Edit the top of the papi/src/Makefile.linux-perfctr-x.y file and change
+the following two variables:
+
+PERFCTR	      - should be the absolute path to your PerfCtr build directory
+KERNINC	      - should be the absolute path to your Kernel include files
+	        (thanks to Redhat for breaking the /usr/src/linux convention)
 
 MIPS - IRIX 6.5
 *****************************************************************************
@@ -149,12 +161,6 @@ Solaris 8 - Ultrasparc
 The only requirement for Solaris is that you must be running version 2.8 or 
 newer.  As long as that requirement is met, no additional steps are required 
 to get PAPI working and you can follow the general installation guide.
-
-*NOTE: The Ultrasparc III mapping and code is available, but untested, as we 
-don't have access to an Ultrasparc III. So consider it beta. If you have 
-access to an Ultrasparc III on which you would like to run PAPI, run the 
-test suite and let us know the results. **
-
 
 Tru64 UNIX - Alpha
 *****************************************************************************
