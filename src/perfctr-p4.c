@@ -171,9 +171,10 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 	  tmp->pebs_matrix_vert = tmp2->pebs_matrix_vert;
 	  SUBDBG("pebs_matrix_vert[%d] %#08x\n",unum,tmp->pebs_matrix_vert);
 
-	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x",
+	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x (0x%08x, 0x%08x)",
 		  (unum >= 1) ? " " : "",
-		  tmp2->evntsel,tmp2->evntsel_aux,(ffs(tmp2->pmc_map)-1)|FAST_RDPMC);
+		  tmp2->evntsel,tmp2->evntsel_aux,(ffs(tmp2->pmc_map)-1)|FAST_RDPMC,
+		  tmp->pebs_enable,tmp->pebs_matrix_vert);
 	  if ((strlen(note) + strlen(tmpnote)) < (PAPI_MAX_STR_LEN-1))
 	    strcat(note,tmpnote);
 	}
