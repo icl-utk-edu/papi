@@ -259,6 +259,7 @@ static int mpx_startup_itimer(void)
 
    /* Set up the signal handler and the timer that triggers it */
    memset(&sigact, 0, sizeof(sigact));
+   sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
    retval = sigaction(MPX_SIGNAL, &sigact, &oaction);
    assert(retval == 0);
