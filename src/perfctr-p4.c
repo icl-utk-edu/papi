@@ -614,18 +614,14 @@ static void clear_control_state(hwd_control_state_t * this_state)
       SUBDBG("Clearing pmc event entry %d\n", i);
       this_state->control.cpu_control.pmc_map[i] = 0;
       this_state->control.cpu_control.evntsel[i] = 0;
-#ifdef __i386__
       this_state->control.cpu_control.evntsel_aux[i] = 0;
-#endif
       this_state->control.cpu_control.ireset[i] = 0;
    }
 
    /* Clear pebs stuff */
 
-#ifdef __i386__
    this_state->control.cpu_control.p4.pebs_enable = 0;
    this_state->control.cpu_control.p4.pebs_matrix_vert = 0;
-#endif
 
    this_state->control.cpu_control.nractrs = 0;
 
@@ -641,12 +637,27 @@ static void clear_control_state(hwd_control_state_t * this_state)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count)
 {
-   int i, nractrs;
+   int i, nractrs, def_mode;
 
    P4_register_t *bits;
 
    /* clear out everything currently coded */
    clear_control_state(this_state);
+
+   /* determine the current domain setting */
+   switch(_papi_hwi_system_info.default_domain) {
+   case PAPI_DOM_USER:
+      def_mode = ESCR_T0_USR;
+      break;
+   case PAPI_DOM_KERNEL:
+      def_mode = ESCR_T0_OS;
+      break;
+   case PAPI_DOM_ALL:
+      def_mode = ESCR_T0_OS | ESCR_T0_USR;
+      break;
+   default:
+      return(PAPI_EINVAL);
+   }
 
    /* fill the counters we're using */
    nractrs = this_state->control.cpu_control.nractrs;
@@ -660,7 +671,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
       this_state->control.cpu_control.evntsel[nractrs] = bits->cccr;
       this_state->control.cpu_control.ireset[nractrs] = bits->ireset;
       this_state->control.cpu_control.pmc_map[nractrs] |= FAST_RDPMC;
-      this_state->control.cpu_control.evntsel_aux[nractrs] = bits->event;
+      this_state->control.cpu_control.evntsel_aux[nractrs] = bits->event | def_mode;
       /* What happens if more than one native event has pebs_enable or pebs_matrix_vert?
          Are these just binary enables or can they actually have conflicting values? */
       if (bits->pebs_enable)
@@ -690,7 +701,30 @@ int _papi_hwd_add_prog_event(P4_perfctr_control_t * state, unsigned int code, vo
 
 int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
 {
-   return (PAPI_ESBSTR);
+   int i, did = 0;
+    
+     /* Clear the current domain set for this event set */
+     /* We don't touch the Enable bit in this code but  */
+     /* leave it as it is */
+   for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+      cntrl->control.cpu_control.evntsel_aux[i] &= ~(ESCR_T0_OS|ESCR_T0_USR);
+   }
+   if(domain & PAPI_DOM_USER) {
+      did = 1;
+      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+         cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_USR;
+      }
+   }
+   if(domain & PAPI_DOM_KERNEL) {
+      did = 1;
+      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+         cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_OS;
+      }
+   }
+   if(!did)
+      return(PAPI_EINVAL);
+   else
+      return(PAPI_OK);
 }
 
 volatile unsigned int lock[PAPI_MAX_LOCK] = { 0, };
@@ -785,9 +819,6 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   const int PERF_INT_ENABLE = CCCR_OVF_PMI_T0;
-   /* | CCCR_OVF_PMI_T1 (1 << 27) */
-
    extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    struct vperfctr_control *contr = &this_state->control;
@@ -815,7 +846,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
       contr->cpu_control.ireset[i] = (-threshold + 1);
-      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+      contr->cpu_control.evntsel[i] |= CCCR_OVF_PMI_T0;
       contr->cpu_control.nrictrs++;
       contr->cpu_control.nractrs--;
       nricntrs = contr->cpu_control.nrictrs;
@@ -840,9 +871,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       OVFDBG("Modified event set\n");
    } else {
-      if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
+      if (contr->cpu_control.evntsel[i] & CCCR_OVF_PMI_T0) {
          contr->cpu_control.ireset[i] = 0;
-         contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
+         contr->cpu_control.evntsel[i] &= (~CCCR_OVF_PMI_T0);
          contr->cpu_control.nrictrs--;
          contr->cpu_control.nractrs++;
          nricntrs = contr->cpu_control.nrictrs;

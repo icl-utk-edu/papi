@@ -133,7 +133,6 @@ typedef P4_perfctr_context_t hwd_context_t;
 
 typedef P4_perfctr_event_t hwd_event_t;
 
-
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
