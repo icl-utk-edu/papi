@@ -55,7 +55,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_L3_ICR, 0, {"L3_READS_INST_READS_ALL", 0, 0, 0}},
    {PAPI_TLB_DM, 0, {"DTLB_MISSES", 0, 0, 0}},
    {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH", 0, 0, 0}},
-   {PAPI_MEM_SCY, 0, {"MEMORY_CYCLE", 0, 0, 0}},
+   {PAPI_MEM_SCY, 0, {"MEMORY_CYCLE", PAPI_NULL, 0, 0}},
    {PAPI_STL_ICY, 0, {"UNSTALLED_BACKEND_CYCLE", 0, 0, 0}},
    {PAPI_BR_INS, 0, {"BRANCH_EVENT", 0, 0, 0}},
    {PAPI_BR_PRC, 0, {"BRANCH_PREDICTOR_ALL_CORRECT_PREDICTIONS", 0, 0, 0}},
@@ -215,7 +215,7 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
          findme++;
          cnt++;
       }
-      preset_search_map[i].data.native[cnt] = 0;
+      preset_search_map[i].data.native[cnt] = PAPI_NULL;
    }
    if (NUM_OF_PRESET_EVENTS != pnum)
       abort();

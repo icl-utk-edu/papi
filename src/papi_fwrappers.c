@@ -429,6 +429,7 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
    }
 #else
 /* printf("EventCode: %d\n", *EventCode ); -KSL */
+#if 0
    if ((*check = PAPI_query_event_verbose(*EventCode, &info)) == PAPI_OK) {
       strncpy(symbol, info.symbol, PAPI_MAX_STR_LEN);
       strncpy(long_descr, info.long_descr, PAPI_MAX_STR_LEN);
@@ -436,6 +437,7 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
       *count = info.count;
 /*    strncpy(event_note, info.event_note, PAPI_MAX_STR_LEN); */
    }
+#endif
 /*  printf("Check: %d\n", *check); -KSL */
 #endif
 }

@@ -191,7 +191,10 @@ int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc)
    if ((retval = _internal_check_state(&state)) != PAPI_OK)
       return (retval);
 
-   return (_hl_rate_calls(rtime, ptime, ins, ipc, PAPI_TOT_INS, state));
+   if ( state->mhz == 0 )
+      state->mhz = (short int) PAPI_get_opt(PAPI_CLOCKRATE, NULL);
+
+   return(_hl_rate_calls(rtime,ptime,ins,ipc,PAPI_TOT_INS,state));
 }
 
 int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *rate,

@@ -576,9 +576,11 @@ int PAPI_stop(int EventSet, long_long * values)
       papi_return(PAPI_ENOTRUN);
 
    if (ESI->state & PAPI_PROFILING) {
-      retval = _papi_hwd_stop_profiling(thread, ESI);
-      if (retval < PAPI_OK)
-         papi_return(retval);
+      if (_papi_hwi_system_info.supports_hw_profile) {
+         retval = _papi_hwd_stop_profiling(thread, ESI);
+         if (retval < PAPI_OK)
+            papi_return(retval);
+      }
    }
 
    /* If multiplexing is enabled for this eventset,

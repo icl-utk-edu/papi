@@ -63,11 +63,6 @@ typedef siginfo_t hwd_siginfo_t;
 typedef struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_pc
-#define GET_OVERFLOW_CTR_BITS(context) \
-  (((_papi_hwi_context_t *)context)->overflow_vector)
-
-#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
-  (_papi_hwi_event_index_map[bit])
 
 #include "papi_internal.h"
 

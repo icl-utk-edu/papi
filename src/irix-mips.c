@@ -93,63 +93,63 @@ hwi_search_t *preset_search_map;
    in the native event table
 */
 hwi_search_t findem_r10k[] = {
-   {PAPI_L1_DCM, {0, {NATIVE_MASK | 25, 0}}},   /* L1 D-Cache misses */
-   {PAPI_L1_ICM, {0, {NATIVE_MASK | 9, 0}}},    /* L1 I-Cache misses */
-   {PAPI_L2_DCM, {0, {NATIVE_MASK | 26, 0}}},   /* L2 D-Cache misses */
-   {PAPI_L2_ICM, {0, {NATIVE_MASK | 10, 0}}},   /* L2 I-Cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {NATIVE_MASK | 9, NATIVE_MASK | 25, 0}}},
+   {PAPI_L1_DCM, {0, {NATIVE_MASK | 25, PAPI_NULL}}},   /* L1 D-Cache misses */
+   {PAPI_L1_ICM, {0, {NATIVE_MASK | 9, PAPI_NULL}}},    /* L1 I-Cache misses */
+   {PAPI_L2_DCM, {0, {NATIVE_MASK | 26, PAPI_NULL}}},   /* L2 D-Cache misses */
+   {PAPI_L2_ICM, {0, {NATIVE_MASK | 10, PAPI_NULL}}},   /* L2 I-Cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {NATIVE_MASK | 9, NATIVE_MASK | 25, PAPI_NULL}}},
    /* L1 total */
-   {PAPI_L2_TCM, {DERIVED_ADD, {NATIVE_MASK | 10, NATIVE_MASK | 26, 0}}},
+   {PAPI_L2_TCM, {DERIVED_ADD, {NATIVE_MASK | 10, NATIVE_MASK | 26,PAPI_NULL}}},
    /* L2 total */
-   {PAPI_CA_INV, {0, {NATIVE_MASK | 13, 0}}},   /* Cache Line Invalidation */
-   {PAPI_CA_ITV, {0, {NATIVE_MASK | 12, 0}}},   /* Cache Line Intervention */
-   {PAPI_TLB_TL, {0, {NATIVE_MASK | 23, 0}}},   /* Total TLB misses */
-   {PAPI_CSR_FAL, {0, {NATIVE_MASK | 5, 0}}},   /* Failed store conditional */
-   {PAPI_CSR_SUC, {DERIVED_SUB, {NATIVE_MASK | 20, NATIVE_MASK | 5, 0}}},
+   {PAPI_CA_INV, {0, {NATIVE_MASK | 13, PAPI_NULL}}},   /* Cache Line Invalidation */
+   {PAPI_CA_ITV, {0, {NATIVE_MASK | 12, PAPI_NULL}}},   /* Cache Line Intervention */
+   {PAPI_TLB_TL, {0, {NATIVE_MASK | 23, PAPI_NULL}}},   /* Total TLB misses */
+   {PAPI_CSR_FAL, {0, {NATIVE_MASK | 5, PAPI_NULL}}},   /* Failed store conditional */
+   {PAPI_CSR_SUC, {DERIVED_SUB, {NATIVE_MASK | 20, NATIVE_MASK | 5, PAPI_NULL}}},
    /* Successful store conditional */
-   {PAPI_CSR_TOT, {0, {NATIVE_MASK | 20, 0}}},  /* Total store conditional */
-   {PAPI_BR_MSP, {0, {NATIVE_MASK | 24, 0}}},   /* Cond. branch inst. mispred */
-   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, 0}}},   /* Total inst. issued */
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, 0}}},  /* Total inst. executed */
-   {PAPI_FP_INS, {0, {NATIVE_MASK | 21, 0}}},   /* Floating Pt. inst. executed */
-   {PAPI_LD_INS, {0, {NATIVE_MASK | 8, 0}}},    /* Loads executed */
-   {PAPI_SR_INS, {0, {NATIVE_MASK | 19, 0}}},   /* Stores executed */
-   {PAPI_BR_INS, {0, {NATIVE_MASK | 6, 0}}},    /* Branch inst. executed */
-   {PAPI_FLOPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 21, 0}}},  /* FLOPS */
-   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, 0}}},   /* Total cycles */
+   {PAPI_CSR_TOT, {0, {NATIVE_MASK | 20, PAPI_NULL}}},  /* Total store conditional */
+   {PAPI_BR_MSP, {0, {NATIVE_MASK | 24, PAPI_NULL}}},   /* Cond. branch inst. mispred */
+   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
+   {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
+   {PAPI_FP_INS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
+   {PAPI_LD_INS, {0, {NATIVE_MASK | 8, PAPI_NULL}}},    /* Loads executed */
+   {PAPI_SR_INS, {0, {NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
+   {PAPI_BR_INS, {0, {NATIVE_MASK | 6, PAPI_NULL}}},    /* Branch inst. executed */
+   {PAPI_FLOPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 21, PAPI_NULL}}},  /* FLOPS */
+   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},   /* Total cycles */
    {PAPI_IPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 15, 0}}},    /* IPS */
    {0, {0, {0, 0}}}             /* The END */
 };
 
 
 hwi_search_t findem_r12k[] = {  /* Shared with R14K */
-   {PAPI_L1_DCM, {0, {NATIVE_MASK | 25, 0}}},   /* L1 D-Cache misses */
-   {PAPI_L1_ICM, {0, {NATIVE_MASK | 9, 0}}},    /* L1 I-Cache misses */
-   {PAPI_L2_DCM, {0, {NATIVE_MASK | 26, 0}}},   /* L2 D-Cache misses */
-   {PAPI_L2_ICM, {0, {NATIVE_MASK | 10, 0}}},   /* L2 I-Cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {NATIVE_MASK | 9, NATIVE_MASK | 25, 0}}},        /* L1 total */
-   {PAPI_L2_TCM, {DERIVED_ADD, {NATIVE_MASK | 10, NATIVE_MASK | 26, 0}}},       /* L2 total */
-   {PAPI_CA_INV, {0, {NATIVE_MASK | 13, 0}}},   /* Cache Line Invalidation */
-   {PAPI_CA_ITV, {0, {NATIVE_MASK | 12, 0}}},   /* Cache Line Intervention */
-   {PAPI_TLB_TL, {0, {NATIVE_MASK | 23, 0}}},   /* Total TLB misses */
-   {PAPI_PRF_DM, {0, {NATIVE_MASK | 17, 0}}},   /* Prefetch miss */
-   {PAPI_CSR_FAL, {0, {NATIVE_MASK | 5, 0}}},   /* Failed store conditional */
-   {PAPI_CSR_SUC, {DERIVED_SUB, {NATIVE_MASK | 20, NATIVE_MASK | 5, 0}}},
+   {PAPI_L1_DCM, {0, {NATIVE_MASK | 25, PAPI_NULL}}},   /* L1 D-Cache misses */
+   {PAPI_L1_ICM, {0, {NATIVE_MASK | 9, PAPI_NULL}}},    /* L1 I-Cache misses */
+   {PAPI_L2_DCM, {0, {NATIVE_MASK | 26, PAPI_NULL}}},   /* L2 D-Cache misses */
+   {PAPI_L2_ICM, {0, {NATIVE_MASK | 10, PAPI_NULL}}},   /* L2 I-Cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {NATIVE_MASK | 9, NATIVE_MASK | 25, PAPI_NULL}}},        /* L1 total */
+   {PAPI_L2_TCM, {DERIVED_ADD, {NATIVE_MASK | 10, NATIVE_MASK | 26, PAPI_NULL}}},       /* L2 total */
+   {PAPI_CA_INV, {0, {NATIVE_MASK | 13, PAPI_NULL}}},   /* Cache Line Invalidation */
+   {PAPI_CA_ITV, {0, {NATIVE_MASK | 12, PAPI_NULL}}},   /* Cache Line Intervention */
+   {PAPI_TLB_TL, {0, {NATIVE_MASK | 23, PAPI_NULL}}},   /* Total TLB misses */
+   {PAPI_PRF_DM, {0, {NATIVE_MASK | 17, PAPI_NULL}}},   /* Prefetch miss */
+   {PAPI_CSR_FAL, {0, {NATIVE_MASK | 5, PAPI_NULL}}},   /* Failed store conditional */
+   {PAPI_CSR_SUC, {DERIVED_SUB, {NATIVE_MASK | 20, NATIVE_MASK | 5, PAPI_NULL}}},
    /* Successful store conditional */
-   {PAPI_CSR_TOT, {0, {NATIVE_MASK | 20, 0}}},  /* Total store conditional */
-   {PAPI_BR_CN, {0, {NATIVE_MASK | 6, 0}}},     /* Cond. branch inst. exe */
-   {PAPI_BR_MSP, {0, {NATIVE_MASK | 24, 0}}},   /* Cond. branch inst. mispred */
-   {PAPI_BR_PRC, {DERIVED_SUB, {NATIVE_MASK | 6, NATIVE_MASK | 24, 0}}},
+   {PAPI_CSR_TOT, {0, {NATIVE_MASK | 20, PAPI_NULL}}},  /* Total store conditional */
+   {PAPI_BR_CN, {0, {NATIVE_MASK | 6, PAPI_NULL}}},     /* Cond. branch inst. exe */
+   {PAPI_BR_MSP, {0, {NATIVE_MASK | 24, PAPI_NULL}}},   /* Cond. branch inst. mispred */
+   {PAPI_BR_PRC, {DERIVED_SUB, {NATIVE_MASK | 6, NATIVE_MASK | 24, PAPI_NULL}}},
    /* Cond. branch inst. correctly pred */
-   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, 0}}},   /* Total inst. issued */
-   {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, 0}}},  /* Total inst. executed */
-   {PAPI_FP_INS, {0, {NATIVE_MASK | 21, 0}}},   /* Floating Pt. inst.executed */
-   {PAPI_LD_INS, {0, {NATIVE_MASK | 18, 0}}},   /* Loads executed */
-   {PAPI_SR_INS, {0, {NATIVE_MASK | 19, 0}}},   /* Stores executed */
-   {PAPI_FLOPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 21, 0}}},  /* FLOPS */
-   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, 0}}},   /* Total cycles */
-   {PAPI_IPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 15, 0}}},    /* IPS */
-   {PAPI_LST_INS, {DERIVED_ADD, {NATIVE_MASK | 18, NATIVE_MASK | 19, 0}}},
+   {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
+   {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
+   {PAPI_FP_INS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
+   {PAPI_LD_INS, {0, {NATIVE_MASK | 18, PAPI_NULL}}},   /* Loads executed */
+   {PAPI_SR_INS, {0, {NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
+   {PAPI_FLOPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 21, PAPI_NULL}}},  /* FLOPS */
+   {PAPI_TOT_CYC, {0, {NATIVE_MASK | 0, PAPI_NULL}}},   /* Total cycles */
+   {PAPI_IPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 15, PAPI_NULL}}},    /* IPS */
+   {PAPI_LST_INS, {DERIVED_ADD, {NATIVE_MASK | 18, NATIVE_MASK | 19, PAPI_NULL}}},
    /* Total load/store inst. exec */
    {0, {0, {0, 0}}}             /* The END */
 };
