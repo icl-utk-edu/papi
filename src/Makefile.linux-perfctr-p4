@@ -1,8 +1,8 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR = ./perfctr
+PERFCTR = ./perfctr-2.4.5
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -g -Wall -DDEBUG
-TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS -DPENTIUM4
+OPTFLAGS= -O -g -Wall -mpentiumpro -DDEBUG
+TOPTFLAGS= -g -Wall -mpentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
 #
 # GNU G77 section
 #
@@ -35,7 +35,7 @@ SHLIB   = libpapi.so
 SUBSTR	= perfctr-p4
 MSUBSTR	= linux-perfctr-p4
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr patch for all Pentium IVs"
+DESCR	= "Linux with PerfCtr 2.4.5 patch for all Pentium IVs"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
@@ -56,11 +56,11 @@ linux.o: linux.c
 
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)/usr.lib
-	-$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
 native_clean:
 	$(MAKE) -C $(PERFCTR) clean
 
 native_install:
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
+	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(DESTDIR)/include
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
