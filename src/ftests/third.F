@@ -106,8 +106,7 @@
 
       call PAPIf_start(es2, retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error in PAPIf_start')
-        call ftests_fail(__FILE__,retval)
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
