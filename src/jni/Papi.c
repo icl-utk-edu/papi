@@ -321,15 +321,15 @@ JNIEXPORT jobject JNICALL Java_PapiJ_get_1executable_1info
     return NULL;
 
   mid = (*env)->GetMethodID(env, class, "<init>", 
-    "(Ljava/lang/String;Ljava/lang/String;JJJJJJLjava/lang/String;)V");
+    "(Ljava/lang/String;Ljava/lang/String;JJJJJJ)V");
 
+  fprintf(stderr, "%s\n", exe->fullname);
   exe_obj = (*env)->NewObject(env, class, mid, 
     (*env)->NewStringUTF(env,exe->fullname), 
-    (*env)->NewStringUTF(env,exe->name),
+    (*env)->NewStringUTF(env,exe->address_info.name),
     (jlong)(jint)(exe->address_info.text_start), (jlong)(jint)(exe->address_info.text_end),
     (jlong)(jint)(exe->address_info.data_start), (jlong)(jint)(exe->address_info.data_end),
-    (jlong)(jint)(exe->address_info.bss_start), (jlong)(jint)(exe->address_info.bss_end), 
-    (*env)->NewStringUTF(env,exe->preload_info.lib_preload_env));
+    (jlong)(jint)(exe->address_info.bss_start), (jlong)(jint)(exe->address_info.bss_end));
 
   return exe_obj;
 }

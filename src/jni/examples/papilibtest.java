@@ -16,16 +16,16 @@ public class papilibtest {
 
     System.out.println("Executable info...");
     System.out.println("Full name = " + exeInfo.fullname);
-    System.out.println("Name = " + exeInfo.name);
-    System.out.println("Text start = " + exeInfo.text_start);
-    System.out.println("Text end = " + exeInfo.text_end);
-    System.out.println("Data start = " + exeInfo.data_start);
-    System.out.println("Data end = " + exeInfo.data_end);
-    System.out.println("Bss start = " + exeInfo.bss_start);
-    System.out.println("Bss end = " + exeInfo.bss_end);
+    System.out.println("Name = " + exeInfo.address_info.name);
+    System.out.println("Text start = " + exeInfo.address_info.text_start);
+    System.out.println("Text end = " + exeInfo.address_info.text_end);
+    System.out.println("Data start = " + exeInfo.address_info.data_start);
+    System.out.println("Data end = " + exeInfo.address_info.data_end);
+    System.out.println("Bss start = " + exeInfo.address_info.bss_start);
+    System.out.println("Bss end = " + exeInfo.address_info.bss_end);
 
-    System.out.println("and finally the preload env...");
-    System.out.println(exeInfo.lib_preload_env);
+    //System.out.println("and finally the preload env...");
+    //System.out.println(exeInfo.lib_preload_env);
 
 
     hwInfo = p.get_hardware_info();
