@@ -33,7 +33,7 @@ shmem: $(SHMEM)
 
 serial: $(SERIAL)
 
-calibrate: calibrate.c dummy.o $(PAPILIB)
+calibrate: calibrate.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
 
 timer_overflow: timer_overflow.c $(PAPILIB) $(UTILOBJS)
@@ -120,7 +120,7 @@ first-twice: first-twice.c $(UTILOBJS) $(PAPILIB)
 second: second.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) second.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o second
 
-flops: flops.c dummy.o $(PAPILIB)
+flops: flops.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) flops.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o flops
 
 third: third.c $(UTILOBJS) $(PAPILIB)
@@ -147,7 +147,7 @@ overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 profile: profile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
 
-pernode: pernode.c $(PAPILIB)
+pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
 
 mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
