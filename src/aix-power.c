@@ -707,12 +707,12 @@ static int setup_all_presets(pm_info_t *info)
 	    {
 	      hwd_preset_t tmp;
 	      int free_hwcntrs, need_one_hwcntr, hwcntr_num, err = 0, all_selector = 0, first = -1;
-	      unsigned char all_command[MAX_COUNTERS];
+	      unsigned char all_command[POWER_MAX_COUNTERS];
 	      char note[PAPI_MAX_STR_LEN];
 	      
 	      pmc = 0;
 	      note[0] = '\0';
-	      memset(all_command,0x00,sizeof(unsigned char)*MAX_COUNTERS);
+	      memset(all_command,0x00,sizeof(unsigned char)*POWER_MAX_COUNTERS);
 	      DBG((stderr,"Looking for preset %d, compound event\n",pnum,findem[pnum].findme[0]));
 	      while (findem[pnum].findme[pmc])
 		{
@@ -755,7 +755,7 @@ static int setup_all_presets(pm_info_t *info)
 	      
 	      if (err == 0)
 		{
-		  memcpy(preset_map[pnum].counter_cmd,all_command,sizeof(unsigned char)*MAX_COUNTERS);
+		  memcpy(preset_map[pnum].counter_cmd,all_command,sizeof(unsigned char)*POWER_MAX_COUNTERS);
 		  preset_map[pnum].selector = all_selector;
 		  preset_map[pnum].derived = findem[pnum].derived;
 		  preset_map[pnum].operand_index = first;
@@ -1036,7 +1036,7 @@ int _papi_hwd_init(EventSetInfo *zero)
 
 static int get_avail_hwcntr_bits(int cntr_avail_bits)
 {
-  int tmp = 0, i = 1 << (MAX_COUNTERS-1);
+  int tmp = 0, i = 1 << (POWER_MAX_COUNTERS-1);
   
   while (i)
     {
@@ -1050,7 +1050,7 @@ static int get_avail_hwcntr_bits(int cntr_avail_bits)
 
 static int get_avail_hwcntr_num(int cntr_avail_bits)
 {
-  int tmp = 0, i = MAX_COUNTERS - 1;
+  int tmp = 0, i = POWER_MAX_COUNTERS - 1;
   
   while (i)
     {
@@ -1076,13 +1076,11 @@ static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
     }
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
-  unsigned char tmp_cmd[MAX_COUNTERS];
-  unsigned char *codes;
+  unsigned char tmp_cmd[POWER_MAX_COUNTERS], *codes;
 
   if (EventCode & PRESET_MASK)
     { 
@@ -1122,8 +1120,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = preset_map[preset_index].counter_cmd;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
+      out->command = derived;
+      out->operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
@@ -1170,20 +1168,20 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int selector, used, preset_index;
+  int selector, used, preset_index, EventCode;
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
+  used = in->selector;
+  EventCode = in->code;
  
   if (EventCode & PRESET_MASK)
     { 
@@ -1195,7 +1193,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
     }
   else
     {
-      int hwcntr_num, code;
+      int hwcntr_num, code, old_code;
       
       /* Support for native events here, only 1 counter at a time. */
 
@@ -1204,8 +1202,9 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
+      old_code = in->command;
       code = EventCode >> 8; /* 0 through 50 */
-      if (code > 50)
+      if (old_code != code)
 	return(PAPI_EINVAL); 
 
       selector = 1 << hwcntr_num;
@@ -1217,15 +1216,15 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
     return(PAPI_EINVAL);
 
   /* Clear out counters that are part of this event. */
-  /* Remember, that selector might encode duplicate events
-     so we need to know only the ones that are used. */
   
-  this_state->selector = this_state->selector ^ (selector & used);
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
+
 {
   return(PAPI_ESBSTR);
 }
@@ -1478,7 +1477,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
 {
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
-  long long correct[MAX_COUNTERS];
+  long long correct[POWER_MAX_COUNTERS];
 
   retval = update_global_hwcounters(zero);
   if (retval)
@@ -1539,8 +1538,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }

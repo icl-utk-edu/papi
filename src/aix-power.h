@@ -10,10 +10,11 @@
 #include <sys/times.h>
 #include <procinfo.h>
 #include <sys/atomic_op.h>
+
 #include "pmapi.h"
+#define POWER_MAX_COUNTERS MAX_COUNTERS
+
 #include "papi.h"
-#include "papi_internal.h"
-#include "papiStdEventDefs.h"
 
 typedef struct hwd_control_state {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
@@ -26,6 +27,8 @@ typedef struct hwd_control_state {
   int timer_ms;  
 } hwd_control_state_t;
 
+#include "papi_internal.h"
+
 typedef struct hwd_preset {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   unsigned char selector;  
@@ -34,7 +37,7 @@ typedef struct hwd_preset {
   /* If the derived event is not associative, this index is the lead operand */
   unsigned char operand_index;
   /* Buffer to pass to the kernel to control the counters */
-  unsigned char counter_cmd[MAX_COUNTERS];
+  unsigned char counter_cmd[POWER_MAX_COUNTERS];
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
@@ -43,7 +46,7 @@ typedef struct pmapi_search {
   /* Derived code */
   int derived;
   /* Strings to look for */
-  char *(findme[MAX_COUNTERS]);
+  char *(findme[POWER_MAX_COUNTERS]);
 } pmapi_search_t;
 
 extern _etext;
