@@ -47,7 +47,6 @@ extern native_event_entry_t _papi_hwd_p2_native_map;
 extern native_event_entry_t _papi_hwd_k7_native_map;
 extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
-extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
 
 #ifdef _WIN32
@@ -152,7 +151,7 @@ inline_static int setup_p3_presets(int cputype) {
    default:
      error_return(PAPI_ESBSTR, MODEL_ERROR);
    }
-   return (_papi_hwi_setup_all_presets(preset_search_map));
+   return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
 }
 
 /* Initialize the system-specific settings */

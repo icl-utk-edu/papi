@@ -400,7 +400,7 @@ int _papi_hwd_init_global(void)
    setup_native_table();
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
-   retval = _papi_hwi_setup_all_presets(preset_search_map);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
 
    return (retval);
 }

@@ -714,7 +714,7 @@ static int get_system_info(void)
 
    /* Setup presets */
 
-   retval = _papi_hwi_setup_all_presets(preset_search_map);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
    if (retval)
       return (retval);
 

@@ -191,7 +191,7 @@ static int get_system_info(void)
       return (PAPI_ESBSTR);
 
 
-   retval = _papi_hwi_setup_all_presets(findem_ev6);
+   retval = _papi_hwi_setup_all_presets(findem_ev6, NULL);
    if (retval)
       return (retval);
 

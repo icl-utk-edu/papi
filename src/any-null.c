@@ -93,7 +93,7 @@ inline_static int setup_p3_presets(int cputype) {
       native_table = &_papi_hwd_p3_native_map;
       preset_search_map = &_papi_hwd_p3_preset_map;
    }
-   return (_papi_hwi_setup_all_presets(preset_search_map));
+   return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
 }
 
 /* Initialize the system-specific settings */

@@ -11,7 +11,6 @@
 
 extern hwi_search_t *preset_search_map;
 extern native_event_entry_t *native_table;
-extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
 
 #ifdef DEBUG
@@ -235,7 +234,7 @@ int _papi_hwd_init_global(void) {
       return (retval);
 
    /* Setup presets */
-   retval = _papi_hwi_setup_all_presets(preset_search_map);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
    if (retval)
       return (retval);
 

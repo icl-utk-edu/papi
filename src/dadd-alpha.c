@@ -183,7 +183,7 @@ static int get_system_info(void)
       return (PAPI_ESBSTR);
 
    _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
-   retval = _papi_hwi_setup_all_presets(findem_dadd);
+   retval = _papi_hwi_setup_all_presets(findem_dadd, NULL);
    if (retval)
       return (retval);
 

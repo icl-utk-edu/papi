@@ -396,7 +396,7 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   retval = _papi_hwi_setup_all_presets(preset_search_map);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
    if (retval)
       return (retval);
 
