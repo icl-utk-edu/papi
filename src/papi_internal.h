@@ -20,42 +20,35 @@
 #ifndef _PAPI_INTERNAL_H
 #define _PAPI_INTERNAL_H
 
-#include SUBSTRATE
-#include "papi_preset.h"
-
-#ifndef __func__
-#define __func__ "?"
-#endif
-
-#ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
-#define error_return(retval, format, args...){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); } return(retval); }
-#else
-#define error_return(retval, format){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); } return(retval); }
-#endif
-
 #ifdef DEBUG
+
+#ifdef __GNUC__
+#define FUNC __FUNCTION__
+#elif defined(__func__)
+#define FUNC __func__
+#else
+#define FUNC "?"
+#endif
 
   /* Debug Levels */
 
-#define DEBUG_ON                0x1
 #define DEBUG_SUBSTRATE         0x2
 #define DEBUG_API               0x4
 #define DEBUG_INTERNAL          0x8
 #define DEBUG_THREADS           0x10
 #define DEBUG_MULTIPLEX         0x20
 #define DEBUG_OVERFLOW          0x40
+#define DEBUG_PROFILE           0x80
+#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE)
 
   /* Please get rid of the DBG macro from your code */
 
-#ifdef DEBUG
 extern int _papi_hwi_debug; 
-#endif
 
-#define DBG(a) { if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__func__,__LINE__); fprintf a; } }
+#define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
+#define ISLEVEL(a) (_papi_hwi_debug&a)
 
-#define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, __func__, __LINE__)
-
-#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":"UNKNOWN")
+#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":"UNKNOWN")
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
 #define PAPIDEBUG(level,format, args...) { if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
@@ -68,6 +61,7 @@ extern int _papi_hwi_debug;
 #define THRDBG(format, args...) (PAPIDEBUG(DEBUG_THREADS,format, ## args))
 #define MPXDBG(format, args...) (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## args))
 #define OVFDBG(format, args...) (PAPIDEBUG(DEBUG_OVERFLOW,format, ## args))
+#define PRFDBG(format, args...) (PAPIDEBUG(DEBUG_PROFILE,format, ## args))
 #endif
 
 #else
@@ -84,13 +78,13 @@ extern int _papi_hwi_debug;
 #endif
 
 #ifdef NO_VARARG_MACRO          /* Prototypes */
-  #define ISLEVEL(a) (_papi_hwi_debug&a)
   void SUBDBG(char *, ...);
   void APIDBG(char *, ...);
   void INTDBG(char *, ...);
   void THRDBG(char *, ...);
   void MPXDBG(char *, ...);
   void OVFDBG(char *, ...);
+  void PRFDBG(char *, ...);
   void PAPIDEBUG(int, char *, ...);
 #endif
 
@@ -127,6 +121,39 @@ extern int _papi_hwi_debug;
 #define DERIVED_CMPD     0x8    /* Event lives in operand index but takes 2 or more codes */
 #define DERIVED_SUB      0x10   /* Sub all counters from counter with operand_index */
 #define DERIVED_POSTFIX  0x20   /* Process counters based on specified postfix string */
+
+/* Thread related: thread local storage */
+
+#define LOWLEVEL_TLS		PAPI_NUM_TLS+0
+#define NUM_INNER_TLS   	1
+#define PAPI_MAX_TLS		(NUM_INNER_TLS+PAPI_NUM_TLS)
+
+/* Thread related: locks */
+
+#define INTERNAL_LOCK      	PAPI_NUM_LOCK+0       /* papi_internal.c */
+#define MULTIPLEX_LOCK     	PAPI_NUM_LOCK+1       /* multiplex.c */
+#define THREADS_LOCK		PAPI_NUM_LOCK+2       /* threads.c */
+#define HIGHLEVEL_LOCK		PAPI_NUM_LOCK+3       /* papi_hl.c */
+#define SUBSTRATE_LOCK          PAPI_NUM_LOCK+4       /* <substrate.c> */
+#define GLOBAL_LOCK          	PAPI_NUM_LOCK+5       /* papi.c for global variable (static and non) initialization/shutdown */
+#define NUM_INNER_LOCK         	6
+#define PAPI_MAX_LOCK         	(NUM_INNER_LOCK+PAPI_NUM_LOCK)
+
+/* extras related */
+
+#define NEED_CONTEXT		1
+#define DONT_NEED_CONTEXT 	0
+
+/* DEFINES END HERE */
+
+#ifdef _WIN32
+  /* Define SUBSTRATE to map to linux-perfctr.h
+   * since we haven't figured out how to assign a value 
+   * to a label at make inside the Windows IDE */
+#define SUBSTRATE "linux-perfctr.h"
+#endif
+#include SUBSTRATE
+#include "papi_preset.h"
 
 typedef struct _EventSetDomainInfo {
    int domain;
@@ -260,36 +287,9 @@ typedef struct _MPX_EventSet {
 
 typedef MPX_EventSet *EventSetMultiplexInfo_t;
 
-/* Threads */
+/* Opaque struct, not defined yet...due to threads.h <-> papi_internal.h */
 
-/* Other Thread Level Storage is defined in papi.h
- * this is so the user is not exposed to our thread
- * storage (At least not specifically exposed ;)
- */
-
-#define PAPI_TLS_LOW_LEVEL	0
-#define PAPI_TLS_HIGH_LEVEL	1
-
-
-typedef struct _ThreadInfo {
-   pid_t pid;
-   unsigned long int tid;
-   hwd_context_t context;
-   void *event_set_overflowing;
-   void *event_set_profiling;
-   int running_eventset;  /* -1 means no eventset is running */
-   int domain;
-   void *thread_storage[PAPI_MAX_THREAD_STORAGE];
-} ThreadInfo_t;
-
-extern ThreadInfo_t *default_master_thread;
-
-typedef struct _thread_list {
-   ThreadInfo_t *master;
-   struct _thread_list *next;
-} ThreadInfoList_t;
-/* End of Threads */
-
+struct _ThreadInfo;
 
 typedef struct _EventSetInfo {
    unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
@@ -332,15 +332,7 @@ typedef struct _EventSetInfo {
 
    EventSetProfileInfo_t profile;
 
-#if 0
-   EventSetInheritInfo_t inherit;
-
-/* Are these needed here, or do they occur only in the ThreadInfo structure? */
-   struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
-   struct _EventSetInfo *event_set_profiling;   /* EventSets that are profiling */
-#endif
-
-   ThreadInfo_t *master;
+   struct _ThreadInfo *master;
 
 } EventSetInfo_t;
 
@@ -463,7 +455,9 @@ typedef struct _papi_mdi {
 
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
+extern int _papi_hwi_using_signal;
 
+#include "threads.h"
 #include "papi_protos.h"
 
 #endif                          /* PAPI_INTERNAL_H */

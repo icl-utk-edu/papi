@@ -99,9 +99,20 @@ All of the functions in the PerfAPI should use the following set of constants.
  * for internal PAPI use, so if you change anything
  * make sure to look at both places -KSL
  */
-#define PAPI_TLS_USER_LEVEL1		2
-#define PAPI_TLS_USER_LEVEL2		3
-#define PAPI_MAX_THREAD_STORAGE		4
+
+#define PAPI_USR1_TLS		0
+#define PAPI_USR2_TLS		1
+#define PAPI_HIGH_LEVEL_TLS     2
+#define PAPI_NUM_TLS		3
+
+/* Locking Mechanisms defines 
+ * This can never go over 31, because of the Cray T3E uses
+ * _semt which has a max index of 31 
+ */
+
+#define PAPI_USR1_LOCK          	0       /* User controlled locks */
+#define PAPI_USR2_LOCK          	1       /* User controlled locks */
+#define PAPI_NUM_LOCK           	2       /* Used with setting up array */
 
 /* Vendor definitions */
 
@@ -149,8 +160,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_OVERFLOWING  0x10  /* EventSet has overflowing enabled */
 #define PAPI_PROFILING    0x20  /* EventSet has profiling enabled */
 #define PAPI_MULTIPLEXING 0x40  /* EventSet has multiplexing enabled */
-#define PAPI_ACCUMULATING 0x80  /* EventSet has accumulating enabled */
-#define PAPI_HWPROFILING  0x100 /* EventSet has hardware profiling enabled */
 
 /* Error predefines */
 
@@ -470,19 +479,6 @@ read the documentation carefully.  */
                                                 NOTE: could also be implemented for native events. */
    } PAPI_event_info_t;
 
-/* Locking Mechanisms defines 
- * This can never go over 31, because of the Cray T3E uses
- * _semt which has a max index of 31 
- */
-#define PAPI_INTERNAL_LOCK      	0       /* Used in Internal PAPI routines */
-#define PAPI_MULTIPLEX_LOCK     	1       /* Only used in multiplexing */
-#define PAPI_THREAD_STORAGE_LOCK	2       /* Only used with thr storage */
-#define PAPI_HIGHLEVEL_LOCK		3       /* Used in the high level */
-#define PAPI_USR1_LOCK          	4       /* User controlled locks */
-#define PAPI_USR2_LOCK          	5       /* User controlled locks */
-#define PAPI_MAX_LOCK           	6       /* Used with setting up array */
-
-
 /* The Low Level API (Alphabetical) */
    int   PAPI_accum(int EventSet, long_long * values);
    int   PAPI_add_event(int EventSet, int Event);
@@ -511,7 +507,7 @@ read the documentation carefully.  */
    int   PAPI_is_initialized(void);
    int   PAPI_library_init(int version);
    int   PAPI_list_events(int EventSet, int *Events, int *number);
-   void  PAPI_lock(int);
+   int  PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
    int   PAPI_num_events(int EventSet);
@@ -539,7 +535,8 @@ read the documentation carefully.  */
    char *PAPI_strerror(int);
    unsigned long PAPI_thread_id(void);
    int   PAPI_thread_init(unsigned long int (*id_fn) (void));
-   void  PAPI_unlock(int);
+   int   PAPI_unlock(int);
+   int   PAPI_unregister_thread(void);
    int   PAPI_write(int EventSet, long_long * values);
 
    /* These functions are implemented in the hwi layers, but not the hwd layers.
