@@ -113,7 +113,7 @@ void Thread(int n)
 
 int main()
 {
-  int i, rc, maxthr, retval;
+  int i, maxthr, retval;
   long long elapsed_us, elapsed_cyc;
   char errstring[PAPI_MAX_STR_LEN];
 
@@ -137,9 +137,14 @@ int main()
 
   maxthr = omp_get_num_procs();
 
+#if defined(sgi)
+#pragma omp parallel for private(i) schedule(static)
+  for (i=1;i<3;i++)
+#else
 #pragma omp parallel for
-  for (i=0;i<2*maxthr;i++)
-    Thread(1000000);
+  for (i=1;i<maxthr+1;i++)
+#endif
+    Thread(1000000*i);
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 

@@ -51,7 +51,7 @@ Master pthread:
 
 void Thread(int t, int n)
 {
-  int retval, num_tests = 1, tmp;
+  int retval, num_tests = 1;
   int EventSet1;
   int mask1 = 0x5;
   int num_events1;
@@ -98,7 +98,7 @@ void Thread(int t, int n)
 
 int main()
 {
-  int i, rc;
+  int i;
   long long elapsed_us, elapsed_cyc;
 
   if (PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT)
@@ -116,7 +116,8 @@ int main()
   if (PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0) == PAPI_OK)
     exit(1);
 #pragma parallel
-#pragma pfor local(i)
+#pragma local(i)
+#pragma pfor
 #elif defined(sun) && defined(sparc)
   if (PAPI_thread_init((unsigned long (*)(void))(thr_self), 0) == PAPI_OK)
     exit(1);
@@ -126,7 +127,7 @@ int main()
 #error "Architecture not included in this test file yet."
 #endif
   for (i=1;i<3;i++)
-    Thread(i,1000000*i);
+    Thread(i,10000000*i);
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
