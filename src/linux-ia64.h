@@ -34,49 +34,33 @@
 
 #include "papi.h"
 #include "linux-ia64-memory.h"
+#include "pfmwrap.h"
 
-#ifdef ITANIUM2
-#define PMU_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-#else
-#define PMU_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-#endif
+/* just to make the compile work */
+typedef struct Itanium_regmap {
+    unsigned selector;
+} Itanium_regmap_t;
 
-typedef union {
-		unsigned int  pme_vcode;		/* virtual code: code+umask combined */
-		struct		{
-			unsigned int pme_mcode:8;	/* major event code */
-			unsigned int pme_ear:1;		/* is EAR event */
-			unsigned int pme_dear:1;	/* 1=Data 0=Instr */
-			unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
-			unsigned int pme_ig1:5;		/* ignored */
-			unsigned int pme_umask:16;	/* unit mask*/
-		} pme_codes;				/* event code divided in 2 parts */
-	} pme_entry_code_t;				
-
-#define EVENT_CONFIG_T pfm_event_config_t
-#define MAX_COUNTERS 4
+typedef Itanium_regmap_t  hwd_register_map_t;
 
 typedef struct hwd_control_state {
   /* Arg to perfmonctl */
   pid_t pid;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
+  hwd_register_map_t bits;
   /* Number of values in pc */
   int pc_count;
-  /* Buffer to pass to kernel to control the counters */
 
-#ifdef ITANIUM2
-  pfarg_reg_t pc[PMU_MAX_PMCS];
-/* specific parameters for the library */
-  pfmlib_ita2_param_t ita_lib_param;
-#else
-  pfarg_reg_t pc[PMU_MAX_PMCS];
-/* specific parameters for the library */
-  pfmlib_ita_param_t ita_lib_param;
-#endif
+  pfmw_ita_param_t ita_lib_param;
+
+  /* Buffer to pass to kernel to control the counters */
   pfmlib_param_t evt;
-/* sampling buffer address */
+
   int overflowcount[PMU_MAX_COUNTERS];
+  u_long_long counters[PMU_MAX_COUNTERS];
+  pfarg_reg_t pd[PMU_MAX_PMCS];
+
+/* sampling buffer address */
   void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
   /* Is this event derived? */
@@ -90,16 +74,11 @@ typedef struct preset_search {
   /* Derived code */
   int derived;
   /* Strings to look for */
-
-#ifdef ITANIUM2
   char *(findme[PMU_MAX_COUNTERS]);
-#else
-  char *(findme[PMU_MAX_COUNTERS]);
-#endif
 } preset_search_t;
 
 typedef struct hwd_preset {
-  /* Is this event here? */
+  /* If present it is the event code */
   int present;   
   /* Is this event derived? */
   int derived;   
@@ -110,6 +89,32 @@ typedef struct hwd_preset {
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
+
+typedef struct Itanium_null {
+	int null_int;  /* useless int */
+} Itanium_null_t;
+
+typedef struct _Context { 
+	int init_flag;
+	hwd_control_state_t cntrl;
+}  hwd_context_t;
+
+typedef struct _ThreadInfo {
+	unsigned pid;
+	unsigned tid;
+	hwd_context_t context;
+	void *event_set_overflowing;
+    void *event_set_profiling;
+	int domain;
+} ThreadInfo_t;
+
+extern ThreadInfo_t *default_master_thread;
+
+typedef struct _thread_list  {
+	ThreadInfo_t *master;
+	struct _thread_list *next;
+}  ThreadInfoList_t;
+
 
 #include "papi_internal.h"
 

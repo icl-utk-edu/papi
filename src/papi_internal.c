@@ -263,8 +263,8 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
 
   max_counters = _papi_hwi_system_info.num_cntrs;
 /*  ESI->machdep = (hwd_control_state_t *)malloc(sizeof(hwd_control_state_t)); */
-  ESI->sw_stop = (long_long *)malloc(max_counters*sizeof(long_long)); 
-  ESI->hw_start = (long_long *)malloc(max_counters*sizeof(long_long));
+  ESI->sw_stop = (u_long_long *)malloc(max_counters*sizeof(long_long)); 
+  ESI->hw_start = (u_long_long *)malloc(max_counters*sizeof(long_long));
   ESI->EventInfoArray = (EventInfo_t *)malloc(max_counters*sizeof(EventInfo_t));
 
   if (
@@ -696,18 +696,44 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
 int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *values)
 {
-/*
-  register int i, j = 0;
-*/
-  int retval;
+  register int i;
+  int retval, selector;
   u_long_long *dp;
 
   retval = _papi_hwd_read(context, &ESI->machdep, &dp);
   if (retval != PAPI_OK)
     return(retval);
 
+  if ((ESI->state & PAPI_OVERFLOWING) && 
+          (_papi_hwi_system_info.supports_hw_overflow)) 
+  {
+    selector = ESI->EventInfoArray[ESI->overflow.EventIndex].hwd_selector;
+    while ((i=ffs(selector)))
+    {
+      dp[i-1]+= ESI->overflow.threshold;
+      selector ^= 1<< (i-1);
+    }
+  }  
+  if ((ESI->state & PAPI_PROFILING) && 
+          (_papi_hwi_system_info.supports_hw_profile)) 
+  {
+    selector = ESI->EventInfoArray[ESI->profile.EventIndex].hwd_selector;
+    while ((i=ffs(selector)))
+    {
+      dp[i-1]+= ESI->profile.threshold;
+      selector ^= 1<< (i-1);
+    }
+    selector = ESI->EventInfoArray[ESI->profile.EventIndex].hwd_selector;
+    i = ffs(selector);
+    if ( i ) 
+      dp[i-1] += ESI->profile.threshold * ESI->profile.overflowcount;
+  }  
+
   retval = counter_reorder(ESI, dp, values);
-  return(retval);
+  if (retval != PAPI_OK)
+    return(retval);
+
+  return(PAPI_OK);
 #if 0
   for (i=0;i<EventInfoArrayLength(ESI);i++)
     {
@@ -721,9 +747,8 @@ int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *val
       if (++j == ESI->NumberOfEvents)
 	return(PAPI_OK);
     }
-#endif
-
   return(PAPI_EBUG);
+#endif
 }
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t *ESI)

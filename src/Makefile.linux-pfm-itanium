@@ -14,7 +14,7 @@ LIBS	= static shared
 # shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall -g -DPFM20 
+CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall -g -DPFM20 -DDEBUG -DPAPI3 
 TOOLPATH = ../$(LIBPFMHOME)
 # -DDEBUG
 OPTFLAGS= -O3
@@ -30,7 +30,7 @@ CC_R	= gcc -pthread
 CC	= gcc
 #F77	= /usr/local/intel/compiler50/ia64/bin/efc
 F77     = g77
-MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o
+MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o 
 MISCHDRS= pfmwrap.h $(SUBSTR)-memory.h
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 

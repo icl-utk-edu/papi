@@ -2,16 +2,18 @@
 #define _PFMWRAP_H
 
 /* copy from itanium_events.h */
- #ifdef ITANIUM2
+#ifdef ITANIUM2
   #define PME_EVENT_COUNT 475
- #else
+  #define PMU_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+#else
   #define PME_EVENT_COUNT 230
- #endif
+  #define PMU_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+#endif
+
+#define MAX_COUNTERS 4
 
  typedef pfmlib_param_t pfmw_param_t;
  typedef pfarg_reg_t pfmw_reg_t;
- typedef pfarg_context_t pfmw_context_t;
- typedef pme_entry_code_t pfmw_code_t;
 
  #ifdef ITANIUM2
   #ifndef PMU_ITA2_MAX_PMCS
@@ -39,29 +41,6 @@
   typedef pfmlib_ita_param_t pfmw_ita_param_t;
  #endif
 
- inline int pfmw_find_event(char *v, int r, int *ev) {
-     return pfm_find_event(v, ev);
- }
-
- inline int pfmw_set_options(pfmlib_options_t *opt) {
-     return pfm_set_options(opt);
- } 
-
- inline int pfmw_perfmonctl(pid_t pid, int cmd, void *arg, int narg) {
-     return perfmonctl(pid, cmd, arg, narg);
- }
-
- inline int pfmw_dispatch_events(pfmw_param_t *p, pfmw_reg_t *pc, int *count) {
-     int ret;
-/*   memset(p->pfp_pc, 0, sizeof p->pfp_pc);
-     p->pfp_pc_count = *count; */
-     ret = pfm_dispatch_events(p);
-     if (ret == PFMLIB_SUCCESS) {
- 	memcpy(pc, p->pfp_pc, sizeof(pfarg_reg_t)*PMU_MAX_PMCS);
- 	*count = p->pfp_pc_count;
-     }
-     return ret;
- }
 
  #define PFMW_PEVT_EVTCOUNT(evt)   (evt->pfp_event_count)
  #define PFMW_PEVT_EVENT(evt,i)    (evt->pfp_events[i].event)

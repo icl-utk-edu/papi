@@ -38,6 +38,12 @@ typedef struct hwd_control_state {
   papi_cpc_event_t counter_cmd;
 } hwd_control_state_t;
 
+typedef struct Solaris_regmap {
+  unsigned selector;
+} Solaris_regmap_t;
+
+typedef Solaris_regmap_t hwd_register_map_t;
+
 #include "papi_internal.h"
 
 typedef struct hwd_preset {
@@ -61,6 +67,26 @@ typedef struct hwd_search {
   /* Buffer to pass to the kernel to control the counters */
   int findme[US_MAX_COUNTERS];
 } hwd_search_t;
+
+typedef struct _Context {
+  int init_flag;
+} hwd_context_t;
+
+typedef struct _ThreadInfo {
+  unsigned pid;
+  unsigned tid;
+  hwd_context_t context;
+  void * event_set_overflowing;
+  void * event_set_profiling;
+  int domain;
+} ThreadInfo_t;
+
+extern ThreadInfo_t *default_master_thread;
+
+typedef struct _thread_list {
+  ThreadInfo_t *master;
+  struct _thread_list *next;
+} ThreadInfoList_t;
 
 /* Assembler prototypes */
 

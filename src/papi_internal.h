@@ -85,13 +85,13 @@ typedef struct _EventSetProfileInfo {
   int EventIndex;
   int EventCode;
   int flags;
+  int overflowcount; /* number of overflows */
 } EventSetProfileInfo_t;
 
 /* PAPI supports derived events that are made up of at most 2 counters. */
 
 typedef struct _EventInfo {
-  struct _EventInfo *head;  /* Always points back to EventInfoArray[0] for this EventSet.
-			       Used to optimize register allocation across an event set */
+  struct _EventInfo *head;  /* Always points back to EventInfoArray[0] for this EventSet.  Used to optimize register allocation across an event set */
   unsigned int event_code;  /* Preset or native code for this event as passed to PAPI_add_event() */
   unsigned counter_index;   /* Index of counter to read in buffer returned by the hardware/kernel
 			       This is also used for order dependent derived events to indicate

@@ -179,7 +179,7 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval;
-  long_long latest;
+  u_long_long latest;
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
 
@@ -190,9 +190,9 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 
   thread = _papi_hwi_lookup_in_thread_list();
   if (thread != NULL)
-    {
-      ESI = thread->event_set_overflowing;
-      if (ESI == NULL)
+  {
+    ESI = thread->event_set_overflowing;
+    if (ESI == NULL)
 	{
 #ifdef OVERFLOW_DEBUG_TIMER
 	  fprintf(stderr,"%lld:%s:0x%x:I'm using PAPI, but not overflowing.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)());
@@ -203,41 +203,44 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 	  return;
 	}
 
-      if ((ESI->state & PAPI_OVERFLOWING) == 0)
-	abort();
+    if ((ESI->state & PAPI_OVERFLOWING) == 0)
+	  abort();
       
-      /* Get the latest counter value */
+    /* Get the latest counter value */
       
-  retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
-      if (retval < PAPI_OK)
-	return;
+    retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
+    if (retval < PAPI_OK)
+	  return;
       
-      latest = ESI->sw_stop[ESI->overflow.EventIndex];
+    latest = ESI->sw_stop[ESI->overflow.EventIndex];
       
-  DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",
-       latest,ESI->overflow.deadline,ESI->overflow.threshold));
+    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, 
+      threshold %d\n",latest,ESI->overflow.deadline,ESI->overflow.threshold));
   
   /* Is it bigger than the deadline? */
   
-  if ((_papi_hwi_system_info.supports_hw_overflow) || (latest > ESI->overflow.deadline))
+    if ((_papi_hwi_system_info.supports_hw_overflow) || 
+             (latest > ESI->overflow.deadline))
     {
       ESI->overflow.count++;
       if (ESI->state & PAPI_PROFILING)
-	dispatch_profile(ESI, (caddr_t)context, latest - ESI->overflow.deadline, ESI->overflow.threshold); 
+	    dispatch_profile(ESI, (caddr_t)context, 
+             latest - ESI->overflow.deadline, ESI->overflow.threshold); 
       else
-	ESI->overflow.handler(ESI->EventSetIndex, ESI->overflow.EventCode, ESI->overflow.EventIndex,
-			      ESI->sw_stop, &ESI->overflow.threshold, context);
+	    ESI->overflow.handler(ESI->EventSetIndex, ESI->overflow.EventCode, 
+                ESI->overflow.EventIndex, ESI->sw_stop, 
+                &ESI->overflow.threshold, context);
       ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
-    }
+  }
 #ifdef ANY_THREAD_GETS_SIGNAL
   else
-    {
+  {
 #ifdef OVERFLOW_DEBUG
-      fprintf(stderr,"%lld:%s:0x%x:I haven't been noticed by PAPI before\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)());
+    fprintf(stderr,"%lld:%s:0x%x:I haven't been noticed by PAPI before\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)());
 #endif
-      _papi_hwi_broadcast_overflow_signal((*_papi_hwi_thread_id_fn)());
-    }
+    _papi_hwi_broadcast_overflow_signal((*_papi_hwi_thread_id_fn)());
+  }
 #endif
 }
 
