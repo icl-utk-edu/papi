@@ -23,7 +23,10 @@
 /* high level papi functions*/
 
 static int PAPI_EVENTSET_INUSE = PAPI_NULL;
-static int initialized = 0;
+static int initialized = 0; /* 1 = Library initialized
+			     * 2 = Start/read/stop counters
+			     * 3 = Flops
+			     */
 static int hl_max_counters = 0;
 
 /* CHANGE LOG:
@@ -187,6 +190,10 @@ int PAPI_start_counters(int *events, int array_len)
 {
   int i,retval;
 
+   if ( initialized == 3 ) /* flopt call */ {
+	retval = PAPI_EINVAL;
+        return retval;
+   }
   if (!initialized)
     {
       PAPI_num_counters();
@@ -235,7 +242,7 @@ int PAPI_read_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized || initialized==1)
+  if (!initialized || initialized==1 || initialized==3)
     return(PAPI_EINVAL);
 
   if (array_len > hl_max_counters)
@@ -252,7 +259,7 @@ int PAPI_accum_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized||initialized==1)
+  if (!initialized||initialized==1||initialized==3)
     return(PAPI_EINVAL);
 
   if (array_len > hl_max_counters)
