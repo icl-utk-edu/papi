@@ -35,11 +35,11 @@ int main(int argc, char **argv) {
   int eventset=PAPI_NULL;
   int events[MAXEVENTS];
 
-  events[0]=PAPI_BR_INS;
-  events[1]=PAPI_BR_PRC;
+  events[0]=PAPI_BR_PRC;
+  events[1]=PAPI_BR_INS;
   events[2]=PAPI_BR_MSP;
-  events[3]=PAPI_BR_UCN;
-  events[4]=PAPI_BR_CN;
+  events[3]=PAPI_BR_CN; 
+  events[4]=PAPI_BR_UCN;
   events[5]=PAPI_BR_TKN;
   events[6]=PAPI_BR_NTK;
 
@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
   }
 
   if ( !TESTS_QUIET ) {
-    printf("\nAccuracy check of multiplexing routines.\n");
-    printf("Comparing a multiplex measurement with separate measurements.\n\n");
+    printf("\nAccuracy check of branch presets.\n");
+    printf("Comparing a measurement with separate measurements.\n\n");
   }
 
   if((retval = PAPI_library_init(PAPI_VER_CURRENT))!=PAPI_VER_CURRENT)
@@ -78,17 +78,20 @@ int main(int argc, char **argv) {
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 #endif
 
-  nevents=MAXEVENTS;
-  for(i=0;i<nevents;i++) {
-    if((retval=PAPI_add_event(&eventset, events[i]))) {
-      for(j=i;j<MAXEVENTS;j++)
-	events[j]=events[j+1];
-      nevents--;
-      i--;
-    }
-  }
+  nevents=0;
 
-  if(nevents<2)
+  for(i=0;i<MAXEVENTS;i++) 
+    {
+      if (PAPI_query_event(events[i]) != PAPI_OK)
+	continue;
+      if (PAPI_add_event(&eventset, events[i]) == PAPI_OK) 
+	{
+	  events[nevents]=events[i];
+	  nevents++;
+	}
+    }
+
+  if(nevents<1)
     test_skip(__FILE__,__LINE__,"Not enough events left...",0);
 
   /* Find a reasonable number of iterations (each 
@@ -111,7 +114,7 @@ int main(int argc, char **argv) {
   x=1.0;
 
   if ( !TESTS_QUIET )
-    printf("\nFirst run: Multiplexed.\n");
+    printf("\nFirst run: Together.\n");
 
   t1=PAPI_get_real_usec();
   if((retval=PAPI_start(eventset)))
@@ -124,7 +127,7 @@ int main(int argc, char **argv) {
   if ( !TESTS_QUIET ) {
     printf("\tOperations= %.1f Mflop",y*1e-6);  
     printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
-    printf("PAPI multiplexed measurement:\n");
+    printf("PAPI grouped measurement:\n");
   }
   for (j=0; j<nevents; j++) {
     PAPI_label_event(events[j],des);
