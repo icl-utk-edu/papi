@@ -62,21 +62,6 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
 }
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////// unimplemented function required for PAPI3 ///////////////////
-int _papi_hwd_allocate_registers(hwd_control_state_t *control, hwd_preset_t *presets, hwd_register_map_t *map)
-{
-  return(PAPI_OK);
-}
-
-static void _papi_hwd_init_system_info() {
-//     _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_init;
-//     _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)&_etext;
-//     _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_etext+1;
-//     _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t)&_edata;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 
 static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
 {
@@ -619,6 +604,18 @@ long_long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
   return(_papi3_hwd_get_virt_usec(&machdep->context));
 }
 #endif
+
+/* Register allocation */
+
+int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *from, P4_regmap_t *out)
+{
+  /* This routine should be far more complex than below. See papiv3 branch, for instance.
+     For now, we just provide the minimum info from the preset map. */
+  *out = from->possible_registers;
+  SUBDBG("Selector %08x\n",out->hardware_event[0].selector);
+
+  return(PAPI_OK);
+}
 
 /* After this function is called, ESI->machdep has everything it needs to do a start/read/stop 
    as quickly as possible. This returns the position in the array output by _papi_hwd_read that
