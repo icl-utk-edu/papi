@@ -447,12 +447,10 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum=ESI->NativeCount;
-   for(i = 0; i < natNum; i++){
+   for(i = 0; i < natNum; i++) {
       index=ESI->NativeInfoArray[i].ni_index;
-      event_list[i].ra_selector = native_table[index].resources.selector; 
-printf("native selector = %d\n", native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
-printf("index = %d\n", ESI->NativeInfoArray[i].ni_index);
-printf("selector = %d\n", event_list[i].ra_bits.selector);
+      event_list[i].ra_bits = native_table[index].resources;
+      event_list[i].ra_selector = event_list[i].ra_bits.selector; 
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
       for(j=0;j<MAX_COUNTERS;j++) {
@@ -460,6 +458,10 @@ printf("selector = %d\n", event_list[i].ra_bits.selector);
             event_list[i].ra_rank++;
          }
       }
+printf("native selector = %d\n", native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
+printf("index = %d\n", ESI->NativeInfoArray[i].ni_index);
+printf("selector = %d\n", event_list[i].ra_selector);
+printf("rank = %d\n", event_list[i].ra_rank);
    }
    if(_papi_hwi_bipartite_alloc(event_list, natNum)){ /* successfully mapped */ 
       for(i = 0; i < natNum; i++) {
@@ -469,7 +471,7 @@ printf("selector = %d\n", event_list[i].ra_bits.selector);
          /* The selector contains the counter bit position. */
 //         ESI->NativeInfoArray[i].ni_bits.selector = event_list[i].ra_selector;
          /* Array order on perfctr is event ADD order, not counter #... */
-         ESI->NativeInfoArray[i].ni_position=ffs(event_list[i].ra_selector)-1;
+         ESI->NativeInfoArray[i].ni_position=i;
       }
       return 1;
    }
@@ -504,18 +506,19 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 
    /* fill the counters we're using */
 print_control(&this_state->control.cpu_control);
-   for(i = 0; i < count; i++){
+   for(i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
       bits = &native[i].ni_bits;
       /* Add counter control command values to eventset */
       this_state->control.cpu_control.pmc_map[bits->selector] = i;
-      this_state->control.cpu_control.evntsel[bits->selector] = bits->counter_cmd[0];
+      this_state->control.cpu_control.evntsel[bits->selector] = bits->counter_cmd[bits->selector];
    }
    this_state->control.cpu_control.nractrs = count;
 
    /* Make sure the TSC is always on */
    this_state->control.cpu_control.tsc_on = 1;
 
+printf("Updating:\n");
 print_control(&this_state->control.cpu_control);
 
    return(PAPI_OK);

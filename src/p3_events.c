@@ -20,6 +20,9 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
+native_event_entry_t *native_table;
+preset_search_t *preset_search_map;
+
 /* Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example. */
 
@@ -1661,6 +1664,14 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode) {
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits) {
+   if(EventCode > sizeof(*native_table)) return(PAPI_ENOEVNT);
    bits = &native_table[EventCode & NATIVE_AND_MASK].resources;
+   return(PAPI_OK);
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier) {
+printf("code = %d\n", *EventCode);
+   if(++*EventCode >= sizeof(*native_table)) return(PAPI_ENOEVNT);
+ //  *EventCode = *EventCode + NATIVE_MASK;
    return(PAPI_OK);
 }
