@@ -1,11 +1,15 @@
 /*
- * File:   	linux-ia64.c
- *
- * Mods:	Kevin London
- *		london@cs.utk.edu
- *              Per Ekman
- *              pek@pdc.kth.se
- */
+* File:    linux-ia64.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:	   Kevin London
+*	   london@cs.utk.edu
+*          Per Ekman
+*          pek@pdc.kth.se
+*          Zhou Min
+*          min@cs.utk.edu
+*/
 
 #include SUBSTRATE
 
@@ -248,10 +252,15 @@ static inline char *search_cpu_info(FILE *f, char *search_str, char *line)
 static inline unsigned long get_cycles(void)
 {
 	unsigned long tmp;
-
+#ifdef __INTEL_COMPILER
+#include <ia64intrin.h>
+#include <ia64regs.h> 
+	tmp = __getReg(_IA64_REG_AR_ITC);
+ 
+#else /* GCC */
 	/* XXX: need more to adjust for Itanium itc bug */
-	__asm__ __volatile__("mov %0=ar.itc" : "=r"(tmp) :: "memory");
-
+       __asm__ __volatile__("mov %0=ar.itc" : "=r"(tmp) :: "memory"); 
+#endif
 	return tmp;
 }
 
@@ -526,7 +535,7 @@ static int get_system_info(void)
   _papi_system_info.hw_info.revision = (float)tmp;
 
   rewind(f);
-  s = search_cpu_info(f,"model",maxargs);
+  s = search_cpu_info(f,"family",maxargs);
   if (s && (t = strchr(s+2,'\n')))
     {
       *t = '\0';
@@ -1949,39 +1958,29 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-#define __SMP__
-#define CONFIG_SMP
-#include <asm/atomic.h>
-static atomic_t lock;
+static volatile unsigned int lock = 0;
+static volatile unsigned int *lock_addr = &lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,1);
 }
 
 void _papi_hwd_lock(void)
 {
-  if (atomic_dec_and_test(&lock))
-    return;
-  else
+  while (1)
     {
-#ifdef DEBUG
-      volatile int waitcyc = 0;
-#endif
-      while (atomic_dec_and_test(&lock))
+      if (test_and_set_bit(0,lock_addr))
 	{
-	  DBG((stderr,"Waiting..."));
-#ifdef DEBUG
-	  waitcyc++;
-#endif
-	  atomic_inc(&lock);
+	  __asm__ __volatile__ ("mf" ::: "memory");
+	  return;
 	}
     }
 }
 
 void _papi_hwd_unlock(void)
 {
-  atomic_set(&lock, 1);
+  clear_bit(0, lock_addr);
+  __asm__ __volatile__ ("mf" ::: "memory");
 }
 
 /* Machine info structure. -1 is unused. */

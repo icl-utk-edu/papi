@@ -1,22 +1,26 @@
-LIBPFMHOME = ./libpfm-2.0
-LIBPFM  = $(LIBPFMHOME)/libpfm
+PFM_LIB_PATH = ./libpfm-2.0/libpfm
+#PFM_LIB_PATH = /usr/lib
+PFM_INC_PATH = ./libpfm-2.0
+#
+# Don't touch below here
+#
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
 MSUBSTR  = linux-ia64-libpfm2.0
 MEMSUBSTR= linux-ia64
-DESCR	= "Stock Linux 2.4.18 + for the Intel Itanium"
+DESCR	:= "Stock Linux 2.4.18 + for the Intel Itanium"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -g -Wall -I. -I$(LIBPFMHOME)/include -DPFM20 -D_ASM_IA64_PAL_H
+CFLAGS  += -g -Wall -I. -I$(PFM_INC_PATH)/include -DPFM20 -D_ASM_IA64_PAL_H
 # -DDEBUG
 OPTFLAGS= -O3
 TOPTFLAGS = -O0
 FFLAGS	=
 #  -Vaxlib
 LDFLAGS = 
-# LDFLAGS = -lPEPCF90 -lIEPCF90 -lF90 -lintrins
+#LDFLAGS = -lPEPCF90 -lIEPCF90 -lF90 -lintrins
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 CC_SHR  = gcc -shared -fpic -DCONFIG_PFMLIB_GENERIC -DCONFIG_PFMLIB_ITANIUM -DCONFIG_PFMLIB_ITANIUM2
@@ -24,18 +28,17 @@ CC_R	= gcc -pthread
 CC	= gcc
 #F77	= /usr/local/intel/compiler50/ia64/bin/efc
 F77     = g77
-MISCOBJS= $(LIBPFM)/pfmlib_itanium.o $(LIBPFM)/pfmlib_itanium2.o $(LIBPFM)/pfmlib_common.o $(LIBPFM)/pfmlib_generic.o
-MISCSRCS= $(LIBPFM)/pfmlib_itanium.c $(LIBPFM)/pfmlib_itanium2.c $(LIBPFM)/pfmlib_common.c $(LIBPFM)/pfmlib_generic.c
+MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o
 MISCHDRS= pfmwrap.h $(SUBSTR)-memory.h
+SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 
 include Makefile.inc
 
-$(MISCOBJS): $(MISCSRCS)
-	$(MAKE) -C $(LIBPFM)
-	ar xv $(LIBPFM)/libpfm.a
+$(MISCOBJS):
+	-cd $(PFM_LIB_PATH); $(MAKE)
+	ar xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-	rm -f $(MISCOBJS); cd $(LIBPFM); $(MAKE) clean
+	rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
 
 native_install:
-

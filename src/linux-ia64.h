@@ -19,14 +19,15 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <time.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#include <sys/ucontext.h>
+#include <asm/bitops.h>
 /* Include -D_ASM_IA64_PAL_H instead
 #include <asm/system.h>
 */
-#include <sys/ucontext.h>
 
 #ifdef PFM06A
 #include "mysiginfo.h"
