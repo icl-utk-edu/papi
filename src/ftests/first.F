@@ -34,13 +34,22 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#else
       call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
-      
+#endif
+ 
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -100,7 +109,7 @@
 
       print *, "TEST CASE 1: Non-overlapping start, stop, read."
       print *, "--------------------------------------------------------------
-     *-----------------------------------"
+     *--------------------"
 
       call PAPIf_get_domain(EventSet, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -109,8 +118,9 @@
       end if
 
       call stringify_domain(domain, domainstr)
-      print *, "Default domain is:", domain, " ", domainstr
-
+      write (*,900) "Default domain is:", domain, domainstr
+ 900  format(a20, i3, " ", a20)
+ 
       call PAPIf_get_granularity(eventset, granularity, PAPI_GET_DEFGRN, 
      *retval)
       if ( retval .NE. PAPI_OK ) then
@@ -119,19 +129,30 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
-      print *, "Default granularity is:", granularity, " ", grnstr
+      write (*,800) "Default granularity is:", granularity, grnstr
+ 800  format(a25, i3, " ", a20)
 
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
       print *, "--------------------------------------------------------------
-     *-----------------------------------"
+     *--------------------"
  
-      print *, "Test type    : \t1\t\t2\t\t3\t\t4\t\t5"
-      print *, "PAPI_FP_INS  :", values(1), "\t", values(3), "\t", 
-     *          values(5), "\t", values(7), "\t", values(9)
-      print *, "PAPI_TOT_CYC :", values(2), "\t", values(4), "\t", 
-     *          values(6), "\t", values(8), "\t", values(10)
+      write (*,100) "Test type", 1, 2, 3, 4, 5
+#if defined(NO_FLOPS)
+      write (*,100) "PAPI_TOT_INS", values(1), values(3), 
+     *          values(5), values(7), values(9)
+#else
+      write (*,100) "PAPI_FP_INS", values(1), values(3), 
+     *          values(5), values(7), values(9)
+#endif
+
+      write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
+     *          values(6), values(8), values(10)
+
+      write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
+     *          values(6), values(8), values(10)
+ 100  format(a13, ":  ", i11, i11, i11, i11, i11)
       print *, "--------------------------------------------------------------
-     *-----------------------------------"
+     *--------------------"
 
       print *, "Verification:"
       print *, "Column 1 approximately equals column 2"
@@ -160,7 +181,6 @@
         call ftests_fail(__FILE__,1)
       end if
 
-      
       call ftests_pass(__FILE__)
 
       end

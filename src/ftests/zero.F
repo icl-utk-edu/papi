@@ -33,13 +33,22 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( es, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#else
       call PAPIf_add_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
-      
+#endif
+ 
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -78,7 +87,8 @@
       end if
 
       call stringify_domain(domain, domainstr)
-      print *, "Default domain is:", domain, " ", domainstr
+      write (*,900) "Default domain is:", domain, domainstr
+ 900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -88,17 +98,22 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
-      print *, "Default granularity is:", granularity, " ", grnstr
+      write (*,800) "Default granularity is:", granularity, grnstr
+ 800  format(a25, i3, " ", a20)
 
       print *, "-----------------------------------------------",
      *"--------------------------"
  
-      print *, "Test type   : \t1"
-      print *, "PAPI_FP_INS : \t", values(1)
-      print *, "PAPI_TOT_CYC: \t", values(2)
-      print *, "Real usec   : \t", usn-uso
-      print *, "Real cycles : \t", cycn-cyco
- 
+      write (*,100) "Test type", 1
+#ifdef NO_FLOPS
+      write (*,100) "PAPI_FP_INS", values(1)
+#else
+      write (*,100) "PAPI_TOT_INS", values(1)
+#endif
+      write (*,100) "PAPI_TOT_CYC", values(2)
+      write (*,100) "Real usec", usn-uso
+      write (*,100) "Real cycles", cycn-cyco
+ 100  format(a13, ":", i12)
       print *, "-----------------------------------------------",
      *"--------------------------"
  

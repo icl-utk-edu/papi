@@ -32,12 +32,21 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#else
       call PAPIf_add_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
+#endif
 
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -52,13 +61,22 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#else
       call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
-      
+#endif
+ 
       call PAPIf_add_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
@@ -129,11 +147,19 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_rem_event( es1, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
+        call ftests_fail(__FILE__,retval)
+      end if
+#else
       call PAPIf_rem_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_rem_event')
         call ftests_fail(__FILE__,retval)
       end if
+#endif
 
       call PAPIf_rem_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -141,11 +167,19 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_rem_event( es2, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
+        call ftests_fail(__FILE__,retval)
+      end if
+#else
       call PAPIf_rem_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_rem_event')
         call ftests_fail(__FILE__,retval)
       end if
+#endif
       
       print *, "Test case 4: Overlapping start and stop of 2 eventsets."
       print *, "-----------------------------------------------------",
@@ -158,7 +192,8 @@
       end if
 
       call stringify_domain(domain, domainstr)
-      print *, "Default domain is:", domain, " ", domainstr
+      write (*,900) "Default domain is:", domain, domainstr
+ 900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -168,19 +203,27 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
-      print *, "Default granularity is:", granularity, " ", grnstr
+      write (*,800) "Default granularity is:", granularity, grnstr
+ 800  format(a25, i3, " ", a20)
+
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "-----------------------------------------------------",
      *"--------------------"
  
-      print *, "Test type   : \t1\t\t2\t\t3\t\t4"
-      print *, "PAPI_FP_INS : \t", values(1), "\t", values(3), "\t", 
-     * values(5), "\t", values(7)
-      print *, "PAPI_TOT_CYC: \t", values(2), "\t", values(4), "\t",
-     * values(6), "\t", values(8)
+      write (*,100), "Test type", 1, 2, 3, 4
+#if defined(NO_FLOPS)
+      write (*,100), "PAPI_TOT_INS", values(1), values(3), 
+     * values(5), values(7)
+#else
+      write (*,100), "PAPI_FP_INS", values(1), values(3), 
+     * values(5), values(7)
+#endif
+      write (*,100) "PAPI_TOT_CYC", values(2), values(4),
+     * values(6), values(8)
       print *, "-----------------------------------------------------",
      *"--------------------"
+ 100  format (a15, ":", i12, i12, i12, i12)
  
       print *, "Verification:"
       print *, "Column 1 approximately equals column 2"

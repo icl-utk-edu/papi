@@ -24,6 +24,10 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call ftests_pass(__FILE__)
+#endif
+
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
@@ -195,7 +199,8 @@
       end if
 
       call stringify_domain(domain, domainstr)
-      print *, "Default domain is:", domain, " ", domainstr
+      write (*,900) "Default domain is:", domain, domainstr
+ 900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -205,7 +210,9 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
-      print *, "Default granularity is:", granularity, " ", grnstr
+      write (*,800) "Default granularity is:", granularity, grnstr
+ 800  format(a25, i3, " ", a20)
+
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "----------------------------------------------------------

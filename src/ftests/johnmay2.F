@@ -23,8 +23,12 @@
         call ftests_perror(__LINE__,'Error in PAPIf_set_debug')
         call ftests_fail(__FILE__,retval)
       end if
-      
+
+#if defined(NO_FLOPS)
+      call PAPIf_query_event(PAPI_TOT_INS, retval)
+#else
       call PAPIf_query_event(PAPI_FP_INS, retval)
+#endif
       if ( retval.NE.PAPI_OK) then
         call ftests_perror(__LINE__,'Error in PAPIf_query_event')
         call ftests_fail(__FILE__,retval)
@@ -36,12 +40,21 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( es, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#else
       call PAPIf_add_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
+#endif
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -96,8 +109,12 @@
      *"destroy eventset."
       print *, "--------------------------------",
      *"-----------------"
-      print *, "Test run    : \t1"
-      print *, "PAPI_FP_INS : \t", values(1)
+      print *, "Test run    : 1"
+#if defined(NO_FLOPS)
+      print *, "PAPI_TOT_INS : ", values(1)
+#else
+      print *, "PAPI_FP_INS : ", values(1)
+#endif
       print *, "----------------------------------",
      *"---------------"
  

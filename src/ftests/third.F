@@ -46,13 +46,22 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call PAPIf_perror( retval, errorstring, errorcode)
+        print *, 'Can not add PAPI_TOT_INS: '//
+     *  errorstring(1:len_trim(errorstring))
+      end if
+#else
       call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
       end if
-      
+#endif
+
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_start')
@@ -123,11 +132,19 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+#if defined(NO_FLOPS)
+      call PAPIf_rem_event( es2, PAPI_TOT_INS, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'error in PAPIf_rem_event')
+        call ftests_fail(__FILE__,retval)
+      end if
+#else
       call PAPIf_rem_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_rem_event')
         call ftests_fail(__FILE__,retval)
       end if
+#endif
 
       zero="  0     "
       print *, "Test case 3: Overlapping start and stop of 2 eventsets",
@@ -142,7 +159,8 @@
       end if
 
       call stringify_domain(domain, domainstr)
-      print *, "Default domain is:", domain, " ", domainstr
+      write (*,900) "Default domain is:", domain, domainstr
+ 900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -152,23 +170,28 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
-      print *, "Default granularity is:", granularity, " ", grnstr
+      write (*,800) "Default granularity is:", granularity, grnstr
+ 800  format(a25, i3, " ", a20)
+
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "--------------------------------------------------------------
      *---------------------"
 
-      print *, "Test type   : \t  1\t\t  2\t\t  3\t\t  4\t\t  5"
-      print *, "PAPI_FP_INS : \t", zero, "\t", zero, "\t", values(5), 
-     *"\t", zero, "\t", values(9)
-      print *, "PAPI_TOT_CYC: \t", values(1), "\t", values(3), 
-     *"\t", zero, "\t", values(7), "\t", zero
+      write (*,100) "Test type", 1, 2, 3, 4, 5
+#if defined(NO_FLOPS)
+      write (*,100) "PAPI_TOT_INS", 0, 0, values(5), 0, values(9)
+#else
+      write (*,100) "PAPI_FP_INS", 0, 0, values(5), 0, values(9)
+#endif
+      write (*,100) "PAPI_TOT_CYC", values(1), values(3), 0,
+     *values(7), 0
       print *, "----------------------------------------------------------
      *---------------------"
-
+ 100  format(a15, ":", i12, i12, i12, i12, i12)
       print *, "Verification:"
-      print *, "Row 1 approximately equals ", 0, 0, "  N", 0, "  N"
-      print *, "Row 2 approximately equals X  X", 0, "  X", 0
+      print *, "Row 1 approximately equals 0  0  N  0  N"
+      print *, "Row 2 approximately equals X  X  0  X  0"
       print *, "Column 1 approximately equals column 2"
       print *, "Column 4 approximately equals three times column 1"
       print *, "Column 5 approximately equals column 3"

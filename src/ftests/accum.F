@@ -28,7 +28,12 @@
       end if
 
       number=2
+#if defined(NO_FLOPS)
+      events(1) = PAPI_TOT_INS 
+#else
       events(1) = PAPI_FP_INS 
+#endif
+
       events(2) = PAPI_TOT_CYC
       call PAPIf_add_events( es1, events, number, retval )
       if ( retval.NE.PAPI_OK) then
@@ -100,13 +105,19 @@
      *"PAPI_rem_events, PAPI_accum"
       print *, "------------------------------------------",
      *"------------------------"
-      print *, "Test type   : \t1\t\t2\t\t3\t\t4\t\t5"
-      print *, "PAPI_FP_INS : \t", values(1), "\t", values(3),
-     *"\t", values(5), "\t", values(7), "\t", values(9)
-      print *, "PAPI_TOT_CYC: \t", values(2), "\t", values(4),
-     *"\t", values(6), "\t", values(8), "\t", values(10)
+      write (*,100) "Test type", 1, 2, 3, 4, 5
+#if defined (NO_FLOPS)
+      write (*,100) "PAPI_TOT_INS", values(1), values(3),
+     *values(5), values(7), values(9)
+#else
+      write (*,100) "PAPI_FP_INS", values(1), values(3),
+     *values(5), values(7), values(9)
+#endif
+      write (*,100) "PAPI_TOT_CYC", values(2), values(4),
+     *values(6), values(8), values(10)
       print *, "------------------------------------------",
      *"------------------------"
+ 100  format(a15, ":", i12, i12, i12, i12, i12)
       print *, "\nVerification:"
       print *, "Column 2 approximately equals to 0;"
       print *, "Column 3 approximately equals 2 * Column 1;"

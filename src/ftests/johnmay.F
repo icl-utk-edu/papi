@@ -142,15 +142,16 @@
       print *, "----------------------------------------------",
      *"-------------------"
  
-      print *, "Test run    : \t  1\t\t  2\t\t  3\t\t  4"
+      write (*,100) "Test run", 1, 2, 3, 4
 #ifndef NO_FLOPS
-      print *, "PAPI_FP_INS : \t", values(1), "\t", values(3), "\t",
-     *values(5), "\t", values(7)
+      write (*,100) "PAPI_FP_INS", values(1), values(3),
+     *values(5), values(7)
 #else
-      print *, "PAPI_TOT_INS : \t", values(1), "\t", values(3), "\t",
-     *values(5), "\t", values(7)
+      write (*,100) "PAPI_TOT_INS", values(1), values(3),
+     *values(5), values(7)
 #endif
-      print *, "PAPI_TOT_CYC: \t\t\t\t\t\t\t", values(9)
+      write (*,100) "PAPI_TOT_CYC", 0, 0, 0, values(9)
+ 100  format(a15, ":", i12, i12, i12, i12)
       print *, "----------------------------------------------",
      *"---------------------------"
  
