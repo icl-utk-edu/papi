@@ -287,7 +287,9 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 #ifdef OVERFLOW_DEBUG_TIMER
 	  fprintf(stderr,"%lld:%s:0x%x:I'm using PAPI, but not overflowing.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*thread_id_fn)());
 #endif
+#ifdef ANY_THREAD_GETS_SIGNAL
 	  _papi_hwi_broadcast_overflow_signal(master_event_set->tid);
+#endif
 	  return;
 	}
 
