@@ -75,6 +75,16 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_OVRFLO  5    /*Option to query the status of the overflow
 				reporting software*/
 
+#define PAPI_SET_DEFDOM  6    /* Domain for all new eventsets */    
+#define PAPI_GET_DEFDOM  7    /* Domain for all new eventsets */    
+#define PAPI_SET_DOMAIN  8    /* Domain for an eventset */    
+#define PAPI_GET_DOMAIN  9    /* Domain for an eventset */    
+
+#define PAPI_SET_DEFGRN  10    /* Granularity for all new eventsets */    
+#define PAPI_GET_DEFGRN  11    /* Granularity for all new eventsets */    
+#define PAPI_SET_GRANUL  12    /* Granularity for an eventset */    
+#define PAPI_GET_GRANUL  13    /* Granularity for an eventset */    
+
 #define PAPI_ONESHOT	 1    /*Option to have the overflow handler called once*/
 #define PAPI_RANDOMIZE	 2    /*Option to have the threshold of the overflow
 				handler randomized*/

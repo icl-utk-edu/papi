@@ -855,7 +855,6 @@ int PAPI_add_events(int *EventSetIndex, int *EventCodes, int number)
 int PAPI_add_pevent(int *EventSetIndex, int p_code, void *inout)
 {
   int add_errorCode,hwd_errorCode,glo_errorCode,esi_errorCode;
-  void *extra; /*needed to call _papi_hwd_add_prog_event*/
   int allocated_a_new_one = 0;
   EventSetInfo *ESI;
 
@@ -879,7 +878,7 @@ int PAPI_add_pevent(int *EventSetIndex, int p_code, void *inout)
      }
 
   /* Now we have a valid ESI, try _papi_hwd_add_prog_event with p_code */
-  hwd_errorCode = _papi_hwd_add_prog_event(ESI->machdep,p_code,extra);
+  hwd_errorCode = _papi_hwd_add_prog_event(ESI->machdep,p_code,inout);
 
    /* if good _papi_hwd_add_event, see if it can be added to the eventSet*/
    /* Update the machine Independent information                         */
@@ -1290,12 +1289,13 @@ int PAPI_set_domain(int domain, int EventSet)
 /*========================================================================*/
 int PAPI_set_opt(int option, int value, PAPI_option_t *ptr)
 {
- int errorCode;
+  int errorCode;
 
-        /*check for initialization*/
-        errorCode=check_initialize();
-        if(errorCode<PAPI_OK)
-	   return(handle_error(errorCode,NULL));
+  /* check for initialization */
+
+  errorCode = check_initialize();
+  if (errorCode < PAPI_OK)
+    return(handle_error(errorCode,NULL));
 
   switch (option)
     {
@@ -1463,3 +1463,22 @@ int PAPI_reset(int EventSet)
 }
 
 
+/*========================================================================
+  This function calls the setopt with the option to set the default granularity
+  it doesn't operate on an EventSet. */
+
+int PAPI_set_granularity(int granularity)
+{ int retval;
+
+  retval = PAPI_set_opt(PAPI_SET_DEFGRN,granularity,NULL); 
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
+}
+
+int PAPI_set_domain(int domain)
+{ int retval;
+
+  retval = PAPI_set_opt(PAPI_SET_DEFDOM,domain,NULL);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
+}

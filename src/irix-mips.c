@@ -1,15 +1,21 @@
 #if defined(sgi) && defined(mips)
 
+#include <sys/hwperftypes.h>
+#include <invent.h>
 #include <time.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
-#define PAPI_NULL -1
+/* Globals to get rid of */
 
-typedef struct _hwd_preset {
-  int counter_code1;
-  int counter_code2; } hwd_control_state;
+static int fd = -1, generation = -1;
+
+static hwperf_profevctrarg_t none;
+
+/* Globals */ 
+
+typedef hwperf_profevctrarg_t hwd_control_state;
 
 static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { { -1, -1 }, };
 
@@ -17,11 +23,43 @@ static hwd_control_state current; /* not yet used. */
 
 /* Low level functions, should not handle errors, just return codes. */
 
+static int cpu(inventory_t *item, void *bar)
+{
+  if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD))
+    {
+      _papi_system_info.ncpu++;
+      _papi_system_info.mhz = item->inv_controller;
+    }
+  return(0);
+}
+
 int _papi_hwd_init(EventSetInfo *zero)
 {
-  zero->machdep = (void *)&current;
+  char pfile[80];
+  void *foo = NULL;
+  int retval;
+  pid_t pid;
 
-  /* Call sysconf and syssgi to get machine config */
+  /* Get machine config */
+
+  retval = scaninvent(cpu, foo);
+  if (retval == -1)
+    return(PAPI_ESBSTR);
+    
+  /* Acquire counters */
+
+  pid = getpid();
+  sprintf(pfile, "/proc/%05d", pid);
+  fd = open(pfile, O_RDWR);
+  if (fd == -1)
+    return(PAPI_ESBSTR);
+
+  memset(&none,0x00,sizeof(none));
+  generation = ioctl(fd,PIOCENEVCTRS, (void *)&none);
+  if (generation < 0)
+    return(PAPI_ESBSTR);
+
+  zero->machdep = (void *)&current;
 
   return(PAPI_OK);
 }
@@ -170,20 +208,20 @@ int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option)
     }
 }
 
-/* Machine info structure. -1 is PAPI_NULL. */
+/* Machine info structure. */
 
 papi_mdi _papi_system_info = { "$Id$",
-			        PAPI_NULL,
-			        PAPI_NULL, 
-			        PAPI_NULL,
-			        PAPI_NULL,
-			        PAPI_NULL,
+			        0,
+			        0, 
+			        0,
+			        0,
+			        0,
 			        2,
 			        2,
 			        0,
 			        0,
-			        PAPI_NULL, 
-			        PAPI_NULL,
+			        0, 
+			        0,
 			       sizeof(hwd_control_state), 
 			       NULL };
 #endif
