@@ -95,43 +95,11 @@ C     used in the program. See eg. fmatrixpapi.F
  100  format(a,t41,a)
       end
 
-      subroutine ftests_fail(test_str,papiretval)
-      implicit none
-      character*(*) test_str
-      character*(PAPI_MAX_STR_LEN) papi_errstr
-      integer papiretval
-      integer len_trim
-      external len_trim
-
-      if ( papiretval.eq.PAPI_ESBSTR ) then
-        call ftests_skip(test_str,papiretval)
-      end if
-      if ( papiretval.eq.PAPI_ENOEVNT ) then
-        call ftests_skip(test_str,papiretval)
-      end if
-
-      if ( papiretval.ne.0 )then
-        write(*,100) test_str,' FAILED'
-      else
-        write(*,100) test_str,' SKIPPED'
-      end if
-      if(papiretval.lt.0)then
-        call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
-        write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
-      end if
-      if(papiretval.eq.0)then
-        write(*,*) 'SGI requires root permissions for this test'
-      end if
-      call pause()
-      stop
- 100  format(a,t41,a)
-      end
-
       subroutine ftests_skip(test_str,papiretval)
       implicit none
       character*(*) test_str
       character*(PAPI_MAX_STR_LEN) papi_errstr
-      integer papiretval
+      integer papiretval,iret
       integer len_trim
       external len_trim
       integer quiet
@@ -140,7 +108,7 @@ C     used in the program. See eg. fmatrixpapi.F
       write(*,100) test_str,' SKIPPED'
       if (quiet .eq. 0) then
         if(papiretval.lt.0)then
-          call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
+          call PAPIF_perror(papiretval,papi_errstr,iret)
           write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
@@ -154,13 +122,13 @@ C     used in the program. See eg. fmatrixpapi.F
       character*(*) file
       integer line
       character*(*) callstr
-      integer retval
+      integer retval,ilen,iret
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer len_trim
       external len_trim
 
       if ( retval.eq.PAPI_ESBSTR .OR. retval.eq.PAPI_ENOEVNT
-     .     .OR. retval.eq.PAPI_ECNFLCT ) then
+     &    .OR. retval.eq.PAPI_ECNFLCT ) then
         call ftest_skip(file, line, callstr, retval)
       end if
       if ( retval.eq.PAPI_ENOEVNT ) then
@@ -181,9 +149,10 @@ C     used in the program. See eg. fmatrixpapi.F
       else if(retval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test'
       else
-        call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
-        write(*,*) 'PAPI error in ', callstr, 
-     *       ': ', papi_errstr(1:len_trim(papi_errstr))
+        call PAPIF_perror(retval,papi_errstr,iret)
+        ilen=len_trim(callstr)
+        write(*,'(T2,3a)') 'PAPI error in ', callstr(1:ilen), 
+     *       ': '// papi_errstr(1:len_trim(papi_errstr))
       end if
       call pause()
       stop
@@ -195,7 +164,7 @@ C     used in the program. See eg. fmatrixpapi.F
       character*(*) file
       integer line
       character*(*) callstr
-      integer retval
+      integer retval,iret,ilen
       integer quiet
       common quiet
 
@@ -211,9 +180,10 @@ C     used in the program. See eg. fmatrixpapi.F
         else if (retval.gt.0) then
           write(*,*) "Error calculating: ", callstr
         else
-          call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
-          write(*,*) 'Error in ', callstr, ' : ', 
-     *         papi_errstr(1:len_trim(papi_errstr))
+          call PAPIF_perror(retval,papi_errstr,iret)
+          ilen=len_trim(callstr)
+          write(*,'(T2,3a)') 'Error in ', callstr(1:ilen),
+     *         ': ' // papi_errstr(1:len_trim(papi_errstr))
         end if
       end if
       call pause()
