@@ -885,6 +885,11 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+int _papi_hwd_shutdown_global(void)
+{
+  return(PAPI_OK);
+}
+
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
   if (preset_map[preset_index].selector == 0)
@@ -1033,10 +1038,8 @@ papi_mdi _papi_system_info = { "$Id$",
 
 void __pdf_th_create(void)
 {
-  extern PAPI_notify_handler_t thread_notifier;
 }
 
 void __pdf_th_destroy(void)
 {
-  extern PAPI_notify_handler_t thread_notifier;
 }

@@ -9,6 +9,7 @@ NOOPT	= -O0
 CC_R	= cc
 CC	= cc
 F77	= f90
+FFLAGS  = -F
 MISCOBJS= perfctrl.o
 
 include Makefile.inc

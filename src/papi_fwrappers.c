@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#if defined ( _CRAYT3E ) 
+#include  <stdlib.h>
+#include  <fortran.h>  
+#endif
 #include "papi.h"
 
 /* Lets use defines to rename all the files */
@@ -59,9 +63,19 @@ PAPI_FCALL(papif_list_events,PAPIF_LIST_EVENTS,(int *EventSet, int *Events, int 
   *check = PAPI_list_events(*EventSet, Events, number);
 }
 
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, _fcd destination, int *length, int *check))
+#else
 PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *length, int *check))
+#endif
 {
+#if defined( _CRAYT3E )
+  char tmp[PAPI_MAX_STR_LEN];
+  *check = PAPI_perror(*code, tmp, *length);
+  strncpy( _fcdtocp(destination), tmp, strlen(tmp));
+#else
   *check = PAPI_perror(*code, destination, *length);
+#endif
 }
 
 PAPI_FCALL(papif_query_event,PAPIF_QUERY_EVENT,(int *EventCode, int *check))
@@ -69,14 +83,37 @@ PAPI_FCALL(papif_query_event,PAPIF_QUERY_EVENT,(int *EventCode, int *check))
   *check = PAPI_query_event(*EventCode);
 }
  
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, _fcd out, int *check))
+#else
 PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, char *out, int *check))
+#endif
 {
+#if defined( _CRAYT3E )
+  char tmp[PAPI_MAX_STR_LEN];
+  *check = PAPI_event_code_to_name(*EventCode, tmp);
+  strncpy( _fcdtocp(out), tmp, strlen(tmp));
+#else
   *check = PAPI_event_code_to_name(*EventCode, out);
+#endif
 }
 
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(_fcd in, int *out, int *check))
+#else
 PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out, int *check))
+#endif
 {
+#if defined( _CRAYT3E )
+  char tmpin[PAPI_MAX_STR_LEN]; 
+  int slen;
+  
+  slen = _fcdlen(in);
+  strncpy( tmpin, _fcdtocp(in), slen );
+  *check= PAPI_event_name_to_code(tmpin, out);
+#else
   *check= PAPI_event_name_to_code(in, out);
+#endif
 }
 
 PAPI_FCALL(papif_read,PAPIF_READ,(int *EventSet, long long *values, int *check))
@@ -139,9 +176,15 @@ PAPI_FCALL(papif_shutdown,PAPIF_SHUTDOWN,(void))
   PAPI_shutdown();
 }
 
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, int *nnodes, int *totalcpus, int *vendor,
-				    char *vendor_string, int *model, char *model_string, float *revision,
-				    float *mhz))
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+	   int *nnodes, int *totalcpus, int *vendor, _fcd vendor_string, 
+	   int *model, _fcd model_string, float *revision, float *mhz))
+#else
+PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
+	   int *model, char *model_string, float *revision, float *mhz))
+#endif
 {
   const PAPI_hw_info_t *hwinfo;
   hwinfo = PAPI_get_hardware_info();
@@ -153,9 +196,16 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, int *nnod
     *nnodes = hwinfo->nnodes;
     *totalcpus = hwinfo->totalcpus;
     *vendor = hwinfo->vendor;
-    strcpy( vendor_string, hwinfo->vendor_string );
     *model = hwinfo->model;
+#if defined ( _CRAYT3E )
+    strncpy( _fcdtocp( vendor_string), hwinfo->vendor_string,
+	     strlen( hwinfo->vendor_string) );
+    strncpy( _fcdtocp( model_string), hwinfo->model_string,
+	     strlen( hwinfo->model_string ) );
+#else
+    strcpy( vendor_string, hwinfo->vendor_string );
     strcpy( model_string, hwinfo->model_string );
+#endif    
     *revision = hwinfo->revision;
     *mhz = hwinfo->mhz;
   }

@@ -3,8 +3,8 @@
 #include <unistd.h>
 #if defined(_AIX)
 #include <sys/wait.h> /* ARGH! */
-#else
-#include <wait.h>
+#elif !defined(_CRAYT3E)
+#include <wait.h>  /* Double ARGH! */
 #endif
 #include "papi.h"
 #include "test_utils.h"
