@@ -1,15 +1,15 @@
 PAPI_SRCDIR = $(PWD)	
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
-    papi_data.c threads.c native.c $(MEMSUBSTR)-memory.c $(SUBSTR).c
+    papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c
 OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    papi_data.o threads.o native.o $(MEMSUBSTR)-memory.o $(SUBSTR).o
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h native.h $(SUBSTR).h
+    papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
 
-all: showconf nativegen $(LIBS) genpapifdef $(FHEADERS) examples
+all: showconf $(NATIVEGEN) $(LIBS) genpapifdef $(FHEADERS) examples
 
 showconf:
 		@echo; 
@@ -30,7 +30,7 @@ $(LIBRARY): $(OBJECTS)
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
 
-nativegen: nativegen.c 
+$(NATIVEGEN): nativegen.c 
 	$(CC) $(CFLAGS) $(OPTFLAGS) nativegen.c -o nativegen $(LDFLAGS)
 	./nativegen
 

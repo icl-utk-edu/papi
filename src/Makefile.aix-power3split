@@ -29,8 +29,9 @@ CC_SHR	= ld -G -r
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
-MISCSRCS= aix.c allocate.c
-MISCOBJS= aix.o allocate.o
+MISCSRCS= aix.c allocate.c native.c
+MISCOBJS= aix.o allocate.o native.o
+NATIVEGEN= nativegen
 
 include Makefile.inc
 
