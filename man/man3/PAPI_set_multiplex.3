@@ -2,11 +2,8 @@
 .TH PAPI_set_multiplex 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-.nf
 PAPI_get_multiplex \- get the multiplexing status of specified event set
-PAPI_set_multiplex \- convert a standard event set to a multiplexed 
-                      event set
-.fi
+PAPI_set_multiplex \- convert a standard event set to a multiplexed event set
 
 .SH SYNOPSIS
 .B C Interface
@@ -18,24 +15,29 @@ PAPI_set_multiplex \- convert a standard event set to a multiplexed
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_get_multiplex(C_INT\  EventSet )
-.BI PAPIF_set_multiplex(C_INT\  EventSet )
+.BI PAPIF_get_multiplex(C_INT\  EventSet,\  C_INT\  check )
+.BI PAPIF_set_multiplex(C_INT\  EventSet,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
-.B "PAPI_get_multiplex" 
-Returns 
-.I TRUE "if a PAPI event set is multiplexed, or" FALSE "if not."
+.B PAPI_get_multiplex
+tests the state of the 
+.I PAPI_MULTIPLEXING
+flag in the specified event set, returning 
+.I TRUE
+if a PAPI event set is multiplexed, or
+.I FALSE
+if not.
 .LP
-.B "PAPI_set_multiplex" 
-Converts a standard PAPI event set created by a call to 
+.B PAPI_set_multiplex
+converts a standard PAPI event set created by a call to 
 .B PAPI_create_eventset()
 into an event set capable of handling multiplexed events. This must be done 
 after calling 
 .B PAPI_multiplex_init()
 , but prior to calling 
 .B PAPI_start().
-Events can be added to an eventset either before or after converting it into
+Events can be added to an event set either before or after converting it into
 a multiplexed set, but the conversion must be done prior to using it as a
 multiplexed set.
 
@@ -45,86 +47,47 @@ multiplexed set.
 .BR "PAPI_create_eventset" (3)
 
 .SH RETURN VALUES
-.B PAPI_get_multiplex "returns either
-.I TRUE "(non-zero) or" FALSE "(zero)."
+.B PAPI_get_multiplex
+returns either
+.I TRUE
+(positive non-zero) if multiplexing is enabled for this event set,
+.I FALSE
+(zero) if multiplexing is not enabled, or
+.I PAPI_ENOEVST
+if the specified event set cannot be found.
 .LP
 On success, 
-.B PAPI_get_multiplex "returns" PAPI_OK"."
- On error, a non-zero error code is returned.
+.B PAPI_get_multiplex
+returns
+.I PAPI_OK.
+On error, a non-zero error code is returned, as described below.
 
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
-One or more of the arguments is invalid.
+One or more of the arguments is invalid, or the EventSet is already multiplexed.
 .TP
 .B "PAPI_ENOEVST"
 The EventSet specified does not exist.
 .TP
 .B "PAPI_EISRUN"
 The EventSet is currently counting events.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
 
 .SH EXAMPLES
 .nf         
 .if t .ft CW
-  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 0;
-  long_long *values;
-  PAPI_event_info_t pset;
-
-
-  /* Initialize the library */
-
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    handle_error(1);
-
-  if (PAPI_multiplex_init() != PAPI_OK)
-    handle_error(1);
+  retval = PAPI_get_multiplex(EventSet);
+  if (retval > 0) printf("This event set is ready for multiplexing\n.")
+  if (retval == 0) printf("This event set is not enabled for multiplexing\n.")
+  if (retval < 0) handle_error(retval);
   
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-
-  if (PAPI_get_multiplex(EventSet) != 0)
-    handle_error(1);
-
-  if (PAPI_set_multiplex(EventSet) != PAPI_OK)
-    handle_error(1);
-
-  if (PAPI_get_multiplex(EventSet) == 0)
-    handle_error(1);
-
-     for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
-
-      if ((pset.count) && (pset.event_code != PAPI_TOT_CYC)) {
-         if (!TESTS_QUIET)
-            printf("Adding %s\n", pset.symbol);
-
-         retval = PAPI_add_event(EventSet, pset.event_code);
-         if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-
-         if (!TESTS_QUIET) {
-            if (retval == PAPI_OK)
-               printf("Added %s\n", pset.symbol);
-            else
-               printf("Could not add %s\n", pset.symbol);
-         }
-
-         if (retval == PAPI_OK) {
-            if (++j >= max_to_add)
-               break;
-         }
-      }
-   }
-
-  values = (long_long *)malloc(max_to_add*sizeof(long_long));
-  if (values == NULL)
-    handle_error(1);
-
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
+  retval = PAPI_set_multiplex(EventSet);
+  if ((retval == PAPI_EINVAL) && (PAPI_get_multiplex(EventSet) > 0))
+    printf("This event set already has multiplexing enabled\n");
+  else if (retval != PAPI_OK) handle_error(retval);
 .if t .ft P
 .fi         
 
@@ -132,4 +95,4 @@ The EventSet is currently counting events.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_multiplex_init "(3)," PAPI_set_opt "(3)"
+.BR PAPI_multiplex_init "(3)," PAPI_set_opt "(3)," PAPI_create_eventset "(3)"
