@@ -1,0 +1,1250 @@
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/Documentation/Configure.help linux-2.0.36-new/Documentation/Configure.help
+*** linux-2.0.36-orig/Documentation/Configure.help	Tue Oct 13 22:15:48 1998
+--- linux-2.0.36-new/Documentation/Configure.help	Mon Jul 12 17:46:11 1999
+***************
+*** 958,963 ****
+--- 958,972 ----
+    running on a Pentium or PPro machine.
+    If you don't know what to do, say "386".
+  
++ CPU Performance Counter Support
++ CONFIG_PERF
++   This provides support (via a syscall) for hardware performance counters
++   present in the Pentium (untested), Pentium Pro and Pentium II. This patch
++   is a modification to that originally written by Erik Hendriks for the
++   Beowulf project at http://www.beowulf.org/software/software.html. This patch
++   is intended to provide some bug fixes and support for PAPI. See
++   http://icl.cs.utk.edu/projects/papi for further details. (mucci@cs.utk.edu)
++ 
+  Compile the kernel into the ELF object format
+  CONFIG_ELF_KERNEL
+    ELF (Executable and Linkable Format) is a format for libraries and
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/config.in linux-2.0.36-new/arch/i386/config.in
+*** linux-2.0.36-orig/arch/i386/config.in	Tue Oct 13 22:15:41 1998
+--- linux-2.0.36-new/arch/i386/config.in	Sun Feb 21 14:51:33 1999
+***************
+*** 49,54 ****
+--- 49,58 ----
+    bool 'Handle buggy SMP BIOSes with bad MTRR setup' CONFIG_MTRR
+  fi
+  
++ if [ "$CONFIG_M686" = "y" -o "$CONFIG_M586" = "y" ]; then
++   bool 'CPU Performance Counter Support' CONFIG_PERF
++ fi
++ 
+  endmenu
+  
+  source drivers/block/Config.in
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/defconfig linux-2.0.36-new/arch/i386/defconfig
+*** linux-2.0.36-orig/arch/i386/defconfig	Tue Oct 13 22:15:51 1998
+--- linux-2.0.36-new/arch/i386/defconfig	Thu Feb 18 00:27:37 1999
+***************
+*** 31,36 ****
+--- 31,37 ----
+  # CONFIG_M486 is not set
+  # CONFIG_M586 is not set
+  # CONFIG_M686 is not set
++ # CONFIG_PERF is not set
+  
+  #
+  # Floppy, IDE, and other block devices
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/Makefile linux-2.0.36-new/arch/i386/kernel/Makefile
+*** linux-2.0.36-orig/arch/i386/kernel/Makefile	Tue Oct 13 22:15:41 1998
+--- linux-2.0.36-new/arch/i386/kernel/Makefile	Thu Feb 18 00:27:37 1999
+***************
+*** 42,47 ****
+--- 42,53 ----
+  
+  endif
+  
++ ifeq ($(CONFIG_PERF),y)
++ 
++ O_OBJS += perf.o
++ 
++ endif
++ 
+  hexify:
+  	$(HOSTCC) hexify.c -o hexify
+  
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/entry.S linux-2.0.36-new/arch/i386/kernel/entry.S
+*** linux-2.0.36-orig/arch/i386/kernel/entry.S	Tue Oct 13 22:15:41 1998
+--- linux-2.0.36-new/arch/i386/kernel/entry.S	Thu Feb 18 00:27:37 1999
+***************
+*** 40,45 ****
+--- 40,46 ----
+   *	40(%esp) - %oldss
+   */
+  
++ #include <linux/config.h>
+  #include <linux/sys.h>
+  #include <linux/linkage.h>
+  #include <asm/segment.h>
+***************
+*** 707,710 ****
+--- 708,717 ----
+  	.long 0,0,0,0,0,0,0,0			/* 180 - 187 */
+  	.long 0					/* 188 STREAMS getpmsg */
+  	.long 0					/* 189 STREAMS putpmsg */
++ #ifdef CONFIG_PERF
++ 	.space (NR_syscalls-189-5)*4
++ 	.long SYMBOL_NAME(sys_perf)	/* 252 */
++ 	.space 4*4
++ #else
+  	.space (NR_syscalls-189)*4
++ #endif
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/ioport.c linux-2.0.36-new/arch/i386/kernel/ioport.c
+*** linux-2.0.36-orig/arch/i386/kernel/ioport.c	Wed Jun  3 18:17:46 1998
+--- linux-2.0.36-new/arch/i386/kernel/ioport.c	Sat Feb 20 22:00:51 1999
+***************
+*** 10,15 ****
+--- 10,16 ----
+  #include <linux/errno.h>
+  #include <linux/types.h>
+  #include <linux/ioport.h>
++ #include <linux/mm.h>
+  
+  /* Set EXTENT bits starting at BASE in BITMAP to value TURN_ON. */
+  static void set_bitmap(unsigned long *bitmap, short base, short extent, int new_value)
+***************
+*** 73,89 ****
+   * on system-call entry - see also fork() and the signal handling
+   * code.
+   */
+! asmlinkage int sys_iopl(long ebx,long ecx,long edx,
+! 	     long esi, long edi, long ebp, long eax, long ds,
+! 	     long es, long fs, long gs, long orig_eax,
+! 	     long eip,long cs,long eflags,long esp,long ss)
+  {
+! 	unsigned int level = ebx;
+  
+  	if (level > 3)
+  		return -EINVAL;
+  	if (!suser() || securelevel > 0)
+  		return -EPERM;
+! 	*(&eflags) = (eflags & 0xffffcfff) | (level << 12);
+  	return 0;
+  }
+--- 74,89 ----
+   * on system-call entry - see also fork() and the signal handling
+   * code.
+   */
+! 
+! asmlinkage int sys_iopl(unsigned long unused)
+  {
+! 	struct pt_regs * regs = (struct pt_regs *) &unused;
+! 	unsigned int level = regs->ebx;
+  
+  	if (level > 3)
+  		return -EINVAL;
+  	if (!suser() || securelevel > 0)
+  		return -EPERM;
+! 	regs->eflags = (regs->eflags & 0xffffcfff) | (level << 12);
+  	return 0;
+  }
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/ksyms.c linux-2.0.36-new/arch/i386/kernel/ksyms.c
+*** linux-2.0.36-orig/arch/i386/kernel/ksyms.c	Tue Oct 13 22:15:41 1998
+--- linux-2.0.36-new/arch/i386/kernel/ksyms.c	Sat Feb 20 22:00:51 1999
+***************
+*** 10,15 ****
+--- 10,16 ----
+  
+  extern void dump_thread(struct pt_regs *, struct user *);
+  extern int dump_fpu(elf_fpregset_t *);
++ extern char * strstr(const char *,const char *);
+  
+  static struct symbol_table arch_symbol_table = {
+  #include <linux/symtab_begin.h>
+***************
+*** 18,23 ****
+--- 19,25 ----
+  	X(dump_thread),
+  	X(dump_fpu),
+  	X(get_pt_regs_for_task),
++ 	X(strstr),
+  	XNOVERS(__do_delay),
+  	XNOVERS(down_failed),
+  	XNOVERS(down_failed_interruptible),
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c linux-2.0.36-new/arch/i386/kernel/perf.c
+*** linux-2.0.36-orig/arch/i386/kernel/perf.c	Wed Dec 31 19:00:00 1969
+--- linux-2.0.36-new/arch/i386/kernel/perf.c	Thu Jul  1 15:22:46 1999
+***************
+*** 0 ****
+--- 1,403 ----
++ /* Modified by Philip J. Mucci. mucci@cs.utk.edu (May 1999)
++    for PAPI. http://icl.cs.utk.edu/projects/papi
++ 
++    Major Modifications:
++    
++    This kernel externsion now supports a third counter. Counter 2 is
++    a software only, per process cycle counter. 
++    It counts WALL clock cycles. Counting domain settings
++    have no effect on it. To turn it on, write a 1 to configuration register
++    2 in either a call to PERF_FASTCONFIG or PERF_SET_CONFIG.
++ 
++    Added calls:
++ 
++    PERF_SYS_RESET_COUNTERS: 
++    	- Resets the values of the counters without changing configuration
++ 	registers.
++    PERF_RESET_COUNTERS: 
++    	- Resets the values of the counters without changing configuration
++ 	registers.
++    PERF_FASTCONFIG:
++    	- Configuration register transfer. 1st arg is a pointer
++ 	to an array of 3 unsigned int's. We don't need to PERF_ENABLE
++ 	if you set the proper bits on counter 0. This saves 1000's of 
++ 	cycles.
++    PERF_FASTREAD:
++    	- Read the array of 3 unsigned long long's from the scheduler
++ 	structure into arg1. This saves 1000's of cycles.
++    PERF_GET_OPT:
++    PERF_SET_OPT:
++    
++    Added options:
++ 
++    PERF_SUM_CPUS
++    	- To return cumulative counts when using the SYS interface.
++    PERF_DO_CHILDREN
++    	- Child processes/threads inherit the counting hardware setting
++ 	and lock the use of their interface. When the parent calls wait()
++ 	the values are automatically added to those in the parent. 
++ */
++ 
++ /*
++  * Pentium Pro hardware performance counter support
++  *
++  * Erik Hendriks <hendriks@cesdis.gsfc.nasa.gov>
++  * (12/15/1997)
++  */
++ #include <linux/kernel.h>
++ #include <linux/sched.h>
++ #include <linux/mm.h>
++ #include <linux/errno.h>
++ #include <asm/perf.h>
++ 
++ int do_wait(pid_t pid, unsigned int *stat_addr, int options, struct rusage *ru,
++ 	    unsigned long long *perf_counters);
++ 
++ volatile int              perf_sys_flag=0;
++ static unsigned int       perf_sys_conf   [NR_CPUS][PERF_COUNTERS];
++ static unsigned long long perf_sys_counter[NR_CPUS][PERF_COUNTERS];
++ static unsigned long long perf_sys_shadow_tsc[NR_CPUS];
++ 
++ /*--------------------------------------------------------------------
++  *
++  */
++ static
++ void remote_config(void) {
++     int i, id;
++     id = smp_processor_id();
++     for (i=0; i < PERF_COUNTERS-1; i++) {
++ 	wrmsr(MSR_EVNTSEL0+i, perf_sys_conf[id][i]);
++ 	wrmsr(MSR_PERFCTR0+i, 0);
++     }
++     perf_sys_shadow_tsc[id] = get_cycles();
++ }
++ 
++ /* The counters are set to zero after every read and the values
++  * read are accumulated in perf_sys_counter
++  */
++ static
++ void remote_read(void) {
++     int i, id;
++     unsigned long flags;
++     id = smp_processor_id();
++     save_flags(flags);
++     cli();
++     for(i=0; i < PERF_COUNTERS-1; i++) {
++ 	perf_sys_counter[id][i] += (rdmsr(MSR_PERFCTR0+i) & ((1ULL<<40)-1));
++ 	wrmsr(MSR_PERFCTR0+i, 0);
++     }
++     /* Per process TSC is last one */
++     perf_sys_counter[id][i] += get_cycles() - perf_sys_shadow_tsc[id];
++     perf_sys_shadow_tsc[id] = get_cycles(); 
++     restore_flags(flags);
++ }
++ 
++ /*--------------------------------------------------------------------
++  *
++  * System wide profiling routines.  These use routines use IPI's to
++  * read and write the registers on other processors.
++  */
++ static
++ void sys_set_config(void) {
++     smp_message_pass(MSG_ALL_BUT_SELF, MSG_EXEC_FUNC,
++ 		     (unsigned long) remote_config, 1);
++     remote_config();
++ }
++ 
++ static
++ void sys_read_counters(void) {
++     smp_message_pass(MSG_ALL_BUT_SELF, MSG_EXEC_FUNC,
++ 		     (unsigned long) remote_read, 1);
++     remote_read();
++ }
++ 
++ /*--------------------------------------------------------------------
++  *
++  */
++ static
++ int do_sys_perfop(int op, int arg1, int arg2) {
++     int i, j, retval;
++     int procid, counter;
++ 
++     if (!suser()) 
++       return -EPERM;
++ 
++     if ((perf_sys_flag) && (current->perf.options.is_sys_holder == 0))
++ 	return -EBUSY;
++ 
++     switch(op) {
++     case PERF_SYS_START:	/*----------------------------------*/
++ 	for (i=0; i < NR_CPUS; i++) perf_sys_conf[i][0] |= PERF_ENABLE;
++ 	sys_set_config();
++ 	return 0;
++     case PERF_SYS_STOP:		/*----------------------------------*/
++ 	for (i=0; i < NR_CPUS; i++) perf_sys_conf[i][0] &= ~PERF_ENABLE;
++ 	sys_set_config();
++ 	return 0;
++     case PERF_SYS_READ:		/*----------------------------------*/
++ 	counter = arg1 & 0xff;
++ 	if (counter < 0 || counter >= PERF_COUNTERS) return -EINVAL;
++ 	retval = verify_area(VERIFY_WRITE,(void *)arg2,
++ 			     sizeof(unsigned long long));
++ 	if (retval) return retval;
++ 	if (current->perf.options.sum_cpus == 0)
++ 	  {
++ 	    procid  = (arg1 >> 8) & 0xff;
++ 	    if (procid  < 0 || procid  >= NR_CPUS) return -EINVAL;
++ 	    sys_read_counters();
++ 	    memcpy_tofs((void *)arg2, &(perf_sys_counter[procid][counter]),
++ 			sizeof(unsigned long long));
++ 	    return 0;
++ 	  }
++ 	else
++ 	  {
++ 	    unsigned long long tmp_tot = 0;
++ 
++ 	    sys_read_counters();
++ 	    for (i=0; i < NR_CPUS; i++) 
++ 	      tmp_tot += perf_sys_counter[i][counter];
++ 
++ 	    memcpy_tofs((void *)arg2, &tmp_tot,sizeof(unsigned long long));
++ 	    return 0;
++ 	    }
++     case PERF_SYS_RESET:	/*----------------------------------*/
++ 	for (j=0; j < NR_CPUS; j++) 
++ 	  for (i=0; i < PERF_COUNTERS; i++) 
++ 	    perf_sys_conf   [j][i] = 0;
++ 	sys_set_config();
++ 	for (j=0; j < NR_CPUS; j++) {
++ 	  for (i=0; i < PERF_COUNTERS; i++)
++ 	    perf_sys_counter[j][i] = 0;
++ 	  perf_sys_shadow_tsc[j] = 0; }
++ 	perf_sys_flag = 0;
++ 	current->perf.options.is_sys_holder = 0;
++ 	return 0;
++     case PERF_SYS_RESET_COUNTERS:	/*----------------------------------*/
++ 	sys_read_counters();
++ 	for (j=0; j < NR_CPUS; j++) 
++ 	  for (i=0; i < PERF_COUNTERS; i++)
++ 	    perf_sys_counter[j][i] = 0;
++ 	return 0;
++     case PERF_SYS_SET_CONFIG:	/*----------------------------------*/
++ 	perf_sys_flag = 1;
++ 	current->perf.options.is_sys_holder = 1;
++ 	procid  = (arg1 >> 8) & 0xff; counter = arg1 & 0xff;
++ 	if (procid  < 0 || procid  >= NR_CPUS ||
++ 	    counter < 0 || counter >= PERF_COUNTERS) return -EINVAL;
++ 	if ((arg2 & (PERF_OS|PERF_USR)) == 0) {
++ 	    arg2 |= PERF_USR;	/* Default mode = PERF_OS */
++ 	}
++ 	perf_sys_conf[procid][counter] =
++ 	  arg2 & (PERF_OS|PERF_USR|PERF_EVNT_MASK|PERF_UNIT_MASK);
++ 	sys_set_config();
++ 	return 0;
++     case PERF_SYS_GET_CONFIG:	/*----------------------------------*/
++ 	procid  = (arg1 >> 8) & 0xff;
++ 	counter = arg1 & 0xff;
++ 	if (procid  < 0 || procid  >= NR_CPUS ||
++ 	    counter < 0 || counter >= PERF_COUNTERS) return -EINVAL;
++ 	retval = verify_area(VERIFY_WRITE, (void *)arg2, sizeof(int));
++ 	if (retval) return retval;
++ 	put_user(perf_sys_conf[procid][counter] &
++ 		 (PERF_OS|PERF_USR|PERF_EVNT_MASK|PERF_UNIT_MASK),(int *)arg2);
++ 	return 0;
++     case PERF_SYS_WRITE:	/*----------------------------------*/
++ 	procid  = (arg1 >> 8) & 0xff;
++ 	counter = arg1 & 0xff;
++ 	if (procid  < 0 || procid  >= NR_CPUS ||
++ 	    counter < 0 || counter >= PERF_COUNTERS) return -EINVAL;
++ 	retval = verify_area(VERIFY_READ,(void *)arg2,
++ 			     sizeof(unsigned long long));
++ 	if (retval) return retval;
++ 
++ 	sys_read_counters();	/* Read the counters before writing in
++ 				 * order "sync" with the hardware counters */
++ 	memcpy_fromfs(&perf_sys_counter[procid][counter], (void *) arg2,
++ 		     sizeof(unsigned long long));
++ 	return 0;
++     default:
++       return -EINVAL;
++     }
++ }
++ 
++ /*--------------------------------------------------------------------
++  * do_user_perfop
++  *
++  *  The CPU counter registers are saved before calling this 
++  *  function and restored afterwards.
++  */
++ static
++ int do_user_perfop(int op, int arg1, int arg2) {
++     int i, retval;
++ 
++     switch(op) {
++     case PERF_FASTREAD:
++ 	retval = verify_area(VERIFY_WRITE,(void *)arg1,
++ 			     PERF_COUNTERS*sizeof(unsigned long long));
++ 	if (retval) return retval;
++ 	memcpy_tofs((unsigned long long *)arg1, &current->perf.counter[0],
++ 		    PERF_COUNTERS*sizeof(unsigned long long));
++ 	return 0;
++     case PERF_FASTCONFIG:	
++ 	retval = verify_area(VERIFY_READ,(void *)arg1,
++ 			     PERF_COUNTERS*sizeof(int));
++ 	if (retval) return retval;
++ 	memcpy_fromfs(&current->perf.conf[0],(void *)arg1,
++ 		    PERF_COUNTERS*sizeof(int));
++ 	return 0;
++     case PERF_RESET_COUNTERS:
++       for (i=0; i < PERF_COUNTERS; i++) 
++ 	current->perf.counter[i] = 0;
++       return 0;
++     case PERF_RESET:		
++ 	for (i=0; i < PERF_COUNTERS; i++) 
++ 	  {
++ 	    current->perf.conf   [i] = 0;
++ 	    current->perf.counter[i] = 0;
++ 	  }
++ 	current->perf.options.do_children = 0;
++ 	current->perf.options.sum_cpus = 0;
++ 	return 0;
++     case PERF_START:
++ 	current->perf.conf[0] |= PERF_ENABLE;
++ 	return 0;
++     case PERF_STOP:
++ 	current->perf.conf[0] &= ~PERF_ENABLE;
++ 	return 0;
++     case PERF_READ:
++ 	if (arg1 < 0 || arg1 >= PERF_COUNTERS) return -EINVAL;
++ 	retval = verify_area(VERIFY_WRITE,(void *)arg2,
++ 			     sizeof(unsigned long long));
++ 	if (retval) return retval;
++ 	memcpy_tofs((unsigned long long *)arg2, &current->perf.counter[arg1],
++ 		    sizeof(unsigned long long));
++ 	return 0;
++     case PERF_SET_OPT:
++ 	{
++ 	    if (arg1 == PERF_DO_CHILDREN)
++ 		current->perf.options.do_children = (arg2 != 0);
++ 	    else if (arg1 == PERF_SUM_CPUS)
++ 		current->perf.options.sum_cpus = (arg2 != 0);
++ 	    else
++ 		return -EINVAL;
++ 	    return 0;
++ 	}
++     case PERF_GET_OPT:
++ 	{
++ 	    int tmp;
++ 
++ 	    if (arg1 == PERF_DO_CHILDREN)
++ 		tmp = (current->perf.options.do_children != 0);
++ 	    else if (arg1 == PERF_SUM_CPUS)
++ 		tmp = (current->perf.options.sum_cpus != 0);
++ 	    else
++ 		return -EINVAL;
++ 
++ 	    retval = verify_area(VERIFY_WRITE, (void *)arg2, sizeof(int));
++ 	    if (retval) return retval;
++ 	    put_user(tmp,(int *)arg2);
++ 	    return 0;
++ 	}
++     case PERF_SET_CONFIG:	/*----------------------------------*/
++ 	if (arg1 < 0 || arg1 >= PERF_COUNTERS) return -EINVAL;
++ 	if ((arg2 & (PERF_OS|PERF_USR)) == 0) 
++ 	    arg2 |= PERF_USR;	/* Default mode = PERF_USR */
++ 	current->perf.conf[arg1] =
++ 	  arg2 & (PERF_OS|PERF_USR|PERF_EVNT_MASK|PERF_UNIT_MASK);
++ 	current->perf.counter[arg1] = 0;
++ 	return 0;
++     case PERF_GET_CONFIG:
++ 	if (arg1 < 0 || arg1 >= PERF_COUNTERS) return -EINVAL;
++ 	retval = verify_area(VERIFY_WRITE, (void *)arg2, sizeof(int));
++ 	if (retval) return retval;
++ 	put_user(current->perf.conf[arg1] &
++ 		 (PERF_OS|PERF_USR|PERF_EVNT_MASK|PERF_UNIT_MASK),(int *)arg2);
++ 	return 0;
++     case PERF_WRITE:
++ 	if (arg1 < 0 || arg1 >= PERF_COUNTERS) return -EINVAL;
++ 	retval = verify_area(VERIFY_READ,(void *)arg2,
++ 			     sizeof(unsigned long long));
++ 	if (retval) return retval;
++ 	memcpy_fromfs(&current->perf.counter[arg1],
++ 		      (unsigned long long *)arg2, sizeof(unsigned long long));
++ 	return 0;
++     case PERF_WAIT:
++ 	{
++ 	    struct perf_wait_struct *p = (struct perf_wait_struct *)arg1;
++ 	    retval = verify_area(VERIFY_READ, p, sizeof(*p));
++ 	    if (retval) return retval;
++ 	    return do_wait(get_user(&p->pid), get_user(&p->status),
++ 			   get_user(&p->options),
++ 			   get_user(&p->rusage), get_user(&p->counts));
++ 	}
++     default:
++       return -EINVAL;
++     }
++ }
++ 
++ /*
++  * sys_perf
++  *
++  * syscall for manipulation of performance counters.
++  */
++ asmlinkage int
++ sys_perf(int op, int arg1, int arg2) {
++     int retval;
++ 
++     switch(op) {
++     case PERF_FASTREAD:
++     case PERF_FASTCONFIG:
++     case PERF_START:
++     case PERF_STOP:
++     case PERF_RESET:		
++     case PERF_RESET_COUNTERS:	
++     case PERF_SET_CONFIG:
++     case PERF_GET_CONFIG:
++     case PERF_SET_OPT:
++     case PERF_GET_OPT:
++     case PERF_READ:
++     case PERF_WRITE:
++     case PERF_WAIT:
++ 	/* If someone is using the system counters or if our parent has locked our counters, then bail. */
++ 	if ((perf_sys_flag) || (current->perf.options.do_children > 1)) 
++ 	  return -EBUSY; 
++ 	perf_save(current->perf.counter, &current->perf.shadow_tsc);
++ 	retval = do_user_perfop(op, arg1, arg2);
++ 	perf_restore(current->perf.conf, &current->perf.shadow_tsc);	
++ 	return retval;
++     case PERF_SYS_RESET:
++     case PERF_SYS_RESET_COUNTERS:
++     case PERF_SYS_SET_CONFIG:
++     case PERF_SYS_GET_CONFIG:
++     case PERF_SYS_START:
++     case PERF_SYS_STOP:
++     case PERF_SYS_READ:
++     case PERF_SYS_WRITE:
++ 	return do_sys_perfop(op, arg1, arg2);
++     case PERF_DEBUG:
++ 	{
++ #define load64(ll,l,h)  (l)=*((int *)&(ll));(h)=*(((int *)&(ll))+1);
++ 	    int hi0, lo0, hi1, lo1, hi2, lo2;
++ 	    printk("-[ %5d ] ------------------------------------\n",
++ 		   current->pid);
++ 	    printk("CONF   :         %08x         %08x          %08x\n",
++ 		   current->perf.conf[0], current->perf.conf[1], 
++ 		   current->perf.conf[2]);
++ 	    load64(current->perf.counter[0], lo0, hi0);
++ 	    load64(current->perf.counter[1], lo1, hi1);
++ 	    load64(current->perf.counter[2], lo2, hi2);
++ 	    printk("COUNTER: %08x%08x %08x%08x %08x%08x\n", 
++ 		   hi0, lo0, hi1, lo1, hi2, lo2);
++ 	    load64(current->perf.shadow_tsc, lo2, hi2);
++ 	    printk("SHADOW_TSC: %08x%08x\n", 
++ 		   hi2, lo2);
++ 	    printk("OPTIONS: do_children %d sum_cpus %d is_sys_holder %d\n",
++ 		   current->perf.options.do_children,
++ 		   current->perf.options.sum_cpus,
++ 		   current->perf.options.is_sys_holder);
++ 	}
++ 	return 0;
++     default:
++ 	return -EINVAL;
++     }
++ }
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/smp.c linux-2.0.36-new/arch/i386/kernel/smp.c
+*** linux-2.0.36-orig/arch/i386/kernel/smp.c	Tue Oct 13 22:15:41 1998
+--- linux-2.0.36-new/arch/i386/kernel/smp.c	Thu Feb 18 00:27:37 1999
+***************
+*** 1198,1203 ****
+--- 1198,1208 ----
+  		/*	cpu_callin_map[0]|=1<<smp_processor_id();*/
+  			break;
+  			
++ 		case MSG_EXEC_FUNC:
++ 			((void (*)(void))smp_msg_data)();
++ 			set_bit(i, (unsigned long *)&cpu_callin_map[0]);
++ 			break;
++ 		
+  		/*
+  		 *	Halt other CPU's for a panic or reboot
+  		 */
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/perf.h linux-2.0.36-new/include/asm-i386/perf.h
+*** linux-2.0.36-orig/include/asm-i386/perf.h	Wed Dec 31 19:00:00 1969
+--- linux-2.0.36-new/include/asm-i386/perf.h	Wed Jun 30 18:21:19 1999
+***************
+*** 0 ****
+--- 1,212 ----
++ #ifndef _I386_PERF_H_
++ #define _I386_PERF_H_
++ 
++ /* Countable things: (For PPro) */
++ /* Data Cache Unit (DCU) */
++ #define PERF_DATA_MEM_REFS          0x43
++ #define PERF_DCU_LINES_IN           0x45
++ #define PERF_DCU_M_LINES_IN         0x46
++ #define PERF_DCU_M_LINES_OUT        0x47
++ #define PERF_DCU_MISS_STANDING      0x48
++ 
++ /* Instruction Fetch Unit (IFU) */
++ #define PERF_IFU_IFETCH             0x80
++ #define PERF_IFU_IFETCH_MISS        0x81
++ #define PERF_ITLB_MISS              0x85
++ #define PERF_IFU_MEM_STALL          0x86
++ #define PERF_ILD_STALL              0x87
++ 
++ /* L2 Cache */
++ #define PERF_L2_IFETCH              0x28  /* MESI */
++ #define PERF_L2_LD                  0x29  /* MESI */
++ #define PERF_L2_ST                  0x2A  /* MESI */
++ #define PERF_L2_LINES_IN            0x24
++ #define PERF_L2_LINES_OUT           0x26
++ #define PERF_L2_LINES_INM           0x25
++ #define PERF_L2_LINES_OUTM          0x27
++ #define PERF_L2_RQSTS               0x2E  /* MESI */
++ #define PERF_L2_ADS                 0x21
++ #define PERF_L2_DBUS_BUSY           0x22
++ #define PERF_L2_DBUS_BUSY_RD        0x23
++ 
++ /* External Bus Logic */
++ #define PERF_BUS_DRDY_CLOCKS        0x62
++ #define PERF_BUS_LOCK_CLOCKS        0x63
++ #define PERF_BUS_REQ_OUTSTANDING    0x60
++ #define PERF_BUS_TRAN_BRD           0x65
++ #define PERF_BUS_TRAN_RFO           0x66
++ #define PERF_BUS_TRANS_WB           0x67
++ #define PERF_BUS_TRAN_IFETCH        0x68
++ #define PERF_BUS_TRAN_INVAL         0x69
++ #define PERF_BUS_TRAN_PWR           0x6A
++ #define PERF_BUS_TRAN_P             0x6B
++ #define PERF_BUS_TRANS_IO           0x6C
++ #define PERF_BUS_TRAN_DEF           0x6D
++ #define PERF_BUS_TRAN_BURST         0x6E
++ #define PERF_BUS_TRAN_ANY           0x70
++ #define PERF_BUS_TRAN_MEM           0x6F
++ #define PERF_BUS_DATA_RCV           0x64
++ #define PERF_BUS_BNR_DRV            0x61
++ #define PERF_BUS_HIT_DRV            0x7A
++ #define PERF_BUS_HITM_DRV           0x7B
++ #define PERF_BUS_SNOOP_STALL        0x7E
++ 
++ /* Floating point unit */
++ #define PERF_FLOPS                  0xC1
++ #define PERF_FP_COMP_OPS_EXE        0x10
++ #define PERF_FP_ASSIST              0x11
++ #define PERF_MUL                    0x12
++ #define PERF_DIV                    0x13
++ #define PERF_CYCLES_DIV_BUSY        0x14
++ 
++ /* Memory Ordering */
++ #define PERF_LD_BLOCK               0x03
++ #define PERF_SB_DRAINS              0x04
++ #define PERF_MISALIGN_MEM_REF       0x05
++ 
++ /* Instruction Decoding and Retirement */ 
++ #define PERF_INST_RETIRED           0xC0
++ #define PERF_UOPS_RETIRED           0xC2
++ #define PERF_INST_DECODER           0xD0
++ 
++ /* Interrupts */
++ #define PERF_HW_INT_RX              0xC8
++ #define PERF_CYCLES_INST_MASKED     0xC6
++ #define PERF_CYCLES_INT_PENDING_AND_MASKED 0xC7
++ 
++ /* Branches */
++ #define PERF_BR_INST_RETIRED        0xC4
++ #define PERF_BR_MISS_PRED_RETIRED   0xC5
++ #define PERF_BR_TAKEN_RETIRED       0xC9
++ #define PERF_BR_MISS_PRED_TAKEN_RET 0xCA
++ #define PERF_BR_INST_DECODED        0xE0
++ #define PERF_BR_BTB_MISSES          0xE2
++ #define PERF_BR_BOGUS               0xE4
++ #define PERF_BACLEARS               0xE6
++ 
++ /* Stalls */
++ #define PERF_RESOURCE_STALLS        0xA2
++ #define PERF_PARTIAL_RAT_STALLS     0xD2
++ 
++ /* Segment Register Loads */
++ #define PERF_SEGMENT_REG_LOADS      0x06
++ 
++ /* Clocks */
++ #define PERF_CPU_CLK_UNHALTED       0x79
++ 
++ /* Unit mask flags: */
++ #define PERF_SELF                 0x0000
++ #define PERF_ANY                  0x2000
++ #define PERF_CACHE_M              0x0800
++ #define PERF_CACHE_E              0x0400
++ #define PERF_CACHE_S              0x0200
++ #define PERF_CACHE_I              0x0100
++ #define PERF_CACHE_ALL            0x0F00
++ 
++ /*--------------------------------------------------------*/
++ /* Bit masks for configuration fields */
++ #define PERF_CTR_MASK          0xFF000000
++ #define PERF_INV_CTR_MASK      0x00800000
++ #define PERF_ENABLE            0x00400000
++ #define PERF_INT_ENABLE        0x00100000
++ #define PERF_PIN_CONTROL       0x00080000
++ #define PERF_EDGE_DETECT       0x00040000
++ #define PERF_OS                0x00020000
++ #define PERF_USR               0x00010000
++ #define PERF_UNIT_MASK         0x0000FF00
++ #define PERF_EVNT_MASK         0x000000FF
++ 
++ /* System calls */
++ 
++ #define PERF_RESET          0
++ #define PERF_SET_CONFIG     1
++ #define PERF_GET_CONFIG     2
++ #define PERF_START          3
++ #define PERF_STOP           4
++ #define PERF_READ           5
++ #define PERF_WRITE          6
++ #define PERF_WAIT           7
++ #define PERF_DEBUG          8
++ #define PERF_SET_OPT        9
++ #define PERF_GET_OPT        10
++ #define PERF_RESET_COUNTERS 11
++ #define PERF_FASTREAD       13
++ #define PERF_FASTCONFIG     14
++ #define PERF_SYS_RESET      20
++ #define PERF_SYS_SET_CONFIG 21
++ #define PERF_SYS_GET_CONFIG 22
++ #define PERF_SYS_START      23
++ #define PERF_SYS_STOP       24
++ #define PERF_SYS_READ       25
++ #define PERF_SYS_WRITE      26
++ #define PERF_SYS_RESET_COUNTERS 27
++ 
++ /* Options */
++ 
++ #define PERF_DO_CHILDREN    1
++ #define PERF_SUM_CPUS       2
++ 
++ /* Number of performance counters */
++ /* Counter 2 is always the virtual cycle counter. */
++ 
++ #define PERF_COUNTERS 3
++ 
++ struct perf_wait_struct {
++   pid_t  pid;
++   int   *status;
++   int    options;
++   struct rusage *rusage;
++   unsigned long long *counts;
++ };
++ 
++ #ifdef __KERNEL__
++ 
++ #define MSR_PERFCTR0 0x00C1
++ #define MSR_PERFCTR1 0x00C2
++ #define MSR_EVNTSEL0 0x0186
++ #define MSR_EVNTSEL1 0x0187
++ 
++ struct proc_perf_opt_t {
++     unsigned int do_children:16;
++     unsigned int sum_cpus:8;
++     unsigned int is_sys_holder:8;
++ };
++ 
++ struct proc_perf_t {
++     struct proc_perf_opt_t options;
++     unsigned int       conf   [PERF_COUNTERS];
++     unsigned long long counter[PERF_COUNTERS]; /* Last one is always the TSC for this process */
++     unsigned long long shadow_tsc;
++ };
++ 
++ #define PROC_PERF_INIT {{0,},{0,},{0,},0}
++ 
++ extern volatile int perf_sys_flag;
++ 
++ static inline unsigned long get_cycles (void)
++ {
++ 	unsigned long eax, edx;
++ 
++ 	__asm__ __volatile__("rdtsc":"=a" (eax), "=d" (edx));
++ 	return eax;
++ }
++ 
++ static inline
++ void perf_restore(unsigned int *config, unsigned long long *shadow_tsc) {
++     wrmsr(MSR_EVNTSEL0, config[0]);
++     wrmsr(MSR_PERFCTR0, 0);
++     wrmsr(MSR_EVNTSEL0+1, config[1]);
++     wrmsr(MSR_PERFCTR0+1, 0);
++     *shadow_tsc = get_cycles();
++ }
++ 
++ static inline
++ void perf_save(unsigned long long *counter, unsigned long long *shadow_tsc) {
++     counter[0] += (rdmsr(MSR_PERFCTR0)&((1ULL<<40)-1));
++     counter[1] += (rdmsr(MSR_PERFCTR0+1)&((1ULL<<40)-1));
++     counter[2] += get_cycles() - *shadow_tsc;
++ }
++ 
++ void perf_getctrs(struct task_struct *task, unsigned long long *dest);
++ #endif
++ #endif
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/string.h linux-2.0.36-new/include/asm-i386/string.h
+*** linux-2.0.36-orig/include/asm-i386/string.h	Tue Apr  8 11:47:46 1997
+--- linux-2.0.36-new/include/asm-i386/string.h	Sat Feb 20 22:00:51 1999
+***************
+*** 258,263 ****
+--- 258,264 ----
+  return __res;
+  }
+  
++ #if 0
+  #define __HAVE_ARCH_STRSTR
+  extern inline char * strstr(const char * cs,const char * ct)
+  {
+***************
+*** 286,291 ****
+--- 287,293 ----
+  	:"cx","dx","di","si");
+  return __res;
+  }
++ #endif
+  
+  #define __HAVE_ARCH_STRLEN
+  extern inline size_t strlen(const char * s)
+***************
+*** 437,443 ****
+  		case 0: COMMON(""); return to;
+  		case 1: COMMON("\n\tmovsb"); return to;
+  		case 2: COMMON("\n\tmovsw"); return to;
+! 		case 3: COMMON("\n\tmovsw\n\tmovsb"); return to;
+  	}
+  #undef COMMON
+  }
+--- 439,445 ----
+  		case 0: COMMON(""); return to;
+  		case 1: COMMON("\n\tmovsb"); return to;
+  		case 2: COMMON("\n\tmovsw"); return to;
+! 		default: COMMON("\n\tmovsw\n\tmovsb"); return to;
+  	}
+  #undef COMMON
+  }
+***************
+*** 588,594 ****
+  		case 0: COMMON(""); return s;
+  		case 1: COMMON("\n\tstosb"); return s;
+  		case 2: COMMON("\n\tstosw"); return s;
+! 		case 3: COMMON("\n\tstosw\n\tstosb"); return s;
+  	}
+  #undef COMMON
+  }
+--- 590,596 ----
+  		case 0: COMMON(""); return s;
+  		case 1: COMMON("\n\tstosb"); return s;
+  		case 2: COMMON("\n\tstosw"); return s;
+! 		default: COMMON("\n\tstosw\n\tstosb"); return s;
+  	}
+  #undef COMMON
+  }
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/unistd.h linux-2.0.36-new/include/asm-i386/unistd.h
+*** linux-2.0.36-orig/include/asm-i386/unistd.h	Tue Oct 13 22:15:44 1998
+--- linux-2.0.36-new/include/asm-i386/unistd.h	Thu Feb 18 00:27:37 1999
+***************
+*** 172,177 ****
+--- 172,178 ----
+  #define __NR_poll		168
+  #define __NR_getpmsg		188
+  #define __NR_putpmsg		189
++ #define __NR_perf		252
+  
+  /* XXX - _foo needs to be __foo, while __NR_bar could be _NR_bar. */
+  #define _syscall0(type,name) \
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/sched.h linux-2.0.36-new/include/linux/sched.h
+*** linux-2.0.36-orig/include/linux/sched.h	Tue Oct 13 22:17:09 1998
+--- linux-2.0.36-new/include/linux/sched.h	Tue Jul 13 03:10:05 1999
+***************
+*** 25,31 ****
+  #include <linux/smp.h>
+  #include <linux/tty.h>
+  #include <linux/sem.h>
+! 
+  /*
+   * cloning flags:
+   */
+--- 25,33 ----
+  #include <linux/smp.h>
+  #include <linux/tty.h>
+  #include <linux/sem.h>
+! #ifdef CONFIG_PERF
+! #include <asm/perf.h>
+! #endif
+  /*
+   * cloning flags:
+   */
+***************
+*** 244,249 ****
+--- 246,255 ----
+  	struct mm_struct *mm;
+  /* signal handlers */
+  	struct signal_struct *sig;
++ /* performance monitoring */
++ #ifdef CONFIG_PERF
++ 	struct proc_perf_t perf;
++ #endif
+  #ifdef __SMP__
+  	int processor;
+  	int last_processor;
+***************
+*** 281,286 ****
+--- 287,297 ----
+   *  INIT_TASK is used to set up the first task table, touch at
+   * your own risk!. Base=0, limit=0x1fffff (=2MB)
+   */
++ #ifdef CONFIG_PERF
++ #define PERF_INIT PROC_PERF_INIT,
++ #else
++ #define PERF_INIT
++ #endif
+  #define INIT_TASK \
+  /* state etc */	{ 0,DEF_PRIORITY,DEF_PRIORITY,0,0,0,0, \
+  /* debugregs */ { 0, },            \
+***************
+*** 309,314 ****
+--- 320,326 ----
+  /* files */	&init_files, \
+  /* mm */	&init_mm, \
+  /* signals */	&init_signals, \
++ /* perf */      PERF_INIT \
+  }
+  
+  extern struct   mm_struct init_mm;
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/smp.h linux-2.0.36-new/include/linux/smp.h
+*** linux-2.0.36-orig/include/linux/smp.h	Tue Oct 13 22:17:08 1998
+--- linux-2.0.36-new/include/linux/smp.h	Thu Feb 18 00:27:37 1999
+***************
+*** 39,44 ****
+--- 39,45 ----
+  #define MSG_STOP_CPU		0x0002		/* Sent to shut down slave CPU's when rebooting */
+  #define MSG_RESCHEDULE		0x0003		/* Reschedule request from master CPU */
+  
++ #define MSG_EXEC_FUNC           0x0004		 /* Execute function on all processors. */
+  #else
+  
+  /*
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/types.h linux-2.0.36-new/include/linux/types.h
+*** linux-2.0.36-orig/include/linux/types.h	Tue Oct 13 22:15:44 1998
+--- linux-2.0.36-new/include/linux/types.h	Sat Feb 20 22:00:51 1999
+***************
+*** 1,18 ****
+  #ifndef _LINUX_TYPES_H
+  #define _LINUX_TYPES_H
+  
+- #ifdef __i386__
+- #if defined(__KERNEL__) && !defined(STDC_HEADERS)
+- #if ((__GNUC_MINOR__ >= 8) || (__GNUC_MAJOR >=3))
+- #warning "This code is tested with gcc 2.7.2.x only. Using egcs/gcc 2.8.x needs"
+- #warning "additional patches that have not been sufficiently tested to include by"
+- #warning "default."
+- #warning "See http://www.suse.de/~florian/kernel+egcs.html for more information"
+- #error "Remove this if you have applied the gcc 2.8/egcs patches and wish to use them"
+- #endif
+- #endif
+- #endif
+- 
+  #include <linux/posix_types.h>
+  #include <asm/types.h>
+  
+--- 1,6 ----
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/exit.c linux-2.0.36-new/kernel/exit.c
+*** linux-2.0.36-orig/kernel/exit.c	Wed Jun  3 18:17:50 1998
+--- linux-2.0.36-new/kernel/exit.c	Wed Jun 30 19:23:30 1999
+***************
+*** 20,25 ****
+--- 20,29 ----
+  #include <asm/segment.h>
+  #include <asm/pgtable.h>
+  
++ #ifdef CONFIG_PERF
++ #include <asm/perf.h>
++ #endif
++ 
+  extern void sem_exit (void);
+  extern int acct_process (long exitcode);
+  extern void kerneld_exit(void);
+***************
+*** 591,596 ****
+--- 595,604 ----
+  	sem_exit();
+  	kerneld_exit();
+  	__exit_mm(current);
++ #ifdef CONFIG_PERF
++ 	if (current->perf.options.is_sys_holder)
++ 	  perf_sys_flag = 0;
++ #endif
+  	__exit_files(current);
+  	__exit_fs(current);
+  	__exit_sighand(current);
+***************
+*** 627,633 ****
+  	do_exit((error_code&0xff)<<8);
+  }
+  
+! asmlinkage int sys_wait4(pid_t pid,unsigned int * stat_addr, int options, struct rusage * ru)
+  {
+  	int flag, retval;
+  	struct wait_queue wait = { current, NULL };
+--- 635,645 ----
+  	do_exit((error_code&0xff)<<8);
+  }
+  
+! int do_wait(pid_t pid,unsigned int * stat_addr, int options, struct rusage * ru
+! #ifdef CONFIG_PERF
+! 	    , unsigned long long *perf_counts
+! #endif
+! 	    )
+  {
+  	int flag, retval;
+  	struct wait_queue wait = { current, NULL };
+***************
+*** 680,685 ****
+--- 692,709 ----
+  				if (stat_addr)
+  					put_user((p->exit_code << 8) | 0x7f,
+  						stat_addr);
++ #ifdef CONFIG_PERF
++ 				if (p->perf.options.do_children)
++ 				  {
++ 				    current->perf.counter[0] += p->perf.counter[0];
++ 				    current->perf.counter[1] += p->perf.counter[1];
++ 				    current->perf.counter[2] += p->perf.counter[2]; 
++ 				  }
++ 
++ 				if (perf_counts)
++ 					memcpy_tofs(perf_counts, p->perf.counter,
++ 						    sizeof(unsigned long long)*PERF_COUNTERS);
++ #endif
+  				p->exit_code = 0;
+  				retval = p->pid;
+  				goto end_wait4;
+***************
+*** 690,695 ****
+--- 714,731 ----
+  					getrusage(p, RUSAGE_BOTH, ru);
+  				if (stat_addr)
+  					put_user(p->exit_code, stat_addr);
++ #ifdef CONFIG_PERF
++ 				if (p->perf.options.do_children)
++ 				  {
++ 				    current->perf.counter[0] += p->perf.counter[0];
++ 				    current->perf.counter[1] += p->perf.counter[1];
++ 				    current->perf.counter[2] += p->perf.counter[2]; 
++ 				  }
++ 
++ 				if (perf_counts)
++ 					memcpy_tofs(perf_counts, p->perf.counter,
++ 						    sizeof(unsigned long long)*PERF_COUNTERS);
++ #endif
+  				retval = p->pid;
+  				if (p->p_opptr != p->p_pptr) {
+  					REMOVE_LINKS(p);
+***************
+*** 721,726 ****
+--- 757,771 ----
+  end_wait4:
+  	remove_wait_queue(&current->wait_chldexit,&wait);
+  	return retval;
++ }
++ 
++ asmlinkage int sys_wait4(pid_t pid,unsigned int * stat_addr, int options, struct rusage * ru)
++ {
++ 	return do_wait(pid, stat_addr, options, ru
++ #ifdef CONFIG_PERF
++ 		, 0
++ #endif
++ 		);
+  }
+  
+  #ifndef __alpha__
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/fork.c linux-2.0.36-new/kernel/fork.c
+*** linux-2.0.36-orig/kernel/fork.c	Wed Jun  3 18:17:50 1998
+--- linux-2.0.36-new/kernel/fork.c	Wed Jun 30 19:22:01 1999
+***************
+*** 25,30 ****
+--- 25,33 ----
+  #include <asm/segment.h>
+  #include <asm/system.h>
+  #include <asm/pgtable.h>
++ #ifdef CONFIG_PERF
++ #include <asm/perf.h>
++ #endif
+  
+  int nr_tasks=1;
+  int nr_running=1;
+***************
+*** 275,280 ****
+--- 278,313 ----
+  #ifdef __SMP__
+  	p->processor = NO_PROC_ID;
+  	p->lock_depth = 1;
++ #endif
++ #ifdef CONFIG_PERF
++ 	{
++ 		int i;
++ 
++ 		if (current->perf.options.do_children)
++ 		  {
++ 		    p->perf.options    = current->perf.options;
++ 		    p->perf.shadow_tsc = 0;
++ 		    if (current->perf.options.do_children == 1)
++ 		      p->perf.options.do_children = 2;
++ 		    for (i=0; i < PERF_COUNTERS; i++) 
++ 		      {
++ 			p->perf.conf[i]    = current->perf.conf[i];
++ 			p->perf.counter[i] = 0;
++ 		      }
++ 		  }
++ 		else
++ 		  {
++ 		    p->perf.options.do_children = 0;
++ 		    p->perf.options.is_sys_holder = 0;
++ 		    p->perf.options.sum_cpus = 0;
++ 		    p->perf.shadow_tsc = 0;
++ 		    for (i=0; i < PERF_COUNTERS; i++) 
++ 		      {
++ 			p->perf.conf[i]    = 0;
++ 			p->perf.counter[i] = 0;
++ 		      }
++ 		  }
++ 	}
+  #endif
+  	p->start_time = jiffies;
+  	task[nr] = p;
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/sched.c linux-2.0.36-new/kernel/sched.c
+*** linux-2.0.36-orig/kernel/sched.c	Tue Oct 13 22:15:44 1998
+--- linux-2.0.36-new/kernel/sched.c	Wed Jun 30 17:57:07 1999
+***************
+*** 39,45 ****
+  #include <asm/segment.h>
+  #include <asm/pgtable.h>
+  #include <asm/mmu_context.h>
+! 
+  #include <linux/timex.h>
+  
+  /*
+--- 39,47 ----
+  #include <asm/segment.h>
+  #include <asm/pgtable.h>
+  #include <asm/mmu_context.h>
+! #ifdef CONFIG_PERF
+! #include <asm/perf.h>
+! #endif
+  #include <linux/timex.h>
+  
+  /*
+***************
+*** 487,492 ****
+--- 489,501 ----
+  			timer.function = process_timeout;
+  			add_timer(&timer);
+  		}
++ #ifdef CONFIG_PERF
++ 		/* Switch performance counter configs */
++ 		if (!perf_sys_flag) {
++ 				perf_save(prev->perf.counter, &(prev->perf.shadow_tsc));
++ 				perf_restore(next->perf.conf, &(next->perf.shadow_tsc));
++ 		}
++ #endif
+  		get_mmu_context(next);
+  		switch_to(prev,next);
+  		if (timeout)
+Binary files linux-2.0.36-orig/patch/patch-2.2.1.gz and linux-2.0.36-new/patch/patch-2.2.1.gz differ
+diff -cr --ignore-all-space --new-file linux-2.0.36-orig/scripts/patch-kernel linux-2.0.36-new/scripts/patch-kernel
+*** linux-2.0.36-orig/scripts/patch-kernel	Tue Mar 26 14:22:14 1996
+--- linux-2.0.36-new/scripts/patch-kernel	Thu Feb 18 00:02:48 1999
+***************
+*** 11,16 ****
+--- 11,21 ----
+  # successful.  If it is, then all of the "*.orig" files are removed.
+  #
+  #       Nick Holloway <Nick.Holloway@alfie.demon.co.uk>, 2nd January 1995.
++ #
++ # Added support for handling multiple types of compression. What includes
++ # gzip, bzip, bzip2, zip, compress, and plaintext. 
++ #
++ #       Adam Sulmicki <adam@cfar.umd.edu>, 1st January 1997.
+  
+  # Set directories from arguments, or use defaults.
+  sourcedir=${1-/usr/src/linux}
+***************
+*** 29,42 ****
+  while :
+  do
+      SUBLEVEL=`expr $SUBLEVEL + 1`
+!     patch=patch-$VERSION.$PATCHLEVEL.$SUBLEVEL.gz 
+!     if [ ! -r $patchdir/$patch ]
+!     then
+          break
+      fi
+  
+!     echo -n "Applying $patch... "
+!     if gunzip -dc $patchdir/$patch | patch -p1 -s -N -E -d $sourcedir
+      then
+  	echo "done."
+      else
+--- 34,70 ----
+  while :
+  do
+      SUBLEVEL=`expr $SUBLEVEL + 1`
+!     patch=patch-$VERSION.$PATCHLEVEL.$SUBLEVEL 
+!     if [ -r $patchdir/${patch}.gz ]; then
+!         ext=".gz"
+!         name="gzip"
+!         uncomp="gunzip -dc"
+!     elif [ -r $patchdir/${patch}.bz  ]; then
+!         ext=".bz"
+! 	name="bzip"
+!         uncomp="bunzip -dc"
+!     elif [ -r $patchdir/${patch}.bz2 ]; then
+!         ext=".bz2"
+!         name="bzip2"
+!         uncomp="bunzip2 -dc"
+!     elif [ -r $patchdir/${patch}.zip ]; then
+!         ext=".zip"
+!         name="zip"
+!         uncomp="unzip -d"
+!     elif [ -r $patchdir/${patch}.Z ]; then
+!         ext=".Z"
+!         name="uncompress"
+!         uncomp="uncompress -c"
+!     elif [ -r $patchdir/${patch}     ]; then
+!         ext=""
+!         name="plaintext"
+!         uncomp="cat"
+!     else
+  	break
+      fi
+  
+!     echo -n "Applying ${patch} (${name})... "
+!     if $uncomp ${patchdir}/${patch}${ext} | patch -p1 -s -N -E -d $sourcedir
+      then
+          echo "done."
+      else

@@ -1,0 +1,50 @@
+Version 0.7
+Modified by Philip Mucci, mucci@cs.utk.edu
+
+Basically, I've added support for PAPI features. See HISTORY 
+file and new examples. The original documentation follows.
+
+-----------------------------------------------------------
+
+libperf:  P6 performance counter support patches for Linux.
+Version 0.5
+
+Erik Hendriks
+<hendriks@cesdis.gsfc.nasa.gov>
+
+You must patch your kernel to add support for performance monitoring.
+(The need to add something to the context switches prevents it from
+being written as a loadable module.)  Patches are supplied for kernel
+versions 2.0.36 and 2.2.1.
+
+NOTE: Linux 2.2.1 has some APIC issues.  If you see the message
+"spurious APIC interrupt, ayiee, should never happen", try upgrading
+to 2.2.2.  (This patch applied ok to 2.2.2-pre4 - the latest available
+when this was written.)
+
+After applying the patch, the counters must be enabled in the kernel
+configuration.  To do this, set the processor type to Pentium Pro (or 686)
+and enable CPU performance counter support.  (CONFIG_PERF)
+
+A small C library is included to support the syscall interface.  There are
+a few examples using this library in the examples directory.
+
+See the file "INSTALL" for build and install instructions.
+
+Multiple processors, context switches, etc. ------------------------
+Every process gets a set of performance counters as part of the task
+structure.  Most processes will never do anything with them but that's
+OK.  These counters are saved and restored during context switches
+(inside the kernel's schedule() function) so that many processes may
+count events simultaneously without corrupting each other's counts.
+This also means that counting is accurate in SMP systems where
+processes may move between processors.
+
+Counting can also be done on a system-wide basis.  In this mode,
+(which is only available to the superuser) counters may be configured
+on a per-processor basis.  Separate counts will be returned for each
+CPU.  Individual processes cannot use the counters while this mode of
+counting is in use.
+
+NOTE: When doing system wide counting, the CPU's are numbered the same
+as in /proc/cpuinfo.  Your CPU's may not be sequentially numbered.

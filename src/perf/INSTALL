@@ -1,0 +1,97 @@
+
+1) Patch your kernel.
+
+  Choose the appropiate patch file for your source tree. We're currently
+  supporting Redhat 5.2 and 6.0. Before you patch any kernel, you should
+  check your nearest Redhat mirror for the latest updates to the
+  kernel-source and kernel-include RPMS. 
+
+  perf-papi-RH5.2.patch patches the installed contents of:
+	kernel-headers-2.0.36-3.i386.rpm
+	kernel-source-2.0.36-3.i386.rpm
+
+  perf-papi-RH6.0.patch patches the installed contents of:
+	kernel-headers-2.2.5-22.i386.rpm
+	kernel-source-2.2.5-22.i386.rpm
+
+  $ patch -l -p1 < /wherever/you/unpacked/me/perf/perf-papi-RHx.y.patch
+
+2) Configure the kernel build.
+
+  Turn on performance monitoring in the kernel configuration.
+  Under general setup, select PPro/686 as the processor type and
+  then turn on CPU performance counter support.
+
+ - Compile/Install your kernel. (if you don't know how, quit now.)
+ - Reboot using the new kernel.
+
+3) Test the kernel extension.
+
+3.1) Compile the library and run examples.
+
+  $ make
+gcc -Wall -O2 -c perf.c -o perf.o
+ar r libperf.a perf.o
+cd examples; make
+make[1]: Entering directory `/usr/src/old/perf/examples'
+gcc -Wall -g -I.. psys.c -o psys -L.. -lperf
+gcc -Wall -g -I.. pfork.c -o pfork -L.. -lperf
+gcc -Wall -g -I.. pwait.c -o pwait -L.. -lperf
+gcc -Wall -g -I.. pflops.c -o pflops -L.. -lperf
+gcc -Wall -g -I.. pfast.c -o pfast -L.. -lperf
+gcc -Wall -g -I.. psumchild.c -o psumchild -L.. -lperf
+gcc -Wall -g -I.. pconfig.c -o pconfig -L.. -lperf
+make[1]: Leaving directory `/usr/src/old/perf/examples'
+  $ cd examples/
+
+  $ ./pfast
+Total cycles 265268816, Total flops 100000
+Total cycles for perf_read() for 3 counters 2652.688160
+Total cycles 91401038, Total flops 100000
+Total cycles per perf_fastread() for 3 counters 914.010380
+
+  $ ./psumchild
+PERF_DO_CHILDREN is now 1
+perf: flops=  30000000   (as expected - ok)
+
+  $ ./pconfig
+register 0 is 0 after reset
+register 0 is 100c1 after PERF_FLOPS c1 PERF_USR 10000
+register 0 is 100c1 after PERF_ENABLE 400000
+perf: flops=  10000000   (as expected - ok)
+register 0 is 0 after reset
+register 0 is 100c1 after fastconfig 4100c1
+register 1 is 0 after fastconfig 0
+register 2 is 1 after fastconfig 1
+./perf: flops=  10000000   (as expected - ok)
+
+  $ ./pflops
+perf: flops=  10000000   (as expected - ok)
+perf: flops=  10000000   (as expected - ok)
+perf: flops=  10000000   (as expected - ok)
+perf: flops=  10000000   (as expected - ok)
+perf: flops=  10000000   (as expected - ok)
+
+  $ ./pfork
+Testing fork behavior
+Parent: ok
+  $ Child: ok
+
+  $ ./pwait sleep 1
+pid=592 counters(FLOPS, IFU_IFETCH)={0, 520091}
+flags:  exited=1 status=0 signaled=0 termsig=0 stopped=0 stopsig=0
+
+  $ ./psys
+(0):       1108        678   
+(0):     316392     108470   
+(0):     540568     195260   
+(0):     733211     268010   
+(0):     939292     344348   
+(0):    1228477     457374
+^C
+
+  $ exit
+
+Script done on Sun Jul 18 19:24:48 1999
+
+
