@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
   min = (long_long)((values[0])[0]*(1.0-TOLERANCE));
   max = (long_long)((values[0])[0]*(1.0+TOLERANCE));
-  if ( (values[0])[1] > max || (values[0])[1] < min )
+  if ( (values[1])[0] > max || (values[1])[0] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
 
   min = (long_long)(((values[0])[0]*(1.0-OVR_TOLERANCE))/(long_long)THRESHOLD);
