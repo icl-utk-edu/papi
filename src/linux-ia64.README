@@ -47,3 +47,10 @@ typedef union {
 	unsigned int pme_umask:13;	/* unit mask */
 	} papi_native_bits;
 } papi_native_code_t;
+
+
+Known Problems
+--------------
+
+- Overflow is not working correctly on the itanium and will be fixed
+  in the next release.

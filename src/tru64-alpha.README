@@ -20,3 +20,5 @@ Known problems:
  - The EV5 preset map is incomplete.
  - OSF 5.1 and the pfm device driver do not support saving and restoring the
    counters on context switch.  Whoever opens the driver owns the counters.
+ - Currently multiplexing is not working and as such the tests are 
+   skipped.
