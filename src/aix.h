@@ -36,10 +36,7 @@ extern _data;
 pm_info_t pminfo;
 
 /* Locks */
-extern atomic_p lock;
-#define _papi_hwd_lock_init()                   \
-{                                               \
-}
+extern atomic_p lock[];
 
 #define _papi_hwd_lock(lck)                     \
 while(_check_lock(&lock[lck],0,1 == TRUE)       \ 
