@@ -75,8 +75,7 @@ extern void _papi_hwd_init_control_state(hwd_control_state_t *ptr);
 extern void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *, EventInfo_t *); 
 extern int _papi_hwd_allocate_registers(EventSetInfo_t *ESI);
-extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **,
-                           int, int , int *);
+extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **);
 extern int _papi_hwd_shutdown(hwd_context_t *);
 extern u_long_long _papi_hwd_get_real_cycles (void);
 extern u_long_long _papi_hwd_get_real_usec (void);

@@ -905,10 +905,14 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
 int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *values)
 {
-  int retval, *pos, threshold, multiplier;
+  int retval;
   long_long *dp;
+/*
+  int *pos, threshold, multiplier;
+*/
 
 
+/*
   pos = NULL;
   threshold = multiplier = 0;
   if ((ESI->state & PAPI_OVERFLOWING) && 
@@ -926,9 +930,9 @@ int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *value
       threshold = ESI->profile.threshold;
       multiplier =  ESI->profile.overflowcount;
     };
+*/
 
-  retval = _papi_hwd_read(context, &ESI->machdep, &dp, 
-                            threshold, multiplier,pos);
+  retval = _papi_hwd_read(context, &ESI->machdep, &dp);
   if (retval != PAPI_OK)
     return(retval);
 

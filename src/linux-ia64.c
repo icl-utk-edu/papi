@@ -996,7 +996,10 @@ int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 }
 */
 
+/*
 int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long **events, int threshold, int multiplier, int *pos)
+*/
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long **events)
 {
   int i;
   pfarg_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS+1];
@@ -1029,6 +1032,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long *
 	DBG((stderr, "read counters is %ld\n", readem[i].reg_value));
   }
 
+#if 0
   /* if pos is not null, then adjust by threshold */
   if (pos != NULL )
   {
@@ -1052,6 +1056,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long *
       machdep->counters[pos[i]] += threshold * multiplier;
 
   }
+#endif
 
   *events=machdep->counters;
   return PAPI_OK;

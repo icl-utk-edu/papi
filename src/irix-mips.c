@@ -100,6 +100,7 @@ char * (r10k_native_events_table[])= {
  0
 };
 
+/* r14k native events are the same as r12k */
 char * (r12k_native_events_table[])= { 
 /* 0  */ "cycles",
 /* 1  */ "decoded_instructions",
@@ -133,7 +134,7 @@ char * (r12k_native_events_table[])= {
 /* 29 */ "state_of_invalidation_hits_in_secondary_cache",
 /* 30 */ "Miss_Handling_Table_entries_accessing_memory",
 /* 31 */ "store/prefetch_exclusive_to_shared_block_in_secondary_cache",
- 0;
+ 0
 };
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -592,7 +593,7 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-long long _papi_hwd_get_real_usec (void)
+u_long_long _papi_hwd_get_real_usec (void)
 {
   timespec_t t;
   long long retval;
@@ -604,7 +605,7 @@ long long _papi_hwd_get_real_usec (void)
   return(retval);
 }
 
-long long _papi_hwd_get_real_cycles (void)
+u_long_long _papi_hwd_get_real_cycles (void)
 {
   long long retval;
 
@@ -612,7 +613,7 @@ long long _papi_hwd_get_real_cycles (void)
   return(retval);
 }
 
-long long _papi_hwd_get_virt_usec (const hwd_context_t *ctx)
+u_long_long _papi_hwd_get_virt_usec (const hwd_context_t *ctx)
 {
   long long retval;
   struct tms buffer;
@@ -622,7 +623,7 @@ long long _papi_hwd_get_virt_usec (const hwd_context_t *ctx)
   return(retval);
 }
 
-long long _papi_hwd_get_virt_cycles (const hwd_context_t *ctx)
+u_long_long _papi_hwd_get_virt_cycles (const hwd_context_t *ctx)
 {
   float usec, cyc;
 
@@ -1474,77 +1475,3 @@ int _papi_hwd_encode_native(char *name, int *code)
   return(PAPI_OK);
 }
 
-
-#if 0
-/* Machine info structure. -1 is initialized by _papi_hwd_init. */
-papi_mdi _papi_system_info = { "$Id$",
-			      1.0, /*  version */
-			       -1,  /*  cpunum */
-			       { 
-				 -1,  /*  ncpu */
-				  1,  /*  nnodes */
-				 -1,  /*  totalcpus */
-				 -1,  /*  vendor */
-				 "",  /*  vendor string */
-				 -1,  /*  model */
-				 "",  /*  model string */
-				0.0,  /*  revision */
-				 -1  /*  mhz */ 
-			       },
-			       {
-				 "",
-				 "",
-				 (caddr_t)&_ftext,
-				 (caddr_t)&_etext,
-				 (caddr_t)&_fdata,
-				 (caddr_t)&_edata,
-				 (caddr_t)&_fbss,
-				 (caddr_t)&_end,
-			        "_RLD_LIST", /* environment variable */
-			       },
-                               { 0,  /*total_tlb_size*/
-                                 0,  /*itlb_size */
-                                 0,  /*itlb_assoc*/
-                                 0,  /*dtlb_size */
-                                 0, /*dtlb_assoc*/
-                                 0, /*total_L1_size*/
-                                 0, /*L1_icache_size*/
-                                 0, /*L1_icache_assoc*/
-                                 0, /*L1_icache_lines*/
-                                 0, /*L1_icache_linesize*/
-                                 0, /*L1_dcache_size */
-                                 0, /*L1_dcache_assoc*/
-                                 0, /*L1_dcache_lines*/
-                                 0, /*L1_dcache_linesize*/
-                                 0, /*L2_cache_size*/
-                                 0, /*L2_cache_assoc*/
-                                 0, /*L2_cache_lines*/
-                                 0, /*L2_cache_linesize*/
-                                 0, /*L3_cache_size*/
-                                 0, /*L3_cache_assoc*/
-                                 0, /*L3_cache_lines*/
-                                 0  /*L3_cache_linesize*/
-                               },
-			       -1,  /*  num_cntrs */
-			       -1,  /*  num_gp_cntrs */
-			       -1,  /*  grouped_counters */
-			       -1,  /*  num_sp_cntrs */
-			       -1,  /*  total_presets */
-			       -1,  /*  total_events */
-			        PAPI_DOM_USER, /* default domain */
-			        PAPI_GRN_THR,  /* default granularity */
-			        0,  /* We can use add_prog_event */
-			        0,  /* We can write the counters */
-			        1,  /* supports HW overflow overflow emulation */
-			        0,  /* supports HW profile emulation */
-			        1,  /* supports 64 bit virtual counters */
-			        1,  /* supports child inheritance option */
-			        0,  /* supports attaching to another process */
-			        1,  /* We can use the real_usec call */
-			        1,  /* We can use the real_cyc call */
-			        1,  /* We can use the virt_usec call */
-			        1,  /* We can use the virt_cyc call */
-			        0,  /* HW read resets the counters */
-			        sizeof(hwd_control_state_t), 
-			        { 0, } };
-#endif

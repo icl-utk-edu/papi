@@ -20,6 +20,13 @@
 #include <sys/hwperfmacros.h>
 
 #include "papi.h"
+#define MAX_COUNTERS HWPERF_EVENTMAX
+#define MAX_COUNTER_TERMS 4
+#define MAX_NATIVE_EVENT 32
+#define PAPI_MAX_NATIVE_EVENTS MAX_NATIVE_EVENT
+ 
+typedef int hwd_register_t;
+
 typedef struct hwd_control_state {
   /* File descriptor controlling the counters; */
   int fd;
