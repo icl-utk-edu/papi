@@ -594,7 +594,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
   if (EventCode & PRESET_MASK)
     { 
       EventCode ^= PRESET_MASK;
-      if (EventCode >= PAPI_MAX_PRESET_EVENTS)
+      if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 	
       strcpy(out,papi_presets[EventCode].event_name);
@@ -612,7 +612,7 @@ int PAPI_event_name_to_code(char *in, int *out)
 
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     {
-      if (strcasecmp(papi_presets[i].event_name,in) == 0)
+      if ((papi_presets[i].event_name) && (strcasecmp(papi_presets[i].event_name,in) == 0))
 	{ 
 	  *out = papi_presets[i].event_code;
 	  return(PAPI_OK);

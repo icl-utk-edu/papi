@@ -1,7 +1,7 @@
 OMP	= zero_omp
 SMP	= zero_smp
 PTHREADS= zero_pthreads
-SERIAL  = avail zero first second third fourth fifth overflow profile nineth tenth native
+SERIAL  = avail zero first second third fourth fifth overflow profile nineth tenth native eventname
 ALL 	= $(OMP) $(SMP) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
 
@@ -59,6 +59,9 @@ tenth: tenth.o $(UTILOBJS) ../libpapi.a
 
 native: native.o do_loops.o ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) native.o do_loops.o -L.. -lpapi $(LDFLAGS) -o native
+
+eventname: eventname.o do_loops.o ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) eventname.o do_loops.o -L.. -lpapi $(LDFLAGS) -o eventname
 
 do_loops.o: do_loops.c
 	$(CC) $(CFLAGS) -g -c do_loops.c

@@ -11,6 +11,7 @@
 #include <sys/procfs.h>
 #include <sys/cpu.h>
 #include <sys/sysmp.h>
+#include <sys/sbd.h>
 #include <task.h>
 #include <assert.h>
 
