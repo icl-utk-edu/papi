@@ -1,46 +1,52 @@
+#!/usr/bin/perl
+
 # manServer_papi - generic Perl man page to HTML converter
 # customized specifically for PAPI documentation, and
 # derived from:
+
 # manServer - Unix man page to HTML converter
 # Rolf Howarth, rolf@squarebox.co.uk
-# Version 1.06  30 November 1999
-  
+# Version 1.07  16 July 2001
+
+$version = "1.07";
+$manServerUrl = "<A HREF=\"http://www.squarebox.co.uk/download/manServer.shtml\">manServer $version</A>";
 
 $rolf  = "Rolf Howarth <rolf\@squarebox.co.uk>";
-$dan   = "dan terpstra <terpstra\@cs.utk.edu>";
+$dan   = "Dan Terpstra <terpstra\@cs.utk.edu>";
+$long  = "Long Zhou <zlong\@cs.utk.edu>";
 
-$version = "1.06";
-$manServerUrl = "<A HREF=\"http://www.squarebox.co.uk/download/manServer.shtml\">manServer</A> $version";
 $Title = "PAPI Manual Reference Pages";
+$Header = "header.htm";
+$Footer = "footer.htm";
 
 initialise();
 $request = shift @ARGV;
 # Usage: manServer [-dn] [-o html_directory] filename 
+require 5.003;                     # need this version of Perl or newer
+use English;                       # use English names, not cryptic ones
+use FileHandle;                    # use FileHandles instead of open(),close()
+use Carp;                          # get standard error / warning messages
 
-  require 5.003;                     # need this version of Perl or newer
-  use English;                       # use English names, not cryptic ones
-  use FileHandle;                    # use FileHandles instead of open(),close()
-  use Carp;                          # get standard error / warning messages
 
 $root = "";
 $cgiMode = 0;
+$bodyTag = "BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000";
+
 $Background = 'background="fader-orange.gif"';
 $bodyTag = 'BODY '. $Background . ' bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"';
 $ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>\n";
-
 	*LOG = *STDOUT;
-
+ 
 #	if ($request =~ m/^-?/) { usage(); }
 	if ($request =~ m/^-h/) { usage(); }
-	if ($request eq "") { usage(); }
-
+        if ($request eq "") { usage(); }
 	if ($request =~ m/^-d(\d)/)
 	{
-		print LOG "debug: $1\n";
 		$debug = $1;
+		print LOG "debug: $1\n";
 		$request = shift @ARGV;
 	}
-	if ($request =~ m/^-o/)
+ 	if ($request =~ m/^-o/)
 	{
 		$outdir = shift @ARGV;
 		$request = shift @ARGV;
@@ -63,23 +69,34 @@ $ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>I
 	exit(0);
 
 
-
 ##### Process troff input using man macros into HTML #####
 
 sub man2html
 {
+        $out = $_[1];
 	$file = $_[0];
-	$out = $_[1];
 	$srcfile = $file;
 	$zfile = $file;
-	if (! -f $file && -f "$file.gz")
+	if (! -f $file)
 	{
-		$zfile = "$file.gz";
-		$srcfile = "/usr/bin/zcat $zfile |";
-		$srcfile =~ m/^(.*)$/;
-		$srcfile = $1;	# untaint
+		if (-f "$file.gz")
+		{
+			$zfile = "$file.gz";
+			$zcat = "/usr/bin/zcat";
+			$zcat = "/bin/zcat" unless (-x $zcat);
+			$srcfile = "$zcat $zfile |";
+			$srcfile =~ m/^(.*)$/;
+			$srcfile = $1;	# untaint
+		}
+		elsif (-f "$file.bz2")
+		{
+			$zfile = "$file.bz2";
+			$srcfile = "/usr/bin/bzcat $zfile |";
+			$srcfile =~ m/^(.*)$/;
+			$srcfile = $1;	# untaint
+		}
 	}
-	print LOG "man2html $file -> $out\n";
+	print LOG "man2html $file --> $out\n";
 	$foundNroffTag = 0;
 	loadContents($file);
 	unless (open(SRC, $srcfile))
@@ -90,6 +107,9 @@ sub man2html
 	}
 	($dir,$page,$sect) = ($file =~ m,^(.*)/([^/]+)\.([^.]+)$,);
 	$troffTable = 0;
+	%macro = ();
+	%renamedMacro = ();
+	%deletedMacro = ();
 	@indent = ();
 	@tabstops = ();
 	$indentLevel = 0;
@@ -102,19 +122,21 @@ sub man2html
 	$eqnEnd = "";
 	$eqnMode = 0;
 	%eqndefs = ();
+	$defaultNm = "";
 	$title = $file;
 	$title = "Manual Page - $page($sect)" if ($page && $sect);
 
 	$_ = getLine();
 	if (m/^.so (man.*)$/)
-	{
+        {
+		# An .so include on the first line only is replaced by the referenced page.
+		# (See elsewhere for processing of included sections that occur later in document.)
 		man2html($root.$1, "");
 		return;
-	}
+        }
+
 
 	$perlPattern = "";
-
-	print $OUT "<HTML><HEAD>\n<TITLE>$title</TITLE>\n<$bodyTag><A NAME=top></A>\n";
 
 	if ($foundNroffTag)
 	{
@@ -130,7 +152,7 @@ sub man2html
 	else
 	{
 		# Special case where input is not nroff at all but is preformatted text
-		$sectionName = $Title;
+		$sectionName = $Tiltle;
 		$sectionNumber = $sect;
 		$left = "Manual Page";
 		$right = "Manual Page";
@@ -150,11 +172,23 @@ sub man2html
 	outputPageFooter();
 }
 
+sub copyFromFile
+{
+     open(tempFile, $_[0]);
+     while (<tempFile>) {
+ 	print($OUT $_);
+     }
+     close (tempFile);
+}
+ 
 sub outputPageHead
 {
-	plainOutput( "<CENTER>\n" );
-	outputLine( "<H1><HR><I>$sectionName &nbsp;-&nbsp;</I><NOBR>$pageName</NOBR><HR></H1>\n" );
-	plainOutput( "</CENTER>\n" );
+     plainOutput("<HTML>\n");
+     plainOutput("<HEAD>\n");
+     plainOutput("<TITLE>\n");
+     print $OUT "$title";
+     plainOutput("</TITLE>\n");
+     copyFromFile $Header; 
 }
 
 sub outputPageFooter
@@ -172,10 +206,8 @@ sub outputPageFooter
 		endBlockquote();
 		outputLine("<P><HR>\n<TABLE width=100%><TR> <TD width=33%><I>$left</I></TD> <TD width=33% align=center>$pageName</TD> <TD align=right width=33%><I>$right</I></TD> </TR></TABLE>\n");
 	}
-	$date = &fmtTime(time);
-	plainOutput("<FONT SIZE=-1>Generated on $date by a derivative of $manServerUrl from $zfile $macroPackage.\n");
-	plainOutput($ICL_Footer);
-	plainOutput("</FONT>\n</BODY></HTML>\n");
+	copyFromFile $Footer;
+
 }
 
 sub outputContents
@@ -210,8 +242,8 @@ sub loadContents
 	while (<SRC>)
 	{
 		preProcessLine();
-		$foundNroffTag = $foundNroffTag || (m/^\.(\\\"|TH) /);
-		if (m/^\.(S[HShs]) (.*)\s*$/)
+		$foundNroffTag = $foundNroffTag || (m/^\.(\\\"|TH|so) /);
+		if (m/^\.(S[HShs]) ([A-Z].*)\s*$/)
 		{
 			$foundNroffTag = 1;
 			$c = $1;
@@ -269,6 +301,10 @@ sub preProcessLine
 		}
 	}
 
+	# XXX Note: multiple levels of escaping aren't handled properly, eg. \\*.. as a macro argument
+	# should get interpolated as string but ends up with a literal '\' being copied through to output.
+	s,\\\\\*q,&#34;,g; # treat mdoc \\*q as special case
+	
 	s,\\\\,_DBLSLASH_,g;
 	s,\\ ,_SPACE_,g;
 	s,\s*\\".*$,,;
@@ -321,9 +357,9 @@ sub outputLine
 	s,\\\.,&#46;,g;
 	s,\\\^,,g;
 	s,\\\|,,g;
-	s,\\&,,g;
 	s,\\c,,g;
 	s,\\0,&nbsp;,g;
+	s,\\t,\t,g;
 
 	s,\\%,&nbsp;,g;
 	s,\\{,,g;
@@ -363,7 +399,7 @@ sub outputLine
 	s,\\\((..),<BLINK>\\($1</BLINK>,g unless (m,^\.,);
 
 	# Don't know how to handle other escapes
-	s,(\\.),<BLINK>\1</BLINK>,g unless (m,^\.,);
+	s,(\\[^&]),<BLINK>\1</BLINK>,g unless (m,^\.,);
 
 	postProcessLine();
 
@@ -380,6 +416,9 @@ sub outputLine
 	{
 		s,\b($perlPattern)\b,<A HREF=\"$root$perlPages{$1}\">\1</A>,g;
 	}
+
+	# Do this late so \& can be used to suppress conversion of URLs etc.
+	s,\\&,,g;
 
 	# replace tabs with spaces to next multiple of 8
 	if (m/\t/)
@@ -570,7 +609,7 @@ sub processMacro
 		$macro = $macro{$c};
 		# Interpolate arguments
 		$macro =~ s,\\\$(\d),$p[$1],ge;
-		#print $OUT "<PRE>$macro</PRE>\n";
+		#print $OUT "<!-- Expanding $c to\n$macro-->\n";
 		foreach $_ (split(/\n/, $macro))
 		{
 			$_ .= "\n";
@@ -578,8 +617,14 @@ sub processMacro
 			processLine();
 		}
 		$doneLine = 0;
+		return;
 	}
-	elsif ($c eq "ds")			# Define string
+	elsif ($renamedMacro{$c})
+	{
+		$c = $renamedMacro{$c};
+	}
+
+	if ($c eq "ds")			# Define string
 	{
 		$vars{$p[1]} = $joined2;
 		$doneLine = 0;
@@ -589,10 +634,49 @@ sub processMacro
 		$number{$p[1]} = evalnum($joined2);
 		$doneLine = 0;
 	}
-	elsif ($c eq "ti")
+	elsif ($c eq "ti")			# Temporary indent
 	{
-		# Temporary indent
 		plainOutput("&nbsp; &nbsp;");
+	}
+	elsif ($c eq "rm")
+	{
+		$macroName = $p[1];
+		if ($macro{$macroName})
+		{
+			delete $macro{$macroName};
+		}
+		else
+		{
+			$deletedMacro{$macroName} = 1;
+		}
+	}
+	elsif ($c eq "rn")
+	{
+		$oldName = $p[1];
+		$newName = $p[2];
+		$macro = $macro{$oldName};
+		if ($macro)
+		{
+			if ($newName =~ $reservedMacros && ! $deletedMacro{$newName})
+			{
+				plainOutput("<!-- Not overwriting reserved macro '$newName' -->\n");
+			}
+			else
+			{
+				$macro{$newName} = $macro;
+				delete $deletedMacro{$newName};
+			}
+			delete $macro{$oldName};
+		}
+		else
+		{
+			# Support renaming of reserved macros by mapping occurrences of new name
+			# to old name after macro expansion so that built in definition is still
+			# available, also mark the name as deleted to override reservedMacro checks.
+			plainOutput("<!-- Fake renaming reserved macro '$oldName' -->\n");
+			$renamedMacro{$newName} = $oldName;
+			$deletedMacro{$oldName} = 1;
+		}
 	}
 	elsif ($c eq "de" || $c eq "ig")	# Define macro or ignore
 	{
@@ -620,19 +704,20 @@ sub processMacro
 		# plainOutput("<!-- Found delimiter -->\n");
 		if ($c eq "de")
 		{
-			if ($macroName =~ $reservedMacros)
+			if ($macroName =~ $reservedMacros && ! $deletedMacro{$macroName})
 			{
 				plainOutput("<!-- Not defining reserved macro '$macroName' ! -->\n");
 			}
 			else
 			{
 				$macro{$macroName} = $macro;
+				delete $deletedMacro{$macroName};
 			}
 		}
 	}
 	elsif ($c eq "so")			# Source
 	{
-		plainOutput("<P>[<A HREF=\"$root/usr/man/$p[1]\">Include document $p[1]</A>]<P>\n");
+		plainOutput("<P>[<A HREF=\"$root$dir/../$p[1]\">Include document $p[1]</A>]<P>\n");
 	}
 	elsif ($c eq "TH" || $c eq "Dt")			# Man page title
 	{
@@ -767,17 +852,12 @@ sub processMacro
 			}
 			if ($pair =~ m/^(\S+)\s?\(\s?([0-9lL][0-9a-zA-Z]*)\s?\)(.*)$/)
 			{
-#				if ($cmdLineMode)
-#					{ outputLine( "\\fB$1\\fR($2)$3\n" ); }
-#				else 
-				{
-					$name = $1;
-					$lowname = $name;
-					$level = $2;
-					$extra = $3;
-					$lowname = lc($name);
-					outputLine( "<A HREF=\"$root$lowname.html\">$name ($level)</A>$extra\n" );
-				}
+			    $name = $1;
+			    $lowname = $name;
+			    $level = $2;
+			    $extra = $3;
+			    $lowname = lc($name);
+			    outputLine( "<A HREF=\"$root$lowname.html\">$name ($level)</A>$extra\n" );
 			}
 			else
 				{ outputLine( "$pair\n" ); }
@@ -1090,6 +1170,7 @@ sub processMacro
 	}
 	elsif ($c eq "Bl")		# Begin list (mdoc)
 	{
+		push @docListStyles, $docListStyle;
 		if ($p[1] eq "-enum")
 		{
 			plainOutput("<OL>\n");
@@ -1130,7 +1211,7 @@ sub processMacro
 		{
 			plainOutput("</OL>\n");
 		}
-		$docListStyle = "";
+		$docListStyle = pop @docListStyles;
 	}
 	elsif ($c eq "Os")
 	{
@@ -1139,10 +1220,6 @@ sub processMacro
 	elsif ($c eq "Dd")
 	{
 		$left = $joined;
-	}
-	elsif ($c eq "Xr" && ! $cmdLineMode)		# Cross reference (mdoc)
-	{
-		outputLine( "<A HREF=\"$root/$p[1].$p[2]\">$p[1]($p[2])</A>$p[3]\n" );
 	}
 	elsif ($c eq "Sx")		# See section
 	{
@@ -1153,7 +1230,9 @@ sub processMacro
 		}
 		else
 		{
-			outputLine(&mdocStyle(@p[1..$#p])."\n");
+			my $x = &mdocStyle(@p[1..$#p]);
+			$x =~ s/^ //;
+			outputLine($x."\n");
 		}
 	}
 	elsif (&mdocCallable($c))
@@ -1324,6 +1403,7 @@ sub setIndent
 		}
 		if ($indent > 0)
 		{
+			endNoFill();
 			$border = "";
 			$border = " border=1" if ($debug>2);
 			#plainOutput("<P>") unless ($indent[$indentLevel] > 0);
@@ -1367,12 +1447,38 @@ sub mdocStyle
 		$term = (pop @param).$term;
 	}
 
+	if ($param[0] =~ m,\\\\,)
+	{
+		print STDERR "$tag: ",join(",", @param),"\n";
+	}
 	$rest = &mdocStyle(@param);
 	
 	if ($tag eq "Op")
 	{
 		$rest =~ s/ //;	# remove first space
 		return " \\fP[$rest]$term";
+	}
+	elsif ($tag eq "Xr")	# cross reference
+	{
+		my $p = shift @param;
+		my $url = $p;
+		if (@param==1)
+		{
+			$url .= ".".$param[0];
+			$rest = "(".$param[0].")";
+		}
+		else
+		{
+			$rest = &mdocStyle(@param);
+		}
+		if ($cmdLineMode)
+		{
+			return " <B>".$p."</B>".$rest.$term;
+		}
+		else
+		{
+			return " <A HREF=\"".$root."/".$url."\">".$p."</A>".$rest.$term;
+		}
 	}
 	elsif ($tag eq "Fl")
 	{
@@ -1389,15 +1495,18 @@ sub mdocStyle
 				unshift @param, $f;
 				return $sofar.&mdocStyle(@param).$term;
 			}
-			$sofar .= "-<B>$f</B> "
+			else
+			{
+				$sofar .= "-<B>$f</B> "
+			}
 		}
 		return $sofar.$term;
 	}
-	elsif ($tag eq "Pa")
+	elsif ($tag eq "Pa" || $tag eq "Er" || $tag eq "Fn" || $tag eq "Dv")
 	{
 		return "\\fC$rest\\fP$term";
 	}
-	elsif ($tag eq "Ad" || $tag eq "Ar" || $tag eq "Em" || $tag eq "Fa" ||
+	elsif ($tag eq "Ad" || $tag eq "Ar" || $tag eq "Em" || $tag eq "Fa" || $tag eq "St" ||
 		$tag eq "Ft" || $tag eq "Va" || $tag eq "Ev" || $tag eq "Tn" || $tag eq "%T")
 	{
 		return "\\fI$rest\\fP$term";
@@ -1412,8 +1521,9 @@ sub mdocStyle
 	{
 		return "\\fB$rest\\fP$term";
 	}
-	elsif ($tag eq "Ta")
+	elsif ($tag eq "Ta")		# Tab
 	{
+		# Tabs are used inconsistently so this is the best we can do. Columns won't line up. Tough.
 		return "&nbsp; &nbsp; &nbsp; $rest$term";
 	}
 	elsif ($tag eq "Ql")
@@ -1425,7 +1535,7 @@ sub mdocStyle
 	{
 		return "<P>&nbsp; &nbsp; <TT>$rest</TT>$term<P>\n";
 	}
-	elsif ($tag =~ m/^[ABDEPQS][qoc]/)
+	elsif ($tag =~ m/^[ABDEOPQS][qoc]$/)
 	{
 		$lq = "";
 		$rq = "";
@@ -1441,6 +1551,8 @@ sub mdocStyle
 			{ $lq = "\""; $rq = "\""; }
 		elsif ($tag =~ m/^S/)
 			{ $lq = "\\'"; $rq = "\\'"; }
+		elsif ($tag =~ m/^O/)
+			{ $lq = "["; $rq = "]"; }
 		if ($tag =~ m/^.o/)
 			{ $rq = ""; }
 		if ($tag =~ m/^.c/)
@@ -1456,6 +1568,10 @@ sub mdocStyle
 	{
 		return $tag.$rest.$term;
 	}
+	elsif ($tag eq "Ns")
+	{
+		return $rest.$term;
+	}
 	else
 	{
 		return " ".$tag.$rest.$term;
@@ -1465,7 +1581,7 @@ sub mdocStyle
 # Determine if a macro is mdoc parseable/callable
 sub mdocCallable
 {
-	return ($_[0] =~ m/^Op|Fl|Pa|Ns|No|Ad|Ar|Em|Fa|Ft|Ic|Cm|Va|Sy|Nm|Li|Dv|Ev|Tn|Pf|Dl|%T|Ta|Ql|[ABDEPQS][qoc]$/);
+	return ($_[0] =~ m/^(Op|Fl|Pa|Er|Fn|Ns|No|Ad|Ar|Xr|Em|Fa|Ft|St|Ic|Cm|Va|Sy|Nm|Li|Dv|Ev|Tn|Pf|Dl|%T|Ta|Ql|[ABDEOPQS][qoc])$/);
 }
 
 
@@ -1494,7 +1610,7 @@ sub processTable
 			outputOrigLine();
 			if (m/;\s*$/)
 			{
-				$troffSeparator = $1 if (m/tab\s*\((.)\)/);
+				$troffSeparator = quotemeta($1) if (m/tab\s*\((.)\)/);
 			}
 			else
 			{
@@ -1643,12 +1759,11 @@ sub endTblRow
 	{
 # Don't know why these are here, but they add three empty cells to the end of each row...
 #		$rowref->[$troffCol] = "<TD>&nbsp;</TD>";
-#		#print $OUT "<TD>&nbsp;</TD>";
-#		print $OUT "<TD>&nbsp;</TD>";
+#		#print OUT "<TD>&nbsp;</TD>";
 		++$troffCol;
 	}
 	$troffCol = 0;
-#	print $OUT "</TR>\n";
+	#print $OUT "</TR>\n"
 }
 
 sub flushTable
@@ -2130,7 +2245,6 @@ sub doEqn1
 }
 
 ##### initialise special char array #####
-
 sub initialise
 {
 	# Prevent redefinition of macros that have special meaning to us
@@ -2145,8 +2259,26 @@ sub initialise
 	$vars{'R'} = '\\(rg';
 	$vars{'S'} = '\\s0';
 
-	# String variables defined by ms package (access to accented characters)
+	# String variables defined by mdoc package
+	$vars{'Le'} = '\\(<=';
+	$vars{'<='} = '\\(<=';
+	$vars{'Ge'} = '\\(>=';
+	$vars{'Lt'} = '<';
+	$vars{'Gt'} = '>';
+	$vars{'Ne'} = '\\(!=';
+	$vars{'>='} = '\\(>=';
+	$vars{'q'} = '&#34;';	# see also special case in preProcessLine
+	$vars{'Lq'} = '&#147;';
+	$vars{'Rq'} = '&#148;';
+	$vars{'ua'} = '\\(ua';
+	$vars{'ga'} = '\\(ga';
+	$vars{'Pi'} = '\\(*p';
+	$vars{'Pm'} = '\\(+-';
+	$vars{'Na'} = 'NaN';
+	$vars{'If'} = '\\(if';
+	$vars{'Ba'} = '|';
 
+	# String variables defined by ms package (access to accented characters)
 	$vars{'bu'} = '&#187;';
 	$vars{'66'} = '&#147;';
 	$vars{'99'} = '&#148;';
@@ -2377,7 +2509,6 @@ sub initialise
 	$special{'cp'} = '&#169;';
 	$special{'tm'} = '&#174;';
 	$special{'en'} = '-';
-
 }
 
 sub fmtTime
@@ -2414,4 +2545,3 @@ Version:
 EndOfUsage
     exit 0;
 }
-
