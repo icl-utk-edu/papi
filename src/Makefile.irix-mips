@@ -1,19 +1,13 @@
 SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
-TARGETS	= smp serial
+LIBS	= static shared
+TARGETS	= serial
 
-# Which Fortran to use
-# FOR_USED can be blank, FORTRANUNDERSCORE, FORTRANDOUBLEUNDERSCORE or
-# FORTRANALLCAPS
-FOR_USED  = -DFORTRANUNDERSCORE
-
-
+FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS  = -g -woff 1552,1174,1116,15 -DDEBUG
-OPTFLAGS= 
-NOOPT	=
+#OPTFLAGS= -fast -DNDEBUG
 SMPCFLGS= -mp
-OMPCFLGS= 
-LDFLAGS = 
+CC_SHR  = cc -shared -all
 CC_R	= cc
 CC	= cc
 F77	= f77

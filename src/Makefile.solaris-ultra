@@ -1,15 +1,17 @@
 SUBSTR  = solaris-ultra
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I or II"
-TARGETS	= smp pthreads serial
+LIBS	= static shared
+TARGETS	= serial
+# omp smp pthreads
 
 CFLAGS  = -xarch=v8plusa -g
-OPTFLAGS= -xO3
+#OPTFLAGS= -xO3
 NOOPT 	= -xO0
 SMPCFLGS= -xexplicitpar
-OMPCFLGS= 
 LDFLAGS = -lcpc
 CC_R	= cc -mt
-CC	= cc
+CC	= cc -mt
+CC_SHR	= cc -shared -dy -G
 F77	= 
 MISCOBJS= get_tick.o
 

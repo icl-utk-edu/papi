@@ -918,7 +918,7 @@ static long long handle_derived_ps(int operand_index, int selector, long long *f
   int pos;
 
   pos = ffs(selector ^ (1 << operand_index)) - 1;
-  assert(pos != -1);
+  assert(pos >= 0);
 
   return(units_per_second(from[pos],from[operand_index]));
 }

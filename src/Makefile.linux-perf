@@ -5,9 +5,9 @@ TARGETS = serial pthreads
 
 CFLAGS  = -Wall -g
 #OPTFLAGS= -O6 -mpentiumpro -DNDEBUG
-SHRLOPT = -shared
-CC_R	= cc
-CC	= cc
+CC_SHR  = gcc -shared
+CC_R	= gcc
+CC	= gcc
 F77	= g77
 
 include Makefile.inc

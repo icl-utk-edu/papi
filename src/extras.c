@@ -146,8 +146,8 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
   EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
-  if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
+  if (eventset_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, master_event_set, (void *)info); 
   return;
 }
 #elif defined(sun) && defined(sparc)
@@ -158,8 +158,8 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
   EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
-  if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
+  if (eventset_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
   return;
 }
 #elif defined(linux)
@@ -186,8 +186,8 @@ static void dispatch_timer(int signal, siginfo_t *si, void *i)
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.jmp_context.iar));
 #endif
 
-  if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, i); 
+  if (eventset_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, i); 
 }
 #elif defined(sgi) && defined(mips)
 static void dispatch_timer(int signal, int code, struct sigcontext *info)
@@ -198,8 +198,8 @@ static void dispatch_timer(int signal, int code, struct sigcontext *info)
   DBG((stderr,"dispatch_timer() at %p\n",(void *)info->sc_pc));
 #endif
 
-  if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
+  if (eventset_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
 }
 #endif
 

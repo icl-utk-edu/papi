@@ -1,5 +1,5 @@
 #include <sys/asm_linkage.h>
-#include "solaris-ultra.h"
+	! #include "solaris-ultra.h"
 
 	! These functions blatantly stolen from perfmon
 	! The author of the package "perfmon" is Richard J. Enbody

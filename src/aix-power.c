@@ -738,6 +738,16 @@ long long _papi_hwd_get_real_cycles (void)
   return((long long)cyc);
 }
 
+long long _papi_hwd_get_virt_usec (void)
+{
+  return(-1);
+}
+
+long long _papi_hwd_get_virt_cycles (void)
+{
+  return(-1);
+}
+
 void _papi_hwd_error(int error, char *where)
 {
   sprintf(where,"Substrate error");
@@ -1183,7 +1193,7 @@ static long long handle_derived_ps(int operand_index, int selector, long long *f
   int pos;
 
   pos = ffs(selector ^ (1 << operand_index)) - 1;
-  assert(pos != 0);
+  assert(pos >= 0);
 
   return(units_per_second(from[pos],from[operand_index]));
 }
@@ -1284,7 +1294,7 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_write(EventSetInfo *ESI, long long events[])
+int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }

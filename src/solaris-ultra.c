@@ -1073,7 +1073,7 @@ static long long handle_derived_ps(int operand_index, int selector, long long *f
   int pos;
 
   pos = ffs(selector ^ (1 << operand_index)) - 1;
-  assert(pos != -1);
+  assert(pos >= 0);
 
   return(units_per_second(from[pos],from[operand_index]));
 }
@@ -1173,7 +1173,7 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_write(EventSetInfo *ESI, long long events[])
+int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }

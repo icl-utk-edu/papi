@@ -273,28 +273,61 @@ int PAPI_thread_init(void **handle, int flag)
 #define __SMP__
 #include <asm/atomic.h>
 atomic_t lock;
+#elif defined(sun) && defined(sparc)
+#include <synch.h>
+rwlock_t lock;
+#elif defined(sgi) && defined(mips)
+int lock;
+#elif defined(_CRAYT3E)
+#elif defined(_AIX)
+#include <sys/atomic_op.h>
+int lock_var = 0;
+atomic_p lock = &lock_var;
 #endif
 
 void PAPI_lock(void)
 {
+#if defined(linux)
   atomic_inc(&lock);
   while (atomic_read(&lock) > 1)
     {
       DBG((stderr,"Waiting..."));
       usleep(1000);
     }
+#elif defined(_AIX)
+  while (_check_lock(lock,0,1) == TRUE)
+    {
+      DBG((stderr,"Waiting..."));
+      usleep(1000);
+    }
+#elif defined(sgi) && defined(mips)
+  while (__lock_test_and_set(&lock,1) != 0)
+    {
+      DBG((stderr,"Waiting..."));
+      usleep(1000);
+    }
+#elif defined(_CRAYT3E)
+#elif defined(sun) && defined(sparc)
+  rw_wrlock(&lock);
+#endif
 }
 
 void PAPI_unlock(void)
 {
+#if defined(linux)
   atomic_dec(&lock);
+#elif defined(sun) && defined(sparc)
+  rw_unlock(&lock);
+#elif defined(_AIX)
+  _clear_lock(lock, 0);
+#elif defined(sgi) && defined(mips)
+  __lock_release(&lock);
+#endif
 }
 
 int PAPI_library_init(int version)
 {
   int init_retval, i, tmp;
-
-  atomic_set(&lock,0);
 
   if (version != PAPI_VER_CURRENT)
     return(PAPI_EMISC);
@@ -302,6 +335,10 @@ int PAPI_library_init(int version)
 #ifdef DEBUG
   if (getenv("PAPI_NDEBUG"))
     papi_debug = 0;
+#endif
+
+#if defined(linux)
+  atomic_set(&lock,0);
 #endif
 
   tmp = _papi_hwd_init_global();

@@ -1,5 +1,9 @@
 #ifdef DEBUG
+#if defined(sgi) && defined(mips)
+#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
+#else
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
+#endif
 #else
 #define DBG(a)
 #endif

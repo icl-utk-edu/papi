@@ -12,14 +12,18 @@ showconf:
 	@echo "Host examples    : $(TARGETS)";
 	@echo
 
-static $(LIBRARY): $(OBJECTS) 
+static: $(LIBRARY)
+
+$(LIBRARY): $(OBJECTS) 
 	ar ruv $(LIBRARY) $(OBJECTS) 
 
-shared $(SHLIB): $(OBJECTS) 
-	$(CC) $(SHRLOPT) -o $(SHLIB) $(OBJECTS)
+shared: $(SHLIB)
+
+$(SHLIB): $(OBJECTS) 
+	-$(CC_SHR) -o $(SHLIB) $(OBJECTS)
 
 papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
-	$(CC) $(CFLAGS) $(FOR_USED) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(FOR_USED) -c papi_fwrappers.c -o papi_fwrappers.o
 papi.o: papi.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi.c -o papi.o
 papi_hl.o: papi_hl.c $(HEADERS)
@@ -29,7 +33,7 @@ extras.o: extras.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o
 genpapifdef: genpapifdef.c $(LIBRARY)
-	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY)
+	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
 fpapi.h: genpapifdef
 	./genpapifdef > fpapi.h
 
