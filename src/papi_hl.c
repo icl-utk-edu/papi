@@ -163,6 +163,16 @@ void _internal_cleanup_hl_info(HighLevelInfo * state)
    return;
 }
 
+/*
+ * The next three calls all use _hl_rate_calls() to return an instruction rate value.
+ * PAPI_flips returns information related to floating point instructions using 
+ * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
+ * floating point pipe with no massaging.
+ * PAPI_flops return information related to theoretical floating point operations
+ * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
+ * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
+ * PAPI_ipc returns information on the instruction rate using the PAPI_TOT_INS event.
+ */
 int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips)
 {
    HighLevelInfo *state = NULL;
@@ -178,7 +188,7 @@ int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips)
    return (PAPI_OK);
 }
 
-int PAPI_flops(float *rtime, float *ptime, long_long * flpins, float *mflips)
+int PAPI_flops(float *rtime, float *ptime, long_long * flpops, float *mflops)
 {
    HighLevelInfo *state = NULL;
    int retval;
@@ -187,7 +197,7 @@ int PAPI_flops(float *rtime, float *ptime, long_long * flpins, float *mflips)
       return (retval);
 
    if ((retval =
-        _hl_rate_calls(rtime, ptime, flpins, mflips, PAPI_FP_OPS, state)) != PAPI_OK)
+        _hl_rate_calls(rtime, ptime, flpops, mflops, PAPI_FP_OPS, state)) != PAPI_OK)
       return (retval);
 
    return (PAPI_OK);

@@ -484,7 +484,8 @@ conjunction with the low level API. */
    int PAPI_stop_counters(long_long * values, int array_len);
    int PAPI_accum_counters(long_long * values, int array_len);
    int PAPI_num_counters(void);
-   int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflops);
+   int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips);
+   int PAPI_flops(float *rtime, float *ptime, long_long * flpops, float *mflops);
    int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc);
 
 #ifdef __cplusplus
