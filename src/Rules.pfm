@@ -44,12 +44,12 @@ POST_BUILD	=
 SPECIAL_REMOVE =
 
 ifeq (4,$(KERNMINVER)) 
-VERSION	?= 2.0
+VERSION	?= 2.x
 else
 ifeq (2,$(KERNMINVER))
-VERSION	?= 2.0
+VERSION	?= 2.x
 else
-VERSION ?= 3.0
+VERSION ?= 3.x
 endif
 endif
 	
@@ -85,11 +85,11 @@ endif
 
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX)
 
-CFLAGS-2.0 := -DPFM20 -D_GNU_SOURCE
-CFLAGS-3.0 := -DPFM30 -D_GNU_SOURCE  
+CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
+CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
 
-PFM_OBJS-2.0 := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-PFM_OBJS-3.0 := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
+PFM_OBJS-2.x := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
+PFM_OBJS-3.x := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 
 CFLAGS += $(CFLAGS-$(VERSION))
 PFM_OBJS := $(PFM_OBJS-$(VERSION))  
@@ -103,7 +103,7 @@ include Makefile.inc
 
 $(PFM_LIB_PATH)/libpfm.a:
 ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM)
+	$(MAKE) -C $(PFM) CC="$(CC)"
 else
 	@echo '$@ not installed!'; exit 1
 endif
