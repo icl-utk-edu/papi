@@ -89,7 +89,10 @@ int case1(void)
 
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     {
-      if ((pset->avail) && (pset->event_code != PAPI_TOT_CYC))
+	  /* skip total cycles and some cache events */
+      if ((pset->avail)
+			&& (pset->event_code != PAPI_TOT_CYC)
+			&& (pset->event_code != PAPI_CA_SHR))
 	{
 	  if ( !TESTS_QUIET ) 
 	    printf("Adding %s\n",pset->event_name);
