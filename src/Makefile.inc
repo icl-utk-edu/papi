@@ -129,7 +129,7 @@ install-all: install install-tests
 
 install: install-tree install-man install-lib
 
-install-lib: install-tree
+install-lib: install-tree native_install
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(PREFIX)/include
 	cd $(PREFIX)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h 
 	cp $(LIBRARY) $(SHLIB) $(PREFIX)/lib
