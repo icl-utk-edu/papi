@@ -1,3 +1,7 @@
+#define INNER_TEST  1
+#define VECTOR_TEST 1
+#define MATRIX_TEST 1
+
 /*
  * Calibrate.c
 Kevin,
@@ -48,6 +52,8 @@ for i = 1:n; for j = 1:n; for k = 1:n; c(i,j) = c(i,j) + a(i,k)*b(k,j); end; end
 
 #include "papi_test.h"
 
+static int l_PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops);
+
 static void resultline(int i, int j)
 {
 	float real_time, proc_time, mflops;
@@ -57,12 +63,12 @@ static void resultline(int i, int j)
 	i++;						/* convert to 1s base  */
 	theory = 2 * i * j;			/* thoretical ops   */
 	
-	PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
+	l_PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
 	papi = (int)(flpins);
 	diff = papi - theory;
-	errord = (10000 * abs(diff) / theory)%100;
+	errord = abs(1000000 * diff / theory)%100;
 	error = 100 * diff / theory;
-	printf("%8d %12d %12d %8d %5d.%.2d\n", i, papi, theory, diff, error,errord);
+	printf("%8d %12d %12d %8d %5d.%.4d\n", i, papi, theory, diff, error,errord);
 }
 
 static void headerlines(char * title)
@@ -82,25 +88,29 @@ static void headerlines(char * title)
   printf("Total CPU's in the system: %d\n",hwinfo->totalcpus);
   printf("-------------------------------------------------------------------------\n");
   printf("\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory", "diff", "%error");
-  printf("----------------------------------------------------\n");
+  printf("-------------------------------------------------------------------------\n");
 }
+
 
 #define INDEX1 100
 #define INDEX2 250	/* Microsoft can't handle x[500][500]. Sad but true... */
 #define INDEX3 500
 
-#define INNER_TEST  1
-#define VECTOR_TEST 0
-#define MATRIX_TEST 0
-
-int main(){
+int main(int argc, char *argv[]) {
   extern void dummy(void *);
   float x[INDEX3], y[INDEX3], z[INDEX3];
   float a[INDEX2][INDEX2], b[INDEX2][INDEX2], c[INDEX2][INDEX2];
 
   float real_time, proc_time, mflops, aa;
   long_long flpins;
-  int i,j,k;
+  int i,j,k,t;
+
+  t = 0;
+  if (argc > 1) {
+	if(!strcmp(argv[1],"1")) t = 1;
+	if(!strcmp(argv[1],"2")) t = 2;
+	if(!strcmp(argv[1],"3")) t = 3;
+  }
 
   printf("Initializing...");
 
@@ -115,48 +125,47 @@ int main(){
 	a[0][i] = b[0][i] = rand()*(float)1.1; }
 
   /* Setup PAPI library and begin collecting data from the counters */
-  if(PAPI_flops( &real_time, &proc_time, &flpins, &mflops)<PAPI_OK){ 
+  if(l_PAPI_flops( &real_time, &proc_time, &flpins, &mflops)<PAPI_OK){ 
 	 printf("Error starting the counters, aborting.\n"); 
 	 exit(-1); } 
 
-#if INNER_TEST
-  /* Inner Product test */
-  headerlines("Inner Product Test");
-  for (i=0;i<INDEX3;i++) {
+  if (t == 1 || (INNER_TEST && t == 0)) {
+	/* Inner Product test */
+	headerlines("Inner Product Test");
+	for (i=0;i<INDEX3;i++) {
 	 aa = aa + x[i]*y[i];
 	 if (i < INDEX1 || ((i+1) % 50) == 0)
 		resultline(i, 1);
+	}
+	flpins = -1;
+	l_PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
   }
 
-  flpins = -1;
-  PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
-#endif
+  if (t == 2 || (VECTOR_TEST && t == 0)) {
+	/* Matrix Vector test */
+	headerlines("Matrix Vector Test");
+	for (i=0;i<INDEX3;i++) {
+		for(j=0;j<INDEX3;j++)
+			z[i] = z[i] + a[i%INDEX2][j%INDEX2]*y[j];
+		if (i < INDEX1 || ((i+1) % 50) == 0)
+			resultline(i, INDEX3);
+	}
 
-#if VECTOR_TEST
-  /* Matrix Vector test */
-  headerlines("Matrix Vector Test");
-  for (i=0;i<INDEX3;i++) {
-	for(j=0;j<INDEX3;j++)
-		z[i] = z[i] + a[i%INDEX2][j%INDEX2]*y[j];
-	if (i < INDEX1 || ((i+1) % 50) == 0)
-		resultline(i, INDEX3);
+	flpins = -1;
+	l_PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
   }
 
-  flpins = -1;
-  PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
-#endif
-
-#if MATRIX_TEST
-  /* Matrix Multiply test */
-  headerlines("Matrix Multiply Test");
-  for (i=0;i<INDEX3;i++) {
-	for(j=0;j<INDEX3;j++)
-		for(k=0;k<INDEX3;k++)
-			c[i%INDEX2][j%INDEX2] = c[i%INDEX2][j%INDEX2] + a[i%INDEX2][k%INDEX2]*b[k%INDEX2][j%INDEX2];
-	if (i < INDEX1 || ((i+1) % 50) == 0)
-		resultline(i, INDEX3 * INDEX3);
+  if (t == 3 || (MATRIX_TEST && t == 0)) {
+	/* Matrix Multiply test */
+	headerlines("Matrix Multiply Test");
+	for (i=0;i<INDEX3;i++) {
+		for(j=0;j<INDEX3;j++)
+			for(k=0;k<INDEX3;k++)
+				c[i%INDEX2][j%INDEX2] = c[i%INDEX2][j%INDEX2] + a[i%INDEX2][k%INDEX2]*b[k%INDEX2][j%INDEX2];
+		if (i < INDEX1 || ((i+1) % 50) == 0)
+			resultline(i, INDEX3 * INDEX3);
+	}
   }
-#endif
 
   /* Use results so they don't get optimized away */
   c[0][0] = aa;
@@ -165,5 +174,88 @@ int main(){
  
   exit(0);
 }
+
+/* Use this local version to test potential changes for various platforms
+*/
+static int initialized = 0;
+static int l_PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops)
+{
+   static float total_proc_time=0.0; 
+   static int EventSet = PAPI_NULL;
+   static float mhz;
+   static long_long start_us = 0;
+   static long_long total_flpins = 0;
+   const PAPI_hw_info_t *hwinfo = NULL;
+   long_long values[2] = {0,0};
+   char buf[500];
+   int retval;
+
+   if ( !initialized ) {
+	mhz = 0.0;
+	*mflops = 0.0;
+ 	*real_time = 0.0;
+ 	*proc_time = 0.0;
+	*flpins = 0;
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT )
+	   return(retval);
+	if ( (hwinfo = PAPI_get_hardware_info()) == NULL ) {
+	   printf("Error getting hw_info\n");
+	   return -1;
+        } 
+	mhz = hwinfo->mhz;
+	PAPI_create_eventset( &EventSet );
+	retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+	PAPI_perror( retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+	retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+	PAPI_perror(retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+	initialized = 1;
+	start_us = PAPI_get_real_usec();
+	retval = PAPI_start(EventSet);
+	PAPI_perror(retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+   }
+   else {
+	retval = PAPI_stop( EventSet, values );
+	/* If fp instuction count is negative, re-initialize */
+	if ( *flpins < 0 ) {
+		total_flpins = 0;
+		PAPI_reset(EventSet);
+		start_us = PAPI_get_real_usec();
+	}
+	*real_time = (float)((PAPI_get_real_usec()-start_us)/1000000.0);
+	PAPI_perror( retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     initialized = 0;
+	     return retval;
+	}
+	*proc_time = (float)(values[1]/(mhz*1000000.0));
+	*mflops = (float)(values[0]/(*proc_time*1000000.0));
+	total_proc_time += *proc_time;
+	total_flpins += values[0];
+	*proc_time = total_proc_time;
+	*flpins = total_flpins;
+ 	retval = PAPI_start(EventSet);
+	PAPI_perror(retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+   }
+   return PAPI_OK;
+}
+
 
 
