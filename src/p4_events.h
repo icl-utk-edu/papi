@@ -294,7 +294,7 @@
 #define COMPLEMENT CCCR_COMPLEMENT
 #define THRESHOLD(a) CCCR_THRESHOLD(a)
 
-#define COUNTER(a) (a)
+#define COUNTER(a) (1 << a)
 #define NBOGUSNTAG (1 << 9)
 #define CPL(a) (a << 2)
 #define PEBS_TAG (1 << 24)

@@ -11,7 +11,6 @@
  */  
 
 #define MPX_NONDECR
-
 /* Nils Smeds */
 
 /* This MPX update modifies the behaviour of the multiplexing in PAPI.
@@ -881,7 +880,11 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
     for( i = 0; i < mpx_events->num_events; i++ ) {
       MasterEvent * mev = mpx_events->mev[i];
 
-      mpx_events->stop_values[i] = mev->count_estimate;
+      if( !(mev->is_a_rate) )
+	mpx_events->stop_values[i] = mev->count_estimate;
+      else
+	mpx_events->stop_values[i] = mev->count;
+      
 
 #ifndef MPX_NONDECR
       /* Extrapolate data up to the current time 

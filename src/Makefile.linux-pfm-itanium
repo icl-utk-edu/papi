@@ -11,6 +11,7 @@ MSUBSTR  = linux-ia64-libpfm2.0
 MEMSUBSTR= linux-ia64
 DESCR	?= "Stock Linux 2.4.18 + for the Intel Itanium"
 LIBS	= static shared
+# shared
 TARGETS = serial multiplex_and_pthreads
 
 CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall -g -DPFM20 

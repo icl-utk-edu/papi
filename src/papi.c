@@ -1116,6 +1116,9 @@ static int remove_event(EventSetInfo_t *ESI, int EventCode)
     }
 
   /* Zero the EventInfoArray. */
+  ESI->NumberOfEvents--;
+  for(;thisindex<ESI->NumberOfEvents;thisindex++)
+    ESI->EventInfoArray[thisindex] = ESI->EventInfoArray[thisindex+1];
 
   ESI->EventInfoArray[thisindex].code = PAPI_NULL;
   ESI->EventInfoArray[thisindex].command = NOT_DERIVED;

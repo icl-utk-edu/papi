@@ -53,11 +53,11 @@
 
  inline int pfmw_dispatch_events(pfmw_param_t *p, pfmw_reg_t *pc, int *count) {
      int ret;
-     memset(p->pfp_pc, 0, sizeof p->pfp_pc);
-     p->pfp_pc_count = *count;
+/*   memset(p->pfp_pc, 0, sizeof p->pfp_pc);
+     p->pfp_pc_count = *count; */
      ret = pfm_dispatch_events(p);
      if (ret == PFMLIB_SUCCESS) {
- 	memcpy(pc,p->pfp_pc, sizeof p->pfp_pc[0] * p->pfp_pc_count);
+ 	memcpy(pc, p->pfp_pc, sizeof(pfarg_reg_t)*PMU_MAX_PMCS);
  	*count = p->pfp_pc_count;
      }
      return ret;
