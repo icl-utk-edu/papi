@@ -1,13 +1,13 @@
 SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared extra
-TARGETS	= serial smp omp 
+TARGETS	= multiplex serial pthreads smp omp 
 FLAGS  	= -g3
-CFLAGS  = -DDEBUG -woff 1116,1552 $(FLAGS)
+CFLAGS  = -woff 1116,1552 $(FLAGS)
 NOOPT	= -O0
 OPTFLAGS= -O3
 FOPTFLAGS= $(OPTFLAGS)
-FFLAGS	= $(FLAGS)
+FFLAGS	= $(FLAGS) -col120
 SMPCFLGS= -mp
 OMPCFLGS= -mp
 CC_SHR  = cc -shared -all -check_registry /usr/lib/so_locations -rpath $(PWD) -soname libpapi.so
