@@ -264,7 +264,7 @@ void *case4_pthreads(void *arg)
    if ((retval = PAPI_set_multiplex(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
-   for (i = 2; i < 4; i++) {
+   for (i = 2; i < num_PAPI_events; i++) {
       if ((retval = PAPI_add_event(EventSet, PAPI_events[i])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
    }
@@ -284,7 +284,8 @@ void *case4_pthreads(void *arg)
       printf("case4 thread %4x:", (unsigned) pthread_self());
       test_print_event_header("", EventSet);
       printf("case4 thread %4x:", (unsigned) pthread_self());
-      printf(TAB4, "", values[0], values[1], values[2], values[3]);
+      for( i = 0; i < num_PAPI_events;i++) printf(" %12lld", values[i]);
+      printf("\n");
    }
 
    if ((retval = PAPI_cleanup_eventset(EventSet)) != PAPI_OK)   /* JT */
