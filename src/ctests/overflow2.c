@@ -54,6 +54,7 @@ int main(int argc, char **argv)
    int num_flops, retval;
    int PAPI_event, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
+   const PAPI_hw_info_t *hw_info = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -66,6 +67,10 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
 #if defined(POWER3)
    PAPI_event = PAPI_TOT_INS;
@@ -83,7 +88,11 @@ int main(int argc, char **argv)
    if ( PAPI_event == PAPI_FP_INS )
       mythreshold = THRESHOLD ;
    else 
-      mythreshold = THRESHOLD * 2;
+#if defined(linux)
+      mythreshold = hw_info->mhz*10000*2;
+#else
+      mythreshold = THRESHOLD*2;
+#endif
 
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
