@@ -38,6 +38,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <linux/unistd.h>
 #include "libperfctr.h"
 
@@ -84,7 +86,7 @@
 #define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
 
 /* Lock macros. */
-extern volatile unsigned int _papi_hwd_lock[PAPI_MAX_LOCK];
+extern int sem_set;
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 
@@ -99,20 +101,16 @@ extern volatile unsigned int _papi_hwd_lock[PAPI_MAX_LOCK];
  * else val = MUTEX_CLOSED */
 
 #define  _papi_hwd_lock(lck)                    \
-do                                              \
 {                                               \
-   unsigned int res = 0;                        \
-   do {                                         \
-      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(_papi_hwd_lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
-   } while(res != (unsigned int)MUTEX_OPEN);   \
-} while(0)
+struct sembuf sem_lock = { lck, -1, 0 }; \
+if (semop(sem_set, &sem_lock, 1) == -1 ) {      \
+PAPIERROR("semop errno %d",errno); abort(); } }
 
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   unsigned int res = 0;                       \
-   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
-} while(0)
+#define  _papi_hwd_unlock(lck)                   \
+{                                                \
+struct sembuf sem_unlock = { lck, 1, 0 }; \
+if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
+PAPIERROR("semop errno %d",errno); abort(); } }
 
 /* Overflow-related defines and declarations */
 typedef struct {

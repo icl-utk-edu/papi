@@ -12,10 +12,7 @@
 */
 
 #include "papi.h"
-#include SUBSTRATE
-#include "papi_preset.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 
 extern hwi_search_t _papi_hwd_p3_preset_map;
 extern hwi_search_t _papi_hwd_pm_preset_map;
@@ -30,7 +27,7 @@ extern native_event_entry_t _papi_hwd_k7_native_map;
 extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
 
-volatile unsigned int _papi_hwd_lock[PAPI_MAX_LOCK] = { 0, };
+int sem_set;
 volatile long_long virt_tsc, cntr[2];
 
 #ifdef DEBUG
@@ -54,37 +51,6 @@ void print_control(const struct perfctr_cpu_control *control) {
 }
 #endif
 
-inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
-   switch (perfctr_cpu_type) {
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PII:
-   case PERFCTR_X86_INTEL_PIII:
-   case PERFCTR_X86_INTEL_P4:
-   case PERFCTR_X86_INTEL_P4M2:
-#ifdef PERFCTR_X86_INTEL_P4M3
-   case PERFCTR_X86_INTEL_P4M3:
-#endif
-#ifdef PERFCTR_X86_INTEL_PENTM
-   case PERFCTR_X86_INTEL_PENTM:
-#endif
-      return (PAPI_VENDOR_INTEL);
-#ifdef PERFCTR_X86_AMD_K8
-   case PERFCTR_X86_AMD_K8:
-#endif
-#ifdef PERFCTR_X86_AMD_K8C
-   case PERFCTR_X86_AMD_K8C:
-#endif
-   case PERFCTR_X86_AMD_K7:
-      return (PAPI_VENDOR_AMD);
-   case PERFCTR_X86_CYRIX_MII:
-      return (PAPI_VENDOR_CYRIX);
-   default:
-      return (PAPI_VENDOR_UNKNOWN);
-   }
-}
-
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
 inline_static int setup_p3_presets(int cputype) {
@@ -98,7 +64,7 @@ inline_static int setup_p3_presets(int cputype) {
 
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
- extern int _papi_hwd_mdi_init() 
+static int mdi_init() 
    {
      /* Name of the substrate we're using */
     strcpy(_papi_hwi_system_info.substrate, "$Id$");       
@@ -129,7 +95,9 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
       def_mode = PERF_OS | PERF_USR;
       break;
    default:
-      abort();
+      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
+      def_mode = PERF_USR;
+      break;
    }
 
    ptr->allocated_registers.selector = 0;
@@ -178,12 +146,22 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
       return(PAPI_OK);
 }
 
-void _papi_hwd_lock_init(void) 
+static int lock_init(void) 
 {
-   int i;
-   for (i = 0; i < PAPI_MAX_LOCK; i++) {
-      _papi_hwd_lock[i] = MUTEX_OPEN;
-   }
+   int retval, i;
+   
+   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+     {
+       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
+     }
+   sem_set = retval;
+   for (i=0;i<PAPI_MAX_LOCK;i++)
+     {
+       if ((retval = semctl(sem_set,i,SETVAL,1)) == -1)
+	 {
+	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+	 }
+     }
 }
 
 /* At init time, the higher level library should always allocate and 
@@ -198,17 +176,17 @@ int _papi_hwd_init_global(void)
    /* Opened once for all threads. */
 
    if ((dev = vperfctr_open()) == NULL)
-      error_return(PAPI_ESYS, VOPEN_ERROR);
+     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
 
    /* Get info from the kernel */
 
    if (vperfctr_info(dev, &info) < 0)
-      error_return(PAPI_ESYS, VINFO_ERROR);
+     { PAPIERROR(VINFO_ERROR); return(PAPI_ESYS); }
 
    /* Initialize outstanding values in machine info structure */
 
-   if (_papi_hwd_mdi_init() != PAPI_OK) {
+   if (mdi_init() != PAPI_OK) {
       return (PAPI_ESBSTR);
    }
 
@@ -216,20 +194,6 @@ int _papi_hwd_init_global(void)
    retval = _papi_hwd_get_system_info();
    if (retval != PAPI_OK)
       return (retval);
-
-   /* Fixup stuff from linux.c */
-
-   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
-
-   _papi_hwi_system_info.supports_hw_overflow =
-       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
-   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
-          _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
-
-   _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.hw_info.model = info.cpu_type;
-   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
 
    /* Setup presets */
    retval = setup_p3_presets(info.cpu_type);
@@ -243,6 +207,8 @@ int _papi_hwd_init_global(void)
    cntr[0] = 222LL;
    cntr[1] = 333LL;
 
+   lock_init();
+
     return (PAPI_OK);
 }
 
@@ -252,7 +218,7 @@ int _papi_hwd_init(hwd_context_t * ctx)
 
    /* Initialize our thread/process pointer. */
    if ((ctx->perfctr = vperfctr_open()) == NULL)
-      error_return(PAPI_ESYS, VOPEN_ERROR);
+     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
 
    /* Initialize the per thread/process virtualized TSC */
@@ -261,7 +227,7 @@ int _papi_hwd_init(hwd_context_t * ctx)
 
    /* Start the per thread/process virtualized TSC */
    if (vperfctr_control(ctx->perfctr, &tmp) < 0)
-      error_return(PAPI_ESYS, VCNTRL_ERROR);
+     { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
 
    return (PAPI_OK);
 }
@@ -377,7 +343,7 @@ static void clear_control_state(hwd_control_state_t *this_state) {
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
-                                   NativeInfo_t *native, int count) {
+                                   NativeInfo_t *native, int count, hwd_context_t *ctx) {
    int i;
 
    /* clear out everything currently coded */
@@ -397,7 +363,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    int error;
    if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
-      error_return(PAPI_ESYS, VCNTRL_ERROR);
+      { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
    }
 #ifdef DEBUG
    print_control(&state->control.cpu_control);
@@ -407,7 +373,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
 
 int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    if(vperfctr_stop(ctx->perfctr) < 0)
-      error_return(PAPI_ESYS, VCNTRL_ERROR);
+     { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
    return(PAPI_OK);
 }
 
@@ -416,7 +382,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
-      if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
+      if (ISLEVEL(DEBUG_SUBSTRATE)) 
+	{
          int i;
          for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
@@ -482,22 +449,29 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
+int _papi_hwd_get_system_info() 
+{
+  _papi_hwi_system_info.hw_info.ncpu = 1;
+  _papi_hwi_system_info.hw_info.nnodes = 1;
+  _papi_hwi_system_info.hw_info.totalcpus = 1;
+  _papi_hwi_system_info.hw_info.mhz = 999.999;
+  _papi_hwi_system_info.num_cntrs = 2;
+  _papi_hwi_system_info.num_gp_cntrs = 2;
+  strcpy(_papi_hwi_system_info.hw_info.model_string,"Unknown Model");
+  strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Unknown Vendor");
+  return(PAPI_OK);
+}
+
+int _papi_hwd_update_shlib_info(void)
+{
+  return(PAPI_OK);
+}
+
 /* Low level functions, should not handle errors, just return codes. */
 
 inline_static long_long get_cycles(void) {
-   long_long ret;
-#ifdef __x86_64__
-   do {
-      unsigned int a,d;
-      asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
-   } while(0);
-#else
-   __asm__ __volatile__("rdtsc"
-                       : "=A" (ret)
-                       : /* no inputs */);
-#endif
-   return ret;
+  static long_long ret = 1;
+  return ret+100;
 }
 
 long_long _papi_hwd_get_real_usec(void) {
