@@ -274,7 +274,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
     papi_cpc_event_t *sample;
     EventSetInfo_t *ESI;
     ThreadInfo_t *thread;
-    int t;
+    int t, overflow_vector, readvalue;
 
     thread = _papi_hwi_lookup_in_thread_list();
     ESI = (EventSetInfo_t *)thread->event_set_overflowing;
@@ -294,15 +294,46 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
     else
       t = 1;
       
-    /* Call the regular overflow function in extras.c */
-    _papi_hwi_dispatch_overflow_signal(&ctx,  _papi_hwi_system_info.supports_hw_overflow, 0, 1);
+    if ( cpc_take_sample(&sample->cmd) == -1)
+      return;
+    if(event_counter==1) {
+      overflow_vector=1<<t; 
+      sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold[0];
+    }
+    else {
+      overflow_vector=0;
+      readvalue=sample->cmd.ce_pic[0];
+      if (readvalue >= 0 )
+      {
+          overflow_vector=1;
+          if (t==0)
+            sample->cmd.ce_pic[0] = UINT64_MAX - ESI->overflow.threshold[0];
+          else
+            sample->cmd.ce_pic[0] = UINT64_MAX - ESI->overflow.threshold[1];
+      }
+      readvalue=sample->cmd.ce_pic[1];
+      if (readvalue >= 0 )
+      {
+          overflow_vector ^= 1<<1; 
+          if (t==0)
+            sample->cmd.ce_pic[1] = UINT64_MAX - ESI->overflow.threshold[1];
+          else
+            sample->cmd.ce_pic[1] = UINT64_MAX - ESI->overflow.threshold[0];
+      }
+      DBG((stderr,"overflow_vector, = %d\n",overflow_vector));
+      if (overflow_vector==0) abort();
+    }
 
+    /* Call the regular overflow function in extras.c */
+    _papi_hwi_dispatch_overflow_signal(&ctx,  _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0);
+
+#if 0
     /* Reset the threshold */
       
     if ( cpc_take_sample(&sample->cmd) == -1)
       return;
-
     sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold[0];
+#endif
       
 #if DEBUG
     dump_cmd(sample);
@@ -831,7 +862,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
   return(PAPI_OK);
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   /* This function is not used and shouldn't be called. */
 
@@ -840,7 +871,6 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 
 int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
-  /* This function is not used and shouldn't be called. */
   ESI->profile.overflowcount=0;
   return(PAPI_OK);
 }

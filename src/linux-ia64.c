@@ -136,7 +136,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 extern hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS];
 
 extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
-                 long_long over, long_long threshold);
+                 long_long over, int profile_index);
 
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
@@ -869,12 +869,13 @@ int _papi_hwd_shutdown(hwd_context_t *ctx)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
 {
+
+  return;
+/*
   struct ucontext *uc;
   struct sigcontext *mc;
   struct ucontext realc;
 
-  return;
-/*
   pfm_stop();
   uc = (struct ucontext *) tmp;
   realc = *uc;
@@ -942,15 +943,16 @@ check_btb(pfmw_arch_reg_t *btb, pfmw_arch_reg_t *pmd16)
 	else return PAPI_ESYS;
 }
 
-static int ia64_process_profile_entry()
+static int ia64_process_profile_entry(void *papiContext)
 {
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
   perfmon_smpl_hdr_t *hdr ;
   perfmon_smpl_entry_t *ent;
   unsigned long pos;
-  int i, ret, reg_num;
-  struct sigcontext info;
+  int i, ret, reg_num, overflow_vector, count, EventCode, eventindex;
+  _papi_hwi_context_t *ctx=(_papi_hwi_context_t *)papiContext;
+  struct sigcontext *info= (struct sigcontext *)ctx->ucontext;
   hwd_control_state_t *this_state;
   pfmw_arch_reg_t *reg;
 /*
@@ -989,53 +991,73 @@ static int ia64_process_profile_entry()
 	}
 
     /* record  each register's overflow times  */
-	reg_num= ffs(ent->regs)-1;
 	ESI->profile.overflowcount++;
 
-   /* * print entry header */
-	info.sc_ip=ent->ip;
+    overflow_vector=ent->regs;
+    while (overflow_vector )
+    {
+	  reg_num= ffs(overflow_vector)-1;
+      /* find the event code */
+      for(count=0; count<ESI->profile.event_counter; count++)
+      {
+        eventindex=ESI->profile.EventIndex[count];
+        if(ESI->EventInfoArray[eventindex].pos[0]+PMU_FIRST_COUNTER == reg_num)
+        {
+          EventCode=ESI->profile.EventCode[count];
+          break;
+        }
+      }
+      /* something is wrong */
+      if (count==ESI->profile.event_counter) abort();
 
-#ifdef ITANIUM2 
-   	if ( pfm_ita2_is_dear( ESI->profile.EventCode ) ) {
-#else
-   	if ( pfm_ita_is_dear( ESI->profile.EventCode) ) {
-#endif
-	  reg = (pfmw_arch_reg_t*)(ent+1);
-	  reg++;
-	  reg++;
-#ifdef ITANIUM2
-      info.sc_ip = ( (reg->pmd17_ita2_reg.dear_iaddr  +  
+   /* * print entry header */
+	  info->sc_ip=ent->ip;
+    #ifdef ITANIUM2 
+   	  if ( pfm_ita2_is_dear( EventCode ) ) {
+    #else
+   	  if ( pfm_ita_is_dear( EventCode) ) {
+    #endif
+	    reg = (pfmw_arch_reg_t*)(ent+1);
+	    reg++;
+	    reg++;
+    #ifdef ITANIUM2
+        info->sc_ip = ( (reg->pmd17_ita2_reg.dear_iaddr  +  
                      reg->pmd17_ita2_reg.dear_bn ) << 4 ) 
                      | reg->pmd17_ita2_reg.dear_slot;
 
-#else
-	  info.sc_ip= (reg->pmd17_ita_reg.dear_iaddr<<4) 
+    #else
+	    info->sc_ip= (reg->pmd17_ita_reg.dear_iaddr<<4) 
                   | (reg->pmd17_ita_reg.dear_slot);
+    #endif
+      } ;
+  #ifdef ITANIUM2 
+      if ( pfm_ita2_is_btb( EventCode ) 
+           || EventCode ==PAPI_BR_INS) 
+      {
+  #else
+      if ( pfm_ita_is_btb( EventCode) 
+         || EventCode ==PAPI_BR_INS ) 
+      {
 #endif
-    } ;
+	    reg = (pfmw_arch_reg_t*)(ent+1);
+	    info->sc_ip= check_btb(reg, reg+8);
+      }
 
-#ifdef ITANIUM2 
-    if ( pfm_ita2_is_btb( ESI->profile.EventCode ) 
-           || ESI->profile.EventCode ==PAPI_BR_INS) 
-    {
-#else
-    if ( pfm_ita_is_btb( ESI->profile.EventCode) 
-         || ESI->profile.EventCode ==PAPI_BR_INS ) 
-    {
-#endif
-	  reg = (pfmw_arch_reg_t*)(ent+1);
-	  info.sc_ip= check_btb(reg, reg+8);
+   	  dispatch_profile(ESI, papiContext, (long_long)0, count);
+      overflow_vector ^= (1<<reg_num);
     }
+
+
+
 /*
         printf("Entry %d PID:%d CPU:%d regs:0x%lx IIP:0x%016lx\n",
             smpl_entry++,
             ent->pid,
             ent->cpu,
             ent->regs,
-            info.sc_ip);
+            info->sc_ip);
 */
 
-   	dispatch_profile(ESI, (caddr_t)&info, 0, ESI->profile.threshold);
 
     /*  move to next entry */
     pos += hdr->hdr_entry_size;
@@ -1047,6 +1069,11 @@ static int ia64_process_profile_entry()
 static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
 *context)
 {
+ _papi_hwi_context_t ctx;
+
+  ctx.si = info;
+  ctx.ucontext = context;
+
 /*
   pfm_stop();
 */
@@ -1056,7 +1083,7 @@ static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
       info->sy_code);
     return;
   }
-  ia64_process_profile_entry();
+  ia64_process_profile_entry(&ctx);
   if ( perfmonctl(getpid(), PFM_RESTART, NULL, 0) == -1 )
   {
     fprintf(stderr,"PID %d: perfmonctl mmm error PFM_RESTART %d\n",
@@ -1124,29 +1151,43 @@ static int set_notify(EventSetInfo_t *ESI, int index, int value)
 
 int _papi_hwd_stop_profiling( ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
+   _papi_hwi_context_t ctx;
+   struct sigcontext info; 
+
+   ctx.ucontext=&info;
    pfm_stop();
    ESI->profile.overflowcount = 0;
-   ia64_process_profile_entry();
+   ia64_process_profile_entry(&ctx);
    master->event_set_profiling=NULL;
    return(PAPI_OK);
 }
 
 
-int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   struct sigaction act;
   void *tmp;
-  int i, *pos, index;
+  int i, *pos;
   hwd_control_state_t *this_state = &ESI->machdep;
   pfarg_context_t ctx[1];
+  int EventCode = ESI->EventInfoArray[EventIndex].event_code;
 
-  if (profile_option->threshold == 0 ) 
+  if (threshold == 0 ) 
   {
 /* unset notify */
-    set_notify(ESI, profile_option->EventIndex, 0);
+    set_notify(ESI, EventIndex, 0);
+/* reset the initial value */
+       i= ESI->EventInfoArray[EventIndex].pos[0];
+       DBG((stderr,"counter %d used in overflow, threshold %d\n",
+           i+PMU_FIRST_COUNTER,threshold));
+       this_state->pd[i].reg_value = 0;
+       this_state->pd[i].reg_long_reset = 0;
+       this_state->pd[i].reg_short_reset = 0;
+
 /* remove the signal handler */
-    if (sigaction(SIGPROF, NULL, NULL) == -1)
-      return(PAPI_ESYS);
+    if (ESI->profile.event_counter==0)
+      if (sigaction(SIGPROF, NULL, NULL) == -1)
+        return(PAPI_ESYS);
   } 
   else 
   {
@@ -1164,23 +1205,17 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 
    /* Set up the overflow notifier on the proper event.  */
 
-    set_notify(ESI, profile_option->EventIndex, PFM_REGFL_OVFL_NOTIFY);
+    set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
 /* set initial value in pd array */
-    pos = ESI->EventInfoArray[profile_option->EventIndex].pos;
-    index=0;
-    while ( pos[index] != -1 )
-    {
-      i=pos[index];
+    i= ESI->EventInfoArray[EventIndex].pos[0];
       DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i+PMU_FIRST_COUNTER,profile_option->threshold));
+           i+PMU_FIRST_COUNTER,threshold));
       this_state->pd[i].reg_value = (~0UL) -
-                                  (unsigned long)profile_option->threshold+1;
+                                  (unsigned long)threshold+1;
       this_state->pd[i].reg_long_reset = (~0UL) -
-                                  (unsigned long)profile_option->threshold+1;
+                                  (unsigned long)threshold+1;
       this_state->pd[i].reg_short_reset = (~0UL) -
-                                  (unsigned long)profile_option->threshold+1;
-      index++;
-    }
+                                  (unsigned long)threshold+1;
 
   /* need to rebuild the context */
     if ( perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0) == -1 )
@@ -1199,18 +1234,18 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 
 /* DEAR events */
 #ifdef ITANIUM2
-    if ( pfm_ita2_is_dear( profile_option->EventCode ) ) 
+    if ( pfm_ita2_is_dear( EventCode ) ) 
       ctx[0].ctx_smpl_regs[0] = DEAR_REGS_MASK;
     else 
-      if (pfm_ita2_is_btb(profile_option->EventCode )
-            || profile_option->EventCode ==PAPI_BR_INS)
+      if (pfm_ita2_is_btb(EventCode )
+            || EventCode ==PAPI_BR_INS)
         ctx[0].ctx_smpl_regs[0] = BTB_REGS_MASK;
 #else
-    if ( pfm_ita_is_dear( profile_option->EventCode ) ) 
+    if ( pfm_ita_is_dear( EventCode ) ) 
       ctx[0].ctx_smpl_regs[0] = DEAR_REGS_MASK;
     else 
-      if (pfm_ita_is_btb(profile_option->EventCode )
-          || profile_option->EventCode ==PAPI_BR_INS)
+      if (pfm_ita_is_btb( EventCode )
+          || EventCode ==PAPI_BR_INS)
         ctx[0].ctx_smpl_regs[0] = BTB_REGS_MASK;
 #endif
 
@@ -1244,44 +1279,31 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_OK);
 }
 
-/*
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
-*/
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = &ESI->machdep;
-  int j, index, retval = PAPI_OK, *pos, event_index;
-  int event_counter;
-  EventSetOverflowInfo_t *overflow_option= &ESI->overflow;
+  int j, retval = PAPI_OK, *pos;
 
   if (threshold == 0)
   {
   /* Remove the overflow notifier on the proper event. 
   */
-/*
-     event_index= overflow_option->EventIndex[event_counter-1];
-*/
      set_notify(ESI, EventIndex, 0);
 
        pos = ESI->EventInfoArray[EventIndex].pos;
-       index=0;
-       while ( pos[index] != -1 )
-       {
-         j = pos[index];
+         j = pos[0];
          DBG((stderr,"counter %d used in overflow, threshold %d\n",
            j+PMU_FIRST_COUNTER,threshold));
          this_state->pd[j].reg_value = 0;
          this_state->pd[j].reg_long_reset = 0;
          this_state->pd[j].reg_short_reset = 0;
-         index++;
-       }
 
      /* Remove the signal handler */
 
      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
      _papi_hwi_using_signal--;
-     DBG(("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal));
+     DBG((stderr, "_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal));
      if (_papi_hwi_using_signal == 0)
 	 {
 
@@ -1309,26 +1331,18 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 
   /*Set the overflow notifier on the proper event. Remember that selector
   */
-/*
-    event_index= overflow_option->EventIndex[event_counter-1];
-*/
     set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
 
 /* set initial value in pd array */
 
       pos = ESI->EventInfoArray[EventIndex].pos;
-      index=0;
-      while ( pos[index] != -1 )
-      {
-        j = pos[index];
+        j = pos[0];
         DBG((stderr,"counter %d used in overflow, threshold %d\n",
            j+PMU_FIRST_COUNTER,threshold));
         this_state->pd[j].reg_value = (~0UL) -
                               (unsigned long)threshold+1;
         this_state->pd[j].reg_long_reset = (~0UL) -
                                (unsigned long)threshold+1;
-        index++;
-      }
 
     _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     _papi_hwi_using_signal++;

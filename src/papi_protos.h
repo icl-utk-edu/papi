@@ -94,7 +94,7 @@ extern int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long_long eve
 extern int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t *option);
 extern int _papi_hwd_init_global(void);
 extern int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold);
-extern int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option);
+extern int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold);
 extern void *_papi_hwd_get_overflow_address(void *context);
 extern void _papi_hwd_error(int error, char *);
 extern void _papi_hwd_lock_init(void);

@@ -95,7 +95,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
   if (flags & PAPI_PROFIL_RANDOM)
     {
       if (random_ushort() <= (USHRT_MAX/4))
-	return;
+	    return;
     }
 
   if (flags & PAPI_PROFIL_COMPRESS)
@@ -111,41 +111,43 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
   if (flags & PAPI_PROFIL_WEIGHTED)     /* Increment is between 1 and 255 */
     {
       if (excess <= (long_long)1)
-	increment = 1;
+	    increment = 1;
       else if (excess > threshold)
-	increment = 255;
-      else
-	{
-	  threshold = threshold / (long_long)255;
-	  increment = (int)(excess / threshold);
-	}	
+	         increment = 255;
+           else
+	       {
+	         threshold = threshold / (long_long)255;
+	         increment = (int)(excess / threshold);
+	       }	
     }
 
   buf[addr] += increment;
   DBG((stderr,"posix_profile() bucket %lu = %u\n",addr,buf[addr]));
 }
 
-/*
-static void dispatch_profile(EventSetInfo_t *ESI, void *context,
-			     long_long over, long_long threshold)
-*/
 void dispatch_profile(EventSetInfo_t *ESI, void *context,
-			     long_long over, long_long threshold)
+			     long_long over, int profile_index )
 {
+ _papi_hwi_context_t *ctx = (_papi_hwi_context_t *)context;
+
   EventSetProfileInfo_t *profile = &ESI->profile;
-  caddr_t pc = (caddr_t)_papi_hwd_get_overflow_address(context);
+  caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
+
+/*
   caddr_t offset = (caddr_t)0;
   caddr_t best_offset = (caddr_t)0;
   int count;
   int best_index = -1;
+  int i;
+*/
   unsigned short overflow_dummy;
   unsigned short *overflow_bin = NULL;
-  int i;
 
 #ifdef PROFILE_DEBUG
   fprintf(stderr,"%lld:%s:0x%x:handled at 0x%lx\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),pc);
 #endif
 
+/*
   count = profile->count;
   if ((profile->prof[count-1].pr_off == 0) &&
       (profile->prof[count-1].pr_scale == 0x2))
@@ -170,8 +172,13 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 
   if (best_index == -1)
     best_index = 0;
+*/
+  overflow_bin = &overflow_dummy;
 
+  posix_profil(pc, profile->prof[profile_index], overflow_bin, profile->flags, over, profile->threshold[profile_index]);
+/*
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
+*/
 }
 
 /* if isHardware is true, then the processor is using hardware overflow,
@@ -196,9 +203,9 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_long overflow_bit, int genOverflowBit)
 {
   int retval, event_counter, i, overflow_flag, pos;
-  int papi_index;
-  long_long overflow_vector;
-  u_long_long latest=0, temp[MAX_COUNTERS];
+  int papi_index, profile_index, j;
+  long_long overflow_vector, temp[MAX_COUNTERS], over;
+  u_long_long latest=0 ;
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
   _papi_hwi_context_t *ctx = (_papi_hwi_context_t*)papiContext;
@@ -242,6 +249,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_
       {
         papi_index=ESI->overflow.EventIndex[i];
         latest = ESI->sw_stop[papi_index];
+        temp[i] = -1;
         
         if (latest >= ESI->overflow.deadline[i])
         {
@@ -260,6 +268,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_
     {
       /* we had assumed the overflow event can't be derived event */
       papi_index=ESI->overflow.EventIndex[0];
+
       /* suppose the pos is the same as the counter number(this is not true in 
          Itanium, but itanium don't need us to generate the overflow bit
       */
@@ -272,15 +281,22 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_
       ESI->overflow.count++;
       if (ESI->state & PAPI_PROFILING)
       {
-/*
-	    dispatch_profile(ESI, (caddr_t)context, 
-             latest - ESI->overflow.deadline[event_counter-1], ESI->overflow.threshold[event_counter-1]); 
-*/
-        for(i=0; i<event_counter; i++) {
-          if (temp[i] > 0)
-	        dispatch_profile(ESI, (caddr_t)papiContext, 
-             temp[i], ESI->overflow.threshold[i]); 
+        while(overflow_vector) 
+        {
+          i=ffs(overflow_vector)-1;
+          for(j=0; j<event_counter; j++) 
+          {
+            papi_index=ESI->overflow.EventIndex[j];
+            pos=ESI->EventInfoArray[papi_index].pos[0];
+            if (i==pos) {profile_index=j; break;}
+          }
+          if (j==event_counter) abort();/* something is wrong */
+          if (isHardware) over=0;
+            else over=temp[profile_index];
+	      dispatch_profile(ESI, (caddr_t)papiContext, over, profile_index); 
+          overflow_vector ^= 1<<i;
         }
+        /* do not use overflow_vector after this place */
       }
       else
 	    ESI->overflow.handler(ESI->EventSetIndex,  

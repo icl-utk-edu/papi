@@ -118,13 +118,14 @@ typedef struct _EventSetInheritInfo {
 #endif
 
 typedef struct _EventSetProfileInfo {
-  PAPI_sprofil_t *prof;
-  int count; /* Number of buffers */
-  int threshold;
-  int EventIndex;
-  int EventCode;
+  PAPI_sprofil_t *prof[MAX_COUNTERS];
+  int count[MAX_COUNTERS]; /* Number of buffers */
+  int threshold[MAX_COUNTERS];
+  int EventIndex[MAX_COUNTERS];
+  int EventCode[MAX_COUNTERS];
   int flags;
   int overflowcount; /* number of overflows */
+  int event_counter;
 } EventSetProfileInfo_t;
 
 /* This contains info about an individual event added to the EventSet.

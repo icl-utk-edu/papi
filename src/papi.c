@@ -1394,8 +1394,10 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode, int threshold, int flags)
 {
   EventSetInfo_t *ESI;
+/*
   EventSetProfileInfo_t opt = { 0, };
-  int retval,index;
+*/
+  int retval,index, i;
 
   ESI = _papi_hwi_lookup_EventSet(EventSet);
   if (ESI == NULL)
@@ -1407,18 +1409,56 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
   if ((index=_papi_hwi_lookup_EventCodeIndex(ESI, EventCode)) < 0)
     papi_return(PAPI_ENOEVNT);
 
+  /* We do not support derived events in overflow */
+  if ( ESI->EventInfoArray[index].derived )
+    papi_return(PAPI_EINVAL);
+
   if (threshold < 0)
     papi_return(PAPI_EINVAL);
 
-  if (ESI->state & PAPI_PROFILING)
-  {
-    if (threshold)
-      papi_return(PAPI_EINVAL);
-  }
-  else
+  /* the first time to call PAPI_sprofil */
+  if ( ! (ESI->state & PAPI_PROFILING) )
   {
     if (threshold == 0)
       papi_return(PAPI_EINVAL);
+  }
+  if (threshold > 0 && ESI->profile.event_counter>=MAX_COUNTERS)
+    papi_return(PAPI_ECNFLCT);
+
+  if (threshold ==0 ) {
+    for(i=0; i<ESI->profile.event_counter; i++)
+    {
+      if (ESI->profile.EventCode[i]== EventCode) break;
+    }
+    /* EventCode not found */
+    if (i==ESI->profile.event_counter) papi_return(PAPI_EINVAL);
+    /* compact these arrays */
+    while(i< ESI->profile.event_counter - 1)
+    {
+      ESI->profile.prof[i] = ESI->profile.prof[i+1];
+      ESI->profile.count[i] = ESI->profile.count[i+1];
+      ESI->profile.threshold[i] = ESI->profile.threshold[i+1];
+      ESI->profile.EventIndex[i] = ESI->profile.EventIndex[i+1];
+      ESI->profile.EventCode[i] = ESI->profile.EventCode[i+1];
+      i++;
+    }
+    ESI->profile.prof[i] = NULL;
+    ESI->profile.count[i] = 0;
+    ESI->profile.threshold[i] = 0;
+    ESI->profile.EventIndex[i] = 0;
+    ESI->profile.EventCode[i] = 0;
+
+    ESI->profile.event_counter--;
+  }
+  else 
+  {
+    i=ESI->profile.event_counter;
+    ESI->profile.prof[i] = prof;
+    ESI->profile.count[i] = profcnt;
+    ESI->profile.threshold[i] = threshold;
+    ESI->profile.EventIndex[i] = index;
+    ESI->profile.EventCode[i] = EventCode;
+    ESI->profile.event_counter++;
   }
 
   if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
@@ -1427,15 +1467,10 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
 
   /* Set up the option structure for the low level */
 
-  opt.prof = prof;
-  opt.count = profcnt;
-  opt.flags = flags;
-  opt.threshold = threshold;
-  opt.EventIndex = index;
-  opt.EventCode = EventCode;
+  ESI->profile.flags = flags;
 
   if ( _papi_hwi_system_info.supports_hw_profile) 
-    retval = _papi_hwd_set_profile(ESI, &opt);
+    retval = _papi_hwd_set_profile(ESI, index, threshold);
   else 
     retval = PAPI_overflow(EventSet, EventCode, threshold, 0, 
                        _papi_hwi_dummy_handler);
@@ -1444,14 +1479,10 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
     return(retval);
 
   /* Toggle profiling flag */
+  if ( (ESI->profile.event_counter==1 && threshold>0 ) ||
+      (ESI->profile.event_counter==0 && threshold==0) )
+    ESI->state ^= PAPI_PROFILING;
 
-  ESI->state ^= PAPI_PROFILING;
-
-  if (ESI->state & PAPI_PROFILING)
-  {
-      /* Copy the machine independent options into the ESI */
-    memcpy(&ESI->profile, &opt, sizeof(EventSetProfileInfo_t));
-  }
   papi_return(PAPI_OK);
 }
 

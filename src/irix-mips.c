@@ -725,7 +725,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
       (this_state->num_on_counter[1] > 1))
     return(PAPI_ECNFLCT);
 */
+/*
   if (ESI->overflow.event_counter >1) return(PAPI_ECNFLCT);
+*/
   if (threshold == 0)
   {
     arg->hwp_ovflw_sig = 0;
@@ -770,7 +772,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
   return(retval);
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   /* This function is not used and shouldn't be called. */
 
