@@ -33,7 +33,7 @@ multiplex1: multiplex1.c do_loops.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c do_loops.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1_pthreads: multiplex1_pthreads.c do_loops.o $(PAPILIB)
-	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1_pthreads.c do_loops.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
+	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) profile_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
