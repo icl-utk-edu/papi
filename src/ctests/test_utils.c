@@ -220,6 +220,19 @@ int add_test_events(int *number, int *mask)
 	}
     }
 
+  if (*mask & MASK_TOT_IIS)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_IIS);
+      if (retval == PAPI_OK)
+	(*number)++;
+      else
+	{
+	  if ( !TESTS_QUIET )
+	      fprintf(stderr,"PAPI_TOT_IIS is not available.\n");
+	  *mask = *mask ^ MASK_TOT_IIS;
+	}
+    }
+
   if (*mask & MASK_TOT_CYC)
     {
       retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
@@ -294,7 +307,13 @@ int remove_test_events(int *EventSet, int mask)
 
   if (mask & MASK_TOT_INS) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
+     retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
+      if (retval < PAPI_OK) return(retval);
+    }
+ 
+  if (mask & MASK_TOT_IIS) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_TOT_IIS);
       if (retval < PAPI_OK) return(retval);
     }
  

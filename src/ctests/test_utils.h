@@ -3,6 +3,7 @@
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
 */
+#define MASK_TOT_IIS 0x4000	/* Try this if TOT_INS won't work */
 #define MASK_BR_PRC  0x2000
 #define MASK_BR_MSP  0x1000
 #define MASK_BR_CN   0x0800
