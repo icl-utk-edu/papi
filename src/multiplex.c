@@ -553,9 +553,11 @@ static void mpx_handler(int signal)
          long_long cycles, total_cycles;
 
          retval = PAPI_stop(cur_event->papi_event, counts);
-         assert(retval == PAPI_OK);
+	 assert(retval == PAPI_OK);
          MPXDBG("retval=%d, cur_event=%p, I'm tid=%lx\n",
                  retval, cur_event, me->tid);
+
+         if (retval == PAPI_OK) {
          MPXDBG("counts[0] = %lld counts[1] = %lld\n", counts[0], counts[1]);
 
          cur_event->count += counts[0];
@@ -567,7 +569,6 @@ static void mpx_handler(int signal)
          cur_event->prev_total_c = me->total_c;
          cur_event->handler_count++;
 
-         if (retval == PAPI_OK) {
             /* If it's a rate, count occurrences & average later */
             if (!cur_event->is_a_rate) {
                cur_event->cycles += cycles;
@@ -604,7 +605,7 @@ static void mpx_handler(int signal)
           * but only after considerating all the other
           * possible events.
           */
-         if ((cycles >= MPX_MINCYC) && (retval == PAPI_OK)) {
+         if ((retval != PAPI_OK) || ((retval == PAPI_OK) && (cycles >= MPX_MINCYC))) {
             for (mev = (cur_event->next == NULL) ? head : cur_event->next;
                  mev != cur_event; mev = (mev->next == NULL) ? head : mev->next) {
                /* Found the next one to start */
@@ -617,7 +618,7 @@ static void mpx_handler(int signal)
 
          if (me->cur_event->active) {
             retval = PAPI_start(me->cur_event->papi_event);
-            assert(retval == PAPI_OK);
+	    assert(retval == PAPI_OK);
          }
 #ifdef MPX_DEBUG_OVERHEAD
          didwork = 1;
@@ -689,7 +690,7 @@ int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events)
 
 int MPX_start(MPX_EventSet * mpx_events)
 {
-   int retval;
+   int retval = PAPI_OK;
    int i;
    long_long values[2];
    long_long cycles_this_slice, current_thread_mpx_c = 0;
@@ -703,8 +704,17 @@ int MPX_start(MPX_EventSet * mpx_events)
       current_thread_mpx_c += t->total_c;
       retval = PAPI_read(t->cur_event->papi_event, values);
       assert(retval == PAPI_OK);
-      cycles_this_slice = ((t->cur_event->pi.event_type == PAPI_TOT_CYC)
-                           ? values[0] : values[1]);
+      if (retval == PAPI_OK)
+	{
+	  cycles_this_slice = ((t->cur_event->pi.event_type == PAPI_TOT_CYC)
+			       ? values[0] : values[1]);
+	}
+      else
+	{
+	  values[0] = values[1] = 0;
+	  cycles_this_slice = 0;
+	}
+
    } else {
       values[0] = values[1] = 0;
       cycles_this_slice = 0;
@@ -778,7 +788,6 @@ int MPX_start(MPX_EventSet * mpx_events)
       t->cur_event->prev_total_c = 0;
       mpx_events->start_c = 0;
       retval = PAPI_start(mpx_events->mev[index]->papi_event);
-      /* if( retval ) pm_error("papi start", retval); */
       assert(retval == PAPI_OK);
    } else {
       /* If an event is already running, record the starting cycle
@@ -960,8 +969,6 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
    /* Read the counter values, this updates mpx_events->stop_values[] */
    MPXDBG("Start\n");
    retval = MPX_read(mpx_events, values);
-   if (retval != PAPI_OK)
-      return retval;
 
    /* Block timer interrupts while modifying active events */
    mpx_hold();
@@ -998,7 +1005,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
           * counters as this is the last active user
           */
          retval = PAPI_stop(mev->papi_event, dummy_value);
-         assert(retval == PAPI_OK);
+	 assert(retval == PAPI_OK);
          mev->rate_estimate = 0.0;
 
          /* Fall-back value if none is found */
@@ -1014,7 +1021,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 
          if (thr->cur_event != NULL) {
             retval = PAPI_start(thr->cur_event->papi_event);
-            assert(retval == PAPI_OK);
+	    assert(retval = PAPI_OK);
          } else {
             mpx_shutdown_itimer();
          }
@@ -1122,10 +1129,11 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 
       /* Make a list of the events in the current set */
       event_list = (int *) malloc(mpx_events->num_events * sizeof(int));
-      assert(event_list != NULL);
-      for (i = 0; i < mpx_events->num_events; i++)
-         event_list[i] = mpx_events->mev[i]->pi.event_type;
+      if (event_list == NULL)
+	return PAPI_ENOMEM;
 
+      for (i = 0; i < mpx_events->num_events; i++)
+        event_list[i] = mpx_events->mev[i]->pi.event_type;
 
       mpx_hold();
 
@@ -1218,7 +1226,8 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
       /* No matching event in the list; add a new one */
       if (mev == NULL) {
          mev = (MasterEvent *) malloc(sizeof(MasterEvent));
-         assert(mev != NULL);
+         if (mev == NULL)
+	   return(PAPI_ENOMEM);
 
          mev->pi.event_type = event_list[i];
          mev->pi.domain = domain;
