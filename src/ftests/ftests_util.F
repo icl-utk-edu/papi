@@ -2,6 +2,27 @@
 
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 
+      integer function get_quiet()
+#if _WIN32
+      use dflib
+#endif
+      implicit none
+      character*25 chbuf
+
+C	This routine tests for a command line argument
+C	that matches 'TESTS_QUIET'
+C	If found, it returns 1 to set output to quiet
+C	The routine was placed her to hide the ugly
+C	Windows #if stuff from normal view
+C	And also to make the test code read cleaner
+      get_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         get_quiet=1
+      end if
+	end
+
+
       subroutine dummy(array)
       implicit none
       real array
