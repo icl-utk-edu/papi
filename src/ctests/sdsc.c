@@ -184,7 +184,6 @@ int main(int argc, char **argv)
 
    for (j = 0; j < nevents; j++) {
       spread[j] = llabs(refvalues[j] - values[j]);
-      printf("diff=%lf \n", spread[j]);
       if (values[j])
          spread[j] /= (double) values[j];
       if (!TESTS_QUIET)
