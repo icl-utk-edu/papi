@@ -25,23 +25,22 @@ registered with PAPI through a call to
 None.
 
 .SH RETURN VALUES
-Return values are identical to the function registered with PAPI 
-through a call to 
-.B PAPI_thread_init().
+On success, this function returns
+.B PAPI_OK.
+ On error, a negative error value is returned.
 
 .SH ERRORS
-None.
+.TP
+.B "PAPI_EMISC" 
+is returned if there are no threads registered.
+.TP
+.B "-1"
+is returned if the thread id function returns an error.
 
 .SH EXAMPLE
 .nf
 .if t .ft CW
 unsigned long tid;
-
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
-
-if (PAPI_thread_init(pthread_self) != PAPI_OK)
-  exit(1);
 
 if ((tid = PAPI_thread_id()) == (unsigned long int)-1)
   exit(1);
