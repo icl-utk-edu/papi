@@ -19,11 +19,17 @@ ALLTESTS="$FTESTS $CTESTS";
 x=0;
 CWD=`pwd`
 
-echo "The following test cases will be run";
-echo $ALLTESTS;
-echo "\n";
+echo "Platform:"
+uname -a
 
-echo "Running C Tests\n";
+echo ""
+echo "The following test cases will be run:";
+echo $ALLTESTS;
+
+echo "";
+echo "Running C Tests";
+echo ""
+
 for i in $CTESTS;
 do
 if [ -x $i ]; then
@@ -36,7 +42,10 @@ fi;
 fi;
 done
 
-echo "\n\nRunning Fortran Tests\n";
+echo ""
+echo "Running Fortran Tests";
+echo ""
+
 for i in $FTESTS;
 do
 if [ -x $i ]; then
