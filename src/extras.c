@@ -53,12 +53,12 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
   int increment = 1;
   unsigned short *buf = prof->pr_base;
   unsigned long addr;
-  unsigned long_long laddr;
+  u_long_long laddr;
 
   addr = (unsigned long)(address - prof->pr_off);
   laddr = addr / 2;
   laddr = laddr * prof->pr_scale;
-  addr = laddr >> 16;
+  addr = (unsigned long)laddr >> 16;
 
   if (addr >= prof->pr_size)
     {
