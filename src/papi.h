@@ -333,14 +333,18 @@ read the documentation carefully.  */
       int count;
    } PAPI_shlib_info_t;
 
+   /* The following defines and next for structures define the memory heirarchy */
    /* All sizes are in BYTES */
    /* Except tlb size, which is in entries */
 
 #define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  3
-#define PAPI_MH_TYPE_EMPTY    0x0
-#define PAPI_MH_TYPE_INST	   0x1
-#define PAPI_MH_TYPE_DATA     0x2
+#define PAPI_MH_TYPE_EMPTY    0x00
+#define PAPI_MH_TYPE_INST	   0x01
+#define PAPI_MH_TYPE_DATA     0x02
+#define PAPI_MH_TYPE_VECTOR   0x04
 #define PAPI_MH_TYPE_UNIFIED  PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA
+#define PAPI_MH_TYPE_WT       0x10  /* write-through cache */
+#define PAPI_MH_TYPE_WB       0x20  /* write-back cache */
 
    typedef struct _papi_mh_tlb_info {
       int type; /* Empty, unified, data, instr */
