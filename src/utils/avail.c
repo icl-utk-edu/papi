@@ -6,13 +6,21 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int i,j;
+   int i,j, k;
    int retval;
+   int print_full_info = 0;
+   char *name = NULL;
    int print_avail_only = 0;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+   if (argv[1]) {
+      if (strstr(argv[1], "-f")) {
+         print_full_info = 1;
+         name = argv[2];
+      }
+   }
    for (i = 0; i < argc; i++)
       if (argv[i]) {
          if (strstr(argv[i], "-a"))
@@ -49,27 +57,53 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
-      
-      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Deeveloper's Notes|\n Derived|\n |PostFix|\n");
-      printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
+      if (print_full_info) {
+         if (PAPI_event_name_to_code(name, &i) == PAPI_OK) {
+            if (PAPI_get_event_info(i, &info) == PAPI_OK) {
+               PAPI_event_info_t n_info;
+               if (i & PAPI_PRESET_MASK) {
+                  printf("Event name:\t\t\t%s\nEvent Code:\t\t\t0x%-10x\nNumber of Native Events:\t%d\n",
+		               info.symbol, info.event_code, info.count);
+                  printf("Short Description:\t\t|%s|\nLong Description:\t\t|%s|\nDeveloper's Notes:\t\t|%s|\n",
+		               info.short_descr, info.long_descr, info.note);
+                     printf("Derived Type:\t\t\t|%s|\nPostfix Processing String:\t|%s|\n",
+                     info.derived, info.postfix);
+                  for (j=0;j<info.count;j++) {
+                     printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+                     PAPI_get_event_info(info.code[j], &n_info);
+                     printf(" |Number of Register Values: %d|\n", n_info.count);
+                     for (k=0;k<n_info.count;k++)
+                        printf(" |Register[%d]: 0x%-10x  %s|\n",k, n_info.code[k], n_info.name[k]);
+                     printf(" |Native Event Description: |%s|\n\n", n_info.long_descr);
+                 }
+               }
+	         }
+         }
+         else printf("Sorry, an event by the name '%s' could not be found. Is it typed correctly?\n\n",name);
+      }
+      else {
+         printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
+         
+         printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Developer's Notes|\n Derived|\n |PostFix|\n");
+         printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
 
-      i = PAPI_PRESET_MASK;
-      do {
-         if (PAPI_get_event_info(i, &info) == PAPI_OK) 
-	   {
-	     printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
-		    info.symbol,
-		    info.event_code,
-		    info.count,
-		    info.short_descr,
-		    info.long_descr,
-		    info.note,
-          info.derived,
-          info.postfix);
-        for (j=0;j<info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
-	   }
-      } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
+         i = PAPI_PRESET_MASK;
+         do {
+            if (PAPI_get_event_info(i, &info) == PAPI_OK) 
+	         {
+	            printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
+		            info.symbol,
+		            info.event_code,
+		            info.count,
+		            info.short_descr,
+		            info.long_descr,
+		            info.note,
+                  info.derived,
+                  info.postfix);
+               for (j=0;j<info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+	         }
+         } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
+      }
       printf
           ("-------------------------------------------------------------------------\n");
    }

@@ -5,7 +5,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int i, j;
+   int i, j, k;
    int retval;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
    int group = 0;
 #endif
 #ifdef PENTIUM4
-   int k, l;
+   int l;
 #endif
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -74,14 +74,15 @@ int main(int argc, char **argv)
          j++;
          retval = PAPI_get_event_info(i, &info);
 
-	 printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n",
+	 printf("%s\t0x%x\n |%s|\n",
 		info.symbol,
 		info.event_code,
-		info.count,
-		info.short_descr,
-		info.long_descr,
-		info.derived,
-		info.postfix);
+		info.long_descr);
+
+   for (k=0;k<info.count;k++)
+      printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
+   printf("\n");
+
 #ifdef _POWER4
          if (!TESTS_QUIET)
             printf("Groups: ");
