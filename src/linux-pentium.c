@@ -19,7 +19,6 @@ _syscall3(int, perf, int, op, int, counter, int, event);
 
 #include "papi.h"
 #include "papi_internal.h"
-//#include "extras.c"
 #include "papiStdEventDefs.h"
 
 /* The following structure holds preset values for that defined in the 
@@ -91,12 +90,12 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 {},				// 37
                 {},				// 38
                 {},				// 39
-		{ 3, 0xC5, },			// Branch inst. mispred.
-		{ 3, 0xC9, },			// Branch inst. taken
-		{ 3, 0xE4, },			// Branch inst. not taken
-                {},				// 43
-                {},				// 44
-                {},				// 45
+                {},				// 40
+                {},				// 41
+		{ 3, 0xC9, },			// Uncond. branches executed
+		{ 3, 0xC5, },			// Cond. Branch inst. mispred.
+		{ 3, 0xC9, },			// Cond. Branch inst. taken
+		{ 3, 0xE4, },			// Cond. Branch inst. not taken
                 {},				// 46
                 {},				// 47
                 {},				// 48
@@ -139,7 +138,7 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;
@@ -246,7 +245,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
 
 
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;
@@ -586,6 +585,8 @@ papi_mdi _papi_system_info = { "$Id$",
  				-1,
  				-1,
 			       sizeof(hwd_control_state_t), 
-			       NULL };
+			       NULL,
+			       PAPI_DOM_USER,
+			       PAPI_GRN_THR };
 #endif
 #endif

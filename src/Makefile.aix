@@ -1,0 +1,28 @@
+ARCH    = power
+OSTYPE  = aix
+NAME	= $(OSTYPE)-$(ARCH)
+CFLAGS 	= -g -DDEBUG
+LDFLAGS = -g
+OBJECTS = papi.o papi_hl.o aix-p2sc.o
+HEADERS = papi.h papi_internal.h papiStdEventDefs.h aix-p2sc.h
+LIBRARY = libpapi.a
+KNOWN	= 0
+
+CONF	= $(NAME)
+KNOWN	= 1
+
+all: showconf $(LIBRARY) examples
+
+showconf:
+	@echo "Host architecture: $(NAME)"; 
+	@echo "Host substrate   : $(CONF)"; echo
+
+$(LIBRARY): $(OBJECTS)
+	ar ruv $(LIBRARY) $(OBJECTS) p2sc/xlf_p2sc.o 
+
+examples: 
+	cd tests; $(MAKE) -f Makefile.aix CC=$(CC) CFLAGS="$(CFLAGS) -I.." LDFLAGS="$(LDFLAGS) -L.."
+
+clean:
+	rm -rf $(OBJECTS) $(LIBRARY) $(EXAMPLES) $(EXOBS) core *~
+	cd tests; $(MAKE) clean

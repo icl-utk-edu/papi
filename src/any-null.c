@@ -39,7 +39,7 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { -1 },		/* 27 */
                 { -1 },		/* 28 */
                 { -1 },		/* 29 */
-		{ 22 },		/* TLB shootdowns */
+		{ 30 },		/* TLB shootdowns */
                 { -1 },		/* 31 */
                 { -1 },		/* 32 */
                 { -1 },		/* 33 */
@@ -49,13 +49,13 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { -1 },		/* 37 */
                 { -1 },		/* 38 */
                 { -1 },		/* 39 */
-		{ 40 },		/* Branch inst. mispred. */
-		{ 41 },		/* Branch inst. taken */
-		{ 42 },		/* Branch inst. not taken */
-                { -1 },		/* 43 */
-                { -1 },		/* 44 */
-                { -1 },		/* 45 */
-                { -1 },		/* 46 */
+		{ -1 },		/* 40 */
+                { -1 },		/* 41 */
+		{ 42 },		/* Uncond. branches executed */
+		{ 43 },		/* Cond. branch inst. executed.*/
+		{ 44 },		/* Cond. branch inst. taken*/
+		{ 45 },		/* Cond. branch inst. not taken*/
+		{ 46 },		/* Cond. branch inst. mispred.*/
                 { -1 },		/* 47 */
                 { -1 },		/* 48 */
                 { -1 },		/* 49 */
@@ -97,16 +97,11 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int preset;
 
-  /* Machine specific check, we only support 1 counter */
-
-  if (ESI->NumberOfCounters > 0)
-    return(PAPI_ECNFLCT);
-    
   /* We only support 1 preset */
 
   if (event & PRESET_MASK)
@@ -125,7 +120,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
     return(PAPI_ENOEVNT);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int preset;

@@ -58,12 +58,12 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { 0,-1,-1 },			/* 37*/
                 { 0,-1,-1 },			/* 38*/
                 { 0,-1,-1 },			/* 39*/
-		{ 0,-1,24  },			/* Branch inst. mispred.*/
-		{ 0,-1,-1 },			/* Branch inst. taken*/
-		{ 0,-1,-1 },			/* Branch inst. not taken*/
-                { 0,-1,-1 },			/* 43*/
-                { 0,-1,-1 },			/* 44*/
-                { 0,-1,-1 },			/* 45*/
+		{ 0,-1,-1 },			/* 40*/
+		{ 0,-1,-1 },			/* 41*/
+		{ 0,-1,-1 },			/* Uncond. branches executed */
+		{ 0,-1,-1 },			/* Cond. branch inst. mispred.*/
+		{ 0,-1,-1 },			/* Cond. branch inst. taken*/
+		{ 0,-1,-1 },			/* Cond. branch inst. not taken*/
                 { 0,-1,-1 },			/* 46*/
                 { 0,-1,-1 },			/* 47*/
                 { 0,-1,-1 },			/* 48*/
@@ -231,7 +231,7 @@ static int removeev(hwd_control_state_t *machdep, int swindex, int event)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
   int c1, c2, retval;
@@ -281,7 +281,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
   return(insertev(machdep,ESI->NumberOfCounters,event));
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
 
@@ -443,5 +443,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,
 			        0,
 			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        NULL,
+			        PAPI_DOM_USER,
+			        PAPI_GRN_THR };
 #endif

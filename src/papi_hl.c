@@ -24,10 +24,10 @@ static int PAPI_EVENTSET_INUSE=PAPI_EINVAL;
 /* This function returns the optimal length of the values                 */
 /* array used in the high level routines.                                 */ 
 /*========================================================================*/
-int PAPI_num_events(void) {
-return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+int PAPI_num_events(void) 
+{
+  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 }
-
 
 /*  */
 /*========================================================================*/
@@ -40,62 +40,63 @@ return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 /* by reading the vendor's documentation. The length of this array        */
 /* should be no longer than PAPI_MAX_EVNTS.                               */ 
 /*========================================================================*/
-int PAPI_start_counters(int *events, int array_len) {
+int PAPI_start_counters(int *events, int array_len) 
+{
 
-int EventSet;
-int i,r;
+  int EventSet;
+  int i,r;
 
-int MAX_COUNTERS;
+  int MAX_COUNTERS;
 
-MAX_COUNTERS=PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
-
-
-if(PAPI_EVENTSET_INUSE > PAPI_NULL ) {
-PAPI_perror(PAPI_EINVAL,"attempt to start new event set while prev one running",0);
-return(PAPI_EINVAL);
-}/* end if*/
+  MAX_COUNTERS=PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
 
 
-if(array_len>MAX_COUNTERS) {
-PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed because array_len > MAX_COUNTERS",0);
-return(PAPI_EINVAL);
-}
-
-/*initialize value for EventSet integer*/
-
-EventSet=PAPI_EINVAL;
-
-/* load *events to the new EventSet */   
-
-for(i=0;i<array_len;i++) {
-r=PAPI_add_event(&EventSet,events[i]);
-if( r < PAPI_OK ) {
-  fprintf(stderr,
-   "PAPI warning: PAPI_start_counters failed to load events[%d]",i);
-   }
-}
+  if(PAPI_EVENTSET_INUSE > PAPI_NULL ) {
+    PAPI_perror(PAPI_EINVAL,"attempt to start new event set while prev one running",0);
+    return(PAPI_EINVAL);
+  }/* end if*/
 
 
+  if(array_len>MAX_COUNTERS) {
+    PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed because array_len > MAX_COUNTERS",0);
+    return(PAPI_EINVAL);
+  }
 
-if ( EventSet == PAPI_EINVAL ) {
+  /*initialize value for EventSet integer*/
+
+  EventSet=PAPI_EINVAL;
+
+  /* load *events to the new EventSet */   
+
+  for(i=0;i<array_len;i++) {
+    r=PAPI_add_event(&EventSet,events[i]);
+    if( r < PAPI_OK ) {
+      fprintf(stderr,
+	      "PAPI warning: PAPI_start_counters failed to load events[%d]",i);
+    }
+  }
+
+
+
+  if ( EventSet == PAPI_EINVAL ) {
     PAPI_perror(PAPI_EINVAL,
-     "PAPI_start_counters failed to create the EventSet",0);
-     return(PAPI_EINVAL);
-}
+		"PAPI_start_counters failed to create the EventSet",0);
+    return(PAPI_EINVAL);
+  }
 
-/* start the EventSet*/
-
-
-r=PAPI_start(EventSet);
-if( r < PAPI_OK ) {
-  fprintf(stderr,"PAPI warning: PAPI_start failed ");
-  return(PAPI_EINVAL);
-}
+  /* start the EventSet*/
 
 
-PAPI_EVENTSET_INUSE=EventSet;
+  r=PAPI_start(EventSet);
+  if( r < PAPI_OK ) {
+    fprintf(stderr,"PAPI warning: PAPI_start failed ");
+    return(PAPI_EINVAL);
+  }
 
-return(PAPI_OK);
+
+  PAPI_EVENTSET_INUSE=EventSet;
+
+  return(PAPI_OK);
 }
 /*  */
 /*========================================================================*/
@@ -107,15 +108,15 @@ return(PAPI_OK);
 /*========================================================================*/
 int PAPI_read_counters(unsigned long long *values, int array_len) {
 
-if(PAPI_EVENTSET_INUSE != PAPI_EINVAL) {
-PAPI_read(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
-return(PAPI_OK);
-}
+  if(PAPI_EVENTSET_INUSE != PAPI_EINVAL) {
+    PAPI_read(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
+    return(PAPI_OK);
+  }
 
-else {
-PAPI_perror(PAPI_EINVAL,"PAPI_read_counters failed to locate active EventSet",0);
-}
-return(PAPI_EINVAL);
+  else {
+    PAPI_perror(PAPI_EINVAL,"PAPI_read_counters failed to locate active EventSet",0);
+  }
+  return(PAPI_EINVAL);
 
 }
 
@@ -128,15 +129,15 @@ return(PAPI_EINVAL);
 /*========================================================================*/
 int PAPI_stop_counters(unsigned long long *values, int array_len) {
 
-if( PAPI_EVENTSET_INUSE != PAPI_EINVAL ) {
-PAPI_stop(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
-return(PAPI_OK);
-}
+  if( PAPI_EVENTSET_INUSE != PAPI_EINVAL ) {
+    PAPI_stop(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
+    return(PAPI_OK);
+  }
 
-else {
-PAPI_perror(PAPI_EINVAL,"PAPI_stop_counters failed to locate active EventSet",0);
-}
-return(PAPI_EINVAL);
+  else {
+    PAPI_perror(PAPI_EINVAL,"PAPI_stop_counters failed to locate active EventSet",0);
+  }
+  return(PAPI_EINVAL);
 
 } 
 

@@ -1,3 +1,4 @@
+
 /* file: papiStdEventDefs.h
 
 The following is a list of hardware events deemed relevant and useful
@@ -25,18 +26,21 @@ platform.
 
 #define PAPI_TLB_DM  0x80000014 /*Data translation lookaside buffer misses*/
 #define PAPI_TLB_IM  0x80000015 /*Instruction translation lookaside buffer misses*/
+#define PAPI_TLB_TL  0x80000016 /*Total translation lookaside buffer misses*/
 #define PAPI_TLB_SD  0x8000001E /*Translation lookaside buffer shootdowns (SMP)*/
 
-#define PAPI_BRI_MSP 0x80000028 /*Branch instructions mispredicted*/
-#define PAPI_BRI_TKN 0x80000029 /*Branch instructions taken*/
-#define PAPI_BRI_NTK 0x8000002A /*Branch instructions not taken*/
+#define PAPI_BR_UCN  0x8000002A /*Unconditional branch instructions executed*/
+#define PAPI_BR_CN   0x8000002B /*Conditional branch instructions executed*/
+#define PAPI_BR_TKN  0x8000002C /*Conditional branch instructions taken*/
+#define PAPI_BR_NTK  0x8000002D /*Conditional branch instructions not taken*/
+#define PAPI_BR_MSP  0x8000002E /*Conditional branch instructions mispredicted*/
 
 #define PAPI_TOT_INS 0x80000032 /*Total instructions executed*/
 #define PAPI_INT_INS 0x80000033 /*Integer instructions executed*/
 #define PAPI_FP_INS  0x80000034 /*Floating point instructions executed*/
 #define PAPI_LD_INS  0x80000035 /*Load instructions executed*/
 #define PAPI_SR_INS  0x80000036 /*Store instructions executed*/
-#define PAPI_CND_INS 0x80000037 /*Branch instructions executed*/
+#define PAPI_BR_INS  0x80000037 /*Total branch instructions executed*/
 #define PAPI_VEC_INS 0x80000038 /*Vector/SIMD instructions executed*/
 #define PAPI_FLOPS   0x80000039 /*Floating Point instructions per second*/ 
 

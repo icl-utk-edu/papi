@@ -8,6 +8,7 @@
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -110,16 +111,9 @@ heck:
 }
 
 int PAPI_init(void)
-{ /* if initialize has never been called, call it */
-int errorCode;
-if(!PAPI_EVENTSET_MAP.dataSlotArray)/* null ptr*/
-   {
-   errorCode=initialize();
-   return(errorCode);
-   }
-return(PAPI_OK);
-} /* end int PAPI_init(void) */
-
+{ 
+  return(check_initialize());
+} 
 
 static int expand_dynamic_array(DynamicArray *DA)
 {
@@ -170,18 +164,21 @@ static EventSetInfo *allocate_EventSet(void)
   ESI->stop = (unsigned long long *)malloc(max_counters*sizeof(unsigned long long));
   ESI->latest = (unsigned long long *)malloc(max_counters*sizeof(unsigned long long));
   ESI->EventCodeArray = (int *)malloc(max_counters*sizeof(int));
+  ESI->EventSelectArray = (int *)malloc(max_counters*sizeof(int));
 
   if ((ESI->machdep        == NULL )  || 
       (ESI->start          == NULL )  || 
       (ESI->stop           == NULL )  || 
       (ESI->latest         == NULL )  ||
-      (ESI->EventCodeArray == NULL ))
+      (ESI->EventCodeArray == NULL )  ||
+      (ESI->EventSelectArray == NULL ))
     {
       if (ESI->machdep)        free(ESI->machdep);
       if (ESI->start)          free(ESI->start);
       if (ESI->stop)           free(ESI->stop);
       if (ESI->latest)         free(ESI->latest);
       if (ESI->EventCodeArray) free(ESI->EventCodeArray);
+      if (ESI->EventSelectArray)  free(ESI->EventSelectArray);
       free(ESI);
       return(NULL);
     }
@@ -191,10 +188,13 @@ static EventSetInfo *allocate_EventSet(void)
   memset(ESI->latest,        0x00,max_counters*sizeof(unsigned long long));
 
   for (i=0;i<max_counters;i++)
-    ESI->EventCodeArray[i] = PAPI_NULL;
+    {
+      ESI->EventCodeArray[i] = PAPI_NULL;
+      ESI->EventSelectArray[i] = PAPI_NULL;
+    }
 
   ESI->state = PAPI_STOPPED; 
-  ESI->all_options.domain.domain.domain = PAPI_DOM_DEFAULT;
+  ESI->all_options.domain.domain.domain = _papi_system_info.default_domain;
 
   return(ESI);
 }
@@ -209,6 +209,7 @@ static EventSetInfo *allocate_EventSet(void)
 static void free_EventSet(EventSetInfo *ESI) 
 {
   if (ESI->EventCodeArray) free(ESI->EventCodeArray);
+  if (ESI->EventSelectArray)  free(ESI->EventSelectArray);
   if (ESI->machdep)        free(ESI->machdep);
   if (ESI->start)          free(ESI->start);
   if (ESI->stop)           free(ESI->stop);
@@ -246,15 +247,20 @@ static int add_EventSet(EventSetInfo *ESI)
 }
 
 /* add_event checks for event already added, zeroes the counters
-   values in the ESI structure */
+   values in the ESI structure. This function now returns the index
+   of the slot in EventCodeArray and EventSelectArray which is used for
+   the added EventCode. */
 
 static int add_event(EventSetInfo *ESI, int EventCode) 
 { 
   int k;
 
+  if (ESI->NumberOfCounters == _papi_system_info.num_cntrs)
+    return(PAPI_ECNFLCT);
+
   k = lookup_EventCodeIndex(ESI, EventCode);
-  if (k<PAPI_OK) 
-    return k; 
+  if (k != PAPI_EINVAL)
+    return(PAPI_ECNFLCT); 
 
   /* Take the lowest empty slot */
 
@@ -272,7 +278,7 @@ static int add_event(EventSetInfo *ESI, int EventCode)
   ESI->latest[k]         = 0;
   ESI->NumberOfCounters++;
 
-  return(PAPI_OK); 
+  return(k); 
 }
 
 /* add_event checks to see whether the ESI structure has been 
@@ -280,14 +286,10 @@ static int add_event(EventSetInfo *ESI, int EventCode)
 
 int PAPI_add_event(int *EventSet, int EventCode) 
 { 
-  int retval;
+  int retval,indextohw;
   EventSetInfo *ESI,*n = NULL;
 
-  if(EventCode == -1) return(PAPI_OK);
-
-  retval = check_initialize();
-  if (retval < PAPI_OK)
-    return(retval);
+  PAPI_init();
   
   /* check for pre-existing ESI*/
   
@@ -296,22 +298,28 @@ int PAPI_add_event(int *EventSet, int EventCode)
     {
       n = allocate_EventSet();
       if (n == NULL)
-	return(PAPI_ENOMEM);
+	return(handle_error(PAPI_ENOMEM,"Error allocating memory for new EventSet"));
       ESI = n;
     }
 
-  retval = _papi_hwd_add_event(ESI,EventCode);
-  if (retval < PAPI_OK)
-    {
-      heck:
-      if (n)
-	free_EventSet(ESI);
-      return(retval);
-    }
+  /* This returns index into the map array */
 
   retval = add_event(ESI,EventCode);
   if (retval < PAPI_OK)
-    goto heck;
+    {
+    heck:
+      if (n)
+	free_EventSet(ESI);
+      return(handle_error(retval,NULL));
+    }
+
+  indextohw = retval;
+  retval = _papi_hwd_add_event(ESI,indextohw,EventCode);
+  if (retval < PAPI_OK)
+    {
+      remove_event(ESI,EventCode);
+      goto heck;
+    }
 
   if (n)
     {
@@ -320,22 +328,25 @@ int PAPI_add_event(int *EventSet, int EventCode)
 	goto heck;
 
       *EventSet = ESI->EventSetIndex;
-      DBG((stderr,"\n in  PAPI_add_event: new eventset at EventSet=%d\n",*EventSet));
+      DBG((stderr,"PAPI_add_event new EventSet in slot %d\n",*EventSet));
     }
   return(retval);
 }
 
-static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode)
+/* This function should return the index of the EventCode and counter
+   value in the arrays inside ESI. */
+
+static int lookup_EventCodeIndex(EventSetInfo *ESI, int EventCode)
 {
   int i;
 
-  for(i=0;i<ESI->NumberOfCounters;i++) 
+  for(i=0;i<_papi_system_info.num_cntrs;i++) 
     { 
       if (ESI->EventCodeArray[i]==EventCode) 
-	return(PAPI_ECNFLCT);
+	return(i);
     }
 
-  return(PAPI_OK);
+  return(PAPI_EINVAL);
 } 
 
 static EventSetInfo *lookup_EventSet(int eventset)
@@ -346,19 +357,13 @@ static EventSetInfo *lookup_EventSet(int eventset)
     return(NULL);
 }
 
+/* This function only removes empty EventSets */
+
 static int remove_EventSet(EventSetInfo *ESI)
 {
   int i;
 
-  /* first remove all of the Events from this EventSet*/
-  /* ignore return vals */
-
-  for(i=0;i<_papi_system_info.num_cntrs;i++) {
-      remove_event(ESI,ESI->EventCodeArray[i]);
-      }
-
-  /* get value of Index I for this ESI in 
-     PAPI_EVENTSET_MAP.dataSlotArray[I]    */
+  assert(ESI->NumberOfCounters == 0);
 
   i = ESI->EventSetIndex;
 
@@ -375,13 +380,28 @@ static int remove_EventSet(EventSetInfo *ESI)
   return(PAPI_OK);
 }
 
+static int cleanup_EventSet(EventSetInfo *ESI)
+{
+  int i;
+
+  /* first remove all of the Events from this EventSet*/
+  /* ignore return vals */
+
+  for(i=0;i<_papi_system_info.num_cntrs;i++) 
+    {
+      remove_event(ESI,ESI->EventCodeArray[i]);
+    }
+
+  return(remove_EventSet(ESI));
+}
+
 static int remove_event(EventSetInfo *ESI, int EventCode)
 {
   int k;
 
   k = lookup_EventCodeIndex(ESI,EventCode);
   if (k < 0)
-    return(PAPI_EINVAL);
+    return(k);
 
   ESI->EventCodeArray[k] = PAPI_NULL;
   ESI->start[k]          = 0;
@@ -392,27 +412,35 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
   return(PAPI_OK);
 }
 
-int PAPI_rem_event(int EventSet, int Event)
+int PAPI_rem_event(int *EventSet, int EventCode)
 {
   EventSetInfo *ESI;
-  int errorCode, hwd_errorCode;
+  int retval, indextohw;
 
-  ESI = lookup_EventSet(EventSet);
+  /* check for pre-existing ESI*/
+
+  ESI = lookup_EventSet(*EventSet);
   if (ESI == NULL)
-    return(handle_error(PAPI_EINVAL,NULL));
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-  errorCode = remove_event(ESI,Event);
-  if (errorCode < PAPI_OK)
-    return(handle_error(errorCode,NULL));
+  /* This returns index into the map array */
 
-  hwd_errorCode = _papi_hwd_rem_event(ESI,Event);
-  if (hwd_errorCode < PAPI_OK)
-    return(handle_error(hwd_errorCode,NULL));
+  retval = remove_event(ESI,EventCode);
+  if (retval < PAPI_OK)
+    return(handle_error(retval,NULL));
+
+  indextohw = retval;
+  retval = _papi_hwd_rem_event(ESI,indextohw,EventCode);
+  if (retval < PAPI_OK)
+    return(handle_error(retval,NULL));
 
   if (ESI->NumberOfCounters == 0)
-    remove_EventSet(ESI);
+    {
+      remove_EventSet(ESI);
+      *EventSet = PAPI_NULL;
+    }
 
-  return(hwd_errorCode);
+  return(retval);
 }
 
 /* simply checks for valid EventSet, calls substrate start() call */
@@ -540,70 +568,117 @@ int PAPI_write(int EventSet, unsigned long long *values)
 
 int PAPI_cleanup(int *EventSet) 
 { 
-    int retval,status;
-    EventSetInfo *ESI;
-
-    retval=PAPI_state(*EventSet,&status);
-
-    if( (retval<0) || (status==PAPI_RUNNING) ) {
-       return(handle_error(PAPI_NULL,"attempt to perform cleanup on RUNNING eventset"));
-       }
-
-    /* check for good EventSetIndex value*/
-    ESI = lookup_EventSet(*EventSet);
-
-    /* good remove_EventSet returns PAPI_OK */
-    /* remove_EventSet removes each event
-       by calling remove_event, 
-       then calls free_EventSet. */ 
+  int retval;
+  EventSetInfo *ESI;
   
-    retval=remove_EventSet(ESI);
+  ESI = lookup_EventSet(*EventSet);
+  if (ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-    return(retval);
+  if (ESI->state != PAPI_STOPPED) 
+    return(handle_error(PAPI_EINVAL,"EventSet is still running"));
+  
+  retval = cleanup_EventSet(ESI);
+  if (retval < PAPI_OK)
+    return(handle_error(PAPI_EMISC,NULL));
+
+  *EventSet = PAPI_NULL;
+  return(retval);
 }
  
 int PAPI_state(int EventSet, int *status)
 {
-    EventSetInfo *ESI;
-
-    /* check bounds*/
-    if(EventSet>PAPI_EVENTSET_MAP.totalSlots) {
-  	return(PAPI_EMISC);
-	}
-
-
-    /* check for good EventSetIndex value*/
-    ESI = lookup_EventSet(EventSet);
-
-    if(!ESI) return(PAPI_NULL);
-
-    /*read status FROM ESI->state*/
-    *status=ESI->state;
-
-     return(PAPI_OK);
+  EventSetInfo *ESI;
+  
+  /* check for good EventSetIndex value*/
+  
+  ESI = lookup_EventSet(EventSet);
+  if (ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+  
+  /*read status FROM ESI->state*/
+  
+  *status=ESI->state;
+  
+  return(PAPI_OK);
 }
 
 
 int PAPI_set_opt(int option, PAPI_option_t *ptr)
-{ int retval;
+{ 
+  int retval;
   _papi_int_option_t internal;
-
+  
   switch(option)
-  { case PAPI_SET_MPXRES:
+    { 
+    case PAPI_SET_DOMAIN:
+      { 
+	int dom = ptr->defdomain.domain;
+
+	if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
+	  return(handle_error(PAPI_EINVAL,"Domain out of range"));
+	internal.domain.domain.domain = dom;
+
+	internal.domain.domain.eventset = ptr->domain.eventset;
+	internal.domain.ESI = lookup_EventSet(ptr->domain.eventset);
+	if (internal.domain.ESI == NULL)
+	  return(handle_error(PAPI_EINVAL,"No such EventSet"));
+
+	retval = _papi_hwd_ctl(PAPI_SET_DOMAIN, &internal);
+	if (retval < PAPI_OK)
+	  return(handle_error(retval,NULL));
+	else
+	  return(retval);
+      }
+    case PAPI_SET_DEFDOM:
+      {
+	int dom = ptr->defdomain.domain;
+
+	if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
+	  return(handle_error(PAPI_EINVAL,"Domain out of range"));
+
+	internal.defdomain.defdomain.domain = dom;
+
+	retval = _papi_hwd_ctl(PAPI_SET_DEFDOM, &internal);
+	if (retval < PAPI_OK)
+	  return(handle_error(retval,NULL));
+	else
+	  return(retval);
+      }
+    case PAPI_SET_GRANUL:
+      {
+	int grn = ptr->defgranularity.granularity;
+
+	if ((grn < PAPI_GRN_MIN) || (grn > PAPI_GRN_MAX))
+	  return(handle_error(PAPI_EINVAL,"Granularity out of range"));
+
+	internal.defgranularity.defgranularity.granularity = grn;
+
+	retval = _papi_hwd_ctl(PAPI_SET_DEFGRN, &internal);
+	if (retval < PAPI_OK)
+	  return(handle_error(retval,NULL));
+	else
+	  return(retval);
+      }
+    case PAPI_SET_DEFGRN:
+      {
+	int grn = ptr->defgranularity.granularity;
+
+	if ((grn < PAPI_GRN_MIN) || (grn > PAPI_GRN_MAX))
+	  return(handle_error(PAPI_EINVAL,"Granularity out of range"));
+
+	internal.defgranularity.defgranularity.granularity = grn;
+
+	retval = _papi_hwd_ctl(PAPI_SET_DEFGRN, &internal);
+	if (retval < PAPI_OK)
+	  return(handle_error(retval,NULL));
+	else
+	  return(retval);
+      }
+    case PAPI_SET_MPXRES:
     case PAPI_SET_OVRFLO:
     case PAPI_GET_MPXRES:
     case PAPI_GET_OVRFLO:
-    case PAPI_SET_DEFDOM:
-    case PAPI_SET_DEFGRN:
-    case PAPI_SET_DOMAIN:
-    { internal.domain.domain.eventset=ptr->domain.eventset;
-      internal.domain.domain.domain=ptr->domain.domain;
-      internal.domain.ESI=lookup_EventSet(ptr->domain.eventset);
-      retval = _papi_hwd_ctl(PAPI_SET_DOMAIN, &internal);
-      return(retval);
-    }
-    case PAPI_SET_GRANUL:
-    case PAPI_GET_DEFDOM:
     case PAPI_GET_DEFGRN:
     case PAPI_GET_DOMAIN:
     case PAPI_GET_GRANUL:
@@ -615,35 +690,31 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
 int PAPI_get_opt(int option, PAPI_option_t *ptr) 
 { 
-
   PAPI_init();
 
   switch(option)
-  {
+    {
     case PAPI_GET_CLOCKRATE:
-	{ 
-          return( _papi_system_info.mhz ); 
-        }
+      return( _papi_system_info.mhz ); 
     case PAPI_GET_MAX_HWCTRS: 
-	{ 
-          return( _papi_system_info.num_cntrs  ); 
-        }
+      return( _papi_system_info.num_cntrs  ); 
+    default:
+      return(PAPI_EINVAL);
     }
-
-   return(PAPI_EINVAL);
 } 
 
-void PAPI_shutdown(void) {
-    int i;
-
-    for(i=0;i<PAPI_EVENTSET_MAP.totalSlots;i++) {
-        if(PAPI_EVENTSET_MAP.dataSlotArray[i]) {
-           free_EventSet(PAPI_EVENTSET_MAP.dataSlotArray[i]);
-          }
-        }
-    free(PAPI_EVENTSET_MAP.dataSlotArray);
-    fprintf(stderr,"\n\n PAPI SHUTDOWN. \n\n");
-    return;
+void PAPI_shutdown(void) 
+{
+  int i;
+  
+  for (i=0;i<PAPI_EVENTSET_MAP.totalSlots;i++) 
+    {
+      if (PAPI_EVENTSET_MAP.dataSlotArray[i]) 
+	{
+	  free_EventSet(PAPI_EVENTSET_MAP.dataSlotArray[i]);
+	}
+    }
+  free(PAPI_EVENTSET_MAP.dataSlotArray);
 }
 
 static int handle_error(int PAPI_errorCode, char *errorMessage)

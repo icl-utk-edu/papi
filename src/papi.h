@@ -39,7 +39,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_KERNEL	 0x2    /* Kernel/OS context counted */
 #define PAPI_DOM_OTHER	 0x4    /* Exception/transient mode (like user TLB misses )*/
 #define PAPI_DOM_ALL	 0x7    /* All contexts counted */
-#define PAPI_DOM_DEFAULT PAPI_DOM_USER
+/* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
 #define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000 /* Flag that indicates we are not reading CPU like stuff.
 				       The lower 31 bits can be decoded by the substrate into something
@@ -54,6 +54,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_SYS     0x8    /* PAPI counters for the current CPU, are you bound? */
 #define PAPI_GRN_SYS_CPU 0x10   /* PAPI counters for all CPU's individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
+/* #define PAPI_GRN_DEFAULT PAPI_GRN_THR NOW DEFINED BY SUBSTRATE */
 
 #define PAPI_PER_CPU     1    /*Counts are accumulated on a per cpu basis*/
 #define PAPI_PER_NODE    2    /*Counts are accumulated on a per node or
@@ -201,8 +202,8 @@ int PAPI_perror(int code, char *destination, int length);
 int PAPI_add_event(int *EventSet, int Event);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
-int PAPI_rem_event(int EventSet, int Event); 
-int PAPI_rem_events(int EventSet, int *Events, int number); 
+int PAPI_rem_event(int *EventSet, int Event); 
+int PAPI_rem_events(int *EventSet, int *Events, int number); 
 int PAPI_list_events(int EventSet, int *Events, int *number);
 int PAPI_start(int EventSet);
 int PAPI_stop(int EventSet, unsigned long long *values);

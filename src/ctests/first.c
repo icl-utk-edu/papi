@@ -14,26 +14,32 @@
 
 void main() 
 {
-  int r, i;
+  int r, i, n;
   double a, b, c;
   unsigned long long *ct;
   int EventSet = PAPI_NULL;
 
-  i = PAPI_num_events();
-  assert(i>=2);
+  n = PAPI_num_events();
+  assert(n>0);
 
-  ct = (unsigned long long *)malloc(i*sizeof(unsigned long long));
+  ct = (unsigned long long *)malloc(n*sizeof(unsigned long long));
   assert(ct!=NULL);
-  memset(ct,0x00,i*sizeof(unsigned long long));
+  memset(ct,0x00,n*sizeof(unsigned long long));
 
   r=PAPI_add_event(&EventSet, PAPI_TOT_CYC);
   assert(r>=PAPI_OK);
 
-  r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
-  assert(r>=PAPI_OK); 
+  if (n > 1)
+    {
+      r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
+      assert(r>=PAPI_OK); 
+    }
 
-  r=PAPI_add_event(&EventSet, PAPI_FP_INS);
-  assert(r>=PAPI_OK);
+  if (n > 2) 
+    {
+      r=PAPI_add_event(&EventSet, PAPI_FP_INS);
+      assert(r>=PAPI_OK);
+    }
 
   r=PAPI_start(EventSet);
   assert(r>=PAPI_OK);
@@ -47,11 +53,17 @@ void main()
   r=PAPI_stop(EventSet, ct);
   assert(r>=PAPI_OK);
 
-  r=PAPI_rem_event(&EventSet, PAPI_FP_INS);
-  assert(r>=PAPI_OK);
+  if (n > 2) 
+    {
+      r=PAPI_rem_event(&EventSet, PAPI_FP_INS);
+      assert(r>=PAPI_OK);
+    }
 
-  r=PAPI_rem_event(&EventSet, PAPI_TOT_INS);
-  assert(r>=PAPI_OK);
+  if (n > 1) 
+    {
+      r=PAPI_rem_event(&EventSet, PAPI_TOT_INS);
+      assert(r>=PAPI_OK);
+    }
 
   r=PAPI_rem_event(&EventSet, PAPI_TOT_CYC);
   assert(r>=PAPI_OK); 
@@ -59,9 +71,20 @@ void main()
   PAPI_shutdown();
 
   printf("%d iterations of c = a*b\n",TESTNUM);
-  printf("%lld cycles\n%lld instructions\n%lld floating point instructions\n",ct[0],ct[1],ct[2]);
-  printf("%f IPC\n%f FPC\n",(float)ct[1]/(float)ct[0],(float)ct[2]/(float)ct[0]);
-
+  if (n > 2)
+    {
+      printf("%lld cycles\n%lld instructions\n%lld floating point instructions\n",ct[0],ct[1],ct[2]);
+      printf("%f IPC\n%f FPC\n",(float)ct[1]/(float)ct[0],(float)ct[2]/(float)ct[0]);
+    }
+  else if (n > 1)
+    {
+      printf("%lld cycles\n%lld instructions\n",ct[0],ct[1]);
+      printf("%f IPC\n",(float)ct[1]/(float)ct[0]);
+    }
+  else
+    {
+      printf("%lld cycles\n",ct[0]);
+    }
   free(ct);
   exit(0);
 }
