@@ -22,13 +22,17 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-#ifdef PERFCTR25
-#define PERFCTR_CPU_NAME   perfctr_info_cpu_name
-#define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
-#define evntsel_aux	   p4.escr
+#if defined(PERFCTR26)
+#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
+#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
+#define evntsel_aux             p4.escr
+#elif defined(PERFCTR25)
+#define PERFCTR_CPU_NAME	perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS	perfctr_info_nrctrs
+#define evntsel_aux		p4.escr
 #else
-#define PERFCTR_CPU_NAME perfctr_cpu_name
-#define PERFCTR_CPU_NRCTRS perfctr_cpu_nrctrs
+#define PERFCTR_CPU_NAME	perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS	perfctr_cpu_nrctrs
 #endif
 
 /*******************************/
@@ -529,11 +533,11 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 
    /* remove counters referenced by any shared escrs */
    if ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1)) {
-      dst->ra_selector ^= dst->ra_bits.counter[0];
+      dst->ra_selector &= ~dst->ra_bits.counter[0];
       dst->ra_escr[0] = -1;
    }
    if ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)) {
-      dst->ra_selector ^= dst->ra_bits.counter[1];
+      dst->ra_selector &= ~dst->ra_bits.counter[1];
       dst->ra_escr[1] = -1;
    }
 
@@ -905,7 +909,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
    }
 
-   OVFDBG("%s (%s): Hardware overflow is still experimental.\n", __FILE__, __FUNCTION__);
+   OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
@@ -928,13 +932,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
 
       master = _papi_hwi_lookup_in_thread_list();
       if (master == NULL) {
-         fprintf(stderr, "%s():%d: master event lookup failure! abort()\n",
-                 __FUNCTION__, __LINE__);
+         fprintf(stderr, "%s:%d: master event lookup failure! abort()\n",
+                 __FILE__, __LINE__);
          abort();
       }
       if (vperfctr_iresume(master->context.perfctr) < 0) {
-         fprintf(stderr, "%s():%d: vperfctr_iresume %s\n",
-                 __FUNCTION__, __LINE__, strerror(errno));
+         fprintf(stderr, "%s:%d: vperfctr_iresume %s\n",
+                 __FILE__, __LINE__, strerror(errno));
       }
    }
 }
