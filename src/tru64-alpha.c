@@ -35,7 +35,7 @@ static native_info_t ev6_native_table[] = {
 /* 0  */ {"cycles", {PF6_MUX0_CYCLES, PF6_MUX1_CYCLES}},
 /* 1  */ {"retinst", {PF6_MUX0_RET_INSTRUCTIONS, -1}},
 /* 2  */ {"retcondbranch", {-1, PF6_MUX1_RET_COND_BRANCHES}},
-/* 3  */ {"retdtb1miss", {-1, PF6_MUX1_RET_DTB_SINGLE_MISSES}},
+/* 3  */ {"retdtb1miss", {-1, PF6_MUX1_RET_DTB_SINGLE_MISSES}}, /*bug -- 2 for each miss in p1 */
 /* 4  */ {"retdtb2miss", {-1, PF6_MUX1_RET_DTB_DOUBLE_MISSES}},
 /* 5  */ {"retitbmiss", {-1, PF6_MUX1_RET_ITB_MISSES}},
 /* 6  */ {"retunaltrap", {-1, PF6_MUX1_RET_UNALIGNED_TRAPS}},
@@ -728,3 +728,24 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst,
 void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
 }
+
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+  char buf[128];
+
+  int chip;
+
+  if ( count == 0 ) return (0);
+
+  sprintf(buf, "%x", *bits);
+  strncpy(names, buf, name_len);
+  return(1);   
+}
+
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+{
+  *bits = EventCode;
+}
+
