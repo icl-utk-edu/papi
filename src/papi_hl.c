@@ -5,6 +5,8 @@
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
+* Mods:	   Kevin London
+* 	   london@cs.utk.edu
 */  
 
 /* This file contains the 'high level' interface to PAPI. 
@@ -28,6 +30,70 @@
 static int PAPI_EVENTSET_INUSE = PAPI_NULL;
 static int initialized = 0;
 static int MAX_COUNTERS = 0;
+
+int PAPI_simple(float *real_time, float *proc_time, float *flpins, float *mflops)
+{
+   static float total_proc_time=0.0, total_flpins=-6.0; 
+   static int EventSet = PAPI_NULL;
+   static float mhz=0.0;
+   static float start_us=0.0;
+   const PAPI_hw_info_t *hwinfo = NULL;
+   long long values[2] = {0,0};
+   char buf[500];
+   int retval;
+
+   if ( !initialized ) {
+	*mflops = 0.0;
+ 	*real_time = 0.0;
+ 	*proc_time = 0.0;
+	*flpins = 0;
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT )
+	   return(retval);
+	if ( (hwinfo = PAPI_get_hardware_info()) == NULL ) 
+	   return -1;
+	mhz = hwinfo->mhz;
+	PAPI_create_eventset( &EventSet );
+	retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+	PAPI_perror( retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+	retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+	PAPI_perror(retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+	retval = PAPI_start(EventSet);
+	PAPI_perror(retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     return retval;
+	}
+	start_us = PAPI_get_real_usec();
+	initialized = 1;
+   }
+   else {
+	*real_time = ((float)PAPI_get_real_usec()-start_us)/1000000.0;
+	retval = PAPI_accum( EventSet, values );
+	PAPI_perror( retval, buf, 500);
+	if ( retval < PAPI_OK ) {
+	     PAPI_shutdown();
+	     initialized = 0;
+	     return retval;
+	}
+	*proc_time = (float)values[1]/ (mhz*1000000.0);
+	*mflops = (float)values[0]/(*proc_time*1000000.0);
+	total_proc_time += *proc_time;
+	total_flpins += (float)values[0];
+	*proc_time = total_proc_time;
+	*flpins = total_flpins;
+	total_flpins-=21;
+   }
+   return PAPI_OK;
+}
 
 int PAPI_num_counters(void) 
 {
