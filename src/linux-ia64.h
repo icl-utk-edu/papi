@@ -25,22 +25,16 @@
 #include <sys/times.h>
 #include <sys/ucontext.h>
 
-#ifdef PFM06A
-#include "mysiginfo.h"
-#include "pfmlib.h"
-#else
 #include "perfmon/pfmlib.h"
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
 #else
 #include "perfmon/pfmlib_itanium.h"
 #endif
-#endif
 
 #include "papi.h"
 #include "linux-ia64-memory.h"
 
-#ifndef PFM06A
  #ifdef ITANIUM2
    typedef struct {
     unsigned long pme_code:8;   /* major event code */
@@ -67,7 +61,6 @@ typedef union {
         pme_ita_entry_code_t pme_ita_code;      /* must not be larger than vco
 de */
 } pme_ita_code_t;
-#endif
 
 typedef union {
 		unsigned int  pme_vcode;		/* virtual code: code+umask combined */
@@ -90,10 +83,7 @@ typedef struct hwd_control_state {
   /* Number of values in pc */
   int pc_count;
   /* Buffer to pass to kernel to control the counters */
-#ifdef PFM06A
-  perfmon_req_t pc[PMU_MAX_COUNTERS];
-  pfm_event_config_t evt;
-#else
+
 #ifdef ITANIUM2
   #ifndef PMU_ITA2_MAX_COUNTERS
    #define PMU_ITA2_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
@@ -112,7 +102,6 @@ typedef struct hwd_control_state {
   int overflowcount[PMU_ITA_MAX_COUNTERS];
 #endif
   pfmlib_param_t evt;
-#endif
 /* sampling buffer address */
   void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
@@ -129,14 +118,10 @@ typedef struct preset_search {
   /* Derived code */
   int derived;
   /* Strings to look for */
-#ifdef PFM06A
-  char *(findme[PMU_MAX_COUNTERS]);
-#else
 #ifdef ITANIUM2
   char *(findme[PMU_ITA2_MAX_COUNTERS]);
 #else
   char *(findme[PMU_ITA_MAX_COUNTERS]);
-#endif
 #endif
 } preset_search_t;
 
@@ -148,23 +133,17 @@ typedef struct hwd_preset {
   /* If the derived event is not associative, this index is the lead operand */
   int operand_index;
   /* Buffer to pass to library to control the counters */
-#ifdef PFM06A
-  pfm_event_config_t evt;
-#else
   pfmlib_param_t evt;
-#endif
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
 #include "papi_internal.h"
 
-#ifndef PFM06A
 #ifdef ITANIUM2
 #define PMU_MAX_COUNTERS PMU_ITA2_MAX_COUNTERS
 #else
 #define PMU_MAX_COUNTERS PMU_ITA_MAX_COUNTERS
-#endif
 #endif
 
 #define SMPL_BUF_NENTRIES 64
