@@ -118,7 +118,7 @@ clean: native_clean
 	cd ftests; $(MAKE) clean
 	cd utils;  $(MAKE) clean
 
-clobber: clean
+clobber: clean native_clobber
 	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS) $(SPECIAL_REMOVE)
 	cd utils;  $(MAKE) clobber
 null:
@@ -143,7 +143,7 @@ install-man: install-tree
 	cd ../man && $(MAKE) PREFIX=$(PREFIX) install
 
 install-utils: install-tree
-	cd utils; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
+	cd utils; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' LIBRARY="$(LIBRARY)" install
 
 install-tests: install-tree
 	cd ctests; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install

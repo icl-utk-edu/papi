@@ -38,7 +38,8 @@ cpu_version.o: alpha-linux/cpu_version.s
 hw_driver.o: alpha-linux/hw_driver.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c alpha-linux/hw_driver.c -o hw_driver.o
 
-
 native_clean:
 
 native_install:
+
+native_clobber:

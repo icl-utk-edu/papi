@@ -49,3 +49,4 @@ native_install:
 
 native_clean:
 
+native_clobber:

@@ -43,4 +43,5 @@ native_clean:
 
 native_install:
 
+native_clobber:
 
