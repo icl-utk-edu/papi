@@ -26,7 +26,7 @@
 #include "papi.h"
 #include "papi_preset.h"
 
-
+extern _text;
 extern _etext;
 extern _edata;
 extern _end;

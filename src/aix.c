@@ -24,17 +24,12 @@ atomic_p lock[PAPI_MAX_LOCK];
  some heap information, start_of_text, start_of_data .....
  ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV 
 */
-#ifndef _P64
-#define START_OF_TEXT 0x10000000
+#define START_OF_TEXT &_text
 #define END_OF_TEXT   &_etext
-#define START_OF_DATA 0x20000000
-#define END_OF_DATA   &_end
-#else
-#define START_OF_TEXT 0x100000000
-#define END_OF_TEXT   &_etext
-#define START_OF_DATA 0x110000000
-#define END_OF_DATA   &_end
-#endif
+#define START_OF_DATA &_data
+#define END_OF_DATA   &_edata
+#define START_OF_BSS  &_edata
+#define END_OF_BSS    &_end
 
 static int maxgroups = 0;
 
@@ -251,19 +246,14 @@ int _papi_hwd_mdi_init()
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) END_OF_TEXT;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) START_OF_DATA;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) END_OF_DATA;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) NULL;
+   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) START_OF_BSS;
+   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) END_OF_BSS;
 
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
    _papi_hwi_system_info.supports_real_cyc = 1;
 
-   _papi_hwi_system_info.shlib_info.map->text_start = (caddr_t) START_OF_TEXT;
-   _papi_hwi_system_info.shlib_info.map->text_end = (caddr_t) END_OF_TEXT;
-   _papi_hwi_system_info.shlib_info.map->data_start = (caddr_t) START_OF_DATA;
-   _papi_hwi_system_info.shlib_info.map->data_end = (caddr_t) END_OF_DATA;
-   _papi_hwi_system_info.shlib_info.map->bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.shlib_info.map->bss_end = (caddr_t) NULL;
+   _papi_hwi_system_info.shlib_info.map = &(_papi_hwi_system_info.exe_info.address_info);
 
    return (PAPI_OK);
 }
@@ -314,8 +304,8 @@ static int get_system_info(void)
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) END_OF_TEXT;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) START_OF_DATA;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) END_OF_DATA;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) NULL;
+   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) START_OF_BSS;
+   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) END_OF_BSS;
 
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
