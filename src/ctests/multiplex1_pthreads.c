@@ -224,9 +224,13 @@ void *case4_pthreads(void *arg)
 #if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || (defined(__ia64__) && defined(linux))
   if((retval = PAPI_add_event(&EventSet, PAPI_L1_DCM))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
+ #if defined(_POWER4)
+  if((retval = PAPI_add_event(&EventSet, PAPI_L1_DCA))!=PAPI_OK)
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+ #else
   if((retval = PAPI_add_event(&EventSet, PAPI_L1_ICM))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+ #endif
 #elif  defined(sparc) && defined(sun)
   if((retval = PAPI_add_event(&EventSet, PAPI_LD_INS))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);

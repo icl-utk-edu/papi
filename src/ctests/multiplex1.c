@@ -10,16 +10,7 @@
 /* This file tests the multiplex functionality, originally developed by 
    John May of LLNL. */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papi.h"
-#include "test_utils.h"
-
+#include "papi_test.h"
 
 #define NUM 10
 #define SUCCESS 1
@@ -54,7 +45,7 @@ void init_papi(void)
 int case1() 
 {
   int retval, i, EventSet = PAPI_NULL;
-  long long values[2];
+  long_long values[2];
 
   init_papi();
 
@@ -90,7 +81,7 @@ int case1()
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET )
-     printf("case1: %lld %lld\n",values[0],values[1]);
+     printf(TAB2,"case1:",values[0],values[1]);
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
@@ -104,7 +95,7 @@ int case1()
 int case2() 
 {
   int retval, i, EventSet = PAPI_NULL;
-  long long values[2];
+  long_long values[2];
 
   init_papi();
 
@@ -148,7 +139,7 @@ int case2()
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) 
-     printf("case2: %lld %lld\n",values[0],values[1]);
+     printf(TAB2,"case2:",values[0],values[1]);
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
@@ -162,7 +153,7 @@ int case2()
 int case3() 
 {
   int retval, i, EventSet = PAPI_NULL;
-  long long values[2];
+  long_long values[2];
 
   init_papi();
 
@@ -206,7 +197,7 @@ int case3()
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) 
-     printf("case3: %lld %lld\n",values[0],values[1]);
+     printf(TAB2,"case3:",values[0],values[1]);
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
@@ -222,7 +213,7 @@ int case3()
 int case4() 
 {
   int retval, i, EventSet = PAPI_NULL;
-  long long values[4];
+  long_long values[4];
 
   init_papi();
 
@@ -250,14 +241,20 @@ int case4()
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux))
+#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || defined(WIN32)
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
+ #if (defined(_POWER4))
+  retval = PAPI_add_event(&EventSet, PAPI_L1_DCA);
+  if (retval != PAPI_OK)
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+ #else
   retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+ #endif
 
 #elif defined(sparc) && defined(sun)
   retval = PAPI_add_event(&EventSet, PAPI_LD_INS);
@@ -294,7 +291,7 @@ int case4()
 #if defined(__ALPHA) && defined(__osf__)
      printf("case4: %lld %lld %lld\n", values[0], values[1],values[3]);
 #else
-     printf("case4: %lld %lld %lld %lld\n",values[0],values[1],values[2],values[3]);
+     printf(TAB4,"case4:",values[0],values[1],values[2],values[3]);
 #endif
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
