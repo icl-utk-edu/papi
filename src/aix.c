@@ -328,7 +328,7 @@ static int get_system_info(void)
    _papi_hwi_system_info.hw_info.mhz = (float) (pm_cycles() / 1000000.0);
    _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;
    _papi_hwi_system_info.num_cntrs = pminfo.maxpmcs;
-
+   _papi_hwi_system_info.supports_multiple_threads = 1;  
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
