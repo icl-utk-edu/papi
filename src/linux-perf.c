@@ -559,7 +559,7 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  return(_papi_hwd_get_virt_usec() * (long long)_papi_system_info.hw_info.mhz);
+  return(_papi_hwd_get_virt_usec(zero) * (long long)_papi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
