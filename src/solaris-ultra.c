@@ -7,6 +7,7 @@
 *          london@cs.utk.edu
 * Mods:    Min Zhou
 *          min@cs.utk.edu
+* Mods:    
 */
 
 /* to understand this program, first you should read the user's manual
@@ -672,10 +673,7 @@ static int get_system_info(void)
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
    /* Executable regions, reading /proc/pid/maps file */
-/* comment it out until the bug in dladdr is fixed */
-/*
    retval = _papi_hwd_update_shlib_info();
-*/
 
    /* Hardware info */
 
@@ -706,12 +704,14 @@ static int get_system_info(void)
    SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.num_cntrs);
 
    /* program text segment, data segment  address info */
+/*
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _start;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _edata + 1;
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
+*/
 
    /* Setup presets */
 
@@ -1194,12 +1194,6 @@ int _papi_hwd_remove_event(hwd_register_map_t * chosen, unsigned int hardware_in
 {
    return PAPI_OK;
 }
-/*
-int _papi_hwd_update_shlib_info(void)
-{
-   return (PAPI_OK);
-}
-*/
 
 int _papi_hwd_encode_native(char *name, int *code)
 {
@@ -1420,4 +1414,218 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
    return (((long long) gethrvtime() / (long long) 1000) * (long long) _papi_hwi_system_info.hw_info.mhz);
 }
 
+int _papi_hwd_update_shlib_info(void)
+{
+   /*??? system call takes very long */
 
+   char cmd_line[PATH_MAX+PATH_MAX], fname[L_tmpnam];
+   char line[256];
+   char address[16], size[10], flags[64], objname[256];
+   PAPI_address_map_t *tmp = NULL;
+
+   FILE *f=NULL;
+   int t_index=0, length, i;
+   long addr;
+   struct map_record {
+      long address;
+      int size;
+      int flags;
+      char objname[256];
+      struct map_record * next;
+   }  *tmpr, *head, *curr;
+
+   tmpnam(fname);
+   SUBDBG("Temporary name %s\n",fname);
+
+   sprintf(cmd_line, "/bin/pmap %d > %s",getpid(), fname);
+   if (system(cmd_line) == -1) {
+      remove(fname);
+      exit(-1);
+   }
+   f = fopen(fname, "r");   
+   if (f == NULL ) {
+      remove(fname);
+      exit(-1);
+   }
+   /* ignore the first line */
+   fgets(line, 256, f);
+   head = curr = NULL;
+   while (fgets(line, 256, f) != NULL) {
+      /* discard the last line */
+      if (strncmp(line, " total", 6) != 0 )
+      {
+         sscanf(line, "%s %s %s %s", address, size, flags, objname);
+         if (objname[0] == '/' )  
+         {
+            tmpr = (struct map_record *)malloc(sizeof(struct map_record));
+            if (tmpr==NULL) return(-1);
+            tmpr->next = NULL;
+            if (curr ) {
+               curr->next = tmpr;
+               curr = tmpr;
+            }
+            if (head == NULL) {
+               curr = head = tmpr;
+            }
+
+            SUBDBG("%s\n", objname);
+
+            if ( strstr(flags, "read") && strstr(flags, "exec") )
+            {
+              if ( !strstr(flags, "write") )  /* text segment */
+               { 
+                  t_index++;
+                  tmpr->flags =1;
+               } else {
+                  tmpr->flags =0;
+               }
+               sscanf(address, "%x", &tmpr->address);
+               sscanf(size,"%d", &tmpr->size);
+               tmpr->size *= 1024;
+               strcpy(tmpr->objname, objname);
+            }
+            
+         }
+         
+      }
+   }
+   tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+
+   if (tmp == NULL)
+      error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+   
+   t_index = -1;
+   tmpr = curr = head;
+   i=0;
+   while (curr != NULL )
+   {
+      if (strcmp(_papi_hwi_system_info.exe_info.address_info.name,
+                          basename(curr->objname))== 0 )
+      {
+         if ( curr->flags ) 
+         {
+            _papi_hwi_system_info.exe_info.address_info.text_start =
+                                      (caddr_t) curr->address;
+            _papi_hwi_system_info.exe_info.address_info.text_end =
+                                      (caddr_t) (curr->address + curr->size);
+         } else {
+            _papi_hwi_system_info.exe_info.address_info.data_start =
+                                      (caddr_t) curr->address;
+            _papi_hwi_system_info.exe_info.address_info.data_end =
+                                      (caddr_t) (curr->address + curr->size);
+         }
+      } else {
+         if ( curr->flags ) 
+         {
+            t_index++;
+            tmp[t_index].text_start = (caddr_t) curr->address;
+            tmp[t_index].text_end =(caddr_t) (curr->address+curr->size);
+               strncpy(tmp[t_index].name, curr->objname,PAPI_HUGE_STR_LEN-1 );
+               tmp[t_index].name[PAPI_HUGE_STR_LEN-1]='\0';
+         } else {
+               if (t_index <0 )  continue;
+               tmp[t_index].data_start = (caddr_t) curr->address;
+               tmp[t_index].data_end = (caddr_t) (curr->address+ curr->size);
+         }
+      }
+      tmpr = curr->next;
+      /* free the temporary allocated memory */
+      free(curr);
+      curr = tmpr;
+   }  /* end of while */ 
+   fclose(f);
+   if (_papi_hwi_system_info.shlib_info.map)
+      free(_papi_hwi_system_info.shlib_info.map);
+   _papi_hwi_system_info.shlib_info.map = tmp;
+   _papi_hwi_system_info.shlib_info.count = t_index+1;
+
+   return(PAPI_OK);
+
+}
+
+#if 0
+/* once the bug in dladdr is fixed by SUN, (now dladdr caused deadlock when
+   used with pthreads) this function can be used again */
+int _papi_hwd_update_shlib_info(void)
+{
+   char fname[80], name[PATH_MAX];
+   prmap_t newp;
+   int count, t_index;
+   FILE * map_f;
+   void * vaddr;
+   Dl_info dlip;
+   PAPI_address_map_t *tmp = NULL;
+
+   sprintf(fname, "/proc/%d/map", getpid());
+   map_f = fopen(fname, "r");
+
+   /* count the entries we need */
+   count =0;
+   t_index=0;
+   while ( fread(&newp, sizeof(prmap_t), 1, map_f) > 0 ) {
+      vaddr = (void*)(1+(newp.pr_vaddr)); // map base address 
+      if (dladdr(vaddr, &dlip) > 0) {
+         count++;
+         if ((newp.pr_mflags & MA_EXEC) && (newp.pr_mflags & MA_READ) ) {
+            if ( !(newp.pr_mflags & MA_WRITE)) 
+               t_index++;
+         }
+         strcpy(name,dlip.dli_fname);
+         if (strcmp(_papi_hwi_system_info.exe_info.address_info.name, 
+                          basename(name))== 0 ) {
+            if ((newp.pr_mflags & MA_EXEC) && (newp.pr_mflags & MA_READ) ) {
+               if ( !(newp.pr_mflags & MA_WRITE)) {
+                  _papi_hwi_system_info.exe_info.address_info.text_start = 
+                                      (caddr_t) newp.pr_vaddr;
+                  _papi_hwi_system_info.exe_info.address_info.text_end =
+                                      (caddr_t) (newp.pr_vaddr+newp.pr_size);
+               } else {
+                  _papi_hwi_system_info.exe_info.address_info.data_start = 
+                                      (caddr_t) newp.pr_vaddr;
+                  _papi_hwi_system_info.exe_info.address_info.data_end =
+                                      (caddr_t) (newp.pr_vaddr+newp.pr_size);
+               }  
+            }
+         }
+      } 
+
+   }
+   rewind(map_f);
+   tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+
+   if (tmp == NULL)
+      error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+   t_index=-1;
+   while ( fread(&newp, sizeof(prmap_t), 1, map_f) > 0 ) {
+      vaddr = (void*)(1+(newp.pr_vaddr)); // map base address
+      if (dladdr(vaddr, &dlip) > 0) {  // valid name
+         strcpy(name,dlip.dli_fname);
+         if (strcmp(_papi_hwi_system_info.exe_info.address_info.name, 
+                          basename(name))== 0 ) 
+            continue;
+         if ((newp.pr_mflags & MA_EXEC) && (newp.pr_mflags & MA_READ) ) {
+            if ( !(newp.pr_mflags & MA_WRITE)) {
+               t_index++;
+               tmp[t_index].text_start = (caddr_t) newp.pr_vaddr;
+               tmp[t_index].text_end =(caddr_t) (newp.pr_vaddr+newp.pr_size);
+               strncpy(tmp[t_index].name, dlip.dli_fname,PAPI_HUGE_STR_LEN-1 );
+               tmp[t_index].name[PAPI_HUGE_STR_LEN-1]='\0';
+            } else {
+               if (t_index <0 )  continue;
+               tmp[t_index].data_start = (caddr_t) newp.pr_vaddr;
+               tmp[t_index].data_end = (caddr_t) (newp.pr_vaddr+newp.pr_size);
+            }
+         }
+      }
+   }
+
+   fclose(map_f);
+
+   if (_papi_hwi_system_info.shlib_info.map) 
+      free(_papi_hwi_system_info.shlib_info.map);
+   _papi_hwi_system_info.shlib_info.map = tmp;
+   _papi_hwi_system_info.shlib_info.count = t_index+1;
+
+   return(PAPI_OK);
+}
+#endif
