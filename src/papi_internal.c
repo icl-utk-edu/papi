@@ -243,11 +243,10 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
     {
       ESI->EventInfoArray[i].head = ESI->EventInfoArray; /* always points to top of array */
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
-      ESI->EventInfoArray[i].hardware_index = -1;
+      ESI->EventInfoArray[i].counter_index = -1;
 /*      ESI->EventInfoArray[i].bits = ???; */
-      ESI->EventInfoArray[i].hardware_selector = 0;
+      ESI->EventInfoArray[i].hwd_selector = 0;
       ESI->EventInfoArray[i].command = NOT_DERIVED;
-      ESI->EventInfoArray[i].operand_index = -1;
     }
 }
 
