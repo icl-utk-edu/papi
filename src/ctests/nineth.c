@@ -22,7 +22,7 @@ int main(int argc, char **argv)
    int retval, num_tests = 2, tmp;
    int EventSet1;
    int EventSet2;
-   int mask1 = 0x5;             /* FP_INS and TOT_CYC */
+   int mask1 = 0x80001;             /* FP_OPS and TOT_CYC */
    int mask2 = 0x8;             /* FLOPS */
    int num_events1;
    int num_events2;
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
    }
 
    /* gotta count flops to run this test */
-   if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
+   if ((retval = PAPI_query_event(PAPI_FP_OPS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
    EventSet1 = add_test_events(&num_events1, &mask1);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
           ("-------------------------------------------------------------------------\n");
 
       printf("Test type   : %12s%12s\n", "1", "2");
-      printf(TAB2, "PAPI_FP_INS : ", (values[0])[0], (long_long) 0);
+      printf(TAB2, "PAPI_FP_OPS : ", (values[0])[0], (long_long) 0);
       printf(TAB2, "PAPI_TOT_CYC: ", (values[0])[1], (long_long) 0);
       printf(TAB2, "PAPI_FLOPS  : ", (long_long) 0, (values[1])[0]);
       printf

@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
 /* If this platform doesn't support floating point, skip the test */
-   if (PAPI_query_event(PAPI_FP_INS) != PAPI_OK) {
+   if (PAPI_query_event(PAPI_FP_OPS) != PAPI_OK) {
       test_skip(__FILE__, __LINE__, "PAPI_query_event", PAPI_ENOEVNT);
    }
 
