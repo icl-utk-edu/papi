@@ -207,7 +207,8 @@ int _papi_hwd_get_system_info(void)
 
    retval = _papi_hwd_update_shlib_info();
    if (retval == 0) {
-      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & __data_start;
+      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) NULL;
+
       _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
       _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & __bss_start;
       _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
