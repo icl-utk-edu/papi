@@ -82,9 +82,9 @@ long _papi_hwd_get_dmem_info(int option){
    char pfile[256];
    int fd;
 
-   sprintf(pfile, "/proc/%05d", pid);
+   sprintf(pfile, "/proc/%05d", (int)pid);
    if((fd=open(pfile,O_RDONLY)) <0 ) {
-        DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d\n",pid));
+        DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d\n",(int)pid));
         return(PAPI_ESYS);
    }
    if(ioctl(fd, PIOCPSINFO,  &info)<0){
