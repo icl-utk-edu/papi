@@ -374,35 +374,23 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
 int _papi_hwd_start(EventSetInfo *EventSet)
 {
   hwd_control_state_t *this_state = EventSet->machdep;
-  int retval, code1, code2, code3;
+  int retval;
 
-  code1 = this_state->counter_code1;
-  code2 = this_state->counter_code2;
-  code3 = 1; 
-
-  if (EventSet->all_options.domain.domain.domain == 2)
-  { code1 = code1 | 0x00020000;
-    code2 = code2 | 0x00020000;
-    code3 = code3 | 0x00020000;
-  }
-  if(EventSet->all_options.domain.domain.domain == 3)
-  { code1 = code1 | 0x00020000 | 0x00010000;
-    code2 = code2 | 0x00020000 | 0x00010000;
-    code3 = code3 | 0x00020000 | 0x00010000;
-  }
+  retval=_papi_set_domain(EventSet, &EventSet->all_options.domain);
+  if(retval) return(PAPI_EBUG);
 
   if(this_state->counter_code1 >= 0)
-  { retval = perf(PERF_SET_CONFIG, 0, code1);
+  { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
     if(retval) return(PAPI_EBUG);
   }
 
   if(this_state->counter_code2 >= 0)
-  { retval = perf(PERF_SET_CONFIG, 1, code2);
+  { retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
     if(retval) return(PAPI_EBUG);
   }
 
   if(this_state->sp_code >= 0)
-  { retval = perf(PERF_SET_CONFIG, 2, code3);
+  { retval = perf(PERF_SET_CONFIG, 2, this_state->sp_code);
     if(retval) return(PAPI_EBUG);
   }
   retval = perf(PERF_START, 0, 0);
@@ -525,24 +513,49 @@ int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
   return(retval);
 }
 
+int _papi_set_domain(EventSetInfo *ESI, _papi_int_domain_t *domain)
+{ hwd_control_state_t *this_state = ESI->machdep;
+  if (domain->domain.domain == 2)
+  { this_state->counter_code1 = this_state->counter_code1 | 0x00020000;
+    this_state->counter_code2 = this_state->counter_code2 | 0x00020000;
+    this_state->sp_code = this_state->sp_code | 0x00020000;
+  }
+  if(domain->domain.domain == 3)
+  { this_state->counter_code1 = this_state->counter_code1 | 0x00020000 | 0x00010000;
+    this_state->counter_code2 = this_state->counter_code2 | 0x00020000 | 0x00010000;
+    this_state->sp_code = this_state->sp_code | 0x00020000 | 0x00010000;
+  }
+  return(PAPI_OK);
+}
+
+
 int _papi_hwd_ctl(int code, _papi_int_option_t *option)
 {
   switch (code)
     {
     case PAPI_SET_MPXRES:
-      /* return(_papi_portable_set_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex)); */
+      /* return(_papi_portable_set_multiplex((EventSetInfo *)option->
+           multiplex.ESI,&option->multiplex)); */
     case PAPI_SET_OVRFLO:
-      /* return(_papi_portable_set_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow)); */
+      /* return(_papi_portable_set_overflow((EventSetInfo *)option->
+           multiplex.ESI,&option->overflow)); */
     case PAPI_GET_MPXRES:
-      /* return(_papi_portable_get_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex)); */
+      /* return(_papi_portable_get_multiplex((EventSetInfo *)option->
+           multiplex.ESI,&option->multiplex)); */
     case PAPI_GET_OVRFLO:
-      /* return(_papi_portable_get_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow)); */
+      /* return(_papi_portable_get_overflow((EventSetInfo *)option->
+           multiplex.ESI,&option->overflow)); */
     case PAPI_SET_DEFDOM:
     case PAPI_SET_DEFGRN:
     case PAPI_SET_DOMAIN:
+    { option->domain.ESI->all_options.domain.domain.domain=option->domain.domain.domain;
+      return(PAPI_OK);
+    }
     case PAPI_SET_GRANUL:
+      return(PAPI_EINVAL);
     case PAPI_GET_DEFDOM:
     case PAPI_GET_DEFGRN:
+      return(PAPI_EINVAL);
     case PAPI_GET_DOMAIN:
     case PAPI_GET_GRANUL:
       return(PAPI_EINVAL);

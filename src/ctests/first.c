@@ -15,10 +15,16 @@ void main()
   double a, b, c;
   unsigned long long ct[3];
   int EventSet = PAPI_NULL;
+  PAPI_option_t options;
 
   r=PAPI_add_event(&EventSet, PAPI_FP_INS);
   r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
   r=PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+
+  options.domain.eventset=1;
+  options.domain.domain=PAPI_DOM_DEFAULT;
+
+  r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
   r=PAPI_reset(EventSet);
   r=PAPI_start(EventSet);
 

@@ -496,6 +496,34 @@ int PAPI_write(int EventSet, unsigned long long *values)
   return(retval);
 }
 
+int PAPI_set_opt(int option, PAPI_option_t *ptr)
+{ int retval;
+  _papi_int_option_t internal;
+
+  switch(option)
+  { case PAPI_SET_MPXRES:
+    case PAPI_SET_OVRFLO:
+    case PAPI_GET_MPXRES:
+    case PAPI_GET_OVRFLO:
+    case PAPI_SET_DEFDOM:
+    case PAPI_SET_DEFGRN:
+    case PAPI_SET_DOMAIN:
+    { internal.domain.domain.eventset=ptr->domain.eventset;
+      internal.domain.domain.domain=ptr->domain.domain;
+      internal.domain.ESI=lookup_EventSet(ptr->domain.eventset);
+      retval = _papi_hwd_ctl(PAPI_SET_DOMAIN, &internal);
+      return(retval);
+    }
+    case PAPI_SET_GRANUL:
+    case PAPI_GET_DEFDOM:
+    case PAPI_GET_DEFGRN:
+    case PAPI_GET_DOMAIN:
+    case PAPI_GET_GRANUL:
+    default:
+      return(PAPI_EINVAL);
+    }
+}
+ 
 void PAPI_shutdown(void) {
     int i;
 
