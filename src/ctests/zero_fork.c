@@ -91,6 +91,9 @@ int main(int argc, char **argv)
    int retval;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+# if defined(__ALPHA) && defined(__osf__)
+   test_skip(__FILE__, __LINE__, "main", 0);
+#endif
 
    printf("This tests if PAPI_library_init(),2*fork(),PAPI_library_init() works.\n");
    /* Initialize PAPI for this process */
