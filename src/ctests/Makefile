@@ -9,7 +9,7 @@ SERIAL  = branches dmem_info all_events derived high-level2 describe mem_info ze
 	zero_flip low-level high-level sprofile eventname case1 case2 \
 	calibrate flops avail first second cost johnmay2 clockres nineth \
 	overflow_single_event overflow profile tenth native memory \
-	timer_overflow overflow2 matrix-hl earprofile profilehw 
+	timer_overflow overflow2 matrix-hl  profilehw 
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -157,9 +157,6 @@ profile: profile.c $(UTILOBJS) $(PAPILIB)
 
 profilehw: profilehw.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profilehw.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profilehw
-
-earprofile: earprofile.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) earprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o earprofile
 
 pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
