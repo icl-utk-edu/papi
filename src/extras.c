@@ -20,6 +20,10 @@ vendors did in the kernel extensions or performance libraries. */
 //  #include <winbase.h>
 #endif
 
+#ifdef __LINUX__
+#include <limits.h>
+#endif
+
 
 static unsigned int rnum = 0xdeadbeef;
 
