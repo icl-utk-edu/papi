@@ -613,15 +613,22 @@ static int  check_cpuid(){
 inline_static void cpuid(unsigned int *a, unsigned int *b,
 			 unsigned int *c, unsigned int *d)
 {
+  volatile unsigned long tmp,tmp2,tmp3,tmp4;
+  volatile unsigned long in_tmp;
+ 
+  in_tmp = *a; 
   __asm {
-	  mov eax, [a];
+	  mov eax, in_tmp;
 	  cpuid;
-	  mov [a], eax;
-	  mov [b], ebx;
-	  mov [c], ecx;
-	  mov [d], edx;
+	  mov tmp, eax;
+	  mov tmp2, ebx;
+	  mov tmp3, ecx;
+	  mov tmp4, edx;
 	}
-
+  *a = tmp;
+  *b = tmp2;
+  *c = tmp3;
+  *d = tmp4;
 }
 #else
 inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
