@@ -2,7 +2,10 @@
 .TH PAPI_event_code_to_name 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_event_code_to_name, PAPI_event_name_to_code \- convert a numeric hardware event code to a name, or vice versa.
+.nf
+PAPI_event_code_to_name \- convert a numeric hardware event code to a name.
+PAPI_event_name_to_code \- convert a name to a numeric hardware event code.
+.fi
 
 .SH SYNOPSIS
 .B C Interface
@@ -38,10 +41,6 @@ or discussed in
 -- the numeric code for the event
 .LP
 
-*
-* Check the return values and example code.
-*
-
 .SH RETURN VALUES
 On success, these functions return
 .B "PAPI_OK."
@@ -54,6 +53,9 @@ One or more of the arguments is invalid.
 .TP
 .B "PAPI_ENOTPRESET"
 The hardware event specified is not a valid PAPI preset. 
+.TP
+.B "PAPI_ENOEVNT"  
+The hardware event is not available on the underlying hardware. 
 
 .SH EXAMPLES
 .nf
@@ -86,5 +88,5 @@ These functions have no known bugs.
 .SH SEE ALSO
 .BR PAPI_presets "(3), " PAPI_native "(3), " 
 .BR PAPI_enum_events "(3), " PAPI_add_event "(3), " 
-.BR PAPI_set_opt "(3), " PAPI_get_event_info "(3)"
+.BR PAPI_remove_event "(3), " PAPI_get_event_info "(3)"
 
