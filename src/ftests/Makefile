@@ -1,5 +1,5 @@
 INCLUDE = -I..
-TESTS 	= zero first  second nineth tenth description \
+TESTS 	=  zero first  second nineth tenth description \
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
