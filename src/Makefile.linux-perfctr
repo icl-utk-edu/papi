@@ -8,7 +8,7 @@
 # Use this version if you are using perfctr-2.4.x
 # or using the perfctr that comes with PAPI
 KERNINC	= /usr/src/linux/include
-PERFCTR	= ./perfctr-2.4.1
+PERFCTR	= ./perfctr-2.4.5
 PERF_FLAGS = -DPERFCTR20 -DPERFCTR24 -DPAPI_PERFCTR_INTR_SUPPORT
 
 #Uncomment below if you are using perfctr 2.3.x and
