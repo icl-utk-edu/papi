@@ -43,7 +43,7 @@ CFG=WinPMC - Win32 Debug
 # PROP Intermediate_Dir "Release"
 # PROP Cmd_Line "ddkbuild -W2k free ."
 # PROP Rebuild_Opt "/a"
-# PROP Target_File "WinPMC.exe"
+# PROP Target_File "WinPMC.sys"
 # PROP Bsc_Name "WinPMC.bsc"
 # PROP Target_Dir ""
 
@@ -64,7 +64,7 @@ CFG=WinPMC - Win32 Debug
 # PROP Intermediate_Dir "WinPMC___Win32_Debug"
 # PROP Cmd_Line "ddkbuild -W2k checked ."
 # PROP Rebuild_Opt "/a"
-# PROP Target_File "WinPMC.exe"
+# PROP Target_File "WinPMC.sys"
 # PROP Bsc_Name "WinPMC.bsc"
 # PROP Target_Dir ""
 
