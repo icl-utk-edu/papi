@@ -5,11 +5,14 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-0.06a/include -I. -Wall
-TOPTFLAGS  = -O0
+#CFLAGS  = -Ipfmon-0.06a/include -I. -Wall
+#LIBPFM  = pfmon-0.06a/libpfm
+CFLAGS  = -Ipfmon-1.1/include -Ipfmon-1.1/libpfm -I. -Wall
+LIBPFM  = pfmon-1.1/libpfm
+TOPTFLAGS  = -O0 -g0
 FFLAGS	=  -Vaxlib
 LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
-OPTFLAGS= -O3 
+OPTFLAGS= -O3 -g0
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 CC_SHR  = gcc -shared -fpic
@@ -19,14 +22,13 @@ CC	= gcc
 #F77	= /opt/intel/compiler50/ia64/bin/efc
 F77	= /usr/local/intel/compiler50/ia64/bin/efc
 #F77     = f77
-LIBPFM  = pfmon-0.06a/libpfm
-MISCOBJS= pfmlib.o pfmusr.o pfmerror.o
-MISCSRCS= $(LIBPFM)/pfmlib.c $(LIBPFM)/pfmusr.c $(LIBPFM)/pfmerror.c
+MISCOBJS= pfmlib_itanium.o pfmlib_common.o pfmlib_generic.o
+MISCSRCS= $(LIBPFM)/pfmlib_itanium.c $(LIBPFM)/pfmlib_common.c $(LIBPFM)/pfmlib_generic.c
 
 include Makefile.inc
 
 $(MISCOBJS): $(MISCSRCS)
-	$(MAKE) CFLAGS="$(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" -C $(LIBPFM)
+	$(MAKE) -C $(LIBPFM)
 	cd $(LIBPFM); cp $(MISCOBJS) $(PAPI_SRCDIR)
 
 native_clean:

@@ -1,0 +1,12 @@
+TODO list:
+----------
+- support for randomized sampling periods in pfmon
+- add support for multi-threaded (multiple tasks) processes
+- separate the library (libpfm) from the tool (pfmon)
+- internal interface for (3rd party) sampling format plug-ins
+- write documentation for library (libpfm)
+- add some more examples and tests
+- add perfmon support to GNU libc
+- add regex support for event name listing
+- add all combinations in itanium_events.db for L2_FLUSH_DETAILS
+- add all combinations in itanium_events.db for PIPELINE_FLUSH
