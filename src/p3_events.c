@@ -1670,8 +1670,11 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits) {
 }
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier) {
-printf("code = %d\n", *EventCode);
-   if(++*EventCode >= sizeof(*native_table)) return(PAPI_ENOEVNT);
- //  *EventCode = *EventCode + NATIVE_MASK;
-   return(PAPI_OK);
+   if(native_table[*EventCode & NATIVE_AND_MASK].resources.selector) {
+      *EventCode = *EventCode + 1;
+      return(PAPI_OK);
+   }
+   else {
+      return(PAPI_ENOEVNT);
+   }
 }

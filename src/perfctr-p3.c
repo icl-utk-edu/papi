@@ -196,11 +196,33 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr) {
          abort();
     }
    ptr->allocated_registers.selector = 0;
-   ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      ptr->control.cpu_control.evntsel[i] |= def_mode;
-      ptr->control.cpu_control.pmc_map[i] = i;
-   }
+   switch(_papi_hwi_system_info.hw_info.model)
+    {
+      case PERFCTR_X86_GENERIC:
+      case PERFCTR_X86_CYRIX_MII:
+      case PERFCTR_X86_WINCHIP_C6:
+      case PERFCTR_X86_WINCHIP_2:
+      case PERFCTR_X86_VIA_C3:
+      case PERFCTR_X86_INTEL_P5:
+      case PERFCTR_X86_INTEL_P5MMX:
+      case PERFCTR_X86_INTEL_PII:
+      case PERFCTR_X86_INTEL_P6:
+      case PERFCTR_X86_INTEL_PIII:
+         ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
+         for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+            ptr->control.cpu_control.evntsel[i] |= def_mode;
+            ptr->control.cpu_control.pmc_map[i] = i;
+         }
+         break;
+      case PERFCTR_X86_AMD_K7:
+         for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+            ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
+            ptr->control.cpu_control.pmc_map[i] = i;
+         }
+         break;
+    }
+   /* Make sure the TSC is always on */
+   ptr->control.cpu_control.tsc_on = 1;
 }
 
 int _papi_hwd_add_prog_event(hwd_control_state_t *state, unsigned int code, void *tmp, EventInfo_t *tmp2)
@@ -304,23 +326,19 @@ int _papi_hwd_init(hwd_context_t *ctx) {
    return(PAPI_OK);
 }
 
-u_long_long _papi_hwd_get_real_usec(void)
-{
+u_long_long _papi_hwd_get_real_usec(void) {
   return((u_long_long)get_cycles() / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-u_long_long _papi_hwd_get_real_cycles(void)
-{
+u_long_long _papi_hwd_get_real_cycles(void) {
   return(get_cycles());
 }
 
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t *ctx)
-{
+u_long_long _papi_hwd_get_virt_usec(const hwd_context_t *ctx) {
   return(_papi_hwd_get_virt_cycles(ctx) / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t *ctx)
-{
+u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t *ctx) {
   return(vperfctr_read_tsc(ctx->perfctr));
 }
 
@@ -328,8 +346,7 @@ u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t *ctx)
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't.
 */
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
-{
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
    return(dst->ra_selector & (1<<ctr));
 }
 
@@ -337,8 +354,7 @@ int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
     be mapped to only counter ctr.
     Returns nothing.
 */
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
-{
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
    dst->ra_selector = (1<<ctr);
    dst->ra_rank = 1;
 }
@@ -347,8 +363,7 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
    if it has a single exclusive mapping.
    Returns true if exlusive, false if non-exclusive.
 */
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
-{
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst) {
    return(dst->ra_rank==1);
 }
 
@@ -357,8 +372,7 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    return(dst->ra_selector & src->ra_selector);
 }
 
@@ -376,12 +390,9 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    if(shared) dst->ra_selector ^= shared;
    for(i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
       if(dst->ra_selector & (1<<i)) dst->ra_rank++;
- //  dst->ra_selector ^= src->ra_selector;
- //  dst->ra_rank -= src->ra_rank;
 }
 
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    dst->ra_selector = src->ra_selector;
 }
 
@@ -436,26 +447,17 @@ static void clear_control_state(hwd_control_state_t *this_state) {
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count) {
    int i;
-   hwd_register_t *bits;
 
    /* clear out everything currently coded */
    clear_control_state(this_state);
 
    /* fill the counters we're using */
+   _papi_hwd_init_control_state(this_state);
    for(i = 0; i < count; i++) {
-      /* dereference the mapping information about this native event */
-      bits = &native[i].ni_bits;
       /* Add counter control command values to eventset */
-      this_state->control.cpu_control.pmc_map[i] = i;
-      this_state->control.cpu_control.evntsel[i] = bits->counter_cmd[0];
-      this_state->control.cpu_control.evntsel[i] |= PERF_USR;
+      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd[0];
    }
-   this_state->control.cpu_control.evntsel[0] |= PERF_ENABLE;
    this_state->control.cpu_control.nractrs = count;
-
-   /* Make sure the TSC is always on */
-   this_state->control.cpu_control.tsc_on = 1;
-
    return(PAPI_OK);
 }
 
