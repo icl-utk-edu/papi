@@ -30,17 +30,8 @@ void free_test_space(long_long **values, int num_tests)
 }
 
 /* Mask tells us what to select. 
-   0x400 is PAPI_L2_TCH.
-   0x200 is PAPI_L2_TCA.
-   0x100 is PAPI_L2_TCM.
-   0x40 is PAPI_L1_DCM.
-   0x20 is PAPI_L1_ICM.
-   0x10 is PAPI_L1_TCM.
-   0x8 is PAPI_FLOPS.
-   0x4 is PAPI_FP_INS.
-   0x2 is PAPI_TOT_INS. 
-   0x1 is PAPI_TOT_CYC. */
-
+	See test_utils.h for mask definitions
+*/
 
 int add_test_events(int *number, int *mask)
 {
@@ -56,7 +47,7 @@ int add_test_events(int *number, int *mask)
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     exit(1);
 
-  if (*mask & 0x400)
+  if (*mask & MASK_L2_TCH)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L2_TCH);
       if (retval == PAPI_OK)
@@ -64,11 +55,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_L2_TCH is not available.\n");
-	  *mask = *mask ^ 0x400;
+	  *mask = *mask ^ MASK_L2_TCH;
 	}
     }
 
-  if (*mask & 0x200)
+  if (*mask & MASK_L2_TCA)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L2_TCA);
       if (retval == PAPI_OK)
@@ -76,11 +67,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_L2_TCA is not available.\n");
-	  *mask = *mask ^ 0x200;
+	  *mask = *mask ^ MASK_L2_TCA;
 	}
     }
 
-  if (*mask & 0x100)
+  if (*mask & MASK_L2_TCM)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
       if (retval == PAPI_OK)
@@ -88,11 +79,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_L2_TCM is not available.\n");
-	  *mask = *mask ^ 0x100;
+	  *mask = *mask ^ MASK_L2_TCM;
 	}
     }
 
-  if (*mask & 0x40)
+  if (*mask & MASK_L1_DCM)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
       if (retval == PAPI_OK)
@@ -100,11 +91,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_L1_DCM is not available.\n");
-	  *mask = *mask ^ 0x40;
+	  *mask = *mask ^ MASK_L1_DCM;
 	}
     }
 
-  if (*mask & 0x20)
+  if (*mask & MASK_L1_ICM)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
       if (retval == PAPI_OK)
@@ -112,11 +103,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_L1_ICM is not available.\n");
-	  *mask = *mask ^ 0x20;
+	  *mask = *mask ^ MASK_L1_ICM;
 	}
     }
 
-  if (*mask & 0x10)
+  if (*mask & MASK_L1_TCM)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L1_TCM);
       if (retval == PAPI_OK)
@@ -124,11 +115,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_L1_TCM is not available.\n");
-	  *mask = *mask ^ 0x10;
+	  *mask = *mask ^ MASK_L1_TCM;
 	}
     }
 
-  if (*mask & 0x8)
+  if (*mask & MASK_FLOPS)
     {
       retval = PAPI_add_event(&EventSet, PAPI_FLOPS);
       if (retval == PAPI_OK)
@@ -136,15 +127,17 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_FLOPS is not available.\n");
-	  *mask = *mask ^ 0x8;
+	  *mask = *mask ^ MASK_FLOPS;
 	}
     }
 
-  if (*mask & 0x4)
+  if (*mask & MASK_FP_INS)
     {
 #if defined(__digital__)
       fprintf(stderr,"Using PAPI_TOT_INS instead of PAPI_FP_INS.\n");
       retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+	  *mask = *mask ^ MASK_FP_INS;
+	  *mask = *mask & MASK_TOT_INS;
 #else
       retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
 #endif
@@ -153,11 +146,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_FP_INS is not available.\n");
-	  *mask = *mask ^ 0x4;
+	  *mask = *mask ^ MASK_FP_INS;
 	}
     }
 
-  if (*mask & 0x2)
+  if (*mask & MASK_TOT_INS)
     {
       retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
       if (retval == PAPI_OK)
@@ -165,11 +158,11 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_TOT_INS is not available.\n");
-	  *mask = *mask ^ 0x2;
+	  *mask = *mask ^ MASK_TOT_INS;
 	}
     }
 
-  if (*mask & 0x1)
+  if (*mask & MASK_TOT_CYC)
     {
       retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
       if (retval == PAPI_OK)
@@ -177,7 +170,7 @@ int add_test_events(int *number, int *mask)
       else
 	{
 	  fprintf(stderr,"PAPI_TOT_CYC is not available.\n");
-	  *mask = *mask ^ 0x1;
+	  *mask = *mask ^ MASK_TOT_CYC;
 	}
     }
 
@@ -188,49 +181,49 @@ int remove_test_events(int *EventSet, int mask)
 {
   int retval = PAPI_OK;
   
-  if (mask & 0x400) 
+  if (mask & MASK_L2_TCH) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L2_TCH);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x200) 
+  if (mask & MASK_L2_TCA) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L2_TCA);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x100) 
+  if (mask & MASK_L2_TCM) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L2_TCM);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x40) 
+  if (mask & MASK_L1_DCM) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L1_DCM);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x20) 
+  if (mask & MASK_L1_ICM) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L1_ICM);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x10) 
+  if (mask & MASK_L1_TCM) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_L1_TCM);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x8) 
+  if (mask & MASK_FLOPS) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_FLOPS);
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x4) 
+  if (mask & MASK_FP_INS) 
     {
 #if defined(__digital__)
       retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
@@ -240,13 +233,13 @@ int remove_test_events(int *EventSet, int mask)
       if (retval < PAPI_OK) return(retval);
     }
 
-  if (mask & 0x2) 
+  if (mask & MASK_TOT_INS) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
       if (retval < PAPI_OK) return(retval);
     }
  
-  if (mask & 0x1) 
+  if (mask & MASK_TOT_CYC) 
     {
       retval = PAPI_rem_event(EventSet, PAPI_TOT_CYC);
       if (retval < PAPI_OK) return(retval); 

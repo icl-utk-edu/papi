@@ -32,10 +32,10 @@
 
 #ifdef NO_FLOPS
   #define PAPI_EVENT 		PAPI_TOT_INS
-  #define MASK				0x3
+  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
 #else
   #define PAPI_EVENT 		PAPI_FP_INS
-  #define MASK				0x5
+  #define MASK				MASK_FP_INS | MASK_TOT_CYC
 #endif
 
 int TESTS_QUIET=0; /* Tests in Verbose mode? */

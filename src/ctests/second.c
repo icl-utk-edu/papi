@@ -17,23 +17,46 @@
 
 #include "papi_test.h"
 
+#define TEST_NAME "second"
+
+#ifdef NO_FLOPS
+  #define PAPI_EVENT 		PAPI_TOT_INS
+  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
+#else
+  #define PAPI_EVENT 		PAPI_FP_INS
+  #define MASK				MASK_FP_INS | MASK_TOT_CYC
+#endif
+
+int TESTS_QUIET=0; /* Tests in Verbose mode? */
+
 int main(int argc, char **argv) 
 {
   int retval, num_tests = 3, tmp;
   long_long **values;
   int EventSet1, EventSet2, EventSet3;
   int num_events1, num_events2, num_events3;
-  int mask1 = 0x5, mask2 = 0x5, mask3 = 0x5;
+  int mask1 = MASK, mask2 = MASK, mask3 = MASK;
   PAPI_option_t options;
+  char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
-  memset(&options,0x0,sizeof(options));
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+
+  if ( !TESTS_QUIET ) {
+	retval = PAPI_set_debug(PAPI_VERB_ECONT);
+	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_debug", retval);
+  }
+
+  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_event_code_to_name", retval);
+  sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    exit(1);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(TEST_NAME, "PAPI_library_init", retval);
 
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  memset(&options,0x0,sizeof(options));
 
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
@@ -45,28 +68,30 @@ int main(int argc, char **argv)
 
   options.domain.eventset=EventSet1;
   options.domain.domain=PAPI_DOM_ALL;
+
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_opt", retval);
 
   options.domain.eventset=EventSet2;
   options.domain.domain=PAPI_DOM_KERNEL;
+
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_opt", retval);
 
   options.domain.eventset=EventSet3;
   options.domain.domain=PAPI_DOM_USER;
+
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_opt", retval);
 
   retval = PAPI_start(EventSet1);
 
   do_flops(NUM_FLOPS);
 
-  if (retval == PAPI_OK)
+  if (retval == PAPI_OK) {
     retval = PAPI_stop(EventSet1, values[0]);
+	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  }
   else
     { values[0][0] = retval; values[0][1] = retval; }
 
@@ -74,53 +99,63 @@ int main(int argc, char **argv)
 
   do_flops(NUM_FLOPS);
 
-  if (retval == PAPI_OK)
+  if (retval == PAPI_OK) {
     retval = PAPI_stop(EventSet2, values[1]);
+	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
+  }
   else
     { values[1][0] = retval; values[1][1] = retval; }
 
   retval = PAPI_start(EventSet3);
-  if (retval != PAPI_OK)
-    exit(1);
+	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet3, values[2]);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
 
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);
   remove_test_events(&EventSet3, mask3);
 
-  printf("Test case 2: Non-overlapping start, stop, read for all 3 domains.\n");
-  printf("-----------------------------------------------------------------\n");
-  tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
-  printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
-  tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
-  printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
-  printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
-  printf("-------------------------------------------------------------\n");
+  if ( !TESTS_QUIET ){
+	printf("Test case 2: Non-overlapping start, stop, read for all 3 domains.\n");
+	printf("-----------------------------------------------------------------\n");
+	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
+	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
+	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
+	printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
+	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
+	printf("-------------------------------------------------------------\n");
 
-  printf("Test type   : \tPAPI_DOM_ALL\tPAPI_DOM_KERNEL\tPAPI_DOM_USER\n");
-  printf(TAB3, "PAPI_FP_INS : ",
+	printf("Test type   : \tPAPI_DOM_ALL\tPAPI_DOM_KERNEL\tPAPI_DOM_USER\n");
+	sprintf(add_event_str, "%s : ", event_name);
+	printf(TAB3, add_event_str,
 	 (values[0])[0],(values[1])[0],(values[2])[0]);
-  printf(TAB3, "PAPI_TOT_CYC: ",
+	printf(TAB3, "PAPI_TOT_CYC: ",
 	 (values[0])[1],(values[1])[1],(values[2])[1]);
-  printf("-------------------------------------------------------------\n");
+	printf("-------------------------------------------------------------\n");
 
-  printf("Verification:\n");
-  printf("Row 1 approximately equals N %d N\n",0);
-  printf("Column 1 approximately equals column 2 plus column 3\n");
+	printf("Verification:\n");
+	printf("Row 1 approximately equals N %d N\n",0);
+	printf("Column 1 approximately equals column 2 plus column 3\n");
   
 #if defined(sgi) && defined(host_mips)
-  printf("\n* Irix requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL.\n");
-  printf("* The first two rows will be -3 if not run as root for IRIX.\n");
+	printf("\n* IRIX requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL.\n");
+	printf("* The first two columns will be -3 if not run as root for IRIX.\n");
 #endif
+  }
+  {
+    long_long min, max;
+    min = (long_long)(values[2][0]*.9);
+    max = (long_long)(values[2][0]*1.1);
+    if ( values[0][0] > max || values[0][0] < min )
+		test_fail(TEST_NAME, event_name, 1);
 
-  free_test_space(values, num_tests);
-
-  PAPI_shutdown();
-
-  exit(0);
+    min = (long_long)(values[0][1]*.9);
+    max = (long_long)(values[0][1]*1.1);
+    if ( (values[1][1] + values[2][1]) > max || (values[1][1] + values[2][1]) < min )
+  		test_fail(TEST_NAME, "PAPI_TOT_CYC", 1);
+  }
+  test_pass(TEST_NAME, values, num_tests);
 }

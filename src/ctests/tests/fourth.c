@@ -31,10 +31,10 @@
 
 #ifdef NO_FLOPS
   #define PAPI_EVENT 		PAPI_TOT_INS
-  #define MASK				0x3
+  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
 #else
   #define PAPI_EVENT 		PAPI_FP_INS
-  #define MASK				0x5
+  #define MASK				MASK_FP_INS | MASK_TOT_CYC
 #endif
 
 int TESTS_QUIET=0; /* Tests in Verbose mode? */
@@ -135,21 +135,21 @@ int main(int argc, char **argv)
   }
 
   {
-        long_long min, max;
-        min = (long_long)(values[1][0]*.9);
-        max = (long_long)(values[1][0]*1.1);
-        if ( values[0][0] > max || values[0][0] < min || values[2][0]>(3*max)
-          || values[2][0] < (min*3) || values[3][0] < min || values[3][0]>max)
-			{
-				test_fail(TEST_NAME, event_name, 1);
-			}
-        min = (long_long)(values[1][1]*.9);
-        max = (long_long)(values[1][1]*1.1);
-        if ( values[0][1] > max || values[0][1] < min || values[2][1]>(3*max)
-          || values[2][1] < (min*3) || values[3][1] < min || values[3][1]>max)
- 			{
-  				test_fail(TEST_NAME, "PAPI_TOT_CYC", 1);
-			}
+    long_long min, max;
+    min = (long_long)(values[1][0]*.9);
+    max = (long_long)(values[1][0]*1.1);
+    if ( values[0][0] > max || values[0][0] < min || values[2][0]>(3*max)
+      || values[2][0] < (min*3) || values[3][0] < min || values[3][0]>max)
+		{
+			test_fail(TEST_NAME, event_name, 1);
+		}
+    min = (long_long)(values[1][1]*.9);
+    max = (long_long)(values[1][1]*1.1);
+    if ( values[0][1] > max || values[0][1] < min || values[2][1]>(3*max)
+      || values[2][1] < (min*3) || values[3][1] < min || values[3][1]>max)
+ 		{
+  			test_fail(TEST_NAME, "PAPI_TOT_CYC", 1);
+		}
   }
   test_pass(TEST_NAME, values, num_tests);
 }
