@@ -6,10 +6,20 @@ void dummy(void *array)
 /* Confuse the compiler so as not to optimize
    away the flops in the calling routine    */
 }
+
 void dummy_(void *array)
 {
 }
+
 void dummy__(void *array)
+{
+}
+
+void DUMMY(void *array)
+{
+}
+
+void _DUMMY(void *array)
 {
 }
 

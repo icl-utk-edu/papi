@@ -41,7 +41,18 @@ void do_reads_(int *n)
 {
   do_reads(*n);
 }
+
 void do_reads__(int *n)
+{
+  do_reads(*n);
+}
+
+void DO_READS(int *n)
+{
+  do_reads(*n);
+}
+
+void _DO_READS(int *n)
 {
   do_reads(*n);
 }
@@ -65,6 +76,16 @@ void do_flops_(int *n)
 }
 
 void do_flops__(int *n)
+{
+  do_flops(*n);
+}
+
+void DO_FLOPS(int *n)
+{
+  do_flops(*n);
+}
+
+void _DO_FLOPS(int *n)
 {
   do_flops(*n);
 }
@@ -96,6 +117,16 @@ void do_misses__(int *n, int *size)
   do_misses(*n,*size);
 }
 
+void DO_MISSES(int *n, int *size)
+{
+  do_misses(*n,*size);
+}
+
+void _DO_MISSES(int *n, int *size)
+{
+  do_misses(*n,*size);
+}
+
 void do_both(int n)
 {
    int i;
@@ -118,19 +149,29 @@ void do_both__(int *n)
   do_both(*n);
 }
 
+void DO_BOTH(int *n)
+{
+  do_both(*n);
+}
+
+void _DO_BOTH(int *n)
+{
+  do_both(*n);
+}
+
 void do_flush(void)
 {
   register int i;
   if (flush == NULL)
     flush = (int *)malloc((1024*1024*16)*sizeof(int));
-  dummy(flush);
+  dummy((void *)flush);
   for (i=0;i<(1024*1024*16);i++)
     {
       flush[i] += flush_dummy;
     }
   flush_dummy++;
-  dummy(flush);
-  dummy(&flush_dummy);
+  dummy((void *)flush);
+  dummy((void *)&flush_dummy);
 }
 
 void do_flush_(void)
@@ -139,6 +180,16 @@ void do_flush_(void)
 }
 
 void do_flush__(void)
+{
+  do_flush();
+}
+
+void DO_FLUSH(void)
+{
+  do_flush();
+}
+
+void _DO_FLUSH(void)
 {
   do_flush();
 }
@@ -152,7 +203,18 @@ void do_l1misses_(int *n)
 {
   do_l1misses(*n);
 }
+
 void do_l1misses__(int *n)
+{
+  do_l1misses(*n);
+}
+
+void DO_L1MISSES(int *n)
+{
+  do_l1misses(*n);
+}
+
+void _DO_L1MISSES(int *n)
 {
   do_l1misses(*n);
 }
