@@ -5,6 +5,7 @@
 #include <mpp/globals.h> 
 #include <sys/ucontext.h>
 #include <sys/times.h>
+#include <limits.h>
 
 #include "papi.h"
 
