@@ -23,7 +23,7 @@ typedef struct _dynamic_array {
 } DynamicArray;
 
 /*function prototype*/
-int _papi_expandDA(DynamicArray *DA); 
+static int _papi_expandDA(DynamicArray *DA); 
 
 /* this is not the final version of this data structure*/
 typedef struct _papi_option_t  {
