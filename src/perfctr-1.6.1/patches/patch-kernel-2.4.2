@@ -1,6 +1,6 @@
---- linux-2.4.0-test11pre6-perfctr/CREDITS.~1~	Fri Nov 17 23:20:11 2000
-+++ linux-2.4.0-test11pre6-perfctr/CREDITS	Fri Nov 17 23:22:25 2000
-@@ -2069,6 +2069,7 @@
+--- linux-2.4.2-perfctr/CREDITS.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/CREDITS	Wed Feb 28 22:35:05 2001
+@@ -2180,6 +2180,7 @@
  E: mikpe@csd.uu.se
  W: http://www.csd.uu.se/~mikpe/
  D: Miscellaneous fixes
@@ -8,9 +8,9 @@
  
  N: Reed H. Petty
  E: rhp@draper.net
---- linux-2.4.0-test11pre6-perfctr/Documentation/Configure.help.~1~	Fri Nov 17 23:20:11 2000
-+++ linux-2.4.0-test11pre6-perfctr/Documentation/Configure.help	Fri Nov 17 23:22:25 2000
-@@ -2879,6 +2879,82 @@
+--- linux-2.4.2-perfctr/Documentation/Configure.help.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/Documentation/Configure.help	Wed Feb 28 22:35:05 2001
+@@ -2913,6 +2913,82 @@
  
    If you don't know what to do, choose "386".
  
@@ -22,8 +22,8 @@
 +  performance-related events which occur during program execution,
 +  such as cache misses, pipeline stalls, etc.
 +
-+  The driver supports all x86-class processors known to have
-+  performance-monitoring counters: Intel Pentium and newer,
++  The driver supports most x86-class processors known to have
++  performance-monitoring counters: Intel Pentium to Pentium III,
 +  AMD K7 Athlon, Cyrix 6x86MX/MII/III, and WinChip C6/2/3.
 +
 +  On processors which have a time-stamp counter but no performance-
@@ -40,7 +40,7 @@
 +CONFIG_PERFCTR_INIT_TESTS
 +  This option makes the driver run additional hardware tests
 +  during initialisation. This is not necessary for normal
-+  operation, but is sometimes useful during driver development.
++  operation, but it can be useful during driver development.
 +
 +  If unsure, say N.
 +
@@ -93,17 +93,17 @@
  VGA text console
  CONFIG_VGA_CONSOLE
    Saying Y here will allow you to use Linux in text mode through a
---- linux-2.4.0-test11pre6-perfctr/Documentation/ioctl-number.txt.~1~	Sat Jul  1 00:13:51 2000
-+++ linux-2.4.0-test11pre6-perfctr/Documentation/ioctl-number.txt	Fri Nov 17 23:22:25 2000
-@@ -185,3 +185,5 @@
+--- linux-2.4.2-perfctr/Documentation/ioctl-number.txt.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/Documentation/ioctl-number.txt	Wed Feb 28 22:35:05 2001
+@@ -186,3 +186,5 @@
  0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
  0xCB	00-1F	CBM serial IEC bus	in development:
  					<mailto:michael.klein@puffin.lb.shuttle.de>
 +0xD0	all	performance counters	in development:
 +					<mailto:mikpe@csd.uu.se>
---- linux-2.4.0-test11pre6-perfctr/MAINTAINERS.~1~	Fri Nov 17 23:20:11 2000
-+++ linux-2.4.0-test11pre6-perfctr/MAINTAINERS	Fri Nov 17 23:22:25 2000
-@@ -953,6 +953,12 @@
+--- linux-2.4.2-perfctr/MAINTAINERS.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/MAINTAINERS	Wed Feb 28 22:35:05 2001
+@@ -987,6 +987,12 @@
  L:	linux-net@vger.kernel.org
  S:	Maintained
  
@@ -116,19 +116,19 @@
  PNP SUPPORT
  P:	Tom Lees
  M:	tom@lpsg.demon.co.uk
---- linux-2.4.0-test11pre6-perfctr/Makefile.~1~	Fri Nov 17 23:20:11 2000
-+++ linux-2.4.0-test11pre6-perfctr/Makefile	Fri Nov 17 23:22:25 2000
-@@ -177,6 +177,7 @@
+--- linux-2.4.2-perfctr/Makefile.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/Makefile	Wed Feb 28 22:35:05 2001
+@@ -176,6 +176,7 @@
  DRIVERS-$(CONFIG_PHONE) += drivers/telephony/telephony.o
- DRIVERS-$(CONFIG_ACPI_INTERPRETER) += drivers/acpi/acpi.o
+ DRIVERS-$(CONFIG_ACPI) += drivers/acpi/acpi.o
  DRIVERS-$(CONFIG_MD) += drivers/md/mddev.o
 +DRIVERS-$(CONFIG_KPERFCTR) += drivers/perfctr/kperfctr.o
  
  DRIVERS += $(DRIVERS-y)
  
---- linux-2.4.0-test11pre6-perfctr/arch/i386/config.in.~1~	Fri Nov 17 23:20:11 2000
-+++ linux-2.4.0-test11pre6-perfctr/arch/i386/config.in	Fri Nov 17 23:22:25 2000
-@@ -204,6 +204,7 @@
+--- linux-2.4.2-perfctr/arch/i386/config.in.~1~	Tue Jan 30 15:07:29 2001
++++ linux-2.4.2-perfctr/arch/i386/config.in	Wed Feb 28 22:35:05 2001
+@@ -198,6 +198,7 @@
  fi
  
  source drivers/pci/Config.in
@@ -136,17 +136,17 @@
  
  bool 'EISA support' CONFIG_EISA
  
---- linux-2.4.0-test11pre6-perfctr/arch/i386/kernel/process.c.~1~	Wed Oct  4 16:03:19 2000
-+++ linux-2.4.0-test11pre6-perfctr/arch/i386/kernel/process.c	Fri Nov 17 23:22:25 2000
+--- linux-2.4.2-perfctr/arch/i386/kernel/process.c.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/arch/i386/kernel/process.c	Wed Feb 28 22:35:05 2001
 @@ -32,6 +32,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
  #include <linux/init.h>
 +#include <linux/perfctr.h>
+ #include <linux/mc146818rtc.h>
  
  #include <asm/uaccess.h>
- #include <asm/pgtable.h>
-@@ -460,7 +461,7 @@
+@@ -467,7 +468,7 @@
   */
  void exit_thread(void)
  {
@@ -155,15 +155,15 @@
  }
  
  void flush_thread(void)
-@@ -477,6 +478,7 @@
+@@ -484,6 +485,7 @@
  
  void release_thread(struct task_struct *dead_task)
  {
 +	perfctr_release_thread(&current->thread, &dead_task->thread);
  	if (dead_task->mm) {
- 		void * ldt = dead_task->mm->segments;
+ 		void * ldt = dead_task->mm->context.segments;
  
-@@ -546,6 +548,8 @@
+@@ -548,6 +550,8 @@
  	unlazy_fpu(current);
  	struct_cpy(&p->thread.i387, &current->thread.i387);
  
@@ -172,7 +172,7 @@
  	return 0;
  }
  
-@@ -628,6 +632,8 @@
+@@ -630,6 +634,8 @@
  				 *next = &next_p->thread;
  	struct tss_struct *tss = init_tss + smp_processor_id();
  
@@ -181,7 +181,7 @@
  	unlazy_fpu(prev_p);
  
  	/*
-@@ -683,11 +689,13 @@
+@@ -685,11 +691,13 @@
  			 */
  			tss->bitmap = INVALID_IO_BITMAP_OFFSET;
  	}
@@ -196,7 +196,7 @@
  }
  
  asmlinkage int sys_clone(struct pt_regs regs)
-@@ -714,7 +722,7 @@
+@@ -716,7 +724,7 @@
   */
  asmlinkage int sys_vfork(struct pt_regs regs)
  {
@@ -205,8 +205,8 @@
  }
  
  /*
---- linux-2.4.0-test11pre6-perfctr/arch/i386/kernel/setup.c.~1~	Fri Nov 17 23:20:11 2000
-+++ linux-2.4.0-test11pre6-perfctr/arch/i386/kernel/setup.c	Fri Nov 17 23:23:43 2000
+--- linux-2.4.2-perfctr/arch/i386/kernel/setup.c.~1~	Thu Feb 22 15:23:41 2001
++++ linux-2.4.2-perfctr/arch/i386/kernel/setup.c	Wed Feb 28 22:35:05 2001
 @@ -98,6 +98,7 @@
  #include <asm/dma.h>
  #include <asm/mpspec.h>
@@ -215,7 +215,7 @@
  /*
   * Machine setup..
   */
-@@ -2012,7 +2013,7 @@
+@@ -2094,7 +2095,7 @@
  void __init dodgy_tsc(void)
  {
  	get_cpu_vendor(&boot_cpu_data);
@@ -224,20 +224,60 @@
  	if ( boot_cpu_data.x86_vendor == X86_VENDOR_CYRIX )
  		init_cyrix(&boot_cpu_data);
  }
---- linux-2.4.0-test11pre6-perfctr/drivers/Makefile.~1~	Tue Oct 31 23:34:16 2000
-+++ linux-2.4.0-test11pre6-perfctr/drivers/Makefile	Fri Nov 17 23:22:25 2000
-@@ -42,6 +42,8 @@
- subdir-$(CONFIG_HAMRADIO)	+= net/hamradio
+--- linux-2.4.2-perfctr/drivers/Makefile.~1~	Mon Jan  1 14:03:43 2001
++++ linux-2.4.2-perfctr/drivers/Makefile	Wed Feb 28 22:35:05 2001
+@@ -43,5 +43,8 @@
  subdir-$(CONFIG_I2C)		+= i2c
  subdir-$(CONFIG_ACPI)		+= acpi
-+subdir-$(CONFIG_PERFCTR)	+= perfctr
+ 
++mod-subdirs += perfctr
 +subdir-$(CONFIG_KPERFCTR)	+= perfctr
++
+ include $(TOPDIR)/Rules.make
  
+--- linux-2.4.2-perfctr/fs/proc/base.c.~1~	Mon Nov 20 18:54:29 2000
++++ linux-2.4.2-perfctr/fs/proc/base.c	Wed Feb 28 22:35:05 2001
+@@ -23,6 +23,7 @@
+ #include <linux/init.h>
+ #include <linux/file.h>
+ #include <linux/string.h>
++#include <linux/perfctr.h>
  
- # Subdirectories that should be entered when MAKING_MODULES=1, even if set to 'y'.
---- linux-2.4.0-test11pre6-perfctr/include/asm-i386/processor.h.~1~	Fri Nov 17 23:20:19 2000
-+++ linux-2.4.0-test11pre6-perfctr/include/asm-i386/processor.h	Fri Nov 17 23:22:25 2000
-@@ -354,6 +354,11 @@
+ /*
+  * For hysterical raisins we keep the same inumbers as in the old procfs.
+@@ -495,6 +496,7 @@
+ 	PROC_PID_STATM,
+ 	PROC_PID_MAPS,
+ 	PROC_PID_CPU,
++	PROC_PID_PERFCTR,
+ 	PROC_PID_FD_DIR = 0x8000,	/* 0x8000-0xffff */
+ };
+ 
+@@ -514,6 +516,9 @@
+   E(PROC_PID_CWD,	"cwd",		S_IFLNK|S_IRWXUGO),
+   E(PROC_PID_ROOT,	"root",		S_IFLNK|S_IRWXUGO),
+   E(PROC_PID_EXE,	"exe",		S_IFLNK|S_IRWXUGO),
++#ifdef CONFIG_VPERFCTR_PROC
++  E(PROC_PID_PERFCTR,	"perfctr",	PERFCTR_PROC_PID_MODE),
++#endif
+   {0,0,NULL,0}
+ };
+ #undef E
+@@ -860,6 +865,11 @@
+ 			inode->i_op = &proc_mem_inode_operations;
+ 			inode->i_fop = &proc_mem_operations;
+ 			break;
++#ifdef CONFIG_VPERFCTR_PROC
++		case PROC_PID_PERFCTR:
++			perfctr_set_proc_pid_ops(inode);
++			break;
++#endif
+ 		default:
+ 			printk("procfs: impossible type (%d)",p->type);
+ 			iput(inode);
+--- linux-2.4.2-perfctr/include/asm-i386/processor.h.~1~	Mon Jan  1 14:03:50 2001
++++ linux-2.4.2-perfctr/include/asm-i386/processor.h	Wed Feb 28 22:35:05 2001
+@@ -355,6 +355,11 @@
  	unsigned long __cacheline_filler[5];
  };
  
@@ -249,7 +289,7 @@
  struct thread_struct {
  	unsigned long	esp0;
  	unsigned long	eip;
-@@ -373,6 +378,8 @@
+@@ -374,6 +379,8 @@
  /* IO permissions */
  	int		ioperm;
  	unsigned long	io_bitmap[IO_BITMAP_SIZE+1];
@@ -258,7 +298,7 @@
  };
  
  #define INIT_THREAD  {						\
-@@ -382,7 +389,8 @@
+@@ -383,7 +390,8 @@
  	0, 0, 0,						\
  	{ { 0, }, },		/* 387 state */			\
  	0,0,0,0,0,0,						\
@@ -268,9 +308,9 @@
  }
  
  #define INIT_MMAP \
---- linux-2.4.0-test11pre6-perfctr/include/linux/sched.h.~1~	Fri Nov 17 23:20:20 2000
-+++ linux-2.4.0-test11pre6-perfctr/include/linux/sched.h	Fri Nov 17 23:22:25 2000
-@@ -39,6 +39,7 @@
+--- linux-2.4.2-perfctr/include/linux/sched.h.~1~	Thu Feb 22 15:23:49 2001
++++ linux-2.4.2-perfctr/include/linux/sched.h	Wed Feb 28 22:35:05 2001
+@@ -40,6 +40,7 @@
  #define CLONE_VFORK	0x00004000	/* set if the parent wants the child to wake it up on mm_release */
  #define CLONE_PARENT	0x00008000	/* set if we want to have the same parent as the cloner */
  #define CLONE_THREAD	0x00010000	/* Same thread group? */

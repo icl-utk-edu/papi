@@ -48,7 +48,7 @@ struct vperfctr_state {
 struct gperfctr_control {
 	unsigned long interval_usec;
 	unsigned int nrcpus;
-	struct perfctr_control cpu_control[0];
+	struct perfctr_control cpu_control[1];	/* actually 'nrcpus' */
 };
 
 /* returned by GPERFCTR_READ ioctl */
@@ -59,7 +59,7 @@ struct gperfctr_cpu_state {
 };
 struct gperfctr_state {
 	unsigned nrcpus;
-	struct gperfctr_cpu_state cpu_state[0];
+	struct gperfctr_cpu_state cpu_state[1];	/* actually 'nrcpus' */
 };
 
 #ifdef __KERNEL__

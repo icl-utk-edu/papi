@@ -7,6 +7,11 @@ $Id$
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
 
+Version 1.6-update-1, 2001-03-28
+- Maintenance update for PAPI.
+- Updated patches for kernels 2.2.18, 2.2.19, 2.4.1, and 2.4.2.
+- Backported a few minor bug fixes from perfctr-2.0-pre1.
+
 Version 1.6, 2000-11-21
 - Updated for kernels 2.4.0-test11 and 2.2.18pre22.
 - Preliminary implementation of /proc/self/perfctr as a more direct

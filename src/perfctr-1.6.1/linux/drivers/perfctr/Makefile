@@ -2,41 +2,41 @@
 # Makefile for the Performance-monitoring counters driver.
 #
 
-SUB_DIRS :=
-MOD_SUB_DIRS := $(SUB_DIRS)
-ALL_SUB_DIRS := $(SUB_DIRS)
-
+O_TARGET := kperfctr.o
 driver-objs-y := init.o
-tests-objs-y :=
-stub-objs-y :=
-o-objs-y :=
-ox-objs-m :=
-mi-objs-m :=
-m-objs-m :=
-
 driver-objs-$(CONFIG_X86) += x86.o
 tests-objs-$(CONFIG_X86) := x86_tests.o
 kernel-objs-$(CONFIG_X86) := x86_setup.o
-
 driver-objs-$(CONFIG_PERFCTR_INIT_TESTS) += $(tests-objs-y)
-
 driver-objs-$(CONFIG_PERFCTR_VIRTUAL) += virtual.o
-stub-objs-$(CONFIG_PERFCTR_VIRTUAL) += virtual_stub.o
-
+stub-objs-$(CONFIG_PERFCTR)-$(CONFIG_PERFCTR_VIRTUAL) := virtual_stub.o
 driver-objs-$(CONFIG_PERFCTR_GLOBAL) += global.o
-
-o-objs-$(CONFIG_PERFCTR) := $(kernel-objs-y) $(driver-objs-y)
-ox-objs-$(CONFIG_PERFCTR) := $(kernel-objs-y) $(stub-objs-y)
-mi-objs-$(CONFIG_PERFCTR) := $(driver-objs-y)
 m-objs-$(CONFIG_PERFCTR) := perfctr.o
+y-objs-$(CONFIG_PERFCTR) := $(driver-objs-y)
+kernel-objs-y += $(stub-objs-m-y)
 
-O_TARGET := kperfctr.o
-O_OBJS := $(o-objs-y)
-OX_OBJS := $(ox-objs-m)
-MI_OBJS := $(mi-objs-m)
-M_OBJS := $(m-objs-m)
+export-objs := $(kernel-objs-y)
+obj-y := $(kernel-objs-y) $(y-objs-y)
+obj-m := $(m-objs-m)
+list-multi := perfctr.o
+perfctr-objs := $(driver-objs-y)
+
+ifeq ($(VERSION).$(PATCHLEVEL),2.2)
+multi-y		:= $(filter $(list-multi), $(obj-y))
+multi-m		:= $(filter $(list-multi), $(obj-m))
+int-y		:= $(sort $(foreach m, $(multi-y), $($(basename $(m))-objs)))
+int-m		:= $(sort $(foreach m, $(multi-m), $($(basename $(m))-objs)))
+obj-m		:= $(filter-out $(obj-y), $(obj-m))
+int-m		:= $(filter-out $(int-y), $(int-m))
+O_OBJS		:= $(sort $(filter-out $(export-objs), $(obj-y)))
+OX_OBJS		:= $(sort $(filter     $(export-objs), $(obj-y)))
+M_OBJS		:= $(sort $(filter-out $(export-objs), $(obj-m)))
+MX_OBJS		:= $(sort $(filter     $(export-objs), $(obj-m)))
+MI_OBJS		:= $(sort $(filter-out $(export-objs), $(int-m)))
+MIX_OBJS	:= $(sort $(filter     $(export-objs), $(int-m)))
+endif
 
 include $(TOPDIR)/Rules.make
 
-perfctr.o:	$(MI_OBJS)
-	$(LD) $(LD_RFLAG) -r -o $@ $(MI_OBJS)
+perfctr.o:	$(perfctr-objs)
+	$(LD) -r -o $@ $(perfctr-objs)

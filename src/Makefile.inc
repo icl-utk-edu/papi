@@ -74,6 +74,8 @@ libclean:
 clean: libclean
 	cd tests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
+	cd perfctr; $(MAKE) clean
+	cd perf; $(MAKE) clean
 
 clobber: clean
 	rm -f $(LIBRARY) $(SHLIB) fpapi.h

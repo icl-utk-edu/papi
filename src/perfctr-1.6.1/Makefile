@@ -18,8 +18,10 @@ config configure:
 distclean realclean:	clean
 	rm -f config.out
 
-clean:
-	$(MAKE) MAKETARGET=clean all-subdirs
+linuxclean:
 	rm -f linux/drivers/perfctr/*.o
 	rm -f linux/drivers/perfctr/.*.flags
 	rm -f linux/drivers/perfctr/.depend
+
+clean:	linuxclean
+	$(MAKE) MAKETARGET=clean all-subdirs

@@ -77,8 +77,8 @@ static struct miscdevice dev_perfctr = {
 	.fops = &dev_perfctr_file_ops,
 };
 
-#define STR2(X) #X
-#define STR(X)	STR2(X)
+#define __STR(X) #X
+#define STR(X)	__STR(X)
 
 int __init perfctr_init(void)
 {

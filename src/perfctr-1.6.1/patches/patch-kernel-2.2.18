@@ -1,6 +1,6 @@
---- linux-2.2.18pre21-perfctr/CREDITS.~1~	Tue Nov 14 00:40:58 2000
-+++ linux-2.2.18pre21-perfctr/CREDITS	Tue Nov 14 00:42:34 2000
-@@ -1716,6 +1716,12 @@
+--- linux-2.2.18-perfctr/CREDITS.~1~	Mon Dec 11 22:10:06 2000
++++ linux-2.2.18-perfctr/CREDITS	Sat Dec 16 18:07:02 2000
+@@ -1725,6 +1725,12 @@
  D: implemented kmod
  D: modularized BSD Unix domain sockets
  
@@ -13,8 +13,8 @@
  N: Reed H. Petty
  E: rhp@draper.net
  W: http://www.draper.net
---- linux-2.2.18pre21-perfctr/Documentation/Configure.help.~1~	Tue Nov 14 00:40:58 2000
-+++ linux-2.2.18pre21-perfctr/Documentation/Configure.help	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/Documentation/Configure.help.~1~	Mon Dec 11 22:10:06 2000
++++ linux-2.2.18-perfctr/Documentation/Configure.help	Sat Dec 16 18:07:02 2000
 @@ -1771,6 +1771,82 @@
  
    If you don't know what to do, choose "386".
@@ -27,8 +27,8 @@
 +  performance-related events which occur during program execution,
 +  such as cache misses, pipeline stalls, etc.
 +
-+  The driver supports all x86-class processors known to have
-+  performance-monitoring counters: Intel Pentium and newer,
++  The driver supports most x86-class processors known to have
++  performance-monitoring counters: Intel Pentium to Pentium III,
 +  AMD K7 Athlon, Cyrix 6x86MX/MII/III, and WinChip C6/2/3.
 +
 +  On processors which have a time-stamp counter but no performance-
@@ -45,7 +45,7 @@
 +CONFIG_PERFCTR_INIT_TESTS
 +  This option makes the driver run additional hardware tests
 +  during initialisation. This is not necessary for normal
-+  operation, but is sometimes useful during driver development.
++  operation, but it can be useful during driver development.
 +
 +  If unsure, say N.
 +
@@ -98,17 +98,17 @@
  VGA text console
  CONFIG_VGA_CONSOLE
    Saying Y here will allow you to use Linux in text mode through a
---- linux-2.2.18pre21-perfctr/Documentation/ioctl-number.txt.~1~	Tue Nov 14 00:40:58 2000
-+++ linux-2.2.18pre21-perfctr/Documentation/ioctl-number.txt	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/Documentation/ioctl-number.txt.~1~	Mon Dec 11 22:10:06 2000
++++ linux-2.2.18-perfctr/Documentation/ioctl-number.txt	Sat Dec 16 18:07:02 2000
 @@ -131,3 +131,5 @@
  0xA3	90-9F	DoubleTalk driver	in development:
  					<mailto:jrv@vanzandt.mv.com>
  0xAB	00-06	Network block device
 +0xD0	all	performance counters	in development:
 +					<mailto:mikpe@csd.uu.se>
---- linux-2.2.18pre21-perfctr/MAINTAINERS.~1~	Tue Nov 14 00:40:58 2000
-+++ linux-2.2.18pre21-perfctr/MAINTAINERS	Tue Nov 14 00:42:34 2000
-@@ -773,6 +773,12 @@
+--- linux-2.2.18-perfctr/MAINTAINERS.~1~	Mon Dec 11 22:10:06 2000
++++ linux-2.2.18-perfctr/MAINTAINERS	Sat Dec 16 18:07:02 2000
+@@ -775,6 +775,12 @@
  L:	linux-net@vger.kernel.org
  S:	Maintained
  
@@ -121,8 +121,8 @@
  PNP SUPPORT
  P:	Tom Lees
  M:	tom@lpsg.demon.co.uk
---- linux-2.2.18pre21-perfctr/Makefile.~1~	Tue Nov 14 00:40:58 2000
-+++ linux-2.2.18pre21-perfctr/Makefile	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/Makefile.~1~	Sat Dec 16 18:06:41 2000
++++ linux-2.2.18-perfctr/Makefile	Sat Dec 16 18:07:02 2000
 @@ -218,6 +218,10 @@
  DRIVERS := $(DRIVERS) drivers/telephony/telephony.a
  endif
@@ -134,8 +134,8 @@
  include arch/$(ARCH)/Makefile
  
  .S.s:
---- linux-2.2.18pre21-perfctr/arch/i386/config.in.~1~	Tue Nov 14 00:40:59 2000
-+++ linux-2.2.18pre21-perfctr/arch/i386/config.in	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/arch/i386/config.in.~1~	Mon Dec 11 22:10:07 2000
++++ linux-2.2.18-perfctr/arch/i386/config.in	Sat Dec 16 18:07:02 2000
 @@ -4,6 +4,8 @@
  #
  mainmenu_name "Linux Kernel Configuration"
@@ -153,8 +153,8 @@
  bool 'MCA support' CONFIG_MCA
  bool 'SGI Visual Workstation support' CONFIG_VISWS
  if [ "$CONFIG_VISWS" = "y" ]; then
---- linux-2.2.18pre21-perfctr/arch/i386/kernel/process.c.~1~	Tue Nov 14 00:41:00 2000
-+++ linux-2.2.18pre21-perfctr/arch/i386/kernel/process.c	Tue Nov 14 00:43:30 2000
+--- linux-2.2.18-perfctr/arch/i386/kernel/process.c.~1~	Mon Dec 11 22:10:07 2000
++++ linux-2.2.18-perfctr/arch/i386/kernel/process.c	Sat Dec 16 18:07:02 2000
 @@ -31,6 +31,7 @@
  #include <linux/smp.h>
  #include <linux/reboot.h>
@@ -222,8 +222,8 @@
  }
  
  /*
---- linux-2.2.18pre21-perfctr/arch/i386/kernel/setup.c.~1~	Tue Nov 14 00:41:00 2000
-+++ linux-2.2.18pre21-perfctr/arch/i386/kernel/setup.c	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/arch/i386/kernel/setup.c.~1~	Mon Dec 11 22:10:07 2000
++++ linux-2.2.18-perfctr/arch/i386/kernel/setup.c	Sat Dec 16 18:07:02 2000
 @@ -73,6 +73,7 @@
  #include <asm/cobalt.h>
  #include <asm/msr.h>
@@ -241,8 +241,8 @@
  	if(boot_cpu_data.x86_vendor != X86_VENDOR_CYRIX)
  	{
  		return;
---- linux-2.2.18pre21-perfctr/drivers/Makefile.~1~	Tue Nov 14 00:41:01 2000
-+++ linux-2.2.18pre21-perfctr/drivers/Makefile	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/drivers/Makefile.~1~	Mon Dec 11 22:10:08 2000
++++ linux-2.2.18-perfctr/drivers/Makefile	Sat Dec 16 18:07:02 2000
 @@ -11,6 +11,7 @@
  MOD_SUB_DIRS := $(SUB_DIRS)
  ALL_SUB_DIRS := $(SUB_DIRS) pci sgi scsi sbus cdrom isdn pnp \
@@ -267,8 +267,8 @@
    endif
  endif
  
---- linux-2.2.18pre21-perfctr/include/asm-i386/processor.h.~1~	Tue Nov 14 00:41:12 2000
-+++ linux-2.2.18pre21-perfctr/include/asm-i386/processor.h	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/include/asm-i386/processor.h.~1~	Mon Dec 11 22:10:20 2000
++++ linux-2.2.18-perfctr/include/asm-i386/processor.h	Sat Dec 16 18:07:02 2000
 @@ -13,6 +13,11 @@
  #include <asm/page.h>
  
@@ -298,8 +298,8 @@
  }
  
  #define start_thread(regs, new_eip, new_esp) do {		\
---- linux-2.2.18pre21-perfctr/include/linux/sched.h.~1~	Tue Nov 14 00:41:14 2000
-+++ linux-2.2.18pre21-perfctr/include/linux/sched.h	Tue Nov 14 00:42:34 2000
+--- linux-2.2.18-perfctr/include/linux/sched.h.~1~	Mon Dec 11 22:10:21 2000
++++ linux-2.2.18-perfctr/include/linux/sched.h	Sat Dec 16 18:07:02 2000
 @@ -34,6 +34,7 @@
  #define CLONE_PID	0x00001000	/* set if pid shared */
  #define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */
