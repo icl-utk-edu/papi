@@ -71,36 +71,6 @@ C Skip Alpha till multiplex is fixed. -KSL
         end if
       end
 
-C     Print the content of an event set
-      subroutine PrintEventSet(ES)
-      IMPLICIT NONE
-      integer ES
-      integer MAXEVENT
-      parameter(MAXEVENT=64)
-      integer n,i,codes(MAXEVENT),retval
-      character*(PAPI_MAX_STR_LEN) name
-
-      n=MAXEVENT
-      call PAPIf_list_events(ES,codes,n,retval)
-      if(n.gt.MAXEVENT) write(*,100) n,MAXEVENT
-  100 format(T1,'There are',i4,' events in the set. Can only print',
-     &       i4,'.')
-
-      do i=1,min(n,MAXEVENT)
-        name = ' '
-        call PAPIf_event_code_to_name(codes(i),name,retval)
-        if(retval .EQ. PAPI_OK)then
-          write(*,200) i,name
-        else
-          write(*,210) i,codes(i),'**Error looking up the event name**'
-        end if
-      end do
-  200 format(T1,i4,': ',a40)
-  210 format(T1,i4,' (',i12.11,'): ',a40)
-
-      write(*,*)
-      end
-
 C     Tests that PAPI_multiplex_init does not mess with normal operation. 
       subroutine case1(ret, tests_quiet)
       IMPLICIT NONE
