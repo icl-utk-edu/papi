@@ -930,7 +930,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
 
       /* Compact the Event Info Array list if it's not the last event */
       /* clear the newly empty slot in the array */
-      for(;thisindex<ESI->NumberOfEvents;thisindex++)
+      for(;thisindex<ESI->NumberOfEvents-1;thisindex++)
          array[thisindex] = array[thisindex+1];
 
       array[thisindex].event_code = PAPI_NULL;
