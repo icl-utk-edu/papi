@@ -37,7 +37,11 @@ failure.
 #define PAPI_ECNFLCT  -8  /*Hardware Event exists, but cannot be counted 
                             due to counter resource limitations*/ 
 #define PAPI_ENOTRUN  -9  /*No Events or EventSets are currently counting*/
-#define PAPI_EMISC   -10 /* No clue as to what this error code means */
+#define PAPI_EISRUN  -10  /*Events or EventSets are currently counting */
+#define PAPI_ENOEVST -11  /* No EventSet Available */
+#define PAPI_ENOTPRESET -12 /* Not a Preset Event in argument */
+#define PAPI_ENOCNTR -13 /* Hardware does not support counters */
+#define PAPI_EMISC   -14 /* No clue as to what this error code means */
 
 /*
 Constants
@@ -99,7 +103,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Error predefines */
 
-#define PAPI_NUM_ERRORS  11    /* Number of error messages specified in this API. */
+#define PAPI_NUM_ERRORS  15    /* Number of error messages specified in this API. */
 #define PAPI_QUIET       0     /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes < 0 to stderr and continue. */ 
 #define PAPI_VERB_ESTOP  2     /* Option to automatically report any return codes < 0 to stderr and exit. */
@@ -335,6 +339,7 @@ int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
 int PAPI_state(int EventSetIndex, int *status);
 int PAPI_stop(int EventSet, long long *values);
+char *PAPI_strerror(int);
 void PAPI_unlock(void);
 int PAPI_write(int EventSet, long long *values);
 

@@ -682,8 +682,30 @@
               </tr>
               <tr>
                 <td><!--mstheme--><font face="Arial, Helvetica"><tt>-10</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>PAPI_ISRUN</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica">EventSet is currently running<!--mstheme--></font></td>
+              </tr>
+              <tr>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>-11</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>PAPI_ENOEVST</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica">No such EventSet available<!--mstheme--></font></td>
+              </tr>
+              <tr>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>-12</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>PAPI_ENOTPRESET</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica">Event is not a valid preset<!--mstheme--></font></td>
+              </tr>
+              <tr>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>-13</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>PAPI_ENOCNTR</tt><!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica">Hardware does not support performance counters<!--mstheme--></font></td>
+              </tr>
+              <tr>
+                <td><!--mstheme--><font face="Arial, Helvetica"><tt>-14</tt><!--mstheme--></font></td>
                 <td><!--mstheme--><font face="Arial, Helvetica"><tt>PAPI_EMISC</tt><!--mstheme--></font></td>
-                <td><!--mstheme--><font face="Arial, Helvetica">Call to PAPI_error with unknown error code&nbsp;<!--mstheme--></font></td>
+                <td><!--mstheme--><font face="Arial, Helvetica">Unknown error code<!--mstheme--></font></td>
+              </tr>
+              <tr>
               </tr>
             </table><!--mstheme--><font face="Arial, Helvetica">
           <!--mstheme--></font></td>
@@ -892,6 +914,11 @@
         null terminated. If length is 0, then the string is printed on stderr.
         The return value is an integer that indicates whether the call succeeded
         (PAPI_OK) or failed (not PAPI_OK).
+      </blockquote>
+      <p><b><tt>char *PAPI_strerror(int code)</tt></b></p>
+      <blockquote>
+        This function returns the corresponding english error string 
+	from the passed code. Returns NULL if code is invalid.
       </blockquote>
       <p><b><tt>int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int
       scale, int EventSet, int EventCode, int threshold, int flags)</tt></b></p>
