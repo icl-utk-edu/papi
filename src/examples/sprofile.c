@@ -99,13 +99,13 @@ int main(int argc, char **argv)
    sprof[0].pr_off = DO_FLOPS2;
       fprintf(stderr, "do_flops is at %p %lx\n", &do_flops2, sprof[0].pr_off);
 
-   sprof[0].pr_scale = 65535;  /* constant needed by PAPI_sprofil */
+   sprof[0].pr_scale = 65536;  /* constant needed by PAPI_sprofil */
    /* Second half */
    sprof[1].pr_base = profbuf2;
    sprof[1].pr_size = length / 2;
    sprof[1].pr_off = DO_FLOPS1;
       fprintf(stderr, "do_flops1 is at %p %lx\n", &do_flops1, sprof[1].pr_off);
-   sprof[1].pr_scale = 65535; /* constant needed by PAPI_sprofil */
+   sprof[1].pr_scale = 65536; /* constant needed by PAPI_sprofil */
 
    /* Overflow bin */
    sprof[2].pr_base = profbuf3;

@@ -67,7 +67,7 @@ int main()
    end = prginfo->address_info.text_end;
    length = (end - start);
 
-   /* for PAPI_PROFIL_BUCKET_16 and scale = 65535, 
+   /* for PAPI_PROFIL_BUCKET_16 and scale = 65536, 
       profile buffer length == program address length.
       Larger bucket sizes would increase the buffer length.
       Smaller scale factors would decrease it.
@@ -95,7 +95,7 @@ int main()
       ERROR_RETURN(retval);
 
    /* enable the collection of profiling information */
-   if ((retval = PAPI_profil(profbuf, length, start, 65535, EventSet,
+   if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
             PAPI_event, THRESHOLD, PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
       ERROR_RETURN(retval);
    
@@ -111,7 +111,7 @@ int main()
    /* disable the collection of profiling information by setting threshold
       to 0
    */
-   if ((retval = PAPI_profil(profbuf, length, start, 65535, EventSet,
+   if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
             PAPI_event, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
       ERROR_RETURN(retval);
    
