@@ -154,8 +154,6 @@ int main(int argc, char **argv)
              prginfo->address_info.data_start, prginfo->address_info.data_end);
       printf("BSS start: %p, BSS end: %p\n",
              prginfo->address_info.bss_start, prginfo->address_info.bss_end);
-      printf("Dynamic Library Preload Env. Var.: %s\n",
-             prginfo->preload_info.lib_preload_env);
 
       printf("-----------------------------------------\n");
 

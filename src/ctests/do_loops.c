@@ -1,27 +1,11 @@
 /* Compile me with -O0 or else you'll get none. */
 
 #include "papi_test.h"
-#include <fcntl.h>
 
-#define L1_MISS_BUFFER_SIZE_INTS 128*1024
 static int buf[L1_MISS_BUFFER_SIZE_INTS];
 
 volatile double a = 0.5, b = 2.2;
 volatile long_long z = -101010101;
-
-void do_flops(int n)
-{
-   extern void dummy(void *);
-   int i;
-   double c = 0.11;
-
-   for (i = 0; i < n; i++) {
-      c += a * b;
-#ifndef _CRAYT3E
-      dummy((void *) &c);
-#endif
-   }
-}
 
 void do_reads(int n)
 {
@@ -29,7 +13,7 @@ void do_reads(int n)
    int i, j;
    static int fd = -1;
    char buf;
-   long_long c = (long_long) 0.11;
+   long_long c = 3;
 
    if (fd == -1) {
       fd = open("/dev/null", O_RDONLY);
@@ -47,6 +31,21 @@ void do_reads(int n)
    }
 #endif                          /* _WIN32 */
 }
+
+void do_flops(int n)
+{
+   extern void dummy(void *);
+   int i;
+   double c = 0.11;
+
+   for (i = 0; i < n; i++) {
+      c += a * b;
+#ifndef _CRAYT3E
+      dummy((void *) &c);
+#endif
+   }
+}
+
 
 void do_l1misses(int n)
 {
