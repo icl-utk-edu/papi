@@ -219,7 +219,10 @@ int PAPI_library_init(int version)
        if ((init_level != PAPI_NOT_INITED) || (init_retval != DEADBEEF))
 	 {
 	   _in_papi_library_init_cnt--;
-	   papi_return(init_retval); 
+	   if (init_retval < PAPI_OK)
+		papi_return(init_retval); 
+		else
+		return(init_retval); 
 	 }
 
        APIDBG("system_info was initialized, but init did not succeed\n");
