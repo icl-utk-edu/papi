@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
+#include <signal.h>
 
 #include <perfmon/pfmlib.h>
 
@@ -39,16 +40,50 @@
 
 #define PFMON_DFL_SMPL_ENTRIES	2048
 
+#ifdef CONFIG_PFMON_SMPL_FMT_RAW
 extern pfmon_smpl_output_t raw_smpl_output;
+#endif
+
+#ifdef CONFIG_PFMON_SMPL_FMT_COMPACT
 extern pfmon_smpl_output_t compact_smpl_output;
+#endif
+
+#ifdef CONFIG_PFMON_SMPL_FMT_DET_ITA
 extern pfmon_smpl_output_t detailed_itanium_smpl_output;
-//extern pfmon_smpl_output_t example_smpl_output;
+#endif
+
+#ifdef CONFIG_PFMON_SMPL_FMT_DET_ITA2
+extern pfmon_smpl_output_t detailed_itanium2_smpl_output;
+#endif
+
+#ifdef CONFIG_PFMON_SMPL_FMT_BTB
+extern pfmon_smpl_output_t btb_smpl_output;
+#endif
+
+#ifdef CONFIG_PFMON_SMPL_FMT_EXAMPLE
+extern pfmon_smpl_output_t example_smpl_output;
+#endif
 
 static pfmon_smpl_output_t *smpl_outputs[]={
-	&detailed_itanium_smpl_output,
+
+#ifdef CONFIG_PFMON_SMPL_FMT_DET_ITA
+	&detailed_itanium_smpl_output,	/* must be first for Itanium */
+#endif
+#ifdef CONFIG_PFMON_SMPL_FMT_DET_ITA2
+	&detailed_itanium2_smpl_output,	/* must be first for Itanium2 */
+#endif
+#ifdef CONFIG_PFMON_SMPL_FMT_RAW
 	&raw_smpl_output,
+#endif
+#ifdef CONFIG_PFMON_SMPL_FMT_COMPACT
 	&compact_smpl_output,
-//	&example_smpl_output,
+#endif
+#ifdef CONFIG_PFMON_SMPL_FMT_BTB
+	&btb_smpl_output,
+#endif
+#ifdef CONFIG_PFMON_SMPL_FMT_EXAMPLE
+	&example_smpl_output,
+#endif
 	NULL
 };
 
@@ -58,35 +93,35 @@ print_smpl_output_header(pfmon_smpl_ctx_t *csmpl)
 {
 	perfmon_smpl_hdr_t *hdr = csmpl->smpl_hdr;
 	char *name;
-	int fd = csmpl->smpl_fd;
+	FILE *fp = csmpl->smpl_fp;
 	unsigned long msk;
 	int i;
 
-	print_standard_header(fd, options.opt_aggregate_res ? 
+	print_standard_header(fp, options.opt_aggregate_res ? 
 				  options.cpu_mask : csmpl->cpu_mask);
 
 	if (hdr) {
-		safe_fprintf(fd, "#\n# kernel sampling format: %d.%d\n# sampling entry size: %lu\n", 
+		fprintf(fp, "#\n# kernel sampling format: %d.%d\n# sampling entry size: %lu\n", 
 			PFM_VERSION_MAJOR(hdr->hdr_version), 
 			PFM_VERSION_MINOR(hdr->hdr_version), 
 			hdr->hdr_entry_size);
 	}
 
-	safe_fprintf(fd, "#\n# recorded PMDs: ");
+	fprintf(fp, "#\n# recorded PMDs: ");
 
 	for(i=0, msk =options.smpl_regs; msk; msk>>=1, i++) 
-		if (msk & 0x1) safe_fprintf(fd, "PMD%d ", i);
+		if (msk & 0x1) fprintf(fp, "PMD%d ", i);
 
-	safe_fprintf(fd, "\n# sampling entries count: %lu\n", options.smpl_entries);
+	fprintf(fp, "\n# sampling entries count: %lu\n", options.smpl_entries);
 
-	safe_fprintf(fd, "#\n# sampling rates (short/long): ");
+	fprintf(fp, "#\n# sampling rates (short/long): ");
 
 	for(i=0; i < options.monitor_count-1; i++) {
 		pfm_get_event_name(options.monitor_events[i], &name);
 		if (options.short_rates[i] == 0 && options.long_rates[i] == 0) {
-			safe_fprintf(fd, "%s(none), ", name); 
+			fprintf(fp, "%s(none), ", name); 
 		} else {
-			safe_fprintf(fd, "%s(%lu/%lu), ", 
+			fprintf(fp, "%s(%lu/%lu), ", 
 				name,
 				options.short_rates[i]*-1,
 				options.long_rates[i]*-1);
@@ -94,9 +129,9 @@ print_smpl_output_header(pfmon_smpl_ctx_t *csmpl)
 	}
 	pfm_get_event_name(options.monitor_events[i], &name);
 	if (options.short_rates[i] == 0 && options.long_rates[i] == 0) {
-		safe_fprintf(fd, "%s(none)\n#\n",  name);
+		fprintf(fp, "%s(none)\n#\n",  name);
 	} else {
-		safe_fprintf(fd, "%s(%lu/%lu)\n#\n", 
+		fprintf(fp, "%s(%lu/%lu)\n#\n", 
 			name,
 			options.short_rates[i]*-1,
 			options.long_rates[i]*-1);
@@ -108,7 +143,7 @@ print_smpl_output_header(pfmon_smpl_ctx_t *csmpl)
 	if (options.smpl_output->print_header)
 		(*options.smpl_output->print_header)(csmpl);
 
-	safe_fprintf(fd, "#\n#\n");
+	fprintf(fp, "#\n#\n");
 }
 
 /*
@@ -118,6 +153,8 @@ print_smpl_output_header(pfmon_smpl_ctx_t *csmpl)
 int
 process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 {
+	if (csmpl == NULL || csmpl->smpl_hdr == NULL) return -1;
+
 	return (*options.smpl_output->process_smpl)(csmpl);
 }
 
@@ -125,19 +162,19 @@ int
 setup_sampling_output(pfmon_smpl_ctx_t *csmpl)
 {
         char filename[PFMON_MAX_FILENAME_LEN];
-        int fd = fileno(stdout);
+        FILE *fp = stdout;
 
 	if (options.opt_use_smpl == 0) return 0;
 
         if (options.smpl_file) {
-                if (options.opt_syst_wide && options.opt_aggregate_res == 0) {
+                if (options.opt_syst_wide && options.opt_aggregate_res == 0 && is_regular_file(options.smpl_file)) {
                         sprintf(filename, "%s.cpu%d", options.smpl_file, find_cpu(getpid()));
                 } else {
                         strcpy(filename, options.smpl_file);
                 }
 
-                fd = open(filename, O_CREAT|O_TRUNC|O_WRONLY, 0666);
-                if (fd == -1) {
+                fp = fopen(filename, "w");
+                if (fp == NULL) {
                         warning("cannot create sampling output file %s: %s\n", options.smpl_file, strerror(errno));
                         return -1;
                 }
@@ -145,7 +182,7 @@ setup_sampling_output(pfmon_smpl_ctx_t *csmpl)
 
         }
 
-        csmpl->smpl_fd = fd;
+        csmpl->smpl_fp = fp;
 
 	if (options.opt_with_header) print_smpl_output_header(csmpl);
 
@@ -157,7 +194,7 @@ close_sampling_output(pfmon_smpl_ctx_t *csmpl)
 {
 	if (options.opt_use_smpl == 0) return;
 
-	if (csmpl->smpl_fd != fileno(stdout)) close(csmpl->smpl_fd);
+	if (csmpl->smpl_fp && csmpl->smpl_fp != stdout) fclose(csmpl->smpl_fp);
 }
 
 void 
@@ -199,8 +236,15 @@ setup_sampling_rates(pfmlib_param_t *evt, char *smpl_args, char *ovfl_args)
 	}
 
 	if (options.opt_use_smpl) {
-		if (options.smpl_output == NULL) 
-			fatal_error("you must choose a sampling output format\n");
+		/*
+		 * try to pick a default output format, if none specified by the user
+		 */
+		if (options.smpl_output == NULL) {
+			if (pfmon_find_smpl_output(NULL, &options.smpl_output, 0) != PFMLIB_SUCCESS) 
+				fatal_error("no sampling output format available for this PMU model\n");
+		}
+
+		vbprintf("using %s sampling output format\n", options.smpl_output->name);
 
 		if (options.smpl_output->validate) {
 			if ((*options.smpl_output->validate)(evt) == -1) 
@@ -246,19 +290,24 @@ setup_sampling_rates(pfmlib_param_t *evt, char *smpl_args, char *ovfl_args)
 int
 pfmon_find_smpl_output(char *name, pfmon_smpl_output_t **fmt, int ignore_cpu)
 {
-	pfmon_smpl_output_t **p = smpl_outputs;
-	unsigned long mask;
+	pfmon_smpl_output_t **p;
+	unsigned long mask, gen_mask;
 	int type;
 
 	pfm_get_pmu_type(&type);
-	mask = PFMON_PMU_MASK(type);
-	while (*p) {	
-		if (!strcmp(name, (*p)->name)) {
-			if (ignore_cpu == 0 && ((*p)->pmu_mask & mask) == 0) return PFMLIB_ERR_BADHOST;
+	mask     = PFMON_PMU_MASK(type);
+	gen_mask = PFMON_PMU_MASK(PFMLIB_GENERIC_PMU);
+
+	for(p = smpl_outputs; *p ; p++) {
+
+		if (name == NULL || !strcmp(name, (*p)->name)) {
+			if (ignore_cpu == 0 && (*p)->pmu_mask != gen_mask && ((*p)->pmu_mask & mask) == 0) {
+				if (name) return PFMLIB_ERR_BADHOST;
+				continue;
+			}
 			*fmt = *p;
 			return PFMLIB_SUCCESS;
 		}
-		p++;
 	}
 	return PFMLIB_ERR_NOTFOUND;
 }
@@ -267,10 +316,16 @@ void
 pfmon_list_smpl_outputs(void)
 {
 	pfmon_smpl_output_t **p = smpl_outputs;
+	unsigned long mask, gen_mask;
+	int type;
+
+	pfm_get_pmu_type(&type);
+	mask     = PFMON_PMU_MASK(type);
+	gen_mask = PFMON_PMU_MASK(PFMLIB_GENERIC_PMU);
 
 	printf("supported sampling outputs: ");
 	while (*p) {	
-		printf("[%s] ", (*p)->name);
+		if ((*p)->pmu_mask == gen_mask || ((*p)->pmu_mask & mask)) printf("[%s] ", (*p)->name);
 		p++;
 	}
 	printf("\n");
@@ -297,5 +352,35 @@ pfmon_smpl_output_info(pfmon_smpl_output_t *fmt)
 		}
 	}
 	printf("\n");
+}
+
+static void
+kill_task(pid_t pid)
+{
+	/*
+	 * Not very nice but works
+	 */
+	kill(pid, SIGKILL);
+}
+
+void
+pfmon_process_smpl_buf(pfmon_smpl_ctx_t *csmpl, pid_t pid)
+{
+	sigset_t mask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigaddset(&mask, SIGALRM);
+	
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+
+	process_smpl_buffer(csmpl);
+
+	if (perfmonctl(pid, PFM_RESTART, 0, 0) == -1) {
+		if (options.opt_syst_wide == 0) kill_task(pid);
+		fatal_error("overflow cannot restart monitoring, aborting: %s\n", strerror(errno));
+	}
+
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 }
 

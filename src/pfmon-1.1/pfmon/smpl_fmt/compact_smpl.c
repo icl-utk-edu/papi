@@ -85,13 +85,66 @@ explain_ita_reg(pfmon_smpl_ctx_t *csmpl, int num, int *column)
 #endif
 
 
+#if 0
+static int
+compact_explain_mck_reg(pfmon_smpl_ctx_t *csmpl, int num, int *column)
+{
+	int col = *column;
+	int fd = csmpl->smpl_fd;
+	pfmon_mck_options_t *opt = (pfmon_mck_options_t *)options.model_options;
+
+	switch(num) {
+		case 0:
+
+			safe_fprintf(fd, "# column %u: PMD0 I-EAR instruction cache line address (0x%016lx if invalid)\n", col++, PMD0_INVALID_VALUE);
+
+			if (opt->iear_mode == PFMLIB_MCK_EAR_TLB_MODE)
+				safe_fprintf(fd, "# column %u: PMD0 I-EAR instruction TLB type (\"-\" if invalid)\n", col++);
+			break;
+		case 1:
+			if (opt->iear_mode == PFMLIB_MCK_EAR_TLB_MODE) break;
+			safe_fprintf(fd, "# column %u: PMD1 I-EAR latency in CPU cycles (%u if invalid)\n", col++, PMD1_INVALID_VALUE);
+			break;
+		case 2:
+			safe_fprintf(fd, "# column %u: PMD2 D-EAR Data address (0x%016lx if invalid)\n", col++, PMD2_INVALID_VALUE);
+			break;
+		case 3:
+			if (opt->dear_mode == PFMLIB_MCK_EAR_TLB_MODE)
+				safe_fprintf(fd, "# column %u: PMD3 D-EAR TLB level (\"-\" if invalid)\n", col++);
+			else if (opt->dear_mode == PFMLIB_MCK_EAR_CACHE_MODE)
+				safe_fprintf(fd, "# column %u: PMD3 D-EAR Latency in CPU cycles (%u if invalid)\n", col++, PMD3_INVALID_VALUE);
+			else 
+				safe_fprintf(fd, "# column %u: PMD3 D-EAR ALAT validity (%u if invalid)\n", col++, PMD3_INVALID_VALUE);
+			break;
+		case 16:
+			safe_fprintf(fd, "# column %u: PMD16 Branch Trace Buffer Index\n", col++);
+			break;
+		case 17:
+			safe_fprintf(fd, "# column %u: PMD17 D-EAR instruction address (0x%16lx if invalid)\n", col++, PMD17_INVALID_VALUE);
+			break;
+		default: 
+			/*
+			* If we find a BTB then record it for later
+			 */
+			if (num>7 && num < 16) 
+				safe_fprintf(fd, "# column %u: PMD%u branch history\n",  col++, num);
+			else
+				return -1;
+	}
+
+	*column = col;
+	return 0;
+}
+#endif
+
+
 
 static int
 compact_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 {
 	perfmon_smpl_hdr_t *hdr = csmpl->smpl_hdr;
 	perfmon_smpl_entry_t *ent = (perfmon_smpl_entry_t *)(hdr+1);
-	int fd = csmpl->smpl_fd;
+	FILE *fp = csmpl->smpl_fp;
 	unsigned long pos, msk;
 	pmu_reg_t *reg;
 	int i, j, ret;
@@ -115,11 +168,11 @@ compact_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 
 		ret = 0;
 
-		if (options.opt_no_ent_header == 0) 
-			ret += safe_fprintf(fd, "%-8lu %-8d %-2d 0x%016lx 0x%04lx ",
+		ret += fprintf(fp, "%-8lu %-8d %-2d 0x%016lx 0x%016lx 0x%04lx ",
 				*csmpl->smpl_entry,
 				ent->pid,
 				ent->cpu,
+				ent->ip,
 				ent->stamp,
 				ent->regs);
 
@@ -127,7 +180,7 @@ compact_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 
 		for(j=0, msk = hdr->hdr_pmds[0]; msk; msk >>=1, j++) {	
 			if ((msk & 0x1) == 0) continue;
-			ret += safe_fprintf(fd, "0x%016lx ", reg->pmu_reg);
+			ret += fprintf(fp, "0x%016lx ", reg->reg_val);
 			reg++;
 
 			/* Lazily detect output error now */
@@ -135,7 +188,7 @@ compact_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 
 		}
 
-		ret += safe_fprintf(fd, "\n");
+		ret += fprintf(fp, "\n");
 
 		pos += hdr->hdr_entry_size;
 		ent = (perfmon_smpl_entry_t *)pos;	
@@ -153,20 +206,23 @@ static int
 compact_print_header(pfmon_smpl_ctx_t *csmpl)
 {
 	unsigned long msk;
-	int j, column = 6;
-	int fd = csmpl->smpl_fd;
+	int j, col;
+	FILE *fp = csmpl->smpl_fp;
 
-	safe_fprintf(fd, "#\n#\n# column 1: entry number\n"
+	fprintf(fp, "#\n#\n# column 1: entry number\n"
 	 	 	 "# column 2: process id\n"
 		 	 "# column 3: CPU number\n"
-		 	 "# column 4: unique timestamp\n"
-		 	 "# column 5: bitmask of PMDs which overflowed\n");
+		 	 "# column 4: Instruction pointer\n"
+		 	 "# column 5: unique timestamp\n"
+		 	 "# column 6: bitmask of PMDs which overflowed\n");
+	col = 7;
 
 	for(j=0, msk = options.smpl_regs; msk; msk >>=1, j++) {	
 
 		if ((msk & 0x1) == 0) continue;
 
-		safe_fprintf(csmpl->smpl_fd, "# column %u: PMD%d\n", column++, j);
+		fprintf(csmpl->smpl_fp, "# column %u: PMD%d\n", col, j);
+		col++;
 	}
 
 	return 0;

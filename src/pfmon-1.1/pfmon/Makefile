@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2001 Hewlett-Packard Co
+# Copyright (C) 2001-2002 Hewlett-Packard Co
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # This file is part of pfmon, a sample tool to measure performance 
@@ -46,6 +46,36 @@ OBJS   += pfmon_itanium.o
 CFLAGS += -DCONFIG_PFMON_ITANIUM
 endif
 
+ifeq ($(CONFIG_PFMON_ITANIUM2),y)
+OBJS   += pfmon_itanium2.o
+CFLAGS += -DCONFIG_PFMON_ITANIUM2
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_RAW),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_RAW
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_COMPACT),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_COMPACT
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_EXAMPLE),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_EXAMPLE
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_BTB),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_BTB
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_DET_ITA),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_DET_ITA
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_DET_ITA2),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_DET_ITA2
+endif
+
+
 #
 # say y to turn on debugging support with --debug option
 #
@@ -82,12 +112,12 @@ depend:
 pfmon : $(OBJS) $(SUPPORT)
 
 check_support:
-ifeq ($(CONFIG_PFMON_GENERIC)$(CONFIG_PFMON_ITANIUM),nn)
+ifeq ($(CONFIG_PFMON_GENERIC)$(CONFIG_PFMON_ITANIUM)$(CONFIG_PFMON_ITANIUM2),nnn)
 	@echo " missing CPU specific support in pfmon Makefile"
 	@exit 1
 endif
 
-install: $(TARGET)
+install: subdirs check_support $(TARGET)
 	-mkdir -p $(EXEC_PREFIX)/bin
 	$(INSTALL) -m 755 pfmon $(EXEC_PREFIX)/bin/pfmon
 	-ln -s $(EXEC_PREFIX)/bin/pfmon $(EXEC_PREFIX)/bin/pfmon_gen

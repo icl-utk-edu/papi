@@ -1,4 +1,6 @@
 /*
+ * showreset.c - getting the PAL reset values for the PMCs
+ *
  * Copyright (C) 2002 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
@@ -22,12 +24,16 @@
  */
 
 #include <sys/types.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 
-#define VECTOR_SIZE	1000000
+#include <perfmon/pfmlib.h>
+
+#define NUM_PMCS PMU_MAX_PMCS
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
@@ -44,52 +50,41 @@ fatal_error(char *fmt, ...)
 }
 
 
-static void
-saxpy(unsigned long *a, unsigned long *b, unsigned long *c, unsigned long size)
-{
-	unsigned long i;
-
-	for(i=0; i < size; i++) {
-		c[i] = 2*a[i] + b[i];
-	}
-}
-
-static void
-saxpy2(unsigned long *a, unsigned long *b, unsigned long *c, unsigned long size)
-{
-	unsigned long i;
-
-	for(i=0; i < size; i++) {
-		c[i] = 2*a[i] + b[i];
-	}
-}
-
-
 int
 main(int argc, char **argv)
 {
-	unsigned long size;
-	unsigned long *a, *b, *c;
+	int i, cnum = 0;
+	unsigned long m;
+	pfarg_reg_t pc[NUM_PMCS];
+	unsigned long impl_pmcs[4];
 
-	size = argc > 1 ? strtoul(argv[1], NULL, 0) : VECTOR_SIZE;
+	/*
+	 * Initialize pfm library (required before we can use it)
+	 */
+	if (pfm_initialize() != PFMLIB_SUCCESS) {
+		printf("Can't initialize library\n");
+		exit(1);
+	}
+	memset(impl_pmcs, 0, sizeof(impl_pmcs));
+	memset(pc, 0, sizeof(pc));
+	
+	pfm_get_impl_pmcs(impl_pmcs);
 
-	printf("%lu entries = %lu bytes/vector = %lu Mbytes total\n", 
-		size, 
-		size*sizeof(unsigned long),
-		(3*size*sizeof(unsigned long))>>20
-	);
+	m = impl_pmcs[0];
+	for(i=0; m; i++, m>>=1) {
+		if ((m & 0x1) == 0) continue;
+		pc[cnum++].reg_num = i;
+	}
 
-	a = malloc(size*sizeof(unsigned long));
-	b = malloc(size*sizeof(unsigned long));
-	c = malloc(size*sizeof(unsigned long));
+	if (perfmonctl(0, PFM_GET_PMC_RESET_VAL, pc, cnum) == -1 ) {
+		if (errno == ENOSYS) {
+			fatal_error("Your kernel does not have performance monitoring support!\n");
+		}
+		fatal_error("Can't get reset values: %s\n", strerror(errno));
+	}
 
-	if (a == NULL || b == NULL || c == NULL)
-		fatal_error("Cannot allocate vectors\n");
-
-	saxpy(a, b, c, size);
-
-	saxpy2(a, b, c, size);
-
+	for (i=0; i < cnum; i++) {
+		printf("PMC%u 0x%016lx\n", pc[i].reg_num, pc[i].reg_value);
+	}
 	return 0;
 }
-

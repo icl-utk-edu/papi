@@ -28,10 +28,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
+#include <sys/time.h>
 #include <asm/ptrace_offsets.h>
+#include <semaphore.h>
 
 #include <perfmon/pfmlib.h>
 
@@ -40,105 +41,60 @@
 #define PSR_UP_BIT	2
 #define PSR_DB_BIT	24
 
-static jmp_buf jbuf;	/* setjmp buffer */
 static int child_pid;	/* process id of signaling child */
+static int time_to_quit;
+static sem_t ovfl_sem;
+static unsigned long ovfl_cnt;
 
-static void
-kill_task(pid_t pid)
-{
-	/*
-	 * Not very nice but works
-	 */
-	kill(pid, SIGKILL);
-}
-
+/*
+ * XXX: we MUST NOT have any DPRINT(), warning, fatal_error() in ANY signal handler
+ * as this is not threadsafe.
+ */ 
 static void
 alarm_handler(int n, struct pfm_siginfo *info, struct sigcontext *sc)
 {
-	vbprintf("%lu second(s) timeout expired: killing command\n", options.session_timeout);
-
 	/*
 	 * XXX: should do something more gentle here
 	 */
 	kill(child_pid, SIGKILL);
 }
 
+/*
+ * pfmon only uses the overflow handler when sampling.
+ */
 static void
 overflow_handler(int n, struct pfm_siginfo *info, struct sigcontext *sc)
 {
-	unsigned long mask =info->sy_pfm_ovfl[0];
-	pfmon_smpl_ctx_t *csmpl = options.smpl_ctx;
-
+	/* ignore spurious overflow interrupts */
 	if (info->sy_code != PROF_OVFL) {
-		printf("received spurious SIGPROF si_code=%d\n", info->sy_code);
 		return;
 	}
+	/* keep some statistics */
+	ovfl_cnt++;
 
-	if (csmpl->smpl_hdr == NULL) {
-		warning("overflow handler but not sampling\n");
-		return;
-	}
-
-	DPRINT(("overflow notification: pid=%d bv=0x%lx\n", info->sy_pid, info->sy_pfm_ovfl[0]));
-
-	if ((mask>> PMU_FIRST_COUNTER) == 0UL) {
-		warning("system wide overflow handler: empty mask\n");
-		return;
-	}
-
-	process_smpl_buffer(csmpl);
-
-#if 0
-	for(i= PMU_FIRST_COUNTER; mask; mask >>=1, i++) {
-
-		DPRINT(("mask=0x%lx i=%d\n", mask, i));
-
-		/* 
-		 * if we are sampling, process the buffer 
-		 *
-		 * pfmon does not use notification, unless it is sampling
-		 */
-		if ((mask & 0x1) != 0  && csmpl->smpl_hdr) {
-			process_smpl_buffer(csmpl);
-		}
-	}
-#endif
-	if (perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1) {
-		kill_task(info->sy_pid);
-		fatal_error("overflow cannot restart process %d, aborting: %s\n", info->sy_pid, strerror(errno));
-	}
+	/* 
+	 * force processing of the sampling buffer upon return from the handler
+	 */
+	sem_post(&ovfl_sem);
 }
 
 static void
 child_handler(int n, struct siginfo *info, struct sigcontext *sc)
 {
-	DPRINT(("SIGCHLD handler for %d code=%d\n", info->si_pid, info->si_code));
+	/*
+	 * We are only interested in SIGCHLD indicating that the process is
+	 * dead
+	 */
+	if (info->si_code != CLD_EXITED && info->si_code != CLD_KILLED) return;
 
 	/*
 	 * stop the alarm, if any
 	 */
 	if (options.session_timeout) alarm(0);
 
-	/*
-	 * we need to record the child pid here because we need to avoid
-	 * a race condition with the parent returning from fork().
-	 * In some cases, the pid=fork() instruction is not completed before
-	 * we come to the SIGCHILD handler. the pid variable still has its
-	 * default (zero) value. That's because the signal was received on
-	 * return from fork() by the parent.
-	 * So here we keept track of who just died and use a global variable
-	 * to pass it back to the parent.
-	child_pid = info->si_pid;
-	 */
+	time_to_quit = 1;
 
-	/*
-	 * That's not very pretty but that's one way of avoiding a race
-	 * condition with the pause() system call. You may deadlock if the 
-	 * signal is delivered before the parent reaches the pause() call.
-	 * Using a variable and test reduces the window but it still exists.
-	 * longjmp/setjmp avoids it completely.
-	 */
-	siglongjmp(jbuf,1);
+	sem_post(&ovfl_sem);
 }
 
 static void
@@ -164,6 +120,7 @@ setup_overflow_handler(void)
 
 	sigemptyset(&my_set);
 	sigaddset(&my_set, SIGCHLD);
+	sigaddset(&my_set, SIGALRM);
 
 	act.sa_handler = (sig_t)overflow_handler;
 	act.sa_mask    = my_set;
@@ -215,11 +172,12 @@ do_measure_one_task(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 {
 	pfarg_reg_t pd[PMU_MAX_PMDS];
 	pfmon_smpl_ctx_t *csmpl = options.smpl_ctx;
+	struct timeval time_start, time_end;
+	struct rusage ru;
 	pid_t mypid = getpid(), pid;
 	unsigned long private_smpl_entry = 0UL;
 	int trigger_mode = 0;
 	int i, status;
-
 
 	if (perfmonctl(mypid, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
 		if (errno == EBUSY) {
@@ -227,6 +185,9 @@ do_measure_one_task(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 		} else
 			fatal_error("can't create PFM context: %s\n", strerror(errno));
 	}
+
+	sem_init(&ovfl_sem, 0, 0);
+
 	if (options.opt_use_smpl) {
 		csmpl->smpl_hdr = ctx->ctx_smpl_vaddr;
 		DPRINT(("sampling buffer at %p\n", csmpl->smpl_hdr));
@@ -238,6 +199,8 @@ do_measure_one_task(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 	/* 
 	 * back from signal handler?
 	 */
+
+	gettimeofday(&time_start, NULL);
 
 	if ((pid= child_pid = fork()) == -1) fatal_error("cannot fork process\n");
 
@@ -310,8 +273,6 @@ trigger_restart:
 	 * Now install the SIGCHLD handler to make sure we catch the end of the execution
 	 * and collect the PMDS before a waitpid().
 	 */
-	if (sigsetjmp(jbuf, 1) == 1) goto extract_results;
-
 	setup_child_handler();
 
 	/*
@@ -319,19 +280,16 @@ trigger_restart:
 	 */
 	ptrace(PTRACE_DETACH, pid, NULL, NULL);
 
-	/* 
-	 * Block for child to finish
-	 * The child process may already be done by the time we get here.
-	 * The parent will skip to the next statement directly in this case.
-	 */
-
 	if (options.session_timeout) {
 		alarm(options.session_timeout);
 	}
 
-	for(;;) pause();
+	for(;;) {
+		sem_wait(&ovfl_sem);
+		if (time_to_quit == 1) break;
+		pfmon_process_smpl_buf(options.smpl_ctx, pid);
+	}
 
-extract_results:
 	if (options.session_timeout) {
 		alarm(0);
 	}
@@ -351,12 +309,16 @@ extract_results:
 		fatal_error("perfmonctl error READ_PMDS for process %d %s\n", pid, strerror(errno));
 	}
 
+
 	/* 
 	 * We cannot issue this call BEFORE we read the PMD registers.
 	 *
 	 * Cleanup child now 
 	 */
-	waitpid(pid, &status, 0);
+	wait4(pid, &status, 0, &ru);
+
+	gettimeofday(&time_end, NULL);
+
 end_of_exec:
 	/* we may or may not want to check child exit status here */
 	if (WEXITSTATUS(status) != 0) {
@@ -365,12 +327,12 @@ end_of_exec:
 
 	vbprintf("process %d exited with status %d\n", pid, WEXITSTATUS(status));
 
-	/* dump results */
-	if (pfmon_current->pfmon_print_results)
-		pfmon_current->pfmon_print_results(pd, csmpl);
-	else
-		print_results(pd, csmpl);
-	
+	if (options.opt_show_rusage) show_task_rusage(&time_start, &time_end, &ru);
+
+	vbprintf("%lu sampling buffer overflows\n", ovfl_cnt);
+
+	print_results(pd, csmpl);
+
 	return 0;
 }
 

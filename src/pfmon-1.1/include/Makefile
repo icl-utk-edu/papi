@@ -26,7 +26,9 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-HEADERS=perfmon/perfmon.h perfmon/pfmlib.h perfmon/pfmlib_itanium.h perfmon/pfm_siginfo.h
+HEADERS=perfmon/perfmon.h perfmon/pfmlib.h perfmon/pfm_siginfo.h \
+        perfmon/pfmlib_itanium.h \
+        perfmon/pfmlib_itanium2.h 
 
 .PHONY: all clean distclean depend
 

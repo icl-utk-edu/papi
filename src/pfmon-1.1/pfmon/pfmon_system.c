@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <semaphore.h>
 
 #include <perfmon/pfmlib.h>
 
@@ -70,14 +72,13 @@ static barrier_t barrier;
 static int session_state;
 static int who_must_print;
 
-static pthread_mutex_t session_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  session_cond  = PTHREAD_COND_INITIALIZER;
-
 static pthread_mutex_t results_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  results_cond  = PTHREAD_COND_INITIALIZER;
 static pthread_key_t   param_key;
 
 static int thread_state[PFMON_MAX_CTX];
+static sem_t ovfl_sem[PFMON_MAX_CTX];
+static unsigned long ovfl_cnts[PFMON_MAX_CTX];
 
 static	pfarg_reg_t sys_pd[PMU_MAX_PMDS];
 
@@ -160,6 +161,7 @@ do_measure_one_cpu(void *data)
 	pfmon_smpl_ctx_t *csmpl;
 	unsigned long private_smpl_entry = 0UL;
 	pid_t mypid = getpid();
+	int mycpu;
 	int i;
 
 	pthread_setspecific(param_key, arg);
@@ -176,22 +178,21 @@ do_measure_one_cpu(void *data)
 	 */
 	ctx->ctx_cpu_mask   = csmpl->cpu_mask = 1UL << arg->cpu;
 	ctx->ctx_notify_pid = mypid;
-
-	//if (arg->cpu == 1) sleep(2);
+	mycpu 		    = arg->cpu;
 
 	DPRINT(("[%d] before CPU%d must be on CPU%d mask=0x%lx\n", 
-		getpid(), find_cpu(getpid()), arg->cpu, ctx->ctx_cpu_mask));
+		getpid(), find_cpu(getpid()), mycpu, ctx->ctx_cpu_mask));
 
 	if (perfmonctl(mypid, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
 		if (errno == EBUSY) {
-			warning("Concurrent conflicting monitoring session is present in your system\n");
+			warning("CPU%d concurrent conflicting monitoring session is present in your system\n", mycpu);
 		} else {
-			warning("Can't create PFM context: %s\n", strerror(errno));
+			warning("CPU%d Can't create PFM context: %s\n", mycpu, strerror(errno));
 		}
 		goto error;
 	}
 
-	DPRINT(("[%d] after CPU%d\n", getpid(), find_cpu(getpid())));
+	DPRINT(("CPU%d thread now on CPU%d\n", mycpu, find_cpu(getpid())));
 
 	if (find_cpu(getpid()) != arg->cpu) {
 		warning("Thread does not run on correct CPU: %d instead of %d\n",
@@ -208,9 +209,8 @@ do_measure_one_cpu(void *data)
 		}
 		csmpl->smpl_hdr = ctx->ctx_smpl_vaddr;
 
-		DPRINT(("sampling buffer at %p\n", csmpl->smpl_hdr));
+		DPRINT(("CPU%d sampling buffer at %p\n", mycpu, csmpl->smpl_hdr));
 	}
-
 
 	if (enable_pmu(mypid) == -1) goto error;
 
@@ -220,26 +220,35 @@ do_measure_one_cpu(void *data)
 
 	barrier_wait(&barrier);
 
-	DPRINT(("[%d] after barrier\n", mypid));
+	DPRINT(("CPU%d after barrier\n", mycpu));
 
 	if (session_state == SESSION_ABORTED) goto error;
 
-	vbprintf("starting system wide session on CPU%d\n", arg->cpu);
 
 	if (session_start(mypid) == -1) goto error;
 
-	pthread_mutex_lock(&session_mutex);
-	while (session_state != SESSION_STOP) {
-		if (session_state == SESSION_ABORTED) goto error;
-		pthread_cond_wait(&session_cond, &session_mutex);
-	}
-	pthread_mutex_unlock(&session_mutex);
+	vbprintf("CPU%d started monitoring\n", mycpu);
 
-	DPRINT(("[%d] seen SESSION_STOP\n", mypid));
+	for(;;) {
+		sem_wait(ovfl_sem+arg->id);
+
+		if (session_state == SESSION_STOP) break;
+
+		pthread_testcancel();
+
+		if (options.opt_aggregate_res) pthread_mutex_lock(&results_mutex);
+
+		pfmon_process_smpl_buf(csmpl, getpid());
+
+		if (options.opt_aggregate_res) pthread_mutex_unlock(&results_mutex);
+
+		pthread_testcancel();
+	}
+
 
 	if (session_stop(mypid) == -1) goto error;
 
-	vbprintf("stopped system wide session on CPU%d\n", arg->cpu);
+	vbprintf("CPU%d stopped monitoring\n", mycpu);
 
 	memset(pd, 0, sizeof(pd));
 
@@ -248,10 +257,8 @@ do_measure_one_cpu(void *data)
 	 * and not any other PMC. The counters are GUARANTEED to be at the beginning
 	 */
 	for(i=0; i < arg->evt->pfp_count; i++) {
-
 		pd[i].reg_num = arg->pc[i].reg_num;
-
-			DPRINT(("will read: pd[%d].reg_num=%ld\n", i, pd[i].reg_num));
+		DPRINT(("CPU%d will read pmd%ld\n", mycpu, pd[i].reg_num));
 	}
 
 	/*
@@ -261,14 +268,18 @@ do_measure_one_cpu(void *data)
 		warning("perfmonctl error READ_PMDS for process %d %s\n", mypid, strerror(errno));
 		goto error;
 	}
-	DPRINT(("[%d] read PMDS\n", mypid));
+	DPRINT(("CPU%d has read PMDS\n", mycpu));
 
 	/* 
 	 * dump results 
 	 */
 	if (options.opt_aggregate_res) {
 		pthread_mutex_lock(&results_mutex);
+
 		syswide_aggregate_results(pd);
+
+		if (options.opt_use_smpl) pfmon_process_smpl_buf(csmpl,  getpid());
+
 		pthread_mutex_unlock(&results_mutex);
 	} else {
 		/*
@@ -291,6 +302,7 @@ do_measure_one_cpu(void *data)
 
 	thread_state[arg->id] = THREAD_DONE;
 	pthread_exit((void *)(0UL));
+	/* NO RETURN */
 error:
 	close_sampling_output(csmpl);
 	thread_state[arg->id] = THREAD_ERROR;
@@ -300,64 +312,26 @@ error:
 /*
  * We cannot use any of the stdio routine during the execution of the handler because
  * they are not lock-safe with regards to ASYNC signals.
+ *
+ * NO DEBUG(), warning() or fatal_error() in the handler!
  */
 static void
 syswide_overflow_handler(int n, struct pfm_siginfo *info, struct sigcontext *sc)
 {
-	unsigned long mask =info->sy_pfm_ovfl[0];
 	thread_arg_t *arg = (thread_arg_t *)pthread_getspecific(param_key);
-	pfmon_smpl_ctx_t *csmpl = options.smpl_ctx+arg->id;
 
+	/* ignore spurious overflow interrupts */
 	if (info->sy_code != PROF_OVFL) {
-		warning("Received spurious SIGPROF si_code=%d\n", info->sy_code);
 		return;
 	} 
 
-	if (csmpl->smpl_hdr == NULL) {
-		warning("overflow handler but not sampling on CPU%d\n", arg->cpu);
-		return;
-	}
+	/* keep some statistics */
+	ovfl_cnts[arg->cpu]++;
 
-	safe_fprintf(1, "Overflow in thread %d [%d] from CPU%d on CPU%d mask=0x%lx\n", 
-		info->sy_pid, 
-		getpid(),
-		arg->cpu, 
-		find_cpu(info->sy_pid),
-		info->sy_pfm_ovfl[0]);
-
-	if ((mask>> PMU_FIRST_COUNTER) == 0UL) {
-		warning("system wide overflow handler: empty mask on CPU%d\n", arg->cpu);
-		return;
-	}
-
-	if (options.opt_aggregate_res) pthread_mutex_lock(&results_mutex);
-	process_smpl_buffer(csmpl);
-	if (options.opt_aggregate_res) pthread_mutex_unlock(&results_mutex);
-#if 0	
-	for(i= PMU_FIRST_COUNTER; mask; mask >>=1, i++) {
-
-		if (options.opt_verbose) {
-			char *name;
-			pfm_get_event_name(options.monitor_events[options.rev_pc[i]], &name);
-			printf("Overflow on PMD%d %s\n", i,  name);
-		}
-
-		/* 
-		 * if we are sampling, process the buffer 
-		 *
-		 * pfmon does not use notification, unless it is sampling
-		 */
-		if ((mask & 0x1) != 0  && csmpl->smpl_hdr) {
-			pthread_mutex_lock(&results_mutex);
-			process_smpl_buffer(csmpl);
-			pthread_mutex_unlock(&results_mutex);
-		}
-	}
-#endif
-
-	if (perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1) {
-		fatal_error("overflow cannot restart process %d: %d\n", info->sy_pid, errno);
-	}
+	/* 
+	 * force processing of the sampling buffer upon return from the handler
+	 */
+	sem_post(ovfl_sem+arg->id);
 }
 
 static void
@@ -371,35 +345,30 @@ setup_signals(void)
 
 	sigemptyset(&my_set);
 	sigaddset(&my_set, SIGCHLD);
+	sigaddset(&my_set, SIGALRM);
 
 	act.sa_handler = (sig_t)syswide_overflow_handler;
 	act.sa_mask    = my_set;
 	sigaction (SIGPROF, &act, 0);
 }
 
-static __inline__ int
-hweight64 (unsigned long x)
-{
-	unsigned long result;
-#ifdef __GNUC__
-	__asm__ ("popcnt %0=%1" : "=r" (result) : "r" (x));
-#elif defined(INTEL_ECC_COMPILER)
-	result = _m64_popcnt(x);
-#else
-#error "you need to provide inline assembly from your compiler"
-#endif
-	return (int)result;
-}
-
 static void
 exit_system_wide(int i)
 {
+	thread_arg_t *arg = (thread_arg_t *)pthread_getspecific(param_key);
+
+	DPRINT(("thread on CPU%d aborting\n", arg->cpu));
+
+	thread_state[arg->id] = THREAD_ERROR;
+
 	pthread_exit((void *)((unsigned long)i));
 }
 
 static int
 delimit_session(char **argv)
 {
+	struct timeval time_start, time_end;
+	struct rusage ru;
 	pid_t pid;
 	int status;
 
@@ -421,6 +390,7 @@ delimit_session(char **argv)
 		}
 		return 0;
 	}
+	gettimeofday(&time_start, NULL);
 	/*
 	 * we fork+exec the command to run during our system wide monitoring
 	 * session. When the command ends, we stop the session and print
@@ -446,15 +416,21 @@ delimit_session(char **argv)
 		warning("child: cannot exec %s: %s\n", argv[0], strerror(errno));
 		exit(-1);
 	} 
+	/*
+	 * this will start the session in each "worker" thread
+	 */
 	barrier_wait(&barrier);
 
-	waitpid(pid, &status, 0);
+	wait4(pid, &status, 0, &ru);
+
+	gettimeofday(&time_end, NULL);
 
 	/* we may or may not want to check child exit status here */
 	if (WEXITSTATUS(status) != 0) {
 		warning("process %d exited with non zero value (%d): results may be incorrect\n", pid, WEXITSTATUS(status));
 	}
 
+	if (options.opt_show_rusage) show_task_rusage(&time_start, &time_end, &ru);
 	return 0;
 }
 
@@ -486,7 +462,6 @@ measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 
 	pthread_key_create(&param_key, NULL);
 
-
 	mask = options.cpu_mask;
 
 	for(i=0, n = 0; mask; mask>>=1, i++) {
@@ -494,7 +469,7 @@ measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 		if ((mask & 0x1) == 0) continue;
 
 		if (n > 0 && options.opt_aggregate_res && options.opt_use_smpl) {
-			options.smpl_ctx[n].smpl_fd  = options.smpl_ctx[0].smpl_fd;
+			options.smpl_ctx[n].smpl_fp  = options.smpl_ctx[0].smpl_fp;
 		}
 		arg[n].id    = n;
 		arg[n].cpu   = i;
@@ -504,6 +479,7 @@ measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 		arg[n].count = count;
 
 		thread_state[n] = THREAD_STARTED;
+		sem_init(ovfl_sem+n, 0, 0);
 
 		ret = pthread_create(&thread_list[n], NULL, (void *(*)(void *))do_measure_one_cpu, arg+n);
 		if (ret != 0) goto abort;
@@ -518,7 +494,7 @@ measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 		nready = 0;
 		for(i=0; i < n ; i++) {
 			if (thread_state[i] == THREAD_ERROR) {
-				DPRINT(("the thread on CPU%d had a problem, aborting\n", i));
+				DPRINT(("CPU%d thread aborted\n", i));
 				goto abort;
 			}
 			if (thread_state[i] == THREAD_RUN) nready++;
@@ -532,19 +508,16 @@ measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 	/*
 	 * set end of session and unblock all threads
 	 */
-	pthread_mutex_lock(&session_mutex);
 	session_state = SESSION_STOP;
-	pthread_cond_broadcast(&session_cond);
-	pthread_mutex_unlock(&session_mutex);
 
-	DPRINT(("[%d] after session stop\n"));
-	/*
-	 * collect all resources
-	 */
+	for (i=0; i < n; i++) sem_post(ovfl_sem+i);
+
+	DPRINT(("main thread after session stop\n"));
+
 	for(i=0; i< n; i++) {
 		ret = pthread_join(thread_list[i], &retval);
-		if (ret !=0) warning("cannot joing thread %d\n", i);
-		DPRINT(("thread %d exited with ret=%ld\n", i, (unsigned long)retval));
+		if (ret !=0) warning("cannot join thread %d\n", i);
+		DPRINT(("CPU%d thread exited with value %ld\n", arg[i].cpu, (unsigned long)retval));
 	}
 
 	if (options.opt_aggregate_res) {
@@ -556,23 +529,26 @@ measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, 
 
 	register_exit_function(NULL);
 
-
+	if (options.opt_verbose) {
+		for(i=0; i < n; i++) vbprintf("CPU%d : %lu sampling buffer overflows\n", i, ovfl_cnts[i]);
+	}
 	return 0;
-
 abort:
 	session_state = SESSION_ABORTED;
 
+	vbprintf("aborting %d threads\n", n);
 
-	DPRINT(("aborting %d threads\n", n));
 	for(i=0; i < n; i++) {
-		DPRINT(("cancel %d\n", i));
+		DPRINT(("cancelling on CPU%d\n", i));
 		pthread_cancel(thread_list[i]);
 	}
 	for(i=0; i < n; i++) {
 		ret = pthread_join(thread_list[i], &retval);
 		if (ret != 0) warning("cannot join thread %i\n", i);
-		DPRINT(("thread %d exited with ret=%ld\n", i, (unsigned long)retval));
+		DPRINT(("CPU%d thread exited with value %ld\n", arg[i].cpu, (unsigned long)retval));
 	}
+
+	pthread_key_delete(param_key);
 
 	register_exit_function(NULL);
 

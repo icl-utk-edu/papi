@@ -27,11 +27,12 @@
 #define __PFMON_H__
 #include <getopt.h>
 #include <signal.h>
+#include <sys/resource.h>
 
 #include <perfmon/perfmon.h>
 #include <perfmon/pfmlib.h>
 
-#define PFMON_VERSION		"1.1-papi"
+#define PFMON_VERSION		"1.1"
 
 /* 
  * max number of cpus (threads) supported
@@ -54,9 +55,12 @@
 #define DPRINT(a)
 #endif
 
+/*
+ * pfmon sampling context information
+ */
 typedef struct {
 	void *smpl_hdr;			/* virtual address of sampling buffer headers */
-	int   smpl_fd;			/* sampling file descriptor */
+	FILE *smpl_fp;			/* sampling file descriptor */
 	unsigned long *smpl_entry;	/* next sampling entry to output (allocated for each buffer) */
 	unsigned long cpu_mask;		/* on which CPU does this apply to (system wide) */
 } pfmon_smpl_ctx_t;
@@ -89,10 +93,12 @@ typedef struct {
 		int opt_syst_wide;
 
 		int opt_with_header;   /* generate header on output results (smpl or not) */
-		int opt_no_entry_header; /* no pid, tstamp, cpu on sampling entries */
 		int opt_use_smpl;	/* true if sampling is requested */
 		int opt_aggregate_res;	/* aggregate results */
 		int opt_print_cnt_mode;	/* mode for printing counters */
+		int opt_show_rusage;	/* show process time */
+		int opt_sysmap_syms;	/* use System.map format for symbol file */
+		int opt_check_evt_only; /* stop after checking the event combination is valid */
 	} program_opt_flags;
 
 	char  **argv;			/* full command line */
@@ -141,10 +147,12 @@ typedef struct {
 #define opt_fclone		program_opt_flags.opt_fclone
 #define opt_syst_wide		program_opt_flags.opt_syst_wide
 #define opt_with_header		program_opt_flags.opt_with_header
-#define opt_no_ent_header	program_opt_flags.opt_no_entry_header
 #define opt_use_smpl		program_opt_flags.opt_use_smpl
 #define opt_aggregate_res	program_opt_flags.opt_aggregate_res
 #define opt_print_cnt_mode	program_opt_flags.opt_print_cnt_mode
+#define opt_show_rusage		program_opt_flags.opt_show_rusage
+#define opt_sysmap_syms		program_opt_flags.opt_sysmap_syms
+#define opt_check_evt_only	program_opt_flags.opt_check_evt_only
 
 typedef struct {
 	char	*name;		/* support module name */
@@ -155,10 +163,8 @@ typedef struct {
 	int	(*pfmon_post_options)(pfmlib_param_t *evt);
 	int	(*pfmon_overflow_handler)(int n, struct pfm_siginfo *info, struct sigcontext *sc);
 	int	(*pfmon_install_counters)(pid_t pid, pfmlib_param_t *evt, pfarg_reg_t *pc, int count, pfarg_reg_t *pd);
-	int	(*pfmon_print_results)(pfarg_reg_t *pd, pfmon_smpl_ctx_t *csmpl);
-	int	(*pfmon_explain_smpl_reg)(pfmon_smpl_ctx_t *csmpl, int rnum, int *column);
-	int	(*pfmon_print_smpl_reg)(pfmon_smpl_ctx_t *csmpl, int rnum, unsigned long *rval);
-	int	(*pfmon_print_header)(int fd);
+	int	(*pfmon_print_header)(FILE *fp);
+	void	(*pfmon_show_detailed_event_name)(int evt);
 } pfmon_support_t;
 
 extern pfmon_support_t *pfmon_current;
@@ -170,8 +176,8 @@ extern void extract_pal_info(program_options_t *options);
 extern void warning(char *fmt, ...);
 extern void fatal_error(char *fmt, ...);
 extern char * priv_level_str(unsigned long plm);
-extern void print_palinfo(int fd, int cpuid);
-extern void print_cpuinfo(int fd);
+extern void print_palinfo(FILE *fp, int cpuid);
+extern void print_cpuinfo(FILE *fp);
 extern void gen_reverse_table(pfmlib_param_t *evt, pfarg_reg_t *pc, int *rev_pc);
 extern int protect_context(pid_t pid);
 extern int unprotect_context(pid_t pid);
@@ -183,8 +189,7 @@ extern int gen_priv_levels(char *arg, unsigned int *lvl_lst);
 extern int gen_event_smpl_rates(char *arg, int count, unsigned long *opt_lst);
 extern int find_cpu(pid_t pid);
 extern int register_exit_function(void (*func)(int));
-extern void print_standard_header(int fd, unsigned long cpu_mask);
-extern int safe_fprintf(int fd, char *fmt, ...);
+extern void print_standard_header(FILE *fp, unsigned long cpu_mask);
 extern int set_code_breakpoint(pid_t pid, int dbreg, unsigned long address);
 #define PSR_MODE_CLEAR	0
 #define PSR_MODE_SET	1
@@ -195,6 +200,10 @@ extern int convert_data_rr_param(char *param, unsigned long *start, unsigned lon
 extern void gen_code_range(char *arg, unsigned long *start, unsigned long *end);
 extern void gen_data_range(char *arg, unsigned long *start, unsigned long *end);
 extern void counter2str(unsigned long count, char *str);
+extern void show_task_rusage(struct timeval *start, struct timeval *end, struct rusage *ru);
+extern int is_regular_file(char *name);
+extern void check_counter_conflict(pfmlib_param_t *evt, unsigned long max_counter_mask);
+
 
 /* from pfmon.c */
 extern int pfmon_register_options(struct option *cmd, size_t sz);
@@ -209,6 +218,7 @@ extern int process_smpl_buffer(pfmon_smpl_ctx_t *csmpl);
 extern int pfmon_find_smpl_output(char *name, pfmon_smpl_output_t **fmt, int ignore_cpu);
 extern void pfmon_list_smpl_outputs(void);
 extern void pfmon_smpl_output_info(pfmon_smpl_output_t *fmt);
+extern void pfmon_process_smpl_buf(pfmon_smpl_ctx_t *csmpl, pid_t pid);
 
 /* from pfmon_system.c */
 extern int measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, int count, char **argv);
@@ -217,7 +227,7 @@ extern int measure_system_wide(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_
 extern int measure_per_task(pfmlib_param_t *evt, pfarg_context_t *ctx, pfarg_reg_t *pc, int count, char **argv);
 
 /* from pfmon_symbols.c */
-extern int load_symbols(char *filename);
+extern void load_symbols(void);
 extern int find_code_symbol_addr(char *sym, unsigned long *start, unsigned long *end);
 extern int find_data_symbol_addr(char *sym, unsigned long *start, unsigned long *end);
 extern void print_symbols(void);
@@ -226,6 +236,23 @@ extern void print_symbols(void);
 extern void load_config_file(void);
 extern int find_opcode_matcher(char *name, unsigned long *val);
 extern void print_opcode_matchers(void);
+
+/*
+ * Some useful inline functions
+ */
+static __inline__ int
+hweight64 (unsigned long x)
+{
+	unsigned long result;
+#ifdef __GNUC__
+	__asm__ ("popcnt %0=%1" : "=r" (result) : "r" (x));
+#elif defined(INTEL_ECC_COMPILER)
+	result = _m64_popcnt(x);
+#else
+#error "you need to provide inline assembly from your compiler"
+#endif
+	return (int)result;
+}
 
 
 #endif /*__PFMON_H__ */

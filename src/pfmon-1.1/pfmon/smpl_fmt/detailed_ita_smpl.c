@@ -45,14 +45,14 @@
 #define SMPL_OUTPUT_NAME	"detailed-itanium"
 
 static int
-show_ita_btb_reg(int fd, int j, pfm_ita_reg_t reg)
+show_ita_btb_reg(FILE *fp, int j, pfm_ita_reg_t reg)
 {
 	int ret;
 	int is_valid = reg.pmd8_15_ita_reg.btb_b == 0 && reg.pmd8_15_ita_reg.btb_mp == 0 ? 0 :1; 
 
-	ret = safe_fprintf(fd, "\tPMD%-2d: 0x%016lx b=%d mp=%d valid=%c\n",
+	ret = fprintf(fp, "\tPMD%-2d: 0x%016lx b=%d mp=%d valid=%c\n",
 			j,
-			reg.pmu_reg,
+			reg.reg_val,
 			 reg.pmd8_15_ita_reg.btb_b,
 			 reg.pmd8_15_ita_reg.btb_mp,
 			is_valid ? 'Y' : 'N');
@@ -60,13 +60,18 @@ show_ita_btb_reg(int fd, int j, pfm_ita_reg_t reg)
 	if (!is_valid) return ret;
 
 	if (reg.pmd8_15_ita_reg.btb_b) {
-		ret = safe_fprintf(fd, "\t       Source Address: 0x%016lx (slot %d)\n"
-						"\t       Prediction: %s\n\n",
-			 (reg.pmd8_15_ita_reg.btb_addr<<4), 
-			 reg.pmd8_15_ita_reg.btb_slot,
+		unsigned long addr;
+
+		addr = 	reg.pmd8_15_ita_reg.btb_addr<<4;
+		addr |= reg.pmd8_15_ita_reg.btb_slot < 3 ?  reg.pmd8_15_ita_reg.btb_slot : 0;
+
+		ret = fprintf(fp, "\t       Source Address: 0x%016lx\n"
+				  "\t       Taken=%c Prediction: %s\n\n",
+			 addr,
+			 reg.pmd8_15_ita_reg.btb_slot < 3 ? 'Y' : 'N',
 			 reg.pmd8_15_ita_reg.btb_mp ? "Failure" : "Success");
 	} else {
-		ret = safe_fprintf(fd, "\t       Target Address: 0x%016lx\n\n",
+		ret = fprintf(fp, "\t       Target Address: 0x%016lx\n\n",
 			 (reg.pmd8_15_ita_reg.btb_addr<<4));
 	}
 
@@ -74,7 +79,7 @@ show_ita_btb_reg(int fd, int j, pfm_ita_reg_t reg)
 }
 
 static int
-show_ita_btb_trace(int fd, pfm_ita_reg_t reg, pfm_ita_reg_t *btb_regs)
+show_ita_btb_trace(FILE *fp, pfm_ita_reg_t reg, pfm_ita_reg_t *btb_regs)
 {
 	int i, last, ret;
 
@@ -88,7 +93,7 @@ show_ita_btb_trace(int fd, pfm_ita_reg_t reg, pfm_ita_reg_t *btb_regs)
 			reg.pmd16_ita_reg.btbi_full));
 
 	do {
-		ret = show_ita_btb_reg(fd, i+8, btb_regs[i]);
+		ret = show_ita_btb_reg(fp, i+8, btb_regs[i]);
 		i = (i+1) % 8;
 	} while (i != last);
 
@@ -105,37 +110,37 @@ print_ita_reg(pfmon_smpl_ctx_t *csmpl, int rnum, unsigned long rval)
 	pfm_ita_reg_t reg;
 	pfm_ita_reg_t pmd16;
 	pfmon_ita_options_t *opt = (pfmon_ita_options_t *)options.model_options;
-	int fd = csmpl->smpl_fd;
+	FILE *fp = csmpl->smpl_fp;
 	int ret = 0;
 	int found_pmd16 = 0;
 
-	reg.pmu_reg = rval;
+	reg.reg_val = rval;
 
 	switch(rnum) {
 		case 0:
-			safe_fprintf(fd, "\tPMD0 : 0x%016lx, valid %c, cache line 0x%lx",
-				reg.pmu_reg,
+			fprintf(fp, "\tPMD0 : 0x%016lx, valid %c, cache line 0x%lx",
+				reg.reg_val,
 				reg.pmd0_ita_reg.iear_v ? 'Y': 'N',
-				reg.pmd0_ita_reg.iear_icla<<5L);
+				reg.pmd0_ita_reg.iear_icla<<5);
 
 			if (opt->opt_use_iear_tlb)
-				ret = safe_fprintf(fd, ", TLB %s\n", tlb_hdls[reg.pmd0_ita_reg.iear_tlb]);
+				ret = fprintf(fp, ", TLB %s\n", tlb_hdls[reg.pmd0_ita_reg.iear_tlb]);
 			else
-				ret = safe_fprintf(fd, "\n");
+				ret = fprintf(fp, "\n");
 			break;
 		case 1:
 			if (opt->opt_use_iear_tlb == 0)
-				ret = safe_fprintf(fd, "\tPMD1 : 0x%016lx, latency %u\n",
-						reg.pmu_reg,
+				ret = fprintf(fp, "\tPMD1 : 0x%016lx, latency %u\n",
+						reg.reg_val,
 						reg.pmd1_ita_reg.iear_lat);
 			break;
 		case 3:
-			safe_fprintf(fd, "\tPMD3 : 0x%016lx ", reg.pmu_reg);
+			fprintf(fp, "\tPMD3 : 0x%016lx ", reg.reg_val);
 
 			if (opt->opt_use_dear_tlb)
-				ret = safe_fprintf(fd, ", TLB %s\n", tlb_levels[reg.pmd3_ita_reg.dear_level]);
+				ret = fprintf(fp, ", TLB %s\n", tlb_levels[reg.pmd3_ita_reg.dear_level]);
 			else
-				ret = safe_fprintf(fd, ", latency %u\n", reg.pmd3_ita_reg.dear_lat);
+				ret = fprintf(fp, ", latency %u\n", reg.pmd3_ita_reg.dear_lat);
 			break;
 		case 16:
 			/*
@@ -146,8 +151,8 @@ print_ita_reg(pfmon_smpl_ctx_t *csmpl, int rnum, unsigned long rval)
 			break;
 		case 17:
 
-			ret = safe_fprintf(fd, "\tPMD17: 0x%016lx, valid %c, address 0x%016lx\n",
-					reg.pmu_reg,
+			ret = fprintf(fp, "\tPMD17: 0x%016lx, valid %c, address 0x%016lx\n",
+					reg.reg_val,
 					reg.pmd17_ita_reg.dear_v ? 'Y': 'N',
 					(reg.pmd17_ita_reg.dear_iaddr << 4) | reg.pmd17_ita_reg.dear_slot);
 			break;
@@ -158,10 +163,10 @@ print_ita_reg(pfmon_smpl_ctx_t *csmpl, int rnum, unsigned long rval)
 			if (rnum>7 && rnum < 16)
 				btb_regs[rnum-8] = reg;
 			else
-				ret = safe_fprintf(fd, "\tPMD%-2d: 0x%016lx\n", rnum, reg.pmu_reg);
+				ret = fprintf(fp, "\tPMD%-2d: 0x%016lx\n", rnum, reg.reg_val);
 	}
 
-	if (found_pmd16) ret = show_ita_btb_trace(fd, pmd16, btb_regs);
+	if (found_pmd16) ret = show_ita_btb_trace(fp, pmd16, btb_regs);
 
 	return ret;
 }
@@ -185,7 +190,7 @@ detailed_ita_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 {
 	perfmon_smpl_hdr_t *hdr;
 	perfmon_smpl_entry_t *ent;
-	int fd = csmpl->smpl_fd;
+	FILE *fp = csmpl->smpl_fp;
 	unsigned long pos, msk;
 	pmu_reg_t *reg;
 	int i, j, ret;
@@ -196,10 +201,9 @@ detailed_ita_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 	pos = (unsigned long)ent;
 
 	DPRINT(("hdr_count=%ld smpl_regs=0x%lx\n",hdr->hdr_count, options.smpl_regs));
-	safe_fprintf(fd, "hdr_count=%ld smpl_regs=0x%lx\n",hdr->hdr_count, options.smpl_regs);
 
 	for(i=0; i < hdr->hdr_count; i++) {
-		ret =  safe_fprintf(fd, 
+		ret =  fprintf(fp, 
 			"entry %ld PID:%d CPU:%d STAMP:0x%lx IIP:0x%016lx\n",
 			*csmpl->smpl_entry,
 			ent->pid,
@@ -209,21 +213,19 @@ detailed_ita_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 
 		(*csmpl->smpl_entry)++;
 
-		ret += safe_fprintf(fd, "\tPMD OVFL: ");
+		ret += fprintf(fp, "\tPMD OVFL: ");
 		msk = ent->regs >> PMU_FIRST_COUNTER;
 		for(j=PMU_FIRST_COUNTER ; msk; msk >>=1, j++) {	
-			//pfm_get_event_name(options.monitor_events[options.rev_pc[j]], &name);
-			//if (msk & 0x1) safe_fprintf(fd, "%s(%d) ", name, j);
-			if (msk & 0x1) safe_fprintf(fd, "%d ", j);
+			if (msk & 0x1) fprintf(fp, "%d ", j);
 		}
 
-		ret += safe_fprintf(fd, "\n");
+		ret += fprintf(fp, "\n");
 
 		reg = (pmu_reg_t*)(ent+1);
 
 		for(j=0, msk = options.smpl_regs; msk; msk >>=1, j++) {	
 			if ((msk & 0x1) == 0) continue;
-			ret = print_ita_reg(csmpl, j, reg->pmu_reg);
+			ret = print_ita_reg(csmpl, j, reg->reg_val);
 			if (ret == -1) goto error;
 			reg++;
 		}

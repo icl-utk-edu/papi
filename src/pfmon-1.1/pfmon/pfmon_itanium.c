@@ -83,7 +83,7 @@ gen_thresholds(char *arg, pfmlib_param_t *evt)
 		 * this is because by setting threshold to n, one counts only
 		 * when n+1 or more events occurs per cycle.
 	 	 */
-		pfm_ita_event_maxincr(evt->pfp_evt[cnt], &maxincr);
+		pfm_ita_get_event_maxincr(evt->pfp_evt[cnt], &maxincr);
 		if (thres > (maxincr-1)) goto too_big;
 
 		param->pfp_ita_counters[cnt++].thres = thres;
@@ -104,9 +104,7 @@ install_irange(int pid, pfmlib_param_t *evt)
 	pfmlib_ita_param_t *param = ITA_PARAM(evt);
 
 	r = perfmonctl(pid, PFM_WRITE_IBRS, param->pfp_ita_irange.rr_br, param->pfp_ita_irange.rr_nbr_used);
-	if (r == -1) {
-		fatal_error(" PFM_WRITE_IBRS %s\n", strerror(errno));
-	}
+	if (r == -1) fatal_error("cannot install code range restriction: %s\n", strerror(errno));
 }
 
 static void
@@ -116,9 +114,7 @@ install_drange(int pid, pfmlib_param_t *evt)
 	pfmlib_ita_param_t *param = ITA_PARAM(evt);
 
 	r = perfmonctl(pid, PFM_WRITE_DBRS, param->pfp_ita_drange.rr_br, param->pfp_ita_drange.rr_nbr_used);
-	if (r == -1) {
-		fatal_error(" PFM_WRITE_DBRS %s\n", strerror(errno));
-	}
+	if (r == -1) fatal_error("cannot install data range restriction: %s\n", strerror(errno));
 }
 
 static void
@@ -136,9 +132,8 @@ prepare_pmd16(pid_t pid, pfmlib_param_t *evt, pfarg_reg_t *pc)
 	pdx[0].reg_num = 16;
 
 	r = perfmonctl(pid, PFM_WRITE_PMDS, pdx, 1);
-	if (r == -1) {
-		fatal_error(" cannot reset pmd16: %s\n", strerror(errno));
-	}
+	if (r == -1) fatal_error("cannot reset pmd16: %s\n", strerror(errno));
+
 	/*
 	 * Next, we search all occurences of BRANCH_EVENT and add PMD16 to the
 	 * list of other registers to reset on overflow.
@@ -157,9 +152,7 @@ prepare_pmd16(pid_t pid, pfmlib_param_t *evt, pfarg_reg_t *pc)
 			 */
 			pc[i].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
 
-			if (options.opt_debug) {
-				printf("added pmd16 to pmd%u\n", pc[i].reg_num);
-			}
+			DPRINT(("added pmd16 to pmd%u\n", pc[i].reg_num));
 		}
 	}
 }
@@ -221,7 +214,6 @@ pfmon_ita_usage(void)
 		"--btb-ppm-correct\t\t\tcapture branch if path is predicted correctly\n"
 		"--btb-ppm-incorrect\t\t\tcapture branch if path is mispredicted\n"
 		"--btb-all-mispredicted\t\t\tcapture all mispredicted branches\n"
-		"--no-smpl-header\t\t\tsuppress entry,pid,cpu,timestamp from sampling output\n"
 		"--irange=start-end\t\t\tspecify an instruction address range constraint\n"
 		"--drange=start-end\t\t\tspecify a data address range constraint\n"
 		"--checkpoint-func=addr\t\t\ta bundle address to use as checkpoint\n"
@@ -248,7 +240,7 @@ setup_ear(pfmlib_param_t *evt)
 
 			param->pfp_ita_dear.ear_used   = 1;
 			param->pfp_ita_dear.ear_is_tlb = pfmon_ita_opt.opt_use_dear_tlb;
-			param->pfp_ita_dear.ear_umask  = pfm_ita_get_event_umask(evt->pfp_evt[i]);
+			pfm_ita_get_event_umask(evt->pfp_evt[i], &param->pfp_ita_dear.ear_umask);
 			param->pfp_ita_dear.ear_plm    = evt->pfp_plm[i]; /* use plm from event */
 			param->pfp_ita_dear.ear_ism    = param->pfp_ita_counters[i].ism;
 
@@ -265,7 +257,7 @@ setup_ear(pfmlib_param_t *evt)
 
 			param->pfp_ita_iear.ear_used   = 1;
 			param->pfp_ita_iear.ear_is_tlb = pfmon_ita_opt.opt_use_iear_tlb;
-			param->pfp_ita_iear.ear_umask  = pfm_ita_get_event_umask(evt->pfp_evt[i]);
+			pfm_ita_get_event_umask(evt->pfp_evt[i], &param->pfp_ita_iear.ear_umask);
 			param->pfp_ita_iear.ear_plm    = evt->pfp_plm[i]; /* use plm from event */
 			param->pfp_ita_iear.ear_ism    = param->pfp_ita_counters[i].ism;
 
@@ -291,6 +283,18 @@ setup_btb(pfmlib_param_t *evt)
 	for (i=0; i < evt->pfp_count; i++) {
 		if (pfm_ita_is_btb(evt->pfp_evt[i])) goto found;
 	}
+	/*
+	 * if the user specified an BTB option (but not the event) 
+	 * then we program the BTB as a free running config.
+	 *
+	 * XXX: cannot record ALL branches
+	 */
+	if (  pfmon_ita_opt.opt_btb_notar
+	   || pfmon_ita_opt.opt_btb_notac
+	   || pfmon_ita_opt.opt_btb_nobac
+	   || pfmon_ita_opt.opt_btb_tm
+	   || pfmon_ita_opt.opt_btb_ptm
+	   || pfmon_ita_opt.opt_btb_ppm) goto found;
 	return 0;
 
 found:
@@ -395,9 +399,9 @@ gen_ita_insn_sets(char *arg, pfmlib_ita_counter_t *c)
 		unsigned int val;
 	} insn_sets[]={
 		{ "", 0  }, /* empty element: indicate use default value set by pfmon */
-		{ "ia32", 0x1 },
-		{ "ia64", 0x2 },
-		{ "both", 0 },
+		{ "ia32", PFMLIB_ITA_ISM_IA32 },
+		{ "ia64", PFMLIB_ITA_ISM_IA64 },
+		{ "both", PFMLIB_ITA_ISM_BOTH },
 		{ NULL, 0}
 	};
 
@@ -517,7 +521,7 @@ setup_opcm(pfmlib_param_t *evt)
 
 		param->pfp_ita_pmc8.opcm_used = 1;
 
-		vbprintf("opcode matcher pmc8=0x%lx\n", param->pfp_ita_pmc8.pmc_val); 
+		vbprintf("[pmc8=0x%lx]\n", param->pfp_ita_pmc8.pmc_val); 
 	}
 
 	if (pfmon_ita_opt.opcm9_str) {
@@ -558,16 +562,6 @@ setup_rr(pfmlib_param_t *evt)
 		vbprintf("irange is [0x%lx-0x%lx)=%ld bytes\n", start, end, end-start);
 	}
 
-	if (pfmon_ita_opt.drange_str) {
-		gen_data_range(pfmon_ita_opt.drange_str, &start, &end);
-
-		vbprintf("drange is [0x%lx-0x%lx)=%ld bytes\n", start, end, end-start);
-		
-		param->pfp_ita_drange.rr_used = 1;
-
-		param->pfp_ita_drange.rr_limits[0].rr_start = start;
-		param->pfp_ita_drange.rr_limits[0].rr_end   = end;
-	}
 
 	/*
 	 * now finalize irange/chkp programming of the range
@@ -580,7 +574,20 @@ setup_rr(pfmlib_param_t *evt)
 		param->pfp_ita_irange.rr_limits[0].rr_end   = end;
 		param->pfp_ita_irange.rr_limits[0].rr_plm   = evt->pfp_dfl_plm; /* use default */
 	}
+
+	if (pfmon_ita_opt.drange_str) {
+		gen_data_range(pfmon_ita_opt.drange_str, &start, &end);
+
+		vbprintf("drange is [0x%lx-0x%lx)=%ld bytes\n", start, end, end-start);
+		
+		param->pfp_ita_drange.rr_used = 1;
+
+		param->pfp_ita_drange.rr_limits[0].rr_start = start;
+		param->pfp_ita_drange.rr_limits[0].rr_end   = end;
+	}
+
 }
+
 
 /*
  * This function checks the configuration to verify
@@ -610,6 +617,11 @@ check_ita_event_combinations(pfmlib_param_t *evt)
 		if (param->pfp_ita_drange.rr_used && pfm_ita_support_darr(cnt_list[i]) == 0)
 			fatal_error("event %s does not support data address range restrictions\n", name);
 	}
+	/*
+	 * we do not call check_counter_conflict() because Itanium does not have events
+	 * which can only be measured on one counter, therefore this routine would not
+	 * catch anything at all.
+	 */
 }
 
 static int
@@ -618,10 +630,10 @@ pfmon_ita_post_options(pfmlib_param_t *evt)
 	pfmlib_ita_param_t *param = ITA_PARAM(evt);
 
 	if (options.trigger_addr_str) {
-		if (param->pfp_ita_irange.rr_used)
+		if (pfmon_ita_opt.irange_str)
 			fatal_error("cannot use start address with instruction range restrictions\n");
-		if (param->pfp_ita_drange.rr_used)
-			fatal_error("Cannot use start address with data range restrictions\n");
+		if (pfmon_ita_opt.drange_str)
+			fatal_error("cannot use start address with data range restrictions\n");
 		if (pfmon_ita_opt.chkp_func_str)
 			fatal_error("cannot use start address with function checkpoint\n");
 	}
@@ -645,7 +657,7 @@ pfmon_ita_post_options(pfmlib_param_t *evt)
 		/*
 		 * Code & Data range restrictions are ignored for IA-32
 		 */
-		if (param->pfp_ita_irange.rr_used || param->pfp_ita_drange.rr_used) 
+		if (pfmon_ita_opt.irange_str|| pfmon_ita_opt.drange_str) 
 			fatal_error("you cannot use range restrictions when monitoring IA-32 execution only\n");
 
 		/*
@@ -660,13 +672,19 @@ pfmon_ita_post_options(pfmlib_param_t *evt)
 		if (param->pfp_ita_pmc8.opcm_used || param->pfp_ita_pmc9.opcm_used) 
 			fatal_error("you cannot use the opcode matcher(s) when monitoring IA-32 execution only\n");
 
-		param->pfp_ita_ism = PFMLIB_ITA_ISM_IA32;
 	}
 	/* 
 	 * set default instruction set 
-	 * 0=both, 1=ia32, 2=ia64, 3=both
 	 */
-	param->pfp_ita_ism = pfmon_ita_opt.opt_ia32 | pfmon_ita_opt.opt_ia64;
+	if (pfmon_ita_opt.opt_ia32  && pfmon_ita_opt.opt_ia64)
+		param->pfp_ita_ism = PFMLIB_ITA_ISM_BOTH;
+	else if (pfmon_ita_opt.opt_ia64)
+		param->pfp_ita_ism = PFMLIB_ITA_ISM_IA64;
+	else if (pfmon_ita_opt.opt_ia32)
+		param->pfp_ita_ism = PFMLIB_ITA_ISM_IA32;
+	else
+		param->pfp_ita_ism = PFMLIB_ITA_ISM_BOTH;
+
 
 
 	setup_rr(evt);
@@ -696,18 +714,18 @@ pfmon_ita_post_options(pfmlib_param_t *evt)
 }
 
 static int
-pfmon_ita_print_header(int fd)
+pfmon_ita_print_header(FILE *fp)
 {
 	char *name;
 	int i, isn;
 	static const char *insn_str[]={
-		"both",
+		"ia32/ia64",
 		"ia32", 
 		"ia64"
 	};
 
 
-	safe_fprintf(fd, "#\n#\n# instruction sets:\n");
+	fprintf(fp, "#\n#\n# instruction sets:\n");
 
 	for(i=0; i < PMU_MAX_PMDS; i++) {
 		if (options.rev_pc[i] == -1) continue;
@@ -715,15 +733,28 @@ pfmon_ita_print_header(int fd)
 		pfm_get_event_name(options.monitor_events[options.rev_pc[i]], &name);
 
 		isn = pfmon_ita_opt.params->pfp_ita_counters[options.rev_pc[i]].ism;
-		safe_fprintf(fd, "#\tPMD%d: %s, %s\n", 
-				i,
-				name,
-				insn_str[isn ? isn : pfmon_ita_opt.params->pfp_ita_ism]);
+		fprintf(fp, "#\tPMD%d: %s, %s\n", 
+			i,
+			name,
+			insn_str[isn ? isn : pfmon_ita_opt.params->pfp_ita_ism]);
 	} 
-	safe_fprintf(fd, "#\n");
+	fprintf(fp, "#\n");
 
 	return 0;
 }
+
+static void
+pfmon_ita_detailed_event_name(int evt)
+{
+	unsigned long umask;
+	unsigned long maxincr;
+
+	pfm_ita_get_event_umask(evt, &umask);
+	pfm_ita_get_event_maxincr(evt, &maxincr);
+
+	printf("umask=0x%02lx incr=%ld", umask, maxincr);
+}
+
 
 pfmon_support_t pfmon_itanium={
 	"Itanium",
@@ -734,8 +765,6 @@ pfmon_support_t pfmon_itanium={
 	pfmon_ita_post_options,		/* post */
 	NULL,				/* overflow */
 	pfmon_ita_install_counters,	/* install counters */
-	NULL,				/* print results */
-	NULL,				/* explain smpl reg */
-	NULL,				/* print smpl reg */
-	pfmon_ita_print_header		/* print header */
+	pfmon_ita_print_header,		/* print header */
+	pfmon_ita_detailed_event_name	/* detailed event name */
 };

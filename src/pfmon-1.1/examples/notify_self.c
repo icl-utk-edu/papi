@@ -129,12 +129,13 @@ overflow_handler(int n, struct pfm_siginfo *info, struct sigcontext *sc)
 	/*
          * Now reset the second counter, for the next period so that the 
 	 * results are easier to compare.
-         */
+	pd[0].reg_num = pc[1].reg_num;
         pd[0].reg_value = 0;
         if (perfmonctl(getpid(), PFM_WRITE_PMDS, pd, 1) == -1) {
                 perror("PFM_READ_PMDS");
                 exit(1);
         }
+         */
 
 	/*
 	 * increment our notification counter
@@ -234,7 +235,7 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+	if (perfmonctl(pid, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
@@ -252,7 +253,8 @@ main(int argc, char **argv)
 	 * We want to get notified when the counter used for our first
 	 * event overflows
 	 */
-	pc[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
+	pc[0].reg_flags 	|= PFM_REGFL_OVFL_NOTIFY;
+	pc[0].reg_reset_pmds[0] |= 1UL << pc[1].reg_num;
 
 	/*
 	 * Now prepare the argument to initialize the PMDs.
@@ -268,9 +270,8 @@ main(int argc, char **argv)
 	 * we arm the first counter, such that it will overflow
 	 * after SMPL_PERIOD events have been observed
 	 */
-	pd[0].reg_value   = (~0UL) - SMPL_PERIOD;
+	pd[0].reg_value       = (~0UL) - SMPL_PERIOD;
 	pd[0].reg_long_reset  = (~0UL) - SMPL_PERIOD;
-	//pd[0].short_reset = (~0UL) - SMPL_PERIOD;
 
 	/*
 	 * Now program the registers

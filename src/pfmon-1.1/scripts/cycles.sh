@@ -2,13 +2,19 @@
 #
 # Simplictic cycle breakdown generator
 #
-# Copyright (C) 2001 Hewlett-Packard Co
+# Copyright (C) 2001-2002 Hewlett-Packard Co
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 usage()
 {
 	echo "Usage $0 [-k] [-u] [-h] [-i cmd_redir_in] [-o cmd_redir_out] command [command_args]"
 }
+
+cpu=`fgrep family /proc/cpuinfo | cut -d':' -f2 | head -1`
+if [ "$cpu" != " Itanium" ]; then
+	echo this script only works on the Itanium CPU
+	exit 1
+fi
 
 TMPDIR=/tmp
 
@@ -181,7 +187,7 @@ rm /tmp/cyres$$.py
 cat >/tmp/valid$$.awk <<"EOF"
 #! /usr/bin/awk -f
 #
-# Copyright (C) 2001 Hewlett-Packard Co
+# Copyright (C) 2001-2002 Hewlett-Packard Co
 # Contributed by Sumit Roy <sumit_roy@hp.com>
 #
 # awk program to validate the output from any program that produces two column

@@ -25,15 +25,22 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include ../config.mk
 include ../rules.mk
 
-#LDFLAGS+=-static 
+LDFLAGS+=-static 
 
 INCDIR=-I$(PFM_INC_DIR) 
 
-SRCS=self.c task.c syst.c notify_self.c task_smpl.c task_dear.c ita_rr.c whichcpu.c ita_opcode.c \
-     ita_btb.c simple_ear.c freesmpl.c
+SRCS=self.c task.c syst.c notify_self.c task_smpl.c task_dear.c whichpmu.c freesmpl.c showreset.c 
+TARGETS=self task syst notify_self whichpmu freesmpl showreset 
 
-TARGETS=simple_ear self task syst notify_self whichcpu ita_rr ita_opcode ita_btb \
-        freesmpl
+ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
+SRCS +=ita_rr.c ita_irr.c ita_opcode.c ita_btb.c 
+TARGETS +=ita_rr ita_irr ita_opcode ita_btb 
+endif
+
+ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
+SRCS +=ita2_opcode.c ita2_rr.c ita2_irr.c
+TARGETS +=ita2_opcode ita2_rr ita2_irr
+endif
 
 all: $(TARGETS)
 

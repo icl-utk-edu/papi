@@ -164,6 +164,7 @@ main(int argc, char **argv)
 	pfm_get_pmu_type(&type);
 	switch (type) {
 		case PFMLIB_ITANIUM_PMU:
+		case PFMLIB_ITANIUM2_PMU: break;
 		default: {
 			    char *model; 
 			         pfm_get_pmu_name(&model);

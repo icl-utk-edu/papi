@@ -1,5 +1,5 @@
 /*
- * pfmlib_common.c: set of functions common to all CPU models
+ * pfmlib_common.c: set of functions common to all PMU models
  *
  * Copyright (C) 2001-2002 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -36,14 +36,19 @@
 
 #include "pfmlib_priv.h"
 
+extern pfm_pmu_support_t itanium2_support;
 extern pfm_pmu_support_t itanium_support;
 extern pfm_pmu_support_t generic_support;
 
 static pfm_pmu_support_t *pmus[]=
 {
+#ifdef CONFIG_PFMLIB_ITANIUM2
+	&itanium2_support,
+#endif
 #ifdef CONFIG_PFMLIB_ITANIUM
 	&itanium_support,
 #endif
+
 #ifdef CONFIG_PFMLIB_GENERIC
 	&generic_support,	/* must always be last */
 #endif
@@ -83,17 +88,17 @@ pfm_set_options(pfmlib_options_t *opt)
 static char *pmu_names[]={
 	"generic",
 	"itanium",
-	NULL
+	"itanium2"
 };
 
-#define NB_PMU_TYPES	((sizeof(pmu_names)/sizeof(char *)) -1)
+#define NB_PMU_TYPES	((sizeof(pmu_names)/sizeof(char *)))
 
 int
 pfm_get_pmu_name_bytype(int type, char **name)
 {
 	if (name == NULL) return PFMLIB_ERR_INVAL;
 
-	if (type < 0 || type > NB_PMU_TYPES) return PFMLIB_ERR_INVAL;
+	if (type < 0 || type >= NB_PMU_TYPES) return PFMLIB_ERR_INVAL;
 
 	*name = pmu_names[type]; 
 
@@ -231,10 +236,7 @@ pfm_find_event_byvcode(int code, int *idx)
 	if (idx == NULL) return PFMLIB_ERR_INVAL;
 
 	for(i=0; i < pfm_current->pme_count; i++) {
-		int me;
-		if ((me=pfm_current->get_event_vcode(i)) == code){
-			 goto found;
-		}
+		if (pfm_current->get_event_vcode(i) == code) goto found;
 	}
 	return PFMLIB_ERR_NOTFOUND;
 found:
@@ -299,14 +301,14 @@ found:
 }
 
 int
-pfm_find_event_byvcode_next(int code, int i, int *next)
+pfm_find_event_byvcode_next(int vcode, int i, int *next)
 {
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (next == NULL) return PFMLIB_ERR_INVAL;
 
 	for(++i; i < pfm_current->pme_count; i++) {
-		if (pfm_current->get_event_vcode(i) == code) goto found;
+		if (pfm_current->get_event_vcode(i) == vcode) goto found;
 	}
 	return PFMLIB_ERR_NOTFOUND;
 found:
@@ -361,9 +363,7 @@ pfm_get_next_event(int i)
 {
 	if (PFMLIB_INITIALIZED() == 0) return -1;
 
-	if (i < 0) return -1;
-
-	if (i >= pfm_current->pme_count) return -1;
+	if (i < 0 || i >= pfm_current->pme_count-1) return -1;
 
 	return i+1;
 }
@@ -378,9 +378,9 @@ pfm_print_event_info(char *name, int (*pf)(const char *fmt,...))
 {
 	int (*find_next)(int code, int i, int *next);
 	long c;
-        int i, code, ret, ret2;
-	int full_name_used, code_is_used = 0;
-	int v, vbis;
+        int i, code, ret;
+	int code_is_used = 1, event_is_digit = 0;
+	int v;
 	unsigned int num;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
@@ -390,32 +390,23 @@ pfm_print_event_info(char *name, int (*pf)(const char *fmt,...))
 	/* we can't quite use pfm_findevent() because we need to try
 	 * both ways systematically.
 	 */
+	find_next = pfm_find_event_bycode_next;
 	if (isdigit(*name)) {
 		ret = pfm_gen_event_code(name, &num);
 		if (ret != PFMLIB_SUCCESS) return ret;
 
-		ret  = pfm_find_event_byvcode(num, &v);
-		ret2 = pfm_find_event_bycode(num, &vbis);
-		
+		ret = pfm_find_event_bycode(num, &v);
+		if (ret != PFMLIB_SUCCESS) {
+			find_next = pfm_find_event_byvcode_next;
+			ret  = pfm_find_event_byvcode(num, &v);
+			code_is_used = 0;
+		}
+		event_is_digit = 1;
 	} else {
 		ret  = pfm_find_event_byname(name, &v);
-		ret2 = PFMLIB_ERR_INVAL;
-	}
-	if (ret != PFMLIB_SUCCESS && ret2 != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTFOUND;
-
-	/*
-	 * This is code is to work around a tricky case
-	 * where code == vcode (when umask==0)
-	 */
-	if (ret != -1 && v != vbis) {
-		find_next = pfm_find_event_byvcode_next;
-	} else {
-		v = vbis;
-		code_is_used =1;
-		find_next = pfm_find_event_bycode_next;
 	}
 
-	full_name_used = !isdigit(*name) ? 1: 0;
+	if (ret != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTFOUND;
 
 	code = code_is_used ? pfm_current->get_event_code(v) : pfm_current->get_event_vcode(v);
 
@@ -423,7 +414,7 @@ pfm_print_event_info(char *name, int (*pf)(const char *fmt,...))
 		(*pf)(	"Name   : %s\n" 
 			"VCode  : 0x%lx\n"
 			"Code   : 0x%lx\n",
-			pfm_current->get_event_name(v),
+			pfm_current->get_event_name(v), 
 			pfm_current->get_event_vcode(v),
 			pfm_current->get_event_code(v));
 		
@@ -435,13 +426,47 @@ pfm_print_event_info(char *name, int (*pf)(const char *fmt,...))
 		}
 		(*pf)(	"]\n");
 
+		/* print PMU specific information */
 		if (pfm_config.current->print_info) {
 			pfm_config.current->print_info(v, pf);
 		}
-	} while (!full_name_used && (find_next(code, v, &v)) != PFMLIB_SUCCESS);
+	} while (event_is_digit && find_next(code, v, &v) == PFMLIB_SUCCESS);
 
 	return PFMLIB_SUCCESS;
 }
+
+int
+pfm_print_event_info_byindex(int v, int (*pf)(const char *fmt,...))
+{
+	long c;
+        int i;
+
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (v <0 || v >= pfm_current->pme_count || pf == NULL) return PFMLIB_ERR_INVAL;
+
+	(*pf)(	"Name   : %s\n" 
+		"VCode  : 0x%lx\n"
+		"Code   : 0x%lx\n",
+		pfm_current->get_event_name(v), 
+		pfm_current->get_event_vcode(v),
+		pfm_current->get_event_code(v));
+	
+	(*pf)(	"PMD/PMC: [ ");
+
+	c = pfm_current->get_event_counters(v);
+	for (i=0; c; i++, c>>=1 ) {
+		if (c & 0x1) (*pf)("%d ", i);
+	}
+	(*pf)(	"]\n");
+
+	/* print PMU specific information */
+	if (pfm_config.current->print_info) {
+		pfm_config.current->print_info(v, pf);
+	}
+	return PFMLIB_SUCCESS;
+}
+
 
 int
 pfm_dispatch_events(pfmlib_param_t *evt, pfarg_reg_t *pc, int *count)
@@ -459,6 +484,22 @@ pfm_get_num_counters(void)
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 	
 	return pfm_config.current->get_num_counters();
+}
+
+int
+pfm_get_impl_pmcs(unsigned long impl_pmcs[4])
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (impl_pmcs == NULL) return PFMLIB_ERR_INVAL;
+	return pfm_config.current->get_impl_pmcs(impl_pmcs);
+}
+
+int
+pfm_get_impl_pmds(unsigned long impl_pmds[4])
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (impl_pmds == NULL) return PFMLIB_ERR_INVAL;
+	return pfm_config.current->get_impl_pmds(impl_pmds);
 }
 
 static const char *pfmlib_err_list[]=
@@ -486,6 +527,7 @@ static const char *pfmlib_err_list[]=
 	"code range is not bundle-aligned"
 };
 static unsigned int pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
+
 const char *
 pfm_strerror(int code)
 {

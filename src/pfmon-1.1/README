@@ -1,15 +1,18 @@
             ------------------------------------------------------
-                                    pfmon-1.0:
+                                    pfmon-1.1:
 	                 a package to monitor performance 
-                                  for Linux/ia64
+                                  on Linux/ia64
             ------------------------------------------------------
 	  Copyright (c) 2001-2002 Hewlett-Packard Company
 	                Stephane Eranian <eranian@hpl.hp.com>
 	
 
-This package provides a library and a sample tool to monitor performance
+This package provides a library and a tool (pfmon) to monitor performance
 using the IA-64 Performance Monitoring Unit (PMU). This package relies
 on the Linux/ia64 kernel support for the PMU (perfmon).
+
+This version of pfmon and libpfm support BOTH the Itanium and Itanium2 (McKinley)
+processors.
 
           -----> YOU MUST at least HAVE kernel v2.4.18 or v2.5.3 <-----
 
@@ -17,16 +20,17 @@ In this package you will find:
 
 	- a generic helper library (libpfm) and header files (include)
 
-	- the pfmon tool (pfmon) which collects performance data on unmodified
+	- the pfmon tool (pfmon directory) which collects performance data on unmodified
 	  binaries or for the entire system (UP & SMP).
 
-	- a set of examples (examples) showing how the kernel and library can be
+	- a set of examples (examples directory) showing how the kernel and library can be
 	  used outside of pfmon.
 
-	- a small set of test programs (tests) including pfdbg to turn on/off 
+	- a small set of test programs (tests directory) including pfdbg to turn on/off 
 	  kernel perfmon debugging. 
 
-	- a simple script (scripts) to collect a cycle breakdown using pfmon.
+	- a simple script (scripts directory) to collect a cycle breakdown using pfmon 
+	  on Itanium.
 
-	- a user's guide (docs) for pfmon.
+	- a user's guide (docs directory) for pfmon for both Itanium and Itanium2.
 

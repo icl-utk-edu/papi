@@ -260,7 +260,7 @@ done:
 	memset(pc, 0, cnt*sizeof(pfarg_reg_t));
 
 	for (j=0; j < cnt ; j++ ) {
-		reg.pmu_reg    = 0; /* clear all */
+		reg.reg_val    = 0; /* clear all */
 		/* if not specified per event, then use default (could be zero: measure nothing) */
 		reg.pmc_plm    = evt->pfp_plm[j] ? evt->pfp_plm[j]: evt->pfp_dfl_plm; 
 		reg.pmc_oi     = 1; /* overflow interrupt */
@@ -268,11 +268,11 @@ done:
 		reg.pmc_es     = generic_pe[cnt_list[j]].pme_gen_entry_code.pme_gen_code.pme_code;
 
 		pc[j].reg_num   = assign[j]; 
-		pc[j].reg_value = reg.pmu_reg;
+		pc[j].reg_value = reg.reg_val;
 
 		if (PFMLIB_DEBUG()) {
 			printf("[cnt=0x%x,val=0x%lx,es=0x%x,plm=%d pm=%d] %s\n", 
-					assign[j], reg.pmu_reg, 
+					assign[j], reg.reg_val, 
 					reg.pmc_es,reg.pmc_plm, 
 					reg.pmc_pm,
 					generic_pe[cnt_list[j]].pme_name);

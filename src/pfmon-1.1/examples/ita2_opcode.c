@@ -1,5 +1,5 @@
 /*
- * ita_opcode.c - example of how to use the opcode matcher with the Itanium PMU
+ * ita2_opcode.c - example of how to use the opcode matcher with the Itanium2 PMU
  *
  * Copyright (C) 2001-2002 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -33,7 +33,7 @@
 #include <signal.h>
 
 #include <perfmon/pfmlib.h>
-#include <perfmon/pfmlib_itanium.h>
+#include <perfmon/pfmlib_itanium2.h>
 
 #define NUM_PMCS PMU_MAX_PMCS
 #define NUM_PMDS PMU_MAX_PMDS
@@ -72,7 +72,7 @@ main(void)
 	char *name;
 	pid_t pid = getpid();
 	pfmlib_param_t evt;
-	pfmlib_ita_param_t ita_param;
+	pfmlib_ita2_param_t ita2_param;
 	pfarg_reg_t pc[NUM_PMCS];
 	pfarg_reg_t pd[NUM_PMDS];
 	pfarg_context_t ctx[1];
@@ -89,7 +89,7 @@ main(void)
 	 * Let's make sure we run this on the right CPU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_ITANIUM_PMU) {
+	if (type != PFMLIB_ITANIUM2_PMU) {
 		char *model; 
 		pfm_get_pmu_name(&model);
 		fatal_error("this program does not work with the %s PMU\n", model);
@@ -110,7 +110,7 @@ main(void)
 	memset(ctx, 0, sizeof(ctx));
 
 	memset(&evt,0, sizeof(evt));
-	memset(&ita_param,0, sizeof(ita_param));
+	memset(&ita2_param,0, sizeof(ita2_param));
 
 	/*
 	 * because we use a model specific feature, we must initialize the
@@ -120,15 +120,15 @@ main(void)
 	 * that the model specific data structure is decent. You must set it manually
 	 * otherwise the model specific feature won't work.
 	 */
-	ita_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
-	evt.pfp_model       = &ita_param;
+	ita2_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+	evt.pfp_model       = &ita2_param;
 
 	/*
 	 * We indicate that we are using the PMC8 opcode matcher. This is required
 	 * otherwise the library add PMC8 to the list of PMC to pogram during
 	 * pfm_dispatch_events().
 	 */
-	ita_param.pfp_ita_pmc8.opcm_used = 1;
+	ita2_param.pfp_ita2_pmc8.opcm_used = 1;
 
 	/*
 	 * We want to match all the br.cloop in our test function.
@@ -159,16 +159,20 @@ main(void)
 	 * Depending on the level of optimization to compile this code, it may 
 	 * be that the count reported could be zero, if the compiler uses a br.cond 
 	 * instead of br.cloop.
+	 *
+	 *
+	 * The 0x1 sets the ig_ad field to make sure we ignore any range restriction.
+	 * Also bit 2 must always be set
 	 */
-	ita_param.pfp_ita_pmc8.pmc_val = 0x1400028003fff1f8;
+	ita2_param.pfp_ita2_pmc8.pmc_val = 0x1400028003fff1fa | 0x1;
 
 	/*
 	 * To count the number of occurence of this instruction, we must
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event("IA64_TAGGED_INST_RETIRED_PMC8",0, evt.pfp_evt) != PFMLIB_SUCCESS) {
-		fatal_error("Cannot find event IA64_TAGGED_INST_RETIRED_PMC8\n");
+	if (pfm_find_event("IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0, evt.pfp_evt) != PFMLIB_SUCCESS) {
+		fatal_error("Cannot find event IA64_TAGGED_INST_RETIRED_IBRP0_PMC8\n");
 	}
 
 	/*

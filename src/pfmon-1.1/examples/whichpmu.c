@@ -1,4 +1,6 @@
 /*
+ * whichpmu.c - example of how to figure out the host PMU model detected by pfmlib
+ *
  * Copyright (C) 2002 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
@@ -20,25 +22,35 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  */
-
 #include <sys/types.h>
-#include <stdlib.h>
 #include <stdio.h>
 
+#include <perfmon/pfmlib.h>
+
 int
-main(int argc, char **argv)
+main(void)
 {
-	unsigned long count;
-	double f = 0.0, g = 1.0;
-
-	count = argc > 1 ? strtoul(argv[1], NULL, 0) : 1;
-
-
-	while (count--) {
-		f = f + 2.0*g;
+	char *model;
+	/*
+	 * Initialize pfm library (required before we can use it)
+	 */
+	if (pfm_initialize() != PFMLIB_SUCCESS) {
+		printf("Can't initialize library\n");
+		return 1;
 	}
-	printf("f=%g\n", f);
-
+	/*
+	 * Now simply print the CPU model detected by pfmlib
+	 *
+	 * When the CPU model is not directly supported AND the generic support
+	 * is compiled into the library, the detected will yield "Generic" which
+	 * mean that only the architected features will be supported.
+	 *
+	 * This call can be used to tune applications based on the detected host
+	 * CPU model. This is useful because some features are CPU model specific,
+	 * such as address range restriction which is an Itanium feature.
+	 *
+	 */
+	pfm_get_pmu_name(&model);
+	printf("PMU model detected by pfmlib: %s\n", model); 
 	return 0;
 }
-

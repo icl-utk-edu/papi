@@ -37,28 +37,43 @@ EXEC_PREFIX=/usr/local
 # XXX: should split library and pfmon packages
 #
 
-# Configuration Paramaters for pfm library
+# Configuration Paramaters for libpfm library
 CONFIG_PFMLIB_GENERIC=y
 CONFIG_PFMLIB_ITANIUM=y
+CONFIG_PFMLIB_ITANIUM2=y
 
 # Configuration Paramaters for pfmon
 CONFIG_PFMON_GENERIC=y
 CONFIG_PFMON_ITANIUM=y
+CONFIG_PFMON_ITANIUM2=y
+
+# configuration for pfmon's sampling output formats
+# not all of them work with all PMU models
+CONFIG_PFMON_SMPL_FMT_RAW=y
+CONFIG_PFMON_SMPL_FMT_COMPACT=y
+CONFIG_PFMON_SMPL_FMT_DET_ITA=y
+CONFIG_PFMON_SMPL_FMT_BTB=y
+CONFIG_PFMON_SMPL_FMT_EXAMPLE=y
+CONFIG_PFMON_SMPL_FMT_DET_ITA2=y
 
 OPTIM=-O2
 
 #
 # you shouldn't have to touch anything beyond this point
 #
-CFLAGS=$(OPTIM) -Wall -g $(CONFIG_FLAGS)
-#LDFLAGS=-static
-MKDEP=makedepend
 
 #
 # The entire package can be compiled using 
 # ecc the Intel Itanium Compiler (beta 6.0)
 #
-CC=cc
+#CC=/opt/gcc3.1/bin/gcc -Wall
+#CC=ecc
+CC=gcc -Wall
+
+CFLAGS=$(OPTIM) -g $(CONFIG_FLAGS)
+LDFLAGS=
+MKDEP=makedepend
+
 
 LIBS=
 INSTALL=install

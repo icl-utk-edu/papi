@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2001 Hewlett-Packard Co
+# Copyright (C) 2001-2002 Hewlett-Packard Co
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # This file is part of pfmon, a sample tool to measure performance 
@@ -25,10 +25,6 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-ifeq ($(CONFIG_NUE_HACK),y)
-CFLAGS += -DNUE_HACK
-endif
-
 #
 # pfmusr.o is unsupported in this version
 #
@@ -37,33 +33,26 @@ OBJS=pfmlib_common.o
 #
 # list all library support modules
 #
-SUPP_OBJS = pfmlib_generic.o pfmlib_itanium.o
-
-#
-# list all events databases
-#
-SUPP_DB=itanium_events.db
-SUPP_DB_TARGETS=$(SUPP_DB:.db=.h)
+SUPP_OBJS = pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o
 
 ifeq ($(CONFIG_PFMLIB_GENERIC),y)
 CFLAGS    += -DCONFIG_PFMLIB_GENERIC
 OBJS += pfmlib_generic.o
-# no event database for generic
 endif
 
 ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 OBJS += pfmlib_itanium.o
 CFLAGS    += -DCONFIG_PFMLIB_ITANIUM
-DB        += itanium_events.db
+endif
+
+ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
+OBJS += pfmlib_itanium2.o
+CFLAGS    += -DCONFIG_PFMLIB_ITANIUM2
 endif
 
 INCDIR=-I$(PFM_INC_DIR) -I.
 
 TARGET=libpfm.a
-
-.SUFFIXES: .db .h
-.db.h:
-	./genpme.py $*.db $@
 
 all: check_support $(TARGET)
 
@@ -76,17 +65,16 @@ ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 pfmlib_itanium.o  : pfmlib_itanium.c itanium_events.h
 endif
 
+ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
+pfmlib_itanium2.o  : pfmlib_itanium2.c itanium2_events.h
+endif
+
 $(TARGET):  $(OBJS)
 	$(RM) $@
 	$(AR) qv $@ $(OBJS)
 
-#$(DB_TARGETS) : $(DB) genpme.py
-
-clean:
+clean distclean:
 	rm -f $(OBJS) $(SUPP_OBJS) $(TARGET)
-
-distclean: clean
-	rm -f $(SUPP_DB_TARGETS)
 
 depend:
 	$(MKDEP) $(SRCS)
@@ -94,7 +82,7 @@ depend:
 check_support:
 	@echo $(OBJS)
 	@echo -n checking support settings:
-ifeq ($(CONFIG_PFMLIB_GENERIC)$(CONFIG_PFMLIB_ITANIUM),nn)
+ifeq ($(CONFIG_PFMLIB_GENERIC)$(CONFIG_PFMLIB_ITANIUM)$(CONFIG_PFMLIB_ITANIUM2),nnn)
 	@echo " missing support in library Makefile"
 	@exit 1
 endif

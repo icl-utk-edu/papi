@@ -27,8 +27,9 @@ include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
 INCDIR=-I$(PFM_INC_DIR) -I.
+#LDFLAGS+=-static
 
-TARGETS=spectest pfdbg getpid una noploop specatest fpops exec um saxpy saxpyf
+TARGETS=spectest pfdbg getpid una noploop specatest fpops exec saxpy saxpyf itlb_test
 
 all: $(TARGETS)
 

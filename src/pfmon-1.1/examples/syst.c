@@ -168,7 +168,7 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+	if (perfmonctl(pid, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}

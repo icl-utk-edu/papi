@@ -41,7 +41,7 @@
  * architected PMC/PMD register structure
  */
 typedef union {
-	unsigned long pmu_reg;			/* generic PMD register */
+	unsigned long reg_val;			/* generic PMD register */
 	struct {
 		unsigned long pmc_plm:4;	/* privilege level mask */
 		unsigned long pmc_ev:1;		/* external visibility */
@@ -64,7 +64,7 @@ typedef union {
 extern inline void
 pfm_start(void)
 {
-	__asm__ __volatile__("sum psr.up;;" ::: "memory" );
+	__asm__ __volatile__("sum psr.up;;srlz.i;;" ::: "memory" );
 }
 #elif defined(INTEL_ECC_COMPILER)
 #define pfm_start()	__sum(1<<2)
@@ -79,7 +79,7 @@ extern void pfm_start(void);
 extern inline void
 pfm_stop(void)
 {
-	__asm__ __volatile__("rum psr.up;;" ::: "memory" );
+	__asm__ __volatile__("rum psr.up;;srlz.i;;" ::: "memory" );
 }
 #elif defined(INTEL_ECC_COMPILER)
 #define pfm_stop()	__rum(1<<2)
@@ -115,10 +115,10 @@ extern unsigned long pfm_get_pmd(unsigned long regnum);
 /* 
  * privilege level mask 
  */
-#define PFM_PLM0	1
-#define PFM_PLM1	2
-#define PFM_PLM2	4
-#define PFM_PLM3	8
+#define PFM_PLM0	0x1
+#define PFM_PLM1	0x2
+#define PFM_PLM2	0x4
+#define PFM_PLM3	0x8
 
 typedef struct {
 	int		pfp_evt[PMU_MAX_PMCS];	/* contains events indices */
@@ -150,6 +150,7 @@ extern int pfm_is_pmu_supported(int type);
 extern int pfm_force_pmu(int type);
 
 extern int pfm_print_event_info(char *name, int (*pf)(const char *fmt,...));
+extern int pfm_print_event_info_byindex(int idx, int (*pf)(const char *fmt,...));
 extern int pfm_find_eventbycode_next(int code, int start, int *next);
 extern int pfm_find_event_byvcode_next(int code, int start, int *next);
 extern int pfm_find_event(char *v, int retry, int *ev);
@@ -164,12 +165,15 @@ extern int pfm_get_event_name(int e, char **name);
 extern int pfm_get_event_code(int i, int *ev);
 extern int pfm_get_event_counters(int i, unsigned long *counters);
 extern const char *pfm_strerror(int code);
+extern int pfm_get_impl_pmcs(unsigned long impl_pmcs[4]);
+extern int pfm_get_impl_pmds(unsigned long impl_pmds[4]);
 
 /*
  * Types of PMU supported by libpfm
  */
 #define PFMLIB_GENERIC_PMU	 0	/* architected PMU */
-#define PFMLIB_ITANIUM_PMU	 1	/* Itanium family PMU */
+#define PFMLIB_ITANIUM_PMU	 1	/* Itanium PMU family */
+#define PFMLIB_ITANIUM2_PMU 	 2	/* Itanium2 PMU family */
 
 /*
  * pfmlib error codes

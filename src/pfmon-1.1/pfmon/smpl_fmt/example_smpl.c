@@ -37,7 +37,7 @@
 /*
  * if the format is specific to a CPU model, then you can include the pfmon
  * CPU model specific header file:
- * #include "pfmon_itanium.h"
+ * #include "pfmon_mckinley.h"
  */
 
 
@@ -60,19 +60,13 @@
  * Return:
  * 	 0: success
  * 	-1: error
- *
- * Important:
- * 	this routine should not use the stdio routine to print the results to the screen or file, use safe_fprintf() instead.
- * 	This routine avoids some locking problem in case pfmon is running system-wide SMP mode. This routine is called from
- * 	a SIGPROF signal handler and the ptread standard apparently stipulates that you cannot use STDIO routines from
- * 	a signal handler because of potential deadlock.
  */
 static int
 example_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 {
 	perfmon_smpl_hdr_t *hdr = csmpl->smpl_hdr;
 	perfmon_smpl_entry_t *ent = (perfmon_smpl_entry_t *)(hdr+1);
-	int fd = csmpl->smpl_fd;
+	FILE *fp = csmpl->smpl_fp;
 	unsigned long pos, msk;
 	pmu_reg_t *reg;
 	int i, j, ret;
@@ -84,7 +78,7 @@ example_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 
 	pos = (unsigned long)ent;
 
-	safe_fprintf(fd, "entries recorded=%lu smpl_regs=0x%lx\n", hdr->hdr_count, hdr->hdr_pmds[0]);
+	fprintf(fp, "entries recorded=%lu smpl_regs=0x%lx\n", hdr->hdr_count, hdr->hdr_pmds[0]);
 
 	/* 
 	 * print the raw value of each PMD
@@ -105,12 +99,7 @@ example_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 
 			if ((msk & 0x1) == 0) continue;
 
-			/*
-			 * safe_fprintf() returns:
-			 * 	 - number of character written if successful
-			 * 	 - 0 or -1 otherwise
-			 */
-			ret = safe_fprintf(fd, "0x%016lx ", reg->pmu_reg);
+			ret = fprintf(fp, "0x%016lx ", reg->reg_val);
 			if (ret <= 0) goto error;
 
 			/*
@@ -121,7 +110,7 @@ example_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 		/*
 		 * complete the line
 		 */
-		ret += safe_fprintf(fd, "\n");
+		ret += fprintf(fp, "\n");
 
 		/*
 		 * move to the next sampling entry using the entry_size field.
@@ -164,15 +153,15 @@ example_print_header(pfmon_smpl_ctx_t *csmpl)
 {
 	unsigned long msk;
 	int j, column = 1;
-	int fd = csmpl->smpl_fd;
+	FILE *fp = csmpl->smpl_fp;
 
-	safe_fprintf(fd, "# using example sampling output format\n");
+	fprintf(fp, "# using example sampling output format\n");
 
 	for(j=0, msk = options.smpl_regs; msk; msk >>=1, j++) {	
 
 		if ((msk & 0x1) == 0) continue;
 
-		safe_fprintf(csmpl->smpl_fd, "# column %u: PMD%d\n", column++, j);
+		fprintf(fp, "# column %u: PMD%d\n", column++, j);
 	}
 	return 0;
 }
@@ -234,7 +223,7 @@ pfmon_smpl_output_t example_smpl_output={
 		/*
 		 * a small description
 		 */
-		"Sampling output example. Any CPU models",
+		"Sampling output example. Any PMU models",
 		/*
 		 * what is the validate function. NULL is also a valid choice here
 		 */

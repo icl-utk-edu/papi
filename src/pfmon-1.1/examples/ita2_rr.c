@@ -1,7 +1,7 @@
 /*
- * ita_rr.c - example of how to use data range restriction with the Itanium PMU
+ * ita2_rr.c - example of how to use data range restriction with the Itanium2 PMU
  *
- * Copyright (C) 2001-2002 Hewlett-Packard Co
+ * Copyright (C) 2002 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * This file is part of pfmon, a sample tool to measure performance 
@@ -33,13 +33,13 @@
 #include <signal.h>
 
 #include <perfmon/pfmlib.h>
-#include <perfmon/pfmlib_itanium.h>
+#include <perfmon/pfmlib_itanium2.h>
 
 #ifdef __GNUC__
 extern inline void
 clear_psr_ac(void)
 {
-	__asm__ __volatile__("rum psr.up;;" ::: "memory" );
+	__asm__ __volatile__("rum psr.ac;;" ::: "memory" );
 }
 #elif defined(INTEL_ECC_COMPILER)
 #define clear_psr_ac()	__rum(1UL<<3)
@@ -52,9 +52,12 @@ clear_psr_ac(void)
 #define NUM_PMCS PMU_MAX_PMCS
 #define NUM_PMDS PMU_MAX_PMDS
 
+/*
+ * here we capture only misaligned_loads because it cannot
+ * be measured with misaligned_stores_retired at the same time
+ */
 static char *event_list[]={
 	"misaligned_loads_retired",
-	"misaligned_stores_retired",
 	NULL
 };
 
@@ -108,7 +111,7 @@ main(int argc, char **argv)
 	int ret, cnt, i, type = 0;
 	pid_t pid = getpid();
 	pfmlib_param_t evt;
-	pfmlib_ita_param_t ita_param;
+	pfmlib_ita2_param_t ita2_param;
 	pfarg_reg_t pc[NUM_PMCS];
 	pfarg_reg_t pd[NUM_PMDS];
 	pfarg_dbreg_t dbr[8];
@@ -126,7 +129,7 @@ main(int argc, char **argv)
 	 * Let's make sure we run this on the right CPU family
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_ITANIUM_PMU) {
+	if (type != PFMLIB_ITANIUM2_PMU) {
 		char *model; 
 		pfm_get_pmu_name(&model);
 		fatal_error("this program does not work with %s PMU\n", model);
@@ -166,7 +169,7 @@ main(int argc, char **argv)
 	 * specific features here. so the pfp_model is NULL.
 	 */
 	memset(&evt,0, sizeof(evt));
-	memset(&ita_param,0, sizeof(ita_param));
+	memset(&ita2_param,0, sizeof(ita2_param));
 
 
 	/*
@@ -177,8 +180,8 @@ main(int argc, char **argv)
 	 * that the model specific data structure is decent. You must set it manually
 	 * otherwise the model specific feature won't work.
 	 */
-	ita_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
-	evt.pfp_model       = &ita_param;
+	ita2_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+	evt.pfp_model       = &ita2_param;
 
 	/*
 	 * find requested event
@@ -209,28 +212,22 @@ main(int argc, char **argv)
 	/*
 	 * We use the library to figure out how to program the debug registers
 	 * to cover the data range we are interested in. The rr_end parameter
-	 * must point to the byte after the last of the range (C-style range).
+	 * must point to the byte after the last element of the range (C-style range).
 	 *
 	 * Because of the masking mechanism and therefore alignment constraints used to implement 
 	 * this feature, it may not be possible to exactly cover a given range. It may be that
 	 * the coverage exceeds the desired range. So it is possible to capture noise if
-	 * the surrounding addresses are also heavily used. You can figure out, the actual 
-	 * start and end offsets of the generated range by checking the rr_soff and rr_eoff fields
-	 * when coming back from the library call.
+	 * the surrounding addresses are also heavily used. You can figure out by how much the
+	 * actual range is off compared to the requested range by checking the rr_soff and rr_eoff 
+	 * fields on return from the library call.
 	 *
-	 * Upon return, the rr_dbr array is programmed and the number of entries used
-	 * to cover the range is in rr_nbr_used. 
+	 * Upon return, the rr_dbr array is programmed and the number of debug registers (not pairs)
+	 * used to cover the range is in rr_nbr_used. 
 	 */
 
-	/*
-	 * We indicate that we are using a Data Range Restriction feature.
-	 * In this particular case this will cause, pfm_dispatch_events() to 
-	 * add pmc13 to the list of PMC registers to initialize and the 
-	 */
-
-	ita_param.pfp_ita_drange.rr_used = 1;
-	ita_param.pfp_ita_drange.rr_limits[0].rr_start = range_start;
-	ita_param.pfp_ita_drange.rr_limits[0].rr_end   = range_end;
+	ita2_param.pfp_ita2_drange.rr_used = 1;
+	ita2_param.pfp_ita2_drange.rr_limits[0].rr_start = range_start;
+	ita2_param.pfp_ita2_drange.rr_limits[0].rr_end   = range_end;
 
 
 	/*
@@ -247,9 +244,9 @@ main(int argc, char **argv)
 	       "start_offset:-0x%lx end_offset:+0x%lx\n", 
 			range_start, 
 			range_end, 
-			ita_param.pfp_ita_drange.rr_nbr_used >> 1, 
-			ita_param.pfp_ita_drange.rr_limits[0].rr_soff, 
-			ita_param.pfp_ita_drange.rr_limits[0].rr_eoff);
+			ita2_param.pfp_ita2_drange.rr_nbr_used >> 1, 
+			ita2_param.pfp_ita2_drange.rr_limits[0].rr_soff, 
+			ita2_param.pfp_ita2_drange.rr_limits[0].rr_eoff);
 
 	printf("fake data range: [0x%016lx-0x%016lx)\n", 
 			(unsigned long)test_data_fake,
@@ -294,7 +291,7 @@ main(int argc, char **argv)
 	 * IMPORTANT: programming the debug register MUST always be done before the PMCs
 	 * otherwise the kernel will fail on PFM_WRITE_PMCS. This is for security reasons.
 	 */
-	if (perfmonctl(pid, PFM_WRITE_DBRS, ita_param.pfp_ita_drange.rr_br, ita_param.pfp_ita_drange.rr_nbr_used) == -1) {
+	if (perfmonctl(pid, PFM_WRITE_DBRS, ita2_param.pfp_ita2_drange.rr_br, ita2_param.pfp_ita2_drange.rr_nbr_used) == -1) {
 		fatal_error( "child: perfmonctl error PFM_WRITE_DBRS errno %d\n",errno);
 	}
 
@@ -351,9 +348,9 @@ main(int argc, char **argv)
 	 * be in PMD4. Not all events can be measured by any monitor. That's why
 	 * we need to use the pc[] array to figure out where event i was allocated.
 	 *
-	 * For this example, we expect to see a value of 1 for both misaligned loads
-	 * and misaligned stores. But it can be two when the test_data and test_data_fake
-	 * are allocate very close from each other and the range created with the debug
+	 * For this example, we expect to see a value of 1 for misaligned loads.
+	 * But it can be two when the test_data and test_data_fake
+	 * are allocated very close from each other and the range created with the debug
 	 * registers is larger then test_data.
 	 *
 	 */

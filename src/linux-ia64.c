@@ -579,7 +579,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
       if (flop_hack.pmc_es == 0xa)
 	readem[i].pfr_reg.reg_value = readem[i].pfr_reg.reg_value * 4;
 #else
-      flop_hack.pmu_reg = machdep->pc[i].reg_value;
+      flop_hack.reg_val = machdep->pc[i].reg_value;
       if (flop_hack.pmc_es == 0xa)
 	readem[i].reg_value = readem[i].reg_value * 4;
 #endif

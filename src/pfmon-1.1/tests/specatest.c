@@ -34,6 +34,7 @@
 #include <perfmon/pfmlib.h>
 
 #define ITA_EVENT_NAME "ALAT_INST_FAILED_CHKA_LDC_ALL"
+#define MCK_EVENT_NAME "INST_FAILED_CHKA_LDC_ALAT_ALL"
 
 #define RESET_VAL  (~0UL)
 
@@ -170,6 +171,9 @@ main(int argc, char **argv)
 	switch (type) {
 		case PFMLIB_ITANIUM_PMU:
 			event = ITA_EVENT_NAME;
+			break;
+		case PFMLIB_ITANIUM2_PMU:
+			event = MCK_EVENT_NAME;
 			break;
 		default: {
 			    char *model; 

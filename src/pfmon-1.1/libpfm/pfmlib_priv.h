@@ -23,6 +23,13 @@
 #ifndef __PFMLIB_PRIV_H__
 #define __PFMLIB_PRIV_H__
 
+#if defined(__ECC) && defined(__INTEL_COMPILER)
+#define INTEL_ECC_COMPILER	1
+/* if you do not have this file, your compiler is too old */
+#include <ia64intrin.h>
+#endif
+
+
 typedef struct {
 	char 		*name;
 	int		pmu_type;
@@ -35,6 +42,8 @@ typedef struct {
 	int 		(*dispatch_events)(pfmlib_param_t *p, pfarg_reg_t *pc, int *count);
 	int		(*get_num_counters)(void);
 	int 		(*cpu_detect)(void);
+	int		(*get_impl_pmcs)(unsigned long impl_pmcs[4]);
+	int		(*get_impl_pmds)(unsigned long impl_pmds[4]);
 } pfm_pmu_support_t;
 
 typedef struct {
@@ -62,6 +71,9 @@ extern void pfm_vbprintf(char *fmt,...);
 #define DPRINT(a)
 #endif
 
+#define ALIGN_DOWN(a,p)	((a) & ~((1UL<<(p))-1))
+#define ALIGN_UP(a,p)	((((a) + ((1UL<<(p))-1))) & ~((1UL<<(p))-1))
+
 typedef struct {
 	unsigned long db_mask:56;
 	unsigned long db_plm:4;
@@ -84,6 +96,8 @@ ia64_get_cpuid (unsigned long regnum)
 	asm ("mov %0=cpuid[%r1]" : "=r"(r) : "rO"(regnum));
 	return r;
 }
+#elif defined(INTEL_ECC_COMPILER)
+#define ia64_get_cpuid(regnum)	__getIndReg(_IA64_REG_INDR_CPUID, regnum)
 #else
 #error "need to define macro to get cpuid[] registers"
 #endif

@@ -29,17 +29,17 @@ static union {
 static int
 do_una(int argc, char **argv)
 {
-	unsigned long *l, v;
+	unsigned int *l, v;
 	static int called;
 
 	called++;
-	l = (unsigned long *)(messy.c_tab+1);
+	l = (unsigned int *)(messy.c_tab+1);
 
 	if (((unsigned long)l & 0x1) == 0) {
 		printf("Data is not unaligned, can't run test\n");
 		return  PFM_TEST_INVALID;
 	}
-printf("l=%p\n", l);
+
 	v = *l;
 	v++;
 	*l = v;

@@ -44,10 +44,14 @@
 #define PFMON_FORCED_GEN	"pfmon_gen"
 
 
+extern pfmon_support_t pfmon_itanium2;
 extern pfmon_support_t pfmon_itanium;
 extern pfmon_support_t pfmon_generic;
 
 static pfmon_support_t *pfmon_cpus[]={
+#ifdef CONFIG_PFMON_ITANIUM2
+	&pfmon_itanium2,
+#endif
 #ifdef CONFIG_PFMON_ITANIUM
 	&pfmon_itanium,
 #endif
@@ -78,7 +82,7 @@ print_results(pfarg_reg_t *pd, pfmon_smpl_ctx_t *csmpl)
 	char filename[PFMON_MAX_FILENAME_LEN];
 
 	if (options.opt_outfile) {
-		if (options.opt_syst_wide && options.opt_aggregate_res == 0) {
+		if (options.opt_syst_wide && options.opt_aggregate_res == 0 && is_regular_file(options.opt_outfile)) {
 			sprintf(filename, "%s.cpu%d", options.opt_outfile, find_cpu(getpid()));
 		} else {
 			strcpy(filename, options.opt_outfile);
@@ -99,7 +103,7 @@ print_results(pfarg_reg_t *pd, pfmon_smpl_ctx_t *csmpl)
 	}	
 
 	if (options.opt_with_header) 
-		print_standard_header(fileno(fp), options.opt_aggregate_res ? 
+		print_standard_header(fp, options.opt_aggregate_res ? 
 					  options.cpu_mask : csmpl->cpu_mask);
 
 
@@ -123,10 +127,7 @@ print_results(pfarg_reg_t *pd, pfmon_smpl_ctx_t *csmpl)
 
 		counter2str(pd[i].reg_value, counter_str);
 
-		fprintf(fp, "%s %26s %s\n", 
-			prefix, 
-			counter_str,
-			name);
+		fprintf(fp, "%s %26s %s\n", prefix, counter_str, name);
 	}
 
 	if (fp && fp != stdout) fclose(fp);
@@ -173,6 +174,14 @@ install_counters(int pid, pfmlib_param_t *evt, pfarg_reg_t *pc, int count)
 
 	}
 
+	if (options.opt_debug) {
+		for(i=0; i < evt->pfp_count; i++) {
+			debug_print("install_counters: pmc%lu reset_pmds=0x%lx\n",
+					pc[i].reg_num,
+					pc[i].reg_reset_pmds[0]);
+		}
+	}
+
 
 #if 0
 	if (options.opt_debug) {
@@ -188,14 +197,14 @@ install_counters(int pid, pfmlib_param_t *evt, pfarg_reg_t *pc, int count)
 	 * now program the PMC registers
 	 */
 	if (perfmonctl(pid, PFM_WRITE_PMCS, pc, count) == -1) {
-		warning("child: perfmonctl error WRITE_PMCS %s\n",strerror(errno));
+		warning("install_counters: perfmonctl error WRITE_PMCS %s\n",strerror(errno));
 		return -1;
 	}
 	/*
 	 * and the PMD registers
 	 */
 	if (perfmonctl(pid, PFM_WRITE_PMDS, pd, evt->pfp_count) == -1) {
-		warning( "child: perfmonctl error WRITE_PMDS %s\n", strerror(errno));
+		warning( "install_counters: perfmonctl error WRITE_PMDS %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -223,6 +232,11 @@ do_measurements(pfmlib_param_t *evt, char **argv)
 	if (ret != PFMLIB_SUCCESS) {
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
+	/*
+	 * in case we just want to check for a valid event combination, we
+	 * exit here
+	 */
+	if (options.opt_check_evt_only) exit(0);
 
 #ifdef PFMON_DEBUG	
 	if (options.opt_debug) {
@@ -277,24 +291,46 @@ do_measurements(pfmlib_param_t *evt, char **argv)
 				     : measure_per_task(evt, ctx, pc, count, argv);
 }
 
-void
-pfmon_list_all_events(char *pattern)
+static void
+show_detailed_event_name(int i, char *name)
+{
+	unsigned long counters;
+	int code;
+
+	pfm_get_event_code(i, &code);
+	pfm_get_event_counters(i, &counters);
+	printf("%s code=0x%02x counters=0x%lx ", name, code, counters); 
+	if (pfmon_current->pfmon_show_detailed_event_name) {
+		(*pfmon_current->pfmon_show_detailed_event_name)(i);
+	}
+	putchar('\n');
+}
+
+/*
+ * mode=0 : just print event name
+ * mode=1 : print name + other information (some of which maybe model specific)
+ */
+static void
+pfmon_list_all_events(char *pattern, int mode)
 {
 	char *name;
 	regex_t preg;
 	int i;
 
 	if (pattern) {
+		int done = 0;
+
 		if (regcomp(&preg, pattern, REG_ICASE|REG_NOSUB)) {
 			fatal_error("error in regular expression for event \"%s\"\n", pattern);
 		}
-	}
-	if (pattern) {
-		int done = 0;
+
 		for(i=pfm_get_first_event(); i != -1; i = pfm_get_next_event(i)) {
 			pfm_get_event_name(i, &name);
 			if (regexec(&preg, name, 0, NULL, 0) == 0) {
-				printf("%s\n", name);
+				if (mode == 0) 
+					printf("%s\n", name);
+				else
+					show_detailed_event_name(i, name);
 				done = 1;
 			}
 		}
@@ -302,7 +338,11 @@ pfmon_list_all_events(char *pattern)
 	} else {
 		for(i=pfm_get_first_event(); i != -1; i = pfm_get_next_event(i)) {
 			pfm_get_event_name(i, &name);
-			printf("%s\n", name);
+			if (mode == 0) 
+				printf("%s\n", name);
+			else
+				show_detailed_event_name(i, name);
+
 		}
 	}
 }
@@ -316,8 +356,8 @@ static struct option pfmon_common_options[]={
 	{ "help", 0, 0, 6 },
 	{ "version", 0, 0, 7 },
 	{ "outfile", 1, 0, 8 },
-	{ "follow-fork", 0, 0, 9},
-	{ "list-supported-cpus", 0, 0, 10},
+	{ "long-show-events", 2, 0, 9 },
+	{ "info", 0, 0, 10},
 	{ "smpl-entries", 1, 0, 11},
 	{ "smpl-outfile", 1, 0, 12},
 	{ "long-smpl-periods", 1, 0, 13},
@@ -329,19 +369,21 @@ static struct option pfmon_common_options[]={
 	{ "symbol-file", 1, 0, 19},
 	{ "smpl-output-format", 1, 0, 20},
 	{ "smpl-output-info", 1, 0, 21},
+	{ "sysmap-file", 1, 0, 22},
 
 	{ "verbose", 0, &options.opt_verbose, 1 },
 	{ "append", 0, &options.opt_append, 1},
 	{ "overflow-block",0, &options.opt_block, 1},
-	{ "system-wide", 0, &options.opt_syst_wide, 0x1},
+	{ "system-wide", 0, &options.opt_syst_wide, 1},
 	{ "debug", 0, &options.opt_debug, 1 },
 	{ "aggregate-results", 0, &options.opt_aggregate_res, 1 },
 
-	{ "with-header", 0, &options.opt_with_header, 0x1},
-	{ "smpl-no-entry-header", 0, &options.opt_no_ent_header, 0x1},
-	{ "counter-format-us",0, &options.opt_print_cnt_mode, 1},
-	{ "counter-format-eu",0, &options.opt_print_cnt_mode, 2},
-	{ "counter-format-hex",0, &options.opt_print_cnt_mode, 3},
+	{ "with-header", 0, &options.opt_with_header, 1},
+	{ "us-counter-format",0, &options.opt_print_cnt_mode, 1},
+	{ "eu-counter-format",0, &options.opt_print_cnt_mode, 2},
+	{ "hex-counter-format",0, &options.opt_print_cnt_mode, 3},
+	{ "show-time",0, &options.opt_show_rusage, 1},
+	{ "check-events-only",0, &options.opt_check_evt_only, 1},
 	{ 0, 0, 0, 0}
 };
 
@@ -354,34 +396,38 @@ usage(char **argv)
 
 	printf(	"-h, --help\t\t\t\tdisplay this help and exit\n"
 		"-V, --version\t\t\t\toutput version information and exit\n"
-		"-l [regex], --show-events[=regex]\t\t\tdisplay all or subset of supported events\n"
+		"-l[regex], --show-events[=regex]\tdisplay all or a matching subset of the events\n"
+		"--long-show-events[=regex]\t\tdisplay all or a matching subset of the events with info\n"
 		"-i event, --event-info=event\t\tdisplay information about an event (numeric code or regex)\n"
 		"-u, --user-level\t\t\tmonitor at the user level for all events\n"
 		"-k, --kernel-level\t\t\tmonitor at the kernel level for all events\n"
 		"-e, --events=ev1,ev2,...\t\tselect events to monitor (no space)\n"
-		"-L,--list-supported-cpus\t\tlist supported CPU models and detected host CPU\n"
+		"-I,--info\t\t\t\tlist supported PMU models and compiled in sampling output formats\n"
 		"-t secs, --session-timeout=secs\t\tduration of the system wide session in seconds\n"
-		"-S format, --smpl-output-info=format\t\tdisplay information about a sampling output format\n"
+		"-S format, --smpl-output-info=format\tdisplay information about a sampling output format\n"
 		"--debug\t\t\t\t\tenable debug prints\n"
 		"--verbose\t\t\t\tprint more information during execution\n"
 		"--outfile=filename\t\t\tprint results in a file\n"
 		"--append\t\t\t\tappend results to outfile\n"
-		"--overflow-block\t\t\tblock the task on counter overflow\n"
+		"--overflow-block\t\t\tblock the task when sampling buffer is full\n"
 		"--system-wide\t\t\t\tcreate a system wide monitoring session\n"
 		"--smpl-outfile=filename\t\t\tfile to save the sampling results\n"
 		"--smpl-entries=val\t\t\tset number of entries for sampling buffer\n"
 		"--long-smpl-periods=val1,val2,...\tset sampling period after user notification\n"
 		"--short-smpl-periods=val1,val2,...\tset sampling period\n"
 		"--with-header\t\t\t\tgenerate a header for results\n"
-		"--smpl-no-entry-header\t\t\tdo not generate a cpu,pid,tstamp header in sampling entries\n"
 		"--cpu-mask=0xn\t\t\t\tbitmask indicating on which CPU to start system wide monitoring\n"
 		"--aggregate-results\t\t\taggregate counts and sampling buffer outputs for multi CPU monitoring\n"
 		"--trigger-address=addr\t\t\tdelay monitoring until addr (code) is reached\n"
 		"--priv-levels=lvl1,lvl2,...\t\tset privilege level per event (lvlX=[u|k|uk])\n"
-		"--counter-format-us\t\t\tprint counters using commas (1,024)\n"
-		"--counter-format-eu\t\t\tprint counters using points (1.024)\n"
-		"--counter-format-hex\t\t\tprint counters in hexadecimal (0x400)\n"
+		"--us-counter-format\t\t\tprint counters using commas (1,024)\n"
+		"--eu-counter-format\t\t\tprint counters using points (1.024)\n"
+		"--hex-counter-format\t\t\tprint counters in hexadecimal (0x400)\n"
 		"--smpl-output-format=fmt\t\tselect fmt as sampling output format, use -L to list formats\n"
+		"--show-time\t\t\t\tshow real,user, and system time for the command executed\n"
+		"--symbol-file=filename\t\t\tELF image containing a symbol table\n"
+		"--sysmap-file=filename\t\t\tSystem.map-format file containing a symbol table\n"
+		"--check-events-only\t\t\tverify combination of events and exit (no measurement)\n"
 	);
 }
 
@@ -470,7 +516,7 @@ pfmon_check_perfmon(int info_mode)
 		fatal_error("perfmon version mistmatch, must have at least %u.x\n", 
 			    PFM_VERSION_MAJOR(PFM_VERSION));
 	}
-
+#if 0
 	if (options.opt_verbose || info_mode) {
 		printf("kernel perfmon version v%u.%u (sampling format v%u.%u)\n", 
 			PFM_VERSION_MAJOR(ft.ft_version),
@@ -479,6 +525,7 @@ pfmon_check_perfmon(int info_mode)
 			PFM_VERSION_MINOR(ft.ft_smpl_version)
 		); 
 	}
+#endif
 	options.pfm_version      = ft.ft_version;
 	options.pfm_smpl_version = ft.ft_smpl_version;
 }
@@ -517,7 +564,7 @@ pfmon_print_event_info(char *event)
 	for(i=pfm_get_first_event(); i != -1; i = pfm_get_next_event(i)) {
 		pfm_get_event_name(i, &name);
 		if (regexec(&preg, name, 0, NULL, 0) == 0) {
-			pfm_print_event_info(name, printf);
+			pfm_print_event_info_byindex(i, printf);
 			done = PFMLIB_SUCCESS;
 		}
 	}
@@ -566,7 +613,7 @@ main(int argc, char **argv)
 
 	load_config_file();
 
-	while ((c=getopt_long(argc, argv,"+vkhue:Ll::i:Vt:S:", pfmon_cmd_options, 0)) != -1) {
+	while ((c=getopt_long(argc, argv,"+vkhue:Il::i:Vt:S:", pfmon_cmd_options, 0)) != -1) {
 		switch(c) {
 			case   0: continue; /* fast path for options */
 
@@ -577,14 +624,12 @@ main(int argc, char **argv)
 				exit(pfmon_print_event_info(optarg));
 			case   2:
 			case 'l':
-				pfmon_list_all_events(optarg);
+				pfmon_list_all_events(optarg, 0);
 				exit(0);
-
 			case   3:
 			case 'k':
 				options.opt_plm |= PFM_PLM0;
 				break;
-
 			case   4:
 			case 'u':
 				options.opt_plm |= PFM_PLM3;
@@ -594,7 +639,6 @@ main(int argc, char **argv)
 				if (evt.pfp_count) fatal_error("events already defined\n");
 				options.monitor_count = gen_event_list(optarg, options.monitor_events);
 				break;
-
 			case   6:
 			case 'h':
 				usage(argv);
@@ -609,10 +653,10 @@ main(int argc, char **argv)
 				options.opt_outfile = optarg;
 				break;
 			case   9:
-				warning("ignoring the --follow-fork option: not yet available");
-				break;
+				pfmon_list_all_events(optarg, 1);
+				exit(0);
 			case  10:
-			case 'L':
+			case 'I':
 				pfmon_show_info();
 				exit(0);
 			case  11:
@@ -660,6 +704,13 @@ main(int argc, char **argv)
 				fine_priv_lvl_done = 1;
 				break;
 			case 19 :
+				if (options.symbol_file) {
+					if (options.opt_sysmap_syms)
+						fatal_error("Cannot use --sysmap-file and --symbol-file at the same time\n");
+					fatal_error("symbol file already defined\n");
+				}
+				if (*optarg == '\0') 
+					fatal_error("you must provide a filename for --symbol-file\n");
 				options.symbol_file = optarg;
 				break;
 			case 20:
@@ -676,6 +727,18 @@ main(int argc, char **argv)
 					fatal_error("invalid sampling output format %s: %s\n", optarg, pfm_strerror(r));
 				  pfmon_smpl_output_info(smpl_output);
 				  exit(0);
+			case 22 :
+				if (options.symbol_file) {
+					if (options.opt_sysmap_syms == 0)
+						fatal_error("Cannot use --sysmap-file and --symbol-file at the same time\n");
+					fatal_error("sysmap file already defined\n");
+				}
+				if (*optarg == '\0') 
+					fatal_error("you must provide a filename for --sysmap-file\n");
+				options.opt_sysmap_syms = 1;
+				options.symbol_file = optarg;
+				break;
+
 			default:
 				if (pfmon_current->pfmon_parse_options == NULL ||
 				     pfmon_current->pfmon_parse_options(c, optarg, &evt) == -1)
@@ -690,7 +753,7 @@ main(int argc, char **argv)
 	 */
 	if (options.opt_debug) pfmlib_options.pfm_debug = 1;
 
-	if (optind == argc && options.opt_syst_wide == 0)
+	if (optind == argc && options.opt_syst_wide == 0 && options.opt_check_evt_only == 0)
 		fatal_error("you need to specify a command to measure\n");
 
 	if (options.opt_syst_wide == 0 && options.cpu_mask)
@@ -714,13 +777,13 @@ main(int argc, char **argv)
 		options.cpu_mask = new_mask;
 
 		if (options.cpu_mask == 0UL) options.cpu_mask = max_cpu_mask;
-	} else if (options.symbol_file == NULL) {
-		/*
-		 * in per task mode, try to use the command to get the symbols
-		 * XXX: require absolute path
-		 */
-		options.symbol_file = argv[optind];
-	}
+	} 
+
+	/*
+	 * try to use the command to get the symbols
+	 * XXX: require absolute path
+	 */
+	if (options.symbol_file == NULL) options.symbol_file = argv[optind];
 
 	/*
 	 * make sure we do at least one measure

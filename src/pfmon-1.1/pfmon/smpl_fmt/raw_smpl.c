@@ -43,13 +43,13 @@ raw_process_smpl_buffer(pfmon_smpl_ctx_t *csmpl)
 	size_t sz;
 
 	if (*csmpl->smpl_entry == 0) {
-		if (write(csmpl->smpl_fd, hdr, sizeof(*hdr)) < sizeof(*hdr)) goto error;
+		if (write(fileno(csmpl->smpl_fp), hdr, sizeof(*hdr)) < sizeof(*hdr)) goto error;
 		*csmpl->smpl_entry = 1;
 	}
 
 	sz = hdr->hdr_entry_size*hdr->hdr_count;
 
-	if (write(csmpl->smpl_fd, (hdr+1), sz) != sz) goto error;
+	if (write(fileno(csmpl->smpl_fp), (hdr+1), sz) != sz) goto error;
 
 	return 0;
 error:

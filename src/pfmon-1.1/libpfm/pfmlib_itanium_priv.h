@@ -61,6 +61,7 @@ typedef struct {
 	unsigned long	 	pme_counters;		/* supported counters */
 	unsigned long		pme_maxincr;
 	pme_ita_qualifiers_t	pme_qualifiers;
+	char			*pme_desc;
 } pme_ita_entry_t;
 
 /*

@@ -32,7 +32,9 @@
 #include <time.h>
 #include <ctype.h>
 #include <sys/utsname.h>
+#include <sys/resource.h>
 #include <sys/ptrace.h>
+#include <sys/stat.h>
 #include <asm/ptrace_offsets.h>
 
 #include "pfmon.h"
@@ -51,40 +53,6 @@
  * a pthread to call exit but pthread_exit.
  */
 static void (*pfmon_exit_func)(int);
-
-static void
-extract_va_mask(unsigned long *mask)
-{
-	FILE *fp;	
-	char *p;
-	unsigned long val = PFMON_DFL_VA_IMPL_BITS;
-	char buffer[64];
-
-#ifdef NUE_HACK
-	fp = fopen("/proc/pal/cpu0/vm_info", "r");
-	if (fp == NULL)
-		fp = fopen("/tmp/pal/cpu0/vm_info", "r");
-	else
-#endif
-	fp = fopen("/proc/pal/cpu0/vm_info", "r");
-	if (fp == NULL) goto error;
-
-	for (;;) {
-		p  = fgets(buffer, sizeof(buffer)-1, fp);
-		if (p == NULL) break;
-
-		p = strchr(buffer, ':');
-		if (p == NULL) goto error;
-
-		*p = '\0'; 
-
-		if (!strncmp("Virtual Address Space", buffer, 21))
-			val = atoi(p+2);
-	}
-error:
-	if (fp) fclose(fp);
-	*mask = ((1UL << val) - 1) | (7UL << 61);
-}
 
 static void
 extract_dbr_info(unsigned long *ndbrs, unsigned long *nibrs)
@@ -197,7 +165,7 @@ error:
 void
 extract_pal_info(program_options_t *options)
 {
-	extract_va_mask(&options->va_impl_mask);
+	//extract_va_mask(&options->va_impl_mask);
 	extract_dbr_info(&options->ndbrs, &options->nibrs);
 	extract_max_counters(&options->max_counters);
 }
@@ -278,9 +246,9 @@ priv_level_str(unsigned long plm)
  * XXX: not safe to call from signal handler (stdio lock)
  */
 void
-print_palinfo(int fd, int cpuid)
+print_palinfo(FILE *fp, int cpuid)
 {
-	FILE *fp;	
+	FILE *fp1;	
 	char fn[64], *p;
 	char buffer[64], *value = NULL;
 	int cache_lvl = 0;
@@ -288,10 +256,10 @@ print_palinfo(int fd, int cpuid)
 	int lsz=0, st_lat=0, sz=0;
 
 	sprintf(fn, "/proc/pal/cpu%d/version_info", cpuid);
-	fp = fopen(fn, "r");
-	if (fp == NULL) return;
+	fp1 = fopen(fn, "r");
+	if (fp1 == NULL) return;
 	for (;;) {
-		p  = fgets(buffer, 64, fp);
+		p  = fgets(buffer, 64, fp1);
 		if (p == NULL) break;
 
 		p = strchr(buffer, ':');
@@ -302,16 +270,16 @@ print_palinfo(int fd, int cpuid)
 			buffer[5] = '\0';
 			p = strchr(value, ' ');
 			if (p) *p = '\0';
-			safe_fprintf(fd, "#\t%s: %s\n", buffer, value);
+			fprintf(fp, "#\t%s: %s\n", buffer, value);
 		}
 	}
-	fclose(fp);
+	fclose(fp1);
 
 	sprintf(fn, "/proc/pal/cpu%d/cache_info", cpuid);
-	fp = fopen(fn, "r");
-	if (fp == NULL) return;
+	fp1 = fopen(fn, "r");
+	if (fp1 == NULL) return;
 	for (;;) {	
-		p  = fgets(buffer, 64, fp);
+		p  = fgets(buffer, 64, fp1);
 		if (p == NULL) break;
 
 		/* skip  blank lines */
@@ -338,7 +306,7 @@ print_palinfo(int fd, int cpuid)
 		}
 		if (!strncmp("Unique caches",buffer, 13)) {
 			int s = atoi(value);
-			safe_fprintf(fd, "#\tCache levels: %d Unique caches: %d\n", cache_lvl, s);
+			fprintf(fp, "#\tCache levels: %d Unique caches: %d\n", cache_lvl, s);
 			continue;
 		}
 		/* skip tab */
@@ -357,12 +325,12 @@ print_palinfo(int fd, int cpuid)
 		}
 		if (!strncmp("Load latency", p, 12)) {
 			int s = atoi(value);
-			safe_fprintf(fd, "#\t%s: %8d bytes, line %3d bytes, load_lat %3d, store_lat %3d\n", 
-					cache_name, sz, lsz, s, st_lat);
+			fprintf(fp, "#\t%s: %8d bytes, line %3d bytes, load_lat %3d, store_lat %3d\n", 
+				    cache_name, sz, lsz, s, st_lat);
 		}
 	}
 end_it:
-	fclose(fp);
+	fclose(fp1);
 }
 
 #define CPU_MAX_STEPPINGS	12
@@ -372,7 +340,8 @@ typedef struct {
 } cpu_info_t;
 
 static const cpu_info_t cpu_info[]={
-	{ "Itanium",  {0,0,0,0,"B3",0, "C0","C1", 0}},
+	{ "Itanium", {0,0,0,0,"B3",0, "C0","C1", 0}},
+	{ "Itanium 2", {0, 0, 0, 0, "B0", "B1", "B2",}},
 	{ NULL, {0,}}
 };
 
@@ -389,20 +358,21 @@ find_cpu_type(char *name)
  * XXX: not safe to call from signal handler (stdio lock)
  */
 void
-print_cpuinfo(int fd)
+print_cpuinfo(FILE *fp)
 {
-	FILE *fp;	
-	char buffer[64], *p, *value;
+	FILE *fp1;	
+	char buffer[128], *p, *value;
 	int cpuid = 0, cpu_type=0, rev = 0;
 
-	fp = fopen("/proc/cpuinfo", "r");
-	if (fp == NULL) return;
+	memset(buffer, 'A', sizeof(buffer));
 
-	//p = fscanf(outfp, "%s %*s %s", buffer, value);
+	fp1 = fopen("/proc/cpuinfo", "r");
+	if (fp1 == NULL) return;
+
 	for (;;) {
 		buffer[0] = '\0';
 
-		p  = fgets(buffer, 64, fp);
+		p  = fgets(buffer, 127, fp1);
 		if (p == NULL) goto end_it;
 
 		/* skip  blank lines */
@@ -415,7 +385,10 @@ print_cpuinfo(int fd)
 		 * p+2: +1 = space, +2= firt character
 		 * strlen()-1 gets rid of \n
 		 */
-		*p = '\0'; value = p+2; value[strlen(value)-1] = '\0';
+		*p = '\0'; 
+		value = p+2; 
+
+		value[strlen(value)-1] = '\0';
 
 		if (!strncmp("processor", buffer, 9)) {
 			cpuid = atoi(value);
@@ -449,16 +422,16 @@ print_cpuinfo(int fd)
 			}	
 			if (rstr == NULL) rstr = "??";
 
-			safe_fprintf(fd, "# CPU%d %s %s %4.0f Mhz\n", cpuid, 
+			fprintf(fp, "# CPU%d %s %s %4.0f Mhz\n", cpuid, 
 					name,
 					rstr, f);
 
-			print_palinfo(fd, cpuid);
+			print_palinfo(fp, cpuid);
 		}
 	}
 
 end_it:
-	fclose(fp);
+	fclose(fp1);
 }
 	
 void
@@ -621,7 +594,7 @@ error:
 }
 
 void
-print_standard_header(int fd, unsigned long cpu_mask)
+print_standard_header(FILE *fp, unsigned long cpu_mask)
 {
 	char **argv = options.argv;
 	char *name;
@@ -632,75 +605,76 @@ print_standard_header(int fd, unsigned long cpu_mask)
 	uname(&uts);
 	time(&t);
 
-	safe_fprintf(fd, "#\n# date: %s", asctime(localtime(&t)));
-	safe_fprintf(fd, "#\n# hostname: %s\n", uts.nodename);
-	safe_fprintf(fd, "#\n# kernel version: %s %s %s\n", 
+	fprintf(fp, "#\n# date: %s", asctime(localtime(&t)));
+	fprintf(fp, "#\n# hostname: %s\n", uts.nodename);
+	fprintf(fp, "#\n# kernel version: %s %s %s\n", 
 			uts.sysname, 
 			uts.release, 
 			uts.version);
 
-	safe_fprintf(fd, "#\n# pfmon version: "PFMON_VERSION"\n");
-	safe_fprintf(fd, "# kernel perfmon version: %u.%u\n#\n#\n", 
+	fprintf(fp, "#\n# pfmon version: "PFMON_VERSION"\n");
+	fprintf(fp, "# kernel perfmon version: %u.%u\n#\n#\n", 
 			PFM_VERSION_MAJOR(options.pfm_version),
 			PFM_VERSION_MINOR(options.pfm_version));
 
-	safe_fprintf(fd, "#\n# page size: %u bytes\n", getpagesize());
-	safe_fprintf(fd, "# CLK_TCK: %lu ticks/second\n", sysconf(_SC_CLK_TCK));
-	safe_fprintf(fd, "# CPU configured: %lu\n# CPU online: %lu\n", sysconf(_SC_NPROCESSORS_CONF), sysconf(_SC_NPROCESSORS_ONLN));
-	safe_fprintf(fd, "# physical memory: %lu\n# physical memory available: %lu\n#\n", sysconf(_SC_PHYS_PAGES)*getpagesize(), sysconf(_SC_AVPHYS_PAGES)*getpagesize());
+	fprintf(fp, "#\n# page size: %u bytes\n", getpagesize());
+	fprintf(fp, "# CLK_TCK: %lu ticks/second\n", sysconf(_SC_CLK_TCK));
+	fprintf(fp, "# CPU configured: %lu\n# CPU online: %lu\n", sysconf(_SC_NPROCESSORS_CONF), sysconf(_SC_NPROCESSORS_ONLN));
+	fprintf(fp, "# physical memory: %lu\n# physical memory available: %lu\n#\n", sysconf(_SC_PHYS_PAGES)*getpagesize(), sysconf(_SC_AVPHYS_PAGES)*getpagesize());
 
-	print_cpuinfo(fd);
+	print_cpuinfo(fp);
 
-	safe_fprintf(fd, "#\n#\n# captured events:\n");
+	fprintf(fp, "#\n#\n# captured events:\n");
 
 	for(i=0; i < PMU_MAX_PMDS; i++) {
 		if (options.rev_pc[i] == -1) continue;
 
 		pfm_get_event_name(options.monitor_events[options.rev_pc[i]], &name);
 
-		safe_fprintf(fd, "#\tPMD%d: %s, %s level(s)\n", 
+		fprintf(fp, "#\tPMD%d: %s, %s level(s)\n", 
 				i,
 				name,
 				options.monitor_plm[options.rev_pc[i]] ? 
-				  priv_level_str(options.monitor_plm[options.rev_pc[i]]) : 
-				  priv_level_str(options.opt_plm));
+				priv_level_str(options.monitor_plm[options.rev_pc[i]]) : 
+				priv_level_str(options.opt_plm));
 	} 
-	safe_fprintf(fd, "#\n");
+	fprintf(fp, "#\n");
 
 
 	//safe_fprintf(fd, "#\n# default privilege level: %s\n", priv_level_str(options.opt_plm));
 
 	if (options.opt_syst_wide) {
-		safe_fprintf(fd, "# monitoring mode: system wide\n");
+		fprintf(fp, "# monitoring mode: system wide\n");
 	} else {
-		safe_fprintf(fd, "# monitoring mode: per-process\n");
+		fprintf(fp, "# monitoring mode: per-process\n");
 	}
 	/*
 	 * invoke CPU model specific routine to print any additional information
 	 */
 	if (pfmon_current->pfmon_print_header) {
-		pfmon_current->pfmon_print_header(fd);
+		pfmon_current->pfmon_print_header(fp);
 	}
 
-	safe_fprintf(fd, "#\n# command:");
-	while (*argv) safe_fprintf(fd, " %s", *argv++);
+	fprintf(fp, "#\n# command:");
+	while (*argv) fprintf(fp, " %s", *argv++);
 
-	safe_fprintf(fd, "\n#\n");
+	fprintf(fp, "\n#\n");
 	
 	if (options.opt_syst_wide) {
 		int i;
 
-		safe_fprintf(fd, "# results captured on: ");
+		fprintf(fp, "# results captured on: ");
 
 		for(i=0; cpu_mask; i++, cpu_mask>>=1) {
-			if (cpu_mask & 0x1) safe_fprintf(fd, "CPU%d ", i);
+			if (cpu_mask & 0x1) fprintf(fp, "CPU%d ", i);
 		}
-		safe_fprintf(fd, "\n");
+		fprintf(fp, "\n");
 	}
 
-	safe_fprintf(fd, "#\n#\n");
+	fprintf(fp, "#\n#\n");
 }
 
+#if 0
 /*
  * thread-safe, lock-free fprintf. This is needed to fprintf() from
  * a signal handler.
@@ -725,6 +699,7 @@ safe_fprintf(int fd, char *fmt,...)
 	 */
 	return write(fd, buf, r);
 }
+#endif
 
 typedef union {
 	struct {
@@ -874,7 +849,7 @@ convert_data_rr_param(char *param, unsigned long *start, unsigned long *end)
 
 	}
 
-	load_symbols(options.symbol_file);
+	load_symbols();
 
 	return find_data_symbol_addr(param, start, end);
 }
@@ -883,7 +858,6 @@ int
 convert_code_rr_param(char *param, unsigned long *start, unsigned long *end)
 {
 	char *endptr;
-	int ret;
 
 	if (isdigit(param[0])) {
 		endptr = NULL;
@@ -895,7 +869,7 @@ convert_code_rr_param(char *param, unsigned long *start, unsigned long *end)
 
 	}
 
-	if ((ret = load_symbols(options.symbol_file))) return ret;
+	load_symbols();
 
 	return find_code_symbol_addr(param, start, end);
 }
@@ -944,13 +918,13 @@ error:
 void
 gen_data_range(char *arg, unsigned long *start, unsigned long *end)
 {
-	return gen_range(arg, start, end, convert_data_rr_param);
+	gen_range(arg, start, end, convert_data_rr_param);
 }
 	
 void
 gen_code_range(char *arg, unsigned long *start, unsigned long *end)
 {
-	return gen_range(arg, start, end, convert_code_rr_param);
+	gen_range(arg, start, end, convert_code_rr_param);
 }
 
 static void
@@ -997,6 +971,69 @@ counter2str(unsigned long count, char *str)
 			sprintf(str, "%lu", count);
 			break;
 	}
+}
+
+void
+show_task_rusage(struct timeval *start, struct timeval *end, struct rusage *ru)
+{
+	long secs, suseconds;
+
+	 secs =  end->tv_sec - start->tv_sec;
+
+	if (end->tv_usec < start->tv_usec) {
+      		end->tv_usec += 1000000;
+      		secs--;
+    	}
+  	suseconds = end->tv_usec - start->tv_usec;
+
+	printf ("real %ldh%02ldm%02ld.%03lds user %ldh%02ldm%02ld.%03lds sys %ldh%02ldm%02ld.%03lds\n", 
+		secs / 3600, 
+		(secs % 3600) / 60, 
+		secs % 60,
+		suseconds / 1000,
+
+		ru->ru_utime.tv_sec / 3600, 
+		(ru->ru_utime.tv_sec % 3600) / 60, 
+		ru->ru_utime.tv_sec% 60,
+		ru->ru_utime.tv_usec / 1000,
+
+		ru->ru_stime.tv_sec / 3600, 
+		(ru->ru_stime.tv_sec % 3600) / 60, 
+		ru->ru_stime.tv_sec% 60,
+		ru->ru_stime.tv_usec / 1000
+		);
+}
+
+int
+is_regular_file(char *name)
+{
+	struct stat st;
+
+	return stat(name, &st) == -1 || S_ISREG(st.st_mode) ? 1 : 0;
+}
+
+void 
+check_counter_conflict(pfmlib_param_t *evt, unsigned long max_counter_mask)
+{
+	int *cnt_list = evt->pfp_evt;
+	unsigned long cnt1, cnt2;
+	unsigned int cnt = evt->pfp_count;
+	char *name1, *name2;
+	int i, j;
+
+	for (i=0; i < cnt; i++) {
+		pfm_get_event_counters(cnt_list[i], &cnt1);
+		if (cnt1 == max_counter_mask) continue;
+		for(j=i+1; j < cnt; j++) {
+			pfm_get_event_counters(cnt_list[j], &cnt2);
+			if (cnt2 == cnt1 && hweight64(cnt1) == 1) goto error;
+		}
+	}
+	return;
+error:
+	pfm_get_event_name(cnt_list[i], &name1);
+	pfm_get_event_name(cnt_list[j], &name2);
+	fatal_error("event %s and %s cannot be measured at the same time\n", name1, name2);
 }
 
 

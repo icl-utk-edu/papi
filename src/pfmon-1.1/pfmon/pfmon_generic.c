@@ -65,7 +65,5 @@ pfmon_support_t pfmon_generic={
 	NULL,			/* post */
 	NULL,			/* overflow */
 	NULL,			/* install counters */
-	NULL,			/* print results */
-	NULL,			/* explain smpl reg */
-	NULL,			/* print smpl reg */
+	NULL			/* print header */
 };

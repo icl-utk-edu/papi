@@ -38,7 +38,7 @@
  * perfmon_req_t and passed to the kernel via perfmonctl().
  */
 typedef union {
-	unsigned long pmu_reg;			/* generic PMD register */
+	unsigned long reg_val;			/* generic PMD register */
 
 	/* This is the Itanium-specific PMC layout for counter config */
 	struct {
@@ -299,7 +299,6 @@ typedef struct {
 
 #define ITA_PARAM(e)	((pfmlib_ita_param_t *)e->pfp_model)
 
-extern int pfm_ita_event_maxincr(int i, unsigned long *maxincr);
 extern int pfm_ita_is_ear(int i);
 extern int pfm_ita_is_dear(int i);
 extern int pfm_ita_is_dear_tlb(int i);
@@ -312,6 +311,7 @@ extern int pfm_ita_support_opcm(int i);
 extern int pfm_ita_support_iarr(int i);
 extern int pfm_ita_support_darr(int i);
 
-extern unsigned long pfm_ita_get_event_umask(int i);
+extern int pfm_ita_get_event_maxincr(int i, unsigned long *maxincr);
+extern int pfm_ita_get_event_umask(int i, unsigned long *umask);
 
 #endif /* __PFMLIB_ITANIUM_H__ */

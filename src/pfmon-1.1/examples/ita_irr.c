@@ -1,7 +1,7 @@
 /*
- * ita_rr.c - example of how to use data range restriction with the Itanium PMU
+ * ita_irr.c - example of how to use code range restriction with the Itanium PMU
  *
- * Copyright (C) 2001-2002 Hewlett-Packard Co
+ * Copyright (C) 2002 Hewlett-Packard Co
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * This file is part of pfmon, a sample tool to measure performance 
@@ -35,55 +35,16 @@
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_itanium.h>
 
-#ifdef __GNUC__
-extern inline void
-clear_psr_ac(void)
-{
-	__asm__ __volatile__("rum psr.up;;" ::: "memory" );
-}
-#elif defined(INTEL_ECC_COMPILER)
-#define clear_psr_ac()	__rum(1UL<<3)
-#else
-#error "You need to define clear_psr_ac() for your compiler"
-#endif
-
-#define TEST_DATA_COUNT	16
-
 #define NUM_PMCS PMU_MAX_PMCS
 #define NUM_PMDS PMU_MAX_PMDS
 
 static char *event_list[]={
-	"misaligned_loads_retired",
-	"misaligned_stores_retired",
+	"fp_ops_retired_hi",
+	"fp_ops_retired_lo",
 	NULL
 };
 
-
-typedef union {
-	unsigned long   l_tab[2];
-	unsigned int    i_tab[4];
-	unsigned short  s_tab[8];
-	unsigned char   c_tab[16];
-} test_data_t;
-
-static int
-do_test(test_data_t *data)
-{
-	unsigned int *l, v;
-
-	l = (unsigned int *)(data->c_tab+1);
-
-	if (((unsigned long)l & 0x1) == 0) {
-		printf("Data is not unaligned, can't run test\n");
-		return  -1;
-	}
-
-	v = *l;
-	v++;
-	*l = v;
-
-	return 0;
-}
+#define VECTOR_SIZE	1000000UL
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
@@ -99,11 +60,57 @@ fatal_error(char *fmt, ...)
 	exit(1);
 }
 
+
+void
+saxpy(double *a, double *b, double *c, unsigned long size)
+{
+	unsigned long i;
+
+	for(i=0; i < size; i++) {
+		c[i] = 2*a[i] + b[i];
+	}
+}
+
+void
+saxpy2(double *a, double *b, double *c, unsigned long size)
+{
+	unsigned long i;
+
+	for(i=0; i < size; i++) {
+		c[i] = 2*a[i] + b[i];
+	}
+}
+
+
+
+static int
+do_test(void)
+{
+	unsigned long size;
+	double *a, *b, *c;
+
+	size = VECTOR_SIZE;
+
+	a = malloc(size*sizeof(double));
+	b = malloc(size*sizeof(double));
+	c = malloc(size*sizeof(double));
+
+	if (a == NULL || b == NULL || c == NULL) fatal_error("Cannot allocate vectors\n");
+
+	memset(a, 0, size*sizeof(double));
+	memset(b, 0, size*sizeof(double));
+	memset(c, 0, size*sizeof(double));
+
+	saxpy(a,b,c, size);
+	saxpy2(a,b,c, size);
+
+	return 0;
+}
+
 int
 main(int argc, char **argv)
 {
 	char **p;
-	test_data_t *test_data, *test_data_fake;
 	unsigned long range_start, range_end;
 	int ret, cnt, i, type = 0;
 	pid_t pid = getpid();
@@ -111,9 +118,13 @@ main(int argc, char **argv)
 	pfmlib_ita_param_t ita_param;
 	pfarg_reg_t pc[NUM_PMCS];
 	pfarg_reg_t pd[NUM_PMDS];
-	pfarg_dbreg_t dbr[8];
+	pfarg_dbreg_t ibr[8];
 	pfarg_context_t ctx[1];
 	pfmlib_options_t pfmlib_options;
+	struct fd {			/* function descriptor */
+		unsigned long addr;
+		unsigned long gp;
+	} *fd;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -136,35 +147,36 @@ main(int argc, char **argv)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 0; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
 	/*
-	 * now let's allocate the data structure we will be monitoring
-	 */
-	test_data = (test_data_t *)malloc(sizeof(test_data_t)*TEST_DATA_COUNT);
-	if (test_data == NULL) {
-		fatal_error("cannot allocate test data structure");
-	}
-	test_data_fake = (test_data_t *)malloc(sizeof(test_data_t)*TEST_DATA_COUNT);
-	if (test_data_fake == NULL) {
-		fatal_error("cannot allocate test data structure");
-	}
-	/*
 	 * Compute the range we are interested in
+	 *
+	 * On IA-64, the function pointer does not point directly
+	 * to the function but to a descriptor which contains two
+	 * unsigned long: the first one is the actual start address
+	 * of the function, the second is the gp (global pointer)
+	 * to load into r1 before jumping into the function. Unlesss
+	 * we're jumping into a shared library the gp is the same as
+	 * the current gp.
+	 *
+	 * In the artificial example, we also rely on the compiler/linker
+	 * NOT reordering code layout. We depend on saxpy2() being just
+	 * after saxpy().
+	 *
 	 */
-	range_start = (unsigned long)test_data;
-	range_end   = range_start + sizeof(test_data_t)*TEST_DATA_COUNT;
+	fd = (struct fd *)saxpy;
+	range_start = fd->addr;
+
+	fd = (struct fd *)saxpy2;
+	range_end   =  fd->addr;
 	
 	memset(pc, 0, sizeof(pc));
 	memset(pd, 0, sizeof(pd));
 	memset(ctx, 0, sizeof(ctx));
-	memset(dbr,0, sizeof(dbr));
+	memset(ibr,0, sizeof(ibr));
 
-	/*
-	 * prepare parameters to library. we don't use any Itanium
-	 * specific features here. so the pfp_model is NULL.
-	 */
 	memset(&evt,0, sizeof(evt));
 	memset(&ita_param,0, sizeof(ita_param));
 
@@ -209,28 +221,23 @@ main(int argc, char **argv)
 	/*
 	 * We use the library to figure out how to program the debug registers
 	 * to cover the data range we are interested in. The rr_end parameter
-	 * must point to the byte after the last of the range (C-style range).
+	 * must point to the byte after the last element of the range (C-style range).
 	 *
 	 * Because of the masking mechanism and therefore alignment constraints used to implement 
 	 * this feature, it may not be possible to exactly cover a given range. It may be that
 	 * the coverage exceeds the desired range. So it is possible to capture noise if
-	 * the surrounding addresses are also heavily used. You can figure out, the actual 
-	 * start and end offsets of the generated range by checking the rr_soff and rr_eoff fields
-	 * when coming back from the library call.
+	 * the surrounding addresses are also heavily used. You can figure out by how much the
+	 * actual range is off compared to the requested range by checking the rr_soff and rr_eoff 
+	 * fields on return from the library call.
 	 *
-	 * Upon return, the rr_dbr array is programmed and the number of entries used
-	 * to cover the range is in rr_nbr_used. 
+	 * Upon return, the rr_dbr array is programmed and the number of debug registers (not pairs)
+	 * used to cover the range is in rr_nbr_used. 
+	 *
 	 */
 
-	/*
-	 * We indicate that we are using a Data Range Restriction feature.
-	 * In this particular case this will cause, pfm_dispatch_events() to 
-	 * add pmc13 to the list of PMC registers to initialize and the 
-	 */
-
-	ita_param.pfp_ita_drange.rr_used = 1;
-	ita_param.pfp_ita_drange.rr_limits[0].rr_start = range_start;
-	ita_param.pfp_ita_drange.rr_limits[0].rr_end   = range_end;
+	ita_param.pfp_ita_irange.rr_used = 1;	/* indicate we use code range restriction */
+	ita_param.pfp_ita_irange.rr_limits[0].rr_start = range_start;
+	ita_param.pfp_ita_irange.rr_limits[0].rr_end   = range_end;
 
 
 	/*
@@ -243,17 +250,17 @@ main(int argc, char **argv)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
 
-	printf("data range  : [0x%016lx-0x%016lx): %d pair of debug registers used\n"
-	       "start_offset:-0x%lx end_offset:+0x%lx\n", 
+	/*
+	 * print offsets
+	 */
+	printf("code range  : [0x%016lx-0x%016lx)\n"
+	       "start_offset:-0x%lx end_offset:+0x%lx\n"
+		"%d pair of debug registers used\n",
 			range_start, 
 			range_end, 
-			ita_param.pfp_ita_drange.rr_nbr_used >> 1, 
-			ita_param.pfp_ita_drange.rr_limits[0].rr_soff, 
-			ita_param.pfp_ita_drange.rr_limits[0].rr_eoff);
-
-	printf("fake data range: [0x%016lx-0x%016lx)\n", 
-			(unsigned long)test_data_fake,
-			(unsigned long)test_data_fake+sizeof(test_data_t)*TEST_DATA_COUNT);
+			ita_param.pfp_ita_irange.rr_limits[0].rr_soff, 
+			ita_param.pfp_ita_irange.rr_limits[0].rr_eoff,
+			ita_param.pfp_ita_irange.rr_nbr_used >> 1);
 
 	/*
 	 * for this example, we have decided not to get notified
@@ -289,13 +296,13 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Program the data debug registers. 
+	 * Program the code debug registers. 
 	 *
 	 * IMPORTANT: programming the debug register MUST always be done before the PMCs
 	 * otherwise the kernel will fail on PFM_WRITE_PMCS. This is for security reasons.
 	 */
-	if (perfmonctl(pid, PFM_WRITE_DBRS, ita_param.pfp_ita_drange.rr_br, ita_param.pfp_ita_drange.rr_nbr_used) == -1) {
-		fatal_error( "child: perfmonctl error PFM_WRITE_DBRS errno %d\n",errno);
+	if (perfmonctl(pid, PFM_WRITE_IBRS, ita_param.pfp_ita_irange.rr_br, ita_param.pfp_ita_irange.rr_nbr_used) == -1) {
+		fatal_error( "child: perfmonctl error PFM_WRITE_IBRS errno %d\n",errno);
 	}
 
 	/*
@@ -313,27 +320,17 @@ main(int argc, char **argv)
 		fatal_error( "child: perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
 	}
 
-	/* 
-	 * Let's make sure that the hardware does the unaligned accesses (do not use the
-	 * kernel software handler otherwise the PMU won't see the unaligned fault).
-	 */
-	clear_psr_ac();
-
 	/*
 	 * Let's roll now.
 	 *
-	 * The idea behind this test is to have two dynamically allocated data structures
-	 * which are access in a unaligned fashion. But we want to capture only the unaligned
-	 * accesses on one of the two. So the debug registers are programmed to cover the
-	 * first one ONLY. Then we activate monotoring and access the two data structures.
-	 * This is an artificial example just to demonstrate how to use data address range
-	 * restrictions.
+	 * We run two distinct copies of the same function but we restrict measurement
+	 * to the first one (saxpy). Therefore the expected count is half what you would
+	 * get if code range restriction was not used. The core loop in both case uses
+	 * two floating point operation per iteration.
 	 */
 	pfm_start();
 
-	do_test(test_data);
-
-	do_test(test_data_fake);
+	do_test();
 
 	pfm_stop();
 
@@ -350,25 +347,14 @@ main(int argc, char **argv)
 	 * It is important to realize, that the first event we specified may not
 	 * be in PMD4. Not all events can be measured by any monitor. That's why
 	 * we need to use the pc[] array to figure out where event i was allocated.
-	 *
-	 * For this example, we expect to see a value of 1 for both misaligned loads
-	 * and misaligned stores. But it can be two when the test_data and test_data_fake
-	 * are allocate very close from each other and the range created with the debug
-	 * registers is larger then test_data.
-	 *
 	 */
 	for (i=0; i < evt.pfp_count; i++) {
 		char *name;
 		pfm_get_event_name(evt.pfp_evt[i], &name);
-		printf("PMD%u %20lu %s (expected 1)\n", 
+		printf("PMD%u %20lu %s (expected %lu)\n", 
 			pd[i].reg_num, 
 			pd[i].reg_value, 
-			name);
-
-		if (pd[i].reg_value != 1) {
-			printf("error: Result should be 1 for %s\n", name);
-			break;
-		}
+			name, VECTOR_SIZE*2);
 	}
 	/* 
 	 * let's stop this now
@@ -376,8 +362,6 @@ main(int argc, char **argv)
 	if (perfmonctl(pid, PFM_DESTROY_CONTEXT, NULL, 0) == -1) {
 		fatal_error( "child: perfmonctl error PFM_DESTROY errno %d\n",errno);
 	}
-	free(test_data);
-	free(test_data_fake);
 
 	return 0;
 }

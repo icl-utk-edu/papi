@@ -45,7 +45,7 @@
 #define PFM_GET_FEATURES	0x0c
 #define PFM_DEBUG		0x0d
 #define PFM_UNPROTECT_CONTEXT	0x0e
-
+#define PFM_GET_PMC_RESET_VAL	0x0f
 
 /*
  * CPU model specific commands (may not be supported on all models)

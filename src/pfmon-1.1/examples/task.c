@@ -227,7 +227,7 @@ parent(char **arg)
 	 * case where we are just counting but it is required when doing sampling to access
 	 * the sampling buffer.
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+	if (perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}

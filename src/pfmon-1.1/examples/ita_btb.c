@@ -61,6 +61,7 @@ static pfarg_reg_t pc[NUM_PMCS];
  * we don't use static to make sure the compiler does not inline the function
  */
 long func1(void) { return 0;}
+
 long
 do_test(unsigned long loop)
 {
@@ -68,8 +69,10 @@ do_test(unsigned long loop)
 
 	pfm_start();
 	while(loop--) {
-		//if (loop & 0x1) func1();
-		sum += loop;
+		if (loop & 0x1) 
+			sum += func1();
+		else
+			sum += loop;
 	}
 	pfm_stop();
 	return sum;
@@ -98,31 +101,37 @@ fatal_error(char *fmt, ...)
  */
 #define safe_printf	printf
 
-static void
-show_btb_reg(int j, pfm_ita_reg_t *reg)
+static int
+show_btb_reg(int j, pfm_ita_reg_t reg)
 {
 	int ret;
-	int is_valid = reg->pmd8_15_ita_reg.btb_b == 0 && reg->pmd8_15_ita_reg.btb_mp == 0 ? 0 :1; 
+	int is_valid = reg.pmd8_15_ita_reg.btb_b == 0 && reg.pmd8_15_ita_reg.btb_mp == 0 ? 0 :1; 
 
 	ret = safe_printf("\tPMD%-2d: 0x%016lx b=%d mp=%d valid=%c\n",
 			j,
-			reg->pmu_reg,
-			 reg->pmd8_15_ita_reg.btb_b,
-			 reg->pmd8_15_ita_reg.btb_mp,
+			reg.reg_val,
+			 reg.pmd8_15_ita_reg.btb_b,
+			 reg.pmd8_15_ita_reg.btb_mp,
 			is_valid ? 'Y' : 'N');
 
-	if (!is_valid) return;
+	if (!is_valid) return ret;
 
-	if (reg->pmd8_15_ita_reg.btb_b) {
-		ret = safe_printf("\t\tSource Address: 0x%016lx (slot %d)\n"
-						"\t\tPrediction: %s\n\n",
-			 (reg->pmd8_15_ita_reg.btb_addr<<4),
-			 reg->pmd8_15_ita_reg.btb_slot,
-			 reg->pmd8_15_ita_reg.btb_mp ? "Failure" : "Success");
+	if (reg.pmd8_15_ita_reg.btb_b) {
+		unsigned long addr;
+
+		addr = 	reg.pmd8_15_ita_reg.btb_addr<<4;
+		addr |= reg.pmd8_15_ita_reg.btb_slot < 3 ?  reg.pmd8_15_ita_reg.btb_slot : 0;
+
+		ret = safe_printf("\t       Source Address: 0x%016lx\n"
+				  "\t       Taken=%c Prediction: %s\n\n",
+			 addr,
+			 reg.pmd8_15_ita_reg.btb_slot < 3 ? 'Y' : 'N',
+			 reg.pmd8_15_ita_reg.btb_mp ? "Failure" : "Success");
 	} else {
-		ret = safe_printf("\t\tTarget Address: 0x%016lx\n\n",
-			 (reg->pmd8_15_ita_reg.btb_addr<<4));
+		ret = safe_printf("\t       Target Address: 0x%016lx\n\n",
+			 (reg.pmd8_15_ita_reg.btb_addr<<4));
 	}
+	return ret;
 }
 
 static void
@@ -136,7 +145,7 @@ show_btb(pfm_ita_reg_t *btb, pfm_ita_reg_t *pmd16)
 
 	safe_printf("btb_trace: i=%d last=%d bbi=%d full=%d\n", i, last,pmd16->pmd16_ita_reg.btbi_bbi, pmd16->pmd16_ita_reg.btbi_full);
 	do {
-		show_btb_reg(i+8, btb+i);
+		show_btb_reg(i+8, btb[i]);
 		i = (i+1) % 8;
 	} while (i != last);
 }
@@ -385,7 +394,7 @@ main(void)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+	if (perfmonctl(pid, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}

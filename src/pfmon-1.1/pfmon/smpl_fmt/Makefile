@@ -28,10 +28,40 @@ include $(TOPDIR)/rules.mk
 
 INCDIR=-I$(PFM_INC_DIR) -I. -I..
 
-SRCS=raw_smpl.c compact_smpl.c text_smpl.c detailed_ita_smpl.c \
-     example_smpl.c
-OBJS=raw_smpl.o compact_smpl.o detailed_ita_smpl.o\
-     example_smpl.o
+SRCS=raw_smpl.c compact_smpl.c text_smpl.c detailed_ita_smpl.c detailed_ita2_smpl.c \
+     btb_smpl.c example_smpl.c
+
+OBJS=
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_RAW),y)
+OBJS   += raw_smpl.o 
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_RAW
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_COMPACT),y)
+OBJS += compact_smpl.o 
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_COMPACT
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_EXAMPLE),y)
+OBJS += example_smpl.o
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_EXAMPLE
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_BTB),y)
+OBJS += btb_smpl.o 
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_BTB
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_DET_ITA),y)
+OBJS +=detailed_ita_smpl.o 
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_DET_ITA
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_DET_ITA2),y)
+OBJS +=detailed_ita2_smpl.o 
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_DET_ITA2
+endif
 
 TARGET=libsmplfmt.a
 
