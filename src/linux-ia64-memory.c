@@ -22,23 +22,20 @@ int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 }
 
 long _papi_hwd_get_dmem_info(int option){
-   pid_t pid = getpid();
    char pfile[256];
    FILE * fd;
    int tmp;
    unsigned int vsize,rss;
 
-   sprintf(pfile, "/proc/%d/stat", pid);
-   if((fd=fopen(pfile,"r")) == NULL ) {
-        DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d/stat\n",pid));
+   if((fd=fopen("/proc/self/stat","r")) == NULL ) {
+        DBG((stderr,"PAPI_get_dmem_info can't open /proc/self/stat\n"));
         return(PAPI_ESYS);
    }
   fgets(pfile, 256, fd);
   fclose(fd);
   
    /* Scan through the information */
-  sscanf(pfile,"%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %
-d %u %u", 
+  sscanf(pfile,"%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %d %u %u", 
         &tmp,pfile,pfile,&tmp,&tmp,&tmp,&tmp,&tmp,
         &tmp,&tmp,&tmp,&tmp, &tmp,&tmp,&tmp,&tmp,
         &tmp, &tmp,&tmp,&tmp,&tmp,&tmp, &vsize,&rss );
