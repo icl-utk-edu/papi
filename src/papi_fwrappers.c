@@ -270,6 +270,11 @@ PAPI_FCALL(papif_multiplex_init, PAPIF_MULTIPLEX_INIT, (int *check))
    *check = PAPI_multiplex_init();
 }
 
+PAPI_FCALL(papif_get_multiplex, PAPIF_GET_MULTIPLEX, (int *EventSet, int *check))
+{
+   *check = PAPI_get_multiplex(*EventSet);
+}
+
 PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check))
 {
    *check = PAPI_set_multiplex(*EventSet);
