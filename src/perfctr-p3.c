@@ -21,7 +21,7 @@
 
 /* PAPI stuff */
 
-#ifdef PERFCTR25
+#ifdef PERFCTR26
 #define PERFCTR_CPU_NAME   perfctr_info_cpu_name
 #define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
 #else
