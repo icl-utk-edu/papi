@@ -118,8 +118,6 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
              };
 
 
-static hwd_control_state_t current; /* not yet used. */
-
 /* Low level functions, should not handle errors, just return codes. */
 
 int _papi_hwd_init(EventSetInfo *zero)
@@ -136,7 +134,7 @@ int _papi_hwd_init(EventSetInfo *zero)
   stamp = (rdtsc() - stamp)/1000000;
   _papi_system_info.mhz = stamp;
 
-  zero->machdep = (void *)&current;
+  DBG((stderr,"CPU number %d at %d MHZ found\n",1,_papi_system_info.mhz));
 
   return(PAPI_OK);
 }
@@ -546,6 +544,7 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
     case PAPI_GET_DEFGRN:
     case PAPI_GET_DOMAIN:
     case PAPI_GET_GRANUL:
+      return(PAPI_EINVAL);
     default:
       return(PAPI_EINVAL);
     }

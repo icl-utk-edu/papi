@@ -39,7 +39,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_KERNEL	 0x2    /* Kernel/OS context counted */
 #define PAPI_DOM_OTHER	 0x4    /* Exception/transient mode (like user TLB misses )*/
 #define PAPI_DOM_ALL	 0x7    /* All contexts counted */
-#define PAPI_DOM_DEFAULT (PAPI_DOM_USER | PAPI_DOM_OTHER)
+#define PAPI_DOM_DEFAULT PAPI_DOM_USER
 #define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000 /* Flag that indicates we are not reading CPU like stuff.
 				       The lower 31 bits can be decoded by the substrate into something
@@ -186,6 +186,7 @@ typedef union {
   PAPI_granularity_option_t granularity; 
   PAPI_defdomain_option_t defdomain; 
   PAPI_domain_option_t domain; 
+  int num_substrate_counters;
   int debug; } PAPI_option_t;
   
 int PAPI_set_granularity(int granularity);

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <malloc.h>
 #include <sys/types.h>
 
 #include "papiStdEventDefs.h"
@@ -27,24 +28,45 @@
 #endif
 
 void main() {
-  int r, i;
+  int i;
   double a, b, c;
-  unsigned long long ct[3];
+  unsigned long long *ct;
   EventSetInfo EventSetZero;
   EventSetInfo EventSet;
   hwd_control_state_t test;
 
-  memset(&EventSetZero,0x00,sizeof(hwd_control_state_t));
+  memset(&EventSetZero,0x00,sizeof(EventSetInfo));
+  memset(&EventSet,0x00,sizeof(EventSetInfo));
   memset(&test,0x00,sizeof(hwd_control_state_t));
   EventSet.machdep = &test;
+  EventSet.NumberOfCounters = 0;
   EventSet.all_options.domain.domain.domain = 1;       /* set to default PAPI_USR */
 
-  _papi_hwd_init(&EventSetZero);
-  _papi_hwd_reset(&EventSet);
-  _papi_hwd_add_event(&EventSet, PAPI_FP_INS);
-  _papi_hwd_add_event(&EventSet, PAPI_TOT_INS);
-  _papi_hwd_add_event(&EventSet, PAPI_TOT_CYC);
-  _papi_hwd_start(&EventSet);
+
+  ct = (unsigned long long *)malloc(_papi_system_info.num_cntrs * sizeof(unsigned long long));
+  memset(ct,0x00,_papi_system_info.num_cntrs * sizeof(unsigned long long));
+
+  printf("_papi_hwd_init(&EventSetZero) returns %d\n",_papi_hwd_init(&EventSetZero));
+  printf("_papi_hwd_reset(&EventSet) returns %d\n",_papi_hwd_reset(&EventSet)); 
+
+  printf("_papi_hwd_add_event(&EventSet, PAPI_FP_INS) returns %d\n",
+	 _papi_hwd_add_event(&EventSet, PAPI_FP_INS));
+  EventSet.NumberOfCounters++;
+
+  if (_papi_system_info.num_cntrs > 1)
+     {
+       printf("_papi_hwd_add_event(&EventSet, PAPI_TOT_CYC) returns %d\n",
+	      _papi_hwd_add_event(&EventSet, PAPI_TOT_CYC));
+       EventSet.NumberOfCounters++;
+     }
+  if (_papi_system_info.num_cntrs > 2)
+    {
+      printf("_papi_hwd_add_event(&EventSet, PAPI_TOT_INS) returns %d\n",
+	     _papi_hwd_add_event(&EventSet, PAPI_TOT_INS));
+      EventSet.NumberOfCounters++;
+    }  
+  
+  printf("_papi_hwd_start(&EventSet) returns %d\n",_papi_hwd_start(&EventSet));
 
   a = 0.5;
   b = 6.2;
@@ -52,9 +74,11 @@ void main() {
     c = a*b;
   }
 
-  _papi_hwd_stop(&EventSet, ct);
+  printf("_papi_hwd_stop(&EventSet, ct) returns %d\n",_papi_hwd_stop(&EventSet, ct));
   
   printf("\tFloating point ins.: 	%lld\n", ct[0]);
-  printf("\tTotal Instructions : 	%lld\n", ct[1]);
-  printf("\tTotal Cycles : 		%lld\n", ct[2]);
+  if (_papi_system_info.num_cntrs > 1)
+  printf("\tTotal Cycles : 		%lld\n", ct[1]);
+  if (_papi_system_info.num_cntrs > 2)
+    printf("\tTotal Instructions : 	%lld\n", ct[2]); 
 }

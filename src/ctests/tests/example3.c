@@ -17,7 +17,7 @@
 #endif
 
 void main() {
-  int r, i;
+  int i;
   double a, b, c;
   unsigned long long  ct[3];
   hwd_control_state_t test;
@@ -60,7 +60,6 @@ void main() {
   printf("\tTotal Instructions : 	%lld\n", ct[1]);
   printf("\tTotal Cycles : 		%lld\n\n", ct[2]);
 
-///////////////////////////////////////////////////////
   EventSet.all_options.domain.domain.domain = 2;       /* set to PAPI_KERNEL */
 
   _papi_hwd_init(&EventSetZero);
@@ -83,7 +82,6 @@ void main() {
   printf("\tTotal Instructions :        %lld\n", ct[1]);
   printf("\tTotal Cycles :              %lld\n\n", ct[2]);
 
-////////////////////////////////////////////////////////
   EventSet.all_options.domain.domain.domain = 3;       /* set to default PAPI_ALL */
 
   _papi_hwd_init(&EventSetZero);

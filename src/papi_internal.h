@@ -1,5 +1,9 @@
 /* $Id$ */
 
+#ifdef DEBUG
+#define DBG(a) { fprintf(stderr,"DEBUG: "); fprintf a; }
+#endif
+
 /* some members of structs and/or function parameters may or may not be
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
@@ -88,7 +92,7 @@ typedef struct _EventSetInfo {
 } EventSetInfo;
 
 typedef struct _dynamic_array{
-	EventSetInfo   *dataSlotArray[PAPI_INIT_SLOTS]; /* array of ptrs to EventSets */
+	EventSetInfo   **dataSlotArray; /* array of ptrs to EventSets */
 	int    totalSlots;      /* number of slots in dataSlotArrays      */
 	int    availSlots;      /* number of open slots in dataSlotArrays */
 	int    fullSlots;       /* number of full slots in dataSlotArray    */

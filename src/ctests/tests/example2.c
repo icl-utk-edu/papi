@@ -26,7 +26,7 @@
 #endif
 
 void main() {
-  int r, i, j;
+  int i, j;
   double a, b, c;
   unsigned long long  ct[3];
   EventSetInfo EventSetZero;

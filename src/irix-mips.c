@@ -18,70 +18,70 @@
 #include "irix-mips.h"
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
-                { -1,9  },			/* L1 D-Cache misses */
-                {  9,-1 },		        /* L1 I-Cache misses */
-		{ -1,10 },		        /* L2 D-Cache misses */
-		{ 10,-1 },		        /* L2 I-Cache misses */
-		{ -1,-1 },			/* 4*/
-		{ -1,-1 },			/* 5*/
-		{ -1,-1 },			/* 6*/
-		{ -1,-1 },			/* 7*/
-		{ -1,-1 },			/* 8*/
-		{ -1,-1 },			/* 9*/
-		{ -1,15 }, 			/* Req. access to shared cache line*/
-		{ -1,14 }, 			/* Req. access to clean cache line*/
-		{ -1,13 }, 			/* Cache Line Invalidation*/
-                { -1,-1 },			/* 13*/
-                { -1,-1 },			/* 14*/
-                { -1,-1 },			/* 15*/
-                { -1,-1 },			/* 16*/
-                { -1,-1 },			/* 17*/
-                { -1,-1 },			/* 18*/
-                { -1,-1 },			/* 19*/
-		{ -1,7  }, 			/* D-TLB misses*/
-		{ -1,7  },			/* I-TLB misses*/
-                { -1,-1 },			/* 22*/
-                { -1,-1 },			/* 23*/
-                { -1,-1 },			/* 24*/
-                { -1,-1 },			/* 25*/
-                { -1,-1 },			/* 26*/
-                { -1,-1 },			/* 27*/
-                { -1,-1 },			/* 28*/
-                { -1,-1 },			/* 29*/
-		{ -1,-1 },			/* TLB shootdowns*/
-                { -1,-1 },			/* 31*/
-                { -1,-1 },			/* 32*/
-                { -1,-1 },			/* 33*/
-                { -1,-1 },			/* 34*/
-                { -1,-1 },			/* 35*/
-                { -1,-1 },			/* 36*/
-                { -1,-1 },			/* 37*/
-                { -1,-1 },			/* 38*/
-                { -1,-1 },			/* 39*/
-		{ -1,8  },			/* Branch inst. mispred.*/
-		{ -1,-1 },			/* Branch inst. taken*/
-		{ -1,-1 },			/* Branch inst. not taken*/
-                { -1,-1 },			/* 43*/
-                { -1,-1 },			/* 44*/
-                { -1,-1 },			/* 45*/
-                { -1,-1 },			/* 46*/
-                { -1,-1 },			/* 47*/
-                { -1,-1 },			/* 48*/
-                { -1,-1 },			/* 49*/
-		{ 15,-1 },			/* Total inst. executed*/
-		{ -1,-1 },		        /* Integer inst. executed*/
-		{ -1,5  },			/* Floating Pt. inst. executed*/
-		{ -1,2  },			/* Loads executed*/
-		{ -1,3  },			/* Stores executed*/
-		{ -1,-1 },			/* Branch inst. executed*/
-		{ -1,-1 },			/* Vector/SIMD inst. executed */
-		{  0,5  },			/* FLOPS */
-                { -1,-1 },			/* 58 */
-                { -1,-1 },			/* 59 */
-		{  0,0  },			/* Total cycles */
-		{  0,1  },			/* MIPS */
-                { -1,-1 },			/* 62 */
-                { -1,-1 }			/* 63 */
+                { 0,-1,25  },			/* L1 D-Cache misses */
+                { 0, 9,-1 },		        /* L1 I-Cache misses */
+		{ 0,-1,26 },		        /* L2 D-Cache misses */
+		{ 0,10,-1 },		        /* L2 I-Cache misses */
+		{ 0,-1,-1 },			/* 4*/
+		{ 0,-1,-1 },			/* 5*/
+		{ 0,-1,-1 },			/* 6*/
+		{ 0,-1,-1 },			/* 7*/
+		{ 0,-1,-1 },			/* 8*/
+		{ 0,-1,-1 },			/* 9*/
+		{ 0,-1,31 }, 			/* Req. access to shared cache line*/
+		{ 0,-1,30 }, 			/* Req. access to clean cache line*/
+		{ 0,-1,29 }, 			/* Cache Line Invalidation*/
+                { 0,-1,-1 },			/* 13*/
+                { 0,-1,-1 },			/* 14*/
+                { 0,-1,-1 },			/* 15*/
+                { 0,-1,-1 },			/* 16*/
+                { 0,-1,-1 },			/* 17*/
+                { 0,-1,-1 },			/* 18*/
+                { 0,-1,-1 },			/* 19*/
+		{ 0,-1,23  }, 			/* D-TLB misses*/
+		{ 0,-1,23  },			/* I-TLB misses*/
+                { 0,-1,-1 },			/* 22*/
+                { 0,-1,-1 },			/* 23*/
+                { 0,-1,-1 },			/* 24*/
+                { 0,-1,-1 },			/* 25*/
+                { 0,-1,-1 },			/* 26*/
+                { 0,-1,-1 },			/* 27*/
+                { 0,-1,-1 },			/* 28*/
+                { 0,-1,-1 },			/* 29*/
+		{ 0,-1,-1 },			/* TLB shootdowns*/
+                { 0,-1,-1 },			/* 31*/
+                { 0,-1,-1 },			/* 32*/
+                { 0,-1,-1 },			/* 33*/
+                { 0,-1,-1 },			/* 34*/
+                { 0,-1,-1 },			/* 35*/
+                { 0,-1,-1 },			/* 36*/
+                { 0,-1,-1 },			/* 37*/
+                { 0,-1,-1 },			/* 38*/
+                { 0,-1,-1 },			/* 39*/
+		{ 0,-1,24  },			/* Branch inst. mispred.*/
+		{ 0,-1,-1 },			/* Branch inst. taken*/
+		{ 0,-1,-1 },			/* Branch inst. not taken*/
+                { 0,-1,-1 },			/* 43*/
+                { 0,-1,-1 },			/* 44*/
+                { 0,-1,-1 },			/* 45*/
+                { 0,-1,-1 },			/* 46*/
+                { 0,-1,-1 },			/* 47*/
+                { 0,-1,-1 },			/* 48*/
+                { 0,-1,-1 },			/* 49*/
+		{ 0,15,17 },			/* Total inst. executed*/
+		{ 0,-1,-1 },		        /* Integer inst. executed*/
+		{ 0,-1,21  },			/* Floating Pt. inst. executed*/
+		{ 0,-1,18  },			/* Loads executed*/
+		{ 0,-1,19  },			/* Stores executed*/
+		{ 0,-1,-1 },			/* Branch inst. executed*/
+		{ 0,-1,-1 },			/* Vector/SIMD inst. executed */
+		{ 1, 0,21  },			/* FLOPS */
+                { 0,-1,-1 },			/* 58 */
+                { 0,-1,-1 },			/* 59 */
+		{ 0, 0,16  },			/* Total cycles */
+		{ 1, 15,16  },			/* MIPS */
+                { 0,-1,-1 },			/* 62 */
+                { 0,-1,-1 }			/* 63 */
              };
 
 
@@ -89,16 +89,16 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 
 static int fd = -1, generation = -1, domain = HWPERF_CNTEN_U;
 static hwperf_profevctrarg_t none;
-static hwd_control_state_t current; /* not yet used. */
 
 /* Low level functions, should not handle errors, just return codes. */
 
 static int cpu(inventory_t *item, void *bar)
 {
-  if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD))
+  if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD)) 
     {
       _papi_system_info.ncpu++;
       _papi_system_info.mhz = (int)item->inv_controller;
+      DBG((stderr,"CPU number %d at %d MHZ found\n",_papi_system_info.ncpu,_papi_system_info.mhz));
     }
   return(0);
 }
@@ -114,6 +114,7 @@ static int config(int fd, hwperf_profevctrarg_t *p, int *gen)
   if (tmp < 0)
     return(PAPI_ESYS);
   *gen = tmp;
+  DBG((stderr,"Counter generation is now %d\n",tmp));
   return(PAPI_OK);
 }
 
@@ -136,19 +137,21 @@ int _papi_hwd_init(EventSetInfo *zero)
   sprintf(pfile, "/proc/%05d", (int)pid);
   fd = open(pfile, O_RDWR);
   if (fd == -1)
-    return(PAPI_ESYS);
+    return(PAPI_ESYS); 
+
+  DBG((stderr,"FD of %s is %d\n",pfile,fd));
 
   memset(&none,0x00,sizeof(none));
-  generation = ioctl(fd,PIOCENEVCTRS, (void *)&none);
+  generation = ioctl(fd, PIOCENEVCTRS, &none);
   if (generation <= 0)
     return(PAPI_ESYS);
 
-  zero->machdep = (void *)&current;
+  DBG((stderr,"Counter generation is now %d\n",generation));
 
   return(PAPI_OK);
 }
 
-static int insertev(hwd_control_state_t *machdep, int event)
+static int insertev(hwd_control_state_t *machdep, int swindex, int event)
 {
   hwperf_profevctrarg_t *evctr_args;
   int ctr = event;
@@ -159,6 +162,7 @@ static int insertev(hwd_control_state_t *machdep, int event)
   if (ctr >= HWPERF_CNT1BASE)
     ctr -= HWPERF_CNT1BASE;
 
+  DBG((stderr,"Inserting event %d, counter %d, swindex %d\n",event,ctr,swindex));
 
   /* Control block for turning on these counters */
 
@@ -175,18 +179,24 @@ static int insertev(hwd_control_state_t *machdep, int event)
   /* Other defaults */
 
   evctr_args->hwp_evctrargs.hwp_evctrl[event].hwperf_creg.hwp_ie = 1;
-  evctr_args->hwp_evctrargs.hwp_evctrl[event].hwperf_spec = 0;
   evctr_args->hwp_ovflw_freq[event] = 0;
   evctr_args->hwp_ovflw_sig = 0;
 
-  /* Bump the number */
-  
-  machdep->number_of_events++;
+  /* Update the map */
+
+  machdep->hwindex[swindex] = event;
+
+  /* How many on this hardware register */
+
+  if (event >= HWPERF_CNT1BASE)
+    machdep->num_on_counter2++;
+  else
+    machdep->num_on_counter1++;
 
   return(PAPI_OK);
 }
 
-static int removeev(hwd_control_state_t *machdep, int event)
+static int removeev(hwd_control_state_t *machdep, int swindex, int event)
 {
   hwperf_profevctrarg_t *evctr_args;
   int ctr = event;
@@ -201,24 +211,22 @@ static int removeev(hwd_control_state_t *machdep, int event)
 
   evctr_args = (hwperf_profevctrarg_t *)&machdep->on;
 
-  /* Insert adjusted event number */
+  /* Turn it off */
 
-  evctr_args->hwp_evctrargs.hwp_evctrl[event].hwperf_creg.hwp_ev = 0;
-
-  /* Insert default domain */
-
-  evctr_args->hwp_evctrargs.hwp_evctrl[event].hwperf_creg.hwp_mode = domain;
-
-  /* Other defaults */
-
-  evctr_args->hwp_evctrargs.hwp_evctrl[event].hwperf_creg.hwp_ie = 0;
   evctr_args->hwp_evctrargs.hwp_evctrl[event].hwperf_spec = 0;
   evctr_args->hwp_ovflw_freq[event] = 0;
   evctr_args->hwp_ovflw_sig = 0;
 
-  /* Reduce the number */
-  
-  machdep->number_of_events--;
+  /* Update the map */
+
+  machdep->hwindex[swindex] = 0;
+
+  /* Lower the counts */
+
+  if (event >= HWPERF_CNT1BASE)
+    machdep->num_on_counter2--;
+  else
+    machdep->num_on_counter1--;
 
   return(PAPI_OK);
 }
@@ -226,25 +234,51 @@ static int removeev(hwd_control_state_t *machdep, int event)
 int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
 {
   hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
-  
+  int c1, c2, retval;
+
   if (event & PRESET_MASK)
     { 
-      int preset, c1, c2;
-      int retval = PAPI_ENOEVNT;
+      event ^= PRESET_MASK; 
+      c1 = preset_map[event].counter_code1;
+      c2 = preset_map[event].counter_code2;
 
-      preset = event ^= PRESET_MASK; 
-      c1 = preset_map[preset].counter_code1;
-      c2 = preset_map[preset].counter_code2;
-
-      if (c1 >= 0)
-	return(insertev((hwd_control_state_t *)machdep,c1));
-      if (c2 >= 0)
-	return(insertev((hwd_control_state_t *)machdep,c2));
+      if (!preset_map[event].computed)
+	{
+	  if ((c1 == -1) && (c2 >= 0))
+	    return(insertev(machdep,ESI->NumberOfCounters,c2));
+	  else if ((c2 == -1) && (c1 >= 0))
+	    return(insertev(machdep,ESI->NumberOfCounters,c1));
+	  else if ((c1 >= 0) && (c2 >= 0)) /* If same event runs on multiple counters */
+	    {
+	      if (machdep->num_on_counter1 == 0)
+		retval = insertev(machdep,ESI->NumberOfCounters,c1); /* Put it on the free one */
+	      else if (machdep->num_on_counter1 == 0)
+		retval = insertev(machdep,ESI->NumberOfCounters,c2);
+	      else
+		{
+		  if (machdep->num_on_counter1 < machdep->num_on_counter2)
+		    retval = insertev(machdep,ESI->NumberOfCounters,c1); /* Put it on the lesser one */		    
+		  else
+		    retval = insertev(machdep,ESI->NumberOfCounters,c2); 
+		}
+	    }
+	  else
+	    retval = PAPI_ENOEVNT;
+	}
+      else /* This is computed, we need both counters */
+	{
+	  retval = insertev(machdep,ESI->NumberOfCounters,c1);
+	  if (retval < PAPI_OK)
+	    return(retval);
+	  retval = insertev(machdep,ESI->NumberOfCounters,c2);
+	  if (retval < PAPI_OK)
+	    removeev(machdep,ESI->NumberOfCounters,c1);
+	}
       
       return(retval);
     }
 
-  return(insertev((hwd_control_state_t *)machdep,event));
+  return(insertev(machdep,ESI->NumberOfCounters,event));
 }
 
 int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
@@ -261,14 +295,14 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
       c2 = preset_map[preset].counter_code2;
 
       if (c1 >= 0)
-	return(removeev(machdep,c1));
+	return(removeev(machdep,ESI->NumberOfCounters,c1));
       if (c2 >= 0)
-	return(removeev((hwd_control_state_t *)machdep,c2));
+	return(removeev(machdep,ESI->NumberOfCounters,c2));
       
       return(retval);
     }
 
-  return(removeev(machdep,event));
+  return(removeev(machdep,ESI->NumberOfCounters,event));
 }
 
 int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
@@ -276,17 +310,46 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
+static int copy_values(EventSetInfo *ESI, unsigned long long *from_kernel, unsigned long long *to_user)
+{
+  hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
+  hwperf_profevctrarg_t *evctr_args = (hwperf_profevctrarg_t *)&machdep->on;
+  int i,ind,j=0;
+
+  for (i=0;i<ESI->NumberOfCounters;i++)
+    {
+      ind = machdep->hwindex[i];
+      if (evctr_args->hwp_evctrargs.hwp_evctrl[ind].hwperf_spec)
+	{
+	  DBG((stderr,"Running counter detected at offset %d, index %d\n",i,ind));
+	  to_user[j] = from_kernel[ind];
+	  j++;
+	}
+    }
+  return(PAPI_OK);
+}
+
 int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 {
-  int gen, retval = PAPI_OK;
+  hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
+  unsigned long long getem[HWPERF_EVENTMAX];
+  int gen;
   
-  gen = ioctl(fd, PIOCGETEVCTRS, (void *)events);
+  gen = ioctl(fd, PIOCGETEVCTRS, (void *)&getem);
   if (gen < 0)
     return(PAPI_ESYS);
   else if (gen != generation)
     return(PAPI_ECLOST);
 
-  return(retval);
+#if defined(DEBUG)
+  { 
+    int i;
+    for (i=0;i<_papi_system_info.num_cntrs;i++)
+      DBG((stderr,"counter[%d]:\t\t%lld\n",i,getem[i]));
+  }
+#endif
+
+  return(copy_values(ESI,getem,events));
 }
 
 int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
@@ -374,6 +437,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,
 			        0, 
 			        0,
-			       sizeof(hwd_control_state_t), 
-			       NULL };
+			        0,
+			        sizeof(hwd_control_state_t), 
+			        NULL };
 #endif
