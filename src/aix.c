@@ -54,8 +54,10 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 }
 
 /* this function would return the next native event code.
-    modifer=0    it simply returns next native event code
-    modifer=1    it would return information of groups this native event lives
+    modifer = PAPI_ENUM_ALL
+		 it simply returns next native event code
+    modifer = PAPI_PWR4_ENUM_GROUPS
+		 it would return information of groups this native event lives
                  0x400000ed is the native code of PM_FXLS_FULL_CYC,
 		 before it returns 0x400000ee which is the next native event's
 		 code, it would return *EventCode=0x400400ed, the digits 16-23
@@ -66,7 +68,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   if (modifer == 0) {
+   if (modifer == PAPI_ENUM_ALL) {
       int index = *EventCode & NATIVE_AND_MASK;
 
       if (native_table[index + 1].resources.selector) {
@@ -74,7 +76,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
          return (PAPI_OK);
       } else
          return (PAPI_ENOEVNT);
-   } else {
+   } else if (modifer == PAPI_PWR4_ENUM_GROUPS) {
 #ifdef _POWER4
       unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000000FF;
@@ -102,6 +104,8 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       return (PAPI_EINVAL);
 #endif
    }
+   else
+      return (PAPI_EINVAL);
 }
 
 static void set_config(hwd_control_state_t * ptr, int arg1, int arg2)

@@ -956,13 +956,6 @@ hwd_p4_mask_t *mask_array[] = {
    _machine_clear_mask
 };
 
-enum {
-   PAPI_P4_ENUM_ALL = 0,        // all 83,000+ native events
-   PAPI_P4_ENUM_GROUPS,         // 45 groups + custom + user
-   PAPI_P4_ENUM_COMBOS,         // all combinations of mask bits for given group
-   PAPI_P4_ENUM_BITS            // all individual bits for given group
-};
-
 /*************************************/
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
@@ -986,7 +979,6 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
       for p4, (modifier==0) scans major groups; (modifier==1) scans all variations of the groups.
       this can be important for platforms such as pentium 4 that have event groups and variations
     */
-   /* UNTESTED: write high level PAPI_enum_events(); rewrite avail and native_avail; test */
 
    int event, mask, this_mask;
 
@@ -994,7 +986,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 
    if (event <= P4_machine_clear) {
       switch (modifier) {
-      case PAPI_P4_ENUM_ALL:
+      case PAPI_ENUM_ALL:
          this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
          while (((++mask) & this_mask) != mask) {
             if (mask > this_mask) {
@@ -1008,7 +1000,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          }
          break;
 
-      case PAPI_P4_ENUM_GROUPS:
+      case PAPI_PENT4_ENUM_GROUPS:
          if (++event > P4_machine_clear) {
             event = P4_custom_event;
             mask = -1;
@@ -1016,7 +1008,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
             mask = 0;
          break;
 
-      case PAPI_P4_ENUM_COMBOS:
+      case PAPI_PENT4_ENUM_COMBOS:
          this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
          while (((++mask) & this_mask) != mask) {
             if (mask > this_mask)
@@ -1024,7 +1016,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          }
          break;
 
-      case PAPI_P4_ENUM_BITS:
+      case PAPI_PENT4_ENUM_BITS:
          this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
          if (mask == 0)
             mask = 1;

@@ -219,6 +219,34 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
 
+/* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
+   A value of 0 (PAPI_ENUM_ALL) is always assumed to enumerate ALL events on every platform.
+   PAPI PRESET events are broken into related event categories.
+   Each supported substrate can have optional values to determine how native events on that
+   substrate are enumerated.
+*/
+enum {
+   PAPI_ENUM_ALL = 0,			/* Always enumerate all events */
+
+   /* PAPI PRESET section */
+   PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
+   PAPI_PRESET_ENUM_BR,			/* branch related preset events */
+   PAPI_PRESET_ENUM_MEM,		/* memory related preset events */
+   PAPI_PRESET_ENUM_TLB,		/* Translation Lookaside Buffer events */
+   PAPI_PRESET_ENUM_FP,			/* Floating Point related preset events */
+
+   /* Pentium 4 specific section */
+   PAPI_PENT4_ENUM_GROUPS = 0x100,      /* 45 groups + custom + user */
+   PAPI_PENT4_ENUM_COMBOS,		/* all combinations of mask bits for given group */
+   PAPI_PENT4_ENUM_BITS,		/* all individual bits for given group */
+
+   /* POWER 4 specific section */
+   PAPI_PWR4_ENUM_GROUPS = 0x200	/* Enumerate groups an event belongs to */
+};
+
+
+
+
 /* 
 The Low Level API
 
