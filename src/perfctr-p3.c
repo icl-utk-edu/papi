@@ -519,6 +519,9 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
       SUBDBG("vperfctr_control returns: %d\n", error);
       error_return(PAPI_ESYS, VCNTRL_ERROR);
    }
+#ifdef DEBUG
+   print_control(&state->control.cpu_control);
+#endif
    return (PAPI_OK);
 }
 
