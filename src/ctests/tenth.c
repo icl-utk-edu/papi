@@ -128,7 +128,7 @@ int main()
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("First number row 1 approximately equals (1,1) - (2,2) or %lld\n",(values[1])[0]-(values[2])[0]);
+  printf("First number row 1 approximately equals (2,2) - (3,3) or %lld\n",(values[1])[0]-(values[2])[0]);
 #else
   printf("PAPI_L1_TCM : \t%lld\t\t0\t\t0\n",
 	 (values[0])[0]);
@@ -139,7 +139,7 @@ int main()
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("First number row 1 approximately equals (1,1) + (2,2) or %lld\n",(values[1])[0]+(values[2])[0]);
+  printf("First number row 1 approximately equals (2,2) + (3,3) or %lld\n",(values[1])[0]+(values[2])[0]);
 #endif
 
   free_test_space(values, num_tests);
