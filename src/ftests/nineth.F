@@ -4,7 +4,7 @@
       implicit none
 
       integer es1, es2
-      integer*8 values(10)
+      integer*8 values(10),tvalues(10)
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer retval
@@ -69,6 +69,7 @@
       end if
 
       call PAPIf_get_clockrate(clockrate)
+      print *, 'Clockrate:', clockrate
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -78,7 +79,7 @@
 
       call do_flops(NUM_FLOPS)
 
-      call PAPIf_stop(es1, values(1), retval)
+      call PAPIf_stop(es1, tvalues(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_stop', retval)
@@ -92,7 +93,7 @@
 
       call do_flops(NUM_FLOPS)
 
-      call PAPIf_stop(es2, values(3), retval)
+      call PAPIf_stop(es2, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_stop', retval)
@@ -116,8 +117,8 @@
      . 'PAPIf_rem_event', retval)
       end if
 
-      test_flops = values(1)*clockrate*1000000.0
-      test_flops = test_flops / values(2)
+      test_flops = tvalues(1)*clockrate*1000000.0
+      test_flops = test_flops / tvalues(2)
     
 
       if (tests_quiet .EQ. 0) then
@@ -153,17 +154,17 @@
       print *, "---------------------------------------------"
  
       print *, "Test type   : \t  1\t\t  2\n"
-      print *, "PAPI_FP_INS : \t", values(1), "\t  0"
-      print *, "PAPI_TOT_CYC: \t", values(2), "\t  0"
-      print *, "PAPI_FLOPS  : \t  0\t\t", values(3)
+      print *, "PAPI_FP_INS : \t", tvalues(1), "\t  0"
+      print *, "PAPI_TOT_CYC: \t", tvalues(2), "\t  0"
+      print *, "PAPI_FLOPS  : \t  0\t\t", values(1)
       print *, "---------------------------------------------"      
 
       print *, "Verification:"
       print *, "Last number in row 3 approximately equals", test_flops
       end if
 
-      min = values(3) * 0.9
-      max = values(3) * 1.1
+      min = tvalues(1) * 0.9
+      max = tvalues(1) * 1.1
       if ((test_flops.gt.max) .OR. (test_flops.lt.min)) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_FLOPS', 1)
