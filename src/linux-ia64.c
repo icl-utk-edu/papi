@@ -1695,7 +1695,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 
       memset(&act,0x0,sizeof(struct sigaction));
       act.sa_handler = (sig_t)ia64_dispatch_sigprof;
-      act.sa_flags = SA_RESTART;
+      act.sa_flags = SA_SIGINFO;
       if (sigaction(SIGPROF, &act, NULL) == -1)
 	return(PAPI_ESYS);
 
