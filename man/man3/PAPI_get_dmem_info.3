@@ -1,117 +1,65 @@
 .\" $Id$
 .TH PAPI_get_dmem_info 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
-*
-* This is a placeholder. It needs a total rewrite.
-*
-
 .SH NAME
-PAPI_get_memory_info \- get the info about the system memory hardware
+PAPI_get_dmem_info \- get information about the dynamic memory usage of the current program
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "const PAPI_mem_info_t *PAPI_get_memory_info(void);"
+.BI " long PAPI_get_dmem_info(int option);"
 .fi
 
 .SH DESCRIPTION
 In C, this function returns a pointer to a structure containing information
-about the memory hardware on which the program runs. 
+about the memory hardware on which the program runs. There is no Fortran equivalent call.
+
+.SH NOTE
+The exact calling syntax and returned information for this function is likely to change.
 
 .SH ARGUMENTS
-The following arguments are implicit in the structure returned by the C function.
 .LP
-.I total_tlb_size
---  Total Size of the TLB in KB
-.LP
-.I itlb_size
---  Instruction TLB size in KB, this will be 0 if instruction and data TLB are 
-combined.
-.LP
-.I itlb_assoc
---  Instruction TLB associtivity. 
-.LP
-.I dtlb_size
---  Data TLB size in KB, this will be 0 if instruction and data TLB are 
-combined.
-.LP
-.I dtlb_assoc
---  Data TLB associtivity. 
-.LP
-.I total_L1_size
---  Total size of Level 1 cache in KB
-.LP
-.I L1_icache_size
--- Total size of Level 1 Instruction cache in KB, this value is 0 if the
-instruction and data Level 1 cache are combined.
-.LP
-.I L1_icache_assoc
--- Level 1 instruction cache associtivity
-.LP
-.I L1_icache_lines
--- Number of lines in Level 1 instruction cache
-.LP
-.I L1_icache_linesize
--- Line size in KB of Level 1 instruction cache
-.I L1_dcache_size
--- Total size of Level 1 Data cache in KB, this value is 0 if the
-instruction and data Level 1 cache are combined.
-.LP
-.I L1_dcache_assoc
--- Level 1 data cache associtivity
-.LP
-.I L1_dcache_lines
--- Number of lines in Level 1 data cache
-.LP
-.I L1_dcache_linesize
--- Line size in KB of Level 1 data cache
-.I L2_cache_size
--- Total size of Level 2 cache in KB.
-.LP
-.I L2_cache_assoc
--- Level 2 cache associtivity
-.LP
-.I L2_cache_lines
--- Number of lines in Level 2 cache
-.LP
-.I L2_cache_linesize
--- Line size in KB of Level 2 cache
-.I L3_cache_size
--- Total size of Level 3 cache in KB.
-.LP
-.I L3_cache_assoc
--- Level 3 cache associtivity
-.LP
-.I L3_cache_lines
--- Number of lines in Level 3 cache
-.LP
-.I L3_cache_linesize
--- Line size in KB of Level 3 cache
+.I option
+--  Can currently be one of the following: 
+.B PAPI_GET_SIZE 
+(Size of process image in pages),
+.B PAPI_GET_RESSIZE 
+(Resident set size in pages),
+.B PAPI_GET_PAGESIZE 
+(Pagesize in bytes).
 
 .SH RETURN VALUES
-On success, the C function returns a non-NULL pointer.
-.B PAPI_OK.
- On error, NULL is returned by the C function.
+On success, this function returns the positive value of the specified option. 
+On error a negative error value is returned.
 
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
-One or more of the arguments is invalid.
+The value of 
+.I option 
+is invalid.
+.TP
+.B "PAPI_SYS"
+A system error occured.
 
 .SH EXAMPLE
 .LP
 .nf
 .if t .ft CW
-const PAPI_mem_info_t  *meminfo = NULL;
-	
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
+   int retval;
 
-if ((hwinfo = PAPI_get_memory_info()) == NULL)
-  exit(1);
+   if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+   exit(1);
 
-printf("Total L1 cache: %d KB.\n",meminfo->total_L1_size );
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+      handle_error(retval);
+
+   printf("Resident Size in Pages: %ld  Size in Pages: %ld  Pagesize in bytes: %ld\n",
+           PAPI_get_dmem_info(PAPI_GET_RESSIZE),
+           PAPI_get_dmem_info(PAPI_GET_SIZE),
+           PAPI_get_dmem_info(PAPI_GET_PAGESIZE));
 .if t .ft P
 .fi
 
@@ -127,4 +75,5 @@ the behavior of the routine is undefined.
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
 .BR PAPI_get_opt "(3), " 
-.BR PAPI_get_hardware_info "(3)"
+.BR PAPI_get_hardware_info "(3), "
+.BR PAPI_get_executable_info "(3)"

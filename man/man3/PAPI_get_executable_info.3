@@ -23,7 +23,7 @@ PAPI_get_executable_info \- get the executable's address space info
 
 .SH DESCRIPTION
 In C, this function returns a pointer to a structure containing information about
-the current program. In Fortran, the fields of the structure are returned explicitly.
+the current program. In Fortran, some fields of the structure are returned explicitly.
 
 .SH ARGUMENTS
 The following arguments are implicit in the structure returned by the C function,
@@ -76,6 +76,38 @@ printf("End of user program is at %p\en",prginfo->text_end);
 .if t .ft P
 .fi
 
+.SH DATA STRUCTURES
+.LP
+.nf
+.if t .ft CW
+   typedef struct _papi_preload_option {
+      char lib_preload_env[PAPI_MAX_STR_LEN];   /* Model string of CPU */
+      char lib_preload_sep;
+      char lib_dir_env[PAPI_MAX_STR_LEN];
+      char lib_dir_sep;
+   } PAPI_preload_option_t;
+
+   typedef int (*PAPI_debug_handler_t) (int code);
+
+   typedef struct _papi_address_map {
+      char mapname[PAPI_MAX_STR_LEN];
+      caddr_t text_start;       /* Start address of program text segment */
+      caddr_t text_end;         /* End address of program text segment */
+      caddr_t data_start;       /* Start address of program data segment */
+      caddr_t data_end;         /* End address of program data segment */
+      caddr_t bss_start;        /* Start address of program bss segment */
+      caddr_t bss_end;          /* End address of program bss segment */
+   } PAPI_address_map_t;
+
+   typedef struct _papi_program_info {
+      char fullname[PAPI_MAX_STR_LEN];  /* path+name */
+      char name[PAPI_MAX_STR_LEN];      /* name */
+      PAPI_address_map_t address_info;
+      PAPI_preload_option_t preload_info;
+   } PAPI_exe_info_t;
+.if t .ft P
+.fi
+
 .SH AUTHORS
 The PAPI Team. See them at the PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi
@@ -89,4 +121,5 @@ fields are filled on every architecture.
 
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
+.BR PAPI_get_hardware_info "(3), "
 .BR PAPI_get_opt "(3)" 
