@@ -797,7 +797,7 @@ long long _papi_hwd_get_real_cycles (void)
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   long long retval;
-  struct tms buffer;
+/*  struct tms buffer; */
 
   retval = _papi_hwd_get_virt_cycles(zero);
   retval = retval / _papi_system_info.hw_info.mhz;
@@ -814,7 +814,7 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   long long lcyc;
   hwd_control_state_t *machdep = zero->machdep;
-  float usec, cyc;
+/*  float usec, cyc; */
 
   lcyc = vperfctr_read_tsc(machdep->self);
   DBG((stderr,"Read virt. cycles is %lld (%p -> %p)\n",lcyc,machdep,machdep->self));
