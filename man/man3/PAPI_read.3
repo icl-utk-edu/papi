@@ -30,6 +30,13 @@ The counters are left counting after the read.
 adds the counters of the indicated event set into the array
 .IR values .
 The counters are zeroed and left counting after the operation.
+.B NOTE:
+Unexpected values will result from using
+.B PAPI_accum()
+on rate-based derived events, such as 
+.B PAPI_FLOPS 
+and 
+.B PAPI_IPS .
 
 .SH ARGUMENTS
 .I EventSet
