@@ -15,6 +15,9 @@ ftests_util.o: ftests_util.F
 	else if [ $(SUBSTR) = solaris-ultra ]; then $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
 	else $(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi; fi
 
+addAIXevents.o: addAIXevents.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c addAIXevents.c
+
 do_loops.o: do_loops.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c do_loops.c
 
@@ -90,8 +93,8 @@ johnmay: johnmay.F $(FTEST_DEPENDENCE)
 johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
 
-native: native.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) -o native $(LDFLAGS)
+native: native.F $(FTEST_DEPENDENCE) addAIXevents.o
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
 
 profile: profile.F $(FTEST_DEPENDENCE)
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) profile.F $(PAPILIB) -o profile $(LDFLAGS)

@@ -50,6 +50,12 @@
      *retval)
       end if
 
+C Don't know how to make the following #if defined() be TRUE
+C So we'll just do AIX initialization in a C subroutine...
+	call addAIXevents(es, retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'addAIXevents', retval)
+      end if
 #if defined(_AIX)
       print *, "AIX"
 C     ICM      
@@ -167,7 +173,6 @@ C     CPU cyc
 #endif
 
 #if (defined(sun) && defined(sparc))
-      print *, "Sun Sparc"
 C     Load_use
       nativees = z'B' * 2**8
       call PAPIf_add_event( es, nativees, retval )
