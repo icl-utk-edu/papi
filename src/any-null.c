@@ -188,6 +188,12 @@ static int get_system_info(void)
   _papi_system_info.num_gp_cntrs = 2;
   _papi_system_info.num_cntrs = 2;
 
+  /* Setup memory info */
+
+  tmp = get_memory_info(&_papi_system_info.mem_info, 0/*(int)info.cpu_type*/);
+  if (tmp)
+    return(tmp);
+
   /* Setup presets */
 
   tmp = setup_all_presets();
@@ -388,7 +394,7 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
   struct tms buffer;
 
   times(&buffer);
-  retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
+  retval = (long long)buffer.tms_utime*(long long)(1000000/sysconf(_SC_CLK_TCK));
   return(retval);
 }
 
@@ -918,6 +924,29 @@ papi_mdi _papi_system_info = { "$Id$",
 				 (caddr_t)NULL,
 				 (caddr_t)NULL,
 				 "LD_PRELOAD", /* How to preload libs */
+			       },
+                               { 0,  /*total_tlb_size*/
+                                 0,  /*itlb_size */
+                                 0,  /*itlb_assoc*/
+                                 0,  /*dtlb_size */
+                                 0, /*dtlb_assoc*/
+                                 0, /*total_L1_size*/
+                                 0, /*L1_icache_size*/
+                                 0, /*L1_icache_assoc*/
+                                 0, /*L1_icache_lines*/
+                                 0, /*L1_icache_linesize*/
+                                 0, /*L1_dcache_size */
+                                 0, /*L1_dcache_assoc*/
+                                 0, /*L1_dcache_lines*/
+                                 0, /*L1_dcache_linesize*/
+                                 0, /*L2_cache_size*/
+                                 0, /*L2_cache_assoc*/
+                                 0, /*L2_cache_lines*/
+                                 0, /*L2_cache_linesize*/
+                                 0, /*L3_cache_size*/
+                                 0, /*L3_cache_assoc*/
+                                 0, /*L3_cache_lines*/
+                                 0  /*L3_cache_linesize*/
 			       },
 			       -1,  /*  num_cntrs */
 			       -1,  /*  num_gp_cntrs */
