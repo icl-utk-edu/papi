@@ -13,6 +13,31 @@
    - Get us.
 */
 
+
+#if defined(sun) && defined(sparc)
+  #define CACHE_LEVEL "PAPI_L2_TCM"
+  #define EVT1		  PAPI_L2_TCM
+  #define EVT2		  PAPI_L2_TCA
+  #define EVT3		  PAPI_L2_TCH
+  #define EVT1_STR	  "PAPI_L2_TCM"
+  #define EVT2_STR	  "PAPI_L2_TCA"
+  #define EVT3_STR	  "PAPI_L2_TCH"
+  #define MASK1		  MASK_L2_TCM
+  #define MASK2		  MASK_L2_TCA
+  #define MASK3		  MASK_L2_TCH
+#else
+  #define CACHE_LEVEL "PAPI_L1_TCM"
+  #define EVT1		  PAPI_L1_TCM
+  #define EVT2		  PAPI_L1_ICM
+  #define EVT3		  PAPI_L1_DCM
+  #define EVT1_STR	  "PAPI_L1_TCM"
+  #define EVT2_STR	  "PAPI_L1_ICM"
+  #define EVT3_STR	  "PAPI_L1_DCM"
+  #define MASK1		  MASK_L1_TCM
+  #define MASK2		  MASK_L1_ICM
+  #define MASK3		  MASK_L1_DCM
+#endif
+
 #include "papi_test.h"
 
 int TESTS_QUIET=0; /* Tests in Verbose mode? */
@@ -23,17 +48,9 @@ int main(int argc, char **argv)
   int EventSet1;
   int EventSet2;
   int EventSet3;
-#if defined(sun) && defined(sparc)
-  #define CACHE_LEVEL "PAPI_L2_TCM"
-  int mask1 = MASK_L2_TCM;
-  int mask2 = MASK_L2_TCA;
-  int mask3 = MASK_L2_TCH;
-#else
-  #define CACHE_LEVEL "PAPI_L1_TCM"
-  int mask1 = MASK_L1_TCM;
-  int mask2 = MASK_L1_ICM;
-  int mask3 = MASK_L1_DCM;
-#endif
+  int mask1 = MASK1;
+  int mask2 = MASK2;
+  int mask3 = MASK3;
   int num_events1;
   int num_events2;
   int num_events3;
@@ -51,6 +68,16 @@ int main(int argc, char **argv)
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+  /* Make sure that required resources are available */
+  retval = PAPI_query_event(EVT1);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, EVT1_STR, retval);
+
+  retval = PAPI_query_event(EVT2);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, EVT2_STR, retval);
+
+  retval = PAPI_query_event(EVT3);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, EVT3_STR, retval);
 
 
 #ifndef _CRAYT3E
