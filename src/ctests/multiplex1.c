@@ -125,7 +125,11 @@ int case2(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
+#ifdef _CRAYT3E
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_IIS);
+#else
   retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -177,7 +181,11 @@ int case3(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
+#ifdef _CRAYT3E
+  retval = PAPI_add_event(&EventSet, PAPI_TLB_DM);
+#else
   retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -235,7 +243,11 @@ int case4(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
+#ifdef _CRAYT3E
+  retval = PAPI_add_event(&EventSet, PAPI_TLB_DM);
+#else
   retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+#endif
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -243,7 +255,7 @@ int case4(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX) || defined(mips))
+#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E)
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
@@ -306,9 +318,11 @@ int main(int argc, char **argv)
     printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
   }
   case1();
+
   if ( !TESTS_QUIET ) 
   	printf("case2: Does setmpx/add work?\n");
   case2();
+
   if ( !TESTS_QUIET ) 
   	printf("case3: Does add/setmpx work?\n");
   case3();
