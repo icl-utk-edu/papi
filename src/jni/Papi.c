@@ -11,7 +11,7 @@ getPapiFunction(char *f)
   library = dlopen("libpapi.so",RTLD_LAZY);
   if(!library) {
 #ifdef PAPIJ_DEBUG
-    fprintf(stderr,"getPapiFunction: dlopen() failed\n");
+    fprintf(stderr,"getPapiFunction: dlopen() failed %s\n",dlerror());
     perror("reason:");
 #endif
     return NULL;
@@ -326,10 +326,10 @@ JNIEXPORT jobject JNICALL Java_PapiJ_get_1executable_1info
   exe_obj = (*env)->NewObject(env, class, mid, 
     (*env)->NewStringUTF(env,exe->fullname), 
     (*env)->NewStringUTF(env,exe->name),
-    (jlong)(jint)(exe->text_start), (jlong)(jint)(exe->text_end),
-    (jlong)(jint)(exe->data_start), (jlong)(jint)(exe->data_end),
-    (jlong)(jint)(exe->bss_start), (jlong)(jint)(exe->bss_end), 
-    (*env)->NewStringUTF(env,exe->lib_preload_env));
+    (jlong)(jint)(exe->address_info.text_start), (jlong)(jint)(exe->address_info.text_end),
+    (jlong)(jint)(exe->address_info.data_start), (jlong)(jint)(exe->address_info.data_end),
+    (jlong)(jint)(exe->address_info.bss_start), (jlong)(jint)(exe->address_info.bss_end), 
+    (*env)->NewStringUTF(env,exe->preload_info.lib_preload_env));
 
   return exe_obj;
 }
@@ -495,34 +495,6 @@ JNIEXPORT jint JNICALL Java_PapiJ_profil
   return ret;
 }
 
-JNIEXPORT jobject JNICALL Java_PapiJ_query_1all_1events_1verbose
-  (JNIEnv *env, jobject obj)
-{
-  int num;
-  PAPI_event_info_t *preset, *(*query_all)(void);
-  jmethodID mid;
-  jclass class;
-  jobject preset_obj = NULL;
-
-  if( ! (query_all = getPapiFunction("PAPI_query_all_events_verbose")) )
-    return NULL;
-
-  preset = (*query_all)();
-
-  if( ! (class = (*env)->FindClass(env, "PAPI_preset_info")) )
-    return NULL;
-
-  mid = (*env)->GetMethodID(env, class, "<init>",
-    "(Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;I)V");
-
-  preset_obj = (*env)->NewObject(env, class, mid, 
-    (*env)->NewStringUTF(env,preset->event_name), preset->event_code,
-    (*env)->NewStringUTF(env,preset->event_descr), preset->avail,
-    (*env)->NewStringUTF(env,preset->event_note), preset->flags);
-
-  return preset_obj;
-}
-
 JNIEXPORT jint JNICALL Java_PapiJ_query_1event
   (JNIEnv *env, jobject obj, jint eventCode)
 {
@@ -532,42 +504,6 @@ JNIEXPORT jint JNICALL Java_PapiJ_query_1event
     return -1;
 
   return (*query_event)(eventCode);
-}
-
-JNIEXPORT jint JNICALL Java_PapiJ_query_1event_1verbose
-  (JNIEnv *env, jobject obj, jint eventCode, jobject p)
-{
-  int ret, (*query_event_verbose)(int, PAPI_event_info_t *);
-  PAPI_event_info_t *pinfo;
-  jclass class;
-  jfieldID fid;
-
-  if( ! (query_event_verbose = getPapiFunction("PAPI_query_event_verbose")) )
-    return -1;
-
-  ret = (*query_event_verbose)(eventCode, pinfo);
-
-  class = (*env)->GetObjectClass(env, p);
-
-  fid = (*env)->GetFieldID(env, class, "event_name", "Ljava/lang/String;");
-  (*env)->SetObjectField(env, p, fid, (*env)->NewStringUTF(env, pinfo->event_name));
-
-  fid = (*env)->GetFieldID(env, class, "event_code", "I");
-  (*env)->SetIntField(env, p, fid, pinfo->event_code);
-
-  fid = (*env)->GetFieldID(env, class, "event_descr", "Ljava/lang/String;");
-  (*env)->SetObjectField(env, p, fid, (*env)->NewStringUTF(env, pinfo->event_descr));
-
-  fid = (*env)->GetFieldID(env, class, "avail", "I");
-  (*env)->SetIntField(env, p, fid, pinfo->avail);
-
-  fid = (*env)->GetFieldID(env, class, "event_note", "Ljava/lang/String;");
-  (*env)->SetObjectField(env, p, fid, (*env)->NewStringUTF(env, pinfo->event_note));
-
-  fid = (*env)->GetFieldID(env, class, "flags", "I");
-  (*env)->SetIntField(env, p, fid, pinfo->flags);
-
-  return ret;
 }
 
 JNIEXPORT jint JNICALL Java_PapiJ_read

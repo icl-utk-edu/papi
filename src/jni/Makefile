@@ -1,6 +1,7 @@
 CC=gcc
-
+CFLAGS= #-DPAPIJ_DEBUG
 PAPI_INCLUDE=..
+#JAVA_HOME=/opt/j2sdk1.4.1_03
 
 PAPIJ_JAVA_SRC=EventSet.java PAPI_hw_info.java \
   FlopInfo.java PAPI_inherit_option.java \
