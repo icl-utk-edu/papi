@@ -89,9 +89,9 @@ The naming scheme is <release>.<major>.<minor>
 
 2) Import the sources
 
-	% cvs import -ko -m "Import of perfctr 2.6.x" papi/src/perfctr-2.6.x perfctr perfctr-2-6-7
+	% cvs import -ko -m "Import of perfctr 2.6.7" papi/src/perfctr-2.6.x perfctr perfctr-2-6-7
 
-Here perfctr_dist is the "vendor tag" and perfctr-2-6-7 is the release
+Here perfctr is the "vendor tag" and perfctr-2-6-7 is the release
 version.
 
 Then if we have locally modified our copy (made changes to the distro)

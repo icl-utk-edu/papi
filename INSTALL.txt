@@ -149,12 +149,25 @@ installing PAPI, using Makefile.linux-alpha.
 
 Linux - Itanium I & II
 *****************************************************************************
-PAPI on Itanium Linux links to libpfm, which requires a kernel version of 
-2.4.18 or higher. After verifying that your kernel meets this condition, 
-follow the general instructions for installing PAPI, using 
-Makefile.linux-ia64-pfmon-1.1 for Itanium I or Makefile.linux-ia64-itanium2 
-for Itanium II.
+PAPI on Itanium Linux links to libpfm, version 2.0 requires a kernel version
+of 2.4.x, version 3.0 requires kernel version 2.6.x or higher. The kernel
+version is detected automatically in the Rules.libpfm file. 
 
+To build for this platform, use the Makefile.linux-libpfm-<processor> makefile,
+where processor is either itanium or itanium2.
+
+To build with a different version of PFM than is detected by the makefile: 
+(version 2.0 or 3.0)
+
+set VERSION=2.0 or VERSION=3.0 on the make line.
+
+To build with an installed libpfm:
+
+set the PFM_PREFIX flag on the make line.
+
+To build with an uninstalled libpfm not inside the PAPI source tree:
+
+set the PFM flag on the make line.
 
 Linux/x86 - Intel and AMD
 *****************************************************************************
