@@ -50,6 +50,12 @@ native_avail
 test case in the PAPI distribution. For the encoding of native events, see 
 .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
 
+It should be noted that
+.BR "PAPI_add_events"
+never partially succeeds. It either adds all the events or none at all. This is 
+different then the partial success semantics of
+.BR "PAPI_remove_events".
+
 .SH RETURN VALUES
 On success, these functions return
 .B "PAPI_OK."

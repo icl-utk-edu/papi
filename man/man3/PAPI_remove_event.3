@@ -47,10 +47,17 @@ For a list of native events available on current platform, run native_avail
 test case in the PAPI distribution. For the encoding of native events, see
 .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
 
+It should be noted that
+.BR "PAPI_remove_events"
+is allowed to partially succeed. In this case, the error returned 
+corresponds to the first bad entry in the EventCode array. This is 
+different then the binary success semantics of
+.BR "PAPI_add_events".
+
 .SH RETURN VALUES
 .nf
 On success, this function returns PAPI_OK.
-On error, a non-zero error code is returned.
+On error, a non-zero error code is returned according to the first entry that caused an error.
 .fi
 
 .SH ERRORS
