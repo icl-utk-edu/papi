@@ -22,6 +22,7 @@
 #endif
 
 // Includes specific to Windows
+#include <windows.h>
 #include <wtypes.h>
 #include <mmsystem.h>
 

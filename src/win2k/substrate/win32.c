@@ -11,24 +11,18 @@
 #include "win32.h"
 static void _papi_hwd_lock_release(void);
 
-/* First entry is mask, counter code 1, counter code 2, and TSC. 
-A high bit in the mask entry means it is an OR mask, not an
-and mask. This means that the same even is available on either
-counter. */
-
 static hwd_preset_t *preset_map = NULL;
 
 /* Since the preset maps are identical for all ia32 substrates
   (at least Linux and Windows) the preset maps are in a common
   file to minimimze redundant maintenance.
   NOTE: The obsolete linux-perf substrate is not supported by
-  this scheme, although it could be.
+  this scheme, although it could be with some rewrite.
 */
+
 #include "ia32_presets.h"
 
-
 /* Low level functions, should not handle errors, just return codes. */
-
 
 static __inline u_long_long get_cycles (void)
 {
@@ -988,6 +982,35 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
 
 #ifdef _WIN32
 
+static CONTEXT	context;	// processor specific context structure
+
+void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
+        DWORD dwUser, DWORD dw1, DWORD dw2) 
+{
+	HANDLE	threadHandle;
+	BOOL	error;
+
+	// dwUser is the threadID passed by timeSetEvent
+	// NOTE: This call requires W2000 or later
+	threadHandle = OpenThread(THREAD_GET_CONTEXT, FALSE, dwUser);
+
+	// retrieve the contents of the control registers only
+	context.ContextFlags = CONTEXT_CONTROL;
+	error = GetThreadContext(threadHandle, &context);
+	CloseHandle(threadHandle);
+
+	// pass a void pointer to cpu register data here
+	_papi_hwi_dispatch_overflow_signal((void *)(&context)); 
+} 
+    
+// this routine  returns the instruction pointer 
+// when the timer timed out for profiling purposes
+void *_papi_hwd_get_overflow_address(void *context)
+{
+  return((void *)((LPCONTEXT)context)->Eip);
+}
+
+/*
 void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
     DWORD dwUser, DWORD dw1, DWORD dw2) 
 {
@@ -1011,6 +1034,7 @@ void *_papi_hwd_get_overflow_address(void *context)
 
   return(location);
 }
+*/
 
 static CRITICAL_SECTION CriticalSection;
 
