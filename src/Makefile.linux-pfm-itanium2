@@ -5,14 +5,14 @@ SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
 MSUBSTR  = linux-ia64-libpfm2.0
 MEMSUBSTR= linux-ia64
-DESCR	= "Stock Linux 2.4.18 for the Intel Itanium 2"
+DESCR	= "Stock Linux 2.4.18 + for the Intel Itanium 2"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -I$(LIBPFMHOME)/include -I. -DITANIUM2 -DPFM20 -D_ASM_IA64_PAL_H
-# -DDEBUG -Wall
-OPTFLAGS= -g -DITANIUM2
-TOPTFLAGS = -DITANIUM2 -O0
+CFLAGS  = -g -Wall -I. -I$(LIBPFMHOME)/include -DPFM20 -D_ASM_IA64_PAL_H -DITANIUM2
+# -DDEBUG
+OPTFLAGS= -O3 
+TOPTFLAGS = -O0
 FFLAGS	=
 #  -Vaxlib
 #LDFLAGS =  -lPEPCF90 -lIEPCF90 -lF90 -lintrins
