@@ -20,5 +20,3 @@ Known problems:
  - The EV5 preset map is incomplete.
  - OSF 5.1 and the pfm device driver do not support saving and restoring the
    counters on context switch.  Whoever opens the driver owns the counters.
-   A patch to support saving/restoring/virtualizing the counters on a
-   per-thread basis has been requested.
