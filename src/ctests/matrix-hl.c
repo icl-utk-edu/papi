@@ -104,10 +104,10 @@ int main(int argc, char **argv)
    if (event[0] == PAPI_FP_INS) {
       /*     Compare measured FLOPS to expected value */
       tmp = 2 * (long_long) (NROWS1) * (long_long) (NCOLS2) * (long_long) (NCOLS1);
-      if (abs(values[0] - tmp) > (tmp * 0.05)) {
+      if (abs((int)values[0] - (int)tmp) > tmp * 0.05) {
          /*     Maybe we are counting FMAs? */
          tmp = tmp / 2;
-         if (abs(values[0] - tmp) > tmp * 0.05) {
+         if (abs((int)values[0] - (int)tmp) > tmp * 0.05) {
             printf("\n" TAB1, "Expected operation count: ", 2 * tmp);
             printf(TAB1, "Or possibly (using FMA):  ", tmp);
             printf(TAB1, "Instead I got:            ", values[0]);
