@@ -564,7 +564,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    deleting events from the eventset
 */
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
+              NativeInfo_t * native, int count, hwd_context_t *zero)
 {
    ev_control_t *ev_cmd = &this_state->counter_cmd;
    int i, nidx1, nidx2;

@@ -9,7 +9,7 @@ TARGETS	= serial multiplex
 POST_BUILD =
 SPECIAL_REMOVE =
 
-CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO 
+CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL 
 FFLAGS	= 
 OPTFLAGS= -O 
 TOPTFLAGS=$(OPTFLAGS)
