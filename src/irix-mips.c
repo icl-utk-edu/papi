@@ -1,5 +1,8 @@
+/* $Id$ */
+
 #if defined(sgi) && defined(mips)
 #define R10000
+
 #include <stdio.h>
 #include <invent.h>
 #include <time.h>
@@ -28,70 +31,70 @@ typedef struct hwd_preset {
   int counter_code2; /* 0 through 15 */ } hwd_preset_t;
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
-                { -1,9  },			// L1 D-Cache misses 
-                {  9,-1 },		        // L1 I-Cache misses 
-		{ -1,10 },		        // L2 D-Cache misses
-		{ 10,-1 },		        // L2 I-Cache misses
-		{ -1,-1 },			// 4
-		{ -1,-1 },			// 5
-		{ -1,-1 },			// 6	**unused preset map elements**
-		{ -1,-1 },			// 7
-		{ -1,-1 },			// 8
-		{ -1,-1 },			// 9
-		{ -1,15 }, 			// Req. access to shared cache line
-		{ -1,14 }, 			// Req. access to clean cache line
-		{ -1,13 }, 			// Cache Line Invalidation
-                { -1,-1 },			// 13
-                { -1,-1 },			// 14
-                { -1,-1 },			// 15
-                { -1,-1 },			// 16
-                { -1,-1 },			// 17
-                { -1,-1 },			// 18
-                { -1,-1 },			// 19
-		{ -1,7  }, 			// D-TLB misses
-		{ -1,7  },			// I-TLB misses
-                { -1,-1 },			// 22
-                { -1,-1 },			// 23
-                { -1,-1 },			// 24
-                { -1,-1 },			// 25
-                { -1,-1 },			// 26
-                { -1,-1 },			// 27
-                { -1,-1 },			// 28
-                { -1,-1 },			// 29
-		{ -1,-1 },			// TLB shootdowns
-                { -1,-1 },			// 31
-                { -1,-1 },			// 32
-                { -1,-1 },			// 33
-                { -1,-1 },			// 34
-                { -1,-1 },			// 35
-                { -1,-1 },			// 36
-                { -1,-1 },			// 37
-                { -1,-1 },			// 38
-                { -1,-1 },			// 39
-		{ -1,8  },			// Branch inst. mispred.
-		{ -1,-1 },			// Branch inst. taken
-		{ -1,-1 },			// Branch inst. not taken
-                { -1,-1 },			// 43
-                { -1,-1 },			// 44
-                { -1,-1 },			// 45
-                { -1,-1 },			// 46
-                { -1,-1 },			// 47
-                { -1,-1 },			// 48
-                { -1,-1 },			// 49
-		{ 15,-1 },			// Total inst. executed
-		{ -1,-1 },		        // Integer inst. executed
-		{ -1,5  },			// Floating Pt. inst. executed
-		{ -1,2  },			// Loads executed
-		{ -1,3  },			// Stores executed
-		{ -1,-1 },			// Branch inst. executed
-		{ -1,-1 },			// Vector/SIMD inst. executed 
-		{  0,5  },			// FLOPS
-                { -1,-1 },			// 58
-                { -1,-1 },			// 59
-		{  0,0  },			// Total cycles
-		{  0,1  },			// MIPS
-                { -1,-1 },			// 62
-                { -1,-1 }			// 63
+                { -1,9  },			/* L1 D-Cache misses */
+                {  9,-1 },		        /* L1 I-Cache misses */
+		{ -1,10 },		        /* L2 D-Cache misses */
+		{ 10,-1 },		        /* L2 I-Cache misses */
+		{ -1,-1 },			/* 4*/
+		{ -1,-1 },			/* 5*/
+		{ -1,-1 },			/* 6*/
+		{ -1,-1 },			/* 7*/
+		{ -1,-1 },			/* 8*/
+		{ -1,-1 },			/* 9*/
+		{ -1,15 }, 			/* Req. access to shared cache line*/
+		{ -1,14 }, 			/* Req. access to clean cache line*/
+		{ -1,13 }, 			/* Cache Line Invalidation*/
+                { -1,-1 },			/* 13*/
+                { -1,-1 },			/* 14*/
+                { -1,-1 },			/* 15*/
+                { -1,-1 },			/* 16*/
+                { -1,-1 },			/* 17*/
+                { -1,-1 },			/* 18*/
+                { -1,-1 },			/* 19*/
+		{ -1,7  }, 			/* D-TLB misses*/
+		{ -1,7  },			/* I-TLB misses*/
+                { -1,-1 },			/* 22*/
+                { -1,-1 },			/* 23*/
+                { -1,-1 },			/* 24*/
+                { -1,-1 },			/* 25*/
+                { -1,-1 },			/* 26*/
+                { -1,-1 },			/* 27*/
+                { -1,-1 },			/* 28*/
+                { -1,-1 },			/* 29*/
+		{ -1,-1 },			/* TLB shootdowns*/
+                { -1,-1 },			/* 31*/
+                { -1,-1 },			/* 32*/
+                { -1,-1 },			/* 33*/
+                { -1,-1 },			/* 34*/
+                { -1,-1 },			/* 35*/
+                { -1,-1 },			/* 36*/
+                { -1,-1 },			/* 37*/
+                { -1,-1 },			/* 38*/
+                { -1,-1 },			/* 39*/
+		{ -1,8  },			/* Branch inst. mispred.*/
+		{ -1,-1 },			/* Branch inst. taken*/
+		{ -1,-1 },			/* Branch inst. not taken*/
+                { -1,-1 },			/* 43*/
+                { -1,-1 },			/* 44*/
+                { -1,-1 },			/* 45*/
+                { -1,-1 },			/* 46*/
+                { -1,-1 },			/* 47*/
+                { -1,-1 },			/* 48*/
+                { -1,-1 },			/* 49*/
+		{ 15,-1 },			/* Total inst. executed*/
+		{ -1,-1 },		        /* Integer inst. executed*/
+		{ -1,5  },			/* Floating Pt. inst. executed*/
+		{ -1,2  },			/* Loads executed*/
+		{ -1,3  },			/* Stores executed*/
+		{ -1,-1 },			/* Branch inst. executed*/
+		{ -1,-1 },			/* Vector/SIMD inst. executed */
+		{  0,5  },			/* FLOPS */
+                { -1,-1 },			/* 58 */
+                { -1,-1 },			/* 59 */
+		{  0,0  },			/* Total cycles */
+		{  0,1  },			/* MIPS */
+                { -1,-1 },			/* 62 */
+                { -1,-1 }			/* 63 */
              };
 
 
@@ -233,16 +236,16 @@ static int removeev(hwd_control_state_t *machdep, int event)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_event(void *machdep, int event)
+int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
 {
-  unsigned int foo = event;
-
-  if (foo & PRESET_MASK)
+  hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
+  
+  if (event & PRESET_MASK)
     { 
-      unsigned int preset, c1, c2;
+      int preset, c1, c2;
       int retval = PAPI_ENOEVNT;
 
-      preset = foo ^= PRESET_MASK; 
+      preset = event ^= PRESET_MASK; 
       c1 = preset_map[preset].counter_code1;
       c2 = preset_map[preset].counter_code2;
 
@@ -257,36 +260,36 @@ int _papi_hwd_add_event(void *machdep, int event)
   return(insertev((hwd_control_state_t *)machdep,event));
 }
 
-int _papi_hwd_rem_event(void *machdep, int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
-  unsigned int foo = event;
+  hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
 
-  if (foo & PRESET_MASK)
+  if (event & PRESET_MASK)
     { 
-      unsigned int preset, c1, c2;
+      int preset, c1, c2;
       int retval = PAPI_ENOEVNT;
 
-      preset = foo ^= PRESET_MASK; 
+      preset = event ^= PRESET_MASK; 
       c1 = preset_map[preset].counter_code1;
       c2 = preset_map[preset].counter_code2;
 
       if (c1 >= 0)
-	return(removeev((hwd_control_state_t *)machdep,c1));
+	return(removeev(machdep,c1));
       if (c2 >= 0)
 	return(removeev((hwd_control_state_t *)machdep,c2));
       
       return(retval);
     }
 
-  return(removeev((hwd_control_state_t *)machdep,event));
+  return(removeev(machdep,event));
 }
 
-int _papi_hwd_add_prog_event(void *machdep, int event, void *extra)
+int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
 {
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_read(void *machdep, unsigned long long events[])
+int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 {
   int gen, retval = PAPI_OK;
   
@@ -299,7 +302,7 @@ int _papi_hwd_read(void *machdep, unsigned long long events[])
   return(retval);
 }
 
-int _papi_hwd_write(void *machdep, unsigned long long events[])
+int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
 { 
   return(PAPI_ESBSTR);
 }
@@ -311,13 +314,13 @@ int _papi_hwd_start(EventSetInfo *ESI)
   return(config(fd,&arg->on,&generation));
 }
 
-int _papi_hwd_stop(void *machdep, unsigned long long events[])
+int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
 { 
   int retval;
 
   if (events)
     {
-      retval = _papi_hwd_read(machdep,events);
+      retval = _papi_hwd_read(ESI,events);
       if (retval < PAPI_OK)
 	return(retval);
     }
@@ -327,9 +330,9 @@ int _papi_hwd_stop(void *machdep, unsigned long long events[])
 
 /* No explicit reset on the SGI. But reconfiguring might do the trick */
 
-int _papi_hwd_reset(void *machdep)
+int _papi_hwd_reset(EventSetInfo *ESI)
 {
-  hwd_control_state_t *arg = (hwd_control_state_t *)machdep;
+  hwd_control_state_t *arg = (hwd_control_state_t *)ESI->machdep;
   int retval;
 
   /* Turn everything off */

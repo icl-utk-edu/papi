@@ -12,70 +12,70 @@ typedef struct _hwd_preset {
 } hwd_control_state_t;
 
 static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
-                { -1 },		// L1 D-Cache misses 
-                { -1 },		// L1 I-Cache misses 
-		{ -1 },		// L2 Cache misses
-		{ -1 },		// ditto
-		{ -1 },		// L3 misses
-		{ -1 },		// ditto
-		{ -1 },		// 6	**unused preset map elements**
-		{ -1 },		// 7
-		{ -1 },		// 8
-		{ -1 },		// 9
-		{ -1 }, 	// Req. access to shared cache line
-		{ -1 }, 	// Req. access to clean cache line
-		{ -1 }, 	// Cache Line Invalidation
-                { -1 },		// 13
-                { -1 },		// 14
-                { -1 },		// 15
-                { -1 },		// 16
-                { -1 },		// 17
-                { -1 },		// 18
-                { -1 },		// 19
-		{ -1 }, 	// D-TLB misses
-		{ -1 },		// I-TLB misses
-                { -1 },	 	// 22
-                { -1 },	        // 23
-                { -1 },		// 24
-                { -1 },		// 25
-                { -1 },		// 26
-                { -1 },		// 27
-                { -1 },		// 28
-                { -1 },		// 29
-		{ -1 },		// TLB shootdowns
-                { -1 },		// 31
-                { -1 },		// 32
-                { -1 },		// 33
-                { -1 },		// 34
-                { -1 },		// 35
-                { -1 },		// 36
-                { -1 },		// 37
-                { -1 },		// 38
-                { -1 },		// 39
-		{ -1 },		// Branch inst. mispred.
-		{ -1 },		// Branch inst. taken
-		{ -1 },		// Branch inst. not taken
-                { -1 },		// 43
-                { -1 },		// 44
-                { -1 },		// 45
-                { -1 },		// 46
-                { -1 },		// 47
-                { -1 },		// 48
-                { -1 },		// 49
-		{ -1 },		// Total inst. executed
-		{ -1 },		// Integer inst. executed
-		{ -1 },		// Floating Pt. inst. executed
-		{ -1 },		// Loads executed
-		{ -1 },		// Stores executed
-		{ -1 },		// Branch inst. executed
-		{ -1 },		// Vector/SIMD inst. executed 
-		{ -1 },		// FLOPS
-                { -1 },		// 58
-                { -1 },		// 59
-		{ -1 },		// Total cycles
-		{ -1 },		// MIPS
-                { -1 },		// 62
-                { -1 },		// 63
+                { -1 },		/* L1 D-Cache misses  */
+                { -1 },		/* L1 I-Cache misses  */
+		{ -1 },		/* L2 Cache misses */
+		{ -1 },		/* ditto */
+		{ -1 },		/* L3 misses */
+		{ -1 },		/* ditto */
+		{ -1 },		/* 6	**unused preset map elements** */
+		{ -1 },		/* 7 */
+		{ -1 },		/* 8 */
+		{ -1 },		/* 9 */
+		{ -1 }, 	/* Req. access to shared cache line */
+		{ -1 }, 	/* Req. access to clean cache line */
+		{ -1 }, 	/* Cache Line Invalidation */
+                { -1 },		/* 13 */
+                { -1 },		/* 14 */
+                { -1 },		/* 15 */
+                { -1 },		/* 16 */
+                { -1 },		/* 17 */
+                { -1 },		/* 18 */
+                { -1 },		/* 19 */
+		{ -1 }, 	/* D-TLB misses */
+		{ -1 },		/* I-TLB misses */
+                { -1 },	 	/* 22 */
+                { -1 },	        /* 23 */
+                { -1 },		/* 24 */
+                { -1 },		/* 25 */
+                { -1 },		/* 26 */
+                { -1 },		/* 27 */
+                { -1 },		/* 28 */
+                { -1 },		/* 29 */
+		{ -1 },		/* TLB shootdowns */
+                { -1 },		/* 31 */
+                { -1 },		/* 32 */
+                { -1 },		/* 33 */
+                { -1 },		/* 34 */
+                { -1 },		/* 35 */
+                { -1 },		/* 36 */
+                { -1 },		/* 37 */
+                { -1 },		/* 38 */
+                { -1 },		/* 39 */
+		{ -1 },		/* Branch inst. mispred. */
+		{ -1 },		/* Branch inst. taken */
+		{ -1 },		/* Branch inst. not taken */
+                { -1 },		/* 43 */
+                { -1 },		/* 44 */
+                { -1 },		/* 45 */
+                { -1 },		/* 46 */
+                { -1 },		/* 47 */
+                { -1 },		/* 48 */
+                { -1 },		/* 49 */
+		{ -1 },		/* Total inst. executed */
+		{ -1 },		/* Integer inst. executed */
+		{ -1 },		/* Floating Pt. inst. executed */
+		{ -1 },		/* Loads executed */
+		{ -1 },		/* Stores executed */
+		{ -1 },		/* Branch inst. executed */
+		{ -1 },		/* Vector/SIMD inst. executed  */
+		{ -1 },		/* FLOPS */
+                { -1 },		/* 58 */
+                { -1 },		/* 59 */
+		{ -1 },		/* Total cycles */
+		{ -1 },		/* MIPS */
+                { -1 },		/* 62 */
+                { -1 },		/* 63 */
              };
 
 /* Globals are BAD */

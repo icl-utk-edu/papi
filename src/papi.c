@@ -1201,9 +1201,6 @@ static int set_overflow(PAPI_option_t *ptr)
   if (ind < PAPI_OK)
     return(ind);
 
-  if (ptr->overflow.threshold < 0)
-    return(handle_error(PAPI_EINVAL,"Threshold cannot be less than zero"));
-
   if (ptr->overflow.threshold > 0)
     if (!ptr->overflow.handler)
       return(handle_error(PAPI_EINVAL,"Overflow handler not specified"));
@@ -1476,47 +1473,65 @@ int PAPI_start(int EventSet)
 
 int PAPI_stop(int EventSet, unsigned long long *values)
 { 
-  int retval, i, bound;
+  int retval, i;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
-  if(ESI==NULL) return(handle_error(PAPI_EINVAL, NULL));
+  if (ESI==NULL) 
+    return(handle_error(PAPI_EINVAL, "No such EventSet"));
 
   retval = _papi_hwd_stop(ESI->machdep, values);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (retval<PAPI_OK) 
+    return(handle_error(retval, NULL));
 
-  bound = num_counters(ESI);
+#ifdef DEBUG
+  {
+    int bound;
+    bound = num_counters(ESI);
 
-  for(i=0; i<bound; i++)
-  { if(values[i] >= 0)
-    { printf("\tCounter %d : %lld\n", i, values[i]);
-    }
+    for(i=0; i<bound; i++)
+      { 
+	if (values[i] >= 0) 
+	  printf("DEBUG: Counter %d : %lld\n", i, values[i]);
+      }
   }
+#endif
 
   retval = _papi_hwd_reset(ESI->machdep);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (retval<PAPI_OK) 
+    return(handle_error(retval, NULL));
+
   return(retval);
 }
-/*=+=*/ 
+
 /*========================================================================*/
+
 int PAPI_read(int EventSet, unsigned long long *values)
-{ int retval, i, bound;
+{ 
+  int retval, i;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
-  if ( ESI == NULL )
-    return(handle_error(PAPI_EINVAL,NULL));
+  if (ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
   retval = _papi_hwd_read(ESI->machdep, values);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (retval<PAPI_OK) 
+    return(handle_error(retval, NULL));
 
-  bound = num_counters(ESI);
+#ifdef DEBUG
+  {
+    int bound;
+    bound = num_counters(ESI);
 
-  for(i=0; i<bound; i++)
-  { if(values[i] >= 0) 
-    { printf("\tCounter %d : %lld\n", i, values[i]);
-    }
+    for(i=0; i<bound; i++)
+      { 
+	if (values[i] >= 0) 
+	  printf("DEBUG: Counter %d : %lld\n", i, values[i]);
+      }
   }
+#endif
+
   return(retval);
 }
 
