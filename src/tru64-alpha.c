@@ -190,15 +190,15 @@ static int update_global_hwcounters(EventSetInfo *global)
 
   /* Get CPU vals. */
 
-  for (i=0;i<_papi_system_info.hw_info.ncpu;i++)
-    {
+/*  for (i=0;i<_papi_system_info.hw_info.ncpu;i++)
+    { */
       /* Do the math */
 
-      counter_values[0] += cntrs[i].pf_cntr0;
-      counter_values[1] += cntrs[i].pf_cntr1; 
+      counter_values[0] += cntrs[0].pf_cntr0;
+      counter_values[1] += cntrs[0].pf_cntr1; 
       
       DBG((stderr,"Actual values %d %ld %ld \n",i,counter_values[0],counter_values[1]));
-    }
+    /*}*/
 
   DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
        global->hw_start[0]+counter_values[0],global->hw_start[0],counter_values[0]));
