@@ -176,11 +176,53 @@ int PAPI_library_init(int version)
    char *var;
 #endif
 
+   if (version != PAPI_VER_CURRENT)
+      papi_return(PAPI_EINVAL);
+
    ++_in_papi_library_init_cnt;
    while (_in_papi_library_init_cnt > 1)
      {
        PAPIERROR("Multiple callers of PAPI_library_init");
        sleep(1);
+     }
+
+#ifndef _WIN32
+   /* This checks to see if we have forked or called init more than once.
+      If we have forked, then we continue to init. If we have not forked, 
+      we check to see the status of initialization. */
+
+   APIDBG("Initializing library: current PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid);
+   if (_papi_hwi_system_info.pid == getpid())
+#endif
+     {
+       /* If the magic environment variable PAPI_ALLOW_STOLEN is set,
+	  we call shutdown if PAPI has been initialized. This allows
+	  tools that use LD_PRELOAD to run on applications that use PAPI.
+	  In this circumstance, PAPI_ALLOW_STOLEN will be set to 'stolen'
+	  so the tool can check for this case. */
+
+       if (getenv("PAPI_ALLOW_STOLEN"))
+	 {
+	   char buf[PATH_MAX];
+	   if (init_level != PAPI_NOT_INITED)
+	     PAPI_shutdown();
+	   sprintf(buf,"%s=%s","PAPI_ALLOW_STOLEN","stolen");
+	   putenv(buf);
+	 }
+
+       /* If the library has been successfully initialized *OR*
+	  the library attempted initialization but failed. */
+       
+       else if ((init_level != PAPI_NOT_INITED) || (init_retval != DEADBEEF))
+	 {
+	   _in_papi_library_init_cnt--;
+	   if (init_retval < PAPI_OK)
+	     papi_return(init_retval); 
+	   else
+	     return(init_retval); 
+	 }
+
+       APIDBG("system_info was initialized, but init did not succeed\n");
      }
 
 #ifdef DEBUG
@@ -213,35 +255,6 @@ int PAPI_library_init(int version)
 	 _papi_hwi_debug |= DEBUG_API;
      }
 #endif
-
-#ifndef _WIN32
-   /* This checks to see if we have forked. If we have, then we continue to init.
-      If we have not forked, we check to see the status of initialization. */
-
-   APIDBG("Initializing library: current PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid);
-   if (_papi_hwi_system_info.pid == getpid())
-#endif
-     {
-       /* If the library has not been successfully initialized *OR*
-	  the library attempted initialization but failed. */
-
-       if ((init_level != PAPI_NOT_INITED) || (init_retval != DEADBEEF))
-	 {
-	   _in_papi_library_init_cnt--;
-	   if (init_retval < PAPI_OK)
-		papi_return(init_retval); 
-		else
-		return(init_retval); 
-	 }
-
-       APIDBG("system_info was initialized, but init did not succeed\n");
-     }
-
-   if (version != PAPI_VER_CURRENT) {
-      init_retval = PAPI_EINVAL;
-      _in_papi_library_init_cnt--;
-      papi_return(PAPI_EINVAL);
-   }
 
    /* Initialize internal globals */
 
@@ -1234,6 +1247,7 @@ void PAPI_shutdown(void)
    int i, j = 0;
    ThreadInfo_t *master;
 
+   APIDBG("Enter\n");
    if (init_retval == DEADBEEF) {
       PAPIERROR(PAPI_SHUTDOWN_str);
       return;
@@ -1246,7 +1260,9 @@ void PAPI_shutdown(void)
    /* Count number of running EventSets AND */
    /* Stop any running EventSets in this thread */
 
+#ifdef DEBUG
  again:
+#endif
    for (i = 0; i < map->totalSlots; i++) {
      ESI = map->dataSlotArray[i];
      if (ESI) {
@@ -1262,6 +1278,7 @@ void PAPI_shutdown(void)
    /* No locking required, we're just waiting for the others
       to call shutdown or stop their eventsets. */
 
+#ifdef DEBUG
    if (j != 0) {
       PAPIERROR(PAPI_SHUTDOWN_SYNC_str);
 #ifdef _WIN32
@@ -1272,6 +1289,7 @@ void PAPI_shutdown(void)
       j = 0;
       goto again;
    }
+#endif
 
    /* Shutdown the entire substrate */
 

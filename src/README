@@ -3,43 +3,6 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    Kevin London
-*          london@cs.utk.edu
-*/  
+*/
 
-This directory contains:
-
-Makefile.inc	  A general Makefile included by substrate-specific makes.
-Makefile.xxx-yyy  A collection of substrate specific Makefiles, where:
-		  xxx = operating system
-		  yyy = hardware platform
-configure         A script to create a Makefile for your system
-xxx-yyy.README	  substrate specific notes, including info on native events.
-xxx-yyy.c
-xxx-yyy.h	  substrate specific source files
-xxx-yyy/	  folder containing substrate specific support files
-papi*.c
-papi*.h		  platform independent PAPI source code
-*.*		  various other source and documentation files
-
-
-PAPI Debugging
---------------
-
-1) To compile with debugging, define CFLAGS to include -DDEBUG in the Makefile.
-
-2) To enable debugging messages at run time, set the PAPI_DEBUG environment
-   variable to one or more of the following.
- 
-  (SUBSTRATE|API|INTERNAL|THREADS|MULTIPLEX|OVERFLOW|PROFILE|ALL)
-
-PAPI Configure
---------------
-
-configure script is the utility to help user pick the right native Makefile.
-
-1)  --prefix=<path>, "make install" can install the library into the
-    directory specified in <path>
-
-2)  --with-bitmode=64 on a platform which supports 64 bit mode to build a 64 bit mode library.
-    --with-bitmode=32 on a platform which supports 32 bit mode to build a 32 bit mode library.
+Please see the README in the root directory.
