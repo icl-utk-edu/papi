@@ -1,11 +1,15 @@
 /* file: papi.c */ 
 /*file: PAPI_expandDA.c*/
+
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include <siginfo.h>
+#include <sys/types.h>
+#include <signal.h>
 
+#include "papi_internal.h"
 #include "papi.h"
+
 
 
 /*========================================================================*/
@@ -14,9 +18,9 @@
 /* begin function: static int _papi_expandDA(DynamicArray *DA);           */
 /*========================================================================*/
 
-----------------------------------------------------------------------------
-the _dynamic_array struct defined in papi_internal.h
-typedef struct _dynamic_array {
+/*----------------------------------------------------------------------------
+//the _dynamic_array struct defined in papi_internal.h
+//typedef struct _dynamic_array {
 	void   **dataSlotArray; ** ptr to array of ptrs to EventSets      **
 	int    totalSlots;      ** number of slots in dataSlotArrays      **
 	int    availSlots;      ** number of open slots in dataSlotArrays **
