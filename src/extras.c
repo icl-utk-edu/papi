@@ -246,7 +246,7 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
 
    EventSetProfileInfo_t *profile = &ESI->profile;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
+   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx->ucontext);
 
 /*
   caddr_t offset = (caddr_t)0;
@@ -322,8 +322,8 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
-   int profile_index = 0;
-   long_long overflow_vector, temp[MAX_COUNTERS], over;
+   int profile_index = 0, overflow_vector;
+   long_long temp[MAX_COUNTERS], over;
    u_long_long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;
