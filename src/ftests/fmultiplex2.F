@@ -18,6 +18,11 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+C Skip Alpha till multiplex is fixed. -KSL 
+#if defined(__alpha) && defined(__osf__)
+      call ftest_skip(__FILE__, __LINE__, 'Broken', PAPI_ENOEVNT)
+#endif
+
       if (tests_quiet .EQ. 0) then
         write (*, 100) NUM
  100    FORMAT ("multiplex2: Using ", I3, " iterations")
