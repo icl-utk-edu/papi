@@ -459,24 +459,34 @@ static int get_system_info(struct perfctr_dev *dev)
     sscanf(s+1, "%d", &tmp);
   _papi_system_info.hw_info.revision = (float)tmp;
 
-#ifdef PERFCTR18
+#ifdef PERFCTR18  /* And PERFCTR20 */
   if (vperfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
   strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
+  _papi_system_info.supports_hw_overflow = 
+    (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
+  DBG((stderr,"Hardware/OS %s support counter generated interrupts\n",
+       _papi_system_info.supports_hw_overflow ? "does" : "does not"));
+#ifndef PAPI_PERFCTR_INTR_SUPPORT
+  if(_papi_system_info.supports_hw_overflow)
+    DBG((stderr,"PAPI_PERFCTR_INTR_SUPPORT disabled at compile time.\n"));
+  _papi_system_info.supports_hw_overflow = 0;
+#endif
+  _papi_system_info.supports_hw_profile = 0; /* != _papi_system_info.supports_hw_overflow? */
 #ifdef PERFCTR20
   _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info);
   _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info);
-#else
+#else /* PERFCTR20 */
   _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info) - 1;
   _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info) - 1;
-#endif
-#elif defined(PERFCTR16) 
+#endif /* PERFCTR20 */
+#elif defined(PERFCTR16)  /* Neither PERFCTR18 nor PERFCTR20 */
   if (perfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
   strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
   _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info) - 1;
   _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info) - 1;
-#endif
+#endif /* PERFCTR18 */
 
   _papi_system_info.hw_info.model = (int)info.cpu_type;
   _papi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
@@ -711,6 +721,7 @@ int _papi_hwd_init_global(void)
 #ifdef PERFCTR18
   struct vperfctr *dev;
   dev = vperfctr_open();
+  DBG((stderr,"_papi_hwd_init_global dev=%p\n",dev));
 #else
   dev = perfctr_dev_open();
 #endif
@@ -752,6 +763,7 @@ int _papi_hwd_init(EventSetInfo *zero)
 #ifdef PERFCTR18
   if ((machdep->self = vperfctr_open()) == NULL) 
     return(PAPI_ESYS);
+  DBG((stderr,"_papi_hwd_init dev=%p\n",machdep->self));
 #else
   if ((machdep->self = vperfctr_attach(dev)) == NULL) 
     return(PAPI_ESYS);
@@ -760,6 +772,10 @@ int _papi_hwd_init(EventSetInfo *zero)
   /* Initialize the event fields */
 
   init_config(zero->machdep);
+
+  /* Start the TSC counter */
+  if(vperfctr_control(machdep->self, &machdep->counter_cmd) < 0)
+    return(PAPI_ESYS);
 
   return(PAPI_OK);
 }
@@ -783,18 +799,32 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
   long long retval;
   struct tms buffer;
 
+  retval = _papi_hwd_get_virt_cycles(zero);
+  retval = retval / _papi_system_info.hw_info.mhz;
+  return(retval);
+
+  /*
   times(&buffer);
   retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
   return(retval);
+   */
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
+  long long lcyc;
+  hwd_control_state_t *machdep = zero->machdep;
   float usec, cyc;
 
+  lcyc = vperfctr_read_tsc(machdep->self);
+  DBG((stderr,"Read virt. cycles is %lld (%p -> %p)\n",lcyc,machdep,machdep->self));
+  return(lcyc);
+
+  /*  
   usec = (float)_papi_hwd_get_virt_usec(zero);
   cyc = usec * _papi_system_info.hw_info.mhz;
   return((long long)cyc);
+  */
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -1278,7 +1308,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  fprintf(stderr,"%s (_papi_hwd_set_overflow): Hardware overflow not implemented yet\n",__FILE__);
   return(PAPI_ESBSTR);
 }
 

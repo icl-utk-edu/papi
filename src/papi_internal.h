@@ -353,8 +353,8 @@ typedef struct _papi_mdi {
 
   const int supports_program;        /* We can use programmable events */
   const int supports_write;          /* We can write the counters */
-  const int supports_hw_overflow;    /* Needs overflow to be emulated */
-  const int supports_hw_profile;     /* Needs profile to be emulated */
+  int supports_hw_overflow;    /* Needs overflow to be emulated */
+  int supports_hw_profile;     /* Needs profile to be emulated */
   const int supports_64bit_counters; /* Only limited precision is available from hardware */
   const int supports_inheritance;    /* We can pass on and inherit child counters/values */
   const int supports_attach;         /* We can attach PAPI to another process */
