@@ -23,13 +23,7 @@
 
 #include "libperfctr.h"
 
-#ifdef __i386__
 #include "p4_events.h"
-#elif defined(__x86_64__)
-#include "x86-64_events.h"
-#elif
-#error No defined substrate events
-#endif
 
 #ifdef _WIN32
 #define inline_static static __inline
@@ -41,7 +35,6 @@
 
 /* Per event data structure for each event */
 
-#ifdef __i386__
 typedef struct P4_perfctr_event {
    unsigned pmc_map;
    unsigned evntsel;
@@ -50,22 +43,10 @@ typedef struct P4_perfctr_event {
    unsigned pebs_matrix_vert;
    unsigned ireset;
 } P4_perfctr_event_t;
-#endif
-
-#ifdef __x86_64__
-typedef struct P4_perfctr_event {
-   unsigned pmc_map;
-   unsigned evntsel;
-   unsigned evntsel_aux;
-   unsigned ireset;
-} P4_perfctr_event_t;
-#endif
 
 
 #define MAX_COUNTERS	       18
 #define MAX_COUNTER_TERMS	8
-#define P4_MAX_REGS_PER_EVENT	4
-
 
 /*
 The name and description fields should be self-explanatory.
@@ -170,40 +151,18 @@ typedef P4_perfctr_event_t hwd_event_t;
 
 
 typedef siginfo_t hwd_siginfo_t;
-typedef struct sigcontext hwd_ucontext_t;
+typedef ucontext_t hwd_ucontext_t;
 
-#ifdef __x86_64__
-#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->rip)
-#else
-#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->eip)
-#endif
+#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 
 /* Locks */
-#ifdef __x86_64__
-#include <linux/spinlock.h>
-extern spinlock_t lock[PAPI_MAX_LOCK];
-#else
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
-#endif
 /* volatile uint32_t lock; */
 
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 #include <inttypes.h>
 
-#ifdef __x86_64__
-#define  _papi_hwd_lock(lck)                    \
-do                                              \
-{                                               \
-   spin_lock(&lock[lck]);                       \
-} while(0)
-
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   spin_unlock(&lock[lck]);                             \
-} while(0)
-#else
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
 #define  _papi_hwd_lock(lck)                                            \
@@ -221,7 +180,6 @@ do                                                                      \
    unsigned long res = 0;                                               \
 __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");   \
 }while(0)
-#endif
 
 
 /* Stupid linux basename prototype! */

@@ -791,7 +791,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    struct vperfctr_control *contr = &this_state->control;
-   int i, ncntrs, nricntrs = 0, nracntrs, retval = 0;
+   int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
 
@@ -816,8 +816,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          thus we subtract 1 from the threshold. */
       contr->cpu_control.ireset[i] = (-threshold + 1);
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
-      nricntrs = ++contr->cpu_control.nrictrs;
-      nracntrs = --contr->cpu_control.nractrs;
+      contr->cpu_control.nrictrs++;
+      contr->cpu_control.nractrs--;
+      nricntrs = contr->cpu_control.nrictrs;
+      nracntrs = contr->cpu_control.nractrs;
       contr->si_signo = PAPI_SIGNAL;
 
       /* move this event to the bottom part of the list if needed */
@@ -841,8 +843,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
          contr->cpu_control.ireset[i] = 0;
          contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-         nricntrs = --contr->cpu_control.nrictrs;
-         nracntrs = ++contr->cpu_control.nractrs;
+         contr->cpu_control.nrictrs--;
+         contr->cpu_control.nractrs++;
+         nricntrs = contr->cpu_control.nrictrs;
+         nracntrs = contr->cpu_control.nractrs;
       }
 
       /* move this event to the top part of the list if needed */
@@ -868,22 +872,16 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
 {
-   ucontext_t *uc;
-   mcontext_t *mc;
    _papi_hwi_context_t ctx;
 
-   uc = (struct ucontext *) context;
-   mc = &uc->uc_mcontext;
-   DBG((stderr,"Start at 0x%lx\n",((struct sigcontext *)mc)->eip));
-
-   ctx.si = info;
-   ctx.ucontext = (struct sigcontext *)mc;
+   ctx.si = si;
+   ctx.ucontext = (ucontext_t *)context;
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
                                       _papi_hwi_system_info.supports_hw_overflow,
-                                      info->si_pmc_ovf_mask, 0);
+                                      si->si_pmc_ovf_mask, 0);
 
    /* We are done, resume interrupting counters */
 
@@ -901,5 +899,4 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
                  __FUNCTION__, __LINE__, strerror(errno));
       }
    }
-//  OVFDBG("Finished, returning to address 0x%lx\n",(unsigned long)(*gs)[15]);
 }
