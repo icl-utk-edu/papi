@@ -1,10 +1,12 @@
 CFLAGS=-Wall -g -I..
 LDFLAGS=-L.. -lperf
 
-BINS=psys pfork pwait pflops pfast psumchild pconfig
+BINS=pcycles psys pfork pwait pflops pfast psumchild pconfig pfastwrite
 all: $(BINS)
 clean:
 	rm -f $(BINS) *~
+pcycles: pcycles.c
+	gcc $(CFLAGS) pcycles.c -o pcycles $(LDFLAGS)
 psys: psys.c
 	gcc $(CFLAGS) psys.c -o psys $(LDFLAGS)
 pfork: pfork.c
@@ -19,3 +21,5 @@ psumchild: psumchild.c
 	gcc $(CFLAGS) psumchild.c -o psumchild $(LDFLAGS)
 pconfig: pconfig.c
 	gcc $(CFLAGS) pconfig.c -o pconfig $(LDFLAGS)
+pfastwrite: pfastwrite.c
+	gcc $(CFLAGS) pfastwrite.c -o pfastwrite $(LDFLAGS)
