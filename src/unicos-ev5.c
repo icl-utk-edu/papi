@@ -453,7 +453,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 
   /* Lower three bits tell us what counters we need */
 
-  assert((this_state->selector | 0x3) == 0x3);
+  assert((this_state->selector | 0x7) == 0x7);
   
   /* Perform any initialization of the control bits */
 
