@@ -88,11 +88,11 @@ C    used in the program. See eg. fmatrixpapi.F
       implicit none
       character*(*) test_str
 
-      write(*,*) test_str,':                PASSED'
+      write(*,100) test_str,' PASSED'
       call PAPIF_shutdown()
 	call pause()
       stop
- 100  format(/,t1,a,a)
+ 100  format(a,t41,a)
       end
 
       subroutine ftests_fail(test_str,papiretval)
@@ -111,9 +111,9 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 
       if ( papiretval.ne.0 )then
-          write(*,*) test_str,':                FAILED'
+          write(*,100) test_str,' FAILED'
       else
-          write(*,*) test_str,':                SKIPPED'
+          write(*,100) test_str,' SKIPPED'
       end if
       if(papiretval.lt.0)then
         call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
@@ -124,6 +124,7 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 	call pause()
       stop
+ 100  format(a,t41,a)
       end
 
       subroutine ftests_skip(test_str,papiretval)
