@@ -1,0 +1,4 @@
+MAKEVER   = @MAKEVER@
+PREFIX    = @prefix@
+
+include ./Makefile.$(MAKEVER)
