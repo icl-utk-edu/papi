@@ -96,7 +96,7 @@ install: default
 	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
 	-mkdir -p $(DESTDIR)/ftests
-	chmod go+rx $(DESTDIR)/ftests
+	-chmod go+rx $(DESTDIR)/ftests
 	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
-	chmod go+rx $(DESTDIR)/ftests/*
+	-chmod go+rx $(DESTDIR)/ftests/*
 	find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;

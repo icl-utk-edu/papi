@@ -94,7 +94,7 @@ tests: null
 
 # LIBCFLAGS='$(CFLAGS)'
 ftests: null
-	cd ftests; $(MAKE) CC="$(CC)" F77="$(F77)" TOPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" CFLAGS="$(CFLAGS)" SUBSTR="$(SUBSTR)"
+	cd ftests; $(MAKE) CC="$(CC)" F77="$(F77)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" CFLAGS="$(CFLAGS)" SUBSTR="$(SUBSTR)"
 
 clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
@@ -118,12 +118,12 @@ install: all install_tree native_install
 	-chmod go+rx $(DESTDIR)/include
 	-cp $(LIBRARY) $(SHLIB) $(DESTDIR)/lib
 	-chmod go+r $(DESTDIR)/lib/*
-	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
+	-cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
 	-chmod go+r $(DESTDIR)/include/*
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
 	cd ctests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
 	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-	cp $(SUBSTR).README $(DESTDIR)
+	-cp $(SUBSTR).README $(DESTDIR)
 
 install_tree:
 	-mkdir -p $(DESTDIR)/lib
