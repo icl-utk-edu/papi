@@ -316,7 +316,7 @@ int _papi_hwd_get_system_info(void)
 
 int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
 {
-  extern int _papi_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain);
+  extern int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain);
   switch (code)
     {
     case PAPI_SET_DOMAIN:
