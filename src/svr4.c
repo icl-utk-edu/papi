@@ -1,6 +1,10 @@
 
 #include "papi.h"
+#include SUBSTRATE
+#include "papi_preset.h"
 #include "papi_internal.h"
+#include "papi_protos.h"
+
 
 #if defined(sun)&&defined(sparc)
 
