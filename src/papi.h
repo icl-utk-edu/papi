@@ -390,7 +390,6 @@ read the documentation carefully.  */
       char vendor_descr[PAPI_HUGE_STR_LEN];
    } PAPI_event_info_t;
 
-/* The Low Level API */
 /* Locking Mechanisms defines 
  * This can never go over 31, because of the Cray T3E uses
  * _semt which has a max index of 31 
@@ -404,79 +403,83 @@ read the documentation carefully.  */
 #define PAPI_MAX_LOCK           	6       /* Used with setting up array */
 
 
-   int PAPI_accum(int EventSet, long_long * values);
-   int PAPI_add_event(int EventSet, int Event);
-   int PAPI_add_events(int EventSet, int *Events, int number);
-   int PAPI_add_pevent(int EventSet, int code, void *inout);
-   int PAPI_cleanup_eventset(int EventSet);
-   int PAPI_create_eventset(int *EventSet);
-   int PAPI_destroy_eventset(int *EventSet);
-   void PAPI_lock(int);
-   void PAPI_unlock(int);
+/* The Low Level API (Alphabetical) */
+   int   PAPI_accum(int EventSet, long_long * values);
+   int   PAPI_add_event(int EventSet, int Event);
+   int   PAPI_add_events(int EventSet, int *Events, int number);
+   int   PAPI_cleanup_eventset(int EventSet);
+   int   PAPI_create_eventset(int *EventSet);
+   int   PAPI_destroy_eventset(int *EventSet);
+   int   PAPI_enum_event(int *EventCode, int modifier);
+   int   PAPI_event_code_to_name(int EventCode, char *out);
+   int   PAPI_event_name_to_code(char *in, int *out);
+   long  PAPI_get_dmem_info(int option);
+   int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
-   const PAPI_hw_info_t *PAPI_get_hardware_info(void);
-   const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
-   long PAPI_get_dmem_info(int option);
-   int PAPI_get_opt(int option, PAPI_option_t * ptr);
-   void *PAPI_get_overflow_address(void *context);
+   const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
+   int   PAPI_get_multiplex(int EventSet);
+   int   PAPI_get_opt(int option, PAPI_option_t * ptr);
    long_long PAPI_get_real_cyc(void);
    long_long PAPI_get_real_usec(void);
+   const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
+   int   PAPI_get_thr_specific(int tag, void **ptr);
    long_long PAPI_get_virt_cyc(void);
    long_long PAPI_get_virt_usec(void);
-   int PAPI_library_init(int version);
-   unsigned long int PAPI_thread_id(void);
-   int PAPI_register_thread(void);
-   int PAPI_get_thr_specific(int tag, void **ptr);
-   int PAPI_set_thr_specific(int tag, void *ptr);
-   int PAPI_thread_init(unsigned long int (*id_fn) (void), int flag);
-   int PAPI_list_events(int EventSet, int *Events, int *number);
-   int PAPI_multiplex_init(void);
-   int PAPI_num_hwctrs(void);
-   int PAPI_num_events(int EventSet);
-   int PAPI_set_multiplex(int *);
-   int PAPI_get_multiplex(int EventSet);
-   int PAPI_overflow(int EventSet, int EventCode, int threshold,
+   int   PAPI_is_initialized(void);
+   int   PAPI_library_init(int version);
+   int   PAPI_list_events(int EventSet, int *Events, int *number);
+   void  PAPI_lock(int);
+   int   PAPI_multiplex_init(void);
+   int   PAPI_num_hwctrs(void);
+   int   PAPI_num_events(int EventSet);
+   int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
-   int PAPI_perror(int code, char *destination, int length);
-   int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
+   int   PAPI_perror(int code, char *destination, int length);
+   int   PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
                    unsigned scale, int EventSet, int EventCode, int threshold, int flags);
-   int PAPI_query_event(int EventCode);
-   int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
-   int PAPI_event_code_to_name(int EventCode, char *out);
-   int PAPI_event_name_to_code(char *in, int *out);
-   int PAPI_enum_event(int *EventCode, int modifier);
-   int PAPI_read(int EventSet, long_long * values);
-   int PAPI_remove_event(int EventSet, int EventCode);
-   int PAPI_remove_events(int EventSet, int *Events, int number);
-   int PAPI_reset(int EventSet);
+   int   PAPI_query_event(int EventCode);
+   int   PAPI_read(int EventSet, long_long * values);
+   int   PAPI_register_thread(void);
+   int   PAPI_remove_event(int EventSet, int EventCode);
+   int   PAPI_remove_events(int EventSet, int *Events, int number);
+   int   PAPI_reset(int EventSet);
+   int   PAPI_set_debug(int level);
+   int   PAPI_set_domain(int domain);
+   int   PAPI_set_granularity(int granularity);
+   int   PAPI_set_multiplex(int *);
+   int   PAPI_set_opt(int option, PAPI_option_t * ptr);
+   int   PAPI_set_thr_specific(int tag, void *ptr);
+   void  PAPI_shutdown(void);
+   int   PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode,
+                    int threshold, int flags);
+   int   PAPI_start(int EventSet);
+   int   PAPI_state(int EventSet, int *status);
+   int   PAPI_stop(int EventSet, long_long * values);
+   char *PAPI_strerror(int);
+   unsigned long PAPI_thread_id(void);
+   int   PAPI_thread_init(unsigned long int (*id_fn) (void), int flag);
+   void  PAPI_unlock(int);
+   int   PAPI_write(int EventSet, long_long * values);
+
+   /* These function is implemented in the hwi layers, but not the hwd layers.
+      They shouldn't be exposed to the UI until they are needed somewhere.
+   int PAPI_add_pevent(int EventSet, int code, void *inout);
    int PAPI_restore(void);
    int PAPI_save(void);
-   int PAPI_set_debug(int level);
-   int PAPI_set_domain(int domain);
-   int PAPI_set_granularity(int granularity);
-   int PAPI_set_opt(int option, PAPI_option_t * ptr);
-   void PAPI_shutdown(void);
-   int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode,
-                    int threshold, int flags);
-   int PAPI_start(int EventSet);
-   int PAPI_state(int EventSet, int *status);
-   int PAPI_stop(int EventSet, long_long * values);
-   char *PAPI_strerror(int);
-   int PAPI_write(int EventSet, long_long * values);
-   int PAPI_is_initialized(void);
+   */
 
-/* The High Level API
+   /* The High Level API
 
-The simple interface implemented by the following eight routines
-allows the user to access and count specific hardware events from
-both C and Fortran. It should be noted that this API can be used in
-conjunction with the low level API. */
+   The simple interface implemented by the following eight routines
+   allows the user to access and count specific hardware events from
+   both C and Fortran. It should be noted that this API can be used in
+   conjunction with the low level API. */
 
-   int PAPI_start_counters(int *events, int array_len);
-   int PAPI_read_counters(long_long * values, int array_len);
-   int PAPI_stop_counters(long_long * values, int array_len);
    int PAPI_accum_counters(long_long * values, int array_len);
    int PAPI_num_counters(void);
+   int PAPI_read_counters(long_long * values, int array_len);
+   int PAPI_start_counters(int *events, int array_len);
+   int PAPI_stop_counters(long_long * values, int array_len);
    int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips);
    int PAPI_flops(float *rtime, float *ptime, long_long * flpops, float *mflops);
    int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc);
