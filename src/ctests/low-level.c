@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   /* query and set up the right events to monitor */
   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
 	  Events[0] = PAPI_FP_INS;
-	  Events[1] = PAPI_TOT_INS;
+	  Events[1] = PAPI_TOT_CYC;
   }
   else {
 	  Events[0] = PAPI_TOT_INS;
