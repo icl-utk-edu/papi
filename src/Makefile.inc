@@ -123,23 +123,33 @@ dist:
 	gzip ./papi-$(SUBSTR).tar
 	rm -rf ./papi-$(SUBSTR)
 
-install: all install_tree native_install
+install-all: install-tree install install-man install-tests
+
+install: install-tree native_install
+	cp $(LIBRARY) $(SHLIB) $(DESTDIR)/lib
+	chmod go+r $(DESTDIR)/lib/$(LIBRARY) $(DESTDIR)/lib/$(SHLIB)
+	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
+	cd $(DESTDIR)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h 
+
+install-man: install-tree
+	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
+	cp $(SUBSTR).README $(DESTDIR)/share/papi
+
+install-tests: install-tree
+	-mkdir -p $(DESTDIR)/share/papi/ctests
+	-mkdir -p $(DESTDIR)/share/papi/ftests
+	cd ctests; $(MAKE) DESTDIR=$(DESTDIR)/share/papi CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
+	cd ftests; $(MAKE) DESTDIR=$(DESTDIR)/share/papi F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
+
+install-tree:
 	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	-chmod go+rx $(DESTDIR)/lib
-	-chmod go+rx $(DESTDIR)/include
-	-cp $(LIBRARY) $(SHLIB) $(DESTDIR)/lib
-	-chmod go+r $(DESTDIR)/lib/*
-	-cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
-	-chmod go+r $(DESTDIR)/include/*
-	-cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
-	cd ctests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-	-cp $(SUBSTR).README $(DESTDIR)
-
-install_tree:
 	-mkdir -p $(DESTDIR)/lib
+	chmod go+rx $(DESTDIR)/lib
 	-mkdir -p $(DESTDIR)/include
+	chmod go+rx $(DESTDIR)/include
 	-mkdir -p $(DESTDIR)/man
-	-mkdir -p $(DESTDIR)/ctests
-	-mkdir -p $(DESTDIR)/ftests
+	chmod go+rx $(DESTDIR)/man
+	-mkdir -p $(DESTDIR)/share/papi
+	chmod go+rx $(DESTDIR)/share/papi
+	
