@@ -58,7 +58,14 @@ papi_mdi_t _papi_hwi_system_info =
     "",                         /*  model string */
     0.0,                        /*  revision */
     0.0,                        /*  mhz */
-    0,                          /* All the cache information */
+      {
+         0,                      /* levels */
+         {
+            {{{0},},{{0},}},    /* level 1 cache and tlb structures */
+            {{{0},},{{0},}},    /* level 2 cache and tlb structures */
+            {{{0},},{{0},}},    /* level 3 cache and tlb structures */
+         }
+      },
     },
       { "", { "", 0, 0, 0, 0, 0, 0 }},
       { NULL, 0},

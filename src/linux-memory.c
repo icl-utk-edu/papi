@@ -21,13 +21,14 @@
 #include "papi_protos.h"
 
 #include <stdio.h>
-static int init_amd(PAPI_hw_info_t * mem_info);
+static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
-static int init_intel(PAPI_hw_info_t * mem_info);
+static int init_intel(PAPI_mh_info_t * mh_info);
 inline_static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
+int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
+   int i,j;
    int retval = 0;
 
    /*
@@ -43,29 +44,48 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
 #else
    case PERFCTR_X86_AMD_K7:
 #endif
-      retval = init_amd(mem_info);
+      retval = init_amd(&hw_info->mem_hierarchy);
       break;
 #ifdef __x86_64__
    case PERFCTR_X86_AMD_K8:
    case PERFCTR_X86_AMD_K8C:
-      retval = init_amd(mem_info);
+      retval = init_amd(&hw_info->mem_hierarchy);
       break;
 #endif
    default:
-      retval = init_intel(mem_info);
+      retval = init_intel(&hw_info->mem_hierarchy);
       break;
    }
+
+   /* Do some post-processing */
+   if (retval == PAPI_OK) {
+      for (i=0; i<PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+         for (j=0; j<2; j++) {
+            /* Compute the number of levels of hierarchy actually used */
+            if (hw_info->mem_hierarchy.level[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
+               hw_info->mem_hierarchy.level[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
+               hw_info->mem_hierarchy.levels = i+1;
+            /* Cache sizes were reported as KB; convert to Bytes by multipying by 2^10 */
+            if (hw_info->mem_hierarchy.level[i].cache[j].size != 0)
+               hw_info->mem_hierarchy.level[i].cache[j].size <<= 10;
+         }
+      }
+   }
+
+   /* This works only because an empty cache element is initialized to 0 */
    DBG((stderr, "Detected L1: %d L2: %d  L3: %d\n",
-        mem_info->L1_size, mem_info->L2_cache_size, mem_info->L3_cache_size));
+        hw_info->level[0].cache[0].size + hw_info->level[0].cache[1].size, 
+        hw_info->level[1].cache[0].size + hw_info->level[1].cache[1].size, 
+        hw_info->level[2].cache[0].size + hw_info->level[2].cache[1].size));
    return retval;
 }
 
 /* Cache configuration for AMD AThlon/Duron */
-static int init_amd(PAPI_hw_info_t * mem_info)
+static int init_amd(PAPI_mh_info_t * mh_info)
 {
    unsigned int reg_eax, reg_ebx, reg_ecx, reg_edx;
    unsigned short int pattern;
-
+   PAPI_mh_level_t *L = mh_info->level;
    /*
     * Layout of CPU information taken from :
     * "AMD Processor Recognition Application Note", 20734W-1 November 2002 
@@ -80,75 +100,76 @@ static int init_amd(PAPI_hw_info_t * mem_info)
         reg_eax, reg_ebx, reg_ecx, reg_edx));
    /* TLB info in L1-cache */
 
-   /* 2MB memory page information, 4MB pages has half the number of entris */
+   /* 2MB memory page information, 4MB pages has half the number of entries */
    /* Most people run 4k pages on Linux systems, don't they? */
    /*
-    * mem_info->L1_itlb_size      = (reg_eax&0xff);
-    * mem_info->L1_itlb_assoc     = ((reg_eax&0xff00)>>8);
-    * mem_info->L1_dtlb_size      = ((reg_eax&0xff0000)>>16);
-    * mem_info->L1_dtlb_assoc     = ((reg_eax&0xff000000)>>24);
+    * L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
+    * L[0].tlb[0].num_entries   = (reg_eax&0xff);
+    * L[0].tlb[0].associativity = ((reg_eax&0xff00)>>8);
+    * L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
+    * L[0].tlb[1].num_entries   = ((reg_eax&0xff0000)>>16);
+    * L[0].tlb[1].associativity = ((reg_eax&0xff000000)>>24);
     */
 
    /* 4k page information */
-   mem_info->L1_itlb_size = ((reg_ebx & 0x000000ff));
-   mem_info->L1_itlb_assoc = ((reg_ebx & 0x0000ff00) >> 8);
-   switch (mem_info->L1_itlb_assoc) {
+   L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
+   L[0].tlb[0].num_entries   = ((reg_ebx & 0x000000ff));
+   L[0].tlb[0].associativity = ((reg_ebx & 0x0000ff00) >> 8);
+   switch (L[0].tlb[0].associativity) {
    case 0x00:                  /* Reserved */
-      mem_info->L1_itlb_assoc = -1;
+      L[0].tlb[0].associativity = -1;
       break;
    case 0xff:
-      mem_info->L1_itlb_assoc = SHRT_MAX;
+      L[0].tlb[0].associativity = SHRT_MAX;
       break;
    }
-   mem_info->L1_dtlb_size = ((reg_ebx & 0x00ff0000) >> 16);
-   mem_info->L1_dtlb_assoc = ((reg_ebx & 0xff000000) >> 24);
-   switch (mem_info->L1_dtlb_assoc) {
+   L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
+   L[0].tlb[1].num_entries          = ((reg_ebx & 0x00ff0000) >> 16);
+   L[0].tlb[1].associativity = ((reg_ebx & 0xff000000) >> 24);
+   switch (L[0].tlb[1].associativity) {
    case 0x00:                  /* Reserved */
-      mem_info->L1_dtlb_assoc = -1;
+      L[0].tlb[1].associativity = -1;
       break;
    case 0xff:
-      mem_info->L1_dtlb_assoc = SHRT_MAX;
+      L[0].tlb[1].associativity = SHRT_MAX;
       break;
    }
    DBG((stderr, "L1 TLB info (to be over-written by L2:\n"
-        "\tI-size %d,  I-assoc %d\n\tD-size %d,  D-assoc %d\n",
-        mem_info->L1_itlb_size, mem_info->L1_itlb_assoc,
-        mem_info->L1_dtlb_size, mem_info->L1_dtlb_assoc))
-
-       mem_info->L1_tlb_size = mem_info->L1_itlb_size + mem_info->L1_dtlb_size;
+        "\tI-num_entries %d,  I-assoc %d\n\tD-num_entries %d,  D-assoc %d\n",
+        L[0].tlb[0].num_entries, L[0].tlb[0].associativity,
+        L[0].tlb[1].num_entries, L[0].tlb[1].associativity))
 
    /* L1 D-cache/I-cache info */
 
-   mem_info->L1_dcache_size = ((reg_ecx & 0xff000000) >> 24);
-   mem_info->L1_dcache_assoc = ((reg_ecx & 0x00ff0000) >> 16);
-   switch (mem_info->L1_dcache_assoc) {
+   L[0].cache[1].type = PAPI_MH_TYPE_DATA;
+   L[0].cache[1].size = ((reg_ecx & 0xff000000) >> 24);
+   L[0].cache[1].associativity = ((reg_ecx & 0x00ff0000) >> 16);
+   switch (L[0].cache[1].associativity) {
    case 0x00:                  /* Reserved */
-      mem_info->L1_dcache_assoc = -1;
+      L[0].cache[1].associativity = -1;
       break;
    case 0xff:                  /* Fully assoc. */
-      mem_info->L1_dcache_assoc = SHRT_MAX;
+      L[0].cache[1].associativity = SHRT_MAX;
       break;
    }
    /* Bit 15-8 is "Lines per tag" */
-   mem_info->L1_dcache_lines = ((reg_ecx & 0x0000ff00) >> 8);
-   mem_info->L1_dcache_linesize = ((reg_ecx & 0x000000ff));
+   L[0].cache[1].num_lines = ((reg_ecx & 0x0000ff00) >> 8);
+   L[0].cache[1].line_size = ((reg_ecx & 0x000000ff));
 
-   mem_info->L1_icache_size = ((reg_edx & 0xff000000) >> 24);
-   mem_info->L1_icache_assoc = ((reg_edx & 0x00ff0000) >> 16);
-   switch (mem_info->L1_icache_assoc) {
+   L[0].cache[0].type = PAPI_MH_TYPE_INST;
+   L[0].cache[0].size = ((reg_edx & 0xff000000) >> 24);
+   L[0].cache[0].associativity = ((reg_edx & 0x00ff0000) >> 16);
+   switch (L[0].cache[0].associativity) {
    case 0x00:                  /* Reserved */
-      mem_info->L1_icache_assoc = -1;
+      L[0].cache[0].associativity = -1;
       break;
    case 0xff:
-      mem_info->L1_icache_assoc = SHRT_MAX;
+      L[0].cache[0].associativity = SHRT_MAX;
       break;
    }
    /* Bit 15-8 is "Lines per tag" */
-   mem_info->L1_icache_lines = ((reg_edx & 0x0000ff00) >> 8);
-   mem_info->L1_icache_linesize = ((reg_edx & 0x000000ff));
-
-   /* Why summing up these entries ? */
-   mem_info->L1_size = mem_info->L1_icache_size + mem_info->L1_dcache_size;
+   L[0].cache[0].num_lines = ((reg_edx & 0x0000ff00) >> 8);
+   L[0].cache[0].line_size = ((reg_edx & 0x000000ff));
 
    reg_eax = 0x80000006;
    cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
@@ -157,11 +178,12 @@ static int init_amd(PAPI_hw_info_t * mem_info)
         reg_eax, reg_ebx, reg_ecx, reg_edx));
 
    /* AMD level 2 cache info */
-   mem_info->L2_cache_size = ((reg_ecx & 0xffff0000) >> 16);
+   L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+   L[1].cache[0].size = ((reg_ecx & 0xffff0000) >> 16);
    pattern = ((reg_ecx & 0x0000f000) >> 12);
-   mem_info->L2_cache_assoc = init_amd_L2_assoc_inf(pattern);
-   mem_info->L2_cache_lines = ((reg_ecx & 0x00000f00) >> 8);
-   mem_info->L2_cache_linesize = ((reg_ecx & 0x000000ff));
+   L[1].cache[0].associativity = init_amd_L2_assoc_inf(pattern);
+   L[1].cache[0].num_lines = ((reg_ecx & 0x00000f00) >> 8);
+   L[1].cache[0].line_size = ((reg_ecx & 0x000000ff));
 
    /* L2 cache TLB information. This over-writes the L1 cache TLB info */
 
@@ -180,16 +202,17 @@ static int init_amd(PAPI_hw_info_t * mem_info)
     */
 
    /* 4k page information */
-   mem_info->L1_dtlb_size = ((reg_ebx & 0x0fff0000) >> 16);
+   L[0].tlb[1].type = PAPI_MH_TYPE_DATA;
+   L[0].tlb[1].num_entries = ((reg_ebx & 0x0fff0000) >> 16);
    pattern = ((reg_ebx & 0xf0000000) >> 28);
-   mem_info->L1_dtlb_assoc = init_amd_L2_assoc_inf(pattern);
-   mem_info->L1_itlb_size = ((reg_ebx & 0x00000fff));
+   L[0].tlb[1].associativity = init_amd_L2_assoc_inf(pattern);
+   L[0].tlb[0].type = PAPI_MH_TYPE_INST;
+   L[0].tlb[0].num_entries = ((reg_ebx & 0x00000fff));
    pattern = ((reg_ebx & 0x0000f000) >> 12);
-   mem_info->L1_itlb_assoc = init_amd_L2_assoc_inf(pattern);
+   L[0].tlb[0].associativity = init_amd_L2_assoc_inf(pattern);
 
-   mem_info->L1_tlb_size += mem_info->L1_itlb_size + mem_info->L1_dtlb_size;
-   if (!mem_info->L1_dtlb_size) {       /* The L2 TLB is a unified TLB, with the size itlb_size */
-      mem_info->L1_itlb_size = 0;
+   if (!L[0].tlb[1].num_entries) {       /* The L2 TLB is a unified TLB, with the size itlb_size */
+      L[0].tlb[0].num_entries = 0;
    }
 
 
@@ -227,10 +250,11 @@ static short int init_amd_L2_assoc_inf(unsigned short int pattern)
    return assoc;
 }
 
-static int init_intel(PAPI_hw_info_t * mem_info)
+static int init_intel(PAPI_mh_info_t * mh_info)
 {
    unsigned int reg_eax, reg_ebx, reg_ecx, reg_edx, value;
    int i, j, k, count;
+   PAPI_mh_level_t *L = mh_info->level;
 
    /*
     * "Intel® Processor Identification and the CPUID Instruction",
@@ -269,40 +293,40 @@ static int init_intel(PAPI_hw_info_t * mem_info)
             }
             switch ((value & 0xff)) {
             case 0x01:
-               mem_info->L1_itlb_size = 128;
-               mem_info->L1_itlb_assoc = 4;
+               L[0].tlb[0].num_entries = 128;
+               L[0].tlb[0].associativity = 4;
                break;
             case 0x02:
-               mem_info->L1_itlb_size = 8;
-               mem_info->L1_itlb_assoc = 1;
+               L[0].tlb[0].num_entries = 8;
+               L[0].tlb[0].associativity = 1;
                break;
             case 0x03:
-               mem_info->L1_dtlb_size = 256;
-               mem_info->L1_dtlb_assoc = 4;
+               L[0].tlb[1].num_entries = 256;
+               L[0].tlb[1].associativity = 4;
                break;
             case 0x04:
-               mem_info->L1_dtlb_size = 32;
-               mem_info->L1_dtlb_assoc = 4;
+               L[0].tlb[1].num_entries = 32;
+               L[0].tlb[1].associativity = 4;
                break;
             case 0x06:
-               mem_info->L1_icache_size = 8;
-               mem_info->L1_icache_assoc = 4;
-               mem_info->L1_icache_linesize = 32;
+               L[0].cache[0].size = 8;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 32;
                break;
             case 0x08:
-               mem_info->L1_icache_size = 16;
-               mem_info->L1_icache_assoc = 4;
-               mem_info->L1_icache_linesize = 32;
+               L[0].cache[0].size = 16;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 32;
                break;
             case 0x0A:
-               mem_info->L1_dcache_size = 8;
-               mem_info->L1_dcache_assoc = 2;
-               mem_info->L1_dcache_linesize = 32;
+               L[0].cache[1].size = 8;
+               L[0].cache[1].associativity = 2;
+               L[0].cache[1].line_size = 32;
                break;
             case 0x0C:
-               mem_info->L1_dcache_size = 16;
-               mem_info->L1_dcache_assoc = 4;
-               mem_info->L1_dcache_linesize = 32;
+               L[0].cache[1].size = 16;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 32;
                break;
             case 0x10:
                /* This value is not in my copy of the Intel manual */
@@ -310,9 +334,9 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                 * If we can't combine the two *Still Hoping ;) * -KSL
                 * This is L1 data cache
                 */
-               mem_info->L1_dcache_size = 16;
-               mem_info->L1_dcache_assoc = 4;
-               mem_info->L1_dcache_linesize = 32;
+               L[0].cache[1].size = 16;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 32;
                break;
             case 0x15:
                /* This value is not in my copy of the Intel manual */
@@ -320,9 +344,9 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                 * If we can't combine the two *Still Hoping ;) * -KSL
                 * This is L1 instruction cache
                 */
-               mem_info->L1_icache_size = 16;
-               mem_info->L1_icache_assoc = 4;
-               mem_info->L1_icache_linesize = 32;
+               L[0].cache[0].size = 16;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 32;
                break;
             case 0x1A:
                /* This value is not in my copy of the Intel manual */
@@ -330,78 +354,78 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                 * If we can't combine the two *Still Hoping ;) * -KSL
                 * This is L1 instruction AND data cache
                 */
-               mem_info->L2_cache_size = 96;
-               mem_info->L2_cache_assoc = 6;
-               mem_info->L2_cache_linesize = 64;
+               L[1].cache[1].size = 96;
+               L[1].cache[1].associativity = 6;
+               L[1].cache[1].line_size = 64;
                break;
             case 0x22:
-               mem_info->L3_cache_assoc = 4;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 512;
+               L[2].cache[1].associativity = 4;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 512;
                break;
             case 0x23:
-               mem_info->L3_cache_assoc = 8;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 1024;
+               L[2].cache[1].associativity = 8;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 1024;
                break;
             case 0x25:
-               mem_info->L3_cache_assoc = 8;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 2048;
+               L[2].cache[1].associativity = 8;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 2048;
                break;
             case 0x29:
-               mem_info->L3_cache_assoc = 8;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 4096;
+               L[2].cache[1].associativity = 8;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 4096;
                break;
             case 0x39:
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 128;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 128;
                break;
             case 0x3B:
-               mem_info->L2_cache_assoc = 2;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 128;
+               L[1].cache[1].associativity = 2;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 128;
                break;
             case 0x3C:
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 256;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 256;
                break;
             case 0x40:
-               if (mem_info->L2_cache_size) {
+               if (L[1].cache[1].size) {
                   /* We have valid L2 cache, but no L3 */
-                  mem_info->L3_cache_size = 0;
+                  L[2].cache[1].size = 0;
                } else {
                   /* We have no L2 cache */
-                  mem_info->L2_cache_size = 0;
+                  L[1].cache[1].size = 0;
                }
                break;
             case 0x41:
-               mem_info->L2_cache_size = 128;
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 32;
+               L[1].cache[1].size = 128;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 32;
                break;
             case 0x42:
-               mem_info->L2_cache_size = 256;
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 32;
+               L[1].cache[1].size = 256;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 32;
                break;
             case 0x43:
-               mem_info->L2_cache_size = 512;
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 32;
+               L[1].cache[1].size = 512;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 32;
                break;
             case 0x44:
-               mem_info->L2_cache_size = 1024;
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 32;
+               L[1].cache[1].size = 1024;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 32;
                break;
             case 0x45:
-               mem_info->L2_cache_size = 2048;
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 32;
+               L[1].cache[1].size = 2048;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 32;
                break;
                /* Events 0x50--0x5d: TLB size info */
                /*There is no way to determine
@@ -415,96 +439,96 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                 * Smile -smeds 
                 */
             case 0x50:
-               mem_info->L1_itlb_size = 64;
-               mem_info->L1_itlb_assoc = 1;
+               L[0].tlb[0].num_entries = 64;
+               L[0].tlb[0].associativity = 1;
                break;
             case 0x51:
-               mem_info->L1_itlb_size = 128;
-               mem_info->L1_itlb_assoc = 1;
+               L[0].tlb[0].num_entries = 128;
+               L[0].tlb[0].associativity = 1;
                break;
             case 0x52:
-               mem_info->L1_itlb_size = 256;
-               mem_info->L1_itlb_assoc = 1;
+               L[0].tlb[0].num_entries = 256;
+               L[0].tlb[0].associativity = 1;
                break;
             case 0x5B:
-               mem_info->L1_dtlb_size = 64;
-               mem_info->L1_dtlb_assoc = 1;
+               L[0].tlb[1].num_entries = 64;
+               L[0].tlb[1].associativity = 1;
                break;
             case 0x5C:
-               mem_info->L1_dtlb_size = 128;
-               mem_info->L1_dtlb_assoc = 1;
+               L[0].tlb[1].num_entries = 128;
+               L[0].tlb[1].associativity = 1;
                break;
             case 0x5D:
-               mem_info->L1_dtlb_size = 256;
-               mem_info->L1_dtlb_assoc = 1;
+               L[0].tlb[1].num_entries = 256;
+               L[0].tlb[1].associativity = 1;
                break;
             case 0x66:
-               mem_info->L1_dcache_assoc = 4;
-               mem_info->L1_dcache_linesize = 64;
-               mem_info->L1_dcache_size = 8;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 8;
                break;
             case 0x67:
-               mem_info->L1_dcache_assoc = 4;
-               mem_info->L1_dcache_linesize = 64;
-               mem_info->L1_dcache_size = 16;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 16;
                break;
             case 0x68:
-               mem_info->L1_dcache_assoc = 4;
-               mem_info->L1_dcache_linesize = 64;
-               mem_info->L1_dcache_size = 32;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 32;
                break;
             case 0x70:
                /* 12k-uops trace cache */
-               mem_info->L1_icache_assoc = 8;
-               mem_info->L1_icache_size = 12;
-               mem_info->L1_icache_linesize = 0;
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 12;
+               L[0].cache[0].line_size = 0;
                break;
             case 0x71:
                /* 16k-uops trace cache */
-               mem_info->L1_icache_assoc = 8;
-               mem_info->L1_icache_size = 16;
-               mem_info->L1_icache_linesize = 0;
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 16;
+               L[0].cache[0].line_size = 0;
                break;
             case 0x72:
                /* 32k-uops trace cache */
-               mem_info->L1_icache_assoc = 8;
-               mem_info->L1_icache_size = 32;
-               mem_info->L1_icache_linesize = 0;
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 32;
+               L[0].cache[0].line_size = 0;
                break;
             case 0x77:
                /* This value is not in my copy of the Intel manual */
                /* Once again IA-64 code, will most likely have to be moved */
                /* This is sectored */
-               mem_info->L1_icache_size = 16;
-               mem_info->L1_icache_assoc = 4;
-               mem_info->L1_icache_linesize = 64;
+               L[0].cache[0].size = 16;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 64;
                break;
             case 0x79:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 128;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 128;
                break;
             case 0x7A:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 256;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 256;
                break;
             case 0x7B:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 512;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 512;
                break;
             case 0x7C:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 1024;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 1024;
                break;
             case 0x7E:
                /* This value is not in my copy of the Intel manual */
                /* IA64 value */
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 128;
-               mem_info->L2_cache_size = 256;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 128;
+               L[1].cache[1].size = 256;
                break;
             case 0x81:
                /* This value is not in my copy of the Intel manual */
@@ -512,86 +536,86 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                 * Perhaps it is in an errata somewhere, I found the
                 * info at sandpile.org -KSL
                 */
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 32;
-               mem_info->L2_cache_size = 128;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 32;
+               L[1].cache[1].size = 128;
             case 0x82:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 32;
-               mem_info->L2_cache_size = 256;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 32;
+               L[1].cache[1].size = 256;
                break;
             case 0x83:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 32;
-               mem_info->L2_cache_size = 512;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 32;
+               L[1].cache[1].size = 512;
                break;
             case 0x84:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 32;
-               mem_info->L2_cache_size = 1024;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 32;
+               L[1].cache[1].size = 1024;
                break;
             case 0x85:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 32;
-               mem_info->L2_cache_size = 2048;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 32;
+               L[1].cache[1].size = 2048;
                break;
             case 0x86:
-               mem_info->L2_cache_assoc = 4;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 512;
+               L[1].cache[1].associativity = 4;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 512;
                break;
             case 0x87:
-               mem_info->L2_cache_assoc = 8;
-               mem_info->L2_cache_linesize = 64;
-               mem_info->L2_cache_size = 1024;
+               L[1].cache[1].associativity = 8;
+               L[1].cache[1].line_size = 64;
+               L[1].cache[1].size = 1024;
                break;
             case 0x88:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               mem_info->L3_cache_assoc = 4;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 2048;
+               L[2].cache[1].associativity = 4;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 2048;
                break;
             case 0x89:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               mem_info->L3_cache_assoc = 4;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 4096;
+               L[2].cache[1].associativity = 4;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 4096;
                break;
             case 0x8A:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               mem_info->L3_cache_assoc = 4;
-               mem_info->L3_cache_linesize = 64;
-               mem_info->L3_cache_size = 8192;
+               L[2].cache[1].associativity = 4;
+               L[2].cache[1].line_size = 64;
+               L[2].cache[1].size = 8192;
                break;
             case 0x8D:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               mem_info->L3_cache_assoc = 12;
-               mem_info->L3_cache_linesize = 128;
-               mem_info->L3_cache_size = 3096;
+               L[2].cache[1].associativity = 12;
+               L[2].cache[1].line_size = 128;
+               L[2].cache[1].size = 3096;
                break;
             case 0x90:
-               mem_info->L1_itlb_assoc = 1;
-               mem_info->L1_itlb_size = 64;
+               L[0].tlb[0].associativity = 1;
+               L[0].tlb[0].num_entries = 64;
                break;
             case 0x96:
-               mem_info->L1_dtlb_assoc = 1;
-               mem_info->L1_dtlb_size = 32;
+               L[0].tlb[1].associativity = 1;
+               L[0].tlb[1].num_entries = 32;
                break;
             case 0x9b:
-               mem_info->L2_dtlb_assoc = 1;
-               mem_info->L2_dtlb_size = 96;
+               L[1].tlb[1].associativity = 1;
+               L[1].tlb[1].num_entries = 96;
                break;
             case 0xb0:
-               mem_info->L1_itlb_assoc = 4;
-               mem_info->L1_itlb_size = 512;
+               L[0].tlb[0].associativity = 4;
+               L[0].tlb[0].num_entries = 512;
                break;
             case 0xb3:
-               mem_info->L1_dtlb_assoc = 4;
-               mem_info->L1_dtlb_size = 512;
+               L[0].tlb[1].associativity = 4;
+               L[0].tlb[1].num_entries = 512;
                break;
                /* Note, there are still various IA64 cases not mapped yet */
             }
@@ -599,10 +623,18 @@ static int init_intel(PAPI_hw_info_t * mem_info)
          }
       }
    }
-
-   /* I don't like summing this as when the cache is divided, but...  /smeds */
-   mem_info->L1_size = mem_info->L1_icache_size + mem_info->L1_dcache_size;
-   mem_info->L1_tlb_size = mem_info->L1_itlb_size + mem_info->L1_dtlb_size;
+   /* Scan memory hierarchy elements to look for non-zero structures.
+      If a structure is not empty, it must be marked as type DATA or type INST.
+      By convention, this routine always assumes {tlb,cache}[0] is INST and
+      {tlb,cache}[1] is DATA. If Intel produces a unified TLB or cache, this
+      algorithm will fail.
+   */
+   for (i = 0; i < 3; i++) {
+      if (L[i].tlb[0].num_entries) L[i].tlb[0].type = PAPI_MH_TYPE_INST;
+      if (L[i].tlb[1].num_entries) L[i].tlb[1].type = PAPI_MH_TYPE_DATA;
+      if (L[i].cache[0].size) L[i].cache[0].type = PAPI_MH_TYPE_INST;
+      if (L[i].cache[1].size) L[i].cache[1].type = PAPI_MH_TYPE_DATA;
+   }
 
    return PAPI_OK;
 }

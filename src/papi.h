@@ -276,6 +276,8 @@ read the documentation carefully.  */
 #define u_long_long unsigned long long
 #endif
 
+#define NEW_PAPI_MEM_INFO
+
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                               long_long overflow_vector, void *context);
 
@@ -336,34 +338,38 @@ read the documentation carefully.  */
 
 #ifdef NEW_PAPI_MEM_INFO
 
-#define PAPI_MAX_MEM_HEIRARCHY_LEVELS 	3
-  /* All sizes are in BYTES */
-#define PAPI_MH_TYPE_UNIFIED 		0x0
-#define PAPI_MH_TYPE_SPLIT 		0x1
-#define PAPI_MH_TYPE_SET_ASSOCIATIVE 	0x2
+   /* All sizes are in BYTES */
+   /* Except tlb size, which is in entries */
 
-  typedef struct _papi_mh_tlb_info {
-    unsigned flags; /* Unified, split, set associative */
-    int size;
-    int associativity;
-  } PAPI_mh_tlb_info_t;
+#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  3
+#define PAPI_MH_TYPE_EMPTY    0x0
+#define PAPI_MH_TYPE_INST	   0x1
+#define PAPI_MH_TYPE_DATA     0x2
+#define PAPI_MH_TYPE_UNIFIED  PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA
 
-  typedef struct _papi_mh_cache_info {
-    unsigned flags; /* Unified, split, set associative */
-    int size;
-    int line_size;
-    int associativity;
-  } PAPI_mh_cache_info_t;
+   typedef struct _papi_mh_tlb_info {
+      int type; /* Empty, unified, data, instr */
+      int num_entries;
+      int associativity;
+   } PAPI_mh_tlb_info_t;
 
-  typedef struct _papi_mh_level_info {
-    PAPI_mh_tlb_info_t tlb;
-    PAPI_mh_cache_info_t cache;
-  } PAPI_mh_level_t;
+   typedef struct _papi_mh_cache_info {
+      int type; /* Empty, unified, data, instr */
+      int size;
+      int line_size;
+      int num_lines;
+      int associativity;
+   } PAPI_mh_cache_info_t;
 
-  typedef struct _papi_mh_info { /* mh for mem heirarchy maybe? */
-    int levels;
-    PAPI_mh_level_t level[PAPI_MAX_MEM_HEIRARCHY_LEVELS];
-  } PAPI_mh_info_t;
+   typedef struct _papi_mh_level_info {
+      PAPI_mh_tlb_info_t   tlb[2];
+      PAPI_mh_cache_info_t cache[2];
+   } PAPI_mh_level_t;
+
+   typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
+      int levels;
+      PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+   } PAPI_mh_info_t;
 #endif
 
    typedef struct _papi_hw_info {
