@@ -280,191 +280,18 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    return (PAPI_OK);
 }
 
-static char * getbasename(char *fname) 
+extern int _papi_hwd_mdi_init() 
 {
-   char *temp;
-
-   temp = strrchr(fname, '/');
-   if( temp == NULL) return fname;
-      else return temp+1;
-}
-
-inline int _papi_hwd_update_shlib_info(void)
-{
-   char fname[PATH_MAX];
-   unsigned long writable = 0, total = 0, shared = 0, l_index = 0, counting = 1;
-   PAPI_address_map_t *tmp = NULL;
-   FILE *f;
-   char cmdname[80], *pname1, *pname2;
-
-   sprintf(fname, "/proc/%ld/cmdline", (long) _papi_hwi_system_info.pid);
-   f = fopen(fname, "r");
-   fscanf(f,"%s",cmdname);
-   pname1=getbasename(cmdname);
-   fclose(f);
-
-   sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
-   f = fopen(fname, "r");
-
-   if (!f)
-      return (PAPI_ESYS);
-
- again:
-   while (!feof(f)) {
-      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX];
-      unsigned long begin, end, size, inode, foo;
-
-      if (fgets(buf, sizeof(buf), f) == 0)
-         break;
-      mapname[0] = '\0';
-      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
-             &foo, dev, &inode, mapname);
-      size = end - begin;
-      total += size;
-      /* the permission string looks like "rwxp", where each character can
-       * be either the letter, or a hyphen.  The final character is either
-       * p for private or s for shared.  We want to add up private writable
-       * mappings, to get a feel for how much private memory this process
-       * is taking.
-       *
-       * Also, we add up the shared mappings, to see how much this process
-       * is sharing with others.
-       */
-      if (perm[3] == 'p') {
-         if (perm[1] == 'w')
-            writable += size;
-      } else if (perm[3] == 's')
-         shared += size;
-      else
-         return (PAPI_EBUG);
-
-      if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0)) {
-         pname2=getbasename(mapname);
-         if ( strcmp(pname1, pname2)==0 ) {
-            _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
-            _papi_hwi_system_info.exe_info.address_info.text_end =
-                (caddr_t) (begin + size);
-            strcpy(_papi_hwi_system_info.exe_info.address_info.mapname,
-                   _papi_hwi_system_info.exe_info.name);
-         }
-         if ((!counting) && (l_index > 0)) {
-            tmp[l_index - 1].text_start = (caddr_t) begin;
-            tmp[l_index - 1].text_end = (caddr_t) (begin + size);
-            strncpy(tmp[l_index - 1].mapname, mapname, PAPI_MAX_STR_LEN);
-         }
-         l_index++;
-      }
-   }
-   if (counting) {
-      /* When we get here, we have counted the number of entries in the map
-         for us to allocate */
-
-      tmp = (PAPI_address_map_t *) calloc(l_index, sizeof(PAPI_address_map_t));
-      if (tmp == NULL)
-         return (PAPI_ENOMEM);
-      l_index = 0;
-      rewind(f);
-      counting = 0;
-      goto again;
-   } else {
-      if (_papi_hwi_system_info.shlib_info.map)
-         free(_papi_hwi_system_info.shlib_info.map);
-      _papi_hwi_system_info.shlib_info.map = tmp;
-      _papi_hwi_system_info.shlib_info.count = l_index;
-
-      fclose(f);
-   }
-   return (PAPI_OK);
-}
-
-static int get_system_info(void)
-{
-   pid_t pid;
-   int tmp;
-   float mhz;
-   char maxargs[PAPI_MAX_STR_LEN], *t, *s;
-   FILE *f;
-
-   /* Path and args */
-
-   pid = getpid();
-   if (pid == -1)
-      return (PAPI_ESYS);
-   _papi_hwi_system_info.pid = pid;
-   if(_papi_hwd_update_shlib_info()== PAPI_ESYS) return(PAPI_ESYS);
-
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");          /* Name of the substrate we're using */
-   _papi_hwi_system_info.supports_hw_overflow = 1;
-   _papi_hwi_system_info.supports_hw_profile = 0;
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_inheritance = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-
-   sprintf(maxargs, "/proc/%d/exe", (int) getpid());
-   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == -1)
-      return (PAPI_ESYS);
-   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
-   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
-
-   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
-   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
-
-   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-      return -1;
-
-   /* Hardware info */
-
-   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-   _papi_hwi_system_info.hw_info.vendor = -1;
-
-   rewind(f);
-   s = search_cpu_info(f, "vendor", maxargs);
-   if (s && (t = strchr(s + 2, '\n'))) {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-   }
-
-   rewind(f);
-   s = search_cpu_info(f, "revision", maxargs);
-   if (s)
-      sscanf(s + 1, "%d", &tmp);
-   _papi_hwi_system_info.hw_info.revision = (float) tmp;
-
-   rewind(f);
-   s = search_cpu_info(f, "family", maxargs);
-   if (s && (t = strchr(s + 2, '\n'))) {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-   }
-
-   rewind(f);
-   s = search_cpu_info(f, "cpu MHz", maxargs);
-   if (s)
-      sscanf(s + 1, "%f", &mhz);
-   _papi_hwi_system_info.hw_info.mhz = mhz;
-
-   SUBDBG("Actual MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
-
-   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
-   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
-   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
-   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & __bss_start;
-
-   /* Setup presets */
-
-   tmp = generate_preset_search_map(ia_preset_search_map);
-   if (tmp)
-      return (tmp);
-
-   tmp = _papi_hwi_setup_all_presets(preset_search_map);
-   if (tmp)
-      return (tmp);
-
-   return (PAPI_OK);
+  /* Name of the substrate we're using */
+  strcpy(_papi_hwi_system_info.substrate, "$Id$");          
+  
+  _papi_hwi_system_info.supports_hw_overflow = 1;
+  _papi_hwi_system_info.supports_64bit_counters = 1;
+  _papi_hwi_system_info.supports_inheritance = 1;
+  _papi_hwi_system_info.supports_real_usec = 1;
+  _papi_hwi_system_info.supports_real_cyc = 1;
+  
+  return(PAPI_OK);
 }
 
 inline static int set_granularity(hwd_control_state_t * this_state, int domain)
@@ -503,7 +330,6 @@ int _papi_hwd_init_global(void)
    int retval, type;
    unsigned int version;
    pfmlib_options_t pfmlib_options;
-
 
    /* Opened once for all threads. */
 
@@ -545,9 +371,19 @@ int _papi_hwd_init_global(void)
    if (pfm_set_options(&pfmlib_options))
       return (PAPI_ESYS);
 
-   /* Fill in what we can of the papi_system_info. */
+   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
+   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
 
-   retval = get_system_info();
+   /* Fill in what we can of the papi_system_info. */
+   retval = _papi_hwd_get_system_info();
+   if (retval)
+      return (retval);
+
+   /* Setup presets */
+   retval = generate_preset_search_map(ia_preset_search_map);
+   if (retval)
+      return (retval);
+   retval = _papi_hwi_setup_all_presets(preset_search_map);
    if (retval)
       return (retval);
 
@@ -555,15 +391,10 @@ int _papi_hwd_init_global(void)
     * fakining it here with hw_info.model which is not set by this
     * substrate 
     */
-   retval = get_memory_info(&_papi_hwi_system_info.hw_info,
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
                             _papi_hwi_system_info.hw_info.model);
    if (retval)
       return (retval);
-
-   SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
-          _papi_hwi_system_info.hw_info.totalcpus,
-          _papi_hwi_system_info.hw_info.vendor_string,
-          _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
    return (PAPI_OK);
 }
