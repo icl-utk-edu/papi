@@ -132,7 +132,8 @@ const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
    {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_L1_DCA, {0, {PNE_replay_event_L1_data_access, PAPI_NULL,}, {0,}}},
+// This event fails on Jon Burgoyne's Xeon. 12/05/03
+//   {PAPI_L1_DCA, {0, {PNE_replay_event_L1_data_access, PAPI_NULL,}, {0,}}},
    {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L2_STM,  {0, { PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
    {PAPI_L2_DCM, {0, {PNE_replay_event_L2_data_miss, PAPI_NULL,}, {0,}}},
@@ -1168,7 +1169,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    case P4_128bit_MMX_uop:
    case P4_x87_FP_uop:
    case P4_x87_SIMD_moves_uop:
-      // these event groups can be tagged for use with replay_event.
+      // these event groups can be tagged for use with execution_event.
       // the tag bits are encoded as bits 5 - 8 of the otherwise unused mask bits
       // if a tag bit is set, the enable bit is also set
       tags = mask & 0x01e0;
