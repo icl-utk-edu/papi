@@ -20,11 +20,11 @@ Its output is usually directed to fpapi.h. See Makefile.inc for details. */
 #include <assert.h>
 
 /*
-	The following 4 arrays are used to create a series of defines
+	The following 6 arrays are used to create a series of defines
 	for use with PAPI in Fortran programs.
-	The first and third contain the string names of the defines.
-	The second and fourth contain the integer values associated with the names.
-	These arrays MUST be kept synchonized. Sizes are computed automagically.
+	The first, third and fifth contain the string names of the defines.
+	The second, fourth and sixth contain the integer values associated with the names.
+	These pairs of arrays MUST be kept synchonized. Sizes are computed automagically.
 */
 
 const char *papi_defNam[] = {
@@ -164,10 +164,31 @@ const int papi_errNum[] = {
   PAPI_EMISC 
 };
 
+const char *papi_miscNam[] = {
+  "NUM_FLOPS" 
+};
+
+const int papi_miscNum[] = {
+  10000000 
+};
+
+
 static void define_val(const char *val_string, int val)
 {
       printf("#define %-18s % d\n",val_string,val);
 }
+
+static void createDef(char *title, const char **names, const int *nums, int size)
+{
+	int i,j;
+  /* compute the size of the predefined arrays */
+  j = size/sizeof(int);
+
+  /* create defines for each line in the general arrays */
+  printf("\nC\nC\t%s\nC\n\n", title);
+  for (i=0;i<j;i++) define_val(names[i],nums[i]);
+}
+
 
 int main(int argc, char **argv) 
 {
@@ -182,21 +203,10 @@ int main(int argc, char **argv)
   printf("C\tDO NOT modify its contents and expect the changes to stick.\n");
   printf("C\tChanges MUST be made in genpapifdef.c instead.\nC\n\n");
 
-  /* compute the size of the predefined general purpose arrays */
-  j = sizeof(papi_defNum)/sizeof(int);
-
-  /* create defines for each line in the general arrays */
-  printf("\nC\nC\tGeneral purpose defines.\nC\n\n");
-  for (i=0;i<j;i++)
-      define_val(papi_defNam[i],papi_defNum[i]);
-
-  /* compute the size of the predefined error arrays */
-  j = sizeof(papi_errNum)/sizeof(int);
-
-  /* create defines for each line in the error arrays */
-  printf("\nC\nC\tError defines.\nC\n\n");
-  for (i=0;i<j;i++)
-      define_val(papi_errNam[i],papi_errNum[i]);
+  /* create defines for the internal array pairs */
+  createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum));
+  createDef("Error defines.", papi_errNam, papi_errNum, sizeof(papi_errNum));
+  createDef("Miscellaneous defines.", papi_miscNam, papi_miscNum, sizeof(papi_miscNum));
 
   /* create defines for each member of the PRESET array */
   printf("\nC\nC\tPAPI preset event values.\nC\n\n");
