@@ -1,0 +1,190 @@
+/*
+ * Installation instructions for PAPI 2.3
+ * Updated September 30, 2002
+ * Kevin London
+ * london@cs.utk.edu
+ * Dan Terpstra
+ * terpstra@cs.utk.edu
+ */
+
+
+*****************************************************************************
+HOW TO INSTALL PAPI ONTO YOUR SYSTEM
+*****************************************************************************
+
+On some of the systems that PAPI supports, you can install PAPI right 
+out of the box without any additional setup. Others require drivers or 
+patches to be installed first.
+
+The general installation steps are below, but first find your particular 
+Operating System's section for any additional steps that may be necessary.
+
+General Installation
+
+1.	Pick the appropriate Makefile.<arch> for your system in the papi 
+	source distribution, edit it (if necessary) and compile.
+
+	% make -f Makefile.<arch>
+
+2.	Check for errors. Look for the libpapi.a and libpapi.so in the 
+	current directory. Optionally, run the test programs in the 'ftests' 
+	and 'tests' directories.
+	**NOTE: Not all tests will succeed on all platforms.**
+
+	% ./run_tests.sh
+
+	This will run the tests in quiet mode, which will print PASSED, 
+	FAILED, or SKIPPED. Tests are SKIPPED if the functionality being 
+	tested is not supported by that platform.
+
+3.	Create a PAPI binary distribution or install PAPI directly.
+
+	To directly install PAPI from the build tree:
+
+	% make -f Makefile.<arch> DESTDIR=<install-dir> install
+
+	Please use an absolute pathname for <install-dir>, not a relative 
+	pathname.
+
+	To create a binary kit, papi-<arch>.tgz:
+
+	% make -f Makefile.<arch> dist
+
+
+
+*****************************************************************************
+Operating System Specific Installation Steps (In Alphabetical Order by OS)
+*****************************************************************************
+
+
+AIX - IBM POWER3 and POWER4
+*****************************************************************************
+PAPI is supported on both AIX 4.3.3 for POWER3, and AIX 5.1 for POWER3 
+and POWER4. A different make file is used for each of these three 
+configurations.
+
+For AIX 4.3.3 - POWER3:
+Install Pmtoolkit before compiling PAPI.  Pmtoolkit must be installed as root. 
+The file can be downloaded from the following URL:
+
+	http://www.alphaworks.ibm.com/aw.nsf/download/pmapi
+
+Installation instructions for PMTOOLKIT on AIX 4.3.3:
+1.	Make sure you have AIX 4.3.3 installed.
+2.	Store pmtoolkit.latest in /usr/sys/inst.images. 
+3.	Type "installp -X -acd /usr/sys/inst.images/pmtoolkit.obj all" to 
+	install. This file goes in 
+	/usr/lpp/pmtoolkit/doc/pmapi.toolkit.guide.html.
+4.	After the installation, run pmloadsvcs as root to load the kernel 
+	extension.  
+5.	A simple way of testing the installation and load is by running 
+	pmcycles. It should return: 
+		This machine runs at xxx MHz
+
+**NOTE: Whenever the machine is rebooted, Pmtoolkit must be reloaded. 
+This step can be done automatically at boot time by putting the line: 
+	% /usr/lpp/pmtoolkit/bin/pmloadsvcs  
+at the end of the /etc/rc.net file. **
+
+**NOTE In order to unload the kernel extension, run pmunloadsvcs. **
+
+After the installation of Pmtoolkit, follow the general installation to 
+install PAPI, using Makefile.aix-power.
+
+For AIX 5.1 - POWER4:
+*****************************************************************************
+1.	On AIX 5.x, the bos.pmapi is a product level fileset (part of the OS).
+	However, it is not installed by default. Consult your sysadmin to 
+	make sure it is installed. 
+2.	Follow the general instructions for installing PAPI, using 
+	Makefile.aix-power4.
+
+For AIX 5.1 - POWER3:
+*****************************************************************************
+1.	If you are upgrading from AIX 4.3.x, first unload and uninstall 
+	pmtoolkit if it has been installed.
+2.	After upgrading to AIX 5.x, consult your sysadmin to make sure the 
+	bos.pmapi is properly installed. 
+3.	Follow the general instructions for installing PAPI, using 
+	Makefile.aix5-power3.
+
+
+Linux - Alpha
+*****************************************************************************
+PAPI on Alpha Linux requires the iprobe driver patch from Compaq/HP, which 
+requires a minimum kernel version of 2.1.132. For details on installing this 
+kernel driver see the README at: 
+ftp://ftp.support.compaq.com/private/alpha-tools-software/iprobe/readme.txt
+The patch itself is in the papi/src/alpha-linux directory.
+Once the driver is properly installed, follow the general instructions for 
+installing PAPI, using Makefile.linux-alpha.
+
+
+Linux - Itanium I & II
+*****************************************************************************
+PAPI on Itanium Linux links to libpfm, which requires a kernel version of 
+2.4.18 or higher. After verifying that your kernel meets this condition, 
+follow the general instructions for installing PAPI, using 
+Makefile.linux-ia64-pfmon-1.1 for Itanium I or Makefile.linux-ia64-itanium2 
+for Itanium II.
+
+
+Linux/x86 - Intel and AMD
+*****************************************************************************
+Linux/x86 requires that the kernel be patched and recompiled. The required 
+patches and complete installation instructions are provided in the 
+papi/src/perfctr-x.y directory.
+After successfully patching your kernel with perfctr, follow the general 
+instructions for installing PAPI using Makefile.linux-perfctr-x.y.
+
+
+MIPS - IRIX 6.5
+*****************************************************************************
+No additional steps are required to get PAPI working on IRIX. Follow the 
+general installation guide, and everything should work.
+
+
+Solaris 8 - Ultrasparc
+*****************************************************************************
+The only requirement for Solaris is that you must be running version 2.8 or 
+newer.  As long as that requirement is met, no additional steps are required 
+to get PAPI working and you can follow the general installation guide.
+
+*NOTE: The Ultrasparc III mapping and code is available, but untested, as we 
+don't have access to an Ultrasparc III. So consider it beta. If you have 
+access to an Ultrasparc III on which you would like to run PAPI, run the 
+test suite and let us know the results. **
+
+
+Tru64 UNIX - Alpha
+*****************************************************************************
+On Tru64 UNIX, PAPI uses a service called "Dynamic Access to DCPI
+Data (DADD)" to acquire performance data. DADD is a service provided
+by the HP Continuous Profiling Infrastructure (DCPI.) DCPI with DADD
+is not part of the PAPI distribution and is available from Hewlett
+Packard. Contact dcpi@hp.com for further details.
+
+PAPI support using the PFM device driver is deprecated and will be
+replaced by DCPI with DADD.
+
+
+Unicos - Cray 
+*****************************************************************************
+No additional steps are required to get PAPI working on Unicos.
+Follow the general installation guide, and everything should work.
+
+
+Windows XP/2000 - Intel
+*****************************************************************************
+**NOTE:  A driver bug currently prevents PAPI from running successfully on 
+AMD processors.**
+
+Download the self-installing executable from the PAPI site.
+Double-click it and follow the prompts.
+The installer requires administrator privileges, since it installs a device 
+driver to access the counters.
+This executable includes binaries for the library, device driver, examples, 
+and perfometer as well as source code for the examples.
+The general installation instructions are irrelevant for Windows.
+
+
