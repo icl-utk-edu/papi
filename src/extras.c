@@ -418,7 +418,6 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                i = ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
-#ifdef PENTIUM4 
                   /* This loop is here ONLY because Pentium 4 can have tagged events
                      that contain more than one counter without being derived.
                      You've gotta scan all terms to make sure you find the one to profile. */
@@ -429,7 +428,13 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                         goto foundit;
                      }
                   }
-#else
+#ifdef ITANIUM2 
+                 /* in Itanium, the set bit in overflow vector is not
+                    equal to the position in native event array */
+                 profile_index = ESI->EventInfoArray[papi_index].pos[0];
+                 goto foundit;
+#endif
+#ifdef ITANIUM
                  /* in Itanium, the set bit in overflow vector is not
                     equal to the position in native event array */
                  profile_index = ESI->EventInfoArray[papi_index].pos[0];
