@@ -641,23 +641,31 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * cntrl)
 
 #if 1
    DBG((stderr, "Start\n"));
-/*dump_state(cntrl);
-dump_state(current_state);*/
 #endif
 
    /* Copy the global counter structure to the current eventset */
+
    DBG((stderr, "Copying states\n"));
    memcpy(current_state, cntrl, sizeof(hwd_control_state_t));
 
    retval = pm_set_program_mythread(&current_state->counter_cmd);
-   if (retval > 0)
-      return (retval);
+ if (retval != 0)
+   {
+     extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
+     if ((retval == 13) && (_papi_hwi_thread_id_fn))
+       {
+	 pm_delete_program_mythread();
+	 retval = pm_set_program_mythread(&current_state->counter_cmd);
+	 if (retval != 0)
+	   return(retval);
+       }
+     else
+       return(retval);
+   }
 
    /* Set up the new merged control structure */
 
 #if 0
-/*  dump_state(cntrl);
-  dump_state(current_state);*/
    dump_cmd(&current_state->counter_cmd);
 #endif
 
