@@ -101,6 +101,9 @@ int _papi_hwd_get_system_info(void)
   if (IS_P3(&win_hwinfo) || IS_P3_XEON(&win_hwinfo) || IS_CELERON(&win_hwinfo))
     _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_PIII;
 
+  if (IS_MOBILE(&win_hwinfo))
+    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_PENTM;
+
   if (IS_P4(&win_hwinfo)) {
     if (win_hwinfo.model >= 2)
       /* this is a guess for Pentium 4 Model 2 */
