@@ -1042,12 +1042,12 @@ int PAPI_start(int EventSet)
     {
       retval = _papi_hwi_start_overflow_timer(ESI, thread_master_eventset);
       if (retval < PAPI_OK)
-	return(retval);
+	papi_return(retval);
     }
 
   retval = _papi_hwd_merge(ESI, thread_master_eventset);
   if (retval != PAPI_OK)
-    return(retval);
+    papi_return(retval);
 
   ESI->state ^= PAPI_STOPPED;
   ESI->state |= PAPI_RUNNING;

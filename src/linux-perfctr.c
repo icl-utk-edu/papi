@@ -7,7 +7,7 @@
 
 /* PAPI stuff */
 
-#include "linux-2.4-x86.h"
+#include "linux-perfctr.h"
 
 /* First entry is mask, counter code 1, counter code 2, and TSC. 
 A high bit in the mask entry means it is an OR mask, not an
