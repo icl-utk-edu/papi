@@ -118,6 +118,7 @@ static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 
 
 hwd_control_state_t *array[PAPI_INIT_SLOTS];
+static hwd_control_state_t current;
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -136,6 +137,10 @@ int _papi_hwd_init(EventSetInfo *zero)
   _papi_system_info.mhz = stamp;
 
   DBG((stderr,"CPU number %d at %d MHZ found\n",1,_papi_system_info.mhz));
+  current.counter_code1 = -1;
+  current.counter_code2 = -1;
+  current.sp_code = -1;
+  zero->machdep = (void *)&current;
 
   return(PAPI_OK);
 }
@@ -392,31 +397,71 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_merge(EventSetInfo *ESI)
-{ 
-  int i, retval, code[_papi_system_info.num_cntrs];
-  hwd_control_state_t *this_state = ESI->machdep;
+int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
+{ int retval;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
 
   retval=_papi_hwd_stop(ESI, ESI->start);
-  if(retval) return(PAPI_EBUG);
+  if(retval<PAPI_OK) return(PAPI_ESBSTR);
 
-  for(i=0; i<_papi_system_info.num_cntrs; i++)
-  { retval=perf(PERF_GET_CONFIG, i, code[i]);
-    if(retval) return(PAPI_EBUG);
-  }
-  for(i=0; i<_papi_system_info.num_cntrs; i++)
-  { if(code[i] == this_state->counter_code1)  
-    { ESI->EventCodeArray[i] = ESI->EventCodeArray[i] & SHARED_MASK;
+  if(this_state->counter_code1 != -1)
+  { if(this_state->counter_code1 == current_state->counter_code1)
+    { zero->all_options.multistart.multistart.SharedDepth[0] ++; 
+    } 
+    else if(this_state->counter_code1 == current_state->counter_code2)
+    { zero->all_options.multistart.multistart.SharedDepth[1] ++; 
     }
-    else if(code[i] != 0) return(PAPI_ECNFLCT);
+    else
+    { retval=_papi_hwd_add_event(zero, 0, ESI->EventCodeArray[0]);
+      if(retval<PAPI_OK) return(PAPI_ECNFLCT);
+      if(this_state->counter_code1 == current_state->counter_code1)
+      { zero->all_options.multistart.multistart.SharedDepth[0] ++;
+      }
+      if(this_state->counter_code1 == current_state->counter_code2)
+      { zero->all_options.multistart.multistart.SharedDepth[1] ++;
+      }
+    }
   }
-  return (_papi_hwd_start(ESI));
+
+  if(this_state->counter_code2 != -1)
+  { if(this_state->counter_code2 == current_state->counter_code1)
+    { zero->all_options.multistart.multistart.SharedDepth[0] ++; 
+    } 
+    else if(this_state->counter_code2 == current_state->counter_code2)
+    { zero->all_options.multistart.multistart.SharedDepth[1] ++; 
+    }
+    else
+    { retval=_papi_hwd_add_event(zero, 0, ESI->EventCodeArray[1]);
+      if(retval<PAPI_OK) return(PAPI_ECNFLCT);
+      if(this_state->counter_code2 == current_state->counter_code1)
+      { zero->all_options.multistart.multistart.SharedDepth[0] ++;
+      }
+      if(this_state->counter_code2 == current_state->counter_code2)
+      { zero->all_options.multistart.multistart.SharedDepth[1] ++;
+      }
+    }
+  }
+
+  if(this_state->sp_code == 1)
+  { if(current_state->sp_code != 1)
+    { current_state->sp_code = 1; 
+    }
+    zero->all_options.multistart.multistart.SharedDepth[2] ++; 
+  }
+  return(_papi_hwd_start(zero));
 } 
 
 int _papi_hwd_start(EventSetInfo *EventSet)
 {
   hwd_control_state_t *this_state = EventSet->machdep;
   int retval;
+
+  if(EventSet->EventSetIndex != 0)
+  { current.counter_code1 = this_state->counter_code1;
+    current.counter_code2 = this_state->counter_code2;
+    current.sp_code = this_state->sp_code;
+  }
 
   retval=_papi_set_domain(EventSet, &EventSet->all_options.domain);
   if(retval) return(PAPI_EBUG);
@@ -425,18 +470,15 @@ int _papi_hwd_start(EventSetInfo *EventSet)
   { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
     if(retval) return(PAPI_EBUG);
   }
-
   if(this_state->counter_code2 >= 0)
   { retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
     if(retval) return(PAPI_EBUG);
   }
-
   if(this_state->sp_code >= 0)
   { retval = perf(PERF_SET_CONFIG, 2, this_state->sp_code);
     if(retval) return(PAPI_EBUG);
   }
-  retval = perf(PERF_START, 0, 0);
-  return (retval);
+  return(perf(PERF_START, 0, 0));
 }
 
 
@@ -454,27 +496,53 @@ int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
     return (PAPI_OK);
 }
 
-int _papi_hwd_unmerge(EventSetInfo *ESI)
-{ int i, retval, code[_papi_system_info.num_cntrs];
-  hwd_control_state_t *this_state = ESI->machdep;
+int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
+{ int retval;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
 
   retval=_papi_hwd_stop(ESI, ESI->stop);
-  if(retval) return(PAPI_EBUG);
+  if(retval<PAPI_OK) return(PAPI_ESBSTR);
 
-  for(i=0; i<_papi_system_info.num_cntrs; i++)
-  { retval=perf(PERF_GET_CONFIG, i, code[i]);
-    if(retval) return(PAPI_EBUG);
-  }
-  for(i=0; i<_papi_system_info.num_cntrs; i++)
-  { if(code[i] == this_state->counter_code1)  
-    { if(ESI->EventCodeArray[i] & SHARED_MASK)  /*find out if still needed by others*/
-      { ESI->EventCodeArray[i] ^= SHARED_MASK;
+  if(this_state->counter_code1 != -1)
+  { if(this_state->counter_code1 == current_state->counter_code1)
+    { zero->all_options.multistart.multistart.SharedDepth[0] --;
+      if(zero->all_options.multistart.multistart.SharedDepth[0] == 0)
+      { current_state->counter_code1 = -1;
       }
-      this_state->counter_code1 = 0;
+    }
+    else if(this_state->counter_code1 == current_state->counter_code2)
+    { zero->all_options.multistart.multistart.SharedDepth[1] --;
+      if(zero->all_options.multistart.multistart.SharedDepth[1] == 0)
+      { current_state->counter_code2 = -1;
+      }
+    }
+    else { return(PAPI_EBUG);}
+  }
+
+  if(this_state->counter_code2 != -1)
+  { if(this_state->counter_code2 == current_state->counter_code1)
+    { zero->all_options.multistart.multistart.SharedDepth[0] --;
+      if(zero->all_options.multistart.multistart.SharedDepth[0] == 0)
+      { current_state->counter_code1 = -1;
+      }
+    }
+    else if(this_state->counter_code2 == current_state->counter_code2)
+    { zero->all_options.multistart.multistart.SharedDepth[1] --;
+      if(zero->all_options.multistart.multistart.SharedDepth[1] == 0)
+      { current_state->counter_code2 = -1;
+      }
+    }
+    else { return(PAPI_EBUG);}
+  }
+
+  if(this_state->sp_code == 1)
+  { zero->all_options.multistart.multistart.SharedDepth[2] --;
+    if(zero->all_options.multistart.multistart.SharedDepth[2] == 0)
+    { current_state->sp_code = -1;
     }
   }
-
-  return(_papi_hwd_start(ESI));
+  return(_papi_hwd_start(zero));
 }
 
 
@@ -495,6 +563,7 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int retval, machnum, i;
+  unsigned int event;
 
   for(i=0; i<3; i++) events[i] = -1;
 
@@ -509,21 +578,85 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
     if(retval) return(PAPI_EBUG);
     retval = perf(PERF_READ, 2, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
+    if(ESI->EventCodeArray[0] & PRESET_MASK) 
+      event = ESI->EventCodeArray[0] ^ PRESET_MASK;
+    if(preset_map[event].counter_code1 != this_state->counter_code1)
+    { events[0] ^= events[1];
+      events[1] ^= events[0];
+      events[0] ^= events[1];
+    }
   }
   if(machnum == 7)
   { retval = perf(PERF_READ, 1, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
     retval = perf(PERF_READ, 2, (int)&events[2]);
     if(retval) return(PAPI_EBUG);
+
+    if(ESI->EventCodeArray[0] == PAPI_TOT_CYC)
+    { events[0] ^= events[2];
+      events[2] ^= events[0];
+      events[0] ^= events[2];
+      if(ESI->EventCodeArray[1] & PRESET_MASK)
+        event = ESI->EventCodeArray[1] ^ PRESET_MASK;
+      if(preset_map[event].counter_code1 != this_state->counter_code1)
+      { events[1] ^= events[2];
+        events[2] ^= events[1];
+        events[1] ^= events[2];
+      }
+    }
+    else if(ESI->EventCodeArray[1] == PAPI_TOT_CYC)
+    { events[1] ^= events[2];
+      events[2] ^= events[1];
+      events[1] ^= events[2];
+      if(ESI->EventCodeArray[0] & PRESET_MASK)
+        event = ESI->EventCodeArray[0] ^ PRESET_MASK;
+      if(preset_map[event].counter_code1 != this_state->counter_code1)
+      { events[0] ^= events[2];
+        events[2] ^= events[0];
+        events[0] ^= events[2];
+      }
+    }
+    else if(ESI->EventCodeArray[0] & PRESET_MASK)
+    { event = ESI->EventCodeArray[0] ^ PRESET_MASK;
+      if(preset_map[event].counter_code1 != this_state->counter_code1)
+      { events[0] ^= events[1];
+        events[1] ^= events[0];
+        events[0] ^= events[1];
+      }
+    }
   }
-  if((machnum == 2) || (machnum == 6))
+  if(machnum == 6)
   { retval = perf(PERF_READ, 1, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
+    if(ESI->EventCodeArray[0] & PRESET_MASK)
+      event = ESI->EventCodeArray[0] ^ PRESET_MASK;
+    if(preset_map[event].counter_code1 != this_state->counter_code1)
+    { events[0] ^= events[1];
+      events[1] ^= events[0];
+      events[0] ^= events[1];
+    }
   }
   if(machnum == 5) 
   { retval = perf(PERF_READ, 2, (int)&events[1]);
     if(retval) return(PAPI_EBUG);
+    if(ESI->EventCodeArray[0] & PRESET_MASK)
+      event = ESI->EventCodeArray[0] ^ PRESET_MASK;
+    if(preset_map[event].counter_code1 != this_state->counter_code1)
+    { events[0] ^= events[1];
+      events[1] ^= events[0];
+      events[0] ^= events[1];
+    }
   }
+  if(machnum == 2) 
+  { retval = perf(PERF_READ, 1, (int)&events[0]);
+    if(retval) return(PAPI_EBUG);
+  }
+  if(machnum == 1) 
+  { retval = perf(PERF_READ, 2, (int)&events[0]);
+    if(retval) return(PAPI_EBUG);
+  }
+
+  /* sort into order added */
 
   return PAPI_OK;
 }

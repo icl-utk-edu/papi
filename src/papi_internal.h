@@ -176,8 +176,8 @@ extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
 extern int _papi_set_domain(EventSetInfo *ESI, _papi_int_domain_t *domain);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_query(int preset);
-extern int _papi_hwd_merge(EventSetInfo *ESI);
-extern int _papi_hwd_unmerge(EventSetInfo *ESI);
+extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);
+extern int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero);
 
 /* Portable overflow routines */
 

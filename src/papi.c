@@ -30,7 +30,7 @@ static int handle_error(int, char *);
 static char *get_error_string(int);
 static EventSetInfo *lookup_EventSet(int eventset);
 static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode);
-static int check_runners(PAPI_multistart_option_t *ptr);
+static EventSetInfo *lookup_Zero(int eventset);
 
 /* Global variables */
 /* These will eventually be encapsulated into per thread structures. */ 
@@ -66,7 +66,7 @@ static int check_initialize(void)
 
 static int initialize(void)
 {
-  int retval;
+  int retval, i;
   EventSetInfo *zero;
 
   /* Clear the Dynamic Array structure */
@@ -101,6 +101,8 @@ heck:
      }
    memset(zero,0x00,sizeof(EventSetInfo));
 
+   zero->machdep = (void *)malloc(_papi_system_info.size_machdep);
+
    PAPI_EVENTSET_MAP.dataSlotArray[0] = zero;
 
    retval = _papi_hwd_init(zero);
@@ -109,6 +111,15 @@ heck:
        free(zero);
        goto heck;
      }
+   zero->all_options.multistart.multistart.SharedDepth =
+    (int **)malloc(_papi_system_info.num_cntrs*sizeof(int *));
+   zero->all_options.multistart.multistart.EvSetArray =
+    (int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
+   zero->all_options.multistart.multistart.virtual_machdep =
+    (void *)malloc(_papi_system_info.size_machdep);
+   zero->all_options.multistart.multistart.num_runners =0;
+   for(i=0; i<_papi_system_info.num_cntrs; i++)
+     zero->all_options.multistart.multistart.SharedDepth[i] = 0;
 
    return(retval);
 }
@@ -160,11 +171,6 @@ static EventSetInfo *allocate_EventSet(void)
   if (ESI==NULL) 
     return(NULL); 
   memset(ESI,0x00,sizeof(EventSetInfo));
-  ESI->all_options.multistart.multistart.EvSetArray =
-    (int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
-  ESI->all_options.multistart.multistart.virtual_machdep = 
-    (void *)malloc(_papi_system_info.size_machdep);
-
 
   max_counters = _papi_system_info.num_cntrs;
   ESI->machdep = (void *)malloc(_papi_system_info.size_machdep);
@@ -425,7 +431,6 @@ int PAPI_add_event(int *EventSet, int EventCode)
     }
 
   /* This returns index into the map array */
-
   retval = add_event(ESI,EventCode);
   if (retval < PAPI_OK)
     {
@@ -477,6 +482,11 @@ static EventSetInfo *lookup_EventSet(int eventset)
     return(PAPI_EVENTSET_MAP.dataSlotArray[eventset]);
   else
     return(NULL);
+}
+
+static EventSetInfo *lookup_Zero(int eventset)
+{ if(eventset == 0) return(PAPI_EVENTSET_MAP.dataSlotArray[0]);
+  return(NULL);
 }
 
 /* This function only removes empty EventSets */
@@ -565,28 +575,6 @@ int PAPI_rem_event(int *EventSet, int EventCode)
   return(retval);
 }
 
-static int check_runners(PAPI_multistart_option_t *ptr)
-{ int retval, state, i, j=0;
-  EventSetInfo *ESI;
-  int reset=0;
-
-  ptr->num_runners = 0;
-  for(i=0; i<PAPI_EVENTSET_MAP.totalSlots; i++)
-    ptr->EvSetArray[i]=&reset;
-  for(i=1; i<PAPI_EVENTSET_MAP.totalSlots; i++)
-  { ESI=lookup_EventSet(i); 
-    if(ESI!=NULL)
-    { retval=PAPI_state(i, &state);
-      if(retval) return retval;
-      if(state==PAPI_RUNNING)
-      { ptr->EvSetArray[j]=&ESI->EventSetIndex;
-        ptr->num_runners ++;
-      }
-    }
-  }
-  return(PAPI_OK);
-}
-
 /* simply checks for valid EventSet, calls substrate start() call */
 
 int PAPI_start(int EventSet)
@@ -597,12 +585,13 @@ int PAPI_start(int EventSet)
   ESI = lookup_EventSet(EventSet);
   if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  zero = lookup_EventSet(0);
-  retval=check_runners(&ESI->all_options.multistart.multistart);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if(ESI->state == PAPI_RUNNING)
+    return(handle_error(PAPI_EINVAL, NULL));
+  zero = lookup_Zero(0);
+  if(zero == NULL) return(handle_error(PAPI_EINVAL, NULL)); 
 
-  if(ESI->all_options.multistart.multistart.num_runners >0)
-  { retval=_papi_hwd_merge(ESI);
+  if(zero->all_options.multistart.multistart.num_runners >0)
+  { retval=_papi_hwd_merge(ESI, zero);
     if(retval<PAPI_OK) return(handle_error(retval, NULL));
   }
   else
@@ -610,6 +599,7 @@ int PAPI_start(int EventSet)
     if(retval<PAPI_OK) return(handle_error(retval, NULL));
   }
   ESI->state=PAPI_RUNNING;
+  zero->all_options.multistart.multistart.num_runners ++;
 
   DBG((stderr,"PAPI_start returns %d\n",retval));
   return(retval);
@@ -618,18 +608,21 @@ int PAPI_start(int EventSet)
 /* checks for valid EventSet, calls substrate stop() fxn. */
 int PAPI_stop(int EventSet, unsigned long long *values)
 { 
-  int retval;
-  EventSetInfo *ESI;
+  int retval, i;
+  EventSetInfo *ESI, *zero;
 
   ESI = lookup_EventSet(EventSet);
   if(ESI==NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  retval=check_runners(&ESI->all_options.multistart.multistart);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if(ESI->state == PAPI_STOPPED)
+    return(handle_error(PAPI_EINVAL, NULL));
+  zero = lookup_Zero(0);
+  if(zero==NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  if(ESI->all_options.multistart.multistart.num_runners >1)
-  { retval=_papi_hwd_unmerge(ESI);
+  if(zero->all_options.multistart.multistart.num_runners >1)
+  { retval=_papi_hwd_unmerge(ESI, zero);
     if(retval<PAPI_OK) return(handle_error(retval, NULL));
+    for (i=0;i<_papi_system_info.num_cntrs;i++) values[i] = ESI->stop[i]; 
   }
   else
   { retval = _papi_hwd_stop(ESI, values);
@@ -646,7 +639,7 @@ int PAPI_stop(int EventSet, unsigned long long *values)
 #endif
 
   ESI->state=PAPI_STOPPED;
-
+  zero->all_options.multistart.multistart.num_runners --;
   return(retval);
 }
 
