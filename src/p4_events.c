@@ -50,7 +50,7 @@
 #define PNE_page_walk_type_instr_miss (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
 #define PNE_page_walk_type_all (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
 
-/* cache events */
+/* cache events via replay tagging */
 #define PNE_replay_event_L1_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_access (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT))
@@ -58,6 +58,22 @@
 #define PNE_replay_event_L2_store_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_STORE_BIT)  + (1<<PEBS_L2_MISS_BIT))
 #define PNE_replay_event_L2_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
 #define PNE_replay_event (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS))
+
+/* cache events via front-end tagging */
+#define PNE_front_end_event (PAPI_NATIVE_MASK + (P4_front_end_event<<16) + (1<<NBOGUS))
+#define PNE_front_end_event_bogus (PAPI_NATIVE_MASK + (P4_front_end_event<<16) + (1<<BOGUS))
+#define PNE_front_end_event_all (PAPI_NATIVE_MASK + (P4_front_end_event<<16) + (1<<NBOGUS) + (1<<BOGUS))
+#define PNE_uop_type_load (PAPI_NATIVE_MASK + (P4_uop_type<<16) + (1<<TAGLOADS))
+#define PNE_uop_type_store (PAPI_NATIVE_MASK + (P4_uop_type<<16) + (1<<TAGSTORES))
+#define PNE_uop_type_load_store (PAPI_NATIVE_MASK + (P4_uop_type<<16) + (1<<TAGLOADS) + (1<<TAGSTORES))
+
+/* L2 and L3 cache events via BSQ_cache_reference */
+#define PNE_BSQ_cache_reference_L2_RD_hit (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_2ndL_HITS) + (1<<RD_2ndL_HITE) + (1<<RD_2ndL_HITM))
+#define PNE_BSQ_cache_reference_L3_RD_hit (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_3rdL_HITS) + (1<<RD_3rdL_HITE) + (1<<RD_3rdL_HITM))
+#define PNE_BSQ_cache_reference_L2_RD_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_2ndL_MISS))
+#define PNE_BSQ_cache_reference_L3_RD_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_3rdL_MISS))
+#define PNE_BSQ_cache_reference_L2_WR_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<WR_2ndL_MISS))
+#define PNE_BSQ_cache_reference_L2_RD_WR_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_2ndL_MISS) + (1<<WR_2ndL_MISS))
 
 /* instruction events */
 #define PNE_instr_retired_non_bogus (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
@@ -150,15 +166,24 @@ hwi_search_t _papi_hwd_pentium4_base_preset_map[] = {
    {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
+   {PAPI_LD_INS, {DERIVED_CMPD, {PNE_front_end_event, PNE_uop_type_load, PAPI_NULL,}, {0,}}},
+   {PAPI_SR_INS, {DERIVED_CMPD, {PNE_front_end_event, PNE_uop_type_store, PAPI_NULL,}, {0,}}},
+   {PAPI_LST_INS, {DERIVED_CMPD, {PNE_front_end_event, PNE_uop_type_load_store, PAPI_NULL,}, {0,}}},
+
    {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
    {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
 //  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
    {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
-//  {PAPI_L2_STM,  {0, { PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L2_DCM, {0, {PNE_replay_event_L2_data_miss, PAPI_NULL,}, {0,}}},
+//   {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
+//   {PAPI_L2_STM,  {0, { PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
+   {PAPI_L2_LDM, {0, {PNE_BSQ_cache_reference_L2_RD_miss, PAPI_NULL,}, {0,}}},
+   {PAPI_L2_STM, {0, {PNE_BSQ_cache_reference_L2_WR_miss, PAPI_NULL,},{0,}}},
+   {PAPI_L2_TCM, {0, {PNE_BSQ_cache_reference_L2_RD_WR_miss, PAPI_NULL,}, {0,}}},
+   {PAPI_L3_LDM, {0, {PNE_BSQ_cache_reference_L3_RD_miss, PAPI_NULL,}, {0,}}},
+   {PAPI_L2_DCR, {0, {PNE_BSQ_cache_reference_L2_RD_hit, PAPI_NULL,}, {0,}}},
+   {PAPI_L3_DCR, {0, {PNE_BSQ_cache_reference_L3_RD_hit, PAPI_NULL,}, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
@@ -431,7 +456,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "BSQ_cache_reference",
-    "This event counts cache references (2nd level cache or 3rd level cache) as seen by the bus unit. Specify one or more mask bit to select an access according to the access type and the access result",
+    "This event counts cache references (2nd level cache or 3rd level cache) as seen by the bus unit. Specify one or more mask bit to select an access according to the access type and the access result. Currently this event causes both over and undercounting by as much as a factor of two due to an erratum.",
     {
      {CTR01, CTR23}, {MSR_BSU_ESCR0, MSR_BSU_ESCR1},
      CCCR_ESCR_SEL(BSQ_CREF_CCCR), ESCR_EVENT_SEL(BSQ_CREF_ESCR),
