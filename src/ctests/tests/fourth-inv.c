@@ -74,10 +74,10 @@ int main(int argc, char **argv)
   retval = PAPI_add_event(&EventSet1, PAPI_EVENT);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, add_event_str, retval);
 
-  retval = PAPI_add_event(&EventSet2, PAPI_TOT_CYC);
+  retval = PAPI_add_event(&EventSet2, PAPI_EVENT);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_add_event[PAPI_TOT_CYC]", retval);
 
-  retval = PAPI_add_event(&EventSet2, PAPI_EVENT);
+  retval = PAPI_add_event(&EventSet2, PAPI_TOT_CYC);
   if (retval != PAPI_OK) {
 	/* if there's a conflict, we can't complete this test */
 	if(retval == PAPI_ECNFLCT ) test_fail(__FILE__, __LINE__, 0, PAPI_OK);
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
   
   if ( !TESTS_QUIET ) {
-	printf("Test case 4: Overlapping start and stop of 2 eventsets.\n");
+	printf("Test case 4: Overlapping start and stop of 2 (inversed) eventsets.\n");
 	printf("-------------------------------------------------------\n");
 	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
 	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
@@ -134,9 +134,9 @@ int main(int argc, char **argv)
 	printf("Test type    : %12s%12s%12s%12s\n", "1", "2", "3", "4");
 	sprintf(add_event_str, "%-12s : ", event_name);
 	printf(TAB4, add_event_str,
-	 (values[0])[1],(values[1])[1],(values[2])[1],(values[3])[1]);
+	 (values[0])[1],(values[1])[0],(values[2])[1],(values[3])[0]);
 	printf(TAB4, "PAPI_TOT_CYC : ",
-	 (values[0])[0],(values[1])[0],(values[2])[0],(values[3])[0]);
+	 (values[0])[0],(values[1])[1],(values[2])[0],(values[3])[1]);
 	printf("-------------------------------------------------------------------------\n");
 
 	printf("Verification:\n");
@@ -146,16 +146,16 @@ int main(int argc, char **argv)
   }
   {
 	long_long min, max;
-	min = (long_long)(values[1][1]*.9);
-	max = (long_long)(values[1][1]*1.1);
-	if ( values[0][1] > max || values[0][1]<min || values[2][1]>(3*max)||
-	     values[2][1]<(3*min)||values[3][1]<min||values[3][1]>max ){
-			test_fail(__FILE__, __LINE__, event_name, 1);
-        }
 	min = (long_long)(values[1][0]*.9);
 	max = (long_long)(values[1][0]*1.1);
+	if ( values[0][1] > max || values[0][1]<min || values[2][1]>(3*max)||
+	     values[2][1]<(3*min)||values[3][0]<min||values[3][0]>max ){
+			test_fail(__FILE__, __LINE__, event_name, 1);
+        }
+	min = (long_long)(values[1][1]*.9);
+	max = (long_long)(values[1][1]*1.1);
 	if ( values[0][0] > max || values[0][0]<min || values[2][0]>(3*max)||
-	     values[2][0]<(3*min)||values[3][0]<min||values[3][0]>max ){
+	     values[2][0]<(3*min)||values[3][1]<min||values[3][1]>max ){
  			test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
         }
   }
