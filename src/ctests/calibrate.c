@@ -89,9 +89,9 @@ int main(int argc, char *argv[]) {
 
 		    /* reset PAPI flops count */
 		    flpins = -1;
-		    retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
+		    retval = PAPI_flips( &real_time, &proc_time, &flpins, &mflops); 
 		    if (retval != PAPI_OK)
-				test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_flops", retval);
+				test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_flips", retval);
 
 			/* do the multiplication */
 			for (i=0;i<=n;i++)
@@ -129,9 +129,9 @@ int main(int argc, char *argv[]) {
 
 		    /* reset PAPI flops count */
 		    flpins = -1;
-		    retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
+		    retval = PAPI_flips( &real_time, &proc_time, &flpins, &mflops); 
 		    if (retval != PAPI_OK)
-				test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_flops", retval);
+				test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_flips", retval);
 
 			/* compute the resultant vector */
 			for(i=0;i<=n;i++)
@@ -169,9 +169,9 @@ int main(int argc, char *argv[]) {
 
 		    /* reset PAPI flops count */
 		    flpins = -1;
-		    retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
+		    retval = PAPI_flips( &real_time, &proc_time, &flpins, &mflops); 
 		    if (retval != PAPI_OK)
-				test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_flops", retval);
+				test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_flips", retval);
 
 			/* compute the resultant matrix */
 			for(i=0;i<=n;i++)
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
 
 /*
 	Extract and display hardware information for this processor.
-	(Re)Initialize PAPI_flops() and begin counting floating ops.
+	(Re)Initialize PAPI_flips() and begin counting floating ops.
 */
 static void headerlines(char * title, int TESTS_QUIET)
 {
@@ -234,12 +234,12 @@ static void headerlines(char * title, int TESTS_QUIET)
 
   /* Setup PAPI library and begin collecting data from the counters */
   flpins = -1;
-  retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "headerlines: PAPI_flops", retval);
+  retval = PAPI_flips( &real_time, &proc_time, &flpins, &mflops); 
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "headerlines: PAPI_flips", retval);
 }
 
 /*
-  Read PAPI_flops.
+  Read PAPI_flips.
   Format and display results.
   Compute error without using floating ops.
 */
@@ -261,8 +261,8 @@ static void resultline(int i, int j, int TESTS_QUIET)
 	int papi, theory, diff=0;
 	int retval;
 		
-	retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
-	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "resultline: PAPI_flops", retval);
+	retval = PAPI_flips( &real_time, &proc_time, &flpins, &mflops);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "resultline: PAPI_flips", retval);
 
 	i++;						/* convert to 1s base  */
 	theory = 2;

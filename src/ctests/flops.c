@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
 	matrixa[0][i] = matrixb[0][i] = rand()*(float)1.1; }
 
   /* Setup PAPI library and begin collecting data from the counters */
-  if((retval=PAPI_flops( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
-	test_fail(__FILE__, __LINE__, "PAPI_flops", retval);
+  if((retval=PAPI_flips( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_flips", retval);
 
   /* Matrix-Matrix multiply */
   for (i=0;i<INDEX;i++)
@@ -44,8 +44,8 @@ int main(int argc, char **argv) {
 	mresult[i][j]=mresult[i][j] + matrixa[i][k]*matrixb[k][j];
 
   /* Collect the data into the variables passed in */
-  if((retval=PAPI_flops( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
-	test_fail(__FILE__, __LINE__, "PAPI_flops", retval);
+  if((retval=PAPI_flips( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_flips", retval);
   dummy((void*) mresult);
  
   if ( !TESTS_QUIET )

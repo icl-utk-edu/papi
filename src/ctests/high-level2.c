@@ -1,4 +1,4 @@
-/* This test checks that mixing PAPI_flops and the other high
+/* This test checks that mixing PAPI_flips and the other high
  * level calls does the right thing.
  * Kevin 
  */
@@ -19,22 +19,22 @@ int main(int argc, char **argv )
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
   if ((retval=PAPI_query_event(PAPI_FP_INS)) != PAPI_OK) {
-         test_fail(__FILE__, __LINE__, "PAPI_flops", retval); 
+         test_fail(__FILE__, __LINE__, "PAPI_flips", retval); 
   }
 
   Events = PAPI_FP_INS;
-  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
+  if ( (retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_flips",retval);
   if ( (retval = PAPI_start_counters(&Events,1))==PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
-  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
+  if ( (retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_flips",retval);
   if ( (retval = PAPI_read_counters(&values,1))==PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval);
   if ( (retval = PAPI_stop_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop_counters",retval);
-  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
+  if ( (retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_flips",retval);
   if ( (retval = PAPI_read_counters(&values,1))==PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval);
   if ( (retval = PAPI_stop_counters(&values,1))!=PAPI_OK)
@@ -43,8 +43,8 @@ int main(int argc, char **argv )
 	test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
   if ( (retval = PAPI_read_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval);
-  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))==PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
+  if ( (retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops))==PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_flips",retval);
   if ( (retval = PAPI_stop_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop_counters",retval);
   test_pass(__FILE__,NULL,0);
