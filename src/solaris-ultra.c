@@ -420,7 +420,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
       }
 
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, overflow_vector, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal(&ctx, NULL, overflow_vector, 0, &thread);
 
 #if DEBUG
       dump_cmd(sample);
