@@ -1,0 +1,55 @@
+===============================================================================
+PAPI 3.0 beta 3 RELEASE NOTES                                      11 June 2004
+===============================================================================
+
+This file documents issues associated with the PAPI 3.0 beta 3 release.
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP303.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+GENERAL NOTES
+===============================================================================
+This release is primarily a maintenance release for PAPI 3 beta development.
+As such, there have been a large number of bug fixes and revisions to the PAPI
+system, but a much smaller number of changes that will be visible to the user.
+
+As always, if you identify strange behavior or demonstrable bugs, please
+contact the PAPI team or one of the PAPI development lists.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+NEW, MODIFIED OR DEPRECATED FEATURES
+===============================================================================
+* PAPI_get_overflow_event_index() - added to provide better support for overflow
+and profiling functions.
+* memory information - the structures containing static memory information 
+(cache and TLB sizes, etc.) have been reworked. For details see papi.h or
+ctests/mem_info.c
+* Shared library support has been added where possible. See ctests/shlib.c for 
+more information.
+* PAPI_get_dmem_info() has been temporarily deprecated, pending a redesign of
+the supporting data structures.
+
+PLATFORM NOTES
+===============================================================================
+* Pentium M support - a native event table was added to explicitly support this 
+processor from Intel.
+* Opteron is supported in this release, but has not been recently tested, due to
+unavailability of our test system.
+* Itanium 1 is still supported but has not been recently tested, due to
+unavailability of our test systems.
+* Make files have been renamed and reworked for Itanium. pfmlib versions are now
+automatically identified.
+* Make files for linux-perfctr have been reworked. They now support a VERSION
+command line parameter to specify the perfctr library version to link to.
+The default in both cases is perfctr 2.6.x
+* AIX 5.2 is now supported, but a bug in the OS prevents properly clearing the 
+counters. This should only affect PAPI_reset. A patch is available from IBM.
+Contact the PAPI team for details.
+* A bug in Solaris prevents the support of shared library information. We are
+investigating a work-around, and will commit it to the cvs tree when available.
+Contact the PAPI team for details.
