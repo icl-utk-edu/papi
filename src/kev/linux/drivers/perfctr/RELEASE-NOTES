@@ -3,6 +3,12 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.12, 2004-12-19
+- PPC32 driver updated to be more robust in its detection of
+  timebase and core clock frequencies. Some information sources
+  can give wrong values for those frequencies, so the driver
+  now tries other more reliable methods first.
+
 Version 2.6.11, 2004-11-14
 - Compat stuff updated for tsk->sighand->siglock,
   recalc_sigpending(), and preempt_enable_no_resched().

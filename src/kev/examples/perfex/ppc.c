@@ -53,12 +53,12 @@ static int parse_event_spec(const char *arg, unsigned int *evntsel,
 {
     char *endp;
 
-    *evntsel = strtoul(arg, &endp, 16);
+    *evntsel = my_strtoul(arg, &endp);
     if( endp[0] != '@' ) {
 	*pmc = (unsigned int)-1;
     } else {
 	arg = endp + 1;
-	*pmc = strtoul(arg, &endp, 16);
+	*pmc = my_strtoul(arg, &endp);
     }
     return endp[0] != '\0';
 }
@@ -89,7 +89,7 @@ static int parse_value(const char *arg, unsigned int *value)
 {
     char *endp;
 
-    *value = strtoul(arg, &endp, 16);
+    *value = my_strtoul(arg, &endp);
     return endp[0] != '\0';
 }
 

@@ -23,9 +23,14 @@
 #define REG_PC REG_EIP
 #endif
 
-unsigned long mcontext_pc(const mcontext_t *mc)
+static inline unsigned long mcontext_pc(const mcontext_t *mc)
 {
     return mc->gregs[REG_PC];
+}
+
+unsigned long ucontext_pc(const struct ucontext *uc)
+{
+    return mcontext_pc(&uc->uc_mcontext);
 }
 
 void do_setup(const struct perfctr_info *info,

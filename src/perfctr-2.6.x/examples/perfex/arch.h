@@ -12,6 +12,9 @@ extern void do_print(FILE *resfile,
 
 extern void do_arch_usage(void);
 
+/* Hack while phasing out an old number parsing bug. */
+extern unsigned long my_strtoul(const char *nptr, char **endptr);
+
 extern unsigned int do_event_spec(unsigned int n,
 				  const char *arg,
 				  struct perfctr_cpu_control *cpu_control);

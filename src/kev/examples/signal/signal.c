@@ -48,7 +48,6 @@ static void do_open(void)
 static void on_sigio(int sig, siginfo_t *si, void *puc)
 {
     struct ucontext *uc;
-    mcontext_t *mc;
     unsigned long pc;
     unsigned int pmc_mask;
 
@@ -65,8 +64,7 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
 	return;
     }
     uc = puc;
-    mc = &uc->uc_mcontext;
-    pc = mcontext_pc(mc);
+    pc = ucontext_pc(uc);
     if( !vperfctr_is_running(vperfctr) ) {
 	/*
 	 * My theory is that this happens if a perfctr overflowed

@@ -66,6 +66,7 @@ int main(void)
     print_cpu_type(PERFCTR_X86_AMD_K7);
 #endif
 #if defined(__i386__) || defined(__x86_64__)
+    print_cpu_type(PERFCTR_X86_INTEL_P4M3);
     print_cpu_type(PERFCTR_X86_AMD_K8);
     print_cpu_type(PERFCTR_X86_AMD_K8C);
 #endif

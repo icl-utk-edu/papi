@@ -10,9 +10,14 @@
 #include "libperfctr.h"
 #include "arch.h"
 
-unsigned long mcontext_pc(const mcontext_t *mc)
+unsigned long ucontext_pc(const struct ucontext *uc)
 {
-    return mc->regs->nip;
+    /* glibc-2.3.3 (YDL4) changed the type of uc->uc_mcontext,
+     * breaking code which worked in glibc-2.3.1 (YDL3.0.1).
+     * This formulation works with both, and is cleaner than
+     * selecting glibc-2.3.3 specific code with "#ifdef NGREG".
+     */
+    return uc->uc_mcontext.regs->nip;
 }
 
 void do_setup(const struct perfctr_info *info,

@@ -12,7 +12,6 @@
 #include <linux/fs.h>
 #include <linux/perfctr.h>
 #include <asm/processor.h>
-#include <asm/time.h>	/* for tb_ticks_per_jiffy */
 #include "compat.h"
 #include "ppc_compat.h"
 #include "ppc_tests.h"
@@ -131,7 +130,9 @@ static void __init init_tests_message(void)
 	printk(KERN_INFO "PERFCTR INIT: PVR 0x%08x, CPU clock %u kHz, TB clock %u kHz\n",
 	       pvr,
 	       perfctr_info.cpu_khz,
-	       tb_ticks_per_jiffy*(HZ/10)/(1000/10));
+	       perfctr_info.tsc_to_cpu_mult
+	       ? (perfctr_info.cpu_khz / perfctr_info.tsc_to_cpu_mult)
+	       : 0);
 }
 
 static void __init clear(int have_mmcr1)

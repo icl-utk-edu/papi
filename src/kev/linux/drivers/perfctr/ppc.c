@@ -749,7 +749,7 @@ static unsigned char cfg_ratio_7457[32] __initdata = { // *2
 	16, 28, 12, 32, 27, 56, 0, 25
 };
 
-static unsigned int __init tb_to_core_ratio(enum pll_type pll_type)
+static unsigned int __init pll_tb_to_core(enum pll_type pll_type)
 {
 	unsigned char *cfg_ratio;
 	unsigned int shift = 28, mask = 0xF, hid1, pll_cfg, ratio;
@@ -801,19 +801,12 @@ static unsigned int __init tb_to_core_ratio(enum pll_type pll_type)
 	return (4/2) * ratio;
 }
 
-static unsigned int __init pll_to_core_khz(enum pll_type pll_type)
-{
-	unsigned int tb_to_core = tb_to_core_ratio(pll_type);
-	perfctr_info.tsc_to_cpu_mult = tb_to_core;
-	return tb_ticks_per_jiffy * tb_to_core * (HZ/10) / (1000/10);
-}
-
 /* Extract core and timebase frequencies from Open Firmware. */
 
-static unsigned int __init of_to_core_khz(void)
+static unsigned int __init of_core_khz(void)
 {
 	struct device_node *cpu;
-	unsigned int *fp, core, tb;
+	unsigned int *fp, core;
 
 	cpu = find_type_devices("cpu");
 	if (!cpu)
@@ -821,27 +814,119 @@ static unsigned int __init of_to_core_khz(void)
 	fp = (unsigned int*)get_property(cpu, "clock-frequency", NULL);
 	if (!fp || !(core = *fp))
 		return 0;
-	fp = (unsigned int*)get_property(cpu, "timebase-frequency", NULL);
-	if (!fp || !(tb = *fp))
-		return 0;
-	perfctr_info.tsc_to_cpu_mult = core / tb;
 	return core / 1000;
 }
 
-static unsigned int __init detect_cpu_khz(enum pll_type pll_type)
+static unsigned int __init of_bus_khz(void)
 {
-	unsigned int khz;
+	struct device_node *cpu;
+	unsigned int *fp, bus;
 
-	khz = pll_to_core_khz(pll_type);
-	if (khz)
-		return khz;
+	cpu = find_type_devices("cpu");
+	if (!cpu)
+		return 0;
+	fp = (unsigned int*)get_property(cpu, "bus-frequency", NULL);
+	if (!fp || !(bus = *fp)) {
+		fp = (unsigned int*)get_property(cpu, "config-bus-frequency", NULL);
+		if (!fp || !(bus = *fp))
+			return 0;
+	}
+	return bus / 1000;
+}
 
-	khz = of_to_core_khz();
-	if (khz)
-		return khz;
+static unsigned int __init of_bus_to_core_x2(void)
+{
+	struct device_node *cpu;
+	unsigned int *fp, ratio;
 
-	printk(KERN_WARNING "perfctr: unable to determine CPU speed\n");
+	cpu = find_type_devices("cpu");
+	if (!cpu)
+		return 0;
+	fp = (unsigned int*)get_property(cpu, "processor-to-bus-ratio*2", NULL);
+	if (!fp || !(ratio = *fp))
+		return 0;
+	return ratio;
+}
+
+static unsigned int __init detect_tb_khz(unsigned int bus_khz, unsigned int tb_to_bus)
+{
+	unsigned int tb_khz, bus_tb_khz, diff;
+
+	tb_khz = tb_ticks_per_jiffy * (HZ/10) / (1000/10);
+	if (bus_khz && tb_to_bus) {
+		bus_tb_khz = bus_khz / tb_to_bus;
+		if (bus_tb_khz > tb_khz)
+			diff = bus_tb_khz - tb_khz;
+		else
+			diff = tb_khz - bus_tb_khz;
+		if (diff >= bus_tb_khz/20) {
+			printk(KERN_WARNING "perfctr: timebase frequency %u kHz seems"
+			       " out of range, using %u kHz (bus/%u) instead\n",
+			       tb_khz, bus_tb_khz, tb_to_bus);
+			return bus_tb_khz;
+		}
+	}
+	return tb_khz;
+}
+
+static unsigned int __init detect_tb_to_core(enum pll_type pll_type, unsigned int tb_to_bus)
+{
+	unsigned int tb_to_core;
+	unsigned int bus_to_core_x2;
+
+	tb_to_core = pll_tb_to_core(pll_type);
+	if (tb_to_core)
+		return tb_to_core;
+	if (tb_to_bus) {
+		bus_to_core_x2 = of_bus_to_core_x2();
+		if (bus_to_core_x2)
+			return (tb_to_bus * bus_to_core_x2) / 2;
+	}
 	return 0;
+}
+
+static unsigned int __init detect_core_khz(unsigned int tb_khz, unsigned int tb_to_core)
+{
+	unsigned int core_khz;
+
+	if (tb_to_core) {
+		perfctr_info.tsc_to_cpu_mult = tb_to_core;
+		return tb_khz * tb_to_core;
+	}
+	core_khz = of_core_khz();
+	perfctr_info.tsc_to_cpu_mult = core_khz / tb_khz;
+	return core_khz;
+}
+
+/*
+ * Detect the timebase and core clock frequencies.
+ *
+ * Known issues:
+ * 1. The OF timebase-frequency property is sometimes way off, and
+ *    similarly the ppc32 kernel's tb_ticks_per_jiffy variable.
+ *    (Observed on a 7447A-based laptop.)
+ *    Workaround: Compute the TB frequency from the bus frequency
+ *    and the TB-to-bus ratio.
+ * 2. The OF clock-frequency property is sometimes wrong.
+ *    (Observed on a Beige G3 with a 7455 upgrade processor.)
+ *    Workaround: Compute the core frequency from the TB frequency
+ *    and the TB-to-core ratio.
+ * 3. The PLL_CFG details may be unknown.
+ */
+static unsigned int __init detect_cpu_khz(enum pll_type pll_type, unsigned int tb_to_bus)
+{
+	unsigned int bus_khz;
+	unsigned int tb_khz;
+	unsigned int tb_to_core;
+	unsigned int core_khz;
+
+	bus_khz = of_bus_khz();
+	tb_khz = detect_tb_khz(bus_khz, tb_to_bus);
+	tb_to_core = detect_tb_to_core(pll_type, tb_to_bus);
+	core_khz = detect_core_khz(tb_khz, tb_to_core);
+	if (!core_khz)
+		printk(KERN_WARNING "perfctr: unable to determine CPU speed\n");
+	return core_khz;
 }
 
 static int __init known_init(void)
@@ -851,7 +936,9 @@ static int __init known_init(void)
 	enum pll_type pll_type;
 	unsigned int pvr;
 	int have_mmcr1;
+	unsigned int tb_to_bus;
 
+	tb_to_bus = 4; /* default, overridden below if necessary */
 	features = PERFCTR_FEATURE_RDTSC | PERFCTR_FEATURE_RDPMC;
 	have_mmcr1 = 1;
 	pvr = mfspr(SPRN_PVR);
@@ -920,7 +1007,7 @@ static int __init known_init(void)
 	perfctr_info.cpu_features = features;
 	perfctr_info.cpu_type = 0; /* user-space should inspect PVR */
 	perfctr_cpu_name = known_name;
-	perfctr_info.cpu_khz = detect_cpu_khz(pll_type);
+	perfctr_info.cpu_khz = detect_cpu_khz(pll_type, tb_to_bus);
 	perfctr_ppc_init_tests(have_mmcr1);
 	return 0;
 }
@@ -930,7 +1017,7 @@ static int __init unknown_init(void)
 	static char unknown_name[] __initdata = "Generic PowerPC with TB";
 	unsigned int khz;
 
-	khz = detect_cpu_khz(PLL_NONE);
+	khz = detect_cpu_khz(PLL_NONE, 0);
 	if (!khz)
 		return -ENODEV;
 	perfctr_info.cpu_features = PERFCTR_FEATURE_RDTSC;

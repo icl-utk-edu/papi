@@ -6,6 +6,25 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.12, 2004-12-19
+- PPC32 driver updated to be more robust in its detection of
+  timebase and core clock frequencies. Some information sources
+  can give wrong values for those frequencies, so the driver
+  now tries other more reliable methods first.
+- On x86/x86-64, perfctr_event_codes.h now includes P4 events.
+- On x86-64 libraries will now be installed in PREFIX/lib64/,
+  as per current standards, unless overridden by LIBDIR.
+- Perfex had a bug in which it interpreted all numbers as hex,
+  even those without "0x" prefixes. Perfex now emits warnings
+  for ambiguous numbers. To silence the warnings, (a) prefix
+  hex numbers with "0x" (preferred), or (b) use the "-d" option
+  to enable decimal numbers, which requires "0x" prefixes on
+  hex numbers, or (c) use the "-x" option to force all numbers
+  to be interpreted as hex (deprecated). The "-d" option should
+  be the default, but unfortunately that would break user-level
+  scripts that assumed that "0x"-less numbers are still hex.
+- Changes in examples/signal/ to handle glibc-2.3.3 on PPC32.
+
 Version 2.6.11, 2004-11-14
 - Workarounds for a hardware quirk on x86 and x86-64, where
   interrupts can be delivered some time after the counters have

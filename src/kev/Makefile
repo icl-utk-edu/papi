@@ -15,7 +15,7 @@ linux/include/asm/perfctr.h config configure:
 	ln -s asm-${ARCH} linux/include/asm
 
 install:	default
-	etc/install.sh "$(PREFIX)" "$(BINDIR)" "$(LIBDIR)" "$(INCLDIR)"
+	etc/install.sh "$(PREFIX)" "$(BINDIR)" "$(LIBDIR)" "$(INCLDIR)" "$(ARCH)"
 
 install2:
 	$(MAKE) MAKEARGS="BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCLDIR)" MAKETARGET=install all-subdirs
