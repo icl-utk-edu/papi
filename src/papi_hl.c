@@ -276,9 +276,9 @@ int PAPI_stop_counters(long_long *values, int array_len)
     return(PAPI_EINVAL);
 
   retval = PAPI_stop(PAPI_EVENTSET_INUSE, values);
-  if (retval) 
-    return(retval);
-
-  return(PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE));
+  if (!retval) 
+    retval = PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE);
+  DBG((stderr,"PAPI_stop_counters returns %d\n",retval));
+  return (retval);
 }
 
