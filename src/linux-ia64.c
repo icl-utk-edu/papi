@@ -70,7 +70,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 41
+#define NUM_OF_PRESET_EVENTS (sizeof(ia_preset_search_map)/sizeof(itanium_preset_search_t)-1)
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #else
@@ -144,7 +144,11 @@ static itanium_preset_search_t ia_preset_search_map[] = {
 
    {0, 0, {0, 0, 0, 0}}
 };
+/*
 #define NUM_OF_PRESET_EVENTS 61
+*/
+#define NUM_OF_PRESET_EVENTS (sizeof(ia_preset_search_map)/sizeof(itanium_preset_search_t)-1)
+
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #endif
@@ -293,9 +297,7 @@ int _papi_hwd_mdi_init()
   
   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.supports_hw_overflow = 1;
-/*
   _papi_hwi_system_info.supports_hw_profile = 1;
-*/
   _papi_hwi_system_info.supports_64bit_counters = 1;
   _papi_hwi_system_info.supports_inheritance = 1;
   _papi_hwi_system_info.supports_real_usec = 1;
@@ -947,17 +949,17 @@ static int ia64_process_profile_entry(void *papiContext)
             info->sc_ip = (reg->pmd17_ita_reg.dear_iaddr << 4)
                 | (reg->pmd17_ita_reg.dear_slot);
 #endif
+            /* adjust pointer position */
+            buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          };
 
          dispatch_profile(ESI, papiContext, (long_long) 0, count);
-         /* adjust pointer position */
-         buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
       }
 
       /*  move to next entry */
       buf_pos += entry_size;
 
-   }                            /* end of for loop */
+   }                            /* end of if */
    return (PAPI_OK);
 }
 
