@@ -681,15 +681,8 @@ int _papi_hwd_init_global(void)
        _papi_system_info.hw_info.mhz));
 
 #ifdef PERFCTR18
+  vperfctr_unlink(dev);
   vperfctr_close(dev);
-#endif
-  return(PAPI_OK);
-}
-
-int _papi_hwd_shutdown_global(void)
-{
-#ifndef PERFCTR18
-  perfctr_dev_close(dev);
 #endif
   return(PAPI_OK);
 }
@@ -1255,12 +1248,26 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
   return(PAPI_ESBSTR);
 }
 
+/* Called once per process. */
+
+int _papi_hwd_shutdown_global(void)
+{
+#ifndef PERFCTR18
+  perfctr_dev_close(dev);
+#endif
+  preset_map = NULL;
+  return(PAPI_OK);
+}
+
+/* This routine is for shutting down threads, including the
+   master thread. */
+
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
-  /* hwd_control_state_t *machdep = zero->machdep;
-   * vperfctr_unlink(machdep->self);
-   * Do nothing here. This routine is for shutting down event sets?
-   * Global shutdown is made later in _papi_hwd_global_shutdown */
+  hwd_control_state_t *machdep = zero->machdep;
+  vperfctr_unlink(machdep->self);
+  vperfctr_close(machdep->self);
+  memset(machdep,0x0,sizeof(hwd_control_state_t));
   return(PAPI_OK);
 }
 

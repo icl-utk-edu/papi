@@ -140,13 +140,16 @@ void _papi_hwi_cleanup_master_list(void)
 {
   EventSetInfoList *tmp;
 
+  _papi_hwd_lock();
   while (head)
     {
       tmp = head;
       head = head->next;
-      DBG((stderr,"Freeing master EventSet for thread %ld at %p\n",tmp->master->tid,tmp));
+      _papi_hwd_shutdown(tmp->master);
+      DBG((stderr,"Freeing master thread %ld at %p\n",tmp->master->tid,tmp));
       free(tmp);
     }
+  _papi_hwd_unlock();
 }
 
 int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)

@@ -274,9 +274,10 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 /* label. In that way it can be translated as needed.   */
 /********************************************************/
 #define PAPI_ERROR_CODE_str  "Codice Di Errore Di PAPI"
-#define PAPI_THREAD_INIT_str "PAPI_thread_init() dovrebbe soltanto essere chiamato once.\n" 
-#define PAPI_SHUTDOWN_str	 "ERRORE DI PAPI: Errore di PAPI_shutdown. PAPI attualmente non inizializzato\n"
+#define PAPI_THREAD_INIT_str "PAPI_thread_init: dovrebbe soltanto essere chiamato once\n" 
+#define PAPI_SHUTDOWN_str	 "Errore di PAPI_shutdown: PAPI attualmente non inizializzato\n"
 #define PAPI_NO_RESTORE_str	 "PAPI_restore attualmente non è effettuato\n"
 #define PAPI_NO_SAVE_str	 "PAPI_save attualmente non è effettuato\n"
+#define PAPI_SHUTDOWN_SYNC_str	 "Errore di PAPI_shutdown: Other threads still have running EventSets\n"
 
 

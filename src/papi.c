@@ -1770,39 +1770,70 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 
 void PAPI_shutdown(void) 
 {
-  int i, status;
+  int i, j = 0, status;
+  EventSetInfo *master;
 
   if(init_retval == DEADBEEF) {
     fprintf(stderr, PAPI_SHUTDOWN_str);
     return;
   }
 
+  master = _papi_hwi_lookup_in_master_list();
+
+  /* Count number of running EventSets AND */
+  /* Stop any running EventSets in this thread */ 
+
+again:
   for (i=0;i<PAPI_EVENTSET_MAP->totalSlots;i++) 
     {
-      if (PAPI_EVENTSET_MAP->dataSlotArray[i]) 
+      EventSetInfo *ESI = PAPI_EVENTSET_MAP->dataSlotArray[i];
+      if (ESI) 
 	{
 	  PAPI_state(i,&status);
 	  if (status & PAPI_RUNNING)
-	    PAPI_stop(i,NULL);
-          _papi_hwd_shutdown(PAPI_EVENTSET_MAP->dataSlotArray[i]);
-	  free_EventSet(PAPI_EVENTSET_MAP->dataSlotArray[i]);
-	  PAPI_EVENTSET_MAP->dataSlotArray[i] = NULL;
+	    {
+	      if (ESI->master == master)
+		{
+		  PAPI_stop(i,NULL);
+		  PAPI_cleanup_eventset(i);
+		}
+	      else
+		j++;
+	    }
 	}
     }
-  free(PAPI_EVENTSET_MAP->dataSlotArray);
-#ifdef DEBUG
-  memset(PAPI_EVENTSET_MAP,0x0,sizeof(DynamicArray));
-#endif
-#if 0
-  free(PAPI_EVENTSET_MAP);
-  PAPI_EVENTSET_MAP = NULL;
-#endif
-  _papi_hwd_shutdown_global();
-  init_retval = DEADBEEF;
+
+  /* No locking required, we're just waiting for the others
+     to call shutdown or stop their eventsets. */
+
+  if (j != 0)
+    {
+      fprintf(stderr,PAPI_SHUTDOWN_SYNC_str);
+      usleep(1000);
+      j = 0;
+      goto again;
+    }
+
+  /* Here call shutdown on the other threads */
+
+  _papi_hwi_cleanup_master_list();
 
   /* Clean up thread stuff */
 
   thread_id_fn = NULL;
+
+  /* Free up some memory */
+
+  free(PAPI_EVENTSET_MAP->dataSlotArray);
+  memset(PAPI_EVENTSET_MAP,0x0,sizeof(DynamicArray));
+
+  /* Shutdown the entire substrate */
+
+  _papi_hwd_shutdown_global();
+
+  /* Now it is safe to call re-init */
+
+  init_retval = DEADBEEF;
 }
 
 char *PAPI_strerror(int errorCode)
