@@ -5,6 +5,8 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Min Zhou
+*          min@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */  
@@ -690,7 +692,7 @@ int PAPI_label_event(int EventCode, char *label)
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	papi_return(PAPI_ENOTPRESET);
 	
-      strncpy(label, papi_presets[EventCode ^= PRESET_MASK].event_label, PAPI_MAX_STR_LEN);
+      strncpy(label, papi_presets[EventCode].event_label, PAPI_MAX_STR_LEN);
       papi_return(PAPI_OK);
     }
   papi_return(PAPI_ENOTPRESET);
