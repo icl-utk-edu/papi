@@ -8,11 +8,11 @@
 #endif
       implicit none
       character*25 chbuf
-	integer quiet
 	common quiet
 #if defined(_CRAYT3E)
       integer ilen,ierror
 #endif
+      integer quiet
 
 C	This routine tests for a command line argument
 C	that matches 'TESTS_QUIET'
