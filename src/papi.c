@@ -1184,6 +1184,10 @@ void PAPI_shutdown(void)
 
    if (_papi_hwi_system_info.supports_multiple_threads )
       PAPI_thread_init(NULL);
+   else /* if the platform doesn't support multiple threads to
+           operate the device driver, then _papi_hwi_shutdown_the_thread_list
+           will just return, so this function is necessary */
+      _papi_hwd_shutdown(&(default_master_thread->context));
 
    /* Free up some memory */
 
