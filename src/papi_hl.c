@@ -37,6 +37,7 @@
 #define HL_START_COUNTERS	1
 #define HL_FLIPS		2
 #define HL_IPC			3
+#define HL_FLOPS		4
 
 /* Definitions for reading */
 #define PAPI_HL_READ		1
@@ -177,6 +178,21 @@ int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips)
    return (PAPI_OK);
 }
 
+int PAPI_flops(float *rtime, float *ptime, long_long * flpins, float *mflips)
+{
+   HighLevelInfo *state = NULL;
+   int retval;
+
+   if ((retval = _internal_check_state(&state)) != PAPI_OK)
+      return (retval);
+
+   if ((retval =
+        _hl_rate_calls(rtime, ptime, flpins, mflips, PAPI_FP_OPS, state)) != PAPI_OK)
+      return (retval);
+
+   return (PAPI_OK);
+}
+
 int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc)
 {
    HighLevelInfo *state = NULL;
@@ -200,6 +216,8 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
       level = HL_FLIPS;
    else if (EVENT == PAPI_TOT_INS)
       level = HL_IPC;
+   else if (EVENT == PAPI_FP_OPS)
+      level = HL_FLOPS;
 
    if (state->running != 0 && state->running != level)
       return (PAPI_EINVAL);
@@ -368,7 +386,7 @@ int PAPI_stop_counters(long_long * values, int array_len)
    if (state->running == 0)
       return (PAPI_ENOTRUN);
 
-   if (state->running == HL_FLIPS || state->running == HL_IPC) {
+   if (state->running == HL_FLOPS || state->running == HL_FLIPS || state->running == HL_IPC) {
       long_long tmp_values[2];
       retval = PAPI_stop(state->EventSet, tmp_values);
    } 
