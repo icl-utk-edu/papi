@@ -23,23 +23,59 @@
 #define TAB_DOM	"%s%12lld%15lld%17lld\n"
 #endif
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+#define CREATE 1
+#define ADD 2
+#define MIDDLE 3
 
-int main(int argc, char **argv)
+void dump_and_verify(int test_case, long_long **values)
 {
-   int retval, num_tests = 3, tmp;
+      printf("-----------------------------------------------------------------\n");
+      printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
+      printf("-------------------------------------------------------------\n");
+
+      if (test_case == 2)
+      {
+      printf("Test type   :   Before Create  Before Add  Between Adds\n");
+      printf(TAB_DOM, "PAPI_TOT_INS: ", (values[0])[0], (values[1])[0], (values[2])[0]);
+      printf(TAB_DOM, "PAPI_TOT_CYC: ", (values[0])[1], (values[1])[1], (values[2])[1]);
+      printf("-------------------------------------------------------------\n");
+      printf("Verification:\n");
+      printf("Both rows equals <small> N N\n");
+      return;
+      }
+      
+	  
+      printf("Test type   :   PAPI_DOM_ALL  PAPI_DOM_KERNEL  PAPI_DOM_USER\n");
+      printf(TAB_DOM, "PAPI_TOT_INS: ", (values[0])[0], (values[1])[0], (values[2])[0]);
+      printf(TAB_DOM, "PAPI_TOT_CYC: ", (values[0])[1], (values[1])[1], (values[2])[1]);
+      printf("-------------------------------------------------------------\n");
+
+      printf("Verification:\n");
+      printf("Row 1 approximately equals N %d N\n", 0);
+      printf("Column 1 approximately equals column 2 plus column 3\n");
+
+      long_long min, max;
+      min = (long_long) (values[2][0] * (1.0 - TOLERANCE));
+      max = (long_long) (values[2][0] * (1.0 + TOLERANCE));
+      if (values[0][0] > max || values[0][0] < min)
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS", 1);
+
+      min = (long_long) (values[0][1] * (1.0 - TOLERANCE));
+      max = (long_long) (values[0][1] * (1.0 + TOLERANCE));
+      if ((values[1][1] + values[2][1]) > max || (values[1][1] + values[2][1]) < min)
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+}
+
+/* Do the set_domain on the eventset before adding events */
+
+void case1(int num)
+{
+   int retval, num_tests = 3;
    long_long **values;
    int EventSet1=PAPI_NULL, EventSet2=PAPI_NULL, EventSet3=PAPI_NULL;
-   int num_events1, num_events2, num_events3;
-   int mask1 = 0x3, mask2 = 0x3, mask3 = 0x3;
    PAPI_option_t options;
-   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-#if defined(sgi) && defined(host_mips)
-   uid_t id;
-   id = getuid();
-#endif
 
-   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+   memset(&options, 0x0, sizeof(options));
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
@@ -51,69 +87,142 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-#if ((defined(sgi) && defined(host_mips)) || defined(_CRAYT3E))
-   mask1=mask2=mask3=0x5;
-   if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
-      test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
-
-   retval = PAPI_event_code_to_name(PAPI_FP_INS, event_name);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
-   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
-#else
    if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
-   retval = PAPI_event_code_to_name(PAPI_TOT_INS, event_name);
+   if ((retval = PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK)
+      test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
+
+   retval = PAPI_create_eventset(&EventSet1);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
-   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
-#endif
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-
-   memset(&options, 0x0, sizeof(options));
-
-   EventSet1 = add_test_events(&num_events1, &mask1);
-   EventSet2 = add_test_events(&num_events2, &mask2);
-   EventSet3 = add_test_events(&num_events3, &mask3);
-
-   /* num_events1 is equal to num_events2 so don't worry. */
-
-   values = allocate_test_space(num_tests, num_events1);
-
-   options.domain.eventset = EventSet1;
-   options.domain.domain = PAPI_DOM_ALL;
-
-   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
-   if (retval != PAPI_OK && retval != PAPI_ESBSTR)
-      test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
-
-   options.domain.eventset = EventSet2;
-   options.domain.domain = PAPI_DOM_KERNEL;
-
-   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+   retval = PAPI_create_eventset(&EventSet2);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   options.domain.eventset = EventSet3;
-   options.domain.domain = PAPI_DOM_USER;
-
-   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+   retval = PAPI_create_eventset(&EventSet3);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+   if (num == CREATE)
+       {
+	   printf("\nTest case 2: Call PAPI_set_opt(PAPI_DOMAIN) on EventSet before add\n");
+	   options.domain.eventset = EventSet1;
+	   options.domain.domain = PAPI_DOM_ALL;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+	   
+	   options.domain.eventset = EventSet2;
+	   options.domain.domain = PAPI_DOM_USER;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+	   
+	   options.domain.eventset = EventSet3;
+	   options.domain.domain = PAPI_DOM_KERNEL;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+       }
+
+   retval = PAPI_add_event(EventSet1, PAPI_TOT_INS);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_INS)", retval);
+
+   retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_CYC)", retval);
+
+   retval = PAPI_add_event(EventSet2, PAPI_TOT_INS);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_INS)", retval);
+
+   retval = PAPI_add_event(EventSet2, PAPI_TOT_CYC);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_CYC)", retval);
+
+   retval = PAPI_add_event(EventSet3, PAPI_TOT_INS);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_INS)", retval);
+   
+   if (num == MIDDLE)
+   {
+	   printf("\nTest case 2: Call PAPI_set_opt(PAPI_DOMAIN) on EventSet between adds\n");
+	   options.domain.eventset = EventSet1;
+	   options.domain.domain = PAPI_DOM_ALL;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK && retval != PAPI_ESBSTR)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+	   
+	   options.domain.eventset = EventSet2;
+	   options.domain.domain = PAPI_DOM_KERNEL;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+	   
+	   options.domain.eventset = EventSet3;
+	   options.domain.domain = PAPI_DOM_USER;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+   }
+
+   retval = PAPI_add_event(EventSet3, PAPI_TOT_CYC);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_CYC)", retval);
+
+   if (num == ADD)
+   {	
+	   printf("\nTest case 2: Call PAPI_set_opt(PAPI_DOMAIN) on EventSet after add\n");
+	   options.domain.eventset = EventSet1;
+	   options.domain.domain = PAPI_DOM_ALL;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK && retval != PAPI_ESBSTR)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+	   
+	   options.domain.eventset = EventSet2;
+	   options.domain.domain = PAPI_DOM_KERNEL;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+	   
+	   options.domain.eventset = EventSet3;
+	   options.domain.domain = PAPI_DOM_USER;
+	   
+	   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+   }
+
+   /* 2 events */
+
+   values = allocate_test_space(num_tests, 2);
+
+   /* Warm it up dude */
+
+   PAPI_start(EventSet1);
+   do_flops(NUM_FLOPS);
+   PAPI_stop(EventSet1,NULL);
 
    retval = PAPI_start(EventSet1);
+   if (retval != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_flops(NUM_FLOPS);
 
-   if (retval == PAPI_OK) {
-      retval = PAPI_stop(EventSet1, values[0]);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-   } else {
-      values[0][0] = retval;
-      values[0][1] = retval;
-   }
+   retval = PAPI_stop(EventSet1, values[0]);
+   if (retval != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    retval = PAPI_start(EventSet2);
 
@@ -138,67 +247,165 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   remove_test_events(&EventSet1, mask1);
-   remove_test_events(&EventSet2, mask2);
-   remove_test_events(&EventSet3, mask3);
+   retval = PAPI_cleanup_eventset(EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy", retval);
+
+   retval = PAPI_cleanup_eventset(EventSet2);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet2);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy", retval);
+
+   retval = PAPI_cleanup_eventset(EventSet3);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet3);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy", retval);
+   
+   dump_and_verify(1, values);
+   PAPI_shutdown();
+}
+
+void case2(int num, int domain, long_long *values)
+{
+   int retval;
+   int EventSet1=PAPI_NULL;
+   PAPI_option_t options;
+
+   memset(&options, 0x0, sizeof(options));
+
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
    if (!TESTS_QUIET) {
-      printf("Test case 2: Non-overlapping start, stop, read for all 3 domains.\n");
-      printf("-----------------------------------------------------------------\n");
-      tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
-      tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
-      printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
-      printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
-      printf("-------------------------------------------------------------\n");
+      retval = PAPI_set_debug(PAPI_VERB_ECONT);
+      if (retval != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+   }
 
-      printf("Test type   :   PAPI_DOM_ALL  PAPI_DOM_KERNEL  PAPI_DOM_USER\n");
-      sprintf(add_event_str, "%s : ", event_name);
-      printf(TAB_DOM, add_event_str, (values[0])[0], (values[1])[0], (values[2])[0]);
-      printf(TAB_DOM, "PAPI_TOT_CYC: ", (values[0])[1], (values[1])[1], (values[2])[1]);
-      printf("-------------------------------------------------------------\n");
+   if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
+      test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
-      printf("Verification:\n");
-      printf("Row 1 approximately equals N %d N\n", 0);
-      printf("Column 1 approximately equals column 2 plus column 3\n");
+   if ((retval = PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK)
+      test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
+
+   if (num == CREATE)
+       {
+	   printf("\nTest case 2: Call PAPI_set_domain(%s) before create\n",stringify_domain(domain));
+
+	   retval = PAPI_set_domain(domain);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
+       }
+
+   retval = PAPI_create_eventset(&EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+   if (num == ADD)
+       {
+	   printf("\nTest case 2: Call PAPI_set_domain(%s) before add\n",stringify_domain(domain));
+
+	   retval = PAPI_set_domain(domain);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
+       }
+
+   retval = PAPI_add_event(EventSet1, PAPI_TOT_INS);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_INS)", retval);
+
+   if (num == MIDDLE)
+       {
+	   printf("\nTest case 2: Call PAPI_set_domain(%s) between adds\n",stringify_domain(domain));
+
+	   retval = PAPI_set_domain(domain);
+	   if (retval != PAPI_OK)
+	       test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
+       }
+
+   retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event(PAPI_TOT_CYC)", retval);
+
+
+   /* Warm it up dude */
+
+   PAPI_start(EventSet1);
+   do_flops(NUM_FLOPS);
+   PAPI_stop(EventSet1,NULL);
+
+   retval = PAPI_start(EventSet1);
+   if (retval != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
+   do_flops(NUM_FLOPS);
+
+   retval = PAPI_stop(EventSet1, values);
+   if (retval != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   retval = PAPI_cleanup_eventset(EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy", retval);
+   
+   PAPI_shutdown();
+}
+
+void case2_driver(void)
+{
+   long_long **values;
+
+   /* 3 tests, 2 events */
+
+   values = allocate_test_space(3, 2);
+   
+   case2(CREATE, PAPI_DOM_KERNEL, values[0]);
+   case2(ADD, PAPI_DOM_KERNEL, values[1]);
+   case2(MIDDLE, PAPI_DOM_KERNEL, values[2]);
+
+   dump_and_verify(2,values);
+}
+
+void case1_driver(void)
+{
+   case1(ADD);
+   case1(MIDDLE);
+   case1(CREATE);
+}
+
+int main(int argc, char **argv)
+{ 
+   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
 #if defined(sgi) && defined(host_mips)
-      printf("\n* IRIX requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL.\n");
-      printf("* The first two columns will be -3 if not run as root for IRIX.\n");
+   uid_t id;
+   id = getuid();
+   if (id != 0)
+       {
+	   printf("IRIX requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL.\n");
+	   test_skip(__FILE__, __LINE__, "", 1);
+       }
 #endif
-   }
-   {
-#if defined(sgi) && defined(host_mips)
-      long_long min, max;
-      if (id != 0) {
-         min = NUM_FLOPS * (1.0 - TOLERANCE);
-         max = NUM_FLOPS * (1.0 + TOLERANCE);
-         if (values[2][0] < min || values[2][0] > max)
-            test_fail(__FILE__, __LINE__, event_name, 1);
-      } else {
-         min = (long_long) (values[2][0] * (1.0 - TOLERANCE));
-         max = (long_long) (values[2][0] * (1.0 + TOLERANCE));
-         if (values[0][0] > max || values[0][0] < min)
-            test_fail(__FILE__, __LINE__, event_name, 1);
 
-         min = (long_long) (values[0][1] * (1.0 - TOLERANCE));
-         max = (long_long) (values[0][1] * (1.0 + TOLERANCE));
-         if ((values[1][1] + values[2][1]) > max || (values[1][1] + values[2][1]) < min)
-            test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
-      }
-#else
-      long_long min, max;
-      min = (long_long) (values[2][0] * (1.0 - TOLERANCE));
-      max = (long_long) (values[2][0] * (1.0 + TOLERANCE));
-      if (values[0][0] > max || values[0][0] < min)
-         test_fail(__FILE__, __LINE__, event_name, 1);
+   printf("Test case 2: set domain of eventset via PAPI_set_domain and PAPI_set_opt.\n");
+   case2_driver();
+   case1_driver();
 
-      min = (long_long) (values[0][1] * (1.0 - TOLERANCE));
-      max = (long_long) (values[0][1] * (1.0 + TOLERANCE));
-      if ((values[1][1] + values[2][1]) > max || (values[1][1] + values[2][1]) < min)
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
-#endif
-   }
-   test_pass(__FILE__, values, num_tests);
+   test_pass(__FILE__, NULL, 0);
    exit(1);
 }
