@@ -73,7 +73,11 @@ void *Thread(void *arg)
 	printf("0x%x\t%d\n",(unsigned int)my_start + 2*i,profbuf[i]);
     }
   }
+  for ( i=0;i<length;i++) 
+	if ( profbuf[i] )  break;
 
+  if ( i >= length )
+	test_fail(__FILE__,__LINE__,"No information in buffers",1);
   free_test_space(values, num_tests);
 
   pthread_exit(NULL);

@@ -289,11 +289,13 @@ int main(int argc, char **argv)
     }
 
   printf("-----------------------------------------\n");
-  printf("Verification:\n");
   }
 
   remove_test_events(&EventSet, mask);
 
-  test_pass(__FILE__,values, num_tests );
+  if((profbuf[i])||(profbuf2[i])||(profbuf3[i])||(profbuf4[i])||(profbuf5[i]))
+     test_pass(__FILE__,values, num_tests );
+  else
+	test_fail(__FILE__,__LINE__,"No information in buffers",1);
   exit(1);
 }

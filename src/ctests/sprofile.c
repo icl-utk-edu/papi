@@ -153,7 +153,14 @@ int main(int argc, char **argv)
     printf("-------------------------\n");
     printf("%u samples that fell outside the regions.\n",*profbuf3);
   }
-  test_pass(__FILE__,values,num_events );
+  for ( i=0;i<length/2;i++ ) {
+    if ( profbuf[i] || profbuf2[i] )
+	break;
+  }
+  if ( i < (length/2) )
+     test_pass(__FILE__,values,num_events );
+  else
+     test_fail(__FILE__,__LINE__,"No information in buffers",1);
   exit(1);
 }
 
