@@ -398,18 +398,25 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
       if (isHardware || overflow_flag) {
          ESI->overflow.count++;
          if (ESI->state & PAPI_PROFILING) {
+            int k = 0;
             while (overflow_vector) {
                i = ffs(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
-                  pos = ESI->EventInfoArray[papi_index].pos[0];
-                  if (i == pos) {
-                     profile_index = j;
-                     break;
+                  /* This loop is here ONLY because Pentium 4 can have tagged events
+                     that contain more than one counter without being derived.
+                     You've gotta scan all terms to make sure you find the one to profile. */
+                  for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) {
+                     pos = ESI->EventInfoArray[papi_index].pos[k];
+                     if (i == pos) {
+                        profile_index = j;
+                        goto foundit;
+                     }
                   }
                }
                if (j == event_counter)
                   abort();      /* something is wrong */
+foundit:
                if (isHardware)
                   over = 0;
                else
