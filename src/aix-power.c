@@ -25,7 +25,7 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Total Cache misses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
-  {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
+  {0,{"PM_SNOOP",0,0,0,0,0,0,0}},	
   /* Req. shared cache line*/
   {0,{0,0,0,0,0,0,0,0}},		 	
   /* Req. clean cache line*/
@@ -131,7 +131,7 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* IPS */
   {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},			
   /* load/store*/
-  {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
+  {0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}},		
   /* Synchronization inst. executed*/
   {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
   /* L1 data cache hits */
@@ -236,7 +236,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Total Cache Dmisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
-  {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
+  {0,{"PM_SNOOP",0,0,0,0,0,0,0}},	
   /* Req. shared cache line*/
   {0,{"PM_LD_MISS_DC_SHR",0,0,0,0,0,0,0}},		 	
   /* Req. clean cache line*/
@@ -342,7 +342,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   /* IPS */
   {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},
   /* load/stores executed*/
-  {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
+  {0,{"PM_LSU_EXEC",0,0,0,0,0,0,0}},		
   /* Synchronization inst. executed */
   {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
   /* L1 data cache hits */
@@ -429,7 +429,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
 
 static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
   /* L1 Cache Dmisses */
-  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0,0}},
+  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0,0}},
   /* L1 Cache Imisses */
   {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
   /* L2 Cache Dmisses*/
@@ -441,7 +441,7 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L1 Total Cache misses */
-  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0}},
+  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_L1MISS",0,0,0,0,0}},
   /* L2 Total Cache misses*/
   {0,{0,0,0,0,0,0,0,0}},
   /* L3 Total Cache Dmisses*/
@@ -477,7 +477,7 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* L1 Load misses */
   {0,{"PM_LD_MISS_L1",0,0,0,0,0,0,0}},			
   /* L1 Store misses */
-  {0,{"PM_ST_MISS",0,0,0,0,0,0,0}},			
+  {0,{"PM_ST_L1MISS",0,0,0,0,0,0,0}},			
   /* L2 Load misses */
   {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
   /* L2 Store misses */
