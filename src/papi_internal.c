@@ -556,7 +556,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
   /* If it is a MPX EventSet, add it to the multiplex data structure and
      this threads multiplex list */
 
-  if (!ESI->state & PAPI_MULTIPLEXING)
+  if (!(ESI->state & PAPI_MULTIPLEXING))
     {
       int preset_index = EventCode ^ PRESET_MASK;
 

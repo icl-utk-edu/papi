@@ -383,8 +383,6 @@ int PAPI_add_event(int EventSet, int EventCode)
 { 
   EventSetInfo_t *ESI;
 
-  DBG((stderr,"PAPI_add_event(%d, %d)\n",EventSet, EventCode));
-
   /* Is the EventSet already in existence? */
   
   ESI = _papi_hwi_lookup_EventSet(EventSet);
