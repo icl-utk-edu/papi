@@ -22,12 +22,11 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papiStrings.h"
 #undef NDEBUG
 #include <assert.h>
 
 /*
-	The following 6 arrays are used to create a series of defines
+	The following arrays are used to create a series of defines
 	for use with PAPI in Fortran programs.
 	The first, third and fifth contain the string names of the defines.
 	The second, fourth and sixth contain the integer values associated with the names.
@@ -207,25 +206,6 @@ const int papi_defNum[] = {
    PAPI_TLS_USER_LEVEL2
 };
 
-const char *papi_errorNam[] = {
-   PAPI_OK_nm,
-   PAPI_EINVAL_nm,
-   PAPI_ENOMEM_nm,
-   PAPI_ESYS_nm,
-   PAPI_ESBSTR_nm,
-   PAPI_ECLOST_nm,
-   PAPI_EBUG_nm,
-   PAPI_ENOEVNT_nm,
-   PAPI_ECNFLCT_nm,
-   PAPI_ENOTRUN_nm,
-   PAPI_EISRUN_nm,
-   PAPI_ENOEVST_nm,
-   PAPI_ENOTPRESET_nm,
-   PAPI_ENOCNTR_nm,
-   PAPI_EMISC_nm,
-   PAPI_EPERM_nm
-};
-
 const int papi_errorNum[] = {
    PAPI_OK,
    PAPI_EINVAL,
@@ -283,6 +263,7 @@ int main(int argc, char **argv)
    int i;
    PAPI_event_info_t info;
    enum deftype_t deftype = CDEFINE;
+   extern const char *_papi_hwi_errNam[];
 
    if (argc > 1) {
       if (strcmp(argv[1], "-f77") == 0) {
@@ -312,7 +293,7 @@ int main(int argc, char **argv)
    /* create defines for the internal array pairs */
    createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum),
              deftype);
-   createDef("Error defines.", papi_errorNam, papi_errorNum, sizeof(papi_errorNum),
+   createDef("Error defines.", _papi_hwi_errNam, papi_errorNum, sizeof(papi_errorNum),
              deftype);
 
    /* create defines for each member of the PRESET array */
