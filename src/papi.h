@@ -414,6 +414,7 @@ u_long_long PAPI_get_virt_cyc(void);
 u_long_long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
 unsigned long int PAPI_thread_id(void);
+int PAPI_register_thread(void);
 int PAPI_get_thr_specific(int tag, void **ptr);
 int PAPI_set_thr_specific(int tag, void *ptr);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);

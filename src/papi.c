@@ -131,7 +131,26 @@ unsigned long int PAPI_thread_id(void)
     return(PAPI_EINVAL);
 }
 
-/* Thread Storage Functions */
+/* Thread Functions */
+
+/* 
+ * Notify PAPI that a thread has 'appeared'
+ * We lookup the thread, if it does not exist we create it
+ */
+int PAPI_register_thread(void)
+{
+  ThreadInfo_t *thread = _papi_hwi_lookup_in_thread_list();
+  int retval;
+
+  if ( thread == NULL ){
+	retval = _papi_hwi_initialize_thread(&thread);
+	if ( retval )
+	   papi_return(retval);
+	_papi_hwi_insert_in_thread_list(thread);
+  }
+  papi_return(PAPI_OK);
+}
+
 /*
  * Return a pointer to the stored thread information.
  */
@@ -175,7 +194,7 @@ int PAPI_library_init(int version)
 #endif
 
   if (init_retval != DEADBEEF)
-    return(init_retval);
+    papi_return(init_retval);
 
   if (version != PAPI_VER_CURRENT) {
     init_retval = PAPI_EINVAL;
@@ -190,14 +209,14 @@ int PAPI_library_init(int version)
   tmp = _papi_hwd_init_global();
   if (tmp) {
     init_retval = tmp;
-    return(init_retval);
+    papi_return(init_retval);
   }
 
   if (_papi_hwi_allocate_eventset_map()) 
   {
       _papi_hwd_shutdown_global();
       init_retval = PAPI_ENOMEM;
-      return(init_retval);
+      papi_return(init_retval);
   }
 
   DBG((stderr,"Initialize master thread.\n"));
@@ -206,7 +225,7 @@ int PAPI_library_init(int version)
     {
       _papi_hwd_shutdown_global();
       init_retval = tmp;
-      return(init_retval); 
+      papi_return(init_retval); 
     }
 
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
@@ -225,7 +244,7 @@ int PAPI_library_init(int version)
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
 
   init_level = PAPI_LOW_LEVEL_INITED;
-  return(init_retval = PAPI_VER_CURRENT);
+  papi_return(init_retval = PAPI_VER_CURRENT);
 }
 
 /* From Anders Nilsson's (anni@pdc.kth.se) */
