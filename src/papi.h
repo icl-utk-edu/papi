@@ -198,9 +198,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_HWINFO  		16      /* Hardware information */
 #define PAPI_EXEINFO  		17      /* Executable information */
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
-#define PAPI_MAXMEM        19      /* Setup Maximum Memory if no hardware support */
-#define PAPI_SHLIBINFO     20      /* Shared Library information */
-#define PAPI_LIB_VERSION   21      /* Option to find out the complete version number of the PAPI library */
+#define PAPI_MAXMEM             19      /* Setup Maximum Memory if no hardware support */
+#define PAPI_SHLIBINFO          20      /* Shared Library information */
+#define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
+#define PAPI_FORCE_SW_OVERFLOW  22      /* Change Overflow to use software even if supports hardware */
 
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
@@ -279,6 +280,10 @@ read the documentation carefully.  */
                                  fixed point fraction
                                  0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc. */
    } PAPI_sprofil_t;
+
+   typedef struct _papi_overflow_option {
+      int force_software;
+   } PAPI_overflow_option_t;
 
    typedef struct _papi_inherit_option {
       int inherit;
@@ -398,6 +403,7 @@ read the documentation carefully.  */
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
+      PAPI_overflow_option_t ovf_info;
    } PAPI_option_t;
 
 #ifdef PAPI_DMEM_INFO

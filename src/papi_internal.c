@@ -1133,6 +1133,7 @@ int _papi_hwi_mdi_init()
    _papi_hwi_system_info.supports_program = 0;
    _papi_hwi_system_info.supports_write = 0;
    _papi_hwi_system_info.supports_hw_overflow = 0;
+   _papi_hwi_system_info.force_sw_overflow = 0;
    _papi_hwi_system_info.using_hw_overflow = 0;
    _papi_hwi_system_info.supports_hw_profile = 0;
    _papi_hwi_system_info.supports_multiple_threads = 1;

@@ -918,8 +918,25 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          papi_return(_papi_hwi_convert_eventset_to_multiplex(ESI));
       }
-   case PAPI_DEBUG:
-      papi_return(PAPI_set_debug(ptr->debug.level));
+   case PAPI_FORCE_SW_OVERFLOW:
+      {
+        if(ptr->ovf_info.force_software!=0 && ptr->ovf_info.force_software!=1) {
+           APIDBG("Invalid option for forcing software overflow: %d\n",ptr->ovf_info.force_software);
+           return(PAPI_EINVAL);
+        }
+        if ( ptr->ovf_info.force_software == 0 ){
+           _papi_hwi_system_info.using_hw_overflow = _papi_hwi_system_info.supports_hw_overflow;
+        }
+        else {
+           _papi_hwi_system_info.using_hw_overflow = 0;
+        }
+        _papi_hwi_system_info.force_sw_overflow = ptr->ovf_info.force_software; 
+        return(PAPI_OK);
+      }
+   case PAPI_DEBUG: 
+      {
+        papi_return(PAPI_set_debug(ptr->debug.level));
+      }
    case PAPI_DEFDOM:
       {
          int dom = ptr->defdomain.domain;
@@ -1048,6 +1065,11 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
       break;
+   case PAPI_FORCE_SW_OVERFLOW:
+      {
+        ptr->ovf_info.force_software = _papi_hwi_system_info.force_sw_overflow;
+        return(PAPI_OK);
+      }
    case PAPI_PRELOAD:
      memcpy(&ptr->preload,&_papi_hwi_system_info.preload_info,sizeof(PAPI_preload_info_t));
       break;
@@ -1310,7 +1332,8 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    /* Set up the option structure for the low level */
 
-   if (_papi_hwi_system_info.supports_hw_overflow) {
+   if (_papi_hwi_system_info.supports_hw_overflow && 
+       !_papi_hwi_system_info.force_sw_overflow) {
       retval = _papi_hwd_set_overflow(ESI, index, threshold);
       if ( !_papi_hwi_system_info.using_hw_overflow )
          ESI->overflow.timer_ms = PAPI_ITIMER_MS;
