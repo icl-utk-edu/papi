@@ -24,8 +24,6 @@
 
 #include "papi_test.h"
 
-#define NO_FLOPS
-
 #undef NUM_FLOPS
 
 #define NUM_FLOPS 10000000
