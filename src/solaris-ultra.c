@@ -457,27 +457,28 @@ static int scan_prtconf(char *cpuname, int len_cpuname, int *hz, int *ver)
    /* ignore all lines until we reach something with a sparc line */
    matched = 0x0;
    ihz = -1;
+   sleep(3);
    while (fgets(line, 256, f) != NULL) {
-      /* SUBDBG(">>> %s",line); */
+      printf(">>> %s",line); 
       if ((sscanf(line, "%s", cmd) == 1)
           && strstr(line, "Node 0x")) {
          matched = 0x0;
-         /* SUBDBG("Found 'Node' -- search reset. (0x%2.2x)\n",matched); */
+         SUBDBG("Found 'Node' -- search reset. (0x%2.2x)\n",matched); 
       } else {
          if (strstr(cmd, "device_type:") && strstr(line, "'cpu'")) {
             matched |= 0x1;
-            /* SUBDBG("Found 'cpu'. (0x%2.2x)\n",matched); */
+            SUBDBG("Found 'cpu'. (0x%2.2x)\n",matched);
          } else if (!strcmp(cmd, "sparc-version:") &&
                     (sscanf(line, "%s %x", cmd, &version) == 2)) {
             matched |= 0x2;
-            /* SUBDBG("Found version=%d. (0x%2.2x)\n", version, matched); */
+            SUBDBG("Found version=%d. (0x%2.2x)\n", version, matched); 
          } else if (!strcmp(cmd, "clock-frequency:") &&
                     (sscanf(line, "%s %x", cmd, &ihz) == 2)) {
             matched |= 0x4;
-            /* SUBDBG("Found ihz=%d. (0x%2.2x)\n", ihz,matched); */
+            SUBDBG("Found ihz=%d. (0x%2.2x)\n", ihz,matched);
          } else if (!strcmp(cmd, "name:") && (sscanf(line, "%s %s", cmd, name) == 2)) {
             matched |= 0x8;
-            /* SUBDBG("Found name: %s. (0x%2.2x)\n", name,matched); */
+            SUBDBG("Found name: %s. (0x%2.2x)\n", name,matched); 
          }
       }
       if ((matched & 0xF) == 0xF)
@@ -606,6 +607,7 @@ static int get_system_info(void)
       pcr_event_mask[1] = (CPC_ULTRA2_PCR_PIC1_MASK << CPC_ULTRA_PCR_PIC1_SHIFT);
       pcr_inv_mask[0] = ~(pcr_event_mask[0]);
       pcr_inv_mask[1] = ~(pcr_event_mask[1]);
+      _papi_hwi_system_info.supports_hw_overflow = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
