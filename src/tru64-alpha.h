@@ -11,6 +11,7 @@
 #include <sys/sysinfo.h>
 #include <sys/procfs.h>
 #include <machine/hal_sysinfo.h>
+#include <machine/cpuconf.h>
 #include <assert.h>
 
 #include "papi.h"

@@ -52,16 +52,11 @@ static int setup_all_presets(int family, int model)
 
   DBG((stderr,"Family %d, model %d\n",family,model));
 
-  if ((family == 2) && 
-#ifdef EV67_CPU
-      (model < EV67_CPU))
-#else
-      (1))
-#endif
+  if (family == 2)
     findem = findem_ev6;
   else
     {
-      fprintf(stderr,"Unsupported processor family %d, model %d\n",family,model);
+      fprintf(stderr,"PAPI: Don't know processor family %d, model %d\n",family,model);
       return(PAPI_ESBSTR);
     }
 
