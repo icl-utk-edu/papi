@@ -1526,9 +1526,6 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-#define __SMP__
-#define CONFIG_SMP
-#include <asm/atomic.h>
 static atomic_t lock;
 
 void _papi_hwd_lock_init(void)

@@ -16,9 +16,13 @@
 #include <asm/param.h>
 #include <linux/unistd.h>	
 
-#ifdef PERFCTR24
-#include "asm/atomic.h"
+#ifndef CONFIG_SMP
+/* Assert that CONFIG_SMP is set before including asm/atomic.h to 
+ * get bus-locking atomic_* operations when building on UP kernels
+ */
+#define CONFIG_SMP
 #endif
+#include "asm/atomic.h"
 
 #include "libperfctr.h"
 #include "x86-events.h"
