@@ -31,7 +31,7 @@ int main(int argc, char **argv ) {
      if ( meminfo->L1_icache_size )
      	printf("Instruction L1 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L1_icache_size,meminfo->L1_icache_assoc,meminfo->L1_icache_linesize);
      if ( meminfo->L1_dcache_size )
-     	printf("Instruction L1 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L1_dcache_size,meminfo->L1_dcache_assoc,meminfo->L1_dcache_linesize);
+     	printf("Data L1 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L1_dcache_size,meminfo->L1_dcache_assoc,meminfo->L1_dcache_linesize);
      if ( meminfo->L2_cache_size )
      	printf("L2 cache: %d KB of %d-way associative and %d KB lines.\n", meminfo->L2_cache_size, meminfo->L2_cache_assoc,meminfo->L2_cache_linesize);
      if ( meminfo->L3_cache_size )
