@@ -148,17 +148,13 @@ int main(int argc, char **argv)
 
    use_total = 1;
 
-   retval = PAPI_remove_event(EventSet, PAPI_event);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
-
-   retval = PAPI_add_event(EventSet, PAPI_event);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-
    retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+
+   retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
    retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
@@ -168,17 +164,13 @@ int main(int argc, char **argv)
    if (retval == PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
 
-   retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
+   retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
 
    retval = PAPI_remove_event(EventSet, PAPI_TOT_CYC);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
-
-   retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
