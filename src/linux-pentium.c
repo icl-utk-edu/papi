@@ -20,15 +20,19 @@
    take the difference. IN convention is the following:
 
 if number == 0, then not supported
-if number == 1, then only 1 counter is needed and it is in counter 1.
-if number == 2, then only 1 counter is needed and it is in counter 2.
-if number == 3, then both counters are needed. 
-if number == 4, then counter 1 is needed in conjunction with the special 
+if number == 1, then only 1 counter is needed and it is only in counter 1.
+if number == 2, then only 1 counter is needed and it is only in counter 2.
+if number == 3, then either counter 1 or 2 may be used.
+if number == 4, then both counters are needed. 
+if number == 5, then counter 1 is needed in conjunction with the special 
                 purpose counter.
-if number == 5, then counter 2 is needed in conjunction with the special 
+if number == 6, then counter 2 is needed in conjunction with the special 
                 purpose counter.
-if number == 6, then both counters are needed in conjunction with the 
+if number == 7, then both counters are needed in conjunction with the 
                 special purpose counter.
+if number == 8, then either counter 1 or 2 may be used with the special 
+		purpose counter.
+if number == 9, then only the special purpose counter is needed.
 */
 
 #ifdef LINUX_PENTIUM
@@ -47,10 +51,72 @@ typedef struct _hwd_preset {
 
 
 /*example values for now */
-static hwd_control_state preset_map[PAPI_PRESET_EVENTS] = { 
-                { 1, 0x42, -1,, }, 
-                { 2, -1, 0x23,, }, 
-                ... };
+static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = { 
+                { , , , , },			// L1 D-Cache misses 
+                { 4, 0x28, 0xC0, , },		// L1 I-Cache misses 
+		{ 4, 0x24, 0x2E, , },		// L2 Cache misses
+		{ 4, 0x24, 0x2E, , },		// ditto
+		{ 0, , , , },			// L3 misses
+		{ 0, , , , },			// ditto
+		{,,,,}				// 6	**unused preset map elements**
+		{,,,,}				// 7
+		{,,,,}				// 8
+		{,,,,}				// 9
+		{ , , , , }, 			// Req. access to shared cache line
+		{ , , , , }, 			// Req. access to clean cache line
+		{ , , , , }, 			// Cache Line Invalidation
+                {,,,,}				// 13
+                {,,,,}				// 14
+                {,,,,}				// 15
+                {,,,,}				// 16
+                {,,,,}				// 17
+                {,,,,}				// 18
+                {,,,,}				// 19
+		{ , , , , }, 			// D-TLB misses
+		{ 3, 0x81, , , },		// I-TLB misses
+                {,,,,}				// 22
+                {,,,,}				// 23
+                {,,,,}				// 24
+                {,,,,}				// 25
+                {,,,,}				// 26
+                {,,,,}				// 27
+                {,,,,}				// 28
+                {,,,,}				// 29
+		{ , , , , },			// TLB shootdowns
+                {,,,,}				// 31
+                {,,,,}				// 32
+                {,,,,}				// 33
+                {,,,,}				// 34
+                {,,,,}				// 35
+                {,,,,}				// 36
+                {,,,,}				// 37
+                {,,,,}				// 38
+                {,,,,}				// 39
+		{ 3, 0xC5, , , },		// Branch inst. mispred.
+		{ 3, 0xC9, , , },		// Branch inst. taken
+		{ 3, 0xE4, , , },		// Branch inst. not taken
+                {,,,,}				// 43
+                {,,,,}				// 44
+                {,,,,}				// 45
+                {,,,,}				// 46
+                {,,,,}				// 47
+                {,,,,}				// 48
+                {,,,,}				// 49
+		{ 3, 0xC0, , , },		// Total inst. executed
+		{ 3, 0xC0, 0x10, , },		// Integer inst. executed
+		{ 1, 0x10, , , },		// Floating Pt. inst. executed
+		{ , , , , },			// Loads executed
+		{ , , , , },			// Stores executed
+		{ 3, 0xC4, , , },		// Branch inst. executed
+		{ 0, , , , },			// Vector/SIMD inst. executed 
+		{ 5, 0x10, , , },		// FLOPS
+                {,,,,}				// 58
+                {,,,,}				// 59
+		{ 9, , , , },			// Total cycles
+		{ 8, 0xC0, , , },		// MIPS
+                {,,,,}				// 62
+                {,,,,}				// 63
+                };
 
 static hwd_control_state current; /* not yet used. */
 
