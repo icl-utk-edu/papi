@@ -1,23 +1,26 @@
-INCLUDE = -I..
+INCLUDE = -I.. -I../ctests
 TESTS 	= zero first  second tenth description \
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
-PAPILIB=ftests_util.o ../$(LIBRARY)
+PAPILIB=do_loops.o ftests_util.o dummy.o ../$(LIBRARY)
 FTEST_DEPENDENCE=$(PAPILIB)
 
 default: $(TESTS)
 
 ftests_util.o: ftests_util.F
-	@if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
+	if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
 	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
+
+dummy.o: dummy.F
+	$(F77) $(FFLAGS) $(INCLUDE) -c dummy.F
 
 addAIXevents.o: addAIXevents.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c addAIXevents.c
 
-do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c do_loops.c
+do_loops.o: do_loops.F
+	$(F77) $(FFLAGS) $(INCLUDE) -c do_loops.F
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
@@ -79,12 +82,12 @@ johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
 native: native.F $(FTEST_DEPENDENCE) addAIXevents.o
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
 
-fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) do_loops.o
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) do_loops.o -o fmultiplex1 $(LDFLAGS)
+fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) 
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) -o fmultiplex1 $(LDFLAGS)
 
 
-fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) do_loops.o
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) do_loops.o -o fmultiplex2 $(LDFLAGS)
+fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) 
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)

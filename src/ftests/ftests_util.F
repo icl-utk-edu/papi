@@ -1,8 +1,5 @@
 #include "fpapi_test.h"
 
-#define L1_MISS_BUFFER_SIZE_INTS 128*1024
-
-
       integer function get_quiet()
 #if _WIN32
       use dflib
@@ -33,16 +30,6 @@ C     And also to make the test code read cleaner
       quiet=get_quiet
       end
 
-
-      subroutine dummy(array)
-      implicit none
-      real*8 array
-      
-C     This is a dummy routine that can be used to make the
-C     compiler believe that the result of a loop is actually
-C     used in the program. See eg. fmatrixpapi.F
-
-      end
 
       integer function len_trim(string)
       implicit none
@@ -189,55 +176,6 @@ C     used in the program. See eg. fmatrixpapi.F
       call pause()
       stop
  100  format(a,t41,a)
-      end
-
-C     
-C     TEST UTILITIES
-C     
-      subroutine do_flops(n)
-      implicit none      
-      integer n
-      real*8 a,b,c
-      common a, b
-      integer i
-      c = 0.11
-      do i = 1, n
-        c = c + a * b
-      end do
-#ifndef _CRAYT3E
-      call dummy(c)
-#endif
-      end
-
-      subroutine do_l1misses(n)
-      implicit none      
-      integer n
-      integer i, j
-      integer buf(L1_MISS_BUFFER_SIZE_INTS)      
-      do i = 1, n
-        do j=1, L1_MISS_BUFFER_SIZE_INTS
-          buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
-        end do
-      end do
-      end
-
-      subroutine do_both(n)
-      implicit none      
-      integer n
-      real*8 a, b, c
-      integer i, j
-      integer buf(L1_MISS_BUFFER_SIZE_INTS)      
-      a = 0.5
-      b = 6.2
-      c = 0.11
-      do i = 1, n
-        do j=1, n
-          c = c + a * b
-        end do
-        do j=1, L1_MISS_BUFFER_SIZE_INTS
-          buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
-        end do
-      end do
       end
 
       subroutine stringify_domain(domain, str)

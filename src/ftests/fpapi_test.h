@@ -1,2 +1,3 @@
-#include "../fpapi.h"
-#define SUCCESS 1
+#include "fpapi.h"
+#include "test_utils.h"
+
