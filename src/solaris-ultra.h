@@ -52,6 +52,15 @@ typedef struct hwd_preset {
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
+typedef struct hwd_search {
+  /* PAPI preset code */
+  unsigned int preset;
+  /* Is this event derived? */
+  int derived_op;   
+  /* Buffer to pass to the kernel to control the counters */
+  int findme[US_MAX_COUNTERS];
+} hwd_search_t;
+
 /* Assembler prototypes */
 
 extern void cpu_sync(void);

@@ -27,7 +27,7 @@ aix-shared: $(OBJECTS)
 	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 $(SHLIB): $(OBJECTS) 
-	-$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(MISCLIBS) -o $@
+	-$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(MISCOBJS) $(MISCLIBS) -o $@
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c

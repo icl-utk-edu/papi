@@ -1,250 +1,111 @@
+/* 
+* File:    solaris-ultra.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+*/  
 
-#include "solaris-ultra.h"
+#include SUBSTRATE
 
-const static int pcr_shift[2] = { CPC_ULTRA_PCR_PIC0_SHIFT, CPC_ULTRA_PCR_PIC1_SHIFT };
+/* Globals used to access the counter registers. */
 
-const static uint64_t pcr_event_mask[2] = { (CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT), 
-					    (CPC_ULTRA2_PCR_PIC1_MASK<<CPC_ULTRA_PCR_PIC1_SHIFT) };
-
-const static uint64_t pcr_inv_mask[2] = { ~(CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT), ~(CPC_ULTRA2_PCR_PIC1_MASK<<CPC_ULTRA_PCR_PIC1_SHIFT) };
-
-static int cpuver = -1;
+static int cpuver;
+static int pcr_shift[2]; 
+static uint64_t pcr_event_mask[2];
+static uint64_t pcr_inv_mask[2];
 
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
-  /* L1 Cache Dmisses */
-  {0,0,0,{0,0},""},		
+static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
+
+static hwd_search_t usii_preset_search_map[] = {
   /* L1 Cache Imisses */
-  {0x3,DERIVED_SUB,0,{0x8,0x8},""},		
-  /* L2 Cache Dmisses*/
-  {0,0,0,{0,0},""}, 			
-  /* L2 Cache Imisses*/
-  {0,0,0,{0,0},""}, 			
-  /* L3 Cache Dmisses*/
-  {0,0,0,{0,0},""}, 			
-  /* L3 Cache Imisses*/
-  {0,0,0,{0,0},""}, 			
-  /* L1 Total Cache misses */
-  {0,0,0,{0,0},""}, 			
+  {PAPI_L1_ICM,DERIVED_SUB,{0x8,0x8}},		
   /* L2 Total Cache misses*/
-  {0x3,DERIVED_SUB,0,{0xc,0xc},""},			
-  /* L3 Total Cache misses*/
-  {0,0,0,{0,0},""}, 			
+  {PAPI_L2_TCM,DERIVED_SUB,{0xc,0xc}},			
   /* Req. for snoop*/
-  {0x2,0,0,{0,0xe},""},	
-  /* Req. shared cache line*/
-  {0,0,0,{0,0},""},		 	
-  /* Req. clean cache line*/
-  {0,0,0,{0,0},""},		 	
+  {PAPI_CA_SNP,0,{-1,0xe}},	
   /* Req. invalidate cache line*/
-  {0x1,0,0,{0xe,0},""},		 	
-  /* Req. intervention cache line*/
-  {0,0,0,{0,0},""},		
-  /* L3 Load misses*/
-  {0,0,0,{0,0},""},			
-  /* L3 Store misses*/
-  {0,0,0,{0,0},""},			
-  /* BRU idle cycles*/
-  {0,0,0,{0,0},""},		
-  /* FXU idle cycles*/
-  {0,0,0,{0,0},""},		
-  /* FPU idle cycles*/
-  {0,0,0,{0,0},""},          
-  /* LSU idle cycles*/
-  {0,0,0,{0,0},""},          
-  /* D-TLB misses*/
-  {0,0,0,{0,0},""},		
-  /* I-TLB misses*/
-  {0,0,0,{0,0},""},		
-  /* Total TLB misses*/
-  {0,0,0,{0,0},""},		
+  {PAPI_CA_INV,0,{0xe,-1}},		 	
   /* L1LM */
-  {0x3,DERIVED_SUB,0,{0x9,0x9},""},			
+  {PAPI_L1_LDM,DERIVED_SUB,{0x9,0x9}},			
   /* L1SM */
-  {0x3,DERIVED_SUB,0,{0xa,0xa},""},			
-  /* L2LM*/
-  {0,0,0,{0,0},""},			
-  /* L2SM*/
-  {0,0,0,{0,0},""},			
-  /* BTAC */
-  {0,0,0,{0,0},""},			
-  /* PRF_DM */
-  {0,0,0,{0,0},""},			
-  /* L3DCH*/
-  {0,0,0,{0,0},""},			
-  /* TLB shootdowns*/
-  {0,0,0,{0,0},""},			
-  /* Suc. store conditional instructions*/
-  {0,0,0,{0,0},""},	
-  /* Failed store conditional instructions*/
-  {0,0,0,{0,0},""},	
-  /* Total store conditional instructions*/
-  {0,0,0,{0,0},""},			
-  /* Cycles stalled waiting for memory */
-  {0,0,0,{0,0},""},			
-  /* Cycles stalled waiting for memory read */
-  {0,0,0,{0,0},""},   	
-  /* Cycles stalled waiting for memory write */
-  {0,0,0,{0,0},""},
-  /* Cycles no instructions issued */
-  {0,0,0,{0,0},""},	
-  /* Cycles max instructions issued */
-  {0,0,0,{0,0},""},			
-  /* Cycles no instructions completed */
-  {0,0,0,{0,0},""},	
-  /* Cycles max instructions completed */
-  {0,0,0,{0,0},""},		
-  /* Hardware interrupts */
-  {0,0,0,{0,0},""},		
-  /* Uncond. branches executed*/
-  {0,0,0,{0,0},""},			
-  /* Cond. Branch inst. executed*/
-  {0,0,0,{0,0},""},		
-  /* Cond. Branch inst. taken*/
-  {0,0,0,{0,0},""},			
-  /* Cond. Branch inst. not taken*/
-  {0,0,0,{0,0},""},			
+  {PAPI_L1_STM,DERIVED_SUB,{0xa,0xa}},			
   /* Cond. branch inst. mispred.*/
-  {0x2,0,0,{0,0x2},""},          
-  /* Cond. branch inst. pred. */
-  {0,0,0,{0,0},""},		
-  /* FMA's */
-  {0,0,0,{0,0},""},		
+  {PAPI_BR_MSP,0,{-1,0x2}},          
   /* Total inst. issued*/
-  {0x3,0,0,{0x1,0x1},""},		
+  {PAPI_TOT_IIS,0,{0x1,0x1}},		
   /* Total inst. executed*/
-  {0x3,0,0,{0x1,0x1},""},		
-  /* Integer inst. executed*/
-  {0,0,0,{0,0},""},		
+  {PAPI_TOT_INS,0,{0x1,0x1}},		
   /* Floating Pt. inst. executed*/
-  {0x2,0,0,{0,0x3},""},	        
+  {PAPI_FP_INS,0,{-1,0x3}},	        
   /* Loads executed*/
-  {0x1,0,0,{0x9,0},""},		
+  {PAPI_LD_INS,0,{0x9,-1}},		
   /* Stores executed*/
-  {0x1,0,0,{0xa,0},""},		
-  /* Branch inst. executed*/
-  {0,0,0,{0,0},""},	
-  /* Vector/SIMD inst. executed */
-  {0,0,0,{0,0},""},			
+  {PAPI_SR_INS,0,{0xa,-1}},		
   /* FLOPS */
-  {0x3,DERIVED_PS,0,{0,0x3},""},
-  /* Any stalls */
-  {0,0,0,{0,0},""},			
-  /* Cycles FP units are stalled*/
-  {0,0,0,{0,0},""},			
+  {PAPI_FLOPS,DERIVED_PS,{0,0x3}},
   /* Total cycles */
-  {0x3,0,0,{0,0},""},		
+  {PAPI_TOT_CYC,0,{0,0}},		
   /* IPS */
-  {0x3,DERIVED_PS,0,{0,0},""},			
-  /* load/store*/
-  {0,0,0,{0,0},""},		
-  /* Synchronization inst. executed*/
-  {0,0,0,{0,0},""},		
-  /* L1 data cache hits */
-  {0,0,0,{0,0},""},		
-  /* L2 data cache hits */
-  {0,0,0,{0,0},""},		
-  /* L1 data cache accesses */
-  {0,0,0,{0,0},""},		
-  /* L2 data cache accesses */
-  {0,0,0,{0,0},""},		
-  /* L3 data cache accesses */
-  {0,0,0,{0,0},""},		
+  {PAPI_IPS,DERIVED_PS,{0,0x1}},			
   /* L1 data cache reads */
-  {0x1,0,0,{0x9,0},""},		
-  /* L2 data cache reads */
-  {0,0,0,{0,0},""},		
-  /* L3 data cache reads */
-  {0,0,0,{0,0},""},		
+  {PAPI_L1_DCR,0,{0x9,-1}},		
   /* L1 data cache writes */
-  {0x1,0,0,{0xa,0},""},		
-  /* L2 data cache writes */
-  {0,0,0,{0,0},""},		
-  /* L3 data cache writes */
-  {0,0,0,{0,0},""},
+  {PAPI_L1_DCW,0,{0xa,-1}},		
   /* L1 instruction cache hits */
-  {0x2,0,0,{0,0x8},""},
+  {PAPI_L1_ICH,0,{-1,0x8}},
   /* L2 instruction cache hits */
-  {0x2,0,0,{0,0xf},""},		
-  /* L3 instruction cache hits */
-  {0,0,0,{0,0},""},		
+  {PAPI_L2_ICH,0,{-1,0xf}},		
   /* L1 instruction cache accesses */
-  {0x1,0,0,{0x8,0},""},		
-  /* L2 instruction cache accesses */
-  {0,0,0,{0,0},""},		
-  /* L3 instruction cache accesses */
-  {0,0,0,{0,0},""},		
-  /* L1 instruction cache reads */
-  {0,0,0,{0,0},""},		
-  /* L2 instruction cache reads */
-  {0,0,0,{0,0},""},		
-  /* L3 instruction cache reads */
-  {0,0,0,{0,0},""},		
-  /* L1 instruction cache writes */
-  {0,0,0,{0,0},""},		
-  /* L2 instruction cache writes */
-  {0,0,0,{0,0},""},		
-  /* L3 instruction cache writes */
-  {0,0,0,{0,0},""},
-  /* L1 total cache hits */
-  {0,0,0,{0,0},""},
+  {PAPI_L1_ICA,0,{0x8,-1}},		
   /* L2 total cache hits */
-  {0x2,0,0,{0,0xc},""},		
-  /* L3 total cache hits */
-  {0,0,0,{0,0},""},		
-  /* L1 total cache accesses */
-  {0,0,0,{0,0},""},		
+  {PAPI_L2_TCH,0,{-1,0xc}},		
   /* L2 total cache accesses */
-  {0x1,0,0,{0xc,0},""},		
-  /* L3 total cache accesses */
-  {0,0,0,{0,0},""},		
-  /* L1 total cache reads */
-  {0,0,0,{0,0},""},		
-  /* L2 total cache reads */
-  {0,0,0,{0,0},""},		
-  /* L3 total cache reads */
-  {0,0,0,{0,0},""},		
-  /* L1 total cache writes */
-  {0,0,0,{0,0},""},		
-  /* L2 total cache writes */
-  {0,0,0,{0,0},""},		
-  /* L3 total cache writes */
-  {0,0,0,{0,0},""},
-  /* FP mult */
-  {0,0,0,{0,0},""},
-  /* FP add */
-  {0,0,0,{0,0},""},
-  /* FP Div */
-  {0,0,0,{0,0},""},
-  /* FP Sqrt */
-  {0,0,0,{0,0},""},
-  /* FP inv */
-  {0,0,0,{0,0},""},
-};
+  {PAPI_L2_TCA,0,{0xc,-1}},
+  /* Terminator */
+  {0,0,{0,0}}};
 
-static void merge_flags(int from, int *to)
-{
-  *to = from | *to;
-}
-
-static void merge_pcr(int hwcntr_num, uint64_t from, uint64_t *to)
-{
-  uint64_t mask;
-  uint64_t tmp;
-
-  if (hwcntr_num == 0)
-    mask = CPC_ULTRA2_PCR_PIC0_MASK;
-  else if (hwcntr_num == 1)
-    mask = CPC_ULTRA2_PCR_PIC1_MASK;
-  else
-    abort();
-
-  tmp = *to; /* copy it */
-  tmp = tmp & ~(mask); /* turn bits off */
-  *to = tmp | (mask & from); /* copy bits in */
-}
+static hwd_search_t usiii_preset_search_map[] = {
+  /* ITLB */
+  {PAPI_TLB_IM,0,{-1,0x11}},           /* pic1 ITLB_miss */
+  /* DITLB */
+  {PAPI_TLB_DM,0,{-1,0x12}},           /* pic1 DTLB_miss */
+  /* Total cycles */
+  {PAPI_TOT_CYC,0,{0,0}},              /* pic0 and pic1 Cycle_cnt */				
+  /* Total inst. issued*/
+  {PAPI_TOT_IIS,0,{0x1,0x1}},          /* pic0 and pic1 Instr_cnt */				
+  /* Total inst. executed*/
+  {PAPI_TOT_INS,0,{0x1,0x1}},          /* pic0 and pic1 Instr_cnt */		
+  /* L2 Total Cache misses*/
+  {PAPI_L2_TCM,0,{-1,0xc}},            /* pic1 EC_misses */			
+  /* L2 Total ICache misses*/
+  {PAPI_L2_ICM,0,{-1,0xf}},            /* pic1 EC_ic_miss */			
+  /* L1 Total ICache misses */
+  {PAPI_L1_ICM,0,{-1,0x8}},            /* pic1 IC_miss (actually hits) */      		
+  /* L1 Load Misses */
+  {PAPI_L1_LDM,0,{-1,0x9}},            /* pic1 DC_rd_miss */			
+  /* L1 Store Misses */
+  {PAPI_L1_STM,0,{-1,0xa}},            /* pic1 DC_wr_miss */			
+  /* Cond. branch inst. mispred.*/
+  {PAPI_BR_MSP,0,{-1,0x2}},            /* pic1 Dispatch0_mispred */
+  /* IPS */
+  {PAPI_IPS,DERIVED_PS,{0x0,0x1}},   /* pic0 Cycle_cnt, pic1 Instr_cnt */		
+  /* L1 data cache reads */
+  {PAPI_L1_DCR,0,{0x9,-1}},	       /* pic0 DC_rd */	
+  /* L1 data cache writes */
+  {PAPI_L1_DCW,0,{0xa,-1}},	       /* pic0 DC_wr */	
+  /* L1 instruction cache hits */
+  {PAPI_L1_ICH,0,{0x8,-1}},            /* pic0 IC_ref (actually hits only)
+  /* L1 instruction cache accesses */
+  {PAPI_L1_ICA,DERIVED_ADD,{0x8,0x8}}, /* pic0 IC_ref (actually hits only) + pic1 IC_miss */
+  /* L2 total cache hits */
+  {PAPI_L2_TCH,DERIVED_SUB,{0xc,0xc}}, /* pic0 EC_ref - pic1 EC_misses */
+  /* L2 total cache accesses */
+  {PAPI_L2_TCA,0,{0xc,-1}},            /* pic0 EC_ref */
+  /* Terminator */
+  {0,0,{0,0}}};
 
 #ifdef DEBUG
 static void dump_cmd(papi_cpc_event_t *t)
@@ -257,7 +118,6 @@ static void dump_cmd(papi_cpc_event_t *t)
 }
 #endif DEBUG
 
-#if 0
 static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
 {
 #ifdef DEBUG
@@ -268,13 +128,17 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
   if (sip->si_code == EMT_CPCOVF)
     {
       papi_cpc_event_t *sample;
-      EventSetInfo *ESI;
+      EventSetInfo *ESI, *master_event_set;
       int t;
-      INIT_MAP_VOID;
-      sample = &((hwd_control_state_t *)master_event_set->machdep)->counter_cmd;
-      ESI = event_set_overflowing;
 
-      /* GROSS! Hack to push the correct values back into the hardware */
+      master_event_set = _papi_hwi_lookup_in_master_list();
+      ESI = master_event_set->event_set_overflowing;
+      sample = &((hwd_control_state_t *)master_event_set->machdep)->counter_cmd;
+
+      /* GROSS! This is a hack to 'push' the correct values 
+	 back into the hardware, such that when PAPI handles
+         the overflow and reads the values, it gets the correct
+         ones. */
       
       /* Find which HW counter is overflowing */
       
@@ -286,7 +150,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       /* Push the correct value */
       
       sample->cmd.ce_pic[t] = ESI->overflow.threshold;
-#if 0
+#if DEBUG
       dump_cmd(sample);
 #endif
       if (cpc_bind_event(&sample->cmd,0) == -1)
@@ -294,13 +158,13 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       
       /* Call the regular overflow function in extras.c */
 
-      _papi_hwi_dispatch_overflow_signal(ESI,master_event_set,arg);
+      _papi_hwi_dispatch_overflow_signal(arg);
       
       /* Reset the threshold */
       
       sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold;
       
-#if 0
+#if DEBUG
       dump_cmd(sample);
 #endif
       if (cpc_bind_event(&sample->cmd,sample->flags) == -1)
@@ -312,7 +176,6 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       return;
     }
 }
-#endif
 
 static int getmhz(void)
 {
@@ -370,32 +233,66 @@ static int getmhz(void)
 
 static int setup_all_presets(PAPI_hw_info_t *info)
 {
-  int pnum, s;
+  int snum, preset_index, selector;
+  hwd_search_t *findem;
 
-  for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
+  if (info->model <= CPC_ULTRA2)
+    findem = usii_preset_search_map;
+  else if (info->model == CPC_ULTRA3)
+    findem = usiii_preset_search_map;
+  else
+    abort();
+
+  memset(preset_map,0x0,sizeof(preset_map));
+
+  for (snum = 0; snum < PAPI_MAX_PRESET_EVENTS; snum++)
     {
-      if ((s = preset_map[pnum].selector))
+      selector = 0;
+
+      /* Get index */
+
+      preset_index = findem[snum].preset ^ PRESET_MASK; 
+
+      /* Check for premature end of list */
+
+      if (findem[snum].preset == 0)
+	break;
+
+      /* Set Derived flag */
+
+      preset_map[preset_index].derived = findem[snum].derived_op;
+
+      /* This might need to be changed */
+
+      preset_map[preset_index].operand_index = 0;
+
+      /* Set Selector bits and control values */
+
+      if (findem[snum].findme[0] != -1)
 	{
-	  if (preset_map[pnum].derived == 0)
-	    {
-	      if (s == 0x1)
-		sprintf(preset_map[pnum].note,"0x%x,-1",preset_map[pnum].counter_cmd[0]);
-	      else
-		sprintf(preset_map[pnum].note,"-1,0x%x",preset_map[pnum].counter_cmd[1]);
-	    }
-	  else
-	    {
-	      int j = preset_map[pnum].operand_index;
-	      
-	      if (j == 0)
-		sprintf(preset_map[pnum].note,"0x%x,0x%x",preset_map[pnum].counter_cmd[0],
-		       preset_map[pnum].counter_cmd[1]);
-	      else 
-		sprintf(preset_map[pnum].note,"0x%x,0x%x",preset_map[pnum].counter_cmd[1],
-		       preset_map[pnum].counter_cmd[0]);
-	    }
+	  preset_map[preset_index].counter_cmd[0] = findem[snum].findme[0];
+	  selector |= 0x1;
 	}
+      if (findem[snum].findme[1] != -1)
+	{
+	  preset_map[preset_index].counter_cmd[1] = findem[snum].findme[1];
+	  selector |= 0x2;
+	}
+      preset_map[preset_index].selector = selector;
+
+      /* Put in the note */
+     
+      if (selector == 0x1)
+	sprintf(preset_map[preset_index].note,"0x%x,-1",preset_map[preset_index].counter_cmd[0]);
+      else if (selector == 0x2)
+	sprintf(preset_map[preset_index].note,"-1,0x%x",preset_map[preset_index].counter_cmd[1]);
+      else if (selector == 0x3)
+	sprintf(preset_map[preset_index].note,"0x%x,0x%x",
+		preset_map[preset_index].counter_cmd[0],preset_map[preset_index].counter_cmd[1]);
+      else
+	abort();
     }
+
   return(PAPI_OK);
 }
 
@@ -455,8 +352,34 @@ static int get_system_info(void)
   if (cpc_access() == -1)
     return(PAPI_ESBSTR);
 
+  /* Global variable cpuver */
+
   cpuver = cpc_getcpuver();
   if (cpuver == -1)
+    return(PAPI_ESBSTR);
+
+  /* Initialize other globals */
+
+  if (cpuver <= CPC_ULTRA2)
+    {
+      pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
+      pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
+      pcr_event_mask[0] = (CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
+      pcr_event_mask[1] = (CPC_ULTRA2_PCR_PIC1_MASK<<CPC_ULTRA_PCR_PIC1_SHIFT);
+      pcr_inv_mask[0] = ~(pcr_event_mask[0]);
+      pcr_inv_mask[1] = ~(pcr_event_mask[1]);
+    }
+  else if (cpuver == CPC_ULTRA3)
+    {
+      pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
+      pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
+      pcr_event_mask[0] = (CPC_ULTRA3_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
+      pcr_event_mask[1] = (CPC_ULTRA3_PCR_PIC1_MASK<<CPC_ULTRA_PCR_PIC1_SHIFT);
+      pcr_inv_mask[0] = ~(pcr_event_mask[0]);
+      pcr_inv_mask[1] = ~(pcr_event_mask[1]);
+      _papi_system_info.supports_hw_overflow = 1;
+    }
+  else
     return(PAPI_ESBSTR);
 
   /* Path and args */
@@ -1233,7 +1156,6 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
-#if 0
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   papi_cpc_event_t *arg = &this_state->counter_cmd;
   int selector, hwcntr;
@@ -1263,11 +1185,6 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
     }
 
   return(PAPI_OK);
-#else
-  /* This function is not used and shouldn't be called. */
-
-  abort();
-#endif
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
