@@ -1,3 +1,16 @@
+2004-06-24 Stephane Eranian <eranian@hpl.hp.com>
+	* fixed Itanium2 events tables L2_FORCE_RECIRC_*
+	and L2_L3ACCESS_* events can only be measured by PMC4
+
+	* fixed pfm_*_get_event_counters(). It would always
+	return the counter mask for event index 0.
+
+2004-02-12 Stephane Eranian <eranian@hpl.hp.com>
+	* fixed a bug in pfmlib_itanium2.c which cause measurements
+	  using opcode matching with an event different from
+	  IA64_TAGGED_INST_RETIRED* to return wrong results, i.e.,
+	  opcode filter was ignored.
+
 2003-11-21 Stephane Eranian <eranian@hpl.hp.com>
 	* changed interface to pfm_get_impl_*() to use
 	  a cleaner definition for bitmasks. pfmlib_regmask_t is

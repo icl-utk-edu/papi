@@ -387,16 +387,16 @@ int
 pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...))
 {
 	unsigned long number, vcode;
-	pfmlib_regmask_t cmask;
+	pfmlib_regmask_t cmask, impl_counters;
         int code, ret;
 	int code_is_used = 1, event_is_digit = 0;
-	unsigned int idx, next_idx, n_counters, i;
+	unsigned int idx, next_idx, n, num_counters, i;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (name == NULL || pf == NULL) return PFMLIB_ERR_INVAL;
 
-	pfm_current->get_num_counters(&n_counters);
+	pfm_current->get_num_counters(&n);
 
 	/* we can't quite use pfm_findevent() because we need to try
 	 * both ways systematically.
@@ -424,6 +424,7 @@ pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...))
 
 	if (ret != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTFOUND;
 
+	pfm_current->get_num_counters(&num_counters);
 start_loop:
 	do {
 		code  = pfm_current->get_event_code(idx);
@@ -439,8 +440,9 @@ start_loop:
 		(*pf)(	"PMD/PMC: [ ");
 
 		pfm_current->get_event_counters(idx, &cmask);
-
-		for (i=0; i < n_counters; i++) {
+		n = num_counters;
+		for (i=0; n; i++) {
+			if (PFMLIB_REGMASK_ISSET(&impl_counters, i)) n--;
 			if (PFMLIB_REGMASK_ISSET(&cmask, i)) (*pf)("%d ", i);
 		}
 		(*pf)(	"]\n");
@@ -463,8 +465,8 @@ start_loop:
 int
 pfm_print_event_info_byindex(unsigned int v, int (*pf)(const char *fmt,...))
 {
-	pfmlib_regmask_t cmask;
-	unsigned int i, n_counters;
+	pfmlib_regmask_t cmask, impl_counters;
+	unsigned int i, n;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
@@ -479,10 +481,12 @@ pfm_print_event_info_byindex(unsigned int v, int (*pf)(const char *fmt,...))
 	
 	(*pf)(	"PMD/PMC: [ ");
 
-	pfm_current->get_num_counters(&n_counters);
+	pfm_current->get_num_counters(&n);
 	pfm_current->get_event_counters(v, &cmask);
+	pfm_current->get_impl_counters(&impl_counters);
 
-	for (i=0; i < n_counters; i++) {
+	for (i=0; n; i++) {
+		if (PFMLIB_REGMASK_ISSET(&impl_counters, i)) n--;
 		if (PFMLIB_REGMASK_ISSET(&cmask, i)) (*pf)("%d ", i);
 	}
 	(*pf)(	"]\n");
@@ -493,7 +497,6 @@ pfm_print_event_info_byindex(unsigned int v, int (*pf)(const char *fmt,...))
 	}
 	return PFMLIB_SUCCESS;
 }
-
 
 int
 pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)

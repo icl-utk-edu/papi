@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (C) 2002-2004 Hewlett-Packard Co
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -54,11 +54,13 @@ endif
 ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 SRCS   += pfmlib_itanium.c
 CFLAGS += -DCONFIG_PFMLIB_ITANIUM
+pfmlib_itanium.o : itanium_events.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
 SRCS   += pfmlib_itanium2.c
 CFLAGS += -DCONFIG_PFMLIB_ITANIUM2
+pfmlib_itanium2.o : itanium2_events.h
 endif
 
 INCDIR=-I$(PFMINCDIR) -I.

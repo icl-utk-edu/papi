@@ -1073,13 +1073,13 @@ pfm_ita_get_event_name(unsigned int i)
 static void
 pfm_ita_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
-	unsigned int i = 0;
+	unsigned int i;
 	unsigned long m;
 
 	memset(counters, 0, sizeof(*counters));
 
-	m =itanium_pe[i].pme_counters;
-	for(; m ; i++, m>>=1) {
+	m =itanium_pe[j].pme_counters;
+	for(i=0; m ; i++, m>>=1) {
 		if (m & 0x1) PFMLIB_REGMASK_SET(counters, i);
 	}
 }
