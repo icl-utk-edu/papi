@@ -240,14 +240,13 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
 
    EventSetProfileInfo_t *profile = &ESI->profile;
    caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
+   PAPI_sprofil_t *sprof;
 
-/*
   caddr_t offset = (caddr_t)0;
   caddr_t best_offset = (caddr_t)0;
   int count;
   int best_index = -1;
   int i;
-*/
    unsigned short overflow_dummy;
    unsigned short *overflow_bin = NULL;
 
@@ -256,12 +255,12 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
            __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), pc);
 #endif
 
-/*
-  count = profile->count;
-  if ((profile->prof[count-1].pr_off == 0) &&
-      (profile->prof[count-1].pr_scale == 0x2))
+   sprof = profile->prof[profile_index];
+  count = profile->count[profile_index];
+  if ((sprof[count-1].pr_off == 0) &&
+      (sprof[count-1].pr_scale == 0x2))
     {
-      overflow_bin = profile->prof[count-1].pr_base;
+      overflow_bin = sprof[count-1].pr_base;
       count--;
     }
   else
@@ -271,7 +270,7 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
     
   for (i = 0; i < count; i++)
     {
-      offset = (caddr_t)profile->prof[i].pr_off;
+      offset = (caddr_t)sprof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
 	{
 	  best_index = i;
@@ -281,10 +280,12 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
 
   if (best_index == -1)
     best_index = 0;
-*/
-   overflow_bin = &overflow_dummy;
 
-   posix_profil(pc, profile->prof[profile_index], overflow_bin, profile->flags, over,
+/*
+   overflow_bin = &overflow_dummy;
+*/
+
+   posix_profil(pc, &sprof[best_index], overflow_bin, profile->flags, over,
                 profile->threshold[profile_index]);
 /*
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
@@ -417,7 +418,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                i = ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
-#ifdef ITANIUM 
+#ifdef PENTIUM4 
                   /* This loop is here ONLY because Pentium 4 can have tagged events
                      that contain more than one counter without being derived.
                      You've gotta scan all terms to make sure you find the one to profile. */
