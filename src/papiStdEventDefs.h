@@ -22,9 +22,9 @@ your platform.
 #define PAPI_CA_CLN  0x8000000B /*Request for access to clean  cache line (SMP)*/
 #define PAPI_CA_INV  0x8000000C /*Cache Line Invalidation (SMP)*/
 
-#define PAPI_TBL_DM  0x80000014 /*Data translation lookaside buffer misses*/
-#define PAPI_TBL_IM  0x80000015 /*Instruction translation lookaside buffer misses*/
-#define PAPI_TBL_SD  0x8000001E /*Translation lookaside buffer shootdowns (SMP)*/
+#define PAPI_TLB_DM  0x80000014 /*Data translation lookaside buffer misses*/
+#define PAPI_TLB_IM  0x80000015 /*Instruction translation lookaside buffer misses*/
+#define PAPI_TLB_SD  0x8000001E /*Translation lookaside buffer shootdowns (SMP)*/
 
 #define PAPI_BRI_MSP 0x80000028 /*Branch instructions mispredicted*/
 #define PAPI_BRI_TKN 0x80000029 /*Branch instructions taken*/
