@@ -1,32 +1,34 @@
 INCLUDE = -I..
 TESTS 	= avail case1 case2 clockres eventname fmatrixlowpapi \
           fmatrixpapi flops
+PAPILIB	= ../libpapi.a
 
 default: $(TESTS)
 
-clockres: clockres.F ../libpapi.a
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F ../libpapi.a $(LDFLAGS) -o clockres
+clockres: clockres.F $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F -L.. -lpapi $(LDFLAGS) -o clockres
 
-avail: avail.F ../libpapi.a
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F ../libpapi.a $(LDFLAGS) -o avail
+avail: avail.F $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F -L.. -lpapi $(LDFLAGS) -o avail
 
-eventname: eventname.F ../libpapi.a
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F ../libpapi.a $(LDFLAGS) -o eventname
+eventname: eventname.F $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F -L.. -lpapi $(LDFLAGS) -o eventname
 
-case1: case1.F ../libpapi.a
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F ../libpapi.a $(LDFLAGS) -o case1
+case1: case1.F $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F -L.. -lpapi $(LDFLAGS) -o case1
 
-case2: case2.F ../libpapi.a
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F ../libpapi.a $(LDFLAGS) -o case2
+case2: case2.F $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F -L.. -lpapi $(LDFLAGS) -o case2
 
-fmatrixlowpapi: fmatrixlowpapi.F ../libpapi.a
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F ../libpapi.a $(LDFLAGS) -o fmatrixlowpapi
+fmatrixlowpapi: fmatrixlowpapi.F $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F -L.. -lpapi $(LDFLAGS) -o fmatrixlowpapi
 
-fmatrixpapi: fmatrixpapi.F ../libpapi.a
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F ../libpapi.a $(LDFLAGS) -o fmatrixpapi
+fmatrixpapi: fmatrixpapi.F $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F -L.. -lpapi $(LDFLAGS) -o fmatrixpapi
 
-flops: flops.F ../libpapi.a
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F ../libpapi.a $(LDFLAGS) -o flops
+flops: flops.F $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F -L.. -lpapi $(LDFLAGS) -o flops
+
 clean:
 	rm -f *.o $(TESTS) core *~
 
