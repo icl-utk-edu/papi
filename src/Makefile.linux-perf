@@ -6,6 +6,7 @@ TARGETS = serial multiplex_and_pthreads
 CFLAGS  = -Wall
 FFLAGS	= -Wall
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro 
+TOPTFLAGS= $(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc
 F77	= g77

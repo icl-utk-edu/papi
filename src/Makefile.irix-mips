@@ -4,7 +4,7 @@ LIBS	= static shared extra
 TARGETS	= serial multiplex_and_pthreads smp omp 
 FLAGS  	= -g3
 CFLAGS  = -woff 1116,1343,1552,3187,3348 $(FLAGS)
-NOOPT	= -O0
+TOPTFLAGS= -O0
 OPTFLAGS= -O3
 FOPTFLAGS= $(OPTFLAGS)
 FFLAGS	= $(FLAGS) -col120
@@ -21,7 +21,7 @@ include ./Makefile.inc
 extra:	libpapi64.a libpapi64.so
 
 libpapi64.a: 
-	$(CC) -64 $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o libpapi64.o
+	$(CC) -64 $(LIBCFLAGS) $(OPTFLAGS) -c $(SOURCES) -o libpapi64.o
 	ar ruv $@ libpapi64.o
 
 libpapi64.so: 

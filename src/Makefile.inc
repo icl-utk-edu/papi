@@ -66,10 +66,10 @@ fulltest: examples
 	sh run_tests.sh
 
 tests: null
-	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" LIBCFLAGS='$(LIBCFLAGS)' $(TARGETS)
+	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" LIBCFLAGS='$(LIBCFLAGS)' $(TARGETS)
 
 ftests: null
-	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(OPTFLAGS)" FOPTFLAGS="$(FOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" SUBSTR="$(SUBSTR)"
+	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" SUBSTR="$(SUBSTR)"
 
 clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c

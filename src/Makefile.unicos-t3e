@@ -6,6 +6,7 @@ TARGETS	= serial multiplex
 CFLAGS	= -h calchars 
 FFLAGS	= -F 
 OPTFLAGS= -O3
+TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 NOOPT	= -O0
 CC_R	= cc

@@ -6,6 +6,7 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
 CFLAGS	= $(FLAGS) -g -DDEBUG
 OPTFLAGS= 
+TOPTFLAGS=
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 NOOPT	= 

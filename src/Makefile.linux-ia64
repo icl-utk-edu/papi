@@ -3,10 +3,11 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -O3
+CFLAGS  = -Ipfmon-0.06a/include -I. -Wall
+TOPTFLAGS  = -O0
 FFLAGS	=  
 LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
-OPTFLAGS= 
+OPTFLAGS= -O3 
 CC_SHR  = gcc -shared -fpic
 CC_R	= gcc -pthread
 CC	= gcc
@@ -21,7 +22,7 @@ MISCSRCS= $(LIBPFM)/pfmlib.c $(LIBPFM)/pfmusr.c $(LIBPFM)/pfmerror.c
 include Makefile.inc
 
 $(MISCOBJS): $(MISCSRCS)
-	$(MAKE) CFLAGS="$(OPTFLAGS) $(CFLAGS)" -C $(LIBPFM)
+	$(MAKE) CFLAGS="$(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" -C $(LIBPFM)
 	cd $(LIBPFM); cp $(MISCOBJS) $(PAPI_SRCDIR)
 
 native_clean:

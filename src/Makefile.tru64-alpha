@@ -6,6 +6,7 @@ TARGETS	= serial multiplex_and_pthreads omp
 CFLAGS 	= -DDEBUG -Zp8 
 FFLAGS	= 
 OPTFLAGS= 
+TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp

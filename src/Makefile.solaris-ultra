@@ -9,7 +9,7 @@ CFLAGS  = -xarch=v8plusa -g
 OPTFLAGS= 
 #-xO3
 #NOOPT	= 
-NOOPT 	= -xO0
+TOPTFLAGS= -xO0
 FFLAGS	= $(CFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 #SMPCFLGS= 

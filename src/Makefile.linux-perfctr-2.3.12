@@ -9,6 +9,7 @@ CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPER
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 FFLAGS	= -Dlinux -Wall 
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
+TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc
 F77	= g77
