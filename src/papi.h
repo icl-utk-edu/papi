@@ -343,7 +343,6 @@ void PAPI_shutdown(void);
 int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode, int threshold, int flags);
 int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
-int PAPI_state(int EventSetIndex, int *status);
 int PAPI_stop(int EventSet, long_long *values);
 char *PAPI_strerror(int);
 void PAPI_unlock(void);
