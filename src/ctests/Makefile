@@ -9,7 +9,8 @@ SHARED  = shlib
 SERIAL  = realtime first exeinfo zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second cost johnmay2 clockres \
-	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
+	overflow overflow_force_software overflow_single_event \
+        overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth \
 	profile  sprofile profile_twoevents earprofile\
 	ipc native native_avail overflow_index command_line
@@ -174,6 +175,9 @@ overflow2: overflow2.c $(UTILOBJS) $(PAPILIB)
 
 overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_single_event.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_single_event
+
+overflow_force_software: overflow_force_software.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_force_software.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_force_software
 
 sprofile: sprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) sprofile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o sprofile
