@@ -59,23 +59,6 @@ inline_static unsigned short random_ushort(void)
    return (unsigned short) (_rnum = 1664525 * _rnum + 1013904223);
 }
 
-/* compute the address index into the buffer array.
-   size determines sizeof(bucket)
-   the multiplication by pr_scale is done in 64-bit mode to avoid truncation
-   this routine is used by all three profiling cases
-   it is inlined for speed
-*/
-inline_static unsigned long profil_addr(caddr_t address, PAPI_sprofil_t * prof, unsigned long size)
-{
-   unsigned long addr;
-   u_long_long laddr;
-
-   addr = (unsigned long) (address - prof->pr_off);
-   addr = addr / size;        /* get the index */
-   laddr = ((u_long_long)addr) * prof->pr_scale;
-   addr = (unsigned long) (laddr >> 16);
-   return(addr);
-}
 
 /* compute the amount by which to increment the bucket.
    value is the current value of the bucket
@@ -119,40 +102,55 @@ inline_static int profil_increment(long_long value,
 
 
 static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
-                         unsigned short *outside_bin, int flags, long_long excess,
-                         long_long threshold)
+                         int flags, long_long excess, long_long threshold)
 {
-   unsigned long addr;
    unsigned short *buf16;
    unsigned int *buf32;
    u_long_long *buf64;
+   unsigned long indx;
+   u_long_long lloffset;
 
-   /* check for addresses outside specified range */
-   if (((unsigned long )(address - prof->pr_off)) >= prof->pr_size) {
-      *outside_bin = *outside_bin + 1;
-      DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
-      return;
-   }
-   /* test first for 16-bit buckets; this should be the fast case */
-   if (!(flags & (PAPI_PROFIL_BUCKET_32+PAPI_PROFIL_BUCKET_64))) {
-      buf16 = prof->pr_base;
-      addr = profil_addr(address, prof, sizeof(short));
-      buf16[addr] += profil_increment(buf16[addr], flags, excess, threshold);
-      DBG((stderr, "posix_profil_16() bucket %lu = %u\n", addr, buf16[addr]));
-   }
-   /* next, look for the 32-bit case */
-   else if (flags & PAPI_PROFIL_BUCKET_32) {
-      buf32 = prof->pr_base;
-      addr = profil_addr(address, prof, sizeof(int));
-      buf32[addr] += profil_increment(buf32[addr], flags, excess, threshold);
-      DBG((stderr, "posix_profil_32() bucket %lu = %u\n", addr, buf32[addr]));
-   }
-   /* finally, fall through to the 64-bit case */
+   /* SPECIAL CASE: if starting address is 0 and scale factor is 2
+                    then all counts go into first bin.
+   */
+   if ((prof->pr_off == 0) && (prof->pr_scale == 0x2))
+      indx = 0;
    else {
-      buf64 = prof->pr_base;
-      addr = profil_addr(address, prof, sizeof(long_long));
-      buf64[addr] += profil_increment(buf64[addr], flags, excess, threshold);
-      DBG((stderr, "posix_profil_64() bucket %lu = %lld\n", addr, buf64[addr]));
+      /* compute the profile buffer offset by:
+         - subtracting the profiling base address from the pc address
+         - multiplying by the scaling factor
+         - dividing by max scale (65536, or 2^^16) 
+         - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses */
+      lloffset = ((u_long_long)(address - prof->pr_off)) * prof->pr_scale;
+      indx = (unsigned long)(lloffset >> 17);
+   }
+
+   /* confirm addresses within specified range */
+   if (address >= prof->pr_off) {
+      /* test first for 16-bit buckets; this should be the fast case */
+      if (flags & PAPI_PROFIL_BUCKET_16) {
+         if ((indx * sizeof(short)) < prof->pr_size) {
+            buf16 = prof->pr_base;
+            buf16[indx] += profil_increment(buf16[indx], flags, excess, threshold);
+            DBG((stderr, "posix_profil_16() bucket %lu = %u\n", indx, buf16[indx]));
+         }
+      }
+      /* next, look for the 32-bit case */
+      else if (flags & PAPI_PROFIL_BUCKET_32) {
+         if ((indx * sizeof(int)) < prof->pr_size) {
+            buf32 = prof->pr_base;
+            buf32[indx] += profil_increment(buf32[indx], flags, excess, threshold);
+            DBG((stderr, "posix_profil_32() bucket %lu = %u\n", indx, buf32[indx]));
+         }
+      }
+      /* finally, fall through to the 64-bit case */
+      else {
+         if ((indx * sizeof(long_long)) < prof->pr_size) {
+            buf64 = prof->pr_base;
+            buf64[indx] += profil_increment(buf64[indx], flags, excess, threshold);
+            DBG((stderr, "posix_profil_64() bucket %lu = %lld\n", indx, buf64[indx]));
+         }
+      }
    }
 }
 
@@ -170,49 +168,30 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
   int count;
   int best_index = -1;
   int i;
-   unsigned short overflow_dummy;
-   unsigned short *overflow_bin = NULL;
 
 #ifdef PROFILE_DEBUG
    fprintf(stderr, "%lld:%s:%d:0x%x:handled at 0x%lx\n", _papi_hwd_get_real_usec(),
            __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), pc);
 #endif
 
-   sprof = profile->prof[profile_index];
+  sprof = profile->prof[profile_index];
   count = profile->count[profile_index];
-  if ((sprof[count-1].pr_off == 0) &&
-      (sprof[count-1].pr_scale == 0x2))
-    {
-      overflow_bin = sprof[count-1].pr_base;
-      count--;
-    }
-  else
-    {
-      overflow_bin = &overflow_dummy;
-    }
     
   for (i = 0; i < count; i++)
-    {
+  {
       offset = (caddr_t)sprof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
-	{
-	  best_index = i;
-	  best_offset = offset;
-	}
-    }
+      {
+         best_index = i;
+         best_offset = offset;
+      }
+   }
 
-  if (best_index == -1)
-    best_index = 0;
+   if (best_index == -1)
+      best_index = 0;
 
-/*
-   overflow_bin = &overflow_dummy;
-*/
-
-   posix_profil(pc, &sprof[best_index], overflow_bin, profile->flags, over,
+   posix_profil(pc, &sprof[best_index], profile->flags, over,
                 profile->threshold[profile_index]);
-/*
-  posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
-*/
 }
 
 /* if isHardware is true, then the processor is using hardware overflow,
