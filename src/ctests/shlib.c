@@ -30,7 +30,7 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-
+   sleep(2);
    if ((shinfo = PAPI_get_shared_lib_info()) == NULL) {
       test_skip(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
    }
@@ -90,11 +90,9 @@ int main(int argc, char **argv)
      printf("Looking up cos() function with dlsym().\n");
 
      cosine = dlsym(handle, "cos");
-#if ( !(defined(sun) && defined(sparc)))
-     if ((error = dlerror()) != NULL)  {
+     if (cosine == NULL)  {
        test_fail(__FILE__, __LINE__, "dlsym", 1);
      }
-#endif
      
      printf ("cos(2.0) = %f\n\n", (*cosine)(2.0));
  
