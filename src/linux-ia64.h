@@ -23,7 +23,6 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
-#include <asm/system.h>
 #include <sys/ucontext.h>
 
 #ifdef PFM06A
