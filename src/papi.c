@@ -206,7 +206,9 @@ int PAPI_library_init(int version)
       _papi_hwi_debug |= DEBUG_OVERFLOW;
 #endif
 
+#ifndef _WIN32
    if (_papi_hwi_system_info.pid == getpid())
+#endif
      {
        if ( init_level != PAPI_NOT_INITED )
 	 {
