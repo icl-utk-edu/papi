@@ -1,12 +1,31 @@
 #include "fpapi.h"
 #define ITERS 100
 
+#if defined(sun) && defined(sparc)
+#define CACHE_LEVEL "PAPI_L2_TCM"
+#define EVT1            PAPI_L2_TCM
+#define EVT2            PAPI_L2_TCA
+#define EVT3            PAPI_L2_TCH
+#define EVT1_STR        "PAPI_L2_TCM"
+#define EVT2_STR        "PAPI_L2_TCA"
+#define EVT3_STR        "PAPI_L2_TCH"
+#else
+#define CACHE_LEVEL "PAPI_L1_TCM"
+#define EVT1            PAPI_L1_TCM
+#define EVT2            PAPI_L1_ICM
+#define EVT3            PAPI_L1_DCM
+#define EVT1_STR        "PAPI_L1_TCM"
+#define EVT2_STR        "PAPI_L1_ICM"
+#define EVT3_STR        "PAPI_L1_DCM"
+#endif
+
+
       program tenth
       implicit none
 
       integer*8 values(10)
       integer es1, es2, es3
-      integer mask1, mask2, mask3
+      integer*8 mask1, mask2, mask3
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer retval
@@ -16,17 +35,11 @@
       integer tests_quiet, get_quiet
 	external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
-#if (defined(sun) && defined(sparc))
-      mask1 = PAPI_L2_TCM
-      mask2 = PAPI_L2_TCA
-      mask3 = PAPI_L2_TCH
-#else
-      mask1 = PAPI_L1_TCM
-      mask2 = PAPI_L1_ICM
-      mask3 = PAPI_L1_DCM
-#endif
+      mask1 = EVT1
+      mask2 = EVT2
+      mask3 = EVT3
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -77,7 +90,7 @@
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_create_eventset',
-     *retval)
+     *   retval)
       end if
 
       call PAPIf_add_event( es3, mask3, retval )
@@ -194,9 +207,9 @@
       
       write (*,500) "Test type", 1, 2, 3
 #if (defined(sun) && defined(sparc))
-      write (*,500) "PAPI_L2_TCM", values(1), 0, 0
-      write (*,500) "PAPI_L2_TCA", 0, values(3), 0
-      write (*,500) "PAPI_L2_TCH", 0, 0, values(5)
+      write (*,500) EVT1_STR, values(1), 0, 0
+      write (*,500) EVT2_STR, 0, values(3), 0
+      write (*,500) EVT3_STR, 0, 0, values(5)
       print *, "------------------------------------------------",
      *"------"
  
@@ -204,9 +217,9 @@
       print *, "First number row 1 approximately equals (2,2) - (3,3) ", 
      *"or ",(values(3)-values(5))
 #else
-      write (*,500) "PAPI_L1_TCM", values(1), 0, 0
-      write (*,500) "PAPI_L1_ICM", 0, values(3), 0
-      write (*,500) "PAPI_L1_DCM", 0, 0, values(5)
+      write (*,500) EVT1_STR, values(1), 0, 0
+      write (*,500) EVT2_STR, 0, values(3), 0 
+      write (*,500) EVT3_STR, 0, 0, values(5) 
       print *, "------------------------------------------------",
      *"------"
  
