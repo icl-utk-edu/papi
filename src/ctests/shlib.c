@@ -13,6 +13,7 @@
 #ifndef NO_DLFCN
 #include <dlfcn.h>
 #endif
+extern errno;
 
 int main(int argc, char **argv)
 {
@@ -87,7 +88,10 @@ int main(int argc, char **argv)
 
      handle = dlopen (libname, RTLD_NOW);
      if (!handle) {
-       test_fail(__FILE__, __LINE__, "dlopen", 1);
+       if (errno==2)
+          test_skip(__FILE__, __LINE__, "dlopen", 1);
+       else
+          test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
      
 #if defined(_AIX)  
