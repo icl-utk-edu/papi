@@ -20,6 +20,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <math.h>
 
 #if defined ( _CRAYT3E )
 #include  <fortran.h>

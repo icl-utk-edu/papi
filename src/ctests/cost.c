@@ -4,6 +4,9 @@ int main(int argc, char **argv)
 {
    int i, retval, EventSet = PAPI_NULL;
    long_long totcyc, values[2];
+   long_long *array;
+   long_long min, max, tmp;
+   double  average, std;
 
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -43,38 +46,73 @@ int main(int argc, char **argv)
 
    if (!TESTS_QUIET)
       printf("Performing start/stop test...\n");
-   totcyc = PAPI_get_real_cyc();
+   array = (long_long *)malloc(NUM_ITERS*sizeof(long_long));
+   if (array == NULL ) 
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
    for (i = 0; i < NUM_ITERS; i++) {
+      totcyc = PAPI_get_real_cyc();
       PAPI_start(EventSet);
       PAPI_stop(EventSet, values);
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i]=totcyc;
    }
-
-   totcyc = PAPI_get_real_cyc() - totcyc;
+   min = max = array[0]; 
+   printf("array[0] = %lld \n", array[0]);
+   average = 0;
+   for(i=0; i < NUM_ITERS; i++ ) {
+      average += array[i]; 
+      if (min > array[i]) min = array[i];
+      if (max < array[i]) max = array[i];
+   }
+   average = (long) (average/NUM_ITERS); 
+   std=0;
+   for(i=0; i < NUM_ITERS; i++ ) {
+      tmp = array[i]-average; 
+      std += tmp * tmp;
+   }
+   std = sqrt(std/(NUM_ITERS-1));
 
    if (!TESTS_QUIET) {
       printf("\n");
 
-      printf("\nTotal cost for PAPI_start/stop(2 counters) over %d iterations\n",NUM_ITERS);
-      printf(LLDFMT, totcyc);
-      printf("total cyc,\n%f cyc/call pair\n",((float) totcyc) / (float)(NUM_ITERS+1));
+      printf("\nCost for PAPI_start/stop(2 counters) over %d iterations\n",NUM_ITERS);
+      printf("min cyc/pair  max cycle/pair  average cycle/pair  std \n ");
+      printf("%lld          %lld            %lf         %lf\n", min, max, average, std);
 
       /* Start the read eval */
       printf("\n\nPerforming read test...\n");
    }
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-   totcyc = PAPI_get_real_cyc();
 
    for (i = 0; i < NUM_ITERS; i++) {
+      totcyc = PAPI_get_real_cyc();
       PAPI_read(EventSet, values);
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i]=totcyc;
    }
 
-   totcyc = PAPI_get_real_cyc() - totcyc;
+   min = max = array[0]; 
+   printf("array[0] = %lld \n", array[0]);
+   average = 0;
+   for(i=0; i < NUM_ITERS; i++ ) {
+      average += array[i]; 
+      if (min > array[i]) min = array[i];
+      if (max < array[i]) max = array[i];
+   }
+   average = (long) (average/NUM_ITERS); 
+   std=0;
+   for(i=0; i < NUM_ITERS; i++ ) {
+      tmp = array[i]-average; 
+      std += tmp * tmp;
+   }
+   std = sqrt(std/(NUM_ITERS-1));
 
    if (!TESTS_QUIET) {
       printf("\nTotal cost for PAPI_read(2 counters) over %d iterations\n",NUM_ITERS);
-      printf(LLDFMT, totcyc);
-      printf("total cyc,\n%f cyc/call\n",((float) totcyc) / (float)(NUM_ITERS+1));
+      printf("min cyc/pair  max cycle/pair  average cycle/pair  std \n ");
+      printf("%lld          %lld            %lf         %lf\n", min, max, average, std);
    }
    test_pass(__FILE__, NULL, 0);
    exit(1);

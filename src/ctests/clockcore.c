@@ -1,139 +1,102 @@
 #include "papi_test.h"
 
-void clockcore(void)
+static char *func_name[]={
+  "PAPI_get_real_cyc",
+  "PAPI_get_real_usec",
+  "PAPI_get_virt_cyc",
+  "PAPI_get_virt_usec"
+};
+
+void clock_res_check(int flag)
 {
-   long_long *elapsed_usec, *elapsed_cyc,
-       total_usec = 0, uniq_usec = 0, diff_usec = 0,
+   long_long  *elapsed_cyc,
        total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
    int i;
+   double min, max, average, std, tmp;
 
-   elapsed_usec = (long_long *) malloc(NUM_ITERS * sizeof(long_long));
    elapsed_cyc = (long_long *) malloc(NUM_ITERS * sizeof(long_long));
 
    /* Real */
+   switch(flag) {
+      case 0:
+         for (i = 0; i < NUM_ITERS; i++)
+            elapsed_cyc[i] = (long_long) PAPI_get_real_cyc();
+         break;
+      case 1:
+         for (i = 0; i < NUM_ITERS; i++)
+            elapsed_cyc[i] = (long_long) PAPI_get_real_usec();
+         break;
+      case 2:
+         for (i = 0; i < NUM_ITERS; i++)
+            elapsed_cyc[i] = (long_long) PAPI_get_virt_cyc();
+         break;
+      case 3:
+         for (i = 0; i < NUM_ITERS; i++)
+            elapsed_cyc[i] = (long_long) PAPI_get_virt_usec();
+         break;
+      default:
+         test_fail(__FILE__, __LINE__, "clock_res_check", -1);
+         
+   }
 
-   for (i = 0; i < NUM_ITERS; i++)
-      elapsed_cyc[i] = (long_long) PAPI_get_real_cyc();
-
+   min = max = elapsed_cyc[1]-elapsed_cyc[0];
    for (i = 1; i < NUM_ITERS; i++) {
       if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0){
 	 fprintf(stderr,"Negative elapsed time, bailing\n");
          abort();
       }
       diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
+      if (min > diff_cyc) min= diff_cyc;
+      if (max < diff_cyc) max= diff_cyc;
       if (diff_cyc != 0)
          uniq_cyc++;
       total_cyc += diff_cyc;
    }
+   average = (double)total_cyc/(NUM_ITERS-1);
+   std = 0;
+   for(i=1; i< NUM_ITERS; i++) {
+      tmp = elapsed_cyc[i]-elapsed_cyc[i-1];
+      tmp  = tmp -average;
+      std += tmp * tmp; 
+   }
+   std = sqrt(std/(NUM_ITERS-2));
+   printf("%s: min %.3lf  max %.3lf \n", func_name[flag], min , max);
+   printf("                   average %.3lf std %.3lf\n", average, std);
    if (!TESTS_QUIET) {
       if (uniq_cyc == NUM_ITERS - 1) {
-         printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
+         printf("%s : %7.3f   <%7.3f\n", func_name[flag],
                 (double) total_cyc / (double) (NUM_ITERS),
                 (double) total_cyc / (double) uniq_cyc);
       } else if (uniq_cyc) {
-         printf("PAPI_get_real_cyc : %7.3f    %7.3f\n",
+         printf("%s : %7.3f    %7.3f\n", func_name[flag],
                 (double) total_cyc / (double) (NUM_ITERS),
                 (double) total_cyc / (double) uniq_cyc);
       } else {
-         printf("PAPI_get_real_cyc : %7.3f   >%7.3f\n",
+         printf("%s : %7.3f   >%7.3f\n", func_name[flag],
                 (double) total_cyc / (double) (NUM_ITERS), (double) total_cyc);
       }
    }
 
-   for (i = 0; i < NUM_ITERS; i++)
-      elapsed_usec[i] = (long_long) PAPI_get_real_usec();
+   free(elapsed_cyc);
+}
 
-   for (i = 1; i < NUM_ITERS; i++) {
-      if (elapsed_usec[i] - elapsed_usec[i - 1] < 0){
-	 fprintf(stderr,"Negative elapsed time, bailing\n");
-         abort();
-      }
-      diff_usec = elapsed_usec[i] - elapsed_usec[i - 1];
-      if (diff_usec != 0)
-         uniq_usec++;
-      total_usec += diff_usec;
-   }
-   if (!TESTS_QUIET) {
-      if (uniq_usec == NUM_ITERS - 1) {
-         printf("PAPI_get_real_usec: %7.3f   <%7.3f\n",
-                (double) total_usec / (double) (NUM_ITERS),
-                (double) total_usec / (double) uniq_usec);
-      } else if (uniq_usec) {
-         printf("PAPI_get_real_usec: %7.3f    %7.3f\n",
-                (double) total_usec / (double) (NUM_ITERS),
-                (double) total_usec / (double) uniq_usec);
-      } else {
-         printf("PAPI_get_real_usec: %7.3f   >%7.3f\n",
-                (double) total_usec / (double) (NUM_ITERS), (double) total_usec);
-      }
-   }
+void clockcore(void)
+{
+   /* check PAPI_get_real_cyc */
+   clock_res_check(0);
+   /* check PAPI_get_real_usec */
+   clock_res_check(1);
 
+   /* check PAPI_get_virt_cyc */
    /* Virtual */
-
-   total_cyc = 0;
-   uniq_cyc = 0;
-
    if (PAPI_get_virt_cyc() != -1) {
-      for (i = 0; i < NUM_ITERS; i++)
-         elapsed_cyc[i] = PAPI_get_virt_cyc();
-
-      for (i = 1; i < NUM_ITERS; i++) {
-         if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0){
-	    fprintf(stderr,"Negative elapsed time, bailing.\n");
-            abort();
-	 }
-         diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
-         if (diff_cyc != 0)
-            uniq_cyc++;
-         total_cyc += diff_cyc;
-      }
-      if (!TESTS_QUIET) {
-         if (uniq_cyc == NUM_ITERS - 1) {
-            printf("PAPI_get_virt_cyc : %7.3f   <%7.3f\n",
-                   (double) total_cyc / (double) (NUM_ITERS),
-                   (double) total_cyc / (double) uniq_cyc);
-         } else if (uniq_cyc) {
-            printf("PAPI_get_virt_cyc : %7.3f    %7.3f\n",
-                   (double) total_cyc / (double) (NUM_ITERS),
-                   (double) total_cyc / (double) uniq_cyc);
-         } else {
-            printf("PAPI_get_virt_cyc : %7.3f   >%7.3f\n",
-                   (double) total_cyc / (double) (NUM_ITERS), (double) total_cyc);
-	 }
-      }
+      clock_res_check(2);
    } else
       test_fail(__FILE__, __LINE__, "PAPI_get_virt_cyc", -1);
-   total_usec = 0;
-   uniq_usec = 0;
 
+   /* check PAPI_get_virt_usec */
    if (PAPI_get_virt_usec() != -1) {
-      for (i = 0; i < NUM_ITERS; i++)
-         elapsed_usec[i] = (long_long) PAPI_get_virt_usec();
-
-      for (i = 1; i < NUM_ITERS; i++) {
-         if (elapsed_usec[i] - elapsed_usec[i - 1] < 0){
-	    fprintf(stderr,"Negative elapsed time, bailing\n");
-            abort();
-	 }
-         diff_usec = elapsed_usec[i] - elapsed_usec[i - 1];
-         if (diff_usec != 0)
-            uniq_usec++;
-         total_usec += diff_usec;
-      }
-      if (!TESTS_QUIET) {
-         if (uniq_usec == NUM_ITERS - 1) {
-            printf("PAPI_get_virt_usec: %7.3f   <%7.3f\n",
-                   (double) total_usec / (double) (NUM_ITERS),
-                   (double) total_usec / (double) uniq_usec);
-         } else if (uniq_usec) {
-            printf("PAPI_get_virt_usec: %7.3f    %7.3f\n",
-                   (double) total_usec / (double) (NUM_ITERS),
-                   (double) total_usec / (double) uniq_usec);
-         } else {
-            printf("PAPI_get_virt_usec: %7.3f   >%7.3f\n",
-                   (double) total_usec / (double) (NUM_ITERS), (double) total_usec);
-	 }
-      }
+      clock_res_check(3);
    } else
       test_fail(__FILE__, __LINE__, "PAPI_get_virt_usec", -1);
 }
