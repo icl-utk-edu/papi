@@ -1,3 +1,5 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared

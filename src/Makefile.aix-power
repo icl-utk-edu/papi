@@ -1,3 +1,5 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
 SUBSTR  = aix-power
 DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
 LIBS	= static aix-shared
@@ -12,7 +14,6 @@ TOPTFLAGS=
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
-NOOPT	= 
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi

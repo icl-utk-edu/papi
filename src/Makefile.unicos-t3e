@@ -1,3 +1,5 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
 SUBSTR  = unicos-ev5
 DESCR   = "Cray UNICOS/mk Unix with Alpha 21164"
 LIBS	= static 
@@ -9,7 +11,6 @@ OPTFLAGS= -O3
 TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
-NOOPT	= -O0
 CC_R	= cc
 CC	= cc
 CPP	= $(CC) -E

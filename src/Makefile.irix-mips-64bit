@@ -1,3 +1,5 @@
+LIBRARY = libpapi64.a
+SHLIB = libpapi64.so
 SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared 
@@ -18,8 +20,5 @@ CPP	= cc -E
 F77	= f77
 
 include ./Makefile.inc
-
-LIBRARY = libpapi64.a
-SHLIB = libpapi64.so
 
 native_clean:

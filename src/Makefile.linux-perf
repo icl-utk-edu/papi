@@ -1,3 +1,5 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
 SUBSTR  = linux-perf
 DESCR	= "Linux with Perf Kernel Patch for the Pentium Pro, II, III"
 LIBS	= static shared

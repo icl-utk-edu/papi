@@ -1,3 +1,5 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
 SUBSTR  = solaris-ultra
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
@@ -8,7 +10,6 @@ CFLAGS  = -xarch=v8plusa -g
 #OPTFLAGS= -fpic -O3
 OPTFLAGS= 
 #-xO3
-#NOOPT	= 
 TOPTFLAGS= -xO0
 FFLAGS	= $(CFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
