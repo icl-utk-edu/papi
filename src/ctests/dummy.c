@@ -1,4 +1,4 @@
-#include "test_utils.h"
+#include "papi_test.h"
 
 void dummy(void *array) {
 
