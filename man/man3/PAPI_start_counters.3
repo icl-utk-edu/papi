@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_start_counters "October, 2000" "" "PAPI"
+.TH PAPI_start_counters 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_start_counters \- PAPI High Level: start counting hardware events
@@ -9,20 +9,21 @@ PAPI_start_counters \- PAPI High Level: start counting hardware events
 
 .BI "int\ PAPI_start_counters(int *" events ", int " array_len ");"
 
-.LP
-int *events -- an array of codes for events, such as PAPI_INT_INS
-.LP
-int array_len -- the number of items in the *events array
-.LP
 .SH DESCRIPTION
 .LP
 .B PAPI_start_counters(\|)
-Start counting the events named in the events array.  This function
+starts counting the events named in the events array.  This function
 implicitly stops and initializes any counters running as a result of
-a previous call to PAPI_start_coutners().  It is the user's responsibility
+a previous call to PAPI_start_counters().  It is the user's responsibility
 to choose events that can be counted simultaneously by reading the
-vendor's documentation.  The lenght of this array should be no longer
+vendor's documentation.  The lenght of the event array should be no longer
 than PAPI_MAX_EVENTS.
+.LP
+.I *events 
+-- an array of codes for events such as PAPI_INT_INS or a native event code
+.LP
+.I array_len 
+-- the number of items in the *events array
 .LP
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  
@@ -59,11 +60,10 @@ in the EventSet simultaneously.
 The PAPI preset is not available on the underlying hardware. 
 
 .SH EXAMPLES
-.LP
-
+.nf
+.if t .ft CW
   int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
   int num_hwcntrs = 0;
-.LP
 	
   if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
     handle_error(1);
@@ -75,6 +75,8 @@ The PAPI preset is not available on the underlying hardware.
 
   if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
     handle_error(1);
+.if t .ft CW
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

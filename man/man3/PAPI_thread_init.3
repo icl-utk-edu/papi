@@ -1,13 +1,13 @@
 .\" $Id$
-.TH PAPI_thread_init 3 "October, 2000" "" "PAPI"
+.TH PAPI_thread_init 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_thread_init \- initialize thread support in the PAPI library
 
 .SH SYNOPSIS
-.nf
 .B #include <papi.h>
 
+.nf
 .BI "int PAPI_thread_init (unsigned long int (*" handle ")(), int " flag ");"
 .fi
 
@@ -26,7 +26,6 @@ this routine. It takes the following arguments:
 .LP
 .I "flag"
 --  This is reserved for future use and should be set to zero.
-.LP
 
 .SH RETURN VALUES
 On success, this function returns
@@ -40,17 +39,21 @@ One or more of the arguments is invalid.
 .fi
 
 .SH EXAMPLES
-.LP
-For Pthreads:
-
+.I For Pthreads:
+.nf         
+.if t .ft CW
 if (PAPI_thread_init(pthread_self, 0) != PAPI_OK)
   handle_error(1);
-
-For OpenMP:
-
+.if t .ft P
+.fi        
+.LP
+.I For OpenMP:
+.nf         
+.if t .ft CW
 if (PAPI_thread_init(omp_get_thread_num,0) != PAPI_OK)
   handle_error(1);
-.LP
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_describe_eventset 3 "October, 2000" "" "PAPI"
+.TH PAPI_describe_eventset 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_describe_event, PAPI_event_name_to_code, PAPI_event_code_to_name \- convert a hardware event to a description, number or string symbol.
@@ -14,13 +14,13 @@ PAPI_describe_event, PAPI_event_name_to_code, PAPI_event_code_to_name \- convert
 .if
 
 .SH DESCRIPTION
-.B PAPI_describe_event
+.B PAPI_describe_event(\|)
 is used to translate either an ASCII PAPI preset name or an integer PAPI preset event code into an ASCII description of that event. The functionality of this call is a superset of the following two calls. 
 
-.B PAPI_event_name_to_code
+.B PAPI_event_name_to_code(\|)
 is used to translate an ASCII PAPI preset name into an integer PAPI event code.
 
-.B PAPI_event_code_to_name
+.B PAPI_event_code_to_name(\|)
 is used to translate an integer PAPI event code into an ASCII PAPI preset name.
 
 The
@@ -78,10 +78,8 @@ Philip J. Mucci <mucci@cs.utk.edu>
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+.BR PAPI_preset "(3), " PAPI_add_event "(3), " 
+.BR PAPI_set_opt "(3), " PAPI__events "(3), " PAPI_query "(3), "
 The PAPI Web Site: 
 .B http://icl.cs.utk.edu/projects/papi
 

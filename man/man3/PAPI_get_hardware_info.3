@@ -1,14 +1,23 @@
 .\" $Id$
-.TH PAPI_get_hardware_info "October, 2000" PAPI "PAPI Programmer's Manual"
+.TH PAPI_get_hardware_info 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_get_hardware_info \- get the hardware's address space info
+PAPI_get_hardware_info \- get the info about the system hardware
 
 .SH SYNOPSIS
+.B #include <papi.h>
+
+.nf
 .BI "const PAPI_hw_info_t *PAPI_get_hardware_info(void);"
+.if
 
 .SH DESCRIPTION
-None.
+The pointer returned points to a structure containing information
+about the hardware on which the program runs. For details about the
+possibly defined values refer to the
+.B papi.h
+include file.
+
 
 .SH RETURN VALUES
 On success, this function returns a non-NULL pointer.
@@ -19,11 +28,9 @@ None.
 
 .SH EXAMPLE
 .LP
-.PP
-.RS
 .nf
+.if t .ft CW
 const PAPI_hw_info_t *hwinfo = NULL;
-.LP
 	
 if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);
@@ -32,19 +39,16 @@ if ((hwinfo = PAPI_get_hardware_info()) == NULL)
   exit(1);
 
 printf("%d CPU's at %f Mhz.\en",hwinfo->totalcpus,hwinfo->mhz);
+.if t .ft P
 .fi
-.RE
-.PP
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-Only the
-.I text_start
-and
-.I text_end
-fields are filled on every architecture.
+If called before 
+.B PAPI_library_init()
+the behaviour of the routine is undefined.
 
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "

@@ -1,15 +1,30 @@
 .\" $Id$
-.TH PAPI_read "October, 2000" "" "PAPI"
+.TH PAPI_read 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_read, PAPI_accum \- read and reset, accumulate and reset hardware events from an EventSet
+PAPI_read, PAPI_accum \- read and reset, accumulate and reset hardware
+events from an event set
 
 .SH SYNOPSIS
+.B #include <papi.h>
 
+.nf
 .BI "int\ PAPI_read(int " EventSet ", long long *" values ");"
-
 .BI "int\ PAPI_accum(int " EventSet ", long long *" values ");"
+.fi
 
+.SH DESCRIPTION
+.B PAPI_read()
+reads the counters of the indicated event set and stores the values in 
+the array
+.IR values .
+The counters are left counting after the read.
+.LP
+.B PAPI_accum()
+reads the counters of the indicated event set and adds counter values to
+the values in the array
+.IR values .
+The counters are zeroed and left counting after the operation.
 
 .SH RETURN VALUES
 On success, this function returns
@@ -27,15 +42,14 @@ A system or C library call failed inside PAPI, see the
 variable.
 .TP
 .B "PAPI_ENOEVST"
-The EventSet specified does not exist.
+The event set specified does not exist.
 
 .SH EXAMPLES
-.LP
-
+.nf
+.if t .ft CW
   int EventSet = PAPI_NULL;
   unsigned int native = 0x0;
-  long long values[1] = (long long)0;
-.LP
+  long long values[1] = (long long) 0;
 	
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
@@ -55,14 +69,16 @@ The EventSet specified does not exist.
   if (PAPI_accum(EventSet, values) != PAPI_OK)
     handle_error(1);
 
-  printf("%lld\n",values[0]);
+  printf("%lld\\n",values[0]);
 
   poorly_tuned_function();
 
   if (PAPI_stop(EventSet, values) != PAPI_OK)
     handle_error(1);
 
-  printf("%lld\n",values[0]);
+  printf("%lld\\n",values[0]);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

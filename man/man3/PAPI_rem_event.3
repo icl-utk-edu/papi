@@ -1,8 +1,8 @@
 .\" $Id$
-.TH PAPI_rem_event 3 "October, 2000" "" "PAPI"
+.TH PAPI_rem_event 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent \- add PAPI preset or native hardware event to an EventSet
+PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent \- remove PAPI preset or native hardware event from an EventSet
 
 .SH SYNOPSIS
 .B #include <papi.h>
@@ -11,20 +11,32 @@ PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent \- add PAPI preset or native ha
 .BI "int\ PAPI_rem_event(int *" EventSet ", int " EventCode ");"
 .BI "int\ PAPI_rem_events(int *" EventSet ", int *" EventCode ", int " num ");"
 .BI "int\ PAPI_rem_pevent(int *" EventSet ", int " code ", void * " misc ");"
-.if
+.fi
 
 .SH DESCRIPTION
 .nf
-.BR "PAPI_rem_event() " "adds a hardware event to a PAPI Event Set."
-.BR "PAPI_rem_events() " "does the same, but for an array of hardware event codes."
-.BR "PAPI_rem_pevents() " "is reserved for future use."
-.if
+.BR "PAPI_rem_event(\|) " "removes a hardware event to a PAPI event set."
+.BR "PAPI_rem_events(\|) " "does the same, but for an array of hardware event codes."
+.BR "PAPI_rem_pevents(\|) " "is reserved for future use."
+.fi
 
 Each of these functions takes the following as its first argument:
 .LP
 .I "EventSet"
---  an integer handle for a PAPI Event Set as created by
+--  an integer handle for a PAPi event set as created by
 .BR "PAPI_create_eventset" (3)
+.LP
+The other arguments are:
+.LP
+.I EventCode
+-- a defined event such as PAPI_TOT_INS or a native event.
+.LP
+.I *EventCode
+-- an array of defined events
+.LP
+.I num
+-- an integer indicating the number of events in the array
+.I *EventCode
 
 A hardware event can be either a PAPI Preset or a native hardware event code. 
 For a list of PAPI preset events, see
@@ -98,8 +110,8 @@ This function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_preset "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_add_event "(3), " 
+.BR PAPI_add_events "(3), " PAPI_add_pevents "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
 The\ PAPI\ Web\ Site: 
 .B http://icl.cs.utk.edu/projects/papi

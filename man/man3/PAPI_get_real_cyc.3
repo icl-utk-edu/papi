@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_get_real_cyc "October, 2000" PAPI "PAPI Programmer's Manual"
+.TH PAPI_get_real_cyc 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_get_real_cyc, PAPI_get_real_usec \- get real time counter values
@@ -7,27 +7,25 @@ PAPI_get_real_cyc, PAPI_get_real_usec \- get real time counter values
 .SH SYNOPSIS
 .B #include <papi.h>
 
+.nf
 .BI "long long PAPI_get_real_cyc(void);"
 .BI "long long PAPI_get_real_usec(void);"
+.fi
 
 .SH DESCRIPTION
-Both of these functions return the total number of real time units 
-from some arbitrary starting point. These calls are equivalent to
+Both of these functions return the total real time passed since 
+some arbitrary starting point. The time is returned in clock cycles 
+or microseconds respectively. These calls are equivalent to
 wall clock time. 
 
-.SH RETURN VALUES
-This function always succeeds.
-
 .SH ERRORS
-None.
+This function always succeeds.
 
 .SH EXAMPLE
 .LP
-.PP
-.RS
 .nf
+.if t .ft CW
 long long s, e;
-.LP
 	
 if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);
@@ -38,9 +36,8 @@ your_slow_code();
 
 e = PAPI_get_real_cyc();
 printf("Wallclock cycles: %lld\en",e-s);
+.if t .ft P
 .fi
-.RE
-.PP
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

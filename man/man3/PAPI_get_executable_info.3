@@ -1,14 +1,22 @@
 .\" $Id$
-.TH PAPI_get_executable_info "October, 2000" PAPI "PAPI Programmer's Manual"
+.TH PAPI_get_executable_info 3 "October, 2000" "PAPI Programmer's Manual" PAPI
 
 .SH NAME
 PAPI_get_executable_info \- get the executable's address space info
 
 .SH SYNOPSIS
+.B #include <papi.h>
+
+.nf
 .BI "const PAPI_exe_info_t *PAPI_get_executable_info(void);"
+.if
 
 .SH DESCRIPTION
-None.
+The pointer returned points to a structure containing information about
+the current program. For details about the possibly defined values 
+refer to the
+.B papi.h
+include file.
 
 .SH RETURN VALUES
 On success, this function returns a non-NULL pointer.
@@ -19,11 +27,9 @@ None.
 
 .SH EXAMPLE
 .LP
-.PP
-.RS
 .nf
+.if t .ft CW
 const PAPI_exe_info_t *prginfo = NULL;
-.LP
 	
 if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);
@@ -33,9 +39,8 @@ if ((prginfo = PAPI_get_executable_info()) == NULL)
 
 printf("Start of user program is at %p\en",prginfo->text_start);
 printf("End of user program is at %p\en",prginfo->text_end);
+.if t .ft P
 .fi
-.RE
-.PP
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

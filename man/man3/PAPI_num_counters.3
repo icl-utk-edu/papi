@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_num_counters "October, 2000" "" "PAPI"
+.TH PAPI_num_counters 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_num_counters \- PAPI High Level: get the number of hardware counters available on the system
@@ -12,15 +12,16 @@ PAPI_num_counters \- PAPI High Level: get the number of hardware counters availa
 .SH DESCRIPTION
 .LP
 .B PAPI_num_counters(\|)
-This function returns the optimal length of the values array for the
+returns the optimal length of the values array for the
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
+.BR PAPI_num_counters() "initialises the library using"
+.BR PAPI_library_init "if necessary."
 
 .SH RETURN VALUES
-On success, this function returns 
-.I "PAPI_VER_CURRENT."
-\.
-On error, a non-zero non-zero error code is returned.
+On success, this function returns the number of hardware counters available.
+.LP
+On error, a negative error code is returned.
 
 .SH ERRORS
 .TP
@@ -38,11 +39,11 @@ A system or C library call failed inside PAPI, see the
 variable.
 
 .SH EXAMPLES
-.LP
 
+.nf
+.if t .ft CW
   int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
   int num_hwcntrs = 0;
-.LP
 	
   if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
     handle_error(1);
@@ -54,12 +55,17 @@ variable.
 
   if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
     handle_error(1);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
 If you don't call this, your application could core dump.
+.LP
+A positive return value indicates either the number of available counters
+or a library mis-match error.
 
 .SH SEE ALSO
 .BR PAPI_start_counters "(3),"

@@ -1,16 +1,23 @@
 .\" $Id$
-.TH PAPI_start 3 "October, 2000" "" "PAPI"
+.TH PAPI_start 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_start, PAPI_stop \- start/stop counting hardware events in an EventSet
+PAPI_start, PAPI_stop \- start/stop counting hardware events in an event set
 
 .SH SYNOPSIS
 .B #include <papi.h>
 
+.nf
 .BI "int\ PAPI_start(int " EventSet ");"
-
 .BI "int\ PAPI_stop(int " EventSet ", long long *" values ");"
+.fi
 
+.SH DESCRIPTION
+.B PAPI_start
+starts the counting of a previously set up event set
+.LP
+.B PAPI_stop
+halts the counting of a previously set up event set
 
 .SH RETURN VALUES
 On success, this function returns
@@ -32,11 +39,11 @@ The EventSet specified does not exist.
 .TP
 .B "PAPI_EISRUN"
 The EventSet is currently counting events.
-.B (PAPI_start() only)
+.BR ""  ( "PAPI_start() " only)
 .TP
 .B "PAPI_ENOTRUN"
 The EventSet is currently not running.
-.B (PAPI_stop() only)
+.BR "" ( "PAPI_stop() " only)
 .TP
 .B "PAPI_ECNFLCT"
 The underlying counter hardware can not count this event and other events
@@ -46,12 +53,11 @@ in the EventSet simultaneously.
 The PAPI preset is not available on the underlying hardware. 
 
 .SH EXAMPLES
-.LP
-
+.nf         
+.if t .ft CW
   int EventSet = PAPI_NULL;
   unsigned int native = 0x0;
   long long values[1];
-.LP
 	
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
@@ -71,8 +77,9 @@ The PAPI preset is not available on the underlying hardware.
   if (PAPI_stop(EventSet, values) != PAPI_OK)
     handle_error(1);
 
-  printf("%lld\n",values[0]);
-
+  printf("%lld\\n",values[0]);
+.if t .ft P
+.fi         
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
 
@@ -80,8 +87,8 @@ Philip J. Mucci <mucci@cs.utk.edu>
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_add_event "(3), " PAPI_reset "(3), " PAPI_read "(3), "
-.BR PAPI_set_opt "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+.BR PAPI_create_eventset "(3), " PAPI_destroy_eventset "(3), " 
+.BR PAPI_add_event "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_reset "(3), " PAPI_set_opt "(3), " 
 The PAPI Web Site: 
 .B http://icl.cs.utk.edu/projects/papi

@@ -1,8 +1,8 @@
 .\" $Id$
-.TH PAPI_set_domain 3 "March, 2001" "" "PAPI"
+.TH PAPI_set_domain 3 "March, 2001" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_set_domain \- set the default execution domain for new EventSets
+PAPI_set_domain \- set the default execution domain for new event sets
 
 .SH SYNOPSIS
 .B #include <papi.h>
@@ -10,28 +10,34 @@ PAPI_set_domain \- set the default execution domain for new EventSets
 .BI "int PAPI_set_domain(int " domain ");"
 
 .SH DESCRIPTION
-.B "PAPI_set_domain" sets the default execution domain 
-for all new EventSets created by 
+.B "PAPI_set_domain" 
+sets the default execution domain for all new event sets created by
 .BR "PAPI_create_eventset" (3).
-EventSets that are already in existance are not affected. To change the
-domain of an existing EventSet, please see the 
+Event sets that are already in existance are not affected. To change the
+domain of an existing event set, please see the 
 .BR "PAPI_set_opt" (3)
-man page. The reader should note that the domain of an EventSet affects
-only which mode the counter continue to run. Counts are still aggregated
-for the current process, and not for any other processes in the system. Thus
-when requesting PAPI_DOM_KERNEL, the user is asking for events that occur on
-behalf of the process, inside the kernel. 
+man page. The reader should note that the domain of an event set
+affects only which mode the counter continue to run. Counts are still
+aggregated for the current process, and not for any other processes in
+the system. Thus when requesting
+.BR PAPI_DOM_KERNEL , 
+the user is asking for events that occur on behalf of the process,
+inside the kernel.
 
 Here
 .I "domain"
 is one of the following constants as defined in the papi.h header file.
 
-.nf 
-.B "PAPI_DOM_USER"\t\tUser context counted
-.B "PAPI_DOM_KERNEL"\tKernel/OS context counted
-.B "PAPI_DOM_OTHER"\tException/transiant mode counted
-.B "PAPI_DOM_ALL"\t\tAll contexts counted
-.fi
+.TS
+allbox tab($);
+lB l.
+PAPI_DOM_USER$User context counted
+PAPI_DOM_KERNEL$Kernel/OS context counted
+PAPI_DOM_OTHER$Exception/transient mode counted
+PAPI_DOM_ALL$All above contexts counted
+PAPI_DOM_MIN$The smallest available context
+PAPI_DOM_MAX$The largest available context
+.TE
 
 .SH RETURN VALUES
 On success, this function returns
@@ -44,13 +50,13 @@ On error, a non-zero error code is returned.
 One or more of the arguments is invalid.
 .TP
 .B "PAPI_ENOEVST"
-The EventSet specified does not exist.
+The event set specified does not exist.
 .TP
 .B "PAPI_EISRUN"
-The EventSet is currently counting events.
+The event set is currently counting events.
 
 .SH EXAMPLES
-.LP
+
 .nf
 .if t .ft CW
 int retval;
@@ -59,7 +65,7 @@ int retval;
 
 retval = PAPI_library_init(PAPI_VER_CURRENT);
 
-if (retval > 0) {
+if (retval > 0 && retval != PAPI_VER_CURRENT) {
   fprintf(stderr,"PAPI library version mismatch!\n");
   exit(1); }
 

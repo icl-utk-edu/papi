@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_overflow 3 "October, 2000" "" "PAPI"
+.TH PAPI_overflow 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_overflow \- start counting events contained in an EventSet
@@ -7,24 +7,32 @@ PAPI_overflow \- start counting events contained in an EventSet
 .SH SYNOPSIS
 .B #include <papi.h>
 
-.BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler);
-.LP
-EventSet -- a reference to an EventSetInfo structure
-.LP
-EventCode -- integer value for a PAPI Event
-.LP
-threshold -- threshold value in the EventSetOverflowInfo_t structure
-.LP
-flags -- flags value in the EventSetOverflowInfo_t structure
-.LP
-handler -- handler value in the EventSetOverflowInfo_t structure
+.BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler ");"
 
 .SH DESCRIPTION
-.B PAPI_overflow(\|)
-sets up an EventSet such that when it is PAPI_start()'ed, it begins to register overflows. 
-This EventSet may only have multiple events in it, but only 1 can be an overflow trigger.  
-Subsequent calls to PAPI_overflow replace earlier calls. To turn off overflow, set the 
-handler to NULL. 
+.B PAPI_overflow()
+sets up an event set such that when it is PAPI_start()'ed, it begins to
+register overflows.  This event set may have multiple events in
+it, but only one can be used as an overflow trigger.  Subsequent calls to
+.B PAPI_overflow() 
+replace earlier calls. To turn off overflow, set the handler to NULL.
+.LP
+.I EventSet 
+-- a reference to the event set to use
+.LP
+.I EventCode 
+-- the counter to be used for overflow detection
+.LP
+.I threshold 
+-- the overflow threshold value to use
+.LP
+.I flags 
+-- bit map that controls the overflow mode of operation. This is
+currently not used and should be set to 0.
+
+.LP
+.I handler 
+-- the handler function to call upon overflow
 
 .SH RETURN VALUES
 On success, this function returns
@@ -53,17 +61,17 @@ in the EventSet simultaneously.
 The PAPI preset is not available on the underlying hardware. 
 
 .SH EXAMPLES
+.nf
+.if t .ft CW
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {
-  fprintf(stderr,"Value %lld at %p\n",
+  fprintf(stderr,"Value %lld at %p\en",
 	  values[EventIndex],PAPI_get_overflow_address(context));
 #endif
   total++;
 }
-.LP
 
   int EventSet = PAPI_NULL;
-.LP
 	
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
@@ -75,10 +83,17 @@ void handler(int EventSet, int EventCode, int EventIndex, long long *values, int
 
   /* Call handler every 100000 instructions */
 
+  retval = PAPI_overflow(EventSet, PAPI_TOT_INS, THRESHOLD, 0, handler);
+  if (retval != PAPI_OK)
+    exit(1);
+
   /* Start counting */
 
   if (PAPI_start(EventSet) != PAPI_OK)
     handle_error(1);
+
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

@@ -1,5 +1,5 @@
 .\" @(#)$Id$
-.TH PAPI_profil 3 "October, 2000" "" "PAPI"
+.TH PAPI_profil 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_profil, PAPI_sprofil \- generate PC histogram data where hardware counter overflow occurs
@@ -7,29 +7,83 @@ PAPI_profil, PAPI_sprofil \- generate PC histogram data where hardware counter o
 .SH SYNOPSIS
 .B #include <papi.h>
 
-.BI "int PAPI_sprofil(PAPI_sprofil_t *" prof ", int " profcnt 
-.BI ", int " EventSet ", int " EventNum ", int " threshold
-.BI ", int " flags ");"
+.BI "int PAPI_profil(unsigned short *" buf ", unsigned " bufsiz ", unsigned long " offset ", unsigned " scale ", int " EventSet ", int " EventCode ", int " threshold ", int " flags ");"
 .LP
-.BI "int PAPI_profil(unsigned short *" buf ", unsigned " bufsiz
-.BI ", unsigned long " offset ", unsigned " scale ", int " EventSet 
-.BI ", int " EventCode ", int " threshold 
-.BI ", int " flags ");"
+.BI "int PAPI_sprofil(PAPI_sprofil_t *" prof ", int " profcnt ", int " EventSet ", int " EventCode ", int " threshold ", int " flags ");"
 
 .SH DESCRIPTION
+.B PAPI_profil()
+takes the following arguments:
 .LP
-PAPI_sprofil_t *prof -- pointer to array of profile buffers.
+.I *buf
+-- pointer to profile buffer array.
 .LP
-int profcnt -- number of profile buffers in pointed to by prof.
+.I bufsiz
+-- number of entries in *buf.
 .LP
-int EventSet -- The PAPI EventSet to profile when it is started.
+.I offset
+-- starting value of lowest entry in *buf
 .LP
-int EventNum -- Number of the Event in the EventSet to profile.
+.I scale
+-- 
 .LP
-int threshold -- threshold value for the Event triggers the handler.
+.I EventSet 
+-- The PAPI EventSet to profile when it is started.
 .LP
-int flags -- flags to control the behavior of PAPI_sprofil(). 
+.I EventCode
+-- Code of the Event in the EventSet to profile.
 .LP
+.I threshold 
+-- threshold value for the Event triggers the handler. 
+.LP
+.I flags 
+-- bit pattern to control the behavior of PAPI_sprofil(). 
+.LP
+
+.B PAPI_sprofil()
+takes the following arguments:
+.LP
+.I *prof
+-- pointer to sprofil structure.
+.LP
+.I profcnt
+-- 
+.LP
+.I EventSet 
+-- The PAPI EventSet to profile when it is started.
+.LP
+.I EventCode
+-- Code of the Event in the EventSet to profile.
+.LP
+.I threshold 
+-- threshold value for the Event triggers the handler. 
+.LP
+.I flags 
+-- bit pattern to control the behavior of PAPI_sprofil(). 
+
+.TS
+allbox tab($);
+cw(40)  s
+lB lw(40).
+T{
+Defined bits for the 
+.I flags 
+varible
+T}
+PAPI_PROFIL_POSIX$T{
+Default type of profiling, similar to 
+.BR profil (3).
+T}
+PAPI_PROFIL_RANDOM$T{
+Drop a random 25% of the samples.
+T}
+PAPI_PROFIL_WEIGHTED$T{
+Weight the samples by their value.
+T}
+PAPI_PROFIL_COMPRESS$T{
+Ignore samples if hash buckets get big.
+T}
+.TE
 
 .SH RETURN VALUES
 On success, this function returns
@@ -68,7 +122,7 @@ unsigned short *profbuf;
 
 retval = PAPI_library_init(PAPI_VER_CURRENT);
 
-if (retval > 0) {
+if (retval != PAPI_VER_CURRENT & retval > 0) {
   fprintf(stderr,"PAPI library version mismatch!\n");
   exit(1); }
 
@@ -95,7 +149,8 @@ if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
 if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS)) != PAPI_OK)
   handle_error(retval);
 
-if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet, PAPI_FP_INS, 1000000, PAPI_PROFIL_POSIX)) != PAPI_OK)
+if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet, 
+                PAPI_FP_INS, 1000000, PAPI_PROFIL_POSIX)) != PAPI_OK)
   handle_error(retval);
 
 /* Start counting */

@@ -1,26 +1,43 @@
 .\" $Id$
-.TH PAPI_list_events 3 "October, 2000" "" "PAPI"
+.TH PAPI_list_events 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_list_events \- remove one Event from an EventSet
+PAPI_list_events \- list the events defined in an event set
 .SH SYNOPSIS
-.LP
-int PAPI_list_events (int EventSet, *int Events, int *number)
-.LP
-int EventSet -- a reference to an EventSetInfo structure
-.LP
-int *Events -- an array of codes for events, such as PAPI_INT_INS
-.LP
-int number -- how many items in the *Events array
-.LP
+.B #include <papi.h>
+
+.nf
+.BI "int PAPI_list_events(int " EventSet ", int *" Events ", int *" number ");"
+.if
+
 .SH DESCRIPTION
 .LP
 .B PAPI_list_events(\|)
-This function decomposes EventSet into the hardware Events it
-contains. number is both an input and output parameter.
+decomposes an event set into the hardware events it contains.
 .LP
+.I EventSet 
+-- a reference to an EventSetInfo structure
+.LP
+.I *Events 
+-- an array of codes for events, such as PAPI_INT_INS. No more than 
+.I *number
+codes will be stored into the array.
+.LP
+.I *number 
+-- On input the variable determines the size of the 
+.I Events
+array. On output the variable contains the number of counters in the
+event set.
+.LP
+Note that if the given array
+.I *Events
+is too short to hold all the counters in the event set the
+.I *number
+variable will be larger than the actually stored number of counter codes.
+
+.SH RETURN VALUES
 The return value is an integer that indicates whether the call
-succeeded (PAPI_OK) or failed (not PAPI_OK).  
+succeeded (PAPI_OK) or failed (not PAPI_OK). 
 .LP
 
 .SH ERRORS
@@ -35,12 +52,12 @@ The EventSet specified does not exist.
 The hardware event specified is not a PAPI preset for this architecture. 
 
 .SH EXAMPLES
-.LP
 
+.nf
+.if t .ft CW
   int EventCode, EventSet = PAPI_NULL;
   char EventCodeStr[PAPI_MAX_STR_LEN];
   char EventDescr[PAPI_MAX_STR_LEN];
-.LP
 	
   /* Convert to integer */
 
@@ -66,6 +83,8 @@ The hardware event specified is not a PAPI preset for this architecture.
 
   if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
     handle_error(1);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

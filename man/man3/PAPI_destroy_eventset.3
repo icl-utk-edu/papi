@@ -1,27 +1,28 @@
 .\" $Id$
-.TH PAPI_destroy_eventset 3 "October, 2000" "" "PAPI"
+.TH PAPI_destroy_eventset 3 "October, 2000"  "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_cleanup_eventset, PAPI_destroy_eventset  \-  empty and destroy an EventSet
 
-.nf
+.SH SYNOPSIS
 .B #include <papi.h>
 
+.nf
 .BI "int\ PAPI_cleanup_eventset(int *" EventSet ");"
 .BI "int\ PAPI_destroy_eventset(int *" EventSet ");"
 .if
 
 .SH DESCRIPTION
-.B PAPI_cleanup_eventset
-removes all PAPI events from a PAPI Event Set. 
+.B PAPI_cleanup_eventset()
+removes all PAPI events from a PAPI event set. 
 
-.B PAPI_destroy_eventset
-deallocates the memory associated with an empty PAPI Event Set.
+.B PAPI_destroy_eventset()
+deallocates the memory associated with an empty PAPI event set.
 
 Each of these functions takes one argument:
 .LP
 .I "EventSet"
---  an integer handle for a PAPI Event Set as created by
+--  an integer handle for a PAPI event set as created by
 .BR "PAPI_create_eventset" (3)
 
 .SH RETURN VALUES
@@ -32,7 +33,8 @@ On error, a non-zero error code is returned.
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
-One or more of the arguments is invalid.
+One or more of the arguments is invalid. Attempting to
+to destroy a non-empty event set is one such case.
 .TP
 .B "PAPI_ENOEVST"
 The EventSet specified does not exist.

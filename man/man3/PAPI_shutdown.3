@@ -1,21 +1,18 @@
 .\" $Id$
-.TH PAPI_shutdown 3 "October, 2000" "" "PAPI"
+.TH PAPI_shutdown 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_shutdown \- finish using PAPI and free all related resources
 
 .SH SYNOPSIS
-.LP
-void PAPI_shutdown (void)
+.BI "void PAPI_shutdown (void);"
 
-.LP
 .SH DESCRIPTION
-.LP
 .B PAPI_shutdown(\|)
-This is an exit function used by the PAPI Library to free resources
-and shut down when  certain error conditions arise.  This call is
-not necessary, but allows the user the capability to free memory 
-and resources used by the PAPI Library.
+is an exit function used by the PAPI Library to free resources and
+shut down when certain error conditions arise. It is not necessary for
+the user to call this function, but doing so allows the user the
+capability to free memory and resources used by the PAPI Library.
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

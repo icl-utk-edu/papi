@@ -1,48 +1,78 @@
 .\" $Id$
-.TH PAPIF 3 "October, 2000" "" "PAPI"
+.TH PAPIF 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI \- Performance Application Programming Interface Library
 
-.SH Fortran calling interface
-The PAPI library comes with a specific Fortran library interface. The Fortran
-interface covers the complete library with a few minor exceptions. The most
-important omission is the profiling library utility routines that are not
-very relevant in the Fortran version.
+.SH SYNOPSIS
+.B #include "fpapi.h"
 
-The following lists the functions in the Fortran interface. For details about
-each function see the corresponding C function. I.e. the functionality of
+.B call PAPIF_function_name(arg1,arg2,...,check)
+
+
+.SH Fortran calling interface
+The PAPI library comes with a specific Fortran library interface. The
+Fortran interface covers the complete library with a few minor
+exceptions. The most important omission is the profiling library
+utility routines that are not very relevant in the Fortran version.
+
+The following lists the functions in the Fortran interface. For
+details about each function see the corresponding C function. I.e. the
+functionality of
 .B PAPIF_accum
 is covered in the 
 .B PAPI_accum(3)
 man page.
 
-The Fortran calling interface is described below. For most architectures the
-following relation holds between the pseudo-types listed and Fortran variable types.
+The Fortran calling interface is described below. For most
+architectures the following relation holds between the pseudo-types
+listed and Fortran variable types.
 
-.nf
-.BI C_INT\ ->\ INTEGER " Default Integer type"
-.BI C_FLOAT\ ->\ REAL " Default Real type"
-.BI C_LONG_LONG\ ->\ INTEGER*8 " Extended size integer"
-.BI C_STRING\ ->\ CHARACTER*(PAPI_MAX_STR_LEN) " Fortran string"
-.BI "C_INT FUNCTION -> EXTERNAL INTEGER FUNCTION" " Fortran function returning integer result"
-.fi
+.TS
+box, tab($);
+c|c|c
+l|l|l.
+Pseuodo-type	$Fortran type	$Description
+=
+C_INT		$INTEGER	$Default Integer type
+_
+C_FLOAT		$REAL		$Default Real type
+_
+C_LONG_LONG	$INTEGER*8	$Extended size integer
+_
+C_STRING	$CHARACTER*(PAPI_MAX_STR_LEN)	$Fortran string
+_
+C_INT FUNCTION	$EXTERNAL INTEGER FUNCTION	$T{
+Fortran function returning integer result 
+T}
+_
+C_INT(*)	$Array of corresponding type	$T{
+C_TYPE(*) refers to an array of the corresponding Fortan type.
+The length of the array needed is context dependent. It may be 
+e.g. PAPI_MAX_HWCTRS or PAPIF_num_counters.
+T}
+C_FLOAT(*)	$\^	$\^
+C_LONG_LONG(*)	$\^	$\^
+.TE
 
-A type such as
-.B C_INT(*)
-denotes an integer array of sufficent size to hold the input/output indicated
-either by the accompanying argument or by internal PAPI definitions. For details
-on this see the corresponding C routine.
+
+Array arguments must be of sufficent size to hold the input/output
+from/to the subroutine for predictabe behaviour. The array length is
+indicated either by the accompanying argument or by internal PAPI
+definitions. For details on this see the corresponding C routine.
 
 Subroutines accepting 
 .B C_STRING 
-as an argument on most implementations are capable of reading the character string
-size as provided by Fortran. In these implementations the string is truncated or
-string padded as necessary. For other implementations the length of the character
-array is assumed to be indicated by the corresponding 
+as an argument are on most implementations capable of reading the
+character string length as provided by Fortran. In these implementations
+the string is truncated or space padded as necessary. For other
+implementations the length of the character array is assumed to be
+indicated by the corresponding
 .B length
-argument. In these cases the string will be a C type string terminated by a 
-new-line.
+argument. In these cases the string will be a C type string terminated
+by a new-line. 
+
+
 
 .SH PAPI Low Level Functions
 .nf 
@@ -69,9 +99,11 @@ new-line.
 .BI PAPIF_stop(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
 .BI PAPIF_write(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
 .BI PAPIF_shutdown()
-.BI PAPIF_get_hardware_info(C_INT\  ncpu,\
-           C_INT\  nnodes,\  C_INT\  totalcpus,\  C_INT\  vendor,\  C_STRING\  vendor_string,\
-           C_INT\  model,\  C_STRING\  model_string,\  C_FLOAT\  revision,\  C_FLOAT\  mhz)
+.BI PAPIF_get_hardware_info(C_INT\  ncpu,\  C_INT\  nnodes,\ \
+           C_INT\  totalcpus,\  C_INT\  vendor,\ \
+           C_STRING\  vendor_string, \  C_INT\  model,\ \
+           C_STRING\  model_string,\
+           C_FLOAT\  revision,\  C_FLOAT\  mhz)
 .BI PAPIF_create_eventset(C_INT\  EventSet,\  C_INT\  check)
 .BI PAPIF_destroy_eventset(C_INT\  EventSet,\  C_INT\  check)
 .BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check ) 
@@ -90,8 +122,6 @@ new-line.
 .SH SEE ALSO
 .nf 
 .B The PerfAPI Draft: http://icl.cs.utk.edu/projects/papi/api/ 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
 .fi
 
 .SH DIAGNOSTICS

@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_state 3
+.TH PAPI_state 3 "Date??" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_state \- return the counting state of an EventSet
@@ -16,15 +16,19 @@ returns the counting state of
 in the form of indicator bits in 
 .IR status "."
 .LP
-The values can be boolean combinations of one or more of the following
-nonzero constants as defined in the PAPI header file, 
+The values is a boolean combination of one or more of the following
+nonzero constants as defined in the PAPI header file
 .BR papi.h "."
 
 .nf
 .B PAPI_STOPPED
 .B PAPI_RUNNING      
+.B PAPI_PAUSED
+.B PAPI_NOT_INIT
 .B PAPI_OVERFLOWING  
-.B PAPI_PROFILING    
+.B PAPI_PROFILING
+.B PAPI_MULTIPLEXING
+.B PAPI_ACCUMULATING    
 .if
 
 .SH RETURN VALUES
@@ -41,7 +45,9 @@ One or more of the arguments is invalid.
 The EventSet specified does not exist.
 
 .SH EXAMPLES
-.nf
+
+.nf         
+.if t .ft CW
 int EventSet = PAPI_NULL;
 int status = 0;  
 
@@ -67,6 +73,7 @@ if (PAPI_state(EventSet, &status) != PAPI_OK)
   handle_error(1);
 
 printf("State is now %d\en",status);
+.if t .ft P
 .fi
 
 .SH AUTHOR

@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_create_eventset 3 "October, 2000" "" "PAPI"
+.TH PAPI_create_eventset 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
 PAPI_create_eventset \- create an EventSet 
@@ -7,17 +7,21 @@ PAPI_create_eventset \- create an EventSet
 .SH SYNOPSIS
 .B #include <papi.h>
 
-.BI "PAPI_create_eventset (int *" handle ");"
+.BI "PAPI_create_eventset (int *" EventSet ");"
 
 .SH DESCRIPTION
 .B "PAPI_create_eventset()"
 creates a new EventSet pointed to by 
-.I "handle,"
+.I "EventSet,"
 which must be initialized to 
 .I "PAPI_NULL"
-before calling this routine. The user adds hardware events by calling
+before calling this routine. The user may then add hardware events 
+to the event set by calling
 .BR "PAPI_add_event" (3) 
-or similar routines. It takes the following arguments:
+or similar routines. 
+
+.B PAPI_create_eventset()
+takes the following arguments:
 .LP
 .I EventSet
 -- Address of an integer location to store the new EventSet handle
@@ -40,7 +44,8 @@ Insufficient memory to complete the operation.
 
 .SH EXAMPLES
 .LP
-
+.nf
+.if t .ft CW
   int EventSet = PAPI_NULL;
 
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
@@ -50,6 +55,8 @@ Insufficient memory to complete the operation.
 
   if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>

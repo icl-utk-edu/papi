@@ -1,8 +1,8 @@
 .\" $Id$
-.TH PAPI_get_opt 3 "October, 2000" "" "PAPI"
+.TH PAPI_get_opt 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
 
 .SH NAME
-PAPI_get_opt, PAPI_set_opt \- get/set PAPI library or EventSet options
+PAPI_get_opt, PAPI_set_opt \- get/set PAPI library or event set options
 
 .SH SYNOPSIS
 .B #include <papi.h>
@@ -15,8 +15,9 @@ PAPI_get_opt, PAPI_set_opt \- get/set PAPI library or EventSet options
 .SH DESCRIPTION
 .B PAPI_get_opt()
 and
-.B PAPI_set_opt() query or change the options of the PAPI library
-or a specific EventSet created by
+.B PAPI_set_opt() 
+query or change the options of the PAPI library or a specific event set 
+created by
 .BR "PAPI_create_eventset" (3).
 These functions have a C interface only.
 Not all options require or return information in the
@@ -27,27 +28,91 @@ for usage of PAPI_get_opt.  The file papi.h contains
 definitions for the structures unioned in the PAPI_option_t structure.  
 
 .I "option"
-is an input parameter, one of the following constants.  
-
-.nf 
-.B PAPI_GET_CLOCKRATE  \tReturn MHz of this platform.
-.B PAPI_GET_MAX_CPUS  \tReturn number of CPUs.
-.B PAPI_GET_MAX_HWCTRS  Return number of counters.
-.B PAPI_GET_DEFDOM     \tReturn default counting domain.
-.B PAPI_GET_EXEINFO    \tAddresses for text/data/bss.
-.B PAPI_GET_HWINFO     \tInfo. about hardware.
-.B PAPI_GET_DOMAIN     \tGet domain for a single EventSet.
-.B PAPI_SET_DOMAIN     \tSet...
-.B PAPI_GET_PRELOAD    \tGet "LD_PRELOAD" equivalent.
-.B PAPI_GET_DEBUG      \tGet the PAPI debug state.
-.B PAPI_SET_DEBUG      \tSet...
-.fi
-
+-- is an input parameter describing the course of action. Its possible
+values are defined in 
+.B papi.h
+and briefly described below.
+.LP
 .I "ptr"
-is both an input and output parameter. It is defined as
-follows:
+-- is both an input and output parameter. It is defined in
+.B papi.h
+and its definition is enclosed below.
 
+.LP
+.TS H
+allbox tab($);
+cB cB
+cI s
+lB lw(45).
+.TH
+Predefined name$Explanation
+General information requests
+PAPI_GET_CLOCKRATE$T{
+Return clockrate in MHz.
+T}
+PAPI_GET_MAX_CPUS$T{
+Return number of CPUs.
+T}
+PAPI_GET_MAX_HWCTRS$T{
+Return number of counters.
+T}
+PAPI_GET_EXEINFO$T{
+Addresses for text/data/bss.
+T}
+PAPI_GET_HWINFO$T{
+Info. about hardware.
+T}
+PAPI_GET_PRELOAD$T{
+Get ``LD_PRELOAD'' environment equivalent.
+T}
+.T&
+cI s
+lB lw(45).
+Defaults for the global library
+PAPI_GET_DEFDOM$T{
+Return default counting domain for newly created event sets.
+T}
+PAPI_SET_DEFDOM$T{
+Set default counting domain.
+T}
+PAPI_GET_DEFGRN$T{
+Return default counting granularity.
+T}
+PAPI_SET_DEFGRN$T{
+Set default counting granularity.
+T}
+PAPI_GET_DEBUG$T{
+Get the PAPI debug state. The available debug states are
+defined in
+.BR papi.h .
+The debug state is available in ptr->debug
+T}
+PAPI_SET_DEBUG$T{
+Set the PAPI debug state
+T}
+.T&
+cI s
+lB lw(45).
+Manipulating individual event sets
+PAPI_GET_DOMAIN$T{
+Get domain for a single event set. The event set is specified 
+in ptr->domain.eventset
+T}
+PAPI_SET_DOMAIN$T{
+Set the domain for a single event set.
+T}
+PAPI_GET_GRANUL$T{
+Get granularity for a single event set. The event set is specified 
+in ptr->granularity.eventset
+T}
+PAPI_SET_GRANUL$T{
+Set the granularity for a single event set.
+T}
+.TE
+
+.LP
 .nf
+.if t .ft CW
 typedef union {
   PAPI_preload_option_t preload;
   PAPI_debug_option_t debug;
@@ -58,7 +123,9 @@ typedef union {
   PAPI_domain_option_t defdomain; 
   PAPI_hw_info_t *hw_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
-.if
+.if t .ft P
+.fi
+
 
 .SH RETURN VALUES
 On success, this function returns
@@ -71,10 +138,10 @@ On error, a non-zero error code is returned.
 One or more of the arguments is invalid.
 .TP
 .B "PAPI_ENOEVST"
-The EventSet specified does not exist.
+The event set specified does not exist.
 .TP
 .B "PAPI_EISRUN"
-The EventSet is currently counting events.
+The event set is currently counting events.
 
 .SH EXAMPLES
 .LP
