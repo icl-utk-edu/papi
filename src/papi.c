@@ -465,7 +465,7 @@ int PAPI_library_init(int version)
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (papi_presets[i].event_name) /* If the preset is part of the API */
       papi_presets[i].avail = 
-	_papi_hwd_query(papi_presets[i].event_code ^ PRESET_MASK,
+	_papi_hwd_query(papi_presets[i].event_code & PRESET_AND_MASK,
 			&papi_presets[i].flags,
 			&papi_presets[i].event_note);
 
@@ -676,7 +676,7 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
 
   if (description != NULL)
     {
-      strncpy(description, papi_presets[*EventCode ^ PRESET_MASK].event_descr, PAPI_MAX_STR_LEN);
+      strncpy(description, papi_presets[*EventCode & PRESET_AND_MASK].event_descr, PAPI_MAX_STR_LEN);
     }
   papi_return(PAPI_OK);
 }
@@ -688,7 +688,7 @@ int PAPI_label_event(int EventCode, char *label)
 
   if (EventCode & PRESET_MASK)
     { 
-      EventCode ^= PRESET_MASK;
+      EventCode &= PRESET_AND_MASK;
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	papi_return(PAPI_ENOTPRESET);
 	
@@ -702,7 +702,7 @@ int PAPI_query_event(int EventCode)
 { 
   if (EventCode & PRESET_MASK)
     { 
-      EventCode ^= PRESET_MASK;
+      EventCode &= PRESET_AND_MASK;
       if (EventCode >= PAPI_MAX_PRESET_EVENTS)
 	papi_return(PAPI_ENOTPRESET);
 	
@@ -721,7 +721,7 @@ int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
 
   if (EventCode & PRESET_MASK)
     { 
-      EventCode ^= PRESET_MASK;
+      EventCode &= PRESET_AND_MASK;
       if (EventCode >= PAPI_MAX_PRESET_EVENTS)
 	papi_return(PAPI_ENOTPRESET);
 	
@@ -748,7 +748,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
 
   if (EventCode & PRESET_MASK)
     { 
-      EventCode ^= PRESET_MASK;
+      EventCode &= PRESET_AND_MASK;
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	papi_return(PAPI_ENOTPRESET);
 	

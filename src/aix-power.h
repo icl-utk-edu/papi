@@ -22,7 +22,7 @@
 typedef struct hwd_control_state {
   /* Indices into preset map for event in order of addition */
   /* if !PRESET_MASK then native event and counter # */
-  int preset[POWER_MAX_COUNTERS];
+  unsigned int preset[POWER_MAX_COUNTERS];
   /* bitmap with all counters currently used */
   unsigned char master_selector;  
   /* bitmap with which counters used for which event */

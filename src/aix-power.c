@@ -247,7 +247,7 @@ static int setup_all_presets(pm_info_t *info)
       if (findem[pnum].preset == 0)
 	break;
 
-      preset_index = findem[pnum].preset ^ PRESET_MASK; 
+      preset_index = findem[pnum].preset & PRESET_AND_MASK; 
       /* If it's not derived */
       if (findem[pnum].derived == 0)
 	{
@@ -471,7 +471,7 @@ static int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
       if (findem[pnum].preset == 0)
 	break;
 
-      preset_index = findem[pnum].preset ^ PRESET_MASK; 
+      preset_index = findem[pnum].preset & PRESET_AND_MASK; 
 
       /* If it's not derived */
       if (findem[pnum].derived == 0)
@@ -915,7 +915,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
      supported on this platform */
   if (EventCode & PRESET_MASK)
     {
-      if (preset_map[(EventCode ^ PRESET_MASK)].selector[0] == 0)
+      if (preset_map[(EventCode & PRESET_AND_MASK)].selector[0] == 0)
 	return(PAPI_ENOEVNT);
     }
 
@@ -981,11 +981,11 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 	  /* capture the derived state of the current event code */
 	  if (event_code == EventCode)
-	    out_command = preset_map[event_code ^ PRESET_MASK].derived;
+	    out_command = preset_map[event_code & PRESET_AND_MASK].derived;
 
 	  /* Dereference for cleaner access */
-	  this_rank = (unsigned char *)&(preset_map[event_code ^ PRESET_MASK].rank);
-	  this_selector = (unsigned char *)&(preset_map[event_code ^ PRESET_MASK].selector);
+	  this_rank = (unsigned char *)&(preset_map[event_code & PRESET_AND_MASK].rank);
+	  this_selector = (unsigned char *)&(preset_map[event_code & PRESET_AND_MASK].selector);
 
 	  /* Process all available metrics for this event.
 	     This may be as many as 8 for derived events */
@@ -1032,7 +1032,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 	  else /* its a preset event */
 	    {
 	      /* Dereference this preset for cleaner access */
-	      this_preset = &(preset_map[event_code ^ PRESET_MASK]);
+	      this_preset = &(preset_map[event_code & PRESET_AND_MASK]);
 
 	      /* Process all available metrics for this event.
 		 This may be as many as 8 for derived events */
@@ -1130,7 +1130,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   DBG((stderr,"EventCode %x \n",EventCode));
 
   /* mask off the preset bit */
-  event_code = EventCode ^ PRESET_MASK;
+  event_code = EventCode & PRESET_AND_MASK;
 
   if (EventCode == PAPI_FP_INS)
     DBG((stderr,"PAPI_FP_INS Groups: 0x%x 0x%x\n", preset_map[event_code].gps[1],preset_map[event_code].gps[0]));
@@ -1217,7 +1217,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       /* simple presets and derived events have predefined groups */
       else
 	{
-	  event_code ^= PRESET_MASK;
+	  event_code &= PRESET_AND_MASK;
 	  tmp_gps[0] &= preset_map[event_code].gps[0];
 	  tmp_gps[1] &= preset_map[event_code].gps[1];
           DBG((stderr,"preset -- hwd_idx: %d, Groups: 0x%x 0x%x\n",hwd_idx, tmp_gps[1],tmp_gps[0]));
@@ -1262,11 +1262,11 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     {
       /* capture the derived state of the current event code */
       if (event_code == EventCode)
-	out_command = preset_map[event_code ^ PRESET_MASK].derived;
+	out_command = preset_map[event_code & PRESET_AND_MASK].derived;
       else out_command = NOT_DERIVED;
 
       /* Dereference this preset for cleaner access */
-      this_preset = &(preset_map[event_code ^ PRESET_MASK]);
+      this_preset = &(preset_map[event_code & PRESET_AND_MASK]);
 
       /* Process all available metrics for this event.
 	 This may be as many as 8 for derived events */

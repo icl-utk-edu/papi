@@ -75,7 +75,7 @@ typedef struct hwd_preset {
 
 typedef struct hwd_search {
   /* PAPI preset code */
-  int papi_code;
+  unsigned int papi_code;
   /* DADD event code */
   long dadd_code;
 } hwd_search_t;

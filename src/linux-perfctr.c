@@ -789,7 +789,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       int preset_index;
       int derived;
 
-      preset_index = EventCode ^ PRESET_MASK; 
+      preset_index = EventCode & PRESET_AND_MASK; 
 
       selector = preset_map[preset_index].selector;
       if (selector == 0)

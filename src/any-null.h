@@ -35,7 +35,7 @@ typedef struct hwd_control_state {
 
 typedef struct hwd_search {
   /* PAPI preset code */
-  int papi_code;
+  unsigned int papi_code;
   /* Is this derived */
   int derived_op;
   /* If so, what is the index of the operand */

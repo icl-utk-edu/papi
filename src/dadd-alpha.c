@@ -33,14 +33,14 @@ static int setup_all_presets(void)
   int first, event, derived, hwnum;
   hwd_search_t *findem;
   char str[PAPI_MAX_STR_LEN];
-  int code;
+  unsigned int code;
 
   findem = findem_dadd;
   while ((code = findem->papi_code) != -1)
     {
-      int index;
+      unsigned int index;
 
-      index = code ^ PRESET_MASK;
+      index = code & PRESET_AND_MASK;
       preset_map[index].selector = 1;
       preset_map[index].derived = NOT_DERIVED;
       preset_map[index].operand_index = 0;
@@ -210,9 +210,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   if (EventCode & PRESET_MASK)
     {
-      int preset_index;
+      unsigned int preset_index;
 
-      preset_index = EventCode ^ PRESET_MASK;
+      preset_index = EventCode & PRESET_AND_MASK;
       out->selector = preset_map[preset_index].selector;
       if (out->selector == 0)
         return(PAPI_ENOEVNT);

@@ -59,7 +59,7 @@ typedef struct hwd_preset {
 
 typedef struct hwd_search {
   /* PAPI preset code */
-  int papi_code;
+  unsigned int papi_code;
   /* Events to encode */
   long findme[EV_MAX_COUNTERS];
 } hwd_search_t;

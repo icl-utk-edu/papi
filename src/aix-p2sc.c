@@ -646,7 +646,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 
   if (event & PRESET_MASK)
     { 
-      event ^= PRESET_MASK; 
+      event &= PRESET_AND_MASK; 
 
       group = preset_map[event].group;
       number = preset_map[event].number;
@@ -723,7 +723,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 
   if (event & PRESET_MASK)
     { 
-      event ^= PRESET_MASK; 
+      event &= PRESET_AND_MASK; 
 
       number = preset_map[event].number;
       group = preset_map[event].group;
@@ -908,7 +908,7 @@ int _papi_hwd_query(int preset)
 
   if (preset & PRESET_MASK)
     { 
-      preset ^= PRESET_MASK; 
+      preset &= PRESET_AND_MASK; 
 
       group = preset_map[preset].group;
       if (group == PAPI_NULL)

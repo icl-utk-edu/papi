@@ -593,7 +593,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       int preset_index;
       int derived;
 
-      preset_index = EventCode ^ PRESET_MASK; 
+      preset_index = EventCode & PRESET_AND_MASK; 
 
       selector = preset_map[preset_index].selector;
       if (selector == 0)
@@ -688,7 +688,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
 
   if (EventCode & PRESET_MASK)
     { 
-      preset_index = EventCode ^ PRESET_MASK; 
+      preset_index = EventCode & PRESET_AND_MASK; 
 
       selector = preset_map[preset_index].selector;
       if (selector == 0)

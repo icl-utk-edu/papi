@@ -298,7 +298,7 @@ static inline int setup_all_presets()
     {
       if (preset_search_map[pnum].preset == 0)
 	break;
-      preset_index = preset_search_map[pnum].preset ^ PRESET_MASK; 
+      preset_index = preset_search_map[pnum].preset & PRESET_AND_MASK; 
       if (gen_events(preset_search_map[pnum].findme, &preset_map[preset_index].evt) == -1)
 	abort();
       preset_map[preset_index].present = 1;
@@ -940,10 +940,10 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   if (EventCode & PRESET_MASK)
     { 
-      int preset_index;
+      unsigned int preset_index;
       int derived;
 
-      preset_index = EventCode ^ PRESET_MASK; 
+      preset_index = EventCode & PRESET_AND_MASK; 
 
       if (!preset_map[preset_index].present)
 	return(PAPI_ENOEVNT);
@@ -1041,7 +1041,8 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int used,preset_index,i,j;
+  int used,i,j;
+  unsigned int preset_index;
 
   /* Find out which counters used. */
   
@@ -1053,7 +1054,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
   /* We need to remove the count from this event, do we need to
    * reset the index of values too? -KSL 
    * Apparently so. -KSL */
-  preset_index = in->code ^ PRESET_MASK;
+  preset_index = in->code & PRESET_AND_MASK;
   for(i=0;i<PMU_MAX_COUNTERS;i++){
 #ifdef PFM06A
     if ( this_state->evt.pec_evt[i] & used ) {
