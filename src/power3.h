@@ -1,3 +1,6 @@
+#ifndef _PAPI_POWER3 /* _PAPI_POWER3 */
+#define _PAPI_POWER3
+
 #include "aix.h"
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
@@ -124,3 +127,5 @@ extern int set_domain(hwd_control_state_t *this_state, int domain);
 extern int set_granularity(hwd_control_state_t *this_state, int domain);
 extern void init_config(hwd_control_state_t *ptr);
 void dump_state(hwd_control_state_t *s);
+
+#endif /* _PAPI_POWER3 */

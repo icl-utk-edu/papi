@@ -1,15 +1,15 @@
 PAPI_SRCDIR = $(PWD)	
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
-    papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c
+    papi_data.c threads.c native.c $(MEMSUBSTR)-memory.c $(SUBSTR).c
 OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
+    papi_data.o threads.o native.o $(MEMSUBSTR)-memory.o $(SUBSTR).o
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h native.h $(SUBSTR).h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) genpapifdef $(FHEADERS) examples
+all: showconf nativegen $(LIBS) genpapifdef $(FHEADERS) examples
 
 showconf:
 		@echo; 
@@ -29,6 +29,10 @@ $(LIBRARY): $(OBJECTS)
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
+
+nativegen: nativegen.c 
+	$(CC) $(CFLAGS) $(OPTFLAGS) nativegen.c -o nativegen $(LDFLAGS)
+	./nativegen
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
@@ -50,6 +54,9 @@ papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)
 
 PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o
+
+native.o: native.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c native.c -o native.o 
 
 papi.o: papi.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o 
@@ -106,7 +113,7 @@ ftests: null
 	cd ftests; $(MAKE) CC="$(CC)" F77="$(F77)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" CFLAGS="$(CFLAGS)" SUBSTR="$(SUBSTR)"
 
 clean: native_clean
-	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
+	rm -rf $(OBJECTS) core rii_files native.* nativegen genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
 	cd ctests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
 

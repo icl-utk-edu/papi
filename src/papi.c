@@ -231,7 +231,7 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
       if (*EventCode & PRESET_MASK)
 	strncpy(description, _papi_hwi_presets[*EventCode & PRESET_AND_MASK].event_descr, PAPI_MAX_STR_LEN);
       else if (*EventCode & NATIVE_MASK)
-	_papi_hwi_native_code_to_descr(*EventCode, description);
+	strncpy(description, _papi_hwi_native_code_to_descr(*EventCode), PAPI_MAX_STR_LEN);
     }
   papi_return(PAPI_OK);
 }
@@ -310,7 +310,15 @@ int PAPI_event_code_to_name(int EventCode, char *out)
       strncpy(out,_papi_hwi_presets[EventCode].event_name,PAPI_MAX_STR_LEN);
       papi_return(PAPI_OK);
     }
-  papi_return(_papi_hwi_native_code_to_name(EventCode, out));
+	
+  if (EventCode & NATIVE_MASK) {
+	if(_papi_hwi_native_code_to_name(EventCode)!=NULL){
+		strncpy(out,_papi_hwi_native_code_to_name(EventCode),PAPI_MAX_STR_LEN);
+  		papi_return(PAPI_OK);
+	}
+  }
+  
+  papi_return(PAPI_ENOEVNT);
 }
 
 int PAPI_event_name_to_code(char *in, int *out)
@@ -333,17 +341,14 @@ int PAPI_event_name_to_code(char *in, int *out)
 
 int PAPI_native_event_index_to_code(int in, int *out)
 {
-#ifdef HAS_NATIVE_MAP
   if ((in < 0) || (out == NULL))
     papi_return(PAPI_EINVAL);
 
-  *out = _papi_hwd_native_idx_to_code(in);
-  if (!(*out & NATIVE_MASK) || (*out < 0))
+  *out = _papi_hwi_native_idx_to_code(in);
+  if (!(*out & NATIVE_MASK) || (*out < 0)){
     papi_return(PAPI_ENOEVNT);
+  }
   papi_return(PAPI_OK);
-#else
-    papi_return(PAPI_ENOEVNT);
-#endif
 }
 
 int PAPI_create_eventset(int *EventSet)

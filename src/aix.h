@@ -1,3 +1,6 @@
+#ifndef _PAPI_AIX  /* _PAPI_AIX */
+#define _PAPI_AIX
+
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
@@ -16,12 +19,11 @@
 
 #include "pmapi.h"
 #define POWER_MAX_COUNTERS MAX_COUNTERS
-#define GROUP_INTS 2
-#define MAX_GROUPS (GROUP_INTS * 32)
 #define INVALID_EVENT -2
 #define POWER_MAX_COUNTERS_MAPPING 8
 
 #include "papi.h"
+#include "native.h"
 
 
 extern _etext;
@@ -34,3 +36,4 @@ pm_info_t pminfo;
 
 /* prototypes */
 
+#endif  /* _PAPI_AIX */
