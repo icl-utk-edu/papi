@@ -430,18 +430,20 @@ int _papi_hwd_init(EventSetInfo *zero)
   long arg;
   int fd;
   hwd_control_state_t *machdep = (hwd_control_state_t *)zero->machdep;
-  int cpu_num, cpu_mask = 0;
 
   /* Initialize our global machdep. */
 
+#if 0
+  int cpu_num, cpu_mask = 0;
   if(getsysinfo(GSI_CURRENT_CPU, (caddr_t)&cpu_num, sizeof(cpu_num), NULL, NULL, NULL) < 1)
     abort();
   fprintf(stderr,"CPU %d\n",cpu_num);
   cpu_mask = 1 << cpu_num;
   if (bind_to_cpu(getpid(), cpu_mask, BIND_NO_INHERIT) == -1)
     abort();
+#endif
 
-  fd = open("/dev/pfcntr",O_RDONLY | PCNTOPENONE,S_IRUSR | S_IRGRP | S_IROTH);
+  fd = open("/dev/pfcntr",O_RDONLY | PCNTOPENALL);
   if (fd == -1)
     return(PAPI_ESYS);
 
