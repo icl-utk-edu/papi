@@ -24,7 +24,7 @@
       real*4 csec
 #endif
 
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1)
       integer ilen, ierror
 #endif
 
@@ -57,6 +57,13 @@
       eventname(1) = 'MACHINE_CYCLES'
       eventname(2) = 'DCACHE_ACCESSES'
       eventname(3) = 'CPU_CYC'
+      n = 3
+#endif
+
+#if defined(__crayx1)
+      eventname(1) = 'X1_P_EV_INST_S_FP'
+      eventname(2) = 'X1_E_EV_REQUESTS'
+      eventname(3) = 'X1_M_EV_REQUESTS'
       n = 3
 #endif
 
@@ -147,7 +154,8 @@
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-          call ftest_fail(__FILE__, __LINE__, 
+         print *, "Bad Event : ", eventname(i)
+         call ftest_fail(__FILE__, __LINE__, 
      &    'PAPIf_event_name_to_code', retval)
       end if
       call PAPIf_add_event( es, nativees, retval )
