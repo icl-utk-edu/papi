@@ -202,7 +202,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
 extern native_event_entry_t *native_table;
-extern hwi_preset_t *preset_search_map;
+extern hwi_search_t *preset_search_map;
 extern char *basename(char *);
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
 #endif

@@ -35,11 +35,14 @@
 #include "papi_protos.h"
 
 extern hwi_preset_t _papi_hwd_p3_preset_map;
+extern hwi_preset_t _papi_hwd_p2_preset_map;
 extern hwi_preset_t _papi_hwd_amd_preset_map;
+extern hwi_preset_t _papi_hwd_opt_preset_map;
 extern hwi_preset_t *preset_search_map;
 extern native_event_entry_t _papi_hwd_pentium3_native_map;
 extern native_event_entry_t _papi_hwd_p2_native_map;
 extern native_event_entry_t _papi_hwd_k7_native_map;
+extern native_event_entry_t _papi_hwd_opt_native_map;
 extern native_event_entry_t *native_table;
 extern hwi_preset_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
@@ -79,7 +82,7 @@ inline static int setup_p3_presets(int cputype) {
     case PERFCTR_X86_INTEL_P5MMX:
     case PERFCTR_X86_INTEL_PII:
       native_table = &_papi_hwd_p2_native_map;
-      preset_search_map = &_papi_hwd_p3_preset_map;
+      preset_search_map = &_papi_hwd_p2_preset_map;
       break;
     case PERFCTR_X86_INTEL_P6:
     case PERFCTR_X86_INTEL_PIII:
@@ -89,6 +92,10 @@ inline static int setup_p3_presets(int cputype) {
     case PERFCTR_X86_AMD_K7:
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_amd_preset_map;
+      break;
+    case PERFCTR_X86_AMD_K8:
+      native_table = &_papi_hwd_opt_native_map;
+      preset_search_map = &_papi_hwd_opt_preset_map;
       break;
     }
    return(_papi_hwi_setup_all_presets(preset_search_map));
