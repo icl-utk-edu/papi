@@ -43,6 +43,34 @@ void papimon_start(void)
 	test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
 #if defined(_AIX)
+  #if defined(_POWER4)
+      /* defined in Makefile.aix.power4 */
+      /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
+      native = 0 | 10 << 8  | 0; /* PM_FPU0_DIV */
+      if ( (retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 19 << 8 | 1; /* PM_FPU1_DIV */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 25 << 8  | 2; /* PM_FPU0_FRSP_FCONV */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 29 << 8  | 3; /* PM_FPU1_FRSP_FCONV */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 11 << 8  | 4; /* PM_FPU0_FMA */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 20 << 8 | 5; /* PM_FPU1_FMA */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 78 << 8  | 6; /* PM_INST_CMPL */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      native = 0 | 74 << 8  | 7; /* PM_CYC */
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  #else
       native = 0 | 5 << 8  | 0; /* ICM */
       if ( (retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
@@ -67,6 +95,7 @@ void papimon_start(void)
       native = 0 | 0 << 8  | 7; /* TLB */
       if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  #endif
 #elif defined(linux) && defined(__i386__)
       if(strncmp("AuthenticAMD",hwinfo->vendor_string,(size_t) 3) == 0)
 	{
@@ -216,6 +245,23 @@ void papimon_stop(void)
      rsec = (float)us/1000000.0;
      fprintf(stderr,"Real Elapsed Time in sec.  : %f\n",rsec);
 #if defined(_AIX)
+  #if defined(_POWER4)
+     csec = (float)values[7]/(hwinfo->mhz*1000000.0);
+     fprintf(stderr,"CPU Elapsed Time in sec.   : %f\n",csec);
+     fprintf(stderr,"FPU0 DIV Instructions      : %lld\n",values[0]);
+     fprintf(stderr,"FPU1 DIV Instructions      : %lld\n",values[1]);
+     fprintf(stderr,"FPU0 FRSP & FCONV Instr.   : %lld\n",values[2]);
+     fprintf(stderr,"FPU1 FRSP & FCONV Instr.   : %lld\n",values[3]);
+     fprintf(stderr,"FPU0 FMA Instructions      : %lld\n",values[4]);
+     fprintf(stderr,"FPU1 FMA Instructions      : %lld\n",values[5]);
+     fprintf(stderr,"Instructions Completed     : %lld\n",values[6]);
+     fprintf(stderr,"CPU Cycles                 : %lld\n",values[7]);
+     fprintf(stderr,"------------------------------------------\n");
+     fprintf(stderr,"CPU MFLOPS                 : %.2f\n",
+	  (((float)values[4]+(float)values[5])/500000.0)/csec);
+     fprintf(stderr,"%% FMA Instructions         : %.2f\n",
+	  100.0*((float)values[4]+(float)values[5])/(float)values[6]);
+  #else
      csec = (float)values[5]/(hwinfo->mhz*1000000.0);
      fprintf(stderr,"CPU Elapsed Time in sec.   : %f\n",csec);
      fprintf(stderr,"L1 Instruction Cache Misses: %lld\n",values[0]);
@@ -235,6 +281,7 @@ void papimon_stop(void)
 	  100.0*(1.0 - ((float)values[2]/(float)values[3])));
      fprintf(stderr,"%% FMA Instructions         : %.2f\n",
 	  100.0*(float)values[6]/((float)values[1]+(float)values[4]));
+  #endif
 #elif defined(linux) && defined(__i386__)
      if(strncmp("AuthenticAMD",hwinfo->vendor_string,(size_t) 3) == 0)
 	{

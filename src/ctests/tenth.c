@@ -26,6 +26,18 @@
   #define MASK2		  MASK_L2_TCA
   #define MASK3		  MASK_L2_TCH
 #else
+ #if (_POWER4)
+  #define CACHE_LEVEL "PAPI_L1_DCA"
+  #define EVT1		  PAPI_L1_DCA
+  #define EVT2		  PAPI_L1_DCW
+  #define EVT3		  PAPI_L1_DCR
+  #define EVT1_STR	  "PAPI_L1_DCA"
+  #define EVT2_STR	  "PAPI_L1_DCW"
+  #define EVT3_STR	  "PAPI_L1_DCR"
+  #define MASK1		  MASK_L1_DCA
+  #define MASK2		  MASK_L1_DCW
+  #define MASK3		  MASK_L1_DCR
+ #else
   #define CACHE_LEVEL "PAPI_L1_TCM"
   #define EVT1		  PAPI_L1_TCM
   #define EVT2		  PAPI_L1_ICM
@@ -36,6 +48,7 @@
   #define MASK1		  MASK_L1_TCM
   #define MASK2		  MASK_L1_ICM
   #define MASK3		  MASK_L1_DCM
+ #endif
 #endif
 
 #include "papi_test.h"
