@@ -206,11 +206,15 @@ int PAPI_library_init(int version)
       _papi_hwi_debug |= DEBUG_OVERFLOW;
 #endif
 
-   if ( init_level != PAPI_NOT_INITED )
-       return (init_retval = PAPI_VER_CURRENT);
-
-   if (init_retval != DEADBEEF)
-      papi_return(init_retval);
+   if (_papi_hwi_system_info.pid == getpid())
+     {
+       if ( init_level != PAPI_NOT_INITED )
+	 {
+	   return (init_retval = PAPI_VER_CURRENT); 
+	 }
+       if (init_retval != DEADBEEF)
+	 papi_return(init_retval);
+     }
 
    if (version != PAPI_VER_CURRENT) {
       init_retval = PAPI_EINVAL;
@@ -862,7 +866,6 @@ int PAPI_state(int EventSet, int *status)
 
 int PAPI_set_debug(int level)
 {
-   extern int _papi_hwi_error_level;
    switch (level) {
    case PAPI_QUIET:
    case PAPI_VERB_ESTOP:

@@ -27,9 +27,9 @@
 /* Could be __func__ as spec'd by C99 standard? */
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
-#define error_return(retval, format, args...){ fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); return(retval); }
+#define error_return(retval, format, args...){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); return(retval); } }
 #else
-#define error_return(retval, format){ fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); return(retval); }
+#define error_return(retval, format){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); return(retval); } }
 #endif
 
 #ifdef DEBUG
@@ -46,14 +46,14 @@
 
   /* Please get rid of the DBG macro from your code */
 
-#define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__func__,__LINE__); fprintf a; } }
+#define DBG(a) { if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__func__,__LINE__); fprintf a; } }
 
 #define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, __func__, __LINE__)
 
 #define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":"UNKNOWN")
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
-#define PAPIDEBUG(level,format, args...) { extern int _papi_hwi_debug; if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
+#define PAPIDEBUG(level,format, args...) { if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
 
  /* Macros */
 
@@ -445,4 +445,6 @@ typedef struct _papi_mdi {
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
+extern int _papi_hwi_error_level;
+extern int _papi_hwi_debug; 
 #endif                          /* PAPI_INTERNAL_H */
