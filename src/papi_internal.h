@@ -270,8 +270,8 @@ typedef union _papi_int_option_t {
 
 
 typedef struct _papi_mdi {
-  const char substrate[81]; /* Name of the substrate we're using */
-  const float version;      /* Version of this substrate */
+  char substrate[81]; /* Name of the substrate we're using */
+  float version;      /* Version of this substrate */
   pid_t pid;                /* Process identifier */
   PAPI_hw_info_t hw_info;   /* See definition in papi.h */
   PAPI_exe_info_t exe_info;  /* See definition in papi.h */
@@ -299,27 +299,27 @@ typedef struct _papi_mdi {
 
   /* Begin public feature flags */
 
-  const int supports_program;        /* We can use programmable events */
-  const int supports_write;          /* We can write the counters */
+  int supports_program;        /* We can use programmable events */
+  int supports_write;          /* We can write the counters */
   int supports_hw_overflow;    /* Needs overflow to be emulated */
   int supports_hw_profile;     /* Needs profile to be emulated */
-  const int supports_64bit_counters; /* Only limited precision is available from hardware */
-  const int supports_inheritance;    /* We can pass on and inherit child counters/values */
-  const int supports_attach;         /* We can attach PAPI to another process */
-  const int supports_real_usec;      /* We can use the real_usec call */
-  const int supports_real_cyc;       /* We can use the real_cyc call */
-  const int supports_virt_usec;      /* We can use the virt_usec call */
-  const int supports_virt_cyc;       /* We can use the virt_cyc call */
+  int supports_64bit_counters; /* Only limited precision is available from hardware */
+  int supports_inheritance;    /* We can pass on and inherit child counters/values */
+  int supports_attach;         /* We can attach PAPI to another process */
+  int supports_real_usec;      /* We can use the real_usec call */
+  int supports_real_cyc;       /* We can use the real_cyc call */
+  int supports_virt_usec;      /* We can use the virt_usec call */
+  int supports_virt_cyc;       /* We can use the virt_cyc call */
 
   /* End public feature flags */
 
   /* Begin private feature flags */
 
-  const int supports_read_reset;     /* The read call from the kernel resets the counters */
+  int supports_read_reset;     /* The read call from the kernel resets the counters */
 
   /* End private feature flags */
 
-  const int size_machdep;   /* Size of the substrate's control structure in bytes */
+  int size_machdep;   /* Size of the substrate's control structure in bytes */
 
   DynamicArray_t global_eventset_map; /* Global structure to maintain int<->EventSet mapping */
 } papi_mdi_t;

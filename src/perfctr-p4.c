@@ -214,6 +214,19 @@ inline static float calc_mhz(void)
   return(mhz);
 }
 
+/* Initialize the system-specific settings */
+/* Machine info structure. -1 is unused. */
+extern int _papi_hwd_mdi_init() {
+   _papi_hwi_system_info.supports_hw_overflow           = 1;
+   _papi_hwi_system_info.supports_64bit_counters        = 1;
+   _papi_hwi_system_info.supports_inheritance           = 1;
+   _papi_hwi_system_info.supports_real_usec             = 1;
+   _papi_hwi_system_info.supports_real_cyc              = 1;
+   _papi_hwi_system_info.supports_virt_usec             = 1;
+   _papi_hwi_system_info.supports_virt_cyc              = 1;
+   return(PAPI_OK);
+}
+
 /* Called when PAPI/process is initialized */
 
 int _papi_hwd_init_global(void)
@@ -235,8 +248,9 @@ int _papi_hwd_init_global(void)
     error_return(PAPI_ESYS,VINFO_ERROR);
 
   /* Initialize outstanding values in machine info structure */
-  _papi_hwd_init_system_info();
-
+  if(_papi_hwd_mdi_init() != PAPI_OK) {
+    return(PAPI_EINVAL);
+  }
   strcpy(_papi_hwi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
   _papi_hwi_system_info.supports_hw_overflow = 
     (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;

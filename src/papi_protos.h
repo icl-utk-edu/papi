@@ -32,6 +32,7 @@ extern EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 extern int _papi_hwi_remove_EventSet(EventSetInfo_t *);
 extern int _papi_hwi_query(int preset_index, int *flags, char **note);
 extern EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *);
+extern int _papi_hwi_mdi_init(void);
 
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
@@ -92,6 +93,7 @@ extern int _papi_hwd_shutdown_global(void);
 extern int _papi_hwd_set_domain(hwd_control_state_t *, int);
 extern int _papi_hwd_setmaxmem();
 extern int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI);
+extern int _papi_hwd_mdi_init(void);
 
 #ifdef _WIN32
 /* Callback routine for Windows timers */

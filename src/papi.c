@@ -135,6 +135,115 @@ void PAPI_unlock(void)
   _papi_hwd_unlock();
 }
 
+/* Machine info struct initialization using defaults */
+/* See _papi_mdi definition in papi_internal.h       */
+int _papi_hwi_mdi_init() {
+   strcpy(_papi_hwi_system_info.substrate, "$Id$");     /* Name of the substrate we're using */
+   _papi_hwi_system_info.version                 = 1.0; /* version */
+   _papi_hwi_system_info.pid                     = 0;   /* Process identifier */
+
+  /* The PAPI_hw_info_t struct defined in papi.h */
+   _papi_hwi_system_info.hw_info.ncpu               = -1;    /* ncpu */
+   _papi_hwi_system_info.hw_info.nnodes             =  1;    /* nnodes */
+   _papi_hwi_system_info.hw_info.totalcpus          = -1;    /* totalcpus */
+   _papi_hwi_system_info.hw_info.vendor             = -1;    /* vendor */
+   _papi_hwi_system_info.hw_info.vendor_string[0]   = '\0';  /* vendor_string */
+   _papi_hwi_system_info.hw_info.model              = -1;    /* model */
+   _papi_hwi_system_info.hw_info.model_string[0]    = '\0';  /* model_string */
+   _papi_hwi_system_info.hw_info.revision           = 0.0;   /* revision */
+   _papi_hwi_system_info.hw_info.mhz                = 0.0;   /* mhz */
+
+  /* The PAPI_exe_info_t struct defined in papi.h */
+   _papi_hwi_system_info.exe_info.fullname[0]             = '\0';
+   _papi_hwi_system_info.exe_info.name[0]                 = '\0';
+   _papi_hwi_system_info.exe_info.address_info.mapname[0] = '\0';
+   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_init;
+   _papi_hwi_system_info.exe_info.address_info.text_end   = (caddr_t)&_etext;
+   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_etext+1;
+   _papi_hwi_system_info.exe_info.address_info.data_end   = (caddr_t)&_edata;
+   _papi_hwi_system_info.exe_info.address_info.bss_start  = (caddr_t)NULL;
+   _papi_hwi_system_info.exe_info.address_info.bss_end    = (caddr_t)NULL;
+   _papi_hwi_system_info.exe_info.preload_info.lib_preload_env[0] = '\0';
+   _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep = '\0';
+   _papi_hwi_system_info.exe_info.preload_info.lib_dir_env[0] = '\0';
+   _papi_hwi_system_info.exe_info.preload_info.lib_dir_sep = '\0';
+
+  /* The PAPI_mem_info_t struct defined in papi.h */
+   _papi_hwi_system_info.mem_info.total_tlb_size        = 0;
+   _papi_hwi_system_info.mem_info.itlb_size             = 0;
+   _papi_hwi_system_info.mem_info.itlb_assoc            = 0;
+   _papi_hwi_system_info.mem_info.dtlb_size             = 0;
+   _papi_hwi_system_info.mem_info.dtlb_assoc            = 0;
+   _papi_hwi_system_info.mem_info.total_L1_size         = 0;
+   _papi_hwi_system_info.mem_info.L1_icache_size        = 0;
+   _papi_hwi_system_info.mem_info.L1_icache_assoc       = 0;
+   _papi_hwi_system_info.mem_info.L1_icache_lines       = 0;
+   _papi_hwi_system_info.mem_info.L1_icache_linesize    = 0;
+   _papi_hwi_system_info.mem_info.L1_dcache_size        = 0;
+   _papi_hwi_system_info.mem_info.L1_dcache_assoc       = 0;
+   _papi_hwi_system_info.mem_info.L1_dcache_lines       = 0;
+   _papi_hwi_system_info.mem_info.L1_dcache_linesize    = 0;
+   _papi_hwi_system_info.mem_info.L2_cache_size         = 0;
+   _papi_hwi_system_info.mem_info.L2_cache_assoc        = 0;
+   _papi_hwi_system_info.mem_info.L2_cache_lines        = 0;
+   _papi_hwi_system_info.mem_info.L2_cache_linesize     = 0;
+   _papi_hwi_system_info.mem_info.L3_cache_size         = 0;
+   _papi_hwi_system_info.mem_info.L3_cache_assoc        = 0;
+   _papi_hwi_system_info.mem_info.L3_cache_lines        = 0;
+   _papi_hwi_system_info.mem_info.L3_cache_linesize     = 0;
+
+  /* The PAPI_shlib_info_t struct defined in papi.h */
+   _papi_hwi_system_info.shlib_info.map = (PAPI_address_map_t *)malloc(sizeof(PAPI_address_map_t));
+   _papi_hwi_system_info.shlib_info.map->mapname[0]      = '\0';
+   _papi_hwi_system_info.shlib_info.map->text_start      = (caddr_t)&_init;
+   _papi_hwi_system_info.shlib_info.map->text_end        = (caddr_t)&_etext;
+   _papi_hwi_system_info.shlib_info.map->data_start      = (caddr_t)&_etext+1;
+   _papi_hwi_system_info.shlib_info.map->data_end        = (caddr_t)&_edata;
+   _papi_hwi_system_info.shlib_info.map->bss_start       = (caddr_t)NULL;
+   _papi_hwi_system_info.shlib_info.map->bss_end         = (caddr_t)NULL;
+   _papi_hwi_system_info.shlib_info.count                = 0;
+
+  /* The following variables define the length of the arrays in the
+     EventSetInfo_t structure. Each array is of length num_gp_cntrs +
+     num_sp_cntrs * sizeof(long_long) */
+   _papi_hwi_system_info.num_cntrs                      = -1;
+   _papi_hwi_system_info.num_gp_cntrs                   = -1;
+   _papi_hwi_system_info.grouped_counters               = -1;
+   _papi_hwi_system_info.num_sp_cntrs                   = -1;
+   _papi_hwi_system_info.total_presets                  = -1;
+   _papi_hwi_system_info.total_events                   = -1;
+   _papi_hwi_system_info.default_domain                 = PAPI_DOM_USER;
+   _papi_hwi_system_info.default_granularity            = PAPI_GRN_THR;
+
+  /* Public feature flags */
+   _papi_hwi_system_info.supports_program               = 0;
+   _papi_hwi_system_info.supports_write                 = 0;
+   _papi_hwi_system_info.supports_hw_overflow           = 0;
+   _papi_hwi_system_info.supports_hw_profile            = 0;
+   _papi_hwi_system_info.supports_64bit_counters        = 0;
+   _papi_hwi_system_info.supports_inheritance           = 0;
+   _papi_hwi_system_info.supports_attach                = 0;
+   _papi_hwi_system_info.supports_real_usec             = 0;
+   _papi_hwi_system_info.supports_real_cyc              = 0;
+   _papi_hwi_system_info.supports_virt_usec             = 0;
+   _papi_hwi_system_info.supports_virt_cyc              = 0;
+
+  /* Does the read call from the kernel reset the counters? */
+   _papi_hwi_system_info.supports_read_reset            = 0;  /* Private flag */
+
+  /* Size of the substrate's control struct in bytes */
+   _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
+
+  /* Global struct to maintain EventSet mapping */
+   _papi_hwi_system_info.global_eventset_map.dataSlotArray   = NULL;
+   _papi_hwi_system_info.global_eventset_map.totalSlots      = 0;
+   _papi_hwi_system_info.global_eventset_map.availSlots      = 0;
+   _papi_hwi_system_info.global_eventset_map.fullSlots       = 0;
+   _papi_hwi_system_info.global_eventset_map.lowestEmptySlot = 0;
+
+  return(PAPI_OK);
+}
+
 int PAPI_library_init(int version)
 {
   int i, tmp;
@@ -158,6 +267,9 @@ int PAPI_library_init(int version)
 
   _papi_hwd_lock_init();
 
+  if(_papi_hwi_mdi_init() != PAPI_OK) {
+    papi_return(PAPI_EINVAL);
+  }
   tmp = _papi_hwd_init_global();
   if (tmp) {
     init_retval = tmp;
