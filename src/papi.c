@@ -645,8 +645,6 @@ int PAPI_reset(int EventSet)
 	  
 	  retval = _papi_hwd_reset(&thread->context, &ESI->machdep);
 	}
-      if (retval != PAPI_OK)
-	papi_return(retval);
     }
   else
     {
@@ -654,7 +652,7 @@ int PAPI_reset(int EventSet)
     }
 
   DBG((stderr,"PAPI_reset returns %d\n",retval));
-  return(retval);
+  papi_return(retval);
 }
 
 int PAPI_read(int EventSet, long_long *values)
