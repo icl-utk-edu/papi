@@ -1,0 +1,9 @@
+
+This is a hacked up buglist for PAPI (and it's associated tools).
+I'll try to come up with a better system later on.  NG
+
+3/8/00 - PAPI (Linux x86) is reporting a single cpu on SMP systems 
+
+3/8/00 - Robert Bell: I have noticed that there seems to be something amiss with thread support on linux and irix in Papi (though I have only tested on those two platforms).
+
+
