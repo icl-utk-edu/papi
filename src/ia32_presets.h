@@ -15,10 +15,10 @@
 */
 
 static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
-  {CNTR2|CNTR1,0,0,{{0x45,0x45,0x0,0x0}},""},	// L1 Cache Dmisses 
-  {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L1 Cache Imisses 
+  {CNTR2|CNTR1,0,0,{{0x45,0x45,0x0,0x0}},""},	// L1 Cache Dmisses//0x29 could possibly be used
+  {CNTR2|CNTR1,0,0,{{0x81,0x81,0x0,0x0}},""},	// L1 Cache Imisses 
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Cache Dmisses
-  {CNTR2|CNTR1,0,0,{{0x81,0x81,0x0,0x0}},""},	// L2 Cache Imisses 
+  {CNTR2|CNTR1,0,0,{{0x68,0x68,0x0,0x0}},""},	// L2 Cache Imisses 
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Dmisses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Imisses
   {CNTR2|CNTR1,0,0,{{0xf2e,0xf2e,0x0,0x0}},""},	// L1 Total Cache misses 
@@ -42,6 +42,7 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {CNTR2|CNTR1,0,0,{{0xf2A,0xf2A,0x0,0x0}},""},	// L1 store M
   {0,0,0,{{0,0,0x0,0x0}},""},			// L2 load M
   {0,0,0,{{0,0,0x0,0x0}},""},			// L2 store M
+  //{CNTR2|CNTR1,0,0,{{0x25,0x25,0x0,0x0}},""},	// L2 store M // Is this really correct????
   {CNTR2|CNTR1,0,0,{{0xe2,0xe2,0x0,0x0}},""},	// BTAC misses
   {0,0,0,{{0,0,0x0,0x0}},""},	                // Prefmiss
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3DCH
@@ -90,8 +91,8 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCW
   {CNTR2|CNTR1,0,0,{{0xf2a,0xf2a,0x0,0x0}},""},	// L2_DCW
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCW
-  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x80,0xf28,0x0,0x0}},""}, // L1_ICH
-  {CNTR2|CNTR1,DERIVED_SUB,0,{{0xf28,0x81,0x0,0x0}},""}, // L2_ICH
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x80,0x81,0x0,0x0}},""}, // L1_ICH
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0xf28,0x68,0x0,0x0}},""}, // L2_ICH
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICH
   {CNTR2|CNTR1,0,0,{{0x80,0x80,0x0,0x0}},""},	// L1_ICA
   {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L2_ICA
