@@ -352,7 +352,7 @@ int case4()
   for(i=0;i<nev;i++)
     PAPI_event_code_to_name(event_codes[i],evname[i]);
 
-  if ( !TESTS_QUIET ) 
+  if ( !TESTS_QUIET ) {
 #if defined(__ALPHA) && defined(__osf__)
      printf(TAB3HDR,"case4:",evname[0],evname[1],evname[3]);
      printf("case4: %lld %lld %lld\n", values[0], values[1],values[3]);
@@ -360,6 +360,7 @@ int case4()
      test_print_event_header("case4:",EventSet);
      printf(TAB4,"case4:",values[0],values[1],values[2],values[3]);
 #endif
+  }
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
