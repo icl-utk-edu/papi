@@ -293,9 +293,10 @@ int PAPI_num_counters(void)
 /*========================================================================*/
 /* int PAPI_start_counters(int *events, int array_len)                    */
 /* from draft standard:                                                   */
-/* Start counting the events named in the events array. This function     */
-/* implicitly stops and initializes any counters running as the result    */
-/* of a previous call to PAPI_start_counters(). It is the user's          */
+/* Start counting the events named in the events array.                   */
+/* If the events array is already running, then you must call             */
+/* PAPI_stop_counters to stop the events before you call this function    */
+/* again. It is the user's                                                */
 /* responsibility to choose events that can be counted simultaneously     */
 /* by reading the vendor's documentation. The length of this array        */
 /* should be no longer than PAPI_num_counters()                           */
