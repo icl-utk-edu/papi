@@ -7,13 +7,29 @@ KERNINC	= /usr/src/linux-2.4.13/include
 PERFCTR	= ./perfctr-2.3
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-FFLAGS	= -Dlinux 
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
 TOPTFLAGS= -O0 -fomit-frame-pointer -mpentiumpro
+CC	= gcc
+#
+#  G77 section
+F77   = g77
+FFLAGS        = -Dlinux
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
-CC	= gcc
-F77	= g77
+# #
+# #  Portland Group PGF77 section
+# F77       = pgf77
+# FFLAGS    = -Dlinux
+# FOPTFLAGS = -O3 -tp p6
+# FTOPTFLAGS= $(FOPTFLAGS)
+# #
+# #  Intel Corp. Fortran compiler
+# F77      = ifc
+# FFLAGS   = -Dlinux
+# LDFLAGS  = -lPEPCF90  # Intel portability library (getarg_)
+# FOPTFLAGS= -O3 -tpp6
+# FTOPTFLAGS= $(FOPTFLAGS)
+
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
 CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
@@ -34,3 +50,4 @@ native_clean:
 	$(MAKE) -C $(PERFCTR) clean
 
 null:
+
