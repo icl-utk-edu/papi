@@ -305,34 +305,164 @@ static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
 
 static int scan_cpu_info(inventory_t *item, void *foo)
 {
-  papi_rev_id_t *ri;
+  #define IPSTRPOS 8
+  char *ip_str_pos=&_papi_system_info.hw_info.model_string[IPSTRPOS];
+  char *cptr;
+  int i;
+  /* The information gathered here will state the information from
+   * the last CPU board and the last CPU chip. Previous ones will
+   * be overwritten. For systems where each CPU returns an entry, that is.
+   *
+   * The model string gets two contributions. One is from the 
+   *  CPU board (IP-version) and the other is from the chip (R10k/R12k)
+   *  Let the first IPSTRPOS characters be the chip part and the 
+   *  remaining be the board part 
+   *     0....5....0....5....0....
+   *     R10000  IP27                                  
+   *
+   * The model integer will be two parts. The lower 8 bits are used to
+   * store the CPU chip type (R10k/R12k) using the codes available in
+   * sys/sbd.h. The upper bits store the board type (e.g. P25 using
+   * the codes available in sys/cpu.h                                */
+#define SETHIGHBITS(var,patt) var = (var & 0x000000ff) | (patt << 8 )
+#define SETLOWBITS(var,patt)  var = (var & 0xffffff00) | (patt & 0xff)
+
+  /* If the string is untouched fill the chip part with spaces */
+  if ((item->inv_class == INV_PROCESSOR) && 
+      (!_papi_system_info.hw_info.model_string[0]))
+    {
+      for(cptr=_papi_system_info.hw_info.model_string; 
+	  cptr!=ip_str_pos;*cptr++=' ');
+    }
 
   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD)) 
-    _papi_system_info.hw_info.mhz = (int)item->inv_controller;
+    {
+      DBG((stderr,"scan_system_info(%p,%p) Board: %d, %d, %d\n",
+	   item,foo,item->inv_controller,item->inv_state,item->inv_unit));
+
+      _papi_system_info.hw_info.mhz = (int)item->inv_controller;
+
+      switch(item->inv_state) {   /* See /usr/include/sys for new models */
+      case INV_IPMHSIMBOARD:
+	strcpy(ip_str_pos,"IPMHSIM");
+	SETHIGHBITS(_papi_system_info.hw_info.model,0);
+	break;
+      case INV_IP19BOARD:
+	strcpy(ip_str_pos,"IP19");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP19);
+	break;
+      case INV_IP20BOARD:
+	strcpy(ip_str_pos,"IP20");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP20);
+	break;
+      case INV_IP21BOARD:
+	strcpy(ip_str_pos,"IP21");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP21);
+	break;
+      case INV_IP22BOARD:
+	strcpy(ip_str_pos,"IP22");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP22);
+	break;
+      case INV_IP25BOARD:
+	strcpy(ip_str_pos,"IP25");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP25);
+	break;
+      case INV_IP26BOARD:
+	strcpy(ip_str_pos,"IP26");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP26);
+	break;
+      case INV_IP27BOARD:
+	strcpy(ip_str_pos,"IP27");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP27);
+	break;
+      case INV_IP28BOARD:
+	strcpy(ip_str_pos,"IP28");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP28);
+	break;
+/* sys/cpu.h and sys/invent.h varies slightly between systems so
+   protect the newer entries in case they are not defined */
+#if defined(INV_IP30BOARD) && defined(CPU_IP30)
+      case INV_IP30BOARD:
+	strcpy(ip_str_pos,"IP30");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP30);
+	break;
+#endif
+#if defined(INV_IP32BOARD) && defined(CPU_IP32)
+      case INV_IP32BOARD:
+	strcpy(ip_str_pos,"IP32");
+	SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP32);
+	break;
+#endif
+#if defined(INV_IP33BOARD) && defined(CPU_IP33)
+      case INV_IP33BOARD:
+        strcpy(ip_str_pos,"IP33");
+        SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP33);
+        break;
+#endif
+#if defined(INV_IP35BOARD) && defined(CPU_IP35)
+      case INV_IP35BOARD:
+        strcpy(ip_str_pos,"IP35");
+        SETHIGHBITS(_papi_system_info.hw_info.model,CPU_IP35);
+        break;
+#endif
+      default:
+	strcpy(ip_str_pos,"Unknown cpu board");
+	_papi_system_info.hw_info.model = PAPI_EINVAL;
+      }
+      DBG((stderr,"scan_system_info:       Board: 0x%x, %s\n",
+	   _papi_system_info.hw_info.model,
+	   _papi_system_info.hw_info.model_string));
+    }
 
   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUCHIP))
     {
-      DBG((stderr,"scan_system_info(%p,%p) %d, %d, %d\n",
-	   item,foo,item->inv_controller,item->inv_state,item->inv_unit));
-      ri = (papi_rev_id_t *)&item->inv_state;
-      _papi_system_info.hw_info.revision = (float)ri->ri_majrev + 
-	((float)ri->ri_minrev*0.1);
-      switch (ri->ri_imp)
-	 {
+      unsigned int imp,majrev,minrev;
+
+      DBG((stderr,"scan_system_info(%p,%p) CPU: %d, %d, %d\n",
+	   item,foo,item->inv_controller,item->inv_state,item->inv_unit)); 
+
+      imp=(item->inv_state & C0_IMPMASK ) >> C0_IMPSHIFT;
+      majrev=(item->inv_state & C0_MAJREVMASK ) >> C0_MAJREVSHIFT;
+      minrev=(item->inv_state & C0_MINREVMASK ) >> C0_MINREVSHIFT;
+
+      _papi_system_info.hw_info.revision = (float) majrev + 
+	((float)minrev*0.01);
+
+      SETLOWBITS(_papi_system_info.hw_info.model,imp);
+      switch (imp)
+	 {  /* We fill a name here and then remove any \0 characters */
 	 case C0_IMP_R10000:
-	   _papi_system_info.hw_info.model = CPU_IP27;	      
-	   strcpy(_papi_system_info.hw_info.model_string,"R10000");
+	   strncpy(_papi_system_info.hw_info.model_string,"R10000",IPSTRPOS);
 	   _papi_system_info.num_gp_cntrs = 2;
 	   break;
 	 case C0_IMP_R12000:
-	   _papi_system_info.hw_info.model = CPU_IP30;	      
-	   strcpy(_papi_system_info.hw_info.model_string,"R12000");
+	   strncpy(_papi_system_info.hw_info.model_string,"R12000",IPSTRPOS);
 	   _papi_system_info.num_gp_cntrs = 4;
 	   break;
 	 default:
 	   return(PAPI_ESBSTR);
 	 }
+      /* Remove the \0 inserted above to be able to print the board version */
+      for(i=strlen(_papi_system_info.hw_info.model_string);i<IPSTRPOS;i++)
+	_papi_system_info.hw_info.model_string[i]=' ';
+
+    DBG((stderr,"scan_system_info:       CPU: 0x%.2x, 0x%.2x, 0x%.2x, %s\n",
+	 imp,majrev,minrev,_papi_system_info.hw_info.model_string));
     }	  
+
+  /* FPU CHIP is not used now, but who knows about the future? */
+  if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_FPUCHIP))
+    {
+      unsigned int imp,majrev,minrev;
+
+      DBG((stderr,"scan_system_info(%p,%p) FPU: %d, %d, %d\n",
+	   item,foo,item->inv_controller,item->inv_state,item->inv_unit)); 
+      imp=(item->inv_state & C0_IMPMASK ) >> C0_IMPSHIFT;
+      majrev=(item->inv_state & C0_MAJREVMASK ) >> C0_MAJREVSHIFT;
+      minrev=(item->inv_state & C0_MINREVMASK ) >> C0_MINREVSHIFT;
+      DBG((stderr,"scan_system_info        FPU: 0x%.2x, 0x%.2x, 0x%.2x\n",
+	   imp,majrev,minrev))
+    }
   return(0);
 }
 
@@ -344,9 +474,9 @@ static int setup_all_presets(PAPI_hw_info_t *info)
   char str[PAPI_MAX_STR_LEN];
   hwd_search_t *findem;  
 
-  if (info->model == CPU_IP27)
+  if ((info->model & 0xff)  == C0_IMP_R10000)
     findem = findem_r10k;
-  else if (info->model == CPU_IP30)
+  else if ((info->model & 0xff) == C0_IMP_R12000)
     findem = findem_r12k;
   else
     return(PAPI_ESBSTR);
