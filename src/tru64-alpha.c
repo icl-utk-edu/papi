@@ -546,7 +546,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Support for native events here, only 1 counter at a time. */
 
       hwcntr_num = EventCode & 0xff;  /* 0 through 7 */ 
-      if (hwcntr_num > _papi_system_info.num_gp_cntrs)
+      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) || 
+	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
       tmp_cmd[hwcntr_num] = EventCode >> 8; /* 0 through 50 */

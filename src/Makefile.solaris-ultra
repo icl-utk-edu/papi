@@ -3,15 +3,23 @@ DESCR	= "Solaris 5.8 or greater with UltraSPARC I or II"
 LIBS	= static shared
 TARGETS	= pthreads serial smp omp
 FOR_USED= -DFORTRANUNDERSCORE
+#CFLAGS	=
 CFLAGS  = -xarch=v8plusa
+#OPTFLAGS= -fpic -O3 -DNDEBUG
 OPTFLAGS= -xO3 -DNDEBUG
-FFLAGS	= $(CFLAGS)
+#NOOPT	= 
 NOOPT 	= -xO0
+FFLAGS	= $(CFLAGS)
+#SMPCFLGS= 
 SMPCFLGS= -xexplicitpar
+#OMPCFLGS= 
 OMPCFLGS= -xexplicitpar
 LDFLAGS = -lcpc
+#CC_R	= gcc
 CC_R	= cc -mt
+#CC	= gcc
 CC	= cc -mt
+#CC_SHR	= gcc -shared -fpic
 CC_SHR	= cc -shared -dy -G
 F77	= f77
 MISCOBJS= get_tick.o
@@ -19,4 +27,4 @@ MISCOBJS= get_tick.o
 include Makefile.inc
 
 get_tick.o: solaris-ultra/get_tick.S
-	$(CC) -c -D_ASM $(CFLAGS) $(OPTFLAGS) solaris-ultra/get_tick.S
+	cc -c -D_ASM -xarch=v8plusa solaris-ultra/get_tick.S

@@ -483,7 +483,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Support for native events here, only 1 counter at a time. */
 
       hwcntr_num = EventCode & 0xff;  
-      if (hwcntr_num > _papi_system_info.num_gp_cntrs) /* 0 or 1 */ 
+      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) ||
+	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
       tmp_cmd.cmd[hwcntr_num] = EventCode >> 8; 
@@ -548,7 +549,8 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Support for native events here, only 1 counter at a time. */
 
       hwcntr_num = EventCode & 0x3; 
-      if (hwcntr_num > _papi_system_info.num_gp_cntrs) /* counter 0 or 1 */ 
+      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) || 
+	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
       old_code = ESI->EventInfoArray[index].command;
