@@ -19,6 +19,12 @@ OPTFLAGS	+= $(GCC3ARGS) -g -DDEBUG
 endif
 endif
 
+ARCH		:= $(shell uname -m | grep x86_64)
+ifeq (x86_64,$(ARCH))
+SHRFLAGS	:= -fPIC
+LIB_SUFFIX	:= 64
+endif
+
 # Flags for test programs
 FFLAGS        	+= -Dlinux -ffixed-line-length-132
 TOPTFLAGS	+= -O -g 
