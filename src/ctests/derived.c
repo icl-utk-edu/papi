@@ -2,10 +2,10 @@
 
 #include "papi_test.h"
 
-/*#define OLD_TEST_DRIVER*/
+#define OLD_TEST_DRIVER
 
 #ifdef OLD_TEST_DRIVER
-#define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
+#define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval);
 #define CPP_TEST_PASS() { test_pass(__FILE__, NULL, 0); }
 #define CPP_TEST_SKIP() { test_skip(__FILE__,__LINE__,NULL,0); }
 #else
