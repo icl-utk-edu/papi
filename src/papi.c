@@ -1007,7 +1007,7 @@ int PAPI_rem_events(int EventSet, int *RemEvents, int number)
 /*=+=*/ 
 /*========================================================================*/
 /* low-level function:                                                    */
-/* static int PAPI_list_events(int EventSet, int *Events, int *number)    */
+/* static int PAPI_list_events(int EventSet,int *EventCodes,int *number)  */
 /*
    from the draft standard:
 
@@ -1020,12 +1020,10 @@ int PAPI_rem_events(int EventSet, int *RemEvents, int number)
 */
 /*========================================================================*/
 
-int PAPI_list_events(int EventSet, int *Events, int *number)
+int PAPI_list_events(int EventSet, int *EventCodes, int *number)
 {
    EventSetInfo *ESI;
-   int i,k,nActive;
-   /*char *standardEventDef_STR[25]    added to papiStdDefs.h*/
-   /*int  standardEventDef_NUM[25] added to papiStdDefs.h*/
+   int i,nActive;
 
   /* determine target ESI structure */
   ESI=lookup_EventSet(EventSet);
@@ -1034,21 +1032,12 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 
   nActive=0;/*count number of active events*/
 
-     for(i=0;i<*number;i++) {
+  for(i=0;i<*number;i++) {
+     EventCodes[i]=ESI->EventCodeArray[i];
+     if(EventCodes[i]>0)nActive++;
+  }/* end for i */
 
-  /* determine index of target event k */
-      k=lookup_EventCodeIndex(ESI,Events[i]);
-      if(k<PAPI_OK) {
-        printf("\n EventCodeArray[%d]:  no value", i);
-        }
-      else {
-        printf("\n ESI->EventCodeArray[%d]: ESI->latest[%d] : %lld",
-        i,i, ESI->latest[i]);
-        nActive++;
-        }
-     }/* end for i */
-
-   *number=nActive;
+  *number=nActive;
   
    return(PAPI_OK);
 }
