@@ -44,8 +44,9 @@
   /* Please get rid of the DBG macro from your code */
 
 extern int _papi_hwi_debug; 
+extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
-#define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
+#define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
 #define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":"UNKNOWN")
