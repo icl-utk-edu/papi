@@ -118,6 +118,3 @@ struct wininfo {
 
 
 int init_hwinfo( struct wininfo *);
-int init_amd ( struct wininfo *);
-int init_intel( struct wininfo * );
-void print_feature_flags ( unsigned int flag );

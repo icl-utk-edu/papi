@@ -17,9 +17,10 @@
 
 
 void CALLBACK my_timer( UINT wTimerID, UINT msg, DWORD dwuser, DWORD dw1, DWORD dw2 );
-void waitConsole(void);
-int amd_proc( struct wininfo * hwinfo );
-int intel_proc( struct wininfo *hwinfo );
+static int init_amd ( struct wininfo *);
+static int amd_proc( struct wininfo * hwinfo );
+static int init_intel( struct wininfo * );
+static int intel_proc( struct wininfo *hwinfo );
 
 // Have to use the below function because sleep isn't reliable for determining
 // Mhz on a laptop.....sigh.....
@@ -188,7 +189,7 @@ int init_hwinfo( struct wininfo * hwinfo) {
 	return 1;
 }
 
-int init_amd( struct wininfo * hwinfo ) {
+static int init_amd( struct wininfo * hwinfo ) {
   volatile unsigned long val,val2, val3,val4;
   
   hwinfo->processor_id = amd_proc( hwinfo );
@@ -284,7 +285,7 @@ int init_amd( struct wininfo * hwinfo ) {
   return 1;
 }
 
-int amd_proc( struct wininfo * hwinfo ) {
+static int amd_proc( struct wininfo * hwinfo ) {
 	unsigned int model = hwinfo->model;
 	switch ( hwinfo->family ) {
 	    default:
@@ -304,7 +305,7 @@ int amd_proc( struct wininfo * hwinfo ) {
 	}
 }
 
-int init_intel ( struct wininfo * hwinfo ) {
+static int init_intel ( struct wininfo * hwinfo ) {
   volatile unsigned long val,val2, val3,val4,value;
   int count,i,j,tmp[4],k;
   char model[48];
@@ -616,7 +617,7 @@ int init_intel ( struct wininfo * hwinfo ) {
   return 1;
 }
 
-int intel_proc( struct wininfo * hwinfo ) {
+static int intel_proc( struct wininfo * hwinfo ) {
 	unsigned int model = hwinfo->model;
 	switch ( hwinfo->brand_id ) {
 		case 0x1:

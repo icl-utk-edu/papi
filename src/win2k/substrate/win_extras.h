@@ -41,6 +41,7 @@
 // Prototypes for routines not found in MS Visual C++
 extern int ffs(int i);
 extern int rand_r (unsigned int *Seed);
+extern int getpagesize(void);
 
 
 #endif // _WIN_EXTRAS

@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
@@ -6,22 +7,14 @@
 #include <math.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <signal.h>
+
 #include <errno.h>
 
-//#include "x86-events.h"
 #include "papi.h"
 
 #define inline_static static __inline 
 #include "cpuinfo.h"
 #include "pmclib.h"
-
-#define CNTR1 0x1
-#define CNTR2 0x2
-#define CNTR3 0x4
-#define CNTR4 0x8
-
-#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
 typedef struct hwd_control_state {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
@@ -35,6 +28,14 @@ typedef struct hwd_control_state {
 } hwd_control_state_t;
 
 #include "papi_internal.h"
+
+#define CNTR1 0x1
+#define CNTR2 0x2
+#define CNTR3 0x4
+#define CNTR4 0x8
+
+#define CNTRS12 (CNTR1|CNTR2)
+#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
 #define PERF_MAX_COUNTERS 4
 

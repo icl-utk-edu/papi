@@ -7,8 +7,13 @@
 
 /* PAPI stuff */
 
-// Windows specific stuff (instead of SUBSTRATE)
-#include "win32.h"
+/* Define SUBSTRATE to map to linux-perfctr.h
+ * since we haven't figured out how to assign a value 
+ * to a label at make inside the Windows IDE */
+#define SUBSTRATE "linux-perfctr.h"
+
+#include SUBSTRATE
+
 static void _papi_hwd_lock_release(void);
 
 static hwd_preset_t *preset_map = NULL;
@@ -227,19 +232,9 @@ static int get_system_info(void)
 
   _papi_system_info.hw_info.mhz = (float)win_hwinfo.mhz; 
 
-/* 
-  This appears to be costly and redundant with Kevins's cpuinfo results
-  DBG((stderr,"Detected MHZ is %f\n",_papi_system_info.hw_info.mhz));
-  mhz = calc_mhz();
-  DBG((stderr,"Calculated MHZ is %f\n",mhz));
-  if (_papi_system_info.hw_info.mhz < mhz)
-    _papi_system_info.hw_info.mhz = mhz;
-  {
-    int tmp = (int)_papi_system_info.hw_info.mhz;
-    _papi_system_info.hw_info.mhz = (float)tmp;
-  }
-  DBG((stderr,"Actual MHZ is %f\n",_papi_system_info.hw_info.mhz));
-*/
+  tmp = get_memory_info(&_papi_system_info.mem_info, (int)win_hwinfo.vendor);
+  if (tmp)
+    return(tmp);
 
   /* Setup presets */
 
@@ -936,6 +931,10 @@ int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long_long events[]
   return(PAPI_EBUG);
 }
 
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}
+
 int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option)
 {
   switch (code)
@@ -1079,17 +1078,24 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  return(PAPI_ESBSTR);
 }
 
 int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  return(PAPI_ESBSTR);
 }
 
-/* Machine info structure. -1 is unused. */
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  /* This function is not used and shouldn't be called. */
+
+  return(PAPI_ESBSTR);
+}
+
+ /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
 			      1.0, /*  version */
