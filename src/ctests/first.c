@@ -14,31 +14,47 @@
 
 void main() 
 {
-  int r, i, n;
+  int r, i, n = 0;
   double a, b, c;
   unsigned long long *ct;
   int EventSet = PAPI_NULL;
 
-  n = PAPI_num_events();
-  assert(n>0);
-  ct = (unsigned long long *)malloc(n*sizeof(unsigned long long));
-  assert(ct!=NULL);
-  memset(ct,0x00,n*sizeof(unsigned long long));
-
-  r=PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+  r = PAPI_num_events();
   assert(r>=PAPI_OK);
 
-  if (n > 1)
+  if (PAPI_query(PAPI_TOT_CYC) == PAPI_OK)
     {
-      r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
-      assert(r>=PAPI_OK); 
+      r=PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+      if (r >= PAPI_OK)
+	n++;
     }
 
-  if (n > 2) 
+  if (PAPI_query(PAPI_TOT_INS) == PAPI_OK)
+    {
+      r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
+      if (r >= PAPI_OK)
+	n++;
+    }
+
+  if (PAPI_query(PAPI_FP_INS) == PAPI_OK)
     {
       r=PAPI_add_event(&EventSet, PAPI_FP_INS);
-      assert(r>=PAPI_OK);
+      if (r >= PAPI_OK)
+	n++;
     }
+  
+  ct = (unsigned long long *)malloc(n*sizeof(unsigned long long));
+  cr = (unsigned long long *)malloc(n*sizeof(unsigned long long));
+  cs = (unsigned long long *)malloc(n*sizeof(unsigned long long));
+  cu = (unsigned long long *)malloc(n*sizeof(unsigned long long));
+  assert(ct!=NULL);
+  assert(cr!=NULL);
+  assert(cs!=NULL);
+  assert(cu!=NULL);
+  memset(ct,0x00,n*sizeof(unsigned long long));
+  memset(cr,0x00,n*sizeof(unsigned long long));
+  memset(cs,0x00,n*sizeof(unsigned long long));
+  memset(cu,0x00,n*sizeof(unsigned long long));
 
   r=PAPI_start(EventSet);
   assert(r>=PAPI_OK);
@@ -49,7 +65,31 @@ void main()
     c = a*b;
   }
   
+  r=PAPI_read(EventSet, cr);
+  assert(r>=PAPI_OK);
+
+  r=PAPI_reset(EventSet, cr);
+  assert(r>=PAPI_OK);
+
+  a = 0.5;
+  b = 6.2;
+  for (i=0; i < TESTNUM; i++) {
+    c = a*b;
+  }
+
+  r=PAPI_read(EventSet, cs);
+  assert(r>=PAPI_OK);
+
+  a = 0.5;
+  b = 6.2;
+  for (i=0; i < TESTNUM; i++) {
+    c = a*b;
+  }
+
   r=PAPI_stop(EventSet, ct);
+  assert(r>=PAPI_OK);
+
+  r=PAPI_read(EventSet, cu);
   assert(r>=PAPI_OK);
 
   if (n > 2) 
@@ -70,20 +110,15 @@ void main()
   PAPI_shutdown();
 
   printf("%d iterations of c = a*b\n",TESTNUM);
-  if (n > 2)
-    {
-      printf("%lld cycles\n%lld instructions\n%lld floating point instructions\n",ct[0],ct[1],ct[2]);
-      printf("%f IPC\n%f FPC\n",(float)ct[1]/(float)ct[0],(float)ct[2]/(float)ct[0]);
-    }
-  else if (n > 1)
-    {
-      printf("%lld cycles\n%lld instructions\n",ct[0],ct[1]);
-      printf("%f IPC\n",(float)ct[1]/(float)ct[0]);
-    }
-  else
-    {
-      printf("%lld cycles\n",ct[0]);
-    }
+  printf("Cycles: %lld %lld %lld %lld\n",cr[0],cs[0],ct[0],cu[0]);
+  printf("Instrs: %lld %lld %lld %lld\n",cr[1],cs[1],ct[1],cu[1]);
+  printf("Flinst: %lld %lld %lld %lld\n",cr[2],cs[2],ct[2],cu[2]);
+  printf("col 1 ~= col 2, col 2 ~= 2 * col 3, col 3 ~= col4\n");
+
+  free(cr);
+  free(cs);
   free(ct);
+  free(cu);
+  
   exit(0);
 }
