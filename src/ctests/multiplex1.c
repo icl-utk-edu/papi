@@ -12,8 +12,8 @@
 
 #include "papi_test.h"
 
-#define FLOPS 10000000
-#define READS 10000
+#define FLOPS 4000000
+#define READS 4000
 #define NUM 10
 #define SUCCESS 1
 
@@ -277,7 +277,7 @@ int case4()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_set_multiplex",retval);
 
-  for (i=0;i<PAPI_num_hwctrs();i++)
+  for (i=0;i<PAPI_events_len;i++)
     {
       char out[PAPI_MAX_STR_LEN];
 
