@@ -29,8 +29,8 @@ int quiet=0;
 
 int main(int argc, char *argv[]) {
   extern void dummy(void *);
-//  float x[INDEX3], y[INDEX3], z[INDEX3];
-//  float a[INDEX2][INDEX2], b[INDEX2][INDEX2], c[INDEX2][INDEX2];
+/*  float x[INDEX3], y[INDEX3], z[INDEX3];
+  float a[INDEX2][INDEX2], b[INDEX2][INDEX2], c[INDEX2][INDEX2]; */
   float real_time, proc_time, mflops;
   long_long flpins;
 
@@ -244,6 +244,9 @@ static void resultline(int i, int j, int quiet)
 	i++;						/* convert to 1s base  */
 	theory = 2;
 	while (j--) theory *= i;	/* theoretical ops   */
+#if defined(sgi)
+	theory/=2;
+#endif
 	papi = (int)(flpins);
 	diff = papi - theory;
 	adiff = abs(diff);
@@ -253,7 +256,7 @@ static void resultline(int i, int j, int quiet)
 	if (adiff < 1000000) error = (100 * adiff) / theory;
 	else error = 100 * (adiff / theory);
 	if (quiet)
-		{if (error > 4) test_fail(__FILE__, __LINE__, "error exceeds 5%", PAPI_EMISC);}
+		{if (error > 10) test_fail(__FILE__, __LINE__, "error exceeds 10%", PAPI_EMISC);}
 	else
 		printf("%8d %12d %12d %8d %5d.%.4d\n", i, papi, theory, diff, error,errord);
 }

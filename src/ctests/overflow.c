@@ -27,7 +27,7 @@
 #undef NUM_FLOPS
 
 #define NUM_FLOPS 10000000
-#define THRESHOLD  1000000
+#define THRESHOLD  5000000
 #define EVENT_NAME_1 PAPI_TOT_CYC
 #define EVENT_STRING_1 "PAPI_TOT_CYC"
 
@@ -64,6 +64,8 @@ void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int
   if ( !TESTS_QUIET )
     fprintf(stderr,OVER_FMT,EventSet,EventCode,EventIndex,
 	  values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
+  else
+	PAPI_get_overflow_address(context);
   total++;
 }
 
@@ -165,4 +167,5 @@ int main(int argc, char **argv)
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
   test_pass(__FILE__,NULL,0);
+  exit(1);
 }

@@ -26,7 +26,7 @@
 #include "papi.h"
 #include "test_utils.h"
 
-#define THRESHOLD 100000
+#define THRESHOLD 500000
 
 int total = 0;
 int TESTS_QUIET=0; /*Run tests in verbose mode?*/

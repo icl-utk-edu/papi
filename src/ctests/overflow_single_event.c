@@ -27,7 +27,7 @@
 #undef NUM_FLOPS
 
 #define NUM_FLOPS 10000000
-#define THRESHOLD  1000000
+#define THRESHOLD  5000000
 
 #ifdef NO_FLOPS
   #define EVENT_NAME	PAPI_TOT_INS
