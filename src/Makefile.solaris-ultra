@@ -19,4 +19,4 @@ MISCOBJS= get_tick.o
 include Makefile.inc
 
 get_tick.o: solaris-ultra/get_tick.S
-	$(CC) -c -O -D_ASM -xarch=v8plusa solaris-ultra/get_tick.S
+	$(CC) -c -D_ASM $(CFLAGS) $(OPTFLAGS) solaris-ultra/get_tick.S

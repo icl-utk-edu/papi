@@ -2,50 +2,55 @@
 .TH PAPI_thread_init 0 "18 May 2000"
 .LP
 .SH NAME
-PAPI_thread_init \- 
+PAPI_thread_init \- initialize PAPI for use with threads 
 .SH SYNOPSIS
 .LP
-int PAPI_thread_init (unsigned long int (*handle)(), int flag)
-.LP
-unsigned long int (*handle)() --  Function that returns current thread ID.
-.LP
-int flag --  This is reserved for future use and a zero should be passed in.
+int PAPI_thread_init (unsigned long int (*handle)(), int flag);
 .LP
 .SH DESCRIPTION
+This function initializes thread support in the PAPI library. It
+should be called only once, just after PAPI_library_init() and
+before any other PAPI calls. Applications that make no use of threads do not need to call
+this routine. It takes the following arguments:
 .LP
-.B PAPI_thread_init(\|)
-This function initializes thread support and has to be called once
-just after PAPI_library_init() before any PAPI calls can be 
-used in an application.
+unsigned long int (*handle)() --  Pointer to a function that returns current thread ID.
+.LP
+int flag --  This is reserved for future use and should be set to zero.
 .LP
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  
 .LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.SH RETURN VALUES
+.LP
+If successful, the PAPI_thread_init() function returns PAPI_OK.
+Otherwise, an error number is returned  to indicate the
+error.
+.LP
+.SH ERRORS
+.LP
+The pthread_create() function will fail if:
+.LP
 .nf
-.B  \t
-.B  PAPI_thread_init may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_start_counters
-.B  \tPAPI_read_counters
-.B  \tPAPI_stop_counters
+.B  PAPI_EINVAL
+.B  \tThe arguments specified are invalid.
 .fi
-.nf
-.B  \t
-.B  PAPI_init contains calls to:
-.B  \t
-.B  \tallocate_master_eventset
-.B  \t_papi_hwd_init
-.B  \tfree_master_eventset
-.fi
+.LP
+.SH EXAMPLES
+.LP
+For Pthreads:
+
+if (PAPI_thread_init(pthread_self, 0) != PAPI_OK)
+  handle_error(1);
+
+For OpenMP:
+
+if (PAPI_thread_init(omp_get_thread_num,0) != PAPI_OK)
+  handle_error(1);
 .LP
 .SH SEE ALSO
 .nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+.B The PerfAPI Draft: http://icl.cs.utk.edu/projects/papi/
 .SH BUGS
 .LP
-This function has no known bugs.
+This function causes the application to exit if it is called more than once.
 
