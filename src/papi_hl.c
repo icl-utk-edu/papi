@@ -173,7 +173,7 @@ int PAPI_num_counters(void)
 /* of a previous call to PAPI_start_counters(). It is the user's          */
 /* responsibility to choose events that can be counted simultaneously     */
 /* by reading the vendor's documentation. The length of this array        */
-/* should be no longer than PAPI_MAX_EVNTS.                               */ 
+/* should be no longer than PAPI_num_counters()                           */ 
 /*========================================================================*/
 
 int PAPI_start_counters(int *events, int array_len) 
