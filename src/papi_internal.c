@@ -819,6 +819,75 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+/* Machine info struct initialization using defaults */
+/* See _papi_mdi definition in papi_internal.h       */
+int _papi_hwi_mdi_init() {
+   _papi_hwi_system_info.substrate[0]           = '\0'; /* Name of the substrate we're using */
+   _papi_hwi_system_info.version                = 1.0; /* version */
+   _papi_hwi_system_info.pid                    = 0;   /* Process identifier */
+
+  /* The PAPI_hw_info_t struct defined in papi.h */
+   _papi_hwi_system_info.hw_info.ncpu               = -1;    /* ncpu */
+   _papi_hwi_system_info.hw_info.nnodes             =  1;    /* nnodes */
+   _papi_hwi_system_info.hw_info.totalcpus          = -1;    /* totalcpus */
+   _papi_hwi_system_info.hw_info.vendor             = -1;    /* vendor */
+   _papi_hwi_system_info.hw_info.vendor_string[0]   = '\0';  /* vendor_string */
+   _papi_hwi_system_info.hw_info.model              = -1;    /* model */
+   _papi_hwi_system_info.hw_info.model_string[0]    = '\0';  /* model_string */
+   _papi_hwi_system_info.hw_info.revision           = 0.0;   /* revision */
+   _papi_hwi_system_info.hw_info.mhz                = 0.0;   /* mhz */
+
+  /* The PAPI_exe_info_t struct defined in papi.h */
+   memset(&_papi_hwi_system_info.exe_info, sizeof(PAPI_exe_info_t), 0);
+
+  /* The PAPI_mem_info_t struct defined in papi.h */
+    memset(&_papi_hwi_system_info.mem_info, sizeof(PAPI_mem_info_t), 0);
+
+  /* The PAPI_shlib_info_t struct defined in papi.h */
+    memset(&_papi_hwi_system_info.shlib_info, sizeof(PAPI_shlib_info_t), 0);
+   _papi_hwi_system_info.shlib_info.map = (PAPI_address_map_t *)malloc(sizeof(PAPI_address_map_t));
+
+  /* The following variables define the length of the arrays in the
+     EventSetInfo_t structure. Each array is of length num_gp_cntrs +
+     num_sp_cntrs * sizeof(long_long) */
+   _papi_hwi_system_info.num_cntrs                      = -1;
+   _papi_hwi_system_info.num_gp_cntrs                   = -1;
+   _papi_hwi_system_info.grouped_counters               = -1;
+   _papi_hwi_system_info.num_sp_cntrs                   = -1;
+   _papi_hwi_system_info.total_presets                  = -1;
+   _papi_hwi_system_info.total_events                   = -1;
+   _papi_hwi_system_info.default_domain                 = PAPI_DOM_USER;
+   _papi_hwi_system_info.default_granularity            = PAPI_GRN_THR;
+
+  /* Public feature flags */
+   _papi_hwi_system_info.supports_program               = 0;
+   _papi_hwi_system_info.supports_write                 = 0;
+   _papi_hwi_system_info.supports_hw_overflow           = 0;
+   _papi_hwi_system_info.supports_hw_profile            = 0;
+   _papi_hwi_system_info.supports_64bit_counters        = 0;
+   _papi_hwi_system_info.supports_inheritance           = 0;
+   _papi_hwi_system_info.supports_attach                = 0;
+   _papi_hwi_system_info.supports_real_usec             = 0;
+   _papi_hwi_system_info.supports_real_cyc              = 0;
+   _papi_hwi_system_info.supports_virt_usec             = 0;
+   _papi_hwi_system_info.supports_virt_cyc              = 0;
+
+  /* Does the read call from the kernel reset the counters? */
+   _papi_hwi_system_info.supports_read_reset            = 0;  /* Private flag */
+
+  /* Size of the substrate's control struct in bytes */
+   _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
+
+  /* Global struct to maintain EventSet mapping */
+   _papi_hwi_system_info.global_eventset_map.dataSlotArray   = NULL;
+   _papi_hwi_system_info.global_eventset_map.totalSlots      = 0;
+   _papi_hwi_system_info.global_eventset_map.availSlots      = 0;
+   _papi_hwi_system_info.global_eventset_map.fullSlots       = 0;
+   _papi_hwi_system_info.global_eventset_map.lowestEmptySlot = 0;
+
+  return(PAPI_OK);
+}
+
 void _papi_hwi_dummy_handler(int EventSet, int EventCode, int EventIndex,
                           long_long *values, int *threshold, void *context)
 {

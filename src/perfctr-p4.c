@@ -218,6 +218,13 @@ inline static float calc_mhz(void)
 /* Machine info structure. -1 is unused. */
 extern int _papi_hwd_mdi_init() {
    strcpy(_papi_hwi_system_info.substrate, "$Id$");     /* Name of the substrate we're using */
+   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_init;
+   _papi_hwi_system_info.exe_info.address_info.text_end   = (caddr_t)&_etext;
+   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_etext+1;
+   _papi_hwi_system_info.exe_info.address_info.data_end   = (caddr_t)&_edata;
+   _papi_hwi_system_info.exe_info.address_info.bss_start  = (caddr_t)NULL;
+   _papi_hwi_system_info.exe_info.address_info.bss_end    = (caddr_t)NULL;
+
    _papi_hwi_system_info.supports_hw_overflow           = 1;
    _papi_hwi_system_info.supports_64bit_counters        = 1;
    _papi_hwi_system_info.supports_inheritance           = 1;
@@ -225,6 +232,14 @@ extern int _papi_hwd_mdi_init() {
    _papi_hwi_system_info.supports_real_cyc              = 1;
    _papi_hwi_system_info.supports_virt_usec             = 1;
    _papi_hwi_system_info.supports_virt_cyc              = 1;
+
+   _papi_hwi_system_info.shlib_info.map->text_start      = (caddr_t)&_init;
+   _papi_hwi_system_info.shlib_info.map->text_end        = (caddr_t)&_etext;
+   _papi_hwi_system_info.shlib_info.map->data_start      = (caddr_t)&_etext+1;
+   _papi_hwi_system_info.shlib_info.map->data_end        = (caddr_t)&_edata;
+   _papi_hwi_system_info.shlib_info.map->bss_start       = (caddr_t)NULL;
+   _papi_hwi_system_info.shlib_info.map->bss_end         = (caddr_t)NULL;
+
    return(PAPI_OK);
 }
 
