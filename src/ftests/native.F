@@ -459,8 +459,8 @@ C     call sleep(1)
       print *, "Load Instructions          : ", values(4)
       print *, "FPU0 Instructions          : ", values(5)
       print *, "CPU Cycles                 : ", values(6)
-      print *, "TLB Misses                 : ", values(7)
-      print *, "FMA Instructions           : ", values(8)
+      print *, "FMA Instructions           : ", values(7)
+      print *, "TLB Misses                 : ", values(8)
       print *, "------------------------------------------"
       print *, "CPU MFLOPS                 : ",
      *((values(5)+values(2))/1000000.0)/csec
