@@ -1,4 +1,5 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"><html><head><title>PAPI</title></head>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><title>PAPI</title></head>
 <body bgcolor="#ffffff" text="#000000">
 
 <a name="top"></a>
@@ -17,6 +18,8 @@
 &nbsp; &nbsp; &nbsp; <a href="#81">What tools are available for PAPI?</a><br>
 <br>
 <strong><a href="#38">The PAPI Library</a></strong><br>
+&nbsp; &nbsp; &nbsp; <a href="#218">I downloaded the PAPI 3 tarball last week and keep getting a segmentation fault in gcc. What's up?</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#219">When I make PAPI, I always get a warning message when compiling fmultiplex2. Why?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#138">How do I convert my code from PAPI 2 to PAPI 3?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#168">How do I compile PAPI with debugging support?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#169">How do I use the debugging features of the PAPI library?</a><br>
@@ -73,6 +76,7 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#185">Native Events for IRIX v6.x on MIPS R10K and R12K processors</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#186">Hardware Multiplexing</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#187">Bugs</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#217">Why when I compile PAPI 3.0, do I get Dl_info undefined in irix-mips.c?</a><br>
 <br>
 <strong><a href="#44">Linux-Alpha</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#188">General Comments</a><br>
@@ -82,6 +86,7 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#190">Linux/IA64 2.4 Kernel Notes</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#191">Linux/IA64 2.6 Kernel Notes</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#192">Notes on PAPI-&gt;Native event mappings</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#220">Why am I getting Operation Not Permitted on my Redhat kernels?</a><br>
 <br>
 <strong><a href="#46">Linux-Perfctr</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#209">PAPI and the Linux Kernel</a><br>
@@ -169,8 +174,8 @@ all CVS update messages (which can be a significant amount of mail!)</p><p>To su
 <br> <br>
 <a name="165"></a>
 <strong>Where are the archives for the mailing lists?</strong>
-<blockquote><p>The archives for the general PAPI mailing list are located at <a href="http://www.ptools.org/archive/perfapi">www.ptools.org/archive/perfapi</a>.
-The archives for the developers list are located at <a href="http://www.ptools.org/archive/perfapi-devel">www.ptools.org/archive/perfapi-devel</a>.</p></blockquote>
+<blockquote><p>The archives for the general PAPI mailing list are located at <a href="https://www.nacse.org/mailman/private/ptools-perfapi/">www.nacse.org/mailman/private/ptools-perfapi/</a>.
+The archives for the developers list are located at <a href="https://www.nacse.org/mailman/private/perfapi-devel/">www.nacse.org/mailman/private/perfapi-devel/</a>.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <a name="80"></a>
@@ -189,6 +194,29 @@ You can also see the latest list of third party tools and related software at <a
 <h2>The PAPI Library</h2>
 <font color="#666666"><p></p></font>
 
+<a name="218"></a>
+<strong>I downloaded the PAPI 3 tarball last week and keep getting a segmentation fault in gcc. What's up?</strong>
+<blockquote><p>SOme versions of GCC have a bug that is triggered by a
+statement in PAPI 3.0. This (one character) is fixed in the current tar
+ball, but may not be in the one you downloaded.</p><p>If you see an INTERNAL ERROR from GCC when compiling multiplex.c, do 2 things.</p><p>1) edit multiplex.c, line 1021 to have 2 equal signs instead of 1.</p><p>2 optional) send a message to your local gcc maintainer and complain.</p><p>The actual culprit is:</p><p>assert(retval = PAPI_OK) and it should be
+assert(retval == PAPI_OK)</p><p>Of course, both are legal C and nothing should trigger an internal compiler error, but hey...</p><p>P.S.
+If your current release compiled with GCC, you're still ok. As the
+statement above NEVER gets triggered. It is there as an artifact from
+the original multiplex.c implementation. So you don't need to change or
+upgrade your PAPI or gcc.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="219"></a>
+<strong>When I make PAPI, I always get a warning message when compiling fmultiplex2. Why?</strong>
+<blockquote><p>The warning message here is benign, but since it occurs
+on the last file to be compiled, it often looks like the build has been
+aborted.
+The reason the message occurs is that the compiler thinks it is trying
+to stuff too many bits into an integer value. You can fix it by
+rearranging the code a little bit. Or just download the latest copy of
+fmultiplex2.F from the cvs tree.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
 <a name="138"></a>
 <strong>How do I convert my code from PAPI 2 to PAPI 3?</strong>
 <blockquote><p>PAPI 3 represents a major upgrade to the PAPI library.
@@ -368,8 +396,14 @@ doing.</p></blockquote>
 <strong>Why am I still getting PAPI_ECNFLCT when using multiplexing?</strong>
 <blockquote><p>PAPI multiplexing currently always uses one hardware
 counter for Total Cycles. If you are trying to multiplex a derived
-event on hardware with only two physical counters then you will get
-aPAPI_ECNFLCT error. This happens on the Intel Pentium IIIs for example.</p></blockquote>
+event on hardware with only two physical counters then you will get a
+PAPI_ECNFLCT error. This happens on the Intel Pentium IIIs for example.</p><p>Also,
+enabling multiplexing is a two-step process. You must call
+PAPI_multiplex_init() to initialize multiplexing system-wide. You must
+also call PAPI_set_multiplex() for *each* event set that you want to
+count in multiplexed mode. If you try to add too many events to an
+event set where multiplexing has not been set, a PAPI_ECNFLCT error
+will result.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <a name="171"></a>
@@ -539,18 +573,18 @@ perfctr-2.6.7.tar.gz<br>
                                                                                
 <br>
         % cvs import -ko -m "Import
-of perfctr 2.6.7" papi/src/perfctr-2.6.x perfctr perfctr-2-6-7<br>
+of perfctr 2.6.7" papi/src/perfctr-2.6.x PERFCTR_DIST perfctr-2-6-13<br>
                                                                                
 <br>
-Here perfctr is the "vendor tag" and perfctr-2-6-7 is the release<br>
+Here PERFCTR_DIST is the "vendor tag" and perfctr-2-6-13 is the release<br>
 version.<br>
                                                                                
 <br>
 Then if we have locally modified our copy (made changes to the distro)<br>
 CVS will warn us to merge in our changes. We do this by<br>
-                                                                               
+                                                                               cd /anywhere/clean<br>
 <br>
-cvs checkout -jperfctr:yesterday -jperfctr papi/src/perfctr<br>
+cvs checkout -jperfctr:yesterday -jperfctr-2-6-13 papi/src/perfctr-2.6.x<br>
                                                                                
 <br>
 CVS will then do the merge for us. If there are any conflicts, we fix<br>
@@ -782,6 +816,11 @@ one of the result from hardware counter 1 will be abnormal higher than
 the reasonable result. See: man r10k_counters</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
+<a name="217"></a>
+<strong>Why when I compile PAPI 3.0, do I get Dl_info undefined in irix-mips.c?</strong>
+<blockquote><p>You have an older run-time system than what PAPI was developed on. The fix is to change the definition to 'struct Dl_info'.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
 <br>
 <a name="44"></a>
 <h2>Linux-Alpha</h2>
@@ -846,6 +885,15 @@ PAPI_FP_STAL<br>
 &nbsp;Counts stalls due to register dependencies and load latencies.<br>
 &nbsp;If the FP pipeline can stall for some other reason (I don't know)<br>
 &nbsp;then those stall cycles won't be counted.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="220"></a>
+<strong>Why am I getting Operation Not Permitted on my Redhat kernels?</strong>
+<blockquote><p>Redhat broke the perfmon kernel interface in their
+kernels and thus only enabled it for root. You can test this by running
+your papi as root, if it works, guess what, you have a broken kernel.</p><p>The
+fix is supposed to be in the latest update to RHEL3. The best thing to
+do would be to download a kernel.org kernel and start from there.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <br>

@@ -1,3 +1,12 @@
+REM PAPI Utility Pages
+perl manServer_papi.pl -o html man1/avail.1
+perl manServer_papi.pl -o html man1/clockres.1
+perl manServer_papi.pl -o html man1/cost.1
+perl manServer_papi.pl -o html man1/command_line.1
+perl manServer_papi.pl -o html man1/event_chooser.1
+perl manServer_papi.pl -o html man1/mem_info.1
+perl manServer_papi.pl -o html man1/native_avail.1
+
 REM PAPI Miscellaneous Pages
 perl manServer_papi.pl -o html man3/PAPI.3
 perl manServer_papi.pl -o html man3/PAPI_help.3
