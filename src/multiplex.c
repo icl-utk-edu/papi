@@ -227,7 +227,7 @@ static void mpx_restore_signal(void)
 static void mpx_shutdown_itimer(void)
 {
   if (setitimer(MPX_ITIMER, &itimestop, NULL) == -1)
-    perror("setitimer(MPX_ITIMER) in mpx_shutdown_itimer");
+    DBG((stderr,"setitimer(MPX_ITIMER) in mpx_shutdown_itimer"));
 }
 
 static void mpx_hold(void)
