@@ -479,6 +479,9 @@ inline static int set_granularity(hwd_control_state_t *this_state, int domain)
 
 inline static int set_inherit(int arg)
 {
+  return(PAPI_ESBSTR);
+
+/*
   int r;
 
   if (arg)
@@ -489,6 +492,7 @@ inline static int set_inherit(int arg)
     return(PAPI_ESYS);
 
   return(PAPI_OK);
+*/
 }
 
 inline static int set_default_domain(EventSetInfo *zero, int domain)
@@ -1021,8 +1025,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }

@@ -657,10 +657,14 @@ static int set_granularity(hwd_control_state_t *this_state, int domain)
 
 static int set_inherit(EventSetInfo *global, int arg)
 {
+  return(PAPI_ESBSTR);
+
+/*
   hwd_control_state_t *machdep = (hwd_control_state_t *)global->machdep;
   papi_cpc_event_t *command= &machdep->counter_cmd;
 
   return(PAPI_EINVAL);
+*/
 
 #if 0
   if (arg == 0)

@@ -645,6 +645,9 @@ static int set_granularity(hwd_control_state_t *this_state, int domain)
 
 static int set_inherit(EventSetInfo *zero, pid_t pid)
 {
+  return(PAPI_ESBSTR);
+
+/*
   int retval;
 
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
@@ -656,6 +659,7 @@ static int set_inherit(EventSetInfo *zero, pid_t pid)
     return(PAPI_ESYS);
 
   return(PAPI_OK);
+*/
 }
 
 static int set_default_domain(EventSetInfo *zero, int domain)
