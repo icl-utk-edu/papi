@@ -36,36 +36,22 @@ EventSetInfo *get_valid_ESI(int *EventSetIndex, int *allocated_a_new_one );
 
 /* Our integer to EventSetInfo * mapping */
 
-
 DynamicArray PAPI_EVENTSET_MAP = { 0, };    
-
 
 /* Behavior of handle_error(). 
    Changed to the default behavior of PAPI_QUIET in PAPI_init
    after initialization is successful. */
 
-int          PAPI_ERR_LEVEL = PAPI_VERB_ESTOP; 
+int PAPI_ERR_LEVEL = PAPI_VERB_ESTOP; 
 
-/*=+=*/
-/*========================================================================*/
-/* begin function:                                                        */    
-/* check for initialization                                               */
-static int check_initialize(void) {
+static int check_initialize(void) 
+{
+  /* see if initialization needed */
 
-int errorCode;
-
-    /* see if initialization needed */
-    if(PAPI_EVENTSET_MAP.totalSlots==0) {
-        errorCode=initialize(); 
-        if(errorCode<PAPI_OK)
-	return(handle_error(errorCode,NULL));
-	}
-
-   /* either initialization done prior to this function call
-      or the code above did a successful initialization.     */
-
-   return(PAPI_OK);
-
+  if (PAPI_EVENTSET_MAP.totalSlots) 
+    return(PAPI_OK);
+   
+  return(initialize()); 
 } 
 
 /*=+=*/ 
@@ -111,7 +97,7 @@ static int initialize(void)
    PAPI_EVENTSET_MAP.dataSlotArray=
     (EventSetInfo **)malloc(PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
    if(!PAPI_EVENTSET_MAP.dataSlotArray) 
-     return(handle_error(PAPI_ENOMEM,"Initialization failed."));
+     return(PAPI_ENOMEM);
 
    memset(&PAPI_EVENTSET_MAP.dataSlotArray,0x00, 
            PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
@@ -126,7 +112,6 @@ static int initialize(void)
    return(PAPI_OK);
 }
 
-/*=+=*/
 /*========================================================================*/
 /* This function returns the number of counters that a read(ESI->machdep)
    returns */
@@ -138,17 +123,17 @@ static int num_counters(EventSetInfo *ESI)
 
 
 /*========================================================================*/
-/* This function returns true and the memory allocated for counters */
+/* This function returns true and the memory allocated for counters 
 
-static long long *get_space_for_counters(EventSetInfo *ESI)
+static unsigned long long *get_space_for_counters(EventSetInfo *ESI)
 {
   int num;
 
   num = num_counters(ESI);
-  return((long long *)malloc(num*sizeof(long long)));
+  return((unsigned long long *)malloc(num*sizeof(unsigned long long)));
 }
+*/
 
-/*=+=*/
 /*========================================================================*/
 /* begin function:                                                        */    
 /* static void PAPI_shutdown (void);                                      */
@@ -419,9 +404,9 @@ static EventSetInfo *allocate_EventSet(void)
 
   ESI->machdep=(void *)malloc(_papi_system_info.size_machdep);
 
-  ESI->start =    (long long *)malloc(counterArrayLength*sizeof(long long));
-  ESI->stop =     (long long *)malloc(counterArrayLength*sizeof(long long));
-  ESI->latest =   (long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->start =    (unsigned long long *)malloc(counterArrayLength*sizeof(unsigned long long));
+  ESI->stop =     (unsigned long long *)malloc(counterArrayLength*sizeof(unsigned long long));
+  ESI->latest =   (unsigned long long *)malloc(counterArrayLength*sizeof(unsigned long long));
   ESI->EventCodeArray = (int *)malloc(counterArrayLength*sizeof(int));
 
   if ((ESI->machdep        == NULL )  || 
@@ -439,9 +424,9 @@ static EventSetInfo *allocate_EventSet(void)
       return(NULL);
     }
   memset(ESI->machdep,       0x00,_papi_system_info.size_machdep);
-  memset(ESI->start,         0x00,counterArrayLength*sizeof(long long));
-  memset(ESI->stop,          0x00,counterArrayLength*sizeof(long long));
-  memset(ESI->latest,        0x00,counterArrayLength*sizeof(long long));
+  memset(ESI->start,         0x00,counterArrayLength*sizeof(unsigned long long));
+  memset(ESI->stop,          0x00,counterArrayLength*sizeof(unsigned long long));
+  memset(ESI->latest,        0x00,counterArrayLength*sizeof(unsigned long long));
   memset(ESI->EventCodeArray,0x00,counterArrayLength*sizeof(int));
 
   ESI->state = PAPI_STOPPED; 
@@ -946,8 +931,11 @@ int PAPI_rem_event(int EventSet, int Event)
   /* determine target ESI structure */
 
   ESI = lookup_EventSet(EventSet);
-  if ( ESI == NULL )
-    return(handle_error(PAPI_EINVAL,NULL));
+  if (ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+
+  if (ESI->NumberOfCounters < 1)
+    return(handle_error(PAPI_EINVAL,"No counters present"));
 
   /* Remove Event from machine independent structures */
 
@@ -1169,56 +1157,47 @@ static int event_is_in_eventset(int event, EventSetInfo *ESI)
   return(handle_error(PAPI_EINVAL,"Event not in EventSet"));
 }
 
-
-/*=+=*/ 
 /*========================================================================*/
-static int set_multiplex(int eventset, PAPI_option_t *ptr)
+static int set_multiplex(PAPI_option_t *ptr)
 {
-  EventSetInfo *ESI = lookup_EventSet(eventset);
+  _papi_int_option_t internal_option;
+  int retval;
 
-  if (!ESI)
+  internal_option.multiplex.ESI = lookup_EventSet(ptr->multiplex.eventset);
+  if (!internal_option.multiplex.ESI)
     return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-  return(_papi_hwd_setopt(PAPI_SET_MPXRES,ESI,ptr));
+  memcpy(&internal_option.multiplex.multiplex,&ptr->multiplex,sizeof(PAPI_multiplex_option_t));
+  retval = _papi_hwd_ctl(PAPI_SET_MPXRES,&internal_option);
+  if (retval < PAPI_OK)
+    return(retval);
+
+  memcpy(&internal_option.multiplex.ESI->all_options.multiplex,
+	 &internal_option.multiplex,sizeof(_papi_int_multiplex_t));
+  return(PAPI_OK);
+  
 }
 
-/*========================================================================*/
-static int get_multiplex(int *eventset, PAPI_option_t *ptr)
-{
-  EventSetInfo *ESI;
-
-  if ((!eventset) || (!ptr))
-    return(handle_error(PAPI_EINVAL,"Invalid pointer"));
-
-  ESI = lookup_EventSet(*eventset);
-  if (!ESI)
-    return(handle_error(PAPI_EINVAL,"No such EventSet"));
-
-  return(_papi_hwd_getopt(PAPI_GET_MPXRES,ESI,ptr));
-}
-
-/*=+=*/ 
 /*========================================================================*/
 static int overflow_is_active(EventSetInfo *ESI)
 {
-  if (ESI->overflow.eventindex >= 0) /* No overflow active for this EventSet */
+  if (ESI->all_options.overflow.eventindex >= 0) /* No overflow active for this EventSet */
     return(1);
   else
     return(0);
 }
 
 /*========================================================================*/
-static int set_overflow(int eventset, PAPI_option_t *ptr)
+static int set_overflow(PAPI_option_t *ptr)
 {
   int retval, ind;
-  EventSetInfo *ESI = lookup_EventSet(eventset);
+  _papi_int_option_t internal_option;
 
-  /* Check the arguments */
-
-  if (!ESI)
+  internal_option.overflow.ESI = lookup_EventSet(ptr->overflow.eventset);
+  if (!internal_option.overflow.ESI)
     return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-  ind = event_is_in_eventset(ptr->overflow.event, ESI);
+  ind = event_is_in_eventset(ptr->overflow.event, internal_option.overflow.ESI);
   if (ind < PAPI_OK)
     return(ind);
 
@@ -1231,10 +1210,10 @@ static int set_overflow(int eventset, PAPI_option_t *ptr)
 					
   /* Args are good. Is overflow active? */
 
-  if ((!overflow_is_active(ESI)) && (ptr->overflow.threshold == 0))
+  if ((!overflow_is_active(internal_option.overflow.ESI)) && (ptr->overflow.threshold == 0))
     return(PAPI_OK);
     
-  retval = _papi_hwd_setopt(PAPI_SET_OVRFLO,ESI,ptr);
+  retval = _papi_hwd_ctl(PAPI_SET_OVRFLO,&internal_option);
   if (retval < 0)
     return(retval);
 
@@ -1244,50 +1223,171 @@ static int set_overflow(int eventset, PAPI_option_t *ptr)
   memcpy(&ESI->overflow.option,&ptr->overflow,sizeof(ptr->overflow)) */
   return(PAPI_OK);
 }
-/*=+=*/
-/*========================================================================*/
-static int get_overflow(int *eventset, PAPI_option_t *ptr)
+
+static int get_overflow(PAPI_option_t *ptr)
 {
   EventSetInfo *ESI;
 
-  if ((!eventset) || (!ptr))
-    return(handle_error(PAPI_EINVAL,"Invalid pointer"));
-
-  ESI = lookup_EventSet(*eventset);
+  ESI = lookup_EventSet(ptr->overflow.eventset);
   if (!ESI)
     return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-  return(_papi_hwd_getopt(PAPI_GET_OVRFLO,ESI,ptr));
+  memcpy(&ptr->overflow,&ESI->all_options.overflow,sizeof(ESI->all_options.overflow));
+
+  return(PAPI_OK);
 }
 
-int PAPI_set_granularity(int granularity, int EventSet)
-{ int retval;
+static int get_multiplex(PAPI_option_t *ptr)
+{
   EventSetInfo *ESI;
 
-  ESI = lookup_EventSet(EventSet);
+  ESI = lookup_EventSet(ptr->multiplex.eventset);
+  if (!ESI)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
 
-  retval = _papi_hwd_set_gran(granularity, (EventSetInfo *)EventSet);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  memcpy(&ptr->multiplex,&ESI->all_options.multiplex,sizeof(ESI->all_options.multiplex));
 
-  ESI->granularity = granularity;
-  return(retval);
+  return(PAPI_OK);
 }
 
-int PAPI_set_domain(int domain, int EventSet)
-{ int retval;
+static int set_domain(PAPI_option_t *ptr)
+{
+  _papi_int_option_t opt;
+  int arg, retval;
+
+  /* Check the args */
+
+  if (ptr == NULL)
+    return(handle_error(PAPI_EINVAL,"Invalid option pointer"));
+
+  arg = ptr->domain.domain;
+
+  if ((arg < PAPI_DOM_MIN) && (arg > PAPI_DOM_MAX))
+    return(handle_error(PAPI_EINVAL,"Invalid domain"));
+
+  /* Lookup the eventset */
+  
+  opt.domain.ESI = lookup_EventSet(ptr->domain.eventset);
+  if (opt.domain.ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+  
+  /* Fill in the internal structure */
+  
+  memcpy(&opt.domain.domain,&ptr->domain,sizeof(PAPI_domain_option_t));
+  
+  /* Do the low level call */
+
+  retval = _papi_hwd_ctl(PAPI_SET_DOMAIN,&opt);
+  if (retval < PAPI_OK)
+    return(retval);
+
+  /* Store this ESI's options if the above is successful */
+  
+  memcpy(&opt.domain.ESI->all_options.domain,&opt.domain,sizeof(_papi_int_domain_t));
+  return(PAPI_OK);
+}
+
+static int get_defdomain(PAPI_option_t *ptr)
+{
+  return(PAPI_OK);
+}
+
+static int get_defgranularity(PAPI_option_t *ptr)
+{
+  return(PAPI_OK);
+}
+
+static int get_granularity(PAPI_option_t *ptr)
+{
+  return(PAPI_OK);
+}
+
+static int get_domain(PAPI_option_t *ptr)
+{
   EventSetInfo *ESI;
 
-  ESI = lookup_EventSet(EventSet);
+  /* Check the args */
 
-  retval = _papi_hwd_set_domain(domain, (EventSetInfo *)EventSet);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if (ptr == NULL)
+    return(handle_error(PAPI_EINVAL,"Invalid option pointer"));
 
-  ESI->domain = domain; 
-  return(retval);
+  /* Lookup the eventset */
+  
+  ESI = lookup_EventSet(ptr->domain.eventset);
+  if (ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+  
+  /* Copy this ESI's options if the above is successful */
+  
+  memcpy(&ptr->domain,&ESI->all_options.domain.domain,sizeof(PAPI_domain_option_t));
+
+  return(PAPI_OK);
 }
 
-/*========================================================================*/
-int PAPI_set_opt(int option, int value, PAPI_option_t *ptr)
+static int set_defdomain(PAPI_option_t *ptr)
+{
+  return(PAPI_OK);
+}
+
+static int set_granularity(PAPI_option_t *ptr)
+{
+  _papi_int_option_t opt;
+  int arg, retval;
+
+  /* Check the args */
+
+  if (ptr == NULL)
+    return(handle_error(PAPI_EINVAL,"Invalid option pointer"));
+
+  arg = ptr->granularity.granularity;
+
+  if ((arg < PAPI_GRN_MIN) && (arg > PAPI_GRN_MAX))
+    return(handle_error(PAPI_EINVAL,"Invalid granularity"));
+
+  /* Lookup the eventset */
+  
+  opt.granularity.ESI = lookup_EventSet(ptr->granularity.eventset);
+  if (opt.granularity.ESI == NULL)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+  
+  /* Fill in the internal structure */
+  
+  memcpy(&opt.granularity.granularity,&ptr->granularity,sizeof(PAPI_granularity_option_t));
+  
+  /* Do the low level call */
+
+  retval = _papi_hwd_ctl(PAPI_SET_GRANUL,&opt);
+  if (retval < PAPI_OK)
+    return(retval);
+
+  /* Store this ESI's options if the above is successful */
+  
+  memcpy(&opt.granularity.ESI->all_options.granularity,&opt.granularity,sizeof(_papi_int_granularity_t));
+  return(PAPI_OK);
+}
+
+static int set_defgranularity(PAPI_option_t *ptr)
+{
+  return(PAPI_OK);
+}
+
+int PAPI_set_granularity(int granularity)
+{ 
+  PAPI_option_t opt;
+
+  opt.defgranularity.granularity = granularity;
+  return(PAPI_set_opt(PAPI_SET_DEFGRN,&opt));
+}
+
+int PAPI_set_domain(int domain)
+{ 
+  PAPI_option_t opt;
+
+  opt.defdomain.domain = domain;
+  return(PAPI_set_opt(PAPI_SET_DEFDOM,&opt));
+}
+
+int PAPI_set_opt(int option, PAPI_option_t *ptr)
 {
   int errorCode;
 
@@ -1299,63 +1399,84 @@ int PAPI_set_opt(int option, int value, PAPI_option_t *ptr)
 
   switch (option)
     {
+    case PAPI_SET_DEFDOM:
+      return(set_defdomain(ptr));
+    case PAPI_SET_DOMAIN:
+      return(set_domain(ptr));
+    case PAPI_SET_DEFGRN:
+      return(set_defgranularity(ptr));
+    case PAPI_SET_GRANUL:
+      return(set_granularity(ptr));
     case PAPI_SET_MPXRES:
-      return(set_multiplex(value,ptr)); 
+      return(set_multiplex(ptr)); 
     case PAPI_SET_OVRFLO:
-      return(set_overflow(value,ptr));
+      return(set_overflow(ptr));
     case PAPI_DEBUG:
-      if ((value < PAPI_QUIET) || (value > PAPI_VERB_ESTOP)) 
+      if ((ptr->debug < PAPI_QUIET) || (ptr->debug > PAPI_VERB_ESTOP)) 
 	return(handle_error(PAPI_EINVAL,NULL));
-      PAPI_ERR_LEVEL = value;
+      PAPI_ERR_LEVEL = ptr->debug;
       return(PAPI_OK);
     default:
       return(handle_error(PAPI_EINVAL,"No such option"));
     }
 }
-/*=+=*/
-/*========================================================================*/
-int PAPI_get_opt(int option, int *value, PAPI_option_t *ptr)
-{
- int errorCode;
 
-        /*check for initialization*/
-        errorCode=check_initialize();
-        if(errorCode<PAPI_OK)
-	   return(handle_error(errorCode,NULL));
+int PAPI_get_opt(int option, PAPI_option_t *ptr)
+{
+  int errorCode;
+
+  if (ptr == NULL)
+    return(handle_error(PAPI_EINVAL,"Invalid pointer"));
+
+  errorCode = check_initialize();
+  if (errorCode<PAPI_OK)
+    return(handle_error(errorCode,NULL));
 
   switch (option)
     {
     case PAPI_GET_MPXRES:
-      return(get_multiplex(value,ptr)); 
+      return(get_multiplex(ptr)); 
     case PAPI_GET_OVRFLO:
-      return(get_overflow(value,ptr));
+      return(get_overflow(ptr));
+    case PAPI_GET_DOMAIN:
+      return(get_domain(ptr));
+    case PAPI_GET_DEFDOM:
+      return(get_defdomain(ptr));
+    case PAPI_GET_GRANUL:
+      return(get_granularity(ptr));
+    case PAPI_GET_DEFGRN:
+      return(get_defgranularity(ptr));
     case PAPI_DEBUG:
-      if (!value)
-	return(handle_error(PAPI_EINVAL,"Invalid pointer"));
-      *value = PAPI_ERR_LEVEL;
+      ptr->debug = PAPI_ERR_LEVEL;
       return(PAPI_OK);
     default:
-      return(handle_error(PAPI_EINVAL,NULL));
+      return(handle_error(PAPI_EINVAL,"Invalid option"));
     }
 }
 
-/*=+=*/ 
 /*========================================================================*/
+
 int PAPI_start(int EventSet)
 { 
   int retval;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
-  if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
+  if(ESI == NULL) 
+    return(handle_error(PAPI_EINVAL, NULL));
 
   retval = _papi_hwd_start(ESI);
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  if(retval<PAPI_OK) 
+    return(handle_error(retval, NULL));
+
   return(retval);
 }
+
 /*========================================================================*/
-int PAPI_stop(int EventSet, long long *values)
-{ int retval, i, bound;
+
+int PAPI_stop(int EventSet, unsigned long long *values)
+{ 
+  int retval, i, bound;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
@@ -1378,7 +1499,7 @@ int PAPI_stop(int EventSet, long long *values)
 }
 /*=+=*/ 
 /*========================================================================*/
-int PAPI_read(int EventSet, long long *values)
+int PAPI_read(int EventSet, unsigned long long *values)
 { int retval, i, bound;
   EventSetInfo *ESI;
 
@@ -1402,11 +1523,11 @@ int PAPI_read(int EventSet, long long *values)
 /*=+=*/ 
 /*========================================================================*/
 
-int PAPI_accum(int EventSet, long long *values)
+int PAPI_accum(int EventSet, unsigned long long *values)
 { 
   EventSetInfo *ESI;
   int retval, i, bound;
-  long long a,b,c,*increase;
+  unsigned long long a,b,c,*increase;
 
   ESI = lookup_EventSet(EventSet);
   if ( ESI == NULL ) 
@@ -1435,7 +1556,7 @@ int PAPI_accum(int EventSet, long long *values)
 
 /*=+=*/ 
 /*========================================================================*/
-int PAPI_write(int EventSet, long long *values)
+int PAPI_write(int EventSet, unsigned long long *values)
 { int retval;
   EventSetInfo *ESI; 
 
@@ -1467,7 +1588,7 @@ int PAPI_reset(int EventSet)
   This function calls the setopt with the option to set the default granularity
   it doesn't operate on an EventSet. */
 
-int PAPI_set_granularity(int granularity)
+/* int PAPI_set_granularity(int granularity)
 { int retval;
 
   retval = PAPI_set_opt(PAPI_SET_DEFGRN,granularity,NULL); 
@@ -1481,4 +1602,4 @@ int PAPI_set_domain(int domain)
   retval = PAPI_set_opt(PAPI_SET_DEFDOM,domain,NULL);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
   return(retval);
-}
+} */

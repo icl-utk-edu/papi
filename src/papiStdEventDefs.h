@@ -1,16 +1,17 @@
 /* file: papiStdEventDefs.h
 
-The following is a list of hardware events deemed relevant and useful in tuning
-application performance. These events have identical assignments in the header
-files on different platforms however they may differ in their actual semantics. In
-addition, all of these events are not guaranteed to be present on all platforms.
-Please check your platform's documentation carefully. 
+The following is a list of hardware events deemed relevant and useful
+in tuning application performance. These events have identical
+assignments in the header files on different platforms however they
+may differ in their actual semantics. In addition, all of these events
+are not guaranteed to be present on all platforms.  Please check your
+platform's documentation carefully.
 
-This file should be modified to comply with the documentation on 
-your platform.
- 
+This file should be modified to comply with the documentation on your
+platform.
 */
 
+#define PAPI_MAX_PRESET_EVENTS 64 /*The maxmimum number of preset events */
 #define PAPI_L1_DCM  0x80000000 /*Level 1 data cache misses*/
 #define PAPI_L1_ICM  0x80000001 /*Level 1 instruction cache misses*/ 
 #define PAPI_L2_DCM  0x80000002 /*Level 2 data cache misses*/
