@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   int retval, num_tests = 5, tmp;
   long_long **values;
   int EventSet1, EventSet2;
-  int mask1 = TOT_CYC_MASK, mask2 = MASK;
+  int mask1 = MASK_TOT_CYC, mask2 = MASK;
   int num_events1, num_events2;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
