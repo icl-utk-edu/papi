@@ -194,8 +194,15 @@ int main(int argc, char **argv) {
     else if(refvalues[j]<MINCOUNTS) /* Neglect inprecise results with low counts */
       i--;
   }
-  if ( !TESTS_QUIET )
+  if ( !TESTS_QUIET ) {
     printf("\n\n");
+    for (j=0;j<nevents;j++) {
+      PAPI_label_event(events[j],des);
+      printf("Event %.2d: ref=%10lld, diff/ref=%7.2g  -- %s\n",
+	     j,refvalues[j],spread[j],des);
+    }
+    printf("\n");
+  }
 
   if ( i )
     test_fail(__FILE__,__LINE__,"Values outside threshold", i);
