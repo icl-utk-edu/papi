@@ -11,10 +11,10 @@ static void print_help(void)
    printf("    avail TESTS_QUIET\n\n");
    printf("Options:\n\n");
    printf("  -a            display only available PAPI preset events\n");
-   printf("  -t            display PAPI preset event info in tabular format (default)\n");
-   printf("  -h            print this help message\n");
-   printf("  -f            display PAPI preset event info in full detail format\n");
+   printf("  -d            display PAPI preset event info in detailed format\n");
    printf("  -e EVENTNAME  display full detail for named preset or native event\n");
+   printf("  -h            print this help message\n");
+   printf("  -t            display PAPI preset event info in tabular format (default)\n");
    printf("\n");
 }
 
