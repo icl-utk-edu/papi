@@ -3,8 +3,8 @@ DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
 LIBS	= static aix-shared
 TARGETS	= mpi multiplex serial pthreads smp omp
 
-FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com -DDEBUG
-CFLAGS	= $(FLAGS) -g
+FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
+CFLAGS	= $(FLAGS) -g -DDEBUG
 OPTFLAGS= 
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
