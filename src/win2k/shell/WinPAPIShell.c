@@ -19,12 +19,13 @@ TCHAR jarDir[256];		// Perfometer jar application directory
 TCHAR helpDir[256];		// help file directory
 
 // Foward declarations of functions included in this code module:
-BOOL				InitInstance(HINSTANCE, int);
+BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	getFileHook(HWND, UINT, WPARAM, LPARAM);
-static BOOL			UniProcessorBuild(void);
-static void			exerciseDriver(void);
-static void			centerDialog(HWND hdlg);
+static BOOL		UniProcessorBuild(void);
+static void		exerciseDriver(void);
+static void		getDriverVersion(void);
+static void		centerDialog(HWND hdlg);
 
 
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -345,6 +346,10 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					smokeTest();
 					return TRUE;
 
+				case IDVERSION:
+					getDriverVersion();
+					return TRUE;
+
 				case IDHELP:
 					ShellExecute(NULL,"open", helpDir, NULL, NULL, SW_SHOWNORMAL);
 					return TRUE;
@@ -404,6 +409,41 @@ static BOOL UniProcessorBuild(void)
 		CloseHandle(hDriver);
 	}
 	return(bReturnCode);
+}
+
+
+// get the driver version string; also makes sure it's there and active
+static void getDriverVersion(void)
+{    
+	HANDLE hDriver = INVALID_HANDLE_VALUE;
+	DWORD dwBytesReturned;
+	BOOL  bReturnCode = FALSE;
+	int iobuf[256];     // I/O buffer
+
+	// Try opening a static device driver. 
+	hDriver = CreateFile("\\\\.\\WinPMC",
+			 GENERIC_READ | GENERIC_WRITE, 
+			 FILE_SHARE_READ | FILE_SHARE_WRITE,
+			 0,                     // Default security
+			 OPEN_EXISTING,
+			 0,						// Don't Perform asynchronous I/O
+			 0);                    // No template
+
+	if (hDriver == INVALID_HANDLE_VALUE)
+			MessageBox(NULL,"Bummer","Driver Load Failed.",MB_OK);
+	else {
+
+		// Dispatch the PMC_VERSION_STRING IOCTL to our NT driver.
+		bReturnCode = DeviceIoControl(hDriver,
+					  IOCTL_PMC_VERSION_STRING,
+					  NULL, 0, iobuf, sizeof(iobuf),
+					  &dwBytesReturned, NULL);
+
+		// Display the results!
+		MessageBox(NULL,(const char *)iobuf,"WinPMC Version",MB_OK);
+
+		CloseHandle(hDriver);
+	}
 }
 
 
