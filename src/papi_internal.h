@@ -194,7 +194,6 @@ typedef MPX_EventSet * EventSetMultiplexInfo_t;
 #define PAPI_TLS_LOW_LEVEL	0
 #define PAPI_TLS_HIGH_LEVEL	1
 
-void * thread_storage[PAPI_MAX_THREAD_STORAGE];
 
 typedef struct _ThreadInfo {
   unsigned pid;
@@ -203,6 +202,7 @@ typedef struct _ThreadInfo {
   void *event_set_overflowing;
   void *event_set_profiling;
   int domain;
+  void * thread_storage[PAPI_MAX_THREAD_STORAGE];
 } ThreadInfo_t;
 
 extern ThreadInfo_t *default_master_thread;

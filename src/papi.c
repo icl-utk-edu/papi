@@ -137,11 +137,11 @@ unsigned long int PAPI_thread_id(void)
  */
 inline int PAPI_get_thr_specific(int tag, void **ptr)
 {
+  ThreadInfo_t *thread;
   if ( tag < 0 || tag > PAPI_MAX_THREAD_STORAGE )
 	papi_return(PAPI_EINVAL);
-  _papi_hwd_lock( PAPI_THREAD_STORAGE_LOCK );
-  *ptr = &thread_storage[tag];
-  _papi_hwd_unlock( PAPI_THREAD_STORAGE_LOCK );
+  thread =  _papi_hwi_lookup_in_thread_list();
+  *ptr = thread->thread_storage[tag];
   papi_return(PAPI_OK);
 }
 
@@ -150,11 +150,13 @@ inline int PAPI_get_thr_specific(int tag, void **ptr)
  */
 inline int PAPI_set_thr_specific(int tag, void *ptr)
 {
+  ThreadInfo_t *thread;
   if ( tag < 0 || tag > PAPI_MAX_THREAD_STORAGE )
 	papi_return(PAPI_EINVAL);
-  _papi_hwd_lock( PAPI_THREAD_STORAGE_LOCK );
-  thread_storage[tag] = ptr;
-  _papi_hwd_unlock( PAPI_THREAD_STORAGE_LOCK );
+  thread =  _papi_hwi_lookup_in_thread_list();
+  if ( thread == NULL )
+	papi_return(PAPI_EBUG);
+  thread->thread_storage[tag] = ptr;
   papi_return(PAPI_OK);
 }
 
@@ -221,12 +223,6 @@ int PAPI_library_init(int version)
     if(_papi_hwi_presets[i].flags & PAPI_DERIVED) tmp += 1;
   }
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
-
-  /*
-   * Initialize the thread storage
-   */
-  for ( i=0; i < PAPI_MAX_THREAD_STORAGE; i++ )
-	thread_storage[i] = NULL;
 
   init_level = PAPI_LOW_LEVEL_INITED;
   return(init_retval = PAPI_VER_CURRENT);

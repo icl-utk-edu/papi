@@ -111,12 +111,18 @@ void _papi_hwi_cleanup_thread_list(void)
 int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
 {
   ThreadInfoList_t *entry = (ThreadInfoList_t *)malloc(sizeof(ThreadInfoList_t));
+  int i;
+
   if (entry == NULL)
     return(PAPI_ENOMEM);
 #ifdef THREAD_DEBUG
   fprintf(stderr,"%lld:%s:0x%x:(%p): New entry is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,entry);
 #endif
   entry->master = ptr;
+
+  /* Thread specific data */
+  for ( i=0; i < PAPI_MAX_THREAD_STORAGE; i++ )
+	ptr->thread_storage[0] = NULL;
 
   /*_papi_hwd_lock(PAPI_INTERNAL_LOCK);*/
   if ( head == NULL ){
