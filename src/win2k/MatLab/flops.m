@@ -11,7 +11,7 @@
 %                               execution since the last call.
 %
 %    DESCRIPTION
-%    The MATLAB flops function uses the PAPI Performance API to do the heavy
+%    The PAPI flops function uses the PAPI Performance API to do the heavy
 %    lifting. PAPI takes advantage of the fact that most modern microprocessors
 %    have built-in hardware support for counting a variety of basic operations
 %    or events. PAPI uses these counters to track things like instructions 
