@@ -135,13 +135,14 @@ C    used in the program. See eg. fmatrixpapi.F
       integer len_trim
       external len_trim
 
-      write(*,*) test_str,':               SKIPPED' 
+      write(*,100) test_str,' SKIPPED'
       if(papiretval.lt.0)then
         call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
         write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
       end if
 	call pause()
       stop
+ 100  format(a,t41,a)
       end
 
       subroutine ftest_fail(file, line, callstr, retval)

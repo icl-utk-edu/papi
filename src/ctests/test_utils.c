@@ -382,7 +382,7 @@ void test_skip(char *file, int line, char *call, int retval)
 	char buf[128];
 
 	memset( buf, '\0', sizeof(buf) );
-	printf("%-24s: SKIPPED\nLine # %d\n", file, line);
+	printf("%-40s SKIPPED\nLine # %d\n", file, line);
 	if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
 		perror(buf);
