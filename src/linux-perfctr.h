@@ -12,6 +12,9 @@
 #include <asm/system.h>
 #include <linux/unistd.h>	
 // #include <linux/smp.h>
+#ifdef PERFCTR20
+#include <time.h>
+#endif
 
 #include "libperfctr.h"
 #include "x86-events.h"
@@ -23,7 +26,11 @@ typedef struct hwd_control_state {
   /* Is this event derived? */
   int derived;   
   /* Buffer to pass to the kernel to control the counters */
+#ifdef PERFCTR20
+  struct vperfctr_control counter_cmd;
+#else
   struct perfctr_control counter_cmd;
+#endif
   /* Buffer to control the kernel state of the counters */
   struct vperfctr *self;
 } hwd_control_state_t;
@@ -50,6 +57,12 @@ typedef struct hwd_control_state {
 #define PERF_UNIT_MASK         0x0000FF00
 #define PERF_EVNT_MASK         0x000000FF
 
+#ifdef PERFCTR20
+struct papi_perfctr_counter_cmd {
+  unsigned int evntsel[PERF_MAX_COUNTERS];
+} papi_perfctr_counter_cmd ;
+#endif
+
 typedef struct hwd_preset {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   unsigned char selector;  
@@ -58,7 +71,11 @@ typedef struct hwd_preset {
   /* If the derived event is not associative, this index is the lead operand */
   unsigned char operand_index;
   /* Buffer to pass to the kernel to control the counters */
+#ifdef PERFCTR20
+  struct papi_perfctr_counter_cmd counter_cmd;
+#else
   struct perfctr_control counter_cmd;
+#endif
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
