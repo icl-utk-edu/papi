@@ -5,7 +5,7 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = exeinfo shlib zero avail branches dmem_info all_events derived high-level2 describe mem_info  \
+SERIAL  = exeinfo shlib zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops first second cost johnmay2 clockres \
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
@@ -123,6 +123,9 @@ derived: derived.c $(UTILOBJS) $(PAPILIB)
 
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
+
+zero_fork: zero_fork.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_fork.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_fork
 
 try: try.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) try.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o try
