@@ -1538,7 +1538,7 @@ static void dummy_handler(int EventSet, int EventCode, int EventIndex,
   abort();
 }
 
-int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
+int PAPI_profil(void *buf, int bufsiz, caddr_t offset, unsigned int scale,
                 int EventSet, int EventCode, int threshold, int flags)
 {
   EventSetInfo *ESI;

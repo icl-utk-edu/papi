@@ -4,6 +4,7 @@ LIBS	= static shared
 TARGETS	= serial pthreads smp omp
 
 CFLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qtune=pwr3 -qarch=pwr3
+#FOR_USED= -DFORTRANUNDERSCORE
 OPTFLAGS= -O3 -qstrict -DNDEBUG
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
