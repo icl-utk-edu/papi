@@ -5,6 +5,7 @@
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
+#if 0
 static hwd_search_t findem_ev4[] = {
   { PAPI_TOT_CYC, { PF_CYCLES, -1 }},
   { PAPI_TOT_INS, { PF_ISSUES, -1 }},
@@ -17,12 +18,6 @@ static hwd_search_t findem_pca[] = {
   { PAPI_TOT_CYC, { PF5_MUX0_CYCLES, -1, PF5_MUX2_C_CYCLES }},
   { PAPI_TOT_INS, { PF5_MUX0_ISSUES, -1, -1 }},
   { -1, {-1, }}};
-static hwd_search_t findem_ev6[] = {
-  { PAPI_TOT_CYC, { PF6_MUX0_CYCLES, PF6_MUX1_CYCLES, -1 }},
-  { PAPI_TOT_INS,  { PF6_MUX0_RET_INSTRUCTIONS, -1, -1 }},
-  { PAPI_BR_CN,   { -1, PF6_MUX1_RET_COND_BRANCHES, -1 }},
-  { PAPI_RES_STL, { -1, PF6_MUX1_REPLAY_TRAP, -1 }},
-  { -1, {-1, -1, -1}}};
 static hwd_search_t findem_ev67[] = {
   { PAPI_TOT_CYC, { -1, PF67_RET_INST_AND_CYCLES, -1 }},
   { PAPI_TOT_INS, { PF67_RET_INST_AND_CYCLES, -1, -1 }},
@@ -34,6 +29,15 @@ static hwd_search_t findem_ev67[] = {
 static int setmuxcode = -1;
 static int getcntcode = -1;
 static int cntselcode = -1;
+
+#endif
+
+static hwd_search_t findem_ev6[] = {
+  { PAPI_TOT_CYC, { PF6_MUX0_CYCLES, PF6_MUX1_CYCLES, -1 }},
+  { PAPI_TOT_INS,  { PF6_MUX0_RET_INSTRUCTIONS, -1, -1 }},
+  { PAPI_BR_CN,   { -1, PF6_MUX1_RET_COND_BRANCHES, -1 }},
+  { PAPI_RES_STL, { -1, PF6_MUX1_REPLAY_TRAP, -1 }},
+  { -1, {-1, -1, -1}}};
 
 /* Utility functions */
 
@@ -49,6 +53,15 @@ static int setup_all_presets(int family, int model)
 
   DBG((stderr,"Family %d, model %d\n",family,model));
 
+  if ((family == 2) && (model < EV67_CPU))
+    findem = findem_ev6;
+  else
+    {
+      fprintf(stderr,"Unsupported processor family %s, model %d\n",family,model);
+      return(PAPI_ESBSTR);
+    }
+
+#if 0
   if (family == 0)
     {
       findem = findem_ev4;
@@ -80,6 +93,7 @@ static int setup_all_presets(int family, int model)
       fprintf(stderr,"Unknown processor model %d family %d\n",model,family);
       return(PAPI_ESBSTR);
     }  
+#endif
 
   while ((code = findem->papi_code) != -1)
     {
@@ -155,14 +169,14 @@ static int counter_event_shared(const ev_control_t *a, const ev_control_t *b, in
 
 static int update_global_hwcounters(EventSetInfo *global)
 {
-  int retval;
+  int i, retval;
   hwd_control_state_t *current_state = (hwd_control_state_t *)global->machdep;
   struct pfcntrs_ev6 tev6;
   struct pfcntrs_ev6 *interrupts_ev6 = &tev6;
   union pmctrs_ev6 values_ev6;
   long counter_values[EV_MAX_COUNTERS] = { 0, 0, 0 };
 
-  /* Get interrupt vals */
+  /* Get interrupt vals for the driver */
 
   retval = ioctl(current_state->fd, PCNT6GETCNT, &interrupts_ev6);
   if (retval == -1)
@@ -173,20 +187,31 @@ static int update_global_hwcounters(EventSetInfo *global)
 
   /* Get CPU vals. */
 
-  values_ev6.pmctrs_ev6_long = 0;
-  retval = ioctl(current_state->fd, PCNT6GETCNTRS, &values_ev6.pmctrs_ev6_long);
-  if (retval == -1)
-    return PAPI_ESYS;
+  for (i=0;i<_papi_system_info.hw_info.ncpu;i++)
+    {
+      values_ev6.pmctrs_ev6_long = 0;
+      values_ev6.pmctrs_ev6_cpu = i;
 
-  DBG((stderr,"PCNT6GETCNTRS returns 0x%lx\n",values_ev6.pmctrs_ev6_long));
-  DBG((stderr,"PCNT6GETCNTRS C0: %ld C1: %ld\n",values_ev6.pmctrs_ev6_cntr0,values_ev6.pmctrs_ev6_cntr1));
+      retval = ioctl(current_state->fd, PCNT6GETCNTRS, &values_ev6.pmctrs_ev6_long);
+      if (retval == -1)
+	{
+	  perror("");
+	  return PAPI_ESYS;
+	}
 
-  /* Do the math */
+      DBG((stderr,"PCNT6GETCNTRS %d returns 0x%lx\n",i,values_ev6.pmctrs_ev6_long));
+      DBG((stderr,"PCNT6GETCNTRS %d C0: %ld C1: %ld\n",i,values_ev6.pmctrs_ev6_cntr0,values_ev6.pmctrs_ev6_cntr1));
 
-  counter_values[0] = (interrupts_ev6->pf_cntr0 << 20) + values_ev6.pmctrs_ev6_cntr0;
-  counter_values[1] = (interrupts_ev6->pf_cntr1 << 20) + values_ev6.pmctrs_ev6_cntr1; 
-  
-  DBG((stderr,"Actual values %ld %ld \n",counter_values[0],counter_values[1]));
+      /* Do the math */
+
+      counter_values[0] += values_ev6.pmctrs_ev6_cntr0;
+      counter_values[1] += values_ev6.pmctrs_ev6_cntr1; 
+      
+      DBG((stderr,"Actual values %d %ld %ld \n",i,counter_values[0],counter_values[1]));
+    }
+
+  counter_values[0] += (interrupts_ev6->pf_cntr0 << 20);
+  counter_values[1] += (interrupts_ev6->pf_cntr1 << 20);
 
   DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
        global->hw_start[0]+counter_values[0],global->hw_start[0],counter_values[0]));
@@ -425,16 +450,13 @@ int _papi_hwd_init(EventSetInfo *zero)
   if (fd == -1)
     return(PAPI_ESYS);
 
-  if (ioctl(fd,PCNTRENABLE) == -1)
+  arg = PFM_COUNTERS;
+  if (ioctl(fd,PCNTSETITEMS,&arg) == -1)
     {
     bail:
       close(fd);
       return(PAPI_ESYS);
     }
-
-  arg = PFM_COUNTERS;
-  if (ioctl(fd,PCNTSETITEMS,&arg) == -1)
-    goto bail;
 
   if (ioctl(fd,PCNTLOGSELECT) == -1)
     goto bail;
@@ -686,14 +708,6 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       current_state->selector = this_state->selector;
       memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(current_state->counter_cmd));
 
-      /* Stop the current context */
-
-      /* (Re)start the counters */
-      
-#ifdef DEBUG
-      dump_cmd(&current_state->counter_cmd);
-#endif
-
       /* clear driver */
 
       retval = ioctl(current_state->fd, PCNTCLEARCNT);
@@ -702,7 +716,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
       /* select events */
 
-      retval = ioctl(current_state->fd,PCNT6MUX, &current_state->counter_cmd.ev6);
+      DBG((stderr,"PCNT6MUX command %lx\n",current_state->counter_cmd.ev6)); 
+      retval = ioctl(current_state->fd,PCNT6MUX, &current_state->counter_cmd.ev6); 
       if (retval == -1)
 	return(PAPI_ESYS);
 

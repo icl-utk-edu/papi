@@ -1,10 +1,10 @@
 SUBSTR  = tru64-alpha
-DESCR   = "Compaq Tru64 Unix with Alpha 21xxx"
+DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial pthreads omp smp
 
 FOR_USED= -DFORTRANUNDERSCORE
-CFLAGS 	= -g -DDEBUG 
+CFLAGS 	= -g -DDEBUG -Zp8
 FFLAGS	= -g
 OPTFLAGS= 
 SMPCFLGS= -mp
