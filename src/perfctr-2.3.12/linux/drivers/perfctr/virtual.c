@@ -348,43 +348,33 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct vperfctr_control *argp)
 	struct vperfctr_control control;
 	int err;
 	unsigned int prev_cstatus;
-	unsigned int prev_start_tsc;
+	unsigned int next_cstatus;
 
 	if( copy_from_user(&control, argp, sizeof control) )
 		return -EFAULT;
-#if PERFCTR_INTERRUPT_SUPPORT
-	perfctr->iresume_cstatus = 0;
-#else
-	if( control.cpu_control.nrictrs > 0 )
-		return -EINVAL;
-#endif
 	prev_cstatus = perfctr->state.cpu_state.cstatus;
+	sys_vperfctr_stop(perfctr);
 	err = perfctr_cpu_update_control(&perfctr->state.cpu_state,
 					 &control.cpu_control);
 	if( err < 0 )
 		return err;
-	if( !perfctr_cstatus_enabled(perfctr->state.cpu_state.cstatus) )
-		/* XXX: too late, cstatus == 0 now :-( */
-		return sys_vperfctr_stop(perfctr);
+	next_cstatus = perfctr->state.cpu_state.cstatus;
+	if( !perfctr_cstatus_enabled(next_cstatus) )
+		return 0;
 
 	/* XXX: validate si_signo? */
 	perfctr->state.si_signo = control.si_signo;
 
 	/*
 	 * Clear the perfctr sums and restart the perfctrs.
-	 *
-	 * If the counters were running before this control call,
-	 * then don't clear the time-stamp counter's sum and don't
-	 * overwrite its current start value.
+	 * Preserve the time-stamp counter's sum if possible.
 	 */
-	if( prev_cstatus == 0 )
+	if( !perfctr_cstatus_has_tsc(prev_cstatus) ||
+	    !perfctr_cstatus_has_tsc(next_cstatus) )
 		perfctr->state.cpu_state.sum.tsc = 0;
 	memset(&perfctr->state.cpu_state.sum.pmc, 0,
 	       sizeof perfctr->state.cpu_state.sum.pmc);
-	prev_start_tsc = perfctr->state.cpu_state.start.tsc;
-	vperfctr_resume(perfctr);	/* clobbers start.tsc :-( */
-	if( prev_cstatus != 0 )
-		perfctr->state.cpu_state.start.tsc = prev_start_tsc;
+	vperfctr_resume(perfctr);
 
 	return 0;
 }
@@ -393,7 +383,6 @@ static int sys_vperfctr_iresume(struct vperfctr *perfctr)
 {
 #if PERFCTR_INTERRUPT_SUPPORT
 	unsigned int iresume_cstatus;
-	unsigned int prev_start_tsc;
 
 	iresume_cstatus = perfctr->iresume_cstatus;
 	if( !perfctr_cstatus_has_ictrs(iresume_cstatus) )
@@ -405,10 +394,8 @@ static int sys_vperfctr_iresume(struct vperfctr *perfctr)
 	perfctr->state.cpu_state.cstatus = iresume_cstatus;
 	perfctr->iresume_cstatus = 0;
 
-	prev_start_tsc = perfctr->state.cpu_state.start.tsc;
 	perfctr_cpu_ireload(&perfctr->state.cpu_state);
-	vperfctr_resume(perfctr);	/* clobbers start.tsc :-( */
-	perfctr->state.cpu_state.start.tsc = prev_start_tsc;
+	vperfctr_resume(perfctr);
 	return 0;
 #else
 	return -ENOSYS;
@@ -529,6 +516,34 @@ static int vperfctr_open(struct inode *inode, struct file *filp)
 		_vperfctr_set_thread(task_thread(tsk), perfctr);
 	return 0;
 }
+
+#if 1
+#include <linux/smp_lock.h>	/* for {,un}lock_kernel() */
+int perfctr_stub_for_new_remote_control_code(int pid)
+{
+    struct task_struct *tsk;
+    int ret;
+
+    lock_kernel();
+    read_lock(&tasklist_lock);
+    tsk = find_task_by_pid(pid);
+    if( tsk )
+	get_task_struct(tsk);
+    read_unlock(&tasklist_lock);
+    ret = -EPERM;
+    if( !tsk )
+	goto out;
+    ret = ptrace_check_attach(tsk, 0);
+    if( ret < 0 )
+	goto out_tsk;
+    ret = 0;	/* do some work here */
+ out_tsk:
+    put_task_struct(tsk);
+ out:
+    unlock_kernel();
+    return ret;
+}
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
 

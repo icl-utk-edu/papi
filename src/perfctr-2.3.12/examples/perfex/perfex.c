@@ -17,9 +17,26 @@
  *		Specify an event to be counted.
  *		Multiple event specifiers may be given, limited by the
  *		number of available performance counters in the processor.
- *		Each event specifier is a 32-bit processor-dependent
- *		hexadecimal number. The order in which the events are
- *		specified is significant.
+ *
+ *		The full syntax of an event specifier is "evntsel/aux@pmc".
+ *		All three components are 32-bit processor-specific numbers,
+ *		written in decimal or hexadecimal notation.
+ *
+ *		"evntsel" is the primary processor-specific event selection
+ *		code to use for this event. This field is mandatory.
+ *
+ *		"/aux" is used when additional event selection data is
+ *		needed. For the Pentium 4, "evntsel" is put in the counter's
+ *		CCCR register, and "aux" is put in the associated ESCR
+ *		register. No other processor currently needs this field.
+ *
+ *		"@pmc" describes which CPU counter number to assign this
+ *		event to. When omitted, the events are assigned in the
+ *		order listed, starting from 0. Either all or none of the
+ *		event specifiers should use the "@pmc" notation.
+ *		Explicit counter assignment via "@pmc" is required on
+ *		Pentium 4 and VIA C3 processors.
+ *
  *		The counts, together with an event description are written
  *		to the result file (default is stderr).
  *
@@ -45,10 +62,22 @@
  *	perfex -e 0x004100C0 some_program
  *	perfex --event=0x004100C0 some_program
  *
+ *	The following command does the same on an Intel Pentium 4 processor:
+ *
+ *	perfex -e 0x00039000/0x04000204@0x8000000C some_program
+ *
+ *	Explanation: Program IQ_CCCR0 with required flags, ESCR select 4
+ *	(== CRU_ESCR0), and Enable. Program CRU_ESCR0 with event 2
+ *	(instr_retired), NBOGUSNTAG, CPL>0. Map this event to IQ_COUNTER0
+ *	(0xC) with fast RDPMC enabled.
+ *
  * DEPENDENCIES
  *	perfex only works on Linux/x86 systems which have been modified
  *	to include the perfctr driver. This driver is available at
  *	http://www.csd.uu.se/~mikpe/linux/perfctr/.
+ *
+ * BUGS
+ *	The -l and -L options do not work on the Pentium 4.
  *
  * NOTES
  *	perfex is superficially similar to IRIX' perfex(1).
@@ -244,10 +273,14 @@ static int do_parent(int sock, int child_pid, FILE *resfile)
     if( kstate->cpu_state.control.tsc_on )
 	fprintf(resfile, "tsc\t\t\t%19lld\n", kstate->cpu_state.sum.tsc);
     nrctrs = kstate->cpu_state.control.nractrs;
-    for(i = 0; i < nrctrs; ++i)
-	fprintf(resfile, "event 0x%08X\t%19lld\n",
-		kstate->cpu_state.control.evntsel[i],
-		kstate->cpu_state.sum.pmc[i]);
+    for(i = 0; i < nrctrs; ++i) {
+	fprintf(resfile, "event 0x%08X",
+		kstate->cpu_state.control.evntsel[i]);
+	if( kstate->cpu_state.control.evntsel_aux[i] )
+	    fprintf(resfile, "/0x%08X",
+		    kstate->cpu_state.control.evntsel_aux[i]);
+	fprintf(resfile, "\t%19lld\n", kstate->cpu_state.sum.pmc[i]);
+    }
 
     munmap((void*)kstate, PAGE_SIZE);
     return WEXITSTATUS(child_status);
@@ -364,23 +397,44 @@ static void do_usage(void)
     fprintf(stderr, "\t-L | --long-list\t\tList available events in long format\n");
 }
 
+static int parse_event_spec(const char *arg, unsigned int *evntsel,
+			    unsigned int *aux, unsigned int *pmc)
+{
+    char *endp;
+
+    *evntsel = strtoul(arg, &endp, 16);
+    if( endp[0] != '/' ) {
+	*aux = 0;
+    } else {
+	arg = endp + 1;
+	*aux = strtoul(arg, &endp, 16);
+    }
+    if( endp[0] != '@' ) {
+	*pmc = (unsigned int)-1;
+    } else {
+	arg = endp + 1;
+	*pmc = strtoul(arg, &endp, 16);
+    }
+    return endp[0] != '\0';
+}
+
 int main(int argc, char **argv)
 {
     struct perfctr_info info;
     struct vperfctr_control control;
-    unsigned long evntsel;
     int n;
-    char *endp;
+    unsigned int spec_evntsel, spec_aux, spec_pmc;
     FILE *resfile;
-
-    memset(&control, 0, sizeof control);
-    control.cpu_control.tsc_on = 1;
-    n = 0;
-    resfile = stderr;
 
     /* prime info, as we'll need it in most cases */
     if( get_info(&info) )
 	return 1;
+
+    memset(&control, 0, sizeof control);
+    if( info.cpu_features & PERFCTR_FEATURE_RDTSC )
+	control.cpu_control.tsc_on = 1;
+    n = 0;
+    resfile = stderr;
 
     for(;;) {
 	/* the '+' is there to prevent permutation of argv[] */
@@ -407,17 +461,19 @@ int main(int argc, char **argv)
 	    }
 	    continue;
 	  case 'e':
+	    if( parse_event_spec(optarg, &spec_evntsel, &spec_aux, &spec_pmc) ) {
+		fprintf(stderr, "perfex: invalid event specifier: '%s'\n", optarg);
+		return 1;
+	    }
 	    if( n >= ARRAY_SIZE(control.cpu_control.evntsel) ) {
 		fprintf(stderr, "perfex: too many event specifiers\n");
 		return 1;
 	    }
-	    evntsel = strtoul(optarg, &endp, 16);
-	    if( endp[0] != '\0' ) {
-		fprintf(stderr, "perfex: invalid number: '%s'\n", optarg);
-		return 1;
-	    }
-	    control.cpu_control.evntsel[n] = evntsel;
-	    control.cpu_control.pmc_map[n] = n; /* XXX: only valid for P6/K7 */
+	    if( spec_pmc == (unsigned int)-1 )
+		spec_pmc = n;
+	    control.cpu_control.evntsel[n] = spec_evntsel;
+	    control.cpu_control.evntsel_aux[n] = spec_aux;
+	    control.cpu_control.pmc_map[n] = spec_pmc;
 	    control.cpu_control.nractrs = ++n;
 	    continue;
 	  default:
@@ -426,7 +482,6 @@ int main(int argc, char **argv)
 	}
 	break;
     }
-    /* XXX: pmc_map[] fixup here */
 
     return do_perfex(&control, argv, resfile);
 }

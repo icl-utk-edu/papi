@@ -1,0 +1,278 @@
+--- linux-2.5.5-perfctr/CREDITS.~1~	Wed Feb 20 03:10:56 2002
++++ linux-2.5.5-perfctr/CREDITS	Tue Feb 26 15:06:46 2002
+@@ -2342,6 +2342,7 @@
+ E: mikpe@csd.uu.se
+ W: http://www.csd.uu.se/~mikpe/
+ D: Miscellaneous fixes
++D: Performance-monitoring counters driver
+ 
+ N: Reed H. Petty
+ E: rhp@draper.net
+--- linux-2.5.5-perfctr/Documentation/ioctl-number.txt.~1~	Wed Feb 20 03:11:05 2002
++++ linux-2.5.5-perfctr/Documentation/ioctl-number.txt	Tue Feb 26 15:06:46 2002
+@@ -188,5 +188,7 @@
+ 0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
+ 0xCB	00-1F	CBM serial IEC bus	in development:
+ 					<mailto:michael.klein@puffin.lb.shuttle.de>
++0xD0	all	performance counters	in development:
++					<mailto:mikpe@csd.uu.se>
+ 
+ 0xFE	00-9F	Logical Volume Manager	<mailto:linux-lvm@sistina.com>
+--- linux-2.5.5-perfctr/MAINTAINERS.~1~	Wed Feb 20 03:10:54 2002
++++ linux-2.5.5-perfctr/MAINTAINERS	Tue Feb 26 15:06:46 2002
+@@ -1216,6 +1216,12 @@
+ L:	linux-net@vger.kernel.org
+ S:	Maintained
+ 
++PERFORMANCE-MONITORING COUNTERS DRIVER
++P:	Mikael Pettersson
++M:	mikpe@csd.uu.se
++W:	http://www.csd.uu.se/~mikpe/linux/perfctr/
++S:	Maintained
++
+ PNP SUPPORT
+ P:	Tom Lees
+ M:	tom@lpsg.demon.co.uk
+--- linux-2.5.5-perfctr/Makefile.~1~	Wed Feb 20 03:10:55 2002
++++ linux-2.5.5-perfctr/Makefile	Tue Feb 26 15:07:46 2002
+@@ -187,6 +187,7 @@
+ DRIVERS-$(CONFIG_BLUEZ) += drivers/bluetooth/bluetooth.o
+ DRIVERS-$(CONFIG_HOTPLUG_PCI) += drivers/hotplug/vmlinux-obj.o
+ DRIVERS-$(CONFIG_ISDN) += drivers/isdn/vmlinux-obj.o
++DRIVERS-$(CONFIG_KPERFCTR) += drivers/perfctr/kperfctr.o
+ 
+ DRIVERS := $(DRIVERS-y)
+ 
+--- linux-2.5.5-perfctr/arch/i386/config.in.~1~	Wed Feb 20 03:10:59 2002
++++ linux-2.5.5-perfctr/arch/i386/config.in	Tue Feb 26 15:06:46 2002
+@@ -231,6 +231,7 @@
+ fi
+ 
+ source drivers/pci/Config.in
++source drivers/perfctr/Config.in
+ 
+ bool 'EISA support' CONFIG_EISA
+ 
+--- linux-2.5.5-perfctr/arch/i386/kernel/i8259.c.~1~	Wed Feb 20 03:11:05 2002
++++ linux-2.5.5-perfctr/arch/i386/kernel/i8259.c	Tue Feb 26 15:06:46 2002
+@@ -21,6 +21,7 @@
+ #include <asm/delay.h>
+ #include <asm/desc.h>
+ #include <asm/apic.h>
++#include <asm/perfctr.h>
+ 
+ #include <linux/irq.h>
+ 
+@@ -493,6 +494,10 @@
+ 	set_intr_gate(ERROR_APIC_VECTOR, error_interrupt);
+ #endif
+ 
++#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_KPERFCTR)
++	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt);
++#endif
++
+ 	/*
+ 	 * Set the clock to HZ Hz, we already have a valid
+ 	 * vector now:
+--- linux-2.5.5-perfctr/arch/i386/kernel/irq.c.~1~	Wed Feb 20 03:10:55 2002
++++ linux-2.5.5-perfctr/arch/i386/kernel/irq.c	Tue Feb 26 15:06:46 2002
+@@ -44,6 +44,7 @@
+ #include <asm/delay.h>
+ #include <asm/desc.h>
+ #include <asm/irq.h>
++#include <asm/perfctr.h>
+ 
+ 
+ 
+@@ -171,6 +172,12 @@
+ 		seq_printf(p, "%10u ", apic_timer_irqs[cpu_logical_map(j)]);
+ 	seq_putc(p, '\n');
+ #endif
++#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_KPERFCTR)
++	seq_printf(p, "PMC: ");
++	for (j = 0; j < smp_num_cpus; j++)
++		seq_printf(p, "%10u ", apic_lvtpc_irqs[cpu_logical_map(j)]);
++	seq_putc(p, '\n');
++#endif
+ 	seq_printf(p, "ERR: %10u\n", atomic_read(&irq_err_count));
+ #ifdef CONFIG_X86_IO_APIC
+ #ifdef APIC_MISMATCH_DEBUG
+--- linux-2.5.5-perfctr/arch/i386/kernel/process.c.~1~	Wed Feb 20 03:10:52 2002
++++ linux-2.5.5-perfctr/arch/i386/kernel/process.c	Tue Feb 26 15:06:46 2002
+@@ -33,6 +33,7 @@
+ #include <linux/delay.h>
+ #include <linux/reboot.h>
+ #include <linux/init.h>
++#include <linux/perfctr.h>
+ #include <linux/mc146818rtc.h>
+ 
+ #include <asm/uaccess.h>
+@@ -525,7 +526,7 @@
+  */
+ void exit_thread(void)
+ {
+-	/* nothing to do ... */
++	perfctr_exit_thread(&current->thread);
+ }
+ 
+ void flush_thread(void)
+@@ -607,6 +608,8 @@
+ 	unlazy_fpu(current);
+ 	struct_cpy(&p->thread.i387, &current->thread.i387);
+ 
++	perfctr_copy_thread(&p->thread);
++
+ 	return 0;
+ }
+ 
+@@ -691,6 +694,8 @@
+ 
+ 	/* never put a printk in __switch_to... printk() calls wake_up*() indirectly */
+ 
++	perfctr_suspend_thread(prev);
++
+ 	unlazy_fpu(prev_p);
+ 
+ 	/*
+@@ -748,6 +753,8 @@
+ 			 */
+ 			tss->bitmap = INVALID_IO_BITMAP_OFFSET;
+ 	}
++
++	perfctr_resume_thread(next);
+ }
+ 
+ asmlinkage int sys_fork(struct pt_regs regs)
+--- linux-2.5.5-perfctr/drivers/Makefile.~1~	Wed Feb 20 03:10:58 2002
++++ linux-2.5.5-perfctr/drivers/Makefile	Tue Feb 26 15:06:46 2002
+@@ -49,4 +49,7 @@
+ 
+ subdir-$(CONFIG_BLUEZ)		+= bluetooth
+ 
++mod-subdirs += perfctr
++subdir-$(CONFIG_KPERFCTR)	+= perfctr
++
+ include $(TOPDIR)/Rules.make
+--- linux-2.5.5-perfctr/fs/proc/base.c.~1~	Wed Feb 20 03:10:55 2002
++++ linux-2.5.5-perfctr/fs/proc/base.c	Tue Feb 26 15:06:46 2002
+@@ -26,6 +26,7 @@
+ #include <linux/seq_file.h>
+ #include <linux/namespace.h>
+ #include <linux/mm.h>
++#include <linux/perfctr.h>
+ 
+ /*
+  * For hysterical raisins we keep the same inumbers as in the old procfs.
+@@ -547,6 +548,7 @@
+ 	PROC_PID_MAPS,
+ 	PROC_PID_CPU,
+ 	PROC_PID_MOUNTS,
++	PROC_PID_PERFCTR,
+ 	PROC_PID_FD_DIR = 0x8000,	/* 0x8000-0xffff */
+ };
+ 
+@@ -567,6 +569,9 @@
+   E(PROC_PID_ROOT,	"root",		S_IFLNK|S_IRWXUGO),
+   E(PROC_PID_EXE,	"exe",		S_IFLNK|S_IRWXUGO),
+   E(PROC_PID_MOUNTS,	"mounts",	S_IFREG|S_IRUGO),
++#ifdef CONFIG_PERFCTR_VIRTUAL
++  E(PROC_PID_PERFCTR,	"perfctr",	PERFCTR_PROC_PID_MODE),
++#endif
+   {0,0,NULL,0}
+ };
+ #undef E
+@@ -944,6 +949,11 @@
+ 		case PROC_PID_MOUNTS:
+ 			inode->i_fop = &proc_mounts_operations;
+ 			break;
++#ifdef CONFIG_PERFCTR_VIRTUAL
++		case PROC_PID_PERFCTR:
++			perfctr_set_proc_pid_ops(inode);
++			break;
++#endif
+ 		default:
+ 			printk("procfs: impossible type (%d)",p->type);
+ 			iput(inode);
+--- linux-2.5.5-perfctr/include/asm-i386/apic.h.~1~	Wed Feb 20 03:11:02 2002
++++ linux-2.5.5-perfctr/include/asm-i386/apic.h	Tue Feb 26 15:06:46 2002
+@@ -94,6 +94,9 @@
+ #define NMI_LOCAL_APIC	2
+ #define NMI_INVALID	3
+ 
++extern struct pm_dev *nmi_pmdev;
++extern unsigned int nmi_perfctr_msr;
++
+ #endif /* CONFIG_X86_LOCAL_APIC */
+ 
+ #endif /* __ASM_APIC_H */
+--- linux-2.5.5-perfctr/include/asm-i386/hw_irq.h.~1~	Wed Feb 20 03:11:02 2002
++++ linux-2.5.5-perfctr/include/asm-i386/hw_irq.h	Tue Feb 26 15:06:46 2002
+@@ -50,14 +50,15 @@
+  * sources per level' errata.
+  */
+ #define LOCAL_TIMER_VECTOR	0xef
++#define LOCAL_PERFCTR_VECTOR	0xee
+ 
+ /*
+- * First APIC vector available to drivers: (vectors 0x30-0xee)
++ * First APIC vector available to drivers: (vectors 0x30-0xed)
+  * we start at 0x31 to spread out vectors evenly between priority
+  * levels. (0x80 is the syscall vector)
+  */
+ #define FIRST_DEVICE_VECTOR	0x31
+-#define FIRST_SYSTEM_VECTOR	0xef
++#define FIRST_SYSTEM_VECTOR	0xee
+ 
+ extern int irq_vector[NR_IRQS];
+ #define IO_APIC_VECTOR(irq)	irq_vector[irq]
+--- linux-2.5.5-perfctr/include/asm-i386/processor.h.~1~	Wed Feb 20 03:10:54 2002
++++ linux-2.5.5-perfctr/include/asm-i386/processor.h	Tue Feb 26 15:06:46 2002
+@@ -359,6 +359,11 @@
+ 	unsigned long __cacheline_filler[5];
+ };
+ 
++/*
++ * Virtual per-process performance-monitoring counters.
++ */
++struct vperfctr;	/* opaque; no need to depend on <linux/perfctr.h> */
++
+ struct thread_struct {
+ 	unsigned long	esp0;
+ 	unsigned long	eip;
+@@ -378,6 +383,8 @@
+ /* IO permissions */
+ 	int		ioperm;
+ 	unsigned long	io_bitmap[IO_BITMAP_SIZE+1];
++/* performance counters */
++	struct vperfctr *perfctr;
+ };
+ 
+ #define INIT_THREAD  {						\
+@@ -387,7 +394,8 @@
+ 	0, 0, 0,						\
+ 	{ { 0, }, },		/* 387 state */			\
+ 	0,0,0,0,0,0,						\
+-	0,{~0,}			/* io permissions */		\
++	0,{~0,},		/* io permissions */		\
++	NULL,			/* performance counters */	\
+ }
+ 
+ #define INIT_TSS  {						\
+--- linux-2.5.5-perfctr/kernel/timer.c.~1~	Wed Feb 20 03:10:58 2002
++++ linux-2.5.5-perfctr/kernel/timer.c	Tue Feb 26 15:06:46 2002
+@@ -22,6 +22,7 @@
+ #include <linux/smp_lock.h>
+ #include <linux/interrupt.h>
+ #include <linux/kernel_stat.h>
++#include <linux/perfctr.h>
+ 
+ #include <asm/uaccess.h>
+ 
+@@ -572,6 +573,7 @@
+ 	do_process_times(p, user, system);
+ 	do_it_virt(p, user);
+ 	do_it_prof(p);
++	perfctr_sample_thread(&p->thread);
+ }	
+ 
+ /*

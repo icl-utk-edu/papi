@@ -2,7 +2,9 @@
 # Performance-monitoring counters driver configuration
 #
 
-tristate 'Performance-monitoring counters support' CONFIG_PERFCTR
+if [ "$CONFIG_PREEMPT" != "y" ]; then
+   tristate 'Performance-monitoring counters support' CONFIG_PERFCTR
+fi
 if [ "$CONFIG_PERFCTR" != "n" ]; then
    define_bool CONFIG_KPERFCTR y
    bool '  Additional internal consistency checks' CONFIG_PERFCTR_DEBUG

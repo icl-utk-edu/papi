@@ -200,6 +200,16 @@ int vperfctr_stop(const struct vperfctr *perfctr)
     return ioctl(perfctr->fd, VPERFCTR_STOP, NULL);
 }
 
+int vperfctr_is_running(const struct vperfctr *perfctr)
+{
+    return perfctr->kstate->cpu_state.cstatus != 0;
+}
+
+int vperfctr_iresume(const struct vperfctr *perfctr)
+{
+    return ioctl(perfctr->fd, VPERFCTR_IRESUME, NULL);
+}
+
 int vperfctr_unlink(const struct vperfctr *perfctr)
 {
     return ioctl(perfctr->fd, VPERFCTR_UNLINK, NULL);

@@ -91,3 +91,8 @@ rwlock_t vperfctr_stub_lock = RW_LOCK_UNLOCKED;
 
 EXPORT_SYMBOL(vperfctr_stub);
 EXPORT_SYMBOL(vperfctr_stub_lock);
+EXPORT_SYMBOL_pidhash;
+EXPORT_SYMBOL___put_task_struct;
+#ifdef CONFIG_SMP
+EXPORT_SYMBOL_tasklist_lock;
+#endif

@@ -15,14 +15,11 @@ CFLAGS += $(shell if $(CC) -mpreferred-stack-boundary=2 -S -o /dev/null -x c /de
 
 # this code does not need -fno-strict-aliasing
 
-default:	libperfctr.a libperfctr.so
+default:	libperfctr.a
 
 libperfctr.a:	$(OBJS)
 	$(AR) $(ARFLAGS) libperfctr.a $(OBJS)
 	$(RANLIB) libperfctr.a
-
-libperfctr.so:	libperfctr.a
-	$(CC) $(CFLAGS) -shared libperfctr.c event_set.c -o $@
 
 $(OBJS):	libperfctr.h $(INCLDIR)/linux/perfctr.h $(INCLDIR)/asm/perfctr.h
 event_set.o:	event_codes.h

@@ -58,14 +58,22 @@ static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 #define MSR_P4_PERFCTR0		0x300		/* .. 0x311 */
 #define MSR_P4_CCCR0		0x360		/* .. 0x371 */
 #define MSR_P4_ESCR0		0x3A0		/* .. 0x3E1, with some gaps */
-#define P4_CCCR_RESERVED	0xB8000FFF	/* must be zeros */
-#define P4_CCCR_REQUIRED	0x00031000	/* must be ones */
+
+#define P4_CCCR_OVF		0x80000000
 #define P4_CCCR_CASCADE		0x40000000
-#define P4_CCCR_OVF_PMI		0x04000000
+#define P4_CCCR_OVF_PMI_T1	0x08000000
+#define P4_CCCR_OVF_PMI_T0	0x04000000
+#define P4_CCCR_ACTIVE_THREAD	0x00030000
+#define P4_CCCR_ENABLE		0x00001000
 #define P4_CCCR_ESCR_SELECT(X)	(((X) >> 13) & 0x7)
-#define P4_ESCR_RESERVED	0x80000003	/* must be zeros */
-#define P4_ESCR_CPL		0x0000000C	/* must be non-zero */
+#define P4_CCCR_RESERVED	(0x30000FFF|P4_CCCR_OVF|P4_CCCR_OVF_PMI_T1)
+#define P4_CCCR_REQUIRED	P4_CCCR_ACTIVE_THREAD
+
+#define P4_ESCR_CPL_T1		0x00000003
+#define P4_ESCR_CPL_T0		0x0000000C	/* must be non-zero */
 #define P4_ESCR_TAG_ENABLE	0x00000010
+#define P4_ESCR_RESERVED	(0x80000000|P4_ESCR_CPL_T1)
+
 #define P4_FAST_RDPMC		0x80000000
 #define P4_MASK_FAST_RDPMC	0x0000001F	/* we only need low 5 bits */
 
@@ -414,6 +422,12 @@ static void p6_isuspend(struct perfctr_cpu_state *state)
 		cpu->control.evntsel[pmc] = 0;
 		wrmsr(MSR_P6_EVNTSEL0+pmc, 0, 0);
 		rdpmcl(pmc, state->start.pmc[i]);
+#if 0	/* XXX: to support sums for i-mode PMCs */
+		unsigned int now;
+		rdpmcl(pmc, now);
+		state->sum.pmc[i] += now - state->start.pmc[i];
+		state->start.pmc[i] = now;
+#endif
 	}
 	/* cpu->k1.id is still == state->k1.id */
 	set_isuspend_cpu(state, cpu);
@@ -502,6 +516,12 @@ static void k7_isuspend(struct perfctr_cpu_state *state)
 		cpu->control.evntsel[pmc] = 0;
 		wrmsr(MSR_K7_EVNTSEL0+pmc, 0, 0);
 		rdpmcl(pmc, state->start.pmc[i]);
+#if 0	/* XXX: to support sums for i-mode PMCs */
+		unsigned int now;
+		rdpmcl(pmc, now);
+		state->sum.pmc[i] += now - state->start.pmc[i];
+		state->start.pmc[i] = now;
+#endif
 	}
 	/* cpu->k1.id is still == state->k1.id */
 	set_isuspend_cpu(state, cpu);
@@ -587,7 +607,6 @@ static int vc3_check_control(struct perfctr_cpu_state *state)
 /*
  * Intel Pentium 4.
  * Current implementation restrictions:
- * - No cascading counters support.
  * - No overflow interrupts support.
  * - No tagging of micro-ops support.
  * - No DS/PEBS support.
@@ -692,15 +711,15 @@ static int p4_check_control(struct perfctr_cpu_state *state)
 			return -EPERM;
 		if( (cccr_val & P4_CCCR_REQUIRED) != P4_CCCR_REQUIRED )
 			return -EINVAL;
-		if( cccr_val & P4_CCCR_CASCADE )	/* XXX: NYI */
-			return -EPERM;
-		if( cccr_val & P4_CCCR_OVF_PMI )	/* XXX: NYI */
+		if( !(cccr_val & (P4_CCCR_ENABLE | P4_CCCR_CASCADE)) )
+			return -EINVAL;
+		if( cccr_val & P4_CCCR_OVF_PMI_T0 )	/* XXX: NYI */
 			return -EPERM;
 		/* check ESCR contents */
 		escr_val = state->control.evntsel_aux[i];
 		if( escr_val & P4_ESCR_RESERVED )
 			return -EPERM;
-		if( !(escr_val & P4_ESCR_CPL) )
+		if( !(escr_val & P4_ESCR_CPL_T0) )
 			return -EINVAL;
 		/* compute and cache ESCR address */
 		escr_addr = p4_escr_addr(pmc, cccr_val);
@@ -868,13 +887,15 @@ unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 
 	/* Only one i-mode PMC: we don't have to poll. */
 	if( nrctrs == pmc+1 ) {
+		/* XXX: "+=" to correct for overshots */
 		state->start.pmc[pmc] = state->control.ireset[pmc];
 		return (1 << pmc);
 	}
 
 	/* Multiple i-mode PMCs: must poll and accumulate bitmask. */
 	for(pmc_mask = 0; pmc < nrctrs; ++pmc) {
-		if( (int)state->start.pmc[pmc] >= 0 ) {
+		if( (int)state->start.pmc[pmc] >= 0 ) { /* XXX: ">" ? */
+			/* XXX: "+=" to correct for overshots */
 			state->start.pmc[pmc] = state->control.ireset[pmc];
 			pmc_mask |= (1 << pmc);
 		}
@@ -1028,7 +1049,7 @@ static int __init intel_init(void)
 
 	if( !cpu_has_tsc )
 		return -ENODEV;
-	switch( boot_cpu_data.x86 ) {
+	switch( current_cpu_data.x86 ) {
 	case 5:
 		if( cpu_has_mmx ) {
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5MMX;
@@ -1044,9 +1065,9 @@ static int __init intel_init(void)
 		perfctr_p5_init_tests();
 		return 0;
 	case 6:
-		if( boot_cpu_data.x86_model >= 7 )	/* PIII */
+		if( current_cpu_data.x86_model >= 7 )	/* PIII */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
-		else if( boot_cpu_data.x86_model >= 3 )	/* PII or Celeron */
+		else if( current_cpu_data.x86_model >= 3 )	/* PII or Celeron */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
 		else
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
@@ -1083,7 +1104,7 @@ static int __init amd_init(void)
 {
 	if( !cpu_has_tsc )
 		return -ENODEV;
-	switch( boot_cpu_data.x86 ) {
+	switch( current_cpu_data.x86 ) {
 	case 6:	/* K7. Model 1 does not have a local APIC.
 		   AMD Document #22007 Revision J hints that APIC-less
 		   K7s signal overflows as debug interrupts. */
@@ -1109,7 +1130,7 @@ static int __init cyrix_init(void)
 {
 	if( !cpu_has_tsc )
 		return -ENODEV;
-	switch( boot_cpu_data.x86 ) {
+	switch( current_cpu_data.x86 ) {
 	case 6:	/* 6x86MX, MII, or III */
 		perfctr_info.cpu_type = PERFCTR_X86_CYRIX_MII;
 		read_counters = rdpmc_read_counters;
@@ -1124,10 +1145,10 @@ static int __init cyrix_init(void)
 
 static int __init centaur_init(void)
 {
-	switch( boot_cpu_data.x86 ) {
+	switch( current_cpu_data.x86 ) {
 #if !defined(CONFIG_X86_TSC)
 	case 5:
-		switch( boot_cpu_data.x86_model ) {
+		switch( current_cpu_data.x86_model ) {
 		case 4: /* WinChip C6 */
 			perfctr_info.cpu_type = PERFCTR_X86_WINCHIP_C6;
 			break;
@@ -1154,9 +1175,10 @@ static int __init centaur_init(void)
 	case 6: /* VIA C3 */
 		if( !cpu_has_tsc )
 			return -ENODEV;
-		switch( boot_cpu_data.x86_model ) {
+		switch( current_cpu_data.x86_model ) {
 		case 6:	/* VIA C3 (Cyrix III) */
 		case 7:	/* VIA C3 Samuel 2 or Ezra */
+		case 8:	/* VIA C3 Ezra-T */
 			break;
 		default:
 			return -ENODEV;
@@ -1301,7 +1323,7 @@ int __init perfctr_cpu_init(void)
 	perfctr_info.cpu_features = PERFCTR_FEATURE_RDPMC | PERFCTR_FEATURE_RDTSC;
 
 	if( cpu_has_msr ) {
-		switch( boot_cpu_data.x86_vendor ) {
+		switch( current_cpu_data.x86_vendor ) {
 		case X86_VENDOR_INTEL:
 			err = intel_init();
 			break;

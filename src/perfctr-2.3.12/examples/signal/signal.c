@@ -10,41 +10,30 @@
  *
  * Copyright (C) 2001-2002  Mikael Pettersson
  */
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <signal.h>
+#include <string.h>
 #include <asm/sigcontext.h>
 #include <asm/ucontext.h>	/* _not_ the broken <sys/ucontext.h> */
-#include "linux/perfctr.h"
-#define PAGE_SIZE	4096
+#include "libperfctr.h"
 
-static int fd;
-static volatile const struct vperfctr_state *kstate;
-static struct vperfctr_control control;
+static const struct vperfctr *vperfctr;
 static struct perfctr_info info;
 
 static void do_open(void)
 {
-    fd = open("/proc/self/perfctr", O_RDONLY|O_CREAT);
-    if( fd < 0 ) {
-	perror("open");
+    vperfctr = vperfctr_open();
+    if( !vperfctr ) {
+	perror("vperfctr_open");
 	exit(1);
     }
-    if( ioctl(fd, PERFCTR_INFO, &info) != 0 ) {
-	perror("perfctr_info");
+    if( vperfctr_info(vperfctr, &info) != 0 ) {
+	perror("vperfctr_info");
 	exit(1);
     }
     if( !(info.cpu_features & PERFCTR_FEATURE_PCINT) )
 	printf("PCINT not supported -- expect failure\n");
-    kstate = mmap(NULL, PAGE_SIZE, PROT_READ, MAP_SHARED, fd, 0);
-    if( kstate == MAP_FAILED ) {
-	perror("mmap");
-	exit(1);
-    }
 }
 
 static void on_sigio(int sig, siginfo_t *si, void *puc)
@@ -69,7 +58,7 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
     uc = puc;
     mc = &uc->uc_mcontext;
     pc = mc->eip;	/* clearly more readable than glibc's mc->gregs[14] */
-    if( !kstate->cpu_state.cstatus ) {
+    if( !vperfctr_is_running(vperfctr) ) {
 	/*
 	 * My theory is that this happens if a perfctr overflowed
 	 * at the very instruction for the VPERFCTR_STOP call.
@@ -80,12 +69,12 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
 	 * This can be triggered by counting e.g. BRANCHES and setting
 	 * the overflow limit ridiculously low.
 	 */
-	printf("%s: unexpected overflow from PMC set %#x at pc %#lx (cstatus %#x)\n",
-	       __FUNCTION__, pmc_mask, pc, kstate->cpu_state.cstatus);
+	printf("%s: unexpected overflow from PMC set %#x at pc %#lx\n",
+	       __FUNCTION__, pmc_mask, pc);
 	return;
     }
     printf("%s: PMC overflow set %#x at pc %#lx\n", __FUNCTION__, pmc_mask, pc);
-    if( ioctl(fd, VPERFCTR_IRESUME, 0) < 0 ) {
+    if( vperfctr_iresume(vperfctr) < 0 ) {
 	perror("vperfctr_iresume");
 	abort();
     }
@@ -106,6 +95,7 @@ static void do_sigaction(void)
 static void do_control(void)
 {
     unsigned evntsel0, evntsel1;
+    struct vperfctr_control control;
 
     memset(&control, 0, sizeof control);
     switch( info.cpu_type ) {
@@ -137,7 +127,7 @@ static void do_control(void)
     control.cpu_control.evntsel[1] = evntsel1;
     control.cpu_control.ireset[1] = -25;
     control.si_signo = SIGIO;
-    if( ioctl(fd, VPERFCTR_CONTROL, &control) < 0 ) {
+    if( vperfctr_control(vperfctr, &control) < 0 ) {
 	perror("vperfctr_control");
 	exit(1);
     }
@@ -147,8 +137,8 @@ static void do_stop(void)
 {
     struct sigaction sa;
 
-    if( ioctl(fd, VPERFCTR_STOP, NULL) )
-	perror("stop");
+    if( vperfctr_stop(vperfctr) )
+	perror("vperfctr_stop");
     memset(&sa, 0, sizeof sa);
     sa.sa_handler = SIG_DFL;
     if( sigaction(SIGIO, &sa, NULL) < 0 ) {

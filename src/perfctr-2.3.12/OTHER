@@ -3,6 +3,16 @@
 
 [Note: this list is incomplete and not actively maintained.]
 
+tsprof (by John Reiser, jreiser@BitWagon.com)
+	http://www.BitWagon.com/tsprof/tsprof.html
+	A profiling application which uses the facilities provided
+	by the perfctr driver.
+
+lperfex (by Troy Baer, troy@osc.edu)
+	http://www.osc.edu/~troy/lperfex/
+	A hardware performance monitoring tool for Linux/IA32 systems,
+	using the interface provided by the perfctr driver and library.
+
 vprof (by Curtis Janssen, cljanss@ca.sandia.gov)
 	http://aros.ca.sandia.gov/~cljanss/perf/vprof/
 	An application that annotates source code lines with event

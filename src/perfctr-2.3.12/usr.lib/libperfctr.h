@@ -24,6 +24,8 @@ int vperfctr_read_state(const struct vperfctr*, struct perfctr_sum_ctrs*,
 			struct vperfctr_control*);
 int vperfctr_control(const struct vperfctr*, struct vperfctr_control*);
 int vperfctr_stop(const struct vperfctr*);
+int vperfctr_is_running(const struct vperfctr*);
+int vperfctr_iresume(const struct vperfctr*);
 int vperfctr_unlink(const struct vperfctr*);
 void vperfctr_close(struct vperfctr*);
 

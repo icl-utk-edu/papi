@@ -3,6 +3,45 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.3.7, 2002-04-14
+- Kernel 2.5.8-pre3 changed the way APIC/SMP interrupt entries
+  are defined. Defining these with asm() in C is no longer
+  practical, so the kernel patch for 2.5.8-pre3 now defines
+  the perfctr interrupt entry in arch/i386/kernel/entry.S.
+- Permit use of cascading counters on P4: in the slave counter
+  one sets the CASCADE flag instead of the ENABLE flag.
+- Added P4 hyperthreading bit field definitions.
+- Preliminary infrastructure to support a new remote-control
+  interface via ptrace(). Updates to compat.h, virtual.c,
+  virtual_stub.c, and x86_setup.c. ptrace_check_attach()
+  emulation for older kernels is in x86_setup.c since
+  virtual_stub.c isn't compiled if the driver isn't a module.
+
+Version 2.3.6, 2002-03-21
+- Rewrote sys_vperfctr_control() to do a proper suspend before
+  updating the control, and to skip trying to preserve the TSC
+  start value around the resume. This cleaned up the code and
+  eliminated the bogus "BUG! resuming non-suspended perfctr"
+  warnings that control calls to active perfctrs caused.
+- Rewrote sys_vperfctr_iresume() to not preserve the TSC start
+  value around the resume. Since we had just done a suspend(),
+  this would cause double-accounting of the TSC.
+
+Version 2.3.5, 2002-03-17
+- Added detection of the VIA C3 Ezra-T processor.
+- CPU detection now uses current_cpu_data instead of boot_cpu_data,
+  to avoid the boot_cpu_data.x86_vendor bug which is present is
+  all current 2.2/2.4/2.5 kernels. The bug caused the x86_vendor
+  field to be cleared on SMP machines, which in turn tricked the
+  driver to identify MP AMD K7 machines as MP Intel P6, with
+  disastrous results when the wrong MSRs were programmed.
+- Updated compat.h for /proc/<pid>/ inode change in 2.5.4.
+- Added a check to prevent building on preemptible 2.4/2.5 kernels,
+  since the driver isn't yet safe for those.
+- Put perfctr's configuration help text in Config.help in this
+  directory: kernel 2.5.3-pre5 changed from a having a common
+  Configure.help file to having local Config.help files.
+
 Version 2.3.4, 2002-01-23
 - Updated virtual.c for remap_page_range() change in 2.5.3-pre1.
   Added emulation for older kernels to compat.h.

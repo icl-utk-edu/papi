@@ -102,10 +102,10 @@ static void __init init_tests_message(void)
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
 	printk(KERN_INFO "PERFCTR INIT: vendor %u, family %u, model %u, stepping %u, clock %lu kHz\n",
-	       boot_cpu_data.x86_vendor,
-	       boot_cpu_data.x86,
-	       boot_cpu_data.x86_model,
-	       boot_cpu_data.x86_mask,
+	       current_cpu_data.x86_vendor,
+	       current_cpu_data.x86,
+	       current_cpu_data.x86_model,
+	       current_cpu_data.x86_mask,
 	       cpu_khz);
 }
 
