@@ -22,6 +22,7 @@ C	And also to make the test code read cleaner
       if (LGE(chbuf, 'TESTS_QUIET')) then
          get_quiet=1
       end if
+	quiet=get_quiet
 	end
 
 
