@@ -318,14 +318,16 @@ static void smokeTest(void)
 
 static void dispVersions(HWND hDlg)
 {
-  int retval;
+  unsigned int len;
   char text[512] = {"Fourscore and seven years ago..."};
   LPARAM lParam = (LPARAM)text;
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  PAPI_shutdown();
-  sprintf(text, "   PAPI Library Version: %d.%2d.%2d;  ",
-    PAPI_VERSION_MAJOR(retval), PAPI_VERSION_MINOR(retval), PAPI_VERSION_REVISION(retval));
-  getDriverVersion(&text[strlen(text)], sizeof(text) - strlen(text));
+
+  sprintf(text, "   PAPI Library Version: %d.%d.%d;  ",
+    PAPI_VERSION_MAJOR(PAPI_VERSION), 
+    PAPI_VERSION_MINOR(PAPI_VERSION),
+    PAPI_VERSION_REVISION(PAPI_VERSION));
+  len = strlen(text);
+  getDriverVersion(&text[len], sizeof(text) - len);
   SendDlgItemMessage(hDlg, IDC_STATIC, WM_SETTEXT, 0, lParam);
 }
 

@@ -44,8 +44,8 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "WinPAPI"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Now is the time for all good men",IDC_STATIC,0,0,384,12,
-                    SS_CENTERIMAGE | NOT WS_GROUP,WS_EX_STATICEDGE
+    LTEXT           "The WinPMC Driver is not available.",IDC_STATIC,0,0,384,
+                    12,SS_CENTERIMAGE | NOT WS_GROUP,WS_EX_STATICEDGE
     CONTROL         143,IDC_STATIC,"Static",SS_BITMAP,0,13,384,266
     DEFPUSHBUTTON   "Exit",IDOK,322,258,50,14
     PUSHBUTTON      "Diagnostics",IDDIAGNOSTIC,323,236,50,14
