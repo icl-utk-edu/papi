@@ -1,3 +1,5 @@
+function PAPIInnerProduct
+
 % Compute an Inner Product (c = a * x) 
 % on elements sized from 50 to 500,
 % in steps of 50. 
@@ -7,14 +9,13 @@
 % - difference
 % - per cent error
 % - mflops/s
+
 fprintf(1,'\nPAPI Inner Product Test');
 fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n', 'difference', '% error', 'mflops')
-i=0;
 for n=50:50:500,
     a=rand(1,n);x=rand(n,1);
-    i=i+1;
     flops(0);
     c=a*x;
-    [count(i),mflops]=floprate;
-    fprintf(1,'%12d %12d %12d %12d %12.2g %12.2g\n',n,count(i),2*n,count(i) - 2*n, (1.0 - ((2*n) / (count(i)))) * 100,mflops)
+    [count,mflops]=flops;
+    fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n,count - 2*n, (1.0 - ((2*n) / count)) * 100,mflops)
 end

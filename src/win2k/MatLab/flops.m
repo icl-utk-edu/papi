@@ -1,23 +1,27 @@
 % FLOPS Floating point operation count.
 %    FLOPS returns the cumulative number of floating point operations.
 %
-%    FLOPS(0) resets the count to zero.
+%                    FLOPS(0) - Initialize PAPI library, reset counters
+%                               to zero and begin counting.
+%              ops = FLOPS    - Return the number of floating point 
+%                               operations since the first call or last reset.
+%    [ops, mflops] = FLOPS    - Return both the number of floating point 
+%                               operations since the first call or last reset,
+%                               and the incremental rate of floating point 
+%                               execution since the last call.
 %
-%    It is not feasible to count absolutely all floating point
-%    operations, but most of the important ones are counted.
-%    Additions and subtractions are one flop if real and two if
-%    complex. Multiplications and divisions count one flop each
-%    if the result is real and six flops if it is not.
-%    Elementary functions count one if real and more if complex.
-%
-%    Some examples. If A and B are real N-by-N matrices, then
-%       A + B     counts N^2 flops,
-%       A * B     counts 2*N^3 flops,
-%       LU(A)     counts roughly (2/3)*N^3 flops.
-%       A ^ P     counts 2*C*N^3 flops where, for integer P and
-%                 D = DEC2BIN(P), C = length(D)+sum(D=='1')-1.
-%
+%    DESCRIPTION
+%    The first call to flops will initialize PAPI, set up the counters to 
+%    monitor floating point instructions and total cpu cycles, and start 
+%    the counters. Subsequent calls will return one or two values. The number 
+%    of floating point operations since the first call or last reset is always
+%    returned. Optionally, the execution rate in mflops can also be returned. 
+%    The mflops rate is computed by dividing the operations since the last call
+%    by the cycles since the last call and multiplying by cycles per second:
+%                   mflops = ((ops/cycles)*(cycles/second))/10^6
+%    The PAPI library will continue counting after any call. A call with an 
+%    input of 0 will reset the counters and return 0.
 
 %   Copyright 2001 The Innovative Computing Laboratory,
-%					     University of Tennessee.
+%                        University of Tennessee.
 %   $Revision$  $Date$
