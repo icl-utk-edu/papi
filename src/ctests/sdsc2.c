@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
   nevents=MAXEVENTS;
   for(i=0;i<nevents;i++) {
-    if((retval=PAPI_add_event(&eventset, events[i]))) {
+    if((retval=PAPI_add_event(eventset, events[i]))) {
       for(j=i;j<MAXEVENTS;j++)
 	events[j]=events[j+1];
       nevents--;

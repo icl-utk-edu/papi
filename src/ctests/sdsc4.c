@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 
   nevents=MAXEVENTS;
   for(i=0;i<nevents;i++) {
-    if((retval=PAPI_add_event(&eventset, events[i]))) {
+    if((retval=PAPI_add_event(eventset, events[i]))) {
       for(j=i;j<MAXEVENTS;j++)
 	events[j]=events[j+1];
       nevents--;
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
       PAPI_label_event(events[j],des);
       if ( !TESTS_QUIET )
 	printf("Adding event[%d]: %s\n", j, des);
-      if((retval=PAPI_add_event(&eventset,events[j])))
+      if((retval=PAPI_add_event(eventset,events[j])))
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       eventmap[nev1]=j;
       nev1++;

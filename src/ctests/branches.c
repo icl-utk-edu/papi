@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
   nevents=MAXEVENTS;
   for(i=0;i<nevents;i++) {
-    if((retval=PAPI_add_event(&eventset, events[i]))) {
+    if((retval=PAPI_add_event(eventset, events[i]))) {
       for(j=i;j<MAXEVENTS;j++)
 	events[j]=events[j+1];
       nevents--;
@@ -145,9 +145,9 @@ int main(int argc, char **argv) {
 
   for(i=0;i<nevents;i++){
     
-    if((retval=PAPI_cleanup_eventset(&eventset)))
+    if((retval=PAPI_cleanup_eventset(eventset)))
       test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
-    if((retval=PAPI_add_event(&eventset,events[i])))
+    if((retval=PAPI_add_event(eventset,events[i])))
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     
     x=1.0;

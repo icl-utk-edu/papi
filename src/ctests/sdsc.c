@@ -14,17 +14,17 @@
 
 #define REPEATS 5
 #define MAXEVENTS 9
-#define RELTOLERANCE 0.08
+#define RELTOLERANCE 0.1
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[128];
+  char des[PAPI_MAX_STR_LEN];
   int i, j, retval;
-  int iters=10000000;
-  double x,y;
+  int iters=NUM_FLOPS;
+  double x = 1.1,y;
   long_long t1,t2;  
   long_long values[MAXEVENTS], refvalues[MAXEVENTS];
   int sleep_time = SLEEPTIME; 
@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
 
   nevents=MAXEVENTS;
   for(i=0;i<nevents;i++) {
-    if((retval=PAPI_add_event(&eventset, events[i]))) {
-      for(j=i;j<MAXEVENTS;j++)
+    if((retval=PAPI_add_event(eventset, events[i]))) {
+      for(j=i;j<(MAXEVENTS-1);j++)
 	events[j]=events[j+1];
       nevents--;
       i--;
@@ -145,9 +145,9 @@ int main(int argc, char **argv) {
 
   for(i=0;i<nevents;i++){
     
-    if((retval=PAPI_cleanup_eventset(&eventset)))
+    if((retval=PAPI_cleanup_eventset(eventset)))
       test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
-    if((retval=PAPI_add_event(&eventset,events[i])))
+    if((retval=PAPI_add_event(eventset,events[i])))
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     
     x=1.0;

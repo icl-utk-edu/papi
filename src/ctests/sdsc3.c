@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
   nevents=MAXEVENTS;
   for(i=0;i<nevents;i++) {
-    if((retval=PAPI_add_event(&eventset, events[i]))) {
+    if((retval=PAPI_add_event(eventset, events[i]))) {
       for(j=i;j<MAXEVENTS;j++)
 	events[j]=events[j+1];
       nevents--;
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
   nev1=nevents/2+1;
   for(i=0;i<nev1;i++) {
-    if((retval=PAPI_add_event(&eset1, events[i]))) 
+    if((retval=PAPI_add_event(eset1, events[i]))) 
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
   
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
   nev2=nevents/2+1;
   for(i=0;i<nev2;i++) {
-    if((retval=PAPI_add_event(&eset2, events[nevents-i-1]))) 
+    if((retval=PAPI_add_event(eset2, events[nevents-i-1]))) 
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
   
