@@ -13,11 +13,8 @@
 #else /* SV2,SV1 ? */
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #endif
-extern PAPI_debug_handler_t PAPI_ERR_HANDLER;
-#define papi_return(a) return(PAPI_ERR_HANDLER(a))
 #else
 #define DBG(a)
-#define papi_return(a) return(a)
 #endif
 
 /* some members of structs and/or function parameters may or may not be

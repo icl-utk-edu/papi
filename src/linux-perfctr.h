@@ -8,7 +8,7 @@
 #include <sys/times.h>
 #include <asm/system.h>
 #include <linux/unistd.h>	
-#include <linux/smp.h>
+// #include <linux/smp.h>
 #include "libperfctr.h"
 #include "papi.h"
 #include "papi_internal.h"

@@ -37,5 +37,4 @@ install: default
 	chmod go+rx $(DESTDIR)/ftests
 	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
 	chmod go+rx $(DESTDIR)/ftests/*
-	cp fmt1 fmt2 $(DESTDIR)/ftests
 	find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;

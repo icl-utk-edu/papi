@@ -72,6 +72,11 @@ int papi_debug = 0;
 
 static int PAPI_ERR_LEVEL = PAPI_QUIET; /* Behavior of handle_error() */
 static PAPI_debug_handler_t PAPI_ERR_HANDLER = default_error_handler;
+#ifdef DEBUG
+#define papi_return(a) return(PAPI_ERR_HANDLER(a))
+#else
+#define papi_return(a) return(a)
+#endif
 
 /* Our informative table */
 
