@@ -122,8 +122,13 @@
  #define PFMW_REG_SMPLRST(reg)     (reg.reg_long_reset)
  #define PFMW_REG_REGFLAGS(reg)    (reg.reg_flags)
  #define PFMW_ARCH_REG_REGVAL(reg) (reg.reg_val)
+#ifdef ITANIUM2
  #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita2_count_reg.pmc_plm)
  #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita2_count_reg.pmc_es)
+#else
+ #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita_count_reg.pmc_plm)
+ #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita_count_reg.pmc_es)
+#endif
  #define PFMW_CTX_NOTIFYPID(ctx)   (ctx.ctx_notify_pid)
  #define PFMW_CTX_FLAGS(ctx)       (ctx.ctx_flags)
 

@@ -7,7 +7,7 @@ DESCR	= "Stock Linux 2.4.18 for the Intel IA64"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-1.1/include -I. -Wall -g
+CFLAGS  = -Ipfmon-1.1/include -I. -Wall -DPFM11 -g
 # -DDEBUG
 OPTFLAGS= -O2
 TOPTFLAGS = $(OPTFLAGS)
