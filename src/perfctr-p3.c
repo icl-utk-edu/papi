@@ -96,6 +96,9 @@ inline_static int setup_p3_presets(int cputype) {
       break;
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
+#ifdef PERFCTR26
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
       native_table = &_papi_hwd_p3_native_map;
       preset_search_map = &_papi_hwd_p3_preset_map;
       break;
@@ -153,6 +156,9 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    case PERFCTR_X86_INTEL_PII:
    case PERFCTR_X86_INTEL_PIII:
    case PERFCTR_X86_INTEL_P4:
+#ifdef PERFCTR26
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
       return (PAPI_VENDOR_INTEL);
 #ifdef PERFCTR26
    case PERFCTR_X86_AMD_K8:
