@@ -1,12 +1,13 @@
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21xxx"
 LIBS	= static shared
-TARGETS	= serial smp omp
+TARGETS	= serial omp
 FOR_USED=
 CFLAGS 	= -g -DDEBUG 
 OPTFLAGS=
-SMPCFLGS=
-OMPCFLGS=
+SMPCFLGS= -mp
+OMPCFLGS= -omp
+CC_SHR	= cc -shared
 CC_R	= cc
 CC	= cc
 F77	= f77

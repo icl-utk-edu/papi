@@ -110,6 +110,9 @@ int main()
 #elif defined(sun) && defined(sparc)
   assert(PAPI_thread_init(thread_self, 0) == PAPI_OK);
 #pragma MP taskloop private(i)
+#elif defined(__ALPHA) && defined(__osf__)
+#else
+#error "Architecture not included in this test file yet."
 #endif
   for (i=1;i<3;i++)
     Thread(i,1000000*i);

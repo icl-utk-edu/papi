@@ -8,6 +8,28 @@
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "test_utils.h"
+#if defined(__ALPHA) && defined(__osf__)
+#include <machine/hal/cpuconf.h>
+#include <sys/pfcntr.h>
+long get_instr()
+{
+  int cpu;
+  GET_CPU_FAMILY(&cpu);
+  if (cpu == EV6_CPU)
+    return(PF6_MUX0_RET_INSTRUCTIONS << 8 | 0);
+  else
+    abort();
+}
+long get_cyc()
+{
+  int cpu;
+  GET_CPU_FAMILY(&cpu);
+  if (cpu == EV6_CPU)
+    return(PF6_MUX1_CYCLES << 8 | 1);
+  else
+    abort();
+}
+#endif
 
 static int point = 0;
 static int EventSet = PAPI_NULL;
@@ -107,6 +129,13 @@ void papimon_start(void)
       retval = PAPI_add_event(&EventSet, native);
       assert (retval == PAPI_OK);
       native = 1 | (0xa << 8); /* DC_wr_hit */  
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
+#elif defined(__ALPHA) && defined(__osf__)
+      native = get_instr();
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
+      native = get_cyc();
       retval = PAPI_add_event(&EventSet, native);
       assert (retval == PAPI_OK);
 #else

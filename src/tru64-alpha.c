@@ -5,164 +5,166 @@
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
-static hwd_search_t findem_ev4[PAPI_MAX_PRESET_EVENTS] = { 
-                { 0, { -1, PF_DCACHE, -1 } },  /* L1 D-Cache misses  */
-                { 0, { -1, PF_ICACHE, -1 } },	/* L1 I-Cache misses  */
-		{ 0, { -1, -1, -1 } },	/* L2 D-Cache misses */
-		{ 0, { -1, -1, -1 } },	/* L2 I-ditto */
-		{ 0, { -1, -1, -1 } },	/* L3 D-misses */
-		{ 0, { -1, -1, -1 } },	/* L3 I-misses */
-		{ 0, { -1, -1, -1 } },	/* L1 total */
-		{ DERIVED_ADD, { PF_EXTPIN0, PF_EXTPIN1, -1 } }, /* L2 total */
-		{ 0, { -1, -1, -1 } },	/* L3 total */
-		{ 0, { -1, -1, -1 } },	/* snoop */
-		{ 0, { -1, -1, -1 } }, 	/* Req. access to shared cache line */
-		{ 0, { -1, -1, -1 } }, 	/* Req. access to clean cache line */
-		{ 0, { -1, -1, -1 } }, 	/* Cache Line Invalidation */
-                { 0, { -1, -1, -1 } },	/* Cache line intervention */
-                { 0, { -1, -1, -1 } },	/* L3 LM */
-                { 0, { -1, -1, -1 } },	/* L3 SM */
-                { 0, { -1, -1, -1 } },	/* BRU idle cyc */
-                { 0, { -1, -1, -1 } },	/* ALU idle cyc */
-                { 0, { -1, -1, -1 } },	/* FPU idle cyc */
-                { 0, { -1, -1, -1 } },	/* LD/ST idle cyc */
-		{ 0, { -1, -1, -1 } },  /* D-TLB misses */
-		{ 0, { -1, -1, -1 } },	/* I-TLB misses */
-                { 0, { -1, -1, -1 } },	/* Total TLB misses */
-                { 0, { -1, -1, -1 } },	/* L1 LM */
-                { 0, { -1, -1, -1 } },	/* L1 SM */ 
-                { 0, { -1, -1, -1 } },	/* L2 LM */
-                { 0, { -1, -1, -1 } },	/* L2 SM */
-                { 0, { -1, -1, -1 } },	/* BTAC miss */
-                { 0, { -1, -1, -1 } },	/* Prefetch data caused a miss */
-                { 0, { -1, -1, -1 } },	
-		{ 0, { -1, -1, -1 } },	/* TLB shootdowns */
-                { 0, { -1, -1, -1 } },	/* Failed store cond. */
-                { 0, { -1, -1, -1 } },	/* Suc. store cond. */
-                { 0, { -1, -1, -1 } },	/* Tot. store cond. */
-                { 0, { -1, -1, -1 } },	/* Cycles stalled waiting for memory */
-                { 0, { -1, -1, -1 } },	/* Cycles stalled waiting for memory read */
-                { 0, { -1, -1, -1 } },	/* Cycles stalled waiting for memory write */
-                { 0, { PF_NONISSUES, -1, -1 } }, /* Cycles no instructions issued */
-                { 0, { -1, PF_DUAL, -1 } },	/* Cycles max instructions issued */
-                { 0, { PF_NONISSUES, -1, -1 } },/* Cycles no instructions comlpeted */
-		{ 0, { -1, PF_DUAL, -1 } },	/* Cycles max instructions completed */
-                { 0, { -1, -1, -1 } },	/* hardware interrupts */
-		{ 0, { -1, -1, -1 } },	/* Uncond. branches executed */
-		{ 0, { -1, -1, -1 } },	/* Cond. branch inst. executed*/
-		{ 0, { -1, -1, -1 } },	/* Cond. branch inst. taken*/
-		{ 0, { -1, -1, -1 } },	/* Cond. branch inst. not taken*/
-		{ 0, { -1, PF_BRANCHMISS, -1 } },	/* Cond. branch inst. mispred.*/
-                { 0, { -1, -1, -1 } },	/* Cond. branch inst. corr. pred */
-                { 0, { -1, -1, -1 } },	/* FMA instructions */
-                { 0, { PF_ISSUES, -1, -1 } },	/* Total instructions issued */
-		{ 0, { PF_ISSUES, -1, -1 } },	/* Total inst. executed */
-		{ 0, { -1, PF_INTOPS, -1 } },	/* Integer inst. executed */
-		{ 0, { -1, PF_FPINST, -1 } },	/* Floating Pt. inst. executed */
-		{ 0, { PF_LOADI, -1, -1 } },	/* Loads executed */
-		{ 0, { -1, PF_STOREI, -1 } },	/* Stores executed */
-		{ 0, { PF_BRANCHI, -1, -1 } },	/* Branch inst. executed */
-		{ 0, { -1, -1, -1 } },	/* Vector/SIMD inst. executed  */
-		{ DERIVED_PS, { PF_CYCLES, PF_FPINST, -1 } },	/* FLOPS */
-                { 0, { PF_PIPEFROZEN, -1, -1 } },	/* Cycles stalled */
-                { 0, { -1, -1, -1 } },	/* Cycles FP stalled */
-		{ 0, { PF_CYCLES, -1, -1 } },	/* Total cycles */
-		{ DERIVED_PS, { PF_CYCLES, PF_ISSUES, -1 } },	/* IPS */
-                { DERIVED_ADD, { PF_LOADI, PF_STOREI, -1 } },	/* Total load/stores */
-                { 0, { -1, -1, -1 } }	/* Syncs */ };
+static hwd_search_t findem_ev4[] = {
+  { PAPI_TOT_CYC, { PF_CYCLES, -1 }},
+  { PAPI_TOT_INS, { PF_ISSUES, -1 }},
+  { -1, {-1, }}};
+static hwd_search_t findem_ev5[] = {
+  { PAPI_TOT_CYC, { PF5_MUX0_CYCLES, -1, PF5_MUX2_C_CYCLES }},
+  { PAPI_TOT_INS, { PF5_MUX0_ISSUES, -1, -1 }},
+  { -1, {-1, }}};  
+static hwd_search_t findem_pca[] = {
+  { PAPI_TOT_CYC, { PF5_MUX0_CYCLES, -1, PF5_MUX2_C_CYCLES }},
+  { PAPI_TOT_INS, { PF5_MUX0_ISSUES, -1, -1 }},
+  { -1, {-1, }}};
+static hwd_search_t findem_ev6[] = {
+  { PAPI_TOT_CYC, { PF6_MUX0_CYCLES, PF6_MUX1_CYCLES }},
+  { PAPI_TOT_INS, { PF6_MUX0_RET_INSTRUCTIONS, -1 }},
+  { PAPI_BR_CN, { -1, PF6_MUX1_RET_COND_BRANCHES }},
+  { -1, {-1, }}};
+static hwd_search_t findem_ev67[] = {
+  { PAPI_TOT_CYC, { PF67_RET_INST_AND_CYCLES }},
+  { PAPI_TOT_INS, { PF67_RET_INST_AND_CYCLES }},
+  { -1, {-1, }}};
+
+/* Globals */
+
+int setmuxcode = -1;
+int getcntcode = -1;
+int cntselcode = -1;
 
 /* Utility functions */
 
-static int setup_all_presets(int model)
+static int setup_all_presets(int family)
 {
-  int first, event, pnum, derived, hwnum;
+  int first, event, derived, hwnum;
   hwd_search_t *findem;
   char str[PAPI_MAX_STR_LEN];
-  
-  if (model == 0)
-    findem = findem_ev4;
-  else
-    return(PAPI_ESBSTR);
-  
-  for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
+  int model = _papi_system_info.hw_info.model;
+  int num = _papi_system_info.num_gp_cntrs;
+  int code;
+
+  if (family == 0)
     {
-      first = -1;
-      derived = findem[pnum].derived;
-      if (derived == -1)
-	continue;
-      for (hwnum = 0; hwnum < _papi_system_info.num_cntrs; hwnum++)
-	{
-	  event = findem[pnum].findme[hwnum];
-	  if (event == -1)
-	    continue;
-	  if (first == -1)
-	    first = event;
-
-	  preset_map[pnum].selector |= 1 << event;
-	  preset_map[pnum].counter_cmd[hwnum] = event;
-
-	  sprintf(str,"%d",event);
-	  if ((strlen(preset_map[pnum].note) != (size_t)0))
-	    strcat(preset_map[pnum].note,",");
-	  strcat(preset_map[pnum].note,str);
-	  
-	  DBG((stderr,"setup_all_presets(%d): Preset %d, event %d found, selector 0x%x\n",
-	       model,pnum,event,preset_map[pnum].selector));
-	}				
-      if (preset_map[pnum].selector)
-	{
-	  preset_map[pnum].derived = derived;
-	  if (derived)
-	    preset_map[pnum].operand_index = first;
-	  else
-	    preset_map[pnum].operand_index = -1;
-	}
+      findem = findem_ev4;
+      setmuxcode = PCNTSETMUX;
+      getcntcode = PCNTGETCNT;
     }
+  else if (family == 1)
+    {
+/*      if ((model == PCA56_CPU) || (model == PCA57_CPU))
+	findem = findem_pca;
+      else */
+	findem = findem_ev5;
+	setmuxcode = PCNT5MUX;
+	getcntcode = PCNT5GETCNT;
+	cntselcode = PF5_SEL_COUNTER_0 | PF5_SEL_COUNTER_1 | PF5_SEL_COUNTER_2;
+    }
+  else if (family == 2)
+    {
+/*      if (model >= EV67_CPU)
+	findem = findem_ev67;
+      else */
+	findem = findem_ev6;
+	setmuxcode = PCNT6MUX;
+	getcntcode = PCNT6GETCNT;
+	cntselcode = PF6_SEL_COUNTER_0 | PF6_SEL_COUNTER_1;
+    }
+  else
+    {
+      fprintf(stderr,"Unknown processor type %d family %d\n",model,family);
+      return(PAPI_ESBSTR);
+    }  
 
+  while ((code = findem->papi_code) != -1)
+    {
+      int i, index;
+
+      index = code ^ PRESET_MASK; 
+      preset_map[index].derived = NOT_DERIVED;
+      preset_map[index].operand_index = 0;
+      for (i=0;i<num;i++)
+	{
+	  if (findem->findme[i] != -1)
+	    {
+	      preset_map[index].selector |= 1 << i;
+	      preset_map[index].counter_cmd[i] = findem->findme[i];
+	      sprintf(str,"0x%x",findem->findme[i]);
+	      if (strlen(preset_map[index].note))
+		strcat(preset_map[index].note,",");
+	      strcat(preset_map[index].note,str);
+	    }
+	}
+      if (preset_map[index].selector != 0)
+	{
+	  DBG((stderr,"Preset %d found, selector 0x%x\n",
+	       index,preset_map[index].selector));
+	}
+      findem++;
+    }
   return(PAPI_OK);
 }
 
-static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
+static int counter_event_compat(const ev_control_t *a, const ev_control_t *b, int cntr)
 {
-  /* ptr->counter_cmd.events[arg1] = arg2; */
+  return(1);
 }
 
-static void unset_config(hwd_control_state_t *ptr, int arg1)
+static void counter_event_copy(ev_control_t *a, const ev_control_t *b, int cntr)
 {
-  /* ptr->counter_cmd.events[arg1] = 0; */
+  long al = a->ev6;
+  long bl = b->ev6;
+  long mask = 0xf0 >> cntr;
+  DBG((stderr,"copy: A %x B %x C %d M %x\n",al,bl,cntr,mask));
+  
+  bl = bl & mask;
+  al = al | mask;
+  al = al ^ mask;
+  al = al & bl;
+  a->ev6 = al;
+
+  DBG((stderr,"A is now %x\n",al));
 }
 
-static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
+static int counter_event_shared(const ev_control_t *a, const ev_control_t *b, int cntr)
 {
-  /* if (a->counter_cmd.events[cntr] == b->counter_cmd.events[cntr])
-    return(1); */
+  long al = a->ev6;
+  long bl = b->ev6;
+  long mask = 0xf0 >> cntr;
+  DBG((stderr,"shared?: A %x B %x C %d M %x\n",al,bl,cntr,mask));
+  
+  bl = bl & mask;
+  al = al & mask;
 
-  return(0);
+  if (al == bl)
+    {
+      DBG((stderr,"shared!\n",al,bl));
+      return(1);
+    }
+  else
+    {
+      DBG((stderr,"not shared!\n",al,bl));
+      return(0);
+    }
 }
 
 static int update_global_hwcounters(EventSetInfo *global)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)global->machdep;
   int retval;
-  struct pfcntrs hwcntrs;
+  ev_values_t hwcntrs;
 
-  retval = ioctl(current_state->fd, PCNTGETCNT, &hwcntrs);
+  retval = ioctl(current_state->fd, PCNT6GETCNT, &hwcntrs.ev6);
   if (retval == -1)
     return(PAPI_ESYS);
 
-  if (current_state->selector & 0x1)
-    {
-      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
-	   global->hw_start[0]+hwcntrs.pf_cntr0,global->hw_start[0],hwcntrs.pf_cntr0));
-      global->hw_start[0] = global->hw_start[0] + hwcntrs.pf_cntr0;
-    }
+  DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
+       global->hw_start[0]+hwcntrs.ev6.pf_cntr0,global->hw_start[0],hwcntrs.ev6.pf_cntr0));
+  global->hw_start[0] = global->hw_start[0] + hwcntrs.ev6.pf_cntr0;
 
-  if (current_state->selector & 0x2)
-    {
-      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",1,
-	   global->hw_start[1]+hwcntrs.pf_cntr1,global->hw_start[1],hwcntrs.pf_cntr1));
-      global->hw_start[1] = global->hw_start[1] + hwcntrs.pf_cntr1;
-    }
+  DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",1,
+       global->hw_start[1]+hwcntrs.ev6.pf_cntr1,global->hw_start[1],hwcntrs.ev6.pf_cntr1));
+  global->hw_start[1] = global->hw_start[1] + hwcntrs.ev6.pf_cntr1;
 
   retval = ioctl(current_state->fd, PCNTCLEARCNT);
   if (retval == -1)
@@ -214,15 +216,12 @@ static int set_inherit(EventSetInfo *zero, int arg)
 
 static void init_config(hwd_control_state_t *ptr)
 {
-  ptr->counter_cmd.items = PFM_COUNTERS;
-  memset(&ptr->counter_cmd.mux,0x0,sizeof(struct iccsr));
-  /* set_domain(ptr,_papi_system_info.default_domain);
-  set_granularity(ptr,_papi_system_info.default_granularity); */
+  memset(&ptr->counter_cmd,0x0,sizeof(ptr->counter_cmd));
 }
 
 static int get_system_info(void)
 {
-  int fd, retval;
+  int fd, retval, family;
   prpsinfo_t info;
   struct cpu_info cpuinfo;
   pid_t pid;
@@ -254,7 +253,6 @@ static int get_system_info(void)
     return PAPI_ESYS;
 
   _papi_system_info.cpunum = cpuinfo.current_cpu;
-  _papi_system_info.hw_info.revision = cpu_implementation_version();
   _papi_system_info.hw_info.mhz = (float)cpuinfo.mhz;
   _papi_system_info.hw_info.ncpu = cpuinfo.cpus_in_box;
   _papi_system_info.hw_info.nnodes = 1;
@@ -265,28 +263,31 @@ static int get_system_info(void)
   _papi_system_info.hw_info.model = cpuinfo.cpu_type;
 
   _papi_system_info.num_sp_cntrs = 1;
-  if (_papi_system_info.hw_info.revision == 0)
+  strcpy(_papi_system_info.hw_info.model_string,"Alpha "); 
+  family = cpu_implementation_version();
+
+  if (family == 0)
     {
+      strcat(_papi_system_info.hw_info.model_string,"21064");
       _papi_system_info.num_cntrs = 2;
       _papi_system_info.num_gp_cntrs = 2;
-      strcpy(_papi_system_info.hw_info.model_string,"Alpha 21064"); 
     }
-  else if (_papi_system_info.hw_info.revision == 2)
+  if (family == 2)
     {
+      strcat(_papi_system_info.hw_info.model_string,"21264");
       _papi_system_info.num_cntrs = 2;
       _papi_system_info.num_gp_cntrs = 2;
-      strcpy(_papi_system_info.hw_info.model_string,"Alpha 21264"); 
     }
-  else if (_papi_system_info.hw_info.revision == 1)
+  else if (family == 1)
     {
+      strcat(_papi_system_info.hw_info.model_string,"21164");
       _papi_system_info.num_cntrs = 3;
       _papi_system_info.num_gp_cntrs = 3;
-      strcpy(_papi_system_info.hw_info.model_string,"Alpha 21164");
     }
   else
     return(PAPI_ESBSTR);
 
-  retval = setup_all_presets(_papi_system_info.hw_info.revision);
+  retval = setup_all_presets(family);
   if (retval)
     return(retval);
 
@@ -359,6 +360,7 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_init(EventSetInfo *zero)
 {
+  long arg;
   int fd;
   hwd_control_state_t *machdep = (hwd_control_state_t *)zero->machdep;
 
@@ -368,13 +370,23 @@ int _papi_hwd_init(EventSetInfo *zero)
   if (fd == -1)
     return(PAPI_ESYS);
 
+  if (ioctl(fd,PCNTRENABLE) == -1)
+    {
+    bail:
+      close(fd);
+      return(PAPI_ESYS);
+    }
+
+  arg = PFM_COUNTERS;
+  if (ioctl(fd,PCNTSETITEMS,&arg) == -1)
+    goto bail;
+
+  if (ioctl(fd,PCNTLOGSELECT) == -1)
+    goto bail;
+
   machdep->fd = fd;
 
-  ioctl(machdep->fd,PCNTRENABLE);
-
-  ioctl(machdep->fd,PCNTLOGSELECT);
-      
-  init_config(zero->machdep); 
+  init_config(machdep); 
 
   return(PAPI_OK);
 }
@@ -410,7 +422,7 @@ static int get_avail_hwcntr_num(int cntr_avail_bits)
   return(0);
 }
 
-static void set_hwcntr_codes(int selector, unsigned char *from, ev4_command_t *to)
+static void set_hwcntr_codes(int selector, long *from, ev_control_t *to)
 {
   int useme, i;
   
@@ -419,7 +431,7 @@ static void set_hwcntr_codes(int selector, unsigned char *from, ev4_command_t *t
       useme = (1 << i) & selector;
       if (useme)
 	{
-	  /* to[i] = from[i]; */
+	  to->ev6 |= from[i]; 
 	}
     }
 }
@@ -429,8 +441,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
-  unsigned char tmp_cmd[EV_MAX_COUNTERS];
-  unsigned char *codes;
+  long tmp_cmd[EV_MAX_COUNTERS];
+  long *codes;
 
   if (EventCode & PRESET_MASK)
     { 
@@ -576,14 +588,29 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, v
   return(PAPI_ESBSTR);
 }
 
-void dump_cmd(ev4_command_t *t)
+/*   if (t->model == 0)
+    {
+      fprintf(stderr,"Command block at %p: items 0x%x\n",t,t->items);
+      fprintf(stderr,"iccsr_pc1 %d\n",t->mux.iccsr_pc1);
+      fprintf(stderr,"iccsr_pc0 %d\n",t->mux.iccsr_pc0);
+      fprintf(stderr,"iccsr_mux0 0x%x\n",t->mux.iccsr_mux0);
+      fprintf(stderr,"iccsr_mux1 0x%x\n",t->mux.iccsr_mux1);
+      fprintf(stderr,"iccsr_disable 0x%x\n",t->mux.iccsr_disable);
+    }
+  else if (t->model == 1)
+    {
+      fprintf(stderr,"
+    }
+  else if (t->model == 2)
+    {
+    }
+  else
+    abort();
+*/
+
+void dump_cmd(ev_control_t *t)
 {
-  fprintf(stderr,"Command block at %p: items 0x%x\n",t,t->items);
-  fprintf(stderr,"iccsr_pc1 %d\n",t->mux.iccsr_pc1);
-  fprintf(stderr,"iccsr_pc0 %d\n",t->mux.iccsr_pc0);
-  fprintf(stderr,"iccsr_mux0 0x%x\n",t->mux.iccsr_mux0);
-  fprintf(stderr,"iccsr_mux1 0x%x\n",t->mux.iccsr_mux1);
-  fprintf(stderr,"iccsr_disable 0x%x\n",t->mux.iccsr_disable);
+  fprintf(stderr,"Command block at %p: 0x%x\n",t,t->ev6);  
 }
 
 /* EventSet zero contains the 'current' state of the counting hardware */
@@ -594,12 +621,37 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   
-  /* If we are nested, merge the global counter structure
-     with the current eventset */
+  /* If we ARE NOT nested, 
+     just copy the global counter structure to the current eventset */
 
-  if (current_state->selector)
+  if (current_state->selector == 0x0)
     {
-      int hwcntrs_in_both, hwcntr;
+      current_state->selector = this_state->selector;
+      memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(current_state->counter_cmd));
+
+      /* Stop the current context */
+
+      retval = ioctl(current_state->fd, PCNTCLEARCNT);
+      if (retval == -1)
+	return(PAPI_ESYS);
+
+      /* (Re)start the counters */
+      
+#ifdef DEBUG
+      dump_cmd(&current_state->counter_cmd);
+#endif
+
+      retval = ioctl(current_state->fd,PCNT6MUX,&current_state->counter_cmd);
+      if (retval == -1)
+	return(PAPI_ESYS);
+
+      return(PAPI_OK);
+    }
+  /* If we ARE nested, 
+     carefully merge the global counter structure with the current eventset */
+  else
+    {
+      int tmp, hwcntrs_in_both, hwcntrs_in_all, hwcntr;
 
       /* Stop the current context */
 
@@ -612,50 +664,47 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       /* Delete the current context */
 
       hwcntrs_in_both = this_state->selector & current_state->selector;
+      hwcntrs_in_all  = this_state->selector | current_state->selector;
 
-      for (i = 0; i < _papi_system_info.num_cntrs; i++)
+      /* Check for events that are shared between eventsets and 
+	 therefore require no modification to the control state. */
+
+      /* First time through, error check */
+
+      tmp = hwcntrs_in_all;
+      while ((i = ffs(tmp)))
 	{
-	  /* Check for events that are shared between eventsets and 
-	     therefore require no modification to the control state. */
-	  
-	  hwcntr = 1 << i;
+	  hwcntr = 1 << (i-1);
+	  tmp = tmp ^ hwcntr;
 	  if (hwcntr & hwcntrs_in_both)
 	    {
-	      if (counter_shared(this_state, current_state, i))
-		zero->multistart.SharedDepth[i]++;
-	      else
+	      if (!(counter_event_shared(&this_state->counter_cmd, &current_state->counter_cmd, i-1)))
 		return(PAPI_ECNFLCT);
-	      ESI->hw_start[i] = zero->hw_start[i];
 	    }
+	  else if (!(counter_event_compat(&this_state->counter_cmd, &current_state->counter_cmd, i-1)))
+	    return(PAPI_ECNFLCT);
+	}
 
-	  /* Merge the unshared configuration registers. */
-	  
-	  else if (this_state->selector & hwcntr)
+      /* Now everything is good, so actually do the merge */
+
+      tmp = hwcntrs_in_all;
+      while ((i = ffs(tmp)))
+	{
+	  hwcntr = 1 << (i-1);
+	  tmp = tmp ^ hwcntr;
+	  if (hwcntr & hwcntrs_in_both)
+	    {
+	      ESI->hw_start[i-1] = zero->hw_start[i-1];
+	      zero->multistart.SharedDepth[i-1]++; 
+	    }
+	  else if (hwcntr & this_state->selector)
 	    {
 	      current_state->selector |= hwcntr;
-	      /* current_state->counter_cmd.mode.w = this_state->counter_cmd.mode.w;
-	      current_state->counter_cmd.events[i] = this_state->counter_cmd.events[i]; */
-	      ESI->hw_start[i] = 0;
+	      counter_event_copy(&this_state->counter_cmd, &current_state->counter_cmd, i-1);
+	      ESI->hw_start[i-1] = 0;
+	      zero->hw_start[i-1] = 0;
 	    }
 	}
-    }
-  else
-    {
-      /* If we are NOT nested, just copy the global counter 
-	 structure to the current eventset */
-
-      current_state->selector = this_state->selector;
-      memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(ev_command_t));
-
-    }
-
-  /* If overflowing is enabled, turn it on */
-  
-  if (ESI->state & PAPI_OVERFLOWING)
-    {
-      retval = _papi_hwi_start_overflow_timer(ESI, zero);
-      if (retval < PAPI_OK)
-	return(PAPI_EBUG);
     }
 
   /* Set up the new merged control structure */
@@ -664,13 +713,15 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   dump_cmd(&current_state->counter_cmd);
 #endif
       
-  retval = ioctl(current_state->fd,PCNTSETITEMS,current_state->counter_cmd.items);
+  /* Stop the current context */
+
+  retval = ioctl(current_state->fd, PCNTCLEARCNT);
   if (retval == -1)
     return(PAPI_ESYS);
 
   /* (Re)start the counters */
   
-  retval = ioctl(current_state->fd,PCNTSETMUX,&current_state->counter_cmd.mux);
+  retval = ioctl(current_state->fd,PCNT6MUX,&current_state->counter_cmd);
   if (retval == -1)
     return(PAPI_ESYS);
 
@@ -679,53 +730,29 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
 int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
 { 
-  int i, hwcntr, retval;
+  int i, tmp, hwcntr, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
 
-  /* retval = pm_stop_mythread();
-  if (retval > 0) 
-    return(retval); */
-  
-  for (i = 0; i < _papi_system_info.num_cntrs; i++)
+  if ((zero->multistart.num_runners - 1) == 0)
     {
-      /* Check for events that are NOT shared between eventsets and 
-	 therefore require modification to the control state. */
-      
-      hwcntr = 1 << i;
-      if (hwcntr & this_state->selector)
-	{
-	  if (zero->multistart.SharedDepth[i] - 1 < 0)
-	    current_state->selector ^= hwcntr;
-	  else
-	    zero->multistart.SharedDepth[i]--;
-	}
-    }
-
-  if (ESI->state & PAPI_OVERFLOWING)
-    {
-      retval = _papi_hwi_stop_overflow_timer(ESI, zero);
-      if (retval < PAPI_OK)
-	return(PAPI_EBUG);
-    }
-  
-  /* If we're not the outermost EventSet, then we need to start again 
-     because someone is still running. */
-
-  if (zero->multistart.num_runners - 1)
-    {
-      /* retval = pm_start_mythread();
-      if (retval > 0) 
-	return(retval); */
+      current_state->selector = 0;
+      return(PAPI_OK);
     }
   else
     {
-      /* retval = pm_delete_program_mythread();
-      if (retval > 0) 
-	return(retval); */
+      tmp = this_state->selector;
+      while ((i = ffs(tmp)))
+	{
+	  hwcntr = 1 << (i-1);
+	  if (zero->multistart.SharedDepth[i-1] - 1 < 0)
+	    current_state->selector ^= hwcntr;
+	  else
+	    zero->multistart.SharedDepth[i-1]--;
+	  tmp ^= hwcntr;
+	}
+      return(PAPI_OK);
     }
-
-  return(PAPI_OK);
 }
 
 int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
@@ -912,14 +939,14 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  return(PAPI_EMISC);
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  return(PAPI_EMISC);
 }
 
 void *_papi_hwd_get_overflow_address(void *context)

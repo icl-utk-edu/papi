@@ -18,23 +18,18 @@
 
 #define EV_MAX_COUNTERS 3
 
-typedef struct ev4_command {
-  int items;
-  struct iccsr mux;
-} ev4_command_t;
+typedef union {
+  struct pfcntrs ev4;
+  struct pfcntrs_ev5 ev5;
+  struct pfcntrs ev6;
+} ev_values_t;
 
-typedef struct ev5_command {
-  int items;
-  int ctxts;
-  int mux;
-  int freq;
-} ev5_command_t;
+typedef union {
+  struct iccsr ev4;
+  long ev5;
+  long ev6;
+} ev_control_t;
 
-typedef struct ev_command {
-  int model; /* 4, 5, 6, ... */
-  ev4_command_t ev4;
-} ev_command_t;
-    
 typedef struct hwd_control_state {
   /* File descriptor controlling the counters; */
   int fd;
@@ -43,7 +38,7 @@ typedef struct hwd_control_state {
   /* Is this event derived? */
   int derived;   
   /* Buffer to pass to the kernel to control the counters */
-  ev4_command_t counter_cmd;
+  ev_control_t counter_cmd;
   /* Interrupt interval */
   int timer_ms;  
 } hwd_control_state_t;
@@ -58,15 +53,14 @@ typedef struct hwd_preset {
   /* If the derived event is not associative, this index is the lead operand */
   unsigned char operand_index;
   /* Buffer to pass to the kernel to control the counters */
-  unsigned char counter_cmd[EV_MAX_COUNTERS];
+  long counter_cmd[EV_MAX_COUNTERS];
   /* Footnote to append to the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
 typedef struct hwd_search {
-  /* Derived code */
-  int derived;
+  /* PAPI preset code */
+  int papi_code;
   /* Events to encode */
   int findme[EV_MAX_COUNTERS];
 } hwd_search_t;
-
