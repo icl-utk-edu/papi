@@ -7223,7 +7223,7 @@ case "$OS" in
   osf1)
        case "$CPU" in
             alpha)
-                 MAKEVER=true64-"$CPU" ;;
+                 MAKEVER=tru64-"$CPU" ;;
        esac
        ;;
 esac
