@@ -309,103 +309,93 @@ typedef struct pre_info {
   char *descr; } preset_info_t; 
 
 static preset_info_t papi_preset_info[PAPI_MAX_PRESET_EVENTS] = { 
-  { "PAPI_L1_DCM", 0x80000000, "Level 1 Data Cache Misses" },
-  { "PAPI_L1_ICM", 0x80000001, "Level 1 Instruction Cache Misses" },
-  { "PAPI_L2_DCM", 0x80000002, "Level 2 Data Cache Misses" },
-  { "PAPI_L2_ICM", 0x80000003, "Level 2 Instruction Cache Misses" },
-  { "PAPI_L3_DCM", 0x80000004, "Level 3 Data Cache Misses" },
-  { "PAPI_L3_ICM", 0x80000005, "Level 3 Instruction Cache Misses" },
-  { NULL, 0x80000006, NULL },
-  { NULL, 0x80000007, NULL },
-  { NULL, 0x80000008, NULL },
-  { NULL, 0x80000009, NULL },
-  { "PAPI_CA_SHR", 0x8000000A, "Requests for Shared Cache Line" },
-  { "PAPI_CA_CLN", 0x8000000B, "Requests for Clean Cache Line" },
-  { "PAPI_CA_INV", 0x8000000C, "Cache Line Invalidation Requests" },
-  { NULL, 0x8000000D, NULL },
-  { NULL, 0x8000000E, NULL },
-  { NULL, 0x8000000F, NULL },
-  { NULL, 0x80000010, NULL },
-  { NULL, 0x80000011, NULL },
-  { NULL, 0x80000012, NULL },
-  { NULL, 0x80000013, NULL },
-  { "PAPI_TLB_DM", 0x80000014, "Data Translation Lookaside Buffer Misses" },
-  { "PAPI_TLB_IM", 0x80000015, "Instruction Translation Lookaside Buffer Misses" },
-  { "PAPI_TLB_TOT", 0x80000016, "Total Translation Lookaside Buffer Misses" },
-  { NULL,  0x80000017, NULL },
-  { NULL,  0x80000018, NULL },
-  { NULL,  0x80000019, NULL },
-  { NULL,  0x8000001A, NULL },
-  { NULL,  0x8000001B, NULL },
-  { NULL,  0x8000001C, NULL },
-  { NULL,  0x8000001D, NULL },
-  { "PAPI_TLB_SD", 0x8000001E, "Translation Lookaside Buffer Shootdowns" },
-  { NULL,  0x8000001F, NULL },
-  { NULL,  0x80000020, NULL },
-  { NULL,  0x80000021, NULL },
-  { "PAPI_MEM_SCY",  0x80000022, "Cycles Stalled Waiting for Memory Access" },
-  { "PAPI_MEM_RCY",  0x80000023, "Cycles Stalled Waiting for Memory Read" },
-  { "PAPI_MEM_WCY",  0x80000024, "Cycles Stalled Waiting for Memory Write" },
-  { "PAPI_STL_SCY",  0x80000025, "Cycles with No Instruction Issue" },
-  { "PAPI_FUL_CYC",  0x80000026, "Cycles with Maximum Instruction Issue" },
-  { NULL,  0x80000027, NULL },
-  { NULL,  0x80000028, NULL },
-  { NULL,  0x80000029, NULL },
-  { "PAPI_BR_UCN", 0x8000002A, "Unconditional Branch Instructions" },
-  { "PAPI_BR_CN", 0x8000002B, "Conditional Branch Instructions" },
-  { "PAPI_BR_TKN", 0x8000002C, "Conditional Branch Instructions Taken" }, 
-  { "PAPI_BR_NTK", 0x8000002D, "Conditional Branch Instructions Not Taken" }, 
-  { "PAPI_BR_MSP", 0x8000002E, "Conditional Branch Instructions Mispredicted" },
-  { NULL,  0x8000002F, NULL },
-  { NULL,  0x80000030, NULL },
-  { NULL,  0x80000031, NULL },
-  { "PAPI_TOT_INS", 0x80000032, "Total Instructions" },
-  { "PAPI_INT_INS", 0x80000033, "Integer Instructions" },
-  { "PAPI_FP_INS", 0x80000034, "Floating Point Instructions" },
-  { "PAPI_LD_INS", 0x80000035, "Load Instructions" },
-  { "PAPI_SR_INS", 0x80000036, "Store Instructions" },
-  { "PAPI_BR_INS", 0x80000037, "Branch Instructions" },
-  { "PAPI_VEC_INS", 0x80000038, "Vector Instructions" },
-  { "PAPI_FLOPS", 0x80000039, "Floating Point Instructions per Second" },
-  { NULL,  0x8000003A, NULL },
-  { NULL,  0x8000003B, NULL },
-  { "PAPI_TOT_CYC",  0x8000003C, "Total Cycles" },
-  { "PAPI_MIPS", 0x8000003D, "Millions of Instructions per Second" },
-  { NULL,  0x8000003E, NULL },
-  { NULL,  0x8000003, NULL } };
+  { "PAPI_L1_DCM", 0, "Level 1 Data Cache Misses" },
+  { "PAPI_L1_ICM", 1, "Level 1 Instruction Cache Misses" },
+  { "PAPI_L2_DCM", 2, "Level 2 Data Cache Misses" },
+  { "PAPI_L2_ICM", 3, "Level 2 Instruction Cache Misses" },
+  { "PAPI_L3_DCM", 4, "Level 3 Data Cache Misses" },
+  { "PAPI_L3_ICM", 5, "Level 3 Instruction Cache Misses" },
+  { "PAPI_NULL", 6, NULL },
+  { "PAPI_NULL", 7, NULL },
+  { "PAPI_NULL", 8, NULL },
+  { "PAPI_NULL", 9, NULL },
+  { "PAPI_CA_SHR", 10, "Requests for Shared Cache Line" },
+  { "PAPI_CA_CLN", 11, "Requests for Clean Cache Line" },
+  { "PAPI_CA_INV", 12, "Cache Line Invalidation Requests" },
+  { "PAPI_NULL", 13, NULL },
+  { "PAPI_NULL", 14, NULL },
+  { "PAPI_NULL", 15, NULL },
+  { "PAPI_NULL", 16, NULL },
+  { "PAPI_NULL", 17, NULL },
+  { "PAPI_NULL", 18, NULL },
+  { "PAPI_NULL", 19, NULL },
+  { "PAPI_TLB_DM", 20, "Data Translation Lookaside Buffer Misses" },
+  { "PAPI_TLB_IM", 21, "Instruction Translation Lookaside Buffer Misses" },
+  { "PAPI_TLB_TOT", 22, "Total Translation Lookaside Buffer Misses" },
+  { "PAPI_NULL",  23, NULL },
+  { "PAPI_NULL",  24, NULL },
+  { "PAPI_NULL",  25, NULL },
+  { "PAPI_NULL",  26, NULL },
+  { "PAPI_NULL",  27, NULL },
+  { "PAPI_NULL",  28, NULL },
+  { "PAPI_NULL",  29, NULL },
+  { "PAPI_TLB_SD", 30, "Translation Lookaside Buffer Shootdowns" },
+  { "PAPI_NULL",  31, NULL },
+  { "PAPI_NULL",  32, NULL },
+  { "PAPI_NULL",  33, NULL },
+  { "PAPI_MEM_SCY",  34, "Cycles Stalled Waiting for Memory Access" },
+  { "PAPI_MEM_RCY",  35, "Cycles Stalled Waiting for Memory Read" },
+  { "PAPI_MEM_WCY",  36, "Cycles Stalled Waiting for Memory Write" },
+  { "PAPI_STL_SCY",  37, "Cycles with No Instruction Issue" },
+  { "PAPI_FUL_CYC",  38, "Cycles with Maximum Instruction Issue" },
+  { "PAPI_NULL",  39, NULL },
+  { "PAPI_NULL",  40, NULL },
+  { "PAPI_NULL",  41, NULL },
+  { "PAPI_BR_UCN", 42, "Unconditional Branch Instructions" },
+  { "PAPI_BR_CN", 43, "Conditional Branch Instructions" },
+  { "PAPI_BR_TKN", 44, "Conditional Branch Instructions Taken" }, 
+  { "PAPI_BR_NTK", 45, "Conditional Branch Instructions Not Taken" }, 
+  { "PAPI_BR_MSP", 46, "Conditional Branch Instructions Mispredicted" },
+  { "PAPI_NULL",  47, NULL },
+  { "PAPI_NULL",  48, NULL },
+  { "PAPI_NULL",  49, NULL },
+  { "PAPI_TOT_INS", 50, "Total Instructions" },
+  { "PAPI_INT_INS", 51, "Integer Instructions" },
+  { "PAPI_FP_INS", 52, "Floating Point Instructions" },
+  { "PAPI_LD_INS", 53, "Load Instructions" },
+  { "PAPI_SR_INS", 54, "Store Instructions" },
+  { "PAPI_BR_INS", 55, "Branch Instructions" },
+  { "PAPI_VEC_INS", 56, "Vector Instructions" },
+  { "PAPI_FLOPS", 57, "Floating Point Instructions per Second" },
+  { "PAPI_NULL",  58, NULL },
+  { "PAPI_NULL",  59, NULL },
+  { "PAPI_TOT_CYC",  60, "Total Cycles" },
+  { "PAPI_MIPS", 61, "Millions of Instructions per Second" },
+  { "PAPI_NULL",  62, NULL },
+  { "PAPI_NULL",  63, NULL } };
 
 int PAPI_describe_event(char *name, int *EventCode, char *description)
-{
-  if (name)
-    {
-      int i;
-      
-      for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-	{
-	  if (strcmp(papi_preset_info[i].name,name) == 0)
-	    {
-	      if (description)
-		strcpy(description,papi_preset_info[i].descr);
-	      *EventCode = papi_preset_info[i].code;
-	      return(PAPI_OK);
-	    }
-	}
-      return(PAPI_EINVAL);
-    }
-  if ((*EventCode > 0) && (*EventCode < PAPI_MAX_PRESET_EVENTS))
-    {
-      if (description)
-	strcpy(description,papi_preset_info[*EventCode].descr);
-      if (name)
-	strcpy(name,papi_preset_info[*EventCode].name);
+{ 
+  int i;
+  if ((*EventCode >= 0) && (*EventCode < PAPI_MAX_PRESET_EVENTS))
+  { 
+    strcpy(name,papi_preset_info[*EventCode].name);
+    strcpy(description,papi_preset_info[*EventCode].descr);
+    return(PAPI_OK);
+  }
+  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
+  { if (strcmp(papi_preset_info[i].name,name) == 0)
+    { if(description)
+        strcpy(description,papi_preset_info[i].descr);
+      *EventCode = papi_preset_info[i].code;
       return(PAPI_OK);
     }
+  }
   return(PAPI_EINVAL);
 }
 
 int PAPI_query_event(int EventCode)
-{
-  int retval;
+{ int retval;
 
   retval = _papi_hwd_query(EventCode);
   if (retval != PAPI_OK)
@@ -419,8 +409,7 @@ int PAPI_query_event(int EventCode)
    created already for this EventSet, adds the event */
 
 int PAPI_add_event(int *EventSet, int EventCode) 
-{ 
-  int retval,indextohw;
+{ int retval,indextohw;
   EventSetInfo *ESI,*n = NULL;
 
   PAPI_init();
@@ -985,6 +974,107 @@ int PAPI_perror(int code, char *destination, int length)
   else
     fprintf(stderr,"%s\n",foo);
 
+  return(PAPI_OK);
+}
+
+int PAPI_set_granularity(int granularity)
+{ PAPI_option_t ptr;
+
+  ptr.defgranularity.granularity = granularity;
+  return(PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
+}
+
+int PAPI_set_domain(int domain)
+{ PAPI_option_t ptr;
+
+  ptr.defdomain.domain = domain;
+  return(PAPI_set_opt(PAPI_SET_DOMAIN, &ptr));
+}
+
+int PAPI_add_pevent(int *EventSet, int code, void *inout)
+{ int retval;
+  EventSetInfo *ESI, *n;
+  
+  PAPI_init();
+
+  /* check for pre-existing ESI*/
+  if (EventSet == NULL)
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
+
+  ESI = lookup_EventSet(*EventSet);
+  if (ESI == NULL)
+    {
+      n = allocate_EventSet();
+      if (n == NULL)
+        return(handle_error(PAPI_ENOMEM,"Error allocating memory for new EventSet"));
+      ESI = n;
+    }
+  retval=_papi_hwd_add_prog_event(ESI->machdep, code, inout);
+  if(retval<PAPI_OK) return(retval);
+
+  retval = add_EventSet(ESI);
+  if(retval<PAPI_OK) return(retval);
+
+  *EventSet = ESI->EventSetIndex;
+  return(PAPI_OK);
+}
+
+int PAPI_add_events(int *EventSet, int *Events, int number)
+{ int i, retval;
+  EventSetInfo *ESI, *n;
+
+  ESI=lookup_EventSet(*EventSet);
+  if (ESI == NULL)
+    {
+      n = allocate_EventSet();
+      if (n == NULL)
+        return(handle_error(PAPI_ENOMEM,"Error allocating memory for new EventSet"));
+      ESI = n;
+    }
+
+  if((ESI->NumberOfCounters+number) > _papi_system_info.num_cntrs)
+    return(handle_error(PAPI_EINVAL, "Too many events requested"));
+
+  for(i=0;i<number;i++)
+  { retval=PAPI_add_event(EventSet, Events[i]);
+    if(retval<PAPI_OK) return(retval);
+  }
+  return(PAPI_OK);
+}
+
+int PAPI_rem_events(int *EventSet, int *Events, int number)
+{ int i, retval;
+  EventSetInfo *ESI;
+
+  ESI=lookup_EventSet(*EventSet);
+  if(!ESI) return(handle_error(PAPI_EINVAL, "Not a valid EventSet"));
+
+  if(number > _papi_system_info.num_cntrs)
+    return(handle_error(PAPI_EINVAL, "Too many events requested"));
+
+  if(ESI->NumberOfCounters == 0)
+    return(handle_error(PAPI_EINVAL, "No events have been added"));
+
+  for(i=0; i<number; i++)
+  { retval=PAPI_rem_event(EventSet, Events[i]);
+    if(retval<PAPI_OK) return(retval);
+  }
+  return(PAPI_OK);
+}
+
+int PAPI_list_events(int EventSet, int *Events, int *number)
+{ EventSetInfo *ESI;
+  int i;
+
+  ESI=lookup_EventSet(EventSet);
+  if(!ESI) return(handle_error(PAPI_EINVAL, "Not a valid EventSet"));
+
+  if(ESI->NumberOfCounters == 0)
+    return(handle_error(PAPI_EINVAL, "No events have been added"));
+
+  for(i=0; i<ESI->NumberOfCounters; i++)
+  { Events[i] = (PRESET_MASK ^ ESI->EventCodeArray[i]);
+  }
   return(PAPI_OK);
 }
 
