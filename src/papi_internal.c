@@ -246,7 +246,7 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
       ESI->EventInfoArray[i].counter_index = -1;
 /*      ESI->EventInfoArray[i].bits = ???; */
       ESI->EventInfoArray[i].hwd_selector = 0;
-      ESI->EventInfoArray[i].command = NOT_DERIVED;
+      ESI->EventInfoArray[i].derived = NOT_DERIVED;
     }
 }
 
@@ -451,7 +451,7 @@ static int add_preset_event(hwd_control_state_t *machdep, hwd_preset_t *preset, 
      register bits to stuff the proper values into our counter control
      structure */
 
-  evi->hardware_index = _papi_hwd_add_event(result, preset, machdep);
+  evi->counter_index = _papi_hwd_add_event(result, preset, machdep);
 
   /* After this function is called, ESI->machdep has everything it 
      needs to do a start/read/stop as quickly as possible */
@@ -584,6 +584,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 	  /* Fill in the EventCode (machine independent) information */
 
 	  ESI->EventInfoArray[thisindex].event_code = EventCode; 
+	  ESI->EventInfoArray[thisindex].derived = _papi_hwd_preset_map[preset_index].derived; 
 	}
       else
 	{
@@ -602,6 +603,10 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 
   /* Bump the number of events */
   ESI->NumberOfEvents++;
+
+  /* for platform dependent work */
+  if (_papi_hwd_add_event_leftover(ESI, EventCode))
+	return (PAPI_ECNFLCT);
 
   return(retval);
 }
@@ -653,32 +658,32 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
   else    
     /* Remove the events hardware dependant stuff from the EventSet */
     {
-      retval = _papi_hwd_remove_event(&ESI->EventInfoArray[thisindex].bits, ESI->EventInfoArray[thisindex].hardware_index, &ESI->machdep);
+      retval = _papi_hwd_remove_event(&ESI->EventInfoArray[thisindex].bits, ESI->EventInfoArray[thisindex].counter_index, &ESI->machdep);
       if (retval < PAPI_OK)
 	return(retval);
     }
 
-  /* Move the hardware_index's around. */
+  /* Move the counter_index's around. */
 
   for (i=0;i<EventInfoArrayLength(ESI);i++)
     {
-      if (ESI->EventInfoArray[i].hardware_index < ESI->EventInfoArray[thisindex].hardware_index)
+      if (ESI->EventInfoArray[i].counter_index < ESI->EventInfoArray[thisindex].counter_index)
 	;
-      else if (ESI->EventInfoArray[i].hardware_index == ESI->EventInfoArray[thisindex].hardware_index)
+      else if (ESI->EventInfoArray[i].counter_index == ESI->EventInfoArray[thisindex].counter_index)
 	{
 	  ESI->EventInfoArray[i].event_code = PAPI_NULL;
-	  ESI->EventInfoArray[i].hardware_index = -1;
+	  ESI->EventInfoArray[i].counter_index = -1;
 	}
       else
 	{
-	  ESI->EventInfoArray[i].hardware_index = -1;
+	  ESI->EventInfoArray[i].counter_index = -1;
 	}
 
       if (++j == ESI->NumberOfEvents)
 	break;
     }
 	
-  /* ESI->EventInfoArray[thisindex].command = NOT_DERIVED; */
+  /* ESI->EventInfoArray[thisindex].derived = NOT_DERIVED; */
   /* ESI->EventInfoArray[thisindex].selector = 0; */
   /* ESI->EventInfoArray[thisindex].operand_index = -1; */
 
@@ -692,7 +697,9 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
 int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *values)
 {
+/*
   register int i, j = 0;
+*/
   int retval;
   u_long_long *dp;
 
@@ -700,18 +707,22 @@ int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *val
   if (retval != PAPI_OK)
     return(retval);
 
+  retval = _papi_hwi_counter_reorder(ESI, dp, values);
+  return(retval);
+#if 0
   for (i=0;i<EventInfoArrayLength(ESI);i++)
     {
 #ifdef DEBUG
-      DBG((stderr,"PAPI counter %d is at hardware index %d, %lld\n",i,ESI->EventInfoArray[i].hardware_index,dp[ESI->EventInfoArray[i].hardware_index]));
+      DBG((stderr,"PAPI counter %d is at hardware index %d, %lld\n",i,ESI->EventInfoArray[i].counter_index,dp[ESI->EventInfoArray[i].counter_index]));
 #endif
-      values[j] = dp[ESI->EventInfoArray[i].hardware_index];
+      values[j] = dp[ESI->EventInfoArray[i].counter_index];
 
       /* Early exit! */
       
       if (++j == ESI->NumberOfEvents)
 	return(PAPI_OK);
     }
+#endif
 
   return(PAPI_EBUG);
 }
@@ -807,6 +818,7 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t *ESI)
   return(PAPI_OK);
 }
 
+#if 0
 int _papi_hwi_query(int preset_index, int *flags, char **note)
 { 
   if (_papi_hwd_preset_map[preset_index].number == 0)
@@ -819,6 +831,7 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
     *note = _papi_hwd_preset_map[preset_index].note;
   return(1);
 }
+#endif
 
 /* Machine info struct initialization using defaults */
 /* See _papi_mdi definition in papi_internal.h       */
@@ -895,4 +908,116 @@ void _papi_hwi_dummy_handler(int EventSet, int EventCode, int EventIndex,
   /* This function is not used and shouldn't be called. */
 
   abort();
+}
+
+static u_long_long handle_derived_add(int selector, u_long_long *from)
+{
+  int pos;
+  u_long_long retval = 0;
+
+  while ((pos = ffs(selector)))
+    {
+      DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos-1],retval));
+      retval += from[pos-1];
+      selector ^= 1 << (pos-1);
+    }
+  return(retval);
+}
+
+static u_long_long handle_derived_subtract(int counter_index, int selector, u_long_long *from)
+{
+  int pos;
+  u_long_long retval = from[counter_index];
+
+  DBG((stderr,"counter_index: %d   selector: 0x%x\n",counter_index,selector));
+  selector = selector ^ (1 << counter_index);
+  while ((pos = ffs(selector)))
+    {
+      DBG((stderr,"Compound event, subtracting pos=%d  %lld to %lld\n",pos, from[pos-1],retval));
+      retval -= from[pos-1];
+      selector ^= 1 << (pos-1);
+    }
+  return(retval);
+}
+
+static u_long_long units_per_second(long long units, long long cycles)
+{
+  float tmp;
+
+  tmp = (float)units * _papi_hwi_system_info.hw_info.mhz * 1000000.0;
+  tmp = tmp / (float) cycles;
+  return((u_long_long)tmp);
+}
+
+static u_long_long handle_derived_ps(int counter_index, int selector, u_long_long *from)
+{
+  int pos;
+
+  pos = ffs(selector ^ (1 << counter_index)) - 1;
+  assert(pos >= 0);
+
+  return(units_per_second(from[pos],from[counter_index]));
+}
+
+static u_long_long handle_derived_add_ps(int counter_index, int selector, u_long_long *from)
+{
+  int add_selector = selector ^ (1 << counter_index);
+  u_long_long tmp = handle_derived_add(add_selector, from);
+  return(units_per_second(tmp, from[counter_index]));
+}
+
+static u_long_long handle_derived(EventInfo_t *evi, u_long_long *from)
+{
+  switch (evi->derived)
+  {
+    case DERIVED_ADD: 
+      return(handle_derived_add(evi->hwd_selector, from));
+    case DERIVED_ADD_PS:
+      return(handle_derived_add_ps(evi->counter_index, evi->hwd_selector, from));
+    case DERIVED_SUB:
+      return(handle_derived_subtract(evi->counter_index, evi->hwd_selector, from));
+    case DERIVED_PS:
+      return(handle_derived_ps(evi->counter_index, evi->hwd_selector, from));
+    default:
+      abort();
+  }
+}
+
+int _papi_hwi_counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_long *events)
+{
+  int i, j=0, selector, index;
+
+  /* This routine distributes hardware counters to software counters in the
+     order that they were added. Note that the higher level
+     EventInfoArray[i] entries may not be contiguous because the user
+     has the right to remove an event.
+     But if we do compaction after remove event, this function can be 
+     changed.  ----Min
+   */
+
+  for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
+  {
+    selector = ESI->EventInfoArray[i].hwd_selector;
+    if (selector == 0)
+      continue;
+    index = ESI->EventInfoArray[i].counter_index;
+
+    DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
+
+    /* If this is not a derived event */
+
+    if (ESI->EventInfoArray[i].derived == NOT_DERIVED)
+    {
+      DBG((stderr,"counter_index is %d\n", index));
+      events[j] = hw_counter[index];
+    }
+    else /* If this is a derived event */
+      events[j]= handle_derived(&ESI->EventInfoArray[i], hw_counter);
+
+    DBG((stderr, "read value is =%lld \n", events[j]));
+    /* Early exit! */
+    if (++j == ESI->NumberOfEvents)
+      break;
+  }
+  return(PAPI_OK);
 }
