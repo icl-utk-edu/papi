@@ -6,7 +6,7 @@
 
 typedef struct preset_search {
   /* Preset code */
-  int preset;
+  unsigned int preset;
   /* Derived code */
   int derived;
   /* native event codes: must be signed since -1 is used as a terminator flag */

@@ -124,7 +124,7 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    }
    else {
 	retval = PAPI_stop( EventSet, values );
-        if (*(int*)real_time==-1 && *(int*)proc_time==0 && *(int*)flpins == 1 && *(int*)mflops == 2){
+    if (*real_time==-1 && *proc_time==0 && *flpins == 1 && *mflops == 2){
 		initialized = 1;
 		return PAPI_OK;
    	}		
@@ -219,15 +219,11 @@ int PAPI_start_counters(int *events, int array_len)
 
   for (i=0;i<array_len;i++) 
     {
-      /* retval = PAPI_query_event(events[i]);
-      if (retval)
-	return(retval); */
-
       retval = PAPI_add_event(PAPI_EVENTSET_INUSE,events[i]);
       if (retval) {
-	/* remove any prior events that may have been added */
-        PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE);
-	return(retval);
+         /* remove any prior events that may have been added */
+         PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE);
+	     return(retval);
       }
     }
 

@@ -37,20 +37,8 @@
 #include "pfmwrap.h"
 #include "papi_preset.h"
 
-/* just to make the compile work */
-typedef struct Itanium_register {
-  int native_idx; /* native event index */
-  int register_num;  /* register number */
-} Itanium_register_t;
-
-typedef struct P4_regmap {
-  unsigned selector;
-  int native_count;
-  Itanium_register_t hardware_event[MAX_COUNTERS];
-} Itanium_regmap_t;
-
-typedef Itanium_register_t hwd_register_t;
-typedef Itanium_regmap_t  hwd_register_map_t;
+typedef int hwd_register_t;
+typedef int hwd_register_map_t;
 
 typedef struct hwd_control_state {
   /* Arg to perfmonctl */
@@ -69,8 +57,6 @@ typedef struct hwd_control_state {
 /* sampling buffer address */
   void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
-  /* Is this event derived? */
-  int derived; 
 } hwd_control_state_t;
 
 
@@ -95,10 +81,6 @@ typedef struct hwd_preset {
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
-
-typedef struct Itanium_null {
-	int null_int;  /* useless int */
-} Itanium_null_t;
 
 typedef struct _Context { 
 	int init_flag;

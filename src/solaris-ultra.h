@@ -20,7 +20,12 @@
 
 #include "papi.h"
 
-#define US_MAX_COUNTERS 2
+#define MAX_COUNTERS 2
+#define MAX_COUNTER_TERMS MAX_COUNTERS
+#define PAPI_MAX_NATIVE_EVENTS 71
+#define MAX_NATIVE_EVENT PAPI_MAX_NATIVE_EVENTS
+
+typedef int hwd_register_t;
 
 typedef struct papi_cpc_event {
   /* Structure to libcpc */
@@ -30,48 +35,22 @@ typedef struct papi_cpc_event {
 } papi_cpc_event_t;
 
 typedef struct hwd_control_state {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Is this event derived? */
-  int derived;   
   /* Buffer to pass to the kernel to control the counters */
   papi_cpc_event_t counter_cmd;
   /* Buffer to save the values read from the hardware counter */
-  u_long_long values[US_MAX_COUNTERS];
+  long_long values[MAX_COUNTERS];
 } hwd_control_state_t;
 
-typedef struct Solaris_regmap {
-  unsigned selector;
-} Solaris_regmap_t;
+typedef int hwd_register_map_t;
 
-typedef Solaris_regmap_t hwd_register_map_t;
-
-
-typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;  
-  /* Is this event derived? */
-  unsigned char derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
+typedef struct _native_info {
+  /* native name */
+  char name[40];
   /* Buffer to pass to the kernel to control the counters */
-  unsigned char counter_cmd[US_MAX_COUNTERS];
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
+  int encoding[MAX_COUNTERS];
+} native_info_t;
 
-typedef struct hwd_search {
-  /* PAPI preset code */
-  unsigned int preset;
-  /* Is this event derived? */
-  int derived_op;   
-  /* Buffer to pass to the kernel to control the counters */
-  int findme[US_MAX_COUNTERS];
-} hwd_search_t;
-
-typedef struct _Context {
-  int init_flag;
-} hwd_context_t;
+typedef int hwd_context_t;
 
 typedef struct _ThreadInfo {
   unsigned pid;

@@ -20,41 +20,35 @@
 #include <sys/hwperfmacros.h>
 
 #include "papi.h"
+
 #define MAX_COUNTERS HWPERF_EVENTMAX
 #define MAX_COUNTER_TERMS 4
 #define MAX_NATIVE_EVENT 32
 #define PAPI_MAX_NATIVE_EVENTS MAX_NATIVE_EVENT
+#include "papi_preset.h"
  
 typedef int hwd_register_t;
 
 typedef struct hwd_control_state {
   /* File descriptor controlling the counters; */
+/*
   int fd;
+*/
   /* Generation number of the counters */
   int generation;
   /* Native encoding of the default counting domain */
   int selector;  
-  /* Is this event derived? */
-  int derived;   
   /* Buffer to pass to the kernel to control the counters */
   hwperf_profevctrarg_t counter_cmd;
-  /* Interrupt interval */
-  int timer_ms;
   /* Number on each hwcounter */
   unsigned num_on_counter[2];
   /* Buffer for reading counters */
   hwperf_cntr_t cntrs_read;
 } hwd_control_state_t;
 
-/* just to make the compile work */
-typedef struct Irix_regmap {
-    unsigned selector;
-} Irix_regmap_t;
-
-typedef Irix_regmap_t  hwd_register_map_t;
+typedef int hwd_register_map_t;
 
 typedef struct _Context {
-  int init_flag;
   /* File descriptor controlling the counters; */
   int fd;
 }  hwd_context_t;

@@ -649,7 +649,7 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 			/* there is an empty slot for the native event;
 			   initialize the native index for the new added event */
 			ESI->NativeInfoArray[ESI->NativeCount].ni_index=nix[i];
-			ESI->NativeInfoArray[ESI->NativeCount].ni_owners++;
+		    ESI->NativeInfoArray[ESI->NativeCount].ni_owners=1;
 			ESI->NativeCount++;
 			remap++; 
 		}

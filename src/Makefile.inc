@@ -9,7 +9,7 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h pa
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
 
-all: showconf $(NATIVEGEN) $(LIBS) genpapifdef $(FHEADERS) examples
+all: showconf $(LIBS) genpapifdef $(FHEADERS) examples
 
 showconf:
 		@echo; 
@@ -29,10 +29,6 @@ $(LIBRARY): $(OBJECTS)
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
-
-$(NATIVEGEN): nativegen.c 
-	$(CC) $(CFLAGS) $(OPTFLAGS) nativegen.c -o nativegen $(LDFLAGS)
-	./nativegen
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
