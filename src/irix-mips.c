@@ -1006,6 +1006,25 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       return (PAPI_ENOEVNT);
 }
 
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+  char buf[128];
+
+  if ( count == 0 ) return(0);
+  
+  sprintf(buf, "Event: %d", *bits);
+  strncpy(names, buf, name_len);
+
+  return(1);
+}
+
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+{
+  *bits = EventCode;  
+  return(PAPI_OK);
+}
+
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 {
   return(0);
