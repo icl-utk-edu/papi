@@ -20,9 +20,9 @@ PAPI_set_domain \- set the default execution domain for new event sets
 .SH DESCRIPTION
 .B "PAPI_set_domain" 
 sets the default execution domain for all new event sets created by
-.BR "PAPI_create_eventset" (3) in all threads.
-Event sets that are already in existance are not affected. To change the
-domain of an existing event set, please see the 
+.BR "PAPI_create_eventset" (3) 
+in all threads. Event sets that are already in existance are not affected. 
+To change the domain of an existing event set, please see the 
 .BR "PAPI_set_opt" (3)
 man page. The reader should note that the domain of an event set
 affects only which mode the counter continue to run. Counts are still

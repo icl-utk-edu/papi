@@ -2,7 +2,7 @@
 .TH PAPI_event_code_to_name 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_event_code_to_name, PAPI_event_name_to_code \- convert a numeric hardware event to a name, or vice versa.
+PAPI_event_code_to_name, PAPI_event_name_to_code \- convert a numeric hardware event code to a name, or vice versa.
 
 .SH SYNOPSIS
 .B C Interface
@@ -75,7 +75,7 @@ if (PAPI_create_eventset(&EventSet) != PAPI_OK)
 
 /* Add Total Instructions Executed to our EventSet */
 
-if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
+if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
   handle_error(1);
 .if t .ft P
 .fi
