@@ -40,7 +40,7 @@ int main()
     const PAPI_exe_info_t *prginfo = NULL;
 
 
-    int retval,num_events,mask, num_tests = 5;
+    int retval;
     
 
    /****************************************************************************

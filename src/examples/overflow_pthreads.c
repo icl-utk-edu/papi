@@ -59,7 +59,7 @@ void *Thread(void *arg)
 	if ( (retval = PAPI_create_eventset(&EventSet1))!=PAPI_OK)
     	ERROR_RETURN(retval);
 
- 	/* query whether the event exists or not */
+ 	/* query whether the event exists */
 	if ((retval=PAPI_query_event(PAPI_FP_INS)) != PAPI_OK) 
     	ERROR_RETURN(retval);
 	if ((retval=PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK) 

@@ -1,12 +1,13 @@
 /*****************************************************************************
- * This is an example using the low level function PAPI_get_opt to query the *
- * option settings of the PAPI library or a specific eventset created by the *
- * PAPI_create_eventset function. PAPI_set_opt is used on the otherhand to   *
- * set PAPI library or event set options.                                    *
+ * This example shows how to use PAPI_set_domain                             * 
  *****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "papi.h" /* This needs to be included every time you use PAPI */
 
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
@@ -27,8 +28,10 @@ int main()
 {
 
    int num, retval, EventSet = PAPI_NULL;
-   PAPI_option_t options;    
    long long values[2];
+   PAPI_option_t options;    
+   int fd;
+   
 
    /****************************************************************************
    *  This part initializes the library and compares the version number of the *
@@ -43,29 +46,15 @@ int main()
       exit(1);
    }
 
-   /*PAPI_get_opt returns a negative number if there is an error */
-
-   /* This call returns the maximum available hardware counters */
-   if((num = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL)) <= 0)
-      ERROR_RETURN(num);
-
-
-   printf("This machine has %d counters.\n",num);
+   /* Set the domain of this EventSet to counter user mode. The domain
+      will be valid for all the eventset created after this function call 
+      unless you call PAPI_set_domain again */ 
+   if ((retval=PAPI_set_domain(PAPI_DOM_USER)) != PAPI_OK)
+      ERROR_RETURN(retval);
 
    if ((retval=PAPI_create_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   /* Set the domain of this EventSet to counter user and 
-      kernel modes for this process.                      */
-        
-   memset(&options,0x0,sizeof(options));
-   
-   options.domain.eventset = EventSet;
-   /* Default domain is PAPI_DOM_USER */
-   options.domain.domain = PAPI_DOM_ALL;
-   /* this sets the options for the domain */
-   if ((retval=PAPI_set_opt(PAPI_DOMAIN, &options)) != PAPI_OK)
-      ERROR_RETURN(retval);
    /* Add Total Instructions Executed event to the EventSet */
    if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
       ERROR_RETURN(retval);
@@ -79,11 +68,57 @@ int main()
       ERROR_RETURN(retval);
 
    poorly_tuned_function();
+   /* add some system calls */
+   fd = open("/dev/zero", O_RDONLY);
+   if (fd == -1)
+   {
+         perror("open(/dev/zero)");
+         exit(1);
+   }
+   close(fd);
+
 
    /* Stop counting */
    if((retval=PAPI_stop(EventSet, values)) != PAPI_OK)
       ERROR_RETURN(retval);
-
+        
    printf(" Total instructions: %lld   Total Cycles: %lld \n", values[0],
             values[1]);
+
+   /* Set the domain of this EventSet to counter user and kernel modes */ 
+   if ((retval=PAPI_set_domain(PAPI_DOM_ALL)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
+   EventSet = PAPI_NULL;
+   if ((retval=PAPI_create_eventset(&EventSet)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
+   /* Add Total Instructions Executed to our EventSet */
+   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
+   /* Add Total Instructions Executed to our EventSet */
+   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
+      ERROR_RETURN(retval);
+   /* Start counting */
+   if((retval=PAPI_start(EventSet)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
+   poorly_tuned_function();
+   /* add some system calls */
+   fd = open("/dev/zero", O_RDONLY);
+   if (fd == -1)
+   {
+         perror("open(/dev/zero)");
+         exit(1);
+   }
+   close(fd);
+
+   /* Stop counting */
+   if((retval=PAPI_stop(EventSet, values)) != PAPI_OK)
+      ERROR_RETURN(retval);
+        
+   printf(" Total instructions: %lld   Total Cycles: %lld \n", values[0],
+            values[1]);
+
 }

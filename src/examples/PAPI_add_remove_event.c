@@ -40,11 +40,11 @@ int main()
    if ( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   /* Add Total Instructions Executed to our EventSet */
+   /* Add Total Instructions Executed to the EventSet */
    if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   /* Add Total Instructions Executed to our EventSet */
+   /* Add Total Cycles event to the EventSet */
    if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
       ERROR_RETURN(retval);
 
