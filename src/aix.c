@@ -321,12 +321,7 @@ static int get_system_info(void)
    _papi_hwi_system_info.supports_real_usec = 1;
    _papi_hwi_system_info.supports_real_cyc = 1;
 
-   _papi_hwi_system_info.shlib_info.map->text_start = (caddr_t) START_OF_TEXT;
-   _papi_hwi_system_info.shlib_info.map->text_end = (caddr_t) END_OF_TEXT;
-   _papi_hwi_system_info.shlib_info.map->data_start = (caddr_t) START_OF_DATA;
-   _papi_hwi_system_info.shlib_info.map->data_end = (caddr_t) END_OF_DATA;
-   _papi_hwi_system_info.shlib_info.map->bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.shlib_info.map->bss_end = (caddr_t) NULL;
+   _papi_hwi_system_info.shlib_info.map = &(_papi_hwi_system_info.exe_info.address_info);
 
    _papi_hwi_system_info.hw_info.ncpu = _system_configuration.ncpus;
    _papi_hwi_system_info.hw_info.totalcpus =
