@@ -432,7 +432,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
 {
   return(PAPI_ESBSTR);
 }
@@ -745,16 +745,22 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
 
   if (overflow_option->threshold == 0)
-    this_state->timer_ms = 0;
+    {
+      this_state->timer_ms = 0;
+      overflow_option->timer_ms = 0;
+    }
   else
-    this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
+    {
+      this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
+      overflow_option->timer_ms = 1;
+    }
 
   return(PAPI_OK);
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
 {
-  return(PAPI_OK);
+  return(PAPI_ESBSTR);
 }
 
 /* Machine info structure. -1 is unused. */

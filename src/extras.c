@@ -21,11 +21,37 @@ the following:
 #include "papi.h"
 #include "papi_internal.h"
 
-#define PAPI_ITIMER ITIMER_REAL
-#define PAPI_SIGNAL SIGALRM
+#define PAPI_ITIMER ITIMER_PROF
+#define PAPI_SIGNAL SIGPROF
 
 extern EventSetInfo *event_set_overflowing;
 extern EventSetInfo *event_set_zero;
+
+static void dispatch_profile(EventSetInfo *ESI, caddr_t eip)
+{
+  unsigned long address;
+  EventSetProfileInfo_t *profile = &ESI->profile;
+
+  address = (unsigned long)(eip - profile->offset);
+  address *= profile->scale;
+  address /= profile->divisor;
+
+  switch (profile->flags)
+    {
+    case PAPI_PROFIL_POSIX:
+    default:
+      {
+        unsigned short *buf = (unsigned short *)profile->buf;
+        if (address < profile->bufsiz)
+          {
+            DBG((stderr,"dispatch_profile() handled at eip %p, bucket %lu\n",eip,address));
+            buf[address]++;
+          }
+        else
+          DBG((stderr,"dispatch_profile() ignored at eip %p, bucket %lu\n",eip,address));       
+      }
+    }
+}
 
 static void dispatch_overflow_signal(EventSetInfo *ESI, void *context)
 {

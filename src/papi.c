@@ -435,7 +435,10 @@ int PAPI_add_event(int *EventSet, int EventCode)
     }
 
   if(!(ESI->state & PAPI_STOPPED))
-    return(handle_error(PAPI_EINVAL, "EventSet is not stopped"));
+    {
+      if (n) free(n);
+      return(handle_error(PAPI_EINVAL, "EventSet is not stopped"));
+    }
 
   /* This returns index into the map array. Note that this routine
      increments ESI->NumberOfCounters. */
@@ -445,7 +448,10 @@ int PAPI_add_event(int *EventSet, int EventCode)
     {
     heck:
       if (n)
-	free_EventSet(ESI);
+        {
+          free_EventSet(ESI);
+          free(n);
+        }
       return(handle_error(retval,NULL));
     }
 
@@ -1092,7 +1098,7 @@ int PAPI_perror(int code, char *destination, int length)
    in it, but only 1 can be an overflow trigger. Subsequent calls to PAPI_overflow
    replace earlier calls. To turn off overflow, set the handler to NULL. */
 
-int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, void *handler)
+int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
   int retval, index;
   EventSetInfo *ESI;
@@ -1149,7 +1155,14 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, void *h
   return(PAPI_OK);
 }
 
-int PAPI_profil(void *buf, int bufsiz, int offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags)
+static void dummy_handler(int EventSet, int count, int eventcode,
+                          unsigned long long value, int *threshold, void *context)
+{
+  abort();
+}
+
+int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
+                int EventSet, int EventCode, int threshold, int flags)
 {
   int retval, index;
   EventSetInfo *ESI;
@@ -1185,8 +1198,20 @@ int PAPI_profil(void *buf, int bufsiz, int offset, unsigned int scale, int Event
   opt.bufsiz = bufsiz;
   opt.offset = offset;
   opt.scale = scale;
+  opt.flags = flags;
 
-  retval = _papi_hwd_set_profile(ESI, &opt);
+  switch (flags)
+    {
+    case PAPI_PROFIL_POSIX:
+    default:
+      opt.divisor = 65536;
+    }
+
+  if (_papi_system_info.needs_profile_emul)
+    retval = PAPI_overflow(EventSet, EventCode, threshold, 0, dummy_handler);
+  else
+    retval = _papi_hwd_set_profile(ESI, &opt);
+
   if (retval < PAPI_OK)
     return(retval);
 
@@ -1218,11 +1243,13 @@ int PAPI_set_domain(int domain)
 
 int PAPI_add_pevent(int *EventSet, int code, void *inout)
 { int retval;
-  EventSetInfo *ESI, *n;
+  EventSetInfo *ESI, *n = NULL;
   
-  PAPI_init();
+  retval = PAPI_init();
+  if (retval < PAPI_OK) return retval;
 
   /* check for pre-existing ESI*/
+
   if (EventSet == NULL)
     return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
 
@@ -1234,72 +1261,113 @@ int PAPI_add_pevent(int *EventSet, int code, void *inout)
         return(handle_error(PAPI_ENOMEM,"Error allocating memory for new EventSet"));
       ESI = n;
     }
-  retval=_papi_hwd_add_prog_event(ESI->machdep, code, inout);
-  if(retval<PAPI_OK) return(retval);
 
-  retval = add_EventSet(ESI);
-  if(retval<PAPI_OK) return(retval);
+  if(!(ESI->state & PAPI_STOPPED))
+    {
+      if (n) free(n);
+      return(handle_error(PAPI_EINVAL, "EventSet is not stopped"));
+    }
 
-  *EventSet = ESI->EventSetIndex;
+  /* This returns index into the map array. Note that this routine
+     increments ESI->NumberOfCounters. */
+
+  retval = add_event(ESI,code);
+  if (retval < PAPI_OK)
+    {
+    heck:
+      if (n)
+        {
+          free_EventSet(ESI);
+          free(n);
+        }
+      return(handle_error(retval,NULL));
+    }
+
+  indextohw = retval;
+  retval = _papi_hwd_add_prog_event(ESI->machdep,indextohw,code,inout);
+  if (retval < PAPI_OK)
+    {
+      remove_event(ESI,code);
+      goto heck;
+    }
+
+  if (n)
+    {
+      retval = add_EventSet(ESI);
+      if (retval < PAPI_OK)
+        goto heck;
+
+      *EventSet = ESI->EventSetIndex;
+      DBG((stderr,"PAPI_add_pevent new EventSet in slot %d\n",*EventSet));
+    }
   return(PAPI_OK);
 }
 
 int PAPI_add_events(int *EventSet, int *Events, int number)
-{ int i, retval;
-  EventSetInfo *ESI, *n;
+{
+  int i, retval;
 
-  ESI=lookup_EventSet(*EventSet);
-  if (ESI == NULL)
+  for (i=0;i<number;i++)
     {
-      n = allocate_EventSet();
-      if (n == NULL)
-        return(handle_error(PAPI_ENOMEM,"Error allocating memory for new EventSet"));
-      ESI = n;
+      retval = PAPI_add_event(EventSet, Events[i]);
+      if (retval<PAPI_OK) return(retval);
     }
-
-  if((ESI->NumberOfCounters+number) > _papi_system_info.num_cntrs)
-    return(handle_error(PAPI_EINVAL, "Too many events requested"));
-
-  for(i=0;i<number;i++)
-  { retval=PAPI_add_event(EventSet, Events[i]);
-    if(retval<PAPI_OK) return(retval);
-  }
   return(PAPI_OK);
 }
 
 int PAPI_rem_events(int *EventSet, int *Events, int number)
-{ int i, retval;
+{
+  int i, retval;
   EventSetInfo *ESI;
 
-  ESI=lookup_EventSet(*EventSet);
-  if(!ESI) return(handle_error(PAPI_EINVAL, "Not a valid EventSet"));
+  if ((!EventSet) || (!Events))
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
 
-  if(number > _papi_system_info.num_cntrs)
+  ESI=lookup_EventSet(*EventSet);
+  if (!ESI)
+    return(handle_error(PAPI_EINVAL, "Not a valid EventSet"));
+
+#ifdef DEBUG
+  /* Not necessary */
+  if (ESI->NumberOfCounters == 0)
+    return(handle_error(PAPI_EINVAL, "No events have been added"));
+#endif
+
+  if (number > ESI->NumberOfCounters)
     return(handle_error(PAPI_EINVAL, "Too many events requested"));
 
-  if(ESI->NumberOfCounters == 0)
-    return(handle_error(PAPI_EINVAL, "No events have been added"));
-
-  for(i=0; i<number; i++)
-  { retval=PAPI_rem_event(EventSet, Events[i]);
-    if(retval<PAPI_OK) return(retval);
-  }
+  for (i=0; i<number; i++)
+    {
+      retval=PAPI_rem_event(EventSet, Events[i]);
+      if(retval<PAPI_OK) return(retval);
+    }
   return(PAPI_OK);
 }
 
+
 int PAPI_list_events(int EventSet, int *Events, int *number)
-{ EventSetInfo *ESI;
+{
+  EventSetInfo *ESI;
   int i;
 
-  ESI=lookup_EventSet(EventSet);
-  if(!ESI) return(handle_error(PAPI_EINVAL, "Not a valid EventSet"));
+  if ((!Events) || (!number))
+    return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
 
-  if(ESI->NumberOfCounters == 0)
+  ESI=lookup_EventSet(EventSet);
+  if (!ESI)
+    return(handle_error(PAPI_EINVAL, "Not a valid EventSet"));
+
+#ifdef DEBUG
+  /* Not necessary */
+  if (ESI->NumberOfCounters == 0)
     return(handle_error(PAPI_EINVAL, "No events have been added"));
+#endif
 
   for(i=0; i<ESI->NumberOfCounters; i++)
-  { Events[i] = (PRESET_MASK ^ ESI->EventCodeArray[i]);
-  }
+    {
+      Events[i] = (PRESET_MASK ^ ESI->EventCodeArray[i]);
+    }
+  *number = ESI->NumberOfCounters;
   return(PAPI_OK);
 }
 

@@ -129,6 +129,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_SET_PROFIL  27     /* Option to turn on the overflow/profil reporting software */
 #define PAPI_GET_PROFIL  28     /* Option to query the status of the overflow/profil reporting software */
+#define PAPI_PROFIL_POSIX 0    /* Default type of profiling, similar to 'man profil'. */
 
 #define PAPI_SET_ATTACH  29     /* Option to attach to another process */
 #define PAPI_GET_ATTACH  30     /* Option to query which process I'm attached */
@@ -167,11 +168,13 @@ read the documentation carefully.  */
 
 #include <signal.h>
 
+typedef void (*PAPI_overflow_handler_t)(int, int, int, unsigned long long, int *, void *);
+
 typedef struct _papi_overflow_option {
   int eventset;
   int event;
   unsigned long long threshold; 
-  void (*handler)(void *, void *); } PAPI_overflow_option_t;
+  PAPI_overflow_handler_t handler; } PAPI_overflow_option_t;
 
 typedef struct _papi_multiplex_option {
   int eventset;
@@ -208,9 +211,9 @@ int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 int PAPI_init(void);
 int PAPI_list_events(int EventSet, int *Events, int *number);
-int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, void *handler);
+int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);
-int PAPI_profil(void *buf, int bufsiz, int offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags);
+int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale, int EventSet, int EventCode, int threshold, int flags);
 int PAPI_query_event(int EventCode);
 int PAPI_read(int EventSet, unsigned long long *values);
 int PAPI_rem_event(int *EventSet, int Event); 

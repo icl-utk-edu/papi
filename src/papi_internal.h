@@ -40,7 +40,7 @@ typedef struct _EventSetOverflowInfo {
   int EventCode;
   int flags;
   int timer_ms;
-  void (*handler)(int, int, int, unsigned long long *, int, void *);
+  PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
 
 typedef struct _EventSetMultiplexInfo {
@@ -52,8 +52,10 @@ typedef struct _EventSetInheritInfo {
 typedef struct _EventSetProfileInfo {
   void *buf;
   int bufsiz;
-  int offset;
-  unsigned int scale;
+  caddr_t offset;
+  int scale;
+  int divisor;
+  int flags;
 } EventSetProfileInfo_t;
 
 typedef struct _EventSetInfo {
@@ -148,7 +150,7 @@ extern int start_overflow_timer(EventSetInfo *ESI);
 /* The following functions are defined by the substrate file. */
 
 extern int _papi_hwd_add_event(EventSetInfo *machdep, int index, unsigned int event);
-extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, unsigned int event, void *extra); 
+extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, int index, unsigned int event, void *extra); 
 extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
 extern int _papi_hwd_init(EventSetInfo *zero);
 extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);
@@ -196,7 +198,7 @@ typedef struct _papi_mdi {
   /* Begin feature flags */
 
   const int needs_overflow_emul; /* Needs overflow to be emulated */
-  const int needs_profil_emul; /* Needs profil to be emulated */
+  const int needs_profile_emul; /* Needs profile to be emulated */
   const int needs_64bit_counters; /* Only limited precision is available from hardware */
   const int supports_child_inheritance; /* We can pass on and inherit child counters/values */
   const int can_attach; /* We can attach PAPI to another process */
