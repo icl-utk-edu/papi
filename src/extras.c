@@ -546,6 +546,118 @@ int _papi_portable_get_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *p
 }
 */
 
+/*
+  Hardware independent routines to support native events.
+  #define HAS_NATIVE_MAP for these functions to be active.
+  Otherwise they return benign values (PAPI_ENOEVNT)
+  These routines assume the existence of four hardware dependent routines:
+    _papi_hwd_native_code_to_idx()
+    _papi_hwd_native_idx_to_code()
+    _papi_hwd_native_idx_to_name()
+    _papi_hwd_native_idx_to_descr()
+    These four routines provide the mapping from the opaque hardware dependent
+    native event structure array to the higher level hardware independent interface.
+*/
+
+/* Returns index of native EventCode or error message;
+   Used to enumerate the entire array, e.g. for native_avail.c */
+int _papi_hwi_query_native_event(unsigned int EventCode)
+{
+#ifdef HAS_NATIVE_MAP
+  if (EventCode & NATIVE_MASK) {
+    return (_papi_hwd_native_code_to_idx(EventCode));
+  }
+#endif
+  return(PAPI_ENOEVNT);
+}
+
+/* Converts an ASCII name into an event code usable by other routines */
+int _papi_hwi_native_name_to_code(char *in, int *out)
+{
+#ifdef HAS_NATIVE_MAP
+  char *name;
+  int i = 0;
+  do {
+    name = _papi_hwd_native_idx_to_name(i);
+    if (name != NULL) {
+      if (strcasecmp(name,in) == 0) {
+	*out = _papi_hwd_native_idx_to_code(i);
+	return(PAPI_OK);
+      }
+    }
+    else return(PAPI_ENOEVNT);
+  }  while (++i);
+#endif
+  return(PAPI_ENOEVNT);
+}
+
+/* Converts a code to a name */
+int _papi_hwi_native_code_to_name(unsigned int EventCode, char *out)
+{
+#ifdef HAS_NATIVE_MAP
+  int idx;
+  char *name;
+  if (EventCode & NATIVE_MASK)
+  {
+    idx = _papi_hwd_native_code_to_idx(EventCode);
+    name = _papi_hwd_native_idx_to_name(idx);
+    if (name) {
+      strncpy(out, name, PAPI_MAX_STR_LEN - 1);
+      out[PAPI_MAX_STR_LEN - 1] = 0;
+      return(PAPI_OK);
+    }
+  }
+#endif
+  return(PAPI_ENOEVNT);
+}
+
+/* Retrieves an event description based on a code */
+int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *description)
+{
+#ifdef HAS_NATIVE_MAP
+  int idx;
+  char *descr;
+  if (EventCode & NATIVE_MASK)
+  { 
+    idx = _papi_hwd_native_code_to_idx(EventCode);
+    if (idx >= 0) {
+      descr = _papi_hwd_native_idx_to_descr(idx);
+      if (descr) {
+	strncpy(description, descr, PAPI_MAX_STR_LEN - 1);
+	description[PAPI_MAX_STR_LEN - 1] = 0;
+	return(PAPI_OK);
+      }
+    }
+  }
+#endif
+  return(PAPI_ENOEVNT);
+}
+
+/* The native event equivalent of PAPI_query_event_verbose */
+int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info)
+{
+#ifdef HAS_NATIVE_MAP
+  int idx;
+
+  if (EventCode & NATIVE_MASK) {
+    idx = _papi_hwd_native_code_to_idx(EventCode);
+    info->event_name = _papi_hwd_native_idx_to_name(idx);
+    if (info->event_name != NULL) {
+      /* Fill in the info structure */
+      info->event_code = EventCode;
+      info->event_descr = _papi_hwd_native_idx_to_descr(idx);
+      info->event_label = NULL;
+      info->event_note = NULL;
+      info->avail = 1;	/* if we found it, it's available */
+      info->flags = 0; /* not derived */
+      return(PAPI_OK);
+    }
+  }
+#endif
+  return(PAPI_ENOEVNT);
+}
+
+
 
 /**********************************************************************
 	Windows Compatability stuff
@@ -570,19 +682,14 @@ extern int ffs(int i)
 }
 
 /*
- Another Unix routine that I can't find in Windows
- This one should return a pseudo-random integer
- given an unsigned int seed. For now it just returns 1
-*/
-/*
- This routine is called only once and only by MPX_start.
- If it isn't implemented, stuff will still work, but the
- starting event won't be randomized, reducing the validity
- of the statistics...
+ More Unix routines that I can't find in Windows
+ This one returns a pseudo-random integer
+ given an unsigned int seed.
 */
 extern int rand_r (unsigned int *Seed)
 {
-	return (1);
+	srand(*Seed);
+	return (rand());
 }
 
 /*

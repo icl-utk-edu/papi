@@ -289,6 +289,19 @@ extern int _papi_hwi_start_overflow_timer(EventSetInfo_t *master, EventSetInfo_t
 extern int _papi_hwi_initialize(DynamicArray **);
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
 
+/* The following functions implement the native event query capability
+   See extras.c or substrates for details... */
+
+extern int _papi_hwi_query_native_event(unsigned int EventCode);
+extern int _papi_hwi_native_code_to_name(unsigned int EventCode, char *out);
+extern int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *description);
+extern int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info);
+extern int _papi_hwi_native_name_to_code(char *in, int *out);
+extern unsigned int _papi_hwd_native_code_to_idx(unsigned int EventCode);
+extern unsigned int _papi_hwd_native_idx_to_code(unsigned int EventCode);
+extern char *_papi_hwd_native_idx_to_name(unsigned int EventCode);
+extern char *_papi_hwd_native_idx_to_descr(unsigned int EventCode);
+
 /* The following functions are defined by the memory file. */
 extern long _papi_hwd_get_dmem_info(int option);
 /* The following functions are defined by the substrate file. */

@@ -371,10 +371,10 @@ typedef struct  _dmem_t{
 
 /* dkt - added a label field to this structure */
 typedef struct pre_info {
-  const char *event_name;          /* JT */
-  const unsigned int event_code;   /* JT */ 
-  const char *event_descr;         /* JT */
-  const char *event_label;         /* JT */
+  char *event_name;
+  unsigned int event_code;
+  char *event_descr;
+  char *event_label;
   int avail;
   char *event_note;
   int flags;
@@ -425,6 +425,7 @@ int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
+int PAPI_native_event_index_to_code(int in, int *out);
 int PAPI_read(int EventSet, long_long *values);
 #ifdef PAPI30
 int PAPI_remove_event(int EventSet, int EventCode);

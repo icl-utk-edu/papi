@@ -707,7 +707,10 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
 
   if (description != NULL)
     {
-      strncpy(description, papi_presets[*EventCode & PRESET_AND_MASK].event_descr, PAPI_MAX_STR_LEN);
+      if (*EventCode & PRESET_MASK)
+	strncpy(description, papi_presets[*EventCode & PRESET_AND_MASK].event_descr, PAPI_MAX_STR_LEN);
+      else if (*EventCode & NATIVE_MASK)
+	_papi_hwi_native_code_to_descr(*EventCode, description);
     }
   papi_return(PAPI_OK);
 }
@@ -742,7 +745,7 @@ int PAPI_query_event(int EventCode)
       else
 	papi_return(PAPI_ENOEVNT);
     }
-  papi_return(PAPI_ENOTPRESET);
+  papi_return(_papi_hwi_query_native_event(EventCode));
 }
 
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
@@ -764,7 +767,7 @@ int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
       else
 	papi_return(PAPI_ENOEVNT);
     }
-  papi_return(PAPI_ENOTPRESET);
+  papi_return(_papi_hwi_query_native_event_verbose(EventCode, info));
 }
 
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void)
@@ -782,11 +785,11 @@ int PAPI_event_code_to_name(int EventCode, char *out)
       EventCode &= PRESET_AND_MASK;
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	papi_return(PAPI_ENOTPRESET);
-	
+
       strncpy(out,papi_presets[EventCode].event_name,PAPI_MAX_STR_LEN);
       papi_return(PAPI_OK);
     }
-  papi_return(PAPI_ENOTPRESET);
+  papi_return(_papi_hwi_native_code_to_name(EventCode, out));
 }
 
 int PAPI_event_name_to_code(char *in, int *out)
@@ -804,7 +807,22 @@ int PAPI_event_name_to_code(char *in, int *out)
 	  papi_return(PAPI_OK);
 	}
     }
-  papi_return(PAPI_ENOTPRESET);
+  papi_return(_papi_hwi_native_name_to_code(in, out));
+}
+
+int PAPI_native_event_index_to_code(int in, int *out)
+{
+#ifdef HAS_NATIVE_MAP
+  if ((in < 0) || (out == NULL))
+    papi_return(PAPI_EINVAL);
+
+  *out = _papi_hwd_native_idx_to_code(in);
+  if (!(*out & NATIVE_MASK) || (*out < 0))
+    papi_return(PAPI_ENOEVNT);
+  papi_return(PAPI_OK);
+#else
+    papi_return(PAPI_ENOEVNT);
+#endif
 }
 
 int create_eventset(int *EventSet, void *handle)
