@@ -7257,7 +7257,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
              #include <pthread.h>
 
-             __thread int i;
+             extern __thread int i;
              static int res1, res2;
 
              void thread_main (void *arg)
@@ -7269,6 +7269,8 @@ cat >>conftest.$ac_ext <<_ACEOF
                else
                   res2 = (i == arg);
              }
+
+	     __thread int i;
 
              int main ()
              {

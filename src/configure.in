@@ -420,7 +420,7 @@ case "$tls" in
       AC_TRY_RUN([
              #include <pthread.h>
 
-             __thread int i;
+             extern __thread int i;
              static int res1, res2;
 
              void thread_main (void *arg)
@@ -432,6 +432,8 @@ case "$tls" in
                else
                   res2 = (i == arg);
              }
+
+	     __thread int i;
 
              int main () 
              {
