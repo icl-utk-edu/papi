@@ -189,6 +189,7 @@ typedef P4_preset_t hwd_preset_t;
 
 #define PAPI_MODEL_UNKNOWN  -1
 #define PAPI_MODEL_PENTIUM_4 PERFCTR_X86_INTEL_P4
+#define PAPI_MODEL_PENTIUM_4M2 PERFCTR_X86_INTEL_P4M2
 
 #define FAST_RDPMC (1 << 31)
 #define COUNTER(a) (a)

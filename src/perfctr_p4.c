@@ -114,26 +114,29 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 inline static int setup_all_presets(int cputype)
 {
-  int hyper, model;
-  volatile unsigned int tmp, tmp2;
+  int hyper, model, hyper_enabled;
+  volatile unsigned int tmp, tmp2, tmp3;
   __asm__("movl $0x01, %%eax;"
 	  "cpuid;"
 	  "movl %%eax, %0;"
 	  "movl %%edx, %1;"
-	: "=r"(tmp), "=r"(tmp2)
+          "movl %%ebx, %2;"
+	: "=r"(tmp), "=r"(tmp2), "=r"(tmp3)
 	:
-	: "%eax", "%edx" );
+	: "%eax", "%edx" , "%ebx");
   SUBDBG("%%EAX       %%EDX\n");
   SUBDBG("0x%08x 0x%08x\n",tmp,tmp2);
   hyper = ((tmp2&0x10000000) != 0);
   SUBDBG("Hyperthreading = %x\n",hyper);
   model = (tmp&0x000000f0)>>4;
   SUBDBG("Model = %x\n",model);
+  hyper_enabled = ( ((tmp3&0x00ff0000)>>16) > 1 );
+  SUBDBG("Hyperthreading Enabled = %x\n", hyper_enabled);
 
-  if (hyper)
+  if (hyper && hyper_enabled)
     fprintf(stderr,"Whoa! Hyperthreading and Perfctr?!?!?\n");
 
-  assert (cputype == PAPI_MODEL_PENTIUM_4);
+  assert (cputype == PAPI_MODEL_PENTIUM_4 || cputype == PAPI_MODEL_PENTIUM_4M2);
   
   if (model < 2)
     return(setup_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_preset_map));
