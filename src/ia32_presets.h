@@ -118,18 +118,22 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPA
   {CNTR2,0,0,{{0,0x13,0x0,0x0}},""},		// FPD
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPSQ
+#ifdef DEBUG
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x0,0x0,0x0,0x0}},"This event goes away if you compile without -DDEBUG. The plus is at pos. 77 +"},	// Dummy FPI event for testing string handling
+#else
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPI
+#endif
 };
 
 static hwd_preset_t k7_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
   {ALLCNTRS,0,0,{{0x41,0x41,0x41,0x41}},""},	// L1 Cache Dmisses 
   {ALLCNTRS,0,0,{{0x81,0x81,0x81,0x81}},""},	// L1 Cache Imisses 
-  {ALLCNTRS,0,0,{{0x42,0x42,0x42,0x42}},""}, 	// L2 Cache Dmisses
+  {ALLCNTRS,0,0,{{0x1F43,0x1F43,0x1F43,0x1F43}},""},  // L2 Cache Dmisses
   {ALLCNTRS,0,0,{{0x83,0x83,0x83,0x83}},""}, 	// L2 Cache Imisses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Dmisses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Imisses
-  {ALLCNTRS,0,0,{{0x73,0x73,0x73,0x73}},""}, 	// L1 Total Cache misses 
-  {0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Total Cache misses
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x41,0x81,0x0,0x0}},""}, // L1 Total Cache misses 
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x1F43,0x83,0x0,0x0}},""}, // L2 Total Cache misses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Total Cache misses
   {0,0,0,{{0,0,0x0,0x0}},""},			// Snoops
   {0,0,0,{{0,0,0x0,0x0}},""},			// Req. access to shared cache line
@@ -143,12 +147,12 @@ static hwd_preset_t k7_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {0,0,0,{{0,0,0x0,0x0}},""},			// cycles fpu idle
   {0,0,0,{{0,0,0x0,0x0}},""},			// cycles load/store idle
   {ALLCNTRS,0,0,{{0x46,0x46,0x46,0x46}},""},	// D-TLB misses
-  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x84,0x85,0x0,0x0}},""}, // I-TLB misses
-  {CNTR1|CNTR2|CNTR3,DERIVED_ADD,0,{{0x84,0x85,0x46,0x0}},""}, // Total TLB misses
-  {0,0,0,{{0,0,0x0,0x0}},""},		   	// L1 load M
-  {0,0,0,{{0,0,0x0,0x0}},""},		   	// L1 store M
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2 load M
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2 store M
+  {ALLCNTRS,0,0,{{0x85,0x85,0x85,0x85}},""}, // I-TLB misses
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x46,0x85,0x0,0x0}},""}, // Total TLB misses
+  {ALLCNTRS,0,0,{{0x0F42,0x0F42,0x0F42,0x0F42}},""},	// L1 load M
+  {ALLCNTRS,0,0,{{0x1042,0x1042,0x1042,0x1042}},""},	// L1 store M
+  {ALLCNTRS,0,0,{{0x0F43,0x0F43,0x0F43,0x0F43}},""},	// L2 load M
+  {ALLCNTRS,0,0,{{0x1043,0x1043,0x1043,0x1043}},""},	// L2 store M
   {0,0,0,{{0,0,0x0,0x0}},""},		   	// BTAC misses
   {0,0,0,{{0,0,0x0,0x0}},""},	                // Prefmiss
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3DCH
@@ -186,22 +190,22 @@ static hwd_preset_t k7_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {CNTR1|CNTR2,DERIVED_PS,1,{{0xC0,0x76,0x0,0x0}},""}, // IPS
   {0,0,0,{{0,0,0x0,0x0}},""},			// Total load/store inst. exec
   {0,0,0,{{0,0,0x0,0x0}},""},			// SYnc exec.
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCH
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_DCH
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCA
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_DCA
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x40,0x41,0x0,0x0}},""},  // L1_DCH
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x41,0x1F43,0x0,0x0}},""},  // L2_DCH
+  {ALLCNTRS,0,0,{{0x40,0x40,0x40,0x40}},""},	// L1_DCA
+  {ALLCNTRS,0,0,{{0x41,0x41,0x41,0x41}},""},	// L2_DCA
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCA
   {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCR
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_DCR
+  {ALLCNTRS,0,0,{{0x0e42,0x0e42,0x0e42,0x0e42}},"Uncertain"},	// L2_DCR /* Only guessing here */
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCR
   {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCW
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_DCW
+  {ALLCNTRS,0,0,{{0x1142,0x1142,0x1142,0x1142}},"Uncertain"},	// L2_DCW /* cf. L2_DCW */
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCW
   {0,0,0,{{0,0,0x0,0x0}},""},			// L1_ICH
   {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICH
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICH
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_ICA
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICA
+  {ALLCNTRS,0,0,{{0x80,0x80,0x80,0x80}},""},	// L1_ICA
+  {ALLCNTRS,0,0,{{0x81,0x81,0x81,0x81}},""},	// L2_ICA
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICA
   {ALLCNTRS,0,0,{{0x80,0x80,0x80,0x80}},""},	// L1_ICR
   {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICR
@@ -225,6 +229,10 @@ static hwd_preset_t k7_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPA
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPD
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPSQ
+#ifdef DEBUG
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x0,0x0,0x0,0x0}},"This event goes away if you compile without -DDEBUG. The plus is at pos. 77 +"},	//  Dummy FPI event for testing string handling
+#else
   {0,0,0,{{0,0,0x0,0x0}},""},			// FPI
+#endif
 };
 
