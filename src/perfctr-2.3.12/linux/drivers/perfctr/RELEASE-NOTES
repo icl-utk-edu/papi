@@ -3,6 +3,54 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.3.3, 2001-12-31
+- Minor x86.c cleanup: reordered function definitions so that
+  write_control comes after isuspend/iresume: this makes it easier
+  to follow the runtime control flow.
+- Fixed isuspend()/iresume()'s broken cache checking protocol. The
+  old protocol didn't handle process migration across CPUs in SMP
+  machines correctly, as illustrated by the following scenario:
+      P1 runs on CPU1 and suspends. P1 and CPU1 now have the same
+  cache id (->k1.id). P1 is resumed and suspended on CPU2: the state
+  in CPU1 is now stale. Then P1 is resumed on CPU1, and no other
+  process has been using CPU1's performance counters since P1's last
+  suspend on CPU1. The old protocol would see matching cache ids and
+  that P1's i-mode EVNTSELs are stopped, so it would accept the cache
+  and resume P1 with CPU1's stale PERFCTRS values.
+      In the new protocol isuspend() records the active CPU in the
+  state object, and iresume() checks if both the CPU and the control
+  id match. The new protocol is also simpler since iresume() no longer
+  checks if the i-mode EVNTSELs are cleared or not.
+- P6 nasty i-mode to a-mode context switch bug fixed: p6_isuspend()
+  used to simply clear EVNTSEL0's Enable flag in order to stop all
+  i-mode counters. Unfortunately, that was insufficient as shown by
+  the following case (which actually happened).
+      P1 has EVNTSEL0 in a-mode and EVNTSEL1 in i-mode. P1 suspends:
+  PERFCTR1 is stopped but EVNTSEL1 is still in i-mode. P2 has EVNTSEL0
+  in a-mode and no EVNTSEL1. P2 resumes and updates EVNTSEL0. This
+  activates not only P2's PERFCTR0 but also the dormant PERFCTR1. If
+  PERFCTR1 overflows, then P2 will receive an unexpected interrupt. If
+  PERFCTR1 doesn't overflow, but P2 suspends and P1 resumes, then P1
+  will find that PERFCTR1 has a larger than expected value.
+      p6_isuspend() and p6_iresume() were changed to ignore the global
+  Enable flag and to disable/enable each i-mode EVNTSEL individually,
+  just like how it's done on the K7.
+- x86.c cleanups: P5MMX, MII, C6, VC3, P6, K7, and P4 now all
+  use the same rdpmc_read_counters() method. VIA C3 now uses
+  p6_write_control() instead of its own method.
+- Removed "pmc_map[] must be identity" restriction from P6 and K7.
+  The API uses the virtual counter index to distinguish a-mode
+  and i-mode counters, but P6 events aren't entirely symmetric:
+  this lead to some strange cases with the old pmc_map[] rule.
+      P6 and K7 isuspend() now need access to the control, so
+  update_control() and its callers had to be changed to allow it
+  to isuspend() _before_ the new control is installed.
+- P4 write_control fixes: changed the ESCR cache to be indexed by
+  MSR offset from 0x3A0, and changed P4 write_control to index the
+  CCCR/ESCR cache with physical instead of virtual indices. Added
+  call to debug_evntsel_cache(), after updating it for pmc_map[].
+- Added P4 and Generic support to x86_tests.c, and some cleanups.
+
 Version 2.3.2, 2001-11-19
 - P4 fix: the mapping from CCCR 17 to its associated ESCRs was
   wrong due to an off-by-one error in x86.c:p4_escr_addr().

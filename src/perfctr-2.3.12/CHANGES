@@ -6,6 +6,25 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.3.3, 2001-12-31
+- Added support for the 2.4.16 and 2.4.17 kernels.
+- SMP bug fixed: if a process using interrupt-mode counters migrates
+  from CPU1 to CPU2 and then back to CPU1, then it could incorrectly
+  resume the stale state cached in CPU1.
+- P6 bug fixed: when a process resumed, it could inadvertently activate
+  a suspended interrupt-mode counter belonging to the previous process
+  using the performance counters.
+- Pentium 4 bug fixed: could fail to update the control registers on a
+  context switch.
+- Removed the "pmc_map[] must be the identity function" restriction
+  from P6 and K7.
+- Updated examples/global/global.c: added Pentium 4 support
+  (preliminary, counting MIPS not FLOPS), corrected VIA C3 handling,
+  and corrected 32-bit integer overflow problems affecting fast CPUs.
+- Removed perfctr_evntsel_num_insns() from the library: the interface
+  could not support the Pentium 4. examples/self/self.c now does the
+  setup all by itself, with Pentium 4 support.
+
 Version 2.3.2, 2001-11-19
 - Corrected an error in the driver's mapping from counter number
   to control registers on the Pentium 4. Counter 17 didn't work,

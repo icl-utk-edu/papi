@@ -315,34 +315,6 @@ const char *perfctr_cpu_name(const struct perfctr_info *info)
     }
 }
 
-unsigned perfctr_evntsel_num_insns(const struct perfctr_info *info)
-{
-    /* This is terribly naive. Assumes only one event will be
-     * selected, at CPL > 0.
-     */
-    switch( info->cpu_type ) {
-      case PERFCTR_X86_INTEL_P5:
-      case PERFCTR_X86_INTEL_P5MMX:
-      case PERFCTR_X86_CYRIX_MII:
-        /* event 0x16, count at CPL 3 */
-        return 0x16 | (2 << 6);
-      case PERFCTR_X86_INTEL_P6:
-      case PERFCTR_X86_INTEL_PII:
-      case PERFCTR_X86_INTEL_PIII:
-      case PERFCTR_X86_AMD_K7:
-        /* event 0xC0, count at CPL > 0, ENable */
-        return 0xC0 | (1 << 16) | (1 << 22);
-      case PERFCTR_X86_WINCHIP_C6:
-        return 0x02;
-      case PERFCTR_X86_WINCHIP_2:
-        return 0x16;
-      case PERFCTR_X86_VIA_C3:
-	return 0xC0;
-      default:
-	return 0;
-    }
-}
-
 void perfctr_print_info(const struct perfctr_info *info)
 {
     static const char * const features[] = { "rdpmc", "rdtsc", "pcint" };

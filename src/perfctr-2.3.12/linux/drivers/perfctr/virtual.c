@@ -238,8 +238,8 @@ static void vperfctr_ihandler(unsigned long pc)
 	}
 	if( !IS_IMODE(perfctr) ) {
 		printk(KERN_ERR __FUNCTION__
-		       ": BUG! pid %d's vperfctr has cstatus %#x\n",
-		       tsk->pid, perfctr->state.cpu_state.cstatus);
+		       ": BUG! vperfctr has cstatus %#x (pid %d, comm %s)\n",
+		       perfctr->state.cpu_state.cstatus, tsk->pid, tsk->comm);
 		return;
 	}
 	vperfctr_suspend(perfctr);
@@ -362,8 +362,8 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct vperfctr_control *argp)
 		return -EINVAL;
 #endif
 	prev_cstatus = perfctr->state.cpu_state.cstatus;
-	perfctr->state.cpu_state.control = control.cpu_control;
-	err = perfctr_cpu_update_control(&perfctr->state.cpu_state);
+	err = perfctr_cpu_update_control(&perfctr->state.cpu_state,
+					 &control.cpu_control);
 	if( err < 0 )
 		return err;
 	if( !perfctr_cstatus_enabled(perfctr->state.cpu_state.cstatus) )

@@ -78,7 +78,6 @@ const struct perfctr_event_set *perfctr_cpu_event_set(unsigned int cpu_type);
 
 unsigned perfctr_cpu_nrctrs(const struct perfctr_info*);
 const char *perfctr_cpu_name(const struct perfctr_info*);
-unsigned perfctr_evntsel_num_insns(const struct perfctr_info*);
 void perfctr_print_info(const struct perfctr_info*);
 
 #endif /* __LIB_PERFCTR_H */

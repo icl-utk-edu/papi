@@ -65,13 +65,11 @@ for Intel P6 and AMD K7 processors.
 
 Limitations
 -----------
+- Only basic event counting is currently supported on the Pentium 4.
 - The performance counter interrupt facility requires a 2.4.10
   or newer kernel, or an earlier 2.4-ac kernel, or a vendor kernel
   based on any of these. The kernel must also be configured with
   SMP or uniprocessor APIC support.
-- The performance counter interrupt facility is currently limited
-  to the use of at most one interrupt-mode performance counter
-  per process.
 - Almost no documentation. "Use the source, Luke."
 - Neither the kernel driver nor the sample user-space library
   attempt to hide any processor-specific details from the user.
@@ -82,7 +80,6 @@ Limitations
   See the "Continuous Profiling" and "ProfileMe" papers at Compaq's
   DCPI web site for more information on this issue. (The URL is
   listed in the OTHERS file.)
-- The Pentium 4 processor is not yet supported.
 - Centaur WinChip C6/2/3 support requires that the TSC is disabled.
   See linux/drivers/perfctr/x86.c for further information.
 

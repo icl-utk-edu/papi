@@ -17,14 +17,15 @@
 #include "x86_tests.h"
 
 /* Support for lazy evntsel and perfctr MSR updates. */
-struct per_cpu_cache {	/* subset of perfctr_cpu_state */
+struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 	union {
 		unsigned int p5_cesr;
 		unsigned int id;	/* cache owner id */
 	} k1;
 	struct {
+		/* NOTE: these caches have physical indices, not virtual */
 		unsigned int evntsel[18];
-		unsigned int evntsel_aux[18];
+		unsigned int escr[0x3E2-0x3A0];
 	} control;
 } __attribute__((__aligned__(SMP_CACHE_BYTES)));
 static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
@@ -56,6 +57,7 @@ static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 #define MSR_P4_MISC_ENABLE_PEBS_UNAVAIL (1<<12) /* read-only status bit */
 #define MSR_P4_PERFCTR0		0x300		/* .. 0x311 */
 #define MSR_P4_CCCR0		0x360		/* .. 0x371 */
+#define MSR_P4_ESCR0		0x3A0		/* .. 0x3E1, with some gaps */
 #define P4_CCCR_RESERVED	0xB8000FFF	/* must be zeros */
 #define P4_CCCR_REQUIRED	0x00031000	/* must be ones */
 #define P4_CCCR_CASCADE		0x40000000
@@ -102,6 +104,33 @@ static unsigned int new_id(void)
 	return id;
 }
 
+#if defined(CONFIG_SMP) && PERFCTR_INTERRUPT_SUPPORT
+
+static inline void set_isuspend_cpu(struct perfctr_cpu_state *state,
+				    const struct per_cpu_cache *cpu)
+{
+	state->k2.isuspend_cpu = cpu;
+}
+
+static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state,
+				  const struct per_cpu_cache *cpu)
+{
+	return state->k2.isuspend_cpu == cpu;
+}
+
+static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state)
+{
+	state->k2.isuspend_cpu = NULL;
+}
+
+#else
+static inline void set_isuspend_cpu(struct perfctr_cpu_state *state,
+				    const struct per_cpu_cache *cpu) { }
+static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state,
+				  const struct per_cpu_cache *cpu) { return 1; }
+static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
+#endif
+
 /****************************************************************
  *								*
  * Driver procedures.						*
@@ -122,7 +151,6 @@ static unsigned int new_id(void)
  * - The MMX events are not symmetric: some events are only available
  *   for some PMC, and some event codes denote different events
  *   depending on which PMCs they control.
- * - pmc_map[] is not required to be the identity function.
  */
 
 /* shared with MII and C6 */
@@ -162,7 +190,7 @@ static int p5_check_control(struct perfctr_cpu_state *state)
 static void p5_write_control(const struct perfctr_cpu_state *state)
 {
 	struct per_cpu_cache *cpu;
-	unsigned cesr;
+	unsigned int cesr;
 
 	cesr = state->k1.p5_cesr;
 	if( !cesr )	/* no PMC is on (this test doesn't work on C6) */
@@ -194,16 +222,11 @@ static void p5_read_counters(const struct perfctr_cpu_state *state,
 	}
 }
 
-/* shared with MII, C6, and VC3 */
-static void p5mmx_read_counters(const struct perfctr_cpu_state *state,
+/* used by P5MMX, MII, C6, VC3, P6, K7, P4 */
+static void rdpmc_read_counters(const struct perfctr_cpu_state *state,
 				struct perfctr_low_ctrs *ctrs)
 {
 	unsigned int cstatus, nrctrs, i;
-
-	/* The P5 doesn't allocate a cache line on a write miss, so do
-	   a dummy read to avoid a write miss here _and_ a read miss
-	   later in our caller. */
-	asm("" : : "r"(ctrs->tsc));
 
 	cstatus = state->cstatus;
 	if( perfctr_cstatus_has_tsc(cstatus) )
@@ -267,7 +290,7 @@ static int c6_check_control(struct perfctr_cpu_state *state)
 static void c6_write_control(const struct perfctr_cpu_state *state)
 {
 	struct per_cpu_cache *cpu;
-	unsigned cesr;
+	unsigned int cesr;
 
 	if( perfctr_cstatus_nractrs(state->cstatus) == 0 ) /* no PMC is on */
 		return;
@@ -289,31 +312,28 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  *   That bit is reserved in EVNTSEL1.
  * - Each EVNTSEL contains a CPL field.
  * - Overflow interrupts are possible, but requires that the
- *   local APIC is available. Mobile P6 CPUs have no local APIC.
- *   Additional kernel patches are also required.
+ *   local APIC is available. Some Mobile P6s have no local APIC.
  * - The PMCs cannot be initialised with arbitrary values, since
  *   wrmsr fills the high bits by sign-extending from bit 31.
  * - Most events are symmetric, but a few are not.
- * - pmc_map[] is required to be the identity function. PMC1 cannot
- *   be used if PMC0 is skipped (since EVNTSEL0 has the global
- *   enable bit), so the counters might as well be listed in the
- *   natural order.
  */
 
 /* shared with K7 */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7)
 {
-	unsigned int evntsel, i, nractrs, nrctrs;
+	unsigned int evntsel, i, nractrs, nrctrs, pmc_mask, pmc;
 
 	nractrs = state->control.nractrs;
 	nrctrs = nractrs + state->control.nrictrs;
 	if( nrctrs < nractrs || nrctrs > (is_k7 ? 4 : 2) )
 		return -EINVAL;
 
+	pmc_mask = 0;
 	for(i = 0; i < nrctrs; ++i) {
-		/* pmc_map[] should be the identity function */
-		if( state->control.pmc_map[i] != i )
+		pmc = state->control.pmc_map[i];
+		if( pmc >= (is_k7 ? 4 : 2) || (pmc_mask & (1<<pmc)) )
 			return -EINVAL;
+		pmc_mask |= (1<<pmc);
 		evntsel = state->control.evntsel[i];
 		/* protect reserved bits */
 		if( evntsel & P6_EVNTSEL_RESERVED )
@@ -326,10 +346,10 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7)
 		} else {
 			/* only evntsel[0] has the ENable bit */
 			if( evntsel & P6_EVNTSEL_ENABLE ) {
-				if( i > 0 )
+				if( pmc > 0 )
 					return -EPERM;
 			} else {
-				if( i == 0 )
+				if( pmc == 0 )
 					return -EINVAL;
 			}
 		}
@@ -363,11 +383,12 @@ static void debug_evntsel_cache(const struct perfctr_cpu_state *state,
 	nrctrs = perfctr_cstatus_nrctrs(state->cstatus);
 	for(i = 0; i < nrctrs; ++i) {
 		unsigned int evntsel = state->control.evntsel[i];
-		if( evntsel != cpu->control.evntsel[i] ) {
+		unsigned int pmc = state->control.pmc_map[i];
+		if( evntsel != cpu->control.evntsel[pmc] ) {
 			printk(KERN_ERR "perfctr/x86.c: (pid %d, comm %s) "
 			       "evntsel[%u] is %#x, should be %#x\n",
 			       current->pid, current->comm,
-			       i, cpu->control.evntsel[i], evntsel);
+			       i, cpu->control.evntsel[pmc], evntsel);
 			return;
 		}
 	}
@@ -378,6 +399,49 @@ static inline void debug_evntsel_cache(const struct perfctr_cpu_state *s,
 { }
 #endif
 
+#if PERFCTR_INTERRUPT_SUPPORT
+/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
+static void p6_isuspend(struct perfctr_cpu_state *state)
+{
+	struct per_cpu_cache *cpu;
+	unsigned int cstatus, nrctrs, i;
+
+	cpu = &per_cpu_cache[smp_processor_id()];
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
+		unsigned int pmc = state->control.pmc_map[i];
+		cpu->control.evntsel[pmc] = 0;
+		wrmsr(MSR_P6_EVNTSEL0+pmc, 0, 0);
+		rdpmcl(pmc, state->start.pmc[i]);
+	}
+	/* cpu->k1.id is still == state->k1.id */
+	set_isuspend_cpu(state, cpu);
+}
+
+/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
+static void p6_iresume(const struct perfctr_cpu_state *state)
+{
+	struct per_cpu_cache *cpu;
+	unsigned int cstatus, nrctrs, i;
+
+	cpu = &per_cpu_cache[smp_processor_id()];
+	if( cpu->k1.id == state->k1.id ) {
+		cpu->k1.id = 0; /* force reload of cleared EVNTSELs */
+		if( is_isuspend_cpu(state, cpu) )
+			return; /* skip reload of PERFCTRs */
+	}
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
+		unsigned int pmc = state->control.pmc_map[i];
+		wrmsr(MSR_P6_PERFCTR0+pmc, state->start.pmc[i], 0);
+	}
+	/* cpu->k1.id remains != state->k1.id */
+}
+#endif	/* PERFCTR_INTERRUPT_SUPPORT */
+
+/* shared with VC3 */
 static void p6_write_control(const struct perfctr_cpu_state *state)
 {
 	struct per_cpu_cache *cpu;
@@ -391,26 +455,13 @@ static void p6_write_control(const struct perfctr_cpu_state *state)
 	nrctrs = perfctr_cstatus_nrctrs(state->cstatus);
 	for(i = 0; i < nrctrs; ++i) {
 		unsigned int evntsel = state->control.evntsel[i];
-		if( evntsel != cpu->control.evntsel[i] ) {
-			cpu->control.evntsel[i] = evntsel;
-			wrmsr(MSR_P6_EVNTSEL0+i, evntsel, 0);
+		unsigned int pmc = state->control.pmc_map[i];
+		if( evntsel != cpu->control.evntsel[pmc] ) {
+			cpu->control.evntsel[pmc] = evntsel;
+			wrmsr(MSR_P6_EVNTSEL0+pmc, evntsel, 0);
 		}
 	}
 	cpu->k1.id = state->k1.id;
-}
-
-/* shared with K7 */
-static void p6_read_counters(const struct perfctr_cpu_state *state,
-			     struct perfctr_low_ctrs *ctrs)
-{
-	unsigned int cstatus, nrctrs, i;
-
-	cstatus = state->cstatus;
-	if( perfctr_cstatus_has_tsc(cstatus) )	/* XXX: ignore this test? */
-		rdtscl(ctrs->tsc);
-	nrctrs = perfctr_cstatus_nractrs(cstatus);
-	for(i = 0; i < nrctrs; ++i)
-		rdpmcl(i, ctrs->pmc[i]);
 }
 
 static void p6_clear_counters(void)
@@ -418,51 +469,6 @@ static void p6_clear_counters(void)
 	clear_msr_range(MSR_P6_EVNTSEL0, 2);
 	clear_msr_range(MSR_P6_PERFCTR0, 2);
 }
-
-#if PERFCTR_INTERRUPT_SUPPORT
-/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
-static void p6_isuspend(struct perfctr_cpu_state *state)
-{
-	struct per_cpu_cache *cpu;
-	unsigned int cstatus, nrctrs, i;
-
-	cpu = &per_cpu_cache[smp_processor_id()];
-	cpu->control.evntsel[0] = 0;
-	wrmsr(MSR_P6_EVNTSEL0, 0, 0);
-	/* cpu->k1.id is still == state->k1.id */
-	cstatus = state->cstatus;
-	nrctrs = perfctr_cstatus_nrctrs(cstatus);
-	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i)
-		rdpmcl(i, state->start.pmc[i]);
-}
-
-/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
-static void p6_iresume(const struct perfctr_cpu_state *state)
-{
-	struct per_cpu_cache *cpu;
-	unsigned int cstatus, nrctrs, i;
-
-	cpu = &per_cpu_cache[smp_processor_id()];
-	/* XXX: move k1.id test up here? */
-	if( cpu->control.evntsel[0] ) {
-		cpu->control.evntsel[0] = 0;
-		wrmsr(MSR_P6_EVNTSEL0, 0, 0);
-		cpu->k1.id = 0;
-	} else if( cpu->k1.id == state->k1.id ) {
-		/* isuspend() cleared EVNTSEL0, so invalidate the cache
-		   here to force write_control() to reload the EVNTSELs.
-		   The k1.id cache still allows us to avoid reloading
-		   the PERFCTRs. */
-		cpu->k1.id = 0;
-		return;
-	}
-	cstatus = state->cstatus;
-	nrctrs = perfctr_cstatus_nrctrs(cstatus);
-	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i)
-		wrmsr(MSR_P6_PERFCTR0+i, state->start.pmc[i], 0);
-	/* cpu->k1.id remains != state->k1.id */
-}
-#endif	/* PERFCTR_INTERRUPT_SUPPORT */
 
 /*
  * AMD K7 family (Athlon, Duron).
@@ -474,13 +480,54 @@ static void p6_iresume(const struct perfctr_cpu_state *state)
  * - The events appear to be completely symmetric.
  * - The EVNTSEL MSRs are symmetric since each has its own enable bit.
  * - Publicly available documentation is incomplete.
- * - pmc_map[] is required to be the identity function.
  */
 
 static int k7_check_control(struct perfctr_cpu_state *state)
 {
 	return p6_like_check_control(state, 1);
 }
+
+#if PERFCTR_INTERRUPT_SUPPORT
+/* PRE: perfctr_cstatus_has_ictrs(control->cstatus) != 0 */
+static void k7_isuspend(struct perfctr_cpu_state *state)
+{
+	struct per_cpu_cache *cpu;
+	unsigned int cstatus, nrctrs, i;
+
+	cpu = &per_cpu_cache[smp_processor_id()];
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
+		unsigned int pmc = state->control.pmc_map[i];
+		cpu->control.evntsel[pmc] = 0;
+		wrmsr(MSR_K7_EVNTSEL0+pmc, 0, 0);
+		rdpmcl(pmc, state->start.pmc[i]);
+	}
+	/* cpu->k1.id is still == state->k1.id */
+	set_isuspend_cpu(state, cpu);
+}
+
+/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
+static void k7_iresume(const struct perfctr_cpu_state *state)
+{
+	struct per_cpu_cache *cpu;
+	unsigned int cstatus, nrctrs, i;
+
+	cpu = &per_cpu_cache[smp_processor_id()];
+	if( cpu->k1.id == state->k1.id ) {
+		cpu->k1.id = 0; /* force reload of cleared EVNTSELs */
+		if( is_isuspend_cpu(state, cpu) )
+			return; /* skip reload of PERFCTRs */
+	}
+	cstatus = state->cstatus;
+	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
+		unsigned int pmc = state->control.pmc_map[i];
+		wrmsr(MSR_K7_PERFCTR0+pmc, state->start.pmc[i], -1);
+	}
+	/* cpu->k1.id remains != state->k1.id */
+}
+#endif	/* PERFCTR_INTERRUPT_SUPPORT */
 
 static void k7_write_control(const struct perfctr_cpu_state *state)
 {
@@ -495,9 +542,10 @@ static void k7_write_control(const struct perfctr_cpu_state *state)
 	nrctrs = perfctr_cstatus_nrctrs(state->cstatus);
 	for(i = 0; i < nrctrs; ++i) {
 		unsigned int evntsel = state->control.evntsel[i];
-		if( evntsel != cpu->control.evntsel[i] ) {
-			cpu->control.evntsel[i] = evntsel;
-			wrmsr(MSR_K7_EVNTSEL0+i, evntsel, 0);
+		unsigned int pmc = state->control.pmc_map[i];
+		if( evntsel != cpu->control.evntsel[pmc] ) {
+			cpu->control.evntsel[pmc] = evntsel;
+			wrmsr(MSR_K7_EVNTSEL0+pmc, evntsel, 0);
 		}
 	}
 	cpu->k1.id = state->k1.id;
@@ -508,59 +556,9 @@ static void k7_clear_counters(void)
 	clear_msr_range(MSR_K7_EVNTSEL0, 4+4);
 }
 
-#if PERFCTR_INTERRUPT_SUPPORT
-/* PRE: perfctr_cstatus_has_ictrs(control->cstatus) != 0 */
-static void k7_isuspend(struct perfctr_cpu_state *state)
-{
-	struct per_cpu_cache *cpu;
-	unsigned int cstatus, nrctrs, i;
-
-	cpu = &per_cpu_cache[smp_processor_id()];
-	cstatus = state->cstatus;
-	nrctrs = perfctr_cstatus_nrctrs(cstatus);
-	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
-		cpu->control.evntsel[i] = 0;
-		wrmsr(MSR_K7_EVNTSEL0+i, 0, 0);
-		rdpmcl(i, state->start.pmc[i]);
-	}
-	/* cpu->k1.id is still == state->k1.id */
-}
-
-/* PRE: perfctr_cstatus_has_ictrs(state->cstatus) != 0 */
-static void k7_iresume(const struct perfctr_cpu_state *state)
-{
-	struct per_cpu_cache *cpu;
-	unsigned int cstatus, nrctrs, nractrs, i;
-	int id_valid;
-
-	cpu = &per_cpu_cache[smp_processor_id()];
-	id_valid = 1;
-	cstatus = state->cstatus;
-	nrctrs = perfctr_cstatus_nrctrs(cstatus);
-	nractrs = perfctr_cstatus_nractrs(cstatus);
-	/* XXX: move k1.id test up here? */
-	for(i = nractrs; i < nrctrs; ++i) {
-		if( cpu->control.evntsel[i] ) {
-			cpu->control.evntsel[i] = 0;
-			wrmsr(MSR_K7_EVNTSEL0+i, 0, 0);
-			id_valid = 0;
-		}
-	}
-	if( !id_valid )
-		cpu->k1.id = 0;
-	else if( cpu->k1.id == state->k1.id ) {
-		cpu->k1.id = 0; /* see comment in p6_iresume() */
-		return;
-	}
-	for(i = nractrs; i < nrctrs; ++i)
-		wrmsr(MSR_K7_PERFCTR0+i, state->start.pmc[i], -1);
-	/* cpu->k1.id remains != state->k1.id */
-}
-#endif	/* PERFCTR_INTERRUPT_SUPPORT */
-
 /*
  * VIA C3 family.
- * - A Centaur design somewhat similar to the Intel P6.
+ * - A Centaur design somewhat similar to the P6/Celeron.
  * - PERFCTR0 is an alias for the TSC, and EVNTSEL0 is read-only.
  * - PERFCTR1 is 32 bits wide.
  * - EVNTSEL1 has no defined control fields, and there is no
@@ -569,8 +567,7 @@ static void k7_iresume(const struct perfctr_cpu_state *state)
  *   no function. We always fill them with zeroes.
  * - Only a few event codes are defined.
  * - No local APIC or interrupt-mode support.
- * - pmc_map[] is NOT the identity function: pmc_map[0] must be 1,
- *   if nractrs == 1.
+ * - pmc_map[0] must be 1, if nractrs == 1.
  */
 static int vc3_check_control(struct perfctr_cpu_state *state)
 {
@@ -581,24 +578,10 @@ static int vc3_check_control(struct perfctr_cpu_state *state)
 			return -EINVAL;
 		if( state->control.evntsel[0] & VC3_EVNTSEL1_RESERVED )
 			return -EPERM;
-	}
+		state->k1.id = state->control.evntsel[0];
+	} else
+		state->k1.id = 0;
 	return 0;
-}
-
-static void vc3_write_control(const struct perfctr_cpu_state *state)
-{
-	struct per_cpu_cache *cpu;
-	unsigned evntsel;
-
-	/* check if PERFCTR1 is enabled */
-	if( perfctr_cstatus_nractrs(state->cstatus) == 0 )
-		return;
-	cpu = &per_cpu_cache[smp_processor_id()];
-	evntsel = state->control.evntsel[0];
-	if( cpu->control.evntsel[0] != evntsel ) {
-		cpu->control.evntsel[0] = evntsel;
-		wrmsr(MSR_P6_EVNTSEL0+1, evntsel, 0);
-	}
 }
 
 /*
@@ -725,10 +708,9 @@ static int p4_check_control(struct perfctr_cpu_state *state)
 		escr_addr = p4_escr_addr(pmc, cccr_val);
 		if( !escr_addr )
 			return -EINVAL;		/* ESCR SELECT range error */
-		/* XXX: It's possible to have two CCCRs using the same ESCR.
-		   Is it worthwhile to check here that they use the same
-		   ESCR value? */
-		state->k2.p4_escr_map[i] = escr_addr;
+		/* XXX: Two counters could map to the same ESCR. Should we
+		   check that they use the same ESCR value? */
+		state->k2.p4_escr_map[i] = escr_addr - MSR_P4_ESCR0;
 	}
 	state->k1.id = new_id();
 	return 0;
@@ -740,42 +722,27 @@ static void p4_write_control(const struct perfctr_cpu_state *state)
 	unsigned int nrctrs, i;
 
 	cpu = &per_cpu_cache[smp_processor_id()];
-	if( cpu->k1.id == state->k1.id )
+	if( cpu->k1.id == state->k1.id ) {
+		debug_evntsel_cache(state, cpu);
 		return;
+	}
 	nrctrs = perfctr_cstatus_nrctrs(state->cstatus);
 	for(i = 0; i < nrctrs; ++i) {
-		unsigned int escr_val, cccr_val, pmc;
+		unsigned int escr_val, escr_off, cccr_val, pmc;
 		escr_val = state->control.evntsel_aux[i];
-		if( escr_val != cpu->control.evntsel_aux[i] ) {
-			cpu->control.evntsel_aux[i] = escr_val;
-			wrmsr(state->k2.p4_escr_map[i], escr_val, 0);
+		escr_off = state->k2.p4_escr_map[i];
+		if( escr_val != cpu->control.escr[escr_off] ) {
+			cpu->control.escr[escr_off] = escr_val;
+			wrmsr(MSR_P4_ESCR0+escr_off, escr_val, 0);
 		}
 		cccr_val = state->control.evntsel[i];
-		if( cccr_val != cpu->control.evntsel[i] ) {
-			pmc = state->control.pmc_map[i] & P4_MASK_FAST_RDPMC;
-			cpu->control.evntsel[i] = cccr_val;
+		pmc = state->control.pmc_map[i] & P4_MASK_FAST_RDPMC;
+		if( cccr_val != cpu->control.evntsel[pmc] ) {
+			cpu->control.evntsel[pmc] = cccr_val;
 			wrmsr(MSR_P4_CCCR0+pmc, cccr_val, 0);
 		}
 	}
 	cpu->k1.id = state->k1.id;
-}
-
-static void p4_read_counters(const struct perfctr_cpu_state *state,
-			     struct perfctr_low_ctrs *ctrs)
-{
-	unsigned int cstatus, nrctrs, i;
-
-	/* XXX: could be shared with P5 et al if we remove the
-	   prefetch in p5mmx_read_counters() */
-
-	cstatus = state->cstatus;
-	if( perfctr_cstatus_has_tsc(cstatus) )
-		rdtscl(ctrs->tsc);
-	nrctrs = perfctr_cstatus_nractrs(cstatus);
-	for(i = 0; i < nrctrs; ++i) {
-		unsigned int pmc = state->control.pmc_map[i];
-		rdpmcl(pmc, ctrs->pmc[i]);
-	}
 }
 
 static void p4_clear_counters(void)
@@ -947,7 +914,8 @@ static inline void setup_imode_start_values(struct perfctr_cpu_state *state)
 }
 
 static int (*check_control)(struct perfctr_cpu_state*);
-int perfctr_cpu_update_control(struct perfctr_cpu_state *state)
+int perfctr_cpu_update_control(struct perfctr_cpu_state *state,
+			       const struct perfctr_cpu_control *control)
 {
 	int err;
 
@@ -955,6 +923,8 @@ int perfctr_cpu_update_control(struct perfctr_cpu_state *state)
 	if( perfctr_cstatus_has_ictrs(state->cstatus) )
 	    perfctr_cpu_isuspend(state);
 #endif
+	clear_isuspend_cpu(state);
+	state->control = *control;
 	state->cstatus = 0;
 	if( !(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT) ) {
 		/* disallow i-mode counters if we cannot catch the interrupts */
@@ -1051,7 +1021,7 @@ static void __init finalise_backpatching(void)
 	perfctr_cpu_sample(&state);
 	perfctr_cpu_resume(&state);
 	perfctr_cpu_suspend(&state);
-	perfctr_cpu_update_control(&state);
+	perfctr_cpu_update_control(&state, &state.control);
 
 	redirect_call_disable = 1;
 }
@@ -1066,7 +1036,7 @@ static int __init intel_init(void)
 	case 5:
 		if( cpu_has_mmx ) {
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5MMX;
-			read_counters = p5mmx_read_counters;
+			read_counters = rdpmc_read_counters;
 		} else {
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5;
 			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
@@ -1084,7 +1054,7 @@ static int __init intel_init(void)
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
 		else
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
-		read_counters = p6_read_counters;
+		read_counters = rdpmc_read_counters;
 		write_control = p6_write_control;
 		check_control = p6_check_control;
 		clear_counters = p6_clear_counters;
@@ -1102,12 +1072,12 @@ static int __init intel_init(void)
 		if( !(misc_enable & MSR_P4_MISC_ENABLE_PERF_AVAIL) )
 			break;
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4;
-		read_counters = p4_read_counters;
+		read_counters = rdpmc_read_counters;
 		write_control = p4_write_control;
 		check_control = p4_check_control;
 		clear_counters = p4_clear_counters;
 		/* XXX: set up isuspend/iresume here later */
-		/* XXX: call perfctr_p4_init_tests() here later */
+		perfctr_p4_init_tests();
 		return 0;
 	}
 	return -ENODEV;
@@ -1122,7 +1092,7 @@ static int __init amd_init(void)
 		   AMD Document #22007 Revision J hints that APIC-less
 		   K7s signal overflows as debug interrupts. */
 		perfctr_info.cpu_type = PERFCTR_X86_AMD_K7;
-		read_counters = p6_read_counters;
+		read_counters = rdpmc_read_counters;
 		write_control = k7_write_control;
 		check_control = k7_check_control;
 		clear_counters = k7_clear_counters;
@@ -1146,7 +1116,7 @@ static int __init cyrix_init(void)
 	switch( boot_cpu_data.x86 ) {
 	case 6:	/* 6x86MX, MII, or III */
 		perfctr_info.cpu_type = PERFCTR_X86_CYRIX_MII;
-		read_counters = p5mmx_read_counters;
+		read_counters = rdpmc_read_counters;
 		write_control = p5_write_control;
 		check_control = mii_check_control;
 		clear_counters = p5_clear_counters;
@@ -1178,7 +1148,7 @@ static int __init centaur_init(void)
 		if( !(read_cr4() & X86_CR4_TSD) || cpu_has_tsc )
 			return -ENODEV;
 		perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDTSC;
-		read_counters = p5mmx_read_counters;
+		read_counters = rdpmc_read_counters;
 		write_control = c6_write_control;
 		check_control = c6_check_control;
 		clear_counters = p5_clear_counters;
@@ -1196,8 +1166,8 @@ static int __init centaur_init(void)
 			return -ENODEV;
 		}
 		perfctr_info.cpu_type = PERFCTR_X86_VIA_C3;
-		read_counters = p5mmx_read_counters;
-		write_control = vc3_write_control;
+		read_counters = rdpmc_read_counters;
+		write_control = p6_write_control;
 		check_control = vc3_check_control;
 		clear_counters = generic_clear_counters;
 		perfctr_vc3_init_tests();
@@ -1216,6 +1186,7 @@ static int __init generic_init(void)
 	write_control = generic_write_control;
 	read_counters = generic_read_counters;
 	clear_counters = generic_clear_counters;
+	perfctr_generic_init_tests();
 	return 0;
 }
 

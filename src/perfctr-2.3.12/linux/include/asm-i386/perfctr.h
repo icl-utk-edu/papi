@@ -35,8 +35,9 @@ struct perfctr_cpu_state {
 	struct perfctr_sum_ctrs sum;
 	struct perfctr_low_ctrs start;
 	struct perfctr_cpu_control control;
-	union {
+	struct {
 		unsigned int p4_escr_map[18];
+		void *isuspend_cpu;
 	} k2;
 };
 
@@ -114,7 +115,8 @@ extern void perfctr_cpu_release(const char *service);
 /* Check that the new control data is valid.
    Update the driver's private control data.
    Returns a negative error code if the control data is invalid. */
-extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state);
+extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state,
+				      const struct perfctr_cpu_control *control);
 
 /* Read a-mode counters. Subtract from start and accumulate into sums. */
 extern void perfctr_cpu_suspend(struct perfctr_cpu_state *state);

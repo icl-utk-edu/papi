@@ -24,7 +24,7 @@ struct perfctr_info info;
 #define have_rdtsc (info.cpu_features & PERFCTR_FEATURE_RDTSC)
 struct gperfctr_control *control;
 struct gperfctr_state *state;
-unsigned long sampling_interval = 1000000;
+unsigned long sampling_interval = 1000000; /* XXX: reduce for >4GHz CPUs */
 unsigned int sleep_interval = 5;
 unsigned int sample_num = 0;
 struct gperfctr_state *prev_state;
@@ -102,18 +102,18 @@ int do_read(void)
 	    printf("\tpmc[%d]\t%lld\n",
 		   ctr, state->cpu_state[cpu].sum.pmc[ctr]);
 	if( ctr == 1 ) {	/* compute and display MFLOP/s or MIP/s */
-	    unsigned int tsc = state->cpu_state[cpu].sum.tsc;
-	    unsigned int prev_tsc = prev_state->cpu_state[cpu].sum.tsc;
-	    unsigned int ticks = tsc - prev_tsc;
-	    unsigned int pmc0 = state->cpu_state[cpu].sum.pmc[0];
-	    unsigned int prev_pmc0 = prev_state->cpu_state[cpu].sum.pmc[0];
-	    unsigned int ops = pmc0 - prev_pmc0;
+	    unsigned long long tsc = state->cpu_state[cpu].sum.tsc;
+	    unsigned long long prev_tsc = prev_state->cpu_state[cpu].sum.tsc;
+	    unsigned long long ticks = tsc - prev_tsc;
+	    unsigned long long pmc0 = state->cpu_state[cpu].sum.pmc[0];
+	    unsigned long long prev_pmc0 = prev_state->cpu_state[cpu].sum.pmc[0];
+	    unsigned long long ops = pmc0 - prev_pmc0;
 	    double seconds = have_rdtsc
 		? ((double)ticks / (double)info.cpu_khz) / 1000.0
 		: (double)sleep_interval; /* don't div-by-0 on WinChip ... */
 	    printf("\tSince previous sample:\n");
 	    printf("\tSECONDS\t%.15g\n", seconds);
-	    printf("\t%s\t%u\n", counting_mips ? "INSNS" : "FLOPS", ops);
+	    printf("\t%s\t%llu\n", counting_mips ? "INSNS" : "FLOPS", ops);
 	    printf("\t%s/s\t%.15g\n",
 		   counting_mips ? "MIP" : "MFLOP",
 		   ((double)ops / seconds) / 1e6);
@@ -126,56 +126,83 @@ int do_read(void)
 
 void setup_control(struct perfctr_cpu_control *control)
 {
-    unsigned evntsel0;
+    unsigned int tsc_on = 1;
+    unsigned int nractrs = 1;
+    unsigned int pmc_map0 = 0;
+    unsigned int evntsel0 = 0;
+    unsigned int evntsel_aux0 = 0;
 
-    control->tsc_on = 1;
+    /* Attempt to set up control to count clocks via the TSC
+       and FLOPS via PMC0. */
     switch( info.cpu_type ) {
       case PERFCTR_X86_GENERIC:
-	return;
+	nractrs = 0;		/* no PMCs available */
+	break;
       case PERFCTR_X86_INTEL_P5:
       case PERFCTR_X86_INTEL_P5MMX:
       case PERFCTR_X86_CYRIX_MII:
-	/* FLOPS, any CPL */
+	/* event 0x22 (FLOPS), any CPL */
 	evntsel0 = 0x22 | (3 << 6);
 	break;
       case PERFCTR_X86_INTEL_P6:
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
-	/* FLOPS, any CPL, ENable */
+	/* note: FLOPS is only available in PERFCTR0 */
+	/* event 0xC1 (FLOPS), any CPL, Enable */
 	evntsel0 = 0xC1 | (3 << 16) | (1 << 22);
 	break;
       case PERFCTR_X86_AMD_K7:
-	/* "AMD Athlon Processor x86 Code Optimization Guide, Rev. H".
-	   doesn't list any event for FLOPS. Amazing. */
+	/* K7 apparently can't count FLOPS. */
 	counting_mips = 1;
-	/* RETIRED_INSTRUCTIONS, any CPL, ENable */	
+	/* event 0xC0 (RETIRED_INSTRUCTIONS), any CPL, Enable */
 	evntsel0 = 0xC0 | (3 << 16) | (1 << 22);
 	break;
       case PERFCTR_X86_WINCHIP_C6:
-	/* Can't count FLOPS :-( */
-	counting_mips = 1;
-	evntsel0 = 0x02;		/* X86_INSTRUCTIONS */
+	counting_mips = 1;	/* can't count FLOPS */
+	tsc_on = 0;		/* no working TSC available */
+	evntsel0 = 0x02;	/* X86_INSTRUCTIONS */
 	break;
       case PERFCTR_X86_WINCHIP_2:
-	/* Can't count FLOPS :-( */
-	counting_mips = 1;
-	evntsel0 = 0x16;		/* INSTRUCTIONS_EXECUTED */
+	counting_mips = 1;	/* can't count FLOPS */
+	tsc_on = 0;		/* no working TSC available */
+	evntsel0 = 0x16;	/* INSTRUCTIONS_EXECUTED */
 	break;
       case PERFCTR_X86_VIA_C3:
-	/* Can't count FLOPS :-( */
+	counting_mips = 1;	/* can't count FLOPS */
+	pmc_map0 = 1;		/* redirect PMC0 to PERFCTR1 */
+	evntsel0 = 0xC0;	/* INSTRUCTIONS_EXECUTED */
+	break;
+      case PERFCTR_X86_INTEL_P4:
+	/* XXX: FLOPS requires tagging and an upstream ESCR.
+	   For now, count MIPS instead. */
 	counting_mips = 1;
-	evntsel0 = 0xC0;		/* INSTRUCTIONS_EXECUTED */
+	pmc_map0 = 0x0C | (1 << 31);
+	evntsel0 = (0x3 << 16) | (4 << 13) | (1 << 12);
+	evntsel_aux0 = (2 << 25) | (1 << 9) | (1 << 2);
 	break;
       default:
 	fprintf(stderr, "cpu_type %u (%s) not supported\n",
 		info.cpu_type, perfctr_cpu_name(&info));
 	exit(1);
     }
-    control->nractrs = 1;
+    control->tsc_on = tsc_on;
+    control->nractrs = nractrs;
+    control->pmc_map[0] = pmc_map0;
     control->evntsel[0] = evntsel0;
-    /* XXX: pmc_map[] fixup here */
+    control->evntsel_aux[0] = evntsel_aux0;
+
     printf("\nControl used:\n");
-    printf("\tevntsel[%u]\t0x%08X\n", 0, control->evntsel[0]);
+    printf("tsc_on\t\t\t%u\n", tsc_on);
+    printf("nractrs\t\t\t%u\n", nractrs);
+    if( nractrs ) {
+	if( pmc_map0 >= 18 )
+	    printf("pmc_map[0]\t\t0x%08X\n", pmc_map0);
+	else
+	    printf("pmc_map[0]\t\t%u\n", pmc_map0);
+	printf("evntsel[0]\t\t0x%08X\n", evntsel0);
+	if( evntsel_aux0 )
+	    printf("evntsel_aux[0]\t\t0x%08X\n", evntsel_aux0);
+    }
 }
 
 void do_enable(unsigned long sampling_interval)
