@@ -1,6 +1,10 @@
-The new PAPI substrate for Alpha Tru64 Unix uses the Dynamic Access to
-DCPI Data (DADD) API from Hewlett-Packard (formerly Compaq).  DADD is assumed
-to be installed in /usr/local/dadd.  Because DCPI uses instruction sampling
-to collect performance data, the counts for PAPI events are estimated from
+DCPI Data (DADD) API from Hewlett-Packard (formerly Compaq).
+DADD is assumed to be installed in
+  /usr/lib/dcpi  (dadd.a)
+  /usr/include/dcpi (dadd.h, virtual_counters.h)
+  /usr/local/dadd  (dcpid)
+
+Because DCPI uses instruction sampling to collect performance data,
+the DADD counts for PAPI events are estimated from
 these samples.  For this reason, very short running programs instrumented
-with PAPI may show undercounts as low as zero.  
+with PAPI may show undercounts as low as zero.
