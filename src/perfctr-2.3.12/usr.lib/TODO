@@ -1,0 +1,4 @@
+- Implement gethrvtime(). Don't ever STOP the counters. To stop PMC
+  updates, call CONTROL with tsc_on == 1 and nractrs == nrictrs == 0.
+  The driver will continue sampling the TSC. Then gethrvtime() reduces
+  to scaling the virtualised TSC with cpu_khz.

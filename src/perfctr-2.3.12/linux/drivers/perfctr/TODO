@@ -1,0 +1,28 @@
+$Id$
+
+- Add buffering to i-mode vperfctrs.
+
+- Add interrupt support to global-mode perfctrs.
+
+- On 2.4 make /proc/self/perfctr a symlink to "perfctr:[XXXX]"
+  so that the open file descriptor can be identified as a perfctr
+  object.
+
+- Put 2.4 and 2.2 VFS code in separate files, at least for virtual.
+
+- Use the "rewrite function call sites" trick to get rid of the
+  process scheduling callback function pointers.
+  (Only relevant when the driver is a module.)
+
+- Global-mode perfctrs need some form of access control mechanism.
+
+- Implement perfctr multiplexing.
+  Use a timer to cycle through a <control,counter> array.
+
+- Add support for other architectures.
+  Start with the relatively straightforward UltraSPARC.
+
+- Add Documentation/perfctr/ ?
+
+- Pentium MMX and Pentium Pro have errata which affect SMM and CR4.
+  Will this hit us, or is it a problem for the BIOS to solve?

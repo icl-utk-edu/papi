@@ -1,0 +1,14 @@
+[data from a 500MHz Athlon]
+
+PERFCTR INIT: vendor 2, family 6, model 1
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: rdpmc ticks == 930
+PERFCTR INIT: rdmsr (counter) ticks == 3401
+PERFCTR INIT: rdmsr (evntsel) ticks == 3454
+PERFCTR INIT: wrmsr (counter) ticks == 5197
+PERFCTR INIT: wrmsr (evntsel) ticks == 14915
+PERFCTR INIT: loop overhead ticks == 98
+PERFCTR INIT: Athlon test0 == 0 (ok)
+PERFCTR INIT: Athlon test1 == 43 (ok)
+PERFCTR INIT: Athlon test2 == 43 (EvntSel0 does not override)
+PERFCTR INIT: Athlon test3 == 0 (ok) 

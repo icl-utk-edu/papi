@@ -1,0 +1,12 @@
+[data from a 450MHz Pentium III (Katmai)]
+
+PERFCTR INIT: vendor 0, family 6, model 7
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: rdpmc ticks == 2277
+PERFCTR INIT: rdmsr (counter) ticks == 5237
+PERFCTR INIT: rdmsr (evntsel) ticks == 4499
+PERFCTR INIT: wrmsr (counter) ticks == 7432
+PERFCTR INIT: wrmsr (evntsel) ticks == 6818
+PERFCTR INIT: read %cr4 ticks == 215
+PERFCTR INIT: write %cr4 ticks == 2793
+PERFCTR INIT: loop overhead ticks == 88
