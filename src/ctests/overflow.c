@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-#if defined(sun) && defined(sparc)
+#if (defined(sun) && defined(sparc)) || (defined(mips) && defined(sgi) && defined(unix))
   /* query and set up the right instruction to monitor */
   if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) PAPI_event = PAPI_TOT_INS;
   else     test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!",0);

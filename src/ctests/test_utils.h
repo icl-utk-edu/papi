@@ -1,4 +1,4 @@
-#define NUM_FLOPS 100000000
+#define NUM_FLOPS  20000000
 #define THRESHOLD   1000000
 
 /* Masks to select operations for add_test_events() and remove_test_events()

@@ -165,10 +165,11 @@ void papimon_start(void)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       }
 #elif defined(mips) && defined(sgi) && defined(unix)
-      native = 0 | 0x9 << 8 | 0; /* L1 I Miss */
+      /* See man r10k_counters */
+      native = 9; /* L1 I Miss */
       if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-      native = 0 | 0x9 << 8 | 1; /* L1 D Miss */
+      native = 25; /* L1 D Miss */
       if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(_CRAYT3E)

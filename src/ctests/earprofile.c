@@ -10,7 +10,11 @@
 #define NUM 1000000
 #define THR 200
 
-int *array;
+#include "papi_test.h"
+
+extern int TESTS_QUIET; /* Declared in test_utils.c */
+
+volatile int *array;
 
 int do_test(unsigned long loop)
 {
@@ -24,27 +28,6 @@ int do_test(unsigned long loop)
     }
     return sum;
 }
-
-/* This file performs the following test: profiling and program info option call
-
-   - This tests the SVR4 profiling interface of PAPI. These are counted 
-   in the default counting domain and default granularity, depending on 
-   the platform. Usually this is the user domain (PAPI_DOM_USER) and 
-   thread context (PAPI_GRN_THR).
-
-     The Eventset contains:
-     + PAPI_FP_INS (to profile)
-     + PAPI_TOT_CYC
-
-   - Set up profile
-   - Start eventset 1
-   - Do flops
-   - Stop eventset 1
-*/
-
-#include "papi_test.h"
-
-extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
 {

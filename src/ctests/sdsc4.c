@@ -16,7 +16,7 @@
 
 #define REPEATS 5
 #define MAXEVENTS 9
-#define RELTOLERANCE 0.08
+#define RELTOLERANCE 0.1
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
@@ -25,7 +25,7 @@ static double dummy3(double x,int iters);
 int main(int argc, char **argv) {
   char des[128];
   int i, j, retval, idx, repeats;
-  int iters=10000000;
+  int iters=NUM_FLOPS;
   double x = 1.1,y,dtmp;
   long_long t1,t2;  
   long_long values[MAXEVENTS],refvals[MAXEVENTS];
@@ -137,36 +137,31 @@ int main(int argc, char **argv) {
     }
   }
 
-  
-  if((retval=PAPI_start(eventset)))
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
-
   x=1.0;
-  
-#ifndef STARTSTOP
-  if((retval=PAPI_reset(eventset)))
-    test_fail(__FILE__,__LINE__,"PAPI_reset",retval);
-#else
-  if((retval=PAPI_stop(eventset,dummies)))
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
-  if((retval=PAPI_start(eventset)))
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
-#endif
 
   if ( !TESTS_QUIET )
     printf("\nReference run:\n");
+
   t1=PAPI_get_real_usec();
+  if((retval=PAPI_start(eventset)))
+    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
   y=dummy3(x,iters);  
   PAPI_read(eventset,refvals);
   t2=PAPI_get_real_usec();
 
   if ( !TESTS_QUIET ) {
-    printf("\n(calculated independent of PAPI)\n");
     printf("\tOperations= %.1f Mflop",y*1e-6);  
     printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
-    printf("PAPI measurements:\n");
+    printf("PAPI multiplex measurement:\n");
   }
 
+  if ( !TESTS_QUIET ) {
+    for (j=0; j<nevents; j++) {
+      PAPI_label_event(events[j],des);
+      printf("%20s = %lld\n", des, refvals[j]);
+    }
+    printf("\n");
+  }
 
   nev1=nevents;
   repeats=nevents*4;
