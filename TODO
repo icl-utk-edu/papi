@@ -5,13 +5,7 @@ To Do List for PAPI Documentation
 
 - Make PAPI_native man page that shows how to encode native events on all supported platforms
 
-- Make PAPI_multiplex_init man page
-
-- Make PAPI_set_opt man page for multiplexing
-
-- Make PAPI_get_overflow_address, PAPI_lock, PAPI_unlock man pages
-
-- Make PAPI_set_debug, PAPI_write man pages
+- Make PAPI_get_overflow_address man page
 
 Comments: Man pages should use the PAPI_query_event page as a template for full markup.
 
