@@ -1,3 +1,4 @@
+Make sure you're /usr/src/linux points to the source tree.
 
 The PAPI linux-alpha substrate uses the linux iprobe_4.3 driver and library
 from Compaq (now HP). This needs to be patched, because not all of
