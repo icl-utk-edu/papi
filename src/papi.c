@@ -1662,3 +1662,91 @@ int PAPI_is_initialized(void)
    return (init_level);
 }
 
+/* This function maps the overflow_vector to event indexes in the event
+   set, so that user can know which PAPI event overflowed.
+   int *array---- an array of event indexes in eventset; the first index
+                  maps to the highest set bit in overflow_vector
+   int *number--- number of indexes in *array 
+*/
+int PAPI_get_overflow_event_index(int EventSet, long long overflow_vector, int *array, int *number)
+{
+   EventSetInfo_t *ESI;
+   int event_counter, set_bit, papi_index, j, pos;
+   int count=0, k;
+
+   ESI = _papi_hwi_lookup_EventSet(EventSet);
+   if (ESI == NULL)
+      papi_return(PAPI_ENOEVST);
+/*
+   thread = _papi_hwi_lookup_in_thread_list();
+   if (thread == NULL ) 
+      return(PAPI_ENOEVST); 
+
+   ESI = thread->event_set_overflowing;
+   if (ESI == NULL) 
+      return(PAPI_ENOEVST);
+*/
+   /* in case the user didn't call PAPI_overflow or stopped
+      overflowing */ 
+   *number = 0;
+   if ((ESI->state & PAPI_OVERFLOWING) == 0)
+   { 
+      while ( overflow_vector ) 
+      {
+         set_bit = ffsll(overflow_vector) -1;
+         for(j=0; j< ESI->NumberOfEvents; j++ )
+         {
+            for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) 
+            {
+               pos = ESI->EventInfoArray[j].pos[k];
+               if ((set_bit == pos) && (ESI->EventInfoArray[j].derived==0) ) 
+               { 
+                  array[count++]= j;
+                  break;
+               }
+            }
+         }
+         overflow_vector ^= (long long)1 << set_bit;
+      }
+      *number= count;
+      if (*number == 0) return(PAPI_EINVAL);
+      return(PAPI_OK);
+   } else { 
+   /* in case the user doesn't stop overflowing */
+      event_counter = ESI->overflow.event_counter; 
+      if (event_counter <1 ) return(PAPI_EBUG);
+      *number = 0 ;
+      if (event_counter == 1) 
+      { 
+         /* since only one event was set to be overflow monitor,
+            we can simply get the event index from the overflow struct 
+          */
+         papi_index = ESI->overflow.EventIndex[0];
+         array[0]= papi_index;
+         *number =1;
+      } else {
+         while ( overflow_vector ) 
+         {
+            set_bit = ffsll(overflow_vector) -1;
+            for(j=0; j< event_counter; j++ )
+            {
+               papi_index = ESI->overflow.EventIndex[j];
+               for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) 
+               {
+                  pos = ESI->EventInfoArray[papi_index].pos[k];
+                  if (set_bit == pos) 
+                  { 
+                     array[count]= papi_index;
+                     break;
+                  }
+               }
+            }
+            count++;
+            overflow_vector ^= (long long)1 << set_bit;
+         }
+         *number= count;
+      }
+      if (*number == 0) return(PAPI_EINVAL);
+      return(PAPI_OK);
+   }
+}

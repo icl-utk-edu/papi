@@ -543,6 +543,7 @@ read the documentation carefully.  */
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
    int   PAPI_get_thr_specific(int tag, void **ptr);
+   int PAPI_get_overflow_event_index(int Eventset, long long overflow_vector, int *array, int *number);
    long_long PAPI_get_virt_cyc(void);
    long_long PAPI_get_virt_usec(void);
    int   PAPI_is_initialized(void);
@@ -555,8 +556,7 @@ read the documentation carefully.  */
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
    int   PAPI_perror(int code, char *destination, int length);
-   int   PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
-                   unsigned scale, int EventSet, int EventCode, int threshold, int flags);
+   int   PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags);
    int   PAPI_query_event(int EventCode);
    int   PAPI_read(int EventSet, long_long * values);
    int   PAPI_register_thread(void);
@@ -570,8 +570,7 @@ read the documentation carefully.  */
    int   PAPI_set_opt(int option, PAPI_option_t * ptr);
    int   PAPI_set_thr_specific(int tag, void *ptr);
    void  PAPI_shutdown(void);
-   int   PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode,
-                    int threshold, int flags);
+   int   PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags);
    int   PAPI_start(int EventSet);
    int   PAPI_state(int EventSet, int *status);
    int   PAPI_stop(int EventSet, long_long * values);

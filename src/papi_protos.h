@@ -69,6 +69,7 @@ extern int _papi_hwi_initialize(DynamicArray_t **);
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
 */
 extern void _papi_hwi_dispatch_overflow_signal(void *context, int, long_long, int);
+extern int _papi_hwi_ffsll(long_long lli);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
