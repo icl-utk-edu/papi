@@ -58,11 +58,11 @@
      &         'PAPIf_set_debug', retval)
          end if
       end if
-        call PAPIf_query_event(PAPI_FP_INS, retval)
+        call PAPIf_query_event(PAPI_TOT_INS, retval)
         if (retval .NE. PAPI_OK) then
         event = PAPI_TOT_CYC 
         else
-        event = PAPI_FP_INS 
+        event = PAPI_TOT_INS 
         end if
       end
 
