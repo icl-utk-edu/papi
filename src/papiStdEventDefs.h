@@ -116,3 +116,4 @@ platform's documentation carefully.
 #define PAPI_FDV_INS 0x80000065 /*FD ins */
 #define PAPI_FSQ_INS 0x80000066 /*FSq ins */
 #define PAPI_FNV_INS 0x80000067 /*Finv ins */
+#define PAPI_NATIVE  0x8fffffff /*Native event placeholder */

@@ -13,19 +13,37 @@ vendors did in the kernel extensions or performance libraries. */
 /* It also contains a new section at the end with Windows routines
  to emulate standard stuff found in Unix/Linux, but not Windows. */
 
+#include "papi.h"
+
 #ifndef _WIN32
   #include SUBSTRATE
 #else
   #include "win32.h"
-//  #include <winbase.h>
 #endif
 
-#ifdef __LINUX__
-#include <limits.h>
-#endif
+#include "papi_internal.h"
 
+#include "papi_protos.h"
 
-static unsigned int rnum = 0xdeadbeef;
+/*******************/
+/* BEGIN EXTERNALS */
+/*******************/
+
+extern papi_mdi_t _papi_hwi_system_info;
+
+/*****************/
+/* END EXTERNALS */
+/*****************/
+
+/****************/
+/* BEGIN LOCALS */
+/****************/
+
+static unsigned int rnum = DEADBEEF;
+
+/**************/
+/* END LOCALS */
+/**************/
 
 static unsigned short random_ushort(void)
 {
@@ -88,7 +106,7 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
   DBG((stderr,"posix_profile() bucket %lu = %u\n",address,buf[address]));
 }
 
-static void dispatch_profile(EventSetInfo *ESI, void *context,
+static void dispatch_profile(EventSetInfo_t *ESI, void *context,
 			     long_long over, long_long threshold)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
@@ -132,90 +150,22 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }
 
-typedef struct _thread_list {
-  EventSetInfo *master;
-  struct _thread_list *next; 
-} EventSetInfoList;
-
-static EventSetInfoList *head = NULL;
-extern unsigned long int (*thread_id_fn)(void);
-
-void _papi_hwi_cleanup_master_list(void)
-{
-  EventSetInfoList *tmp;
-
-  _papi_hwd_lock();
-  while (head)
-    {
-      tmp = head;
-      head = head->next;
-      _papi_hwd_shutdown(tmp->master);
-      DBG((stderr,"Freeing master thread %ld at %p\n",tmp->master->tid,tmp));
-      free(tmp);
-    }
-  _papi_hwd_unlock();
-}
-
-int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)
-{
-  EventSetInfoList *entry = (EventSetInfoList *)malloc(sizeof(EventSetInfoList));
-  if (entry == NULL)
-    return(PAPI_ENOMEM);
-  DBG((stderr,"(%p): New entry is at %p\n",ptr,entry));
-  entry->master = ptr;
-
-  _papi_hwd_lock();
-  entry->next = head;
-  DBG((stderr,"(%p): Old head is at %p\n",ptr,entry->next));
-  head = entry;
-  DBG((stderr,"(%p): New head is at %p\n",ptr,head));
-  _papi_hwd_unlock();
-  
-  return(PAPI_OK);
-}
-
-EventSetInfo *_papi_hwi_lookup_in_master_list(void)
-{
-  extern EventSetInfo *default_master_eventset;
-  if (thread_id_fn == NULL)
-    return(default_master_eventset);
-  else
-    {
-      unsigned long int id_to_find = (*thread_id_fn)();
-      EventSetInfoList *tmp;
-
-      _papi_hwd_lock();
-      tmp = head;
-      while (tmp != NULL)
-	{
-	  if (tmp->master->tid == id_to_find)
-	    {
-	      _papi_hwd_unlock();
-	      return(tmp->master);
-	    }
-	  tmp = tmp->next;
-	}
-      DBG((stderr,"New thread %lu found, but not initialized.\n",id_to_find));
-      _papi_hwd_unlock();
-      return(NULL);
-    }
-}
-
 void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval;
   long_long latest;
-  EventSetInfo *master_event_set;
-  EventSetInfo *ESI;
+  ThreadInfo_t *thread;
+  EventSetInfo_t *ESI;
 
   DBG((stderr,"BEGIN\n"));
-  master_event_set = _papi_hwi_lookup_in_master_list();
-  if (master_event_set == NULL)
+  thread = _papi_hwi_lookup_in_thread_list();
+  if (thread == NULL)
     return;
-  ESI = master_event_set->event_set_overflowing;
+
+  ESI = thread->event_set_overflowing;
   if (ESI == NULL)
     {
-      DBG((stderr,"New thread %lu initialized, but not overflowing.\n",(*thread_id_fn)()));
+      DBG((stderr,"New thread %lu initialized, but not overflowing.\n",(*_papi_hwi_thread_id_fn)()));
       return;
     }
 
@@ -224,7 +174,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 
   /* Get the latest counter value */
 
-  retval = _papi_hwd_read(ESI, master_event_set, ESI->sw_stop); 
+  retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
   if (retval < PAPI_OK)
     return;
 
@@ -235,7 +185,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 
   /* Is it bigger than the deadline? */
 
-  if ((_papi_system_info.supports_hw_overflow) || (latest > ESI->overflow.deadline))
+  if ((_papi_hwi_system_info.supports_hw_overflow) || (latest > ESI->overflow.deadline))
     {
       ESI->overflow.count++;
       if (ESI->state & PAPI_PROFILING)
@@ -251,23 +201,17 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 #ifdef _WIN32
 
 static MMRESULT	wTimerID;	// unique ID for referencing this timer
-static UINT		wTimerRes;	// resolution for this timer
 
 static int start_timer(int milliseconds)
 {
   int retval = PAPI_OK;
 
   TIMECAPS	tc;
-  DWORD		threadID;
+  UINT		wTimerRes;
 
   // get the timer resolution capability on this system
   if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) return(PAPI_ESYS);
   
-  // get the ID of the current thread to read the context later
-  // NOTE: Use of this code is restricted to W2000 and later...
-  threadID = GetCurrentThreadId();
-
-  // set the minimum usable resolution of the timer
   wTimerRes = min(max(tc.wPeriodMin, 1), tc.wPeriodMax);
   timeBeginPeriod(wTimerRes);
   
@@ -276,7 +220,7 @@ static int start_timer(int milliseconds)
   //	and calling (_papi_hwd_timer_callback())
   //	with no data
   wTimerID = timeSetEvent(milliseconds, wTimerRes, 
-		_papi_hwd_timer_callback, threadID, TIME_PERIODIC);
+		_papi_hwd_timer_callback, (DWORD)NULL, TIME_PERIODIC);
   if(!wTimerID) return PAPI_ESYS;
 
   return(retval);
@@ -284,11 +228,8 @@ static int start_timer(int milliseconds)
 
 static int stop_timer(void)
 {
-  int retval = PAPI_OK;
-
-  if (timeKillEvent(wTimerID) != TIMERR_NOERROR) retval = PAPI_ESYS;
-  timeEndPeriod(wTimerRes);
-  return(retval);
+  if (timeKillEvent(wTimerID) != TIMERR_NOERROR) return(PAPI_ESYS);
+  return(PAPI_OK);
 }
 
 #else
@@ -328,7 +269,6 @@ static int start_timer(int milliseconds)
 #elif defined(__ALPHA) && defined(__osf__)
   action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
-
 
   if (sigaction(PAPI_SIGNAL, &action, &oaction) < 0)
     return(PAPI_ESYS);
@@ -382,23 +322,23 @@ static int stop_timer(void)
 
 #endif /* _WIN32 */
 
-int _papi_hwi_start_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwi_start_overflow_timer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
 {
   int retval = PAPI_OK;
 
-  master->event_set_overflowing = ESI;
-  if (_papi_system_info.supports_hw_overflow == 0)
+  thread->event_set_overflowing = ESI;
+  if (_papi_hwi_system_info.supports_hw_overflow == 0)
     retval = start_timer(ESI->overflow.timer_ms);
   return(retval);
 }
 
-int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwi_stop_overflow_timer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
 {
   int retval = PAPI_OK;
 
-  if (_papi_system_info.supports_hw_overflow == 0)
+  if (_papi_hwi_system_info.supports_hw_overflow == 0)
     retval = stop_timer();
-  master->event_set_overflowing = NULL;
+  thread->event_set_overflowing = NULL;
   return(retval);
 }
 

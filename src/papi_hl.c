@@ -14,11 +14,17 @@
 /* This file contains the 'high level' interface to PAPI. 
    BASIC is a high level language. ;-) */
 
+#include "papi.h"
+
 #ifndef _WIN32
   #include SUBSTRATE
 #else
   #include "win32.h"
 #endif
+
+#include "papi_internal.h"
+
+#include "papi_protos.h"
 
 /* high level papi functions*/
 
@@ -85,13 +91,13 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
         } 
 	mhz = hwinfo->mhz;
 	PAPI_create_eventset( &EventSet );
-	retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+	retval = PAPI_add_event(EventSet, PAPI_FP_INS);
 	PAPI_perror( retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
 	     return retval;
 	}
-	retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+	retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
 	PAPI_perror(retval, buf, 500);
 	if ( retval < PAPI_OK ) {
 	     PAPI_shutdown();
@@ -198,12 +204,9 @@ int PAPI_start_counters(int *events, int array_len)
       if (retval)
 	return(retval); */
 
-      retval = PAPI_add_event(&PAPI_EVENTSET_INUSE,events[i]);
-      if (retval) {
-	/* remove any prior events that may have been added */
-        PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE);
+      retval = PAPI_add_event(PAPI_EVENTSET_INUSE,events[i]);
+      if (retval)
 	return(retval);
-      }
     }
 
   /* start the EventSet*/
@@ -276,9 +279,9 @@ int PAPI_stop_counters(long_long *values, int array_len)
     return(PAPI_EINVAL);
 
   retval = PAPI_stop(PAPI_EVENTSET_INUSE, values);
-  if (!retval) 
-    retval = PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE);
-  DBG((stderr,"PAPI_stop_counters returns %d\n",retval));
-  return (retval);
+  if (retval) 
+    return(retval);
+
+  return(PAPI_cleanup_eventset(PAPI_EVENTSET_INUSE));
 }
 

@@ -55,11 +55,17 @@
 #include <pthread.h>
 #endif
 
+#include "papi.h"
+
 #ifndef _WIN32
   #include SUBSTRATE
 #else
   #include "win32.h"
 #endif
+
+#include "papi_internal.h"
+
+#include "papi_protos.h"
 
 /* Globals for this file. */
 
@@ -238,10 +244,10 @@ static MasterEvent *get_my_threads_master_event_list(void)
   Threadlist *t = tlist;
   unsigned long tid;
 
-  if (thread_id_fn == NULL)
+  if (_papi_hwi_thread_id_fn == NULL)
     return(tlist->head);
 
-  tid = thread_id_fn();
+  tid = _papi_hwi_thread_id_fn();
 
   while (t)
     {
@@ -297,12 +303,12 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
        * field with the thread_id otherwise
        * use getpid() as a placeholder. */
 
-      if (thread_id_fn)
+      if (_papi_hwi_thread_id_fn)
 	{
 #ifdef MPX_DEBUG
-	  fprintf(stderr,"New thread %lu at %p\n",thread_id_fn(),t);
+	  fprintf(stderr,"New thread %lu at %p\n",_papi_hwi_thread_id_fn(),t);
 #endif
-	  t->pid = thread_id_fn();
+	  t->pid = _papi_hwi_thread_id_fn();
 	}
       else 
 	{
@@ -323,13 +329,13 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 #endif
       alloced_thread = 1;
     }
-  else if (thread_id_fn)
+  else if (_papi_hwi_thread_id_fn)
     {
 
       /* If we are threaded, AND there exists threads in the list, 
        *  then try to find our thread in the list. */
 
-      unsigned long tid = thread_id_fn();
+      unsigned long tid = _papi_hwi_thread_id_fn();
 
       while (t)
 	{
@@ -433,8 +439,8 @@ static void mpx_handler(int signal)
 	signal = signal;	/* unused */
 
 #ifdef MPX_DEBUG
-	if (thread_id_fn)
-	  fprintf(stderr,"%lu\n",thread_id_fn());
+	if (_papi_hwi_thread_id_fn)
+	  fprintf(stderr,"THREAD %lu\n",_papi_hwi_thread_id_fn());
 #endif
 
 	/* This handler can be invoked either when a timer expires
@@ -1269,14 +1275,14 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 			    fprintf(stderr,"Event %d could not be counted.\n",event_list[i]);
 #endif
 			  bail:
-			    PAPI_cleanup_eventset(&(mev->papi_event));
+			    PAPI_cleanup_eventset(mev->papi_event);
 			    PAPI_destroy_eventset(&(mev->papi_event));
 			    free(mev);
 			    mev = NULL;
 			    break;
 			  }
 
-			retval = PAPI_add_event(&(mev->papi_event),event_list[i]);
+			retval = PAPI_add_event(mev->papi_event,event_list[i]);
 			if (retval != PAPI_OK)
 			  {
 #ifdef MPX_DEBUG
@@ -1290,7 +1296,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 
 			if (event_list[i] != PAPI_TOT_CYC) 
 			  {
-			    retval = PAPI_add_event(&(mev->papi_event), PAPI_TOT_CYC); 
+			    retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC); 
 			    if (retval != PAPI_OK)
 			      {
 #ifdef MPX_DEBUG
@@ -1388,7 +1394,7 @@ static void mpx_delete_events(MPX_EventSet * mpx_events)
 			} else {
 				lastmev->next = nextmev;
 			}
-			PAPI_cleanup_eventset(&(mev->papi_event));
+			PAPI_cleanup_eventset(mev->papi_event);
 			PAPI_destroy_eventset(&(mev->papi_event));
 			free(mev);
 		} else {

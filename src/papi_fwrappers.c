@@ -48,17 +48,17 @@ PAPI_FCALL(papif_accum,PAPIF_ACCUM,(int *EventSet, long_long *values, int *check
 
 PAPI_FCALL(papif_add_event,PAPIF_ADD_EVENT,(int *EventSet, int *Event, int *check))
 {
-  *check = PAPI_add_event(EventSet, *Event);
+  *check = PAPI_add_event(*EventSet, *Event);
 }
 
 PAPI_FCALL(papif_add_events,PAPIF_ADD_EVENTS,(int *EventSet, int *Events, int *number, int *check))
 {
-  *check = PAPI_add_events(EventSet, Events, *number);
+  *check = PAPI_add_events(*EventSet, Events, *number);
 }
 
 PAPI_FCALL(papif_cleanup_eventset,PAPIF_CLEANUP_EVENTSET,(int *EventSet, int *check))
 {
-  *check = PAPI_cleanup_eventset(EventSet);
+  *check = PAPI_cleanup_eventset(*EventSet);
 }
 
 PAPI_FCALL(papif_create_eventset,PAPIF_CREATE_EVENTSET,(int *EventSet, int *check))
@@ -100,25 +100,25 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
     for(i=strlen(e.exe_info->fullname);i<fullname_len;fullname[i++]=' ');
     strncpy(name, e.exe_info->name, name_len);
     for(i=strlen(e.exe_info->name);i<name_len;name[i++]=' ');
-    *text_start = (int)e.exe_info->text_start;
-    *text_end = (int)e.exe_info->text_end;
-    *data_start = (int)e.exe_info->data_start;
-    *data_end = (int)e.exe_info->data_end;
-    *bss_start = (int)e.exe_info->bss_start;
-    *bss_end = (int)e.exe_info->bss_end;
-    strncpy(lib_preload_env, e.exe_info->lib_preload_env, lib_preload_env_len);
-    for(i=strlen(e.exe_info->lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
+    *text_start = (int)e.exe_info->address_info.text_start;
+    *text_end = (int)e.exe_info->address_info.text_end;
+    *data_start = (int)e.exe_info->address_info.data_start;
+    *data_end = (int)e.exe_info->address_info.data_end;
+    *bss_start = (int)e.exe_info->address_info.bss_start;
+    *bss_end = (int)e.exe_info->address_info.bss_end;
+    strncpy(lib_preload_env, e.exe_info->preload_info.lib_preload_env, lib_preload_env_len);
+    for(i=strlen(e.exe_info->preload_info.lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
   }
 #else
   if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
     strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
     strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
-    *text_start = (int)e.exe_info->text_start;
-    *text_end = (int)e.exe_info->text_end;
-    *data_start = (int)e.exe_info->data_start;
-    *data_end = (int)e.exe_info->data_end;
-    *bss_start = (int)e.exe_info->bss_start;
-    *bss_end = (int)e.exe_info->bss_end;
+    *text_start = (int)e.exe_info->address_info.text_start;
+    *text_end = (int)e.exe_info->address_info.text_end;
+    *data_start = (int)e.exe_info->address_info.data_start;
+    *data_end = (int)e.exe_info->address_info.data_end;
+    *bss_start = (int)e.exe_info->address_info.bss_start;
+    *bss_end = (int)e.exe_info->address_info.bss_end;
     strncpy(lib_preload_env, e.exe_info->lib_preload_env, PAPI_MAX_STR_LEN);
   }
 #endif
@@ -464,12 +464,12 @@ PAPI_FCALL(papif_read,PAPIF_READ,(int *EventSet, long_long *values, int *check))
 
 PAPI_FCALL(papif_rem_event,PAPIF_REM_EVENT,(int *EventSet, int *Event, int *check))
 {
-  *check = PAPI_rem_event(EventSet, *Event);
+  *check = PAPI_remove_event(*EventSet, *Event);
 }
 
 PAPI_FCALL(papif_rem_events,PAPIF_REM_EVENTS,(int *EventSet, int *Events, int *number, int *check))
 {
-  *check = PAPI_rem_events(EventSet, Events, *number);
+  *check = PAPI_remove_events(*EventSet, Events, *number);
 }
 
 PAPI_FCALL(papif_reset,PAPIF_RESET,(int *EventSet, int *check))
