@@ -41,9 +41,6 @@ power3_events.o: power3_events.c  $(HEADERS)
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
-allocate.o: allocate.c
-	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c allocate.c -o allocate.o
-
 aix-shared: $(SOURCES)
 	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
