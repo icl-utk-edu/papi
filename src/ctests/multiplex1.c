@@ -65,14 +65,16 @@ void init_papi(int *out_events, int *len)
 	{
 	  out_events[real_len++] = in_events[i];
 	  PAPI_event_code_to_name(in_events[i],out);
-	  printf("%s exists\n",out);
+ 	  if ( !TESTS_QUIET )
+	  	printf("%s exists\n",out);
 	if (real_len == *len)
 	break;
 	}
 	else
 	{
 	  PAPI_event_code_to_name(in_events[i],out);
-	  printf("%s does not exist\n",out);
+	  if ( !TESTS_QUIET )
+	  	printf("%s does not exist\n",out);
 	}
     }
   if (real_len < 1) 
@@ -106,6 +108,7 @@ int case1()
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
+      if ( !TESTS_QUIET )
       printf("Added %s\n",out);
     }
 
