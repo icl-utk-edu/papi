@@ -761,7 +761,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
       }
    }
    machdep->cntrs_last_read = cnts;
-   if (overflow_vector)
+/*   if (overflow_vector)*/
       _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, overflow_vector, 0, &thread);
 }
 
