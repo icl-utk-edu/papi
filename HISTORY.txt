@@ -1,0 +1,39 @@
+/* 
+* File:    HISTORY
+* CVS:     $Id$
+* Author:  Dan Terpstra
+*          terpstra@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+This file contains a brief history of what's changed in the PAPI project.
+It was created after the fact to try to capture PAPI's evolution.
+Early details may be sketchy; we hope to keep more recent information
+more complete.
+
+PAPI Release 2.3: October 2002
+------------------------------
+> added support for IBM AIX 5.1 on POWER 3
+> added support for IBM POWER 4 architecture
+> added support for Linux Itanium II (McKinley)
+> added support for Linux Alpha
+> added support for Tru64 Alpha/DADD
+> deployed multi-format documentation:
+  - User's Guide: doc; html; ps; pdf
+  - Programmer's Reference: doc; html; ps; pdf; man
+> added Java bindings and examples
+
+PAPI Release 2.1: February 2002
+-------------------------------
+
+PAPI Release 2.0.1: November 2001
+---------------------------------
+> added support for Intel on Windows NT/2K/XP
+> added support for Linux Itanium
+> added support for multiplexed events
+
+PAPI Release 1.1.5: December 2000
+---------------------------------
+
+
