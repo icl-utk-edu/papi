@@ -11,6 +11,8 @@
 *	       london@cs.utk.edu
 *	       dan terpstra
 *	       terpstra@cs.utk.edu
+*          Min Zhou
+*	       min@cs.utk.edu
 */  
 
 #include <stdio.h>
@@ -25,13 +27,13 @@
 /* Lets use defines to rename all the files */
 
 #ifdef FORTRANUNDERSCORE
-#define PAPI_FCALL(function,caps,args) void function##_##args
+#define PAPI_FCALL(function,caps,args) void function##_ args
 #elif FORTRANDOUBLEUNDERSCORE
-#define PAPI_FCALL(function,caps,args) void function##__##args
+#define PAPI_FCALL(function,caps,args) void function##__ args
 #elif FORTRANCAPS
-#define PAPI_FCALL(function,caps,args) void caps##args
+#define PAPI_FCALL(function,caps,args) void caps args
 #else
-#define PAPI_FCALL(function,caps,args) void function##args
+#define PAPI_FCALL(function,caps,args) void function args
 #endif
 
 /* Many Unix systems passes Fortran string lengths as extra arguments */
