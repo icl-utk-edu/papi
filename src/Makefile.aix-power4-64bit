@@ -3,17 +3,14 @@ SHLIB     = libpapi64.so
 SUBSTR  = power4
 MSUBSTR = power4
 MEMSUBSTR=aix
-DESCR	= "AIX 5.1.0 or greater with POWER4"
+DESCR	= "AIX 5.1.0 or greater with POWER4 64 bit build"
 LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
 PMAPI	= /usr/pmapi
 SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 
-# Default source is for pmtoolkit 1.4.x.
-
-FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -q64 -qlanglvl=extended
-CFLAGS	= $(FLAGS) -qenum=4 -D_POWER4 -DNO_VARARG_MACRO
-
+FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -qtune=pwr4 -qlanglvl=extended -q64 
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_POWER4 
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
 FFLAGS	= $(FLAGS) -WF,-D_POWER4
@@ -22,10 +19,10 @@ FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L$(PMAPI)/lib -lpmapi
-ARG64= -X64  
+ARG64	= -X64
 CC_R	= xlc_r
 CC	= xlc
-CC_SHR	= xlc -G
+CC_SHR	= xlc -G -bnoentry
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
@@ -39,10 +36,10 @@ power4_events.o: power4_events.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power4_events.c -o power4_events.o
 
 aix.o: aix.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
-
-
-native_clean:
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 native_install:
 
+native_clean:
+
+native_clobber:

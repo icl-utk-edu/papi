@@ -9,22 +9,20 @@ TARGETS = serial multiplex_and_pthreads smp omp
 PMAPI   = /usr/pmapi
 SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 
-# Default source is for pmapi 1.5.x and above.
-
-FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qenum=4 
-CFLAGS  = $(FLAGS) -DNO_VARARG_MACRO -DPOWER3 -DNO_FUNCTION_MACRO
+FLAGS  	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qtune=pwr3 -qlanglvl=extended 
+CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3
 OPTFLAGS= -O3 -qstrict
-TOPTFLAGS= -qnostdinc
+TOPTFLAGS= 
 FFLAGS  = $(FLAGS) -WF,-DPOWER3
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L$(PMAPI)/lib -lpmapi
+ARG64	= 
 CC_R    = xlc_r
 CC      = xlc  
-CC_SHR  = xlc -bnoentry -bE:libpapi.exp -bM:SHR  
-#CC_SHR  = xlc -bnoentry  -bexpall -bM:SHR  
+CC_SHR  = xlc -G -bnoentry
 MPICC   = mpcc
 F77     = xlf
 CPP     = xlc -E
@@ -40,8 +38,9 @@ power3_events.o: power3_events.c  $(HEADERS)
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
-# Required targets for all platforms.
-
 native_install:
 
 native_clean:
+
+native_clobber:
+
