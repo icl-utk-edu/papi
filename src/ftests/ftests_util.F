@@ -2,6 +2,7 @@
 
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 
+	
       integer function get_quiet()
 #if _WIN32
       use dflib
@@ -305,7 +306,7 @@ C	that prompts the user for a keypress
 C	For every other platform it is a nop.
       subroutine pause()
       implicit none      
-	integer quiet,i
+	integer quiet
 	common quiet
 
 #ifdef _WIN32
@@ -314,35 +315,3 @@ C	For every other platform it is a nop.
 	end if
 #endif
 	end
-
-      subroutine do_reads(integer n, integer fd)
-#ifdef _WIN32
-      implicit none
-	integer i, j
-	character buf
-	integer*8 c
-	
-	c = 0.11
-
-     	do i=0, n, 1
-	 do j=0, n, 1
-            c = c + z
-	 end do
-	 call read (fd, *) buf
-      end do
-#endif
-      end
-
-      subroutine do_open(integer fd)
-#ifdef _WIN32
-      implicit none
-      call open(unit=fd, file='/dev/zero/', READONLY, status="old")
-#endif
-      end
-
-      subroutine do_close(integer fd)
-#ifdef _WIN32
-      implicit none
-      call close(unit=fd)
-#endif
-      end
