@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_query_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_query_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -272,11 +272,10 @@ PAPI_query_event - query if PAPI event exists
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -339,8 +338,9 @@ check the syntax of a native event.
 <BLOCKQUOTE>
 On success,
 <!-- .B PAPI_query_event returns -->
-<B>PAPI_query_event returns</B> <!-- .B "PAPI_OK" , -->
-<B>PAPI_OK ,</B> and on error, a non-zero error code is returned.
+<B>PAPI_query_event returns</B> <!-- .B "PAPI_OK"  -->
+<B>PAPI_OK</B> <BR>
+ On error, a non-zero error code is returned.
 <P>
 <P>
 <!-- .SH ERRORS -->
@@ -382,11 +382,7 @@ The PAPI preset is not available on the underlying hardware.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-int retval,i;
-PAPI_preset_info_t info;
-PAPI_preset_info_t *infostructs;
+<TT>int retval;
 <P>
 /* Initialize the library */
 <P>
@@ -405,20 +401,9 @@ if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -428,7 +413,7 @@ These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
@@ -437,19 +422,14 @@ These functions have no known bugs.
 <!-- .BR PAPI_preset "(3), " PAPI_native "(3), " -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
 <A HREF="papi_native.html">PAPI_native (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
+<!-- .BR PAPI_remove_event "(3), "  -->
 <A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
 <!-- .BR PAPI_remove_events "(3), " -->
 <A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_query_event (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_query_event (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_num_counters 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_num_counters 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_num_counters - PAPI High Level: get the number of hardware counters available on the system
+PAPI_num_counters - PAPI High Level: return the number of hardware counters available on the system
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -267,11 +267,10 @@ PAPI_num_counters - PAPI High Level: get the number of hardware counters availab
 <A HREF=#3>Return Values</A><BR>
 <A HREF=#4>Errors</A><BR>
 <A HREF=#5>Examples</A><BR>
-<A HREF=#6>Authors</A><BR>
-<A HREF=#7>Bugs</A><BR>
-<A HREF=#8>See Also</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SYNOPSIS</H3>
 
@@ -311,7 +310,7 @@ PAPI_num_counters - PAPI High Level: get the number of hardware counters availab
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
 <!-- .B PAPI_num_counters() -->
-<B>PAPI_num_counters()</B> initialises the library to
+<B>PAPI_num_counters()</B> initializes the library to
 <!-- .B PAPI_HIGH_LEVEL_INITED -->
 <B>PAPI_HIGH_LEVEL_INITED</B> if necessary.
 <P>
@@ -371,9 +370,7 @@ A system or C library call failed inside PAPI, see the
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
-  int num_hwcntrs = 0;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<TT>  int num_hwcntrs;
   /*  The installation does not support PAPI */
   if ((num_hwcntrs = PAPI_num_counters()) &lt; 0 )
     handle_error(1);
@@ -381,32 +378,13 @@ A system or C library call failed inside PAPI, see the
   /*  The installation supports PAPI, but has no counters */
   if ((num_hwcntrs = PAPI_num_counters()) == 0 )
     fprintf(stderr,"Info:: This machine does not provide hardware counters.0);
-<P>
-  if (num_hwcntrs &gt; 2)
-    num_hwcntrs = 2;
-<P>
-  /* Start counting events */
-<P>
-  if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
-    handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=6>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=6>
 
      <H3>BUGS</H3>
 
@@ -416,27 +394,18 @@ If you don&#146;t call this function, your application could core dump.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_start_counters "(3)," -->
-<A HREF="papi_start_counters.html">PAPI_start_counters (3)</A>,
-<!-- .BR PAPI_read_counters "(3)," -->
-<A HREF="papi_read_counters.html">PAPI_read_counters (3)</A>,
-<!-- .BR PAPI_stop_counters "(3)," -->
-<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A>,
-<!-- .BR PAPI_init_library "(3)," -->
-<A HREF="papi_init_library.html">PAPI_init_library (3)</A>,
-<!-- .BR PAPI_num_hwctrs "(3)," -->
-<A HREF="papi_num_hwctrs.html">PAPI_num_hwctrs (3)</A>,
-<!-- .BR PAPI "(3)" -->
-<A HREF="papi.html">PAPI (3)</A>
+<!-- .BR PAPI "(3)," PAPIF "(3)" -->
+<A HREF="papi.html">PAPI (3)</A>,
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_counters (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_counters (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

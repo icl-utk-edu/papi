@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_thread_init 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_thread_init 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,11 +268,10 @@ PAPI_thread_init - initialize thread support in the PAPI library
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -306,13 +305,15 @@ PAPI_thread_init - initialize thread support in the PAPI library
 </A>
 <BLOCKQUOTE>
 <!-- .B "PAPI_thread_init" -->
-<B>PAPI_thread_init</B> initializes thread support in the PAPI library. Itshould be called
-<!-- .BR "only once" ,  -->
-<B>only once</B>, just after
-<!-- .BR "PAPI_library_init" (3), -->
-<A HREF="papi_library_init.html">PAPI_library_init (3)</A>,
-and before any other PAPI calls. Applications that make no use of threads
-do not need to call this routine.
+<B>PAPI_thread_init</B> initializes thread support in the PAPI library. Applications that
+make no use of threads do not need to call this routine. This function
+MUST return a UNIQUE thread ID for every new thread/LWP created. The
+OpenMP call omp_get_thread_num() violates this rule, as the underlying
+LWPs may have been killed off by the run-time system or by a call to
+omp_set_num_threads(). In that case, it is still possible to use
+omp_get_thread_num() in conjunction with
+<!-- .B PAPI_unregister_thread() -->
+<B>PAPI_unregister_thread()</B> when the OpenMP thread has finished.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -383,43 +384,37 @@ One or more of the arguments is invalid.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-This function causes the application to exit if it is called more than once.
+This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_library_init" (3), " -->
-<B>PAPI_library_init</B> (3),  <!-- .BR PAPI_thread_id" (3), " -->
-<B>PAPI_thread_id</B> (3),  <!-- .BR PAPI_get_thr_specific" (3), " -->
-<B>PAPI_get_thr_specific</B> (3),  <!-- .BR PAPI_set_thr_specific" (3)" -->
-<B>PAPI_set_thr_specific</B> (3) <P>
+<!-- .BR PAPI_library_init "(3), " PAPI_thread_id "(3), " -->
+<A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
+<A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>, 
+<!-- .BR PAPI_get_thr_specific "(3), " PAPI_set_thr_specific "(3), " -->
+<A HREF="papi_get_thr_specific.html">PAPI_get_thr_specific (3)</A>, 
+<A HREF="papi_set_thr_specific.html">PAPI_set_thr_specific (3)</A>, 
+<!-- .BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3) " -->
+<A HREF="papi_register_thread.html">PAPI_register_thread (3)</A>, 
+PAPI_unregister_thread  (3) 
+<P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_thread_init (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_thread_init (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_dmem_info 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_dmem_info 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -269,11 +269,10 @@ PAPI_get_dmem_info - get information about the dynamic memory usage of the curre
 <A HREF=#5>Return Values</A><BR>
 <A HREF=#6>Errors</A><BR>
 <A HREF=#7>Example</A><BR>
-<A HREF=#8>Authors</A><BR>
-<A HREF=#9>Bugs</A><BR>
-<A HREF=#10>See Also</A><BR>
+<A HREF=#8>Bugs</A><BR>
+<A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=11>
+<A name=10>
 
      <H3>SYNOPSIS</H3>
 
@@ -298,7 +297,8 @@ PAPI_get_dmem_info - get information about the dynamic memory usage of the curre
 </A>
 <BLOCKQUOTE>
 In C, this function returns a value specified by the option.
-There is no Fortran equivalent call.
+There is no Fortran equivalent call. This function has been depricated
+until a better interface can be provided.
 <P>
 <!-- .SH NOTE -->
 </BLOCKQUOTE>
@@ -394,20 +394,9 @@ A system error occured.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=8>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>BUGS</H3>
 
@@ -419,7 +408,7 @@ If called before
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SEE ALSO</H3>
 
@@ -435,7 +424,7 @@ If called before
 <A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_dmem_info (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_dmem_info (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

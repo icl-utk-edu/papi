@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_opt 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_opt 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,10 +256,17 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_get_opt, PAPI_set_opt - get/set PAPI library or event set options
+ PAPI_get_opt - get PAPI library or event set options
 <BR>
- PAPIF_get_clockrate, PAPIF_get_domain, PAPIF_get_granularity, PAPIF_get_preload
-- Fortran implementation of some PAPI_get_opt options
+ PAPI_set_opt - set PAPI library or event set options
+<BR>
+ PAPIF_get_clockrate - get the clockrate (Fortran only)
+<BR>
+ PAPIF_get_domain - get the counting domain (Fortran only)
+<BR>
+ PAPIF_get_granularity - get the counting granularity (Fortran only)
+<BR>
+ PAPIF_get_preload - get the library preload setting (Fortran only)
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -271,11 +278,10 @@ PAPI_get_opt, PAPI_set_opt - get/set PAPI library or event set options
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -438,9 +444,10 @@ or for the current event set
 <TD><B>PAPI_DEFGRN</B></TD><TD>Get/Set default counting granularity.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_DEBUG</B></TD><TD>Get/Set the PAPI debug state. The available debug states are
-defined in papi.h.
-The debug state is available in ptr-&gt;debug.level.
+<TD><B>PAPI_DEBUG</B></TD><TD>Get/Set the PAPI debug state and the debug handler. The available debug states are
+defined in papi.h. The debug state is available in ptr-&gt;debug.level. The debug
+handler is available in ptr-&gt;debug.handler. For information regarding the behavior
+of the handler, please see the man page for
 </TD></TR>
 <!-- cI s -->
 <!-- lB lw(45). -->
@@ -502,7 +509,7 @@ Users should use the definition in
 
 </A>
 <BLOCKQUOTE>
-On success, this function returns
+On success, these functions return
 <!-- .I "PAPI_OK." -->
 <I>PAPI_OK.</I> On error, a non-zero error code is returned.
 <P>
@@ -547,23 +554,18 @@ The event set is currently counting events.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int num, EventSet = PAPI_NULL;
-PAPI_option_t options;
+<TT>PAPI_option_t options;
 <P>
 if ((num = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL)) &lt;= 0)
   handle_error();
 <P>
 printf("This machine has %d counters.0,num);
 <P>
-if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-  handle_error();
-<P>
 /* Set the domain of this EventSet
    to counter user and kernel modes for this
    process */
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 memset(&options,0x0,sizeof(options));
-<P>
 options.domain.eventset = EventSet;
 options.domain.domain = PAPI_DOM_ALL;
 if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
@@ -572,20 +574,9 @@ if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -597,19 +588,19 @@ There are no known bugs in these functions.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " PAPI_start "(3)"  -->
-<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>, 
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>
+<!-- .BR PAPI_set_debug "(3)," PAPI_set_multiplex "(3)," PAPI_set_domain "(3)" -->
+<A HREF="papi_set_debug.html">PAPI_set_debug (3)</A>,
+<A HREF="papi_set_multiplex.html">PAPI_set_multiplex (3)</A>,
+<A HREF="papi_set_domain.html">PAPI_set_domain (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_opt (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_opt (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

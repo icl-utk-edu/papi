@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_destroy_eventset 3 "November, 2003"  "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_destroy_eventset 3 "September, 2004"  "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_cleanup_eventset, PAPI_destroy_eventset  -  empty and destroy an EventSet
+PAPI_destroy_eventset, PAPI_cleanup_eventset  -  empty and destroy an EventSet
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,11 +268,10 @@ PAPI_cleanup_eventset, PAPI_destroy_eventset  -  empty and destroy an EventSet
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -310,7 +309,9 @@ PAPI_cleanup_eventset, PAPI_destroy_eventset  -  empty and destroy an EventSet
 </A>
 <BLOCKQUOTE>
 <!-- .B PAPI_cleanup_eventset() -->
-<B>PAPI_cleanup_eventset()</B> removes all events from a PAPI event set.
+<B>PAPI_cleanup_eventset()</B> removes all events from a PAPI event set and turns off profiling
+and overflow for all events in the eventset. This can not be
+called if the EventSet is not stopped.
 <P>
 <!-- .B PAPI_destroy_eventset() -->
 <B>PAPI_destroy_eventset()</B> deallocates the memory associated with an empty PAPI event set.
@@ -325,8 +326,14 @@ PAPI_cleanup_eventset, PAPI_destroy_eventset  -  empty and destroy an EventSet
 <BLOCKQUOTE>
 <!-- .I "EventSet" -->
 <I>EventSet</I> --  an integer handle for a PAPI event set as created by
-<!-- .BR "PAPI_create_eventset" (3) -->
-<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
+<!-- .BR "PAPI_create_eventset" (3). -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>.
+<P>
+<!-- .I "*EventSet" -->
+<I>*EventSet</I> --  a pointer to the integer handle for a PAPI event set as created by
+<!-- .BR "PAPI_create_eventset" (3). -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>.
+The value pointed to by EventSet is then set to PAPI_NULL on success.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -336,13 +343,12 @@ PAPI_cleanup_eventset, PAPI_destroy_eventset  -  empty and destroy an EventSet
 
 </A>
 <BLOCKQUOTE>
-<!-- .nf -->
-<PRE>
-On success, these functions return PAPI_OK.
-On error, a non-zero error code is returned.
-<!-- .fi -->
-</PRE>
-<P>
+ On success, this function returns
+<!-- .B "PAPI_OK." -->
+<B>PAPI_OK.</B> <BR>
+ On error, a non-zero error code is returned.
+<BR>
+                                                                               
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
 <A name=5>
@@ -357,7 +363,8 @@ On error, a non-zero error code is returned.
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 One or more of the arguments is invalid. Attempting to
-destroy a non-empty event set is one such case.
+destroy a non-empty event set or passing in a null pointer
+to be destroyed.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -389,10 +396,7 @@ Internal error, send mail to <A HREF="mailto:ptools-perfapi@ptools.org">ptools-p
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>if (PAPI_stop(EventSet, values) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Remove all events in the eventset */
+<TT>/* Remove all events in the eventset */
 <P>
 if (PAPI_cleanup_eventset(EventSet) != PAPI_OK)
   handle_error(1);
@@ -405,48 +409,40 @@ if (PAPI_destroy_eventset(&EventSet) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+If the user has set profile on an event with the
+<!-- .BR "PAPI_profil "(3)  -->
+<B>PAPI_profil </B>(3) call, then when destroying
+the EventSet the memory allocated by
+<!-- .BR "PAPI_profil "(3)  -->
+<B>PAPI_profil </B>(3) will not be freed. The user should turn off
+profiling on the Events before destroying the
+EventSet to prevent this behavior.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_create_eventset "(3), " PAPI_query_event "(3), " -->
+<!-- .BR PAPI_create_eventset "(3), "PAPI_add_event "(3), " PAPI_stop "(3), "  -->
 <A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>, 
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
-<!-- .BR PAPI_add_event "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_remove_events "(3), " PAPI_shutdown "(3)" -->
-<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
-<A HREF="papi_shutdown.html">PAPI_shutdown (3)</A>
+<A HREF="papi_stop.html">PAPI_stop (3)</A>, 
+<!-- .BR PAPI_profil "(3) " -->
+<A HREF="papi_profil.html">PAPI_profil (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_destroy_eventset (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_destroy_eventset (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

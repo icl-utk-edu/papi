@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_overflow 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_overflow 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,8 +256,9 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_overflow - set up an event set
-to begin registering overflows;
+ PAPI_overflow - set up an event set to begin registering overflows
+<BR>
+ _papi_overflow_handler - user defined function to process overflow events
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -269,11 +270,10 @@ to begin registering overflows;
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -284,8 +284,14 @@ to begin registering overflows;
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler ");" -->
-<B>int PAPI_overflow (int </B><I>EventSet</I><B>, int </B><I>EventCode</I><B>, int </B><I>threshold</I><B>, int </B><I>flags</I><B>, PAPI_overflow_handler_t </B><I>handler</I><B>);</B> 
+<!-- .BI "int\ PAPI_overflow  -->
+<B>int PAPI_overflow</B> 
+<!-- .BI "      (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler ");" -->
+<B>      (int </B><I>EventSet</I><B>, int </B><I>EventCode</I><B>, int </B><I>threshold</I><B>, int </B><I>flags</I><B>, PAPI_overflow_handler_t </B><I>handler</I><B>);</B> 
+<!-- .BI "(*PAPI_overflow_handler_t)\ _papi_overflow_handler  -->
+<B>(*PAPI_overflow_handler_t) _papi_overflow_handler</B> 
+<!-- .BI "      (int " EventSet ", void * " address ", long_long " overflow_vector ", void * " context ");" -->
+<B>      (int </B><I>EventSet</I><B>, void * </B><I>address</I><B>, long_long </B><I>overflow_vector</I><B>, void * </B><I>context</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -311,11 +317,47 @@ to begin registering overflows;
 <!-- .I EventSet  -->
 <I>EventSet</I> to generate an overflow signal after every
 <!-- .I threshold -->
-<I>threshold</I> events are counted. More than one event in an event set can be used as
-overflow triggers, in such case, the user must call this function several
-times.
-<!-- .B To turn off overflow, set the threshold to 0. If the user get negative number -->
-<B>To turn off overflow, set the threshold to 0. If the user get negative number</B> or small number for the result of the overflow events, don&#146;t be surprised.  To reduce the overhead of PAPI_read, we don&#146;t adjust the number. If the platform use hardware overflow, then based on the threshold and how many times it overflowed, you can get an approximate number.
+<I>threshold</I> events are counted. More than one event in an event set can be used to trigger
+overflows. In such cases, the user must call this function once
+for each overflowing event. To turn off overflow on a specified event,
+call this function with a
+<!-- .I threshold  -->
+<I>threshold</I> value of 0.
+<!-- .LP -->
+<P>
+Overflows can be implemented in either software or hardware, but the
+scope is the entire event set. PAPI defaults to hardware overflow if it is available.
+In the case of software overflow, a periodic timer
+interrupt causes PAPI to compare the event counts against the
+<!-- .I threshold  -->
+<I>threshold</I> values and call the overflow handler if one or more events have exceeded their
+<!-- .I threshold. -->
+<I>threshold.</I> In the case of hardware overflow, the counters are typically set to the negative of the
+<!-- .I threshold  -->
+<I>threshold</I> value and count up to 0. This zero-crossing triggers a hardware interrupt
+that calls the overflow handler. Because of this counter interrupt, the counter values
+for overflowing counters may be very small or even negative numbers, and cannot be relied upon
+as accurate. In such cases the overflow handler can approximate the counts by supplying the
+<!-- .I threshold -->
+<I>threshold</I> value whenever an overflow occurs.
+<!-- .LP -->
+<P>
+<!-- .B _papi_overflow_handler() -->
+<B>_papi_overflow_handler()</B> is a placeholder for a user-defined function to process overflow events.
+A pointer to this function is passed to the
+<!-- .B PAPI_overflow  -->
+<B>PAPI_overflow</B> routine, where it is invoked whenever a software or hardware overflow occurs.
+This handler receives the
+<!-- .I EventSet -->
+<I>EventSet</I> of the overflowing event, the Program Counter
+<!-- .I address  -->
+<I>address</I> when the interrupt occured, an
+<!-- .I overflow_vector -->
+<I>overflow_vector</I> that can be processed to determined which event(s) caused the overflow,
+and a pointer to the machine
+<!-- .I context,  -->
+<I>context,</I> which can be used in a platform-specific manor
+to extract register information about what was happening when the overflow occured.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -326,24 +368,51 @@ times.
 </A>
 <BLOCKQUOTE>
 <!-- .I EventSet  -->
-<I>EventSet</I> -- a reference to the event set to use
+<I>EventSet</I> --  an integer handle to a PAPI event set as created by
+<!-- .BR "PAPI_create_eventset" (3) -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
 <!-- .LP -->
 <P>
 <!-- .I EventCode  -->
-<I>EventCode</I> -- the counter to be used for overflow detection
-<!-- .LP -->
+<I>EventCode</I> -- the preset or native event code to be set for overflow detection.
+This event must have already been added to the
+<!-- .I EvenSet. -->
+<I>EvenSet.</I> <!-- .LP -->
 <P>
 <!-- .I threshold  -->
-<I>threshold</I> -- the overflow threshold value to use
-<!-- .LP -->
+<I>threshold</I> -- the overflow threshold value for this
+<!-- .I EventCode. -->
+<I>EventCode.</I> <!-- .LP -->
 <P>
 <!-- .I flags  -->
-<I>flags</I> -- bit map that controls the overflow mode of operation. This is
-currently not used and should be set to 0.
+<I>flags</I> -- bit map that controls the overflow mode of operation. Set to PAPI_OVERFLOW_FORCE_SW
+to force software overflowing, even if hardware overflow support is available.
+If hardware overflow support is available on a given system,
+it will be the default mode of operation. There are situations where it
+is advantageous to use software overflow instead. Although software overflow
+is inherently less accurate, with more latency and processing overhead, it does
+allow for overflowing on derived events, and for the accurate recording of
+overflowing event counts. These two features are typically not available with
+hardware overflow. Only one type of overflow is allowed
+per event set, so setting one event to hardware overflow and another to
+forced software overflow will result in an error being returned.
 <!-- .LP -->
 <P>
 <!-- .I handler  -->
-<I>handler</I> -- the handler function to call upon overflow
+<I>handler</I> -- pointer to the user supplied handler function to call upon overflow
+<!-- .LP -->
+<P>
+<!-- .I address  -->
+<I>address</I> -- the Program Counter address at the time of the overflow
+<!-- .LP -->
+<P>
+<!-- .I overflow_vector  -->
+<I>overflow_vector</I> -- a long_long word containing flag bits to indicate which hardware counter(s) caused the overflow
+<!-- .LP -->
+<P>
+<!-- .I *context  -->
+<I>*context</I> -- pointer to a machine specific structure that defines the register context at the time of overflow.
+This parameter is often unused and can be ignored in the user function.
 <!-- .LP -->
 <P>
 <P>
@@ -355,10 +424,13 @@ currently not used and should be set to 0.
 
 </A>
 <BLOCKQUOTE>
-On success, PAPI_overflow returns
+On success,
+<!-- .B PAPI_overflow  -->
+<B>PAPI_overflow</B> returns
 <!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
+<B>PAPI_OK.</B> On error, a non-zero error code is returned.
+<!-- .B _papi_overflow_handler -->
+<B>_papi_overflow_handler</B> is a void function and returns nothing.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -374,6 +446,7 @@ On success, PAPI_overflow returns
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 One or more of the arguments is invalid.
+Specifically, a bad threshold value.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -397,8 +470,9 @@ The EventSet is currently counting events.
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ECNFLCT" -->
 <B>PAPI_ECNFLCT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously.
+The underlying counter hardware cannot count this event and other events
+in the EventSet simultaneously. Or you are trying to overflow both by
+hardware and by forced software at the same time.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -415,6 +489,7 @@ The PAPI preset is not available on the underlying hardware.
 
 </A>
 <BLOCKQUOTE>
+Define a simple overflow handler:
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
@@ -423,76 +498,43 @@ The PAPI preset is not available on the underlying hardware.
   fprintf(stderr,"Overflow at %p! bit=0x%llx &#92;n",
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  address,overflow_vector);
 }
-<P>
-  int EventSet = PAPI_NULL;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Add Total Instructions Executed to our EventSet */
-<P>
-  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Call handler every 100000 instructions */
-<P>
-  retval = PAPI_overflow(EventSet, PAPI_TOT_INS, THRESHOLD, 0, handler);
-  if (retval != PAPI_OK)
-    exit(1);
-<P>
-  /* Start counting */
-<P>
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+Call PAPI_overflow for an event set containing the PAPI_TOT_INS event,
+setting the threshold to 100000. Use the handler defined above.
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>  retval = PAPI_overflow(EventSet, PAPI_TOT_INS, 100000, 0, handler);
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_preset "(3), " -->
-<A HREF="papi_preset.html">PAPI_preset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_remove_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
-<A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3)" -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>
+<!-- .BR PAPI_get_overflow_event_index "(3)" -->
+<A HREF="papi_get_overflow_event_index.html">PAPI_get_overflow_event_index (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_overflow (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_overflow (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

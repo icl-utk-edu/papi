@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_thr_specific 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_thr_specific 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,11 +268,10 @@ PAPI_get_thr_specific, PAPI_set_thr_specific - Store or retrieve a pointer to a 
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Example</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -299,8 +298,10 @@ PAPI_get_thr_specific, PAPI_set_thr_specific - Store or retrieve a pointer to a 
 <BLOCKQUOTE>
 In C, PAPI_set_thr_specific will save ptr into an array indexed by tag.
 PAPI_get_thr_specific will retrieve the pointer from the array with index tag.
-The array mentioned above is managed by PAPI and allocated to each thread
-which has called PAPI_thread_init. There are no Fortran equivalent functions.
+There are 2 user available locations and tag can be either PAPI_USR1_TLS
+or PAPI_USR2_TLS.  The array mentioned above is managed by PAPI and
+allocated to each thread which has called PAPI_thread_init. There are no
+Fortran equivalent functions.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -313,8 +314,8 @@ which has called PAPI_thread_init. There are no Fortran equivalent functions.
 <!-- .LP -->
 <P>
 <!-- .I tag -->
-<I>tag</I> --  An identifier, the value of which is between 0 and PAPI_MAX_THREAD_STORAGE
-(currently 4). This identifier indicates which of several data structures
+<I>tag</I> --  An identifier, the value of which is either PAPI_USR1_TLS or
+PAPI_USR2_TLS. This identifier indicates which of several data structures
 associated with this thread is to be accessed.
 <!-- .LP -->
 <P>
@@ -365,11 +366,7 @@ The
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>   unsigned long int tid;
-   HighLevelInfo *state = NULL;
-<P>
-   if (retval = PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-      handle_error(retval);
+<TT>   HighLevelInfo *state = NULL;
 <P>
    if (retval = PAPI_thread_init(pthread_self) != PAPI_OK)
       handle_error(retval);
@@ -377,19 +374,19 @@ The
    /*
     * Do we have the thread specific data setup yet?
     */
-   if ((retval = PAPI_get_thr_specific(1, (void *) &state))
+   if ((retval = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state))
        != PAPI_OK || state == NULL) {
       state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
       if (state == NULL)
          return (PAPI_ESYS);
 <P>
       memset(state, 0, sizeof(HighLevelInfo));
-      state-&gt;EventSet = -1;
+      state-&gt;EventSet = PAPI_NULL;
 <P>
       if ((retval = PAPI_create_eventset(&state-&gt;EventSet)) != PAPI_OK)
          return (PAPI_ESYS);
 <P>
-      if ((retval = PAPI_set_thr_specific(1, state)) != PAPI_OK)
+      if ((retval=PAPI_set_thr_specific(PAPI_USR1_TLS, state))!=PAPI_OK)
          return (retval);
    }
 <P>
@@ -397,20 +394,9 @@ The
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -420,21 +406,20 @@ There are no known bugs in these functions.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_thread_init "(3), " -->
-<A HREF="papi_thread_init.html">PAPI_thread_init (3)</A>, 
-<!-- .BR PAPI_thread_id "(3), " -->
-<A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>, 
+<!-- .BR PAPI_thread_init "(3), .BR PAPI_thread_id "(3), " -->
+<A HREF="papi_thread_init.html">PAPI_thread_init (3)</A>, .BR PAPI_thread_id 
+(3), 
 <!-- .BR PAPI_register_thread "(3)"  -->
 <A HREF="papi_register_thread.html">PAPI_register_thread (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_thr_specific (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_thr_specific (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

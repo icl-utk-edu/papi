@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_set_debug 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_set_debug 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -267,7 +267,7 @@ PAPI_set_debug - set the current debug level for PAPI
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
-<A HREF=#6>Authors</A><BR>
+<A HREF=#6>Examples</A><BR>
 <A HREF=#7>Bugs</A><BR>
 <A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
@@ -305,7 +305,7 @@ PAPI_set_debug - set the current debug level for PAPI
 </A>
 <BLOCKQUOTE>
 <!-- .B "PAPI_set_debug"  -->
-<B>PAPI_set_debug</B> sets the debug level for the PAPI library.
+<B>PAPI_set_debug</B> sets the debug level for error output from the PAPI library.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -318,18 +318,31 @@ PAPI_set_debug - set the current debug level for PAPI
 <!-- .I "debuglevel" -->
 <I>debuglevel</I> -- one of the constants shown in the table below and defined
 in the papi.h header file.
-The current debug level is internally stored in the PAPI library and
-is used by the default internal PAPI error handler subroutine.
-The error handler is called by library routines
-on the occurence of recoverable errors.
-The default PAPI error handler handles the possible debug levels
-shown in the table below.
+The current debug level is used by both the internal error and debug message
+handler subroutines. The debug handler is only used if the library was compiled
+with -DDEBUG. The debug handler is called when there is an error upon a call
+to the PAPI API. The error handler is always active and it&#146;s behavior cannot
+be modified except for whether or not it prints anything.
+<P>
+The PAPI error handler prints out messages in the following form:
+<P>
+PAPI Error: message.
+<P>
+The default PAPI debug handler prints out messages in the following form:
+<P>
+PAPI Error: Error Code code,symbol,description
+<P>
+If the error was caused from a system call and the return code is PAPI_ESYS,
+the message will have a colon space and the error string as reported by
+strerror() appended to the end.
+<P>
+The possible debug levels for debugging are shown in the table below.
 <!-- .TS -->
 <P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
 <!-- allbox tab($); -->
 <!-- lB l. -->
 <TR valign=top>
-<TD><B>PAPI_QUIET</B></TD><TD>Quietly handle errors</TD></TR>
+<TD><B>PAPI_QUIET</B></TD><TD>Do not print anything, just return the error code</TD></TR>
 <TR valign=top>
 <TD><B>PAPI_VERB_ECONT</B></TD><TD>Print error message and continue</TD></TR>
 <TR valign=top>
@@ -362,22 +375,29 @@ On success, this function returns
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
+The debuglevel is invalid.
 <P>
-<!-- .SH AUTHORS -->
+<!-- .SH EXAMPLES -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=6>
 
-     <H3>AUTHORS</H3>
+     <H3>EXAMPLES</H3>
 
 </A>
 <BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>  if ( PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK )
+     handle_error();
+<!-- .if t .ft CW -->
+</TT><TT><!-- .fi -->
+</PRE>
 <P>
 <!-- .SH BUGS -->
-</BLOCKQUOTE>
+<!-- resetStyles [FTT] -->
+</TT></BLOCKQUOTE>
 <A name=7>
 
      <H3>BUGS</H3>
@@ -394,11 +414,13 @@ This function has no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_set_opt "(3)"  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>
+<!-- .BR PAPI_set_opt "(3), " -->
+<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
+<!-- .BR PAPI_get_opt "(3) " -->
+<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_set_debug (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_set_debug (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

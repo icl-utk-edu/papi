@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_real_cyc 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_real_cyc 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,10 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_get_real_cyc, PAPI_get_real_usec - get real time counter values
+PAPI_get_real_cyc - get real time counter value in clock cycles
+<!-- .LP -->
+<P>
+PAPI_get_real_usec - get real time counter value in microseconds
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -266,11 +269,10 @@ PAPI_get_real_cyc, PAPI_get_real_usec - get real time counter values
 <A HREF=#2>Description</A><BR>
 <A HREF=#3>Errors</A><BR>
 <A HREF=#4>Example</A><BR>
-<A HREF=#5>Author</A><BR>
-<A HREF=#6>Bugs</A><BR>
-<A HREF=#7>See Also</A><BR>
+<A HREF=#5>Bugs</A><BR>
+<A HREF=#6>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>SYNOPSIS</H3>
 
@@ -335,35 +337,17 @@ These functions always succeed.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>long_long s, e;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
-<P>
-s = PAPI_get_real_cyc();
-<P>
+<TT>s = PAPI_get_real_cyc();
 your_slow_code();
-<P>
 e = PAPI_get_real_cyc();
 printf("Wallclock cycles: %lld&#92;n",e-s);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
-</BLOCKQUOTE>
-<A name=5>
-
-     <H3>AUTHOR</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=6>
+<A name=5>
 
      <H3>BUGS</H3>
 
@@ -373,7 +357,7 @@ These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=6>
 
      <H3>SEE ALSO</H3>
 
@@ -381,13 +365,17 @@ These functions have no known bugs.
 <BLOCKQUOTE>
 <!-- .BR PAPI_library_init "(3), " -->
 <A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
+<!-- .BR PAPI_get_virt_cyc "(3), "  -->
+<A HREF="papi_get_virt_cyc.html">PAPI_get_virt_cyc (3)</A>, 
 <!-- .BR PAPI_get_virt_usec "(3), "  -->
 <A HREF="papi_get_virt_usec.html">PAPI_get_virt_usec (3)</A>, 
-<!-- .BR PAPI_get_virt_cyc "(3)"  -->
-<A HREF="papi_get_virt_cyc.html">PAPI_get_virt_cyc (3)</A>
+<!-- .BR PAPI "(3), "  -->
+<A HREF="papi.html">PAPI (3)</A>, 
+<!-- .BR PAPIF "(3)"  -->
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_real_cyc (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_real_cyc (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

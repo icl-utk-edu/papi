@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_num_events 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_num_events 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -267,11 +267,10 @@ PAPI_num_events - return the number of events in an event set
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -308,6 +307,9 @@ PAPI_num_events - return the number of events in an event set
 <P>
 <!-- .B PAPI_num_events(\|) -->
 <B>PAPI_num_events()</B> returns the number of preset events contained in an event set.
+The event set should be created by
+<!-- .BR "PAPI_create_eventset" (3). -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -377,65 +379,16 @@ The EventSet specified does not exist.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  int EventCode, EventSet = PAPI_NULL;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  /* Create an EventSet */
+<TT>  /* Count the events in our EventSet */
+  printf("%d events found in EventSet.0, PAPI_num_events(EventSet));
 <P>
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Convert an event name to an event code */
-<P>
-  if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Query if Total Instructions Executed exists */
-<P>
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Add Total Instructions Executed to our EventSet */
-<P>
-  if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Convert a second event name to an event code */
-<P>
-  if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Query if L1 Load Misses exists */
-<P>
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Add L1 Load Misses to our EventSet */
-<P>
-  if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Count the events in our EventSet */
-<P>
-  if (PAPI_num_events(EventSet) != 2)
-    handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -445,19 +398,20 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_event_name_to_code "(3), " PAPI_query_event "(3), " PAPI_add_event "(3)"  -->
-<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>, 
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>
+<!-- .BR PAPI_add_event "(3)," PAPI_create_eventset "(3)," PAPI "(3)," PAPIF "(3)" -->
+<A HREF="papi_add_event.html">PAPI_add_event (3)</A>,
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>,
+<A HREF="papi.html">PAPI (3)</A>,
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_events (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_events (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

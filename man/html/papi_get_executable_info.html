@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_executable_info 3 "November, 2003" "PAPI Programmer's Reference" PAPI -->
+<!-- .TH PAPI_get_executable_info 3 "September, 2004" "PAPI Programmer's Reference" PAPI -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -269,11 +269,10 @@ PAPI_get_executable_info - get the executable&#146;s address space info
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Example</A><BR>
 <A HREF=#7>Data Structures</A><BR>
-<A HREF=#8>Authors</A><BR>
-<A HREF=#9>Bugs</A><BR>
-<A HREF=#10>See Also</A><BR>
+<A HREF=#8>Bugs</A><BR>
+<A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=11>
+<A name=10>
 
      <H3>SYNOPSIS</H3>
 
@@ -293,16 +292,14 @@ PAPI_get_executable_info - get the executable&#146;s address space info
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_get_exe_info(C_STRING\  fullname,\  C_STRING\  name,\ \ -->
-<B>PAPIF_get_exe_info(C_STRING </B><I>fullname, </I><B>C_STRING </B><I>name, </I> 
-           C_LONG_LONG  text_start, 
-<!-- .BI \tC_LONG_LONG\  text_end,\  C_LONG_LONG\  data_start,\ \ -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_LONG_LONG </B><B>C_LONG_LONG </B><I>data_start, </I> 
-           C_LONG_LONG  data_end,
-<!-- .BI \tC_LONG_LONG\  bss_start,\  C_LONG_LONG\  bss_end,\  -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_LONG_LONG </B><B>C_LONG_LONG </B><I>bss_end,</I> 
-<!-- .BI \tC_INT\  check) -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_INT </B> 
+<!-- .BI "PAPIF_get_exe_info(C_STRING " fullname," C_STRING "  name, -->
+<B>PAPIF_get_exe_info(C_STRING </B><I>fullname,</I><B> C_STRING </B><I>name,</I> 
+<!-- .BI "       C_LONG_LONG "  text_start, " C_LONG_LONG "  text_end,  -->
+<B>       C_LONG_LONG </B><I>text_start,</I><B> C_LONG_LONG </B><I>text_end,</I> 
+<!-- .BI "       C_LONG_LONG "  data_start, " C_LONG_LONG "  data_end, -->
+<B>       C_LONG_LONG </B><I>data_start,</I><B> C_LONG_LONG </B><I>data_end,</I> 
+<!-- .BI "       C_LONG_LONG "  bss_start, "  C_LONG_LONG "  bss_end, " C_INT " check) -->
+<B>       C_LONG_LONG </B><I>bss_start,</I><B>  C_LONG_LONG </B><I>bss_end,</I><B> C_INT </B><I>check)</I> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -315,7 +312,7 @@ PAPI_get_executable_info - get the executable&#146;s address space info
 </A>
 <BLOCKQUOTE>
 In C, this function returns a pointer to a structure containing information about
-the current program. In Fortran, some fields of the structure are returned explicitly.
+the current program. In Fortran, the fields of the structure are returned explicitly.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -394,14 +391,14 @@ One or more of the arguments is invalid.
 <!-- .if t .ft CW -->
 <TT>const PAPI_exe_info_t *prginfo = NULL;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
-<P>
 if ((prginfo = PAPI_get_executable_info()) == NULL)
   exit(1);
 <P>
-printf("Start of user program is at %p&#92;n",prginfo-&gt;text_start);
-printf("End of user program is at %p&#92;n",prginfo-&gt;text_end);
+printf("Path+Program: %s0,exeinfo-&gt;fullname);
+printf("Program: %s0,exeinfo-&gt;address_info.name);
+printf("Text start: %p, Text end: %p0,exeinfo-&gt;address_info.text_start,exeinfo-&gt;address_info.text_end);
+printf("Data start: %p, Data end: %p0,exeinfo-&gt;address_info.data_start,exeinfo-&gt;address_info.data_end);
+printf("Bss start: %p, Bss end: %p0,exeinfo-&gt;address_info.bss_start,exeinfo-&gt;address_info.bss_end);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
@@ -419,9 +416,8 @@ printf("End of user program is at %p&#92;n",prginfo-&gt;text_end);
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT><P>
-   typedef struct _papi_address_map {
-      char name[PAPI_MAX_STR_LEN];
+<TT>   typedef struct _papi_address_map {
+      char name[PAPI_HUGE_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */
@@ -431,27 +427,16 @@ printf("End of user program is at %p&#92;n",prginfo-&gt;text_end);
    } PAPI_address_map_t;
 <P>
    typedef struct _papi_program_info {
-      char fullname[PAPI_MAX_STR_LEN];  /* path+name */
+      char fullname[PAPI_HUGE_STR_LEN];  /* path+name */
       PAPI_address_map_t address_info;
    } PAPI_exe_info_t;
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=8>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>BUGS</H3>
 
@@ -465,21 +450,19 @@ Only the
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_library_init "(3), " -->
-<A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
 <!-- .BR PAPI_get_hardware_info "(3), " -->
 <A HREF="papi_get_hardware_info.html">PAPI_get_hardware_info (3)</A>, 
-<!-- .BR PAPI_get_opt "(3)"  -->
+<!-- .BR PAPI_get_opt "(3)" -->
 <A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_executable_info (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_executable_info (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

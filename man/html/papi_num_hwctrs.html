@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_num_hwctrs 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_num_hwctrs 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -267,11 +267,10 @@ PAPI_num_hwctrs - return the number of hardware counters
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Examples</A><BR>
-<A HREF=#6>Author</A><BR>
-<A HREF=#7>Bugs</A><BR>
-<A HREF=#8>See Also</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SYNOPSIS</H3>
 
@@ -304,8 +303,9 @@ PAPI_num_hwctrs - return the number of hardware counters
 
 </A>
 <BLOCKQUOTE>
-<!-- .B "PAPI_num_hwctrs()" returns the number of physical hardware -->
-<B>PAPI_num_hwctrs() returns the number of physical hardware</B> counters present in the processor. This count does not include any
+<!-- .B "PAPI_num_hwctrs()"  -->
+<B>PAPI_num_hwctrs()</B> returns the number of physical hardware
+counters present in the processor. This count does not include any
 special purpose registers or performance hardware.
 <!-- .BR "PAPI_library_init" "(3) must be called" -->
 <A HREF="papi_library_init.html">PAPI_library_init (3)</A> must be called
@@ -347,37 +347,15 @@ A zero result usually means the library has not been initialized.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int retval, num;
-<P>
-/* Initialize the library */
-<P>
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-<P>
-if (retval != PAPI_VER_CURRENT)
-  exit(1);
-<P>
-/* Query the substrate for our resources. */
-<P>
-num = PAPI_num_hwctrs();
-printf("%d hardware counters found.0,num);
+<TT>/* Query the substrate for our resources. */
+printf("%d hardware counters found.0, PAPI_num_hwctrs());
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
-</BLOCKQUOTE>
-<A name=6>
-
-     <H3>AUTHOR</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=6>
 
      <H3>BUGS</H3>
 
@@ -387,24 +365,20 @@ None.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_get_opt "(3)," -->
-<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>,
 <!-- .BR PAPI_init_library "(3)," -->
 <A HREF="papi_init_library.html">PAPI_init_library (3)</A>,
-<!-- .BR PAPI_num_counters "(3)," -->
-<A HREF="papi_num_counters.html">PAPI_num_counters (3)</A>,
-<!-- .BR PAPI "(3)" -->
-<A HREF="papi.html">PAPI (3)</A>
-<P>
+<!-- .BR PAPI "(3)," PAPI_F "(3)" -->
+<A HREF="papi.html">PAPI (3)</A>,
+<A HREF="papi_f.html">PAPI_F (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_hwctrs (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_hwctrs (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_presets 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_presets 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -274,8 +274,13 @@ PAPI_presets - PAPI predefined named events
 
 </A>
 <BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
 <!-- .B #include <papi.h> -->
-<B>#include &lt;papi.h&gt;</B> <P>
+<B>#include &lt;papi.h&gt;</B> 
+<!-- .fi -->
+</PRE>
+<P>
 <!-- .SH DESCRIPTION -->
 </BLOCKQUOTE>
 <A name=2>
@@ -284,7 +289,7 @@ PAPI_presets - PAPI predefined named events
 
 </A>
 <BLOCKQUOTE>
-The PAPI library names a number of predefined events. This set
+The PAPI library names a number of predefined, or preset events. This set
 is a collection of events typically found in many
 CPUs that provide performance counters. A PAPI preset event name is
 mapped onto one or more of the countable native events on each hardware platform.
@@ -295,8 +300,8 @@ as a single counter, derived using a combination of counters or unavailable.
 The PAPI preset events can be broken loosely into several categories,
 as shown in the table below:
 <P>
-<!-- .B Conditional Branching:  -->
-<B>Conditional Branching:</B> <!-- .TS H -->
+<!-- .B PAPI Preset Event Definitions by Category:  -->
+<B>PAPI Preset Event Definitions by Category:</B> <!-- .TS H -->
 <P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
 <!-- allbox, tab($); -->
 <!-- cB cB -->
@@ -474,7 +479,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L1_DCM</B></TD><TD>Level 1 data cache misses
+<TD><B>PAPI_L1_DCM</B></TD><TD>L1 data cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -494,7 +499,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L1_ICM</B></TD><TD>Level 1 instruction cache misses
+<TD><B>PAPI_L1_ICM</B></TD><TD>L1 instruction cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -506,11 +511,11 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L1_LDM</B></TD><TD>Level 1 load misses
+<TD><B>PAPI_L1_LDM</B></TD><TD>L1 load misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L1_STM</B></TD><TD>Level 1 store misses
+<TD><B>PAPI_L1_STM</B></TD><TD>L1 store misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -522,7 +527,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L1_TCM</B></TD><TD>Level 1 cache misses
+<TD><B>PAPI_L1_TCM</B></TD><TD>L1 total cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -542,7 +547,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L2_DCM</B></TD><TD>Level 2 data cache misses
+<TD><B>PAPI_L2_DCM</B></TD><TD>L2 data cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -562,7 +567,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L2_ICM</B></TD><TD>Level 2 instruction cache misses
+<TD><B>PAPI_L2_ICM</B></TD><TD>L2 instruction cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -574,11 +579,11 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L2_LDM</B></TD><TD>Level 2 load misses
+<TD><B>PAPI_L2_LDM</B></TD><TD>L2 load misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L2_STM</B></TD><TD>Level 2 store misses
+<TD><B>PAPI_L2_STM</B></TD><TD>L2 store misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -590,7 +595,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L2_TCM</B></TD><TD>Level 2 cache misses
+<TD><B>PAPI_L2_TCM</B></TD><TD>L2 total cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -606,11 +611,11 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L3_DCH</B></TD><TD>Level 3 Data Cache Hits
+<TD><B>PAPI_L3_DCH</B></TD><TD>L3 Data Cache Hits
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L3_DCM</B></TD><TD>Level 3 data cache misses
+<TD><B>PAPI_L3_DCM</B></TD><TD>L3 data cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -630,7 +635,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L3_ICM</B></TD><TD>Level 3 instruction cache misses
+<TD><B>PAPI_L3_ICM</B></TD><TD>L3 instruction cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -642,11 +647,11 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L3_LDM</B></TD><TD>Level 3 load misses
+<TD><B>PAPI_L3_LDM</B></TD><TD>L3 load misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L3_STM</B></TD><TD>Level 3 store misses
+<TD><B>PAPI_L3_STM</B></TD><TD>L3 store misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -658,7 +663,7 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_L3_TCM</B></TD><TD>Level 3 cache misses
+<TD><B>PAPI_L3_TCM</B></TD><TD>L3 cache misses
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -751,10 +756,6 @@ as shown in the table below:
 </A>
 <BLOCKQUOTE>
 Nils Smeds &lt;<A HREF="mailto:smeds@cs.utk.edu">smeds@cs.utk.edu</A>&gt;
-<!-- .LP -->
-<P>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -789,7 +790,7 @@ PAPI event obtained on different hardware platforms.
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_presets (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_presets (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

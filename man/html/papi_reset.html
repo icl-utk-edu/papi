@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_reset 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_reset 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_reset - reset the hardware event counts in an EventSet
+PAPI_reset - reset the hardware event counts in an event set
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,11 +268,10 @@ PAPI_reset - reset the hardware event counts in an EventSet
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -308,7 +307,9 @@ PAPI_reset - reset the hardware event counts in an EventSet
 <!-- .B PAPI_reset() -->
 <B>PAPI_reset()</B> zeroes the values of the counters contained in
 <!-- .IR EventSet "." -->
-<I>EventSet</I>. <P>
+<I>EventSet</I>. This call assumes an initialized PAPI library and
+a properly added event set.
+<P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -370,50 +371,15 @@ The EventSet specified does not exist.
 <!-- .nf          -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-long_long values[1];
- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Add Total Instructions Executed to our EventSet */
-<P>
-if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Start counting */
-<P>
-if (PAPI_start(EventSet) != PAPI_OK)
-  handle_error(1);
-<P>
-poorly_tuned_function();
-<P>
-if (PAPI_stop(EventSet, values) != PAPI_OK)
-  handle_error(1);
-<P>
-printf("%lld&#92;n",values[0]);
-<P>
-if (PAPI_reset(EventSet) != PAPI_OK)
+<TT>if (PAPI_reset(EventSet) != PAPI_OK)
   handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -423,25 +389,19 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_add_event "(3), " PAPI_reset "(3), " PAPI_read "(3), " -->
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<A HREF="papi_reset.html">PAPI_reset (3)</A>, 
-<A HREF="papi_read.html">PAPI_read (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3)"  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>
+<!-- .BR PAPI_create_eventset "(3), " PAPI "(3)," PAPIF "(3)" -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>, 
+<A HREF="papi.html">PAPI (3)</A>,
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_reset (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_reset (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_create_eventset 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_create_eventset 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,11 +268,10 @@ PAPI_create_eventset - create an EventSet
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -335,12 +334,11 @@ or similar routines.
 
 </A>
 <BLOCKQUOTE>
-<!-- .nf -->
-<PRE>
-On success, this function returns PAPI_OK.
-On error, a non-zero error code is returned.
-<!-- .fi -->
-</PRE>
+ On success, this function returns
+<!-- .B "PAPI_OK." -->
+<B>PAPI_OK.</B> <BR>
+ On error, a non-zero error code is returned.
+<P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
 <A name=5>
@@ -357,8 +355,9 @@ On error, a non-zero error code is returned.
 The argument
 <!-- .I handle -->
 <I>handle</I> has not been initialized to
-<!-- .I PAPI_NULL. -->
-<I>PAPI_NULL.</I> <!-- .TP -->
+<!-- .I PAPI_NULL -->
+<I>PAPI_NULL</I> or the argument is a NULL pointer.
+<!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ENOMEM" -->
@@ -392,20 +391,9 @@ Insufficient memory to complete the operation.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -415,23 +403,20 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), " PAPI_remove_event "(3), "   -->
+<!-- .BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), "   -->
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_remove_events "(3), " PAPI_add_event "(3), " PAPI_add_events "(3)"  -->
-<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<A HREF="papi_add_events.html">PAPI_add_events (3)</A>
+<!-- .BR PAPI_add_event "(3) "  -->
+<A HREF="papi_add_event.html">PAPI_add_event (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_create_eventset (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_create_eventset (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

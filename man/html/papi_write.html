@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_write 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_write 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -272,11 +272,10 @@ PAPI_write - Write counter values into counters
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -368,7 +367,9 @@ The EventSet specified does not exist.
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ESBSTR" -->
 <B>PAPI_ESBSTR</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The EventSet is currently counting events and the substrate could
+PAPI_write() is not implemented for this architecture.
+<!-- .B "PAPI_ESYS" -->
+<B>PAPI_ESYS</B> The EventSet is currently counting events and the substrate could
 not change the values of the running counters.
 <P>
 <!-- .SH EXAMPLES -->
@@ -390,20 +391,9 @@ not change the values of the running counters.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHOR</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -413,18 +403,19 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_accum "(3)" -->
-<A HREF="papi_accum.html">PAPI_accum (3)</A>
-<P>
+<!-- .BR PAPI_read "(3), " PAPI "(3), " PAPIF "(3), " -->
+<A HREF="papi_read.html">PAPI_read (3)</A>, 
+<A HREF="papi.html">PAPI (3)</A>, 
+<A HREF="papif.html">PAPIF (3)</A>, 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_write (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_write (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

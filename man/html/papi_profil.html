@@ -268,11 +268,10 @@ PAPI_profil - generate a histogram of hardware counter overflows vs. PC addresse
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -283,10 +282,12 @@ PAPI_profil - generate a histogram of hardware counter overflows vs. PC addresse
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI int\ PAPI_profil(void\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\   -->
-<B>int PAPI_profil(void * </B><I>buf, </I><B>unsigned </B><I>bufsiz, </I><B>unsigned long </B><I>offset, </I> 
-<!-- .BI  \ \ \ unsigned\  scale,\  int\  EventSet,\  int\  EventCode,\  int\  threshold,\  int\  flags ); -->
-<B>   unsigned </B><I>scale, </I><B>int </B><I>EventSet, </I><B>int </B><I>EventCode, </I><B>int </B><I>threshold, </I><B>int </B><I>flags</I><B>);</B> 
+<!-- .BI "int PAPI_profil(void * " buf, " unsigned " bufsiz, " unsigned long " offset,  -->
+<B>int PAPI_profil(void * </B><I>buf,</I><B> unsigned </B><I>bufsiz,</I><B> unsigned long </B><I>offset,</I> 
+<!-- .BI "                unsigned " scale, " int " EventSet, " int " EventCode, "  int "  threshold, -->
+<B>                unsigned </B><I>scale,</I><B> int </B><I>EventSet,</I><B> int </B><I>EventCode,</I><B>  int </B><I>threshold,</I> 
+<!-- .BI "                int " flags ); -->
+<B>                int </B><I>flags</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .LP -->
@@ -294,7 +295,8 @@ PAPI_profil - generate a histogram of hardware counter overflows vs. PC addresse
 <!-- .B Fortran Interface -->
 <B>Fortran Interface</B> <!-- .nf -->
 <PRE>
-The profiling routines have no Fortran interface.
+<!-- .I The profiling routines have no Fortran interface. -->
+<I>The profiling routines have no Fortran interface.</I> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -373,28 +375,28 @@ histogram buffer. Below is a table of representative values for scale:
 <P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
 <!-- allbox tab($); -->
 <!-- cI  s  s -->
-<!-- lB lw  lw. -->
+<!-- lw lw  lw. -->
 <TR valign=top>
 <TD align=center colspan=3><I>Representative values for the scale variable
-</I></TD></TR>
+</TD></TR>
 <TR valign=top>
-<TD><B>HEX</B></TD><TD>DECIMAL</TD><TD>DEFININTION</TD></TR>
+<TD>HEX</TD><TD>DECIMAL</TD><TD>DEFININTION</TD></TR>
 <TR valign=top>
-<TD><B>0x20000</B></TD><TD>131072</TD><TD>Maps precisely one instruction address to a unique bucket in buf.</TD></TR>
+<TD>0x20000</TD><TD>131072</TD><TD>Maps precisely one instruction address to a unique bucket in buf.</TD></TR>
 <TR valign=top>
-<TD><B>0x10000</B></TD><TD> 65536</TD><TD>Maps precisely two instruction addresses to a unique bucket in buf.</TD></TR>
+<TD>0x10000</TD><TD> 65536</TD><TD>Maps precisely two instruction addresses to a unique bucket in buf.</TD></TR>
 <TR valign=top>
-<TD><B> 0xFFFF</B></TD><TD> 65535</TD><TD>Maps approximately two instruction addresses to a unique bucket in buf.</TD></TR>
+<TD> 0xFFFF</TD><TD> 65535</TD><TD>Maps approximately two instruction addresses to a unique bucket in buf.</TD></TR>
 <TR valign=top>
-<TD><B> 0x8000</B></TD><TD> 32768</TD><TD>Maps every four instruction addresses to a bucket in buf.</TD></TR>
+<TD> 0x8000</TD><TD> 32768</TD><TD>Maps every four instruction addresses to a bucket in buf.</TD></TR>
 <TR valign=top>
-<TD><B> 0x4000</B></TD><TD> 16384</TD><TD>Maps every eight instruction addresses to a bucket in buf.</TD></TR>
+<TD> 0x4000</TD><TD> 16384</TD><TD>Maps every eight instruction addresses to a bucket in buf.</TD></TR>
 <TR valign=top>
-<TD><B> 0x0002</B></TD><TD>     2</TD><TD>Maps all instruction addresses to the same bucket in buf.</TD></TR>
+<TD> 0x0002</TD><TD>     2</TD><TD>Maps all instruction addresses to the same bucket in buf.</TD></TR>
 <TR valign=top>
-<TD><B> 0x0001</B></TD><TD>     1</TD><TD>Undefined.</TD></TR>
+<TD> 0x0001</TD><TD>     1</TD><TD>Undefined.</TD></TR>
 <TR valign=top>
-<TD><B> 0x0000</B></TD><TD>     0</TD><TD>Undefined.</TD></TR>
+<TD> 0x0000</TD><TD>     0</TD><TD>Undefined.</TD></TR>
 </TABLE></BLOCKQUOTE>
 <!-- .LP -->
 <P>
@@ -402,9 +404,9 @@ histogram buffer. Below is a table of representative values for scale:
 <P>
 Historically, the scale factor was introduced to allow the allocation of buffers smaller than
 the code size to be profiled. Data and instruction sizes were assumed to be multiples of 16-bits.
-These assumptions are no longer true.
+These assumptions are no longer necessarily true.
 <!-- .B PAPI_profil -->
-<B>PAPI_profil</B> has preserved the traditional definition of scale where appropriate,
+</I><B>PAPI_profil</B> has preserved the traditional definition of scale where appropriate,
 but deprecated the definitions for 0 and 1 (disable scaling) and extended
 the range of scale to include 65536 and 131072 to allow for exactly two
 addresses and exactly one address per profiling bucket.
@@ -566,98 +568,55 @@ The PAPI preset is not available on the underlying hardware.
 <PRE>
 <!-- .if t .ft CW -->
 <TT>int retval;
-int EventSet = PAPI_NULL;
-unsigned long start, end, length;
+unsigned long length;
 PAPI_exe_info_t *prginfo;
 unsigned short *profbuf;
-<P>
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-<P>
-if (retval != PAPI_VER_CURRENT & retval &gt; 0) {
-  fprintf(stderr,"PAPI library version mismatch!0);
-  exit(1); }
-<P>
-if (retval &lt; 0)
-  handle_error(retval);
 <P>
 if ((prginfo = PAPI_get_executable_info()) == NULL)
   handle_error(1);
 <P>
-start = (unsigned long)prginfo-&gt;text_start;
-end = (unsigned long)prginfo-&gt;text_end;
-length = (end - start);
+length = (unsigned long)(prginfo-&gt;text_end - prginfo-&gt;text_start);
 <P>
 profbuf = (unsigned short *)malloc(length);
 if (profbuf == NULL)
   handle_error(1);
 memset(profbuf,0x00,length);
-<P>
-if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-  handle_error(retval);
-<P>
-/* Add Total FP Instructions Executed to our EventSet */
-<P>
-if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
-  handle_error(retval);
-<P>
+ .
+ .
+ .
 if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
                 PAPI_FP_INS, 1000000, PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
   handle_error(retval);
-<P>
-/* Start counting */
-<P>
-if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-  handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
-<P>
+If you call PAPI_profil, PAPI allocates buffer space that will not be
+freed if you call PAPI_shutdown or PAPI_cleanup_eventset.  To clean all
+memory, you must call PAPI_profil on the Events with a 0 threshold.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR profil "(3), " PAPI_sprofil "(3), " -->
-<A HREF="profil.html">profil (3)</A>, 
+<!-- .BR PAPI_sprofil "(3), " -->
 <A HREF="papi_sprofil.html">PAPI_sprofil (3)</A>, 
-<!-- .BR PAPI_preset "(3), " PAPI_get_executable_info "(3), " -->
-<A HREF="papi_preset.html">PAPI_preset (3)</A>, 
-<A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_remove_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
-<A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3) "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A> 
+<!-- .BR PAPI_overflow "(3), " -->
+<A HREF="papi_overflow.html">PAPI_overflow (3)</A>, 
+<!-- .BR PAPI_get_executable_info "(3) " -->
+<A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A> 
 <P>
 </BLOCKQUOTE>
 <P><HR>

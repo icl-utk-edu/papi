@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_set_multiplex 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_set_multiplex 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,13 +256,8 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-<!-- .nf -->
-<PRE>
 PAPI_get_multiplex - get the multiplexing status of specified event set
-PAPI_set_multiplex - convert a standard event set to a multiplexed
-                      event set
-<!-- .fi -->
-</PRE>
+PAPI_set_multiplex - convert a standard event set to a multiplexed event set
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -274,11 +269,10 @@ PAPI_set_multiplex - convert a standard event set to a multiplexed
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -300,10 +294,10 @@ PAPI_set_multiplex - convert a standard event set to a multiplexed
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_get_multiplex(C_INT\  EventSet ) -->
-<B>PAPIF_get_multiplex(C_INT </B><I>EventSet</I><B>)</B> 
-<!-- .BI PAPIF_set_multiplex(C_INT\  EventSet ) -->
-<B>PAPIF_set_multiplex(C_INT </B><I>EventSet</I><B>)</B> 
+<!-- .BI PAPIF_get_multiplex(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_get_multiplex(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_set_multiplex(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_set_multiplex(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -315,20 +309,25 @@ PAPI_set_multiplex - convert a standard event set to a multiplexed
 
 </A>
 <BLOCKQUOTE>
-<!-- .B "PAPI_get_multiplex"  -->
-<B>PAPI_get_multiplex</B> Returns
-<!-- .I TRUE "if a PAPI event set is multiplexed, or" FALSE "if not." -->
-<I>TRUE if a PAPI event set is multiplexed, or FALSE if not.</I> <!-- .LP -->
+<!-- .B PAPI_get_multiplex -->
+<B>PAPI_get_multiplex</B> tests the state of the
+<!-- .I PAPI_MULTIPLEXING -->
+<I>PAPI_MULTIPLEXING</I> flag in the specified event set, returning
+<!-- .I TRUE -->
+<I>TRUE</I> if a PAPI event set is multiplexed, or
+<!-- .I FALSE -->
+<I>FALSE</I> if not.
+<!-- .LP -->
 <P>
-<!-- .B "PAPI_set_multiplex"  -->
-<B>PAPI_set_multiplex</B> Converts a standard PAPI event set created by a call to
+<!-- .B PAPI_set_multiplex -->
+<B>PAPI_set_multiplex</B> converts a standard PAPI event set created by a call to
 <!-- .B PAPI_create_eventset() -->
 <B>PAPI_create_eventset()</B> into an event set capable of handling multiplexed events. This must be done
 after calling
 <!-- .B PAPI_multiplex_init() -->
 <B>PAPI_multiplex_init()</B> , but prior to calling
 <!-- .B PAPI_start(). -->
-<B>PAPI_start().</B> Events can be added to an eventset either before or after converting it into
+<B>PAPI_start().</B> Events can be added to an event set either before or after converting it into
 a multiplexed set, but the conversion must be done prior to using it as a
 multiplexed set.
 <P>
@@ -353,14 +352,21 @@ multiplexed set.
 
 </A>
 <BLOCKQUOTE>
-<!-- .B PAPI_get_multiplex "returns either -->
-<B>PAPI_get_multiplex returns either</B> <!-- .I TRUE "(non-zero) or" FALSE "(zero)." -->
-<I>TRUE (non-zero) or FALSE (zero).</I> <!-- .LP -->
+<!-- .B PAPI_get_multiplex -->
+<B>PAPI_get_multiplex</B> returns either
+<!-- .I TRUE -->
+<I>TRUE</I> (positive non-zero) if multiplexing is enabled for this event set,
+<!-- .I FALSE -->
+<I>FALSE</I> (zero) if multiplexing is not enabled, or
+<!-- .I PAPI_ENOEVST -->
+<I>PAPI_ENOEVST</I> if the specified event set cannot be found.
+<!-- .LP -->
 <P>
 On success,
-<!-- .B PAPI_get_multiplex "returns" PAPI_OK"." -->
-<B>PAPI_get_multiplex returns PAPI_OK .</B> <BR>
- On error, a non-zero error code is returned.
+<!-- .B PAPI_get_multiplex -->
+<B>PAPI_get_multiplex</B> returns
+<!-- .I PAPI_OK. -->
+<I>PAPI_OK.</I> On error, a non-zero error code is returned, as described below.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -375,7 +381,7 @@ On success,
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
+One or more of the arguments is invalid, or the EventSet is already multiplexed.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -388,6 +394,12 @@ The EventSet specified does not exist.
 <!-- .B "PAPI_EISRUN" -->
 <B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 The EventSet is currently counting events.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOMEM" -->
+<B>PAPI_ENOMEM</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Insufficient memory to complete the operation.
 <P>
 <!-- .SH EXAMPLES -->
 </TD></TR>
@@ -401,83 +413,22 @@ The EventSet is currently counting events.
 <!-- .nf          -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 0;
-  long_long *values;
-  PAPI_event_info_t pset;
-<P>
-<P>
-  /* Initialize the library */
-<P>
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    handle_error(1);
-<P>
-  if (PAPI_multiplex_init() != PAPI_OK)
-    handle_error(1);
+<TT>  retval = PAPI_get_multiplex(EventSet);
+  if (retval &gt; 0) printf("This event set is ready for multiplexing0")
+  if (retval == 0) printf("This event set is not enabled for multiplexing0")
+  if (retval &lt; 0) handle_error(retval);
  
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  if (PAPI_get_multiplex(EventSet) != 0)
-    handle_error(1);
-<P>
-  if (PAPI_set_multiplex(EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  if (PAPI_get_multiplex(EventSet) == 0)
-    handle_error(1);
-<P>
-     for (i = 0; i &lt; PAPI_MAX_PRESET_EVENTS; i++) {
-      retval = PAPI_get_event_info(i | PRESET_MASK, &pset);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
-<P>
-      if ((pset.count) && (pset.event_code != PAPI_TOT_CYC)) {
-         if (!TESTS_QUIET)
-            printf("Adding %s0, pset.symbol);
-<P>
-         retval = PAPI_add_event(EventSet, pset.event_code);
-         if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-<P>
-         if (!TESTS_QUIET) {
-            if (retval == PAPI_OK)
-               printf("Added %s0, pset.symbol);
-            else
-               printf("Could not add %s0, pset.symbol);
-         }
-<P>
-         if (retval == PAPI_OK) {
-            if (++j &gt;= max_to_add)
-               break;
-         }
-      }
-   }
-<P>
-  values = (long_long *)malloc(max_to_add*sizeof(long_long));
-  if (values == NULL)
-    handle_error(1);
-<P>
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
+  retval = PAPI_set_multiplex(EventSet);
+  if ((retval == PAPI_EINVAL) && (PAPI_get_multiplex(EventSet) &gt; 0))
+    printf("This event set already has multiplexing enabled0);
+  else if (retval != PAPI_OK) handle_error(retval);
 <!-- .if t .ft P -->
 </TT><!-- .fi          -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -487,18 +438,19 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_multiplex_init "(3)," PAPI_set_opt "(3)" -->
+<!-- .BR PAPI_multiplex_init "(3)," PAPI_set_opt "(3)," PAPI_create_eventset "(3)" -->
 <A HREF="papi_multiplex_init.html">PAPI_multiplex_init (3)</A>,
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>
+<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>,
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_set_multiplex (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_set_multiplex (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

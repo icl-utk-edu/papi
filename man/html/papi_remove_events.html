@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_remove_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_remove_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,12 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_remove_event, PAPI_remove_events - remove PAPI preset or native hardware event from an EventSet
+<!-- .nf -->
+<PRE>
+PAPI_remove_event  - remove PAPI preset or native hardware event from an EventSet
+PAPI_remove_events - remove PAPI presets or native hardware events from an EventSet
+<!-- .fi -->
+</PRE>
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,11 +273,10 @@ PAPI_remove_event, PAPI_remove_events - remove PAPI preset or native hardware ev
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -311,7 +315,33 @@ PAPI_remove_event, PAPI_remove_events - remove PAPI preset or native hardware ev
 <BLOCKQUOTE>
 <!-- .BR "PAPI_remove_event(\|) " "removes a hardware event to a PAPI event set." -->
 <B>PAPI_remove_event() </B>removes a hardware event to a PAPI event set. <!-- .BR "PAPI_remove_events(\|) " "does the same, but for an array of hardware event codes." -->
-<B>PAPI_remove_events() </B>does the same, but for an array of hardware event codes. <P>
+<B>PAPI_remove_events() </B>does the same, but for an array of hardware event codes. <!-- .LP -->
+<P>
+A hardware event can be either a PAPI Preset or a native hardware event code.
+For a list of PAPI preset events, see
+<!-- .BR "PAPI_presets" "(3) or run the" -->
+<A HREF="papi_presets.html">PAPI_presets (3)</A> or run the
+<!-- .I avail -->
+<I>avail</I> test case in the PAPI distribution. PAPI Presets can be passed to
+<!-- .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture." -->
+<A HREF="papi_query_event.html">PAPI_query_event (3)</A> to see if they exist on the underlying architecture.
+For a list of native events available on current platform, run native_avail
+test case in the PAPI distribution. For the encoding of native events, see
+<!-- .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the -->
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
+to learn
+how to
+generate native
+code for
+the 
+supported native event on the underlying architecture."
+<BR>
+                                                                               
+It should be noted that
+<!-- .BR "PAPI_remove_events" -->
+<B>PAPI_remove_events</B> can partially succeed, exactly like
+<!-- .BR "PAPI_add_events". -->
+<B>PAPI_add_events</B>. <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -338,19 +368,6 @@ PAPI_remove_event, PAPI_remove_events - remove PAPI preset or native hardware ev
 <I>number</I> -- an integer indicating the number of events in the array
 <!-- .I *EventCode -->
 <I>*EventCode</I> <P>
-A hardware event can be either a PAPI Preset or a native hardware event code.
-For a list of PAPI preset events, see
-<!-- .BR "PAPI_presets" "(3) or run the" -->
-<A HREF="papi_presets.html">PAPI_presets (3)</A> or run the
-<!-- .I avail -->
-<I>avail</I> test case in the PAPI distribution. PAPI Presets can be passed to
-<!-- .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture." -->
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A> to see if they exist on the underlying architecture.
-For a list of native events available on current platform, run native_avail
-test case in the PAPI distribution. For the encoding of native events, see
-<!-- .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture." -->
-<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A> to learn how to generate native code for the supported native event on the underlying architecture.
-<P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
 <A name=4>
@@ -359,12 +376,9 @@ test case in the PAPI distribution. For the encoding of native events, see
 
 </A>
 <BLOCKQUOTE>
-<!-- .nf -->
-<PRE>
-On success, this function returns PAPI_OK.
-On error, a non-zero error code is returned.
-<!-- .fi -->
-</PRE>
+On success, these functions return
+<!-- .B "PAPI_OK." -->
+<B>PAPI_OK.</B> On error, a less than zero error code is returned or the the number of elements that succeeded before the error.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -376,6 +390,12 @@ On error, a non-zero error code is returned.
 <BLOCKQUOTE>
 <!-- .TP -->
 <TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<!-- .B "Positive integer" -->
+<B>Positive integer</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The number of consecutive elements that succeeded before the error.
+<!-- .TP -->
+</TD></TR>
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
@@ -447,53 +467,40 @@ if (PAPI_remove_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+The vector function should take a pointer to a length argument so a proper return value can
+be set upon partial success.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_preset "(3), " -->
+<!-- .BR PAPI_preset "(3), " " PAPI_add_event "(3), " PAPI_add_events "(3), "  -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_add_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<!-- .BR PAPI_add_events "(3), " PAPI_add_pevents "(3), " PAPI_query_event "(3), " -->
-<A HREF="papi_add_events.html">PAPI_add_events (3)</A>, 
-<A HREF="papi_add_pevents.html">PAPI_add_pevents (3)</A>, 
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
+<BR>
+ PAPI_add_event  (3),
+<BR>
+ PAPI_add_events  (3),
+<BR>
+ 
 <!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " PAPI_event_name_to_code "(3) "  -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_remove_event (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_remove_event (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

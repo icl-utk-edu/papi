@@ -269,11 +269,10 @@ PAPI_sprofil - generate PC histogram data from multiple code regions where hardw
 <A HREF=#5>Return Values</A><BR>
 <A HREF=#6>Errors</A><BR>
 <A HREF=#7>Examples</A><BR>
-<A HREF=#8>Authors</A><BR>
-<A HREF=#9>Bugs</A><BR>
-<A HREF=#10>See Also</A><BR>
+<A HREF=#8>Bugs</A><BR>
+<A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=11>
+<A name=10>
 
      <H3>SYNOPSIS</H3>
 
@@ -284,10 +283,10 @@ PAPI_sprofil - generate PC histogram data from multiple code regions where hardw
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\ -->
-<B>int PAPI_sprofil(PAPI_sprofil_t * </B><I>prof, </I><B>int </B><I>profcnt, </I><B>int </B><I>EventSet,</I> 
-<!-- .BI \ \ \ int\  EventCode,\  int\  threshold,\  int\  flags\  ); -->
-<B>   int </B><I>EventCode, </I><B>int </B><I>threshold, </I><B>int </B><I>flags </I><B>);</B> 
+<!-- .BI "int PAPI_sprofil(PAPI_sprofil_t * " prof, " int " profcnt, " int "  EventSet, -->
+<B>int PAPI_sprofil(PAPI_sprofil_t * </B><I>prof,</I><B> int </B><I>profcnt,</I><B> int </B><I>EventSet,</I> 
+<!-- .BI "                 int " EventCode, "  int "  threshold, "  int "  flags "  ); -->
+<B>                 int </B><I>EventCode,</I><B>  int </B><I>threshold,</I><B>  int </B><I>flags</I><B></B><I>);</I> 
 <!-- .fi -->
 </PRE>
 <!-- .LP -->
@@ -295,7 +294,8 @@ PAPI_sprofil - generate PC histogram data from multiple code regions where hardw
 <!-- .B Fortran Interface -->
 <B>Fortran Interface</B> <!-- .nf -->
 <PRE>
-The profiling routines have no Fortran interface.
+<!-- .I The profiling routines have no Fortran interface. -->
+<I>The profiling routines have no Fortran interface.</I> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -428,27 +428,15 @@ Please refer to that page for further details.
 <PRE>
 <!-- .if t .ft CW -->
 <TT>int retval;
-int EventSet = PAPI_NULL;
-unsigned long start, end, length;
+unsigned long length;
 PAPI_exe_info_t *prginfo;
 unsigned short *profbuf1, *profbuf2, profbucket;
 PAPI_sprofil_t sprof[3];
 <P>
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-<P>
-if (retval != PAPI_VER_CURRENT & retval &gt; 0) {
-  fprintf(stderr,"PAPI library version mismatch!0);
-  exit(1); }
-<P>
-if (retval &lt; 0)
-  handle_error(retval);
-<P>
 if ((prginfo = PAPI_get_executable_info()) == NULL)
   handle_error(1);
 <P>
-start = (unsigned long)prginfo-&gt;text_start;
-end = (unsigned long)prginfo-&gt;text_end;
-length = (end - start);
+length = (unsigned long)(prginfo-&gt;text_end - prginfo-&gt;text_start);
 <P>
 /* Allocate 2 buffers of equal length */
 profbuf1 = (unsigned short *)malloc(length);
@@ -457,14 +445,6 @@ if ((profbuf1 == NULL) || (profbuf2 == NULL))
   handle_error(1);
 memset(profbuf1,0x00,length);
 memset(profbuf2,0x00,length);
-<P>
-/* Create an empty EventSet */
-if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-  handle_error(retval);
-<P>
-/* Add Total FP Instructions Executed to our EventSet */
-if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
-  handle_error(retval);
 <P>
 /* First buffer */
 sprof[0].pr_base = profbuf1;
@@ -487,28 +467,13 @@ sprof[2].pr_scale = 0x0002;
 if ((retval = PAPI_sprofil(sprof, EventSet, PAPI_FP_INS, 1000000,
                  PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
   handle_error(retval);
-<P>
-/* Start counting */
-if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-  handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=8>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>BUGS</H3>
 
@@ -516,10 +481,9 @@ The PAPI Team. See them at the PAPI Web Site:
 <BLOCKQUOTE>
 These functions have no known bugs.
 <P>
-<P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SEE ALSO</H3>
 
@@ -527,20 +491,10 @@ These functions have no known bugs.
 <BLOCKQUOTE>
 <!-- .BR PAPI_profil "(3), " -->
 <A HREF="papi_profil.html">PAPI_profil (3)</A>, 
-<!-- .BR PAPI_preset "(3), " PAPI_get_executable_info "(3), " -->
-<A HREF="papi_preset.html">PAPI_preset (3)</A>, 
+<!-- .BR PAPI_get_executable_info "(3), " -->
 <A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_remove_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
-<A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3) "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A> 
-<P>
+<!-- .BR PAPI_overflow "(3) " -->
+<A HREF="papi_overflow.html">PAPI_overflow (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
 <TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_sprofil (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_start_counters 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_start_counters 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,11 +268,10 @@ PAPI_start_counters - PAPI High Level: start counting hardware events
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -307,7 +306,7 @@ PAPI_start_counters - PAPI High Level: start counting hardware events
 <BLOCKQUOTE>
 <!-- .B PAPI_start_counters(\|) -->
 <B>PAPI_start_counters()</B> starts counting the events named in the events array.  This function
-can&#146;t be called if the events array is already running. The user must
+cannot be called if the events array is already running. The user must
 call PAPI_stop_counters to stop the events explicitly if he/she wants to
 call this function again.  It is the user&#146;s responsibility
 to choose events that can be counted simultaneously by reading the
@@ -405,38 +404,17 @@ The PAPI preset is not available on the underlying hardware.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
-  int num_hwcntrs = 0;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
-    handle_error(1);
-<P>
-  if (num_hwcntrs &gt; 2)
-    num_hwcntrs = 2;
-<P>
-  /* Start counting events */
-<P>
+<TT>  /* Start counting events */
   if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
     handle_error(1);
 <!-- .if t .ft CW -->
 </TT><TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
+<!-- .SH BUGS -->
 <!-- resetStyles [FTT] -->
 </TT></BLOCKQUOTE>
 <A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
-<!-- .SH BUGS -->
-</BLOCKQUOTE>
-<A name=8>
 
      <H3>BUGS</H3>
 
@@ -446,21 +424,25 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_num_counters "(3)," -->
-<A HREF="papi_num_counters.html">PAPI_num_counters (3)</A>,
-<!-- .BR PAPI_read_counters "(3)," -->
-<A HREF="papi_read_counters.html">PAPI_read_counters (3)</A>,
-<!-- .BR PAPI_stop_counters "(3)" -->
-<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A>
+<!-- .BR PAPI_create_eventset "(3)," -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>,
+<!-- .BR PAPI_add_event "(3)," -->
+<A HREF="papi_add_event.html">PAPI_add_event (3)</A>,
+<!-- .BR PAPI_stop_counters "(3)," -->
+<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A>,
+<!-- .BR PAPI "(3)," -->
+<A HREF="papi.html">PAPI (3)</A>,
+<!-- .BR PAPIF "(3)" -->
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_start_counters (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_start_counters (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_event_info 3 "November, 2003" "PAPI Programmer's Reference" PAPI -->
+<!-- .TH PAPI_get_event_info 3 "September, 2004" "PAPI Programmer's Reference" PAPI -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,11 +268,10 @@ PAPI_get_event_info - get the event&#146;s name and description info
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Example</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -311,6 +310,7 @@ PAPI_get_event_info - get the event&#146;s name and description info
 <BLOCKQUOTE>
 In C, this function fills the event information into a structure.
 In Fortran, some fields of the structure are returned explicitly.
+This function works with existing PAPI preset and native event codes.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -380,7 +380,8 @@ One or more of the arguments is invalid.
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ENOTPRESET" -->
 <B>PAPI_ENOTPRESET</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The hardware event specified is not a valid PAPI preset.
+The PAPI preset mask was set, but the hardware event specified
+is not a valid PAPI preset.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -404,37 +405,17 @@ The PAPI preset is not available on the underlying hardware.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT><P>
-int EventCode;
-PAPI_event_info_t info;
-<P>
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
-<P>
-if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
-  handle_error(1);
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<TT>/*Find the event code for PAPI_TOT_INS and its info*/
+PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode)
 if (PAPI_get_event_info(EventCode, &info) == PAPI_OK)
   handle_error(1);
-<P>
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -444,21 +425,21 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_library_init "(3), " -->
-<A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
-<!-- .BR PAPI_get_hardware_info "(3), " -->
-<A HREF="papi_get_hardware_info.html">PAPI_get_hardware_info (3)</A>, 
-<!-- .BR PAPI_get_opt "(3)"  -->
-<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>
+<!-- .BR PAPI "(3),"  -->
+<A HREF="papi.html">PAPI (3)</A>,
+<!-- .BR PAPIF "(3),"  -->
+<A HREF="papif.html">PAPIF (3)</A>,
+<!-- .BR PAPI_event_name_to_code "(3)"  -->
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_event_info (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_event_info (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

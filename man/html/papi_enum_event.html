@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_enum_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_enum_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -274,11 +274,10 @@ PAPI_enum_event - enumerate PAPI preset or native events
 <A HREF=#6>Return Values</A><BR>
 <A HREF=#7>Errors</A><BR>
 <A HREF=#8>Examples</A><BR>
-<A HREF=#9>Authors</A><BR>
-<A HREF=#10>Bugs</A><BR>
-<A HREF=#11>See Also</A><BR>
+<A HREF=#9>Bugs</A><BR>
+<A HREF=#10>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=12>
+<A name=11>
 
      <H3>SYNOPSIS</H3>
 
@@ -395,14 +394,6 @@ On success, this function returns
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EINVAL" -->
-<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments (typically
-<!-- .I modifier)  -->
-<I>modifier)</I> is invalid.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ENOEVNT" -->
 <B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 The next requested PAPI preset or native event is not available on the underlying hardware.
@@ -419,19 +410,7 @@ The next requested PAPI preset or native event is not available on the underlyin
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>   int i = 0 | NATIVE_MASK;
-   int retval;
-   PAPI_event_info_t info;
-<P>
-/* Initialize the library */
-<P>
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-<P>
-if (retval != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library init error!\n");
-  exit(1); }
-<P>
-/* Scan for all supported native events on this platform */
+<TT>/* Scan for all supported native events on this platform */
 <P>
    printf("Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;       Code&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   Description0);
    do {
@@ -445,20 +424,9 @@ if (retval != PAPI_VER_CURRENT) {
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=9>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>BUGS</H3>
 
@@ -468,7 +436,7 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=11>
+<A name=10>
 
      <H3>SEE ALSO</H3>
 
@@ -477,14 +445,15 @@ This function has no known bugs.
 <!-- .BR PAPI_preset "(3), " PAPI_native "(3), " -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
 <A HREF="papi_native.html">PAPI_native (3)</A>, 
-<!-- .BR PAPI_get_event_info "(3), " PAPI_library_init "(3)"  -->
+<!-- .BR PAPI_get_event_info "(3), " PAPI_event_name_to_code "(3)"  -->
 <A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>, 
-<A HREF="papi_library_init.html">PAPI_library_init (3)</A>
-<P>
-<P>
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
+<!-- .BR PAPI "(3), " PAPIF "(3)" -->
+<A HREF="papi.html">PAPI (3)</A>, 
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_enum_event (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_enum_event (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

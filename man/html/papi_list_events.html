@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_list_events 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_list_events 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -267,11 +267,10 @@ PAPI_list_events - list the events in an event set
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -308,6 +307,10 @@ PAPI_list_events - list the events in an event set
 <P>
 <!-- .B PAPI_list_events(\|) -->
 <B>PAPI_list_events()</B> decomposes an event set into the hardware events it contains.
+<!-- .LP -->
+<P>
+This call assumes an initialized PAPI library and a properly
+added event set.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -375,12 +378,6 @@ One or more of the arguments is invalid.
 <!-- .B "PAPI_ENOEVST" -->
 <B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 The EventSet specified does not exist.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOTPRESET" -->
-<B>PAPI_ENOTPRESET</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The hardware event specified is not a PAPI preset for this architecture.
 <P>
 <!-- .SH EXAMPLES -->
 </TD></TR>
@@ -394,46 +391,23 @@ The hardware event specified is not a PAPI preset for this architecture.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  int EventCode, EventSet = PAPI_NULL;
-  int Events[4], number = 4;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  /* Create an EventSet */
-<P>
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Convert an event name to an event code */
-<P>
+<TT>  /* Convert an event name to an event code */
   if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
     handle_error(1);
 <P>
-  /* Query if Total Instructions Executed exists */
-<P>
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
   /* Add Total Instructions Executed to our EventSet */
-<P>
   if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
     handle_error(1);
 <P>
   /* Convert a second event name to an event code */
-<P>
   if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
     handle_error(1);
 <P>
-  /* Query if L1 Load Misses exists */
-<P>
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-<P>
   /* Add L1 Load Misses to our EventSet */
-<P>
   if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
     handle_error(1);
 <P>
   /* List the events in our EventSet */
-<P>
   number = 4;
   if(PAPI_list_events(EventSet, Events, &number);
     handle_error(1);
@@ -444,20 +418,9 @@ The hardware event specified is not a PAPI preset for this architecture.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -467,19 +430,23 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_event_name_to_code "(3), " PAPI_query_event "(3), " PAPI_add_event "(3)"  -->
+<!-- .BR PAPI_event_name_to_code "(3), " PAPI_add_event "(3)" PAPI_create_eventset "(3)," -->
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>, 
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>,
+<!-- .BR PAPI_event_code_to_name "(3), " PAPI "(3), " PAPIF "(3)"  -->
+<A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>, 
+<A HREF="papi.html">PAPI (3)</A>, 
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_list_events (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_list_events (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,5 +1,5 @@
 <!-- .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5 -->
-<!-- .TH PAPI_ipc 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_ipc 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -267,12 +267,10 @@ PAPI_ipc - PAPI High level: Simplified call to get instructions per cycle, real 
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=8>
 
      <H3>SYNOPSIS</H3>
 
@@ -315,7 +313,13 @@ Subsequent calls will read the counters and return total real time,
 total process time, total instructions since the start
 of the measurement and the instructions per cycle rate since latest call to
 <!-- .B PAPI_ipc(\|). -->
-<B>PAPI_ipc().</B> <P>
+<B>PAPI_ipc().</B> A call to
+<!-- .B PAPI_stop_counters(\|) " -->
+<B>PAPI_stop_counters() </B> will stop the counters from running and then calls such as
+<!-- .B PAPI_start_counters(\|) " -->
+<B>PAPI_start_counters() </B> can safely be used.
+<P>
+<P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -360,30 +364,70 @@ On success, this function returns
 
 </A>
 <BLOCKQUOTE>
-<P>
-<!-- .SH EXAMPLES -->
-</BLOCKQUOTE>
-<A name=6>
-
-     <H3>EXAMPLES</H3>
-
-</A>
-<BLOCKQUOTE>
-<P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+ In addition to the possible errors returned by the various PAPI
+low level calls, the following errors could also be returned:
+<!-- .TP -->
+<TABLE cellpadding=3><!-- tsb:  In addition to the possible errors returned by the various PAPI
+ -->
+<TR></TR><TR></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EINVAL" -->
+<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The counters were already started by something other than:
+<!-- .B PAPI_ipc(\|)  -->
+<B>PAPI_ipc()</B> <!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOEVNT" -->
+<B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The total instructions or total cycles event does not exist.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOMEM" -->
+<B>PAPI_ENOMEM</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Insufficient memory to complete the operation.
+<BR>
+                                                                               
+<!-- .BR  PAPI_ipc() " may be called by:" -->
+<B>PAPI_ipc()</B> may be called by: <!-- .B  \t -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> <!-- .B  \tthe user application program -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the user application program</B> <!-- .fi -->
+<!-- .LP -->
+</TD></TR>
+<!-- LP ends table -->
+<TR></TR></TABLE><!-- .nf -->
+<PRE>
+<!-- .B  \t -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> 
+<!-- .BR  PAPI_ipc() " contains calls to:" -->
+<B>PAPI_ipc()</B> contains calls to: 
+<!-- .B  \t -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> 
+<!-- .B  \tPAPI_perror() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_perror()</B> 
+<!-- .B  \tPAPI_library_init() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_library_init()</B> 
+<!-- .B  \tPAPI_get_hardware_info() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_get_hardware_info()</B> 
+<!-- .B  \tPAPI_create_eventset() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_create_eventset()</B> 
+<!-- .B  \tPAPI_add_event() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_add_event()</B> 
+<!-- .B  \tPAPI_start() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_start()</B> 
+<!-- .B  \tPAPI_get_real_usec() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_get_real_usec()</B> 
+<!-- .B  \tPAPI_accum() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_accum()</B> 
+<!-- .B  \tPAPI_shutdown() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_shutdown()</B> 
+<!-- .fi -->
+</PRE>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=6>
 
      <H3>BUGS</H3>
 
@@ -393,19 +437,21 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=7>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR "PAPI_accum (3)", "PAPI_flips (3)", "PAPI_flops (3)" -->
-<A HREF="papi_accum.html">PAPI_accum (3)</A> ,
+<!-- .BR "PAPI_stop_counters (3)", "PAPI_set_opt (3)", "PAPI_flips (3)", -->
+<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A> ,
+<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A> ,
 <A HREF="papi_flips.html">PAPI_flips (3)</A> ,
+<!-- .BR "PAPI_flops (3)" -->
 <A HREF="papi_flops.html">PAPI_flops (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_ipc (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_ipc (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

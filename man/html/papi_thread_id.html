@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_thread_id 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_thread_id 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -264,10 +264,10 @@ PAPI_thread_id - get the thread identifier of the current thread
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Return Values</A><BR>
-<A HREF=#4>Errors</A><BR>
-<A HREF=#5>Example</A><BR>
-<A HREF=#6>Authors</A><BR>
+<A HREF=#3>Arguments</A><BR>
+<A HREF=#4>Return Values</A><BR>
+<A HREF=#5>Errors</A><BR>
+<A HREF=#6>Example</A><BR>
 <A HREF=#7>Bugs</A><BR>
 <A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
@@ -304,34 +304,58 @@ PAPI_thread_id - get the thread identifier of the current thread
 
 </A>
 <BLOCKQUOTE>
+This function returns a valid thread identifier. It calls the function
+registered with PAPI through a call to
+<!-- .B PAPI_thread_init(). -->
+<B>PAPI_thread_init().</B> <P>
+<!-- .SH ARGUMENTS -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>ARGUMENTS</H3>
+
+</A>
+<BLOCKQUOTE>
 None.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
-<A name=3>
+<A name=4>
 
      <H3>RETURN VALUES</H3>
 
 </A>
 <BLOCKQUOTE>
-On success, this function returns a valid thread
-identifier.
-<BR>
- On error, (unsigned long int)-1 is returned.
+On success, this function returns
+<!-- .B PAPI_OK. -->
+<B>PAPI_OK.</B> <BR>
+ On error, a negative error value is returned.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
-<A name=4>
+<A name=5>
 
      <H3>ERRORS</H3>
 
 </A>
 <BLOCKQUOTE>
-None.
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EMISC"  -->
+<B>PAPI_EMISC</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+is returned if there are no threads registered.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD width=6% nowrap>
+<!-- .B "-1" -->
+<B>-1</B> </TD><TD valign=bottom>
+is returned if the thread id function returns an error.
 <P>
 <!-- .SH EXAMPLE -->
-</BLOCKQUOTE>
-<A name=5>
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=6>
 
      <H3>EXAMPLE</H3>
 
@@ -342,12 +366,6 @@ None.
 <!-- .if t .ft CW -->
 <TT>unsigned long tid;
 <P>
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
-<P>
-if (PAPI_thread_init(pthread_self) != PAPI_OK)
-  exit(1);
-<P>
 if ((tid = PAPI_thread_id()) == (unsigned long int)-1)
   exit(1);
 <P>
@@ -355,17 +373,6 @@ printf("Initial thread id is: %lu&#92;n",tid);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
-<P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=6>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -389,7 +396,7 @@ This function has no known bugs.
 <A HREF="papi_thread_init.html">PAPI_thread_init (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_thread_id (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_thread_id (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

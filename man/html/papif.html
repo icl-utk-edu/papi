@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPIF 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPIF 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -263,31 +263,36 @@ PAPIF - Performance Application Programming Interface (Fortran)
 <A name=contents></A><H3>CONTENTS</H3></A>
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
-<A HREF=#2>Fortran Calling Interface</A><BR>
-<A HREF=#3>Authors</A><BR>
-<A HREF=#4>Diagnostics</A><BR>
-<A HREF=#5>See Also</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Return Values</A><BR>
+<A HREF=#4>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=6>
+<A name=5>
 
      <H3>SYNOPSIS</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
 <!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> <P>
-<!-- .B call PAPIF_function_name(arg1,arg2,...,check) -->
-<B>call PAPIF_function_name(arg1,arg2,...,check)</B> <P>
+<B>#include fpapi.h</B> 
+<!-- .BI "call PAPIF_function_name(" arg1,arg2,...,check" ) -->
+<B>call PAPIF_function_name(</B><I>arg1,arg2,...,check</I><B>)</B> 
+<!-- .fi -->
+</PRE>
 <P>
-<!-- .SH Fortran Calling Interface -->
+<P>
+<!-- .SH DESCRIPTION -->
 </BLOCKQUOTE>
 <A name=2>
 
-     <H3>Fortran Calling Interface</H3>
+     <H3>DESCRIPTION</H3>
 
 </A>
 <BLOCKQUOTE>
-The PAPI library comes with a specific Fortran library interface. The
+<!-- .B Fortran Calling Interface -->
+<B>Fortran Calling Interface</B> The PAPI library comes with a specific Fortran library interface. The
 Fortran interface covers the complete library with a few minor
 exceptions. Functions returning C pointers to structures, such as
 <!-- .BR PAPI_get_opt(3) -->
@@ -307,8 +312,7 @@ and functionality of
 <A HREF="papi_accum.html">PAPI_accum (3)</A> 
 man page.
 <P>
-For most
-architectures the following relation holds between the pseudo-types
+For most architectures the following relation holds between the pseudo-types
 listed and Fortran variable types.
 <P>
 <!-- .TS -->
@@ -357,22 +361,11 @@ of sufficient size. No character string longer than
 <!-- .B PAPI_MAX_STR_LEN -->
 <B>PAPI_MAX_STR_LEN</B> is returned by the PAPIF interface.
 <P>
-<!-- .SH AUTHORS -->
+<!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
 <A name=3>
 
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
-<!-- .SH DIAGNOSTICS -->
-</BLOCKQUOTE>
-<A name=4>
-
-     <H3>DIAGNOSTICS</H3>
+     <H3>RETURN VALUES</H3>
 
 </A>
 <BLOCKQUOTE>
@@ -382,7 +375,7 @@ The return code of the corresponding C routine is returned in the argument
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=4>
 
      <H3>SEE ALSO</H3>
 
@@ -393,7 +386,7 @@ The return code of the corresponding C routine is returned in the argument
 <A HREF="papi.html">PAPI (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPIF (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPIF (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

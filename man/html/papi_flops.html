@@ -1,5 +1,5 @@
 <!-- .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5 -->
-<!-- .TH PAPI_flips 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_flips 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -270,8 +270,8 @@ PAPI HOME
 <A HREF=#2>Description</A><BR>
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Notes</A><BR>
-<A HREF=#6>Authors</A><BR>
+<A HREF=#5>Errors</A><BR>
+<A HREF=#6>Notes</A><BR>
 <A HREF=#7>Bugs</A><BR>
 <A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
@@ -321,8 +321,13 @@ to monitor PAPI_FP_INS or PAPI_FP_OPS and PAPI_TOT_CYC events and start the coun
 Subsequent calls will read the counters and return total real time,
 total process time, total floating point instructions or operations since the start
 of the measurement and the Mflip/s or Mflop/s rate since latest call to
-<!-- .B PAPI_flops(\|) "or" PAPI_flops(\|). -->
-<B>PAPI_flops() or PAPI_flops().</B> <P>
+<!-- .B PAPI_flips(\|) "or" PAPI_flops(\|).                 -->
+<B>PAPI_flips() or PAPI_flops().</B> A call to
+<!-- .B PAPI_stop_counters(\|) " -->
+<B>PAPI_stop_counters() </B> will stop the counters from running and then calls such as
+<!-- .B PAPI_start_counters(\|) " -->
+<B>PAPI_start_counters() </B> can safely be used.
+<P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -359,9 +364,44 @@ On success, this function returns
 <B>PAPI_OK.</B> <BR>
  On error, a non-zero error code is returned.
 <P>
-<!-- .SH NOTES -->
+<!-- .SH ERRORS -->
 </BLOCKQUOTE>
 <A name=5>
+
+     <H3>ERRORS</H3>
+
+</A>
+<BLOCKQUOTE>
+ In addition to the possible errors returned by the various PAPI
+low level calls, the following errors could also be returned:
+<!-- .TP -->
+<TABLE cellpadding=3><!-- tsb:  In addition to the possible errors returned by the various PAPI
+ -->
+<TR></TR><TR></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EINVAL" -->
+<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The counters were already started by something other than:
+<!-- .B PAPI_flips(\|) "or" PAPI_flops(\|).                 -->
+<B>PAPI_flips() or PAPI_flops().</B> <!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOEVNT" -->
+<B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The floating point operations,floating point instruction or
+total cycles event does not exist.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOMEM" -->
+<B>PAPI_ENOMEM</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Insufficient memory to complete the operation.
+<P>
+<P>
+<!-- .SH NOTES -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=6>
 
      <H3>NOTES</H3>
 
@@ -384,8 +424,8 @@ loads and stores if necessary.
 <P>
 <!-- .nf -->
 <PRE>
-<!-- .BR  PAPI_flops() " may be called by:" -->
-<B>PAPI_flops()</B> may be called by: 
+<!-- .BR  PAPI_flops() and PAPI_flips() " may be called by:" -->
+<B>PAPI_flops()</B>and<B>PAPI_flips()</B> may be called by: 
 <!-- .B  \t -->
 <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> 
 <!-- .B  \tthe user application program -->
@@ -423,17 +463,6 @@ loads and stores if necessary.
 <!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHORS -->
-</BLOCKQUOTE>
-<A name=6>
-
-     <H3>AUTHORS</H3>
-
-</A>
-<BLOCKQUOTE>
-The PAPI Team. See them at the PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
 <A name=7>
@@ -452,12 +481,13 @@ These functions have no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR "PAPI_accum (3)", "PAPI_ipc (3)" -->
-<A HREF="papi_accum.html">PAPI_accum (3)</A> ,
-<A HREF="papi_ipc.html">PAPI_ipc (3)</A> 
+<!-- .BR "PAPI_stop_counters (3)", "PAPI_ipc (3)", "PAPI_set_opt (3)" -->
+<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A> ,
+<A HREF="papi_ipc.html">PAPI_ipc (3)</A> ,
+<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_flips (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_flips (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
