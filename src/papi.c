@@ -904,7 +904,8 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 	thread->domain = dom;
 
 	/* Change the global structure. This should be removed but is
-	   necessary since the init_config function in the substrates
+	   necessary since the _papi_hwd_init_control_state function 
+	   (formerly init_config) in the substrates
 	   gets information from the global structure instead of
 	   per-thread information. */
 	

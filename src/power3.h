@@ -5,28 +5,7 @@
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
 
-typedef struct hwd_native {
-  /* index in the native table, required */
-  int index;
-  /* Which counters can be used?  */
-  unsigned int selector;  
-  /* Rank determines how many counters carry each metric */
-  unsigned char rank;
-  /* which counter this native event stays */
-  int position;
-  int mod;
-  int link;
-} hwd_native_t;
-
 typedef struct PWR3_pmapi_control {
-  /* add this array to hold native events info */
-  hwd_native_t native[MAX_COUNTERS];
-  
-  /* total_events: number of added events
-     native_idx:   number of all native events 
-	 both are required */
-  int native_idx; 
-    
   /* bitmap with all counters currently used */
   unsigned char master_selector;  
 
@@ -82,7 +61,6 @@ typedef struct _thread_list {
 /* prototypes */
 extern int set_domain(hwd_control_state_t *this_state, int domain);
 extern int set_granularity(hwd_control_state_t *this_state, int domain);
-extern void init_config(hwd_control_state_t *ptr);
 /*void dump_state(hwd_control_state_t *s);*/
 
 #endif /* _PAPI_POWER3 */

@@ -360,7 +360,7 @@ int _papi_hwd_init(hwd_context_t *context)
 {
   /* Initialize our global machdep. */
 
-  init_config(&context->cntrl);
+  _papi_hwd_init_control_state(&context->cntrl);
 
   return(PAPI_OK);
 }

@@ -67,12 +67,13 @@ extern int _papi_hwd_init(hwd_context_t *);
 /*
 extern int _papi_hwd_add_event(hwd_register_map_t *chosen, hwd_preset_t *preset, hwd_control_state_t *out);
 */
+extern void _papi_hwd_init_control_state(hwd_control_state_t *ptr);
 extern int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, EventInfo_t *out);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *, EventInfo_t *); 
-extern int _papi_hwd_allocate_registers(hwd_control_state_t *);
+extern int _papi_hwd_allocate_registers(EventSetInfo_t *ESI);
 extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **);
 extern int _papi_hwd_shutdown(hwd_context_t *);
-extern int _papi_hwd_remove_event(hwd_control_state_t *this_state, int *nix, int size);
+extern int _papi_hwd_remove_event(EventSetInfo_t *ESI, int *nix, int size);
 extern u_long_long _papi_hwd_get_real_cycles (void);
 extern u_long_long _papi_hwd_get_real_usec (void);
 extern u_long_long _papi_hwd_get_virt_cycles (const hwd_context_t *);

@@ -19,8 +19,6 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-#include "allocate.h"
-
 extern hwi_preset_t _papi_hwd_preset_map[];
 
 /* These defines smooth out the differences between versions of pmtoolkit */
@@ -187,21 +185,16 @@ preset_search_t *preset_search_map=preset_name_map_630;
 
  #define DEBUG_SETUP 
 
-void init_config(hwd_control_state_t *ptr)
+/* This used to be init_config, static to the substrate.
+   Now its exposed to the hwi layer and called when an EventSet is allocated.
+*/
+void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
-  int i, j;
-
-  memset(ptr->native, 0, sizeof(hwd_native_t)*MAX_COUNTERS);
+  int i;
 
   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
     ptr->counter_cmd.events[i] = COUNT_NOTHING;
- 	ptr->native[i].index=COUNT_NOTHING;
- 	ptr->native[i].position=COUNT_NOTHING;
-	/*ptr->native[i].link=COUNT_NOTHING;*/
  }
-  /*ptr->hwd_idx=0;
-  ptr->total_events=0;*/
-  ptr->native_idx=0;
   set_domain(ptr,_papi_hwi_system_info.default_domain);
   set_granularity(ptr,_papi_hwi_system_info.default_granularity);
 }
@@ -257,14 +250,14 @@ static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cn
      Success, return hwd_native_t array index
      Fail,    return -1;                                                             
 */
-int _papi_hwd_add_native_precheck(hwd_control_state_t *tmp_state, int nix)
+int _papi_hwd_add_native_precheck(EventSetInfo_t *ESI, int nix)
 {
 	int i;
 	  
 	/* to find the native event from the native events list */
-	for(i=0; i<tmp_state->native_idx;i++){
-		if(nix==tmp_state->native[i].index){
-			tmp_state->native[i].link++;
+	for(i=0; i<ESI->NativeCount;i++){
+		if(nix==ESI->NativeInfoArray[i].index){
+			ESI->NativeInfoArray[i].owners++;
 			DBG((stderr,"found native name: %s\n", native_table[nix].name));
 			return i;
 		}
@@ -278,10 +271,10 @@ int _papi_hwd_add_native_precheck(hwd_control_state_t *tmp_state, int nix)
      success  return 1
 	 fail     return 0
 */
-static int do_counter_allocation(hwd_native_t *event_list, int size)
+static int do_counter_allocation(NativeInfo_t *event_list, int size)
 {
 	int i,j;
-	hwd_native_t *queue[MAX_COUNTERS];
+	NativeInfo_t *queue[MAX_COUNTERS];
 	int head, tail;
 	
 	/* if the event competes 1 counter only, it has priority, map it */
@@ -321,19 +314,19 @@ static int do_counter_allocation(hwd_native_t *event_list, int size)
 		return 1; /* successfully mapped */
 	}
 	else{
-		hwd_native_t rest_event_list[MAX_COUNTERS];
-		hwd_native_t copy_rest_event_list[MAX_COUNTERS];
+		NativeInfo_t rest_event_list[MAX_COUNTERS];
+		NativeInfo_t copy_rest_event_list[MAX_COUNTERS];
 		
 		j=0;
 		for(i=0;i<size;i++){
 			if(event_list[i].mod<0){
-				memcpy(copy_rest_event_list+j, event_list+i, sizeof(hwd_native_t));
+				memcpy(copy_rest_event_list+j, event_list+i, sizeof(NativeInfo_t));
 				copy_rest_event_list[j].mod=i;
 				j++;
 			}
 		}
 		
-		memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_native_t)*(size-tail));
+		memcpy(rest_event_list, copy_rest_event_list, sizeof(NativeInfo_t)*(size-tail));
 		
 		for(i=0;i<MAX_COUNTERS;i++){
 			if(rest_event_list[0].selector & (1<<i)){ /* pick first event on the list, set 1 to 0, to see whether there is an answer */
@@ -352,7 +345,7 @@ static int do_counter_allocation(hwd_native_t *event_list, int size)
 				if(do_counter_allocation(rest_event_list, size-tail))
 					break;
 				
-				memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_native_t)*(size-tail));
+				memcpy(rest_event_list, copy_rest_event_list, sizeof(NativeInfo_t)*(size-tail));
 			}
 		}
 		if(i==MAX_COUNTERS){
@@ -370,18 +363,19 @@ static int do_counter_allocation(hwd_native_t *event_list, int size)
      success  return 1
 	 fail     return 0
 */      
-int _papi_hwd_allocate_registers(hwd_control_state_t *tmp_state)
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 {
+  hwd_control_state_t *tmp_state = &ESI->machdep;
   unsigned char selector;
   int i, natNum;
-  hwd_native_t event_list[MAX_COUNTERS];
+  NativeInfo_t event_list[MAX_COUNTERS];
   int position;
 
-  natNum=tmp_state->native_idx;
+  natNum=ESI->NativeCount;
   
   /* not successfully mapped, but have enough slots for events */
 	
-  memcpy(event_list, tmp_state->native, sizeof(hwd_native_t)*natNum);
+  memcpy(event_list, ESI->NativeInfoArray, sizeof(NativeInfo_t)*natNum);
 	
   if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
 	/* update tmp_state, reset... */
@@ -394,9 +388,9 @@ int _papi_hwd_allocate_registers(hwd_control_state_t *tmp_state)
 		tmp_state->master_selector |= event_list[i].selector;
 		/* update tmp_state->native->position */
 		position=get_avail_hwcntr_num(event_list[i].selector);
-		tmp_state->native[i].position=position; 
+		ESI->NativeInfoArray[i].position=position; 
 		/* update tmp_state->counter_cmd */
-		tmp_state->counter_cmd.events[position] = native_table[tmp_state->native[i].index].resources.counter_cmd[position];
+		tmp_state->counter_cmd.events[position] = native_table[ESI->NativeInfoArray[i].index].resources.counter_cmd[position];
 	}
 	return 1;
   }
@@ -411,17 +405,17 @@ size: number of native events to add
 */
 int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, EventInfo_t *out)
 {
+	EventSetInfo_t *ESI;
 	hwd_control_state_t tmp_state;
 	int nidx, ntop, i, j, remap=0; 
 	
+	/* dereference a pointer to the EventSetInfo structure */
+	ESI = out->ESIhead;
+
 	/* Copy this_state into tmp_state. We can muck around with tmp and
 	bail in case of failure and leave things unchanged. tmp_state 
 	gets written back to this_state only if everything goes OK. */
 	tmp_state = *this_state;
-	
-	/* If all slots are empty, initialize the state. */
-	if (tmp_state.master_selector == 0)
-		init_config(&tmp_state);
 	
 	/* index of native event */
 	/* nix = EventCode ^ NATIVE_MASK;*/
@@ -429,35 +423,35 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, Eve
 	/* if the native event is already mapped, fill in 
 	out->regs.pos[presetPos]  */
 	for(i=0;i<size;i++){
-		if((nidx=_papi_hwd_add_native_precheck(&tmp_state, nix[i]))>=0){
-			out->regs.pos[i]=tmp_state.native[nidx].position;
+		if((nidx=_papi_hwd_add_native_precheck(ESI, nix[i]))>=0){
+			out->regs.pos[i]=ESI->NativeInfoArray[nidx].position;
 		}
 		else{
 			/* all counters have been used, add_native fail */
-			if(tmp_state.native_idx==MAX_COUNTERS){
+			if(ESI->NativeCount==MAX_COUNTERS){
 				DBG((stderr,"counters are full!\n"));
 				return -1;
 			}
 			/* there is an empty slot for the native event, initialize the empty slot for the new added event */
-			ntop=tmp_state.native_idx;
-			tmp_state.native[ntop].index=nix[i];
-			tmp_state.native[ntop].selector=native_table[nix[i]].resources.selector;
+			ntop=ESI->NativeCount;
+			ESI->NativeInfoArray[ntop].index=nix[i];
+			ESI->NativeInfoArray[ntop].selector=native_table[nix[i]].resources.selector;
 			
 			/* calculate native event rank, which is number of counters it can live on, this is power3 specific */
 			j=0;
 			while(j<MAX_COUNTERS){
-				if(tmp_state.native[ntop].selector & (1<<j))
-					tmp_state.native[ntop].rank++;
+				if(ESI->NativeInfoArray[ntop].selector & (1<<j))
+					ESI->NativeInfoArray[ntop].rank++;
 				j++;
 			}
-			tmp_state.native_idx++;
+			ESI->NativeCount++;
 			remap++; 
 		}
 	}
 	
 	/* if remap!=0, we need reallocate counters */
 	if(remap){
-		if(_papi_hwd_allocate_registers(&tmp_state)){
+		if(_papi_hwd_allocate_registers(ESI)){
 			*this_state=tmp_state;
 			return 1;
 		}
@@ -472,15 +466,16 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, Eve
 
 
 /*int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)*/
-int _papi_hwd_remove_event(hwd_control_state_t *this_state, int *nix, int size)
+int _papi_hwd_remove_event(EventSetInfo_t *ESI, int *nix, int size)
 {
+	hwd_control_state_t *this_state= &ESI->machdep;
 	int i, j, zero=0;
 
 	for(i=0;i<size;i++){
-		for(j=0;j<this_state->native_idx;j++){
-			if(this_state->native[j].index==nix[i]){
-				this_state->native[j].link--;
-				if(this_state->native[j].link==0){
+		for(j=0;j<ESI->NativeCount;j++){
+			if(ESI->NativeInfoArray[j].index==nix[i]){
+				ESI->NativeInfoArray[j].owners--;
+				if(ESI->NativeInfoArray[j].owners==0){
 					zero++;
 				}
 				break;
@@ -488,35 +483,35 @@ int _papi_hwd_remove_event(hwd_control_state_t *this_state, int *nix, int size)
 		}
 	}
 
-	for(i=0;i<this_state->native_idx;i++){
-		if(this_state->native[i].index==COUNT_NOTHING)
+	for(i=0;i<ESI->NativeCount;i++){
+		if(ESI->NativeInfoArray[i].index==COUNT_NOTHING)
 			continue;
-		if(this_state->native[i].link==0){
+		if(ESI->NativeInfoArray[i].owners==0){
 			int copy=0;
-			this_state->master_selector^=1<<this_state->native[i].position;
-			this_state->counter_cmd.events[this_state->native[i].position]=COUNT_NOTHING;
-			for(j=this_state->native_idx-1;j>i;j--){
-				if(this_state->native[j].index==COUNT_NOTHING)
+			this_state->master_selector^=1<<ESI->NativeInfoArray[i].position;
+			this_state->counter_cmd.events[ESI->NativeInfoArray[i].position]=COUNT_NOTHING;
+			for(j=ESI->NativeCount-1;j>i;j--){
+				if(ESI->NativeInfoArray[j].index==COUNT_NOTHING)
 					continue;
 				else{
-					memcpy(this_state->native+i, this_state->native+j, sizeof(hwd_native_t));
-					memset(this_state->native+j, 0, sizeof(hwd_native_t));
-					this_state->native[j].index=COUNT_NOTHING;
-					this_state->native[j].position=COUNT_NOTHING;
+					memcpy(ESI->NativeInfoArray+i, ESI->NativeInfoArray+j, sizeof(NativeInfo_t));
+					memset(ESI->NativeInfoArray+j, 0, sizeof(NativeInfo_t));
+					ESI->NativeInfoArray[j].index=COUNT_NOTHING;
+					ESI->NativeInfoArray[j].position=COUNT_NOTHING;
 					copy++;
 					break;
 				}
 			}
 			if(copy==0){
-				memset(this_state->native+i, 0, sizeof(hwd_native_t));
-				this_state->native[j].index=COUNT_NOTHING;
-				this_state->native[i].position=COUNT_NOTHING;
+				memset(ESI->NativeInfoArray+i, 0, sizeof(NativeInfo_t));
+				ESI->NativeInfoArray[j].index=COUNT_NOTHING;
+				ESI->NativeInfoArray[i].position=COUNT_NOTHING;
 			}
 		}
 	}
 
 	/* to reset hwd_control_state values */
-	this_state->native_idx-=zero;
+	ESI->NativeCount-=zero;
 	return(PAPI_OK);
 }
 

@@ -87,7 +87,12 @@ typedef struct _EventSetProfileInfo {
   int overflowcount; /* number of overflows */
 } EventSetProfileInfo_t;
 
-/* PAPI supports derived events that are made up of at most 2 counters. */
+/* This contains info about an individual event added to the EventSet.
+   The event can be either PRESET or NATIVE, and either simple or derived.
+   If derived, it can consist of up to MAX_COUNTER_TERMS native events.
+   An EventSet contains a pointer to an array of these structures to define
+   each added event.
+ */
 
 typedef struct _EventInfo {
   struct _EventSetInfo *ESIhead;  /* Always points back to &EventSetInfo for this EventSet.  Used to optimize register allocation across an event set */
@@ -95,13 +100,29 @@ typedef struct _EventInfo {
   unsigned counter_index;   /* Index of counter to read in buffer returned by the hardware/kernel
 			       This is also used for order dependent derived events to indicate
 			       the first operand (replaces PAPI 2 operand_index) */
-  int pos[MAX_COUNTERS];    /* */
+  int pos[MAX_COUNTERS];    /* position in the counter array for this events components */
   hwd_register_map_t regs;  /* Substrate defined collection of register number that keep track of resources 
 			                   used by this event */
   char *ops;                /* operation string of preset */
   unsigned hwd_selector;    /* Counter select bits used by the substrate (Replaced by bits??) */
   int derived;		    /* Counter derivation command used for derived events */
 } EventInfo_t;
+
+/* This contains info about each native event added to the EventSet.
+   An EventSet contains an array of MAX_COUNTERS of these structures 
+   to define each native event in the set.
+ */
+
+typedef struct _NativeInfo {
+  int index;		  /* index into the native table */
+  unsigned int selector;  /* Which counters are used?*/
+  unsigned char rank;	  /* Rank determines how many counters carry each metric */
+			  /* More generally, which event is most resource restrictive */
+  int position;		  /* on which counter this native event stays */
+  int mod;		  /* don't exactly know what this field does */
+  int owners;		  /* specifies how many owners share this native event */
+} NativeInfo_t;
+
 
 /* Multiplex definitions */
 
@@ -175,7 +196,7 @@ typedef struct _EventSetInfo {
 
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
-  int NumberOfEvents;    /* Number of counters added to EventSet */
+  int NumberOfEvents;    /* Number of events added to EventSet */
 
   hwd_control_state_t machdep;      /* A chunk of memory of size 
                          _papi_hwi_system_info.size_machdep bytes. This 
@@ -189,12 +210,11 @@ typedef struct _EventSetInfo {
   long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
 			    processed, in order, PAPI counter values when used or stopped */
 
-/* I don't think this is referenced anymore...
-  u_long_long *latest;     *//* Array of the same length as above, containing 
-				  the values of the counters when last read */ 
+  int state;		/* The state of this entire EventSet; can be
+			   PAPI_RUNNING or PAPI_STOPPED plus flags */
 
-  int state;          /* The state of this entire EventSet; can be
-			 PAPI_RUNNING or PAPI_STOPPED plus flags */
+  int NativeCount;	/* How many native events in the array below. */
+  NativeInfo_t NativeInfoArray[MAX_COUNTERS]; /* Info about each native event in the set */
 
   EventInfo_t *EventInfoArray;   /* This array contains the mapping from 
                                   events added into the API into hardware 

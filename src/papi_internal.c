@@ -254,6 +254,21 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
     }
 }
 
+
+static void initialize_NativeInfoArray(EventSetInfo_t *ESI)
+{
+  int i;
+
+  memset(ESI->NativeInfoArray, 0, sizeof(NativeInfo_t)*MAX_COUNTERS);
+
+  for (i = 0; i < MAX_COUNTERS; i++) {
+ 	ESI->NativeInfoArray[i].index = COUNT_NOTHING;
+ 	ESI->NativeInfoArray[i].position = COUNT_NOTHING;
+  }
+  ESI->NativeCount = 0;
+}
+
+
 EventSetInfo_t *_papi_hwi_allocate_EventSet(void) 
 {
   EventSetInfo_t *ESI;
@@ -288,6 +303,8 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
   memset(ESI->hw_start,        0x00,max_counters*sizeof(long_long));
 
   initialize_EventInfoArray(ESI);
+  initialize_NativeInfoArray(ESI);
+  _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
 
   ESI->state = PAPI_STOPPED; 
 
@@ -510,11 +527,13 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t *ESI)
  */
 void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, int remap)
 {
+	EventSetInfo_t *ESI;
 	EventInfo_t *head;
 	int i, j, k, n, preset_index, nix, total_events;
 
-	head=out->ESIhead->EventInfoArray;
-	total_events=out->ESIhead->NumberOfEvents;
+	ESI = out->ESIhead;
+	head=ESI->EventInfoArray;
+	total_events=ESI->NumberOfEvents;
 
 	if(!remap){
 		out->counter_index = out->pos[0];
@@ -536,10 +555,10 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 			preset_index = head[j].event_code & PRESET_AND_MASK;
 			for(k=0;k<_papi_hwi_preset_map[preset_index].metric_count;k++){
 				nix=_papi_hwi_preset_map[preset_index].natIndex[k];
-				for(n=0;n<tmp_state->native_idx;n++){
-					if(nix==tmp_state->native[n].index){
-						head[j].pos[k]=tmp_state->native[n].position;
-						head[j].hwd_selector |= 1<<tmp_state->native[n].position;
+				for(n=0;n<ESI->NativeCount;n++){
+					if(nix==ESI->NativeInfoArray[n].index){
+						head[j].pos[k]=ESI->NativeInfoArray[n].position;
+						head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].position;
 						break;
 					}
 				}
@@ -548,11 +567,11 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 		}
 		else{
 			nix = head[j].event_code & NATIVE_AND_MASK;
-			for(n=0;n<tmp_state->native_idx;n++){
-				if(nix==tmp_state->native[n].index){
-					head[j].pos[0]=tmp_state->native[n].position;
-					head[j].hwd_selector |= 1<<tmp_state->native[n].position;
-					head[j].counter_index=tmp_state->native[n].position;
+			for(n=0;n<ESI->NativeCount;n++){
+				if(nix==ESI->NativeInfoArray[n].index){
+					head[j].pos[0]=ESI->NativeInfoArray[n].position;
+					head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].position;
+					head[j].counter_index=ESI->NativeInfoArray[n].position;
 					break;
 				}
 				
@@ -713,7 +732,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 			
 			/* Try to remove the preset. */
 			
-			_papi_hwd_remove_event(&ESI->machdep, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
+			_papi_hwd_remove_event(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
 		}
 		else if(EventCode & NATIVE_MASK)
 		{
@@ -726,7 +745,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
 			/* Try to add the native. */
 			
-			_papi_hwd_remove_event(&ESI->machdep, &native_index, 1);
+			_papi_hwd_remove_event(ESI, &native_index, 1);
 		}
 		else
 			return(PAPI_ENOEVNT);
