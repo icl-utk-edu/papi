@@ -45,7 +45,6 @@
 
 
 #ifdef _WIN32
-#define inline_static static __inline
 
 /* cpu_type values:: lifted from perfctr.h */
 #define PERFCTR_X86_GENERIC	0	/* any x86 with rdtsc */
@@ -85,8 +84,6 @@ typedef CONTEXT hwd_ucontext_t;
 #define HW_OVERFLOW 0
 
 #else
-
-#define inline_static inline static
 
 /* Lock macros. */
 extern volatile unsigned int lock[PAPI_MAX_LOCK];

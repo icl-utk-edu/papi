@@ -20,6 +20,13 @@
 #ifndef PAPI_INTERNAL_H
 #define PAPI_INTERNAL_H
 
+/* Windows has it's own way of declaring inline static routines */
+#ifdef _WIN32
+   #define inline_static static __inline
+#else
+   #define inline_static inline static
+#endif
+
 #if defined(NO_FUNCTION_MACRO) 
 #define __func__ "?"
 #endif
