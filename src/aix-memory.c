@@ -32,3 +32,6 @@ int get_memory_info( PAPI_mem_info_t * mem_info ) {
  mem_info->L2_cache_assoc=_system_configuration.L2_cache_asc;
  return PAPI_OK;
 }
+
+long _papi_hwd_get_dmem_info(int option){
+}

@@ -369,3 +369,6 @@ volatile unsigned long val;
         :"=r"(val));
 	return (int) val;
 }
+
+long _papi_hwd_get_dmem_info(int option){
+}

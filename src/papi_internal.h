@@ -295,6 +295,8 @@ extern int _papi_hwi_start_overflow_timer(EventSetInfo *master, EventSetInfo *ES
 extern int _papi_hwi_initialize(DynamicArray **);
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
 
+/* The following functions are defined by the memory file. */
+extern long _papi_hwd_get_dmem_info(int option);
 /* The following functions are defined by the substrate file. */
 
 #ifdef _WIN32

@@ -354,6 +354,7 @@ int PAPI_destroy_eventset(int *EventSet);
 const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);
 const PAPI_mem_info_t *PAPI_get_memory_info();
+long PAPI_get_dmem_info(int option);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 void *PAPI_get_overflow_address(void *context);
 long_long PAPI_get_real_cyc(void);
