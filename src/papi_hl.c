@@ -84,10 +84,7 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
  	*proc_time = 0.0;
 	*flpins = 0;
         if ( !initialized ) {
-		PAPI_num_counters();
-		retval = PAPI_library_init( PAPI_VER_CURRENT );
-		if ( retval != PAPI_VER_CURRENT )
-	   	return(retval);
+		PAPI_num_counters(); /* Library Initialized Here */
         }
 	if ( (hwinfo = PAPI_get_hardware_info()) == NULL ) {
 	   printf("Error getting hw_info\n");
@@ -164,12 +161,9 @@ int PAPI_num_counters(void)
 
   if (!initialized )
     {
-      if ( !initialized ){
          retval = PAPI_library_init(PAPI_VER_CURRENT);
          if (retval != PAPI_VER_CURRENT)
 	    return(PAPI_EINVAL);
-      }
-
       retval = PAPI_create_eventset(&PAPI_EVENTSET_INUSE);
       if (retval)
 	return(retval);
