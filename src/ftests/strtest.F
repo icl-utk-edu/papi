@@ -198,7 +198,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       subroutine checkstr(incode,string,outcode,check,lastchar,quiet)
       implicit none
-      integer incode,outcode,check,lastchar, quiet
+      integer*8 incode
+      integer outcode,check,lastchar, quiet
 	character*(*) string
       character*(PAPI_MAX_STR_LEN) papierr
       integer code,i
@@ -290,7 +291,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       subroutine test_papif_descr(name,code,string,check,quiet)
       implicit none
-      integer code,check,quiet
+      integer*8 code
+      integer check,quiet
       character*(*) name,string
 
       character*(PAPI_MAX_STR_LEN) papierr
@@ -362,7 +364,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
 	subroutine checkcode(code,check,quiet)
       implicit none
-      integer code,check,quiet
+      integer*8 code
+      integer check,quiet
 
       if(code.ne.check)then
 	  if(quiet.EQ.0)then

@@ -8,6 +8,8 @@
 #endif
       implicit none
       character*25 chbuf
+	integer quiet
+	common quiet
 
 C	This routine tests for a command line argument
 C	that matches 'TESTS_QUIET'
@@ -58,6 +60,7 @@ C    used in the program. See eg. fmatrixpapi.F
       integer line
 
       call ftests_perror(line,msg)
+	call pause()
       stop
       end
 
@@ -78,6 +81,7 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,*) test_str,':                PASSED'
       call PAPIF_shutdown()
+	call pause()
       stop
  100  format(/,t1,a,a)
       end
@@ -109,6 +113,7 @@ C    used in the program. See eg. fmatrixpapi.F
       if(papiretval.eq.0)then
         write(*,*) 'SGI requires root permissions for this test\n'
       end if
+	call pause()
       stop
       end
 
@@ -125,6 +130,7 @@ C    used in the program. See eg. fmatrixpapi.F
         call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
         write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
       end if
+	call pause()
       stop
       end
 
@@ -164,6 +170,7 @@ C    used in the program. See eg. fmatrixpapi.F
         write(*,*) 'PAPI error in ', callstr, 
      *': ', papi_errstr(1:len_trim(papi_errstr))
       end if
+	call pause()
       stop
       end
 
@@ -189,6 +196,7 @@ C    used in the program. See eg. fmatrixpapi.F
         write(*,*) 'Error in ', callstr, ' : ', 
      *       papi_errstr(1:len_trim(papi_errstr))
       end if
+	call pause()
       stop
       end
 
@@ -255,6 +263,7 @@ C
          str = "PAPI_DOM_ALL"
       else
          print *, 'error in stringify_domain'
+	   call pause()
          stop
       end if
       end
@@ -276,7 +285,24 @@ C
          str = "PAPI_GRN_SYS"
       else
          print *, 'error in stringify_granularity'
+	   call pause()
          stop
       end if
       end
 
+C	This routine provides a bottleneck
+C	at the exit point of a program
+C	For Windows, it links to a simple C routine
+C	that prompts the user for a keypress
+C	For every other platform it is a nop.
+      subroutine pause()
+      implicit none      
+	integer quiet,i
+	common quiet
+
+#ifdef _WIN32
+	if (quiet .eq. 0) then
+	  call cpause()
+	end if
+#endif
+	end
