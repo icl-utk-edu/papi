@@ -160,8 +160,10 @@ PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out
 
   /* Remove trailing blanks from initial Fortran string */
   for(i=slen-1;tmpin[i]==' ';tmpin[i--]='\0');
+
   /* Make sure string is NULL terminated before call*/
   tmpin[PAPI_MAX_STR_LEN-1]='\0';   
+  if(slen<PAPI_MAX_STR_LEN) tmpin[slen]='\0';
   
   *check= PAPI_event_name_to_code(tmpin, out);
 #else
