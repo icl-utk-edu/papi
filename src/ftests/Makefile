@@ -6,28 +6,28 @@ PAPILIB	= ../libpapi.a
 default: $(TESTS)
 
 clockres: clockres.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F -L.. -lpapi $(LDFLAGS) -o clockres
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
 
 avail: avail.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F -L.. -lpapi $(LDFLAGS) -o avail
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F $(PAPILIB) $(LDFLAGS) -o avail
 
 eventname: eventname.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F -L.. -lpapi $(LDFLAGS) -o eventname
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
 
 case1: case1.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F -L.. -lpapi $(LDFLAGS) -o case1
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
 
 case2: case2.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F -L.. -lpapi $(LDFLAGS) -o case2
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
 
 fmatrixlowpapi: fmatrixlowpapi.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F -L.. -lpapi $(LDFLAGS) -o fmatrixlowpapi
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
 
 fmatrixpapi: fmatrixpapi.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F -L.. -lpapi $(LDFLAGS) -o fmatrixpapi
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
 
 flops: flops.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F -L.. -lpapi $(LDFLAGS) -o flops
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
 
 clean:
 	rm -f *.o $(TESTS) core *~
