@@ -1,0 +1,30 @@
+#!/bin/sh
+uname -s | grep "[Ll]inux" > /dev/null;
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+cat /proc/cpuinfo | grep "Pentium(R) 4" > /dev/null;
+if [ $? -eq 0 ]; then
+    make -f Makefile.linux-perfctr-p4 $*
+    exit $?;
+fi
+cat /proc/cpuinfo | grep "(IA64-2)|Itanium(R) 2)" > /dev/null
+if [ $? -eq 0 ]; then
+    make -f Makefile.linux-ia64-itanium2-libpfm2.0 $*
+    exit $?;
+fi
+cat /proc/cpuinfo | grep "(IA64)|(Itanium(R))" > /dev/null
+if [ $? -eq 0 ]; then
+    make -f Makefile.linux-ia64-libpfm2.0 $*
+    exit $?;
+fi
+cat /proc/cpuinfo | grep "(Opteron)|(Athlon HX)" > /dev/null
+if [ $? -eq 0 ]; then
+    make -f Makefile.linux-perfctr-x86_64 $*
+    exit $?;
+fi 
+make -f Makefile.linux-perfctr $*
+exit $?
+
+
+ 
