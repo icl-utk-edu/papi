@@ -7,7 +7,6 @@
 
 #define FLOPS 10000000
 #define READS 4000
-#define THRESHOLD 500000
 
 int total = 0;
 

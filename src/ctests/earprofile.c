@@ -10,6 +10,19 @@
 #define NUM 1000000
 #define THR 200
 
+int do_test(unsigned long loop)
+{
+
+    int  i;
+    long sum  = 0;
+
+
+    for(i=0; i<loop; i++) {
+        sum+=array[i];
+    }
+    return sum;
+}
+
 /* This file performs the following test: profiling and program info option call
 
    - This tests the SVR4 profiling interface of PAPI. These are counted 
@@ -36,7 +49,7 @@ int *array;
 int main(int argc, char **argv) 
 {
   int i, num_events, num_tests = 6;
-  int PAPI_event,  native;
+  int PAPI_event,  native = PAPI_NULL;
   char event_name[PAPI_MAX_STR_LEN];
   int EventSet = PAPI_NULL;
   unsigned short *profbuf;
@@ -322,18 +335,3 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"No information in buffers",1);
   exit(1);
 }
-
-
-int do_test(unsigned long loop)
-{
-
-    int  i;
-    long sum  = 0;
-
-
-    for(i=0; i<loop; i++) {
-        sum+=array[i];
-    }
-    return sum;
-}
-

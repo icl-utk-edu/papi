@@ -20,8 +20,6 @@
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
-#define THRESHOLD 500000
-
 int total = 0;
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
@@ -129,14 +127,14 @@ int main(int argc, char **argv)
   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-  flops1 = 100000000;
+  flops1 = NUM_FLOPS;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
   if (rc){
 	retval=PAPI_ESYS;
 	test_fail(__FILE__,__LINE__,"pthread_create",retval);
   }
 
-  flops2 = 50000000;
+  flops2 = 5*NUM_FLOPS;
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
   if (rc){
 	retval=PAPI_ESYS;

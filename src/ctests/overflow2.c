@@ -24,11 +24,6 @@
 
 #include "papi_test.h"
 
-#undef NUM_FLOPS
-
-#define NUM_FLOPS 10000000
-#define THRESHOLD 10000000
-
 #ifdef _CRAYT3E
 	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
 	#define OUT_FMT		"%-12s : %16lld%16lld\n"
@@ -88,7 +83,7 @@ int main(int argc, char **argv)
   retval = PAPI_start(EventSet);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_start", retval);
   
-  do_flops(NUM_FLOPS*10);
+  do_flops(NUM_FLOPS);
   
   retval = PAPI_stop(EventSet, values[0]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -99,7 +94,7 @@ int main(int argc, char **argv)
   retval = PAPI_start(EventSet);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-  do_flops(NUM_FLOPS*10);
+  do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet, values[1]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -107,7 +102,7 @@ int main(int argc, char **argv)
   retval = PAPI_overflow(EventSet, PAPI_event, 0, 0, handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
-  num_flops = 10*NUM_FLOPS;
+  num_flops = NUM_FLOPS;
 #if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
   num_flops *= 2;
 #endif
@@ -138,7 +133,7 @@ int main(int argc, char **argv)
          * different between the two runs.
          * printf("Column 1 approximately equals column 2\n"); 
          */
-	printf(TAB1, "Row 3 approximately equals",(values[0])[0]/THRESHOLD);
+	printf(TAB1, "Row 3 approximately equals",(values[0])[0]/(long_long)THRESHOLD);
   }
 
   if (PAPI_event == PAPI_FP_INS) {
@@ -159,8 +154,8 @@ int main(int argc, char **argv)
   	test_fail(__FILE__, __LINE__, event_name, 1);
 #endif
 
-  min = (long_long)((values[0][0]*.75)/THRESHOLD);
-  max = (long_long)((values[0][0]*1.15)/THRESHOLD);
+  min = (long_long)((values[0][0]*.75)/(long_long)THRESHOLD);
+  max = (long_long)((values[0][0]*1.15)/(long_long)THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
   test_pass(__FILE__,NULL,0);
