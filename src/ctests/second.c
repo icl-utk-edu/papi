@@ -120,6 +120,8 @@ int main(int argc, char **argv)
   printf("Verification:\n");
   printf("Row 1 approximately equals N %d N\n",0);
   printf("Column 1 approximately equals column 2 plus column 3\n");
+  printf("*Irix requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL.\n");
+  printf("*The first two rows will be -3 if not run as root for IRIX.\n");
 
   free_test_space(values, num_tests);
 
