@@ -153,6 +153,8 @@ static int get_system_info(void)
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _fbss;
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _ebss;
 
+   _papi_hwi_system_info.supports_multiple_threads = 0;
+
    if (family == 0) {
       strcat(_papi_hwi_system_info.hw_info.model_string, "21064");
       _papi_hwi_system_info.num_cntrs = 2;
