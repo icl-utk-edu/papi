@@ -1,0 +1,2016 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>PAPI Spec</title>
+                                                   
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+                             
+  <style type="text/css">
+<!--
+p
+{font-family: Verdana, Helvetica, Arial, sans-serif}
+
+.style
+{font-family: Verdana, Helvetica, Arial, sans-serif}
+
+td.navBar A:link
+{color: #ddd8d2;
+font-weight: bold;
+text-decoration: none}
+
+td.navBar A:visited
+{color: #ccc9c5;
+font-weight: bold;
+text-decoration: none}
+
+td.navBar A:hover
+{color: #ffffff}
+
+.navBar
+{color: #77797c;
+font-family: Verdana, Helvetica, Arial, sans-serif;
+font-size:  11px;
+text-transform: uppercase}
+
+a:visited
+{color: #50525f}
+
+a:link
+{color: #8b3409}
+
+a:hover
+{color: #660000}
+
+a:active
+{background-color: #b1afad}
+
+.footerNote
+{background-color: #ffffff;
+background-image: url(images/line.gif);
+background-position: right top;
+background-repeat: repeat-x;
+color: #77797c;
+font-family: Verdana, Helvetica, Arial, sans-serif;
+font-size:  10px}
+
+BODY
+{font-family: Verdana, Helvetica, Arial, sans-serif}
+-->
+</style>                      
+  <script language="JavaScript">
+<!--
+function MM_swapImgRestore() { //v3.0
+  var i,x,a=document.MM_sr; for(i=0;a&&i<a.length&&(x=a[i])&&x.oSrc;i++) x.src=x.oSrc;
+}
+
+function MM_preloadImages() { //v3.0
+  var d=document; if(d.images){ if(!d.MM_p) d.MM_p=new Array();
+    var i,j=d.MM_p.length,a=MM_preloadImages.arguments; for(i=0; i<a.length; i++)
+    if (a[i].indexOf("#")!=0){ d.MM_p[j]=new Image; d.MM_p[j++].src=a[i];}}
+}
+
+function MM_findObj(n, d) { //v4.0
+  var p,i,x;  if(!d) d=document; if((p=n.indexOf("?"))>0&&parent.frames.length) {
+    d=parent.frames[n.substring(p+1)].document; n=n.substring(0,p);}
+  if(!(x=d[n])&&d.all) x=d.all[n]; for (i=0;!x&&i<d.forms.length;i++) x=d.forms[i][n];
+  for(i=0;!x&&d.layers&&i<d.layers.length;i++) x=MM_findObj(n,d.layers[i].document);
+  if(!x && document.getElementById) x=document.getElementById(n); return x;
+}
+
+function MM_swapImage() { //v3.0
+  var i,j=0,x,a=MM_swapImage.arguments; document.MM_sr=new Array; for(i=0;i<(a.length-2);i+=3)
+   if ((x=MM_findObj(a[i]))!=null){document.MM_sr[j++]=x; if(!x.oSrc) x.oSrc=x.src; x.src=a[i+2];}
+}
+//-->
+</script>
+</head>
+ <body bgcolor="#ffffff" text="#000000" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+ 
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+   <tbody>
+     <tr>
+       <td valign="Top" height="75">       
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" height="75">
+         <tbody>
+           <tr>
+             <td background="images/menubg95.jpg" height="75">          
+  
+            <table width="760" border="0" cellspacing="0" cellpadding="0" align="Center" height="75">
+               <tbody>
+                 <tr valign="Bottom">
+                   <td width="760" align="Center" height="50" colspan="2"><img src="images/headertop.jpg" width="760" height="50">
+                   </td>
+                 </tr>
+                 <tr>
+                   <td height="10" align="Center" valign="Top" bgcolor="#333333" width="135"><img src="images/logoleft.jpg" width="135" height="25" vspace="0" hspace="0" align="Left">
+                   </td>
+                   <td class="navBar" height="25" align="Center" valign="Middle" bgcolor="#333333" nowrap="" width="625" background="images/menubg.jpg">
+                   
+                  <center><a href="http://icl.cs.utk.edu/papi/"> PAPI HOME
+                      </a>
+                   </center>
+                   </td>
+                 </tr>
+                 <tr>
+                   <td height="10" align="Center" valign="Top" bgcolor="#ffffff" width="135"><img src="images/logobottom.jpg" width="135" height="20" vspace="0" hspace="0" align="Left">
+                   </td>
+                   <td class="navBar" height="10" align="Center" valign="Bottom" bgcolor="#ffffff" width="625"><img src="images/white.jpg" width="625" height="20" vspace="0" hspace="0" align="Left">
+                   </td>
+                 </tr>
+               
+              </tbody>             
+            </table>
+             </td>
+           </tr>
+         
+        </tbody>       
+      </table>
+       </td>
+     </tr>
+     <tr>
+       <td valign="Top">       
+      <table width="760" border="0" cellspacing="0" cellpadding="0" align="Center" class="style">
+         <tbody>
+           <tr>
+             <td class="STYLE">             
+            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+               <tbody>
+                 <tr>
+                   <td><br>
+                   </td>
+                 </tr>
+               
+              </tbody>             
+            </table>
+             
+            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+               <tbody>
+                 <tr>
+                   <td valign="Top">                   
+                  <table>
+                     <tbody>
+                       <tr>
+                         <td>                         
+                        <center></center>
+                         
+                        <div align="Left">                         
+                        <h1>PAPI Software Specification</h1>
+      This software specification describes the PAPI 2.1.0 Release, and is
+ current   as of December 18, 2001. It consists of the following sections:<br>
+                         
+                        <ul>
+                           
+                          <li><a href="#const">Introduction to PAPI Constants</a>
+                           </li>
+                           
+                          <li><a href="#common">Standardized Event Definitions</a>
+                           </li>
+                           
+                          <li><a href="#return">Return Codes</a>
+                           </li>
+                           
+                          <li><a href="#lowlevel">Low Level API</a>
+                           </li>
+                           
+                          <li><a href="#highlevel">High Level API</a>
+                           </li>
+                         
+                        </ul>
+                         </div>
+                         
+                        <h2><a name="const"></a>
+        Introduction to PAPI Constants</h2>
+                         
+                        <p>The <b>PAPI</b> constants are defined in the header 
+   files:<br>
+                         </p>
+                         
+                        <blockquote><b><tt> papiStdEventDefs.h<br>
+                           </tt></b><b><tt> papi.h</tt></b><br>
+                           </blockquote>
+                           
+                          <p>The header file                         <b>papiStdEventDefs.h</b>
+       contains platform specific         constants. These constants are
+presented    in <a href="#common"> Table 1:        Standardized Event Definitions</a>
+        below. The user should read the        documentation that accompanies 
+  this  table for an explanation of these        constants.</p>
+                           
+                          <p>The remaining header file <b>papi.h</b> contains
+   the <b>PAPI </b><a href="#return">Return        Codes</a>
+       , among other internal definitions.<br>
+                           </p>
+                           
+                          <h2><a name="common"></a>
+        Standardized Event Definitions</h2>
+       The following is a table of hardware events deemed relevant and useful 
+  in        tuning application performance. These events have identical assignments
+   in        the header files on different platforms<i> however they may
+differ    in        their actual semantics. In addition, all of these events
+are not          guaranteed to be present on all platforms. Please check
+your platform's          documentation carefully.</i> Note: these values
+should not be changed   by        the user.                             
+                                                                        
+                                                                        
+            
+                          <dl>
+                          <center>                           
+                          <table border="0">
+                             <tbody>
+                               <tr>
+                                 <td>                                 
+                                <table nosave="" noshade="" border="5" bordercolordark="#999966" bordercolorlight="#CCCC99">
+                                   <tbody>
+                                     <tr nosave="">
+                                       <td nosave=""><b>  Value </b></td>
+                                       <td nosave=""><b> Symbol</b></td>
+                                       <td><b> Description</b></td>
+                                     </tr>
+                                     <tr nosave="">
+                                       <td nosave=""><tt> 0x80000000</tt></td>
+                                       <td nosave=""><tt> PAPI_L1_DCM</tt></td>
+                                       <td> Level 1 data cache misses</td>
+                                     </tr>
+                                     <tr nosave="">
+                                       <td nosave=""><tt> 0x80000001</tt></td>
+                                       <td><tt> PAPI_L1_ICM</tt></td>
+                                       <td nosave=""> Level 1 instruction 
+ cache  misses</td>
+                                     </tr>
+                                     <tr nosave="">
+                                       <td nosave=""><tt> 0x80000002</tt></td>
+                                       <td><tt> PAPI_L2_DCM</tt></td>
+                                       <td nosave=""> Level 2 data cache
+misses</td>
+                                     </tr>
+                                     <tr nosave="">
+                                       <td nosave=""><tt> 0x80000003</tt></td>
+                                       <td><tt> PAPI_L2_ICM</tt></td>
+                                       <td nosave=""> Level 2 instruction 
+ cache  misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000004</tt></td>
+                                       <td><tt> PAPI_L3_DCM</tt></td>
+                                       <td> Level 3 data cache misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000005</tt></td>
+                                       <td><tt> PAPI_L3_ICM</tt></td>
+                                       <td> Level 3 instruction cache misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000006</tt></td>
+                                       <td><tt> PAPI_L1_TCM</tt></td>
+                                       <td> Level 1 total cache misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000007</tt></td>
+                                       <td><tt> PAPI_L2_TCM</tt></td>
+                                       <td> Level 2 total cache misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000008</tt></td>
+                                       <td><tt> PAPI_L3_TCM</tt></td>
+                                       <td> Level 3 total cache misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000009</tt></td>
+                                       <td><tt> PAPI_CA_SNP</tt></td>
+                                       <td> Snoops</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000000A</tt></td>
+                                       <td><tt> PAPI_CA_SHR</tt></td>
+                                       <td> Request for access to shared
+cache   line (SMP)</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000000B</tt></td>
+                                       <td><tt> PAPI_CA_CLN</tt></td>
+                                       <td> Request for access to clean cache
+   line (SMP)</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000000C</tt></td>
+                                       <td><tt> PAPI_CA_INV</tt></td>
+                                       <td> Cache Line Invalidation (SMP)</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000000D</tt></td>
+                                       <td><tt> PAPI_CA_ITV</tt></td>
+                                       <td> Cache Line Intervention (SMP)</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000000E</tt></td>
+                                       <td><tt> PAPI_L3_LDM</tt></td>
+                                       <td> Level 3 load misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000000F</tt></td>
+                                       <td><tt> PAPI_L3_STM</tt></td>
+                                       <td> Level 3 store misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000010</tt></td>
+                                       <td><tt> PAPI_BRU_IDL</tt></td>
+                                       <td> Cycles branch units are idle</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000011</tt></td>
+                                       <td><tt> PAPI_FXU_IDL</tt></td>
+                                       <td> Cycles integer units are idle</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000012</tt></td>
+                                       <td><tt> PAPI_FPU_IDL</tt></td>
+                                       <td> Cycles floating point units are
+  idle</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000013</tt></td>
+                                       <td><tt> PAPI_LSU_IDL</tt></td>
+                                       <td> Cycles load/store units are idle</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000014</tt></td>
+                                       <td><tt> PAPI_TLB_DM</tt></td>
+                                       <td> Data translation lookaside buffer
+   misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000015</tt></td>
+                                       <td><tt> PAPI_TLB_IM</tt></td>
+                                       <td> Instruction translation lookaside
+   buffer misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000016</tt></td>
+                                       <td><tt> PAPI_TLB_TL</tt></td>
+                                       <td> Total translation lookaside buffer
+   misses </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000017</tt></td>
+                                       <td><tt> PAPI_L1_LDM</tt></td>
+                                       <td> Level 1 load misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000018</tt></td>
+                                       <td><tt> PAPI_L1_STM</tt></td>
+                                       <td> Level 1 store misses </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000019</tt></td>
+                                       <td><tt> PAPI_L2_LDM</tt></td>
+                                       <td> Level 2 load misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000001A</tt></td>
+                                       <td><tt> PAPI_L2_STM</tt></td>
+                                       <td> Level 2 store misses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000001B</tt></td>
+                                       <td><tt> PAPI_BTAC_M</tt></td>
+                                       <td> BTAC miss</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000001C</tt></td>
+                                       <td><tt> PAPI_PRF_DM</tt></td>
+                                       <td> Prefetch data instruction caused
+   a miss</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000001D</tt></td>
+                                       <td><tt> PAPI_L3_DCH</tt></td>
+                                       <td> Level 3 Data Cache Hit</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000001E</tt></td>
+                                       <td><tt> PAPI_TLB_SD</tt></td>
+                                       <td> Translation lookaside buffer
+shootdowns   (SMP)</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000001F</tt></td>
+                                       <td><tt> PAPI_CSR_FAL</tt></td>
+                                       <td> Failed store conditional instructions 
+                                      </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000020</tt></td>
+                                       <td><tt> PAPI_CSR_SUC</tt></td>
+                                       <td> Successful store conditional
+instructions</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000021</tt></td>
+                                       <td><tt> PAPI_CSR_TOT</tt></td>
+                                       <td> Total store conditional instructions</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000022</tt></td>
+                                       <td><tt> PAPI_MEM_SCY</tt></td>
+                                       <td> Cycles Stalled Waiting for Memory
+   Access </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000023</tt></td>
+                                       <td><tt> PAPI_MEM_RCY</tt></td>
+                                       <td> Cycles Stalled Waiting for Memory
+   Read </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000024</tt></td>
+                                       <td><tt> PAPI_MEM_WCY</tt></td>
+                                       <td> Cycles Stalled Waiting for Memory
+   Write </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000025</tt></td>
+                                       <td><tt> PAPI_STL_ICY</tt></td>
+                                       <td> Cycles with No Instruction Issue 
+                                      </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000026</tt></td>
+                                       <td><tt> PAPI_FUL_ICY</tt></td>
+                                       <td> Cycles with Maximum Instruction
+  Issue</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000027</tt></td>
+                                       <td><tt> PAPI_STL_CCY</tt></td>
+                                       <td> Cycles with No Instruction Completion</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000028</tt></td>
+                                       <td><tt> PAPI_FUL_CCY</tt></td>
+                                       <td> Cycles with Maximum Instruction
+  Completion</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000029</tt></td>
+                                       <td><tt> PAPI_HW_INT</tt></td>
+                                       <td> Hardware interrupts</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000002A</tt></td>
+                                       <td><tt> PAPI_BR_UCN</tt></td>
+                                       <td> Unconditional branch instructions
+   executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000002B</tt></td>
+                                       <td><tt> PAPI_BR_CN</tt></td>
+                                       <td> Conditional branch instructions
+  executed                                     </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000002C</tt></td>
+                                       <td><tt> PAPI_BR_TKN</tt></td>
+                                       <td> Conditional branch instructions
+  taken                                     </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000002D</tt></td>
+                                       <td><tt> PAPI_BR_NTK</tt></td>
+                                       <td> Conditional branch instructions
+  not taken </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000002E</tt></td>
+                                       <td><tt> PAPI_BR_MSP</tt></td>
+                                       <td> Conditional branch instructions
+  mispredicted                                     </td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000002F</tt></td>
+                                       <td><tt> PAPI_BR_PRC</tt></td>
+                                       <td> Conditional branch instructions
+  correctly predicted</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000030</tt></td>
+                                       <td><tt> PAPI_FMA_INS</tt></td>
+                                       <td> FMA instructions completed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000031</tt></td>
+                                       <td><tt> PAPI_TOT_IIS</tt></td>
+                                       <td> Total instructions issued</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000032</tt></td>
+                                       <td><tt> PAPI_TOT_INS</tt></td>
+                                       <td> Total instructions executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000033</tt></td>
+                                       <td><tt> PAPI_INT_INS</tt></td>
+                                       <td> Integer instructions executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000034</tt></td>
+                                       <td><tt> PAPI_FP_INS</tt></td>
+                                       <td> Floating point instructions executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000035</tt></td>
+                                       <td><tt> PAPI_LD_INS</tt></td>
+                                       <td> Load instructions executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000036</tt></td>
+                                       <td><tt> PAPI_SR_INS</tt></td>
+                                       <td> Store instructions executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000037</tt></td>
+                                       <td><tt> PAPI_BR_INS</tt></td>
+                                       <td> Total branch instructions executed 
+                                      </td>
+                                     </tr>
+                                     <tr nosave="">
+                                       <td nosave=""><tt> 0x80000038</tt></td>
+                                       <td><tt> PAPI_VEC_INS</tt></td>
+                                       <td nosave=""> Vector/SIMD instructions
+   executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000039</tt></td>
+                                       <td><tt> PAPI_FLOPS</tt></td>
+                                       <td> Floating Point Instructions executed
+   per second</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000003A</tt></td>
+                                       <td><tt> PAPI_RES_STL</tt></td>
+                                       <td> Cycles processor is stalled on
+  resource</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000003B</tt></td>
+                                       <td><tt> PAPI_FP_STAL</tt></td>
+                                       <td>Cycles any FP units are stalled</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000003C</tt></td>
+                                       <td><tt> PAPI_TOT_CYC</tt></td>
+                                       <td> Total cycles</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000003D</tt></td>
+                                       <td><tt> PAPI_IPS</tt></td>
+                                       <td> Instructions executed per second</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000003E</tt></td>
+                                       <td><tt> PAPI_LST_INS</tt></td>
+                                       <td> Total load/store instructions 
+ executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000003F</tt></td>
+                                       <td><tt> PAPI_SYC_INS</tt></td>
+                                       <td> Sync. instructions executed</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000040</tt></td>
+                                       <td><tt> PAPI_L1_DCH</tt></td>
+                                       <td> L1 data cache hit</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000041</tt></td>
+                                       <td><tt> PAPI_L2_DCH</tt></td>
+                                       <td> L2 data cache hit</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000042</tt></td>
+                                       <td><tt> PAPI_L1_DCA</tt></td>
+                                       <td> L1 data cache access</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000043</tt></td>
+                                       <td><tt> PAPI_L2_DCA</tt></td>
+                                       <td> L2 data cache access</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000044</tt></td>
+                                       <td><tt> PAPI_L3_DCA</tt></td>
+                                       <td> L3 data cache access</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000045</tt></td>
+                                       <td><tt> PAPI_L1_DCR</tt></td>
+                                       <td> L1 data cache read</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000046</tt></td>
+                                       <td><tt> PAPI_L2_DCR</tt></td>
+                                       <td> L2 data cache read</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000047</tt></td>
+                                       <td><tt> PAPI_L3_DCR</tt></td>
+                                       <td> L3 data cache read</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000048</tt></td>
+                                       <td><tt> PAPI_L1_DCW</tt></td>
+                                       <td> L1 data cache write</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000049</tt></td>
+                                       <td><tt> PAPI_L2_DCW</tt></td>
+                                       <td> L2 data cache write</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000004A</tt></td>
+                                       <td><tt> PAPI_L3_DCW</tt></td>
+                                       <td> L3 data cache write</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000004B</tt></td>
+                                       <td><tt> PAPI_L1_ICH</tt></td>
+                                       <td> L1 instruction cache hits</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000004C</tt></td>
+                                       <td><tt> PAPI_L2_ICH</tt></td>
+                                       <td> L2 instruction cache hits</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000004D</tt></td>
+                                       <td><tt> PAPI_L3_ICH</tt></td>
+                                       <td> L3 instruction cache hits</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000004E</tt></td>
+                                       <td><tt> PAPI_L1_ICA</tt></td>
+                                       <td> L1 instruction cache accesses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000004F</tt></td>
+                                       <td><tt> PAPI_L2_ICA</tt></td>
+                                       <td> L2 instruction cache accesses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000050</tt></td>
+                                       <td><tt> PAPI_L3_ICA</tt></td>
+                                       <td> L3 instruction cache accesses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000051</tt></td>
+                                       <td><tt> PAPI_L1_ICR</tt></td>
+                                       <td> L1 instruction cache reads</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000052</tt></td>
+                                       <td><tt> PAPI_L2_ICR</tt></td>
+                                       <td> L2 instruction cache reads</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000053</tt></td>
+                                       <td><tt> PAPI_L3_ICR</tt></td>
+                                       <td> L3 instruction cache reads</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000054</tt></td>
+                                       <td><tt> PAPI_L1_ICW</tt></td>
+                                       <td> L1 instruction cache writes</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000055</tt></td>
+                                       <td><tt> PAPI_L2_ICW</tt></td>
+                                       <td> L2 instruction cache writes</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000056</tt></td>
+                                       <td><tt> PAPI_L3_ICW</tt></td>
+                                       <td> L3 instruction cache writes</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000057</tt></td>
+                                       <td><tt> PAPI_L1_TCH</tt></td>
+                                       <td> L1 total cache hits</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000058</tt></td>
+                                       <td><tt> PAPI_L2_TCH</tt></td>
+                                       <td> L2 total cache hits</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000059</tt></td>
+                                       <td><tt> PAPI_L3_TCH</tt></td>
+                                       <td> L3 total cache hits</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000005A</tt></td>
+                                       <td><tt> PAPI_L1_TCA</tt></td>
+                                       <td> L1 total cache accesses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000005B</tt></td>
+                                       <td><tt> PAPI_L2_TCA</tt></td>
+                                       <td> L2 total cache accesses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000005C</tt></td>
+                                       <td><tt> PAPI_L3_TCA</tt></td>
+                                       <td> L3 total cache accesses</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000005D</tt></td>
+                                       <td><tt> PAPI_L1_TCR</tt></td>
+                                       <td> L1 total cache reads</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000005E</tt></td>
+                                       <td><tt> PAPI_L2_TCR</tt></td>
+                                       <td> L2 total cache reads</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x8000005F</tt></td>
+                                       <td><tt> PAPI_L3_TCR</tt></td>
+                                       <td> L3 total cache reads</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000060</tt></td>
+                                       <td><tt> PAPI_L1_TCW</tt></td>
+                                       <td> L1 total cache writes</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000061</tt></td>
+                                       <td><tt> PAPI_L2_TCW</tt></td>
+                                       <td> L2 total cache writes</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000062</tt></td>
+                                       <td><tt> PAPI_L3_TCW</tt></td>
+                                       <td> L3 total cache writes</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000063</tt></td>
+                                       <td><tt> PAPI_FML_INS</tt></td>
+                                       <td> Floating Multiply instructions</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000064</tt></td>
+                                       <td><tt> PAPI_FAD_INS</tt></td>
+                                       <td> Floating Add instructions</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000065</tt></td>
+                                       <td><tt> PAPI_FDV_INS</tt></td>
+                                       <td> Floating Divide instructions</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000066</tt></td>
+                                       <td><tt> PAPI_FSQ_INS</tt></td>
+                                       <td> Floating Sqare Root instructions</td>
+                                     </tr>
+                                     <tr>
+                                       <td nosave=""><tt> 0x80000067</tt></td>
+                                       <td><tt> PAPI_FNV_INS</tt></td>
+                                       <td> Floating Inverse instructions</td>
+                                     </tr>
+                                   
+                                  </tbody>                              
+  
+                                </table>
+                                 </td>
+                               </tr>
+                               <tr>
+                                 <td>                                 
+                                <h3>Table 1: Standardized Event Definitions</h3>
+                                 </td>
+                               </tr>
+                             
+                            </tbody>                           
+                          </table>
+                           </center>
+                          </dl>
+                           
+                          <center></center>
+                           
+                          <h2><font color="#000000"><a name="return"></a>
+                           </font><font color="#000000">Return Codes</font></h2>
+                           
+                          <p align="Left">All of the functions contained
+in   the <b>PAPI</b> APIs return        standardized error codes. Values
+greater than  or equal to zero indicate        success, less than zero indicates 
+ failure.</p>
+                           
+                          <center>                           
+                          <p>                           
+                          <table border="0">
+                             <tbody>
+                               <tr>
+                                 <td>                                 
+                                <table border="5" nosave="" bordercolordark="#999966" bordercolorlight="#CCCC99" align="Center">
+                                   <tbody>
+                                     <tr>
+                                       <td><b> Value</b></td>
+                                       <td><b> Symbol</b></td>
+                                       <td><b> Definition</b></td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> 0</tt></td>
+                                       <td><tt> PAPI_OK</tt></td>
+                                       <td> No error</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -1</tt></td>
+                                       <td><tt> PAPI_EINVAL</tt></td>
+                                       <td> Invalid argument</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -2</tt></td>
+                                       <td><tt> PAPI_ENOMEM</tt></td>
+                                       <td> Insufficient memory</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -3</tt></td>
+                                       <td><tt> PAPI_ESYS</tt></td>
+                                       <td> A System or C library call failed,
+   please check <tt>errno</tt></td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -4</tt></td>
+                                       <td><tt> PAPI_ESBSTR</tt></td>
+                                       <td> Substrate returned an error,
+usually   the result of an                    unimplemented feature</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -5</tt></td>
+                                       <td><tt> PAPI_ECLOST</tt></td>
+                                       <td> Access to the counters was lost
+  or interrupted</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -6</tt></td>
+                                       <td><tt> PAPI_EBUG</tt></td>
+                                       <td> Internal error, please send mail
+   to the developers</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -7</tt></td>
+                                       <td><tt> PAPI_ENOEVNT</tt></td>
+                                       <td> Hardware Event does not exist</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -8</tt></td>
+                                       <td><tt> PAPI_ECNFLCT</tt></td>
+                                       <td> Hardware Event exists, but cannot
+   be counted due <br>
+    to counter                    resource limitations</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -9</tt></td>
+                                       <td><tt> PAPI_ENOTRUN</tt></td>
+                                       <td> No Events or EventSets are currently
+   not counting</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -10</tt></td>
+                                       <td><tt> PAPI_ISRUN</tt></td>
+                                       <td> EventSet is currently running</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -11</tt></td>
+                                       <td><tt> PAPI_ENOEVST</tt></td>
+                                       <td> No such EventSet available</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -12</tt></td>
+                                       <td><tt> PAPI_ENOTPRESET</tt></td>
+                                       <td> Event is not a valid preset</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -13</tt></td>
+                                       <td><tt> PAPI_ENOCNTR</tt></td>
+                                       <td> Hardware does not support performance
+   counters</td>
+                                     </tr>
+                                     <tr>
+                                       <td><tt> -14</tt></td>
+                                       <td><tt> PAPI_EMISC</tt></td>
+                                       <td>'Unknown error' code</td>
+                                     </tr>
+                                     <tr>
+                                     </tr>
+                                   
+                                  </tbody>                              
+  
+                                </table>
+                                 </td>
+                               </tr>
+                               <tr>
+                                 <td>                                 
+                                <h3>Table 2: Return Codes</h3>
+                                 </td>
+                               </tr>
+                             
+                            </tbody>                           
+                          </table>
+                           </p>
+                           </center>
+                           
+                          <h2><font color="#000000"><a name="lowlevel"></a>
+                           </font><font color="#000000">The Low Level API</font></h2>
+                               The following functions represent the low
+level    portion of the <b>PAPI </b><b>API</b>.        These functions provide
+greatly  increased efficiency and functionality        over the high level
+API presented  in the next section. As mentioned in the        introduction,
+the low level   API is only as powerful as the substrate upon        which
+it is built. Thus  some features may not be available on every        platform.
+The converse   may also be true, that more advanced features may        be
+available and   defined in the header file. The user is encouraged to   
+    read the documentation   for each platform carefully.               
+                                                                        
+                                                                        
+                         
+                          <p><b><tt>int PAPI_accum (int EventSet, long  long 
+ *values)</tt></b></p>
+                           
+                          <blockquote>        This function accumulates (adds) 
+ the  running or stopped counters in EventSet          into the values array.
+   In addition, it re-initializes the internal           counters to zero.
+                                                                        
+                                                                        
+                                                         
+                            <p>The return value is an integer that indicates
+   whether the call          succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                             </blockquote>
+                             <b><tt>int PAPI_add_event (int *EventSet, int 
+ Event)</tt></b>                             
+                            <blockquote>                               
+                              <p>This function modifies an existing EventSet.
+   Separate          EventSets containing events that require use of the
+same    hardware may          exist, but may not be started if a conflicting
+EventSet    is running.          Returns the error code PAPI_ENOEVNT if Event
+cannot   be counted on this          platform. The addition of a conflicting
+event   to an event set will          return an error unless PAPI_SET_MPXRES
+has  been set. Note: EventSet 0          may not be used; it has been reserved
+ for internal use.</p>
+                               
+                              <p>The return value is an integer that indicates
+   whether the call          succeeded (a positive integer corresponding
+to   the index in the          EventCodeArray where this event is stored)
+or failed   (an error code).</p>
+                               </blockquote>
+                               
+                              <p><b><tt>int PAPI_add_events (int *EventSet,
+  int *Events, int number)</tt></b></p>
+                               
+                              <blockquote>                              
+  
+                                <p>This function modifies an existing EventSet.
+   The Events          contained in *Events will be loaded into the EventSet.
+   Separate          EventSets containing events that require use of the
+same    hardware may          exist, but may not be started if a conflicting
+EventSet    is running. If          one or more of the items in Events cannot
+be counted    on this platform,          this function returns the error
+code PAPI_ENOEVNT.    In addition, the          invalid entries in the Events
+array are set to   PAPI_NULL, such that the          user can successfully
+reissue the call.   The addition of a conflicting          event to an event
+set will return  an error unless PAPI_SET_MPXRES has          been set. Note:
+EventSet 0 may  not be used; it has been reserved for          internal use.</p>
+                                 
+                                <p>The return value is an integer that indicates
+   whether the call          succeeded (a positive integer corresponding
+to   the index in the          EventCodeArray where this event is stored)
+or failed   (an error code).</p>
+                                 </blockquote>
+                                 
+                                <p><b><tt>int PAPI_add_pevent (int *EventSet,
+   int code, void *inout)</tt></b></p>
+                                 
+                                <blockquote>                            
+      
+                                  <p>This function adds a native programmable
+   Event to an existing  	EventSet. Such EventSets can only consist of one
+ event,  namely that which          is specified in this call. Its semantics
+ are very  similar to that of          ioctl() system call. inout points
+to  an opaque  data structure that is          specific to the value in code.
+ Higher level  macros may be provided in          the header file. Please
+check the documentation  for each substrate. This          function has a
+C binding only. (not yet implemented)        </p>
+                                   
+                                  <p>The return value is an integer that
+indicates   whether the call          succeeded (PAPI_OK) or failed (not
+PAPI_OK).</p>
+                                   </blockquote>
+                                   
+                                  <p><b><tt>int PAPI_cleanup_eventset (int 
+ *EventSet)</tt></b></p>
+                                   
+                                  <blockquote>                          
+          
+                                    <p>This function effectively cleans the
+   target EventSet. It removes  	all of the hardware events which have been
+  added to the EventSet. It can then          be removed from existence with
+  a call to PAPI_destroy_eventset. The          EventSet must be stopped
+in   order for this call to succeed.</p>
+                                     
+                                    <p>The return value is an integer that
+ indicates whether the call          succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                     </blockquote>
+                                     
+                                    <p><b><tt> int PAPI_create_eventset (int
+   *EventSet)</tt></b></p>
+                                     
+                                    <blockquote>                        
+              
+                                      <p>This function creates a new EventSet
+   for use. This call is  	not thread safe.</p>
+                                       
+                                      <p>The return value is an integer that
+   indicates whether the call          succeeded (PAPI_OK) or failed (not
+PAPI_OK).</p>
+                                       </blockquote>
+                                       
+                                      <p><b><tt> int PAPI_describe_event
+(char   *name, int *EventCode, char        *description)</tt></b></p>
+                                       
+                                      <blockquote>                      
+                  
+                                        <p>This function identifies a PAPI_Event
+   in one of two ways.</p>
+                                         
+                                        <p>Given the name of the Event (i.e.
+   "PAPI_INT_INS"), the          function will write the corresponding value
+   in EventCode (51) and a          descriptive string ("Integer Instructions")
+   to the description          buffer.</p>
+                                         
+                                        <p>Given the integer value of EventCode
+   (51), the function will write          the string value of the EventName
+  ("PAPI_INT_INS") to the name          buffer and a descriptive string ("Integer
+  Instructions") to          the description buffer.</p>
+                                         
+                                        <p>Set *description to NULL if the
+ description is not needed.</p>
+                                         
+                                        <p>The return value is an integer
+ that   indicates whether the call          succeeded (PAPI_OK) or failed
+(not PAPI_OK).<br>
+                                         </p>
+                                         </blockquote>
+                                         
+                                        <p><b><tt> int PAPI_label_event (int 
+ *EventCode, char *label)</tt></b></p>
+                                         
+                                        <blockquote>                    
+                      
+                                          <p>Given an integer EventCode,
+this function will return a short string to          the label buffer. This
+string is appropriate to use as an event label for third party tools.</p>
+                                           
+                                          <p>The return value is an integer 
+ that  indicates whether the call          succeeded (PAPI_OK) or failed (not
+ PAPI_OK).</p>
+                                           </blockquote>
+                                           
+                                          <p><b><tt> int PAPI_destroy_eventset
+   (int *EventSet )</tt></b></p>
+                                           
+                                          <blockquote>                  
+                          
+                                            <p> This function effectively
+ removes   an EventSet from existence. The          EventSet must be empty
+ in order  for this call to succeed.</p>
+                                             
+                                            <p> The return value is an integer
+   that indicates whether the call          succeeded (PAPI_OK) or failed
+(not   PAPI_OK).</p>
+                                             </blockquote>
+                                             
+                                            <p><b><tt> const PAPI_exe_info_t
+  *PAPI_get_executable_info (void)</tt></b></p>
+                                             
+                                            <blockquote>         This function
+   returns a pointer to a structure of type PAPI_exe_info_t,           which
+   contains path, name, start and end addresses for the program's       
+   text, data, and bss segments. For the definition of the structure, see
+         papi.h Returns pointer to structure of type PAPI_exe_info_t if 
+        successful, and NULL if otherwise.        </blockquote>
+                                               <b><tt> const PAPI_hw_info_t 
+ *PAPI_get_hardware_info (void)</tt></b>                                
+              
+                                              <blockquote>         This function
+   returns a pointer to a structure of type PAPI_hw_info_t,           which
+  contains number of CPUs, nodes, vendor number/name for CPU, CPU       
+  revision, clock speed. For the definition of the structure, see papi.h
+         Returns pointer to structure of type PAPI_hw_info_t if successful,
+ and          NULL if otherwise.        </blockquote>
+                                                 
+                                                <p><b><tt> int PAPI_get_opt 
+ (int  option, PAPI_option_t *ptr)</tt></b></p>
+                                                 
+                                                <blockquote>            
+                                      
+                                                  <p> This function queries 
+ the  status of tunable options in the PerfAPI          Library. "option" 
+is an  input/output parameter. The "ptr"          structure is for input and
+output.  Not all options fill the          PAPI_option_t structure. This function
+has a C binding only.</p>
+                                                   
+                                                  <p> The reader is urged
+ to  carefully read the PerfAPI Draft for a          complete discussion
+of  PAPI_get_opt.   The file papi.h contains          definitions for the
+structures  unioned  in the PAPI_option_t structure.</p>
+                                                   
+                                                  <p> The return value is
+ an  integer that indicates whether the call          succeeded (PAPI_OK)
+or failed  (not PAPI_OK).</p>
+                                                   </blockquote>
+                                                   <b><tt> void *PAPI_get_overflow_address 
+ (void  *context)</tt></b>                                              
+    
+                                                  <blockquote>         Returns
+   overflow address if successful, appropriate error code          otherwise.
+Typically called inside the overflow handler routine. See PAPI_overflow().
+          </blockquote>
+                                                     <b><tt> long long PAPI_get_real_cyc 
+ (void)</tt></b>                                                     
+                                                    <blockquote>        
+This   function returns a value in cycles, and can be used at the beginning
+          and end of a section of code to calculate number of total cycles
+elapsed  while the section executed. Returns time of type long long if successful, 
+ appropriate            error code otherwise.        </blockquote>
+                                                       
+                                                      <p><b><tt> long long 
+ PAPI_get_real_usec (void)</tt></b></p>
+                                                       
+                                                      <blockquote>      
+  This  function returns a real (wall) time in micro seconds, and can be
+used at the          beginning and end of a section of code to calculate
+real time in micro          seconds for the section. Returns time of type
+long long if successful,           appropriate error code otherwise.    
+   </blockquote>
+                                                         <b><tt> long long
+ PAPI_get_virt_cyc (void)</tt></b>                                      
+                  
+                                                        <blockquote>    
+    This  function returns a value in cycles, and can be used at the beginning 
+           and end of a section of code to calculate number of virtual (process 
+ or thread) cycles elapsed in           the section. Returns time of type 
+long long if successful, appropriate            error code otherwise.    
+   </blockquote>
+                                                           
+                                                          <p><b><tt> long
+ long PAPI_get_virt_usec (void)</tt></b></p>
+                                                           
+                                                          <blockquote>  
+      This  function returns a virtual time in micro seconds, and can be
+used at the          beginning and end of a section of code to calculate
+user time in micro          seconds for the section. Returns time of type
+long long if successful,           appropriate error code otherwise.    
+   </blockquote>
+                                                             
+                                                            <p><b><tt> int 
+ PAPI_library_init  (int version)</tt></b></p>
+                                                             
+                                                            <blockquote>
+        This function initializes the PAPI library and has to be called before 
+           the low level PAPI can be used. The argument should always be set
+  to PAPI_VER_CURRENT.   	The reason for this is that you may be linked with
+  a shared library, so  	this will detect version skew. Don't forget PAPI_thread_init
+   also has to   	be called before low level PAPI calls can be used in a
+threaded    application.        </blockquote>
+                                                               <b><tt>int 
+PAPI_list_events  (int   EventSet, int *Events, int *number)</tt></b>
+                                                              <blockquote>
+                                                                <p> This
+function   decomposes EventSet into the hardware Events it          contains.
+number   is both an input and output parameter.</p>
+                                                                <p> The return 
+ value  is an integer that indicates whether the call          succeeded (PAPI_OK)
+  or failed (not PAPI_OK).</p>
+                                                                </blockquote>
+                                                                 
+                                                                <p><b><tt>
+void PAPI_lock  (void)</tt></b></p>
+                                                                <blockquote>
+                                                                  <p>Grabs
+access to the PAPI mutex variable. This function is provided to the user
+to have a platform independent call to an (hopefully) efficiently implemented
+mutex. This function has no return value.</p>
+                                                                  </blockquote>
+                                                                  <p><b><tt>
+void PAPI_unlock  (void)</tt></b></p>
+                                                                  <blockquote>
+                                                                    <p>Unlocks
+the mutex acquired by a call to <!-- .BR PAPI_lock . --><b>PAPI_lock()</b>
+. This function has no return value.</p>
+                                                                    </blockquote>
+                                                                    <p><b><tt>
+  int PAPI_multiplex_init (int   EventSet, int *Events, int *number)</tt></b></p>
+                                                                 
+                                                                    <blockquote>
+                                                                   
+                                                                      <p>
+ This  function enables and initializes multiplex support in the PAPI library. 
+ This allows a user to count more events than there are physical counters 
+by time sharing the existing counters at some loss in precision. Applications 
+that make no use of multiplexing do not need to call this routine.</p>
+                                                                   
+                                                                      <p>
+ The  return value  is an integer that indicates whether the call       
+  succeeded  (PAPI_OK)   or failed (not PAPI_OK).</p>
+                                                                   </blockquote>
+                                                                   
+                                                                      <p><b><tt>
+   int PAPI_set_multiplex (int   EventSet)</tt></b></p>
+                                                                   
+                                                                      <blockquote>
+                                                                     
+                                                                        <p>
+ This  function converts a standard EventSet created by a call to <!-- .B PAPI_create_eventset() -->
+   PAPI_create_eventset() into an event set capable of handling multiplexed 
+ events. This must be done after calling <!-- .B PAPI_multiplex_init() -->
+   PAPI_multiplex_init() , but prior to calling <!-- .B PAPI_start(). -->
+PAPI_start().   Events can be added to an eventset either before or after
+converting it into a multiplexed set, but the conversion must be done prior
+to using it as a multiplexed set.</p>
+                                                                     
+                                                                        <p>
+ The  return value  is an integer that indicates whether the call       
+  succeeded  (PAPI_OK)  or failed (not PAPI_OK).</p>
+                                                                     </blockquote>
+                                                                     
+                                                                        <p><b><tt>
+    int PAPI_overflow (int  EventSet, int EventCode, int threshold,     
+  int flags, <br>
+       PAPI_overflow_handler_t  handler)</tt></b></p>
+                                                                     
+                                                                        <blockquote>
+                                                                       
+                                                                          <p>
+   This function  sets up an EventSet such that when it is          PAPI_start()'ed, 
+ it begins  to register overflows. This EventSet may only          have multiple 
+ events  in it, but only 1 can be an overflow trigger.          Subsequent 
+ calls to  PAPI_overflow replace earlier calls. To turn off          overflow, 
+ set the  handler to NULL.</p>
+                                                                       
+                                                                          <p>
+   The return value is an integer that indicates whether the call       
+  succeeded (PAPI_OK)  or failed (not PAPI_OK).</p>
+                                                                       </blockquote>
+                                                                       
+                                                                          <p><b><tt>
+    int PAPI_perror (int code, char *destination, int length)</tt></b></p>
+                                                                       
+                                                                          <blockquote>
+            This function copies length worth of the error description string 
+           corresponding to code into destination. The resulting string is
+  always           null terminated. If length is 0, then the string is printed
+  on stderr.           The return value is an integer that indicates whether
+  the call succeeded           (PAPI_OK) or failed (not PAPI_OK).       
+                                                                            </blockquote>
+                                                                        
+                                                                            <p><b><tt>
+    char  *PAPI_strerror (int code)</tt></b></p>
+                                                                        
+                                                                            <blockquote>
+            This function returns the corresponding english error string
+  	from   the passed code. Returns NULL if code is invalid.        </blockquote>
+                                                                        
+  
+                                                                              <p><b><tt>
+    int PAPI_profil (unsigned short *buf, unsigned bufsiz, unsigned long
+offset,                                                                 
+                                                                        
+         <br>
+&nbsp;&nbsp;&nbsp; unsigned scale, int EventSet, int EventCode, int threshold,
+int flags)</tt></b></p>
+                                                                        
+  
+                                                                              <blockquote>
+                                                                        
+    
+                                                                                <p>
+    This function sets the values in the PAPI_sprofil_t structure,      
+   if profiling is to be enabled for this EventSet. The EventSet must be
+in           the stopped state for this call to succeed.</p>
+                                                                        
+    
+                                                                                <p>
+    The return  value is an integer that indicates whether the call     
+    succeeded (PAPI_OK)  or failed (not PAPI_OK).</p>
+                                                                        
+    </blockquote>
+                                                                        
+    
+                                                                                <p><b><tt>
+    int PAPI_sprofil (PAPI_sprofil_t *prof, int profcnt, int  EventSet, <br>
+&nbsp;&nbsp;&nbsp; int EventCode, int threshold, int flags)</tt></b></p>
+                                                                        
+    
+                                                                                <blockquote>
+                                                                        
+      
+                                                                                  <p>
+    This function assumes a pre-initialized PAPI_sprofil_t structure and
+enables  profiling for this EventSet. The EventSet must be in          the
+stopped  state for this call to succeed.</p>
+                                                                        
+      
+                                                                                  <p>
+    The return  value is an integer that indicates whether the call     
+    succeeded (PAPI_OK)  or failed (not PAPI_OK).</p>
+                                                                        
+      </blockquote>
+                                                                        
+      
+                                                                                  <p><b><tt>
+       int PAPI_query_event (int EventCode)</tt></b></p>
+                                                                        
+      
+                                                                                  <blockquote>
+                                                                        
+        
+                                                                                    <p>
+    This  function tests if the event designated by EventCode is supported
+          by the current substrate.</p>
+                                                                        
+        
+                                                                                    <p>
+    If the answer is yes, the function returns PAPI_OK. If the answer is
+         no, the function returns an error code.</p>
+                                                                        
+        </blockquote>
+                                                                        
+        
+                                                                                    <p><b><tt>
+       int PAPI_query_event_verbose (int EventCode, PAPI_preset_info_t  
+     *info)</tt></b></p>
+                                                                        
+        
+                                                                                    <blockquote>
+               This function returns description about queried event if it
+ is  supported           on the current platform. Returns PAPI_OK if successful, 
+  and appropriate           error code otherwise.        </blockquote>
+                                                                        
+          <b><tt>       const PAPI_preset_info_t *PAPI_query_all_events_verbose
+(void)</tt></b>                                                         
+                         
+                                                                                      <blockquote>
+               Returns structure containing all PAPI presets, regardless
+of           implementation on current platform. The return structure is
+of type             PAPI_preset_info_t (see papi.h).        </blockquote>
+                                                                        
+            <b><tt>       int PAPI_event_code_to_name (int EventCode, char
+*out)</tt></b>                                                          
+                          
+                                                                                        <blockquote>
+               This function translates an EventCode from the user into the 
+ event   name          used by PAPI. Return code is PAPI_OK if successful, 
+ and appropriate            error code otherwise.        </blockquote>
+                                                                        
+              <b><tt>      int PAPI_event_name_to_code (char *in, int *out)</tt></b>
+                                                                        
+              
+                                                                                          <blockquote>
+               This function translates an event name to PAPI event code. 
+Return    value          is PAPI_OK if successful and appropriate error code 
+otherwise.           </blockquote>
+                                                                        
+                <b><tt>   int PAPI_read (int EventSet, long long *values)</tt></b>
+                                                                        
+                
+                                                                                            <blockquote>
+                                                                        
+                  
+                                                                                              <p>
+       This function copies the running or stopped counters in EventSet into
+           the values array. Internal counters will not be re-initialized
+to   zero.</p>
+                                                                        
+                  
+                                                                                              <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                  </blockquote>
+                                                                        
+                  
+                                                                                              <p><b><tt>
+       int PAPI_rem_event (int *EventSet, int Event)</tt></b></p>
+                                                                        
+                  
+                                                                                              <blockquote>
+                                                                        
+                    
+                                                                                                <p>
+       This function removes the hardware counter Event from EventSet.</p>
+                                                                        
+                    
+                                                                                                <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                    </blockquote>
+                                                                        
+                    
+                                                                                                <p><b><tt>
+       int PAPI_rem_events (int *EventSet, int *Events, int number)</tt></b></p>
+                                                                        
+                    
+                                                                                                <blockquote>
+                                                                        
+                      
+                                                                                                  <p>
+       This function removes the hardware counters listed in the Events 
+        array from EventSet.</p>
+                                                                        
+                      
+                                                                                                  <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                      </blockquote>
+                                                                        
+                      
+                                                                                                  <p><b><tt>
+       int PAPI_reset (int EventSet)</tt></b></p>
+                                                                        
+                      
+                                                                                                  <blockquote>
+                                                                        
+                        
+                                                                                                    <p>
+       This function initializes the internal counters of the hardware  
+       Events contained in EventSet to zero.</p>
+                                                                        
+                        
+                                                                                                    <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                        </blockquote>
+                                                                        
+                        
+                                                                                                    <p><b><tt>
+       int PAPI_restore (void)</tt></b></p>
+                                                                        
+                        
+                                                                                                    <blockquote>
+               PAPI_save and PAPI_restore are for use with external libraries 
+  that wish to preserve the state of PAPI and the hardware counters.   For 
+instance a C++ instrumentation library will probably want to  call PAPI_save() 
+upon entry to it's functions and PAPI_restore()   upon exit. These function 
+calls map to whatever is the most efficient    on the underlying platform 
+for saving and restoring. Returns PAPI_OK    if successful, and appropriate 
+error code otherwise. (not yet implemented)          </blockquote>
+                                                                        
+                          <b><tt> int PAPI_save (void)</tt></b>         
+                                                                        
+                
+                                                                                                      <blockquote>
+               see above description (not yet implemented)        </blockquote>
+                                                                        
+                            <b><tt> int PAPI_set_debug (int level)</tt></b>
+                                                                        
+                            
+                                                                                                        <blockquote>
+                                                                        
+                              
+                                                                                                          <p>
+       This function sets the default debug level for the PAPI library to 
+one of three debug levels as defined in the papi.h header file. The current 
+debug level is internally  stored in the PAPI library and is used by the default
+internal PAPI error  handler subroutine. The error handler is called by library
+routines on the  occurence of recoverable errors.                       
+                                                                        
+       </p>
+                                                                        
+                              
+                                                                                                          <p>
+     The return value is an integer that indicates whether the call  succeeded 
+(PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                              </blockquote>
+                                                                        
+                              
+                                                                                                          <p><b><tt>
+     int PAPI_set_domain (int domain)</tt></b></p>
+                                                                        
+                              
+                                                                                                          <blockquote>
+                                                                        
+                                
+                                                                                                            <p>
+       This function sets the execution domain in which events are counted. 
+          Here domain is one of the constants PAPI_DOM_USER, PAPI_DOM_MIN,
+           PAPI_DOM_KERNEL, PAPI_DOM_OTHER, PAPI_DOM_ALL, PAPI_DOM_MAX, or
+          PAPI_DOM_HWSPEC as defined in the header file. These constants
+are              listed below and can also be found in the online PerfAPI
+Draft.    The           return value is an integer that indicates whether
+the call   succeeded           (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                </blockquote>
+                                                                        
+                                
+                                                                                                            <p><b><tt>
+       int PAPI_set_granularity (int granularity)</tt></b></p>
+                                                                        
+                                
+                                                                                                            <blockquote>
+               This function sets the measurement granularity in which the
+ counters             function. By default, the granularity is set to the
+most restrictive             supported by the substrate. Returns PAPI_OK
+if successful, and           appropriate error code otherwise. Granularity
+settings include per             thread, process, process group, current
+cpu, and each cpu. For  more           information, see papi.h        </blockquote>
+                                                                        
+                                  <b><tt>   int PAPI_set_opt (int option,
+PAPI_option_t  *ptr)</tt></b>                                           
+                                                               
+                                                                                                              <blockquote>
+                                                                        
+                                    
+                                                                                                                <p>
+       This function sets specific options of the PerfAPI Library, its  
+       substrate, or specific EventSets. The PAPI_option_t structure represents
+             a union of all the structures that can be arguments to the different
+             options. In addition, there may exist machine specific options
+  so please          check the header file for documentation. This function
+  has a C binding          only.</p>
+                                                                        
+                                    
+                                                                                                                <p>
+       The reader is urged to carefully read the PerfAPI Draft for a    
+     complete  discussion of PAPI_set_opt. The file papi.h contains     
+    definitions  for the structures unioned in the PAPI_option_t structure.</p>
+                                                                        
+                                    
+                                                                                                                <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                    </blockquote>
+                                                                        
+                                    
+                                                                                                                <p><b><tt>
+       void PAPI_shutdown (void)</tt></b></p>
+                                                                        
+                                    
+                                                                                                                <blockquote>
+                                                                        
+                                      
+                                                                                                                  <p>
+       This is an exit function used by the PAPI Library to free resources
+          and shut down when certain error conditions arise. This call is
+not            necessary, but allows the user the capability to free memory
+and            resources used by the PAPI Library.</p>
+                                                                        
+                                      
+                                                                                                                  <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                      </blockquote>
+                                                                        
+                                      
+                                                                                                                  <p><b><tt>
+       int PAPI_start (int EventSet)</tt></b></p>
+                                                                        
+                                      
+                                                                                                                  <blockquote>
+                                                                        
+                                        
+                                                                                                                    <p>
+       This function starts counting all of the hardware events contained 
+in           EventSet. All counters are implicitly set to zero. PAPI_start()
+ will  not          start the hardware counters if a conflicting EventSet
+is already  running          and the counters are already in use.</p>
+                                                                        
+                                        
+                                                                                                                    <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                        </blockquote>
+                                                                        
+                                        
+                                                                                                                    <p><b><tt>
+       int PAPI_state (int EventSet, int *status)</tt></b></p>
+                                                                        
+                                        
+                                                                                                                    <blockquote>
+                                                                        
+                                          
+                                                                                                                      <p>
+       This function returns the state of the entire EventSet in status.
+If           the call succeeds, then status is either PAPI_RUNNING or PAPI_STOPPED.</p>
+                                                                        
+                                          
+                                                                                                                      <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                          </blockquote>
+                                                                        
+                                          
+                                                                                                                      <p><b><tt>
+       int PAPI_stop (int EventSet, long long *values)</tt></b></p>
+                                                                        
+                                          
+                                                                                                                      <blockquote>
+                                                                        
+                                            
+                                                                                                                        <p>
+       This function terminates the counting of all hardware events     
+    contained  in EventSet. In addition, the counters contained in that 
+        EventSet  are copied into the values array.</p>
+                                                                        
+                                            
+                                                                                                                        <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                            </blockquote>
+                                                                        
+                                            
+                                                                                                                        <p><b><tt>
+       int PAPI_thread_init (unsigned long int (*handle)(), int flag)</tt></b></p>
+                                                                        
+                                            
+                                                                                                                        <blockquote>
+                                                                        
+                                              
+                                                                                                                          <p>
+       This function initializes thread support. The first argument is a
+pointer      	to a function that returns the Thread ID of the currently running
+thread.    The flag  	argument is currently not used and should be set to
+zero.</p>
+                                                                        
+                                              
+                                                                                                                          <p>
+       The return value is an integer that indicates whether the call   
+      succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+                                                                        
+                                              </blockquote>
+                                                                        
+                                              
+                                                                                                                          <p><b><tt>
+   unsigned long int PAPI_thread_id (void)</tt></b></p>
+                                                                        
+                                              
+                                                                                                                          <blockquote>
+                                                                        
+                                                
+                                                                                                                            <p>
+       This function calls the thread id function registered by PAPI_thread_init().</p>
+                                                                        
+                                                
+                                                                                                                            <p>
+       The return value is an unsigned long integer representing the thread 
+ id  or   	(unsigned long int)-1.</p>
+                                                                        
+                                                </blockquote>
+                                                                        
+                                                
+                                                                                                                            <p><b><tt>
+       int PAPI_write (int EventSet, long long *values)</tt></b></p>
+                                                                        
+                                                
+                                                                                                                            <blockquote>
+               This function assigns the values contained in the values array 
+  to  the          internal counters of the Events contained in the EventSet. 
+  Returns           PAPI_OK if successful, and appropriate error code otherwise. 
+         </blockquote>
+                                                                        
+                                                  
+                                                                                                                              <p align="Center"><img src="file:///C:/papi/spec/_themes/straight-edge-mod-by-ng/strrulec.gif" width="600" height="10">
+                                                                        
+                                                  </p>
+                                                                        
+                                                  
+                                                                                                                              <h2><font color="#000000"><a name="highlevel"></a>
+                                                                        
+                                                  </font><font color="#000000">
+    The High Level API</font></h2>
+               The simple interface implemented by the following six routines
+   allows the        user to access and count specific hardware events. It
+ should  be noted that        this API can be used <i>in conjunction with
+the low level API.</i>        However, the high level API by itself is only
+able to access those events        countable simultaneously by the underlying
+hardware. Note that the high        level interface performs initialization
+implicitly and is <i>not thread safe</i>. Under the covers it        calls
+PAPI_library_init(PAPI_VER_CURRENT)  and PAPI_thread_init(NULL, 0).     
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                   
+                                                                                                                              <p><b><tt>
+       int PAPI_num_counters(void)</tt></b></p>
+                                                                        
+                                                  
+                                                                                                                              <blockquote>
+                                                                        
+                                                    
+                                                                                                                                <p>
+       This function returns the optimal length of the values array for the 
+          high level functions. This value corresponds to the number of hardware
+             counters supported by the current substrate.</p>
+                                                                        
+                                                    </blockquote>
+                                                                        
+                                                    <br>
+                                                                        
+                                                    <b><tt> int PAPI_start_counters(int
+ *events, int array_len)</tt></b>                                       
+                                                                        
+            
+                                                                                                                                <blockquote>
+                 Start counting the events named in the events array. This
+ function             implicitly stops and initializes any counters running
+ as a result   of a          previous call to PAPI_start_counters(). It is
+ the user's responsibility            to choose events that can be counted
+ simultaneously by reading the           vendor's documentation. The length
+ of this array should be no longer           than PAPI_MAX_EVENTS. Returns
+ PAPI_OK if successful,  and an appropriate           error code otherwise.
+        </blockquote>
+                                                                        
+                                                      <br>
+                                                                        
+                                                      <b><tt>    int PAPI_read_counters(long
+long *values, int array_len)</tt></b>                                   
+                                                                        
+                  
+                                                                                                                                  <blockquote><i><b>
+ Read </b></i>the running counter values into the values  array. This call 
+implicitly            re-initializes the counters to zero  and lets them continue
+to run  upon          return. Returns PAPI_OK if successful,  and an appropriate
+error  code          otherwise.        </blockquote>
+                                                                        
+                                                        <br>
+                                                                        
+                                                        <b><tt>    int PAPI_accum_counters(long
+long *values, int array_len)</tt></b>                                   
+                                                                        
+                    
+                                                                                                                                    <blockquote><b><i>
+ Add </i></b>the running counter values to the values  in the values array. 
+This call implicitly            re-initializes the counters  to zero and lets
+them continue to run  upon          return. Returns PAPI_OK  if successful, 
+and an appropriate error  code          otherwise.                       
+                                                                        
+                                       </blockquote>
+                                                                        
+                                                          <br>
+                                                                        
+                                                          <b><tt>  int PAPI_stop_counters(long
+long *values, int array_len)</tt></b>                                   
+                                                                        
+                      
+                                                                                                                                      <blockquote><i><b>
+   Stop </b></i>the running counters and copy the counts into the values
+ array.            This is to be used in conjunction with PAPI_start_counters. 
+ Returns            PAPI_OK if successful, and an appropriate error code otherwise.<br>
+                                                                        
+                                                            <br>
+                                                                        
+                                                            </blockquote>
+                                                                        
+                                                            
+                                                                                                                                        <p align="Center"><img src="file:///C:/papi/spec/_themes/straight-edge-mod-by-ng/strrulec.gif" width="600" height="10">
+                                                                        
+                                                            </p>
+                                                                        
+                                                            <b><tt>  int
+PAPI_flops(float *rtime, float *ptime, long_long *flpins, float *mflops</tt></b><b><tt>
+  )</tt></b>                                                            
+                                                                        
+                                                                                                                                        <blockquote>
+   Simplified single call to measure the number of floating point instructions 
+ executed and the MegaFlop rate, defined as the number of floating point 
+                                                                        
+                                                            <i><b>   instructions
+                                                                                                                                          </b></i>
+per microsecond. Note that not all floating point instructions  are created
+equal: Some platforms implement a floating point multiply/add  (FMA) as a
+single instruction; and a floating point <i>square root</i> is  often more
+costly than a floating point <i>add. </i>Caution must be used in comparing
+measurements on different platforms. Each call to PAPI_flops returns the
+real (clock) time and process time, floating point instructions executed,
+and MFlops for the period since the last call.  A call to PAPI_flops with
+flpins = -1 resets the counters. Returns           PAPI_OK if successful,
+ and an appropriate error code otherwise.<br>
+                                                                        
+                                                              </blockquote>
+                                                                        
+                                                              </td>
+                                                                        
+                                                            </tr>
+                                                                        
+                                                          
+                                                                                                                                      </tbody>
+                                                                        
+                                                        
+                                                                                                                                    </table>
+                                                                        
+                                                        </td>
+                                                                        
+                                                      </tr>
+                                                                        
+                                                    
+                                                                                                                                </tbody>
+                                                                        
+                                                  
+                                                                                                                              </table>
+                                                                        
+                                                  
+                                                                                                                              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                                        
+                                                    <tbody>
+                                                                        
+                                                      <tr>
+                                                                        
+                                                        <td>            
+                                                                        
+                                           
+                                                                                                                                    <div align="Center">
+                                                                        
+                                                        
+                                                                                                                                    <h4>
+   Copyright (c) 2001 Innovative Computing Laboratory.<br>
+      Last updated: December 18, 2001.                                  
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+        </h4>
+                                                                        
+                                                        </div>
+                                                                        
+                                                        </td>
+                                                                        
+                                                      </tr>
+                                                                        
+                                                    
+                                                                                                                                </tbody>
+                                                                        
+                                                  
+                                                                                                                              </table>
+                                                                        
+                                                  </td>
+                                                                        
+                                                </tr>
+                                                                        
+                                              
+                                                                                                                          </tbody>
+                                                                        
+                                            
+                                                                                                                        </table>
+                                                                        
+                                            </td>
+                                                                        
+                                          </tr>
+                                                                        
+                                          <tr>
+                                                                        
+                                            <td valign="Top">           
+                                                                        
+                                
+                                                                                                                        <table width="760" border="0" cellspacing="0" cellpadding="5" align="Center">
+                                                                        
+                                              <tbody>
+                                                                        
+                                                <tr>
+                                                                        
+                                                  <td>                  
+                                                                        
+                               
+                                                                                                                              <hr size="1"></td>
+                                                                        
+                                                </tr>
+                                                                        
+                                                <tr>
+                                                                        
+                                                  <td height="92">      
+                                                                        
+                                           
+                                                                                                                              <table width="760" border="0" cellspacing="0" cellpadding="0" align="Center" vspace="0" hspace="0">
+                                                                        
+                                                    <tbody>
+                                                                        
+                                                      <tr valign="Top">
+                                                                        
+                                                        <td align="Left" background="images/stripes2.jpg" rowspan="2"><br>
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Right" height="39" background="images/stripes2.jpg" width="280"><img src="images/trans.gif" width="280" height="63" vspace="0" hspace="0">
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Left" height="63" width="200" background="images/spinbg.jpg"><a href="http://icl.cs.utk.edu/" onmouseout="MM_swapImgRestore()" onmouseover="MM_swapImage('Image10','','images/spinlogo.gif',1)"><img name="Image10" border="0" src="images/stable.gif" width="200" height="63" hspace="0" vspace="0" align="Left" alt="Innovative Computing Laboratory">
+                                                                        
+                                                        </a>
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Left" height="0" rowspan="2" valign="Top" width="140">
+                                                                        
+                                                        
+                                                                                                                                    <div align="Left"><img src="images/trans.gif" width="140" height="75" border="0" align="Left" vspace="0" hspace="0">
+                                                                        
+                                                        </div>
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Left" rowspan="2" valign="Top" width="140"><img src="images/rd.jpg" width="140" height="75" border="0" align="Right" vspace="0" hspace="0" alt="2001 R&amp;D Winner">
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Right" rowspan="3" valign="Top" bgcolor="#ffffff"><br>
+                                                                        
+                                                        </td>
+                                                                        
+                                                      </tr>
+                                                                        
+                                                      <tr valign="Top">
+                                                                        
+                                                        <td align="Center" height="22" rowspan="2" valign="Top"><span class="FOOTERNOTE">
+        Contact PAPI:  <a href="mailto:papi@cs.utk.edu"> papi@cs.utk.edu</a>
+                                                                        
+                                                        </span></td>
+                                                                        
+                                                        <td align="Center" height="11" width="200"><a href="http://www.cs.utk.edu/" onmouseout="MM_swapImgRestore()" onmouseover="MM_swapImage('Image11','','images/cssigon.gif',1)"><img name="Image11" border="0" src="images/cssigoff.gif" width="200" height="11" align="Left" hspace="0" vspace="0" alt="Computer Science Department">
+                                                                        
+                                                        </a>
+                                                                        
+                                                        </td>
+                                                                        
+                                                      </tr>
+                                                                        
+                                                      <tr valign="Top">
+                                                                        
+                                                        <td align="Left"><br>
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Center" height="11" width="200" valign="Top"><a href="http://www.utk.edu/" onmouseout="MM_swapImgRestore()" onmouseover="MM_swapImage('Image12','','images/utsigon.gif',1)"><img name="Image12" border="0" src="images/utsigoff.gif" width="200" height="11" vspace="0" hspace="0" align="Left" alt="University of Tennessee">
+                                                                        
+                                                        </a>
+                                                                        
+                                                        </td>
+                                                                        
+                                                        <td align="Left" height="0" colspan="2" valign="Top"><br>
+                                                                        
+                                                        </td>
+                                                                        
+                                                      </tr>
+                                                                        
+                                                    
+                                                                                                                                </tbody>
+                                                                        
+                                                  
+                                                                                                                              </table>
+                                                                        
+                                                  </td>
+                                                                        
+                                                </tr>
+                                                                        
+                                              
+                                                                                                                          </tbody>
+                                                                        
+                                            
+                                                                                                                        </table>
+                                                                        
+                                            </td>
+                                                                        
+                                          </tr>
+                                                                        
+                                          <tr>
+                                                                        
+                                            <td valign="Top"><br>
+                                                                        
+                                            </td>
+                                                                        
+                                          </tr>
+                                                                        
+                                        
+                                                                                                                    </tbody>
+                                                                        
+                                      
+                                                                                                                  </table>
+                                                                        
+                                      
+                                                                                                                  </body>
+                                                                                                                  </html>
