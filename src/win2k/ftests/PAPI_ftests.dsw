@@ -135,42 +135,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "fmatrixlowpapi"=.\fmatrixlowpapi.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "fmatrixpapi"=.\fmatrixpapi.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "fmatrixpapitwo"=.\fmatrixpapi2.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "ffourth"=.\ffourth.dsp - Package Owner=<4>
 
 Package=<5>
@@ -207,7 +171,43 @@ Package=<4>
 
 ###############################################################################
 
-Project: "fjohnmaytwo"=.\fjohnmay2.dsp - Package Owner=<4>
+Project: "fjohnmay2"=.\fjohnmay2.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fmatrixlowpapi"=.\fmatrixlowpapi.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fmatrixpapi"=.\fmatrixpapi.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fmatrixpapi2"=.\fmatrixpapi2.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -220,18 +220,6 @@ Package=<4>
 ###############################################################################
 
 Project: "fnineth"=.\fnineth.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "fprofile"=.\fprofile.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
