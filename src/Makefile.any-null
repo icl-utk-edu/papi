@@ -5,6 +5,7 @@ TARGETS = serial pthreads
 
 CFLAGS  = -Wall -g -DDEBUG
 OPTFLAGS=
+FOPTFLAGS= $(OPTFLAGS)
 CC_SHR  = gcc -shared
 CC_R	= gcc
 CC	= gcc

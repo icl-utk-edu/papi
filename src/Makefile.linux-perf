@@ -6,6 +6,7 @@ TARGETS = serial pthreads
 CFLAGS  = -Wall -mpentiumpro -g -DDEBUG
 FFLAGS	= -Wall -g
 OPTFLAGS= -O3
+FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc
 F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"

@@ -6,6 +6,7 @@ TARGETS	= serial
 CFLAGS	= -h calchars 
 FFLAGS	= -F 
 OPTFLAGS= -O3
+FOPTFLAGS= $(OPTFLAGS)
 NOOPT	= -O0
 CC_R	= cc
 CC	= cc

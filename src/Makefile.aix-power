@@ -7,6 +7,7 @@ FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com
 CFLAGS	= $(FLAGS) -g
 OPTFLAGS= -O3 -qstrict
 FFLAGS	= $(FLAGS)
+FOPTFLAGS= $(OPTFLAGS)
 NOOPT	= 
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp

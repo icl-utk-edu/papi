@@ -6,6 +6,7 @@ TARGETS	= serial pthreads omp smp
 CFLAGS 	= -g -DDEBUG -Zp8 -DNO_FLOPS
 FFLAGS	= -g
 OPTFLAGS= 
+FOPTFLAGS= $(OPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
 MISCLIBS= 
