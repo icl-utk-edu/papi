@@ -73,6 +73,11 @@ PAPI_FCALL(papif_thread_init,PAPIF_THREAD_INIT,(unsigned long int (*handle)(void
   *check = PAPI_thread_init(handle, *flag);
 }
 
+PAPI_FCALL(papif_thread_id,PAPIF_THREAD_ID,(unsigned long int *id))
+{
+  *id = PAPI_thread_id();
+}
+
 PAPI_FCALL(papif_list_events,PAPIF_LIST_EVENTS,(int *EventSet, int *Events, int *number, int *check))
 {
   *check = PAPI_list_events(*EventSet, Events, number);
@@ -533,7 +538,7 @@ PAPI_FCALL(papif_set_inherit, PAPIF_SET_INHERIT, (int *inherit, int *check))
 }
 #endif
 
-PAPI_FCALL(papif_set_domain1, PAPIF_SET_DOMAIN1, (int *es, int *domain, int *check))
+PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN, (int *es, int *domain, int *check))
 {
   PAPI_option_t d;
 
