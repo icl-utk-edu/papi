@@ -541,8 +541,10 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
    /* clear out everything currently coded */
    clear_control_state(this_state);
 
-   /* fill the counters we're using */
+   /* and reinitialize to the default state */
    _papi_hwd_init_control_state(this_state);
+
+   /* fill the counters we're using */
    for (i = 0; i < count; i++) {
       /* Add counter control command values to eventset */
       this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;

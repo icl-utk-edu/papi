@@ -711,6 +711,9 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    /* clear out everything currently coded */
    clear_control_state(this_state);
 
+   /* and reinitialize to the default state */
+   _papi_hwd_init_control_state(this_state);
+
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
