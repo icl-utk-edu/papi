@@ -26,9 +26,6 @@
 #include "papi.h"
 #include "papi_preset.h"
 
-#define PERFCNT_ON      1
-#define PERFCNT_OFF     2
-#define PERFCNT_EV5     1
 #define CTL_OFF         0
 #define CTL_ON          2
 #define CNTR1 0x1
@@ -109,13 +106,11 @@ typedef struct hwd_native {
    /* index in the native table, required */
    int index;
    /* Which counters can be used?  */
-   unsigned int selector;
+   int selector;
    /* Rank determines how many counters carry each metric */
    unsigned char rank;
    /* which counter this native event stays */
    int position;
-   int mod;
-   int link;
 } hwd_native_t;
 
 typedef struct hwd_control_state {
@@ -177,6 +172,5 @@ typedef ucontext_t hwd_ucontext_t;
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #endif

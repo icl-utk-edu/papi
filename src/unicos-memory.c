@@ -11,7 +11,7 @@
 #include SUBSTRATE
 
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info)
+int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu)
 {
    return PAPI_OK;
 }

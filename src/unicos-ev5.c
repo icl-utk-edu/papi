@@ -1,8 +1,6 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-/* PAPI stuff */
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_preset.h"
@@ -32,8 +30,6 @@ void print_control(pmctr_t *control) {
    SUBDBG("   CTL2 value:%d\n", control->CTL2);
 }
 #endif
-
-/* Utility functions */
 
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
@@ -82,51 +78,49 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t *ctx) {
+   return(PAPI_OK);
+}
+
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    int i, index;
+   hwd_control_state_t *this_state = &ESI->machdep;
 
    /* fill the counters we're using */
    _papi_hwd_init_control_state(this_state);
-   for(i = 0; i < count; i++) {
-      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
-      native[i].ni_bits.selector[0] = native_table[index].resources.selector[0];
-      native[i].ni_bits.selector[1] = native_table[index].resources.selector[1];
-      native[i].ni_bits.selector[2] = native_table[index].resources.selector[2];
+   for(i = 0; i < ESI->NativeCount; i++) {
+      index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
+      ESI->NativeInfoArray[i].ni_bits.selector[0] = native_table[index].resources.selector[0];
+      ESI->NativeInfoArray[i].ni_bits.selector[1] = native_table[index].resources.selector[1];
+      ESI->NativeInfoArray[i].ni_bits.selector[2] = native_table[index].resources.selector[2];
       /* Add counter control command values to eventset */
-      if(native[i].ni_bits.selector[0] != -1) {
+      if(ESI->NativeInfoArray[i].ni_bits.selector[0] != -1) {
          if(this_state->counter_cmd.CTL0) {
             return (PAPI_ECNFLCT);
          }
-         native[i].ni_position = 0;
-         this_state->selector |= CNTR1;
-         this_state->counter_cmd.SEL0 = native[i].ni_bits.selector[0];
+         ESI->NativeInfoArray[i].ni_position = 0;
+         this_state->counter_cmd.SEL0 = ESI->NativeInfoArray[i].ni_bits.selector[0];
          this_state->counter_cmd.CTL0 = CTL_ON;
       }
-      if(native[i].ni_bits.selector[1] != -1) {
+      if(ESI->NativeInfoArray[i].ni_bits.selector[1] != -1) {
          if(this_state->counter_cmd.CTL1) {
             return (PAPI_ECNFLCT);
          }
-         native[i].ni_position = 1;
-         this_state->selector |= CNTR2;
-         this_state->counter_cmd.SEL1 = native[i].ni_bits.selector[1];
+         ESI->NativeInfoArray[i].ni_position = 1;
+         this_state->counter_cmd.SEL1 = ESI->NativeInfoArray[i].ni_bits.selector[1];
          this_state->counter_cmd.CTL1 = CTL_ON;
       }
-      if(native[i].ni_bits.selector[2] != -1) {
+      if(ESI->NativeInfoArray[i].ni_bits.selector[2] != -1) {
          if(this_state->counter_cmd.CTL2) {
             return (PAPI_ECNFLCT);
          }
-         native[i].ni_position = 2;
-         this_state->selector |= CNTR3;
-         this_state->counter_cmd.SEL2 = native[i].ni_bits.selector[2];
+         ESI->NativeInfoArray[i].ni_position = 2;
+         this_state->counter_cmd.SEL2 = ESI->NativeInfoArray[i].ni_bits.selector[2];
          this_state->counter_cmd.CTL2 = CTL_ON;
       }
    }
 #ifdef DEBUG
    print_control(&this_state->counter_cmd);
 #endif
-   return(PAPI_OK);
-}
-
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    return(1);
 }
 
@@ -202,30 +196,37 @@ int _papi_hwd_get_system_info(void)
    pid = getpid();
    if (pid == -1)
       return (PAPI_ESYS);
-
-/*  dump_infoblk(); */
-   /* _papi_hwi_system_info.exe_info.fullname; */
-   /* _papi_hwi_system_info.exe_info.name; */
-   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) 0x800000000;
-   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) 0x100000000;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) 0x200000000;
+#if 0
+   dump_infoblk();
+#endif
+   _papi_hwi_system_info.pid = pid;
+   if(getcwd(_papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == NULL)
+      return(PAPI_ESYS);
+   strcat(_papi_hwi_system_info.exe_info.fullname, "/");
+   strcat(_papi_hwi_system_info.exe_info.fullname, _infoblk.i_pid);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, _infoblk.i_pid);
+   _papi_hwi_system_info.exe_info.address_info.text_start =
+       (caddr_t)_infoblk.i_segs[0].vaddr;
+   _papi_hwi_system_info.exe_info.address_info.data_start =
+       (caddr_t)_infoblk.i_segs[1].vaddr;
+   _papi_hwi_system_info.exe_info.address_info.bss_start =
+       (caddr_t)_infoblk.i_segs[2].vaddr;
    _papi_hwi_system_info.exe_info.address_info.text_end =
-       (caddr_t) (_infoblk.i_segs[0].size + 0x800000000);
+       (caddr_t)(_infoblk.i_segs[0].size + _infoblk.i_segs[0].vaddr);
    _papi_hwi_system_info.exe_info.address_info.data_end =
-       (caddr_t) (_infoblk.i_segs[1].size + 0x100000000);
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) (_infoblk.i_segs[2].size + 0x200000000);
+       (caddr_t) (_infoblk.i_segs[1].size + _infoblk.i_segs[1].vaddr);
+   _papi_hwi_system_info.exe_info.address_info.bss_end =
+       (caddr_t) (_infoblk.i_segs[2].size + _infoblk.i_segs[2].vaddr);
 
    _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_CRAY_NCPU);
-   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_CRAY_NCPU);
    _papi_hwi_system_info.hw_info.nnodes = 1;
+   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_CRAY_NCPU);
    _papi_hwi_system_info.hw_info.mhz = getmhz();
    strcpy(_papi_hwi_system_info.hw_info.vendor_string, "Cray");
    _papi_hwi_system_info.hw_info.vendor = -1;
    _papi_hwi_system_info.hw_info.revision = 0.0;
    _papi_hwi_system_info.hw_info.model = -1;
    strcpy(_papi_hwi_system_info.hw_info.model_string, "Alpha 21164");
-
-/*   _papi_hwi_system_info.cpunum = sysconf(_SC_CRAY_PPE);  */
 
    return (PAPI_OK);
 }
@@ -250,14 +251,12 @@ int _papi_hwd_init_global(void) {
    /* Setup presets */
    native_table = &_papi_hwd_t3e_native_table;
    preset_search_map = &_papi_hwd_t3e_preset_map;
-   retval = _papi_hwi_setup_all_presets(&_papi_hwd_t3e_preset_map);
+   retval = _papi_hwi_setup_all_presets(&_papi_hwd_t3e_preset_map, NULL);
    if (retval)
       return (retval);
 
    /* Setup memory info */
-   retval =
-       _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) _papi_hwi_system_info.hw_info.vendor);
-   if(retval)
+   if(_papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, 0))
       return (retval);
 
    return(PAPI_OK);
@@ -269,8 +268,7 @@ int _papi_hwd_init(hwd_context_t *ctx)
 }
 
 int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
-                             unsigned int event, void *extra, EventInfo_t * out)
-{
+                             unsigned int event, void *extra, EventInfo_t * out){
    return (PAPI_ESBSTR);
 }
 
@@ -313,15 +311,13 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    ctrl->values[2] = (pc_data[3] << 14) + (long_long)pmctr->CTR2;
    *events = ctrl->values;
 #ifdef DEBUG
-   {
-      if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
-         SUBDBG("raw val hardware index 0 is %lld\n",
-               (long_long) ctrl->values[0]);
-         SUBDBG("raw val hardware index 1 is %lld\n",
-               (long_long) ctrl->values[1]);
-         SUBDBG("raw val hardware index 2 is %lld\n",
-               (long_long) ctrl->values[2]);
-      }
+   if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
+      SUBDBG("raw val hardware index 0 is %lld\n",
+            (long_long) ctrl->values[0]);
+      SUBDBG("raw val hardware index 1 is %lld\n",
+            (long_long) ctrl->values[1]);
+      SUBDBG("raw val hardware index 2 is %lld\n",
+            (long_long) ctrl->values[2]);
    }
 #endif
    return(PAPI_OK);
