@@ -498,17 +498,7 @@ void dump_data(pm_data_t * d)
 /*int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)*/
 int _papi_hwd_reset(hwd_context_t * ESI, hwd_control_state_t * zero)
 {
-   int i, retval;
-
-/* I think this doesn't need to be done anymore...
-  retval = update_global_hwcounters(zero);
-  if (retval)
-    return(retval);
-*/
-/* I think this is now done at the hwi level...
-  for (i=0;i<_papi_hwi_system_info.num_cntrs;i++)
-    ESI->hw_start[i] = zero->hw_start[i];
-*/
+   pm_reset_data_mythread();
    return (PAPI_OK);
 }
 
