@@ -538,7 +538,7 @@ static void mpx_handler(int signal)
   if( threads_responding == 0 ) {       /* this thread caught the timer sig */
     /* Signal the other threads with event lists */
 #ifdef MPX_DEBUG_TIMER
-    thiscall = PAPI_get_real_usec();
+    thiscall = _papi_hwd_get_real_usec();
     fprintf( stderr, "last signal was %lld usec ago\n",
              thiscall - lastcall);
     lastcall = thiscall;
@@ -714,7 +714,7 @@ static void mpx_handler(int signal)
 #endif
 
 #ifdef MPX_DEBUG_OVERHEAD
-  usec = PAPI_get_real_usec() - usec;
+  usec = _papi_hwd_get_real_usec() - usec;
   fprintf(stderr,"handler %x did %swork in %lld usec\n",
          self, (didwork ? "" : "no "), usec);
 #endif
