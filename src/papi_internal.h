@@ -50,6 +50,8 @@ typedef struct _EventSetInfo {
 			 PAPI_RUNNING or PAPI_STOPPED. */
   _papi_overflow_info_t overflow; /* Overflow information and user options */ 
   _papi_multiplex_info_t multiplex; /* Overflow information and user options */ 
+  int granularity;
+  int domain;
 } EventSetInfo;
 
 typedef struct _dynamic_array{
@@ -108,7 +110,7 @@ extern int _papi_hwd_add_prog_event(void *machdep, int event, void *extra);
                       /* the extra will be for programmable events 
                          such as the threshold setting on IBM cache 
                          misses */
-extern int _papi_hwd_start(void *machdep);
+extern int _papi_hwd_start(EventSetInfo *value);
 extern int _papi_hwd_stop(void *machdep, long long events[]); 
                       /* counters will be read in stop call */
 extern int _papi_hwd_reset(void *machdep);
@@ -121,6 +123,9 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
                          overflow thresholds and multiplexing */
 extern int _papi_hwd_setopt(int code, EventSetInfo *value, PAPI_option_t *option);
 extern int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option);
+extern int _papi_hwd_set_gran(int code, EventSetInfo *value);
+extern int _papi_hwd_set_domain(int code, EventSetInfo *value);
+
 
 /* Portable overflow routines */
 

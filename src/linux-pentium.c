@@ -383,23 +383,38 @@ int _papi_hwd_add_prog_event(void *machdep, int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_start(void *machdep)
+int _papi_hwd_start(EventSetInfo *EventSet)
 {
-  hwd_control_state *this_state = (hwd_control_state *)machdep;
-  int retval;
+  hwd_control_state *this_state = EventSet->machdep;
+  int retval, code1, code2, code3;
+
+  code1 = this_state->counter_code1;
+  code2 = this_state->counter_code2;
+  code3 = 1; 
+
+  if(EventSet->domain == 2)
+  { code1 = code1 | 0x00020000;
+    code2 = code2 | 0x00020000;
+    code3 = code3 | 0x00020000;
+  }
+  if(EventSet->domain == 3)
+  { code1 = code1 | 0x00020000 | 0x00010000;
+    code2 = code2 | 0x00020000 | 0x00010000;
+    code3 = code3 | 0x00020000 | 0x00010000;
+  }
 
   if(this_state->counter_code1 >= 0)
-  { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
+  { retval = perf(PERF_SET_CONFIG, 0, code1);
     if(retval) return(PAPI_EBUG);
   }
 
   if(this_state->counter_code2 >= 0)
-  { retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
+  { retval = perf(PERF_SET_CONFIG, 1, code2);
     if(retval) return(PAPI_EBUG);
   }
 
   if(this_state->sp_code >= 0)
-  { retval = perf(PERF_SET_CONFIG, 2, 1);
+  { retval = perf(PERF_SET_CONFIG, 2, code3);
     if(retval) return(PAPI_EBUG);
   }
   retval = perf(PERF_START, 0, 0);
@@ -515,21 +530,17 @@ int _papi_hwd_write(void *machdep, long long events[])
   return(retval);
 }
 
-  /* used for native options like counting level, etc...*/
+int _papi_hwd_set_gran(int code, EventSetInfo *value)
+{  
+  return(PAPI_ESBSTR);
+}
 
-  /* probably from User Low Level API functions 
-     int PAPI_set_granularity(int granularity) 
-     and int PAPI_set_context(int context) 
-
-     we can probably use code=1 for granularity, 
-                         code=2 for context, 
-                         code=3 for overflow threshold,
-                         code=4 multiplexing,
-     and void *option for either (PAPI_PER_THR, PAPI_PER_PROC,
-     PAPI_PER_CPU or PAPI_PER_NODE), or (PAPI_USER, PAPI_KERNEL, 
-     PAPI_SYSTEM), for granularity and context, respectively, and
-     user defined values for overflow and multiplexing.
-  */
+int _papi_hwd_set_domain(int code, EventSetInfo *value)
+{  
+  if((code < 1) || (code > 4)) return(PAPI_EINVAL);
+  if(code == 4) return(PAPI_ESBSTR);
+  return(PAPI_OK);
+}
 
 int _papi_hwd_setopt(int code, EventSetInfo *value, PAPI_option_t *option)
 {
@@ -556,6 +567,7 @@ int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option)
       return(PAPI_EINVAL);
     }
 }
+
 
 /* Machine info structure. -1 is unused. */
 

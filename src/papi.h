@@ -31,18 +31,21 @@ All of the functions in the PerfAPI should use the following set of constants.
 */
 
 #define PAPI_NULL       -1    /*A nonexistent hardware event used as a placeholder*/ 
-#define PAPI_USER        0    /*Counts are accumulated for events occuring in the 
+#define PAPI_DEFAULT_DOMAIN   1
+#define PAPI_USER        1    /*Counts are accumulated for events occuring in the 
 				the user context*/
-#define PAPI_KERNEL	 1    /*Counts are accumulated for events occurring in the
+#define PAPI_KERNEL	 2    /*Counts are accumulated for events occurring in the
 				the kernel context*/
-#define PAPI_SYSTEM	 2    /*Counts are accumulated for events occuring in
+#define PAPI_ALL	 3
+#define PAPI_OTHER	 4
+#define PAPI_PER_CPU     1    /*Counts are accumulated on a per cpu basis*/
+#define PAPI_PER_NODE    2    /*Counts are accumulated on a per node or
+                                processor basis*/
+#define PAPI_SYSTEM	 3    /*Counts are accumulated for events occuring in
 			 	either the user context or the kernel context*/
 
 #define PAPI_PER_THR     0    /*Counts are accumulated on a per kernel thread basis*/ 	
 #define PAPI_PER_PROC    1    /*Counts are accumulated on a per process basis*/
-#define PAPI_PER_CPU     2    /*Counts are accumulated on a per cpu basis*/
-#define PAPI_PER_NODE    3    /*Counts are accumulated on a per node or 
-				processor basis*/ 
 
 #define PAPI_STOPPED     0x00    /* EventSet stopped */ 
 #define PAPI_RUNNING     0x01    /* EventSet running */
@@ -121,8 +124,8 @@ typedef union {
     papi_multiplex_option_t multiplex; 
 } PAPI_option_t;
 
-int PAPI_set_granularity(int granularity);
-int PAPI_set_context(int context);
+int PAPI_set_granularity(int granularity, int EventSet);
+int PAPI_set_domain(int domain, int EventSet);
 int PAPI_perror(int code, char *destination, int length);
 
 int PAPI_add_event(int *EventSet, int Event);

@@ -1261,7 +1261,32 @@ static int get_overflow(int *eventset, PAPI_option_t *ptr)
   return(_papi_hwd_getopt(PAPI_GET_OVRFLO,ESI,ptr));
 }
 
-/*=+=*/ 
+int PAPI_set_granularity(int granularity, int EventSet)
+{ int retval;
+  EventSetInfo *ESI;
+
+  ESI = lookup_EventSet(EventSet);
+
+  retval = _papi_hwd_set_gran(granularity, (EventSetInfo *)EventSet);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  ESI->granularity = granularity;
+  return(retval);
+}
+
+int PAPI_set_domain(int domain, int EventSet)
+{ int retval;
+  EventSetInfo *ESI;
+
+  ESI = lookup_EventSet(EventSet);
+
+  retval = _papi_hwd_set_domain(domain, (EventSetInfo *)EventSet);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  ESI->domain = domain; 
+  return(retval);
+}
+
 /*========================================================================*/
 int PAPI_set_opt(int option, int value, PAPI_option_t *ptr)
 {
@@ -1324,7 +1349,7 @@ int PAPI_start(int EventSet)
   ESI = lookup_EventSet(EventSet);
   if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  retval = _papi_hwd_start(ESI->machdep);
+  retval = _papi_hwd_start(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
   return(retval);
 }
@@ -1438,19 +1463,3 @@ int PAPI_reset(int EventSet)
 }
 
 
-/*========================================================================*/
-int PAPI_set_granularity(int granularity, int EventSet)
-{ int retval;
-
-  retval = PAPI_set_opt(); 
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
-  return(retval);
-}
-
-int PAPI_set_domain(int domain, int EventSet)
-{ int retval;
-
-  retval = PAPI_get_opt();
-  if(retval<PAPI_OK) return(handle_error(retval, NULL));
-  return(retval);
-}
