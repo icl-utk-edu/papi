@@ -28,11 +28,8 @@
 #include "p4_events.h"
 
 #ifdef _WIN32
-#define inline_static static __inline
 #include "cpuinfo.h"
 #include "pmclib.h"
-#else
-#define inline_static inline static
 #endif
 
 /* Per event data structure for each event */
