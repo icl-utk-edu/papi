@@ -82,7 +82,7 @@ int main(int argc, char **argv)
       platform */
    EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
 
-   if ( PAPI_event == PAPI_FP_INS ) 
+   if ( PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS ) 
       mythreshold = THRESHOLD;
    else
       mythreshold = THRESHOLD*2;
@@ -130,17 +130,17 @@ int main(int argc, char **argv)
       printf("-----------------------------------------------\n");
 
       printf("Test type    : %16d%16d\n", 1, 2);
-      printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0]);
-      printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1]);
+      printf(OUT_FMT, event_name, (values[0])[0], (values[1])[0]);
+      printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[1], (values[1])[1]);
       printf("Overflows    : %16s%16d\n", "", total);
       printf("-----------------------------------------------\n");
 
       printf("Verification:\n");
       if (PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS)
-         printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
+         printf("Row 1 approximately equals %d %d\n", num_flops, num_flops);
       printf("Column 1 approximately equals column 2\n");
       printf("Row 3 approximately equals %u +- %u %%\n",
-             (unsigned) ((values[0])[1] / (long_long) mythreshold),
+             (unsigned) ((values[0])[0] / (long_long) mythreshold),
              (unsigned) (OVR_TOLERANCE * 100.0));
    }
 /*
@@ -150,8 +150,8 @@ int main(int argc, char **argv)
   	test_fail(__FILE__, __LINE__, event_name, 1);
 */
 
-   min = (long_long) (((values[0])[1] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
-   max = (long_long) (((values[0])[1] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
+   min = (long_long) (((values[0])[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
+   max = (long_long) (((values[0])[0] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
    if (total > max || total < min)
       test_fail(__FILE__, __LINE__, "Overflows", 1);
 
