@@ -3,7 +3,7 @@ SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads
 MPX	= multiplex1 multiplex2
-MPXPTHR	= multiplex1_pthreads 
+MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SERIAL  = zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
@@ -42,6 +42,9 @@ multiplex2: multiplex2.c $(PAPILIB) $(UTILOBJS)
 
 multiplex1_pthreads: multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
+
+multiplex3_pthreads: multiplex3_pthreads.c $(UTILOBJS) $(PAPILIB)
+	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex3_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) profile_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
