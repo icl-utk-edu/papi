@@ -64,6 +64,7 @@
 #define PNE_replay_event_L2_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L2_MISS_BIT))
 #define PNE_instr_retired_non_bogus (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
 #define PNE_instr_retired_all (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG) + (1<<BOGUSNTAG) + (1<<BOGUSTAG))
+#define PNE_resource_stall (PAPI_NATIVE_MASK + (P4_resource_stall<<16) + (1<<SBFULL))
 
 #define PNE_scalar_DP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_DP_uop<<16) + (1<<TAG0) + (1<<ALL))
 #define PNE_scalar_SP_uop_tag0 (PAPI_NATIVE_MASK + (P4_scalar_SP_uop<<16) + (1<<TAG0) + (1<<ALL))
@@ -78,7 +79,7 @@
 
 const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 /* preset, derived, native index array */
-//   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
+   {PAPI_RES_STL, {0, {PNE_resource_stall, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
    {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
    {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
@@ -105,7 +106,7 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 
 const hwi_search_t _papi_hwd_pentium4_m2_preset_map[] = {
 /* preset, derived, native index array */
-//   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
+   {PAPI_RES_STL, {0, {PNE_resource_stall, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
    {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
    {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
@@ -533,7 +534,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
    {
     // "This event may not be supported in all models of the processor family"
     "resource_stall",
-    "This event monitors the occurrence or latency of stalls in the Allocator",
+    "This event monitors the occurrence or latency of stalls in the Allocator. It may not be supported in all models of the processor family",
     {
      {CTR236, CTR457}, {MSR_ALF_ESCR0, MSR_ALF_ESCR1},
      CCCR_ESCR_SEL(RESOURCE_STALL_CCCR), ESCR_EVENT_SEL(RESOURCE_STALL_ESCR),
