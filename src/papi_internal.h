@@ -88,7 +88,7 @@ typedef struct _EventSetInfo {
 } EventSetInfo;
 
 typedef struct _dynamic_array{
-	EventSetInfo   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
+	EventSetInfo   *dataSlotArray[PAPI_INIT_SLOTS]; /* array of ptrs to EventSets */
 	int    totalSlots;      /* number of slots in dataSlotArrays      */
 	int    availSlots;      /* number of open slots in dataSlotArrays */
 	int    fullSlots;       /* number of full slots in dataSlotArray    */

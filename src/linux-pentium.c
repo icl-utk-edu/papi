@@ -554,19 +554,18 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
-			        0.00,
-			        -1, 
-			        -1,
-			        -1,
-			        -1,
-			        -1,
-			         3,
-			         2,
-			         0,
-			         1,
-			        -1, 
-			        -1,
-			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        1.0,
+			        1, 
+			        1,
+			        1,
+			        1,
+			        200,
+			        3,
+			        2,
+			        0,
+			        1, 
+ 				16,
+			       sizeof(hwd_control_state_t), 
+			       NULL };
 #endif
 #endif
