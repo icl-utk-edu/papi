@@ -1,4 +1,5 @@
 // cpuinfo_papi.cpp : Defines the entry point for the console application.
+// File by Kevin London
 //
 
 
@@ -6,6 +7,47 @@
 #include <stdio.h>
 #include <windows.h>
 
+
+// Have to use the below function because sleep isn't reliable for determining
+// Mhz on a laptop.....sigh.....--KSL
+int mhz;
+UINT_PTR mytimer;
+
+void CALLBACK my_timer( UINT wTimerID, UINT msg, DWORD dwuser, DWORD dw1, DWORD dw2 );
+
+void CALLBACK my_timer( UINT wTimerID, UINT msg, DWORD dwuser, DWORD dw1, DWORD dw2 ){
+        static int count=0;
+        static int mymhz=0;
+        static ULARGE_INTEGER t1,t2;
+        int tmpmhz=1;
+        __asm {
+                rdtsc
+                mov t2.LowPart, eax
+                mov t2.HighPart, edx
+        }
+        if ( count == 0 ){
+                t1 = t2;
+                count++;
+                return;
+        }
+        else
+                tmpmhz = (unsigned int)((t2.QuadPart-t1.QuadPart))/1000000;
+
+
+        if ( tmpmhz > mymhz || mymhz == 0){
+                t1 = t2;
+                mymhz = tmpmhz;
+                return;
+        }
+        else if ( count > 60 )
+                mhz = mymhz;
+        else if(tmpmhz!=mymhz){
+                t1 = t2;
+                count++;
+                return;
+        }
+        timeKillEvent( mytimer );
+}
 
 // The functions to initialize processor information,
 // The only function a user should call is init_hwinfo -KSL
@@ -16,9 +58,9 @@ static int init_intel( struct wininfo * );
 int init_hwinfo( struct wininfo * hwinfo) {
     volatile unsigned long val,val2, val3;
     SYSTEM_INFO sys_info;
-	char vendor[13];
-	int tmpmhz,retval;
-	ULARGE_INTEGER t1, t2;
+    char vendor[13];
+    int tmpmhz,retval,dowork=0;
+    ULARGE_INTEGER t1, t2;
 
 
 
@@ -96,20 +138,13 @@ int init_hwinfo( struct wininfo * hwinfo) {
 	hwinfo->revision=(val&0xf);
 	hwinfo->brand_id=(val2&0xff);
 
-	// caclulate MHz
-	__asm {
-		rdtsc
-		mov t1.LowPart, eax
-		mov t1.HighPart, edx
+        mytimer = timeSetEvent( 1000, 0, my_timer, 0, TIME_PERIODIC );
+        while ( !mhz ){
+		if ( dowork%100000000 )
+                	Sleep (1);
 	}
-    Sleep(1000);
-	__asm {
-		rdtsc
-		mov t2.LowPart, eax
-		mov t2.HighPart, edx
-	}
-	tmpmhz = (int)((t2.QuadPart - t1.QuadPart)/1000000);
-	hwinfo->mhz = tmpmhz;
+        hwinfo->mhz = mhz;
+
 
 	if ( hwinfo->myvendor == AMD )
 		retval=init_amd( hwinfo );
