@@ -21,13 +21,6 @@
 *          <your email address>
 */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_preset.h"
@@ -1197,7 +1190,7 @@ static long_long units_per_second(long_long units, long_long cycles)
 {
    float tmp;
 
-   tmp = (float) units *_papi_hwi_system_info.hw_info.mhz * 1000000.0;
+   tmp =  units * _papi_hwi_system_info.hw_info.mhz * ((float)1000000.0);
    tmp = tmp / (float) cycles;
    return ((u_long_long) tmp);
 }
@@ -1235,7 +1228,7 @@ static long_long handle_derived_add_ps(int *position, long_long * from)
             i++;
          } while (*point != '|');
          operand[i] = '\0';
-         stack[top] = hw_counter[evi->pos[atoi(operand)]];
+         stack[top] = (double)hw_counter[evi->pos[atoi(operand)]];
          top++;
          point++;
       } else if (*point == '#') {       /* to get mhz, ignore the rest char's */
