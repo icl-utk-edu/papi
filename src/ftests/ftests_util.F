@@ -10,6 +10,7 @@
       integer ilen,ierror
 #endif
       integer quiet
+      common quiet
 
 C     This routine tests for a command line argument
 C     that matches 'TESTS_QUIET'
@@ -17,7 +18,6 @@ C     If found, it returns 1 to set output to quiet
 C     The routine was placed her to hide the ugly
 C     Windows #if stuff from normal view
 C     And also to make the test code read cleaner
-      get_quiet=0
 #if defined(_CRAYT3E) || defined(__crayx1)
       call pxfgetarg(1,chbuf,ilen,ierror)
 #else 
