@@ -107,6 +107,7 @@ typedef struct itanium_preset_search {
    int derived;
    /* Strings to look for */
    char *(findme[MAX_COUNTERS]);
+   char operation[MAX_COUNTERS*5];
 } itanium_preset_search_t;
 
 typedef int hwd_context_t;

@@ -137,9 +137,10 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
+   {PAPI_MEM_SCY, DERIVED_POSTFIX, {"BE_EXE_BUBBLE_GRALL", "BE_EXE_BUBBLE_GRGR", "BE_L1D_FPU_BUBBLE_L1D"}, "N0|N1|-|N2|+|"},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 56
+#define NUM_OF_PRESET_EVENTS 57
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #endif
@@ -181,6 +182,7 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
       pnum++;
       preset_search_map[i].event_code = oldmap[i].preset;
       preset_search_map[i].data.derived = oldmap[i].derived;
+      strcpy(preset_search_map[i].data.operation,oldmap[i].operation);
       findme = oldmap[i].findme;
       cnt = 0;
       while (*findme != NULL) {
