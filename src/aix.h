@@ -19,12 +19,13 @@
 
 #include "pmapi.h"
 #define POWER_MAX_COUNTERS MAX_COUNTERS
+#define MAX_COUNTER_TERMS MAX_COUNTERS
 #define INVALID_EVENT -2
 #define POWER_MAX_COUNTERS_MAPPING 8
 
 #include "papi.h"
 #include "native.h"
-#include "preset.h"
+#include "papi_preset.h"
 
 
 extern _etext;

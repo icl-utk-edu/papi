@@ -18,7 +18,6 @@
 #ifndef PAPI_INTERNAL_H
 #define PAPI_INTERNAL_H
 
-
 #ifdef DEBUG
 /* add Win32 to the debug list */
 #if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__) \
@@ -96,6 +95,7 @@ typedef struct _EventInfo {
   unsigned counter_index;   /* Index of counter to read in buffer returned by the hardware/kernel
 			       This is also used for order dependent derived events to indicate
 			       the first operand (replaces PAPI 2 operand_index) */
+  int pos[MAX_COUNTERS];    /* */
   hwd_register_map_t regs;  /* Substrate defined collection of register number that keep track of resources 
 			                   used by this event */
   char *ops;                /* operation string of preset */
@@ -331,5 +331,5 @@ typedef struct _papi_mdi {
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
-extern hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS];
+/*extern hwi_preset_t _papi_hwi_preset_map[];*/
 #endif /* PAPI_INTERNAL_H */

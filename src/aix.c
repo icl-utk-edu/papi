@@ -9,6 +9,7 @@
 
 #include "papi.h"
 #include SUBSTRATE
+#include "papi_preset.h"
 #include "papi_internal.h"
 #include "papi_protos.h"
 
@@ -36,6 +37,23 @@ static int maxgroups = 0;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/* The following is for any POWER hardware */
+
+/* Routines to support an opaque native event table */
+char *_papi_hwd_native_code_to_name(unsigned int EventCode)
+{
+  return(native_table[EventCode & NATIVE_AND_MASK].name);
+}
+
+char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
+{
+  return(native_table[EventCode & NATIVE_AND_MASK].description);
+}
+
+int _papi_hwd_native_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+{
+  bits = &native_table[EventCode & NATIVE_AND_MASK].resources;
+  return(PAPI_OK);
+}
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
 {

@@ -62,26 +62,89 @@ typedef struct P4_perfctr_event {
 #endif
 
 
-#define P4_MAX_REGS_PER_EVENT 4
+#define MAX_COUNTERS	       18
+#define MAX_COUNTER_TERMS	8
+#define P4_MAX_REGS_PER_EVENT	4
+#define PAPI_MAX_NATIVE_EVENTS 40
+
+
+/*
+Haihang: This is a first cut. It was the best I could do on short notice.
+The name and description fields should be self-explanatory.
+The counter and escr fields are what must be used for register allocation.
+There are 18 possible counters. There are 45 possible escrs.
+Each native event requires and consumes one counter and one escr.
+Multiple counters (2 or 3) are valid with each escr, 
+and typically 2 escrs are valid with each event.
+Thus, you must track and optimize two different selectors: one for the 18 counters,
+and a second for the 45 escrs. 
+The bits set in counter[0] correspond to the counters available for use with escr[0].
+The value of escr[0] is the bit position in a long_long selector determining which escrs
+have been allocated.
+Example:
+Native event PNE_branch_retired_all can live on 6 counters
+counter[0] = MSR_IQ_COUNTER014 = COUNTER(12) | COUNTER(13) | COUNTER(16)
+counter[1] = MSR_IQ_COUNTER235 = COUNTER(14) | COUNTER(15) | COUNTER(17)
+This event also MUST live on one of two escrs:
+escr[0] = MSR_CRU_ESCR2 = 41
+escr[1] = MSR_CRU_ESCR3 = 42
+If one of counter[0] is chosen, then escr[0] must be chosen.
+Likewise for counter[1] and escr[1].
+So if this event is assigned to counter 12, bit 12 of counter_selector must be set, 
+and bit 41 of escr_selector must be set. These resources are then not available for
+any other native event.
+Hope this helps! Good luck!
+*/
 
 typedef struct P4_perfctr_codes {
-  P4_perfctr_event_t data[P4_MAX_REGS_PER_EVENT];
+  P4_perfctr_event_t data[MAX_COUNTER_TERMS];
 } P4_perfctr_preset_t;
 
-typedef struct P4_perfctr_avail {
-  unsigned selector;               /* Mask for which counters in use */
-  unsigned uses_pebs;              /* Binary flag for PEBS */
-  unsigned uses_pebs_matrix_vert;  /* Binary flag for PEBS_MATRIX_VERT */
+typedef struct P4_register {
+  unsigned counter[2];	    // bitmap of valid counters for each escr
+  unsigned escr[2];	    // bit offset for each of 2 valid escrs
+  unsigned cccr;	    // value to be loaded into cccr register
+  unsigned event;	    // value defining event to be loaded into escr register
+  unsigned pebs_enable;	    // flag for PEBS counting
+  unsigned pebs_matrix_vert;// flag for PEBS_MATRIX_VERT, whatever that is 
+  unsigned ireset;	    // I don't really know what this does
 } P4_register_t;
 
 typedef struct P4_regmap {
   unsigned num_hardware_events;
-  P4_register_t hardware_event[P4_MAX_REGS_PER_EVENT];
+  P4_register_t hardware_event[MAX_COUNTER_TERMS];
 } P4_regmap_t;
+
+typedef struct hwd_p4_native_map {
+  char *name;		    // ASCII name of the native event
+  char *description;	    // ASCII description of the native event
+  P4_register_t resources;  // description of resources needed by this event
+  int synonym;		    // index of next synonym if event can be multiply encoded 
+} hwd_p4_native_map_t;
 
 /* Per eventset data structure for thread level counters */
 
+typedef struct hwd_native {
+  /* index in the native table, required */
+  int index;
+  /* Which counters can be used?  */
+  unsigned int selector;  
+  /* Rank determines how many counters carry each metric */
+  unsigned char rank;
+  /* which counter this native event stays */
+  int position;
+  int mod;
+  int link;
+} hwd_native_t;
+
 typedef struct P4_perfctr_control {
+  /* add this array to hold native events info */
+  hwd_native_t native[MAX_COUNTERS];
+  
+  /* total_events: number of added events
+     native_idx:   number of all native events 
+	 both are required */
+  int native_idx; 
   P4_register_t allocated_registers;
   struct vperfctr_control control; 
   struct perfctr_sum_ctrs state;

@@ -396,7 +396,7 @@ int _papi_hwd_allocate_registers(hwd_control_state_t *tmp_state)
 		position=get_avail_hwcntr_num(event_list[i].selector);
 		tmp_state->native[i].position=position; 
 		/* update tmp_state->counter_cmd */
-		tmp_state->counter_cmd.events[position] = native_table[tmp_state->native[i].index].counter_cmd[position];
+		tmp_state->counter_cmd.events[position] = native_table[tmp_state->native[i].index].resources.counter_cmd[position];
 	}
 	return 1;
   }
@@ -441,7 +441,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, Eve
 			/* there is an empty slot for the native event, initialize the empty slot for the new added event */
 			ntop=tmp_state.native_idx;
 			tmp_state.native[ntop].index=nix[i];
-			tmp_state.native[ntop].selector=native_table[nix[i]].selector;
+			tmp_state.native[ntop].selector=native_table[nix[i]].resources.selector;
 			
 			/* calculate native event rank, which is number of counters it can live on, this is power3 specific */
 			j=0;

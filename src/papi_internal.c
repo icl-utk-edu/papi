@@ -28,6 +28,7 @@
 
 #include "papi.h"
 #include SUBSTRATE
+#include "papi_preset.h"
 #include "papi_internal.h"
 #include "papi_protos.h"
 
@@ -246,7 +247,7 @@ static void initialize_EventInfoArray(EventSetInfo_t *ESI)
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
       ESI->EventInfoArray[i].counter_index = -1;
       for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
-     	  ESI->EventInfoArray[i].regs.pos[j] = -1;
+     	  ESI->EventInfoArray[i].pos[j] = -1;
       ESI->EventInfoArray[i].ops = NULL;
       ESI->EventInfoArray[i].hwd_selector = 0;
       ESI->EventInfoArray[i].derived = NOT_DERIVED;
@@ -516,10 +517,10 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 	total_events=out->ESIhead->NumberOfEvents;
 
 	if(!remap){
-		out->counter_index = out->regs.pos[0];
+		out->counter_index = out->pos[0];
 		i=0;
-		while(out->regs.pos[i]>=0 && i<MAX_COUNTERS){
-			out->hwd_selector |= 1<<out->regs.pos[i];
+		while(out->pos[i]>=0 && i<MAX_COUNTERS){
+			out->hwd_selector |= 1<<out->pos[i];
 			i++;
 		}
 		return;
@@ -537,19 +538,19 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 				nix=_papi_hwi_preset_map[preset_index].natIndex[k];
 				for(n=0;n<tmp_state->native_idx;n++){
 					if(nix==tmp_state->native[n].index){
-						head[j].regs.pos[k]=tmp_state->native[n].position;
+						head[j].pos[k]=tmp_state->native[n].position;
 						head[j].hwd_selector |= 1<<tmp_state->native[n].position;
 						break;
 					}
 				}
 			}
-			head[j].counter_index=head[j].regs.pos[0];
+			head[j].counter_index=head[j].pos[0];
 		}
 		else{
 			nix = head[j].event_code & NATIVE_AND_MASK;
 			for(n=0;n<tmp_state->native_idx;n++){
 				if(nix==tmp_state->native[n].index){
-					head[j].regs.pos[0]=tmp_state->native[n].position;
+					head[j].pos[0]=tmp_state->native[n].position;
 					head[j].hwd_selector |= 1<<tmp_state->native[n].position;
 					head[j].counter_index=tmp_state->native[n].position;
 					break;
@@ -676,7 +677,7 @@ int _papi_hwi_add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout)
 
 int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 {
-  int i, j = 0, retval, thisindex;
+  int j = 0, retval, thisindex;
 
   /* Make sure the event is preset. */
 
@@ -735,7 +736,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 		ESI->EventInfoArray[thisindex].event_code = PAPI_NULL;
 		ESI->EventInfoArray[thisindex].counter_index = -1;
 		for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
-     		ESI->EventInfoArray[thisindex].regs.pos[j] = -1;
+     		ESI->EventInfoArray[thisindex].pos[j] = -1;
 		ESI->EventInfoArray[thisindex].ops = NULL;
 		ESI->EventInfoArray[thisindex].hwd_selector = 0;
 		ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
@@ -955,6 +956,7 @@ int _papi_hwi_mdi_init() {
    _papi_hwi_system_info.hw_info.model_string[0]    = '\0';  /* model_string */
    _papi_hwi_system_info.hw_info.revision           = 0.0;   /* revision */
    _papi_hwi_system_info.hw_info.mhz                = 0.0;   /* mhz */
+   _papi_hwi_system_info.hw_info.max_native_events  = PAPI_MAX_NATIVE_EVENTS;
 
   /* The PAPI_exe_info_t struct defined in papi.h */
    memset(&_papi_hwi_system_info.exe_info, sizeof(PAPI_exe_info_t), 0);

@@ -290,6 +290,7 @@ typedef struct _papi_hw_info {
   float revision;           /* Revision of CPU */ 
   float mhz;                  /* Cycle time of this CPU, *may* be estimated at 
                                init time with a quick timing routine */
+  int max_native_events;    /* maximum # of native events for this platform */
 } PAPI_hw_info_t;
   
 typedef struct _papi_mem_info {
@@ -410,7 +411,6 @@ int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
-int PAPI_native_event_index_to_code(int in, int *out);
 int PAPI_read(int EventSet, long_long *values);
 int PAPI_remove_event(int EventSet, int EventCode);
 int PAPI_remove_events(int EventSet, int *Events, int number);

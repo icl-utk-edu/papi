@@ -1,6 +1,8 @@
 #include "aix.h"
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
+#define GROUP_INTS 2
+
 
 typedef struct PWR4_pmapi_control {
   /* Indices into preset map for event in order of addition */
@@ -36,8 +38,6 @@ typedef PWR4_regmap_t hwd_register_map_t;
 typedef PWR4_pmapi_context_t hwd_context_t;
 
 /* ... for PAPI3
-typedef PWR4_register_t hwd_register_t;
-
 typedef PWR4_pmapi_event_t hwd_event_t;
 */
 

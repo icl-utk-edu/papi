@@ -28,6 +28,7 @@
 
 #include "papi.h"
 #include SUBSTRATE
+#include "papi_preset.h"
 #include "papi_internal.h"
 #include "papi_protos.h"
 
@@ -337,18 +338,6 @@ int PAPI_event_name_to_code(char *in, int *out)
 	}
     }
   papi_return(_papi_hwi_native_name_to_code(in, out));
-}
-
-int PAPI_native_event_index_to_code(int in, int *out)
-{
-  if ((in < 0) || (out == NULL))
-    papi_return(PAPI_EINVAL);
-
-  *out = _papi_hwi_native_idx_to_code(in);
-  if (!(*out & NATIVE_MASK) || (*out < 0)){
-    papi_return(PAPI_ENOEVNT);
-  }
-  papi_return(PAPI_OK);
 }
 
 int PAPI_create_eventset(int *EventSet)

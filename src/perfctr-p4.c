@@ -18,6 +18,7 @@
 
 #include "papi.h"
 #include SUBSTRATE
+#include "papi_preset.h"
 #include "papi_internal.h"
 #include "papi_protos.h"
 
@@ -35,9 +36,9 @@
 
 #ifdef __i386__
 /* CPUID model < 2 */
-extern P4_search_t _papi_hwd_pentium4_mlt2_preset_map[];
+extern preset_search_t _papi_hwd_pentium4_mlt2_preset_map[];
 /* CPUID model >= 2 */
-extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
+extern preset_search_t _papi_hwd_pentium4_mge2_preset_map[];
 #elif defined(__x86_64__)
 extern P4_search_t _papi_hwd_x86_64_opteron_map[];
 #endif
@@ -58,6 +59,7 @@ P4_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
 /* END LOCAL DECLARATIONS */
 /**************************/
 
+/*
 static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
 {
   int pnum, unum, preset_index, did_something = 0;
@@ -73,12 +75,12 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
       preset_map[preset_index].derived = NOT_DERIVED;
 
       /* Number of hardware events in this event */
-
+/*
       preset_map[preset_index].number = preset_search_map[pnum].number;
 
       /* Fill in the preset's register map of which registers this
 	 preset can use. */
-
+/*
       note = preset_map[preset_index].note;
       for (unum = 0; unum < preset_map[preset_index].number; unum++)
 	{
@@ -124,19 +126,20 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
   return(PAPI_OK);
 }
+*/
 
-inline static int setup_all_presets(int cputype)
+inline static int setup_p4_presets(int cputype)
 {
 #ifdef __i386__
   if (cputype == PERFCTR_X86_INTEL_P4)
-    return(setup_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_preset_map));
+    return(setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map));
   else if (cputype == PERFCTR_X86_INTEL_P4M2)
-    return(setup_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_preset_map));
+    return(setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
   else
     error_return(PAPI_ESBSTR,MODEL_ERROR);
 #elif defined(__x86_64__)
   if (PERFCTR_X86_AMD_K8)
-    return(setup_presets(_papi_hwd_x86_64_opteron_map, _papi_hwd_preset_map));
+    return(setup_all_presets(_papi_hwd_x86_64_opteron_map));
   else
     error_return(PAPI_ESBSTR,MODEL_ERROR);
 #endif
@@ -286,7 +289,7 @@ int _papi_hwd_init_global(void)
 
   /* Setup presets */
 
-  retval = setup_all_presets(info.cpu_type);
+  retval = setup_p4_presets(info.cpu_type);
   if (retval)
     return(retval);
 
@@ -541,12 +544,12 @@ u_long_long _papi_hwd_get_virt_usec (const P4_perfctr_context_t *ctx)
 
 /* Register allocation */
 
-int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *from, P4_regmap_t *out)
+int _papi_hwd_allocate_registers(hwd_control_state_t *evset_info)
 {
   /* This routine should be far more complex than below. See papiv3 branch, for instance.
      For now, we just provide the minimum info from the preset map. */
-  *out = from->possible_registers;
-  SUBDBG("Selector %08x\n",out->hardware_event[0].selector);
+//  *out = from->possible_registers;
+//  SUBDBG("Selector %08x\n",out->hardware_event[0].selector);
 
   return(PAPI_OK);
 }
@@ -556,8 +559,10 @@ int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *
    this register lives in. */
 
 //int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_control_t *evset_info)
-int _papi_hwd_add_event(hwd_control_state_t *evset_info, unsigned int EventCode, EventInfo_t * ev_info)
+//int _papi_hwd_add_event(hwd_control_state_t *evset_info, unsigned int EventCode, EventInfo_t * ev_info)
+int _papi_hwd_add_event(hwd_control_state_t *evset_info, int *nix, int size, EventInfo_t *ev_info)
 {
+#if 0
   int i, index, mask = 0;
   P4_preset_t *preset;
   P4_register_t *bits = &evset_info->allocated_registers;
@@ -660,15 +665,18 @@ int _papi_hwd_add_event(hwd_control_state_t *evset_info, unsigned int EventCode,
   
   /* Here we return the hardware index of the event we are reading. */
   return(index-preset->number);
+#endif
+  return(0);
 }
 
-int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perfctr_control_t *evset_info)
+int _papi_hwd_remove_event(hwd_control_state_t *evset_info, int *nix, int size)
+//int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perfctr_control_t *evset_info)
 {
+#if 0
   int i, j, new_nractrs, nractrs, clear_pebs = 0, clear_pebs_matrix_vert = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
 
   /* Remove allocation/usage info for this event from bits */
-
   for (i=0;i<ev_info->num_hardware_events;i++)
     {
       SUBDBG("Allocated registers (before):  %d %08x\n",i,evset_info->allocated_registers.selector);
@@ -743,6 +751,7 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perf
   print_control(&evset_info->control.cpu_control);
 #endif
 
+#endif
   return(PAPI_OK);
 }
 

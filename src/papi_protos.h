@@ -113,10 +113,22 @@ extern int _papi_hwi_query_native_event(unsigned int EventCode);
 extern int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *description);*/
 extern int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info);
 extern int _papi_hwi_native_name_to_code(char *in, int *out);
-extern int _papi_hwi_native_code_to_idx(unsigned int EventCode);
-extern unsigned int _papi_hwi_native_idx_to_code(unsigned int EventCode);
+/*extern int _papi_hwi_native_code_to_idx(unsigned int EventCode);
+extern unsigned int _papi_hwi_native_idx_to_code(unsigned int EventCode);*/
 extern char *_papi_hwi_native_code_to_name(unsigned int EventCode);
 extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
+
+/* The following functions implement the hardware dependent native event table access.
+   The first three routines are required. The next two are optional.
+   All five must at least be stubbed in the substrate file. */
+
+extern char *_papi_hwd_native_code_to_name(unsigned int EventCode);
+extern char *_papi_hwd_native_code_to_descr(unsigned int EventCode);
+extern int _papi_hwd_native_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+/* not completely defined yet...
+    _papi_hwd_encode_native();
+    _papi_hwd_decode_native();
+*/
 
 /* The following functions are defined by the memory file. */
 

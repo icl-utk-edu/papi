@@ -22,19 +22,22 @@
 #define PAPI_MAX_STR_LEN 129
 #define GROUP_INTS 2
 
-typedef struct native_event_entry{
-  /* assigned index for the event */
-  /*unsigned char index;*/
+typedef struct PWR_register {
   /* indicate which counters this event can live on */
   unsigned int selector;
   /* Buffers containing counter cmds for each possible metric */
   int counter_cmd[MAX_COUNTERS];
-  /* If it exists, then this is the name of this event */
-  char name[PAPI_MAX_STR_LEN];
 #ifdef _POWER4
-  /* which group this event belongs */
+  /* which group this event belongs to */
   unsigned int group[GROUP_INTS];
 #endif
+} PWR_register_t;
+
+typedef struct native_event_entry{
+  /* description of the resources required by this native event */
+  PWR_register_t resources;
+  /* If it exists, then this is the name of this event */
+  char name[PAPI_MAX_STR_LEN];
   /* If it exists, then this is the description of this event */
   char *description;
 } native_event_entry_t;  
@@ -53,7 +56,7 @@ void initialize_native_table()
   
   for(i=0;i<MAX_NATIVE_EVENT;i++){
 	for(j=0;j<MAX_COUNTERS;j++)
-		native_table[i].counter_cmd[j]=-1;
+		native_table[i].resources.counter_cmd[j]=-1;
   }
 }
 
@@ -65,11 +68,11 @@ void setup_gps(int total)
   
   for(i=0;i<total;i++){
   	for(j=0;j<MAX_COUNTERS;j++){
-		if(native_table[i].selector & (1<<j)){
+		if(native_table[i].resources.selector & (1<<j)){
 			for(gnum=0;gnum<pmgroups.maxgroups;gnum++){
-  				if(native_table[i].counter_cmd[j]==pmgroups.event_groups[gnum].events[j]){
+  				if(native_table[i]resources.counter_cmd[j]==pmgroups.event_groups[gnum].events[j]){
 					/* could use gnum instead of pmgroups.event_groups[gnum].group_id */
-					native_table[i].group[pmgroups.event_groups[gnum].group_id/32] |= \
+					native_table[i]resources.group[pmgroups.event_groups[gnum].group_id/32] |= \
 				   	  1<<(pmgroups.event_groups[gnum].group_id%32);
 				}
 			}
@@ -93,15 +96,15 @@ int setup_native_table()
   	for (ev = 0; ev < info->maxevents[pmc]; ev++, wevp++){
  		for(i=0;i<index;i++){
 			if (strcmp(wevp->short_name, native_table[i].name) == 0){
-				native_table[i].selector |= 1<<pmc;
-				native_table[i].counter_cmd[pmc]=wevp->event_id;
+				native_table[i].resources.selector |= 1<<pmc;
+				native_table[i].resources.counter_cmd[pmc]=wevp->event_id;
 				break;
 			}
 		}
 		if(i==index){
 			/*native_table[i].index=i;*/
-			native_table[i].selector |= 1<<pmc;
-			native_table[i].counter_cmd[pmc]=wevp->event_id;
+			native_table[i].resources.selector |= 1<<pmc;
+			native_table[i].resources.counter_cmd[pmc]=wevp->event_id;
 			strcpy(native_table[i].name, wevp->short_name);
 			native_table[i].description=strdup(wevp->description);
 			index++;
@@ -173,17 +176,27 @@ void main()
     }
   }
 
-  fprintf(fp[0], "\ntypedef struct native_event_entry{\n");
+#ifdef _POWER4
+  fprintf(fp[0], "\ntypedef struct PWR4_register{\n");
+#else
+  fprintf(fp[0], "\ntypedef struct PWR3_register{\n");
+#endif
   fprintf(fp[0], "  /* indicate which counters this event can live on */\n");
   fprintf(fp[0], "  unsigned int selector;\n");
   fprintf(fp[0], "  /* Buffers containing counter cmds for each possible metric */\n");
   fprintf(fp[0], "  int counter_cmd[MAX_COUNTERS];\n");
-  fprintf(fp[0], "  /* If it exists, then this is the name of this event */\n");
-  fprintf(fp[0], "  char name[PAPI_MAX_STR_LEN];\n");
 #ifdef _POWER4
   fprintf(fp[0], "  /* which group this event belongs */\n");
   fprintf(fp[0], "  unsigned int group[GROUP_INTS];\n");
 #endif
+  fprintf(fp[0], "} hwd_register_t;\n\n"); 
+
+
+  fprintf(fp[0], "\ntypedef struct native_event_entry{\n");
+  fprintf(fp[0], "    /* description of the resources required by this native event */\n");
+  fprintf(fp[0], "    hwd_register_t resources;\n");
+  fprintf(fp[0], "  /* If it exists, then this is the name of this event */\n");
+  fprintf(fp[0], "  char name[PAPI_MAX_STR_LEN];\n");
   fprintf(fp[0], "  /* If it exists, then this is the description of this event */\n");
   fprintf(fp[0], "  char *description;\n");
   fprintf(fp[0], "} native_event_entry_t;\n\n"); 
@@ -205,18 +218,18 @@ void main()
   fprintf(fp[1], "native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS] = {");
   for(i=0;i<total;i++){
   	if(i==0)
-		fprintf(fp[1], "\n	{0x%x, {%d", native_table[i].selector, native_table[i].counter_cmd[0]);
+		fprintf(fp[1], "\n	{0x%x, {%d", native_table[i].resources.selector, native_table[i].resources.counter_cmd[0]);
 	else
-	  	fprintf(fp[1], ",\n	{0x%x, {%d", native_table[i].selector, native_table[i].counter_cmd[0]);
+	  	fprintf(fp[1], ",\n	{0x%x, {%d", native_table[i].resources.selector, native_table[i].resources.counter_cmd[0]);
     for(j=1;j<MAX_COUNTERS;j++){
-		fprintf(fp[1], ",%d", native_table[i].counter_cmd[j]);
+		fprintf(fp[1], ",%d", native_table[i].resources.counter_cmd[j]);
 	}
 	fprintf(fp[1], "}, \"%s\", ", native_table[i].name);
 
   #ifdef _POWER4
-  	fprintf(fp[1], "{ 0x%x", native_table[i].group[0]);
+  	fprintf(fp[1], "{ 0x%x", native_table[i].resources.group[0]);
   	for(k=1;k<GROUP_INTS;k++){
-		fprintf(fp[1], ", 0x%x", native_table[i].group[k]);
+		fprintf(fp[1], ", 0x%x", native_table[i].resources.group[k]);
 	}
 	fprintf(fp[1], "}, ");
   #endif

@@ -451,33 +451,80 @@ int _papi_portable_get_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *p
 }
 */
 
-/* Returns index of native EventCode or error message;
+/*
+  Hardware independent routines to support an opaque native event table.
+  #define HAS_NATIVE_MAP for these functions to be active.
+  Otherwise they return benign values (PAPI_ENOEVNT)
+  These routines assume the existence of two hardware dependent routines:
+    _papi_hwd_native_code_to_name()
+    _papi_hwd_native_code_to_descr()
+  A third routine is required to extract hardware dependent mapping info from the structure:
+    _papi_hwd_native_code_to_bits()
+  In addition, two more optional hardware dependent routines provide for the creation
+  of new native events that may not be included in the distribution:
+    _papi_hwd_encode_native()
+    _papi_hwd_decode_native()
+  These five routines provide the mapping from the opaque hardware dependent
+  native event structure array to the higher level hardware independent interface.
+*/
+
+/* Returns PAPI_OK if native EventCode found, or PAPI_ENOEVNT if not;
    Used to enumerate the entire array, e.g. for native_avail.c */
 int _papi_hwi_query_native_event(unsigned int EventCode)
 {
 #ifdef HAS_NATIVE_MAP
-  if (EventCode & NATIVE_MASK) {
-    return (_papi_hwi_native_code_to_idx(EventCode));
+  char *name;
+
+  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+    name = _papi_hwi_native_code_to_name(EventCode);
+    if (name) return(PAPI_OK);
   }
 #endif
   return(PAPI_ENOEVNT);
 }
 
-/* Converts an ASCII name into an event code usable by other routines */
+/* Converts an ASCII name into a native event code usable by other routines */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
 #ifdef HAS_NATIVE_MAP
   char *name;
-  int i;
-  
+  int i = 0;
   for(i=0;i<PAPI_MAX_NATIVE_EVENTS;i++){
-  	if(strcasecmp(native_table[i].name, in)==0){
-		*out=_papi_hwi_native_idx_to_code(i);
-		return(PAPI_OK);
-	}
-  }  
+    name = _papi_hwd_native_code_to_name(i | NATIVE_MASK);
+    if (name != NULL) {
+      if (strcasecmp(name,in) == 0) {
+	*out = i | NATIVE_MASK;
+	return(PAPI_OK);
+      }
+    }
+  }
 #endif
   return(PAPI_ENOEVNT);
+}
+
+
+/* Returns event name based on native event code. */
+char *_papi_hwi_native_code_to_name(unsigned int EventCode)
+{
+#ifdef HAS_NATIVE_MAP
+  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+    return(_papi_hwd_native_code_to_name(EventCode));
+  }
+#endif
+  return(NULL);
+}
+
+
+/* Returns event description based on native event code. */
+char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
+{
+#ifdef HAS_NATIVE_MAP
+  
+  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+    return(_papi_hwd_native_code_to_descr(EventCode));
+  }
+#endif
+  return(NULL);
 }
 
 
@@ -485,7 +532,6 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info)
 {
 #ifdef HAS_NATIVE_MAP
-  int idx;
 
   if (EventCode & NATIVE_MASK) {
     info->event_name = _papi_hwi_native_code_to_name(EventCode);
@@ -504,72 +550,6 @@ int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_inf
   return(PAPI_ENOEVNT);
 }
 
-/* Reverse lookup of event code to index */
-int _papi_hwi_native_code_to_idx(unsigned int EventCode)
-{
-#ifdef HAS_NATIVE_MAP
-  int index;
-  
-  if (EventCode & NATIVE_MASK) {
-  	index=EventCode ^ NATIVE_MASK;
-  
-  	if(index<PAPI_MAX_NATIVE_EVENTS){
-  		return(index);
-  	}
-  }
-#endif
-  return (PAPI_ENOEVNT);
-}
-
-/* Returns event code based on index. NATIVE_MASK bit must be set if not predefined */
-unsigned int _papi_hwi_native_idx_to_code(unsigned int idx)
-{
-#ifdef HAS_NATIVE_MAP
-  unsigned int EventCode;
-  
-  EventCode =idx | NATIVE_MASK;
-  
-  if(idx<PAPI_MAX_NATIVE_EVENTS){
-  	return(EventCode);
-  }
-#endif
-  return (PAPI_ENOEVNT);
-}
-
-/* Returns event name based on index. */
-char *_papi_hwi_native_code_to_name(unsigned int EventCode)
-{
-#ifdef HAS_NATIVE_MAP
-  int index;
-  
-  if (EventCode & NATIVE_MASK) {
-  	index=EventCode ^ NATIVE_MASK;
-  
-  	if(index<PAPI_MAX_NATIVE_EVENTS){
-  		return(native_table[index].name);
-  	}
-  }
-#endif
-  return(NULL);
-}
-
-
-/* Returns event description based on index. */
-char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
-{
-#ifdef HAS_NATIVE_MAP
-  int index;
-  
-  if (EventCode & NATIVE_MASK) {
-  	index=EventCode ^ NATIVE_MASK;
-  
-  	if(index<PAPI_MAX_NATIVE_EVENTS){
-  		return(native_table[index].description);
-  	}
-  }
-#endif
-  return(NULL);
-}
 
 /**********************************************************************
 	Windows Compatability stuff
@@ -617,4 +597,14 @@ extern int getpagesize(void)
 }
 
 #endif /* _WIN32 */
+
+
+
+
+
+
+
+
+
+
 

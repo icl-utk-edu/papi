@@ -56,8 +56,6 @@ typedef PWR3_regmap_t hwd_register_map_t;
 typedef PWR3_pmapi_context_t hwd_context_t;
 
 /* ... for PAPI3
-typedef PWR3_register_t hwd_register_t;
-
 typedef PWR3_pmapi_event_t hwd_event_t;
 */
 
