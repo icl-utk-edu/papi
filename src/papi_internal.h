@@ -42,6 +42,7 @@
    the event bits. */
 
 #define PRESET_MASK 0x80000000
+#define NATIVE_MASK 0x40000000
 #define PRESET_AND_MASK 0x7FFFFFFF
 
 /* Commands used to compute derived events */
