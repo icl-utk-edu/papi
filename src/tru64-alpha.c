@@ -1144,13 +1144,15 @@ void _papi_hwd_lock_init(void)
 {
 }
 
-void _papi_hwd_lock(void)
-{
-}
+#define _papi_hwd_lock(lck)	\
+do				\
+{				\
+}while(0)
 
-void _papi_hwd_unlock(void)
-{
-}
+#define _papi_hwd_unlock(lck)	\
+do				\
+{				\
+}while(0)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 {

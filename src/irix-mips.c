@@ -727,14 +727,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 0;
 	arg->hwp_ovflw_freq[hwcntr] = 0;
 
-    PAPI_lock();
+    _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     _papi_hwi_using_signal--;
     if (_papi_hwi_using_signal == 0)
 	{
 	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
 	    retval = PAPI_ESYS;
 	}
-    PAPI_unlock();
+    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   }
   else
   {
@@ -756,9 +756,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
     /* set the threshold and interrupt flag */
 	arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 1;
 	arg->hwp_ovflw_freq[hwcntr] = (int)overflow_option->threshold;
-    PAPI_lock();
+    _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     _papi_hwi_using_signal++;
-    PAPI_unlock();
+    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   }
 
   return(retval);
@@ -784,25 +784,23 @@ void *_papi_hwd_get_overflow_address(void *context)
   return((void *)info->sc_pc);
 }
 
-static volatile int lock = 0;
+static volatile int lock[PAPI_MAX_LOCK] = {0,};
 
 void _papi_hwd_lock_init(void)
 {
 }
 
-void _papi_hwd_lock(void)
-{
-  while (__lock_test_and_set(&lock,1) != 0)
-  {
-    DBG((stderr,"Waiting..."));
-    usleep(1000);
-  }
+#define _papi_hwd_lock(lck)			\
+while (__lock_test_and_set(&lock[lck],1) != 0)	\
+{						\
+    usleep(1000);				\
 }
 
-void _papi_hwd_unlock(void)
-{
-  __lock_release(&lock);
-}
+#define _papi_hwd_unlock(lck)			\
+do						\
+{						\
+  __lock_release(&lock[lck]);			\
+} while(0)
 
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)

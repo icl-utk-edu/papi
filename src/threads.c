@@ -7,8 +7,8 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email here>
+* Mods:    Kevin London
+*          london@cs.utk.edu
 */  
 
 /* This file contains thread allocation and bookkeeping functions */
@@ -37,7 +37,7 @@ void _papi_hwi_shutdown_the_thread_list(void)
 {
   ThreadInfoList_t *tmp;
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   while (head)
     {
       tmp = head;
@@ -47,14 +47,14 @@ void _papi_hwi_shutdown_the_thread_list(void)
 #endif
       _papi_hwd_shutdown(&tmp->master->context);
     }
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 }
 
 void _papi_hwi_cleanup_thread_list(void)
 {
   ThreadInfoList_t *tmp;
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   while (head)
     {
       tmp = head;
@@ -65,7 +65,7 @@ void _papi_hwi_cleanup_thread_list(void)
 #endif
       free(tmp);
     }
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 }
 
 int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
@@ -78,14 +78,14 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
 #endif
   entry->master = ptr;
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   entry->next = head;
   head = entry;
 #ifdef THREAD_DEBUG
   fprintf(stderr,"%lld:%s:0x%x:(%p): Old head is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,entry->next);
   fprintf(stderr,"%lld:%s:0x%x:(%p): New head is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,head);
 #endif
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   
   return(PAPI_OK);
 }
@@ -99,7 +99,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
       unsigned long int id_to_find = (*_papi_hwi_thread_id_fn)();
       ThreadInfoList_t *tmp;
 
-      _papi_hwd_lock();
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       tmp = head;
       while (tmp != NULL)
 	{
@@ -108,7 +108,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 #endif
 	  if (tmp->master->tid == id_to_find)
 	    {
-	      _papi_hwd_unlock();
+	      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 	      return(tmp->master);
 	    }
 	  tmp = tmp->next;
@@ -116,7 +116,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 #ifdef OVERFLOW_DEBUG
       fprintf(stderr,"%lld:%s:0x%x:I'm not in the list at %p.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),head);
 #endif
-      _papi_hwd_unlock();
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
       return(NULL);
     }
 }
@@ -128,7 +128,7 @@ void _papi_hwi_broadcast_overflow_signal(unsigned int mytid)
 {
   int retval, didsomething = 0;
   ThreadInfoList_t *foo = NULL;
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   for(foo = head ; foo != NULL; foo = foo->next ) 
     {
       if ((foo->master->event_set_overflowing) && (foo->master->tid != mytid))
@@ -147,7 +147,7 @@ void _papi_hwi_broadcast_overflow_signal(unsigned int mytid)
 #endif
 	}
     }
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   assert(didsomething);
 }
 #endif

@@ -131,16 +131,6 @@ unsigned long int PAPI_thread_id(void)
 }
 
 
-void PAPI_lock(void)
-{
-  _papi_hwd_lock();
-}
-
-void PAPI_unlock(void)
-{
-  _papi_hwd_unlock();
-}
-
 int PAPI_library_init(int version)
 {
   int i, tmp;

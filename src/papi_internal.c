@@ -339,7 +339,7 @@ static int add_EventSet(EventSetInfo_t *ESI, ThreadInfo_t *master)
   DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
   int i, errorCode;
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
 
   /* Update the values for lowestEmptySlot, num of availSlots */
 
@@ -354,7 +354,7 @@ static int add_EventSet(EventSetInfo_t *ESI, ThreadInfo_t *master)
       errorCode = expand_dynamic_array(map);
       if (errorCode!=PAPI_OK) 
 	{
-	  _papi_hwd_unlock();
+	  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 	  return(errorCode);
 	}
     }
@@ -364,7 +364,7 @@ static int add_EventSet(EventSetInfo_t *ESI, ThreadInfo_t *master)
   DBG((stderr,"Empty slot for lowest available EventSet is at %d\n",i));
   map->lowestEmptySlot = i;
  
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   papi_return(PAPI_OK);
 }
 

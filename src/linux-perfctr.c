@@ -1453,9 +1453,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	    }
 	}
 
-      PAPI_lock();
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       _papi_hwi_using_signal++;
-      PAPI_unlock();
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 
 #ifdef DEBUG
       DBG((stderr,"Modified event set\n"));
@@ -1504,14 +1504,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       dump_cmd(__FUNCTION__,contr);
 #endif 
 
-      PAPI_lock();
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0)
 	{
 	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
 	    retval = PAPI_ESYS;
 	}
-      PAPI_unlock();
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     }
 
   DBG((stderr,"%s (%s): Hardware overflow is still experimental.\n",

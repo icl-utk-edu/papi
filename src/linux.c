@@ -191,10 +191,9 @@ inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
 
 #ifdef __x86_64__
 #include <linux/spinlock.h>
-static spinlock_t lock;
+static spinlock_t lock[PAPI_MAX_LOCK];
 #else
-static volatile unsigned int lock = 0;
-static volatile unsigned int *lock_addr = &lock;
+static volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
 #endif
 /* volatile uint32_t lock; */
 
@@ -212,32 +211,36 @@ void _papi_hwd_lock_init(void)
 #endif
 }
  
-void _papi_hwd_lock(void)
-{
 #ifdef __x86_64__
-  spin_lock(&lock);
-#else
-    unsigned long res = 0;
-    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
-     * else val = MUTEX_CLOSED */
-    do {
-      __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock), "0"(MUTEX_OPEN) : "memory");
-    } while (res != (unsigned long)MUTEX_OPEN);
+#define  _papi_hwd_lock(lck) 			\
+do						\
+{  						\
+    spin_lock(&lock[lck]); 			\
+} while(0)
+#define  _papi_hwd_unlock(lck)			\
+do						\
+{						\
+  spin_unlock(&lock[lck]);				\
 
-#endif
-    return;
-}
- 
-void _papi_hwd_unlock(void)
-{
-#ifdef __x86_64__
-  spin_unlock(&lock);
 #else
-    unsigned long res = 0;
-        
-    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock), "0"(MUTEX_OPEN) : "memory");
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+#define  _papi_hwd_lock(lck) 						\
+do									\
+{									\
+    unsigned long res = 0;						\
+      __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");				\
+} while (res != (unsigned long)MUTEX_OPEN);
+
+#define  _papi_hwd_unlock(lck)						\
+do									\
+{									\
+    unsigned long res = 0;						\
+    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");								\
+}while(0)
 #endif
-}
+
+ 
 
 int _papi_hwd_get_system_info(void)
 {

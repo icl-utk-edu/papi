@@ -854,21 +854,23 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static rwlock_t lock;
+static rwlock_t lock[PAPI_MAX_LOCK];
 
 void _papi_hwd_lock_init(void)
 {
 }
 
-void _papi_hwd_lock(void)
-{
-  rw_wrlock(&lock);
-}
+#define _papi_hwd_lock(lck)
+do				\
+{				\
+  rw_wrlock(&lock[lck]);	\
+}while(0)			
 
-void _papi_hwd_unlock(void)
-{
-  rw_unlock(&lock);
-}
+#define _papi_hwd_unlock(lck)	\
+do				\
+{				\
+  rw_unlock(&lock[lck]);	\
+}while(0)
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {

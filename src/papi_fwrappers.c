@@ -237,11 +237,6 @@ PAPI_FCALL(papif_list_events,PAPIF_LIST_EVENTS,(int *EventSet, int *Events, int 
   *check = PAPI_list_events(*EventSet, Events, number);
 }
 
-PAPI_FCALL(papif_lock,PAPIF_LOCK,(void))
-{
-  PAPI_lock();
-}
-
 PAPI_FCALL(papif_multiplex_init, PAPIF_MULTIPLEX_INIT, (int *check))
 {
   *check = PAPI_multiplex_init();
@@ -527,11 +522,6 @@ PAPI_FCALL(papif_state,PAPIF_STATE,(int *EventSet, int *status, int *check))
 PAPI_FCALL(papif_stop,PAPIF_STOP,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_stop(*EventSet, values);
-}
-
-PAPI_FCALL(papif_unlock,PAPIF_UNLOCK,(void))
-{
-  PAPI_unlock();
 }
 
 PAPI_FCALL(papif_write,PAPIF_WRITE,(int *EventSet, long_long *values, int *check))

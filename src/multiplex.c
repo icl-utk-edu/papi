@@ -337,7 +337,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 
   /* Get the global list of threads */
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_MULTIPLEX_LOCK);
   t = tlist;
 
   /* If there are no threads in the list at all, then allocate the new Threadlist */
@@ -348,7 +348,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
       t = (Threadlist *)malloc(sizeof(Threadlist));
       if (t == NULL)
         {
-          _papi_hwd_unlock();
+          _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
           return(PAPI_ENOMEM);
         }
 
@@ -423,7 +423,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
       newset = mpx_malloc(t);
       if (newset == NULL)
         {
-          _papi_hwd_unlock();
+          _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
           return(PAPI_ENOMEM);
         }
       alloced_newset = 1;
@@ -431,7 +431,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 
   /* Now we're finished playing with the thread list */
 
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
 
   /* Removed newset->num_events++, moved to mpx_insert_events() */
 
@@ -533,7 +533,7 @@ static void mpx_handler(int signal)
    */
 
 #ifdef PTHREADS
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_MULTIPLEX_LOCK);
 
   if( threads_responding == 0 ) {       /* this thread caught the timer sig */
     /* Signal the other threads with event lists */
@@ -567,7 +567,7 @@ static void mpx_handler(int signal)
 #ifdef REGENERATE
   lastthread = (threads_responding == 0);
 #endif
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
 #endif
 
   /* See if this thread has an active event list */
@@ -1124,7 +1124,7 @@ void MPX_shutdown(void)
     {
       mpx_shutdown_itimer();
 
-      PAPI_lock();
+      _papi_hwd_lock(PAPI_MULTIPLEX_LOCK);
 
       for( t = tlist; t != NULL; t = nextthr ) {
         /* Removing this assert allows MPX_shutdown to proceed even if counters
@@ -1139,7 +1139,7 @@ void MPX_shutdown(void)
         free(t);
       }
       tlist = NULL;
-      PAPI_unlock();
+      _papi_hwd_unlock(PAPI_MULTIPLEX_LOCK);
 
       mpx_restore_signal();
     }}

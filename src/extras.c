@@ -325,10 +325,10 @@ static int start_timer(int milliseconds)
 #if defined(ANY_THREAD_GETS_SIGNAL)
   _papi_hwi_lookup_thread_symbols();
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   if (++_papi_hwi_using_signal > 1)
     {
-      _papi_hwd_unlock();
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 #ifdef OVERFLOW_DEBUG
       fprintf(stderr,"%lld:%s:0x%x:_papi_hwi_using_signal is now %d.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),_papi_hwi_using_signal);
 #endif
@@ -348,10 +348,10 @@ static int start_timer(int milliseconds)
     return(PAPI_ESYS);
   
 #ifndef ANY_THREAD_GETS_SIGNAL
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   _papi_hwi_using_signal++;
 #endif
- _papi_hwd_unlock();
+ _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 
   DBG((stderr,"Timer started.\n"));
 #ifdef OVERFLOW_DEBUG
@@ -372,7 +372,7 @@ static int stop_timer(void)
   value.it_value.tv_usec = 0;
   
 #ifdef ANY_THREAD_GETS_SIGNAL
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   if (--_papi_hwi_using_signal == 0)
     {
 #ifdef OVERFLOW_DEBUG
@@ -387,7 +387,7 @@ static int stop_timer(void)
   if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
     retval = PAPI_ESYS;
 
-  _papi_hwd_lock();
+  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   _papi_hwi_using_signal--;
   if (_papi_hwi_using_signal == 0)
     {
@@ -398,7 +398,7 @@ static int stop_timer(void)
 	retval = PAPI_ESYS;
     }
 #endif
-  _papi_hwd_unlock();
+  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 #ifdef OVERFLOW_DEBUG
     fprintf(stderr,"%lld:%s:0x%x:_papi_hwi_using_signal is now %d.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),_papi_hwi_using_signal);
 #endif

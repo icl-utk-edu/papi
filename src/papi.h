@@ -367,6 +367,18 @@ typedef struct pre_info {
 } PAPI_preset_info_t; 
 
 /* The Low Level API */
+/* Locking Mechanisms defines 
+ * This can never go over 31, because of the Cray T3E uses
+ * _semt which has a max index of 31 
+ */
+#define PAPI_INTERNAL_LOCK      0
+#define PAPI_MULTIPLEX_LOCK     1
+#define PAPI_USR1_LOCK          2
+#define PAPI_USR2_LOCK          3
+#define PAPI_MAX_LOCK           4  /* Always 1 more than previous lock */
+#define PAPI_lock(lck) (_papi_hwd_lock(lck) );
+#define PAPI_unlock(lck)(_papi_hwd_unlock(lck) );
+
 
 int PAPI_accum(int EventSet, long_long *values);
 int PAPI_add_event(int EventSet, int Event);
@@ -390,7 +402,6 @@ int PAPI_library_init(int version);
 unsigned long int PAPI_thread_id(void);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
-void PAPI_lock(void);
 int PAPI_multiplex_init(void);
 int PAPI_num_hw_counters(void);
 int PAPI_num_hwctrs(void);
@@ -427,7 +438,6 @@ int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
 int PAPI_stop(int EventSet, long_long *values);
 char *PAPI_strerror(int);
-void PAPI_unlock(void);
 int PAPI_write(int EventSet, long_long *values);
 int PAPI_initialized(void);
 

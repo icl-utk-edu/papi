@@ -1281,14 +1281,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
      /* Remove the signal handler */
 
-     PAPI_lock();
+     _papi_hwd_lock(PAPI_INTERNAL_LOCK);
      _papi_hwi_using_signal--;
      if (_papi_hwi_using_signal == 0)
 	 {
 	   if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
 	     retval = PAPI_ESYS;
 	 }
-     PAPI_unlock();
+     _papi_hwd_lock(PAPI_INTERNAL_LOCK);
   }
   else
   {
@@ -1344,9 +1344,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
         index++;
     }
 
-    PAPI_lock();
+    _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     _papi_hwi_using_signal++;
-    PAPI_unlock();
+    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   }
   return(retval);
 }
@@ -1364,41 +1364,47 @@ void *_papi_hwd_get_overflow_address(void *context)
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 #include <inttypes.h>
-volatile uint32_t lock;
+volatile uint32_t lock[MAX_PAPI_LOCK] = {MUTEX_OPEN,};
 
 void _papi_hwd_lock_init(void)
 {
-    lock = MUTEX_OPEN;
 }
  
-void _papi_hwd_lock(void)
-{
-    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
-     * else val = MUTEX_CLOSED */
-#ifdef __INTEL_COMPILER
-    while(_InterlockedCompareExchange_acq(&lock, MUTEX_CLOSED, MUTEX_OPEN)
-        != (uint64_t)MUTEX_OPEN)
-      ;
-#else /* GCC */
-    uint64_t res = 0;
-    do {
-      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));
-      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock), "r"(MUTEX_CLOSED) : "memory");
-    } while (res != (uint64_t)MUTEX_OPEN);
-#endif /* __INTEL_COMPILER */
-    return;
-}
- 
-void _papi_hwd_unlock(void)
-{
-#ifdef __INTEL_COMPILER
-    _InterlockedExchange(&lock, (unsigned __int64)MUTEX_OPEN);
-#else /* GCC */
-    uint64_t res = 0;
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+#define _papi_hwd_lock(lck)			\
+do						\
+{						\
 
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock), "r"(MUTEX_OPEN) : "memory");
-#endif /* __INTEL_COMPILER */
-}
+
+#ifdef __INTEL_COMPILER
+#define _papi_hwd_lock(lck)			 			      \
+    while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) \
+        != (uint64_t)MUTEX_OPEN);					      
+
+#define _papi_hwd_unlock(lck)						\
+do									\
+{									\
+    _InterlockedExchange(&lock[lck], (unsigned __int64)MUTEX_OPEN);	\
+}while(0)
+
+#else /* GCC */
+#define _papi_hwd_lock(lck)			 			      \
+do{									      \
+    uint64_t res = 0;							      \
+    do {								      \
+      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
+      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
+    } while (res != (uint64_t)MUTEX_OPEN);				      \
+}while(0)								      
+
+#define _papi_hwd_lock(lck)			 			      \
+do{									      \
+    uint64_t res = 0;							      \
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory");	\
+}while(0)
+#endif
+ 
 
 char * _papi_hwd_native_code_to_name(unsigned int EventCode)
 {

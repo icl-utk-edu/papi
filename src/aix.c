@@ -568,26 +568,22 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static volatile int lock_var = 0;
-static atomic_p lock;
+static atomic_p lock[PAPI_MAX_LOCK];
 
 void _papi_hwd_lock_init(void)
 {
-  lock = (int *)&lock_var;
 }
 
-void _papi_hwd_lock(void)
-{
-  while (_check_lock(lock,0,1) == TRUE)
-    {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
-    }
+#define _papi_hwd_lock(lck)			\
+while(_check_lock(&lock[lck],0,1 == TRUE)	\
+{						\
+      usleep(1000);				\
 }
 
-void _papi_hwd_unlock(void)
-{
-  _clear_lock(lock, 0);
+#define _papi_hwd_unlock(lck)			\
+do						\
+{						\
+  _clear_lock(&lock[lck], 0);			\
 }
 
 

@@ -981,6 +981,22 @@ void _papi_hwd_lock_init(void)
 {
 }
 
+
+#pragma _CRI soft $MULTION
+#define _papi_hwd_lock(lck)		\
+do {					\
+ if ($MULTION == 0) _semts(lck)		\
+while(0)
+
+#define _papi_hwd_unlock(lck)		\
+do {					\
+    if ($MULTION == 0) _semclr(lck);	\
+while(0)
+
+/*  DID I do the above correctly?  The manual seems to say
+ * any value between 0 and 31 is valid as long as they are constants
+ * -KSL
+ */
 #define PIF_LOCK        (010)
 #pragma _CRI soft $MULTION
 
@@ -996,6 +1012,7 @@ void _papi_hwd_unlock(void)
     if ($MULTION == 0) _semclr(PIF_LOCK);
     return;
 }
+*/
 
 /* Machine info structure. -1 is unused. */
 
