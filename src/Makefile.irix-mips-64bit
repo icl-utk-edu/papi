@@ -2,7 +2,7 @@ SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared 
 TARGETS	= serial multiplex_and_pthreads smp omp 
-FLAGS  	= -g3
+FLAGS  	= -64 -g3
 CFLAGS  = -woff 1116,1343,1552,3187,3348 $(FLAGS)
 TOPTFLAGS= -O0
 OPTFLAGS= -O3
@@ -10,12 +10,15 @@ FOPTFLAGS= $(OPTFLAGS)
 FFLAGS	= $(FLAGS) -col120
 SMPCFLGS= -mp
 OMPCFLGS= -mp
-CC_SHR  = cc -shared -all -check_registry /usr/lib32/so_locations -soname $(SHLIB)
+CC_SHR  = cc -shared -all -check_registry /usr/lib64/so_locations -soname $(SHLIB)
 CC_R	= cc
 CC	= cc
 CPP	= cc -E
 F77	= f77
 
 include ./Makefile.inc
+
+LIBRARY = libpapi64.a
+SHLIB = libpapi64.so
 
 native_clean:

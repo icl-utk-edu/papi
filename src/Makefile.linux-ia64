@@ -3,7 +3,7 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Ipfmon-0.06a/include -I. -Wall
+CFLAGS  = -Ipfmon-0.06a/include -I. -Wall -DDEBUG
 TOPTFLAGS  = -O0
 FFLAGS	=  
 LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90

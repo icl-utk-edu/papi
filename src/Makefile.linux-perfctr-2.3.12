@@ -5,11 +5,11 @@ TARGETS = serial multiplex_and_pthreads
 
 KERNINC	= /usr/src/linux-2.4.13/include
 PERFCTR	= ./perfctr-2.3
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -Wall 
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-FFLAGS	= -Dlinux -Wall 
+FFLAGS	= -Dlinux 
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
-TOPTFLAGS=$(OPTFLAGS)
+TOPTFLAGS= -O0 -fomit-frame-pointer -mpentiumpro
 FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc
 F77	= g77
