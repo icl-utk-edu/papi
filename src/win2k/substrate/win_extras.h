@@ -16,7 +16,9 @@
 #define _WIN_EXTRAS
 
 #ifdef _DEBUG
-  #define DEBUG	// create the debug flag expected by PAPI
+  #ifndef DEBUG
+	#define DEBUG	// create the debug flag expected by PAPI
+  #endif
 #endif
 
 // Includes specific to Windows
