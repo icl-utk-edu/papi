@@ -9,14 +9,11 @@
 
 #include "papi.h"
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-  #define SUBSTRATE "linux-perfctr.h"
+#ifndef _WIN32
+  #include SUBSTRATE
+#else
+  #include "win32.h"
 #endif
-
-#include SUBSTRATE
 
 #ifdef PAPI3
 #include "papi_internal.h"
@@ -39,6 +36,18 @@ will always succeed and the counter will increment by one on every
 clock cycle. */
 
 const P4_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
+  { PAPI_TLB_DM, NULL, 1,
+   {{{ COUNTER(0) | COUNTER(1), 
+       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
+       EVENT(0x1) | ESCR_EVENT_MASK(0x1) | CPL(1)} }}},
+  { PAPI_TLB_IM, NULL, 1,
+   {{{ COUNTER(0) | COUNTER(1), 
+       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
+       EVENT(0x1) | ESCR_EVENT_MASK(0x2) | CPL(1)} }}},
+  { PAPI_TLB_TL, NULL, 1,
+   {{{ COUNTER(0) | COUNTER(1), 
+       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
+       EVENT(0x1) | ESCR_EVENT_MASK(0x3) | CPL(1)} }}},
   { PAPI_TOT_INS, NULL, 1,
    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
        HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
@@ -88,6 +97,18 @@ const P4_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 };
 
 const P4_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
+  { PAPI_TLB_DM, NULL, 1,
+   {{{ COUNTER(0) | COUNTER(1), 
+       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
+       EVENT(0x1) | ESCR_EVENT_MASK(0x1) | CPL(1)} }}},
+  { PAPI_TLB_IM, NULL, 1,
+   {{{ COUNTER(0) | COUNTER(1), 
+       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
+       EVENT(0x1) | ESCR_EVENT_MASK(0x2) | CPL(1)} }}},
+  { PAPI_TLB_TL, NULL, 1,
+   {{{ COUNTER(0) | COUNTER(1), 
+       HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
+       EVENT(0x1) | ESCR_EVENT_MASK(0x3) | CPL(1)} }}},
   { PAPI_TOT_INS, NULL, 1,
    {{{ COUNTER(12) | COUNTER(13) | COUNTER(16), 
        HYPERTHREAD_ANY | ESCR(4) | ENABLE, 
