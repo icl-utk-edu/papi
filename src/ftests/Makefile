@@ -10,6 +10,8 @@ default: $(TESTS)
 
 mpi:
 
+shared:
+
 multiplex:
 
 omp:
