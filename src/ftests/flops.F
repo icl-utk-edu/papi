@@ -11,7 +11,7 @@ C -Kevin London
       REAL*4 matrixa(index,index),matrixb(index,index),mres(index,index)
       REAL*4 proc_time, mflops, real_time
       INTEGER*8 flpins
-      INTEGER i,j,k, check
+      INTEGER i,j,k, retval
 
 C Initialize the Matrix arrays
       do i=1,index
@@ -23,10 +23,10 @@ C Initialize the Matrix arrays
       end do
 
 C Setup PAPI library and begin collecting data from the counters
-      call PAPIf_flops( real_time, proc_time, flpins, mflops, check )
-      if ( check .LT. PAPI_OK ) then
-	print *, 'Error starting PAPI ', check, PAPI_OK
-	stop
+      call PAPIf_flops( real_time, proc_time, flpins, mflops, retval )
+      if ( retval.NE.PAPI_OK) then
+        call ftests_perror(__LINE__,'Error starting PAPI_flops ')
+        call ftests_fail(__FILE__,retval)
       end if
 C Matrix-Matrix Multiply
       do i=1,index
@@ -38,10 +38,14 @@ C Matrix-Matrix Multiply
       end do
 
 C Collect the data into the Variables passed in
-      call PAPIf_flops( real_time, proc_time, flpins, mflops, check )
+      call PAPIf_flops( real_time, proc_time, flpins, mflops, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftests_perror(__LINE__,'Error stopping PAPI_flops ')
+        call ftests_fail(__FILE__,retval)
+      end if
       print *, 'Real_time: ', real_time, ' Proc_time: ', proc_time,
      & ' Total flpins: ', flpins, ' MFLOPS: ', mflops
       call dummy(mres)
 
-      stop
+      call ftests_pass(__FILE__)
       end

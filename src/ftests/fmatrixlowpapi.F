@@ -13,7 +13,7 @@ C ****************************************************************************
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
-      INTEGER i,j,k,check,nchr,numevents,errorcode,EventSet
+      INTEGER i,j,k,retval,nchr,numevents,errorcode,EventSet
       CHARACTER*(PAPI_MAX_STR_LEN)  errorstring,vstring,mstring
 C   PAPI values of the counters
       INTEGER*8 values(2)
@@ -29,36 +29,33 @@ C   Setup default values
       starttime=0
       stoptime=0
 
-      check = PAPI_VER_CURRENT
-      call PAPIf_library_init( check )
-      if ( check.NE.PAPI_VER_CURRENT) then
-         print *, 'Error in PAPI_library_init '
-         stop
+      retval = PAPI_VER_CURRENT
+      call PAPIf_library_init( retval )
+      if ( retval.NE.PAPI_VER_CURRENT) then
+        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
+        call ftests_fail(__FILE__,retval)
       end if
 
 C     Create the eventset
-      call PAPIf_create_eventset(EventSet,check)
-      if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, errorcode)
-        print *, errorstring
-        stop 'PAPIf_create_eventset failed'
-      endif 
+      call PAPIf_create_eventset(EventSet,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'PAPIf_create_eventset failed')
+        call ftests_fail(__FILE__,retval)
+      end if
 
 C   Total cycles
-      call PAPIf_add_event(EventSet,PAPI_TOT_CYC,check)
-      if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, errorcode)
-        print *, errorstring
-        stop 'PAPIf_add_event PAPI_TOT_CYC failed'
-      endif 
+      call PAPIf_add_event(EventSet,PAPI_TOT_CYC,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'PAPIf_add_event PAPI_TOT_CYC failed')
+        call ftests_fail(__FILE__,retval)
+      end if
 
 C   Total floating point instructions
-      call PAPIf_add_event(EventSet,PAPI_FP_INS,check)
-      if ( check .LT. 0 ) then
-        call PAPIf_perror( check, errorstring, errorcode)
-        print *, errorstring
-        stop 'PAPIf_add_event PAPI_FP_INS failed'
-      endif 
+      call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'PAPIf_add_event PAPI_FP_INS failed')
+        call ftests_fail(__FILE__,retval)
+      end if
 
 C   Grab the hardware info
       call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
@@ -115,10 +112,10 @@ C  Grab the beginning time
       call PAPIf_get_real_usec( starttime )
  
 C  Start the event counters
-      call PAPIf_start( EventSet, check )
-      if ( EventSet .LT. 0 ) then
-         print *, 'Error starting counters'
-         stop 'PAPIf_start failed'
+      call PAPIf_start( EventSet, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'Error starting counter')
+        call ftests_fail(__FILE__,retval)
       end if
 
 C  Compute the matrix-matrix multiplication
@@ -131,10 +128,10 @@ C  Compute the matrix-matrix multiplication
       end do
 
 C  Stop the counters and put the results in the array values 
-      call PAPIf_stop(EventSet,values,check)
-      if ( check .LT. 0 ) then
-        print *, 'Error stopping counters'
-        stop 'PAPIf_stop failed'
+      call PAPIf_stop(EventSet,values,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'Error stopping counter')
+        call ftests_fail(__FILE__,retval)
       end if
 
       call PAPIf_get_real_usec( stoptime )
@@ -148,6 +145,7 @@ C  Make sure the compiler does not optimize away the multiplication
       print *, 'FP Instructions: ', values(2)
       write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
-      stop
+
+      call ftests_pass(__FILE__)
       end
 

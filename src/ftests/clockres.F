@@ -17,8 +17,8 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-         print *, 'Error in PAPI_library_init '
-         stop
+        call ftests_perror(__LINE__,'Error in PAPI_library_init ')
+        call ftests_fail(__FILE__,retval)
       end if
 
       print *, 'Test case: Clock resolution.'
@@ -47,4 +47,5 @@
 
       call PAPIf_shutdown()
   
+      call ftests_pass(__FILE__)
       end

@@ -1,6 +1,6 @@
 C This file performs the following tests:
 C Hardware info
-
+#include "ftests.h"
 #include "fpapi.h"
 
       program avail
@@ -16,8 +16,7 @@ C Hardware info
       check = PAPI_VER_CURRENT
       call PAPIf_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
-         print *, 'Error in PAPI_library_init '
-         stop
+         FATAL_ERROR('Error in PAPI_library_init')
       end if
       call PAPIf_get_hardware_info( ncpu,nnodes,totalcpus,vendor,
      .     vstring, model, mstring, revision, mhz )
@@ -35,14 +34,4 @@ C Hardware info
       print *, 'Nodes in the system      : ',nnodes
       print *, 'Total CPUs in the system : ',totalcpus
       print *, '------------------------------------------------'
-      end
-
-      integer function len_trim(string)
-      implicit none
-      character*(*) string
-      
-      do len_trim=len(string),1,-1
-        if(string(len_trim:len_trim).NE.' ') return
-      end do
-      len_trim=0
       end

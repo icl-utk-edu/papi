@@ -13,7 +13,7 @@ C ****************************************************************************
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
-      INTEGER i,j,k,num_events,check,errorcode
+      INTEGER i,j,k,num_events,retval,errorcode
       CHARACTER*(PAPI_MAX_STR_LEN) errorstring
 C   PAPI standardized event to be monitored
       INTEGER event(2)
@@ -68,19 +68,17 @@ C  Initialize the result matrix
       
 C  Set up the counters
       num_events = 2
-      call PAPIf_start_counters( event, num_events, check)
-      if  ( check .LT. PAPI_OK ) then
-        call PAPIf_perror( check, errorstring, errorcode)
-        print *, errorstring
-        stop 'PAPIf_start_counters failed'
+      call PAPIf_start_counters( event, num_events, retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'Error starting counters')
+        call ftests_fail(__FILE__,retval)
       end if
 
 C  Clear the counter values
-      call PAPIf_read_counters(values, num_events,check)
-      if ( check .LT. PAPI_OK) then
-        call PAPIf_perror( check, errorstring, errorcode)
-        print *, errorstring
-        stop 'PAPIf_read_counters failed'
+      call PAPIf_read_counters(values, num_events,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'Error reading counters')
+        call ftests_fail(__FILE__,retval)
       end if
 
 C  Compute the matrix-matrix multiplication
@@ -93,11 +91,15 @@ C  Compute the matrix-matrix multiplication
       end do
 
 C  Stop the counters and put the results in the array values 
-      call PAPIf_stop_counters(values,num_events,check)
-      if ( check .LT. PAPI_OK ) then
-        call PAPIf_perror( check, errorstring, errorcode)
-        print *, errorstring
-        stop 'PAPIf_stop_counters failed'
+      call PAPIf_stop_counters(values,num_events,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'Error stopping counters')
+        call ftests_fail(__FILE__,retval)
+      end if
+      call PAPIf_read_counters(values, num_events,retval)
+      if ( retval .NE. PAPI_OK ) then
+        call ftests_perror(__LINE__,'Error reading counters')
+        call ftests_fail(__FILE__,retval)
       end if
 
 C  Make sure the compiler does not optimize away the multiplication
@@ -107,5 +109,6 @@ C  Make sure the compiler does not optimize away the multiplication
       print *, 'Cycles: ',values(2)
       write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
-      stop
+
+      call ftests_pass(__FILE__)
       end

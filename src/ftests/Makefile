@@ -5,38 +5,38 @@ PAPILIB	= ../libpapi.a
 
 default: $(TESTS)
 
-clockres: clockres.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
+ftests_util.o: ftests_util.F
+	$(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F
 
-avail: avail.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F $(PAPILIB) $(LDFLAGS) -o avail
+clockres: clockres.F ftests_util.o $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o clockres
 
-eventname: eventname.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
+avail: avail.F ftests_util.o $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F $(PAPILIB) $(LDFLAGS) ftests_util.o -o avail
 
-case1: case1.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
+eventname: eventname.F ftests_util.o $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o eventname
 
-case2: case2.F $(PAPILIB)
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
+case1: case1.F ftests_util.o $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o case1
 
-dummy.o: dummy.F
-	$(F77) -c $(FFLAGS) dummy.F -o dummy.o
+case2: case2.F ftests_util.o $(PAPILIB)
+	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o case2
 
-fmatrixlowpapi: fmatrixlowpapi.F dummy.o $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F dummy.o $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
+fmatrixlowpapi: fmatrixlowpapi.F ftests_util.o $(PAPILIB)
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
 
-fmatrixpapi: fmatrixpapi.F dummy.o $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F dummy.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
+fmatrixpapi: fmatrixpapi.F ftests_util.o $(PAPILIB)
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
 
-fmatrixpapi2: fmatrixpapi2.F dummy.o $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F dummy.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
+fmatrixpapi2: fmatrixpapi2.F $(PAPILIB)
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
 
 strtest: strtest.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
 
-flops: flops.F dummy.o $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F dummy.o $(PAPILIB) $(LDFLAGS) -o flops
+flops: flops.F ftests_util.o $(PAPILIB)
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F ftests_util.o $(PAPILIB) $(LDFLAGS) -o flops
 
 clean:
 	rm -f *.o $(TESTS) core *~
