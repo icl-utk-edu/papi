@@ -234,11 +234,11 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
+   SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_hwi_system_info.hw_info.totalcpus,
         _papi_hwi_system_info.hw_info.vendor_string,
         _papi_hwi_system_info.hw_info.model_string,
-        _papi_hwi_system_info.hw_info.mhz));
+        _papi_hwi_system_info.hw_info.mhz);
 
    return (PAPI_OK);
 }

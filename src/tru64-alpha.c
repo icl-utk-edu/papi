@@ -11,12 +11,20 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
 /* Globals */
 
+#if 0
 static hwd_search_t findem_ev67[] = {
-   {PAPI_TOT_CYC, {-1, PF67_RET_INST_AND_CYCLES}},
-   {PAPI_TOT_INS, {PF67_RET_INST_AND_CYCLES, -1}},
-   {PAPI_RES_STL, {-1, PF67_CYCLES_AND_REPLAY_TRAPS}},
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
+   {PAPI_RES_STL, {0, {PAPI_NATIVE_MASK | 2, PAPI_NULL}}},
    {-1, {-1, -1}}
 };
+static native_info_t ev67_native_table[] = {
+/* 0  */ {"cycles", {PF67_CYCLES_AND_UNDEFINED, -1}},
+/* 1  */ {"retires", {PF67_RET_INST_AND_CYCLES, -1}},
+/* 2  */ {"replaytrap", {-1, PF67_CYCLES_AND_REPLAY_TRAPS}}
+/* 3  */ {"bmiss", {-1, PF67_RET_INST_AND_BCACHE_MISS}},
+};
+#endif
 
 static hwi_search_t findem_ev6[] = {
    {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
@@ -36,6 +44,7 @@ static native_info_t ev6_native_table[] = {
 /* 6  */ {"retunaltrap", {-1, PF6_MUX1_RET_UNALIGNED_TRAPS}},
 /* 7  */ {"replay", {-1, PF6_MUX1_REPLAY_TRAP}}
 };
+
 
 extern papi_mdi_t _papi_hwi_system_info;
 /* Utility functions */
@@ -175,6 +184,9 @@ static int get_system_info(void)
       fprintf(stderr, "PAPI: Don't know processor family %d\n", family);
       return (PAPI_ESBSTR);
    }
+   /* never tested in EV67_CPU */
+   if (proc_type >= EV67_CPU)
+      return (PAPI_ESBSTR);
 
 
    retval = _papi_hwi_setup_all_presets(findem_ev6);
@@ -237,11 +249,11 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
 
-   DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
+   SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
         _papi_hwi_system_info.hw_info.totalcpus,
         _papi_hwi_system_info.hw_info.vendor_string,
         _papi_hwi_system_info.hw_info.model_string,
-        _papi_hwi_system_info.hw_info.mhz));
+        _papi_hwi_system_info.hw_info.mhz);
 
    return (PAPI_OK);
 }
@@ -441,7 +453,7 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
 
 void dump_cmd(ev_control_t * t)
 {
-   DBG((stderr, "Command block at %p: 0x%x\n", t, t->ev6));
+   SUBDBG("Command block at %p: 0x%x\n", t, t->ev6);
 }
 
 /* EventSet zero contains the 'current' state of the counting hardware */
@@ -471,8 +483,8 @@ int _papi_hwd_merge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
 
       /* select events */
 
-      DBG((stderr, "PCNT6MUX command %lx\n",
-           current_state->counter_cmd.ev6));
+      SUBDBG( "PCNT6MUX command %lx\n",
+           current_state->counter_cmd.ev6);
       retval =
           ioctl(current_state->fd, PCNT6MUX,
                 &current_state->counter_cmd.ev6);
@@ -772,7 +784,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
       return (PAPI_ESYS);
 
    /* select events */
-   DBG((stderr, "PCNT6MUX command %lx\n", ctrl->counter_cmd.ev6));
+   SUBDBG("PCNT6MUX command %lx\n", ctrl->counter_cmd.ev6);
    retval = ioctl(ctx->fd, PCNT6MUX, &ctrl->counter_cmd.ev6);
    if (retval == -1)
       return (PAPI_ESYS);
