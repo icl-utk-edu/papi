@@ -741,7 +741,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
   ctrl->counter_cmd.cmd.ce_pic[0] -= (u_long_long)ctrl->values[0];
   ctrl->counter_cmd.cmd.ce_pic[1] -= (u_long_long)ctrl->values[1];
 
-  *events = ctrl->counter_cmd.cmd.ce_pic;
+  events = ctrl->counter_cmd.cmd.ce_pic;
 
   return PAPI_OK;
 }
@@ -860,7 +860,7 @@ void _papi_hwd_lock_init(void)
 {
 }
 
-#define _papi_hwd_lock(lck)
+#define _papi_hwd_lock(lck)	\
 do				\
 {				\
   rw_wrlock(&lock[lck]);	\
