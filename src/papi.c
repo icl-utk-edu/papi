@@ -1137,12 +1137,10 @@ int PAPI_rem_event(int *EventSet, int EventCode)
     retval=mpx_remove_event(&ESI->multiplex,EventCode);
     if(retval)
       papi_return(retval);
-    ESI->NumberOfEvents--;
-  } else {
-    /* Now do the magic. */
-    retval=remove_event(ESI,EventCode);
   }
 
+  /* Now do the magic. */
+  retval=remove_event(ESI,EventCode);
   papi_return(retval);
 }
 
