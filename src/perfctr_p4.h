@@ -33,11 +33,25 @@ typedef struct P4_perfctr_event {
   int ireset;
 } P4_perfctr_event_t;
 
+/* Each event in this structure corresponds to the arguments to a
+   vperfctr_control call. The substrate currently does no register
+   allocation so just pick your escr/cccr/pmc carefully.
+
+   You should add any new register definitions to perfctr_p4.h and edit
+   the p4_events.c file. You should test your entries register contents
+   with tperfex in papi/tools or perfex in perfctr/examples/perfex. When
+   you run avail -a, you will see the register contents dumped in a
+   perfex compatible manner. This will help you get the bits right.
+*/ 
+
 #define P4_MAX_REGS_PER_EVENT 4
 
 typedef struct P4_perfctr_codes {
   P4_perfctr_event_t data[P4_MAX_REGS_PER_EVENT];
 } P4_perfctr_preset_t;
+
+/* So each PAPI event can use up to four registers. Usually
+we just need one or two (for replay and tagged events) */
 
 typedef struct P4_perfctr_avail {
   unsigned cccr_bits;           /* What we write for control, read for data */
@@ -120,6 +134,14 @@ typedef struct P4_search {
   unsigned number;
   P4_perfctr_preset_t info;
 } P4_search_t;
+
+/* Here preset is the PAPI preset.
+   Note is a string or NULL.
+   Control selector is the number of the pmc the event is on
+    read selectory should be the number of escr the event is on, but it isn't. 
+    It's the same as control selectory for now.
+   Number is the number of events (up to 4) used for this preset.
+*/
 
 /* Per preset data structure dynamically defined in sparse array by substrate
    from array of P4_search_t's. */

@@ -25,7 +25,11 @@
 
 extern papi_mdi_t _papi_hwi_system_info;
 
-extern P4_search_t _papi_hwd_pentium4_preset_map[];
+/* CPUID model < 2 */
+extern P4_search_t _papi_hwd_pentium4_mlt2_preset_map[];
+
+/* CPUID model >= 2 */
+extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -110,10 +114,31 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 inline static int setup_all_presets(int cputype)
 {
-  if (cputype == PAPI_MODEL_PENTIUM_4)
-    return(setup_presets(_papi_hwd_pentium4_preset_map, _papi_hwd_preset_map));
+  int hyper, model;
+  volatile unsigned int tmp, tmp2;
+  __asm__("movl $0x01, %%eax;"
+	  "cpuid;"
+	  "movl %%eax, %0;"
+	  "movl %%edx, %1;"
+	: "=r"(tmp), "=r"(tmp2)
+	:
+	: "%eax", "%edx" );
+  SUBDBG("%%EAX       %%EDX\n");
+  SUBDBG("0x%08x 0x%08x\n",tmp,tmp2);
+  hyper = ((tmp2&0x10000000) != 0);
+  SUBDBG("Hyperthreading = %x\n",hyper);
+  model = (tmp&0x000000f0)>>4;
+  SUBDBG("Model = %x\n",model);
+
+  if (hyper)
+    fprintf(stderr,"Whoa! Hyperthreading and Perfctr?!?!?\n");
+
+  assert (cputype == PAPI_MODEL_PENTIUM_4);
+  
+  if (model < 2)
+    return(setup_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_preset_map));
   else
-    abort();
+    return(setup_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_preset_map));
   
   return(PAPI_OK);
 }
