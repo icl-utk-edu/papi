@@ -665,9 +665,10 @@ static void clear_control_state(hwd_control_state_t * this_state)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count)
 {
-   int i;
+   int i, retval = PAPI_OK;
 
    P4_register_t *bits;
+   struct perfctr_cpu_control *cpu_control = &this_state->control.cpu_control;
 
    /* clear out everything currently coded */
    clear_control_state(this_state);
@@ -679,17 +680,34 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
       /* Add counter control command values to eventset */
 
-      this_state->control.cpu_control.pmc_map[i] = bits->counter[0];
-      this_state->control.cpu_control.evntsel[i] = bits->cccr;
-      this_state->control.cpu_control.ireset[i] = bits->ireset;
-      this_state->control.cpu_control.pmc_map[i] |= FAST_RDPMC;
-      this_state->control.cpu_control.evntsel_aux[i] |= bits->event;
-      /* What happens if more than one native event has pebs_enable or pebs_matrix_vert?
-         Are these just binary enables or can they actually have conflicting values? */
-      if (bits->pebs_enable)
-         this_state->control.cpu_control.p4.pebs_enable = bits->pebs_enable;
-      if (bits->pebs_matrix_vert)
-         this_state->control.cpu_control.p4.pebs_matrix_vert = bits->pebs_matrix_vert;
+      cpu_control->pmc_map[i] = bits->counter[0];
+      cpu_control->evntsel[i] = bits->cccr;
+      cpu_control->ireset[i] = bits->ireset;
+      cpu_control->pmc_map[i] |= FAST_RDPMC;
+      cpu_control->evntsel_aux[i] |= bits->event;
+
+      /* pebs_enable and pebs_matrix_vert are shared registers used for replay_events.
+	 Replay_events count L1 and L2 cache events. There is only one of each for 
+	 the entire eventset. Therefore, there can be only one unique replay_event 
+	 per eventset. This means L1 and L2 can't be counted together. Which stinks. */
+      if (bits->pebs_enable) {
+	 /* if pebs_enable isn't set, just copy */
+	 if (cpu_control->p4.pebs_enable == 0)
+            cpu_control->p4.pebs_enable = bits->pebs_enable;
+	 /* if pebs_enable conflicts, flag an error */
+	 else if (cpu_control->p4.pebs_enable != bits->pebs_enable)
+	    retval = PAPI_ECNFLCT;
+	 /* if pebs_enable == bits->pebs_enable, do nothing */
+      }
+      if (bits->pebs_matrix_vert) {
+	 /* if pebs_matrix_vert isn't set, just copy */
+	 if (cpu_control->p4.pebs_matrix_vert == 0)
+	    cpu_control->p4.pebs_matrix_vert = bits->pebs_matrix_vert;
+	 /* if pebs_matrix_vert conflicts, flag an error */
+	 else if (cpu_control->p4.pebs_matrix_vert != bits->pebs_matrix_vert)
+ 	    retval = PAPI_ECNFLCT;
+	 /* if pebs_matrix_vert == bits->pebs_matrix_vert, do nothing */
+     }
    }
    this_state->control.cpu_control.nractrs = count;
 
@@ -699,7 +717,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 #ifdef DEBUG
    print_control(&this_state->control.cpu_control);
 #endif
-   return (PAPI_OK);
+   return (retval);
 }
 
 
