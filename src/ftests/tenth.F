@@ -2,31 +2,31 @@
 #define ITERS 100
 
 #if defined(sun) && defined(sparc)
-  #define CACHE_LEVEL "PAPI_L2_TCM"
-  #define EVT1            PAPI_L2_TCM
-  #define EVT2            PAPI_L2_TCA
-  #define EVT3            PAPI_L2_TCH
-  #define EVT1_STR        "PAPI_L2_TCM"
-  #define EVT2_STR        "PAPI_L2_TCA"
-  #define EVT3_STR        "PAPI_L2_TCH"
+#define CACHE_LEVEL "PAPI_L2_TCM"
+#define EVT1            PAPI_L2_TCM
+#define EVT2            PAPI_L2_TCA
+#define EVT3            PAPI_L2_TCH
+#define EVT1_STR        "PAPI_L2_TCM"
+#define EVT2_STR        "PAPI_L2_TCA"
+#define EVT3_STR        "PAPI_L2_TCH"
 #else
- #if (_POWER4)
-  #define CACHE_LEVEL "PAPI_L1_DCA"
-  #define EVT1            PAPI_L1_DCA
-  #define EVT2            PAPI_L1_DCW
-  #define EVT3            PAPI_L1_DCR
-  #define EVT1_STR        "PAPI_L1_DCA"
-  #define EVT2_STR        "PAPI_L1_DCW"
-  #define EVT3_STR        "PAPI_L1_DCR"
- #else
-  #define CACHE_LEVEL "PAPI_L1_TCM"
-  #define EVT1            PAPI_L1_TCM
-  #define EVT2            PAPI_L1_ICM
-  #define EVT3            PAPI_L1_DCM
-  #define EVT1_STR        "PAPI_L1_TCM"
-  #define EVT2_STR        "PAPI_L1_ICM"
-  #define EVT3_STR        "PAPI_L1_DCM"
- #endif
+#if defined(_POWER4)
+#define CACHE_LEVEL "PAPI_L1_DCA"
+#define EVT1            PAPI_L1_DCA
+#define EVT2            PAPI_L1_DCW
+#define EVT3            PAPI_L1_DCR
+#define EVT1_STR        "PAPI_L1_DCA"
+#define EVT2_STR        "PAPI_L1_DCW"
+#define EVT3_STR        "PAPI_L1_DCR"
+#else
+#define CACHE_LEVEL "PAPI_L1_TCM"
+#define EVT1            PAPI_L1_TCM
+#define EVT2            PAPI_L1_ICM
+#define EVT3            PAPI_L1_DCM
+#define EVT1_STR        "PAPI_L1_TCM"
+#define EVT2_STR        "PAPI_L1_ICM"
+#define EVT3_STR        "PAPI_L1_DCM"
+#endif
 #endif
 
       program tenth
