@@ -165,22 +165,6 @@ typedef P4_perfctr_context_t hwd_context_t;
 
 typedef P4_perfctr_event_t hwd_event_t;
 
-#if 0
-#include "papi_internal.h"
-
-/* Per thread data structure for global level counters */
-
-typedef struct P4_perfctr_context {
-  struct gperfctr *perfctr;
-} P4_perfctr_global_context_t;
-
-typedef struct P4_global_control {
-  struct gperfctr_control *control; 
-  struct gperfctr_state *state;
-} P4_perfctr_global_control_t;
-#include "papi_protos.h"
-#endif
-
 
 /* Per preset data structure statically defined in dense array in substrate */
 
@@ -191,24 +175,6 @@ typedef struct P4_search {
   P4_perfctr_preset_t info;
 } P4_search_t;
 
-/* Per preset data structure dynamically defined in sparse array by substrate
-   from array of P4_search_t's. */
-#if 0
-typedef struct P4_preset {
-  /* Is this event derived? */
-  unsigned derived;   
-  /* Number of counters in the following */
-  unsigned number;
-  /* Where can this register live */
-  P4_regmap_t possible_registers;
-  /* Information on how to construct the event */
-  P4_perfctr_preset_t *info;
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} P4_preset_t;
-
-typedef P4_preset_t hwd_preset_t;
-#endif
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
@@ -224,6 +190,21 @@ typedef P4_preset_t hwd_preset_t;
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
+
+
+/* Overflow stuff */
+typedef struct { 
+  siginfo_t *si; 
+  struct sigcontext *ucontext;
+} papi_hwd_context_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)((papi_hwd_context_t *)ctx)->ucontext->sc_ip
+#define GET_OVERFLOW_CTR_BITS(context) \
+  (((papi_hwd_context_t *)context)->si->sy_pfm_ovfl[0])
+
+#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
+  (_papi_hwi_event_index_map[bit-PMU_FIRST_COUNTER])
+
 
 /* Locks */
 #ifdef __x86_64__
