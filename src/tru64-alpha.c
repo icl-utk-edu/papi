@@ -1172,6 +1172,29 @@ papi_mdi _papi_system_info = { "$Id$",
 				 (caddr_t)NULL,
 				 "_RLD_LIST", /* How to preload libs */
 			       },
+                               { 0,  /*total_tlb_size*/
+                                 0,  /*itlb_size */
+                                 0,  /*itlb_assoc*/
+                                 0,  /*dtlb_size */
+                                 0, /*dtlb_assoc*/
+                                 0, /*total_L1_size*/
+                                 0, /*L1_icache_size*/
+                                 0, /*L1_icache_assoc*/
+                                 0, /*L1_icache_lines*/
+                                 0, /*L1_icache_linesize*/
+                                 0, /*L1_dcache_size */
+                                 0, /*L1_dcache_assoc*/
+                                 0, /*L1_dcache_lines*/
+                                 0, /*L1_dcache_linesize*/
+                                 0, /*L2_cache_size*/
+                                 0, /*L2_cache_assoc*/
+                                 0, /*L2_cache_lines*/
+                                 0, /*L2_cache_linesize*/
+                                 0, /*L3_cache_size*/
+                                 0, /*L3_cache_assoc*/
+                                 0, /*L3_cache_lines*/
+                                 0  /*L3_cache_linesize*/
+                               },
 			       -1,  /*  num_cntrs */
 			       -1,  /*  num_gp_cntrs */
 			       -1,  /*  grouped_counters */

@@ -2,6 +2,7 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-perf
 MSUBSTR  = linux-perf
+MEMSUBSTR= linux
 DESCR	= "Linux with Perf Kernel Patch for the Pentium Pro, II, III"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads

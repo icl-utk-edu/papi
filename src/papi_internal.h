@@ -5,6 +5,8 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra.utk.edu
+* Mods:    Kevin London
+*	   london@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */  
@@ -333,6 +335,7 @@ typedef struct _papi_mdi {
   int cpunum;               /* Index of this CPU, we really should be bound */
   PAPI_hw_info_t hw_info;   /* See definition in papi.h */
   PAPI_exe_info_t exe_info;  /* See definition in papi.h */
+  PAPI_mem_info_t mem_info;  /* See definition in papi.h */
 
   /* The following variables define the length of the arrays in the 
      EventSetInfo structure. Each array is of length num_gp_cntrs + 

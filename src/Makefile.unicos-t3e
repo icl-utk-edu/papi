@@ -2,6 +2,7 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = unicos-ev5
 MSUBSTR  = unicos-ev5
+MEMSUBSTR= unicos
 DESCR   = "Cray UNICOS/mk Unix with Alpha 21164"
 LIBS	= static 
 TARGETS	= serial multiplex 

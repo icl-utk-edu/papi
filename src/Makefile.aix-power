@@ -2,6 +2,7 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = aix-power
 MSUBSTR = aix-power
+MEMSUBSTR=aix
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
 LIBS	= static aix-shared
 TARGETS	= serial multiplex_and_pthreads smp omp
@@ -12,8 +13,8 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
 CFLAGS	= $(FLAGS)
-OPTFLAGS= 
-TOPTFLAGS=
+OPTFLAGS= -O3
+TOPTFLAGS= -g
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)

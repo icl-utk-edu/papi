@@ -1,6 +1,7 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-alpha
+MEMSUBSTR= alpha
 DESCR   = "Alpha Linux for Alpha 21164EV5 and Alpha 21264EV6"
 
 LIBS	= static shared

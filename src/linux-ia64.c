@@ -816,6 +816,10 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
+  retval = get_memory_info(&_papi_system_info.mem_info);
+  if (retval)
+    return(retval);
+
   DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
        _papi_system_info.hw_info.totalcpus,
        _papi_system_info.hw_info.vendor_string,

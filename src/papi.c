@@ -448,11 +448,11 @@ int PAPI_library_init(int version)
   }
 
   if (allocate_eventset_map(PAPI_EVENTSET_MAP)) 
-    {
+  {
       _papi_hwd_shutdown_global();
       init_retval = PAPI_ENOMEM;
       return(init_retval);
-    }
+  }
 
   tmp = initialize_master_eventset(&default_master_eventset);
   if (tmp)
@@ -1771,6 +1771,11 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 	papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_system_info.hw_info;
       break;
+    case PAPI_GET_MEMINFO:
+      if (ptr == NULL)
+	papi_return(PAPI_EINVAL);
+      ptr->mem_info = &_papi_system_info.mem_info;
+      break;
     case PAPI_GET_DOMAIN:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
@@ -2142,6 +2147,17 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void)
   retval = PAPI_get_opt(PAPI_GET_EXEINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.exe_info);
+  else
+    return(NULL);
+}
+
+const PAPI_mem_info_t *PAPI_get_memory_info() {
+  PAPI_option_t ptr;
+  int retval;
+ 
+  retval = PAPI_get_opt(PAPI_GET_MEMINFO,&ptr);
+  if (retval == PAPI_OK)
+    return(ptr.mem_info);
   else
     return(NULL);
 }

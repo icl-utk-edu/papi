@@ -5,6 +5,9 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@cs.utk.edu
+* 
+*	   Kevin London
+*	   london@cs.utk.edu
 */  
 
 #ifndef _PAPI
@@ -172,6 +175,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_EXEINFO  	73 /* Executable information */  
 
 #define PAPI_GET_MAX_CPUS 	74 /* Number of ncpus we can talk to from here */
+ 
+#define PAPI_GET_MEMINFO        75 /* Memory information */
 
 #define PAPI_MAX_STR_LEN        81 /* Guess what */
 
@@ -260,6 +265,36 @@ typedef struct _papi_hw_info {
                                init time with a quick timing routine */
 } PAPI_hw_info_t;
   
+typedef struct _papi_mem_info {
+  int total_tlb_size;		/*If combined itlb_size and dtlb_size will
+				 * be 0 */
+  int itlb_size;		/*Instruction TLB size in KB */
+  short int itlb_assoc;      /*Instruction TLB associtivity */
+  int dtlb_size;		/*Data TLB size in KB */
+  short  dtlb_assoc;	/*Data TLB associtivity */
+
+  int total_L1_size;		/*If combined icache and dcache size is 0 */
+  int L1_icache_size;		/*Level 1 instruction cache size in KB */
+  short int L1_icache_assoc;    /*Level 1 instruction cache associtivity */
+  int L1_icache_lines;		/*Number of lines in Level 1 instruction cache*/
+  int L1_icache_linesize;       /*Line size in KB of Level 1 instruction cache*/
+
+  int L1_dcache_size;		/*Level 1 data cache size in KB */
+  short int L1_dcache_assoc;	/*Level 1 data cache associtivity */
+  int L1_dcache_lines;		/*Number of lines in Level 1 data cache*/
+  int L1_dcache_linesize;	/*Line size in KB of Level 1 data cache*/
+
+  int L2_cache_size;		/*Level 2 cache size in KB */
+  short int L2_cache_assoc;	/*Level 2 cache associtivity */
+  int L2_cache_lines;		/*Number of lines in Level 2 cache*/
+  int L2_cache_linesize;	/*Line size in KB of Level 2 cache*/
+
+  int L3_cache_size;		/*Level 3 cache size in KB */
+  short int L3_cache_assoc;	/*Level 3 cache associtivity */
+  int L3_cache_lines;		/*Number of lines in Level 3 cache */
+  int L3_cache_linesize;	/*Line size of Level 3 cache */
+} PAPI_mem_info_t;
+
 typedef struct _papi_multiplex_option {
   int eventset;
   int us;
@@ -280,6 +315,7 @@ typedef union {
   PAPI_domain_option_t defdomain; 
   PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
+  PAPI_mem_info_t *mem_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 
 /* dkt - added a label field to this structure */
@@ -304,6 +340,7 @@ int PAPI_create_eventset(int *EventSet);
 int PAPI_destroy_eventset(int *EventSet);
 const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);
+const PAPI_mem_info_t *PAPI_get_memory_info();
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 void *PAPI_get_overflow_address(void *context);
 long_long PAPI_get_real_cyc(void);

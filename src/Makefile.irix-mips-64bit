@@ -2,6 +2,7 @@ LIBRARY = libpapi64.a
 SHLIB = libpapi64.so
 SUBSTR  = irix-mips
 MSUBSTR  = irix-mips
+MEMSUBSTR= irix
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared 
 TARGETS	= serial multiplex_and_pthreads smp omp 

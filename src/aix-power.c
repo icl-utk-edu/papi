@@ -813,6 +813,10 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
+  retval = get_memory_info(&_papi_system_info.mem_info);
+  if (retval)
+    return(retval);
+
   DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
        _papi_system_info.hw_info.totalcpus,
        _papi_system_info.hw_info.vendor_string,
@@ -1954,6 +1958,29 @@ papi_mdi _papi_system_info = { "$Id$",
 				 (caddr_t)-1,
 				 ""
 			       },
+                               { 0,  /*total_tlb_size*/
+                                 0,  /*itlb_size */
+                                 0,  /*itlb_assoc*/
+                                 0,  /*dtlb_size */
+                                 0, /*dtlb_assoc*/
+                                 0, /*total_L1_size*/
+                                 0, /*L1_icache_size*/
+                                 0, /*L1_icache_assoc*/
+                                 0, /*L1_icache_lines*/
+                                 0, /*L1_icache_linesize*/
+                                 0, /*L1_dcache_size */
+                                 0, /*L1_dcache_assoc*/
+                                 0, /*L1_dcache_lines*/
+                                 0, /*L1_dcache_linesize*/
+                                 0, /*L2_cache_size*/
+                                 0, /*L2_cache_assoc*/
+                                 0, /*L2_cache_lines*/
+                                 0, /*L2_cache_linesize*/
+                                 0, /*L3_cache_size*/
+                                 0, /*L3_cache_assoc*/
+                                 0, /*L3_cache_lines*/
+                                 0  /*L3_cache_linesize*/
+                               },
 			       -1,  /*  num_cntrs */
 			       -1,  /*  num_gp_cntrs */
 			       -1,  /*  grouped_counters */

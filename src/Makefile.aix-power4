@@ -1,6 +1,7 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = aix-power
+MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4"
 LIBS	= static aix-shared
 TARGETS	= serial multiplex_and_pthreads smp omp
@@ -9,7 +10,7 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 
 FLAGS  = -I/usr/pmapi/include -qmaxmem=-1 -qarch=com
 CFLAGS	= $(FLAGS) -D_POWER4 -DDEBUG
-OPTFLAGS= 
+OPTFLAGS= -O3
 TOPTFLAGS=
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
