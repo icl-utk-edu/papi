@@ -22,6 +22,8 @@
 
 #include "libperfctr.h"
 
+#include "p4_events.h"
+
 #ifndef PAPI3
 #include "papi.h"
 typedef struct _papi_address_map {
@@ -180,7 +182,8 @@ typedef P4_preset_t hwd_preset_t;
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
-
+#define MODEL_ERROR "This is not a Pentium 4"
+ 
 #define error_return(retval, format, args...) { fprintf(stderr,"Error in %s, function %s, line %d: ",__FILE__,__FUNCTION__,__LINE__); fprintf(stderr, format , ## args) ; fprintf(stderr, "\n"); return(retval); }
 #ifdef DEBUG
 #define DEBUGLABEL(a) fprintf(stderr,"%s:%s:%s:%d: ",a,__FILE__,__FUNCTION__,__LINE__)
@@ -197,27 +200,6 @@ typedef P4_preset_t hwd_preset_t;
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
-
-#define PAPI_MODEL_UNKNOWN  -1
-#define PAPI_MODEL_PENTIUM_4 PERFCTR_X86_INTEL_P4
-
-#define FAST_RDPMC (1 << 31)
-#define COUNTER(a) (a)
-#define ESCR(a) (a << 13)
-#define ENABLE (1 << 12)
-#define HYPERTHREAD_ANY (0x3 << 16)
-#define NBOGUSNTAG (1 << 9)
-#define CPL(a) (a << 2)
-#define EVENT(a) (a << 25)
-#define EVENTMASK(a) (a << 9)
-#define COMPARE (1 << 18)
-#define COMPLEMENT (1 << 19)
-#define THRESHOLD(a) (a << 20)
-#define PEBS_TAG (1 << 24)
-#define PEBS_L1_MISS (1)
-#define PEBS_L2_MISS (1 << 1)
-#define PEBS_MV_LOAD (1)
-#define PEBS_MV_STORE (1 << 1)
 
 /* Stupid linux basename prototype! */
 

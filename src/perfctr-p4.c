@@ -24,6 +24,12 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
+/* CPUID model < 2 */
+extern P4_search_t _papi_hwd_pentium4_mlt2_preset_map[];
+
+/* CPUID model >= 2 */
+extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
+
 #ifdef PAPI3
 extern papi_mdi_t _papi_hwi_system_info;
 #else
@@ -100,8 +106,6 @@ papi_mdi_t _papi_system_info = { "$Id$",
 			        { 0, }
 };
 #endif
-
-extern P4_search_t _papi_hwd_pentium4_preset_map[];
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -199,11 +203,13 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 inline static int setup_all_presets(int cputype)
 {
-  if (cputype == PAPI_MODEL_PENTIUM_4)
-    return(setup_presets(_papi_hwd_pentium4_preset_map, _papi_hwd_preset_map));
+  if (cputype == PERFCTR_X86_INTEL_P4)
+    return(setup_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_preset_map));
+  else if (cputype == PERFCTR_X86_INTEL_P4M2)
+    return(setup_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_preset_map));
   else
-    abort();
-  
+    error_return(PAPI_ESBSTR,MODEL_ERROR);
+ 
   return(PAPI_OK);
 }
 
