@@ -222,26 +222,32 @@ C     TLB
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_event_name_to_code('DCU_LINES_I', nativees, retval )
+      call PAPIf_event_name_to_code('DCU_LINES_IN', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 #endif
 #ifdef __ATHLON__
-      call PAPIf_event_name_to_code('SEG_REG_LOADS', nativees, retval )
+      call PAPIf_event_name_to_code('TOT_CYC', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_event_name_to_code('ST_ACTIVE_IS', nativees, retval )
+      call PAPIf_event_name_to_code('IC_MISSES', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
       call PAPIf_event_name_to_code('DC_ACCESSES', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('DC_MISSES', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -453,8 +459,8 @@ C     call sleep(1)
       print *, "Load Instructions          : ", values(4)
       print *, "FPU0 Instructions          : ", values(5)
       print *, "CPU Cycles                 : ", values(6)
-      print *, "FMA Instructions           : ", values(7)
-      print *, "TLB Misses                 : ", values(8)
+      print *, "TLB Misses                 : ", values(7)
+      print *, "FMA Instructions           : ", values(8)
       print *, "------------------------------------------"
       print *, "CPU MFLOPS                 : ",
      *((values(5)+values(2))/1000000.0)/csec
@@ -479,8 +485,8 @@ C     call sleep(1)
       print *, "DCU_LINES_IN       : ", values(2)
 #endif
 #ifdef __ATHLON__
-      print *, "DCU_LINES_IN       : ", values(1)
-      print *, "ST_ACTIVE_IS       : ", values(2)
+      print *, "TOT_CYC            : ", values(1)
+      print *, "IC_MISSES          : ", values(2)
       print *, "DC_ACCESSES        : ", values(3)
       print *, "DC_MISSES          : ", values(4)
 #endif

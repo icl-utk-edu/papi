@@ -96,21 +96,22 @@ void addaixevents(int *EventSet, int *retval)
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
 
-#ifdef PMTOOLKIT_1_2
-   *retval = PAPI_event_name_to_code("PM_FPU_FMA", &native);
-#else   
-   *retval = PAPI_event_name_to_code("PM_EXEC_FMA", &native);
-#endif
-   /*if (*retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
-   if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
-      return;
 
    *retval = PAPI_event_name_to_code("PM_TLB_MISS", &native);
    /*if (*retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
    if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
       return;
+
+#ifdef PMTOOLKIT_1_2
+   *retval = PAPI_event_name_to_code("PM_FPU_FMA", &native);
+   /*if (*retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", *retval);*/
+   if ((*retval = PAPI_add_event(*EventSet, native)) != PAPI_OK)
+      return;
+/*#else   
+   *retval = PAPI_event_name_to_code("PM_EXEC_FMA", &native);*/
+#endif
 #endif
 #endif
 }

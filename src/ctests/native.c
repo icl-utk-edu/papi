@@ -67,7 +67,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    };
 #else
    static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
-      "PM_FPU0_CMPL", "PM_CYC", "PM_EXEC_FMA", "PM_TLB_MISS", NULL
+      "PM_FPU0_CMPL", "PM_CYC", "PM_TLB_MISS", NULL
    };
 #endif
 #endif
@@ -251,8 +251,12 @@ void papimon_stop(void)
       fprintf(stderr, "Load Instructions          : %lld\n", values[3]);
       fprintf(stderr, "FPU0 Instructions          : %lld\n", values[4]);
       fprintf(stderr, "CPU Cycles                 : %lld\n", values[5]);
+#ifdef PMTOOLKIT_1_2
       fprintf(stderr, "FMA Instructions           : %lld\n", values[6]);
       fprintf(stderr, "TLB Misses                 : %lld\n", values[7]);
+#else
+      fprintf(stderr, "TLB Misses                 : %lld\n", values[6]);
+#endif
       fprintf(stderr, "------------------------------------------\n");
       fprintf(stderr, "CPU MFLOPS                 : %.2f\n",
               (((float) values[4] + (float) values[1]) / 1000000.0) / csec);
