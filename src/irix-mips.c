@@ -548,8 +548,9 @@ int _papi_hwd_init_global(void)
    retval = _internal_get_system_info();
    if (retval)
       return (retval);
-
-   retval = get_memory_info(&_papi_hwi_system_info.hw_info);
+   /* the second argument isn't really used in this implementation of the call */
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
+      _papi_hwi_system_info.hw_info.vendor);
    if (retval)
       return (retval);
 
