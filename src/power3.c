@@ -335,11 +335,12 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
        to access the native table directly, but in general this is a bad idea */
     event_list[i].ra_selector = native_table[ESI->NativeInfoArray[i].ni_index].resources.selector;
     /* calculate native event rank, which is number of counters it can live on, this is power3 specific */
-    for(j=0;j<MAX_COUNTERS;j++) {
+    event_list[i].ra_rank=0;
+	for(j=0;j<MAX_COUNTERS;j++) {
       if(event_list[i].ra_selector & (1<<j))
-	event_list[i].ra_rank++;
+		  event_list[i].ra_rank++;
     }
-    event_list[i].ra_mod = -1;
+    /*event_list[i].ra_mod = -1;*/
   }
 
   if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
