@@ -53,15 +53,13 @@
 #include <pthread.h>
 #endif
 
-#include SUBSTRATE
+#ifndef _WIN32
+  #include SUBSTRATE
+#else
+  #include "win32.h"
+#endif
 
 /* Globals for this file. */
-
-/* Timer stuff */
-
-static struct itimerval itime;
-static struct itimerval itimestop;
-struct sigaction oaction;
 
 /* List of threads that are multiplexing. */
 
@@ -84,12 +82,152 @@ static void *global_process_record;
 
 static void mpx_delete_events(MPX_EventSet *);
 static void mpx_insert_events(MPX_EventSet *, int * event_list, int num_events, int domain, int granularity);
+static void mpx_handler(int signal);
+
+#ifdef _WIN32
+
+static MMRESULT	mpxTimerID;	// unique ID for referencing this timer
+static int mpx_time;
+
+static void mpx_init_timers(int interval)
+{
+	/* Fill in the interval timer values now to save a
+	 * little time later.
+	 */
+#ifdef OUTSIDE_PAPI
+	interval = MPX_DEFAULT_INTERVAL;
+#endif
+	// interval is in usec & Windows needs msec resolution
+	mpx_time = interval/1000;
+}
+
+void CALLBACK mpx_timer_callback(UINT wTimerID, UINT msg, 
+    DWORD dwUser, DWORD dw1, DWORD dw2) 
+{
+	mpx_handler(0); 
+} 
+
+
+static int mpx_startup_itimer(void)
+{
+  int retval = PAPI_OK;
+
+  TIMECAPS	tc;
+  UINT		wTimerRes;
+
+  // get the timer resolution capability on this system
+  if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) return(PAPI_ESYS);
+  
+  wTimerRes = min(max(tc.wPeriodMin, 1), tc.wPeriodMax);
+  timeBeginPeriod(wTimerRes);
+  
+  // initialize a periodic timer
+  //	triggering every (milliseconds) 
+  //	and calling (_papi_hwd_timer_callback())
+  //	with no data
+  mpxTimerID = timeSetEvent(mpx_time, wTimerRes, 
+		mpx_timer_callback, (DWORD)NULL, TIME_PERIODIC);
+  if(!mpxTimerID) return PAPI_ESYS;
+
+  return(retval);
+}
+
+#define mpx_restore_signal()	// NOP on Windows
+
+static void mpx_shutdown_itimer(void)
+{
+	if (timeKillEvent(mpxTimerID) != TIMERR_NOERROR)
+		perror("setitimer(ITIMER_VIRTUAL)");
+}
+
+static void mpx_release(void)
+{
+	mpx_startup_itimer();
+}
+
+static void mpx_hold(void)
+{
+	mpx_shutdown_itimer();
+}
+
+#else
+
+/* Timer stuff */
+
+static struct itimerval itime;
+static struct itimerval itimestop;
+struct sigaction oaction;
+
+static void mpx_init_timers(int interval)
+{
+	/* Fill in the interval timer values now to save a
+	 * little time later.
+	 */
+#ifdef OUTSIDE_PAPI
+	interval = MPX_DEFAULT_INTERVAL;
+#endif
+
+#ifdef REGENERATE
+	/* Signal handler restarts the timer every time it runs */
+	itime.it_interval.tv_sec = 0;
+	itime.it_interval.tv_usec = 0;
+	itime.it_value.tv_sec = 0;
+	itime.it_value.tv_usec = interval;
+#else
+	/* Timer resets itself automatically */
+	itime.it_interval.tv_sec = 0;
+	itime.it_interval.tv_usec = interval;
+	itime.it_value.tv_sec = 0;
+	itime.it_value.tv_usec = interval;
+#endif
+
+	itimestop.it_interval.tv_sec = 0;
+	itimestop.it_interval.tv_usec = 0;
+	itimestop.it_value.tv_sec = 0;
+	itimestop.it_value.tv_usec = 0;
+}
+
+static int mpx_startup_itimer(void)
+{
+	int retval;
+	struct sigaction sigact;
+
+	/* Set up the signal handler and the timer that triggers it */
+	memset(&sigact, 0, sizeof(sigact));
+	sigact.sa_handler = mpx_handler;
+	retval = sigaction(SIGVTALRM, &sigact, &oaction);
+	assert(retval == 0);
+
+	retval |= setitimer(ITIMER_VIRTUAL, &itime, NULL);
+	assert(retval == 0);
+	return(retval);
+}
+
+static void mpx_restore_signal(void)
+{
+	int retval;
+
+	retval = sigaction(SIGVTALRM, &oaction, NULL);
+	assert(retval == 0);
+}
 
 static void mpx_shutdown_itimer(void)
 {
   if (setitimer(ITIMER_VIRTUAL, &itimestop, NULL) == -1)
     perror("setitimer(ITIMER_VIRTUAL)");
 }
+
+static void mpx_hold(void)
+{
+  sighold(SIGVTALRM);
+}
+
+static void mpx_release(void)
+{
+  sigrelse(SIGVTALRM);
+}
+
+#endif // _WIN32
 
 static MasterEvent *get_my_threads_master_event_list(void)
 {
@@ -120,9 +258,9 @@ static MPX_EventSet *mpx_malloc(Threadlist *t)
   newset->mythr = t;
   newset->num_events = 0;
   newset->start_c = newset->stop_c = 0;
-  memset(newset->start_hc, 0, PAPI_MPX_DEF_DEG * sizeof(long long));
-  memset(newset->start_values, 0, PAPI_MPX_DEF_DEG * sizeof(long long));
-  memset(newset->start_cycles, 0, PAPI_MPX_DEF_DEG * sizeof(long long));
+  memset(newset->start_hc, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
+  memset(newset->start_values, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
+  memset(newset->start_cycles, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
   return(newset);
 }
 
@@ -215,7 +353,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
   def_dom = PAPI_get_opt(PAPI_GET_DEFDOM, NULL);
   def_grn = PAPI_get_opt(PAPI_GET_DEFGRN, NULL);
 
-  sighold(SIGVTALRM);
+  mpx_hold();
 
   /* Create PAPI events (if they don't already exist) and link
    * the new event set to them, add them to the master list for
@@ -223,7 +361,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 
   mpx_insert_events(newset, &EventCode, 1, def_dom, def_grn);
 
-  sigrelse(SIGVTALRM);
+  mpx_release();
   
   /* Output the new or existing EventSet */
 
@@ -343,9 +481,9 @@ static void mpx_handler(int signal)
 		 * disable the timer interrupt before they update the list.
 		 */
 		if( me != NULL && me->cur_event != NULL ) {
-			long long counts[2];
+			long_long counts[2];
 			MasterEvent * cur_event = me->cur_event;
-			long long cycles;
+			long_long cycles;
 
 			retval = PAPI_stop(cur_event->papi_event, counts);
 			assert(retval == PAPI_OK);
@@ -476,13 +614,12 @@ int MPX_start(MPX_EventSet * mpx_events)
 {
 	int retval;
 	int i;
-	long long cycles_this_slice = 0;
-	struct sigaction sigact;
+	long_long cycles_this_slice = 0;
 	Threadlist * t;
 	
 	t = mpx_events->mythr;
 
-	sighold(SIGVTALRM);
+	mpx_hold();
 
 	/* Make all events in this set active, and for those
 	 * already active, get the current count and cycles.
@@ -501,7 +638,7 @@ int MPX_start(MPX_EventSet * mpx_events)
 			 * time slice.
 			 */
 			if( mev == t->cur_event ) {
-				long long values[2];
+				long_long values[2];
 				retval = PAPI_read(mev->papi_event, values);
 				assert(retval == PAPI_OK);
 				mpx_events->start_values[i] += values[0];
@@ -549,34 +686,29 @@ int MPX_start(MPX_EventSet * mpx_events)
 		mpx_events->start_c = t->total_c + cycles_this_slice;
 	}
 
-	sigrelse(SIGVTALRM);
+	mpx_release();
 
-	/* Set up the signal handler and the timer that triggers it */
-	memset(&sigact, 0, sizeof(sigact));
-	sigact.sa_handler = mpx_handler;
-	retval = sigaction(SIGVTALRM, &sigact, &oaction);
-	assert(retval == 0);
+	retval = mpx_startup_itimer();
 
-	retval = setitimer(ITIMER_VIRTUAL, &itime, NULL);
 	assert(retval == 0);
 
 	return PAPI_OK;
 }
 
-int MPX_read(MPX_EventSet * mpx_events, long long * values)
+int MPX_read(MPX_EventSet * mpx_events, long_long * values)
 {
 	int i;
 	int retval;
-	long long last_value[2];
-	long long cycles_this_slice = 0;
-	long long time_interval;
+	long_long last_value[2];
+	long_long cycles_this_slice = 0;
+	long_long time_interval;
 	MasterEvent * cur_event;
 	Threadlist * thread_data;
 
 	if( mpx_events->status == MPX_RUNNING ) {
 
 		/* Hold timer interrupts while we read values */
-		sighold(SIGVTALRM);
+		mpx_hold();
 
 		thread_data = mpx_events->mythr;
 		cur_event = thread_data->cur_event;
@@ -609,7 +741,7 @@ int MPX_read(MPX_EventSet * mpx_events, long long * values)
 		mpx_events->stop_c = thread_data->total_c + cycles_this_slice;
 
 		/* Restore the interrupt */
-		sigrelse(SIGVTALRM);
+		mpx_release();
 	}
 
         /* Compute the total time (in cycles) this measurement has run */
@@ -617,7 +749,7 @@ int MPX_read(MPX_EventSet * mpx_events, long long * values)
 
 	/* Scale all the values and store in user array. */
 	for( i = 0; i < mpx_events->num_events; i++ ) {
-		long long elapsed_cycles = mpx_events->stop_cycles[i]
+		long_long elapsed_cycles = mpx_events->stop_cycles[i]
 			- mpx_events->start_cycles[i];
 
 		/* Prevent division-by-zero if counters are zero */
@@ -630,7 +762,7 @@ int MPX_read(MPX_EventSet * mpx_events, long long * values)
 		 * constant over the whole measurement period.
 		 */
 		else if( mpx_events->mev[i]->is_a_rate ) {
-			values[i] = (long long)(
+			values[i] = (long_long)(
 				(mpx_events->stop_values[i]
 					- mpx_events->start_values[i])
 				/ elapsed_cycles );
@@ -639,7 +771,7 @@ int MPX_read(MPX_EventSet * mpx_events, long long * values)
 		 * was active.
 		 */
 		} else {
-			values[i] = (long long)(
+			values[i] = (long_long)(
 				(mpx_events->stop_values[i]
 					- mpx_events->start_values[i])
 					* (double)time_interval
@@ -660,13 +792,13 @@ int MPX_reset(MPX_EventSet * mpx_events)
 {
 	int i;
 	int retval;
-	long long last_value[2];
-	long long cycles_this_slice = 0;
+	long_long last_value[2];
+	long_long cycles_this_slice = 0;
 	MasterEvent * cur_event;
 	Threadlist * thread_data;
 
 	/* Disable timer interrupt */ 
-	sighold(SIGVTALRM);
+	mpx_hold();
 
 	thread_data = mpx_events->mythr;
 	cur_event = thread_data->cur_event;
@@ -700,16 +832,16 @@ int MPX_reset(MPX_EventSet * mpx_events)
 	mpx_events->start_c = thread_data->total_c + cycles_this_slice;
 
 	/* Restart the interrupt */
-	sigrelse(SIGVTALRM);
+	mpx_release();
 	
 	return PAPI_OK;
 }
 
-int MPX_stop(MPX_EventSet * mpx_events, long long * values)
+int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 {
 	int i;
 	int retval;
-	long long last_value[2];
+	long_long last_value[2];
 	MasterEvent * cur_event, * head;
 	Threadlist * thr;
 
@@ -724,7 +856,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long long * values)
 	mpx_events->status = MPX_STOPPED;
 
 	/* Block timer interrupts */
-	sighold(SIGVTALRM);
+	mpx_hold();
 
 	/* Get the master event list for this thread. */
 	head = get_my_threads_master_event_list();
@@ -791,7 +923,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long long * values)
 	  }
 
 	/* Restore the timer (for other event sets that may be running) */
-	sigrelse(SIGVTALRM);
+	mpx_release();
 
 	return PAPI_OK;
 }
@@ -807,14 +939,14 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 			|| (*mpx_events)->status == MPX_RUNNING )
 		return PAPI_EINVAL;
 
-	sighold(SIGVTALRM);
+	mpx_hold();
 
 	/* Remove master events from this event set and from
 	 * the master list, if necessary.
 	 */
 	mpx_delete_events(tmp);
 
-	sigrelse(SIGVTALRM);
+	mpx_release();
 
 	/* Free all the memory */
 
@@ -827,7 +959,6 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
 void MPX_shutdown(void)
 {
-	int retval;
 	Threadlist * t, * nextthr;
 
 	mpx_shutdown_itimer();
@@ -842,8 +973,7 @@ void MPX_shutdown(void)
 
 	PAPI_unlock();
 
-	retval = sigaction(SIGVTALRM, &oaction, NULL);
-	assert(retval == 0);
+	mpx_restore_signal();
 }
 
 int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
@@ -905,7 +1035,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 					mpx_events->mev[i]->pi.event_type;
 
 
-			sighold(SIGVTALRM);
+			mpx_hold();
 
 			/* Remove the events from the master list and the current set*/
 			mpx_delete_events(mpx_events);
@@ -916,7 +1046,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 			mpx_insert_events(mpx_events, event_list, i,
 					domain, granularity);
 
-			sigrelse(SIGVTALRM);
+			mpx_release();
 
 			free(event_list);
 
@@ -931,39 +1061,7 @@ int mpx_init(int interval)
 	int retval;
 #endif
 
-	/* Fill in the interval timer values now to save a
-	 * little time later.
-	 */
-#ifdef REGENERATE
-	/* Signal handler restarts the timer every time it runs */
-	itime.it_interval.tv_sec = 0;
-	itime.it_interval.tv_usec = 0;
-	itime.it_value.tv_sec = 0;
-#ifdef OUTSIDE_PAPI
-	itime.it_value.tv_usec = MPX_DEFAULT_INTERVAL;
-#else
-	itime.it_value.tv_usec = interval;
-#endif
-#else
-	/* Timer resets itself automatically */
-	itime.it_interval.tv_sec = 0;
-#ifdef OUTSIDE_PAPI
-	itime.it_interval.tv_usec = MPX_DEFAULT_INTERVAL;
-#else
-	itime.it_interval.tv_usec = interval;
-#endif
-	itime.it_value.tv_sec = 0;
-#ifdef OUTSIDE_PAPI
-	itime.it_value.tv_usec = MPX_DEFAULT_INTERVAL;
-#else
-	itime.it_value.tv_usec = interval;
-#endif
-#endif
-
-	itimestop.it_interval.tv_sec = 0;
-	itimestop.it_interval.tv_usec = 0;
-	itimestop.it_value.tv_sec = 0;
-	itimestop.it_value.tv_usec = 0;
+	mpx_init_timers(interval);
 
 #ifdef OUTSIDE_PAPI
 	/* Only want to initialize PAPI if it's not done already by
