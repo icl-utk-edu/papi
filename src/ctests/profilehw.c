@@ -73,6 +73,9 @@ int main(int argc, char **argv)
 	  mask = MASK_TOT_INS | MASK_TOT_CYC;
   }
 #endif
+#if !( defined(linux) && defined(__ia64__) )
+	  test_fail(__FILE__, __LINE__, "PAPI_profile_hw not support", PAPI_ESYS);
+#endif
 
   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
 	  test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
