@@ -14,7 +14,8 @@
 #include <sys/systeminfo.h>
 #include SUBSTRATE
 
-
+/* Are these values computed in bytes?
+   Do they need to be divided by 32 to properly represent entries? */
 #define TLB_R4  96*32
 #define TLB_R5  96*32
 #define TLB_R8  384*32
@@ -28,55 +29,60 @@ int get_memory_info(PAPI_hw_info_t * mem_info)
    long count;
    int chiptype;
    char ptype[80];
-
+   PAPI_mh_level_t *L = mem_info->mem_hierarchy.level;
+   
    count = 80;
    while ((curr = getinvent()) != NULL) {
       if ((curr->inv_class == INV_MEMORY) && (curr->inv_type == INV_DCACHE)) {
-         mem_info->L1_dcache_size = curr->inv_state / 1024;
+         L[0].cache[1].type = PAPI_MH_TYPE_DATA;
+         L[0].cache[1].size = curr->inv_state;
       }
       if ((curr->inv_class == INV_MEMORY) && (curr->inv_type == INV_ICACHE)) {
-         mem_info->L1_icache_size = curr->inv_state / 1024;
+         L[0].cache[0].type = PAPI_MH_TYPE_INST;
+         L[0].cache[0].size = curr->inv_state;
       }
       if ((curr->inv_class == INV_MEMORY) && (curr->inv_type == INV_SIDCACHE))
-         mem_info->L2_cache_size = curr->inv_state / 1024;
+         L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+         L[1].cache[0].size = curr->inv_state;
    }
-   mem_info->L1_size = mem_info->L1_dcache_size + mem_info->L1_icache_size;
 
-   mem_info->L1_dcache_linesize = 32;
-   mem_info->L1_dcache_lines = mem_info->L1_dcache_size / mem_info->L1_dcache_linesize;
-   mem_info->L1_dcache_assoc = 2;
-   mem_info->L1_icache_linesize = 64;
-   mem_info->L1_icache_lines = mem_info->L1_icache_size / mem_info->L1_icache_linesize;
-   mem_info->L1_icache_assoc = 2;
+   L[0].cache[1].line_size = 32;
+   L[0].cache[1].lines = L[0].cache[1].size / L[0].cache[1].line_size;
+   L[0].cache[1].associativity = 2;
+   L[0].cache[0].line_size = 64;
+   L[0].cache[0].lines = L[0].cache[0].size / L[0].cache[0].line_size;
+   L[0].cache[0].associativity = 2;
 
-   mem_info->L2_cache_assoc = 2;
-   mem_info->L2_cache_linesize = 128;
-   mem_info->L2_cache_lines = mem_info->L2_cache_size / mem_info->L2_cache_linesize;
+   L[1].cache[0].assoc = 2;
+   L[1].cache[0].linesize = 128;
+   L[1].cache[0].lines = L[1].cache[0].size / L[1].cache[0].line_size;
 
    sysinfo(_MIPS_SI_PROCESSORS, ptype, count);
    sscanf(ptype + 1, "%d", &chiptype);
    switch (chiptype) {
    case 4000:
-      mem_info->L1_tlb_size = TLB_R4 / 1024;
+      L[0].tlb[0].num_entries = TLB_R4;
       break;
    case 5000:
-      mem_info->L1_tlb_size = TLB_R5 / 1024;
+      L[0].tlb[0].num_entries = TLB_R5;
       break;
    case 8000:
-      mem_info->L1_tlb_size = TLB_R8 / 1024;
+      L[0].tlb[0].num_entries = TLB_R8;
       break;
    case 10000:
-      mem_info->L1_tlb_size = TLB_R10 / 1024;
+      L[0].tlb[0].num_entries = TLB_R10;
       break;
    case 12000:
-      mem_info->L1_tlb_size = TLB_R12 / 1024;
+      L[0].tlb[0].num_entries = TLB_R12;
       break;
    default:
       break;
 /*
-			mem_info->total_tlb_size = TLB_R4/1024;
+			mem_info->total_tlb_size = TLB_R4;
 */
    }
+   if(L[0].tlb[0].num_entries != 0)
+      L[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
    return PAPI_OK;
 }
 

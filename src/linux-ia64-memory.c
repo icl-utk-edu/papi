@@ -19,18 +19,22 @@ inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *f
 void fline ( FILE *fp, char *buf );
 int get_number(char *buf);
 
-#define C_INSTRUCTION 1
-#define C_DATA        2
-#define C_COMBINED    3
+/* 
+   Note that by convention, DATA information is stored in array index 1,
+   while INST and UNIFIED information is stored in array index 0.
+   Also levels 1, 2 and 3 are stored in array index 0, 1, 2.
+   Thus (clevel - 1) produces the right level index.
+*/
 
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
 {
    unsigned int rev,model,family,archrev;
    int retval = 0;
    FILE *f;
-   int clevel=0, ctype=0;
+   int clevel = 0, cindex = -1;
    char buf[1024];
    int num;
+   PAPI_mh_level_t *L = mem_info->mem_hierarchy.level;
 
    f = fopen("/proc/pal/cpu0/cache_info","r");
 
@@ -38,196 +42,80 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
       error_return(PAPI_ESYS, "fopen(/proc/pal/cpu0/cache_info returned < 0");
 
    while (!feof(f)) {
-        fline(f, buf);
-        if ( buf[0] == '\0' ) break;
-        if (  !strncmp(buf, "Data Cache", 10) ) {
-  	   ctype = C_DATA;
-	   clevel = get_number( buf );
-        }
-        else if ( !strncmp(buf, "Instruction Cache", 17) ){
-   	   ctype = C_INSTRUCTION;
-	   clevel = get_number( buf );
-        }
-	else if ( !strncmp(buf, "Data/Instruction Cache", 22)){
-           ctype = C_COMBINED;
-	   clevel = get_number( buf );
-        }
-        else {
-           if ( (clevel == 0 || clevel > 3) && ctype != 0)
-	     error_return(PAPI_EBUG, "Cache type could not be recognized, send /proc/pal/cpu0/cache_info");
-           if ( !strncmp(buf, "Size", 4) ){
-		num = get_number( buf );
-		switch(clevel){
-		  case 1:
-		    if ( ctype == C_INSTRUCTION ){
-			num = num/1024;
-       			mem_info->L1_size += num;
-       			mem_info->L1_icache_size = num;
-		    }
-		    else if ( ctype == C_DATA ){
-			num = num/1024;
-       			mem_info->L1_size += num;
-       			mem_info->L1_dcache_size = num;
-		    }
-		    else if ( ctype == C_COMBINED ){
-			num = num/1024;
-       			mem_info->L1_size = num;
-       			mem_info->L1_dcache_size = 0;
-       			mem_info->L1_icache_size = 0;
-		    }
-		    break;
-		  case 2:
-			mem_info->L2_cache_size = num/1024;
-		    break;
-		  case 3:
-			mem_info->L3_cache_size = num/1024;
-		    break;
-		  default:
-		    break;
-		}
-           }
-  	   else if ( !strncmp(buf, "Associativity", 13) ) {
-	   	num = get_number( buf );
-		switch(clevel){
-		  case 1:
-		    if ( ctype == C_INSTRUCTION ){
-       			mem_info->L1_icache_assoc = num;
-		    }
-		    else if ( ctype == C_DATA ){
-       			mem_info->L1_dcache_assoc = num;
-		    }
-		    else if ( ctype == C_COMBINED ){
-       			mem_info->L1_icache_assoc = num;
-       			mem_info->L1_dcache_assoc = num;
-		    }
-		    break;
-		  case 2:
-			mem_info->L2_cache_assoc = num;
-		    break;
-		  case 3:
-			mem_info->L3_cache_assoc = num;
-		    break;
-		  default:
-		    break;
-		}
-	   }
-	   else if ( !strncmp(buf, "Line size", 9) ) {
-	   	num = get_number( buf );
-		switch(clevel){
-		  case 1:
-		    if ( ctype == C_INSTRUCTION ){
-		        mem_info->L1_icache_linesize = num;
-			mem_info->L1_icache_lines = (mem_info->L1_icache_size*1024)/num;
-		    }
-		    else if ( ctype == C_DATA ){
-		        mem_info->L1_dcache_linesize = num;
-			mem_info->L1_dcache_lines = (mem_info->L1_icache_size*1024)/num;
-		    }
-		    else if ( ctype == C_COMBINED ){
-		        mem_info->L1_icache_linesize = num;
-		        mem_info->L1_dcache_linesize = num;
-			mem_info->L1_icache_lines = (mem_info->L1_icache_size*1024)/num;
-			mem_info->L1_dcache_lines = (mem_info->L1_icache_size*1024)/num;
-		    }
-		    break;
-		  case 2:
-			mem_info->L2_cache_linesize = num;
-			mem_info->L2_cache_lines = (mem_info->L2_cache_size*1024)/num;
-		    break;
-		  case 3:
-			mem_info->L3_cache_linesize = num;
-			mem_info->L3_cache_lines = (mem_info->L2_cache_size*1024)/num;
-		    break;
-		  default:
-		    break;
-		}
-	   }
-	   else
-	     continue;
-        }
+      fline(f, buf);
+      if ( buf[0] == '\0' ) break;
+      if (  !strncmp(buf, "Data Cache", 10) ) {
+         cindex = 1;
+         clevel = get_number( buf );
+         L[clevel - 1].cache[cindex].type = PAPI_MH_TYPE_DATA;
+      }
+      else if ( !strncmp(buf, "Instruction Cache", 17) ) {
+         cindex = 0;
+         clevel = get_number( buf );
+         L[clevel - 1].cache[cindex].type = PAPI_MH_TYPE_INST;
+      }
+      else if ( !strncmp(buf, "Data/Instruction Cache", 22)) {
+         cindex = 0;
+         clevel = get_number( buf );
+         L[clevel - 1].cache[cindex].type = PAPI_MH_TYPE_UNIFIED;
+      }
+      else {
+         if ( (clevel == 0 || clevel > 3) && cindex >= 0)
+            error_return(PAPI_EBUG, "Cache type could not be recognized, send /proc/pal/cpu0/cache_info");
+
+         if ( !strncmp(buf, "Size", 4) ) {
+            num = get_number( buf );
+            L[clevel - 1].cache[cindex].size = num;
+         }
+         else if ( !strncmp(buf, "Associativity", 13) ) {
+            num = get_number( buf );
+            L[clevel - 1].cache[cindex].associativity = num;
+         }
+         else if ( !strncmp(buf, "Line size", 9) ) {
+            num = get_number( buf );
+            L[clevel - 1].cache[cindex].line_size = num;
+            L[clevel - 1].cache[cindex].num_lines = L[clevel - 1].cache[cindex].size/num;
+         }
+      }
    } 
 
    fclose(f);
 
    f = fopen("/proc/pal/cpu0/vm_info","r");
    /* No errors on fopen as I am not sure this is always on the systems */
-   if ( f != NULL ){
-     ctype = 0;
-     clevel = 0;
-     while (!feof(f)) {
-	  fline(f, buf);
-	  if ( buf[0] == '\0' ) break;
-	  if (  !strncmp(buf, "Data Translation", 16) ) {
-  	     ctype = C_DATA;
-	     clevel = get_number( buf );
-	  }
-	  else if ( !strncmp(buf, "Instruction Translation", 23) ){
-   	     ctype = C_INSTRUCTION;
-	     clevel = get_number( buf );
-	  }
-	  else {
-	     if ( (clevel == 0 || clevel > 2) && ctype != 0)
-	       error_return(PAPI_EBUG, "TLB type could not be recognized, send /proc/pal/cpu0/vm_info");
-	     if ( !strncmp(buf, "Number of entries", 17) ){
-		  num = get_number( buf );
-		  switch(clevel){
-		    case 1:
-		      if ( ctype == C_INSTRUCTION ){
-       			  mem_info->L1_tlb_size += num;
-       			  mem_info->L1_itlb_size = num;
-		      }
-		      else if ( ctype == C_DATA ){
-       			  mem_info->L1_tlb_size += num;
-       			  mem_info->L1_dtlb_size = num;
-		      }
-		      break;
-		    case 2:
-		      if ( ctype == C_INSTRUCTION ){
-       			  mem_info->L2_tlb_size += num;
-       			  mem_info->L2_itlb_size = num;
-		      }
-		      else if ( ctype == C_DATA ){
-       			  mem_info->L2_tlb_size += num;
-       			  mem_info->L2_dtlb_size = num;
-		      }
-		      break;
-		    default:
-		      break;
-		  }
-	     }
-  	     else if ( !strncmp(buf, "Associativity", 13) ) {
-	   	  num = get_number( buf );
-		  switch(clevel){
-		    case 1:
-		      if ( ctype == C_INSTRUCTION ){
-       			  mem_info->L1_itlb_assoc = num;
-		      }
-		      else if ( ctype == C_DATA ){
-       			  mem_info->L1_dtlb_assoc = num;
-		      }
-		      break;
-		    case 2:
-		      if ( ctype == C_INSTRUCTION ){
-       			  mem_info->L2_itlb_assoc = num;
-		      }
-		      else if ( ctype == C_DATA ){
-       			  mem_info->L2_dtlb_assoc = num;
-		      }
-		      break;
-		    default:
-		      break;
-		  }
-	     }
-	     else
-	       continue;
-	  }
-     } 
+   if ( f != NULL ) {
+      cindex = -1;
+      clevel = 0;
+      while (!feof(f)) {
+         fline(f, buf);
+         if ( buf[0] == '\0' ) break;
+         if (  !strncmp(buf, "Data Translation", 16) ) {
+            cindex = 1;
+	         clevel = get_number( buf );
+            L[clevel - 1].tlb[cindex].type = PAPI_MH_TYPE_DATA;
+         }
+         else if ( !strncmp(buf, "Instruction Translation", 23) ){
+            cindex = 0;
+            clevel = get_number( buf );
+            L[clevel - 1].tlb[cindex].type = PAPI_MH_TYPE_INST;
+         }
+         else {
+	         if ( (clevel == 0 || clevel > 2) && cindex >= 0)
+	            error_return(PAPI_EBUG, "TLB type could not be recognized, send /proc/pal/cpu0/vm_info");
 
-     fclose(f);
+	         if ( !strncmp(buf, "Number of entries", 17) ){
+	            num = get_number( buf );
+               L[clevel - 1].tlb[cindex].num_entries = num;
+	         }
+  	         else if ( !strncmp(buf, "Associativity", 13) ) {
+	            num = get_number( buf );
+               L[clevel - 1].tlb[cindex].associativity = num;
+	         }
+         }
+      } 
+      fclose(f);
    }
-   
    get_cpu_info(&rev,&model,&family,&archrev);
-
    return retval;
 }
 

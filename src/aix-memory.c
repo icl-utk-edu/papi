@@ -17,31 +17,43 @@
 
 int get_memory_info(PAPI_hw_info_t * mem_info)
 {
+   PAPI_mh_level_t *L = mem_info->mem_hierarchy.level;
+   
+   /* Not quite sure what bit 30 indicates.
+      I'm assuming it flags a unified tlb */
    if (_system_configuration.tlb_attrib & (1 << 30)) {
-      mem_info->L1_tlb_size = _system_configuration.itlb_size;
+      L[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+      L[0].tlb[0].num_entries = _system_configuration.itlb_size;
+      L[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
    } else {
-      mem_info->L1_itlb_size = _system_configuration.itlb_size;
-      mem_info->L1_itlb_assoc = _system_configuration.itlb_asc;
-      mem_info->L1_dtlb_size = _system_configuration.dtlb_size;
-      mem_info->L1_dtlb_assoc = _system_configuration.dtlb_asc;
-      mem_info->L1_tlb_size = _system_configuration.itlb_size +
-          _system_configuration.dtlb_size;
+      L[0].tlb[0].type = PAPI_MH_TYPE_INST;
+      L[0].tlb[0].num_entries = _system_configuration.itlb_size;
+      L[0].tlb[0].associativity = _system_configuration.itlb_asc;
+      L[0].tlb[1].type = PAPI_MH_TYPE_DATA;
+      L[0].tlb[1].num_entries = _system_configuration.dtlb_size;
+      L[0].tlb[1].associativity = _system_configuration.dtlb_asc;
    }
+   /* Not quite sure what bit 30 indicates.
+      I'm assuming it flags a unified cache */
    if (_system_configuration.cache_attrib & (1 << 30)) {
-      mem_info->L1_size = _system_configuration.icache_size / 1024;
-      mem_info->L1_icache_assoc = _system_configuration.icache_asc;
-      mem_info->L1_icache_linesize = _system_configuration.icache_line;
+      L[0].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+      L[0].cache[0].size = _system_configuration.icache_size;
+      L[0].cache[0].associativity = _system_configuration.icache_asc;
+      L[0].cache[0].line_size = _system_configuration.icache_line;
    } else {
-      mem_info->L1_icache_size = _system_configuration.icache_size / 1024;
-      mem_info->L1_icache_assoc = _system_configuration.icache_asc;
-      mem_info->L1_icache_linesize = _system_configuration.icache_line;
-      mem_info->L1_dcache_size = _system_configuration.dcache_size / 1024;
-      mem_info->L1_dcache_assoc = _system_configuration.dcache_asc;
-      mem_info->L1_dcache_linesize = _system_configuration.dcache_line;
-      mem_info->L1_size = mem_info->L1_icache_size + mem_info->L1_dcache_size;
+      L[0].cache[0].type = PAPI_MH_TYPE_INST;
+      L[0].cache[0].size = _system_configuration.icache_size;
+      L[0].cache[0].associativity = _system_configuration.icache_asc;
+      L[0].cache[0].line_size = _system_configuration.icache_line;
+      L[0].cache[1].type = PAPI_MH_TYPE_DATA;
+      L[0].cache[1].size = _system_configuration.dcache_size;
+      L[0].cache[1].associativity = _system_configuration.dcache_asc;
+      L[0].cache[1].line_size = _system_configuration.dcache_line;
    }
-   mem_info->L2_cache_size = _system_configuration.L2_cache_size / 1024;
-   mem_info->L2_cache_assoc = _system_configuration.L2_cache_asc;
+   L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+   L[1].cache[0].size = _system_configuration.L2_cache_size;
+   L[1].cache[0].associativity = _system_configuration.L2_cache_asc;
+   /* is there a line size for Level 2 cache? */
    return PAPI_OK;
 }
 
