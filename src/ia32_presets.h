@@ -25,10 +25,10 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {CNTR2|CNTR1,0,0,{{0x24,0x24,0x0,0x0}},""}, 	// L2 Total Cache misses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Total Cache misses
   {0,0,0,{{0,0,0x0,0x0}},""},			// Snoops
-  {CNTR2|CNTR1,0,0,{{0x222e,0x222e,0x0,0x0}},""},	// Req. access to shared cache line
-  {CNTR2|CNTR1,0,0,{{0x212e,0x212e,0x0,0x0}},""},	// Req. access to clean cache line
-  {CNTR2|CNTR1,0,0,{{0x2069,0x2069,0x0,0x0}},""},	// Req. Cache Line Invalidation
-  {CNTR2|CNTR1,0,0,{{0x2e2e,0x2e2e,0x0,0x0}},""},	// Req. Cache Line Intervention
+  {CNTR2|CNTR1,0,0,{{0x022e,0x022e,0x0,0x0}},""},	// Req. access to shared cache line
+  {CNTR2|CNTR1,0,0,{{0x66,0x66,0x0,0x0}},""},	// Req. access to clean cache line
+  {CNTR2|CNTR1,0,0,{{0x0069,0x0069,0x0,0x0}},""},	// Req. Cache Line Invalidation
+  {CNTR2|CNTR1,0,0,{{0x4007b,0x4007b,0x0,0x0}},""},	// Req. Cache Line Intervention (Overcount ~3x)
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3 LDM
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3 STM
   {0,0,0,{{0,0,0x0,0x0}},""},			// cycles branch idle
