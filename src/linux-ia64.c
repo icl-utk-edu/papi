@@ -600,6 +600,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   pfmw_arch_reg_t flop_hack;
   pfmw_reg_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
   memset(writeem, 0x0, sizeof writeem);
+  memset(readem, 0x0, sizeof readem);
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
@@ -686,13 +687,16 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 	 local->profile.overflowcount=0;
   }
 
-  for(i=0; i < PMU_MAX_COUNTERS; i++)
+  /* Store the results in register order (they are read out LSb first from
+     the selector) */
+  for(i=0; i < PMU_MAX_COUNTERS && PFMW_REG_REGNUM(readem[i]); i++)
     {
+      int papireg;
       DBG((stderr,"update_global_hwcounters() %d: G%ld = G%lld + C%ld\n",i+4,
 	   global->hw_start[i]+PFMW_REG_REGVAL(readem[i]),
 	   global->hw_start[i],PFMW_REG_REGVAL(readem[i])));
-      global->hw_start[i] = global->hw_start[i] + PFMW_REG_REGVAL(readem[i]);
-
+      papireg = PFMW_REG_REGNUM(readem[i]) - 4;
+      global->hw_start[papireg] += PFMW_REG_REGVAL(readem[i]);
     }
 
 #ifdef PFM06A
@@ -887,6 +891,39 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
+int _papi_recalc_selectors(hwd_control_state_t *this_state, EventInfo_t *eventinfo) {
+    EventSetInfo *ESI = get_my_EventSetInfo(eventinfo);
+    int i, j, k;
+    unsigned int EventCode, preset_index;
+    pfmlib_param_t *old_evt, *cur_evt = &this_state->evt;
+    int selector;
+
+    if (ESI == NULL)
+        return(PAPI_ESBSTR);
+    
+    this_state->selector = 0;
+    for (i = 0; i < ESI->NumberOfEvents; i++) {
+        EventCode = ESI->EventInfoArray[i].code;
+        selector = 0;
+        if (EventCode & PRESET_MASK) {
+            preset_index = EventCode & PRESET_AND_MASK; 
+            old_evt = &preset_map[preset_index].evt;
+            for (j = 0; j < PFMW_PEVT_EVTCOUNT(old_evt); j++) {
+                for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) {
+                    if (PFMW_PEVT_EVENT(old_evt,j) == PFMW_PEVT_EVENT(cur_evt,k))
+                        selector |= (1 << PFMW_REG_REGNUM(this_state->pc[k]));
+                }
+            }
+            ESI->EventInfoArray[i].selector = selector;
+            this_state->selector |= selector;
+        }
+        else {
+            /* SOL */    
+        }
+    }
+    return 0;
+}
+
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
   int nselector = 0;
@@ -997,6 +1034,10 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   if (nselector == 0)
     abort();
 
+  out->code = EventCode;
+  /* Recalculate the selectors in this EventSet (the order may have changed). */
+  _papi_recalc_selectors(this_state, out);
+
   /* Only the new fields */
 
   selector = this_state->selector ^ nselector;
@@ -1005,7 +1046,6 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  out->code = EventCode;
   out->selector = selector;
 
   /* Update the new counter select field */

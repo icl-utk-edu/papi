@@ -9,6 +9,8 @@
 *          min@cs.utk.edu
 * Mods:    Kevin London
 *	   london@cs.utk.edu
+* Mods:    Per Ekman
+*          pek@pdc.kth.se
 * Mods:    <your name here>
 *          <your email address>
 */  
@@ -945,6 +947,24 @@ static EventSetInfo *lookup_EventSet(const DynamicArray *map, int eventset)
     return(NULL);
   return(map->dataSlotArray[eventset]);
 }
+
+/* Return the EventSetInfo to which this EventInfo belongs */
+EventSetInfo *get_my_EventSetInfo(EventInfo_t *me) {
+    EventSetInfo *ESI;
+    int ei, i;
+    
+    for (ei = 0; ei < PAPI_EVENTSET_MAP->totalSlots; ei++) {
+       if (( ESI = lookup_EventSet(PAPI_EVENTSET_MAP, ei)) != NULL) {
+           for (i = 0; i < _papi_system_info.num_cntrs; i++) {
+               if (&ESI->EventInfoArray[i] == me) 
+                   return ESI;
+           }
+       }
+    }
+
+    return NULL;
+}
+
 
 /* This function only removes empty EventSets */
 

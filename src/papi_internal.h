@@ -270,6 +270,7 @@ typedef union _papi_int_option_t {
 /* The following functions are defined by the papi.c file. */
 
 extern unsigned long int (*thread_id_fn)(void);
+extern EventSetInfo *get_my_EventSetInfo(EventInfo_t *);
 
 /* The following functions are defined by the multiplex.c file. */
 
