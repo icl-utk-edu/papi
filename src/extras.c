@@ -200,6 +200,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
   EventSetInfo *master_event_set;
   EventSetInfo *ESI;
 
+  DBG((stderr,"BEGIN\n"));
   master_event_set = _papi_hwi_lookup_in_master_list();
   if (master_event_set == NULL)
     return;
@@ -236,6 +237,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 			      ESI->sw_stop, &ESI->overflow.threshold, context);
       ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
+  DBG((stderr,"FINISHED\n"));
 }
 
 #ifdef _WIN32
@@ -282,6 +284,7 @@ static int start_timer(int milliseconds)
   struct sigaction action, oaction;
   struct itimerval value;
 
+  DBG((stderr,"Timer start...\n"));
   /* If the user has installed a signal, don't do anything
 
      The following code is commented out because many C libraries
@@ -303,7 +306,8 @@ static int start_timer(int milliseconds)
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))_papi_hwd_dispatch_timer;
   action.sa_flags |= SA_SIGINFO;
 #elif defined(linux) && !defined(__ia64)
-  action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
+  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))_papi_hwd_dispatch_timer;
+  action.sa_flags |= SA_SIGINFO;
 #elif defined(__ALPHA) && defined(__osf__)
   action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
@@ -328,6 +332,7 @@ static int start_timer(int milliseconds)
   _papi_hwi_using_signal++;
   _papi_hwd_unlock();
 
+  DBG((stderr,"Timer started.\n"));
   return(PAPI_OK);
 }
 
@@ -336,6 +341,7 @@ static int stop_timer(void)
   int retval = PAPI_OK;
   struct itimerval value;
 
+  DBG((stderr,"Stopping timer...\n"));
   value.it_interval.tv_sec = 0;
   value.it_interval.tv_usec = 0;
   value.it_value.tv_sec = 0;
@@ -353,6 +359,7 @@ static int stop_timer(void)
     }
   _papi_hwd_unlock();
   
+  DBG((stderr,"Timer stopped\n"));
   return(retval);
 }
 

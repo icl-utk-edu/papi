@@ -1,3 +1,5 @@
+#include <signal.h>
+#include <asm/ucontext.h>    /* sys/ucontext.h  apparently broken */
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

@@ -1117,6 +1117,7 @@ int PAPI_start(int EventSet)
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
 
+  DBG((stderr,"PAPI_start\n"));
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
@@ -1192,6 +1193,7 @@ int PAPI_stop(int EventSet, long_long *values)
   EventSetInfo *thread_master_eventset;
   int retval;
 
+  DBG((stderr,"PAPI_stop\n"));
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if (ESI==NULL)
     papi_return(PAPI_ENOEVST);

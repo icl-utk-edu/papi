@@ -389,7 +389,7 @@ inline static void set_hwcntr_codes(int selector, struct perfctr_control *from, 
 
 inline static void init_config(hwd_control_state_t *ptr)
 {
-  int def_mode;
+  int def_mode, i;
 
   switch (_papi_system_info.default_domain)
     {
@@ -412,8 +412,10 @@ inline static void init_config(hwd_control_state_t *ptr)
   ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode;
   ptr->counter_cmd.cpu_control.tsc_on=1;
   ptr->counter_cmd.cpu_control.nractrs=2;
-  ptr->counter_cmd.cpu_control.pmc_map[0]=0;
-  ptr->counter_cmd.cpu_control.pmc_map[1]=1;
+  ptr->counter_cmd.cpu_control.nrictrs=0;
+  /* Identity counter map for starters */
+  for(i=0;i<_papi_system_info.num_cntrs;i++) 
+    ptr->counter_cmd.cpu_control.pmc_map[i]=i;
 #else
   ptr->counter_cmd.evntsel[0] |= def_mode | PERF_ENABLE;
   ptr->counter_cmd.evntsel[1] |= def_mode;
@@ -530,21 +532,24 @@ static int get_system_info(struct perfctr_dev *dev)
 
 #ifdef DEBUG
 #ifdef PERFCTR20
-static void dump_cmd(struct vperfctr_control *t)
+static void dump_cmd(char *str, struct vperfctr_control *t)
 #else
-static void dump_cmd(struct perfctr_control *t)
+static void dump_cmd(char *str, struct perfctr_control *t)
 #endif
 {
-  int i;
+  int i,k;
 
 #ifdef PERFCTR20
-  DBG((stderr,"tsc_on=0x%x  nractrs=0x%x, nrictrs=0x%x\n",
-       t->cpu_control.tsc_on,t->cpu_control.nractrs,t->cpu_control.nrictrs));
+  DBG((stderr,"%s: tsc_on=0x%x  nractrs=0x%x, nrictrs=0x%x\n",str,t->cpu_control.tsc_on,t->cpu_control.nractrs,t->cpu_control.nrictrs));
   for (i=0;i<_papi_system_info.num_cntrs;i++)
-    DBG((stderr,"Event %d: 0x%x\n",i,t->cpu_control.evntsel[i]));
+    {
+      k=t->cpu_control.pmc_map[i];
+      DBG((stderr,"Item %d [map %d]: Evntsel=0x%08x   (ireset=%d)\n",i,k,t->cpu_control.evntsel[i],t->cpu_control.ireset[i]));
+    }
 #else
+  DBG((stderr,"%s:",str));
   for (i=0;i<_papi_system_info.num_cntrs;i++)
-    DBG((stderr,"Event %d: 0x%x\n",i,t->evntsel[i]));
+    DBG((stderr,"Event %d: 0x%08x\n",i,t->evntsel[i]));
 #endif
 }
 #endif
@@ -603,33 +608,81 @@ inline static int update_global_hwcounters(EventSetInfo *global)
   hwd_control_state_t *machdep = global->machdep;
 #ifdef PERFCTR20
   struct perfctr_sum_ctrs sum;
+  int *pmc_map=machdep->counter_cmd.cpu_control.pmc_map;
+  struct vperfctr_control control;
 #else
   struct vperfctr_state state;
 #endif
-  int i;
+  int cntr,i,nrictrs,nractrs;
 
 #ifdef PERFCTR20
-  vperfctr_read_ctrs(machdep->self, &sum);
+  /* read_state seems necessary to get the sum right here */
+  vperfctr_read_state(machdep->self, &sum, &control);
+  DBG((stderr,"sum tsc=%lld   [0]%lld   [1]%lld\n",
+       sum.tsc,sum.pmc[0],sum.pmc[1]));
+  nractrs = machdep->counter_cmd.cpu_control.nractrs;
+  nrictrs = machdep->counter_cmd.cpu_control.nrictrs;
+  /*  We don't map the perfcntr order back to the actual
+      hardware counter map order here. This mapping is left 
+      for _papi_hwd_read to do
+  sum.tsc = unmapped_sum.tsc;
+  for(i=0;i<nractrs+nrictrs;i++)
+    sum.pmc[i]=unmapped_sum.pmc[pmc_map[i]];
+  DBG((stderr,"mapped_sum   tsc=%lld   [0]%lld   [1]%lld\n",
+       sum.tsc,sum.pmc[0],sum.pmc[1]));
+  */
 #else
   if (vperfctr_read_state(machdep->self, &state) < 0) 
     return(PAPI_ESYS);
+  nractrs = _papi_system_info.num_cntrs;
+  nrictrs = 0;
 #endif
-  
-  for (i=0;i<_papi_system_info.num_cntrs;i++)
-    {
+#ifdef DEBUG
+  DBG((stderr,"nractrs=%d nrictrs=%d\n",nractrs,nrictrs));
+  dump_cmd("global->machdep",&machdep->counter_cmd);
+#endif
+
+  for (i=0;i<nractrs;i++)
+    {  
+      unsigned long long ull_count;
 #ifdef PERFCTR20
-      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",i,
-	   global->hw_start[i]+sum.pmc[i],
-	   global->hw_start[i],sum.pmc[i]));
-      global->hw_start[i] = global->hw_start[i] + sum.pmc[i];
+      /*      ull_count=sum.pmc[pmc_map[i]]; */
+      ull_count=sum.pmc[i];
 #else
-      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",i,
-	   global->hw_start[i]+state.sum.ctr[i+1],
-	   global->hw_start[i],state.sum.ctr[i+1]));
-      global->hw_start[i] = global->hw_start[i] + state.sum.ctr[i+1];
+      ull_count=state.sum.ctr[i+1];
 #endif
+      DBG((stderr,"[%d]: G%lld = G%lld + C%lld\n",i,
+	   global->hw_start[i]+ull_count,
+	   global->hw_start[i],ull_count));
+      global->hw_start[i] = global->hw_start[i] + ull_count;
     }
 
+  for (i=0;i<nrictrs;i++)
+    {
+      unsigned long long ull_count;
+      int now;
+
+      cntr = nractrs+i;
+#ifdef PERFCTR20
+#define rdpmcl(ctr,low) \
+        __asm__ __volatile__("rdpmc" : "=a"(low) : "c"(ctr) : "edx")
+      rdpmcl(pmc_map[cntr],now);
+      ull_count = now - machdep->counter_cmd.cpu_control.ireset[cntr];
+      DBG((stderr,"[intr(%d)]: C%lld = rdpmc(%d) - ireset(%d)\n",cntr,
+	   ull_count,now,machdep->counter_cmd.cpu_control.ireset[cntr]));
+#else
+      /* This shouldn't happen */
+      abort();
+#endif
+      DBG((stderr,"[intr(%d)]: G%lld = G%lld + C%lld\n",cntr,
+	   global->hw_start[cntr]+ull_count,
+	   global->hw_start[cntr],ull_count));
+      global->hw_start[cntr] = global->hw_start[cntr] + ull_count;
+    }
+
+  /* This restarts the interrupting counters and is the reason why
+     vperfctr_iresume can not be used in _papi_hwd_dispatch_timer() 
+     Exactly why is it needed here? */
   if (vperfctr_control(machdep->self, &machdep->counter_cmd) < 0) 
     return(PAPI_ESYS);
 
@@ -642,9 +695,9 @@ inline static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *l
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
-      DBG((stderr,"correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n",i,
-	   global->hw_start[i]-local->hw_start[i],global->hw_start[i],local->hw_start[i]));
       correct[i] = global->hw_start[i] - local->hw_start[i];
+      DBG((stderr,"correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n",i,
+	   correct[i],global->hw_start[i],local->hw_start[i]));
     }
 
   return(0);
@@ -993,9 +1046,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
     {
       current_state->selector = this_state->selector;
 #ifdef PERFCTR20
-      memcpy(&current_state->counter_cmd.cpu_control.evntsel,
-	     &this_state->counter_cmd.cpu_control.evntsel,
-	     _papi_system_info.num_cntrs*sizeof(unsigned int));
+      memcpy(&current_state->counter_cmd, &this_state->counter_cmd,
+	     sizeof this_state->counter_cmd);
 #else
       memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(struct perfctr_control));
 #endif
@@ -1007,14 +1059,25 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	return(PAPI_ESYS);  */
       
       /* (Re)start the counters */
-      
+
 #ifdef DEBUG
-      dump_cmd(&current_state->counter_cmd);
+      dump_cmd("_papi_hwd_merge (this)",&this_state->counter_cmd);
+      dump_cmd("_papi_hwd_merge (current)",&current_state->counter_cmd);
 #endif
-      if (vperfctr_control(current_state->self, &current_state->counter_cmd) < 0) 
-	return(PAPI_ESYS);
-      
-      return(PAPI_OK);
+
+      /* Should anything of the below be added here ??? - NS */
+      /* zero->hw_start[i-1] = 
+	 !(this_state->counter_cmd.cpu_control.evntsel[i-1] & PERF_INT_ENABLE)
+	 ? 0 : this_state->counter_cmd.cpu_control.ireset[i-1]; */
+      /* ESI->hw_start[i-1] = zero->hw_start[i-1]; */
+      /* zero->multistart.SharedDepth[i-1] = 0;    */
+
+      if (vperfctr_control(current_state->self, &current_state->counter_cmd) < 0)
+	{
+	  DBG((stderr,"Setting counters failed: SYSERR %d: %s",errno,strerror(errno)));
+	  return(PAPI_ESYS);
+	}
+
     }
 
   /* If we ARE nested, 
@@ -1023,6 +1086,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
     {
       int tmp, hwcntrs_in_both, hwcntrs_in_all, hwcntr;
 
+      DBG((stderr,"Nested event set\n"));
       /* Stop the current context 
 
       retval = perf(PERF_STOP, 0, 0);
@@ -1075,8 +1139,10 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	    {
 	      current_state->selector |= hwcntr;
 	      counter_event_copy(&this_state->counter_cmd, &current_state->counter_cmd, i-1);
-	      ESI->hw_start[i-1] = 0;
-	      zero->hw_start[i-1] = 0;
+	      ESI->hw_start[i-1] = zero->hw_start[i-1] = 
+		!(this_state->counter_cmd.cpu_control.evntsel[i-1] & PERF_INT_ENABLE) ?
+		  0 : this_state->counter_cmd.cpu_control.ireset[i-1];
+	      zero->multistart.SharedDepth[i-1] = 0; 
 	    }
 	}
     }
@@ -1084,7 +1150,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   /* Set up the new merged control structure */
   
 #ifdef DEBUG
-  dump_cmd(&current_state->counter_cmd);
+  dump_cmd(__FUNCTION__,&current_state->counter_cmd);
 #endif
       
   /* Stop the current context 
@@ -1095,9 +1161,11 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   /* (Re)start the counters */
   
-  if (vperfctr_control(current_state->self, &current_state->counter_cmd) < 0)
-    return(PAPI_ESYS);
-
+  if (vperfctr_control(current_state->self, &current_state->counter_cmd) < 0) 
+    {
+      DBG((stderr,"Calling vperfctr_control: SYSERR %d: %s",errno,strerror(errno)));
+      return(PAPI_ESYS);
+    }
   return(PAPI_OK);
 } 
 
@@ -1221,15 +1289,29 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
 {
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
-  long long correct[PERF_MAX_COUNTERS];
+#ifdef PAPI_PERFCTR_INTR_SUPPORT
+  hwd_control_state_t *machdep = zero->machdep;
+  int *pmc_map = machdep->counter_cmd.cpu_control.pmc_map;
+  long long correct_pmc_order[PERF_MAX_COUNTERS];
+#endif
+  long long correct_hw_order[PERF_MAX_COUNTERS];
 
+  DBG((stderr,"Start\n"));
   retval = update_global_hwcounters(zero);
   if (retval)
     return(retval);
 
-  retval = correct_local_hwcounters(zero, ESI, correct);
+#ifdef PAPI_PERFCTR_INTR_SUPPORT
+  retval = correct_local_hwcounters(zero, ESI, correct_pmc_order);
   if (retval)
     return(retval);
+  for (i=0;i<_papi_system_info.num_cntrs;i++)
+    correct_hw_order[pmc_map[i]] = correct_pmc_order[i];
+#else
+  retval = correct_local_hwcounters(zero, ESI, correct_hw_order);
+  if (retval)
+    return(retval);
+#endif
 
   /* This routine distributes hardware counters to software counters in the
      order that they were added. Note that the higher level 
@@ -1250,18 +1332,21 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
 	{
 	  shift_cnt = ffs(selector) - 1;
 	  assert(shift_cnt >= 0);
-	  events[j] = correct[shift_cnt];
+	  events[j] = correct_hw_order[shift_cnt];
 	}
 
       /* If this is a derived event */
 
       else 
-	events[j] = handle_derived(&ESI->EventInfoArray[i], correct);
+	events[j] = handle_derived(&ESI->EventInfoArray[i], correct_hw_order);
 
       /* Early exit! */
 
       if (++j == ESI->NumberOfEvents)
-	return(PAPI_OK);
+	{
+	  DBG((stderr,"Done\n"));
+	  return(PAPI_OK);
+	}
     }
 
   /* Should never get here */
@@ -1315,18 +1400,224 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
-void _papi_hwd_dispatch_timer(int signal, struct sigcontext info)
+void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
 {
-  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info.eip));
-  _papi_hwi_dispatch_overflow_signal((void *)&info); 
+  struct ucontext *uc;
+  struct sigcontext *mc;
+  struct ucontext realc;
+
+  uc = (struct ucontext *) tmp;
+  realc = *uc;
+  mc = &uc->uc_mcontext;
+  DBG((stderr,"Start at 0x%lx\n",mc->eip));
+  _papi_hwi_dispatch_overflow_signal(mc); 
+
+  /* We are done, resume interrupting counters */
+#ifdef PAPI_PERFCTR_INTR_SUPPORT
+  if(_papi_system_info.supports_hw_overflow)
+    {
+      EventSetInfo *master;
+      hwd_control_state_t *machdep;
+      struct vperfctr* dev;
+
+      master = _papi_hwi_lookup_in_master_list();
+      if(master==NULL)
+	{
+	  fprintf(stderr,"%s():%d: master event lookup failure! abort()\n",
+		  __FUNCTION__,__LINE__);
+	  abort();
+	}
+      machdep =  master->machdep;
+      dev = machdep->self;
+      /* This is currently disabled since the restart of the counter */
+      /* is made in update_global_counters out of unknown reasons    */
+      /* if(vperfctr_isrun(machdep->self))                           */
+      /*   if(vperfctr_iresume(machdep->self)<0)                     */
+      /*     {                                                       */
+      /*       perror("vperfctr_iresume");                           */
+      /*       abort();                                              */
+      /*     }                                                       */
+    }
+#endif
+  DBG((stderr,"Finished at 0x%lx\n",mc->eip));
+}
+
+int swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
+{
+  unsigned int ui; int si;
+
+  /* In the case a user wants to interrupt on a counter in an evntsel
+     that is not among the last events, we need to move the perfctr 
+     virtual events around to make it last. This function swaps two
+     perfctr events */
+
+  ui=contr->cpu_control.pmc_map[cntr1];
+  contr->cpu_control.pmc_map[cntr1]=contr->cpu_control.pmc_map[cntr2];
+  contr->cpu_control.pmc_map[cntr2] = ui;
+
+  ui=contr->cpu_control.evntsel[cntr1];
+  contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
+  contr->cpu_control.evntsel[cntr2] = ui;
+
+  ui=contr->cpu_control.evntsel_aux[cntr1];
+  contr->cpu_control.evntsel_aux[cntr1]=contr->cpu_control.evntsel_aux[cntr2];
+  contr->cpu_control.evntsel_aux[cntr2] = ui;
+
+  si=contr->cpu_control.ireset[cntr1];
+  contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
+  contr->cpu_control.ireset[cntr2] = si;
 }
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
-  /* This function is not used and shouldn't be called. */
+#ifdef PAPI_PERFCTR_INTR_SUPPORT
+  extern int _papi_hwi_using_signal;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  struct vperfctr_control *contr = &this_state->counter_cmd;
+  int i, ncntrs, nricntrs, nracntrs, cntr, cntr2, retval=0;
+  unsigned int selector;
 
-  fprintf(stderr,"%s (_papi_hwd_set_overflow): Hardware overflow not implemented yet\n",__FILE__);
+#ifdef DEBUG
+  DBG((stderr,"overflow_option->EventIndex=%d\n",
+       overflow_option->EventIndex));
+  dump_cmd("_papi_hwd_set_overflow",contr);
+#endif 
+  if( overflow_option->threshold != 0)  /* Set an overflow threshold */
+    {
+      struct sigaction sa;
+      void *tmp;
+      int err;
+
+      /* Return error if installed signal is set earlier (!=SIG_DFL) and
+	 it was not set to the PAPI overflow handler */
+      /* The following code is commented out because many C libraries
+	 replace the signal handler when one links with threads. The
+	 name of this signal handler is not exported. So there really
+	 is NO WAY to check if the user has installed a signal. */
+      /*
+      tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
+      if ((tmp != (void *)SIG_DFL) && (tmp != (void *)_papi_hwd_dispatch_timer))
+	return(PAPI_EMISC);
+      */
+
+      memset(&sa, 0, sizeof sa);
+      sa.sa_sigaction = _papi_hwd_dispatch_timer;
+      sa.sa_flags = SA_SIGINFO;
+      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0)
+	{
+	  DBG((stderr,"Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno)));
+	  return(PAPI_ESYS);
+	}
+
+      /* The correct event to overflow is overflow_option->EventIndex */
+      ncntrs=_papi_system_info.num_cntrs;
+      selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
+      DBG((stderr,"selector id is %d.\n",selector));
+      i=ffs(selector)-1;
+      if(i>=ncntrs)
+	{
+	  DBG((stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs));
+	  return PAPI_EINVAL;
+	}
+      contr->cpu_control.ireset[i] = -overflow_option->threshold;
+      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+      nricntrs=++contr->cpu_control.nrictrs;
+      nracntrs=--contr->cpu_control.nractrs;
+      contr->si_signo = PAPI_SIGNAL;
+
+      /* perfctr 2.x requires the interrupting counters to be placed last
+	 in evntsel, swap events that do not fulfill this criterion. This
+	 will yield a non-monotonic pmc_map array */
+      for(i=nricntrs;i>0;i--)
+	{
+	  cntr = nracntrs + i - 1;
+	  if( !(contr->cpu_control.evntsel[cntr] & PERF_INT_ENABLE))
+	    { /* A non-interrupting counter was found among the icounters
+		 Locate an interrupting counter in the acounters and swap */
+	      for(cntr2=0;cntr2<nracntrs;cntr2++)
+		{
+		  if( (contr->cpu_control.evntsel[cntr2] & PERF_INT_ENABLE))
+		    break;
+		}
+	      if(cntr2==nracntrs)
+		{
+		  DBG((stderr,"No icounter to swap with!\n"));
+		  return(PAPI_EMISC);
+		}
+	      swap_pmc_map_events(contr,cntr,cntr2);
+	    }
+	}
+
+      PAPI_lock();
+      _papi_hwi_using_signal++;
+      PAPI_unlock();
+
+#ifdef DEBUG
+      DBG((stderr,"Modified event set\n"));
+      dump_cmd("_papi_hwd_set_overflow",contr);
+#endif 
+    }
+  else   /* Disable overflow */
+    {
+      /* The correct event to overflow is overflow_option->EventIndex */
+      ncntrs=_papi_system_info.num_cntrs;
+      for(i=0;i<ncntrs;i++) 
+	if(contr->cpu_control.evntsel[i] & PERF_INT_ENABLE)
+	  {
+	    contr->cpu_control.ireset[i] = 0;
+	    contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
+	    nricntrs=--contr->cpu_control.nrictrs;
+	    nracntrs=++contr->cpu_control.nractrs;
+	    contr->si_signo = 0;
+	  }
+      /* The current implementation only supports one interrupting counter */
+      if(nricntrs)
+	{
+	  fprintf(stderr,"%s %s\n","PAPI internal error.",
+		  "Only one interrupting counter is supported!");
+	  return(PAPI_ESBSTR);
+	}
+
+      /* perfctr 2.x requires the interrupting counters to be placed last
+	 in evntsel, when the counter is non-interupting, move the order
+	 back into the default monotonic pmc_map */
+      for(cntr=0;cntr<ncntrs;cntr++)
+	if(contr->cpu_control.pmc_map[cntr]!=cntr)
+	  { /* This counter is out-of-order. Swap with the correct one*/
+	    for(cntr2=cntr+1;cntr2<ncntrs;cntr2++)
+	      if(contr->cpu_control.pmc_map[cntr2]==cntr) break;
+	    if(cntr2==ncntrs)
+	      {
+		DBG((stderr,"No icounter to swap with!\n"));
+		return(PAPI_EMISC);
+	      }
+	    swap_pmc_map_events(contr,cntr,cntr2);
+	  }
+
+#ifdef DEBUG
+      DBG((stderr,"Modified event set\n"));
+      dump_cmd(__FUNCTION__,contr);
+#endif 
+
+      PAPI_lock();
+      _papi_hwi_using_signal--;
+      if (_papi_hwi_using_signal == 0)
+	{
+	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+	    retval = PAPI_ESYS;
+	}
+      PAPI_unlock();
+    }
+
+  fprintf(stderr,"%s (%s): Hardware overflow is experimental still.\n",
+	  __FILE__,__FUNCTION__);
+  DBG((stderr,"End of call. Exit code: %d\n",retval));
+  return(retval);
+#else
+  /* This function is not used and shouldn't be called. */
+  abort();
   return(PAPI_ESBSTR);
+#endif
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
