@@ -48,16 +48,18 @@ static unsigned short random_ushort(void)
   return (unsigned short)(rnum = 1664525 * rnum + 1013904223);
 }
 
-static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
+static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *outside_bin, int flags, long_long excess, long_long threshold)
 {
   int increment = 1;
   unsigned short *buf = prof->pr_base;
+  unsigned long addr;
 
-  address = (address - prof->pr_off)/2;
-  address = address * prof->pr_scale;
-  address = address >> 16;
+  addr = (unsigned long)(address - prof->pr_off);
+  addr = addr / 2;
+  addr = addr * prof->pr_scale;
+  addr = addr >> 16;
 
-  if (address >= prof->pr_size)
+  if (addr >= prof->pr_size)
     {
       *outside_bin = *outside_bin + 1;
       DBG((stderr,"outside bucket at %p = %u\n",outside_bin,*outside_bin));
@@ -66,8 +68,8 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
 
   if (flags == PAPI_PROFIL_POSIX)
     {
-      buf[address]++;
-      DBG((stderr,"bucket %lu = %u\n",address,buf[address]));
+      buf[addr]++;
+      DBG((stderr,"bucket %lu = %u\n",addr,buf[addr]));
       return;
     }
     
@@ -81,7 +83,7 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
     {
       /* We're likely to ignore the sample if buf[address] gets big. */
 
-       if (random_ushort() < buf[address]) 
+       if (random_ushort() < buf[addr]) 
 	 {
 	   return;
 	 }
@@ -100,24 +102,23 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
 	}	
     }
 
-  buf[address] += increment;
-  DBG((stderr,"posix_profile() bucket %lu = %u\n",address,buf[address]));
+  buf[addr] += increment;
+  DBG((stderr,"posix_profile() bucket %lu = %u\n",addr,buf[addr]));
 }
 
 static void dispatch_profile(EventSetInfo *ESI, void *context,
 			     long_long over, long_long threshold)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
-  unsigned long pc;
-  unsigned offset = 0;
+  caddr_t pc = (caddr_t)_papi_hwd_get_overflow_address(context);
+  caddr_t offset = (caddr_t)0;
+  caddr_t best_offset = (caddr_t)0;
   int count;
-  unsigned best_offset = 0;
   int best_index = -1;
   unsigned short overflow_dummy;
   unsigned short *overflow_bin = NULL;
   int i;
 
-  pc = (unsigned long)_papi_hwd_get_overflow_address(context);
 #ifdef PROFILE_DEBUG
   fprintf(stderr,"%lld:%s:0x%x:handled at 0x%lx\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*thread_id_fn)(),pc);
 #endif
