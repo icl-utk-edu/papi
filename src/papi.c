@@ -870,6 +870,12 @@ int PAPI_cleanup_eventset(int EventSet)
       }
    }
 
+   if (ESI->state & PAPI_MULTIPLEXING) {
+      retval = MPX_cleanup(&ESI->multiplex);
+      if (retval != PAPI_OK)
+         papi_return(retval);
+   }
+
    /* Now do the magic */
 
    papi_return(_papi_hwi_cleanup_eventset(ESI));
@@ -1552,27 +1558,36 @@ int PAPI_add_events(int EventSet, int *Events, int number)
    if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
 
-   for (i = 0; i < number; i++) {
-      retval = PAPI_add_event(EventSet, Events[i]);
-      if (retval != PAPI_OK)
-         return (retval);
-   }
+   for (i = 0; i < number; i++) 
+     {
+       retval = PAPI_add_event(EventSet, Events[i]);
+       if (retval != PAPI_OK)
+	 {
+	   while (i != 0)
+	     {
+	       i--;
+	       PAPI_remove_event(EventSet, Events[i]);
+	     }
+	   papi_return(retval);
+	 }
+     }
    return(PAPI_OK);
 }
 
 int PAPI_remove_events(int EventSet, int *Events, int number)
 {
-   int i, retval;
+   int i, retval, err_retval = PAPI_OK;
 
-   if ((Events == NULL) || (number < 0))
+   if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
 
    for (i = 0; i < number; i++) {
       retval = PAPI_remove_event(EventSet, Events[i]);
-      if (retval != PAPI_OK)
-         return (retval);
+      if ((retval != PAPI_OK) && (err_retval == PAPI_OK))
+	err_retval = retval;
    }
-   return (PAPI_OK);
+
+   return (err_retval);
 }
 
 int PAPI_list_events(int EventSet, int *Events, int *number)
@@ -1580,7 +1595,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
    EventSetInfo_t *ESI;
    int i,j;
 
-   if ((!Events) || (!number))
+   if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);

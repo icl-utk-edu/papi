@@ -306,15 +306,6 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
    papi_return(PAPI_OK);
 }
 
-EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
-{
-   const DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
-
-   if ((eventset < 0) || (eventset >= map->totalSlots))
-      return (NULL);
-   return (map->dataSlotArray[eventset]);
-}
-
 int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
 {
    EventSetInfo_t *ESI;
@@ -411,26 +402,6 @@ int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI, unsigned int Eve
    return (PAPI_EINVAL);
 }
 
-/* Return the EventSetInfo_t to which this EventInfo belongs */
-EventSetInfo_t *get_my_EventSetInfo(EventInfo_t * me)
-{
-   const DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
-   EventSetInfo_t *ESI;
-   int ei, i;
-
-   for (ei = 0; ei < map->totalSlots; ei++) {
-      if ((ESI = _papi_hwi_lookup_EventSet(ei)) != NULL) {
-         for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-            if (&ESI->EventInfoArray[i] == me)
-               return ESI;
-         }
-      }
-   }
-
-   return NULL;
-}
-
-
 /* This function only removes empty EventSets */
 
 int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
@@ -444,11 +415,15 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 
    /* do bookkeeping for PAPI_EVENTSET_MAP */
 
+   _papi_hwi_lock(INTERNAL_LOCK);
+
    map->dataSlotArray[i] = NULL;
    if (i < map->lowestEmptySlot)
       map->lowestEmptySlot = i;
    map->availSlots++;
    map->fullSlots--;
+
+   _papi_hwi_unlock(INTERNAL_LOCK);
 
    return (PAPI_OK);
 }
@@ -929,12 +904,6 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
 {
    int retval, i, tmp = EventInfoArrayLength(ESI);
-
-   if (ESI->state & PAPI_MULTIPLEXING) {
-      retval = MPX_cleanup(&ESI->multiplex);
-      if (retval != PAPI_OK)
-         return (retval);
-   }
 
    for (i = (tmp - 1); i >= 0; i--) {
       if (ESI->EventInfoArray[i].event_code != PAPI_NULL) {

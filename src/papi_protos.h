@@ -32,9 +32,8 @@ extern int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI);
 extern int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
                                            unsigned int EventCode);
 extern EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
-extern EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
+inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 extern int _papi_hwi_remove_EventSet(EventSetInfo_t *);
-extern EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *);
 extern void print_state(EventSetInfo_t * ESI);
 extern int _papi_hwi_init_global_internal(void);
 extern void _papi_hwi_shutdown_global_internal(void);

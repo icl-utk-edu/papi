@@ -578,4 +578,14 @@ inline_static void PRFDBG(char *format, ...)
 #include "threads.h"
 #include "papi_protos.h"
 
+inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
+{
+   const DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
+
+   if ((eventset < 0) || (eventset > map->totalSlots))
+      return (NULL);
+   
+   return (map->dataSlotArray[eventset]);
+}
+
 #endif                          /* PAPI_INTERNAL_H */
