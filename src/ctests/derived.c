@@ -15,7 +15,7 @@
 #define NUM_ITERS 5000
 
 #define QUIETPRINTF if (!TESTS_QUIET) printf
-const static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L2_DCM, 0 };
+const static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L2_DCM, 0 };
 const static int PAPI_events_len = 1;
 extern int TESTS_QUIET;
 

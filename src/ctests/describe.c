@@ -17,7 +17,7 @@ int main(int argc, char **argv)
    int EventSet;
    int retval;
    long_long g1[2];
-   int eventcode = PAPI_TOT_INS;
+   unsigned int eventcode = PAPI_TOT_INS;
    char eventname[PAPI_MAX_STR_LEN];
    char eventdesc[PAPI_MAX_STR_LEN];
 
@@ -45,13 +45,13 @@ int main(int argc, char **argv)
    /* Case 0, no info, should fail */
    eventname[0] = '\0';
    eventcode = 0;
-   if ( ( retval = PAPI_describe_event(eventname,&eventcode,eventdesc) ) == PAPI_OK)
+   if ( ( retval = PAPI_describe_event(eventname,(int *)&eventcode,eventdesc) ) == PAPI_OK)
      test_fail(__FILE__,__LINE__,"PAPI_describe_event",retval);	   
 
    /* Case 1, fill in name field. */
    eventcode = PAPI_TOT_INS;
    eventname[0] = '\0';
-   if ( ( retval = PAPI_describe_event(eventname,&eventcode,eventdesc) ) != PAPI_OK)
+   if ( ( retval = PAPI_describe_event(eventname,(int *)&eventcode,eventdesc) ) != PAPI_OK)
      test_fail(__FILE__,__LINE__,"PAPI_describe_event",retval);	   
 
    if (strcmp(eventname,"PAPI_TOT_INS") != 0)
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
    eventcode = 0;
 
    /* Case 2, fill in code field. */
-   if ( ( retval = PAPI_describe_event(eventname,&eventcode,eventdesc) ) != PAPI_OK)
+   if ( ( retval = PAPI_describe_event(eventname,(int *)&eventcode,eventdesc) ) != PAPI_OK)
      test_fail(__FILE__,__LINE__,"PAPI_describe_event",retval);	   
 
    if (eventcode != PAPI_TOT_INS)

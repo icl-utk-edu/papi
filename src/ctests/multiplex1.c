@@ -25,12 +25,12 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 /* Event to use in all cases; initialized in init_papi() */
 
 #if defined(sparc) && defined(sun) || defined(__ALPHA) && defined(__osf__)
-const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L1_ICM, PAPI_TOT_INS, PAPI_TOT_CYC, 0 };
+const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_ICM, 0 };
 #else
-const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_DCM, 0 };
+const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_DCM, 0 };
 #endif
 
-static int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
+static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int PAPI_events_len;
 
 #ifdef TEST_DRIVER
@@ -40,11 +40,11 @@ static int PAPI_events_len;
 
 #endif
 
-void init_papi(int *out_events, int *len)
+void init_papi(unsigned int *out_events, int *len)
 {
   int retval;
   int i, real_len = 0;
-  const int *in_events = preset_PAPI_events;
+  const unsigned int *in_events = preset_PAPI_events;
  
   /* Initialize the library */
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -285,10 +285,6 @@ int case4()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_create_eventset",retval);
 
-  retval = PAPI_set_multiplex(&EventSet);
-  if (retval != PAPI_OK)
-    CPP_TEST_FAIL("PAPI_set_multiplex",retval);
-
   for (i=0;i<PAPI_events_len;i++)
     {
       char out[PAPI_MAX_STR_LEN];
@@ -300,6 +296,10 @@ int case4()
       if ( !TESTS_QUIET )
       	printf("Added %s\n",out);
     }
+
+  retval = PAPI_set_multiplex(&EventSet);
+  if (retval != PAPI_OK)
+    CPP_TEST_FAIL("PAPI_set_multiplex",retval);
 
 #if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || defined(WIN32)
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);

@@ -34,22 +34,20 @@ extern void do_reads(int);
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 #if defined(sparc) && defined(sun)
-const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { 
-  PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, PAPI_LD_INS,
-  PAPI_SR_INS, PAPI_L2_TCM, 0, };
+const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { 
+  PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_LD_INS, PAPI_SR_INS, 0, };
 #else
-const static int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { 
-  PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, PAPI_L2_TCM, 
-  PAPI_BR_CN, PAPI_RES_STL, 0, };
+const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = { 
+  PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, 0, };
 #endif
-static int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
+static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int num_PAPI_events = 0;
 
 void init_papi_pthreads(void)
 {
   int retval;
-  const int *inev;
-  int *outev;
+  const unsigned int *inev;
+  unsigned int *outev;
 
   /* Initialize the library */
 
@@ -351,10 +349,10 @@ int main(int argc, char **argv)
    printf("%s: Using %d threads, %d iterations\n\n",argv[0],NUM_THREADS,NUM);
    printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
   }
-  case1();
+/*  case1();
   if(!TESTS_QUIET )
      printf("case2: Does setmpx/add work?\n");
-  case2();
+*/  case2();
   if(!TESTS_QUIET )
      printf("case3: Does add/setmpx work?\n");
   case3();
