@@ -161,7 +161,7 @@ preset_search_t findem_r12k[] = { /* Shared with R14K */
 
 /* Utility functions */
 
-static int scan_cpu_info(inventory_t *item, void *foo)
+static int _internal_scan_cpu_info(inventory_t *item, void *foo)
 {
   #define IPSTRPOS 8
   char *ip_str_pos=&_papi_hwi_system_info.hw_info.model_string[IPSTRPOS];
@@ -389,14 +389,14 @@ static int set_default_granularity(hwd_control_state_t *current_state, int granu
   return(set_granularity(current_state,granularity));
 }
 
-static int get_system_info(void)
+static int _internal_get_system_info(void)
 {
   int fd, retval;
   pid_t pid;
   char pidstr[PAPI_MAX_STR_LEN];
   prpsinfo_t psi;
 
-  if (scaninvent(scan_cpu_info, NULL) == -1)
+  if (scaninvent(_internal_scan_cpu_info, NULL) == -1)
     return(PAPI_ESBSTR);
 
   pid = getpid();
@@ -478,7 +478,7 @@ static int get_system_info(void)
 #endif
 
 /* setup_all_presets is in papi_preset.c */
-  retval = setup_all_presets(preset_search_map);
+  retval = _papi_hwi_setup_all_presets(preset_search_map);
   if (retval)
     return(retval);
 
@@ -536,7 +536,7 @@ int _papi_hwd_init_global(void)
 
   /* Fill in what we can of the papi_system_info. */
   
-  retval = get_system_info();
+  retval = _internal_get_system_info();
   if (retval)
     return(retval);
 
@@ -718,6 +718,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       (this_state->num_on_counter[1] > 1))
     return(PAPI_ECNFLCT);
 */
+  if (ESI->overflow.event_counter >1) return(PAPI_ECNFLCT);
   if ( ESI->EventInfoArray[overflow_option->EventIndex].derived != NOT_DERIVED)
     return(PAPI_ECNFLCT);
   if (overflow_option->threshold == 0)
@@ -785,6 +786,10 @@ void *_papi_hwd_get_overflow_address(void *context)
 }
 
 volatile int lock[PAPI_MAX_LOCK] = {0,};
+
+void _papi_hwd_lock_init(void)
+{
+}
 
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
@@ -869,7 +874,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI )
   return 1;
 }
 
-char * _papi_hwd_native_code_to_name(unsigned int EventCode)
+char * _papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
   int nidx;
 
@@ -879,8 +884,60 @@ char * _papi_hwd_native_code_to_name(unsigned int EventCode)
   else return NULL;
 }
 
-char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-  return(_papi_hwd_native_code_to_name(EventCode));
+  return(_papi_hwd_ntv_code_to_name(EventCode));
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+{
+  return PAPI_OK;
+}
+
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
+{
+}
+
+/* This function forces the event to
+    be mapped to only counter ctr.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+}
+
+/* This function examines the event to determine
+    if it has a single exclusive mapping.
+    Returns true if exlusive, false if non-exclusive.
+*/
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
+{
+}
+
+/* This function compares the dst and src events
+    to determine if any counters are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* This function removes the counters available to the src event
+    from the counters available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* This function updates the selection status of
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
 }
 

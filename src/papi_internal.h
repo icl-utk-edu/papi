@@ -69,6 +69,7 @@ typedef struct _EventSetOverflowInfo {
   int threshold;
   int EventIndex;
   int EventCode;
+  int event_counter;
   int flags;
   int timer_ms;
   PAPI_overflow_handler_t handler;

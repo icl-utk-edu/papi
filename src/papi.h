@@ -227,8 +227,8 @@ read the documentation carefully.  */
   #define u_long_long unsigned long long
 #endif
 
-typedef void (*PAPI_overflow_handler_t)(int EventSet, int EventCode, int index,
-					long_long *latest, int *threshold, void *context);
+typedef void (*PAPI_overflow_handler_t)(int EventSet, void *address, 
+                                      void *context);
 
 typedef struct _papi_sprofil {
   unsigned short *pr_base;      /* buffer base */

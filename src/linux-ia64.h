@@ -56,6 +56,7 @@
 
 typedef int hwd_register_t;
 typedef int hwd_register_map_t;
+typedef int hwd_reg_alloc_t;
 
 typedef struct hwd_control_state {
   /* Arg to perfmonctl */
@@ -119,6 +120,34 @@ typedef struct _thread_list  {
 extern char *basename(char *);
 extern caddr_t _init, _fini, _etext, _edata, __bss_start;
 
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#define MAX_PAPI_LOCK 4
+#include <inttypes.h>
+extern volatile uint32_t lock[MAX_PAPI_LOCK] ;
 
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+
+#ifdef __INTEL_COMPILER
+#define _papi_hwd_lock(lck)			 			      \
+    while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) \
+        != (uint64_t)MUTEX_OPEN);					      
+
+#define _papi_hwd_unlock(lck)						\
+    _InterlockedExchange(&lock[lck], (unsigned __int64)MUTEX_OPEN);	
+
+#else /* GCC */
+#define _papi_hwd_lock(lck)			 			      \
+   { uint64_t res = 0;							      \
+    do {								      \
+      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
+      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
+    } while (res != (uint64_t)MUTEX_OPEN); }
+
+#define _papi_hwd_unlock(lck)			 			      \
+    { uint64_t res = 0;							      \
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif
 
 

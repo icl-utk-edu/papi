@@ -597,7 +597,7 @@ static int get_system_info(void)
 
   /* Setup presets */
 
-  retval = setup_all_presets(preset_search_map);
+  retval = _papi_hwi_setup_all_presets(preset_search_map);
   if (retval)
     return(retval);
 
@@ -741,7 +741,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
   ctrl->counter_cmd.cmd.ce_pic[0] -= (u_long_long)ctrl->values[0];
   ctrl->counter_cmd.cmd.ce_pic[1] -= (u_long_long)ctrl->values[1];
 
-  events = ctrl->counter_cmd.cmd.ce_pic;
+  *events = ctrl->counter_cmd.cmd.ce_pic;
 
   return PAPI_OK;
 }
@@ -856,6 +856,10 @@ void *_papi_hwd_get_overflow_address(void *context)
 
 rwlock_t lock[PAPI_MAX_LOCK];
 
+void _papi_hwd_lock_init(void)
+{
+}
+
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
   int retval;
@@ -901,7 +905,12 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI )
   return 1;
 }
 
-char * _papi_hwd_native_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+{
+  return PAPI_OK;
+}
+
+char * _papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
   int nidx;
 
@@ -911,9 +920,9 @@ char * _papi_hwd_native_code_to_name(unsigned int EventCode)
   return NULL;
 }
 
-char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-  return(_papi_hwd_native_code_to_name(EventCode));
+  return(_papi_hwd_ntv_code_to_name(EventCode));
 }
 
 void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
@@ -1030,3 +1039,55 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 
   return(PAPI_OK);
 }
+
+
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
+{
+  return(PAPI_OK);
+}
+
+/* This function forces the event to
+    be mapped to only counter ctr.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+}
+
+/* This function examines the event to determine
+    if it has a single exclusive mapping.
+    Returns true if exlusive, false if non-exclusive.
+*/
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
+{
+  return(PAPI_OK);
+}
+
+/* This function compares the dst and src events
+    to determine if any counters are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+  return(PAPI_OK);
+}
+
+/* This function removes the counters available to the src event
+    from the counters available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* This function updates the selection status of
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+

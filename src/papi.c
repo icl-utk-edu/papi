@@ -351,7 +351,7 @@ int PAPI_enum_event(int *EventCode, int modifier)
     }
   }
   else if (i & NATIVE_MASK){
-    return(_papi_hwd_ntv_enum_events(EventCode, modifier));
+    return(_papi_hwd_ntv_enum_events((unsigned int *)EventCode, modifier));
   }
   return(PAPI_ENOEVNT);
 }
@@ -1234,7 +1234,7 @@ int PAPI_perror(int code, char *destination, int length)
 /* This function sets up an EventSet such that when it is PAPI_start()'ed, it
    begins to register overflows. This EventSet may only have multiple events
    in it, but only 1 can be an overflow trigger. Subsequent calls to PAPI_overflow
-   replace earlier calls. To turn off overflow, set the handler to NULL. */
+   replace earlier calls. To turn off overflow, set the threshold to 0 */
 
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
@@ -1257,18 +1257,18 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
   if (threshold < 0)
     papi_return(PAPI_EINVAL);
 
-  if (ESI->state & PAPI_OVERFLOWING)
-  {
-    if (threshold)
-      papi_return(PAPI_EINVAL);
-  }
-  else
+/* the first time to call PAPI_overflow function */
+  if ( !(ESI->state & PAPI_OVERFLOWING) )
   {
     if (handler == NULL)
       papi_return(PAPI_EINVAL);
     if (threshold == 0)
       papi_return(PAPI_EINVAL);
   }
+  if (threshold ==0 ) ESI->overflow.event_counter--;
+  else ESI->overflow.event_counter++;
+  if (threshold > 0 && ESI->overflow.event_counter>MAX_COUNTERS)
+    papi_return(PAPI_ECNFLCT);
 
   /* Set up the option structure for the low level */
 
@@ -1279,20 +1279,22 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
   opt.flags = flags;
   opt.handler = handler;
   opt.count = 0;
+  opt.event_counter = ESI->overflow.event_counter;
 
   if (_papi_hwi_system_info.supports_hw_overflow)
   {
     retval = _papi_hwd_set_overflow(ESI, &opt);
     if (retval < PAPI_OK)
-	  return(retval);
+	  papi_return(retval);
   }
   else
     opt.timer_ms = PAPI_ITIMER_MS;
 
     
   /* Toggle the overflow flag */
-
-  ESI->state ^= PAPI_OVERFLOWING;
+  if ( (ESI->overflow.event_counter==1 && threshold>0 ) ||
+      (ESI->overflow.event_counter==0 && threshold==0) )
+    ESI->state ^= PAPI_OVERFLOWING;
 
   /* Copy the machine independent options into the ESI */
 
@@ -1588,12 +1590,12 @@ int PAPI_save(void)
   return(PAPI_ESBSTR);
 }
 
-inline void PAPI_lock(int lck) {
-_papi_hwd_lock(lck);
+void PAPI_lock(int lck) {
+ _papi_hwd_lock(lck) ;
 }
 
-inline void PAPI_unlock(int lck){
-_papi_hwd_unlock(lck);
+void PAPI_unlock(int lck){
+ _papi_hwd_unlock(lck) ;
 }
 
 int PAPI_is_initialized(void)

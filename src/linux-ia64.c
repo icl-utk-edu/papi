@@ -493,7 +493,7 @@ static int get_system_info(void)
   tmp=generate_preset_search_map(ia_preset_search_map);
   if (tmp) return(tmp);
 
-  tmp = setup_all_presets(preset_search_map);
+  tmp = _papi_hwi_setup_all_presets(preset_search_map);
   if (tmp)
     return(tmp);
 
@@ -1090,7 +1090,7 @@ static int set_notify(EventSetInfo_t *ESI, int index, int value)
 
   pos = ESI->EventInfoArray[index].pos;
   count=0;
-  while ( pos[count] != -1 )
+  while ( pos[count] != -1 && count < MAX_COUNTERS )
   {
     hwcntr = pos[count] + PMU_FIRST_COUNTER;
     for (i=0;i<MAX_COUNTERS;i++)
@@ -1234,50 +1234,27 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 {
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = &ESI->machdep;
-  pfarg_reg_t *pc = this_state->evt.pfp_pc;
-  int i, hwcntr, index, retval = PAPI_OK, *pos;
+  int j, index, retval = PAPI_OK, *pos, event_index;
 
-  if ( overflow_option->EventCode & PRESET_MASK) 
-  {
-    /* when hardware supports overflow, it is only meaningful
-       for non derived events and derived_add events
-    */
+  /* when hardware supports overflow, it is only meaningful
+     for non derived event
+  */
     if ( _papi_hwi_system_info.supports_hw_overflow )
     {
-      index = overflow_option->EventCode & PRESET_AND_MASK;
-/*
-      if  ( _papi_hwd_preset_map[index].derived != NOT_DERIVED 
-          && _papi_hwd_preset_map[index].derived != DERIVED_ADD ) 
-*/
-      if  ( _papi_hwi_preset_map[index].derived != NOT_DERIVED) 
-        return (PAPI_ESBSTR);
+      if ( overflow_option->EventCode & PRESET_MASK) 
+      {
+        index = overflow_option->EventCode & PRESET_AND_MASK;
+        if  ( _papi_hwi_preset_map[index].derived != NOT_DERIVED) 
+          return (PAPI_EINVAL);
+      }
     }
-  }
 
   if (overflow_option->threshold == 0)
   {
-  /* Remove the overflow notifier on the proper event. Remember that selector
-     contains the index in the hardware counter buffer, we must covert it to
-     to the actual hardware register. 
+  /* Remove the overflow notifier on the proper event. 
   */
-
-     pos = ESI->EventInfoArray[overflow_option->EventIndex].pos;
-     index=0;
-     while ( pos[index]!= -1 )
-	 {
-	   hwcntr = pos[index] + PMU_FIRST_COUNTER;
-	   for (i=0;i<MAX_COUNTERS;i++)
-	   { 
-	     if ( pc[i].reg_num == hwcntr)
-		 {
-		   DBG((stderr,"Found hw counter %d in %d, flags %d\n",hwcntr,
-                 i,pc[i].reg_num));
-		   pc[i].reg_flags = 0;
-		   break;
-		 }
-	   }
-	   index++;
-	 }
+     event_index= overflow_option->EventIndex;
+     set_notify(ESI, event_index, 0);
 
      /* Remove the signal handler */
 
@@ -1288,7 +1265,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	   if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
 	     retval = PAPI_ESYS;
 	 }
-     _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+     _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
   }
   else
   {
@@ -1307,42 +1284,26 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
     if (sigaction(SIGPROF, &act, NULL) == -1)
 	  return(PAPI_ESYS);
 
-  /*Remove the overflow notifier on the proper event. Remember that selector
-    contains the index in the hardware counter buffer, we must covert it to
-    to the actual hardware register. 
+  /*Set the overflow notifier on the proper event. Remember that selector
   */
-
-    pos = ESI->EventInfoArray[overflow_option->EventIndex].pos;
-    index = 0;
-    while ( pos[index] != -1 )
-	{
-	  hwcntr = pos[index] + PMU_FIRST_COUNTER;
-	  for (i=0;i<MAX_COUNTERS;i++)
-	  {
-	    if ( pc[i].reg_num == hwcntr)
-	    {
-	      DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
-		  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
-		  break;
-		}
-	  }
-      index++;
-	}
+    event_index= overflow_option->EventIndex;
+    set_notify(ESI, event_index, PFM_REGFL_OVFL_NOTIFY);
 
 /* set initial value in pd array */
-    pos = ESI->EventInfoArray[overflow_option->EventIndex].pos;
-    index=0;
-    while ( pos[index] != -1 )
-    {
-        i = pos[index];
+
+      pos = ESI->EventInfoArray[event_index].pos;
+      index=0;
+      while ( pos[index] != -1 )
+      {
+        j = pos[index];
         DBG((stderr,"counter %d used in overflow, threshold %d\n",
-           i+PMU_FIRST_COUNTER,overflow_option->threshold));
-        this_state->pd[i].reg_value = (~0UL) -
-                                  (unsigned long)overflow_option->threshold+1;
-        this_state->pd[i].reg_long_reset = (~0UL) -
-                                  (unsigned long)overflow_option->threshold+1;
+           j+PMU_FIRST_COUNTER,overflow_option->threshold));
+        this_state->pd[j].reg_value = (~0UL) -
+                              (unsigned long)overflow_option->threshold+1;
+        this_state->pd[j].reg_long_reset = (~0UL) -
+                               (unsigned long)overflow_option->threshold+1;
         index++;
-    }
+      }
 
     _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     _papi_hwi_using_signal++;
@@ -1360,53 +1321,17 @@ void *_papi_hwd_get_overflow_address(void *context)
 
   return(location);
 }
-
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
+#define MAX_PAPI_LOCK 4
 #include <inttypes.h>
 volatile uint32_t lock[MAX_PAPI_LOCK] = {MUTEX_OPEN,};
 
 void _papi_hwd_lock_init(void)
 {
 }
- 
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-#define _papi_hwd_lock(lck)			\
-do						\
-{						\
 
-
-#ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck)			 			      \
-    while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) \
-        != (uint64_t)MUTEX_OPEN);					      
-
-#define _papi_hwd_unlock(lck)						\
-do									\
-{									\
-    _InterlockedExchange(&lock[lck], (unsigned __int64)MUTEX_OPEN);	\
-}while(0)
-
-#else /* GCC */
-#define _papi_hwd_lock(lck)			 			      \
-do{									      \
-    uint64_t res = 0;							      \
-    do {								      \
-      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
-      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
-    } while (res != (uint64_t)MUTEX_OPEN);				      \
-}while(0)								      
-
-#define _papi_hwd_lock(lck)			 			      \
-do{									      \
-    uint64_t res = 0;							      \
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory");	\
-}while(0)
-#endif
- 
-
-char * _papi_hwd_native_code_to_name(unsigned int EventCode)
+char * _papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
   char *name;
 
@@ -1415,9 +1340,14 @@ char * _papi_hwd_native_code_to_name(unsigned int EventCode)
   else return NULL;
 }
 
-char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-  return(_papi_hwd_native_code_to_name(EventCode));
+  return(_papi_hwd_ntv_code_to_name(EventCode));
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+{
+  return PAPI_OK;
 }
 
 void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
@@ -1496,3 +1426,54 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 
   return(PAPI_OK);
 }
+
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
+{
+  return(PAPI_OK);
+}
+
+/* This function forces the event to
+    be mapped to only counter ctr.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+}
+
+/* This function examines the event to determine
+    if it has a single exclusive mapping.
+    Returns true if exlusive, false if non-exclusive.
+*/
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
+{
+  return(PAPI_OK);
+}
+
+/* This function compares the dst and src events
+    to determine if any counters are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+  return(PAPI_OK);
+}
+
+/* This function removes the counters available to the src event
+    from the counters available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* This function updates the selection status of
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+

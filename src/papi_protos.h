@@ -120,7 +120,8 @@ extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
 
 /* The following functions implement the hardware dependent native event table access.
    The first four routines are required. The next two are optional.
-   All six must at least be stubbed in the substrate file. */
+   All six must at least be stubbed in the substrate file. 
+*/
 
 extern int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
 extern char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
@@ -138,6 +139,7 @@ extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bi
 	Author: Haihang You  you@cs.utk.edu
 	Mods  : Dan Terpstra terpstra@cs.utk.edu
 */
+
 extern int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count);
 
 /* The following functions are called by _papi_hwi_bipartite_alloc().

@@ -207,7 +207,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
     /* Get the latest counter value */
       
   /* if you want to change this, please discuss with me .  -- Min */
-    if (!_papi_hwi_system_info.supports_hw_overflow)
+    if (_papi_hwi_system_info.supports_hw_overflow==0)
     {
       retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
       if (retval < PAPI_OK)
@@ -228,9 +228,8 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 	    dispatch_profile(ESI, (caddr_t)context, 
              latest - ESI->overflow.deadline, ESI->overflow.threshold); 
       else
-	    ESI->overflow.handler(ESI->EventSetIndex, ESI->overflow.EventCode, 
-                ESI->overflow.EventIndex, ESI->sw_stop, 
-                &ESI->overflow.threshold, context);
+	    ESI->overflow.handler(ESI->EventSetIndex,  
+                context, context);
       ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
   }
