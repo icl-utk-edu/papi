@@ -441,7 +441,7 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                mem_info->L1_dtlb_assoc = 1;
                break;
             case 0x5D:
-               mem_info->L1_dtlb_size = 128;
+               mem_info->L1_dtlb_size = 256;
                mem_info->L1_dtlb_assoc = 1;
                break;
             case 0x66:
@@ -541,6 +541,16 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                mem_info->L2_cache_linesize = 32;
                mem_info->L2_cache_size = 2048;
                break;
+            case 0x86:
+               mem_info->L2_cache_assoc = 4;
+               mem_info->L2_cache_linesize = 64;
+               mem_info->L2_cache_size = 512;
+               break;
+            case 0x87:
+               mem_info->L2_cache_assoc = 8;
+               mem_info->L2_cache_linesize = 64;
+               mem_info->L2_cache_size = 1024;
+               break;
             case 0x88:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
@@ -568,6 +578,26 @@ static int init_intel(PAPI_hw_info_t * mem_info)
                mem_info->L3_cache_assoc = 12;
                mem_info->L3_cache_linesize = 128;
                mem_info->L3_cache_size = 3096;
+               break;
+            case 0x90:
+               mem_info->L1_itlb_assoc = 1;
+               mem_info->L1_itlb_size = 64;
+               break;
+            case 0x96:
+               mem_info->L1_dtlb_assoc = 1;
+               mem_info->L1_dtlb_size = 32;
+               break;
+            case 0x9b:
+               mem_info->L2_dtlb_assoc = 1;
+               mem_info->L2_dtlb_size = 96;
+               break;
+            case 0xb0:
+               mem_info->L1_itlb_assoc = 4;
+               mem_info->L1_itlb_size = 512;
+               break;
+            case 0xb3:
+               mem_info->L1_dtlb_assoc = 4;
+               mem_info->L1_dtlb_size = 512;
                break;
                /* Note, there are still various IA64 cases not mapped yet */
             }

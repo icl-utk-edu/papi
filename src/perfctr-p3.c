@@ -57,8 +57,7 @@ volatile unsigned int lock[PAPI_MAX_LOCK] = { 0, };
 #endif
 
 #ifdef DEBUG
-void print_control(const struct perfctr_cpu_control *control)
-{
+void print_control(const struct perfctr_cpu_control *control) {
    unsigned int i;
 
    SUBDBG("Control used:\n");
@@ -80,8 +79,7 @@ void print_control(const struct perfctr_cpu_control *control)
 
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
-inline static int setup_p3_presets(int cputype)
-{
+inline static int setup_p3_presets(int cputype) {
    switch (_papi_hwi_system_info.hw_info.model) {
    case PERFCTR_X86_GENERIC:
    case PERFCTR_X86_CYRIX_MII:
@@ -117,16 +115,14 @@ inline static int setup_p3_presets(int cputype)
 }
 
 /* Low level functions, should not handle errors, just return codes. */
-static inline u_long_long get_cycles(void)
-{
+static inline u_long_long get_cycles(void) {
    u_long_long ret;
    __asm__ __volatile__("rdtsc":"=A"(ret)
                         : /* no inputs */ );
    return ret;
 }
 
-inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
-{
+inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    switch (perfctr_cpu_type) {
    case PERFCTR_X86_INTEL_P5:
    case PERFCTR_X86_INTEL_P5MMX:
@@ -147,8 +143,7 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type)
 
 /* Dumb hack to make sure I get the cycle time correct. */
 
-static float calc_mhz(void)
-{
+static float calc_mhz(void) {
    u_long_long ostamp;
    u_long_long stamp;
    float correction = 4000.0, mhz;
@@ -171,8 +166,7 @@ static float calc_mhz(void)
 
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
-extern int _papi_hwd_mdi_init()
-{
+extern int _papi_hwd_mdi_init() {
    strcpy(_papi_hwi_system_info.substrate, "$Id$");       /* Name of the substrate we're using */
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _init;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
@@ -198,8 +192,7 @@ extern int _papi_hwd_mdi_init()
    return (PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
-{
+void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode;
 
    switch (_papi_hwi_system_info.default_domain) {
@@ -245,19 +238,15 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->control.cpu_control.tsc_on = 1;
 }
 
-int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp,
-                             EventInfo_t * tmp2)
-{
+int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
    return (PAPI_ESBSTR);
 }
 
-int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
-{
+int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
    return (PAPI_ESBSTR);
 }
 
-void _papi_hwd_lock_init(void)
-{
+void _papi_hwd_lock_init(void) {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++) {
 #ifdef __x86_64__
@@ -270,8 +259,7 @@ void _papi_hwd_lock_init(void)
 
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
-int _papi_hwd_init_global(void)
-{
+int _papi_hwd_init_global(void) {
    int retval;
    struct perfctr_info info;
    float mhz;
@@ -334,8 +322,7 @@ int _papi_hwd_init_global(void)
    return (PAPI_OK);
 }
 
-int _papi_hwd_init(hwd_context_t * ctx)
-{
+int _papi_hwd_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
 
    /* Initialize our thread/process pointer. */
@@ -354,49 +341,42 @@ int _papi_hwd_init(hwd_context_t * ctx)
    return (PAPI_OK);
 }
 
-u_long_long _papi_hwd_get_real_usec(void)
-{
-   return ((u_long_long) get_cycles() / (u_long_long) _papi_hwi_system_info.hw_info.mhz);
+u_long_long _papi_hwd_get_real_usec(void) {
+   return((u_long_long)get_cycles() / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-u_long_long _papi_hwd_get_real_cycles(void)
-{
-   return (get_cycles());
+u_long_long _papi_hwd_get_real_cycles(void) {
+   return(get_cycles());
 }
 
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
-{
-   return (_papi_hwd_get_virt_cycles(ctx) /
-           (u_long_long) _papi_hwi_system_info.hw_info.mhz);
+u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
+   return(_papi_hwd_get_virt_cycles(ctx) /
+         (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
-
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
-{
-   return (vperfctr_read_tsc(ctx->perfctr));
+ 
+u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
+   return(vperfctr_read_tsc(ctx->perfctr));
 }
 
 /* This function examines the event to determine
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't. */
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
-{
-   return (dst->ra_selector & (1 << ctr));
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
+   return(dst->ra_selector & (1 << ctr));
 }
 
 /* This function forces the event to
     be mapped to only counter ctr.
     Returns nothing.  */
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
-{
-   dst->ra_selector = (1 << ctr);
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
+   dst->ra_selector = 1 << ctr;
    dst->ra_rank = 1;
 }
 
 /* This function examines the event to determine
    if it has a single exclusive mapping.
    Returns true if exlusive, false if non-exclusive.  */
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
-{
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
    return (dst->ra_rank == 1);
 }
 
@@ -404,8 +384,7 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
     to determine if any resources are shared. Typically the src event
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.  */
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    return (dst->ra_selector & src->ra_selector);
 }
 
@@ -414,8 +393,7 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
     and reduces the rank of the dst event accordingly. Typically,
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.  */
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    int i;
    unsigned shared;
 
@@ -427,34 +405,32 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
          dst->ra_rank++;
 }
 
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    dst->ra_selector = src->ra_selector;
 }
 
 /* Register allocation */
-int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
-{
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    int index, i, j, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
-   for (i = 0; i < natNum; i++) {
+   for(i = 0; i < natNum; i++) {
       index = ESI->NativeInfoArray[i].ni_event & NATIVE_AND_MASK;
       event_list[i].ra_bits = native_table[index].resources;
       event_list[i].ra_selector = event_list[i].ra_bits.selector;
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
-      for (j = 0; j < MAX_COUNTERS; j++) {
-         if (event_list[i].ra_selector & (1 << j)) {
+      for(j = 0; j < MAX_COUNTERS; j++) {
+         if(event_list[i].ra_selector & (1 << j)) {
             event_list[i].ra_rank++;
          }
       }
    }
-   if (_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
-      for (i = 0; i < natNum; i++) {
+   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+      for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
          /* Array order on perfctr is event ADD order, not counter #... */
@@ -465,12 +441,11 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
       return 0;
 }
 
-static void clear_control_state(hwd_control_state_t * this_state)
-{
+static void clear_control_state(hwd_control_state_t *this_state) {
    int i;
 
    /* Remove all counter control command values from eventset. */
-   for (i = 0; i < this_state->control.cpu_control.nractrs; i++) {
+   for(i = 0; i < this_state->control.cpu_control.nractrs; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
       this_state->control.cpu_control.pmc_map[i] = 0;
       this_state->control.cpu_control.evntsel[i] = 0;
@@ -482,9 +457,8 @@ static void clear_control_state(hwd_control_state_t * this_state)
 /* This function clears the current contents of the control structure and 
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
-int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
-{
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
+                                   NativeInfo_t *native, int count) {
    int i;
 
    /* clear out everything currently coded */
@@ -500,38 +474,34 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state)
-{
+int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    int error;
-   if ((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
+   if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
       error_return(PAPI_ESYS, VCNTRL_ERROR);
    }
    return (PAPI_OK);
 }
 
-int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * state)
-{
-   if (vperfctr_stop(ctx->perfctr) < 0)
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+   if(vperfctr_stop(ctx->perfctr) < 0)
       error_return(PAPI_ESYS, VCNTRL_ERROR);
-   return (PAPI_OK);
+   return(PAPI_OK);
 }
 
-int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * cntrl)
-{
-   return (_papi_hwd_start(ctx, cntrl));
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
+   return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp)
-{
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp) {
    vperfctr_read_ctrs(ctx->perfctr, &spc->state);
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
       extern int _papi_hwi_debug;
-      if (_papi_hwi_debug) {
+      if(_papi_hwi_debug) {
          int i;
-         for (i = 0; i < spc->control.cpu_control.nractrs; i++) {
+         for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
                    (long_long) spc->state.pmc[i]);
          }
@@ -541,39 +511,34 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
    return (PAPI_OK);
 }
 
-int _papi_hwd_setmaxmem()
-{
+int _papi_hwd_setmaxmem() {
    return (PAPI_OK);
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from)
-{
-   return (PAPI_ESBSTR);
+int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
+   return(PAPI_ESBSTR);
 }
 
 /* Called once per process. */
-int _papi_hwd_shutdown_global(void)
-{
+int _papi_hwd_shutdown_global(void) {
    return (PAPI_OK);
 }
 
 /* This routine is for shutting down threads, including the
    master thread. */
-int _papi_hwd_shutdown(hwd_context_t * ctx)
-{
+int _papi_hwd_shutdown(hwd_context_t * ctx) {
    int retval = vperfctr_unlink(ctx->perfctr);
    SUBDBG("_papi_hwd_init_global vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
    vperfctr_close(ctx->perfctr);
    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", ctx->perfctr);
    memset(ctx, 0x0, sizeof(hwd_context_t));
 
-   if (retval)
-      return (PAPI_ESYS);
-   return (PAPI_OK);
+   if(retval)
+      return(PAPI_ESYS);
+   return(PAPI_OK);
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
-{
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info) {
    _papi_hwi_context_t ctx;
 
    ctx.si = si;
@@ -589,9 +554,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    position entries in both the NativeInfoArray and the EventInfoArray to keep
    everything consistent.
 */
-static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, int cntr1,
-                        int cntr2)
-{
+static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, int cntr1, int cntr2) {
    unsigned int ui;
    int si, i, j;
 
@@ -622,8 +585,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
    contr->cpu_control.ireset[cntr2] = si;
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
-{
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    struct vperfctr_control *contr = &this_state->control;
@@ -697,14 +659,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
-{
+int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    /* This function is not used and shouldn't be called. */
    return (PAPI_ESBSTR);
 }
 
-int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
-{
+int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
    ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
