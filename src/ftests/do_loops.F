@@ -5,34 +5,41 @@ C Compile me with -O0 or else you'll get none.
       subroutine do_reads(n)
       implicit none      
       integer n
-      integer buf(100)
-c L1_MISS_BUFFER_SIZE_INTS)      
+      integer buf(L1_MISS_BUFFER_SIZE_INTS)      
       integer i,u,stat
       save u
 
-#ifndef _CRAYT3E
-c  Open the data file
+c  Open the file
       if (u .eq. 0) then
-         open (UNIT=1,FILE='/dev/zero', STATUS='OLD', IOSTAT=stat)
+         open (UNIT=1,STATUS='SCRATCH', IOSTAT=stat)
          if (stat .ne. 0) then
-            write(*,*) '/dev/zero cannot be opened.'
+            write(*,*) 'Temporary file cannot be opened.'
             stop
          end if
 	 u = 1
+
+c  Fill the file
+      do i = 1, n
+        write(u,*,IOSTAT=stat) buf
+        if (stat .ne. 0) then
+            write(*,*) 'Temporary file cannot be written.'
+            stop
+        end if
+      end do
+      rewind(u)
       end if
 
-c  Read the number of points
+c  Read the file
       do i = 1, n
-        read(UNIT=1,FMT=*,IOSTAT=stat) buf
+        read(u,*,IOSTAT=stat) buf
         if (stat .ne. 0) then
-            write(*,*) '/dev/zero cannot be read.'
+            write(*,*) 'Temporary file cannot be read.'
             stop
-         end if
+        end if
       end do
-
-c  Close the file
-      close (u)
-#endif
+      
+c  Rewind the file as this function may be called more than once
+      rewind(u)
       end
 
       subroutine do_flops(n)
