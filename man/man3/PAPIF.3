@@ -79,52 +79,57 @@ a C type string terminated by a new-line.
 
 
 
+
+.SH PAPI High Level Functions
+.nf
+.BI PAPIF_num_counters(C_INT\  numevents )
+.BI PAPIF_read_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check )
+.BI PAPIF_accum_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check )
+.BI PAPIF_start_counters(C_INT(*)\  events,\  C_INT\  array_len,\  C_INT\  check )
+.BI PAPIF_stop_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check )
+.fi
+
 .SH PAPI Low Level Functions
 .nf 
-.BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
-.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  Event,\  C_INT\  check)
-.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check)
-.BI PAPIF_cleanup_eventset(C_INT\  EventSet,\  C_INT\  check)
-.BI PAPIF_library_init(C_INT\  check)
-.BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  flag,\  C_INT\  check)
-.BI PAPIF_list_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check)
-.BI PAPIF_perror(C_INT\  code,\  C_STRING\  destination,\  C_INT\  check)
-.BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check)
-.BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check)
-.BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  out,\  C_INT\  check)
-.BI PAPIF_event_name_to_code(C_STRING\  in,\  C_INT\  out,\  C_INT\  check)
-.BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
-.BI PAPIF_rem_event(C_INT\  EventSet,\  C_INT\  Event,\  C_INT\  check)
-.BI PAPIF_rem_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check)
-.BI PAPIF_reset(C_INT\  EventSet,\  C_INT\  check)
-.BI PAPIF_set_debug(C_INT\  debug,\  C_INT\  check)
-.BI PAPIF_set_domain(C_INT\  domain,\  C_INT\  check)
-.BI PAPIF_set_granularity(C_INT\  granularity,\  C_INT\  check)
-.BI PAPIF_start(C_INT\  EventSet,\  C_INT\  check)
-.BI PAPIF_state(C_INT\  EventSet,\  C_INT\  status,\  C_INT\  check)
-.BI PAPIF_stop(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
-.BI PAPIF_write(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
+.BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
+.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  Event,\  C_INT\  check )
+.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check )
+.BI PAPIF_cleanup_eventset(C_INT\  EventSet,\  C_INT\  check )
+.BI PAPIF_library_init(C_INT\  check )
+.BI PAPIF_multiplex_init(C_INT\  check )
+.BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  flag,\  C_INT\  check )
+.BI PAPIF_list_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check )
+.BI PAPIF_perror(C_INT\  code,\  C_STRING\  destination,\  C_INT\  check )
+.BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check )
+.BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  out,\  C_INT\  check )
+.BI PAPIF_event_name_to_code(C_STRING\  in,\  C_INT\  out,\  C_INT\  check )
+.BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
+.BI PAPIF_rem_event(C_INT\  EventSet,\  C_INT\  Event,\  C_INT\  check )
+.BI PAPIF_rem_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check )
+.BI PAPIF_reset(C_INT\  EventSet,\  C_INT\  check )
+.BI PAPIF_set_debug(C_INT\  debug,\  C_INT\  check )
+.BI PAPIF_set_domain(C_INT\  domain,\  C_INT\  check )
+.BI PAPIF_set_granularity(C_INT\  granularity,\  C_INT\  check )
+.BI PAPIF_start(C_INT\  EventSet,\  C_INT\  check )
+.BI PAPIF_state(C_INT\  EventSet,\  C_INT\  status,\  C_INT\  check )
+.BI PAPIF_stop(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
+.BI PAPIF_write(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
 .BI PAPIF_shutdown()
 .BI PAPIF_get_hardware_info(C_INT\  ncpu,\  C_INT\  nnodes,\ \
            C_INT\  totalcpus,\  C_INT\  vendor,\ \
            C_STRING\  vendor_string, \  C_INT\  model,\ \
            C_STRING\  model_string,\
            C_FLOAT\  revision,\  C_FLOAT\  mhz)
-.BI PAPIF_create_eventset(C_INT\  EventSet,\  C_INT\  check)
-.BI PAPIF_destroy_eventset(C_INT\  EventSet,\  C_INT\  check)
+.BI PAPIF_create_eventset(C_INT\  EventSet,\  C_INT\  check )
+.BI PAPIF_destroy_eventset(C_INT\  EventSet,\  C_INT\  check )
 .BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check ) 
 .BI PAPIF_get_real_usec(C_LONG_LONG\  time)
 .BI PAPIF_get_real_cyc(C_LONG_LONG\  real_cyc)
 .BI PAPIF_get_virt_usec(C_LONG_LONG\  time)
 .BI PAPIF_get_virt_cyc(C_LONG_LONG\  virt_cyc)
-
-.SH PAPI High Level Functions
-.BI PAPIF_num_counters(C_INT\  numevents)
-.BI PAPIF_read_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check)
-.BI PAPIF_accum_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check)
-.BI PAPIF_start_counters(C_INT(*)\  events,\  C_INT\  array_len,\  C_INT\  check)
-.BI PAPIF_stop_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check)
 .fi
+
 .LP
 .SH SEE ALSO
 .nf 
