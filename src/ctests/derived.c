@@ -83,8 +83,6 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
 
-  PAPI_shutdown();
-  
   QUIETPRINTF("Verification: Does produce a non-zero value?\n");
 
   if (values == 0)
