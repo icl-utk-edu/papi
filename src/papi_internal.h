@@ -33,18 +33,6 @@
 #define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
 
-/* Mask which indicates the event is a preset- the presets will have 
-   the high bit set to one, as the vendors probably won't use the 
-   higher numbers for the native events */
-/* This causes a problem for signed ints on 64 bit systems, since the
-   'high bit' is no longer the high bit. An alternative is to AND
-   with PRESET_AND_MASK instead of XOR with PRESET_MASK to isolate
-   the event bits. */
-
-#define PRESET_MASK 0x80000000
-#define NATIVE_MASK 0x40000000
-#define PRESET_AND_MASK 0x7FFFFFFF
-
 /* Commands used to compute derived events */
 
 #define NOT_DERIVED      0x0  /* Do nothing */

@@ -9,7 +9,25 @@ are not guaranteed to be present on all platforms.  Please check your
 platform's documentation carefully.
 
 */
+
+/*
+   Masks to indicate the event is a preset- the presets will have 
+   the high bit set to one, as the vendors probably won't use the 
+   higher numbers for the native events 
+   This causes a problem for signed ints on 64 bit systems, since the
+   'high bit' is no longer the high bit. An alternative is to AND
+   with PRESET_AND_MASK instead of XOR with PRESET_MASK to isolate
+   the event bits.
+   Native events for a specific platform can be defined by setting
+   the next-highest bit. This gives PAPI a standardized way of 
+   differentiating native events from preset events for query
+   functions, etc.
+*/
+
 #define PRESET_MASK 0x80000000
+#define NATIVE_MASK 0x40000000
+#define PRESET_AND_MASK 0x7FFFFFFF
+#define NATIVE_AND_MASK 0x3FFFFFFF
 
 #define PAPI_MAX_PRESET_EVENTS 128	  /*The maxmimum number of preset events */
 
