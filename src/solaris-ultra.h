@@ -70,6 +70,39 @@ typedef struct _thread_list {
 
 #include "papi_internal.h"
 
+typedef struct P3_register {
+  unsigned ra_selector;
+  unsigned ra_rank;
+} Ultra_reg_alloc_t;
+
+typedef Ultra_reg_alloc_t hwd_reg_alloc_t;
+/*
+typedef U_reg_alloc_t hwd_reg_alloc_t;
+typedef U_control_start hwd_control_state_t;
+typedef P3_register_t hwd_register_t;
+typedef P3_perfctr_context_t hwd_context_t;
+*/
+
+/* Locks */
+extern rwlock_t lock[PAPI_MAX_LOCK];
+
+#define _papi_hwd_lock_init()	\
+{				\
+}
+
+#define _papi_hwd_lock(lck)     \
+do                              \
+{                               \
+  rw_wrlock(&lock[lck]);        \
+}while(0)
+
+#define _papi_hwd_unlock(lck)   \
+do                              \
+{                               \
+  rw_unlock(&lock[lck]);        \
+}while(0)
+
+
 /* Assembler prototypes */
 
 extern void cpu_sync(void);

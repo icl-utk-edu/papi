@@ -854,23 +854,7 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static rwlock_t lock[PAPI_MAX_LOCK];
-
-void _papi_hwd_lock_init(void)
-{
-}
-
-#define _papi_hwd_lock(lck)	\
-do				\
-{				\
-  rw_wrlock(&lock[lck]);	\
-}while(0)			
-
-#define _papi_hwd_unlock(lck)	\
-do				\
-{				\
-  rw_unlock(&lock[lck]);	\
-}while(0)
+rwlock_t lock[PAPI_MAX_LOCK];
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
