@@ -52,10 +52,10 @@ SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 include Makefile.inc
 
 linux.o: linux.c
-	$(CC) $(CFLAGS) -c linux.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 p3_events.o: p3_events.c
-	$(CC) $(CFLAGS) -c p3_events.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c p3_events.c -o $@
 
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)/usr.lib

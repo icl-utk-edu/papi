@@ -55,10 +55,10 @@ include Makefile.inc
 linux.o: linux.c
 	rm -f $(PERFCTR)/linux/include/asm
 	ln -s asm-${ARCH} $(PERFCTR)/linux/include/asm
-	$(CC) $(CFLAGS) -c linux.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 p3_events.o: p3_events.c
-	$(CC) $(CFLAGS) -c p3_events.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c p3_events.c -o $@
 
 marshal.o global.o misc.o virtual.o x86.o: $(PERFCTR)/usr.lib/libperfctr.a
 	ar x $(PERFCTR)/usr.lib/libperfctr.a

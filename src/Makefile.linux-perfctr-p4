@@ -40,7 +40,6 @@ SHLIB   = libpapi.so
 SUBSTR	= perfctr-p4
 MSUBSTR	= linux-perfctr-p4
 MEMSUBSTR= linux
-#DESCR	= "Linux with PerfCtr 2.4.5 patch for all Pentium IVs"
 DESCR	= "Linux with PerfCtr 2.6.x patch for all Pentium IVs"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
@@ -58,10 +57,10 @@ SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 include Makefile.inc
 
 linux.o: linux.c
-	$(CC) $(CFLAGS) -c linux.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 p4_events.o: p4_events.c p4_events.h
-	$(CC) $(CFLAGS) -c -g p4_events.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c -g p4_events.c -o $@
 
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)/usr.lib
