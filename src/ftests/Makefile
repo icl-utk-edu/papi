@@ -11,11 +11,7 @@ FTEST_DEPENDENCE=$(PAPILIB)
 default: $(TESTS)
 
 ftests_util.o: ftests_util.F
-	if [ $(SUBSTR) = tru64-alpha ]; then $(F77) -g2 -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
-	elif [ $(SUBSTR) = solaris-ultra ]; then $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
-	elif [ $(SUBSTR) = unicos-ev5 ]; then $(F77) -O0 -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
-	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
-	fi
+	$(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;
 
 addAIXevents.o: addAIXevents.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c addAIXevents.c
