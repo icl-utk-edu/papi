@@ -70,13 +70,13 @@
 
 static Threadlist * tlist = NULL;
 
-/* Number of threads that have been signaled */
-
-static int threads_responding = 0;
 
 static unsigned int randomseed;
 
 #ifdef PTHREADS
+/* Number of threads that have been signaled */
+static int threads_responding = 0;
+
 static pthread_once_t mpx_once_control = PTHREAD_ONCE_INIT;
 static pthread_mutex_t tlistlock;
 static pthread_key_t master_events_key;

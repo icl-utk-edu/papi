@@ -1374,7 +1374,6 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   if( overflow_option->threshold != 0)  /* Set an overflow threshold */
     {
       struct sigaction sa;
-      void *tmp;
       int err;
 
       /* Return error if installed signal is set earlier (!=SIG_DFL) and
@@ -1384,6 +1383,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	 name of this signal handler is not exported. So there really
 	 is NO WAY to check if the user has installed a signal. */
       /*
+      void *tmp;
       tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
       if ((tmp != (void *)SIG_DFL) && (tmp != (void *)_papi_hwd_dispatch_timer))
 	return(PAPI_EMISC);

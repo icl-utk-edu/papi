@@ -380,7 +380,6 @@ int _papi_hwi_using_signal = 0;
 
 static int start_timer(int milliseconds)
 {
-  int retval;
   struct sigaction action;
   struct itimerval value;
 
