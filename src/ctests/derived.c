@@ -15,7 +15,7 @@
 #endif
 
 #define QUIETPRINTF if (!TESTS_QUIET) printf
-const static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L2_DCM, 0 };
+unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, 0 };
 const static int PAPI_events_len = 1;
 extern int TESTS_QUIET;
 
@@ -26,10 +26,12 @@ int main(int argc, char **argv)
   int i;
   long_long values;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+  const PAPI_preset_info_t *info = NULL;
 
-#if !defined(i386) || !defined(linux)
+/*#if !defined(i386) || !defined(linux)
   CPP_TEST_SKIP();
 #endif
+*/
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
@@ -47,6 +49,19 @@ int main(int argc, char **argv)
   QUIETPRINTF("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
   QUIETPRINTF("Default granularity is: %d (%s)\n\n",tmp,stringify_granularity(tmp));
+
+  if ((info = PAPI_query_all_events_verbose()) == NULL)
+	test_fail(__FILE__, __LINE__, "PAPI_query_all_events_verbose", 1);
+
+  for(i=0;i<PAPI_MAX_PRESET_EVENTS;i++){
+      if (info[i].flags & PAPI_DERIVED){
+            PAPI_events[0]=info[i].event_code;
+            break;
+      }
+  }
+
+  if(PAPI_events[0]==0)
+      CPP_TEST_SKIP();
 
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
