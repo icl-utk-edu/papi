@@ -16,6 +16,7 @@
 #include <math.h>
 #include <limits.h>
 #include <sys/types.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <asm/system.h>
