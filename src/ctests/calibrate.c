@@ -268,6 +268,13 @@ static void resultline(int i, int j, int TESTS_QUIET)
 	theory = 2;
 	while (j--) theory *= i;	/* theoretical ops   */
 	papi = (int)(flpins) << FMA;
+#if defined(_POWER4)
+/* As of now, POWER4 FLOPS counts floating point operations completed,
+  which includes floating point stores and produces a result that is 50% too high
+  for the FMA counts that this example relies on. This correction compensates...
+*/
+	papi -= (papi/3)+1;
+#endif
 	diff = papi - theory;
 
 	ferror = ((float)abs(diff)) / ((float)theory) * 100;
@@ -277,6 +284,7 @@ static void resultline(int i, int j, int TESTS_QUIET)
 
 	if (ferror > 10 && diff > 8)
 		test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
+
 }
 
 
