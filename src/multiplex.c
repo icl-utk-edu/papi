@@ -85,7 +85,7 @@ static void *global_process_record;
 /* Forward prototypes */
 
 static void mpx_delete_events(MPX_EventSet *);
-static void mpx_insert_events(MPX_EventSet *, int * event_list, int num_events, int domain, int granularity);
+static int mpx_insert_events(MPX_EventSet *, int * event_list, int num_events, int domain, int granularity);
 static void mpx_handler(int signal);
 
 #ifdef _WIN32
@@ -202,7 +202,7 @@ static int mpx_startup_itimer(void)
 	retval = sigaction(SIGVTALRM, &sigact, &oaction);
 	assert(retval == 0);
 
-	retval |= setitimer(ITIMER_VIRTUAL, &itime, NULL);
+	retval = setitimer(ITIMER_VIRTUAL, &itime, NULL);
 	assert(retval == 0);
 	return(retval);
 }
@@ -273,7 +273,7 @@ static MPX_EventSet *mpx_malloc(Threadlist *t)
 int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 {
   MPX_EventSet *newset = *mpx_events;
-  int def_dom, def_grn, alloced_thread = 0;
+  int retval, def_dom, def_grn, alloced_thread = 0, alloced_newset = 0;
   Threadlist *t;
 
   /* Get the global list of threads */
@@ -288,24 +288,26 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
     new_thread:
       t = (Threadlist *)malloc(sizeof(Threadlist));
       if (t == NULL)
-	return(PAPI_ENOMEM);
+	{
+	  _papi_hwd_unlock();
+	  return(PAPI_ENOMEM);
+	}
 
-      /* If we're actually threaded */
+      /* If we're actually threaded, fill the 
+       * field with the thread_id otherwise
+       * use getpid() as a placeholder. */
 
       if (thread_id_fn)
 	{
 #ifdef MPX_DEBUG
-      fprintf(stderr,"New thread at %p\n",t);
+	  fprintf(stderr,"New thread %lu at %p\n",thread_id_fn(),t);
 #endif
-	t->pid = thread_id_fn();
+	  t->pid = thread_id_fn();
 	}
-
-      /* otherwise */
-
-      else
+      else 
 	{
 #ifdef MPX_DEBUG
-	  fprintf(stderr,"New process at %p\n",t);
+	  fprintf(stderr,"New process %d at %p\n",getpid(),t);
 #endif
 	  t->pid = getpid();
 	}
@@ -316,15 +318,17 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
       t->cur_event = NULL;
       t->next = tlist;
       tlist = t;
+#ifdef MPX_DEBUG
+      fprintf(stderr,"New head is at %p(%lu).\n",tlist,tlist->pid);
+#endif
       alloced_thread = 1;
     }
-
-  /* If we are threaded, AND there exists threads in the list, AND we
-     haven't allocated one already, then try to find our thread in
-     the list. */
-
-  if ((thread_id_fn) && (t != NULL) && (alloced_thread == 0))
+  else if (thread_id_fn)
     {
+
+      /* If we are threaded, AND there exists threads in the list, 
+       *  then try to find our thread in the list. */
+
       unsigned long tid = thread_id_fn();
 
       while (t)
@@ -338,6 +342,10 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 	    }
 	  t = t->next;
 	}
+
+      /* Our thread is not in the list, so make a new
+       * thread entry. */
+
       if (t == NULL)
 	{
 #ifdef MPX_DEBUG
@@ -347,6 +355,8 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 	}
     }
 
+  /* Now t & tlist points to our thread, also at the head of the list */
+
   /* Allocate a the MPX_EventSet if necessary */
 
   if (newset == NULL)
@@ -354,14 +364,10 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
       newset = mpx_malloc(t);
       if (newset == NULL)
 	{
-	  if (alloced_thread)
-	    {
-	      tlist = t->next;
-	      free(t);
-	      _papi_hwd_unlock();
-	      return(PAPI_ENOMEM);
-	    }
+	  _papi_hwd_unlock();
+	  return(PAPI_ENOMEM);
 	}
+      alloced_newset = 1;
     }
 
   /* Now we're finished playing with the thread list */
@@ -379,7 +385,15 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
    * the new event set to them, add them to the master list for
      the thread, reset master event list for this thread */
 
-  mpx_insert_events(newset, &EventCode, 1, def_dom, def_grn);
+  retval = mpx_insert_events(newset, &EventCode, 1, def_dom, def_grn);
+  if (retval != PAPI_OK)
+    {
+      if (alloced_newset)
+	{
+	  free(newset);
+	  newset = NULL;
+	}
+    }
 
   mpx_release();
   
@@ -387,7 +401,7 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 
   *mpx_events = newset;
 
-  return(PAPI_OK);
+  return(retval);
 }
 
 int mpx_remove_event(MPX_EventSet **mpx_events, int EventCode)
@@ -417,7 +431,11 @@ static void mpx_handler(int signal)
 #endif
 
 	signal = signal;	/* unused */
-	fprintf(stderr,"%lu\n",thread_id_fn());
+
+#ifdef MPX_DEBUG
+	if (thread_id_fn)
+	  fprintf(stderr,"%lu\n",thread_id_fn());
+#endif
 
 	/* This handler can be invoked either when a timer expires
 	 * or when another thread in this handler responding to the
@@ -1207,7 +1225,7 @@ int mpx_init(int interval)
 
 /* MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
 
-static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
+static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 		int num_events, int domain, int granularity)
 {
 	int i, retval, num_events_success = 0;
@@ -1331,10 +1349,10 @@ static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 		(*head)->mythr = mpx_events->mythr;
 	}
 #ifdef MPX_DEBUG
-	fprintf(stderr,"%d of %d events were added successfully.\n",num_events,num_events_success);
+	fprintf(stderr,"%d of %d events were added.\n",num_events_success,num_events);
 #endif
 	mpx_events->num_events += num_events_success;
-
+	return(retval);
 }
 
 /* Remove revove master events from an mpx event set (and from the
