@@ -6,7 +6,7 @@
 # References
 # ----------
 # [IA32, Volume 3] "Intel Architecture Software Developer's Manual,
-# Volume 3: System Programming Guide". Intel document number 245472-03.
+# Volume 3: System Programming Guide". Intel document number 245472-007.
 # (at http://developer.intel.com/)
 #
 # [Cyrix 6x86MX] "Cyrix 6x86MX Processor".
@@ -118,8 +118,8 @@ include:P5
 2C:CACHE_LINE_SHARING:1
 2D:EMMS_INSTRUCTIONS_EXECUTED:0
 2D:TRANSITIONS_BETWEEN_MMX_AND_FP_INSTRUCTIONS:1
-# note: BUS_UTILIZATION_DUE_TO_PROCESSOR_ACTIVITY is incorrectly
-# labelled as having code 0x2D in [IA32, Volume 3, Table A-7].
+# note: BUS_UTILIZATION_DUE_TO_PROCESSOR_ACTIVITY was incorrectly
+# assigned code 0x2D in earlier revisions of [IA32, Volume 3].
 2E:BUS_UTILIZATION_DUE_TO_PROCESSOR_ACTIVITY:0
 2E:WRITES_TO_NONCACHEABLE_MEMORY:1
 2F:SATURATING_MMX_INSTRUCTIONS_EXECUTED:0
@@ -161,7 +161,7 @@ qualifier:MESI
 # Unit mask EBL: count only self-generated bus transations (0x00), or
 # transations that result from any processor on the bus (0x20).
 qualifier:EBL
-# Events (order here follows [IA32, Volume 3, Table A-6])
+# Events (order here follows [IA32, Volume 3, Table A-7])
 43:DATA_MEM_REFS
 45:DCU_LINES_IN
 46:DCU_M_LINES_IN
@@ -260,7 +260,7 @@ D6:RET_SEG_RENAMES
 
 # Intel PIII
 begin:PIII
-# A strict interpretation of [IA32, Volume 3, Table A-6]
+# A strict interpretation of [IA32, Volume 3, Table A-7]
 # would imply that events 0xB0 and 0xCE are invalid for PIII.
 # For now, ignore the issue.
 include:PII

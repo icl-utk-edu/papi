@@ -17,7 +17,7 @@ static void bug(const char *func, void *callee)
 	printk(KERN_ERR __FILE__ ": BUG! call to __vperfctr_%s "
 	       "from %p, pid %u, '%s' when perfctr module is not loaded\n",
 	       func, callee, current->pid, current->comm);
-	_vperfctr_set_thread(task_thread(current), NULL);
+	task_thread(current)->perfctr = NULL;
 }
 
 static void bug_exit(struct vperfctr *perfctr)

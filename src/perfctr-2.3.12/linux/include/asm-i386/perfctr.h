@@ -23,6 +23,10 @@ struct perfctr_cpu_control {
 	unsigned int pmc_map[18];
 	unsigned int evntsel[18];	/* one per counter, even on P5 */
 	unsigned int evntsel_aux[18];	/* e.g. P4 ESCR contents */
+	struct {
+		unsigned int pebs_enable;	/* for replay tagging */
+		unsigned int pebs_matrix_vert;	/* for replay tagging */
+	} p4;
 	int ireset[18];			/* <= 0, for i-mode counters */
 };
 
@@ -42,7 +46,7 @@ struct perfctr_cpu_state {
 };
 
 /* `struct perfctr_cpu_state' binary layout version number */
-#define PERFCTR_CPU_STATE_MAGIC	0x0200	/* 2.0 */
+#define PERFCTR_CPU_STATE_MAGIC	0x0201	/* 2.1 */
 
 /* cstatus is a re-encoding of control.tsc_on/nractrs/nrictrs
    which should have less overhead in most cases */

@@ -38,9 +38,6 @@ struct vperfctr {
 #endif
 #if PERFCTR_INTERRUPT_SUPPORT
 	unsigned int iresume_cstatus;
-#if 0
-	struct perfctr_ibuf_entry ientry;
-#endif
 #endif
 };
 #define IS_RUNNING(perfctr)	perfctr_cstatus_enabled((perfctr)->state.cpu_state.cstatus)
@@ -159,10 +156,6 @@ static struct vperfctr *get_empty_vperfctr(void)
 	struct vperfctr *perfctr = vperfctr_alloc();
 	if( perfctr ) {
 		perfctr->state.magic = VPERFCTR_MAGIC;
-#if 0
-		perfctr->state.ibuf_offset = offsetof(struct vperfctr, ientry);
-		perfctr->state.ibuf_size = 1;
-#endif
 		atomic_set(&perfctr->count, 1);
 		debug_init(perfctr);
 	}
@@ -229,7 +222,7 @@ static void vperfctr_ihandler(unsigned long pc)
 	unsigned int pmc_mask;
 	siginfo_t si;
 
-	perfctr = _vperfctr_get_thread(task_thread(tsk));
+	perfctr = task_thread(tsk)->perfctr;
 	if( !perfctr ) {
 		printk(KERN_ERR "%s: BUG! pid %d has no vperfctr\n",
 		       __FUNCTION__, tsk->pid);
@@ -255,10 +248,6 @@ static void vperfctr_ihandler(unsigned long pc)
 		vperfctr_resume(perfctr);
 	} else
 		perfctr->state.cpu_state.cstatus = 0;
-#if 0
-	perfctr->ientry.pc = pc;
-	perfctr->ientry.pmc_mask = pmc_mask;
-#endif
 	si.si_signo = perfctr->state.si_signo;
 	si.si_errno = 0;
 	si.si_code = SI_PMC_OVF;
@@ -347,12 +336,10 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct vperfctr_control *argp)
 {
 	struct vperfctr_control control;
 	int err;
-	unsigned int prev_cstatus;
 	unsigned int next_cstatus;
 
 	if( copy_from_user(&control, argp, sizeof control) )
 		return -EFAULT;
-	prev_cstatus = perfctr->state.cpu_state.cstatus;
 	sys_vperfctr_stop(perfctr);
 	err = perfctr_cpu_update_control(&perfctr->state.cpu_state,
 					 &control.cpu_control);
@@ -369,8 +356,7 @@ sys_vperfctr_control(struct vperfctr *perfctr, struct vperfctr_control *argp)
 	 * Clear the perfctr sums and restart the perfctrs.
 	 * Preserve the time-stamp counter's sum if possible.
 	 */
-	if( !perfctr_cstatus_has_tsc(prev_cstatus) ||
-	    !perfctr_cstatus_has_tsc(next_cstatus) )
+	if( !perfctr_cstatus_has_tsc(next_cstatus) )
 		perfctr->state.cpu_state.sum.tsc = 0;
 	memset(&perfctr->state.cpu_state.sum.pmc, 0,
 	       sizeof perfctr->state.cpu_state.sum.pmc);
@@ -405,7 +391,7 @@ static int sys_vperfctr_iresume(struct vperfctr *perfctr)
 /* PRE: perfctr == TASK_VPERFCTR(current) */
 static int sys_vperfctr_unlink(struct vperfctr *perfctr)
 {
-	_vperfctr_set_thread(task_thread(current), NULL);
+	task_thread(current)->perfctr = NULL;
 	__vperfctr_exit(perfctr);
 	return 0;
 }
@@ -463,7 +449,7 @@ static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 		return sys_perfctr_info((struct perfctr_info*)arg);
 	}
 	perfctr = filp->private_data;
-	if( !perfctr || perfctr != _vperfctr_get_thread(task_thread(current)) )
+	if( !perfctr || perfctr != task_thread(current)->perfctr )
 		return -EPERM;
 	switch( cmd ) {
 	case VPERFCTR_CONTROL:
@@ -501,7 +487,7 @@ static int vperfctr_open(struct inode *inode, struct file *filp)
 	tsk = current;
 	if( !proc_pid_inode_denotes_task(inode, tsk) )
 		return -EPERM;
-	perfctr = _vperfctr_get_thread(task_thread(tsk));
+	perfctr = task_thread(tsk)->perfctr;
 	if( filp->f_flags & O_CREAT ) {
 		if( perfctr )
 			return -EEXIST;
@@ -512,8 +498,8 @@ static int vperfctr_open(struct inode *inode, struct file *filp)
 	filp->private_data = perfctr;
 	if( perfctr )
 		atomic_inc(&perfctr->count);
-	if( !_vperfctr_get_thread(task_thread(tsk)) )
-		_vperfctr_set_thread(task_thread(tsk), perfctr);
+	if( !task_thread(tsk)->perfctr )
+		task_thread(tsk)->perfctr = perfctr;
 	return 0;
 }
 

@@ -20,6 +20,7 @@ linuxclean:
 	rm -f linux/drivers/perfctr/*.o
 	rm -f linux/drivers/perfctr/.*.flags
 	rm -f linux/drivers/perfctr/.depend
+	rm -f linux/drivers/perfctr/.*.cmd
 
 clean:	linuxclean
 	$(MAKE) MAKETARGET=clean all-subdirs

@@ -10,6 +10,7 @@ Overview
 This package adds support to the Linux kernel for using the
 Performance-Monitoring Counters (PMCs) found in many modern
 x86-class processors. Supported processors are:
+- The Intel Pentium 4 processor family.
 - All Intel family 5 and 6 processors, i.e. Pentium, Pentium MMX,
   Pentium Pro, Pentium II, and Pentium III, including Celeron
   and Xeon versions.
@@ -17,10 +18,6 @@ x86-class processors. Supported processors are:
 - Cyrix 6x86MX, MII, and III.
 - VIA C3 (Cyrix III).
 - Centaur WinChip C6/2/3.
-
-The Intel Pentium 4 processor is partially supported: basic
-non at-retirement event counting is supported, but tagging,
-cascading, and overflow interrupts are not yet supported.
 
 PMCs are "event counters" capable of recording any of a large
 number of performance-related events during execution.
@@ -65,7 +62,7 @@ The user-space library is accompanied by several example programs
 that illustrate how the driver and the library can be used.
 
 Support for performance-counter overflow interrupts is provided
-for Intel P6 and AMD K7 processors.
+for Intel P4 and P6, and AMD K7 processors.
 
 
 Limitations

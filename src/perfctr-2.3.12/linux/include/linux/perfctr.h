@@ -35,29 +35,20 @@ struct perfctr_info {
 #define PERFCTR_FEATURE_RDTSC	0x02
 #define PERFCTR_FEATURE_PCINT	0x04
 
-struct perfctr_ibuf_entry {
-	unsigned long pc;
-	unsigned int pmc_mask;
-};
-
 /* user's view of mmap:ed virtual perfctr */
 struct vperfctr_state {
 	unsigned int magic;
 	int si_signo;
-	int si_code;	/* XXX: unused, scheduled for removal */
-	unsigned int ibuf_offset;
-	unsigned int ibuf_size;
 	struct perfctr_cpu_state cpu_state;
 };
 
 /* `struct vperfctr_state' binary layout version number */
-#define VPERFCTR_STATE_MAGIC	0x0200	/* 2.0 */
+#define VPERFCTR_STATE_MAGIC	0x0201	/* 2.1 */
 #define VPERFCTR_MAGIC	((VPERFCTR_STATE_MAGIC<<16)|PERFCTR_CPU_STATE_MAGIC)
 
 /* parameter in VPERFCTR_CONTROL command */
 struct vperfctr_control {
 	int si_signo;
-	int si_code;	/* XXX: unused, scheduled for removal */
 	struct perfctr_cpu_control cpu_control;
 };
 
@@ -135,40 +126,17 @@ extern rwlock_t vperfctr_stub_lock;
 #define _vperfctr_sample(x)	__vperfctr_sample((x))
 #endif	/* CONFIG_PERFCTR_MODULE */
 
-#ifdef CONFIG_PERFCTR_DEBUG
-
-extern void _vperfctr_set_thread(struct thread_struct*, struct vperfctr*);
-extern struct vperfctr *__vperfctr_get_thread(const struct thread_struct*,
-					      const char*);
-#define _vperfctr_get_thread(thread) __vperfctr_get_thread((thread),__FUNCTION__)
-
-#else	/* !CONFIG_PERFCTR_DEBUG */
-
-static inline void _vperfctr_set_thread(struct thread_struct *thread,
-					struct vperfctr *perfctr)
-{
-	thread->perfctr = perfctr;
-}
-
-static inline struct vperfctr *
-_vperfctr_get_thread(const struct thread_struct *thread)
-{
-	return thread->perfctr;
-}
-
-#endif	/* CONFIG_PERFCTR_DEBUG */
-
 static inline void perfctr_copy_thread(struct thread_struct *thread)
 {
-	_vperfctr_set_thread(thread, NULL);
+	thread->perfctr = NULL;
 }
 
 static inline void perfctr_exit_thread(struct thread_struct *thread)
 {
 	struct vperfctr *perfctr;
-	perfctr = _vperfctr_get_thread(thread);
+	perfctr = thread->perfctr;
 	if( perfctr ) {
-		_vperfctr_set_thread(thread, NULL);
+		thread->perfctr = NULL;
 		_vperfctr_exit(perfctr);
 	}
 }
@@ -176,7 +144,7 @@ static inline void perfctr_exit_thread(struct thread_struct *thread)
 static inline void perfctr_suspend_thread(struct thread_struct *prev)
 {
 	struct vperfctr *perfctr;
-	perfctr = _vperfctr_get_thread(prev);
+	perfctr = prev->perfctr;
 	if( perfctr )
 		_vperfctr_suspend(perfctr);
 }
@@ -185,7 +153,7 @@ static inline void perfctr_suspend_thread(struct thread_struct *prev)
 static inline void perfctr_resume_thread(struct thread_struct *next)
 {
 	struct vperfctr *perfctr;
-	perfctr = _vperfctr_get_thread(next);
+	perfctr = next->perfctr;
 	if( perfctr )
 		_vperfctr_resume(perfctr);
 }
@@ -194,7 +162,7 @@ static inline void perfctr_sample_thread(struct thread_struct *thread)
 {
 #ifdef CONFIG_SMP
 	struct vperfctr *perfctr;
-	perfctr = _vperfctr_get_thread(thread);
+	perfctr = thread->perfctr;
 	if( perfctr )
 		_vperfctr_sample(perfctr);
 #endif

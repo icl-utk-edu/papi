@@ -290,15 +290,15 @@ static const unsigned short p4_cccr_escr_map_orig[18][8] = {
 			[5] 0x3CC,
 			[6] 0x3E0,
 			[0] 0x3BA,
-			[3] 0x3BC,
-			[2] 0x3BE,
+			[2] 0x3BC,
+			[3] 0x3BE,
 			[1] 0x3CA, },
      [0x0D] {		[4] 0x3B8,
 			[5] 0x3CC,
 			[6] 0x3E0,
 			[0] 0x3BA,
-			[3] 0x3BC,
-			[2] 0x3BE,
+			[2] 0x3BC,
+			[3] 0x3BE,
 			[1] 0x3CA, },
      [0x0E] {		[4] 0x3B9,
 			[5] 0x3CD,
@@ -316,8 +316,8 @@ static const unsigned short p4_cccr_escr_map_orig[18][8] = {
 			[5] 0x3CC,
 			[6] 0x3E0,
 			[0] 0x3BA,
-			[3] 0x3BC,
-			[2] 0x3BE,
+			[2] 0x3BC,
+			[3] 0x3BE,
 			[1] 0x3CA, },
      [0x11] {		[4] 0x3B9,
 			[5] 0x3CD,
@@ -339,7 +339,7 @@ static unsigned int p4_escr_addr_orig(unsigned int pmc, unsigned int escr_select
  * This is the compacted map, derived from the manual's table.
  */
 
-static const unsigned char p4_cccr_escr_map[5][8] = {
+static const unsigned char p4_cccr_escr_map[4][8] = {
 	/* 0x00 and 0x01 as is, 0x02 and 0x03 are +1 */
 	[0x00/4] {	[7] 0xA0,
 			[6] 0xA2,
@@ -359,39 +359,30 @@ static const unsigned char p4_cccr_escr_map[5][8] = {
 			[5] 0xA8,
 			[2] 0xAE,
 			[3] 0xB0, },
-	/* 0x0C, 0x0D, and 0x10 as is */
+	/* 0x0C, 0x0D, and 0x10 as is,
+	   0x0E, 0x0F, and 0x11 are +1 except [3] is not in the domain */
 	[0x0C/4] {	[4] 0xB8,
 			[5] 0xCC,
 			[6] 0xE0,
 			[0] 0xBA,
-			[3] 0xBC,
-			[2] 0xBE,
+			[2] 0xBC,
+			[3] 0xBE,
 			[1] 0xCA, },
-	/* 0x0E, 0x0F, and 0x11 as is */
-	[0x11/4] {	[4] 0xB9,
-			[5] 0xCD,
-			[6] 0xE1,
-			[0] 0xBB,
-			[2] 0xBD,
-			[1] 0xCB, },
 };
 
 static unsigned int p4_escr_addr(unsigned int pmc, unsigned int escr_select)
 {
-	unsigned int pair, index, escr_offset;
+	unsigned int pair, escr_offset;
 
 	if( pmc > 0x11 )
 		return 0;	/* pmc range error */
 	if( pmc > 0x0F )
 		pmc -= 3;	/* 0 <= pmc <= 0x0F */
 	pair = pmc / 2;		/* 0 <= pair <= 7 */
-	index = (pair == 7) ? 4 : (pair / 2);	/* 0 <= index <= 4 */
-	escr_offset = p4_cccr_escr_map[index][escr_select];
-	if( !escr_offset )
+	escr_offset = p4_cccr_escr_map[pair / 2][escr_select];
+	if( !escr_offset || (pair == 7 && escr_select == 3) )
 		return 0;	/* ESCR SELECT range error */
-	if( pair < 6 )
-		escr_offset += (pair & 1);
-	return escr_offset + 0x300;
+	return escr_offset + (pair & 1) + 0x300;
 };
 
 static void check_p4_escr_addr(void)
@@ -434,10 +425,10 @@ static const struct event events[] = {
     { "page_walk_type", 0x01, PMH_ESCR0, PMH_ESCR1 },
     { "BSQ_cache_reference", 0x0C, BSU_ESCR0, BSU_ESCR1 },
     { "IOQ_allocation", 0x03, FSB_ESCR0, -1 },
-    { "IOQ_active_entries", 0x1A, FSB_ESCR1, -1 },	/* XXX: new */
+    { "IOQ_active_entries", 0x1A, FSB_ESCR1, -1 },
     { "FSB_data_activity", 0x17, FSB_ESCR0, FSB_ESCR1 },
     { "BSQ_allocation", 0x05, BSU_ESCR0, -1 },
-    { "bsq_active_entries", 0x06, BSU_ESCR1, -1 },	/* XXX: new, typo */
+    { "bsq_active_entries", 0x06, BSU_ESCR1, -1 },	/* NOTE: typo in manual */
     { "x87_assist", 0x03, CRU_ESCR2, CRU_ESCR3 },
     { "SSE_input_assist", 0x34, FIRM_ESCR0, FIRM_ESCR1 },
     { "packed_SP_uop", 0x08, FIRM_ESCR0, FIRM_ESCR1 },
@@ -449,17 +440,17 @@ static const struct event events[] = {
     { "x87_FP_uop", 0x04, FIRM_ESCR0, FIRM_ESCR1 },
     { "x87_SIMD_moves_uop", 0x2E, FIRM_ESCR0, FIRM_ESCR1 },
     { "machine_clear", 0x02, CRU_ESCR2, CRU_ESCR3 },
-    { "global_power_events", 0x05, FSB_ESCR0, FSB_ESCR1 },	/* XXX: new */
-    { "tc_ms_xfer", 0x05, MS_ESCR0, MS_ESCR1 },		/* XXX: new */
-    { "uop_queue_writes", 0x09, MS_ESCR0, MS_ESCR1 },	/* XXX: new */
+    { "global_power_events", 0x05, FSB_ESCR0, FSB_ESCR1 },
+    { "tc_ms_xfer", 0x05, MS_ESCR0, MS_ESCR1 },
+    { "uop_queue_writes", 0x09, MS_ESCR0, MS_ESCR1 },
     { "front_end_event", 0x08, CRU_ESCR2, CRU_ESCR3 }, /* filters uop_type */
     { "execution_event", 0x0C, CRU_ESCR2, CRU_ESCR3 }, /* filters packed_SP_uop, packed_DP_uop, scalar_SP_uop, scalar_DP_uop, 128bit_MMX_uop, 64bit_MMX_uop, x87_FP_uop, x86_SIMD_moves_uop */
     { "replay_event", 0x09, CRU_ESCR2, CRU_ESCR3 }, /* filters MOB_load_replay, load_port_replay(SAAT_ESCR1), store_port_replay(SAAT_ESCR0), MSR_IA32_PEBS_ENABLE, MSR_PEBS_MATRIX_VERT */
     { "instr_retired", 0x02, CRU_ESCR0, CRU_ESCR1 }, /* seems to be sensitive to tagged uops */
     { "uops_retired", 0x01, CRU_ESCR0, CRU_ESCR1 },
     { "uop_type", 0x02, RAT_ESCR0, RAT_ESCR1 }, /* can tag uops for front_end_event */
-    { "retired_branch_type", 0x04, TBPU_ESCR0, TBPU_ESCR1 },	/* XXX: new, typo */
-    { "retired_mispred_branch_type", 0x05, TBPU_ESCR0, TBPU_ESCR1 }, /* XXX: new */
+    { "retired_mispred_branch_type", 0x05, TBPU_ESCR0, TBPU_ESCR1 },
+    { "retired_branch_type", 0x04, TBPU_ESCR0, TBPU_ESCR1 },
 };
 
 static void do_escr(unsigned int escr_num)

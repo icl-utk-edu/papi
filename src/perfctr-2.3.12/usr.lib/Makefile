@@ -21,6 +21,9 @@ libperfctr.a:	$(OBJS)
 	$(AR) $(ARFLAGS) libperfctr.a $(OBJS)
 	$(RANLIB) libperfctr.a
 
+libperfctr.so:	$(OBJS)
+	$(CC) -shared $(OBJS) -o $@
+
 $(OBJS):	libperfctr.h $(INCLDIR)/linux/perfctr.h $(INCLDIR)/asm/perfctr.h
 event_set.o:	event_codes.h
 
@@ -33,4 +36,4 @@ event_codes.h:	../etc/perfctr-events.tab ../etc/mk-events-h.awk
 distclean realclean:	clean
 
 clean:
-	rm -f libperfctr.a $(OBJS) event_codes.h
+	rm -f libperfctr.a libperfctr.so $(OBJS) event_codes.h

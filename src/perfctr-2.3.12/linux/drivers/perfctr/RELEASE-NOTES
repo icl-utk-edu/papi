@@ -3,6 +3,37 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.3.9, 2002-06-27
+- Updated p4_escr_addr() in x86.c to match the latest revision of
+  Intel's IA32 Volume 3 manual, #245472-007. An error in previous
+  revisions of this document caused the driver to program the wrong
+  ESCR in some cases. (CCCRs 12/13/16 with ESCR_SELECT(2) were mapped
+  to SSU_ESCR0 instead of RAT_ESCR0, affecting the uop_type event.)
+
+Version 2.3.8, 2002-06-26
+- Added counter overflow interrupt support for Intel P4.
+- 2.5.23 dropped smp_num_cpus and cpu_logical_map(). Added
+  temporary workarounds to x86.c and global.c to allow compilation
+  and testing under 2.5. May have to change the API (esp. global's)
+  to be based on the sparse cpu_online_map instead.
+- RedHat's 2.4.9-34 defines cpu_relax(). Updated compat.h.
+- Added pebs_enable and pebs_matrix_vert fields (currently unused)
+  to perfctr_cpu_control to support replay tagging events on P4.
+  Updated the perfctr_cpu_state binary layout magic number.
+- Silenced redefinition warnings for MSR_P6_PERFCTR0 and cpu_has_mmx.
+- Updated Makefile for the 2.5.19 kernel's Makefile changes.
+- Merged the P6 and K7 isuspend/iresume/write_control driver code.
+- Added a VC3 specific clear_counters() procedure.
+- Removed pointless code from perfctr_cpu_identify_overflow().
+- Removed _vperfctr_get/set_thread() wrappers and thread->perfctr
+  clobber checks from the DEBUG code. Removed unused "ibuf" and
+  obsolete si_code fields from vperfctr state and control objects.
+  Updated the vperfctr state magic number.
+- Fixed the CONFIG_PREEMPT anti-dependency check in Config.in.
+- vperfctr_control() now preserves the TSC sum on STOP;CONTROL
+  transitions. The failure to do this caused problems for the
+  PAPI P4 support being developed.
+
 Version 2.3.7, 2002-04-14
 - Kernel 2.5.8-pre3 changed the way APIC/SMP interrupt entries
   are defined. Defining these with asm() in C is no longer

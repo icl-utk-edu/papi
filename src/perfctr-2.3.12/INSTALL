@@ -74,7 +74,7 @@ The recommended kernel build and installation procedure is as follows:
    unpatched one. This is why it is important to distinguish the patched
    kernel via EXTRAVERSION and CONFIG_MODVERSIONS.
 
-4. `make dep modules vmlinux'. This compiles the kernel and its modules.
+4. `make dep vmlinux modules'. This compiles the kernel and its modules.
 
 5. As root, `make modules_install' to install the modules under /lib/modules/.
 

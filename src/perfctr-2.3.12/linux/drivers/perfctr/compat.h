@@ -20,7 +20,7 @@ static inline void rep_nop(void)
 }
 #endif
 
-#if defined(CONFIG_X86) && LINUX_VERSION_CODE < KERNEL_VERSION(2,4,11)
+#if defined(CONFIG_X86) && LINUX_VERSION_CODE < KERNEL_VERSION(2,4,11) && !defined(cpu_relax)
 #define cpu_relax()		rep_nop()
 #endif
 

@@ -11,6 +11,7 @@
 #include <linux/sched.h>
 #include <linux/perfctr.h>
 #include <asm/msr.h>
+#undef MSR_P6_PERFCTR0
 #include "compat.h"
 #include "x86_compat.h"
 #include "x86_tests.h"

@@ -22,7 +22,12 @@ static inline unsigned int read_cr4(void)
 }
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,18)
+
+/* missing from <asm-i386/cpufeature.h> */
+#define cpu_has_msr	boot_cpu_has(X86_FEATURE_MSR)
+
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
 
 /* missing from <asm-i386/processor.h> */
 #define cpu_has_mmx	(test_bit(X86_FEATURE_MMX,  boot_cpu_data.x86_capability))

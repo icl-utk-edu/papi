@@ -1,8 +1,11 @@
 # $Id$
 # Makefile for the Performance-monitoring counters driver.
-#
 
-O_TARGET := kperfctr.o
+# construct various object file lists:
+# kernel-objs-y		kernel objects exporting symbols
+# y-objs-y		kernel objects not exporting symbols
+# m-objs-m		perfctr.o if driver is module, empty otherwise
+# driver-objs-y		objects for perfctr.o module, or empty
 driver-objs-y := init.o
 driver-objs-$(CONFIG_X86) += x86.o
 tests-objs-$(CONFIG_X86) := x86_tests.o
@@ -15,11 +18,20 @@ m-objs-$(CONFIG_PERFCTR) := perfctr.o
 y-objs-$(CONFIG_PERFCTR) := $(driver-objs-y)
 kernel-objs-y += $(stub-objs-m-y)
 
-export-objs := $(kernel-objs-y)
-obj-y := $(kernel-objs-y) $(y-objs-y)
-obj-m := $(m-objs-m)
-list-multi := perfctr.o
-perfctr-objs := $(driver-objs-y)
+export-objs		:= $(kernel-objs-y)
+perfctr-objs		:= $(driver-objs-y)
+obj-m			+= $(m-objs-m)
+
+ifeq ($(VERSION).$(PATCHLEVEL),2.5)
+# for 2.5.19 or later
+obj-$(CONFIG_KPERFCTR)	+= kperfctr.o
+kperfctr-objs		:= $(kernel-objs-y) $(y-objs-y)
+else
+# for 2.4 and 2.2
+O_TARGET		:= kperfctr.o
+obj-y			:= $(kernel-objs-y) $(y-objs-y)
+list-multi		:= perfctr.o
+endif
 
 ifeq ($(VERSION).$(PATCHLEVEL),2.2)
 multi-y		:= $(filter $(list-multi), $(obj-y))
@@ -38,5 +50,7 @@ endif
 
 include $(TOPDIR)/Rules.make
 
+ifneq ($(VERSION).$(PATCHLEVEL),2.5)
 perfctr.o:	$(perfctr-objs)
 	$(LD) -r -o $@ $(perfctr-objs)
+endif

@@ -6,6 +6,35 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.3.9, 2002-06-27
+- Pentium 4 bug fix: An error in older revisions of Intel's IA32
+  Volume 3 manual caused the driver to program the wrong control
+  register in a few cases, affecting uses of the uop_type event.
+  Revision -007 of Intel document #245472 corrects the error,
+  and the driver has been updated accordingly.
+
+Version 2.3.8.1, 2002-06-27
+- Regenerated the patch file for RedHat's 2.4.18-5 kernel. The
+  patch file in 2.3.8 only contained an error message from 'diff'.
+
+Version 2.3.8, 2002-06-26
+- Added counter overflow interrupt support for Intel P4.
+- New kernel support: standard kernels 2.2.21 and 2.4.19-rc1,
+  and RedHat kernels 2.2.19-7.0.16, 2.4.9-34, and 2.4.18-5.
+- API changes: Removed unused and obsolete fields from the vperfctr
+  state and control objects. Added fields to perfctr_cpu_control
+  to enable future support for P4 replay tagging events.
+  Incremented the vperfctr mmap() binary layout magic number.
+- Changed the "make" rule in INSTALL to build "vmlinux" before
+  "modules". This change is needed for RedHat kernels.
+- Added build of a shared (.so) version of the user-space library.
+- When changing a process' vperfctr control data, the TSC sum
+  is now preserved if the next control state includes the TSC.
+  It used to be preserved only if both the previous and next states
+  included the TSC. The difference matters when a running TSC is
+  stopped and then restarted by a STOP;CONTROL command sequence.
+- Driver cleanups. Merged P6 and K7 driver procedures.
+
 Version 2.3.7, 2002-04-14
 - Added Pentium 4 support to examples/perfex/. The full
   syntax of an event specifier is now "evntsel/aux@pmc".

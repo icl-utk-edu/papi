@@ -20,6 +20,12 @@
 #include "compat.h"
 #include "global.h"
 
+/* XXX: broken in 2.5.23+, solution TDB */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,23)
+#define smp_num_cpus		1
+#define cpu_logical_map(i)	(i)
+#endif
+
 static const char this_service[] = __FILE__;
 static int hardware_is_ours = 0;
 static struct timer_list sampling_timer;
@@ -265,7 +271,7 @@ int __init gperfctr_init(void)
 		       -err);
 		return err;
 	}
-	for(i = 0; i < smp_num_cpus; ++i)
+	for(i = 0; i < NR_CPUS; ++i)
 		per_cpu_gperfctr[i].lock = SPIN_LOCK_UNLOCKED;
 	return 0;
 }
