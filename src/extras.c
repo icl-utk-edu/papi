@@ -135,7 +135,7 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
     
   for (i = 0; i < count; i++)
     {
-      offset = profile->prof[i].pr_off;
+      offset = (caddr_t)profile->prof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
 	{
 	  best_index = i;
