@@ -146,7 +146,6 @@ int main(int argc, char **argv)
       maxthr = omp_get_num_threads();
       Thread(1000000 * (omp_get_thread_num()+1));
    }
-#pragma parallel end
    omp_set_num_threads(1);
    Thread(1000000 * (omp_get_thread_num()+1));
    omp_set_num_threads(omp_get_max_threads());
@@ -155,7 +154,6 @@ int main(int argc, char **argv)
       maxthr = omp_get_num_threads();
       Thread(1000000 * (omp_get_thread_num()+1));
    }
-#pragma parallel end
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
