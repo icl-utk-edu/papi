@@ -1,3 +1,6 @@
+#ifndef _PAPI_SOLARIS_ULTRA_H
+#define _PAPI_SOLARIS_ULTRA_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -19,8 +22,6 @@
 #include <syms.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
-
-#include "papi.h"
 
 #define MAX_COUNTERS 2
 #define MAX_COUNTER_TERMS MAX_COUNTERS
@@ -63,8 +64,6 @@ typedef ucontext_t hwd_ucontext_t;
 
 typedef int hwd_context_t;
 
-#include "papi_internal.h"
-
 /* Assembler prototypes */
 
 extern void cpu_sync(void);
@@ -77,3 +76,4 @@ extern rwlock_t lock[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck)   rw_unlock(&lock[lck]);
 
+#endif

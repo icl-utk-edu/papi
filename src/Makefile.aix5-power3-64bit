@@ -35,13 +35,13 @@ MISCOBJS= aix.o power3_events.o
 include Makefile.inc
 
 power3_events.o: power3_events.c  $(HEADERS)
-	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power3_events.c -o power3_events.o
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power3_events.c -o power3_events.o
 
 aix.o: aix.c  $(HEADERS)
-	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 aix-shared: $(SOURCES)
-	$(CC_SHR) $(CFLAGS) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 # Required targets for all platforms.
 

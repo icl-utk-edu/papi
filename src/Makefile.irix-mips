@@ -27,7 +27,7 @@ F77	= f77
 include ./Makefile.inc
 
 svr4.o: svr4.c
-	$(CC) -c svr4.c $(LIBCFLAGS) -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c svr4.c -o $@
 
 native_clean:
 

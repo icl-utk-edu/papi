@@ -36,10 +36,10 @@ MISCOBJS= aix.o power4_events.o
 include Makefile.inc
 
 power4_events.o: power4_events.c  $(HEADERS)
-	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power4_events.c -o power4_events.o
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power4_events.c -o power4_events.o
 
 aix.o: aix.c  $(HEADERS)
-	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+	$(CC) $(LIBCFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 
 native_clean:
