@@ -54,11 +54,9 @@ void init_papi_pthreads(void)
    if(!(strncmp(hw_info->model_string, "AMD K7", 6))) {
       preset_PAPI_events[0] = PAPI_TOT_INS;
    }
-   printf("%s   %s\n", hw_info->vendor_string, hw_info->model_string);
    /* String results can vary, so we're looking at the important portion */
    if(!(strncmp(hw_info->model_string, "UltraSPARC", 10)) && !(strncmp(hw_info->vendor_string, "SUN", 3))) {
       preset_PAPI_events[0] = PAPI_TOT_INS;
-      preset_PAPI_events[2] = PAPI_L1_ICM;
       preset_PAPI_events[3] = PAPI_L2_TCM;
    }
    if(!(strcmp(hw_info->model_string, "Intel Pentium 4")) || !(strcmp(hw_info->model_string, "power4"))) {
