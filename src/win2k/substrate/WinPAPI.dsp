@@ -142,6 +142,10 @@ SOURCE=.\cpuinfo.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\ia32_presets.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\papi.h
 # End Source File
 # Begin Source File
