@@ -142,9 +142,80 @@ int _papi_hwd_add_event(void *machdep, int event)
   if (foo & PRESET_MASK)
     {
       preset = foo ^= PRESET_MASK; 
-      /* lookup preset_map[preset] */
-      /* check if it can be integrated into this state */
-      /* do it */
+      switch (preset_map[preset]->number)
+      { case 0 : return(PAPI_ENOEVNT);
+        case 1 :  
+          if(this_state->number >= 4) return(PAPI_ECNFLCT);
+          this_state->counter_code1 = preset_map[preset]->counter_code1;
+          this_state->number += 4;
+          return 0;
+        case 2 :
+          if((this_state->number == 2) ||
+             (this_state->number == 3) ||
+             (this_state->number == 6) ||
+             (this_state->number == 7)) return(PAPI_ECNFLCT);
+          this_state->counter_code2 = preset_map[preset]->counter_code2;
+          this_state->number += 2;
+          return 0;
+        case 3 :
+          if(this_state->number <= 3) 
+          { this_state->counter_code1 = preset_map[preset]->counter_code1;
+            this_state->number += 4;
+            return 0;
+          }
+          if(this_state->number >= 6) return(PAPI_ECNFLCT);
+          else
+          { this_state->counter_code2 = preset_map[preset]->counter_code2;
+            this_state->number += 2;
+            return 0;
+          }
+        case 4 :
+          if(this_state->number > 1) return(PAPI_ECNFLCT);
+          this_state->counter_code1 = preset_map[preset]->counter_code1;
+          this_state->counter_code2 = preset_map[preset]->counter_code2;
+          this_state->number += 6;
+          return 0;
+        case 5 :
+          if((this_state->number == 0) ||
+             (this_state->number == 2)) 
+          { this_state->counter_code1 = preset_map[preset]->counter_code1;
+            this_state->number += 5;
+            return 0;
+          }
+          else return(PAPI_ECNFLCT);
+        case 6 :
+          if((this_state->number == 0) ||
+             (this_state->number == 4))
+          { this_state->counter_code2 = preset_map[preset]->counter_code2;
+            this_state->number += 3;
+            return 0;
+          }
+          else return(PAPI_ECNFLCT);
+        case 7 :
+          if(this_state->number == 0) 
+          { this_state->counter_code1 = preset_map[preset]->counter_code1;
+            this_state->counter_code2 = preset_map[preset]->counter_code2;
+            this_state->number += 7;
+            return 0;
+          }
+          else return(PAPI_ECNFLCT);
+        case 8 :
+          if((this_state->number == 0) ||
+             (this_state->number == 2))
+          { this_state->counter_code1 = preset_map[preset]->counter_code1;
+            this_state->number += 5;
+            return 0;
+          }
+          if(this_state->number == 4) 
+          { this_state->counter_code2 = preset_map[preset]->counter_code2;
+            this_state->number += 3;
+            return 0;
+          }
+          else return(PAPI_ECNFLCT);
+        case 9 :
+          if(this_state->number % 2) return(PAPI_ECNFLCT);
+          this_state->number += 1;
+          return 0; 
     }
   else
     {
