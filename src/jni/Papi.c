@@ -264,21 +264,43 @@ JNIEXPORT jint JNICALL Java_PapiJ_create_1eventset
   int ret, eventSet, (*create_eventset)(int *);
   jfieldID fid;
   jclass class;
-
-  if( ! (create_eventset = getPapiFunction("PAPI_create_eventset")) )
+  if( ! (create_eventset = getPapiFunction("PAPI_create_eventset")) ){
     return -1;
+  }
+  class = (*env)->GetObjectClass(env, set);
 
+  fid = (*env)->GetFieldID(env, class, "set", "I");
+
+  eventSet = PAPI_NULL;
+  /*eventSet = (*env)->GetIntField(env, set, fid);*/
+
+  ret = (*create_eventset)(&eventSet);
+
+  (*env)->SetIntField(env, set, fid, eventSet);
+
+ return ret;
+}
+
+JNIEXPORT jint JNICALL Java_PapiJ_num_1events
+  (JNIEnv *env, jobject obj, jobject set)
+{
+  int ret, eventSet, (*num_events)(int);
+  jfieldID fid;
+  jclass class;
+  if( ! (num_events = getPapiFunction("PAPI_num_events")) ){
+    return -1;
+  }
   class = (*env)->GetObjectClass(env, set);
 
   fid = (*env)->GetFieldID(env, class, "set", "I");
 
   eventSet = (*env)->GetIntField(env, set, fid);
 
-  ret = (*create_eventset)(&eventSet);
+  ret = (*num_events)(eventSet);
 
   (*env)->SetIntField(env, set, fid, eventSet);
 
-  return ret;
+ return ret;
 }
 
 JNIEXPORT jint JNICALL Java_PapiJ_destroy_1eventset
