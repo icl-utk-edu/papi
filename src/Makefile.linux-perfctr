@@ -1,11 +1,12 @@
 SUBSTR  = linux-2.4-x86
-DESCR	= "Patched linux 2.4 with any Intel Compatible Processor"
+DESCR	= "Patched linux 2.4 with Pentium Pro, II or III"
 LIBS	= static shared
 TARGETS = serial pthreads
 
 FOR_USED= -DFORTRANDOUBLEUNDERSCORE
-CFLAGS  = -Wall -Ilibperfctr 
+CFLAGS  = -Wall -Ilibperfctr
 OPTFLAGS= -O6 -mpentiumpro -DNDEBUG
+# -g -DDEBUG
 CC_SHR  = gcc -shared
 CC_R	= gcc
 CC	= gcc

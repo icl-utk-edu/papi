@@ -22,6 +22,10 @@
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
+/********************/
+/* BEGIN PROTOTYPES */
+/********************/
+
 /* Utility functions */
 
 static int expand_dynamic_array(DynamicArray *);
@@ -41,21 +45,33 @@ static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout);
 static int get_free_EventCodeIndex(EventSetInfo *ESI, int EventCode);
 static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode);
 static int remove_event(EventSetInfo *ESI, int EventCode);
+static int default_error_handler(int errorCode);
 
-/* Global variables that may be modified by any thread */
+/********************/
+/*  END PROTOTYPES  */
+/********************/
+
+/********************/
+/*  BEGIN GLOBALS   */ 
+/********************/
 
 #define PAPI_EVENTSET_MAP (&_papi_system_info.global_eventset_map)
-
-EventSetInfo *default_master_eventset = NULL; /* For non threaded apps */
-
-static int PAPI_ERR_LEVEL = PAPI_QUIET; /* Behavior of handle_error() */
-static PAPI_debug_handler_t PAPI_ERR_HANDLER = NULL;
-
+EventSetInfo *default_master_eventset = NULL; 
 unsigned long int (*thread_id_fn)(void) = NULL;
-
 #ifdef DEBUG
 int papi_debug = 0;
 #endif
+
+/********************/
+/*    END GLOBALS   */
+/********************/
+
+/********************/
+/*  BEGIN LOCALS    */ 
+/********************/
+
+static int PAPI_ERR_LEVEL = PAPI_QUIET; /* Behavior of handle_error() */
+static PAPI_debug_handler_t PAPI_ERR_HANDLER = default_error_handler;
 
 /* Our informative table */
 
@@ -166,8 +182,7 @@ static PAPI_preset_info_t papi_presets[PAPI_MAX_PRESET_EVENTS] = {
   { "PAPI_FNV_INS", PAPI_FNV_INS, "Floating point inverse instructions", 0, NULL, 0 },
 };
 
-#ifdef DEBUG
-static char *papi_errNam[PAPI_NUM_ERRORS] = {
+const char *papi_errNam[PAPI_NUM_ERRORS] = {
   "PAPI_OK",
   "PAPI_EINVAL",
   "PAPI_ENOMEM",
@@ -184,9 +199,8 @@ static char *papi_errNam[PAPI_NUM_ERRORS] = {
   "PAPI_ENOCNTR",
   "PAPI_EMISC" 
 };
-#endif
 
-static char *papi_errStr[PAPI_NUM_ERRORS] = {
+const char *papi_errStr[PAPI_NUM_ERRORS] = {
   "No error",
   "Invalid argument",
   "Insufficient memory",
@@ -204,10 +218,13 @@ static char *papi_errStr[PAPI_NUM_ERRORS] = {
   "Unknown error code"
 };
 
+/********************/
+/*    END LOCALS    */ 
+/********************/
+
 /* Utility functions */
 
-#ifdef DEBUG
-static int handle_error(int errorCode)
+static int default_error_handler(int errorCode)
 {
   if (errorCode == PAPI_OK)
     return(errorCode);
@@ -231,7 +248,6 @@ static int handle_error(int errorCode)
       abort();
     }
 }
-#endif
 
 static int allocate_eventset_map(DynamicArray *map)
 {
@@ -1310,13 +1326,13 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
       }
     case PAPI_SET_INHERIT:
       {
-	EventSetInfo *tmp;
-	if (ptr->inherit.thread_handle == NULL)
-	  tmp = default_master_eventset;
-	else
-	  tmp = ptr->inherit.thread_handle;
+	EventSetInfo *tmp = _papi_hwi_lookup_in_master_list();
+	if (tmp == NULL)
+	  return(PAPI_EINVAL);
 
         internal.inherit.inherit = ptr->inherit.inherit;
+	internal.inherit.master = tmp;
+
         retval = _papi_hwd_ctl(tmp, PAPI_SET_INHERIT, &internal);
         if (retval < PAPI_OK)
           return(retval);
@@ -1333,6 +1349,10 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 { 
   switch(option)
     {
+    case PAPI_GET_PRELOAD:
+      strncpy(ptr->preload.lib_preload_env,_papi_system_info.exe_info.lib_preload_env,
+	      PAPI_MAX_STR_LEN);
+      break;
     case PAPI_GET_DEBUG:
       ptr->debug.level = PAPI_ERR_LEVEL;
       ptr->debug.handler = PAPI_ERR_HANDLER;
@@ -1346,13 +1366,14 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
     case PAPI_GET_DEFGRN:
       return(_papi_system_info.default_granularity);
     case PAPI_GET_INHERIT:
-      if (ptr->inherit.thread_handle == NULL)
-	return(default_master_eventset->inherit.inherit); 
-      else
-	{
-	  EventSetInfo *tmp = (EventSetInfo *)ptr->inherit.thread_handle;
-	  return(tmp->inherit.inherit);
-	}
+      {
+	EventSetInfo *tmp;
+	tmp = _papi_hwi_lookup_in_master_list();
+	if (tmp == NULL)
+	  return(PAPI_EINVAL);
+	
+	return(tmp->inherit.inherit); 
+      }
     case PAPI_GET_EXEINFO:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
@@ -1407,7 +1428,7 @@ char *PAPI_strerror(int errorCode)
   if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
     return(NULL);
     
-  return(papi_errStr[-errorCode]);
+  return((char *)papi_errStr[-errorCode]);
 }
 
 int PAPI_perror(int code, char *destination, int length)

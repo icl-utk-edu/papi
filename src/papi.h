@@ -155,14 +155,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_INIT_SLOTS  64     /*Number of initialized slots in
                                 DynamicArray of EventSets */
 
-#define PAPI_ERROR	 123  /*Exit code for PerfAPI executables that have 
-				PAPI_VERB_ESTOP option set*/
-
-
-#define PAPI_MAX_ERRMS   16   /*Number of internal error messages.*/
-
-#define PAPI_MAX_ERROR   10   /*Highest number of defined error messages.*/ 	
-
 #define PAPI_GET_CLOCKRATE  	70 /* Clock rate in MHz */  
 
 #define PAPI_GET_MAX_HWCTRS 	71 /* Number of physical hardware counters */
@@ -201,7 +193,6 @@ typedef struct _papi_sprofil {
   unsigned pr_scale;  /* pc scaling */ } PAPI_sprofil_t;
 
 typedef struct _papi_inherit_option {
-  void *thread_handle;
   int inherit; } PAPI_inherit_option_t;
 
 typedef struct _papi_domain_option {
@@ -212,7 +203,11 @@ typedef struct _papi_granularity_option {
   int eventset;
   int granularity; } PAPI_granularity_option_t;
 
-typedef void (*PAPI_debug_handler_t)(int level, int num, char **params);
+typedef struct _papi_preload_option {
+  char lib_preload_env[PAPI_MAX_STR_LEN];    /* Model string of CPU */
+} PAPI_preload_option_t;
+
+typedef int (*PAPI_debug_handler_t)(int code);
   
 typedef struct _papi_debug_option {
   int level;
@@ -246,6 +241,7 @@ typedef struct _papi_hw_info {
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
 typedef union {
+  PAPI_preload_option_t preload;
   PAPI_debug_option_t debug;
   PAPI_inherit_option_t inherit;
   PAPI_granularity_option_t granularity; 
@@ -272,7 +268,6 @@ int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
 int PAPI_cleanup_eventset(int *EventSet);
 int PAPI_create_eventset(int *EventSet);
-int PAPI_create_eventset_r(int *EventSet, void *handle);
 int PAPI_destroy_eventset(int *EventSet);
 const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);

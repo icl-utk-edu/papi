@@ -7,6 +7,7 @@ int add_test_events(int *number, int *mask);
 int add_test_events_r(int *number, int *mask, void *handle);
 void remove_test_events(int *EventSet, int mask);
 void do_flops(int n);
+void do_reads(int n);
 void do_both(int n);
 void do_l1misses(int n);
 char *stringify_domain(int domain);

@@ -1,10 +1,14 @@
-/* This file contains portable routines to do things that we wish the
-vendors did in the kernel extensions or performance libraries. This includes
-the following:
+/* 
+* File:    extras.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
 
-1) Handle overflow in < 64 bit hardware registers (not yet)
-2) Software overflow callbacks to user functions (for prof-like functions)
-3) Software multiplexing (like perfex -a) (not yet) */
+/* This file contains portable routines to do things that we wish the
+vendors did in the kernel extensions or performance libraries. */
 
 #include <stdio.h>
 #include <malloc.h>
@@ -38,8 +42,8 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t *prof, unsigned s
 
   if (address >= prof->pr_size)
     {
-      (*outside_bin)++;
-      DBG((stderr,"outside bucket = %u\n",*outside_bin));
+      *outside_bin = *outside_bin + 1;
+      DBG((stderr,"outside bucket at %p = %u\n",outside_bin,*outside_bin));
       return;
     }
 
@@ -89,7 +93,7 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   EventSetProfileInfo_t *profile = &ESI->profile;
   unsigned long pc;
   unsigned offset = 0;
-  unsigned count;
+  int count;
   unsigned best_offset = 0;
   int best_index = -1;
   unsigned short overflow_dummy;
@@ -99,11 +103,11 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   pc = (unsigned long)_papi_hwd_get_overflow_address(context);
   DBG((stderr,"handled at 0x%lx\n",pc));
 
-  count = profile->count - 1;
-  if ((profile->prof[count].pr_off == 0) &&
-      (profile->prof[count].pr_scale == 0x2))
+  count = profile->count;
+  if ((profile->prof[count-1].pr_off == 0) &&
+      (profile->prof[count-1].pr_scale == 0x2))
     {
-      overflow_bin = profile->prof[count].pr_base;
+      overflow_bin = profile->prof[count-1].pr_base;
       count--;
     }
   else
@@ -114,12 +118,15 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   for (i = 0; i < count; i++)
     {
       offset = profile->prof[i].pr_off;
-      if ((pc < offset) && (offset > best_offset))
+      if ((offset < pc) && (offset > best_offset))
 	{
 	  best_index = i;
 	  best_offset = offset;
 	}
     }
+
+  if (best_index == -1)
+    best_index = 0;
 
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }

@@ -1,3 +1,15 @@
+/* 
+* File:    papi_hl.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+/* This file contains the 'high level' interface to PAPI. 
+   BASIC is a high level language. ;-) */
+
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>

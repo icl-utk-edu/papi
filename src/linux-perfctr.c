@@ -370,11 +370,10 @@ inline static void counter_event_copy(const struct perfctr_control *a, struct pe
 inline static int update_global_hwcounters(EventSetInfo *global)
 {
   hwd_control_state_t *machdep = global->machdep;
-  struct perfctr_control *control = &machdep->counter_cmd;
   struct vperfctr_state state;
   int i;
 
-  if (perfctr_read_self(&state) < 0)
+  if (perfctr_read_self(&state) < 0) // (&machdep->self,
     return(PAPI_ESYS);
   
   for (i=0;i<_papi_system_info.num_cntrs;i++)
@@ -385,7 +384,7 @@ inline static int update_global_hwcounters(EventSetInfo *global)
       global->hw_start[i] = global->hw_start[i] + state.sum.ctr[i+1];
     }
 
-  if (perfctr_control_self(control) < 0)
+  if (perfctr_control_self(&machdep->counter_cmd) < 0) // &machdep->self, 
     return(PAPI_ESYS);
 
   return(PAPI_OK);
@@ -490,10 +489,14 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_init(EventSetInfo *zero)
 {
+  // hwd_control_state_t *machdep = zero->machdep;
+  
   /* Initialize our global machdep. */
 
-  if (perfctr_attach_rdwr_self() < 0)
+  if (perfctr_attach_rdwr_self() < 0) // simple(0, NULL, 1, &machdep->self)
     return(PAPI_ESYS);
+
+  /* Initialize the event fields */
 
   init_config(zero->machdep);
 
@@ -714,7 +717,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 #ifdef DEBUG
       dump_cmd(&current_state->counter_cmd);
 #endif
-      if (perfctr_control_self(&current_state->counter_cmd) < 0)
+      if (perfctr_control_self(&current_state->counter_cmd) < 0) // &current_state->self, 
 	return(PAPI_ESYS);
       
       return(PAPI_OK);
@@ -998,7 +1001,8 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
-  perfctr_close_self();
+  // hwd_control_state_t *machdep = global->machdep;
+  perfctr_close_self(); // (&machdep->self);
   return(PAPI_OK);
 }
 

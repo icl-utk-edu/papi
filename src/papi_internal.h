@@ -4,7 +4,8 @@
 #else
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #endif
-#define papi_return(a) return(handle_error(a))
+extern PAPI_debug_handler_t PAPI_ERR_HANDLER;
+#define papi_return(a) return(PAPI_ERR_HANDLER(a))
 #else
 #define DBG(a)
 #define papi_return(a) return(a)
@@ -16,14 +17,13 @@
 
 /* Signal used for overflow delivery */
 
-#define PAPI_ITIMER ITIMER_VIRTUAL
-#define PAPI_SIGNAL SIGVTALRM
+#if defined(sun) && defined(sparc)
+#define PAPI_ITIMER ITIMER_REALPROF
+#else
+#define PAPI_ITIMER ITIMER_PROF
+#endif
+#define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
-
-/* Number of preset events - more than we will probably ever need, 
-   currently the draft has only 25 */
-
-#define MAX_PRESET_EVENTS 64
 
 /* Mask which indicates the event is a preset- the presets will have 
    the high bit set to one, as the vendors probably won't use the 
@@ -161,6 +161,7 @@ typedef struct _papi_int_profile {
   EventSetProfileInfo_t profile; } _papi_int_profile_t;
 
 typedef struct _papi_int_inherit {
+  EventSetInfo *master;
   int inherit; } _papi_int_inherit_t;
 
 typedef union _papi_int_option_t {

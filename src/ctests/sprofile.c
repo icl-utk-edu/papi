@@ -1,22 +1,7 @@
 #define NUM 1000
-#define THR 10000
+#define THR 100000
 
-/* This file performs the following test: profiling and program info option call
-
-   - This tests the SVR4 profiling interface of PAPI. These are counted 
-   in the default counting domain and default granularity, depending on 
-   the platform. Usually this is the user domain (PAPI_DOM_USER) and 
-   thread context (PAPI_GRN_THR).
-
-     The Eventset contains:
-     + PAPI_FP_INS (to profile)
-     + PAPI_TOT_CYC
-
-   - Set up profile
-   - Start eventset 1
-   - Do flops
-   - Stop eventset 1
-*/
+/* This file performs the following test: sprofile */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -32,11 +17,11 @@
 
 int main(int argc, char **argv) 
 {
-  int num_events, num_tests = 6, mask = 0x5;
+  int i, num_events, num_tests = 6, mask = 0x1;
   int EventSet = PAPI_NULL;
   unsigned short *profbuf;
   unsigned short *profbuf2;
-  unsigned short profbuf3;
+  unsigned short *profbuf3;
   unsigned long length;
   caddr_t start, end;
   long long **values;
@@ -60,33 +45,39 @@ int main(int argc, char **argv)
   assert(profbuf2 != NULL);
   memset(profbuf2,0x00,length/2*sizeof(unsigned short));
 
+  profbuf3 = (unsigned short *)malloc(1*sizeof(unsigned short));
+  assert(profbuf3 != NULL);
+  memset(profbuf3,0x00,1*sizeof(unsigned short));
+
   /* First half */
   sprof[0].pr_base = profbuf;
   sprof[0].pr_size = length/2;
-  sprof[0].pr_off = (unsigned long)start;
+  sprof[0].pr_off = (unsigned long)do_flops;
   sprof[0].pr_scale = 65536;
   /* Second half */
-  sprof[0].pr_base = profbuf2;
-  sprof[0].pr_size = length/2;
-  sprof[0].pr_off = (unsigned long)(start+length/2);
-  sprof[0].pr_scale = 65536;
+  sprof[1].pr_base = profbuf2;
+  sprof[1].pr_size = length/2;
+  sprof[1].pr_off = (unsigned long)do_reads;
+  sprof[1].pr_scale = 65536;
   /* Overflow bin */
-  sprof[0].pr_base = &profbuf3;
-  sprof[0].pr_size = 1;
-  sprof[0].pr_off = 0;
-  sprof[0].pr_scale = 0x2;
+  sprof[2].pr_base = profbuf3;
+  sprof[2].pr_size = 1;
+  sprof[2].pr_off = 0;
+  sprof[2].pr_scale = 0x2;
 
   EventSet = add_test_events(&num_events,&mask);
 
   values = allocate_test_space(num_tests, num_events);
 
-  assert(mask & 0x4);
-
-  assert(PAPI_sprofil(sprof, 1, EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX) >= PAPI_OK);
+  assert(PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THR, PAPI_PROFIL_POSIX) >= PAPI_OK);
 
   assert(PAPI_start(EventSet) >= PAPI_OK);
 
-  do_both(NUM);
+  for (i=0;i<NUM;i++)
+    {
+      do_flops(100000);
+      do_reads(1000);
+    }
 
   assert(PAPI_stop(EventSet, values[1]) >= PAPI_OK);
 
@@ -96,5 +87,21 @@ int main(int argc, char **argv)
 
   PAPI_shutdown();
 
+  printf("Test case: PAPI_sprofil()\n");
+  printf("---------Buffer 1--------\n");
+  for (i=0;i<length/2;i++)
+    {
+      if (profbuf[i])
+	printf("0x%x\t%d\n",(unsigned int)do_flops + 2*i,profbuf[i]);
+    }
+  printf("---------Buffer 2--------\n");
+  for (i=0;i<length/2;i++)
+    {
+      if (profbuf2[i])
+	printf("0x%x\t%d\n",(unsigned int)do_reads + 2*i,profbuf2[i]);
+    }
+  printf("-------------------------\n");
+  printf("%u samples that fell outside the regions.\n",*profbuf3);
   exit(0);
 }
+
