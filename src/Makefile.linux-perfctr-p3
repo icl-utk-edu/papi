@@ -1,7 +1,7 @@
-OPTFLAGS= -O3 -g -Wall -march=pentiumpro
-TOPTFLAGS= -O -g -Wall -march=pentiumpro
+OPTFLAGS= -O3 -Wall -march=pentiumpro
+TOPTFLAGS= -O -Wall -march=pentiumpro
 F77	= g77
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-include Makefile.perfctr-2.6.x
-# include Makefile.perfctr-2.4.x
+include Rules.perfctr-2.6.x
+# include Rules.perfctr-2.4.x

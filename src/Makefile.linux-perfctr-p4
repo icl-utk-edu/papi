@@ -3,16 +3,17 @@
 # and add -DPERFCTR25 to CFLAGS in line 51.
 #
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR = ./perfctr-2.4.x
-# PERFCTR = ./perfctr-2.6.x
+# PERFCTR = ./perfctr-2.4.x
+PERFCTR = ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -O3 -g -Wall -march=pentiumpro -DDEBUG
-TOPTFLAGS= -O -g -Wall -march=pentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
+OPTFLAGS= -Wall -O3 -march=pentiumpro -DPERFCTR26
+# -DPERFCTR26 -DDEBUG
+TOPTFLAGS= -O -march=pentiumpro -DPENTIUM4
 #
 # GNU G77 section
 #
 F77   = g77
-FFLAGS        = -Dlinux
+FFLAGS        = -Dlinux -Wall
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 # #
@@ -47,7 +48,7 @@ TARGETS = serial multiplex_and_pthreads
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DDEBUG
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I.
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER -DPERFCTR25
 MISCSRCS= linux.c p4_events.c
 MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p4_events.o
@@ -60,7 +61,7 @@ linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 p4_events.o: p4_events.c p4_events.h
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c -g p4_events.c -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c p4_events.c -o $@
 
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)/usr.lib

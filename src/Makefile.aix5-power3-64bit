@@ -11,17 +11,17 @@ SHLIBDEPS = $(PMAPI)/lib -lpmapi
 
 # Default source is for pmapi 1.5.x and above.
 
-FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qenum=4 -q64 -qlanglvl=extended 
-CFLAGS  = $(FLAGS) -DNO_VARARG_MACRO -DPOWER3
+FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -q64
+CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3
+ARG64	= -X64
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS= -qnostdinc
 FFLAGS  = $(FLAGS) -WF,-DPOWER3
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(FOPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L$(PMAPI)/lib -lpmapi
-ARG64= -X64  
 CC_R    = xlc_r
 CC      = xlc
 CC_SHR  = xlc -G
@@ -41,7 +41,7 @@ aix.o: aix.c  $(HEADERS)
 	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 aix-shared: $(SOURCES)
-	$(CC_SHR) $(CFLAGS) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
+	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 # Required targets for all platforms.
 

@@ -1,6 +1,6 @@
-OPTFLAGS= -g -Wall -O3
-TOPTFLAGS= -g -Wall -O1 -D__x86_64__
+OPTFLAGS= -Wall -O3
+TOPTFLAGS= -Wall -O -D__x86_64__
 F77	= g77 gcc
 CC      = gcc
 CC_SHR  = $(CC) -shared -fPIC -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
-include Makefile.perfctr-2.6.x
+include Rules.perfctr-2.6.x

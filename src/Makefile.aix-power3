@@ -15,11 +15,11 @@ FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=pwr3
 CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
-NOOPT	= -g
-TOPTFLAGS= -g 
+NOOPT	= 
+TOPTFLAGS= 
 FFLAGS	= $(FLAGS) -WF,-DPOWER3
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(FOPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi

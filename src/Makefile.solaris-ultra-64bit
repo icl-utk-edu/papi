@@ -1,5 +1,5 @@
-LIBRARY	=libpapi.a
-SHLIB	=libpapi.so
+LIBRARY	=libpapi64.a
+SHLIB	=libpapi64.so
 SUBSTR  = solaris-ultra
 MSUBSTR  = solaris-ultra
 MEMSUBSTR= solaris
@@ -22,7 +22,7 @@ F77		= f90
 FFLAGS		= $(CFLAGS)
 TOPTFLAGS	= 
 NOOPT		= -xO0 
-OPTFLAGS	= -fast -mt
+OPTFLAGS	= -fast -xarch=v9 -xtarget=ultra
 #for 64-bit use:
 #OPTFLAGS = -fast -xarch=v9
 #
