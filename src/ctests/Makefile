@@ -2,7 +2,7 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads 
-MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx
+MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SERIAL  = overflow_twoevents profile_twoevents earprofile branchprofile zero profile overflow avail branches dmem_info all_events derived high-level2 describe mem_info  \
@@ -47,9 +47,6 @@ sdsc2-mpx-noreset: sdsc2.c $(PAPILIB) $(UTILOBJS)
 
 sdsc-mpx: sdsc.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@
-
-sdsc3-mpx: sdsc3.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc3.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 sdsc4-mpx: sdsc4.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc4.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
