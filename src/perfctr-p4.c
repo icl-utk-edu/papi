@@ -478,11 +478,12 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
    dst->ra_selector = (1 << ctr);
    dst->ra_rank = 1;
    /* Pentium 4 requires that both an escr and a counter are selected.
-      Find which counter mask contains this counter and set its escr */
+      Find which counter mask contains this counter.
+      Set the opposite escr to empty (-1) */
    if (dst->ra_bits.counter[0] & dst->ra_selector)
-      dst->ra_escr[0] = dst->ra_bits.escr[0];
+      dst->ra_escr[1] = -1;
    else
-      dst->ra_escr[1] = dst->ra_bits.escr[1];
+      dst->ra_escr[0] = -1;
 }
 
 /* This function examines the event to determine
@@ -503,8 +504,8 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
    /* Pentium 4 needs to check for conflict of both counters and esc registers */
    return ((dst->ra_selector & src->ra_selector)
-           || (dst->ra_escr[0] == src->ra_escr[0])
-           || (dst->ra_escr[1] == src->ra_escr[1]));
+           || ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1))
+           || ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)));
 }
 
 /* This function removes shared resources available to the src event
@@ -526,13 +527,17 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 #endif
 
    /* remove counters referenced by any shared escrs */
-   if (dst->ra_escr[0] == src->ra_escr[0])
+   if ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1)) {
       dst->ra_selector ^= dst->ra_bits.counter[0];
-   if (dst->ra_escr[1] == src->ra_escr[1])
+      dst->ra_escr[0] = -1;
+   }
+   if ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)) {
       dst->ra_selector ^= dst->ra_bits.counter[1];
+      dst->ra_escr[1] = -1;
+   }
 
    /* remove any remaining shared counters */
-   shared = dst->ra_selector & src->ra_selector;
+   shared = (dst->ra_selector & src->ra_selector);
    if (shared)
       dst->ra_selector ^= shared;
 
@@ -587,6 +592,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
             e->ra_rank++;
          }
       }
+
       /* set the bits for the two esc registers this event can live on */
       e->ra_escr[0] = e->ra_bits.escr[0];
       e->ra_escr[1] = e->ra_bits.escr[1];
