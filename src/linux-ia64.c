@@ -12,13 +12,12 @@
 */
 
 
-
+#include "papi.h"
 #include SUBSTRATE
-#include "papi_protos.h"
-#include "pfmwrap.h"
 #include "papi_internal.h"
+#include "papi_protos.h"
 #include "papi_preset.h"
-int papi_debug;
+#include "pfmwrap.h"
 
 #ifndef ITANIUM2
 static itanium_preset_search_t ia_preset_search_map[] = {
@@ -373,7 +372,7 @@ int _papi_hwd_init_global(void)
 
    memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
-   if (papi_debug) {
+   if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
       pfmlib_options.pfm_debug = 1;
       pfmlib_options.pfm_verbose = 1;
    }
@@ -1038,41 +1037,37 @@ static void ia64_dispatch_sigprof(int n, struct siginfo * info, struct sigcontex
 {
    _papi_hwi_context_t ctx;
    pfm_msg_t msg;
-   int fd = info->si_fd;
-   int retval;
-     
+   int *fd = NULL , ret;
+
    ctx.si = info;
    ctx.ucontext = sc;
+   _papi_hwi_get_thr_context((void **)&fd);
+/*
+   printf("Notified\n");
+   printf("fd =%d  info->si_fd=%d \n", *fd, info->si_fd);
+   if (*fd != info->si_fd) {
+      fprintf(stderr,"handler does not get valid file descriptor\n");
+      abort();
+   }
+*/
+   ret = read(*fd, &msg, sizeof(msg));
+   if (ret != sizeof(msg)) {
+      fprintf(stderr,"cannot read overflow message: %s\n", strerror(errno));
+      abort();
+   }
 
-   printf("FD %d\n",info->si_fd);
-   retval = read(fd, &msg, sizeof(msg));
-   if (retval == -1)
-     {
-       fprintf(stderr, "%s:%d: cannot read overflow message: %s\n",
-	       __FILE__, __LINE__,strerror(errno));
-       return;
-     }
-   if (retval != sizeof(msg))
-     {
-       fprintf(stderr, "%s:%d: short message on file descriptor: %d vs. %d\n",
-	       __FILE__, __LINE__, retval,(int)sizeof(msg));
-       return;
-     }
-   if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL) 
-     {
-       fprintf(stderr,"%s:%d: unexpected msg type: %d\n",__FILE__,__LINE__,msg.pfm_gen_msg.msg_type);
-       return;
-     }
-
+   if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL) {
+      fprintf(stderr,"unexpected msg type: %d\n",msg.pfm_gen_msg.msg_type);
+   }
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
           _papi_hwi_system_info.supports_hw_overflow, 
           msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0);
+   if (pfmw_perfmonctl(getpid(), PFM_RESTART, 0, 0) == -1) {
+      fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", 
+             getpid(), errno);
+      return;
+   }
 
-   if (perfmonctl(info->si_fd, PFM_RESTART, 0, 0) == -1) 
-     {
-       fprintf(stderr, "%s:%d: error calling PFM_RESTART: %s\n",
-	       __FILE__, __LINE__,strerror(errno));
-     }
 }
 #endif
 
