@@ -1,3 +1,4 @@
+#include "test_utils.h"
 
 void dummy(void *array) {
 
