@@ -149,16 +149,23 @@ int main(int argc, char **argv) {
   PAPI_read(eventset,refvals);
   t2=PAPI_get_real_usec();
 
+  ntrue=nevents;
+  PAPI_list_events(eventset,truelist,&ntrue);
   if ( !TESTS_QUIET ) {
     printf("\tOperations= %.1f Mflop",y*1e-6);  
     printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
-    printf("PAPI multiplex measurement:\n");
+    printf("%20s   %16s   %-15s %-15s\n","PAPI measurement:",
+	   "Acquired count","Expected event","PAPI_list_events");
   }
 
   if ( !TESTS_QUIET ) {
     for (j=0; j<nevents; j++) {
       PAPI_label_event(events[j],des);
-      printf("%20s = %lld\n", des, refvals[j]);
+      PAPI_event_code_to_name(events[j],name1);
+      PAPI_event_code_to_name(truelist[j],name2);
+      if ( !TESTS_QUIET )
+	printf("%20s = %16lld   %-15s %-15s %s\n", des, refvals[j],
+	       name1, name2, strcmp(name1,name2) ? "*** MISMATCH ***" : "");
     }
     printf("\n");
   }
