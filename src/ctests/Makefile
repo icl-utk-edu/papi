@@ -9,12 +9,12 @@ SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
 	overflow_single_event overflow profile tenth native \
 	memory
 BROKEN	= inherit pernode
-ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 UTILOBJS= do_loops.o test_utils.o dummy.o
+ALL 	= (MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 INCLUDE = -I..
 PAPILIB	= ../libpapi.a
 
-multiplex: $(MPX)
+multiplex: $(MPX) 
 
 omp: $(OMP)
 
@@ -29,7 +29,7 @@ serial: $(SERIAL)
 calibrate: calibrate.c dummy.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
 
-multiplex1: multiplex1.c do_loops.o $(PAPILIB)
+multiplex1: multiplex1.c do_loops.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c do_loops.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1_pthreads: multiplex1_pthreads.c do_loops.o $(PAPILIB)
