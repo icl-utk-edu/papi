@@ -1252,6 +1252,7 @@ int mpx_init(int interval)
    int retval;
 #endif
 
+   tlist = NULL;
    mpx_init_timers(interval);
 
 #ifdef OUTSIDE_PAPI
