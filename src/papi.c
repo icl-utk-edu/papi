@@ -944,9 +944,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          /* Try to change the domain of the eventset in the hardware */
 
          internal.defdomain.defdomain = dom;
-         retval = _papi_hwd_ctl(&thread->context, PAPI_DEFDOM, &internal);
-         if (retval < PAPI_OK)
-            papi_return(retval);
 
          /* Change the domain of the master eventset in this thread */
 
