@@ -1,8 +1,13 @@
+#
+# To configure for perfctr 2.6.x, change definition of PERFCTR in line 6, 
+# and add -DPERFCTR25 to CFLAGS in line 51.
+#
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR = ./perfctr-2.4.5
+# PERFCTR = ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -O3 -g -Wall -mpentiumpro -DDEBUG
-TOPTFLAGS= -g -Wall -mpentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
+OPTFLAGS= -O3 -g -Wall -march=pentiumpro -DDEBUG
+TOPTFLAGS= -g -Wall -march=pentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
 #
 # GNU G77 section
 #
@@ -35,15 +40,16 @@ SHLIB   = libpapi.so
 SUBSTR	= perfctr-p4
 MSUBSTR	= linux-perfctr-p4
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr 2.4.5 patch for all Pentium IVs"
+#DESCR	= "Linux with PerfCtr 2.4.5 patch for all Pentium IVs"
+DESCR	= "Linux with PerfCtr 2.6.x patch for all Pentium IVs"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
-#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
+#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER -DPERFCTR25
 MISCSRCS= linux.c p4_events.c
 MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p4_events.o
 MISCHDRS= perfctr-p4.h p4_events.h

@@ -25,6 +25,7 @@
 #ifdef PERFCTR25
 #define PERFCTR_CPU_NAME   perfctr_info_cpu_name
 #define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
+#define evntsel_aux	   p4.escr
 #else
 #define PERFCTR_CPU_NAME perfctr_cpu_name
 #define PERFCTR_CPU_NRCTRS perfctr_cpu_nrctrs
