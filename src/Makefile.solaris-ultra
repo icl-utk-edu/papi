@@ -1,0 +1,16 @@
+SUBSTR  = solaris-ultra
+DESCR	= "Solaris 5.8 or greater with UltraSPARC I,II or III"
+TARGET	= libpapi.a 
+TESTS	= serial
+
+CFLAGS  = -Wall -DDEBUG
+OPTFLAGS= -g -O3
+SMPCFLGS= 
+OMPCFLGS= 
+LDFLAGS = -lcpc
+CC_R	= 
+CC	= gcc
+F77	= 
+
+include ./Makefile.inc
+
