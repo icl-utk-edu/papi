@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   /* First half */
   sprof[0].pr_base = profbuf;
   sprof[0].pr_size = length/2;
-  sprof[0].pr_off = (caddr_t)do_flops;
+  sprof[0].pr_off = (caddr_t)DO_FLOPS;
 #if defined(linux) && defined(__ia64__)
   if ( !TESTS_QUIET )
      fprintf(stderr,"do_flops is at %p %lx\n",&do_flops,sprof[0].pr_off);
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
   /* Second half */
   sprof[1].pr_base = profbuf2;
   sprof[1].pr_size = length/2;
-  sprof[1].pr_off = (caddr_t)do_reads;
+  sprof[1].pr_off = (caddr_t)DO_READS;
 #if defined(linux) && defined(__ia64__)
   if ( !TESTS_QUIET )
       fprintf(stderr,"do_reads is at %p %lx\n",&do_reads,sprof[1].pr_off);
