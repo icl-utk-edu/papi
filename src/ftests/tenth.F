@@ -1,5 +1,4 @@
 #include "fpapi.h"
-#include "tests.h"
 #define ITERS 100
 
       program tenth

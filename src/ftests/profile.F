@@ -1,5 +1,4 @@
 #include "fpapi.h"
-#include "tests.h"
 #define NUM 1000
 #define THR 10000
 #define BUFSIZE 81920

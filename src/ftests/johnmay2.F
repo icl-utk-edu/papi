@@ -1,5 +1,4 @@
 #include "fpapi.h"
-#include "tests.h"
 
       program johnmay2
       implicit none

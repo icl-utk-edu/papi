@@ -1,5 +1,4 @@
 #include "fpapi.h"
-#include "tests.h"
 
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 
