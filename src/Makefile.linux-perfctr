@@ -1,13 +1,8 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	= ./perfctr
+PERFCTR	:= ./perfctr
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-#
-# GNU GCC section
-#
 OPTFLAGS= -g -Wall -O3 -march=pentiumpro
 TOPTFLAGS= -g -Wall -O0 -march=pentiumpro
-#OPTFLAGS= -g -Wall -DDEBUG
-#TOPTFLAGS= -g -Wall
 #
 # GNU G77 section
 #
@@ -38,21 +33,20 @@ FTOPTFLAGS= $(TOPTFLAGS)
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR	= linux-perfctr
-MSUBSTR	= linux-perfctr-2.3
+MSUBSTR	= linux-memory
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
+DESCR	= "Linux with PerfCtr 2.4.1 patch for all Pentiums and the AMD K7"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. \
- -DPERFCTR20 -DPAPI_PERFCTR_INTR_SUPPORT -DMPX_NONDECR -DDEBUG
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPAPI_PERFCTR_INTR_SUPPORT
 # Some nice flags to add to CFLAGS when debugging PAPI library itself
-# -g -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+# -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
-MISCHDRS= ia32_presets.h $(SUBSTR)-memory.h
+MISCHDRS= ia32_presets.h 
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
@@ -63,7 +57,7 @@ libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o $(PERFCTR)/usr.lib/libperfctr.so
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)
 
-$(PERFCTR)/usr.lib/libperfctr.so:
+lib $(PERFCTR)/usr.lib/libperfctr.so:
 	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
 native_clean:

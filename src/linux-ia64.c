@@ -785,13 +785,13 @@ int _papi_hwd_init_global(void)
 #ifdef ITANIUM2
   if (type != PFMLIB_ITANIUM2_PMU)
     {
-      fprintf(stderr,"Architecture mismatch of libpapi: compiled %x vs. installed %x\n",PFMLIB_ITANIUM2_PMU,type);
+      fprintf(stderr,"Intel Itanium I is not supported by this substrate.\n");
       return(PAPI_ESBSTR);
     }
 #else
   if (type != PFMLIB_ITANIUM_PMU)
     {
-      fprintf(stderr,"Architecture mismatch of libpapi: compiled %x vs. installed %x\n",PFMLIB_ITANIUM_PMU,type);
+      fprintf(stderr,"Intel Itanium II is not supported by this substrate.\n");
       return(PAPI_ESBSTR);
     }
 #endif

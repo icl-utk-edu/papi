@@ -142,7 +142,7 @@ inline static int setup_all_presets(int cpu_type)
 
     case PERFCTR_X86_INTEL_P4:
     case PERFCTR_X86_INTEL_P4M2:
-      fprintf(stderr,"Intel P4 (and Xeon) is not supported by this PAPI substrate.\n");
+      fprintf(stderr,"Intel Pentium 4 is not supported by this substrate.\n");
       break;
 
     default:
@@ -275,11 +275,6 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
-    case PERFCTR_X86_INTEL_P4:   /* This needs to be set to the right values */
-      ptr->counter_cmd.cpu_control.tsc_on=1;
-      ptr->counter_cmd.cpu_control.nractrs=0;
-      ptr->counter_cmd.cpu_control.nrictrs=0;
-      break;
     case PERFCTR_X86_AMD_K7:
       ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
@@ -289,6 +284,8 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
+    default:
+      abort();
     }
   /* Identity counter map for starters */
   for(i=0;i<_papi_system_info.num_cntrs;i++) 
@@ -352,9 +349,15 @@ static int get_system_info(struct perfctr_dev *dev)
 
   fclose(cpuinfo);
 
-#ifdef PERFCTR18  /* And PERFCTR20 */
+#if defined(PERFCTR18) || defined(PERFCTR20) 
   if (vperfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
+  if (strstr(info.version,"2.4") != info.version)
+    {
+      fprintf(stderr,"Version mismatch of perfctr: compiled 2.4 or higher vs. installed %s\n",info.version);
+      return(PAPI_ESBSTR);
+    }
+
   strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
   _papi_system_info.supports_hw_overflow = 
     (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;

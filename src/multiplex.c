@@ -10,6 +10,8 @@
  *          smeds@pdc.kth.se
  */  
 
+#define MPX_NONDECR
+
 /* Nils Smeds */
 
 /* This MPX update modifies the behaviour of the multiplexing in PAPI.
