@@ -414,6 +414,10 @@ read the documentation carefully.  */
       /* Memory Locality */
    } PAPI_dmem_t;
 
+  /* If you change this, please update test *avail* test cases! */
+  /* Whatever you do, don't reorder the fields. All hell will break
+     loose due to static initializers in the substrates. */
+
    typedef struct event_info {
       unsigned int event_code;
       unsigned int count;

@@ -179,7 +179,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_custom_map[] = {
        This is a good candidate for defining synonyms for use with other groups...
      */
     "cycles",
-    "This event counts every cycle by setting the threshold of the TC_deliver_mode event to count every tick.",
+    "This event counts every cycle by setting the threshold of the TC_deliver_mode event to count every tick",
     {
      {CTR45, CTR67}, {MSR_TC_ESCR0, MSR_TC_ESCR1},
      CCCR_ESCR_SEL(TC_DLVR_CCCR) | CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ENABLE |
@@ -194,7 +194,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
 // following are the non-retirement events
    {
     "TC_deliver_mode",
-    "This event counts the duration (in clock cycles) of the operating modes of the trace cache and decode engine in the processor package. The mode is specified by one or more of the event mask bits.",
+    "This event counts the duration (in clock cycles) of the operating modes of the trace cache and decode engine in the processor package. The mode is specified by one or more of the event mask bits",
     {
      {CTR45, CTR67}, {MSR_TC_ESCR0, MSR_TC_ESCR1},
      CCCR_ESCR_SEL(TC_DLVR_CCCR), ESCR_EVENT_SEL(TC_DLVR_ESCR),
@@ -205,7 +205,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "BPU_fetch_request",
-    "This event counts instruction fetch requests of specified request type by the Branch Prediction unit. Specify one or more mask bits to qualify the request type(s).",
+    "This event counts instruction fetch requests of specified request type by the Branch Prediction unit. Specify one or more mask bits to qualify the request type(s)",
     {
      {CTR01, CTR23}, {MSR_BPU_ESCR0, MSR_BPU_ESCR1},
      CCCR_ESCR_SEL(BPU_FETCH_RQST_CCCR), ESCR_EVENT_SEL(BPU_FETCH_RQST_ESCR),
@@ -214,7 +214,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "ITLB_reference",
-    "This event counts translations using the Instruction Translation Look-aside Buffer (ITLB).",
+    "This event counts translations using the Instruction Translation Look-aside Buffer (ITLB)",
     {
      {CTR01, CTR23}, {MSR_ITLB_ESCR0, MSR_ITLB_ESCR1},
      CCCR_ESCR_SEL(ITLB_REF_CCCR), ESCR_EVENT_SEL(ITLB_REF_ESCR),
@@ -223,7 +223,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "memory_cancel",
-    "This event counts the canceling of various type of request in the Data cache Address Control unit (DAC). Specify one or more mask bits to select the type of requests that are canceled.",
+    "This event counts the canceling of various type of request in the Data cache Address Control unit (DAC). Specify one or more mask bits to select the type of requests that are canceled",
     {
      {CTR89, CTR1011}, {MSR_DAC_ESCR0, MSR_DAC_ESCR1},
      CCCR_ESCR_SEL(MEM_CANCEL_CCCR), ESCR_EVENT_SEL(MEM_CANCEL_ESCR),
@@ -232,7 +232,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "memory_complete",
-    "This event counts the completion of a load split, store split, uncacheable (UC) split, or UC load. Specify one or more mask bits to select the operations to be counted.",
+    "This event counts the completion of a load split, store split, uncacheable (UC) split, or UC load. Specify one or more mask bits to select the operations to be counted",
     {
      {CTR89, CTR1011}, {MSR_SAAT_ESCR0, MSR_SAAT_ESCR1},
      CCCR_ESCR_SEL(MEM_CANCEL_CCCR), ESCR_EVENT_SEL(MEM_CANCEL_ESCR),
@@ -241,7 +241,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "load_port_replay",
-    "This event counts replayed events at the load port. Specify one or more mask bits to select the cause of the replay.",
+    "This event counts replayed events at the load port. Specify one or more mask bits to select the cause of the replay",
     {
      {CTR89, CTR1011}, {MSR_SAAT_ESCR0, MSR_SAAT_ESCR1},
      CCCR_ESCR_SEL(LDPRT_RPL_CCCR), ESCR_EVENT_SEL(LDPRT_RPL_ESCR),
@@ -250,7 +250,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "store_port_replay",
-    "This event counts replayed events at the store port. Specify one or more mask bits to select the cause of the replay.",
+    "This event counts replayed events at the store port. Specify one or more mask bits to select the cause of the replay",
     {
      {CTR89, CTR1011}, {MSR_SAAT_ESCR0, MSR_SAAT_ESCR1},
      CCCR_ESCR_SEL(SRPRT_RPL_CCCR), ESCR_EVENT_SEL(SRPRT_RPL_ESCR),
@@ -259,7 +259,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "MOB_load_replay",
-    "This event triggers if the memory order buffer (MOB) caused a load operation to be replayed. Specify one or more mask bits to select the cause of the replay.",
+    "This event triggers if the memory order buffer (MOB) caused a load operation to be replayed. Specify one or more mask bits to select the cause of the replay",
     {
      {CTR01, CTR23}, {MSR_MOB_ESCR0, MSR_MOB_ESCR1},
      CCCR_ESCR_SEL(MOB_LD_RPL_CCCR), ESCR_EVENT_SEL(MOB_LD_RPL_ESCR),
@@ -268,7 +268,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "page_walk_type",
-    "This event counts various types of page walks that the page miss handler (PMH) performs.",
+    "This event counts various types of page walks that the page miss handler (PMH) performs",
     {
      {CTR01, CTR23}, {MSR_PMH_ESCR0, MSR_PMH_ESCR1},
      CCCR_ESCR_SEL(PG_WLK_CCCR), ESCR_EVENT_SEL(PG_WLK_ESCR),
@@ -277,7 +277,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "BSQ_cache_reference",
-    "This event counts cache references (2nd level cache or 3rd level cache) as seen by the bus unit. Specify one or more mask bit to select an access according to the access type and the access result.",
+    "This event counts cache references (2nd level cache or 3rd level cache) as seen by the bus unit. Specify one or more mask bit to select an access according to the access type and the access result",
     {
      {CTR01, CTR23}, {MSR_BSU_ESCR0, MSR_BSU_ESCR1},
      CCCR_ESCR_SEL(BSQ_CREF_CCCR), ESCR_EVENT_SEL(BSQ_CREF_ESCR),
@@ -289,7 +289,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "IOQ_allocation",
-    "This event counts the various types of transactions on the bus. A count is generated each time a transaction is allocated into the IOQ that matches the specified mask bits.",
+    "This event counts the various types of transactions on the bus. A count is generated each time a transaction is allocated into the IOQ that matches the specified mask bits",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(IOQ_ALLOC_CCCR), ESCR_EVENT_SEL(IOQ_ALLOC_ESCR),
@@ -302,7 +302,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "IOQ_active_entries",
-    "This event counts the number of entries (clipped at 15) in the IOQ that are active. This event must be programmed in conjunction with IOQ_allocation.",
+    "This event counts the number of entries (clipped at 15) in the IOQ that are active. This event must be programmed in conjunction with IOQ_allocation",
     {
      {CTR23, CTR23}, {MSR_FSB_ESCR1, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(IOQ_ACTV_ENTR_CCCR), ESCR_EVENT_SEL(IOQ_ACTV_ENTR_ESCR),
@@ -315,7 +315,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "FSB_data_activity",
-    "This event increments once for each DRDY or DBSY event that occurs on the front side bus. The event allows selection of a specific DRDY or DBSY event.",
+    "This event increments once for each DRDY or DBSY event that occurs on the front side bus. The event allows selection of a specific DRDY or DBSY event",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(FSB_DATA_CCCR), ESCR_EVENT_SEL(FSB_DATA_ESCR),
@@ -326,7 +326,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "BSQ_allocation",
-    "This event counts allocations in the Bus Sequence Unit (BSQ) according to the specified mask bit encoding.",
+    "This event counts allocations in the Bus Sequence Unit (BSQ) according to the specified mask bit encoding",
     {
      {CTR01, CTR01}, {MSR_BSU_ESCR0, MSR_BSU_ESCR0},
      CCCR_ESCR_SEL(BSQ_ALLOC_CCCR), ESCR_EVENT_SEL(BSQ_ALLOC_ESCR),
@@ -339,7 +339,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "bsq_active_entries",
-    "This event represents the number of BSQ entries (clipped at 15) currently active (valid) which meet the subevent mask criteria during allocation in the BSQ.",
+    "This event represents the number of BSQ entries (clipped at 15) currently active (valid) which meet the subevent mask criteria during allocation in the BSQ",
     {
      {CTR23, CTR23}, {MSR_BSU_ESCR1, MSR_BSU_ESCR1},
      CCCR_ESCR_SEL(BSQ_ACTV_ENTR_CCCR), ESCR_EVENT_SEL(BSQ_ACTV_ENTR_ESCR),
@@ -352,7 +352,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "SSE_input_assist",
-    "This event counts the number of times an assist is requested to handle problems with input operands for SSE and SSE2 operations.",
+    "This event counts the number of times an assist is requested to handle problems with input operands for SSE and SSE2 operations",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(SSE_ASSIST_CCCR), ESCR_EVENT_SEL(SSE_ASSIST_ESCR),
@@ -361,7 +361,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "packed_SP_uop",
-    "This event increments for each packed single-precision uop, specified through the event mask for detection.",
+    "This event increments for each packed single-precision uop, specified through the event mask for detection",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(PACKED_SP_UOP_CCCR), ESCR_EVENT_SEL(PACKED_SP_UOP_ESCR),
@@ -370,7 +370,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "packed_DP_uop",
-    "This event increments for each packed double-precision uop, specified through the event mask for detection.",
+    "This event increments for each packed double-precision uop, specified through the event mask for detection",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(PACKED_DP_UOP_CCCR), ESCR_EVENT_SEL(PACKED_DP_UOP_ESCR),
@@ -379,7 +379,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "scalar_SP_uop",
-    "This event increments for each scalar single-precision uop, specified through the event mask for detection.",
+    "This event increments for each scalar single-precision uop, specified through the event mask for detection",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(SCALAR_SP_UOP_CCCR), ESCR_EVENT_SEL(SCALAR_SP_UOP_ESCR),
@@ -388,7 +388,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "scalar_DP_uop",
-    "This event increments for each scalar double-precision uop, specified through the event mask for detection.",
+    "This event increments for each scalar double-precision uop, specified through the event mask for detection",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(SCALAR_DP_UOP_CCCR), ESCR_EVENT_SEL(SCALAR_DP_UOP_ESCR),
@@ -397,7 +397,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "64bit_MMX_uop",
-    "This event increments for each MMX instruction, which operate on 64 bit SIMD operands.",
+    "This event increments for each MMX instruction, which operate on 64 bit SIMD operands",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(MMX_64_UOP_CCCR), ESCR_EVENT_SEL(MMX_64_UOP_ESCR),
@@ -406,7 +406,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "128bit_MMX_uop",
-    "This event increments for each integer SIMD SSE2 instructions, which operate on 128 bit SIMD operands.",
+    "This event increments for each integer SIMD SSE2 instructions, which operate on 128 bit SIMD operands",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(MMX_128_UOP_CCCR), ESCR_EVENT_SEL(MMX_128_UOP_ESCR),
@@ -415,7 +415,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "x87_FP_uop",
-    "This event increments for each x87 floating-point uop, specified through the event mask for detection.",
+    "This event increments for each x87 floating-point uop, specified through the event mask for detection",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(X87_FP_UOP_CCCR), ESCR_EVENT_SEL(X87_FP_UOP_ESCR),
@@ -424,7 +424,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "x87_SIMD_moves_uop",
-    "This event increments for each x87 FPU, MMX, SSE or SSE2 uop related to load data, store data, or register-to-register moves.",
+    "This event increments for each x87 FPU, MMX, SSE or SSE2 uop related to load data, store data, or register-to-register moves",
     {
      {CTR89, CTR1011}, {MSR_FIRM_ESCR0, MSR_FIRM_ESCR1},
      CCCR_ESCR_SEL(X87_SIMD_UOP_CCCR), ESCR_EVENT_SEL(X87_SIMD_UOP_ESCR),
@@ -433,7 +433,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "global_power_events",
-    "This event accumulates the time during which a processor is not stopped.",
+    "This event accumulates the time during which a processor is not stopped",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(GLOBAL_PWR_CCCR), ESCR_EVENT_SEL(GLOBAL_PWR_ESCR),
@@ -442,7 +442,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "tc_ms_xfer",
-    "This event counts the number of times that uop delivery changed from TC to MS ROM.",
+    "This event counts the number of times that uop delivery changed from TC to MS ROM",
     {
      {CTR45, CTR67}, {MSR_MS_ESCR0, MSR_MS_ESCR1},
      CCCR_ESCR_SEL(TC_MS_XFER_CCCR), ESCR_EVENT_SEL(TC_MS_XFER_ESCR),
@@ -451,7 +451,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "uop_queue_writes",
-    "This event counts the number of valid uops written to the uop queue. Specify one or more mask bits to select the source type of writes.",
+    "This event counts the number of valid uops written to the uop queue. Specify one or more mask bits to select the source type of writes",
     {
      {CTR45, CTR67}, {MSR_MS_ESCR0, MSR_MS_ESCR1},
      CCCR_ESCR_SEL(UOP_QUEUE_WRITES_CCCR), ESCR_EVENT_SEL(UOP_QUEUE_WRITES_ESCR),
@@ -460,7 +460,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "retired_mispred_branch_type",
-    "This event counts retiring mispredicted branches by type.",
+    "This event counts retiring mispredicted branches by type",
     {
      {CTR45, CTR67}, {MSR_TBPU_ESCR0, MSR_TBPU_ESCR1},
      CCCR_ESCR_SEL(RET_MISPRED_BR_TYPE_CCCR), ESCR_EVENT_SEL(RET_MISPRED_BR_TYPE_ESCR),
@@ -469,7 +469,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "retired_branch_type",
-    "This event counts retiring branches by type. Specify one or more mask bits to qualify the branch by its type.",
+    "This event counts retiring branches by type. Specify one or more mask bits to qualify the branch by its type",
     {
      {CTR45, CTR67}, {MSR_TBPU_ESCR0, MSR_TBPU_ESCR1},
      CCCR_ESCR_SEL(RET_BR_TYPE_CCCR), ESCR_EVENT_SEL(RET_BR_TYPE_ESCR),
@@ -477,9 +477,9 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     (1 << CONDITIONAL) | (1 << CALL) | (1 << RETURN) | (1 << INDIRECT),
     0},
    {
-    // "This event may not be supported in all models of the processor family."
+    // "This event may not be supported in all models of the processor family"
     "resource_stall",
-    "This event monitors the occurrence or latency of stalls in the Allocator.",
+    "This event monitors the occurrence or latency of stalls in the Allocator",
     {
      {CTR236, CTR457}, {MSR_ALF_ESCR0, MSR_ALF_ESCR1},
      CCCR_ESCR_SEL(RESOURCE_STALL_CCCR), ESCR_EVENT_SEL(RESOURCE_STALL_ESCR),
@@ -488,7 +488,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "WC_Buffer",
-    "This event counts Write Combining Buffer operations that are selected by the event mask.",
+    "This event counts Write Combining Buffer operations that are selected by the event mask",
     {
      {CTR89, CTR1011}, {MSR_DAC_ESCR0, MSR_DAC_ESCR1},
      CCCR_ESCR_SEL(WC_BUFFER_CCCR), ESCR_EVENT_SEL(WC_BUFFER_ESCR),
@@ -496,9 +496,9 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     (1 << WCB_EVICTS) | (1 << WCB_FULL_EVICT),
     0},
    {
-    // "This event may not be supported in all models of the processor family."
+    // "This event may not be supported in all models of the processor family"
     "b2b_cycles",
-    "This event can be configured to count the number back-to-back bus cycles using sub-event mask bits 1 through 6.",
+    "This event can be configured to count the number back-to-back bus cycles using sub-event mask bits 1 through 6",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(B2B_CYCLES_CCCR), ESCR_EVENT_SEL(B2B_CYCLES_ESCR),
@@ -506,9 +506,9 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     // The documentation suggests that mask bits can be used, but none are defined.
     0, 0},
    {
-    // "This event may not be supported in all models of the processor family."
+    // "This event may not be supported in all models of the processor family"
     "bnr",
-    "This event can be configured to count bus not ready conditions using sub-event mask bits 0 through 2.",
+    "This event can be configured to count bus not ready conditions using sub-event mask bits 0 through 2",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(BNR_CCCR), ESCR_EVENT_SEL(BNR_ESCR),
@@ -516,9 +516,9 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     // The documentation suggests that mask bits can be used, but none are defined.
     0, 0},
    {
-    // "This event may not be supported in all models of the processor family."
+    // "This event may not be supported in all models of the processor family"
     "snoop",
-    "This event can be configured to count snoop hit modified bus traffic using sub-event mask bits 2, 6 and 7.",
+    "This event can be configured to count snoop hit modified bus traffic using sub-event mask bits 2, 6 and 7",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(SNOOP_CCCR),
@@ -527,9 +527,9 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     // The documentation suggests that mask bits can be used, but none are defined.
     0, 0},
    {
-    // "This event may not be supported in all models of the processor family."
+    // "This event may not be supported in all models of the processor family"
     "response",
-    "This event can be configured to count different types of responses using sub-event mask bits 1,2, 8, and 9.",
+    "This event can be configured to count different types of responses using sub-event mask bits 1,2, 8, and 9",
     {
      {CTR01, CTR23}, {MSR_FSB_ESCR0, MSR_FSB_ESCR1},
      CCCR_ESCR_SEL(RESPONSE_CCCR), ESCR_EVENT_SEL(RESPONSE_ESCR),
@@ -540,7 +540,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
 // following are the at-retirement events
    {
     "front_end_event",
-    "This event counts the retirement of tagged uops, which are specified through the front-end tagging mechanism. The event mask specifies bogus or non-bogus uops.",
+    "This event counts the retirement of tagged uops, which are specified through the front-end tagging mechanism. The event mask specifies bogus or non-bogus uops",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR2, MSR_CRU_ESCR3},
      CCCR_ESCR_SEL(FRONT_END_CCCR), ESCR_EVENT_SEL(FRONT_END_ESCR),
@@ -549,7 +549,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "execution_event",
-    "This event counts the retirement of tagged uops, which are specified through the execution tagging mechanism. The event mask allows from one to four types of uops to be specified as either bogus or non-bogus uops to be tagged.",
+    "This event counts the retirement of tagged uops, which are specified through the execution tagging mechanism. The event mask allows from one to four types of uops to be specified as either bogus or non-bogus uops to be tagged",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR2, MSR_CRU_ESCR3},
      CCCR_ESCR_SEL(EXECUTION_CCCR), ESCR_EVENT_SEL(EXECUTION_ESCR),
@@ -559,7 +559,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "replay_event",
-    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops.",
+    "This event counts the retirement of tagged uops, which are specified through the replay tagging mechanism. The event mask specifies bogus or non-bogus uops",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR2, MSR_CRU_ESCR3},
      CCCR_ESCR_SEL(REPLAY_CCCR), ESCR_EVENT_SEL(REPLAY_ESCR),
@@ -570,7 +570,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "instr_retired",
-    "This event counts instructions that are retired during a clock cycle. Mask bits specify bogus or non-bogus (and whether they are tagged via the front-end tagging mechanism.",
+    "This event counts instructions that are retired during a clock cycle. Mask bits specify bogus or non-bogus (and whether they are tagged via the front-end tagging mechanism",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR0, MSR_CRU_ESCR1},
      CCCR_ESCR_SEL(INSTR_RET_CCCR), ESCR_EVENT_SEL(INSTR_RET_ESCR),
@@ -579,7 +579,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "uops_retired",
-    "This event counts uops that are retired during a clock cycle. Mask bits specify bogus or non-bogus.",
+    "This event counts uops that are retired during a clock cycle. Mask bits specify bogus or non-bogus",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR0, MSR_CRU_ESCR1},
      CCCR_ESCR_SEL(UOPS_RET_CCCR), ESCR_EVENT_SEL(UOPS_RET_ESCR),
@@ -588,7 +588,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "uop_type",
-    "This event is used in conjunction with the front-end at-retirement mechanism to tag load and store uops.",
+    "This event is used in conjunction with the front-end at-retirement mechanism to tag load and store uops",
     {
      {CTR236, CTR457}, {MSR_RAT_ESCR0, MSR_RAT_ESCR1},
      CCCR_ESCR_SEL(UOP_TYPE_CCCR), ESCR_EVENT_SEL(UOP_TYPE_ESCR),
@@ -597,7 +597,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "branch_retired",
-    "This event counts the retirement of a branch. Specify one or more mask bits to select any combination of taken, not-taken, predicted and mispredicted.",
+    "This event counts the retirement of a branch. Specify one or more mask bits to select any combination of taken, not-taken, predicted and mispredicted",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR2, MSR_CRU_ESCR3},
      CCCR_ESCR_SEL(BR_RET_CCCR), ESCR_EVENT_SEL(BR_RET_ESCR),
@@ -606,7 +606,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "mispred_branch_retired",
-    "This event represents the retirement of mispredicted IA-32 branch instructions.",
+    "This event represents the retirement of mispredicted IA-32 branch instructions",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR0, MSR_CRU_ESCR1},
      CCCR_ESCR_SEL(MPR_BR_RET_CCCR), ESCR_EVENT_SEL(MPR_BR_RET_ESCR),
@@ -615,7 +615,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "x87_assist",
-    "This event counts the retirement of x87 instructions that required special handling. Specifies one or more event mask bits to select the type of assistance.",
+    "This event counts the retirement of x87 instructions that required special handling. Specifies one or more event mask bits to select the type of assistance",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR2, MSR_CRU_ESCR3},
      CCCR_ESCR_SEL(X87_ASSIST_CCCR), ESCR_EVENT_SEL(X87_ASSIST_ESCR),
@@ -624,7 +624,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_native_map[] = {
     0},
    {
     "machine_clear",
-    "This event increments according to the mask bit specified while the entire pipeline of the machine is cleared. Specify one of the mask bit to select the cause.",
+    "This event increments according to the mask bit specified while the entire pipeline of the machine is cleared. Specify one of the mask bit to select the cause",
     {
      {CTR236, CTR457}, {MSR_CRU_ESCR2, MSR_CRU_ESCR3},
      CCCR_ESCR_SEL(MACHINE_CLEAR_CCCR), ESCR_EVENT_SEL(MACHINE_CLEAR_ESCR),
@@ -900,7 +900,7 @@ hwd_p4_mask_t _x87_assist_mask[] = {
 
 hwd_p4_mask_t _machine_clear_mask[] = {
    {CLEAR, "CLEAR",
-    "Counts for a portion of the many cycles while the machine is cleared for any cause."},
+    "Counts for a portion of the many cycles while the machine is cleared for any cause"},
    {MOCLEAR, "MOCLEAR",
     "Increments each time the machine is cleared due to memory ordering issues"},
    {SMCLEAR, "SMCLEAR",
@@ -1190,7 +1190,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
       }
       break;
 
-      // "These events may not be supported in all models of the processor family."
+      // "These events may not be supported in all models of the processor family"
       // We need to find out which processors and vector appropriately, returning
       // an error if not supported on the current hardware.
    case P4_resource_stall:
