@@ -6,7 +6,7 @@
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 static int buf[L1_MISS_BUFFER_SIZE_INTS];
 
-volatile double a = 0.5, b = 6.2;
+volatile double a = 0.5, b = 2.2;
 volatile long_long z = -101010101;
 
 void do_flops(int n)
