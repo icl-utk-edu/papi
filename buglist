@@ -1,11 +1,31 @@
+This is a buglist for PAPI. If you add something here, you had better:
+1) Let the ptools-perfapi@ptools.org know.
+2) Post it on the Errata for the web site.
+3) Start fixing it (or get someone who can) ASAP!
 
-This is a hacked up buglist for PAPI (and it's associated tools).
-I'll try to come up with a better system later on.  NG
+-Philip Mucci, Nathan Garner, George Ho, Kevin London
 
-3/8/00 - PAPI (Linux x86) is reporting a single cpu on SMP systems 
-
-3/8/00 - Robert Bell: I have noticed that there seems to be something
-amiss with thread support on linux and irix in Papi (though I have only
-tested on those two platforms).
+5/31/00 - John May: expand_dynamic_array is broken. (fixed in 1.1)
+5/31/00 - John May: PAPI_cleanup_eventset is *still* broken. (fixed in 1.1)
+5/31/00 - Bug in kernel patch that only manifests itself if you add another
+	  custom system call. (fixed in 1.1 thanks to Venetis Ioannis of Greece)
+5/31/00 - pthread and shmem support for the T3E doesn't work. (fixed in 1.1
+	  thanks to Charles Aldarondo of Cray)
+5/31/00 - 64 bit Cycle counter may wrap. (not worth fixing, OS's don't even
+	  worry about this. Why?)
+5/31/00 - PAPI_create_eventset needs it's arg to be set to PAPI_NULL first.
+	  (fixed in 1.1)
+5/1/00 	- Don't mix low level initialization with the high level calls.
+	  Let the high level do it. (fixed in 1.1)
+4/1/00 	- Mixing unshared eventsets do not reset their values properly.
+ 	  (fixed in 1.0)
+4/1/00 	- John May: PAPI_cleanup fails. (fixed in 1.0, renamed to cleanup_eventset)
+4/1/00 	- John May: overlapping unshared events with multiple starts produces
+	  erroneous results. (fixed in 1.0)
+3/8/00 	- PAPI (Linux x86) is reporting a single cpu on SMP systems 
+	  (fixed in 1.0)
+3/8/00 	- Robert Bell: I have noticed that there seems to be something
+	  amiss with thread support on linux and irix in Papi (though I have only
+	  tested on those two platforms). (fixed in 1.0)
 
 
