@@ -103,7 +103,7 @@ static hwd_search_t usiii_preset_search_map[] = {
   /* L1 data cache writes */
   {PAPI_L1_DCW,0,{0xa,-1}},	       /* pic0 DC_wr */	
   /* L1 instruction cache hits */
-  {PAPI_L1_ICH,0,{0x8,-1}},            /* pic0 IC_ref (actually hits only)
+  {PAPI_L1_ICH,0,{0x8,-1}},            /* pic0 IC_ref (actually hits only) */
   /* L1 instruction cache accesses */
   {PAPI_L1_ICA,DERIVED_ADD,{0x8,0x8}}, /* pic0 IC_ref (actually hits only) + pic1 IC_miss */
   /* L2 total cache hits */
@@ -1396,5 +1396,5 @@ papi_mdi _papi_system_info = { "$Id$",
 			        1,  /* We can use the virt_cyc call */
 			        0,  /* HW Read also resets the counters */
 			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        { 0, } };
 
