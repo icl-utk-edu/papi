@@ -23,13 +23,13 @@
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[PAPI_MAX_STR_LEN];
+  char des[PAPI_MAX_STR_LEN],name1[PAPI_MAX_STR_LEN],name2[PAPI_MAX_STR_LEN];
   int i, j, retval, idx, repeats;
   int iters=NUM_FLOPS;
   double x = 1.1,y,dtmp;
   long_long t1,t2;  
   long_long values[MAXEVENTS],refvals[MAXEVENTS];
-  int nsamples[MAXEVENTS];
+  int nsamples[MAXEVENTS], truelist[MAXEVENTS], ntrue;
 #ifdef STARTSTOP
   long_long dummies[MAXEVENTS];
 #endif
@@ -219,14 +219,21 @@ int main(int argc, char **argv) {
       printf("\n(calculated independent of PAPI)\n");
       printf("\tOperations= %.1f Mflop",y*1e-6);  
       printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
-      printf("PAPI measurement:\n");
+      printf("%20s   %16s   %-15s %-15s\n","PAPI measurement:",
+	     "Acquired count","Expected event","PAPI_list_events");
     }
+
+    ntrue=nev1;
+    PAPI_list_events(eventset,truelist,&ntrue);
     for (j=0; j<nev1; j++) {
       idx=eventmap[j];
       /* printf("Mapping: Counter %d -> slot %d.\n",j,idx); */
       PAPI_label_event(events[idx],des);
+      PAPI_event_code_to_name(events[idx],name1);
+      PAPI_event_code_to_name(truelist[j],name2);
       if ( !TESTS_QUIET )
-	printf("%20s = %lld\n", des, values[j]);
+	printf("%20s = %16lld   %-15s %-15s %s\n", des, values[j],
+	       name1, name2, strcmp(name1,name2) ? "*** MISMATCH ***" : "");
       dtmp = (double) values[j];
       valsum[idx] += dtmp;
       valsqsum[idx] += dtmp * dtmp;
