@@ -32,13 +32,13 @@
 
 #ifdef _CRAYT3E
 #define OVER_FMT	"handler(%d ) Overflow at %x! overflow_vector=0x%x!\n"
-#define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
+#define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
 #elif defined(_WIN32)
 #define OVER_FMT	"handler(%d ) Overflow at %p! overflow_vector=0x%x!\n"
-#define OUT_FMT		"%-12s : %16I64d%16I64d%16I64d\n"
+#define OUT_FMT		"%-12s : %16I64d%16d%16I64d\n"
 #else
 #define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=0x%llx!\n"
-#define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
+#define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
 #endif
 
 static int total[2] = {0,0};                  /* total overflows */
@@ -65,8 +65,8 @@ int main(int argc, char **argv)
    int num_flops, retval;
    int PAPI_event=0, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
-   const PAPI_hw_info_t *hw_info = NULL;
    PAPI_option_t  opt;
+   PAPI_event_info_t info;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -84,31 +84,27 @@ int main(int argc, char **argv)
    if ( !opt.sub_info.supports_hw_overflow )
       test_skip(__FILE__, __LINE__, "Platform does not support Hardware overflow", 0);
 
-   hw_info = PAPI_get_hardware_info();
-   if (hw_info == NULL)
-     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+   /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+     if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+        PAPI_get_event_info(PAPI_FP_INS, &info);
+        if ( info.count == 1 )
+           PAPI_event = PAPI_FP_INS;
+     }
+  } 
+  if ( PAPI_event == 0 ) {
+     if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK) {
+        PAPI_get_event_info(PAPI_FP_OPS, &info);
+        if ( info.count == 1 )
+           PAPI_event = PAPI_FP_OPS;
+     }
+  }
+  if ( PAPI_event == 0 ) 
+      PAPI_event = PAPI_TOT_INS;
 
-   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
-       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (strstr(hw_info->model_string, "POWER3"))) {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         PAPI_event = PAPI_TOT_INS;
-      } else {
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
-      }
-   } else {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-            PAPI_event = PAPI_FP_INS;
-      } else {
-         if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK) 
-         PAPI_event = PAPI_FP_OPS;
-         else 
-            PAPI_event = PAPI_TOT_INS;
-      }
-   }
+   if ( PAPI_event == 0 )
+      test_fail(__FILE__, __LINE__, "No suitable event for this test found!", 0);
+   
 
    if (PAPI_event == PAPI_FP_INS )
       mythreshold = THRESHOLD;
