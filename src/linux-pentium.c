@@ -173,7 +173,7 @@ int _papi_hwd_add_event(void *machdep, int event)
         }
         if(this_state->number >= 6) return(PAPI_ECNFLCT);
         else
-        { this_state->counter_code2 = preset_map[preset].counter_code2;
+        { this_state->counter_code2 = preset_map[preset].counter_code1;
           this_state->number += 2;
           return 0;
         }

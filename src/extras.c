@@ -17,8 +17,8 @@ the following:
 #include <string.h>
 #include <strings.h>
 
-#include "papi_internal.h"
 #include "papi.h"
+#include "papi_internal.h"
 
 #if 0
 
