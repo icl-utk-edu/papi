@@ -146,7 +146,7 @@ C  Make sure the compiler does not optimize away the multiplication
       print *, 'Time: ', finaltime, 'seconds'
       print *, 'Cycles: ', values(1)
       print *, 'FP Instructions: ', values(2)
-      write(*,'(a,1p,f9.6)') ' Efficiency (fp/cycle):',
+      write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
       stop
       end

@@ -82,7 +82,7 @@ int case1(void)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 
@@ -133,7 +133,7 @@ int case2(void)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 
@@ -184,7 +184,7 @@ int case3(void)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 
@@ -258,7 +258,7 @@ int case4(void)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 

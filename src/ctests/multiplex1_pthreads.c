@@ -117,7 +117,7 @@ void *case1_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 
@@ -161,7 +161,7 @@ void *case2_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 
@@ -205,7 +205,7 @@ void *case3_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 
@@ -269,7 +269,7 @@ void *case4_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(100000);
+      do_flops(1000000);
       do_reads(1000);
     }
 

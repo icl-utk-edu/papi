@@ -105,7 +105,7 @@ C  Make sure the compiler does not optimize away the multiplication
 
       print *, 'FP Instructions:  ',values(1)
       print *, 'Cycles: ',values(2)
-      write(*,'(a,1p,f9.6)') ' Efficiency (flops/cycles):',
+      write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
       stop
       end
