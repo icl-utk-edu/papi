@@ -23,7 +23,7 @@
 
       tests_quiet=0
 #if defined(_CRAYT3E)
-      call pfxgetarg(1,chbuf,ilen,ierror)
+      call pxfgetarg(1,chbuf,ilen,ierror)
 #else
       call getarg(1,chbuf)
 #endif
