@@ -401,11 +401,17 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   perfmon_req_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
   int i, selector = 0, hwcntr;
 
-  memset(readem,0x0,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
   memset(writeem,0x0,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
+
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
-      readem[i].pfr_reg.reg_num = PMU_MAX_COUNTERS+i;
+      /* Bug fix, we must read the counters out in the same order we programmed them. */
+      /* pfm_dispatch_events may request registers out of order. */
+
+      readem[i].pfr_reg.reg_num = machdep->pc[i].pfr_reg.reg_num;
+
+      /* Writing doesn't matter, we're just zeroing the counter. */ 
+
       writeem[i].pfr_reg.reg_num = PMU_MAX_COUNTERS+i;
     }
 
@@ -416,6 +422,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
     }
 
   if (local->state & PAPI_OVERFLOWING)
+
     {
       selector = local->EventInfoArray[local->overflow.EventIndex].selector;
       while ((i = ffs(selector)))

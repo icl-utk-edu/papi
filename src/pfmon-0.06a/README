@@ -1,0 +1,198 @@
+
+            ------------------------------------------------------
+                                        pfmon
+		            A sample tool to access the IA-64 PMU 
+			            on Linux/ia64
+            ------------------------------------------------------
+		   Copyright (c) 2001 Hewlett-Packard Company
+		   Copyright (c) 2001 Stephane Eranian <eranian@hpl.hp.com>
+	
+
+pfmon is a perfmonance monitoring tool uniquely designed for Linux/ia64.
+It won't work with Linux/x86. It is meant as a sample tool to demonstrate
+how to use the perfmon() API provided by the Linux/ia64 as of version 2.4.0
+and higher. This tool provides access to the powerful IA-64 Performance
+Monitoring Unit (PMU) to do counting but also sampling on existing programs.
+
+The pfmon tool allows you to monitor unmodified Linux/ia64 binaries very
+much like you would do with strace, for instance.  At this point, it does 
+not work on Linux/x86 binaries run on Linux/ia64
+
+
+WARNING: This tool is not complete nor is the kernel API and functionalities. So
+be careful not to rely too much on the current state of the code.
+
+
+As of version 0.06 pfmon supports: 
+
+	- per process ONLY monitoring: collect results on one
+	  process. Subsequent children of initial process are not
+	  monitored yet.
+
+	- UP and SMP configurations
+
+	- counting on all 140 (or so) events defined for Itanium
+
+	- thresholding on counters
+
+	- user-level, kernel-level monitoring or both (per process)
+
+	- opcode matching (not very well tested, though)
+
+	- Event Address Registers (EARS) sampling: Data & Instructions
+
+	- Branch Trace Buffer (BTB) sampling.
+
+As of 0.06 pfmon does not have:
+	- clear documentation
+	- full install guide
+	- a stress testsuite
+
+	More seriously:
+	- Address Range restrictions: Data & Instructions
+	- system wide monitoring (user/kernel, UP/SMP)
+	- better ease of use
+
+Installation:
+	- Simply type make in the top level directory
+	- install pfmon/pfmon wherever you like
+	- the rest of the produced binaries a test cases or examples. Don't rely
+	  on them.
+
+Using pfmon:
+	- online help (at least that one is present):
+
+	  % pfmon --help
+	  (don't be scared by the name of the options !)
+
+	- List of events supported:
+	  % pfmon -l
+
+	- counting:
+	% pfmon -e loads_retired,l2_misses,cpu_cycles ls
+	280633           LOADS_RETIRED
+	22553            L2_MISSES
+	2704168          CPU_CYCLES
+	
+	Up to 4 events can be measured. If you don't specify an event, you get
+	CPU_CYCLES.
+
+	- information about events:
+
+	  % pfmon -e loads_retired
+	  Name   : LOADS_RETIRED
+	  VCode  : 0x6c
+	  Code   : 0x6c
+	  EAR    : No (N/A) Umask: 0000
+	  Umask  : None
+	  PMD/PMC: [4 5 6 7]
+	  Incr   : 2
+	  Qual   : [Instruction Address Range] [OpCode match] [Data Address Range] 
+
+	Just look for Incr for the max threshold.
+
+	- EAR sampling (the interesting stuff):
+
+	  You need to pick an EAR-class event: 
+
+	  % pfmon -l | fgrep EAR
+          DATA_EAR_EVENTS
+          DATA_EAR_CACHE_LAT4
+          DATA_EAR_CACHE_LAT8
+          DATA_EAR_CACHE_LAT16
+          DATA_EAR_CACHE_LAT32
+          DATA_EAR_CACHE_LAT64
+          DATA_EAR_CACHE_LAT128
+          DATA_EAR_CACHE_LAT256
+          DATA_EAR_CACHE_LAT512
+          DATA_EAR_CACHE_LAT1024
+          DATA_EAR_CACHE_LAT2048
+          DATA_EAR_CACHE_LAT4096
+          DATA_EAR_CACHE_LAT_NONE
+          DATA_EAR_TLB_L2
+	  .....
+
+	DANGER: sampling IS DIFFERENT from TRACING. You don't want to capture
+	all D-cache misses but take sample at specified intervals. Intervals
+	are defined by number of events NOT by time.
+
+	The default values for the rate are BAD and used for stress testing.
+	Please use much bigger values. Here I still show fake values, don't rely
+	on them.
+
+	% pfmon --dear-ovfl-rate=300 --dear-smpl-rate=400 -e DATA_EAR_CACHE_LAT128 -- ls -ial
+	Format=v1 entry_size=64 bytes
+	Recorded PMDs=0x000000000002000c
+
+	Entry 0 PID:3315 CPU:1 STAMP:0xe2f6ad9415c6 IIP:0x2000000000013500
+        	PMD OVFL: DATA_EAR_CACHE_LAT128(4) 
+        	PMD2  : 0x200000000005ae0a
+        	PMD3  : 0x00000000000000b0 , Latency 176
+        	PMD17 : 0x2000000000024840 (slot 0) valid=Y
+
+	Entry 1 PID:3315 CPU:1 STAMP:0xe2f6ad986e82 IIP:0x2000000000013260
+        	PMD OVFL: DATA_EAR_CACHE_LAT128(4) 
+        	PMD2  : 0x2000000000050120
+        	PMD3  : 0x00000000000000b1 , Latency 177
+        	PMD17 : 0x2000000000013210 (slot 1) valid=Y
+
+	Entry 2 PID:3315 CPU:1 STAMP:0xe2f6adb230cd IIP:0x2000000000013260
+        	PMD OVFL: DATA_EAR_CACHE_LAT128(4) 
+        	PMD2  : 0x2000000000050570
+        	PMD3  : 0x00000000000000b5 , Latency 181
+        	PMD17 : 0x2000000000013210 (slot 1) valid=Y
+
+	.....
+
+	To keep this readme simple, make sure that *-smpl-rate > *-ovfl-rate to
+	get something that has chances of being correct. 	
+
+	- BTB sampling (the interesting stuff II):
+
+	  Follow more or less the explanation for EAR but use the BRANCH_EVENT instead:
+
+	
+	% pfmon --btb-ovfl-rate=300 --btb-smpl-rate=400 -e branch_event -- ls -ial
+	Format=v1 entry_size=112 bytes
+	Recorded PMDs=0x000000000001ff00
+
+	Entry 0 PID:3336 CPU:1 STAMP:0xe31fb427ea1a IIP:0x2000000000024870
+        PMD OVFL: BRANCH_EVENT(4) 
+        PMD9 : 0x2000000000024842 b=0 mp=1 valid=Y
+                Target Address: 0x2000000000024840
+
+        PMD10: 0x200000000002485d b=1 mp=0 valid=Y
+                Source Address: 0x2000000000024850 (slot 3)
+                Prediction: Success
+
+        PMD11: 0x2000000000024869 b=1 mp=0 valid=Y
+                Source Address: 0x2000000000024860 (slot 2)
+                Prediction: Success
+
+        PMD12: 0x2000000000024842 b=0 mp=1 valid=Y
+                Target Address: 0x2000000000024840
+
+        PMD13: 0x200000000002485d b=1 mp=0 valid=Y
+                Source Address: 0x2000000000024850 (slot 3)
+                Prediction: Success
+
+        PMD14: 0x2000000000024869 b=1 mp=0 valid=Y
+                Source Address: 0x2000000000024860 (slot 2)
+                Prediction: Success
+
+        PMD15: 0x2000000000024842 b=0 mp=1 valid=Y
+                Target Address: 0x2000000000024840
+
+        PMD8 : 0x200000000002485d b=1 mp=0 valid=Y
+                Source Address: 0x2000000000024850 (slot 3)
+                Prediction: Success
+
+	.....
+
+	By default the tool capture ALL branches. I am sure that's not what you want, 
+	so play with the other --btb-* options and read the Itanium specific manual
+	to figure out what you want. Sorry I don't have a better answer right now !
+
+
+01/29/2001
+S.Eranian <eranian@hpl.hp.com>

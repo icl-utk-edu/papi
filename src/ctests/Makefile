@@ -4,7 +4,7 @@ SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
 MPX	= multiplex1 multiplex1_pthreads
 MPI	= mpifirst
-SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
+SERIAL  = zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory
@@ -75,6 +75,9 @@ johnmay2: johnmay2.c $(UTILOBJS) $(PAPILIB)
 
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
+
+zero_flip: zero_flip.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) zero_flip.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_flip
 
 first: first.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) first.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first

@@ -3,7 +3,7 @@ DESCR	= "Stock Linux 2.4.x for the Intel IA64"
 LIBS	= static shared 
 TARGETS = serial pthreads
 
-CFLAGS  = -Wall -Ipfmon/include -I. -ggdb -DDEBUG
+CFLAGS  = -Wall -Ipfmon-0.06a/include -I. -ggdb -DDEBUG
 FFLAGS	= -g 
 LDFLAGS = -L/usr/local/intel/compiler50/ia64/lib -lPEPCF90
 OPTFLAGS= 
@@ -11,7 +11,7 @@ CC_SHR  = gcc -shared -fpic
 CC_R	= gcc
 CC	= gcc
 F77	= /usr/local/intel/compiler50/ia64/bin/efc
-LIBPFM  = pfmon/libpfm
+LIBPFM  = pfmon-0.06a/libpfm
 MISCOBJS= $(LIBPFM)/pfmlib.o $(LIBPFM)/pfmusr.o $(LIBPFM)/pfmerror.o
 MISCSRCS= $(LIBPFM)/pfmlib.c $(LIBPFM)/pfmusr.c $(LIBPFM)/pfmerror.c
 
