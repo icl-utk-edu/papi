@@ -71,12 +71,16 @@ int main(int argc, char **argv)
    {
      char *libname = 
 #if defined(_AIX)  
-     "libm.a";
+     "libpapi.so";
 #else
      "libm.so";
 #endif     
      void *handle = dlopen("libm.so", RTLD_LAZY);
+#if defined(_AIX)
+     int (*is_initialized)(void);
+#else
      double (*cosine)(double);
+#endif
      int oldcount;
 
      printf("\nLoading %s with dlopen().\n",libname);
@@ -86,6 +90,15 @@ int main(int argc, char **argv)
        test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
      
+#if defined(_AIX)  
+     printf("Looking up PAPI_is_initialized() \n");
+     is_initialized = ( int (*) (void)) dlsym(handle, "PAPI_is_initialized");
+     if (is_initialized == NULL)  {
+       test_fail(__FILE__, __LINE__, "dlsym", 1);
+     }
+     
+     printf ("PAPI status is = %d\n\n", (*is_initialized)());
+#else
      printf("Looking up cos() function with dlsym().\n");
 
      cosine = ( double (*) (double)) dlsym(handle, "cos");
@@ -94,6 +107,7 @@ int main(int argc, char **argv)
      }
      
      printf ("cos(2.0) = %f\n\n", (*cosine)(2.0));
+#endif
  
    oldcount = shinfo->count;
 
