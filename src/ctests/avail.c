@@ -40,7 +40,7 @@ int main(int argc, char **argv)
       if (argv[i]) {
          if (strstr(argv[i], "-a"))
             print_avail_only = PAPI_PRESET_ENUM_AVAIL;
-         if (strstr(argv[i], "-f"))
+         if (strstr(argv[i], "-d"))
             print_tabular = 0;
          if (strstr(argv[i], "-h")) {
             print_help();
