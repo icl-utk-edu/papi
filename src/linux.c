@@ -293,7 +293,7 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
 int _papi_hwd_get_system_info(void)
 {
    int tmp, retval;
-   char maxargs[PAPI_MAX_STR_LEN], *t, *s;
+   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
    pid_t pid;
    float mhz = 0.0;
    FILE *f;
