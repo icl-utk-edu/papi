@@ -26,7 +26,7 @@
 #define NUM_THREADS 4
 #define SUCCESS 1
 #define FAILURE 0
-//#define METRIC PAPI_FP_INS
+/*#define METRIC PAPI_FP_INS */
 #define METRIC PAPI_L1_DCM
 extern void do_flops(int);
 extern void do_reads(int);
