@@ -423,8 +423,6 @@ read the documentation carefully.  */
    long_long PAPI_get_real_usec(void);
    long_long PAPI_get_virt_cyc(void);
    long_long PAPI_get_virt_usec(void);
-//   u_long_long PAPI_get_virt_cyc(void);
-//   u_long_long PAPI_get_virt_usec(void);
    int PAPI_library_init(int version);
    unsigned long int PAPI_thread_id(void);
    int PAPI_register_thread(void);

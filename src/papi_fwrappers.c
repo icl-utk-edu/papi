@@ -222,12 +222,12 @@ PAPI_FCALL(papif_get_real_usec, PAPIF_GET_REAL_USEC, (long_long * time))
    *time = PAPI_get_real_usec();
 }
 
-PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (u_long_long * virt_cyc))
+PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long_long * virt_cyc))
 {
    *virt_cyc = PAPI_get_virt_cyc();
 }
 
-PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (u_long_long * time))
+PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (long_long * time))
 {
    *time = PAPI_get_virt_usec();
 }
