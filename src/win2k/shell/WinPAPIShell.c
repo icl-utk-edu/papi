@@ -303,6 +303,7 @@ static void smokeTest(void)
 		}
 		else MessageBox(NULL, "The low-level driver looks ok, \nbut I couldn't find any test directories.", "Smoke Test",MB_OK);
 	}
+	else MessageBox(NULL, "This version of PAPI doesn't run on the MultiProcessor Build.", "Smoke Test",MB_OK);
 }
 	
 
@@ -340,7 +341,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					openExamples("Perfometer Example", PerfDir);
 					return TRUE;
 
-                case IDSMOKE:
+				case IDSMOKE:
 					smokeTest();
 					return TRUE;
 
