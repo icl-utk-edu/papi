@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_destroy_eventset 3 "September, 2002"  "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_destroy_eventset 3 "November, 2003"  "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_cleanup_eventset, PAPI_destroy_eventset  \-  empty and destroy an EventSet
@@ -8,7 +8,7 @@ PAPI_cleanup_eventset, PAPI_destroy_eventset  \-  empty and destroy an EventSet
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int\ PAPI_cleanup_eventset(int *" EventSet ");"
+.BI "int\ PAPI_cleanup_eventset(int " EventSet ");"
 .BI "int\ PAPI_destroy_eventset(int *" EventSet ");"
 .fi
 .B Fortran Interface
@@ -31,9 +31,10 @@ deallocates the memory associated with an empty PAPI event set.
 .BR "PAPI_create_eventset" (3)
 
 .SH RETURN VALUES
-On success, these functions return
-.B "PAPI_OK."
- On error, a non-zero error code is returned.
+.nf
+On success, these functions return PAPI_OK.
+On error, a non-zero error code is returned.
+.fi
 
 .SH ERRORS
 .TP
@@ -58,7 +59,7 @@ if (PAPI_stop(EventSet, values) != PAPI_OK)
 
 /* Remove all events in the eventset */
 
-if (PAPI_cleanup_eventset(&EventSet) != PAPI_OK)
+if (PAPI_cleanup_eventset(EventSet) != PAPI_OK)
   handle_error(1);
 
 /* Free all memory and data structures, EventSet must be empty. */
@@ -75,8 +76,9 @@ Philip J. Mucci <mucci@cs.utk.edu>
 These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_create_eventset "(3), " PAPI_query "(3), "
-.BR PAPI_add_event "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_shutdown "(3), "
- The PAPI Web Site: 
+.BR PAPI_create_eventset "(3), " PAPI_query_event "(3), "
+.BR PAPI_add_event "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
+.BR PAPI_remove_events "(3), " PAPI_shutdown "(3), "
+
+.SH The PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi
