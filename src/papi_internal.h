@@ -358,7 +358,6 @@ typedef union _papi_int_option_t {
 typedef struct {
   hwd_siginfo_t *si;
   hwd_ucontext_t *ucontext;
-  int overflow_vector;
 } _papi_hwi_context_t;
 
 typedef struct _papi_mdi {
@@ -416,5 +415,4 @@ typedef struct _papi_mdi {
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
-extern int _papi_hwi_event_index_map[MAX_COUNTERS];
 #endif /* PAPI_INTERNAL_H */

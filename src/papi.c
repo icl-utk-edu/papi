@@ -1301,7 +1301,6 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 {
   int retval, index, event_counter;
   EventSetInfo_t *ESI;
-  EventSetOverflowInfo_t opt = {{0},};
   ThreadInfo_t *thread;
 
   ESI = _papi_hwi_lookup_EventSet(EventSet);
@@ -1360,11 +1359,6 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
   if ( (ESI->overflow.event_counter==1 && threshold>0 ) ||
       (ESI->overflow.event_counter==0 && threshold==0) )
     ESI->state ^= PAPI_OVERFLOWING;
-
-  /* Copy the machine independent options into the ESI */
-/*
-  memcpy(&ESI->overflow, &opt, sizeof(EventSetOverflowInfo_t));
-*/
 
   papi_return(PAPI_OK);
 }
@@ -1663,6 +1657,7 @@ int PAPI_encode_native(char *str, int *code)
   return(_papi_hwi_native_name_to_code(str, code));
 }
 
+#if 0
 int PAPI_get_overflow_ctrs(int EventSet, void *context, int *papi_event_indices)
 {
   int i;
@@ -1679,4 +1674,5 @@ int PAPI_get_overflow_ctrs(int EventSet, void *context, int *papi_event_indices)
   } while (bits);
   return(total);
 }
+#endif
 

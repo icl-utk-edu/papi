@@ -24,6 +24,7 @@
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 #define PAPI_MAX_NATIVE_EVENTS 71
 #define MAX_NATIVE_EVENT PAPI_MAX_NATIVE_EVENTS
+#define MAX_NATIVE_EVENT_USII  22
 
 typedef int hwd_register_t;
 typedef int hwd_reg_alloc_t;

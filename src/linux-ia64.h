@@ -96,28 +96,6 @@ typedef  struct sigcontext hwd_ucontext_t;
 #define GET_OVERFLOW_CTR_BITS(context) \
   (((_papi_hwi_context_t *)context)->si->sy_pfm_ovfl[0])
 
-#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
-  (_papi_hwi_event_index_map[bit-PMU_FIRST_COUNTER])
-/*
-
-typedef struct _ThreadInfo {
-	unsigned pid;
-	unsigned tid;
-	hwd_context_t context;
-	void *event_set_overflowing;
-    void *event_set_profiling;
-	int domain;
-} ThreadInfo_t;
-
-extern ThreadInfo_t *default_master_thread;
-
-typedef struct _thread_list  {
-	ThreadInfo_t *master;
-	struct _thread_list *next;
-}  ThreadInfoList_t;
-*/
-
-
 #include "papi_internal.h"
 
 

@@ -235,7 +235,7 @@ read the documentation carefully.  */
 #endif
 
 typedef void (*PAPI_overflow_handler_t)(int EventSet, void *address, 
-                                      void *context);
+                                      long_long overflow_vector);
 
 typedef struct _papi_sprofil {
   unsigned short *pr_base;      /* buffer base */

@@ -62,7 +62,10 @@ extern void _papi_hwi_shutdown_the_thread_list(void);
 extern int _papi_hwi_stop_overflow_timer(ThreadInfo_t *master, EventSetInfo_t *ESI);
 extern int _papi_hwi_start_overflow_timer(ThreadInfo_t *master, EventSetInfo_t *ESI);
 extern int _papi_hwi_initialize(DynamicArray_t **);
+/*
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
+*/
+extern void _papi_hwi_dispatch_overflow_signal(void *context, int, long_long , int);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 

@@ -65,7 +65,6 @@ extern PAPI_preset_info_t _papi_hwi_presets[];
 extern int _papi_hwi_debug;
 #endif
 
-int _papi_hwi_event_index_map[MAX_COUNTERS];
 
 ThreadInfo_t *default_master_thread = NULL; 
 
@@ -604,6 +603,8 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 /* this function must be called after remap_event_position */
 static void map_papi_event_index(EventSetInfo_t *ESI, int thisindex)
 {
+    return;
+#if 0
 	EventInfo_t *head;
 	int i, preset_index, total_events;
 
@@ -621,6 +622,7 @@ static void map_papi_event_index(EventSetInfo_t *ESI, int thisindex)
 	  }
       _papi_hwi_event_index_map[head[i].pos[0]]=i;
     }
+#endif 
 }
 
 

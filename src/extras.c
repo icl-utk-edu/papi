@@ -174,15 +174,26 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }
 
-void _papi_hwi_dispatch_overflow_signal(void *context)
+/* if isHardwareSupport is true, then the processor is using hardware overflow,
+   else it is using software overflow. 
+   overflow_bit: if the substrate can get the overflow bit when overflow occurs,     then this should be passed by the substrate;  
+   If both genOverflowBit and isHardwareSupport are true, that means 
+     we don't know how to get the overflow bit from the kernel directly,
+      , so we generate the overflow bit in this function; 
+   (The substrate can only set genOverflowBit pararemter to ture if the 
+     hardware doesn't support multiple hardware overflow. If the substrate
+     support multiple hardware overflow and you don't know how to get the
+     overflow bit, then I don't know how to deal with this situation).
+*/
+void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_long overflow_bit, int genOverflowBit)
 {
   int retval, event_counter, i, overflow_flag, pos;
   int papi_index;
+  long_long overflow_vector;
   u_long_long latest=0, temp[MAX_COUNTERS];
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
-  _papi_hwi_context_t *ctx = (_papi_hwi_context_t*)context;
-  void *address;
+  _papi_hwi_context_t *ctx = (_papi_hwi_context_t*)papiContext;
 
 #ifdef OVERFLOW_DEBUG_TIMER
   if (_papi_hwi_thread_id_fn)
@@ -209,16 +220,16 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
       
     /* Get the latest counter value */
    event_counter = ESI->overflow.event_counter;
-   printf("event_counter=%d\n", event_counter);
       
   /* if you want to change this, please discuss with me .  -- Min */
     overflow_flag = 0;
-    if (_papi_hwi_system_info.supports_hw_overflow==0)
+    overflow_vector=0;
+
+    if (isHardware == 0)
     {
       retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
       if (retval < PAPI_OK)
 	    return;
-      ctx->overflow_vector=0;
       for(i=0; i<event_counter; i++) 
       {
         papi_index=ESI->overflow.EventIndex[i];
@@ -229,7 +240,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
     DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline[i],ESI->overflow.threshold[i]));
           pos=ESI->EventInfoArray[papi_index].pos[0];
           printf("pos=%d  ", pos);
-          ctx->overflow_vector ^= 1<<pos; 
+          overflow_vector ^= 1<<pos; 
           temp[i] = latest - ESI->overflow.threshold[i];
           overflow_flag=1;
       /* adjust the deadline */
@@ -237,13 +248,21 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
         }
       }
     }
-      
-  /* Is it larger than the deadline? */
-  
-    if ((_papi_hwi_system_info.supports_hw_overflow) || overflow_flag )
+    
+    if ( isHardware && genOverflowBit )
+    {
+      /* we had assumed the overflow event can't be derived event */
+      papi_index=ESI->overflow.EventIndex[0];
+      /* suppose the pos is the same as the counter number(this is not true in 
+         Itanium, but itanium don't need us to generate the overflow bit
+      */
+      pos=ESI->EventInfoArray[papi_index].pos[0];
+      overflow_vector = 1<<pos;
+    } else if (isHardware) overflow_vector=overflow_bit; 
+
+    if ( isHardware || overflow_flag )
     {
       ESI->overflow.count++;
-      address=_papi_hwd_get_overflow_address(ctx->ucontext);
       if (ESI->state & PAPI_PROFILING)
       {
 /*
@@ -252,13 +271,13 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 */
         for(i=0; i<event_counter; i++) {
           if (temp[i] > 0)
-	        dispatch_profile(ESI, (caddr_t)context, 
+	        dispatch_profile(ESI, (caddr_t)papiContext, 
              temp[i], ESI->overflow.threshold[i]); 
         }
       }
       else
 	    ESI->overflow.handler(ESI->EventSetIndex,  
-                GET_OVERFLOW_ADDRESS(ctx), context);
+                GET_OVERFLOW_ADDRESS(ctx), overflow_vector);
     }
   }
 #ifdef ANY_THREAD_GETS_SIGNAL

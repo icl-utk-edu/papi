@@ -64,8 +64,8 @@ static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_FLOPS,DERIVED_ADD_PS,{"CPU_CYCLES","FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0}},
   {0,0,{0,0,0,0}}};
   #define NUM_OF_PRESET_EVENTS 41
-  preset_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS];
-  preset_search_t *preset_search_map=ia_preset_search_map_bycode;
+  hwi_preset_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS+1];
+  hwi_preset_t *preset_search_map=ia_preset_search_map_bycode;
 #else
 static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_CA_SNP,0,{"BUS_SNOOPS_SELF",0,0,0}},
@@ -115,7 +115,6 @@ static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_L3_TCW,0,{"L3_WRITES_ALL_ALL",0,0,0}},
   {PAPI_TLB_DM,0,{"L2DTLB_MISSES",0,0,0}},
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH_L2ITLB",0,0,0}},
-  {PAPI_BR_INS,0,{"BR_MISPRED_DETAIL_ALL_ALL_PRED",0,0,0}},
   {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, 
   {PAPI_BR_PRC,0,{"BR_MISPRED_DETAIL_ALL_CORRECT_PRED",0,0,0}},
   {PAPI_BR_MSP,DERIVED_ADD,{"BR_MISPRED_DETAIL_ALL_WRONG_PATH","BR_MISPRED_DETAIL_ALL_WRONG_TARGET",0,0}},
@@ -126,9 +125,9 @@ static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_SR_INS,0,{"STORES_RETIRED",0,0,0}},
   {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
   {0,0,{0,0,0,0}}};
-  #define NUM_OF_PRESET_EVENTS 57
-  preset_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS];
-  preset_search_t *preset_search_map=ia_preset_search_map_bycode;
+  #define NUM_OF_PRESET_EVENTS 56
+  hwi_preset_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS+1];
+  hwi_preset_t *preset_search_map=ia_preset_search_map_bycode;
 #endif
 
 
@@ -183,26 +182,26 @@ int generate_preset_search_map(itanium_preset_search_t *oldmap)
 
   pnum=0;  /* preset event counter */
   memset(ia_preset_search_map_bycode,0x0,sizeof(ia_preset_search_map_bycode));
-  for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
+  for (i = 0; i <= PAPI_MAX_PRESET_EVENTS; i++)
   {
     if (oldmap[i].preset == 0)
 	  break;
     pnum++;
-    preset_search_map[i].preset=oldmap[i].preset;
+    preset_search_map[i].event_code=oldmap[i].preset;
     preset_search_map[i].derived = oldmap[i].derived;
     findme = oldmap[i].findme;
     cnt=0;
     while (*findme!= NULL )
     {
       if (cnt == MAX_COUNTER_TERMS) abort();
-      if (pfm_find_event_byname(*findme, &preset_search_map[i].natEvent[cnt]) != PFMLIB_SUCCESS) 
+      if (pfm_find_event_byname(*findme, &preset_search_map[i].nativeEvent[cnt]) != PFMLIB_SUCCESS) 
         return(PAPI_ENOEVNT);
       else 
-        preset_search_map[i].natEvent[cnt] ^= NATIVE_MASK;
+        preset_search_map[i].nativeEvent[cnt] ^= NATIVE_MASK;
       findme++;
       cnt++;
     }
-    preset_search_map[i].natEvent[cnt]=-1;
+    preset_search_map[i].nativeEvent[cnt]=0;
   }
   if (NUM_OF_PRESET_EVENTS != pnum) 
     abort();
@@ -871,6 +870,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
   struct sigcontext *mc;
   struct ucontext realc;
 
+  return;
+/*
   pfm_stop();
   uc = (struct ucontext *) tmp;
   realc = *uc;
@@ -879,6 +880,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
   _papi_hwi_dispatch_overflow_signal((void *)mc); 
   DBG((stderr,"Finished at 0x%lx\n",mc->sc_ip));
   pfm_start();
+*/
 }
 
 static unsigned long
@@ -1082,7 +1084,7 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
 /*
   _papi_hwi_dispatch_overflow_signal((void *)context); 
 */
-  _papi_hwi_dispatch_overflow_signal((void *)&ctx); 
+  _papi_hwi_dispatch_overflow_signal((void *)&ctx,_papi_hwi_system_info.supports_hw_overflow , info->sy_pfm_ovfl[0], 0); 
   if ( perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1 )
   {
     fprintf(stderr,"PID %d: perfmonctl error PFM_RESTART %d\n",
@@ -1346,7 +1348,12 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-  return PAPI_OK;
+  int index=*EventCode & NATIVE_AND_MASK;
+
+  if(index < MAX_NATIVE_EVENT-1 ) {
+    *EventCode=*EventCode+1;
+    return(PAPI_OK);
+  } else  return(PAPI_ENOEVNT);
 }
 
 void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
