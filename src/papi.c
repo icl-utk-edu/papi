@@ -1623,6 +1623,10 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
   switch(option)
     { 
+    case PAPI_SET_MAXMEM:
+    {
+	papi_return(_papi_hwd_setmaxmem());
+    }
     case PAPI_SET_MULTIPLEX:
       {
 	EventSetInfo *ESI;
@@ -2189,6 +2193,36 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 void *PAPI_get_overflow_address(void *context)
 {
   return(_papi_hwd_get_overflow_address(context));
+}
+
+long PAPI_get_dmem_info(int option){
+ if ( option != PAPI_GET_PAGESIZE ){
+   pid_t pid = getpid();
+   prpsinfo_t info;
+   char pfile[256];
+   int fd;
+
+   sprintf(pfile, "/proc/%05d", pid);
+   if((fd=open(pfile,O_RDONLY)) <0 ) {
+	DBG((stderr,"PAPI_get_dmem_info can't open /proc/%d\n",pid));
+        return(PAPI_ESYS);
+   }
+   if(ioctl(fd, PIOCPSINFO,  &info)<0){
+        return(PAPI_ESYS);
+   }
+   close(fd);
+ switch(option){
+   case PAPI_GET_RESSIZE:
+	return(info.pr_rssize);
+   case PAPI_GET_SIZE:
+	return(info.pr_size);
+   default:
+	return(PAPI_EINVAL);
+ }
+ }
+ else
+	return ((long)getpagesize());
+ return(PAPI_EINVAL);
 }
 
 const PAPI_exe_info_t *PAPI_get_executable_info(void)

@@ -1409,6 +1409,10 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
   return(PAPI_EBUG);
 }
 
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}
+
 int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
 {
   switch (code)

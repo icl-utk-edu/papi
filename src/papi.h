@@ -118,6 +118,11 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes < 0 to stderr and continue. */ 
 #define PAPI_VERB_ESTOP  2     /* Option to automatically report any return codes < 0 to stderr and exit. */
 
+/* dmem_info definitions */
+#define PAPI_GET_SIZE        1    /* Size of process image in pages */
+#define PAPI_GET_RESSIZE     2    /* Resident set size in pages */
+#define PAPI_GET_PAGESIZE    3    /* Pagesize in bytes */
+
 /* Option definitions */
 
 #define PAPI_SET_DEBUG	 2     /* Option to turn on debugging features of the PAPI library*/
@@ -177,6 +182,7 @@ All of the functions in the PerfAPI should use the following set of constants.
  
 #define PAPI_GET_MEMINFO        75 /* Memory information */
 
+#define PAPI_SET_MAXMEM         76 /* Setup Maximum Memory if no hardware support */
 #define PAPI_MAX_STR_LEN        81 /* Guess what */
 
 #define PAPI_DERIVED            0x1 /* Flag to indicate that the event is derived */
@@ -316,6 +322,14 @@ typedef union {
   PAPI_hw_info_t *hw_info;
   PAPI_mem_info_t *mem_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
+
+/* A pointer to the following is passed to PAPI_get_dmem_info() */
+typedef struct  _dmem_t{
+   long_long  total_memory;
+   long_long  max_memory;
+   long_long  total_swapping;
+   /* Memory Locality */ 
+} PAPI_dmem_t;
 
 /* dkt - added a label field to this structure */
 typedef struct pre_info {

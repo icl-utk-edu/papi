@@ -65,4 +65,6 @@ typedef struct hwd_search {
 
 extern void cpu_sync(void);
 extern unsigned long long get_tick(void);
+/*
 extern _start, _end, _etext, _edata;
+*/

@@ -3,6 +3,8 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    Kevin London 
+*	   london@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */  
@@ -393,6 +395,10 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(retval);
 }
 #endif
+
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}
 
 #if 0
 int _papi_hwd_allocate_hwcounters(const P4_perfctr_control_t *state, const P4_perfctr_event_t *add)

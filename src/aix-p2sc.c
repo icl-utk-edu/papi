@@ -875,6 +875,10 @@ int _papi_hwd_reset(EventSetInfo *ESI)
   return(retval);
 }
 
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}
+
 int _papi_hwd_ctl(int code, _papi_int_option_t *option)
 {
   switch (code)

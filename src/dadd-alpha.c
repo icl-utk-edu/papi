@@ -440,6 +440,10 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
+}
+
 int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
 {
   return(PAPI_ESBSTR);

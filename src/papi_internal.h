@@ -307,6 +307,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DW
 extern int _papi_hwd_add_event(hwd_control_state_t *, unsigned int, EventInfo_t *);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *extra, EventInfo_t *); 
 extern int _papi_hwd_rem_event(hwd_control_state_t *, EventInfo_t *);
+extern int _papi_hwd_setmaxmem();
 
 /* Old syntax! */
 extern int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option);

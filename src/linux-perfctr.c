@@ -7,6 +7,8 @@
 *          terpstra@cs.utk.edu
 * Mods:    nils smeds
 *          smeds@pdc.kth.se
+* Mods:    Kevin London
+*	   london@cs.utk.edu
 */  
 
 #ifdef PERFCTR20
@@ -1227,6 +1229,10 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
   /* Should never get here */
 
   return(PAPI_EBUG);
+}
+
+int _papi_hwd_setmaxmem(){
+  return(PAPI_OK);
 }
 
 int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)

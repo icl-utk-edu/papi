@@ -5,9 +5,9 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = all_events derived high-level2 describe mem_info zero zero_flip \
-	low-level high-level sprofile eventname case1 case2 calibrate \
-	flops avail first second third fourth fourth-inv cost \
+SERIAL  = dmem_info all_events derived high-level2 describe mem_info zero \
+	zero_flip low-level high-level sprofile eventname case1 case2 \
+	calibrate flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory \
 	timer_overflow overflow2 matrix-hl
@@ -149,6 +149,9 @@ profile: profile.c $(UTILOBJS) $(PAPILIB)
 
 pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
+
+dmem_info: dmem_info.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) dmem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o dmem_info
 
 mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o mem_info
