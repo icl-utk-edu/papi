@@ -1,7 +1,6 @@
 INCLUDE = -I..
-TESTS 	= zero first \
-	  second third fourth fifth nineth tenth description \
-          accum highlevel cost johnmay johnmay2 native \
+TESTS 	= zero first  second nineth tenth description \
+          accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
@@ -68,15 +67,6 @@ first: first.F $(FTEST_DEPENDENCE)
 second: second.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(PAPILIB) -o second $(LDFLAGS)
 
-third: third.F $(FTEST_DEPENDENCE)
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) third.F $(PAPILIB) -o third $(LDFLAGS)
-
-fourth: fourth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fourth.F $(PAPILIB) -o fourth $(LDFLAGS)
-
-fifth: fifth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fifth.F $(PAPILIB) -o fifth $(LDFLAGS)
-
 nineth: nineth.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) nineth.F $(PAPILIB) -o nineth $(LDFLAGS)
 
@@ -85,9 +75,6 @@ tenth: tenth.F $(FTEST_DEPENDENCE)
 
 cost: cost.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) cost.F $(PAPILIB) -o cost $(LDFLAGS)
-
-johnmay: johnmay.F $(FTEST_DEPENDENCE)
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay.F $(PAPILIB) -o johnmay $(LDFLAGS)
 
 johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
