@@ -23,30 +23,31 @@ __8.  execute cat_progref.bat (on Windows)
       You can do the same on Linux/Unix, probably using cat.
       A suggested file order is:
 	papi.html			papif.html	
-	papi_presets.html		papi_accum.html
-	papi_accum_counters.html	papi_add_event.html
-	papi_add_events.html		papi_add_pevent.html
+	papi_presets.html		papi_native.html
+        papi_accum.html                 papi_accum_counters.html
+	papi_add_event.html             papi_add_events.html
 	papi_cleanup_eventset.html	papi_create_eventset.html
-	papi_describe_event.html	papi_destroy_eventset.html
+	papi_destroy_eventset.html      papi_enum_event.html
 	papi_event_code_to_name.html	papi_event_name_to_code.html
-	papi_flops.html			papi_get_executable_info.html
-	papi_get_hardware_info.html	papi_get_opt.html
-	papi_get_overflow_address.html	papi_get_real_cyc.html
-	papi_get_real_usec.html		papi_get_virt_cyc.html
+	papi_flips.html			papi_flops.html
+        papi_get_dmem_info.html         papi_get_event_info.html
+        papi_get_executable_info.html
+	papi_get_hardware_info.html	papi_get_multiplex.html
+	papi_get_opt.html       	papi_get_real_cyc.html
+	papi_get_real_usec.html		papi_get_shared_lib_info.html
+	papi_get_thr_specific.html	papi_get_virt_cyc.html
 	papi_get_virt_usec.html		papif_get_clockrate.html
 	papif_get_domain.html		papif_get_exe_info.html
-	papif_get_granularity.html
-	papif_get_preload.html		papi_label_event.html
-	papi_library_init.html		papi_list_events.html
-	papi_lock.html			papi_multiplex_init.html
+	papif_get_granularity.html      papif_get_preload.html
+	papi_ipc.html                   papi_library_init.html
+	papi_list_events.html           papi_lock.html
+	papi_multiplex_init.html        papi_num_events.html		
 	papi_num_counters.html		papi_num_hwctrs.html
 	papi_overflow.html		papi_perror.html
-	papi_profil.html		papi_query_all_events_verbose.html
-	papi_query_event.html		papi_query_event_verbose.html
+	papi_profil.html		papi_query_event.html		
 	papi_read.html			papi_read_counters.html
-	papi_rem_event.html		papi_rem_events.html
-	papi_rem_pevent.html		papi_restore.html
-	papi_reset.html			papi_save.html
+        papi_register_thread.html       papi_remove_event.html
+        papi_remove_events.html         papi_reset.html			
 	papi_set_debug.html		papi_set_domain.html
 	papi_set_granularity.html	papi_set_multiplex.html
 	papi_set_opt.html		papif_set_event_domain.html
