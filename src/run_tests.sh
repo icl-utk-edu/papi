@@ -27,7 +27,7 @@ echo "Running C Tests\n";
 for i in $CTESTS;
 do
 if [ -x $i ]; then
-if [ "$i" = "tests/timer_overflow" ]; then
+if [ "$i" = "ctests/timer_overflow" ]; then
   echo Skipping test $i, it takes too long...
 else
 echo -n "Running $i: ";
