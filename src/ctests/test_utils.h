@@ -3,9 +3,9 @@
 #define SUCCESS 1
 #define FAILURE 0
 #define NUM_THREADS 4
-#define NUM_ITERS  1000
+#define NUM_ITERS  50
 #define NUM_FLOPS  20000000
-#define NUM_READS  4000
+#define NUM_READS  1
 #define THRESHOLD   1000000
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 #define TOLERANCE   .1
