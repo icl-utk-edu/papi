@@ -1221,7 +1221,7 @@ void PAPI_shutdown(void)
 {
    DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
    EventSetInfo_t *ESI;
-   int i, j = 0, status;
+   int i, j = 0;
    ThreadInfo_t *master;
 
    if (init_retval == DEADBEEF) {
@@ -1238,17 +1238,15 @@ void PAPI_shutdown(void)
 
  again:
    for (i = 0; i < map->totalSlots; i++) {
-      ESI = map->dataSlotArray[i];
-      if (ESI) {
-         PAPI_state(i, &status);
-         if (ESI->state & PAPI_RUNNING) {
-            if (ESI->master == master) {
-               PAPI_stop(i, NULL);
-               PAPI_cleanup_eventset(i);
-            } else
-               j++;
-         }
-      }
+     ESI = map->dataSlotArray[i];
+     if (ESI) {
+       if (ESI->master == master) {
+	 if (ESI->state & PAPI_RUNNING) 
+	   PAPI_stop(i, NULL);
+	 PAPI_cleanup_eventset(i);
+       } else if (ESI->state & PAPI_RUNNING) 
+	 j++;
+     }
    }
 
    /* No locking required, we're just waiting for the others

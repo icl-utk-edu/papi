@@ -115,7 +115,7 @@ static unsigned int randomseed;
 
 #ifndef _WIN32
 static struct itimerval itime;
-static struct itimerval itimestop;
+const static struct itimerval itimestop = { { 0, 0 }, { 0, 0 } };
 static struct sigaction oaction;
 #else
 static MMRESULT mpxTimerID;     /* unique ID for referencing this timer */
@@ -236,11 +236,6 @@ static void mpx_init_timers(int interval)
    itime.it_value.tv_sec = 0;
    itime.it_value.tv_usec = interval;
 #endif
-
-   itimestop.it_interval.tv_sec = 0;
-   itimestop.it_interval.tv_usec = 0;
-   itimestop.it_value.tv_sec = 0;
-   itimestop.it_value.tv_usec = 0;
 }
 
 static int mpx_startup_itimer(void)
@@ -249,11 +244,12 @@ static int mpx_startup_itimer(void)
 
    /* Set up the signal handler and the timer that triggers it */
 
+   MPXDBG("%d\n",getpid());
    memset(&sigact, 0, sizeof(sigact));
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
 
-   if (sigaction(MPX_SIGNAL, &sigact, &oaction) == -1)
+   if (sigaction(MPX_SIGNAL, &sigact, NULL) == -1)
      {
         PAPIERROR("sigaction start errno %d",errno);
 	return PAPI_ESYS;
@@ -270,24 +266,28 @@ static int mpx_startup_itimer(void)
 
 static void mpx_restore_signal(void)
 {
-   if (sigaction(MPX_SIGNAL, &oaction, NULL) == -1)
+  MPXDBG("restore signal\n");
+  if (signal(MPX_SIGNAL, SIG_IGN) == SIG_ERR)
      PAPIERROR("sigaction stop errno %d",errno);
 }
 
 static void mpx_shutdown_itimer(void)
 {
+  MPXDBG("setitimer off\n");
    if (setitimer(MPX_ITIMER, &itimestop, NULL) == -1)
      PAPIERROR("setitimer stop errno %d",errno);
 }
 
 static void mpx_hold(void)
 {
-   sighold(MPX_SIGNAL);
+  MPXDBG("sighold\n");
+  sighold(MPX_SIGNAL);
 }
 
 static void mpx_release(void)
 {
-   sigrelse(MPX_SIGNAL);
+  MPXDBG("sigrelse\n");
+  sigrelse(MPX_SIGNAL);
 }
 
 #endif                          /* _WIN32 */
@@ -296,6 +296,10 @@ static MasterEvent *get_my_threads_master_event_list(void)
 {
    Threadlist *t = tlist;
    unsigned long tid;
+
+   MPXDBG("tlist is %p\n",tlist);
+   if (tlist == NULL)
+     return NULL;
 
    if (_papi_hwi_thread_id_fn == NULL)
       return (tlist->head);
@@ -507,9 +511,7 @@ static void mpx_handler(int signal)
       MPXDBG("last signal was %lld usec ago\n", thiscall - lastcall);
       lastcall = thiscall;
 #endif
-#ifdef MPX_DEBUG_SIGNALS
-      MPXDBG("%x caught it\n", self);
-#endif
+      MPXDBG("%x caught it, tlist is %p\n", self, tlist);
       for (t = tlist; t != NULL; t = t->next) {
          if (pthread_equal(t->thr, self) == 0) {
             ++threads_responding;
@@ -553,7 +555,6 @@ static void mpx_handler(int signal)
          long_long cycles=0, total_cycles=0;
 
          retval = PAPI_stop(cur_event->papi_event, counts);
-	 assert(retval == PAPI_OK);
          MPXDBG("retval=%d, cur_event=%p, I'm tid=%lx\n",
                  retval, cur_event, me->tid);
 
@@ -618,7 +619,6 @@ static void mpx_handler(int signal)
 
          if (me->cur_event->active) {
             retval = PAPI_start(me->cur_event->papi_event);
-	    assert(retval == PAPI_OK);
          }
 #ifdef MPX_DEBUG_OVERHEAD
          didwork = 1;
@@ -1065,11 +1065,9 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
 void MPX_shutdown(void)
 {
-  if (tlist) 
-    {
-      mpx_shutdown_itimer();
-      mpx_restore_signal();
-    }
+  MPXDBG("%d\n",getpid());
+  mpx_shutdown_itimer();
+  mpx_restore_signal();
 }
 
 
@@ -1160,37 +1158,10 @@ int mpx_init(int interval)
 #endif
 
    tlist = NULL;
+   mpx_hold();
+   mpx_shutdown_itimer();
    mpx_init_timers(interval);
-
-#ifdef OUTSIDE_PAPI
-   /* Only want to initialize PAPI if it's not done already by
-    * some external library.  A crude test (but the best one I
-    * can think of) is to check for the existence of an  event
-    * that should be there.  If it is, PAPI is initialized;
-    * otherwise is isn't.
-    */
-   retval = PAPI_query_event(PAPI_TOT_CYC);
-   if (retval == PAPI_ENOEVNT) {
-      retval = PAPI_library_init(PAPI_VER_CURRENT);
-      assert(retval == PAPI_VER_CURRENT);
-#ifdef PTHREADS
-      retval = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
-      assert(retval == PAPI_OK);
-#endif
-   }
-#endif
-
-#ifdef PTHREADS
-   retval = pthread_key_create(&master_events_key, NULL);
-   assert(retval == 0);
-
-   retval = pthread_key_create(&thread_record_key, NULL);
-   assert(retval == 0);
-
-   retval = pthread_mutex_init(&tlistlock, NULL);
-   assert(retval == 0);
-#endif
-
+   
    return (PAPI_OK);
 }
 
