@@ -17,6 +17,8 @@
 *          pek@pdc.kth.se
 * Mods:    Haihang You
 *          you@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -520,7 +522,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
    int i;
 
    /* to find the native event from the native events list */
-   for (i = 0; i < ESI->NativeCount; i++) {
+   for (i = 0; i < MAX_COUNTERS; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners--;
          /* to clean the entry in the nativeInfo array */

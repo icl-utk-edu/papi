@@ -11,6 +11,8 @@
 *          terpstra@cs.utk.edu
 * Mods:    Kevin London
 *          london@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 */
 
 /* This file contains portable routines to do things that we wish the
@@ -443,9 +445,9 @@ int _papi_hwi_start_signal(int signal, int need_context)
    struct sigaction action;
 
    _papi_hwi_lock(INTERNAL_LOCK);
-   if (_papi_hwi_using_signal)
+   _papi_hwi_using_signal++;
+   if (_papi_hwi_using_signal - 1)
      {
-       _papi_hwi_using_signal++;
        INTDBG("_papi_hwi_using_signal is now %d\n",_papi_hwi_using_signal);
        _papi_hwi_unlock(INTERNAL_LOCK);
        return(PAPI_OK);

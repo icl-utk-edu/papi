@@ -16,6 +16,8 @@
  *          you@cs.utk.edu 
  *	    Kevin London
  *	    london@cs.utk.edu
+ *          Maynard Johnson
+ *          maynardj@us.ibm.com
  */
 
 #define MPX_NONDECR
@@ -1041,7 +1043,9 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 #endif
    MPX_EventSet *tmp = *mpx_events;
 
-   if (mpx_events == NULL || *mpx_events == NULL || (*mpx_events)->status == MPX_RUNNING)
+   if (*mpx_events == NULL)
+      return PAPI_OK;
+   if (mpx_events == NULL || (*mpx_events)->status == MPX_RUNNING)
       return PAPI_EINVAL;
 
    mpx_hold();
