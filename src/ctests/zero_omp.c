@@ -10,7 +10,7 @@ thread context (PAPI_GRN_THR).
      + PAPI_FP_INS
      + PAPI_TOT_CYC
 
-Each of 2 slave pthreads:
+Each thread inside the Thread routine:
    - Get cyc.
    - Get us.
    - Start counters
@@ -19,11 +19,10 @@ Each of 2 slave pthreads:
    - Get us.
    - Get cyc.
 
-Master pthread:
+Master serial thread:
    - Get us.
    - Get cyc.
-   - Fork threads
-   - Wait for threads to exit
+   - Run parallel for loop
    - Get us.
    - Get cyc.
 */
@@ -39,9 +38,12 @@ Master pthread:
 #include "papi.h"
 #include "papi_internal.h"
 #include "test_utils.h"
-#if (defined(mips) && defined(sgi) && defined(unix)) || (defined(sun) && defined(sparc))
+#ifdef _OPENMP
 #include <omp.h>
+#else
+#warning "This compiler does not understand OPENMP"
 #endif
+
 
 void Thread(int n)
 {
@@ -78,13 +80,13 @@ void Thread(int n)
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",pthread_self(),
+  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",omp_get_thread_num(),
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",pthread_self(),
+  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",omp_get_thread_num(),
 	 (values[0])[1]);
-  printf("Thread 0x%x Real usec   : \t%lld\n",pthread_self(),
+  printf("Thread 0x%x Real usec   : \t%lld\n",omp_get_thread_num(),
 	 elapsed_us);
-  printf("Thread 0x%x Real cycles : \t%lld\n",pthread_self(),
+  printf("Thread 0x%x Real cycles : \t%lld\n",omp_get_thread_num(),
 	 elapsed_cyc);
 
   free_test_space(values, num_tests);
@@ -92,7 +94,7 @@ void Thread(int n)
 
 int main()
 {
-  int i, rc;
+  int i, rc, maxthr;
   long long elapsed_us, elapsed_cyc;
 
   if (PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT)
@@ -105,9 +107,11 @@ int main()
 
   elapsed_cyc = PAPI_get_real_cyc();
 
+  maxthr = omp_get_num_procs();
+
 #pragma omp parallel for
-  for (i=1;i<3;i++)
-    Thread(1000000*i);
+  for (i=0;i<2*maxthr;i++)
+    Thread(1000000);
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 

@@ -1,3 +1,14 @@
+/* 
+* File:    papi_fwrappers.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    Nils Smeds
+*          smeds@pdc.kth.se
+*          Anders Nilsson
+*          anni@pdc.kth.se
+*/  
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>

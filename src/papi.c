@@ -650,7 +650,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	papi_return(PAPI_ENOTPRESET);
 	
-      strcpy(out,papi_presets[EventCode].event_name);
+      strcpy(out,papi_presets[EventCode].event_name,PAPI_MAX_STR_LEN);
       papi_return(PAPI_OK);
     }
   papi_return(PAPI_ENOTPRESET);
