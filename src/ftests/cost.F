@@ -96,7 +96,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-      call PAPIf_stop(es, , retval)
+      call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_stop')
         call ftests_fail(__FILE__,retval)
