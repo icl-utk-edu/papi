@@ -102,7 +102,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 #else
-  test_fail(__FILE__, __LINE__, "PAPI_profile_hw not available on this platform!");
+  test_fail(__FILE__, __LINE__, "PAPI_profile_hw not available on this platform!",PAPI_ESBSTR);
 #endif
 
 
