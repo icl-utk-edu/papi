@@ -86,17 +86,7 @@ typedef struct hwd_control_state {
   perfmon_req_t pc[PMU_MAX_COUNTERS];
   pfm_event_config_t evt;
 #else
-#ifdef ITANIUM2
-  #ifndef PMU_ITA2_MAX_COUNTERS
-   #define PMU_ITA2_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-  #endif
-  pfarg_reg_t pc[PMU_ITA2_MAX_COUNTERS];
-#else
-  #ifndef PMU_ITA_MAX_COUNTERS
-   #define PMU_ITA_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-  #endif
-  pfarg_reg_t pc[PMU_ITA_MAX_COUNTERS];
-#endif
+  pfarg_reg_t pc[PMU_MAX_PMCS];
   pfmlib_param_t evt;
 #endif
   int overflowcount[MAX_COUNTERS];
@@ -114,12 +104,12 @@ typedef struct preset_search {
   int derived;
   /* Strings to look for */
 #ifdef PFM06A
-  char *(findme[PMU_MAX_COUNTERS]);
+  char *(findme[MAX_COUNTERS]);
 #else
 #ifdef ITANIUM2
-  char *(findme[PMU_ITA2_MAX_COUNTERS]);
+  char *(findme[MAX_COUNTERS]);
 #else
-  char *(findme[PMU_ITA_MAX_COUNTERS]);
+  char *(findme[MAX_COUNTERS]);
 #endif
 #endif
 } preset_search_t;

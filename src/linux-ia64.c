@@ -92,8 +92,8 @@ static preset_search_t preset_search_map[] = {
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH",0,0,0}},
   {PAPI_MEM_SCY,0,{"MEMORY_CYCLE",0,0,0}},
   {PAPI_STL_ICY,0,{"UNSTALLED_BACKEND_CYCLE",0,0,0}},
-/*  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, Broken */
-  {PAPI_BR_PRC,0,{"BRANCH_PREDICTOR_ALL_ALL_PREDICTIONS",0,0,0}}, 
+  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, 
+  {PAPI_BR_PRC,0,{"BRANCH_PREDICTOR_ALL_CORRECT_PREDICTIONS",0,0,0}}, 
   {PAPI_BR_MSP,DERIVED_ADD,{"BRANCH_PREDICTOR_ALL_WRONG_PATH","BRANCH_PREDICTOR_ALL_WRONG_TARGET",0,0}},
   {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
   {PAPI_FP_INS,DERIVED_ADD,{"FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0,0}},
@@ -174,6 +174,8 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
 
 #ifdef ITANIUM2
 static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
+#else
+static pfmlib_ita_param_t ita_param[PAPI_MAX_PRESET_EVENTS];
 #endif
 
 extern void dispatch_profile(EventSetInfo *ESI, void *context,
@@ -338,6 +340,10 @@ static inline int setup_all_presets()
       preset_index = preset_search_map[pnum].preset & PRESET_AND_MASK; 
 #ifdef ITANIUM2
       preset_map[preset_index].evt.pfp_model = &ita2_param[pnum];
+      ita2_param[pnum].pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+#else
+      preset_map[preset_index].evt.pfp_model = &ita_param[pnum];
+      ita_param[pnum].pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
 #endif
       if (gen_events(preset_search_map[pnum].findme, &preset_map[preset_index].evt) == -1)
 	abort();
@@ -399,13 +405,10 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
 	  PFMW_PEVT_EVTCOUNT(evt) = orig_cnt;
 	  return(PAPI_ECNFLCT);
 	}
-#ifdef ITANIUM2
       evt->pfp_model = from->pfp_model;
-#endif
     }
 
-
-  /* Recalcuate the pfmw_param_t structure, may also signal conflict */
+  /* Recalculate the pfmw_param_t structure, may also signal conflict */
   if (pfmw_dispatch_events(evt,pc,&cnt))
     {
       goto bail;
@@ -799,7 +802,10 @@ int _papi_hwd_init_global(void)
   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
   if (papi_debug)
-    pfmlib_options.pfm_debug = 1;
+    {
+      pfmlib_options.pfm_debug = 1;
+      pfmlib_options.pfm_verbose = 1;
+    }
 #endif
 
   if (pfmw_set_options(&pfmlib_options))
