@@ -3,11 +3,25 @@ TESTS 	= zero first  second tenth description \
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
-
 PAPILIB=do_loops.o ftests_util.o dummy.o ../$(LIBRARY)
 FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 
 default: $(TESTS)
+
+mpi:
+
+multiplex:
+
+omp:
+
+smp: 
+
+pthreads:
+
+shmem:
+
+serial:  $(TESTS)
+
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
