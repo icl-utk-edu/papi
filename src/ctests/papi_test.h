@@ -59,6 +59,7 @@ void do_flops(int n);
 void do_reads(int n);
 void do_both(int n);
 void do_l1misses(int n);
+void dummy(void *);
 char *stringify_domain(int domain);
 char *stringify_granularity(int granularity);
 void tests_quiet(int argc, char **argv);
