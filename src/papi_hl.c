@@ -27,6 +27,12 @@ static int initialized = 0;
 static int hl_max_counters = 0;
 
 /* CHANGE LOG:
+  - dkt 11/19/01:
+	After much discussion with users and developers, removed FMA and SLOPE
+	fudge factors. SLOPE was not being used, and we decided the place to
+	apply FMA was at a higher level where there could be a better understanding
+	of platform discrepancies and code implications.
+	ALL PAPI CALLS NOW RETURN EXACTLY WHAT THE HARDWARE REPORTS
   - dkt 08/14/01:
 	Added reinitialization of values and proc_time to new reinit code.
 	Added SLOPE and FMA constants to correct for systemic errors on a
@@ -51,25 +57,6 @@ static int hl_max_counters = 0;
 	-- initial PAPI_get_real_usec() call moved above PAPI_start to avoid unwanted flops.
 	-- PAPI_accum() replaced with PAPI_start() / PAPI_stop pair for same reason.
 */
-#ifdef _WIN32
-  #define SLOPE 0
-  #define FMA 0
-#elif (defined(i386) && defined(linux))
-  #define SLOPE 0
-  #define FMA 0
-#elif(defined(_POWER) && defined(_AIX)) 
-  #define SLOPE 0
-  #define FMA 0
-#elif defined(mips)
-  #define SLOPE 9
-  #define FMA 1
-#elif (defined(sparc) && defined(sun))
-  #define SLOPE 0
-  #define FMA 1
-#else
-  #define SLOPE 0
-  #define FMA 0
-#endif
 
 int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops)
 {
@@ -140,12 +127,11 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 		}
 
 		*proc_time = (float)(values[1]/(mhz*1000000.0));
-		*mflops = (float)((values[0]<<FMA)/(*proc_time*1000000.0));
+		*mflops = (float)((values[0])/(*proc_time*1000000.0));
 		total_proc_time += *proc_time;
 		total_flpins += values[0];
 		*proc_time = total_proc_time;
-		*flpins = total_flpins<<FMA;
-		total_flpins -= SLOPE;
+		*flpins = total_flpins;
 	}
 	retval = PAPI_start(EventSet);
 	PAPI_perror(retval, buf, 500);
@@ -262,6 +248,7 @@ int PAPI_accum_counters(long_long *values, int array_len)
     return(PAPI_EINVAL);
 
   retval = PAPI_accum(PAPI_EVENTSET_INUSE,values);
+
   return(retval);
   /* PAPI_accum implies a PAPI_reset so no explicit PAPI_reset needed */
 }
@@ -290,4 +277,5 @@ int PAPI_stop_counters(long_long *values, int array_len)
     return(retval);
 
   return(PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE));
-} 
+}
+
