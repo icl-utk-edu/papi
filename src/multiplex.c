@@ -97,7 +97,7 @@ extern int (*thread_kill_fn)(int, int);
 
 #ifdef _WIN32
 
-static MMRESULT	mpxTimerID;	// unique ID for referencing this timer
+static MMRESULT	mpxTimerID;	/* unique ID for referencing this timer */
 static int mpx_time;
 
 static void mpx_init_timers(int interval)
@@ -108,7 +108,7 @@ static void mpx_init_timers(int interval)
 #ifdef OUTSIDE_PAPI
 	interval = MPX_DEFAULT_INTERVAL;
 #endif
-	// interval is in usec & Windows needs msec resolution
+	/* interval is in usec & Windows needs msec resolution */
 	mpx_time = interval/1000;
 }
 
@@ -126,16 +126,16 @@ static int mpx_startup_itimer(void)
   TIMECAPS	tc;
   UINT		wTimerRes;
 
-  // get the timer resolution capability on this system
+  /* get the timer resolution capability on this system */
   if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) return(PAPI_ESYS);
   
   wTimerRes = min(max(tc.wPeriodMin, 1), tc.wPeriodMax);
   timeBeginPeriod(wTimerRes);
   
-  // initialize a periodic timer
-  //	triggering every (milliseconds) 
-  //	and calling (_papi_hwd_timer_callback())
-  //	with no data
+  /* initialize a periodic timer
+  	triggering every (milliseconds) 
+  	and calling (_papi_hwd_timer_callback())
+  	with no data */
   mpxTimerID = timeSetEvent(mpx_time, wTimerRes, 
 		mpx_timer_callback, (DWORD)NULL, TIME_PERIODIC);
   if(!mpxTimerID) return PAPI_ESYS;
@@ -143,7 +143,7 @@ static int mpx_startup_itimer(void)
   return(retval);
 }
 
-#define mpx_restore_signal()	// NOP on Windows
+#define mpx_restore_signal()	/* NOP on Windows */
 
 static void mpx_shutdown_itimer(void)
 {
@@ -863,7 +863,6 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
 				(mpx_events->stop_values[i]
 					- mpx_events->start_values[i])
 				/ elapsed_cycles );
-
 		/* For regular events, scale the value by the proportion
 		 * of the total number of cycles during which this counter
 		 * was active.
@@ -1111,7 +1110,11 @@ void MPX_shutdown(void)
 	PAPI_lock();
 
 	for( t = tlist; t != NULL; t = nextthr ) {
-		assert(t->cur_event == NULL);	/* should be no active events */
+	  /* Removing this assert allows MPX_shutdown to proceed even if counters
+	     are running */
+#if 0
+	  assert(t->cur_event == NULL);	/* should be no active events */
+#endif
 		nextthr = t->next;
 #ifdef MPX_DEBUG_TIMER
 		fprintf(stderr,"Freeing thread %x\n",t->pid);
