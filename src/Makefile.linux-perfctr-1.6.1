@@ -20,6 +20,7 @@ CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpat
 CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
 SHLIBOBJS = $(MISCOBJS)
+MISCHDRS = x86-events.h ia32_presets.h
 
 include Makefile.inc
 

@@ -35,7 +35,7 @@ FTOPTFLAGS= -O0
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
 CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
-MISCHDRS= x86-events.h
+MISCHDRS= x86-events.h ia32_presets.h
 SHLIBOBJS = $(MISCOBJS)
 
 include Makefile.inc
@@ -50,7 +50,6 @@ $(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o: null
 	$(MAKE) -C $(PERFCTR)
 
 native_clean:
-	rm -f $(MISCHDRS)
 	$(MAKE) -C $(PERFCTR) clean
 
 null:
