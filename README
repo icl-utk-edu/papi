@@ -16,8 +16,6 @@ HISTORY.txt	A brief history of features and platforms added to PAPI.
 doc/ 		User documentation and support files.
 		See doc/README for details.
 man/ 		Stuff related to PAPI man pages. See man/README for details.
-spec/		Old versions of the PAPI specification.
-		See doc/ for current version.
 src/ 		The PAPI library source files and support files.
 		See src/README for more details.
 tools/		A growing collection of sample tools for use with PAPI.
@@ -38,7 +36,7 @@ a few tips on where to go from here.
   files. You can also find documentation in a greater variety of formats than
   in the papi/doc/ directory.
 - Sign up for the PAPI mailing list(s). Instructions are on our home page.
-- Read the HISTORY.txt file to get an idea of what's new in the current release.
+- Read the RELEASENOTES.txt file to get an idea of what's new in the current release.
 
 
 Installing PAPI
@@ -58,6 +56,7 @@ Using PAPI
 To use PAPI in your own programs:
 - Read the User's Guide. Versions in a variety of formats can be found in the 
   doc/ directory and online.
+- Try out the utility programs in /utils to see what's in your system.
 - Try a test program. Source for a number of tests in both C and FORTRAN is
   available in the src/tests/ and src/ftests/ directories. Find a program
   that's similar to what you want to do. Make sure you can build it and run it.
@@ -68,7 +67,7 @@ To use PAPI in your own programs:
 
 Bugs and Questions
 ------------------
-- Visit our FAQ (such as it is) at: <http://icl.cs.utk.edu/papi/faq/>
+- Visit our FAQ at: <http://icl.cs.utk.edu/papi/faq/>
 - Subscribe to the PAPI mailing list at:
   <http://www.nacse.org/mailman/listinfo/ptools-perfapi>
 - Read historical postings to the list.

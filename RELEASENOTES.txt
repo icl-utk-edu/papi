@@ -1,21 +1,21 @@
 ===============================================================================
-PAPI 3.0.7 RELEASE NOTES                                            03 Dec 2004
+PAPI 3.0.8 RELEASE NOTES                                            02 Mar 2005
 ===============================================================================
 
-This file documents the changes since the PAPI 3.0.6 release.
+This file documents the changes since the PAPI 3.0.7 release.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP307.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP308.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This release is a maintenance release for PAPI 3.
-It contains a small but significant number of Bug fixes and feature
-enhancements, as documented below.
+This is a maintenance release for PAPI 3.
+It contains a number of Bug fixes and feature enhancements, 
+as documented below.
 
 As always, if you identify strange behavior or demonstrable bugs, please
 contact the PAPI team or one of the PAPI development lists.
@@ -23,68 +23,183 @@ contact the PAPI team or one of the PAPI development lists.
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
 
-CHANGES IN PAPI 3.0.7 SINCE PAPI 3.0.6
+CHANGES IN PAPI 3.0.8 SINCE PAPI 3.0.7
 ===============================================================================
 
 Major Issues:
 -------------	
-* src/multiplex.c:
-  - fixed an assert error that caused gcc to segfault.
+* src/Rules.perfctr:
+  - add configure switch --with-tls=<yes|no>. By default, it is '
+    yes' and running the checking code. When it is 'no', -DNO_TLS
+    passed to gcc.
 
-* src/p3_events.c:
-  - added / updated lots of Opteron event definitions.
-    Thanks to Anoop Iyer at AMD!
+* src/linux-ia64.c, src/linux-ia64.h, src/pfmwrap.h:
+  - Fixes for SGI Propack 3 on Altix...
+    This happens because it's a Perfmon 2 platform + NPTL threads. Got
+    rid of those pesky, pesky pids instead of nice little tids.
 
-* src/aix.c: 
-  - fixed a static variable declaration in _papi_hwd_read 
-    that caused events to be attributed to the wrong threads.
-
-* src/threads.h: 
-  - Added NO_TLS definition to allow us to turn off TLS storage.
-    This prevented compilation on some platforms.
+* src/linux.c:
+  - Fixed a bug that showed up on the Nocona. A string was being used
+    as HUGE but declared as MAX. This bug also later showed up on other
+    linux systems.
+  - When PAPI is run as SUID, often links in /proc are inaccessible.
+    The fix is simply to tolerate inaccessible /proc information since 
+    this doesn't affect library operation at all. In this case, the 
+    exe_name and full_name are NULL strings, and the memory map is empty. 
+    Debug error messages are still raised.
+    The executable name can be empty, as can the memory map.
 
 
 Bug Fixes:
 ----------
-* src/Matlab/{PAPI_Matlab.readme, flops.readme, PAPI_flops.c}:
-  - fixed some Matlab mex file and comment syntax problems.
+* src/extras.c, src/p4_events.c, src/papi.c, src/papi_protos.h:
+  - Changes to address the thread-unsafe behavior of _papi_hwd_code_to_{name,descr}().
+    Rather than change the calling sequence of these routines in every substrate,
+    I changed the way the routines are called from extras.c, wrapping them in PAPI_lock/unlock pairs.
+    Pentium 4 was the only substrate that posed a thread risk. That hole has now been plugged.
 
-* src/ftests/fmultiplex2.F:
-  - fixed an annoying and long-standing warning message.
+* src/extras.c:
+  - Ensure that _papi_hwi_using_signal is always incremented.
 
-* src/solaris-ultra.c:
-  - fixed some event definitions.
+* src/multiplex.c:
+ - Prevent the PAPI_EINVAL error if MPX_cleanup is called multiple times
+   for a given set of MPX events (which happens in ctests/multiplex1).
 
-* src/jni/{EventSet.java, Papi.c, PapiJ.java}:
-  - various fixes.
+* src/papi_internal.c:
+  - Ensure that all native events that we fail to add during a given call 
+    to add_native_events() get cleaned out of the NativeInfoArray. 
+    This change makes sure we examine all NativeInfoArray event entries 
+    to see if they failed and need to be removed.
 
-* src/{p4_events.c, perfctr-p4.c, perfctr-p3.c}:
-  - fixes in P4 event definitions and in event set handling 
-    to make domain settings behave as documented.
+* src/x1-presets.h:
+  - Deprecated PAPI_TOT_IIS for X1. Previous definition was giving random 
+    results from 0 to very large.
+
+* src/linux-ia64.c:
+  - Fix for not compiling using libpfm 3.0
+  - Fix for software overflowing using PFM 3.0
+
+* src/irix-mips.c:
+  - Fix for software overflow on irix
+
+* src/extras.c, src/linux-ia64.c, src/papi.c:
+  - Fixes for forced overflow, first we had no default for a sigaction so in some
+    cases a sigaction wasn't getting setup, and ia64 didn't have dispatch_timer
+    routine implemented at all. Added better debugging messages.
+* src/genpapifdef.c:
+  - Modifications to work around Cray Fortran bug with maximum negative integer values.
+
+* src/papi_fwrappers.c:
+  - Modified fwrappers to support Cray X1 'string length at end' convention.
+
+* src/Rules.pfm:
+  - Fixed build for ALTIX. This was building with PFM in our directory,
+    but there should be always building with the pfm in /usr.
+
+* src/configure, src/configure.in:
+  - Allowed configure to detect the altix.
+
+* src/Makefile.solaris-ultra, src/Makefile.solaris-ultra-64bit:
+  - Removed -R argument to shared link, which was putting the wrong path
+    in to the run-time loader.
+  - Removed the -h flag to the shared link, which was (in the 64 bit case)
+    setting the wrong name of the library.
+    Neither is required.
+
+* src/Makefile.linux-perfctr-{athlon, p3}, src/papi_internal.c:
+  - Created a work-around for a situation found on Athlon and PIII in which
+    DERIVED_SUB events would occasionally generate small negative results.
+    Now, for these platforms only, small negatives (>= -3) are trapped and 
+    forced to zero. This bug was causing occasional failures in ctests/memory.c
+
+* src/ctests/overflow.c, src/ctests/overflow2.c:
+  - For cases where software overflow is used on PAPI_TOT_INS, care must be
+    taken to ensure that the sampling rate is faster than the overflow rate.
+    Since for linux the sampling rate is fixed at 10 msec, the overflow threshold
+    is now set to: mythreshold = hw_info->mhz*10000*2 for software overflow 
+    when using TOT_INS.
+
+* src/ftests/native.F:
+  - Added native events for Cray X1.
+
+* src/ftests/ftests_util.F:
+  - Modified ftest_fail to match test_fail.
+    Now skips on PAPI_EPERM so that second.F will skip the same as second.c
+
+* src/ctests/overflow_force_software.c:
+  - Changed the verification to check overflows and removed the printing of
+    the event when hardware overflowing is enabled as reading an event that
+    is on hardware overflow doesn't mean anything.
+  - Changes to check for derived events, and to get rid of the need for strcmp
+    on os names.
+  - Fix to check for compound derived events which CAN be used to overflow
+    on in hardware (Currently only p4 has them).  This allows P4 to use
+    FP_INS instead of TOT_INS
 
 
 Enhancements:
 -------------
-* src/perfctr-2.6.11:
-  - Added Perfctr-2.6.11 to the repository. Please, don't use perfctr-2.4
-    unless perfctr-2.6 doesn't work for you. There is NO linkage between 
-    perfctr versions and linux kernel versions. Perfctr 2.6 works just fine
+* src/utils:
+  - Added a utils directory with an initial collection of useful tools.
+    These tools are repurposed from the ctests directory, but are generally
+    useful enough to warrant their own directory and installation option.
+    Man pages and html pages are available for each utility.
+
+* src/perfctr-2.6.13:
+  - Added Perfctr-2.6.13 to the repository. Please, don't use perfctr-2.4
+    unless perfctr-2.6.x doesn't work for you. There is NO linkage between 
+    perfctr versions and linux kernel versions. Perfctr 2.6.x works just fine
     with linux 2.4.
 
-* src/ctests/shlib.c:
-  - Added error message to print out a library loading failure.
+*src/libpfm-3.x:
+  - Updated (Itanium) libpfm to 3.1, current as of 2004-12-21.
 
-* src/Rules.perfctr:
-  - test for lib64 installation of PerfCtr on x86_64.
+* src/linux-ia64.{c,h}:
+  - Added MMTIMER support on Altix for good global timing.
 
-* src/ctests/val_omp.c:
-  - added new test to catch aix threading problem.
+* src/power4.c:
+  - Add 20 cache and branch events contributed by Brian Wylie.
+    This nearly doubles the number of events available on POWER4.
 
-* src/ctests/second.c:
-  - updated with more domain tests and better explanations.
+* src/p3_events.c, src/perfctr-p3.c, src/perfctr-p3.h:
+  - Modifications to native event tables for Pentium II, III, Athlon and Opteron to
+    dynamically generate all combinations of events that support MESI (Intel) or
+    MOESI (AMD) bits. Similar to the way that Pentium 4 supports groups and
+    modifiers, but MUCH simpler.
 
-* src/{papi.h, linux-memory.c}:
-  - modified definitions for cache description structure.
+* src/p3_events.c:
+  - Added / modified a number of events to Opteron per Brian Wylie's suggestions:
+	PAPI_L2_TCH, PAPI_L1_ICH, PAPI_L2_DCW, PAPI_L1_LDM, PAPI_L2_LDM
+  - Added six new undocumented native events to Opteron event table per Phil's request.
+    These measure NUMA HyperTransport memory and IO transfers.
+    Run utils/native_avail on Opteron and look at the last six entries.
 
-* src/ctests/memory.c: 
-  - enhancements for above changes.
+* src/p4_events.c:
+  - Implemented PAPI_L1_ICA and PAPI_L1_ICM per suggestions from Brinkley Sprunt.
+
+* src/Makefile.linux-perfctr-{em64t-32bit, opteron-32bit}:
+  - Added 32 bit library support for 64 bit platforms. This has been tested on
+    an Opteron. All tests pass. Configure script works also.
+
+* src/any-null.{c,h}:
+  - This seems to be working again.
+
+* src/papi_internal.h:
+  - If you set PAPI_DEBUG to ALL or THREADS and compile with -DDEBUG,
+    now the internal eventset lookup routine will return NULL if you
+    lookup another threads eventset. This should help debug possible
+    problems on architectures where signals may be delivered to any threads.
+    Under normal operation, this is not turned on for performance reasons.
+
+* src/power3.h, src/power4.h:
+  - Added pm_data_t to hwd_control_state_t. This contains per thread
+    space for the counters!
+
+
+Known Bugs:
+-----------
+* src/x1.c:
+  - A subtle bug was uncovered in the use of hardware event overflow on the 
+    X1 P-chip. It appears that once overflow is turned on, it cannot be turned
+    off without exiting the application. This affects the overflow_force_software()
+    test on X1.
