@@ -198,10 +198,12 @@ void papimon_start(void)
       }
 #elif defined(mips) && defined(sgi) && defined(unix)
       /* See man r10k_counters */
-      native = 9; /* L1 I Miss */
+      PAPI_encode_native("Primary_instruction_cache_misses", &native); 
+                                     /* L1 I Miss */
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-      native = 25; /* L1 D Miss */
+      PAPI_encode_native("Primary_data_cache_misses", &native); 
+                                     /* L1 D Miss */
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(_CRAYT3E)
@@ -215,36 +217,10 @@ void papimon_start(void)
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(sun) && defined(sparc)
-/* 
-0,0,Cycle_cnt,0x0
-0,0,Instr_cnt,0x1
-0,0,Dispatch0_IC_miss,0x2
-0,0,IC_ref,0x8
-0,0,DC_rd,0x9
-0,0,DC_wr,0xa
-0,0,EC_ref,0xc
-0,0,EC_snoop_inv,0xe
-0,0,Dispatch0_storeBuf,0x3
-0,0,Load_use,0xb
-0,0,EC_write_hit_RDO,0xd
-0,0,EC_rd_hit,0xf
-0,1,Cycle_cnt,0x0
-0,1,Instr_cnt,0x1
-0,1,Dispatch0_mispred,0x2
-0,1,EC_wb,0xd
-0,1,EC_snoop_cb,0xe
-0,1,Dispatch0_FP_use,0x3
-0,1,IC_hit,0x8
-0,1,DC_rd_hit,0x9
-0,1,DC_wr_hit,0xa
-0,1,Load_use_RAW,0xb
-0,1,EC_hit,0xc
-0,1,EC_ic_hit,0xf
-*/
-      native = 0 | (0xb << 8); /* Load_use */  
+      PAPI_encode_native("Load_use", &native); 
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-      native = 1 | (0xa << 8); /* DC_wr_hit */  
+      PAPI_encode_native("DC_wr_hit", &native); 
       if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)

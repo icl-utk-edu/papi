@@ -124,7 +124,9 @@ int case1()
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
+  printf("before\n");
   PAPI_shutdown();
+  printf("after\n");
   return(SUCCESS);
 }
 
