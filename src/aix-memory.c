@@ -17,7 +17,7 @@
 
 int get_memory_info( PAPI_hw_info_t * mem_info ) {
   if ( _system_configuration.tlb_attrib & (1<<30) ){
-   mem_info->total_tlb_size=_system_configuration.itlb_size;
+   mem_info->L1_tlb_size=_system_configuration.itlb_size;
   }
   else{
    mem_info->L1_itlb_size=_system_configuration.itlb_size;
@@ -39,7 +39,7 @@ int get_memory_info( PAPI_hw_info_t * mem_info ) {
    mem_info->L1_dcache_size=_system_configuration.dcache_size/1024;
    mem_info->L1_dcache_assoc=_system_configuration.dcache_asc;
    mem_info->L1_dcache_linesize=_system_configuration.dcache_line;
-   mem_info->total_L1_size=mem_info->L1_icache_size+mem_info->L1_dcache_size;
+   mem_info->L1_size=mem_info->L1_icache_size+mem_info->L1_dcache_size;
   }
  mem_info->L2_cache_size=_system_configuration.L2_cache_size/1024;
  mem_info->L2_cache_assoc=_system_configuration.L2_cache_asc;
