@@ -1663,6 +1663,10 @@ int PAPI_get_overflow_event_index(int EventSet, long_long overflow_vector, int *
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
+   /* in case the eventset is empty */
+   if (ESI->NumberOfEvents == 0 )
+      papi_return(PAPI_EINVAL);
+
    while ((set_bit = _papi_hwi_ffsll(overflow_vector)))
    {
 	   set_bit -= 1;
