@@ -6,7 +6,6 @@ MEMSUBSTR=aix
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
 LIBS	= static aix-shared
 TARGETS	= serial multiplex_and_pthreads smp omp
-ALLOCATE = allocate.o
 
 # Default source is for pmtoolkit 1.3.x and above.
 # For version 1.2.x add -DPMTOOLKIT_1_2
@@ -17,7 +16,7 @@ CFLAGS	= $(FLAGS)
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= -g
-TOPTFLAGS= -g 
+TOPTFLAGS= -g -qnostdinc
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)

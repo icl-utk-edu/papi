@@ -11,7 +11,7 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 FLAGS  = -I/usr/pmapi/include -qmaxmem=-1 -qarch=pwr4
 CFLAGS	= $(FLAGS) -D_POWER4
 OPTFLAGS= -O3 -qstrict
-TOPTFLAGS=
+TOPTFLAGS=-qnostdinc
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)

@@ -152,7 +152,7 @@ static int get_system_info(void)
       strcat(_papi_system_info.hw_info.model_string,"21164");
       _papi_system_info.num_cntrs = 47;
     }
-  else if (family == 3) /* EV7, thanks Paul */
+  else if (family == 3) 
     {
       strcat(_papi_system_info.hw_info.model_string,"21364");
       _papi_system_info.num_cntrs = 47;
@@ -456,19 +456,11 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *overflow_opt
-ion)
+int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
-}
-
-int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
-{
-  /* This function is not used and shouldn't be called. */
-
-  abort();
+  return(PAPI_ESBSTR);
 }
 
 void *_papi_hwd_get_overflow_address(void *context)
