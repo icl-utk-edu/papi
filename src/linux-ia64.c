@@ -593,7 +593,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   hwd_control_state_t *machdep = global->machdep;
   int i, selector = 0, hwcntr;
 #ifdef PFM06A
-  perfmon_req_t flop_hack;
+  perfmon_reg_t flop_hack;
   perfmon_req_t readem[PMU_MAX_COUNTERS], writeem[PMU_MAX_COUNTERS];
   memset(writeem,0x0,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
 #else
@@ -805,8 +805,10 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_shutdown_global(void)
 {
+#ifndef PFM06A
   /* Need to pass in pid for _papi_hwd_shutdown_globabl in the future -KSL */
   perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0);
+#endif
   return(PAPI_OK);
 }
 
@@ -1592,14 +1594,14 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
 #endif
 {
   pfm_stop();
+#ifndef PFM06A
   if (info->sy_code != PROF_OVFL) {
     fprintf(stderr,"PAPI: received spurious SIGPROF si_code=%d\n", info->sy_code);
     return;
   } 
-#ifdef PFM06A
-  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
-#else
   DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]));
+#else
+  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
 #endif
   _papi_hwi_dispatch_overflow_signal((void *)context); 
 #ifdef PFM06A
@@ -1686,10 +1688,18 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  hwcntr = hwcntr - 1;
 	  for (i=0;i<PMU_MAX_COUNTERS;i++)
 	    {
-	      if (pc[i].reg_num == hwcntr)
+#ifndef PFM06A
+              if (pc[i].reg_num == hwcntr)
+#else
+              if (pc[i].pfr_reg.reg_num == hwcntr)
+#endif
 		{
 		  DBG((stderr,"Found hw counter %d in %d\n",hwcntr,i));
-		  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+#ifndef PFM06A
+                  pc[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+#else
+                  pc[i].pfr_reg.reg_flags = PFM_REGFL_OVFL_NOTIFY;
+#endif
 		  break;
 		}
 	    }
