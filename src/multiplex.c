@@ -1058,7 +1058,9 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
 void MPX_shutdown(void)
 {
+#if 0
 	Threadlist * t, * nextthr;
+#endif
 
 	mpx_shutdown_itimer();
 
