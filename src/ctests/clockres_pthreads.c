@@ -40,6 +40,7 @@ void *pthread_main(void *arg)
       abort();
 #endif
   clockcore();
+  return(NULL);
 }
 
 int main(int argc, char **argv)

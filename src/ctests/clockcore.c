@@ -6,12 +6,15 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void clockcore(void)
 {
-  long_long elapsed_usec[ITERS], elapsed_cyc[ITERS],
+  long_long *elapsed_usec, *elapsed_cyc,
     total_usec = 0, uniq_usec = 0, diff_usec = 0, 
     total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
   int i, retval;
 
-  /* Real */
+  elapsed_usec = (long_long *)malloc(ITERS*sizeof(long_long));
+  elapsed_cyc = (long_long *)malloc(ITERS*sizeof(long_long));
+  
+ /* Real */
 
  for (i=0;i<ITERS;i++)
     elapsed_cyc[i] = PAPI_get_real_cyc();
