@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event", retval );
 
    if ((retval = PAPI_add_event(&CostEventSet, PAPI_TOT_INS)) != PAPI_OK)
-      if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_IIS)) != PAPI_OK)
+      if ((retval = PAPI_add_event(&CostEventSet, PAPI_TOT_IIS)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event", retval );
 
    /* Make sure no errors */
