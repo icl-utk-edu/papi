@@ -1096,6 +1096,12 @@
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
+      <p><b><tt>int PAPI_thread_id (void)</tt></b></p>
+      <blockquote>
+        <p>This function calls the thread id function registered by PAPI_thread_init().</p>
+        <p>The return value is an unsigned long integer representing the thread id or
+	(unsigned long int)-1.</p>
+      </blockquote>
       <p><b><tt>int PAPI_write(int EventSet, long long *values)</tt></b></p>
       <blockquote>
         This function assigns the values contained in the values array to the
