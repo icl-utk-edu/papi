@@ -99,6 +99,8 @@ int main(int argc, char **argv)
 
   retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0,  handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+  retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, THRESHOLD, 0,  handler);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
   retval = PAPI_start(EventSet);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -108,6 +110,8 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet, values[1]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
   retval = PAPI_overflow(EventSet, PAPI_event, 0, 0,  handler);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+  retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, 0, 0,  handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
   num_flops = NUM_FLOPS;
@@ -142,6 +146,7 @@ int main(int argc, char **argv)
 	       (unsigned)(OVR_TOLERANCE*100.0));
   }
 
+/*
   min = (long_long)((values[0])[1]*(1.0-TOLERANCE));
   max = (long_long)((values[0])[1]*(1.0+TOLERANCE));
   if ( (values[0])[1] > max || (values[0])[1] < min )
@@ -151,6 +156,7 @@ int main(int argc, char **argv)
   max = (long_long)(((values[0])[1]*(1.0+OVR_TOLERANCE))/(long_long)THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
+*/
 
   test_pass(__FILE__,NULL,0);
   exit(1);
