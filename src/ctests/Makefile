@@ -12,7 +12,7 @@ SERIAL  = realtime first exeinfo zero zero_fork avail branches dmem_info all_eve
 	overflow overflow_force_software overflow_single_event \
         overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth \
-	profile  sprofile profile_twoevents earprofile\
+	profile sprofile profile_twoevents earprofile byte_profile\
 	ipc native native_avail overflow_index command_line
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
@@ -193,6 +193,9 @@ profile_twoevents: profile_twoevents.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 
 earprofile: earprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) earprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB) $(LDFLAGS) -o earprofile
+
+byte_profile: byte_profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) byte_profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o byte_profile
 
 pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
