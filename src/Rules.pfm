@@ -25,7 +25,7 @@ NATIVE_CLEAN = rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
 CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall  -DPAPI3 -g -DDEBUG 
 TOOLPATH = ../$(LIBPFMHOME)
 # -DDEBUG
-OPTFLAGS= -O3
+OPTFLAGS= 
 TOPTFLAGS = -O0
 FFLAGS	+=
 #  -Vaxlib
@@ -55,5 +55,5 @@ native_clean:
 
 native_install:
 	-cp -p $(PFM_LIB_PATH)/libpfm.so.2 $(PREFIX)/lib
-	-cp -p $(PFM_INC_PATH)/*.h $(PREFIX)/include
+	-cp -pr $(PFM_INC_PATH)/perfmon $(PREFIX)/include
 
