@@ -923,9 +923,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       codes = &tmp_cmd;
     }
 
-  /* Lower two bits tell us what counters we need */
+  /* Lower bits tell us what counters we need */
 
-  assert((this_state->selector | 0x3) == 0x3);
+  assert((this_state->selector | ((1<<_papi_system_info.num_cntrs)-1)) == ((1<<_papi_system_info.num_cntrs)-1));
   
   /* Perform any initialization of the control bits */
 
