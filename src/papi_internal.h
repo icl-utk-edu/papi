@@ -23,6 +23,10 @@
 #define DBG(a)
 #endif
 
+#ifndef __FUNCTION__
+#define __FUNCTION__ "unknown"
+#endif
+
 /* some members of structs and/or function parameters may or may not be
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
@@ -85,6 +89,7 @@ typedef struct _EventSetProfileInfo {
   int threshold;
   int EventIndex;
   int EventCode;
+  int overflowcount; /* Number of overflows occurred */
   int flags;
 } EventSetProfileInfo_t;
 
