@@ -35,9 +35,11 @@ static hwd_search_t usii_preset_search_map[] = {
   /* Cond. branch inst. mispred.*/
   {PAPI_BR_MSP,0,{-1,0x2}},          
   /* Total inst. issued*/
-  {PAPI_TOT_IIS,0,{0x1,0x1}},		
+  {PAPI_TOT_IIS,0,{-1,0x1}},	/*	can be counted on both counters
+  {PAPI_TOT_IIS,0,{0x1,0x1}},		but causes conflicts with TOT_CYC */	
   /* Total inst. executed*/
-  {PAPI_TOT_INS,0,{0x1,0x1}},		
+  {PAPI_TOT_INS,0,{-1,0x1}},	/*	can be counted on both counters
+  {PAPI_TOT_INS,0,{0x1,0x1}},		but causes conflicts with TOT_CYC */	
   /* Loads executed*/
   {PAPI_LD_INS,0,{0x9,-1}},		
   /* Stores executed*/
@@ -890,7 +892,12 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
       hwcntrs_in_both = this_state->selector & current_state->selector;
       hwcntrs_in_all  = this_state->selector | current_state->selector;
-      
+#if DEBUG
+	  fprintf(stderr,"this selector:    %x\n", this_state->selector);
+	  fprintf(stderr,"current selector: %x\n", current_state->selector);
+	  fprintf(stderr,"both:             %x\n", hwcntrs_in_both);
+	  fprintf(stderr,"all:              %x\n", hwcntrs_in_all);
+#endif
       /* Check for events that are shared between eventsets and 
 	 therefore require no modification to the control state. */
 
