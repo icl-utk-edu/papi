@@ -4,11 +4,11 @@ LIBS	= static
 TARGETS	= serial 
 
 #CFLAGS	= -Gn -DDEBUG
-OPTFLAGS= -O3 -h calchars
+OPTFLAGS= -O3 -h calchars -DFORTRANCAPS
 NOOPT	= -O0
 CC_R	= cc
 CC	= cc
-F77	= f77
+F77	= f90
 MISCOBJS= perfctrl.o
 
 include Makefile.inc
