@@ -41,7 +41,12 @@ void CALLBACK my_timer( UINT wTimerID, UINT msg, DWORD dwuser, DWORD dw1, DWORD 
         }
         else if ( count > 60 )
                 mhz = mymhz;
-        else if(tmpmhz!=mymhz){
+        else {
+	    if ( mymhz == tmpmhz && count>5 ) {
+		mhz = mymhz;
+		timeKillEvent( mytimer );
+		return;
+	    }
                 t1 = t2;
                 count++;
                 return;
@@ -140,11 +145,12 @@ int init_hwinfo( struct wininfo * hwinfo) {
 
         mytimer = timeSetEvent( 1000, 0, my_timer, 0, TIME_PERIODIC );
         while ( !mhz ){
-		if ( dowork%100000000 )
+		if ( !(dowork%100000000) )
                 	Sleep (1);
+		else
+			dowork++;
 	}
         hwinfo->mhz = mhz;
-
 
 	if ( hwinfo->myvendor == AMD )
 		retval=init_amd( hwinfo );
