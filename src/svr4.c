@@ -19,7 +19,7 @@ int _papi_hwd_update_shlib_info(void)
    PAPI_address_map_t *tmp = NULL;
 
    return(PAPI_ESBSTR); /* temporary solution for beta 3.0.3 */
-
+#if 0
    sprintf(fname, "/proc/%d/map", getpid());
    map_f = fopen(fname, "r");
 
@@ -91,6 +91,7 @@ int _papi_hwd_update_shlib_info(void)
    _papi_hwi_system_info.shlib_info.count = t_index+1;
 
    return(PAPI_OK);
+#endif
 }
 
 #elif (defined(mips) && defined(sgi)) 
