@@ -1,6 +1,6 @@
 VERSION 	?= 2.6.x
 CPU		= p4
-GCC3ARGS	= -march=pentium4 -msse -msse2 
+GCC3ARGS	= -march=pentium4 -msse -msse2 $(NOTLS)
 TOPTFLAGS	= -DPENTIUM4
 # These flags are OPTIONAL; defaults are FP_X87_SSE_DP and VEC_SSE
 EVENTFLAGS	= -DPAPI_PENTIUM4_FP_X87 -DPAPI_PENTIUM4_VEC_SSE

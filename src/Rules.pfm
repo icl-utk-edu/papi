@@ -13,9 +13,9 @@ TARGETS = serial multiplex_and_pthreads shared
 #
 
 F77   		= g77 -Wall
-CC		= gcc -Wall 
-CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC		= gcc -Wall $(NOTLS)
+CC_R    	= $(CC) -pthread $(NOTLS)
+CC_SHR		= $(CC) $(NOTLS) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 FFLAGS		= -ffixed-line-length-132
 
 #

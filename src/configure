@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PMAPI MAKEVER AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PMAPI MAKEVER AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LIBOBJS NOTLS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -846,6 +846,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-bitmode=64       Specify to build 64 bit mode library
   --with-pmapi=<path>     Specify path of pmapi on aix system
+  --with-tls=<no>         To disable tls support
 
 Some influential environment variables:
   CC          C compiler command
@@ -1360,6 +1361,9 @@ case "$OS" in
              if test "$model" = "3"; then
                CPU=em64t
              fi
+             if test "$model" = "2"; then
+               CPU=p4
+             fi
            fi
            if test "$CPU" = "" ; then
              if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
@@ -1368,6 +1372,8 @@ case "$OS" in
                CPU=itanium2
              elif test "`cat /proc/cpuinfo | grep Itanium`" != ""; then
                CPU=itanium
+             elif test "`cat /proc/cpuinfo | grep "Pentium III"`" != ""; then
+               CPU=p3
              elif test "`cat /proc/cpuinfo | grep "Pentium II"`" != ""; then
                CPU=p2
              else CPU=p3
@@ -7192,6 +7198,140 @@ done
 #AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
 
 
+# Check whether --with-tls or --without-tls was given.
+if test "${with_tls+set}" = set; then
+  withval="$with_tls"
+  tls=$withval
+else
+  tls=yes
+
+fi;
+case "$tls" in
+   yes)
+      #       NOTLS="" ;;
+                        with_tls="__thread"
+      echo "$as_me:$LINENO: checking for working __thread" >&5
+echo $ECHO_N "checking for working __thread... $ECHO_C" >&6
+      #echo $with_tls
+      if test "$cross_compiling" = yes; then
+  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+             #include <pthread.h>
+
+             __thread int i;
+             static int res1, res2;
+
+             void thread_main (void *arg)
+             {
+               i = arg;
+               sleep (1);
+               if (arg == 1)
+                  res1 = (i == arg);
+               else
+                  res2 = (i == arg);
+             }
+
+             int main ()
+             {
+               pthread_t t1, t2;
+
+               i = 5;
+
+               pthread_create (&t1, NULL, thread_main, 1);
+               pthread_create (&t2, NULL, thread_main, 2);
+
+               pthread_join (t1, NULL);
+               pthread_join (t2, NULL);
+
+               return !(res1 + res2 == 2);
+             }
+
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+            echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+
+            echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+            with_tls=pthread
+
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+     #if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
+     if test "$OS" = "linux"; then
+        if test "x$with_tls" = "x__thread"; then
+                #
+                # On some linux distributions, TLS works in executables, but linking
+                # against a shared library containing TLS fails with:
+                # undefined reference to `__tls_get_addr'
+                #
+                rm -f conftest.c conftest.so conftest
+                echo "static __thread int foo; void main () { foo = 5; }" > conftest.c
+                gcc -fPIC --shared -o conftest.so conftest.c > /dev/null 2>&1
+                gcc -o conftest conftest.so > /dev/null 2>&1
+                if test ! -f conftest; then
+                   { echo "$as_me:$LINENO: WARNING: Disabling usage of __thread." >&5
+echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
+                   with_tls=pthread
+                fi
+                rm -f conftest.c conftest.so conftest
+        fi
+     #else
+     #   with_tls=pthread
+     fi
+
+     if test "x$with_tls" = "x__thread"; then
+        cat >>confdefs.h <<\_ACEOF
+#define HAVE_KW_THREAD 1
+_ACEOF
+
+      # Pass the information to libgc
+        #CPPFLAGS="$CPPFLAGS -DUSE_COMPILER_TLS"
+        #export CPPFLAGS
+        NOTLS="-DUSE_COMPILER_TLS"
+     else
+        NOTLS="-DNO_TLS"
+     fi
+     ;;
+
+ no)
+             NOTLS="-DNO_TLS" ;;
+ esac
+
+#AC_MSG_RESULT($NOTLS)
+
+
 
 get_bitmode()
 {
@@ -7851,6 +7991,7 @@ s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
+s,@NOTLS@,$NOTLS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

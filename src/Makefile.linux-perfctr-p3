@@ -1,6 +1,6 @@
 VERSION		?= 2.6.x
 CPU		= p3
-GCC3ARGS	= -march=pentium3 -msse
+GCC3ARGS	= -march=pentium3 -msse $(NOTLS)
 # COMPILER	?= INTEL or PGROUP
 
 include Rules.perfctr
