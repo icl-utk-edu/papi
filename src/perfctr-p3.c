@@ -47,8 +47,6 @@ extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
 extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
-extern unsigned int p3_size, p2_size, ath_size, opt_size;
-extern unsigned int NATIVE_TABLE_SIZE;
 
 #ifdef _WIN32
 CRITICAL_SECTION lock[PAPI_MAX_LOCK];
@@ -93,25 +91,21 @@ inline_static int setup_p3_presets(int cputype) {
    case PERFCTR_X86_INTEL_P5:
    case PERFCTR_X86_INTEL_P5MMX:
    case PERFCTR_X86_INTEL_PII:
-      NATIVE_TABLE_SIZE = p2_size;
       native_table = &_papi_hwd_p2_native_map;
       preset_search_map = &_papi_hwd_p2_preset_map;
       break;
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
-      NATIVE_TABLE_SIZE = p3_size;
       native_table = &_papi_hwd_p3_native_map;
       preset_search_map = &_papi_hwd_p3_preset_map;
       break;
    case PERFCTR_X86_AMD_K7:
-      NATIVE_TABLE_SIZE = ath_size;
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
 #ifdef PERFCTR26
    case PERFCTR_X86_AMD_K8:
    case PERFCTR_X86_AMD_K8C:
-      NATIVE_TABLE_SIZE = opt_size;
       native_table = &_papi_hwd_k8_native_map;
       preset_search_map = &_papi_hwd_opt_preset_map;
       break;

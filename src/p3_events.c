@@ -14,7 +14,6 @@
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
-unsigned int NATIVE_TABLE_SIZE;
 
 /* Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example. */
@@ -2207,11 +2206,6 @@ const native_event_entry_t _papi_hwd_k8_native_map[] = {
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
-unsigned int p3_size = sizeof(_papi_hwd_p3_native_map) / sizeof(native_event_entry_t);
-unsigned int p2_size = sizeof(_papi_hwd_p2_native_map) / sizeof(native_event_entry_t);
-unsigned int ath_size = sizeof(_papi_hwd_k7_native_map) / sizeof(native_event_entry_t);
-unsigned int opt_size = sizeof(_papi_hwd_k8_native_map) / sizeof(native_event_entry_t);
-
 /* Given a native event code, returns the short text label. */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
@@ -2229,7 +2223,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    information to a given pointer. */
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   if ((EventCode & NATIVE_AND_MASK) >= NATIVE_TABLE_SIZE) {
+   if(native_table[(EventCode & NATIVE_AND_MASK)].resources.selector == 0) {
       return (PAPI_ENOEVNT);
    }
    bits = &native_table[EventCode & NATIVE_AND_MASK].resources;
@@ -2240,7 +2234,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (((*EventCode & NATIVE_AND_MASK) + 1) < NATIVE_TABLE_SIZE) {
+   if (native_table[(*EventCode & NATIVE_AND_MASK) + 1].resources.selector) {
       *EventCode = *EventCode + 1;
       return (PAPI_OK);
    } else {
