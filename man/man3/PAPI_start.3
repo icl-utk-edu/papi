@@ -84,7 +84,7 @@ The PAPI preset is not available on the underlying hardware.
 
   /* Add Total Instructions Executed to our EventSet */
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 
   /* Start counting */
@@ -108,7 +108,7 @@ These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_create_eventset "(3), " PAPI_destroy_eventset "(3), " 
-.BR PAPI_add_event "(3), " PAPI_rem_event "(3), " 
+.BR PAPI_add_event "(3), " PAPI_remove_event "(3), " 
 .BR PAPI_reset "(3), " PAPI_set_opt "(3), " 
  The PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi

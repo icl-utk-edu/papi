@@ -8,7 +8,7 @@ PAPI_profil, PAPI_sprofil \- generate PC histogram data where hardware counter o
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  
+.BI int\ PAPI_profil(void\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  
 .BI \tunsigned\  scale, \ int \ EventSet, \
            \  int\  EventCode,\  int\  threshold,\  int\  flags );
 .BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\  
@@ -80,6 +80,15 @@ T}
 PAPI_PROFIL_COMPRESS$T{
 Ignore samples if hash buckets get big.
 T}
+PAPI_PROFIL_BUCKET_16$T{
+use unsigned short(16bit) as bucket, This is the default bucket.
+T}
+PAPI_PROFIL_BUCKET_32$T{
+use unsigned int(32bit) as bucket.
+T}
+PAPI_PROFIL_BUCKET_64$T{
+use unsigned long(64bit) as bucket.
+T}
 .TE
 
 .SH RETURN VALUES
@@ -131,19 +140,19 @@ if ((prginfo = PAPI_get_executable_info()) == NULL)
 
 start = (unsigned long)prginfo->text_start;
 end = (unsigned long)prginfo->text_end;
-length = end - start;
+length = (end - start)/sizeof(unsigned short) *sizeof(unsigned short);
 
-profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
+profbuf = (unsigned short *)malloc(length);
 if (profbuf == NULL)
   handle_error(1);
-memset(profbuf,0x00,length*sizeof(unsigned short));
+memset(profbuf,0x00,length);
 
 if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
   handle_error(retval);
 
 /* Add Total FP Instructions Executed to our EventSet */
 
-if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS)) != PAPI_OK)
+if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
   handle_error(retval);
 
 if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet, 
@@ -166,8 +175,8 @@ These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_preset "(3), " PAPI_get_executable_info "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
+.BR PAPI_remove_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
  The PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi

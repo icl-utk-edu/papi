@@ -2,15 +2,14 @@
 .TH PAPI_overflow 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_overflow, PAPI_get_overflow_address \- set up an event set 
-to begin registering overflows; return the address at which an overflow occured
+PAPI_overflow \- set up an event set 
+to begin registering overflows; 
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler ");"
-.BI "void\ *PAPI_get_overflow_address (void *" context );
 .fi
 .B Fortran Interface
 .nf
@@ -25,14 +24,9 @@ in an
 .I EventSet 
 to generate an overflow signal after every 
 .I threshold
-events are counted. Only one event in an event set can be used as 
-an overflow trigger.  Subsequent calls to
-.B PAPI_overflow() 
-replace earlier calls. To turn off overflow, set the handler to NULL.
-
-.B PAPI_get_overflow_address()
-returns the instruction pointer where overflow occured. This routine is often used
-as part of the overflow handler routine.
+events are counted. More than one event in an event set can be used as 
+an overflow trigger.
+.B To turn off overflow, set the threshold to 0.
 
 .SH ARGUMENTS
 .I EventSet 
@@ -59,13 +53,6 @@ This structure is typically returned automatically by the signal handler.
 On success, PAPI_overflow returns
 .B "PAPI_OK."
  On error, a non-zero error code is returned.
- PAPI_get_overflow_address returns the instruction pointer where the 
-overflow occured. PAPI_get_overflow_address always returns the value 
-at the offset in the 
-.I context
-structure where the instruction pointer should be. No validity testing of 
-this structure is done. If an invalid context pointer is passed to this function,
-the results will be undefined.
 
 .SH ERRORS
 .TP
@@ -91,12 +78,10 @@ The PAPI preset is not available on the underlying hardware.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
+void handler(int EventSet, void *address, long_long overflow_vector)
 {
-  fprintf(stderr,"Value %lld at %p\en",
-	  values[EventIndex],PAPI_get_overflow_address(context));
-#endif
-  total++;
+  fprintf(stderr,"Overflow at %p! bit=0x%llx \en",
+	  address,overflow_vector);
 }
 
   int EventSet = PAPI_NULL;
@@ -106,7 +91,7 @@ void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int
 
   /* Add Total Instructions Executed to our EventSet */
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 
   /* Call handler every 100000 instructions */
@@ -131,8 +116,8 @@ These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_preset "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
+.BR PAPI_remove_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
  The PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi
