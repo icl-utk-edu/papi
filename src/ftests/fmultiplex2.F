@@ -104,7 +104,8 @@
  200        FORMAT(A22, A12)
          end if
 
-         mask1 = (PAPI_L1_DCM+(EventCode-1))
+         mask1 = ((PAPI_L1_DCM)+EventCode) 
+         mask1 = mask1 - 1
          call PAPIf_add_event( EventSet, mask1, retval )
          if ( retval .NE. PAPI_OK .AND. retval .NE. PAPI_ECNFLCT) then
             call ftest_fail(__FILE__, __LINE__,
