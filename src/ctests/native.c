@@ -49,7 +49,7 @@ void papimon_start(void)
   #if defined(HAS_NATIVE_MAP)
     #if defined(_POWER4)
       /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
-      char *native_name[] = {"PM_FPU0_DIV","PM_FPU1_DIV","PM_FPU0_FRSP_FCONV","PM_FPU1_FRSP_FCONV",
+      char *native_name[] = {"PM_FPU0_FDIV","PM_FPU1_FDIV","PM_FPU0_FRSP_FCONV","PM_FPU1_FRSP_FCONV",
 	"PM_FPU0_FMA","PM_FPU1_FMA","PM_INST_CMPL","PM_CYC"};
     #else
       #ifdef PMTOOLKIT_1_2
@@ -73,9 +73,9 @@ void papimon_start(void)
 #if defined(_AIX)
   #if defined(HAS_NATIVE_MAP)
     for (i=0;i<8;i++) {
-      printf("native_name[%d] = %s\n", i, native_name[i]);
+      /* printf("native_name[%d] = %s\n", i, native_name[i]); */
       retval = PAPI_event_name_to_code(native_name[i], &native);
-      printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native);
+      /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
       if (retval!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_event_name_to_code",retval);
       if ( (retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
