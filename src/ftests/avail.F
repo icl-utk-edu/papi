@@ -75,7 +75,7 @@ C Hardware info
             end do
             write (6, 100) event_name, z'80000000'+i, avail_str, 
      *       flags_str, event_descr, event_note(1:l)
- 100  format(A12, '0x', z8, 2x, A5, 1x, A5, A45, x,'(', A, ')') 
+ 100  format(A12, '0x', z8, 2x, A5, 1x, A5, A45, 1x,'(', A, ')') 
          end if
       end do
       if (tests_quiet .EQ. 0) then 
