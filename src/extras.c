@@ -8,7 +8,10 @@ the following:
 
 #ifdef PTHREADS
 #include <pthread.h>
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+#include <thread.h>
 #endif
+
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -22,12 +25,6 @@ the following:
 
 #include "papi.h"
 #include "papi_internal.h"
-
-#ifdef PTHREADS
-extern pthread_key_t theKey;
-#else
-extern DynamicArray PAPI_EVENTSET_MAP; /* Integer to EventSetInfo * mapping */
-#endif
 
 typedef union {
   PAPI_timer_handler_t timer_handler;

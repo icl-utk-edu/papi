@@ -40,7 +40,7 @@ Master pthread:
 #include "papi_internal.h"
 #include "test_utils.h"
 
-void Thread(int n)
+void Thread(int t, int n)
 {
   int retval, num_tests = 1, tmp;
   int EventSet1;
@@ -55,40 +55,42 @@ void Thread(int n)
 
   values = allocate_test_space(num_tests, num_events1);
 
+  retval = PAPI_start(EventSet1);
+  assert(retval >= PAPI_OK);
+
   elapsed_us = PAPI_get_real_usec();
 
   elapsed_cyc = PAPI_get_real_cyc();
 
-  retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
-
   do_flops(n);
   
-  retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
-
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
+  retval = PAPI_stop(EventSet1, values[0]);
+  assert(retval >= PAPI_OK);
+
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",pthread_self(),
+  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",t,
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",pthread_self(),
+  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",t,
 	 (values[0])[1]);
-  printf("Thread 0x%x Real usec   : \t%lld\n",pthread_self(),
-	 elapsed_us);
-  printf("Thread 0x%x Real cycles : \t%lld\n",pthread_self(),
-	 elapsed_cyc);
 
   free_test_space(values, num_tests);
+  printf("Thread 0x%x Real usec   : \t%lld\n",t,
+	 elapsed_us);
+  printf("Thread 0x%x Real cycles : \t%lld\n",t,
+	 elapsed_cyc);
 }
 
 int main()
 {
   int i, rc;
   long long elapsed_us, elapsed_cyc;
+
+  assert(PAPI_init() == PAPI_OK);
 
   elapsed_us = PAPI_get_real_usec();
 
@@ -99,10 +101,11 @@ int main()
 #elif defined(sgi) && defined(mips)
 #pragma parallel
 #pragma pfor local(i)
+#elif defined(sun) && defined(sparc)
+#pragma MP taskloop private(i)
 #endif
- 
   for (i=1;i<3;i++)
-    Thread(1000000*i);
+    Thread(i,1000000*i);
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 

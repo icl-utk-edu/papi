@@ -2,6 +2,7 @@ LIBRARY   = libpapi.a
 FLIBRARY  = libfpapi.a
 PTHRLIB   = libpapi_r.a
 SMPTHRLIB = libpapi_smp.a
+OMPTHRLIB = libpapi_omp.a
 SHLIB     = libpapi.so
 OBJECTS   = papi.o papi_hl.o $(SUBSTR).o extras.o 
 FOBJECTS   = papi.o papi_hl.o $(SUBSTR).o extras.o papi_fwrappers.o
@@ -18,23 +19,26 @@ showconf:
 	@echo "Host libraries   : $(TARGETS)";
 	@echo
 
-serial $(LIBRARY): $(OBJECTS) $(MISCOBJS)
+serial: $(LIBRARY)
+
+pthreads: $(PTHRLIB)
+
+smp: $(SMPTHRLIB)
+
+$(LIBRARY): $(OBJECTS) $(MISCOBJS)
 	ar ruv $(LIBRARY) $(OBJECTS) $(MISCOBJS)
 
 $(FLIBRARY): $(FOBJECTS) $(MISCOBJS) 
 	ar ruv $(FLIBRARY) $(FOBJECTS) $(MISCOBJS)
 
-pthreads $(PTHRLIB): $(PTHROBS) $(MISCOBJS)
+$(PTHRLIB): $(PTHROBS) $(MISCOBJS)
 	ar ruv $(PTHRLIB) $(PTHROBS) $(MISCOBJS)
 
-smp $(SMPTHRLIB): $(SMPTHROBS) $(MISCOBJS)
+$(SMPTHRLIB): $(SMPTHROBS) $(MISCOBJS)
 	ar ruv $(SMPTHRLIB) $(SMPTHROBS) $(MISCOBJS)
 
-omp $(OMPTHRLIB): $(OMPTHROBS) $(MISCOBJS)
+$(OMPTHRLIB): $(OMPTHROBS) $(MISCOBJS)
 	ar ruv $(OMPTHRLIB) $(OMPTHROBS) $(MISCOBJS)
-
-shmem $(SHTHRLIB): $(SHTHROBS) $(MISCOBJS)
-	ar ruv $(SHTHRLIB) $(SHTHROBS) $(MISCOBJS)
 
 # No Threads
 

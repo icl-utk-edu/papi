@@ -21,7 +21,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* L2 Cache Dmisses*/
   {0,0,0,{0,0},""}, 			
   /* L2 Cache Imisses*/
-  {0x3,DERIVED_SUB,0,{0xc,0xc},""},			
+  {0,0,0,{0,0},""}, 			
   /* L3 Cache Dmisses*/
   {0,0,0,{0,0},""}, 			
   /* L3 Cache Imisses*/
@@ -29,7 +29,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* L1 Total Cache misses */
   {0,0,0,{0,0},""}, 			
   /* L2 Total Cache misses*/
-  {0x2,0,0,{0,0xd},""},
+  {0x3,DERIVED_SUB,0,{0xc,0xc},""},			
   /* L3 Total Cache misses*/
   {0,0,0,{0,0},""}, 			
   /* Req. for snoop*/
@@ -129,7 +129,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* Vector/SIMD inst. executed */
   {0,0,0,{0,0},""},			
   /* FLOPS */
-  {0x3,DERIVED_PS,1,{0,0x3},""},
+  {0x3,DERIVED_PS,0,{0,0x3},""},
   /* Any stalls */
   {0,0,0,{0,0},""},			
   /* Cycles FP units are stalled*/
@@ -137,7 +137,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* Total cycles */
   {0x3,0,0,{0,0},""},		
   /* IPS */
-  {0x3,DERIVED_PS,1,{0,0},""},			
+  {0x3,DERIVED_PS,0,{0,0},""},			
   /* load/store*/
   {0,0,0,{0,0},""},		
   /* Synchronization inst. executed*/
@@ -145,7 +145,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* L1 data cache hits */
   {0,0,0,{0,0},""},		
   /* L2 data cache hits */
-  {0x2,0,0,{0,0xc},""},		
+  {0,0,0,{0,0},""},		
   /* L1 data cache accesses */
   {0,0,0,{0,0},""},		
   /* L2 data cache accesses */
@@ -153,25 +153,25 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 data cache accesses */
   {0,0,0,{0,0},""},		
   /* L1 data cache reads */
-  {0,0,0,{0,0},""},		
+  {0x1,0,0,{0x9,0},""},		
   /* L2 data cache reads */
   {0,0,0,{0,0},""},		
   /* L3 data cache reads */
   {0,0,0,{0,0},""},		
   /* L1 data cache writes */
-  {0,0,0,{0,0},""},		
+  {0x1,0,0,{0xa,0},""},		
   /* L2 data cache writes */
   {0,0,0,{0,0},""},		
   /* L3 data cache writes */
   {0,0,0,{0,0},""},
   /* L1 instruction cache hits */
-  {0,0,0,{0,0},""},
+  {0x2,0,0,{0,0x8},""},
   /* L2 instruction cache hits */
-  {0,0,0,{0,0},""},		
+  {0x2,0,0,{0,0xf},""},		
   /* L3 instruction cache hits */
-  {0x2,0,0,{0,0xc},""},		
-  /* L1 instruction cache accesses */
   {0,0,0,{0,0},""},		
+  /* L1 instruction cache accesses */
+  {0x1,0,0,{0x8,0},""},		
   /* L2 instruction cache accesses */
   {0,0,0,{0,0},""},		
   /* L3 instruction cache accesses */
@@ -191,13 +191,13 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
   /* L1 total cache hits */
   {0,0,0,{0,0},""},
   /* L2 total cache hits */
-  {0,0,0,{0,0},""},		
-  /* L3 total cache hits */
   {0x2,0,0,{0,0xc},""},		
+  /* L3 total cache hits */
+  {0,0,0,{0,0},""},		
   /* L1 total cache accesses */
   {0,0,0,{0,0},""},		
   /* L2 total cache accesses */
-  {0,0,0,{0,0},""},		
+  {0x1,0,0,{0xc,0},""},		
   /* L3 total cache accesses */
   {0,0,0,{0,0},""},		
   /* L1 total cache reads */
@@ -362,6 +362,37 @@ static int getmhz(void)
   /* End stolen code */
 }
 
+static int setup_all_presets(PAPI_hw_info_t *info)
+{
+  int pnum, s;
+
+  for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
+    {
+      if ((s = preset_map[pnum].selector))
+	{
+	  if (preset_map[pnum].derived == 0)
+	    {
+	      if (s == 0x1)
+		sprintf(preset_map[pnum].note,"0x%x,-1",preset_map[pnum].counter_cmd[0]);
+	      else
+		sprintf(preset_map[pnum].note,"-1,0x%x",preset_map[pnum].counter_cmd[1]);
+	    }
+	  else
+	    {
+	      int j = preset_map[pnum].operand_index;
+	      
+	      if (j == 0)
+		sprintf(preset_map[pnum].note,"0x%x,0x%x",preset_map[pnum].counter_cmd[0],
+		       preset_map[pnum].counter_cmd[1]);
+	      else 
+		sprintf(preset_map[pnum].note,"0x%x,0x%x",preset_map[pnum].counter_cmd[1],
+		       preset_map[pnum].counter_cmd[0]);
+	    }
+	}
+    }
+  return(PAPI_OK);
+}
+
 /* Go from highest counter to lowest counter. Why? Because there are usually
    more counters on #1, so we try the least probable first. */
 
@@ -493,6 +524,10 @@ static int get_system_info(void)
   /* Software info */
 
   /* Setup presets */
+
+  retval = setup_all_presets(&_papi_system_info.hw_info);
+  if (retval)
+    return(retval);
 
   return(PAPI_OK);
 } 
@@ -1038,7 +1073,7 @@ static long long handle_derived_ps(int operand_index, int selector, long long *f
   int pos;
 
   pos = ffs(selector ^ (1 << operand_index)) - 1;
-  assert(pos != 0);
+  assert(pos != -1);
 
   return(units_per_second(from[pos],from[operand_index]));
 }

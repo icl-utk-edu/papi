@@ -1,5 +1,7 @@
 #ifdef PTHREADS
 #include <pthread.h>
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+#include <thread.h>
 #endif
 
 #include <stdio.h>
@@ -45,14 +47,22 @@ pthread_key_t theKey;
 pthread_once_t once_block = PTHREAD_ONCE_INIT;
 pthread_mutex_t global_mutex;
 PAPI_notify_handler_t thread_notifier = NULL;
-#elif defined SMPTHREADS && defined(sgi) && defined(mips)
-volatile void **thread_specific = (volatile void **)&PRDA->usr_prda.fill[0];
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+thread_key_t theKey;
+mutex_t once_block = { 0, };
+mutex_t global_mutex = { 0, };
+PAPI_notify_handler_t thread_notifier = NULL;
+#elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
+#include <sys/prctl.h>
+#define THREAD_SETSPECIFIC(setme) { volatile void **to = (volatile void **)PRDA->usr_prda.fill; *to = (void *)setme; }
+#define THREAD_GETSPECIFIC(getme) { volatile void **to = (volatile void **)PRDA->usr_prda.fill; *getme = (void *)*to; }
 volatile int once_block = 0;
 volatile int global_mutex = 0;
 PAPI_notify_handler_t thread_notifier = NULL;
 #else
 DynamicArray *PAPI_EVENTSET_MAP; /* Integer to EventSetInfo * mapping */
 #endif
+
 static int initialize_process_retval = 0xdedbeef;
 
 /* Behavior of handle_error() */
@@ -254,33 +264,47 @@ static EventSetInfo *allocate_master_eventset(void)
 
 static int initialize_thread(void)
 {
-  int retval;
+  int self, retval;
   DynamicArray *map;
   EventSetInfo *master;
-  
+
 #ifdef PTHREADS
+  self = pthread_self();
   if (pthread_getspecific(theKey))
     {
-      fprintf(stderr,"Thread 0x%x already initialized\n",(unsigned int)pthread_self());
+      fprintf(stderr,"Thread 0x%x: Already initialized\n",(unsigned int)self);
       abort();
     }
-  if (thread_notifier)
+  {
+    pthread_attr_t scope;
+    if (pthread_attr_init(&scope) == -1)
+      return(PAPI_ESYS);
+    if (pthread_attr_setscope(&scope,PTHREAD_SCOPE_SYSTEM) == -1)
+      fprintf(stderr,"Thread 0x%x: Unbound Pthreads can not be supported in PAPI.\n",(unsigned int)self);
+    pthread_attr_destroy(&scope);
+  }
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+  self = thr_self();
+  thr_getspecific(theKey, (void **)&map);
+  if (map)
     {
-      int self = pthread_self();
-      thread_notifier(PAPI_THREAD_CREATE, &self);
+      fprintf(stderr,"Thread 0x%x: Already initialized\n",self);
+      abort();
     }
 #elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
-  if (*thread_specific != NULL)
+  self = mp_my_threadnum();
+  THREAD_GETSPECIFIC((void **)&map);
+  if (map)
     {
-      fprintf(stderr,"Thread 0x%x already initialized\n",(unsigned int)mp_my_threadnum());
+      fprintf(stderr,"Thread 0x%x: Already initialized\n",(unsigned int)self);
       abort();
     }
-  if (thread_notifier)
-    {
-      int self = mp_my_threadnum();
-      thread_notifier(PAPI_THREAD_CREATE, &self);
-    }
 #endif  
+
+#if defined(SMPTHREADS) || defined(PTHREADS)
+  if (thread_notifier)
+    thread_notifier(PAPI_THREAD_CREATE, &self);
+#endif
 
   if ((map = allocate_eventset_map()) == NULL)
     return(PAPI_ENOMEM);
@@ -303,13 +327,16 @@ static int initialize_thread(void)
   
   map->dataSlotArray[0] = master;
   
-#ifdef PTHREADS
   /* Set this map to be per thread */
 
+#ifdef PTHREADS
   if ((retval = pthread_setspecific(theKey, (void *)map)))
     return(retval);
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+  if ((retval = thr_setspecific(theKey, (void *)map)))
+    return(retval);
 #elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
-  *thread_specific = map;
+  THREAD_SETSPECIFIC((void *)map);
 #else
   PAPI_EVENTSET_MAP = map;
 #endif
@@ -319,7 +346,7 @@ static int initialize_thread(void)
 
 static void initialize_process(void)
 {
-  int i;
+  int i, tmp;
 
 #ifdef PTHREADS
   initialize_process_retval = pthread_mutex_init(&global_mutex, NULL);
@@ -329,17 +356,33 @@ static void initialize_process(void)
   initialize_process_retval = pthread_key_create(&theKey, NULL);
   if (initialize_process_retval)
     return;
-#elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
-  if (__lock_test_and_set(&once_block, 1) != 0)
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+  if (mutex_trylock(&once_block) != 0)
     {
-      DBG((stderr,"initialize_process(): Thread 0x%x booted.\n",mp_my_threadnum()));
+      DBG((stderr,"initialize_process(): Thread 0x%x booted.\n",thr_self()));
       return;
     }
-#endif
-
-  initialize_process_retval = _papi_hwd_init_global();
+  initialize_process_retval = thr_keycreate(&theKey, NULL);
   if (initialize_process_retval)
     return;
+#elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
+  if (__lock_test_and_set(&once_block, 1, initialize_process_retval) != 0)
+    {
+      DBG((stderr,"initialize_process(): Thread 0x%x has to wait.\n",mp_my_threadnum()));
+      while (__lock_test_and_set(&once_block, 1, initialize_process_retval) != 0);
+      DBG((stderr,"initialize_process(): Thread 0x%x can now make progress.\n",mp_my_threadnum()));
+      return;
+    }
+  else
+    DBG((stderr,"initialize_process(): Thread 0x%x has acquired lock.\n",mp_my_threadnum()));
+#endif
+
+  tmp = _papi_hwd_init_global();
+  if (tmp)
+    {
+      initialize_process_retval = tmp;
+      return;
+    }
 
   /* Set up the query structure */
   
@@ -348,6 +391,12 @@ static void initialize_process(void)
       papi_presets[i].avail = _papi_hwd_query(papi_presets[i].event_code ^ PRESET_MASK,
 					      &papi_presets[i].flags,
 					      &papi_presets[i].event_note);
+  
+  initialize_process_retval = tmp;
+#if defined(SMPTHREADS) && defined(sgi) && defined(mips)
+  __lock_release(&once_block, initialize_process_retval);
+  DBG((stderr,"initialize_process(): Thread 0x%x has released lock.\n",mp_my_threadnum()));
+#endif
 }
 
 int _papi_hwi_initialize(DynamicArray **map)
@@ -374,24 +423,43 @@ int _papi_hwi_initialize(DynamicArray **map)
       return(retval);
     }
 #elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
-  initialize_process();
+  if (initialize_process_retval == 0xdedbeef)
+    initialize_process();
   if (initialize_process_retval == PAPI_OK)
     {
-      while (__lock_test_and_set(&global_mutex, 1, thread_specific) != 0);
-
-      *map = (DynamicArray *)*thread_specific; 
+      THREAD_GETSPECIFIC(map);
       if (*map)
 	{
 	  DBG((stderr,"Existing thread 0x%x detected, data is at %p\n",(int)mp_my_threadnum(),*map));
 	  return(PAPI_OK);
 	}
-
+      
       DBG((stderr,"New thread 0x%x detected\n",(int)mp_my_threadnum()));
       retval = initialize_thread();
       if (retval == PAPI_OK)
 	{
-	  *map = (DynamicArray *)*thread_specific;  
+	  THREAD_GETSPECIFIC(map);
 	  DBG((stderr,"New data for thread 0x%x is at %p\n",(int)mp_my_threadnum(),*map));
+	}
+      return(retval);
+    }
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+  initialize_process();
+  if (initialize_process_retval == PAPI_OK)
+    {
+      thr_getspecific(theKey,(void **)map);
+      if (*map)
+	{
+	  DBG((stderr,"Existing thread 0x%x detected, data is at %p\n",(int)thr_self(),*map));
+	  return(PAPI_OK);
+	}
+
+      DBG((stderr,"New thread 0x%x detected\n",(int)thr_self()));
+      retval = initialize_thread();
+      if (retval == PAPI_OK)
+	{
+	  thr_getspecific(theKey,(void **)map);
+	  DBG((stderr,"New data for thread 0x%x is at %p\n",(int)thr_self(),*map));
 	}
       return(retval);
     }
@@ -1044,6 +1112,9 @@ int PAPI_start(int EventSet)
 
   if (!(ESI->state & PAPI_STOPPED))
     return(handle_error(PAPI_EINVAL, "EventSet is not stopped"));
+
+  if (ESI->NumberOfCounters < 1)
+    return(handle_error(PAPI_EINVAL, "EventSet is empty"));
 
   /* Short circuit this stuff if there's nothing running */
 
@@ -1828,8 +1899,13 @@ int PAPI_notify(int what, int flags, PAPI_notify_handler_t handler)
       if (pthread_mutex_unlock(&global_mutex))
 	return(PAPI_ESYS);
       return(PAPI_OK);
+#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
+      while (mutex_trylock(&global_mutex) != 0);
+      thread_notifier = handler;
+      mutex_unlock(&global_mutex);
+      return(PAPI_OK);
 #elif defined(SMPTHREADS) && defined(sgi) && defined(mips)
-      while (__lock_test_and_set(&global_mutex, 1) != 0)
+      while (__lock_test_and_set(&global_mutex, 1) != 0);
       thread_notifier = handler;
       __lock_release(&global_mutex);
       return(PAPI_OK);

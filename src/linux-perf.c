@@ -1102,10 +1102,10 @@ papi_mdi _papi_system_info = { "$Id$",
 				 (caddr_t)&_fini,
 				 "LD_PRELOAD", /* How to preload libs */
 			       },
-			        0,  /*  num_cntrs */
-			        0,  /*  num_gp_cntrs */
-			        0,  /*  grouped_counters */
-			        0,  /*  num_sp_cntrs */
+			       -1,  /*  num_cntrs */
+			       -1,  /*  num_gp_cntrs */
+			       -1,  /*  grouped_counters */
+			       -1,  /*  num_sp_cntrs */
 			       -1,  /*  total_presets */
 			       -1,  /*  total_events */
 			        PAPI_DOM_USER, /* default domain */

@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
   printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
-  printf("Text start: %p, Text end: %p, Text length: %p\n",
+  printf("Text start: %p, Text end: %p, Text length: %lx\n",
 	 prginfo->text_start,prginfo->text_end,length);
   printf("Data start: %p, Data end: %p\n",
 	 prginfo->data_start,prginfo->data_end);

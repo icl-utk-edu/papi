@@ -136,8 +136,88 @@ static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
 		{  0,{0,-1}},			/* Total cycles */
 		{ DERIVED_PS,{0,15}},		/* IPS */
                 { DERIVED_ADD,{18,19}},		/* Total load/store inst. exec */
-                { -1,{-1,-1}}			/* Sync exec. */
-             };
+                { -1,{-1,-1}},			/* Sync exec. */
+		/* L1 data cache hits */
+		{ -1,{-1,-1}},
+		/* L2 data cache hits */
+		{ -1,{-1,-1}},
+		/* L1 data cache accesses */
+		{ -1,{-1,-1}},
+		/* L2 data cache accesses */
+		{ -1,{-1,-1}},
+		/* L3 data cache accesses */
+		{ -1,{-1,-1}},
+		/* L1 data cache reads */
+		{ -1,{-1,-1}},
+		/* L2 data cache reads */
+		{ -1,{-1,-1}},
+		/* L3 data cache reads */
+		{ -1,{-1,-1}},
+		/* L1 data cache writes */
+		{ -1,{-1,-1}},
+		/* L2 data cache writes */
+		{ -1,{-1,-1}},
+		/* L3 data cache writes */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache hits */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache hits */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache hits */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache accesses */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache accesses */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache accesses */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache reads */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache reads */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache reads */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache writes */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache writes */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache writes */
+		{ -1,{-1,-1}},
+		/* L1 total cache hits */
+		{ -1,{-1,-1}},
+		/* L2 total cache hits */
+		{ -1,{-1,-1}},
+		/* L3 total cache hits */
+		{ -1,{-1,-1}},
+		/* L1 total cache accesses */
+		{ -1,{-1,-1}},
+		/* L2 total cache accesses */
+		{ -1,{-1,-1}},
+		/* L3 total cache accesses */
+		{ -1,{-1,-1}},
+		/* L1 total cache reads */
+		{ -1,{-1,-1}},
+		/* L2 total cache reads */
+		{ -1,{-1,-1}},
+		/* L3 total cache reads */
+		{ -1,{-1,-1}},
+		/* L1 total cache writes */
+		{ -1,{-1,-1}},
+		/* L2 total cache writes */
+		{ -1,{-1,-1}},
+		/* L3 total cache writes */
+		{ -1,{-1,-1}},
+		/* FP mult */
+		{ -1,{-1,-1}},
+		/* FP add */
+		{ -1,{-1,-1}},
+		/* FP Div */
+		{ -1,{-1,-1}},
+		/* FP Sqrt */
+		{ -1,{-1,-1}},
+		/* FP inv */
+		{ -1,{-1,-1}},
+};
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -461,7 +541,7 @@ long long _papi_hwd_get_real_usec (void)
   timespec_t t;
   long long retval;
 
-  if (clock_gettime(CLOCK_REALTIME, &t) == -1)
+  if (clock_gettime(CLOCK_SGI_CYCLE, &t) == -1)
     return(PAPI_ESYS);
 
   retval = (t.tv_sec * 1000000) + t.tv_nsec / 1000;
@@ -470,19 +550,25 @@ long long _papi_hwd_get_real_usec (void)
 
 long long _papi_hwd_get_real_cycles (void)
 {
-  timespec_t t;
   long long retval;
 
-  if (clock_gettime(CLOCK_REALTIME, &t) == -1)
-    return(PAPI_ESYS);
-
-  retval = (float)((t.tv_sec * 1000000) + t.tv_nsec / 1000) * _papi_system_info.hw_info.mhz;
+  retval = _papi_hwd_get_real_usec() * (long long)_papi_system_info.hw_info.mhz;
   return(retval);
+}
+
+long long _papi_hwd_get_virt_usec (void)
+{
+  return(-1);
+}
+
+long long _papi_hwd_get_virt_cycles (void)
+{
+  return(-1);
 }
 
 void _papi_hwd_error(int error, char *where)
 {
-  abort();
+  sprintf(where,"Substrate error: %s",strerror(error));
 }
 
 int _papi_hwd_init_global(void)
@@ -1189,20 +1275,26 @@ papi_mdi _papi_system_info = { "$Id$",
 				 (caddr_t)&_end,
 			        "_RLD_LIST", /* environment variable */
 			       },
-			        -1,  /*  num_cntrs */
-			        -1,  /*  num_gp_cntrs */
-			        0,  /*  grouped_counters */
-			        0,  /*  num_sp_cntrs */
+			       -1,  /*  num_cntrs */
+			       -1,  /*  num_gp_cntrs */
+			       -1,  /*  grouped_counters */
+			       -1,  /*  num_sp_cntrs */
 			       -1,  /*  total_presets */
 			       -1,  /*  total_events */
-			        0,  /*  needs overflow emulation */
-			        1,  /*  needs profile emulation */
-			        0,  /*  needs 64 bit virtual counters */
-			        1,  /*  supports child inheritance option */
-			        0,  /*  can attach to another process */
-			        0,  /*  read resets the counters */
 			        PAPI_DOM_USER, /* default domain */
 			        PAPI_GRN_THR,  /* default granularity */
+			        0,  /* We can use add_prog_event */
+			        0,  /* We can write the counters */
+			        1,  /* supports HW overflow overflow emulation */
+			        0,  /* supports HW profile emulation */
+			        1,  /* supports 64 bit virtual counters */
+			        1,  /* supports child inheritance option */
+			        0,  /* supports attaching to another process */
+			        1,  /* We can use the real_usec call */
+			        1,  /* We can use the real_cyc call */
+			        0,  /* We can use the virt_usec call */
+			        0,  /* We can use the virt_cyc call */
+			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        NULL };
 

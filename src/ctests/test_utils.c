@@ -38,6 +38,9 @@ void free_test_space(long long **values, int num_tests)
 }
 
 /* Mask tells us what to select. 
+   0x400 is PAPI_L2_TCH.
+   0x200 is PAPI_L2_TCA.
+   0x100 is PAPI_L2_TCM.
    0x40 is PAPI_L1_DCM.
    0x20 is PAPI_L1_ICM.
    0x10 is PAPI_L1_TCM.
@@ -57,6 +60,33 @@ int add_test_events(int *number, int *mask)
   retval = PAPI_num_events();
   assert(retval >= PAPI_OK);
  
+  if ((*mask & 0x400) && PAPI_query_event(PAPI_L2_TCH) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCH);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x200) && PAPI_query_event(PAPI_L2_TCA) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCA);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x100) && PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
   if ((*mask & 0x40) && PAPI_query_event(PAPI_L1_DCM) == PAPI_OK)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
@@ -126,6 +156,24 @@ int add_test_events(int *number, int *mask)
 void remove_test_events(int *EventSet, int mask)
 {
   int retval;
+
+  if (mask & 0x400) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_L2_TCH);
+      assert(retval >= PAPI_OK);
+    }
+
+  if (mask & 0x200) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_L2_TCA);
+      assert(retval >= PAPI_OK);
+    }
+
+  if (mask & 0x100) 
+    {
+      retval = PAPI_rem_event(EventSet, PAPI_L2_TCM);
+      assert(retval >= PAPI_OK);
+    }
 
   if (mask & 0x40) 
     {

@@ -31,9 +31,15 @@ int main()
   int EventSet1;
   int EventSet2;
   int EventSet3;
+#if defined(sun) && defined(sparc)
+  int mask1 = 0x100; /* PAPI_L2_TCM */
+  int mask2 = 0x200; /* PAPI_L2_TCA */
+  int mask3 = 0x400; /* PAPI_L2_TCH */
+#else
   int mask1 = 0x10; /* PAPI_L1_TCM */
   int mask2 = 0x20; /* PAPI_L1_ICM */
   int mask3 = 0x40; /* PAPI_L1_DCM */
+#endif
   int num_events1;
   int num_events2;
   int num_events3;
@@ -51,7 +57,7 @@ int main()
 
   do_l1misses(ITERS);
 
-#ifndef _CRAYT3E
+#ifndef _CRAYT3E 
   retval = PAPI_start(EventSet1);
   assert(retval >= PAPI_OK);
 
@@ -85,7 +91,12 @@ int main()
   remove_test_events(&EventSet2, mask2);
   remove_test_events(&EventSet3, mask3);
 
-  printf("Test case 9: start, stop for derived event PAPI_FLOPS.\n");
+#if defined(sun) && defined(sparc)
+  printf("Test case 9: start, stop for derived event PAPI_L2_TCM.\n");
+#else
+  printf("Test case 9: start, stop for derived event PAPI_L1_TCM.\n");
+#endif
+
   printf("------------------------------------------------------\n");
   tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
@@ -95,7 +106,19 @@ int main()
   printf("-------------------------------------------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\t\t3\n");
-  printf("PAPI_L1_TCM : \t%lld\t0\t\t0\n",
+#if defined(sun) && defined(sparc)
+  printf("PAPI_L2_TCM : \t%lld\t\t0\t\t0\n",
+	 (values[0])[0]);
+  printf("PAPI_L2_TCA : \t0\t\t%lld\t0\n",
+	 (values[1])[0]);
+  printf("PAPI_L2_TCH : \t0\t\t0\t\t%lld\n",
+	 (values[2])[0]);
+  printf("-------------------------------------------------------------------------\n");
+
+  printf("Verification:\n");
+  printf("First number row 1 approximately equals (1,1) - (2,2) or %lld\n",(values[1])[0]-(values[2])[0]);
+#else
+  printf("PAPI_L1_TCM : \t%lld\t\t0\t\t0\n",
 	 (values[0])[0]);
   printf("PAPI_L1_ICM : \t0\t\t%lld\t\t0\n",
 	 (values[1])[0]);
@@ -105,6 +128,7 @@ int main()
 
   printf("Verification:\n");
   printf("First number row 1 approximately equals (1,1) + (2,2) or %lld\n",(values[1])[0]+(values[2])[0]);
+#endif
 
   free_test_space(values, num_tests);
 

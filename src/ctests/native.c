@@ -76,6 +76,41 @@ void papimon_start(void)
       native = 0 | 0xC << 8 | 2; /* CPU cyc */
       retval = PAPI_add_event(&EventSet, native);
       assert (retval == PAPI_OK);
+#elif defined(sun) && defined(sparc)
+/* 
+0,0,Cycle_cnt,0x0
+0,0,Instr_cnt,0x1
+0,0,Dispatch0_IC_miss,0x2
+0,0,IC_ref,0x8
+0,0,DC_rd,0x9
+0,0,DC_wr,0xa
+0,0,EC_ref,0xc
+0,0,EC_snoop_inv,0xe
+0,0,Dispatch0_storeBuf,0x3
+0,0,Load_use,0xb
+0,0,EC_write_hit_RDO,0xd
+0,0,EC_rd_hit,0xf
+0,1,Cycle_cnt,0x0
+0,1,Instr_cnt,0x1
+0,1,Dispatch0_mispred,0x2
+0,1,EC_wb,0xd
+0,1,EC_snoop_cb,0xe
+0,1,Dispatch0_FP_use,0x3
+0,1,IC_hit,0x8
+0,1,DC_rd_hit,0x9
+0,1,DC_wr_hit,0xa
+0,1,Load_use_RAW,0xb
+0,1,EC_hit,0xc
+0,1,EC_ic_hit,0xf
+*/
+      native = 0 | (0xb << 8); /* Load_use */  
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
+      native = 1 | (0xa << 8); /* DC_wr_hit */  
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
+#else
+#error "Architecture not included in this test file yet."
 #endif
       assert(hwinfo = PAPI_get_hardware_info());
     }
@@ -134,7 +169,9 @@ void papimon_stop(void)
   fprintf(stderr,"Machine Cycles                    : %lld\n",values[0]);
   fprintf(stderr,"DCache accesses                   : %lld\n",values[1]);
   fprintf(stderr,"CPU Cycles                        : %lld\n",values[2]);
-#elif defined(sun) && defined(__SVR4) && defined(sparc)
+#elif defined(sun) && defined(sparc)
+  fprintf(stderr,"Load_use                   : %lld\n",values[0]);
+  fprintf(stderr,"DC_wr_hit                  : %lld\n",values[1]);
 #elif defined(tru64)
 #endif
 }
