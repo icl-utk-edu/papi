@@ -2,7 +2,10 @@
 .TH PAPI_remove_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_remove_event, PAPI_remove_events \- remove PAPI preset or native hardware event from an EventSet
+.nf
+PAPI_remove_event  \- remove PAPI preset or native hardware event from an EventSet 
+PAPI_remove_events \- remove PAPI presets or native hardware events from an EventSet
+.fi
 
 .SH SYNOPSIS
 .B C Interface
@@ -21,6 +24,22 @@ PAPI_remove_event, PAPI_remove_events \- remove PAPI preset or native hardware e
 .SH DESCRIPTION
 .BR "PAPI_remove_event(\|) " "removes a hardware event to a PAPI event set."
 .BR "PAPI_remove_events(\|) " "does the same, but for an array of hardware event codes."
+.LP
+A hardware event can be either a PAPI Preset or a native hardware event code.
+For a list of PAPI preset events, see
+.BR "PAPI_presets" "(3) or run the"
+.I avail
+test case in the PAPI distribution. PAPI Presets can be passed to
+.BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
+For a list of native events available on current platform, run native_avail
+test case in the PAPI distribution. For the encoding of native events, see
+.BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the
+supported native event on the underlying architecture."
+                                                                                
+It should be noted that
+.BR "PAPI_remove_events"
+can partially succeed, exactly like
+.BR "PAPI_add_events".
 
 .SH ARGUMENTS
 .I "EventSet"
@@ -36,21 +55,6 @@ PAPI_remove_event, PAPI_remove_events \- remove PAPI preset or native hardware e
 .I number
 -- an integer indicating the number of events in the array
 .I *EventCode
-
-A hardware event can be either a PAPI Preset or a native hardware event code. 
-For a list of PAPI preset events, see
-.BR "PAPI_presets" "(3) or run the"
-.I avail
-test case in the PAPI distribution. PAPI Presets can be passed to
-.BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
-For a list of native events available on current platform, run native_avail
-test case in the PAPI distribution. For the encoding of native events, see
-.BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
-
-It should be noted that
-.BR "PAPI_remove_events"
-can partially succeed, exactly like 
-.BR "PAPI_add_events".
 
 .SH RETURN VALUES
 On success, these functions return
@@ -114,7 +118,5 @@ The vector function should take a pointer to a length argument so a proper retur
 be set upon partial success.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_add_event "(3), " 
-.BR PAPI_add_events "(3), " PAPI_add_pevents "(3), " PAPI_query_event "(3), "
+.BR PAPI_preset "(3), " " PAPI_add_event "(3), " PAPI_add_events "(3), " 
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " PAPI_event_name_to_code "(3) " 
