@@ -1092,11 +1092,15 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return (_papi_hwi_get_granularity(&ptr->granularity));
 #endif
    case PAPI_SHLIBINFO:
-      if (ptr == NULL)
-         papi_return(PAPI_EINVAL);
-      _papi_hwd_update_shlib_info();
-      ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
-      break;
+      {
+         int retval;
+
+         if (ptr == NULL)
+            papi_return(PAPI_EINVAL);
+         retval = _papi_hwd_update_shlib_info();
+         ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
+         papi_return(retval);
+      }
    case PAPI_EXEINFO:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);

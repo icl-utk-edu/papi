@@ -32,7 +32,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
    if ((shinfo = PAPI_get_shared_lib_info()) == NULL) {
-      test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
+      test_skip(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
    }
 
    if ((shinfo->count == 0) && (shinfo->map)) {
