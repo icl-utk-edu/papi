@@ -246,6 +246,7 @@ static int default_error_handler(int errorCode)
     default:
       abort();
     }
+  return(PAPI_EBUG);
 }
 
 static int allocate_eventset_map(DynamicArray *map)
@@ -440,6 +441,14 @@ int PAPI_library_init(int version)
 	_papi_hwd_query(papi_presets[i].event_code ^ PRESET_MASK,
 			&papi_presets[i].flags,
 			&papi_presets[i].event_note);
+
+  _papi_system_info.total_events = 0 ;
+  tmp = 0;  /* Count number of derived events */
+  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++){
+    if(papi_presets[i].avail>0) _papi_system_info.total_events += 1;
+    if(papi_presets[i].flags & PAPI_DERIVED) tmp += 1;
+  }
+  _papi_system_info.total_presets = _papi_system_info.total_events - tmp;
 
   return(init_retval = PAPI_VER_CURRENT);
 }
@@ -967,7 +976,6 @@ static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout)
   /* ESI->hw_start[thisindex]   = 0; */
 
   ESI->NumberOfEvents++;
-
   return(retval);
 }
 
