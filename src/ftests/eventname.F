@@ -5,6 +5,10 @@
 
       INTEGER retval, handle
       INTEGER preset
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       handle = 0
       retval = PAPI_VER_CURRENT
@@ -20,7 +24,9 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-      print *, 'Ok, PAPI_FP_INS code is',preset
+      if (tests_quiet .EQ. 0) then
+      print *, 'PAPI_FP_INS code is',preset
+      end if
       call ftests_pass(__FILE__)
       end
 

@@ -12,6 +12,10 @@ C -Kevin London
       REAL*4 proc_time, mflops, real_time
       INTEGER*8 flpins
       INTEGER i,j,k, retval
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
 C Initialize the Matrix arrays
       do i=1,index
@@ -43,8 +47,10 @@ C Collect the data into the Variables passed in
         call ftests_perror(__LINE__,'Error stopping PAPI_flops ')
         call ftests_fail(__FILE__,retval)
       end if
+      if (tests_quiet .EQ. 0) then
       print *, 'Real_time: ', real_time, ' Proc_time: ', proc_time,
      & ' Total flpins: ', flpins, ' MFLOPS: ', mflops
+      end if
       call dummy(mres)
 
       call ftests_pass(__FILE__)

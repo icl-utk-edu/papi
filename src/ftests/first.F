@@ -14,6 +14,10 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -38,23 +42,29 @@
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        print *, 'Can not add PAPI_TOT_INS: '//
+        if (tests_quiet .EQ. 0) then
+        print *, 'Cannot add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #else
       call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #endif
  
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
       
       call PAPIf_start(EventSet, retval)
@@ -107,9 +117,11 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "TEST CASE 1: Non-overlapping start, stop, read."
       print *, "--------------------------------------------------------------
      *--------------------"
+      end if
 
       call PAPIf_get_domain(EventSet, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -118,8 +130,10 @@
       end if
 
       call stringify_domain(domain, domainstr)
+      if (tests_quiet .EQ. 0) then
       write (*,900) "Default domain is:", domain, domainstr
  900  format(a20, i3, " ", a20)
+      end if
  
       call PAPIf_get_granularity(eventset, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -129,6 +143,7 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
+      if (tests_quiet .EQ. 0) then
       write (*,800) "Default granularity is:", granularity, grnstr
  800  format(a25, i3, " ", a20)
 
@@ -157,6 +172,7 @@
       print *, "Column 3 approximately equals 2 * column 2"
       print *, "Column 4 approximately equals 3 * column 2"
       print *, "Column 4 exactly equals column 5"
+      end if
 
       min = values(3)*0.9
       max = values(3)*1.1

@@ -13,7 +13,11 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
       
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
+
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
@@ -37,23 +41,29 @@
       call PAPIf_add_event( es, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        print *, 'Can not add PAPI_TOT_INS: '//
+        if (tests_quiet .EQ. 0) then
+        print *, 'Cannot add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #else
       call PAPIf_add_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #endif
  
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_get_real_usec(uso)
@@ -76,9 +86,11 @@
       call PAPIf_get_real_usec(usn)
       call PAPIf_get_real_cyc(cycn)
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case 0: start, stop."
       print *, "-----------------------------------------------",
      *"--------------------------"
+      end if
 
       call PAPIf_get_domain(es, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -87,7 +99,9 @@
       end if
 
       call stringify_domain(domain, domainstr)
+      if (tests_quiet .EQ. 0) then
       write (*,900) "Default domain is:", domain, domainstr
+      end if
  900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es, granularity, PAPI_GET_DEFGRN, 
@@ -98,6 +112,7 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
+      if (tests_quiet .EQ. 0) then
       write (*,800) "Default granularity is:", granularity, grnstr
  800  format(a25, i3, " ", a20)
 
@@ -118,6 +133,7 @@
      *"--------------------------"
  
       print *, "Verification: none"
+      endif
      
       call ftests_pass(__FILE__)
       end
