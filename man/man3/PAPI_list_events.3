@@ -1,18 +1,13 @@
 .\" $Id$
 .TH PAPI_list_events 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
-*
-* This needs to be reworked to incorporate PAPI_num_events.
-*
-
 .SH NAME
-PAPI_list_events, PAPI_num_events \- list or return the number of events in an event set
+PAPI_list_events \- list the events in an event set
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int PAPI_list_events(int " EventSet ", int *" Events ", int *" number ");"
-.BI "int PAPI_num_events(int " EventSet ");"
 .fi
 .B Fortran Interface
 .nf
@@ -67,32 +62,50 @@ The hardware event specified is not a PAPI preset for this architecture.
 .nf
 .if t .ft CW
   int EventCode, EventSet = PAPI_NULL;
-  char EventCodeStr[PAPI_MAX_STR_LEN];
-  char EventDescr[PAPI_MAX_STR_LEN];
+  int Events[4], number = 4;
 	
-  /* Convert to integer */
-
-  if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Query Total Instructions Executed to our EventSet */
-
-  if (PAPI_query(EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Describe event from EventCode */
-
-  if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
-    handle_error(1);
-
-  /* Create the EventSet */
+  /* Create an EventSet */
 
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
 
+  /* Convert an event name to an event code */
+
+  if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* Query if Total Instructions Executed exists */
+
+  if (PAPI_query_event(EventCode) != PAPI_OK)
+    handle_error(1);
+
   /* Add Total Instructions Executed to our EventSet */
 
-  if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
+  if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* Convert a second event name to an event code */
+
+  if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* Query if L1 Load Misses exists */
+
+  if (PAPI_query_event(EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* Add L1 Load Misses to our EventSet */
+
+  if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+    handle_error(1);
+
+  /* List the events in our EventSet */
+
+  number = 4;
+  if(PAPI_list_events(EventSet, Events, &number);
+    handle_error(1);
+
+  if(number != 2)
     handle_error(1);
 .if t .ft P
 .fi
