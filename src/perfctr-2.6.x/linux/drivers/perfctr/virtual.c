@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2005  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -658,8 +658,7 @@ static int vperfctr_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static int vperfctr_ioctl(struct inode *inode, struct file *filp,
-			  unsigned int cmd, unsigned long arg)
+static long vperfctr_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct vperfctr *perfctr;
 	struct task_struct *tsk;
@@ -717,11 +716,27 @@ static int vperfctr_ioctl(struct inode *inode, struct file *filp,
 	return ret;
 }
 
+#if !HAVE_UNLOCKED_IOCTL
+static int vperfctr_ioctl_oldstyle(struct inode *inode, struct file *filp,
+				   unsigned int cmd, unsigned long arg)
+{
+	return vperfctr_ioctl(filp, cmd, arg);
+}
+#endif
+
 static struct file_operations vperfctr_file_ops = {
 	.owner = THIS_MODULE,
 	.mmap = vperfctr_mmap,
 	.release = vperfctr_release,
-	.ioctl = vperfctr_ioctl,
+	/* 2.6.11-rc2 introduced HAVE_UNLOCKED_IOCTL and HAVE_COMPAT_IOCTL */
+#if HAVE_UNLOCKED_IOCTL
+	.unlocked_ioctl = vperfctr_ioctl,
+#else
+	.ioctl = vperfctr_ioctl_oldstyle,
+#endif
+#if defined(CONFIG_IA32_EMULATION) && HAVE_COMPAT_IOCTL
+	.compat_ioctl = vperfctr_ioctl,
+#endif
 };
 
 /****************************************************************
@@ -737,9 +752,9 @@ static struct file_operations vperfctr_file_ops = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)
 #include <linux/mount.h> /* needed for 2.6, included by fs.h in 2.4 */
 
-/* 2.6 doesn't EXPORT_SYMBOL() fs/libfs.c:get_sb_pseudo().
+/* 2.6 kernels prior to 2.6.11-rc1 don't EXPORT_SYMBOL() get_sb_pseudo().
    This is a verbatim copy, only renamed. */
-#ifdef MODULE
+#if defined(MODULE) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
 static
 struct super_block *
 perfctr_get_sb_pseudo(struct file_system_type *fs_type, char *name,
@@ -785,7 +800,7 @@ Enomem:
 }
 #undef get_sb_pseudo
 #define get_sb_pseudo perfctr_get_sb_pseudo
-#endif	/* MODULE */
+#endif	/* MODULE && VERSION < 2.6.11 */
 
 static struct super_block *
 vperfctrfs_get_sb(struct file_system_type *fs_type,

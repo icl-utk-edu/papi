@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2005  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -131,7 +131,7 @@ static inline void clear_in_cr4_local(unsigned int mask)
 
 static unsigned int new_id(void)
 {
-	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
+	static DEFINE_SPINLOCK(lock);
 	static unsigned int counter;
 	int id;
 
@@ -927,7 +927,7 @@ static noinline void redirect_call(void *ra, void *to)
 }
 
 static void (*write_control)(const struct perfctr_cpu_state*);
-static noinline void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
+/*static*/ noinline void __perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), write_control);
 	return write_control(state);
@@ -944,14 +944,14 @@ static noinline void perfctr_cpu_read_counters(const struct perfctr_cpu_state *s
 
 #ifdef CONFIG_X86_LOCAL_APIC
 static void (*cpu_isuspend)(struct perfctr_cpu_state*);
-static noinline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
+/*static*/ noinline void __perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), cpu_isuspend);
 	return cpu_isuspend(state);
 }
 
 static void (*cpu_iresume)(const struct perfctr_cpu_state*);
-static noinline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
+/*static*/ noinline void __perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), cpu_iresume);
 	return cpu_iresume(state);
@@ -1030,8 +1030,8 @@ static inline void debug_no_imode(const struct perfctr_cpu_state *state)
 }
 
 #else	/* CONFIG_X86_LOCAL_APIC */
-static inline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state) { }
-static inline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state) { }
+static inline void __perfctr_cpu_isuspend(struct perfctr_cpu_state *state) { }
+static inline void __perfctr_cpu_iresume(const struct perfctr_cpu_state *state) { }
 static inline int check_ireset(const struct perfctr_cpu_state *state) { return 0; }
 static inline void setup_imode_start_values(struct perfctr_cpu_state *state) { }
 static inline void debug_no_imode(const struct perfctr_cpu_state *state) { }
@@ -1070,7 +1070,7 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 	struct perfctr_low_ctrs now;
 
 	if (perfctr_cstatus_has_ictrs(state->cstatus))
-	    perfctr_cpu_isuspend(state);
+	    __perfctr_cpu_isuspend(state);
 	perfctr_cpu_read_counters(state, &now);
 	cstatus = state->cstatus;
 	if (perfctr_cstatus_has_tsc(cstatus))
@@ -1084,9 +1084,9 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 void perfctr_cpu_resume(struct perfctr_cpu_state *state)
 {
 	if (perfctr_cstatus_has_ictrs(state->cstatus))
-	    perfctr_cpu_iresume(state);
+	    __perfctr_cpu_iresume(state);
 	/* perfctr_cpu_enable_rdpmc(); */	/* not for x86 or global-mode */
-	perfctr_cpu_write_control(state);
+	__perfctr_cpu_write_control(state);
 	//perfctr_cpu_read_counters(state, &state->start);
 	{
 		struct perfctr_low_ctrs now;
@@ -1163,6 +1163,10 @@ static void __init finalise_backpatching(void)
 		(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
 		? __perfctr_mk_cstatus(0, 1, 0, 0)
 		: 0;
+	perfctr_cpu_sample(&state);
+	perfctr_cpu_resume(&state);
+	perfctr_cpu_suspend(&state);
+	state.cstatus = 0;
 	perfctr_cpu_sample(&state);
 	perfctr_cpu_resume(&state);
 	perfctr_cpu_suspend(&state);

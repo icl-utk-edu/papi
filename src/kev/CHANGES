@@ -6,6 +6,16 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.13, 2005-02-13
+- Changed the global-mode counters to allow user-space to
+  disable the in-kernel sampling timer and to move the sampling
+  points into the read system calls. This may improve sampling
+  precision in some scenarios.
+- gcc-4.0 snapshots broke the x86/x86-64 low-level driver.
+  Changed the driver to prevent those problems.
+- Updated kernel support: 2.6.11-rc4, 2.4.30-pre1, and
+  2.4.21-27.0.2 (RHEL3).
+
 Version 2.6.12, 2004-12-19
 - PPC32 driver updated to be more robust in its detection of
   timebase and core clock frequencies. Some information sources

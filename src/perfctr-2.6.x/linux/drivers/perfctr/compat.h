@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Compatibility definitions for 2.6 kernels.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2005  Mikael Pettersson
  */
 #include <linux/version.h>
 
@@ -22,7 +22,7 @@
 #define sysdev_unregister(dev)	sys_device_unregister((dev))
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10) /* obsoleted in 2.6.10-rc1 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10) /* remap_page_range() obsoleted in 2.6.10-rc1 */
 #include <linux/mm.h>
 static inline int
 remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
@@ -30,6 +30,10 @@ remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
 {
 	return remap_page_range(vma, uvaddr, pfn << PAGE_SHIFT, size, prot);
 }
+#endif
+
+#if !defined(DEFINE_SPINLOCK) /* added in 2.6.11-rc1 */
+#define DEFINE_SPINLOCK(x)	spinlock_t x = SPIN_LOCK_UNLOCKED
 #endif
 
 #endif

@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2005  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -89,7 +89,7 @@ int sys_perfctr_cpus_forbidden(struct perfctr_cpu_mask *argp)
 	return cpus_copy_to_user(&cpus, argp);
 }
 
-#ifdef CONFIG_IA32_EMULATION
+#if defined(CONFIG_IA32_EMULATION) && !HAVE_COMPAT_IOCTL
 #include <asm/ioctl32.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,23)
 static int perfctr_ioctl32_handler(unsigned int fd, unsigned int cmd, unsigned long arg, struct file *filp)
@@ -148,8 +148,7 @@ static void __exit perfctr_unregister_ioctl32_conversions(void)
 #define perfctr_unregister_ioctl32_conversions()	do{}while(0)
 #endif
 
-static int dev_perfctr_ioctl(struct inode *inode, struct file *filp,
-			     unsigned int cmd, unsigned long arg)
+static long dev_perfctr_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	switch( cmd ) {
 	case PERFCTR_ABI:
@@ -165,14 +164,30 @@ static int dev_perfctr_ioctl(struct inode *inode, struct file *filp,
 	case VPERFCTR_OPEN:
 		return vperfctr_attach((int)arg, 0);
 	default:
-		return gperfctr_ioctl(inode, filp, cmd, arg);
+		return gperfctr_ioctl(filp, cmd, arg);
 	}
 	return -EINVAL;
 }
 
+#if !HAVE_UNLOCKED_IOCTL
+static int dev_perfctr_ioctl_oldstyle(struct inode *inode, struct file *filp,
+				      unsigned int cmd, unsigned long arg)
+{
+	return dev_perfctr_ioctl(filp, cmd, arg);
+}
+#endif
+
 static struct file_operations dev_perfctr_file_ops = {
 	.owner = THIS_MODULE,
-	.ioctl = dev_perfctr_ioctl,
+	/* 2.6.11-rc2 introduced HAVE_UNLOCKED_IOCTL and HAVE_COMPAT_IOCTL */
+#if HAVE_UNLOCKED_IOCTL
+	.unlocked_ioctl = dev_perfctr_ioctl,
+#else
+	.ioctl = dev_perfctr_ioctl_oldstyle,
+#endif
+#if defined(CONFIG_IA32_EMULATION) && HAVE_COMPAT_IOCTL
+	.compat_ioctl = dev_perfctr_ioctl,
+#endif
 };
 
 static struct miscdevice dev_perfctr = {

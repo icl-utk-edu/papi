@@ -3,6 +3,27 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.13, 2005-02-13
+- global.c: Allow user-space to disable the in-kernel sampling
+  timer by setting interval_usec == 0 in the START command.
+  In this case sampling is done by the READ command.
+- Modified x86 call backpatching code to avoid breaking with
+  gcc-4.0 snapshots:
+  * gcc-4.0 may clone control flows, resulting in more sites
+    with backpatchable calls. finalise_backpatching() now sets
+    things up to exercise all affected control flow paths.
+  * gcc-4.0 appears to ignore 'noinline' on static functions
+    that are only called from one place, at least on x86-64.
+    This broke perfctr_cpu_{write_control,isuspend,iresume}().
+    Things work again if they are made non-static.
+- Only define our own version of get_sb_pseudo() in kernels older
+  than 2.6.11, since 2.6.11-rc1 added EXPORT_SYMBOL(get_sb_pseudo).
+- In 2.6.11-rc2 and newer kernels, bind ioctls to ->unlocked_ioctl
+  and ->compat_ioctl, and don't use register_ioctl32_conversion().
+- Remove unused inode parameter to gperfctr_ioctl().
+- Define static spinlocks with DEFINE_SPINLOCK(), following new
+  coding style in 2.6.11-rc1. Add compat macros for older kernels.
+
 Version 2.6.12, 2004-12-19
 - PPC32 driver updated to be more robust in its detection of
   timebase and core clock frequencies. Some information sources

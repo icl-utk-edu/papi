@@ -1,7 +1,7 @@
 /* $Id$
  * Global-mode performance-monitoring counters via /dev/perfctr.
  *
- * Copyright (C) 2000-2003  Mikael Pettersson
+ * Copyright (C) 2000-2005  Mikael Pettersson
  *
  * XXX: Doesn't do any authentication yet. Should we limit control
  * to root, or base it on having write access to /dev/perfctr?
@@ -57,7 +57,8 @@ static void release_hardware(void)
 	nr_active_cpus = 0;
 	if( hardware_is_ours ) {
 		hardware_is_ours = 0;
-		del_timer(&sampling_timer);
+		if( sampling_timer.data )
+			del_timer(&sampling_timer);
 		sampling_timer.data = 0;
 		perfctr_cpu_release(this_service);
 		module_put(THIS_MODULE);
@@ -83,6 +84,19 @@ static void sample_this_cpu(void *unused)
 static void sample_all_cpus(void)
 {
 	on_each_cpu(sample_this_cpu, NULL, 1, 1);
+}
+
+static void do_sample_one_cpu(void *info)
+{
+	unsigned int cpu = (unsigned long)info;
+
+	if( cpu == smp_processor_id() )
+		sample_this_cpu(NULL);
+}
+
+static void sample_one_cpu(unsigned int cpu)
+{
+	on_each_cpu(do_sample_one_cpu, (void*)(unsigned long)cpu, 1, 1);
 }
 
 static void sampling_timer_function(unsigned long interval)
@@ -169,7 +183,7 @@ static int gperfctr_start(unsigned int interval_usec)
 {
 	int ret;
 
-	if( interval_usec < 10000 )
+	if( interval_usec && interval_usec < 10000 )
 		return -EINVAL;
 	down(&control_mutex);
 	ret = nr_active_cpus;
@@ -199,12 +213,13 @@ static int gperfctr_read(struct perfctr_struct_buf *argp)
 	struct gperfctr_cpu_state state;
 	int err;
 
-	// XXX: sample_all_cpus() ???
 	err = perfctr_copy_from_user(&state, argp, &gperfctr_cpu_state_only_cpu_sdesc);
 	if( err )
 		return err;
 	if( state.cpu >= NR_CPUS || !cpu_online(state.cpu) )
 		return -EINVAL;
+	if( !sampling_timer.data )
+		sample_one_cpu(state.cpu);
 	perfctr = &per_cpu_gperfctr[state.cpu];
 	spin_lock(&perfctr->lock);
 	state.cpu_control = perfctr->cpu_state.control;
@@ -219,8 +234,7 @@ static int gperfctr_read(struct perfctr_struct_buf *argp)
 	return perfctr_copy_to_user(argp, &state, &gperfctr_cpu_state_sdesc);
 }
 
-int gperfctr_ioctl(struct inode *inode, struct file *filp,
-		   unsigned int cmd, unsigned long arg)
+int gperfctr_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	switch( cmd ) {
 	case GPERFCTR_CONTROL:

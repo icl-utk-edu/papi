@@ -1,7 +1,7 @@
 /* $Id$
  * PPC32 performance-monitoring counters driver.
  *
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004-2005  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -52,7 +52,7 @@ static enum pm_type pm_type;
 
 static unsigned int new_id(void)
 {
-	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
+	static DEFINE_SPINLOCK(lock);
 	static unsigned int counter;
 	int id;
 
