@@ -191,7 +191,7 @@ int PAPI_library_init(int version)
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (_papi_hwi_presets[i].event_name) /* If the preset is part of the API */
       _papi_hwi_presets[i].avail = 
-	_papi_hwd_query(_papi_hwi_presets[i].event_code & PRESET_AND_MASK,
+	_papi_hwi_preset_query(_papi_hwi_presets[i].event_code & PRESET_AND_MASK,
 			&_papi_hwi_presets[i].flags,
 			&_papi_hwi_presets[i].event_note);
 

@@ -91,13 +91,14 @@ typedef struct _EventSetProfileInfo {
 /* PAPI supports derived events that are made up of at most 2 counters. */
 
 typedef struct _EventInfo {
-  struct _EventInfo *head;  /* Always points back to EventInfoArray[0] for this EventSet.  Used to optimize register allocation across an event set */
+  struct _EventSetInfo *ESIhead;  /* Always points back to &EventSetInfo for this EventSet.  Used to optimize register allocation across an event set */
   unsigned int event_code;  /* Preset or native code for this event as passed to PAPI_add_event() */
   unsigned counter_index;   /* Index of counter to read in buffer returned by the hardware/kernel
 			       This is also used for order dependent derived events to indicate
 			       the first operand (replaces PAPI 2 operand_index) */
-  hwd_register_map_t bits;  /* Substrate defined collection of bits that keep track of resources 
-			       used by this event */
+  hwd_register_map_t regs;  /* Substrate defined collection of register number that keep track of resources 
+			                   used by this event */
+  char *ops;                /* operation string of preset */
   unsigned hwd_selector;    /* Counter select bits used by the substrate (Replaced by bits??) */
   int derived;		    /* Counter derivation command used for derived events */
 } EventInfo_t;
@@ -330,5 +331,5 @@ typedef struct _papi_mdi {
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
-
+extern hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS];
 #endif /* PAPI_INTERNAL_H */

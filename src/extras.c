@@ -470,7 +470,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
   char *name;
   int i;
   
-  for(i=0;i<MAX_NATIVE_EVENT;i++){
+  for(i=0;i<PAPI_MAX_NATIVE_EVENTS;i++){
   	if(strcasecmp(native_table[i].name, in)==0){
 		*out=_papi_hwi_native_idx_to_code(i);
 		return(PAPI_OK);
@@ -513,7 +513,7 @@ int _papi_hwi_native_code_to_idx(unsigned int EventCode)
   if (EventCode & NATIVE_MASK) {
   	index=EventCode ^ NATIVE_MASK;
   
-  	if(index<MAX_NATIVE_EVENT){
+  	if(index<PAPI_MAX_NATIVE_EVENTS){
   		return(index);
   	}
   }
@@ -529,7 +529,7 @@ unsigned int _papi_hwi_native_idx_to_code(unsigned int idx)
   
   EventCode =idx | NATIVE_MASK;
   
-  if(idx<MAX_NATIVE_EVENT){
+  if(idx<PAPI_MAX_NATIVE_EVENTS){
   	return(EventCode);
   }
 #endif
@@ -545,7 +545,7 @@ char *_papi_hwi_native_code_to_name(unsigned int EventCode)
   if (EventCode & NATIVE_MASK) {
   	index=EventCode ^ NATIVE_MASK;
   
-  	if(index<MAX_NATIVE_EVENT){
+  	if(index<PAPI_MAX_NATIVE_EVENTS){
   		return(native_table[index].name);
   	}
   }
@@ -563,7 +563,7 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
   if (EventCode & NATIVE_MASK) {
   	index=EventCode ^ NATIVE_MASK;
   
-  	if(index<MAX_NATIVE_EVENT){
+  	if(index<PAPI_MAX_NATIVE_EVENTS){
   		return(native_table[index].description);
   	}
   }

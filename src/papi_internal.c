@@ -54,7 +54,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 /********************/
 
 /* Defined by the substrate */
-extern hwd_preset_t _papi_hwd_preset_map[];
+extern hwi_preset_t _papi_hwi_preset_map[];
 
 /* Defined in papi_data.c */
 extern PAPI_preset_info_t _papi_hwi_presets[];
@@ -238,14 +238,16 @@ static int EventInfoArrayLength(const EventSetInfo_t *ESI)
  
 static void initialize_EventInfoArray(EventSetInfo_t *ESI)
 {
-  int i, limit = EventInfoArrayLength(ESI);
+  int i, j, limit = EventInfoArrayLength(ESI);
 
   for (i=0;i<limit;i++)
     {
-      ESI->EventInfoArray[i].head = ESI->EventInfoArray; /* always points to top of array */
+      ESI->EventInfoArray[i].ESIhead = ESI; /* always points to EventSetInfo_t *ESI */
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
       ESI->EventInfoArray[i].counter_index = -1;
-/*      ESI->EventInfoArray[i].bits = ???; */
+      for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
+     	  ESI->EventInfoArray[i].regs.pos[j] = -1;
+      ESI->EventInfoArray[i].ops = NULL;
       ESI->EventInfoArray[i].hwd_selector = 0;
       ESI->EventInfoArray[i].derived = NOT_DERIVED;
     }
@@ -501,67 +503,150 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t *ESI)
   return(PAPI_OK);
 }
 
+/* this function is called after mapping is done
+    if(remap) refill info for every added events
+	else     fill current EventInfo_t *out
+ */
+void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, int remap)
+{
+	EventInfo_t *head;
+	int i, j, k, n, preset_index, nix, total_events;
+
+	head=out->ESIhead->EventInfoArray;
+	total_events=out->ESIhead->NumberOfEvents;
+
+	if(!remap){
+		out->counter_index = out->regs.pos[0];
+		i=0;
+		while(out->regs.pos[i]>=0 && i<MAX_COUNTERS){
+			out->hwd_selector |= 1<<out->regs.pos[i];
+			i++;
+		}
+		return;
+	}
+	
+	j=0;
+	for(i=0;i<=total_events;i++){
+		while(head[j].event_code==PAPI_NULL) /* find the added event in EventInfoArray */
+			j++;
+		/* fill in the new information */
+		head[j].hwd_selector=0;
+		if(head[j].event_code & PRESET_MASK){
+			preset_index = head[j].event_code & PRESET_AND_MASK;
+			for(k=0;k<_papi_hwi_preset_map[preset_index].metric_count;k++){
+				nix=_papi_hwi_preset_map[preset_index].natIndex[k];
+				for(n=0;n<tmp_state->native_idx;n++){
+					if(nix==tmp_state->native[n].index){
+						head[j].regs.pos[k]=tmp_state->native[n].position;
+						head[j].hwd_selector |= 1<<tmp_state->native[n].position;
+						break;
+					}
+				}
+			}
+			head[j].counter_index=head[j].regs.pos[0];
+		}
+		else{
+			nix = head[j].event_code & NATIVE_AND_MASK;
+			for(n=0;n<tmp_state->native_idx;n++){
+				if(nix==tmp_state->native[n].index){
+					head[j].regs.pos[0]=tmp_state->native[n].position;
+					head[j].hwd_selector |= 1<<tmp_state->native[n].position;
+					head[j].counter_index=tmp_state->native[n].position;
+					break;
+				}
+				
+			}
+		}
+		j++;
+	}
+}
+
 int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 {
-  int thisindex, retval;
-
-  /* Make sure the event is not present and get the next
-     free slot. */
-
-  thisindex = get_free_EventCodeIndex(ESI,EventCode);
-  if (thisindex < PAPI_OK)
-    return(thisindex);
-
-  /* If it is a MPX EventSet, add it to the multiplex data structure and
-     this threads multiplex list */
-
-  if (!(ESI->state & PAPI_MULTIPLEXING))
+	int thisindex, remap, retval=PAPI_OK;
+	
+	/* Make sure the event is not present and get the next
+	free slot. */
+	
+	thisindex = get_free_EventCodeIndex(ESI,EventCode);
+	if (thisindex < PAPI_OK)
+		return(thisindex);
+	
+		/* If it is a MPX EventSet, add it to the multiplex data structure and
+	this threads multiplex list */
+	
+	if (!(ESI->state & PAPI_MULTIPLEXING))
     {
-      int preset_index = EventCode ^ PRESET_MASK;
+		
+		if (EventCode & PRESET_MASK)
+		{
+			int preset_index = EventCode & PRESET_AND_MASK;
+			
+			/* Check if it's within the valid range */
+			
+			if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
+				return(PAPI_EINVAL);
+			
+			/* Check if event exists */
+			
+			if (!_papi_hwi_presets[preset_index].avail)
+				return(PAPI_ENOEVNT);
+			
+			/* Try to add the preset. */
+			
+			remap = _papi_hwd_add_event(&ESI->machdep, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count, &ESI->EventInfoArray[thisindex]);
+			if (remap < 0)
+				return(PAPI_ECNFLCT);
+			else{
+				/* Fill in the EventCode (machine independent) information */
+			
+				ESI->EventInfoArray[thisindex].event_code = EventCode; 
+				ESI->EventInfoArray[thisindex].derived = _papi_hwi_preset_map[preset_index].derived; 
+				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_map[preset_index].operation; 
+				_papi_hwi_allocate_after(&ESI->machdep, &ESI->EventInfoArray[thisindex], remap);
+			}
+		}
+		else if(EventCode & NATIVE_MASK)
+		{
+			int native_index = EventCode & NATIVE_AND_MASK;
 
-      if (EventCode & PRESET_MASK)
-	{
-	  /* Check if it's within the valid range */
+			/* Check if it's within the valid range */
+			
+			if ((native_index < 0) || (native_index >= PAPI_MAX_NATIVE_EVENTS))
+				return(PAPI_EINVAL);
 
-	  if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
-	    return(PAPI_EINVAL);
+			/* Try to add the native. */
+			
+			remap = _papi_hwd_add_event(&ESI->machdep, &native_index, 1, &ESI->EventInfoArray[thisindex]);
+			if (remap < 0)
+				return(PAPI_ECNFLCT);
+			else{
+				/* Fill in the EventCode (machine independent) information */
+			
+				ESI->EventInfoArray[thisindex].event_code = EventCode; 
+				_papi_hwi_allocate_after(&ESI->machdep, &ESI->EventInfoArray[thisindex], remap);
+			}
+		}
+		else
+		{
+			/* not Native and Preset events */
+			
+			return(PAPI_EBUG);
+		}
 
-	  /* Check if event exists */
-
-	  if (!_papi_hwi_presets[preset_index].avail)
-	    return(PAPI_ENOEVNT);
-
-	  /* Try to add the preset. */
-
-	  retval = _papi_hwd_add_event(&ESI->machdep, EventCode,
-				    &ESI->EventInfoArray[thisindex]);
-	  if (retval < PAPI_OK)
-	    return(retval);
-
-	  /* Fill in the EventCode (machine independent) information */
-
-	  ESI->EventInfoArray[thisindex].event_code = EventCode; 
-	  ESI->EventInfoArray[thisindex].derived = _papi_hwd_preset_map[preset_index].derived; 
-	}
-      else
-	{
-	  /* Native events that can be encoded in sizeof(int) go here. */
-
-	  return(PAPI_EBUG);
-	}
     }
-  else
+	else
     {
-      /* Multiplexing is special. See multiplex.c */
-      retval = mpx_add_event(&ESI->multiplex,EventCode);
-      if (retval < PAPI_OK)
+		/* Multiplexing is special. See multiplex.c */
+		retval = mpx_add_event(&ESI->multiplex,EventCode);
+		if (retval < PAPI_OK)
+			return(retval);
+    }
+	
+	/* Bump the number of events */
+	ESI->NumberOfEvents++;
+	
 	return(retval);
-    }
-
-  /* Bump the number of events */
-  ESI->NumberOfEvents++;
-
-  return(retval);
 }
 
 int _papi_hwi_add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout)
@@ -611,14 +696,56 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
   else    
     /* Remove the events hardware dependant stuff from the EventSet */
     {
-      retval = _papi_hwd_remove_event(&ESI->EventInfoArray[thisindex].bits, ESI->EventInfoArray[thisindex].counter_index, &ESI->machdep);
-      if (retval < PAPI_OK)
-	return(retval);
+		if (EventCode & PRESET_MASK)
+		{
+			int preset_index = EventCode & PRESET_AND_MASK;
+			
+			/* Check if it's within the valid range */
+			
+			if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
+				return(PAPI_EINVAL);
+			
+			/* Check if event exists */
+			
+			if (!_papi_hwi_presets[preset_index].avail)
+				return(PAPI_ENOEVNT);
+			
+			/* Try to remove the preset. */
+			
+			_papi_hwd_remove_event(&ESI->machdep, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
+		}
+		else if(EventCode & NATIVE_MASK)
+		{
+			int native_index = EventCode & NATIVE_AND_MASK;
+
+			/* Check if it's within the valid range */
+			
+			if ((native_index < 0) || (native_index >= PAPI_MAX_NATIVE_EVENTS))
+				return(PAPI_EINVAL);
+
+			/* Try to add the native. */
+			
+			_papi_hwd_remove_event(&ESI->machdep, &native_index, 1);
+		}
+		else
+			return(PAPI_ENOEVNT);
+
+		/* clean the EventCode (machine independent) information */
+
+		ESI->EventInfoArray[thisindex].event_code = PAPI_NULL;
+		ESI->EventInfoArray[thisindex].counter_index = -1;
+		for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
+     		ESI->EventInfoArray[thisindex].regs.pos[j] = -1;
+		ESI->EventInfoArray[thisindex].ops = NULL;
+		ESI->EventInfoArray[thisindex].hwd_selector = 0;
+		ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
+	
     }
+
 
   /* Move the counter_index's around. */
 
-  for (i=0;i<EventInfoArrayLength(ESI);i++)
+ /* for (i=0;i<EventInfoArrayLength(ESI);i++)
     {
       if (ESI->EventInfoArray[i].counter_index < ESI->EventInfoArray[thisindex].counter_index)
 	;
@@ -635,7 +762,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
       if (++j == ESI->NumberOfEvents)
 	break;
     }
-	
+	*/
   /* ESI->EventInfoArray[thisindex].derived = NOT_DERIVED; */
   /* ESI->EventInfoArray[thisindex].selector = 0; */
   /* ESI->EventInfoArray[thisindex].operand_index = -1; */
@@ -645,7 +772,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
   ESI->NumberOfEvents--;
 
-  return(retval);
+  return(PAPI_OK);
 }
 
 int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, long_long *values)
