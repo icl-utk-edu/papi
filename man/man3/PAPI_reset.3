@@ -53,7 +53,7 @@ if (PAPI_create_eventset(&EventSet) != PAPI_OK)
 
 /* Add Total Instructions Executed to our EventSet */
 
-if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
   handle_error(1);
 
 /* Start counting */
