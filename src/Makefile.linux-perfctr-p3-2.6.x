@@ -1,8 +1,8 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR ?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -g -Wall
-TOPTFLAGS= -g -Wall -D__x86_64__
+OPTFLAGS= -g -Wall -O3
+TOPTFLAGS= -g -Wall -O1 -D__x86_64__
 # Use the following flags on the appropriate systems:
 # -DPENTIUM3 -DPENTIUM2 -D__x86_64__ -D__ATHLON__
 #
