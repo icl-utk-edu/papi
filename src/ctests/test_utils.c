@@ -56,7 +56,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L1_DCA)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L1_DCA);
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCA);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -69,7 +69,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L1_DCW)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L1_DCW);
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCW);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -82,7 +82,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L1_DCR)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L1_DCR);
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCR);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -95,7 +95,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L2_TCH)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L2_TCH);
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCH);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -108,7 +108,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L2_TCA)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L2_TCA);
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCA);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -121,7 +121,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L2_TCM)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L2_TCM);
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -134,7 +134,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L1_DCM)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L1_DCM);
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -147,7 +147,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L1_ICM)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L1_ICM);
+      retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -160,7 +160,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_L1_TCM)
     {
-      retval = PAPI_add_event(EventSet, PAPI_L1_TCM);
+      retval = PAPI_add_event(&EventSet, PAPI_L1_TCM);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -173,7 +173,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_BR_CN)
     {
-      retval = PAPI_add_event(EventSet, PAPI_BR_CN);
+      retval = PAPI_add_event(&EventSet, PAPI_BR_CN);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -190,7 +190,7 @@ int add_test_events(int *number, int *mask)
     }
   if (*mask & MASK_BR_MSP)
     {
-      retval = PAPI_add_event(EventSet, PAPI_BR_MSP);
+      retval = PAPI_add_event(&EventSet, PAPI_BR_MSP);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -202,7 +202,7 @@ int add_test_events(int *number, int *mask)
     }
   if (*mask & MASK_BR_PRC)
     {
-      retval = PAPI_add_event(EventSet, PAPI_BR_PRC);
+      retval = PAPI_add_event(&EventSet, PAPI_BR_PRC);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -214,7 +214,7 @@ int add_test_events(int *number, int *mask)
     }
   if (*mask & MASK_FLOPS)
     {
-      retval = PAPI_add_event(EventSet, PAPI_FLOPS);
+      retval = PAPI_add_event(&EventSet, PAPI_FLOPS);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -227,7 +227,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_FP_INS)
     {
-      retval = PAPI_add_event(EventSet, PAPI_FP_INS);
+      retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -240,7 +240,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_TOT_INS)
     {
-      retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -253,7 +253,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_TOT_IIS)
     {
-      retval = PAPI_add_event(EventSet, PAPI_TOT_IIS);
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_IIS);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -266,7 +266,7 @@ int add_test_events(int *number, int *mask)
 
   if (*mask & MASK_TOT_CYC)
     {
-      retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
       if (retval == PAPI_OK)
 	(*number)++;
       else
@@ -456,6 +456,7 @@ void test_fail(char *file, int line, char *call, int retval)
 		printf("Error in %s: %s\n", call, errstring );
 	}
         printf("\n");
+        PAPI_shutdown();
 	exit(1);
 }
 
@@ -481,6 +482,7 @@ void test_skip(char *file, int line, char *call, int retval)
 	  }
           printf("\n");
          }
+        PAPI_shutdown();
 	exit(0);
 }
 
