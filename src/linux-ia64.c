@@ -137,10 +137,15 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
-   {PAPI_MEM_SCY, DERIVED_POSTFIX, {"BE_EXE_BUBBLE_GRALL", "BE_EXE_BUBBLE_GRGR", "BE_L1D_FPU_BUBBLE_L1D"}, "N0|N1|-|N2|+|"},
+   {PAPI_L2_ICA, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
+   {PAPI_L3_ICA, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0}},
+   {PAPI_L1_TCR, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0}}, 
+   {PAPI_L1_TCA, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0}}, 
+   {PAPI_L2_TCW, 0, {"L2_DATA_REFERENCES_L2_DATA_WRITES", 0, 0, 0}},
+
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 57
+#define NUM_OF_PRESET_EVENTS 61
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #endif
