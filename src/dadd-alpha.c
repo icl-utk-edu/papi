@@ -389,9 +389,8 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex,
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 {
-   /* This function is not used and shouldn't be called. */
-
-   return (PAPI_ESBSTR);
+   ESI->profile.overflowcount = 0;
+   return (PAPI_OK);
 }
 
 void _papi_hwd_lock_init(void)

@@ -372,7 +372,6 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
       /* Get the latest counter value */
       event_counter = ESI->overflow.event_counter;
 
-      /* if you want to change this, please discuss with me .  -- Min */
       overflow_flag = 0;
       overflow_vector = 0;
 
@@ -403,8 +402,9 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
          /* we had assumed the overflow event can't be derived event */
          papi_index = ESI->overflow.EventIndex[0];
 
-         /* suppose the pos is the same as the counter number(this is not true in 
-            Itanium, but itanium don't need us to generate the overflow bit
+         /* suppose the pos is the same as the counter number
+          * (this is not true in Itanium, but itanium doesn't 
+          * need us to generate the overflow bit
           */
          pos = ESI->EventInfoArray[papi_index].pos[0];
          overflow_vector = 1 << pos;
@@ -418,9 +418,10 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                i = ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
-                  /* This loop is here ONLY because Pentium 4 can have tagged events
-                     that contain more than one counter without being derived.
-                     You've gotta scan all terms to make sure you find the one to profile. */
+              /* This loop is here ONLY because Pentium 4 can have tagged   *
+               * events that contain more than one counter without being    *
+               * derived. You've gotta scan all terms to make sure you find *
+               * the one to profile. */
                   for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) {
                      pos = ESI->EventInfoArray[papi_index].pos[k];
                      if (i == pos) {
@@ -428,17 +429,15 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                         goto foundit;
                      }
                   }
-#ifdef ITANIUM2 
+#if ( defined(ITANIUM2) || defined(ITANIUM) ) 
                  /* in Itanium, the set bit in overflow vector is not
                     equal to the position in native event array */
-                 profile_index = ESI->EventInfoArray[papi_index].pos[0];
-                 goto foundit;
-#endif
-#ifdef ITANIUM
-                 /* in Itanium, the set bit in overflow vector is not
-                    equal to the position in native event array */
-                 profile_index = ESI->EventInfoArray[papi_index].pos[0];
-                 goto foundit;
+                 pos = ESI->EventInfoArray[papi_index].pos[0];
+                 if ( i == (pos + PMU_FIRST_COUNTER))
+                 { 
+                    profile_index=j;
+                    goto foundit;
+                 }
 #endif
                }
                if (j == event_counter)

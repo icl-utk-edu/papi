@@ -294,6 +294,9 @@ int _papi_hwd_mdi_init()
   
   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.supports_hw_overflow = 1;
+/*
+  _papi_hwi_system_info.supports_hw_profile = 1;
+*/
   _papi_hwi_system_info.supports_64bit_counters = 1;
   _papi_hwi_system_info.supports_inheritance = 1;
   _papi_hwi_system_info.supports_real_usec = 1;
@@ -870,7 +873,7 @@ static int ia64_process_profile_entry(void *papiContext)
    pfmw_smpl_entry_t *ent;
    unsigned long buf_pos;
    unsigned long entry_size;
-   int i, ret, reg_num, overflow_vector, count, pos;
+   int i, ret, reg_num, count, pos;
    int EventCode=0, eventindex, native_index=0;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
@@ -911,9 +914,9 @@ static int ia64_process_profile_entry(void *papiContext)
       /* record  each register's overflow times  */
       ESI->profile.overflowcount++;
 
-      overflow_vector = 1 << ent->ovfl_pmd;
-      while (overflow_vector) {
-         reg_num = ffs(overflow_vector) - 1;
+      if (ent->ovfl_pmd) 
+      {
+         reg_num = ent->ovfl_pmd;
          /* find the event code */
          for (count = 0; count < ESI->profile.event_counter; count++) {
             eventindex = ESI->profile.EventIndex[count];
@@ -951,11 +954,9 @@ static int ia64_process_profile_entry(void *papiContext)
          };
 
          dispatch_profile(ESI, papiContext, (long_long) 0, count);
-         overflow_vector ^= (1 << reg_num);
+         /* adjust pointer position */
+         buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
       }
-
-
-
 
       /*  move to next entry */
       buf_pos += entry_size;
