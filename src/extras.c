@@ -189,18 +189,6 @@ static void dispatch_timer(int signal, siginfo_t *si, void *i)
   if (eventset_overflowing->state & PAPI_OVERFLOWING)
     _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, i); 
 }
-#elif defined(sgi) && defined(mips)
-static void dispatch_timer(int signal, int code, struct sigcontext *info)
-{
-  extern EventSetInfo *default_master_eventset;
-  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
-#ifdef DEBUG
-  DBG((stderr,"dispatch_timer() at %p\n",(void *)info->sc_pc));
-#endif
-
-  if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
-}
 #endif
 
 static int start_timer(int milliseconds)
@@ -209,7 +197,7 @@ static int start_timer(int milliseconds)
   struct sigaction action;
   struct itimerval value;
 
-  /* If the user has installed a SIGPROF, don't do anything */
+  /* If the user has installed a signal, don't do anything */
 
   if (signal(PAPI_SIGNAL, SIG_IGN) != SIG_DFL)
     return(PAPI_ESYS);
@@ -219,8 +207,6 @@ static int start_timer(int milliseconds)
 #if defined(_AIX) 
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
   action.sa_flags |= SA_SIGINFO;
-#elif defined(sgi) && defined(mips)
-  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
 #elif defined(_CRAYT3E)
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
   action.sa_flags |= SA_SIGINFO;

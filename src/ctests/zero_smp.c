@@ -36,6 +36,7 @@ Master pthread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
+#undef NDEBUG
 #include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"

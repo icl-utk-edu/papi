@@ -69,8 +69,88 @@ static hwd_search_t findem_r10k[PAPI_MAX_PRESET_EVENTS] = {
 		{  0,{ 0,16}},			/* Total cycles */
 		{ DERIVED_PS,{0,15}},		/* IPS */
                 { -1,{-1,-1}},			/* Total load/store inst. exec */
-                { -1,{-1,-1}}			/* Sync exec. */
-             };
+                { -1,{-1,-1}},			/* Sync exec. */
+		/* L1 data cache hits */
+		{ -1,{-1,-1}},
+		/* L2 data cache hits */
+		{ -1,{-1,-1}},
+		/* L1 data cache accesses */
+		{ -1,{-1,-1}},
+		/* L2 data cache accesses */
+		{ -1,{-1,-1}},
+		/* L3 data cache accesses */
+		{ -1,{-1,-1}},
+		/* L1 data cache reads */
+		{ -1,{-1,-1}},
+		/* L2 data cache reads */
+		{ -1,{-1,-1}},
+		/* L3 data cache reads */
+		{ -1,{-1,-1}},
+		/* L1 data cache writes */
+		{ -1,{-1,-1}},
+		/* L2 data cache writes */
+		{ -1,{-1,-1}},
+		/* L3 data cache writes */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache hits */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache hits */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache hits */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache accesses */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache accesses */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache accesses */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache reads */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache reads */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache reads */
+		{ -1,{-1,-1}},
+		/* L1 instruction cache writes */
+		{ -1,{-1,-1}},
+		/* L2 instruction cache writes */
+		{ -1,{-1,-1}},
+		/* L3 instruction cache writes */
+		{ -1,{-1,-1}},
+		/* L1 total cache hits */
+		{ -1,{-1,-1}},
+		/* L2 total cache hits */
+		{ -1,{-1,-1}},
+		/* L3 total cache hits */
+		{ -1,{-1,-1}},
+		/* L1 total cache accesses */
+		{ -1,{-1,-1}},
+		/* L2 total cache accesses */
+		{ -1,{-1,-1}},
+		/* L3 total cache accesses */
+		{ -1,{-1,-1}},
+		/* L1 total cache reads */
+		{ -1,{-1,-1}},
+		/* L2 total cache reads */
+		{ -1,{-1,-1}},
+		/* L3 total cache reads */
+		{ -1,{-1,-1}},
+		/* L1 total cache writes */
+		{ -1,{-1,-1}},
+		/* L2 total cache writes */
+		{ -1,{-1,-1}},
+		/* L3 total cache writes */
+		{ -1,{-1,-1}},
+		/* FP mult */
+		{ -1,{-1,-1}},
+		/* FP add */
+		{ -1,{-1,-1}},
+		/* FP Div */
+		{ -1,{-1,-1}},
+		/* FP Sqrt */
+		{ -1,{-1,-1}},
+		/* FP inv */
+		{ -1,{-1,-1}}
+};
 
 static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
                 {  0,{-1,25}},			/* L1 D-Cache misses */
@@ -1195,6 +1275,18 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
+static void dispatch_timer(int signal, int code, struct sigcontext *info)
+{
+  extern EventSetInfo *default_master_eventset;
+  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
+#ifdef DEBUG
+  DBG((stderr,"dispatch_timer() at %p\n",(void *)info->sc_pc));
+#endif
+
+  if (eventset_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
+}
+
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -1212,11 +1304,19 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  arg->hwp_ovflw_freq[hwcntr] = 0;
 	  selector ^= 1 << hwcntr;
 	}
-      /* this_state->timer_ms = 0;
-      overflow_option->timer_ms = 0; */
+      if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+	return(PAPI_ESYS);
     }
   else
     {
+      struct sigaction act;
+
+      memset(&act,0x0,sizeof(struct sigaction));
+      act.sa_handler = dispatch_timer;
+      act.sa_flags = SA_RESTART;
+      if (sigaction(PAPI_SIGNAL, &act, NULL) == -1)
+	return(PAPI_ESYS);
+
       arg->hwp_ovflw_sig = PAPI_SIGNAL;
       selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
       while (hwcntr = ffs(selector))
@@ -1226,8 +1326,6 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  arg->hwp_ovflw_freq[hwcntr] = (int)overflow_option->threshold;
 	  selector ^= 1 << hwcntr;
 	}
-      /* this_state->timer_ms = 1; 
-      overflow_option->timer_ms = 1; */
     }
 
   return(PAPI_OK);

@@ -165,9 +165,7 @@ static int allocate_eventset_map(DynamicArray *map)
 {
   /* Allocate and clear the Dynamic Array structure */
   
-#ifdef DEBUG
   memset(map,0x00,sizeof(DynamicArray));
-#endif
 
   /* Allocate space for the EventSetInfo pointers */
 
@@ -178,10 +176,8 @@ static int allocate_eventset_map(DynamicArray *map)
       free(map);
       return(1);
     }
-#ifdef DEBUG
   memset(map->dataSlotArray,0x00, 
 	 PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
-#endif
 
   map->totalSlots = PAPI_INIT_SLOTS;
   map->availSlots = PAPI_INIT_SLOTS;
@@ -804,7 +800,7 @@ static int remove_EventSet(DynamicArray *map, EventSetInfo *ESI)
   /* do bookkeeping for PAPI_EVENTSET_MAP */
 
   map->dataSlotArray[i] = NULL;
-  if (map->lowestEmptySlot < i)
+  if (i < map->lowestEmptySlot)
     map->lowestEmptySlot = i;
   map->availSlots++;
   map->fullSlots--;

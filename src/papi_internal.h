@@ -15,7 +15,7 @@
 /* Signal used for overflow delivery */
 
 #define PAPI_ITIMER ITIMER_REAL
-#define PAPI_SIGNAL SIGALRM
+#define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
 
 /* Number of preset events - more than we will probably ever need, 

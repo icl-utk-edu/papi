@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <memory.h>
+#undef NDEBUG
 #include <assert.h>
 #include <malloc.h>
 #include "papiStdEventDefs.h"

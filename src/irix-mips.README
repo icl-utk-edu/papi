@@ -4,4 +4,6 @@ The encoding for native (NON-PAPI) events is:
 	
 		Low 8 bits indicate which event number: 0 - 31
 
+Hardware multiplexing is in use, you can count all 32 events.
+
 See: man r10k_counters
