@@ -1,3 +1,5 @@
+#ifdef LINUX_PENTIUM
+
 /* $Id$ */
 
 /* This substrate should never malloc anything. All allocation should be
@@ -571,3 +573,5 @@ papi_mdi _papi_system_info = { "$Id$",
 			        -1,
 			       sizeof(hwd_control_state), 
 			       NULL };
+
+#endif

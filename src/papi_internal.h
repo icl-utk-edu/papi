@@ -63,7 +63,8 @@ typedef struct _dynamic_array{
 typedef struct _papi_mdi {
   char substrate[81]; /* Name of the substrate we're using */
   float version;      /* Version of this substrate */
-  int ncpu;           /* Number of CPU's on an SMP */
+  int ncpu;           /* Number of CPU's on an Node */
+  int nnodes;         /* Number of Nodes in an SMP */
   int type;           /* Vendor number of CPU */
   int cpu;            /* Model number of CPU */
   int mhz;            /* Cycle time of this CPU, to be estimated at 

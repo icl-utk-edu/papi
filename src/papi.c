@@ -15,16 +15,17 @@
 
 /* Static prototypes */
 
-static int expand_dynamic_array();
+static int expand_dynamic_array(DynamicArray *);
 static EventSetInfo *allocate_EventSet(void);
 static int add_EventSet(EventSetInfo *);
-static int remove_EventSet(int);
+static void add_event(EventSetInfo *ESI,int Event);
+static int remove_event(EventSetInfo *ESI,int Event);
+static void remove_EventSet(EventSetInfo *);
 static void free_EventSet(EventSetInfo *);
 static int handle_error(int, char *);
 static char *get_error_string(int);
 static EventSetInfo *lookup_EventSet(int eventset);
 static int lookup_EventCodeIndex(EventSetInfo *ESI,int Event);
-static int nullify_event(EventSetInfo *ESI,int Event);
 
 /* Global variables */
 /* These will eventually be encapsulated into per thread structures. */ 
@@ -411,29 +412,35 @@ static void free_EventSet(EventSetInfo *ESI)
   free(ESI);
 }
 
-/*========================================================================*/
-/* This function should nullify memory pertaining to a single event in an
-   EventSetInfo structure, by setting array elements to PAPI_NULL.
-   No memory is freed.
-*/
+static void add_event(EventSetInfo *ESI, int Event) 
+{
+  int k = ESI->NumberOfCounters;
 
-static int nullify_event(EventSetInfo *ESI,int Event) {
+  ESI->EventCodeArray[k] = Event;
+  ESI->start[k]          = 0;
+  ESI->stop[k]           = 0;
+  ESI->latest[k]         = 0;
 
-int k;
+  ESI->NumberOfCounters++;
+}
+
+static int remove_event(EventSetInfo *ESI, int Event) 
+{
+  int k;
 
   /* determine index of target event k */
-      k=lookup_EventCodeIndex(ESI,Event);
-      if(k<PAPI_OK)
-        return(handle_error(PAPI_EINVAL,NULL));
 
+  k = lookup_EventCodeIndex(ESI,Event);
+  if (k < 0)
+    return(PAPI_EINVAL);
 
-     ESI->EventCodeArray[k]=PAPI_NULL;
-     ESI->start[k]         =PAPI_NULL;
-     ESI->stop[k]          =PAPI_NULL;
-     ESI->latest[k]        =PAPI_NULL;
-    
+  ESI->EventCodeArray[k] = PAPI_NULL;
+  ESI->start[k]          = PAPI_NULL;
+  ESI->stop[k]           = PAPI_NULL;
+  ESI->latest[k]         = PAPI_NULL;
+  ESI->NumberOfCounters--;
 
-     return(PAPI_OK); 
+  return(PAPI_OK); 
 }
 
 	
@@ -487,9 +494,24 @@ damnit:      /* If we've allocated one, we must free it */
       return(handle_error(errorCode,NULL));
     }
 
-  errorCode=add_EventSet(ESI);
-  if (errorCode<PAPI_OK) 
-    goto damnit;
+  /* We need to insert it into the global table */
+  
+  if (allocated_a_new_one)
+    {
+      int retval;
+      retval = add_EventSet(ESI);
+      if (retval < PAPI_OK)
+	{
+	  errorCode = retval;
+	  goto damnit;
+	}
+    }
+
+  /* Update the machine Independent information */
+
+  add_event(ESI,Event);
+
+  /* Always return the errorCode from hwd ops */
 
   return(errorCode);
 }
@@ -507,14 +529,13 @@ damnit:      /* If we've allocated one, we must free it */
 
 int PAPI_add_events(int *EventSet, int *Events, int number) 
 {
-    int all_events_valid=1;
-    int i;
-    int errorCode;
-    int allocated_a_new_one = 0;
-    EventSetInfo *ESI;
+  int yikes = PAPI_OK, i;
+  int errorCode;
+  int allocated_a_new_one = 0;
+  EventSetInfo *ESI;
 
-    if ( EventSet == NULL )
-       return(handle_error(PAPI_EINVAL,NULL));
+  if (( EventSet == NULL ) && (number <= 0))
+    return(handle_error(PAPI_EINVAL,NULL));
 
   if ( *EventSet == PAPI_NULL ) /* We need a new one */
     {
@@ -530,43 +551,49 @@ int PAPI_add_events(int *EventSet, int *Events, int number)
         return(handle_error(PAPI_EINVAL,NULL));
     }
 
- /* Now we have a valid ESI, try to add HW events    */
- /* If any Events[i]==NULL, skip with no error       */
- /* If any Events[i] are invalid, all_events_valid=0 */  
+  /* Now we have a valid ESI, try to add HW events    */
+  /* If any Events[i]==NULL, skip with no error       */
+  /* If any Events[i] are invalid, all_events_valid=0 */  
  
-    for( i=0; i<number; i++ ) {
-    
-    if( Events[i] != PAPI_NULL ) {/* only act if not PAPI_NULL */
-       errorCode = _papi_hwd_add_event(ESI->machdep,Events[i]);
-       if ( errorCode < PAPI_OK ) {
-            all_events_valid=0; 
-            Events[i]=PAPI_NULL;
+  for ( i=0; i<number; i++ ) 
+    {
+      if ( Events[i] != PAPI_NULL ) /* only act if not PAPI_NULL */
+	{
+	  errorCode = _papi_hwd_add_event(ESI->machdep,Events[i]);
+	  if (errorCode < PAPI_OK) 
+	    {
+	      Events[i] = PAPI_NULL;
+	      yikes = errorCode;
 	    }
-       }
+	}
     }
 
- /* If (all_events_valid==1), try add_EventSet(ESI)         */
- /* errorCode==PAPI_OK     for no error simple              */
- /* errorCode==PAPI_OK_MPX for no error multiplex is active */ 
+  if (yikes < PAPI_OK) 
+    {
+    damnit:      /* If we've allocated one, we must free it */
+      if (allocated_a_new_one)
+	free_EventSet(ESI);
+      return(handle_error(yikes,NULL));
+    }
 
-    if ( all_events_valid == 1 ) {
-        errorCode=add_EventSet(ESI); 
-	if (errorCode >= PAPI_OK ) /*add_EventSet was successful*/
- 	  return(errorCode);
-	}
+  /* We need to insert it into the global table */
+  
+  if (allocated_a_new_one)
+    {
+      yikes = add_EventSet(ESI);
+      if (yikes < PAPI_OK)
+	goto damnit;
+    }
 
-    /* fall through to here if anything has gone wrong */
-    /*    if (all_events_valid==0)                     */
-    /*    if (errorCode<PAPI_OK)                       */
-    /* get rid of allocations if they were new here    */
-      
-     if (allocated_a_new_one)
-	   free_EventSet(ESI);
-            
-     return(errorCode);
+  /* Update the machine Independent information */
+
+   for ( i=0; i<number; i++ )
+     add_event(ESI,Events[i]);
+
+  /* Always return the errorCode from hwd ops */
+
+  return(errorCode);
 }
-
-
 
 /*========================================================================*/
 /* low-level function:                                                    */
@@ -584,13 +611,11 @@ int PAPI_add_events(int *EventSet, int *Events, int number)
 
 int PAPI_add_pevent(int *EventSet, int code, void *inout)
 {
+  EventSetInfo *ESI;
+  int errorCode;
+  int allocated_a_new_one = 0;
 
-EventSetInfo *ESI;
-int errorCode;
-void *extra; /*needed to call _papi_hwd_add_prog_event*/
-int allocated_a_new_one = 0;
-
- if ( EventSet == NULL )
+  if ( EventSet == NULL )
     return(handle_error(PAPI_EINVAL,NULL));
 
   if ( *EventSet == PAPI_NULL ) /* We need a new one */
@@ -607,31 +632,34 @@ int allocated_a_new_one = 0;
         return(handle_error(PAPI_EINVAL,NULL));
     }
 
-
   /* Now we have a valid ESI, try to add HW event */
-  errorCode = _papi_hwd_add_prog_event(ESI->machdep,code,extra);
+
+  errorCode = _papi_hwd_add_prog_event(ESI->machdep,code,inout);
   if (errorCode < PAPI_OK)
     {
-damnit:      /* If we've allocated one, we must free it */
+    damnit:      /* If we've allocated one, we must free it */
       if (allocated_a_new_one)
         free_EventSet(ESI);
       return(handle_error(errorCode,NULL));
     }
 
-  errorCode=add_EventSet(ESI);
-  if (errorCode<PAPI_OK)
-    goto damnit;
+  /* We need to insert it into the global table */
+  
+  if (allocated_a_new_one)
+    {
+      int retval;
+      retval = add_EventSet(ESI);
+      if (retval < PAPI_OK)
+	{
+	  errorCode = retval;
+	  goto damnit;
+	}
+    }
+
+  /* Always return the errorCode from hwd ops */
 
   return(errorCode);
-
 }
-
-
-
-
-
-
-
 
 /*========================================================================*/
 /* low-level function:                                                    */
@@ -646,23 +674,30 @@ int PAPI_rem_event(int EventSet, int Event)
   EventSetInfo *ESI;
   int errorCode;
 
-
   /* determine target ESI structure */
-  ESI=lookup_EventSet(EventSet);
+
+  ESI = lookup_EventSet(EventSet);
   if ( ESI == NULL )
-      return(handle_error(PAPI_EINVAL,NULL));
+    return(handle_error(PAPI_EINVAL,NULL));
 
+  /* Remove Event from machine INdependent structures */
 
-  /* nullify all array values for ESI */
-      errorCode=nullify_event(ESI,Event);
-      if(errorCode<PAPI_OK) 
-      return(handle_error(PAPI_EINVAL,NULL));
+  errorCode = remove_event(ESI,Event);
+  if (errorCode < PAPI_OK) 
+    return(handle_error(errorCode,NULL));
 
-  errorCode=_papi_hwd_rem_event(ESI->machdep,Event);
-  if(errorCode<PAPI_OK)
-      return(handle_error(PAPI_EINVAL,NULL));
+  /* Remove Event from machine dependent structures */
 
-  return(PAPI_OK);
+  errorCode = _papi_hwd_rem_event(ESI->machdep,Event);
+  if (errorCode < PAPI_OK)
+    return(handle_error(errorCode,NULL));
+
+  if (ESI->NumberOfCounters == 0)
+    remove_EventSet(ESI);
+
+  /* Always return the errorCode from hwd ops */
+
+  return(errorCode);
 }
 
 /*========================================================================*/
@@ -680,34 +715,22 @@ int PAPI_rem_event(int EventSet, int Event)
 int PAPI_rem_events(int EventSet, int *RemEvents, int number)
 {
   EventSetInfo *ESI;
-  int k,j;
-  int nActive;
+  int i, retval;
 
- 
   /* determine target ESI structure */
-  ESI=lookup_EventSet(EventSet);
-  if ( ESI == NULL )
-      return(handle_error(PAPI_EINVAL,NULL));
 
-  nActive=0;/*count number of active events*/
+  ESI = lookup_EventSet(EventSet);
+  if (( ESI == NULL ) || (number <= 0))
+    return(handle_error(PAPI_EINVAL,NULL));
 
+  for (i=0; i<number;i++)
+    {
+      retval = PAPI_rem_event(EventSet,RemEvents[i]);
+      if (retval < PAPI_OK)
+	return(retval); /* Errors are handled by rem_event */
+    }
 
-  j=0;
-  while(RemEvents[j]) {
-     /* determine index of target event k */
-      k=lookup_EventCodeIndex(ESI,RemEvents[j]);
-      if(k<PAPI_OK)
-        return(handle_error(PAPI_EINVAL,NULL));
-      else {
-      PAPI_rem_event(EventSet,RemEvents[j]);
-      nActive--;
-      }
-  j++;
-  }/*end j*/
-
-  number=nActive;
-
-  return(PAPI_OK);
+  return(retval);
 }
 
 /*========================================================================*/
@@ -758,28 +781,17 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
    return(PAPI_OK);
 }
   
-
-
-
-
-/*========================================================================*/
 static int lookup_EventCodeIndex(EventSetInfo *ESI,int Event)
 {
-  /* This function returns the index of the EventCodeArray element
-     that matches the value of Event. 
-     If no match is found, PAPI_NULL is returned.
-     This function assumes that the length of ESI->EventCodeArray
-     is equal to ESI->NumberOfCounters
-  */
-
   int i;
 
-  for(i=0;i<ESI->NumberOfCounters;i++) {
-  if(ESI->EventCodeArray[i]==Event) return (i);
-  }
+  for(i=0;i<ESI->NumberOfCounters;i++) 
+    {
+      if (ESI->EventCodeArray[i]==Event) 
+	return(i);
+    }
 
-  return(PAPI_NULL);
-
+  return(-1);
 } 
 
 
@@ -821,30 +833,19 @@ int add_EventSet(EventSetInfo *ESI)
 }
 
 
-/*========================================================================*/
-/* low-level function:                                                    */
-/* static int remove_EventSet(int eventset)                               */
-/* eventset is a value like: PAPI_L1_ICM                                  */
-
-
-static int remove_EventSet(int eventset)
+static void remove_EventSet(EventSetInfo *ESI)
 {
-
-   /* Determine if target eventset value is valid*/
-      if(PAPI_EVENTSET_MAP.dataSlotArray[eventset]==NULL){
-        return(handle_error(PAPI_EINVAL,NULL));
-      }
-
-   /* Free target EventSet*/
-      free_EventSet(PAPI_EVENTSET_MAP.dataSlotArray[eventset]);
-
    /* do bookkeeping for PAPI_EVENTSET_MAP */
-        PAPI_EVENTSET_MAP.dataSlotArray[eventset]=NULL;
-     if(PAPI_EVENTSET_MAP.lowestEmptySlot < eventset)
-        PAPI_EVENTSET_MAP.lowestEmptySlot = eventset;
-        PAPI_EVENTSET_MAP.availSlots++;
+  
+  if (PAPI_EVENTSET_MAP.lowestEmptySlot > ESI->EventSetIndex)
+    PAPI_EVENTSET_MAP.lowestEmptySlot = ESI->EventSetIndex;
 
-  return(PAPI_OK);
+  PAPI_EVENTSET_MAP.availSlots++;
+  PAPI_EVENTSET_MAP.fullSlots--;
+
+  /* Free target EventSet*/
+
+  free_EventSet(ESI);
 }
 
 

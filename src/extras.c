@@ -1,3 +1,5 @@
+#ifdef LINUX_PENTIUM
+
 /* $Id$ */
 
 /* This file contains portable routines to do things that we wish the
@@ -36,11 +38,11 @@ static void dispatch_eventset(EventSetInfo *ESI, void *context)
 
   /* First get the latest counters */
 
-  /* This doesn't work until George fixes the substrate 
+  /* This doesn't work until George fixes the substrate */
 
-  retval = _papi_hwd_read(ESI->machdep, ESI->latest); */
+  retval = _papi_hwd_read(ESI->machdep, ESI->latest); 
 
-  if (retval < 0)
+  if (retval < PAPI_OK)
     return;
 
   /* Get the latest counter value */
@@ -160,3 +162,4 @@ int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr
   return(PAPI_ESBSTR);
 }
 
+#endif
