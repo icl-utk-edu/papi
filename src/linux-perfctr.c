@@ -102,23 +102,57 @@ inline static int setup_all_presets(int cpu_type)
   int pnum, s;
   char note[100];
 
-  if ((cpu_type == PERFCTR_X86_WINCHIP_C6) ||
-      (cpu_type == PERFCTR_X86_WINCHIP_2))
+  preset_map = NULL; 
+
+  switch(cpu_type)
     {
+
+    case PERFCTR_X86_GENERIC:
+      fprintf(stderr,"This processor is not properly identified by the substrate.");
+      preset_map = calloc(1, sizeof p6_preset_map);
+      break;
+
+    case PERFCTR_X86_INTEL_P5:
+    case PERFCTR_X86_INTEL_P5MMX:
+    case PERFCTR_X86_INTEL_P6:
+    case PERFCTR_X86_INTEL_PII:
+    case PERFCTR_X86_INTEL_PIII:
+    case PERFCTR_X86_CYRIX_MII:
+      preset_map = p6_preset_map;
+      break;
+
+    case PERFCTR_X86_WINCHIP_C6:
+    case PERFCTR_X86_WINCHIP_2:
       fprintf(stderr,"Ask yourself, why am I tuning code on a WinChip?\n");
-      abort();
+      preset_map = calloc(1, sizeof p6_preset_map);
+      break;
+      
+    case PERFCTR_X86_AMD_K7:
+      preset_map = k7_preset_map;
+      break;
+
+    case PERFCTR_X86_VIA_C3:
+      fprintf(stderr,"This platform is not supported by PAPI\n");
+      /* This is most probably wrong, but it is backwards compatible to 
+	 the behaviour of earlier versions of linux-perfctr.c */
+      preset_map = p6_preset_map; 
+      break;
+
+    case PERFCTR_X86_INTEL_P4:
+      fprintf(stderr,"Intel P4 is not yet supported by this PAPI substrate.\n");
+      break;
+
+    default:
+      fprintf(stderr,__FILE__ ", " __FUNCTION__ ":%d:: %s (%d)\n",
+	      __LINE__,"Unexpected PERFCTR processor type",cpu_type);
+      
     }
 
-  if (cpu_type == PERFCTR_X86_GENERIC)
-    {
-      fprintf(stderr,"This processor is not properly identified. Only TSC available.\n");
-      return PAPI_ESBSTR;
-    }
-
-  if (cpu_type == PERFCTR_X86_AMD_K7)
-    preset_map = k7_preset_map;
-  else
-    preset_map = p6_preset_map;
+  /* We are running on an unsupported CPU and this substrate can not
+     handle a NULL preset_map. So we'll return PAPI_ESBSTR to prevent
+     the rest of the library init to try to do things with it */
+  if (!preset_map)
+    return PAPI_ESBSTR;
 
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
     {
@@ -136,8 +170,9 @@ inline static int setup_all_presets(int cpu_type)
 		     preset_map[pnum].counter_cmd.evntsel[3]);
 	  else
 	    {
-	      abort(); /* We shouldn't be here */
-	      break;   /* We could of course just break out instead */
+	      fprintf(stderr,__FILE__ ", " __FUNCTION__ ":%d:: %s\n",
+		      __LINE__,"Unexpected internal error.");
+	      return PAPI_ESBSTR;
 	    }
 
 	  /* If there is a string, add a space before the information here */
