@@ -95,7 +95,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
      &      'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval )
         if ( retval .NE. PAPI_OK ) then
@@ -177,7 +177,7 @@ C     Tests that PAPI_set_multiplex() works before adding events
      &      'PAPIf_add_event', retval)
       end if
 
-      call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval)
         if ( retval .NE. PAPI_OK ) then
@@ -260,7 +260,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
 #ifdef _CRAYT3E
       call PAPIf_add_event( EventSet, PAPI_TLB_DM, retval )
 #else
-      call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
 #endif
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -350,7 +350,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
 #ifdef _CRAYT3E
       call PAPIf_add_event( EventSet, PAPI_TLB_DM, retval )
 #else
-      call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
 #endif
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval )
