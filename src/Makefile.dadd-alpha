@@ -7,7 +7,7 @@ DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial multiplex
 
-CFLAGS 	= -I/usr/include/dcpi -Zp8 
+CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO
 FFLAGS	= 
 OPTFLAGS= -O 
 TOPTFLAGS=$(OPTFLAGS)

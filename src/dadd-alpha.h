@@ -51,18 +51,17 @@
 #define VC_COND_BR_PREDICTED 26
 #define VC_ITBMISS_TRAPS 38
 
-typedef struct hwd_control_state {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;
-  /* Is this event derived? */
-  int derived;
-  /* Pointer to the DADD virtual counter structure */
+
+#define MAX_COUNTERS	       27
+#define MAX_COUNTER_TERMS	8
+
+typedef struct dadd_alpha_control_state {
   virtual_counters *ptr_vc;
   /* Interrupt interval */
   int timer_ms;
   /* latest value for cycles */
   long_long latestcycles;
-} hwd_control_state_t;
+} dadd_alpha_control_state_t;
 
 typedef struct hwd_preset {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
@@ -78,15 +77,29 @@ typedef struct hwd_preset {
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
-typedef struct hwd_search {
-  /* PAPI preset code */
-  unsigned int papi_code;
+typedef struct dadd_alpha_register {
   /* DADD event code(s) */
   long dadd_code;
   long dadd_code2;
-} hwd_search_t;
+} dadd_alpha_register_t;
 
+typedef struct dadd_alpha_context {
+  virtual_counters *ptr_vc;
+} dadd_alpha_context_t;
+
+
+typedef dadd_alpha_control_state_t hwd_control_state_t;
+
+typedef dadd_alpha_register_t hwd_register_t;
+
+typedef dadd_alpha_context_t hwd_context_t;
+
+typedef int hwd_reg_alloc_t;  /* don't need this structure on dadd-alpha */
+
+
+/*
 #include "papi_internal.h"
+*/
 
 extern unsigned long _etext, _ftext;
 
