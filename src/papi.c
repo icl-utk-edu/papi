@@ -1482,7 +1482,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)
 {
    int i, retval;
 
-   if ((Events == NULL) || (number < 0))
+   if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
 
    for (i = 0; i < number; i++) {
