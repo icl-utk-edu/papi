@@ -41,7 +41,7 @@ OPTFLAGS	= -fast -xarch=v8plus -mt
 # Do not touch below here 
 #
 FOPTFLAGS	= $(OPTFLAGS)
-LDFLAGS 	= -lcpc -ldl 
+LDFLAGS 	= -lcpc  
 MISCSRCS	=  
 MISCOBJS	=  
 POST_BUILD =
