@@ -1,0 +1,10 @@
+PAPI Version 1.0 Release Notes
+May, 2000
+ptools-perfapi@ptools.org
+Philip J. Mucci
+mucci@cs.utk.edu
+
+1) To compile with debugging, set CFLAGS to have -DDEBUG.
+   If you tire of all the debugging messages, but want to
+   have debugging support, setenv PAPI_NDEBUG to anything.
+   

@@ -27,7 +27,7 @@ static int PAPI_EVENTSET_INUSE=PAPI_EINVAL;
 /* array used in the high level routines.                                 */ 
 /*========================================================================*/
 
-int PAPI_num_events(void) 
+int PAPI_num_counters(void) 
 {
   return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 }

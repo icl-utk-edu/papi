@@ -8,7 +8,7 @@
 
 #include "linux-x86.h"
 
-_syscall3(int, perf, int, op, int, counter, int, event);
+static inline _syscall3(int, perf, int, op, int, counter, int, event);
 
 /* First entry is mask, counter code 1, counter code 2, and TSC. 
 A high bit in the mask entry means it is an OR mask, not an
@@ -22,14 +22,14 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{0,0,0,{0,0},""}, 			// L2 Cache Imisses
 		{0,0,0,{0,0},""}, 			// L3 Cache Dmisses
 		{0,0,0,{0,0},""}, 			// L3 Cache Imisses
-                {CNTR2|CNTR1,DERIVED_ADD,0,{0x45,0x81},""},	// L1 Total Cache misses 
+                {CNTR2|CNTR1,0,0,{0xf2e,0xf2e},""},	// L1 Total Cache misses 
 		{CNTR2|CNTR1,0,0,{0x24,0x24},""}, 	// L2 Total Cache misses
 		{0,0,0,{0,0},""}, 			// L3 Total Cache misses
 		{0,0,0,{0,0},""},			// Snoops
-		{0,0,0,{0,0},""},		 	// Req. access to shared cache line
-		{0,0,0,{0,0},""},		 	// Req. access to clean cache line
-		{CNTR2|CNTR1,0,0,{0x69,0x69},""},	// Cache Line Invalidation
-                {0,0,0,{0,0},""},			// Cache Line Intervention
+		{CNTR2|CNTR1,0,0,{0x222e,0x222e},""},	// Req. access to shared cache line
+		{CNTR2|CNTR1,0,0,{0x212e,0x212e},""},	// Req. access to clean cache line
+		{CNTR2|CNTR1,0,0,{0x2069,0x2069},""},	// Req. Cache Line Invalidation
+                {CNTR2|CNTR1,0,0,{0x2e2e,0x2e2e},""},	// Req. Cache Line Intervention
                 {0,0,0,{0,0},""},			// L3 LDM
                 {0,0,0,{0,0},""},			// L3 STM
                 {0,0,0,{0,0},""},			// cycles branch idle
@@ -39,12 +39,12 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{0,0,0,{0,0},""},		 	// D-TLB misses
 		{CNTR2|CNTR1,0,0,{0x85,0x85},""},	// I-TLB misses
                 {0,0,0,{0,0},""},			// Total TLB misses
-                {0,0,0,{0,0},""},			// L1 load M
-                {0,0,0,{0,0},""},			// L1 store M
+                {CNTR2|CNTR1,0,0,{0xf29,0xf29},""},	// L1 load M
+                {CNTR2|CNTR1,0,0,{0xf2A,0xf2A},""},	// L1 store M
                 {0,0,0,{0,0},""},			// L2 load M
                 {0,0,0,{0,0},""},			// L2 store M
                 {CNTR2|CNTR1,0,0,{0xe2,0xe2},""},	// BTAC misses
-                {0,0,0,{0,0},""},			// Prefmiss
+                {0,0,0,{0,0},""},	                // Prefmiss
                 {0,0,0,{0,0},""},			// L3DCH
 		{0,0,0,{0,0},""},			// TLB shootdowns
                 {0,0,0,{0,0},""},			// Failed Store cond.
@@ -80,40 +80,40 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{CNTR2|CNTR1,DERIVED_PS,1,{0xC0,0x79},""},	// IPS
                 {CNTR2|CNTR1,0,0,{0x43,0x43},""},	// Total load/store inst. exec
                 {0,0,0,{0,0},""}, // SYnc exec.
-		{0,0,0,{0,0},""}, // L1_DCH
-		{0,0,0,{0,0},""}, // L2_DCH
-		{0,0,0,{0,0},""}, // L1_DCA
-		{CNTR2|CNTR1,DERIVED_ADD,0,{0x29,0x2a},""}, // L2_DCA
+		{CNTR2|CNTR1,DERIVED_SUB,0,{0x43,0x45},""}, // L1_DCH
+		{CNTR2|CNTR1,DERIVED_SUB,0,{0xf2e,0xf24},""}, // L2_DCH
+		{CNTR2|CNTR1,0,0,{0x43,0x43},""}, // L1_DCA
+		{CNTR2|CNTR1,DERIVED_ADD,0,{0xf29,0xf2a},""}, // L2_DCA
 		{0,0,0,{0,0},""}, // L3_DCA
 		{0,0,0,{0,0},""}, // L1_DCR
-		{CNTR2|CNTR1,0,0,{0x29,0x29},""}, // L2_DCR
+		{CNTR2|CNTR1,0,0,{0xf29,0xf29},""}, // L2_DCR
 		{0,0,0,{0,0},""}, // L3_DCR
 		{0,0,0,{0,0},""}, // L1_DCW
-		{CNTR2|CNTR1,0,0,{0x2a,0x2a},""}, // L2_DCW
+		{CNTR2|CNTR1,0,0,{0xf2a,0xf2a},""}, // L2_DCW
 		{0,0,0,{0,0},""}, // L3_DCW
-		{0,0,0,{0,0},""}, // L1_ICH
+		{CNTR2|CNTR1,DERIVED_SUB,0,{0x80,0x81},""}, // L1_ICH
 		{0,0,0,{0,0},""}, // L2_ICH
 		{0,0,0,{0,0},""}, // L3_ICH
-		{0,0,0,{0,0},""}, // L1_ICA
-		{0,0,0,{0,0},""}, // L2_ICA
+		{CNTR2|CNTR1,0,0,{0x80,0x80},""}, // L1_ICA
+		{CNTR2|CNTR1,0,0,{0xf28,0xf28},""}, // L2_ICA
 		{0,0,0,{0,0},""}, // L3_ICA
 		{CNTR2|CNTR1,0,0,{0x80,0x80},""}, // L1_ICR
-		{0,0,0,{0,0},""}, // L2_ICR
+		{CNTR2|CNTR1,0,0,{0xf28,0xf28},""}, // L2_ICR
 		{0,0,0,{0,0},""}, // L3_ICR
-		{0,0,0,{0,0},""}, // L1_ICW
+		{CNTR2|CNTR1,0,0,{0x81,0x81},""}, // L1_ICW
 		{0,0,0,{0,0},""}, // L2_ICW
 		{0,0,0,{0,0},""}, // L3_ICW
 		{0,0,0,{0,0},""}, // L1_TCH
 		{0,0,0,{0,0},""}, // L2_TCH
 		{0,0,0,{0,0},""}, // L3_TCH
-		{0,0,0,{0,0},""}, // L1_TCA
-		{CNTR2|CNTR1,0,0,{0x2e,0x2e},""}, // L2_TCA
+		{CNTR2|CNTR1,DERIVED_ADD,0,{0x43,0x80},""}, // L1_TCA
+		{CNTR2|CNTR1,0,0,{0xf2e,0xf2e},""}, // L2_TCA
 		{0,0,0,{0,0},""}, // L3_TCA
 		{0,0,0,{0,0},""}, // L1_TCR
-		{0,0,0,{0,0},""}, // L2_TCR
+		{CNTR2|CNTR1,DERIVED_ADD,0,{0xf29,0xf28},""}, // L2_TCR
 		{0,0,0,{0,0},""}, // L3_TCR
 		{0,0,0,{0,0},""}, // L1_TCW
-		{0,0,0,{0,0},""}, // L2_TCW
+		{CNTR2|CNTR1,0,0,{0xf2a,0xf2a},""}, // L2_TCW
 		{0,0,0,{0,0},""}, // L3_TCW
 		{CNTR2,0,0,{0,0x12},""}, // FPM
 		{0,0,0,{0,0},""}, // FPA
@@ -173,29 +173,16 @@ static float calc_mhz(void)
 static int setup_all_presets(PAPI_hw_info_t *info)
 {
   int pnum, s;
+  char note[100];
 
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
     {
       if ((s = preset_map[pnum].selector))
 	{
-	  if (preset_map[pnum].derived == 0)
-	    {
-	      if (s == CNTR1)
-		sprintf(preset_map[pnum].note,"0x%x",preset_map[pnum].counter_cmd[0]);
-	      else
-		sprintf(preset_map[pnum].note,"0x%x",preset_map[pnum].counter_cmd[1]);
-	    }
-	  else
-	    {
-	      int j = preset_map[pnum].operand_index;
-	      
-	      if (j == 0)
-		sprintf(preset_map[pnum].note,"0x%x,0x%x",preset_map[pnum].counter_cmd[0],
-		       preset_map[pnum].counter_cmd[1]);
-	      else 
-		sprintf(preset_map[pnum].note,"0x%x,0x%x",preset_map[pnum].counter_cmd[1],
-		       preset_map[pnum].counter_cmd[0]);
-	    }
+	  sprintf(note,"0x%x,0x%x",
+		  preset_map[pnum].counter_cmd[0],
+		  preset_map[pnum].counter_cmd[1]);
+	  strcat(preset_map[pnum].note,note);
 	}
     }
   return(PAPI_OK);
@@ -380,7 +367,7 @@ static void dump_cmd(int *t)
   int i;
 
   for (i=0;i<MAX_COUNTERS;i++)
-    fprintf(stderr,"Event %d: 0x%x\n",i,t[i]);
+    DBG((stderr,"Event %d: 0x%x\n",i,t[i]));
 }
 #endif
 
@@ -1031,7 +1018,7 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_write(EventSetInfo *ESI, long long events[])
+int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }
@@ -1089,7 +1076,7 @@ papi_mdi _papi_system_info = { "$Id$",
 				 -1,  /*  model */
 				 "",  /*  model string */
 				0.0,  /*  revision */
-				 -1  /*  mhz */ 
+				0.0  /*  mhz */ 
 			       },
 			       {
 				 "",
@@ -1123,5 +1110,5 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* We can use the virt_cyc call */
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        { 0, } };
 

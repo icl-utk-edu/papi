@@ -1,5 +1,5 @@
 #ifdef DEBUG
-#define DBG(a) { fprintf(stderr,"DEBUG: "); fprintf a; }
+#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #else
 #define DBG(a)
 #endif
@@ -122,6 +122,8 @@ typedef struct _EventSetInfo {
   EventSetInheritInfo_t inherit;
 
   struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
+
+  struct _EventSetInfo *master;
 } EventSetInfo;
 
 typedef struct _dynamic_array{
@@ -185,19 +187,13 @@ extern int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *ove
 extern int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero);
-extern int _papi_hwd_write(EventSetInfo *, long long events[]);
+extern int _papi_hwd_write(EventSetInfo *, EventSetInfo *, long long events[]);
 extern void *_papi_hwd_get_overflow_address(void *context);
 extern long long _papi_hwd_get_real_cycles (void);
 extern long long _papi_hwd_get_real_usec (void);
 extern long long _papi_hwd_get_virt_cycles (void);
 extern long long _papi_hwd_get_virt_usec (void);
 extern void _papi_hwd_error(int error, char *);
-
-#ifdef THREADS
-#else
-#define unlock_EventSet(a)
-#define lock_EventSet(a)
-#endif
 
 typedef struct _papi_mdi {
   const char substrate[81]; /* Name of the substrate we're using */
@@ -246,29 +242,9 @@ typedef struct _papi_mdi {
 
   /* End private feature flags */
 
-  const int size_machdep;   /* Size of the substrate's control structure in 
-                         bytes */
-  EventSetInfo *zero; /* First element in EventSet array of higher 
-                         level, to be maintained for internal use, 
-                         such as keeping track of multiple running 
-                         EventSets with overlapping events. Will not 
-                         have elements start, stop, and latest 
-                         defined */
+  const int size_machdep;   /* Size of the substrate's control structure in bytes */
+
+  DynamicArray global_eventset_map; /* Global structure to maintain int<->EventSet mapping */
 } papi_mdi;
 
 extern papi_mdi _papi_system_info;
-
-/* Thread support */
-
-#define INIT_MAP            DynamicArray *map; int retval; EventSetInfo *master_event_set, *event_set_overflowing; \
-                            if ((retval = _papi_hwi_initialize(&map))) return(retval); \
-                            master_event_set = map->dataSlotArray[0]; \
-	                    event_set_overflowing = master_event_set->event_set_overflowing;
-#define INIT_MAP_VOID       DynamicArray *map; int retval; EventSetInfo *master_event_set, *event_set_overflowing; \
-                            if ((retval = _papi_hwi_initialize(&map))) return; \
-                            master_event_set = map->dataSlotArray[0]; \
-	                    event_set_overflowing = master_event_set->event_set_overflowing;
-#define INIT_MAP_QUICK_LL   DynamicArray *map; long long retval; if ((retval = _papi_hwi_initialize(&map))) return retval; 
-                            
-
-

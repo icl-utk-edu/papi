@@ -11,6 +11,7 @@ and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 2 counters. */
 
 #include <stdio.h>
+#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 
@@ -20,20 +21,38 @@ int main()
    int n = 1000;
    int EventSet;
    int retval;
-   int i;
+   int j = 0,i;
    long long int g1[3];
-   retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
-   if ( retval != PAPI_OK ) printf(" error adding L2 TCM \n");
-   retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-   if ( retval != PAPI_OK ) printf(" error adding TOT_CYC \n");
-   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-   if ( retval != PAPI_OK ) printf(" error adding FP_INS \n");
 
-    PAPI_start(EventSet);
-    for ( i = 0; i < n; i++ )
-    {
-       c = a * b;
-    }
-    PAPI_stop(EventSet, g1);
-    exit(0);
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   assert(retval >= PAPI_OK);
+   
+   retval = PAPI_thread_init(NULL, 0);
+   assert(retval >= PAPI_OK);
+
+   if (PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
+     j++;
+   retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
+   if ( retval != PAPI_OK ) printf("Error adding L2 TCM (OK)\n");
+
+   if (PAPI_query_event(PAPI_TOT_CYC) == PAPI_OK)
+     j++;
+   retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+   if ( retval != PAPI_OK ) printf("Error adding TOT_CYC (OK)\n");
+
+   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
+     j++;
+   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+   if ( retval != PAPI_OK ) printf("Error adding FP_INS (OK)\n");
+
+   if (j)
+     {
+       PAPI_start(EventSet);
+       for ( i = 0; i < n; i++ )
+	 {
+	   c = a * b;
+	 }
+       PAPI_stop(EventSet, g1);
+     }
+   exit(0);
 }

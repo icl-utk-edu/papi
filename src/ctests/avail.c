@@ -18,6 +18,10 @@ int main(int argc, char **argv)
   const PAPI_preset_info_t *info = NULL;
   const PAPI_hw_info_t *hwinfo = NULL;
 
+  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
+
+  assert(PAPI_thread_init(NULL, 0) == PAPI_OK);
+
   assert(info = PAPI_query_all_events_verbose());
 
   assert(hwinfo = PAPI_get_hardware_info());

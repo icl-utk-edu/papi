@@ -4,6 +4,7 @@ void *get_overflow_address(void *context);
 void free_test_space(long long **values, int num_tests);
 long long **allocate_test_space(int num_tests, int num_events);
 int add_test_events(int *number, int *mask);
+int add_test_events_r(int *number, int *mask, void *handle);
 void remove_test_events(int *EventSet, int mask);
 void do_flops(int n);
 void do_both(int n);

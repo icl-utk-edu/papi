@@ -43,6 +43,13 @@ int main(int argc, char **argv)
   caddr_t start, end;
   long long **values;
   const PAPI_exe_info_t *prginfo = NULL;
+  int retval;
+
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  assert(retval >= PAPI_OK);
+
+  retval = PAPI_thread_init(NULL, 0);
+  assert(retval >= PAPI_OK);
 
   assert(prginfo = PAPI_get_executable_info());
   start = prginfo->text_start;

@@ -37,6 +37,12 @@ int main()
   long long **values;
   int EventSet;
 
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  assert(retval >= PAPI_OK);
+
+  retval = PAPI_thread_init(NULL, 0);
+  assert(retval >= PAPI_OK);
+
   EventSet = add_test_events(&num_events,&mask);
 
   values = allocate_test_space(num_tests, num_events);
@@ -78,7 +84,7 @@ int main()
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
   printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
-  printf("Using %d iterations of c = a*b\n",NUM_FLOPS);
+  printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
   printf("-------------------------------------------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\t\t3\t\t4\t\t5\n");
@@ -90,7 +96,7 @@ int main()
 
   printf("Verification:\n");
   printf("Row 1 approximately equals %d %d %d %d %d\n",
-	 NUM_FLOPS,NUM_FLOPS,2*NUM_FLOPS,3*NUM_FLOPS,3*NUM_FLOPS);
+	 2*NUM_FLOPS,2*NUM_FLOPS,4*NUM_FLOPS,6*NUM_FLOPS,6*NUM_FLOPS);
   printf("Column 1 approximately equals column 2\n");
   printf("Column 3 approximately equals 2 * column 2\n");
   printf("Column 4 approximately equals 3 * column 2\n");

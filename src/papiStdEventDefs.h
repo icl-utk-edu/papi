@@ -24,10 +24,10 @@ platform.
 #define PAPI_L2_TCM  0x80000007 /*Level 2 total cache misses*/
 #define PAPI_L3_TCM  0x80000008 /*Level 3 total cache misses*/
 #define PAPI_CA_SNP  0x80000009 /*Snoops*/
-#define PAPI_CA_SHR  0x8000000A /*Request access to shared cache line (SMP)*/
-#define PAPI_CA_CLN  0x8000000B /*Request access to clean  cache line (SMP)*/
-#define PAPI_CA_INV  0x8000000C /*Cache Line Invalidation (SMP)*/
-#define PAPI_CA_ITV  0x8000000D /*Cache Line Intervention (SMP)*/
+#define PAPI_CA_SHR  0x8000000A /*Request for shared cache line (SMP)*/
+#define PAPI_CA_CLN  0x8000000B /*Request for clean cache line (SMP)*/
+#define PAPI_CA_INV  0x8000000C /*Request for cache line Invalidation (SMP)*/
+#define PAPI_CA_ITV  0x8000000D /*Request for cache line Intervention (SMP)*/
 #define PAPI_L3_LDM  0x8000000E /*Level 3 load misses */
 #define PAPI_L3_STM  0x8000000F /*Level 3 store misses */
 #define PAPI_BRU_IDL 0x80000010 /*Cycles branch units are idle*/

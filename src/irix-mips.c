@@ -18,8 +18,8 @@ static hwd_search_t findem_r10k[PAPI_MAX_PRESET_EVENTS] = {
 		{ -1,{-1,-1}},			/* Snoops*/
 		{  0,{-1,31}}, 			/* Req. access to shared cache line*/
 		{  0,{-1,30}}, 			/* Req. access to clean cache line*/
-		{  0,{-1,29}}, 			/* Cache Line Invalidation*/
-                {  0,{-1,28}},			/* Cache Line Intervention*/
+		{  0,{-1,13}}, 			/* Cache Line Invalidation*/
+                {  0,{-1,12}},			/* Cache Line Intervention*/
                 { -1,{-1,-1}},			/* 14*/
                 { -1,{-1,-1}},			/* 15*/
                 { -1,{-1,-1}},			/* Cycles branch units are idle*/
@@ -84,9 +84,9 @@ static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
 		{ -1,{-1,-1}},			/* L3 total */
 		{ -1,{-1,-1}},			/* Snoops*/
 		{  0,{-1,31}}, 			/* Req. access to shared cache line*/
-		{  0,{-1,30}}, 			/* Req. access to clean cache line*/
-		{  0,{-1,29}}, 			/* Cache Line Invalidation*/
-                {  0,{-1,28}},			/* Cache Line Intervention*/
+		{ -1,{-1,-1}}, 			/* Req. access to clean cache line*/
+		{  0,{-1,13}}, 			/* Cache Line Invalidation*/
+                {  0,{-1,12}},			/* Cache Line Intervention*/
                 { -1,{-1,-1}},			/* 14*/
                 { -1,{-1,-1}},			/* 15*/
                 { -1,{-1,-1}},			/* Cycles branch units are idle*/

@@ -2,12 +2,9 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= zero_pthreads
-SERIAL  = clockres avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2 case3
+SERIAL  = clockres avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2
 ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
-
-default:
-	cd ..; $(MAKE)
 
 omp: $(OMP)
 
@@ -20,7 +17,7 @@ shmem: $(SHMEM)
 serial: $(SERIAL)
 
 zero_pthreads: zero_pthreads.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(CFLAGS) $(OPTFLAGS) zero_pthreads.c $(UTILOBJS) -L.. -lpapi_r $(LDFLAGS) -o zero_pthreads -lpthread
+	$(CC_R) $(CFLAGS) $(OPTFLAGS) zero_pthreads.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o zero_pthreads -lpthread
 
 zero_smp: zero_smp.c $(UTILOBJS) ../libpapi.a
 	$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_smp.c $(UTILOBJS) -L.. -lpapi_smp $(LDFLAGS) -o zero_smp $(SMPLIBS)
@@ -31,8 +28,8 @@ zero_shmem: zero_shmem.c $(UTILOBJS) ../libpapi.a
 zero_omp: zero_omp.c $(UTILOBJS) ../libpapi.a
 	$(CC_R) $(OMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_omp.c $(UTILOBJS) -L.. -lpapi_smp $(LDFLAGS) -o zero_omp $(OMPLIBS)
 
-clockres: clockres.c $(UTILOBJS) ../libpapi.a
-	$(CC) $(CFLAGS) $(OPTFLAGS) clockres.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o clockres
+clockres: clockres.c ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) clockres.c -L.. -lpapi $(LDFLAGS) -o clockres
 
 zero: zero.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) zero.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o zero
@@ -58,8 +55,8 @@ overflow: overflow.c $(UTILOBJS) ../libpapi.a
 profile: profile.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) profile.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o profile
 
-avail: avail.c $(UTILOBJS) ../libpapi.a
-	$(CC) $(CFLAGS) $(OPTFLAGS) avail.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o avail
+avail: avail.c ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) avail.c -L.. -lpapi $(LDFLAGS) -o avail
 
 nineth: nineth.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) nineth.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o nineth
@@ -70,17 +67,14 @@ tenth: tenth.c $(UTILOBJS) ../libpapi.a
 native: native.c do_loops.o ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) native.c do_loops.o -L.. -lpapi $(LDFLAGS) -o native
 
-eventname: eventname.c do_loops.o ../libpapi.a
-	$(CC) $(CFLAGS) $(OPTFLAGS) eventname.c do_loops.o -L.. -lpapi $(LDFLAGS) -o eventname
+eventname: eventname.c ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) eventname.c -L.. -lpapi $(LDFLAGS) -o eventname
 
 case1: case1.c ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) case1.c -L.. -lpapi $(LDFLAGS) -o case1
 
 case2: case2.c ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) case2.c -L.. -lpapi $(LDFLAGS) -o case2
-
-case3: case3.c ../libpapi.a
-	$(CC) $(CFLAGS) $(OPTFLAGS) case3.c -L.. -lpapi $(LDFLAGS) -o case3
 
 do_loops.o: do_loops.c
 	$(CC) $(CFLAGS) $(NOOPT) -c do_loops.c

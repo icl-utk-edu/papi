@@ -6,12 +6,6 @@ the following:
 2) Software overflow callbacks to user functions (for prof-like functions)
 3) Software multiplexing (like perfex -a) (not yet) */
 
-#ifdef PTHREADS
-#include <pthread.h>
-#elif defined(SMPTHREADS) && defined(sun) && defined(sparc)
-#include <thread.h>
-#endif
-
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -148,7 +142,8 @@ void _papi_hwi_dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_
 #include <sys/ucontext.h>
 static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 {
-  INIT_MAP_VOID;
+  extern EventSetInfo *default_master_eventset;
+  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
@@ -159,7 +154,8 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 #include <sys/ucontext.h>
 static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 {
-  INIT_MAP_VOID;
+  extern EventSetInfo *default_master_eventset;
+  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
@@ -169,20 +165,22 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 #elif defined(linux)
 static void dispatch_timer(int signal, struct sigcontext info)
 {
-  INIT_MAP_VOID;
+  extern EventSetInfo *default_master_eventset;
+  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info.eip));
 
-  if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)&info); 
+  if (eventset_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)&info); 
   return;
 }
 #elif defined(_AIX)
 static void dispatch_timer(int signal, siginfo_t *si, void *i)
 {
+  extern EventSetInfo *default_master_eventset;
+  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
 #ifdef DEBUG
   ucontext_t *info;
 #endif
-  INIT_MAP_VOID;
 #ifdef DEBUG
   info = (ucontext_t *)i;
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.jmp_context.iar));
@@ -194,7 +192,8 @@ static void dispatch_timer(int signal, siginfo_t *si, void *i)
 #elif defined(sgi) && defined(mips)
 static void dispatch_timer(int signal, int code, struct sigcontext *info)
 {
-  INIT_MAP_VOID;
+  extern EventSetInfo *default_master_eventset;
+  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
 #ifdef DEBUG
   DBG((stderr,"dispatch_timer() at %p\n",(void *)info->sc_pc));
 #endif

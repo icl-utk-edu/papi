@@ -9,6 +9,7 @@ PAPI_start to work but just count the first event?
 */
 
 #include <stdio.h>
+#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 
@@ -18,18 +19,36 @@ int main()
    int n = 1000;
    int EventSet;
    int retval;
-   int i;
+   int i, j = 0;
    long long int g1[2];
-   retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
-   if ( retval != PAPI_OK ) printf(" error adding L2 TCM \n");
-   retval = PAPI_add_event(&EventSet, PAPI_L2_DCM);
-   if ( retval != PAPI_OK ) printf(" error adding L2 DCM \n");
 
-   PAPI_start(EventSet);
-   for ( i = 0; i < n; i++ )
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   assert(retval >= PAPI_OK);
+   
+   retval = PAPI_thread_init(NULL, 0);
+   assert(retval >= PAPI_OK);
+
+   if (PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
+     j++;
+
+   retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
+   if ( retval != PAPI_OK ) printf("Error adding L2 TCM (OK)\n");
+
+   if (PAPI_query_event(PAPI_L2_DCM) == PAPI_OK)
+     j++;
+
+   retval = PAPI_add_event(&EventSet, PAPI_L2_DCM);
+   if ( retval != PAPI_OK ) printf("Error adding L2 DCM (OK)\n");
+
+   if (j)
      {
-       c = a * b;
+       PAPI_start(EventSet);
+       for ( i = 0; i < n; i++ )
+	 {
+	   c = a * b;
+	 }
+       PAPI_stop(EventSet, g1);
      }
-   PAPI_stop(EventSet, g1);
+
    exit(0);
 }

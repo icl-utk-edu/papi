@@ -16,6 +16,7 @@ int main()
 
   retval = PAPI_event_name_to_code( "PAPI_FP_INS", &preset );
   assert(retval == PAPI_OK);
+  assert(preset == PAPI_FP_INS);
 
   exit(0);
 }

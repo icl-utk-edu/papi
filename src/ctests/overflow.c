@@ -34,10 +34,10 @@ int total = 0;
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {
 #ifdef _CRAYT3E
-  fprintf(stderr,"handler(%d, %d, %d, %lld, %d, %x) Overflow at %x!\n",
+  fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
 #else
-  fprintf(stderr,"handler(%d, %d, %d, %lld, %d, %p) Overflow at %p!\n",
+  fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
 #endif
   total++;
@@ -47,6 +47,13 @@ int main(int argc, char **argv)
 {
   int EventSet, num_tests = 2, tmp, num_events, mask = 0x5;
   long long **values;
+  int retval;
+
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  assert(retval >= PAPI_OK);
+
+  retval = PAPI_thread_init(NULL, 0);
+  assert(retval >= PAPI_OK);
 
   EventSet = add_test_events(&num_events,&mask);
 
@@ -56,7 +63,7 @@ int main(int argc, char **argv)
 
   assert(PAPI_start(EventSet) == PAPI_OK);
 
-  do_flops(NUM_FLOPS);
+  do_flops(NUM_FLOPS*10);
 
   assert(PAPI_stop(EventSet, values[0]) == PAPI_OK);
 
@@ -64,7 +71,7 @@ int main(int argc, char **argv)
 
   assert(PAPI_start(EventSet) == PAPI_OK);
 
-  do_flops(NUM_FLOPS);
+  do_flops(NUM_FLOPS*10);
 
   assert(PAPI_stop(EventSet, values[1]) == PAPI_OK);
 
@@ -75,7 +82,7 @@ int main(int argc, char **argv)
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
   printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
   printf("Threshold for overflow is: %d\n",THRESHOLD);
-  printf("Using %d iterations of c = a*b\n",NUM_FLOPS);
+  printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
   printf("-----------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\n");
@@ -87,9 +94,9 @@ int main(int argc, char **argv)
   printf("-----------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d\n",NUM_FLOPS,NUM_FLOPS);
+  printf("Row 1 approximately equals %d %d\n",20*NUM_FLOPS,20*NUM_FLOPS);
   printf("Column 1 approximately equals column 2\n");
-  printf("Row 3 approximate equals %d\n",NUM_FLOPS/THRESHOLD);
+  printf("Row 3 approximate equals %d\n",(20*NUM_FLOPS)/THRESHOLD);
 
   remove_test_events(&EventSet, mask);
 

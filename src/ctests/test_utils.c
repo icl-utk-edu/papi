@@ -57,9 +57,114 @@ int add_test_events(int *number, int *mask)
 
   *number = 0;
 
-  retval = PAPI_num_events();
+  retval = PAPI_num_counters();
   assert(retval >= PAPI_OK);
  
+  if ((*mask & 0x400) && PAPI_query_event(PAPI_L2_TCH) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCH);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x200) && PAPI_query_event(PAPI_L2_TCA) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCA);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x100) && PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x40) && PAPI_query_event(PAPI_L1_DCM) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x20) && PAPI_query_event(PAPI_L1_ICM) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x10) && PAPI_query_event(PAPI_L1_TCM) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_L1_TCM);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x8) && PAPI_query_event(PAPI_FLOPS) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_FLOPS);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x4) && PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x4;
+    }
+
+  if ((*mask & 0x2) && PAPI_query_event(PAPI_TOT_INS) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x2;
+    }
+
+  if ((*mask & 0x1) && PAPI_query_event(PAPI_TOT_CYC) == PAPI_OK)
+    {
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+      if (retval >= PAPI_OK)
+	(*number)++;
+      else
+	*mask = *mask ^ 0x1;
+    }
+
+  return(EventSet);
+}
+
+int add_test_events_r(int *number, int *mask, void *handle)
+{
+  int retval;
+  int EventSet = PAPI_NULL;
+
+  *number = 0;
+
+  retval = PAPI_num_counters();
+  assert(retval >= PAPI_OK);
+ 
+  assert(PAPI_create_eventset_r(&EventSet, handle) == PAPI_OK);
+  
   if ((*mask & 0x400) && PAPI_query_event(PAPI_L2_TCH) == PAPI_OK)
     {
       retval = PAPI_add_event(&EventSet, PAPI_L2_TCH);
