@@ -25,7 +25,7 @@
 
       integer*8 values(10)
       integer es1, es2, es3
-      integer*8 mask1, mask2, mask3
+      integer*4 mask1, mask2, mask3
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer retval
