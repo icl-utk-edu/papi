@@ -74,15 +74,16 @@ AC_ARG_WITH(bitmode,
 AC_SUBST($bitmode)
 
 #checking for OS
-OS="`uname | tr A-Z a-z`"
+OS="`uname | tr '[A-Z]' '[a-z]'`"
 case "$OS" in
   cygwin*) OS=cygwin;;
   SunOS)   OS=solaris ;;
+  sunos)   OS=solaris ;;
   irix64)  OS=irix ;;
   "unicos/mp") OS=unicos;;
 esac
 
-T3EOS="`uname -a | tr A-Z a-z | grep unicos`"
+T3EOS="`uname -a | tr '[A-Z]' '[a-z]' | grep unicos`"
 if test "$T3EOS" != ""; then
    OS=unicos
 fi
@@ -104,7 +105,9 @@ esac
 
 #checking for CPU
 R="(R)"
-TM="(tm)"
+tm="(tm)"
+TM="(TM)"
+CPU=""
 case "$OS" in
   aix)
          CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
@@ -115,17 +118,26 @@ case "$OS" in
   linux) 
          if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
            made=GenuineIntel
-           if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
-             CPU=p4
-           elif test "`cat /proc/cpuinfo | grep "Itanium 2"`" != ""; then
-             CPU=itanium2 
-           elif test "`cat /proc/cpuinfo | grep Itanium`" != ""; then
-             CPU=itanium
-           else CPU=p3
+           family="`cat /proc/cpuinfo | grep family | cut -d ' ' -f 3 | sed '2,$d'`"
+           model="`cat /proc/cpuinfo | grep family | cut -d ' ' -f 2 | sed '2,$d'`"
+           if test "$family" = "15"; then
+             if test "$model" = "3"; then
+               CPU=em64t
+             fi
+           fi
+           if test "$CPU" = "" ; then       
+             if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
+               CPU=p4
+             elif test "`cat /proc/cpuinfo | grep "Itanium 2"`" != ""; then
+               CPU=itanium2 
+             elif test "`cat /proc/cpuinfo | grep Itanium`" != ""; then
+               CPU=itanium
+             else CPU=p3
+             fi
            fi 
          elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
            made=AuthenticAMD
-           if test "`cat /proc/cpuinfo | grep "Athlon${TM} 64"`" != ""; then
+           if test "`cat /proc/cpuinfo | grep "Athlon${tm} 64"`" != ""; then
              CPU=opteron
            else CPU=athlon
            fi
@@ -144,13 +156,13 @@ case "$OS" in
            fi
          fi
          ;;
-  irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr A-Z a-z`;;
+  irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr '[A-Z]' '[a-z]'`;;
   osf1) CPU=`uname -p`;;
   unicos)
-        if test "`uname -a | tr A-Z a-z | grep crayx1`" != ""; then
+        if test "`uname -a | tr '[A-Z]' '[a-z]' | grep crayx1`" != ""; then
           CPU=x1-msp
         fi
-        if test "`uname -a | tr A-Z a-z | grep t3e`" != ""; then
+        if test "`uname -a | tr '[A-Z]' '[a-z]' | grep t3e`" != ""; then
           CPU=t3e
         fi
         ;;
