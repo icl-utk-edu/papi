@@ -40,6 +40,7 @@
 
 /* Defined in this file */
 static int default_error_handler(int errorCode);
+static int counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_long *events);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
@@ -450,8 +451,10 @@ static int add_preset_event(hwd_control_state_t *machdep, hwd_preset_t *preset, 
   /* Now we call a machine dependent function to use the allocated
      register bits to stuff the proper values into our counter control
      structure */
-
+/*
   evi->counter_index = _papi_hwd_add_event(result, preset, machdep);
+*/
+  evi->counter_index = _papi_hwd_add_event(evi, preset, machdep);
 
   /* After this function is called, ESI->machdep has everything it 
      needs to do a start/read/stop as quickly as possible */
@@ -604,10 +607,6 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
   /* Bump the number of events */
   ESI->NumberOfEvents++;
 
-  /* for platform dependent work */
-  if (_papi_hwd_add_event_leftover(ESI, EventCode))
-	return (PAPI_ECNFLCT);
-
   return(retval);
 }
 
@@ -707,7 +706,7 @@ int _papi_hwi_read(hwd_context_t *context, EventSetInfo_t *ESI, u_long_long *val
   if (retval != PAPI_OK)
     return(retval);
 
-  retval = _papi_hwi_counter_reorder(ESI, dp, values);
+  retval = counter_reorder(ESI, dp, values);
   return(retval);
 #if 0
   for (i=0;i<EventInfoArrayLength(ESI);i++)
@@ -983,7 +982,7 @@ static u_long_long handle_derived(EventInfo_t *evi, u_long_long *from)
   }
 }
 
-int _papi_hwi_counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_long *events)
+static int counter_reorder(EventSetInfo_t *ESI, u_long_long *hw_counter,u_long_long *events)
 {
   int i, j=0, selector, index;
 
