@@ -25,11 +25,11 @@ int main(int argc, char **argv )
   Events = PAPI_FP_INS;
   if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
-  if ( (retval = PAPI_start_counters(&Events,1))!=PAPI_OK)
+  if ( (retval = PAPI_start_counters(&Events,1))==PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
-  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))==PAPI_OK)
+  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
-  if ( (retval = PAPI_read_counters(&values,1))!=PAPI_OK)
+  if ( (retval = PAPI_read_counters(&values,1))==PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval);
   if ( (retval = PAPI_stop_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop_counters",retval);
@@ -37,14 +37,14 @@ int main(int argc, char **argv )
 	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
   if ( (retval = PAPI_read_counters(&values,1))==PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval);
-  if ( (retval = PAPI_stop_counters(&values,1))==PAPI_OK)
+  if ( (retval = PAPI_stop_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop_counters",retval);
-  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))!=PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
   if ( (retval = PAPI_start_counters(&Events,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
   if ( (retval = PAPI_read_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_read_counters",retval);
+  if ( (retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops))==PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_flops",retval);
   if ( (retval = PAPI_stop_counters(&values,1))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop_counters",retval);
   test_pass(__FILE__,NULL,0);
