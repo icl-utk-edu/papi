@@ -34,7 +34,8 @@ __8.  execute cat_progref.bat (on Windows)
 	papi_get_overflow_address.html	papi_get_real_cyc.html
 	papi_get_real_usec.html		papi_get_virt_cyc.html
 	papi_get_virt_usec.html		papif_get_clockrate.html
-	papif_get_domain.html		papif_get_granularity.html
+	papif_get_domain.html		papif_get_exe_info.html
+	papif_get_granularity.html
 	papif_get_preload.html		papi_label_event.html
 	papi_library_init.html		papi_list_events.html
 	papi_lock.html			papi_multiplex_init.html

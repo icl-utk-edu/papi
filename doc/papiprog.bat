@@ -62,6 +62,7 @@ perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_write.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF_get_clockrate.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF_get_domain.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF_get_exe_info.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF_get_granularity.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF_get_preload.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPIF_set_event_domain.3
