@@ -158,6 +158,18 @@ int PAPI_set_thr_specific(int tag, void *ptr)
 int PAPI_library_init(int version)
 {
    int tmp = 0;
+   /* This is a poor attempt at a lock. 
+      For 3.1 this should be replaced with a 
+      true UNIX semaphore. We cannot use PAPI
+      locks here because they are not initialized yet */
+   static int _in_papi_library_init_cnt = 0;
+
+   ++_in_papi_library_init_cnt;
+   while (_in_papi_library_init_cnt > 1)
+     {
+       APIDBG("Waiting for other thread to exit from PAPI_library_init\n");
+       sleep(1);
+     }
 
 #ifdef DEBUG
    char *var = (char *)getenv("PAPI_DEBUG");
@@ -189,28 +201,37 @@ int PAPI_library_init(int version)
 	 _papi_hwi_debug |= DEBUG_API;
      }
 #endif
-   APIDBG("Initialize master thread, PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid);
 
 #ifndef _WIN32
+   /* This checks to see if we have forked. If we have, then we continue to init.
+      If we have not forked, we check to see the status of initialization. */
+
+   APIDBG("Initializing library: current PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid);
    if (_papi_hwi_system_info.pid == getpid())
 #endif
      {
-       if ( init_level != PAPI_NOT_INITED )
+       /* If the library has not been successfully initialized *OR*
+	  the library attempted initialization but failed. */
+
+       if ((init_level != PAPI_NOT_INITED) || (init_retval != DEADBEEF))
 	 {
-	   return (init_retval = PAPI_VER_CURRENT); 
+	   _in_papi_library_init_cnt--;
+	   papi_return(init_retval); 
 	 }
-       if (init_retval != DEADBEEF)
-	 papi_return(init_retval);
+
+       APIDBG("system_info was initialized, but init did not succeed\n");
      }
 
    if (version != PAPI_VER_CURRENT) {
       init_retval = PAPI_EINVAL;
+      _in_papi_library_init_cnt--;
       papi_return(PAPI_EINVAL);
    }
 
    /* Initialize internal globals */
 
    if (_papi_hwi_init_global_internal() != PAPI_OK) {
+     _in_papi_library_init_cnt--;
       papi_return(PAPI_EINVAL);
    }
 
@@ -220,6 +241,7 @@ int PAPI_library_init(int version)
    if (tmp) {
       init_retval = tmp;
       _papi_hwi_shutdown_global_internal();
+      _in_papi_library_init_cnt--;
       papi_return(init_retval);
    }
 
@@ -231,10 +253,12 @@ int PAPI_library_init(int version)
       init_retval = tmp;
       _papi_hwi_shutdown_global_internal();
       _papi_hwd_shutdown_global();
+      _in_papi_library_init_cnt--;
       papi_return(init_retval);
    }
 
    init_level = PAPI_LOW_LEVEL_INITED;
+   _in_papi_library_init_cnt--;
    return (init_retval = PAPI_VER_CURRENT);
 }
 
