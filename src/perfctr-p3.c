@@ -578,8 +578,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
    *dp = (long_long *) spc->state.sum.pmc;
 #ifdef DEBUG
    {
-      extern int _papi_hwi_debug;
-      if(_papi_hwi_debug) {
+      if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
          unsigned int i;
          for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
@@ -616,8 +615,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
-      extern int _papi_hwi_debug;
-      if(_papi_hwi_debug) {
+      if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
          int i;
          for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,

@@ -48,9 +48,6 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 
 /* Defined in papi_data.c */
 extern PAPI_event_info_t _papi_hwi_presets[];
-#ifdef DEBUG
-extern int _papi_hwi_debug;
-#endif
 
 
 ThreadInfo_t *default_master_thread = NULL;

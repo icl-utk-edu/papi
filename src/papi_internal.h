@@ -48,6 +48,10 @@
 
   /* Please get rid of the DBG macro from your code */
 
+#ifdef DEBUG
+extern int _papi_hwi_debug; 
+#endif
+
 #define DBG(a) { if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__func__,__LINE__); fprintf a; } }
 
 #define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, __func__, __LINE__)
@@ -444,7 +448,6 @@ typedef struct _papi_mdi {
 
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
-extern int _papi_hwi_debug; 
 
 #include "papi_protos.h"
 

@@ -8,7 +8,6 @@
 #include "papi_protos.h"
 
 extern EventSetInfo_t *default_master_eventset;
-int papi_debug;
 
 /* Globals */
 

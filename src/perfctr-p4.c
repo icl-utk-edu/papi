@@ -343,8 +343,7 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
-      extern int _papi_hwi_debug;
-      if (_papi_hwi_debug) {
+      if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
          int i;
          for (i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,

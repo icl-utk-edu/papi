@@ -103,8 +103,6 @@ static int pcr_shift[2];
 static uint64_t pcr_event_mask[2];
 static uint64_t pcr_inv_mask[2];
 
-int papi_debug;
-
 #if 0
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
@@ -343,7 +341,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
    ctx.ucontext = arg;
 
 #ifdef DEBUG
-   if (papi_debug)
+   if (_papi_hwi_debug & DEBUG_SUBSTRATE)
       psignal(signal, "dispatch_emt");
 #endif
 
@@ -575,7 +573,7 @@ static int get_system_info(void)
 
 #ifdef DEBUG
    {
-      if (papi_debug) {
+      if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
          name = cpc_getcpuref(cpuver);
          if (name)
             fprintf(stderr, "CPC CPU reference: %s\n", name);
