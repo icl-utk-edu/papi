@@ -104,15 +104,15 @@ int main(int argc, char **argv)
 /*
    start = (caddr_t)do_flops;
    end = (caddr_t)fdo_flops;
+#if (defined(ITANIUM1) || defined(ITANIUM2))
+   start = (caddr_t)(((struct fdesc *)start)->ip);
+   end = (caddr_t)(((struct fdesc *)end)->ip);
+#endif
 */
 
 /* Itanium returns function descriptors instead of function addresses.
    You must dereference the descriptor to get the address.
 */
-#if (defined(ITANIUM1) || defined(ITANIUM2))
-   start = (caddr_t)(((struct fdesc *)start)->ip);
-   end = (caddr_t)(((struct fdesc *)end)->ip);
-#endif
    length = (end - start);
    if (length < 0)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
