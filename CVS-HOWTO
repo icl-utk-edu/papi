@@ -55,6 +55,7 @@ cvs commit: Rebuilding administrative file database
 
 How do I merge branches of the PAPI project back to the main trunk?
 -------------------------------------------------------------------
+
 1) Check out the main trunk of the PAPI project:
 	> cvs checkout -P papi
 2) Update the main trunk by joining with the branch:
@@ -74,6 +75,7 @@ How do I merge branches of the PAPI project back to the main trunk?
 
 How do I add external code (like perfctr) to the papi cvs project?
 ------------------------------------------------------------------
+
 The correct way to do it is:
 
 Let's say we're adding a version of PerfCtr 2.6. PAPI keeps only
@@ -111,4 +113,41 @@ This is all available in further detail in the CVS Manual, under 'import'.
 Good information is also available at:
 http://efault.net/npat/docs_and_postings/cvs-tracking/cvs-tracking.txt
 
-	
+How do I remove a directory?
+----------------------------
+
+First you remove all the files in the directory (and all subdirectories). 
+This can be tedious, so do it like this. This assumes GNU grep.
+
+> cd <dir_to_be_removed>
+> find . -type f | grep --invert-match CVS | xargs > /tmp/removeme
+
+Now you have a list of all files in all subdirectories to be removed,
+not including anything under CVS. Now edit the file and put 'rm' at the
+start of the file.
+
+> vi /tmp/removeme
+
+So the start of the file looks like:
+rm ./file1 ./dir2/file2 ....
+
+Now execute the remove.
+
+> sh /tmp/removeme
+
+Good. Now tell CVS to remove the files. We have to edit the /tmp/removeme
+again to replace 'rm' with 'cvs delete'.
+
+> vi /tmp/removeme
+
+So the start of the file looks like:
+cvs delete ./file1 ./dir2/file2 ....
+
+> sh /tmp/removeme
+
+[ lots of CVS log messages ]
+
+Now commit the changes with an informative log message.
+
+> cvs commit.
+
