@@ -50,20 +50,6 @@ typedef struct _Context {
   int fd;
 }  hwd_context_t;
 
-typedef struct _ThreadInfo {
-    unsigned pid;
-    unsigned tid;
-    hwd_context_t context;
-    void *event_set_overflowing;
-    void *event_set_profiling;
-    int domain;
-} ThreadInfo_t;
-
-typedef struct _thread_list  {
-    ThreadInfo_t *master;
-    struct _thread_list *next;
-}  ThreadInfoList_t;
-
 #include "papi_internal.h"
 
 typedef struct {
@@ -73,8 +59,6 @@ typedef struct {
     ri_minrev:4;	/* minor revision */
 } papi_rev_id_t;
 
-
-extern ThreadInfo_t *default_master_thread;
 
 int get_memory_info(PAPI_mem_info_t* mem_info);
 

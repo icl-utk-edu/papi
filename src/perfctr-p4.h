@@ -210,22 +210,6 @@ typedef struct P4_preset {
 typedef P4_preset_t hwd_preset_t;
 #endif
 
-typedef struct _ThreadInfo {
-  unsigned pid;
-  unsigned tid;
-  hwd_context_t context;
-  void *event_set_overflowing;
-  void *event_set_profiling;
-  int domain;
-} ThreadInfo_t;
-
-extern ThreadInfo_t *default_master_thread;
-
-typedef struct _thread_list {
-  ThreadInfo_t *master;
-  struct _thread_list *next; 
-} ThreadInfoList_t;
-
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"

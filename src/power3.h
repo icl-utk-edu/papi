@@ -46,25 +46,6 @@ typedef PWR3_pmapi_context_t hwd_context_t;
 typedef PWR3_pmapi_event_t hwd_event_t;
 */
 
-/* Can these thread structures be moved out of the substrate?
-    Or are they platform dependent?
-*/
-typedef struct _ThreadInfo {
-  unsigned pid;
-  unsigned tid;
-  hwd_context_t context;
-  void *event_set_overflowing;
-  void *event_set_profiling;
-  int domain;
-} ThreadInfo_t;
-
-extern ThreadInfo_t *default_master_thread;
-
-typedef struct _thread_list {
-  ThreadInfo_t *master;
-  struct _thread_list *next; 
-} ThreadInfoList_t;
-
 /* prototypes */
 extern int set_domain(hwd_control_state_t *this_state, int domain);
 extern int set_granularity(hwd_control_state_t *this_state, int domain);

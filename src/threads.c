@@ -13,6 +13,11 @@
 
 /* This file contains thread allocation and bookkeeping functions */
 
+/* The threads are now stored in a circular link-list, thus there is
+ * no more locking on the lookup or insert function, but, one must
+ * make sure if a remove function is put in that we again think about
+ * locking, the shutdown/cleanup still lock
+ */
 #ifdef _WIN32
   /* Define SUBSTRATE to map to linux-perfctr.h
    * since we haven't figured out how to assign a value 
@@ -42,10 +47,12 @@ void _papi_hwi_shutdown_the_thread_list(void)
   ThreadInfoList_t *tmp;
   ThreadInfoList_t *nxt;
 
-  if ( head == NULL )
-	return;
-
   _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+  if ( head == NULL ){
+        _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+	return;
+  }
+
   tmp = head->next;
   while (tmp != head)
   {
@@ -74,10 +81,12 @@ void _papi_hwi_cleanup_thread_list(void)
   ThreadInfoList_t *nxt;
   ThreadInfoList_t *prev;
 
-  if ( head == NULL )
-	return;
-
   _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+  if ( head == NULL ){
+        _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+	return;
+  }
+
   prev = head;
   tmp = head->next;
   while (tmp != head)
@@ -109,12 +118,15 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
 #endif
   entry->master = ptr;
 
-  _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+  /*_papi_hwd_lock(PAPI_INTERNAL_LOCK);*/
   if ( head == NULL ){
      head = entry;
      head->next = head;
   }
   else{
+    /* Since we are no longer locking the entry has to be setup BEFORE
+     * inserting it into the circular list -KSL
+     */
     entry->next = head->next;
     head->next = entry;
     head = entry;
@@ -123,12 +135,12 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
   fprintf(stderr,"%lld:%s:0x%x:(%p): Old head is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,entry->next);
   fprintf(stderr,"%lld:%s:0x%x:(%p): New head is at %p\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),ptr,head);
 #endif
-  _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+  /*_papi_hwd_unlock(PAPI_INTERNAL_LOCK);*/
   
   return(PAPI_OK);
 }
 
-ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
+inline ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 {
   if (_papi_hwi_thread_id_fn == NULL)
     return(default_master_thread);
@@ -137,7 +149,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
       unsigned long int id_to_find = (*_papi_hwi_thread_id_fn)();
       ThreadInfoList_t *tmp;
 
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      /*_papi_hwd_lock(PAPI_INTERNAL_LOCK);*/
       tmp = head;
       while (tmp != NULL)
 	{
@@ -146,7 +158,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 #endif
 	  if (tmp->master->tid == id_to_find)
 	    {
-	      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+	      /*_papi_hwd_unlock(PAPI_INTERNAL_LOCK);*/
 	      head = tmp;
 	      return(tmp->master);
 	    }
@@ -157,7 +169,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 #ifdef OVERFLOW_DEBUG
       fprintf(stderr,"%lld:%s:0x%x:I'm not in the list at %p.\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),head);
 #endif
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      /*_papi_hwd_unlock(PAPI_INTERNAL_LOCK);*/
       return(NULL);
     }
 }

@@ -160,22 +160,6 @@ typedef P3_register_t hwd_register_t;
 typedef P3_perfctr_context_t hwd_context_t;
 #endif
 
-typedef struct _ThreadInfo {
-  unsigned pid;
-  unsigned tid;
-  hwd_context_t context;
-  void *event_set_overflowing;
-  void *event_set_profiling;
-  int domain;
-} ThreadInfo_t;
-
-extern ThreadInfo_t *default_master_thread;
-
-typedef struct _thread_list {
-  ThreadInfo_t *master;
-  struct _thread_list *next; 
-} ThreadInfoList_t;
-
 #define CNTR1 0x1
 #define CNTR2 0x2
 #define CNTR3 0x4
