@@ -54,11 +54,12 @@ static einfo_t us3info[] = {
    {PAPI_L1_ICM, "IC_miss"},
    {PAPI_L1_LDM, "DC_rd_miss"},
    {PAPI_L1_STM, "DC_wr_miss"},
+   {PAPI_L2_LDM, "EC_rd_miss"},
    {PAPI_BR_MSP, "IU_Stat_Br_miss_taken+IU_Stat_Br_miss_untaken"},
    {PAPI_L1_DCR, "DC_rd"},
    {PAPI_L1_DCW, "DC_wr"},
-   {PAPI_L1_ICH, "IC_ref"},	/* Is this really hits only? */
-   {PAPI_L1_ICA, "IC_ref+IC_miss"},	/* Ditto? */
+   {PAPI_L1_ICH, "IC_ref-IC_miss"},	/* Is this really hits only? */
+   {PAPI_L1_ICA, "IC_ref"},	/* Ditto? */
    {PAPI_L2_TCH, "EC_ref-EC_misses"},
    {PAPI_L2_TCA, "EC_ref"},
 };
@@ -70,6 +71,7 @@ static einfo_t us2info[] = {
    {PAPI_CA_INV, "EC_snoop_inv"},
    {PAPI_L1_LDM, "DC_rd-DC_rd_hit"},
    {PAPI_L1_STM, "DC_wr-DC_wr_hit"},
+   {PAPI_L2_LDM, "EC_rd_miss"},
    {PAPI_BR_MSP, "Dispatch0_mispred"},
    {PAPI_TOT_IIS, "Instr_cnt"},
    {PAPI_TOT_INS, "Instr_cnt"},
