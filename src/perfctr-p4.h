@@ -20,6 +20,7 @@
 #include <linux/unistd.h>
 #include <asm/bitops.h>
 #include <asm/system.h>
+#include <errno.h>
 
 #include "libperfctr.h"
 
