@@ -77,10 +77,8 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_query_event_verbose", 1);
     }
     if ( !TESTS_QUIET ) {
-	printf("%-30s 0x%-10x%s\n",
-	       info.event_name,
-	       info.event_code,
-	       info.event_descr);
+		printf("%-30s 0x%-10x\n%s\n", \
+	       info.event_name, info.event_code, info.event_descr);
     }
   }
   if ( !TESTS_QUIET )
