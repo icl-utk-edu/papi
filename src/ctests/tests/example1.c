@@ -7,13 +7,16 @@
 	Is this going to be too inefficient?
 */
 
-#include <sys/types.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <errno.h>
+#include <sys/types.h>
+
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
+
+/* Header files for the substrates */
 
 #if defined(mips) && defined(unix) && defined(sgi)
 #include "irix-mips.h"
@@ -26,16 +29,17 @@
 void main() {
   int r, i;
   double a, b, c;
-  unsigned long long  ct[2];
-  hwd_control_state_t test;
+  unsigned long long ct[3];
+  EventSetInfo EventSetZero;
   EventSetInfo EventSet;
- 
-  test.number = 0;
-  test.counter_code1 = test.counter_code2 = test.sp_code = -1;
+  hwd_control_state_t test;
 
+  memset(&EventSetZero,0x00,sizeof(hwd_control_state_t));
+  memset(&test,0x00,sizeof(hwd_control_state_t));
   EventSet.machdep = &test;
   EventSet.all_options.domain.domain.domain = 1;       /* set to default PAPI_USR */
 
+  _papi_hwd_init(&EventSetZero);
   _papi_hwd_reset(&EventSet);
   _papi_hwd_add_event(&EventSet, PAPI_FP_INS);
   _papi_hwd_add_event(&EventSet, PAPI_TOT_INS);

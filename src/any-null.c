@@ -7,10 +7,6 @@
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
-typedef struct _hwd_preset {
-  int code;                
-} hwd_control_state_t;
-
 static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
                 { -1 },		/* L1 D-Cache misses  */
                 { -1 },		/* L1 I-Cache misses  */
