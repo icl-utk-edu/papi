@@ -9,14 +9,14 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent \- add PAPI preset or native ha
 .nf
 .B #include <papi.h>
 .BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode ");"
-.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int " number ");"
+.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCodes ", int " number ");"
 .BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventSet,\  C_INT\  check )
-.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventSet,\  C_INT\  number,\  C_INT\  check )
+.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventCodes,\  C_INT\  number,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
