@@ -1251,8 +1251,10 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
-  hwd_control_state_t *machdep = zero->machdep;
-  vperfctr_unlink(machdep->self);
+  /* hwd_control_state_t *machdep = zero->machdep;
+   * vperfctr_unlink(machdep->self);
+   * Do nothing here. This routine is for shutting down event sets?
+   * Global shutdown is made later in _papi_hwd_global_shutdown */
   return(PAPI_OK);
 }
 
