@@ -403,7 +403,7 @@ static int get_system_info(void)
     return(PAPI_ESBSTR);
   name = cpc_getcciname(cpuver);
   if (name)
-    DBG((stderr,"Got %s from cpc_getcciname\n",name))
+    DBG((stderr,"Got %s from cpc_getcciname\n",name));
   else
     DBG((stderr,"Got no name from cpc_getcciname\n"));
 
