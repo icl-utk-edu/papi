@@ -30,10 +30,9 @@ typedef struct {
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
 
-  int NumberOfCounters;    /* Number of counters used- usu. the number of 
-                              events added */
-  int *EventCodeArray;     /* PAPI/Native codes for events in this set from 
-                              AddEvent */
+  int NumberOfCounters;    /* Number of counters added to EventSet */
+
+  int *EventCodeArray;     /* PAPI/Native codes for events in this set */
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
                          will contain the encoding necessary for the 
@@ -74,6 +73,8 @@ typedef struct _papi_mdi {
    EventSetInfo structure. Each array is of length num_gp_cntrs + 
    num_sp_cntrs * sizeof(long long) */
 
+  int num_cntrs;   /* Number of counters returned by a substrate read/write */
+                      
   int num_gp_cntrs;   /* Number of general purpose counters or counters
                          per group */
   int total_groups;   /* Number of counter groups, zero for no groups */

@@ -62,6 +62,24 @@ int          PAPI_ERR_LEVEL = PAPI_VERB_ESTOP;
 /*   b. PAPI_VERB_ESTOP [print error message, then shutdown ]             */
 /*========================================================================*/
 
+/* This function returns the number of counters that a read(ESI->machdep)
+   returns */
+
+static int num_counters(EventSetInfo *ESI)
+{
+  return(_papi_system_info.num_cntrs);
+}
+
+/* This function returns true and the memory allocated for counters */
+
+static long long *get_space_for_counters(EventSetInfo *ESI)
+{
+  int num;
+
+  num = num_counters(ESI);
+  return((long long *)malloc(num*sizeof(long long)));
+}
+
 static void initialize(void)
 {
    memset(&PAPI_EVENTSET_MAP,0x00,sizeof(PAPI_EVENTSET_MAP));
@@ -333,7 +351,7 @@ static EventSetInfo *allocate_EventSet(void)
   EventSetInfo *ESI;
   int counterArrayLength;
   
-  counterArrayLength=_papi_system_info.num_gp_cntrs+_papi_system_info.num_sp_cntrs;
+  counterArrayLength=_papi_system_info.num_cntrs;
 
   ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo));
   if (ESI==NULL) 
@@ -1030,32 +1048,37 @@ int PAPI_read(int EventSet, long long *values)
   return 0;
 }
 
-
 /*========================================================================*/
+
 int PAPI_accum(int EventSet, long long *values)
-{ int retval, i;
-  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
-  long long increase[(_papi_system_info.num_gp_cntrs +
-                      _papi_system_info.num_sp_cntrs)]; 
+{ 
+  EventSetInfo *ESI;
+  int retval, i, bound;
+  long long a,b,c,*increase;
 
-  retval = _papi_hwd_read(this_machdep, increase);
-  if(retval) return(PAPI_EBUG);
+  ESI = lookup_EventSet(EventSet);
+  if ( ESI == NULL ) 
+    return(handle_error(PAPI_EINVAL,NULL));
 
-  for(i=0; i<(_papi_system_info.num_gp_cntrs +
-              _papi_system_info.num_sp_cntrs); i++)
-  { values[i] += increase[i];
-  }
+  increase = ESI->latest;
+  bound = num_counters(ESI);
 
-  for(i=0; i<(_papi_system_info.num_gp_cntrs +
-              _papi_system_info.num_sp_cntrs); i++)
-  { if(values[i] >= 0)
-    { printf("\tCounter %d : %lld\n", i, values[i]);
+  for ( i=0 ; i < bound; i++)
+    { 
+      a = increase[i];
+      b = values[i];
+      c = a + b;
+      values[i] = c;
     }
-  }
 
-  retval = _papi_hwd_reset(this_machdep);
-  if(retval) return(PAPI_EBUG);
-  return 0;
+  retval = _papi_hwd_read(ESI->machdep, increase);
+  if (retval < PAPI_OK) 
+    return(handle_error(retval,NULL));
+
+  retval = _papi_hwd_reset(ESI->machdep);
+  if (retval < PAPI_OK)
+    return(handle_error(retval,NULL));
+  return(retval);
 }
 
 /*========================================================================*/
