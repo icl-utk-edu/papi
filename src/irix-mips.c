@@ -721,14 +721,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    hwd_control_state_t *this_state = &ESI->machdep;
    hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
    int hwcntr, retval = PAPI_OK;
-
 /*
   if ((this_state->num_on_counter[0] > 1) || 
       (this_state->num_on_counter[1] > 1))
     return(PAPI_ECNFLCT);
 */
-  if (ESI->overflow.event_counter >1) return(PAPI_ECNFLCT);
+   if (ESI->overflow.event_counter >1) return(PAPI_ECNFLCT);
    if (threshold == 0) {
+      this_state->overflow_flag = 0;
       arg->hwp_ovflw_sig = 0;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
       arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 0;
@@ -757,9 +757,18 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       arg->hwp_ovflw_sig = PAPI_SIGNAL;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
+      this_state->overflow_flag = 1;
+      this_state->overflow_index = hwcntr;
+      this_state->overflow_threshold = threshold;
       /* set the threshold and interrupt flag */
       arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 1;
-      arg->hwp_ovflw_freq[hwcntr] = (int) threshold;
+      if (hwcntr > HWPERF_MAXEVENT) {
+         arg->hwp_ovflw_freq[hwcntr] = (int) threshold
+                                      /this_state->num_on_counter[1];
+      } else {
+         arg->hwp_ovflw_freq[hwcntr] = (int) threshold
+                                     /this_state->num_on_counter[0];
+      }
       _papi_hwd_lock(PAPI_INTERNAL_LOCK);
       _papi_hwi_using_signal++;
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -842,12 +851,14 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count)
 {
-   int index, i, selector = 0, mode = 0;
+   int index, i, selector = 0, mode = 0, hwcntr, threshold;
    hwperf_eventctrl_t *to = &this_state->counter_cmd.hwp_evctrargs;
 
    memset(to, 0, sizeof(hwperf_eventctrl_t));
 
+/*
    this_state->counter_cmd.hwp_ovflw_sig=0;
+*/
 
    if (_papi_hwi_system_info.default_domain & PAPI_DOM_USER) {
       mode |= HWPERF_CNTEN_U;
@@ -875,6 +886,17 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
    }
    this_state->selector = selector;
+   if (this_state->overflow_flag) {  // * adjust the threshold for overflow
+      hwcntr = this_state->overflow_index;
+      threshold = this_state->overflow_threshold;
+      if (hwcntr > HWPERF_MAXEVENT) {
+         this_state->counter_cmd.hwp_ovflw_freq[hwcntr] = (int) threshold
+                                      /this_state->num_on_counter[1];
+      } else {
+         this_state->counter_cmd.hwp_ovflw_freq[hwcntr] = (int) threshold
+                                     /this_state->num_on_counter[0];
+      }
+   }
 
 
    return (PAPI_OK);
