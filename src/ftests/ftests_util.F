@@ -2,7 +2,7 @@
 
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 
-	
+
       integer function get_quiet()
 #if _WIN32
       use dflib
@@ -69,7 +69,7 @@ C    used in the program. See eg. fmatrixpapi.F
       integer line
 
       call ftests_perror(line,msg)
-	call pause()
+       call pause()
       stop
       end
 
@@ -90,7 +90,7 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,100) test_str,' PASSED'
       call PAPIF_shutdown()
-	call pause()
+       call pause()
       stop
  100  format(a,t41,a)
       end
@@ -120,9 +120,9 @@ C    used in the program. See eg. fmatrixpapi.F
         write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
       end if
       if(papiretval.eq.0)then
-        write(*,*) 'SGI requires root permissions for this test\n'
+        write(*,*) 'SGI requires root permissions for this test'
       end if
-	call pause()
+       call pause()
       stop
  100  format(a,t41,a)
       end
@@ -140,7 +140,7 @@ C    used in the program. See eg. fmatrixpapi.F
         call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
         write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
       end if
-	call pause()
+       call pause()
       stop
  100  format(a,t41,a)
       end
@@ -163,7 +163,7 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
 
       if ( retval.ne.0 )then
-		write(*,100) file,' FAILED'
+          write(*,100) file,' FAILED'
           write(*,*) 'Line # ', line
       else
 		write(*,100) file,' SKIPPED'
@@ -208,7 +208,7 @@ C    used in the program. See eg. fmatrixpapi.F
         write(*,*) 'Error in ', callstr, ' : ', 
      *       papi_errstr(1:len_trim(papi_errstr))
       end if
-	call pause()
+       call pause()
       stop
       end
 
@@ -275,7 +275,7 @@ C
          str = "PAPI_DOM_ALL"
       else
          print *, 'error in stringify_domain'
-	   call pause()
+          call pause()
          stop
       end if
       end
@@ -297,7 +297,7 @@ C
          str = "PAPI_GRN_SYS"
       else
          print *, 'error in stringify_granularity'
-	   call pause()
+         call pause()
          stop
       end if
       end
@@ -309,7 +309,7 @@ C	that prompts the user for a keypress
 C	For every other platform it is a nop.
       subroutine pause()
       implicit none      
-	integer quiet
+      integer quiet
 	common quiet
 
 #ifdef _WIN32
