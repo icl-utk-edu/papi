@@ -69,12 +69,10 @@ The PAPI preset is not available on the underlying hardware.
 .LP
 .nf
 .if t .ft CW
-
 /*Find the event code for PAPI_TOT_INS and its info*/
 PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode)
 if (PAPI_get_event_info(EventCode, &info) == PAPI_OK)
   handle_error(1);
-
 .if t .ft P
 .fi
 
