@@ -494,7 +494,6 @@ int _papi_hwd_shutdown_global(void)
  */
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
-  extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = &ESI->machdep;
   hwd_context_t *ctx = &ESI->master->context;
   int retval = PAPI_OK;

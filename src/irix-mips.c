@@ -767,7 +767,6 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
    int hwcntr, retval = PAPI_OK, i;
