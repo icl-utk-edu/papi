@@ -13,55 +13,36 @@
 #include <errno.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
+#include "papi_internal.h"
 
-typedef struct _hwd_preset {
-  int number;
-  int counter_code1;
-  int counter_code2;
-  int sp_code;  
-} hwd_control_state;
+/* Header files for the substrates */
 
-typedef struct {
-  int eventindex;
-  long long deadline;
-  int milliseconds;
-  papi_overflow_option_t option; } _papi_overflow_info_t;
-
-typedef struct {
-  papi_multiplex_option_t option; } _papi_multiplex_info_t;
-
-typedef struct _EventSetInfo {
-  int EventSetIndex;
-  int NumberOfCounters;
-  int *EventCodeArray;
-  void *machdep;
-  long long *start;
-  long long *stop;
-  long long *latest;
-  int state;
-  _papi_overflow_info_t overflow;
-  _papi_multiplex_info_t multiplex;
-  int granularity;
-  int domain;
-} EventSetInfo;
+#if defined(mips) && defined(unix) && defined(sgi)
+#include "irix-mips.h"
+#elif defined(i386) && defined(unix) && defined(linux)
+#include "linux-pentium.h"
+#else
+#include "any-null.h"
+#endif
 
 void main() {
   int r, i, j;
   double a, b, c;
-  unsigned long long  ct[2];
-  hwd_control_state test;
+  unsigned long long  ct[3];
+  EventSetInfo EventSetZero;
   EventSetInfo EventSet;
+  hwd_control_state_t test;
  
-  test.number = 0;
-  test.counter_code1 = test.counter_code2 = test.sp_code = -1;
-
+  memset(&EventSetZero,0x00,sizeof(hwd_control_state_t));
+  memset(&test,0x00,sizeof(hwd_control_state_t));
   EventSet.machdep = &test;
-  EventSet.domain = 1;		// set to default PAPI_USR
+  EventSet.all_options.domain.domain.domain = 1;       /* set to default PAPI_USR */
 
-  _papi_hwd_reset(&test);
-  _papi_hwd_add_event(&test, PAPI_FP_INS);
-  _papi_hwd_add_event(&test, PAPI_TOT_INS);
-  _papi_hwd_add_event(&test, PAPI_TOT_CYC);
+  _papi_hwd_init(&EventSetZero);
+  _papi_hwd_reset(&EventSet);
+  _papi_hwd_add_event(&EventSet, PAPI_FP_INS);
+  _papi_hwd_add_event(&EventSet, PAPI_TOT_INS);
+  _papi_hwd_add_event(&EventSet, PAPI_TOT_CYC);
   _papi_hwd_start(&EventSet);
 
   a = 0.5;
@@ -69,13 +50,13 @@ void main() {
   for (j=0; j < 5; j++)
   { for (i=0; i < 10000000; i++) 
     { c = a*b; }
-    _papi_hwd_read(&test, ct, test.number);
+    _papi_hwd_read(&EventSet, ct);
     printf("\tFloating point ins.:        %lld\n", ct[0]);
     printf("\tTotal Instructions :        %lld\n", ct[1]);
     printf("\tTotal Cycles :              %lld\n\n", ct[2]);
   }
 
-  _papi_hwd_stop(&test, ct);
+  _papi_hwd_stop(&EventSet, ct);
   
   printf("\tFloating point ins.: 	%lld\n", ct[0]);
   printf("\tTotal Instructions : 	%lld\n", ct[1]);
