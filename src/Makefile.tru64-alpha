@@ -4,7 +4,7 @@ LIBS	= static shared
 TARGETS	= serial pthreads omp multiplex
 
 CFLAGS 	= -DDEBUG -Zp8 -DNO_FLOPS 
-FFLAGS	= 
+FFLAGS	= -DNO_FLOPS
 OPTFLAGS= 
 FOPTFLAGS= $(OPTFLAGS)
 SMPCFLGS= -mp
