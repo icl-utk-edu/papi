@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 
     printf("Test type   : \tPAPI_PROFIL_POSIX\n");
    }
-	if ((retval=PAPI_profil_hw(profbuf, length, start, 65536, 
+	if ((retval=PAPI_profil(profbuf, length, start, 65536, 
 		 EventSet, PAPI_event, THR, PAPI_PROFIL_POSIX)) != PAPI_OK){
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 	}
@@ -185,14 +185,14 @@ int main(int argc, char **argv)
     printf(TAB1, event_name, (values[1])[0]);
     printf(TAB1,"PAPI_TOT_CYC:", (values[1])[1]);
   }
-  if ((retval=PAPI_profil_hw(profbuf, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf, length, start, 65536, 
 	     EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
   if ( !TESTS_QUIET )
       printf("Test type   : \tPAPI_PROFIL_RANDOM\n");
 
-  if ((retval=PAPI_profil_hw(profbuf2, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf2, length, start, 65536, 
 		     EventSet, PAPI_event, THR, 
 		     PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
@@ -208,14 +208,14 @@ int main(int argc, char **argv)
     printf(TAB1, event_name, (values[2])[0]);
     printf(TAB1,"PAPI_TOT_CYC:", (values[2])[1]);
   }
-  if ((retval=PAPI_profil_hw(profbuf2, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf2, length, start, 65536, 
 	  EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM))
 	 != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
  
   if ( !TESTS_QUIET )
      printf("Test type   : \tPAPI_PROFIL_WEIGHTED\n");
-  if ((retval=PAPI_profil_hw(profbuf3, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf3, length, start, 65536, 
         EventSet, PAPI_event, THR, PAPI_PROFIL_POSIX|PAPI_PROFIL_WEIGHTED))
 	 != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
@@ -232,13 +232,13 @@ int main(int argc, char **argv)
     printf(TAB1, event_name,(values[3])[0]);
     printf(TAB1,"PAPI_TOT_CYC:",(values[3])[1]);
   }
-  if ((retval=PAPI_profil_hw(profbuf3, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf3, length, start, 65536, 
 	EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
   if ( !TESTS_QUIET )
       printf("Test type   : \tPAPI_PROFIL_COMPRESS\n");
-  if ((retval=PAPI_profil_hw(profbuf4, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf4, length, start, 65536, 
 	EventSet, PAPI_event,THR,PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
@@ -254,13 +254,13 @@ int main(int argc, char **argv)
     printf(TAB1, event_name,(values[4])[0]);
     printf(TAB1,"PAPI_TOT_CYC:",(values[4])[1]);
   }
-  if ((retval=PAPI_profil_hw(profbuf4, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf4, length, start, 65536, 
 	EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
   if ( !TESTS_QUIET )
      printf("Test type   : \tPAPI_PROFIL_<all>\n");
-  if ((retval=PAPI_profil_hw(profbuf5, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf5, length, start, 65536, 
 		     EventSet, PAPI_event, THR, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
     printf(TAB1,"PAPI_event  :", (values[5])[0]);
     printf(TAB1,"PAPI_TOT_CYC:", (values[5])[1]);
   }
-  if ((retval=PAPI_profil_hw(profbuf5, length, start, 65536, 
+  if ((retval=PAPI_profil(profbuf5, length, start, 65536, 
 		     EventSet, PAPI_event, 0, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 

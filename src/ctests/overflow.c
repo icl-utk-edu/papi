@@ -94,7 +94,7 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet, values[0]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0, handler);
+  retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0,  handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
   retval = PAPI_start(EventSet);

@@ -5,11 +5,11 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = branches dmem_info all_events derived high-level2 describe mem_info zero \
+SERIAL  = profile overflow avail zero branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level sprofile eventname case1 case2 \
-	calibrate flops avail first second cost johnmay2 clockres nineth \
-	overflow_single_event overflow profile tenth native memory \
-	timer_overflow overflow2 matrix-hl earprofile profilehw branchprofile \
+	calibrate flops first second cost johnmay2 clockres nineth \
+	overflow_single_event  tenth native memory \
+	timer_overflow overflow2 matrix-hl earprofile branchprofile \
 	native_avail
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
@@ -155,9 +155,6 @@ overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 
 profile: profile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
-
-profilehw: profilehw.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profilehw.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profilehw
 
 branchprofile: branchprofile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) branchprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o branchprofile
