@@ -68,7 +68,6 @@ typedef struct P4_perfctr_event {
 
 
 /*
-Haihang: This is a first cut. It was the best I could do on short notice.
 The name and description fields should be self-explanatory.
 The counter and escr fields are what must be used for register allocation.
 There are 18 possible counters. There are 45 possible escrs.
@@ -92,7 +91,6 @@ Likewise for counter[1] and escr[1].
 So if this event is assigned to counter 12, bit 12 of counter_selector must be set, 
 and bit 41 of escr_selector must be set. These resources are then not available for
 any other native event.
-Hope this helps! Good luck!
 */
 
 typedef struct P4_perfctr_codes {
@@ -133,14 +131,6 @@ typedef struct hwd_p4_mask {
 } hwd_p4_mask_t;
 
 typedef struct P4_perfctr_control {
-  /* add this array to hold native events info */
-// hwd_native_t native[MAX_COUNTERS];
-  
-  /* total_events: number of added events
-     native_idx:   number of all native events 
-	 both are required */
-//  int native_idx; 
-//  P4_register_t allocated_registers;
   struct vperfctr_control control; 
   struct perfctr_sum_ctrs state;
 } P4_perfctr_control_t;
@@ -156,23 +146,11 @@ typedef P4_reg_alloc_t hwd_reg_alloc_t;
 
 typedef P4_perfctr_control_t hwd_control_state_t;
 
-//typedef P4_regmap_t hwd_register_map_t;
-
 typedef P4_register_t hwd_register_t;
 
 typedef P4_perfctr_context_t hwd_context_t;
 
 typedef P4_perfctr_event_t hwd_event_t;
-
-
-/* Per preset data structure statically defined in dense array in substrate */
-
-typedef struct P4_search {
-  unsigned preset;
-  char *note;
-  unsigned number;
-  P4_perfctr_preset_t info;
-} P4_search_t;
 
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
@@ -191,36 +169,14 @@ typedef struct P4_search {
 #define PAPI_VENDOR_CYRIX   3
 
 
-/* Overflow stuff */
-typedef struct { 
-  siginfo_t *si; 
-  struct sigcontext *ucontext;
-} papi_hwd_context_t;
-
-/* XXX - May need to be removed or changed when new Overflow
- * 	 design has stabalized. -KSL
- */
 typedef siginfo_t hwd_siginfo_t;
 typedef struct sigcontext hwd_ucontext_t;
 
-/*
-#define GET_OVERFLOW_ADDRESS(ctx)  (void*)((papi_hwd_context_t *)ctx)->ucontext->sc_ip
-#define GET_OVERFLOW_CTR_BITS(context) \
-  (((papi_hwd_context_t *)context)->si->sy_pfm_ovfl[0])
-#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
-  (_papi_hwi_event_index_map[bit-PMU_FIRST_COUNTER])
-*/
-/* 
- * XXX these are really wrong, just stubs for compiling
- */
-#define GET_OVERFLOW_ADDRESS(ctx)  (void*) NULL
-#define GET_OVERFLOW_CTR_BITS(context) \
-  (1)
-#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
-  (1)
-
-
-
+#ifdef __x86_64__
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->rip)
+#else
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->eip)
+#endif
 
 /* Locks */
 #ifdef __x86_64__
