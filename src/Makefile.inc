@@ -5,8 +5,9 @@ OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
+FHEADERS= fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) fpapi.h examples
+all: showconf $(LIBS) genpapifdef $(FHEADERS) examples
 
 showconf:
 		@echo; 
@@ -65,7 +66,13 @@ genpapifdef: genpapifdef.c $(LIBRARY)
 	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
 
 fpapi.h: genpapifdef
-	./genpapifdef > fpapi.h
+	./genpapifdef -c > fpapi.h
+
+f77papi.h: genpapifdef
+	./genpapifdef -f77 > f77papi.h
+
+f90papi.h: genpapifdef
+	./genpapifdef -f90 > f90papi.h
 
 examples: tests ftests
 
@@ -87,7 +94,7 @@ clean: native_clean
 	cd ftests; $(MAKE) clean
 
 clobber: clean
-	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) fpapi.h
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS)
 null:
 
 dist: 
@@ -105,7 +112,7 @@ install: all
 	chmod go+rx $(DESTDIR)/include
 	-cp $(LIBRARY) $(SHLIB) $(DESTDIR)/lib
 	chmod go+r $(DESTDIR)/lib/*
-	cp fpapi.h papi.h papiStdEventDefs.h $(DESTDIR)/include
+	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
 	chmod go+r $(DESTDIR)/include/*
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
 	cd tests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install
