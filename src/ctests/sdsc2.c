@@ -25,16 +25,16 @@ int main(int argc, char **argv) {
   char des[128];
   int i, j, retval;
   int iters=10000000;
-  double x,y;
+  double x,y,dtmp;
   long_long t1,t2;  
-  long_long values[2*MAXEVENTS];
+  long_long values[MAXEVENTS];
   int sleep_time = SLEEPTIME; 
 #ifdef STARTSTOP
-  long_long dummies[2*MAXEVENTS];
+  long_long dummies[MAXEVENTS];
 #endif
-  double valsqsum[2*MAXEVENTS];
-  double valsum[2*MAXEVENTS];
-  double spread[2*MAXEVENTS];
+  double valsqsum[MAXEVENTS];
+  double valsum[MAXEVENTS];
+  double spread[MAXEVENTS];
   int nevents=MAXEVENTS;
   int eventset=PAPI_NULL;
   int events[MAXEVENTS];
@@ -145,8 +145,9 @@ int main(int argc, char **argv) {
       PAPI_label_event(events[j],des);
       if ( !TESTS_QUIET )
 	printf("%20s = %lld\n", des, values[j]);
-      valsum[j]+=values[j];
-      valsqsum[j]+=values[j]*values[j];
+      dtmp = (double) values[j];
+      valsum[j] += dtmp;
+      valsqsum[j] += dtmp * dtmp;
     }
     if ( !TESTS_QUIET )
       printf("\n");

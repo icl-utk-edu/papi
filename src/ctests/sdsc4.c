@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   char des[128];
   int i, j, retval, idx, repeats;
   int iters=10000000;
-  double x,y;
+  double x,y,dtmp;
   long_long t1,t2;  
   long_long values[MAXEVENTS],refvals[MAXEVENTS];
   int nsamples[MAXEVENTS];
@@ -232,8 +232,9 @@ int main(int argc, char **argv) {
       PAPI_label_event(events[idx],des);
       if ( !TESTS_QUIET )
 	printf("%20s = %lld\n", des, values[j]);
-      valsum[idx]+=values[j];
-      valsqsum[idx]+=values[j]*values[j];
+      dtmp = (double) values[j];
+      valsum[idx] += dtmp;
+      valsqsum[idx] += dtmp * dtmp;
       nsamples[idx]++;
     }
     if ( !TESTS_QUIET )

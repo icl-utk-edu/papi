@@ -190,8 +190,9 @@ int main(int argc, char **argv) {
       PAPI_label_event(events[j],des);
       if ( !TESTS_QUIET )
 	printf("%20s = %lld\n", des, values[j]);
-      valsum[j]+=values[j];
-      valsqsum[j]+=values[j]*values[j];
+      dtmp = (double) values[j];
+      valsum[j] += dtmp;
+      valsqsum[j] += dtmp * dtmp;
     }
     if ( !TESTS_QUIET )
       printf("\n");
@@ -199,8 +200,9 @@ int main(int argc, char **argv) {
       PAPI_label_event(events[nevents-j-1],des);
       if ( !TESTS_QUIET )
 	printf("%20s = %lld\n", des, val2[j]);
-      val2sum[j]+=val2[j];
-      val2sqsum[j]+=val2[j]*val2[j];
+      dtmp = (double) val2[j];
+      val2sum[j] += dtmp;
+      val2sqsum[j] += dtmp * dtmp;
     }
     if ( !TESTS_QUIET )
       printf("\n");
