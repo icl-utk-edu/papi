@@ -106,6 +106,9 @@ void papimon_start(void)
 	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	}
+      else if ( hwinfo->model>=11 ) /* Pentium 4 */{
+	    test_skip(__FILE__,__LINE__,"PAPI_add_event", PAPI_ESBSTR);
+      }
       else
 	{
 	  native = 0 | 0x43 << 8 | 0; /* Data mem refs */
