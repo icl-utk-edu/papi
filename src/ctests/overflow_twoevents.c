@@ -27,7 +27,9 @@ typedef struct {
   int count;
 } ocount_t;
 
-ocount_t overflow_counts[2] = {{0,0}, {0,0}};
+/* there are three possible vectors, one counter overflows, the other 
+   counter overflows, both overflow */
+ocount_t overflow_counts[3] = {{0,0}, {0,0}, {0,0}};
 int total_unknown = 0;
 
 void handler(int EventSet, void *address, long_long overflow_vector, void *context)
@@ -40,7 +42,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 
    /* Look for the overflow_vector entry */
 
-   for (i=0;i<2;i++)
+   for (i=0;i<3;i++)
      {
        if (overflow_counts[i].mask == overflow_vector)
 	 {
@@ -51,7 +53,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 
    /* Didn't find it so add it. */
 
-   for (i=0;i<2;i++)
+   for (i=0;i<3;i++)
      {
        if (overflow_counts[i].mask == (long_long)0)
 	 {
@@ -71,7 +73,8 @@ int main(int argc, char **argv)
    int EventSet;
    long_long(values[3])[2];
    int retval;
-   int PAPI_event;
+   int PAPI_event,k ;
+   long long vector;
    char event_name[PAPI_MAX_STR_LEN];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -159,15 +162,19 @@ int main(int argc, char **argv)
    printf("Test type    : %16d%16d\n", 1, 2);
    printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0]);
    printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1]);
-   printf("Case 2 %s Overflows: %d\n", "PAPI_TOT_CYC", overflow_counts[0].count);
-   printf("Case 2 %s Overflows: %d\n", event_name, overflow_counts[1].count);
+
+   if (overflow_counts[0].count == 0 && overflow_counts[1].count==0)
+      test_fail(__FILE__, __LINE__, "one counter had no overflows", 1);
+
+   for(k=0; k<3; k++ )
+   {
+      if (overflow_counts[k].mask) 
+         printf("Overflows vector 0x%x: %d\n", overflow_counts[k].mask,
+            overflow_counts[k].count);
+   }
    printf("Case 2 %s Overflows: %d\n", "Unknown", total_unknown);
    printf("-----------------------------------------------\n");
 
-   if (overflow_counts[0].count == 0)
-      test_fail(__FILE__, __LINE__, "Counter one had no overflows", 1);
-   if (overflow_counts[1].count == 0)
-      test_fail(__FILE__, __LINE__, "Counter two had no overflows", 1);
    if (total_unknown > 0)
       test_fail(__FILE__, __LINE__, "Unknown counter had overflows", 1);
 
