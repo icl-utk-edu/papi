@@ -6,6 +6,16 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.8, 2004-05-29
+- Added support for the IBM PowerPC 750GX processor.
+- Updated kernel support: 2.4.27-pre3, 2.6.7-rc1, 2.6.7-rc1-mm1,
+  2.4.21-15.EL (RHEL3), 2.6.5-1.358 (FC2).
+- Fixed an error in the 2.4.21-193 SuSE kernel patch file which
+  broke compilation on x86-64.
+- Perfctr and Oprofile can now coexist safely in newer kernels,
+  thanks to changes in kernel 2.6.6. Backported support for
+  those changes from perfctr-2.7.1.
+
 Version 2.6.7, 2004-05-04
 - Merged several x86_64-specific driver files with their x86
   counterparts, reducing the amount of duplicated code.

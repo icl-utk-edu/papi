@@ -3,6 +3,23 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.8, 2004-05-29
+- Added recognition of PowerPC 750GX.
+- Changes for the {reserve,release}_lapic_nmi() API added in
+  kernel 2.6.6 backported from perfctr-2.7.1:
+  * Starting with kernel 2.6.6 we no longer need access to
+    nmi_perfctr_msr, so removed EXPORT_SYMBOL() and <asm/apic.h>
+    patches related to this variable (except for older kernels).
+  * Updated x86.c to use the new API. Added simulation (without
+    the non-conflict guarantees) for older kernels.
+  * Moved hardware reservation to x86.c's "reserve" procedure.
+    The init code now only does read-only hardware detection.
+  * Added a mutex to the reserve/release procedures, eliminating
+  * a long-standing race possibility.
+  * Changed x86.c to reserve and release the hardware around its
+    call to perfctr_x86_init_tests().
+  * Similarly updated x86_64.c for the new API.
+
 Version 2.6.7, 2004-05-04
 - Replaced x86_64_tests.{c,h} with x86_tests.{c,h}.
 - sys_device_{,un}register() was renamed as sysdev_{,un}register()

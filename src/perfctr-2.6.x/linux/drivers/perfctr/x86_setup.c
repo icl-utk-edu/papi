@@ -100,7 +100,9 @@ EXPORT_SYMBOL_mmu_cr4_features;
 EXPORT_SYMBOL(perfctr_cpu_khz);
 
 #ifdef NMI_LOCAL_APIC
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,6)
 EXPORT_SYMBOL(nmi_perfctr_msr);
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,67) && defined(CONFIG_PM)
 EXPORT_SYMBOL(apic_pm_register);

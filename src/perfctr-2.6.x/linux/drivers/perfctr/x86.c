@@ -1472,7 +1472,7 @@ static int __init generic_init(void)
 	return 0;
 }
 
-static void __init perfctr_cpu_init_one(void *ignore)
+static void perfctr_cpu_init_one(void *ignore)
 {
 	/* PREEMPT note: when called via smp_call_function(),
 	   this is in IRQ context with preemption disabled. */
@@ -1483,7 +1483,7 @@ static void __init perfctr_cpu_init_one(void *ignore)
 		set_in_cr4_local(X86_CR4_PCE);
 }
 
-static void __exit perfctr_cpu_exit_one(void *ignore)
+static void perfctr_cpu_exit_one(void *ignore)
 {
 	/* PREEMPT note: when called via smp_call_function(),
 	   this is in IRQ context with preemption disabled. */
@@ -1535,13 +1535,13 @@ static struct sys_device device_perfctr = {
 	.cls	= &perfctr_sysclass,
 };
 
-static void __init x86_pm_init(void)
+static void x86_pm_init(void)
 {
 	if( sysdev_class_register(&perfctr_sysclass) == 0 )
 		sysdev_register(&device_perfctr);
 }
 
-static void __exit x86_pm_exit(void)
+static void x86_pm_exit(void)
 {
 	sysdev_unregister(&device_perfctr);
 	sysdev_class_unregister(&perfctr_sysclass);
@@ -1564,12 +1564,12 @@ static int x86_pm_callback(struct pm_dev *dev, pm_request_t rqst, void *data)
 
 static struct pm_dev *x86_pmdev;
 
-static void __init x86_pm_init(void)
+static void x86_pm_init(void)
 {
 	x86_pmdev = apic_pm_register(PM_SYS_DEV, 0, x86_pm_callback);
 }
 
-static void __exit x86_pm_exit(void)
+static void x86_pm_exit(void)
 {
 	if( x86_pmdev ) {
 		apic_pm_unregister(x86_pmdev);
@@ -1589,7 +1589,7 @@ static inline void x86_pm_exit(void) { }
 #ifdef NMI_LOCAL_APIC
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,67)
-static void __init disable_lapic_nmi_watchdog(void)
+static void disable_lapic_nmi_watchdog(void)
 {
 #ifdef CONFIG_PM
 	if( nmi_pmdev ) {
@@ -1600,20 +1600,37 @@ static void __init disable_lapic_nmi_watchdog(void)
 }
 #endif
 
-static void __init disable_nmi_watchdog(void)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,6)
+static int reserve_lapic_nmi(void)
 {
+	int ret = 0;
 	if( nmi_perfctr_msr ) {
 		nmi_perfctr_msr = 0;
 		disable_lapic_nmi_watchdog();
-		printk(KERN_NOTICE "perfctr: disabled lapic_nmi_watchdog\n");
+		ret = 1;
 	}
+	return ret;
 }
+
+static inline void release_lapic_nmi(void) { }
+#endif
 
 #else
 
-static inline void disable_nmi_watchdog(void) { }
+static inline int reserve_lapic_nmi(void) { return 0; }
+static inline void release_lapic_nmi(void) { }
 
 #endif
+
+static void do_init_tests(void)
+{
+#ifdef CONFIG_PERFCTR_INIT_TESTS
+	if( reserve_lapic_nmi() >= 0 ) {
+		perfctr_x86_init_tests();
+		release_lapic_nmi();
+	}
+#endif
+}
 
 static void invalidate_per_cpu_cache(void)
 {
@@ -1659,7 +1676,8 @@ int __init perfctr_cpu_init(void)
 		if( err )
 			goto out;
 	}
-	perfctr_x86_init_tests();
+	do_init_tests();
+#if 0
 	/*
 	 * Put the hardware in a sane state:
 	 * - finalise resolution of backpatchable call sites
@@ -1670,7 +1688,9 @@ int __init perfctr_cpu_init(void)
 	 */
 	if( perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC )
 		mmu_cr4_features |= X86_CR4_PCE;
+#endif
 	finalise_backpatching();
+#if 0
 	perfctr_cpu_init_one(NULL);
 	smp_call_function(perfctr_cpu_init_one, NULL, 1, 1);
 	perfctr_cpu_set_ihandler(NULL);
@@ -1681,6 +1701,7 @@ int __init perfctr_cpu_init(void)
 	 */
 	disable_nmi_watchdog();
 	x86_pm_init();
+#endif
 
 	invalidate_per_cpu_cache();
 
@@ -1694,6 +1715,7 @@ int __init perfctr_cpu_init(void)
 
 void __exit perfctr_cpu_exit(void)
 {
+#if 0
 	preempt_disable();
 	if( perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC )
 		mmu_cr4_features &= ~X86_CR4_PCE;
@@ -1703,6 +1725,7 @@ void __exit perfctr_cpu_exit(void)
 	x86_pm_exit();
 	/* XXX: restart nmi watchdog? */
 	preempt_enable();
+#endif
 }
 
 /****************************************************************
@@ -1711,35 +1734,51 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
+static DECLARE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
 {
-	if( current_service )
-		return current_service;
+	const char *ret;
+
+	down(&mutex);
+	ret = current_service;
+	if( ret )
+		goto out_up;
+	ret = "unknown driver (oprofile?)";
+	if( reserve_lapic_nmi() < 0 )
+		goto out_up;
 	current_service = service;
 	__module_get(THIS_MODULE);
-	return 0;
-}
-
-static void perfctr_cpu_clear_one(void *ignore)
-{
-	/* PREEMPT note: when called via smp_call_function(),
-	   this is in IRQ context with preemption disabled. */
-	perfctr_cpu_clear_counters();
+	if( perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC )
+		mmu_cr4_features |= X86_CR4_PCE;
+	on_each_cpu(perfctr_cpu_init_one, NULL, 1, 1);
+	perfctr_cpu_set_ihandler(NULL);
+	x86_pm_init();
+	ret = NULL;
+ out_up:
+	up(&mutex);
+	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
+	down(&mutex);
 	if( service != current_service ) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
-	} else {
-		/* power down the counters */
-		invalidate_per_cpu_cache();
-		on_each_cpu(perfctr_cpu_clear_one, NULL, 1, 1);
-		perfctr_cpu_set_ihandler(NULL);
-		current_service = 0;
-		module_put(THIS_MODULE);
+		goto out_up;
 	}
+	/* power down the counters */
+	invalidate_per_cpu_cache();
+	if( perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC )
+		mmu_cr4_features &= ~X86_CR4_PCE;
+	on_each_cpu(perfctr_cpu_exit_one, NULL, 1, 1);
+	perfctr_cpu_set_ihandler(NULL);
+	x86_pm_exit();
+	current_service = 0;
+	release_lapic_nmi();
+	module_put(THIS_MODULE);
+ out_up:
+	up(&mutex);
 }

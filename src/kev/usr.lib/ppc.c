@@ -22,6 +22,7 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
 	break;
       case 0x0008: /* 750/740 */
       case 0x7000: case 0x7001: /* 750FX */
+      case 0x7002: /* 750GX */
 	cpu_type = PERFCTR_PPC_750;
 	break;
       case 0x000C: /* 7400 */

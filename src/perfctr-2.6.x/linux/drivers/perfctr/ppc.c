@@ -889,6 +889,7 @@ static int __init generic_init(void)
 		pll_type = PLL_750;
 		break;
 	case 0x7000: case 0x7001: /* IBM750FX */
+	case 0x7002: /* IBM750GX */
 		pm_type = PM_750;
 		pll_type = PLL_750FX;
 		break;
