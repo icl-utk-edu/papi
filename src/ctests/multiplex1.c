@@ -232,7 +232,7 @@ int case4(void)
   if (retval != PAPI_OK)
     handle_error("PAPI_set_multiplex",__LINE__,retval);
 
-#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX))
+#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX) || defined(mips))
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
     handle_error("PAPI_add_event",__LINE__,retval);
