@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 	}
       if ( !TESTS_QUIET ) {
       if(uniq_cyc==ITERS-1)
-	printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
+	printf("PAPI_get_virt_cyc : %7.3f   <%7.3f\n",
 	       (double)total_cyc/(double)(ITERS),
 	       (double)total_cyc/(double)uniq_cyc);
       else if(uniq_cyc)
