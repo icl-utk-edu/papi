@@ -107,6 +107,7 @@ int main(int argc, char **argv)
 
    /* Warm me up */
    do_l1misses(ITERS);
+   do_misses(1, 1024*1024*4);
 
    for (i=0; i<10; i++) {
       retval = PAPI_start(EventSet1);
