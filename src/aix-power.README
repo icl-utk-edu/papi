@@ -1,6 +1,12 @@
 Title: Notes for AIX 4.3.x and AIX 5.x on IBM Power 630, 604, 604e (POWER3)
 	and AIX 5.x on POWER4
 
+If you are running papi-3.0 on aix5.2 & power4 combo, and seeing failure. It is 
+most likely caused by the BUG in the KERNEL. You need look for efix for APAR IY57280, or
+contact papi team at papi@cs.utk.edu for the fix. Here is the more precise info from IBM:
+the problam was introduced in 5.2 ML3, and fixed in 5.2 ML4 and 5.3.
+
+
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
  this function would return the next native event code.
     modifer=0    it simply returns next native event code
