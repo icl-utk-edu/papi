@@ -168,8 +168,10 @@ int PAPI_set_thr_specific(int tag, void *ptr)
    if (tag < 0 || tag > PAPI_MAX_THREAD_STORAGE)
       papi_return(PAPI_EINVAL);
    thread = _papi_hwi_lookup_in_thread_list();
-   if (thread == NULL)
+   if (thread == NULL) {
+      printf("error in set_thr_specific\n");
       papi_return(PAPI_EBUG);
+   }
    thread->thread_storage[tag] = ptr;
    papi_return(PAPI_OK);
 }
@@ -937,8 +939,12 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          /* Try to change the domain of the eventset in the hardware */
 
          internal.defdomain.defdomain = dom;
+         retval = _papi_hwd_ctl(&thread->context, PAPI_DEFDOM, &internal);
+         if (retval < PAPI_OK)
+            papi_return(retval);
 
          /* Change the domain of the master eventset in this thread */
+
          thread->domain = dom;
 
          /* Change the global structure. This should be removed but is
@@ -949,7 +955,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          _papi_hwi_system_info.default_domain = dom;
 
-         return (PAPI_OK);
+         return (retval);
       }
    case PAPI_DOMAIN:
       {
@@ -1471,7 +1477,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)
 {
    int i, retval;
 
-   if ((Events == NULL) || (number <= 0))
+   if ((Events == NULL) || (number < 0))
       papi_return(PAPI_EINVAL);
 
    for (i = 0; i < number; i++) {

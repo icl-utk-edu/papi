@@ -18,11 +18,13 @@ CC_SHR		= $(CC) -ztext -G -Kpic -R $(PWD) -h libpapi.so
 CFLAGS  	= -DNO_VARARG_MACRO 
 SMPCFLGS	= -xexplicitpar
 OMPCFLGS	= -xopenmp
-F77		= f77
+F77		= f90
 FFLAGS		= $(CFLAGS)
 TOPTFLAGS	= -g
 NOOPT		= -xO0 -g
-OPTFLAGS	= -fast
+OPTFLAGS	= -fast -xarch=v8plus -mt
+#for 64-bit use:
+#OPTFLAGS = -fast -xarch=v9
 #
 # GNU gcc 2.95.3
 #

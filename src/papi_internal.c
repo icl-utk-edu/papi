@@ -175,6 +175,9 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** master)
    if ((*master = allocate_new_thread()) == NULL)
       papi_return(PAPI_ENOMEM);
 
+   if (_papi_hwi_thread_id_fn)
+      (*master)->tid = (*_papi_hwi_thread_id_fn) ();
+
    /* Call the substrate to fill in anything special. */
 
    retval = _papi_hwd_init(&((*master)->context));
@@ -183,8 +186,6 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** master)
       return (retval);
    }
 
-   if (_papi_hwi_thread_id_fn)
-      (*master)->tid = (*_papi_hwi_thread_id_fn) ();
    return (PAPI_OK);
 }
 

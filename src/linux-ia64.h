@@ -24,8 +24,13 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
+#include <fcntl.h>
 
 #include "perfmon/pfmlib.h"
+#include "perfmon/perfmon.h"
+#ifdef PFM30
+  #include "perfmon/perfmon_default_smpl.h"
+#endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
 #else
@@ -33,22 +38,13 @@
 #endif
 
 #include "papi.h"
-
 #define MAX_COUNTER_TERMS 4
 #ifdef ITANIUM2
 #define MAX_NATIVE_EVENT  475   /* the number comes from itanium_events.h */
 #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-#define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita2_count_reg.pmc_plm)
-#define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita2_count_reg.pmc_es)
-typedef pfm_ita2_reg_t pfmw_arch_reg_t;
-typedef pfmlib_ita2_param_t pfmw_ita_param_t;
 #else                           /* itanium */
 #define MAX_NATIVE_EVENT  230   /* the number comes from itanium_events.h */
 #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-#define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita_count_reg.pmc_plm)
-#define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita_count_reg.pmc_es)
-typedef pfm_ita_reg_t pfmw_arch_reg_t;
-typedef pfmlib_ita_param_t pfmw_ita_param_t;
 #endif
 
 #include "papi_preset.h"
@@ -56,6 +52,27 @@ typedef pfmlib_ita_param_t pfmw_ita_param_t;
 typedef int hwd_register_t;
 typedef int hwd_register_map_t;
 typedef int hwd_reg_alloc_t;
+
+#ifdef PFM30
+   #define NUM_PMCS PFMLIB_MAX_PMCS
+   #define NUM_PMDS PFMLIB_MAX_PMDS
+   typedef struct param_t {
+      pfarg_reg_t pc[NUM_PMCS];
+      pfmlib_input_param_t inp;
+      pfmlib_output_param_t outp;
+   } pfmw_param_t;
+   typedef int pfmw_ita_param_t;
+   #define PMU_FIRST_COUNTER  4
+#else
+ #ifdef ITANIUM2
+      typedef pfmlib_ita2_param_t pfmw_ita_param_t;
+ #else
+      typedef pfmlib_ita_param_t pfmw_ita_param_t;
+ #endif
+   #define NUM_PMCS PMU_MAX_PMCS
+   #define NUM_PMDS PMU_MAX_PMDS
+   typedef pfmlib_param_t pfmw_param_t;
+#endif
 
 typedef struct hwd_control_state {
    /* Arg to perfmonctl */
@@ -66,10 +83,10 @@ typedef struct hwd_control_state {
    pfmw_ita_param_t ita_lib_param;
 
    /* Buffer to pass to kernel to control the counters */
-   pfmlib_param_t evt;
+   pfmw_param_t evt;
 
    long_long counters[MAX_COUNTERS];
-   pfarg_reg_t pd[PMU_MAX_PMCS];
+   pfarg_reg_t pd[NUM_PMDS];
 
 /* sampling buffer address */
    void *smpl_vaddr;
@@ -89,7 +106,11 @@ typedef struct itanium_preset_search {
 typedef int hwd_context_t;
 
 /* for _papi_hwi_context_t */
-typedef pfm_siginfo_t hwd_siginfo_t;
+#ifdef PFM30
+   typedef struct siginfo  hwd_siginfo_t;
+#else
+   typedef pfm_siginfo_t hwd_siginfo_t;
+#endif
 typedef struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip

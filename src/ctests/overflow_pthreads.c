@@ -28,7 +28,7 @@ void handler(int EventSet, void *address, long_long overflow_vector)
       fprintf(stderr, "handler(%d ) Overflow at %x, thread 0x%x!\n",
               EventSet, address, PAPI_thread_id());
 #else
-      fprintf(stderr, "handler(%d) Overflow at %p, thread 0x%lux!\n",
+      fprintf(stderr, "handler(%d) Overflow at %p, thread 0x%lx!\n",
               EventSet, address, PAPI_thread_id());
 #endif
    }

@@ -152,6 +152,15 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
    }
 }
 
+/*  * Return a pointer to the hwd_context_t.
+ */
+int  _papi_hwi_get_thr_context(void ** ptr)
+{  
+   ThreadInfo_t *thread;
+   thread = _papi_hwi_lookup_in_thread_list();
+   *ptr = &thread->context; 
+   return(PAPI_OK);
+}  
 
 
 #ifdef ANY_THREAD_GETS_SIGNAL
