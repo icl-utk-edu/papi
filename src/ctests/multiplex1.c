@@ -244,7 +244,7 @@ int case4()
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E)
+#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux))
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);

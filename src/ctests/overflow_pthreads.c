@@ -16,57 +16,13 @@
 */
 
 #include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include <sys/time.h>
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 #define THRESHOLD 500000
 
 int total = 0;
-
-static void sigprof_handler(int sig)
-{
-  if ( !TESTS_QUIET )
-     fprintf(stderr,"sigprof_handler(), PID %d TID %d\n",
-	  getpid(),(int)pthread_self());
-}
-
-static void start_sig(void)
-{
-  struct sigaction action;
-  int retval;
-
-  memset(&action,0x00,sizeof(struct sigaction));
-  action.sa_handler = (void(*)(int))sigprof_handler;
-  if (sigaction(SIGPROF, &action, NULL) == -1){
-     retval=PAPI_ESYS;
-     test_fail(__FILE__,__LINE__,"sigaction",retval);
-  }
-}
-
-void start_timer(int milliseconds)
-{
-  struct itimerval value;
-  int retval;
-
-  start_sig();
-  value.it_interval.tv_sec = 0;
-  value.it_interval.tv_usec = milliseconds * 1000;
-  value.it_value.tv_sec = 0;
-  value.it_value.tv_usec = milliseconds * 1000;
-  if (setitimer(ITIMER_PROF, &value, NULL) == -1){
-     retval=PAPI_ESYS;
-     test_fail(__FILE__,__LINE__,"setitimer",retval);
-  }
-}
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {

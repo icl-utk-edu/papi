@@ -10,18 +10,12 @@
 /* This file tests the multiplex pthread functionality when there are
  * threads in which the application isn't calling PAPI (and only
  * one thread that is calling PAPI.)
+ *
+ * This test will fail on most, if not all platforms due to signal handling.
  */ 
 
 #include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 #define NUM 10
 #define NUM_THREADS 4
@@ -191,6 +185,5 @@ int main(int argc, char **argv)
   test_pass(__FILE__,NULL,0);
 
   pthread_attr_destroy(&attr);
-
   exit(0);
 }

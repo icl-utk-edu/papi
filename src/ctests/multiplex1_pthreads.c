@@ -221,7 +221,7 @@ void *case4_pthreads(void *arg)
   if((retval = PAPI_set_multiplex(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX) || defined(mips))
+#if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || (defined(__ia64__) && defined(linux))
   if((retval = PAPI_add_event(&EventSet, PAPI_L1_DCM))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 

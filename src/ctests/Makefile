@@ -174,8 +174,7 @@ test_utils.o: test_utils.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c test_utils.c
 
 clean:
-	rm -f *.o $(ALL) core *~
-	rm -rf rii_files *.stderr *.stdout
+	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
 run: 
 	sh ./run_tests.sh

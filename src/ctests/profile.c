@@ -27,16 +27,7 @@
    - Stop eventset 1
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
@@ -44,7 +35,6 @@ int main(int argc, char **argv)
 {
   int i, num_events, num_tests = 6;
   int PAPI_event, mask;
-  int mask1;
   char event_name[PAPI_MAX_STR_LEN];
   int EventSet = PAPI_NULL;
   unsigned short *profbuf;

@@ -1,16 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
+
 #if defined(__ALPHA) && defined(__osf__)
 #include <machine/hal/cpuconf.h>
 #include <sys/pfcntr.h>
+
 long get_instr()
 {
   int cpu;
@@ -97,7 +90,7 @@ void papimon_start(void)
 	papi_native_code_t real_native;
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 4;
-	real_native.papi_native_bits.pme_mcode = 0x02;
+	real_native.papi_native_bits.pme_mcode = 0x02; 
 	native = real_native.papi_native_all;
         if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);

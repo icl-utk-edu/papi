@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 #endif
 
   if ( !TESTS_QUIET ) {
-	if (retval=PAPI_event_code_to_name(PAPI_event, event_name) != PAPI_OK)
+	if ((retval=PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
 		test_fail(__FILE__,__LINE__,"PAPI_event_code_to_name",retval);
 
 	printf("Test case: Overflow dispatch of 1st event in set with 1 event.\n");
