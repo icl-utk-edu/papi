@@ -130,3 +130,27 @@ void addaixevents__(int *EventSet, int *retval)
 {
    addaixevents(EventSet, retval);
 }
+
+void pmtoolkit12(int *retval)
+{
+#ifdef PMTOOLKIT_1_2
+  return(1);
+#else
+  return(0);
+}
+
+void pmtoolkit12_(int *retval)
+{
+  pmtoolkit12(retval);
+}
+
+void pmtoolkit12__(int *retval)
+{
+  pmtoolkit12(retval);
+}
+
+void PMTOOLKIT12(int *retval)
+{
+  pmtoolkit12(retval);
+}
+
