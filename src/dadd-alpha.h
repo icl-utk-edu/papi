@@ -1,5 +1,9 @@
+#ifndef _DADD_ALPHA_H
+#define _DADD_ALPHA_H
+
 #include <stdio.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -19,9 +23,10 @@
 /* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
 #include <sys/resource.h>
 
-#include "papi.h"
 #include "dadd.h"
 #include "virtual_counters.h"
+
+#define inline_static static
 
 #define VC_TOTAL_CYCLES 0
 #define VC_BCACHE_MISSES 1
@@ -75,20 +80,6 @@ typedef struct dadd_alpha_context {
    virtual_counters *ptr_vc;
 } dadd_alpha_context_t;
 
-typedef struct hwd_preset {
-   /* Which counters to use? Bits encode counters to use, may be duplicates */
-   unsigned char selector;
-   /* Is this event derived? */
-   unsigned char derived;
-   /* If the derived event is not associative, this index is the lead operand */
-   unsigned char operand_index;
-   /* Buffer to pass to the kernel to control the counters */
-   long counter_cmd;
-   long counter_cmd2;
-   /* Footnote to append to the description of this event */
-   char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
-
 typedef dadd_alpha_control_state_t hwd_control_state_t;
 
 typedef int hwd_register_t;     /* don't need this on dadd-alpha */
@@ -107,6 +98,6 @@ typedef struct native_info_t {
 } native_info_t;
 
 
-#include "papi_internal.h"
-
 extern unsigned long _etext, _ftext, _fdata, _edata;
+
+#endif

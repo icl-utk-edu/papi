@@ -10,8 +10,6 @@
 extern EventSetInfo_t *default_master_eventset;
 int papi_debug;
 
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
-
 /* Globals */
 
 #if 0
@@ -213,7 +211,7 @@ long long _papi_hwd_get_real_usec(void)
 
    if ((clock_gettime(CLOCK_REALTIME, &res) == -1))
       return (PAPI_ESYS);
-   return (res.tv_sec * 1000000) + (res.tv_nsec / 1000);
+   return((res.tv_sec * 1000000) + (res.tv_nsec / 1000));
 }
 
 long long _papi_hwd_get_real_cycles(void)
@@ -222,7 +220,7 @@ long long _papi_hwd_get_real_cycles(void)
            _papi_hwi_system_info.hw_info.mhz);
 }
 
-long long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t *zero)
 {
    struct rusage res;
 
@@ -231,7 +229,7 @@ long long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
    return ((res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec);
 }
 
-long long _papi_hwd_get_virt_cycles(EventSetInfo_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t *zero)
 {
    return ((long long) _papi_hwd_get_virt_usec(zero) *
            _papi_hwi_system_info.hw_info.mhz);
@@ -333,120 +331,6 @@ static void set_hwcntr_codes(int selector, long *from, ev_control_t * to)
    }
 }
 
-int _papi_hwd_add_event(hwd_control_state_t * this_state,
-                        unsigned int EventCode, EventInfo_t * out)
-{
-   int selector = 0;
-   int avail = 0;
-   long tmp_cmd[MAX_COUNTERS], *codes;
-
-   if (EventCode & PAPI_PRESET_MASK) {
-      int preset_index;
-      int derived;
-
-      preset_index = EventCode & PAPI_PRESET_AND_MASK;
-
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-         return (PAPI_ENOEVNT);
-      derived = preset_map[preset_index].derived;
-
-      /* Find out which counters are available. */
-
-      avail = selector & ~this_state->selector;
-
-      /* If not derived */
-
-      if (preset_map[preset_index].derived == 0) {
-         /* Pick any counter available */
-
-         selector = get_avail_hwcntr_bits(avail);
-         if (selector == 0)
-            return (PAPI_ECNFLCT);
-      } else {
-         /* Check the case that if not all the counters 
-            required for the derived event are available */
-
-         if ((avail & selector) != selector)
-            return (PAPI_ECNFLCT);
-      }
-
-      /* Get the codes used for this event */
-
-      codes = preset_map[preset_index].counter_cmd;
-/*
-      out->command = derived;
-      out->operand_index = preset_map[preset_index].operand_index;
-*/
-   } else {
-      int hwcntr_num;
-
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0xff;    /* 0 through 7 */
-      if ((hwcntr_num > _papi_hwi_system_info.num_gp_cntrs) ||
-          (hwcntr_num < 0))
-         return (PAPI_EINVAL);
-
-      tmp_cmd[hwcntr_num] = EventCode >> 8;     /* 0 through 50 */
-      if (tmp_cmd[hwcntr_num] > 50)
-         return (PAPI_EINVAL);
-
-      selector = 1 << hwcntr_num;
-
-      /* Check if the counter is available */
-
-      if (this_state->selector & selector)
-         return (PAPI_ECNFLCT);
-
-      codes = tmp_cmd;
-   }
-
-   /* Lower eight bits tell us what counters we need */
-
-   assert((this_state->selector | 0xff) == 0xff);
-
-   /* Perform any initialization of the control bits */
-
-   if (this_state->selector == 0)
-      init_config(this_state);
-
-   /* Turn on the bits for this counter */
-
-   set_hwcntr_codes(selector, codes, &this_state->counter_cmd);
-
-   /* Update the new counter select field. */
-
-   this_state->selector |= selector;
-
-   /* Inform the upper level that the software event 'index' 
-      consists of the following information. */
-
-/*
-  out->code = EventCode;
-  out->selector = selector;
-*/
-
-   return (PAPI_OK);
-}
-
-int _papi_hwd_rem_event(hwd_control_state_t * this_state, EventInfo_t * in)
-{
-   int selector, used, preset_index;
-
-#if 0
-   /* Find out which counters used. */
-
-   used = in->selector;
-
-   /* Clear out counters that are part of this event. */
-
-   this_state->selector = this_state->selector ^ used;
-#endif
-
-   return (PAPI_OK);
-}
-
 int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
                              unsigned int event, void *extra,
                              EventInfo_t * out)
@@ -458,88 +342,6 @@ void dump_cmd(ev_control_t * t)
 {
    SUBDBG("Command block at %p: 0x%x\n", t, t->ev6);
 }
-
-/* EventSet zero contains the 'current' state of the counting hardware */
-
-#if 0
-int _papi_hwd_merge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
-{
-   int i, retval;
-   hwd_control_state_t *this_state = &ESI->machdep;
-   hwd_control_state_t *current_state = &zero->machdep;
-   union pmctrs_ev6 start_em;
-   long tmp;
-
-   /* If we ARE NOT nested, 
-      just copy the global counter structure to the current eventset */
-
-   if (current_state->selector == 0x0) {
-      current_state->selector = this_state->selector;
-      memcpy(&current_state->counter_cmd, &this_state->counter_cmd,
-             sizeof(current_state->counter_cmd));
-
-      /* clear driver */
-
-      retval = ioctl(current_state->fd, PCNTCLEARCNT);
-      if (retval == -1)
-         return (PAPI_ESYS);
-
-      /* select events */
-
-      SUBDBG( "PCNT6MUX command %lx\n",
-           current_state->counter_cmd.ev6);
-      retval =
-          ioctl(current_state->fd, PCNT6MUX,
-                &current_state->counter_cmd.ev6);
-      if (retval == -1)
-         return (PAPI_ESYS);
-
-      /* zero and restart selected counters */
-
-      start_em.pmctrs_ev6_long = 0;
-      start_em.pmctrs_ev6_cpu = PMCTRS_ALL_CPUS;
-      start_em.pmctrs_ev6_select = PF6_SEL_COUNTER_0 | PF6_SEL_COUNTER_1;
-      retval =
-          ioctl(current_state->fd, PCNT6RESTART,
-                &start_em.pmctrs_ev6_long);
-      if (retval == -1)
-         return PAPI_ESYS;
-
-      return (PAPI_OK);
-   }
-  
-   /* Set up the new merged control structure */
-
-#if 0
-   dump_cmd(&current_state->counter_cmd);
-#endif
-
-   /* Stop the current context */
-
-   retval = ioctl(current_state->fd, PCNTCLEARCNT);
-   if (retval == -1)
-      return (PAPI_ESYS);
-
-   /* (Re)start the counters */
-
-   retval =
-       ioctl(current_state->fd, PCNT6MUX, &current_state->counter_cmd);
-   if (retval == -1)
-      return (PAPI_ESYS);
-
-   return (PAPI_OK);
-}
-
-int _papi_hwd_unmerge(EventSetInfo_t * ESI, EventSetInfo_t * zero)
-{
-   int i, tmp, hwcntr, retval;
-   hwd_control_state_t *this_state = &ESI->machdep;
-   hwd_control_state_t *current_state = &zero->machdep;
-
-   current_state->selector = 0;
-   return (PAPI_OK);
-}
-#endif
 
 int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
@@ -592,7 +394,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
 
    ctrl->cntrs[0] += cntrs[0].pf_cntr0;
    ctrl->cntrs[1] += cntrs[0].pf_cntr1;
-   *events = ctrl->cntrs;
+   *events = (long long *)ctrl->cntrs;
 
    /* clear drivers counts */
    retval = ioctl(ctx->fd, PCNTCLEARCNT);
@@ -876,7 +678,7 @@ void _papi_hwd_unlock(int lck)
 }
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
-                              ucontext_t * info)
+                              void * info)
 {
    _papi_hwi_context_t ctx;
    ctx.si = si;

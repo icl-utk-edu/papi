@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <time.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/pfcntr.h>
@@ -23,8 +24,7 @@
 /* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
 #include <sys/resource.h>
 
-#include "papi.h"
-
+#define inline_static static 
 #define MAX_COUNTERS 2
 /*
 #define EV_MAX_COUNTERS 3
@@ -75,23 +75,6 @@ typedef siginfo_t hwd_siginfo_t;
 typedef struct sigcontext hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->sc_pc)
 
-
-#include "papi_internal.h"
-
-/* Preset structure */
-
-typedef struct hwd_preset {
-   /* Which counters to use? Bits encode counters to use, may be duplicates */
-   unsigned char selector;
-   /* Is this event derived? */
-   unsigned char derived;
-   /* If the derived event is not associative, this index is the lead operand */
-   unsigned char operand_index;
-   /* Buffer to pass to the kernel to control the counters */
-   long counter_cmd[MAX_COUNTERS];
-   /* Footnote to append to the description of this event */
-   char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
 
 typedef struct hwd_search {
    /* PAPI preset code */

@@ -1,11 +1,15 @@
-#include "dadd-alpha.h"
+/* This substrate should never malloc anything. All allocation should be
+   done by the high level API. */
+
+#include "papi.h"
+#include SUBSTRATE
 #include "papi_preset.h"
+#include "papi_internal.h"
+#include "papi_protos.h"
+
 
 extern EventSetInfo_t *default_master_eventset;
 
-/*
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
-*/
 extern papi_mdi_t _papi_hwi_system_info;
 
 static hwi_search_t findem_dadd[] = {
@@ -201,7 +205,7 @@ long long _papi_hwd_get_real_cycles(void)
            _papi_hwi_system_info.hw_info.mhz);
 }
 
-long long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    struct rusage res;
 
@@ -210,7 +214,7 @@ long long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
    return ((res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec);
 }
 
-long long _papi_hwd_get_virt_cycles(EventSetInfo_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
    return ((long long) _papi_hwd_get_virt_usec(zero) *
            _papi_hwi_system_info.hw_info.mhz);
@@ -406,7 +410,7 @@ void _papi_hwd_unlock(int lck)
 }
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
-                              struct sigcontext *info)
+                              void *info)
 {
    _papi_hwi_context_t ctx;
    ctx.si = si;
