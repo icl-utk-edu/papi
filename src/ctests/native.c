@@ -66,7 +66,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *native_name[] = { "retired_mispred_branch_type_CONDITIONAL", "resource_stall_SBFULL",
       "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL
    };
-#elif (defined(linux) && (defined(__i386__) || (defined __x86_64__)))
+#elif ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
    static char *native_name[5] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 #endif
 
