@@ -5,7 +5,7 @@ TARGETS	= serial
 
 CFLAGS	= -h calchars -DFORTRANCAPS
 FFLAGS	= -F 
-OPTFLAGS= -O3
+OPTFLAGS= -O3 -DNDEBUG
 NOOPT	= -O0
 CC_R	= cc
 CC	= cc

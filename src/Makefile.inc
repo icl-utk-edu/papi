@@ -63,9 +63,10 @@ clean: libclean
 null:
 
 dist: 
-	chmod -R 644 *
-	chgrp -R papi *
-	cd ..; tar cvf papisrc.tar src; gzip papisrc.tar
+	$(MAKE) -f Makefile.$(SUBSTR) install DESTDIR=`pwd`/papi-$(SUBSTR)
+	tar cfv ./papi-$(SUBSTR).tar ./papi-$(SUBSTR)
+	gzip ./papi-$(SUBSTR).tar
+	rm -rf ./papi-$(SUBSTR)
 
 install: all
 	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 

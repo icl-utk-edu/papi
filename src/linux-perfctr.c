@@ -14,7 +14,9 @@ A high bit in the mask entry means it is an OR mask, not an
 and mask. This means that the same even is available on either
 counter. */
 
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
+static hwd_preset_t *preset_map;
+
+static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
                 {CNTR2|CNTR1,0,0,{{0x45,0x45,0x0,0x0}},""},	// L1 Cache Dmisses 
                 {CNTR2|CNTR1,0,0,{{0x81,0x81,0x0,0x0}},""},	// L1 Cache Imisses 
 		{0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Cache Dmisses
@@ -121,6 +123,113 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{0,0,0,{{0,0,0x0,0x0}},""}, // FPI
              };
 
+static hwd_preset_t k7_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
+                {ALLCNTRS,0,0,{{0x41,0x41,0x41,0x41}},""},	// L1 Cache Dmisses 
+                {ALLCNTRS,0,0,{{0x81,0x81,0x81,0x81}},""},	// L1 Cache Imisses 
+		{ALLCNTRS,0,0,{{0x42,0x42,0x42,0x42}},""}, 	// L2 Cache Dmisses
+		{ALLCNTRS,0,0,{{0x83,0x83,0x83,0x83}},""}, 	// L2 Cache Imisses
+		{0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Dmisses
+		{0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Imisses
+		{ALLCNTRS,0,0,{{0x73,0x73,0x73,0x73}},""}, 	// L1 Total Cache misses 
+		{0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Total Cache misses
+		{0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Total Cache misses
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Snoops
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Req. access to shared cache line
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Req. access to clean cache line
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Req. Cache Line Invalidation
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Req. Cache Line Intervention
+                {0,0,0,{{0,0,0x0,0x0}},""},			// L3 LDM
+                {0,0,0,{{0,0,0x0,0x0}},""},			// L3 STM
+                {0,0,0,{{0,0,0x0,0x0}},""},			// cycles branch idle
+                {0,0,0,{{0,0,0x0,0x0}},""},			// cycles int idle
+                {0,0,0,{{0,0,0x0,0x0}},""},			// cycles fpu idle
+                {0,0,0,{{0,0,0x0,0x0}},""},			// cycles load/store idle
+		{ALLCNTRS,0,0,{{0x46,0x46,0x46,0x46}},""},	// D-TLB misses
+		{CNTR1|CNTR2,DERIVED_ADD,0,{{0x84,0x85,0x0,0x0}},""},	        // I-TLB misses
+                {CNTR1|CNTR2|CNTR3,DERIVED_ADD,0,{{0x84,0x85,0x46,0x0}},""},	// Total TLB misses
+                {0,0,0,{{0,0,0x0,0x0}},""},		   	// L1 load M
+                {0,0,0,{{0,0,0x0,0x0}},""},		   	// L1 store M
+                {0,0,0,{{0,0,0x0,0x0}},""},			// L2 load M
+                {0,0,0,{{0,0,0x0,0x0}},""},			// L2 store M
+                {0,0,0,{{0,0,0x0,0x0}},""},		   	// BTAC misses
+                {0,0,0,{{0,0,0x0,0x0}},""},	                // Prefmiss
+                {0,0,0,{{0,0,0x0,0x0}},""},			// L3DCH
+		{0,0,0,{{0,0,0x0,0x0}},""},			// TLB shootdowns
+                {0,0,0,{{0,0,0x0,0x0}},""},			// Failed Store cond.
+                {0,0,0,{{0,0,0x0,0x0}},""},			// Suc. store cond.
+                {0,0,0,{{0,0,0x0,0x0}},""},			// total. store cond.
+                {0,0,0,{{0,0,0x0,0x0}},""},	                /* Cycles stalled waiting for memory */
+                {0,0,0,{{0,0,0x0,0x0}},""},		   	/* Cycles stalled waiting for memory read */
+                {0,0,0,{{0,0,0x0,0x0}},""},		   	/* Cycles stalled waiting for memory write */
+                {0,0,0,{{0,0,0x0,0x0}},""},		   	/* Cycles no instructions issued */
+                {0,0,0,{{0,0,0x0,0x0}},""},			/* Cycles max instructions issued */
+                {0,0,0,{{0,0,0x0,0x0}},""},			/* Cycles no instructions completed */
+                {0,0,0,{{0,0,0x0,0x0}},""},			/* Cycles max instructions completed */
+                {ALLCNTRS,0,0,{{0xcf,0xcf,0xcf,0xcf}},""},	// hardware interrupts
+		{ALLCNTRS,0,0,{{0xc6,0xc6,0xc6,0xc6}},""},	// Uncond. branches executed
+		{ALLCNTRS,0,0,{{0xC2,0xC2,0xc2,0xc2}},""},	// Cond. Branch inst. executed
+		{ALLCNTRS,0,0,{{0xC4,0xC4,0xc4,0xc4}},""},	// Cond. Branch inst. taken
+		{CNTR1|CNTR2,DERIVED_SUB,0,{{0xC4,0xC2,0x0,0x0}},""}, // Cond. Branch inst. not taken
+                {ALLCNTRS,0,0,{{0xC3,0xC3,0xC3,0xC3}},""},	// Cond. branch inst. mispred.
+                {CNTR1|CNTR2,DERIVED_SUB,0,{{0xC2,0xC3,0x0,0x0}},""}, // Cond. branch inst. corr. pred.
+                {0,0,0,{{0,0,0x0,0x0}},""},			// FMA
+		{0,0,0,{{0,0,0x0,0x0}},""},                     // Total inst. issued
+		{ALLCNTRS,0,0,{{0xC0,0xC0,0xC0,0xC0}},""},	// Total inst. executed
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Integer inst. executed
+		{0,0,0,{{0,0,0x0,0x0}},""},                     // Floating Pt. inst. executed
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Loads executed
+		{0,0,0,{{0,0,0x0,0x0}},""},			// Stores executed
+		{ALLCNTRS,0,0,{{0xC4,0xC4,0x0,0x0}},""},	// Branch inst. executed
+		{ALLCNTRS,0,0,{{0xB0,0xB0,0x0,0x0}},""},	// Vector/SIMD inst. executed 
+		{0,0,0,{{0,0,0x0,0x0}},""},                     // FLOPS
+		{ALLCNTRS,0,0,{{0xd9,0xd9,0xd9,0xd9}},""},      // Cycles any resource stalls
+                {0,0,0,{{0,0,0x0,0x0}},""}, // Cycles FPU stalled
+		{ALLCNTRS,0,0,{{0x76,0x76,0x76,0x76}},""},	// Total cycles
+		{CNTR1|CNTR2,DERIVED_PS,1,{{0xC0,0x76,0x0,0x0}},""}, // IPS
+		{0,0,0,{{0,0,0x0,0x0}},""}, // Total load/store inst. exec
+                {0,0,0,{{0,0,0x0,0x0}},""}, // SYnc exec.
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_DCH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_DCH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_DCA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_DCA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_DCA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_DCR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_DCR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_DCR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_DCW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_DCW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_DCW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_ICH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_ICH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_ICH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_ICA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_ICA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_ICA
+		{ALLCNTRS,0,0,{{0x80,0x80,0x80,0x80}},""}, // L1_ICR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_ICR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_ICR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_ICW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_ICW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_ICW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_TCH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_TCH
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_TCH
+		{CNTR1|CNTR2,DERIVED_ADD,0,{{0x40,0x80,0x0,0x0}},""}, // L1_TCA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_TCA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_TCA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_TCR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_TCR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_TCR
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L1_TCW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L2_TCW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // L3_TCW
+		{0,0,0,{{0,0,0x0,0x0}},""}, // FPM
+		{0,0,0,{{0,0,0x0,0x0}},""}, // FPA
+		{0,0,0,{{0,0,0x0,0x0}},""}, // FPD
+		{0,0,0,{{0,0,0x0,0x0}},""}, // FPSQ
+		{0,0,0,{{0,0,0x0,0x0}},""}, // FPI
+             };
+
 /* Low level functions, should not handle errors, just return codes. */
 
 inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
@@ -180,10 +289,22 @@ static float calc_mhz(void)
   return(mhz);
 }
 
-inline static int setup_all_presets(void)
+inline static int setup_all_presets(int cpu_type)
 {
   int pnum, s;
   char note[100];
+
+  if ((cpu_type == PERFCTR_X86_WINCHIP_C6) ||
+      (cpu_type == PERFCTR_X86_WINCHIP_2))
+    {
+      fprintf(stderr,"Ask yourself, why am I tuning code on a WinChip?\n");
+      abort();
+    }
+
+  if (cpu_type == PERFCTR_X86_AMD_K7)
+    preset_map = k7_preset_map;
+  else
+    preset_map = p6_preset_map;
 
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
     {
@@ -194,6 +315,15 @@ inline static int setup_all_presets(void)
 	      sprintf(note,"0x%x,0x%x",
 		      preset_map[pnum].counter_cmd.evntsel[0],
 		      preset_map[pnum].counter_cmd.evntsel[1]);
+	      strcat(preset_map[pnum].note,note);
+	    }
+	  else if (_papi_system_info.num_cntrs == 4)
+	    {
+	      sprintf(note,"0x%x,0x%x,0x%x,0x%x",
+		      preset_map[pnum].counter_cmd.evntsel[0],
+		      preset_map[pnum].counter_cmd.evntsel[1],
+		      preset_map[pnum].counter_cmd.evntsel[2],
+		      preset_map[pnum].counter_cmd.evntsel[3]);
 	      strcat(preset_map[pnum].note,note);
 	    }
 	  else
@@ -312,7 +442,7 @@ static int get_system_info(struct perfctr_dev *dev)
     return(PAPI_ESYS);
 
   strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(dev));
-  _papi_system_info.hw_info.model = info.cpu_type;
+  _papi_system_info.hw_info.model = (int)info.cpu_type;
   _papi_system_info.hw_info.mhz = info.cpu_khz / 1000; 
   DBG((stderr,"Detected MHZ is %f\n",_papi_system_info.hw_info.mhz));
   mhz = calc_mhz();
@@ -329,7 +459,7 @@ static int get_system_info(struct perfctr_dev *dev)
 
   /* Setup presets */
 
-  tmp = setup_all_presets();
+  tmp = setup_all_presets((int)info.cpu_type);
   if (tmp)
     return(tmp);
 

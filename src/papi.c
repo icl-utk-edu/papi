@@ -1071,7 +1071,7 @@ int PAPI_stop(int EventSet, long long *values)
   thread_master_eventset = ESI->master;
 
   if (!(ESI->state & PAPI_RUNNING))
-    papi_return(PAPI_EISRUN);
+    papi_return(PAPI_ENOTRUN);
 
   retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);
   if (retval != PAPI_OK)
@@ -1470,12 +1470,12 @@ char *PAPI_strerror(int errorCode)
 
 int PAPI_perror(int code, char *destination, int length)
 {
-  char *bar = "No such PAPI error code";
   char *foo;
 
   foo = PAPI_strerror(code);
   if (foo == NULL)
-    foo = bar;
+    papi_return(PAPI_EINVAL);
+
   if (destination && (length >= 0))
     strncpy(destination,foo,length);
   else
@@ -1658,7 +1658,7 @@ int PAPI_add_events(int *EventSet, int *Events, int number)
 {
   int i, retval;
 
-  if (Events == NULL)
+  if ((Events == NULL) || (number < 0))
     papi_return(PAPI_EINVAL);
 
   for (i=0;i<number;i++)
@@ -1689,7 +1689,7 @@ int PAPI_rem_events(int *EventSet, int *Events, int number)
     papi_return(PAPI_EINVAL);
 #endif
 
-  if (number > ESI->NumberOfCounters)
+  if ((number > ESI->NumberOfCounters) || (number < 0))
     papi_return(PAPI_EINVAL);
 
   for (i=0; i<number; i++)

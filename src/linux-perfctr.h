@@ -17,6 +17,10 @@
 
 #define CNTR1 0x1
 #define CNTR2 0x2
+#define CNTR3 0x4
+#define CNTR4 0x8
+
+#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
 #define MAX_COUNTERS 4
 

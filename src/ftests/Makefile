@@ -34,5 +34,6 @@ install: default
 	mkdir -p $(DESTDIR)/ftests
 	chmod go+rx $(DESTDIR)/ftests
 	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
-	cp fmt1 fmt2 $(DESTDIR)/ftests
 	chmod go+rx $(DESTDIR)/ftests/*
+	cp fmt1 fmt2 $(DESTDIR)/ftests
+	find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;
