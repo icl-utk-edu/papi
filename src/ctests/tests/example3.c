@@ -40,7 +40,7 @@ void main() {
 */
 
   EventSet.all_options.domain.domain.domain = 1;       /* set to default PAPI_USR */
-_papi_set_domain(&EventSet, EventSet.all_options.domain);
+_papi_set_domain(&EventSet, &EventSet.all_options.domain);
   _papi_hwd_init(&EventSetZero);
   _papi_hwd_reset(&EventSet);
   _papi_hwd_add_event(&EventSet, PAPI_FP_INS);
@@ -63,7 +63,7 @@ _papi_set_domain(&EventSet, EventSet.all_options.domain);
 
   EventSet.all_options.domain.domain.domain = 2;       /* set to PAPI_KERNEL */
 
-_papi_set_domain(&EventSet, EventSet.all_options.domain);
+_papi_set_domain(&EventSet, &EventSet.all_options.domain);
   _papi_hwd_init(&EventSetZero);
   _papi_hwd_reset(&EventSet);
   _papi_hwd_add_event(&EventSet, PAPI_FP_INS);
@@ -86,7 +86,7 @@ _papi_set_domain(&EventSet, EventSet.all_options.domain);
 
   EventSet.all_options.domain.domain.domain = 3;       /* set to default PAPI_ALL */
 
-_papi_set_domain(&EventSet, EventSet.all_options.domain);
+_papi_set_domain(&EventSet, &EventSet.all_options.domain);
   _papi_hwd_init(&EventSetZero);
   _papi_hwd_reset(&EventSet);
   _papi_hwd_add_event(&EventSet, PAPI_FP_INS);

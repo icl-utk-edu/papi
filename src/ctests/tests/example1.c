@@ -48,8 +48,6 @@ void main() {
   memset(ct,0x00,_papi_system_info.num_cntrs * sizeof(unsigned long long));
 
   printf("_papi_hwd_init(&EventSetZero) returns %d\n",_papi_hwd_init(&EventSetZero));
-  printf("_papi_hwd_reset(&EventSet) returns %d\n",_papi_hwd_reset(&EventSet)); 
-
   printf("_papi_hwd_add_event(&EventSet, PAPI_FP_INS) returns %d\n",
 	 _papi_hwd_add_event(&EventSet, PAPI_FP_INS));
   EventSet.NumberOfCounters++;
@@ -67,6 +65,7 @@ void main() {
       EventSet.NumberOfCounters++;
     }  
   
+  printf("_papi_hwd_reset(&EventSet) returns %d\n",_papi_hwd_reset(&EventSet)); 
   printf("_papi_hwd_start(&EventSet) returns %d\n",_papi_hwd_start(&EventSet));
 
   a = 0.5;
