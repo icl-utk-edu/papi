@@ -925,22 +925,16 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
             return (retval);
       } else
          return (PAPI_ENOEVNT);
-
-      /* dereference a couple values for cleaner code */
-      /*count = ESI->NumberOfEvents; */
+   }
       array = ESI->EventInfoArray;
 
       /* Compact the Event Info Array list if it's not the last event */
-      /* if (thisindex < (count - 1))
-         memcpy(&array[thisindex], &array[thisindex+1], sizeof(EventInfo_t) * (count - thisindex - 1));
-       */
       /* clear the newly empty slot in the array */
       array[thisindex].event_code = PAPI_NULL;
       for (j = 0; j < MAX_COUNTER_TERMS; j++)
          array[thisindex].pos[j] = -1;
       array[thisindex].ops = NULL;
       array[thisindex].derived = NOT_DERIVED;
-   }
    ESI->NumberOfEvents--;
    /* print_state(ESI); */
 
