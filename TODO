@@ -1,3 +1,4 @@
+- Re do the PAPI API Specification/User Manual
 - Make PAPI_preset man page that lists all the presets
 - Make PAPI_native man page that shows how to encode native events on all supported platforms
 - Make PAPI_query_event check the syntax of native events (will require adding new decoder call to substrate)
