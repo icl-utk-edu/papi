@@ -39,6 +39,9 @@ static hwd_preset_t *preset_map = NULL;
 */
 #include "ia32_presets.h"
 
+#ifdef DEBUG
+#include <errno.h>
+#endif
 
 /* Low level functions, should not handle errors, just return codes. */
 
