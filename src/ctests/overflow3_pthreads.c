@@ -86,10 +86,8 @@ void mainloop(int arg)
 int main(int argc, char **argv)
 {
   pthread_t e_th;
-  int flops1, flops2;
   int rc,retval;
   pthread_attr_t attr;
-  long long elapsed_us, elapsed_cyc;
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 

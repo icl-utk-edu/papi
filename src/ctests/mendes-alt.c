@@ -26,7 +26,7 @@ int main(argc, argv)
      int argc;
      char *argv[];
 {
-    int      i, n, k, retval;
+    int      i, retval;
     double a[MAX],b[MAX];
     void funcX(),funcA();
 

@@ -88,7 +88,6 @@ int case1()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
-  char event_name[PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
@@ -146,7 +145,6 @@ int case2()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
-  char event_name[PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
@@ -209,7 +207,6 @@ int case3()
 {
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
-  char event_name[PAPI_MAX_STR_LEN];
 
   PAPI_events_len = 2;
   init_papi(PAPI_events,&PAPI_events_len);
