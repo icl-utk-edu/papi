@@ -145,16 +145,34 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;
   unsigned int preset;
+  unsigned int tmp_event, tmp_code;
 
   if (foo & PRESET_MASK)
   { preset = foo ^= PRESET_MASK; 
     switch (preset_map[preset].number)
     { case 0 : return(PAPI_ENOEVNT);
       case 1 :  
-        if(this_state->number >= 4) return(PAPI_ECNFLCT);
+        if(this_state->number >= 6) return(PAPI_ECNFLCT);
+        if(this_state->number >= 4)
+        { tmp_event=preset_map[(ESI->EventCodeArray[0]^=PRESET_MASK)].counter_code1;
+          tmp_code=ESI->EventCodeArray[0]^=PRESET_MASK;
+          if(tmp_event != this_state->counter_code1)
+          { tmp_event=preset_map[(ESI->EventCodeArray[1]^=PRESET_MASK)].counter_code1;
+            tmp_code=ESI->EventCodeArray[1]^=PRESET_MASK;
+          }
+          if((preset_map[tmp_code].number == 3) ||
+             (preset_map[tmp_code].number == 6) ||
+             (preset_map[tmp_code].number == 8))
+          { this_state->counter_code2 = tmp_event;
+            this_state->counter_code1 = preset_map[preset].counter_code1;
+            this_state->number += 2;
+            return(PAPI_OK); 
+          }
+          return(PAPI_ECNFLCT);
+        }
         this_state->counter_code1 = preset_map[preset].counter_code1;
         this_state->number += 4;
-        return 0;
+        return(PAPI_OK);
       case 2 :
         if((this_state->number == 2) ||
            (this_state->number == 3) ||
@@ -162,7 +180,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
            (this_state->number == 7)) return(PAPI_ECNFLCT);
         this_state->counter_code2 = preset_map[preset].counter_code2;
         this_state->number += 2;
-        return 0;
+        return(PAPI_OK);
       case 3 :
         if(this_state->number <= 3) 
         { this_state->counter_code1 = preset_map[preset].counter_code1;
@@ -373,7 +391,8 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
 }
 
 int _papi_hwd_check_runners(PAPI_shared_info_t *PAPI_SHARED_INFO, DynamicArray *PAPI_EVENTSET_MAP)
-{ int retval;
+{ 
+/*int retval;
   int state;
   int i, j=0;
 
@@ -389,14 +408,15 @@ int _papi_hwd_check_runners(PAPI_shared_info_t *PAPI_SHARED_INFO, DynamicArray *
   }
   if(PAPI_SHARED_INFO->EvSetArray[j]<-1)
   { retval=_papi_hwd_gather_events(PAPI_SHARED_INFO);
-    /* set multiplex stuff up*/
   }
+*/
   return(PAPI_OK);
 }
 
 int _papi_hwd_gather_events(PAPI_shared_info_t *PAPI_SHARED_INFO)
 { int retval;
   int i=0,j,k,flag=0;
+/*
   unsigned int event;
   EventSetInfo *ESI;
 
@@ -422,6 +442,7 @@ int _papi_hwd_gather_events(PAPI_shared_info_t *PAPI_SHARED_INFO)
       flag=0;
     }
   }
+*/
   return(PAPI_OK);
 }
 
@@ -432,11 +453,12 @@ int _papi_hwd_start(EventSetInfo *EventSet)
 
   retval=_papi_set_domain(EventSet, &EventSet->all_options.domain);
   if(retval) return(PAPI_EBUG);
-
+/*
   if(PAPI_SHARED_INFO.EvSetArray[0]!=-1) // if runner exists
   { retval=_papi_hwd_multistart();
     if(retval) return(PAPI_EBUG); 
   }
+*/
 
   if(this_state->counter_code1 >= 0)
   { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
@@ -644,18 +666,18 @@ int _papi_hwd_query(int preset)
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
-			       1.0,
-			        -1, 
-			        -1,
-			        -1,
-			        -1,
-			        -1,
-			         3,
-			         2,
-			         0,
-			         1, 
- 				-1,
- 				-1,
+			       1.0,   // version
+			        -1,   // ncpu
+			        -1,   // nnodes
+			        -1,   // type
+			        -1,   // cpu
+			        -1,   // mhz
+			         3,   // num_cntrs
+			         2,   // num_gp_cntrs
+			         0,   // grouped_counters
+			         1,   // num_sp_cntrs
+ 				-1,   // total_presets
+ 				-1,   // total_events
 			       sizeof(hwd_control_state_t), 
 			       NULL,
 			       PAPI_DOM_USER,

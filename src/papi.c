@@ -90,7 +90,7 @@ static int initialize(void)
    PAPI_EVENTSET_MAP.availSlots = PAPI_INIT_SLOTS - 1;
    PAPI_EVENTSET_MAP.fullSlots  = 1;
    PAPI_EVENTSET_MAP.lowestEmptySlot = 1;
-
+/*
   PAPI_SHARED_INFO.EvSetArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
   PAPI_SHARED_INFO.EventsArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
   PAPI_SHARED_INFO.MachdepArray=(void **)malloc
@@ -101,7 +101,7 @@ static int initialize(void)
   { *PAPI_SHARED_INFO.EvSetArray[i]=-1;
     *PAPI_SHARED_INFO.EventsArray[i]=-1;
   }
-
+*/
    /* Remember that EventSet zero is reserved */
 
    PAPI_ERR_LEVEL = PAPI_QUIET;
