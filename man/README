@@ -1,0 +1,19 @@
+/* 
+* File:    README
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+This directory contains:
+
+Makefile	To process and install man pages.
+man3/		The unformatted man pages.
+*		Source to tools for the man pages.
+
+Usage:
+
+	make
+	make install DESTDIR=<destdir>
