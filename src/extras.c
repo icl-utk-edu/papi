@@ -570,7 +570,7 @@ int _papi_hwi_native_code_to_idx(unsigned int EventCode)
   if (EventCode & NATIVE_MASK) {
   	index=EventCode ^ NATIVE_MASK;
   
-  	if(index<MAX_NATIVE_EVENT){
+  	if(index<PAPI_MAX_NATIVE_EVENTS){
   		return(index);
   	}
   }
@@ -584,7 +584,7 @@ unsigned int _papi_hwi_native_idx_to_code(unsigned int idx)
   
   EventCode =idx | NATIVE_MASK;
   
-  if(idx<MAX_NATIVE_EVENT){
+  if(idx<PAPI_MAX_NATIVE_EVENTS){
   	return(EventCode);
   }
   return (PAPI_ENOEVNT);
