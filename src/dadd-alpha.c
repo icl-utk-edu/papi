@@ -94,7 +94,7 @@ static int get_system_info(void)
    /* Cut off any arguments to exe */
    {
      char *tmp;
-     tmp = strchr(psi.pr_psargs, ' ');
+     tmp = strchr(info.pr_psargs, ' ');
      if (tmp != NULL)
        *tmp = '\0';
    }
@@ -104,7 +104,7 @@ static int get_system_info(void)
    else
      strncpy(_papi_hwi_system_info.exe_info.fullname, info.pr_psargs, PAPI_HUGE_STR_LEN);
 
-   strncpy(_papi_system_info.exe_info.name, info.pr_fname, PAPI_MAX_STR_LEN);
+   strncpy(_papi_hwi_system_info.exe_info.address_info.name, info.pr_fname, PAPI_MAX_STR_LEN);
 
    if (getsysinfo
        (GSI_CPU_INFO, (char *) &cpuinfo, sizeof(cpuinfo), NULL, NULL,
