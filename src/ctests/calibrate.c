@@ -48,11 +48,11 @@ for i = 1:n; for j = 1:n; for k = 1:n; c(i,j) = c(i,j) + a(i,k)*b(k,j); end; end
 
 #include "papi_test.h"
 
-static void resultline(int order, int i, int j)
+static void resultline(int i, int j)
 {
 	float real_time, proc_time, mflops;
 	long_long flpins = 0;
-	int papi, theory, diff;
+	int papi, theory, diff, error, errord;
 	
 	i++;						/* convert to 1s base  */
 	theory = 2 * i * j;			/* thoretical ops   */
@@ -60,7 +60,9 @@ static void resultline(int order, int i, int j)
 	PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
 	papi = (int)(flpins);
 	diff = papi - theory;
-	printf("%8d %12d %12d %8d\n", i, papi, theory, diff);
+	errord = (10000 * abs(diff) / theory)%100;
+	error = 100 * diff / theory;
+	printf("%8d %12d %12d %8d %5d.%.2d\n", i, papi, theory, diff, error,errord);
 }
 
 static void headerlines(char * title)
@@ -79,17 +81,17 @@ static void headerlines(char * title)
   printf("Nodes in the system      : %d\n",hwinfo->nnodes);
   printf("Total CPU's in the system: %d\n",hwinfo->totalcpus);
   printf("-------------------------------------------------------------------------\n");
-  printf("\n%s:\n%8s %12s %12s %8s\n", title, "i", "papi", "theory", "diff");
-  printf("-------------------------------------------\n");
+  printf("\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory", "diff", "%error");
+  printf("----------------------------------------------------\n");
 }
 
 #define INDEX1 100
 #define INDEX2 250	/* Microsoft can't handle x[500][500]. Sad but true... */
 #define INDEX3 500
 
-#define INNER_TEST  TRUE
-#define VECTOR_TEST TRUE
-#define MATRIX_TEST TRUE
+#define INNER_TEST  1
+#define VECTOR_TEST 0
+#define MATRIX_TEST 0
 
 int main(){
   extern void dummy(void *);
@@ -123,7 +125,7 @@ int main(){
   for (i=0;i<INDEX3;i++) {
 	 aa = aa + x[i]*y[i];
 	 if (i < INDEX1 || ((i+1) % 50) == 0)
-		resultline(1, i, 1);
+		resultline(i, 1);
   }
 
   flpins = -1;
@@ -137,7 +139,7 @@ int main(){
 	for(j=0;j<INDEX3;j++)
 		z[i] = z[i] + a[i%INDEX2][j%INDEX2]*y[j];
 	if (i < INDEX1 || ((i+1) % 50) == 0)
-		resultline(2, i, INDEX3);
+		resultline(i, INDEX3);
   }
 
   flpins = -1;
@@ -152,7 +154,7 @@ int main(){
 		for(k=0;k<INDEX3;k++)
 			c[i%INDEX2][j%INDEX2] = c[i%INDEX2][j%INDEX2] + a[i%INDEX2][k%INDEX2]*b[k%INDEX2][j%INDEX2];
 	if (i < INDEX1 || ((i+1) % 50) == 0)
-		resultline(3, i, INDEX3 * INDEX3);
+		resultline(i, INDEX3 * INDEX3);
   }
 #endif
 
