@@ -20,6 +20,7 @@
 
 static int maxgroups = 0;
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
+static pm_info_t pminfo;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #ifndef _POWER4
@@ -195,6 +196,12 @@ static int find_hwcounter(pm_info_t *info, char *name, hwd_preset_t *preset, int
   int did_something = 0, pmc, ev;
   pm_events_t *wevp;
 
+  preset->metric_count++;
+
+#ifdef DEBUG_SETUP
+	  DBG((stderr,"find_hwcounter( %s, %d, %d)\n",name, index, preset->metric_count));
+#endif
+
   preset->rank[index] = 0;  /* this value accumulates if initializes more than once */
   for (pmc = 0; pmc < info->maxpmcs; pmc++) 
     {
@@ -221,7 +228,7 @@ static int find_hwcounter(pm_info_t *info, char *name, hwd_preset_t *preset, int
     abort();
 }
 
-/* #define DEBUG_SETUP */
+ #define DEBUG_SETUP 
 
 static int setup_all_presets(pm_info_t *info)
 {
@@ -335,6 +342,7 @@ static int setup_all_presets(pm_info_t *info)
 	      preset_map[preset_index] = tmp;
 #ifdef DEBUG_SETUP
 	      DBG((stderr,"Found compound preset %d on 0x%x\n",preset_index,all_selector));
+	      DBG((stderr,"preset->metric_count: %d\n",preset_map[preset_index].metric_count));
 #endif
 	      did_something++;
 	      continue;
@@ -398,18 +406,18 @@ static int find_hwcounter_gps(pm_info_t *pminfo, char *name, hwd_preset_t *prese
      on all counters (pmc) */
   for (pmc = 0; pmc < pminfo->maxpmcs; pmc++) 
     {
-/*     DBG((stderr,"maxpmc: %d pmc: %d maxevents: %d\n",pminfo->maxpmcs, pmc, pminfo->maxevents[pmc]));
-*/     p[pmc] = INVALID_EVENT;
+     DBG((stderr,"maxpmc: %d pmc: %d maxevents: %d\n",pminfo->maxpmcs, pmc, pminfo->maxevents[pmc]));
+     p[pmc] = INVALID_EVENT;
       wevp = pminfo->list_events[pmc];
       for (ev = 0; ev < pminfo->maxevents[pmc]; ev++, wevp++) 
 	{
-/*	  DBG((stderr,"wevp->short_name[%d, %d] = %s \n",pmc,ev,wevp->short_name));
-*/	  if (strcmp(name, wevp->short_name) == 0) 
+	  DBG((stderr,"wevp->short_name[%d, %d] = %s \n",pmc,ev,wevp->short_name));
+	  if (strcmp(name, wevp->short_name) == 0) 
 	    {
 	      p[pmc] = wevp->event_id;
 	      did_something++;
-/*	      DBG((stderr,"Found %s on hardware counter %d, event %d\n",name,pmc,wevp->event_id));
-*/	      break;
+	      DBG((stderr,"Found %s on hardware counter %d, event %d\n",name,pmc,wevp->event_id));
+	      break;
 	    }
 	}
     }
@@ -432,13 +440,13 @@ static int find_hwcounter_gps(pm_info_t *pminfo, char *name, hwd_preset_t *prese
 	    {
 	      preset->gps[g/32] |= 1 << (g%32);
 	      did_something++;
-/*	      DBG((stderr,"Found %s on group %d, counter %d\n",name,g,pmc));
-*/	      break;
+	      DBG((stderr,"Found %s on group %d, counter %d\n",name,g,pmc));
+	      break;
 	    }
 	}
     }
-/*    DBG((stderr,"Found %s in groups %x %x\n",name, preset->gps[1], preset->gps[0]));
-*/
+    DBG((stderr,"Found %s in groups %x %x\n",name, preset->gps[1], preset->gps[0]));
+
   return(did_something);
 }
 
@@ -669,25 +677,43 @@ static int set_inherit(int arg)
 
 static void init_config(hwd_control_state_t *ptr)
 {
-  int i;
+  int i, j;
 
 #ifdef _POWER4
   /* Power4 machines must count by groups */
   ptr->counter_cmd.mode.b.is_group = 1;
 #endif
+#ifndef _POWER4
+  memset(ptr->native, 0, sizeof(hwd_native_t)*POWER_MAX_COUNTERS);
+#endif
 
   for (i = 0; i < _papi_system_info.num_cntrs; i++) {
     ptr->preset[i] = COUNT_NOTHING;
     ptr->counter_cmd.events[i] = COUNT_NOTHING;
+#ifndef _POWER4
+ 	ptr->native[i].position=COUNT_NOTHING;
+#endif
+	/*ptr->native[i].link=COUNT_NOTHING;*/
+ }
+#ifndef _POWER4
+  for(i=0;i<POWER_MAX_COUNTERS_MAPPING;i++){
+    ptr->allevent[i]=COUNT_NOTHING;
+	for (j = 0; j < _papi_system_info.num_cntrs; j++) {
+	  ptr->emap[i][j]=COUNT_NOTHING;
+	}
   }
-  set_domain(ptr,_papi_system_info.default_domain);
+  ptr->hwd_idx=0;
+  ptr->hwd_idx_a=0;
+  ptr->native_idx=0;
+#endif
+ set_domain(ptr,_papi_system_info.default_domain);
   set_granularity(ptr,_papi_system_info.default_granularity);
 }
 
 static int get_system_info(void)
 {
   int retval;
-  pm_info_t pminfo;
+ /* pm_info_t pminfo;*/
   struct procsinfo psi = { 0 };
   pid_t pid;
   char maxargs[PAPI_MAX_STR_LEN];
@@ -855,7 +881,7 @@ static int get_avail_hwcntr_bits(int cntr_avail_bits)
 static int get_avail_hwcntr_num(int cntr_avail_bits)
 {
   int tmp = 0, i = POWER_MAX_COUNTERS - 1;
-  
+ 
   while (i)
     {
       tmp = (1 << i) & cntr_avail_bits;
@@ -894,9 +920,417 @@ static void dump_state(hwd_control_state_t *s)
     s->counter_cmd.events[7]);
 }
 #endif
-
+  
+#ifndef _POWER4
+static void print_state(hwd_control_state_t *s)
+{
+  int i;
+  
+  fprintf(stderr,"\n\n-----------------------------------------\nmaster_selector 0x%x\n",s->master_selector);
+  for(i=0;i<POWER_MAX_COUNTERS;i++){
+  	if(s->master_selector & (1<<i)) fprintf(stderr, "  1  ");
+	else fprintf(stderr, "  0  ");
+  }
+  fprintf(stderr,"\nnative_event_name       %12s %12s %12s %12s %12s %12s %12s %12s\n",s->native[0].name,s->native[1].name,
+    s->native[2].name,s->native[3].name,s->native[4].name,s->native[5].name,s->native[6].name,s->native[7].name);
+  fprintf(stderr,"native_event_selectors    %12d %12d %12d %12d %12d %12d %12d %12d\n",s->native[0].selector,s->native[1].selector,
+    s->native[2].selector,s->native[3].selector,s->native[4].selector,s->native[5].selector,s->native[6].selector,s->native[7].selector);
+  fprintf(stderr,"native_event_position     %12d %12d %12d %12d %12d %12d %12d %12d\n",s->native[0].position,s->native[1].position,
+    s->native[2].position,s->native[3].position,s->native[4].position,s->native[5].position,s->native[6].position,s->native[7].position);
+  fprintf(stderr,"counters                  %12d %12d %12d %12d %12d %12d %12d %12d\n",s->counter_cmd.events[0],
+    s->counter_cmd.events[1],s->counter_cmd.events[2],s->counter_cmd.events[3],
+    s->counter_cmd.events[4],s->counter_cmd.events[5],s->counter_cmd.events[6],
+    s->counter_cmd.events[7]);
+  fprintf(stderr,"native links              %12d %12d %12d %12d %12d %12d %12d %12d\n",s->native[0].link,s->native[1].link,
+    s->native[2].link,s->native[3].link,s->native[4].link,s->native[5].link,s->native[6].link,s->native[7].link);
+  for(i=0;i<s->hwd_idx_a;i++){
+  	fprintf(stderr,"event_codes %x\n",s->allevent[i]);
+  }
+}
+#endif
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #ifndef _POWER4
+
+/* this function try to find out whether native events contained by this preset have already been mapped. If it is, mapping is done */
+int _papi_hwd_event_precheck(hwd_control_state_t *tmp_state, unsigned int EventCode, EventInfo_t *out, void *v)
+{
+	int metric, i, j, found_native=0, hwd_idx=0;
+	hwd_preset_t *this_preset;
+	hwd_native_t *this_native;
+	int counter_mapping[POWER_MAX_COUNTERS];
+	unsigned char selector;
+	  
+	/* to find first empty slot */
+  hwd_idx=out->index;
+		
+	/* preset event */
+	if(EventCode & PRESET_MASK){
+		this_preset=(hwd_preset_t *)v;
+		for( metric=0; metric<this_preset->metric_count; metric++){
+			for (j=0; j<POWER_MAX_COUNTERS; j++) {
+				if (tmp_state->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
+					if (tmp_state->counter_cmd.events[j] == this_preset->counter_cmd[metric][j])
+						break;
+			  	}
+			}
+		
+			if(j<POWER_MAX_COUNTERS){ /* found mapping */ 
+				counter_mapping[metric]=j;
+				for(i=0;i<tmp_state->native_idx;i++)
+					if(j==tmp_state->native[i].position){
+						tmp_state->native[i].link++;
+						break;
+					}
+			}
+			else{
+				return 0;
+			}		
+		}
+		
+		/* successfully found mapping. Write to EventInfo_t *out, return 1 */
+		tmp_state->allevent[hwd_idx]=EventCode;
+		selector=0;
+		for(j=0;j<metric;j++){
+			tmp_state->emap[hwd_idx][j]=counter_mapping[j];
+			selector|=1<<counter_mapping[j];
+		}
+	
+		/* update EventInfo_t *out */
+		out->code = EventCode;
+		out->selector = selector;
+		out->command = this_preset->derived;
+		out->operand_index = tmp_state->emap[hwd_idx][0];
+		tmp_state->hwd_idx_a++;
+	
+		return 1;
+	}
+	else{
+		this_native=(hwd_native_t *)v;
+
+		/* to find the native event from the native events list */
+		for(i=0; i<tmp_state->native_idx;i++){
+			if(strcmp(this_native->name, tmp_state->native[i].name)==0){
+				found_native=1;
+				break;
+			}
+		}
+		if(found_native){
+			tmp_state->allevent[hwd_idx]=EventCode;
+			tmp_state->emap[hwd_idx][0]=tmp_state->native[i].position;
+			tmp_state->native[i].link++;
+			/* update EventInfo_t *out */
+			out->code = EventCode;
+			out->selector |= 1<<tmp_state->native[i].position;
+			out->command = NOT_DERIVED;
+			out->operand_index = tmp_state->emap[hwd_idx][0];
+			tmp_state->hwd_idx_a++;
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+}	  
+
+
+
+/* this function is called after mapping is done */
+int _papi_hwd_event_mapafter(hwd_control_state_t *tmp_state, int index, EventInfo_t *out)
+{
+	int metric, j;
+	hwd_preset_t *this_preset;
+	int counter_mapping[POWER_MAX_COUNTERS];
+	unsigned char selector;
+	unsigned int EventCode;
+	  
+  	EventCode=tmp_state->allevent[index];
+	/* preset */
+	if(EventCode & PRESET_MASK){
+		this_preset = &(preset_map[EventCode & PRESET_AND_MASK]);
+		for( metric=0; metric<this_preset->metric_count; metric++){
+			for (j=0; j<POWER_MAX_COUNTERS; j++) {
+				if (tmp_state->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
+					if (tmp_state->counter_cmd.events[j] == this_preset->counter_cmd[metric][j])
+						break;
+			  	}
+			}
+		
+			if(j<POWER_MAX_COUNTERS){ /* found mapping */
+				counter_mapping[metric]=j;
+			}
+			else{
+				return 0;
+			}		
+		}
+	
+		/* successfully found mapping. Write to EventInfo_t *out, return 1 */
+		selector=0;
+		for(j=0;j<metric;j++){
+			tmp_state->emap[index][j]=counter_mapping[j];
+			selector|=1<<counter_mapping[j];
+		}
+	
+		out->selector = selector;
+		out->operand_index = tmp_state->emap[index][0];
+		return 1;
+	}
+	else{
+		pm_events_t *pe;
+		int found_native=0, pmc, hwcntr_num, i;
+		unsigned int event_code;
+		char name[PAPI_MAX_STR_LEN];
+		
+		/* to get pm event name */ 
+		event_code=EventCode>>8;
+		hwcntr_num = EventCode & 0xff;
+		pe=pminfo.list_events[hwcntr_num];
+		for(i=0;i<pminfo.maxevents[hwcntr_num];i++, pe++){
+			if(pe->event_id==event_code){
+				strcpy(name, pe->short_name); /* will be found */
+				break;
+			}
+		}
+		
+		/* to find the native event from the native events list */
+		for(i=0; i<POWER_MAX_COUNTERS;i++){
+			if(strcmp(name, tmp_state->native[i].name)==0){
+				found_native=1;
+				break;
+			}
+		}
+		if(found_native){
+			tmp_state->emap[index][0]=tmp_state->native[i].position;
+	
+			/* update EventInfo_t *out */
+			out->selector |= 1<<tmp_state->native[i].position;
+			out->operand_index = tmp_state->emap[index][0];
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+}	  
+
+int do_counter_mapping(hwd_native_t *event_list, int size)
+{
+	int i,j;
+	hwd_native_t *queue[POWER_MAX_COUNTERS];
+	int head, tail;
+	
+	/* if the event competes 1 counter only, it has priority, map it */
+	head=0;
+	tail=0;
+	for(i=0;i<size;i++){ /* push rank=1 into queue */
+		event_list[i].mod=-1;
+		if(event_list[i].rank==1){
+			queue[tail]=&event_list[i];
+			event_list[i].mod=i;
+			tail++;
+		}
+	}
+	
+	while(head<tail){
+		for(i=0;i<size;i++){
+			if(i!=(*queue[head]).mod){
+				if(event_list[i].selector & (*queue[head]).selector){
+					if(event_list[i].rank==1){
+						return 0; /* mapping fail, 2 events compete 1 counter only */
+					}
+					else{
+						event_list[i].selector ^= (*queue[head]).selector;
+						event_list[i].rank--;
+						if(event_list[i].rank==1){
+							queue[tail]=&event_list[i];
+							event_list[i].mod=i;
+							tail++;
+						}
+					}
+				}
+			}
+		}
+		head++;
+	}
+	if(tail==size){
+		return 1; /* successfully mapped */
+	}
+	else{
+		hwd_native_t rest_event_list[POWER_MAX_COUNTERS];
+		hwd_native_t copy_rest_event_list[POWER_MAX_COUNTERS];
+		
+		j=0;
+		for(i=0;i<size;i++){
+			if(event_list[i].mod<0){
+				memcpy(copy_rest_event_list+j, event_list+i, sizeof(hwd_native_t));
+				copy_rest_event_list[j].mod=i;
+				j++;
+			}
+		}
+		
+		memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_native_t)*(size-tail));
+		
+		for(i=0;i<POWER_MAX_COUNTERS;i++){
+			if(rest_event_list[0].selector & (1<<i)){ /* pick first event on the list, set 1 to 0, to see whether there is an answer */
+				for(j=0;j<size-tail;j++){
+					if(j==0){
+						rest_event_list[j].selector = 1<<i;
+						rest_event_list[j].rank = 1;
+					}
+					else{
+						if(rest_event_list[j].selector & (1<<i)){
+							rest_event_list[j].selector ^= 1<<i;
+							rest_event_list[j].rank--;
+						}
+					}
+				}
+				if(do_counter_mapping(rest_event_list, size-tail))
+					break;
+				
+				memcpy(rest_event_list, copy_rest_event_list, sizeof(hwd_native_t)*(size-tail));
+			}
+		}
+		if(i==POWER_MAX_COUNTERS){
+			return 0; /* fail to find mapping */
+		}
+		for(i=0;i<size-tail;i++){
+			event_list[copy_rest_event_list[i].mod].selector=rest_event_list[i].selector;
+		}
+		return 1;		
+	}
+}	
+	
+
+/* this function will be called when there are counters available, (void *) is the pointer to adding event structure
+   (hwd_preset_t *)  or (hwd_native_t *)  
+*/      
+int _papi_hwd_counter_mapping(hwd_control_state_t *tmp_state, unsigned int EventCode, EventInfo_t *out, void *v)
+{
+  hwd_preset_t *this_preset;
+  hwd_native_t *this_native;
+  unsigned char selector;
+  int metric, i, j, k, getname=1, ncount=0, hwd_idx=0, triger=0, natNum;
+  pm_events_t *pe;
+  int tr;
+  hwd_control_state_t ttmp_state;
+  EventInfo_t *zeroth;
+
+
+  hwd_idx=out->index;
+  
+  tmp_state->allevent[hwd_idx]=EventCode;
+  selector=0;
+  natNum=tmp_state->native_idx;
+  
+  if(EventCode & PRESET_MASK){
+	this_preset=(hwd_preset_t *)v;
+	
+	
+	/* try to find unmapped native events, then put then on to native list */ 
+	for( metric=0; metric<this_preset->metric_count; metric++){
+		for (j=0; j<POWER_MAX_COUNTERS; j++) {
+			if (tmp_state->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
+				if (tmp_state->counter_cmd.events[j] == this_preset->counter_cmd[metric][j]){
+					selector |= 1<<j;
+					tmp_state->emap[hwd_idx][metric]=j;
+					if(triger){
+						for(i=0;i<natNum;i++)
+							if(j==tmp_state->native[i].position){
+								tmp_state->native[i].link++;
+								break;
+							}
+					}
+					break;
+				}
+		  	}
+		}
+		if(j==POWER_MAX_COUNTERS){ /* not found mapping from existed mapped native events */
+			if(tmp_state->native_idx==POWER_MAX_COUNTERS){ /* can not do mapping, no counter available */
+				return 0;
+			}
+			triger=1;
+			tmp_state->native[tmp_state->native_idx].selector=this_preset->selector[metric];
+			tmp_state->native[tmp_state->native_idx].rank=this_preset->rank[metric];
+			getname=1;
+			
+			for(i=0;i<POWER_MAX_COUNTERS;i++){
+				tmp_state->native[tmp_state->native_idx].counter_cmd[i]=this_preset->counter_cmd[metric][i];
+				if(getname && tmp_state->native[tmp_state->native_idx].counter_cmd[i]!=COUNT_NOTHING){
+					/* get the native event's name */
+					pe=pminfo.list_events[i];
+					/*printf("tmp_state->native[%d].counter_cmd[%d]=%d\n", tmp_state->native_idx, i, tmp_state->native[tmp_state->native_idx].counter_cmd[i]  );*/
+					for(k=0;k<pminfo.maxevents[i];k++, pe++){ 
+						if(pe->event_id==tmp_state->native[tmp_state->native_idx].counter_cmd[i]){
+							strcpy(tmp_state->native[tmp_state->native_idx].name, pe->short_name);
+							tmp_state->native[tmp_state->native_idx].link++;
+							getname=0;
+							break;
+						}
+					}
+				}
+			}
+			tmp_state->native_idx++;
+		}
+	}
+  }
+  else{
+	
+  	this_native=(hwd_native_t *)v;
+	this_native->link++;
+	memcpy(tmp_state->native+tmp_state->native_idx, this_native, sizeof(hwd_native_t));
+	tmp_state->native_idx++;
+  }
+
+  { /* not successfully mapped, but have enough slots for events */
+  	hwd_native_t event_list[POWER_MAX_COUNTERS];
+	
+	memcpy(event_list, tmp_state->native, sizeof(hwd_native_t)*(tmp_state->native_idx));
+	
+	if(do_counter_mapping(event_list, tmp_state->native_idx)){ /* successfully mapped */
+		/* update tmp_state, reset... */
+		tmp_state->master_selector=0;
+		for (i = 0; i <POWER_MAX_COUNTERS; i++) {
+		    tmp_state->counter_cmd.events[i] = COUNT_NOTHING;
+		}
+		
+		for(i=0;i<tmp_state->native_idx;i++){
+			tmp_state->master_selector |= event_list[i].selector;
+			/* update tmp_state->native->position */
+			tmp_state->native[i].position=get_avail_hwcntr_num(event_list[i].selector); 
+			/* update tmp_state->counter_cmd */
+			tmp_state->counter_cmd.events[tmp_state->native[i].position] = tmp_state->native[i].counter_cmd[tmp_state->native[i].position];
+		}
+		
+		/* copy new value to out */
+		zeroth = out-out->index;
+		j=0;
+		for(i=0;i<=tmp_state->hwd_idx_a;i++){
+			while(tmp_state->allevent[j]==COUNT_NOTHING)
+				j++;
+			tr=_papi_hwd_event_mapafter(tmp_state, j, zeroth+j);
+			if(!tr)
+				printf("************************not possible!  j=%d\n", j);
+			j++;
+		}
+		
+		out->code = EventCode;
+		if(EventCode & PRESET_MASK)
+			out->command = this_preset->derived;
+		else
+			out->command = NOT_DERIVED;
+		/*out->index=tmp_state->hwd_idx_a;*/
+	
+		tmp_state->hwd_idx++;
+		tmp_state->hwd_idx_a++;
+		return 1;
+	}
+	else{
+		DBG((stderr,"--------fail 1: %x  %d \n",EventCode, tmp_state->hwd_idx_a));
+		return 0;
+	}
+  }
+
+}
+
 
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
@@ -905,19 +1339,59 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   int out_command, out_operand_index;
   hwd_control_state_t tmp_state;
   hwd_preset_t *this_preset;
-  int hwd_idx = 0, i;
+  hwd_native_t new_native;
+  int hwd_idx = 0, i, j;
   unsigned int event_code;
   int hwcntr_num, rank, metric, max_rank, total_metrics;
   EventInfo_t *zeroth;
+  void *v;
 
   DBG((stderr,"EventCode %x \n",EventCode));
+  
   /* Do a preliminary check to eliminate preset events that aren't
      supported on this platform */
   if (EventCode & PRESET_MASK)
     {
       if (preset_map[(EventCode & PRESET_AND_MASK)].selector[0] == 0)
-	return(PAPI_ENOEVNT);
+	 	return(PAPI_ENOEVNT);
     }
+  else{ /* also need to check the native event is eligible */ 
+		pm_events_t *pe;
+		int found_native=0, pmc;
+		event_code=EventCode>>8;
+		hwcntr_num = EventCode & 0xff;
+		pe=pminfo.list_events[hwcntr_num];
+		for(i=0;i<pminfo.maxevents[hwcntr_num];i++, pe++){
+			if(pe->event_id==event_code){
+				strcpy(new_native.name, pe->short_name);
+				found_native=1;
+				break;
+			}
+		}
+		
+		if(!found_native){ /* no such native event */ 
+			return(PAPI_ENOEVNT);
+		}
+		else{
+			new_native.selector=0;
+			new_native.rank=0;
+			/*memset(&new_native, 0, sizeof(hwd_native_t));*/
+			new_native.position=COUNT_NOTHING;
+			new_native.link=0;
+			for (pmc = 0; pmc < pminfo.maxpmcs; pmc++){
+				new_native.counter_cmd[pmc] = COUNT_NOTHING;
+      			pe = pminfo.list_events[pmc];
+				for (i = 0; i < pminfo.maxevents[pmc]; i++, pe++){
+					if (strcmp(new_native.name, pe->short_name) == 0){
+						new_native.counter_cmd[pmc]=pe->event_id;
+						new_native.selector |=1<<pmc;
+						new_native.rank++;
+						break;
+					}
+				}
+			}
+		}
+	}
 
   /* Copy this_state into tmp_state. We can muck around with tmp and
      bail in case of failure and leave things unchanged. tmp_state 
@@ -928,186 +1402,35 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   if (tmp_state.master_selector == 0)
     init_config(&tmp_state);
 
+  if (EventCode & PRESET_MASK){
+  	this_preset=&(preset_map[EventCode & PRESET_AND_MASK]);
+  	v=(void *)this_preset;
+  }
+  else
+  	v=(void *)&new_native;
+
+  if(_papi_hwd_event_precheck(&tmp_state, EventCode, out, v)){
+  int j;
+	*this_state=tmp_state;
+  	return(PAPI_OK);
+  }
+  
+  
   /* If all counters are full, return a conflict error. */
   if ((tmp_state.master_selector & 0xff) == 0xff)
-    return(PAPI_ECNFLCT);
+   	return(PAPI_ECNFLCT);
 
-  /* Find the first available slot in the state map. Each filled slot
-     has a non-zero selector associated with it. Slots can be filled
-     with simple events, derived events (multiple metrics), or native
-     events. Because of derived events, the counters may fill before
-     all slots are full. But because derived metrics can overlap, slots
-     may fill before counters... */ 
-  while ((tmp_state.selector[hwd_idx]) && (hwd_idx < POWER_MAX_COUNTERS))
-    hwd_idx++;
-
-  if (hwd_idx == POWER_MAX_COUNTERS) 
-    return(PAPI_ECNFLCT); /* This should never happen unless the mapping code fails */
-
-  /* Add the new event code to the list */
-  tmp_state.preset[hwd_idx] = EventCode;
-
-#if 0
-  DBG((stderr,"hwd_idx %d \n",hwd_idx));
-  dump_state(this_state);
-#endif
-
-  /* Scan the list and map all metrics to their best locations */
-
-  /* First, clear all selectors and counter commands */
-  tmp_state.master_selector = 0;
-  for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++)
-    {
-      tmp_state.counter_cmd.events[hwd_idx] = COUNT_NOTHING;
-      tmp_state.selector[hwd_idx] = 0;
-    }
-
-  /* second, prescan all available events for max rank and total metrics */
-  for (hwd_idx=0, max_rank = 1, total_metrics = 0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++)
-    {
-      event_code = tmp_state.preset[hwd_idx];
-      if (event_code == COUNT_NOTHING) break;
-
-      /* look for native events */
-      if ((event_code & PRESET_MASK) == 0)
-	{
-	  total_metrics++;
-	  out_command = NOT_DERIVED;
-	}
-      else /* its a preset event */
-	{
-	  unsigned char *this_rank;
-	  unsigned char *this_selector;
-
-	  /* capture the derived state of the current event code */
-	  if (event_code == EventCode)
-	    out_command = preset_map[event_code & PRESET_AND_MASK].derived;
-
-	  /* Dereference for cleaner access */
-	  this_rank = (unsigned char *)&(preset_map[event_code & PRESET_AND_MASK].rank);
-	  this_selector = (unsigned char *)&(preset_map[event_code & PRESET_AND_MASK].selector);
-
-	  /* Process all available metrics for this event.
-	     This may be as many as 8 for derived events */
-	  for (metric=0; metric<POWER_MAX_COUNTERS && this_selector[metric] != 0; metric++)
-	    {
-		max_rank = (this_rank[metric] > max_rank) ? this_rank[metric] : max_rank;
-	    }
-	  total_metrics += metric;
-	}
-    }
-  DBG((stderr,"max_rank: %d total_metrics: %d\n", max_rank, total_metrics));
-
-  /* third, map the metrics for all other events in order of rank,
-     where rank is the number of counters a metric can live on.
-     Assume native events have rank one, since they specify a single counter */
-  for (rank=1; rank<=max_rank; rank++) /* scan across rank */
-    {
-      for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++) /* scan across available events */
-	{
-	  event_code = tmp_state.preset[hwd_idx];
-	  if (event_code == COUNT_NOTHING) break;
-  DBG((stderr,"scanning events. code: %x idx: %d rank: %d\n",(event_code),hwd_idx, rank));
-
-	  /* look for native events */
-	  if ((event_code & PRESET_MASK) == 0)
-	    {
-	      /* only process native events in rank 1 */
-	      if (rank == 1)
-		{
-		  hwcntr_num = event_code & 0xff;
-  DBG((stderr,"adding native event. code: %x counter: %d\n",(event_code >> 8),hwcntr_num));
-		  /* Check if this counter is available */
-		  selector = 1 << hwcntr_num;
-		  if (tmp_state.master_selector & selector)
-		    return(PAPI_ECNFLCT); /* The solo counter is full */	    
-		  else
-		    {
-		      tmp_state.counter_cmd.events[hwcntr_num] = (event_code >> 8);
-		      tmp_state.selector[hwd_idx] = selector;
-		      tmp_state.master_selector |= selector;
-		    }
-		}
-	    }
-	  else /* its a preset event */
-	    {
-	      /* Dereference this preset for cleaner access */
-	      this_preset = &(preset_map[event_code & PRESET_AND_MASK]);
-
-	      /* Process all available metrics for this event.
-		 This may be as many as 8 for derived events */
-	      for (metric=0; metric<POWER_MAX_COUNTERS && this_preset->selector[metric] != 0; metric++)
-		{
-		  if (this_preset->rank[metric] == rank)
-		    {
-		      /* Select highest counter available for this metric. */
-		      avail = this_preset->selector[metric] & ~tmp_state.master_selector;
-		      selector = get_avail_hwcntr_bits(avail);
-
-		      /* if no empty counter, look for a counter already containing this event */
-		      if (selector == 0) {
-			for (i=0;i<POWER_MAX_COUNTERS; i++) {
-			  if (tmp_state.master_selector & (1<<i)) {
-			    if (tmp_state.counter_cmd.events[i] 
-			      == this_preset->counter_cmd[metric][i])
-				break;
-			  }
-			}
-			if (i<POWER_MAX_COUNTERS) selector = (1<<i);
-		      }
-
-  DBG((stderr,"metric: %d rank: %d avail: %x selector: %x\n", metric, rank, avail, selector));
-		      /* if a valid counter exists, add it to the counter 
-			 command list and mark it as occupied */
-		      if (selector != 0)
-			{
-			  /* turn selector into a number and get that counter command */
-			  hwcntr_num = get_avail_hwcntr_num(selector);
-			  tmp_state.counter_cmd.events[hwcntr_num] = this_preset->counter_cmd[metric][hwcntr_num];
-			  tmp_state.selector[hwd_idx] |= selector;
-			  tmp_state.master_selector |= selector;
-			  if (out_command && metric == 0)
-			    out_operand_index = hwcntr_num;
-			}
-		      else return (PAPI_ECNFLCT);
-		    }
-		}
-	    }
-	}
-    }
-
-  /* Everything worked. Copy temporary state back to current state */
-
-  /* First, find out which event in the event array is this one */
-  for (hwd_idx=0; hwd_idx<POWER_MAX_COUNTERS; hwd_idx++) /* scan across available events */
-    {
-      if (EventCode == tmp_state.preset[hwd_idx]) break;
-    }
-  
-  /* Next, update the high level selectors for all earlier events, 
-     in case a remapping occurred. This is REALLY UGLY code, because it
-     requires that one assume the out pointer is the ith member of a 
-     contiguous array of EventInfo_t structures and computes the address
-     of the 0th member... */
-  zeroth = &(out[-hwd_idx]);
-  for (i=0; i<hwd_idx; i++)
-    {
-      zeroth[i].selector = tmp_state.selector[i];
-    }
-
-  /* Finally, inform the upper level of the necessary info for this event. */
-  out->code = EventCode;
-  out->selector = tmp_state.selector[hwd_idx];
-  out->command = out_command;
-  out->operand_index = out_operand_index;
-  *this_state = tmp_state;
-
+  if(_papi_hwd_counter_mapping(&tmp_state, EventCode, out, v)){
+	*this_state=tmp_state;
+  	return(PAPI_OK);
+  }
+  else{
+   	return(PAPI_ECNFLCT);
+  }
 #if 0
   DBG((stderr,"success \n"));
   dump_state(this_state);
 #endif
-
-  return(PAPI_OK);
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -1335,10 +1658,114 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int i, selector, used, preset_index, EventCode;
-
-  /* Find out which counters used. */
+#ifndef _POWER4
+  int i, j, selector, used, preset_index, EventCode, metric, zero;
+  int allevent[POWER_MAX_COUNTERS_MAPPING];
+  int found;
+  EventInfo_t *zeroth;
+  hwd_control_state_t new_state;
+  hwd_preset_t *this_preset;
+  hwd_native_t *this_native;
   
+  zeroth=&(in[-in->index]); 
+  EventCode = in->code;
+  zero=0;
+
+	/*print_state(this_state);*/
+  if(EventCode!=this_state->allevent[in->index])
+  	return(PAPI_ENOEVNT);
+
+	/* preset */
+	if(EventCode & PRESET_MASK){
+		this_preset = &(preset_map[EventCode & PRESET_AND_MASK]);
+		for( metric=0; metric<this_preset->metric_count; metric++){
+			for (j=0; j<POWER_MAX_COUNTERS; j++) {
+				if (this_state->master_selector & (1<<j) && this_preset->selector[metric] & (1<<j)) {
+					if (this_state->counter_cmd.events[j] == this_preset->counter_cmd[metric][j])
+						break;
+			  	}
+			}
+		
+			if(j<POWER_MAX_COUNTERS){ /* found mapping */ 
+				for(i=0;i<this_state->native_idx;i++)
+					if(j==this_state->native[i].position){
+						this_state->native[i].link--;
+						if(this_state->native[i].link==0)
+							zero++;
+						break;
+					}
+			}
+			else{/* should never happen*/
+				fprintf(stderr, "error in _papi_hwd_rem_event()\n");
+				exit(1);
+			}		
+		}
+	}
+	else{
+		unsigned int code;
+		int hwcntr_num;
+
+		code=EventCode>>8;
+		hwcntr_num = EventCode & 0xff;
+
+		/* to find the native event from the native events list */
+		for(i=0; i<this_state->native_idx;i++){
+			if(code==this_state->native[i].counter_cmd[hwcntr_num]){
+				this_state->native[i].link--; 
+				if(this_state->native[i].link==0)
+					zero++;
+				break;
+			}
+		}
+	}
+
+	/* to reset hwd_control_state values */
+	this_state->allevent[in->index]=COUNT_NOTHING;
+	this_state->hwd_idx_a--;
+	this_state->native_idx-=zero;
+	for (j = 0; j < _papi_system_info.num_cntrs; j++) {
+	  this_state->emap[in->index][j]=COUNT_NOTHING;
+	}
+
+	/*	print_state(this_state);*/
+/* to move correspond native structures */
+	for(found=0; found<zero; found++){
+	for(i=0;i<_papi_system_info.num_cntrs;i++){
+		if(this_state->native[i].link==0 && this_state->native[i].position!=COUNT_NOTHING ){
+			int copy=0;
+			this_state->master_selector^=1<<this_state->native[i].position;
+			this_state->counter_cmd.events[this_state->native[i].position]=COUNT_NOTHING;
+			for(j=_papi_system_info.num_cntrs-1;j>i;j--){
+				if(this_state->native[j].position==COUNT_NOTHING)
+					continue;
+				else{
+					memcpy(this_state->native+i, this_state->native+j, sizeof(hwd_native_t));
+					memset(this_state->native+j, 0, sizeof(hwd_native_t));
+					this_state->native[j].position=COUNT_NOTHING;
+					/*this_state->native[j].link=COUNT_NOTHING;*/
+					copy++;
+					break;
+				}
+			}
+			if(copy==0){
+				memset(this_state->native+i, 0, sizeof(hwd_native_t));
+				this_state->native[i].position=COUNT_NOTHING;
+				/*this_state->native[i].link=COUNT_NOTHING;*/
+			}
+			
+			/*found++;
+			if(found==zero)
+				break;*/
+		}
+	}
+	}
+	/*print_state(this_state);
+	fprintf(stderr, "*********this_state->native_idx=%d, zero=%d,  found=%d\n", this_state->native_idx,zero, found); */
+
+#else
+  int i, selector, used, preset_index, EventCode;
+  
+  /* Find out which counters used. */
   used = in->selector;
   EventCode = in->code;
 
@@ -1368,16 +1795,6 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 
   /* Clear out the preset for this event */
   this_state->preset[i] = COUNT_NOTHING;
-
-#ifndef _POWER4
-  /* Clear out counters that are part of this event. */
-  /* But only on Power3 machines not using groups */
-  for (i=0; selector && i < POWER_MAX_COUNTERS; i++)
-    {
-      if (selector & (1 << i))
-        this_state->counter_cmd.events[i] = COUNT_NOTHING;
-      selector ^= (1 << i);
-    }
 #endif
 
 #if 0

@@ -92,6 +92,7 @@ typedef struct _EventInfo {
   unsigned int selector;      /* Counter select bits used in the lower level */
   int command;       /* Counter derivation command used in the lower level */
   int operand_index; /* Counter derivation data used in the lower level */
+  int index;         /* added to indicate the position in the array */
 } EventInfo_t;
 
 /* Multiplex definitions */

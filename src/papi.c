@@ -249,8 +249,8 @@ static int default_error_handler(int errorCode)
   switch (PAPI_ERR_LEVEL)
     {
     case PAPI_VERB_ECONT:
-      fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
-      if (errorCode == PAPI_ESYS)
+      /*fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
+      */if (errorCode == PAPI_ESYS)
 	perror("");
       return errorCode;
       break;
@@ -546,6 +546,7 @@ static void initialize_EventInfoArray(EventSetInfo *ESI)
       ESI->EventInfoArray[i].selector = 0;
       ESI->EventInfoArray[i].command = NOT_DERIVED;
       ESI->EventInfoArray[i].operand_index = -1;
+      ESI->EventInfoArray[i].index = i;
     }
 }
 
