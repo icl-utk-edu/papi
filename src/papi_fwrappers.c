@@ -556,9 +556,14 @@ PAPI_FCALL(papif_num_counters,PAPIF_NUM_COUNTERS,(int *numevents))
   *numevents = PAPI_num_counters();
 }
  
-PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long_long *flpins, float *mflops, int *check )) 
+PAPI_FCALL(papif_ipc, PAPIF_IPC, (float *rtime, float *ptime, long_long *ins, float *ipc, int *check)
 {
-  *check = PAPI_flops( real_time, proc_time, flpins, mflops);
+  *check = PAPI_ipc( rtime, ptime, ins, ipc);
+}
+
+PAPI_FCALL(papif_flips, PAPIF_FLIPS, ( float *real_time, float *proc_time, long_long *flpins, float *mflops, int *check )) 
+{
+  *check = PAPI_flips( real_time, proc_time, flpins, mflops);
 }
 
 
