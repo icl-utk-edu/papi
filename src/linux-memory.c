@@ -643,7 +643,8 @@ static int init_intel(PAPI_mh_info_t * mh_info)
  * it doesn't it is pre pentium K6 series that we don't
  * support.
  */
-
+#if 0
+/* This routine appears to no longer be called. */
 static int check_cpuid()
 {
    volatile unsigned long val;
@@ -691,7 +692,7 @@ END:	  }
 #endif
    return (int) val;
 }
-
+#endif
 #ifdef _WIN32
 inline_static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
