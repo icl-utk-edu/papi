@@ -5,20 +5,48 @@
 #ifndef _PMC_KERNEL_H
 #define _PMC_KERNEL_H
 
+#ifndef PENTIUM4
+#define nPMC 4
+#else
+#define nPMC 18
+#endif
+
 struct pmc_sum_ctrs {
-	ULONGLONG ctr[5];	/* tsc, pmc0, ..., pmc3 */
+	ULONGLONG tsc;			/* tsc */
+	ULONGLONG pmc[nPMC];		/* pmc[0], ..., pmc[n] */
 };
 
 struct pmc_large_ctrs {
-	ULARGE_INTEGER ctr[5];		/* tsc, pmc0, ..., pmc3 */
+	ULARGE_INTEGER tsc;		/* tsc */
+	ULARGE_INTEGER pmc[nPMC];	/* pmc[0], ..., pmc[n] */
 };
 
 struct pmc_low_ctrs {
-	unsigned int ctr[5];		/* tsc, pmc0, ..., pmc3 */
+	unsigned int tsc;		/* tsc */
+	unsigned int pmc[nPMC];		/* pmc[0], ..., pmc[n] */
+};
+
+struct pmc_cpu_control {
+	unsigned int tsc_on;
+	unsigned int nractrs;		/* # of a-mode counters */
+	unsigned int nrictrs;		/* # of i-mode counters */
+	unsigned int pmc_map[nPMC];
+	unsigned int evntsel[nPMC];	/* one per counter, even on P5 */
+	struct {
+		unsigned int pebs_enable;	/* for replay tagging */
+		unsigned int pebs_matrix_vert;	/* for replay tagging */
+		unsigned int escr[nPMC];	/* P4 ESCR contents */
+	} p4;
+	int ireset[nPMC];			/* <= 0, for i-mode counters */
+};
+
+struct vpmc_control {
+	int si_signo;
+	struct pmc_cpu_control cpu_control;
 };
 
 struct pmc_control {
-	unsigned int evntsel[4];
+	unsigned int evntsel[nPMC];
 };
 
 struct pmc_info {

@@ -31,6 +31,6 @@ struct pmc_state {
 
 int pmc_read_state(int nrctrs, struct pmc_state *);
 int pmc_init(HANDLE kd);
-int pmc_control(HANDLE kd, struct pmc_control *);
+int pmc_set_control(HANDLE kd, struct pmc_control *);
 HANDLE pmc_open(void);
 void pmc_close(HANDLE kd);

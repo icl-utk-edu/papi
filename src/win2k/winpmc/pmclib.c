@@ -71,65 +71,58 @@ static void pmc_read_now(int nrctrs, struct pmc_sum_ctrs *current)
 // This produces the tightest assembly for the cases of less than 5
 // performance counters, which is currently universal.
 // nrctrs MAY be the number of counters ENABLED, not the number that exist.
-// If an x86 processor appears with more than 4 counters,
+// If an x86 processor appears with more than 4 counters (like Pentium4!!!),
 // this code will need to be modified...
 
-	// Read the time stamp counter into ctr[0]
+	// Read the time stamp counter into tsc
 	// Best I can tell, this is *always* a full 64-bit value
 	__asm rdtsc
-	__asm mov now.ctr.LowPart[0 * TYPE ULARGE_INTEGER], eax	// TSC -> ctr[0]
-	__asm mov now.ctr.HighPart[0 * TYPE ULARGE_INTEGER], edx	// TSC -> ctr[0]
+	__asm mov now.tsc.LowPart, eax
+	__asm mov now.tsc.HighPart, edx
 
-	// the counters are 40-bit values for anything less than Pentium IV
-	// we mask of the low 8 bits in the high word to exclude possible stray bits
+	// the counters are 40-bit values for anything less than Pentium 4
+	// we mask off the low 8 bits in the high word to exclude possible stray bits
 	switch (nrctrs) {
 		case 5:							// move 4 counters to now.cnt[]
 			__asm mov ecx, 3
 			__asm rdpmc
-			__asm mov now.ctr.LowPart[4 * TYPE ULARGE_INTEGER], eax
+			__asm mov now.pmc.LowPart[3 * TYPE ULARGE_INTEGER], eax
 			__asm and edx, 0x000000FF
-			__asm mov now.ctr.HighPart[4 * TYPE ULARGE_INTEGER], edx
+			__asm mov now.pmc.HighPart[3 * TYPE ULARGE_INTEGER], edx
 		case 4:
 			__asm mov ecx, 2
 			__asm rdpmc
-			__asm mov now.ctr.LowPart[3 * TYPE ULARGE_INTEGER], eax
+			__asm mov now.pmc.LowPart[2 * TYPE ULARGE_INTEGER], eax
 			__asm and edx, 0x000000FF
-			__asm mov now.ctr.HighPart[3 * TYPE ULARGE_INTEGER], edx
+			__asm mov now.pmc.HighPart[2 * TYPE ULARGE_INTEGER], edx
 		case 3:							// move 2 counters to now.cnt[]
 			__asm mov ecx, 1
 			__asm rdpmc
-			__asm mov now.ctr.LowPart[2 * TYPE ULARGE_INTEGER], eax
+			__asm mov now.pmc.LowPart[1 * TYPE ULARGE_INTEGER], eax
 			__asm and edx, 0x000000FF
-			__asm mov now.ctr.HighPart[2 * TYPE ULARGE_INTEGER], edx
+			__asm mov now.pmc.HighPart[1 * TYPE ULARGE_INTEGER], edx
 		case 2:
 			__asm mov ecx, 0
 			__asm rdpmc
-			__asm mov now.ctr.LowPart[1 * TYPE ULARGE_INTEGER], eax
+			__asm mov now.pmc.LowPart[0 * TYPE ULARGE_INTEGER], eax
 			__asm and edx, 0x000000FF
-			__asm mov now.ctr.HighPart[1 * TYPE ULARGE_INTEGER], edx
+			__asm mov now.pmc.HighPart[0 * TYPE ULARGE_INTEGER], edx
 			break;
 	}
 	// Copy the counter values to the current structure
 	*(struct pmc_large_ctrs *)current = now;
 }
 
-//static	struct pmc_low_ctrs start;
 static	struct pmc_sum_ctrs start;
 
 int pmc_read_state(int nrctrs, struct pmc_state *state)
 {
-//	struct pmc_low_ctrs now;
-	struct pmc_sum_ctrs now;
-	int i;
-
-	pmc_read_now(nrctrs, &now);
-
-    /* update the sums */
-	for(i = 0; i < nrctrs; ++i)
-//		state->sum.ctr[i] += now.ctr[i] - state->start.ctr[i];
-//		state->sum.ctr[i] += now.ctr[i] - start.ctr[i];
-//		state->sum.ctr[i] = now.ctr[i] - start.ctr[i];
-		state->sum.ctr[i] += now.ctr[i];
+    /*	This is drastically simplified from the PAPI 2 version
+	in recognition that until context switch saves are supported
+	we can eliminate the extra overhead of summing the counts
+	on a read.
+    */
+    pmc_read_now(nrctrs+1, &(state->sum));
     return TRUE;
 }
 
@@ -160,7 +153,7 @@ int pmc_init(HANDLE kd)
 }
 */
 
-int pmc_control(HANDLE kd, struct pmc_control *control)
+int pmc_set_control(HANDLE kd, struct pmc_control *control)
 {
 	DWORD dwBytesReturned;
 	int retval;
