@@ -1,11 +1,8 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	= ./perfctr
+PERFCTR	= ./perfctr-2.4.1
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-#
-# GNU GCC section
-#
-OPTFLAGS= -Wall -O3 -fomit-frame-pointer -march=pentiumpro
-TOPTFLAGS= -g -Wall -O0 -march=pentiumpro
+OPTFLAGS= -Wall -g -fomit-frame-pointer -mpentiumpro
+TOPTFLAGS= -g -Wall -O0 -mpentiumpro
 #
 # GNU G77 section
 #
@@ -25,7 +22,7 @@ FTOPTFLAGS= $(TOPTFLAGS)
 # #
 # F77      = ifc
 # FFLAGS   = -Dlinux
-# LDFLAGS  = -lPEPCF90 -lIEPCF90 -lF90 -lintrins  # Intel portability library (getarg_
+# LDFLAGS  = -lPEPCF90 -lIEPCF90 -lF90 -lintrins # Intel portability library (getarg_)
 # FOPTFLAGS= -O3 -tpp6
 # FTOPTFLAGS= $(FOPTFLAGS)
 
@@ -45,23 +42,24 @@ TARGETS = serial multiplex_and_pthreads
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. \
- -DPERFCTR20 -DPAPI_PERFCTR_INTR_SUPPORT -DMPX_NONDECR
-# Some nice flags to add to CFLAGS when debugging PAPI library itself
-# -g -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DPAPI_PERFCTR_INTR_SUPPORT
+#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
-MISCHDRS= ia32_presets.h
+MISCHDRS= x86-events.h ia32_presets.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
 
-libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o $(PERFCTR)/usr.lib/libperfctr.so
+x86-events.h: $(PERFCTR)/usr.lib/event_codes.h
+	cp $(PERFCTR)/usr.lib/event_codes.h $@
+
+libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o
 	cp $(PERFCTR)/usr.lib/libperfctr.o .
 
-$(PERFCTR)/usr.lib/libperfctr.o:
+$(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)
 
-$(PERFCTR)/usr.lib/libperfctr.so:
+lib $(SHLIBDEPS):
 	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
 native_clean:
@@ -70,5 +68,4 @@ native_clean:
 
 native_install:
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
-	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(DESTDIR)/include
 	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include

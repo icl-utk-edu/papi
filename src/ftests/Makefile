@@ -97,6 +97,6 @@ install: default
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
 	-mkdir -p $(DESTDIR)/ftests
 	-chmod go+rx $(DESTDIR)/ftests
-	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
+	-find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
 	-chmod go+rx $(DESTDIR)/ftests/*
-	find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;
+	-find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;

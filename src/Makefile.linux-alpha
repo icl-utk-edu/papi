@@ -38,3 +38,5 @@ hw_driver.o: alpha-linux/hw_driver.c $(HEADERS)
 
 
 native_clean:
+
+native_install:
