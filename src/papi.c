@@ -135,7 +135,7 @@ int PAPI_state(int EventSet, int *status)
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static int _papi_allocate_EventSet(void);              */
+/* begin function: static EventSetInfo *_papi_allocate_EventSet(void);    */
 /*                                                                        */
 /* This function allocates space for one EventSetInfo structure and for   */
 /* all of the pointers in this structure.  If any malloc in this function */
