@@ -167,7 +167,7 @@ static void enableButtons(HWND hDlg) {
 	}
 	// initialize the example directory paths
 	else {
-		initPath("\\tests", "\\tests\\Release", CDir, 1);
+		initPath("\\ctests", "\\ctests\\Release", CDir, 1);
 		initPath("\\ftests", "\\ftests\\Release", FortranDir, 1);
 		initPath("\\perfometer", "\\tools\\perfometer\\tests\\Release", PerfDir, 3);
 	}
@@ -313,6 +313,7 @@ static void smokeTest(void)
 	else MessageBox(NULL, "This version of PAPI doesn't run on the MultiProcessor Build.", "Smoke Test",MB_OK);
 }
 	
+static HWND diagDlg;
 
 // Message handler for about box, which serves as the main interface
 LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -324,6 +325,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 	    centerDialog(hDlg);
 	    enableButtons(hDlg);
+	    diagDlg = 0;
 	    return TRUE;
 
 	case WM_COMMAND:
@@ -362,6 +364,8 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case IDOK:
 		case IDCANCEL:
+		    if (diagDlg) 
+		      EndDialog(diagDlg, LOWORD(wParam));
 		    EndDialog(hDlg, LOWORD(wParam));
 		    return TRUE;
 	    }
@@ -380,6 +384,7 @@ LRESULT CALLBACK Diagnostics(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 
 	case WM_INITDIALOG:
 	    centerDiagnostics(hDlg);
+	    diagDlg = hDlg;
 	    return TRUE;
 
 	case WM_COMMAND:
@@ -422,6 +427,7 @@ LRESULT CALLBACK Diagnostics(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 
 		case IDOK:
 		case IDCANCEL:
+		  diagDlg = 0;
 		  EndDialog(hDlg, LOWORD(wParam));
 		  return TRUE;
 	    }
