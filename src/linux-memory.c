@@ -259,6 +259,22 @@ static int init_intel(PAPI_mh_info_t * mh_info)
     * "Intel® Processor Identification and the CPUID Instruction",
     * Application Note, AP-485, Nov 2002, 241618-022
     */
+   for (i = 0; i < 3; i++) {
+      L[i].tlb[0].type = PAPI_MH_TYPE_EMPTY;
+      L[i].tlb[0].num_entries = 0;
+      L[i].tlb[0].associativity = 0;
+      L[i].tlb[1].type = PAPI_MH_TYPE_EMPTY;
+      L[i].tlb[1].num_entries = 0;
+      L[i].tlb[1].associativity = 0;
+      L[i].cache[0].type = PAPI_MH_TYPE_EMPTY;
+      L[i].cache[0].associativity = 0;
+      L[i].cache[0].line_size = 0;
+      L[i].cache[0].size = 0;
+      L[i].cache[1].type = PAPI_MH_TYPE_EMPTY;
+      L[i].cache[1].associativity = 0;
+      L[i].cache[1].line_size = 0;
+      L[i].cache[1].size = 0;
+   }
 
    SUBDBG("Initializing Intel Memory\n");
    /* All of Intels cache info is in 1 call to cpuid
@@ -353,44 +369,61 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                 * If we can't combine the two *Still Hoping ;) * -KSL
                 * This is L1 instruction AND data cache
                 */
-               L[1].cache[1].size = 96;
-               L[1].cache[1].associativity = 6;
-               L[1].cache[1].line_size = 64;
+               L[1].cache[0].size = 96;
+               L[1].cache[0].associativity = 6;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x22:
-               L[2].cache[1].associativity = 4;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 512;
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 512;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x23:
-               L[2].cache[1].associativity = 8;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 1024;
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 1024;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x25:
-               L[2].cache[1].associativity = 8;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 2048;
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 2048;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x29:
-               L[2].cache[1].associativity = 8;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 4096;
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 4096;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
+            case 0x2C:
+	       L[0].cache[1].associativity = 8;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 32;
+               break;
+            case 0x30:
+	       L[0].cache[0].associativity = 8;
+               L[0].cache[0].line_size = 64;
+               L[0].cache[0].size = 32;
             case 0x39:
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 128;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x3B:
-               L[1].cache[1].associativity = 2;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 128;
+               L[1].cache[0].associativity = 2;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x3C:
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 256;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x40:
                if (L[1].cache[1].size) {
@@ -402,29 +435,34 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                }
                break;
             case 0x41:
-               L[1].cache[1].size = 128;
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 32;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x42:
-               L[1].cache[1].size = 256;
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 32;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x43:
-               L[1].cache[1].size = 512;
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 32;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x44:
-               L[1].cache[1].size = 1024;
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 32;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x45:
-               L[1].cache[1].size = 2048;
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 32;
+               L[1].cache[0].size = 2048;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
                /* Events 0x50--0x5d: TLB size info */
                /*There is no way to determine
@@ -460,6 +498,11 @@ static int init_intel(PAPI_mh_info_t * mh_info)
             case 0x5D:
                L[0].tlb[1].num_entries = 256;
                L[0].tlb[1].associativity = 1;
+               break;
+	    case 0x60:
+	       L[0].cache[1].associativity = 8;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 16;
                break;
             case 0x66:
                L[0].cache[1].associativity = 4;
@@ -502,32 +545,55 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[0].cache[0].associativity = 4;
                L[0].cache[0].line_size = 64;
                break;
+            case 0x78:
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
             case 0x79:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 128;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x7A:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 256;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x7B:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 512;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x7C:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 1024;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7D:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 2048;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x7E:
                /* This value is not in my copy of the Intel manual */
                /* IA64 value */
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 128;
-               L[1].cache[1].size = 256;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 128;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7F:
+               L[1].cache[0].associativity = 2;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x81:
                /* This value is not in my copy of the Intel manual */
@@ -535,66 +601,77 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                 * Perhaps it is in an errata somewhere, I found the
                 * info at sandpile.org -KSL
                 */
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 32;
-               L[1].cache[1].size = 128;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
             case 0x82:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 32;
-               L[1].cache[1].size = 256;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x83:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 32;
-               L[1].cache[1].size = 512;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x84:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 32;
-               L[1].cache[1].size = 1024;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x85:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 32;
-               L[1].cache[1].size = 2048;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 2048;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x86:
-               L[1].cache[1].associativity = 4;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 512;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x87:
-               L[1].cache[1].associativity = 8;
-               L[1].cache[1].line_size = 64;
-               L[1].cache[1].size = 1024;
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x88:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               L[2].cache[1].associativity = 4;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 2048;
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 2048;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x89:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               L[2].cache[1].associativity = 4;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 4096;
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 4096;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x8A:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               L[2].cache[1].associativity = 4;
-               L[2].cache[1].line_size = 64;
-               L[2].cache[1].size = 8192;
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 8192;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x8D:
                /* This value is not in my copy of the Intel manual */
                /* IA64 */
-               L[2].cache[1].associativity = 12;
-               L[2].cache[1].line_size = 128;
-               L[2].cache[1].size = 3096;
+               L[2].cache[0].associativity = 12;
+               L[2].cache[0].line_size = 128;
+               L[2].cache[0].size = 3096;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x90:
                L[0].tlb[0].associativity = 1;
@@ -617,6 +694,7 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[0].tlb[1].num_entries = 512;
                break;
                /* Note, there are still various IA64 cases not mapped yet */
+               /* I think I have them all now 9/10/04 */
             }
             value = value >> 8;
          }
@@ -628,11 +706,18 @@ static int init_intel(PAPI_mh_info_t * mh_info)
       {tlb,cache}[1] is DATA. If Intel produces a unified TLB or cache, this
       algorithm will fail.
    */
+  /* There are a bunch of Unified caches, changed slightly to support this 
+   * Unified should be in slot 0
+   */
    for (i = 0; i < 3; i++) {
-      if (L[i].tlb[0].num_entries) L[i].tlb[0].type = PAPI_MH_TYPE_INST;
-      if (L[i].tlb[1].num_entries) L[i].tlb[1].type = PAPI_MH_TYPE_DATA;
-      if (L[i].cache[0].size) L[i].cache[0].type = PAPI_MH_TYPE_INST;
-      if (L[i].cache[1].size) L[i].cache[1].type = PAPI_MH_TYPE_DATA;
+      if( L[i].tlb[0].type == PAPI_MH_TYPE_EMPTY ) {
+         if (L[i].tlb[0].num_entries) L[i].tlb[0].type = PAPI_MH_TYPE_INST;
+         if (L[i].tlb[1].num_entries) L[i].tlb[1].type = PAPI_MH_TYPE_DATA;
+      }
+      if ( L[i].cache[0].type == PAPI_MH_TYPE_EMPTY) {
+         if (L[i].cache[0].size) L[i].cache[0].type = PAPI_MH_TYPE_INST;
+         if (L[i].cache[1].size) L[i].cache[1].type = PAPI_MH_TYPE_DATA;
+      }
    }
 
    return PAPI_OK;
