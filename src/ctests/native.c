@@ -78,6 +78,19 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
       "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL
    };
 #endif
+#ifdef PENTIUM3
+   static char *native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
+#endif
+#ifdef __ATHLON__
+   static char *native_name[] = { "SEG_REG_LOADS", "ST_ACTIVE_IS", "DC_ACCESSES",
+      "DC_MISSES", NULL
+   };
+#endif
+#ifdef __x86_64__
+   static char *native_name[] = { "FP_ADD_PIPE", "FP_MULT_PIPE", "FP_ST_PIPE",
+      "FP_NONE_RET", NULL
+   };
+#endif
 
 void papimon_start(void)
 {
@@ -102,27 +115,11 @@ void papimon_start(void)
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       }
 #elif defined(linux) && defined(__i386__)
-      if (strncmp("AuthenticAMD", hwinfo->vendor_string, (size_t) 3) == 0) {
-         native = 0 | 0x40 << 8 | 0;    /* DCU refs */
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-         native = 0 | 0x41 << 8 | 1;    /* DCU miss */
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      } else if (hwinfo->model >= 11) { /* Pentium 4 */
-         for (i = 0; native_name[i] != NULL; i++) {
-            retval = PAPI_event_name_to_code(native_name[i], &native);
-            /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
-            if (retval != PAPI_OK)
-               test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
-            if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-               test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-         }
-      } else {
-         native = 0 | 0x43 << 8 | 0;    /* Data mem refs */
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-         native = 0 | 0x47 << 8 | 1;    /* Lines out */
+      for (i = 0; native_name[i] != NULL; i++) {
+         retval = PAPI_event_name_to_code(native_name[i], &native);
+         /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
+         if (retval != PAPI_OK)
+            test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
          if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       }
@@ -267,16 +264,8 @@ void papimon_stop(void)
               100.0 * (float) values[6] / ((float) values[1] + (float) values[4]));
 #endif
 #elif defined(linux) && defined(__i386__)
-      if (strncmp("AuthenticAMD", hwinfo->vendor_string, (size_t) 3) == 0) {
-         fprintf(stderr, "DCU cache accesses         : %lld\n", values[0]);
-         fprintf(stderr, "DCU cache misses           : %lld\n", values[1]);
-      } else if (hwinfo->model >= 11) { /* Pentium 4 */
-         for (i = 0; native_name[i] != NULL; i++) {
-            fprintf(stderr, "%-40s: %lld\n", native_name[i], values[i]);
-         }
-      } else {
-         fprintf(stderr, "DCU Memory references      : %lld\n", values[0]);
-         fprintf(stderr, "DCU Lines out              : %lld\n", values[1]);
+      for (i = 0; native_name[i] != NULL; i++) {
+         fprintf(stderr, "%-40s: %lld\n", native_name[i], values[i]);
       }
 #elif defined(linux) && defined(__ia64__)
 #ifdef ITANIUM2
