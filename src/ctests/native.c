@@ -38,7 +38,7 @@ void papimon_start(void)
   if (EventSet == PAPI_NULL)
     {
       if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-	  test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",retval);
+	  test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",PAPI_EMISC);
       if( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
 	test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
