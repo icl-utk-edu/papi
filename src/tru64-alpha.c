@@ -208,10 +208,12 @@ extern u_int read_virt_cycle_counter(void);
 long long _papi_hwd_get_real_usec(void)
 {
    struct timespec res;
+   long k;
 
    if ((clock_gettime(CLOCK_REALTIME, &res) == -1))
       return (PAPI_ESYS);
-   return((res.tv_sec * 1000000) + (res.tv_nsec / 1000));
+   /* here subtract 10860000000 to avoid overflow */
+   return (((res.tv_sec-1086000000) * 1000000) + (res.tv_nsec / 1000));
 }
 
 long long _papi_hwd_get_real_cycles(void)
