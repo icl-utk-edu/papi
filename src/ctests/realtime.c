@@ -51,7 +51,8 @@ int main(int argc, char **argv)
    one instance of Pentium 4 (torc17@utk) are on the order of one part per thousand.
 */
 
-   /* We'll accept 1 part per thousand error here (to allow Pentium 4 to pass) */
+   /* We'll accept 1.5 part per thousand error here (to allow Pentium 4 
+      and Alpha to pass) */
    if (elapsed_us < (10000000 - 15000))
      test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
 
