@@ -15,8 +15,6 @@
 
 #include "papi_test.h"
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
-
 int main(int argc, char **argv)
 {
    int retval, num_tests = 1, tmp;
@@ -40,9 +38,9 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-   hw_info = PAPI_get_hardware_info();
-   if (hw_info == NULL)
-     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+    hw_info = PAPI_get_hardware_info();
+    if (hw_info == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
        !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
@@ -64,6 +62,7 @@ int main(int argc, char **argv)
          mask1 = MASK_TOT_INS | MASK_TOT_CYC;
       }
    }
+
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);

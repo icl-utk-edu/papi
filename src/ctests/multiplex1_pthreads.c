@@ -31,8 +31,6 @@
 extern void do_flops(int);
 extern void do_reads(int);
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
-
 unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, 0,
 };
@@ -44,12 +42,18 @@ void init_papi_pthreads(void)
    int retval;
    const unsigned int *inev;
    unsigned int *outev;
-   const PAPI_hw_info_t *hw_info;
+   const PAPI_hw_info_t *hw_info = NULL;
 
    /* Initialize the library */
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+   /* Turn on automatic error reporting */
+
+   if (!TESTS_QUIET)
+      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
    hw_info = PAPI_get_hardware_info();
    if (hw_info == NULL)
@@ -80,12 +84,6 @@ void init_papi_pthreads(void)
 
    if ((retval = PAPI_multiplex_init()) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
-
-   /* Turn on automatic error reporting */
-
-   if (!TESTS_QUIET)
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
    /* Turn on thread support in PAPI */
 

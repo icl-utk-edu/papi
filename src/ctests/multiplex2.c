@@ -10,9 +10,6 @@
 /* This file tests the multiplex functionality, originally developed by 
    John May of LLNL. */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 #include "papi_test.h"
 
 void init_papi(void)

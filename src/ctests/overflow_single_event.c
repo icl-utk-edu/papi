@@ -35,8 +35,7 @@
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
-int total = 0;                  /* total overflows */
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+static int total = 0;                  /* total overflows */
 
 void handler(int EventSet, void *address, long_long overflow_vector, void *context)
 {
@@ -47,7 +46,6 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
    total++;
 }
 
-
 int main(int argc, char **argv)
 {
    int EventSet;
@@ -56,6 +54,7 @@ int main(int argc, char **argv)
    int num_flops, retval;
    int PAPI_event, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
+   const PAPI_hw_info_t *hw_info = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -68,15 +67,28 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
-#if defined(PENTIUM4) || defined(POWER3) ||  (defined(sparc) && defined(sun))
-   PAPI_event = PAPI_TOT_INS;
-#else
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+
+   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
+      (!strncmp(hw_info->model_string, "AMD K7", 6))) {
    /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
-      PAPI_event = PAPI_FP_INS;
-   else
-      PAPI_event = PAPI_TOT_INS;
-#endif
+      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+         PAPI_event = PAPI_TOT_INS;
+      } else {
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
+      }
+   } else {
+   /* query and set up the right instruction to monitor */
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+         PAPI_event = PAPI_FP_INS;
+      } else {
+         PAPI_event = PAPI_TOT_INS;
+      }
+   }
 
    if (PAPI_event == PAPI_FP_INS )
       mythreshold = THRESHOLD;

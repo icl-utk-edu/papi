@@ -18,9 +18,9 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+static int total = 0;
+static const PAPI_hw_info_t *hw_info = NULL;
 
-int total = 0;
 void handler(int EventSet, void *address, long_long overflow_vector, void * context)
 {
    if (!TESTS_QUIET) {
@@ -39,20 +39,34 @@ void *Thread(void *arg)
 {
    int retval, num_tests = 1;
    int EventSet1;
-   int mask1 = 0x5;
+   int mask1;
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc;
-   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+
+   if (!TESTS_QUIET) {
+      printf("Thread 0x%x \n", (int) pthread_self());
+   } else {
+      num_events1 = (int) pthread_self();
+   }
 
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
        !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (strstr(hw_info->model_string, "POWER3"))) {
-      mask1 = 0x3;
+      (!strncmp(hw_info->model_string, "AMD K7", 6))) {
+   /* query and set up the right instruction to monitor */
+      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+         mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+      } else {
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
+      }
+   } else {
+   /* query and set up the right instruction to monitor */
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+         mask1 = MASK_FP_INS | MASK_TOT_CYC;
+      } else {
+         mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+      }
    }
-   if (!TESTS_QUIET)
-      fprintf(stderr, "Thread %lx running PAPI\n", pthread_self());
 
    EventSet1 = add_test_events(&num_events1, &mask1);
 
@@ -128,6 +142,10 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if ((retval =
         PAPI_thread_init((unsigned long (*)(void)) (pthread_self))) != PAPI_OK) {

@@ -32,7 +32,7 @@ Master pthread:
 
 #include "papi_test.h"
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+static const PAPI_hw_info_t *hw_info = NULL;
 
 void *Thread(void *arg)
 {
@@ -44,19 +44,27 @@ void *Thread(void *arg)
    long_long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
-   if (!TESTS_QUIET) {
-      printf("Thread 0x%x \n", (int) pthread_self());
-   } else {
-      num_events1 = (int) pthread_self();
-   }
+   printf("Thread 0x%x \n", (int) pthread_self());
 
+   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
+      (!strncmp(hw_info->model_string, "AMD K7", 6))) {
    /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-      PAPI_event = PAPI_FP_INS;
-      mask1 = MASK_FP_INS | MASK_TOT_CYC;
+      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+         PAPI_event = PAPI_TOT_INS;
+         mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+      } else {
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
+      }
    } else {
-      PAPI_event = PAPI_TOT_INS;
-      mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+   /* query and set up the right instruction to monitor */
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+         PAPI_event = PAPI_FP_INS;
+         mask1 = MASK_FP_INS | MASK_TOT_CYC;
+      } else {
+         PAPI_event = PAPI_TOT_INS;
+         mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+      }
    }
 
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
@@ -124,6 +132,9 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    retval = PAPI_thread_init((unsigned long (*)(void)) (pthread_self));
    if (retval != PAPI_OK) {
