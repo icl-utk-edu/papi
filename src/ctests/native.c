@@ -10,17 +10,6 @@
 */
 #include "papi_test.h"
 
-/*
-#if defined(linux) && defined(__ia64__)
-	#ifdef ITANIUM2
-	  #include "pfmlib_itanium2_priv.h"
-      #include "itanium2_events.h"
-    #else
-	  #include "pfmlib_itanium_priv.h"
-	  #include "itanium_events.h"
-	#endif
-#endif
-*/
 
 #if defined(__ALPHA) && defined(__osf__)
 #include <machine/hal/cpuconf.h>
@@ -102,8 +91,9 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
       "UNSTALLED_BACKEND_CYCLE", "MEMORY_CYCLE", NULL
    };
 #endif
+#endif
 
-#if defined(mips) && defined(sgi) && defined(unix)
+#if ( defined(mips) && defined(sgi) && defined(unix) )
    static char *native_name[] = { "Primary_instruction_cache_misses", 
       "Primary_data_cache_misses", NULL
    };
@@ -113,7 +103,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *native_name[] = { "retinst", "DC_wr_hit", NULL };
 #endif
 
-#elif defined(__ALPHA) && defined(__osf__)
+#if defined(__ALPHA) && defined(__osf__)
    static char *native_name[] = { "cycles", "DC_wr_hit", NULL };
 #endif
 
