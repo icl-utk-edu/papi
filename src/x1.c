@@ -174,22 +174,21 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
    struct tms buffer;
 
    times(&buffer);
-   retval = (long_long) buffer.tms_utime * (long_long) (1000000 / sysconf(_SC_CLK_TCK));
+   SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
+     (1000000/sysconf(_SC_CLK_TCK)));
    return (retval);
+}
+
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+{
+   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /*
  * This function should return the highest resolution processor timer available
  * in cycles.
  */
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
-{
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_virt_usec(zero);
-   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-   return ((long_long) cyc);
-}
 
 void _papi_hwd_error(int error, char *where)
 {

@@ -480,15 +480,16 @@ long_long _papi_hwd_get_real_usec(void)
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    struct tms buffer;
+   long_long retval;
 
    times(&buffer);
-   return (((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)CLK_TCK);
+   SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
+     (1000000/CLK_TCK));
+   return retval;
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   struct tms buffer;
-
-   times(&buffer);
-   return ((((long_long)buffer.tms_utime * (long_long)1000000) / (long_long)CLK_TCK) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
