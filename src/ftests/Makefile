@@ -5,7 +5,7 @@ TESTS 	= zero first \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
-FTEST_DEPENDENCE=ftests_util.o do_loops.o
+FTEST_DEPENDENCE=ftests_util.o
 PAPILIB=ftests_util.o ../libpapi.a
 
 default: $(TESTS)
@@ -96,12 +96,12 @@ native: native.F $(FTEST_DEPENDENCE)
 profile: profile.F $(FTEST_DEPENDENCE)
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) profile.F $(PAPILIB) -o profile $(LDFLAGS)
 
-fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) $(FTEST_DEPENDENCE) -o fmultiplex1 $(LDFLAGS)
+fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) do_loops.o
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) do_loops.o -o fmultiplex1 $(LDFLAGS)
 
 
-fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) $(FTEST_DEPENDENCE) -o fmultiplex2 $(LDFLAGS)
+fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) do_loops.o
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) do_loops.o -o fmultiplex2 $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TESTS) core *~
