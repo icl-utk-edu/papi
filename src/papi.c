@@ -215,7 +215,7 @@ const char *papi_errStr[PAPI_NUM_ERRORS] = {
   "Internal error, please send mail to the developers",
   "Event does not exist",
   "Event exists, but cannot be counted due to hardware resource limits",
-  "EventSet is currently running",
+  "EventSet is currently not running",
   "EventSet is currently counting",
   "No such EventSet available",
   "Event in argument is not a valid preset",
