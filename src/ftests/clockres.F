@@ -1,13 +1,13 @@
-#include "fpapi.h"
+#include "fpapi_test.h"
+#define ITERS 100000
 
       program clockres
       IMPLICIT NONE
 
-      INTEGER*8 elapsed_usec(10000), elapsed_cyc(10000)
+      INTEGER*8 elapsed_usec(ITERS), elapsed_cyc(ITERS)
       INTEGER*8 total_usec, total_cyc
       INTEGER i,handle
       INTEGER retval
-      REAL ITERS
       integer tests_quiet, get_quiet
       external get_quiet
 
@@ -15,7 +15,6 @@
 
       total_usec=0
       total_cyc=0
-      ITERS=10000.0
       handle=0
 
       retval = PAPI_VER_CURRENT
@@ -30,20 +29,20 @@
       print *,'-----------------------------------------------'
       end if
 
-      do i=1,10000
+      do i=1,ITERS
          call PAPIf_get_real_cyc( elapsed_cyc(i) )
       end do
 
-      do i=2,10000
+      do i=2,ITERS
          if ((elapsed_cyc(i)-elapsed_cyc(i-1)).LT.0 ) stop 
          total_cyc =total_cyc+(elapsed_cyc(i) - elapsed_cyc(i-1))
       end do
 
-      do i=1,10000
+      do i=1,ITERS
          call PAPIf_get_real_usec(elapsed_usec(i))
       end do
 
-      do i=2,10000
+      do i=2,ITERS
         if ((elapsed_usec(i) - elapsed_usec(i-1)).LT.0) stop
         total_usec=total_usec+(elapsed_usec(i) - elapsed_usec(i-1))
       end do

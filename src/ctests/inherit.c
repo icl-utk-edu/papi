@@ -5,8 +5,7 @@
 #else
 #include <wait.h>
 #endif
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 int err_exit(int code, char *str)
 {

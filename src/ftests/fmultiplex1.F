@@ -1,5 +1,4 @@
-#include "fpapi.h"
-#define SUCCESS 1
+#include "fpapi_test.h"
 #define NUM 10
 
       program multiplex1

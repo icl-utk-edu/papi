@@ -1,4 +1,4 @@
-#include "fpapi.h"
+#include "fpapi_test.h"
 #define ITERS 100
 
 #if defined(sun) && defined(sparc)

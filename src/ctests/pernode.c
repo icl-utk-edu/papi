@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include "papi.h"
+#include "papi_test.h"
 
 int main() 
 {

@@ -1,6 +1,6 @@
 #include "papi_test.h"
 
-#define ITERS 10000
+#define ITERS 100000
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 

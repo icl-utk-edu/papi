@@ -1,10 +1,6 @@
-#include "fpapi.h"
-#define SUCCESS 1
+#include "fpapi_test.h"
 #define NUM 100
-
 #define MAX_TO_ADD 9
-
-#define PAPI_MAX_PRESET_EVENTS 128
 
       program multiplex2
       IMPLICIT NONE

@@ -8,7 +8,7 @@ C successfully added one event, then the 2nd one get an error when I
 C tried to add it, is it possible for PAPI_start to work but just 
 C count the first event?
 
-#include  "fpapi.h"
+#include  "fpapi_test.h"
 
       program case1
       IMPLICIT NONE

@@ -9,7 +9,7 @@
 #if defined ( _CRAYT3E ) 
 #include  <fortran.h>  
 #endif
-#include "papi.h"
+#include "../papi.h"
 
 volatile long_long z = -101010101;
 

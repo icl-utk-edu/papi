@@ -1,7 +1,6 @@
 C This file performs the following tests:
 C Hardware info
-#include "fpapi.h"
-#define PAPI_MAX_PRESET_EVENTS 128
+#include "fpapi_test.h"
 
       program avail
       IMPLICIT NONE

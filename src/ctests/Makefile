@@ -2,7 +2,7 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads
-MPX	= multiplex1 multiplex2 mendes-alt
+MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx branches-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SERIAL  = dmem_info all_events derived high-level2 describe mem_info zero \
@@ -32,6 +32,27 @@ pthreads: $(PTHREADS)
 shmem: $(SHMEM)
 
 serial: $(SERIAL)
+
+sdsc2: sdsc2.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
+
+sdsc2-mpx: sdsc2.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
+
+branches-mpx: branches.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) branches.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
+
+sdsc2-mpx-noreset: sdsc2.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) -DMPX -DSTARTSTOP $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) -lm $(LDFLAGS) -o $@
+
+sdsc-mpx: sdsc.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@
+
+sdsc3-mpx: sdsc3.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc3.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
+
+sdsc4-mpx: sdsc4.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc4.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 calibrate: calibrate.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
