@@ -62,7 +62,7 @@ static hwi_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
 hwi_search_t *preset_search_map;
 
 
-#define DEBUG_SETUP
+/*#define DEBUG_SETUP*/
 /* the following bpt functions are empty functions in POWER4 */
 /* This function examines the event to determine
     if it can be mapped to counter ctr. 

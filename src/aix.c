@@ -80,6 +80,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       } else
          return (PAPI_ENOEVNT);
    } else {
+#ifdef _POWER4
       unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000000FF;
       int i;
@@ -102,6 +103,9 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
          return (PAPI_ENOEVNT);
       *EventCode = *EventCode + 1;
       return (PAPI_OK);
+#else
+      return (PAPI_EINVAL);
+#endif
    }
 }
 
