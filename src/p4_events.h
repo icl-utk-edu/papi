@@ -71,7 +71,7 @@
    SAAT_ESCR1: 10, 11 */
 
 /* store_port_replay */
-#define SRPRT_RPL_ESCR 0x4
+#define SRPRT_RPL_ESCR 0x5
 #define SRPRT_RPL_ESCR_MASK_SPLIT_SR 0x2
 #define SRPRT_RPL_CCCR 0x2
 /* SAAT_ESCR0: 8, 9

@@ -433,8 +433,8 @@ u_long_long _papi_hwd_get_virt_usec (const P4_perfctr_context_t *ctx)
 
 #ifdef DEBUG
 static void print_bits(P4_register_t *b) {
-    SUBDBG("P4_register:\n  counter[0,1]: 0x%x, 0x%x\n", b->counter[0], b->counter[1]);
-    SUBDBG("  escr[0,1]: 0x%x, 0x%x,", b->escr[0], b->escr[1]);
+    SUBDBG("  counter[0,1]: 0x%x, 0x%x\n", b->counter[0], b->counter[1]);
+    SUBDBG("  escr[0,1]: 0x%x, 0x%x\n", b->escr[0], b->escr[1]);
     SUBDBG("  cccr: 0x%x,  event: 0x%x\n", b->cccr, b->event);
     SUBDBG("  pebs_enable: 0x%x,  pebs_matrix_vert: 0x%x,  ireset: 0x%x\n", b->pebs_enable, b->pebs_matrix_vert, b->ireset);
 }
@@ -442,7 +442,9 @@ static void print_bits(P4_register_t *b) {
 static void print_alloc(P4_reg_alloc_t *a){
     SUBDBG("P4_reg_alloc:\n");
     print_bits(&(a->ra_bits));
-    SUBDBG("  selector: 0x%x,  rank: 0x%x,  escr: 0x%x %x\n", a->ra_selector, a->ra_rank, a->ra_escr[0], a->ra_escr[1]);
+    SUBDBG("  selector: 0x%x\n", a->ra_selector);
+    SUBDBG("  rank: 0x%x\n", a->ra_rank);
+    SUBDBG("  escr: 0x%x 0x%x\n", a->ra_escr[0], a->ra_escr[1]);
 }
 #endif
 
