@@ -973,7 +973,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
   int i, cur_mpx_event;
   int retval;
   long_long dummy_value[2];
-  // long_long cycles_this_slice, total_cycles;
+  /* long_long cycles_this_slice, total_cycles; */
   MasterEvent * cur_event, * head;
   Threadlist * thr;
 
