@@ -116,7 +116,7 @@ C     TLB
 
 #endif
 
-#if defined(linux)
+#if defined(linux) && defined(__i386__)
 C     Data mem refs
       nativees = 43 * 2**8 + 0
       call PAPIf_add_event( es, nativees, retval )
@@ -132,9 +132,24 @@ C     Lines out
       end if
 #endif
 
+#if defined(linux) && defined(__ia64__)
+C     Data mem refs
+      nativees = 516
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     Lines out
+      nativees = 1541
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+#endif
 #if (defined(mips) && defined(sgi) && defined(unix))
 C     L1 I Miss
-      nativees = 9 * 2**8
+      nativees = 9*2**8
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -258,9 +273,13 @@ C     call sleep(1)
      *100.0*values(6)/(values(2)+values(5))
 #endif
 
-#if defined(linux)
+#if defined(linux) && defined(__i386__)
       print *, "DCU Memory references      : ", values(1)
       print *, "DCU Lines out              : ", values(2)
+#endif
+#if defined(linux) && defined(__ia64__)
+      print *, "Execution latency stall cyc        : ", values(1)
+      print *, "Combined execution stall cycles    : ", values(2)
 #endif
 
 #if (defined(mips) && defined(sgi))
