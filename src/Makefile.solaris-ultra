@@ -1,7 +1,7 @@
 SUBSTR  = solaris-ultra
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I or II"
 LIBS	= static shared
-TARGETS	= serial smp pthreads
+TARGETS	= pthreads serial smp 
 # TARGETS = omp
 FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS  = -xarch=v8plusa

@@ -170,6 +170,7 @@ EventSetInfo *_papi_hwi_lookup_in_master_list(void)
 	    return(tmp->master);
 	  tmp = tmp->next;
 	}
+      DBG((stderr,"New thread %lu found, but not initialized.\n",id_to_find));
       return(NULL);
     }
 }
@@ -182,7 +183,14 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
   EventSetInfo *ESI;
 
   master_event_set = _papi_hwi_lookup_in_master_list();
+  if (master_event_set == NULL)
+    return;
   ESI = master_event_set->event_set_overflowing;
+  if (ESI == NULL)
+    {
+      DBG((stderr,"New thread %lu initialized, but not overflowing.\n",(*thread_id_fn)()));
+      return;
+    }
 
   if ((ESI->state & PAPI_OVERFLOWING) == 0)
     abort();
@@ -212,16 +220,24 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
     }
 }
 
+static int timer_running = 0;
+
 static int start_timer(int milliseconds)
 {
   int retval;
   struct sigaction action;
   struct itimerval value;
+  void *tmp;
+
+  PAPI_lock();
+  timer_running++;
+  PAPI_unlock();
 
   /* If the user has installed a signal, don't do anything */
 
-  if (signal(PAPI_SIGNAL, SIG_IGN) != SIG_DFL)
-    return(PAPI_ESYS);
+  tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
+  if ((tmp != (void *)SIG_DFL) && (tmp != (void *)_papi_hwd_dispatch_timer))
+    return(PAPI_EMISC);
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_flags = SA_RESTART;
@@ -255,9 +271,6 @@ static int stop_timer(void)
   int retval = PAPI_OK;
   struct itimerval value;
 
-  if (signal(PAPI_SIGNAL,SIG_DFL) == SIG_ERR)
-    retval = PAPI_ESYS;
-  
   value.it_interval.tv_sec = 0;
   value.it_interval.tv_usec = 0;
   value.it_value.tv_sec = 0;
@@ -269,6 +282,15 @@ static int stop_timer(void)
     if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
       retval = PAPI_ESYS;
 
+  PAPI_lock();
+  timer_running--;
+  if (timer_running == 0)
+    {
+      if (signal(PAPI_SIGNAL,SIG_DFL) == SIG_ERR)
+	retval = PAPI_ESYS;
+    }
+  PAPI_unlock();
+  
   return(retval);
 }
 

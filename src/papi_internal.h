@@ -1,5 +1,5 @@
 #ifdef DEBUG
-#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || defined(__digital__)
+#if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || defined(__digital__) || (defined(sun) && defined(sparc))
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
@@ -17,11 +17,7 @@ extern PAPI_debug_handler_t PAPI_ERR_HANDLER;
 
 /* Signal used for overflow delivery */
 
-#if defined(sun) && defined(sparc)
-#define PAPI_ITIMER ITIMER_REALPROF
-#else
 #define PAPI_ITIMER ITIMER_PROF
-#endif
 #define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
 

@@ -116,5 +116,5 @@ C  Stop the counters and put the results in the array values
       if ( num_events .GT. 2 ) then
          print *, 'Total Level 2 Data cache misses: ', values(3)
       endif
-      return
+      stop
       end

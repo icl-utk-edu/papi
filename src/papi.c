@@ -683,13 +683,13 @@ int create_eventset(int *EventSet, void *handle)
   /* Is the EventSet already in existence? */
   
   if ((EventSet == NULL) || (handle == NULL))
-    papi_return(PAPI_EINVAL);
+    return(PAPI_EINVAL);
 
   /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
   
   ESI = allocate_EventSet();
   if (ESI == NULL)
-    papi_return(PAPI_ENOMEM);
+    return(PAPI_ENOMEM);
 
   /* Add it to the global table */
 

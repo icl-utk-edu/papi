@@ -13,8 +13,6 @@ C ****************************************************************************
       INTEGER EventSet, length, handle
       CHARACTER*128  errorstring 
       CHARACTER*40 vstring, mstring
-C   PAPI standardized event to be monitored
-      INTEGER event(3)
 C   PAPI values of the counters
       INTEGER*8 values(3)
       DOUBLE PRECISION p(175,225),q(225,150),r(175,150)
@@ -140,5 +138,5 @@ C  Stop the counters and put the results in the array values
       print *, 'FLOPS: ', values(1)
       print *, 'Total Level 1 Data cache misses: ', values(2)
       print *, 'Total Level 2 Data cache misses: ', values(3)
-      return
+      stop
       end

@@ -5,7 +5,6 @@ C Hardware info
 
       program avail
       INTEGER ncpu,nnodes,totalcpus,vendor,model, check, handle
-      CHARACTER*40 errorstring
       CHARACTER*20 vstring, mstring
       REAL revision, mhz
 

@@ -42,6 +42,9 @@ Master pthread:
 #include "papi.h"
 #include "papi_internal.h"
 #include "test_utils.h"
+#if defined(sun) && defined(sparc)
+#include <thread.h>
+#endif
 
 void Thread(int t, int n)
 {
@@ -51,9 +54,8 @@ void Thread(int t, int n)
   int num_events1;
   long long **values;
   long long elapsed_us, elapsed_cyc;
-  void *handle;
   
-  EventSet1 = add_test_events_r(&num_events1,&mask1,handle);
+  EventSet1 = add_test_events(&num_events1,&mask1);
 
   /* num_events1 is greater than num_events2 so don't worry. */
 
@@ -108,7 +110,7 @@ int main()
 #pragma parallel
 #pragma pfor local(i)
 #elif defined(sun) && defined(sparc)
-  assert(PAPI_thread_init(thread_self, 0) == PAPI_OK);
+  assert(PAPI_thread_init(thr_self, 0) == PAPI_OK);
 #pragma MP taskloop private(i)
 #elif defined(__ALPHA) && defined(__osf__)
 #else

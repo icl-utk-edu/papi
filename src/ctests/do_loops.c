@@ -19,7 +19,7 @@ void do_flops(int n)
   double c = 0.11;
 
   for (i=0; i < n; i++) {
-    c += a;
+    c += a * b;
   }
 }
 

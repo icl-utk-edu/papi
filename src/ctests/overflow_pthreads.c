@@ -27,9 +27,38 @@
 #include "papi_internal.h"
 #include "test_utils.h"
 
-#define THRESHOLD 1000000
+#define THRESHOLD 100000
 
 int total = 0;
+
+#if 0
+static void sigprof_handler(int sig)
+{
+  fprintf(stderr,"sigprof_handler(), PID %d TID %d\n",
+	  getpid(),(int)pthread_self());
+}
+
+static void start_sig(void)
+{
+  struct sigaction action;
+
+  memset(&action,0x00,sizeof(struct sigaction));
+  action.sa_handler = (void(*)(int))sigprof_handler;
+  assert(sigaction(SIGPROF, &action, NULL) != -1);
+}
+
+void start_timer(int milliseconds)
+{
+  struct itimerval value;
+
+  start_sig();
+  value.it_interval.tv_sec = 0;
+  value.it_interval.tv_usec = milliseconds * 1000;
+  value.it_value.tv_sec = 0;
+  value.it_value.tv_usec = milliseconds * 1000;
+  assert(setitimer(ITIMER_PROF, &value, NULL) != -1);
+}
+#endif
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {
@@ -64,8 +93,9 @@ void *Thread(void *arg)
 
   retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler);
   if (retval)
-    exit(1);
+    exit(1); 
 
+  /* start_timer(1); */
   retval = PAPI_start(EventSet1);
   if (retval)
     exit(1);
@@ -93,6 +123,7 @@ void *Thread(void *arg)
   free_test_space(values, num_tests);
 
   pthread_exit(NULL);
+
   return(NULL);
 }
 
@@ -121,18 +152,18 @@ int main()
   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-  flops1 = 1000000;
+  flops1 = 10000000;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
   if (rc)
     exit(-1);
 
-  flops2 = 2000000;
+  flops2 = 20000000;
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
   if (rc)
-    exit(-1);
+    exit(-1); 
 
   pthread_attr_destroy(&attr);
-  pthread_join(f_th, NULL);
+  pthread_join(f_th, NULL); 
   pthread_join(e_th, NULL);
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;

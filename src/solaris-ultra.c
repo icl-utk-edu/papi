@@ -246,14 +246,16 @@ static void merge_pcr(int hwcntr_num, uint64_t from, uint64_t *to)
   *to = tmp | (mask & from); /* copy bits in */
 }
 
+#ifdef DEBUG
 static void dump_cmd(papi_cpc_event_t *t)
 {
-  fprintf(stderr,"cpc_event_t.ce_cpuver %d\n",t->cmd.ce_cpuver);
-  fprintf(stderr,"ce_tick %llu\n",t->cmd.ce_tick);
-  fprintf(stderr,"ce_pic[0] %llu ce_pic[1] %llu\n",t->cmd.ce_pic[0],t->cmd.ce_pic[1]);
-  fprintf(stderr,"ce_pcr 0x%llx\n",t->cmd.ce_pcr);
-  fprintf(stderr,"flags %x\n",t->flags);
+  DBG((stderr,"cpc_event_t.ce_cpuver %d\n",t->cmd.ce_cpuver));
+  DBG((stderr,"ce_tick %llu\n",t->cmd.ce_tick));
+  DBG((stderr,"ce_pic[0] %llu ce_pic[1] %llu\n",t->cmd.ce_pic[0],t->cmd.ce_pic[1]));
+  DBG((stderr,"ce_pcr 0x%llx\n",t->cmd.ce_pcr));
+  DBG((stderr,"flags %x\n",t->flags));
 }
+#endif DEBUG
 
 #if 0
 static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
@@ -284,7 +286,9 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       /* Push the correct value */
       
       sample->cmd.ce_pic[t] = ESI->overflow.threshold;
+#ifdef DEBUG
       dump_cmd(sample);
+#endif
       if (cpc_bind_event(&sample->cmd,0) == -1)
 	return;
       
@@ -296,7 +300,9 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       
       sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold;
       
+#ifdef DEBUG
       dump_cmd(sample);
+#endif
       if (cpc_bind_event(&sample->cmd,sample->flags) == -1)
 	return;
     }
@@ -491,7 +497,7 @@ static int get_system_info(void)
       *tmp = '\0';
   }
   strncpy(_papi_system_info.exe_info.fullname,psi.pr_psargs,PAPI_MAX_STR_LEN);
-  strncpy(_papi_system_info.exe_info.name,psi.pr_fname,PAPI_MAX_STR_LEN);
+  strncpy(_papi_system_info.exe_info.name,basename(psi.pr_psargs),PAPI_MAX_STR_LEN);
   DBG((stderr,"Executable is %s\n",_papi_system_info.exe_info.name));
   DBG((stderr,"Full Executable is %s\n",_papi_system_info.exe_info.fullname));
 
@@ -1203,7 +1209,7 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 {
-  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
+  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[REG_PC]));
   _papi_hwi_dispatch_overflow_signal((void *)info); 
 }
 
