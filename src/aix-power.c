@@ -1036,6 +1036,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   DBG((stderr,"EventCode %x \n",EventCode));
   
+  if(EventCode & NATIVE_MASK)
+    EventCode = EventCode ^ NATIVE_MASK;
+	
   /* Do a preliminary check to eliminate preset events that aren't
      supported on this platform */
   if (EventCode & PRESET_MASK)
@@ -1046,7 +1049,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   else{ /* also need to check the native event is eligible */ 
 		pm_events_t *pe;
 		int found_native=0, pmc;
-		event_code=(EventCode & NATIVE_AND_MASK)>>8;
+		event_code=EventCode>>8;
 		hwcntr_num = EventCode & 0xff;
 		pe=pminfo.list_events[hwcntr_num];
 		for(i=0;i<pminfo.maxevents[hwcntr_num];i++, pe++){
