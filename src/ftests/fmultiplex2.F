@@ -132,7 +132,9 @@
       fd = 1
       do i=0, NUM, 1
          call do_flops(1000000)
+#ifndef _CRAYT3E
          call do_reads(1000)
+#endif
       end do
 
       call PAPIf_stop(EventSet, values(1), retval)

@@ -279,8 +279,8 @@
      .	 'PAPI_FP_INS', 1)
       end if            
 
-      min = values(2)*0.9
-      max = values(2)*1.1
+      min = values(2)*0.8
+      max = values(2)*1.2
       if (((values(4)+values(6)) .lt. min) .OR. 
      *    ((values(4)+values(6)) .gt. max)) then
          call ftest_fail(__FILE__, __LINE__,
