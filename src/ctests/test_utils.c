@@ -293,7 +293,37 @@ char *stringify_granularity(int granularity)
   return(NULL);
 }
 
+void test_pass(char *test_str, long_long **values, int num_tests)
+{
+	printf("%s:                PASSED\n", test_str);
+	if (values) free_test_space(values, num_tests);
+	PAPI_shutdown();
+	exit(0);
+}
+
+void test_fail(char *test_str, char *err_str, int retval)
+{
+	char buf[128];
+
+	memset( buf, '\0', sizeof(buf) );
+	printf("%s:                FAILED\n", test_str);
+	if ( retval == PAPI_ESYS ) {
+		sprintf(buf, "System error in %s:", err_str );
+		perror(buf);
+	}
+	else if ( retval > 0 ) {
+		printf("Error calculating: %s\n", err_str );
+	}
+	else {
+		char errstring[PAPI_MAX_STR_LEN];
+		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
+		printf("Error in %s: %s\n", err_str, errstring );
+	}
+	exit(1);
+}
+
 #ifdef _WIN32
+#undef exit
 	int wait_exit(int retval)
 	{
 		HANDLE hStdIn;
@@ -306,8 +336,9 @@ char *stringify_granularity(int granularity)
 		do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
 			1, &dwInputEvents);
 		} while (!(inputBuffer.EventType == KEY_EVENT &&
-			inputBuffer.Event.KeyEvent.bKeyDown));
-		return(retval);
+ 			inputBuffer.Event.KeyEvent.bKeyDown));
+		exit(retval);
 	}
+#define exit wait_exit
 #endif
 

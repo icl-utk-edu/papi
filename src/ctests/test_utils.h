@@ -11,3 +11,6 @@ void do_both(int n);
 void do_l1misses(int n);
 char *stringify_domain(int domain);
 char *stringify_granularity(int granularity);
+void test_pass(char *test_str, long_long **values, int num_tests);
+void test_fail(char *test_str, char *err_str, int retval);
+
