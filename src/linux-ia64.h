@@ -90,6 +90,7 @@ typedef struct preset_search {
   /* Derived code */
   int derived;
   /* Strings to look for */
+
 #ifdef ITANIUM2
   char *(findme[PMU_MAX_COUNTERS]);
 #else

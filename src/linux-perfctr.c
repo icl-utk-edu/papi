@@ -260,6 +260,7 @@ inline static void init_config(hwd_control_state_t *ptr)
     case PERFCTR_X86_WINCHIP_C6: 
     case PERFCTR_X86_WINCHIP_2:
     case PERFCTR_X86_VIA_C3:    
+    default:
       ptr->counter_cmd.cpu_control.tsc_on=1;
       ptr->counter_cmd.cpu_control.nractrs=0;
       ptr->counter_cmd.cpu_control.nrictrs=0;
@@ -284,8 +285,6 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
-    default:
-      abort();
     }
   /* Identity counter map for starters */
   for(i=0;i<_papi_system_info.num_cntrs;i++) 
@@ -1542,30 +1541,33 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static volatile unsigned int lock = 0;
-static volatile unsigned int *lock_addr = &lock;
-
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+static volatile uint32_t lock;
+ 
 void _papi_hwd_lock_init(void)
 {
+    lock = MUTEX_OPEN;
 }
-
+ 
 void _papi_hwd_lock(void)
 {
-  while (1)
-    {
-      if (test_and_set_bit(0,lock_addr)) /* from asm/bitops.h */
-	{
-	  mb(); /* memory barrier/flush from asm/bitops.h */
-	  return;
-	}
-    }
-}
+    unsigned long res = 0;
+    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+     * else val = MUTEX_CLOSED */
+    do {
+      __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock), "0"(MUTEX_OPEN) : "memory");
+    } while (res != (unsigned long)MUTEX_OPEN);
 
+    return;
+}
+ 
 void _papi_hwd_unlock(void)
 {
-  clear_bit(0, lock_addr); /* from asm/bitops.h */
-  mb(); /* memory barrier/flush from asm/bitops.h */
-}
+    unsigned long res = 0;
+        
+    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock), "0"(MUTEX_OPEN) : "memory"); }
 
 /* Machine info structure. -1 is unused. */
 

@@ -34,7 +34,7 @@ typedef struct hwd_control_state {
   /* Interrupt interval */
   int timer_ms;
   /* Number on each hwcounter */
-  int num_on_counter[2];
+  unsigned num_on_counter[2];
 } hwd_control_state_t;
 
 #include "papi_internal.h"
@@ -76,6 +76,7 @@ typedef struct hwd_search {
 } hwd_search_t;
 
 int get_memory_info(PAPI_mem_info_t* mem_info);
+
 extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];
 extern int _fbss[], _end[];

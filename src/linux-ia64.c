@@ -48,8 +48,8 @@ static preset_search_t preset_search_map[] = {
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH",0,0,0}},
   {PAPI_MEM_SCY,0,{"MEMORY_CYCLE",0,0,0}},
   {PAPI_STL_ICY,0,{"UNSTALLED_BACKEND_CYCLE",0,0,0}},
-/*  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, Broken */
-  {PAPI_BR_PRC,0,{"BRANCH_PREDICTOR_ALL_ALL_PREDICTIONS",0,0,0}}, 
+  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, 
+  {PAPI_BR_PRC,0,{"BRANCH_PREDICTOR_ALL_CORRECT_PREDICTIONS",0,0,0}}, 
   {PAPI_BR_MSP,DERIVED_ADD,{"BRANCH_PREDICTOR_ALL_WRONG_PATH","BRANCH_PREDICTOR_ALL_WRONG_TARGET",0,0}},
   {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
   {PAPI_FP_INS,DERIVED_ADD,{"FP_OPS_RETIRED_HI","FP_OPS_RETIRED_LO",0,0}},
@@ -121,8 +121,12 @@ static preset_search_t preset_search_map[] = {
   {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
   /* First byte selects type (M, I, F, B), bits 3-30 set to 1 to mask the whole opcode,
    * bits 1 (ig_ad) and 2 (mandatory 1) are set */
+  /* These are commented out as the substrate breaks when
+     these events are multiplexed. */
+#if 0
   {PAPI_INT_INS,0,{"400000003FFFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
   {PAPI_FSQ_INS,0,{"2890000001BFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}},
+#endif
   {0,0,{0,0,0,0}}};
 #endif
 
@@ -382,7 +386,6 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
    }
 #endif
     }
-
 
   /* Recalcuate the pfmw_param_t structure, may also signal conflict */
   if (pfmw_dispatch_events(evt,pc,&cnt))
@@ -789,6 +792,7 @@ int _papi_hwd_init_global(void)
     }
 #endif
 
+#ifdef PFM20 /* Version 1.1 doesn't have this */
   if (pfm_get_version(&version) != PFMLIB_SUCCESS)
     return(PAPI_ESBSTR);
 
@@ -797,6 +801,8 @@ int _papi_hwd_init_global(void)
       fprintf(stderr,"Version mismatch of libpfm: compiled %x vs. installed %x\n",PFM_VERSION_MAJOR(PFMLIB_VERSION),PFM_VERSION_MAJOR(version));
       return(PAPI_ESBSTR);
     }
+#endif
+
   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
   if (papi_debug)
@@ -1060,9 +1066,11 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
-/*
-  out->selector = selector;
-*/
+
+/*for native event */
+  if (!(EventCode & PRESET_MASK) ) {
+      out->selector = selector;
+  }
 
   /* Update the new counter select field */
 
@@ -2091,7 +2099,6 @@ void _papi_hwd_unlock(void)
 }
 
 /* Machine info structure. -1 is unused. */
-
 papi_mdi _papi_system_info = { "$Id$",
 			      1.0, /*  version */
 			       -1,  /*  cpunum */

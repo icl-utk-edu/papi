@@ -4,7 +4,6 @@
 #include "irix-mips.h"
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0, };
-
 static hwd_search_t findem_r10k[] = {
                 { PAPI_L1_DCM,0,{25,-1}},       /* L1 D-Cache misses */
                 { PAPI_L1_ICM,0,{ 9,-1}},       /* L1 I-Cache misses */
@@ -100,7 +99,7 @@ static int scan_cpu_info(inventory_t *item, void *foo)
 
   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD)) 
     {
-      DBG((stderr,"scan_system_info(%p,%p) Board: %d, %d, %d\n",
+      DBG((stderr,"scan_system_info(%p,%p) Board: %ld, %d, %ld\n",
 	   item,foo,item->inv_controller,item->inv_state,item->inv_unit));
 
       _papi_system_info.hw_info.mhz = (int)item->inv_controller;
@@ -181,7 +180,7 @@ static int scan_cpu_info(inventory_t *item, void *foo)
     {
       unsigned int imp,majrev,minrev;
 
-      DBG((stderr,"scan_system_info(%p,%p) CPU: %d, %d, %d\n",
+      DBG((stderr,"scan_system_info(%p,%p) CPU: %ld, %d, %ld\n",
 	   item,foo,item->inv_controller,item->inv_state,item->inv_unit)); 
 
       imp=(item->inv_state & C0_IMPMASK ) >> C0_IMPSHIFT;
@@ -200,12 +199,12 @@ static int scan_cpu_info(inventory_t *item, void *foo)
 	   break;
 	 case C0_IMP_R12000:
 	   strncpy(_papi_system_info.hw_info.model_string,"R12000",IPSTRPOS);
-	   _papi_system_info.num_gp_cntrs = 4;
+	   _papi_system_info.num_gp_cntrs = 2;
 	   break;
 #ifdef C0_IMP_R14000
        case C0_IMP_R14000:
          strncpy(_papi_system_info.hw_info.model_string,"R14000",IPSTRPOS);
-         _papi_system_info.num_gp_cntrs = 4;
+         _papi_system_info.num_gp_cntrs = 2;
          break;
 #endif
 	 default:
@@ -224,7 +223,7 @@ static int scan_cpu_info(inventory_t *item, void *foo)
     {
       unsigned int imp,majrev,minrev;
 
-      DBG((stderr,"scan_system_info(%p,%p) FPU: %d, %d, %d\n",
+      DBG((stderr,"scan_system_info(%p,%p) FPU: %ld, %d, %ld\n",
 	   item,foo,item->inv_controller,item->inv_state,item->inv_unit)); 
       imp=(item->inv_state & C0_IMPMASK ) >> C0_IMPSHIFT;
       majrev=(item->inv_state & C0_MAJREVMASK ) >> C0_MAJREVSHIFT;
@@ -239,14 +238,14 @@ static int scan_cpu_info(inventory_t *item, void *foo)
 
 static int setup_all_presets(PAPI_hw_info_t *info)
 {
-  int pnum, hwnum, event, derived, first;
+  int real_pnum, pnum, hwnum, event, derived, first;
   char str[PAPI_MAX_STR_LEN];
   hwd_search_t *findem;  
 
   if ((info->model & 0xff)  == C0_IMP_R10000)
     findem = findem_r10k;
   else if ((info->model & 0xff) == C0_IMP_R12000)
-    findem = findem_r12k;
+      findem = findem_r12k;
 #ifdef C0_IMP_R14000
   else if ((info->model & 0xff) == C0_IMP_R14000)
     findem = findem_r12k;
@@ -256,65 +255,65 @@ static int setup_all_presets(PAPI_hw_info_t *info)
 
   for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
     {
+      if (findem[pnum].preset == -1)
+	break;
+
+      real_pnum = findem[pnum].preset & PRESET_AND_MASK;
       first = -1;
       derived = findem[pnum].derived;
+
+#ifdef DEBUG
       if (derived == -1)
-	continue;
+	return(PAPI_EBUG);
+#endif
+
       for (hwnum = 0; hwnum < 2; hwnum++)
 	{
 	  event = findem[pnum].findme[hwnum];
 	  if (event == -1)
 	    continue;
-	  assert(event < HWPERF_EVENTMAX);
+
+#ifdef DEBUG
+	  if (event >= HWPERF_EVENTMAX)
+	    return(PAPI_EBUG);
+#endif
+
 	  if (first == -1)
 	    first = event;
 
-	  preset_map[pnum].selector |= 1 << event;
+	  preset_map[real_pnum].selector |= 1 << event;
 	  if (event > HWPERF_MAXEVENT)
 	    {
-	      preset_map[pnum].counter_cmd[event] = event - HWPERF_CNT1BASE;
-	      preset_map[pnum].num_on_counter[1]++;
+	      preset_map[real_pnum].counter_cmd[event] = event - HWPERF_CNT1BASE;
+	      preset_map[real_pnum].num_on_counter[1]++;
 	    }
 	  else
 	    {
-	      preset_map[pnum].counter_cmd[event] = event;
-	      preset_map[pnum].num_on_counter[0]++;   
+	      preset_map[real_pnum].counter_cmd[event] = event;
+	      preset_map[real_pnum].num_on_counter[0]++;   
 	    }
 	  sprintf(str,"%d",event);
-	  if (strlen(preset_map[pnum].note))
-	    strcat(preset_map[pnum].note,",");
-	  strcat(preset_map[pnum].note,str);
+	  if (strlen(preset_map[real_pnum].note))
+	    strcat(preset_map[real_pnum].note,",");
+	  strcat(preset_map[real_pnum].note,str);
 	  
 	  DBG((stderr,"setup_all_presets(%p): Preset %d, event %d found, selector 0x%x, num %d,%d\n",
-	       info,pnum,event,preset_map[pnum].selector,
-	       preset_map[pnum].num_on_counter[0],   	
-	       preset_map[pnum].num_on_counter[1]));
+	       info,real_pnum,event,preset_map[real_pnum].selector,
+	       preset_map[real_pnum].num_on_counter[0],   	
+	       preset_map[real_pnum].num_on_counter[1]));
 	}				
-      if (preset_map[pnum].selector)
+      if (preset_map[real_pnum].selector)
 	{
-	  preset_map[pnum].derived = derived;
+	  preset_map[real_pnum].derived = derived;
 	  if (derived)
-	    preset_map[pnum].operand_index = first;
+	    preset_map[real_pnum].operand_index = first;
 	  else
-	    preset_map[pnum].operand_index = -1;
+	    preset_map[real_pnum].operand_index = -1;
 	}
     }
 
   return(PAPI_OK);
 }
-
-/* static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
-{
-  assert(arg2 >= HWPERF_MINEVENT && arg2 <= HWPERF_MAXEVENT);
-  assert(arg1 >= 0 && arg1 <= HWPERF_EVENTMAX);
-  ptr->counter_cmd.hwp_evctrargs.hwp_evctrl[arg1].hwperf_creg.hwp_ev = arg2;
-}
-
-static void unset_config(hwd_control_state_t *ptr, int arg1)
-{
-  assert(arg1 >= 0 && arg1 <= HWPERF_EVENTMAX);
-  ptr->counter_cmd.hwp_evctrargs.hwp_evctrl[arg1].hwperf_spec = 0;
-} */
 
 static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int arg1)
 {
@@ -337,19 +336,19 @@ static int update_global_hwcounters(EventSetInfo_t *global)
   if (retval <= 0)
     return(PAPI_ESYS);
 
-  DBG((stderr,"update_global_hwcounters() num on counters: %d %d\n",
+  DBG((stderr,"update_global_hwcounters() num on counters: %u %u\n",
        machdep->num_on_counter[0],machdep->num_on_counter[1]));
   selector = machdep->selector;
-  while (i = ffs(selector))
+  while ((i = ffs(selector)))
     {
       i = i - 1;
       selector ^= 1 << i;
-      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld * %d\n",i,
-	   global->hw_start[i]+readem.hwp_evctr[i],
+      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%llu * %llu\n",i,
+	   global->hw_start[i]+readem.hwp_evctr[i] * (unsigned long long)machdep->num_on_counter[(i < HWPERF_CNT1BASE ? 0 : 1)],
 	   global->hw_start[i],readem.hwp_evctr[i],
-	   machdep->num_on_counter[(i < HWPERF_CNT1BASE ? 0 : 1)]));
-      global->hw_start[i] = global->hw_start[i] + readem.hwp_evctr[i] * 
-	machdep->num_on_counter[(i < HWPERF_CNT1BASE ? 0 : 1)];
+	   (unsigned long long)machdep->num_on_counter[(i < HWPERF_CNT1BASE ? 0 : 1)]));
+
+      global->hw_start[i] = global->hw_start[i] + readem.hwp_evctr[i] * (unsigned long long)machdep->num_on_counter[(i < HWPERF_CNT1BASE ? 0 : 1)];
     }
 
   retval = ioctl(machdep->fd, PIOCSETEVCTRL, arg);
@@ -365,7 +364,7 @@ static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *loca
   hwd_control_state_t *machdep = (hwd_control_state_t *)local->machdep;
   int selector = machdep->selector;
 
-  while (i = ffs(selector))
+  while ((i = ffs(selector)))
     {
       i = i - 1;
       selector ^= 1 << i;
@@ -414,9 +413,6 @@ static int set_granularity(hwd_control_state_t *this_state, int domain)
 
 static int set_inherit(EventSetInfo_t *zero, pid_t pid)
 {
-  return(PAPI_ESBSTR);
-
-/*
   int retval;
 
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
@@ -428,7 +424,6 @@ static int set_inherit(EventSetInfo_t *zero, pid_t pid)
     return(PAPI_ESYS);
 
   return(PAPI_OK);
-*/
 }
 
 static int set_default_domain(EventSetInfo_t *zero, int domain)
@@ -442,18 +437,6 @@ static int set_default_granularity(EventSetInfo_t *zero, int granularity)
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_granularity(current_state,granularity));
 }
-
-/* static void init_config(hwd_control_state_t *ptr)
-{
-  int i;
-
-  for (i=0;i<HWPERF_EVENTMAX;i++)
-    {
-      ptr->counter_cmd.hwp_evctrargs.hwp_evctrl[i].hwperf_spec = 0;
-      ptr->counter_cmd.hwp_ovflw_freq[i] = 0;
-    }
-  ptr->counter_cmd.hwp_ovflw_sig = 0;
-} */
 
 static int get_system_info(void)
 {
@@ -645,8 +628,7 @@ int _papi_hwd_init(EventSetInfo_t *global)
   return(PAPI_OK);
 }
 
-/* Go from highest counter to lowest counter. Why? Because there are usually
-   more counters on #1, so we try the least probable first. */
+/* Go from lowest to highest */
 
 static int get_avail_hwcntr_bits(int cntr_avail_bits)
 {
@@ -662,20 +644,6 @@ static int get_avail_hwcntr_bits(int cntr_avail_bits)
   return(0);
 }
 
-static int get_avail_hwcntr_num(int cntr_avail_bits)
-{
-  int tmp = 0, i = HWPERF_EVENTMAX - 1;
-  
-  while (i)
-    {
-      tmp = (1 << i) & cntr_avail_bits;
-      if (tmp)
-	return(i);
-      i--;
-    }
-  return(0);
-}
-
 static void set_hwcntr_codes(int selector, unsigned char *from, hwperf_eventctrl_t *to)
 {
   int index, mode = 0;
@@ -687,10 +655,10 @@ static void set_hwcntr_codes(int selector, unsigned char *from, hwperf_eventctrl
   if (_papi_system_info.default_domain & PAPI_DOM_OTHER)
     mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S; 
   
-  while (index = ffs(selector))
+  while ((index = ffs(selector)))
     {
       index = index - 1;
-      DBG((stderr,"set_hwcntr_codes(%x,%p,%p) index = %d, from %d, mode 0x%x\n",selector,from,to,index,from[index],mode));
+      DBG((stderr,"set_hwcntr_codes(0x%x,%p,%p) index = %d, from %d, mode 0x%x\n",selector,from,to,index,from[index],mode));
       selector ^= 1 << index;
       to->hwp_evctrl[index].hwperf_creg.hwp_ev = from[index];
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
@@ -766,30 +734,28 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
       unsigned event;
 
       /* Support for native events here, only 1 counter at a time. */
-
       event = EventCode & 0xff; /* 0 through 32 */
   
       if(event > HWPERF_EVENTMAX)
-	return(PAPI_EINVAL);
+			return(PAPI_EINVAL);
 
       selector = 1 << event;
 
       /* Check if the counter is available */
-      
+
       if (this_state->selector & selector)
-	return(PAPI_ECNFLCT);	    
+		return(PAPI_ECNFLCT);	    
 
       if(event>HWPERF_MAXEVENT)
-	hwcntr_num=1;
+		hwcntr_num=1;
       else
-	hwcntr_num=0;
+		hwcntr_num=0;
 
       /* Set up the native encoding */
-
       if(event<HWPERF_CNT1BASE)
-	tmp_cmd[event]=hwcntr_num;
+		tmp_cmd[event]=hwcntr_num;
       else
-	tmp_cmd[event] = hwcntr_num-HWPERF_CNT1BASE;
+		tmp_cmd[event] = hwcntr_num-HWPERF_CNT1BASE;
 
       codes = tmp_cmd;
     }
@@ -833,7 +799,9 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
   
   used = in->selector;
   EventCode = in->code;
- 
+  
+  DBG((stderr,"Event Info Selector: 0x%x\n",used));
+
   if (EventCode & PRESET_MASK)
     { 
       preset_index = EventCode & PRESET_AND_MASK; 
@@ -841,6 +809,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
       selector = preset_map[preset_index].selector;
       if (selector == 0)
 	return(PAPI_ENOEVNT);
+      DBG((stderr,"Preset Selector: 0x%x\n",selector));
     }
   else
     {
@@ -849,7 +818,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
       /* Support for native events here, only 1 counter at a time. */
 
       hwcntr_num = EventCode & 0xff;  /* 0 through 31 */ 
-      if ((hwcntr_num > _papi_system_info.num_cntrs) ||
+      if ((hwcntr_num >= _papi_system_info.num_cntrs) ||
 	  (hwcntr_num < 0))
 	return(PAPI_EINVAL);
 
@@ -859,7 +828,10 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 	return(PAPI_EINVAL); 
 
       selector = 1 << hwcntr_num;
+      DBG((stderr,"Native Selector: 0x%x\n",selector));
     }
+
+  DBG((stderr,"Event Set Selector: 0x%x\n",this_state->selector));
 
   /* Check if these counters aren't used. */
 
@@ -872,17 +844,21 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
   
   this_state->selector = this_state->selector ^ used;
 
+  DBG((stderr,"New Event Set Selector: 0x%x\n",this_state->selector));
+
   /* Update the counts on the 'physical' registers. */
 
-  while ((hwcntr = ffs(selector)))
+  while ((hwcntr = ffs(used)))
     {
       hwcntr = hwcntr - 1;
+      DBG((stderr,"Clearing hardware counter event: %d\n",hwcntr));
+      this_state->counter_cmd.hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_spec = 0;  
       if (hwcntr < HWPERF_CNT1BASE)
-	this_state->num_on_counter[0]++;
+	this_state->num_on_counter[0]--;
       else
-	this_state->num_on_counter[1]++;
-      selector ^= 1 << hwcntr;
-    }
+	this_state->num_on_counter[1]--;
+      used ^= 1 << hwcntr;
+  }
 
   /* Don't use selector after here */
 
@@ -947,7 +923,7 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
       hwcntrs_in_both = this_state->selector & current_state->selector;
       if (hwcntrs_in_both)
 	{
-	  while (hwcntr = ffs(hwcntrs_in_both))
+	  while ((hwcntr = ffs(hwcntrs_in_both)))
 	    {
 	      hwcntr = hwcntr - 1;
 	      hwcntrs_in_both ^= 1 << hwcntr;
@@ -962,7 +938,7 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
       /* Merge the unshared configuration registers. */
 	  
       hwcntrs_to_add = this_state->selector ^ (this_state->selector & current_state->selector);
-      while (hwcntr = ffs(hwcntrs_to_add))
+      while ((hwcntr = ffs(hwcntrs_to_add)))
 	{	
 	  hwcntr = hwcntr - 1;
 	  hwcntrs_to_add ^= 1 << hwcntr;
@@ -984,13 +960,14 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 
       current_state->selector = this_state->selector;
       memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(hwperf_profevctrarg_t));
-      memcpy(&current_state->num_on_counter,&this_state->num_on_counter,2*sizeof(int));
+      memcpy(current_state->num_on_counter,this_state->num_on_counter,2*sizeof(unsigned));
     }
 
   /* Set up the new merged control structure */
   
-#if 0
-  dump_cmd(&current_state->counter_cmd);
+#if DEBUG
+  if (papi_debug)
+    dump_cmd(&current_state->counter_cmd);
 #endif
       
   retval = ioctl(current_state->fd,PIOCSETEVCTRL,&current_state->counter_cmd);
@@ -1056,11 +1033,11 @@ static long long handle_derived_add(int selector, long long *from)
   int pos;
   long long retval = 0;
 
-  while (pos = ffs(selector))
+  while ((pos = ffs(selector)))
     {
       DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos-1],retval));
       retval += from[pos-1];
-      selector ^= 1 << pos-1;
+      selector ^= 1 << (pos-1);
     }
   return(retval);
 }
@@ -1071,11 +1048,11 @@ static long long handle_derived_subtract(int operand_index, int selector, long l
   long long retval = from[operand_index];
 
   selector = selector ^ (1 << operand_index);
-  while (pos = ffs(selector))
+  while ((pos = ffs(selector)))
     {
       DBG((stderr,"Compound event, subtracting %lld to %lld\n",from[pos-1],retval));
       retval -= from[pos-1];
-      selector ^= 1 << pos-1;
+      selector ^= 1 << (pos-1);
     }
   return(retval);
 }
@@ -1144,7 +1121,6 @@ int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long *events)
       if (selector == PAPI_NULL)
 	continue;
 
-      assert(selector != 0);
       DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
 
       /* If this is not a derived event */
@@ -1239,15 +1215,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
   int selector, hwcntr, retval = PAPI_OK;
 
-  if((this_state->num_on_counter[0]>1)||
-     (this_state->num_on_counter[1]>1))
-     return(PAPI_ECNFLCT);
-
+  if ((this_state->num_on_counter[0] > 1) || 
+      (this_state->num_on_counter[1] > 1))
+      return(PAPI_ECNFLCT);
   if (overflow_option->threshold == 0)
     {
       arg->hwp_ovflw_sig = 0;
       selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
-      while (hwcntr = ffs(selector))
+      while ((hwcntr = ffs(selector)))
 	{
 	  hwcntr = hwcntr - 1;
 	  arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 0;
@@ -1280,7 +1255,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
       arg->hwp_ovflw_sig = PAPI_SIGNAL;
       selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
-      while (hwcntr = ffs(selector))
+      while ((hwcntr = ffs(selector)))
 	{
 	  hwcntr = hwcntr - 1;
 	  arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 1;
@@ -1338,7 +1313,6 @@ void _papi_hwd_unlock(void)
 }
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
-
 papi_mdi _papi_system_info = { "$Id$",
 			      1.0, /*  version */
 			       -1,  /*  cpunum */
@@ -1404,9 +1378,9 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* supports attaching to another process */
 			        1,  /* We can use the real_usec call */
 			        1,  /* We can use the real_cyc call */
-			        0,  /* We can use the virt_usec call */
-			        0,  /* We can use the virt_cyc call */
+			        1,  /* We can use the virt_usec call */
+			        1,  /* We can use the virt_cyc call */
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
-			        NULL };
+			        { 0, } };
 

@@ -213,28 +213,35 @@ inline static char *search_cpu_info(FILE *f, char *search_str, char *line)
 
 static volatile unsigned int lock = 0;
 static volatile unsigned int *lock_addr = &lock;
+/* volatile uint32_t lock; */
 
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+
+ 
 void _papi_hwd_lock_init(void)
 {
+    lock = MUTEX_OPEN;
 }
-
+ 
 void _papi_hwd_lock(void)
 {
-  while (1)
-    {
-      if (test_and_set_bit(0,lock_addr)) /* from asm/bitops.h */
-	{
-	  mb(); /* memory barrier/flush from asm/bitops.h */
-	  return;
-	}
-    }
-}
+    unsigned long res = 0;
+    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+     * else val = MUTEX_CLOSED */
+    do {
+      __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock), "0"(MUTEX_OPEN) : "memory");
+    } while (res != (unsigned long)MUTEX_OPEN);
 
+    return;
+}
+ 
 void _papi_hwd_unlock(void)
 {
-  clear_bit(0, lock_addr); /* from asm/bitops.h */
-  mb(); /* memory barrier/flush from asm/bitops.h */
-}
+    unsigned long res = 0;
+        
+    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock), "0"(MUTEX_OPEN) : "memory"); }
 
 int _papi_hwd_get_system_info(void)
 {
