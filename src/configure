@@ -844,7 +844,7 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-bitmode=64       Specify to build 64 bit mode library
+  --with-bitmode=32/64       Specify bit mode of library
   --with-pmapi=<path>     Specify path of pmapi on aix system
   --with-tls=<no>         To disable tls support
 
@@ -1538,18 +1538,19 @@ case "$OS" in
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             opteron)
                  if test "${with_bitmode}" = "32"; then
-                   echo "The bitmode "$with_bitmode" you specified is not supported"
-                   exit -1
-                 fi
-                 MAKEVER="$OS"-perfctr-"$CPU" ;;
-
+                 	MAKEVER="$OS"-perfctr-"$CPU""-32bit"
+                 else
+                 	MAKEVER="$OS"-perfctr-"$CPU"
+		 fi
+		;;
             em64t)
                  if test "${with_bitmode}" = "32"; then
-                   echo "The bitmode "$with_bitmode" you specified is not supported"
-                   exit -1
+                        MAKEVER="$OS"-perfctr-"$CPU""-32bit"
+                 else
+                        MAKEVER="$OS"-perfctr-"$CPU"
                  fi
-                 MAKEVER="$OS"-perfctr-"$CPU" ;;
-            p4)
+                ;;
+	    p4)
                  if test "${bitmode}" = "64"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
@@ -1594,7 +1595,9 @@ case "$MAKEVER" in
     linux-alpha);;
     linux-perfctr-athlon);;
     linux-perfctr-em64t);;
+    linux-perfctr-em64t-32bit);;
     linux-perfctr-opteron);;
+    linux-perfctr-opteron-32bit);;
     linux-perfctr-p2);;
     linux-perfctr-p3);;
     linux-perfctr-p4);;
