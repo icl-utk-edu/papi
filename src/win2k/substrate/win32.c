@@ -249,6 +249,7 @@ static __inline u_long_long get_cycles (void)
 }
 
 /* Dumb hack to make sure I get the cycle time correct. */
+/* Unfortunately, it doesn't always work on Windows laptops 
 
 static float calc_mhz(void)
 {
@@ -257,7 +258,7 @@ static float calc_mhz(void)
   long_long sstamp;
   float correction = 4000.0, mhz;
 
-  /* Warm the cache */
+  // Warm the cache
 
   ostamp = get_cycles();
   Sleep(1);				// WIN Sleep has millisecond resolution
@@ -273,6 +274,7 @@ static float calc_mhz(void)
 
   return(mhz);
 }
+*/
 
 inline_static int setup_all_presets(struct wininfo *hwinfo)
 {
@@ -408,7 +410,7 @@ static int get_system_info(void)
 //  struct perfctr_info info;
   struct wininfo win_hwinfo;
   int tmp;
-  float mhz;
+//  float mhz;
   HMODULE hModule;
   DWORD len;
   long i = 0;
@@ -426,7 +428,7 @@ static int get_system_info(void)
   if (!init_hwinfo(&win_hwinfo))
     return(PAPI_ESYS);
 
-  _papi_system_info.hw_info.ncpu = win_hwinfo.ncpu;
+  _papi_system_info.hw_info.ncpu = win_hwinfo.ncpus;
   _papi_system_info.hw_info.nnodes = win_hwinfo.nnodes;
   _papi_system_info.hw_info.totalcpus = win_hwinfo.total_cpus;
 
@@ -442,6 +444,8 @@ static int get_system_info(void)
 
   _papi_system_info.hw_info.mhz = (float)win_hwinfo.mhz; 
 
+/* 
+  This appears to be costly and redundant with Kevins's cpuinfo results
   DBG((stderr,"Detected MHZ is %f\n",_papi_system_info.hw_info.mhz));
   mhz = calc_mhz();
   DBG((stderr,"Calculated MHZ is %f\n",mhz));
@@ -452,6 +456,7 @@ static int get_system_info(void)
     _papi_system_info.hw_info.mhz = (float)tmp;
   }
   DBG((stderr,"Actual MHZ is %f\n",_papi_system_info.hw_info.mhz));
+*/
 
   /* Setup presets */
 

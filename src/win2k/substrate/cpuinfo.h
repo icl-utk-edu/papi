@@ -92,6 +92,7 @@ struct wininfo {
 #define AMD     2
 
 // Macros for processor types
+#define IS_UNKNOWN(hwinfo)		((hwinfo)->vendor==UNKNOWN)
 #define IS_AMD(hwinfo)			((hwinfo)->vendor==AMD)
 #define IS_INTEL(hwinfo)		((hwinfo)->vendor==INTEL)
 
