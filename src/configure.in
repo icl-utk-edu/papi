@@ -51,8 +51,8 @@ case "$OS" in
   linux) 
          if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
            made=GenuineIntel
-           family="`cat /proc/cpuinfo | grep family | cut -d ' ' -f 3 | sed '2,$d'`"
-           model="`cat /proc/cpuinfo | grep family | cut -d ' ' -f 2 | sed '2,$d'`"
+           family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+           model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            if test "$family" = "15"; then
              if test "$model" = "3"; then
                CPU=em64t
@@ -74,8 +74,8 @@ case "$OS" in
              CPU=opteron
            else CPU=athlon
            fi
-           family="`cat /proc/cpuinfo | grep family | cut -d ' ' -f 3 | sed '2,$d'`"
-           model="`cat /proc/cpuinfo | grep family | cut -d ' ' -f 2 | sed '2,$d'`"
+           family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+           model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            if test "$family" = "15"; then
              if test "$model" = "5"; then
                CPU=opteron
