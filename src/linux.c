@@ -73,12 +73,14 @@ int _papi_hwd_get_system_info(void)
   long i = 0;
 
   /* Path and args */
+  _papi_hwi_system_info.pid = getpid();
+
   hModule = GetModuleHandle(NULL); // current process
   len = GetModuleFileName(hModule,_papi_hwi_system_info.exe_info.fullname,PAPI_MAX_STR_LEN);
-  if (len) splitpath(_papi_hwi_system_info.exe_info.fullname, _papi_hwi_system_info.exe_info.name);
+  if (len) splitpath(_papi_hwi_system_info.exe_info.fullname, _papi_hwi_system_info.exe_info.address_info.name);
   else return(PAPI_ESYS);
 
-  DBG((stderr, "Executable is %s\n",_papi_hwi_system_info.exe_info.name));
+  DBG((stderr, "Executable is %s\n",_papi_hwi_system_info.exe_info.address_info.name));
   DBG((stderr, "Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname));
 
   /* Hardware info */
