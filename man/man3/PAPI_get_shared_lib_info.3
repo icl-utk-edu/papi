@@ -2,7 +2,8 @@
 .TH PAPI_get_shared_lib_info 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_get_shared_lib_info \- get the info about the system memory hardware
+PAPI_get_shared_lib_info \- get the address info about the shared library used
+                            by this program 
 
 .SH SYNOPSIS
 .B C Interface
@@ -13,7 +14,7 @@ PAPI_get_shared_lib_info \- get the info about the system memory hardware
 
 .SH DESCRIPTION
 In C, this function returns a pointer to a structure containing information
-about the memory hardware on which the program runs. There is no Fortran equivalent call.
+about the shared library used by the program. There is no Fortran equivalent call.
 
 .SH NOTE
 This data will be incorporated into the
@@ -32,7 +33,7 @@ On success, the function returns a non-NULL pointer.
 .nf
 .if t .ft CW
    typedef struct _papi_address_map {
-      char mapname[PAPI_MAX_STR_LEN];
+      char name[PAPI_MAX_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */

@@ -1,92 +1,54 @@
 .\" $Id$
-.TH PAPI_get_event_info 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
-
-*
-* This is a placeholder. It needs a total rewrite.
-*
+.TH PAPI_get_event_info 3 "November, 2003" "PAPI Programmer's Reference" PAPI
 
 .SH NAME
-.nf
-PAPI_query_event \- query if PAPI event exists
-PAPI_query_event_verbose \- query details of a PAPI event
-PAPI_query_all_events_verbose \- acquire details of all PAPI events
-.fi
+PAPI_get_event_info \- get the event's name and description info
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int PAPI_query_event(int " EventCode ");"
-.BI "int PAPI_query_event_verbose(int " EventCode ", PAPI_preset_info_t *" info ");"
-.BI "const PAPI_preset_info_t* PAPI_query_all_events_verbose(\|);"
+.BI "int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info);"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check )
-.BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\  
-           C_STRING\ EventDescr,\  C_STRING\ EventLabel,\  C_INT\  avail,\ 
-           C_STRING\ EventNote,\  C_INT\  flags,\  C_INT\  check )
+.BI PAPIF_get_event_info(C_INT\  EventCode,\  C_STRING\  symbol,
+.BI \tC_STRING\ long_descr,\ C_STRING\  short_descr,\  C_INT\  count,
+.BI \tC_STRING\ event_note,\ C_INT\  flags, ,\ C_INT\  check)
 .fi
 
 .SH DESCRIPTION
-.B "PAPI_query_event()"
-asks the PAPI library if the PAPI Preset event can be counted on this
-architecture. If the event CAN be counted, the function returns
-PAPI_OK.  If the event CANNOT be counted, the function returns an
-error code.  This function also can be used to
-check the syntax of a native event.
-
-.B "PAPI_query_event_verbose()"
-asks the PAPI library for a copy of an event descriptor. This
-descriptor can then be used to investigate the details about the
-event. In Fortran, the individual fields in the descriptor are 
-returned as parameters.
-
-.B "PAPI_query_all_events_verbose()"
-is implemented only in C. It asks the PAPI library to return a pointer 
-to an array of event descriptors. The number of objects in the array is
-.B PAPI_MAX_PRESET_EVENTS
-and each object is a descriptor as returned by
-.B PAPI_query_event_verbose(\|).
+In C, this function fills the event information into a structure.
+In Fortran, some fields of the structure are returned explicitly.
 
 .SH ARGUMENTS
+The following arguments are implicit in the structure returned by the C function,
+or explicitly returned by Fortran.
+.LP
 .I EventCode
--- a defined event such as PAPI_TOT_INS.
+--  event code(preset or native)
 .LP
-.I EventName
--- the event name as described in
-.BR PAPI_presets(3) .
+.I info
+--  structure with the event information
 .LP
-.I EventDescr
--- a descriptive string for the event of length less than
-.BR PAPI_MAX_STR_LEN .
+.I symbol
+--  whether the preset is part of the API
 .LP
-.I EventLabel
--- a short descriptive label for the event of length less than 18 characters.
+.I long_descr
+--  detail description about the event
 .LP
-.I avail
--- zero if the event CANNOT be counted.
+.I short_descr
+--  short description about the event
 .LP
-.I EventNote
--- additional text information about an event if available.
-.LP
-.I flags
--- provides additional information about an event, e.g., 
-.B "PAPI_DERIVED" 
-for an event derived from 2 or more other events.
+.I event_note
+--  notes about the event
 
 .SH RETURN VALUES
-On success, 
-.BR PAPI_query_event " and " PAPI_query_event_verbose " return"
-.B "PAPI_OK" ,
-and on error, a non-zero error code is returned.
-
-.B PAPI_query_all_events_verbose
-returns a pointer to an array of 
-.I PAPI_preset_info_t 
-structures on success, and a NULL pointer on error.
-
+On success, the C function returns PAPI_OK, 
+and the Fortran function returns 
+.B PAPI_OK.
+ On error, a non-zero error code is returned by the function.
 
 .SH ERRORS
 .TP
@@ -94,50 +56,29 @@ structures on success, and a NULL pointer on error.
 One or more of the arguments is invalid.
 .TP
 .B "PAPI_ENOTPRESET"
-The hardware event specified is not a valid PAPI preset. 
+The hardware event specified is not a valid PAPI preset.
 .TP
 .B "PAPI_ENOEVNT"
-The PAPI preset is not available on the underlying hardware. 
+The PAPI preset is not available on the underlying hardware.
 
-.SH EXAMPLES
+
+
+.SH EXAMPLE
+.LP
 .nf
 .if t .ft CW
-int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-int retval,i;
-PAPI_preset_info_t info;
-PAPI_preset_info_t *infostructs;
 
-/* Initialize the library */
+int EventCode;
+PAPI_event_info_t info;
 
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-
-if (retval != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library init error!\\n");
-  exit(1); }
-	
-if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
-  fprintf(stderr,"No instruction counter? How lame.\\n");
+if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);
-  }
+
+if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
+  handle_error(1);
 	
-if (PAPI_query_event_verbose(PAPI_TOT_INS,&info) != PAPI_OK) {
-  fprintf(stderr,"No instruction counter? How lame.\\n");
-  exit(1);
-  }
-
-if(info.avail) 
-  printf("This event is available on this hardware.\\n");
-
-if(info.flags & PAPI_DERIVED) 
-  printf("This event is a derived event on this hardware.\\n");
-
-retval=0;
-infostructs=PAPI_query_all_events_verbose();
-if(infostructs)
-  for(i=0;i<PAPI_MAX_PRESET_EVENTS;i++) 
-    if(infostructs[i].avail)
-      retval += 1;
+if (PAPI_get_event_info(EventCode, &info) == PAPI_OK)
+  handle_error(1);
 
 .if t .ft P
 .fi
@@ -147,11 +88,9 @@ The PAPI Team. See them at the PAPI Web Site:
 http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
-These functions have no known bugs.
+This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), " PAPI_native "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_remove_events "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3)" 
-
+.BR PAPI_library_init "(3), "
+.BR PAPI_get_hardware_info "(3), "
+.BR PAPI_get_opt "(3)" 

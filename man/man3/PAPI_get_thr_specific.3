@@ -2,7 +2,7 @@
 .TH PAPI_get_thr_specific 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_get_thr_specific \- Store or retrieve a pointer to a thread specific data structure
+PAPI_get_thr_specific, PAPI_set_thr_specific \- Store or retrieve a pointer to a thread specific data structure
 
 .SH SYNOPSIS
 .nf
@@ -12,8 +12,10 @@ PAPI_get_thr_specific \- Store or retrieve a pointer to a thread specific data s
 .fi
 
 .SH DESCRIPTION
-In C, this function returns a pointer to a structure containing information
-about the memory hardware on which the program runs. There are no Fortran equivalent functions.
+In C, PAPI_set_thr_specific will save ptr into an array indexed by tag.
+PAPI_get_thr_specific will retrieve the pointer from the array with index tag.
+The array mentioned above is managed by PAPI and allocated to each thread 
+which has called PAPI_thread_init. There are no Fortran equivalent functions.
 
 .SH ARGUMENTS
 .LP
@@ -23,8 +25,7 @@ about the memory hardware on which the program runs. There are no Fortran equiva
 associated with this thread is to be accessed.
 .LP
 .I ptr
---  A pointer to the memory containing the data structure referenced by 
-.I tag.
+--  A pointer to the memory containing the data structure.
 
 .SH RETURN VALUES
 On success, this function returns 

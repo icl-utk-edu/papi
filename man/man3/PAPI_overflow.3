@@ -25,9 +25,10 @@ in an
 to generate an overflow signal after every 
 .I threshold
 events are counted. More than one event in an event set can be used as 
-an overflow trigger.
-.B To turn off overflow, set the threshold to 0. If you see negative number
-or small number for the result of the overflow events, don't be surprised.  To reduce the overhead of PAPI_read, we don't adjust the number. If the platform use hardware overflow, then you can based on the threshold and how many times it overflowed, you can get an approximate number. 
+overflow triggers, in such case, the user must call this function several
+times.
+.B To turn off overflow, set the threshold to 0. If the user get negative number
+or small number for the result of the overflow events, don't be surprised.  To reduce the overhead of PAPI_read, we don't adjust the number. If the platform use hardware overflow, then based on the threshold and how many times it overflowed, you can get an approximate number. 
 
 .SH ARGUMENTS
 .I EventSet 
@@ -46,9 +47,6 @@ currently not used and should be set to 0.
 .I handler 
 -- the handler function to call upon overflow
 .LP
-.I context 
--- a platform dependent structure containing information about the overflow event.
-This structure is typically returned automatically by the signal handler.
 
 .SH RETURN VALUES
 On success, PAPI_overflow returns
@@ -79,7 +77,7 @@ The PAPI preset is not available on the underlying hardware.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-void handler(int EventSet, void *address, long_long overflow_vector)
+void handler(int EventSet, void *address, long_long overflow_vector, void *context)
 {
   fprintf(stderr,"Overflow at %p! bit=0x%llx \en",
 	  address,overflow_vector);

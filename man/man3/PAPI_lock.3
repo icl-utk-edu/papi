@@ -21,9 +21,9 @@ PAPI_lock \- Lock one of two mutex variables defined in papi.h
 
 .SH DESCRIPTION
 .B "PAPI_lock()"
-Grabs access to one of two PAPI mutex variables. This function is provided to the 
+Grabs access to one of the two PAPI mutex variables. This function is provided to the 
 user to have a platform independent call to  (hopefully) efficiently
-implemented mutex variables.
+implemented mutex.
 .LP
 .B "PAPI_unlock()"
 unlocks the mutex acquired by a call to
@@ -31,7 +31,7 @@ unlocks the mutex acquired by a call to
 
 .SH ARGUMENT
 .I lock
---  an integer value specifying one of two user locks: 
+--  an integer value specifying one of the two user locks: 
 .B "PAPI_USR1_LOCK" or "PAPI_USR2_LOCK"
 
 .SH RETURN VALUES

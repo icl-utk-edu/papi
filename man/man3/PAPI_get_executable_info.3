@@ -18,7 +18,7 @@ PAPI_get_executable_info \- get the executable's address space info
 .BI \tC_LONG_LONG\  text_end,\  C_LONG_LONG\  data_start,\ \
            C_LONG_LONG\  data_end,\ 
 .BI \tC_LONG_LONG\  bss_start,\  C_LONG_LONG\  bss_end,\ 
-.BI \tC_STRING\  lib_preload_env,\ C_INT\  check)
+.BI \tC_INT\  check)
 .fi
 
 .SH DESCRIPTION
@@ -43,9 +43,6 @@ or explicitly returned by Fortran.
 .LP
 .I bss_start, bss_end
 --  Start and End addresses of program bss segment
-.LP
-.I lib_preload_env
---  environment variable for preloading libraries
 
 .SH RETURN VALUES
 On success, the C function returns a non-NULL pointer, 
@@ -80,17 +77,9 @@ printf("End of user program is at %p\en",prginfo->text_end);
 .LP
 .nf
 .if t .ft CW
-   typedef struct _papi_preload_option {
-      char lib_preload_env[PAPI_MAX_STR_LEN];   /* Model string of CPU */
-      char lib_preload_sep;
-      char lib_dir_env[PAPI_MAX_STR_LEN];
-      char lib_dir_sep;
-   } PAPI_preload_option_t;
-
-   typedef int (*PAPI_debug_handler_t) (int code);
 
    typedef struct _papi_address_map {
-      char mapname[PAPI_MAX_STR_LEN];
+      char name[PAPI_MAX_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */
@@ -101,9 +90,7 @@ printf("End of user program is at %p\en",prginfo->text_end);
 
    typedef struct _papi_program_info {
       char fullname[PAPI_MAX_STR_LEN];  /* path+name */
-      char name[PAPI_MAX_STR_LEN];      /* name */
       PAPI_address_map_t address_info;
-      PAPI_preload_option_t preload_info;
    } PAPI_exe_info_t;
 .if t .ft P
 .fi
