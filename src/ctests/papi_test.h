@@ -54,6 +54,7 @@ void *get_overflow_address(void *context);
 void free_test_space(long_long ** values, int num_tests);
 long_long **allocate_test_space(int num_tests, int num_events);
 int add_test_events(int *number, int *mask);
+int add_two_events(int *num_events, int *papi_event, const PAPI_hw_info_t *hw_info, int *mask);
 int add_test_events_r(int *number, int *mask, void *handle);
 int remove_test_events(int *EventSet, int mask);
 void do_flush(void);

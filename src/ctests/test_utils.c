@@ -499,8 +499,8 @@ void test_print_event_header(char *call, int evset)
    fprintf(stdout,"\n");
 }
 
-int add_two_events(int *num_events, int *papi_event, PAPI_hw_info_t *hw_info,
-                   int *mask)
+int add_two_events(int *num_events, int *papi_event, 
+               const PAPI_hw_info_t *hw_info, int *mask)
 {
    int EventSet = PAPI_NULL;
 
