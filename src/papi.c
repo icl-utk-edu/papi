@@ -7,13 +7,15 @@
 #include <signal.h>
 #include <string.h>
 #include <strings.h>
+#include <errno.h>
 
 #include "papi_internal.h"
 #include "papi.h"
 
 /* There are two global variables.    */ 
 /* Their values are set in PAPI_init. */  
-DynamicArray PAPI_EVENT_MAP;    
+
+DynamicArray PAPI_EVENTSET_MAP;    
 int          PAPI_ERR_LEVEL; 
 
 /*========================================================================*/
@@ -28,8 +30,8 @@ int          PAPI_ERR_LEVEL;
 /* Failure of this function should shutdown the PAPI tool.                */
 /*                                                                        */
 /* Initialize EM.                                                         */
-/* Set pointer to GLOBAL variable PAPI_EVENT_MAP.                         */
-/* Since PAPI_EVENT_MAP is declared at the top of the program             */
+/* Set pointer to GLOBAL variable PAPI_EVENTSET_MAP.                         */
+/* Since PAPI_EVENTSET_MAP is declared at the top of the program             */
 /* no malloc for EM is needed.                                            */
 /* But the pointer EM->dataSlotArray must be malloced here.               */
 /*                                                                        */
@@ -39,20 +41,19 @@ int          PAPI_ERR_LEVEL;
 /*   a. PAPI_VERB_ECONT [print error message, then continue processing ]  */
 /*   b. PAPI_VERB_ESTOP [print error message, then shutdown ]             */
 /*========================================================================*/
-static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
+static void PAPI_init(int ERROR_LEVEL_CHOICE) 
+{
+   memset(&PAPI_EVENTSET_MAP,0x00,sizeof(PAPI_EVENTSET_MAP));
 
-   EM=&PAPI_EVENT_MAP;
-   bzero(EM,sizeof(PAPI_EVENT_MAP));
+/* initialize values in PAPI_EVENTSET_MAP */ 
 
-/* initialize values in PAPI_EVENT_MAP */ 
+   PAPI_EVENTSET_MAP.dataSlotArray=(EventSetInfo **)malloc(PAPI_EVENTSET_MAP.totalSlots*sizeof(void *));
+   if(!PAPI_EVENTSET_MAP.dataSlotArray) PAPI_shutdown();
+   bzero(PAPI_EVENTSET_MAP.dataSlotArray,sizeof(PAPI_EVENTSET_MAP.dataSlotArray));
 
-   EM->dataSlotArray=(void **)malloc(EM->totalSlots*sizeof(void *));
-   if(!EM->dataSlotArray) PAPI_shutdown();
-   bzero(EM->dataSlotArray,sizeof(EM->dataSlotArray));
-
-   EM->totalSlots = PAPI_INIT_SLOTS;
-   EM->availSlots = PAPI_INIT_SLOTS - 1;
-   EM->lowestEmptySlot = 1;
+   PAPI_EVENTSET_MAP.totalSlots = PAPI_INIT_SLOTS;
+   PAPI_EVENTSET_MAP.availSlots = PAPI_INIT_SLOTS - 1;
+   PAPI_EVENTSET_MAP.lowestEmptySlot = 1;
 
 /* initialize PAPI_ERR_LEVEL */
 
@@ -61,15 +62,6 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
           PAPI_shutdown(); 
 
    PAPI_ERR_LEVEL=ERROR_LEVEL_CHOICE;
-
-
-/* from papi_internal.h
-typedef struct _papi_options{
-	int error_level;
-	} papi_options;
-*/
-
- 	papi_options.error_level=PAPI_ERR_LEVEL;
 
    return;
    }/***/
@@ -88,36 +80,34 @@ typedef struct _papi_options{
 /* a. All memory associated with the PAPI tool is freed.                  */
 /*  b. a shutdown message is written to stderr                            */ 
 /*                                                                        */
-/* Free the elements of EM->dataSlotArray by calling papi_freeEventSet.   */
+/* Free the elements of PAPI_EVENTSET_MAP.dataSlotArray by calling papi_freeEventSet.   */
 /* The function _papi_free_EventSet frees the _EventSetInfo structure     */ 
 /* in two stages:                                                         */
 /*    1. Free the internal pointers.                                      */  
 /*    2. Free the pointer to the _EventSetInfo structure itself.          */ 
 /*                                                                        */
-/* Once the EM->dataSlotArray has had all its elements removed, then      */
-/* the EM->dataSlotArray itself may be freed.                             */
+/* Once the PAPI_EVENTSET_MAP.dataSlotArray has had all its elements removed, then      */
+/* the PAPI_EVENTSET_MAP.dataSlotArray itself may be freed.                             */
 /* The EM pointer itself does not have to be freed because it points to   */
-/* the static memory location of PAPI_EVENT_MAP.                          */
+/* the static memory location of PAPI_EVENTSET_MAP.                          */
 /*========================================================================*/
 
-static void PAPI_shutdown(void) {
+void PAPI_shutdown(void) {
 
     int i;
-    DynamicArray *EM;
-    EM=&PAPI_EVENT_MAP;
     /* close all memory pointed to by xEM */
     /* this code under construction       */
-    /* note: do we need to make a special case for EM->dataSlotArray[0]?*/
+    /* note: do we need to make a special case for PAPI_EVENTSET_MAP.dataSlotArray[0]?*/
 
 
-    /* free all the EventInfo Structures in the EM->dataSlotArray*/
-    for(i=0;i<EM->totalSlots;i++) {
-	if(EM->dataSlotArray[i]) {
- 	  _papi_free_EventSet(EM->dataSlotArray[i]); 
+    /* free all the EventInfo Structures in the PAPI_EVENTSET_MAP.dataSlotArray*/
+    for(i=0;i<PAPI_EVENTSET_MAP.totalSlots;i++) {
+	if(PAPI_EVENTSET_MAP.dataSlotArray[i]) {
+ 	  _papi_free_EventSet(PAPI_EVENTSET_MAP.dataSlotArray[i]); 
 	  }/* end if */
 	}/* end for */ 
 		 
-	free(EM->dataSlotArray);
+	free(PAPI_EVENTSET_MAP.dataSlotArray);
 
 
 
@@ -156,45 +146,47 @@ static void PAPI_shutdown(void) {
 /* cause shutdown of the papi tool.                                       */
 /*========================================================================*/
 
-int PAPI_error (int PAPI_errorCode, char *errorMessage) {
-
-int N; /* absolute value of PAPI_errorCode */
-
-char *papi_errStr[11] = {
-" Call to PAPI_error made with no error ",
-" Invalid argument ",
-" Insufficient memory ",
-" A System C library call failed: \n\t\t",
-" Substrate returned an error ",
-" Access to the counters was lost or interrupted ",
-" Internal error, please send mail to the developers ",
-" Hardware Event does not exist ",
-" Hardware Event exists, but cannot be counted due to counter resource limits ",
-" No Events or EventSets are currently counting " 
-" Invalid Error Code ",
+static char *papi_errStr[PAPI_NUM_ERRORS] = {
+"Call to PAPI_error made with no error",
+"Invalid argument",
+"Insufficient memory",
+"A System/C library call failed",
+"Substrate returned an error",
+"Access to the counters was lost or interrupted",
+"Internal error, please send mail to the developers",
+"Hardware Event does not exist",
+"Hardware Event exists, but cannot be counted due to counter resource limits",
+"No Events or EventSets are currently counting" 
+"Call to PAPI_error with unknown error code",
 };
 
-/* check for valid error code */
-N=PAPI_errorCode; 
-if (N==1)  N = 0;
-if (N<0)   N*= (-1);
-if (N>9)   N = 10;
+int PAPI_error (int PAPI_errorCode, char *errorMessage) 
+{
+  if (PAPI_ERR_LEVEL) 
+    {
+      if (PAPI_errorCode > 0) 
+	PAPI_errorCode = 0;
+      else 
+	PAPI_errorCode = - PAPI_errorCode;
 
-/* print standard papi error message */
-fprintf(stderr, " %s\n", papi_errStr[N]);
+      if (PAPI_errorCode > PAPI_NUM_ERRORS)
+	PAPI_errorCode = PAPI_EMISC;
 
-/* check for failed C library call*/
-if ( N==3 ) fprintf(" %s\n",strerror(errno));
+      /* print standard papi error message */
+      fprintf(stderr, "%s", papi_errStr[PAPI_errorCode]);
 
-/* check for user supplied error message */
-if(errorMessage) fprintf(stderr, " %s\n", errorMessage);
+      /* check for failed C library call*/
+      if ( PAPI_errorCode==PAPI_ESYS ) fprintf(stderr,": %s",strerror(errno));
 
+      /* check for user supplied error message */
+      if (errorMessage) fprintf(stderr, ": %s", errorMessage);
 
-if (PAPI_ERR_LEVEL==PAPI_VERB_STOP) {
+      fprintf(stderr,"\n");
+
+      if (PAPI_ERR_LEVEL==PAPI_VERB_ESTOP) 
 	PAPI_shutdown();
-	}
-
-return(PAPI_errorCode);
+    }
+  return(PAPI_errorCode);
 
 }/***/
 /*========================================================================*/
@@ -211,9 +203,9 @@ return(PAPI_errorCode);
 /* begin function:                                                        */
 /* static int _papi_expandDA(DynamicArray *EM);                           */
 /*                                                                        */
-/* The function _papi_expandDA expands EM->dataSlotArray when the array   */
+/* The function _papi_expandDA expands PAPI_EVENTSET_MAP.dataSlotArray when the array   */
 /* has become full. The function also does all of the bookkeeping chores  */
-/* [reset EM->totalSlots, EM->availSlots, EM->lowestEmptySlot].           */
+/* [reset PAPI_EVENTSET_MAP.totalSlots, PAPI_EVENTSET_MAP.availSlots, PAPI_EVENTSET_MAP.lowestEmptySlot].           */
 /* This enables the user to load as many events as needed.                */
 /*                                                                        */
 /* The DynamicArray data structure is defined in papi_internal.h.         */
@@ -225,54 +217,46 @@ return(PAPI_errorCode);
 /* } DynamicArray;                                                        */
 /*                                                                        */
 /* The EM structure holds the dataSlotArray. Each element of the          */ 
-/* EM->dataSlotArray is a pointer to an EventSetInfo structure.           */
-/* The zero element of the EM->dataSlotArray is reserved and is set       */
+/* PAPI_EVENTSET_MAP.dataSlotArray is a pointer to an EventSetInfo structure.           */
+/* The zero element of the PAPI_EVENTSET_MAP.dataSlotArray is reserved and is set       */
 /* during initilization, [see papi_init]                                  */
 /*                                                                        */
-/* EM->dataSlotArray[1] holds ptr to EventSetInfo number 1                */
-/* EM->dataSlotArray[2] holds ptr to EventSetInfo number 2                */
-/* EM->dataSlotArray[3] holds ptr to EventSetInfo number 3                */ 
+/* PAPI_EVENTSET_MAP.dataSlotArray[1] holds ptr to EventSetInfo number 1                */
+/* PAPI_EVENTSET_MAP.dataSlotArray[2] holds ptr to EventSetInfo number 2                */
+/* PAPI_EVENTSET_MAP.dataSlotArray[3] holds ptr to EventSetInfo number 3                */ 
 /*  ...                                                                   */
 /*  ...                                                                   */
-/* EM->dataSlotArray[N] holds ptr to EventSetInfo number N,               */
+/* PAPI_EVENTSET_MAP.dataSlotArray[N] holds ptr to EventSetInfo number N,               */
 /* where                                                                  */     
-/*	N < EM->totalSlots                                                */
+/*	N < PAPI_EVENTSET_MAP.totalSlots                                                */
 /*                                                                        */
 /* The function _papi_expandDA returns PAPI_OK upon success               */
 /* or PAPI_ENOMEM on failure.                                             */
 /* Error handling should be done in the calling function.                 */  
 /*========================================================================*/
 
+static int _papi_expandDA(void)
+{
+  int  prevTotal;	
+  EventSetInfo **n;
 
+  /*realloc existing PAPI_EVENTSET_MAP.dataSlotArray*/
+    
+  n = (EventSetInfo **)realloc(PAPI_EVENTSET_MAP.dataSlotArray,PAPI_EVENTSET_MAP.totalSlots*sizeof(EventSetInfo *));
+  if (n==NULL) 
+    return(PAPI_error(PAPI_ENOMEM,NULL));   
 
-static int _papi_expandDA(DynamicArray *EM) {
-
-int          prevTotal;	
-
-	/*realloc existing EM->dataSlotArray*/
-        if( (void **)realloc(EM->dataSlotArray,EM->totalSlots*sizeof(void *))
-        ==NULL) return(PAPI_ENOMEM);   
-
+  /* Need to assign this value, what if realloc moved it? */
+  PAPI_EVENTSET_MAP.dataSlotArray = n;
        
-        /* bookkeeping to accomodate successful realloc operation*/
-	prevTotal           = EM->totalSlots; 
-	EM->totalSlots     += prevTotal;
-	EM->availSlots      = prevTotal;
-	EM->lowestEmptySlot = prevTotal;
+  /* bookkeeping to accomodate successful realloc operation*/
+  prevTotal           = PAPI_EVENTSET_MAP.totalSlots; 
+  PAPI_EVENTSET_MAP.totalSlots     += prevTotal;
+  PAPI_EVENTSET_MAP.availSlots      = prevTotal;
+  PAPI_EVENTSET_MAP.lowestEmptySlot = prevTotal;
 
-
-	}/***/
-/* 
-PAPI_OK denotes no error; 
-PAPI_OK_MPX denotes no error, multiplexing enabled.
-*/
-return(PAPI_OK);
-
+  return(PAPI_OK);
 }
-/*========================================================================*/
-/*end function: _papi_expandDA                                            */
-/*========================================================================*/
-/*========================================================================*/
 
 /*========================================================================*/
 /*========================================================================*/
@@ -291,46 +275,34 @@ return(PAPI_OK);
 /*   b.  return(PAPI_EINVAL) [invalid argument]                           */
 /*========================================================================*/
 
-int PAPI_state(int EventSetIndex, int *status) {
+int PAPI_state(int EventSetIndex, int *status) 
+{
 
-	DynamicArray *EM=&PAPI_EVENT_MAP;
-
- /* EventSetIndex is an integer, the index N of EM->dataSlotArray[N] */ 
+ /* EventSetIndex is an integer, the index N of PAPI_EVENTSET_MAP.dataSlotArray[N] */ 
  /* Check if EventSetIndex is a valid value 4 different ways. */ 
 
     /* 1.   invalid array index less than zero */
     /*      if (EventSetIndex < 0 ) return( PAPI_EINVAL );*/
 
     /* 2.   invalid array index 0, reserved for internal use only */ 
-    /*      if(EM->dataSlotArray[EventSet]==0) return (PAPI_EINVAL); */
+    /*      if(PAPI_EVENTSET_MAP.dataSlotArray[EventSet]==0) return (PAPI_EINVAL); */
 
     /* 3.   invalid array index greater than highest possible value*/
-    /*      if (EventSetIndex => EM->totalSlots ) return (PAPI_EINVAL); */
+    /*      if (EventSetIndex => PAPI_EVENTSET_MAP.totalSlots ) return (PAPI_EINVAL); */
 
     /* 4.   valid array index value, but not assigned to any event yet*/
-    /*      if (EM->dataSlotArray[EventSetIndex]==NULL) return(PAPI_EINVAL); */
+    /*      if (PAPI_EVENTSET_MAP.dataSlotArray[EventSetIndex]==NULL) return(PAPI_EINVAL); */
 
 
     /* combine all of the above ifs */
 
-    if(   (EventSetIndex < 1 )
-        ||(EventSetIndex => EM->totalSlots )
-	||(EM->dataSlotArray[EventSetIndex]==NULL )) return (PAPI_EINVAL);
+    if ((EventSetIndex < 1) || 
+	(EventSetIndex >= PAPI_EVENTSET_MAP.totalSlots) ||
+	(PAPI_EVENTSET_MAP.dataSlotArray[EventSetIndex]==NULL)) return (PAPI_error(PAPI_EINVAL,NULL));
 
-    /* check for error in value of 
-       EM->dataSlotArray[EventSetIndex]-> state, 
-       which would be an internal error */
+    /* Good value for PAPI_EVENTSET_MAP.dataSlotArray[EventSetIndex]-> state */
 
-    if(   (EM->dataSlotArray[EventSetIndex])->state !=PAPI_RUNNING)
-        &&(EM->dataSlotArray[EventSetIndex])->state !=PAPI_STOPPED) ) {
-           /* if this error is ignored, need to set value of *status */ 
-	   *status=PAPI_EINVAL;
-           return(PAPI_EBUG); 
-	   }
-	   
-    /* Good value for EM->dataSlotArray[EventSetIndex]-> state */
-
-    *status = (EM->dataSlotArray[EventSetIndex])->state;
+    *status = (PAPI_EVENTSET_MAP.dataSlotArray[EventSetIndex])->state;
      return(PAPI_OK);
 }
 /*========================================================================*/
@@ -355,70 +327,54 @@ int PAPI_state(int EventSetIndex, int *status) {
 /* structure is returned.                                                 */
 /*========================================================================*/
 
-static EventSetInfo *papi_allocate_EventSet(void) {
+static EventSetInfo *allocate_EventSet(void) 
+{
+  EventSetInfo *ESI;
+  int counterArrayLength;
+  
+  counterArrayLength=_papi_system_info.num_gp_cntrs+_papi_system_info.num_sp_cntrs;
 
-EventSetInfo *ESI;
-int counterArrayLength;
+  ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo));
+  if (ESI==NULL) 
+    return(NULL); 
+  memset(&ESI,0x00,sizeof(ESI));
 
-counterArrayLength=_papi_system_info.num_gp_cntrs+_papi_system_info.num_sp_cntrs;
+  ESI->machdep=(void *)malloc(_papi_system_info.size_machdep);
+  ESI->start = (long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->stop = (long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->latest = (long long *)malloc(counterArrayLength*sizeof(long long));
+  ESI->EventCodeArray = (int *)malloc(counterArrayLength*sizeof(int));
 
-if(!ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo))) return(NULL); 
-bzero(ESI,sizeof(ESI));
+  if ((ESI->machdep == NULL) || 
+      (ESI->start == NULL) || 
+      (ESI->stop == NULL) || 
+      (ESI->latest == NULL) ||
+      (ESI->EventCodeArray))
+    {
+      if (ESI->machdep) free(ESI->machdep);
+      if (ESI->start) free(ESI->start);
+      if (ESI->stop) free(ESI->stop);
+      if (ESI->latest) free(ESI->latest);
+      if (ESI->EventCodeArray) free(ESI->EventCodeArray);
+      free(ESI);
+      return(NULL);
+    }
+  memset(ESI->machdep,0x00,_papi_system_info.size_machdep);
+  memset(ESI->start,0x00,counterArrayLength*sizeof(long long));
+  memset(ESI->stop,0x00,counterArrayLength*sizeof(long long));
+  memset(ESI->latest,0x00,counterArrayLength*sizeof(long long));
+  memset(ESI->EventCodeArray,0x00,counterArrayLength*sizeof(int));
 
-ESI->EventSetIndex=0;     /*this is N index from EM->dataSlotArray[N] */
-			  /*0 is the initialization value to denote that
-			    this ESI is not yet loaded int EM->dataSlotArray */
-ESI->NumberOfCounters=0;  /*number of counters*/
+  ESI->state = PAPI_STOPPED; 
 
-/*this ptr needs more work ******************************************************/
-ESI->EventCodeArray=NULL; /* array of codes for events in this set from AddEvent*/
-
-if(!ESI->machdep)=(void *)malloc(_papi_system_info.size_machdep)) {
-	free (ESI);
-	return(NULL);
-	}
-bzero(ESI->machdep,sizeof(ESI->machdep));
-
-if(!ESI->start =(long long *)malloc(counterArrayLength*sizeof(long long))){
-	free (ESI->machdep);
-	free (ESI);
-	return(NULL);
-	}
-bzero(ESI->start,sizeof(ESI->start));
-
-if(!ESI->stop  =(long long *)malloc(counterArrayLength*sizeof(long long))){
-	free (ESI->machdep);
-	free (ESI->start);
-	free (ESI);
-	return(NULL);
-	}
-bzero(ESI->stop,sizeof(ESI->stop));
-
-if(!ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long))){
-	free (ESI->machdep);
-	free (ESI->start);
-	free (ESI->stop);
-	free (ESI);
-	return(NULL);
-	}
-bzero(ESI->latest,sizeof(ESI->latest));
-
-ESI->state=PAPI_RUNNING; /*[or PAPI_STOPPED]*/
-
-return(ESI);
+  return(ESI);
 }
-/*========================================================================*/
-/*end function: papi_allocate_EventSet                                    */
-/*========================================================================*/
-/*========================================================================*/
-
-
 
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
 /* begin function:                                                        */
-/* static int _papi_free_EventSet();                                      */
+/* static int free_EventSet();                                            */
 /*                                                                        */ 
 /* This function should free memory for one EventSetInfo structure.       */
 /* The argument list consists of a pointer to the EventSetInfo            */
@@ -426,18 +382,14 @@ return(ESI);
 /* The calling function should check  for ESI==NULL.                      */
 /*========================================================================*/
 
-static void free_EventSet(EventSetInfo *ESI) {
-
-
-if(ESI->EventCodeArray) free(ESI->EventCodeArray);
-if(ESI->machdep)        free(ESI->machdep);
-if(ESI->start)          free(ESI->start);
-if(ESI->stop)           free(ESI->stop);
-if(ESI->latest)         free(ESI->latest);
-
-free(ESI);
-
-return; /* normal return */
+static void free_EventSet(EventSetInfo *ESI) 
+{
+  if (ESI->EventCodeArray) free(ESI->EventCodeArray);
+  if (ESI->machdep)        free(ESI->machdep);
+  if (ESI->start)          free(ESI->start);
+  if (ESI->stop)           free(ESI->stop);
+  if (ESI->latest)         free(ESI->latest);
+  free(ESI);
 }
 /*========================================================================*/
 /*end function: _papi_free_EventSet                                       */
@@ -460,7 +412,7 @@ return; /* normal return */
 /* PAPI_load_event sets up a new EventSetInfo structure or modifies an    */
 /* existing EventSetInfo structure.  In the case of a new EventSetInfo    */
 /* structure, PAPI_load_event loads the new EventSetInfo pointer to the   */
-/* EM->dataSlotArray by calling PAPI_load_dataSlotArrayElement.           */
+/* PAPI_EVENTSET_MAP.dataSlotArray by calling PAPI_load_dataSlotArrayElement.           */
 /*                                                                        */
 /* from the papi draft standard:
 int PAPI_add_event(int *EventSet, int Event) 
@@ -478,9 +430,8 @@ int PAPI_add_event(int *EventSet, int Event)
 /*========================================================================*/
 
 
-int PAPI_load_event(EventSetInfo *thisESI, int EventSetIndex) {
-
-DynamicArray *EM=PAPI_EVENT_MAP;
+int PAPI_load_event(EventSetInfo *thisESI, int EventSetIndex) 
+{
 int returnCode;
 
 /* if thisESI is new */
@@ -525,41 +476,62 @@ return (PAPI_OK);
 /* int PAPI_load_dataSlotArrayElement(EventSetInfo *ESI)                  */
 /*                                                                        */
 /* This function determines the value of the lowestEmptySlot in the       */
-/* EM->dataSlotArray.  If the dataSlotArray is full, a call to expand is  */
+/* PAPI_EVENTSET_MAP.dataSlotArray.  If the dataSlotArray is full, a call to expand is  */
 /* made to papi_expandDA.  The EventSetInfo *ESI is loaded to the lowest  */
 /* empty slot, and the value of ESI->EventSetIndex set to self-reference  */
-/* EM->lowestEmptySlot.                                                   */
+/* PAPI_EVENTSET_MAP.lowestEmptySlot.                                                   */
 /* bookkeeping is performed on the DynamicArray *EM to update the values  */
-/* of EM->lowestEmptySlot and EM->availSlots.                             */
+/* of PAPI_EVENTSET_MAP.lowestEmptySlot and PAPI_EVENTSET_MAP.availSlots.                             */
 /*========================================================================*/
    
+static int load_dataSlotArrayElement(EventSetInfo *ESI) 
+{
+  int N; /* temp value for bookkeeping */
 
+  if (PAPI_EVENTSET_MAP.availSlots==0) _papi_expandDA();
 
-int PAPI_load_dataSlotArrayElement(EventSetInfo *ESI) {
-
-DynamicArray *EM = &PAPI_EVENT_MAP;
-int N; /* temp value for bookkeeping */
-
-if(EM->availSlots==0) _papi_expandDA(EM);
-
-/*load ESI, failure indicates internal error */
-if(!EM->dataSlotArray[EM->lowestEmptySlot]=ESI) {
-	PAPI_error(PAPI_EBUG,NULL);
-	return(PAPI_EINVAL); /* return invalid flag*/
-	}
-
-/*load ESI->EventSetIndex*/
-ESI->EventSetIndex=EM->lowestEmptySlot;
-
-/*bookkeeping*/
-N=EM->lowestEmptySlot;
-while(EM->dataSlotArray[N]!=NULL)N++;
-EM->lowestEmptySlot=N;
-EM->availSlots--;
-
-return(PAPI_OK);
+  ESI->EventSetIndex=PAPI_EVENTSET_MAP.lowestEmptySlot;
+  PAPI_EVENTSET_MAP.dataSlotArray[PAPI_EVENTSET_MAP.lowestEmptySlot] = ESI;
+  
+  /*bookkeeping*/
+  N=PAPI_EVENTSET_MAP.lowestEmptySlot;
+  while(PAPI_EVENTSET_MAP.dataSlotArray[N]!=NULL)
+    N++;
+  PAPI_EVENTSET_MAP.lowestEmptySlot=N;
+  PAPI_EVENTSET_MAP.availSlots--;
+  
+  return(PAPI_OK);
 }
-/*========================================================================*/
-/*end function: PAPI_load_dataSlotArrayElement                            */
-/*========================================================================*/
-/*========================================================================*/
+
+/* There's more damn comments in this file than code! Let's go guys. */
+
+int PAPI_set_opt(int option, int value, PAPI_option_t *ptr)
+{
+  switch (option)
+    {
+    case PAPI_SET_MPXRES:
+    case PAPI_SET_OVRFLO:
+      return(_papi_hwd_setopt(option,value,ptr));
+    case PAPI_DEBUG:
+      if ((value < PAPI_QUIET) || (value > PAPI_VERB_ESTOP)) return(PAPI_error(PAPI_EINVAL,NULL));
+      PAPI_ERR_LEVEL = value;
+      return(PAPI_OK);
+    default:
+      return(PAPI_error(PAPI_EINVAL,NULL));
+    }
+}
+
+int PAPI_get_opt(int option, int *value, PAPI_option_t *ptr)
+{
+  switch (option)
+    {
+    case PAPI_GET_MPXRES:
+    case PAPI_GET_OVRFLO:
+      return(_papi_hwd_getopt(option,value,ptr));
+    case PAPI_DEBUG:
+      *value = PAPI_ERR_LEVEL;
+      return(PAPI_OK);
+    default:
+      return(PAPI_error(PAPI_EINVAL,NULL));
+    }
+}

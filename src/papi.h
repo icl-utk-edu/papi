@@ -26,6 +26,7 @@ failure.
 #define PAPI_ECNFLCT  -8  /*Hardware Event exists, but cannot be counted 
                             due to counter resource limitations*/ 
 #define PAPI_ENOTRUN  -9  /*No Events or EventSets are currently counting*/
+#define PAPI_EMISC   -10 /* No clue as to what this error code means */
 
 /*
 Constants
@@ -55,6 +56,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 				The constant PAPI_NOT_INIT is not in the standard, 
 				but this definition is reserved for future use.*/  
 
+#define PAPI_NUM_ERRORS  11   /* Number of error messages spec'd */
 #define PAPI_QUIET       0    /*Option to not do any automatic error reporting 
 				to stderr*/
 #define PAPI_VERB_ECONT  1    /*Option to automatically report any return codes <0 
@@ -71,8 +73,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_DEBUG	 3    /*Option to turn on debugging features of 
 				the PerfAPI library*/
-#define PAPI_SET_OVERFLO 4    /*Option to turn on the overflow reporting software*/
-#define PAPI_GET_OVERFLO 5    /*Option to query the status of the overflow
+#define PAPI_SET_OVRFLO  4    /*Option to turn on the overflow reporting software*/
+#define PAPI_GET_OVRFLO  5    /*Option to query the status of the overflow
 				reporting software*/
 
 #define PAPI_ONESHOT	 1    /*Option to have the overflow handler called once*/
@@ -129,11 +131,12 @@ int PAPI_write(int EventSet, long long *values);
 
 int PAPI_reset(int EventSet);
 int PAPI_cleanup(int *EventSet);
+void PAPI_shutdown(void);
 
 int PAPI_state(int EventSet, int *status);
 int PAPI_set_opt(int option, int value, PAPI_option_t *ptr); 
 
-void (*handler)(int signal, siginfo_t *si, void *ucontext, 
+void (*handler)(int signal, void *siginfo, void *ucontext, 
               int EventSet, int Event, int count); 
 int PAPI_get_opt(int option, int *value, PAPI_option_t *ptr);
 
@@ -154,12 +157,3 @@ events countable simultaneously by the underlying hardware.
 int PAPI_start_counters(int *events, int array_len);
 int PAPI_read_counters(long long *values, int array_len);
 int PAPI_stop_counters(long long *values, int array_len);
-
-
-/* 
-PAPI_shutdown.
-This function provides graceful shutdown of PAPI tool.
- a. All memory associated with PAPI tool is freed.
- b. A shutdown message is written to stderr. 
-*/
-static void PAPI_shutdown(void);

@@ -488,10 +488,6 @@ int _papi_hwd_write(void *machdep, long long events[])
   return(retval);
 }
 
-
-
-int _papi_hwd_setopt(int code, void *option)
-{
   /* used for native options like counting level, etc...*/
 
   /* probably from User Low Level API functions 
@@ -507,14 +503,36 @@ int _papi_hwd_setopt(int code, void *option)
      PAPI_SYSTEM), for granularity and context, respectively, and
      user defined values for overflow and multiplexing.
   */
+
+int _papi_hwd_setopt(int option, int value, void *option)
+{
+  switch (option)
+    {
+    case PAPI_SET_MPXRES:
+      return(PAPI_error(PAPI_ESBSTR,NULL));
+    case PAPI_SET_OVRFLO:
+      return(_papi_hwd_setopt(option,value,ptr));
+    default:
+      return(PAPI_error(PAPI_EINVAL,NULL));
+    }
 }
 
-int _papi_hwd_getopt(int code, void *option)
-{
   /* may require use of a global static structure that records calls
      to setopt iff substrate doesn't support it. */
 
   /* probably the same info as above */
+
+int _papi_hwd_getopt(int option, int value, void *option)
+{
+  switch (option)
+    {
+    case PAPI_GET_MPXRES:
+      return(PAPI_error(PAPI_ESBSTR,NULL));
+    case PAPI_GET_OVRFLO:
+      return(_papi_hwd_setopt(option,value,ptr));
+    default:
+      return(PAPI_error(PAPI_EINVAL,NULL));
+    }
 }
 
 #endif

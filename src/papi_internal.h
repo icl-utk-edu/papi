@@ -15,41 +15,20 @@
 
 #define PRESET_MASK 0x80000000
 
- 
-typedef struct _papi_options{
-	int error_level;
-	} papi_options;
+typedef void PAPI_option_t; 
 
+/* this is not the final version of this data structure
 
-typedef struct _dynamic_array{
-	void   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
-	int    totalSlots;      /* number of slots in dataSlotArrays      */
-	int    availSlots;      /* number of open slots in dataSlotArrays */
-	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
-} DynamicArray;
-
-/* -----function prototypes from papi.c------------------------ */
-static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE); 
-static void PAPI_shutdown(void);
-int PAPI_error (int PAPI_errorCode, char *errorMessage);
-static int _papi_expandDA(DynamicArray *EM);
-int PAPI_state(int EventSetIndex, int *status);
-static EventSetInfo *papi_allocate_EventSet(void);
-static void free_EventSet(EventSetInfo *ESI);
-int PAPI_load_event(EventSetInfo *thisESI, int EventSetIndex);
-int PAPI_load_dataSlotArrayElement(EventSetInfo *ESI);
-
-
-extern DynamicArray evmap;
-
-/* this is not the final version of this data structure*/
+typedef struct _papi_options {
+  int error_level;
+} papi_options_t;
 
 typedef struct _papi_option_t  {
 int            handlerStructure; 
 int            count;
 int            signal;
 int            flag; 
-} PAPI_option_t;
+} PAPI_option_t; */
 
 
 /* All memory for this structure should be allocated outside of the 
@@ -73,12 +52,21 @@ typedef struct _EventSetInfo {
   long long *stop;    /* Array of the same length as above, but 
                          containing the values of the counters when 
                          stopped */
+  long long overflow; /* Any counter value exceeding this number 
+			 will cause an overflow. */
   long long *latest;  /* Array of the same length as above, containing 
                          the values of the counters when last read */ 
   int state;          /* The state of this entire EventSet; can be
 			 PAPI_RUNNING or PAPI_STOPPED. */
 } EventSetInfo;
 
+
+typedef struct _dynamic_array{
+	EventSetInfo   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
+	int    totalSlots;      /* number of slots in dataSlotArrays      */
+	int    availSlots;      /* number of open slots in dataSlotArrays */
+	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
+} DynamicArray;
 
 typedef struct _papi_mdi {
   char substrate[81]; /* Name of the substrate we're using */
@@ -136,8 +124,6 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
                          context and granularity functions available
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
-extern int _papi_hwd_setopt(int code, void *option);
-extern int _papi_hwd_getopt(int code, void *option);
-
-
+extern int _papi_hwd_setopt(int code, int value, void *option);
+extern int _papi_hwd_getopt(int code, int *value, void *option);
 
