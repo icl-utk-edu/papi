@@ -27,9 +27,9 @@
 /* Could be __func__ as spec'd by C99 standard? */
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
-#define error_return(retval, format, args...){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); return(retval); } }
+#define error_return(retval, format, args...){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); } return(retval); }
 #else
-#define error_return(retval, format){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); return(retval); } }
+#define error_return(retval, format){ if (_papi_hwi_error_level!=PAPI_QUIET) { fprintf(stderr, "Error %s:%s:%d: ", __FILE__,__func__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); } return(retval); }
 #endif
 
 #ifdef DEBUG
