@@ -62,10 +62,6 @@ int main(int argc, char **argv)
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
-/* Skip Itanium till we fix the overflow problem -KSL */
-#if defined(linux) && defined(__ia64__)
-  test_pass(__FILE__, NULL, 0);
-#endif
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
