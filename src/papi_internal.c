@@ -119,7 +119,8 @@ int _papi_hwi_allocate_eventset_map(void)
    DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
 
    /* Allocate and clear the Dynamic Array structure */
-
+   if(map->dataSlotArray)
+      free(map->dataSlotArray);
    memset(map, 0x00, sizeof(DynamicArray_t));
 
    /* Allocate space for the EventSetInfo_t pointers */
@@ -168,6 +169,8 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** master)
 
    if ((*master = allocate_new_thread()) == NULL)
       papi_return(PAPI_ENOMEM);
+   
+   (*master)->pid = getpid();
 
    if (_papi_hwi_thread_id_fn)
       (*master)->tid = (*_papi_hwi_thread_id_fn) ();

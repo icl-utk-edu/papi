@@ -241,6 +241,9 @@ int PAPI_library_init(int version)
       papi_return(init_retval);
    }
 
+   if(default_master_thread)
+      free(default_master_thread);
+
    tmp = _papi_hwi_initialize_thread(&default_master_thread);
    if (tmp) {
       _papi_hwd_shutdown_global();
