@@ -58,7 +58,7 @@ MEMSUBSTR= linux
 LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) -D__USE_GNU -DHAVE_FFSLL
+CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH)
 
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)

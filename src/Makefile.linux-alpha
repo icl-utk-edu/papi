@@ -13,7 +13,7 @@ IPROBE_INCLUDES	= -I$(IPROBE_HOME)/suite_common/inc/common -I$(IPROBE_HOME)/suit
 
 IPROBE_LIBS = -L$(IPROBE_HOME)/lib/obj -llipr
 
-CFLAGS 	= -D__LINUX__ -DLINUX -g  -I./includes $(IPROBE_INCLUDES) -w -D__USE_GNU -DHAVE_FFSLL 
+CFLAGS 	= -D__LINUX__ -DLINUX -g  -I./includes $(IPROBE_INCLUDES) -w 
 FFLAGS	= -g
 OPTFLAGS= 
 FOPTFLAGS= $(OPTFLAGS)

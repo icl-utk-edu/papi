@@ -1,6 +1,10 @@
 #ifndef _PAPI_PENTIUM3
 #define _PAPI_PENTIUM3
 
+#ifdef __GNUC__
+#define HAVE_FFSLL
+#endif
+
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -254,7 +258,6 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
-extern char *basename(char *);
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #endif /* _PAPI_PENTIUM3 */

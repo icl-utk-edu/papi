@@ -50,7 +50,7 @@ MEMSUBSTR= linux-ia64
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) -D__USE_GNU -DHAVE_FFSLL
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU)
 
 CFLAGS-2.0 := -DPFM20
 CFLAGS-3.0 := -DPFM30

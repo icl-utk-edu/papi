@@ -1,6 +1,10 @@
 #ifndef _PAPI_PENTIUM4
 #define _PAPI_PENTIUM4
 
+#ifdef __GNUC__
+#define HAVE_FFSLL
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -174,9 +178,6 @@ __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN
 }while(0)
 
 
-/* Stupid linux basename prototype! */
-
-extern char *basename(char *);
 extern int sighold(int);
 extern int sigrelse(int);
 
