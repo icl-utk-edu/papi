@@ -870,8 +870,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
    OVFDBG("EventIndex=%d\n", EventIndex);
 
+#ifdef DEBUG
    /* The correct event to overflow is EventIndex */
    print_control(&this_state->control.cpu_control);
+#endif
 
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
@@ -926,8 +928,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
    }
-
+#ifdef DEBUG
    print_control(&this_state->control.cpu_control);
+#endif
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
