@@ -16,27 +16,27 @@ void main()
 {
   int r, i, n = 0;
   double a, b, c;
-  unsigned long long *ct;
+  unsigned long long *cr,*cs,*ct, *cu;
   int EventSet = PAPI_NULL;
 
   r = PAPI_num_events();
   assert(r>=PAPI_OK);
 
-  if (PAPI_query(PAPI_TOT_CYC) == PAPI_OK)
+  if (PAPI_query_event(PAPI_TOT_CYC) == PAPI_OK)
     {
       r=PAPI_add_event(&EventSet, PAPI_TOT_CYC);
       if (r >= PAPI_OK)
 	n++;
     }
 
-  if (PAPI_query(PAPI_TOT_INS) == PAPI_OK)
+  if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK)
     {
       r=PAPI_add_event(&EventSet, PAPI_TOT_INS);
       if (r >= PAPI_OK)
 	n++;
     }
 
-  if (PAPI_query(PAPI_FP_INS) == PAPI_OK)
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
     {
       r=PAPI_add_event(&EventSet, PAPI_FP_INS);
       if (r >= PAPI_OK)
@@ -68,7 +68,7 @@ void main()
   r=PAPI_read(EventSet, cr);
   assert(r>=PAPI_OK);
 
-  r=PAPI_reset(EventSet, cr);
+  r=PAPI_reset(EventSet);
   assert(r>=PAPI_OK);
 
   a = 0.5;
