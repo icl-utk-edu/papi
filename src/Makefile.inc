@@ -22,6 +22,7 @@ static: $(LIBRARY)
 shared: $(SHLIB)
 
 $(LIBRARY): $(OBJECTS) 
+	rm -f $(LIBRARY)
 	ar ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS)
@@ -84,10 +85,11 @@ fulltest: examples
 	sh run_tests.sh
 
 tests: null
-	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' $(TARGETS)
+	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" OPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS)
 
+# LIBCFLAGS='$(CFLAGS)'
 ftests: null
-	cd ftests; $(MAKE) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)"
+	cd ftests; $(MAKE) CC="$(CC)" F77="$(F77)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" CFLAGS="$(CFLAGS)"
 
 clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c

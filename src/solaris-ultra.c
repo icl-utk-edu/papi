@@ -358,6 +358,34 @@ static void set_hwcntr_codes(int selector, unsigned char *from, uint64_t *to)
   *to = tmp;
 }
 
+static int set_domain(hwd_control_state_t *this_state, int domain)
+{
+  papi_cpc_event_t *command= &this_state->counter_cmd;
+  cpc_event_t *event = &command->cmd;
+  uint64_t pcr = event->ce_pcr;
+
+  /* This doesn't exist on this platform */
+
+  if (domain == PAPI_DOM_OTHER)
+    return(PAPI_EINVAL);
+
+  pcr = pcr | 0x7;
+  pcr = pcr ^ 0x7;
+  if (domain & PAPI_DOM_USER)
+    pcr = pcr | 1 << CPC_ULTRA_PCR_USR;
+  if (domain & PAPI_DOM_KERNEL)
+    pcr = pcr | 1 << CPC_ULTRA_PCR_SYS;
+
+  event->ce_pcr = pcr;
+
+  return(PAPI_OK);
+}
+
+static int set_granularity(hwd_control_state_t *this_state, int domain)
+{
+  return(PAPI_OK);
+}
+
 static void init_config(hwd_control_state_t *ptr)
 {
   ptr->counter_cmd.flags = 0x0;
@@ -398,14 +426,9 @@ static int get_system_info(void)
   /* Global variable cpuver */
 
   cpuver = cpc_getcpuver();
-  DBG((stderr,"Got %d from cpc_getcpuver()\n",cpuver))
+  DBG((stderr,"Got %d from cpc_getcpuver()\n",cpuver));
   if (cpuver == -1)
     return(PAPI_ESBSTR);
-  name = cpc_getcciname(cpuver);
-  if (name)
-    DBG((stderr,"Got %s from cpc_getcciname\n",name));
-  else
-    DBG((stderr,"Got no name from cpc_getcciname\n"));
 
 #ifdef DEBUG
   {
@@ -501,26 +524,20 @@ static int get_system_info(void)
   _papi_system_info.hw_info.nnodes = 1;
   _papi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
 
-  /* Default strings until we know better... */
-  _papi_system_info.hw_info.model = -1;
-  strcpy(_papi_system_info.hw_info.model_string,"UltraSPARC???");
-  sprintf(maxargs," %d",cpuver - 999);
-  strcat(_papi_system_info.hw_info.model_string,maxargs);
-  _papi_system_info.hw_info.vendor = cpuver;
-  strcpy(_papi_system_info.hw_info.vendor_string,"SUN unknown");
-  _papi_system_info.hw_info.revision = 0;
-
   retval = scan_prtconf(cpuname,PAPI_MAX_STR_LEN,&hz,&version);
   if (retval == -1)
     return(PAPI_ESBSTR);
+
+  strcpy(_papi_system_info.hw_info.model_string,cpc_getcciname(cpuver));
+  _papi_system_info.hw_info.model = cpuver;
+  strcpy(_papi_system_info.hw_info.vendor_string,"SUN unknown");
+  _papi_system_info.hw_info.vendor = -1;
+  _papi_system_info.hw_info.revision = version;
+
   _papi_system_info.hw_info.mhz = ( (float) hz / 1.0e6 );
   DBG((stderr,"hw_info.mhz = %f\n",_papi_system_info.hw_info.mhz));
-  /* Fill in the strings we got */
-  strcpy(_papi_system_info.hw_info.model_string,cpuname);
-  _papi_system_info.hw_info.model=version;
 
-  strcpy(_papi_system_info.hw_info.vendor_string,cpc_getcciname(cpuver));
-  _papi_system_info.hw_info.vendor=cpuver;
+  /* Number of PMCs */
 
   retval = cpc_getnpic(cpuver);
   if (retval < 1)
@@ -630,34 +647,6 @@ static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, l
   return(0);
 }
 
-static int set_domain(hwd_control_state_t *this_state, int domain)
-{
-  papi_cpc_event_t *command= &this_state->counter_cmd;
-  cpc_event_t *event = &command->cmd;
-  uint64_t pcr = event->ce_pcr;
-
-  /* This doesn't exist on this platform */
-
-  if (domain == PAPI_DOM_OTHER)
-    return(PAPI_EINVAL);
-
-  pcr = pcr | 0x7;
-  pcr = pcr ^ 0x7;
-  if (domain & PAPI_DOM_USER)
-    pcr = pcr | 1 << CPC_ULTRA_PCR_USR;
-  if (domain & PAPI_DOM_KERNEL)
-    pcr = pcr | 1 << CPC_ULTRA_PCR_SYS;
-
-  event->ce_pcr = pcr;
-
-  return(PAPI_OK);
-}
-
-static int set_granularity(hwd_control_state_t *this_state, int domain)
-{
-  return(PAPI_OK);
-}
-
 /* This function should tell your kernel extension that your children
    inherit performance register information and propagate the values up
    upon child exit and parent wait. */
@@ -756,6 +745,13 @@ long long _papi_hwd_get_real_usec (void)
 long long _papi_hwd_get_real_cycles (void)
 {
   return(get_tick());
+#if 0
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_real_usec();
+  cyc = usec * _papi_system_info.hw_info.mhz;
+  return((long long)cyc);
+#endif
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
