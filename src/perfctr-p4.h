@@ -11,7 +11,7 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
-
+#include <errno.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>
