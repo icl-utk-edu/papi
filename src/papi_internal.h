@@ -15,7 +15,24 @@
 
 #define PRESET_MASK 0x80000000
 
-typedef PAPI_option_t  void;
+typedef struct _dynamic_array {
+	void   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
+	int    totalSlots;      /* number of slots in dataSlotArrays      */
+	int    availSlots;      /* number of open slots in dataSlotArrays */
+	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
+} DynamicArray;
+
+/*function prototype*/
+int _papi_expandDA(DynamicArray *DA); 
+
+/* this is not the final version of this data structure*/
+typedef struct _papi_option_t  {
+/*papi_handler   handlerStructure; use dummy arg to test compile*/
+int            handlerStructure; 
+int            count;
+int            signal;
+int            flag; 
+} PAPI_option_t;
 
 
 /* All memory for this structure should be allocated outside of the 
@@ -46,7 +63,6 @@ typedef struct _EventSetInfo {
 } EventSetInfo;
 
 
-extern papi_mdi _papi_system_info;
 
 typedef struct _papi_mdi {
   char substrate[81]; /* Name of the substrate we're using */
@@ -79,6 +95,8 @@ typedef struct _papi_mdi {
                          defined */
 } papi_mdi;
 
+extern papi_mdi _papi_system_info;
+
 /* The following functions are defined by the substrate file. */
 
 extern int _papi_hwd_init(EventSetInfo *zero);   /* members start, 
@@ -105,3 +123,5 @@ extern int _papi_hwd_write(void *machdep, long long *events);
 extern int _papi_hwd_setopt(int code, void *option);
 extern int _papi_hwd_getopt(int code, void *option);
 extern int _papi_err_level(int level); /* get/set error level */
+
+
