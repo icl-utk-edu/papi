@@ -3,7 +3,31 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
+Project: "all_events"=.\all_events.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "avail"=.\avail.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "branches"=.\branches.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -75,7 +99,43 @@ Package=<4>
 
 ###############################################################################
 
-Project: "fifth"=.\fifth.dsp - Package Owner=<4>
+Project: "derived"=.\derived.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "describe"=.\describe.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dmem_info"=.\dmem_info.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "eventname"=.\eventname.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -111,31 +171,43 @@ Package=<4>
 
 ###############################################################################
 
-Project: "fourth"=.\fourth.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "fourth_inv"=.\fourth_inv.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "high_level"=.\high_level.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "highlevel2"=.\highlevel2.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ipc"=.\ipc.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "johnmay2"=.\johnmay2.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -159,7 +231,79 @@ Package=<4>
 
 ###############################################################################
 
-Project: "nineth"=.\nineth.dsp - Package Owner=<4>
+Project: "matrix_hl"=.\matrix_hl.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mem_info"=.\mem_info.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "memory"=.\memory.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mendes_alt"=.\mendes_alt.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multiplex1"=.\multiplex1.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "native"=.\native.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "native_avail"=.\native_avail.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -183,7 +327,55 @@ Package=<4>
 
 ###############################################################################
 
-Project: "profile"=.\profile.dsp - Package Owner=<4>
+Project: "overflow2"=.\overflow2.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "overflow_single_event"=.\overflow_single_event.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "overflow_twoevents"=.\overflow_twoevents.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sdsc"=.\sdsc.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sdsc2"=.\sdsc2.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -219,31 +411,19 @@ Package=<4>
 
 ###############################################################################
 
-Project: "third"=.\third.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "third_inv"=.\third_inv.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "zero"=.\zero.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "zero_flip"=.\zero_flip.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
