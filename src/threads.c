@@ -18,12 +18,6 @@
  * make sure if a remove function is put in that we again think about
  * locking, the shutdown/cleanup still lock
  */
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
 
 #include "papi.h"
 #include SUBSTRATE
@@ -56,12 +50,12 @@ void _papi_hwi_shutdown_the_thread_list(void)
    tmp = head->next;
    while (tmp != head) {
       nxt = tmp->next;
-      THRDBG("%llu:%s:0x%x:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+      THRDBG("%llu:%s:%d:0x%x:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
       _papi_hwd_shutdown(&tmp->master->context);
       tmp = nxt;
    }
    if (tmp) {
-      THRDBG("%lld:%s:0x%x:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+      THRDBG("%lld:%s:%d:0x%x:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
       _papi_hwd_shutdown(&tmp->master->context);
    }
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -86,13 +80,13 @@ void _papi_hwi_cleanup_thread_list(void)
    tmp = head->next;
    while (tmp != head) {
       nxt = tmp->next;
-      THRDBG("%lld:%s:0x%x:Freeing master thread %ld at %p\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp); 
+      THRDBG("%lld:%s:%d:0x%x:Freeing master thread %ld at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp); 
       THRDBG( "%p->%p: %p->%p: %p->%p", prev, prev->next, tmp, tmp->next, nxt, nxt->next);
       free(tmp);
       prev->next = nxt;
       tmp = nxt;
    }
-   THRDBG( "%lld:%s:0x%x:Freeing master thread %ld at %p\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+   THRDBG( "%lld:%s:%d:0x%x:Freeing master thread %ld at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
    free(tmp);
    head = NULL;
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -105,7 +99,7 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t * ptr)
 
    if (entry == NULL)
       return (PAPI_ENOMEM);
-   THRDBG( "%lld:%s:0x%x:(%p): New entry is at %p\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), ptr, entry);
+   THRDBG( "%lld:%s:%d:0x%x:(%p): New entry is at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), ptr, entry);
    entry->master = ptr;
 
    /* Thread specific data */
@@ -142,7 +136,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
       _papi_hwd_lock(PAPI_INTERNAL_LOCK); /* KSL */
       tmp = head;
       while (tmp != NULL) {
-         THRDBG("%lld:%s:0x%x:Examining master at %p,tid 0x%x.\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
+         THRDBG("%lld:%s:%d:0x%x:Examining master at %p,tid 0x%x.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
          if (tmp->master->tid == id_to_find) {
               _papi_hwd_unlock(PAPI_INTERNAL_LOCK); /* KSL */
             head = tmp;
@@ -152,7 +146,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
          if (tmp == head)
             break;
       }
-      THRDBG("%lld:%s:0x%x:I'm not in the list at %p.\n", _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (), head);
+      THRDBG("%lld:%s:%d:0x%x:I'm not in the list at %p.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), head);
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);/* KSL */
       return (NULL);
    }
@@ -169,8 +163,8 @@ void _papi_hwi_broadcast_overflow_signal(unsigned int mytid)
    for (foo = head; foo != NULL; foo = foo->next) {
       if ((foo->master->event_set_overflowing) && (foo->master->tid != mytid)) {
 #ifdef OVERFLOW_DEBUG_TIMER
-         fprintf(stderr, "%lld:%s:0x%x:I'm forwarding signal to thread %x\n",
-                 _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+         fprintf(stderr, "%lld:%s:%d:0x%x:I'm forwarding signal to thread %x\n",
+                 _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
                  foo->master->tid);
 #endif
          retval = (*_papi_hwi_thread_kill_fn) (foo->master->tid, PAPI_SIGNAL);
@@ -178,8 +172,8 @@ void _papi_hwi_broadcast_overflow_signal(unsigned int mytid)
          didsomething++;
       } else {
 #ifdef OVERFLOW_DEBUG_TIMER
-         fprintf(stderr, "%lld:%s:0x%x:I'm NOT forwarding signal to thread %x\n",
-                 _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+         fprintf(stderr, "%lld:%s:%d:0x%x:I'm NOT forwarding signal to thread %x\n",
+                 _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
                  foo->master->tid);
 #endif
       }
