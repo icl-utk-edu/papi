@@ -5,7 +5,7 @@ MSUBSTR  = solaris-ultra
 MEMSUBSTR= solaris
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
-TARGETS	= serial multiplex_and_pthreads
+TARGETS	= serial multiplex_and_pthreads shared
 SHLIBDEPS = -lcpc
 #
 # Sun Workshop compilers: V5.0 and V6.0 R2
