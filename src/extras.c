@@ -95,7 +95,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
   if (flags & PAPI_PROFIL_RANDOM)
     {
       if (random_ushort() <= (USHRT_MAX/4))
-	    return;
+	return;
     }
 
   if (flags & PAPI_PROFIL_COMPRESS)
@@ -111,43 +111,41 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
   if (flags & PAPI_PROFIL_WEIGHTED)     /* Increment is between 1 and 255 */
     {
       if (excess <= (long_long)1)
-	    increment = 1;
+	increment = 1;
       else if (excess > threshold)
-	         increment = 255;
-           else
-	       {
-	         threshold = threshold / (long_long)255;
-	         increment = (int)(excess / threshold);
-	       }	
+	increment = 255;
+      else
+	{
+	  threshold = threshold / (long_long)255;
+	  increment = (int)(excess / threshold);
+	}	
     }
 
   buf[addr] += increment;
   DBG((stderr,"posix_profile() bucket %lu = %u\n",addr,buf[addr]));
 }
 
-void dispatch_profile(EventSetInfo_t *ESI, void *context,
-			     long_long over, int profile_index )
-{
- _papi_hwi_context_t *ctx = (_papi_hwi_context_t *)context;
-
-  EventSetProfileInfo_t *profile = &ESI->profile;
-  caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
-
 /*
+static void dispatch_profile(EventSetInfo_t *ESI, void *context,
+			     long_long over, long_long threshold)
+*/
+void dispatch_profile(EventSetInfo_t *ESI, void *context,
+			     long_long over, long_long threshold)
+{
+  EventSetProfileInfo_t *profile = &ESI->profile;
+  caddr_t pc = (caddr_t)_papi_hwd_get_overflow_address(context);
   caddr_t offset = (caddr_t)0;
   caddr_t best_offset = (caddr_t)0;
   int count;
   int best_index = -1;
-  int i;
-*/
   unsigned short overflow_dummy;
   unsigned short *overflow_bin = NULL;
+  int i;
 
 #ifdef PROFILE_DEBUG
   fprintf(stderr,"%lld:%s:0x%x:handled at 0x%lx\n",_papi_hwd_get_real_usec(),__FUNCTION__,(*_papi_hwi_thread_id_fn)(),pc);
 #endif
 
-/*
   count = profile->count;
   if ((profile->prof[count-1].pr_off == 0) &&
       (profile->prof[count-1].pr_scale == 0x2))
@@ -172,43 +170,19 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 
   if (best_index == -1)
     best_index = 0;
-*/
-  overflow_bin = &overflow_dummy;
 
-  posix_profil(pc, profile->prof[profile_index], overflow_bin, profile->flags, over, profile->threshold[profile_index]);
-/*
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
-*/
 }
 
-/* if isHardware is true, then the processor is using hardware overflow,
-   else it is using software overflow. Use this parameter instead of 
-   _papi_hwi_system_info.supports_hw_overflow is in CRAY some processors
-   may use hardware overflow, some may use software overflow.
-
-   overflow_bit: if the substrate can get the overflow bit when overflow
-                 occurs, then this should be passed by the substrate;
-
-   If both genOverflowBit and isHardwareSupport are true, that means
-     the substrate don't know how to get the overflow bit from the
-     kernel directly, so we generate the overflow bit in this function 
-    since this function can access the ESI->overflow struct;
-   (The substrate can only set genOverflowBit pararemter to ture if the
-     hardware doesn't support multiple hardware overflow. If the
-     substrate support multiple hardware overflow and you don't know how 
-     to get the overflow bit, then I don't know how to deal with this 
-     situation).
-*/
-
-void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_long overflow_bit, int genOverflowBit)
+void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval, event_counter, i, overflow_flag, pos;
-  int papi_index, profile_index, j;
-  long_long overflow_vector, temp[MAX_COUNTERS], over;
-  u_long_long latest=0 ;
+  int papi_index;
+  u_long_long latest=0, temp[MAX_COUNTERS];
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
-  _papi_hwi_context_t *ctx = (_papi_hwi_context_t*)papiContext;
+  _papi_hwi_context_t *ctx = (_papi_hwi_context_t*)context;
+  void *address;
 
 #ifdef OVERFLOW_DEBUG_TIMER
   if (_papi_hwi_thread_id_fn)
@@ -235,27 +209,27 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_
       
     /* Get the latest counter value */
    event_counter = ESI->overflow.event_counter;
+   printf("event_counter=%d\n", event_counter);
       
   /* if you want to change this, please discuss with me .  -- Min */
     overflow_flag = 0;
-    overflow_vector=0;
-
-    if (isHardware == 0)
+    if (_papi_hwi_system_info.supports_hw_overflow==0)
     {
       retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
       if (retval < PAPI_OK)
 	    return;
+      ctx->overflow_vector=0;
       for(i=0; i<event_counter; i++) 
       {
         papi_index=ESI->overflow.EventIndex[i];
         latest = ESI->sw_stop[papi_index];
-        temp[i] = -1;
         
         if (latest >= ESI->overflow.deadline[i])
         {
     DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline[i],ESI->overflow.threshold[i]));
           pos=ESI->EventInfoArray[papi_index].pos[0];
-          overflow_vector ^= 1<<pos; 
+          printf("pos=%d  ", pos);
+          ctx->overflow_vector ^= 1<<pos; 
           temp[i] = latest - ESI->overflow.threshold[i];
           overflow_flag=1;
       /* adjust the deadline */
@@ -263,44 +237,28 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_
         }
       }
     }
-    
-    if ( isHardware && genOverflowBit )
-    {
-      /* we had assumed the overflow event can't be derived event */
-      papi_index=ESI->overflow.EventIndex[0];
-
-      /* suppose the pos is the same as the counter number(this is not true in 
-         Itanium, but itanium don't need us to generate the overflow bit
-      */
-      pos=ESI->EventInfoArray[papi_index].pos[0];
-      overflow_vector = 1<<pos;
-    } else if (isHardware) overflow_vector=overflow_bit; 
-
-    if ( isHardware || overflow_flag )
+      
+  /* Is it larger than the deadline? */
+  
+    if ((_papi_hwi_system_info.supports_hw_overflow) || overflow_flag )
     {
       ESI->overflow.count++;
+      address=_papi_hwd_get_overflow_address(ctx->ucontext);
       if (ESI->state & PAPI_PROFILING)
       {
-        while(overflow_vector) 
-        {
-          i=ffs(overflow_vector)-1;
-          for(j=0; j<event_counter; j++) 
-          {
-            papi_index=ESI->overflow.EventIndex[j];
-            pos=ESI->EventInfoArray[papi_index].pos[0];
-            if (i==pos) {profile_index=j; break;}
-          }
-          if (j==event_counter) abort();/* something is wrong */
-          if (isHardware) over=0;
-            else over=temp[profile_index];
-	      dispatch_profile(ESI, (caddr_t)papiContext, over, profile_index); 
-          overflow_vector ^= 1<<i;
+/*
+	    dispatch_profile(ESI, (caddr_t)context, 
+             latest - ESI->overflow.deadline[event_counter-1], ESI->overflow.threshold[event_counter-1]); 
+*/
+        for(i=0; i<event_counter; i++) {
+          if (temp[i] > 0)
+	        dispatch_profile(ESI, (caddr_t)context, 
+             temp[i], ESI->overflow.threshold[i]); 
         }
-        /* do not use overflow_vector after this place */
       }
       else
 	    ESI->overflow.handler(ESI->EventSetIndex,  
-                GET_OVERFLOW_ADDRESS(ctx), overflow_vector);
+                GET_OVERFLOW_ADDRESS(ctx), context);
     }
   }
 #ifdef ANY_THREAD_GETS_SIGNAL
@@ -559,7 +517,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 /* Converts an ASCII name into a native event code usable by other routines
    Returns code = 0 and PAPI_OK if name not found.
    This allows for sparse native event arrays */
-int _papi_unsigned hwi_native_name_to_code(char *in, unsigned int *out)
+int _papi_hwi_native_name_to_code(char *in, unsigned int *out)
 {
 #ifdef HAS_NATIVE_MAP
   char *name;
@@ -609,21 +567,18 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 }
 
 
-/* The native event equivalent of PAPI_query_event_verbose */
-int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info)
+/* The native event equivalent of PAPI_get_event_info */
+int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 #ifdef HAS_NATIVE_MAP
 
   if (EventCode & NATIVE_MASK) {
-    info->event_name = _papi_hwd_ntv_code_to_name(EventCode);
-    if (info->event_name != NULL) {
+    strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MIN_STR_LEN);
+    if (&info->symbol) {
       /* Fill in the info structure */
-      info->event_code = EventCode;
-      info->event_descr = _papi_hwd_ntv_code_to_descr(EventCode);
-      info->event_label = NULL;
-      info->event_note = NULL;
-      info->avail = 1;	/* if we found it, it's available */
-      info->flags = 0; /* not derived */
+      strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode), PAPI_HUGE_STR_LEN);
+      info->short_descr[0] = '0';
+      info->count = 1;	/* if we found it, it's available */
       return(PAPI_OK);
     }
   }

@@ -133,7 +133,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
 
 /* Machine info structure. -1 is unused. */
 extern papi_mdi_t _papi_hwi_system_info; 
-extern hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS];
+extern hwi_preset_data_t _papi_hwi_preset_data[PAPI_MAX_PRESET_EVENTS];
 
 extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
                  long_long over, int profile_index);
