@@ -1,11 +1,9 @@
-
-UTIL    = avail mem_info cost clockres native_avail command_line event_chooser
+TARGETS = avail mem_info cost clockres native_avail command_line event_chooser
 UTILOBJS= do_loops.o dummy.o test_utils.o
-UTILITY	= UTIL
 INCLUDE = -I.. -I/usr/include -I../ctests
 PAPILIB=../$(LIBRARY)
 
-util: $(UTIL)
+util: $(TARGETS)
 
 event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o event_chooser -lm
@@ -38,7 +36,10 @@ dummy.o: ../ctests/dummy.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(UTILITY)
+	rm -f *.o *.stderr *.stdout core *~
+
+clobber:
+	rm -f $(TARGETS)
 
 install: $(TARGETS)
 	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
