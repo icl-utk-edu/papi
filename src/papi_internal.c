@@ -243,7 +243,7 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 
    for (i = 0; i < limit; i++) {
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
-      for (j = 0; j < _papi_hwi_system_info.num_cntrs; j++)
+      for (j = 0; j < MAX_COUNTER_TERMS; j++)
          ESI->EventInfoArray[i].pos[j] = -1;
       ESI->EventInfoArray[i].ops = NULL;
       ESI->EventInfoArray[i].derived = NOT_DERIVED;
@@ -741,7 +741,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
-         /* check if the native events are been used as overflow
+         /* check if the native events have been used as overflow
             events */
          if (ESI->state & PAPI_OVERFLOWING) {
             for (j = 0; j < ESI->overflow.event_counter; j++) {
@@ -1189,7 +1189,7 @@ static long_long handle_derived_subtract(int *position, long_long * from)
       pos = position[i++];
       if (pos == PAPI_NULL)
          break;
-      INTDBG("Compound event, subtracting pos=%d  %lld to %lld\n", pos, from[pos],
+      INTDBG("Compound event, subtracting pos=%d  %lld from %lld\n", pos, from[pos],
              retval);
       retval -= from[pos];
    }
