@@ -42,8 +42,6 @@ extern int (*_papi_hwi_thread_kill_fn) (int, int);
 /****************/
 
 static unsigned int _rnum = DEADBEEF;
-static struct sigaction oaction;
-static struct itimerval ovalue;
 
 /**************/
 /* END LOCALS */
@@ -354,12 +352,7 @@ int _papi_hwi_using_signal = 0;
 static MMRESULT wTimerID;       // unique ID for referencing this timer
 static UINT wTimerRes;          // resolution for this timer
 
-static int _papi_hwi_start_signal(int sig, int context)
-{
-  return(PAPI_OK);
-}
-
-static int _papi_hwi_start_timer(int milliseconds)
+int _papi_hwi_start_timer(int milliseconds)
 {
    int retval = PAPI_OK;
 
@@ -390,12 +383,17 @@ static int _papi_hwi_start_timer(int milliseconds)
    return (retval);
 }
 
-static int _papi_hwi_stop_signal(void)
+int _papi_hwi_start_signal(int signal, int need_context)
 {
   return(PAPI_OK);
 }
 
-static int _papi_hwi_stop_timer(void)
+int _papi_hwi_stop_signal(int signal)
+{
+  return(PAPI_OK);
+}
+
+int _papi_hwi_stop_timer(void)
 {
    int retval = PAPI_OK;
 
@@ -406,6 +404,9 @@ static int _papi_hwi_stop_timer(void)
 }
 
 #else
+
+static struct sigaction oaction;
+static struct itimerval ovalue;
 
 int _papi_hwi_start_timer(int milliseconds)
 {
@@ -642,7 +643,7 @@ int ffsll(long_long lli)
    int i, num, t, tmpint, len;
 
    num = sizeof(long_long)/sizeof(int);
-   if(num == 1) return(ffs(lli));
+   if(num == 1) return(ffs((int)lli));
    len = sizeof(int)*CHAR_BIT;
 
    for(i=0; i< num; i++ ) {
