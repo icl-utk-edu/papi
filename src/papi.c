@@ -80,11 +80,11 @@ int PAPI_thread_init(unsigned long int (*id_fn) (void))
    int changed_id_fn = 0;
 /* Thread support not implemented on Alpha/OSF because the OSF pfm
  * counter device driver does not support per-thread counters.
- * When this is updated, we can remove this ifdef -KSL
+ * When this is updated, we can remove this if statement
  */
-#if defined(__ALPHA) && defined(__osf__)
-   papi_return(PAPI_ESBSTR);
-#endif
+   if ( ! _papi_hwi_system_info.supports_multiple_threads )
+      papi_return(PAPI_ESBSTR);
+
    if (default_master_thread == NULL)
       papi_return(PAPI_EINVAL);
 
@@ -1206,11 +1206,8 @@ void PAPI_shutdown(void)
 
    /* Clean up thread stuff */
 
-   #if defined(__ALPHA) && defined(__osf__)
-   _papi_hwd_shutdown(&(default_master_thread->context));
-   #else
-   PAPI_thread_init(NULL);
-   #endif 
+   if (_papi_hwi_system_info.supports_multiple_threads )
+      PAPI_thread_init(NULL);
 
    /* Free up some memory */
 
@@ -1664,3 +1661,4 @@ int PAPI_is_initialized(void)
 {
    return (init_level);
 }
+

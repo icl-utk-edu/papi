@@ -433,6 +433,8 @@ typedef struct _papi_mdi {
    int supports_write;          /* We can write the counters */
    int supports_hw_overflow;    /* Needs overflow to be emulated */
    int supports_hw_profile;     /* Needs profile to be emulated */
+   int supports_multiple_threads;     /* hardware counters support 
+                                         multiple threads */
    int supports_64bit_counters; /* Only limited precision is available from hardware */
    int supports_inheritance;    /* We can pass on and inherit child counters/values */
    int supports_attach;         /* We can attach PAPI to another process */

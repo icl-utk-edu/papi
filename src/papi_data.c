@@ -73,6 +73,7 @@ papi_mdi_t _papi_hwi_system_info =
    0,                           /* We can write the counters */
    1,                           /* supports HW overflow */
    0,                           /* supports HW profile */
+   1,                           /* counters support multiple threads */
    1,                           /* supports 64 bit virtual counters */
    1,                           /* supports child inheritance */
    0,                           /* supports attaching to another process */
