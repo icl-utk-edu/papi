@@ -765,13 +765,16 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
   evset_info->control.cpu_control.tsc_on = 1;
 
 #ifdef DEBUG
-//  print_control(&evset_info->control.cpu_control);
+  print_control(&evset_info->control.cpu_control);
 #endif
 
   /* Update this specific events structure containing number of events. For compound events like
      PAPI_FP_INS on the Pentium 4, this is > 1. */
 
+#if 0
+  /* This statement is bogus I think. */
   ev_info->num_hardware_events += preset->number;
+#endif
 
 /* Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example. */
@@ -804,8 +807,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
          stuff next pmc slot with data at preset
   */
 
-  /*if (selector == 0 ) - I believe this was suppose to be -1 -KSL*/
-  if (selector == -1 )
+  if (selector <= 0)
     return(PAPI_ENOEVNT);
 
   hwindex = _papi3_hwd_add_event(regmap,preset,&this_state->control);
@@ -817,9 +819,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
 }
 #endif
 
-int _papi_hwd_remove_event(P4_regmap_t *ev_info, int hardware_index, P4_perfctr_control_t *evset_info)
+int _papi3_hwd_remove_event(P4_regmap_t *ev_info, int perfctr_index, P4_perfctr_control_t *evset_info)
 {
-  int i, j, index, clear_pebs = 0, clear_pebs_matrix_vert = 0;
+  int i, j, new_nractrs, nractrs, clear_pebs = 0, clear_pebs_matrix_vert = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
 
   /* Remove allocation/usage info for this event from bits */
@@ -858,11 +860,11 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, int hardware_index, P4_perfctr_
      a densely populated array, we need to shift our entries back to
      the front of the array. */
   
-  index = evset_info->control.cpu_control.nractrs;
+  nractrs = evset_info->control.cpu_control.nractrs;
 
   /* Zero the control entries that were used */
 
-  for (j=hardware_index;j<ev_info->num_hardware_events+hardware_index;j++)
+  for (j=perfctr_index;j<ev_info->num_hardware_events+perfctr_index;j++)
     {
       SUBDBG("Clearing pmc event entry %d\n",j);
       evset_info->control.cpu_control.pmc_map[j] = 0;
@@ -878,17 +880,26 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, int hardware_index, P4_perfctr_
   if (clear_pebs_matrix_vert)
     evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
 
-  /* Shift the entries */
+  /* Shift the perfctr buffer's entries if necessary, i.e. if we removed
+     counter(s) in the middle of the buffer. 
+     A, B, C, 0 must now be A, B, C
+     A, B, 0, C must now be A, B, C 
+     A, B, 0, 0, C must now be A, B, C */
 
-  for (j=hardware_index;j<index;j++)
+  new_nractrs = nractrs - ev_info->num_hardware_events;
+  for (j=perfctr_index;j<new_nractrs;j++)
     {
-      evset_info->control.cpu_control.pmc_map[j] = evset_info->control.cpu_control.pmc_map[j+ev_info->num_hardware_events];
-      evset_info->control.cpu_control.evntsel[j] = evset_info->control.cpu_control.evntsel[j+ev_info->num_hardware_events];
-      evset_info->control.cpu_control.evntsel_aux[j] = evset_info->control.cpu_control.evntsel_aux[j+ev_info->num_hardware_events];
-      evset_info->control.cpu_control.ireset[j] = evset_info->control.cpu_control.ireset[j+ev_info->num_hardware_events];
+      evset_info->control.cpu_control.pmc_map[j] = 
+	evset_info->control.cpu_control.pmc_map[j+ev_info->num_hardware_events];
+      evset_info->control.cpu_control.evntsel[j] = 
+	evset_info->control.cpu_control.evntsel[j+ev_info->num_hardware_events];
+      evset_info->control.cpu_control.evntsel_aux[j] = 
+	evset_info->control.cpu_control.evntsel_aux[j+ev_info->num_hardware_events];
+      evset_info->control.cpu_control.ireset[j] = 
+	evset_info->control.cpu_control.ireset[j+ev_info->num_hardware_events];
     }
 	  
-  evset_info->control.cpu_control.nractrs = index-ev_info->num_hardware_events;
+  evset_info->control.cpu_control.nractrs = new_nractrs;
   
 #ifdef DEBUG
   print_control(&evset_info->control.cpu_control);
@@ -899,6 +910,19 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, int hardware_index, P4_perfctr_
 #ifndef PAPI3
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
+  int preset_index = in->code & PRESET_AND_MASK; 
+  P4_regmap_t *ev_info = &_papi_hwd_preset_map[preset_index].possible_registers;
+  /* ev_info is used to find out if the preset uses pebs or pebs_matrix_vert. Ideally
+     this should contain all the information about the event, like what registers it
+     is using. */
+  P4_perfctr_control_t *evset_info = &this_state->control;
+  /* evset_info is used to find out what registers are actually allocated to this eventset */
+  int selector = ffs(in->selector) - 1;
+  /* selector is used to tell what is the index of the control values in the perfctr buffer.
+     it should be contained in ev_info. */
+  return(_papi3_hwd_remove_event(ev_info,selector,evset_info));
+
+#if 0
   int j, selector = in->selector;
   P4_register_t *bits = &this_state->control.allocated_registers;
   
@@ -913,6 +937,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
       this_state->control.control.cpu_control.evntsel_aux[j] = 0;
       this_state->control.control.cpu_control.ireset[j] = 0;
     }
+#endif
   return(PAPI_OK);
 }
 #endif
