@@ -34,8 +34,8 @@ check the syntax of a native event.
 .SH RETURN VALUES
 On success, 
 .B PAPI_query_event returns
-.B "PAPI_OK" ,
-and on error, a non-zero error code is returned.
+.B "PAPI_OK" 
+ On error, a non-zero error code is returned.
 
 
 .SH ERRORS
@@ -52,11 +52,7 @@ The PAPI preset is not available on the underlying hardware.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-int retval,i;
-PAPI_preset_info_t info;
-PAPI_preset_info_t *infostructs;
+int retval;
 
 /* Initialize the library */
 
@@ -79,7 +75,6 @@ These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_preset "(3), " PAPI_native "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), " 
+.BR PAPI_remove_event "(3), " 
 .BR PAPI_remove_events "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
 
