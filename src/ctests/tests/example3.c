@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <memory.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"

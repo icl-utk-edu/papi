@@ -461,7 +461,8 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
   { retval = perf(PERF_READ, 2, (int)&events[2]);
     if(retval) return(PAPI_EBUG);
   }
-  return 0;
+
+  return PAPI_OK;
 }
 
 int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
@@ -553,17 +554,18 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
-			        1.0,
-			        1, 
-			        1,
-			        1,
-			        1,
-			        200,
-			        3,
-			        2,
-			        0,
-			        1, 
- 				16,
+			       1.0,
+			        -1, 
+			        -1,
+			        -1,
+			        -1,
+			        -1,
+			         3,
+			         2,
+			         0,
+			         1, 
+ 				-1,
+ 				-1,
 			       sizeof(hwd_control_state_t), 
 			       NULL };
 #endif

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <malloc.h>
+#include <memory.h>
 #include <sys/types.h>
 
 #include "papiStdEventDefs.h"

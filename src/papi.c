@@ -62,6 +62,9 @@ static int check_initialize(void)
 
 static int initialize(void)
 {
+  int retval;
+  EventSetInfo *zero;
+
   /* Clear the Dynamic Array structure */
 
   memset(&PAPI_EVENTSET_MAP,0x00,sizeof(PAPI_EVENTSET_MAP));
@@ -72,7 +75,7 @@ static int initialize(void)
     (EventSetInfo **)malloc(PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
   if(!PAPI_EVENTSET_MAP.dataSlotArray) 
     return(PAPI_ENOMEM);
-  memset(&PAPI_EVENTSET_MAP.dataSlotArray,0x00, 
+  memset(PAPI_EVENTSET_MAP.dataSlotArray,0x00, 
 	 PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
 
    PAPI_EVENTSET_MAP.totalSlots = PAPI_INIT_SLOTS;
@@ -83,8 +86,25 @@ static int initialize(void)
    /* Remember that EventSet zero is reserved */
 
    PAPI_ERR_LEVEL = PAPI_QUIET;
+   
+   zero = (EventSetInfo *)malloc(sizeof(EventSetInfo));
+   if (zero == NULL)
+     {
+heck:
+       free(PAPI_EVENTSET_MAP.dataSlotArray);
+       memset(&PAPI_EVENTSET_MAP,0x00,sizeof(PAPI_EVENTSET_MAP));
+       return(PAPI_ENOMEM);
+     }
+   memset(zero,0x00,sizeof(EventSetInfo));
 
-   return(PAPI_OK);
+   retval = _papi_hwd_init(zero);
+   if (retval < PAPI_OK)
+     {
+       free(zero);
+       goto heck;
+     }
+
+   return(retval);
 }
 
 static int expand_dynamic_array(DynamicArray *DA)
@@ -241,7 +261,7 @@ int PAPI_add_event(int *EventSet, int EventCode)
 
   retval = check_initialize();
   if (retval < PAPI_OK)
-    return(NULL);
+    return(retval);
   
   /* check for pre-existing ESI*/
   
@@ -257,8 +277,9 @@ int PAPI_add_event(int *EventSet, int EventCode)
   retval = _papi_hwd_add_event(ESI,EventCode);
   if (retval < PAPI_OK)
     {
-    heck:
-      free_EventSet(ESI);
+      heck:
+      if (n)
+	free_EventSet(ESI);
       return(retval);
     }
 
@@ -271,6 +292,7 @@ int PAPI_add_event(int *EventSet, int EventCode)
       retval = add_EventSet(ESI);
       if (retval < PAPI_OK)
 	goto heck;
+
       *EventSet = ESI->EventSetIndex;
     }
   return(retval);
@@ -371,6 +393,8 @@ int PAPI_start(int EventSet)
 
   retval = _papi_hwd_start(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  DBG((stderr,"PAPI_start returns %d\n",retval));
   return(retval);
 }
 
@@ -388,6 +412,16 @@ int PAPI_stop(int EventSet, unsigned long long *values)
 
   retval = _papi_hwd_reset(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+#if defined(DEBUG)
+  if (values)
+    { 
+      int i;
+      for (i=0;i<ESI->NumberOfCounters;i++)
+	DBG((stderr,"PAPI_stop values[%d]:\t\t%lld\n",i,values[i]));
+    }
+#endif
+
   return(retval);
 }
 
@@ -400,6 +434,8 @@ int PAPI_reset(int EventSet)
 
   retval = _papi_hwd_reset(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  DBG((stderr,"PAPI_reset returns %d\n",retval));
   return(retval);
 }
 

@@ -314,15 +314,19 @@ static int copy_values(EventSetInfo *ESI, unsigned long long *from_kernel, unsig
 {
   hwd_control_state_t *machdep = (hwd_control_state_t *)ESI->machdep;
   hwperf_profevctrarg_t *evctr_args = (hwperf_profevctrarg_t *)&machdep->on;
-  int i,ind,j=0;
+  int i,ind,num_multiplexed,j=0;
 
   for (i=0;i<ESI->NumberOfCounters;i++)
     {
       ind = machdep->hwindex[i];
       if (evctr_args->hwp_evctrargs.hwp_evctrl[ind].hwperf_spec)
 	{
-	  DBG((stderr,"Running counter detected at offset %d, index %d\n",i,ind));
-	  to_user[j] = from_kernel[ind];
+	  if (ind >= HWPERF_CNT1BASE)
+	    num_multiplexed = machdep->num_on_counter2;
+	  else 
+	    num_multiplexed = machdep->num_on_counter1;
+	  DBG((stderr,"Running counter detected at offset %d, index %d, num_mult %d\n",i,ind,num_multiplexed));
+	  to_user[j] = from_kernel[ind] * num_multiplexed;
 	  j++;
 	}
     }

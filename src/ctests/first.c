@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <memory.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
