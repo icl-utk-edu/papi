@@ -1,5 +1,5 @@
-.\" @(#)PAPI_shutdown    0.10 99/07/28 CHD; from S5
-.TH PAPI_shutdown 0 "28 July 1999"
+.\" @(#)PAPI_shutdown    0.10 00/05/18 CHD; from S5
+.TH PAPI_shutdown 0 "18 May 2000"
 .SH NAME
 PAPI_shutdown \- an exit function to free resources
 .SH SYNOPSIS
@@ -29,6 +29,8 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B  \t
 .B  PAPI_shutdown contains calls to:
 .B  \t
+.B  \tPAPI_state
+.B  \tPAPI_stop
 .B  \tfree_EventSet 
 .fi
 .LP

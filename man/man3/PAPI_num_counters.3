@@ -1,7 +1,7 @@
-.\" @(#)PAPI_num_events    0.10 99/07/28 CHD; from S5
-.TH PAPI_num_events 0 "28 July 1999"
+.\" @(#)PAPI_num_counters    0.10 00/05/18 CHD; from S5
+.TH PAPI_num_counters 0 "18 May 2000"
 .SH NAME
-PAPI_num_events \- get number of hardware counters available
+PAPI_num_counters \- get number of hardware counters available
 .SH SYNOPSIS
 .LP
 int PAPI_num_events (void)
@@ -18,6 +18,9 @@ counters supported by the current substrate.
 .B  \t
 .B  PAPI_num_events may be called by:
 .B  \t
+.B  \tPAPI_read_counters
+.B  \tPAPI_start_counters
+.B  \tPAPI_stop_counters
 .B  \tthe user application program
 .fi
 .nf

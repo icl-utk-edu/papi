@@ -1,18 +1,19 @@
-.\" @(#)PAPI_cleanup    0.10 99/07/28 CHD; from S5
-.TH PAPI_cleanup 0 "28 July 1999"
+.\" @(#)PAPI_cleanup_eventset    0.10 00/05/18 CHD; from S5
+.TH PAPI_cleanup_eventset 0 "17 May 2000"
 .SH NAME
-PAPI_cleanup \- remove EventSet from existence
+PAPI_cleanup_eventset \- cleans an EventSet 
 .LP
 .SH SYNOPSIS
 .LP
-int PAPI_cleanup (int *EventSet)
+int PAPI_cleanup_eventset (int *EventSet)
 .LP
 int *EventSet --  a reference to an EventSetInfo structure
 .LP
 .SH DESCRIPTION
 .LP
 .B PAPI_cleanup(\|)
-This function effectively removes the target EventSet from existence. 
+This function effectively cleans the target EventSet. 
+Which can then be removed from existance with a call to PAPI_destroy_eventset
 The EventSet must be stopped in order for this call to succeed.
 .LP
 The return value is an integer that indicates whether the call
@@ -21,9 +22,10 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
 .nf
 .B  \t
-.B  PAPI_cleanup may be called by:
+.B  PAPI_cleanup_eventset may be called by:
 .B  \t
 .B  \tthe user application program
+.B  \tPAPI_stop_counters
 .fi
 .nf
 .B  \t
@@ -31,7 +33,7 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B  \t
 .B  \tlookup_EventSet 
 .B  \thandle_error
-.B  \tcleanup_EventSet
+.B  \tremove_event
 .fi
 .LP
 .SH SEE ALSO

@@ -47,15 +47,16 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B  PAPI_get_opt may be called by:
 .B  \t
 .B  \tthe user application program
-.B  \tPAPI_num_events
-.B  \tPAPI_start_counters
+.B  \tPAPI_get_executable_info
+.B  \tPAPI_get_hardware_info
 .fi
 .nf
 .B  \t
 .B  PAPI_get_opt contains calls to:
 .B  \t
-.B  \tPAPI_init
 .B  \thandle_error
+.B  \tget_domain
+.B  \tset_granularity
 .fi
 .LP
 .SH SEE ALSO

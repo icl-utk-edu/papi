@@ -1,17 +1,17 @@
-.\" @(#)PAPI_profil    0.10 99/07/28 CHD; from S5
-.TH PAPI_profil 0 "28 July 1999"
+.\" @(#)PAPI_profil    0.10 00/05/18 CHD; from S5
+.TH PAPI_profil 0 "18 May 2000"
 .SH NAME
 PAPI_profil \- set values in the EventSetProfileInfo_t strct.
 .LP
 .SH SYNOPSIS
 .LP
-int PAPI_profil (void *buf, int bufsiz, int offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags) 
+int PAPI_profil (void *buf, int bufsiz, caddr_t offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags) 
 .LP
 void *buf -- buf val of EventSetProfileInfo_t strct.
 .LP
 int bufsiz -- bufsiz val of EventSetProfileInfo_t strct.
 .LP
-int offset -- offset val of EventSetProfileInfo_t strct.
+caddr_t offset -- offset val of EventSetProfileInfo_t strct.
 .LP
 unsigned int scale -- scale val EventSetProfileInfo_t strct.
 .LP
@@ -46,7 +46,9 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B  \t
 .B  \tlookup_EventSet 
 .B  \thandle_error
+.B  \tlookup_EventCodeIndex
 .B  \t_papi_hwd_set_profile ( a substrate function )
+.B  \tPAPI_overflow
 .fi
 .LP
 .SH SEE ALSO

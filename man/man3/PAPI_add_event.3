@@ -1,5 +1,5 @@
-.\" @(#)PAPI_add_event    0.10 99/07/28 CHD; from S5
-.TH PAPI_add_event 0 "28 July 1999"
+.\" @(#)PAPI_add_event    0.10 00/05/17 CHD; from S5
+.TH PAPI_add_event 0 "17 May 2000"
 .SH NAME
 PAPI_add_event \- set up a new or modify an existing EventSet 
 .SH SYNOPSIS
@@ -42,13 +42,12 @@ EventCodeArray where this event is stored) or failed (an error code).
 .B  \t
 .B  PAPI_add_event contains calls to:
 .B  \t
-.B  \tPAPI_init
 .B  \tlookup_EventSet 
 .B  \thandle_error
+.B  \allocate_EventSet
 .B  \tadd_event
 .B  \tfree_EventSet
 .B  \tremove_event
-.B  \t_papi_hwd_add_event ( a substrate function )
 .fi
 .LP
 .SH SEE ALSO

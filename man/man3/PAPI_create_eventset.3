@@ -1,18 +1,18 @@
-.\" @(#)PAPI_add_event    0.10 99/07/28 CHD; from S5
-.TH PAPI_add_event 0 "28 July 1999"
+.\" @(#)PAPI_create_eventset    0.10 00/05/17 CHD; from S5
+.TH PAPI_create_eventset 0 "17 May 2000"
 .SH NAME
-PAPI_add_event \- set up a new or modify an existing EventSet 
+PAPI_create_eventset \- set up a new or modify an existing EventSet 
 .SH SYNOPSIS
 .LP
-int PAPI_add_event (int *EventSet, int Event)
+int PAPI_create_eventset (int *EventSet, void *handle)
 .LP
 int *EventSet -- a reference to an EventSetInfo structure
 .LP
-int Event -- code for an event, such as PAPI_INT_INS
+void *handle -- the handle returned from PAPI_thread_init
 .LP
 .SH DESCRIPTION
 .LP
-.B PAPI_add_event (\|)
+.B PAPI_create_eventset (\|)
 This function sets up a new EventSet or modifies an
 existing one. To create a new EventSet, EventSet
 must be set to PAPI_NULL. Separate EventSets
@@ -37,18 +37,16 @@ EventCodeArray where this event is stored) or failed (an error code).
 .B  \tthe user application program
 .B  \tPAPI_start_counters
 .B  \tPAPI_add_events 
+.B  \tPAPI_thread_init 
 .fi
 .nf
 .B  \t
 .B  PAPI_add_event contains calls to:
 .B  \t
-.B  \tPAPI_init
-.B  \tlookup_EventSet 
+.B  \tallocate_EventSet 
 .B  \thandle_error
-.B  \tadd_event
+.B  \tadd_EventSet
 .B  \tfree_EventSet
-.B  \tremove_event
-.B  \t_papi_hwd_add_event ( a substrate function )
 .fi
 .LP
 .SH SEE ALSO

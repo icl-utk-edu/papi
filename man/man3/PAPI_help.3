@@ -1,5 +1,5 @@
-.\" @(#).B PAPI_help    0.10 99/07/28 CHD; from S5
-.TH PAPI_help 0 "28 July 1999"
+.\" @(#).B PAPI_help    0.10 00/05/18 CHD; from S5
+.TH PAPI_help 0 "18 May 2000"
 .SH NAME
 PAPI_help \- List of all functions in PerfAPI Library
 .SH PerfAPI FUNCTION List 
@@ -8,22 +8,38 @@ PAPI_help \- List of all functions in PerfAPI Library
 .B PAPI_add_event
 .B PAPI_add_events
 .B PAPI_add_pevent
-.B PAPI_cleanup
-.B PAPI_describe_event
+.B PAPI_cleanup_eventset
+.B PAPI_create_eventset
+.B PAPI_create_eventset_r
+.B PAPI_destroy_eventset
+.B PAPI_event_code_to_name
+.B PAPI_event_name_to_code
+.B PAPI_get_executable_info
+.B PAPI_get_hardware_info
 .B PAPI_get_opt
-.B PAPI_help
-.B PAPI_init
+.B PAPI_get_overflow_address
+.B PAPI_get_real_cyc
+.B PAPI_get_real_usec
+.B PAPI_get_real_virt_cyc
+.B PAPI_get_real_virt_usec
+.B PAPI_library_init
 .B PAPI_list_events
-.B PAPI_mytest
-.B PAPI_num_events
+.B PAPI_lock
+.B PAPI_num_counters
 .B PAPI_overflow
 .B PAPI_perror
 .B PAPI_profil
+.B PAPI_query_all_events_verbose
+.B PAPI_query_event
+.B PAPI_query_event_verbose
 .B PAPI_read
 .B PAPI_read_counters
 .B PAPI_rem_event
 .B PAPI_rem_events
 .B PAPI_reset
+.B PAPI_restore
+.B PAPI_save
+.B PAPI_set_debug
 .B PAPI_set_domain
 .B PAPI_set_granularity
 .B PAPI_set_opt
@@ -33,6 +49,8 @@ PAPI_help \- List of all functions in PerfAPI Library
 .B PAPI_state
 .B PAPI_stop
 .B PAPI_stop_counters
+.B PAPI_thread_init
+.B PAPI_unlock
 .B PAPI_write
 .fi
 .LP

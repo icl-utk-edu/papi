@@ -1,5 +1,5 @@
-.\" @(#)PAPI_overflow    0.10 99/07/28 CHD; from S5
-.TH PAPI_overflow 0 "28 July 1999"
+.\" @(#)PAPI_overflow    0.10 00/05/18 CHD; from S5
+.TH PAPI_overflow 0 "18 May 2000"
 .LP
 .SH NAME
 PAPI_overflow \- start counting events contained in an EventSet
@@ -34,6 +34,7 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B  \t
 .B  PAPI_overflow may be called by:
 .B  \t
+.B  \tPAPI_profil
 .B  \tthe user application program
 .fi
 .nf
@@ -41,6 +42,7 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .B  PAPI_overflow contains calls to:
 .B  \t
 .B  \tlookup_EventSet 
+.B  \tlookup_EventCodeIndex
 .B  \thandle_error
 .B  \t_papi_hwd_set_overflow ( a substrate function )
 .fi

@@ -1,19 +1,23 @@
-.\" @(#)PAPI_init    0.10 99/07/28 CHD; from S5
-.TH PAPI_init 0 "28 July 1999"
+.\" @(#)PAPI_thread_init    0.10 00/05/18 CHD; from S5
+.TH PAPI_thread_init 0 "18 May 2000"
 .LP
 .SH NAME
-PAPI_init \- start counting events contained in an EventSet
+PAPI_thread_init \- 
 .SH SYNOPSIS
 .LP
-int PAPI_init (void)
+int PAPI_thread_init (void **handle, int flag)
+.LP
+void **handle --  Send NULL for non threaded programs
+.LP
+int flag --  This currently isn't used
 .LP
 .SH DESCRIPTION
 .LP
-.B PAPI_init(\|)
-This function checks if the PAPI_EVENTSET_INFO structure has 
-been initialized. If it has, the function returns PAPI_OK. 
-If not, the function calls for initialization of the 
-PAPI_EVENTSET_INFO structure and then returns PAPI_OK.
+.B PAPI_thread_init(\|)
+This function intializes thread support and has to be called by
+non-threaded applications as well. This has to be called
+before any PAPI calls can be used in an application along
+with PAPI_library_init
 .LP
 The return value is an integer that indicates whether the call
 succeeded (PAPI_OK) or failed (not PAPI_OK).  
@@ -21,18 +25,20 @@ succeeded (PAPI_OK) or failed (not PAPI_OK).
 .SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
 .nf
 .B  \t
-.B  PAPI_init may be called by:
+.B  PAPI_thread_init may be called by:
 .B  \t
 .B  \tthe user application program
-.B  \tPAPI_add_event
-.B  \tPAPI_get_opt
-.B  \tPAPI_add_pevent
+.B  \tPAPI_start_counters
+.B  \tPAPI_read_counters
+.B  \tPAPI_stop_counters
 .fi
 .nf
 .B  \t
 .B  PAPI_init contains calls to:
 .B  \t
-.B  \tcheck_initialize 
+.B  \tallocate_master_eventset
+.B  \t_papi_hwd_init
+.B  \tfree_master_eventset
 .fi
 .LP
 .SH SEE ALSO
