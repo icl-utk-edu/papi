@@ -1161,10 +1161,10 @@ int _papi_hwi_mdi_init()
    return (PAPI_OK);
 }
 
-PAPI_overflow_handler_t _papi_hwi_dummy_handler(int EventSet, void *address, long_long  overflow_vector, void * context)
+void _papi_hwi_dummy_handler(int EventSet, void *address, long_long  overflow_vector, void * context)
 {
    /* This function is not used and shouldn't be called. */
-   return NULL;
+   return;
 }
 
 static long_long handle_derived_add(int *position, long_long * from)
