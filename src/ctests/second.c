@@ -70,20 +70,20 @@ int main(int argc, char **argv)
   options.domain.eventset=EventSet1;
   options.domain.domain=PAPI_DOM_ALL;
 
-  retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  retval = PAPI_set_opt(PAPI_DOMAIN, &options);
   if (retval != PAPI_OK && retval != PAPI_ESBSTR) 
 	test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
 
   options.domain.eventset=EventSet2;
   options.domain.domain=PAPI_DOM_KERNEL;
 
-  retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  retval = PAPI_set_opt(PAPI_DOMAIN, &options);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
 
   options.domain.eventset=EventSet3;
   options.domain.domain=PAPI_DOM_USER;
 
-  retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  retval = PAPI_set_opt(PAPI_DOMAIN, &options);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
 
   retval = PAPI_start(EventSet1);
@@ -123,9 +123,9 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET ){
 	printf("Test case 2: Non-overlapping start, stop, read for all 3 domains.\n");
 	printf("-----------------------------------------------------------------\n");
-	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
+	tmp = PAPI_get_opt(PAPI_DEFDOM,NULL);
 	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
-	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
+	tmp = PAPI_get_opt(PAPI_DEFGRN,NULL);
 	printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------\n");

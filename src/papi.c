@@ -890,7 +890,7 @@ int PAPI_set_multiplex(int *EventSet)
   mpx.multiplex.us = PAPI_MPX_DEF_US;
   mpx.multiplex.max_degree = PAPI_MPX_DEF_DEG;
   
-  return(PAPI_set_opt(PAPI_SET_MULTIPLEX,&mpx));
+  return(PAPI_set_opt(PAPI_MULTIPLEX,&mpx));
 }
 
 
@@ -907,11 +907,11 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
   switch(option)
     { 
-    case PAPI_SET_MAXMEM:
+    case PAPI_MAXMEM:
     {
 	papi_return(_papi_hwd_setmaxmem());
     }
-    case PAPI_SET_MULTIPLEX:
+    case PAPI_MULTIPLEX:
       {
 	EventSetInfo_t *ESI;
 
@@ -930,9 +930,9 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
 	papi_return(_papi_hwi_convert_eventset_to_multiplex(ESI));
       }
-    case PAPI_SET_DEBUG:
+    case PAPI_DEBUG:
       papi_return(PAPI_set_debug(ptr->debug.level));
-    case PAPI_SET_DEFDOM:
+    case PAPI_DEFDOM:
       { 
 	int dom = ptr->defdomain.domain;
 	if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
@@ -948,7 +948,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 	/* Try to change the domain of the eventset in the hardware */
 
         internal.defdomain.defdomain = dom;
-	retval = _papi_hwd_ctl(&thread->context, PAPI_SET_DEFDOM, &internal);
+	retval = _papi_hwd_ctl(&thread->context, PAPI_DEFDOM, &internal);
         if (retval < PAPI_OK)
           papi_return(retval);
 
@@ -966,7 +966,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 	
         return(retval);
       }	
-    case PAPI_SET_DOMAIN:
+    case PAPI_DOMAIN:
       { 
 	int dom = ptr->domain.domain;
 	if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
@@ -984,7 +984,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
         internal.domain.domain = dom;
         internal.domain.eventset = ptr->domain.eventset;
-        retval = _papi_hwd_ctl(&thread->context, PAPI_SET_DOMAIN, &internal);
+        retval = _papi_hwd_ctl(&thread->context, PAPI_DOMAIN, &internal);
         if (retval < PAPI_OK)
           papi_return(retval);
 
@@ -995,7 +995,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         return(retval);
       }
 #if 0
-    case PAPI_SET_GRANUL:
+    case PAPI_GRANUL:
       {
         int grn = ptr->granularity.granularity;
 
@@ -1008,14 +1008,14 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
         internal.granularity.granularity = grn;
         internal.granularity.eventset = ptr->granularity.eventset;
-        retval = _papi_hwd_ctl(NULL, PAPI_SET_GRANUL, &internal);
+        retval = _papi_hwd_ctl(NULL, PAPI_GRANUL, &internal);
         if (retval < PAPI_OK)
           return(retval);
 
         internal.granularity.ESI->granularity.granularity = grn;
         return(retval);
       }
-    case PAPI_SET_INHERIT:
+    case PAPI_INHERIT:
       {
 	EventSetInfo_t *tmp = _papi_hwi_lookup_in_thread_list();
 	if (tmp == NULL)
@@ -1024,7 +1024,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         internal.inherit.inherit = ptr->inherit.inherit;
 	internal.inherit.master = tmp;
 
-        retval = _papi_hwd_ctl(tmp, PAPI_SET_INHERIT, &internal);
+        retval = _papi_hwd_ctl(tmp, PAPI_INHERIT, &internal);
         if (retval < PAPI_OK)
           return(retval);
 
@@ -1039,7 +1039,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 
 int PAPI_num_hwctrs(void)
 {
-  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+  return(PAPI_get_opt(PAPI_MAX_HWCTRS,NULL));
 }
 		     
 int PAPI_get_multiplex(int EventSet) {
@@ -1047,7 +1047,7 @@ int PAPI_get_multiplex(int EventSet) {
   int retval;
 
   popt.multiplex.eventset = EventSet;
-  retval = PAPI_get_opt(PAPI_GET_MULTIPLEX,&popt);
+  retval = PAPI_get_opt(PAPI_MULTIPLEX,&popt);
   if(retval<0) retval=0;
   return retval;
 }
@@ -1057,7 +1057,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 { 
   switch(option)
     {
-    case PAPI_GET_MULTIPLEX:
+    case PAPI_MULTIPLEX:
       {
 	EventSetInfo_t *ESI;
 
@@ -1067,7 +1067,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 	return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
       break;
-    case PAPI_GET_PRELOAD:
+    case PAPI_PRELOAD:
       strncpy(ptr->preload.lib_preload_env,_papi_hwi_system_info.exe_info.preload_info.lib_preload_env,
 	      PAPI_MAX_STR_LEN);
       ptr->preload.lib_preload_sep = _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep;
@@ -1075,22 +1075,22 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 	      PAPI_MAX_STR_LEN);
       ptr->preload.lib_dir_sep = _papi_hwi_system_info.exe_info.preload_info.lib_dir_sep;
       break;
-    case PAPI_GET_DEBUG:
+    case PAPI_DEBUG:
       ptr->debug.level = _papi_hwi_error_level;
       ptr->debug.handler = _papi_hwi_debug_handler;
       break;
-    case PAPI_GET_CLOCKRATE:
+    case PAPI_CLOCKRATE:
       return((int)_papi_hwi_system_info.hw_info.mhz);
-    case PAPI_GET_MAX_CPUS:
+    case PAPI_MAX_CPUS:
       return(_papi_hwi_system_info.hw_info.ncpu);
-    case PAPI_GET_MAX_HWCTRS:
+    case PAPI_MAX_HWCTRS:
       return(_papi_hwi_system_info.num_cntrs);
-    case PAPI_GET_DEFDOM:
+    case PAPI_DEFDOM:
       return(_papi_hwi_system_info.default_domain);
-    case PAPI_GET_DEFGRN:
+    case PAPI_DEFGRN:
       return(_papi_hwi_system_info.default_granularity);
 #if 0
-    case PAPI_GET_INHERIT:
+    case PAPI_INHERIT:
       {
 	EventSetInfo_t *tmp;
 	tmp = _papi_hwi_lookup_in_thread_list();
@@ -1099,28 +1099,28 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 	
 	return(tmp->inherit.inherit); 
       }
-    case PAPI_GET_GRANUL:
+    case PAPI_GRANUL:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
       return(_papi_hwi_get_granularity(&ptr->granularity));
 #endif
-    case PAPI_GET_SHLIBINFO:
+    case PAPI_SHLIBINFO:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
       _papi_hwd_update_shlib_info();
       ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
       break;
-    case PAPI_GET_EXEINFO:
+    case PAPI_EXEINFO:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
       ptr->exe_info = &_papi_hwi_system_info.exe_info;
       break;
-    case PAPI_GET_HWINFO:
+    case PAPI_HWINFO:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_hwi_system_info.hw_info;
       break;
-    case PAPI_GET_DOMAIN:
+    case PAPI_DOMAIN:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
       return(_papi_hwi_get_domain(&ptr->domain));
@@ -1132,7 +1132,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 
 int PAPI_num_hw_counters(void)
 {
-  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+  return(PAPI_get_opt(PAPI_MAX_HWCTRS,NULL));
 }
 
 int PAPI_num_events(int EventSet)
@@ -1425,7 +1425,7 @@ int PAPI_set_granularity(int granularity)
   PAPI_option_t ptr;
 
   ptr.defgranularity.granularity = granularity;
-  papi_return(PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
+  papi_return(PAPI_set_opt(PAPI_GRANUL, &ptr));
 }
 
 /* This function sets the low level default counting domain
@@ -1436,7 +1436,7 @@ int PAPI_set_domain(int domain)
   PAPI_option_t ptr;
 
   ptr.defdomain.domain = domain;
-  papi_return(PAPI_set_opt(PAPI_SET_DEFDOM, &ptr));
+  papi_return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
 }
 
 int PAPI_add_events(int EventSet, int *Events, int number)
@@ -1519,7 +1519,7 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void)
   PAPI_option_t ptr;
   int retval;
 
-  retval = PAPI_get_opt(PAPI_GET_EXEINFO,&ptr);
+  retval = PAPI_get_opt(PAPI_EXEINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.exe_info);
   else
@@ -1531,7 +1531,7 @@ const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void)
   PAPI_option_t ptr;
   int retval;
 
-  retval = PAPI_get_opt(PAPI_GET_SHLIBINFO,&ptr);
+  retval = PAPI_get_opt(PAPI_SHLIBINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.shlib_info);
   else
@@ -1543,7 +1543,7 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
   PAPI_option_t ptr;
   int retval;
 
-  retval = PAPI_get_opt(PAPI_GET_HWINFO,&ptr);
+  retval = PAPI_get_opt(PAPI_HWINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.hw_info);
   else

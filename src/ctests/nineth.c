@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
   values = allocate_test_space(num_tests, num_events1);
 
-  clockrate = PAPI_get_opt(PAPI_GET_CLOCKRATE,NULL);
+  clockrate = PAPI_get_opt(PAPI_CLOCKRATE,NULL);
   if (clockrate < 1) test_fail(__FILE__, __LINE__, "PAPI_get_opt", retval);
 
   retval = PAPI_start(EventSet1);
@@ -83,9 +83,9 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET ) {
 	printf("Test case 9: start, stop for derived event PAPI_FLOPS.\n");
 	printf("------------------------------------------------------\n");
-	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
+	tmp = PAPI_get_opt(PAPI_DEFDOM,NULL);
 	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
-	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
+	tmp = PAPI_get_opt(PAPI_DEFGRN,NULL);
 	printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");

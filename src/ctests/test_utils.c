@@ -48,7 +48,7 @@ int add_test_events(int *number, int *mask)
 
   *number = 0;
 
-  retval = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+  retval = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL);
   if (retval < 1) test_fail(__FILE__, __LINE__, "PAPI_get_opt", retval);
  
   retval = PAPI_create_eventset(&EventSet);
@@ -518,12 +518,12 @@ void test_skip(char *file, int line, char *call, int retval)
 
 void test_print_event_header(char *call, int evset)
 {
-  int ev_ids[PAPI_GET_MAX_HWCTRS+PAPI_MPX_DEF_DEG];
+  int ev_ids[PAPI_MAX_HWCTRS+PAPI_MPX_DEF_DEG];
   int i,nev;
   int retval;
   char evname[PAPI_MAX_STR_LEN];
 
-  nev=PAPI_GET_MAX_HWCTRS+PAPI_MPX_DEF_DEG;
+  nev=PAPI_MAX_HWCTRS+PAPI_MPX_DEF_DEG;
   retval=PAPI_list_events(evset,ev_ids,&nev);
 
   if(*call) printf("%s",call);

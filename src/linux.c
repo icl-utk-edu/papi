@@ -285,7 +285,7 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
   extern int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain);
   switch (code)
     {
-    case PAPI_SET_DOMAIN:
+    case PAPI_DOMAIN:
       return(_papi_hwd_set_domain(&option->domain.ESI->machdep, 
 				   option->domain.domain));
     default:

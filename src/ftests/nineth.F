@@ -132,7 +132,7 @@
       print *, "Test case 9: start, stop for derived event PAPI_FLOPS"
       print *, "---------------------------------------------"
       end if
-      call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
+      call PAPIf_get_domain(es1, domain, PAPI_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_get_domain', retval)
@@ -144,7 +144,7 @@
  900  format(a20, i3, " ", a20)
       end if
 
-      call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
+      call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN, 
      *retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

@@ -90,9 +90,9 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET ) {
 	printf("Test case 0: start, stop.\n");
 	printf("-----------------------------------------------\n");
-	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
+	tmp = PAPI_get_opt(PAPI_DEFDOM,NULL);
 	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
-	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
+	tmp = PAPI_get_opt(PAPI_DEFGRN,NULL);
 	printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-------------------------------------------------------------------------\n");

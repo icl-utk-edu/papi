@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#define MAXEVENTS 7
+#define MAXEVENTS 4
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
@@ -33,13 +33,15 @@ int main(int argc, char **argv) {
   int eventset=PAPI_NULL;
   int events[MAXEVENTS];
 
-  events[0]=PAPI_BR_PRC;
-  events[1]=PAPI_BR_INS;
-  events[2]=PAPI_BR_MSP;
+  events[0]=PAPI_BR_NTK;
+  events[1]=PAPI_BR_PRC;
+  events[2]=PAPI_BR_INS;
+  events[3]=PAPI_BR_MSP;
+/*
   events[3]=PAPI_BR_CN; 
-  events[4]=PAPI_BR_UCN;
-  events[5]=PAPI_BR_TKN;
-  events[6]=PAPI_BR_NTK;
+  events[4]=PAPI_BR_UCN;*/
+  /*events[5]=PAPI_BR_TKN;*/
+  
 
   for(i=0;i<MAXEVENTS;i++) {
     values[i]=0.;

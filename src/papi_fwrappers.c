@@ -11,12 +11,12 @@
 *          smeds@pdc.kth.se
 *          Anders Nilsson
 *          anni@pdc.kth.se
-*	       Kevin London
-*	       london@cs.utk.edu
-*	       dan terpstra
-*	       terpstra@cs.utk.edu
+*	   Kevin London
+*	   london@cs.utk.edu
+*	   dan terpstra
+*	   terpstra@cs.utk.edu
 *          Min Zhou
-*	       min@cs.utk.edu
+*	   min@cs.utk.edu
 */  
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
   char *lib_preload_env=_fcdtocp(lib_preload_env_fcd);
 #endif
   int i;
-  if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
+  if ((*check = PAPI_get_opt(PAPI_EXEINFO, &e))==PAPI_OK){
     strncpy(fullname, e.exe_info->fullname, fullname_len);
     for(i=strlen(e.exe_info->fullname);i<fullname_len;fullname[i++]=' ');
     strncpy(name, e.exe_info->name, name_len);
@@ -120,7 +120,7 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
     for(i=strlen(e.exe_info->preload_info.lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
   }
 #else
-  if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
+  if ((*check = PAPI_get_opt(PAPI_EXEINFO, &e))==PAPI_OK){
     strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
     strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
     *text_start = (long)(e.exe_info->address_info.text_start);
@@ -135,16 +135,16 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
 }
 
 #if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+PAPI_FCALL(papif_get_hardware_info,PAPIF_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, _fcd vendor_fcd, 
 	   int *model, _fcd model_fcd, double *revision, double *mhz))
 #elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+PAPI_FCALL(papif_get_hardware_info,PAPIF_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, char *vendor_str, 
 	   int *model, char *model_str, float *revision, float *mhz,
 	   int vendor_len, int model_len))
 #else
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+PAPI_FCALL(papif_get_hardware_info,PAPIF_HARDWARE_INFO,(int *ncpu, 
 	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
 	   int *model, char *model_string, float *revision, float *mhz))
 #endif
@@ -566,7 +566,7 @@ PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long_
 
 PAPI_FCALL(papif_get_clockrate, PAPIF_GET_CLOCKRATE, (int *cr))
 {
-  *cr = PAPI_get_opt(PAPI_GET_CLOCKRATE, NULL);
+  *cr = PAPI_get_opt(PAPI_CLOCKRATE, NULL);
 }
 
 #if defined ( _CRAYT3E )
@@ -585,12 +585,12 @@ PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD, (char *lib_preload_env, int *ch
 #endif
   int i;
 
-  if ((*check = PAPI_get_opt(PAPI_GET_PRELOAD, &p))==PAPI_OK){
+  if ((*check = PAPI_get_opt(PAPI_PRELOAD, &p))==PAPI_OK){
     strncpy(lib_preload_env, p.preload.lib_preload_env, lib_preload_env_len);
     for(i=strlen(p.preload.lib_preload_env); i<lib_preload_env_len; lib_preload_env[i++]=' ');
   }
 #else
-  if ((*check = PAPI_get_opt(PAPI_GET_PRELOAD, &p))==PAPI_OK){
+  if ((*check = PAPI_get_opt(PAPI_PRELOAD, &p))==PAPI_OK){
     strncpy(lib_preload_env, p.preload.lib_preload_env, PAPI_MAX_STR_LEN);
   }
 #endif
@@ -601,11 +601,11 @@ PAPI_FCALL(papif_get_granularity, PAPIF_GET_GRANULARITY,
 {
   PAPI_option_t g;
 
-  if (*mode == PAPI_GET_DEFGRN){
+  if (*mode == PAPI_DEFGRN){
     *granularity = PAPI_get_opt(*mode, &g);
     *check = PAPI_OK;
   }
-  else if (*mode == PAPI_GET_GRANUL){
+  else if (*mode == PAPI_GRANUL){
     g.granularity.eventset = *eventset;
     if ((*check = PAPI_get_opt(*mode, &g))==PAPI_OK){
       *granularity = g.granularity.granularity;
@@ -620,11 +620,11 @@ PAPI_FCALL(papif_get_domain, PAPIF_GET_DOMAIN, (int *eventset, int *domain, int 
 {
   PAPI_option_t d;
 
-  if (*mode == PAPI_GET_DEFDOM){
+  if (*mode == PAPI_DEFDOM){
     *domain = PAPI_get_opt(*mode, NULL);
     *check = PAPI_OK;
   }
-  else if(*mode == PAPI_GET_DOMAIN){
+  else if(*mode == PAPI_DOMAIN){
     d.domain.eventset = *eventset;
     if ((*check = PAPI_get_opt(*mode, &d))==PAPI_OK){
       *domain = d.domain.domain;
@@ -640,7 +640,7 @@ PAPI_FCALL(papif_get_inherit, PAPIF_GET_INHERIT, (int *inherit, int *check))
 {
   PAPI_option_t i;
 
-  if ((*check = PAPI_get_opt(PAPI_GET_INHERIT, &i))==PAPI_OK){
+  if ((*check = PAPI_get_opt(PAPI_INHERIT, &i))==PAPI_OK){
     *inherit = i.inherit.inherit;
   }
 }
@@ -652,7 +652,7 @@ PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN, (int *es, int *domain
 
   d.domain.domain = *domain;
   d.domain.eventset = *es;
-  *check = PAPI_set_opt(PAPI_SET_DOMAIN, &d);
+  *check = PAPI_set_opt(PAPI_DOMAIN, &d);
 }
 
 #if 0
@@ -661,7 +661,7 @@ PAPI_FCALL(papif_set_inherit, PAPIF_SET_INHERIT, (int *inherit, int *check))
   PAPI_option_t i;
 
   i.inherit.inherit = *inherit;
-  *check = PAPI_set_opt(PAPI_SET_INHERIT, &i);
+  *check = PAPI_set_opt(PAPI_INHERIT, &i);
 }
 #endif
 

@@ -44,8 +44,8 @@ int main()
 
    memset(&opt,0x0,sizeof(PAPI_option_t));
    opt.inherit.inherit = PAPI_INHERIT_ALL;
-   if ((retval = PAPI_set_opt(PAPI_SET_INHERIT, &opt)) != PAPI_OK)
-     err_exit(retval,"PAPI_set_opt(PAPI_SET_INHERIT, &opt)");
+   if ((retval = PAPI_set_opt(PAPI_INHERIT, &opt)) != PAPI_OK)
+     err_exit(retval,"PAPI_set_opt(PAPI_INHERIT, &opt)");
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
      err_exit(retval,"PAPI_start(EventSet)");

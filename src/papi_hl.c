@@ -187,7 +187,7 @@ int PAPI_num_counters(void)
     }
 
   if(!hl_max_counters)
-    hl_max_counters = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+    hl_max_counters = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL);
       
   return(hl_max_counters);
 }
@@ -298,7 +298,7 @@ int PAPI_stop_counters(long_long *values, int array_len)
     return(PAPI_EINVAL);
 
   if(!hl_max_counters)
-    hl_max_counters = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+    hl_max_counters = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL);
 
   if (array_len > hl_max_counters)
     return(PAPI_EINVAL);

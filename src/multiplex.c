@@ -14,6 +14,8 @@
  *          smeds@pdc.kth.se
  *          Haihang You
  *          you@cs.utk.edu 
+ *	    Kevin London
+ *	    london@cs.utk.edu
  */  
 
 #define MPX_NONDECR
@@ -435,8 +437,8 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 
   /* Removed newset->num_events++, moved to mpx_insert_events() */
 
-  def_dom = PAPI_get_opt(PAPI_GET_DEFDOM, NULL);
-  def_grn = PAPI_get_opt(PAPI_GET_DEFGRN, NULL);
+  def_dom = PAPI_get_opt(PAPI_DEFDOM, NULL);
+  def_grn = PAPI_get_opt(PAPI_DEFGRN, NULL);
 
   mpx_hold();
 
@@ -1163,7 +1165,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 
   switch(option) {
     /* options that are not per-eventset */
-  case PAPI_SET_INHERIT:
+  case PAPI_INHERIT:
     return PAPI_set_opt(option, ptr);
     break;
 
@@ -1176,18 +1178,18 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
      * removing the old events and adding new ones with
      * the new options.
      */
-  case PAPI_SET_DOMAIN:
-  case PAPI_SET_GRANUL:
+  case PAPI_DOMAIN:
+  case PAPI_GRANUL:
     /* Event set must not be running */
     if( mpx_events->status == MPX_RUNNING )
       return PAPI_EINVAL;
 
     /* Determine the option values to use */
-    if( option == PAPI_SET_DOMAIN ) {
+    if( option == PAPI_DOMAIN ) {
       domain = ptr->domain.domain;
       granularity
         = mpx_events->mev[0]->pi.granularity;
-    } else if( option == PAPI_SET_GRANUL ) {
+    } else if( option == PAPI_GRANUL ) {
       domain = mpx_events->mev[0]->pi.domain;
       granularity = ptr->granularity.granularity;
     }
@@ -1404,11 +1406,11 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 #if 0
       options.domain.eventset = mev->papi_event;
       options.domain.domain = domain;
-      retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+      retval = PAPI_set_opt(PAPI_DOMAIN, &options);
       if (retval != PAPI_OK)
         {
 #ifdef MPX_DEBUG
-          fprintf(stderr,"PAPI_set_opt(PAPI_SET_DOMAIN) failed.\n");
+          fprintf(stderr,"PAPI_set_opt(PAPI_DOMAIN) failed.\n");
 #endif
           goto bail;
         }
@@ -1416,11 +1418,11 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 #if 0
       options.granularity.eventset = mev->papi_event;
       options.granularity.granularity = granularity;
-      retval = PAPI_set_opt(PAPI_SET_GRANUL, &options);
+      retval = PAPI_set_opt(PAPI_GRANUL, &options);
       if (retval != PAPI_OK)
         {
 #ifdef MPX_DEBUG
-          fprintf(stderr,"PAPI_set_opt(PAPI_SET_GRANUL) failed.\n");
+          fprintf(stderr,"PAPI_set_opt(PAPI_GRANUL) failed.\n");
 #endif
           goto bail;
         }

@@ -83,7 +83,7 @@
      *       "--------------------------"
       end if
 
-      call PAPIf_get_domain(es, domain, PAPI_GET_DEFDOM, retval)
+      call PAPIf_get_domain(es, domain, PAPI_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPIf_get_domain', retval)
@@ -94,7 +94,7 @@
         write (*,800) "Default domain is     :", domain, domainstr
       end if
 
-      call PAPIf_get_granularity(es, granularity, PAPI_GET_DEFGRN, 
+      call PAPIf_get_granularity(es, granularity, PAPI_DEFGRN, 
      *     retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

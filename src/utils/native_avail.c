@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	printf("CPU's in this Node       : %d\n",hwinfo->ncpu);
 	printf("Nodes in this System     : %d\n",hwinfo->nnodes);
 	printf("Total CPU's              : %d\n",hwinfo->totalcpus);
-	printf("Number Hardware Counters : %d\n",PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+	printf("Number Hardware Counters : %d\n",PAPI_get_opt(PAPI_MAX_HWCTRS,NULL));
 	printf("Max Multiplex Counters   : %d\n",PAPI_MPX_DEF_DEG);
 	printf("-------------------------------------------------------------------------\n");
 

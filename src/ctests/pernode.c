@@ -45,7 +45,7 @@ int main()
 
   options.domain.eventset = EventSet;
   options.domain.domain = PAPI_DOM_ALL;
-  retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  retval = PAPI_set_opt(PAPI_DOMAIN, &options);
   if (retval != PAPI_OK)
     exit(1);
   actual_domain = options.domain.domain;
@@ -54,14 +54,14 @@ int main()
 
   options.granularity.eventset = EventSet;
   options.granularity.granularity = PAPI_GRN_SYS_CPU;
-  retval = PAPI_set_opt(PAPI_SET_GRANUL, &options);
+  retval = PAPI_set_opt(PAPI_GRANUL, &options);
   if (retval != PAPI_OK)
     exit(1);
 
   /* Malloc the output array */
 
-  ncpu = PAPI_get_opt(PAPI_GET_MAX_CPUS,NULL);
-  nctr = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+  ncpu = PAPI_get_opt(PAPI_MAX_CPUS,NULL);
+  nctr = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL);
   values = (long long *)malloc(ncpu*nctr*sizeof(long long));
   memset(values,0x0,(ncpu*nctr*sizeof(long long)));
 

@@ -671,13 +671,13 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
 {
   switch (code)
   {
-    case PAPI_SET_DEFDOM:
+    case PAPI_DEFDOM:
       return(set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
-    case PAPI_SET_DOMAIN:
+    case PAPI_DOMAIN:
       return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
-    case PAPI_SET_DEFGRN:
+    case PAPI_DEFGRN:
       return(set_default_granularity(&option->domain.ESI->machdep, option->granularity.granularity));
-    case PAPI_SET_GRANUL:
+    case PAPI_GRANUL:
       return(set_granularity(&option->granularity.ESI->machdep, option->granularity.granularity));
     default:
       return(PAPI_EINVAL);

@@ -158,64 +158,49 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Option definitions */
 
-#define PAPI_SET_DEBUG	 2     /* Option to turn on debugging features of the PAPI library*/
-#define PAPI_GET_DEBUG   3     /* Option to query debugging features of the PAPI library*/
+#define PAPI_DEBUG		2     /* Option to turn on  debugging features of the PAPI library*/
+#define PAPI_MULTIPLEX 		3   /* Turn on/off or multiplexing for an eventset */
+#define PAPI_DEFDOM  		4     /* Domain for all new eventsets. Takes non-NULL option pointer. */    
 
-#define PAPI_SET_MULTIPLEX 4   /* Turn on/off multiplexing for an eventset */
-
-#define PAPI_GET_MULTIPLEX 5   /* Query multiplexing status for an eventset */
-
-#define PAPI_SET_DEFDOM  6     /* Domain for all new eventsets. Takes non-NULL option pointer. */    
-#define PAPI_GET_DEFDOM  7     /* Domain for all new eventsets. Takes NULL as option pointer. */    
-
-#define PAPI_SET_DOMAIN  8     /* Domain for an eventset */    
-#define PAPI_GET_DOMAIN  9     /* Domain for an eventset */    
-
-#define PAPI_SET_DEFGRN  10    /* Granularity for all new eventsets */    
-#define PAPI_GET_DEFGRN  11    /* Granularity for all new eventsets */
-
-#define PAPI_SET_GRANUL  12    /* Granularity for an eventset */    
-#define PAPI_GET_GRANUL  13    /* Granularity for an eventset */    
-
-#define PAPI_SET_INHERIT 15    /* Child threads/processes inherit counter config and progate values up upon exit. */
-#define PAPI_GET_INHERIT 16    /* Child threads/processes inherit counter config and progate values up upon exit. */
+#define PAPI_DOMAIN  		5     /* Domain for an eventset */    
+#define PAPI_DEFGRN  		6     /* Granularity for all new eventsets */    
+#define PAPI_GRANUL  		7     /* Granularity for an eventset */    
+#define PAPI_INHERIT 		8     /* Child threads/processes inherit counter config and progate values up upon exit. */
 
 #define PAPI_INHERIT_ALL  1    /* The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0    /* The flag to this to inherit none of the children's counters */
 				   
-#define PAPI_GET_CPUS    21    /* Return the maximum number of CPU's usable/detected */
+#define PAPI_CPUS    		9    /* Return the maximum number of CPU's usable/detected */
 
-#define PAPI_GET_THREADS 23    /* Return the number of threads usable/detected by PAPI */
+#define PAPI_THREADS 		10    /* Return the number of threads usable/detected by PAPI */
 
-#define PAPI_GET_NUMCTRS 25    /* The number of counters returned by reading this eventset */
-#define PAPI_SET_NUMCTRS 26    /* The number of counters returned by reading this eventset */
+#define PAPI_NUMCTRS 		11    /* The number of counters returned by reading this eventset */
 
-#define PAPI_SET_PROFIL  27     /* Option to turn on the overflow/profil reporting software */
-#define PAPI_GET_PROFIL  28     /* Option to query the status of the overflow/profil reporting software */
+#define PAPI_PROFIL  		12     /* Option to turn on the overflow/profil reporting software */
 
 #define PAPI_PROFIL_POSIX    0x0 /* Default type of profiling, similar to 'man profil'. */
 #define PAPI_PROFIL_RANDOM   0x1 /* Drop a random 25% of the samples. */
 #define PAPI_PROFIL_WEIGHTED 0x2 /* Weight the samples by their value. */
 #define PAPI_PROFIL_COMPRESS 0x4 /* Ignore samples if hash buckets get big. */
 
-#define PAPI_GET_PRELOAD 31     /* Option to find out the environment variable that can preload libraries */
+#define PAPI_PRELOAD 		13     /* Option to find out the environment variable that can preload libraries */
 
 #define PAPI_INIT_SLOTS  64     /*Number of initialized slots in
                                 DynamicArray of EventSets */
 
-#define PAPI_GET_CLOCKRATE  	70 /* Clock rate in MHz */  
+#define PAPI_CLOCKRATE  	14 /* Clock rate in MHz */  
 
-#define PAPI_GET_MAX_HWCTRS 	71 /* Number of physical hardware counters */
+#define PAPI_MAX_HWCTRS 	15 /* Number of physical hardware counters */
 
-#define PAPI_GET_HWINFO  	72 /* Hardware information */  
+#define PAPI_HWINFO  		16 /* Hardware information */  
 
-#define PAPI_GET_EXEINFO  	73 /* Executable information */  
+#define PAPI_EXEINFO  		17 /* Executable information */  
 
-#define PAPI_GET_MAX_CPUS 	74 /* Number of ncpus we can talk to from here */
+#define PAPI_MAX_CPUS 		18 /* Number of ncpus we can talk to from here */
  
-#define PAPI_SET_MAXMEM         75 /* Setup Maximum Memory if no hardware support */
+#define PAPI_MAXMEM         	19 /* Setup Maximum Memory if no hardware support */
 
-#define PAPI_GET_SHLIBINFO      76 /* Executable information */
+#define PAPI_SHLIBINFO      	20 /* Executable information */
 
 #define PAPI_MAX_STR_LEN        129 /* Guess what */
 
