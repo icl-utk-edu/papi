@@ -50,6 +50,10 @@
 #define PNE_page_walk_type_instr_miss (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<ITMISS))
 #define PNE_page_walk_type_all (PAPI_NATIVE_MASK + (P4_page_walk_type<<16) + (1<<DTMISS) + (1<<ITMISS))
 
+/* trace (instruction) cache events */
+#define PNE_bpu_fetch_request_tcmiss (PAPI_NATIVE_MASK + (P4_BPU_fetch_request<<16) + (1<<TCMISS))
+#define PNE_uop_queue_writes_from_tc_build_deliver (PAPI_NATIVE_MASK + (P4_uop_queue_writes<<16) + (1<<FROM_TC_BUILD) + (1<<FROM_TC_DELIVER))
+
 /* cache events via replay tagging */
 #define PNE_replay_event_L1_load_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT)  + (1<<PEBS_L1_MISS_BIT))
 #define PNE_replay_event_L1_data_miss (PAPI_NATIVE_MASK + (P4_replay_event<<16) + (1<<NBOGUS) + (1<<PEBS_MV_LOAD_BIT) + (1<<PEBS_MV_STORE_BIT) + (1<<PEBS_L1_MISS_BIT))
@@ -181,6 +185,8 @@ hwi_search_t _papi_hwd_pentium4_base_preset_map[] = {
    {PAPI_L2_LDM, {0, {PNE_BSQ_cache_reference_L2_RD_miss, PAPI_NULL,}, {0,}}},
    {PAPI_L2_STM, {0, {PNE_BSQ_cache_reference_L2_WR_miss, PAPI_NULL,},{0,}}},
    {PAPI_L2_TCM, {0, {PNE_BSQ_cache_reference_L2_RD_WR_miss, PAPI_NULL,}, {0,}}},
+   {PAPI_L1_ICM, {0, {PNE_bpu_fetch_request_tcmiss, PAPI_NULL,}, {0,}}},
+   {PAPI_L1_ICA, {0, {PNE_uop_queue_writes_from_tc_build_deliver, PAPI_NULL,}, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
