@@ -419,6 +419,7 @@ static int _internal_get_system_info(void)
 */
    strcat(_papi_hwi_system_info.exe_info.fullname, "/");
    strcat(_papi_hwi_system_info.exe_info.fullname, psi.pr_fname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name,psi.pr_fname);
 
    /* HWinfo */
 
@@ -835,7 +836,7 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
 int _papi_hwd_update_shlib_info(void)
 {
-   return PAPI_OK;
+   return (PAPI_ESBSTR);
 }
 
 
