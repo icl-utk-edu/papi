@@ -22,16 +22,16 @@ int main(int argc, char **argv ) {
   if ( !TESTS_QUIET ) {
      printf("Test case:  Memory Information.\n");
      printf("------------------------------------------------------------------------\n");
-     printf("Total TLB size:  %d.\n",meminfo->total_tlb_size );
-     if ( meminfo->itlb_size )
+     printf("Total TLB size:  %d.\n",meminfo->L1_tlb_size );
+     if ( meminfo->L1_itlb_size )
         printf("Instruction TLB: %d entries, %d-way associative.\n",
-               meminfo->itlb_size, meminfo->itlb_assoc );
-     if ( meminfo->dtlb_size )
+               meminfo->L1_itlb_size, meminfo->L1_itlb_assoc );
+     if ( meminfo->L1_dtlb_size )
         printf("Data TLB: %d entries, %d-way associative.\n",
-               meminfo->dtlb_size, meminfo->dtlb_assoc );
+               meminfo->L1_dtlb_size, meminfo->L1_dtlb_assoc );
 
-     if ( meminfo->total_L1_size )
-        printf("Total L1 cache: %d KB.\n",meminfo->total_L1_size );
+     if ( meminfo->L1_size )
+        printf("Total L1 cache: %d KB.\n",meminfo->L1_size );
      if ( meminfo->L1_icache_size )
         printf("Instruction L1 cache: %d KB of %d-way associative and %d B lines.\n", 
                meminfo->L1_icache_size,meminfo->L1_icache_assoc,meminfo->L1_icache_linesize);

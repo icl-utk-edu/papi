@@ -62,7 +62,7 @@ int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
     break;
   }
   DBG((stderr,"Detected L1: %d L2: %d  L3: %d\n",
-       mem_info->total_L1_size, mem_info->L2_cache_size, 
+       mem_info->L1_size, mem_info->L2_cache_size, 
        mem_info->L3_cache_size));
   return retval;
 }
@@ -89,39 +89,39 @@ static int init_amd( PAPI_mem_info_t * mem_info ) {
   /* 2MB memory page information, 4MB pages has half the number of entris */
   /* Most people run 4k pages on Linux systems, don't they? */
   /*
-   * mem_info->itlb_size      = (reg_eax&0xff);
-   * mem_info->itlb_assoc     = ((reg_eax&0xff00)>>8);
-   * mem_info->dtlb_size      = ((reg_eax&0xff0000)>>16);
-   * mem_info->dtlb_assoc     = ((reg_eax&0xff000000)>>24);
+   * mem_info->L1_itlb_size      = (reg_eax&0xff);
+   * mem_info->L1_itlb_assoc     = ((reg_eax&0xff00)>>8);
+   * mem_info->L1_dtlb_size      = ((reg_eax&0xff0000)>>16);
+   * mem_info->L1_dtlb_assoc     = ((reg_eax&0xff000000)>>24);
    */
 
   /* 4k page information */
-  mem_info->itlb_size      = ((reg_ebx&0x000000ff));
-  mem_info->itlb_assoc     = ((reg_ebx&0x0000ff00)>>8);
-  switch(mem_info->itlb_assoc) {
+  mem_info->L1_itlb_size      = ((reg_ebx&0x000000ff));
+  mem_info->L1_itlb_assoc     = ((reg_ebx&0x0000ff00)>>8);
+  switch(mem_info->L1_itlb_assoc) {
   case 0x00: /* Reserved */
-    mem_info->itlb_assoc = -1;
+    mem_info->L1_itlb_assoc = -1;
     break;
   case 0xff:
-    mem_info->itlb_assoc = SHRT_MAX;
+    mem_info->L1_itlb_assoc = SHRT_MAX;
     break;
   }
-  mem_info->dtlb_size      = ((reg_ebx&0x00ff0000)>>16);
-  mem_info->dtlb_assoc     = ((reg_ebx&0xff000000)>>24);
-  switch(mem_info->dtlb_assoc) {
+  mem_info->L1_dtlb_size      = ((reg_ebx&0x00ff0000)>>16);
+  mem_info->L1_dtlb_assoc     = ((reg_ebx&0xff000000)>>24);
+  switch(mem_info->L1_dtlb_assoc) {
   case 0x00: /* Reserved */
-    mem_info->dtlb_assoc = -1;
+    mem_info->L1_dtlb_assoc = -1;
     break;
   case 0xff:
-    mem_info->dtlb_assoc = SHRT_MAX;
+    mem_info->L1_dtlb_assoc = SHRT_MAX;
     break;
   }
   DBG((stderr,"L1 TLB info (to be over-written by L2:\n"
        "\tI-size %d,  I-assoc %d\n\tD-size %d,  D-assoc %d\n",
-       mem_info->itlb_size, mem_info->itlb_assoc,
-       mem_info->dtlb_size, mem_info->dtlb_assoc))
+       mem_info->L1_itlb_size, mem_info->L1_itlb_assoc,
+       mem_info->L1_dtlb_size, mem_info->L1_dtlb_assoc))
 
-  mem_info->total_tlb_size = mem_info->itlb_size + mem_info->dtlb_size;
+  mem_info->L1_tlb_size = mem_info->L1_itlb_size + mem_info->L1_dtlb_size;
 
   /* L1 D-cache/I-cache info */
 
@@ -154,7 +154,7 @@ static int init_amd( PAPI_mem_info_t * mem_info ) {
   mem_info->L1_icache_linesize= ((reg_edx&0x000000ff));
 
   /* Why summing up these entries ? */
-  mem_info->total_L1_size = mem_info->L1_icache_size+mem_info->L1_dcache_size;
+  mem_info->L1_size = mem_info->L1_icache_size+mem_info->L1_dcache_size;
 
   reg_eax = 0x80000006;
   cpuid(&reg_eax,&reg_ebx,&reg_ecx,&reg_edx);
@@ -186,16 +186,16 @@ static int init_amd( PAPI_mem_info_t * mem_info ) {
    */
 
   /* 4k page information */
-  mem_info->dtlb_size      = ((reg_ebx&0x0fff0000)>>16);
+  mem_info->L1_dtlb_size      = ((reg_ebx&0x0fff0000)>>16);
   pattern = ((reg_ebx&0xf0000000)>>28);
-  mem_info->dtlb_assoc = init_amd_L2_assoc_inf(pattern);
-  mem_info->itlb_size      = ((reg_ebx&0x00000fff));
+  mem_info->L1_dtlb_assoc = init_amd_L2_assoc_inf(pattern);
+  mem_info->L1_itlb_size      = ((reg_ebx&0x00000fff));
   pattern = ((reg_ebx&0x0000f000)>>12);
-  mem_info->itlb_assoc = init_amd_L2_assoc_inf(pattern);
+  mem_info->L1_itlb_assoc = init_amd_L2_assoc_inf(pattern);
   
-  mem_info->total_tlb_size += mem_info->itlb_size + mem_info->dtlb_size;
-  if (!mem_info->dtlb_size) { /* The L2 TLB is a unified TLB, with the size itlb_size */
-    mem_info->itlb_size = 0;  
+  mem_info->L1_tlb_size += mem_info->L1_itlb_size + mem_info->L1_dtlb_size;
+  if (!mem_info->L1_dtlb_size) { /* The L2 TLB is a unified TLB, with the size itlb_size */
+    mem_info->L1_itlb_size = 0;  
   }
   
 
@@ -268,20 +268,20 @@ static int init_intel( PAPI_mem_info_t * mem_info ) {
 	}
 	switch((value&0xff)){
 	case 0x01:
-	  mem_info->itlb_size = 128;
-	  mem_info->itlb_assoc= 4;
+	  mem_info->L1_itlb_size = 128;
+	  mem_info->L1_itlb_assoc= 4;
 	  break;
 	case 0x02:
-	  mem_info->itlb_size = 8;
-	  mem_info->itlb_assoc= 1;
+	  mem_info->L1_itlb_size = 8;
+	  mem_info->L1_itlb_assoc= 1;
 	  break;
 	case 0x03:
-	  mem_info->dtlb_size = 256;
-	  mem_info->dtlb_assoc= 4;
+	  mem_info->L1_dtlb_size = 256;
+	  mem_info->L1_dtlb_assoc= 4;
 	  break;
 	case 0x04:
-	  mem_info->dtlb_size = 32;
-	  mem_info->dtlb_assoc= 4;
+	  mem_info->L1_dtlb_size = 32;
+	  mem_info->L1_dtlb_assoc= 4;
 	  break;
 	case 0x06:
 	  mem_info->L1_icache_size = 8;
@@ -414,28 +414,28 @@ static int init_intel( PAPI_mem_info_t * mem_info ) {
 	   * Smile -smeds 
 	   */
 	case 0x50:
-	  mem_info->itlb_size=64;
-	  mem_info->itlb_assoc=1;
+	  mem_info->L1_itlb_size=64;
+	  mem_info->L1_itlb_assoc=1;
 	  break;
 	case 0x51:
-	  mem_info->itlb_size=128;
-	  mem_info->itlb_assoc=1;
+	  mem_info->L1_itlb_size=128;
+	  mem_info->L1_itlb_assoc=1;
 	  break;
 	case 0x52:
-	  mem_info->itlb_size=256;
-	  mem_info->itlb_assoc=1;
+	  mem_info->L1_itlb_size=256;
+	  mem_info->L1_itlb_assoc=1;
 	  break;
 	case 0x5B:
-	  mem_info->dtlb_size=64;
-	  mem_info->dtlb_assoc=1;
+	  mem_info->L1_dtlb_size=64;
+	  mem_info->L1_dtlb_assoc=1;
 	  break;
 	case 0x5C:
-	  mem_info->dtlb_size=128;
-	  mem_info->dtlb_assoc=1;
+	  mem_info->L1_dtlb_size=128;
+	  mem_info->L1_dtlb_assoc=1;
 	  break;
 	case 0x5D:
-	  mem_info->dtlb_size=128;
-	  mem_info->dtlb_assoc=1;
+	  mem_info->L1_dtlb_size=128;
+	  mem_info->L1_dtlb_assoc=1;
 	  break;
 	case 0x66:
 	  mem_info->L1_dcache_assoc = 4;
@@ -570,8 +570,8 @@ static int init_intel( PAPI_mem_info_t * mem_info ) {
   }
    
   /* I don't like summing this as when the cache is divided, but...  /smeds */
-  mem_info->total_L1_size = mem_info->L1_icache_size+mem_info->L1_dcache_size;
-  mem_info->total_tlb_size = mem_info->itlb_size + mem_info->dtlb_size;
+  mem_info->L1_size = mem_info->L1_icache_size+mem_info->L1_dcache_size;
+  mem_info->L1_tlb_size = mem_info->L1_itlb_size + mem_info->L1_dtlb_size;
 
   return PAPI_OK;
 }

@@ -311,14 +311,19 @@ typedef struct _papi_hw_info {
 } PAPI_hw_info_t;
   
 typedef struct _papi_mem_info {
-  int total_tlb_size;		/*If combined itlb_size and dtlb_size will
-				 * be 0 */
-  int itlb_size;		/*Instruction TLB size in KB */
-  short int itlb_assoc;      /*Instruction TLB associtivity */
-  int dtlb_size;		/*Data TLB size in KB */
-  short  dtlb_assoc;	/*Data TLB associtivity */
+  int L1_tlb_size;		/*Data + Instruction Size */
+  int L1_itlb_size;		/*Instruction TLB size in KB */
+  short int L1_itlb_assoc;      /*Instruction TLB associtivity */
+  int L1_dtlb_size;		/*Data TLB size in KB */
+  short  L1_dtlb_assoc;		/*Data TLB associtivity */
 
-  int total_L1_size;		/*If combined icache and dcache size is 0 */
+  int L2_tlb_size;		/*Data + Instruction Size */
+  int L2_itlb_size;		/*Instruction TLB size in KB */
+  short int L2_itlb_assoc;      /*Instruction TLB associtivity */
+  int L2_dtlb_size;		/*Data TLB size in KB */
+  short  L2_dtlb_assoc;		/*Data TLB associtivity */
+
+  int L1_size;			/* I+D */
   int L1_icache_size;		/*Level 1 instruction cache size in KB */
   short int L1_icache_assoc;    /*Level 1 instruction cache associtivity */
   int L1_icache_lines;		/*Number of lines in Level 1 instruction cache*/
