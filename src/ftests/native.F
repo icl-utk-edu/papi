@@ -442,7 +442,7 @@ C     call sleep(1)
       print *, "CPU MFLOPS                 : ",
      *((values(5)+values(6))/1000000.0)/csec
       print *, "%% FMA Instructions         : ",
-     *100.0*(values(5) + values(6))/(values(7)
+     *100.0*(values(5) + values(6))/values(7)
 #endif
 #if defined(POWER3)
       csec = values(5)/ (mhz*1000000.0)
