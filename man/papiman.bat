@@ -20,6 +20,7 @@ perl manServer_papi.pl -o html man3/PAPI_get_executable_info.3
 perl manServer_papi.pl -o html man3/PAPI_get_hardware_info.3
 perl manServer_papi.pl -o html man3/PAPI_get_multiplex.3
 perl manServer_papi.pl -o html man3/PAPI_get_opt.3
+perl manServer_papi.pl -o html man3/PAPI_get_overflow_event_index.3
 perl manServer_papi.pl -o html man3/PAPI_get_real_cyc.3
 perl manServer_papi.pl -o html man3/PAPI_get_real_usec.3
 perl manServer_papi.pl -o html man3/PAPI_get_shared_lib_info.3
@@ -61,13 +62,13 @@ perl manServer_papi.pl -o html man3/PAPI_write.3
 
 REM PAPI High Level Interface
 perl manServer_papi.pl -o html man3/PAPI_accum_counters.3
+perl manServer_papi.pl -o html man3/PAPI_flips.3
+perl manServer_papi.pl -o html man3/PAPI_flops.3
+perl manServer_papi.pl -o html man3/PAPI_ipc.3
 perl manServer_papi.pl -o html man3/PAPI_num_counters.3
 perl manServer_papi.pl -o html man3/PAPI_read_counters.3
 perl manServer_papi.pl -o html man3/PAPI_start_counters.3
 perl manServer_papi.pl -o html man3/PAPI_stop_counters.3
-perl manServer_papi.pl -o html man3/PAPI_flips.3
-perl manServer_papi.pl -o html man3/PAPI_flops.3
-perl manServer_papi.pl -o html man3/PAPI_ipc.3
 
 REM PAPI Fortran Specific Documentation
 perl manServer_papi.pl -o html man3/PAPIF.3
