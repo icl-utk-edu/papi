@@ -79,10 +79,10 @@ int main(int argc, char **argv)
   retval = PAPI_create_eventset(&EventSet);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+  retval = PAPI_add_event(&EventSet, PAPI_event);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_event);
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
   retval = PAPI_start(EventSet);
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet, values[0]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, THRESHOLD, 0, handler);
+  retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0, handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
   retval = PAPI_start(EventSet);
@@ -116,44 +116,48 @@ int main(int argc, char **argv)
 	if ((retval=PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
 		test_fail(__FILE__,__LINE__,"PAPI_event_code_to_name",retval);
 
-	printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
+	printf("Test case: Overflow dispatch of 1st event in set with 2 events.\n");
 	printf("---------------------------------------------------------------\n");
 	printf("Threshold for overflow is: %d\n",THRESHOLD);
 	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
 	printf("-----------------------------------------------\n");
 
 	printf("Test type    : %16d%16d\n",1,2);
-	printf(OUT_FMT, "PAPI_TOT_CYC",
-	 (values[0])[0],(values[1])[0]);
 	printf(OUT_FMT, event_name,
+	 (values[0])[0],(values[1])[0]);
+	printf(OUT_FMT, "PAPI_TOT_CYC",
 	 (values[0])[1],(values[1])[1]);
 	printf("Overflows    : %16s%16d\n","",total);
 	printf("-----------------------------------------------\n");
 
 	printf("Verification:\n");
 	if (PAPI_event == PAPI_FP_INS)
-		printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
-	printf("Column 1 approximately equals column 2\n");
+		printf("Row 1 approximately equals %d %d\n", num_flops, num_flops);
+	/* Note that the second run prints output on stdout. On some systems
+         * this is costly. PAPI_TOT_INS or PAPI_TOT_CYC are likely to be _very_
+         * different between the two runs.
+         * printf("Column 1 approximately equals column 2\n"); 
+         */
 	printf(TAB1, "Row 3 approximately equals",(values[0])[0]/THRESHOLD);
   }
 
   if (PAPI_event == PAPI_FP_INS) {
 	  min = (long_long)(num_flops*.9);
 	  max = (long_long)(num_flops*1.1);
-	  if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
+	  if ( values[0][0] > max || values[0][0] < min || values[1][0] < min || values[1][0]>max)
 		test_fail(__FILE__, __LINE__, event_name, 1);
   }
-#ifndef _CRAYT3E
   min = (long_long)(values[0][0]*.9);
   max = (long_long)(values[0][0]*1.1);
   if ( values[1][0] > max || values[1][0] < min )
   	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
-#endif
 
+#ifdef THE_SECOND_EVENT_IS_REALLY_REPRODUCABLE
   min = (long_long)(values[0][1]*.9);
   max = (long_long)(values[0][1]*1.1);
   if ( values[1][1] > max || values[1][1] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
+#endif
 
   min = (long_long)((values[0][0]*.75)/THRESHOLD);
   max = (long_long)((values[0][0]*1.15)/THRESHOLD);
@@ -162,3 +166,5 @@ int main(int argc, char **argv)
   test_pass(__FILE__,NULL,0);
   exit(1);
 }
+
+
