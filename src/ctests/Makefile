@@ -5,7 +5,7 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = shlib zero avail branches dmem_info all_events derived high-level2 describe mem_info  \
+SERIAL  = exeinfo shlib zero avail branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops first second cost johnmay2 clockres \
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
@@ -14,7 +14,7 @@ SERIAL  = shlib zero avail branches dmem_info all_events derived high-level2 des
 	ipc native native_avail
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-ALL 	= $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) 
+ALL 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) 
 INCLUDE = -I.. -I/usr/include -I$(TOOLPATH)/libpfm
 PAPILIB	= ../$(LIBRARY)
 
@@ -229,6 +229,9 @@ high-level2: high-level2.c $(PAPILIB) $(UTILOBJS)
 shlib: shlib.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib -ldl
 	if [ ! -x ./shlib ]; then $(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib; fi
+
+exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
 dummy.o: dummy.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c dummy.c
