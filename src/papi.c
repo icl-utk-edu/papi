@@ -137,6 +137,8 @@ int PAPI_get_thr_specific(int tag, void **ptr)
    retval = _papi_hwi_lookup_or_create_thread(&thread);
    if (retval == PAPI_OK)
      *ptr = thread->thread_storage[tag];
+   else
+     return(retval);
 
    return(retval);
 }
@@ -155,6 +157,8 @@ int PAPI_set_thr_specific(int tag, void *ptr)
    retval = _papi_hwi_lookup_or_create_thread(&thread);
    if (retval == PAPI_OK)
      thread->thread_storage[tag] = ptr;
+   else
+     return(retval);
 
    return(PAPI_OK);
 }
