@@ -25,6 +25,9 @@ shmem: $(SHMEM)
 
 serial: $(SERIAL)
 
+calibrate: calibrate.c dummy.o $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
+
 multiplex1: multiplex1.c do_loops.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c do_loops.o $(PAPILIB) $(LDFLAGS) -o $@ 
 
