@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 #endif
   
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
-  for(i=0;i<argc;i++)
+  /*for(i=0;i<argc;i++) */
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
