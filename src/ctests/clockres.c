@@ -1,18 +1,15 @@
-#include <stdlib.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papi.h"
-#define ITERS 100000
+#include "papi_test.h"
 
-int main() 
+#ifndef _WIN32
+  #define ITERS 100000
+#else
+  #define ITERS 10000
+#endif
+
+int main()
 {
-  long long elapsed_usec[ITERS], elapsed_cyc[ITERS];
-  long long total_usec = 0, uniq_usec = 0, diff_usec = 0, 
+  long_long elapsed_usec[ITERS], elapsed_cyc[ITERS];
+  long_long total_usec = 0, uniq_usec = 0, diff_usec = 0, 
     total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
   int i;
 
@@ -27,7 +24,7 @@ int main()
 
   /* Real */
 
-  for (i=0;i<ITERS;i++)
+ for (i=0;i<ITERS;i++)
     elapsed_cyc[i] = PAPI_get_real_cyc();
 
   for (i=1;i<ITERS;i++)

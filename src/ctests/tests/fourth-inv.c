@@ -25,21 +25,12 @@
    - Stop eventset 2
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 int main(int argc, char **argv) 
 {
   int retval, num_tests = 4, tmp;
-  long long **values;
+  long_long **values;
   int EventSet1, EventSet2;
   int num_events = 2;
 
@@ -120,9 +111,9 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\t\t3\t\t4\n");
-  printf("PAPI_FP_INS : \t%lld\t%lld\t%lld\t%lld\n",
+  printf(TAB4, "PAPI_FP_INS : ",
 	 (values[0])[1],(values[1])[0],(values[2])[1],(values[3])[0]);
-  printf("PAPI_TOT_CYC: \t%lld\t%lld\t%lld\t%lld\n",
+  printf(TAB4, "PAPI_TOT_CYC: ",
 	 (values[0])[0],(values[1])[1],(values[2])[0],(values[3])[1]);
   printf("-------------------------------------------------------------------------\n");
 

@@ -1,18 +1,13 @@
 /* Compile me with -O0 or else you'll get none. */
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "papi_test.h"
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include "test_utils.h"
 
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 static int buf[L1_MISS_BUFFER_SIZE_INTS];
 
 volatile double a = 0.5, b = 6.2;
-volatile long long z = -101010101;
+volatile long_long z = -101010101;
 
 void do_flops(int n)
 {
@@ -26,10 +21,11 @@ void do_flops(int n)
 
 void do_reads(int n)
 {
+#ifndef _WIN32
   int i, j;
   static int fd = -1;
   char buf;
-  long long c = 0.11;
+  long_long c = (long_long)0.11;
 
   if (fd == -1)
     {
@@ -47,6 +43,7 @@ void do_reads(int n)
     }
     read(fd,&buf,sizeof(buf));
   }
+#endif /* _WIN32 */
 }
 
 void do_l1misses(int n)

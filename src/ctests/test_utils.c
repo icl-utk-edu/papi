@@ -1,34 +1,26 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
-long long **allocate_test_space(int num_tests, int num_events)
+long_long **allocate_test_space(int num_tests, int num_events)
 {
-  long long **values;
+  long_long **values;
   int i;
 
-  values = (long long **)malloc(num_tests*sizeof(long long *));
+  values = (long_long **)malloc(num_tests*sizeof(long_long *));
   if (values==NULL)
     exit(1);
-  memset(values,0x0,num_tests*sizeof(long long *));
+  memset(values,0x0,num_tests*sizeof(long_long *));
     
   for (i=0;i<num_tests;i++)
     {
-      values[i] = (long long *)malloc(num_events*sizeof(long long));
+      values[i] = (long_long *)malloc(num_events*sizeof(long_long));
       if (values[i]==NULL)
 	exit(1);
-      memset(values[i],0x00,num_events*sizeof(long long));
+      memset(values[i],0x00,num_events*sizeof(long_long));
     }
   return(values);
 }
 
-void free_test_space(long long **values, int num_tests)
+void free_test_space(long_long **values, int num_tests)
 {
   int i;
 
@@ -300,3 +292,22 @@ char *stringify_granularity(int granularity)
     }
   return(NULL);
 }
+
+#ifdef _WIN32
+	int wait_exit(int retval)
+	{
+		HANDLE hStdIn;
+		BOOL bSuccess;
+		INPUT_RECORD inputBuffer;
+		DWORD dwInputEvents; /* number of events actually read */
+
+		printf("Press any key to continue...\n");
+		hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+		do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
+			1, &dwInputEvents);
+		} while (!(inputBuffer.EventType == KEY_EVENT &&
+			inputBuffer.Event.KeyEvent.bKeyDown));
+		return(retval);
+	}
+#endif
+

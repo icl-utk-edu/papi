@@ -8,18 +8,9 @@
     the contributions of loops 2 and 4 into the total count.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
-int handle_error(char *file,int line,char *msg,int errcode)
+void handle_error(char *file,int line,char *msg,int errcode)
 {
   char errstring[PAPI_MAX_STR_LEN];
 
@@ -32,7 +23,7 @@ int main(int argc, char **argv)
 {
   int retval;
 #define NUM_EVENTS 2
-  long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
+  long_long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
   int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_CYC};
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -50,7 +41,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read_counters",retval); 
 
-  printf("%12lld %12lld  (Counters continuing...)\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "(Counters continuing...)\n");
 
   /* Loop 2*/
   do_flops(NUM_FLOPS);
@@ -59,7 +50,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_accum_counters",retval); 
 
-  printf("%12lld %12lld  (Counters being ''held'')\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "(Counters being ''held'')\n");
 
   /* Loop 3*/
   /* Simulated code that should not be counted */
@@ -68,7 +59,7 @@ int main(int argc, char **argv)
   retval = PAPI_read_counters(dummyvalues,NUM_EVENTS);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read_counters",retval); 
-  printf("%12lld %12lld  (Skipped counts)\n",dummyvalues[0],dummyvalues[1]);
+  printf(TWO12, dummyvalues[0], dummyvalues[1], "(Skipped counts)\n");
 
   printf("%12s %12s  (''Continuing'' counting)\n","xxx","xxx");
   /* Loop 4*/
@@ -78,7 +69,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_accum_counters",retval); 
 
-  printf("%12lld %12lld\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "");
 
   PAPI_shutdown();
 

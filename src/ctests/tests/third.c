@@ -26,21 +26,12 @@
    - Stop eventset 2
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 int main(int argc, char **argv) 
 {
   int retval, num_tests = 5, tmp;
-  long long **values;
+  long_long **values;
   int EventSet1, EventSet2;
   int mask1 = 0x1, mask2 = 0x4;
   int num_events1, num_events2;
@@ -118,10 +109,10 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\t\t3\t\t4\t\t5\n");
-  printf("PAPI_FP_INS : \t%d\t\t%d\t\t%lld\t%d\t\t%lld\n",
-	 0,0,(values[2])[0],0,(values[4])[0]);
-  printf("PAPI_TOT_CYC: \t%lld\t%lld\t%d\t\t%lld\t%d\n",
-	 (values[0])[0],(values[1])[0],0,(values[3])[0],0);
+  printf(TAB5, "PAPI_FP_INS : ",
+	 (long_long)0,(long_long)0,(values[2])[0],(long_long)0,(values[4])[0]);
+  printf(TAB5, "PAPI_TOT_CYC: ",
+	 (values[0])[0],(values[1])[0],(long_long)0,(values[3])[0],(long_long)0);
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");

@@ -1,10 +1,6 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
-int err_exit(int code, char *str)
+void err_exit(int code, char *str)
 {
   char out[PAPI_MAX_STR_LEN];
   PAPI_perror(code, out, PAPI_MAX_STR_LEN);
@@ -15,7 +11,7 @@ int err_exit(int code, char *str)
 int main()
 {
    int i, retval, EventSet = PAPI_NULL, CostEventSet = PAPI_NULL;
-   long long int totcyc, values[2], readvalues[2];
+   long_long totcyc, values[2], readvalues[2];
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
      err_exit(retval, "PAPI_library_init(PAPI_VER_CURRENT)");

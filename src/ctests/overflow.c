@@ -22,16 +22,8 @@
    - Stop eventset 1
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
+
 #undef NUM_FLOPS
 
 #define NUM_FLOPS 10000000
@@ -41,24 +33,27 @@
 #define EVENT_NAME_2 PAPI_FP_INS
 #define EVENT_STRING_2 "PAPI_FP_INS"
 
+#ifdef _CRAYT3E
+	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
+#elif defined(_WIN32)
+	#define OVER_FMT	"handler(%d, %x, %d, %I64, %d, %p) Overflow at %p!\n"
+#else
+	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p!\n"
+#endif
+
 int total = 0;
 
-void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
+void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
 {
-#ifdef _CRAYT3E
-  fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n",
-	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
-#else
-  fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p!\n",
-	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
-#endif
+  fprintf(stderr,OVER_FMT,EventSet,EventCode,EventIndex,
+	  values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
   total++;
 }
 
 int main(int argc, char **argv) 
 {
   int EventSet;
-  long long (values[2])[2];
+  long_long (values[2])[2];
   int retval;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -117,7 +112,7 @@ int main(int argc, char **argv)
   printf("Row 2 approximately equals %d %d\n",10*NUM_FLOPS,10*NUM_FLOPS);
 #endif
   printf("Column 1 approximately equals column 2\n");
-  printf("Row 3 approximate equals %lld\n",(values[0])[1]/THRESHOLD);
+  printf(TAB1, "Row 3 approximate equals",(values[0])[1]/THRESHOLD);
 
   PAPI_shutdown();
 

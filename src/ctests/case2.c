@@ -10,10 +10,7 @@ events. I still have a problem if someone adds Level 2 cache misses
 and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 2 counters. */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
+#include "papi_test.h"
 
 int main()
 {
@@ -22,7 +19,7 @@ int main()
    int EventSet;
    int retval;
    int j = 0,i;
-   long long int g1[3];
+   long_long g1[3];
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)

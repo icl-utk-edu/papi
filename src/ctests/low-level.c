@@ -19,18 +19,9 @@
     in example 2.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
-int handle_error(char *file,int line,char *msg,int errcode)
+void handle_error(char *file,int line,char *msg,int errcode)
 {
   char errstring[PAPI_MAX_STR_LEN];
 
@@ -43,7 +34,7 @@ int main(int argc, char **argv)
 {
   int retval;
 #define NUM_EVENTS 2
-  long long values[NUM_EVENTS],dummyvalues[NUM_EVENTS];
+  long_long values[NUM_EVENTS],dummyvalues[NUM_EVENTS];
   int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_INS};
   int EventSet=PAPI_NULL;
 
@@ -72,7 +63,7 @@ int main(int argc, char **argv)
   retval = PAPI_read(EventSet,values);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read",retval); 
-  printf("%12lld %12lld  (Counters continuing...)\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "(Counters continuing...)\n");
 
   /* Loop 2*/
   do_flops(NUM_FLOPS);
@@ -82,7 +73,7 @@ int main(int argc, char **argv)
   retval = PAPI_accum(EventSet,values);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_accum",retval); 
-  printf("%12lld %12lld  (Counters being accumulated)\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "(Counters being accumulated)\n");
 
   /* Loop 3*/
   do_flops(NUM_FLOPS);
@@ -94,10 +85,9 @@ int main(int argc, char **argv)
   retval = PAPI_read(EventSet,dummyvalues);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read",retval); 
-  printf("%12lld %12lld  (Reading stopped counters)\n",
-	 dummyvalues[0],dummyvalues[1]);
+  printf(TWO12, dummyvalues[0], dummyvalues[1], "(Reading stopped counters)\n");
 
-  printf("%12lld %12lld\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "");
 
   printf("\n   Incorrect usage of read and accum.\n");
   printf("   Another incorrect use\n");
@@ -111,7 +101,7 @@ int main(int argc, char **argv)
   retval = PAPI_read(EventSet,values);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read",retval); 
-  printf("%12lld %12lld  (Counters continuing...)\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "(Counters continuing...)\n");
 
   /* Loop 2*/
   /* Code that should not be counted */
@@ -120,8 +110,7 @@ int main(int argc, char **argv)
   retval = PAPI_read(EventSet,dummyvalues);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read",retval); 
-  printf("%12lld %12lld  (Intermediate counts...)\n",
-	 dummyvalues[0],dummyvalues[1]);
+  printf(TWO12, dummyvalues[0], dummyvalues[1], "(Intermediate counts...)\n");
 
   /* Loop 3*/
   do_flops(NUM_FLOPS);
@@ -132,7 +121,7 @@ int main(int argc, char **argv)
   retval = PAPI_accum(EventSet,values);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_accum",retval); 
-  printf("%12lld %12lld\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "");
 
   retval = PAPI_stop(EventSet,dummyvalues);
   if (retval != PAPI_OK)
@@ -150,7 +139,7 @@ int main(int argc, char **argv)
   retval = PAPI_read(EventSet,values);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_read",retval); 
-  printf("%12lld %12lld  (Counters continuing)\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "(Counters continuing)\n");
 
   /* Code that should not be counted */
   do_flops(NUM_FLOPS);
@@ -165,7 +154,7 @@ int main(int argc, char **argv)
   retval = PAPI_accum(EventSet,values);
   if (retval != PAPI_OK)
     handle_error(__FILE__,__LINE__,"PAPI_accum",retval); 
-  printf("%12lld %12lld\n",values[0],values[1]);
+  printf(TWO12, values[0], values[1], "");
 
   PAPI_shutdown();
 

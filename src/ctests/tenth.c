@@ -13,16 +13,7 @@
    - Get us.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 int main() 
 {
@@ -42,7 +33,7 @@ int main()
   int num_events1;
   int num_events2;
   int num_events3;
-  long long **values;
+  long_long **values;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
@@ -119,27 +110,21 @@ int main()
 
   printf("Test type   : \t1\t\t2\t\t3\n");
 #if defined(sun) && defined(sparc)
-  printf("PAPI_L2_TCM : \t%lld\t\t0\t\t0\n",
-	 (values[0])[0]);
-  printf("PAPI_L2_TCA : \t0\t\t%lld\t0\n",
-	 (values[1])[0]);
-  printf("PAPI_L2_TCH : \t0\t\t0\t\t%lld\n",
-	 (values[2])[0]);
+  printf(TAB3, "PAPI_L2_TCM : ", (values[0])[0], (long_long)0, (long_long)0);
+  printf(TAB3, "PAPI_L2_TCA : ", (long_long)0, (values[1])[0], (long_long)0);
+  printf(TAB3, "PAPI_L2_TCH : ", (long_long)0, (long_long)0, (values[2])[0]);
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("First number row 1 approximately equals (2,2) - (3,3) or %lld\n",(values[1])[0]-(values[2])[0]);
+  printf(TAB1, "First number row 1 approximately equals (2,2) - (3,3) or",(values[1])[0]-(values[2])[0]);
 #else
-  printf("PAPI_L1_TCM : \t%lld\t\t0\t\t0\n",
-	 (values[0])[0]);
-  printf("PAPI_L1_ICM : \t0\t\t%lld\t\t0\n",
-	 (values[1])[0]);
-  printf("PAPI_L1_DCM : \t0\t\t0\t\t%lld\n",
-	 (values[2])[0]);
+  printf(TAB3, "PAPI_L1_TCM : ", (values[0])[0], (long_long)0, (long_long)0);
+  printf(TAB3, "PAPI_L1_ICM : ", (long_long)0, (values[1])[0], (long_long)0);
+  printf(TAB3, "PAPI_L1_DCM : ", (long_long)0, (long_long)0, (values[2])[0]);
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("First number row 1 approximately equals (2,2) + (3,3) or %lld\n",(values[1])[0]+(values[2])[0]);
+  printf(TAB1, "First number row 1 approximately equals (2,2) + (3,3) or",(values[1])[0]+(values[2])[0]);
 #endif
 
   free_test_space(values, num_tests);

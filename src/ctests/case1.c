@@ -8,10 +8,7 @@ event, then the 2nd one get an error when I tried to add it, is it possible for
 PAPI_start to work but just count the first event?
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
+#include "papi_test.h"
 
 int main()
 {
@@ -20,7 +17,7 @@ int main()
    int EventSet;
    int retval;
    int i, j = 0;
-   long long int g1[2];
+   long_long g1[2];
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)

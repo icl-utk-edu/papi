@@ -15,20 +15,12 @@
    - Stop and read user domain counters
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <memory.h>
-#include <sys/types.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 int main(int argc, char **argv) 
 {
   int retval, num_tests = 3, tmp;
-  long long **values;
+  long_long **values;
   int EventSet1, EventSet2, EventSet3;
   int num_events1, num_events2, num_events3;
   int mask1 = 0x5, mask2 = 0x5, mask3 = 0x5;
@@ -111,9 +103,9 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------\n");
 
   printf("Test type   : \tPAPI_DOM_ALL\tPAPI_DOM_KERNEL\tPAPI_DOM_USER\n");
-  printf("PAPI_FP_INS : \t%lld\t%lld\t\t%lld\n",
+  printf(TAB3, "PAPI_FP_INS : ",
 	 (values[0])[0],(values[1])[0],(values[2])[0]);
-  printf("PAPI_TOT_CYC: \t%lld\t%lld\t\t%lld\n",
+  printf(TAB3, "PAPI_TOT_CYC: ",
 	 (values[0])[1],(values[1])[1],(values[2])[1]);
   printf("-------------------------------------------------------------\n");
 

@@ -13,16 +13,7 @@
    - Get us.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 int main() 
 {
@@ -30,8 +21,8 @@ int main()
   int EventSet1;
   int mask1 = 0x5;
   int num_events1;
-  long long **values;
-  long long elapsed_us, elapsed_cyc;
+  long_long **values;
+  long_long elapsed_us, elapsed_cyc;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)

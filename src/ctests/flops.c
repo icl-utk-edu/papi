@@ -5,22 +5,26 @@
  * -Kevin London
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include "papi.h"
+#include "papi_test.h"
 #define INDEX 100
+
+#ifdef _WIN32
+	char format_string[] = {"Real_time: %f Proc_time: %f Total flpins: %I64d MFLOPS: %f\n"};
+#else
+	char format_string[] = {"Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n"};
+#endif
 
 int main(){
   extern void dummy(void *);
   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
   float real_time, proc_time, mflops;
-  long long flpins;
+  long_long flpins;
   int i,j,k;
 
   /* Initialize the Matrix arrays */
   for ( i=0; i<INDEX*INDEX; i++ ){
 	mresult[0][i] = 0.0;
-	matrixa[0][i] = matrixb[0][i] = rand()*1.1; }
+	matrixa[0][i] = matrixb[0][i] = rand()*(float)1.1; }
 
   /* Setup PAPI library and begin collecting data from the counters */
   if(PAPI_flops( &real_time, &proc_time, &flpins, &mflops)<PAPI_OK){ 
@@ -37,8 +41,7 @@ int main(){
   PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
   dummy((void*) mresult);
  
-  printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n",
-	real_time, proc_time, flpins, mflops);
+  printf(format_string, real_time, proc_time, flpins, mflops);
   exit(0);
 }
 
