@@ -25,7 +25,7 @@ extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 extern hwd_groups_t group_map[];
 
-static preset_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = { 
+static hwi_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = { 
   {PAPI_L1_DCM,DERIVED_ADD,{PNE_PM_LD_MISS_L1,PNE_PM_ST_MISS_L1,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_DCA,DERIVED_ADD,{PNE_PM_LD_REF_L1,PNE_PM_ST_REF_L1,0,0,0,0,0,0}}, /*Level 1 data cache access*/
   {PAPI_FXU_IDL,0,{PNE_PM_FXU_IDLE,0,0,0,0,0,0,0}}, /*Cycles integer units are idle*/
@@ -54,7 +54,7 @@ static preset_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_STL_ICY,0,{PNE_PM_0INST_FETCH,0,0,0,0,0,0,0}}, /*Cycles with No Instruction Issue*/
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
-preset_search_t *preset_search_map;
+hwi_search_t *preset_search_map;
 
 
  #define DEBUG_SETUP 
