@@ -18,14 +18,14 @@ To create a version of PAPI in your native language, do the following:
 	If neither is done, the strings will default to English
 */
 
-/* #define LANGUAGE_US		/* American English	*/
-/* #define LANGUAGE_FR		/* French			*/
-/* #define LANGUAGE_DE		/* Deutsch			*/
-/* #define LANGUAGE_IT		/* Italian			*/
-/* #define LANGUAGE_SE		/* Swedish			*/
-/* #define LANGUAGE_ES		/* Espanol			*/
-/* #define LANGUAGE_NL		/* Dutch			*/
-/* #define LANGUAGE_AU		/* Australian		*/
+/* #define LANGUAGE_US		*//* American English	*/
+/* #define LANGUAGE_FR		*//* French				*/
+/* #define LANGUAGE_DE		*//* Deutsch			*/
+/* #define LANGUAGE_IT		*//* Italian			*/
+/* #define LANGUAGE_SE		*//* Swedish			*/
+/* #define LANGUAGE_ES		*//* Espanol			*/
+/* #define LANGUAGE_NL		*//* Dutch				*/
+/* #define LANGUAGE_AU		*//* Australian			*/
 
 #ifdef LANGUAGE_FR
   #include "papiStrings_FR.h"
