@@ -1,4 +1,6 @@
 all:
+	@echo "The below is being deprecated. Please use ./configure first!"
+	@echo "";
 	@echo "Please use one of the following commands:";
 	@echo "";
 	@echo "make -f Makefile.linux-pfm-itanium (see ./libpfm-2.0/3.0)";
@@ -15,12 +17,14 @@ all:
 	@echo "make -f Makefile.solaris-ultra-64bit";
 	@echo "make -f Makefile.irix-mips";
 	@echo "make -f Makefile.irix-mips-64bit";
-	@echo "make -f Makefile.linux-perfctr-p2 (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-perfctr-p3 (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-perfctr-p4 (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-perfctr-em64t (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-athlon (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-opteron (see ./perfctr-2.4/6.x)";
+	@echo "make -f Makefile.linux-perfctr-p2 (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-perfctr-p3 (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-perfctr-p4 (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-perfctr-em64t (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-perfctr-em64t-32bit (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-athlon (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-opteron (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-opteron-32bit (see ./perfctr-2.6.x)";
 	@echo "make -f Makefile.dadd-alpha (EV6/67/7 only)";
 	@echo "make -f Makefile.tru64-alpha (EV6/67 only)";
 	@echo "make -f Makefile.linux-alpha (with patched iprobe)";
