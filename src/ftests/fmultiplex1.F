@@ -381,7 +381,9 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       endif
 
 #if (defined(i386)&&defined(linux))||defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || (SUBSTR==aix-power)
+
       call PAPIf_add_event( EventSet, PAPI_L1_DCM, retval )
+C Try alternative event if the above is not possible to use...
       if ( retval .EQ. PAPI_ECNFLCT .OR. retval .EQ. PAPI_ENOEVNT ) then
         call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
       end if
