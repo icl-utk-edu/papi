@@ -12,7 +12,7 @@
 * Mods:    Min Zhou
 *          min@cs.utk.edu
 * Mods:    Kevin London
-*	       london@cs.utk.edu
+*	   london@cs.utk.edu
 * Mods:    Per Ekman
 *          pek@pdc.kth.se
 * Mods:    Haihang You
@@ -26,7 +26,6 @@
 #include "papi_preset.h"
 #include "papi_internal.h"
 #include "papi_protos.h"
-
 #include "papiStrings.h"
 
 
@@ -34,9 +33,8 @@
 /* BEGIN PROTOTYPES */
 /********************/
 
-/* Defined in this file */
 static int default_error_handler(int errorCode);
-static int counter_read(EventSetInfo_t * ESI, long_long * hw_counter, long_long * values);
+static long_long handle_derived(EventInfo_t * evi, long_long * from);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 
@@ -945,38 +943,51 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 {
    int retval;
    long_long *dp;
-/*
-  int *pos, threshold, multiplier;
-*/
-
-
-/*
-  pos = NULL;
-  threshold = multiplier = 0;
-  if ((ESI->state & PAPI_OVERFLOWING) && 
-          (_papi_hwi_system_info.supports_hw_overflow)) 
-  {
-    pos = ESI->EventInfoArray[ESI->overflow.EventIndex].pos;
-    threshold= ESI->overflow.threshold;
-    multiplier = ESI->overflow.count;
-  }  
-  else 
-    if ((ESI->state & PAPI_PROFILING) && 
-          (_papi_hwi_system_info.supports_hw_profile)) 
-    {
-      pos = ESI->EventInfoArray[ESI->profile.EventIndex].pos;
-      threshold = ESI->profile.threshold;
-      multiplier =  ESI->profile.overflowcount;
-    };
-*/
+   int i, j = 0, index;
 
    retval = _papi_hwd_read(context, &ESI->machdep, &dp);
    if (retval != PAPI_OK)
-      return (retval);
+     papi_return (retval);
 
-   counter_read(ESI, dp, values);
 
-   return (PAPI_OK);
+   /* This routine distributes hardware counters to software counters in the
+      order that they were added. Note that the higher level
+      EventInfoArray[i] entries may not be contiguous because the user
+      has the right to remove an event.
+      But if we do compaction after remove event, this function can be 
+      changed.  
+    */
+
+   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) 
+     {
+       index = ESI->EventInfoArray[i].pos[0];
+      if (index == -1)
+         continue;
+
+      INTDBG("Event index %d, position is 0x%x\n", j, index);
+
+      /* If this is not a derived event */
+
+      if (ESI->EventInfoArray[i].derived == NOT_DERIVED) 
+	{
+	  INTDBG("counter index is %d\n", index);
+	  values[j] = dp[index];
+	} 
+      else /* If this is a derived event */ 
+	{ 
+         values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
+	 if (values[j] < (long_long)0)
+	   papi_return(PAPI_EBUG);
+
+	}
+	   
+      INTDBG("read value is =%lld \n", values[j]);
+      /* Early exit! */
+      if (++j == ESI->NumberOfEvents)
+         break;
+     }
+
+   papi_return (PAPI_OK);
 }
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
@@ -1309,42 +1320,6 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
    }
    return(-1);
 }
-
-static int counter_read(EventSetInfo_t * ESI, long_long * hw_counter, long_long * values)
-{
-   int i, j = 0, index;
-
-   /* This routine distributes hardware counters to software counters in the
-      order that they were added. Note that the higher level
-      EventInfoArray[i] entries may not be contiguous because the user
-      has the right to remove an event.
-      But if we do compaction after remove event, this function can be 
-      changed.  
-    */
-
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      index = ESI->EventInfoArray[i].pos[0];
-      if (index == -1)
-         continue;
-
-      INTDBG("Event index %d, position is 0x%x\n", j, index);
-
-      /* If this is not a derived event */
-
-      if (ESI->EventInfoArray[i].derived == NOT_DERIVED) {
-         INTDBG("counter index is %d\n", index);
-         values[j] = hw_counter[index];
-      } else                    /* If this is a derived event */
-         values[j] = handle_derived(&ESI->EventInfoArray[i], hw_counter);
-
-      INTDBG("read value is =%lld \n", values[j]);
-      /* Early exit! */
-      if (++j == ESI->NumberOfEvents)
-         break;
-   }
-   return (PAPI_OK);
-}
-
 
 void print_state(EventSetInfo_t * ESI)
 {

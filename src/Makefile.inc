@@ -143,11 +143,11 @@ install-tree:
 	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
 	@echo "Root of destination directory is: \"$(PREFIX)\""; 
 	-mkdir -p $(PREFIX)/lib
-	chmod go+rx $(PREFIX)/lib
+	# chmod go+rx $(PREFIX)/lib
 	-mkdir -p $(PREFIX)/include
-	chmod go+rx $(PREFIX)/include
+	# chmod go+rx $(PREFIX)/include
 	-mkdir -p $(PREFIX)/man
-	chmod go+rx $(PREFIX)/man
+	# chmod go+rx $(PREFIX)/man
 	-mkdir -p $(PREFIX)/share/papi
-	chmod go+rx $(PREFIX)/share/papi
+	# chmod go+rx $(PREFIX)/share/papi
 	

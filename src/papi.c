@@ -733,7 +733,7 @@ int PAPI_read(int EventSet, long_long * values)
    {
       int i;
       for (i = 0; i < ESI->NumberOfEvents; i++)
-         DBG((stderr, "PAPI_read values[%d]:\t%llu\n", i, values[i]));
+         DBG((stderr, "PAPI_read values[%d]:\t%lld\n", i, values[i]));
    }
 #endif
 
