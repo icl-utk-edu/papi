@@ -451,7 +451,8 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 int mpx_remove_event(MPX_EventSet **mpx_events, int EventCode)
 {
   mpx_hold();
-  mpx_delete_one_event(* mpx_events,EventCode);
+  if(*mpx_events)
+    mpx_delete_one_event(* mpx_events,EventCode);
   mpx_release();
   return(PAPI_OK);
 }
