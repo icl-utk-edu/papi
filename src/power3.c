@@ -42,7 +42,7 @@ extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 extern hwi_preset_data_t _papi_hwd_preset_map[];
 
-static const hwi_search_t _papi_hwd_604_preset_map[] = {
+static hwi_search_t _papi_hwd_604_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
    {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
    {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
@@ -71,7 +71,7 @@ static const hwi_search_t _papi_hwd_604_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
 };
 
-static const hwi_search_t _papi_hwd_604e_preset_map[] = {
+static hwi_search_t _papi_hwd_604e_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
    {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
    {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
@@ -114,7 +114,7 @@ static const hwi_search_t _papi_hwd_604e_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
 };
 
-static const hwi_search_t _papi_hwd_630_preset_map[] = {
+static hwi_search_t _papi_hwd_630_preset_map[] = {
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache misses */
    {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
    {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_IC_MISS, PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 1 total cache misses */
@@ -307,7 +307,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 /* This function updates the control structure with whatever resources are allocated
     for all the native events in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
+                                   NativeInfo_t * native, int count, hwd_context_t *context)
 {
    int i, index;
 
