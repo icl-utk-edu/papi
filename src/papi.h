@@ -270,7 +270,7 @@ int internal_PAPI_add_events(int *EventSet, int *Events, int number);
 int internal_PAPI_add_pevent(int *EventSet, int code, void *inout);
 int internal_PAPI_cleanup(int *EventSet); 
 int internal_PAPI_get_opt(int option, PAPI_option_t *ptr);
-int internal_PAPI_init(void);
+/*int internal_PAPI_init(void);*/
 int internal_PAPI_list_events(int EventSet, int *Events, int *number);
 int internal_PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler);
 int internal_PAPI_perror(int code, char *destination, int length);
@@ -308,7 +308,7 @@ int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
 int PAPI_cleanup(int *EventSet); 
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
-int PAPI_init(void);
+/*int PAPI_init(void);*/
 int PAPI_list_events(int EventSet, int *Events, int *number);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);
