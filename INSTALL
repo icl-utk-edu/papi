@@ -1,11 +1,200 @@
-/* 
-* File:    INSTALL
-* CVS:     $Id$
-* Author:  Philip Mucci
-*          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
-*/  
+/*
+ * Installation guide as of December 13, 2001
+ * Kevin London
+ * london@cs.utk.edu
+ */
 
-To install the various components of PAPI, please see the INSTALL
-files in each of the subdirectories.
+How to install PAPI on your system
+----------------------------------
+
+PAPI is currently supported on the following systems:
+Alpha EV6, EV7 on Tru64 Unix
+AMD Athlon on Linux 2.2,2.4,Windows 2000/XP
+Cray T3E,SV1,SV2 on Unicos
+Intel Pentium on Linux 2.0,2.2,2.4 and Windows 2000/XP
+MIPS R10K, R12K on Irix
+Power 3,604,604e on AIX 4.3
+UltraSparc I,II,III on Solaris 2.8 
+
+Some of these you can compile PAPI right out of the box without any
+additional setup, others require drivers or patches to be installed
+first.  The general installation steps are below, but first find your
+particular Operating System's section for any additional Steps that
+may be necessary.
+
+General Installation
+-------------
+1) Pick the appropriate Makefile.<arch> for your system, edit it
+   and compile.
+
+   % make -f Makefile.<arch>
+
+2) Check for errors. Look for the libpapi.a and libpapi.so
+   in the current directory. Optionally run the test programs
+   in the 'ftests' and 'tests' directories. Not all tests will
+   succeed on all platforms.
+
+   % ./run_tests.sh
+
+   will run the tests in quiet mode, which will print PASSED, FAILED, or
+   SKIPPED.  Tests are SKIPPED if the functionality being tested is not
+   supported by that platform.
+
+3) Create a PAPI binary distribution or install PAPI directly.
+
+   To directly install PAPI from the build tree:
+
+   % make -f Makefile.<arch> DESTDIR=<install-dir> install
+
+   Please use an absolute pathname for <install-dir>, not a relative pathname.
+
+   To create a binary kit, papi-<arch>.tgz:
+
+   % make -f Makefile.<arch> dist
+
+
+******************************************************************************
+OS Specific installation steps - Alphabetical by OS
+******************************************************************************
+
+AIX  - IBM Power
+----------------
+The only requirement for IBM is that you must install pmtoolkit before 
+compiling PAPI.  Pmtoolkit must be installed by root.  The file can
+be downloaded from the following URL:
+http://www.alphaworks.ibm.com/aw.nsf/download/pmapi
+
+Currently the only supported OS if AIX 4.3.3 for pmtoolkit.  The installation
+of pmtoolkit is described below, and as said before it must be installed
+by root.
+
+Installations instructions for the PMTOOLKIT.
+
+1. make sure you have AIX 4.3.3 installed. This is the only supported level 
+   for this package 
+2. store pmtoolkit.latest in /usr/sys/inst.images 
+3. type "installp -X -acd /usr/sys/inst.images/pmtoolkit.obj all" to install.
+    This file goes in /usr/lpp/pmtoolkit/doc/pmapi.toolkit.guide.html.
+4. After the installation it is necessary to run pmloadsvcs to load the 
+   kernel extension. 
+5. A simple way of testing the installation and load is by running pmcycles.
+    It should return: This machine runs at xxx MHz
+
+Notice that whenever the machine is rebooted, one need to reload the 
+pmtoolkit. This step can be done automatically at boot time by putting the
+line: /usr/lpp/pmtoolkit/bin/pmloadsvcs at the end of the /etc/rc.net file.
+
+In order to unload the kernel extension, run pmunloadsvcs
+
+
+After, the installation of pmtoolkit, follow the general installation
+to install PAPI.
+
+
+Linux - Intel and AMD
+---------------------
+Linux requires that the kernel be patched and recomipiled.  The patches
+needed are provided by perfctr.  
+
+Installation of Perfctr
+
+1. cd into the patches director which can be found in 
+   papi/src/perfctr-2.3/patches and find the patch for your kernel
+
+2. Copy the patch file into your kernel source directory, this can
+   usually be loacted in /usr/src/kernel-version, where 
+   kernel-version will most likeley be named something like:
+   linux-2.4  (If your system does not provide kernel source code
+   you can download a new kernel at: ftp.kernel.org )
+
+3. cd into your kernel source directory for example the kernel source
+   directory in the above example would be /usr/src/linux-2.4
+
+4. Apply the patch with the following command:
+   patch -p1 < patch-kernel-$KVER  
+   where $KVER is the kernel version you are using, for example 2.4.2 would
+   be patch-kernel-2.4.2, basically it is the name of the patch file you
+   copied in step 2.  Examine the output if any hunks failed you need to
+   patch them by hand, for more information on this see the patch man page.
+
+5. cd back to papi/src/perfctr-2.3/linux and copy the files by issuing the
+   following command:
+   tar cf - . | tar -C /usr/src/linux-2.4 -xvf -
+   Replace /usr/src/linux-2.4 with the location of your kernel source.
+
+6. Next you have to reconfigure your kernel, cd to the kernel source code
+   directory and issue the following command:
+   make xconfig 
+
+7. You will see a window pop-up and you need to check the following:
+   Also, don't forget to do any setup necessary for that particular system
+   such as the correct ethernet card support, etc...
+
+8. Make the kernel:
+	make dep
+	make clean
+	make bzImage
+	make install
+	make modules
+	make modules_install
+   Make sure that all the makes don't have any errors in them.  The next 
+   step is to add this linux version to lilo.
+
+9. If using lilo, edit /etc/lilo.conf and make an entry that will look
+   similar to:
+	image=/boot/vmlinuz-2.4.2
+	label=papi-linux
+	read-only
+	root=/dev/hda1 
+   Where vmlinuz-2.4.2 should be the bzImage you made in step 8 (if you
+   are unsure, ls -lag /boot and look for the newest vmlinuz* )
+   label is just whatever you want listed as the name of that kernel, and
+   change /dev/hda1 to the linux boot partition if it isn't /dev/hda1
+   If you want this to be the default OS to load, change the default=
+   line to whatever you use for the label, for example in the above it would
+   be:  default=papi-linux
+
+10. After the lilo.conf file is edited use the following to update your
+   Master boot record:
+	/sbin/lilo
+
+11. Reboot, and if all goes well you have perfctr installed, now just follow
+   the general installation instructions and use: Makefile.linux-perfctr-2.3
+   for the Makefile.
+
+
+MIPS - Irix
+-----------
+No additonal steps are required to get PAPI working on Unicos.
+Follow the general installation guide, and everything should work.
+
+
+Solaris - Ultrasparc
+--------------------
+The only requirement for Solaris is that you must be running version 2.8
+or newer.  As long as that requirement is met, no additional steps are
+required to get PAPI working and you can follow the general installation
+guide.
+
+*NOTE about Ultrasparc III, while the mapping and code is here, we have
+*not tested this implementation, as we don't have access to a Ultrasparc III
+*So consider it beta ;)
+
+
+Tru64 - Alpha
+-------------
+
+Unicos - Cray 
+-------------
+No additonal steps are required to get PAPI working on Unicos.
+Follow the general installation guide, and everything should work.
+
+
+Windows XP/2000 - Intel and AMD
+-------------------------------
+You should download out self-installing executable from the PAPI site.
+This executable includes binaries for the library, examples, perfometer and
+the device driver needed to access the counters.  This installation has
+to be installed by a user that has administrator privellages, as it installs
+a device driver.  You do not have to follow the general installation on
+windows, just follow the online prompts.
