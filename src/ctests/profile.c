@@ -193,16 +193,16 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    num_buckets = (llength / 65536) / 2;
    switch (bucket) {
       case PAPI_PROFIL_BUCKET_16:
-         plength = num_buckets * 2;
-         size = 16;
+         plength = num_buckets * sizeof(short);
+         size = sizeof(short);
          break;
       case PAPI_PROFIL_BUCKET_32:
-         plength = num_buckets * 4;
-         size = 32;
+         plength = num_buckets * sizeof(int);
+         size = sizeof(int);
          break;
       case PAPI_PROFIL_BUCKET_64:
-         plength = num_buckets * 8;
-         size = 64;
+         plength = num_buckets * sizeof(u_long_long);
+         size = sizeof(u_long_long);
          break;
       default:
          size = 0;
