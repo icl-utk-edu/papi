@@ -585,7 +585,7 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 	  else
       {
 
-	    nevt =  head[j].event_code&NATIVE_AND_MASK;
+	    nevt =  head[j].event_code;
 	    for(n=0;n<ESI->NativeCount;n++)
         {
 		  if(nevt==ESI->NativeInfoArray[n].ni_event)
@@ -747,8 +747,6 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 		}
 		else if(EventCode & NATIVE_MASK)
 		{
-			int native_index = EventCode & NATIVE_AND_MASK;
-
 			/* Check if native event exists */
 			if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
 				return(PAPI_ENOEVNT);
@@ -765,7 +763,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			
 			/* Try to add the native. */
 			
-			remap = add_native_events(ESI, &native_index, 1, &ESI->EventInfoArray[thisindex]);
+			remap = add_native_events(ESI, &EventCode, 1, &ESI->EventInfoArray[thisindex]);
 			if (remap < 0)
 				return(PAPI_ECNFLCT);
 			else{
