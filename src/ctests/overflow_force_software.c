@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 
    retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
+      test_fail(__FILE__, __LINE__, "PAPI_overflow: didn't allow 2 software overflow", -1);
 
    retval = PAPI_remove_event(EventSet, PAPI_TOT_CYC);
    if (retval != PAPI_OK)
@@ -208,13 +208,13 @@ int main(int argc, char **argv)
       printf("-----------------------------------------------\n");
 
       printf("Test type    : %16d%16d%16d\n", 1, 2, 3);
-      printf(OUT_FMT, event_name, values[0], values[1], values[2]);
+      printf(OUT_FMT, event_name, values[0], 0, values[2]);
       printf("Overflows    : %16s%16d%16d\n", "", total[0], total[1]);
       printf("-----------------------------------------------\n");
 
       printf("Verification:\n");
      
-      printf("Column 2 approximately equals column 3\n");
+      printf("Overflow in Column 2 approximately equals overflows in column 3\n");
    }
 
    min = (long_long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
