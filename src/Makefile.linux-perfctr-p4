@@ -1,7 +1,7 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR = ./perfctr-2.4.5
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -O3 -g -Wall -mpentiumpro
+OPTFLAGS= -O3 -g -Wall -mpentiumpro -DDEBUG
 TOPTFLAGS= -g -Wall -mpentiumpro -DNO_SIMULT_EVENTSETS -DPENTIUM4
 #
 # GNU G77 section

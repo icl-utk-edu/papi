@@ -182,14 +182,33 @@ inline int PAPI_set_thr_specific(int tag, void *ptr)
 
 int PAPI_library_init(int version)
 {
-  int i, tmp;
+  int i, tmp=0;
+  char * var;
 
 #ifdef DEBUG
   #ifdef _WIN32	/* don't want to define an environment variable... */
 	_papi_hwi_debug = 1;
   #else
-	if (getenv("PAPI_DEBUG"))
-	  _papi_hwi_debug = 1;
+	_papi_hwi_debug = 0;
+	if ((var=getenv("PAPI_DEBUG")) && var != NULL)
+        {
+	  _papi_hwi_debug |= DEBUG_ON;
+	  if ( strlen(var)>1 && var[1]=='x')
+	     sscanf(var,"%x", &tmp);
+	  else
+	     tmp = atoi(var);
+	  _papi_hwi_debug |= tmp;
+        }
+	if (getenv("PAPI_DEBUG_SUBSTRATE"))
+	  _papi_hwi_debug |= DEBUG_SUBSTRATE;
+	if (getenv("PAPI_DEBUG_API"))
+	  _papi_hwi_debug |= DEBUG_API;
+	if (getenv("PAPI_DEBUG_INTERNAL"))
+	  _papi_hwi_debug |= DEBUG_INTERNAL;
+	if (getenv("PAPI_DEBUG_THREADS"))
+	  _papi_hwi_debug |= DEBUG_THREADS;
+	if (getenv("PAPI_DEBUG_MULTIPLEX"))
+	  _papi_hwi_debug |= DEBUG_MULTIPLEX;
   #endif
 #endif
 
@@ -244,7 +263,7 @@ int PAPI_library_init(int version)
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
 
   init_level = PAPI_LOW_LEVEL_INITED;
-  papi_return(init_retval = PAPI_VER_CURRENT);
+  return(init_retval = PAPI_VER_CURRENT);
 }
 
 /* From Anders Nilsson's (anni@pdc.kth.se) */
@@ -274,7 +293,7 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
       else if (*EventCode & NATIVE_MASK)
 	strncpy(description, _papi_hwi_native_code_to_descr(*EventCode), PAPI_MAX_STR_LEN);
     }
-  papi_return(PAPI_OK);
+  return(PAPI_OK);
 }
 
 int PAPI_label_event(int EventCode, char *label)

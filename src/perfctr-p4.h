@@ -220,14 +220,6 @@ typedef P4_preset_t hwd_preset_t;
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium 4"
  
-#define error_return(retval, format, args...) { fprintf(stderr,"Error in %s, function %s, line %d: ",__FILE__,__FUNCTION__,__LINE__); fprintf(stderr, format , ## args) ; fprintf(stderr, "\n"); return(retval); }
-#ifdef DEBUG
-#define DEBUGLABEL(a) fprintf(stderr,"%s:%s:%s:%d: ",a,__FILE__,__FUNCTION__,__LINE__)
-#define SUBDBG(format, args...) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { DEBUGLABEL("SUBSTRATE"); fprintf (stderr, format , ## args); } }
-#else
-#define SUBDBG(format, args...) { ; }
-#endif
-
 #define PAPI_VENDOR_UNKNOWN -1
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
