@@ -399,7 +399,7 @@ void _papi_hwd_error(int error, char *where)
 
 int _papi_hwd_init_global(void)
 {
-   int retval;
+   int retval=PAPI_OK;
 
    /* Fill in what we can of the papi_system_info. */
 
@@ -416,7 +416,12 @@ int _papi_hwd_init_global(void)
         _papi_hwi_system_info.hw_info.vendor_string,
         _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz));
 
-   return (PAPI_OK);
+   setup_native_table();
+   if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
+      return (PAPI_ESBSTR);}
+   retval = _papi_hwi_setup_all_presets(preset_search_map);
+
+   return (retval);
 }
 
 int _papi_hwd_init(hwd_context_t * context)
@@ -425,12 +430,6 @@ int _papi_hwd_init(hwd_context_t * context)
    /* Initialize our global machdep. */
 
    _papi_hwd_init_control_state(&context->cntrl);
-   retval = setup_native_table();
-   if (!_papi_hwd_init_preset_search_map(&pminfo))
-      retval = PAPI_ESBSTR;
-   retval = _papi_hwi_setup_all_presets(preset_search_map);
-
-   return (retval);
 }
 
 /* Go from highest counter to lowest counter. Why? Because there are usually
@@ -575,12 +574,6 @@ int _papi_hwd_shutdown_global(void)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *i)
 {
-#ifdef DEBUG
-   hwd_ucontext_t *info;
-   info = (hwd_ucontext_t *) i;
-   DBG((stderr, "_papi_hwd_dispatch_timer() at 0x%lx\n",
-        info->uc_mcontext.jmp_context.iar));
-#endif
    _papi_hwi_context_t ctx;
 
    ctx.si = si;

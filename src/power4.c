@@ -219,7 +219,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 
    set_domain(ptr, _papi_hwi_system_info.default_domain);
    set_granularity(ptr, _papi_hwi_system_info.default_granularity);
-   setup_native_table();
+   /*setup_native_table();*/
 }
 
 
