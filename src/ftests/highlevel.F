@@ -45,7 +45,7 @@
      *retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read_counters(values(1), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -54,7 +54,7 @@
      *retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop_counters(values(3), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then

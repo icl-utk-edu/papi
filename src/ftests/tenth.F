@@ -29,10 +29,6 @@
 #endif
 #endif
 
-#if defined(_POWER4) || defined(POWER3)
-#define do_l1misses do_l1misses_
-#endif
-
       program tenth
       implicit none
 
@@ -124,7 +120,7 @@
      . 'PAPIf_add_event', retval)
       end if
 
-      call do_l1misses(ITERS)
+      call fdo_l1misses(ITERS)
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -132,7 +128,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_l1misses(ITERS)
+      call fdo_l1misses(ITERS)
 
       call PAPIf_stop(es1, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -147,7 +143,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_l1misses(ITERS)
+      call fdo_l1misses(ITERS)
       call PAPIf_stop(es2, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -160,7 +156,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_l1misses(ITERS)
+      call fdo_l1misses(ITERS)
 
       call PAPIf_stop(es3, values(5), retval)
       if ( retval .NE. PAPI_OK ) then

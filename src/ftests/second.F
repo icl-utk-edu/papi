@@ -120,7 +120,7 @@
 
       call PAPIf_start(es1, retval)
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       if (retval.eq.PAPI_OK) then
       call PAPIf_stop(es1, values(1), retval)
@@ -132,7 +132,7 @@
 
       call PAPIf_start(es2, retval)
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       if (retval.eq.PAPI_OK) then
       call PAPIf_stop(es2, values(3), retval)
@@ -148,7 +148,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop(es3, values(5), retval)
       if ( retval .NE. PAPI_OK ) then

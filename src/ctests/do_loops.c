@@ -37,22 +37,27 @@ void do_reads(int n)
 #endif                          /* _WIN32 */
 }
 
-void do_reads_(int *n)
+void fdo_reads(int *n)
 {
   do_reads(*n);
 }
 
-void do_reads__(int *n)
+void fdo_reads_(int *n)
 {
   do_reads(*n);
 }
 
-void DO_READS(int *n)
+void fdo_reads__(int *n)
 {
   do_reads(*n);
 }
 
-void _DO_READS(int *n)
+void FDO_READS(int *n)
+{
+  do_reads(*n);
+}
+
+void _FDO_READS(int *n)
 {
   do_reads(*n);
 }
@@ -70,22 +75,27 @@ void do_flops(int n)
    }
 }
 
-void do_flops_(int *n)
+void fdo_flops(int *n)
 {
   do_flops(*n);
 }
 
-void do_flops__(int *n)
+void fdo_flops_(int *n)
 {
   do_flops(*n);
 }
 
-void DO_FLOPS(int *n)
+void fdo_flops__(int *n)
 {
   do_flops(*n);
 }
 
-void _DO_FLOPS(int *n)
+void FDO_FLOPS(int *n)
+{
+  do_flops(*n);
+}
+
+void _FDO_FLOPS(int *n)
 {
   do_flops(*n);
 }
@@ -107,22 +117,27 @@ void do_misses(int n, int size)
   dummy(&buf_dummy);
 }
 
-void do_misses_(int *n, int *size)
+void fdo_misses(int *n, int *size)
 {
   do_misses(*n,*size);
 }
 
-void do_misses__(int *n, int *size)
+void fdo_misses_(int *n, int *size)
 {
   do_misses(*n,*size);
 }
 
-void DO_MISSES(int *n, int *size)
+void fdo_misses__(int *n, int *size)
 {
   do_misses(*n,*size);
 }
 
-void _DO_MISSES(int *n, int *size)
+void FDO_MISSES(int *n, int *size)
+{
+  do_misses(*n,*size);
+}
+
+void _FDO_MISSES(int *n, int *size)
 {
   do_misses(*n,*size);
 }
@@ -139,22 +154,27 @@ void do_both(int n)
    }
 }
 
-void do_both_(int *n)
+void fdo_both(int *n)
 {
   do_both(*n);
 }
 
-void do_both__(int *n)
+void fdo_both_(int *n)
 {
   do_both(*n);
 }
 
-void DO_BOTH(int *n)
+void fdo_both__(int *n)
 {
   do_both(*n);
 }
 
-void _DO_BOTH(int *n)
+void FDO_BOTH(int *n)
+{
+  do_both(*n);
+}
+
+void _FDO_BOTH(int *n)
 {
   do_both(*n);
 }
@@ -174,22 +194,27 @@ void do_flush(void)
   dummy((void *)&flush_dummy);
 }
 
-void do_flush_(void)
+void fdo_flush(void)
 {
   do_flush();
 }
 
-void do_flush__(void)
+void fdo_flush_(void)
 {
   do_flush();
 }
 
-void DO_FLUSH(void)
+void fdo_flush__(void)
 {
   do_flush();
 }
 
-void _DO_FLUSH(void)
+void FDO_FLUSH(void)
+{
+  do_flush();
+}
+
+void _FDO_FLUSH(void)
 {
   do_flush();
 }
@@ -199,22 +224,27 @@ void do_l1misses(int n)
   do_misses(n,L1_MISS_BUFFER_SIZE_INTS);
 }
 
-void do_l1misses_(int *n)
+void fdo_l1misses(int *n)
 {
   do_l1misses(*n);
 }
 
-void do_l1misses__(int *n)
+void fdo_l1misses_(int *n)
 {
   do_l1misses(*n);
 }
 
-void DO_L1MISSES(int *n)
+void fdo_l1misses__(int *n)
 {
   do_l1misses(*n);
 }
 
-void _DO_L1MISSES(int *n)
+void FDO_L1MISSES(int *n)
+{
+  do_l1misses(*n);
+}
+
+void _FDO_L1MISSES(int *n)
 {
   do_l1misses(*n);
 }

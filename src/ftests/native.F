@@ -180,7 +180,7 @@ C     CPU cyc
 
       point = point +1
 C     call sleep(1)
-      call do_both(NUM_ITERS)
+      call fdo_both(NUM_ITERS)
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then

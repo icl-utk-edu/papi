@@ -63,7 +63,7 @@
      .     'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -85,7 +85,7 @@
      .     'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -95,7 +95,7 @@
       values(5)=values(7)
       values(6)=values(8)
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -103,7 +103,7 @@
      .     'PAPIf_accum', retval)
       end if
 
-      call do_flops(NUM_FLOPS)      
+      call fdo_flops(NUM_FLOPS)      
 
       call PAPIf_stop(es1, values(9), retval)
       if ( retval .NE. PAPI_OK ) then

@@ -69,7 +69,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -83,7 +83,7 @@
      . 'PAPIf_reset', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -91,7 +91,7 @@
      . 'PAPIf_read', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(5), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -99,7 +99,7 @@
      . 'PAPIf_read', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop(EventSet, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
