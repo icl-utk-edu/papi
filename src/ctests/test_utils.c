@@ -388,7 +388,7 @@ void test_pass(char *file, long_long ** values, int num_tests)
    if (values)
       free_test_space(values, num_tests);
    PAPI_set_debug(PAPI_QUIET);  /* Prevent error messages on Alpha */
-   PAPI_shutdown();
+   if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(0);
 }
 
@@ -424,6 +424,7 @@ void test_fail(char *file, int line, char *call, int retval)
       printf("Error in %s: %s\n", call, errstring);
    }
    printf("\n");
+   if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(1);
 }
 
@@ -449,6 +450,7 @@ void test_skip(char *file, int line, char *call, int retval)
       }
       printf("\n");
    }
+   if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(0);
 }
 

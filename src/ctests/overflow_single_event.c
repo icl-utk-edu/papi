@@ -31,7 +31,7 @@
 #define OVER_FMT	"handler(%d ) Overflow at %p! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
-#define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=0x%x!\n"
+#define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=0x%llx!\n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
    long_long values[2] = { 0, 0 };
    long_long min, max;
    int num_flops, retval;
-   int PAPI_event;
+   int PAPI_event, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -80,6 +80,11 @@ int main(int argc, char **argv)
       PAPI_event = PAPI_TOT_INS;
 #endif
 
+   if (PAPI_event == PAPI_FP_INS )
+      mythreshold = THRESHOLD;
+   else 
+      mythreshold = THRESHOLD * 2;
+
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
@@ -98,7 +103,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0, handler);
+   retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, 0, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
@@ -123,7 +128,7 @@ int main(int argc, char **argv)
 
       printf("Test case: Overflow dispatch of 1st event in set with 1 event.\n");
       printf("--------------------------------------------------------------\n");
-      printf("Threshold for overflow is: %d\n", THRESHOLD);
+      printf("Threshold for overflow is: %d\n", mythreshold);
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
       printf("-----------------------------------------------\n");
 
@@ -139,7 +144,7 @@ int main(int argc, char **argv)
 	printf("Column 1 approximately equals column 2\n");
 */
       printf("Row 3 approximately equals %u +- %u %%\n",
-             (unsigned) ((values[0]) / (long_long) THRESHOLD),
+             (unsigned) ((values[0]) / (long_long) mythreshold),
              (unsigned) (OVR_TOLERANCE * 100.0));
 
    }
@@ -151,8 +156,8 @@ int main(int argc, char **argv)
   	test_fail(__FILE__, __LINE__, event_name, 1);
 */
 
-   min = (long_long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long_long) THRESHOLD);
-   max = (long_long) ((values[0] * (1.0 + OVR_TOLERANCE)) / (long_long) THRESHOLD);
+   min = (long_long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
+   max = (long_long) ((values[0] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
    if (total > max || total < min)
       test_fail(__FILE__, __LINE__, "Overflows", 1);
 

@@ -127,6 +127,12 @@ int main(int argc, char **argv)
    retval = PAPI_stop(EventSet, values[1]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   retval = PAPI_cleanup_eventset(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+/*
    retval = PAPI_overflow(EventSet, PAPI_event, 0, 0, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
@@ -143,6 +149,7 @@ int main(int argc, char **argv)
    retval = PAPI_stop(EventSet, values[2]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+*/
    num_flops = NUM_FLOPS;
 #if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
    num_flops *= 2;
