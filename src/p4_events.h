@@ -262,10 +262,10 @@
 #define ESCR_EVENT_MASK(a) (a << 9)
 #define ESCR_TAG_VAL(a) (a << 5)
 #define ESCR_TAG_ENABLE (1 << 4)
-#define ESCR_T1_USR (1 << 3)
-#define ESCR_T0_OS (1 << 2)
-#define ESCR_T1_USR (1 << 1)
-#define ESCR_T0_OS (1 << 0)
+#define ESCR_T0_OS (1 << 3)
+#define ESCR_T0_USR (1 << 2)
+#define ESCR_T1_OS (1 << 1)
+#define ESCR_T1_USR (1 << 0)
 
 /* CCCR bit fields */
 
