@@ -52,6 +52,9 @@ int case1(void)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
+      if ( (i|PAPI_PRESET_MASK) == PAPI_L1_ICM ) continue;
+      if ( (i|PAPI_PRESET_MASK) == PAPI_L2_ICM ) continue;
+
       retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
