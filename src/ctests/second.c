@@ -48,7 +48,8 @@ void main()
   options.domain.domain=PAPI_DOM_ALL;
   r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
 
-///////////////EventSet1 is started/////////
+/*  Start EventSet1  */
+
   r=PAPI_reset(EventSet1);
   r=PAPI_start(EventSet1);
 
@@ -58,9 +59,11 @@ void main()
     c = a*b;
   }
   r=PAPI_stop(EventSet1, ct);
-///////////////EventSet1 is stopped/////////
 
-///////////////EventSet2 is started/////////
+/*  Stop EventSet1  */
+
+/*  Start EventSet2  */
+
   r=PAPI_reset(EventSet2);
   r=PAPI_start(EventSet2);
 
@@ -70,9 +73,11 @@ void main()
     c = a*b;
   }
   r=PAPI_stop(EventSet2, ct);
-///////////////EventSet2 is stopped/////////
 
-///////////////EventSet3 is started/////////
+/*  Stop EventSet2  */
+
+/*  Start EventSet3  */
+
   r=PAPI_reset(EventSet3);
   r=PAPI_start(EventSet3);
 
@@ -82,5 +87,6 @@ void main()
     c = a*b;
   }
   r=PAPI_stop(EventSet3, ct);
-///////////////EventSet3 is stopped/////////
+
+/*  Stop EventSet3  */
 }
