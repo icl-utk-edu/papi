@@ -5,27 +5,34 @@ C Compile me with -O0 or else you'll get none.
       subroutine do_reads(n)
       implicit none      
       integer n
-      real*8 c,z
-      integer i,j,u
+      integer buf(100)
+c L1_MISS_BUFFER_SIZE_INTS)      
+      integer i,u,stat
       save u
-      c = 3
-      z = -101010101
 
+#ifndef _CRAYT3E
 c  Open the data file
       if (u .eq. 0) then
-         open (u, FILE='/dev/null', STATUS='OLD')
+         open (UNIT=1,FILE='/dev/zero', STATUS='OLD', IOSTAT=stat)
+         if (stat .ne. 0) then
+            write(*,*) '/dev/zero cannot be opened.'
+            stop
+         end if
+	 u = 1
       end if
 
 c  Read the number of points
       do i = 1, n
-        do j= 1, n
-           c = c + z
-        end do
-        read(u,*) n
+        read(UNIT=1,FMT=*,IOSTAT=stat) buf
+        if (stat .ne. 0) then
+            write(*,*) '/dev/zero cannot be read.'
+            stop
+         end if
       end do
 
 c  Close the file
       close (u)
+#endif
       end
 
       subroutine do_flops(n)

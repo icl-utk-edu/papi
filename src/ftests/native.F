@@ -96,8 +96,7 @@ C     CPU cyc
       eventname(6) = 'PM_CYC'
       eventname(7) = 'PM_TLB_MISS'
       eventname(8) = 'PM_FPU_FMA'
-      call pmtoolkit12(retval)
-      n = 8 - retval
+      n = 7
 #endif
 
 #if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
@@ -181,7 +180,7 @@ C     CPU cyc
 
       point = point +1
 C     call sleep(1)
-      call do_both(1000)
+      call do_both(NUM_ITERS)
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then

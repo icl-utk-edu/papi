@@ -1,5 +1,4 @@
 #include "fpapi_test.h"
-#define NUM 100
 #define MAX_TO_ADD 9
 
       program multiplex2
@@ -12,7 +11,7 @@
       tests_quiet = get_quiet()
 
       if (tests_quiet .EQ. 0) then
-        write (*, 100) NUM
+        write (*, 100) NUM_ITERS
  100    FORMAT ("multiplex2: Using ", I3, " iterations")
         write (*,*) "case1: Does PAPI_multiplex_init() handle", 
      *       " lots of events?"
@@ -134,11 +133,9 @@
       end if
 
       fd = 1
-      do i=0, NUM, 1
-        call do_flops(1000000)
-#ifndef _CRAYT3E
-        call do_reads(1000)
-#endif
+      do i=0, NUM_ITERS, 1
+        call do_flops(NUM_FLOPS)
+        call do_reads(NUM_READS)
       end do
 
       call PAPIf_stop(EventSet, values(1), retval)

@@ -1,5 +1,4 @@
 #include "fpapi_test.h"
-#define NUM 10
 
       program multiplex1
       IMPLICIT NONE
@@ -11,7 +10,7 @@
       tests_quiet = get_quiet()
 
       if (tests_quiet .EQ. 0) then
-         write (*, 100) NUM
+         write (*, 100) NUM_ITERS
  100     FORMAT ("multiplex1: Using ", I3, " iterations")
          write (*,*) "case1: Does PAPI_multiplex_init() not break",
      *" regular operation?"
@@ -115,11 +114,9 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       end if
 
       fd = 1
-      do i=0, NUM, 1
-         call do_flops(1000000)
-#ifndef _CRAYT3E
-         call do_reads(1000)
-#endif
+      do i=0, NUM_ITERS, 1
+         call do_flops(NUM_FLOPS)
+         call do_reads(NUM_READS)
       end do
 
       call PAPIf_stop(EventSet, values(1), retval)
@@ -199,14 +196,10 @@ C  for multiplexed event sets (change -4711 to 0 when it is working)
       end if
 
       fd = 1
-      do i=0, NUM, 1
-         call do_flops(1000000)
-#ifndef _CRAYT3E
-         call do_reads(1000)
-#endif
+      do i=0, NUM_ITERS, 1
+         call do_flops(NUM_FLOPS)
+         call do_reads(NUM_READS)
       end do
-
-
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -289,11 +282,9 @@ C     Tests that PAPI_set_multiplex() works after adding events
       end if
 
       fd = 1
-      do i=0, NUM, 1
-         call do_flops(1000000)
-#ifndef _CRAYT3E
-         call do_reads(1000)
-#endif
+      do i=0, NUM_ITERS, 1
+         call do_flops(NUM_FLOPS)
+         call do_reads(NUM_READS)
       end do
 
       call PAPIf_stop(EventSet, values(1), retval)
@@ -435,11 +426,9 @@ C Try alternative event if the above is not possible to use...
       end if
 
       fd = 1
-      do i=0, NUM, 1
-         call do_flops(1000000)
-#ifndef _CRAYT3E
-         call do_reads(1000)
-#endif
+      do i=0, NUM_ITERS, 1
+         call do_flops(NUM_FLOPS)
+         call do_reads(NUM_READS)
       end do
 
       call PAPIf_stop(EventSet, values(1), retval)

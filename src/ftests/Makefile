@@ -5,12 +5,9 @@ TESTS 	= zero first  second tenth description \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
 PAPILIB=do_loops.o ftests_util.o dummy.o ../$(LIBRARY)
-FTEST_DEPENDENCE=$(PAPILIB)
+FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 
 default: $(TESTS)
-
-addAIXevents.o: addAIXevents.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c addAIXevents.c
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
@@ -69,8 +66,8 @@ cost: cost.F $(FTEST_DEPENDENCE)
 johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
 
-native: native.F $(FTEST_DEPENDENCE) addAIXevents.o
-	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
+native: native.F $(FTEST_DEPENDENCE) 
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) -o native $(LDFLAGS)
 
 fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) -o fmultiplex1 $(LDFLAGS)
@@ -79,15 +76,14 @@ fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE)
 fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
 
-ftests_util.o: ftests_util.F
-	if [ $(SUBSTR) = unicos-ev5 ]; then $(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
-	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
+ftests_util.o: ftests_util.F fpapi_test.h ../fpapi.h ../ctests/test_utils.h
+	$(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F
 
-do_loops.o: do_loops.F
-	$(F77) $(FFLAGS) $(INCLUDE) -c do_loops.F
+do_loops.o: do_loops.F fpapi_test.h ../fpapi.h ../ctests/test_utils.h
+	$(F77) $(FFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c do_loops.F
 
 dummy.o: dummy.F
-	$(F77) $(FFLAGS) $(INCLUDE) -c dummy.F
+	$(F77) $(FFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c dummy.F
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
