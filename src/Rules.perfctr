@@ -56,7 +56,7 @@ SUBSTR  = perfctr-$(CPU)
 MSUBSTR = linux-perfctr-$(CPU)
 MEMSUBSTR= linux
 LIBS    = static shared
-TARGETS = serial multiplex_and_pthreads
+TARGETS = serial multiplex_and_pthreads shared
 
 POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.5
 SPECIAL_REMOVE = rm -f libperfctr.so libperfctr.so.5
