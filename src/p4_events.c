@@ -83,14 +83,14 @@
 
 #if defined(PAPI_PENTIUM4_FP_X87)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}}
-#elif defined(PAPI_PENTIUM4_X87_SSE_SP)
+#elif defined(PAPI_PENTIUM4_FP_X87_SSE_SP)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
-#elif defined(PAPI_PENTIUM4_X87_SSE_DP)
+#elif defined(PAPI_PENTIUM4_FP_X87_SSE_DP)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
-#elif defined(PAPI_PENTIUM4_SSE_SP_DP)
+#elif defined(PAPI_PENTIUM4_FP_SSE_SP_DP)
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_SP_uop_tag0, PNE_scalar_DP_uop_tag0, PAPI_NULL, }, {0,}}}
 #else
-#warning "Assuming you meant -DPAPI_PENTIUM4_X87_SSE_DP on the compile line?"
+#warning "Assuming you meant -DPAPI_PENTIUM4_FP_X87_SSE_DP on the compile line?"
 #define FPU(a) {a, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_scalar_DP_uop_tag0, PNE_x87_FP_uop_tag0, PAPI_NULL, }, {0,}}}
 #endif
 

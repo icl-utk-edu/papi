@@ -81,7 +81,7 @@ FFLAGS   = -132
 TARGETS	 += omp
 endif
 
-OPTFLAGS	+= -O3
+OPTFLAGS	+= -O3 $(EVENTFLAGS)
 FFLAGS        	+= -Dlinux
 TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
