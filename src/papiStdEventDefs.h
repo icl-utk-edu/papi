@@ -8,8 +8,6 @@ may differ in their actual semantics. In addition, all of these events
 are not guaranteed to be present on all platforms.  Please check your
 platform's documentation carefully.
 
-This file should be modified to comply with the documentation on your
-platform.
 */
 
 #define PAPI_MAX_PRESET_EVENTS 128 /*The maxmimum number of preset events */
