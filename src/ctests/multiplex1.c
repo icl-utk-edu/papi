@@ -18,6 +18,8 @@
 #include <memory.h>
 #include <malloc.h>
 #include "papi.h"
+#include "test_utils.h"
+
 
 #define NUM 10
 #define SUCCESS 1
@@ -318,5 +320,5 @@ int main(int argc, char **argv)
   case4();
   PAPI_library_init(PAPI_VER_CURRENT);
   test_pass(__FILE__,NULL,0);
-  exit(1);
+  exit(0);
 }

@@ -57,7 +57,7 @@ int case1(void)
 
   pset = PAPI_query_all_events_verbose();
   if (pset == NULL)
-    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",NULL);
+    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",0);
 
   retval = PAPI_multiplex_init();
   if (retval != PAPI_OK)
@@ -101,7 +101,7 @@ int case1(void)
 
   values = (long long *)malloc(max_to_add*sizeof(long long));
   if (values == NULL)
-    test_fail(__FILE__,__LINE__,"malloc",NULL);
+    test_fail(__FILE__,__LINE__,"malloc",0);
 
   if (PAPI_start(EventSet) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);

@@ -256,9 +256,9 @@ static void headerlines(char * title, int TESTS_QUIET)
 
 static void resultline(int i, int j, int TESTS_QUIET)
 {
-	float real_time, proc_time, mflops, ferror;
+	float real_time, proc_time, mflops, ferror=0;
 	long_long flpins = 0;
-	int papi, theory, diff;
+	int papi, theory, diff=0;
 	int retval;
 		
 	retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops);

@@ -1228,7 +1228,7 @@ int mpx_init(int interval)
 static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 		int num_events, int domain, int granularity)
 {
-	int i, retval, num_events_success = 0;
+	int i, retval=0, num_events_success = 0;
 	MasterEvent * mev;
 #if 0
 	PAPI_option_t options;

@@ -58,11 +58,12 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
 
   retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0);
-  if ( retval != PAPI_OK ) 
+  if ( retval != PAPI_OK ) {
      if (retval == PAPI_ESBSTR)
            test_skip(__FILE__, __LINE__, "PAPI_thread_init", retval);
      else
 	   test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  }
 
   if ( !TESTS_QUIET ) {
   printf("Test case: Clock latency and resolution.\n");
@@ -90,5 +91,6 @@ int main(int argc, char **argv)
   pthread_join(t4, NULL);
 
   test_pass(__FILE__,NULL,0);
+  exit(0);
 }
 
