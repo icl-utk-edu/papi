@@ -76,7 +76,7 @@ void *thread(void *arg)
 
 int main(int argc, char **argv)
 {
-    int nthreads=64, ret, i;
+    int nthreads=8, ret, i;
     PAPI_event_info_t info;
     pthread_t *threads;
 
@@ -154,7 +154,6 @@ int main(int argc, char **argv)
 
     printf("Done.");
     
-   PAPI_library_init(PAPI_VER_CURRENT);
    test_pass(__FILE__, NULL, 0);
 
    exit(0);
