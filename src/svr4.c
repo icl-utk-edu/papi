@@ -50,7 +50,6 @@ int _papi_hwd_update_shlib_info(void)
       } 
 
    }
-   printf("t_index=%d \n", t_index);
    rewind(map_f);
    tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
 

@@ -39,7 +39,7 @@ OPTFLAGS	= -fast -mt
 # Do not touch below here 
 #
 FOPTFLAGS	= $(OPTFLAGS)
-LDFLAGS 	= -lcpc -ldl
+LDFLAGS 	= -lcpc -ldl 
 MISCSRCS	=  svr4.c
 MISCOBJS	=  svr4.o
 
@@ -49,7 +49,7 @@ get_tick.o: solaris-ultra/get_tick.S
 	cc -c -D_ASM -xarch=v8plusa -O solaris-ultra/get_tick.S
 
 svr4.o: svr4.c
-	$(CC) -c svr4.c $(LIBCFLAGS) -o $@
+	$(CC) -c svr4.c $(LIBCFLAGS) -o $@ 
 
 native_clean:
 
