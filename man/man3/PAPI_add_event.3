@@ -52,16 +52,18 @@ test case in the PAPI distribution. For the encoding of native events, see
 
 It should be noted that
 .BR "PAPI_add_events"
-never partially succeeds. It either adds all the events or none at all. This is 
-different then the partial success semantics of
+can partially succeed, exactly like
 .BR "PAPI_remove_events".
 
 .SH RETURN VALUES
 On success, these functions return
 .B "PAPI_OK."
-On error, a non-zero error code is returned.
+On error, a less than zero error code is returned or the the number of elements that succeeded before the error.
 
 .SH ERRORS
+.TP
+.B "Positive integer"
+The number of consecutive elements that succeeded before the error.
 .TP
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
@@ -117,7 +119,8 @@ http://icl.cs.utk.edu/projects/papi
 
 
 .SH BUGS
-These functions have no known bugs.
+The vector function should take a pointer to a length argument so a proper return value can
+be set upon partial success.
 
 .SH SEE ALSO
 .BR PAPI_presets "(3), "
