@@ -198,12 +198,29 @@ typedef struct {
   struct sigcontext *ucontext;
 } papi_hwd_context_t;
 
+/* XXX - May need to be removed or changed when new Overflow
+ * 	 design has stabalized. -KSL
+ */
+typedef siginfo_t hwd_siginfo_t;
+typedef struct sigcontext hwd_ucontext_t;
+
+/*
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)((papi_hwd_context_t *)ctx)->ucontext->sc_ip
 #define GET_OVERFLOW_CTR_BITS(context) \
   (((papi_hwd_context_t *)context)->si->sy_pfm_ovfl[0])
-
 #define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
   (_papi_hwi_event_index_map[bit-PMU_FIRST_COUNTER])
+*/
+/* 
+ * XXX these are really wrong, just stubs for compiling
+ */
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*) NULL
+#define GET_OVERFLOW_CTR_BITS(context) \
+  (1)
+#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
+  (1)
+
+
 
 
 /* Locks */

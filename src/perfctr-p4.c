@@ -794,13 +794,19 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   struct vperfctr_control *contr = &this_state->control;
   int i, ncntrs, nricntrs = 0, nracntrs, retval=0;
 
-  SUBDBG("overflow_option->EventIndex=%d\n",overflow_option->EventIndex);
+  /*
+   * XXX - This is an array now this code needs to change
+   */
+  SUBDBG("overflow_option->EventIndex=%d\n",overflow_option->EventIndex[0]);
   if( overflow_option->threshold != 0)  /* Set an overflow threshold */
     {
       struct sigaction sa;
       int err;
 
-      if (ESI->EventInfoArray[overflow_option->EventIndex].derived)
+  /*
+   * XXX - This is an array now this code needs to change
+   */
+      if (ESI->EventInfoArray[overflow_option->EventIndex[0]].derived)
 	{
 	  fprintf(stderr,"Can't overflow on a derived event.\n");
 	  return PAPI_EINVAL;
@@ -809,7 +815,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
       /* The correct event to overflow is overflow_option->EventIndex */
 
       ncntrs = _papi_hwi_system_info.num_cntrs;
-      i = ESI->EventInfoArray[overflow_option->EventIndex].pos[0];
+/*
+ * XXX - EventIndex is an array now this code needs to change
+ */
+      i = ESI->EventInfoArray[overflow_option->EventIndex[0]].pos[0];
       if (i >= ncntrs)
 	{
 	  fprintf(stderr,"Selector id (%d) larger than ncntrs (%d)\n",i,ncntrs);
@@ -827,7 +836,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	  return PAPI_EINVAL;
 	}
 */
-      contr->cpu_control.ireset[i] = -overflow_option->threshold;
+/*
+ * XXX - Threshold is an array now this needs to change
+ */
+      contr->cpu_control.ireset[i] = -overflow_option->threshold[0];
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
       nricntrs = ++contr->cpu_control.nrictrs;
       nracntrs = --contr->cpu_control.nractrs;
