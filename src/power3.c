@@ -42,7 +42,7 @@ extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 extern hwi_preset_data_t _papi_hwd_preset_map[];
 
-static hwi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
+static const hwi_search_t _papi_hwd_604_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
    {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
    {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
@@ -71,7 +71,7 @@ static hwi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
 };
 
-static hwi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
+static const hwi_search_t _papi_hwd_604e_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
    {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
    {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
@@ -114,7 +114,7 @@ static hwi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
 };
 
-static hwi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
+static const hwi_search_t _papi_hwd_630_preset_map[] = {
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache misses */
    {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
    {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_IC_MISS, PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 1 total cache misses */
@@ -230,12 +230,12 @@ int _papi_hwd_init_preset_search_map(pm_info_t * info)
    info = &pminfo;
 
    if (__power_630()) {
-      preset_search_map = preset_name_map_630;
+      preset_search_map = _papi_hwd_630_preset_map;
    } else if (__power_604()) {
       if (strstr(info->proc_name, "604e")) {
-         preset_search_map = preset_name_map_604e;
+         preset_search_map = _papi_hwd_604e_preset_map;
       } else {
-         preset_search_map = preset_name_map_604;
+         preset_search_map = _papi_hwd_604_preset_map;
       }
    } else {
       return 0;

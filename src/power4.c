@@ -10,7 +10,7 @@ extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 extern hwd_groups_t group_map[];
 
-static hwi_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
+static const hwi_search_t _papi_hwd_PWR4_preset_map[] = {
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L2_DCM, {0, {PNE_PM_DATA_FROM_L3, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache access */
@@ -97,7 +97,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 /* initialize preset_search_map table by type of CPU */
 int _papi_hwd_init_preset_search_map(pm_info_t * info)
 {
-   preset_search_map = preset_name_map_P4;
+   preset_search_map = _papi_hwd_PWR4_preset_map;
    return 1;
 }
 
