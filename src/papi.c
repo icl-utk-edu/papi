@@ -1727,6 +1727,11 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
     }
 }
 
+int PAPI_num_hwctrs(void)
+{
+  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+}
+		     
 int PAPI_get_opt(int option, PAPI_option_t *ptr) 
 { 
   switch(option)

@@ -353,6 +353,7 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
 void PAPI_lock(void);
 int PAPI_multiplex_init(void);
+int PAPI_num_hwctrs(void);
 int PAPI_set_multiplex(int *);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 		  int flags, PAPI_overflow_handler_t handler);
