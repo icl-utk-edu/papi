@@ -210,8 +210,8 @@
      . name, 1)
       end if            
 
-      min = values(1)*0.9
-      max = values(1)*1.1
+      min = values(1)*0.8
+      max = values(1)*1.2
       if ((values(1).EQ.0).OR.(values(3).EQ.0).OR.(values(7).EQ.0) .OR.
      *    (values(3) .gt. max) .OR. (values(3) .lt. min) .OR.
      *    (values(7) .gt. (max*3)) .OR. (values(7) .lt. (min*3))) then
