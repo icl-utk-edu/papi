@@ -233,17 +233,6 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
    }
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
-{
-   if(native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector[0
-]) {
-      *EventCode = *EventCode + 1;
-      return (PAPI_OK);
-   } else {
-      return (PAPI_ENOEVNT);
-   }
-}
-
 static void copy_value(int val, char *nam, char *names, int *values, int len)
 {
    *values = val;
