@@ -17,6 +17,7 @@
 extern papi_mdi_t _papi_hwi_system_info;
 
 /* Locking variables */
+volatile int lock_var[PAPI_MAX_LOCK] = {0};
 atomic_p lock[PAPI_MAX_LOCK];
 
 /* 
@@ -55,6 +56,17 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
   bits = &native_table[EventCode & NATIVE_AND_MASK].resources; /* it is not right, different type */
   return(PAPI_OK);
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+{
+  int index=*EventCode & NATIVE_AND_MASK;
+  if(native_table[index].resources.selector){
+  	*EventCode=*EventCode+1;
+	return(PAPI_OK);
+  }
+  else
+  	return(PAPI_ENOEVNT);
 }
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
@@ -626,6 +638,13 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *cntrl)
 
   return(PAPI_OK);
 }
+
+void _papi_hwd_lock_init(void)
+{
+  int i;
+  for(i=0;i<PAPI_MAX_LOCK;i++)
+      lock[i] = (int *)(lock_var+i);
+}                                       
 
 /*#if 0
 void dump_state(hwd_control_state_t *s)

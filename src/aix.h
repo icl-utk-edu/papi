@@ -39,15 +39,14 @@ pm_info_t pminfo;
 extern atomic_p lock[];
 
 #define _papi_hwd_lock(lck)                     \
-while(_check_lock(&lock[lck],0,1 == TRUE)       \ 
+while(_check_lock(lock[lck],0,1) == TRUE)       \ 
 {                                               \
       usleep(1000);                             \
 }
 
 #define _papi_hwd_unlock(lck)                   \
-do                                              \
 {                                               \
-  _clear_lock(&lock[lck], 0);                   \
+  _clear_lock(lock[lck], 0);                   \
 }
 
 /* prototypes */
