@@ -368,7 +368,7 @@ static hwd_p4_native_map_t _papi_hwd_pentium4_custom_map[] = {
      {CTR45, CTR67}, {MSR_TC_ESCR0, MSR_TC_ESCR1},
      CCCR_ESCR_SEL(TC_DLVR_CCCR) | CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ENABLE |
      CCCR_COMPARE | CCCR_COMPLEMENT | CCCR_THRESHOLD(0xf),
-     ESCR_EVENT_SEL(TC_DLVR_ESCR) | CPL(1),
+     ESCR_EVENT_SEL(TC_DLVR_ESCR),
      0, 0, 0},
     0,
     0},
@@ -1400,7 +1400,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    };
 
    // these bits are turned on for all event groups
-   bits->event |= ESCR_EVENT_MASK(mask) | CPL(1);
+   bits->event |= ESCR_EVENT_MASK(mask);
    bits->cccr |= CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ENABLE;
 
    return (PAPI_OK);
