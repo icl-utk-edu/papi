@@ -609,7 +609,7 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
   float usec, cyc;
 
-  usec = (float)_papi_hwd_get_real_usec();
+  usec = (float)_papi_hwd_get_virt_usec(zero);
   cyc = usec * _papi_system_info.hw_info.mhz;
   return((long long)cyc);
 }
