@@ -101,8 +101,8 @@ int main(int argc, char **argv)
 	retval=1;
 	test_fail(__FILE__,__LINE__,"PAPI_get_executable_info",retval);
   }
-  start = (unsigned long)prginfo->text_start;
-  end =  (unsigned long)prginfo->text_end;
+  start = (unsigned long)prginfo->address_info.text_start;
+  end =  (unsigned long)prginfo->address_info.text_end;
   length = end - start;
 
   profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
@@ -153,13 +153,13 @@ int main(int argc, char **argv)
     printf("Test case 7: SVR4 compatible hardware profiling.\n");
     printf("------------------------------------------------\n");
     printf("Text start: %p, Text end: %p, Text length: %lx\n",
-	 prginfo->text_start,prginfo->text_end,length);
+	 prginfo->address_info.text_start,prginfo->address_info.text_end,length);
     printf("Data start: %p, Data end: %p\n",
-	 prginfo->data_start,prginfo->data_end);
+	 prginfo->address_info.data_start,prginfo->address_info.data_end);
     printf("BSS start: %p, BSS end: %p\n",
-	 prginfo->bss_start,prginfo->bss_end);
+	 prginfo->address_info.bss_start,prginfo->address_info.bss_end);
     printf("Dynamic Library Preload Env. Var.: %s\n",
-	 prginfo->lib_preload_env);
+	 prginfo->preload_info.lib_preload_env);
 
     printf("-----------------------------------------\n");
 

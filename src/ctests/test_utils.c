@@ -286,85 +286,85 @@ int remove_test_events(int *EventSet, int mask)
   
   if (mask & MASK_L1_DCA) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L1_DCA);
+      retval = PAPI_remove_event(*EventSet, PAPI_L1_DCA);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L1_DCW) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L1_DCW);
+      retval = PAPI_remove_event(*EventSet, PAPI_L1_DCW);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L1_DCR) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L1_DCR);
+      retval = PAPI_remove_event(*EventSet, PAPI_L1_DCR);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L2_TCH) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L2_TCH);
+      retval = PAPI_remove_event(*EventSet, PAPI_L2_TCH);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L2_TCA) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L2_TCA);
+      retval = PAPI_remove_event(*EventSet, PAPI_L2_TCA);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L2_TCM) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L2_TCM);
+      retval = PAPI_remove_event(*EventSet, PAPI_L2_TCM);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L1_DCM) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L1_DCM);
+      retval = PAPI_remove_event(*EventSet, PAPI_L1_DCM);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L1_ICM) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L1_ICM);
+      retval = PAPI_remove_event(*EventSet, PAPI_L1_ICM);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_L1_TCM) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_L1_TCM);
+      retval = PAPI_remove_event(*EventSet, PAPI_L1_TCM);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_FLOPS) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_FLOPS);
+      retval = PAPI_remove_event(*EventSet, PAPI_FLOPS);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_FP_INS) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_FP_INS);
+      retval = PAPI_remove_event(*EventSet, PAPI_FP_INS);
       if (retval < PAPI_OK) return(retval);
     }
 
   if (mask & MASK_TOT_INS) 
     {
-     retval = PAPI_rem_event(EventSet, PAPI_TOT_INS);
+     retval = PAPI_remove_event(*EventSet, PAPI_TOT_INS);
       if (retval < PAPI_OK) return(retval);
     }
  
   if (mask & MASK_TOT_IIS) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_TOT_IIS);
+      retval = PAPI_remove_event(*EventSet, PAPI_TOT_IIS);
       if (retval < PAPI_OK) return(retval);
     }
  
   if (mask & MASK_TOT_CYC) 
     {
-      retval = PAPI_rem_event(EventSet, PAPI_TOT_CYC);
+      retval = PAPI_remove_event(*EventSet, PAPI_TOT_CYC);
       if (retval < PAPI_OK) return(retval); 
     }
   

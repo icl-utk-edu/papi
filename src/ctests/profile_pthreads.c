@@ -114,8 +114,8 @@ int main(int argc, char **argv)
 	retval=1;
 	test_fail(__FILE__,__LINE__,"PAPI_get_executable_info",retval);
   }
-  my_start = (unsigned long)prginfo->text_start;
-  my_end =  (unsigned long)prginfo->text_end;
+  my_start = (unsigned long)prginfo->address_info.text_start;
+  my_end =  (unsigned long)prginfo->address_info.text_end;
   length = my_end - my_start;
 
   elapsed_us = PAPI_get_real_usec();

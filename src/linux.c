@@ -7,8 +7,6 @@
 *          <your email address>
 */  
 
-#include "papi.h"
-
 #ifdef _WIN32
   /* Define SUBSTRATE to map to linux-perfctr.h
    * since we haven't figured out how to assign a value 
@@ -16,23 +14,22 @@
   #define SUBSTRATE "linux-perfctr.h"
 #endif
 
+#include "papi.h"
 #include SUBSTRATE
-
-#if defined(PAPI3)
 #include "papi_internal.h"
 #include "papi_protos.h"
-#endif
+
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
-#ifdef PAPI3
+//#ifdef PAPI3
 extern papi_mdi_t _papi_hwi_system_info;
-#else
-#define _papi_hwi_system_info _papi_system_info
-extern papi_mdi_t _papi_system_info;
-#endif
+//#else
+//#define _papi_hwi_system_info _papi_system_info
+//extern papi_mdi_t _papi_system_info;
+//#endif
 
 extern papi_mdi_t _papi_hwi_system_info;
 
@@ -43,6 +40,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */
 /****************************/
+#define PAPI3
 
 /**************************/
 /* END LOCAL DECLARATIONS */
@@ -155,7 +153,7 @@ again:
     SUBDBG("mapped:   %ld KB writable/private: %ld KB shared: %ld KB\n",
 	    total/1024, writable/1024, shared/1024);
 #endif
-#if PAPI3
+#ifdef PAPI3
     if (counting)
       {
 	/* When we get here, we have counted the number of entries in the map
@@ -366,19 +364,19 @@ int _papi_hwd_get_system_info(void)
   return(PAPI_OK);
 } 
 
-int _papi3_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
+int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
 {
-  extern int _papi3_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain);
+  extern int _papi_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain);
   switch (code)
     {
     case PAPI_SET_DOMAIN:
 #ifdef PAPI3
-      return(_papi3_hwd_set_domain(&option->domain.ESI->machdep, 
+      return(_papi_hwd_set_domain(&option->domain.ESI->machdep, 
 				   option->domain.domain));
 #else
 {
   hwd_control_state_t *machdep = option->domain.ESI->machdep;
-  return(_papi3_hwd_set_domain(&machdep->control, option->domain.domain));
+  return(_papi_hwd_set_domain(&machdep->control, option->domain.domain));
 }
 #endif
     default:

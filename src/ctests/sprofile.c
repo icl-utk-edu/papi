@@ -52,8 +52,8 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_get_executable_info",retval);
   }
 	
-  start = prginfo->text_start;
-  end =  prginfo->text_end;
+  start = prginfo->address_info.text_start;
+  end =  prginfo->address_info.text_end;
   length = end - start;
 
   profbuf = (unsigned short *)malloc(length/2*sizeof(unsigned short));

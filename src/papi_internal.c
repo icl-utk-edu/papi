@@ -33,7 +33,6 @@
 
 #include "papiStrings.h"
 
-extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /********************/
 /* BEGIN PROTOTYPES */
@@ -76,10 +75,9 @@ extern PAPI_preset_info_t _papi_hwi_presets[];
 /*  BEGIN GLOBALS   */ 
 /********************/
 
+extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
+extern int _papi_hwi_debug;
 ThreadInfo_t *default_master_thread = NULL; 
-#ifdef DEBUG
-int _papi_hwi_debug = 0;
-#endif
 
 /* Machine info structure */
 
@@ -212,7 +210,6 @@ int _papi_hwi_initialize_thread(ThreadInfo_t **master)
 
   if (_papi_hwi_thread_id_fn)
     (*master)->tid = (*_papi_hwi_thread_id_fn)();
-
   return(PAPI_OK);
 }
 
@@ -764,7 +761,7 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t *ESI)
 int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t *ESI)
 {
   EventInfo_t *tmp;
-  int retval, i, j=0, *mpxlist;
+  int retval, i, j=0, *mpxlist = NULL;
 
   tmp = (EventInfo_t *)malloc(PAPI_MPX_DEF_DEG*sizeof(EventInfo_t));
   if (tmp == NULL)
@@ -819,7 +816,7 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t *ESI)
      in this eventset without having to iterate through all
      it's 'sub-eventsets'. */
 
-  if (mpxlist) {
+  if (mpxlist != NULL) {
     for (i=0;i<ESI->NumberOfEvents;i++)
 	ESI->EventInfoArray[i].event_code = mpxlist[i];      
     free(mpxlist);
@@ -830,10 +827,13 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t *ESI)
 
 int _papi_hwi_query(int preset_index, int *flags, char **note)
 { 
+  DBG((stderr,"preset_index: %d\n", preset_index));
   if (_papi_hwd_preset_map[preset_index].number == 0)
     return(0);
+  DBG((stderr,"derived: %d\n", _papi_hwd_preset_map[preset_index].derived));
   if (_papi_hwd_preset_map[preset_index].derived)
     *flags = PAPI_DERIVED;
+  DBG((stderr,"note: %s\n", _papi_hwd_preset_map[preset_index].note));
   if (_papi_hwd_preset_map[preset_index].note)
     *note = _papi_hwd_preset_map[preset_index].note;
   return(1);

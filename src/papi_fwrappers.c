@@ -119,13 +119,13 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
   if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
     strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
     strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
-    *text_start = (long_long)e.exe_info->text_start;
-    *text_end = (long_long)e.exe_info->text_end;
-    *data_start = (long_long)e.exe_info->data_start;
-    *data_end = (long_long)e.exe_info->data_end;
-    *bss_start = (long_long)e.exe_info->bss_start;
-    *bss_end = (long_long)e.exe_info->bss_end;
-    strncpy(lib_preload_env, e.exe_info->lib_preload_env, PAPI_MAX_STR_LEN);
+    *text_start = (long_long)e.exe_info->address_info.text_start;
+    *text_end = (long_long)e.exe_info->address_info.text_end;
+    *data_start = (long_long)e.exe_info->address_info.data_start;
+    *data_end = (long_long)e.exe_info->address_info.data_end;
+    *bss_start = (long_long)e.exe_info->address_info.bss_start;
+    *bss_end = (long_long)e.exe_info->address_info.bss_end;
+    strncpy(lib_preload_env, e.exe_info->preload_info.lib_preload_env, PAPI_MAX_STR_LEN);
   }
 #endif
 }

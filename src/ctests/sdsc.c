@@ -134,8 +134,8 @@ int main(int argc, char **argv) {
     printf("\n");
 
 
-  if((retval=PAPI_rem_events(&eventset,events,nevents)))
-      test_fail(__FILE__,__LINE__,"PAPI_rem_events",retval);
+  if((retval=PAPI_remove_events(eventset,events,nevents)))
+      test_fail(__FILE__,__LINE__,"PAPI_remove_events",retval);
   if((retval=PAPI_destroy_eventset(&eventset)))
     test_fail(__FILE__,__LINE__,"PAPI_destroy_eventset",retval);
   eventset=PAPI_NULL;

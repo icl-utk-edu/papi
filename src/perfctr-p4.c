@@ -9,8 +9,6 @@
 *          <your email address>
 */  
 
-#include "papi.h"
-
 #ifdef _WIN32
   /* Define SUBSTRATE to map to linux-perfctr.h
    * since we haven't figured out how to assign a value 
@@ -18,12 +16,12 @@
   #define SUBSTRATE "linux-perfctr.h"
 #endif
 
+#include "papi.h"
 #include SUBSTRATE
-
-#ifdef PAPI3
 #include "papi_internal.h"
 #include "papi_protos.h"
-#endif
+
+#define PAPI3
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -138,6 +136,14 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////// unimplemented function required for PAPI3 ///////////////////
+int _papi_hwd_allocate_registers(hwd_control_state_t *control, hwd_preset_t *presets, hwd_register_map_t *map)
+{
+  return(PAPI_OK);
+}
+///////////////////////////////////////////////////////////////////////////////
 
 static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
 {
@@ -332,7 +338,7 @@ int _papi_hwd_init_global(void)
   
   /* Setup memory info */
 
-  retval = get_memory_info(&_papi_system_info.mem_info, (int)info.cpu_type);
+  retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.mem_info, (int)info.cpu_type);
   if (retval)
     return(retval);
 
@@ -344,7 +350,7 @@ int _papi_hwd_init_global(void)
 
 /* Called when thread is initialized */
 
-int _papi3_hwd_init(P4_perfctr_context_t *ctx)
+int _papi_hwd_init(P4_perfctr_context_t *ctx)
 {
   struct vperfctr_control tmp;
 
@@ -508,7 +514,7 @@ int _papi_hwd_unmerge(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset)
 }
 #endif
 
-int _papi3_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_long **dp)
+int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_long **dp)
 {
   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
   *dp = spc->state.pmc;
@@ -577,7 +583,7 @@ int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long events[]
 /* This routine is for shutting down threads, including the
    master thread. */
 
-int _papi3_hwd_shutdown(P4_perfctr_context_t *ctx)
+int _papi_hwd_shutdown(P4_perfctr_context_t *ctx)
 {
   int retval = vperfctr_unlink(ctx->perfctr);
   SUBDBG("_papi_hwd_init_global vperfctr_unlink(%p) = %d\n",ctx->perfctr,retval);
@@ -607,24 +613,24 @@ int _papi_hwd_shutdown_global(void)
 
 /* Timers */
 
-u_long_long _papi3_hwd_get_real_usec (void)
+u_long_long _papi_hwd_get_real_usec (void)
  {
   return((u_long_long)get_cycles() / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-u_long_long _papi3_hwd_get_real_cycles (void)
+u_long_long _papi_hwd_get_real_cycles (void)
 {
   return(get_cycles());
 }
 
-u_long_long _papi3_hwd_get_virt_cycles (const P4_perfctr_context_t *ctx)
+u_long_long _papi_hwd_get_virt_cycles (const P4_perfctr_context_t *ctx)
 {
   return(vperfctr_read_tsc(ctx->perfctr));
 }
 
-u_long_long _papi3_hwd_get_virt_usec (const P4_perfctr_context_t *ctx)
+u_long_long _papi_hwd_get_virt_usec (const P4_perfctr_context_t *ctx)
 {
-  return(_papi3_hwd_get_virt_cycles(ctx) / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
+  return(_papi_hwd_get_virt_cycles(ctx) / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 #ifndef PAPI3
@@ -652,7 +658,7 @@ long_long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
    as quickly as possible. This returns the position in the array output by _papi_hwd_read that
    this register lives in. */
 
-int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, 
+int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, 
 			 P4_perfctr_control_t *evset_info)
 {
   int i, index, mask = 0;
@@ -770,7 +776,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
 }
 #endif
 
-int _papi3_hwd_remove_event(P4_regmap_t *ev_info, int perfctr_index, P4_perfctr_control_t *evset_info)
+int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perfctr_control_t *evset_info)
 {
   int i, j, new_nractrs, nractrs, clear_pebs = 0, clear_pebs_matrix_vert = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
@@ -878,7 +884,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 }
 #endif
 
-int _papi3_hwd_add_prog_event(P4_perfctr_control_t *state, int code, void *tmp, 
+int _papi_hwd_add_prog_event(P4_perfctr_control_t *state, unsigned int code, void *tmp, 
 			      EventInfo_t *tmp2)
 {
   return(PAPI_ESBSTR);
@@ -912,17 +918,17 @@ int _papi_hwd_add_event(P4_perfctr_control_t *state, const P4_perfctr_event_t *a
 }
 #endif 
 
-int _papi3_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain)
+int _papi_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain)
 {
   return(PAPI_ESBSTR);
 }
 
-int _papi3_hwd_reset(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl)
+int _papi_hwd_reset(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl)
 {
   return(PAPI_ESBSTR);
 }
 
-int _papi3_hwd_write(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl, long long *from)
+int _papi_hwd_write(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl, long long *from)
 {
   return(PAPI_ESBSTR);
 }
@@ -934,7 +940,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
+int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
 {
   /* This function is not used and shouldn't be called. */
 
@@ -942,7 +948,6 @@ int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 }
 
 
-#ifndef PAPI3
 static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
 {
   unsigned int ui; int si;
@@ -975,8 +980,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   /* | CCCR_OVF_PMI_T1 (1 << 27) */
 
   extern int _papi_hwi_using_signal;
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  struct vperfctr_control *contr = &this_state->control.control;
+  hwd_control_state_t *this_state = &ESI->machdep;
+  struct vperfctr_control *contr = &this_state->control;
   int i, ncntrs, nricntrs = 0, nracntrs, retval=0;
   unsigned int selector;
 
@@ -994,8 +999,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
       /* The correct event to overflow is overflow_option->EventIndex */
 
-      ncntrs = _papi_system_info.num_cntrs;
-      selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
+      ncntrs = _papi_hwi_system_info.num_cntrs;
+      selector = ESI->EventInfoArray[overflow_option->EventIndex].hardware_selector;
       SUBDBG("selector id is 0x%x.\n",selector);
       i = ffs(selector) - 1;
       if (i >= ncntrs)
@@ -1047,7 +1052,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   else   
     {
       /* The correct event to overflow is overflow_option->EventIndex */
-      ncntrs=_papi_system_info.num_cntrs;
+      ncntrs=_papi_hwi_system_info.num_cntrs;
       for(i=0;i<ncntrs;i++) 
 	if(contr->cpu_control.evntsel[i] & PERF_INT_ENABLE)
 	  {
@@ -1062,7 +1067,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	 in evntsel, swap events that do not fulfill this criterion. This
 	 will yield a non-monotonic pmc_map array */
 
-      if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
+      if (ESI->EventInfoArray[i].event_code == PAPI_FP_INS)
 	swap_pmc_map_events(contr,1,0);	
 
       SUBDBG("Modified event set\n");
@@ -1083,6 +1088,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   return(retval);
 }
 
+#ifndef PAPI3
 int _papi_hwd_reset(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset) 
 {
   hwd_control_state_t *machdep = this_evset->machdep;
@@ -1114,18 +1120,16 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 
   if(_papi_hwi_system_info.supports_hw_overflow)
     {
-      EventSetInfo_t *master;
-      hwd_control_state_t *machdep;
+      ThreadInfo_t *master;
 
-      master = _papi_hwi_lookup_in_master_list();
+      master = _papi_hwi_lookup_in_thread_list();
       if(master==NULL)
 	{
 	  fprintf(stderr,"%s():%d: master event lookup failure! abort()\n",
 		  __FUNCTION__,__LINE__);
 	  abort();
 	}
-      machdep =  master->machdep;
-      if (vperfctr_iresume(machdep->context.perfctr) < 0)
+      if (vperfctr_iresume(master->context.perfctr) < 0)
 	{
 	  fprintf(stderr,"%s():%d: vperfctr_iresume %s\n",
 		  __FUNCTION__,__LINE__,strerror(errno));

@@ -25,10 +25,6 @@
 
 #include "p4_events.h"
 
-#ifndef PAPI3
-#include "papi.h"
-#endif
-
 
 #ifdef _WIN32
   #define inline_static static __inline
@@ -81,21 +77,7 @@ typedef struct P4_perfctr_context {
 /*  P4_perfctr_control_t start; */
 } P4_perfctr_context_t;
 
-#ifndef PAPI3
-typedef struct {
-  P4_perfctr_control_t control;
-  P4_perfctr_context_t context; 
-}  hwd_control_state_t;
-#else
 typedef P4_perfctr_control_t hwd_control_state_t;
-#endif
-
-#ifndef PAPI3
-#include "papi_internal.h"
-extern caddr_t _init, _fini, _etext, _edata;
-/* typedef EventSetInfo EventSetInfo_t; */
-typedef papi_mdi papi_mdi_t;
-#endif
 
 typedef P4_regmap_t hwd_register_map_t;
 
@@ -115,12 +97,10 @@ typedef struct _ThreadInfo {
 
 extern ThreadInfo_t *default_master_thread;
 
-#ifdef PAPI3
 typedef struct _thread_list {
   ThreadInfo_t *master;
   struct _thread_list *next; 
 } ThreadInfoList_t;
-#endif
 
 #if 0
 #include "papi_internal.h"

@@ -49,6 +49,7 @@ extern int _papi_hwi_debug;
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 extern int _papi_hwi_error_level;
 extern char *_papi_hwi_errStr[];
+extern int _papi_hwi_debug;
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern PAPI_overflow_handler_t _papi_hwi_dummy_handler;
 extern papi_mdi_t _papi_hwi_system_info;
@@ -140,10 +141,10 @@ int PAPI_library_init(int version)
 
 #ifdef DEBUG
   #ifdef _WIN32	/* don't want to define an environment variable... */
-	papi_hwi_debug = 1;
+	_papi_hwi_debug = 1;
   #else
 	if (getenv("PAPI_DEBUG"))
-	  papi_hwi_debug = 1;
+	  _papi_hwi_debug = 1;
   #endif
 #endif
 
@@ -170,6 +171,7 @@ int PAPI_library_init(int version)
       return(init_retval);
   }
 
+  DBG((stderr,"Initialize master thread.\n"));
   tmp = _papi_hwi_initialize_thread(&default_master_thread);
   if (tmp)
     {
@@ -178,20 +180,23 @@ int PAPI_library_init(int version)
       return(init_retval); 
     }
 
+  DBG((stderr,"Above for block.\n"));
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (_papi_hwi_presets[i].event_name) /* If the preset is part of the API */
       _papi_hwi_presets[i].avail = 
-	_papi_hwd_query(_papi_hwi_presets[i].event_code & PRESET_AND_MASK,
+	_papi_hwi_query(_papi_hwi_presets[i].event_code & PRESET_AND_MASK,
 			&_papi_hwi_presets[i].flags,
 			&_papi_hwi_presets[i].event_note);
 
   _papi_hwi_system_info.total_events = 0 ;
   tmp = 0;  /* Count number of derived events */
+  DBG((stderr,"Counting number of derived events.\n"));
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++){
     if(_papi_hwi_presets[i].avail>0) _papi_hwi_system_info.total_presets += 1;
     if(_papi_hwi_presets[i].flags & PAPI_DERIVED) tmp += 1;
   }
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
+  DBG((stderr,"Exiting...\n"));
 
   return(init_retval = PAPI_VER_CURRENT);
 }

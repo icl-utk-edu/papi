@@ -44,8 +44,8 @@ int main(int argc, char **argv)
   	retval = PAPI_stop(EventSet, &values);
   	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-        retval = PAPI_rem_event(&EventSet, info[i].event_code);
-  	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_rem_event", retval);
+        retval = PAPI_remove_event(EventSet, info[i].event_code);
+  	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
 
   }
   if ( !TESTS_QUIET ) 

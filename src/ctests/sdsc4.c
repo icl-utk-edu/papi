@@ -187,8 +187,8 @@ int main(int argc, char **argv) {
       PAPI_label_event(events[j],des);
       if ( !TESTS_QUIET )
 	printf("Removing event[%d]: %s\n", j, des);
-      if((retval=PAPI_rem_event(&eventset,events[j])))
-	test_fail(__FILE__,__LINE__,"PAPI_rem_event",retval);
+      if((retval=PAPI_remove_event(eventset,events[j])))
+	test_fail(__FILE__,__LINE__,"PAPI_remove_event",retval);
       nev1--;
       for(idx=0;eventmap[idx]!=j;idx++);
       for(j=idx;j<nev1;j++)
