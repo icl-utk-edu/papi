@@ -1,75 +1,8 @@
-#
-# To configure for perfctr 2.6.x, change definition of PERFCTR in line 6, 
-# and add -DPERFCTR25 to CFLAGS in line 51.
-#
-KERNINC	= /usr/src/linux-2.4/include
-# PERFCTR = ./perfctr-2.4.x
-PERFCTR = ./perfctr-2.6.x
-PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -Wall -O3 -march=pentiumpro -DPERFCTR26
-# -DPERFCTR26 -DDEBUG
+CPU	= p4
+OPTFLAGS= -Wall -O3 -march=pentiumpro
 TOPTFLAGS= -O -march=pentiumpro -DPENTIUM4
-#
-# GNU G77 section
-#
-F77   = g77
-FFLAGS        = -Dlinux -Wall
-FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(TOPTFLAGS)
-# #
-# #  Portland Group PGF77 section
-# #
-# F77       = pgf77
-# FFLAGS    = -Dlinux
-# FOPTFLAGS = -O3 -tp p6
-# FTOPTFLAGS= $(FOPTFLAGS)
-# #
-# #  Intel Corp. Fortran compiler
-# #
-# F77      = ifc
-# FFLAGS   = -Dlinux
-# LDFLAGS  = -lPEPCF90 -lIEPCF90 -lF90 -lintrins # Intel portability library (getarg_)
-# FOPTFLAGS= -O3 -tpp6
-# FTOPTFLAGS= $(FOPTFLAGS)
-
-#
-# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
-#
-
-LIBRARY = libpapi.a
-SHLIB   = libpapi.so
-SUBSTR	= perfctr-p4
-MSUBSTR	= linux-perfctr-p4
-MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr 2.6.x patch for all Pentium IVs"
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads 
-
+F77	= g77
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I.
-#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER -DPERFCTR25
-MISCSRCS= linux.c p4_events.c
-MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p4_events.o
-MISCHDRS= perfctr-p4.h p4_events.h
-SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-
-include Makefile.inc
-
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
-
-p4_events.o: p4_events.c p4_events.h
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c p4_events.c -o $@
-
-$(PERFCTR)/usr.lib/libperfctr.o:
-	$(MAKE) -C $(PERFCTR)/usr.lib
-
-native_clean:
-	$(MAKE) -C $(PERFCTR) clean
-
-native_install:
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib
-	-cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
+# include Rules.perfctr-2.6.x
+include Rules.perfctr-2.4.x

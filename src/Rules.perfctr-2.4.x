@@ -31,8 +31,8 @@ FTOPTFLAGS= $(TOPTFLAGS)
 
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
-SUBSTR  = perfctr-p3
-MSUBSTR = linux-perfctr-p3
+SUBSTR  = perfctr-$(CPU)
+MSUBSTR = linux-perfctr-$(CPU)
 MEMSUBSTR= linux
 DESCR   = "Linux with PerfCtr 2.4.5 patch for all Pentium IIIs and AMDs"
 LIBS    = static shared
@@ -41,9 +41,9 @@ TARGETS = serial multiplex_and_pthreads
 CC_R    = $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-MISCSRCS= linux.c p3_events.c
-MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o p3_events.o
-MISCHDRS= perfctr-p3.h
+MISCSRCS= linux.c $(CPU)_events.c
+MISCOBJS= $(PERFCTR)/usr.lib/libperfctr.o linux.o $(CPU)_events.o
+MISCHDRS= perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
@@ -51,8 +51,8 @@ include Makefile.inc
 linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
-p3_events.o: p3_events.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c p3_events.c -o $@
+$(CPU)_events.o: $(CPU)_events.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 
 $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)/usr.lib

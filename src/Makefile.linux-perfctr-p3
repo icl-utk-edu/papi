@@ -1,3 +1,4 @@
+CPU	= p3
 OPTFLAGS= -O3 -Wall -march=pentiumpro
 TOPTFLAGS= -O -Wall -march=pentiumpro
 F77	= g77

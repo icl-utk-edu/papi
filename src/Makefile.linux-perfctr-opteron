@@ -1,3 +1,4 @@
+CPU	= p3
 OPTFLAGS= -Wall -O3
 TOPTFLAGS= -Wall -O -D__x86_64__
 F77	= g77 gcc
