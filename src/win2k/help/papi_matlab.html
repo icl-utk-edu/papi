@@ -152,14 +152,15 @@ function MM_swapImage() { //v3.0
                                                                      
             <hr>                          
             <h2>MATLAB Support</h2>
-             An external PAPI function, <b>flops</b>,<b> </b>is provided
-for  users of MATLAB.With     this function you can  monitor the number of
-floating  point instructions  executed   and the instantaneous MegaFLOPS
-rate between  any two points in  your MATLAB   code. Four m-file examples
-are also included  to illustrate the use of this function. These examples
-can also help you calibrate the  performance of your   system.<br>
+             Two external PAPI functions, <b>flops</b>,<b> </b>and <b>PAPI</b>
+, are provided for  users of MATLAB. The first function lets you monitor
+the number of floating  point instructions  executed   and the instantaneous
+MegaFLOPS rate between  any two points in  your MATLAB   code. The second
+provides complete access to the PAPI Higl Level interface. Four m-file examples
+for each function are also included  to illustrate the use of these functions.
+These examples can also help you calibrate the  performance of your   system.<br>
               <br>
-  The PAPI mex function and the supporting m-files are automatically installed
+  The PAPI mex functions and the supporting m-files are automatically installed
  in the folder of your choice by either the specialized PAPI MATLAB installer
  or the more complete Windows PAPI installer. In either case, following the
  installation you must modify MATLAB's search path to access these resources.<br>
@@ -174,37 +175,67 @@ are now ready for use.<br>
             The files provided include:                                 
                                                                         
                                                   
-            <h3> Mex External Function</h3>
+            <h3> Mex External Functions</h3>
                            
             <ul>
-                               <li> [ops, mflops]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#flops">
+                               <li><tt> [ops, mflops]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
   flops</a>
-                </li>
-                           
+                </tt></li>
+              <li><tt>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;
+                <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('num')</tt></li>
+              <li><tt>&nbsp; &nbsp;[val, ...]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('start', 'event', ...)</tt></li>
+              <li><tt>&nbsp; &nbsp;[val, ...]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('stop')</tt></li>
+              <li><tt>&nbsp; &nbsp;[val, ...]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('read')</tt></li>
+              <li><tt>&nbsp; &nbsp;[val, ...]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('accum')</tt></li>
+              <li><tt>&nbsp; &nbsp;[ins, ipc]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('ipc')</tt></li>
+              <li><tt> [ins, mflips]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('flips')</tt></li>
+              <li><tt> [ops, mflops]= <a href="file:///C:/papi/src/win2k/help/papi_matlab.html#PAPI">
+PAPI</a>
+ ('flops')</tt></li>
             </ul>
                            
             <h3> Example M-Files</h3>
                            
             <ul>
-                               <li><a href="file:///C:/papi/src/win2k/help/papi_matlab.html#InnerProduct">
-  PAPIInnerProduct.m</a>
+                               <li><a href="#FlopsInnerProduct">  FlopsInnerProduct.m</a>
                 </li>
-                               <li><a href="file:///C:/papi/src/win2k/help/papi_matlab.html#VectorMatrix">
-  PAPIVectorMatrix.m</a>
+                               <li><a href="#FlopsVectorMatrix">  FlopsMatrix
+Vector.m</a>
                 </li>
-                               <li><a href="file:///C:/papi/src/win2k/help/papi_matlab.html#MatrixMatrix">
-  PAPIMatrixMatrix.m</a>
+                               <li><a href="#FlopsMatrixMatrix">  FlopsMatrixMatrix.m</a>
                 </li>
-                               <li><a href="#Sampler">PAPISampler.m</a>
-                </li>
+                               <li><a href="#FlopsSampler">FlopsSampler.m</a>
+              </li>
+              <li><br>
+              </li>
+              <li><a href="#PAPIInnerProduct">  PAPIInnerProduct.m</a>
+              </li>
+              <li><a href="#PAPIVectorMatrix">  PAPIMatrixVector.m</a>
+              </li>
+              <li><a href="#PAPIMatrixMatrix">  PAPIMatrixMatrix.m</a>
+              </li>
                            
             </ul>
                            
             <h1></h1>
                            
-            <h2> Mex Function                                           
+            <h2> Mex Functions                                          
                                                                         
- 
+  
             <hr width="100%"></h2>
                                                                      
             <blockquote>                                                 
@@ -305,585 +336,1102 @@ the last call to <b>flops</b><b>.</b></p>
                                 <center>                                 
                                                                         
                                                                       
-                                <h1>                                     
-                                                                        
-                                                                 
+                                <center>
+                                <h1>
                                 <hr></h1>
-                                           </center>
+                                </center>
+                                </center>
+                                <blockquote>
+                                  <h3><a name="PAPI"></a>
+        NAME</h3>
+                                  </blockquote>
+                                  <blockquote>
+                                    <blockquote><b>ctrs = PAPI('num')</b>
+ - Return the number of hardware counters.<br>
+                                      <b>PAPI('start', 'event', ...)</b>
+- Begin counting the specified events.<br>
+                                      <b>[val, ...] = PAPI('stop')</b> -
+Stop counting and return the current values.<br>
+                                      <b>[val, ...] = PAPI('read')</b> -
+Read the current values of the active counters.<br>
+                                      <b>[val, ...] = PAPI('accum')</b> -
+Add the current values of the active counters to the input values.<br>
+                                      <b>PAPI('ipc')</b> - Begin counting
+instructions.<br>
+                                      <b>ins = PAPI('ipc')</b> - Return the
+number of instructions executed since the first call.<br>
+                                      <b>[ins, ipc] = PAPI('ipc')</b> - Return
+both the total number of instructions executed since the first call, and
+the incremental rate of instruction execution since the last call.<br>
+                                      <b>PAPI('flips')</b><br>
+                                      <b>PAPI('flops')</b> - Begin counting
+floating point instructions or operations.<br>
+                                      <b>ins = PAPI('flips')</b><br>
+                                      <b>ops = PAPI('flops')</b> - Return
+the number of floating point instructions or operations since the first call.<br>
+                                      <b>[ins, mflips] = PAPI('flips')</b><br>
+                                      <b>[ops, mflops] = PAPI('flops')</b>
+ - Return both the number of floating point instructions or operations since
+the first call, and the incremental rate of floating point execution since
+since the last call.<br>
+                                      </blockquote>
+                                      </blockquote>
+                                      <blockquote>
+                                        <h3>DESCRIPTION</h3>
+                                        </blockquote>
+                                        <blockquote>
+                                          <blockquote>The PAPI function provides
+access to the PAPI Performance API. PAPI takes advantage of the fact that
+most modern microprocessors have built-in hardware support for counting a
+variety of basic operations or events. PAPI uses these counters to track
+things like instructions executed, cycles elapsed, floating point instructions
+performed and a variety of other events.<br>
+                                            </blockquote>
+                                            <blockquote>There are 8 subfunctions
+within the PAPI call, as described below:<br>
+                                              </blockquote>
+                                              <blockquote><b>'num'&nbsp;&nbsp;
+                                                </b>- provides information
+on the number of hardware counters built into this platform. The result of
+this call specifies how many events can be counted at once.<br>
+                                                </blockquote>
+                                                </blockquote>
+                                                <blockquote>
+                                                  <blockquote><b>'start'
+                                                    </b>- programs the counters
+with the named events and begins counting. The names of the events can be
+found in the PAPI documentation. If a named event cannot be found, or cannot
+ be mapped, an error message is displayed.<br>
+                                                    </blockquote>
+                                                    </blockquote>
+                                                    <blockquote>
+                                                      <blockquote><b>'stop'&nbsp;
+                                                        </b>- stops counting
+and returns the values of the counters in the same order as events were specified
+in the start command. 'stop' also can be used to reset the counters for the
+ipc flips and flops subfunctions described below.<br>
+                                                        </blockquote>
+                                                        </blockquote>
+                                                        <blockquote>
+                                                          <blockquote><b>
+'read'&nbsp; </b>- return the values of the counters without stopping them.<br>
+                                                            </blockquote>
+                                                            </blockquote>
+                                                            <blockquote>
+                                                              <blockquote><b>
+'accum' </b>- adds the values of the counters to the input parameters and
+returns them in the output parameters. Counting is not stopped.<br>
+                                                                </blockquote>
+                                                                </blockquote>
+                                                                <blockquote>
+                                                                  <blockquote><b>
+'ipc'&nbsp;&nbsp; </b>- returns the total instructions executed since the
+first call to this subfunction, and the rate of execution of instructions
+(as instructions per cycle) since the last call.<br>
+                                                                    </blockquote>
+                                                                    </blockquote>
+                                                                    <blockquote>
+                                                                      <blockquote><b>
+'flips' </b>- returns the total floating point instructions executed since
+the first call to this subfunction, and the rate of execution of floating
+point instructions (as mega-floating point instructions per second, or mflips)
+since the last call. A floating point instruction is defined as whatever
+this cpu naturally counts as floating point instructions.<br>
+                                                                        </blockquote>
+                                                                        </blockquote>
+                                                                        <blockquote>
+                                                                          <blockquote><b>
+'flops' </b>- identical to 'flips', except it measures floating point operations
+rather than instructions. In many cases these two counts may be identical.
+In some cases 'flops' will be a derived value that attempts to reproduce
+that which is traditionally considered a floating point operation. For example,
+a fused multiply-add would be counted as two operations, even if it was only
+a single instruction.<br>
+                                                                            </blockquote>
+                                                                            </blockquote>
+                                                                            <blockquote>
+                                                                              <blockquote>
+In typical usage, the first five subfunctions: <b>'num'</b>, <b>'start'</b>
+, <b>'stop'</b>, <b>'read'</b>, and <b>'accum'</b> are used together. <b>
+'num'</b> establishes the maximum number of events that can be supplied to
+                                                                                <b>
+'start'</b>. After a <b>'start'</b> is issued, <b>'read'</b> and <b>'accum'</b>
+ can be intermixed until a <b>'stop' </b>is issued.<br>
+                                                                                </blockquote>
+                                                                                </blockquote>
+                                                                                <blockquote>
+The three rate calls, <b>'ipc'</b>, <b>'flips'</b>, and <b>'flops'</b> are
+intended to be used independently. They cannot be mixed, because they use
+the same counter resources. They can be used serially if they are separated
+by a <b>'stop'</b> call, which can also be used to reset the counters.<br>
+                                                                                  </blockquote>
+                                                                                  <center>
+                                                                                  <h1>
+                                                                                  <hr></h1>
+                                                                                  </center>
                                                                         
                                                                         
                                    
-                                <h2> Example M-Files                     
-                                                                        
-                                                                        
-                                                                        
-                                                                        
-    
-                                <hr width="100%"></h2>
-                                                                        
-                                                                        
-                                   
-                                <blockquote>                             
-                                                                        
-                                                                        
-           
-                                  <h3><a name="InnerProduct"></a>
-        NAME</h3>
-                                                                        
-                                                                        
-                                             
-                                  <blockquote><b>PAPIInnerProduct.m</b></blockquote>
-                                                                        
-                                                                        
-                                                       
-                                    <h3> DESCRIPTION</h3>
-                                                                        
-                                                                        
-                                                       
-                                    <blockquote>Computes the product  of a
- scalar and a vector of size n = 50 to 500 in steps of 50. Displays the 
-observed  number of floating point operations as compared to the theoretically 
-  predicted  number. Theory predicts ops = 2*n. The results provide an indication 
-  of the  overhead incurred by MATLAB, and the Mflops acheived for each computation.</blockquote>
-                                                                        
-                                                                        
-                                                                 
-                                      <h3> SOURCE</h3>
-                                                                        
-                                                                        
-                                                                 
-                                      <blockquote><tt>fprintf(1,'\nPAPI Inner 
- Product Test');</tt><tt><br>
-                                           </tt><tt>fprintf(1,'\n%12s %12s
- %12s %12s %12s %12s\n', 'n', 'ops', '2n', 'difference', '% error', 'mflops')</tt><tt><br>
-                                           </tt><tt>for n=50:50:500,</tt><tt><br>
-                                           </tt><tt>&nbsp;&nbsp;&nbsp; a=rand(1,n);x=rand(n,1);</tt><tt><br>
-                                           </tt><tt>&nbsp;&nbsp;&nbsp; flops(0);</tt><tt><br>
-                                           </tt><tt>&nbsp;&nbsp;&nbsp; c=a*x;</tt><tt><br>
-                                           </tt><tt>&nbsp;&nbsp;&nbsp; [count,mflops]=flops;</tt><tt><br>
-                                           </tt><tt>&nbsp;&nbsp;&nbsp; fprintf(1,'%12d 
- %12d %12d %12d %12.2f %12.2f\n',n,count,2*n,count - 2*n, (1.0 - ((2*n) / 
-count)) * 100,mflops)</tt><tt><br>
-                                           </tt><tt>end</tt></blockquote>
-                                                                        
-                                                    
-                                        <h3>RESULTS</h3>
-                                                                        
-                                                                        
-                                                                        
-  
-                                        <blockquote>The following were   obtained
- on an 850 MHz Pentium III running Windows 2000 and MATLAB 6.1.  Your milage
- may vary. <br>
-                                                     </blockquote>
-                                                     <tt>&gt;&gt; PAPIInnerProduct</tt><br>
-                                             <br>
-                                             <tt>PAPI Inner Product Test</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 2n&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- mflops</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 119&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 15.97&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.50</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 23&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 10.31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.84</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 327&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 8.26&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.70</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 431&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 7.19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.55</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 535&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 6.54&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.34</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 639&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 600&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 6.10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10.72</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 743&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 700&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 43&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 5.79&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 13.89</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 851&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 5.99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 16.57</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 955&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 55&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 5.76&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 18.97</tt><tt><br>
-                                             </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1059&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 59&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 5.57&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 16.17</tt><br>
-                                             <tt>&gt;&gt;</tt></blockquote>
-                                                                        
-                                                                        
-                                                                        
-            
-                                          <h3>                           
-                                                                        
-                                                                        
-                                                     
-                                          <hr width="100%"></h3>
-                                                                        
-                                                                        
-                                                                        
-            
-                                          <blockquote>                   
-                                                                        
-                                                                        
-                                                                       
-                                            <h3><a name="VectorMatrix"></a>
-        NAME</h3>
-                                                                        
-                                                                        
-                                                                        
-                      
-                                            <blockquote><b>PAPIVectorMatrix.m</b></blockquote>
-                                                                        
-                                                                        
-                                                                        
-                                
-                                              <blockquote>               
-                                                                        
-                                                                        
-                                                                        
-                      
-                                                <h3> DESCRIPTION</h3>
+                                                                                  <h2>
+ Example M-Files                                                        
                                                                         
                                                                         
                                                                         
                                           
-                                                <blockquote>Computes  the 
- product of a square matrix and a vector of size n = 50 to 500 in steps  of
- 50. Displays the observed number of floating point operations as compared 
-   to the theoretically predicted number. Theory predicts ops = 2*n^2. The 
- results  provide an indication of the overhead incurred by MATLAB, and the 
- Mflops acheived for each computation.</blockquote>
+                                                                                  <hr width="100%"></h2>
                                                                         
                                                                         
-                                                                        
-                                                   
-                                                  <h3> SOURCE</h3>
-                                                                        
+                                   
+                                                                                  <blockquote>
                                                                         
                                                                         
-                                                   
-                                                  <blockquote><tt>fprintf(1,'\nPAPI 
- Matrix Vector Multiply Test');</tt><tt><br>
-                                                       </tt><tt>fprintf(1,'\n%12s 
- %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^2', 'difference', '% error', 
- 'mflops')</tt><tt><br>
-                                                       </tt><tt>for n=50:50:500,</tt><tt><br>
-                                                       </tt><tt>&nbsp;&nbsp;&nbsp; 
- a=rand(n);x=rand(n,1);</tt><tt><br>
-                                                       </tt><tt>&nbsp;&nbsp;&nbsp; 
- flops(0);</tt><tt><br>
-                                                       </tt><tt>&nbsp;&nbsp;&nbsp; 
- b=a*x;</tt><tt><br>
-                                                       </tt><tt>&nbsp;&nbsp;&nbsp; 
- [count,mflops]=flops;</tt><tt><br>
-                                                       </tt><tt>&nbsp;&nbsp;&nbsp; 
- fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n^2,count - 2*n^2, 
- (1.0 - ((2*n^2) / count)) * 100,mflops)</tt><tt><br>
-                                                       </tt><tt>end</tt></blockquote>
-                                                                        
-                                                                        
-               
-                                                    <h3>RESULTS</h3>
-                                                                        
-                                                                        
-                                                                        
-                                                              
-                                                    <blockquote>The  following 
-   were obtained on an 850 MHz Pentium III running Windows 2000 and MATLAB 
- 6.1.  Your milage may vary. </blockquote>
-                                                                 </blockquote>
-                                                                        
-                                                                        
-                                                                        
-                                                                        
-                                                      <p><tt>&gt;&gt; PAPIMatrixVector</tt><tt><br>
-                                                         </tt><tt><br>
-                                                         </tt><tt>PAPI Matrix 
- Vector Multiply Test</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 2n^2&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- mflops</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 5000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 4.21&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 47.17</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 20000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 3.03&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 179.58</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 45223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 45000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.49&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2.66</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 80000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 38.91</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 125423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 125000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.34&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 44.70</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 180541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 180000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 53.56</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 245671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 245000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 48.97</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 320000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.15&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 44.30</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 405583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 405000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27.98</tt><tt><br>
-                                                         </tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 0.14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 38.60</tt><tt><br>
-                                                         </tt><tt>&gt;&gt;</tt></p>
-                                                                 </blockquote>
-                                                                        
-                                                                        
-                                                                        
-                                                                        
-                                                      <h3>               
-                                                                        
-                                                                        
-               </h3>
-                                                                        
-                                      
-                                                      <h3>              
-                                                                        
-                                                                        
-    
-                                                      <hr width="100%"></h3>
-                                                                        
-                                                                        
-                                                                        
-   
-                                                      <blockquote>      
-                                                                        
-                                                                        
-                  
-                                                        <h3><a name="MatrixMatrix"></a>
-         NAME</h3>
-                                                                        
-                                                                        
-                           
-                                                        <blockquote><b>PAPIMatrixMatrix.m</b></blockquote>
-                                                                        
-                                                                        
-                                 
-                                                          <h3> DESCRIPTION</h3>
-                                                                        
-                                                                        
-                                 
-                                                          <blockquote>   
-Computes  the product of two square matrices of size n = 50 to 500 in steps 
-  of 50. Displays the observed number of floating point operations as compared 
-  to the theoretically predicted number. Theory predicts ops = 2*n^3. MATLAB 
- uses an ATLAS optimized agorithm for peak performance on matrix-matrix multiplies. 
-  The bulk of the error indicated below is due to that algorithm, which increases 
-  floating point performance while adding floating point operations to the 
- theoretically predicted number.</blockquote>
-                                                                        
-                                                                        
-                                       
-                                                            <h3> SOURCE</h3>
-                                                                        
-                                                                        
-                                       
-                                                            <blockquote><tt>
-   fprintf(1,'\nPAPI Matrix Matrix Multiply Test');</tt><tt><br>
-                                                                 </tt><tt>
- fprintf(1,'\n%12s  %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^3', 'difference', 
-'% error',  'mflops')</tt><tt><br>
-                                                                 </tt><tt>
- for  n=50:50:500,</tt><tt><br>
-                                                                 </tt><tt>
- &nbsp;&nbsp;&nbsp;  a=rand(n);b=rand(n);c=rand(n);</tt><tt><br>
-                                                                 </tt><tt>
- &nbsp;&nbsp;&nbsp;  flops(0);</tt><tt><br>
-                                                                 </tt><tt>
- &nbsp;&nbsp;&nbsp;  c=c+a*b;</tt><tt><br>
-                                                                 </tt><tt>
- &nbsp;&nbsp;&nbsp;  [count,mflops]=flops;</tt><tt><br>
-                                                                 </tt><tt>
- &nbsp;&nbsp;&nbsp;  fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n^3,count 
-- 2*n^3,  (1.0 - ((2*n^3) / count)) * 100,mflops)</tt><tt><br>
-                                                                 </tt><tt>
- end</tt></blockquote>
-                                                                        
-                                                                        
-                                             
-                                                              <h3>RESULTS</h3>
-                                                                        
-                                                                        
-                                             
-                                                              <blockquote>
+                                         </blockquote>
+                                                                                    <blockquote>
+                                                                                      <h3>
+                                                                                      <h3><b><a name="FlopsInnerProduct"></a>
+                                                                                      </b>
+NAME</h3>
+                                                                                      </h3>
+                                                                                      <blockquote><b>
+FlopsInnerProduct.m</b></blockquote>
+                                                                                        <h3>
+ DESCRIPTION</h3>
+                                                                                        <blockquote>
+Computes the product  of a  scalar and a vector of size n = 50 to 500 in
+steps of 50. Displays the  observed  number of floating point operations
+as compared to the theoretically   predicted  number. Theory predicts ops
+= 2*n. The results provide an indication   of the  overhead incurred by MATLAB,
+and the Mflops acheived for each computation.</blockquote>
+                                                                                          <h3>
+ SOURCE</h3>
+                                                                                          <blockquote><tt>
+fprintf(1,'\nPAPI Inner Product Test');<br>
+fprintf(1,'\nUsing flops');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n', 'difference',
+'% error', 'mflops')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(1,n);x=rand(n,1);<br>
+&nbsp;&nbsp;&nbsp; flops(0);<br>
+&nbsp;&nbsp;&nbsp; c=a*x;<br>
+&nbsp;&nbsp;&nbsp; [ops, mflops] = flops;<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,ops,2*n,ops
+- 2*n, (1.0 - ((2*n) / ops)) * 100,mflops)<br>
+end</tt><br>
+                                                                                            </blockquote>
+                                                                                            <h3>
+RESULTS</h3>
+                                                                                            <blockquote>
+The following were   obtained  on an 850 MHz Pentium III running Windows
+2000 and MATLAB 6.1.  Your milage  may vary. <br>
+                                                                                              </blockquote>
+                                                                                              <tt>
+&gt;&gt; FlopsInnerProduct<br>
+                                                                                              <br>
+PAPI Inner Product Test<br>
+Using flops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n&nbsp;&nbsp;
+difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+mflops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+119&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 15.97&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.28<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+23&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10.31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+7.45<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+327&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8.26&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+10.52<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+431&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7.19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+13.92<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+535&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.54&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+16.01<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+639&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 600&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+18.92<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+743&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 700&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+43&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.79&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20.82<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+851&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+25.27<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+955&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+55&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.76&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+27.90<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1059&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+59&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.57&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+30.08<br>
+&gt;&gt;&nbsp;</tt></blockquote>
+                                                                                              <h3>
+                                                                                              <hr width="100%"></h3>
+                                                                                              <blockquote>
+                                                                                                <blockquote>
+                                                                                                  <h3><a name="FlopsVectorMatrix"></a>
+NAME</h3>
+                                                                                                  </blockquote>
+                                                                                                  <blockquote>
+                                                                                                    <blockquote><b>
+FlopsMatrix</b><b>Vector</b><b>.m</b></blockquote>
+                                                                                                      </blockquote>
+                                                                                                      <blockquote>
+                                                                                                        <h3>
+ DESCRIPTION</h3>
+                                                                                                        <blockquote>
+Computes  the  product of a square matrix and a vector of size n = 50 to
+500 in steps  of  50. Displays the observed number of floating point operations
+as compared    to the theoretically predicted number. Theory predicts ops
+= 2*n^2. The  results  provide an indication of the overhead incurred by
+MATLAB, and the  Mflops acheived for each computation.</blockquote>
+                                                                                                          <h3>
+ SOURCE</h3>
+                                                                                                          <blockquote><tt>
+fprintf(1,'\nPAPI Matrix Vector Multiply Test');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^2', 'difference',
+'% error', 'mflops')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(n);x=rand(n,1);<br>
+&nbsp;&nbsp;&nbsp; flops(0);<br>
+&nbsp;&nbsp;&nbsp; b=a*x;<br>
+&nbsp;&nbsp;&nbsp; [count,mflops]=flops;<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n^2,count
+- 2*n^2, (1.0 - ((2*n^2) / count)) * 100,mflops)<br>
+end</tt></blockquote>
+                                                                                                            <h3>
+RESULTS</h3>
+                                                                                                            <blockquote>
+The  following    were obtained on an 850 MHz Pentium III running Windows
+2000 and MATLAB  6.1.  Your milage may vary. </blockquote>
+                                                                                                              </blockquote>
+                                                                                                              <p><tt>
+&gt;&gt; PAPI Matrix Vector Multiply Test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^2&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+% error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mflops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+5220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4.21&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+66.15<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.03&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+194.65<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+45223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 45000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.49&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+31.84<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+80317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+40.88<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+125423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 125000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.34&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+49.97<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+180541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 180000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+53.06<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+245671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 245000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+51.94<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+320467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.15&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+49.36<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+405583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 405000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+43.97<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+43.00<br>
+&gt;&gt;&nbsp;</tt></p>
+                                                                                                              </blockquote>
+                                                                                                              <h3>
+                                                                                                              <hr width="100%"></h3>
+                                                                                                              <blockquote>
+                                                                                                                <h3><a name="FlopsMatrixMatrix"></a>
+NAME</h3>
+                                                                                                                <blockquote><b>
+FlopsMatrixMatrix.m</b></blockquote>
+                                                                                                                  <h3>
+ DESCRIPTION</h3>
+                                                                                                                  <blockquote>
+    Computes  the product of two square matrices of size n = 50 to 500 in
+steps   of 50. Displays the observed number of floating point operations
+as compared   to the theoretically predicted number. Theory predicts ops
+= 2*n^3. MATLAB  uses an ATLAS optimized agorithm for peak performance on
+matrix-matrix multiplies.   The bulk of the error indicated below is due
+to that algorithm, which increases   floating point performance while adding
+floating point operations to the  theoretically predicted number.</blockquote>
+                                                                                                                    <h3>
+ SOURCE</h3>
+                                                                                                                    <blockquote><tt>
+fprintf(1,'\nPAPI Matrix Matrix Multiply Test');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^3', 'difference',
+'% error', 'mflops')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(n);b=rand(n);c=rand(n);<br>
+&nbsp;&nbsp;&nbsp; flops(0);<br>
+&nbsp;&nbsp;&nbsp; c=c+a*b;<br>
+&nbsp;&nbsp;&nbsp; [count,mflops]=flops;<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n^3,count
+- 2*n^3, (1.0 - ((2*n^3) / count)) * 100,mflops)<br>
+end</tt></blockquote>
+                                                                                                                      <h3>
+RESULTS</h3>
+                                                                                                                      <blockquote>
          The following were obtained on an 850 MHz Pentium III running Windows
    2000  and MATLAB 6.1. Your milage may vary. </blockquote>
-                                                                        
-                                                                        
-                                                   
-                                                                <p><tt>&gt;&gt; 
- PAPIMatrixMatrix</tt><tt><br>
-                                                                   </tt><tt><br>
-                                                                   </tt><tt>
-   PAPI Matrix Matrix Multiply Test</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^3&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- % error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mflops</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 258660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 8660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 59.76</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 2039068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 39068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.92&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 454.16</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 6796006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 46006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.68&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 445.87</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp; 
- 16082342&nbsp;&nbsp;&nbsp;&nbsp; 16000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 82342&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 485.28</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp; 
- 31379542&nbsp;&nbsp;&nbsp;&nbsp; 31250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 129542&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.41&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 475.39</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp; 
- 54187822&nbsp;&nbsp;&nbsp;&nbsp; 54000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 187822&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 433.65</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp; 
- 86007418&nbsp;&nbsp;&nbsp;&nbsp; 85750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 257418&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 483.88</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp; 
-128320222&nbsp;&nbsp;&nbsp;  128000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-320222&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  0.25&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-486.68</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp; 
-182656079&nbsp;&nbsp;&nbsp;  182250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-406079&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  0.22&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-492.85</tt><tt><br>
-                                                                   </tt><tt>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp; 
-250502939&nbsp;&nbsp;&nbsp;  250000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-502939&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  0.20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-496.72</tt><tt><br>
-                                                                   </tt><tt>
-   &gt;&gt;&nbsp;</tt></p>
-                                                                   </blockquote>
-                                                                        
-                                                                        
-                                                   
-                                                                <h3>    
-                                                                        
-                                                                        
-                                            
-                                                                <hr width="100%"></h3>
-                                                                        
-                                                                        
-                                                   
-                                                                <blockquote>
-                                                                        
-                                                                        
-                                                         
-                                                                  <h3><a name="Sampler"></a>
-         NAME</h3>
-                                                                        
-                                                                        
-                                                         
-                                                                  <blockquote><b>
-   PAPISampler.m</b></blockquote>
-                                                                        
-                                                                        
-                                                               
-                                                                    <h3> DESCRIPTION</h3>
-                                                                        
-                                                                        
-                                                               
-                                                                    <blockquote>
+                                                                                                                        <p><tt>
+&gt;&gt; FlopsMatrixMatrix<br>
+                                                                                                                        <br>
+PAPI Matrix Matrix Multiply Test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^3&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+% error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mflops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+258660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+8660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+425.32<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2039068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+39068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.92&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+412.40<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6796006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+46006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.68&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+464.47<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;
+16082342&nbsp;&nbsp;&nbsp;&nbsp; 16000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+82342&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+498.34<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;
+31379542&nbsp;&nbsp;&nbsp;&nbsp; 31250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+129542&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.41&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+514.93<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;
+54187928&nbsp;&nbsp;&nbsp;&nbsp; 54000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+187928&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+426.37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;
+86007456&nbsp;&nbsp;&nbsp;&nbsp; 85750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+257456&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+475.78<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp; 128320392&nbsp;&nbsp;&nbsp;
+128000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320392&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.25&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 446.92<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp; 182656368&nbsp;&nbsp;&nbsp;
+182250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 406368&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.22&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 441.02<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp; 250503312&nbsp;&nbsp;&nbsp;
+250000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 503312&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 447.54<br>
+&gt;&gt;&nbsp;</tt></p>
+                                                                                                                        </blockquote>
+                                                                                                                        <h3>
+                                                                                                                        <hr width="100%"></h3>
+                                                                                                                        <blockquote>
+                                                                                                                          <h3><a name="FlopsSampler"></a>
+NAME</h3>
+                                                                                                                          <blockquote><b>
+FlopsSampler.m</b></blockquote>
+                                                                                                                            <h3>
+ DESCRIPTION</h3>
+                                                                                                                            <blockquote>
    Demonstrates the application of the PAPI flops function on a series of 
 increasingly  more computationally expensive MATLAB operations. &nbsp;You 
 define the size  of the computation with an input parameter; MATLAB displays 
 the operation,  the number of floating point operations required, and the 
 effective Mflop  throughput.<br>
-                                                                        
-                                                                      <br>
-                                                                        
-                                                                      </blockquote>
-                                                                        
-                                                                        
-                                                                     
-                                                                      <h3>
+                                                                                                                              <br>
+                                                                                                                              </blockquote>
+                                                                                                                              <h3>
     SOURCE</h3>
-                                                                        
-                                                                        
-                                                                     
-                                                                      <blockquote>
+                                                                                                                              <blockquote>
    The source for this function can be examined in the file: <br>
    PAPISampler.m</blockquote>
-                                                                        
-                                                                        
-                                                                        
-                                                                        <h3>
+                                                                                                                                <h3>
    RESULTS</h3>
-                                                                        
-                                                                        
-                                                                        
-                                                                        <blockquote>
+                                                                                                                                <blockquote>
          The following were obtained on an 850 MHz Pentium III running Windows
    2000  and MATLAB 6.1. Your milage may vary. </blockquote>
+                                                                                                                                  <p><tt>
+&gt;&gt; FlopsSampler(500)<br>
+                                                                                                                                  <br>
+Counts Using PAPI<br>
+                                                                                                                                  <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Operations&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; fl pt ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Mflop/s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; calling PAPI flops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.04<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+dot product&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1077&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.96<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; matrix
+vector&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 42.75<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; random
+matrix&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+874905&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27.41<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+chol(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+46495920&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 282.40<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+lu(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+84994928&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 262.04<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+x=a\y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+91706152&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 196.63<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+condest(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+93340912&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 77.32<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+qr(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+188981232&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 363.99<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; matrix multiply&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250253248&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+469.55<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+inv(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+263311472&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 328.68<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+svd(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+377278304&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 115.15<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+cond(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+377283040&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 113.68<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+hess(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+450242112&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 177.70<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+eig(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;
+1181522304&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 157.53<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [u,s,v]=svd(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500&nbsp;&nbsp;&nbsp;&nbsp; 2032648448&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+110.25<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+pinv(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp; 2.533161e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+123.81<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+s=gsvd(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp; 4.506011e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+146.69<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[x,e]=eig(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp; 2.916129e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+149.32<br>
+&nbsp;&nbsp;&nbsp; [u,v,x,c,s]=gsvd(a,b)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500&nbsp; 4.756261e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 153.54<br>
+&gt;&gt;&nbsp;</tt></p>
+                                                                                                                                  <p><tt><br>
+                                                                                                                                  </tt></p>
+                                                                                                                                  <h3><br>
+                                                                                                                                  </h3>
+                                                                                                                                  <h3><a name="PAPIInnerProduct"></a>
+NAME</h3>
+                                                                        
+                                                                        
+                                             
+                                                                                                                                  <blockquote><b>
+PAPIInnerProduct.m</b></blockquote>
+                                                                        
+                                                                        
+                                                       
+                                                                                                                                    <h3>
+ DESCRIPTION</h3>
+                                                                        
+                                                                        
+                                                       
+                                                                                                                                    <blockquote>
+Computes the product  of a  scalar and a vector of size n = 50 to 500 in
+steps of 50 using two different methods: the PAPI('flops') call, and PAPI('start')
+/ PAPI('stop'). Displays the  observed  number of floating point operations
+as compared to the theoretically   predicted  number. Theory predicts ops
+= 2*n. The results provide an indication   of the  overhead incurred by MATLAB,
+and the Mflops acheived for each computation.</blockquote>
+                                                                        
+                                                                        
+                                                                 
+                                                                                                                                      <h3>
+ SOURCE</h3>
+                                                                        
+                                                                        
+                                                                 
+                                                                                                                                      <blockquote><tt>
+fprintf(1,'\n\nPAPI Inner Product Test');<br>
+fprintf(1,'\nUsing the High Level PAPI("flops") call');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n', 'difference',
+'% error', 'mflops')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(1,n);x=rand(n,1);<br>
+&nbsp;&nbsp;&nbsp; PAPI('stop'); % reset the counters to zero<br>
+&nbsp;&nbsp;&nbsp; PAPI('flops'); % start counting flops<br>
+&nbsp;&nbsp;&nbsp; c=a*x;<br>
+&nbsp;&nbsp;&nbsp; [ops, mflops] = PAPI('flops'); % read the flops data<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,ops,2*n,ops
+- 2*n, (1.0 - ((2*n) / ops)) * 100,mflops)<br>
+end<br>
+PAPI('stop');<br>
+                                                                                                                                        <br>
+fprintf(1,'\n\nPAPI Inner Product Test');<br>
+fprintf(1,'\nUsing PAPI start and stop');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n', 'difference',
+'% error', 'flops/cycle')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(1,n);x=rand(n,1);<br>
+&nbsp;&nbsp;&nbsp; PAPI('start', 'PAPI_TOT_CYC', 'PAPI_FP_OPS');<br>
+&nbsp;&nbsp;&nbsp; c=a*x;<br>
+&nbsp;&nbsp;&nbsp; [cyc, ops] = PAPI('stop');<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.6f\n',n,ops,2*n,ops
+- 2*n, (1.0 - ((2*n) / ops)) * 100,ops/cyc)<br>
+end</tt></blockquote>
+                                                                        
+                                                    
+                                                                                                                                        <h3>
+RESULTS</h3>
+                                                                        
+                                                                        
+                                                                        
+  
+                                                                                                                                        <blockquote>
+The following were   obtained  on an 850 MHz Pentium III running Windows
+2000 and MATLAB 6.1.  Your milage  may vary. <br>
+                                                     </blockquote>
+                                                     <tt>&gt;&gt; PAPIInnerProduct<br>
+                                                                                                                                          <br>
+                                                                                                                                          <br>
+PAPI Inner Product Test<br>
+Using the High Level PAPI("flops") call<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n&nbsp;&nbsp;
+difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+mflops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+119&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 15.97&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.22<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+23&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10.31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6.47<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+327&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8.26&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+9.49<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+431&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7.19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+12.17<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+535&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.54&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+15.19<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+639&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 600&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+17.73<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+743&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 700&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+43&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.79&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20.56<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+851&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+22.93<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+955&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+55&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.76&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+15.85<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1059&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+59&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.57&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+27.64<br>
+                                                                                                                                          <br>
+                                                                                                                                          <br>
+PAPI Inner Product Test<br>
+Using PAPI start and stop<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n&nbsp;&nbsp;
+difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % error&nbsp; flops/cycle<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+119&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 15.97&nbsp;&nbsp;&nbsp;&nbsp;
+0.002868<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+23&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10.31&nbsp;&nbsp;&nbsp;&nbsp;
+0.007038<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+327&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 8.26&nbsp;&nbsp;&nbsp;&nbsp;
+0.010591<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+431&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+31&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7.19&nbsp;&nbsp;&nbsp;&nbsp;
+0.013792<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+535&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.54&nbsp;&nbsp;&nbsp;&nbsp;
+0.016720<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+639&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 600&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.10&nbsp;&nbsp;&nbsp;&nbsp;
+0.019734<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+743&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 700&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+43&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.79&nbsp;&nbsp;&nbsp;&nbsp;
+0.022139<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+851&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.99&nbsp;&nbsp;&nbsp;&nbsp;
+0.025629<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+955&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+55&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.76&nbsp;&nbsp;&nbsp;&nbsp;
+0.028769<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1059&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+59&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.57&nbsp;&nbsp;&nbsp;&nbsp;
+0.032066<br>
+&gt;&gt;&nbsp;</tt></blockquote>
+                                                                        
+                                                                        
+                                                                        
+            
+                                                                                                                                          <h3>
                                                                         
                                                                         
                                                                         
         
-                                                                          <p><tt>
-   &gt;&gt; papisampler(500)</tt><tt><br>
+                                                                                                                                          <hr width="100%"></h3>
                                                                         
-    </tt><tt><br>
                                                                         
-    </tt><tt> Counts Using PAPI</tt><tt><br>
                                                                         
-    </tt><tt><br>
+            
+                                                                                                                                          <blockquote>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- Operations&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; fl pt ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Mflop/s</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- calling PAPI&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.08</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- dot product&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 1077&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9.56</tt><tt><br>
+                  
+                                                                                                                                            <h3><a name="PAPIVectorMatrix"></a>
+NAME</h3>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
- matrix vector&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 500711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 35.38</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
- random matrix&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 875057&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 36.80</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- chol(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 46495738&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 331.69</tt><tt><br>
+                      
+                                                                                                                                            <blockquote><b>
+PAPIMatrix</b><b>Vector</b><b>.m</b></blockquote>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- lu(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 84994682&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 366.33</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- x=a\y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 90590248&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 284.27</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- condest(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 93335441&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 133.72</tt><tt><br>
+                                
+                                                                                                                                              <blockquote>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- qr(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 188980830&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 405.04</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; matrix
- multiply&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
- 250252890&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 517.53</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- inv(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 262195073&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 361.13</tt><tt><br>
+                                      
+                                                                                                                                                <h3>
+ DESCRIPTION</h3>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- svd(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 377136867&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 120.75</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- cond(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 377141476&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 120.08</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- hess(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 450240547&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 184.41</tt><tt><br>
+                                          
+                                                                                                                                                <blockquote>
+Computes  the  product of a square matrix and a vector of size n = 50 to
+500 in steps  of  50 using two different methods: the PAPI('flops') call,
+and PAPI('start') / PAPI('stop'). Displays the observed number of floating
+point operations as compared    to the theoretically predicted number. Theory
+predicts ops = 2*n^2. The  results  provide an indication of the overhead
+incurred by MATLAB, and the  Mflops acheived for each computation.</blockquote>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- eig(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp; 
- 1176869816&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 170.12</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
- [u,s,v]=svd(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;
- 2027067755&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 114.82</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- pinv(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp; 2.527578e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 134.06</tt><tt><br>
+                                                   
+                                                                                                                                                  <h3>
+ SOURCE</h3>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- s=gsvd(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp; 4.411588e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 160.69</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- [x,e]=eig(a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp; 2.897773e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 167.11</tt><tt><br>
                                                                         
-    </tt><tt> &nbsp;&nbsp;&nbsp; [u,v,x,c,s]=gsvd(a,b)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 500&nbsp; 4.661840e+009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 168.47</tt><tt><br>
+                                                   
+                                                                                                                                                  <blockquote><tt>
+fprintf(1,'\nPAPI Matrix Vector Multiply Test');<br>
+fprintf(1,'\nUsing the High Level PAPI("flops") call');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^2', 'difference',
+'% error', 'mflops')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(n);x=rand(n,1);<br>
+&nbsp;&nbsp;&nbsp; PAPI('stop'); % reset the counters to zero<br>
+&nbsp;&nbsp;&nbsp; PAPI('flops'); % start counting flops<br>
+&nbsp;&nbsp;&nbsp; b=a*x;<br>
+&nbsp;&nbsp;&nbsp; [count, mflops] = PAPI('flops'); % read the flops data<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n^2,count
+- 2*n^2, (1.0 - ((2*n^2) / count)) * 100,mflops)<br>
+end<br>
+PAPI('stop');<br>
+                                                                                                                                                    <br>
+fprintf(1,'\nPAPI Matrix Vector Multiply Test');<br>
+fprintf(1,'\nUsing PAPI start and stop');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^2', 'difference',
+'% error', 'flops/cycle')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(n);x=rand(n,1);<br>
+&nbsp;&nbsp;&nbsp; PAPI('start', 'PAPI_TOT_CYC', 'PAPI_FP_OPS');<br>
+&nbsp;&nbsp;&nbsp; c=a*x;<br>
+&nbsp;&nbsp;&nbsp; [cyc, ops] = PAPI('stop');<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.6f\n',n,ops,2*n^2,ops
+- 2*n^2, (1.0 - ((2*n^2) / ops)) * 100,ops/cyc)<br>
+end</tt></blockquote>
                                                                         
-    </tt><tt> &gt;&gt;</tt></p>
+                                                                        
+               
+                                                                                                                                                    <h3>
+RESULTS</h3>
+                                                                        
+                                                                        
+                                                                        
+                                                              
+                                                                                                                                                    <blockquote>
+The  following    were obtained on an 850 MHz Pentium III running Windows
+2000 and MATLAB  6.1.  Your milage may vary. </blockquote>
+                                                                 </blockquote>
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                                                                                                      <p><tt>
+&gt;&gt; PAPIMatrixVector<br>
+                                                                                                                                                      <br>
+PAPI Matrix Vector Multiply Test<br>
+Using the High Level PAPI("flops") call<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^2&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+% error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mflops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+5220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4.21&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+68.18<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.03&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+183.13<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+45223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 45000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.49&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+61.86<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+80317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+56.50<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+125423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 125000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.34&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+57.77<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+180541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 180000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+58.14<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+245671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 245000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.27&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+55.00<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+320467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.15&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+51.79<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+405583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 405000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+45.92<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.14&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+42.08<br>
+                                                                                                                                                      <br>
+PAPI Matrix Vector Multiply Test<br>
+Using PAPI start and stop<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^2&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+% error&nbsp; flops/cycle<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+5220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4.21&nbsp;&nbsp;&nbsp;&nbsp;
+0.065863<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+625&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.03&nbsp;&nbsp;&nbsp;&nbsp;
+0.202808<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+45223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 45000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.49&nbsp;&nbsp;&nbsp;&nbsp;
+0.072082<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+80317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.39&nbsp;&nbsp;&nbsp;&nbsp;
+0.064472<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+125423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 125000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.34&nbsp;&nbsp;&nbsp;&nbsp;
+0.068027<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+180541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 180000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+541&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;
+0.068057<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+245671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 245000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+671&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.27&nbsp;&nbsp;&nbsp;&nbsp;
+0.063880<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+320467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.15&nbsp;&nbsp;&nbsp;&nbsp;
+0.059551<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+405583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 405000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+583&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.14&nbsp;&nbsp;&nbsp;&nbsp;
+0.044170<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+711&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.14&nbsp;&nbsp;&nbsp;&nbsp;
+0.048029<br>
+&gt;&gt;&nbsp;</tt></p>
+                                                                 </blockquote>
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                                                                                                      <h3>
+                                                                        
+                                                                        
+                               </h3>
+                                                                        
+                                      
+                                                                                                                                                      <h3>
+                                                                        
+                                                                        
+                   
+                                                                                                                                                      <hr width="100%"></h3>
+                                                                        
+                                                                        
+                                                                        
+   
+                                                                                                                                                      <blockquote>
+                                                                        
+                                                                        
+                         
+                                                                                                                                                        <h3><a name="PAPIMatrixMatrix"></a>
+NAME</h3>
+                                                                        
+                                                                        
+                           
+                                                                                                                                                        <blockquote><b>
+PAPIMatrixMatrix.m</b></blockquote>
+                                                                        
+                                                                        
+                                 
+                                                                                                                                                          <h3>
+ DESCRIPTION</h3>
+                                                                        
+                                                                        
+                                 
+                                                                                                                                                          <blockquote>
+    Computes  the product of two square matrices of size n = 50 to 500 in
+steps   of 50 using two different methods: the PAPI('flops') call, and PAPI('start')
+/ PAPI('stop'). Displays the observed number of floating point operations
+as compared   to the theoretically predicted number. Theory predicts ops
+= 2*n^3. MATLAB  uses an ATLAS optimized agorithm for peak performance on
+matrix-matrix multiplies.   The bulk of the error indicated below is due
+to that algorithm, which increases   floating point performance while adding
+floating point operations to the  theoretically predicted number.</blockquote>
+                                                                        
+                                                                        
+                                       
+                                                                                                                                                            <h3>
+ SOURCE</h3>
+                                                                        
+                                                                        
+                                       
+                                                                                                                                                            <blockquote><tt>
+fprintf(1,'\nPAPI Matrix Matrix Multiply Test');<br>
+fprintf(1,'\nUsing the High Level PAPI("flops") call');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^3', 'difference',
+'% error', 'mflops')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(n);b=rand(n);c=rand(n);<br>
+&nbsp;&nbsp;&nbsp; PAPI('stop'); % reset the counters to zero<br>
+&nbsp;&nbsp;&nbsp; PAPI('flops'); % start counting flops<br>
+&nbsp;&nbsp;&nbsp; c=c+a*b;<br>
+&nbsp;&nbsp;&nbsp; [count, mflops] = PAPI('flops'); % read the flops data<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.2f\n',n,count,2*n^3,count
+- 2*n^3, (1.0 - ((2*n^3) / count)) * 100,mflops)<br>
+end<br>
+PAPI('stop');<br>
+                                                                                                                                                              <br>
+fprintf(1,'\nPAPI Matrix Matrix Multiply Test');<br>
+fprintf(1,'\nUsing PAPI start and stop');<br>
+fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^3', 'difference',
+'% error', 'flops/cycle')<br>
+for n=50:50:500,<br>
+&nbsp;&nbsp;&nbsp; a=rand(n);b=rand(n);c=rand(n);<br>
+&nbsp;&nbsp;&nbsp; PAPI('start', 'PAPI_TOT_CYC', 'PAPI_FP_OPS');<br>
+&nbsp;&nbsp;&nbsp; c=c+a*b;<br>
+&nbsp;&nbsp;&nbsp; [cyc, ops] = PAPI('stop');<br>
+&nbsp;&nbsp;&nbsp; fprintf(1,'%12d %12d %12d %12d %12.2f %12.6f\n',n,ops,2*n^3,ops
+- 2*n^3, (1.0 - ((2*n^3) / ops)) * 100,ops/cyc)<br>
+end</tt></blockquote>
+                                                                        
+                                                                        
+                                             
+                                                                                                                                                              <h3>
+RESULTS</h3>
+                                                                        
+                                                                        
+                                             
+                                                                                                                                                              <blockquote>
+         The following were obtained on an 850 MHz Pentium III running Windows
+   2000  and MATLAB 6.1. Your milage may vary. </blockquote>
+                                                                        
+                                                                        
+                                                   
+                                                                                                                                                                <p><tt>
+&gt;&gt; PAPIMatrixMatrix<br>
+                                                                                                                                                                <br>
+PAPI Matrix Matrix Multiply Test<br>
+Using the High Level PAPI("flops") call<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^3&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+% error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mflops<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+258660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+8660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+420.75<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2039068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+39068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.92&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+479.00<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6796006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+46006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.68&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+466.45<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;
+16082342&nbsp;&nbsp;&nbsp;&nbsp; 16000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+82342&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+500.56<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;
+31379542&nbsp;&nbsp;&nbsp;&nbsp; 31250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+129542&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.41&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+505.66<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;
+54187924&nbsp;&nbsp;&nbsp;&nbsp; 54000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+187924&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+437.01<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;
+86007456&nbsp;&nbsp;&nbsp;&nbsp; 85750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+257456&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+487.16<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp; 128320520&nbsp;&nbsp;&nbsp;
+128000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320520&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.25&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 423.99<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp; 182656272&nbsp;&nbsp;&nbsp;
+182250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 406272&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.22&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 459.83<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp; 250503312&nbsp;&nbsp;&nbsp;
+250000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 503312&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 453.29<br>
+                                                                                                                                                                <br>
+PAPI Matrix Matrix Multiply Test<br>
+Using PAPI start and stop<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ops&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2n^3&nbsp;&nbsp; difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+% error&nbsp; flops/cycle<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+258660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+8660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.35&nbsp;&nbsp;&nbsp;&nbsp;
+0.408925<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2039104&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+39104&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.92&nbsp;&nbsp;&nbsp;&nbsp;
+0.156549<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6796006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+46006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.68&nbsp;&nbsp;&nbsp;&nbsp;
+0.555426<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 200&nbsp;&nbsp;&nbsp;&nbsp;
+16082400&nbsp;&nbsp;&nbsp;&nbsp; 16000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+82400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.51&nbsp;&nbsp;&nbsp;&nbsp;
+0.416697<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 250&nbsp;&nbsp;&nbsp;&nbsp;
+31379640&nbsp;&nbsp;&nbsp;&nbsp; 31250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+129640&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.41&nbsp;&nbsp;&nbsp;&nbsp;
+0.479208<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 300&nbsp;&nbsp;&nbsp;&nbsp;
+54187826&nbsp;&nbsp;&nbsp;&nbsp; 54000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+187826&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.35&nbsp;&nbsp;&nbsp;&nbsp;
+0.580607<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 350&nbsp;&nbsp;&nbsp;&nbsp;
+86007732&nbsp;&nbsp;&nbsp;&nbsp; 85750000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+257732&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.30&nbsp;&nbsp;&nbsp;&nbsp;
+0.457513<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 400&nbsp;&nbsp;&nbsp; 128320260&nbsp;&nbsp;&nbsp;
+128000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 320260&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.25&nbsp;&nbsp;&nbsp;&nbsp; 0.545727<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 450&nbsp;&nbsp;&nbsp; 182656419&nbsp;&nbsp;&nbsp;
+182250000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 406419&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.22&nbsp;&nbsp;&nbsp;&nbsp; 0.509754<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 500&nbsp;&nbsp;&nbsp; 250503204&nbsp;&nbsp;&nbsp;
+250000000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 503204&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.20&nbsp;&nbsp;&nbsp;&nbsp; 0.552343<br>
+&gt;&gt;</tt> <tt>&nbsp;</tt></p>
+                                                                   </blockquote>
+                                                                        
+                                                                        
+                                                   
+                                                                                                                                                                <h3>
+                                                                        
+                                                                        
+                                                 
+                                                                                                                                                                <hr width="100%"></h3>
+                                                                        
+                                                                        
+                                                   
+                                                                                                                                                                <blockquote>
+                                                                        
+                                                                        
+                                                         
+                                                                                                                                                                  <h3>
+                                                                                                                                                                  </h3>
                                                                         
     </blockquote>
                                                                         
                                                                         
                                                                         
         
-                                                                          <p>
+                                                                                                                                                                  <p>
                                                                         
     </p>
                                                                         
                                                                         
                                                                         
         
-                                                                          <blockquote>
+                                                                                                                                                                  <blockquote>
                                                                         
                                                                         
                                                                         
               
-                                                                            <p><tt><br>
+                                                                                                                                                                    <p><tt><br>
                                                                         
       </tt></p>
                                                                         
@@ -893,19 +1441,19 @@ effective Mflop  throughput.<br>
                                                                         
      </td>
                                                                         
-                                                                          </tr>
+                                                                                                                                                                  </tr>
                                                                         
                                                                         
                                                                         
                                                                         
                                                                  
-                                                                        </tbody>
+                                                                                                                                                                </tbody>
                                                                         
                                                                         
                                                                         
                                                                         
                                                        
-                                                                      </table>
+                                                                                                                                                              </table>
                                                                      </td>
                                                                    </tr>
                                                                    <tr>
@@ -915,10 +1463,10 @@ effective Mflop  throughput.<br>
                                                                         
                                                                         
                                                        
-                                                                      <table width="760" border="0" cellspacing="0" cellpadding="5" align="Center">
+                                                                                                                                                              <table width="760" border="0" cellspacing="0" cellpadding="5" align="Center">
                                                                        <tbody>
                                                                         
-                                                                          <tr>
+                                                                                                                                                                  <tr>
                                                                         
                                                                         
      <td>                                                               
@@ -927,11 +1475,11 @@ effective Mflop  throughput.<br>
                                                                         
                                                                         
                     
-                                                                            <hr size="1"></td>
+                                                                                                                                                                    <hr size="1"></td>
                                                                         
-                                                                          </tr>
+                                                                                                                                                                  </tr>
                                                                         
-                                                                          <tr>
+                                                                                                                                                                  <tr>
                                                                         
                                                                         
      <td height="92">                                                   
@@ -940,7 +1488,7 @@ effective Mflop  throughput.<br>
                                                                         
                                                                         
                                 
-                                                                            <table width="760" border="0" cellspacing="0" cellpadding="0" align="Center" vspace="0" hspace="0">
+                                                                                                                                                                    <table width="760" border="0" cellspacing="0" cellpadding="0" align="Center" vspace="0" hspace="0">
                                                                         
                                                                         
                                                                         
@@ -969,7 +1517,7 @@ effective Mflop  throughput.<br>
                                                                         
                                                                         
                                      
-                                                                                  <div align="Left"><img src="images/trans.gif" width="140" height="75" border="0" align="Left" vspace="0" hspace="0">
+                                                                                                                                                                          <div align="Left"><img src="images/trans.gif" width="140" height="75" border="0" align="Left" vspace="0" hspace="0">
                                                                         
         </div>
                                                                         
@@ -1023,31 +1571,31 @@ effective Mflop  throughput.<br>
                                                                         
                                                                         
                     
-                                                                              </tbody>
+                                                                                                                                                                      </tbody>
                                                                         
                                                                         
                                                                         
                                                                         
                                                                         
             
-                                                                            </table>
+                                                                                                                                                                    </table>
                                                                         
                                                                         
      </td>
                                                                         
-                                                                          </tr>
+                                                                                                                                                                  </tr>
                                                                         
                                                                         
                                                                         
                                                                         
                                                                  
-                                                                        </tbody>
+                                                                                                                                                                </tbody>
                                                                         
                                                                         
                                                                         
                                                                         
                                                        
-                                                                      </table>
+                                                                                                                                                              </table>
                                                                      </td>
                                                                    </tr>
                                                                    <tr>
@@ -1059,17 +1607,17 @@ effective Mflop  throughput.<br>
                                                                         
                                                                         
                                    
-                                                                  </tbody>
+                                                                                                                                                          </tbody>
                                                                         
                                                                         
                                                                         
                                                                         
                         
-                                                                </table>
+                                                                                                                                                        </table>
                                                                         
                                                                         
                                                                         
                                                                         
                          
-                                                                </body>
-                                                                </html>
+                                                                                                                                                        </body>
+                                                                                                                                                        </html>
