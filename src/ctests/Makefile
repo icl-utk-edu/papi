@@ -9,7 +9,7 @@ SERIAL  = zero zero_flip low-level high-level sprofile eventname case1 case2 cal
 	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory \
-	timer_overflow
+	timer_overflow overflow2
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -124,6 +124,9 @@ fifth: fifth.c $(UTILOBJS) $(PAPILIB)
 
 overflow: overflow.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow
+
+overflow2: overflow2.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) overflow2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow2
 
 overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) overflow_single_event.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_single_event
