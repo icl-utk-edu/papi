@@ -14,11 +14,14 @@
 /* This file contains the 'high level' interface to PAPI. 
    BASIC is a high level language. ;-) */
 
-#ifndef _WIN32
-  #include SUBSTRATE
-#else
-  #include "win32.h"
+#ifdef _WIN32
+  /* Define SUBSTRATE to map to linux-perfctr.h
+   * since we haven't figured out how to assign a value 
+   * to a label at make inside the Windows IDE */
+  #define SUBSTRATE "linux-perfctr.h"
 #endif
+
+#include SUBSTRATE
 
 /* high level papi functions*/
 
