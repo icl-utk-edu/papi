@@ -47,7 +47,7 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 /* initialize values in PAPI_EVENT_MAP */ 
 
    EM->dataSlotArray=(void **)malloc(EM->totalSlots*sizeof(void *));
-   if(!EM->dataSlotArray) PAPI_shutdown(PAPI_ENOMEM);
+   if(!EM->dataSlotArray) PAPI_shutdown();
    bzero(EM->dataSlotArray,sizeof(EM->dataSlotArray));
 
    EM->totalSlots = PAPI_INIT_SLOTS;
@@ -58,9 +58,18 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 
    if(   (ERROR_LEVEL_CHOICE!=PAPI_VERB_ECONT)
        &&(ERROR_LEVEL_CHOICE!=PAPI_VERB_ESTOP) ) 
-          PAPI_shutdown(PAPI_EINVAL); 
+          PAPI_shutdown(); 
 
    PAPI_ERR_LEVEL=ERROR_LEVEL_CHOICE;
+
+
+/* from papi_internal.h
+typedef struct _papi_options{
+	int error_level;
+	} papi_options;
+*/
+
+ 	papi_options.error_level=PAPI_ERR_LEVEL;
 
    return;
    }/***/
@@ -79,13 +88,61 @@ static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
 /*  a. all memory associated with the PAPI tool is freed.                 */
 /*  b. a shutdown message is written to stderr                            */
 /*                                                                        */
+/* Need to free:     
+
+1. typedef struct _EventSetInfo {
+  int EventSetIndex;       ** Index of the EventSet in the array  **
+
+  int NumberOfCounters;    ** Number of counters used- usu. the number of 
+                              events added **
+  int *EventCodeArray;     ** PAPI/Native codes for events in this set from 
+                              AddEvent **
+  void *machdep;      ** A pointer to memory of size 
+                         _papi_system_info.size_machdep bytes. This 
+                         will contain the encoding necessary for the 
+                         hardware to set the counters to the appropriate
+                         conditions**
+  long long *start;   ** Array of length _papi_system_info.num_gp_cntrs
+                         + _papi_system_info.num_sp_cntrs 
+                         This will most likely be zero for most cases**
+  long long *stop;    ** Array of the same length as above, but 
+                         containing the values of the counters when 
+                         stopped **
+  long long *latest;  ** Array of the same length as above, containing 
+                         the values of the counters when last read ** 
+} EventSetInfo;
+*/
 /*========================================================================*/
 static void PAPI_shutdown(void) {
 
-    DynamicArray *xEM;
-    xEM=&PAPI_EVENT_MAP;
+    int i;
+    DynamicArray *EM;
+    EM=&PAPI_EVENT_MAP;
     /* close all memory pointed to by xEM */
     /* this code under construction       */
+    /* note: do we need to make a special case for EM->dataSlotArray[0]?*/
+
+
+    /* free all the EventInfo Structures in the EM->dataSlotArray*/
+    for(i=0;i<EM->totalSlots;i++) {
+	if(EM->dataSlotArray[i]) {
+	  if(EM->dataSlotArray[i]->EventCodeArray)
+	    free(EM->dataSlotArray[i]->EventCodeArray);
+	  if(EM->dataSlotArray[i]->machdep)
+	    free(EM->dataSlotArray[i]->machdep);
+	  if(EM->dataSlotArray[i]->start)
+	    free(EM->dataSlotArray[i]->start);
+	  if(EM->dataSlotArray[i]->stop)
+	    free(EM->dataSlotArray[i]->stop);
+	  if(EM->dataSlotArray[i]->latest)
+	    free(EM->dataSlotArray[i]->latest);
+	  free(EM->dataSlotArray[i]);
+	  }/***/
+	}/***/
+		 
+	free(EM->dataSlotArray);
+
+
 
     /* shutdown message */
     fprintf(stderr,"\n\n PAPI SHUTDOWN. \n\n");
