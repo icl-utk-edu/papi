@@ -1,5 +1,4 @@
-/* $Id$ */
-
+/* papi.c */
 #include <stdio.h>
 #include <malloc.h>
 #include <memory.h>

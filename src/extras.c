@@ -1,4 +1,4 @@
-/* $Id$ */
+/* extras.c */
 
 /* This file contains portable routines to do things that we wish the
 vendors did in the kernel extensions or performance libraries. This includes
@@ -58,6 +58,11 @@ static int time_for_overflow()
 
 int _papi_dispatch_timer(int signal, siginfo_t *sip, ucontext_t *uap)
 {
+  int i;
+
+  for (i=0;i<=PAPI_EVENTSET_MAP.totalSlots-PAPI_EVENTSET_MAP.availSlots;i++)
+    {
+      if ((PAPI_EVENTSET_MAP.dataSlotArray[i]) && (PAPI_EVENTSET_MAP.dataSlotArray[i]->state != PAPI_STOPPED))
   /* for each running eventset */
   if (time_for_accumulate_64())
     ;
