@@ -93,8 +93,6 @@ papi_mdi_t _papi_hwi_system_info = { "$Id$",
 			       -1,  /*  num_gp_cntrs */
 			       -1,  /*  grouped_counters */
 			       -1,  /*  num_sp_cntrs */
-			       -1,  /*  total_presets */
-			       -1,  /*  total_events */
 			        PAPI_DOM_USER, /* default domain */
 			        PAPI_GRN_THR,  /* default granularity */
 			        0,  /* We can use add_prog_event */
@@ -115,10 +113,18 @@ papi_mdi_t _papi_hwi_system_info = { "$Id$",
 
 
 /* Our informative table */
+
+/*
 #define PAPI_PRESET(function)\
 	function##_nm, function, function##_dsc, function##_lbl, 0, NULL, 0
 
-PAPI_preset_info_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = { 
+#define PAPI_PRESET(function)\
+	function##_nm, function##_dsc, function##_lbl, 0
+*/
+#define PAPI_PRESET(function)\
+function, 0, function##_nm, function##_lbl, function##_dsc, {0,}, {0,}
+
+PAPI_event_info_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = { 
   { PAPI_PRESET(PAPI_L1_DCM) },
   { PAPI_PRESET(PAPI_L1_ICM) },
   { PAPI_PRESET(PAPI_L2_DCM) },

@@ -381,9 +381,6 @@ typedef struct _papi_mdi {
   int num_sp_cntrs;   /* Number of special purpose counters, like 
                          Time Stamp Counter on IBM or Pentium */
 
-  int total_presets;  /* Number of preset events supported */
-  int total_events;   /* Number of native events supported. */
-
   int default_domain; /* The default domain when this substrate is used */
 
   int default_granularity; /* The default granularity when this substrate is used */

@@ -36,11 +36,11 @@
 
 #ifdef __i386__
 /* CPUID model < 2 */
-extern hwi_preset_t _papi_hwd_pentium4_mlt2_preset_map[];
+extern hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[];
 /* CPUID model >= 2 */
-extern hwi_preset_t _papi_hwd_pentium4_mge2_preset_map[];
+extern hwi_search_t _papi_hwd_pentium4_mge2_preset_map[];
 #elif defined(__x86_64__)
-extern hwi_preset_t _papi_hwd_x86_64_opteron_map[];
+extern hwi_search_t _papi_hwd_x86_64_opteron_map[];
 #endif
 
 extern papi_mdi_t _papi_hwi_system_info;

@@ -57,10 +57,10 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 /********************/
 
 /* Defined by the substrate */
-extern hwi_preset_t _papi_hwi_preset_map[];
+extern hwi_preset_data_t _papi_hwi_preset_data[];
 
 /* Defined in papi_data.c */
-extern PAPI_preset_info_t _papi_hwi_presets[];
+extern PAPI_event_info_t _papi_hwi_presets[];
 #ifdef DEBUG
 extern int _papi_hwi_debug;
 #endif
@@ -569,7 +569,7 @@ static void remap_event_position(EventSetInfo_t *ESI, int thisindex)
 	    preset_index = head[j].event_code & PRESET_AND_MASK;
 	    for(k=0;k<MAX_COUNTER_TERMS;k++)
         {
-		  nevt=_papi_hwi_preset_map[preset_index].nativeEvent[k];
+		  nevt=_papi_hwi_preset_data[preset_index].native[k];
 		  if (nevt == 0) break;
 		  for(n=0;n<ESI->NativeCount;n++)
           {
@@ -617,7 +617,7 @@ static void map_papi_event_index(EventSetInfo_t *ESI, int thisindex)
 	  if(head[i].event_code & PRESET_MASK)
       {
 	    preset_index = head[i].event_code & PRESET_AND_MASK;
-        if (_papi_hwi_preset_map[preset_index].derived != NOT_DERIVED)
+        if (_papi_hwi_preset_data[preset_index].derived != NOT_DERIVED)
            continue;
 	  }
       _papi_hwi_event_index_map[head[i].pos[0]]=i;
@@ -732,7 +732,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			int preset_index = EventCode & PRESET_AND_MASK;
 
 			/* count the number of native events in this preset */
-			for(count=0;_papi_hwi_preset_map[preset_index].nativeEvent[count] != 0; count++);
+			 count= _papi_hwi_presets[preset_index].count;
 
 			/* Check if it's within the valid range */
 			if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
@@ -740,7 +740,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			
 			/* Check if event exists */
 			
-			if (!_papi_hwi_presets[preset_index].avail)
+			if (!_papi_hwi_presets[preset_index].count)
 				return(PAPI_ENOEVNT);
             /* check if the native events have been used as overflow events */
             if (ESI->state & PAPI_OVERFLOWING ) {
@@ -749,7 +749,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
                 for(j=0; j<ESI->overflow.event_counter; j++)
                 {
                   if ( ESI->overflow.EventCode[j] == 
-		    (_papi_hwi_preset_map[preset_index].nativeEvent[i]) )
+		    (_papi_hwi_preset_data[preset_index].native[i]) )
                     return(PAPI_ECNFLCT);
                 }
               }
@@ -757,15 +757,15 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			
 			/* Try to add the preset. */
 			  
-			remap = add_native_events(ESI, _papi_hwi_preset_map[preset_index].nativeEvent, count, &ESI->EventInfoArray[thisindex]);
+			remap = add_native_events(ESI, _papi_hwi_preset_data[preset_index].native, count, &ESI->EventInfoArray[thisindex]);
 			if (remap < 0)
 				return(PAPI_ECNFLCT);
 			else{
 				/* Fill in the EventCode (machine independent) information */
 			
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
-				ESI->EventInfoArray[thisindex].derived = _papi_hwi_preset_map[preset_index].derived; 
-				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_map[preset_index].operation; 
+				ESI->EventInfoArray[thisindex].derived = _papi_hwi_preset_data[preset_index].derived; 
+				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_data[preset_index].operation; 
 				if(remap)
 					remap_event_position(ESI, thisindex);
                 map_papi_event_index(ESI,thisindex);
@@ -800,7 +800,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
 				if(remap)
 					remap_event_position(ESI, thisindex);
-                map_papi_event_index(ESI,thisindex);
+				map_papi_event_index(ESI,thisindex);
 			}
 		}
 		else
@@ -950,12 +950,12 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 		  return(PAPI_EINVAL);
 	  
 	  /* Check if event exists */
-	  if (!_papi_hwi_presets[preset_index].avail)
+	  if (!_papi_hwi_presets[preset_index].count)
 		  return(PAPI_ENOEVNT);
 	  
 	  /* Remove the preset event. */
-	  for(j=0;_papi_hwi_preset_map[preset_index].nativeEvent[j]!=0;j++);
-	  retval=remove_native_events(ESI, _papi_hwi_preset_map[preset_index].nativeEvent, j);
+	  for(j=0;_papi_hwi_preset_data[preset_index].native[j]!=0;j++);
+	  retval=remove_native_events(ESI, _papi_hwi_preset_data[preset_index].native, j);
       if (retval != PAPI_OK)
   	    return(retval);
       }
@@ -1174,8 +1174,6 @@ int _papi_hwi_mdi_init() {
    _papi_hwi_system_info.num_gp_cntrs                   = -1;
    _papi_hwi_system_info.grouped_counters               = -1;
    _papi_hwi_system_info.num_sp_cntrs                   = -1;
-   _papi_hwi_system_info.total_presets                  = -1;
-   _papi_hwi_system_info.total_events                   = -1;
    _papi_hwi_system_info.default_domain                 = PAPI_DOM_USER;
    _papi_hwi_system_info.default_granularity            = PAPI_GRN_THR;
 

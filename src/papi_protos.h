@@ -116,7 +116,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp);
    See extras.c or substrates for details... */
 
 extern int _papi_hwi_query_native_event(unsigned int EventCode);
-extern int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info);
+extern int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_event_info_t *info);
 extern int _papi_hwi_native_name_to_code(char *in, int *out);
 extern char *_papi_hwi_native_code_to_name(unsigned int EventCode);
 extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);

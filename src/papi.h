@@ -203,9 +203,11 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_SHLIBINFO      	20 /* Executable information */
 
-#define PAPI_MAX_STR_LEN        129 /* Guess what */
+#define PAPI_MIN_STR_LEN        40 /* For small strings, like names & stuff */
+#define PAPI_MAX_STR_LEN       129 /* For average run-of-the-mill strings */
+#define PAPI_HUGE_STR_LEN     1024 /* This should be defined in terms of a system parameter */
 
-#define PAPI_DERIVED            0x1 /* Flag to indicate that the event is derived */
+#define PAPI_DERIVED           0x1 /* Flag to indicate that the event is derived */
 
 /* 
 The Low Level API
@@ -266,7 +268,8 @@ typedef int (*PAPI_debug_handler_t)(int code);
   
 typedef struct _papi_debug_option {
   int level;
-  PAPI_debug_handler_t handler; } PAPI_debug_option_t;
+  PAPI_debug_handler_t handler; 
+} PAPI_debug_option_t;
 
 typedef struct _papi_address_map {
   char mapname[PAPI_MAX_STR_LEN];
@@ -359,26 +362,26 @@ typedef union {
   PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
   PAPI_shlib_info_t *shlib_info;
-  PAPI_exe_info_t *exe_info; } PAPI_option_t;
+  PAPI_exe_info_t *exe_info; 
+} PAPI_option_t;
 
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
-typedef struct  _dmem_t{
+typedef struct  _dmem_t {
    long_long  total_memory;
    long_long  max_memory;
    long_long  total_swapping;
    /* Memory Locality */ 
 } PAPI_dmem_t;
 
-/* dkt - added a label field to this structure */
-typedef struct pre_info {
-  char *event_name;
+typedef struct event_info {
   unsigned int event_code;
-  char *event_descr;
-  char *event_label;
-  int avail;
-  char *event_note;
-  int flags;
-} PAPI_preset_info_t; 
+  unsigned int count;
+  char symbol[PAPI_MIN_STR_LEN];
+  char short_descr[PAPI_MIN_STR_LEN];
+  char long_descr[PAPI_MAX_STR_LEN];
+  char vendor_name[PAPI_MAX_STR_LEN];
+  char vendor_descr[PAPI_HUGE_STR_LEN];
+} PAPI_event_info_t; 
 
 /* The Low Level API */
 /* Locking Mechanisms defines 
@@ -433,11 +436,14 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
 		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
 int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
 		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
+/*
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
 int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_label_event(int EventCode, char *label);
-int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
+*/
+int PAPI_query_event(int EventCode);
+int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
 int PAPI_enum_event(int *EventCode, int modifier);
