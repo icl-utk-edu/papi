@@ -1,6 +1,6 @@
 SUBSTR  = linux-ia64
 DESCR	= "Stock Linux 2.4.x for the Intel IA64"
-LIBS	= static shared
+LIBS	= static 
 TARGETS = serial pthreads
 
 CFLAGS  = -Wall -Ilibpfm -I. -ggdb -DDEBUG

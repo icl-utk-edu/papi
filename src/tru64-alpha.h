@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <sys/pfcntr.h>
 #include <sys/ioctl.h>
+#include <sys/timers.h>
 #include <stropts.h>
 #include <unistd.h>
 #include <sys/processor.h>

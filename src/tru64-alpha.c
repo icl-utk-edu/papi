@@ -365,24 +365,110 @@ static int get_system_info(void)
 extern u_int read_cycle_counter(void);
 extern u_int read_virt_cycle_counter(void);
 
+static long long real_time = 0;
+static long long virt_time = 0;
+static long long real_then = 0;
+static long long virt_then = 0;
+static const long long time_max = 0xffffffff;
+
+static void update_global_time(void)
+{
+  long long real_now = (long long)read_cycle_counter();
+  long long virt_now = (long long)read_cycle_counter();
+
+  DBG((stderr,"REAL: %lld %lld %lld\n",real_time,real_now,real_then));
+  if (real_now < real_then)
+    real_time += real_now + (time_max - real_then);
+  else
+    real_time += real_now - real_then;
+  real_then = real_now;
+
+  DBG((stderr,"VIRT: %lld %lld %lld\n",virt_time,virt_now,virt_then));
+  if (virt_now < virt_then)
+    virt_time += virt_now + (time_max - virt_then);
+  else
+    virt_time += real_now - real_then;
+  virt_then = virt_now;
+}
+
+int start_overflow_timer(void)
+{
+      int retval;
+      struct sigaction action, oaction;
+      struct sigevent event;
+      struct itimerspec value;
+      timer_t timer;
+
+      memset(&action,0x00,sizeof(struct sigaction));
+      action.sa_flags = SA_RESTART;
+      action.sa_handler = (void (*)(int))update_global_time;
+      if (sigaction(SIGRTMIN, &action, &oaction) < 0)
+	return(PAPI_ESYS);
+
+      memset(&event,0x00,sizeof(struct sigevent));
+      event.sigev_notify = SIGEV_SIGNAL;
+      event.sigev_signo = SIGRTMIN;
+      retval = timer_create(CLOCK_REALTIME,&event,&timer);
+      if (retval == -1)
+	return(PAPI_ESYS);
+
+      memset(&value,0x00,sizeof(struct itimerspec));
+      value.it_interval.tv_sec = 1;
+      value.it_value.tv_sec = 1;
+      
+      retval = timer_settime(timer,0,&value,NULL);
+      if (retval == -1)
+	return(PAPI_ESYS);
+
+      update_global_time();
+}
+
 long long _papi_hwd_get_real_usec (void)
 {
-  return((long long)((float)read_cycle_counter() / _papi_system_info.hw_info.mhz));
+  if (real_then)
+    {
+      update_global_time();
+      return(real_time / _papi_system_info.hw_info.mhz);
+    }
+  else
+    start_overflow_timer();
+  return(real_time / _papi_system_info.hw_info.mhz);
 }
 
 long long _papi_hwd_get_real_cycles (void)
 {
-  return((long long)read_cycle_counter());
+  if (real_then)
+    {
+      update_global_time();
+      return(real_time);
+    }
+  else
+    start_overflow_timer();
+  return(real_time);
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
-  return((long long)((float)read_virt_cycle_counter() / _papi_system_info.hw_info.mhz));
+  if (virt_then)
+    {
+      update_global_time();
+      return(virt_time / _papi_system_info.hw_info.mhz);
+    }
+  else
+    start_overflow_timer();
+  return(virt_time / _papi_system_info.hw_info.mhz);
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  return((long long)read_virt_cycle_counter());
+  if (virt_then)
+    {
+      update_global_time();
+      return(virt_time);
+    }
+  else
+    start_overflow_timer();
+  return(virt_time);
 }
 
 void _papi_hwd_error(int error, char *where)
