@@ -21,7 +21,8 @@ int main(int argc, char **argv) {
   extern void dummy(void *);
   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
   float real_time, proc_time, mflops;
-  long_long flpins,retval;
+  long_long flpins;
+  int retval;
   int i,j,k;
 
   if ( argc > 1 ) {

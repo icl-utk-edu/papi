@@ -88,8 +88,8 @@ int main(int argc, char **argv)
   
   {
 	long_long min, max;
-	min = myvalues[0]*.9;
-	max = myvalues[0]*1.1;
+	min = (long_long)(myvalues[0]*.9);
+	max = (long_long)(myvalues[0]*1.1);
 	if ( values[0]<(3*min)||values[0]>(3*max)){
                 retval = 1;
 #ifndef NO_FLOPS
@@ -98,8 +98,8 @@ int main(int argc, char **argv)
 		test_fail(__FILE__,__LINE__,"PAPI_TOT_INS",1);
 #endif
 	}
-	min = myvalues[1]*.9;
-	max = myvalues[1]*1.1;
+	min = (long_long)(myvalues[1]*.9);
+	max = (long_long)(myvalues[1]*1.1);
 	if ( values[1]<(3*min)||values[1]>(3*max)){
                 retval = 1;
 		test_fail(__FILE__,__LINE__,"PAPI_TOT_CYC",1);
