@@ -593,6 +593,9 @@ static int get_system_info(void)
 #ifdef DEBUG
    {
       if (ISLEVEL(DEBUG_SUBSTRATE)) {
+         const char *name;
+         int i;
+
          name = cpc_getcpuref(cpuver);
          if (name)
             SUBDBG("CPC CPU reference: %s\n", name);
