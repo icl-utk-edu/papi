@@ -56,6 +56,7 @@ void do_setup(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+#endif
       case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 1;
 	/* PMC(0) produces tagged x87_FP_uop:s (FLAME_CCCR0, FIRM_ESCR0) */
@@ -71,7 +72,6 @@ void do_setup(const struct perfctr_info *info,
 	evntsel1 = (1 << 26) | (0x3 << 16) | (5 << 13) | (1 << 12);
 	cpu_control->p4.escr[2] = (6 << 25) | (((1 << 3)|(1 << 2)) << 9) | (1 << 2);
 	break;
-#endif
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable, INT */

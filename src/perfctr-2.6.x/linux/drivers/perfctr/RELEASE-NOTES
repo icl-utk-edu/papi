@@ -3,6 +3,29 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.10, 2004-09-14
+- Fixed p4_clear_counters() to not access IQ_ESCR{0,1}
+  on P4 models >= 3.
+
+Version 2.6.10-pre1, 2004-08-03
+- Changed x86-64 to use the x86 include file and driver.
+  Intel's 64-bit P4 should now work in the x86-64 kernel.
+- Replaced PERFCTR_INTERRUPT_SUPPORT and NMI_LOCAL_APIC
+  #if:s in x86 code by #ifdef:s on CONFIG_X86_LOCAL_APIC.
+- Use macros to clean up x86 per-cpu cache accesses.
+- Recognize model 13 Pentium-Ms.
+- Changed isuspend_cpu on x86 to be like x86-64's: it
+  now stores a CPU number instead of a cache pointer.
+- x86: make perfctr_cpu_name more approximate.
+- The x86 driver records a simplified CPU type for x86_tests,
+  but this only occurs if PERFCTR_INIT_TESTS is configured.
+  perfctr_info.cpu_type is now unused.
+- Changed P4 driver to set up and check an explicit flag
+  for EXTENDED_CASCADE availability. perfctr_info.cpu_type
+  is now unused except for perfctr_x86_init_tests().
+- x86: Reformatted "if( x )" to "if (x)" and similarly for while
+  and switch statements. Deleted #if 0 blocks.
+
 Version 2.6.9, 2004-07-27
 - Fix ppc_check_control() to allow 7400/7410 processors to
   specify MMCR2[THRESHMULT].

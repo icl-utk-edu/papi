@@ -20,21 +20,17 @@ void do_print(FILE *resfile,
     for(i = 0; i < nrctrs; ++i) {
 	fprintf(resfile, "event 0x%08X",
 		cpu_control->evntsel[i]);
-#if !defined(__x86_64__)
 	if( cpu_control->p4.escr[i] )
 	    fprintf(resfile, "/0x%08X",
 		    cpu_control->p4.escr[i]);
-#endif
 	fprintf(resfile, "\t%19lld\n", sum->pmc[i]);
     }
-#if !defined(__x86_64__)
     if( cpu_control->p4.pebs_enable )
 	fprintf(resfile, "PEBS_ENABLE 0x%08X\n",
 		cpu_control->p4.pebs_enable);
     if( cpu_control->p4.pebs_matrix_vert )
 	fprintf(resfile, "PEBS_MATRIX_VERT 0x%08X\n",
 		cpu_control->p4.pebs_matrix_vert);
-#endif
 }
 
 void do_arch_usage(void)
@@ -102,15 +98,12 @@ unsigned int do_event_spec(unsigned int n,
     if( spec_pmc == (unsigned int)-1 )
 	spec_pmc = n;
     cpu_control->evntsel[n] = spec_evntsel;
-#if !defined(__x86_64__)
     cpu_control->p4.escr[n] = spec_escr;
-#endif
     cpu_control->pmc_map[n] = spec_pmc;
     cpu_control->nractrs = ++n;
     return n;
 }
 
-#if !defined(__x86_64__)
 static int parse_value(const char *arg, unsigned int *value)
 {
     char *endp;
@@ -118,13 +111,11 @@ static int parse_value(const char *arg, unsigned int *value)
     *value = strtoul(arg, &endp, 16);
     return endp[0] != '\0';
 }
-#endif
 
 int do_arch_option(int ch,
 		   const char *arg,
 		   struct perfctr_cpu_control *cpu_control)
 {
-#if !defined(__x86_64__)
     unsigned int spec_value;
 
     switch( ch ) {
@@ -143,6 +134,5 @@ int do_arch_option(int ch,
 	cpu_control->p4.pebs_matrix_vert = spec_value;
 	return 0;
     }
-#endif
     return -1;
 }

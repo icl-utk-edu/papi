@@ -19,15 +19,10 @@ EXTRA_CFLAGS := $(EXTRA_CFLAGS_y)
 # m-objs-m		perfctr.o if driver is module, empty otherwise
 # driver-objs-y		objects for perfctr.o module, or empty
 
+# This also covers x86_64.
 driver-objs-$(CONFIG_X86) := x86.o
 tests-objs-$(CONFIG_X86) := x86_tests.o
 kernel-objs-$(CONFIG_X86) := x86_setup.o
-
-# Braindamage alert! x86_64 defines _both_ CONFIG_X86_64 and CONFIG_X86.
-# These assignments need to override those above.
-driver-objs-$(CONFIG_X86_64) := x86_64.o
-tests-objs-$(CONFIG_X86_64) := x86_tests.o
-kernel-objs-$(CONFIG_X86_64) := x86_setup.o
 
 driver-objs-$(CONFIG_PPC32) := ppc.o
 tests-objs-$(CONFIG_PPC32) := ppc_tests.o

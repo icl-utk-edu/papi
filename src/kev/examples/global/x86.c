@@ -68,6 +68,7 @@ void setup_control(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+#endif
       case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 2;
 	/* set up PMC(1) to produce tagged x87_FP_uop:s */
@@ -79,7 +80,6 @@ void setup_control(const struct perfctr_info *info,
 	evntsel0 = (0x3 << 16) | (5 << 13) | (1 << 12);
 	control->p4.escr[0] = (0xC << 25) | (1 << 9) | (1 << 2);
 	break;
-#endif
       default:
 	fprintf(stderr, "cpu_type %u (%s) not supported\n",
 		info->cpu_type, perfctr_info_cpu_name(info));

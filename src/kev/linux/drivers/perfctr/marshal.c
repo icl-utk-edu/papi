@@ -217,11 +217,7 @@ int perfctr_decode_struct(void *address,
 #define PERFCTR_TAG_CPU_CONTROL_RSVD3	43
 #define PERFCTR_TAG_CPU_CONTROL_RSVD4	44
 #define PERFCTR_CPU_CONTROL_NRFIELDS_0	(7 + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, pmc_map) + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, evntsel) + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, ireset))
-#ifdef __x86_64__
-#define PERFCTR_CPU_CONTROL_NRFIELDS_1	0
-#else
 #define PERFCTR_CPU_CONTROL_NRFIELDS_1	(2 + STRUCT_ARRAY_SIZE(struct perfctr_cpu_control, p4.escr))
-#endif
 #define PERFCTR_CPU_CONTROL_NRFIELDS	(PERFCTR_CPU_CONTROL_NRFIELDS_0 + PERFCTR_CPU_CONTROL_NRFIELDS_1)
 
 #define PERFCTR_TAG_SUM_CTRS_TSC	48
@@ -267,7 +263,6 @@ static const struct perfctr_field_desc perfctr_cpu_control_fields[] = {
 	  .tag = PERFCTR_TAG_CPU_CONTROL_IRESET,
 	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,ireset),
 				     PERFCTR_TYPE_BYTES4) },
-#ifndef __x86_64__
 	{ .offset = offsetof(struct perfctr_cpu_control, p4.escr),
 	  .tag = PERFCTR_TAG_CPU_CONTROL_P4_ESCR,
 	  .type = PERFCTR_TYPE_ARRAY(STRUCT_ARRAY_SIZE(struct perfctr_cpu_control,p4.escr),
@@ -278,7 +273,6 @@ static const struct perfctr_field_desc perfctr_cpu_control_fields[] = {
 	{ .offset = offsetof(struct perfctr_cpu_control, p4.pebs_matrix_vert),
 	  .tag = PERFCTR_TAG_CPU_CONTROL_P4_PMV,
 	  .type = PERFCTR_TYPE_BYTES4 },
-#endif	/* __x86_64__ */
 	{ .offset = offsetof(struct perfctr_cpu_control, _reserved1),
 	  .tag = PERFCTR_TAG_CPU_CONTROL_RSVD1,
 	  .type = PERFCTR_TYPE_BYTES4 },

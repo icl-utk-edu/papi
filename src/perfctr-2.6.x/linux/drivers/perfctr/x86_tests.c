@@ -46,7 +46,7 @@
 #define CR4MOV	"movl"
 #endif
 
-#ifndef PERFCTR_INTERRUPT_SUPPORT
+#ifndef CONFIG_X86_LOCAL_APIC
 #undef apic_write
 #define apic_write(reg,vector)			do{}while(0)
 #endif
@@ -54,10 +54,10 @@
 #if !defined(__x86_64__)
 /* Avoid speculative execution by the CPU */
 extern inline void sync_core(void)
-{ 
+{
 	int tmp;
 	asm volatile("cpuid" : "=a" (tmp) : "0" (1) : "ebx","ecx","edx","memory");
-} 
+}
 #endif
 
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
@@ -174,9 +174,9 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	unsigned int loop, ticks[13];
 	const char *name[13];
 
-	if( msr_evntsel0 )
+	if (msr_evntsel0)
 		wrmsr(msr_evntsel0, 0, 0);
-	if( msr_cccr )
+	if (msr_cccr)
 		wrmsr(msr_cccr, 0, 0);
 
 	name[0] = "rdtsc";
@@ -210,9 +210,9 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 
 	loop = run(do_empty_loop, 0, 0);
 
-	if( msr_evntsel0 )
+	if (msr_evntsel0)
 		wrmsr(msr_evntsel0, 0, 0);
-	if( msr_cccr )
+	if (msr_cccr)
 		wrmsr(msr_cccr, 0, 0);
 
 	init_tests_message();
@@ -220,7 +220,7 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	printk(KERN_INFO "PERFCTR INIT: loop overhead is %u cycles\n", loop);
 	for(i = 0; i < ARRAY_SIZE(ticks); ++i) {
 		unsigned int x;
-		if( !ticks[i] )
+		if (!ticks[i])
 			continue;
 		x = ((ticks[i] - loop) * 10) / NITER;
 		printk(KERN_INFO "PERFCTR INIT: %s cost is %u.%u cycles (%u total)\n",
@@ -254,13 +254,13 @@ static inline void perfctr_vc3_init_tests(void)
 {
 	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0);
 }
+#endif /* !__x86_64__ */
 
 static inline void perfctr_p4_init_tests(void)
 {
 	measure_overheads(MSR_P4_CRU_ESCR0, P4_CRU_ESCR0_VAL, MSR_P4_IQ_COUNTER0,
 			  MSR_P4_IQ_CCCR0, P4_IQ_CCCR0_VAL);
 }
-#endif /* !__x86_64__ */
 
 static inline void perfctr_k7_init_tests(void)
 {
@@ -272,47 +272,39 @@ static inline void perfctr_generic_init_tests(void)
 	measure_overheads(0, 0, 0, 0, 0);
 }
 
+enum perfctr_x86_tests_type perfctr_x86_tests_type __initdata = PTT_UNKNOWN;
+
 void __init perfctr_x86_init_tests(void)
 {
-	switch( perfctr_info.cpu_type ) {
+	switch (perfctr_x86_tests_type) {
 #ifndef __x86_64__
-	case PERFCTR_X86_INTEL_P5:
-	case PERFCTR_X86_INTEL_P5MMX:
-	case PERFCTR_X86_CYRIX_MII:
+	case PTT_P5: /* Intel P5, P5MMX; Cyrix 6x86MX, MII, III */
 		perfctr_p5_init_tests();
 		break;
-	case PERFCTR_X86_INTEL_P6:
-	case PERFCTR_X86_INTEL_PII:
-	case PERFCTR_X86_INTEL_PIII:
-	case PERFCTR_X86_INTEL_PENTM:
+	case PTT_P6: /* Intel PPro, PII, PIII, PENTM */
 		perfctr_p6_init_tests();
 		break;
 #if !defined(CONFIG_X86_TSC)
-	case PERFCTR_X86_WINCHIP_C6:
-	case PERFCTR_X86_WINCHIP_2:
+	case PTT_WINCHIP: /* WinChip C6, 2, 3 */
 		perfctr_c6_init_tests();
 		break;
 #endif
-	case PERFCTR_X86_VIA_C3:
+	case PTT_VC3: /* VIA C3 */
 		perfctr_vc3_init_tests();
 		break;
-	case PERFCTR_X86_INTEL_P4:
-	case PERFCTR_X86_INTEL_P4M2:
-	case PERFCTR_X86_INTEL_P4M3:
+#endif /* !__x86_64__ */
+	case PTT_P4: /* Intel P4 */
 		perfctr_p4_init_tests();
 		break;
-#endif /* !__x86_64__ */
-	case PERFCTR_X86_AMD_K7:
-	case PERFCTR_X86_AMD_K8:
-	case PERFCTR_X86_AMD_K8C:
+	case PTT_AMD: /* AMD K7, K8 */
 		perfctr_k7_init_tests();
 		break;
-	case PERFCTR_X86_GENERIC:
+	case PTT_GENERIC:
 		perfctr_generic_init_tests();
 		break;
 	default:
 		printk(KERN_INFO "%s: unknown CPU type %u\n",
-		       __FUNCTION__, perfctr_info.cpu_type);
+		       __FUNCTION__, perfctr_x86_tests_type);
 		break;
 	}
 }

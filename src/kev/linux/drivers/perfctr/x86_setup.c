@@ -59,7 +59,7 @@ void set_cpus_allowed(struct task_struct *p, unsigned long new_mask)
 EXPORT_SYMBOL(set_cpus_allowed);
 #endif
 
-#if PERFCTR_INTERRUPT_SUPPORT
+#ifdef CONFIG_X86_LOCAL_APIC
 static void perfctr_default_ihandler(unsigned long pc)
 {
 }
@@ -99,7 +99,7 @@ unsigned int perfctr_cpu_khz(void)
 EXPORT_SYMBOL_mmu_cr4_features;
 EXPORT_SYMBOL(perfctr_cpu_khz);
 
-#ifdef NMI_LOCAL_APIC
+#ifdef CONFIG_X86_LOCAL_APIC
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,6)
 EXPORT_SYMBOL(nmi_perfctr_msr);
 #endif
@@ -110,10 +110,7 @@ EXPORT_SYMBOL(apic_pm_unregister);
 EXPORT_SYMBOL(nmi_pmdev);
 #endif
 
-#endif /* NMI_LOCAL_APIC */
-
-#if PERFCTR_INTERRUPT_SUPPORT
 EXPORT_SYMBOL(perfctr_cpu_set_ihandler);
-#endif /* PERFCTR_INTERRUPT_SUPPORT */
+#endif /* CONFIG_X86_LOCAL_APIC */
 
 #endif /* MODULE */

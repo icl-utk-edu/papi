@@ -93,7 +93,7 @@ check_kernel_srcdir_is_clean() {
 }
 
 get_makefile_variable() {
-    eval `grep "^$1 *=" Makefile | head -1 | sed 's/ *= */=/'`
+    eval `grep "^$1 *=" Makefile | head -n 1 | sed 's/ *= */=/'`
 }
 
 get_kernel_version() {
@@ -189,8 +189,12 @@ apply_patch() {
 }
 
 install_files_by_symlinks() {
-    echo ln -sf ${perfctr}/linux/include/asm-$ARCH/perfctr.h include/asm-$ARCH/
-    ln -sf ${perfctr}/linux/include/asm-$ARCH/perfctr.h include/asm-$ARCH/
+    echo ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
+    ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
+    echo ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
+    ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
+    echo ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
+    ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
     echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     echo ln -sf ${perfctr}/linux/drivers/perfctr drivers/

@@ -1,5 +1,5 @@
 /* $Id$
- * x86 Performance-Monitoring Counters driver
+ * x86/x86_64 Performance-Monitoring Counters driver
  *
  * Copyright (C) 1999-2004  Mikael Pettersson
  */
@@ -33,7 +33,7 @@ struct perfctr_cpu_state {
 	unsigned int cstatus;
 	struct {	/* k1 is opaque in the user ABI */
 		unsigned int id;
-		const void *isuspend_cpu;
+		int isuspend_cpu;
 	} k1;
 	/* The two tsc fields must be inlined. Placing them in a
 	   sub-struct causes unwanted internal padding on x86-64. */
@@ -111,7 +111,7 @@ static inline unsigned int perfctr_cstatus_has_ictrs(unsigned int cstatus)
 #define si_pmc_ovf_mask	_sifields._pad[0] /* XXX: use an unsigned field later */
 
 /* version number for user-visible CPU-specific data */
-#define PERFCTR_CPU_VERSION	0x0500	/* 5.0 */
+#define PERFCTR_CPU_VERSION	0x0501	/* 5.1 */
 
 #ifdef __KERNEL__
 
@@ -156,7 +156,8 @@ typedef void (*perfctr_ihandler_t)(unsigned long pc);
 #define PERFCTR_INTERRUPT_SUPPORT 1
 #endif
 
-#if PERFCTR_INTERRUPT_SUPPORT
+/* Operations related to overflow interrupt handling. */
+#ifdef CONFIG_X86_LOCAL_APIC
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);
@@ -175,7 +176,7 @@ static inline void perfctr_cpu_set_ihandler(perfctr_ihandler_t x) { }
 
 #endif	/* CONFIG_PERFCTR */
 
-#if defined(CONFIG_KPERFCTR) && PERFCTR_INTERRUPT_SUPPORT
+#if defined(CONFIG_KPERFCTR) && defined(CONFIG_X86_LOCAL_APIC)
 asmlinkage void perfctr_interrupt(struct pt_regs*);
 #define perfctr_vector_init()	\
 	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)

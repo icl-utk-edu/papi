@@ -6,6 +6,32 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.10.1, 2004-09-18
+- Fixed a problem causing an incomplete "wrapper" file to be
+  installed as /usr/include/asm/perfctr.h on x86_64 systems.
+
+Version 2.6.10, 2004-09-14
+- Eliminated a potential kernel crash on P4 model 3 Prescott
+  processors, due to the driver initialising two control
+  registers that have been removed from P4M3. The P4M3 Nocona
+  does not appear to have been affected by this error.
+- Fixed install procedure to not fail to install the shared
+  library's symbolic links when updating an older installation.
+- Updated kernel support: 2.4.21-20 (RHEL3), 2.4.28-pre3, 2.6.9-rc2.
+
+Version 2.6.10-pre1, 2004-08-03
+- x86-64 now uses the same driver and data structures as x86.
+  Intel's 64-bit P4 Xeon should work in the x86-64 kernel.
+  x86-64 application-level data structures have changed.
+- Updated library and example applications to include P4
+  support on x86-64.
+- Fixed update-kernel script to use 'head' in a POSIX
+  compliant way.
+- Added kernel support for the Model 13 Pentium-M.
+- Many code cleanups in the x86 driver.
+- Event 0x76 is now officially CPU_CLK_UNHALTED on AMD64.
+- Updated kernel support: 2.4.27-rc4.
+
 Version 2.6.9, 2004-07-27
 - Updated kernel support: 2.4.27-rc3, 2.6.7, 2.6.8-rc2,
   2.4.21-15.0.3 (RHEL3), 2.6.5-7.95 (SuSE).
