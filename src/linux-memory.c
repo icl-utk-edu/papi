@@ -68,7 +68,12 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
             /* Cache sizes were reported as KB; convert to Bytes by multipying by 2^10 */
             if (hw_info->mem_hierarchy.level[i].cache[j].size != 0)
                hw_info->mem_hierarchy.level[i].cache[j].size <<= 10;
-         }
+            /* if line_size was reported without num_lines, compute it */
+             if ((hw_info->mem_hierarchy.level[i].cache[j].line_size != 0) &&
+                 (hw_info->mem_hierarchy.level[i].cache[j].num_lines == 0))
+               hw_info->mem_hierarchy.level[i].cache[j].num_lines = 
+                  hw_info->mem_hierarchy.level[i].cache[j].size / hw_info->mem_hierarchy.level[i].cache[j].line_size;
+        }
       }
    }
 
