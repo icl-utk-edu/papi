@@ -14,9 +14,9 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "test_utils.h"
+#include "../papiStdEventDefs.h"
+#include "../papi.h"
+#include "./test_utils.h"
 
 /*
 	In Windows, all exit() calls are vectored to
