@@ -1,7 +1,7 @@
 SUBSTR  = unicos-ev5
 DESCR   = "Cray UNICOS/mk Unix with Alpha 21164"
 LIBS	= static 
-TARGETS	= serial 
+TARGETS	= serial multiplex 
 
 CFLAGS	= -h calchars 
 FFLAGS	= -F 
