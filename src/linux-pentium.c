@@ -631,6 +631,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
 {
   int retval, selector, j = 0, i;
   unsigned long long last_read[PERF_COUNTERS];
+  unsigned long long a, b, c;
 
   retval = update_counters(last_read);
   if (retval < PAPI_OK)
@@ -642,7 +643,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
      has the right to remove an event. */
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
-    {
+  {
       selector = ESI->EventSelectArray[i];
       
       assert(selector != 0);
@@ -652,21 +653,32 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
       DBG((stderr,"Event %d, mask is 0x%x\n",j,selector));
 
       switch (selector)
-	{
+      {
 	case 0x1:
 	  events[j] = last_read[0];
 	  if (zero->multistart.SharedDepth[0] > 1)
-	    events[j] -= ESI->start[j]; 
+          { a = events[j];
+            b = ESI->start[j];
+            c = a - b;
+            events[j] = c;
+          }
 	  break;
 	case 0x2:
 	  events[j] = last_read[1];
 	  if (zero->multistart.SharedDepth[1] > 1)
-	    events[j] -= ESI->start[j]; 
+          { a = events[j];
+            b = ESI->start[j];
+            c = a - b;
+            events[j] = c;
+          }
 	  break;
 	case 0x4:
 	  events[j] = last_read[2];
 	  if (zero->multistart.SharedDepth[2] > 1)
-	    events[j] -= ESI->start[j]; 
+          { a = events[j];
+            b = ESI->start[j];
+            c = a - b;
+          }
 	  break;
 	case 0x13:
 	case 0x15:
@@ -676,7 +688,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
 	     can do it. */
 	default:
 	  return(PAPI_EBUG);
-	}
+      }
 
       /* Early exit! */
 
@@ -685,7 +697,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
     }
 
   /* Should never get here */
-  
+
   return(PAPI_EBUG);
 }
 

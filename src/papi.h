@@ -191,7 +191,9 @@ typedef struct _papi_granularity_option {
 typedef union {
   PAPI_inherit_option_t inherit;
   PAPI_granularity_option_t granularity; 
+  PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
+  PAPI_domain_option_t defdomain; 
   int debug; } PAPI_option_t;
 
 int PAPI_accum(int EventSet, unsigned long long *values);
