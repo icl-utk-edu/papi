@@ -11,6 +11,15 @@
 *	   london@cs.utk.edu
 */  
 
+#ifdef PERFCTR25
+#define PERFCTR20
+#define PERFCTR_CPU_NAME   perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
+#else
+#define PERFCTR_CPU_NAME perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS perfctr_cpu_nrctrs
+#endif
+
 #ifdef PERFCTR20
 #define PERFCTR18
 #endif
@@ -131,6 +140,10 @@ inline static int setup_all_presets(int cpu_type)
       
     case PERFCTR_X86_AMD_K7:
       preset_map = k7_preset_map;
+      break;
+
+    case PERFCTR_X86_AMD_K8:
+      preset_map = k8_preset_map;
       break;
 
     case PERFCTR_X86_VIA_C3:
@@ -277,6 +290,7 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
     case PERFCTR_X86_AMD_K7:
+    case PERFCTR_X86_AMD_K8:
       ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[2] |= def_mode | PERF_ENABLE;
@@ -290,7 +304,7 @@ inline static void init_config(hwd_control_state_t *ptr)
   for(i=0;i<_papi_system_info.num_cntrs;i++) 
     ptr->counter_cmd.cpu_control.pmc_map[i]=i;
 #else
-  ptr->counter_cmd.evntsel[0] |= def_mode | PERF_ENABLE;
+
   ptr->counter_cmd.evntsel[1] |= def_mode;
 #endif
 }
@@ -351,13 +365,21 @@ static int get_system_info(struct perfctr_dev *dev)
 #if defined(PERFCTR18) || defined(PERFCTR20) 
   if (vperfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
+#ifndef PERFCTR25
   if (strstr(info.version,"2.4") != info.version)
     {
       fprintf(stderr,"Version mismatch of perfctr: compiled 2.4 or higher vs. installed %s\n",info.version);
       return(PAPI_ESBSTR);
     }
+#else
+  if (strstr(info.driver_version,"2.5") != info.driver_version)
+    {
+      fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
+      return(PAPI_ESBSTR);
+    }
+#endif
 
-  strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
+  strcpy(_papi_system_info.hw_info.model_string,PERFCTR_CPU_NAME(&info));
   _papi_system_info.supports_hw_overflow = 
     (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
   DBG((stderr,"Hardware/OS %s support counter generated interrupts\n",
@@ -369,8 +391,8 @@ static int get_system_info(struct perfctr_dev *dev)
 #endif
   _papi_system_info.supports_hw_profile = 0; /* != _papi_system_info.supports_hw_overflow? */
 #ifdef PERFCTR20
-  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info);
-  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info);
+  _papi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+  _papi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
 #else /* PERFCTR20 */
   _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info) - 1;
   _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info) - 1;
@@ -592,35 +614,46 @@ inline static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *l
 
 inline static int set_domain(hwd_control_state_t *this_state, int domain)
 {
-  int mode0 = 0, mode1 = 0, did = 0;
-  
+  int did = 0;
+  int i,ncntr=_papi_system_info.num_cntrs;
+
+  /* Clear the current domain set for this event set */
+  /* We don't touch the Enable bit in this code but  */
+  /* leave it as it is */
+  for(i=0;i<ncntr;i++) {
+#ifdef PERFCTR20
+    this_state->counter_cmd.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
+#else
+    this_state->counter_cmd.evntsel[i] &= ~(PERF_OS|PERF_USR);
+#endif
+  }
+
   if (domain & PAPI_DOM_USER)
     {
       did = 1;
-      mode0 |= PERF_USR | PERF_ENABLE;
-      mode1 |= PERF_USR;
+      for(i=0;i<ncntr;i++) {
+#ifdef PERFCTR20
+	this_state->counter_cmd.cpu_control.evntsel[i] |= PERF_USR;
+#else
+	this_state->counter_cmd.evntsel[i] |= PERF_USR;
+#endif
+      }
     }
+
   if (domain & PAPI_DOM_KERNEL)
     {
       did = 1;
-      mode0 |= PERF_OS | PERF_ENABLE;
-      mode1 |= PERF_OS;
+      for(i=0;i<ncntr;i++) {
+#ifdef PERFCTR20
+	this_state->counter_cmd.cpu_control.evntsel[i] |= PERF_OS;
+#else
+	this_state->counter_cmd.evntsel[i] |= PERF_USR;
+#endif
+      }
     }
 
   if (!did)
     return(PAPI_EINVAL);
-
-#ifdef PERFCTR20
-  this_state->counter_cmd.cpu_control.evntsel[0] &= ~(PERF_OS|PERF_USR);
-  this_state->counter_cmd.cpu_control.evntsel[0] |= mode0;
-  this_state->counter_cmd.cpu_control.evntsel[1] &= ~(PERF_OS|PERF_USR);
-  this_state->counter_cmd.cpu_control.evntsel[1] |= mode1;
-#else
-  this_state->counter_cmd.evntsel[0] &= ~(PERF_OS|PERF_USR);
-  this_state->counter_cmd.evntsel[0] |= mode0;
-  this_state->counter_cmd.evntsel[1] &= ~(PERF_OS|PERF_USR);
-  this_state->counter_cmd.evntsel[1] |= mode1;
-#endif
 
   return(PAPI_OK);
 }
@@ -1307,8 +1340,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
   uc = (struct ucontext *) tmp;
   realc = *uc;
   mc = &uc->uc_mcontext;
+#ifdef __x86_64__
+  DBG((stderr,"Start at 0x%lx\n",mc->rip));
+  _papi_hwi_dispatch_overflow_signal(mc); 
+#else
   DBG((stderr,"Start at 0x%lx\n",mc->eip));
   _papi_hwi_dispatch_overflow_signal(mc); 
+#endif
 
   /* We are done, resume interrupting counters */
 #ifdef PAPI_PERFCTR_INTR_SUPPORT
@@ -1337,7 +1375,11 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
       /*     }                                                       */
     }
 #endif
+#ifdef __x86_64__
+  DBG((stderr,"Finished at 0x%lx\n",mc->rip));
+#else
   DBG((stderr,"Finished at 0x%lx\n",mc->eip));
+#endif
 }
 
 static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
@@ -1357,9 +1399,11 @@ static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cnt
   contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
   contr->cpu_control.evntsel[cntr2] = ui;
 
+#ifndef PERFCTR25
   ui=contr->cpu_control.evntsel_aux[cntr1];
   contr->cpu_control.evntsel_aux[cntr1]=contr->cpu_control.evntsel_aux[cntr2];
   contr->cpu_control.evntsel_aux[cntr2] = ui;
+#endif
 
   si=contr->cpu_control.ireset[cntr1];
   contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
@@ -1539,11 +1583,16 @@ void *_papi_hwd_get_overflow_address(void *context)
 {
   void *location;
   struct sigcontext *info = (struct sigcontext *)context;
-  location = (void *)info->eip;
+#ifdef __x86_64__
+  location = (void *)info->rip;
+#else
+ location = (void *)info->eip;
+#endif
 
   return(location);
 }
 
+#ifdef __i386__ 
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 #include <inttypes.h>
@@ -1553,7 +1602,7 @@ void _papi_hwd_lock_init(void)
 {
     lock = MUTEX_OPEN;
 }
- 
+
 void _papi_hwd_lock(void)
 {
     unsigned long res = 0;
@@ -1570,8 +1619,32 @@ void _papi_hwd_unlock(void)
 {
     unsigned long res = 0;
         
-    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock), "0"(MUTEX_OPEN) : "memory"); }
+    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock), "0"(MUTEX_OPEN) : "memory"); 
+}
 
+#elif defined(__x86_64__)
+#include <linux/config.h>
+#include "/usr/src/linux/include/linux/autoconf.h"
+#include <linux/spinlock.h>
+static spinlock_t lock;
+
+void _papi_hwd_lock_init(void)
+{
+  spin_lock_init(lock);
+}
+
+void _papi_hwd_lock(void)
+{
+  spin_lock(&lock);
+    return;
+}
+
+void _papi_hwd_unlock(void)
+{
+  spin_unlock(&lock);
+}
+
+#endif
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",

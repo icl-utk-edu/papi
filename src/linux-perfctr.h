@@ -13,10 +13,16 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#ifndef __x86_64__
 #include <asm/system.h>
 #include <asm/param.h>
 #include <asm/bitops.h>
+#endif
 #include <linux/unistd.h>	
+
+#ifdef PERFCTR25
+#define PERFCTR20
+#endif
 
 #ifndef CONFIG_SMP
 /* Assert that CONFIG_SMP is set before including asm/atomic.h to 

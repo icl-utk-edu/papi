@@ -236,3 +236,114 @@ static hwd_preset_t k7_preset_map[PAPI_MAX_PRESET_EVENTS] = {
 #endif
 };
 
+static hwd_preset_t k8_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
+  {ALLCNTRS,0,0,{{0x41,0x41,0x41,0x41}},""},	// L1 Cache Dmisses 
+  {ALLCNTRS,0,0,{{0x81,0x81,0x81,0x81}},""},	// L1 Cache Imisses 
+  {ALLCNTRS,0,0,{{0x027E,0x027E,0x027E,0x027E}},""},  // L2 Cache Dmisses
+  {ALLCNTRS,0,0,{{0x017E,0x017E,0x017E,0x017E}},""}, 	// L2 Cache Imisses
+  {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Dmisses
+  {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Imisses
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x41,0x81,0x0,0x0}},""}, // L1 Total Cache misses 
+  {CNTR1|CNTR2,0,0,{{0x037E,0x037E,0x037E,0x037E}},""}, // L2 Total Cache misses
+  {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Total Cache misses
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Snoops
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Req. access to shared cache line
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Req. access to clean cache line
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Req. Cache Line Invalidation
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Req. Cache Line Intervention
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3 LDM
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3 STM
+  {0,0,0,{{0,0,0x0,0x0}},""},			// cycles branch idle
+  {0,0,0,{{0,0,0x0,0x0}},""},			// cycles int idle
+  {0,0,0,{{0,0,0x0,0x0}},""},			// cycles fpu idle
+  {0,0,0,{{0,0,0x0,0x0}},""},			// cycles load/store idle
+  {ALLCNTRS,0,0,{{0x46,0x46,0x46,0x46}},""},	// D-TLB misses
+  {ALLCNTRS,0,0,{{0x85,0x85,0x85,0x85}},""}, // I-TLB misses
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x46,0x85,0x0,0x0}},""}, // Total TLB misses
+  {ALLCNTRS,0,0,{{0x0F42,0x0F42,0x0F42,0x0F42}},""},	// L1 load M
+  {ALLCNTRS,0,0,{{0x1042,0x1042,0x1042,0x1042}},""},	// L1 store M
+  {ALLCNTRS,0,0,{{0x0F43,0x0F43,0x0F43,0x0F43}},""},	// L2 load M
+  {ALLCNTRS,0,0,{{0x1043,0x1043,0x1043,0x1043}},""},	// L2 store M
+  {0,0,0,{{0,0,0x0,0x0}},""},		   	// BTAC misses
+  {0,0,0,{{0,0,0x0,0x0}},""},	                // Prefmiss
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3DCH
+  {0,0,0,{{0,0,0x0,0x0}},""},			// TLB shootdowns
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Failed Store cond.
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Suc. store cond.
+  {0,0,0,{{0,0,0x0,0x0}},""},			// total. store cond.
+  {ALLCNTRS,0,0,{{0xD8,0xD8,0xD8,0xD8}},""},    // Cycles stalled waiting for memory /
+  {0,0,0,{{0,0,0x0,0x0}},""},		   	// Cycles stalled waiting for memory read /
+  {0,0,0,{{0,0,0x0,0x0}},""},		   	// Cycles stalled waiting for memory write /
+  {ALLCNTRS,0,0,{{0xD0,0xD0,0xD0,0xD0}},""},   	// Cycles no instructions issued /
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Cycles max instructions issued /
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Cycles no instructions completed /
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Cycles max instructions completed /
+  {ALLCNTRS,0,0,{{0xcf,0xcf,0xcf,0xcf}},""},	// hardware interrupts
+  {ALLCNTRS,0,0,{{0xc6,0xc6,0xc6,0xc6}},""},	// Uncond. branches executed
+  {ALLCNTRS,0,0,{{0xC2,0xC2,0xc2,0xc2}},""},	// Cond. Branch inst. executed
+  {ALLCNTRS,0,0,{{0xC4,0xC4,0xc4,0xc4}},""},	// Cond. Branch inst. taken
+  {CNTR1|CNTR2,DERIVED_SUB,0,{{0xC4,0xC2,0x0,0x0}},""}, // Cond. Branch inst. not taken
+  {ALLCNTRS,0,0,{{0xC3,0xC3,0xC3,0xC3}},""},	// Cond. branch inst. mispred.
+  {CNTR1|CNTR2,DERIVED_SUB,0,{{0xC2,0xC3,0x0,0x0}},""}, // Cond. branch inst. corr. pred.
+  {0,0,0,{{0,0,0x0,0x0}},""},			// FMA
+  {0,0,0,{{0,0,0x0,0x0}},""},                   // Total inst. issued
+  {ALLCNTRS,0,0,{{0xC0,0xC0,0xC0,0xC0}},""},	// Total inst. executed
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Integer inst. executed
+  {ALLCNTRS,0,0,{{0x300,0x300,0x300,0x300}},""}, // Floating Pt. inst. executed
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Loads executed
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Stores executed
+  {ALLCNTRS,0,0,{{0xC4,0xC4,0x0,0x0}},""},	// Branch inst. executed
+  {ALLCNTRS,0,0,{{0xECB,0xECB,0xECB,0xECB}},""},// Vector/SIMD inst. executed 
+  {CNTR1|CNTR2,DERIVED_PS,1,{{0x300,0x76,0x0,0x0}},""}, // FLOPS
+  {ALLCNTRS,0,0,{{0xd1,0xd1,0xd1,0xd1}},""},    // Cycles any resource stalls
+  {ALLCNTRS,0,0,{{0x01,0x01,0x01,0x01}},""},	// Cycles FPU stalled
+  {ALLCNTRS,0,0,{{0x76,0x76,0x76,0x76}},""},	// Total cycles
+  {CNTR1|CNTR2,DERIVED_PS,1,{{0xC0,0x76,0x0,0x0}},""}, // IPS
+  {0,0,0,{{0,0,0x0,0x0}},""},			// Total load/store inst. exec
+  {0,0,0,{{0,0,0x0,0x0}},""},			// SYnc exec.
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x40,0x41,0x0,0x0}},""},  // L1_DCH
+  {ALLCNTRS,0,0,{{0x1F42,0x1F42,0x1F42,0x1F42}},""},  // L2_DCH
+  {ALLCNTRS,0,0,{{0x40,0x40,0x40,0x40}},""},	// L1_DCA
+  {ALLCNTRS,0,0,{{0x41,0x41,0x41,0x41}},""},	// L2_DCA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCR
+  {ALLCNTRS,0,0,{{0x0e42,0x0e42,0x0e42,0x0e42}},"Uncertain"},	// L2_DCR /* Only guessing here */
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCW
+  {ALLCNTRS,0,0,{{0x1142,0x1142,0x1142,0x1142}},"Uncertain"},	// L2_DCW /* cf. L2_DCW */
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_ICH
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICH
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICH
+  {ALLCNTRS,0,0,{{0x80,0x80,0x80,0x80}},""},	// L1_ICA
+  {ALLCNTRS,0,0,{{0x81,0x81,0x81,0x81}},""},	// L2_ICA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICA
+  {ALLCNTRS,0,0,{{0x80,0x80,0x80,0x80}},""},	// L1_ICR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_ICW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_TCH
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_TCH
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_TCH
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x40,0x80,0x0,0x0}},""}, // L1_TCA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_TCA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_TCA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_TCR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_TCR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_TCR
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_TCW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_TCW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L3_TCW
+  {ALLCNTRS,0,0,{{0x200,0x200,0x200,0x200}},""},// FPM
+  {ALLCNTRS,0,0,{{0x100,0x100,0x100,0x100}},""},// FPA
+  {0,0,0,{{0,0,0x0,0x0}},""},			// FPD
+  {0,0,0,{{0,0,0x0,0x0}},""},			// FPSQ
+#ifdef DEBUG
+  {CNTR1|CNTR2,DERIVED_ADD,0,{{0x0,0x0,0x0,0x0}},"This event goes away if you compile without -DDEBUG. The plus is at pos. 77 +"},	//  Dummy FPI event for testing string handling
+#else
+  {0,0,0,{{0,0,0x0,0x0}},""},			// FPI
+#endif
+};
+

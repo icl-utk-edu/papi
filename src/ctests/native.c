@@ -96,7 +96,7 @@ void papimon_start(void)
       if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   #endif
-#elif defined(linux) && defined(__i386__)
+#elif defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )
       if(strncmp("AuthenticAMD",hwinfo->vendor_string,(size_t) 3) == 0)
 	{
 	  native = 0 | 0x40 << 8 | 0; /* DCU refs */

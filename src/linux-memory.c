@@ -31,6 +31,7 @@ int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
   /* Defaults to Intel which is *probably* a safe assumption -KSL */
   switch ( cpu_type ) {
   case PERFCTR_X86_AMD_K7:
+  case PERFCTR_X86_AMD_K8:
     retval = init_amd(mem_info);
     break;
   default:
@@ -559,6 +560,7 @@ int init_intel( PAPI_mem_info_t * mem_info ) {
 
 int  check_cpuid(){
   volatile unsigned long val;
+#ifdef __i386__
   __asm__ __volatile__("pushfl;"
 		       "pop %%eax;"
 		       "movl %%eax, %%ebx;"
@@ -574,8 +576,27 @@ int  check_cpuid(){
 		       "movl $0, %0;"
 		       "END:"
 		       :"=r"(val));
+#elif defined(__x86_64__)
+  __asm__ __volatile__("pushf;"
+                     "pop %%eax;"
+                     "mov %%eax, %%ebx;"
+                     "xor $0x00200000,%%eax;"
+                     "push %%eax;"
+                     "popf;"
+                     "pushf;"
+                     "pop %%eax;"
+                     "cmp %%eax, %%ebx;"
+                     "jz NO_CPUID;"
+                     "mov $1, %0;"
+                     "jmp END;"
+                     "NO_CPUID:"
+                     "mov $0, %0;"
+                     "END:"
+                     :"=r"(val));
+#endif
   return (int) val;
 }
+
 
 static inline void cpuid(unsigned int *eax, unsigned int *ebx,
 			 unsigned int *ecx, unsigned int *edx)

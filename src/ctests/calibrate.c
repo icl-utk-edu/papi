@@ -283,7 +283,7 @@ static void resultline(int i, int j, int TESTS_QUIET)
 		printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
 
 	if (ferror > 10 && diff > 8)
-#if defined(__ALPHA) && defined(__osf__)
+#if ( defined(__ALPHA) && defined(__osf__) ) || defined(__x86_64__)
           if (!TESTS_QUIET)
              fprintf(stderr, "Calibrate: error exceeds 10 percent\n");
 #else
