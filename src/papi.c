@@ -1497,24 +1497,18 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
    if (!ESI)
       papi_return(PAPI_ENOEVST);
 
-#ifdef DEBUG
-   /* Not necessary */
-   if (ESI->NumberOfEvents == 0)
-      papi_return(PAPI_EINVAL);
-#endif
+   for (i=0,j=0; j < ESI->NumberOfEvents; i++) 
+     {
+       if (ESI->EventInfoArray[i].event_code != PAPI_NULL)
+	 {
+	   Events[j] = ESI->EventInfoArray[i].event_code;
+	   j++;
+	   if (j == *number)
+	     break;
+	 }
+     }
 
-  if (*number < ESI->NumberOfEvents)
-    num = *number;
-  else
-    num = ESI->NumberOfEvents;
-
-  for (i=0,j=0; j < num; i++)
-   if ( ESI->EventInfoArray[i].event_code != PAPI_NULL ){
-      Events[j] = ESI->EventInfoArray[i].event_code;
-      j++;
-   }
-
-  *number = ESI->NumberOfEvents;
+  *number = j;
 
   papi_return(PAPI_OK);
 }
