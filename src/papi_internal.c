@@ -1607,6 +1607,8 @@ void PAPIDEBUG(int level, char * format, ...){
   else
 #endif
      return;
+}
+
  void OVFDBG(char * format, ...){
 #ifdef DEBUG
   va_list args;
