@@ -1010,32 +1010,6 @@ void *_papi_hwd_get_overflow_address(void *context)
   return((void *)((LPCONTEXT)context)->Eip);
 }
 
-/*
-void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
-    DWORD dwUser, DWORD dw1, DWORD dw2) 
-{
-	// normally pass a void pointer to cpu register data here
-	// but I don't know how to get it on Windows
-	// see _papi_hwd_get_overflow_address() below
-	_papi_hwi_dispatch_overflow_signal(NULL); 
-} 
-
-// this routine should return the instruction pointer 
-// when the timer timed out for profiling purposes
-// however, I don't know how to get that on Windows...
-// See GetThreadContext() and the CONTEXT structure in WINNT.H
-// Look for CONTEXT_CONTROL and Eip
-// Unfortunately, this'll return the ip when the thread was suspended,
-// not when the interrpupt occured...
-void *_papi_hwd_get_overflow_address(void *context)
-{
-  void *location;
-  location = (void *)-1;
-
-  return(location);
-}
-*/
-
 static CRITICAL_SECTION CriticalSection;
 
 void _papi_hwd_lock_init(void)
@@ -1134,6 +1108,9 @@ papi_mdi _papi_system_info = { "$Id$",
 			       {
 				 "",
 				 "",
+				 /* These values are left empty in Windows
+				    Unless we can figure out a way to fill them, profiling
+				    will never work... */
 				 (caddr_t)NULL,	/* Start address of program text segment */
 				 (caddr_t)NULL,	/* End address of program text segment */
 				 (caddr_t)NULL,	/* Start address of program data segment */
@@ -1149,7 +1126,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			       -1,  /*  total_presets */
 			       -1,  /*  total_events */
 			        PAPI_DOM_USER, /* default domain */
-			        PAPI_GRN_THR,  /* default granularity */
+			        PAPI_GRN_SYS,  /* default granularity */
 			        0,  /* We can use add_prog_event */
 			        0,  /* We can write the counters */
 			        0,  /* supports HW overflow */
