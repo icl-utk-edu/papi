@@ -1,14 +1,18 @@
 #ifndef _PAPI_AIX_H               /* _PAPI_AIX */
 #define _PAPI_AIX_H
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
 #include <libgen.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <time.h>
+#if defined( _AIX51) || defined(_AIX52)
+#include <sys/procfs.h>
+#include <sys/cred.h>
+#endif
 #include <procinfo.h>
 #include <dlfcn.h>
 #include <sys/time.h>
@@ -16,10 +20,9 @@
 #include <sys/systemcfg.h>
 #include <sys/processor.h>
 #include <sys/atomic_op.h>
-#if( ( defined( _AIXVERSION_510) || defined(_AIXVERSION_520)))
-#include <sys/procfs.h>
-#endif
 #include <sys/utsname.h>
+
+
 #include "pmapi.h"
 
 #define inline_static __inline

@@ -341,8 +341,3 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
    return PAPI_OK;
 }
-
-int _papi_hwd_update_shlib_info(void)
-{
-   return PAPI_ESBSTR;
-}
