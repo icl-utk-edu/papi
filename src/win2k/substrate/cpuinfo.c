@@ -622,7 +622,7 @@ int intel_proc( struct wininfo * hwinfo ) {
 		case 0x1:
 			return INTEL_CELERON;
 		case 0x2:
-			return INTEL_P2;
+			return INTEL_P3;
 		case 0x3:
 			return INTEL_P3_XEON;
 		case 0x4:
