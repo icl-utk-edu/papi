@@ -24,7 +24,7 @@ static void headerlines(char *title, int TESTS_QUIET);
 #define INDEX1 100
 #define INDEX5 500
 
-#define DONT_FAIL
+/* #define DONT_FAIL */
 
 extern int TESTS_QUIET;
 
@@ -84,15 +84,6 @@ int main(int argc, char *argv[])
 
          headerlines("Inner Product Test", TESTS_QUIET);
 
-         /* Setup PAPI library and begin collecting data from the counters */
-/*         retval = PAPI_stop_counters(NULL, 0);
-         if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
-            test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_stop_counters", retval);
-         retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
-         if (retval != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_flips", retval);
-*/
-
          /* step through the different array sizes */
          for (n = 0; n < INDEX5; n++) {
             if (n < INDEX1 || ((n + 1) % 50) == 0) {
@@ -135,14 +126,6 @@ int main(int argc, char *argv[])
 
          headerlines("Matrix Vector Test", TESTS_QUIET);
 
-         /* Setup PAPI library and begin collecting data from the counters */
-/*         retval = PAPI_stop_counters(NULL, 0);
-         if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
-            test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_stop_counters", retval);
-         retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
-         if (retval != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "headerlines: PAPI_flips", retval);
-*/
          /* step through the different array sizes */
          for (n = 0; n < INDEX5; n++) {
             if (n < INDEX1 || ((n + 1) % 50) == 0) {
@@ -158,7 +141,7 @@ int main(int argc, char *argv[])
                /* reset PAPI flops count */
                retval = PAPI_stop_counters(NULL, 0);
                if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
-                  test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_stop_counters", retval);
+                  test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_stop_counters", retval);
                retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
                if (retval != PAPI_OK)
                   test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_flips", retval);
@@ -187,14 +170,6 @@ int main(int argc, char *argv[])
 
          headerlines("Matrix Multiply Test", TESTS_QUIET);
 
-         /* Setup PAPI library and begin collecting data from the counters */
-/*         retval = PAPI_stop_counters(NULL, 0);
-         if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
-            test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_stop_counters", retval);
-         retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
-         if (retval != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "headerlines: PAPI_flips", retval);
-*/
          /* step through the different array sizes */
          for (n = 0; n < INDEX5; n++) {
             if (n < INDEX1 || ((n + 1) % 50) == 0) {
@@ -209,7 +184,7 @@ int main(int argc, char *argv[])
                /* reset PAPI flops count */
                retval = PAPI_stop_counters(NULL, 0);
                if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
-                  test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_stop_counters", retval);
+                  test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_stop_counters", retval);
                retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
                if (retval != PAPI_OK)
                   test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_flips",
