@@ -455,7 +455,12 @@ int PAPI_remove_event(int EventSet, int EventCode)
       PAPI_overflow with threshold=0 to remove the overflow flag */
 
    if (ESI->state & PAPI_OVERFLOWING) 
-      papi_return(PAPI_EINVAL);
+      papi_return(PAPI_ECNFLCT);
+   
+   /* force the user to call PAPI_profil to clear the PAPI_PROFILING flag */
+   if (ESI->state & PAPI_PROFILING)  
+      if (_papi_hwi_system_info.supports_hw_profile)
+          papi_return(PAPI_ECNFLCT);
 
 
    /* Now do the magic. */
@@ -796,6 +801,7 @@ int PAPI_cleanup_eventset(int EventSet)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
+   int i, total, retval;
 
    /* Is the EventSet already in existence? */
 
@@ -808,6 +814,28 @@ int PAPI_cleanup_eventset(int EventSet)
 
    if (ESI->state & PAPI_RUNNING)
       papi_return(PAPI_EISRUN);
+
+   /* clear overflow flag and turn off hardware overflow handler */
+   if (ESI->state & PAPI_OVERFLOWING ) {
+      total=ESI->overflow.event_counter;
+      for (i = 0; i < total; i++) {
+         retval = PAPI_overflow(EventSet,  
+                 ESI->overflow.EventCode[0], 0, 0, NULL);
+         if (retval != PAPI_OK)
+            papi_return(retval);
+      }
+   }
+   /* clear profile flag and turn off hardware profile handler */
+   if ( (ESI->state & PAPI_PROFILING) && 
+          _papi_hwi_system_info.supports_hw_profile) {
+      total=ESI->profile.event_counter;
+      for (i = 0; i < total; i++) {
+         retval = PAPI_profil(NULL, 0, NULL, 65536, EventSet, 
+                 ESI->profile.EventCode[0], 0, PAPI_PROFIL_POSIX);
+         if (retval != PAPI_OK)
+            papi_return(retval);
+      }
+   }
 
    /* Now do the magic */
 
@@ -1328,13 +1356,10 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    papi_return(PAPI_OK);
 }
 
-int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode,
-                 int threshold, int flags)
+int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, 
+                    int EventCode, int threshold, int flags)
 {
    EventSetInfo_t *ESI;
-/*
-  EventSetProfileInfo_t opt = { 0, };
-*/
    int retval, index, i;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
