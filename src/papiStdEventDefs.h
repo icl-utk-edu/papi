@@ -31,6 +31,17 @@ platform's documentation carefully.
 
 #define PAPI_MAX_PRESET_EVENTS 128      /*The maxmimum number of preset events */
 
+/*
+   NOTE: The table below defines each entry in terms of a mask and an integer.
+   The integers MUST be in consecutive order with no gaps.
+   If an event is removed or added, all following events MUST be renumbered.
+   One way to fix this would be to recast each #define in terms of the preceeding
+   one instead of an absolute number. e.g.:
+     #define PAPI_L1_ICM  (PAPI_L1_DCM + 1)
+   That way inserting or deleting events would only affect the definition of one
+   other event.
+*/
+
 #define PAPI_L1_DCM  (PRESET_MASK | 0x00)       /*Level 1 data cache misses */
 #define PAPI_L1_ICM  (PRESET_MASK | 0x01)       /*Level 1 instruction cache misses */
 #define PAPI_L2_DCM  (PRESET_MASK | 0x02)       /*Level 2 data cache misses */
@@ -88,49 +99,49 @@ platform's documentation carefully.
 #define PAPI_SR_INS  (PRESET_MASK | 0x36)       /*Store instructions executed */
 #define PAPI_BR_INS  (PRESET_MASK | 0x37)       /*Total branch instructions executed */
 #define PAPI_VEC_INS (PRESET_MASK | 0x38)       /*Vector/SIMD instructions executed */
-#define PAPI_RES_STL (PRESET_MASK | 0x3A)       /*Cycles processor is stalled on resource */
-#define PAPI_FP_STAL (PRESET_MASK | 0x3B)       /*Cycles any FP units are stalled */
-#define PAPI_TOT_CYC (PRESET_MASK | 0x3C)       /*Total cycles */
-#define PAPI_LST_INS (PRESET_MASK | 0x3E)       /*Total load/store inst. executed */
-#define PAPI_SYC_INS (PRESET_MASK | 0x3F)       /*Sync. inst. executed */
-#define PAPI_L1_DCH  (PRESET_MASK | 0x40)       /*L1 D Cache Hit */
-#define PAPI_L2_DCH  (PRESET_MASK | 0x41)       /*L2 D Cache Hit */
-#define PAPI_L1_DCA  (PRESET_MASK | 0x42)       /*L1 D Cache Access */
-#define PAPI_L2_DCA  (PRESET_MASK | 0x43)       /*L2 D Cache Access */
-#define PAPI_L3_DCA  (PRESET_MASK | 0x44)       /*L3 D Cache Access */
-#define PAPI_L1_DCR  (PRESET_MASK | 0x45)       /*L1 D Cache Read */
-#define PAPI_L2_DCR  (PRESET_MASK | 0x46)       /*L2 D Cache Read */
-#define PAPI_L3_DCR  (PRESET_MASK | 0x47)       /*L3 D Cache Read */
-#define PAPI_L1_DCW  (PRESET_MASK | 0x48)       /*L1 D Cache Write */
-#define PAPI_L2_DCW  (PRESET_MASK | 0x49)       /*L2 D Cache Write */
-#define PAPI_L3_DCW  (PRESET_MASK | 0x4A)       /*L3 D Cache Write */
-#define PAPI_L1_ICH  (PRESET_MASK | 0x4B)       /*L1 instruction cache hits */
-#define PAPI_L2_ICH  (PRESET_MASK | 0x4C)       /*L2 instruction cache hits */
-#define PAPI_L3_ICH  (PRESET_MASK | 0x4D)       /*L3 instruction cache hits */
-#define PAPI_L1_ICA  (PRESET_MASK | 0x4E)       /*L1 instruction cache accesses */
-#define PAPI_L2_ICA  (PRESET_MASK | 0x4F)       /*L2 instruction cache accesses */
-#define PAPI_L3_ICA  (PRESET_MASK | 0x50)       /*L3 instruction cache accesses */
-#define PAPI_L1_ICR  (PRESET_MASK | 0x51)       /*L1 instruction cache reads */
-#define PAPI_L2_ICR  (PRESET_MASK | 0x52)       /*L2 instruction cache reads */
-#define PAPI_L3_ICR  (PRESET_MASK | 0x53)       /*L3 instruction cache reads */
-#define PAPI_L1_ICW  (PRESET_MASK | 0x54)       /*L1 instruction cache writes */
-#define PAPI_L2_ICW  (PRESET_MASK | 0x55)       /*L2 instruction cache writes */
-#define PAPI_L3_ICW  (PRESET_MASK | 0x56)       /*L3 instruction cache writes */
-#define PAPI_L1_TCH  (PRESET_MASK | 0x57)       /*L1 total cache hits */
-#define PAPI_L2_TCH  (PRESET_MASK | 0x58)       /*L2 total cache hits */
-#define PAPI_L3_TCH  (PRESET_MASK | 0x59)       /*L3 total cache hits */
-#define PAPI_L1_TCA  (PRESET_MASK | 0x5A)       /*L1 total cache accesses */
-#define PAPI_L2_TCA  (PRESET_MASK | 0x5B)       /*L2 total cache accesses */
-#define PAPI_L3_TCA  (PRESET_MASK | 0x5C)       /*L3 total cache accesses */
-#define PAPI_L1_TCR  (PRESET_MASK | 0x5D)       /*L1 total cache reads */
-#define PAPI_L2_TCR  (PRESET_MASK | 0x5E)       /*L2 total cache reads */
-#define PAPI_L3_TCR  (PRESET_MASK | 0x5F)       /*L3 total cache reads */
-#define PAPI_L1_TCW  (PRESET_MASK | 0x60)       /*L1 total cache writes */
-#define PAPI_L2_TCW  (PRESET_MASK | 0x61)       /*L2 total cache writes */
-#define PAPI_L3_TCW  (PRESET_MASK | 0x62)       /*L3 total cache writes */
-#define PAPI_FML_INS (PRESET_MASK | 0x63)       /*FM ins */
-#define PAPI_FAD_INS (PRESET_MASK | 0x64)       /*FA ins */
-#define PAPI_FDV_INS (PRESET_MASK | 0x65)       /*FD ins */
-#define PAPI_FSQ_INS (PRESET_MASK | 0x66)       /*FSq ins */
-#define PAPI_FNV_INS (PRESET_MASK | 0x67)       /*Finv ins */
-#define PAPI_FP_OPS  (PRESET_MASK | 0x68)       /*Floating point operations executed */
+#define PAPI_RES_STL (PRESET_MASK | 0x39)       /*Cycles processor is stalled on resource */
+#define PAPI_FP_STAL (PRESET_MASK | 0x3A)       /*Cycles any FP units are stalled */
+#define PAPI_TOT_CYC (PRESET_MASK | 0x3B)       /*Total cycles */
+#define PAPI_LST_INS (PRESET_MASK | 0x3C)       /*Total load/store inst. executed */
+#define PAPI_SYC_INS (PRESET_MASK | 0x3D)       /*Sync. inst. executed */
+#define PAPI_L1_DCH  (PRESET_MASK | 0x3E)       /*L1 D Cache Hit */
+#define PAPI_L2_DCH  (PRESET_MASK | 0x3F)       /*L2 D Cache Hit */
+#define PAPI_L1_DCA  (PRESET_MASK | 0x40)       /*L1 D Cache Access */
+#define PAPI_L2_DCA  (PRESET_MASK | 0x41)       /*L2 D Cache Access */
+#define PAPI_L3_DCA  (PRESET_MASK | 0x42)       /*L3 D Cache Access */
+#define PAPI_L1_DCR  (PRESET_MASK | 0x43)       /*L1 D Cache Read */
+#define PAPI_L2_DCR  (PRESET_MASK | 0x44)       /*L2 D Cache Read */
+#define PAPI_L3_DCR  (PRESET_MASK | 0x45)       /*L3 D Cache Read */
+#define PAPI_L1_DCW  (PRESET_MASK | 0x46)       /*L1 D Cache Write */
+#define PAPI_L2_DCW  (PRESET_MASK | 0x47)       /*L2 D Cache Write */
+#define PAPI_L3_DCW  (PRESET_MASK | 0x48)       /*L3 D Cache Write */
+#define PAPI_L1_ICH  (PRESET_MASK | 0x49)       /*L1 instruction cache hits */
+#define PAPI_L2_ICH  (PRESET_MASK | 0x4A)       /*L2 instruction cache hits */
+#define PAPI_L3_ICH  (PRESET_MASK | 0x4B)       /*L3 instruction cache hits */
+#define PAPI_L1_ICA  (PRESET_MASK | 0x4C)       /*L1 instruction cache accesses */
+#define PAPI_L2_ICA  (PRESET_MASK | 0x4D)       /*L2 instruction cache accesses */
+#define PAPI_L3_ICA  (PRESET_MASK | 0x4E)       /*L3 instruction cache accesses */
+#define PAPI_L1_ICR  (PRESET_MASK | 0x4F)       /*L1 instruction cache reads */
+#define PAPI_L2_ICR  (PRESET_MASK | 0x50)       /*L2 instruction cache reads */
+#define PAPI_L3_ICR  (PRESET_MASK | 0x51)       /*L3 instruction cache reads */
+#define PAPI_L1_ICW  (PRESET_MASK | 0x52)       /*L1 instruction cache writes */
+#define PAPI_L2_ICW  (PRESET_MASK | 0x53)       /*L2 instruction cache writes */
+#define PAPI_L3_ICW  (PRESET_MASK | 0x54)       /*L3 instruction cache writes */
+#define PAPI_L1_TCH  (PRESET_MASK | 0x55)       /*L1 total cache hits */
+#define PAPI_L2_TCH  (PRESET_MASK | 0x56)       /*L2 total cache hits */
+#define PAPI_L3_TCH  (PRESET_MASK | 0x57)       /*L3 total cache hits */
+#define PAPI_L1_TCA  (PRESET_MASK | 0x58)       /*L1 total cache accesses */
+#define PAPI_L2_TCA  (PRESET_MASK | 0x59)       /*L2 total cache accesses */
+#define PAPI_L3_TCA  (PRESET_MASK | 0x5A)       /*L3 total cache accesses */
+#define PAPI_L1_TCR  (PRESET_MASK | 0x5B)       /*L1 total cache reads */
+#define PAPI_L2_TCR  (PRESET_MASK | 0x5C)       /*L2 total cache reads */
+#define PAPI_L3_TCR  (PRESET_MASK | 0x5D)       /*L3 total cache reads */
+#define PAPI_L1_TCW  (PRESET_MASK | 0x5E)       /*L1 total cache writes */
+#define PAPI_L2_TCW  (PRESET_MASK | 0x5F)       /*L2 total cache writes */
+#define PAPI_L3_TCW  (PRESET_MASK | 0x60)       /*L3 total cache writes */
+#define PAPI_FML_INS (PRESET_MASK | 0x61)       /*FM ins */
+#define PAPI_FAD_INS (PRESET_MASK | 0x62)       /*FA ins */
+#define PAPI_FDV_INS (PRESET_MASK | 0x63)       /*FD ins */
+#define PAPI_FSQ_INS (PRESET_MASK | 0x64)       /*FSq ins */
+#define PAPI_FNV_INS (PRESET_MASK | 0x65)       /*Finv ins */
+#define PAPI_FP_OPS  (PRESET_MASK | 0x66)       /*Floating point operations executed */
