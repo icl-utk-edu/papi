@@ -94,7 +94,7 @@ papi_mdi_t _papi_system_info = { "$Id$",
 			        PAPI_GRN_THR,  /* default granularity */
 			        0,  /* We can use add_prog_event */
 			        0,  /* We can write the counters */
-			        0,  /* supports HW overflow */
+			        1,  /* supports HW overflow */
 			        0,  /* supports HW profile */
 			        1,  /* supports 64 bit virtual counters */
 			        1,  /* supports child inheritance */
@@ -442,7 +442,8 @@ void print_control(const struct perfctr_cpu_control *control)
     SUBDBG("Control used:\n");
     SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
     SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-    for(i = 0; i < control->nractrs; ++i) {
+    SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
+    for(i = 0; i < (control->nractrs+control->nrictrs); ++i) {
 	if( control->pmc_map[i] >= 18 )
 	  {
 	    SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
@@ -454,6 +455,8 @@ void print_control(const struct perfctr_cpu_control *control)
 	SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
 	if( control->evntsel_aux[i] )
 	    SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
+	if (control->ireset[i]) 
+	  SUBDBG("ireset[%u]\t%d\n",i,control->ireset[i]);
     }
     if( control->p4.pebs_enable )
       SUBDBG("pebs_enable\t0x%08X\n", 
@@ -1003,11 +1006,6 @@ int _papi3_hwd_write(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl, lon
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
-{
-  return(PAPI_ESBSTR);
-}
-
 int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
@@ -1024,13 +1022,171 @@ int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
 
 
 #ifndef PAPI3
+static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
+{
+  unsigned int ui; int si;
+
+  /* In the case a user wants to interrupt on a counter in an evntsel
+     that is not among the last events, we need to move the perfctr 
+     virtual events around to make it last. This function swaps two
+     perfctr events */
+
+  ui=contr->cpu_control.pmc_map[cntr1];
+  contr->cpu_control.pmc_map[cntr1]=contr->cpu_control.pmc_map[cntr2];
+  contr->cpu_control.pmc_map[cntr2] = ui;
+
+  ui=contr->cpu_control.evntsel[cntr1];
+  contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
+  contr->cpu_control.evntsel[cntr2] = ui;
+
+  ui=contr->cpu_control.evntsel_aux[cntr1];
+  contr->cpu_control.evntsel_aux[cntr1]=contr->cpu_control.evntsel_aux[cntr2];
+  contr->cpu_control.evntsel_aux[cntr2] = ui;
+
+  si=contr->cpu_control.ireset[cntr1];
+  contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
+  contr->cpu_control.ireset[cntr2] = si;
+}
+
+int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
+{
+  const int PERF_INT_ENABLE = CCCR_OVF_PMI_T0;
+  /* | CCCR_OVF_PMI_T1 (1 << 27) */
+
+  extern int _papi_hwi_using_signal;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  struct vperfctr_control *contr = &this_state->control.control;
+  int i, ncntrs, nricntrs = 0, nracntrs, cntr, cntr2, retval=0;
+  unsigned int selector;
+
+  SUBDBG("overflow_option->EventIndex=%d\n",overflow_option->EventIndex);
+  if( overflow_option->threshold != 0)  /* Set an overflow threshold */
+    {
+      struct sigaction sa;
+      int err;
+
+      memset(&sa, 0, sizeof sa);
+      sa.sa_sigaction = _papi_hwd_dispatch_timer;
+      sa.sa_flags = SA_SIGINFO;
+      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0)
+	{
+	  SUBDBG("Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno));
+	  return(PAPI_ESYS);
+	}
+
+      /* The correct event to overflow is overflow_option->EventIndex */
+
+      ncntrs = _papi_system_info.num_cntrs;
+      selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
+      SUBDBG("selector id is %d.\n",selector);
+      i = ffs(selector) - 1;
+      if (i >= ncntrs)
+	{
+	  fprintf(stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs);
+	  return PAPI_EINVAL;
+	}
+
+      contr->cpu_control.ireset[i] = -overflow_option->threshold;
+      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+      nricntrs = ++contr->cpu_control.nrictrs;
+      nracntrs = --contr->cpu_control.nractrs;
+      contr->si_signo = PAPI_SIGNAL;
+
+      /* perfctr 2.x requires the interrupting counters to be placed last
+	 in evntsel, swap events that do not fulfill this criterion. This
+	 will yield a non-monotonic pmc_map array */
+
+      for(i=nricntrs;i>0;i--)
+	{
+	  cntr = nracntrs + i - 1;
+	  if( !(contr->cpu_control.evntsel[cntr] & PERF_INT_ENABLE))
+	    { /* A non-interrupting counter was found among the icounters
+		 Locate an interrupting counter in the acounters and swap */
+	      for(cntr2=0;cntr2<nracntrs;cntr2++)
+		{
+		  if( (contr->cpu_control.evntsel[cntr2] & PERF_INT_ENABLE))
+		    break;
+		}
+	      if(cntr2==nracntrs)
+		{
+		  fprintf(stderr,"No icounter to swap with!\n");
+		  return(PAPI_EMISC);
+		}
+	      swap_pmc_map_events(contr,cntr,cntr2);
+	    }
+	}
+
+      PAPI_lock();
+      _papi_hwi_using_signal++;
+      PAPI_unlock();
+
+      SUBDBG("Modified event set\n");
+    }
+  else   
+    {
+      /* The correct event to overflow is overflow_option->EventIndex */
+      ncntrs=_papi_system_info.num_cntrs;
+      for(i=0;i<ncntrs;i++) 
+	if(contr->cpu_control.evntsel[i] & PERF_INT_ENABLE)
+	  {
+	    contr->cpu_control.ireset[i] = 0;
+	    contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
+	    nricntrs=--contr->cpu_control.nrictrs;
+	    nracntrs=++contr->cpu_control.nractrs;
+	    contr->si_signo = 0;
+	  }
+      /* The current implementation only supports one interrupting counter */
+      if(nricntrs)
+	{
+	  fprintf(stderr,"%s %s\n","PAPI internal error.",
+		  "Only one interrupting counter is supported!");
+	  return(PAPI_ESBSTR);
+	}
+
+      /* perfctr 2.x requires the interrupting counters to be placed last
+	 in evntsel, when the counter is non-interupting, move the order
+	 back into the default monotonic pmc_map */
+
+      for(cntr=0;cntr<ncntrs;cntr++)
+	if(contr->cpu_control.pmc_map[cntr]!=cntr)
+	  { /* This counter is out-of-order. Swap with the correct one*/
+	    for(cntr2=cntr+1;cntr2<ncntrs;cntr2++)
+	      if(contr->cpu_control.pmc_map[cntr2]==cntr) break;
+	    if(cntr2==ncntrs)
+	      {
+		fprintf(stderr,"No icounter to swap with!\n");
+		return(PAPI_EMISC);
+	      }
+	    swap_pmc_map_events(contr,cntr,cntr2);
+	  }
+
+      SUBDBG("Modified event set\n");
+
+      PAPI_lock();
+      _papi_hwi_using_signal--;
+      if (_papi_hwi_using_signal == 0)
+	{
+	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+	    retval = PAPI_ESYS;
+	}
+      PAPI_unlock();
+    }
+
+  SUBDBG("%s (%s): Hardware overflow is still experimental.\n",
+	  __FILE__,__FUNCTION__);
+  SUBDBG("End of call. Exit code: %d\n",retval);
+  return(retval);
+}
+
 int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
 {
   hwd_control_state_t *machdep = zero->machdep;
-
-  _papi_hwd_unmerge(mine, zero);
-  _papi_hwd_merge(mine, zero);
-
+  struct vperfctr *ctx = machdep->context.perfctr;
+  struct vperfctr_control *ctl = &machdep->control.control;
+  if (vperfctr_control(ctx, ctl) == 0)
+    return(PAPI_OK);
+  else
+    error_return(PAPI_ESYS,VCNTRL_ERROR);
 }
 
 int _papi_hwd_write(EventSetInfo *mine, EventSetInfo *zero, long_long events[])
@@ -1054,13 +1210,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
   _papi_hwi_dispatch_overflow_signal(mc); 
 
   /* We are done, resume interrupting counters */
-#ifdef PAPI_PERFCTR_INTR_SUPPORT
+
   if(_papi_hwi_system_info.supports_hw_overflow)
     {
-      ThreadInfo_t *master = _papi_hwi_lookup_in_master_list();
+      EventSetInfo *master;
       hwd_control_state_t *machdep;
-      struct vperfctr* dev;
 
+      master = _papi_hwi_lookup_in_master_list();
       if(master==NULL)
 	{
 	  fprintf(stderr,"%s():%d: master event lookup failure! abort()\n",
@@ -1068,18 +1224,14 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 	  abort();
 	}
       machdep =  master->machdep;
-      dev = machdep->self;
-      /* This is currently disabled since the restart of the counter */
-      /* is made in update_global_counters out of unknown reasons    */
-      /* if(vperfctr_isrun(machdep->self))                           */
-      /*   if(vperfctr_iresume(machdep->self)<0)                     */
-      /*     {                                                       */
-      /*       perror("vperfctr_iresume");                           */
-      /*       abort();                                              */
-      /*     }                                                       */
+      if (vperfctr_iresume(machdep->context.perfctr) < 0)
+	{
+	  fprintf(stderr,"%s():%d: vperfctr_iresume %s\n",
+		  __FUNCTION__,__LINE__,strerror(errno));
+	  abort();
+	}
     }
-#endif
-  DBG((stderr,"Finished at 0x%x\n",(*gs)[15]));
+  DBG((stderr,"Finished, returning to address 0x%x\n",(*gs)[15]));
 }
 
 void *_papi_hwd_get_overflow_address(void *context)
