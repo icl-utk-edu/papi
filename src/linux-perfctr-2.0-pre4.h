@@ -16,6 +16,7 @@
 #include "libperfctr.h"
 #include "x86-events.h"
 #include "papi.h"
+#include <time.h>
 
 #ifdef PERFCTR20PRE4
 struct papi_perfctr_counter_cmd {

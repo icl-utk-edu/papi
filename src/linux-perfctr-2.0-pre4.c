@@ -10,6 +10,7 @@
 /* PAPI stuff */
 
 #include SUBSTRATE
+#include <time.h>
 
 /* First entry is mask, counter code 1, counter code 2, and TSC. 
 A high bit in the mask entry means it is an OR mask, not an
@@ -928,7 +929,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 
   /* Clear out counters that are part of this event. */
 
-  this_state->selector = this_state->selector ^ selector;
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
