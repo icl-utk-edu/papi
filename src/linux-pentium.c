@@ -50,72 +50,74 @@ if number == 9, then only the special purpose counter is needed.
 /*example values for now */
 
 static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
-                { },				// L1 D-Cache misses 
+                { 0,-1,-1,-1},			// L1 D-Cache misses 
                 { 4, 0x28, 0xC0,},		// L1 I-Cache misses 
 		{ 4, 0x24, 0x2E,},		// L2 Cache misses
 		{ 4, 0x24, 0x2E,},		// ditto
 		{ 0,-1,-1,-1},			// L3 misses
 		{ 0,-1,-1,-1},			// ditto
-		{},				// 6	**unused preset map elements**
-		{},				// 7
-		{},				// 8
-		{},				// 9
-		{ }, 				// Req. access to shared cache line
-		{ }, 				// Req. access to clean cache line
-		{ }, 				// Cache Line Invalidation
-                {},				// 13
-                {},				// 14
-                {},				// 15
-                {},				// 16
-                {},				// 17
-                {},				// 18
-                {},				// 19
-		{ }, 				// D-TLB misses
+		{0,-1,-1,-1},			// 6	**unused preset map elements**
+		{0,-1,-1,-1},			// 7
+		{0,-1,-1,-1},			// 8
+		{0,-1,-1,-1},			// 9
+		{0,-1,-1,-1 }, 			// Req. access to shared cache line
+		{0,-1,-1,-1 }, 			// Req. access to clean cache line
+		{ 0,-1,-1,-1}, 			// Cache Line Invalidation
+                {0,-1,-1,-1},			// 13
+                {0,-1,-1,-1},			// 14
+                {0,-1,-1,-1},			// 15
+                {0,-1,-1,-1},			// 16
+                {0,-1,-1,-1},			// 17
+                {0,-1,-1,-1},			// 18
+                {0,-1,-1,-1},			// 19
+		{0,-1,-1,-1 }, 			// D-TLB misses
 		{ 3, 0x81, },			// I-TLB misses
-                {},				// 22
-                {},				// 23
-                {},				// 24
-                {},				// 25
-                {},				// 26
-                {},				// 27
-                {},				// 28
-                {},				// 29
-		{ },				// TLB shootdowns
-                {},				// 31
-                {},				// 32
-                {},				// 33
-                {},				// 34
-                {},				// 35
-                {},				// 36
-                {},				// 37
-                {},				// 38
-                {},				// 39
-                {},				// 40
-                {},				// 41
+                {0,-1,-1,-1},			// 22
+                {0,-1,-1,-1},			// 23
+                {0,-1,-1,-1},			// 24
+                {0,-1,-1,-1},			// 25
+                {0,-1,-1,-1},			// 26
+                {0,-1,-1,-1},			// 27
+                {0,-1,-1,-1},			// 28
+                {0,-1,-1,-1},			// 29
+		{0,-1,-1,-1 },			// TLB shootdowns
+                {0,-1,-1,-1},			// 31
+                {0,-1,-1,-1},			// 32
+                {0,-1,-1,-1},			// 33
+                {0,-1,-1,-1},			// 34
+                {0,-1,-1,-1},			// 35
+                {0,-1,-1,-1},			// 36
+                {0,-1,-1,-1},			// 37
+                {0,-1,-1,-1},			// 38
+                {0,-1,-1,-1},			// 39
+                {0,-1,-1,-1},			// 40
+                {0,-1,-1,-1},			// 41
 		{ 3, 0xC9, },			// Uncond. branches executed
 		{ 3, 0xC5, },			// Cond. Branch inst. mispred.
 		{ 3, 0xC9, },			// Cond. Branch inst. taken
 		{ 3, 0xE4, },			// Cond. Branch inst. not taken
-                {},				// 46
-                {},				// 47
-                {},				// 48
-                {},				// 49
+                {0,-1,-1,-1},			// 46
+                {0,-1,-1,-1},			// 47
+                {0,-1,-1,-1},			// 48
+                {0,-1,-1,-1},			// 49
 		{ 3, 0xC0, },			// Total inst. executed
 		{ 3, 0xC0, 0x10, },		// Integer inst. executed
 		{ 1, 0x10, },			// Floating Pt. inst. executed
-		{ },				// Loads executed
-		{ },				// Stores executed
+		{0,-1,-1,-1 },			// Loads executed
+		{0,-1,-1,-1 },			// Stores executed
 		{ 3, 0xC4, },			// Branch inst. executed
 		{ 0,-1,-1,-1 },			// Vector/SIMD inst. executed 
 		{ 5, 0x10, },			// FLOPS
-                {},				// 58
-                {},				// 59
+                {0,-1,-1,-1},			// 58
+                {0,-1,-1,-1},			// 59
 		{ 9, },				// Total cycles
 		{ 8, 0xC0, },			// MIPS
-                {},				// 62
-                {},				// 63
+                {0,-1,-1,-1},			// 62
+                {0,-1,-1,-1},			// 63
              };
 
+
+hwd_control_state_t *array[PAPI_INIT_SLOTS];
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -370,6 +372,59 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
+int _papi_hwd_check_runners(PAPI_shared_info_t *PAPI_SHARED_INFO, DynamicArray *PAPI_EVENTSET_MAP)
+{ int retval;
+  int state;
+  int i, j=0;
+
+  for(i=1; i<PAPI_EVENTSET_MAP->totalSlots; i++)
+  { if(lookup_EventSet(i)!=NULL)
+    { retval=PAPI_state(i, &state);
+      if(retval<PAPI_OK) return retval;
+      if(state==PAPI_RUNNING)
+      { PAPI_SHARED_INFO->EvSetArray[j]=i;
+        j++;
+      }
+    }
+  }
+  if(PAPI_SHARED_INFO->EvSetArray[j]<-1)
+  { retval=_papi_hwd_gather_events(PAPI_SHARED_INFO);
+    /* set multiplex stuff up*/
+  }
+  return(PAPI_OK);
+}
+
+int _papi_hwd_gather_events(PAPI_shared_info_t *PAPI_SHARED_INFO)
+{ int retval;
+  int i=0,j,k,flag=0;
+  unsigned int event;
+  EventSetInfo *ESI;
+
+  PAPI_SHARED_INFO->MachdepArray=array;
+
+  while(PAPI_SHARED_INFO->EvSetArray[i]!=-1)  //while there is another running evset
+  { ESI=lookup_EventSet(i);
+    for(j=0;j<ESI->NumberOfCounters;j++)  //go through the evset's events
+    { event=ESI->EventCodeArray[j];
+      for(k=0;k<PAPI_SHARED_INFO->num_events;k++) //check to see if event is shared
+      { if(event==PAPI_SHARED_INFO->EventsArray[k])
+        { PAPI_SHARED_INFO->EventsArray[k] | 0x08000000;
+          flag = 1;
+        }
+      }
+      if(!flag)	 //not shared
+      { PAPI_SHARED_INFO->EventsArray[PAPI_SHARED_INFO->num_events]=event;
+        if (event & PRESET_MASK) event = event ^= PRESET_MASK;
+        memcpy(PAPI_SHARED_INFO->MachdepArray[PAPI_SHARED_INFO->num_events], 
+           preset_map[event], sizeof(hwd_control_state_t));
+        PAPI_SHARED_INFO->num_events++;
+      }
+      flag=0;
+    }
+  }
+  return(PAPI_OK);
+}
+
 int _papi_hwd_start(EventSetInfo *EventSet)
 {
   hwd_control_state_t *this_state = EventSet->machdep;
@@ -377,6 +432,11 @@ int _papi_hwd_start(EventSetInfo *EventSet)
 
   retval=_papi_set_domain(EventSet, &EventSet->all_options.domain);
   if(retval) return(PAPI_EBUG);
+
+  if(PAPI_SHARED_INFO.EvSetArray[0]!=-1) // if runner exists
+  { retval=_papi_hwd_multistart();
+    if(retval) return(PAPI_EBUG); 
+  }
 
   if(this_state->counter_code1 >= 0)
   { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
@@ -568,6 +628,18 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
       return(PAPI_EINVAL);
     }
 }
+
+int _papi_hwd_query(int preset)
+{ if (preset & PRESET_MASK)
+  { preset ^= PRESET_MASK;
+    if (preset_map[preset].number == 0)
+      return(PAPI_EINVAL);
+    else
+      return(PAPI_OK);
+    }
+  return(PAPI_OK);
+}
+
 
 /* Machine info structure. -1 is unused. */
 

@@ -193,7 +193,7 @@ typedef union {
   PAPI_domain_option_t domain; 
   int num_substrate_counters;
   int debug; } PAPI_option_t;
-  
+
 int PAPI_init(void);
 
 int PAPI_set_granularity(int granularity);

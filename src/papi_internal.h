@@ -19,6 +19,11 @@
 
 #define PRESET_MASK 0x80000000
 
+/* Mask which indicates an event code is shared between two or more 
+   running EventSets */
+
+#define SHARED_MASK 0x08000000
+
 /* All memory for this structure should be allocated outside of the 
    substrate. */
 
@@ -101,6 +106,15 @@ typedef struct _dynamic_array{
 	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
 } DynamicArray;
 
+typedef struct _papi_shared_info_t
+{ int **EvSetArray;
+  int **EventsArray;
+  void **MachdepArray;
+  int resolution;
+  int num_events;
+} PAPI_shared_info_t;
+
+
 typedef struct _papi_mdi {
   char substrate[81]; /* Name of the substrate we're using */
   float version;      /* Version of this substrate */
@@ -163,8 +177,11 @@ extern int _papi_hwd_write(EventSetInfo *, unsigned long long events[]);
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
 extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
+extern int _papi_set_domain(EventSetInfo *ESI, _papi_int_domain_t *domain);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_query(int preset);
+extern int _papi_hwd_check_runners(PAPI_shared_info_t *, DynamicArray *);
+extern int _papi_hwd_gather_events(PAPI_shared_info_t *);
 
 /* Portable overflow routines */
 

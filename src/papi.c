@@ -38,6 +38,10 @@ static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode);
 
 static DynamicArray PAPI_EVENTSET_MAP;    
 
+/* info struct for multiple running EventSets */
+
+static PAPI_shared_info_t PAPI_SHARED_INFO;
+
 /* Behavior of handle_error(). 
    Changed to the default behavior of PAPI_QUIET in PAPI_init
    after initialization is successful. */
@@ -65,12 +69,13 @@ static int check_initialize(void)
 
 static int initialize(void)
 {
-  int retval;
+  int retval, i;
   EventSetInfo *zero;
 
-  /* Clear the Dynamic Array structure */
+  /* Clear the Dynamic Array and Shared Info structures */
 
   memset(&PAPI_EVENTSET_MAP,0x00,sizeof(PAPI_EVENTSET_MAP));
+  memset(&PAPI_SHARED_INFO,0x00,sizeof(PAPI_SHARED_INFO));
    
   /* Allocate space for the EventSetInfo pointers */
 
@@ -85,6 +90,17 @@ static int initialize(void)
    PAPI_EVENTSET_MAP.availSlots = PAPI_INIT_SLOTS - 1;
    PAPI_EVENTSET_MAP.fullSlots  = 1;
    PAPI_EVENTSET_MAP.lowestEmptySlot = 1;
+
+  PAPI_SHARED_INFO.EvSetArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
+  PAPI_SHARED_INFO.EventsArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
+  PAPI_SHARED_INFO.MachdepArray=(void **)malloc
+        (_papi_system_info.total_events*sizeof(int *));
+  memset(PAPI_SHARED_INFO.MachdepArray, 0x00,
+        _papi_system_info.total_events*sizeof(int *));
+  for(i=0;i<PAPI_INIT_SLOTS;i++) 
+  { *PAPI_SHARED_INFO.EvSetArray[i]=-1;
+    *PAPI_SHARED_INFO.EventsArray[i]=-1;
+  }
 
    /* Remember that EventSet zero is reserved */
 
@@ -565,6 +581,10 @@ int PAPI_start(int EventSet)
 
   ESI = lookup_EventSet(EventSet);
   if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
+
+  retval=_papi_hwd_check_runners(&PAPI_SHARED_INFO, &PAPI_EVENTSET_MAP);  
+         // get list of running evsets
+  if(retval<PAPI_OK) return retval;
 
   retval = _papi_hwd_start(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
