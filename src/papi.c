@@ -899,8 +899,8 @@ int PAPI_cleanup_eventset(int EventSet)
           _papi_hwi_system_info.supports_hw_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
       total=ESI->profile.event_counter;
       for (i = 0; i < total; i++) {
-         retval = PAPI_profil(NULL, 0, 0, 65536, EventSet, 
-                 ESI->profile.EventCode[0], 0, PAPI_PROFIL_POSIX);
+         retval = PAPI_sprofil(NULL,0,EventSet,ESI->profile.EventCode[0],0,
+                               PAPI_PROFIL_POSIX);
          if (retval != PAPI_OK)
             papi_return(retval);
       }
