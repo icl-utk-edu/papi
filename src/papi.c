@@ -1392,7 +1392,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    */
    for(i=0;i<profcnt;i++) {
       if (!((prof[i].pr_scale == 131072) ||
-           ((prof[i].pr_scale <= 65536 && prof[i].pr_scale > 2)))) {
+           ((prof[i].pr_scale <= 65536 && prof[i].pr_scale > 1)))) {
          APIDBG("Improper scale factor: %d\n", prof[i].pr_scale);
          papi_return(PAPI_EINVAL);
       }
