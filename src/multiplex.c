@@ -1154,7 +1154,7 @@ static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 			if( event_list[i] != PAPI_TOT_CYC ) {
 				retval = PAPI_add_event(&(mev->papi_event),
 						PAPI_TOT_CYC); 
-				assert(retval == PAPI_OK);
+				/* assert(retval == PAPI_OK); */
 			}
 #if 0
 			options.domain.eventset = mev->papi_event;
