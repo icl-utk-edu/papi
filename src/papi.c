@@ -215,6 +215,9 @@ int PAPI_library_init(int version)
 #endif
 #endif
 
+   if ( init_level != PAPI_NOT_INITED )
+       return (init_retval = PAPI_VER_CURRENT);
+
    if (init_retval != DEADBEEF)
       papi_return(init_retval);
 
@@ -1203,6 +1206,7 @@ void PAPI_shutdown(void)
    /* Now it is safe to call re-init */
 
    init_retval = DEADBEEF;
+   init_level = PAPI_NOT_INITED;
 }
 
 char *PAPI_strerror(int errorCode)
