@@ -169,7 +169,7 @@ int case1_last_half(void)
   }
 
   if( !allvalid )
-    test_fail(__FILE__,__LINE__,"case1",-1);
+    test_fail(__FILE__,__LINE__,"case1 (one or more counter registered no counts)",1);
 
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
