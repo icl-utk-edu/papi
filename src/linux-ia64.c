@@ -1081,9 +1081,11 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
-/*
-  out->selector = selector;
-*/
+
+/*for native event */
+  if (!(EventCode & PRESET_MASK) ) {
+      out->selector = selector;
+  }
 
   /* Update the new counter select field */
 
@@ -2089,7 +2091,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* We can use add_prog_event */
 			        0,  /* We can write the counters */
 			        1,  /* supports HW overflow */
-#if defined(PFM20) && !defined(ITANIUM2) /* Only Libpfm 2.0+ and Itanium supports hardware profiling */
+#if !defined(PFM06A) && !defined(ITANIUM2) /* Only Itanium and pfm1.1 and pfm2.0 supports hardware profiling */
 			        1,  /* supports HW profile */
 #else
 			        0,  /* supports HW profile */
