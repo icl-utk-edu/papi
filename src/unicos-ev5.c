@@ -276,8 +276,6 @@ int _papi_hwd_init_global(void) {
    if(_papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, 0))
       return (retval);
 
-   lock_init();
-
    return(PAPI_OK);
 }
 
@@ -331,7 +329,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    ctrl->values[2] = (pc_data[3] << 14) + (long_long)pmctr->CTR2;
    *events = ctrl->values;
 #ifdef DEBUG
-   if (ISLEVEL(DEBUG_SUBSTRATE)) 0 is %lld\n",
+   if (ISLEVEL(DEBUG_SUBSTRATE)) {
+      SUBDBG("raw val hardware index 0 is %lld\n",
             (long_long) ctrl->values[0]);
       SUBDBG("raw val hardware index 1 is %lld\n",
             (long_long) ctrl->values[1]);
@@ -357,7 +356,8 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
    }
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long *from) {
+int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long
+*from) {
    return(PAPI_ESBSTR);
 }
 
@@ -407,10 +407,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
    ESI->profile.overflowcount = 0;
    return (PAPI_OK);
-}
-
-static void lock_init(void)
-{
 }
 
 /* Initialize the system-specific settings */
@@ -472,7 +468,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 
 long_long _papi_hwd_get_real_cycles(void)
 {
-   return (((long_long)_rtc() * (long_long)_papi_hwi_system_info.hw_info.mhz) / (long_long)75);
+   return (((long_long)_rtc() * (long_long)_papi_hwi_system_info.hw_info.mhz) /a(long_long)75);
 }
 
 long_long _papi_hwd_get_real_usec(void)
