@@ -1,1 +1,8 @@
-This isn't working yet. Feel free to change it.
+This isn't working yet, but it's close.
+
+Support will include for the EV6 and EV67.
+
+Note that the test cases report PAPI_FP_INS,
+but in actuality it's PAPI_TOT_INS because of
+the poor design of the test cases, and the
+lack of Floating Point counts on the Alpha.

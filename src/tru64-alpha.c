@@ -18,31 +18,36 @@ static hwd_search_t findem_pca[] = {
   { PAPI_TOT_INS, { PF5_MUX0_ISSUES, -1, -1 }},
   { -1, {-1, }}};
 static hwd_search_t findem_ev6[] = {
-  { PAPI_TOT_CYC, { PF6_MUX0_CYCLES, PF6_MUX1_CYCLES }},
-  { PAPI_TOT_INS, { PF6_MUX0_RET_INSTRUCTIONS, -1 }},
-  { PAPI_BR_CN, { -1, PF6_MUX1_RET_COND_BRANCHES }},
-  { -1, {-1, }}};
+  { PAPI_TOT_CYC, { PF6_MUX0_CYCLES, PF6_MUX1_CYCLES, -1 }},
+  { PAPI_TOT_INS,  { PF6_MUX0_RET_INSTRUCTIONS, -1, -1 }},
+  { PAPI_BR_CN,   { -1, PF6_MUX1_RET_COND_BRANCHES, -1 }},
+  { PAPI_RES_STL, { -1, PF6_MUX1_REPLAY_TRAP, -1 }},
+  { -1, {-1, -1, -1}}};
 static hwd_search_t findem_ev67[] = {
-  { PAPI_TOT_CYC, { PF67_RET_INST_AND_CYCLES }},
-  { PAPI_TOT_INS, { PF67_RET_INST_AND_CYCLES }},
-  { -1, {-1, }}};
+  { PAPI_TOT_CYC, { -1, PF67_RET_INST_AND_CYCLES, -1 }},
+  { PAPI_TOT_INS, { PF67_RET_INST_AND_CYCLES, -1, -1 }},
+  { PAPI_RES_STL, { -1, PF67_CYCLES_AND_REPLAY_TRAPS, -1 }},
+  { -1, {-1, -1, -1}}};
 
 /* Globals */
 
-int setmuxcode = -1;
-int getcntcode = -1;
-int cntselcode = -1;
+static int setmuxcode = -1;
+static int getcntcode = -1;
+static int cntselcode = -1;
 
 /* Utility functions */
 
-static int setup_all_presets(int family)
+/* Input as code from HWRPB, Thanks Bill Gray. */
+
+static int setup_all_presets(int family, int model)
 {
   int first, event, derived, hwnum;
   hwd_search_t *findem;
   char str[PAPI_MAX_STR_LEN];
-  int model = _papi_system_info.hw_info.model;
   int num = _papi_system_info.num_gp_cntrs;
   int code;
+
+  DBG((stderr,"Family %d, model %d\n",family,model));
 
   if (family == 0)
     {
@@ -52,9 +57,9 @@ static int setup_all_presets(int family)
     }
   else if (family == 1)
     {
-/*      if ((model == PCA56_CPU) || (model == PCA57_CPU))
+      if ((model == PCA56_CPU) || (model == PCA57_CPU))
 	findem = findem_pca;
-      else */
+      else 
 	findem = findem_ev5;
 	setmuxcode = PCNT5MUX;
 	getcntcode = PCNT5GETCNT;
@@ -62,9 +67,9 @@ static int setup_all_presets(int family)
     }
   else if (family == 2)
     {
-/*      if (model >= EV67_CPU)
+      if (model >= EV67_CPU)
 	findem = findem_ev67;
-      else */
+      else 
 	findem = findem_ev6;
 	setmuxcode = PCNT6MUX;
 	getcntcode = PCNT6GETCNT;
@@ -72,7 +77,7 @@ static int setup_all_presets(int family)
     }
   else
     {
-      fprintf(stderr,"Unknown processor type %d family %d\n",model,family);
+      fprintf(stderr,"Unknown processor model %d family %d\n",model,family);
       return(PAPI_ESBSTR);
     }  
 
@@ -150,25 +155,65 @@ static int counter_event_shared(const ev_control_t *a, const ev_control_t *b, in
 
 static int update_global_hwcounters(EventSetInfo *global)
 {
-  hwd_control_state_t *current_state = (hwd_control_state_t *)global->machdep;
   int retval;
-  ev_values_t hwcntrs;
+  hwd_control_state_t *current_state = (hwd_control_state_t *)global->machdep;
+  struct pfcntrs_ev6 tev6;
+  struct pfcntrs_ev6 *interrupts_ev6 = &tev6;
+  union pmctrs_ev6 values_ev6;
+  long counter_values[EV_MAX_COUNTERS] = { 0, 0, 0 };
 
-  retval = ioctl(current_state->fd, PCNT6GETCNT, &hwcntrs.ev6);
+  /* Get interrupt vals */
+
+  retval = ioctl(current_state->fd, PCNT6GETCNT, &interrupts_ev6);
   if (retval == -1)
     return(PAPI_ESYS);
 
-  DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
-       global->hw_start[0]+hwcntrs.ev6.pf_cntr0,global->hw_start[0],hwcntrs.ev6.pf_cntr0));
-  global->hw_start[0] = global->hw_start[0] + hwcntrs.ev6.pf_cntr0;
+  DBG((stderr,"PCNT6GETCNT returns C0 0x%lx C1 0x%lx CYCLES 0x%lx\n",
+       interrupts_ev6->pf_cntr0,interrupts_ev6->pf_cntr1,interrupts_ev6->pr_cycle));
 
-  DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",1,
-       global->hw_start[1]+hwcntrs.ev6.pf_cntr1,global->hw_start[1],hwcntrs.ev6.pf_cntr1));
-  global->hw_start[1] = global->hw_start[1] + hwcntrs.ev6.pf_cntr1;
+  /* Get CPU vals. */
+
+  values_ev6.pmctrs_ev6_long = 0;
+  retval = ioctl(current_state->fd, PCNT6GETCNTRS, &values_ev6.pmctrs_ev6_long);
+  if (retval == -1)
+    return PAPI_ESYS;
+
+  DBG((stderr,"PCNT6GETCNTRS returns 0x%lx\n",values_ev6.pmctrs_ev6_long));
+  DBG((stderr,"PCNT6GETCNTRS C0: %ld C1: %ld\n",values_ev6.pmctrs_ev6_cntr0,values_ev6.pmctrs_ev6_cntr1));
+
+  /* Do the math */
+
+  counter_values[0] = (interrupts_ev6->pf_cntr0 << 20) + values_ev6.pmctrs_ev6_cntr0;
+  counter_values[1] = (interrupts_ev6->pf_cntr1 << 20) + values_ev6.pmctrs_ev6_cntr1; 
+  
+  DBG((stderr,"Actual values %ld %ld \n",counter_values[0],counter_values[1]));
+
+  DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
+       global->hw_start[0]+counter_values[0],global->hw_start[0],counter_values[0]));
+  if (current_state->selector & 0x1)
+    global->hw_start[0] = global->hw_start[0] + counter_values[0];
+
+  if (current_state->selector & 0x2)
+    {
+      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",1,
+	   global->hw_start[1]+counter_values[1],global->hw_start[1],counter_values[1]));
+      global->hw_start[1] = global->hw_start[1] + counter_values[1];
+    }
+
+  /* Clear driver counts */
 
   retval = ioctl(current_state->fd, PCNTCLEARCNT);
   if (retval == -1)
     return(PAPI_ESYS);
+
+  /* Zero and enable hardware counters */
+
+  values_ev6.pmctrs_ev6_long = 0;
+  values_ev6.pmctrs_ev6_cpu = PMCTRS_ALL_CPUS;
+  values_ev6.pmctrs_ev6_select = PF6_SEL_COUNTER_0 | PF6_SEL_COUNTER_1;
+  retval = ioctl(current_state->fd, PCNT6RESTART, &values_ev6.pmctrs_ev6_long);
+  if (retval == -1)
+    return PAPI_ESYS;
 
   return(0);
 }
@@ -224,6 +269,7 @@ static int get_system_info(void)
   int fd, retval, family;
   prpsinfo_t info;
   struct cpu_info cpuinfo;
+  long proc_type;
   pid_t pid;
   char pname[PAPI_MAX_STR_LEN], *ptr;
 
@@ -252,6 +298,10 @@ static int get_system_info(void)
   if (getsysinfo(GSI_CPU_INFO, (char *)&cpuinfo, sizeof(cpuinfo), NULL, NULL, NULL) == -1)
     return PAPI_ESYS;
 
+  if (getsysinfo(GSI_PROC_TYPE, (char *)&proc_type, sizeof(proc_type), 0, 0,0) == -1)
+    return PAPI_ESYS;
+  proc_type &= 0xffffffff;
+
   _papi_system_info.cpunum = cpuinfo.current_cpu;
   _papi_system_info.hw_info.mhz = (float)cpuinfo.mhz;
   _papi_system_info.hw_info.ncpu = cpuinfo.cpus_in_box;
@@ -260,7 +310,7 @@ static int get_system_info(void)
     _papi_system_info.hw_info.ncpu * _papi_system_info.hw_info.nnodes;
   _papi_system_info.hw_info.vendor = -1;
   strcpy(_papi_system_info.hw_info.vendor_string,"Compaq");
-  _papi_system_info.hw_info.model = cpuinfo.cpu_type;
+  _papi_system_info.hw_info.model = proc_type;
 
   _papi_system_info.num_sp_cntrs = 1;
   strcpy(_papi_system_info.hw_info.model_string,"Alpha "); 
@@ -287,7 +337,7 @@ static int get_system_info(void)
   else
     return(PAPI_ESBSTR);
 
-  retval = setup_all_presets(family);
+  retval = setup_all_presets(family,proc_type);
   if (retval)
     return(retval);
 
@@ -313,10 +363,10 @@ long long _papi_hwd_get_real_usec (void)
 
 long long _papi_hwd_get_real_cycles (void)
 {
-  float usec, cyc;
+  long long usec, cyc;
 
-  usec = (float)_papi_hwd_get_real_usec();
-  cyc = usec * _papi_system_info.hw_info.mhz;
+  usec = _papi_hwd_get_real_usec();
+  cyc = usec * (long long)_papi_system_info.hw_info.mhz;
   return((long long)cyc);
 }
 
@@ -396,12 +446,11 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-/* Go from highest counter to lowest counter. Why? Because there are usually
-   more counters on #1, so we try the least probable first. */
+/* Go from highest counter to lowest counter. */
 
 static int get_avail_hwcntr_bits(int cntr_avail_bits)
 {
-  int tmp = 0, i = 1 << (_papi_system_info.num_cntrs);
+  int tmp = 0, i = 1 << (_papi_system_info.num_cntrs-1);
   
   while (i)
     {
@@ -615,7 +664,7 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, v
 
 void dump_cmd(ev_control_t *t)
 {
-  fprintf(stderr,"Command block at %p: 0x%x\n",t,t->ev6);  
+  DBG((stderr,"Command block at %p: 0x%x\n",t,t->ev6));  
 }
 
 /* EventSet zero contains the 'current' state of the counting hardware */
@@ -625,7 +674,9 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   int i, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-  
+  union pmctrs_ev6 start_em;
+  long tmp;
+
   /* If we ARE NOT nested, 
      just copy the global counter structure to the current eventset */
 
@@ -636,19 +687,32 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
       /* Stop the current context */
 
-      retval = ioctl(current_state->fd, PCNTCLEARCNT);
-      if (retval == -1)
-	return(PAPI_ESYS);
-
       /* (Re)start the counters */
       
 #ifdef DEBUG
       dump_cmd(&current_state->counter_cmd);
 #endif
 
-      retval = ioctl(current_state->fd,PCNT6MUX,&current_state->counter_cmd);
+      /* clear driver */
+
+      retval = ioctl(current_state->fd, PCNTCLEARCNT);
+      if (retval == -1)
+	return(PAPI_ESYS); 
+
+      /* select events */
+
+      retval = ioctl(current_state->fd,PCNT6MUX, &current_state->counter_cmd.ev6);
       if (retval == -1)
 	return(PAPI_ESYS);
+
+      /* zero and restart selected counters */
+
+      start_em.pmctrs_ev6_long = 0;
+      start_em.pmctrs_ev6_cpu = PMCTRS_ALL_CPUS;
+      start_em.pmctrs_ev6_select = PF6_SEL_COUNTER_0 | PF6_SEL_COUNTER_1;
+      retval = ioctl(current_state->fd, PCNT6RESTART, &start_em.pmctrs_ev6_long);
+      if (retval == -1)
+	return PAPI_ESYS;
 
       return(PAPI_OK);
     }
@@ -994,8 +1058,8 @@ papi_mdi _papi_system_info = { "$Id$",
 			       {
 				 "",
 				 "",
-				 (caddr_t)NULL,
-				 (caddr_t)NULL,
+				 (caddr_t)&_ftext,
+				 (caddr_t)&_etext,
 				 (caddr_t)NULL,
 				 (caddr_t)NULL,
 				 (caddr_t)NULL,

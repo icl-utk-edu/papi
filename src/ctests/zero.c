@@ -76,6 +76,7 @@ int main()
   printf("-------------------------------------------------------------------------\n");
 
   printf("Test type   : \t1\n");
+
   printf("PAPI_FP_INS : \t%lld\n",
 	 (values[0])[0]);
   printf("PAPI_TOT_CYC: \t%lld\n",
@@ -84,6 +85,7 @@ int main()
 	 elapsed_us);
   printf("Real cycles : \t%lld\n",
 	 elapsed_cyc);
+
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");

@@ -37,7 +37,7 @@ genpapifdef: genpapifdef.c $(LIBRARY)
 fpapi.h: genpapifdef
 	./genpapifdef > fpapi.h
 
-examples: ftests tests
+examples: tests ftests
 
 test: examples
 	tests/zero

@@ -1,3 +1,12 @@
+/* 
+* File:    papi_internal.h
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #ifdef DEBUG
 #if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || defined(__digital__) || (defined(sun) && defined(sparc))
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }

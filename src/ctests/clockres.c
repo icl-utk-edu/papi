@@ -10,7 +10,7 @@
 int main() 
 {
   long long elapsed_usec[ITERS], elapsed_cyc[ITERS];
-  long long total_usec = 0, total_cyc = 0, nodup_usec = 0, nodup_cyc = 0, diff_usec = 0, diff_cyc = 0;
+  long long total_usec = 0, total_cyc = 0, nodup_usec = 1, nodup_cyc = 1, diff_usec = 0, diff_cyc = 0;
   int i;
 
   if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
@@ -54,7 +54,7 @@ int main()
 
   /* Virtual */
 
-  nodup_cyc = 0;
+  nodup_cyc = 1;
   if (PAPI_get_virt_cyc() != -1)
     {
       for (i=0;i<ITERS;i++)
@@ -74,7 +74,7 @@ int main()
   else
     printf("PAPI_get_virt_cyc : Not supported\n");
 
-  nodup_usec = 0;
+  nodup_usec = 1;
   if (PAPI_get_virt_usec() != -1)
     {
       for (i=0;i<ITERS;i++)

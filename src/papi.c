@@ -236,10 +236,14 @@ static int default_error_handler(int errorCode)
     {
     case PAPI_VERB_ECONT:
       fprintf(stderr,"PAPI Error Code %d: %s: %s\n",errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
+      if (errorCode == PAPI_ESYS)
+	perror("");
       return errorCode;
       break;
     case PAPI_VERB_ESTOP:
       fprintf(stderr,"PAPI Error Code %d: %s: %s\n",errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
+      if (errorCode == PAPI_ESYS)
+	perror("");
       exit(-errorCode);
       break;
     case PAPI_QUIET:
@@ -1071,7 +1075,7 @@ int PAPI_stop(int EventSet, long long *values)
 
   retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);
   if (retval != PAPI_OK)
-    return(retval);
+    papi_return(retval);
 
   /* If overflowing is enabled, turn it off */
 
@@ -1079,12 +1083,12 @@ int PAPI_stop(int EventSet, long long *values)
     {
       retval = _papi_hwi_stop_overflow_timer(ESI, thread_master_eventset);
       if (retval < PAPI_OK)
-	return(retval);
+	papi_return(retval);
     }
   
   retval = _papi_hwd_unmerge(ESI, thread_master_eventset);
   if (retval != PAPI_OK)
-    return(retval);
+    papi_return(retval);
 
   if (values)
     memcpy(values,ESI->sw_stop,ESI->NumberOfCounters*sizeof(long long)); 
@@ -1126,7 +1130,7 @@ int PAPI_reset(int EventSet)
 
       retval = _papi_hwd_reset(ESI, thread_master_eventset);
       if (retval != PAPI_OK)
-	return(retval);
+	papi_return(retval);
     }
   else
     {
@@ -1155,7 +1159,7 @@ int PAPI_read(int EventSet, long long *values)
     {
       retval = _papi_hwd_read(ESI, thread_master_eventset, values);
       if (retval != PAPI_OK)
-        return(retval);
+        papi_return(retval);
     }
   else
     {
@@ -1193,7 +1197,7 @@ int PAPI_accum(int EventSet, long long *values)
     {
       retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);
       if (retval != PAPI_OK)
-        return(retval);
+        papi_return(retval);
     }
   
   for (i=0 ; i < ESI->NumberOfCounters; i++)

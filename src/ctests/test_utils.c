@@ -72,7 +72,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x400;
+	{
+	  fprintf(stderr,"PAPI_L2_TCH is not available.\n");
+	  *mask = *mask ^ 0x400;
+	}
     }
 
   if (*mask & 0x200)
@@ -81,7 +84,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x200;
+	{
+	  fprintf(stderr,"PAPI_L2_TCA is not available.\n");
+	  *mask = *mask ^ 0x200;
+	}
     }
 
   if (*mask & 0x100)
@@ -90,7 +96,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x100;
+	{
+	  fprintf(stderr,"PAPI_L2_TCM is not available.\n");
+	  *mask = *mask ^ 0x100;
+	}
     }
 
   if (*mask & 0x40)
@@ -99,7 +108,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x40;
+	{
+	  fprintf(stderr,"PAPI_L1_DCM is not available.\n");
+	  *mask = *mask ^ 0x40;
+	}
     }
 
   if (*mask & 0x20)
@@ -108,7 +120,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x20;
+	{
+	  fprintf(stderr,"PAPI_L1_ICM is not available.\n");
+	  *mask = *mask ^ 0x20;
+	}
     }
 
   if (*mask & 0x10)
@@ -117,7 +132,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x10;
+	{
+	  fprintf(stderr,"PAPI_L1_TCM is not available.\n");
+	  *mask = *mask ^ 0x10;
+	}
     }
 
   if (*mask & 0x8)
@@ -126,16 +144,27 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x8;
+	{
+	  fprintf(stderr,"PAPI_FLOPS is not available.\n");
+	  *mask = *mask ^ 0x8;
+	}
     }
 
   if (*mask & 0x4)
     {
+#if defined(__digital__)
+      fprintf(stderr,"Using PAPI_TOT_INS instead of PAPI_FP_INS.\n");
+      retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+#else
       retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
+#endif
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x4;
+	{
+	  fprintf(stderr,"PAPI_FP_INS is not available.\n");
+	  *mask = *mask ^ 0x4;
+	}
     }
 
   if (*mask & 0x2)
@@ -144,7 +173,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x2;
+	{
+	  fprintf(stderr,"PAPI_TOT_INS is not available.\n");
+	  *mask = *mask ^ 0x2;
+	}
     }
 
   if (*mask & 0x1)
@@ -153,7 +185,10 @@ int add_test_events(int *number, int *mask)
       if (retval == PAPI_OK)
 	(*number)++;
       else
-	*mask = *mask ^ 0x1;
+	{
+	  fprintf(stderr,"PAPI_TOT_CYC is not available.\n");
+	  *mask = *mask ^ 0x1;
+	}
     }
 
   return(EventSet);

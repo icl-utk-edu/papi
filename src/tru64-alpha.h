@@ -22,23 +22,24 @@
 
 struct pfcntrs_ev6
 {
-  ulong pr_cycle;    /* process cycle counter */
-  ulong pf_cntr0;    /* driver's counter 1 */
-  ulong pf_cntr1;    /* driver's counter 2 */
+        ulong pr_cycle; /* process cycle counter */
+        ulong pf_cntr0; /* driver's counter 1 */
+        ulong pf_cntr1; /* driver's counter 2 */
+        ulong padding;  /* work around driver bug */
 };
 
 /* This comes from the kernel when we get the overflow counts. */
 
 typedef union {
-  struct pfcntrs ev4;
-  struct pfcntrs_ev5 ev5;
   struct pfcntrs_ev6 ev6;
+  struct pfcntrs_ev5 ev5;
+  struct pfcntrs ev4;
 } ev_values_t;
 
 typedef union {
+  long ev6;
+  long ev5;
   struct iccsr ev4;
-  union pmctrs_ev5 ev5;
-  union pmctrs_ev6 ev6;
 } ev_control_t;
 
 typedef struct hwd_control_state {
@@ -73,5 +74,7 @@ typedef struct hwd_search {
   /* PAPI preset code */
   int papi_code;
   /* Events to encode */
-  int findme[EV_MAX_COUNTERS];
+  long findme[EV_MAX_COUNTERS];
 } hwd_search_t;
+
+extern unsigned long _etext, _ftext;

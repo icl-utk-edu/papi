@@ -15,7 +15,7 @@
 
 #define THR 1000000
 unsigned long length;
-unsigned long start, end;
+unsigned long my_start, my_end;
 
 void *Thread(void *arg)
 {
@@ -42,7 +42,7 @@ void *Thread(void *arg)
 
   elapsed_cyc = PAPI_get_real_cyc();
 
-  retval = PAPI_profil(profbuf, length, start, 65536, 
+  retval = PAPI_profil(profbuf, length, my_start, 65536, 
 		       EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX);
   if (retval)
     exit(retval);
@@ -77,7 +77,7 @@ void *Thread(void *arg)
   for (i=0;i<length;i++)
     {
       if (profbuf[i])
-	printf("0x%x\t%d\n",(unsigned int)start + 2*i,profbuf[i]);
+	printf("0x%x\t%d\n",(unsigned int)my_start + 2*i,profbuf[i]);
     }
 
   free_test_space(values, num_tests);
@@ -108,9 +108,9 @@ int main()
 
   if ((prginfo = PAPI_get_executable_info()) == NULL)
     exit(1);
-  start = (unsigned long)prginfo->text_start;
-  end =  (unsigned long)prginfo->text_end;
-  length = end - start;
+  my_start = (unsigned long)prginfo->text_start;
+  my_end =  (unsigned long)prginfo->text_end;
+  length = my_end - my_start;
 
   elapsed_us = PAPI_get_real_usec();
 
