@@ -163,7 +163,7 @@ int main(int argc, char **argv)
  	long_long min, max;
 
 #if defined(sun) && defined(sparc)
-  	max = (values[1])[0]-(values[2])[0]);
+  	max = (long_long)((values[1])[0]-(values[2])[0]);
 #else
   	max = (long_long)((values[1])[0]+(values[2])[0]);
 #endif
