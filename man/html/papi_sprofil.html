@@ -1,5 +1,5 @@
 <!-- .\" @(#)$Id$ -->
-<!-- .TH PAPI_profil 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_sprofil 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_profil, PAPI_sprofil - generate PC histogram data where hardware counter overflow occurs
+PAPI_sprofil - generate PC histogram data from multiple code regions where hardware counter overflow occurs
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -264,15 +264,16 @@ PAPI_profil, PAPI_sprofil - generate PC histogram data where hardware counter ov
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Arguments</A><BR>
-<A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#3>Structure Fields</A><BR>
+<A HREF=#4>Arguments</A><BR>
+<A HREF=#5>Return Values</A><BR>
+<A HREF=#6>Errors</A><BR>
+<A HREF=#7>Examples</A><BR>
+<A HREF=#8>Authors</A><BR>
+<A HREF=#9>Bugs</A><BR>
+<A HREF=#10>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=11>
 
      <H3>SYNOPSIS</H3>
 
@@ -283,15 +284,10 @@ PAPI_profil, PAPI_sprofil - generate PC histogram data where hardware counter ov
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI int\ PAPI_profil(void\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\   -->
-<B>int PAPI_profil(void * </B><I>buf, </I><B>unsigned </B><I>bufsiz, </I><B>unsigned long </B><I>offset, </I> 
-<!-- .BI \tunsigned\  scale, \ int \ EventSet, \ -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned </B><B> int</B><I> EventSet,</I> 
-             int  EventCode,  int  threshold,  int  flags );
-<!-- .BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\   -->
-<B>int PAPI_sprofil(PAPI_sprofil_t * </B><I>prof, </I><B>int </B><I>profcnt, </I><B>int </B><I>EventSet, </I> 
-<!-- .BI \tint\  EventCode,\  int\  threshold,\  int\  flags\  ); -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int </B><B>int </B><I>threshold, </I><B>int </B><I>flags </I><B>);</B> 
+<!-- .BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\ -->
+<B>int PAPI_sprofil(PAPI_sprofil_t * </B><I>prof, </I><B>int </B><I>profcnt, </I><B>int </B><I>EventSet,</I> 
+<!-- .BI \ \ \ int\  EventCode,\  int\  threshold,\  int\  flags\  ); -->
+<B>   int </B><I>EventCode, </I><B>int </B><I>threshold, </I><B>int </B><I>flags </I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .LP -->
@@ -311,95 +307,90 @@ The profiling routines have no Fortran interface.
 
 </A>
 <BLOCKQUOTE>
-<!-- .B PAPI_profil()  -->
-<B>PAPI_profil()</B> uses its first four parameters to create the data structures needed by PAPI_sprofil and then calls PAPI_sprofil to do the work. The user can use more than one event to generate more than one histogram in one eventset. For example, if you want to use two events to generate two histograms while running your program once, then you just call PAPI_profil twice.
-<P>
 <!-- .B PAPI_sprofil() -->
-<B>PAPI_sprofil()</B> assumes a preinitialized sprofil structure, and initiates profiling based on its values.
+<B>PAPI_sprofil()</B> is a structure driven profiler that profiles one or more disjoint regions of code
+in a single call. It accepts a pointer to
+a preinitialized array of sprofil structures, and initiates profiling based on
+the values contained in the array. Each structure in the array defines the
+profiling parameters that are normally passed to
+<!-- .B PAPI_profil(). -->
+<B>PAPI_profil().</B> For more information on profiling, see:
+<!-- .BR PAPI_pofil "(3)" -->
+<A HREF="papi_pofil.html">PAPI_pofil (3)</A>
+<P>
+<!-- .SH STRUCTURE FIELDS -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>STRUCTURE FIELDS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .I *pr_base -->
+<I>*pr_base</I> -- pointer to the base address of the buffer.
+<!-- .LP -->
+<P>
+<!-- .I pr_size -->
+<I>pr_size</I> -- the size of the histogram buffer in pr_base.
+<!-- .LP -->
+<P>
+<!-- .I pr_off -->
+<I>pr_off</I> -- the start address of&nbsp;the region to be profiled.
+<!-- .LP -->
+<P>
+<!-- .I pr_scale -->
+<I>pr_scale</I> -- the scaling factor applied to the buffer.
+<!-- .LP -->
+<P>
+These fields are described in greater detail in the documentation for
+<!-- .BR PAPI_pofil "(3)" -->
+<A HREF="papi_pofil.html">PAPI_pofil (3)</A>
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
-<A name=3>
+<A name=4>
 
      <H3>ARGUMENTS</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .I *buf -->
-<I>*buf</I> -- pointer to profile buffer array.
-<!-- .LP -->
-<P>
-<!-- .I bufsiz -->
-<I>bufsiz</I> -- number of entries in *buf.
-<!-- .LP -->
-<P>
-<!-- .I offset -->
-<I>offset</I> -- starting value of lowest memory address to profile.
-<!-- .LP -->
-<P>
-<!-- .I scale -->
-<I>scale</I> -- scaling factor for bin values.
-<!-- .LP -->
-<P>
-<!-- .I EventSet  -->
-<I>EventSet</I> -- The PAPI EventSet to profile when it is started.
-<!-- .LP -->
-<P>
-<!-- .I EventCode -->
-<I>EventCode</I> -- Code of the Event in the EventSet to profile.
-<!-- .LP -->
-<P>
-<!-- .I threshold  -->
-<I>threshold</I> -- threshold value for the Event triggers the handler.
-<!-- .LP -->
-<P>
-<!-- .I flags  -->
-<I>flags</I> -- bit pattern to control profiling behavior. Defined values are shown in the table below.
-<P>
-<!-- .LP -->
-<P>
 <!-- .I *prof -->
-<I>*prof</I> -- pointer to PAPI_sprofil_t structure.
+<I>*prof</I> -- pointer to an array of PAPI_sprofil_t structures.
 <!-- .LP -->
 <P>
 <!-- .I profcnt -->
-<I>profcnt</I> -- number of buffers for hardware profiling (*reserved*)
+<I>profcnt</I> -- number of structures in the prof array for hardware profiling.
 <!-- .LP -->
 <P>
-<!-- .TS -->
-<P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
-<!-- allbox tab($); -->
-<!-- cI  s -->
-<!-- lB lw. -->
-<TR valign=top>
-<TD align=center colspan=2><I>Defined bits for the flags variable
-</I></TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_POSIX</B></TD><TD>Default type of profiling, similar to
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_RANDOM</B></TD><TD>Drop a random 25% of the samples.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_WEIGHTED</B></TD><TD>Weight the samples by their value.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_COMPRESS</B></TD><TD>Ignore samples if hash buckets get big.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_BUCKET_16</B></TD><TD>use unsigned short(16bit) as bucket, This is the default bucket.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_BUCKET_32</B></TD><TD>use unsigned int(32bit) as bucket.
-</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_PROFIL_BUCKET_64</B></TD><TD>use unsigned long(64bit) as bucket.
-</TD></TR>
-</TABLE></BLOCKQUOTE>
+<!-- .I EventSet  -->
+<I>EventSet</I> -- The PAPI EventSet to profile. This EventSet is marked as profiling-ready, but profiling
+doesn&#146;t actually start until a
+<!-- .B PAPI_start() -->
+<B>PAPI_start()</B> call is issued.
+<!-- .LP -->
+<P>
+<!-- .I EventCode -->
+<I>EventCode</I> -- Code of the Event in the EventSet to profile. This event must already be a member of the EventSet.
+<!-- .LP -->
+<P>
+<!-- .I threshold  -->
+<I>threshold</I> -- minimum number of events that must occur before the PC is sampled. If hardware overflow
+is supported for your substrate, this threshold will trigger an interrupt when reached.
+Otherwise, the counters will be sampled periodically and the PC will be recorded for the
+first sample that exceeds the threshold. If the value of threshold is 0, profiling will be
+disabled for this event.
+<P>
+<!-- .LP -->
+<P>
+<!-- .I flags  -->
+<I>flags</I> -- bit pattern to control profiling behavior. Defined values are given in a table
+in the documentation for
+<!-- .BR PAPI_pofil "(3)" -->
+<A HREF="papi_pofil.html">PAPI_pofil (3)</A>
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
-<A name=4>
+<A name=5>
 
      <H3>RETURN VALUES</H3>
 
@@ -412,54 +403,22 @@ On success, this function returns
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=6>
 
      <H3>ERRORS</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EINVAL" -->
-<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOMEM" -->
-<B>PAPI_ENOMEM</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Insufficient memory to complete the operation.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVST" -->
-<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The EventSet specified does not exist.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EISRUN" -->
-<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The EventSet is currently counting events.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ECNFLCT" -->
-<B>PAPI_ECNFLCT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVNT" -->
-<B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The PAPI preset is not available on the underlying hardware.
+Error returns for
+<!-- .B PAPI_sprofil() -->
+<B>PAPI_sprofil()</B> are identical to those for
+<!-- .BR PAPI_profil "(3)" -->
+<A HREF="papi_profil.html">PAPI_profil (3)</A>
+Please refer to that page for further details.
 <P>
 <!-- .SH EXAMPLES -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
+</BLOCKQUOTE>
+<A name=7>
 
      <H3>EXAMPLES</H3>
 
@@ -472,7 +431,8 @@ The PAPI preset is not available on the underlying hardware.
 int EventSet = PAPI_NULL;
 unsigned long start, end, length;
 PAPI_exe_info_t *prginfo;
-unsigned short *profbuf;
+unsigned short *profbuf1, *profbuf2, profbucket;
+PAPI_sprofil_t sprof[3];
 <P>
 retval = PAPI_library_init(PAPI_VER_CURRENT);
 <P>
@@ -488,27 +448,47 @@ if ((prginfo = PAPI_get_executable_info()) == NULL)
 <P>
 start = (unsigned long)prginfo-&gt;text_start;
 end = (unsigned long)prginfo-&gt;text_end;
-length = (end - start)/sizeof(unsigned short) *sizeof(unsigned short);
+length = (end - start);
 <P>
-profbuf = (unsigned short *)malloc(length);
-if (profbuf == NULL)
+/* Allocate 2 buffers of equal length */
+profbuf1 = (unsigned short *)malloc(length);
+profbuf2 = (unsigned short *)malloc(length);
+if ((profbuf1 == NULL) || (profbuf2 == NULL))
   handle_error(1);
-memset(profbuf,0x00,length);
+memset(profbuf1,0x00,length);
+memset(profbuf2,0x00,length);
 <P>
+/* Create an empty EventSet */
 if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
   handle_error(retval);
 <P>
 /* Add Total FP Instructions Executed to our EventSet */
-<P>
 if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
   handle_error(retval);
 <P>
-if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
-                PAPI_FP_INS, 1000000, PAPI_PROFIL_POSIX)) != PAPI_OK)
+/* First buffer */
+sprof[0].pr_base = profbuf1;
+sprof[0].pr_size = length;
+sprof[0].pr_off = (caddr_t) DO_FLOPS;
+sprof[0].pr_scale = 0x10000;
+<P>
+/* Second buffer */
+sprof[1].pr_base = profbuf2;
+sprof[1].pr_size = length;
+sprof[1].pr_off = (caddr_t) DO_READS;
+sprof[1].pr_scale = 0x10000;
+<P>
+/* Overflow bucket */
+sprof[2].pr_base = profbucket;
+sprof[2].pr_size = 1;
+sprof[2].pr_off = 0;
+sprof[2].pr_scale = 0x0002;
+<P>
+if ((retval = PAPI_sprofil(sprof, EventSet, PAPI_FP_INS, 1000000,
+                 PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
   handle_error(retval);
 <P>
 /* Start counting */
-<P>
 if ((retval = PAPI_start(EventSet)) != PAPI_OK)
   handle_error(1);
 <!-- .if t .ft P -->
@@ -517,7 +497,7 @@ if ((retval = PAPI_start(EventSet)) != PAPI_OK)
 <P>
 <!-- .SH AUTHORS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
      <H3>AUTHORS</H3>
 
@@ -528,7 +508,7 @@ The PAPI Team. See them at the PAPI Web Site:
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>BUGS</H3>
 
@@ -539,12 +519,14 @@ These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=10>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .BR PAPI_profil "(3), " -->
+<A HREF="papi_profil.html">PAPI_profil (3)</A>, 
 <!-- .BR PAPI_preset "(3), " PAPI_get_executable_info "(3), " -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
 <A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>, 
@@ -561,7 +543,7 @@ These functions have no known bugs.
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_profil (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_sprofil (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
