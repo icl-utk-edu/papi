@@ -6,6 +6,15 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.10.2, 2004-10-19
+- Updated kernel support: 2.6.9, 2.4.28-pre4.
+- Corrected the PPC32 driver's handling of MMCR0 changes due
+  to use of the FCECE or TRIGGER control flags.
+- Fixed a synchronisation error in the interface between
+  the per-process counters driver and the low-level drivers.
+  The error triggered warnings in DEBUG_SPINLOCK_SLEEP-
+  enabled kernels.
+
 Version 2.6.10.1, 2004-09-18
 - Fixed a problem causing an incomplete "wrapper" file to be
   installed as /usr/include/asm/perfctr.h on x86_64 systems.

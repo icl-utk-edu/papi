@@ -161,7 +161,7 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
  ****************************************************************/
 
 /* XXX: perhaps relax this to number of _live_ perfctrs */
-static spinlock_t nrctrs_lock = SPIN_LOCK_UNLOCKED;
+static DECLARE_MUTEX(nrctrs_mutex);
 static int nrctrs;
 static const char this_service[] = __FILE__;
 
@@ -170,13 +170,13 @@ static int inc_nrctrs(void)
 	const char *other;
 
 	other = NULL;
-	spin_lock(&nrctrs_lock);
+	down(&nrctrs_mutex);
 	if( ++nrctrs == 1 ) {
 		other = perfctr_cpu_reserve(this_service);
 		if( other )
 			nrctrs = 0;
 	}
-	spin_unlock(&nrctrs_lock);
+	up(&nrctrs_mutex);
 	if( other ) {
 		printk(KERN_ERR __FILE__
 		       ": cannot operate, perfctr hardware taken by '%s'\n",
@@ -189,10 +189,10 @@ static int inc_nrctrs(void)
 
 static void dec_nrctrs(void)
 {
-	spin_lock(&nrctrs_lock);
+	down(&nrctrs_mutex);
 	if( --nrctrs == 0 )
 		perfctr_cpu_release(this_service);
-	spin_unlock(&nrctrs_lock);
+	up(&nrctrs_mutex);
 }
 
 static struct vperfctr *vperfctr_alloc(void)

@@ -3,6 +3,18 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.10.2, 2004-10-19
+- virtual.c: replace nrctrs_lock with a mutex. Avoids illegal
+  may-sleep-while-holding-lock, caused by mutex operations in
+  perfctr_cpu_{reserve,release}().
+  Backport from perfctr-2.7.6.
+- PPC32: Correct MMCR0 handling for FCECE/TRIGGER. Read
+  MMCR0 at suspend and then freeze the counters. Move
+  this code from read_counters() to suspend(). At resume,
+  reload MMCR0 to unfreeze the counters. Clean up the
+  cstatus checks controlling this behaviour.
+  Backport from perfctr-2.7.6.
+
 Version 2.6.10, 2004-09-14
 - Fixed p4_clear_counters() to not access IQ_ESCR{0,1}
   on P4 models >= 3.

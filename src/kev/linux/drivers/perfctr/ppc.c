@@ -91,6 +91,18 @@ static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state, int cpu
 static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
 #endif
 
+/* The ppc driver internally uses cstatus & (1<<30) to record that
+   a context has an asynchronously changing MMCR0. */
+static inline unsigned int perfctr_cstatus_set_mmcr0_quirk(unsigned int cstatus)
+{
+	return cstatus | (1 << 30);
+}
+
+static inline int perfctr_cstatus_has_mmcr0_quirk(unsigned int cstatus)
+{
+	return cstatus & (1 << 30);
+}
+
 /****************************************************************
  *								*
  * Driver procedures.						*
@@ -213,7 +225,7 @@ static inline unsigned int read_pmc(unsigned int pmc)
 	}
 }
 
-static void ppc_read_counters(/*const*/ struct perfctr_cpu_state *state,
+static void ppc_read_counters(struct perfctr_cpu_state *state,
 			      struct perfctr_low_ctrs *ctrs)
 {
 	unsigned int cstatus, nrctrs, i;
@@ -225,12 +237,6 @@ static void ppc_read_counters(/*const*/ struct perfctr_cpu_state *state,
 	for(i = 0; i < nrctrs; ++i) {
 		unsigned int pmc = state->pmc[i].map;
 		ctrs->pmc[i] = read_pmc(pmc);
-	}
-	/* handle MMCR0 changes due to FCECE or TRIGGER on 74xx */
-	if (state->cstatus & (1<<30)) {
-		unsigned int mmcr0 = mfspr(SPRN_MMCR0);
-		state->ppc_mmcr[0] = mmcr0;
-		get_cpu_cache()->ppc_mmcr[0] = mmcr0;
 	}
 }
 
@@ -321,14 +327,15 @@ static int ppc_check_control(struct perfctr_cpu_state *state)
 
 	/*
 	 * MMCR0[FC] and MMCR0[TRIGGER] may change on 74xx if FCECE or
-	 * TRIGGER is set. To avoid undoing those changes, we must read
-	 * MMCR0 back into state->ppc_mmcr[0] and the cache at suspends.
+	 * TRIGGER is set. At suspends we must read MMCR0 back into
+	 * the state and the cache and then freeze the counters, and
+	 * at resumes we must unfreeze the counters and reload MMCR0.
 	 */
 	switch (pm_type) {
 	case PM_7450:
 	case PM_7400:
 		if (state->ppc_mmcr[0] & (MMCR0_FCECE | MMCR0_TRIGGER))
-			state->cstatus |= (1<<30);
+			state->cstatus = perfctr_cstatus_set_mmcr0_quirk(state->cstatus);
 	default:
 		;
 	}
@@ -428,7 +435,7 @@ static void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
 	return ppc_write_control(state);
 }
 
-static void perfctr_cpu_read_counters(/*const*/ struct perfctr_cpu_state *state,
+static void perfctr_cpu_read_counters(struct perfctr_cpu_state *state,
 				      struct perfctr_low_ctrs *ctrs)
 {
 	return ppc_read_counters(state, ctrs);
@@ -542,6 +549,12 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 	unsigned int i, cstatus, nractrs;
 	struct perfctr_low_ctrs now;
 
+	if (perfctr_cstatus_has_mmcr0_quirk(state->cstatus)) {
+		unsigned int mmcr0 = mfspr(SPRN_MMCR0);
+		mtspr(SPRN_MMCR0, mmcr0 | MMCR0_FC);
+		get_cpu_cache()->ppc_mmcr[0] = mmcr0 | MMCR0_FC;
+		state->ppc_mmcr[0] = mmcr0;
+	}
 	if (perfctr_cstatus_has_ictrs(state->cstatus))
 		perfctr_cpu_isuspend(state);
 	perfctr_cpu_read_counters(state, &now);
@@ -557,6 +570,8 @@ void perfctr_cpu_resume(struct perfctr_cpu_state *state)
 {
 	if (perfctr_cstatus_has_ictrs(state->cstatus))
 	    perfctr_cpu_iresume(state);
+	if (perfctr_cstatus_has_mmcr0_quirk(state->cstatus))
+		get_cpu_cache()->k1.id = 0; /* force reload of MMCR0 */
 	perfctr_cpu_write_control(state);
 	//perfctr_cpu_read_counters(state, &state->start);
 	{
