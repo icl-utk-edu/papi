@@ -1,6 +1,7 @@
 VERSION 	?= 2.6.x
 CPU		= p3
-GCC3ARGS	= -march=athlon  -DTRAP_DERIVED_UNDERFLOW
+FARGS	= -D__athlon__
+GCC3ARGS	= -march=athlon
 # COMPILER	?= INTEL or PGROUP
 
 include Rules.perfctr

@@ -89,7 +89,7 @@ TARGETS	 += omp
 endif
 
 OPTFLAGS	+= -O3 $(EVENTFLAGS)
-FFLAGS        	+= -Dlinux
+FFLAGS        	+= -Dlinux $(FARGS)
 TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
