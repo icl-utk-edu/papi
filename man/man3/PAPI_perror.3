@@ -2,7 +2,10 @@
 .TH PAPI_perror 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_perror, PAPI_strerror \- convert PAPI error codes to strings
+.nf
+PAPI_perror   \- convert PAPI error codes to strings, and print error message to stderr.
+PAPI_strerror \- convert PAPI error codes to strings, and return the error string to user.
+.fi
 
 .SH SYNOPSIS
 .B C Interface
@@ -61,6 +64,11 @@ returns a non-NULL pointer.
 .B "PAPI_EINVAL"
 One or more of the arguments to 
 .B PAPI_perror() 
+is invalid.
+.TP
+.B "NULL"
+The input error code to
+.B PAPI_strerror()
 is invalid.
 
 .SH EXAMPLE
