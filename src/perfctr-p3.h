@@ -64,29 +64,29 @@ do                                              \
    unsigned long res = 0;                       \
    do {                                         \
       __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
-   } while(res != (unsigned long)MUTEX_OPEN);   \
+   } while(res != (unsigned int)MUTEX_OPEN);   \
 } while(0)
 
 #define  _papi_hwd_unlock(lck)                  \
 do                                              \
 {                                               \
-   unsigned long res = 0;                       \
+   unsigned int res = 0;                       \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #else
 #define _papi_hwd_lock(lck)                                     \
 do                                                              \
 {                                                               \
-   unsigned long res = 0;                                       \
+   unsigned int res = 0;                                       \
    do {                                                         \
    __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");               \
-   } while(res != (unsigned long)MUTEX_OPEN);                   \
+   } while(res != (unsigned int)MUTEX_OPEN);                   \
 } while(0);
 
 #define  _papi_hwd_unlock(lck)                                 \
 do                                                             \
 {                                                              \
-   unsigned long res = 0;                                      \
+   unsigned int res = 0;                                      \
    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                              \
 }while(0);
 #endif
