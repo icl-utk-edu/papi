@@ -248,14 +248,10 @@ static void openExamples(char *title, char *dir)
 // really should add error checking to the file operations...
 static void addline(const char *dir, const char *name, FILE *file)
 {
-	char line[256];
 	int NumWritten;
 
-	strcpy(line, dir);
-	strcat(line, "\\");
-	strcat(line, name);
-	strcat(line, " TESTS_QUIET\n");
-	NumWritten = fwrite(line, sizeof(char), strlen(line), file);
+	NumWritten = fwrite(name, sizeof(char), strlen(name), file);
+	NumWritten = fwrite(" TESTS_QUIET\n", sizeof(char), 13, file);
 }
 
 // really should add error checking to the file operations...
@@ -265,6 +261,11 @@ static void make_smoke(const char *dir, FILE *out)
     WIN32_FIND_DATA FindFileData; 	// pointer to returned information 
 	char wildcard[] = "\\*.exe";
 	char findname[256];
+
+	strcpy(findname, "CD ");
+	strcat(findname, dir);
+	strcat(findname, "\n");
+	fwrite(findname, sizeof(char), strlen(findname), out);
 
 	strcpy(findname, dir);
 	strcat(findname, wildcard);
@@ -284,17 +285,23 @@ static void smokeTest(void)
 {
 	FILE *batfile;
 	TCHAR smokebat[] = "smoke_test.bat";	// file name for batch file
+	TCHAR currentdir[256];					// name of current directory
 
 	if (UniProcessorBuild()) {
 		// find and run all the C and Fortran tests
 		if (strlen(FortranDir) || strlen(CDir)) {
 			batfile = fopen(smokebat, "w");
 			fwrite("ECHO OFF\n", sizeof(char), 9, batfile);
-			if (strlen(FortranDir)) make_smoke(FortranDir, batfile);
+			if (strlen(FortranDir)) {
+				make_smoke(FortranDir, batfile);
+			}
 			if (strlen(CDir)) make_smoke(CDir, batfile);
 			fwrite("PAUSE\n", sizeof(char), 6, batfile);
 			fclose(batfile);
+
+			GetCurrentDirectory(sizeof(currentdir), currentdir);
 			ShellExecute(NULL, NULL, smokebat, NULL, NULL, SW_MAXIMIZE);
+			SetCurrentDirectory(currentdir);
 		}
 		else MessageBox(NULL, "The low-level driver looks ok, \nbut I couldn't find any test directories.", "Smoke Test",MB_OK);
 	}

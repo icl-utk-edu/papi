@@ -26,6 +26,7 @@ CFG=WinPAPIShell - Win32 Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+F90=df.exe
 MTL=midl.exe
 RSC=rc.exe
 
@@ -137,15 +138,7 @@ SOURCE=.\WinPAPIShell.ico
 # Begin Source File
 
 SOURCE=..\substrate\Release\WinPAPI.lib
-
-!IF  "$(CFG)" == "WinPAPIShell - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "WinPAPIShell - Win32 Debug"
-
 # PROP Exclude_From_Build 1
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
