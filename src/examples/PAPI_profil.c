@@ -27,7 +27,8 @@ int code_to_monitor()
 int main()
 {
 
-    unsigned long start, end, length;
+    unsigned long length;
+    caddr_t start, end;
     PAPI_sprofil_t * prof; 
     int EventSet = PAPI_NULL;
     /*must be initialized to PAPI_NULL before calling PAPI_create_event*/
@@ -62,11 +63,16 @@ int main()
       exit(1);
    }
 
+   start = prginfo->address_info.text_start;
+   end = prginfo->address_info.text_end;
+   length = (end - start);
 
-   start = (unsigned long)prginfo->address_info.text_start;
-   end = (unsigned long)prginfo->address_info.text_end;
-   length = (end - start)/sizeof(unsigned short) *sizeof(unsigned short);
-
+   /* for PAPI_PROFIL_BUCKET_16 and scale = 65535, 
+      profile buffer length == program address length.
+      Larger bucket sizes would increase the buffer length.
+      Smaller scale factors would decrease it.
+      Handle with care...
+   */
    profbuf = (unsigned short *)malloc(length);
    if (profbuf == NULL)
    {
@@ -84,13 +90,13 @@ int main()
    if ( (retval = PAPI_add_event(EventSet, PAPI_event)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   /* Add Total Instructions Executed to our EventSet */
+   /* Add Total Cycles Executed to our EventSet */
    if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    /* enable the collection of profiling information */
-   if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
-            PAPI_event, THRESHOLD, PAPI_PROFIL_POSIX)) != PAPI_OK)
+   if ((retval = PAPI_profil(profbuf, length, start, 65535, EventSet,
+            PAPI_event, THRESHOLD, PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
       ERROR_RETURN(retval);
    
    /* let's rock and roll */
@@ -105,7 +111,7 @@ int main()
    /* disable the collection of profiling information by setting threshold
       to 0
    */
-   if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
+   if ((retval = PAPI_profil(profbuf, length, start, 65535, EventSet,
             PAPI_event, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
       ERROR_RETURN(retval);
    
@@ -122,7 +128,7 @@ int main()
    printf("Test type   : \tPAPI_PROFIL_POSIX\n");
    printf("------------------------------------------\n\n\n");  
    printf("PAPI_profil() hash table.\n");
-   printf("address\t\t\tflat   \n");
+   printf("address\t\tflat   \n");
    for (i = 0; i < (int) length/2; i++) 
    {
       if (profbuf[i]) 
