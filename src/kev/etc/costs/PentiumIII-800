@@ -1,0 +1,14 @@
+[data from an 800MHz Pentium III (Coppermine)]
+
+PERFCTR INIT: vendor 0, family 6, model 8, stepping 6, clock 801827 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 90 cycles
+PERFCTR INIT: rdtsc cost is 36.6 cycles (2437 total)
+PERFCTR INIT: rdpmc cost is 36.3 cycles (2416 total)
+PERFCTR INIT: rdmsr (counter) cost is 91.4 cycles (5942 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 72.8 cycles (4755 total)
+PERFCTR INIT: wrmsr (counter) cost is 80.7 cycles (5258 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 76.2 cycles (4973 total)
+PERFCTR INIT: read %cr4 cost is 1.9 cycles (214 total)
+PERFCTR INIT: write %cr4 cost is 42.2 cycles (2795 total)
+perfctr: driver 2.0-pre5, cpu type Intel Pentium III at 801827 kHz
