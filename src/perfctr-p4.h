@@ -164,10 +164,6 @@ typedef P4_preset_t hwd_preset_t;
 #define SUBDBG(format, args...) { ; }
 #endif
 
-#ifndef PAPI3
-#define _papi_hwi_debug papi_debug
-#endif
-
 #define PAPI_VENDOR_UNKNOWN -1
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2

@@ -33,7 +33,6 @@ extern papi_mdi_t _papi_hwi_system_info;
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */
 /****************************/
-#define PAPI3
 
 /**************************/
 /* END LOCAL DECLARATIONS */
@@ -77,12 +76,7 @@ inline int _papi_hwd_update_shlib_info(void)
     PAPI_address_map_t *tmp = NULL;
     FILE *f;
 
-#ifdef PAPI3
     sprintf(fname, "/proc/%ld/maps", (long)_papi_hwi_system_info.pid);
-#else
-    sprintf(fname, "/proc/%ld/maps", (long)getpid());
-#endif
-
     f = fopen(fname, "r");
 
     if(!f)
@@ -124,14 +118,9 @@ again:
 	  {
 	    if ((l_index == 0) && (counting))
 	      {
-#ifdef PAPI3
 		_papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)begin;
 		_papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)(begin+size);
 		strcpy(_papi_hwi_system_info.exe_info.address_info.mapname,_papi_hwi_system_info.exe_info.name);
-#else
-		_papi_hwi_system_info.exe_info.text_start = (caddr_t)begin;
-		_papi_hwi_system_info.exe_info.text_end = (caddr_t)(begin+size);
-#endif
 	      }
 	    if ((!counting) && (l_index > 0))
 	      {
@@ -146,7 +135,6 @@ again:
     SUBDBG("mapped:   %ld KB writable/private: %ld KB shared: %ld KB\n",
 	    total/1024, writable/1024, shared/1024);
 #endif
-#ifdef PAPI3
     if (counting)
       {
 	/* When we get here, we have counted the number of entries in the map
@@ -169,7 +157,6 @@ again:
 
 	fclose(f);
       }
-#endif
     return(PAPI_OK);
 }
 
@@ -248,9 +235,7 @@ int _papi_hwd_get_system_info(void)
   pid = getpid();
   if (pid < 0)
     error_return(PAPI_ESYS,"getpid() returned < 0");
-#ifdef PAPI3
   _papi_hwi_system_info.pid = pid;
-#endif
 
   sprintf(maxargs,"/proc/%d/exe",(int)pid);
   if (readlink(maxargs,_papi_hwi_system_info.exe_info.fullname,PAPI_MAX_STR_LEN) < 0)
@@ -262,28 +247,18 @@ int _papi_hwd_get_system_info(void)
   retval = _papi_hwd_update_shlib_info();
   if (retval == 0)
     {
-#ifdef PAPI3
       _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&__data_start;
       _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t)&_edata;
       _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t)&__bss_start;
       _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t)&_end;
-#else
-      _papi_hwi_system_info.exe_info.data_start = (caddr_t)&__data_start;
-      _papi_hwi_system_info.exe_info.data_end = (caddr_t)&_edata;
-      _papi_hwi_system_info.exe_info.bss_start = (caddr_t)&__bss_start;
-      _papi_hwi_system_info.exe_info.bss_end = (caddr_t)&_end;
-#endif
     }
   else if (retval < 0)
     {
-#ifdef PAPI3
       memset(&_papi_hwi_system_info.exe_info.address_info,0x0,sizeof(_papi_hwi_system_info.exe_info.address_info));
-#endif
     }
 
   /* PAPI_preload_option information */
 
-#ifdef PAPI3
   strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_preload_env,"LD_PRELOAD");
   _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep = ' ';
   strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_dir_env,"LD_LIBRARY_PATH");
@@ -303,24 +278,6 @@ int _papi_hwd_get_system_info(void)
        _papi_hwi_system_info.exe_info.address_info.bss_start,
        _papi_hwi_system_info.exe_info.address_info.bss_end,
        _papi_hwi_system_info.exe_info.address_info.bss_end - _papi_hwi_system_info.exe_info.address_info.bss_start);       
-#else
-  strcpy(_papi_hwi_system_info.exe_info.lib_preload_env,"LD_PRELOAD");
-
-  SUBDBG("Executable is %s\n",_papi_hwi_system_info.exe_info.name);
-  SUBDBG("Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname);
-  SUBDBG("Text: Start %p, End %p, length %d\n",
-       _papi_hwi_system_info.exe_info.text_start,
-       _papi_hwi_system_info.exe_info.text_end,
-      _papi_hwi_system_info.exe_info.text_end - _papi_hwi_system_info.exe_info.text_start);
-  SUBDBG("Data: Start %p, End %p, length %d\n",
-       _papi_hwi_system_info.exe_info.data_start,
-       _papi_hwi_system_info.exe_info.data_end,
-      _papi_hwi_system_info.exe_info.data_end - _papi_hwi_system_info.exe_info.data_start);       
-  SUBDBG("Bss: Start %p, End %p, length %d\n",
-       _papi_hwi_system_info.exe_info.bss_start,
-       _papi_hwi_system_info.exe_info.bss_end,
-       _papi_hwi_system_info.exe_info.bss_end - _papi_hwi_system_info.exe_info.bss_start);       
-#endif
 
   /* Hardware info */
 
@@ -363,23 +320,10 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
   switch (code)
     {
     case PAPI_SET_DOMAIN:
-#ifdef PAPI3
       return(_papi_hwd_set_domain(&option->domain.ESI->machdep, 
 				   option->domain.domain));
-#else
-{
-  hwd_control_state_t *machdep = option->domain.ESI->machdep;
-  return(_papi_hwd_set_domain(&machdep->control, option->domain.domain));
-}
-#endif
     default:
       return(PAPI_EINVAL);
     }
 }
 
-#ifndef PAPI3
-int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option) 
-{
-  return(_papi3_hwd_ctl(zero->machdep, code, option));
-}
-#endif

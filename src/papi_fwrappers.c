@@ -90,7 +90,11 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
 #endif
 {
   PAPI_option_t e;
-
+/* WARNING: The casts from caddr_t to long below WILL BREAK on systems with
+    64-bit addresses. I did it here because I was lazy. And because I wanted
+    to get rid of those pesky gcc warnings. If you find a 64-bit system,
+    conditionalize the cast with (yet another) #ifdef...
+*/
 #if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
 #if defined( _CRAYT3E )
   int fullname_len=_fcdlen(fullname_fcd);
@@ -106,12 +110,12 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
     for(i=strlen(e.exe_info->fullname);i<fullname_len;fullname[i++]=' ');
     strncpy(name, e.exe_info->name, name_len);
     for(i=strlen(e.exe_info->name);i<name_len;name[i++]=' ');
-    *text_start = (long_long)e.exe_info->address_info.text_start;
-    *text_end = (long_long)e.exe_info->address_info.text_end;
-    *data_start = (long_long)e.exe_info->address_info.data_start;
-    *data_end = (long_long)e.exe_info->address_info.data_end;
-    *bss_start = (long_long)e.exe_info->address_info.bss_start;
-    *bss_end = (long_long)e.exe_info->address_info.bss_end;
+    *text_start = (long)e.exe_info->address_info.text_start;
+    *text_end = (long)e.exe_info->address_info.text_end;
+    *data_start = (long)e.exe_info->address_info.data_start;
+    *data_end = (long)e.exe_info->address_info.data_end;
+    *bss_start = (long)e.exe_info->address_info.bss_start;
+    *bss_end = (long)e.exe_info->address_info.bss_end;
     strncpy(lib_preload_env, e.exe_info->preload_info.lib_preload_env, lib_preload_env_len);
     for(i=strlen(e.exe_info->preload_info.lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
   }
@@ -119,12 +123,12 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
   if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
     strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
     strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
-    *text_start = (long_long)e.exe_info->address_info.text_start;
-    *text_end = (long_long)e.exe_info->address_info.text_end;
-    *data_start = (long_long)e.exe_info->address_info.data_start;
-    *data_end = (long_long)e.exe_info->address_info.data_end;
-    *bss_start = (long_long)e.exe_info->address_info.bss_start;
-    *bss_end = (long_long)e.exe_info->address_info.bss_end;
+    *text_start = (long)(e.exe_info->address_info.text_start);
+    *text_end = (long)e.exe_info->address_info.text_end;
+    *data_start = (long)e.exe_info->address_info.data_start;
+    *data_end = (long)e.exe_info->address_info.data_end;
+    *bss_start = (long)e.exe_info->address_info.bss_start;
+    *bss_end = (long)e.exe_info->address_info.bss_end;
     strncpy(lib_preload_env, e.exe_info->preload_info.lib_preload_env, PAPI_MAX_STR_LEN);
   }
 #endif

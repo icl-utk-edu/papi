@@ -39,8 +39,8 @@
 
 /* papi_internal.c */
 
-#ifdef DEBUG
 extern int _papi_hwi_debug;
+#ifdef DEBUG
 #define papi_return(a) return(_papi_hwi_debug_handler(a))
 #else
 #define papi_return(a) return(a)

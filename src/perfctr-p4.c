@@ -21,8 +21,6 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-#define PAPI3
-
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
@@ -48,20 +46,6 @@ P4_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
 /**************************/
 /* END LOCAL DECLARATIONS */
 /**************************/
-
-#ifndef PAPI3
-int _papi_hwd_query(int preset_index, int *flags, char **note)
-{ 
-  if (_papi_hwd_preset_map[preset_index].number == 0)
-    return(0);
-  if (_papi_hwd_preset_map[preset_index].derived)
-    *flags = PAPI_DERIVED;
-  if (_papi_hwd_preset_map[preset_index].note)
-    *note = _papi_hwd_preset_map[preset_index].note;
-  return(1);
-}
-#endif
-
 
 static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
 {
@@ -342,18 +326,6 @@ int _papi_hwd_init(P4_perfctr_context_t *ctx)
   return(PAPI_OK);
 }
 
-#ifndef PAPI3
-int _papi_hwd_init(EventSetInfo_t *zero)
-{
-  hwd_control_state_t *machdep = zero->machdep;
-  int retval;
-  if ((retval = _papi3_hwd_init(&machdep->context )) < PAPI_OK)
-    return(retval);
-  init_config(&machdep->control.control);
-  return(retval);
-}
-#endif
-
 int _papi_hwd_setmaxmem(){
   return(PAPI_OK);
 }
@@ -396,6 +368,7 @@ void print_control(const struct perfctr_cpu_control *control)
     SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
     SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
     for(i = 0; i < (control->nractrs+control->nrictrs); ++i) {
+//    for(i = 0; i < 4; ++i) {
 	if( control->pmc_map[i] >= 18 )
 	  {
 	    SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
@@ -421,28 +394,24 @@ void print_control(const struct perfctr_cpu_control *control)
 
 int _papi_hwd_start(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 {
-  if (vperfctr_control(ctx->perfctr, &state->control) < 0)
-    error_return(PAPI_ESYS,VCNTRL_ERROR);
-#if 0
-  if (gperfctr_control(ctx->perfctr, &state->control) < 0)
-    error_return(PAPI_ESYS,GCNTRL_ERROR);
-#endif
+  int error;
 
 #ifdef DEBUG
   print_control(&state->control.cpu_control);
 #endif
 
+  error = vperfctr_control(ctx->perfctr, &state->control);
+  if (error < 0) {
+    SUBDBG("vperfctr_control returns: %d\n",error);
+    error_return(PAPI_ESYS,VCNTRL_ERROR);
+  }
+#if 0
+  if (gperfctr_control(ctx->perfctr, &state->control) < 0)
+    error_return(PAPI_ESYS,GCNTRL_ERROR);
+#endif
+
   return(PAPI_OK);
 }
-
-#ifndef PAPI3
-int _papi_hwd_merge(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset)
-{
-  hwd_control_state_t *machdep = this_evset->machdep;
-  hwd_control_state_t *context_machdep = context_evset->machdep;
-  return(_papi_hwd_start(&context_machdep->context, &machdep->control));
-}
-#endif
 
 int _papi_hwd_stop(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 {
@@ -456,14 +425,6 @@ int _papi_hwd_stop(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
   return(PAPI_OK);
 }
 
-#ifndef PAPI3
-int _papi_hwd_unmerge(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset)
-{
-  hwd_control_state_t *machdep = this_evset->machdep;
-  hwd_control_state_t *context_machdep = context_evset->machdep;
-  return(_papi_hwd_stop(&context_machdep->context, &machdep->control));
-}
-#endif
 
 int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_long **dp)
 {
@@ -471,8 +432,8 @@ int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_
   *dp = spc->state.pmc;
 #ifdef DEBUG
  {
-   extern int papi_debug;
-   if (papi_debug)
+   extern int _papi_hwi_debug;
+   if (_papi_hwi_debug)
      {
        int i;
        for (i=0;i<spc->control.cpu_control.nractrs;i++)
@@ -485,51 +446,6 @@ int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_
   return(PAPI_OK);
 }
 
-#ifndef PAPI3
-int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long events[])
-{
-  u_long_long *dp;
-  int shift_cnt, selector, i, j = 0;
-  hwd_control_state_t *machdep = zero->machdep;
-  hwd_control_state_t *evset_machdep = ESI->machdep;
-  _papi3_hwd_read(&machdep->context,&evset_machdep->control,&dp);
-
-  for (i=0;i<_papi_system_info.num_cntrs;i++)
-    {
-      selector = ESI->EventInfoArray[i].selector;
-      if (selector == PAPI_NULL)
-	continue;
-
-      DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
-
-      /* If this is not a derived event */
-
-      if (ESI->EventInfoArray[i].command == NOT_DERIVED)
-	{
-	  shift_cnt = ffs(selector) - 1;
-	  assert(shift_cnt >= 0);
-	  events[j] = dp[shift_cnt];
-	}
-
-      /* If this is a derived event */
-
-//      else 
-//	events[j] = handle_derived(&ESI->EventInfoArray[i], correct_hw_order);
-
-      /* Early exit! */
-
-      if (++j == ESI->NumberOfEvents)
-	{
-	  DBG((stderr,"Done\n"));
-	  return(PAPI_OK);
-	}
-    }
-
-  /* Should never get here */
-
-  return(PAPI_EBUG);
-}
-#endif
 
 /* This routine is for shutting down threads, including the
    master thread. */
@@ -546,14 +462,6 @@ int _papi_hwd_shutdown(P4_perfctr_context_t *ctx)
     return(PAPI_ESYS);
   return(PAPI_OK);
 }
-
-#ifndef PAPI3
-int _papi_hwd_shutdown(EventSetInfo_t *zero)
-{
-  hwd_control_state_t *machdep = zero->machdep;
-  return(_papi3_hwd_shutdown(&machdep->context));
-}
-#endif
 
 /* Called once per process. */
 
@@ -584,27 +492,6 @@ u_long_long _papi_hwd_get_virt_usec (const P4_perfctr_context_t *ctx)
   return(_papi_hwd_get_virt_cycles(ctx) / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-#ifndef PAPI3
-long_long _papi_hwd_get_real_cycles ()
-{
-  return(_papi3_hwd_get_real_cycles());
-}
-long_long _papi_hwd_get_real_usec ()
-{
-  return(_papi3_hwd_get_real_usec());
-}
-long_long _papi_hwd_get_virt_cycles (EventSetInfo_t *zero)
-{
-  hwd_control_state_t *machdep = zero->machdep;
-  return(_papi3_hwd_get_virt_cycles(&machdep->context));
-}
-long_long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
-{
-  hwd_control_state_t *machdep = zero->machdep;
-  return(_papi3_hwd_get_virt_usec(&machdep->context));
-}
-#endif
-
 /* Register allocation */
 
 int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *from, P4_regmap_t *out)
@@ -621,8 +508,7 @@ int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *
    as quickly as possible. This returns the position in the array output by _papi_hwd_read that
    this register lives in. */
 
-int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, 
-			 P4_perfctr_control_t *evset_info)
+int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_control_t *evset_info)
 {
   int i, index, mask = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
@@ -646,7 +532,10 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
       allocated[i] = ffs(avail) - 1;
       SUBDBG("Allocated counter: allocated %d %08x\n",i,allocated[i]);
 
-      if (ev_info->hardware_event[i].uses_pebs)
+     /* this line maps the selected register back into the event structure */
+     ev_info->hardware_event[i].selector = 1 << allocated[i];
+
+     if (ev_info->hardware_event[i].uses_pebs)
 	{
 #if 0
 	  if (bits->uses_pebs)
@@ -703,41 +592,8 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
    first event is the one that is read. See PAPI_FP_INS for an example. */
   
   /* Here we return the hardware index of the event we are reading. */
-
-#ifndef PAPI3
-  return(mask);
-#else
   return(index-preset->number);
-#endif
 }
-
-#ifndef PAPI3
-int _papi_hwd_add_event(hwd_control_state_t *this_state, 
-			unsigned int EventCode, EventInfo_t *out)
-{
-  int hwindex, preset_index = EventCode & PRESET_AND_MASK; 
-  P4_regmap_t *regmap;
-  P4_preset_t *preset;
-
-  if (preset_index >= PAPI_MAX_PRESET_EVENTS)
-    return(PAPI_EINVAL);
-
-  if (_papi_hwd_preset_map[preset_index].number <= 0)
-    return(PAPI_ENOEVNT);
-
-  regmap = &_papi_hwd_preset_map[EventCode ^ PRESET_MASK].possible_registers;
-  preset = &_papi_hwd_preset_map[EventCode ^ PRESET_MASK];
-
-  hwindex = _papi3_hwd_add_event(regmap,preset,&this_state->control);
-  if (hwindex < PAPI_OK)
-    return(hwindex);
-
-  out->code = EventCode;
-  out->selector = hwindex;
-
-  return(PAPI_OK);
-}
-#endif
 
 int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perfctr_control_t *evset_info)
 {
@@ -748,6 +604,10 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perf
 
   for (i=0;i<ev_info->num_hardware_events;i++)
     {
+      SUBDBG("Allocated registers (before):  %d %08x\n",i,evset_info->allocated_registers.selector);
+      evset_info->allocated_registers.selector &= !(ev_info->hardware_event[i].selector);
+      SUBDBG("Allocated registers (after):  %d %08x\n",i,evset_info->allocated_registers.selector);
+     
       if (ev_info->hardware_event[i].uses_pebs)
 	{
 	  clear_pebs = 1;
@@ -812,40 +672,6 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perf
 
   return(PAPI_OK);
 }
-#ifndef PAPI3
-int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
-{
-  int preset_index = in->code & PRESET_AND_MASK; 
-  P4_regmap_t *ev_info = &_papi_hwd_preset_map[preset_index].possible_registers;
-  /* ev_info is used to find out if the preset uses pebs or pebs_matrix_vert. Ideally
-     this should contain all the information about the event, like what registers it
-     is using. */
-  P4_perfctr_control_t *evset_info = &this_state->control;
-  /* evset_info is used to find out what registers are actually allocated to this eventset */
-  int selector = ffs(in->selector) - 1;
-  /* selector is used to tell what is the index of the control values in the perfctr buffer.
-     it should be contained in ev_info. */
-  return(_papi3_hwd_remove_event(ev_info,selector,evset_info));
-
-#if 0
-  int j, selector = in->selector;
-  P4_register_t *bits = &this_state->control.allocated_registers;
-  
-  SUBDBG("selector is %x\n",selector);
-  while ((j = ffs(selector)))
-    {
-      j--;
-      selector ^= (1 << j);
-      SUBDBG("Clearing pmc event entry %d\n",j);
-      this_state->control.control.cpu_control.pmc_map[j] = 0;
-      this_state->control.control.cpu_control.evntsel[j] = 0;
-      this_state->control.control.cpu_control.evntsel_aux[j] = 0;
-      this_state->control.control.cpu_control.ireset[j] = 0;
-    }
-#endif
-  return(PAPI_OK);
-}
-#endif
 
 int _papi_hwd_add_prog_event(P4_perfctr_control_t *state, unsigned int code, void *tmp, 
 			      EventInfo_t *tmp2)
@@ -853,13 +679,6 @@ int _papi_hwd_add_prog_event(P4_perfctr_control_t *state, unsigned int code, voi
   return(PAPI_ESBSTR);
 }
 
-#ifndef PAPI3
-int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
-			     unsigned int event, void *extra, EventInfo_t *out)
-{
-  return(_papi3_hwd_add_prog_event(&this_state->control, event, extra, out));
-}
-#endif
 
 #if 0 
 int _papi_hwd_add_event(P4_perfctr_control_t *state, const P4_perfctr_event_t *add)
@@ -956,7 +775,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 
       if (ESI->NumberOfEvents > 1)
 	{
-	  fprintf(stderr,"Must have one counter in event set.\n");
+	  fprintf(stderr,"Must have only one counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
 
@@ -992,10 +811,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	 in evntsel, swap events that do not fulfill this criterion. This
 	 will yield a non-monotonic pmc_map array */
 
-#if 0
-     if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
-	swap_pmc_map_events(contr,0,1);	
-#endif
+//#if 0
+      if (ESI->EventInfoArray[i].event_code == PAPI_FP_INS) {
+	swap_pmc_map_events(contr,0,1);
+	SUBDBG("Swapped events\n");
+      }
+//#endif
 
       memset(&sa, 0, sizeof sa);
       sa.sa_sigaction = _papi_hwd_dispatch_timer;
@@ -1050,21 +871,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   SUBDBG("End of call. Exit code: %d\n",retval);
   return(retval);
 }
-
-#ifndef PAPI3
-int _papi_hwd_reset(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset) 
-{
-  hwd_control_state_t *machdep = this_evset->machdep;
-  hwd_control_state_t *context_machdep = context_evset->machdep;
-  return(_papi_hwd_start(&context_machdep->context, &machdep->control));
-}
-
-int _papi_hwd_write(EventSetInfo_t *mine, EventSetInfo_t *zero, long_long events[])
-{
-  hwd_control_state_t *machdep = zero->machdep;
-  return(_papi3_hwd_write(&machdep->context,&machdep->control,events));
-}
-#endif
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 {

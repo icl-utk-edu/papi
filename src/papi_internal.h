@@ -23,9 +23,9 @@
 /* add Win32 to the debug list */
 #if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || (defined(__digital__) \
 	|| defined(__osf__)) || (defined(sun) && defined(sparc)) || defined(_WIN32)
-#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
+#define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else /* SV2,SV1 ? */
-#define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
+#define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #endif
 #else
 #define DBG(a)
