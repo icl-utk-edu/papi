@@ -147,6 +147,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
   unsigned int preset;
   unsigned int tmp_event, tmp_code;
 
+  if(foo & SHARED_MASK) foo = foo ^= SHARED_MASK;
+
   if (foo & PRESET_MASK)
   { preset = foo ^= PRESET_MASK; 
     switch (preset_map[preset].number)
@@ -390,37 +392,26 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_gather_events(_papi_int_option_t *ptr)
-{ /* int retval;
-  int i=0,j,k,flag=0;
-  unsigned int event;
-  EventSetInfo *ESI;
+int _papi_hwd_merge(EventSetInfo *ESI)
+{ 
+  int i, retval, code[_papi_system_info.num_cntrs];
+  hwd_control_state_t *this_state = ESI->machdep;
 
-  PAPI_SHARED_INFO->MachdepArray=array;
+  retval=_papi_hwd_stop(ESI, ESI->start);
+  if(retval) return(PAPI_EBUG);
 
-  while(PAPI_SHARED_INFO->EvSetArray[i]!=-1)  //while there is another running evset
-  { ESI=lookup_EventSet(i);
-    for(j=0;j<ESI->NumberOfCounters;j++)  //go through the evset's events
-    { event=ESI->EventCodeArray[j];
-      for(k=0;k<PAPI_SHARED_INFO->num_events;k++) //check to see if event is shared
-      { if(event==PAPI_SHARED_INFO->EventsArray[k])
-        { PAPI_SHARED_INFO->EventsArray[k] | 0x08000000;
-          flag = 1;
-        }
-      }
-      if(!flag)	 //not shared
-      { PAPI_SHARED_INFO->EventsArray[PAPI_SHARED_INFO->num_events]=event;
-        if (event & PRESET_MASK) event = event ^= PRESET_MASK;
-        memcpy(PAPI_SHARED_INFO->MachdepArray[PAPI_SHARED_INFO->num_events], 
-           preset_map[event], sizeof(hwd_control_state_t));
-        PAPI_SHARED_INFO->num_events++;
-      }
-      flag=0;
-    }
+  for(i=0; i<_papi_system_info.num_cntrs; i++)
+  { retval=perf(PERF_GET_CONFIG, i, code[i]);
+    if(retval) return(PAPI_EBUG);
   }
-*/
-  return(PAPI_OK);
-}
+  for(i=0; i<_papi_system_info.num_cntrs; i++)
+  { if(code[i] == this_state->counter_code1)  
+    { ESI->EventCodeArray[i] = ESI->EventCodeArray[i] & SHARED_MASK;
+    }
+    else if(code[i] != 0) return(PAPI_ECNFLCT);
+  }
+  return (_papi_hwd_start(ESI));
+} 
 
 int _papi_hwd_start(EventSetInfo *EventSet)
 {
@@ -461,6 +452,29 @@ int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
     return (_papi_hwd_read(ESI, events));
   else
     return (PAPI_OK);
+}
+
+int _papi_hwd_unmerge(EventSetInfo *ESI)
+{ int i, retval, code[_papi_system_info.num_cntrs];
+  hwd_control_state_t *this_state = ESI->machdep;
+
+  retval=_papi_hwd_stop(ESI, ESI->stop);
+  if(retval) return(PAPI_EBUG);
+
+  for(i=0; i<_papi_system_info.num_cntrs; i++)
+  { retval=perf(PERF_GET_CONFIG, i, code[i]);
+    if(retval) return(PAPI_EBUG);
+  }
+  for(i=0; i<_papi_system_info.num_cntrs; i++)
+  { if(code[i] == this_state->counter_code1)  
+    { if(ESI->EventCodeArray[i] & SHARED_MASK)  /*find out if still needed by others*/
+      { ESI->EventCodeArray[i] ^= SHARED_MASK;
+      }
+      this_state->counter_code1 = 0;
+    }
+  }
+
+  return(_papi_hwd_start(ESI));
 }
 
 

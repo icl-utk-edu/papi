@@ -599,10 +599,16 @@ int PAPI_start(int EventSet)
 
   zero = lookup_EventSet(0);
   retval=check_runners(&ESI->all_options.multistart.multistart);
-
-  retval = _papi_hwd_start(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
 
+  if(ESI->all_options.multistart.multistart.num_runners >0)
+  { retval=_papi_hwd_merge(ESI);
+    if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  }
+  else
+  { retval = _papi_hwd_start(ESI);
+    if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  }
   ESI->state=PAPI_RUNNING;
 
   DBG((stderr,"PAPI_start returns %d\n",retval));
@@ -618,8 +624,17 @@ int PAPI_stop(int EventSet, unsigned long long *values)
   ESI = lookup_EventSet(EventSet);
   if(ESI==NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  retval = _papi_hwd_stop(ESI, values);
+  retval=check_runners(&ESI->all_options.multistart.multistart);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  if(ESI->all_options.multistart.multistart.num_runners >1)
+  { retval=_papi_hwd_unmerge(ESI);
+    if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  }
+  else
+  { retval = _papi_hwd_stop(ESI, values);
+    if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  }
 
 #if defined(DEBUG)
   if (values)
