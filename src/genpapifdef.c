@@ -216,7 +216,7 @@ int main(int argc, char **argv)
   if (argc > 1) {
     if (strcmp(argv[1],"-f77") == 0) {
       deftype = F77DEFINE;
-      comment_char='C';
+      comment_char='!';
     } else if (strcmp(argv[1],"-f90") == 0) {
       deftype = F90DEFINE;
       comment_char='!';
