@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <rld_interface.h>
+#include <dlfcn.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,6 +24,8 @@
 #include <sys/sbd.h>
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
+#include <sys/syscall.h>
+
 
 #define inline_static static
 #define MAX_COUNTERS HWPERF_EVENTMAX
