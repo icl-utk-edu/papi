@@ -5,7 +5,7 @@ MSUBSTR  = dadd-alpha
 MEMSUBSTR= alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial
+TARGETS	= serial multiplex
 
 CFLAGS 	= -Zp8 
 FFLAGS	= 
@@ -18,7 +18,7 @@ OMPCFLGS= -omp
 MISCLIBS= 
 LDFLAGS = -lrt -lclu /usr/local/dadd/dadd.a
 CC_SHR	= cc -shared -all -rpath . -lrt -lclu
-CC_R	= cc
+CC_R	= cc -pthread
 CC	= cc
 CPP	= cc -E
 F77	= f90 

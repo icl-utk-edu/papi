@@ -140,31 +140,27 @@ static int get_system_info(void)
   if (family == 0)
     {
       strcat(_papi_system_info.hw_info.model_string,"21064");
-      _papi_system_info.num_cntrs = 2;
-      _papi_system_info.num_gp_cntrs = 2;
+      _papi_system_info.num_cntrs = 47;
     }
   if (family == 2)
     {
       strcat(_papi_system_info.hw_info.model_string,"21264");
-      _papi_system_info.num_cntrs = 2;
-      _papi_system_info.num_gp_cntrs = 2;
+      _papi_system_info.num_cntrs = 47;
     }
   else if (family == 1)
     {
       strcat(_papi_system_info.hw_info.model_string,"21164");
-      _papi_system_info.num_cntrs = 3;
-      _papi_system_info.num_gp_cntrs = 3;
+      _papi_system_info.num_cntrs = 47;
     }
   else if (family == 4)
     {
       strcat(_papi_system_info.hw_info.model_string,"21364");
-      _papi_system_info.num_cntrs = 2;
-      _papi_system_info.num_gp_cntrs = 2;
+      _papi_system_info.num_cntrs = 47;
     }
   else
     return(PAPI_ESBSTR);
 
-  _papi_system_info.num_cntrs = 27;
+  _papi_system_info.num_cntrs = 47;
   retval = setup_all_presets();
   if (retval)
     return(retval);
@@ -453,14 +449,14 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 {
   /* This function is not used and shouldn't be called. */
 
-  return(PAPI_EMISC);
+  return(PAPI_ESBSTR);
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
 
-  return(PAPI_EMISC);
+  return(PAPI_ESBSTR);
 }
 
 void *_papi_hwd_get_overflow_address(void *context)
@@ -469,7 +465,7 @@ void *_papi_hwd_get_overflow_address(void *context)
   struct sigcontext *info = (struct sigcontext *)context;
   location = (void *)info->sc_pc;
 
-  return(location);
+  return(PAPI_ESBSTR);
 }
 
 int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
@@ -491,7 +487,7 @@ void _papi_hwd_unlock(void)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
 {
-  _papi_hwi_dispatch_overflow_signal((void *)info);
+ return(PAPI_ESBSTR); 
 }
 
 papi_mdi _papi_system_info = { "dadd-alpha.c 2002/05/28 shirley",
@@ -552,8 +548,8 @@ papi_mdi _papi_system_info = { "dadd-alpha.c 2002/05/28 shirley",
                                 PAPI_GRN_PROC,  /* default granularity */
                                 0,  /* We can use add_prog_event */
                                 0,  /* We can write the counters */
-                                0,  /* supports HW overflow */
-                                0,  /* supports HW profile */
+                                1,  /* supports HW overflow */
+                                1,  /* supports HW profile */
                                 1,  /* supports 64 bit virtual counters */
                                 0,  /* supports child inheritance */
                                 0,  /* supports attaching to another process */
