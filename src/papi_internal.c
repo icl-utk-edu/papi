@@ -41,7 +41,6 @@
 
 /* Defined in this file */
 static int default_error_handler(int errorCode);
-static int counter_reorder(EventSetInfo_t *ESI, long_long *hw_counter, long_long *events);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
@@ -622,6 +621,7 @@ size: number of native events to add
 static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
 {
 	int nidx, i, j, remap=0;
+    int retval;
 	
 	/* Need to decide what needs to be preserved so we can roll back state
 	   if the add event fails...
@@ -658,7 +658,10 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	/* if remap!=0, we need reallocate counters */
 	if(remap){
 		if(_papi_hwd_allocate_registers(ESI)){
-			_papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
+			retval=_papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
+            if (retval != PAPI_OK)
+              return(retval);
+
 		    return 1;
 		}
 		else{
@@ -764,6 +767,9 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 		retval = mpx_add_event(&ESI->multiplex,EventCode);
 		if (retval < PAPI_OK)
 			return(retval);
+        ESI->EventInfoArray[thisindex].event_code = EventCode;  /* Relevant */
+        ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
+
     }
 	
 	/* Bump the number of events */
@@ -804,7 +810,7 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
     hwd_control_state_t *this_state= &ESI->machdep;
     NativeInfo_t *native = ESI->NativeInfoArray;
-    int i, j, zero=0;
+    int i, j, zero=0, retval;
 
     /* Remove the references to this event from the native events:
        for all the metrics in this event,
@@ -859,6 +865,8 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 	Then send the info down to the substrate to update the hwd control structure. */
     if (zero) {
       retval=_papi_hwd_update_control_state(this_state, native, ESI->NativeCount);
+      if (retval != PAPI_OK)
+        return(retval);
     }
 
     return(PAPI_OK);
@@ -898,7 +906,9 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 		  return(PAPI_ENOEVNT);
 	  
 	  /* Remove the preset event. */
-	  remove_native_events(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
+	  retval=remove_native_events(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
+      if (retval != PAPI_OK)
+  	    return(retval);
       }
       else if(EventCode & NATIVE_MASK)
       {
@@ -909,7 +919,9 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 		  return(PAPI_EINVAL);
 
 	  /* Remove the native event. */
-	  remove_native_events(ESI, &native_index, 1);
+	  retval=remove_native_events(ESI, &native_index, 1);
+      if (retval != PAPI_OK)
+  	    return(retval);
       }
       else
 		return(PAPI_ENOEVNT);
@@ -1264,6 +1276,7 @@ static int counter_read(EventSetInfo_t *ESI, long_long *hw_counter, long_long *v
   return(PAPI_OK);
 }
 
+/*
 void print_state(EventSetInfo_t *ESI)
 {
   int i;
@@ -1297,5 +1310,6 @@ void print_state(EventSetInfo_t *ESI)
   fprintf(stderr,"\n");
   
 }
+*/
 
 

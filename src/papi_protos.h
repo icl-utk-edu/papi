@@ -73,7 +73,7 @@ extern void _papi_hwd_remove_native(hwd_control_state_t *this_state, NativeInfo_
 extern int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, EventInfo_t *out);
 */
 extern void _papi_hwd_init_control_state(hwd_control_state_t *ptr);
-extern void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count);
+extern int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *, EventInfo_t *); 
 extern int _papi_hwd_allocate_registers(EventSetInfo_t *ESI);
 extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **);

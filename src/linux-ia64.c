@@ -124,7 +124,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
   {PAPI_SR_INS,0,{"STORES_RETIRED",0,0,0}},
   {PAPI_FLOPS,DERIVED_PS,{"CPU_CYCLES","FP_OPS_RETIRED",0,0}},
   {0,0,{0,0,0,0}}};
-  #define NUM_OF_PRESET_EVENTS 56
+  #define NUM_OF_PRESET_EVENTS 57
   preset_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS];
   preset_search_t *preset_search_map=ia_preset_search_map_bycode;
 #endif
@@ -710,10 +710,15 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *machdep)
 int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long **events)
 {
   int i;
+/*
   pfarg_reg_t readem[MAX_COUNTERS], writeem[MAX_COUNTERS+1];
+*/
+  pfarg_reg_t readem[MAX_COUNTERS];
   pfmw_arch_reg_t flop_hack;
 
+/*
   memset(writeem, 0x0, sizeof writeem);
+*/
   memset(readem, 0x0, sizeof readem);
 
   for(i=0; i < MAX_COUNTERS; i++)
@@ -721,14 +726,22 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long *
       /* Bug fix, we must read the counters out in the same order we programmed them. */
       /* pfm_dispatch_events may request registers out of order. */
 
+/*
 	  readem[i].reg_num = machdep->evt.pfp_pc[i].reg_num;
+*/
+	  readem[i].reg_num = MAX_COUNTERS+i;
 
       /* Writing doesn't matter, we're just zeroing the counter. */ 
 
+/*
 	  writeem[i].reg_num = MAX_COUNTERS+i;
+*/
     }
 
+/*
   if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, machdep->evt.pfp_event_count) == -1) 
+*/
+  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) 
     {
       DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
       return PAPI_ESYS;
@@ -1445,14 +1458,28 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 {
   int i,org_cnt;
   pfmlib_param_t *evt = &this_state->evt;
+  int events[MAX_COUNTERS];
 
   if (count == 0 ) 
   {
-    evt->pfp_event_count = 0;
+    for(i=0; i<MAX_COUNTERS; i++)
+      evt->pfp_events[i].event = 0;
+    evt->pfp_event_count=0;
+    memset(evt->pfp_pc, 0 , sizeof(evt->pfp_pc));
     return(PAPI_OK);
   }
 
+/* save the old data */
   org_cnt = evt->pfp_event_count;
+  for(i=0; i<MAX_COUNTERS; i++)
+    events[i]= evt->pfp_events[i].event;
+
+  for(i=0; i<MAX_COUNTERS; i++)
+    evt->pfp_events[i].event = 0;
+  evt->pfp_event_count=0;
+  memset(evt->pfp_pc, 0 , sizeof(evt->pfp_pc));
+
+  DBG((stderr," original count is %d\n", org_cnt));
 
 /* add new native events to the evt structure */
   for(i=0; i< count; i++ )
@@ -1466,17 +1493,22 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
     evt->pfp_events[i].event= native[i].ni_index;
   }
   evt->pfp_event_count = count;
-  printf(" pfp_event_count =%d\n", count);
   /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
   if (pfm_dispatch_events(evt))
   {
+    /* recover the old data */
     evt->pfp_event_count = org_cnt;
+    for(i=0; i<MAX_COUNTERS; i++)
+      evt->pfp_events[i].event = events[i];
     return(PAPI_ECNFLCT);
   }
+  DBG((stderr, "event_count=%d\n", evt->pfp_event_count));
 
-  printf(" pfp_event_count =%d\n", count);
   for(i=0; i<evt->pfp_event_count; i++)
+  {
     native[i].ni_position = evt->pfp_pc[i].reg_num -PMU_FIRST_COUNTER;
+    DBG((stderr, "event_code is %d, reg_num is %d\n", native[i].ni_index, native[i].ni_position));
+  }
 
   return(PAPI_OK);
 }

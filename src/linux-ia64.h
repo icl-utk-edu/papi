@@ -51,7 +51,7 @@ typedef struct hwd_control_state {
   /* Buffer to pass to kernel to control the counters */
   pfmlib_param_t evt;
 
-  long_long counters[PMU_MAX_COUNTERS];
+  long_long counters[MAX_COUNTERS];
   pfarg_reg_t pd[PMU_MAX_PMCS];
 
 /* sampling buffer address */
@@ -66,7 +66,7 @@ typedef struct itanium_preset_search {
   /* Derived code */
   int derived;
   /* Strings to look for */
-  char *(findme[PMU_MAX_COUNTERS]);
+  char *(findme[MAX_COUNTERS]);
 } itanium_preset_search_t;
 
 typedef struct hwd_preset {
