@@ -602,13 +602,12 @@ void _papi_hwi_allocate_after(EventSetInfo_t *ESI, int thisindex, int remap)
 }
 
 /* this function is called by _papi_hwi_add_event when adding native events 
-nix: array of native event index in the native_table
+nix: pointer to array of native event table indexes from the preset entry
 size: number of native events to add
 */
 static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
 {
 	int nidx, ntop, i, j, remap=0;
-	NativeInfo_t *native;
 	
 	/* Need to decide what needs to be preserved so we can roll back state
 	   if the add event fails...
@@ -627,19 +626,8 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 				return -1;
 			}
 			/* there is an empty slot for the native event;
-			   dereference and initialize the empty slot for the new added event */
-			native = &ESI->NativeInfoArray[ESI->NativeCount];
-			native->ni_index=nix[i];
-			/* CAUTION: We really shouldn't be accessing native_table directly */
-			native->ni_selector=native_table[nix[i]].resources.selector;
-			
-			/* calculate native event rank, which is number of counters it can live on, this is power3 specific */
-			j=0;
-			while(j<MAX_COUNTERS){
-				if(native->ni_selector & (1<<j))
-					native->ni_rank++;
-				j++;
-			}
+			   initialize the native index for the new added event */
+			ESI->NativeInfoArray[ESI->NativeCount].ni_index=nix[i];
 			ESI->NativeCount++;
 			remap++; 
 		}

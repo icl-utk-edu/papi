@@ -13,6 +13,14 @@ typedef struct PWR3_pmapi_control {
   int timer_ms;
 } PWR3_pmapi_control_t;
 
+/* defines the fields needed by _papi_hwd_allocate_registers
+   to map the counter set */
+typedef struct PWR3_reg_alloc {
+  unsigned int ra_selector; /* Which counters are available? */
+  unsigned char ra_rank;    /* How many counters carry each metric */
+			    /* More generally, which event is most resource restrictive */
+  int ra_mod;		    /* don't exactly know what this field does */
+} PWR3_reg_alloc_t;
 
 typedef struct PWR3_regmap {
   /* unsigned int event_code; */
