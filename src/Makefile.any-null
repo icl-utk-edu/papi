@@ -12,20 +12,14 @@ F77		= g77
 CC		= gcc
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-CFLAGS  	= -Wall -g -DDEBUG -Iperfctr-2.6.x/usr.lib -Iperfctr-2.6.x/linux/include
+CFLAGS  	= -Wall -g -DDEBUG 
 FFLAGS		= -Wall -g
 
-CPU		= p3
-MISCSRCS 	= $(CPU)_events.c
-MISCOBJS 	= $(MISCSRCS:.c=.o) 
+CPU		= 
+MISCSRCS 	= 
+MISCOBJS 	=  
 
 include Makefile.inc
-
-$(CPU)_events.o: $(CPU)_events.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
-
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 native_clean:
 

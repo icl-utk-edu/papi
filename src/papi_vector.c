@@ -24,7 +24,45 @@ void * vec_void_star_dummy();
 long_long vec_long_long_dummy();
 char * vec_char_star_dummy();
 long vec_long_dummy();
+u_long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero);
+u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero);
+u_long_long vec_dummy_get_real_usec (void);
+u_long_long vec_dummy_get_real_cycles (void);
 
+
+u_long_long vec_dummy_get_real_usec (void)
+{
+  struct timeval tv;
+    gettimeofday(&tv,NULL);  return((tv.tv_sec * 1000000) + tv.tv_usec);
+} 
+        
+u_long_long vec_dummy_get_real_cycles (void)
+{
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_real_usec();
+  cyc = usec * _papi_hwi_system_info.hw_info.mhz;
+  return((long long)cyc);
+}
+
+u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
+{
+  long long retval;
+  struct tms buffer;
+
+  times(&buffer);
+  retval = (long long)buffer.tms_utime*(long long)(1000000/sysconf(_SC_CLK_TCK));
+  return(retval);
+}
+
+u_long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
+{
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_virt_usec(zero);
+  cyc = usec * _papi_hwi_system_info.hw_info.mhz;
+  return((long long)cyc);
+}
 
 int vec_int_ok_dummy (){
   return PAPI_OK;
@@ -196,10 +234,10 @@ int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  table->_vec_papi_hwd_get_overflow_address = (void *(*) (int, char *)) vec_void_star_dummy;
  table->_vec_papi_hwd_start = (int (*) (void *, void *)) vec_int_dummy;
  table->_vec_papi_hwd_stop = (int (*) (void *, void *)) vec_int_dummy;
- table->_vec_papi_hwd_get_real_cycles = (long_long (*) ()) vec_long_long_dummy;
- table->_vec_papi_hwd_get_real_usec = (long_long (*) ()) vec_long_long_dummy;
- table->_vec_papi_hwd_get_virt_cycles = (long_long (*) (void *)) vec_long_long_dummy;
- table->_vec_papi_hwd_get_virt_usec = (long_long (*) (void *)) vec_long_long_dummy;
+ table->_vec_papi_hwd_get_real_cycles = (long_long (*) ()) vec_dummy_get_real_cycles;
+ table->_vec_papi_hwd_get_real_usec = (long_long (*) ()) vec_dummy_get_real_usec;
+ table->_vec_papi_hwd_get_virt_cycles = (long_long (*) (void *)) vec_dummy_get_virt_cycles;
+ table->_vec_papi_hwd_get_virt_usec = (long_long (*) (void *)) vec_dummy_get_virt_usec;
  table->_vec_papi_hwd_reset  = (int (*) (void *, void *)) vec_int_dummy;
  table->_vec_papi_hwd_write = (int (*) (void *, void *, long_long[])) vec_int_dummy;
  table->_vec_papi_hwd_stop_profiling = (int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
@@ -271,6 +309,22 @@ void * find_dummy(void * func, char *buf){
   else if ( vec_long_dummy == func ){
     ptr = vec_long_dummy;  
     buf = strdup("vec_long_dummy");
+  }
+  else if ( vec_dummy_get_real_usec == func ) {
+    ptr = vec_dummy_get_real_usec;
+    buf = strdup("vec_dummy_get_real_usec");
+  }
+  else if ( vec_dummy_get_real_cycles == func ) {
+    ptr = vec_dummy_get_real_cycles;
+    buf = strdup("vec_dummy_get_real_cycles");
+  }
+  else if ( vec_dummy_get_virt_usec == func ) {
+    ptr = vec_dummy_get_virt_usec;
+    buf = strdup("vec_dummy_get_virt_usec");
+  }
+  else if ( vec_dummy_get_virt_cycles == func ) {
+    ptr = vec_dummy_get_virt_cycles;
+    buf = strdup("vec_dummy_get_virt_cycles");
   }
   return(ptr);
 }

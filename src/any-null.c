@@ -1,176 +1,11 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
-
-/* 
-* File:    any-null.c
-* CVS:     $Id$
-* Author:  Philip Mucci
-*          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
-*/
-
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
 
-extern hwi_search_t _papi_hwd_p3_preset_map;
-extern hwi_search_t _papi_hwd_pm_preset_map;
-extern hwi_search_t _papi_hwd_p2_preset_map;
-extern hwi_search_t _papi_hwd_ath_preset_map;
-extern hwi_search_t _papi_hwd_opt_preset_map;
-extern hwi_search_t *preset_search_map;
-extern native_event_entry_t _papi_hwd_p3_native_map;
-extern native_event_entry_t _papi_hwd_pm_native_map;
-extern native_event_entry_t _papi_hwd_p2_native_map;
-extern native_event_entry_t _papi_hwd_k7_native_map;
-extern native_event_entry_t _papi_hwd_k8_native_map;
-extern native_event_entry_t *native_table;
-
-int sem_set;
-volatile long_long virt_tsc, cntr[2];
-
-#ifdef DEBUG
-void print_control(const struct perfctr_cpu_control *control) {
-  unsigned int i;
-
-   SUBDBG("Control used:\n");
-   SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
-   SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-   SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
-   for (i = 0; i < (control->nractrs + control->nrictrs); ++i) {
-      if (control->pmc_map[i] >= 18) {
-         SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
-      } else {
-         SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
-      }
-      SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
-      if (control->ireset[i])
-         SUBDBG("ireset[%u]\t%d\n", i, control->ireset[i]);
-   }
-}
-#endif
-
-/* Assign the global native and preset table pointers, find the native
-   table's size in memory and then call the preset setup routine. */
-inline_static int setup_p3_presets(int cputype) {
-   switch (cputype) {
-   default:
-      native_table = &_papi_hwd_p3_native_map;
-      preset_search_map = &_papi_hwd_p3_preset_map;
-   }
-   return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
-}
-
-/* Initialize the system-specific settings */
-/* Machine info structure. -1 is unused. */
-static int mdi_init() 
-   {
-     /* Name of the substrate we're using */
-    strcpy(_papi_hwi_system_info.substrate, "$Id$");       
-
-   _papi_hwi_system_info.supports_hw_overflow = 0;
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_inheritance = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-   _papi_hwi_system_info.supports_virt_usec = 1;
-   _papi_hwi_system_info.supports_virt_cyc = 1;
-   _papi_hwi_system_info.supports_multiple_threads = 1;
-
-   return (PAPI_OK);
-}
-
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
-   int i, def_mode;
-
-   switch(_papi_hwi_system_info.default_domain) {
-   case PAPI_DOM_USER:
-      def_mode = PERF_USR;
-      break;
-   case PAPI_DOM_KERNEL:
-      def_mode = PERF_OS;
-      break;
-   case PAPI_DOM_ALL:
-      def_mode = PERF_OS | PERF_USR;
-      break;
-   default:
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
-      def_mode = PERF_USR;
-      break;
-   }
-
-   ptr->allocated_registers.selector = 0;
-
-   switch (_papi_hwi_system_info.hw_info.model) 
-     {
-     default:
-       for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-         ptr->control.cpu_control.evntsel[i] |= def_mode;
-         ptr->control.cpu_control.pmc_map[i] = i;
-       }
-       break;
-     }
-   /* Make sure the TSC is always on */
-   ptr->control.cpu_control.tsc_on = 1;
-}
-
-int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
-   return (PAPI_ESBSTR);
-}
-
-int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
-   int i, did = 0;
-    
-     /* Clear the current domain set for this event set */
-     /* We don't touch the Enable bit in this code but  */
-     /* leave it as it is */
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      cntrl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
-   }
-   if(domain & PAPI_DOM_USER) {
-      did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-         cntrl->control.cpu_control.evntsel[i] |= PERF_USR;
-      }
-   }
-   if(domain & PAPI_DOM_KERNEL) {
-      did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-         cntrl->control.cpu_control.evntsel[i] |= PERF_OS;
-      }
-   }
-   if(!did)
-      return(PAPI_EINVAL);
-   else
-      return(PAPI_OK);
-}
-
-static int lock_init(void) 
-{
-   int retval, i;
-   
-   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
-     {
-       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
-     }
-   sem_set = retval;
-   for (i=0;i<PAPI_MAX_LOCK;i++)
-     {
-       if ((retval = semctl(sem_set,i,SETVAL,1)) == -1)
-	 {
-	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
-	 }
-     }
-   return(PAPI_OK);
-}
-
-/* At init time, the higher level library should always allocate and 
-   reserve EventSet zero. */
+void init_mdi();
+void init_presets();
 
 papi_svector_t _any_null_table[] = {
- {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -186,6 +21,18 @@ papi_svector_t _any_null_table[] = {
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
  {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
+ {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
+ {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
+ {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+ {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ {(void (*)())_papi_hwd_add_prog_event, VEC_PAPI_HWD_ADD_PROG_EVENT},
+ {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
  {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
  {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
  {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
@@ -193,351 +40,425 @@ papi_svector_t _any_null_table[] = {
  {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
  {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
  {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
- {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
- {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
- {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
- {(void (*)())_papi_hwd_add_prog_event, VEC_PAPI_HWD_ADD_PROG_EVENT},
- {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- {(void (*)())_papi_stop_profiling, VEC_PAPI_STOP_PROFILING},
- {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
- {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
- {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
- {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
- {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
- {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
  {NULL, VEC_PAPI_END}
 };
 
-int _papi_hwd_init_global(void) 
+/*
+ * Substrate setup and shutdown
+ */
+
+/* Initialize hardware counters, setup the function vector table
+ * and get hardware information, this routine is called when the 
+ * PAPI process is initialized (IE PAPI_library_init)
+ */
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
    int retval;
-   struct perfctr_info info;
-   struct vperfctr *dev;
 
-
-#ifndef PAPI_NO_VECTOR
-  retval = _papi_hwi_setup_vector_table( vtable, _any_null_table);
-  if ( retval != PAPI_OK ) return(retval);
+   retval = _papi_hwi_setup_vector_table( vtable, _any_null_table);
+   
+#ifdef DEBUG
+   /* This prints out which functions are mapped to dummy routines
+    * and this should be taken out once the substrate is completed.
+    * The 0 argument will print out only dummy routines, change
+    * it to a 1 to print out all routines.
+    */
+   vector_print_table(vtable, 0);
 #endif
+   /* Internal function, doesn't necessarily need to be a function */
+   init_mdi();
 
-   /* Opened once for all threads. */
+   /* Internal function, doesn't necessarily need to be a function */
+   init_presets();
 
-   if ((dev = vperfctr_open()) == NULL)
-     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
-
-   /* Get info from the kernel */
-
-   if (vperfctr_info(dev, &info) < 0)
-     { PAPIERROR(VINFO_ERROR); return(PAPI_ESYS); }
-
-   /* Initialize outstanding values in machine info structure */
-
-   if (mdi_init() != PAPI_OK) {
-      return (PAPI_ESBSTR);
-   }
-
-   /* Fill in what we can of the papi_system_info. */
-   retval = _papi_hwd_get_system_info();
-   if (retval != PAPI_OK)
-      return (retval);
-
-   /* Setup presets */
-   retval = setup_p3_presets(info.cpu_type);
-   if (retval)
-      return (retval);
-
-    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
-    vperfctr_close(dev);
-
-   virt_tsc = 111LL;
-   cntr[0] = 222LL;
-   cntr[1] = 333LL;
-
-   return (lock_init());
+   return(retval);
 }
 
-int _papi_hwd_init(hwd_context_t * ctx) 
+/*
+ * This function is an internal function and not exposed and thus
+ * it can be called anything you want as long as the information
+ * for the presets are setup here.
+ */
+const hwi_search_t preset_map[] = {
+   {PAPI_L1_DCM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_ICM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_DCM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_ICM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_DCM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_ICM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_TCM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_TCM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CA_SNP, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CA_SHR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CA_CLN, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CA_INV, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CA_ITV, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_LDM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_STM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BRU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FXU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FPU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_LSU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TLB_DM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TLB_IM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TLB_TL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_LDM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_STM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_LDM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_STM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BTAC_M, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_PRF_DM, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_DCH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TLB_SD, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CSR_FAL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CSR_SUC, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_CSR_TOT, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_MEM_SCY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_MEM_RCY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_MEM_WCY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_STL_ICY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FUL_ICY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_STL_CCY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FUL_CCY, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_HW_INT, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_UCN, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_CN, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_TKN, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_NTK, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_MSP, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_PRC, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FMA_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_IIS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_INT_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FP_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_LD_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_SR_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_BR_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_VEC_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_RES_STL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FP_STAL, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_CYC, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_LST_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_SYC_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_DCH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_DCH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_DCA, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_DCA, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_DCA, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_DCR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_DCR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_DCR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_DCW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_DCW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_DCW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_ICH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_ICH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_ICH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_ICR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_ICR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_ICR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_ICW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_ICW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_ICW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_TCH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_TCH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_TCH, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_TCA, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_TCA, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_TCA, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_TCR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_TCR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_TCR, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_TCW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L2_TCW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L3_TCW, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FML_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FAD_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FDV_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FSQ_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FNV_INS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_FP_OPS, {0, {0x1, PAPI_NULL}, {0,}}},
+   {0, {0, {PAPI_NULL, PAPI_NULL}, {0,}}}
+};
+
+
+void init_presets(){
+  return (_papi_hwi_setup_all_presets(preset_map, NULL));
+}
+
+/*
+ * This function is an internal function and not exposed and thus
+ * it can be called anything you want as long as the information
+ * is setup in _papi_hwd_init_substrate.  Below is some, but not
+ * all of the values that will need to be setup.  For a complete
+ * list check out papi_mdi_t, though some of the values are setup
+ * and used above the substrate level.
+ */
+void init_mdi(){
+   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"any-null");
+   strcpy(_papi_hwi_system_info.hw_info.model_string,"any-null");
+   _papi_hwi_system_info.hw_info.mhz = 100.0;
+   _papi_hwi_system_info.hw_info.ncpu = 1;
+   _papi_hwi_system_info.hw_info.nnodes = 1;
+   _papi_hwi_system_info.hw_info.totalcpus = 1;
+   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
+   _papi_hwi_system_info.supports_program = 0;
+   _papi_hwi_system_info.supports_write = 0;
+   _papi_hwi_system_info.supports_hw_overflow = 0;
+   _papi_hwi_system_info.supports_hw_profile = 0;
+   _papi_hwi_system_info.supports_multiple_threads = 0;
+   _papi_hwi_system_info.supports_64bit_counters = 0;
+   _papi_hwi_system_info.supports_attach = 0;
+   _papi_hwi_system_info.supports_real_usec = 0;
+   _papi_hwi_system_info.supports_real_cyc = 0;
+   _papi_hwi_system_info.supports_virt_usec = 0;
+   _papi_hwi_system_info.supports_virt_cyc = 0;
+   _papi_hwi_system_info.supports_read_reset = 0;
+   _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
+}
+
+
+/*
+ * This is called whenever a thread is initialized
+ */
+int _papi_hwd_init(hwd_context_t *ctx)
 {
-   struct vperfctr_control tmp;
-
-   /* Initialize our thread/process pointer. */
-   if ((ctx->perfctr = vperfctr_open()) == NULL)
-     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
-
-   /* Initialize the per thread/process virtualized TSC */
-   memset(&tmp, 0x0, sizeof(tmp));
-   tmp.cpu_control.tsc_on = 1;
-
-   /* Start the per thread/process virtualized TSC */
-   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
-     { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
-
-   return (PAPI_OK);
+   return(PAPI_OK);
 }
 
-/* Called once per process. */
-int _papi_hwd_shutdown_global(void) 
+int _papi_hwd_shutdown(hwd_context_t *ctx)
 {
-   virt_tsc = 0LL;
-   cntr[0] = 0LL;
-   cntr[1] = 0LL;
-
-   return (PAPI_OK);
+   return(PAPI_OK);
 }
 
-
-/* This function examines the event to determine
-    if it can be mapped to counter ctr.
-    Returns true if it can, false if it can't. */
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
-   return(dst->ra_selector & (1 << ctr));
+int _papi_hwd_shutdown_global(void)
+{
+   return(PAPI_OK);
 }
 
-/* This function forces the event to
-    be mapped to only counter ctr.
-    Returns nothing.  */
+/*
+ * Control of counters (Reading/Writing/Starting/Stopping/Setup)
+ * functions
+ */
+void _papi_hwd_init_control_state(hwd_control_state_t *ptr){
+   return;
+}
+
+int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx){
+   return(PAPI_OK);
+}
+
+int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
+   return(PAPI_OK);
+}
+
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+{
+   return(PAPI_OK);
+}
+
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+{
+   return(PAPI_OK);
+}
+
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+{
+   return(PAPI_OK);
+}
+
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+{
+   return(PAPI_OK);
+}
+
+/*
+ * Overflow and profile functions 
+ */
+void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *context)
+{
+  /* Real function would call the function below with the proper args
+   * _papi_hwi_dispatch_overflow_signal(...);
+   */
+  return;
+}
+
+int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
+{
+  return(PAPI_OK);
+}
+
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
+{
+  return(PAPI_OK);
+}
+
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threashold)
+{
+  return(PAPI_OK);
+}
+
+/*
+ * Functions for setting up various options
+ */
+
+/* This function sets various options in the substrate
+ * The valid codes being passed in are PAPI_SET_DEFDOM,
+ * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
+ */
+int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
+{
+  return(PAPI_OK);
+}
+
+/*
+ * This function has to set the bits needed to count different domains
+ * In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
+ * By default return PAPI_EINVAL if none of those are specified
+ * and PAPI_OK with success
+ * PAPI_DOM_USER is only user context is counted
+ * PAPI_DOM_KERNEL is only the Kernel/OS context is counted
+ * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
+ * PAPI_DOM_ALL   is all of the domains
+ */
+int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain) 
+{
+  int found = 0;
+  if ( PAPI_DOM_USER & domain ){
+        found = 1;
+  }
+  if ( PAPI_DOM_KERNEL & domain ){
+        found = 1;
+  }
+  if ( PAPI_DOM_OTHER & domain ){
+        found = 1;
+  }
+  if ( !found )
+        return(PAPI_EINVAL);
+   return(PAPI_OK);
+}
+
+/* 
+ * Timing Routines
+ * These functions should return the highest resolution timers available.
+ */
+long_long _papi_hwd_get_real_usec(void)
+{
+   return(1);
+}
+
+long_long _papi_hwd_get_real_cycles(void)
+{
+   return(1);
+}
+
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+{
+   return(1);
+}
+
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+{
+   return(1);
+}
+
+/*
+ * Native Event functions
+ */
+int _papi_hwd_add_prog_event(hwd_control_state_t * ctrl, unsigned int EventCode, void *inout, EventInfo_t * EventInfoArray){
+  return(PAPI_OK);
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+{
+  return(PAPI_OK);
+}
+
+char *  _papi_hwd_ntv_code_to_name(unsigned int EventCode)
+{
+  return("PAPI_ANY_NULL");
+}
+
+char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+{
+  return("Event doesn't exist, is an example for a skeleton substrate");
+}
+
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+{
+   return(PAPI_OK);
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values, int name_len, int count)
+{
+  const char str[]="Counter: 0  Event: 0";
+  if ( count == 0 ) return(0);
+
+  if ( strlen(str) > name_len ) return(0);
+
+  strcpy(names, "Counter: 0  Event: 0");
+  return(1);
+}
+
+/* 
+ * Counter Allocation Functions, only need to implement if
+ *    the substrate needs smart counter allocation.
+ */
+
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) 
+{
+  return(1);
+}
+
+/* Forces the event to be mapped to only counter ctr. */
 void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-   dst->ra_selector = 1 << ctr;
-   dst->ra_rank = 1;
 }
 
-/* This function examines the event to determine
-   if it has a single exclusive mapping.
-   Returns true if exlusive, false if non-exclusive.  */
+/* This function examines the event to determine if it can be mapped 
+ * to counter ctr.  Returns true if it can, false if it can't. 
+ */
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
+   return(1);
+} 
+
+/* This function examines the event to determine if it has a single 
+ * exclusive mapping.  Returns true if exlusive, false if 
+ * non-exclusive.  
+ */
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
-   return (dst->ra_rank == 1);
+   return(1);
 }
 
-/* This function compares the dst and src events
-    to determine if any resources are shared. Typically the src event
-    is exclusive, so this detects a conflict if true.
-    Returns true if conflict, false if no conflict.  */
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-   return (dst->ra_selector & src->ra_selector);
+/* This function compares the dst and src events to determine if any 
+ * resources are shared. Typically the src event is exclusive, so 
+ * this detects a conflict if true. Returns true if conflict, false 
+ * if no conflict.  
+ */
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+  return(0);
 }
 
 /* This function removes shared resources available to the src event
-    from the resources available to the dst event,
-    and reduces the rank of the dst event accordingly. Typically,
-    the src event will be exclusive, but the code shouldn't assume it.
-    Returns nothing.  */
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-   int i;
-   unsigned shared;
-
-   shared = dst->ra_selector & src->ra_selector;
-   if (shared)
-      dst->ra_selector ^= shared;
-   for (i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
-      if (dst->ra_selector & (1 << i))
-         dst->ra_rank++;
-}
-
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-   dst->ra_selector = src->ra_selector;
-}
-
-/* Register allocation */
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-   int index, i, j, natNum;
-   hwd_reg_alloc_t event_list[MAX_COUNTERS];
-
-   /* Initialize the local structure needed
-      for counter allocation and optimization. */
-   natNum = ESI->NativeCount;
-   for(i = 0; i < natNum; i++) {
-      index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
-      event_list[i].ra_bits = native_table[index].resources;
-      event_list[i].ra_selector = event_list[i].ra_bits.selector;
-      /* calculate native event rank, which is no. of counters it can live on */
-      event_list[i].ra_rank = 0;
-      for(j = 0; j < MAX_COUNTERS; j++) {
-         if(event_list[i].ra_selector & (1 << j)) {
-            event_list[i].ra_rank++;
-         }
-      }
-   }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
-      for(i = 0; i < natNum; i++) {
-         /* Copy all info about this native event to the NativeInfo struct */
-         ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
-         /* Array order on perfctr is event ADD order, not counter #... */
-         ESI->NativeInfoArray[i].ni_position = i;
-      }
-      return 1;
-   } else
-      return 0;
-}
-
-static void clear_cs_events(hwd_control_state_t *this_state) {
-   int i,j;
-
-   /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
-   j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
-
-   /* Remove all counter control command values from eventset. */
-   for (i = 0; i < j; i++) {
-      SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = i;
-      this_state->control.cpu_control.evntsel[i] 
-         = this_state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
-      this_state->control.cpu_control.ireset[i] = 0;
-   }
-
-   /* clear both a and i counter counts */
-   this_state->control.cpu_control.nractrs = 0;
-   this_state->control.cpu_control.nrictrs = 0;
-}
-
-/* This function clears the current contents of the control structure and 
-   updates it with whatever resources are allocated for all the native events
-   in the native info structure array. */
-int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
-                                   NativeInfo_t *native, int count, hwd_context_t *ctx) {
-   int i;
-
-   /* clear out the events from the control state */
-   clear_cs_events(this_state);
-
-   /* fill the counters we're using */
-   for (i = 0; i < count; i++) {
-      /* Add counter control command values to eventset */
-      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
-   }
-   this_state->control.cpu_control.nractrs = count;
-   return (PAPI_OK);
-}
-
-int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
-   int error;
-   if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
-      SUBDBG("vperfctr_control returns: %d\n", error);
-      { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
-   }
-#ifdef DEBUG
-   print_control(&state->control.cpu_control);
-#endif
-   return (PAPI_OK);
-}
-
-int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
-   if(vperfctr_stop(ctx->perfctr) < 0)
-     { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
-   return(PAPI_OK);
-}
-
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
-   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
-   *dp = (long_long *) spc->state.pmc;
-#ifdef DEBUG
-   {
-      if (ISLEVEL(DEBUG_SUBSTRATE)) 
-	{
-         int i;
-         for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
-            SUBDBG("raw val hardware index %d is %lld\n", i,
-                   (long_long) spc->state.pmc[i]);
-         }
-      }
-   }
-#endif
-   return (PAPI_OK);
-}
-
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
-   return(_papi_hwd_start(ctx, cntrl));
-}
-
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
-   return(PAPI_ESBSTR);
-}
-
-/* This routine is for shutting down threads, including the
-   master thread. */
-int _papi_hwd_shutdown(hwd_context_t * ctx) {
-   int retval = vperfctr_unlink(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
-   vperfctr_close(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
-   memset(ctx, 0x0, sizeof(hwd_context_t));
-
-   if(retval)
-      return(PAPI_ESYS);
-   return(PAPI_OK);
-}
-
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) 
+ *  from the resources available to the dst event,
+ *  and reduces the rank of the dst event accordingly. Typically,
+ *  the src event will be exclusive, but the code shouldn't assume it.
+ *  Returns nothing.  
+ */
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
 {
+  return;
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
 {
-   /* This function is not used and shouldn't be called. */
-   return (PAPI_ESBSTR);
+  return;
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
-   /* This function is not used and shouldn't be called. */
-   return (PAPI_ESBSTR);
-}
-
-int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
-   ESI->profile.overflowcount = 0;
-   return (PAPI_OK);
-}
-
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
-{
-   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
-   switch (code) {
-   case PAPI_DOMAIN:
-   case PAPI_DEFDOM:
-      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   default:
-      return (PAPI_EINVAL);
-   }
-}
-
-int _papi_hwd_get_system_info() 
-{
-  _papi_hwi_system_info.hw_info.ncpu = 1;
-  _papi_hwi_system_info.hw_info.nnodes = 1;
-  _papi_hwi_system_info.hw_info.totalcpus = 1;
-  _papi_hwi_system_info.hw_info.mhz = 999.999;
-  _papi_hwi_system_info.num_cntrs = 2;
-  _papi_hwi_system_info.num_gp_cntrs = 2;
-  strcpy(_papi_hwi_system_info.hw_info.model_string,"Unknown Model");
-  strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Unknown Vendor");
+/*
+ * Shared Library Information and other Information Functions
+ */
+int _papi_hwd_update_shlib_info(void){
   return(PAPI_OK);
-}
-
-int _papi_hwd_update_shlib_info(void)
-{
-  return(PAPI_OK);
-}
-
-/* Low level functions, should not handle errors, just return codes. */
-
-inline_static long_long get_cycles(void) {
-  static long_long ret = 1;
-  return ret+100;
-}
-
-long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
-
-long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
-}
-
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
-   return((long_long)vperfctr_read_tsc(ctx->perfctr) /
-         (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
- 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
-   return((long_long)vperfctr_read_tsc(ctx->perfctr));
 }
