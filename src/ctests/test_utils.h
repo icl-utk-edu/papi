@@ -28,7 +28,6 @@
 #define MASK_L1_DCM  0x00040
 #define MASK_L1_ICM  0x00020
 #define MASK_L1_TCM  0x00010
-#define MASK_FLOPS   0x00008
 #define MASK_FP_INS  0x00004
 #define MASK_TOT_INS 0x00002
 #define MASK_TOT_CYC 0x00001
