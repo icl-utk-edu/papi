@@ -61,7 +61,7 @@ void do_l1misses(int n)
 
 void do_both(int n)
 {
-  int i,j;
+  int i;
   double c = 0.11;
   const int flops = NUM_FLOPS / n;
   const int reads = NUM_READS / n;
