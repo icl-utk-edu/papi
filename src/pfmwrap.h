@@ -1,8 +1,14 @@
-/* This file was created by Per Ekman */
-/*   updated by Min Zhou on Feb 1, 2004 */
+#ifndef _PAPI_PFMWRAP_H
+#define _PAPI_PFMWRAP_H
 
-#ifndef _PFMWRAP_H
-#define _PFMWRAP_H
+/*
+* File:    linux-ia64.c
+* CVS:     $Id$
+* Author:  Per Ekman
+*          pek@pdc.kth.se
+* Mods:	   Zhou Min
+*          min@cs.utk.edu
+*/
 
 #if defined(PFM20)
    #define OVFL_SIGNAL SIGPROF

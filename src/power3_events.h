@@ -1,5 +1,5 @@
-#ifndef _PAPI_POWER3_EVENTS
-#define _PAPI_POWER3_EVENTS
+#ifndef _PAPI_POWER3_EVENTS_H
+#define _PAPI_POWER3_EVENTS_H
 
 /* 
 * File:    power3_events.h
@@ -10,6 +10,7 @@
 *          <your email address>
 */
 
+#include "papi.h"
 #include SUBSTRATE
 
 #define PAPI_MAX_NATIVE_EVENTS 256

@@ -1,5 +1,5 @@
-#ifndef _PAPI_POWER4_EVENTS
-#define _PAPI_POWER4_EVENTS
+#ifndef _PAPI_POWER4_EVENTS_H
+#define _PAPI_POWER4_EVENTS_H
 
 /* 
 * File:    power4_events.h
@@ -9,8 +9,6 @@
 * Mods:    <your name here>
 *          <your email address>
 */
-
-#include SUBSTRATE
 
 #define PAPI_MAX_NATIVE_EVENTS 256
 #define MAX_GROUPS (GROUP_INTS * 32)

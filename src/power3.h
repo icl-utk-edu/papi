@@ -1,5 +1,5 @@
-#ifndef _PAPI_POWER3            /* _PAPI_POWER3 */
-#define _PAPI_POWER3
+#ifndef _PAPI_POWER3_H            /* _PAPI_POWER3 */
+#define _PAPI_POWER3_H
 
 #include "aix.h"
 #include "power3_events.h"

@@ -8,12 +8,10 @@
 */
 
 #include "papi.h"
-#include "papi_internal.h"
 #include SUBSTRATE
-#include "papi_mdi.h"
+#include "papi_internal.h"
 #include "papi_preset.h"
 #include "papi_protos.h"
-#include "papiStrings.h"
 
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"

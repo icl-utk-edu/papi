@@ -8,12 +8,10 @@
 */
 
 #include "papi.h"
-#ifdef __LINUX__
-#include <limits.h>
-#endif
 #include SUBSTRATE
-#include <stdio.h>
-#include <string.h>
+#include "papi_preset.h"
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev);
 void fline ( FILE *fp, char *buf );

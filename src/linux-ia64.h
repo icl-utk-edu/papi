@@ -1,3 +1,5 @@
+#ifndef _PAPI_LINUX_IA64_H
+#define _PAPI_LINUX_IA64_H
 /* 
 * File:    linux-ia64.h
 * CVS:     $Id$
@@ -22,15 +24,15 @@
 #include <time.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
-
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 #ifdef PFM30
-  #include "perfmon/perfmon_default_smpl.h"
+#include "perfmon/perfmon_default_smpl.h"
 #endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
@@ -38,15 +40,14 @@
 #include "perfmon/pfmlib_itanium.h"
 #endif
 
-#include "papi.h"
+#define inline_static inline static
+
 #define MAX_COUNTER_TERMS 4
 #ifdef ITANIUM2
 #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
 #else                           /* itanium */
 #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
 #endif
-
-#include "papi_preset.h"
 
 typedef int hwd_register_t;
 typedef int hwd_register_map_t;
@@ -122,9 +123,6 @@ typedef struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip
 
-#include "papi_internal.h"
-
-
 #define PAPI_MAX_NATIVE_EVENTS  MAX_NATIVE_EVENT
 
 #define SMPL_BUF_NENTRIES 64
@@ -138,7 +136,6 @@ extern caddr_t _init, _fini, _etext, _edata, __bss_start;
 
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
-#include <inttypes.h>
 extern volatile uint32_t lock[PAPI_MAX_LOCK];
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
@@ -163,4 +160,6 @@ extern volatile uint32_t lock[PAPI_MAX_LOCK];
 #define _papi_hwd_unlock(lck)			 			      \
     { uint64_t res = 0;							      \
     __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif
+
 #endif

@@ -340,10 +340,10 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-u_long_long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
    timebasestruct_t t;
-   u_long_long retval;
+   long_long retval;
 
    read_real_time(&t, TIMEBASE_SZ);
    time_base_to_time(&t, TIMEBASE_SZ);
@@ -351,32 +351,24 @@ u_long_long _papi_hwd_get_real_usec(void)
    return (retval);
 }
 
-u_long_long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
-   u_long_long usec, cyc;
-
-   usec = _papi_hwd_get_real_usec();
-   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-   return ((u_long_long) cyc);
+   return(_papi_hwd_get_real_usec() * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * context)
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * context)
 {
-   u_long_long retval;
+   long_long retval;
    struct tms buffer;
 
    times(&buffer);
-   retval = (u_long_long) buffer.tms_utime * (u_long_long) (1000000 / CLK_TCK);
+   retval = (long_long) buffer.tms_utime * (long_long) (1000000 / CLK_TCK);
    return (retval);
 }
 
-u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * context)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * context)
 {
-   float usec, cyc;
-
-   usec = (float) _papi_hwd_get_virt_usec(context);
-   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-   return ((u_long_long) cyc);
+   return (_papi_hwd_get_virt_usec(context) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
