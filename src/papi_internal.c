@@ -621,7 +621,7 @@ size: number of native events to add
 */
 static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
 {
-	int nidx, i, j, remap=0, retval;
+	int nidx, i, j, remap=0;
 	
 	/* Need to decide what needs to be preserved so we can roll back state
 	   if the add event fails...
@@ -658,11 +658,8 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	/* if remap!=0, we need reallocate counters */
 	if(remap){
 		if(_papi_hwd_allocate_registers(ESI)){
-		   retval= _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
-           if (retval != PAPI_OK)
-             return retval;
-           else
-		     return 1;
+			_papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
+		    return 1;
 		}
 		else{
 			for(i=0;i<size;i++){
@@ -807,7 +804,7 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
     hwd_control_state_t *this_state= &ESI->machdep;
     NativeInfo_t *native = ESI->NativeInfoArray;
-    int i, j, zero=0, retval;
+    int i, j, zero=0;
 
     /* Remove the references to this event from the native events:
        for all the metrics in this event,
@@ -862,8 +859,6 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 	Then send the info down to the substrate to update the hwd control structure. */
     if (zero) {
       retval=_papi_hwd_update_control_state(this_state, native, ESI->NativeCount);
-      if (retval != PAPI_OK)
-         return retval;
     }
 
     return(PAPI_OK);
@@ -1268,3 +1263,39 @@ static int counter_read(EventSetInfo_t *ESI, long_long *hw_counter, long_long *v
   }
   return(PAPI_OK);
 }
+
+void print_state(EventSetInfo_t *ESI)
+{
+  int i;
+  
+  fprintf(stderr,"\n\n-----------------------------------------\n");
+  fprintf(stderr,"numEvent: %d    numNative: %d\n", ESI->NumberOfEvents, ESI->NativeCount);
+
+  fprintf(stderr,"\nnative_event_name       ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15s",native_table[ESI->NativeInfoArray[i].ni_index].name);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"native_event_selectors    ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"native_event_position     ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_position);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"counter_cmd               ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",(&(ESI->machdep))->counter_cmd.events[i]);
+  fprintf(stderr,"\n");
+
+  fprintf(stderr,"native links              ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_owners);
+  fprintf(stderr,"\n");
+  
+}
+
+

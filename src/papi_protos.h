@@ -32,6 +32,7 @@ extern EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 extern int _papi_hwi_remove_EventSet(EventSetInfo_t *);
 extern EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *);
 extern int _papi_hwi_mdi_init(void);
+extern void print_state(EventSetInfo_t *ESI);
 
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
@@ -72,7 +73,7 @@ extern void _papi_hwd_remove_native(hwd_control_state_t *this_state, NativeInfo_
 extern int _papi_hwd_add_event(hwd_control_state_t *this_state, int *nix, int size, EventInfo_t *out);
 */
 extern void _papi_hwd_init_control_state(hwd_control_state_t *ptr);
-extern int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count);
+extern void _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *, EventInfo_t *); 
 extern int _papi_hwd_allocate_registers(EventSetInfo_t *ESI);
 extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **);
