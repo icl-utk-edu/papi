@@ -22,9 +22,9 @@ your platform.
 #define PAPI_CA_CLN  0x8000000B /*Request for access to clean  cache line (SMP)*/
 #define PAPI_CA_INV  0x8000000C /*Cache Line Invalidation (SMP)*/
 
-#define PAPI_TBL_DM  0x80000014 /*Data translation lookaside buffer misses*/
-#define PAPI_TBL_IM  0x80000015 /*Instruction translation lookaside buffer misses*/
-#define PAPI_TBL_SD  0x8000001E /*Translation lookaside buffer shootdowns (SMP)*/
+#define PAPI_TLB_DM  0x80000014 /*Data translation lookaside buffer misses*/
+#define PAPI_TLB_IM  0x80000015 /*Instruction translation lookaside buffer misses*/
+#define PAPI_TLB_SD  0x8000001E /*Translation lookaside buffer shootdowns (SMP)*/
 
 #define PAPI_BRI_MSP 0x80000028 /*Branch instructions mispredicted*/
 #define PAPI_BRI_TKN 0x80000029 /*Branch instructions taken*/
@@ -41,5 +41,59 @@ your platform.
 
 #define PAPI_TOT_CYC 0x8000003C /*Total cycles*/
 #define PAPI_MIPS    0x8000003D /*Millions of instructions executed per second*/
+
+
+
+   char *standardEventDef_STR[24]= {
+	"PAPI_L1_DCM",
+	"PAPI_L1_ICM",
+	"PAPI_L2_DCM",
+	"PAPI_L2_ICM",
+	"PAPI_L3_DCM",
+	"PAPI_CA_SHR",
+	"PAPI_CA_CLN",
+	"PAPI_CA_INV",
+	"PAPI_TLB_DM",
+	"PAPI_TLB_IM",
+	"PAPI_TLB_SD",
+	"PAPI_BRI_MSP",
+	"PAPI_BRI_TKN",
+	"PAPI_BRI_NTK",
+	"PAPI_TOT_INS",
+	"PAPI_INT_INS",
+	"PAPI_FP_INS",
+	"PAPI_LD_INS",
+	"PAPI_SR_INS",
+	"PAPI_CND_INS",
+	"PAPI_VEC_INS",
+	"PAPI_FLOPS",
+	"PAPI_TOT_CYc",
+	"PAPI_MIPS"      };
+
+   long long standardEventDef_NUM[24]= {
+	PAPI_L1_DCM,
+	PAPI_L1_ICM,
+	PAPI_L2_DCM,
+	PAPI_L2_ICM,
+	PAPI_L3_DCM,
+	PAPI_CA_SHR,
+	PAPI_CA_CLN,
+	PAPI_CA_INV,
+	PAPI_TLB_DM,
+	PAPI_TLB_IM,
+	PAPI_TLB_SD,
+	PAPI_BRI_MSP,
+	PAPI_BRI_TKN,
+	PAPI_BRI_NTK,
+	PAPI_TOT_INS,
+	PAPI_INT_INS,
+	PAPI_FP_INS,
+	PAPI_LD_INS,
+	PAPI_SR_INS,
+	PAPI_CND_INS,
+	PAPI_VEC_INS,
+	PAPI_FLOPS,
+	PAPI_TOT_CYC,
+	PAPI_MIPS      };
 
 

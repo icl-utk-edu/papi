@@ -442,7 +442,7 @@ return(PAPI_OK);
 }/* end PAPI_add_event */
 
 /*========================================================================*/
-/* This function determines which standardEventDef_INT[j] matches the     */
+/* This function determines which standardEventDef_NUM[j] matches the     */
 /* value EventID.  
 
    The index value "j" is returned.  
@@ -454,7 +454,7 @@ int locateIndexStdEventDef(int EventID) {
 
 int j=0;
 for(j=0;j<24;j++)
-if(EventID==standardEventDef_INT[j])return(j);
+if(EventID==standardEventDef_NUM[j])return(j);
 
 return(-1);
 
@@ -517,7 +517,7 @@ int checkTargetEventValue(int Event) {
       j=0;
 
       for(j=0;j<24;j++) 
-      if(Event==standardEventDef_INT[j])return(PAPI_OK);
+      if(Event==standardEventDef_NUM[j])return(PAPI_OK);
  
       return(PAPI_EINVAL);
 }
@@ -696,7 +696,7 @@ int PAPI_rem_event(int EventSet, int Event)
 
   /* Would you like this function to also remove Pevents????*/
 
-   /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
+   /*int  standardEventDef_NUM[25] added to papiStdDefs.h*/
 
    /* Determine if target Event value is valid standard value*/ 
       errorCode=checkTargetEventValue(Event);
@@ -784,8 +784,8 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 {
    EventSetInfo *ESI;
    int i,j,k,nActive,errorCode;
-   /*char *standardEventDef[25]    added to papiStdDefs.h*/
-   /*int  standardEventDef_INT[25] added to papiStdDefs.h*/
+   /*char *standardEventDef_STR[25]    added to papiStdDefs.h*/
+   /*int  standardEventDef_NUM[25] added to papiStdDefs.h*/
 
     /*This is only done for standard events, not for user defined events.*/
 
@@ -812,7 +812,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
      /* get index k for print string value */
      k=locateIndexStdEventDef(Events[i]);
      printf("\n EventCodeArray[%d]: %s : %lld", 
-     i, standardEventDef[k],ESI->latest[i]); 
+     i, standardEventDef_STR[k],ESI->latest[i]); 
       nActive++;
      }
      }/* end else on good Events[i] */
@@ -857,7 +857,7 @@ static int remove_EventSet(int eventset)
 /*========================================================================*/
 static EventSetInfo *lookup_EventSet(int eventset)
 {
-  if ((eventset > 1) && (eventset < PAPI_EVENTSET_MAP.totalSlots))
+  if ((eventset > 0) && (eventset < PAPI_EVENTSET_MAP.totalSlots))
     return(PAPI_EVENTSET_MAP.dataSlotArray[eventset]);
   else
     return(NULL);
