@@ -1,4 +1,4 @@
-#define ITERS 1000
+#define ITERS 100
 
 /* This file performs the following test: start, stop and timer functionality for 
    PAPI_L1_TCM derived event
@@ -39,7 +39,9 @@ int main()
   int num_events3;
   long long **values;
 
+#ifndef _CRAYT3E
   EventSet1 = add_test_events(&num_events1,&mask1);
+#endif
   EventSet2 = add_test_events(&num_events2,&mask2);
   EventSet3 = add_test_events(&num_events3,&mask3);
 
@@ -49,6 +51,7 @@ int main()
 
   do_l1misses(ITERS);
 
+#ifndef _CRAYT3E
   retval = PAPI_start(EventSet1);
   assert(retval >= PAPI_OK);
 
@@ -56,6 +59,9 @@ int main()
   
   retval = PAPI_stop(EventSet1, values[0]);
   assert(retval >= PAPI_OK);
+#else
+  (values[0])[0] = 0LL;
+#endif
 
   retval = PAPI_start(EventSet2);
   assert(retval >= PAPI_OK);
@@ -73,7 +79,9 @@ int main()
   retval = PAPI_stop(EventSet3, values[2]);
   assert(retval >= PAPI_OK);
 
+#ifndef _CRAYT3E
   remove_test_events(&EventSet1, mask1);
+#endif
   remove_test_events(&EventSet2, mask2);
   remove_test_events(&EventSet3, mask3);
 

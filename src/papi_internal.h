@@ -10,8 +10,8 @@
 
 /* Signal used for overflow delivery */
 
-#define PAPI_ITIMER ITIMER_PROF
-#define PAPI_SIGNAL SIGPROF
+#define PAPI_ITIMER ITIMER_REAL
+#define PAPI_SIGNAL SIGALRM
 
 /* Number of preset events - more than we will probably ever need, 
    currently the draft has only 25 */
@@ -29,7 +29,8 @@
 #define NOT_DERIVED      0x0  /* Do nothing */
 #define DERIVED_ADD      0x1  /* Add counters */
 #define DERIVED_PS       0x2  /* Divide by the cycle counter and convert to seconds */
-#define DERIVED_ADD_PS   0x4  /* Add 2 counters then divide by the cycle counter and convert to seconds */
+#define DERIVED_ADD_PS   0x4  /* Add 2 counters then divide by the cycle counter and xl8 to secs. */
+#define DERIVED_CMPD     0x8  /* Event lives in operand index but takes 2 or more codes */
 #define DERIVED_SUB      0x10 /* Sub all counters from counter with operand_index */
 
 typedef struct _EventSetMultistartInfo {

@@ -1,5 +1,5 @@
 #define NUM 1000
-#define THR 50000
+#define THR 10000
 
 /* This file performs the following test: profiling and program info option call
 
@@ -38,10 +38,15 @@ int main(int argc, char **argv)
   unsigned short *profbuf2;
   unsigned short *profbuf3;
   unsigned short *profbuf4;
-  unsigned long length = 65536;
+  unsigned long length;
   caddr_t start, end;
   long long **values;
   const PAPI_exe_info_t *prginfo = NULL;
+
+  assert(prginfo = PAPI_get_executable_info());
+  start = prginfo->text_start;
+  end =  prginfo->text_end;
+  length = end - start;
 
   profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
   assert(profbuf != NULL);
@@ -67,10 +72,6 @@ int main(int argc, char **argv)
   do_both(NUM);
 
   assert(PAPI_stop(EventSet, values[0]) == PAPI_OK);
-
-  assert(prginfo = PAPI_get_executable_info());
-  start = prginfo->text_start;
-  end =  prginfo->text_end;
 
   assert(PAPI_profil(profbuf, length, start, 65536, 
 		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX) >= PAPI_OK);
@@ -122,7 +123,11 @@ int main(int argc, char **argv)
   printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
   tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
   printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
-  printf("Text start: %p, Text end: %p\n",(void *)start,(void *)end);
+#ifdef _CRAYT3E
+  printf("Text start: %x, Text end: %x, Text length: %x\n",(void *)start,(void *)end,(void *)length);
+#else
+  printf("Text start: %p, Text end: %p, Text length: %x\n",(void *)start,(void *)end,(void *)length);
+#endif
   printf("-----------------------------------------\n");
 
   printf("Test type   : \t1\t\t2\n");

@@ -67,6 +67,15 @@ void papimon_start(void)
       retval = PAPI_add_event(&EventSet, native);
       assert (retval == PAPI_OK);
 #elif defined(_CRAYT3E)
+      native = 0 | 0x0 << 8 | 0; /* Machine cyc */
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
+      native = 0 | 0xe << 8 | 1; /* Dcache acc. */
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
+      native = 0 | 0xC << 8 | 2; /* CPU cyc */
+      retval = PAPI_add_event(&EventSet, native);
+      assert (retval == PAPI_OK);
 #endif
       assert(hwinfo = PAPI_get_hardware_info());
     }
@@ -122,6 +131,9 @@ void papimon_stop(void)
   fprintf(stderr,"L1 Instruction cache misses       : %lld\n",values[0]);
   fprintf(stderr,"L1 Data cache misses              : %lld\n",values[1]);
 #elif defined(_CRAYT3E)
+  fprintf(stderr,"Machine Cycles                    : %lld\n",values[0]);
+  fprintf(stderr,"DCache accesses                   : %lld\n",values[1]);
+  fprintf(stderr,"CPU Cycles                        : %lld\n",values[2]);
 #elif defined(tru64)
 #endif
 }

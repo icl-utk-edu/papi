@@ -16,7 +16,7 @@ and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 
 int main()
 {
-   double c,a,b;
+   double c,a = 0.999,b = 1.001;
    int n = 1000;
    int EventSet;
    int retval;

@@ -13,6 +13,9 @@
 #define PERFCNT_EV5     1
 #define CTL_OFF		0
 #define CTL_ON		2
+#define CNTR1 0x1
+#define CNTR2 0x2
+#define CNTR3 0x4
 
 /* Some of this code comes from Cray, originally in perfctr.h
    I assume they own the copyright, so be careful */

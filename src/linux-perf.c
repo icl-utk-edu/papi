@@ -55,7 +55,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 {0,0,0,{0,0,0},""},		   	/* Cycles stalled waiting for memory write */
                 {0,0,0,{0,0,0},""},			/* Cycles no instructions issued */
                 {0,0,0,{0,0,0},""},			/* Cycles max instructions issued */
-                {0,0,0,{0,0,0},""},			/* Cycles max instructions comleted */
+                {0,0,0,{0,0,0},""},			/* Cycles no instructions comleted */
                 {0,0,0,{0,0,0},""},			/* Cycles max instructions completed */
                 {0,0,0,{0,0,0},""},			// hardware interrupts
 		{0,0,0,{0,0,0},""},	// Uncond. branches executed

@@ -23,7 +23,7 @@ can write a work around to this, if necessary.  */
 int EventSet;
 
 void func(int n) {
-   double c,a,b;
+   double c,a = 0.999,b = 1.001;
    int i;
    long long int g1[2];
 

@@ -14,7 +14,7 @@ PAPI_start to work but just count the first event?
 
 int main()
 {
-   double c,a,b;
+   double c,a = 0.999,b = 1.001;
    int n = 1000;
    int EventSet;
    int retval;

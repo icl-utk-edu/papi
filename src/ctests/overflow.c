@@ -33,8 +33,13 @@ int total = 0;
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {
+#ifdef _CRAYT3E
+  fprintf(stderr,"handler(%d, %d, %d, %lld, %d, %x) Overflow at %x!\n",
+	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
+#else
   fprintf(stderr,"handler(%d, %d, %d, %lld, %d, %p) Overflow at %p!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
+#endif
   total++;
 }
 

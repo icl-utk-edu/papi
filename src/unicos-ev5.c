@@ -9,72 +9,90 @@
    Then is the mask. There are no derived metrics for the T3E. */
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
-                { -1, -1, 0x4, 0x4 },   /* L1 D-Cache misses  */
-                { -1, -1, 0x6, 0x4 },	/* L1 I-Cache misses  */
-		{ -1, 0xf, 0xf, 0x6 },	/* L2 D-Cache misses */
-		{ -1, -1, -1, 0x6 },	/* L2 I-ditto */
-		{ -1, -1, -1, 0 },	/* L3 D-misses */
-		{ -1, -1, -1, 0 },	/* L3 I-misses */
-		{ -1, -1, -1, 0 },	/* L1 total */
-		{ -1, -1, -1, 0 },	/* L2 total */
-		{ -1, -1, -1, 0 },	/* L3 total */
-		{ -1, -1, -1, 0 },	/* snoop */
-		{ -1, -1, -1, 0 }, 	/* Req. access to shared cache line */
-		{ -1, -1, -1, 0 }, 	/* Req. access to clean cache line */
-		{ -1, -1, -1, 0 }, 	/* Cache Line Invalidation */
-                { -1, -1, -1, 0 },	/* Cache line intervention */
-                { -1, -1, -1, 0 },	/* L3 LM */
-                { -1, -1, -1, 0 },	/* L3 SM */
-                { -1, -1, -1, 0 },	/* BRU idle cyc */
-                { -1, -1, -1, 0 },	/* ALU idle cyc */
-                { -1, -1, -1, 0 },	/* FPU idle cyc */
-                { -1, -1, -1, 0 },	/* LD/ST idle cyc */
-		{ -1, -1, 0x7, 0x4 },   /* D-TLB misses */
-		{ -1, -1, 0x5, 0x4 },	/* I-TLB misses */
-                { -1, -1, -1, 0 },	/* Total TLB misses */
-                { -1, -1, -1, 0 },	/* L1 LM */
-                { -1, -1, -1, 0 },	/* L1 SM */ 
-                { -1, -1, -1, 0 },	/* L2 LM */
-                { -1, -1, -1, 0 },	/* L2 LM */
-                { -1, -1, -1, 0 },	/* BTAC miss */
-                { -1, -1, -1, 0 },	/* Prefetch data caused a miss */
-                { -1, -1, -1, 0 },	
-		{ -1, -1, -1, 0 },	/* TLB shootdowns */
-                { -1, -1, -1, 0 },	/* Failed store cond. */
-                { -1, -1, -1, 0 },	/* Suc. store cond. */
-                { -1, -1, -1, 0 },	/* Tot. store cond. */
-                { -1, -1, 0xa, 0x4 },	/* Cycles stalled waiting for memory */
-                { -1, -1, -1, 0 },	/* Cycles stalled waiting for memory read */
-                { -1, -1, -1, 0 },	/* Cycles stalled waiting for memory write */
-                { -1, 0x0, 0xd, 0x2 },	/* Cycles no instructions issued */
-                { -1, 0x7, -1, 0x2 },	/* Cycles max instructions issued */
-                { -1, -1, -1, 0 },	/* Cycles no instructions comlpeted */
-		{ -1, -1, -1, 0 },	/* Cycles max instructions completed */
-                { -1, -1, -1, 0 },	/* hardware interrupts */
-		{ -1, -1, -1, 0 },	/* Uncond. branches executed */
-		{ -1, 0x8, 0x3, 0x2 },	/* Cond. branch inst. executed*/
-		{ -1, -1, -1, 0 },	/* Cond. branch inst. taken*/
-		{ -1, -1, -1, 0 },	/* Cond. branch inst. not taken*/
-		{ -1, -1, 0x3, 0x4 },	/* Cond. branch inst. mispred.*/
-                { -1, -1, -1, 0 },	/* Cond. branch inst. corr. pred */
-                { -1, -1, -1, 0 },	/* FMA instructions */
-                { -1, -1, -1, 0 },	/* Total instructions issued */
-		{ 0x1, -1, -1, 0x1 },	/* Total inst. executed */
-		{ -1, 0x9, -1, 0x2 },	/* Integer inst. executed */
-		{ -1, 0xa, -1, 0x2 },	/* Floating Pt. inst. executed */
-		{ -1, 0xb, -1, 0x2 },	/* Loads executed */
-		{ -1, 0xc, -1, 0x2 },	/* Stores executed */
-		{ -1, 0x8, -1, 0x2 },	/* Branch inst. executed */
-		{ -1, -1, -1, 0 },	/* Vector/SIMD inst. executed  */
-		{ -1, -1, -1, 0 },	/* FLOPS */
-                { -1, -1, -1, 0 },	/* Loads */
-                { -1, -1, -1, 0 },	/* Stores */
-		{ 0x0, -1, -1, 0x1 },	/* Total cycles */
-		{ -1, -1, -1, 0 },	/* MIPS */
-                { -1, -1, -1, 0 },	/* Total load/stores */
-                { -1, -1, -1, 0 },	/* Syncs */ };
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x6}, "" },  /* L1 D-Cache misses */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x4}, "" },  /* L1 I-Cache misses */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L2 D-Cache misses */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L2 I-ditto */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 D-misses */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 I-misses */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L1 total */
+		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0xf}, "" }, /* L2 total */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 total */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* snoop */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, 	/* Req. acc. to shared cache line */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, 	/* Req. acc. to clean cache line */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" }, 	/* Cache Line Invalidation */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cache line intervention */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 LM */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L3 SM */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* BRU idle cyc */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* ALU idle cyc */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* FPU idle cyc */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* LD/ST idle cyc */
+		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0x7}, "" },  /* D-TLB misses */
+		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0x5}, "" },  /* I-TLB misses */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Total TLB misses */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L1 LM */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L1 SM */ 
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L2 LM */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* L2 SM */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x2}, "" },	/* BTAC miss */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Prefetch data caused a miss */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* 29 */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* TLB shootdowns */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Failed store cond. */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Suc. store cond. */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Tot. store cond. */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,0xd}, "" }, /* Cycles stl. wait for memory */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,-1}, "" },  /* Cycles stl. wait for memory read */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,-1}, "" },  /* Cycles stl. wait memory write */
+                { CNTR2, NOT_DERIVED, -1, {-1,0x0,-1}, "" }, /* Cycles no instructions issued */
+                { CNTR2, NOT_DERIVED, -1, {-1,0x7,-1}, "" }, /* Cycles max instructions issued */
+                { CNTR2, NOT_DERIVED, -1, {-1,0x0,-1}, "" }, /* Cycles no instrs completed */
+		{ CNTR2, NOT_DERIVED, -1, {-1,0x7,-1}, "" }, /* Cycles max instrs completed */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* hardware interrupts */
+		{ CNTR2|CNTR3, DERIVED_CMPD, 1, {-1,0x8,0x2}, "" },/* Uncond. branches executed */
+		{ CNTR2|CNTR3, DERIVED_CMPD, 1, {-1,0x8,0x3}, "" },/* Cond. branch inst. executed*/
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cond. branch inst. taken*/
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cond. branch inst. not taken*/
+		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0x3}, "" },  /* Cond. branch inst. mispred.*/
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Cond. branch inst. corr. pred */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* FMA instructions */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Total instructions issued */
+		{ CNTR1, NOT_DERIVED, -1, {0x1,-1,-1}, "" },	/* Total inst. executed */
+		{ CNTR2, NOT_DERIVED, -1, {-1,0x9,-1}, "" },	/* Integer inst. executed */
+		{ CNTR2, NOT_DERIVED, -1, {-1,0xa,-1}, "" },  /* Floating Pt. inst. executed */
+		{ CNTR2, NOT_DERIVED, -1, {-1,0xb,-1}, "" },	/* Loads executed */
+		{ CNTR2, NOT_DERIVED, -1, {-1,0xc,-1}, "" },	/* Stores executed */
+		{ CNTR2, NOT_DERIVED, -1, {-1,0x8,-1}, "" },	/* Branch inst. executed */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Vector/SIMD inst. executed  */
+		{ CNTR2|CNTR1, DERIVED_PS, 0, {0x0,0xa,-1}, "" },	/* FLOPS */
+                { CNTR3, NOT_DERIVED, -1, {-1,-1,0x0}, "" },	/* Resource stalls */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* FPU stalled */
+		{ CNTR3, NOT_DERIVED, -1, {-1,-1,0xc}, ""},   /* Total cycles */
+		{ 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* IPS */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Total load/stores */
+                { 0, NOT_DERIVED, -1, {-1,-1,-1}, "" },	/* Syncs */ 
+};
 
 /* Utility functions */
+
+static int setup_all_presets(PAPI_hw_info_t *info)
+{
+  int pnum;
+
+  for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++)
+    {
+      if (preset_map[pnum].selector)
+	{
+	  sprintf(preset_map[pnum].note,"0x%x,0x%x,0x%x",
+		  preset_map[pnum].counter_cmd[0],
+		  preset_map[pnum].counter_cmd[1],
+		  preset_map[pnum].counter_cmd[2]);
+	}
+    }
+  return(PAPI_OK);
+}
 
 static int set_default_domain(EventSetInfo *zero, int domain)
 {
@@ -158,40 +176,39 @@ static int update_global_hwcounters(EventSetInfo *global)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)global->machdep;
   int retval, selector;
-  pmctr_t *arg = &machdep->counter_cmd;
-  pmctr_t pmctr;
+  pmctr_t *pmctr;
   long pc_data[4];
 
   retval = _rdperf(pc_data);
   if (retval != 0)
     return(PAPI_ESBSTR);
 
-  *(long *) &pmctr = pc_data[0];
+  pmctr = (pmctr_t *)&pc_data[0];
 
   selector = this_state->selector;
   if (selector & 0x1)
     {
       DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",0,
-	   global->hw_start[i]+((pc_data[1] << 16) + pmctr.CTR0),
-	   global->hw_start[i],
-	   ((pc_data[1] << 16) + pmctr.CTR0)));	   
-      global->hw_start[i] = global->hw_start[i] + (pc_data[1] << 16) + pmctr.CTR0;
+	   global->hw_start[0]+((pc_data[1] << 16) + pmctr->CTR0),
+	   global->hw_start[0],
+	   ((pc_data[1] << 16) + pmctr->CTR0)));	   
+      global->hw_start[0] = global->hw_start[0] + (pc_data[1] << 16) + pmctr->CTR0;
     }
   if (selector & 0x2)
     {
-      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",0,
-	   global->hw_start[i]+((pc_data[2] << 16) + pmctr.CTR1),
-	   global->hw_start[i],
-	   ((pc_data[2] << 16) + pmctr.CTR1)));	   
-      global->hw_start[i] = global->hw_start[i] + (pc_data[2] << 16) + pmctr.CTR1;
+      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",1,
+	   global->hw_start[1]+((pc_data[2] << 16) + pmctr->CTR1),
+	   global->hw_start[1],
+	   ((pc_data[2] << 16) + pmctr->CTR1)));	   
+      global->hw_start[1] = global->hw_start[1] + (pc_data[2] << 16) + pmctr->CTR1;
     }
   if (selector & 0x4)
     {
-      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",0,
-	   global->hw_start[i]+((pc_data[3] << 14) + pmctr.CTR2),
-	   global->hw_start[i],
-	   ((pc_data[3] << 14) + pmctr.CTR2)));	   
-      global->hw_start[i] = global->hw_start[i] + (pc_data[3] << 14) + pmctr.CTR2;
+      DBG((stderr,"update_global_counters() %d: G%lld = G%lld + C%lld\n",2,
+	   global->hw_start[2]+((pc_data[3] << 14) + pmctr->CTR2),
+	   global->hw_start[2],
+	   ((pc_data[3] << 14) + pmctr->CTR2)));	   
+      global->hw_start[2] = global->hw_start[2] + (pc_data[3] << 14) + pmctr->CTR2;
     }
   
   retval = _wrperf(this_state->counter_cmd,0,0,0);
@@ -201,7 +218,7 @@ static int update_global_hwcounters(EventSetInfo *global)
   return(PAPI_OK);
 }
 
-static int set_granularity(EventSetInfo *ESI, int domain)
+static int set_granularity(hwd_control_state_t *this_state, int domain)
 {
   return(PAPI_ESBSTR);
 }
@@ -224,11 +241,8 @@ static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, l
   return(0);
 }
 
-static int set_domain(EventSetInfo *ESI, int domain)
+static int set_domain(hwd_control_state_t *this_state, int domain)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int ret;
-
   if (domain & PAPI_DOM_USER)
     this_state->counter_cmd.Ku = 1;
   else
@@ -245,11 +259,6 @@ static int set_domain(EventSetInfo *ESI, int domain)
   return(PAPI_OK);
 }
 
-static int get_cpu_num(void)
-{
-  return sysconf(_SC_CRAY_PPE);
-}
-
 static float getmhz(void)
 {
   long sysconf(int request);
@@ -257,13 +266,14 @@ static float getmhz(void)
   
   p = (float) sysconf(_SC_CRAY_CPCYCLE); /* Picoseconds */
   p = p * 1.0e-12; /* Convert to seconds */
-  p = 1.0 / (p * 1000000.0); /* Convert to MHz */
+  p = (int)(1.0 / (p * 1000000.0)); /* Convert to MHz */
   return(p);
 }
 
 static int get_system_info(void)
 {
   pid_t pid;
+  int tmp;
 
   pid = getpid();
   if (pid == -1)
@@ -271,9 +281,18 @@ static int get_system_info(void)
 
   /* _papi_system_info.exe_info.fullname; */
   /* _papi_system_info.exe_info.name; */
+  _papi_system_info.exe_info.text_start = (caddr_t)0x800000000;
+  _papi_system_info.exe_info.data_start = (caddr_t)0x100000000;
+  _papi_system_info.exe_info.bss_start =  (caddr_t)0x200000000;
+  _papi_system_info.exe_info.text_end = (caddr_t)_infoblk.i_segs[0].size;
+  _papi_system_info.exe_info.data_end = (caddr_t)_infoblk.i_segs[1].size;
+  _papi_system_info.exe_info.bss_end = (caddr_t)_infoblk.i_segs[2].size;
+  _papi_system_info.exe_info.text_end += 0x800000000;
+  _papi_system_info.exe_info.data_end += 0x100000000;
+  _papi_system_info.exe_info.bss_end += 0x200000000;
 
-  _papi_system_info.hw_info.ncpu = 1;
-  _papi_system_info.hw_info.totalcpus = 1;
+  _papi_system_info.hw_info.ncpu = sysconf(_SC_CRAY_NCPU);
+  _papi_system_info.hw_info.totalcpus = sysconf(_SC_CRAY_NCPU);
   _papi_system_info.hw_info.nnodes = 1;
   _papi_system_info.hw_info.mhz = getmhz();
   strcpy(_papi_system_info.hw_info.vendor_string,"Cray");
@@ -282,7 +301,11 @@ static int get_system_info(void)
   _papi_system_info.hw_info.model = -1;
   strcpy(_papi_system_info.hw_info.model_string,"Alpha 21164");
 
-  _papi_system_info.cpunum = get_cpu_num();
+  _papi_system_info.cpunum = sysconf(_SC_CRAY_PPE);
+
+  tmp = setup_all_presets(&_papi_system_info.hw_info);
+  if (tmp)
+    return(tmp);
 
   return(PAPI_OK);
 }
@@ -574,9 +597,24 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	  else if (this_state->selector & hwcntr)
 	    {
 	      current_state->selector |= hwcntr;
-	      current_state->counter_cmd.CTL0 = this_state->counter_cmd.CTL0;
-	      current_state->counter_cmd.SEL0 = this_state->counter_cmd.SEL0;
 	      ESI->hw_start[i] = 0;
+	      if (hwcntr == 0x1)
+		{
+		  current_state->counter_cmd.CTL0 = this_state->counter_cmd.CTL0;
+		  current_state->counter_cmd.SEL0 = this_state->counter_cmd.SEL0;
+		}
+	      else if (hwcntr == 0x2)
+		{
+		  current_state->counter_cmd.CTL1 = this_state->counter_cmd.CTL1;
+		  current_state->counter_cmd.SEL1 = this_state->counter_cmd.SEL1;
+		}
+	      else if (hwcntr == 0x4)
+		{
+		  current_state->counter_cmd.CTL2 = this_state->counter_cmd.CTL2;
+		  current_state->counter_cmd.SEL2 = this_state->counter_cmd.SEL2;
+		}
+	      else
+		abort();
 	    }
 	}
     }
@@ -844,12 +882,16 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-int _papi_hwd_get_text_bounds(caddr_t *start, caddr_t *end)
+/* 75 Mhz sys. clock */
+
+long long _papi_hwd_get_real_cycles (void)
 {
-  *start = (caddr_t)&_infoblk;
-  *end = (caddr_t)&_infoblk;
-  
-  return(PAPI_OK);
+  return(_rtc()*(long long)(_papi_system_info.hw_info.mhz/75.0));
+}
+
+long long _papi_hwd_get_real_usec (void)
+{
+  return(_rtc()/75);
 }
 
 /* Machine info structure. -1 is unused. */
@@ -857,27 +899,53 @@ int _papi_hwd_get_text_bounds(caddr_t *start, caddr_t *end)
 papi_mdi _papi_system_info = { "$Id$",
 			       1.0, /*  version */
 			       -1,  /*  cpunum */
-			       -1,  /*  ncpu */
-			       -1,  /*  nnodes */
-			       -1,  /*  totalcpus */
-			       -1,  /*  vendor */
-			       -1,  /*  vendor string */
-			       -1,  /*  model */
-			       -1,  /*  model string */
-			       
-			       3,   /*  num_cntrs */
-			       3,   /*  num_gp_cntrs */
-			       0,   /*  grouped_counters */
-			       0,   /*  num_sp_cntrs */
-			       -1,  /*  total_presets */
-			       -1,  /*  total_events */
-			       1,   /*  needs overflow emulation */
-			       1,   /*  needs profile emulation */
-			       0,   /*  needs 64 bit virtual counters */
-			       0,   /*  supports child inheritance option */
-			       0,   /*  can attach to another process */
-			       0,   /*  read resets the counters */
-			       PAPI_DOM_USER, /* default domain */
-			       PAPI_GRN_THR,  /* default granularity */
-			       sizeof(hwd_control_state_t), 
-			       NULL };
+			       {
+				 -1,  /*  ncpu */
+				 -1,  /*  nnodes */
+				 -1,  /*  totalcpus */
+				 -1,  /*  vendor */
+				 "",  /*  vendor string */
+				 -1,  /*  model */
+				 "",  /*  model string */
+				 0.0, /* revision */
+				 -1   /* mhz */
+			       },
+			       {
+				 "",
+				 "",
+				 NULL,
+				 NULL,
+				 NULL,
+				 NULL,
+				 NULL,
+				 NULL,
+				 NULL
+			       },
+			        3,   /*  num_cntrs */
+			        3,   /*  num_gp_cntrs */
+			        0,   /*  grouped_counters */
+			        0,   /*  num_sp_cntrs */
+			       -1,   /*  total_presets */
+			       -1,   /*  total_events */
+			        1,   /*  needs overflow emulation */
+			        1,   /*  needs profile emulation */
+			        0,   /*  needs 64 bit virtual counters */
+			        0,   /*  supports child inheritance option */
+			        0,   /*  can attach to another process */
+			        0,   /*  read resets the counters */
+			        PAPI_DOM_USER, /* default domain */
+			        PAPI_GRN_THR,  /* default granularity */
+			        sizeof(hwd_control_state_t), 
+				NULL };
+
+/* Thread hooks */
+
+void __pdf_th_create(void)
+{
+  extern PAPI_notify_handler_t thread_notifier;
+}
+
+void __pdf_th_destroy(void)
+{
+  extern PAPI_notify_handler_t thread_notifier;
+}

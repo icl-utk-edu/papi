@@ -149,7 +149,7 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)&info); 
+    dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
   return;
 }
 #elif defined(linux)
@@ -202,7 +202,7 @@ static int start_timer(int milliseconds)
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_flags = SA_RESTART;
-#if defined(_AIX) || (defined(sgi) && defined(mips)) || defined(_CRATYT3E)
+#if defined(_AIX) || (defined(sgi) && defined(mips)) || defined(_CRAYT3E)
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
 #elif defined(linux)
   action.sa_handler = (void (*)(int))dispatch_timer;
