@@ -7058,6 +7058,7 @@ case "$OS" in
   cygwin*) OS=cygwin;;
   SunOS)   OS=solaris ;;
   irix64)  OS=irix ;;
+  "unicos/mp") OS=unicos;;
 esac
 #echo $OS
 #AC_SUBST($OS)
@@ -7118,6 +7119,11 @@ case "$OS" in
          ;;
   irix) CPU=`hinv -t cpu | cut -d ' ' -f 3`;;
   osf1) CPU=`uname -p`;;
+  unicos)
+        if test "`uname -a | grep crayx1`" != ""; then
+          CPU=x1-msp
+        fi
+        ;;
 esac
 #echo $CPU
 #AC_SUBST($CPU)
