@@ -98,9 +98,9 @@ int main(int argc, char *argv[])
                retval = PAPI_stop_counters(NULL, 0);
                if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
                   test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_stop_counters", retval);
-               retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
+               retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
                if (retval != PAPI_OK)
-                  test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_flips", retval);
+                  test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_flops", retval);
 
                /* do the multiplication */
                for (i = 0; i <= n; i++)
@@ -142,9 +142,9 @@ int main(int argc, char *argv[])
                retval = PAPI_stop_counters(NULL, 0);
                if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
                   test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_stop_counters", retval);
-               retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
+               retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
                if (retval != PAPI_OK)
-                  test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_flips", retval);
+                  test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_flops", retval);
 
                /* compute the resultant vector */
                for (i = 0; i <= n; i++)
@@ -185,9 +185,9 @@ int main(int argc, char *argv[])
                retval = PAPI_stop_counters(NULL, 0);
                if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN))
                   test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_stop_counters", retval);
-               retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
+               retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
                if (retval != PAPI_OK)
-                  test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_flips",
+                  test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_flops",
                             retval);
 
                /* compute the resultant matrix */
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 
 /*
         Extract and display hardware information for this processor.
-        (Re)Initialize PAPI_flips() and begin counting floating ops.
+        (Re)Initialize PAPI_flops() and begin counting floating ops.
 */
 static void headerlines(char *title, int TESTS_QUIET)
 {
@@ -259,7 +259,7 @@ static void headerlines(char *title, int TESTS_QUIET)
 }
 
 /*
-  Read PAPI_flips.
+  Read PAPI_flops.
   Format and display results.
   Compute error without using floating ops.
 */
@@ -281,22 +281,16 @@ static void resultline(int i, int j, int TESTS_QUIET)
    int papi, theory, diff = 0;
    int retval;
 
-   retval = PAPI_flips(&real_time, &proc_time, &flpins, &mflops);
+   retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "resultline: PAPI_flips", retval);
+      test_fail(__FILE__, __LINE__, "resultline: PAPI_flops", retval);
 
    i++;                         /* convert to 1s base  */
    theory = 2;
    while (j--)
       theory *= i;              /* theoretical ops   */
    papi = (int) (flpins) << FMA;
-#if defined(_POWER4)
-/* As of now, POWER4 FLOPS counts floating point operations completed,
-  which includes floating point stores and produces a result that is 50% too high
-  for the FMA counts that this example relies on. This correction compensates...
-*/
-   papi -= (papi / 3) + 1;
-#endif
+
    diff = papi - theory;
 
    ferror = ((float) abs(diff)) / ((float) theory) * 100;
