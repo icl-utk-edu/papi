@@ -14,6 +14,7 @@
 #include <libcpc.h>
 #include <libgen.h>
 #include <ctype.h>
+#include <errno.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>

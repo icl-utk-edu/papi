@@ -346,7 +346,19 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
       int t, overflow_vector, readvalue;
 
       thread = _papi_hwi_lookup_thread();
-      ESI = (EventSetInfo_t *) thread->event_set_overflowing;
+      ESI = (EventSetInfo_t *) thread->running_eventset;
+
+      if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
+	{
+	  OVFDBG("Either no eventset or eventset not set to overflow.\n");
+	  return;
+	}
+
+      if (ESI->master != thread)
+	{
+	  PAPIERROR("eventset->thread 0x%lx vs. current thread 0x%lx mismatch",ESI->master,thread);
+	  return;
+	}
 
       event_counter = ESI->overflow.event_counter;
       sample = &(ESI->machdep.counter_cmd);
