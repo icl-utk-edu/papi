@@ -156,11 +156,8 @@ typedef struct _MPX_EventSet {
         /* Not sure... */
 	long_long start_c, stop_c;
 	long_long start_values[PAPI_MPX_DEF_DEG];
-	long_long start_cycles[PAPI_MPX_DEF_DEG];
 	long_long stop_values[PAPI_MPX_DEF_DEG];
-	long_long stop_cycles[PAPI_MPX_DEF_DEG];
 	long_long start_hc[PAPI_MPX_DEF_DEG];
-	long_long stop_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
 typedef MPX_EventSet * EventSetMultiplexInfo_t;
