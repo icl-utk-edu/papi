@@ -136,6 +136,9 @@ int main(int argc, char **argv)
 
   retval = PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num),0);
   if (retval != PAPI_OK) 
+     if (retval == PAPI_ESBSTR)
+	test_skip(__FILE__, __LINE__, "PAPI_thread_init", retval);
+     else
 	test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 
 #pragma omp parallel private(maxthr,retval)

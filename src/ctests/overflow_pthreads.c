@@ -154,6 +154,9 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
 
   if((retval=PAPI_thread_init((unsigned long(*)(void))(pthread_self),0))!=PAPI_OK){
+     if (retval == PAPI_ESBSTR) 
+	test_skip(__FILE__,__LINE__,"PAPI_thread_init",retval);
+     else
 	test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
   }
 

@@ -298,6 +298,8 @@ void test_fail(char *file, int line, char *call, int retval)
 {
 	char buf[128];
 
+	if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ) 
+            test_skip(file,line,call,retval);
 	memset( buf, '\0', sizeof(buf) );
 	printf("%-24s: FAILED\nLine # %d\n", file, line);
 	if ( retval == PAPI_ESYS ) {
@@ -311,13 +313,31 @@ void test_fail(char *file, int line, char *call, int retval)
 		char errstring[PAPI_MAX_STR_LEN];
 		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
 		printf("Error in %s: %s\n", call, errstring );
-		/* if the error is because it's not supported or doesn't exist
-			log the error message, but return with no error condition
-		*/
-		if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ) exit(0);
 	}
         printf("\n");
 	exit(1);
+}
+
+void test_skip(char *file, int line, char *call, int retval)
+{
+	char buf[128];
+
+	memset( buf, '\0', sizeof(buf) );
+	printf("%-24s: SKIPPED\nLine # %d\n", file, line);
+	if ( retval == PAPI_ESYS ) {
+		sprintf(buf, "System error in %s:", call );
+		perror(buf);
+	}
+	else if ( retval > 0 ) {
+		printf("Error calculating: %s\n", call );
+	}
+	else {
+		char errstring[PAPI_MAX_STR_LEN];
+		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
+		printf("Error in %s: %s\n", call, errstring );
+	}
+        printf("\n");
+	exit(0);
 }
 
 #ifdef _WIN32

@@ -52,6 +52,9 @@ void init_papi_pthreads(void)
   /* Turn on thread support in PAPI */
 
   if ((retval=PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0)) != PAPI_OK){
+     if (retval == PAPI_ESBSTR)
+        test_skip(__FILE__,__LINE__,"PAPI_thread_init",retval);
+     else
         test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
   }
 }
