@@ -63,7 +63,6 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
    sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
-
    EventSet1 = add_test_events(&num_events1, &mask1);
 
    /* num_events1 is greater than num_events2 so don't worry. */
