@@ -268,18 +268,18 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel[i] |= PERF_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel[i] |= PERF_OS;
       }
    }
@@ -519,6 +519,9 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
       SUBDBG("vperfctr_control returns: %d\n", error);
       error_return(PAPI_ESYS, VCNTRL_ERROR);
    }
+#ifdef DEBUG
+   print_control(&this_state->control.cpu_control);
+#endif
    return (PAPI_OK);
 }
 
