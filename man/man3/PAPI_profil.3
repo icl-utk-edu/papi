@@ -5,7 +5,7 @@ PAPI_profil \- set values in the EventSetProfileInfo_t strct.
 .LP
 .SH SYNOPSIS
 .LP
-int PAPI_profil (void *buf, int bufsiz, caddr_t offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags) 
+int PAPI_profil (void *buf, int bufsiz, caddr_t offset, int scale, int EventSet, int EventCode, int threshold, int flags) 
 .LP
 void *buf -- buf val of EventSetProfileInfo_t strct.
 .LP
@@ -13,7 +13,7 @@ int bufsiz -- bufsiz val of EventSetProfileInfo_t strct.
 .LP
 caddr_t offset -- offset val of EventSetProfileInfo_t strct.
 .LP
-unsigned int scale -- scale val EventSetProfileInfo_t strct.
+int scale -- scale val EventSetProfileInfo_t strct.
 .LP
 int EventSet -- a reference to an EventSetInfo structure
 .LP
