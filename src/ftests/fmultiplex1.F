@@ -30,6 +30,7 @@
       end if
       call case4(retval, tests_quiet)
 
+      retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,

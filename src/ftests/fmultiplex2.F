@@ -95,7 +95,7 @@
 
          if (tests_quiet .EQ. 0) then
             write (*, 200) "  Adding Event ", event_name 
- 200        FORMAT(A13, A11)
+ 200        FORMAT(A15, A11)
          end if
 
          call PAPIf_add_event( EventSet, EventCode+z'80000000'-1,
