@@ -10,6 +10,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_vector_redefine.h"
 
 #ifndef PAPI_NO_VECTOR 
 papi_vectors_t _papi_vector_table;
