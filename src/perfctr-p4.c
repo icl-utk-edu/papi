@@ -308,11 +308,10 @@ void print_control(const struct perfctr_cpu_control *control)
    unsigned int i;
 
    SUBDBG("Control used:\n");
-   SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
-   SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-   SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
+   SUBDBG("tsc_on\t\t\t0x%x\n", control->tsc_on);
+   SUBDBG("nractrs\t\t\t0x%x\n", control->nractrs);
+   SUBDBG("nrictrs\t\t\t0x%x\n", control->nrictrs);
    for (i = 0; i < (control->nractrs + control->nrictrs); ++i) {
-//    for(i = 0; i < 4; ++i) {
       if (control->pmc_map[i] >= 18) {
          SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
       } else {
@@ -872,6 +871,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    OVFDBG("EventIndex=%d\n", EventIndex);
 
    /* The correct event to overflow is EventIndex */
+   print_control(&this_state->control.cpu_control);
 
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
@@ -927,7 +927,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
    }
 
-   OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
+   print_control(&this_state->control.cpu_control);
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }

@@ -1273,7 +1273,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    /* We do not support derived events in overflow */
    /* Unless it's DERIVED_CMPD in which no calculations are done */
-   if ( !(flags&PAPI_OVERFLOW_FORCE_SW)&&
+   if ( !(flags&PAPI_OVERFLOW_FORCE_SW)&& threshold != 0 &&
        (ESI->EventInfoArray[index].derived) && 
        (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
@@ -1308,10 +1308,15 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       ESI->overflow.threshold[i] = 0;
       ESI->overflow.EventIndex[i] = 0;
       ESI->overflow.EventCode[i] = 0;
-      ESI->overflow.flags = 0;
 
       ESI->overflow.event_counter--;
    } else {
+      if ( ESI->overflow.event_counter > 0 ){
+         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
+            papi_return(PAPI_ECNFLCT);
+         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW))
+            papi_return(PAPI_ECNFLCT);
+      }
       ESI->overflow.event_counter++;
       event_counter = ESI->overflow.event_counter;
       ESI->overflow.deadline[event_counter - 1] = threshold;
@@ -1327,12 +1332,16 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    if (_papi_hwi_system_info.supports_hw_overflow && 
        !(ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)) {
-      ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+      if ( threshold != 0 )
+         ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
       retval = _papi_hwd_set_overflow(ESI, index, threshold);
       if ( !(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) )
          ESI->overflow.timer_ms = PAPI_ITIMER_MS;
-      else if (retval < PAPI_OK)
+      else if (retval < PAPI_OK){
+         if ( ESI->overflow.event_counter == 0 )
+            ESI->overflow.flags = 0;
          papi_return(retval);
+      }
    } else{
       ESI->overflow.timer_ms = PAPI_ITIMER_MS;
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
@@ -1343,6 +1352,9 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    if ((ESI->overflow.event_counter == 1 && threshold > 0) ||
        (ESI->overflow.event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_OVERFLOWING;
+
+   if ( ESI->overflow.event_counter == 0 )
+      ESI->overflow.flags = 0;
 
    return(PAPI_OK);
 }

@@ -185,8 +185,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
 
 /* Overflow definitions */
-#define PAPI_OVERFLOW_FORCE_SW 0x20	/* Force using Software */
-#define PAPI_OVERFLOW_HARDWARE 0x30	/* Using Hardware */
+#define PAPI_OVERFLOW_FORCE_SW 0x30	/* Force using Software */
+#define PAPI_OVERFLOW_HARDWARE 0x40	/* Using Hardware */
 
 /* Option definitions */
 
