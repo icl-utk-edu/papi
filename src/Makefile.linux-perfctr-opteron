@@ -1,7 +1,6 @@
 VERSION 	= 2.6.x
 CPU		= p3
-CC		= gcc
-CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+SHRFLAGS	= -fPIC
 OPTFLAGS	= -march=athlon-mp -msse -msse2
 TOPTFLAGS	= -D__x86_64__
 

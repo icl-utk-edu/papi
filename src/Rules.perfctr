@@ -2,7 +2,9 @@
 # GNU G77/GCC section
 #
 F77   		= g77
+CC		= gcc
 CC_R    	= $(CC) -pthread
+CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 OPTFLAGS	= -O3 -Wall 
 # Flags for test programs
 FFLAGS        	= -Dlinux -ffixed-line-length-132
@@ -60,7 +62,7 @@ endif
 MISCHDRS= perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 MISCSRCS = linux.c $(CPU)_events.c
-MISCOBJS = $(MISCSRCS:.c=.o) $(PERFCTR_OBJS)
+MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
 include Makefile.inc
 
@@ -72,14 +74,12 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 
 $(CPU)_events.o: $(CPU)_events.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
-ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
 linux.o: linux.c
-	rm -f $(PERFCTR)/linux/include/asm
-	ln -s asm-${ARCH} $(PERFCTR)/linux/include/asm
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 native_clean:
-	$(MAKE) -C $(PERFCTR) clean
+	$(MAKE) -C $(PERFCTR) distclean
 
 ifeq (${VERSION},2.6.x)
 native_install:
