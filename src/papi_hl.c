@@ -70,15 +70,22 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    char buf[500];
    int retval;
 
-   if ( !initialized ) {
+   if ( initialized == 2 ) /* Start counters */ {
+	retval = PAPI_EINVAL;
+        return retval;
+   }
+
+   if ( !initialized || initialized == 1) {
 	mhz = 0.0;
 	*mflops = 0.0;
  	*real_time = 0.0;
  	*proc_time = 0.0;
 	*flpins = 0;
-	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( retval != PAPI_VER_CURRENT )
-	   return(retval);
+        if ( !initialized ) {
+		retval = PAPI_library_init( PAPI_VER_CURRENT );
+		if ( retval != PAPI_VER_CURRENT )
+	   	return(retval);
+        }
 	if ( (hwinfo = PAPI_get_hardware_info()) == NULL ) {
 	   printf("Error getting hw_info\n");
 	   return -1;
@@ -97,7 +104,7 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 	     PAPI_shutdown();
 	     return retval;
 	}
-	initialized = 1;
+	initialized = 3;
 	start_us = PAPI_get_real_usec();
 	retval = PAPI_start(EventSet);
 	PAPI_perror(retval, buf, 500);
@@ -212,6 +219,7 @@ int PAPI_start_counters(int *events, int array_len)
   if (retval) 
     return(retval);
 
+  initialized = 2;
   return(PAPI_OK);
 }
 
@@ -227,7 +235,7 @@ int PAPI_read_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized)
+  if (!initialized || initialized==1)
     return(PAPI_EINVAL);
 
   if (array_len > hl_max_counters)
@@ -244,7 +252,7 @@ int PAPI_accum_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized)
+  if (!initialized||initialized==1)
     return(PAPI_EINVAL);
 
   if (array_len > hl_max_counters)
@@ -267,7 +275,7 @@ int PAPI_stop_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized)
+  if (initialized!=2)
     return(PAPI_EINVAL);
 
   hl_max_counters = PAPI_num_counters();
