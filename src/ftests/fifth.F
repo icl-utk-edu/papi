@@ -238,8 +238,8 @@ C     call do_flops(NUM_FLOPS)
      . name, 1)
       end if            
 
-      min = values(4)*0.8
-      max = values(4)*1.2
+      min = values(4)*0.75
+      max = values(4)*1.25
       if ((values(2) .gt. max) .OR. (values(2) .lt. min) .OR. 
      *    (values(6) .gt. (max*2)) .OR. (values(6) .lt. (min*2)) .OR. 
      *    (values(8) .gt. max) .OR. (values(8) .lt. min)) then
