@@ -147,6 +147,15 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
         }
    } 
 
+   fclose(f);
+
+   f = fopen("/proc/pal/cpu0/vm_info","r");
+   /* No errors on fopen as I am not sure this is always on the systems */
+   if ( f != NULL ){
+	
+     fclose(f);
+   }
+   
    get_cpu_info(&rev,&model,&family,&archrev);
 
    return retval;
@@ -157,15 +166,12 @@ int get_number( char *buf ){
    int num;
    char *tmp, *end;
 
-printf("Buf: %s\n", buf);
    tmp = strpbrk(buf, numbers);
-printf("%s:%s\n", tmp, buf);
    if ( tmp != NULL ){
 	end = tmp;
 	while(isdigit(*end)) end++;
 	*end='\0';
         num = atoi(tmp);
-printf("Num: %d\n", num);
         return(num);
     }
     else {
