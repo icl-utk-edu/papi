@@ -54,7 +54,7 @@ int main(int argc, char **argv)
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
       PAPI_event = PAPI_TOT_INS;
-      mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+      mask = MASK_TOT_INS | MASK_TOT_CYC;
    } else {
       test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!",
                 0);
