@@ -15,3 +15,5 @@ include Makefile.inc
 
 native_clean:
 
+native_install:
+

@@ -24,3 +24,6 @@ perfctrl.o: t3e/perfctrl.s
 	cam -P t3e/perfctrl.s
 
 native_clean:
+
+native_install:
+

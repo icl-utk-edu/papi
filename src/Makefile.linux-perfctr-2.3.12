@@ -1,58 +1,68 @@
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
-SUBSTR  = linux-perfctr
-MSUBSTR  = linux-perfctr-2.3
-DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads 
-
 KERNINC	= /usr/src/linux-2.4.13/include
 PERFCTR	= ./perfctr-2.3
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 
-#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro
-TOPTFLAGS= -O0 -fomit-frame-pointer -mpentiumpro
-CC	= gcc
-#
-#  G77 section
-F77   = g77
-FFLAGS        = -Dlinux
+# #
+# # GNU G77 section
+# #
+F77	= g77
+FFLAGS  = -Dlinux
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= -O0
+FTOPTFLAGS=-g
 # #
 # #  Portland Group PGF77 section
+# #
 # F77       = pgf77
 # FFLAGS    = -Dlinux
 # FOPTFLAGS = -O3 -tp p6
 # FTOPTFLAGS= $(FOPTFLAGS)
 # #
 # #  Intel Corp. Fortran compiler
+# #
 # F77      = ifc
 # FFLAGS   = -Dlinux
 # LDFLAGS  = -lPEPCF90  # Intel portability library (getarg_)
 # FOPTFLAGS= -O3 -tpp6
 # FTOPTFLAGS= $(FOPTFLAGS)
 
-CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+SUBSTR	= linux-perfctr
+MSUBSTR	= linux-perfctr-2.3
+DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
+LIBS	= static shared
+TARGETS = serial multiplex_and_pthreads 
+
+CC	= gcc
+CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 
+#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+TOPTFLAGS= -O0 -g -mpentiumpro
 MISCOBJS= libperfctr.o
 MISCHDRS= x86-events.h ia32_presets.h
-SHLIBOBJS = $(MISCOBJS)
-SHLIBDEPS = -L$(PERFCTR)/usr.lib -lperfctr
+SHLIBDEPS = $(PERFCTR)/usr.lib/libperfctr.so
 
 include Makefile.inc
 
 x86-events.h: $(PERFCTR)/usr.lib/event_codes.h
-	cp ./$(PERFCTR)/usr.lib/event_codes.h $@
+	cp $(PERFCTR)/usr.lib/event_codes.h $@
 
 libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o
-	cp ./$(PERFCTR)/usr.lib/libperfctr.o .
+	cp $(PERFCTR)/usr.lib/libperfctr.o .
 
-$(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o: null
+$(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)
+	$(MAKE) -C $(PERFCTR)/usr.lib -f Makefile.shared LDFLAGS="-Xlinker '-soname' -Xlinker 'libperfctr.so' -Xlinker '-rpath' -Xlinker '$(DESTDIR)/lib'" libperfctr.so
 
 native_clean:
 	$(MAKE) -C $(PERFCTR) clean
+	$(MAKE) -C $(PERFCTR)/usr.lib -f Makefile.shared clean
 
-null:
-
+native_install:
+	cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
+	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include

@@ -36,3 +36,7 @@ cpu_version.o: alpha/cpu_version.s
 #	cc -O -c alpha/read_cycle_counter.s
 
 native_clean:
+
+native_install:
+
+

@@ -199,7 +199,7 @@ C     Tests that PAPI_set_multiplex() works before adding events
 
 C  This print-out is disabled until PAPIf_list_event is working
 C  for multiplexed event sets (change -4711 to 0 when it is working)
-      if(tests_quiet .EQ. -4711) then
+      if(tests_quiet .EQ. 0) then
         write(*,*) 'Event set list'
         call PrintEventSet(EventSet)
       endif

@@ -32,3 +32,6 @@ $(MISCOBJS): $(MISCSRCS)
 
 native_clean:
 	rm -f $(MISCOBJS); cd $(LIBPFM); $(MAKE) clean
+
+native_install:
+

@@ -36,3 +36,6 @@ get_tick.o: solaris-ultra/get_tick.S
 	cc -c -D_ASM -xarch=v8plusa solaris-ultra/get_tick.S
 
 native_clean:
+
+native_install:
+

@@ -30,4 +30,7 @@ include Makefile.inc
 aix-shared: $(SOURCES)
 	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
+native_install:
+
 native_clean:
+

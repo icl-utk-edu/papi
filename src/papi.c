@@ -1509,6 +1509,7 @@ int PAPI_set_multiplex(int *EventSet)
 
 static int convert_eventset_to_multiplex(EventSetInfo *ESI)
 {
+  int i, j = 0, *mpxlist = NULL, retval;
   EventInfo_t *tmp;
 
   tmp = (EventInfo_t *)malloc(PAPI_MPX_DEF_DEG*sizeof(EventInfo_t));
@@ -1520,7 +1521,7 @@ static int convert_eventset_to_multiplex(EventSetInfo *ESI)
 
   if (ESI->NumberOfEvents)
     {
-      int retval, i, *mpxlist = (int *)malloc(sizeof(int)*ESI->NumberOfEvents);
+      mpxlist = (int *)malloc(sizeof(int)*ESI->NumberOfEvents);
       if (mpxlist == NULL)
 	{
 	  free(tmp);
@@ -1528,31 +1529,48 @@ static int convert_eventset_to_multiplex(EventSetInfo *ESI)
 	}
 
       /* Build the args to MPX_add_events(). */
+
+      /* Remeber the EventInfoArray can be sparse
+	 and the data can be non-contiguous */
+
+      for (i=0;i<EventInfoArrayLength(ESI);i++)
+	if (ESI->EventInfoArray[i].code != PAPI_NULL)
+	  mpxlist[j++] = ESI->EventInfoArray[i].code;	      
       
-      for (i=0;i<ESI->NumberOfEvents;i++)
-	mpxlist[i] = ESI->EventInfoArray[i].code;	      
-      
-      retval = MPX_add_events(&ESI->multiplex,mpxlist,i);
+      retval = MPX_add_events(&ESI->multiplex,mpxlist,j);
       if (retval != PAPI_OK)
 	{
 	  free(mpxlist);
 	  free(tmp);
 	  return(retval);
 	}
-      free(mpxlist);
     }
   
   /* Resize the EventInfo_t array */
   
   free(ESI->EventInfoArray);
   ESI->EventInfoArray = tmp;
+
+  /* Update the state before initialization! */
+
   ESI->state |= PAPI_MULTIPLEXING;
 
-  /* Update the state */
-  /* Bug fix, state must be enabled, as ESI is an argument. */
+  /* Initialize it */
 
   initialize_EventInfoArray(ESI);
   
+  /* Copy only the relevant contents of EventInfoArray to
+     this multiplexing eventset. This allows PAPI_list_events
+     to work transparently and allows quick lookups of what's
+     in this eventset without having to iterate through all
+     it's 'sub-eventsets'. */
+
+  for (i=0;i<ESI->NumberOfEvents;i++)
+    {
+      ESI->EventInfoArray[i].code = mpxlist[i];      
+    }  
+  if (mpxlist) free(mpxlist);
+
   return(PAPI_OK);
 }
 
