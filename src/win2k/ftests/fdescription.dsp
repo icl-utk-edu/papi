@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE F90 /compile_only /nologo /warn:nofileopt
-# ADD F90 /compile_only /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"c:\papi\src" /include:"..\.." /nologo /warn:nofileopt /fpp:"/m"
+# ADD F90 /compile_only /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"c:\papi\src" /include:"..\.." /include:"..\..\ctests" /nologo /warn:nofileopt /fpp:"/m"
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -69,7 +69,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE F90 /check:bounds /compile_only /debug:full /nologo /traceback /warn:argument_checking /warn:nofileopt
-# ADD F90 /check:bounds /compile_only /debug:full /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"..\.." /nologo /traceback /warn:argument_checking /warn:nofileopt /fpp:"/m"
+# ADD F90 /check:bounds /compile_only /debug:full /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"..\.." /include:"..\..\ctests" /nologo /traceback /warn:argument_checking /warn:nofileopt /fpp:"/m"
 # SUBTRACT F90 /assume:underscore
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 # ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
@@ -109,6 +109,14 @@ SOURCE=..\..\ftests\description.F
 
 !ENDIF 
 
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\ftests\do_loops.F
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\ftests\dummy.F
 # End Source File
 # Begin Source File
 
