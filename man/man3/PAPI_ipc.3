@@ -1,84 +1,53 @@
 .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5
 .TH PAPI_ipc 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
-*
-* This is a placeholder. It needs a complete rewrite.
-*
-
 .SH NAME
-PAPI_flops \- PAPI High level: Simplified call to get Mflops/s, real and processor time
+PAPI_ipc \- PAPI High level: Simplified call to get instructions per cycle, real and processor time
+
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflops ");"
+.BI "int PAPI_ipc (float *" rtime ", float *" ptime ", long_long *" ins ", float *" ipc ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check )
+.BI PAPIF_ipc(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  ins,\  C_FLOAT\  ipc,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
 .LP
 The first call to
-.B PAPI_flops(\|)
-will initialize PAPI, set up the counters
-to monitor PAPI_FP_INS and PAPI_TOT_CYC events and start the counters.
+.B PAPI_ipc(\|)
+will initialize the PAPI High Level interface, set up the counters
+to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters.
 Subsequent calls will read the counters and return total real time,
-total process time, total floating point instructions since the start
-of the measurement and Mflops/s rate since latest call to
-.B PAPI_flops(\|)
-\. Any call with
-.I flpins
-= -1 will reinitialize all counters to 0.
+total process time, total instructions since the start
+of the measurement and the instructions per cycle rate since latest call to
+.B PAPI_ipc(\|).
 
 .SH ARGUMENTS
 .I *rtime 
--- total realtime since the first PAPI_flops() call
+-- total realtime since the first PAPI_ipc() call
 .LP
 .I *ptime 
--- total process time since the first PAPI_flops() call
+-- total process time since the first PAPI_ipc() call
 .LP
-.I *flpins 
--- total floating point instructions since the first PAPI_flops() call
+.I *flpins, flpops 
+-- total instructions since the first call
 .LP
-.I *mflops 
--- Mflops/s achieved since the latest PAPI_flops() call
+.I *ipc 
+-- instructions per cycle achieved since the previous call
 
 .SH RETURN VALUES
 On success, this function returns
 .B "PAPI_OK."
  On error, a non-zero error code is returned. 
 
-.SH NOTES
-.LP
-Most platforms are only capable of counting the number of floating
-point instructions completed. This may or may not translate to your 
-definition of floating point operations. The measured rate is thus 
-Mflips/s, and will in some circumstances count FMA instructions as one
-operation. Consult the hardware documentation for your system for specifics.
-.LP
-.nf
-.BR  PAPI_flops() " may be called by:"
-.B  \t
-.B  \tthe user application program
-.fi
-.LP
-.nf
-.B  \t
-.BR  PAPI_flops() " contains calls to:"
-.B  \t
-.B  \tPAPI_perror()
-.B  \tPAPI_library_init()
-.B  \tPAPI_get_hardware_info()
-.B  \tPAPI_create_eventset()
-.B  \tPAPI_add_event()
-.B  \tPAPI_start()
-.B  \tPAPI_get_real_usec()
-.B  \tPAPI_accum()
-.B  \tPAPI_shutdown()
-.fi
+.SH ERRORS
+
+.SH EXAMPLES
 
 .SH AUTHORS
 The PAPI Team. See them at the PAPI Web Site: 
@@ -88,4 +57,4 @@ http://icl.cs.utk.edu/projects/papi
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_accum (3)
+.BR "PAPI_accum (3)", "PAPI_flips (3)", "PAPI_flops (3)"

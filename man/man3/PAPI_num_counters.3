@@ -23,8 +23,8 @@ returns the optimal length of the values array for the
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
 .B PAPI_num_counters()
-initialises the library using
-.B PAPI_library_init
+initialises the library to
+.B PAPI_HIGH_LEVEL_INITED
 if necessary.
 
 .SH RETURN VALUES
@@ -81,4 +81,7 @@ If you don't call this function, your application could core dump.
 .SH SEE ALSO
 .BR PAPI_start_counters "(3),"
 .BR PAPI_read_counters "(3),"
-.BR PAPI_stop_counters "(3)"
+.BR PAPI_stop_counters "(3),"
+.BR PAPI_init_library "(3),"
+.BR PAPI_num_hwctrs "(3),"
+.BR PAPI "(3)"

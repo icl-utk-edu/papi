@@ -1,10 +1,6 @@
 .\" $Id$
 .TH PAPI_get_opt 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
-*
-* Rewrite to add discussion of PAPI_get_multiplex
-*
-
 .SH NAME
 PAPI_get_opt, PAPI_set_opt \- get/set PAPI library or event set options
  PAPIF_get_clockrate, PAPIF_get_domain, PAPIF_get_granularity, PAPIF_get_preload
@@ -40,8 +36,8 @@ The Fortran interface is a series of calls implementing various subsets of
 the C interface. Not all options in C are available in Fortran.
 .LP
 .B NOTE:
-/  Some options, such as PAPI_SET_DOMAIN, are also available as separate entry points
-in both C and Fortran.
+/  Some options, such as PAPI_SET_DOMAIN and PAPI_SET_MULTIPLEX, are also 
+available as separate entry points in both C and Fortran.
 .LP
 The reader is urged to see the example code in the PAPI distribution
 for usage of PAPI_get_opt.  The file 
@@ -130,9 +126,8 @@ Set default counting granularity.
 T}
 PAPI_GET_DEBUG$T{
 Get the PAPI debug state. The available debug states are
-defined in
-.BR papi.h .
-The debug state is available in ptr->debug
+defined in papi.h. 
+The debug state is available in ptr->debug.
 T}
 PAPI_SET_DEBUG$T{
 Set the PAPI debug state
@@ -243,6 +238,8 @@ The PAPI Team. See them at the PAPI Web Site:
 http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
+The granularity functions are not yet implemented.
+The domain functions are only implemented on some platforms.
 There are no known bugs in these functions.
 
 .SH SEE ALSO
