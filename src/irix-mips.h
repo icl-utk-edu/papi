@@ -10,8 +10,9 @@
 #include <fcntl.h>
 #include <malloc.h>
 #include <task.h>
+#include <ctype.h>
 #include <assert.h>
-#include <unistd.h>
+#include <rld_interface.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,10 +23,8 @@
 #include <sys/sbd.h>
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
-#include <rld_interface.h>
-#include <ctype.h>
 
-#define inline_static __inline
+#define inline_static static
 #define MAX_COUNTERS HWPERF_EVENTMAX
 #define MAX_COUNTER_TERMS 4
 #define MAX_NATIVE_EVENT 32
