@@ -3,6 +3,8 @@
 * CVS:     $Id$
 * Author:  Kevin London
 *          london@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -160,9 +162,16 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
+   /* expecting error code, so let's suppress printout of error message */
+   PAPI_get_opt(PAPI_DEBUG, &opt);
+   int save_debug_setting = opt.debug.level;
+   opt.debug.level = PAPI_QUIET;
+   PAPI_set_opt(PAPI_DEBUG, &opt);
    retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, 0, handler);
    if (retval == PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
+   opt.debug.level = save_debug_setting;
+   PAPI_set_opt(PAPI_DEBUG, &opt);
 
    retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
@@ -204,7 +213,7 @@ int main(int argc, char **argv)
 
       printf("Verification:\n");
      
-      printf("Column 1 approximately equals column 2\n");
+      printf("Column 2 approximately equals column 3\n");
    }
 
    min = (long_long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
