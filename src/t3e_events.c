@@ -210,14 +210,17 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    return (native_table[EventCode & PAPI_NATIVE_AND_MASK].description);
 }
 
-/* Given a native event code, assigns the native event's
-   information to a given pointer. */
+/* Given a native event code, assigns the native event's 
+   information to a given pointer.
+   NOTE: the info must be COPIED to the provided pointer,
+   not just referenced!
+*/
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector[0] == 0) {
       return (PAPI_ENOEVNT);
    }
-   bits = &native_table[EventCode & PAPI_NATIVE_AND_MASK].resources;
+   *bits = native_table[EventCode & PAPI_NATIVE_AND_MASK].resources;
    return (PAPI_OK);
 }
 
