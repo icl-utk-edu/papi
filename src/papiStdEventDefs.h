@@ -135,3 +135,4 @@ platform's documentation carefully.
 #define PAPI_FDV_INS (PRESET_MASK | 0x65)       /*FD ins */
 #define PAPI_FSQ_INS (PRESET_MASK | 0x66)       /*FSq ins */
 #define PAPI_FNV_INS (PRESET_MASK | 0x67)       /*Finv ins */
+#define PAPI_FP_OPS  (PRESET_MASK | 0x68)       /*Floating point operations executed */
