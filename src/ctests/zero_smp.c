@@ -50,8 +50,12 @@ void Thread(int t, int n)
   int num_events1;
   long long **values;
   long long elapsed_us, elapsed_cyc;
+  void *handle;
+  
+  retval = PAPI_thread_init(&handle, 0);
+  assert(retval >= PAPI_OK);
 
-  EventSet1 = add_test_events(&num_events1,&mask1);
+  EventSet1 = add_test_events_r(&num_events1,&mask1,handle);
 
   /* num_events1 is greater than num_events2 so don't worry. */
 
@@ -92,7 +96,7 @@ int main()
   int i, rc;
   long long elapsed_us, elapsed_cyc;
 
-  assert(PAPI_init() == PAPI_OK);
+  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
 
   elapsed_us = PAPI_get_real_usec();
 

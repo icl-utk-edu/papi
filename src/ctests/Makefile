@@ -17,16 +17,16 @@ shmem: $(SHMEM)
 serial: $(SERIAL)
 
 zero_pthreads: zero_pthreads.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(CFLAGS) $(OPTFLAGS) zero_pthreads.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_pthreads -lpthread
+	-$(CC_R) $(CFLAGS) $(OPTFLAGS) zero_pthreads.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_pthreads -lpthread
 
 zero_smp: zero_smp.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_smp.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_smp $(SMPLIBS)
+	-$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_smp.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_smp $(SMPLIBS)
 
 zero_shmem: zero_shmem.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_shmem.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_smp $(SMPLIBS)
+	-$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_shmem.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_smp $(SMPLIBS)
 
 zero_omp: zero_omp.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(OMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_omp.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_omp $(OMPLIBS)
+	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_omp.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_omp $(OMPLIBS)
 
 clockres: clockres.c ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) clockres.c ../libpapi.a $(LDFLAGS) -o clockres

@@ -11,7 +11,7 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* L1 Cache Imisses */
   {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
   /* L2 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}},			
+  {0,{0,0,0,0,0,0,0,0}}, 			
   /* L2 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L3 Cache Dmisses*/
@@ -19,24 +19,24 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L1 Total Cache misses */
-  {DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}}, 			
+  {DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}},
   /* L2 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}},
+  {0,{0,0,0,0,0,0,0,0}},			
   /* L3 Total Cache misses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
   {0,{"PM_SNOOP_RECV",0,0,0,0,0,0,0}},	
   /* Req. shared cache line*/
-  {0,{"PM_SNOOP_E_TO_S",0,0,0,0,0,0,0}},		 	
+  {0,{0,0,0,0,0,0,0,0}},		 	
   /* Req. clean cache line*/
   {0,{0,0,0,0,0,0,0,0}},		 	
   /* Req. invalidate cache line*/
-  {0,{"PM_SNOOP_PUSH_INT",0,0,0,0,0,0,0}},		 	
-  /* L2 Load misses*/
-  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},		
-  /* L2 Store misses*/
-  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* 15*/
+  {0,{0,0,0,0,0,0,0,0}},		 	
+  /* Req. intervention cache line*/
+  {0,{0,0,0,0,0,0,0,0}},		 	
+  /* L3 Load misses*/
+  {0,{0,0,0,0,0,0,0,0}},		
+  /* L3 Store misses*/
   {0,{0,0,0,0,0,0,0,0}},			
   /* BRU idle cycles*/
   {0,{0,0,0,0,0,0,0,0}},		
@@ -52,19 +52,19 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   {0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}},		
   /* Total TLB misses*/
   {DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}},		
-  /* 23*/
+  /* L1LM*/
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 24*/
+  /* L1SM*/
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 25*/
+  /* L2 Load misses */
+  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
+  /* L2 Store misses */
+  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
+  /* Btacmiss*/
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 26*/
+  /* prefmiss*/
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 27*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* 28*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* 29*/
+  /* L3DCH*/
   {0,{0,0,0,0,0,0,0,0}},			
   /* TLB shootdowns*/
   {0,{0,0,0,0,0,0,0,0}},			
@@ -133,7 +133,87 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   /* load/store*/
   {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
   /* Synchronization inst. executed*/
-  {0,{"PM_SYNC",0,0,0,0,0,0,0}}		
+  {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
+  /* L1 data cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP mult */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP add */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP Div */
+  { 0,{0,0,0,0,0,0,0,0}},
+  /* FP Sqrt */
+  { 0,{0,0,0,0,0,0,0,0}},
+  /* FP inv */
+  {0,{0,0,0,0,0,0,0,0}}
 };
 
 static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
@@ -150,9 +230,9 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L1 Total Cache misses */
-  {DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}},			
+  {DERIVED_ADD,{"PM_DC_MISS","PM_IC_MISS",0,0,0,0,0,0}},
   /* L2 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}},
+  {0,{0,0,0,0,0,0,0,0}}, 			
   /* L3 Total Cache Dmisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
@@ -163,11 +243,11 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {0,{0,0,0,0,0,0,0,0}},		 	
   /* Req. invalidate cache line*/
   {0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}},		 	
-  /* L2 load misses */
-  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* L2 store misses */
-  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
-  /* 15*/
+  /* Req. intervention cache line*/
+  {0,{"PM_WR_HIT_SHR_KILL_BRC",0,0,0,0,0,0,0}},		 	
+  /* L3 load misses */
+  {0,{0,0,0,0,0,0,0,0}},			
+  /* L3 store misses */
   {0,{0,0,0,0,0,0,0,0}},			
   /* BRU idle cycles*/
   {0,{"PM_BRU_IDLE",0,0,0,0,0,0,0}},		
@@ -183,19 +263,19 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {0,{"PM_ITLB_MISS",0,0,0,0,0,0,0}},		
   /* Total TLB misses*/
   {DERIVED_ADD,{"PM_DTLB_MISS","PM_ITLB_MISS",0,0,0,0,0,0}},
-  /* 23*/
+  /* L1 Load misses */
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 24*/
+  /* L1 Store misses */
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 25*/
+  /* L2 Load misses */
+  {0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
+  /* L2 Store misses */
+  {0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}},			
+  /* BTACmiss*/
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 26*/
+  /* Prefmiss*/
   {0,{0,0,0,0,0,0,0,0}},			
-  /* 27*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* 28*/
-  {0,{0,0,0,0,0,0,0,0}},			
-  /* 29*/
+  /* L3DCH*/
   {0,{0,0,0,0,0,0,0,0}},			
   /* TLB shootdowns*/
   {0,{0,0,0,0,0,0,0,0}},			
@@ -216,9 +296,9 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   /* Cycles max instructions issued */
   {0,{"PM_4INST_DISP",0,0,0,0,0,0,0}},	
   /* Cycles no/min instructions completed */
-  {0,{0,0,0,0,0,0,0,0}},	
+  {0,{"PM_1INST_DISP",0,0,0,0,0,0,0}},	
   /* Cycles max instructions completed */
-  {0,{0,0,0,0,0,0,0,0}},		
+  {0,{"PM_4INST_DISP",0,0,0,0,0,0,0}},	
   /* Hardware interrupts */
   {0,{0,0,0,0,0,0,0,0}},		
   /* Uncond. branches executed*/
@@ -253,7 +333,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {0,{0,0,0,0,0,0,0,0}},			
   /* FLOPS */
   {DERIVED_PS,{"PM_CYC","PM_FPU_CMPL",0,0,0,0,0,0}},			
-  /* 58*/
+  /* CPU stall cycles*/
   {0,{0,0,0,0,0,0,0,0}},			
   /* Cycles FP units are stalled*/
   {0,{"PM_FPU_WT",0,0,0,0,0,0,0}},		
@@ -263,17 +343,97 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}},
   /* load/stores executed*/
   {0,{"PM_LS_EXEC",0,0,0,0,0,0,0}},		
-  /* Synchronization inst. executed*/
-  {0,{"PM_SYNC",0,0,0,0,0,0,0}}		
+  /* Synchronization inst. executed */
+  {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
+  /* L1 data cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP mult */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP add */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP Div */
+  { 0,{0,0,0,0,0,0,0,0}},
+  /* FP Sqrt */
+  { 0,{0,0,0,0,0,0,0,0}},
+  /* FP inv */
+  {0,{0,0,0,0,0,0,0,0}}
 };
 
 static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
   /* L1 Cache Dmisses */
-  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0,0}},			
+  {DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0,0}},
   /* L1 Cache Imisses */
   {0,{"PM_IC_MISS",0,0,0,0,0,0,0}},		
   /* L2 Cache Dmisses*/
-  {0,{0,0,0,0,0,0,0,0}},
+  {0,{0,0,0,0,0,0,0,0}}, 			
   /* L2 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L3 Cache Dmisses*/
@@ -281,9 +441,9 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* L3 Cache Imisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* L1 Total Cache misses */
-  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0}},			
+  {DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1","PM_ST_MISS",0,0,0,0,0}},
   /* L2 Total Cache misses*/
-  {0,{0,0,0,0,0,0,0,0}}, 			
+  {0,{0,0,0,0,0,0,0,0}},
   /* L3 Total Cache Dmisses*/
   {0,{0,0,0,0,0,0,0,0}}, 			
   /* Req. for snoop*/
@@ -383,7 +543,7 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* Vector/SIMD inst. executed */
   {0,{0,0,0,0,0,0,0,0}},			
   /* FLOPS */
-  {DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_CMPL","PM_FPU1_CMPL",0,0,0,0,0}},		     
+  {DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_CMPL","PM_FPU1_CMPL",0,0,0,0,0}},
   /* 58*/
   {0,{0,0,0,0,0,0,0,0}},			
   /* Cycles FP units are stalled*/
@@ -395,7 +555,87 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   /* load/stores */
   {DERIVED_ADD,{"PM_LD_CMPL","PM_ST_CMPL",0,0,0,0,0,0}},
   /* Synchronization inst. executed */
-  {0,{"PM_SYNC",0,0,0,0,0,0,0}}		
+  {0,{"PM_SYNC",0,0,0,0,0,0,0}},		
+  /* L1 data cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 data cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 instruction cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache hits */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache accesses */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache reads */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L1 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L2 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* L3 total cache writes */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP mult */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP add */
+  {0,{0,0,0,0,0,0,0,0}},
+  /* FP Div */
+  { 0,{"PM_FPU_FDIV",0,0,0,0,0,0,0}},
+  /* FP Sqrt */
+  { 0,{"PM_FPU_FSQRT",0,0,0,0,0,0,0}},
+  /* FP inv */
+  {0,{0,0,0,0,0,0,0,0}}
 };
 
 /* Utility functions */
@@ -701,7 +941,7 @@ static int get_system_info(void)
   strcpy(_papi_system_info.hw_info.model_string,tmp.proc_name);
   _papi_system_info.hw_info.revision = (float)_system_configuration.version;
   retval = pm_cycles() / 10000.0;
-  _papi_system_info.hw_info.mhz = (float)retval / 100.0;
+  _papi_system_info.hw_info.mhz = (float)(int)(retval / 100.0);
   _papi_system_info.num_gp_cntrs = tmp.maxpmcs;
   _papi_system_info.num_cntrs = tmp.maxpmcs;
   _papi_system_info.cpunum = mycpu();

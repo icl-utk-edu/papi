@@ -784,10 +784,8 @@ static int lookup_EventCodeIndex(EventSetInfo *ESI, int EventCode)
 
 static EventSetInfo *lookup_EventSet(const DynamicArray *map, int eventset)
 {
-#ifdef DEBUG
   if ((eventset < 0) || (eventset >= map->totalSlots))
     return(NULL);
-#endif
   return(map->dataSlotArray[eventset]);
 }
 

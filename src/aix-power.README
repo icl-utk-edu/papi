@@ -5,4 +5,14 @@ The encoding for native (NON-PAPI) events is:
 		Low 8 bits indicate which counter number: 0 - 7
 		Bits 8-16 indicate which event number: 0 - 50
 
-See: /usr/lpp/pmtoolkit/lib
+See: /usr/lpp/pmtoolkit/lib/<arch>.evs
+
+For threaded programs, you had better:
+
+setenv AIXTHREAD_SCOPE S
+
+Test case notes:
+
+All FPU counts for the test cases will be half of the expected values,
+because the Power has a FMADD instruction.
+
