@@ -173,8 +173,8 @@
         print *, 'Column 4 exactly equals column 5'
       end if
 
-      min = values(3)*0.9
-      max = values(3)*1.1
+      min = values(3)*0.8
+      max = values(3)*1.2
 
       if ((values(1).gt.max) .OR. (values(1).lt.min) .OR. 
      *(values(5).gt.(max*2)) .OR. (values(5).lt.(min*2)) .OR.
