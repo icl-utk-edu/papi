@@ -14,8 +14,8 @@
 
 _syscall3(int, perf, int, op, int, counter, int, event);
 
-#include "papi_internal.h"
 #include "papi.h"
+#include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
 /* The following structure holds preset values for that defined in the 
@@ -517,14 +517,16 @@ int _papi_hwd_write(void *machdep, long long events[])
 
 // changed args to code, value ,... to match proto in internal.h
 
-int _papi_hwd_setopt(int code, int value, void *option)
+int _papi_hwd_setopt(int code, int value, PAPI_option_t *option)
 {
   switch (code)
     {
+#if 0
     case PAPI_SET_MPXRES:
-      return(PAPI_ESBSTR);	//changed NULL to 0
+      return(_papi_portable_set_multiplex(value,option->multiplex));
     case PAPI_SET_OVRFLO:
-      return(PAPI_ESBSTR);	//changed NULL to 0
+      return(_papi_portable_set_overflow(value,option->overflow));
+#endif
     default:
       return(PAPI_EINVAL);	//changed NULL to 0
     }
@@ -535,14 +537,16 @@ int _papi_hwd_setopt(int code, int value, void *option)
 
   /* probably the same info as above */
 
-int _papi_hwd_getopt(int code, int *value, void *option)
+int _papi_hwd_getopt(int code, int *value, PAPI_option_t *option)
 {
   switch (code)
     {
+#if 0
     case PAPI_GET_MPXRES:
-      return(PAPI_ESBSTR);
+      return(_papi_portable_get_multiplex(value,option->multiplex));
     case PAPI_GET_OVRFLO:
-      return(PAPI_ESBSTR);	//changed NULL to 0
+      return(_papi_portable_get_overflow(value,option->overflow));
+#endif 
     default:
       return(PAPI_EINVAL);
     }

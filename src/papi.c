@@ -9,8 +9,8 @@
 #include <strings.h>
 #include <errno.h>
 
-#include "papi_internal.h"
 #include "papi.h"
+#include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
 /* Static prototypes */
@@ -455,7 +455,8 @@ static int add_EventSet(EventSetInfo *ESI)
   ESI->EventSetIndex=PAPI_EVENTSET_MAP.lowestEmptySlot;
   PAPI_EVENTSET_MAP.dataSlotArray[PAPI_EVENTSET_MAP.lowestEmptySlot] = ESI;
   
-  /*bookkeeping*/
+  /* Find the lowest available slot */
+
   N=PAPI_EVENTSET_MAP.lowestEmptySlot;
   while(PAPI_EVENTSET_MAP.dataSlotArray[N]!=NULL)
     N++;
@@ -465,26 +466,109 @@ static int add_EventSet(EventSetInfo *ESI)
   return(PAPI_OK);
 }
 
-int remove_EventSet(int eventset) 
+static int remove_EventSet(int eventset) 
 {
   return(PAPI_OK);
 }
 
+static EventSetInfo *lookup_EventSet(int eventset)
+{
+  if ((eventset > 1) && (eventset < PAPI_EVENTSET_MAP.totalSlots))
+    return(PAPI_EVENTSET_MAP.dataSlotArray[eventset]);
+  else
+    return(NULL);
+}
+
+static int event_is_in_eventset(int event, EventSetInfo *ESI)
+{
+  int i = ESI->NumberOfCounters;
+  int *events_in_set = ESI->EventCodeArray;
+
+  while ((--i) >= 0)
+    {
+      if (events_in_set[i] == event)
+	return(i);
+    }
+  
+  return(handle_error(PAPI_EINVAL,"Event not in EventSet"));
+}
+
 /* There's more damn comments in this file than code! Let's go guys. */
+
+#if 0
+
+static int set_multiplex(int value, PAPI_option_t *ptr)
+{
+  return(_papi_hwd_setopt(PAPI_SET_MPXRES,value,ptr));
+}
+
+static int get_multiplex(int *value, PAPI_option_t *ptr)
+{
+  if ((!value) || (!ptr))
+    return(handle_error(PAPI_EINVAL,"Invalid pointer"));
+
+  return(_papi_hwd_getopt(PAPI_SET_MPXRES,value,ptr));
+}
+
+static int set_overflow(int eventset, PAPI_option_t *ptr)
+{
+  int retval, ind;
+  EventSetInfo *ESI = lookup_EventSet(eventset);
+
+  if (!ESI)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+
+  if (ESI->overflow.eventindex < 0) /* No overflow is active for this EventSet */
+    {
+      if (ptr == NULL)    /* Turning off overflow that's already off */
+	return(PAPI_OK);
+    }
+    
+  ind = event_is_in_eventset(ptr->overflow.event, ESI);
+  if (ind < 0)
+    return(ind);
+
+  retval = _papi_hwd_setopt(PAPI_SET_OVRFLO,ESI->EventCodeArray[ind],ptr);
+  if (retval < 0)
+    return(retval);
+
+  ESI->overflow.eventindex = ind;
+  return(PAPI_OK);
+}
+
+static int get_overflow(int *eventset, PAPI_option_t *ptr)
+{
+  EventSetInfo *ESI;
+
+  if ((!eventset) || (!ptr))
+    return(handle_error(PAPI_EINVAL,"Invalid pointer"));
+
+  ESI = lookup_EventSet(*eventset);
+  if (!ESI)
+    return(handle_error(PAPI_EINVAL,"No such EventSet"));
+
+  memcpy(ptr,&ESI->overflow.option,sizeof(*ptr));
+  return(PAPI_OK);
+}
+#endif
 
 int PAPI_set_opt(int option, int value, PAPI_option_t *ptr)
 {
   switch (option)
     {
     case PAPI_SET_MPXRES:
+      /* return(set_multiplex(value,ptr)); */
+      return(PAPI_OK);
     case PAPI_SET_OVRFLO:
-      return(_papi_hwd_setopt(option,value,ptr));
+      /* return(set_overflow(value,ptr)); */
+      return(PAPI_OK);
     case PAPI_DEBUG:
-      if ((value < PAPI_QUIET) || (value > PAPI_VERB_ESTOP)) return(handle_error(PAPI_EINVAL,NULL));
+      if ((value < PAPI_QUIET) || (value > PAPI_VERB_ESTOP)) 
+	return(handle_error(PAPI_EINVAL,NULL));
       PAPI_ERR_LEVEL = value;
       return(PAPI_OK);
     default:
-      return(handle_error(PAPI_EINVAL,NULL));
+      return(handle_error(PAPI_EINVAL,"No such option"));
     }
 }
 
@@ -493,9 +577,14 @@ int PAPI_get_opt(int option, int *value, PAPI_option_t *ptr)
   switch (option)
     {
     case PAPI_GET_MPXRES:
+      /* return(get_multiplex(value,ptr)); */
+      return(PAPI_OK);
     case PAPI_GET_OVRFLO:
-      return(_papi_hwd_getopt(option,value,ptr));
+    /* return(get_overflow(value,ptr)); */
+      return(PAPI_OK);
     case PAPI_DEBUG:
+      if (!value)
+	return(handle_error(PAPI_EINVAL,"Invalid pointer"));
       *value = PAPI_ERR_LEVEL;
       return(PAPI_OK);
     default:

@@ -15,24 +15,12 @@
 
 #define PRESET_MASK 0x80000000
 
-typedef void PAPI_option_t; 
-
-/* this is not the final version of this data structure
-
-typedef struct _papi_options {
-  int error_level;
-} papi_options_t;
-
-typedef struct _papi_option_t  {
-int            handlerStructure; 
-int            count;
-int            signal;
-int            flag; 
-} PAPI_option_t; */
-
-
 /* All memory for this structure should be allocated outside of the 
    substrate. */
+
+typedef struct {
+  int eventindex; /* In EventCodeArray, < 0 means no overflow active */
+  papi_overflow_option_t option; } _papi_overflow_info_t;
 
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
@@ -52,12 +40,11 @@ typedef struct _EventSetInfo {
   long long *stop;    /* Array of the same length as above, but 
                          containing the values of the counters when 
                          stopped */
-  long long overflow; /* Any counter value exceeding this number 
-			 will cause an overflow. */
   long long *latest;  /* Array of the same length as above, containing 
                          the values of the counters when last read */ 
   int state;          /* The state of this entire EventSet; can be
 			 PAPI_RUNNING or PAPI_STOPPED. */
+  _papi_overflow_info_t overflow; /* Overflow option */ 
 } EventSetInfo;
 
 
@@ -124,6 +111,6 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
                          context and granularity functions available
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
-extern int _papi_hwd_setopt(int code, int value, void *option);
-extern int _papi_hwd_getopt(int code, int *value, void *option);
+extern int _papi_hwd_setopt(int code, int value, PAPI_option_t *option);
+extern int _papi_hwd_getopt(int code, int *value, PAPI_option_t *option);
 

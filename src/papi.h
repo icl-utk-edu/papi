@@ -1,4 +1,4 @@
-/* file: papi.h */
+/* $Id$ */
 
 /*
 Return Codes
@@ -107,6 +107,20 @@ true, that more advanced features may be available and defined in the header fil
 The user is encouraged to read the documentation carefully. 
 */
 
+#include <signal.h>
+
+typedef struct _papi_overflow_option_t {
+  int event;
+  long long threshold; 
+  struct sigaction action; } papi_overflow_option_t;
+
+typedef struct _papi_multiplex_option_t {
+  int milliseconds; } papi_multiplex_option_t;
+
+typedef union {
+    papi_overflow_option_t overflow;
+    papi_multiplex_option_t multiplex; 
+} PAPI_option_t;
 
 int PAPI_set_granularity(int granularity);
 int PAPI_set_context(int context);
