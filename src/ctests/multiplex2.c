@@ -15,13 +15,6 @@
 #include <unistd.h>
 #include "papi_test.h"
 
-#define SUCCESS 1
-
-extern void do_flops(int);
-extern void do_reads(int);
-
-extern int TESTS_QUIET;
-
 void init_papi(void)
 {
    int retval;
@@ -43,7 +36,7 @@ void init_papi(void)
 
 int case1(void)
 {
-   int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 0;
+   int retval, i, EventSet = PAPI_NULL, j = 0;
    long long *values;
    PAPI_event_info_t pset;
 
@@ -83,13 +76,13 @@ int case1(void)
          }
 
          if (retval == PAPI_OK) {
-            if (++j >= max_to_add)
+            if (++j >= MAX_TO_ADD)
                break;
          }
       }
    }
 
-   values = (long long *) malloc(max_to_add * sizeof(long long));
+   values = (long long *) malloc(MAX_TO_ADD * sizeof(long long));
    if (values == NULL)
       test_fail(__FILE__, __LINE__, "malloc", 0);
 

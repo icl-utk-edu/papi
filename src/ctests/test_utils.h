@@ -1,7 +1,7 @@
 #define SUCCESS 1
 #define FAILURE 0
 #define NUM_THREADS 4
-#define NUM_ITERS  100000
+#define NUM_ITERS  1000000
 #define NUM_FLOPS  20000000
 #define NUM_READS 2000000 
 #define THRESHOLD   1000000
@@ -10,3 +10,5 @@
 #define TOLERANCE   .2
 #define OVR_TOLERANCE .75
 #define MPX_TOLERANCE .20
+#define MAX_TO_ADD 9
+

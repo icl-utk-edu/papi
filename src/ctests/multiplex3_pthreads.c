@@ -48,7 +48,7 @@ void init_papi(void)
 
 int allvalid = 1;
 long long *values;
-int EventSet = PAPI_NULL, max_to_add = 6;
+int EventSet = PAPI_NULL;
 
 int case1_first_half(void)
 {
@@ -109,13 +109,13 @@ int case1_first_half(void)
          }
 
          if (retval == PAPI_OK) {
-            if (++j >= max_to_add)
+            if (++j >= MAX_TO_ADD)
                break;
          }
       }
    }
 
-   values = (long long *) malloc(max_to_add * sizeof(long long));
+   values = (long long *) malloc(MAX_TO_ADD * sizeof(long long));
    if (values == NULL)
       test_fail(__FILE__, __LINE__, "malloc", 0);
 
@@ -138,7 +138,7 @@ int case1_last_half(void)
    if (!TESTS_QUIET) {
       test_print_event_header("case1:", EventSet);
       printf("case1:");
-      for (i = 0; i < max_to_add; i++) {
+      for (i = 0; i < MAX_TO_ADD; i++) {
          printf(ONENUM, values[i]);
 
          /* There should be some sort of value for all events */

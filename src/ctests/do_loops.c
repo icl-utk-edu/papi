@@ -37,6 +37,15 @@ void do_reads(int n)
 #endif                          /* _WIN32 */
 }
 
+void do_reads_(int *n)
+{
+  do_reads(*n);
+}
+void do_reads__(int *n)
+{
+  do_reads(*n);
+}
+
 void do_flops(int n)
 {
    int i;
@@ -48,6 +57,16 @@ void do_flops(int n)
       dummy((void *) &c);
 #endif
    }
+}
+
+void do_flops_(int *n)
+{
+  do_flops(*n);
+}
+
+void do_flops__(int *n)
+{
+  do_flops(*n);
 }
 
 void do_misses(int n, int size)
@@ -67,6 +86,16 @@ void do_misses(int n, int size)
   dummy(&buf_dummy);
 }
 
+void do_misses_(int *n, int *size)
+{
+  do_misses(*n,*size);
+}
+
+void do_misses__(int *n, int *size)
+{
+  do_misses(*n,*size);
+}
+
 void do_both(int n)
 {
    int i;
@@ -77,6 +106,16 @@ void do_both(int n)
       do_flops(flops);
       do_reads(reads);
    }
+}
+
+void do_both_(int *n)
+{
+  do_both(*n);
+}
+
+void do_both__(int *n)
+{
+  do_both(*n);
 }
 
 void do_flush(void)
@@ -94,7 +133,26 @@ void do_flush(void)
   dummy(&flush_dummy);
 }
 
+void do_flush_(void)
+{
+  do_flush();
+}
+
+void do_flush__(void)
+{
+  do_flush();
+}
+
 void do_l1misses(int n)
 {
   do_misses(n,L1_MISS_BUFFER_SIZE_INTS);
+}
+
+void do_l1misses_(int *n)
+{
+  do_l1misses(*n);
+}
+void do_l1misses__(int *n)
+{
+  do_l1misses(*n);
 }

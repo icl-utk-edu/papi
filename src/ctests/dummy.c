@@ -6,6 +6,12 @@ void dummy(void *array)
 /* Confuse the compiler so as not to optimize
    away the flops in the calling routine    */
 }
+void dummy_(void *array)
+{
+}
+void dummy__(void *array)
+{
+}
 
 /* We have to actually touch the memory to confuse some
  * systems, so they actually allocate the memory.
