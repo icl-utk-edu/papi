@@ -6,7 +6,8 @@ MPX	= multiplex1 multiplex1_pthreads
 SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third third-inv fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
-	overflow_single_event overflow profile tenth native 
+	overflow_single_event overflow profile tenth native  \
+	memory
 BROKEN	= inherit pernode
 ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 UTILOBJS= do_loops.o test_utils.o dummy.o
@@ -120,6 +121,9 @@ tenth: tenth.c $(UTILOBJS) $(PAPILIB)
 
 native: native.c $(UTILSOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) native.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o native
+
+memory: memory.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory
 
 eventname: eventname.c $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) eventname.c $(PAPILIB) $(LDFLAGS) -o eventname
