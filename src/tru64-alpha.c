@@ -664,14 +664,6 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
-void _papi_hwd_lock(int lck)
-{
-}
-
-void _papi_hwd_unlock(int lck)
-{
-}
-
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si,
                               void * info)
 {

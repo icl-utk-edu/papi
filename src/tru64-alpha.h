@@ -75,6 +75,8 @@ typedef siginfo_t hwd_siginfo_t;
 typedef struct sigcontext hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->sc_pc)
 
+#define  _papi_hwd_lock(lck) 
+#define  _papi_hwd_unlock(lck) 
 
 typedef struct hwd_search {
    /* PAPI preset code */
