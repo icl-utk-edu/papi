@@ -427,20 +427,44 @@ inline static int set_domain(hwd_control_state_t *this_state, int domain)
   this_state->evt.pfp_dfl_plm = mode;
 #endif
 
+  /* Bug fix in case we don't call pfm_dispatch_events after this code */
+
   for (i=0;i<PMU_MAX_COUNTERS;i++)
     {
 #ifdef PFM06A
       if (this_state->pc[i].pfr_reg.reg_num)
 	{
-	  DBG((stderr,"slot %d, register %ld active, config value 0x%lx\n",i,this_state->pc[i].pfr_reg.reg_num,this_state->pc[i].pfr_reg.reg_value));
+	  perfmon_reg_t value;
+	  DBG((stderr,"slot %d, register %ld active, config value 0x%lx\n",
+	       i,this_state->pc[i].pfr_reg.reg_num,this_state->pc[i].pfr_reg.reg_value));
+
+	  value.pmu_reg = 
+	    this_state->pc[i].pfr_reg.reg_value;
+	  value.pmc_plm = mode;
+	  this_state->pc[i].pfr_reg.reg_value = 
+	    value.pmu_reg;
+
 	  DBG((stderr,"new config value 0x%lx\n",this_state->pc[i].pfr_reg.reg_value));
+	}
 #else
       if (this_state->pc[i].reg_num)
 	{
-	  DBG((stderr,"slot %d, register %d active, config value 0x%lx\n",i,this_state->pc[i].reg_num,this_state->pc[i].reg_value));
-	  DBG((stderr,"new config value 0x%lx\n",this_state->pc[i].reg_value));
+#if defined(ITANIUM2)
+	  pfm_ita2_reg_t value;
+#else
+	  pfm_ita_reg_t value;
 #endif
+
+	  DBG((stderr,"slot %d, register %d active, config value 0x%lx\n",
+	       i,this_state->pc[i].reg_num,this_state->pc[i].reg_value));
+
+	  value.reg_val = this_state->pc[i].reg_value;
+	  value.pmc_plm = mode;
+	  this_state->pc[i].reg_value = value.reg_val;
+
+	  DBG((stderr,"new config value 0x%lx\n",this_state->pc[i].reg_value));
 	}
+#endif
     }
 	
   return(PAPI_OK);
