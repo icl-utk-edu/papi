@@ -143,9 +143,9 @@ inline static int setup_all_presets(int cpu_type)
       break;
 
     default:
-      fprintf(stderr,__FILE__ ", " __FUNCTION__ ":%d:: %s (%d)\n",
-	      __LINE__,"Unexpected PERFCTR processor type",cpu_type);
-      
+      fprintf(stderr,"%s, %s:%d:: %s (%d)\n",
+	      __FILE__, __FUNCTION__, __LINE__,
+	      "Unexpected PERFCTR processor type",cpu_type);
     }
 
   /* We are running on an unsupported CPU and this substrate can not
@@ -170,8 +170,9 @@ inline static int setup_all_presets(int cpu_type)
 		     preset_map[pnum].counter_cmd.evntsel[3]);
 	  else
 	    {
-	      fprintf(stderr,__FILE__ ", " __FUNCTION__ ":%d:: %s\n",
-		      __LINE__,"Unexpected internal error.");
+	      fprintf(stderr,"%s, %s:%d:: %s\n",
+		      __FILE__, __FUNCTION__, __LINE__,
+		      "Unexpected internal error.");
 	      return PAPI_ESBSTR;
 	    }
 
