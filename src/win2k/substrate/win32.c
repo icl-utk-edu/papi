@@ -18,6 +18,25 @@ static void _papi_hwd_lock_release(void);
 
 static hwd_preset_t *preset_map = NULL;
 
+#ifdef DEBUG
+static void wait(char *prompt)
+  {
+    HANDLE hStdIn;
+    BOOL bSuccess;
+    INPUT_RECORD inputBuffer;
+    DWORD dwInputEvents; /* number of events actually read */
+  
+    printf(prompt);
+    hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+    do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
+	    1, &dwInputEvents);
+    } while (!(inputBuffer.EventType == KEY_EVENT &&
+ 	    inputBuffer.Event.KeyEvent.bKeyDown));
+  }
+#endif
+
+
+
 /* Since the preset maps are identical for all ia32 substrates
   (at least Linux and Windows) the preset maps are in a common
   file to minimimze redundant maintenance.
@@ -167,8 +186,21 @@ inline_static void init_config(hwd_control_state_t *ptr)
     }
 
   ptr->selector = 0;
-  ptr->counter_cmd.evntsel[0] |= def_mode | PERF_ENABLE;
-  ptr->counter_cmd.evntsel[1] |= def_mode;
+  switch(_papi_system_info.hw_info.vendor)
+    {
+    case INTEL: 
+      ptr->counter_cmd.evntsel[0] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.evntsel[1] |= def_mode;
+      break;
+    case AMD:
+      ptr->counter_cmd.evntsel[0] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.evntsel[1] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.evntsel[2] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.evntsel[3] |= def_mode | PERF_ENABLE;
+      break;
+    default:
+      abort();
+    }
 }
 
 
@@ -209,8 +241,8 @@ static int get_system_info(void)
   if (len) splitpath(_papi_system_info.exe_info.fullname, _papi_system_info.exe_info.name);
   else return(PAPI_ESYS);
 
-  DBG((stderr,"Executable is %s\n",_papi_system_info.exe_info.name));
-  DBG((stderr,"Full Executable is %s\n",_papi_system_info.exe_info.fullname));
+  DBG((stderr, "Executable is %s\n",_papi_system_info.exe_info.name));
+  DBG((stderr, "Full Executable is %s\n",_papi_system_info.exe_info.fullname));
 
   /* Hardware info */
   if (!init_hwinfo(&win_hwinfo))
@@ -252,7 +284,7 @@ static void dump_cmd(struct pmc_control *t)
   int i;
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
-    DBG((stderr,"Event %d: 0x%x\n",i,t->evntsel[i]));
+    DBG((stderr, "Event %d: 0x%x\n",i,t->evntsel[i]));
 }
 #endif
 
@@ -291,7 +323,7 @@ inline_static int update_global_hwcounters(EventSetInfo_t *global)
   
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
-      DBG((stderr,"update_global_hwcounters() %d: G%I64d = G%I64d + C%I64d\n",i,
+      DBG((stderr, "update_global_hwcounters() %d: G%I64d = G%I64d + C%I64d\n",i,
 	   global->hw_start[i]+state.sum.ctr[i+1],
 	   global->hw_start[i],state.sum.ctr[i+1]));
       global->hw_start[i] = global->hw_start[i] + state.sum.ctr[i+1];
@@ -309,7 +341,7 @@ inline_static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
-      DBG((stderr,"correct_local_hwcounters() %d: L%I64d = G%I64d - L%I64d\n",i,
+      DBG((stderr, "correct_local_hwcounters() %d: L%I64d = G%I64d - L%I64d\n",i,
 	   global->hw_start[i]-local->hw_start[i],global->hw_start[i],local->hw_start[i]));
       correct[i] = global->hw_start[i] - local->hw_start[i];
     }
@@ -391,7 +423,7 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
-  DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
+  DBG((stderr, "Found %d %s %s CPU's at %f Mhz.\n",
        _papi_system_info.hw_info.totalcpus,
        _papi_system_info.hw_info.vendor_string,
        _papi_system_info.hw_info.model_string,
@@ -673,7 +705,8 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 #ifdef DEBUG
       dump_cmd(&current_state->counter_cmd);
 #endif
-	  if (pmc_control(current_state->self, &current_state->counter_cmd) < 0)
+
+      if (pmc_control(current_state->self, &current_state->counter_cmd) < 0)
 		return(PAPI_ESYS);
       
       return(PAPI_OK);
@@ -814,7 +847,7 @@ static long_long handle_derived_add(int selector, long_long *from)
 
   while ((pos = ffs(selector)))
     {
-      DBG((stderr,"Compound event, adding %I64d to %I64d\n",from[pos-1],retval));
+      DBG((stderr, "Compound event, adding %I64d to %I64d\n",from[pos-1],retval));
       retval += from[pos-1];
       selector ^= 1 << (pos-1);
     }
@@ -829,7 +862,7 @@ static long_long handle_derived_subtract(int operand_index, int selector, long_l
   selector = selector ^ (1 << operand_index);
   while ((pos = ffs(selector)))
     {
-      DBG((stderr,"Compound event, subtracting %I64d from %I64d\n",from[pos-1],retval));
+      DBG((stderr, "Compound event, subtracting %I64d from %I64d\n",from[pos-1],retval));
       retval -= from[pos-1];
       selector ^= 1 << (pos-1);
     }
@@ -904,7 +937,7 @@ int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long_long events[]
       if (selector == PAPI_NULL)
 	continue;
 
-      DBG((stderr,"Event index %d, selector is 0x%x\n",j,selector));
+      DBG((stderr, "Event index %d, selector is 0x%x\n",j,selector));
 
       /* If this is not a derived event */
 
@@ -1035,7 +1068,7 @@ void _papi_hwd_unlock(void)
 
 void _papi_hwd_dispatch_timer(int signal, struct sigcontext info)
 {
-  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info.eip));
+  DBG((stderr, "_papi_hwd_dispatch_timer() at 0x%lx\n",info.eip));
   _papi_hwi_dispatch_overflow_signal((void *)&info); 
 }
 
@@ -1062,7 +1095,7 @@ void _papi_hwd_lock(void)
   atomic_inc(&lock);
   while (atomic_read(&lock) > 1)
     {
-      DBG((stderr,"Waiting..."));
+      DBG((stderr, "Waiting..."));
       usleep(1000);
     }
 }

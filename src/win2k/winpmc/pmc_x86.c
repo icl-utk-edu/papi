@@ -96,27 +96,36 @@ static int k7_check_control(const struct pmc_control *control)
 		/* protect reserved, interrupt control, and pin control bits */
 		if( control->evntsel[i] & 0x00380000 )
 			return STATUS_K7_RESERVED;
-		/* check enable bit */
-		if( !(control->evntsel[i] & 0x00400000) )
-			continue;
-		/* check CPL field */
-		if( control->evntsel[i] & 0x00030000 )
-			last_pmc_on = i;
+		/* check enable bit and CPL field */
+		if( !(control->evntsel[i] & 0x00400000) ||
+		  !(control->evntsel[i] & 0x00030000) ) {
+		    /* not enabled; disallow random junk */
+		    if( control->evntsel[i] != 0 )
+		      return STATUS_K7_DISABLED;
+		}
+		last_pmc_on = i;
 	}
 	return last_pmc_on + 2;
 }
 
 static int k7_write_control(int nrctrs, struct pmc_control *control)
 {
-	struct perfctr_control *cpu;
 	int i;
 	unsigned evntsel;
 
-	for(i = nrctrs - 1; --i >= 0;) {	/* -1 for TSC */
-		evntsel = control->evntsel[i];
-		_wrmsr(MSR_K7_EVNTSEL0+i, evntsel, 0);
-		_wrmsr(MSR_K7_PERFCTR0+i, 0, 0);		// clear the counters
-	}
+	evntsel = control->evntsel[0];
+	_wrmsr(MSR_K7_EVNTSEL0+0, evntsel, 0);
+	_wrmsr(MSR_K7_PERFCTR0+0, 0, 0);		// clear the counters
+	evntsel = control->evntsel[1];
+	_wrmsr(MSR_K7_EVNTSEL0+1, evntsel, 0);
+	_wrmsr(MSR_K7_PERFCTR0+1, 0, 0);		// clear the counters
+	evntsel = control->evntsel[2];
+	_wrmsr(MSR_K7_EVNTSEL0+2, evntsel, 0);
+	_wrmsr(MSR_K7_PERFCTR0+2, 0, 0);		// clear the counters
+	evntsel = control->evntsel[3];
+	_wrmsr(MSR_K7_EVNTSEL0+3, evntsel, 0);
+	_wrmsr(MSR_K7_PERFCTR0+3, 0, 0);		// clear the counters
+
 	return STATUS_SUCCESS;
 }
 

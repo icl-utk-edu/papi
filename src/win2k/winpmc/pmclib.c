@@ -33,13 +33,13 @@ HANDLE pmc_open(void)
 		/* set affinity to lowest processor only */
 		if (!SetProcessAffinityMask(process, processAffinityMask)) {
 			lastError = GetLastError();
-			DBG((stderr, "Error setting affinity: %d \n", lastError));
+			PMCDBG((stderr, "Error setting affinity: %d \n", lastError));
 			return NULL;
 		}
 	}
 	else {
 		lastError = GetLastError();
-		DBG((stderr, "Error getting affinity: %d \n", lastError));
+		PMCDBG((stderr, "Error getting affinity: %d \n", lastError));
 		return NULL;
     }
 
@@ -54,10 +54,10 @@ HANDLE pmc_open(void)
 
     if(kd == INVALID_HANDLE_VALUE) {
 		lastError = GetLastError();
-		DBG((stderr, "Error opening pmc: %d \n", lastError));
+		PMCDBG((stderr, "Error opening pmc: %d \n", lastError));
 		return NULL;
     }
-	return kd;
+    return kd;
 }
 
 
@@ -166,6 +166,7 @@ int pmc_control(HANDLE kd, struct pmc_control *control)
 	int retval;
 	int nrctrs;
 
+
 	retval = DeviceIoControl(
 		kd,							// handle to device of interest
 		IOCTL_PMC_CONTROL,			// control code of operation to perform
@@ -196,13 +197,13 @@ void pmc_close(HANDLE kd)
 		/* set affinity to all processors */
 		if (!SetProcessAffinityMask(process, systemAffinityMask)) {
 			lastError = GetLastError();
-			DBG((stderr, "Error restoring affinity: %d \n", lastError));
+			PMCDBG((stderr, "Error restoring affinity: %d \n", lastError));
 			return;
 		}
 	}
 	else {
 		lastError = GetLastError();
-		DBG((stderr, "Error getting affinity: %d \n", lastError));
+		PMCDBG((stderr, "Error getting affinity: %d \n", lastError));
 		return;
     }
 }
