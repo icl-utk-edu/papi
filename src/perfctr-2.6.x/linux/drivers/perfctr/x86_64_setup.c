@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * x86_86-specific kernel-resident code.
  *
- * Copyright (C) 2003  Mikael Pettersson
+ * Copyright (C) 2003-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -23,7 +23,7 @@ static void perfctr_default_ihandler(unsigned long pc)
 
 static perfctr_ihandler_t perfctr_ihandler = perfctr_default_ihandler;
 
-void do_perfctr_interrupt(struct pt_regs *regs)
+asmlinkage void smp_perfctr_interrupt(struct pt_regs *regs)
 {
 	/* PREEMPT note: invoked via an interrupt gate, which
 	   masks interrupts. We're still on the originating CPU. */
