@@ -46,6 +46,7 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#73">Why can't I get my Fortran programs to compile with PAPI on a Cray T3E?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#79">What's wrong with PAPI_LST_INS (hex code 0x43) on my Pentium?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#76">My Sun box doesn't have libcpc.h. What should I do?</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#216">PAPI_create_eventset always returns an error now.</a><br>
 <br>
 <strong><a href="#39">The PAPI CVS Source Repository</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#172">How do I access the PAPI CVS tree remotely?</a><br>
@@ -89,6 +90,7 @@ cannot be counted due to hardware resource limits, what is the problem?</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#212">Hardware interrupt driven counters</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#213">Floating point counts on the Pentium 4 series</a><br>
 &nbsp; &nbsp; &nbsp; <a href="#214">Vector instruction counts on the Pentium 4 series</a><br>
+&nbsp; &nbsp; &nbsp; <a href="#215">The memory test sometimes fails on Athlon Processors.</a><br>
 <br>
 <strong><a href="#47">Solaris-Ultra</a></strong><br>
 &nbsp; &nbsp; &nbsp; <a href="#193">General Comments</a><br>
@@ -419,6 +421,11 @@ longer. It does appear to work on the AMD Athlon.</p></blockquote>
 <blockquote><p>You didn't check the <a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&amp;slid=96">PAPI Supported Platform Matrix</a>.
 The hardware counters on SunOS withUltraSparc are only available on Sun
 OS 5.8 and above. That's Solaris 2.8 for you SVR4 people.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="216"></a>
+<strong>PAPI_create_eventset always returns an error now.</strong>
+<blockquote><p>The EventSet MUST be set to PAPI_NULL before it is passed into PAPI_create_eventset.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <br>
@@ -1024,6 +1031,11 @@ Makefile.linux-perfctr-p4 or<br>
 &nbsp;<br>
 &nbsp;&nbsp; SSE: count all packed SSE SP and DP instructions<br>
 &nbsp;&nbsp; MMX: count all 64 and 128 bit MMX instructions</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br> <br>
+<a name="215"></a>
+<strong>The memory test sometimes fails on Athlon Processors.</strong>
+<blockquote><p>This is a known issue and we are looking in to the cause.  Currently, we have no fix or work around.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br> <br>
 <br>
