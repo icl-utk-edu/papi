@@ -63,6 +63,8 @@ int main(int argc, char **argv)
 
    if (j)
      {
+       printf("starting EventSet\n");
+       PAPI_start(EventSet);
        if ( (retval = PAPI_start(EventSet) ) != PAPI_OK ) {
 	    tmp = strdup("PAPI_start");
 	    goto FAILED;

@@ -27,6 +27,7 @@ int main(int argc, char **argv)
   int retval, num_tests = 5, num_events, tmp;
   long_long **values;
   int EventSet;
+  int i;
 #ifndef NO_FLOPS
   int mask = 0x5;
 #else
@@ -166,7 +167,7 @@ printf("min: %lld max: %lld  fir: %lld  sec: %lld  thi:  %lld fou: %lld fif: %ll
   printf("first:		PASSED\n");
   exit(0);
 FAILED:
-  printf("fifth:                FAILED\n");
+  printf("first:                FAILED\n");
   if ( retval == PAPI_ESYS ) {
         sprintf(buf, "System error in %s:", mytmp );
         perror(buf);
