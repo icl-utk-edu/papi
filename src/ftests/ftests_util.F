@@ -202,7 +202,7 @@ C    used in the program. See eg. fmatrixpapi.F
       integer len_trim
       external len_trim
 
-      write(*,100) file, ': SKIPPED'
+      write(*,100) file, ' SKIPPED'
       write(*,*) 'Line #', line
 	if (quiet .eq. 0) then
 		if(retval.eq.PAPI_ESYS) then
