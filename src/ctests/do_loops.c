@@ -4,9 +4,8 @@
 
 int buf[CACHE_FLUSH_BUFFER_SIZE_INTS];
 int buf_dummy = 0;
-int *flush = NULL;
-int flush_dummy = 0;
-
+volatile int *flush = NULL;
+volatile int flush_dummy = 0;
 volatile double a = 0.5, b = 2.2;
 
 void do_reads(int n)
@@ -40,7 +39,6 @@ void do_reads(int n)
 
 void do_flops(int n)
 {
-   extern void dummy(void *);
    int i;
    double c = 0.11;
 
@@ -54,17 +52,19 @@ void do_flops(int n)
 
 void do_misses(int n, int size)
 {
-  int j;
-  register int i, len = size / sizeof(int), dummy = buf_dummy;
+  register int i, j, tmp = buf_dummy, len = size / sizeof(int);
+  dummy(buf);
   for (j = 0; j < n; j++)
     {
       for (i = 0; i < len; i++)
 	{
-	  buf[i] = dummy;
+	  buf[i] = tmp;
 	}
-      dummy += j;
+      tmp += len;
     }
-  buf_dummy = dummy;
+  buf_dummy = tmp;
+  dummy(buf);
+  dummy(&buf_dummy);
 }
 
 void do_both(int n)
@@ -84,11 +84,14 @@ void do_flush(void)
   register int i;
   if (flush == NULL)
     flush = (int *)malloc((1024*1024*16)*sizeof(int));
+  dummy(flush);
   for (i=0;i<(1024*1024*16);i++)
     {
       flush[i] += flush_dummy;
     }
   flush_dummy++;
+  dummy(flush);
+  dummy(&flush_dummy);
 }
 
 void do_l1misses(int n)
