@@ -1,6 +1,6 @@
 VERSION 	?= 2.6.x
 CPU		= p4
-SHRFLAGS	= -fPIC
+# SHRFLAGS	= -fPIC
 GCC3ARGS	= -march=pentium4 -msse -msse2
 TOPTFLAGS	= -DPENTIUM4
 
