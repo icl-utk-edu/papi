@@ -958,7 +958,7 @@ static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
    ia64_process_profile_entry(&ctx);
-   if (pfmw_perfmonctl(ctx->tid, 0, PFM_RESTART, NULL, 0) == -1) {
+   if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, NULL, 0) == -1) {
      PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
    }
 }
