@@ -114,7 +114,7 @@ typedef struct _EventInfo {
  */
 
 typedef struct _NativeInfo {
-  int ni_index;		    /* index into the native table */
+  int ni_index;		    /* index into the native table; -1 == empty */
   int ni_position;	    /* on which counter this native event stays */
   int ni_owners;	    /* specifies how many owners share this native event */
 } NativeInfo_t;

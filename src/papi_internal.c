@@ -259,11 +259,10 @@ static void initialize_NativeInfoArray(EventSetInfo_t *ESI)
 {
   int i;
 
-  memset(ESI->NativeInfoArray, 0, sizeof(NativeInfo_t)*MAX_COUNTERS);
-
   for (i = 0; i < MAX_COUNTERS; i++) {
- 	ESI->NativeInfoArray[i].ni_index = COUNT_NOTHING;
- 	ESI->NativeInfoArray[i].ni_position = COUNT_NOTHING;
+ 	ESI->NativeInfoArray[i].ni_index = -1;
+ 	ESI->NativeInfoArray[i].ni_position = 0;
+ 	ESI->NativeInfoArray[i].ni_owners = 0;
   }
   ESI->NativeCount = 0;
 }
@@ -785,27 +784,25 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 	}
 
 	for(i=0;i<ESI->NativeCount;i++){
-		if(native[i].ni_index==COUNT_NOTHING)
+		if(native[i].ni_index==-1)
 			continue;
 		if(native[i].ni_owners==0){
 			int copy=0;
 			_papi_hwd_remove_native(this_state, &native[i]);
 			for(j=ESI->NativeCount-1;j>i;j--){
-				if(native[j].ni_index==COUNT_NOTHING)
+				if(native[j].ni_index==-1)
 					continue;
 				else{
 					memcpy(native+i, native+j, sizeof(NativeInfo_t));
 					memset(native+j, 0, sizeof(NativeInfo_t));
-					native[j].ni_index=COUNT_NOTHING;
-					native[j].ni_position=COUNT_NOTHING;
+					native[j].ni_index=-1;
 					copy++;
 					break;
 				}
 			}
 			if(copy==0){
 				memset(native+i, 0, sizeof(NativeInfo_t));
-				native[j].ni_index=COUNT_NOTHING;
-				native[i].ni_position=COUNT_NOTHING;
+				native[j].ni_index=-1;
 			}
 		}
 	}
