@@ -72,7 +72,7 @@ endif
 
 ifeq (,$(PFM_PREFIX))
 	PFM ?= ./libpfm-$(VERSION)
-ifeq (2.0,$(VERSION))
+ifeq (2.x,$(VERSION))
 	PFM_LIB_PATH ?= $(PFM)/libpfm
 else
 	PFM_LIB_PATH ?= $(PFM)/lib
