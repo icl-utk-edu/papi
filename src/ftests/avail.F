@@ -52,7 +52,7 @@ C Hardware info
      *'Description', '(note)'
  200  format(A8, A12, A9, A6, A25, A30)
       end if
-      event_name=''
+      event_name=' '
       do i=0, PAPI_MAX_PRESET_EVENTS-1
          call papif_query_event_verbose(z'80000000'+i, event_name, 
      *   event_descr, event_label, avail_flag, event_note, flags, check)
