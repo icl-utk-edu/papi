@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -43,7 +41,7 @@ int main()
       if (r >= PAPI_OK)
 	n++;
     }
-  
+
   ct = (unsigned long long *)malloc(n*sizeof(unsigned long long));
   cr = (unsigned long long *)malloc(n*sizeof(unsigned long long));
   cs = (unsigned long long *)malloc(n*sizeof(unsigned long long));
@@ -56,6 +54,9 @@ int main()
   memset(cr,0x00,n*sizeof(unsigned long long));
   memset(cs,0x00,n*sizeof(unsigned long long));
   memset(cu,0x00,n*sizeof(unsigned long long));
+
+  r=PAPI_reset(EventSet);
+  assert(r>=PAPI_OK);
 
   r=PAPI_start(EventSet);
   assert(r>=PAPI_OK);
