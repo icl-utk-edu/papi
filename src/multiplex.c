@@ -227,7 +227,7 @@ static void mpx_release(void)
   sigrelse(SIGVTALRM);
 }
 
-#endif // _WIN32
+#endif /* _WIN32 */
 
 static MasterEvent *get_my_threads_master_event_list(void)
 {
@@ -1150,11 +1150,12 @@ static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 						PAPI_TOT_CYC); 
 				assert(retval == PAPI_OK);
 			}
-
+#if 0
 			options.domain.eventset = mev->papi_event;
 			options.domain.domain = domain;
 			retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
 			assert(retval == PAPI_OK);
+#endif
 #if 0
 			options.granularity.eventset = mev->papi_event;
 			options.granularity.granularity = granularity;
