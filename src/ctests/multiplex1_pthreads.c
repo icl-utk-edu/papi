@@ -41,7 +41,10 @@ const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
 const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_LDM, PAPI_L1_DCM, 0,
 };
-
+#elif defined (__ATHLON__)
+const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+  PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_LDM, PAPI_L1_DCM,0,
+};
 #else
 const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L1_DCM, 0,
