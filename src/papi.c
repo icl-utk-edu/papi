@@ -259,83 +259,6 @@ int PAPI_library_init(int version)
   return(init_retval = PAPI_VER_CURRENT);
 }
 
-#if 0
-/* From Anders Nilsson's (anni@pdc.kth.se) */
-
-int PAPI_describe_event(char *name, int *EventCode, char *description)
-{
-  int retval = PAPI_OK;
-
-  if (name == NULL)
-   papi_return(PAPI_EINVAL);
-
-  if (((int)strlen(name) == 0) && *EventCode == 0)
-    papi_return(PAPI_EINVAL);
-
-  if ((int)strlen(name) == 0) /* if no name, get it from the code */
-    retval = PAPI_event_code_to_name(*EventCode, name);
-  else if (*EventCode == 0)  /* if no code, get it from the name */
-    retval = PAPI_event_name_to_code(name, EventCode);
-
-  if (retval != PAPI_OK)
-    papi_return(retval);
-
-  if (description != NULL)
-    {
-      if (*EventCode & PRESET_MASK)
-	strncpy(description, _papi_hwi_presets[*EventCode & PRESET_AND_MASK].long_descr, PAPI_MAX_STR_LEN);
-      else if (*EventCode & NATIVE_MASK)
-	strncpy(description, _papi_hwi_native_code_to_descr(*EventCode), PAPI_MAX_STR_LEN);
-    }
-  return(PAPI_OK);
-}
-
-int PAPI_label_event(int EventCode, char *label)
-{
-  if (EventCode == 0 || label == NULL)
-    papi_return(PAPI_EINVAL);
-
-  if (EventCode & PRESET_MASK)
-    { 
-      EventCode &= PRESET_AND_MASK;
-      if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (_papi_hwi_presets[EventCode].symbol == NULL))
-	papi_return(PAPI_ENOTPRESET);
-	
-      strncpy(label, _papi_hwi_presets[EventCode].short_descr, PAPI_MAX_STR_LEN);
-      papi_return(PAPI_OK);
-    }
-  papi_return(PAPI_ENOTPRESET);
-}
-
-const PAPI_preset_info_t *PAPI_query_all_events_verbose(void)
-{
-  return(_papi_hwi_presets);
-}
-
-int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
-{ 
-  if (info == NULL)
-    papi_return(PAPI_EINVAL);
-
-  if (EventCode & PRESET_MASK)
-    { 
-      EventCode &= PRESET_AND_MASK;
-      if (EventCode >= PAPI_MAX_PRESET_EVENTS)
-	papi_return(PAPI_ENOTPRESET);
-	
-      if (_papi_hwi_presets[EventCode].count)
-	{
-	  memcpy(info,&_papi_hwi_presets[EventCode],sizeof(PAPI_preset_info_t));
-	  papi_return(PAPI_OK);
-	}
-      else
-	papi_return(PAPI_ENOEVNT);
-    }
-  papi_return(_papi_hwi_query_native_event_verbose(EventCode, info));
-}
-
-#endif
-
 int PAPI_query_event(int EventCode)
 { 
   if (EventCode & PRESET_MASK)
@@ -349,7 +272,7 @@ int PAPI_query_event(int EventCode)
       else
 	papi_return(PAPI_ENOEVNT);
     }
-  papi_return(_papi_hwi_query_native_event(EventCode));
+  papi_return(PAPI_ENOTPRESET);
 }
 
 int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info)
@@ -371,7 +294,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info)
       else
 	papi_return(PAPI_ENOEVNT);
     }
-  papi_return(_papi_hwi_query_native_event_verbose(EventCode, info));
+  papi_return(PAPI_ENOTPRESET);
 }
 
 int PAPI_event_code_to_name(int EventCode, char *out)
