@@ -359,12 +359,12 @@ static pmapi_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_TOT_IIS,0,{"PM_INST_DISP",0,0,0,0,0,0,0}}, /*Total instructions issued*/
   {PAPI_TOT_INS,0,{"PM_INST_CMPL",0,0,0,0,0,0,0}}, /*Total instructions executed*/
   {PAPI_INT_INS,0,{"PM_FXU_FIN",0,0,0,0,0,0,0}}, /*Integer instructions executed*/
-/*  {PAPI_FP_INS,0,{"PM_FPU_FIN",0,0,0,0,0,0,0}},*/ /*Floating point instructions executed*/	
-  {PAPI_FP_INS,DERIVED_ADD,{"PM_FPU0_ALL","PM_FPU1_ALL","PM_FPU0_FIN",
-    "PM_FPU1_FIN","PM_FPU0_FMA","PM_FPU1_FMA",0,0}}, /*Floating point instructions executed*/	
-/*  {PAPI_FLOPS,DERIVED_PS,{"PM_CYC","PM_FPU_FIN",0,0,0,0,0,0}},*/ /*Floating Point instructions per second*/ 
-  {PAPI_FLOPS,DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_ALL","PM_FPU1_ALL","PM_FPU0_FIN",
-    "PM_FPU1_FIN","PM_FPU0_FMA","PM_FPU1_FMA",0}}, /*Floating Point instructions per second*/ 
+  {PAPI_FP_INS,0,{"PM_FPU_FIN",0,0,0,0,0,0,0}}, /*Floating point instructions executed*/	
+/*  {PAPI_FP_INS,DERIVED_ADD,{"PM_FPU0_ALL","PM_FPU1_ALL","PM_FPU0_FIN",
+    "PM_FPU1_FIN","PM_FPU0_FMA","PM_FPU1_FMA",0,0}},*/ /*Floating point instructions executed*/	
+  {PAPI_FLOPS,DERIVED_PS,{"PM_CYC","PM_FPU_FIN",0,0,0,0,0,0}}, /*Floating Point instructions per second*/ 
+ /* {PAPI_FLOPS,DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_ALL","PM_FPU1_ALL","PM_FPU0_FIN",
+    "PM_FPU1_FIN","PM_FPU0_FMA","PM_FPU1_FMA",0}},*/ /*Floating Point instructions per second*/ 
   {PAPI_TOT_CYC,0,{"PM_CYC",0,0,0,0,0,0,0}}, /*Total cycles*/
   {PAPI_IPS,DERIVED_PS,{"PM_CYC","PM_INST_CMPL",0,0,0,0,0,0}}, /*Instructions executed per second*/
   {PAPI_FDV_INS,0,{"PM_FPU_FDIV",0,0,0,0,0,0,0}}, /*FD ins */
