@@ -162,9 +162,8 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 int PAPI_num_counters(void) 
 {
   int retval;
-  static int first=0;
 
-  if (!initialized||!first)
+  if (!initialized)
     {
       if ( !initialized ){
          retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -176,12 +175,13 @@ int PAPI_num_counters(void)
       if (retval)
 	return(retval);
       
-      hl_max_counters = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
-      
       if ( !initialized )
          initialized = 1;
     }
 
+  if(!hl_max_counters)
+    hl_max_counters = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+      
   return(hl_max_counters);
 }
 
@@ -294,7 +294,8 @@ int PAPI_stop_counters(long_long *values, int array_len)
   if (initialized!=2)
     return(PAPI_EINVAL);
 
-  hl_max_counters = PAPI_num_counters();
+  if(!hl_max_counters)
+    hl_max_counters = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
 
   if (array_len > hl_max_counters)
     return(PAPI_EINVAL);
