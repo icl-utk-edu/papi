@@ -5,7 +5,7 @@
 
 #include "papi_test.h"
 
-#define INDEX 100
+#define INDEX 500
 
 #ifdef _WIN32
 char format_string[] = { "Real_time: %f Proc_time: %f Total ins: %I64d IPC: %f\n" };

@@ -7,7 +7,7 @@
 
 #include "papi_test.h"
 
-#define INDEX 100
+#define INDEX 1000
 
 #ifdef _WIN32
 char format_string[] = { "Real_time: %f Proc_time: %f Total flpins: %I64d MFLOPS: %f\n" };
@@ -17,10 +17,10 @@ char format_string[] = { "Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS:
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 
+extern void dummy(void *);
+float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
 int main(int argc, char **argv)
 {
-   extern void dummy(void *);
-   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
    float real_time, proc_time, mflops;
    long_long flpins;
    int retval;

@@ -224,12 +224,12 @@ void papimon_start(void)
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 #elif defined(__ALPHA) && defined(__osf__)
-      native = get_instr();
+      PAPI_event_name_to_code("retinst", &native);
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = get_cyc();
+	     test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+      PAPI_event_name_to_code("cycles", &native);
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+	     test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 #elif defined(__LINUX__)
       native = 0x28;
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
