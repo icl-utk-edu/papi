@@ -244,12 +244,12 @@ static int ffsll(long_long lli)
                  occurs, then this should be passed by the substrate;
 
    If both genOverflowBit and isHardwareSupport are true, that means
-     the substrate don't know how to get the overflow bit from the
+     the substrate doesn't know how to get the overflow bit from the
      kernel directly, so we generate the overflow bit in this function 
     since this function can access the ESI->overflow struct;
-   (The substrate can only set genOverflowBit pararemter to true if the
+   (The substrate can only set genOverflowBit parameter to true if the
      hardware doesn't support multiple hardware overflow. If the
-     substrate support multiple hardware overflow and you don't know how 
+     substrate supports multiple hardware overflow and you don't know how 
      to get the overflow bit, then I don't know how to deal with this 
      situation).
 */
@@ -341,10 +341,20 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                i = ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
-              /* This loop is here ONLY because Pentium 4 can have tagged   *
-               * events that contain more than one counter without being    *
-               * derived. You've gotta scan all terms to make sure you find *
-               * the one to profile. */
+#if ( defined(ITANIUM2) || defined(ITANIUM) ) 
+                  /* in Itanium, the bit set in overflow vector is not
+                    equal to the position in native event array */
+                  pos = ESI->EventInfoArray[papi_index].pos[0];
+                  if ( i == (pos + PMU_FIRST_COUNTER))
+                  { 
+                     profile_index=j;
+                     goto foundit;
+                  }
+#else
+                 /* This loop is here ONLY because Pentium 4 can have tagged *
+                  * events that contain more than one counter without being  *
+                  * derived. You've gotta scan all terms to make sure you    *
+                  * find the one to profile. */
                   for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) {
                      pos = ESI->EventInfoArray[papi_index].pos[k];
                      if (i == pos) {
@@ -352,15 +362,6 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                         goto foundit;
                      }
                   }
-#if ( defined(ITANIUM2) || defined(ITANIUM) ) 
-                 /* in Itanium, the set bit in overflow vector is not
-                    equal to the position in native event array */
-                 pos = ESI->EventInfoArray[papi_index].pos[0];
-                 if ( i == (pos + PMU_FIRST_COUNTER))
-                 { 
-                    profile_index=j;
-                    goto foundit;
-                 }
 #endif
                }
                if (j == event_counter)
