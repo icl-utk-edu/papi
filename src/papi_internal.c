@@ -1304,6 +1304,7 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
    default:
       abort();
    }
+   return(-1);
 }
 
 static int counter_read(EventSetInfo_t * ESI, long_long * hw_counter, long_long * values)

@@ -617,10 +617,10 @@ void dump_cmd(hwperf_profevctrarg_t * t)
       if (t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_mode)
          fprintf(stderr,
                  "Event %d: hwp_ev %d hwp_ie %d hwp_mode %d hwp_ovflw_freq %d\n", i,
-                 t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ev,
-                 t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie,
-                 t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_mode,
-                 t->hwp_ovflw_freq[i]);
+                       (int) t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ev,
+                       (int) t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie,
+                       (int) t->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_mode,
+                       (int) t->hwp_ovflw_freq[i]);
    }
 }
 
@@ -942,6 +942,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 {
+  return(0);
 }
 
 /* This function forces the event to
@@ -958,6 +959,7 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
 */
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 {
+  return(0);
 }
 
 /* This function compares the dst and src events
@@ -967,6 +969,7 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 */
 int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
+  return(0);
 }
 
 /* This function removes the counters available to the src event
