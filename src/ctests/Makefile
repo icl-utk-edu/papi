@@ -5,7 +5,8 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads
 MPX	= multiplex1 multiplex2 mendes-alt
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = describe mem_info zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
+SERIAL  = high-level2 describe mem_info zero zero_flip low-level high-level\
+	sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory \
@@ -175,6 +176,9 @@ low-level: low-level.c $(PAPILIB) $(UTILOBJS)
 
 high-level: high-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
+
+high-level2: high-level2.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) high-level2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level2
 
 dummy.o: dummy.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c dummy.c

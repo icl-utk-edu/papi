@@ -71,13 +71,14 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    const PAPI_hw_info_t *hwinfo = NULL;
    long_long values[2] = {0,0};
    char buf[500];
-   int retval;
+   int retval,check=0;
 
    if ( initialized == 2 ) /* Start counters */ {
-	retval = PAPI_EINVAL;
-        return retval;
+	return PAPI_EINVAL;
    }
 
+   if ( *real_time==-1 && *proc_time==0 && *flpins == 1 && *mflops == 2 )
+	check = 1;
    if ( !initialized || initialized == 1) {
 	mhz = 0.0;
 	*mflops = 0.0;
@@ -118,6 +119,10 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
    }
    else {
 	retval = PAPI_stop( EventSet, values );
+        if ( check ){
+		initialized = 1;
+		return PAPI_OK;
+   	}		
 	/* If fp instuction count is negative, re-initialize */
 	if ( *flpins < 0 ) {
 		total_flpins = 0;
@@ -157,12 +162,15 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 int PAPI_num_counters(void) 
 {
   int retval;
+  static int first=0;
 
-  if (!initialized)
+  if (!initialized||!first)
     {
-      retval = PAPI_library_init(PAPI_VER_CURRENT);
-      if (retval != PAPI_VER_CURRENT)
-	return(PAPI_EINVAL);
+      if ( !initialized ){
+         retval = PAPI_library_init(PAPI_VER_CURRENT);
+         if (retval != PAPI_VER_CURRENT)
+	    return(PAPI_EINVAL);
+      }
 
       retval = PAPI_create_eventset(&PAPI_EVENTSET_INUSE);
       if (retval)
@@ -170,7 +178,8 @@ int PAPI_num_counters(void)
       
       hl_max_counters = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
       
-      initialized = 1;
+      if ( !initialized )
+         initialized = 1;
     }
 
   return(hl_max_counters);
@@ -191,18 +200,17 @@ int PAPI_start_counters(int *events, int array_len)
 {
   int i,retval;
 
-   if ( initialized == 3 ) /* flopt call */ {
-	retval = PAPI_EINVAL;
-        return retval;
+   if ( initialized == 3 ) /* flop call */ {
+	float tmp=-1,tmp2=0,tmp4=2;
+	long_long tmp3=1;
+	if ( PAPI_flops(&tmp,&tmp2,&tmp3,&tmp4)!=PAPI_OK) 
+		return PAPI_EINVAL;
    }
-  if (!initialized)
-    {
-      PAPI_num_counters();
-      if (hl_max_counters < 1)
+   PAPI_num_counters();
+   if (hl_max_counters < 1)
 	return(PAPI_ENOCNTR);
-    }
 
-  if (array_len > hl_max_counters)
+   if (array_len > hl_max_counters)
     return(PAPI_EINVAL);
 
   /* load events to the new EventSet */   
@@ -224,7 +232,7 @@ int PAPI_start_counters(int *events, int array_len)
   /* start the EventSet*/
 
   retval = PAPI_start(PAPI_EVENTSET_INUSE);
-  if (retval) 
+  if (retval!=PAPI_OK) 
     return(retval);
 
   initialized = 2;
@@ -243,14 +251,14 @@ int PAPI_read_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized || initialized==1 || initialized==3)
+  if (initialized !=2)
     return(PAPI_EINVAL);
 
   if (array_len > hl_max_counters)
     return(PAPI_EINVAL);
 
   retval = PAPI_read(PAPI_EVENTSET_INUSE,values);
-  if (retval)
+  if (retval!=PAPI_OK)
     return(retval);
 
   return(PAPI_reset(PAPI_EVENTSET_INUSE));
@@ -260,7 +268,7 @@ int PAPI_accum_counters(long_long *values, int array_len)
 {
   int retval;
 
-  if (!initialized||initialized==1||initialized==3)
+  if (initialized!=2)
     return(PAPI_EINVAL);
 
   if (array_len > hl_max_counters)
@@ -295,6 +303,7 @@ int PAPI_stop_counters(long_long *values, int array_len)
   if (!retval) 
     retval = PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE);
   DBG((stderr,"PAPI_stop_counters returns %d\n",retval));
-  return (retval);
+  initialized=1;
+  return (PAPI_OK);
 }
 
