@@ -1104,6 +1104,8 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
       return (_papi_hwi_get_domain(&ptr->domain));
+   case PAPI_LIB_VERSION:
+      return (PAPI_VERSION);
    default:
       papi_return(PAPI_EINVAL);
    }

@@ -17,7 +17,7 @@
 #define _PAPI
 
 /* Definition of PAPI_VERSION format.  Note that the minor version and
- * revision numbers _must_ be less than 64.  Also, the PAPI_VER_CURRENT
+ * revision numbers _must_ be less than 256.  Also, the PAPI_VER_CURRENT
  * masks out the revision.  Any revision change is supposed to be binary
  * compatible between the user application code and the run-time library.
  * Any modification that breaks this compatibility _should_ modify the
@@ -29,7 +29,7 @@
 #define PAPI_VERSION_REVISION(x)	((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,3)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,4)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffffff00)
 
 #ifdef __cplusplus
@@ -173,7 +173,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Option definitions */
 
-#define PAPI_DEBUG		2       /* Option to turn on  debugging features of the PAPI library */
+#define PAPI_INHERIT_ALL  1     /* The flag to this to inherit all children's counters */
+#define PAPI_INHERIT_NONE 0     /* The flag to this to inherit none of the children's counters */
+
+#define PAPI_DEBUG         2       /* Option to turn on  debugging features of the PAPI library */
 #define PAPI_MULTIPLEX 		3       /* Turn on/off or multiplexing for an eventset */
 #define PAPI_DEFDOM  		4       /* Domain for all new eventsets. Takes non-NULL option pointer. */
 
@@ -182,36 +185,23 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
 #define PAPI_INHERIT 		8       /* Child threads/processes inherit counter config and progate values up upon exit. */
 
-#define PAPI_INHERIT_ALL  1     /* The flag to this to inherit all children's counters */
-#define PAPI_INHERIT_NONE 0     /* The flag to this to inherit none of the children's counters */
-
 #define PAPI_CPUS    		9       /* Return the maximum number of CPU's usable/detected */
-
 #define PAPI_THREADS 		10      /* Return the number of threads usable/detected by PAPI */
-
 #define PAPI_NUMCTRS 		11      /* The number of counters returned by reading this eventset */
-
 #define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
-
-
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
 
-#define PAPI_INIT_SLOTS  64     /*Number of initialized slots in
-                                   DynamicArray of EventSets */
-
 #define PAPI_CLOCKRATE  	14      /* Clock rate in MHz */
-
 #define PAPI_MAX_HWCTRS 	15      /* Number of physical hardware counters */
-
 #define PAPI_HWINFO  		16      /* Hardware information */
-
 #define PAPI_EXEINFO  		17      /* Executable information */
-
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
+#define PAPI_MAXMEM        19      /* Setup Maximum Memory if no hardware support */
+#define PAPI_SHLIBINFO     20      /* Shared Library information */
+#define PAPI_LIB_VERSION   21      /* Option to find out the complete version number of the PAPI library */
 
-#define PAPI_MAXMEM         	19      /* Setup Maximum Memory if no hardware support */
-
-#define PAPI_SHLIBINFO      	20      /* Executable information */
+#define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
+                                   DynamicArray of EventSets */
 
 #define PAPI_MIN_STR_LEN        40      /* For small strings, like names & stuff */
 #define PAPI_MAX_STR_LEN       129      /* For average run-of-the-mill strings */
