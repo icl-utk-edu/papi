@@ -97,7 +97,6 @@
  * (LLNL).
  */
 
-#include <stdio.h>
 #ifdef PTHREADS
 #include <pthread.h>
 #endif

@@ -13,6 +13,7 @@
 #include <procfs.h>
 #include <libcpc.h>
 #include <libgen.h>
+#include <ctype.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>

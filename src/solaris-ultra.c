@@ -340,10 +340,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
    ctx.si = sip;
    ctx.ucontext = arg;
 
-#ifdef DEBUG
-   if (_papi_hwi_debug & DEBUG_SUBSTRATE)
-      psignal(signal, "dispatch_emt");
-#endif
+   SUBDBG("%d, %p, %p\n",signal,sip,arg);
 
    if (sip->si_code == EMT_CPCOVF) {
       papi_cpc_event_t *sample;
@@ -432,26 +429,30 @@ static int scan_prtconf(char *cpuname, int len_cpuname, int *hz, int *ver)
    /*           "clock-frequency" = (Any value)              */
    int ihz, version;
    char line[256], cmd[80], name[256];
-   FILE *f;
-   char cmd_line[80], fname[L_tmpnam];
+   FILE *f = NULL;
+   char cmd_line[PATH_MAX+PATH_MAX], fname[L_tmpnam];
    unsigned int matched;
 
    /*??? system call takes very long */
    /* get system configuration and put output into file */
-   sprintf(cmd_line, "/usr/sbin/prtconf -vp >%s", tmpnam(fname));
-   SUBDBG("/usr/sbin/prtconf -vp > %s \n", fname);
+
+   tmpnam(fname);
+   SUBDBG("Temporary name %s\n",fname);
+
+   sprintf(cmd_line, "/usr/sbin/prtconf -vp > %s",fname);
+   SUBDBG("Executing %s\n",cmd_line);
    if (system(cmd_line) == -1) {
       remove(fname);
       return -1;
    }
 
+   f = fopen(fname, "r");
    /* open output file */
-   if ((f = fopen(fname, "r")) == NULL) {
+   if (f == NULL) {
       remove(fname);
       return -1;
    }
 
-   SUBDBG("Parsing %s...\n", fname);
    /* ignore all lines until we reach something with a sparc line */
    matched = 0x0;
    ihz = -1;
@@ -745,12 +746,12 @@ build_tables(void)
     }
     SUBDBG("%d counters\n", nctrs);
 #if DEBUG
+    if (_papi_hwi_debug * DEBUG_SUBSTRATE) {
     for (i = 0; i < nctrs; ++i) {
-	fprintf(stderr,
-	    "%s: bits (%x,%x) pics %x\n", ctrs[i].name, ctrs[i].bits[0],
+	SUBDBG("%s: bits (%x,%x) pics %x\n", ctrs[i].name, ctrs[i].bits[0],
 	    ctrs[i].bits[1],
 	    ctrs[i].bitmask);
-    }
+    } }
 #endif
     /* Build the native event table */
     if ((native_table = malloc(nctrs*sizeof(native_info_t))) == 0) {
@@ -790,19 +791,20 @@ build_tables(void)
     memset(&preset_table[npresets], 0, sizeof(hwi_search_t));
 
 #ifdef DEBUG
-    fprintf(stderr, "Native table: %d\n", nctrs);
+    if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
+    SUBDBG("Native table: %d\n", nctrs);
     for (i = 0; i < nctrs; ++i) {
-	fprintf(stderr, "%40s: %8x %8x\n", native_table[i].name,
+	SUBDBG("%40s: %8x %8x\n", native_table[i].name,
 	    native_table[i].encoding[0], native_table[i].encoding[1]);
     }
-    fprintf(stderr, "\nPreset table: %d\n", npresets);
+    SUBDBG("\nPreset table: %d\n", npresets);
     for (i = 0; preset_table[i].event_code != 0; ++i) {
 	fprintf(stderr, "%8x: op %2d e0 %8x e1 %8x\n",
 		preset_table[i].event_code,
 		preset_table[i].data.derived,
 		preset_table[i].data.native[0],
 		preset_table[i].data.native[1]);
-    }
+    } }
 #endif
     return PAPI_OK;
 }
