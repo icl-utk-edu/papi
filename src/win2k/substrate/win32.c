@@ -296,7 +296,7 @@ inline_static int update_global_hwcounters(EventSetInfo *global)
   
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
-      DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",i,
+      DBG((stderr,"update_global_hwcounters() %d: G%I64d = G%I64d + C%I64d\n",i,
 	   global->hw_start[i]+state.sum.ctr[i+1],
 	   global->hw_start[i],state.sum.ctr[i+1]));
       global->hw_start[i] = global->hw_start[i] + state.sum.ctr[i+1];
@@ -314,7 +314,7 @@ inline_static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *l
 
   for (i=0;i<_papi_system_info.num_cntrs;i++)
     {
-      DBG((stderr,"correct_local_hwcounters() %d: L%lld = G%lld - L%lld\n",i,
+      DBG((stderr,"correct_local_hwcounters() %d: L%I64d = G%I64d - L%I64d\n",i,
 	   global->hw_start[i]-local->hw_start[i],global->hw_start[i],local->hw_start[i]));
       correct[i] = global->hw_start[i] - local->hw_start[i];
     }
@@ -819,7 +819,7 @@ static long_long handle_derived_add(int selector, long_long *from)
 
   while ((pos = ffs(selector)))
     {
-      DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos-1],retval));
+      DBG((stderr,"Compound event, adding %I64d to %I64d\n",from[pos-1],retval));
       retval += from[pos-1];
       selector ^= 1 << (pos-1);
     }
@@ -834,7 +834,7 @@ static long_long handle_derived_subtract(int operand_index, int selector, long_l
   selector = selector ^ (1 << operand_index);
   while ((pos = ffs(selector)))
     {
-      DBG((stderr,"Compound event, subtracting %lld to %lld\n",from[pos-1],retval));
+      DBG((stderr,"Compound event, subtracting %I64d from %I64d\n",from[pos-1],retval));
       retval -= from[pos-1];
       selector ^= 1 << (pos-1);
     }
