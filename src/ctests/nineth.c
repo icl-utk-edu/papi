@@ -48,6 +48,9 @@ int main(int argc, char **argv)
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
 
+  if ( num_events1 == 0 || num_events2 == 0 ) 
+	test_skip(__FILE__,__LINE__,"add_test_events", PAPI_ENOEVNT );
+
   /* num_events1 is greater than num_events2 so don't worry. */
 
   values = allocate_test_space(num_tests, num_events1);
