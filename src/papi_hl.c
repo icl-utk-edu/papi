@@ -174,7 +174,6 @@ int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips)
         _hl_rate_calls(rtime, ptime, flpins, mflips, PAPI_FP_INS, state)) != PAPI_OK)
       return (retval);
 
-   *mflips = (*mflips * _papi_hwi_system_info.hw_info.mhz);
    return (PAPI_OK);
 }
 
@@ -235,14 +234,11 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
       *real_time = (float) ((PAPI_get_real_usec() - state->initial_time) * .000001);
       *proc_time = (float) (values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
       if (*proc_time > 0)
-         *rate = (float) ((float) values[0] / values[1]);
+         *rate = (float) ((float) values[0]*(EVENT==PAPI_FP_INS?_papi_hwi_system_info.hw_info.mhz:1)/values[1]);
       state->total_proc_time += *proc_time;
       state->total_ins += values[0];
       *proc_time = state->total_proc_time;
       *ins = state->total_ins;
-      /* The flips call adds 1 extra flip, we need to subtract that out */
-      if (EVENT == PAPI_FP_INS)
-	*ins -= 1;
       if ((retval = PAPI_start(state->EventSet)) != PAPI_OK) {
          state->running = 0;
          return (retval);
