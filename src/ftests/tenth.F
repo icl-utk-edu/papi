@@ -15,7 +15,7 @@
       Integer len_trim
       External len_trim
 
-#if defined(sun) .AND. defined(sparc)
+#if (defined(sun) && defined(sparc))
       mask1 = PAPI_L2_TCM
       mask2 = PAPI_L2_TCA
       mask3 = PAPI_L2_TCH
@@ -144,7 +144,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-#if defined(sun) .AND. defined(sparc)
+#if (defined(sun) && defined(sparc))
       print *, "Test case 10: start, stop for derived event ",
      *"PAPI_L2_TCM."
 #else
@@ -175,7 +175,7 @@
       print *, "------------------------------------------------------"
       
       print *, "Test type   : \t  1\t\t  2\t\t  3"
-#if defined(sun) .AND. defined(sparc)
+#if (defined(sun) && defined(sparc))
       print *, "PAPI_L2_TCM : \t", values(1), "\t  0\t\t  0"
       print *, "PAPI_L2_TCA : \t  0\t\t", values(3), "\t  0"
       print *, "PAPI_L2_TCH : \t  0\t\t  0\t\t", values(5)

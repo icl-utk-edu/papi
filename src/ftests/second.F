@@ -12,7 +12,7 @@
       Integer len_trim
       External len_trim
 
-#if defined(sgi) .AND. defined(host_mips)
+#if (defined(sgi) && defined(host_mips))
       integer id
       id = getuid()
 #endif
@@ -224,12 +224,9 @@
       print *, "Row 1 approximately equals N 0 N"
       print *, "Column 1 approximately equals column 2 plus column 3"
 
-#if defined(sgi) .AND. defined(host_mips)
+#if (defined(sgi) && defined(host_mips))
       print *, "* Irix requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL."
       print *, "* The first two rows will be -3 if not run as root for IRIX."
-#endif
-
-#if defined(sgi) .AND. defined(host_mips)
       if (id.NE.0) then
          min = NUM_FLOPS*0.9
          max = NUM_FLOPS*1.1

@@ -124,7 +124,7 @@ C     Lines out
       end if
 #endif
 
-#if defined(mips) .AND. defined(sgi) .AND. defined(unix)
+#if (defined(mips) && defined(sgi) && defined(unix))
 C     L1 I Miss
       nativees = 9 * 2**8
       call PAPIf_add_event( es, nativees, retval )
@@ -169,7 +169,7 @@ C     CPU cyc
 
 #endif
 
-#if defined(sun) .AND. defined(sparc)
+#if (defined(sun) && defined(sparc))
       print *, "Sun Sparc"
 C     Load_use
       nativees = z'B' * 2**8
@@ -189,7 +189,7 @@ C     DC_wr_hit
       
 #endif
 
-#if defined(__ALPHA) .AND. defined(__osf__)
+#if (defined(__ALPHA) && defined(__osf__))
       call get_instr(nativees)
       if (nativees .NE. -1) then
          call PAPIf_add_event( es, nativees, retval )
@@ -264,7 +264,7 @@ C     DC_wr_hit
       print *, "DCU Lines out              : ", values(1)
 #endif
 
-#if defined(mips) .AND. defined(sgi)
+#if (defined(mips) && defined(sgi))
       print *, "L1 Instruction cache misses       : ", values(0)
       print *, "L1 Data cache misses              : ", values(1)      
 #endif
@@ -275,14 +275,14 @@ C     DC_wr_hit
       print *, "CPU Cycles                        : ",values(2)      
 #endif
 
-#if defined(sun) .AND. defined(sparc)
+#if (defined(sun) && defined(sparc))
       print *, "Load_use                   : ", values(1)
       print *, "DC_wr_hit                  : ", values(2)
 #endif
       call ftests_pass(__FILE__)
       end
 
-#if defined(__ALPHA) .AND. defined(__osf__)
+#if (defined(__ALPHA) && defined(__osf__))
 C     NOT TESTED YET
       subroutine get_instr(integer nativees)
       integer cpu
