@@ -45,7 +45,7 @@ CC_R	= $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR26 -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c p3_events.c
-MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o
+MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o x86.o
 MISCHDRS= perfctr-p3.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
