@@ -231,7 +231,10 @@ pfm_find_event_byvcode(int code, int *idx)
 	if (idx == NULL) return PFMLIB_ERR_INVAL;
 
 	for(i=0; i < pfm_current->pme_count; i++) {
-		if (pfm_current->get_event_vcode(i) == code) goto found;
+		int me;
+		if ((me=pfm_current->get_event_vcode(i)) == code){
+			 goto found;
+		}
 	}
 	return PFMLIB_ERR_NOTFOUND;
 found:
