@@ -74,8 +74,8 @@ diff -cbr --new-file linux-2.2.12/arch/i386/kernel/entry.S linux-2.2.12-papi/arc
 + #ifdef CONFIG_PERF
 + 	.rept NR_syscalls-190-5
 + 		.long SYMBOL_NAME(sys_ni_syscall)
-+ 	.long SYMBOL_NAME(sys_perf)		/* 252 */
 + 	.endr
++ 	.long SYMBOL_NAME(sys_perf)		/* 252 */
 + #endif
   
   	/*
