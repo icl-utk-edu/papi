@@ -3,7 +3,6 @@
  *
  * Erik Hendriks <hendriks@cesdis.gsfc.nasa.gov
  *
- * $Id$
  */
 #ifndef _PERF_H_
 #define _PERF_H_

@@ -62,14 +62,8 @@ int main(int argc, char *argv[]) {
   r = perf_stop();
   if (r) { perror("perf_stop"); exit(1); }
 
-  printf("Total cycles %llu, Total flops %llu\n",ctttt[0],ctttt[2]);
-  r = perf_read(0, &ct);
-  if (r) { perror("perf_read"); exit(1); }
-  r = perf_read(2, &cttt);
-  if (r) { perror("perf_read"); exit(1); }
-
-  printf("Total cycles %llu, Total flops %llu\n",cttt,ct);
-  printf("Total cycles per perf_fastread() for 3 counters %f\n",(double)cttt/(double)NFLOPS);
+  printf("Total cycles %llu, Total flops %llu\n",ctttt[2],ctttt[0]);
+  printf("Total cycles per perf_fastread() for 3 counters %f\n",(double)ctttt[2]/(double)NFLOPS);
 
   exit(0);
 }

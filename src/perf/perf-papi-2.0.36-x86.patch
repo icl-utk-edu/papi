@@ -1,4 +1,4 @@
-diff -crN linux-2.0.36/Documentation/Configure.help linux-2.0.36-perf/Documentation/Configure.help
+diff -crwN linux-2.0.36/Documentation/Configure.help linux-2.0.36-perf/Documentation/Configure.help
 *** linux-2.0.36/Documentation/Configure.help	Tue Dec 29 13:10:48 1998
 --- linux-2.0.36-perf/Documentation/Configure.help	Sun Jul 18 19:43:47 1999
 ***************
@@ -19,7 +19,7 @@ diff -crN linux-2.0.36/Documentation/Configure.help linux-2.0.36-perf/Documentat
   Compile the kernel into the ELF object format
   CONFIG_ELF_KERNEL
     ELF (Executable and Linkable Format) is a format for libraries and
-diff -crN linux-2.0.36/arch/i386/config.in linux-2.0.36-perf/arch/i386/config.in
+diff -crwN linux-2.0.36/arch/i386/config.in linux-2.0.36-perf/arch/i386/config.in
 *** linux-2.0.36/arch/i386/config.in	Sun Nov 15 13:32:46 1998
 --- linux-2.0.36-perf/arch/i386/config.in	Sun Jul 18 19:43:47 1999
 ***************
@@ -35,7 +35,7 @@ diff -crN linux-2.0.36/arch/i386/config.in linux-2.0.36-perf/arch/i386/config.in
   endmenu
   
   source drivers/block/Config.in
-diff -crN linux-2.0.36/arch/i386/defconfig linux-2.0.36-perf/arch/i386/defconfig
+diff -crwN linux-2.0.36/arch/i386/defconfig linux-2.0.36-perf/arch/i386/defconfig
 *** linux-2.0.36/arch/i386/defconfig	Tue Dec 29 13:10:48 1998
 --- linux-2.0.36-perf/arch/i386/defconfig	Sun Jul 18 19:43:47 1999
 ***************
@@ -48,7 +48,7 @@ diff -crN linux-2.0.36/arch/i386/defconfig linux-2.0.36-perf/arch/i386/defconfig
   
   #
   # Floppy, IDE, and other block devices
-diff -crN linux-2.0.36/arch/i386/kernel/Makefile linux-2.0.36-perf/arch/i386/kernel/Makefile
+diff -crwN linux-2.0.36/arch/i386/kernel/Makefile linux-2.0.36-perf/arch/i386/kernel/Makefile
 *** linux-2.0.36/arch/i386/kernel/Makefile	Sun Nov 15 13:32:46 1998
 --- linux-2.0.36-perf/arch/i386/kernel/Makefile	Sun Jul 18 19:43:47 1999
 ***************
@@ -66,7 +66,7 @@ diff -crN linux-2.0.36/arch/i386/kernel/Makefile linux-2.0.36-perf/arch/i386/ker
   hexify:
   	$(HOSTCC) hexify.c -o hexify
   
-diff -crN linux-2.0.36/arch/i386/kernel/entry.S linux-2.0.36-perf/arch/i386/kernel/entry.S
+diff -crwN linux-2.0.36/arch/i386/kernel/entry.S linux-2.0.36-perf/arch/i386/kernel/entry.S
 *** linux-2.0.36/arch/i386/kernel/entry.S	Sun Nov 15 13:32:46 1998
 --- linux-2.0.36-perf/arch/i386/kernel/entry.S	Sun Jul 18 19:43:47 1999
 ***************
@@ -92,7 +92,7 @@ diff -crN linux-2.0.36/arch/i386/kernel/entry.S linux-2.0.36-perf/arch/i386/kern
 + #else
   	.space (NR_syscalls-189)*4
 + #endif
-diff -crN linux-2.0.36/arch/i386/kernel/ioport.c linux-2.0.36-perf/arch/i386/kernel/ioport.c
+diff -crwN linux-2.0.36/arch/i386/kernel/ioport.c linux-2.0.36-perf/arch/i386/kernel/ioport.c
 *** linux-2.0.36/arch/i386/kernel/ioport.c	Wed Jun  3 18:17:46 1998
 --- linux-2.0.36-perf/arch/i386/kernel/ioport.c	Sun Jul 18 19:43:47 1999
 ***************
@@ -141,7 +141,7 @@ diff -crN linux-2.0.36/arch/i386/kernel/ioport.c linux-2.0.36-perf/arch/i386/ker
 ! 	regs->eflags = (regs->eflags & 0xffffcfff) | (level << 12);
   	return 0;
   }
-diff -crN linux-2.0.36/arch/i386/kernel/ksyms.c linux-2.0.36-perf/arch/i386/kernel/ksyms.c
+diff -crwN linux-2.0.36/arch/i386/kernel/ksyms.c linux-2.0.36-perf/arch/i386/kernel/ksyms.c
 *** linux-2.0.36/arch/i386/kernel/ksyms.c	Sun Nov 15 13:32:46 1998
 --- linux-2.0.36-perf/arch/i386/kernel/ksyms.c	Sun Jul 18 19:43:47 1999
 ***************
@@ -164,7 +164,7 @@ diff -crN linux-2.0.36/arch/i386/kernel/ksyms.c linux-2.0.36-perf/arch/i386/kern
   	XNOVERS(__do_delay),
   	XNOVERS(down_failed),
   	XNOVERS(down_failed_interruptible),
-diff -crN linux-2.0.36/arch/i386/kernel/perf.c linux-2.0.36-perf/arch/i386/kernel/perf.c
+diff -crwN linux-2.0.36/arch/i386/kernel/perf.c linux-2.0.36-perf/arch/i386/kernel/perf.c
 *** linux-2.0.36/arch/i386/kernel/perf.c	Wed Dec 31 19:00:00 1969
 --- linux-2.0.36-perf/arch/i386/kernel/perf.c	Wed Jul 21 02:52:36 1999
 ***************
@@ -586,7 +586,7 @@ diff -crN linux-2.0.36/arch/i386/kernel/perf.c linux-2.0.36-perf/arch/i386/kerne
 + 	return -EINVAL;
 +     }
 + }
-diff -crN linux-2.0.36/arch/i386/kernel/smp.c linux-2.0.36-perf/arch/i386/kernel/smp.c
+diff -crwN linux-2.0.36/arch/i386/kernel/smp.c linux-2.0.36-perf/arch/i386/kernel/smp.c
 *** linux-2.0.36/arch/i386/kernel/smp.c	Sun Nov 15 13:32:46 1998
 --- linux-2.0.36-perf/arch/i386/kernel/smp.c	Sun Jul 18 19:43:47 1999
 ***************
@@ -603,9 +603,9 @@ diff -crN linux-2.0.36/arch/i386/kernel/smp.c linux-2.0.36-perf/arch/i386/kernel
   		/*
   		 *	Halt other CPU's for a panic or reboot
   		 */
-diff -crN linux-2.0.36/include/asm-i386/perf.h linux-2.0.36-perf/include/asm-i386/perf.h
+diff -crwN linux-2.0.36/include/asm-i386/perf.h linux-2.0.36-perf/include/asm-i386/perf.h
 *** linux-2.0.36/include/asm-i386/perf.h	Wed Dec 31 19:00:00 1969
---- linux-2.0.36-perf/include/asm-i386/perf.h	Wed Jul 21 02:52:45 1999
+--- linux-2.0.36-perf/include/asm-i386/perf.h	Wed Aug 11 16:46:07 1999
 ***************
 *** 0 ****
 --- 1,218 ----
@@ -774,6 +774,15 @@ diff -crN linux-2.0.36/include/asm-i386/perf.h linux-2.0.36-perf/include/asm-i38
 +   unsigned long long *counts;
 + };
 + 
++ static inline unsigned long long perf_get_cycles (void)
++ {
++ 	unsigned long long ret;
++         __asm__ __volatile__("rdtsc"
++ 			    : "=A" (ret)
++ 			    : /* no inputs */);
++         return ret;
++ }
++ 
 + #ifdef __KERNEL__
 + 
 + #define MSR_PERFCTR0 0x00C1
@@ -798,15 +807,6 @@ diff -crN linux-2.0.36/include/asm-i386/perf.h linux-2.0.36-perf/include/asm-i38
 + 
 + extern volatile int perf_sys_flag;
 + 
-+ static inline unsigned long long perf_get_cycles (void)
-+ {
-+ 	unsigned long long ret;
-+         __asm__ __volatile__("rdtsc"
-+ 			    : "=A" (ret)
-+ 			    : /* no inputs */);
-+         return ret;
-+ }
-+ 
 + static inline
 + void perf_restore(unsigned int *config, unsigned long long *shadow_tsc) {
 +     wrmsr(MSR_EVNTSEL0, config[0]);
@@ -827,7 +827,7 @@ diff -crN linux-2.0.36/include/asm-i386/perf.h linux-2.0.36-perf/include/asm-i38
 + void perf_getctrs(struct task_struct *task, unsigned long long *dest);
 + #endif
 + #endif
-diff -crN linux-2.0.36/include/asm-i386/string.h linux-2.0.36-perf/include/asm-i386/string.h
+diff -crwN linux-2.0.36/include/asm-i386/string.h linux-2.0.36-perf/include/asm-i386/string.h
 *** linux-2.0.36/include/asm-i386/string.h	Tue Apr  8 11:47:46 1997
 --- linux-2.0.36-perf/include/asm-i386/string.h	Sun Jul 18 19:43:47 1999
 ***************
@@ -884,7 +884,7 @@ diff -crN linux-2.0.36/include/asm-i386/string.h linux-2.0.36-perf/include/asm-i
   	}
   #undef COMMON
   }
-diff -crN linux-2.0.36/include/asm-i386/unistd.h linux-2.0.36-perf/include/asm-i386/unistd.h
+diff -crwN linux-2.0.36/include/asm-i386/unistd.h linux-2.0.36-perf/include/asm-i386/unistd.h
 *** linux-2.0.36/include/asm-i386/unistd.h	Sun Nov 15 13:33:16 1998
 --- linux-2.0.36-perf/include/asm-i386/unistd.h	Sun Jul 18 19:43:47 1999
 ***************
@@ -897,9 +897,9 @@ diff -crN linux-2.0.36/include/asm-i386/unistd.h linux-2.0.36-perf/include/asm-i
   
   /* XXX - _foo needs to be __foo, while __NR_bar could be _NR_bar. */
   #define _syscall0(type,name) \
-diff -crN linux-2.0.36/include/linux/sched.h linux-2.0.36-perf/include/linux/sched.h
+diff -crwN linux-2.0.36/include/linux/sched.h linux-2.0.36-perf/include/linux/sched.h
 *** linux-2.0.36/include/linux/sched.h	Sun Jul 18 18:30:33 1999
---- linux-2.0.36-perf/include/linux/sched.h	Wed Jul 21 02:52:59 1999
+--- linux-2.0.36-perf/include/linux/sched.h	Wed Aug 11 16:54:56 1999
 ***************
 *** 25,31 ****
   #include <linux/smp.h>
@@ -956,7 +956,7 @@ diff -crN linux-2.0.36/include/linux/sched.h linux-2.0.36-perf/include/linux/sch
   }
   
   extern struct   mm_struct init_mm;
-diff -crN linux-2.0.36/include/linux/smp.h linux-2.0.36-perf/include/linux/smp.h
+diff -crwN linux-2.0.36/include/linux/smp.h linux-2.0.36-perf/include/linux/smp.h
 *** linux-2.0.36/include/linux/smp.h	Tue Dec 29 13:11:12 1998
 --- linux-2.0.36-perf/include/linux/smp.h	Sun Jul 18 19:43:47 1999
 ***************
@@ -969,7 +969,7 @@ diff -crN linux-2.0.36/include/linux/smp.h linux-2.0.36-perf/include/linux/smp.h
   #else
   
   /*
-diff -crN linux-2.0.36/include/linux/types.h linux-2.0.36-perf/include/linux/types.h
+diff -crwN linux-2.0.36/include/linux/types.h linux-2.0.36-perf/include/linux/types.h
 *** linux-2.0.36/include/linux/types.h	Sun Nov 15 13:33:19 1998
 --- linux-2.0.36-perf/include/linux/types.h	Sun Jul 18 19:43:47 1999
 ***************
@@ -993,7 +993,7 @@ diff -crN linux-2.0.36/include/linux/types.h linux-2.0.36-perf/include/linux/typ
   #include <asm/types.h>
   
 --- 1,6 ----
-diff -crN linux-2.0.36/kernel/exit.c linux-2.0.36-perf/kernel/exit.c
+diff -crwN linux-2.0.36/kernel/exit.c linux-2.0.36-perf/kernel/exit.c
 *** linux-2.0.36/kernel/exit.c	Wed Jun  3 18:17:50 1998
 --- linux-2.0.36-perf/kernel/exit.c	Sun Jul 18 19:43:47 1999
 ***************
@@ -1103,7 +1103,7 @@ diff -crN linux-2.0.36/kernel/exit.c linux-2.0.36-perf/kernel/exit.c
   }
   
   #ifndef __alpha__
-diff -crN linux-2.0.36/kernel/fork.c linux-2.0.36-perf/kernel/fork.c
+diff -crwN linux-2.0.36/kernel/fork.c linux-2.0.36-perf/kernel/fork.c
 *** linux-2.0.36/kernel/fork.c	Wed Jun  3 18:17:50 1998
 --- linux-2.0.36-perf/kernel/fork.c	Sun Jul 18 19:43:47 1999
 ***************
@@ -1157,7 +1157,7 @@ diff -crN linux-2.0.36/kernel/fork.c linux-2.0.36-perf/kernel/fork.c
   #endif
   	p->start_time = jiffies;
   	task[nr] = p;
-diff -crN linux-2.0.36/kernel/sched.c linux-2.0.36-perf/kernel/sched.c
+diff -crwN linux-2.0.36/kernel/sched.c linux-2.0.36-perf/kernel/sched.c
 *** linux-2.0.36/kernel/sched.c	Sun Nov 15 13:33:20 1998
 --- linux-2.0.36-perf/kernel/sched.c	Wed Jul 21 02:26:04 1999
 ***************
@@ -1195,7 +1195,7 @@ diff -crN linux-2.0.36/kernel/sched.c linux-2.0.36-perf/kernel/sched.c
   		get_mmu_context(next);
   		switch_to(prev,next);
   		if (timeout)
-diff -crN linux-2.0.36/scripts/patch-kernel linux-2.0.36-perf/scripts/patch-kernel
+diff -crwN linux-2.0.36/scripts/patch-kernel linux-2.0.36-perf/scripts/patch-kernel
 *** linux-2.0.36/scripts/patch-kernel	Tue Mar 26 14:22:14 1996
 --- linux-2.0.36-perf/scripts/patch-kernel	Sun Jul 18 19:43:47 1999
 ***************

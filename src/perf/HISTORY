@@ -1,3 +1,4 @@
+0.91 - Added 2.2.10 patch. It wasn't easy!
 0.9 - Bug fix for 2.0.36. Amazing the difference 1 can make
 0.8 - Bug fix and new features
       - Fixed counter 3 (per process cycle counter) wraparound problems.

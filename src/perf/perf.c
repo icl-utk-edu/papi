@@ -6,7 +6,6 @@
  * Erik Hendriks
  * <hendriks@cesdis.gsfc.nasa.gov>
  *
- * $Id$
  */
 #include <sys/types.h>
 #include <linux/unistd.h>	/* For syscall numbers */

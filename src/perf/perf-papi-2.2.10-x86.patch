@@ -1,9 +1,9 @@
-diff -crwN linux-2.2.5/Documentation/Configure.help linux-2.2.5-perf/Documentation/Configure.help
-*** linux-2.2.5/Documentation/Configure.help	Wed Jun  2 08:36:15 1999
---- linux-2.2.5-perf/Documentation/Configure.help	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/Documentation/Configure.help linux-2.2.10-perf/Documentation/Configure.help
+*** linux-2.2.10/Documentation/Configure.help	Sun Jun 13 22:54:06 1999
+--- linux-2.2.10-perf/Documentation/Configure.help	Fri Aug 13 11:58:57 1999
 ***************
-*** 1642,1647 ****
---- 1642,1656 ----
+*** 1646,1651 ****
+--- 1646,1660 ----
   
     If you don't know what to do, choose "386".
   
@@ -19,9 +19,9 @@ diff -crwN linux-2.2.5/Documentation/Configure.help linux-2.2.5-perf/Documentati
   VGA text console
   CONFIG_VGA_CONSOLE
     Saying Y here will allow you to use Linux in text mode through a
-diff -crwN linux-2.2.5/arch/i386/config.in linux-2.2.5-perf/arch/i386/config.in
-*** linux-2.2.5/arch/i386/config.in	Fri Mar 12 20:39:50 1999
---- linux-2.2.5-perf/arch/i386/config.in	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/arch/i386/config.in linux-2.2.10-perf/arch/i386/config.in
+*** linux-2.2.10/arch/i386/config.in	Mon Apr 26 16:49:17 1999
+--- linux-2.2.10-perf/arch/i386/config.in	Fri Aug 13 11:58:57 1999
 ***************
 *** 36,41 ****
 --- 36,46 ----
@@ -36,9 +36,9 @@ diff -crwN linux-2.2.5/arch/i386/config.in linux-2.2.5-perf/arch/i386/config.in
   endmenu
   
   mainmenu_option next_comment
-diff -crwN linux-2.2.5/arch/i386/kernel/Makefile linux-2.2.5-perf/arch/i386/kernel/Makefile
-*** linux-2.2.5/arch/i386/kernel/Makefile	Wed Jan 20 13:18:53 1999
---- linux-2.2.5-perf/arch/i386/kernel/Makefile	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/arch/i386/kernel/Makefile linux-2.2.10-perf/arch/i386/kernel/Makefile
+*** linux-2.2.10/arch/i386/kernel/Makefile	Wed Jan 20 13:18:53 1999
+--- linux-2.2.10-perf/arch/i386/kernel/Makefile	Fri Aug 13 11:58:57 1999
 ***************
 *** 50,55 ****
 --- 50,59 ----
@@ -52,9 +52,9 @@ diff -crwN linux-2.2.5/arch/i386/kernel/Makefile linux-2.2.5-perf/arch/i386/kern
   head.o: head.S $(TOPDIR)/include/linux/tasks.h
   	$(CC) -D__ASSEMBLY__ $(AFLAGS) -traditional -c $*.S -o $*.o
   
-diff -crwN linux-2.2.5/arch/i386/kernel/entry.S linux-2.2.5-perf/arch/i386/kernel/entry.S
-*** linux-2.2.5/arch/i386/kernel/entry.S	Wed Jan 20 14:05:59 1999
---- linux-2.2.5-perf/arch/i386/kernel/entry.S	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/arch/i386/kernel/entry.S linux-2.2.10-perf/arch/i386/kernel/entry.S
+*** linux-2.2.10/arch/i386/kernel/entry.S	Fri Apr 30 11:13:37 1999
+--- linux-2.2.10-perf/arch/i386/kernel/entry.S	Fri Aug 13 11:58:57 1999
 ***************
 *** 40,45 ****
 --- 40,46 ----
@@ -66,8 +66,8 @@ diff -crwN linux-2.2.5/arch/i386/kernel/entry.S linux-2.2.5-perf/arch/i386/kerne
   #include <linux/linkage.h>
   #include <asm/segment.h>
 ***************
-*** 560,565 ****
---- 561,572 ----
+*** 562,567 ****
+--- 563,574 ----
   	.long SYMBOL_NAME(sys_ni_syscall)		/* streams1 */
   	.long SYMBOL_NAME(sys_ni_syscall)		/* streams2 */
   	.long SYMBOL_NAME(sys_vfork)            /* 190 */
@@ -81,8 +81,8 @@ diff -crwN linux-2.2.5/arch/i386/kernel/entry.S linux-2.2.5-perf/arch/i386/kerne
   	/*
   	 * NOTE!! This doesn't have to be exact - we just have
 ***************
-*** 567,572 ****
---- 574,585 ----
+*** 569,574 ****
+--- 576,587 ----
   	 * entries. Don't panic if you notice that this hasn't
   	 * been shrunk every time we add a new system call.
   	 */
@@ -95,41 +95,40 @@ diff -crwN linux-2.2.5/arch/i386/kernel/entry.S linux-2.2.5-perf/arch/i386/kerne
   		.long SYMBOL_NAME(sys_ni_syscall)
   	.endr
 + #endif
-diff -crwN linux-2.2.5/arch/i386/kernel/irq.c linux-2.2.5-perf/arch/i386/kernel/irq.c
-*** linux-2.2.5/arch/i386/kernel/irq.c	Wed Jun  2 08:36:15 1999
---- linux-2.2.5-perf/arch/i386/kernel/irq.c	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/arch/i386/kernel/irq.c linux-2.2.10-perf/arch/i386/kernel/irq.c
+*** linux-2.2.10/arch/i386/kernel/irq.c	Mon May 10 13:32:45 1999
+--- linux-2.2.10-perf/arch/i386/kernel/irq.c	Fri Aug 13 12:18:23 1999
 ***************
-*** 321,326 ****
---- 321,329 ----
-  BUILD_SMP_INTERRUPT(invalidate_interrupt)
+*** 324,329 ****
+--- 324,332 ----
   BUILD_SMP_INTERRUPT(stop_cpu_interrupt)
-  BUILD_SMP_INTERRUPT(mtrr_interrupt)
+  BUILD_SMP_INTERRUPT(call_function_interrupt)
+  BUILD_SMP_INTERRUPT(spurious_interrupt)
 + #ifdef CONFIG_PERF
 + BUILD_SMP_INTERRUPT(perf_sys_update_interrupt)
 + #endif
-  BUILD_SMP_INTERRUPT(spurious_interrupt)
   
   /*
+   * every pentium local APIC has two 'local interrupts', with a
 ***************
-*** 1083,1088 ****
---- 1086,1096 ----
+*** 1099,1104 ****
+--- 1102,1111 ----
   
-  	/* IPI for MTRR control */
-  	set_intr_gate(MTRR_CHANGE_VECTOR, mtrr_interrupt);
-+ 
+  	/* IPI vector for APIC spurious interrupts */
+  	set_intr_gate(SPURIOUS_APIC_VECTOR, spurious_interrupt);
 + #ifdef CONFIG_PERF
 + 	/* IPI for perf counter update */
 + 	set_intr_gate(PERF_SYS_UPDATE_VECTOR,perf_sys_update_interrupt);
 + #endif
-  
-  	/* IPI vector for APIC spurious interrupts */
-  	set_intr_gate(SPURIOUS_APIC_VECTOR, spurious_interrupt);
-diff -crwN linux-2.2.5/arch/i386/kernel/irq.h linux-2.2.5-perf/arch/i386/kernel/irq.h
-*** linux-2.2.5/arch/i386/kernel/irq.h	Wed Jun  2 08:46:35 1999
---- linux-2.2.5-perf/arch/i386/kernel/irq.h	Wed Jul 21 15:38:37 1999
+  #endif	
+  	request_region(0x20,0x20,"pic1");
+  	request_region(0xa0,0x20,"pic2");
+diff -crwN linux-2.2.10/arch/i386/kernel/irq.h linux-2.2.10-perf/arch/i386/kernel/irq.h
+*** linux-2.2.10/arch/i386/kernel/irq.h	Tue May 11 13:37:06 1999
+--- linux-2.2.10-perf/arch/i386/kernel/irq.h	Fri Aug 13 12:29:12 1999
 ***************
-*** 71,76 ****
---- 71,78 ----
+*** 72,77 ****
+--- 72,79 ----
    */
   #define IRQ0_TRAP_VECTOR	0x51
   
@@ -138,9 +137,9 @@ diff -crwN linux-2.2.5/arch/i386/kernel/irq.h linux-2.2.5-perf/arch/i386/kernel/
   /*
    * This IRQ should never happen, but we print a message nevertheless.
    */
-diff -crwN linux-2.2.5/arch/i386/kernel/perf.c linux-2.2.5-perf/arch/i386/kernel/perf.c
-*** linux-2.2.5/arch/i386/kernel/perf.c	Wed Dec 31 19:00:00 1969
---- linux-2.2.5-perf/arch/i386/kernel/perf.c	Wed Jul 21 02:56:19 1999
+diff -crwN linux-2.2.10/arch/i386/kernel/perf.c linux-2.2.10-perf/arch/i386/kernel/perf.c
+*** linux-2.2.10/arch/i386/kernel/perf.c	Wed Dec 31 19:00:00 1969
+--- linux-2.2.10-perf/arch/i386/kernel/perf.c	Fri Aug 13 12:32:09 1999
 ***************
 *** 0 ****
 --- 1,387 ----
@@ -221,9 +220,9 @@ diff -crwN linux-2.2.5/arch/i386/kernel/perf.c linux-2.2.5-perf/arch/i386/kernel
 +     for (i=0; i < PERF_COUNTERS-1; i++) {
 + 	/* Read the value of the performance counter, update the
 + 	 * config, reset the counter to zero. */
-+ 	perf_sys_counter[id][i] += (rdmsr(MSR_PERFCTR0+i) & ((1ULL<<40)-1));
-+ 	wrmsr(MSR_EVNTSEL0+i, perf_sys_conf[id][i]);
-+ 	wrmsr(MSR_PERFCTR0+i, 0);
++ 	perf_sys_counter[id][i] += (perf_rdmsr(MSR_PERFCTR0+i) & ((1ULL<<40)-1));
++ 	perf_wrmsr(MSR_EVNTSEL0+i, perf_sys_conf[id][i]);
++ 	perf_wrmsr(MSR_PERFCTR0+i, 0);
 +     }
 +     if (perf_sys_conf[id][2])
 + 	perf_sys_counter[id][2] += perf_get_cycles() - current->perf.shadow_tsc;
@@ -531,15 +530,15 @@ diff -crwN linux-2.2.5/arch/i386/kernel/perf.c linux-2.2.5-perf/arch/i386/kernel
 +  * c-basic-offset: 4
 +  * End:
 +  */
-diff -crwN linux-2.2.5/arch/i386/kernel/smp.c linux-2.2.5-perf/arch/i386/kernel/smp.c
-*** linux-2.2.5/arch/i386/kernel/smp.c	Wed Jun  2 08:36:15 1999
---- linux-2.2.5-perf/arch/i386/kernel/smp.c	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/arch/i386/kernel/smp.c linux-2.2.10-perf/arch/i386/kernel/smp.c
+*** linux-2.2.10/arch/i386/kernel/smp.c	Wed Jun  2 14:29:27 1999
+--- linux-2.2.10-perf/arch/i386/kernel/smp.c	Fri Aug 13 12:31:16 1999
 ***************
-*** 39,44 ****
---- 39,47 ----
-  #include <linux/smp_lock.h>
+*** 41,46 ****
+--- 41,49 ----
   #include <linux/init.h>
   #include <asm/mtrr.h>
+  #include <asm/msr.h>
 + #ifdef CONFIG_PERF
 + #include <asm/perf.h>
 + #endif
@@ -547,7 +546,7 @@ diff -crwN linux-2.2.5/arch/i386/kernel/smp.c linux-2.2.5-perf/arch/i386/kernel/
   #include "irq.h"
   
 ***************
-*** 121,127 ****
+*** 124,130 ****
   volatile unsigned long syscall_count=0;			/* Number of times the processor holds the syscall lock	*/
   
   volatile unsigned long ipi_count;			/* Number of IPIs delivered				*/
@@ -555,7 +554,7 @@ diff -crwN linux-2.2.5/arch/i386/kernel/smp.c linux-2.2.5-perf/arch/i386/kernel/
   const char lk_lockmsg[] = "lock from interrupt context at %p\n"; 
   
   int mp_bus_id_to_type [MAX_MP_BUSSES] = { -1, };
---- 124,132 ----
+--- 127,135 ----
   volatile unsigned long syscall_count=0;			/* Number of times the processor holds the syscall lock	*/
   
   volatile unsigned long ipi_count;			/* Number of IPIs delivered				*/
@@ -566,10 +565,10 @@ diff -crwN linux-2.2.5/arch/i386/kernel/smp.c linux-2.2.5-perf/arch/i386/kernel/
   
   int mp_bus_id_to_type [MAX_MP_BUSSES] = { -1, };
 ***************
-*** 1666,1671 ****
---- 1671,1721 ----
+*** 1652,1657 ****
+--- 1657,1707 ----
   {
-  	send_IPI_allbutself(MTRR_CHANGE_VECTOR);
+  	send_IPI_allbutself(STOP_CPU_VECTOR);
   }
 + 
 + #ifdef CONFIG_PERF
@@ -617,11 +616,11 @@ diff -crwN linux-2.2.5/arch/i386/kernel/smp.c linux-2.2.5-perf/arch/i386/kernel/
 + }
 + #endif
   
-  /*
-   * Local timer interrupt handler. It does both profiling and
-diff -crwN linux-2.2.5/include/asm-i386/perf.h linux-2.2.5-perf/include/asm-i386/perf.h
-*** linux-2.2.5/include/asm-i386/perf.h	Wed Dec 31 19:00:00 1969
---- linux-2.2.5-perf/include/asm-i386/perf.h	Wed Aug 11 16:47:21 1999
+  /* Structure and data for smp_call_function(). This is designed to minimise
+   * static memory requirements. It also looks cleaner.
+diff -crwN linux-2.2.10/include/asm-i386/perf.h linux-2.2.10-perf/include/asm-i386/perf.h
+*** linux-2.2.10/include/asm-i386/perf.h	Wed Dec 31 19:00:00 1969
+--- linux-2.2.10-perf/include/asm-i386/perf.h	Fri Aug 13 12:21:29 1999
 ***************
 *** 0 ****
 --- 1,235 ----
@@ -824,7 +823,7 @@ diff -crwN linux-2.2.5/include/asm-i386/perf.h linux-2.2.5-perf/include/asm-i386
 + extern volatile int perf_sys_flag;
 + 
 + static inline
-+ unsigned long long rdmsr(unsigned int msr) {
++ unsigned long long perf_rdmsr(unsigned int msr) {
 +     unsigned long long ret;
 +     __asm__ __volatile__("rdmsr"
 + 			 : "=A" (ret)
@@ -833,7 +832,7 @@ diff -crwN linux-2.2.5/include/asm-i386/perf.h linux-2.2.5-perf/include/asm-i386
 + }
 + 
 + static inline
-+ void wrmsr(unsigned int msr,unsigned long long val) {
++ void perf_wrmsr(unsigned int msr,unsigned long long val) {
 +     __asm__ __volatile__("wrmsr"
 + 			 : /* no Outputs */
 + 			 : "c" (msr), "A" (val));
@@ -841,17 +840,17 @@ diff -crwN linux-2.2.5/include/asm-i386/perf.h linux-2.2.5-perf/include/asm-i386
 + 
 + static inline
 + void perf_restore(unsigned int *config, unsigned long long *shadow_tsc) {
-+     wrmsr(MSR_EVNTSEL0, config[0]);
-+     wrmsr(MSR_PERFCTR0, 0);
-+     wrmsr(MSR_EVNTSEL0+1, config[1]);
-+     wrmsr(MSR_PERFCTR0+1, 0);
++     perf_wrmsr(MSR_EVNTSEL0, config[0]);
++     perf_wrmsr(MSR_PERFCTR0, 0);
++     perf_wrmsr(MSR_EVNTSEL0+1, config[1]);
++     perf_wrmsr(MSR_PERFCTR0+1, 0);
 +     *shadow_tsc = perf_get_cycles();
 + }
 + 
 + static inline
 + void perf_save(unsigned int *config, unsigned long long *counter, unsigned long long *shadow_tsc) {
-+     counter[0] += (rdmsr(MSR_PERFCTR0)&((1ULL<<40)-1));
-+     counter[1] += (rdmsr(MSR_PERFCTR0+1)&((1ULL<<40)-1));
++     counter[0] += (perf_rdmsr(MSR_PERFCTR0)&((1ULL<<40)-1));
++     counter[1] += (perf_rdmsr(MSR_PERFCTR0+1)&((1ULL<<40)-1));
 +     if (config[2])
 +       counter[2] += perf_get_cycles() - *shadow_tsc;
 + }
@@ -860,9 +859,9 @@ diff -crwN linux-2.2.5/include/asm-i386/perf.h linux-2.2.5-perf/include/asm-i386
 + void smp_perf_sys_update(void);
 + #endif
 + #endif
-diff -crwN linux-2.2.5/include/asm-i386/unistd.h linux-2.2.5-perf/include/asm-i386/unistd.h
-*** linux-2.2.5/include/asm-i386/unistd.h	Wed Jan 20 14:06:24 1999
---- linux-2.2.5-perf/include/asm-i386/unistd.h	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/include/asm-i386/unistd.h linux-2.2.10-perf/include/asm-i386/unistd.h
+*** linux-2.2.10/include/asm-i386/unistd.h	Wed Jan 20 14:06:24 1999
+--- linux-2.2.10-perf/include/asm-i386/unistd.h	Fri Aug 13 11:58:57 1999
 ***************
 *** 195,200 ****
 --- 195,201 ----
@@ -873,9 +872,9 @@ diff -crwN linux-2.2.5/include/asm-i386/unistd.h linux-2.2.5-perf/include/asm-i3
   
   /* user-visible error numbers are in the range -1 - -122: see <asm-i386/errno.h> */
   
-diff -crwN linux-2.2.5/include/linux/sched.h linux-2.2.5-perf/include/linux/sched.h
-*** linux-2.2.5/include/linux/sched.h	Wed Jun  2 08:45:53 1999
---- linux-2.2.5-perf/include/linux/sched.h	Wed Jul 21 15:32:10 1999
+diff -crwN linux-2.2.10/include/linux/sched.h linux-2.2.10-perf/include/linux/sched.h
+*** linux-2.2.10/include/linux/sched.h	Tue May 11 13:35:45 1999
+--- linux-2.2.10-perf/include/linux/sched.h	Fri Aug 13 12:19:07 1999
 ***************
 *** 23,28 ****
 --- 23,32 ----
@@ -890,8 +889,8 @@ diff -crwN linux-2.2.5/include/linux/sched.h linux-2.2.5-perf/include/linux/sche
    * cloning flags:
    */
 ***************
-*** 328,333 ****
---- 332,341 ----
+*** 312,317 ****
+--- 316,325 ----
   	struct signal_queue *sigqueue, **sigqueue_tail;
   	unsigned long sas_ss_sp;
   	size_t sas_ss_size;
@@ -903,8 +902,8 @@ diff -crwN linux-2.2.5/include/linux/sched.h linux-2.2.5-perf/include/linux/sche
   
   /*
 ***************
-*** 361,366 ****
---- 369,379 ----
+*** 345,350 ****
+--- 353,363 ----
    *  INIT_TASK is used to set up the first task table, touch at
    * your own risk!. Base=0, limit=0x1fffff (=2MB)
    */
@@ -917,8 +916,8 @@ diff -crwN linux-2.2.5/include/linux/sched.h linux-2.2.5-perf/include/linux/sche
   /* state etc */	{ 0,0,0,KERNEL_DS,&default_exec_domain,0, \
   /* counter */	DEF_PRIORITY,DEF_PRIORITY,0, \
 ***************
-*** 394,399 ****
---- 407,413 ----
+*** 378,383 ****
+--- 391,397 ----
   /* files */	&init_files, \
   /* mm */	&init_mm, \
   /* signals */	SPIN_LOCK_UNLOCKED, &init_signals, {{0}}, {{0}}, NULL, &init_task.sigqueue, 0, 0, \
@@ -926,9 +925,9 @@ diff -crwN linux-2.2.5/include/linux/sched.h linux-2.2.5-perf/include/linux/sche
   }
   
   union task_union {
-diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
-*** linux-2.2.5/kernel/exit.c	Wed Jun  2 08:36:14 1999
---- linux-2.2.5-perf/kernel/exit.c	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/kernel/exit.c linux-2.2.10-perf/kernel/exit.c
+*** linux-2.2.10/kernel/exit.c	Fri Apr 30 11:13:37 1999
+--- linux-2.2.10-perf/kernel/exit.c	Fri Aug 13 11:58:57 1999
 ***************
 *** 17,22 ****
 --- 17,26 ----
@@ -943,8 +942,8 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   extern struct task_struct *child_reaper;
   
 ***************
-*** 369,374 ****
---- 373,382 ----
+*** 367,372 ****
+--- 371,380 ----
   #if CONFIG_AP1000
   	exit_msc(tsk);
   #endif
@@ -956,7 +955,7 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   	__exit_fs(tsk);
   	__exit_sighand(tsk);
 ***************
-*** 405,411 ****
+*** 403,409 ****
   	do_exit((error_code&0xff)<<8);
   }
   
@@ -964,7 +963,7 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   {
   	int flag, retval;
   	struct wait_queue wait = { current, NULL };
---- 413,423 ----
+--- 411,421 ----
   	do_exit((error_code&0xff)<<8);
   }
   
@@ -977,8 +976,8 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   	int flag, retval;
   	struct wait_queue wait = { current, NULL };
 ***************
-*** 443,448 ****
---- 455,471 ----
+*** 441,446 ****
+--- 453,469 ----
   				retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0; 
   				if (!retval && stat_addr) 
   					retval = put_user((p->exit_code << 8) | 0x7f, stat_addr);
@@ -997,8 +996,8 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   					p->exit_code = 0;
   					retval = p->pid;
 ***************
-*** 455,460 ****
---- 478,494 ----
+*** 453,458 ****
+--- 476,492 ----
   				retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
   				if (!retval && stat_addr)
   					retval = put_user(p->exit_code, stat_addr);
@@ -1017,8 +1016,8 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   					goto end_wait4; 
   				retval = p->pid;
 ***************
-*** 491,496 ****
---- 525,539 ----
+*** 489,494 ****
+--- 523,537 ----
   end_wait4:
   	remove_wait_queue(&current->wait_chldexit,&wait);
   	return retval;
@@ -1034,9 +1033,9 @@ diff -crwN linux-2.2.5/kernel/exit.c linux-2.2.5-perf/kernel/exit.c
   }
   
   #ifndef __alpha__
-diff -crwN linux-2.2.5/kernel/fork.c linux-2.2.5-perf/kernel/fork.c
-*** linux-2.2.5/kernel/fork.c	Wed Jun  2 08:36:14 1999
---- linux-2.2.5-perf/kernel/fork.c	Sun Jul 18 19:45:41 1999
+diff -crwN linux-2.2.10/kernel/fork.c linux-2.2.10-perf/kernel/fork.c
+*** linux-2.2.10/kernel/fork.c	Mon Apr 12 15:44:26 1999
+--- linux-2.2.10-perf/kernel/fork.c	Fri Aug 13 11:58:57 1999
 ***************
 *** 22,27 ****
 --- 22,31 ----
@@ -1051,8 +1050,8 @@ diff -crwN linux-2.2.5/kernel/fork.c linux-2.2.5-perf/kernel/fork.c
   int nr_tasks=0;
   int nr_running=0;
 ***************
-*** 644,649 ****
---- 648,683 ----
+*** 619,624 ****
+--- 623,658 ----
   #endif
   	p->lock_depth = -1;		/* -1 = no lock */
   	p->start_time = jiffies;
@@ -1089,9 +1088,9 @@ diff -crwN linux-2.2.5/kernel/fork.c linux-2.2.5-perf/kernel/fork.c
   
   	retval = -ENOMEM;
   	/* copy all the process information */
-diff -crwN linux-2.2.5/kernel/sched.c linux-2.2.5-perf/kernel/sched.c
-*** linux-2.2.5/kernel/sched.c	Mon Mar 15 19:11:55 1999
---- linux-2.2.5-perf/kernel/sched.c	Wed Jul 21 02:54:08 1999
+diff -crwN linux-2.2.10/kernel/sched.c linux-2.2.10-perf/kernel/sched.c
+*** linux-2.2.10/kernel/sched.c	Mon May 10 12:55:21 1999
+--- linux-2.2.10-perf/kernel/sched.c	Fri Aug 13 11:58:57 1999
 ***************
 *** 37,43 ****
   #include <asm/pgtable.h>
@@ -1112,11 +1111,11 @@ diff -crwN linux-2.2.5/kernel/sched.c linux-2.2.5-perf/kernel/sched.c
   
   /*
 ***************
-*** 772,777 ****
---- 774,791 ----
-  		sched_data->prev = prev;
-  #endif
-  	 	kstat.context_swtch++;
+*** 819,824 ****
+--- 821,838 ----
+  #endif /* __SMP__ */
+  
+  	kstat.context_swtch++;
 + #ifdef CONFIG_PERF
 + 		{
 + 			unsigned long flags;
@@ -1129,6 +1128,6 @@ diff -crwN linux-2.2.5/kernel/sched.c linux-2.2.5-perf/kernel/sched.c
 + 			restore_flags(flags);
 + 		}
 + #endif
-  		get_mmu_context(next);
-  		switch_to(prev,next);
-  
+  	get_mmu_context(next);
+  	switch_to(prev, next, prev);
+  	__schedule_tail(prev);
