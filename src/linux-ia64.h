@@ -20,11 +20,12 @@
 #include <math.h>
 #include <limits.h>
 #include <time.h>
+#include <fcntl.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
-#include <fcntl.h>
 
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
