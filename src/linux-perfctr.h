@@ -44,16 +44,16 @@ typedef struct hwd_control_state {
 
 #define PERF_MAX_COUNTERS 4
 
-#define PERF_CTR_MASK          0xFF000000
-#define PERF_INV_CTR_MASK      0x00800000
-#define PERF_ENABLE            0x00400000
-#define PERF_INT_ENABLE        0x00100000
-#define PERF_PIN_CONTROL       0x00080000
-#define PERF_EDGE_DETECT       0x00040000
-#define PERF_OS                0x00020000
-#define PERF_USR               0x00010000
-#define PERF_UNIT_MASK         0x0000FF00
-#define PERF_EVNT_MASK         0x000000FF
+#define PERF_CTR_MASK          0xFF000000LL
+#define PERF_INV_CTR_MASK      0x00800000LL
+#define PERF_ENABLE            0x00400000LL
+#define PERF_INT_ENABLE        0x00100000LL
+#define PERF_PIN_CONTROL       0x00080000LL
+#define PERF_EDGE_DETECT       0x00040000LL
+#define PERF_OS                0x00020000LL
+#define PERF_USR               0x00010000LL
+#define PERF_UNIT_MASK         0x0000FF00LL
+#define PERF_EVNT_MASK         0x000000FFLL
 
 #ifdef PERFCTR20
 struct papi_perfctr_counter_cmd {
