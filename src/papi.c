@@ -1111,10 +1111,30 @@ int PAPI_write(int EventSet, long long *values)
 /*========================================================================*/
 int PAPI_reset(int EventSet)
 { int retval;
-  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+  EventSetInfo *ESI;
 
-  retval = _papi_hwd_reset(this_machdep);
-  if(retval) return(PAPI_EBUG);
+  ESI = lookup_EventSet(EventSet);
+  if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
+
+  retval = _papi_hwd_reset(ESI->machdep);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
   return(retval);
 }
 
+/*
+int PAPI_set_granularity(int granularity, int EventSet)
+{ int retval;
+
+  retval = PAPI_set_opt(); 
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
+}
+
+int PAPI_set_domain(int domain, int EventSet)
+{ int retval;
+
+  retval = PAPI_get_opt();
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
+}
+*/
