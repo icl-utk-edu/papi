@@ -601,3 +601,13 @@ PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *
   }
 #endif
 }
+
+PAPI_FCALL(papif_multiplex_init, PAPIF_MULTIPLEX_INIT, (int *check))
+{
+  *check = PAPI_multiplex_init();
+}
+ 
+PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check))
+{
+  *check = PAPI_set_multiplex(EventSet);
+}
