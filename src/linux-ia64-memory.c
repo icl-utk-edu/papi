@@ -33,7 +33,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
    FILE *f;
    int clevel = 0, cindex = -1;
    char buf[1024];
-   int num;
+   int num, i, j;
    PAPI_mh_level_t *L = mem_info->mem_hierarchy.level;
 
    f = fopen("/proc/pal/cpu0/cache_info","r");
@@ -115,6 +115,16 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
       } 
       fclose(f);
    }
+
+   /* Compute and store the number of levels of hierarchy actually used */
+   for (i=0; i<PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+      for (j=0; j<2; j++) {
+         if (L[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
+            L[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
+            mem_info->mem_hierarchy.levels = i+1;
+      }
+   }
+
    get_cpu_info(&rev,&model,&family,&archrev);
    return retval;
 }
