@@ -3,15 +3,6 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-#ifdef PENTIUM4
-enum {
-   PAPI_P4_ENUM_ALL = 0,        // all 83,000+ native events
-   PAPI_P4_ENUM_GROUPS,         // 45 groups + custom + user
-   PAPI_P4_ENUM_COMBOS,         // all combinations of mask bits for given group
-   PAPI_P4_ENUM_BITS            // all individual bits for given group
-};
-#endif
-
 int main(int argc, char **argv)
 {
    int i, j;
@@ -89,7 +80,7 @@ int main(int argc, char **argv)
 #endif
 #ifdef PENTIUM4
       k = i;
-      if (PAPI_enum_event(&k, PAPI_P4_ENUM_BITS) == PAPI_OK) {
+      if (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK) {
          l = strlen(info.long_descr);
          do {
             j++;
@@ -98,15 +89,17 @@ int main(int argc, char **argv)
                printf("    %-26s 0x%-10x    %s\n",
                       info.symbol, info.event_code, info.long_descr + l);
             }
-         } while (PAPI_enum_event(&k, PAPI_P4_ENUM_BITS) == PAPI_OK);
+         } while (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK);
       }
       if (!TESTS_QUIET && retval == PAPI_OK)
          printf("\n");
-   } while (PAPI_enum_event(&i, PAPI_P4_ENUM_GROUPS) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
 #elif defined(_POWER4)
 /* this function would return the next native event code.
-    modifer=0    it simply returns next native event code
-    modifer=1    it would return information of groups this native event lives
+    modifer = PAPI_ENUM_ALL
+		 it simply returns next native event code
+    modifer = PAPI_PWR4_ENUM_GROUPS
+		 it would return information of groups this native event lives
                  0x400000ed is the native code of PM_FXLS_FULL_CYC,
 		 before it returns 0x400000ee which is the next native event's
 		 code, it would return *EventCode=0x400400ed, the digits 16-23
@@ -115,9 +108,9 @@ int main(int argc, char **argv)
      PAPI_OK successful, next event is valid
      PAPI_ENOEVNT  fail, next event is invalid
 */
-   } while (PAPI_enum_event(&i, 1) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_PWR4_ENUM_GROUPS) == PAPI_OK);
 #else
-   } while (PAPI_enum_event(&i, 0) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
 #endif
 
    if (!TESTS_QUIET) {
