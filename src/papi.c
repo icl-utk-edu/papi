@@ -349,6 +349,7 @@ static EventSetInfo *allocate_master_eventset(void)
 
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
 {
+  int changed_id_fn = 0;
 /* Thread support not implemented on Alpha/OSF because the OSF pfm
  * counter device driver does not support per-thread counters.
  * When this is updated, we can remove this ifdef -KSL
@@ -359,13 +360,11 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
   if (default_master_eventset == NULL)
     papi_return(PAPI_EINVAL);
     
-  /* If the user tries to change the thread pointer function twice, we bark at him. */
-
-  if ((thread_id_fn != NULL) && (id_fn != NULL))
-    {
-      fprintf(stderr, PAPI_THREAD_INIT_str);
-      exit(1);
-    }
+   /* They had better be compatible thread packages if you change thread thread packages without
+      shutting down PAPI first. This means tid of package a = tid of package b */
+   
+  if ((id_fn != NULL) && (thread_id_fn != NULL) && (id_fn != thread_id_fn))
+	changed_id_fn = 1;
 
   thread_id_fn = id_fn;
 
@@ -382,7 +381,7 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
   /* By default, the initial master eventset has TID of getpid(). This will
      get changed if the user enables threads with PAPI_thread_init(). */
 
-  if (thread_id_fn)
+  if ((thread_id_fn) && (changed_id_fn == 0))
     { 
       default_master_eventset->tid = (*thread_id_fn)();
       _papi_hwi_insert_in_master_list(default_master_eventset); 
