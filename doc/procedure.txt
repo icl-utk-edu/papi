@@ -31,15 +31,16 @@ __8.  execute cat_progref.bat (on Windows)
 	papi_event_code_to_name.html	papi_event_name_to_code.html
 	papi_flips.html			papi_flops.html
         papi_get_dmem_info.html         papi_get_event_info.html
-        papi_get_executable_info.html
-	papi_get_hardware_info.html	papi_get_multiplex.html
-	papi_get_opt.html       	papi_get_real_cyc.html
+        papi_get_executable_info.html	papi_get_hardware_info.html
+	papi_get_multiplex.html		papi_get_opt.html
+	papi_get_overflow_index.html	papi_get_real_cyc.html
 	papi_get_real_usec.html		papi_get_shared_lib_info.html
 	papi_get_thr_specific.html	papi_get_virt_cyc.html
 	papi_get_virt_usec.html		papif_get_clockrate.html
 	papif_get_domain.html		papif_get_exe_info.html
 	papif_get_granularity.html      papif_get_preload.html
-	papi_ipc.html                   papi_library_init.html
+	papi_ipc.html                   papi_is_initialized.html
+	papi_library_init.html
 	papi_list_events.html           papi_lock.html
 	papi_multiplex_init.html        papi_num_events.html		
 	papi_num_counters.html		papi_num_hwctrs.html
@@ -50,7 +51,8 @@ __8.  execute cat_progref.bat (on Windows)
         papi_remove_events.html         papi_reset.html			
 	papi_set_debug.html		papi_set_domain.html
 	papi_set_granularity.html	papi_set_multiplex.html
-	papi_set_opt.html		papif_set_event_domain.html
+	papi_set_opt.html		papi_set_thr_specific.html
+	papif_set_event_domain.html
 	papi_shutdown.html		papi_sprofil.html
 	papi_start.html			papi_start_counters.html
 	papi_state.html			papi_stop.html
