@@ -24,6 +24,8 @@ struct pmc_control {
 struct pmc_info {
 	unsigned int family;
 	unsigned int features;
+	unsigned int stepping;
+	unsigned int model;
 	char vendor[12];
 };
 

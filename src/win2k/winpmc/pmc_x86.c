@@ -159,7 +159,7 @@ static int pmc_cpu_write_control(int nrctrs, struct pmc_control *control)
  *																*
  ****************************************************************/
 
-static int intel_init(int family)
+static int intel_init(int family, int stepping, int model)
 {
 	switch(family) {
 	case 5:
@@ -167,6 +167,11 @@ static int intel_init(int family)
 		check_control = p5_check_control;
 		return STATUS_SUCCESS;
 	case 6:
+	       /* P-Pro with SMM support will enter halt state if
+                * the PCE bit is set and a RDPMC is issued    -KSL
+		*/
+	       if ( model == 1 && stepping == 9 ) 
+		    return STATUS_NO_INTEL_INIT;
 		write_control = p6_write_control;
 		check_control = p6_check_control;
 		return STATUS_SUCCESS;
@@ -249,6 +254,8 @@ static int cpu_id(struct pmc_info *info) {
 	strncpy(info->vendor, v, 12);
 	info->features = features;
 	info->family = (version >> 8) & 0x0000000F;		// bits 11 - 8
+	info->model  = (version >> 4) & 0x0000000F;             // Bits  7 - 4
+	info->stepping=(version)      & 0x0000000F;             // bits  3 - 0
 	return 1;
 }
 
@@ -276,7 +283,7 @@ int kern_pmc_init(void)
 	if(!(info.features & TSC)) return STATUS_NO_TSC;
 	if(!(info.features & MMX)) return STATUS_NO_MMX;	// assume MMX tracks RDPMC
 
-	if (!strncmp(info.vendor, "GenuineIntel", 12)) status = intel_init(info.family);
+	if (!strncmp(info.vendor, "GenuineIntel", 12)) status = intel_init(info.family,info.stepping,info.model);
 	else if (!strncmp(info.vendor, "AuthenticAMD", 12)) status = amd_init(info.family);
 	else if (!strncmp(info.vendor, "CyrixInstead", 12)) status = cyrix_init(info.family);
 
