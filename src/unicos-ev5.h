@@ -1,5 +1,7 @@
+#define  UMK
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/unistd.h>
 #include <assert.h>
 #include <infoblk.h>
 #include <mpp/globals.h> 
@@ -17,6 +19,14 @@
 #define CNTR1 0x1
 #define CNTR2 0x2
 #define CNTR3 0x4
+
+#if defined (_SC_PAGESIZE)
+#    define getpagesize() sysconf(_SC_PAGESIZE)
+#else
+#    if defined (_SC_PAGE_SIZE)
+#      define getpagesize() sysconf(_SC_PAGE_SIZE)
+#    endif /* _SC_PAGE_SIZE */
+#endif /* _SC_PAGESIZE */
 
 /* Some of this code comes from Cray, originally in perfctr.h
    I assume they own the copyright, so be careful */
