@@ -21,6 +21,7 @@ static hwi_search_t findem_dadd[] = {
    {PAPI_TOT_INS, {0, {NATIVE_MASK | 8, PAPI_NULL}}},
    {PAPI_TOT_IIS, {0, {NATIVE_MASK | 7, PAPI_NULL}}},
    {PAPI_FP_INS, {0, {NATIVE_MASK | 20, PAPI_NULL}}},
+   {PAPI_FP_OPS, {0, {NATIVE_MASK | 20, PAPI_NULL}}},
    {PAPI_LD_INS, {0, {NATIVE_MASK | 10, PAPI_NULL}}},
    {PAPI_SR_INS, {0, {NATIVE_MASK | 11, PAPI_NULL}}},
    {PAPI_LST_INS, {0, {NATIVE_MASK | 12, PAPI_NULL}}},
