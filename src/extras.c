@@ -295,7 +295,10 @@ static int start_timer(int milliseconds)
   action.sa_flags |= SA_SIGINFO;
 #elif defined(linux) && !defined(__ia64)
   action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
+#elif defined(__ALPHA) && defined(__osf__)
+  action.sa_handler = (void (*)(int))_papi_hwd_dispatch_timer;
 #endif
+
 
   if (sigaction(PAPI_SIGNAL, &action, &oaction) < 0)
     return(PAPI_ESYS);
