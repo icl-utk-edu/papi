@@ -3,6 +3,8 @@
 
 #ifdef __GNUC__
 #define HAVE_FFSLL
+#define _GNU_SOURCE
+#define __USE_GNU
 #endif
 
 #include <stdio.h>

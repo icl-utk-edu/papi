@@ -3,11 +3,13 @@
 
 #ifdef __GNUC__
 #define HAVE_FFSLL
+#define _GNU_SOURCE
+#define __USE_GNU
 #endif
 
-#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <malloc.h>
 #include <assert.h>
 #include <string.h>
