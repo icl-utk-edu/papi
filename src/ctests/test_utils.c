@@ -61,7 +61,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L1_DCA is not available.\n");
+            fprintf(stdout, "PAPI_L1_DCA is not available.\n");
          *mask = *mask ^ MASK_L1_DCA;
       }
    }
@@ -72,7 +72,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L1_DCW is not available.\n");
+            fprintf(stdout, "PAPI_L1_DCW is not available.\n");
          *mask = *mask ^ MASK_L1_DCW;
       }
    }
@@ -83,7 +83,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L1_DCR is not available.\n");
+            fprintf(stdout, "PAPI_L1_DCR is not available.\n");
          *mask = *mask ^ MASK_L1_DCR;
       }
    }
@@ -94,7 +94,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L2_TCH is not available.\n");
+            fprintf(stdout, "PAPI_L2_TCH is not available.\n");
          *mask = *mask ^ MASK_L2_TCH;
       }
    }
@@ -105,7 +105,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L2_TCA is not available.\n");
+            fprintf(stdout, "PAPI_L2_TCA is not available.\n");
          *mask = *mask ^ MASK_L2_TCA;
       }
    }
@@ -116,7 +116,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L2_TCM is not available.\n");
+            fprintf(stdout, "PAPI_L2_TCM is not available.\n");
          *mask = *mask ^ MASK_L2_TCM;
       }
    }
@@ -127,7 +127,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L1_DCM is not available.\n");
+            fprintf(stdout, "PAPI_L1_DCM is not available.\n");
          *mask = *mask ^ MASK_L1_DCM;
       }
    }
@@ -138,7 +138,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L1_ICM is not available.\n");
+            fprintf(stdout, "PAPI_L1_ICM is not available.\n");
          *mask = *mask ^ MASK_L1_ICM;
       }
    }
@@ -149,7 +149,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_L1_TCM is not available.\n");
+            fprintf(stdout, "PAPI_L1_TCM is not available.\n");
          *mask = *mask ^ MASK_L1_TCM;
       }
    }
@@ -163,8 +163,8 @@ int add_test_events(int *number, int *mask)
          char errstring[PAPI_MAX_STR_LEN];
          PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
          if (!TESTS_QUIET) {
-            printf("Error: %s\n", errstring);
-            fprintf(stderr, "PAPI_BR_CN is not available.\n");
+            fprintf(stdout,"Error: %s\n", errstring);
+            fprintf(stdout, "PAPI_BR_CN is not available.\n");
          }
          *mask = *mask ^ MASK_BR_CN;
       }
@@ -175,7 +175,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_BR_MSP is not available.\n");
+            fprintf(stdout, "PAPI_BR_MSP is not available.\n");
          *mask = *mask ^ MASK_BR_MSP;
       }
    }
@@ -185,7 +185,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_BR_PRC is not available.\n");
+            fprintf(stdout, "PAPI_BR_PRC is not available.\n");
          *mask = *mask ^ MASK_BR_PRC;
       }
    }
@@ -196,7 +196,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_FP_OPS is not available.\n");
+            fprintf(stdout, "PAPI_FP_OPS is not available.\n");
          *mask = *mask ^ MASK_FP_OPS;
       }
    }
@@ -207,7 +207,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_FP_INS is not available.\n");
+            fprintf(stdout, "PAPI_FP_INS is not available.\n");
          *mask = *mask ^ MASK_FP_INS;
       }
    }
@@ -218,7 +218,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_TOT_INS is not available.\n");
+            fprintf(stdout, "PAPI_TOT_INS is not available.\n");
          *mask = *mask ^ MASK_TOT_INS;
       }
    }
@@ -229,7 +229,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_TOT_IIS is not available.\n");
+            fprintf(stdout, "PAPI_TOT_IIS is not available.\n");
          *mask = *mask ^ MASK_TOT_IIS;
       }
    }
@@ -240,7 +240,7 @@ int add_test_events(int *number, int *mask)
          (*number)++;
       else {
          if (!TESTS_QUIET)
-            fprintf(stderr, "PAPI_TOT_CYC is not available.\n");
+            fprintf(stdout, "PAPI_TOT_CYC is not available.\n");
          *mask = *mask ^ MASK_TOT_CYC;
       }
    }
@@ -385,7 +385,7 @@ void tests_quiet(int argc, char **argv)
 
 void test_pass(char *file, long_long ** values, int num_tests)
 {
-   printf("%-40s PASSED\n", file);
+   fprintf(stdout,"%-40s PASSED\n", file);
    if (values)
       free_test_space(values, num_tests);
    PAPI_set_debug(PAPI_QUIET);  /* Prevent error messages on Alpha */
@@ -406,25 +406,25 @@ void test_fail(char *file, int line, char *call, int retval)
 #endif
    memset(buf, '\0', sizeof(buf));
    if (retval != 0)
-      printf("%-40s FAILED\nLine # %d\n", file, line);
+      fprintf(stdout,"%-40s FAILED\nLine # %d\n", file, line);
    else {
-      printf("%-40s SKIPPED\n", file);
+      fprintf(stdout,"%-40s SKIPPED\n", file);
       if (!TESTS_QUIET)
-         printf("Line # %d\n", line);
+         fprintf(stdout,"Line # %d\n", line);
    }
    if (retval == PAPI_ESYS) {
       sprintf(buf, "System error in %s:", call);
       perror(buf);
    } else if (retval > 0) {
-      printf("Error calculating: %s\n", call);
+      fprintf(stdout,"Error calculating: %s\n", call);
    } else if (retval == 0) {
-      printf("SGI requires root permissions for this test\n");
+      fprintf(stdout,"SGI requires root permissions for this test\n");
    } else {
       char errstring[PAPI_MAX_STR_LEN];
       PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
-      printf("Error in %s: %s\n", call, errstring);
+      fprintf(stdout,"Error in %s: %s\n", call, errstring);
    }
-   printf("\n");
+   fprintf(stdout,"\n");
    if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(1);
 }
@@ -434,22 +434,22 @@ void test_skip(char *file, int line, char *call, int retval)
    char buf[128];
 
    memset(buf, '\0', sizeof(buf));
-   printf("%-40s SKIPPED\n", file);
+   fprintf(stdout,"%-40s SKIPPED\n", file);
    if (!TESTS_QUIET) {
       if (retval == PAPI_ESYS) {
-         printf("Line # %d\n", line);
+         fprintf(stdout,"Line # %d\n", line);
          sprintf(buf, "System error in %s:", call);
          perror(buf);
       } else if (retval >= 0) {
-         printf("Line # %d\n", line);
-         printf("Error calculating: %s\n", call);
+         fprintf(stdout,"Line # %d\n", line);
+         fprintf(stdout,"Error calculating: %s\n", call);
       } else if (retval < 0) {
          char errstring[PAPI_MAX_STR_LEN];
-         printf("Line # %d\n", line);
+         fprintf(stdout,"Line # %d\n", line);
          PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
-         printf("Error in %s: %s\n", call, errstring);
+         fprintf(stdout,"Error in %s: %s\n", call, errstring);
       }
-      printf("\n");
+      fprintf(stdout,"\n");
    }
    if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(0);
@@ -492,14 +492,14 @@ void test_print_event_header(char *call, int evset)
    retval = PAPI_list_events(evset, ev_ids, &nev);
 
    if (*call)
-      printf("%s", call);
+      fprintf(stdout,"%s", call);
    if (retval == PAPI_OK) {
       for (i = 0; i < nev; i++) {
          PAPI_event_code_to_name(ev_ids[i], evname);
          printf(ONEHDR, evname);
       }
    } else {
-      printf("Can not list event names.");
+      fprintf(stdout,"Can not list event names.");
    }
-   printf("\n");
+   fprintf(stdout,"\n");
 }
