@@ -255,19 +255,19 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
             case PAPI_PROFIL_BUCKET_16:
               if (buf16[0][i] || buf16[1][i] || buf16[2][i] || buf16[3][i] || buf16[4][i])
                   printf("%-16p\t%d\t%d\t%d\t%d\t%d\n",
-                        (unsigned long) start + (unsigned long) (2 * i), buf16[0][i],
+                        start + (2 * i), buf16[0][i],
                         buf16[1][i], buf16[2][i], buf16[3][i], buf16[4][i]);
                break;
             case PAPI_PROFIL_BUCKET_32:
                if (buf32[0][i] || buf32[1][i] || buf32[2][i] || buf32[3][i] || buf32[4][i])
                   printf("%-16p\t%d\t%d\t%d\t%d\t%d\n",
-                        (unsigned long) start + (unsigned long) (2 * i), buf32[0][i],
+                        start + (2 * i), buf32[0][i],
                         buf32[1][i], buf32[2][i], buf32[3][i], buf32[4][i]);
                break;
             case PAPI_PROFIL_BUCKET_64:
                if (buf64[0][i] || buf64[1][i] || buf64[2][i] || buf64[3][i] || buf64[4][i])
                   printf("%-16p\t%lld\t%lld\t%lld\t%lld\t%lld\n",
-                        (unsigned long) start + (unsigned long) (2 * i), buf64[0][i],
+                        start + (2 * i), buf64[0][i],
                         buf64[1][i], buf64[2][i], buf64[3][i], buf64[4][i]);
                break;
          }

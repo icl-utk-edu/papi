@@ -83,7 +83,7 @@ int main(int argc, char **argv)
    sprof[0].pr_off = (caddr_t) DO_FLOPS;
 #if defined(linux) && defined(__ia64__)
    if (!TESTS_QUIET)
-      fprintf(stderr, "do_flops is at %p %lx\n", &do_flops, sprof[0].pr_off);
+      fprintf(stderr, "do_flops is at %p %p\n", &do_flops, sprof[0].pr_off);
 #endif
    sprof[0].pr_scale = 65536;
    /* Second half */
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
    sprof[1].pr_off = (caddr_t) DO_READS;
 #if defined(linux) && defined(__ia64__)
    if (!TESTS_QUIET)
-      fprintf(stderr, "do_reads is at %p %lx\n", &do_reads, sprof[1].pr_off);
+      fprintf(stderr, "do_reads is at %p %p\n", &do_reads, sprof[1].pr_off);
 #endif
    sprof[1].pr_scale = 65536;
    /* Overflow bin */
