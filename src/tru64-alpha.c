@@ -1081,7 +1081,7 @@ int _papi_hwd_shutdown(EventSetInfo *zero)
 
 int _papi_hwd_shutdown_global(void)
 {
-  hwd_control_state_t *current_state;
+  hwd_control_state_t *current_state=NULL;
   int retval;
 
   if (default_master_eventset)
