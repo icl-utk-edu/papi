@@ -486,8 +486,8 @@ j=0;
 
 if(EventID==-1) {
 while (j<counterArrayLength) {
-if(  (ESI->EventCodeArray[j]<1) 
-   ||(ESI->EventCodeArray[j]==NULL) ) return(j);
+if     (ESI->EventCodeArray[j]<1)  return(j);
+/*   ||(ESI->EventCodeArray[j]==NULL) ) return(j); */
 j++;
 }
 }
