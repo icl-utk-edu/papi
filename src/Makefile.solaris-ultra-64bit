@@ -35,7 +35,7 @@ OPTFLAGS	= -fast -xarch=v9 -xtarget=ultra
 #CC_R		= $(CC) 
 #CC_SHR		= $(CC) -shared -fpic
 #OPTFLAGS	= -O3
-#CFLAGS  	= -g
+#CFLAGS  	= -DNO_VARARG_MACRO -DNEED_FFSLL
 #FFLAGS		= $(CFLAGS)
 #
 # Do not touch below here 
