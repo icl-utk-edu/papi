@@ -1,0 +1,52 @@
+.\" $Id$
+.TH "PAPI_lock" 3 "October, 2000" "PAPI Programmer's Manual" "PAPI"
+
+.SH NAME
+.nf
+PAPI_lock \- Lock the PAPI internal mutex variable
+PAPI_unlock \- Unlock the PAPI internal mutex variable
+.fi
+
+.SH SYNOPSIS
+.B #include <papi.h>
+
+.nf
+.BI void\ PAPI_lock(void);
+.BI void\ PAPI_unlock(void);
+.fi
+
+.SH DESCRIPTION
+.B "PAPI_lock()"
+Grabs access to the PAPI mutex variable. This function is provided to the 
+user to have a platform independent call to an (hopefully) efficiently
+implemented mutex.
+.LP
+.B "PAPI_unlock()"
+unlocks the mutex acquired by a call to
+.BR PAPI_lock .
+
+.SH RETURN VALUES
+There are no return values for these calls. Upon return from
+.B PAPI_lock
+the current thread has acquired exclusive access to the PAPI mutex.
+
+.SH NOTES
+Care must be taken since the mutex variable used is the internal PAPI
+mutex variable. The thread that has acquired the mutex should be
+designed so as not to call any PAPI library functions until a call to
+.B PAPI_unlock
+has been made. Also, other threads that call PAPI library functions may
+be blocked until the thread that has grabbed the mutex has released it.
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
+.SH BUGS
+Due to its possible interference with internal PAPI and that there is only
+one mutex available through this interface some care must be observed by
+the programmer using these calls.
+
+.SH SEE ALSO
+The\ PAPI\ Web\ Site: 
+.B http://icl.cs.utk.edu/projects/papi
+

@@ -2031,3 +2031,14 @@ long long PAPI_get_virt_usec(void)
     return(_papi_hwd_get_virt_usec(master));
   return(-1);
 }
+
+int PAPI_restore(void)
+{
+  fprintf(stderr,"PAPI_restore is currently not implemented\n");
+  return(PAPI_ESBSTR);
+}
+int PAPI_save(void)
+{
+  fprintf(stderr,"PAPI_save is currently not implemented\n");
+  return(PAPI_ESBSTR);
+}
