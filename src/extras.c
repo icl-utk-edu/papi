@@ -42,8 +42,8 @@ extern int (*_papi_hwi_thread_kill_fn) (int, int);
 /****************/
 
 static unsigned int _rnum = DEADBEEF;
-struct sigaction oaction;
-struct itimerval ovalue;
+static struct sigaction oaction;
+static struct itimerval ovalue;
 
 /**************/
 /* END LOCALS */
@@ -129,7 +129,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
          if ((indx * sizeof(short)) < prof->pr_size) {
             buf16 = prof->pr_base;
             buf16[indx] += profil_increment(buf16[indx], flags, excess, threshold);
-            OVFDBG("posix_profil_16() bucket %lu = %u\n", indx, buf16[indx]);
+            PRFDBG("posix_profil_16() bucket %lu = %u\n", indx, buf16[indx]);
          }
       }
       /* next, look for the 32-bit case */
@@ -137,7 +137,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
          if ((indx * sizeof(int)) < prof->pr_size) {
             buf32 = prof->pr_base;
             buf32[indx] += profil_increment(buf32[indx], flags, excess, threshold);
-            OVFDBG("posix_profil_32() bucket %lu = %u\n", indx, buf32[indx]);
+            PRFDBG("posix_profil_32() bucket %lu = %u\n", indx, buf32[indx]);
          }
       }
       /* finally, fall through to the 64-bit case */
@@ -145,7 +145,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
          if ((indx * sizeof(long_long)) < prof->pr_size) {
             buf64 = prof->pr_base;
             buf64[indx] += profil_increment(buf64[indx], flags, excess, threshold);
-            OVFDBG("posix_profil_64() bucket %lu = %lld\n", indx, buf64[indx]);
+            PRFDBG("posix_profil_64() bucket %lu = %lld\n", indx, buf64[indx]);
          }
       }
    }
@@ -166,7 +166,7 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
   int best_index = -1;
   int i;
 
-  OVFDBG("handled at %p\n",pc);
+  PRFDBG("handled at %p\n",pc);
 
   sprof = profile->prof[profile_index];
   count = profile->count[profile_index];
@@ -221,7 +221,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
    EventSetInfo_t *ESI;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
 
-   OVFDBG("Thread 0x%lx\n", (*_papi_hwi_thread_id_fn) ());
+   OVFDBG("enter\n");
 
    if (*t) 
      thread = *t;
@@ -232,19 +232,19 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
      {
        ESI = thread->running_eventset;
 
-       if (ESI->master != thread)
-	 {
-	   PAPIERROR("eventset->thread 0x%lx vs. current thread 0x%lx mismatch",ESI->master,thread);
-	   return(PAPI_EBUG);
-	 }
-
        if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
 	 {
-	   OVFDBG("Thread 0x%lx: Either no eventset or eventset not set to overflow.\n",(*_papi_hwi_thread_id_fn)());
+	   OVFDBG("Either no eventset or eventset not set to overflow.\n");
 #ifdef ANY_THREAD_GETS_SIGNAL
 	   _papi_hwi_broadcast_overflow_signal(thread->tid);
 #endif
 	   return(PAPI_OK);
+	 }
+
+       if (ESI->master != thread)
+	 {
+	   PAPIERROR("eventset->thread 0x%lx vs. current thread 0x%lx mismatch",ESI->master,thread);
+	   return(PAPI_EBUG);
 	 }
 
       /* Get the latest counter value */
@@ -330,7 +330,7 @@ foundit:
    }
 #ifdef ANY_THREAD_GETS_SIGNAL
    else {
-      OVFDBG("I haven't been noticed by PAPI before\n",(*_papi_hwi_thread_id_fn) ());
+      OVFDBG("I haven't been noticed by PAPI before\n");
       _papi_hwi_broadcast_overflow_signal((*_papi_hwi_thread_id_fn) ());
    }
 #endif
@@ -405,7 +405,7 @@ int _papi_hwi_start_timer(int milliseconds)
    _papi_hwi_lock(INTERNAL_LOCK);
    if (_papi_hwi_using_signal)
      {
-       INTDBG("Thread 0x%lx: itimer already installed\n",(*_papi_hwi_thread_id_fn) ());
+       INTDBG("itimer already installed\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
        return(PAPI_OK);
      }
@@ -417,7 +417,7 @@ int _papi_hwi_start_timer(int milliseconds)
    value.it_value.tv_sec = 0;
    value.it_value.tv_usec = milliseconds * 1000;
 
-   INTDBG("Thread 0x%lx: installing itimer %d ms\n",(*_papi_hwi_thread_id_fn) (),milliseconds);
+   INTDBG("installing itimer %d ms\n",milliseconds);
    if (setitimer(PAPI_ITIMER, &value, &ovalue) < 0)
      {
        PAPIERROR("setitimer errno %d",errno);
@@ -435,7 +435,7 @@ int _papi_hwi_start_signal(int signal, int need_context)
    if (_papi_hwi_using_signal)
      {
        _papi_hwi_using_signal++;
-       INTDBG("Thread 0x%lx: _papi_hwi_using_signal is now %d\n",(*_papi_hwi_thread_id_fn) (), _papi_hwi_using_signal);
+       INTDBG("_papi_hwi_using_signal is now %d\n",_papi_hwi_using_signal);
        _papi_hwi_unlock(INTERNAL_LOCK);
        return(PAPI_OK);
      }
@@ -450,7 +450,7 @@ int _papi_hwi_start_signal(int signal, int need_context)
    action.sa_handler = (void (*)(int)) _papi_hwd_dispatch_timer;
 #endif
 
-   INTDBG("Thread 0x%lx: installing signal handler\n",(*_papi_hwi_thread_id_fn) ());
+   INTDBG("installing signal handler\n");
    if (sigaction(signal, &action, &oaction) < 0)
      {
        PAPIERROR("sigaction errno %d",errno);
@@ -458,7 +458,7 @@ int _papi_hwi_start_signal(int signal, int need_context)
        return (PAPI_ESYS);
      }
 
-   INTDBG("Thread 0x%lx: _papi_hwi_using_signal is now %d.\n",(*_papi_hwi_thread_id_fn) (),_papi_hwi_using_signal);
+   INTDBG("_papi_hwi_using_signal is now %d.\n",_papi_hwi_using_signal);
    _papi_hwi_unlock(INTERNAL_LOCK);
 
    return (PAPI_OK);
@@ -469,7 +469,7 @@ int _papi_hwi_stop_signal(int signal)
   _papi_hwi_lock(INTERNAL_LOCK);
   if (--_papi_hwi_using_signal == 0) 
     {
-      INTDBG("Thread 0x%lx: removing signal handler\n",(*_papi_hwi_thread_id_fn) ());
+      INTDBG("removing signal handler\n");
       if (sigaction(signal, &oaction, NULL) == -1)
 	{
 	  PAPIERROR("sigaction errno %d",errno);
@@ -478,7 +478,7 @@ int _papi_hwi_stop_signal(int signal)
 	}
     }
   
-  INTDBG("Thread 0x%lx: _papi_hwi_using_signal is now %d\n",(*_papi_hwi_thread_id_fn) (), _papi_hwi_using_signal);
+  INTDBG("_papi_hwi_using_signal is now %d\n", _papi_hwi_using_signal);
   _papi_hwi_unlock(INTERNAL_LOCK);
 
   return(PAPI_OK);
@@ -490,14 +490,14 @@ int _papi_hwi_stop_timer(void)
    _papi_hwi_lock(INTERNAL_LOCK);
    if (_papi_hwi_using_signal > 1)
      {
-       INTDBG("Thread 0x%lx: itimer in use by another thread\n",(*_papi_hwi_thread_id_fn) ());
+       INTDBG("itimer in use by another thread\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
        return(PAPI_OK);
      }
    _papi_hwi_unlock(INTERNAL_LOCK);
 #endif
 
-   INTDBG("Thread 0x%lx: Turning off timer\n",(*_papi_hwi_thread_id_fn) ());
+   INTDBG("turning off timer\n");
    if (setitimer(PAPI_ITIMER, &ovalue, NULL) == -1)
      {
        PAPIERROR("setitimer errno %d",errno);
