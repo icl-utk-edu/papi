@@ -28,9 +28,11 @@ OPTFLAGS	= -fast -xarch=v9 -xtarget=ultra
 #
 # GNU gcc 2.95.3
 #
+#TARGETS	+= smp
+#F77		= g77
 #CC		= gcc
 #CPP		= $(CC) -E
-#CC_R		= $(CC) -pthread
+#CC_R		= $(CC) -lpthread
 #CC_SHR		= $(CC) -shared -fpic
 #OPTFLAGS	= -O3
 #CFLAGS  	= -g

@@ -28,9 +28,11 @@ OPTFLAGS	= -fast -xarch=v8plus -mt
 #
 # GNU gcc 2.95.3
 #
+#TARGETS	+= smp
 #CC		= gcc
+#F77		= g77
 #CPP		= $(CC) -E
-#CC_R		= $(CC) -pthread
+#CC_R		= $(CC) -lpthread
 #CC_SHR		= $(CC) -shared -fpic
 #OPTFLAGS	= -O3
 #CFLAGS  	= -g
