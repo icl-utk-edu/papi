@@ -634,11 +634,17 @@ static void mpx_handler(int signal)
 #endif
 	  for( t = tlist; t != NULL; t = t->next ) {
 #ifdef MPX_DEBUG_TIMER
-	    fprintf(stderr,"forwarding signal to thread %x\n", t->pid);
+	    fprintf(stderr,"%x forwarding signal to thread %x\n",(*thread_id_fn)(), t->pid);
 #endif
 	    retval = (*thread_kill_fn)(t->pid, MPX_SIGNAL);
-	    assert(retval == 0);
-	  }
+	    if (retval != 0)
+	{
+#ifdef MPX_DEBUG
+	    fprintf(stderr,"%x forwarding signal to thread %x returned %d\n",(*thread_id_fn)(), t->pid, retval);
+#endif
+	perror("thread_kill_fn");
+	}
+  }
 	}
 #endif
 
@@ -1097,26 +1103,27 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
 void MPX_shutdown(void)
 {
-#if 0
 	Threadlist * t, * nextthr;
-#endif
-
+	if (tlist)
+	{
 	mpx_shutdown_itimer();
 
-#if 0
 	PAPI_lock();
 
 	for( t = tlist; t != NULL; t = nextthr ) {
 		assert(t->cur_event == NULL);	/* should be no active events */
 		nextthr = t->next;
+#ifdef MPX_DEBUG_TIMER
+		fprintf(stderr,"Freeing thread %x\n",t->pid);
+#endif
 		free(t);
 	}
-
+	tlist = NULL;
 	PAPI_unlock();
-#endif
 
 	mpx_restore_signal();
-}
+}}
+
 
 int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 {

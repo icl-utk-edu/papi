@@ -1813,6 +1813,8 @@ void PAPI_shutdown(void)
     return;
   }
 
+  MPX_shutdown();
+  
   master = _papi_hwi_lookup_in_master_list();
 
   /* Count number of running EventSets AND */
