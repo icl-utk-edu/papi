@@ -6,14 +6,14 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = realtime first exeinfo zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info memory  \
+SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second cost johnmay2 clockres \
+	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
         overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth \
 	profile sprofile profile_twoevents earprofile byte_profile\
-	ipc native native_avail overflow_index command_line overflow_one_and_read
+	ipc native overflow_index overflow_one_and_read
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
@@ -110,14 +110,8 @@ zero_omp: zero_omp.c $(UTILOBJS) $(PAPILIB)
 val_omp: val_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) val_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o val_omp $(OMPLIBS)
 
-clockres: clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres -lm
-
 clockres_pthreads: clockcore.c clockres_pthreads.c $(PAPILIB) $(UTILOBJS)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread -lm
-
-cost: cost.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) cost.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o cost -lm
 
 inherit: inherit.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) inherit.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o inherit
@@ -145,9 +139,6 @@ zero_flip: zero_flip.c $(UTILOBJS) $(PAPILIB)
 
 realtime: realtime.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) realtime.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o realtime
-
-command_line: command_line.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) command_line.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o command_line
 
 first: first.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) first.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first
@@ -209,20 +200,11 @@ pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 dmem_info: dmem_info.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) dmem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o dmem_info
 
-mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o mem_info
-
 all_events: all_events.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_events
 
-avail: avail.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
-
 memory: memory.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory
-
-native_avail: native_avail.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) native_avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o native_avail
 
 tenth: tenth.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) tenth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o tenth
