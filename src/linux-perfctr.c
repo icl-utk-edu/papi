@@ -141,7 +141,7 @@ inline static int setup_all_presets(int cpu_type)
 	    }
 
 	  /* If there is a string, add a space before the information here */
-	  if(preset_map[pnum].note && 
+	  if(preset_map[pnum].note[0] && 
 	     ((sizeof preset_map[pnum].note) - strlen(preset_map[pnum].note) > 2))
 	    strcat(preset_map[pnum].note," ");
 	  /* Be careful with string sizes... */
