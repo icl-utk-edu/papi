@@ -64,19 +64,20 @@ FTOPTFLAGS= $(TOPTFLAGS)
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR	= linux-perfctr
-MSUBSTR	= linux-perfctr-2.4.1
+MSUBSTR	= linux-memory
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr patch for all Pentiums except P4 and the AMD K7"
+DESCR	= "Linux with PerfCtr patch for the AMD K7 and all Pentiums except P4"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
 CC	= gcc
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. $(PERF_FLAGS)
-#-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPAPI_PERFCTR_INTR_SUPPORT
+# Some nice flags to add to CFLAGS when debugging PAPI library itself
+# -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCOBJS= libperfctr.o
-MISCHDRS= x86-events.h ia32_presets.h
+MISCHDRS= ia32_presets.h 
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
@@ -90,7 +91,7 @@ libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o
 $(PERFCTR)/usr.lib/event_codes.h $(PERFCTR)/usr.lib/libperfctr.o:
 	$(MAKE) -C $(PERFCTR)
 
-lib $(SHLIBDEPS):
+lib $(PERFCTR)/usr.lib/libperfctr.so:
 	$(MAKE) -C $(PERFCTR)/usr.lib libperfctr.so
 
 native_clean:

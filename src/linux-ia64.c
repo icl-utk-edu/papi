@@ -1,11 +1,15 @@
 /*
- * File:   	linux-ia64.c
- *
- * Mods:	Kevin London
- *		london@cs.utk.edu
- *              Per Ekman
- *              pek@pdc.kth.se
- */
+* File:    linux-ia64.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:	   Kevin London
+*	   london@cs.utk.edu
+*          Per Ekman
+*          pek@pdc.kth.se
+*          Zhou Min
+*          min@cs.utk.edu
+*/
 
 #include SUBSTRATE
 
@@ -44,9 +48,7 @@ static preset_search_t preset_search_map[] = {
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH",0,0,0}},
   {PAPI_MEM_SCY,0,{"MEMORY_CYCLE",0,0,0}},
   {PAPI_STL_ICY,0,{"UNSTALLED_BACKEND_CYCLE",0,0,0}},
-  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}},
-  {PAPI_BR_NTK,DERIVED_ADD,{"BRANCH_PATH_ALL_NT_OUTCOMES_CORRECTLY_PREDICTED","BRANCH_PATH_ALL_TK_OUTCOMES_INCORRECTLY_PREDICTED",0,0}},
-  {PAPI_BR_TKN,DERIVED_ADD,{"BRANCH_PATH_ALL_TK_OUTCOMES_CORRECTLY_PREDICTED","BRANCH_PATH_ALL_NT_OUTCOMES_INCORRECTLY_PREDICTED",0,0}},
+/*  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, Broken */
   {PAPI_BR_PRC,0,{"BRANCH_PREDICTOR_ALL_ALL_PREDICTIONS",0,0,0}}, 
   {PAPI_BR_MSP,DERIVED_ADD,{"BRANCH_PREDICTOR_ALL_WRONG_PATH","BRANCH_PREDICTOR_ALL_WRONG_TARGET",0,0}},
   {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
@@ -106,9 +108,9 @@ static preset_search_t preset_search_map[] = {
   {PAPI_L3_TCW,0,{"L3_WRITES_ALL_ALL",0,0,0}},
   {PAPI_TLB_DM,0,{"L2DTLB_MISSES",0,0,0}},
   {PAPI_TLB_IM,0,{"ITLB_MISSES_FETCH_L2ITLB",0,0,0}},
-  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}},
-  {PAPI_BR_NTK,DERIVED_ADD,{"BR_PATH_PRED_ALL_MISPRED_NOTTAKEN","BR_PATH_PRED_ALL_OKPRED_NOTTAKEN",0,0}},
-  {PAPI_BR_TKN,DERIVED_ADD,{"BR_PATH_PRED_ALL_OKPRED_TAKEN","BR_PATH_PRED_ALL_MISPRED_TAKEN",0,0}},
+  {PAPI_BR_INS,0,{"BR_MISPRED_DETAIL_ALL_ALL_PRED",0,0,0}},
+/*  {PAPI_BR_INS,0,{"1000000037FFFFFF@IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",0,0,0}}, */
+/*  {PAPI_BR_INS,0,{"BRANCH_EVENT",0,0,0}}, Broken */
   {PAPI_BR_PRC,0,{"BR_MISPRED_DETAIL_ALL_CORRECT_PRED",0,0,0}},
   {PAPI_BR_MSP,DERIVED_ADD,{"BR_MISPRED_DETAIL_ALL_WRONG_PATH","BR_MISPRED_DETAIL_ALL_WRONG_TARGET",0,0}},
   {PAPI_TOT_CYC,0,{"CPU_CYCLES",0,0,0}},
@@ -655,7 +657,7 @@ inline static int update_global_hwcounters(EventSetInfo_t *local, EventSetInfo_t
     }
 
 /* adjust register value  */
-  if (local->state & PAPI_HWPROFILING) 
+  if ((local->state & PAPI_PROFILING) && (_papi_system_info.supports_hw_profile))
   {
    selector = local->EventInfoArray[local->profile.EventIndex].selector;
    while ((i = ffs(selector)))
@@ -933,6 +935,10 @@ int _papi_recalc_selectors(hwd_control_state_t *this_state, EventInfo_t *eventin
             }
             ESI->EventInfoArray[i].selector = selector;
 /*
+            ESI->EventInfoArray[i].operand_index = ffs(selector)-1-PMU_FIRST_COUNTER;
+*/
+
+/*
             this_state->selector |= selector;
 */
         }
@@ -987,6 +993,31 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       		tmp_cmd.pfp_events[0].event=EventCode;
 		else return(PAPI_EINVAL);
 
+#ifdef PFM20
+	  return(PAPI_ESBSTR);
+      memset(&tmp_cmd, 0, sizeof tmp_cmd);
+      tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
+      tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
+      tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
+      tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
+      tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
+/*
+      ev = pfm_find_event_byvcode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
+*/
+      ev = pfm_find_event_bycode(tmp.pme_ita_code.pme_code, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
+      if (ev != PFMLIB_SUCCESS )
+	return(PAPI_EINVAL);
+#else
+      memset(&tmp_cmd, 0, sizeof tmp_cmd);
+      tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
+      tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
+      tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
+      tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
+      tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
+      ev = pfm_find_event_byvcode(tmp.pme_vcode, &(tmp_cmd.pfp_evt[0]));
+      if (ev != PFMLIB_SUCCESS )
+	return(PAPI_EINVAL);
+#endif
       PFMW_EVT_EVTCOUNT(tmp_cmd) = 1;
 
       codes = &tmp_cmd;
@@ -1638,7 +1669,8 @@ int ia64_process_profile_entry()
     perfmon_smpl_hdr_t *hdr ;
     perfmon_smpl_entry_t *ent;
     unsigned long pos;
-	pfmw_arch_reg_t *reg;
+	hwd_control_state_t *this_state;
+
 /*
     unsigned long smpl_entry = 0;
 */
@@ -1849,8 +1881,8 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 {
     struct sigaction act;
     void *tmp;
-    hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
     int j;
+    hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
 /*
     pfmw_reg_t *pc = this_state->pc;
 */
@@ -2030,7 +2062,7 @@ void _papi_hwd_lock_init(void)
 {
     lock = MUTEX_OPEN;
 }
-
+ 
 void _papi_hwd_lock(void)
 {
     /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
@@ -2048,7 +2080,7 @@ void _papi_hwd_lock(void)
 #endif /* __INTEL_COMPILER */
     return;
 }
-
+ 
 void _papi_hwd_unlock(void)
 {
 #ifdef __INTEL_COMPILER

@@ -39,7 +39,11 @@ extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
 #else
 #define _papi_hwi_system_info _papi_system_info
+<<<<<<< perfctr-p4.c
 papi_mdi_t _papi_system_info = { "$Id$", 
+=======
+papi_mdi_t _papi_system_info = { "$Id$", 
+>>>>>>> 1.9.4.2
 			      1.0, /*  version */
 			       -1,  /*  cpunum */
 			       { 
@@ -1200,13 +1204,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
   _papi_hwi_dispatch_overflow_signal(mc); 
 
   /* We are done, resume interrupting counters */
-#ifdef PAPI_PERFCTR_INTR_SUPPORT
+
   if(_papi_hwi_system_info.supports_hw_overflow)
     {
-      ThreadInfo_t *master = _papi_hwi_lookup_in_master_list();
+      EventSetInfo *master;
       hwd_control_state_t *machdep;
-      struct vperfctr* dev;
 
+      master = _papi_hwi_lookup_in_master_list();
       if(master==NULL)
 	{
 	  fprintf(stderr,"%s():%d: master event lookup failure! abort()\n",
@@ -1214,18 +1218,14 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 	  abort();
 	}
       machdep =  master->machdep;
-      dev = machdep->self;
-      /* This is currently disabled since the restart of the counter */
-      /* is made in update_global_counters out of unknown reasons    */
-      /* if(vperfctr_isrun(machdep->self))                           */
-      /*   if(vperfctr_iresume(machdep->self)<0)                     */
-      /*     {                                                       */
-      /*       perror("vperfctr_iresume");                           */
-      /*       abort();                                              */
-      /*     }                                                       */
+      if (vperfctr_iresume(machdep->context.perfctr) < 0)
+	{
+	  fprintf(stderr,"%s():%d: vperfctr_iresume %s\n",
+		  __FUNCTION__,__LINE__,strerror(errno));
+	  abort();
+	}
     }
-#endif
-  DBG((stderr,"Finished at 0x%x\n",(*gs)[15]));
+  DBG((stderr,"Finished, returning to address 0x%x\n",(*gs)[15]));
 }
 
 void *_papi_hwd_get_overflow_address(void *context)
