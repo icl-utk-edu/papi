@@ -1574,7 +1574,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)
 
 int PAPI_remove_events(int EventSet, int *Events, int number)
 {
-   int i, retval, err_retval = PAPI_OK;
+   int i, retval;
 
    if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
