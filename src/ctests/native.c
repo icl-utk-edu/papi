@@ -67,18 +67,8 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
       "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL
    };
 #endif
-#ifdef PENTIUM3
-   static char *native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
-#endif
-#ifdef __ATHLON__
-   static char *native_name[] = { "TOT_CYC", "IC_MISSES", "DC_ACCESSES",
-      "DC_MISSES", NULL
-   };
-#endif
-#ifdef __x86_64__
-   static char *native_name[] = { "FP_ADD_PIPE", "FP_MULT_PIPE", "FP_ST_PIPE",
-      "FP_NONE_RET", NULL
-   };
+#if (defined(linux) && (defined(__i386__) || (defined __x86_64__)))
+   static char *native_name[5] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 #endif
 
 #if defined(linux) && defined(__ia64__)
@@ -118,7 +108,20 @@ void papimon_start(void)
          test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EMISC);
       if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
+      if(!strncmp(hwinfo->model_string, "AMD K7", 6)) {
+         native_name[0] = "TOT_CYC";
+         native_name[1] = "IC_MISSES";
+         native_name[2] = "DC_ACCESSES";
+         native_name[3] = "DC_MISSES";
+         native_name[4] = NULL;
+      }
+      else if(!strncmp(hwinfo->model_string, "AMD K8", 6)) {
+         native_name[0] = "FP_ADD_PIPE";
+         native_name[1] = "FP_MULT_PIPE";
+         native_name[2] = "FP_ST_PIPE";
+         native_name[3] = "FP_NONE_RET";
+         native_name[4] = NULL;
+      }
 #if defined(_CRAYT3E)
       native = 0 | 0x0 << 8 | 0;        /* Machine cyc */
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
