@@ -1,4 +1,5 @@
 #include "x1.h"
+#include "papi_internal.h"
 
 /*
  * This function has to set the bits needed to count different domains
