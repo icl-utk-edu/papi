@@ -393,19 +393,22 @@ static inline int setup_all_presets()
 /* Utility functions */
 
 /* Return new counter mask */
-inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_param_t *from)
+inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_param_t *from, EventInfo_t *out)
 {
   pfmw_reg_t *pc = this_state->pc;
   pfmw_param_t *evt = &this_state->evt;
   int i, orig_cnt = PFMW_PEVT_EVTCOUNT(evt);  
   int cnt = PMU_MAX_PMCS;
   int selector = 0;
+  int pos=0;
 
   if (from)
     {
       /* Called from add_event */
       /* Merge the two evt structures into the old one */
-      
+
+      pos=PFMW_PEVT_EVTCOUNT(evt);
+  
       for (i=0;i<PFMW_PEVT_EVTCOUNT(from);i++) {
 	PFMW_PEVT_EVENT(evt,PFMW_PEVT_EVTCOUNT(evt)) = PFMW_PEVT_EVENT(from,i);
 	PFMW_PEVT_EVTCOUNT(evt)++;
@@ -434,6 +437,8 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
    for (i=0;i<PFMW_PEVT_EVTCOUNT(evt);i++)
     {
       selector |= 1 << PFMW_REG_REGNUM(pc[i]);
+	  if(out && i==pos)
+	  out->operand_index=PFMW_REG_REGNUM(pc[i])-4;
 
       DBG((stderr,"Selector is now 0x%x\n",selector));
     }
@@ -1058,7 +1063,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   /* Turn on the control codes and get the new bits required */
 
-  nselector = set_hwcntr_codes(this_state,codes);
+  nselector = set_hwcntr_codes(this_state,codes, out);
   if (nselector < 0)
     return retval;
   if (nselector == 0)
@@ -1386,7 +1391,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	PFMW_EVT_EVTCOUNT(current_state->evt) += not_shared;
 
 	/* Re-encode the command structure, return the new selector */
-	nselector = set_hwcntr_codes(current_state,NULL);
+	nselector = set_hwcntr_codes(current_state,NULL,NULL);
 	if (nselector < 0)
 	  {
 	    pfm_start();
