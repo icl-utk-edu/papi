@@ -668,7 +668,7 @@ int MPX_start(MPX_EventSet * mpx_events)
 	int i;
 	long_long cycles_this_slice = 0;
 	Threadlist * t;
-	long long prev_total_c;
+	long_long prev_total_c;
 	
 	t = mpx_events->mythr;
 
@@ -680,7 +680,7 @@ int MPX_start(MPX_EventSet * mpx_events)
 	for( i = 0; i < mpx_events->num_events; i++ ) {
 		MasterEvent * mev = mpx_events->mev[i];
 
-		long long prev_count, prev_cycles;
+		long_long prev_count, prev_cycles;
 		prev_count = mpx_events->stop_values[i]
 			- mpx_events->start_values[i];
 		prev_cycles = mpx_events->stop_cycles[i]
