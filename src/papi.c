@@ -472,14 +472,20 @@ int PAPI_remove_event(int EventSet, int EventCode)
       for(i=0; i<ESI->overflow.event_counter; i++ ) {
         if ( ESI->overflow.EventCode[i] == EventCode ){
            PAPI_overflow( EventSet, EventCode, 0, 0, ESI->overflow.handler);
+           break;
         }
       } 
    }
    
    /* force the user to call PAPI_profil to clear the PAPI_PROFILING flag */
-   if (ESI->state & PAPI_PROFILING)  
-      if (_papi_hwi_system_info.supports_hw_profile)
-          papi_return(PAPI_ECNFLCT);
+   if (ESI->state & PAPI_PROFILING)  {
+     for (i=0; i < ESI->profile.event_counter; i++ ){
+       if ( ESI->profile.EventCode[i] == EventCode ){
+         PAPI_sprofil(NULL,0,EventSet,EventCode, 0, 0);
+         break;
+       }
+     }
+   }
 
    /* Now do the magic. */
 
@@ -615,7 +621,7 @@ int PAPI_stop(int EventSet, long_long * values)
       papi_return(PAPI_ENOTRUN);
 
    if (ESI->state & PAPI_PROFILING) {
-      if (_papi_hwi_system_info.supports_hw_profile) {
+      if (_papi_hwi_system_info.supports_hw_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
          retval = _papi_hwd_stop_profiling(thread, ESI);
          if (retval < PAPI_OK)
             papi_return(retval);
@@ -713,7 +719,8 @@ int PAPI_reset(int EventSet)
              (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
             ESI->overflow.count = 0;
 
-         if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.supports_hw_profile))
+         if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.supports_hw_profile) &&
+             !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW))
             ESI->profile.overflowcount = 0;
       }
    } else {
@@ -853,7 +860,7 @@ int PAPI_cleanup_eventset(int EventSet)
    }
    /* clear profile flag and turn off hardware profile handler */
    if ( (ESI->state & PAPI_PROFILING) && 
-          _papi_hwi_system_info.supports_hw_profile) {
+          _papi_hwi_system_info.supports_hw_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
       total=ESI->profile.event_counter;
       for (i = 0; i < total; i++) {
          retval = PAPI_profil(NULL, 0, 0, 65536, EventSet, 
@@ -1386,7 +1393,8 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    /* We do not support derived events in overflow */
    /* Unless it's DERIVED_CMPD in which no calculations are done */
    if ((ESI->EventInfoArray[index].derived) && 
-       (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
+       (ESI->EventInfoArray[index].derived != DERIVED_CMPD) &&
+       !(flags&PAPI_PROFIL_FORCE_SW) ) 
       papi_return(PAPI_EINVAL);
 
    /* check all profile regions for valid scale factors of:
@@ -1441,6 +1449,12 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
       ESI->profile.event_counter--;
    } else {
+      if ( ESI->profile.event_counter > 0 ) {
+        if ( (flags&PAPI_PROFIL_FORCE_SW) && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
+          papi_return(PAPI_ECNFLCT);
+        if ( !(flags&PAPI_PROFIL_FORCE_SW) && (ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
+          papi_return(PAPI_ECNFLCT);
+      }
       i = ESI->profile.event_counter;
       ESI->profile.prof[i] = prof;
       ESI->profile.count[i] = profcnt;
@@ -1484,6 +1498,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if ((ESI->profile.event_counter == 1 && threshold > 0) ||
        (ESI->profile.event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_PROFILING;
+
+   if ( ESI->profile.event_counter == 0 )
+     ESI->profile.flags = 0;
 
    return(PAPI_OK);
 }
