@@ -12,6 +12,55 @@ It was created after the fact to try to capture PAPI's evolution.
 Early details may be sketchy; we hope to keep more recent information
 more complete.
 
+PAPI Release 2.3.4: March 2003
+------------------------------
+(oops, we let a few minor releases slip in)
+
+GENERAL:
+> Improved multiplex support. Adding and removing events in
+  multiplexed event sets now works. More thorough test cases
+  (sdsc1 - 4) to verify correctness of multiplexed event counting.
+> tests directory renamed to ctests to match installations
+> new test case ctests/branches for testing branch events
+> Early release of memory extensions for static and dynamic memory
+> New test case (all_events) that makes sure all events in a substrate 
+  can be added/started/stopped
+> New examples directory added
+	- first example shows how to change an event based on 
+	  environment variables
+> Various Makefile fixes
+
+IA32:
+> New implementations of PAPI_lock/PAPI_unlock
+> Improved memory detection routines for ia32 and AMD. TLB sizes now
+  reported in number of entries instead of equivalent memory mapped
+  on these CPUs as is the case on other platforms.
+> Added support for perfctr 2.4.5
+
+IA64:
+> New implementations of PAPI_lock/PAPI_unlock.
+> Events were sometimes returned on the wrong order on the ia64 
+  substrate. This has now been corrected.
+> Operand order in derived events was not preserved.
+> build/optimization fixes in Makefile
+> First implementation of support for hardware profiling
+> Libpfm 2.0 is now supported
+> Opcode matching support for PAPI events on the Itanium2.
+
+PENTIUM4:
+> Overflow is now supported for event sets with single 
+  events only (for now).
+> Register allocation for at least 3 registers
+> Pentium 4 substrate matches IA32/IA64
+
+ALPHA:
+> EV7 was not being determined correctly
+> DADD directory pathing was fixed
+
+POWER:
+> POWER 3 register allocation scheme improved
+
+
 PAPI Release 2.3: October 2002
 ------------------------------
 > added support for IBM AIX 5.1 on POWER 3
