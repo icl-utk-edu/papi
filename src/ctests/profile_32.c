@@ -43,6 +43,7 @@ int main(int argc, char **argv)
    unsigned long start, end;
    long_long **values;
    const PAPI_exe_info_t *prginfo = NULL;
+   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
    int retval;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -54,23 +55,26 @@ int main(int argc, char **argv)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
-#if defined(sun) && defined(sparc) || defined(POWER3) || defined(__ATHLON__)
    /* query and set up the right instruction to monitor */
-   if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-      PAPI_event = PAPI_TOT_INS;
-      mask = MASK_TOT_INS | MASK_TOT_CYC;
-   } else
-      test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!",
-                0);
-#else
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-      PAPI_event = PAPI_FP_INS;
-      mask = MASK_FP_INS | MASK_TOT_CYC;
-   } else {
-      PAPI_event = PAPI_TOT_INS;
-      mask = MASK_TOT_INS | MASK_TOT_CYC;
+   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
+       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
+      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
+      (!strcmp(hw_info->model_string, "POWER3"))) {
+      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
+         PAPI_event = PAPI_TOT_INS;
+         mask = MASK_TOT_INS | MASK_TOT_CYC;
+      } else
+         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
    }
-#endif
+   else {
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+         PAPI_event = PAPI_FP_INS;
+         mask = MASK_FP_INS | MASK_TOT_CYC;
+      } else {
+         PAPI_event = PAPI_TOT_INS;
+         mask = MASK_TOT_INS | MASK_TOT_CYC;
+      }
+   }
 
    if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
