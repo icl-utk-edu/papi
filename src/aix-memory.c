@@ -15,7 +15,7 @@
 
 
 
-int get_memory_info( PAPI_mem_info_t * mem_info ) {
+int get_memory_info( PAPI_hw_info_t * mem_info ) {
   if ( _system_configuration.tlb_attrib & (1<<30) ){
    mem_info->total_tlb_size=_system_configuration.itlb_size;
   }

@@ -28,13 +28,13 @@
 #include "papi_protos.h"
 
 #include <stdio.h>
-static int init_amd( PAPI_mem_info_t * mem_info );
+static int init_amd( PAPI_hw_info_t * mem_info );
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
-static int init_intel( PAPI_mem_info_t * mem_info );
+static int init_intel( PAPI_hw_info_t * mem_info );
 inline_static void cpuid(unsigned int *, unsigned int *,
 				 unsigned int *,unsigned int *);
 
-int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
+int _papi_hwd_get_memory_info( PAPI_hw_info_t * mem_info, int cpu_type ){
   int retval = 0;
 
   /*
@@ -68,7 +68,7 @@ int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 }
 
 /* Cache configuration for AMD AThlon/Duron */
-static int init_amd( PAPI_mem_info_t * mem_info ) {
+static int init_amd( PAPI_hw_info_t * mem_info ) {
   unsigned int reg_eax,reg_ebx,reg_ecx,reg_edx;
   unsigned short int pattern;
   
@@ -232,7 +232,7 @@ static short int init_amd_L2_assoc_inf(unsigned short int pattern) {
 return assoc;
 }
 
-static int init_intel( PAPI_mem_info_t * mem_info ) {
+static int init_intel( PAPI_hw_info_t * mem_info ) {
   unsigned int reg_eax,reg_ebx,reg_ecx,reg_edx,value;
   int i,j,k,count;
 

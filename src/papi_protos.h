@@ -185,13 +185,15 @@ extern void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 
 /* The following functions are defined by the memory file. */
 
-extern int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type );
 extern long _papi_hwd_get_dmem_info(int option);
 
 /* Defined by the OS substrate file */
 
 extern int _papi_hwd_update_shlib_info(void);
 extern int _papi_hwd_get_system_info(void);
+
+/* Defined in a memory file, could be processor or OS specific */
+extern int _papi_hwd_get_memory_info( PAPI_hw_info_t *, int );
 
 /* Linux defines; may also appear in substrates */
 #ifdef linux

@@ -22,7 +22,7 @@
 #define TLB_R12  128*32
 
 inventory_t *getinvent (void);
-int get_memory_info( PAPI_mem_info_t * mem_info ){
+int get_memory_info( PAPI_hw_info_t * mem_info ){
 	inventory_t *curr;
 	long count;
 	int chiptype;

@@ -275,7 +275,7 @@ int _papi_hwd_init_global(void)
       return(retval);
 
    /* Setup memory info */
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.mem_info, (int)info.cpu_type);
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int)info.cpu_type);
    if(retval)
       return(retval);
 

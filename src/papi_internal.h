@@ -185,6 +185,17 @@ typedef struct _MPX_EventSet {
 typedef MPX_EventSet * EventSetMultiplexInfo_t;
 
 /* Threads */
+
+/* Other Thread Level Storage is defined in papi.h
+ * this is so the user is not exposed to our thread
+ * storage (At least not specifically exposed ;)
+ */
+ 
+#define PAPI_TLS_LOW_LEVEL	0
+#define PAPI_TLS_HIGH_LEVEL	1
+
+void * thread_storage[PAPI_MAX_THREAD_STORAGE];
+
 typedef struct _ThreadInfo {
   unsigned pid;
   unsigned tid;
@@ -313,7 +324,6 @@ typedef struct _papi_mdi {
   pid_t pid;                /* Process identifier */
   PAPI_hw_info_t hw_info;   /* See definition in papi.h */
   PAPI_exe_info_t exe_info;  /* See definition in papi.h */
-  PAPI_mem_info_t mem_info;  /* See definition in papi.h */
   PAPI_shlib_info_t shlib_info; /* See definition in papi.h */
 
   /* The following variables define the length of the arrays in the 

@@ -131,6 +131,33 @@ unsigned long int PAPI_thread_id(void)
     return(PAPI_EINVAL);
 }
 
+/* Thread Storage Functions */
+/*
+ * Return a pointer to the stored thread information.
+ */
+inline int PAPI_get_thr_specific(int tag, void **ptr)
+{
+  if ( tag < 0 || tag > PAPI_MAX_THREAD_STORAGE )
+	papi_return(PAPI_EINVAL);
+  _papi_hwd_lock( PAPI_THREAD_STORAGE_LOCK );
+  *ptr = &thread_storage[tag];
+  _papi_hwd_unlock( PAPI_THREAD_STORAGE_LOCK );
+  papi_return(PAPI_OK);
+}
+
+/*
+ * Store a pointer to memory provided by the thread
+ */
+inline int PAPI_set_thr_specific(int tag, void *ptr)
+{
+  if ( tag < 0 || tag > PAPI_MAX_THREAD_STORAGE )
+	papi_return(PAPI_EINVAL);
+  _papi_hwd_lock( PAPI_THREAD_STORAGE_LOCK );
+  thread_storage[tag] = ptr;
+  _papi_hwd_unlock( PAPI_THREAD_STORAGE_LOCK );
+  papi_return(PAPI_OK);
+}
+
 
 int PAPI_library_init(int version)
 {
@@ -194,6 +221,12 @@ int PAPI_library_init(int version)
     if(_papi_hwi_presets[i].flags & PAPI_DERIVED) tmp += 1;
   }
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
+
+  /*
+   * Initialize the thread storage
+   */
+  for ( i=0; i < PAPI_MAX_THREAD_STORAGE; i++ )
+	thread_storage[i] = NULL;
 
   init_level = PAPI_LOW_LEVEL_INITED;
   return(init_retval = PAPI_VER_CURRENT);
@@ -1087,11 +1120,6 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 	papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_hwi_system_info.hw_info;
       break;
-    case PAPI_GET_MEMINFO:
-      if (ptr == NULL)
-	papi_return(PAPI_EINVAL);
-      ptr->mem_info = &_papi_hwi_system_info.mem_info;
-      break;
     case PAPI_GET_DOMAIN:
       if (ptr == NULL)
 	papi_return(PAPI_EINVAL);
@@ -1506,17 +1534,6 @@ const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void)
   retval = PAPI_get_opt(PAPI_GET_SHLIBINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.shlib_info);
-  else
-    return(NULL);
-}
-
-const PAPI_mem_info_t *PAPI_get_memory_info() {
-  PAPI_option_t ptr;
-  int retval;
- 
-  retval = PAPI_get_opt(PAPI_GET_MEMINFO,&ptr);
-  if (retval == PAPI_OK)
-    return(ptr.mem_info);
   else
     return(NULL);
 }

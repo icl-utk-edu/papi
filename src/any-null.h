@@ -57,4 +57,3 @@ typedef struct hwd_preset {
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
 
-int get_memory_info( PAPI_mem_info_t * mem_info );

@@ -1100,6 +1100,8 @@ int _papi_hwi_mdi_init() {
    _papi_hwi_system_info.version                = 1.0; /* version */
    _papi_hwi_system_info.pid                    = 0;   /* Process identifier */
 
+    memset(&_papi_hwi_system_info.hw_info, sizeof(PAPI_hw_info_t), 0);
+
   /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu               = -1;    /* ncpu */
    _papi_hwi_system_info.hw_info.nnodes             =  1;    /* nnodes */
@@ -1112,11 +1114,10 @@ int _papi_hwi_mdi_init() {
    _papi_hwi_system_info.hw_info.mhz                = 0.0;   /* mhz */
    _papi_hwi_system_info.hw_info.max_native_events  = PAPI_MAX_NATIVE_EVENTS;
 
+
   /* The PAPI_exe_info_t struct defined in papi.h */
    memset(&_papi_hwi_system_info.exe_info, sizeof(PAPI_exe_info_t), 0);
 
-  /* The PAPI_mem_info_t struct defined in papi.h */
-    memset(&_papi_hwi_system_info.mem_info, sizeof(PAPI_mem_info_t), 0);
 
   /* The PAPI_shlib_info_t struct defined in papi.h */
     memset(&_papi_hwi_system_info.shlib_info, sizeof(PAPI_shlib_info_t), 0);

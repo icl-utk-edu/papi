@@ -60,8 +60,6 @@ typedef struct {
 } papi_rev_id_t;
 
 
-int get_memory_info(PAPI_mem_info_t* mem_info);
-
 extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];
 extern int _fbss[], _end[];

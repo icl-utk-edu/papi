@@ -92,6 +92,16 @@ All of the functions in the PerfAPI should use the following set of constants.
 				       The lower 31 bits can be decoded by the substrate into something
 				       meaningful. i.e. SGI HUB counters */
 
+/* Thread Definitions */
+/* We define other levels in papi_internal.h
+ * for internal PAPI use, so if you change anything
+ * make sure to look at both places -KSL
+ */
+#define PAPI_TLS_USER_LEVEL1		2
+#define PAPI_TLS_USER_LEVEL2		3
+#define PAPI_MAX_THREAD_STORAGE		4
+
+
 /* Granularity definitions */
 
 #define PAPI_GRN_THR     0x1    /* PAPI counters for each individual thread */
@@ -203,11 +213,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_GET_MAX_CPUS 	74 /* Number of ncpus we can talk to from here */
  
-#define PAPI_GET_MEMINFO        75 /* Memory information */
+#define PAPI_SET_MAXMEM         75 /* Setup Maximum Memory if no hardware support */
 
-#define PAPI_SET_MAXMEM         76 /* Setup Maximum Memory if no hardware support */
-
-#define PAPI_GET_SHLIBINFO      77 /* Executable information */
+#define PAPI_GET_SHLIBINFO      76 /* Executable information */
 
 #define PAPI_MAX_STR_LEN        129 /* Guess what */
 
@@ -308,9 +316,8 @@ typedef struct _papi_hw_info {
   float mhz;                  /* Cycle time of this CPU, *may* be estimated at 
                                init time with a quick timing routine */
   int max_native_events;    /* maximum # of native events for this platform */
-} PAPI_hw_info_t;
-  
-typedef struct _papi_mem_info {
+
+  /* Memory Information */
   int L1_tlb_size;		/*Data + Instruction Size */
   int L1_itlb_size;		/*Instruction TLB size in KB */
   short int L1_itlb_assoc;      /*Instruction TLB associtivity */
@@ -343,7 +350,8 @@ typedef struct _papi_mem_info {
   short int L3_cache_assoc;	/*Level 3 cache associtivity */
   int L3_cache_lines;		/*Number of lines in Level 3 cache */
   int L3_cache_linesize;	/*Line size of Level 3 cache */
-} PAPI_mem_info_t;
+} PAPI_hw_info_t;
+  
 
 typedef struct _papi_multiplex_option {
   int eventset;
@@ -365,7 +373,6 @@ typedef union {
   PAPI_domain_option_t defdomain; 
   PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
-  PAPI_mem_info_t *mem_info;
   PAPI_shlib_info_t *shlib_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 
@@ -393,11 +400,12 @@ typedef struct pre_info {
  * This can never go over 31, because of the Cray T3E uses
  * _semt which has a max index of 31 
  */
-#define PAPI_INTERNAL_LOCK      0
-#define PAPI_MULTIPLEX_LOCK     1
-#define PAPI_USR1_LOCK          2
-#define PAPI_USR2_LOCK          3
-#define PAPI_MAX_LOCK           4  /* Always 1 more than previous lock */
+#define PAPI_INTERNAL_LOCK      	0  /* Used in Internal PAPI routines */
+#define PAPI_MULTIPLEX_LOCK     	1  /* Only used in multiplexing */
+#define PAPI_THREAD_STORAGE_LOCK	2  /* Only used with thr storage */
+#define PAPI_USR1_LOCK          	3  /* User controlled locks */
+#define PAPI_USR2_LOCK          	4  /* User controlled locks */
+#define PAPI_MAX_LOCK           	5  /* Used with setting up array */
 
 
 int PAPI_accum(int EventSet, long_long *values);
@@ -412,7 +420,6 @@ void PAPI_unlock(int);
 const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);
 const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
-const PAPI_mem_info_t *PAPI_get_memory_info();
 long PAPI_get_dmem_info(int option);
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
 void *PAPI_get_overflow_address(void *context);
@@ -422,6 +429,8 @@ u_long_long PAPI_get_virt_cyc(void);
 u_long_long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
 unsigned long int PAPI_thread_id(void);
+int PAPI_get_thr_specific(int tag, void **ptr);
+int PAPI_set_thr_specific(int tag, void *ptr);
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
 int PAPI_multiplex_init(void);
