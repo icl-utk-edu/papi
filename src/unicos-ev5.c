@@ -3,8 +3,6 @@
 
 /* PAPI stuff */
 
-#define float long_long
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_preset.h"
