@@ -1,4 +1,0 @@
-#!/bin/sh
- 
-this=`pwd | sed -e 's#.*homes/##g'`
-echo "$this> "

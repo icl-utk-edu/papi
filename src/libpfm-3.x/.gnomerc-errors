@@ -1,5 +1,0 @@
-_IceTransmkdir: Owner of /tmp/.ICE-unix should be set to root
-SESSION_MANAGER=local/fir:/tmp/.ICE-unix/7207
-libpng error: IDAT: CRC error
-
-Gtk-WARNING **: gtk_widget_size_allocate(): attempt to allocate widget with width 65527 and height 1
