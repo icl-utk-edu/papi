@@ -34,7 +34,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       CHARACTER*(MSGLEN-1) invstr4
       CHARACTER*(MSGLEN-2) invstr5
 
-      integer i,check,len,code,retcode,lastchar,papicode
+      integer i,check,len,code,code2,retcode,lastchar,papicode
       integer getstrlen
       external getstrlen
 
@@ -127,79 +127,82 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       print *,' On no occasion a NULL character should be found(+)'
       print *
 
-      print *,'Test 1'
+      print 200,'Test 1'
       papistr="PAPI_L1_DCM"
       papicode=-1
       call test_papif_descr(papistr,papicode,papidblstr,check)
       if(papicode.ne.PAPI_L1_DCM)then
-        print *,'Code look up failed?'
+        print 210,'Code look up failed?'
       end if
       print *
 
-      print *,'Test 2'
+      print 200,'Test 2'
       papistr="  "
       papicode=PAPI_L2_DCM
       call test_papif_descr(papistr,papicode,papidblstr,check)
       i=getstrlen(papistr)
       if(papistr(1:i).ne."PAPI_L2_DCM")then
-        print *,'Name look up failed?'
-        print *,'Got:      "'//papistr(1:i)//'"'
-        print *,'Expected: "'//'PAPI_L2_DCM'//'"'
+        print 210,'PAPI name incorrect?'
+        print 220,'Got:      ',papistr(1:i)
+        print 220,'Expected: ','PAPI_L2_DCM'
       end if
       print *
 
-      print *,'Test 3'
+      print 200,'Test 3'
       invstr1="PAPI_L1_ICM"
       papicode=-1
       call test_papif_descr(invstr1,papicode,papidblstr,check)
       if(papicode.ne.PAPI_L1_ICM)then
-        print *,'Code look up failed?'
+        print 210,'Code look up failed?'
       end if
       print *
 
-      print *,'Test 4'
+      print 200,'Test 4'
       invstr1="  "
       papicode=PAPI_L2_ICM
       call test_papif_descr(invstr1,papicode,papidblstr,check)
       i=getstrlen(invstr1)
       if(invstr1(1:i).ne."PAPI_L2_ICM")then
-        print *,'Name look up failed?'
-        print *,'Got:      "'//invstr1(1:i)//'"'
-        print *,'Expected: "'//'PAPI_L2_ICM'//'"'
+        print 210,'PAPI name incorrect?'
+        print 220,'Got:      ',invstr1(1:i)
+        print 220,'Expected: ','PAPI_L2_ICM'
       end if
       print *
 
-      print *,'Test 5  (This test should get a truncated description)'
+      print 200,'Test 5  (This test should get a truncated description)'
       invstr2="PAPI_L3_DCM"
       papicode=-1
       call test_papif_descr(invstr2,papicode,invstr1,check)
       if(papicode.ne.PAPI_L3_DCM)then
-        print *,'Code look up failed?'
+        print 210,'Code look up failed?'
       end if
       print *
 
-      print *,'Test 6  (This test should get a truncated description)'
+      print 200,'Test 6  (This test should get a truncated description)'
       invstr2="  "
       papicode=PAPI_L3_ICM
       call test_papif_descr(invstr2,papicode,invstr1,check)
       i=getstrlen(invstr2)
       if(invstr2(1:i).ne."PAPI_L3_ICM")then
-        print *,'Name look up failed?'
-        print *,'Got:      "'//invstr2(1:i)//'"'
-        print *,'Expected: "'//'PAPI_L2_ICM'//'"'
+        print 210,'PAPI name incorrect?'
+        print 220,'Got:      ',invstr2(1:i)
+        print 220,'Expected: ','PAPI_L2_ICM'
       end if
       print *
 
-      print *,'Test 7  (This test should get a truncated name)'
+      print 200,'Test 7  (This test should get a truncated name)'
       invstr4="  "
       papicode=PAPI_L1_DCM
       call test_papif_descr(invstr4,papicode,papistr,check)
       i=getstrlen(invstr4)
       if(invstr4(1:i).ne."PAPI_L1_DCM")then
-        print *,'Name look up failed?'
-        print *,'Got:      "'//invstr4(1:i)//'"'
-        print *,'Expected: "'//'PAPI_L1_DCM'//'"'
+        print 210,'PAPI name incorrect?'
+        print 220,'Got:      ',invstr4(1:i)
+        print 220,'Expected: ','PAPI_L1_DCM'
       end if
+ 200  format(t1,a)
+ 210  format(t2,a)
+ 220  format(a12,'"',a,'"')
 
       print *,'---------------------------------------------------'
       print *,'(+) Fortran implementations that do not provide the'
@@ -231,7 +234,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
         print *,'NULL character found in string!!!'
       end if
 
-      print *,'The event name is: "',string(1:getstrlen(string)),'"'
+ 100  format(t1,a,'"',a,'"')
+      print 100,'The event name is: ',string(1:getstrlen(string))
       
       call PAPIF_event_name_to_code(string,code,check)
       if(check.ne.PAPI_OK)then
@@ -256,14 +260,15 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       call PAPIF_perror(code,string,check)
       print 100,'Testing string of length ',len(string)
       i=getstrlen(string)
-      print *,'"1234567890....5...20....5...30....5...40....5...50...'
-      print *,'"',string(1:i),'"'
+      print 200,'1234567890....5...20....5...30....5...40....5...50...'
+      print 200,string(1:i)
       i=index(string,char(0))
       if(i.gt.0)then
         print *,'NULL character found in string!!!'
       end if
       
  100  format(t1,a,i4)
+ 200  format(t1,'"',a,'"')
       end
 
       subroutine test_papif_descr(name,code,string,check)
@@ -277,8 +282,9 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       external getstrlen
 
       call PAPIF_describe_event(name,code,string,check)
-      print *,'The event description is: "',
-     $    string(1:getstrlen(string)),'"'
+ 100  format(t1,a,'"',a,'"')
+      print 100,'The event description is: ',
+     $    string(1:getstrlen(string))
       
       if(check.ne.PAPI_OK)then
         call PAPIF_perror(check,papierr,code)
