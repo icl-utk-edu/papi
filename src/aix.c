@@ -371,7 +371,7 @@ void _papi_hwd_error(int error, char *where)
    pm_error(where, error);
 }
 
-static void lock_init(void)
+static void _papi_lock_init(void)
 {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++)
@@ -403,7 +403,7 @@ int _papi_hwd_init_global(void)
 
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
 
-   lock_init();
+   _papi_lock_init();
 
    return (retval);
 }
