@@ -763,7 +763,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
-   int hwcntr, retval = PAPI_OK;
+   int hwcntr, retval = PAPI_OK, i;
 /*
   if ((this_state->num_on_counter[0] > 1) || 
       (this_state->num_on_counter[1] > 1))
@@ -802,6 +802,27 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       arg->hwp_ovflw_sig = PAPI_SIGNAL;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
       this_state->overflow_event_count++;
+      /* when the user set overflow on two or more events and these
+         events are counted by different hardware counters, the result
+         of one event will be abnormal, so we disable multiple overflow
+         on different hardware counters. If these events are counted by
+         one hardware counter, we accept it */
+     if (this_state->overflow_event_count > 1) {
+        if (hwcntr >= HWPERF_CNT1BASE ) { 
+           for (i = 0; i < HWPERF_CNT1BASE; i++) {
+              if (arg->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie &&
+                  arg->hwp_ovflw_freq[i] )
+                 return (PAPI_ESBSTR);
+           }
+        } else {
+           for (i = HWPERF_CNT1BASE; i < HWPERF_EVENTMAX; i++) {
+              if (arg->hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie &&
+                  arg->hwp_ovflw_freq[i] )
+                 return (PAPI_ESBSTR);
+           }
+           
+        }
+     }
 /*
       this_state->overflow_index = hwcntr;
       this_state->overflow_threshold = threshold;
