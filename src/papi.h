@@ -68,8 +68,9 @@ failure.
 #define PAPI_ENOCNTR -13 /* Hardware does not support counters */
 #define PAPI_EMISC   -14 /* No clue as to what this error code means */
 
-#define PAPI_LOW_LEVEL_INITED -1 /* Low level has called library init */
-#define PAPI_HIGH_LEVEL_INITED -2 /* High level has called library init */
+#define PAPI_NOT_INITED		0
+#define PAPI_LOW_LEVEL_INITED 	1 /* Low level has called library init */
+#define PAPI_HIGH_LEVEL_INITED 	2 /* High level has called library init */
 
 /*
 Constants
@@ -298,7 +299,7 @@ typedef struct _papi_hw_info {
   int model;                /* Model number of CPU */
   char model_string[PAPI_MAX_STR_LEN];    /* Model string of CPU */
   float revision;           /* Revision of CPU */ 
-  float mhz;                  /* Cycle time of this CPU, *may* be estimated at 
+  float mhz;                /* Cycle time of this CPU, *may* be estimated at 
                                init time with a quick timing routine */
 
   /* Memory Information */
@@ -387,9 +388,10 @@ typedef struct pre_info {
 #define PAPI_INTERNAL_LOCK      	0  /* Used in Internal PAPI routines */
 #define PAPI_MULTIPLEX_LOCK     	1  /* Only used in multiplexing */
 #define PAPI_THREAD_STORAGE_LOCK	2  /* Only used with thr storage */
-#define PAPI_USR1_LOCK          	3  /* User controlled locks */
-#define PAPI_USR2_LOCK          	4  /* User controlled locks */
-#define PAPI_MAX_LOCK           	5  /* Used with setting up array */
+#define PAPI_HIGHLEVEL_LOCK		3  /* Used in the high level */
+#define PAPI_USR1_LOCK          	4  /* User controlled locks */
+#define PAPI_USR2_LOCK          	5  /* User controlled locks */
+#define PAPI_MAX_LOCK           	6  /* Used with setting up array */
 
 
 int PAPI_accum(int EventSet, long_long *values);
