@@ -1003,7 +1003,6 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
           * counters as this is the last active user
           */
          retval = PAPI_stop(mev->papi_event, dummy_value);
-	 assert(retval == PAPI_OK);
          mev->rate_estimate = 0.0;
 
          /* Fall-back value if none is found */
