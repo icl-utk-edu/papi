@@ -38,18 +38,26 @@ int main(int argc, char **argv)
    printf("%lld us. %lld cyc.\n",elapsed_us,elapsed_cyc);
    printf("%f Computed MHz.\n",(float)elapsed_cyc/(float)elapsed_us);
 
-   {
-     float rsec = ((float)elapsed_us / (float)1000000.0);
-     if (rsec < (float)10.0)
-     {
-       printf("Real time %f seconds\n",rsec);
-       test_fail(__FILE__, __LINE__, "Real time < 10 seconds, SpeedStep?", PAPI_EMISC);
-     }
-   }
+/* Elapsed microseconds and elapsed cycles are not as unambiguous as they appear.
+   On Pentium III and 4, for example, cycles is a measured value, while useconds 
+   is computed from cycles and mhz. MHz is read from /proc/cpuinfo (on linux).
+   Thus, any error in MHz is propagated to useconds.
+   Conversely, on ultrasparc useconds are extracted from a system call (gethrtime())
+   and cycles are computed from useconds. Also, MHz comes from a scan of system info,
+   Thus any error in gethrtime() propagates to both cycles and useconds, and cycles
+   can be further impacted by errors in reported MHz.
+   Without knowing the error bars on these system values, we can't really specify
+   error ranges for our reported values, but we *DO* know that errors for at least
+   one instance of Pentium 4 (torc17@utk) are on the order of one part per thousand.
+*/
+
    /* We'll accept 1 part per thousand error here (to allow Pentium 4 to pass) */
-   if ((10.0 * hw_info->mhz * 1000000.0) > 
-       (((float)elapsed_cyc) + ((float)elapsed_cyc)/(float)1000))
-     test_fail(__FILE__, __LINE__, "Real cycles < 10*MHz*1000000.0, SpeedStep?", PAPI_EMISC);
+   if (elapsed_us < (10000000 - 10000))
+     test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
+
+   if ((10.0 * hw_info->mhz * 1000000.0) > (((float)elapsed_cyc) + ((float)elapsed_cyc)/1000))
+     test_fail(__FILE__, __LINE__, "Real cycles less than 10*MHz*1000000.0!", PAPI_EMISC);
+
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
