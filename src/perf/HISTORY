@@ -1,3 +1,8 @@
+0.9 - Bug fix for 2.0.36. Amazing the difference 1 can make
+0.8 - Bug fix and new features
+      - Fixed counter 3 (per process cycle counter) wraparound problems.
+      - Added perf(PERF_FASTWRITE) call and example program.
+      - Added PERF_CYCLES preset. (Counter 3) mucci@cs.utk.edu
 0.7 - New features
       - New option for children to inherit parents counters
       - wait() automatically adds childs counters to parents if option is set

@@ -20,6 +20,7 @@ int  perf_get_opt(int counter, int *config);
 int  perf_start (void);
 int  perf_stop  (void);
 int  perf_fastread (unsigned long long *dest);
+int  perf_fastwrite (unsigned long long *dest);
 int  perf_fastconfig (int *dest);
 int  perf_read  (int ctr, unsigned long long *dest);
 int  perf_write (int ctr, unsigned long long *src);

@@ -1,6 +1,6 @@
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/Documentation/Configure.help linux-2.0.36-new/Documentation/Configure.help
-*** linux-2.0.36-orig/Documentation/Configure.help	Tue Oct 13 22:15:48 1998
---- linux-2.0.36-new/Documentation/Configure.help	Mon Jul 12 17:46:11 1999
+diff -crN linux-2.0.36/Documentation/Configure.help linux-2.0.36-perf/Documentation/Configure.help
+*** linux-2.0.36/Documentation/Configure.help	Tue Dec 29 13:10:48 1998
+--- linux-2.0.36-perf/Documentation/Configure.help	Sun Jul 18 19:43:47 1999
 ***************
 *** 958,963 ****
 --- 958,972 ----
@@ -19,9 +19,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/Documentation/Configure
   Compile the kernel into the ELF object format
   CONFIG_ELF_KERNEL
     ELF (Executable and Linkable Format) is a format for libraries and
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/config.in linux-2.0.36-new/arch/i386/config.in
-*** linux-2.0.36-orig/arch/i386/config.in	Tue Oct 13 22:15:41 1998
---- linux-2.0.36-new/arch/i386/config.in	Sun Feb 21 14:51:33 1999
+diff -crN linux-2.0.36/arch/i386/config.in linux-2.0.36-perf/arch/i386/config.in
+*** linux-2.0.36/arch/i386/config.in	Sun Nov 15 13:32:46 1998
+--- linux-2.0.36-perf/arch/i386/config.in	Sun Jul 18 19:43:47 1999
 ***************
 *** 49,54 ****
 --- 49,58 ----
@@ -35,9 +35,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/config.in lin
   endmenu
   
   source drivers/block/Config.in
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/defconfig linux-2.0.36-new/arch/i386/defconfig
-*** linux-2.0.36-orig/arch/i386/defconfig	Tue Oct 13 22:15:51 1998
---- linux-2.0.36-new/arch/i386/defconfig	Thu Feb 18 00:27:37 1999
+diff -crN linux-2.0.36/arch/i386/defconfig linux-2.0.36-perf/arch/i386/defconfig
+*** linux-2.0.36/arch/i386/defconfig	Tue Dec 29 13:10:48 1998
+--- linux-2.0.36-perf/arch/i386/defconfig	Sun Jul 18 19:43:47 1999
 ***************
 *** 31,36 ****
 --- 31,37 ----
@@ -48,9 +48,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/defconfig lin
   
   #
   # Floppy, IDE, and other block devices
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/Makefile linux-2.0.36-new/arch/i386/kernel/Makefile
-*** linux-2.0.36-orig/arch/i386/kernel/Makefile	Tue Oct 13 22:15:41 1998
---- linux-2.0.36-new/arch/i386/kernel/Makefile	Thu Feb 18 00:27:37 1999
+diff -crN linux-2.0.36/arch/i386/kernel/Makefile linux-2.0.36-perf/arch/i386/kernel/Makefile
+*** linux-2.0.36/arch/i386/kernel/Makefile	Sun Nov 15 13:32:46 1998
+--- linux-2.0.36-perf/arch/i386/kernel/Makefile	Sun Jul 18 19:43:47 1999
 ***************
 *** 42,47 ****
 --- 42,53 ----
@@ -66,9 +66,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/Makefi
   hexify:
   	$(HOSTCC) hexify.c -o hexify
   
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/entry.S linux-2.0.36-new/arch/i386/kernel/entry.S
-*** linux-2.0.36-orig/arch/i386/kernel/entry.S	Tue Oct 13 22:15:41 1998
---- linux-2.0.36-new/arch/i386/kernel/entry.S	Thu Feb 18 00:27:37 1999
+diff -crN linux-2.0.36/arch/i386/kernel/entry.S linux-2.0.36-perf/arch/i386/kernel/entry.S
+*** linux-2.0.36/arch/i386/kernel/entry.S	Sun Nov 15 13:32:46 1998
+--- linux-2.0.36-perf/arch/i386/kernel/entry.S	Sun Jul 18 19:43:47 1999
 ***************
 *** 40,45 ****
 --- 40,46 ----
@@ -92,9 +92,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/entry.
 + #else
   	.space (NR_syscalls-189)*4
 + #endif
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/ioport.c linux-2.0.36-new/arch/i386/kernel/ioport.c
-*** linux-2.0.36-orig/arch/i386/kernel/ioport.c	Wed Jun  3 18:17:46 1998
---- linux-2.0.36-new/arch/i386/kernel/ioport.c	Sat Feb 20 22:00:51 1999
+diff -crN linux-2.0.36/arch/i386/kernel/ioport.c linux-2.0.36-perf/arch/i386/kernel/ioport.c
+*** linux-2.0.36/arch/i386/kernel/ioport.c	Wed Jun  3 18:17:46 1998
+--- linux-2.0.36-perf/arch/i386/kernel/ioport.c	Sun Jul 18 19:43:47 1999
 ***************
 *** 10,15 ****
 --- 10,16 ----
@@ -141,9 +141,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/ioport
 ! 	regs->eflags = (regs->eflags & 0xffffcfff) | (level << 12);
   	return 0;
   }
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/ksyms.c linux-2.0.36-new/arch/i386/kernel/ksyms.c
-*** linux-2.0.36-orig/arch/i386/kernel/ksyms.c	Tue Oct 13 22:15:41 1998
---- linux-2.0.36-new/arch/i386/kernel/ksyms.c	Sat Feb 20 22:00:51 1999
+diff -crN linux-2.0.36/arch/i386/kernel/ksyms.c linux-2.0.36-perf/arch/i386/kernel/ksyms.c
+*** linux-2.0.36/arch/i386/kernel/ksyms.c	Sun Nov 15 13:32:46 1998
+--- linux-2.0.36-perf/arch/i386/kernel/ksyms.c	Sun Jul 18 19:43:47 1999
 ***************
 *** 10,15 ****
 --- 10,16 ----
@@ -164,13 +164,13 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/ksyms.
   	XNOVERS(__do_delay),
   	XNOVERS(down_failed),
   	XNOVERS(down_failed_interruptible),
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c linux-2.0.36-new/arch/i386/kernel/perf.c
-*** linux-2.0.36-orig/arch/i386/kernel/perf.c	Wed Dec 31 19:00:00 1969
---- linux-2.0.36-new/arch/i386/kernel/perf.c	Thu Jul  1 15:22:46 1999
+diff -crN linux-2.0.36/arch/i386/kernel/perf.c linux-2.0.36-perf/arch/i386/kernel/perf.c
+*** linux-2.0.36/arch/i386/kernel/perf.c	Wed Dec 31 19:00:00 1969
+--- linux-2.0.36-perf/arch/i386/kernel/perf.c	Wed Jul 21 02:52:36 1999
 ***************
 *** 0 ****
---- 1,403 ----
-+ /* Modified by Philip J. Mucci. mucci@cs.utk.edu (May 1999)
+--- 1,416 ----
++ /* Modified by Philip J. Mucci. mucci@cs.utk.edu (Feb-July 1999)
 +    for PAPI. http://icl.cs.utk.edu/projects/papi
 + 
 +    Major Modifications:
@@ -197,6 +197,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 +    PERF_FASTREAD:
 +    	- Read the array of 3 unsigned long long's from the scheduler
 + 	structure into arg1. This saves 1000's of cycles.
++    PERF_FASTWRITE:
++    	- Write the array of 3 unsigned long long's to the scheduler
++ 	structure from arg1. This saves 1000's of cycles.
 +    PERF_GET_OPT:
 +    PERF_SET_OPT:
 +    
@@ -241,7 +244,7 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 + 	wrmsr(MSR_EVNTSEL0+i, perf_sys_conf[id][i]);
 + 	wrmsr(MSR_PERFCTR0+i, 0);
 +     }
-+     perf_sys_shadow_tsc[id] = get_cycles();
++     perf_sys_shadow_tsc[id] = perf_get_cycles();
 + }
 + 
 + /* The counters are set to zero after every read and the values
@@ -259,8 +262,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 + 	wrmsr(MSR_PERFCTR0+i, 0);
 +     }
 +     /* Per process TSC is last one */
-+     perf_sys_counter[id][i] += get_cycles() - perf_sys_shadow_tsc[id];
-+     perf_sys_shadow_tsc[id] = get_cycles(); 
++     if (perf_sys_conf[id][2])
++       perf_sys_counter[id][i] += perf_get_cycles() - perf_sys_shadow_tsc[id];
++     perf_sys_shadow_tsc[id] = perf_get_cycles(); 
 +     restore_flags(flags);
 + }
 + 
@@ -410,6 +414,13 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 + 	memcpy_tofs((unsigned long long *)arg1, &current->perf.counter[0],
 + 		    PERF_COUNTERS*sizeof(unsigned long long));
 + 	return 0;
++     case PERF_FASTWRITE:
++ 	retval = verify_area(VERIFY_READ,(void *)arg1,
++ 			     PERF_COUNTERS*sizeof(unsigned long long));
++ 	if (retval) return retval;
++ 	memcpy_fromfs(&current->perf.counter[0],(unsigned long long *)arg1, 
++ 		    PERF_COUNTERS*sizeof(unsigned long long));
++ 	return 0;
 +     case PERF_FASTCONFIG:	
 + 	retval = verify_area(VERIFY_READ,(void *)arg1,
 + 			     PERF_COUNTERS*sizeof(int));
@@ -518,6 +529,7 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 + 
 +     switch(op) {
 +     case PERF_FASTREAD:
++     case PERF_FASTWRITE:
 +     case PERF_FASTCONFIG:
 +     case PERF_START:
 +     case PERF_STOP:
@@ -530,10 +542,11 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 +     case PERF_READ:
 +     case PERF_WRITE:
 +     case PERF_WAIT:
-+ 	/* If someone is using the system counters or if our parent has locked our counters, then bail. */
++ 	/* If someone is using the system counters or if 
++ 	   our parent has locked our counters, then bail. */
 + 	if ((perf_sys_flag) || (current->perf.options.do_children > 1)) 
 + 	  return -EBUSY; 
-+ 	perf_save(current->perf.counter, &current->perf.shadow_tsc);
++ 	perf_save(current->perf.conf, current->perf.counter, &current->perf.shadow_tsc);
 + 	retval = do_user_perfop(op, arg1, arg2);
 + 	perf_restore(current->perf.conf, &current->perf.shadow_tsc);	
 + 	return retval;
@@ -573,9 +586,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/perf.c
 + 	return -EINVAL;
 +     }
 + }
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/smp.c linux-2.0.36-new/arch/i386/kernel/smp.c
-*** linux-2.0.36-orig/arch/i386/kernel/smp.c	Tue Oct 13 22:15:41 1998
---- linux-2.0.36-new/arch/i386/kernel/smp.c	Thu Feb 18 00:27:37 1999
+diff -crN linux-2.0.36/arch/i386/kernel/smp.c linux-2.0.36-perf/arch/i386/kernel/smp.c
+*** linux-2.0.36/arch/i386/kernel/smp.c	Sun Nov 15 13:32:46 1998
+--- linux-2.0.36-perf/arch/i386/kernel/smp.c	Sun Jul 18 19:43:47 1999
 ***************
 *** 1198,1203 ****
 --- 1198,1208 ----
@@ -590,14 +603,17 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/arch/i386/kernel/smp.c 
   		/*
   		 *	Halt other CPU's for a panic or reboot
   		 */
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/perf.h linux-2.0.36-new/include/asm-i386/perf.h
-*** linux-2.0.36-orig/include/asm-i386/perf.h	Wed Dec 31 19:00:00 1969
---- linux-2.0.36-new/include/asm-i386/perf.h	Wed Jun 30 18:21:19 1999
+diff -crN linux-2.0.36/include/asm-i386/perf.h linux-2.0.36-perf/include/asm-i386/perf.h
+*** linux-2.0.36/include/asm-i386/perf.h	Wed Dec 31 19:00:00 1969
+--- linux-2.0.36-perf/include/asm-i386/perf.h	Wed Jul 21 02:52:45 1999
 ***************
 *** 0 ****
---- 1,212 ----
+--- 1,218 ----
 + #ifndef _I386_PERF_H_
 + #define _I386_PERF_H_
++ 
++ /* Per process cycle counter is third counter. */
++ #define PERF_CYCLES                 0x1
 + 
 + /* Countable things: (For PPro) */
 + /* Data Cache Unit (DCU) */
@@ -728,6 +744,7 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/perf.h
 + #define PERF_SET_OPT        9
 + #define PERF_GET_OPT        10
 + #define PERF_RESET_COUNTERS 11
++ #define PERF_FASTWRITE      12
 + #define PERF_FASTREAD       13
 + #define PERF_FASTCONFIG     14
 + #define PERF_SYS_RESET      20
@@ -781,12 +798,13 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/perf.h
 + 
 + extern volatile int perf_sys_flag;
 + 
-+ static inline unsigned long get_cycles (void)
++ static inline unsigned long long perf_get_cycles (void)
 + {
-+ 	unsigned long eax, edx;
-+ 
-+ 	__asm__ __volatile__("rdtsc":"=a" (eax), "=d" (edx));
-+ 	return eax;
++ 	unsigned long long ret;
++         __asm__ __volatile__("rdtsc"
++ 			    : "=A" (ret)
++ 			    : /* no inputs */);
++         return ret;
 + }
 + 
 + static inline
@@ -795,22 +813,23 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/perf.h
 +     wrmsr(MSR_PERFCTR0, 0);
 +     wrmsr(MSR_EVNTSEL0+1, config[1]);
 +     wrmsr(MSR_PERFCTR0+1, 0);
-+     *shadow_tsc = get_cycles();
++     *shadow_tsc = perf_get_cycles();
 + }
 + 
 + static inline
-+ void perf_save(unsigned long long *counter, unsigned long long *shadow_tsc) {
++ void perf_save(unsigned int *config, unsigned long long *counter, unsigned long long *shadow_tsc) {
 +     counter[0] += (rdmsr(MSR_PERFCTR0)&((1ULL<<40)-1));
 +     counter[1] += (rdmsr(MSR_PERFCTR0+1)&((1ULL<<40)-1));
-+     counter[2] += get_cycles() - *shadow_tsc;
++     if (config[2])
++       counter[2] += perf_get_cycles() - *shadow_tsc;
 + }
 + 
 + void perf_getctrs(struct task_struct *task, unsigned long long *dest);
 + #endif
 + #endif
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/string.h linux-2.0.36-new/include/asm-i386/string.h
-*** linux-2.0.36-orig/include/asm-i386/string.h	Tue Apr  8 11:47:46 1997
---- linux-2.0.36-new/include/asm-i386/string.h	Sat Feb 20 22:00:51 1999
+diff -crN linux-2.0.36/include/asm-i386/string.h linux-2.0.36-perf/include/asm-i386/string.h
+*** linux-2.0.36/include/asm-i386/string.h	Tue Apr  8 11:47:46 1997
+--- linux-2.0.36-perf/include/asm-i386/string.h	Sun Jul 18 19:43:47 1999
 ***************
 *** 258,263 ****
 --- 258,264 ----
@@ -865,9 +884,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/string
   	}
   #undef COMMON
   }
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/unistd.h linux-2.0.36-new/include/asm-i386/unistd.h
-*** linux-2.0.36-orig/include/asm-i386/unistd.h	Tue Oct 13 22:15:44 1998
---- linux-2.0.36-new/include/asm-i386/unistd.h	Thu Feb 18 00:27:37 1999
+diff -crN linux-2.0.36/include/asm-i386/unistd.h linux-2.0.36-perf/include/asm-i386/unistd.h
+*** linux-2.0.36/include/asm-i386/unistd.h	Sun Nov 15 13:33:16 1998
+--- linux-2.0.36-perf/include/asm-i386/unistd.h	Sun Jul 18 19:43:47 1999
 ***************
 *** 172,177 ****
 --- 172,178 ----
@@ -878,9 +897,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/asm-i386/unistd
   
   /* XXX - _foo needs to be __foo, while __NR_bar could be _NR_bar. */
   #define _syscall0(type,name) \
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/sched.h linux-2.0.36-new/include/linux/sched.h
-*** linux-2.0.36-orig/include/linux/sched.h	Tue Oct 13 22:17:09 1998
---- linux-2.0.36-new/include/linux/sched.h	Tue Jul 13 03:10:05 1999
+diff -crN linux-2.0.36/include/linux/sched.h linux-2.0.36-perf/include/linux/sched.h
+*** linux-2.0.36/include/linux/sched.h	Sun Jul 18 18:30:33 1999
+--- linux-2.0.36-perf/include/linux/sched.h	Wed Jul 21 02:52:59 1999
 ***************
 *** 25,31 ****
   #include <linux/smp.h>
@@ -937,9 +956,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/sched.h l
   }
   
   extern struct   mm_struct init_mm;
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/smp.h linux-2.0.36-new/include/linux/smp.h
-*** linux-2.0.36-orig/include/linux/smp.h	Tue Oct 13 22:17:08 1998
---- linux-2.0.36-new/include/linux/smp.h	Thu Feb 18 00:27:37 1999
+diff -crN linux-2.0.36/include/linux/smp.h linux-2.0.36-perf/include/linux/smp.h
+*** linux-2.0.36/include/linux/smp.h	Tue Dec 29 13:11:12 1998
+--- linux-2.0.36-perf/include/linux/smp.h	Sun Jul 18 19:43:47 1999
 ***************
 *** 39,44 ****
 --- 39,45 ----
@@ -950,9 +969,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/smp.h lin
   #else
   
   /*
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/types.h linux-2.0.36-new/include/linux/types.h
-*** linux-2.0.36-orig/include/linux/types.h	Tue Oct 13 22:15:44 1998
---- linux-2.0.36-new/include/linux/types.h	Sat Feb 20 22:00:51 1999
+diff -crN linux-2.0.36/include/linux/types.h linux-2.0.36-perf/include/linux/types.h
+*** linux-2.0.36/include/linux/types.h	Sun Nov 15 13:33:19 1998
+--- linux-2.0.36-perf/include/linux/types.h	Sun Jul 18 19:43:47 1999
 ***************
 *** 1,18 ****
   #ifndef _LINUX_TYPES_H
@@ -974,9 +993,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/include/linux/types.h l
   #include <asm/types.h>
   
 --- 1,6 ----
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/exit.c linux-2.0.36-new/kernel/exit.c
-*** linux-2.0.36-orig/kernel/exit.c	Wed Jun  3 18:17:50 1998
---- linux-2.0.36-new/kernel/exit.c	Wed Jun 30 19:23:30 1999
+diff -crN linux-2.0.36/kernel/exit.c linux-2.0.36-perf/kernel/exit.c
+*** linux-2.0.36/kernel/exit.c	Wed Jun  3 18:17:50 1998
+--- linux-2.0.36-perf/kernel/exit.c	Sun Jul 18 19:43:47 1999
 ***************
 *** 20,25 ****
 --- 20,29 ----
@@ -1084,9 +1103,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/exit.c linux-2.0
   }
   
   #ifndef __alpha__
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/fork.c linux-2.0.36-new/kernel/fork.c
-*** linux-2.0.36-orig/kernel/fork.c	Wed Jun  3 18:17:50 1998
---- linux-2.0.36-new/kernel/fork.c	Wed Jun 30 19:22:01 1999
+diff -crN linux-2.0.36/kernel/fork.c linux-2.0.36-perf/kernel/fork.c
+*** linux-2.0.36/kernel/fork.c	Wed Jun  3 18:17:50 1998
+--- linux-2.0.36-perf/kernel/fork.c	Sun Jul 18 19:43:47 1999
 ***************
 *** 25,30 ****
 --- 25,33 ----
@@ -1138,9 +1157,9 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/fork.c linux-2.0
   #endif
   	p->start_time = jiffies;
   	task[nr] = p;
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/sched.c linux-2.0.36-new/kernel/sched.c
-*** linux-2.0.36-orig/kernel/sched.c	Tue Oct 13 22:15:44 1998
---- linux-2.0.36-new/kernel/sched.c	Wed Jun 30 17:57:07 1999
+diff -crN linux-2.0.36/kernel/sched.c linux-2.0.36-perf/kernel/sched.c
+*** linux-2.0.36/kernel/sched.c	Sun Nov 15 13:33:20 1998
+--- linux-2.0.36-perf/kernel/sched.c	Wed Jul 21 02:26:04 1999
 ***************
 *** 39,45 ****
   #include <asm/segment.h>
@@ -1169,17 +1188,16 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/kernel/sched.c linux-2.
 + #ifdef CONFIG_PERF
 + 		/* Switch performance counter configs */
 + 		if (!perf_sys_flag) {
-+ 				perf_save(prev->perf.counter, &(prev->perf.shadow_tsc));
++ 				perf_save(prev->perf.conf, prev->perf.counter, &(prev->perf.shadow_tsc));
 + 				perf_restore(next->perf.conf, &(next->perf.shadow_tsc));
 + 		}
 + #endif
   		get_mmu_context(next);
   		switch_to(prev,next);
   		if (timeout)
-Binary files linux-2.0.36-orig/patch/patch-2.2.1.gz and linux-2.0.36-new/patch/patch-2.2.1.gz differ
-diff -cr --ignore-all-space --new-file linux-2.0.36-orig/scripts/patch-kernel linux-2.0.36-new/scripts/patch-kernel
-*** linux-2.0.36-orig/scripts/patch-kernel	Tue Mar 26 14:22:14 1996
---- linux-2.0.36-new/scripts/patch-kernel	Thu Feb 18 00:02:48 1999
+diff -crN linux-2.0.36/scripts/patch-kernel linux-2.0.36-perf/scripts/patch-kernel
+*** linux-2.0.36/scripts/patch-kernel	Tue Mar 26 14:22:14 1996
+--- linux-2.0.36-perf/scripts/patch-kernel	Sun Jul 18 19:43:47 1999
 ***************
 *** 11,16 ****
 --- 11,21 ----
@@ -1240,11 +1258,11 @@ diff -cr --ignore-all-space --new-file linux-2.0.36-orig/scripts/patch-kernel li
 !         name="plaintext"
 !         uncomp="cat"
 !     else
-  	break
+          break
       fi
   
 !     echo -n "Applying ${patch} (${name})... "
 !     if $uncomp ${patchdir}/${patch}${ext} | patch -p1 -s -N -E -d $sourcedir
       then
-          echo "done."
+  	echo "done."
       else

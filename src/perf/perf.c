@@ -43,6 +43,9 @@ int perf_read(int ctr, unsigned long long *dest) {
 int perf_fastread(unsigned long long *dest) {
     return perf(PERF_FASTREAD, (int) dest, 0);
 }
+int perf_fastwrite(unsigned long long *dest) {
+    return perf(PERF_FASTWRITE, (int) dest, 0);
+}
 int perf_fastconfig(int *config) {
     return perf(PERF_FASTCONFIG, (int) config, 0);
 }
