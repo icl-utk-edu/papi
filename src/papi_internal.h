@@ -10,7 +10,7 @@
 * Mods:    dan terpstra
 *          terpstra.utk.edu
 * Mods:    Kevin London
-*	       london@cs.utk.edu
+*	   london@cs.utk.edu
 *          Haihang You
 *          you@cs.utk.edu
 * Mods:    <your name here>
@@ -20,49 +20,60 @@
 #ifndef PAPI_INTERNAL_H
 #define PAPI_INTERNAL_H
 
+#ifndef __FUNCTION__
+  #define __FUNCTION__ "unknown"
+#endif 
+
+#ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
+#define error_return(retval, format, args...){ fprintf(stderr, "Error in file %s, function %s, line %d: ", __FILE__,__FUNCTION__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); return(retval); }
+#else
+#define error_return(retval, format){ fprintf(stderr, "Error in file %s, function %s, line %d: ", __FILE__,__FUNCTION__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); return(retval); }
+#endif
 
 #ifdef DEBUG
-  /*
-   * Debug Levels 
-   */
-  #define DEBUG_ON                0x1
-  #define DEBUG_SUBSTRATE         0x2
-  #define DEBUG_API               0x4
-  #define DEBUG_INTERNAL          0x8
-  #define DEBUG_THREADS           0x10
-  #define DEBUG_MULTIPLEX         0x20
-  #define DEBUG_OVERFLOW          0x40
 
-  #define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%d: ",a,__FILE__, __LINE__)
-  #define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":"UNKNOWN")
-  #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
-    #define error_return(retval, format, args...){ fprintf(stderr, "Error in %s,line %d: ", __FILE__,__LINE__); fprintf(stderr, format, ## args); fprintf(stderr, "\n"); return(retval); }
-    #define PAPIDEBUG(level,format, args...) { extern int _papi_hwi_debug; if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
-    /*
-     * Macros
-     */
-    #define SUBDBG(format, args...) (PAPIDEBUG(DEBUG_SUBSTRATE,format, ## args))
-    #define APIDBG(format, args...) (PAPIDEBUG(DEBUG_API,format, ## args))
-    #define INTDBG(format, args...) (PAPIDEBUG(DEBUG_INTERNAL,format, ## args))
-    #define THRDBG(format, args...) (PAPIDEBUG(DEBUG_THREADS,format, ## args))
-    #define MPXDBG(format, args...) (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## args))
-    #define OVFDBG(format, args...) (PAPIDEBUG(DEBUG_OVERFLOW,format, ## args))
-  #else
-    #define error_return(retval, format){ fprintf(stderr, "Error in %s,line %d: ", __FILE__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); return(retval); }
-  #endif
-  #define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
+  /* Debug Levels */
+
+#define DEBUG_ON                0x1
+#define DEBUG_SUBSTRATE         0x2
+#define DEBUG_API               0x4
+#define DEBUG_INTERNAL          0x8
+#define DEBUG_THREADS           0x10
+#define DEBUG_MULTIPLEX         0x20
+#define DEBUG_OVERFLOW          0x40
+
+  /* Please get rid of the DBG macro from your code */
+
+#define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
+
+#define DEBUGLABEL(a) fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, __FUNCTION__, __LINE__)
+
+#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":"UNKNOWN")
+
+#ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
+#define PAPIDEBUG(level,format, args...) { extern int _papi_hwi_debug; if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
+
+ /* Macros */
+
+#define SUBDBG(format, args...) (PAPIDEBUG(DEBUG_SUBSTRATE,format, ## args))
+#define APIDBG(format, args...) (PAPIDEBUG(DEBUG_API,format, ## args))
+#define INTDBG(format, args...) (PAPIDEBUG(DEBUG_INTERNAL,format, ## args))
+#define THRDBG(format, args...) (PAPIDEBUG(DEBUG_THREADS,format, ## args))
+#define MPXDBG(format, args...) (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## args))
+#define OVFDBG(format, args...) (PAPIDEBUG(DEBUG_OVERFLOW,format, ## args))
+#endif
+
 #else
-  #define DBG(a)
-  #define error_return(retval, format){ fprintf(stderr, "Error in %s,line %d: ", __FILE__,__LINE__); fprintf(stderr, format); fprintf(stderr, "\n"); return(retval); }
-  #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
-    #define SUBDBG(format, args...) { ; }
-    #define APIDBG(format, args...) { ; }
-    #define INTDBG(format, args...) { ; }
-    #define THRDBG(format, args...) { ; }
-    #define MPXDBG(format, args...) { ; }
-    #define OVFDBG(format, args...) { ; }
-    #define PAPIDEBUG(level, format, args...) { ; }
-  #endif
+#define DBG(a)
+#ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
+#define SUBDBG(format, args...) { ; }
+#define APIDBG(format, args...) { ; }
+#define INTDBG(format, args...) { ; }
+#define THRDBG(format, args...) { ; }
+#define MPXDBG(format, args...) { ; }
+#define OVFDBG(format, args...) { ; }
+#define PAPIDEBUG(level, format, args...) { ; }
+#endif
 #endif
 
 #ifdef NO_VARARG_MACRO          /* Prototypes */
