@@ -58,6 +58,8 @@ typedef struct hwd_control_state {
   virtual_counters *ptr_vc;
   /* Interrupt interval */
   int timer_ms;
+  /* latest value for cycles */
+  long_long latestcycles;
 } hwd_control_state_t;
 
 typedef struct hwd_preset {

@@ -26,6 +26,8 @@ static hwd_search_t findem_dadd[] = {
   { PAPI_FDV_INS, VC_FD_INSTR_EXECUTED },
   { PAPI_FSQ_INS, VC_FSQ_INSTR_EXECUTED },
   { PAPI_INT_INS, VC_INT_INSTR_EXECUTED },
+  { PAPI_FLOPS, VC_FP_INSTR_EXECUTED },
+  { PAPI_IPS, VC_TOTAL_INSTR_EXECUTED },
   { -1, -1}};
 
 static int setup_all_presets(void)
@@ -43,12 +45,18 @@ static int setup_all_presets(void)
       index = code & PRESET_AND_MASK;
       preset_map[index].selector = 1;
       preset_map[index].derived = NOT_DERIVED;
+      if ((code == PAPI_FLOPS) || (code == PAPI_IPS))
+          preset_map[index].derived = DERIVED_PS;
       preset_map[index].operand_index = 0;
       preset_map[index].counter_cmd = findem->dadd_code;
       sprintf(str,"0x%x",findem->dadd_code);
       if (strlen(preset_map[index].note))
         strcat(preset_map[index].note,",");
       strcat(preset_map[index].note,str);
+      if ((code == PAPI_FLOPS) || (code == PAPI_IPS)) {
+        strcat(preset_map[index].note,",");
+        strcat(preset_map[index].note,"0x0");
+      }
       findem++;
     }
   return(PAPI_OK);
@@ -253,6 +261,7 @@ int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
 
   this_state = (hwd_control_state_t *) (ESI->master)->machdep;
   ptr_vc = this_state->ptr_vc;
+  this_state->latestcycles = (long long)ptr_vc->vc_total_cycles;
   for (i=0; i<ESI->NumberOfEvents; i++) {
     if (ESI->EventInfoArray[i].code != PAPI_NULL) {
       dadd_code = (ESI->EventInfoArray[i]).command;
@@ -294,6 +303,7 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
   virtual_counters *ptr_vc;
   int dadd_code;
   hwd_control_state_t *this_state;
+  long long cycles;
 
   this_state = (ESI->master)->machdep;
   ptr_vc = this_state->ptr_vc;
@@ -327,6 +337,15 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
     else
       return(PAPI_ESBSTR);
     events[i] = ((long long)(count)) - ESI->latest[i];
+    if ((ESI->EventInfoArray[i].code == PAPI_FLOPS) ||
+       (ESI->EventInfoArray[i].code == PAPI_IPS)) {
+        cycles = (long long) ptr_vc->vc_total_cycles - this_state->latestcycles;
+        if (cycles) 
+            events[i] = events[i] * _papi_system_info.hw_info.mhz * 1000000/ 
+                    cycles;
+        else
+            events[i] = 0;
+        }
     }
   }
   return(PAPI_OK);

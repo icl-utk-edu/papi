@@ -137,7 +137,8 @@ int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mfl
 		}
 
 		*proc_time = (float)(values[1]/(mhz*1000000.0));
-		*mflops = (float)((values[0])/(*proc_time*1000000.0));
+		if ( *proc_time > 0)
+                    *mflops = (float)((values[0])/(*proc_time*1000000.0));
 		total_proc_time += *proc_time;
 		total_flpins += values[0];
 		*proc_time = total_proc_time;
