@@ -15,20 +15,20 @@
 *          <your email address>
 */  
 
-#ifdef PAPI30                           /* JT */
+#ifdef _WIN32
+  /* Define SUBSTRATE to map to linux-perfctr.h
+   * since we haven't figured out how to assign a value 
+   * to a label at make inside the Windows IDE */
+  #define SUBSTRATE "linux-perfctr.h"
+#endif
+
+#ifdef PAPI30                            /* JT */
 #include "papi.h"                        /* JT */
 #include "papi_internal.h"               /* JT */
 #include "papi_protos.h"                 /* JT */
 #endif                                   /* JT */
 
-#ifndef _WIN32	/* for Linux/Unix systems */
-  #include SUBSTRATE
-#else			
-  /* I couldn't figure out how to assign a string value 
-	to a preprocessor directive in Windows, so we just
-	include what we need... */
-  #include "win32.h"
-#endif
+#include SUBSTRATE
 
 #include "papiStrings.h" /* for language independent string support. */
 

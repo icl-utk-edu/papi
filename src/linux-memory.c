@@ -11,6 +11,12 @@
 #ifdef __LINUX__
 #include <limits.h>
 #endif
+#ifdef _WIN32
+/* Define SUBSTRATE to map to linux-perfctr.h
+ * since we haven't figured out how to assign a value 
+ * to a label at make inside the Windows IDE */
+#define SUBSTRATE "linux-perfctr.h"
+#endif
 #include SUBSTRATE
 #include <stdio.h>
 int init_amd( PAPI_mem_info_t * mem_info );
