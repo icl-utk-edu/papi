@@ -1007,7 +1007,10 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
 int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
 {
   hwd_control_state_t *machdep = zero->machdep;
-  return(_papi3_hwd_reset(&machdep->context,&machdep->control));
+
+  _papi_hwd_unmerge(mine, zero);
+  _papi_hwd_merge(mine, zero);
+
 }
 
 int _papi_hwd_write(EventSetInfo *mine, EventSetInfo *zero, long_long events[])
