@@ -29,7 +29,7 @@
 #define PAPI_VERSION_REVISION(x)	((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,2)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffffff00)
 
 #ifdef __cplusplus
