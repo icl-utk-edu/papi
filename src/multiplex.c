@@ -1018,7 +1018,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 
          if (thr->cur_event != NULL) {
             retval = PAPI_start(thr->cur_event->papi_event);
-	    assert(retval = PAPI_OK);
+	    assert(retval == PAPI_OK);
          } else {
             mpx_shutdown_itimer();
          }
