@@ -14,9 +14,9 @@
 
 
 #include SUBSTRATE
+#include "papi_protos.h"
 #include "pfmwrap.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
 #include "papi_preset.h"
 int papi_debug;
 
@@ -746,8 +746,8 @@ static int ia64_process_profile_entry(void *papiContext)
    pfmw_smpl_entry_t *ent;
    unsigned long buf_pos;
    unsigned long entry_size;
-   int i, ret, reg_num, overflow_vector, count, native_index, pos,eventindex;
-   int EventCode;
+   int i, ret, reg_num, overflow_vector, count, pos;
+   int EventCode=0, eventindex=0, native_index=0;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
    hwd_control_state_t *this_state;
@@ -872,7 +872,7 @@ static int ia64_process_profile_entry(void *papiContext)
    unsigned long buf_pos;
    unsigned long entry_size;
    int i, ret, reg_num, overflow_vector, count, pos;
-   int EventCode, eventindex, native_index=0;
+   int EventCode=0, eventindex, native_index=0;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
    hwd_control_state_t *this_state;
