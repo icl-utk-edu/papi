@@ -53,8 +53,13 @@ variable.
   int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
   int num_hwcntrs = 0;
 	
-  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
+  /*  The installation does not support PAPI */
+  if ((num_hwcntrs = PAPI_num_counters()) < 0 )
     handle_error(1);
+
+  /*  The installation supports PAPI, but has no counters */
+  if ((num_hwcntrs = PAPI_num_counters()) == 0 )
+    fprintf(stderr,"Info:: This machine does not provide hardware counters.\n");
 
   if (num_hwcntrs > 2)
     num_hwcntrs = 2;
