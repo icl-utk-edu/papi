@@ -37,7 +37,7 @@ if [ "$i" = "ctests/timer_overflow" ]; then
   echo Skipping test $i, it takes too long...
 else
 echo -n "Running $i: ";
-$CWD/$i $TESTS_QUIET
+./$i $TESTS_QUIET
 fi;
 fi;
 done
@@ -50,6 +50,6 @@ for i in $FTESTS;
 do
 if [ -x $i ]; then
 echo -n "Running $i: ";
-$CWD/$i $TESTS_QUIET
+./$i $TESTS_QUIET
 fi;
 done

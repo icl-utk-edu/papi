@@ -1370,39 +1370,6 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset,
 
 }
 
-int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags)
-{
-  EventSetInfo_t *ESI;
-
-  if ( _papi_hwi_system_info.supports_hw_profile==0) 
-  	return(PAPI_ESBSTR);
-
-  ESI = _papi_hwi_lookup_EventSet(EventSet);
-  if(ESI == NULL)
-    papi_return(PAPI_ENOEVST);
-  if (ESI->state & PAPI_HWPROFILING)
-  {
-    if (threshold)
-      papi_return(PAPI_EINVAL);
-  }
-  else
-  {
-    if (threshold == 0)
-      papi_return(PAPI_EINVAL);
-  }
-  ESI->state ^= PAPI_HWPROFILING;
-
-  if (ESI->state & PAPI_HWPROFILING )
-    return(PAPI_profil(buf, bufsiz, offset,scale,EventSet, 
-        EventCode, threshold, flags));
-  else 
-  {
-  /* Toggle profiling flag */
-    ESI->state ^= PAPI_PROFILING;
-    return(PAPI_OK);
-  }
-}
-
 int PAPI_set_granularity(int granularity)
 { 
   PAPI_option_t ptr;

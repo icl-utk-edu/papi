@@ -34,7 +34,24 @@
 
 #include "papi.h"
 #include "linux-ia64-memory.h"
-#include "pfmwrap.h"
+
+#define MAX_COUNTER_TERMS 4
+#ifdef ITANIUM2
+  #define MAX_NATIVE_EVENT  475  /* the number comes from itanium_events.h */
+  #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+  #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita2_count_reg.pmc_plm)
+  #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita2_count_reg.pmc_es)
+  typedef pfm_ita2_reg_t pfmw_arch_reg_t;
+  typedef pfmlib_ita2_param_t pfmw_ita_param_t;
+#else  /* itanium */
+  #define MAX_NATIVE_EVENT  230  /* the number comes from itanium_events.h */
+  #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+  #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita_count_reg.pmc_plm)
+  #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita_count_reg.pmc_es)
+  typedef pfm_ita_reg_t pfmw_arch_reg_t;
+  typedef pfmlib_ita_param_t pfmw_ita_param_t;
+#endif
+
 #include "papi_preset.h"
 
 typedef int hwd_register_t;
@@ -69,22 +86,7 @@ typedef struct itanium_preset_search {
   char *(findme[MAX_COUNTERS]);
 } itanium_preset_search_t;
 
-typedef struct hwd_preset {
-  /* If present it is the event code */
-  int present;   
-  /* Is this event derived? */
-  int derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  int operand_index;
-  /* Buffer to pass to library to control the counters */
-  pfmlib_param_t evt;
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
-
-typedef struct _Context { 
-	int init_flag;
-}  hwd_context_t;
+typedef int  hwd_context_t;
 
 typedef struct _ThreadInfo {
 	unsigned pid;

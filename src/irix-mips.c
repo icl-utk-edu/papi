@@ -1,3 +1,8 @@
+/* Implementation of IRIX platform is straightfoward.
+   First read r10k_counters manual page, then you will get an idea about
+   the performance counter in IRIX.
+*/
+
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
@@ -6,68 +11,6 @@
 int papi_debug;
 
 extern papi_mdi_t _papi_hwi_system_info;
-
-preset_search_t findem_r10k[] = {
-    { PAPI_L1_DCM,0,{NATIVE_MASK|25,-1}},    /* L1 D-Cache misses */
-    { PAPI_L1_ICM,0,{NATIVE_MASK| 9,-1}},    /* L1 I-Cache misses */
-    { PAPI_L2_DCM,0,{NATIVE_MASK|26,-1}},    /* L2 D-Cache misses */
-    { PAPI_L2_ICM,0,{NATIVE_MASK|10,-1}},    /* L2 I-Cache misses */
-    { PAPI_L1_TCM,DERIVED_ADD,{NATIVE_MASK| 9,NATIVE_MASK|25}},
-                                             /* L1 total */
-    { PAPI_L2_TCM,DERIVED_ADD,{NATIVE_MASK|10,NATIVE_MASK|26}},  
-                                             /* L2 total */
-    { PAPI_CA_INV,0,{NATIVE_MASK|13,-1}},    /* Cache Line Invalidation*/
-    { PAPI_CA_ITV,0,{NATIVE_MASK|12,-1}},    /* Cache Line Intervention*/
-    { PAPI_TLB_TL,0,{NATIVE_MASK|23,-1}},    /* Total TLB misses*/
-    { PAPI_CSR_FAL,0,{NATIVE_MASK| 5, -1}},  /* Failed store conditional*/
-    { PAPI_CSR_SUC,DERIVED_SUB,{NATIVE_MASK|20,NATIVE_MASK|5}}, 
-                                             /* Successful store conditional*/
-    { PAPI_CSR_TOT,0,{NATIVE_MASK|20,-1}},   /* Total store conditional*/
-    { PAPI_BR_MSP,0,{NATIVE_MASK|24,-1}},    /* Cond. branch inst. mispred*/
-    { PAPI_TOT_IIS,0,{NATIVE_MASK| 1,-1}},   /* Total inst. issued*/
-    { PAPI_TOT_INS,0,{NATIVE_MASK|15,-1}},   /* Total inst. executed*/
-    { PAPI_FP_INS,0,{NATIVE_MASK|21,-1}},    /* Floating Pt. inst. executed*/
-    { PAPI_LD_INS,0,{NATIVE_MASK|8,-1}},     /* Loads executed*/
-    { PAPI_SR_INS,0,{NATIVE_MASK|19,-1}},    /* Stores executed*/
-    { PAPI_BR_INS,0,{NATIVE_MASK| 6,-1}},    /* Branch inst. executed*/
-    { PAPI_FLOPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|21}},     /* FLOPS */
-    { PAPI_TOT_CYC,0,{ NATIVE_MASK|0,-1}},   /* Total cycles */
-    { PAPI_IPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|15}},       /* IPS */
-    { 0, 0, {-1, -1}}                        /* The END */
-};
-
-
-preset_search_t findem_r12k[] = { /* Shared with R14K */
-    { PAPI_L1_DCM,0,{NATIVE_MASK|25,-1}},       /* L1 D-Cache misses */
-    { PAPI_L1_ICM,0,{NATIVE_MASK| 9,-1}},       /* L1 I-Cache misses */
-    { PAPI_L2_DCM,0,{NATIVE_MASK|26,-1}},       /* L2 D-Cache misses */
-    { PAPI_L2_ICM,0,{NATIVE_MASK|10,-1}},       /* L2 I-Cache misses */
-    { PAPI_L1_TCM,DERIVED_ADD,{ NATIVE_MASK|9,NATIVE_MASK|25}}, /* L1 total */
-    { PAPI_L2_TCM,DERIVED_ADD,{NATIVE_MASK|10,NATIVE_MASK|26}}, /* L2 total */
-    { PAPI_CA_INV,0,{NATIVE_MASK|13,-1}},       /* Cache Line Invalidation*/
-    { PAPI_CA_ITV,0,{NATIVE_MASK|12,-1}},       /* Cache Line Intervention*/
-    { PAPI_TLB_TL,0,{NATIVE_MASK|23,-1}},       /* Total TLB misses*/
-    { PAPI_PRF_DM,0,{NATIVE_MASK|17,-1}},       /* Prefetch miss */
-    { PAPI_CSR_FAL,0,{NATIVE_MASK| 5, -1}},     /* Failed store conditional*/
-    { PAPI_CSR_SUC,DERIVED_SUB,{NATIVE_MASK|20,NATIVE_MASK|5}},        
-                                            /* Successful store conditional*/
-    { PAPI_CSR_TOT,0,{NATIVE_MASK|20,-1}},      /* Total store conditional*/
-    { PAPI_BR_CN,0,{NATIVE_MASK| 6,-1}},        /* Cond. branch inst. exe*/
-    { PAPI_BR_MSP,0,{NATIVE_MASK|24,-1}},       /* Cond. branch inst. mispred*/
-    { PAPI_BR_PRC,DERIVED_SUB,{NATIVE_MASK|6,NATIVE_MASK|24}},     
-                                         /* Cond. branch inst. correctly pred*/
-    { PAPI_TOT_IIS,0,{ NATIVE_MASK|1, -1}},     /* Total inst. issued*/
-    { PAPI_TOT_INS,0,{NATIVE_MASK|15, -1}},     /* Total inst. executed*/
-    { PAPI_FP_INS,0,{NATIVE_MASK|21,-1}},       /* Floating Pt. inst.executed*/
-    { PAPI_LD_INS,0,{NATIVE_MASK|18,-1}},       /* Loads executed*/
-    { PAPI_SR_INS,0,{NATIVE_MASK|19,-1}},       /* Stores executed*/
-    { PAPI_FLOPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|21}},   /* FLOPS */
-    { PAPI_TOT_CYC,0,{ NATIVE_MASK|0, -1}},     /* Total cycles */
-    { PAPI_IPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|15}},     /* IPS */
-    { PAPI_LST_INS,DERIVED_ADD,{NATIVE_MASK|18,NATIVE_MASK|19}},         
-                                             /* Total load/store inst. exec */
-    { 0, 0, {-1, -1}}                           /* The END */
-};
 
 char * (r10k_native_events_table[])= { 
  /* 0  */ "Cycles",    
@@ -144,6 +87,75 @@ char * (r12k_native_events_table[])= {
 
 char ** native_table;
 preset_search_t *preset_search_map;
+
+/* the number in this preset_search map table is the native event index
+   in the native event table, when it ORs the NATIVE_MASK, it becomes the
+   native event code.
+   For example, 25 is the index of native event "Primary_data_cache_misses" 
+   in the native event table
+*/
+preset_search_t findem_r10k[] = {
+    { PAPI_L1_DCM,0,{NATIVE_MASK|25,-1}},    /* L1 D-Cache misses */
+    { PAPI_L1_ICM,0,{NATIVE_MASK| 9,-1}},    /* L1 I-Cache misses */
+    { PAPI_L2_DCM,0,{NATIVE_MASK|26,-1}},    /* L2 D-Cache misses */
+    { PAPI_L2_ICM,0,{NATIVE_MASK|10,-1}},    /* L2 I-Cache misses */
+    { PAPI_L1_TCM,DERIVED_ADD,{NATIVE_MASK| 9,NATIVE_MASK|25,-1}},
+                                             /* L1 total */
+    { PAPI_L2_TCM,DERIVED_ADD,{NATIVE_MASK|10,NATIVE_MASK|26,-1}},  
+                                             /* L2 total */
+    { PAPI_CA_INV,0,{NATIVE_MASK|13,-1}},    /* Cache Line Invalidation*/
+    { PAPI_CA_ITV,0,{NATIVE_MASK|12,-1}},    /* Cache Line Intervention*/
+    { PAPI_TLB_TL,0,{NATIVE_MASK|23,-1}},    /* Total TLB misses*/
+    { PAPI_CSR_FAL,0,{NATIVE_MASK| 5, -1}},  /* Failed store conditional*/
+    { PAPI_CSR_SUC,DERIVED_SUB,{NATIVE_MASK|20,NATIVE_MASK|5,-1}}, 
+                                             /* Successful store conditional*/
+    { PAPI_CSR_TOT,0,{NATIVE_MASK|20,-1}},   /* Total store conditional*/
+    { PAPI_BR_MSP,0,{NATIVE_MASK|24,-1}},    /* Cond. branch inst. mispred*/
+    { PAPI_TOT_IIS,0,{NATIVE_MASK| 1,-1}},   /* Total inst. issued*/
+    { PAPI_TOT_INS,0,{NATIVE_MASK|15,-1}},   /* Total inst. executed*/
+    { PAPI_FP_INS,0,{NATIVE_MASK|21,-1}},    /* Floating Pt. inst. executed*/
+    { PAPI_LD_INS,0,{NATIVE_MASK|8,-1}},     /* Loads executed*/
+    { PAPI_SR_INS,0,{NATIVE_MASK|19,-1}},    /* Stores executed*/
+    { PAPI_BR_INS,0,{NATIVE_MASK| 6,-1}},    /* Branch inst. executed*/
+    { PAPI_FLOPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|21,-1}},     /* FLOPS */
+    { PAPI_TOT_CYC,0,{ NATIVE_MASK|0,-1}},   /* Total cycles */
+    { PAPI_IPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|15,-1}},       /* IPS */
+    { 0, 0, {-1, -1}}                        /* The END */
+};
+
+
+preset_search_t findem_r12k[] = { /* Shared with R14K */
+    { PAPI_L1_DCM,0,{NATIVE_MASK|25,-1}},       /* L1 D-Cache misses */
+    { PAPI_L1_ICM,0,{NATIVE_MASK| 9,-1}},       /* L1 I-Cache misses */
+    { PAPI_L2_DCM,0,{NATIVE_MASK|26,-1}},       /* L2 D-Cache misses */
+    { PAPI_L2_ICM,0,{NATIVE_MASK|10,-1}},       /* L2 I-Cache misses */
+    { PAPI_L1_TCM,DERIVED_ADD,{ NATIVE_MASK|9,NATIVE_MASK|25,-1}}, /* L1 total */
+    { PAPI_L2_TCM,DERIVED_ADD,{NATIVE_MASK|10,NATIVE_MASK|26,-1}}, /* L2 total */
+    { PAPI_CA_INV,0,{NATIVE_MASK|13,-1}},       /* Cache Line Invalidation*/
+    { PAPI_CA_ITV,0,{NATIVE_MASK|12,-1}},       /* Cache Line Intervention*/
+    { PAPI_TLB_TL,0,{NATIVE_MASK|23,-1}},       /* Total TLB misses*/
+    { PAPI_PRF_DM,0,{NATIVE_MASK|17,-1}},       /* Prefetch miss */
+    { PAPI_CSR_FAL,0,{NATIVE_MASK| 5, -1}},     /* Failed store conditional*/
+    { PAPI_CSR_SUC,DERIVED_SUB,{NATIVE_MASK|20,NATIVE_MASK|5,-1}},        
+                                            /* Successful store conditional*/
+    { PAPI_CSR_TOT,0,{NATIVE_MASK|20,-1}},      /* Total store conditional*/
+    { PAPI_BR_CN,0,{NATIVE_MASK| 6,-1}},        /* Cond. branch inst. exe*/
+    { PAPI_BR_MSP,0,{NATIVE_MASK|24,-1}},       /* Cond. branch inst. mispred*/
+    { PAPI_BR_PRC,DERIVED_SUB,{NATIVE_MASK|6,NATIVE_MASK|24,-1}},     
+                                         /* Cond. branch inst. correctly pred*/
+    { PAPI_TOT_IIS,0,{ NATIVE_MASK|1, -1}},     /* Total inst. issued*/
+    { PAPI_TOT_INS,0,{NATIVE_MASK|15, -1}},     /* Total inst. executed*/
+    { PAPI_FP_INS,0,{NATIVE_MASK|21,-1}},       /* Floating Pt. inst.executed*/
+    { PAPI_LD_INS,0,{NATIVE_MASK|18,-1}},       /* Loads executed*/
+    { PAPI_SR_INS,0,{NATIVE_MASK|19,-1}},       /* Stores executed*/
+    { PAPI_FLOPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|21,-1}},   /* FLOPS */
+    { PAPI_TOT_CYC,0,{ NATIVE_MASK|0, -1}},     /* Total cycles */
+    { PAPI_IPS,DERIVED_PS,{NATIVE_MASK|0,NATIVE_MASK|15,-1}},     /* IPS */
+    { PAPI_LST_INS,DERIVED_ADD,{NATIVE_MASK|18,NATIVE_MASK|19,-1}},         
+                                             /* Total load/store inst. exec */
+    { 0, 0, {-1, -1}}                           /* The END */
+};
+
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -338,6 +350,7 @@ static int set_domain(hwd_control_state_t *this_state, int domain)
   return(PAPI_OK);
 }
 
+/* This function now do nothing */
 static int set_granularity(hwd_control_state_t *this_state, int domain)
 {
   switch (domain)
@@ -436,6 +449,8 @@ static int get_system_info(void)
   _papi_hwi_system_info.hw_info.ncpu = get_cpu();
 */
   _papi_hwi_system_info.supports_hw_overflow = 1;
+
+/* set text start address and end address, etc */
   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_ftext;
   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)&_etext;
   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_fdata;
@@ -462,17 +477,13 @@ static int get_system_info(void)
    }
 #endif
 
+/* setup_all_presets is in papi_preset.c */
   retval = setup_all_presets(preset_search_map);
   if (retval)
     return(retval);
 
   return(PAPI_OK);
 } 
-
-/* Low level functions, should not handle errors, just return codes. */
-
-/* At init time, the higher level library should always allocate and 
-   reserve EventSet zero. */
 
 u_long_long _papi_hwd_get_real_usec (void)
 {
@@ -518,6 +529,7 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
+/* this function is called by PAPI_library_init */
 int _papi_hwd_init_global(void)
 {
   int retval;
@@ -558,6 +570,10 @@ static int translate_domain(int domain)
 }
 */
 
+/* this function is called by _papi_hwi_initialize_thread in papi_internal.c
+   this function will generate the file descriptor for hardware counter
+   control
+*/
 int _papi_hwd_init(hwd_context_t *ctx)
 {
   char pidstr[PAPI_MAX_STR_LEN];
@@ -598,6 +614,7 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, unsigned int event
   return(PAPI_ESBSTR);
 }
 
+/* debug function */
 void dump_cmd(hwperf_profevctrarg_t *t)
 {
   int i;
@@ -672,9 +689,9 @@ int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long eve
   return(PAPI_ESBSTR);
 }
 
+/* close the file descriptor */
 int _papi_hwd_shutdown(hwd_context_t *ctx)
 {
-
   close(ctx->fd);
   return(PAPI_OK);
 }
@@ -829,6 +846,9 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
   return;
 }
 
+/* this function will be called when adding events to the eventset and
+   deleting events from the eventset
+*/
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count)
 {
   int index, i, selector=0, mode = 0;

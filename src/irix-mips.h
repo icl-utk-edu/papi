@@ -30,10 +30,6 @@
 typedef int hwd_register_t;
 
 typedef struct hwd_control_state {
-  /* File descriptor controlling the counters; */
-/*
-  int fd;
-*/
   /* Generation number of the counters */
   int generation;
   /* Native encoding of the default counting domain */
@@ -76,34 +72,6 @@ typedef struct {
     ri_minrev:4;	/* minor revision */
 } papi_rev_id_t;
 
-/* Encoding for NON-PAPI events is:
-
-   Low 8 bits indicate which counter number: 0 - 7
-   Bits 8-16 indicate which event number: 0 - 50 */
-
-typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned int selector;  
-  /* Is this event derived? */
-  unsigned char derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  unsigned char counter_cmd[HWPERF_EVENTMAX];
-  /* Number on each hwcounter */
-  int num_on_counter[2];
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
-
-typedef struct hwd_search {
-  /* PAPI preset code */
-  int preset;
-  /* Derived code */
-  int derived;
-  /* Events to encode */
-  int findme[2];
-} hwd_search_t;
 
 extern ThreadInfo_t *default_master_thread;
 

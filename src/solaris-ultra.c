@@ -9,6 +9,11 @@
 *          min@cs.utk.edu
 */  
 
+/* to understand this program, first you should read the user's manual
+   about UltraSparc II and UltraSparc III, then the man pages
+   about cpc_take_sample(cpc_event_t *event)
+*/
+
 #include SUBSTRATE
 #include "papi_protos.h"
 #include "papi_preset.h"
@@ -24,6 +29,11 @@ int papi_debug;
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
+/* the number in this preset_search map table is the native event index 
+   in the native event table, when it ORs the NATIVE_MASK, it becomes the
+   native event code. 
+*/
+/* UltraSparc II preset search table */
 preset_search_t usii_preset_search_map[] = {
   /* L1 Cache Imisses */
   {PAPI_L1_ICM,DERIVED_SUB,{NATIVE_MASK|4,NATIVE_MASK|14}},		
@@ -68,6 +78,7 @@ preset_search_t usii_preset_search_map[] = {
   /* Terminator */
   {0,0,{0,0}}};
 
+/* UltraSparc III preset search table */
 preset_search_t usiii_preset_search_map[] = {
   /* Floating point instructions */
   {PAPI_FP_INS,DERIVED_ADD,{NATIVE_MASK|22,NATIVE_MASK|68}}, 
@@ -118,6 +129,15 @@ preset_search_t usiii_preset_search_map[] = {
   /* Terminator */
   {0,0,{0,0}}};
 
+/* the encoding array in native_info_t is the encodings for PCR.SL
+   and PCR.SU, encoding[0] is for PCR.SL and encoding[1] is for PCR.SU,
+   the value -1 means it is not supported by the corresponding Performance
+   Instrumentation Counter register. For example, Cycle_cnt can be counted
+   by PICL and PICU, but Dispatch0_IC_miss can be only counted by PICL.
+   These encoding information will be used to allocate register to events
+   and update the control structure.
+*/
+/* UltraSparc II native event table */
 native_info_t  usii_native_table[]= {
 /* 0  */   {"Cycle_cnt", {0x0, 0x0}},
 /* 1  */   {"Instr_cnt", {0x1, 0x1}},
@@ -143,6 +163,7 @@ native_info_t  usii_native_table[]= {
 /* 21 */   {"EC_ic_hit", {-1, 0xf}}
 };
 
+/* UltraSparc III native event table */
 native_info_t  usiii_native_table[]= {
 /* 0  */   {"Cycle_cnt", {0x0, 0x0}},
 /* 1  */   {"Instr_cnt", {0x1, 0x1}},
@@ -566,7 +587,7 @@ static int get_system_info(void)
   _papi_hwi_system_info.num_cntrs = retval;
   DBG((stderr,"num_cntrs = %d\n",_papi_hwi_system_info.num_cntrs));
 
-  /* Software info */
+  /* program text segment, data segment  address info */
   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t)&_start;
   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t)&_etext;
   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t)&_etext+1;
@@ -632,15 +653,7 @@ static int set_default_granularity(hwd_control_state_t *current_state, int granu
 
 /* Low level functions, should not handle errors, just return codes. */
 
-/* At init time, the higher level library should always allocate and 
-   reserve EventSet zero. */
-
-/* Go from highest counter to lowest counter. Why? Because there are usually
-   more counters on #1, so we try the least probable first. */
-
-/* At init time, the higher level library should always allocate and 
-   reserve EventSet zero. */
-
+/* this function is called by PAPI_library_init */
 int _papi_hwd_init_global(void)
 {
   int retval;
@@ -703,6 +716,7 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state,
   return(PAPI_ESBSTR);
 }
 
+/* reset the starting number */
 int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t * ctrl)
 {
   int retval;

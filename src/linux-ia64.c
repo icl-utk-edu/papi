@@ -168,8 +168,11 @@ int set_dear_ita_param(pfmw_ita_param_t *ita_lib_param, int EventCode)
   return PAPI_OK;
 }
 
-/* I want to keep the old way to define the preset search map,
-   so I add this function to generate the preset search map in papi3 
+/* I want to keep the old way to define the preset search map.
+   In Itanium2, there are more than 400 native events, if I use the
+   index directly, it will be difficult for people to debug, so I
+   still keep the old way to define preset search table, but 
+   I add this function to generate the preset search map in papi3 
 */
 int generate_preset_search_map(itanium_preset_search_t *oldmap)
 {
@@ -527,10 +530,7 @@ inline static int set_default_granularity(hwd_control_state_t *this_state, int g
   return(set_granularity(this_state,granularity));
 }
 
-/* At init time, the higher level library should always allocate and 
-   reserve EventSet zero. */
-
-// struct perfctr_dev *dev;
+/* this function is called by PAPI_library_init */
 int _papi_hwd_init_global(void)
 {
   int retval,type;
@@ -685,7 +685,7 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state,
   return(PAPI_ESBSTR);
 }
 
-
+/* reset the hardware counters */
 int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *machdep)
 {
   pfarg_reg_t writeem[MAX_COUNTERS];
@@ -710,42 +710,24 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *machdep)
 int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long **events)
 {
   int i;
-/*
-  pfarg_reg_t readem[MAX_COUNTERS], writeem[MAX_COUNTERS+1];
-*/
   pfarg_reg_t readem[MAX_COUNTERS];
   pfmw_arch_reg_t flop_hack;
 
-/*
-  memset(writeem, 0x0, sizeof writeem);
-*/
   memset(readem, 0x0, sizeof readem);
 
+/* read the 4 counters, the high level function will process the 
+   mapping for papi event to hardware counter 
+*/
   for(i=0; i < MAX_COUNTERS; i++)
-    {
-      /* Bug fix, we must read the counters out in the same order we programmed them. */
-      /* pfm_dispatch_events may request registers out of order. */
+  {
+    readem[i].reg_num = MAX_COUNTERS+i;
+  }
 
-/*
-	  readem[i].reg_num = machdep->evt.pfp_pc[i].reg_num;
-*/
-	  readem[i].reg_num = MAX_COUNTERS+i;
-
-      /* Writing doesn't matter, we're just zeroing the counter. */ 
-
-/*
-	  writeem[i].reg_num = MAX_COUNTERS+i;
-*/
-    }
-
-/*
-  if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, machdep->evt.pfp_event_count) == -1) 
-*/
   if (perfmonctl(machdep->pid, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) 
-    {
-      DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
-      return PAPI_ESYS;
-    }
+  {
+    DBG((stderr,"perfmonctl error READ_PMDS errno %d\n",errno));
+    return PAPI_ESYS;
+  }
 
   for(i=0; i < _papi_hwi_system_info.num_cntrs; i++)
   {
@@ -794,13 +776,10 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *machdep, long_long *
 int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *current_state)
 {
   int i;
-/*
-  pfarg_reg_t pd[MAX_COUNTERS+1];
-*/
-/* pd or pc may contain more elements than events */
 
   pfm_stop();
 
+/* write PMCS */
   if (perfmonctl(current_state->pid, PFM_WRITE_PMCS, 
           current_state->evt.pfp_pc, current_state->evt.pfp_pc_count) == -1) 
   {
@@ -809,10 +788,9 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *current_state)
     return(PAPI_ESYS);
   }
 
-/*
-  memset(pd, 0, sizeof pd);
+/* set the initial value of the hardware counter , if PAPI_overflow or
+  PAPI_profil are called, then the initial value is the threshold
 */
-
   for(i=0; i < MAX_COUNTERS; i++) 
     current_state->pd[i].reg_num = MAX_COUNTERS+i;  
 
