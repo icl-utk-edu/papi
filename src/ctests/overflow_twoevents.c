@@ -26,13 +26,13 @@
 
 #ifdef _CRAYT3E
 	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
-	#define OUT_FMT		"%-12s : %16lld%16lld\n"
+	#define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
 #elif defined(_WIN32)
 	#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
-	#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
+	#define OUT_FMT		"%-12s : %16I64d%16I64d%16I64d\n"
 #else
 	#define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
-	#define OUT_FMT		"%-12s : %16lld%16lld\n"
+	#define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
 #endif
 
 int total = 0;		/* total overflows */
@@ -53,7 +53,7 @@ void handler(int EventSet, void *address, long_long overflow_vector)
 int main(int argc, char **argv) 
 {
   int EventSet;
-  long_long (values[2])[2];
+  long_long (values[3])[2];
 /*
   long_long min, max;
 */
@@ -118,6 +118,13 @@ int main(int argc, char **argv)
   retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, 0, 0,  handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
+  retval = PAPI_start(EventSet);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
+  do_flops(NUM_FLOPS);
+
+  retval = PAPI_stop(EventSet, values[2]);
+  if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
   num_flops = NUM_FLOPS;
 #if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
   num_flops *= 2;
@@ -135,9 +142,9 @@ int main(int argc, char **argv)
 
 	printf("Test type    : %16d%16d\n",1,2);
 	printf(OUT_FMT, "PAPI_TOT_CYC",
-	 (values[0])[0],(values[1])[0]);
+	 (values[0])[0],(values[1])[0], (values[2])[0]);
 	printf(OUT_FMT, event_name,
-	 (values[0])[1],(values[1])[1]);
+	 (values[0])[1],(values[1])[1], (values[2])[1]);
         printf("Overflows    : %16s%16d\n","",total);
 	printf("-----------------------------------------------\n");
 
