@@ -269,9 +269,32 @@ int PAPI_thread_init(void **handle, int flag)
   return(PAPI_OK);
 }
 
+#if defined(linux)
+#define __SMP__
+#include <asm/atomic.h>
+atomic_t lock;
+#endif
+
+void PAPI_lock(void)
+{
+  atomic_inc(&lock);
+  while (atomic_read(&lock) > 1)
+    {
+      DBG((stderr,"Waiting..."));
+      usleep(1000);
+    }
+}
+
+void PAPI_unlock(void)
+{
+  atomic_dec(&lock);
+}
+
 int PAPI_library_init(int version)
 {
   int init_retval, i, tmp;
+
+  atomic_set(&lock,0);
 
   if (version != PAPI_VER_CURRENT)
     return(PAPI_EMISC);
@@ -403,6 +426,8 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
 {
   int i, errorCode;
 
+  PAPI_lock();
+
   /* Update the values for lowestEmptySlot, num of availSlots */
 
   ESI->master = master;
@@ -415,7 +440,10 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
     {
       errorCode = expand_dynamic_array(map);
       if (errorCode!=PAPI_OK) 
-	return(errorCode);
+	{
+	  PAPI_unlock();
+	  return(errorCode);
+	}
     }
 
   i = ESI->EventSetIndex + 1;
@@ -423,6 +451,7 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
   DBG((stderr,"Empty slot for lowest available EventSet is at %d\n",i));
   map->lowestEmptySlot = i;
  
+  PAPI_unlock();
   return(PAPI_OK);
 }
 

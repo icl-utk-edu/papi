@@ -288,6 +288,7 @@ long long PAPI_get_virt_usec(void);
 int PAPI_library_init(int version);
 int PAPI_thread_init(void **handle, int flag);
 int PAPI_list_events(int EventSet, int *Events, int *number);
+void PAPI_lock(void);
 int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 		  int flags, PAPI_overflow_handler_t handler);
 int PAPI_perror(int code, char *destination, int length);
@@ -313,6 +314,7 @@ int PAPI_start(int EventSet);
 int PAPI_state(int EventSet, int *status);
 int PAPI_state(int EventSetIndex, int *status);
 int PAPI_stop(int EventSet, long long *values);
+void PAPI_unlock(void);
 int PAPI_write(int EventSet, long long *values);
 
 /* The High Level API
