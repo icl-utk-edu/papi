@@ -5,13 +5,15 @@
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
 static int buf[L1_MISS_BUFFER_SIZE_INTS];
 
+volatile double a = 0.5, b = 6.2;
+
 void do_flops(int n)
 {
   int i;
-  double a = 0.5, b = 6.2, c = 0.11;
+  double c = 0.11;
 
   for (i=0; i < n; i++) {
-    c += a*b;
+    c += a;
   }
 }
 
@@ -27,7 +29,7 @@ void do_l1misses(int n)
 void do_both(int n)
 {
   int i,j;
-  double a = 0.5, b = 6.2, c = 0.11;
+  double c = 0.11;
 
   for (i=0;i<n;i++)
     {
