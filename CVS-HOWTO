@@ -3,7 +3,7 @@ How do I use remote CVS anonymously?
 
 The first time, the Checkout phase:
 
-> setenv CVSROOT :pserver:anonymous@hera.cs.utk.edu:/cvs/homes/papi
+> setenv CVSROOT :pserver:anonymous@icl.cs.utk.edu:/cvs/homes/papi
 > cvs login
 > Password: <cr>
 > cvs co all|papi|src|man|spec|tools
