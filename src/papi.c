@@ -273,7 +273,7 @@ int PAPI_query_event(int EventCode)
       if (_papi_hwi_presets[EventCode].count)
          papi_return(PAPI_OK);
       else
-         papi_return(PAPI_ENOEVNT);
+         return(PAPI_ENOEVNT);
    }
 
    if (EventCode & NATIVE_MASK) {
