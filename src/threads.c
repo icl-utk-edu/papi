@@ -58,15 +58,15 @@ static int lookup_and_set_thread_symbols(void)
    handle = dlopen(NULL, RTLD_LAZY);
    if (handle == NULL)
      {
-       THRDBG("Error from dlopen(NULL, RTLD_LAZY): %s\n",dlerror());
-       return(PAPI_MISC);
+       PAPIERROR("Error from dlopen(NULL, RTLD_LAZY): %s\n",dlerror());
+       return(PAPI_ESYS);
      }
 
    symbol_ptc = dlsym(handle, "pthread_self");
    if (symbol_ptc == NULL)
      {
        error_ptc = dlerror();
-       THRDBG("dlsym(%p,pthread_self) returned NULL: %s\n",(error_ptc ? error_ptc : "No error, NULL symbol!"));
+       PAPIERROR("dlsym(%p,pthread_self) returned NULL: %s\n",(error_ptc ? error_ptc : "No error, NULL symbol!"));
        dlclose(handle);
        return(PAPI_EMISC);
      }
@@ -75,15 +75,15 @@ static int lookup_and_set_thread_symbols(void)
    if (symbol_ptk == NULL)
      {
        error_ptk = dlerror();
-       THRDBG("dlsym(%p,pthread_kill) returned NULL: %s\n",(error_ptk ? error_ptk : "No error, NULL symbol!"));
+       PAPIERROR("dlsym(%p,pthread_kill) returned NULL: %s\n",(error_ptk ? error_ptk : "No error, NULL symbol!"));
        dlclose(handle);
        return(PAPI_EMISC);
      }
 	  
    dlclose(handle);
 
-   _papi_hwi_thread_kill_fn = symbol_ptk;
-   _papi_hwi_thread_id_fn = symbol_ptc;
+   _papi_hwi_thread_kill_fn = (int (*)(int,int))symbol_ptk;
+   _papi_hwi_thread_id_fn = (unsigned long (*)(void))symbol_ptc;
 #endif
    return(PAPI_OK);
 }
@@ -249,7 +249,8 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
 
   for (foo = _papi_hwi_thread_head; foo != NULL; foo = foo->next)
     {
-      if ((foo->tid != mytid) && (foo->running_eventset) && (foo->wants_a_signal))
+      if ((foo->tid != mytid) && (foo->running_eventset) && 
+	  (foo->running_eventset->state & (PAPI_OVERFLOWING|PAPI_MULTIPLEXING)))
 	{
 	  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,PAPI_SIGNAL);
 	  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, PAPI_SIGNAL);
@@ -264,6 +265,10 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
   return(PAPI_OK);
 }
 
+int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
+{
+  return(PAPI_OK);
+}
 #else
 
 /* This is undefined for systems that enable ANY_THREAD_GETS_SIGNAL
