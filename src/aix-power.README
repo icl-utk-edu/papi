@@ -13,10 +13,11 @@ setenv AIXTHREAD_SCOPE S
 
 Test case notes:
 
-Although the Power has a FMADD instruction, it counts as two 
-floating point operations. This means that FLOPS and FPU counts will
-be as expected on Power. Note that Power3 also supports an FMA counter
-(PAPI_FMA_INS) so these operations can be counted independently.
+The Power3 has a FMADD instruction. Because of this, in some situations 
+PAPI_FP_INS may produce fewer Floating Point counts than expected. 
+Note that Power3 also supports an FMA counter (PAPI_FMA_INS). 
+Thus, a more accurate count of Floating Point Operations can be obtained
+by PAPI_FP_INS + PAPI_FMA_INS.
 
 Counter notes:
 
