@@ -12,14 +12,14 @@
       integer*2 profbuf3(BUFSIZE), profbuf4(BUFSIZE)
       integer*2 profbuf5(BUFSIZE)
       integer*8 length, start, end
-      integer i
+      integer i,check
       integer retval
 
       Integer len_trim, n
       External len_trim
       character*(PAPI_MAX_STR_LEN) fullname, name, lib_preload_env
-      integer text_start, text_end, data_start, data_end, bss_start
-      integer bss_end, check
+      integer*8 text_start, text_end, data_start, data_end, bss_start
+      integer*8 bss_end
       integer tests_quiet, get_quiet
       external get_quiet
 

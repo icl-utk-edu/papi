@@ -74,15 +74,15 @@ PAPI_FCALL(papif_destroy_eventset,PAPIF_DESTROY_EVENTSET,(int *EventSet, int *ch
 }
 
 #if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (_fcd fullname_fcd, _fcd name_fcd, int *text_start, int *text_end, 
-           int *data_start, int *data_end, int *bss_start, int *bss_end, _fcd lib_preload_env_fcd, int *check))
+PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (_fcd fullname_fcd, _fcd name_fcd, long_long *text_start, long_long *text_end, 
+           long_long *data_start, long_long *data_end, long_long *bss_start, long_long *bss_end, _fcd lib_preload_env_fcd, int *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, int *text_start, int *text_end, 
-           int *data_start, int *data_end, int *bss_start, int *bss_end, char *lib_preload_env, int *check,
+PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, long_long *text_start, long_long *text_end, 
+           long_long *data_start, long_long *data_end, long_long *bss_start, long_long *bss_end, char *lib_preload_env, int *check,
 	   int fullname_len, int name_len, int lib_preload_env_len))
 #else
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, int *text_start, int *text_end, 
-           int *data_start, int *data_end, int *bss_start, int *bss_end, char *lib_preload_env, int *check))
+PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, long_long *text_start, long_long *text_end, 
+           long_long *data_start, long_long *data_end, long_long *bss_start, long_long *bss_end, char *lib_preload_env, int *check))
 #endif
 {
   PAPI_option_t e;
@@ -102,12 +102,12 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
     for(i=strlen(e.exe_info->fullname);i<fullname_len;fullname[i++]=' ');
     strncpy(name, e.exe_info->name, name_len);
     for(i=strlen(e.exe_info->name);i<name_len;name[i++]=' ');
-    *text_start = (int)e.exe_info->text_start;
-    *text_end = (int)e.exe_info->text_end;
-    *data_start = (int)e.exe_info->data_start;
-    *data_end = (int)e.exe_info->data_end;
-    *bss_start = (int)e.exe_info->bss_start;
-    *bss_end = (int)e.exe_info->bss_end;
+    *text_start = (long_long)e.exe_info->text_start;
+    *text_end = (long_long)e.exe_info->text_end;
+    *data_start = (long_long)e.exe_info->data_start;
+    *data_end = (long_long)e.exe_info->data_end;
+    *bss_start = (long_long)e.exe_info->bss_start;
+    *bss_end = (long_long)e.exe_info->bss_end;
     strncpy(lib_preload_env, e.exe_info->lib_preload_env, lib_preload_env_len);
     for(i=strlen(e.exe_info->lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
   }
@@ -115,12 +115,12 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, 
   if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
     strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
     strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
-    *text_start = (int)e.exe_info->text_start;
-    *text_end = (int)e.exe_info->text_end;
-    *data_start = (int)e.exe_info->data_start;
-    *data_end = (int)e.exe_info->data_end;
-    *bss_start = (int)e.exe_info->bss_start;
-    *bss_end = (int)e.exe_info->bss_end;
+    *text_start = (long_long)e.exe_info->text_start;
+    *text_end = (long_long)e.exe_info->text_end;
+    *data_start = (long_long)e.exe_info->data_start;
+    *data_end = (long_long)e.exe_info->data_end;
+    *bss_start = (long_long)e.exe_info->bss_start;
+    *bss_end = (long_long)e.exe_info->bss_end;
     strncpy(lib_preload_env, e.exe_info->lib_preload_env, PAPI_MAX_STR_LEN);
   }
 #endif
