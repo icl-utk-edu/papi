@@ -46,6 +46,8 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem)
        */
       pmc = 0;
       data = &findem[pnum].data;
+      _papi_hwi_presets[preset_index].vendor_name[0] = '\0';
+      _papi_hwi_presets[preset_index].vendor_descr[0] = '\0';
       while ((data->native[pmc] != PAPI_NULL) && (pmc < MAX_COUNTER_TERMS)) {
          str = _papi_hwd_ntv_code_to_name(data->native[pmc]);
          if (strlen(_papi_hwi_presets[preset_index].vendor_name) + strlen(str) + 1 <
@@ -58,7 +60,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem)
          if (strlen(_papi_hwi_presets[preset_index].vendor_descr) + strlen(str) + 1 <
              PAPI_HUGE_STR_LEN) {
             if (pmc)
-               strcat(_papi_hwi_presets[preset_index].vendor_descr, "; ");
+               strcat(_papi_hwi_presets[preset_index].vendor_descr, ", ");
             strcat(_papi_hwi_presets[preset_index].vendor_descr, str);
          }
          pmc++;
