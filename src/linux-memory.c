@@ -31,7 +31,9 @@ int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
   /* Defaults to Intel which is *probably* a safe assumption -KSL */
   switch ( cpu_type ) {
   case PERFCTR_X86_AMD_K7:
+#ifdef __x86_64__
   case PERFCTR_X86_AMD_K8:
+#endif
     retval = init_amd(mem_info);
     break;
   default:
