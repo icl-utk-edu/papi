@@ -320,10 +320,10 @@ void print_control(const struct perfctr_cpu_control *control)
       SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
 #if defined(__i386__) || defined(__x86_64__)
       if (control->evntsel_aux[i])
-         SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
+         SUBDBG("evntsel_aux[%u]\t\t0x%08X\n", i, control->evntsel_aux[i]);
 #endif
       if (control->ireset[i])
-         SUBDBG("ireset[%u]\t%d\n", i, control->ireset[i]);
+         SUBDBG("ireset[%u]\t\t%d\n", i, control->ireset[i]);
    }
 #if defined(__i386__) || defined(__x86_64__)
    if (control->p4.pebs_enable)
@@ -656,24 +656,28 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 
 static void clear_control_state(hwd_control_state_t * this_state)
 {
-   int i;
+   int i,j;
+
+   /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
+   j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
 
    /* Remove all counter control command values from eventset. */
-
-   for (i = 0; i < this_state->control.cpu_control.nractrs; i++) {
+   for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
       this_state->control.cpu_control.pmc_map[i] = 0;
       this_state->control.cpu_control.evntsel[i] = 0;
-      this_state->control.cpu_control.evntsel_aux[i] = this_state->control.cpu_control.evntsel_aux[i] & (ESCR_T0_OS | ESCR_T0_USR);
+      this_state->control.cpu_control.evntsel_aux[i] = 
+         this_state->control.cpu_control.evntsel_aux[i] & (ESCR_T0_OS | ESCR_T0_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
 
    /* Clear pebs stuff */
-
    this_state->control.cpu_control.p4.pebs_enable = 0;
    this_state->control.cpu_control.p4.pebs_matrix_vert = 0;
 
+   /* clear both a and i counter counts */
    this_state->control.cpu_control.nractrs = 0;
+   this_state->control.cpu_control.nrictrs = 0;
 
 #ifdef DEBUG
    print_control(&this_state->control.cpu_control);
@@ -891,7 +895,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       }
 
       if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
-	return(retval);
+	      return(retval);
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
@@ -904,8 +908,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       contr->si_signo = PAPI_SIGNAL;
 
       /* move this event to the bottom part of the list if needed */
-      if (i < nracntrs)
+      if (i < nracntrs) {
          swap_events(ESI, contr, i, nracntrs);
+      }
       OVFDBG("Modified event set\n");
    } else {
       if (contr->cpu_control.evntsel[i] & CCCR_OVF_PMI_T0) {
@@ -913,14 +918,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          contr->cpu_control.evntsel[i] &= (~CCCR_OVF_PMI_T0);
          contr->cpu_control.nrictrs--;
          contr->cpu_control.nractrs++;
-         nricntrs = contr->cpu_control.nrictrs;
-         nracntrs = contr->cpu_control.nractrs;
       }
+      nricntrs = contr->cpu_control.nrictrs;
+      nracntrs = contr->cpu_control.nractrs;
 
       /* move this event to the top part of the list if needed */
-      if (i >= nracntrs)
+      if (i >= nracntrs) {
          swap_events(ESI, contr, i, nracntrs - 1);
-
+      }
       if (!nricntrs)
          contr->si_signo = 0;
 
