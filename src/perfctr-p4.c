@@ -39,11 +39,7 @@ extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
 #else
 #define _papi_hwi_system_info _papi_system_info
-<<<<<<< perfctr-p4.c
 papi_mdi_t _papi_system_info = { "$Id$", 
-=======
-papi_mdi_t _papi_system_info = { "$Id$", 
->>>>>>> 1.9.4.2
 			      1.0, /*  version */
 			       -1,  /*  cpunum */
 			       { 
@@ -1020,7 +1016,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
   /* This function is not used and shouldn't be called. */
 
@@ -1055,7 +1051,7 @@ static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cnt
   contr->cpu_control.ireset[cntr2] = si;
 }
 
-int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
 {
   const int PERF_INT_ENABLE = CCCR_OVF_PMI_T0;
   /* | CCCR_OVF_PMI_T1 (1 << 27) */
@@ -1172,7 +1168,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   return(retval);
 }
 
-int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
+int _papi_hwd_reset(EventSetInfo_t *mine, EventSetInfo_t *zero) 
 {
   hwd_control_state_t *machdep = zero->machdep;
   struct vperfctr *ctx = machdep->context.perfctr;
@@ -1183,7 +1179,7 @@ int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero)
     error_return(PAPI_ESYS,VCNTRL_ERROR);
 }
 
-int _papi_hwd_write(EventSetInfo *mine, EventSetInfo *zero, long_long events[])
+int _papi_hwd_write(EventSetInfo_t *mine, EventSetInfo_t *zero, long_long events[])
 {
   hwd_control_state_t *machdep = zero->machdep;
   return(_papi3_hwd_write(&machdep->context,&machdep->control,events));
@@ -1207,7 +1203,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 
   if(_papi_hwi_system_info.supports_hw_overflow)
     {
-      EventSetInfo *master;
+      EventSetInfo_t *master;
       hwd_control_state_t *machdep;
 
       master = _papi_hwi_lookup_in_master_list();
