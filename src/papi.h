@@ -375,6 +375,8 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, \
 int PAPI_perror(int code, char *destination, int length);
 int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
 		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
+int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
+		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
 int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_label_event(int EventCode, char *label);

@@ -69,6 +69,7 @@
    #define PMU_ITA2_MAX_BTB PMU_ITA2_NUM_BTB 
   #endif
   typedef pfm_ita2_reg_t pfmw_arch_reg_t;
+  typedef pfmlib_ita2_param_t pfmw_ita_param_t;
  #else /* Itanium */
   #ifndef PMU_ITA_MAX_COUNTERS
    #define PMU_ITA_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
@@ -83,6 +84,7 @@
    #define PMU_ITA_MAX_BTB PMU_ITA_NUM_BTB 
   #endif
   typedef pfm_ita_reg_t pfmw_arch_reg_t;
+  typedef pfmlib_ita_param_t pfmw_ita_param_t;
  #endif
 
  inline int pfmw_find_event(char *v, int r, int *ev) {
@@ -119,7 +121,8 @@
  #define PFMW_EVT_DFLPLM(evt)      (evt.pfp_dfl_plm)
  #define PFMW_REG_REGNUM(reg)      (reg.reg_num)
  #define PFMW_REG_REGVAL(reg)      (reg.reg_value)
- #define PFMW_REG_SMPLRST(reg)     (reg.reg_long_reset)
+ #define PFMW_REG_SMPLLRST(reg)     (reg.reg_long_reset)
+ #define PFMW_REG_SMPLSRST(reg)     (reg.reg_short_reset)
  #define PFMW_REG_REGFLAGS(reg)    (reg.reg_flags)
  #define PFMW_ARCH_REG_REGVAL(reg) (reg.reg_val)
 #ifdef ITANIUM2
@@ -174,7 +177,8 @@
  #define PFMW_EVT_DFLPLM(evt)      (evt.pfp_dfl_plm)
  #define PFMW_REG_REGNUM(reg)      (reg.reg_num)
  #define PFMW_REG_REGVAL(reg)      (reg.reg_value)
- #define PFMW_REG_SMPLRST(reg)     (reg.reg_long_reset)
+ #define PFMW_REG_SMPLLRST(reg)     (reg.reg_long_reset)
+ #define PFMW_REG_SMPLSRST(reg)     (reg.reg_short_reset)
  #define PFMW_REG_REGFLAGS(reg)    (reg.reg_flags)
  #define PFMW_ARCH_REG_REGVAL(reg) (reg.reg_val)
  #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_plm)

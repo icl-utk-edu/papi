@@ -176,6 +176,31 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
 static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
 #endif
 
+pfmw_ita_param_t ear_ita_param;
+static void *smpl_vaddr;
+extern void dispatch_profile(EventSetInfo *ESI, void *context,
+                 long_long over, long_long threshold);
+
+int set_dear_ita_param(int EventCode)
+{
+#ifdef ITANIUM2
+  ear_ita_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+  ear_ita_param.pfp_ita2_dear.ear_used   = 1;
+  ear_ita_param.pfp_ita2_dear.ear_mode = 0;
+  ear_ita_param.pfp_ita2_dear.ear_plm = PFM_PLM3;
+  ear_ita_param.pfp_ita2_dear.ear_ism = PFMLIB_ITA2_ISM_IA64; /* ia64 only */
+  ear_ita_param.pfp_ita2_dear.ear_umask =  (EventCode >> 19) & 0x1fff;
+#else 
+  ear_ita_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
+  ear_ita_param.pfp_ita_dear.ear_used   = 1;
+  ear_ita_param.pfp_ita_dear.ear_is_tlb = 0;
+  ear_ita_param.pfp_ita_dear.ear_plm = PFM_PLM3;
+  ear_ita_param.pfp_ita_dear.ear_ism = PFMLIB_ITA_ISM_IA64; /* ia64 only */
+  ear_ita_param.pfp_ita_dear.ear_umask =  (EventCode >> 19) & 0x1fff;
+#endif
+  return PAPI_OK;
+}
+
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
@@ -271,7 +296,9 @@ gen_events(char **arg, pfmw_param_t *evt)
 	int ev;
 	int cnt=0;
         char *p;
+#ifdef ITANIUM2 
         unsigned long mask = 0;
+#endif
 
 	if (arg == NULL) return -1;
 
@@ -389,6 +416,7 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
       evt->pfp_model = from->pfp_model;
 #endif
     }
+
 
   /* Recalcuate the pfmw_param_t structure, may also signal conflict */
   if (pfmw_dispatch_events(evt,pc,&cnt))
@@ -592,6 +620,26 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
       return PAPI_ESYS;
     }
 
+
+  if ((local->state & PAPI_PROFILING) && (_papi_system_info.supports_hw_profile))
+    {
+      selector = local->EventInfoArray[local->profile.EventIndex].selector;
+      while ((i = ffs(selector)))
+	{
+	  hwcntr = 1 << (i-1);
+	  if (hwcntr & selector)
+	    {
+	      /* Correct value read from kernel */
+	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->profile.threshold ;
+	      /* Ready the new structure */
+	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
+	      PFMW_REG_SMPLLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
+	      PFMW_REG_SMPLSRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->profile.threshold;
+	    }
+	  selector ^= 1 << (i-1); 
+	}
+   }
+
   if ((local->state & PAPI_OVERFLOWING) && (_papi_system_info.supports_hw_overflow))
 
     {
@@ -606,7 +654,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 	      PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += (unsigned long)local->overflow.threshold;
 	      /* Ready the new structure */
 	      PFMW_REG_REGVAL(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
-	      PFMW_REG_SMPLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
+	      PFMW_REG_SMPLLRST(writeem[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)local->overflow.threshold;
 	    }
 	  selector ^= 1 << (i-1); 
 	}
@@ -620,6 +668,23 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
       if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
 	PFMW_REG_REGVAL(readem[i]) = PFMW_REG_REGVAL(readem[i]) * 4;
     }
+
+/* this code is not right, just temporary solution --  min  */
+  if ((local->state & PAPI_PROFILING) && (_papi_system_info.supports_hw_profile))
+  {
+   selector = local->EventInfoArray[local->profile.EventIndex].selector;
+   while ((i = ffs(selector)))
+    {
+      hwcntr = 1 << (i-1);
+      if (hwcntr & selector)
+        {
+          PFMW_REG_REGVAL(readem[i-1-PMU_MAX_COUNTERS]) += local->profile.threshold*local->profile.overflowcount ;
+		  break;
+        }
+    }
+	printf("profile overflowcount=%d\n", local->profile.overflowcount);
+	 local->profile.overflowcount=0;
+  }
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
@@ -891,7 +956,10 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
       tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
       tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
-      ev = pfm_find_event_bycode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
+/*
+      ev = pfm_find_event_byvcode(tmp.pme_vcode, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
+*/
+      ev = pfm_find_event_bycode(tmp.pme_ita_code.pme_code, &(PFMW_EVT_EVENT(tmp_cmd, 0)));
       if (ev != PFMLIB_SUCCESS )
 	return(PAPI_EINVAL);
 #else
@@ -915,6 +983,12 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   if (this_state->selector == 0)
     init_config(this_state);
   
+/* tested by zhou */
+   if (((EventCode >> 8) & 0xff) == 0x67) {
+		set_dear_ita_param(EventCode);
+		this_state->evt.pfp_model=&ear_ita_param;
+	}
+
   /* Turn on the control codes and get the new bits required */
 
   nselector = set_hwcntr_codes(this_state,codes);
@@ -973,7 +1047,17 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state,
   return(PAPI_ESBSTR);
 }
 
-/* EventSet zero contains the 'current' state of the counting hardware */
+/*
+int write_pmc_pmd()
+{
+      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->pc,
+ current_state->pc_count) == -1) {
+    fprintf(stderr,"child: perfmonctl error WRITE_PMCS errno %d\n",errno); pfm_s
+tart(); return(PAPI_ESYS);
+      }
+}
+*/
+
 
 int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 { 
@@ -982,6 +1066,51 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   pfmw_reg_t pd[PMU_MAX_COUNTERS];
   
+/* for hardware profile, currently only support one eventset */
+  if ((ESI->state & PAPI_PROFILING) && (_papi_system_info.supports_hw_profile))
+  {
+      int selector, hwcntr;
+
+      pfm_stop();
+      current_state->selector = this_state->selector;
+      memcpy(&current_state->evt,&this_state->evt,sizeof this_state->evt);
+      memcpy(current_state->pc,this_state->pc,sizeof this_state->pc);
+      current_state->pc_count = this_state->pc_count;
+
+      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->pc,
+ current_state->pc_count) == -1) {
+        fprintf(stderr,"child: perfmonctl error WRITE_PMCS errno %d\n",errno); 
+        pfm_start(); 
+		return(PAPI_ESYS);
+      }
+
+      memset(pd, 0, sizeof pd);
+      for(i=0; i < PMU_MAX_COUNTERS; i++)
+      {
+        PFMW_REG_REGNUM(pd[i]) = PMU_MAX_COUNTERS+i;
+      }
+      selector = ESI->EventInfoArray[ESI->profile.EventIndex].selector;
+      while ((i = ffs(selector)))
+        {
+          hwcntr = 1 << (i-1);
+          if (hwcntr & selector)
+          {
+          DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,ESI->profile.threshold));
+          PFMW_REG_REGVAL(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->profile.threshold;
+          PFMW_REG_SMPLLRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->profile.threshold;
+          PFMW_REG_SMPLSRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->profile.threshold;
+          }
+          selector ^= 1 << (i-1);
+        }
+      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMDS, pd, PMU_MAX_COUNTERS) == -1) {
+         fprintf(stderr,"child: perfmonctl error WRITE_PMDS errno %d\n",errno);
+		 pfm_start(); return(PAPI_ESYS);
+      }
+
+    pfm_start();
+    return(PAPI_OK);
+  }
+
   /* If we ARE NOT nested, 
      just copy the global counter structure to the current eventset */
 
@@ -1020,7 +1149,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 		{
 		  DBG((stderr,"counter %d used in overflow, threshold %d\n",i-1-PMU_MAX_COUNTERS,ESI->overflow.threshold));
 		  PFMW_REG_REGVAL(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
-		  PFMW_REG_SMPLRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
+		  PFMW_REG_SMPLLRST(pd[i-1-PMU_MAX_COUNTERS]) = (~0UL) - (unsigned long)ESI->overflow.threshold;
 		}
 	      selector ^= 1 << (i-1); 
 	    }
@@ -1475,6 +1604,95 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
   pfm_start();
 }
 
+
+int ia64_process_profile_entry()
+{
+    EventSetInfo *master_event_set;
+    EventSetInfo *ESI;
+    perfmon_smpl_hdr_t *hdr = (perfmon_smpl_hdr_t *)smpl_vaddr;
+    perfmon_smpl_entry_t *ent;
+    unsigned long pos;
+	pfmw_arch_reg_t *reg;
+/*
+    unsigned long smpl_entry = 0;
+*/
+    int i, ret;
+    struct sigcontext info;
+
+    /*
+     * Make sure the kernel uses the format we understand
+     */
+    if (PFM_VERSION_MAJOR(hdr->hdr_version) != PFM_VERSION_MAJOR(PFM_SMPL_VERSION)) {
+        fprintf(stderr,"Perfmon v%u.%u sampling format is not supported\n",
+                PFM_VERSION_MAJOR(hdr->hdr_version),
+                PFM_VERSION_MINOR(hdr->hdr_version));
+    }
+
+	master_event_set = _papi_hwi_lookup_in_master_list();
+    if (master_event_set == NULL)
+		return(PAPI_ESYS);
+    if ((ESI = master_event_set->event_set_profiling)==NULL)
+		return(PAPI_ESYS);
+   /*
+     * walk through all the entries recored in the buffer
+     */
+    pos = (unsigned long)(hdr+1);
+    for(i=0; i < hdr->hdr_count; i++) {
+        ret = 0;
+        ent = (perfmon_smpl_entry_t *)pos;
+		if ( ent->regs != 0 )
+			ESI->profile.overflowcount++;
+        /*
+         * print entry header
+         */
+		if (((ESI->profile.EventCode >> 8) & 0xff) == 0x67) {
+			reg = (pfmw_arch_reg_t*)(ent+1);
+			reg++;
+			reg++;
+#ifdef ITANIUM2
+            info.sc_ip = ((reg->pmd17_ita2_reg.dear_iaddr+reg->pmd17_ita2_reg.dear_bn) << 4) | reg->pmd17_ita2_reg.dear_slot;
+
+#else
+			info.sc_ip= (reg->pmd17_ita_reg.dear_iaddr<<4) | (reg->pmd17_ita_reg.dear_slot);
+#endif
+		} else info.sc_ip=ent->ip;
+
+/*
+        printf("Entry %ld PID:%d CPU:%d regs:0x%lx IIP:0x%016lx\n",
+            smpl_entry++,
+            ent->pid,
+            ent->cpu,
+            ent->regs,
+            info.sc_ip);
+*/
+
+    	dispatch_profile(ESI, (caddr_t)&info, 0, ESI->profile.threshold);
+        /*
+         * move to next entry
+         */
+        pos += hdr->hdr_entry_size;
+	}
+    return(PAPI_OK);
+}
+
+#ifdef PFM06A
+static void ia64_process_sigprof(int n, struct mysiginfo *info, struct sigconte
+xt *context)
+#else
+static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
+*context)
+#endif
+{
+  if (info->sy_code != PROF_OVFL) {
+    fprintf(stderr,"PAPI: received spurious SIGPROF si_code=%d\n", info->sy_code
+);
+    return;
+  }
+  ia64_process_profile_entry();
+  pfmw_perfmonctl(info->sy_pid, PFM_RESTART, 0, 0);
+}
+
+
 /* This function only used when hardware interrupts ARE working */
 
 #ifdef PFM06A
@@ -1497,6 +1715,111 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
   pfmw_perfmonctl(info->sy_pid, PFM_RESTART, 0, 0);
 
   pfm_start();
+}
+
+int set_notify(EventSetInfo *ESI, int index, int value)
+{
+	int selector, hwcntr, i;
+    hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+    pfmw_reg_t *pc = this_state->pc;
+
+    selector = ESI->EventInfoArray[index].selector;
+    while ((hwcntr = ffs(selector)))
+    {
+      hwcntr = hwcntr - 1;
+      for (i=0;i<PMU_MAX_COUNTERS;i++)
+        {
+          if (PFMW_REG_REGNUM(pc[i]) == hwcntr)
+        {
+          DBG((stderr,"Found hw counter %d in %d, flags %d\n",hwcntr,i,PFMW_REG_REGNUM(pc[i])));
+          PFMW_REG_REGFLAGS(pc[i]) = value;
+          break;
+        }
+        }
+      selector ^= 1 << hwcntr;
+    }
+	return(PAPI_OK);
+}
+
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  if (_papi_system_info.supports_hw_profile) {
+	  ia64_process_profile_entry();
+      master->event_set_profiling=NULL;
+  }
+   return(PAPI_OK);
+}
+
+
+int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
+{
+    struct sigaction act;
+    void *tmp;
+/*
+    hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+    pfmw_reg_t *pc = this_state->pc;
+*/
+    pfmw_context_t ctx[1];
+
+	if (profile_option->threshold == 0 ) {
+/* unset notify */
+		set_notify(ESI, profile_option->EventIndex, 0);
+/* remove the signal handler */
+        if (sigaction(SIGPROF, NULL, NULL) == -1)
+            return(PAPI_ESYS);
+	} else {
+    	tmp = (void *)signal(SIGPROF, SIG_IGN);
+    	if ((tmp != (void *)SIG_DFL) && (tmp != (void *)ia64_process_sigprof) )
+           return(PAPI_EMISC);
+
+      /* Set up the signal handler */
+
+    	memset(&act,0x0,sizeof(struct sigaction));
+    	act.sa_handler = (sig_t)ia64_process_sigprof;
+    	act.sa_flags = SA_RESTART;
+    	if (sigaction(SIGPROF, &act, NULL) == -1)
+      		return(PAPI_ESYS);
+
+     /* Set up the overflow notifier on the proper event.  */
+
+		set_notify(ESI, profile_option->EventIndex, PFM_REGFL_OVFL_NOTIFY);
+
+  /* need to rebuild the context */
+    pfmw_perfmonctl(getpid(), PFM_DESTROY_CONTEXT, NULL, 0);
+    memset(ctx, 0, sizeof(ctx));
+    PFMW_CTX_NOTIFYPID(ctx[0]) = getpid();
+    PFMW_CTX_FLAGS(ctx[0])     = PFM_FL_INHERIT_NONE;
+#ifdef PFM06A
+    ctx[0].pfr_ctx.notify_sig = SIGPROF;
+#endif
+    ctx[0].ctx_smpl_entries = SMPL_BUF_NENTRIES;
+
+/* DEAR events */
+    if (((profile_option->EventCode >> 8) & 0xff )==0x67) {
+        ctx[0].ctx_smpl_regs[0] = DEAR_REGS_MASK;
+	}
+
+ if (pfmw_perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+    fprintf(stderr,"PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n", getpid(),
+ errno);
+      		return(PAPI_ESYS);
+  }
+  printf("Sampling buffer mapped at %p\n", ctx[0].ctx_smpl_vaddr);
+
+  smpl_vaddr = ctx[0].ctx_smpl_vaddr;
+
+  /*
+   * reset PMU (guarantee not active on return) and unfreeze
+   * must be done before writing to any PMC/PMD
+   */
+  if (pfmw_perfmonctl(getpid(), PFM_ENABLE, 0, 0) == -1) {
+    if (errno == ENOSYS)
+      fprintf(stderr,"Your kernel does not have performance monitoring support !
+\n");
+    fprintf(stderr,"PID %d: perfmonctl error PFM_ENABLE %d\n",getpid(),errno);
+  }
+ }
+  return(PAPI_OK);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
@@ -1581,12 +1904,6 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   return(retval);
 }
 
-int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
-{
-  /* This function is not used and shouldn't be called. */
-
-  abort();
-}
 
 void *_papi_hwd_get_overflow_address(void *context)
 {
@@ -1693,7 +2010,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* We can use add_prog_event */
 			        0,  /* We can write the counters */
 			        1,  /* supports HW overflow */
-			        0,  /* supports HW profile */
+			        1,  /* supports HW profile */
 			        1,  /* supports 64 bit virtual counters */
 			        1,  /* supports child inheritance */
 			        0,  /* supports attaching to another process */

@@ -1524,6 +1524,15 @@ int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_opti
   return(PAPI_ESBSTR);
 }
 
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  /* This function is not used and shouldn't be called. */
+
+  abort();
+  return(PAPI_ESBSTR);
+}
+
+
 void *_papi_hwd_get_overflow_address(void *context)
 {
   void *location;

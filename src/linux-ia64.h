@@ -150,6 +150,10 @@ typedef struct hwd_preset {
 #endif
 #endif
 
+#define SMPL_BUF_NENTRIES 64
+#define M_PMD(x)        (1UL<<(x))
+#define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
+
 extern char *basename(char *);
 extern caddr_t _init, _fini, _etext, _edata, __bss_start;
 

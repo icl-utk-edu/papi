@@ -82,6 +82,10 @@ typedef struct _EventSetInheritInfo {
 typedef struct _EventSetProfileInfo {
   PAPI_sprofil_t *prof;
   int count; /* Number of buffers */
+  int threshold;
+  int EventIndex;
+  int EventCode;
+  int overflowcount; /* Number of overflows occurred */
   int flags;
 } EventSetProfileInfo_t;
 
@@ -210,6 +214,7 @@ typedef struct _EventSetInfo {
 #endif
 
   struct _EventSetInfo *event_set_overflowing; /* EventSets that are overflowing */
+  struct _EventSetInfo *event_set_profiling; /* EventSets that are profiling */
 
   struct _EventSetInfo *master;
 } EventSetInfo;
@@ -322,6 +327,7 @@ extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, long_long events[]);
 extern int _papi_hwd_reset(EventSetInfo *, EventSetInfo *zero);
 extern int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option);
 extern int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option);
+extern int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero);
 extern int _papi_hwd_write(EventSetInfo *, EventSetInfo *, long_long events[]);

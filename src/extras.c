@@ -104,7 +104,11 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
   DBG((stderr,"posix_profile() bucket %lu = %u\n",addr,buf[addr]));
 }
 
+/*
 static void dispatch_profile(EventSetInfo *ESI, void *context,
+			     long_long over, long_long threshold)
+*/
+void dispatch_profile(EventSetInfo *ESI, void *context,
 			     long_long over, long_long threshold)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;

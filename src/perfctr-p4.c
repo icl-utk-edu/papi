@@ -1015,6 +1015,14 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_ESBSTR);
 }
 
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  /* This function is not used and shouldn't be called. */
+
+  return(PAPI_ESBSTR);
+}
+
+
 #ifndef PAPI3
 int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
 {
