@@ -35,7 +35,6 @@ C   Total floating point operations
       event(1) = PAPI_FP_INS
 C  Time used
       event(2) = PAPI_TOT_CYC
-      num_events = 2
 
 C   See how many hardware events at one time are supported
       call PAPIf_num_counters( num_events )
@@ -69,8 +68,9 @@ C  Initialize the result matrix
       end do
       
 C  Set up the counters
+      num_events = 2
       call PAPIf_start_counters( event, num_events, check)
-      if  ( check .LT. 0 ) then
+      if  ( check .LT. PAPI_OK ) then
         call PAPIf_perror( check, errorstring, length, errorcode)
         print *, errorstring
         stop 'PAPIf_start_counters failed'
@@ -78,7 +78,7 @@ C  Set up the counters
 
 C  Clear the counter values
       call PAPIf_read_counters(values, num_events,check)
-      if ( check .LT. 0) then
+      if ( check .LT. PAPI_OK) then
         call PAPIf_perror( check, errorstring, length, errorcode)
         print *, errorstring
         stop 'PAPIf_read_counters failed'
@@ -95,7 +95,7 @@ C  Compute the matrix-matrix multiplication
 
 C  Stop the counters and put the results in the array values 
       call PAPIf_stop_counters(values,num_events,check)
-      if ( check .LT. 0 ) then
+      if ( check .LT. PAPI_OK ) then
         call PAPIf_perror( check, errorstring, length, errorcode)
         print *, errorstring
         stop 'PAPIf_stop_counters failed'
