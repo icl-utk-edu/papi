@@ -10,7 +10,7 @@ FOPTFLAGS= $(OPTFLAGS)
 FFLAGS	= $(FLAGS) -col120
 SMPCFLGS= -mp
 OMPCFLGS= -mp
-CC_SHR  = cc -shared -all -check_registry /usr/lib/so_locations -rpath $(PWD) -soname libpapi.so
+CC_SHR  = cc -shared -all -check_registry /usr/lib/so_locations 
 CC_R	= cc
 CC	= cc
 CPP	= cc -E
@@ -21,7 +21,7 @@ include ./Makefile.inc
 extra:	libpapi64.a libpapi64.so
 
 libpapi64.a: 
-	$(CC) -r -64 $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o libpapi64.o
+	$(CC) -64 $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o libpapi64.o
 	ar ruv $@ libpapi64.o
 
 libpapi64.so: 
