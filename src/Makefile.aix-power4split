@@ -1,6 +1,7 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = power4
+MSUBSTR = power4
 MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4"
 LIBS	= static shared
@@ -27,8 +28,9 @@ CC_SHR	= xlc -G
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
-MISCSRCS= aix.c
-MISCOBJS= aix.o
+MISCSRCS= aix.c native.c
+MISCOBJS= aix.o native.o 
+NATIVEGEN= nativegen
 
 include Makefile.inc
 

@@ -181,44 +181,8 @@ static preset_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
 preset_search_t *preset_search_map=preset_name_map_630;
 #endif
 
-/* Utility functions */
 
  #define DEBUG_SETUP 
-
-void print_state(EventSetInfo_t *ESI)
-{
-  int i;
-  
-  fprintf(stderr,"\n\n-----------------------------------------\n");
-  fprintf(stderr,"numEvent: %d    numNative: %d\n", ESI->NumberOfEvents, ESI->NativeCount);
-
-  fprintf(stderr,"\nnative_event_name       ");
-  for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15s",native_table[ESI->NativeInfoArray[i].ni_index].name);
-  fprintf(stderr,"\n");
-
-  fprintf(stderr,"native_event_selectors    ");
-  for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
-  fprintf(stderr,"\n");
-
-  fprintf(stderr,"native_event_position     ");
-  for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_position);
-  fprintf(stderr,"\n");
-
-  fprintf(stderr,"counter_cmd               ");
-  for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.counter_cmd[ESI->NativeInfoArray[i].ni_position]);
-  fprintf(stderr,"\n");
-
-  fprintf(stderr,"native links              ");
-  for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_owners);
-  fprintf(stderr,"\n");
-  
-}
-
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
@@ -324,7 +288,6 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   PWR3_reg_alloc_t event_list[MAX_COUNTERS];
   int position;
 
-  
   /* not yet successfully mapped, but have enough slots for events */
 	
   /* Initialize the local structure needed 
