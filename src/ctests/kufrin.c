@@ -2,7 +2,7 @@
 * File:    multiplex1_pthreads.c
 * CVS:     $Id$
 * Author:  Rick Kufrin
-*          
+*          rkufrin@ncsa.uiuc.edu                    
 * Mods:    Philip Mucci
 *          mucci@cs.utk.edu
 */
@@ -133,14 +133,14 @@ int main(int argc, char **argv)
 
     threads = (pthread_t *) malloc(nthreads * sizeof(pthread_t));
     if ( threads == NULL ) {
-      test_fail(__FILE__, __LINE__, "malloc", 0);
+      test_fail(__FILE__, __LINE__, "malloc", PAPI_ENOMEM);
     }
 
     /* Create the threads */
     for (i = 0; i < nthreads; i++) {
         ret = pthread_create(&threads[i], NULL, thread, NULL);
         if ( ret != 0 ) {
-	  test_fail(__FILE__, __LINE__, "pthread_create", ret);
+	  test_fail(__FILE__, __LINE__, "pthread_create", PAPI_ESYS);
         }
     }
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
     for (i = 0; i < nthreads; i++) {
         ret = pthread_join(threads[i],NULL);
         if ( ret != 0 ) {
-	  test_fail(__FILE__, __LINE__, "pthread_join", ret);
+	  test_fail(__FILE__, __LINE__, "pthread_join", PAPI_ESYS);
         }
     }
 
