@@ -71,6 +71,8 @@ void *Thread(void *arg)
    elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+   if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, 0, 0, NULL)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
    remove_test_events(&EventSet1, mask1);
 

@@ -117,6 +117,11 @@ int main(int argc, char **argv)
    if ((retval = PAPI_stop(EventSet, values[1])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
+   /* to clear the profile flag before remove the event */
+   if ((retval = PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, 0,
+                              PAPI_PROFIL_POSIX)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_sprofil", retval);
+
    remove_test_events(&EventSet, mask);
 
 
