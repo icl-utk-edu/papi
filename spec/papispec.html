@@ -766,25 +766,27 @@
       </blockquote>
       <p><b><tt>int PAPI_cleanup_eventset(int *EventSet)</tt></b></p>
       <blockquote>
-        <p>This function effectively cleans the target EventSet. Which can then
-        be removed from existence with a call to PAPI_destroy_eventset The
+        <p>This function effectively cleans the target EventSet. It removes
+	all of the hardware events which have been added to the EventSet. It can then
+        be removed from existence with a call to PAPI_destroy_eventset. The
         EventSet must be stopped in order for this call to succeed.</p>
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
-      <p><b><tt>int PAPI_create_eventset (int *EventSet, void *handle)</tt></b></p>
+      <p><b><tt>int PAPI_create_eventset (int *EventSet)</tt></b></p>
       <blockquote>
-        <p>This function sets up a new EventSet or modifies an existing one. To
-        create a new EventSet, EventSet must be set to PAPI_NULL. Separate
-        EventSets containing events that require use of the same hardware may
-        exist, but may not be started if a conflicting EventSet is running.
-        Returns the error code PAPI_ENOEVNT if Event cannot be counted on this
-        platform. The addition of a conflicting event to an event set will
-        return an error unless PAPI_SET_MPXRES has been set. Note: EventSet 0
-        may not be used; it has been reserved for internal use.</p>
+        <p>This function creates a new EventSet for use. This call is
+	not thread safe.</p>
         <p>The return value is an integer that indicates whether the call
-        succeeded (a positive integer corresponding to the index in the
-        EventCodeArray where this event is stored) or failed (an error code).</p>
+        succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
+      </blockquote>
+      <p><b><tt>int PAPI_create_eventset_r (int *EventSet, void *handle)</tt></b></p>
+      <blockquote>
+        <p>This function creates a new EventSet for use in a multithreaded
+	environment. The handle argument is an output parameter from the
+	PAPI_thread_init call. </p>
+        <p>The return value is an integer that indicates whether the call
+        succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
       <p><b><tt>int PAPI_describe_event (char *name, int *EventCode, char
       *description)</tt></b></p>
@@ -856,11 +858,13 @@
         seconds for the section. Returns time of type long long if successful,
         appropriate error code otherwise.
       </blockquote>
-      <p><b><tt>int PAPI_library_init (int *EventSet)</tt></b></p>
+      <p><b><tt>int PAPI_library_init (int version)</tt></b></p>
       <blockquote>
         This function initializes the PAPI library and has to be called before
-        PAPI can be used. Also PAPI_thread_init has to be called before PAPI
-        calls can be used in a user application.
+        the low level PAPI can be used. The argument should always be set to PAPI_VER_CURRENT. 
+	The reason for this is that you may be linked with a shared library, so
+	this will detect version skew. Don't forget PAPI_thread_init also has to 
+	be called before low level PAPI calls can be used in an application.
       </blockquote>
       <br>
       <b><tt>int PAPI_list_events(int EventSet, int *Events, int *number)</tt></b>
@@ -869,12 +873,6 @@
         contains. number is both an input and output parameter.</p>
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
-      </blockquote>
-      <p><b><tt>int PAPI_num_counters()</tt></b></p>
-      <blockquote>
-        <p>This function returns the optimal length of the values array for the
-        high level functions. This value corresponds to the number of hardware
-        counters supported by the current substrate.</p>
       </blockquote>
       <p><b><tt>int PAPI_overflow(int EventSet, int EventCode, int threshold,
       int flags, PAPI_overflow_handler_t handler)</tt></b></p>
@@ -1076,8 +1074,8 @@
       <p><b><tt>int PAPI_thread_init (void **handle, int flag)</tt></b></p>
       <blockquote>
         <p>This function initializes thread support and has to be called by
-        non-threaded applications as well. This has to be called before any PAPI
-        calls can be used in an application along with PAPI_library_init</p>
+        applications that plan on using the reentrant interface to PAPI, namely
+	PAPI_create_eventset_r. </p>
         <p>The return value is an integer that indicates whether the call
         succeeded (PAPI_OK) or failed (not PAPI_OK).</p>
       </blockquote>
@@ -1099,13 +1097,14 @@
       user to access and count specific hardware events. It should be noted that
       this API can be used <i>in conjunction with the low level API.</i>
       However, the high level API by itself is only able to access those events
-      countable simultaneously by the underlying hardware.
-      <p><b><tt>int PAPI_num_events()</tt></b>
+      countable simultaneously by the underlying hardware. Note that the high
+      level interface performs initialization implicitly. Under the covers it
+      calls PAPI_library_init(PAPI_VER_CURRENT) and PAPI_thread_init(NULL, 0).
+      <p><b><tt>int PAPI_num_counters()</tt></b></p>
       <blockquote>
-        This function returns the optimal length of the values array for the
-        high level functions, without needing multiplexing. This value
-        corresponds to the number of hardware counters supported by the current
-        substrate.
+        <p>This function returns the optimal length of the values array for the
+        high level functions. This value corresponds to the number of hardware
+        counters supported by the current substrate.</p>
       </blockquote>
       <br>
       <b><tt>int PAPI_read_counters(long long *values, int array_len)</tt></b>
