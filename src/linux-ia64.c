@@ -420,7 +420,7 @@ static int get_system_info(void)
 
    strcpy(_papi_hwi_system_info.substrate, "$Id$");          /* Name of the substrate we're using */
    _papi_hwi_system_info.supports_hw_overflow = 1;
-   _papi_hwi_system_info.supports_hw_profile = 1;
+   _papi_hwi_system_info.supports_hw_profile = 0;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
@@ -1204,7 +1204,7 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t * info, struct sigcontext
   _papi_hwi_dispatch_overflow_signal((void *)context); 
 */
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.supports_hw_overflow,
+              _papi_hwi_system_info.supports_hw_overflow,
                                       info->sy_pfm_ovfl[0], 0);
    if (pfmw_perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1) {
       fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", getpid(), errno);
