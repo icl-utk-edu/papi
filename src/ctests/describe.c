@@ -1,4 +1,4 @@
-/* From Paul Drongowski at HP. Thanks.
+/* From Paul Drongowski at HP. Thanks. */
 
 /*  I have not been able to call PAPI_describe_event without
     incurring a segv, including the sample code on the man page.
@@ -14,11 +14,8 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   double c,a = 0.999,b = 1.001;
-   int n = 1000;
    int EventSet;
    int retval;
-   int i, j = 0;
    long_long g1[2];
    int eventcode = PAPI_TOT_INS;
    char eventname[PAPI_MAX_STR_LEN];

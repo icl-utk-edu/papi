@@ -6,6 +6,8 @@
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 #define THR 1000000
+#define FLOPS 1000000000
+
 unsigned long length;
 unsigned long my_start, my_end;
 
@@ -132,7 +134,7 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET ) flops1 = 10000000;
   else flops1 = 10000001;
 */
-  flops1 = 10000000;
+  flops1 = FLOPS;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
   if (rc){
 	retval=PAPI_ESYS;
@@ -142,7 +144,7 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET ) flops2 = 20000000;
   else flops2 = 20000001;
 */
-  flops2 = 20000000;
+  flops2 = FLOPS*2;
 
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
   if (rc){

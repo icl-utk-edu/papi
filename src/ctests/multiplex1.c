@@ -12,6 +12,8 @@
 
 #include "papi_test.h"
 
+#define FLOPS 10000000
+#define READS 10000
 #define NUM 10
 #define SUCCESS 1
 
@@ -19,25 +21,49 @@ extern void do_flops(int);
 extern void do_reads(int);
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
-static int PAPI_event;	/* Event to use in all cases; initialized in init_papi() */
 
-void init_papi(void)
+/* Event to use in all cases; initialized in init_papi() */
+
+static int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_FP_INS, PAPI_TOT_INS, PAPI_TOT_CYC };
+static int PAPI_events_len = 2;
+
+#ifdef TEST_DRIVER
+#define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
+#else
+#define CPP_TEST_FAIL(function, retval) { fprintf(stderr,"%s:%d:%s:%d:%s:%s\n",__FILE__,__LINE__,function,retval,PAPI_strerror(retval),"$Id$"); test_fail(__FILE__, __LINE__, function, retval); }
+
+#endif
+
+void init_papi(const int *events, int *len)
 {
   int retval;
+  int i, real_len = 0;
 
   /* Initialize the library */
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
-    test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
+    CPP_TEST_FAIL("PAPI_library_init",retval);
 
   /* Turn on automatic error reporting */
   retval = PAPI_set_debug(PAPI_VERB_ECONT);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
+    CPP_TEST_FAIL("PAPI_set_debug",retval);
 
-  /* query and set up the right instruction to monitor */
-  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) PAPI_event = PAPI_FP_INS;
-  else PAPI_event = PAPI_TOT_CYC;
+  for (i=0;i<*len;i++)
+    {
+      /* query and set up the right instruction to monitor */
+      if (PAPI_query_event(events[i]) == PAPI_OK) 
+	{
+	  char out[PAPI_MAX_STR_LEN];
+
+	  PAPI_events[real_len++] = events[i];
+	  PAPI_event_code_to_name(events[i],out);
+	  printf("Queried %s\n",out);
+	}
+    }
+  if (real_len < 1) 
+    CPP_TEST_FAIL("No counters available",0);
+  *len = real_len;
 }
 
 /* Tests that PAPI_multiplex_init does not mess with normal operation. */
@@ -47,44 +73,48 @@ int case1()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
 
-  init_papi();
+  init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
+    CPP_TEST_FAIL("PAPI_multiplex_init",retval);
   
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
+    CPP_TEST_FAIL("PAPI_create_eventset",retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_event);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for (i=0;i<PAPI_events_len;i++)
+    {
+      char out[PAPI_MAX_STR_LEN];
 
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      if (retval != PAPI_OK)
+	CPP_TEST_FAIL("PAPI_add_event",retval);
+      PAPI_event_code_to_name(PAPI_events[i],out);
+      printf("Added %s\n",out);
+    }
 
   if (PAPI_start(EventSet) != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
+    CPP_TEST_FAIL("PAPI_start",retval);
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
+      do_flops(FLOPS);
 #ifndef _CRAYT3E
-      do_reads(1000);
+      do_reads(READS);
 #endif
     }
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
+    CPP_TEST_FAIL("PAPI_stop",retval);
 
   if ( !TESTS_QUIET )
      printf(TAB2,"case1:",values[0],values[1]);
+
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
+    CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
   PAPI_shutdown();
   return(SUCCESS);
@@ -97,52 +127,52 @@ int case2()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
 
-  init_papi();
+  init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
+    CPP_TEST_FAIL("PAPI_multiplex_init",retval);
   
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
+    CPP_TEST_FAIL("PAPI_create_eventset",retval);
 
   retval = PAPI_set_multiplex(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
+    CPP_TEST_FAIL("PAPI_set_multiplex",retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_event);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for (i=0;i<PAPI_events_len;i++)
+    {
+      char out[PAPI_MAX_STR_LEN];
 
-#ifdef _CRAYT3E
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_IIS);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
-#endif
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      if (retval != PAPI_OK)
+	CPP_TEST_FAIL("PAPI_add_event",retval);
+      PAPI_event_code_to_name(PAPI_events[i],out);
+      printf("Added %s\n",out);
+    }
 
   if (PAPI_start(EventSet) != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
+    CPP_TEST_FAIL("PAPI_start",retval);
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
+      do_flops(FLOPS);
 #ifndef _CRAYT3E
-      do_reads(1000);
+      do_reads(READS);
 #endif
     }
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
+    CPP_TEST_FAIL("PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) 
      printf(TAB2,"case2:",values[0],values[1]);
+
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
+    CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
   PAPI_shutdown();
   return(SUCCESS);
@@ -155,52 +185,52 @@ int case3()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[2];
 
-  init_papi();
+  init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
+    CPP_TEST_FAIL("PAPI_multiplex_init",retval);
   
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
+    CPP_TEST_FAIL("PAPI_create_eventset",retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_event);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  for (i=0;i<PAPI_num_hwctrs();i++)
+    {
+      char out[PAPI_MAX_STR_LEN];
 
-#ifdef _CRAYT3E
-  retval = PAPI_add_event(&EventSet, PAPI_TLB_DM);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
-#endif
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      if (retval != PAPI_OK)
+	CPP_TEST_FAIL("PAPI_add_event",retval);
+      PAPI_event_code_to_name(PAPI_events[i],out);
+      printf("Added %s\n",out);
+    }
 
   retval = PAPI_set_multiplex(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
+    CPP_TEST_FAIL("PAPI_set_multiplex",retval);
 
   if (PAPI_start(EventSet) != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
+    CPP_TEST_FAIL("PAPI_start",retval);
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
+      do_flops(FLOPS);
 #ifndef _CRAYT3E
-      do_reads(1000);
+      do_reads(READS);
 #endif
     }
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
+    CPP_TEST_FAIL("PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) 
      printf(TAB2,"case3:",values[0],values[1]);
+
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
+    CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
   PAPI_shutdown();
   return(SUCCESS);
@@ -215,77 +245,76 @@ int case4()
   int retval, i, EventSet = PAPI_NULL;
   long_long values[4];
 
-  init_papi();
+  init_papi(PAPI_events,&PAPI_events_len);
 
   retval = PAPI_multiplex_init();
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
+    CPP_TEST_FAIL("PAPI_multiplex_init",retval);
   
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
-
-  retval = PAPI_add_event(&EventSet, PAPI_event);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-
-#ifdef _CRAYT3E
-  retval = PAPI_add_event(&EventSet, PAPI_TLB_DM);
-#else
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
-#endif
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_create_eventset",retval);
 
   retval = PAPI_set_multiplex(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
+    CPP_TEST_FAIL("PAPI_set_multiplex",retval);
+
+  for (i=0;i<PAPI_num_hwctrs();i++)
+    {
+      char out[PAPI_MAX_STR_LEN];
+
+      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      if (retval != PAPI_OK)
+	CPP_TEST_FAIL("PAPI_add_event",retval);
+      PAPI_event_code_to_name(PAPI_events[i],out);
+      printf("Added %s\n",out);
+    }
 
 #if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || defined(WIN32)
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_add_event",retval);
 
  #if (defined(_POWER4))
   retval = PAPI_add_event(&EventSet, PAPI_L1_DCA);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_add_event",retval);
  #else
   retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_add_event",retval);
  #endif
 
 #elif defined(sparc) && defined(sun)
   retval = PAPI_add_event(&EventSet, PAPI_LD_INS);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_add_event",retval);
 
   retval = PAPI_add_event(&EventSet, PAPI_SR_INS);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)
   retval = PAPI_add_event(&EventSet, PAPI_RES_STL);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    CPP_TEST_FAIL("PAPI_add_event",retval);
 #else
 #error "Architecture not ported yet"
 #endif
 
   if (PAPI_start(EventSet) != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
+    CPP_TEST_FAIL("PAPI_start",retval);
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
+      do_flops(FLOPS);
 #ifndef _CRAYT3E
-      do_reads(1000);
+      do_reads(READS);
 #endif
     }
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
+    CPP_TEST_FAIL("PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) 
 #if defined(__ALPHA) && defined(__osf__)
@@ -295,7 +324,7 @@ int case4()
 #endif
   retval = PAPI_cleanup_eventset(&EventSet);
   if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
+    CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
   PAPI_shutdown();
   return(SUCCESS);

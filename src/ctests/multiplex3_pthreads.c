@@ -17,8 +17,10 @@
 #include <pthread.h>
 #include "papi_test.h"
 
+#define FLOPS 10000000
+#define READS 10000
 #define NUM 10
-#define NUM_THREADS 4
+#define NUM_THREADS 1
 #define SUCCESS 1
 #define FAILURE 0
 
@@ -33,7 +35,10 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 void * thread_fn( void * dummy )
 {
 	while(1)
-	  do_flops(10000);
+	  {
+	    do_flops(FLOPS);
+	    do_reads(READS);
+	  }
 }
 
 void init_papi(void)
@@ -46,13 +51,6 @@ void init_papi(void)
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
-  if ((retval=PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0)) != PAPI_OK){
-     if (retval == PAPI_ESBSTR)
-        test_skip(__FILE__,__LINE__,"PAPI_thread_init",retval);
-     else
-        test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
-  }
-
   /* Turn on automatic error reporting */
 
   retval = PAPI_set_debug(PAPI_VERB_ECONT);
@@ -64,21 +62,21 @@ void init_papi(void)
 
 int case1(void) 
 {
-  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 0;
+  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 2;
   int allvalid = 1;
   long long *values;
   const PAPI_preset_info_t *pset;
 
   init_papi();
 
-  pset = PAPI_query_all_events_verbose();
-  if (pset == NULL)
-    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",0);
-
   retval = PAPI_multiplex_init();
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
   
+  pset = PAPI_query_all_events_verbose();
+  if (pset == NULL)
+    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",NULL);
+
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
@@ -87,11 +85,28 @@ int case1(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  if ( !TESTS_QUIET ) 
+    {
+      printf("Added %s\n","PAPI_TOT_INC");
+    }
+
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
+    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  if ( !TESTS_QUIET ) 
+    {
+      printf("Added %s\n","PAPI_TOT_CYC");
+    }
+
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     {
 	  /* skip total cycles and some cache events */
       if ((pset->avail)
 			&& (pset->event_code != PAPI_TOT_CYC)
+			&& (pset->event_code != PAPI_TOT_INS)
 			&& (pset->event_code != PAPI_CA_SHR))
 	{
 	  if ( !TESTS_QUIET ) 
@@ -125,7 +140,11 @@ int case1(void)
   if (PAPI_start(EventSet) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  do_reads(10000);
+  for (i=0;i<NUM;i++)
+    {
+      do_flops(FLOPS);
+      do_reads(READS);
+    }
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)

@@ -20,6 +20,8 @@
 #include "papi.h"
 #include "test_utils.h"
 
+#define FLOPS 10000000
+#define READS 10000
 #define NUM 10
 #define NUM_THREADS 4
 #define SUCCESS 1
@@ -109,8 +111,8 @@ void *case1_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
-      do_reads(1000);
+      do_flops(FLOPS);
+      do_reads(READS);
     }
 
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
@@ -148,8 +150,8 @@ void *case2_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
-      do_reads(1000);
+      do_flops(FLOPS);
+      do_reads(READS);
     }
 
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
@@ -187,8 +189,8 @@ void *case3_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
-      do_reads(1000);
+      do_flops(FLOPS);
+      do_reads(READS);
     }
 
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
@@ -253,8 +255,8 @@ void *case4_pthreads(void *arg)
 
   for (i=0;i<NUM;i++)
     {
-      do_flops(1000000);
-      do_reads(1000);
+      do_flops(FLOPS);
+      do_reads(READS);
     }
 
   if((retval = PAPI_stop(EventSet, values))!=PAPI_OK)
