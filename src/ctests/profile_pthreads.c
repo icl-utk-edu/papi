@@ -15,7 +15,11 @@ void *Thread(void *arg)
 {
    int retval, num_tests = 1, i;
    int EventSet1;
+#if defined(POWER3)
+   int mask1 = 0x3;
+#else
    int mask1 = 0x5;
+#endif
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc;
@@ -38,10 +42,17 @@ void *Thread(void *arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
+#if defined(POWER3)
+   retval = PAPI_profil(profbuf, length, my_start, 65536,
+                        EventSet1, PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX);
+   if (retval)
+      test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+#else
    retval = PAPI_profil(profbuf, length, my_start, 65536,
                         EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX);
    if (retval)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+#endif
 
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -56,16 +67,27 @@ void *Thread(void *arg)
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
    /* to remove the profile flag */
+#if defined(POWER3)
+   retval = PAPI_profil(profbuf, length, my_start, 65536,
+                        EventSet1, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX);
+   if (retval)
+      test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+#else
    retval = PAPI_profil(profbuf, length, my_start, 65536,
                         EventSet1, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX);
    if (retval)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+#endif
 
 
    remove_test_events(&EventSet1, mask1);
 
    if (!TESTS_QUIET) {
+#if defined(POWER3)
+      printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+#else
       printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+#endif
       printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", (int) pthread_self(), (values[0])[1]);
       printf("Thread 0x%x Real usec   : \t%lld\n", (int) pthread_self(), elapsed_us);
       printf("Thread 0x%x Real cycles : \t%lld\n", (int) pthread_self(), elapsed_cyc);
