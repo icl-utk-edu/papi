@@ -7,10 +7,10 @@
 *          <your email address>
 */  
 
-Linux 2.4 Kernel Notes
+Linux Kernel Notes
 ----------------------
 
-If using Linux 2.4, patch your kernel with the appropriate patch 
+You patch your kernel with the appropriate patch 
 either Perfctr 1.6 from perfctr/ or Perfctr 2.3 from perfctr-2.3/.
 
 The latest distribution can always be obtained from Mikael Petterson's
@@ -34,8 +34,8 @@ include files, then your probably running a broken redhat installation.
 Edit the path to your kernel include files at the top of either
 Makefile.linux-perfctr or Makefile.linux-perfctr-2.3
 
-Linux 2.4 Native Event Notes
-----------------------------
+x86 Native Event Notes
+----------------------
 
 For *all* the native event codes, see the x86-events.h header file and
 the website at
@@ -44,7 +44,7 @@ the website at
 
 The native event counter format is:
 
-	event_code = 16 bit event selector code and unit mask.
+	event_code = 16 bit event selector code and MESI unit mask.
 	hw_counter_num = Event register number 0 through 1, (2 or 3 on K7).
 			
 	event = (event_code << 8) | (hw_counter_num).

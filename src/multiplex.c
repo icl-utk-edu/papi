@@ -5,6 +5,8 @@
            ?
 * Mods:    Philip Mucci
 *          mucci@cs.utk.edu
+*	   John May
+*	   johnmay@llnl.gov
 */  
 
 /* John May */
@@ -68,6 +70,8 @@ static Threadlist * tlist = NULL;
 /* Number of threads that have been signaled */
 
 static int threads_responding = 0;
+
+static unsigned int randomseed;
 
 #ifdef PTHREADS
 static pthread_once_t mpx_once_control = PTHREAD_ONCE_INIT;
@@ -261,6 +265,8 @@ static MPX_EventSet *mpx_malloc(Threadlist *t)
   memset(newset->start_hc, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
   memset(newset->start_values, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
   memset(newset->start_cycles, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
+  memset(newset->stop_values, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
+  memset(newset->stop_cycles, 0, PAPI_MPX_DEF_DEG * sizeof(long_long));
   return(newset);
 }
 
@@ -272,10 +278,10 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 
   /* Get the global list of threads */
 
+  _papi_hwd_lock();
   t = tlist;
 
-  /* No threads in the list at all */
-  /* allocate the new Threadlist */
+  /* If there are no threads in the list at all, then allocate the new Threadlist */
 
   if (t == NULL)
     {
@@ -283,6 +289,9 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
       t = (Threadlist *)malloc(sizeof(Threadlist));
       if (t == NULL)
 	return(PAPI_ENOMEM);
+
+      /* If we're actually threaded */
+
       if (thread_id_fn)
 	{
 #ifdef MPX_DEBUG
@@ -290,6 +299,9 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 #endif
 	t->pid = thread_id_fn();
 	}
+
+      /* otherwise */
+
       else
 	{
 #ifdef MPX_DEBUG
@@ -297,6 +309,9 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 #endif
 	  t->pid = getpid();
 	}
+
+      /* Fill in the fields */
+
       t->head = NULL;
       t->cur_event = NULL;
       t->next = tlist;
@@ -343,10 +358,15 @@ int mpx_add_event(MPX_EventSet **mpx_events, int EventCode)
 	    {
 	      tlist = t->next;
 	      free(t);
+	      _papi_hwd_unlock();
 	      return(PAPI_ENOMEM);
 	    }
 	}
     }
+
+  /* Now we're finished playing with the thread list */
+
+  _papi_hwd_unlock();
 
   /* Removed newset->num_events++, moved to mpx_insert_events() */
 
@@ -431,6 +451,8 @@ static void mpx_handler(int signal)
 	 * must disable the signal that invokes this handler.
 	 */
 
+	_papi_hwd_lock();
+
 	if( threads_responding == 0 ) {	/* this thread caught the timer sig */
 		/* Signal the other threads with event lists */
 #ifdef MPX_DEBUG_TIMER
@@ -465,8 +487,10 @@ static void mpx_handler(int signal)
 #ifdef REGENERATE
 	lastthread = (threads_responding == 0);
 #endif
-	head = get_my_threads_master_event_list();
+	_papi_hwd_unlock();
 
+	/* See if this thread has an active event list */
+	head = get_my_threads_master_event_list();
 	if( head != NULL ) {
 
 		/* Get the thread header for this master event set.  It's
@@ -501,8 +525,18 @@ static void mpx_handler(int signal)
 			if( retval == PAPI_OK ) {
 			/* If it's a rate, count occurrences & average later */
 				if ( cur_event->is_a_rate ) {
-					cur_event->cycles++;
-				/* Regular event; keep track of cycles */
+					/* Make sure we ran long enough to
+					 * get a useful measurement (otherwise
+					 * potentially inaccurate rate
+					 * measurements get averaged in with
+					 * the same weight as longer, more
+					 * accurate ones.)
+					 */
+					if( cycles >= MINCYCLES ) {
+						cur_event->cycles += 1;
+					} else {
+						cur_event->count -= counts[0];
+					}
 				} else {
 					cur_event->cycles += cycles;
 				}
@@ -616,6 +650,7 @@ int MPX_start(MPX_EventSet * mpx_events)
 	int i;
 	long_long cycles_this_slice = 0;
 	Threadlist * t;
+	long long prev_total_c;
 	
 	t = mpx_events->mythr;
 
@@ -627,6 +662,12 @@ int MPX_start(MPX_EventSet * mpx_events)
 	for( i = 0; i < mpx_events->num_events; i++ ) {
 		MasterEvent * mev = mpx_events->mev[i];
 
+		long long prev_count, prev_cycles;
+		prev_count = mpx_events->stop_values[i]
+			- mpx_events->start_values[i];
+		prev_cycles = mpx_events->stop_cycles[i]
+			- mpx_events->start_cycles[i];
+
 		if( mev->active++ ) {
 			mpx_events->start_values[i] = mev->count;
 			mpx_events->start_cycles[i] = mev->cycles;
@@ -635,9 +676,12 @@ int MPX_start(MPX_EventSet * mpx_events)
 
 			/* If this happens to be the currently-running
 			 * event, add in the current amounts from this
-			 * time slice.
+			 * time slice.  If it's a rate, though, don't
+			 * bother since the event might not have been
+			 * running long enough to get an accurate count.
 			 */
-			if( mev == t->cur_event ) {
+			if( mev == t->cur_event
+					&& !(t->cur_event->is_a_rate)) {
 				long_long values[2];
 				retval = PAPI_read(mev->papi_event, values);
 				assert(retval == PAPI_OK);
@@ -646,17 +690,13 @@ int MPX_start(MPX_EventSet * mpx_events)
 					((mev->pi.event_type == PAPI_TOT_CYC)
 					? values[0] : values[1]);
 
-				if( t->cur_event->is_a_rate ) {
-					++mpx_events->start_cycles[i];
-				} else {
-					mpx_events->start_cycles[i] +=
-						cycles_this_slice;
-				}
+				mpx_events->start_cycles[i] +=
+					cycles_this_slice;
 			}
 		} else {
 			/* The = 0 isn't actually necessary; we only need
 			 * to sync up the mpx event to the master event,
-			 * but it seem safe to set the mev to 0 here, and
+			 * but it seems safe to set the mev to 0 here, and
 			 * that gives us a change to avoid (very unlikely)
 			 * rollover problems for events used repeatedly over
 			 * a long time.
@@ -666,16 +706,26 @@ int MPX_start(MPX_EventSet * mpx_events)
 
 			mpx_events->start_hc[i] = mev->handler_count = 0;
 		}
+		/* Adjust start value to include events and cycles
+		 * counted previously for this event set.
+		 */
+		mpx_events->start_values[i] -= prev_count;
+		mpx_events->start_cycles[i] -= prev_cycles;
 	}
 
 	mpx_events->status = MPX_RUNNING;
 
+	prev_total_c = mpx_events->stop_c - mpx_events->start_c;
+
 	/* Start first counter if one isn't already running */
 	if( t->cur_event == NULL ) {
-		t->cur_event = mpx_events->mev[0];
+		/* Pick an events at random to start. */
+		int index = (rand_r(&randomseed) % mpx_events->num_events);
+		t->cur_event = mpx_events->mev[index];
 		t->total_c = 0;
 		mpx_events->start_c = 0;
-		retval = PAPI_start(mpx_events->mev[0]->papi_event);
+		retval = PAPI_start(mpx_events->mev[index]->papi_event);
+		/* if( retval ) pm_error("papi start", retval); */
 		assert(retval == PAPI_OK);
 	} else {
 		/* If an event is already running, record the starting cycle
@@ -685,6 +735,11 @@ int MPX_start(MPX_EventSet * mpx_events)
 		 */
 		mpx_events->start_c = t->total_c + cycles_this_slice;
 	}
+
+	/* Adjust the total cycle count for this event set to include
+	 * cycles counted in previous instantiations.
+	 */
+	mpx_events->start_c -= prev_total_c;
 
 	mpx_release();
 
@@ -721,7 +776,9 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
 
 			mpx_events->stop_values[i] = mev->count;
 			mpx_events->stop_cycles[i] = mev->cycles;
-			if( mev == cur_event ) {
+
+			/* Read data only if it's not a rate measurement */
+			if( mev == cur_event && !(mev->is_a_rate) ) {
 				retval = PAPI_read(cur_event->papi_event,
 						last_value);
 				assert(retval == PAPI_OK);
@@ -729,12 +786,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
 						 == PAPI_TOT_CYC)
 						? last_value[0] : last_value[1];
 				mpx_events->stop_values[i] += last_value[0];
-				if( mev->is_a_rate ) {
-					mpx_events->stop_cycles[i]++;
-				} else {
-					mpx_events->stop_cycles[i]
-						+= cycles_this_slice;
-				}
+				mpx_events->stop_cycles[i] += cycles_this_slice;
 			}
 		}
 
@@ -766,6 +818,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
 				(mpx_events->stop_values[i]
 					- mpx_events->start_values[i])
 				/ elapsed_cycles );
+
 		/* For regular events, scale the value by the proportion
 		 * of the total number of cycles during which this counter
 		 * was active.
@@ -811,7 +864,7 @@ int MPX_reset(MPX_EventSet * mpx_events)
 
 		mpx_events->start_values[i] = mev->count;
 		mpx_events->start_cycles[i] = mev->cycles;
-		if( mev == cur_event ) {
+		if( mev == cur_event && !(mev->is_a_rate) ) {
 			retval = PAPI_read(cur_event->papi_event,
 					last_value);
 			assert(retval == PAPI_OK);
@@ -819,12 +872,7 @@ int MPX_reset(MPX_EventSet * mpx_events)
 				(cur_event->pi.event_type == PAPI_TOT_CYC)
 					? last_value[0] : last_value[1];
 			mpx_events->start_values[i] += last_value[0];
-			if( mev->is_a_rate ) {
-				mpx_events->start_cycles[i]++;
-			} else {
-				mpx_events->start_cycles[i]
-					+= cycles_this_slice;
-			}
+			mpx_events->start_cycles[i] += cycles_this_slice;
 		}
 	}
 
@@ -842,18 +890,13 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 	int i;
 	int retval;
 	long_long last_value[2];
+	long_long cur_event_cycles, final_count, final_cycles;
 	MasterEvent * cur_event, * head;
 	Threadlist * thr;
 
 	if( mpx_events == NULL || values == NULL ) return PAPI_EINVAL;
 
 	if( mpx_events->status != MPX_RUNNING ) return PAPI_ENOTRUN;
-
-	/* Read the current data, then stop counting */
-	retval = MPX_read(mpx_events, values);
-	assert(retval == PAPI_OK);
-
-	mpx_events->status = MPX_STOPPED;
 
 	/* Block timer interrupts */
 	mpx_hold();
@@ -883,16 +926,36 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 		 * more to do, just let it run.
 		 */
 		if( mev == cur_event ) {
-			if( mev->active == 0 ) {
+			/* Event is now inactive; stop it and update master
+			 * event set counters.
+			 */
+			if( mev->active == 0  ) {
 				retval = PAPI_stop(mev->papi_event, last_value);
 				assert(retval == PAPI_OK);
-				/* Don't use last data; it was read above */
+
+				cur_event_cycles
+					= (mev->pi.event_type == PAPI_TOT_CYC)
+						? last_value[0] : last_value[1];
+
+				/* Include last measurement only if it's not
+				 * a rate.  Rates measured over partial time
+				 * intervals are potentially inaccurate.
+				 */
+				if( !(mev->is_a_rate) ) {
+					mev->count += last_value[0];
+					mev->cycles += cur_event_cycles;
+				}
+				thr->total_c += cur_event_cycles;
+				mpx_events->stop_c = thr->total_c;
+				final_count = mev->count;
+				final_cycles = mev->cycles;
 
 				/* Now find a new cur_event */
-				for(tmp = ((cur_event->next == NULL) ? head : cur_event->next);
+				for(tmp = ((cur_event->next == NULL)
+						? head : cur_event->next);
 				    tmp != cur_event;
-				    tmp = (tmp->next == NULL) ? head : tmp->next ) 
-				  {
+				    tmp = (tmp->next == NULL)
+				   		? head : tmp->next ) {
 					/* Found the next one to start */
 					if( tmp->active ) {
 						thr->cur_event = tmp;
@@ -905,17 +968,49 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 
 				/* If we wrap around to tmp == cur_event, there 
 				 * are no active events in the list, so there 
-				 * is current event.
+				 * is no current event.
 				 */
 				if( tmp == cur_event ) {
 					thr->cur_event = NULL;
 				}
+			/* Event is still active in some other event set,
+			 * so just read its current value.
+			 */
+			} else {
+				/* Current event is still active in another
+				 * running event set.
+				 */
+				if( !(mev->is_a_rate) ) {
+					retval = PAPI_read(mev->papi_event,
+							last_value);
+					assert(retval == PAPI_OK);
+					final_count = mev->count
+						+ last_value[0];
+					cur_event_cycles
+						= (mev->pi.event_type
+								== PAPI_TOT_CYC)
+						? last_value[0] : last_value[1];
+
+					final_cycles = mev->cycles +
+						cur_event_cycles;
+					mpx_events->stop_c = thr->total_c
+						+ cur_event_cycles;
+				} else {
+					
+					final_count = mev->count;
+					final_cycles = mev->cycles;
+				}
 			}
-			break;
+		} else {
+			final_count = mev->count;
+			final_cycles = mev->cycles;
 		}
+		/* Get the latest count for each event */
+		mpx_events->stop_values[i] = final_count;
+		mpx_events->stop_cycles[i] = final_cycles;
 	}
 
-	/* Check to see if we can shutdown the multiplexing timer */
+	mpx_events->status = MPX_STOPPED;
 
 	if (thr->cur_event == NULL)
 	  {
@@ -924,6 +1019,10 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 
 	/* Restore the timer (for other event sets that may be running) */
 	mpx_release();
+
+	/* Read the current data, then stop counting */
+	retval = MPX_read(mpx_events, values);
+	assert(retval == PAPI_OK);
 
 	return PAPI_OK;
 }
@@ -963,6 +1062,7 @@ void MPX_shutdown(void)
 
 	mpx_shutdown_itimer();
 
+#if 0
 	PAPI_lock();
 
 	for( t = tlist; t != NULL; t = nextthr ) {
@@ -972,6 +1072,7 @@ void MPX_shutdown(void)
 	}
 
 	PAPI_unlock();
+#endif
 
 	mpx_restore_signal();
 }
@@ -1154,7 +1255,7 @@ static void mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 			if( event_list[i] != PAPI_TOT_CYC ) {
 				retval = PAPI_add_event(&(mev->papi_event),
 						PAPI_TOT_CYC); 
-				/* assert(retval == PAPI_OK); */
+				assert(retval == PAPI_OK);
 			}
 #if 0
 			options.domain.eventset = mev->papi_event;

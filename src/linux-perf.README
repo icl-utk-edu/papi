@@ -1,4 +1,4 @@
-/* 
+* 
 * File:    linux-x86.README
 * CVS:     $Id$
 * Author:  Philip Mucci
@@ -7,17 +7,14 @@
 *          <your email address>
 */  
 
-Linux 2.0-2.2 Kernel Notes
---------------------------
+Linux Kernel Notes
+------------------
 
-If using Linux 2.0, 2.1 or 2.2, patch your kernel using 
-the perf distribution available on our web site. 
-	
-		http://icl.cs.utk.edu/projects/papi
+This substrate and patch is outdated. Please use the perfctr patch included
+with this distribution. 
 
-
-Linux 2.0-2.2 Native Event Notes
---------------------------------
+x86 Native Event Notes
+----------------------
 
 For *all* the native event codes, see the x86-events.h header file and
 the website at
@@ -29,7 +26,7 @@ found in /usr/include/asm/perf.h.
 
 The native event counter format is:
 
-	event_code = 16 bit event selector code and unit mask.
+	event_code = 16 bit event selector code and MESI unit mask.
 	hw_counter_num = Event register number 0 through 1, (2 or 3 on K7).
 			
 	event = (event_code << 8) | (hw_counter_num).

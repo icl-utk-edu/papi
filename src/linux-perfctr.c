@@ -1,3 +1,14 @@
+/* 
+* File:    linux-perfctr.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    dan terpstra
+*          terpstra@cs.utk.edu
+* Mods:    nils smeds
+*          smeds@pdc.kth.se
+*/  
+
 #ifdef PERFCTR20
 #define PERFCTR18
 #endif
@@ -16,7 +27,8 @@ A high bit in the mask entry means it is an OR mask, not an
 and mask. This means that the same even is available on either
 counter. */
 
-static hwd_preset_t *preset_map;
+static hwd_preset_t *preset_map = NULL;
+
 static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
   {CNTR2|CNTR1,0,0,{{0x45,0x45,0x0,0x0}},""},	// L1 Cache Dmisses 
   {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L1 Cache Imisses 
