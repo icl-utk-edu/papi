@@ -5,7 +5,7 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = overflow_twoevents profile_twoevents earprofile branchprofile zero profile overflow avail branches dmem_info all_events derived high-level2 describe mem_info  \
+SERIAL  = profile_32 profile_64 overflow_twoevents profile_twoevents earprofile branchprofile zero profile overflow avail branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level sprofile eventname case1 case2 \
 	calibrate ipc flops first second cost johnmay2 clockres nineth \
 	overflow_single_event  tenth native memory \
@@ -161,6 +161,12 @@ overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 
 profile: profile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
+
+profile_32: profile_32.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_32.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_32
+
+profile_64: profile_64.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_64.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_64
 
 profile_twoevents: profile_twoevents.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_twoevents.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
