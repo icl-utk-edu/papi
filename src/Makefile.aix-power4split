@@ -28,11 +28,14 @@ CC_SHR	= xlc -G
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
-MISCSRCS= aix.c native.c
-MISCOBJS= aix.o native.o 
-NATIVEGEN= nativegen
+MISCHDRS= aix.h power4_events.h
+MISCSRCS= aix.c power4_events.c
+MISCOBJS= aix.o power4_events.o
 
 include Makefile.inc
+
+power4_events.o: power4_events.c  $(HEADERS)
+	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power4_events.c -o power4_events.o
 
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o

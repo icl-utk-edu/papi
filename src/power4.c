@@ -54,10 +54,68 @@ static preset_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_STL_ICY,0,{PNE_PM_0INST_FETCH,0,0,0,0,0,0,0}}, /*Cycles with No Instruction Issue*/
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
-preset_search_t *preset_search_map=preset_name_map_P4;
+preset_search_t *preset_search_map;
 
 
  #define DEBUG_SETUP 
+/* the following bpt functions are empty functions in POWER4 */
+/* This function examines the event to determine
+    if it can be mapped to counter ctr. 
+    Returns true if it can, false if it can't.
+*/
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
+{
+}
+
+/* This function forces the event to
+    be mapped to only counter ctr. 
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
+{
+}
+
+/* This function examines the event to determine
+    if it has a single exclusive mapping. 
+    Returns true if exlusive, false if non-exclusive.
+*/
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
+{
+}
+
+/* This function compares the dst and src events
+    to determine if any counters are shared. Typically the src event
+    is exclusive, so this detects a conflict if true.
+    Returns true if conflict, false if no conflict.
+*/
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* This function removes the counters available to the src event
+    from the counters available to the dst event,
+    and reduces the rank of the dst event accordingly. Typically,
+    the src event will be exclusive, but the code shouldn't assume it.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* This function updates the selection status of 
+    the dst event based on information in the src event.
+    Returns nothing.
+*/
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+{
+}
+
+/* initialize preset_search_map table by type of CPU */
+int _papi_hwd_init_preset_search_map(pm_info_t *info)
+{
+	preset_search_map = preset_name_map_P4;
+	return 1;
+}
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
@@ -105,7 +163,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 {
   hwd_control_state_t *this_state = &ESI->machdep;
   unsigned char selector;
-  int i, j, natNum;
+  int i, j, natNum, index;
   PWR4_reg_alloc_t event_list[MAX_COUNTERS];
   int position, group;
 
@@ -121,10 +179,14 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     event_list[i].ra_position = -1;
     /* calculate native event rank, which is number of counters it can live on, this is power3 specific */
 	for(j=0;j<MAX_COUNTERS;j++) {
-      event_list[i].ra_counter_cmd[j] = native_table[ESI->NativeInfoArray[i].ni_index].resources.counter_cmd[j];
+		if((index=native_name_map[ESI->NativeInfoArray[i].ni_index].index)<0)
+			return 0;
+      event_list[i].ra_counter_cmd[j] = native_table[index].resources.counter_cmd[j];
     }
 	for(j=0;j<GROUP_INTS;j++) {
-      event_list[i].ra_group[j] = native_table[ESI->NativeInfoArray[i].ni_index].resources.group[j];
+		if((index=native_name_map[ESI->NativeInfoArray[i].ni_index].index)<0)
+			return 0;
+      event_list[i].ra_group[j] = native_table[index].resources.group[j];
     }
     /*event_list[i].ra_mod = -1;*/
   }
@@ -158,6 +220,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 
   set_domain(ptr,_papi_hwi_system_info.default_domain);
   set_granularity(ptr,_papi_hwi_system_info.default_granularity);
+  setup_native_table();
 }
 
 
