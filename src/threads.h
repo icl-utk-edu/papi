@@ -1,7 +1,7 @@
 #ifndef PAPI_THREADS_H
 #define PAPI_THREADS_H
 
-#if defined(__GNUC__) && (__GNUC__ >= 3) && (__GNUC_MINOR__ >= 3) && !defined(ANY_THREAD_GETS_SIGNAL) && !defined(__PATHSCALE__)
+#if defined(__GNUC__) && (__GNUC__ >= 3) && (__GNUC_MINOR__ >= 3) && !defined(ANY_THREAD_GETS_SIGNAL) && !defined(__PATHSCALE__) && !defined(NO_TLS)
 #define HAVE_THREAD_LOCAL_STORAGE
 #define THREAD_LOCAL_STORAGE_KEYWORD __thread
 #else
