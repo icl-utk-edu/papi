@@ -32,8 +32,11 @@
 #define MAX_NATIVE_EVENT PAPI_MAX_NATIVE_EVENTS
 #define MAX_NATIVE_EVENT_USII  22
 
-typedef int hwd_register_t;
 typedef int hwd_reg_alloc_t;
+
+typedef struct US_register {
+   int event[MAX_COUNTERS];
+} hwd_register_t;
 
 typedef struct papi_cpc_event {
    /* Structure to libcpc */

@@ -1239,6 +1239,42 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
+static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
+{
+   *values = val;
+   strncpy(names, nam, len);
+   names[len-1] = 0;
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+   int i = 0;
+   copy_value(bits->event[0], "US Ctr 0", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->event[1], "US Ctr 1", &names[i*name_len], &values[i], name_len);
+   return(++i);
+}
+
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+{
+   int index = EventCode & PAPI_NATIVE_AND_MASK;
+
+   if(cpuver <= CPC_ULTRA2) {
+      if(index >= MAX_NATIVE_EVENT_USII) {
+         return(PAPI_ENOEVNT);
+      }
+   } else if(cpuver <= LASTULTRA3) {
+      if(index >= MAX_NATIVE_EVENT) {
+         return(PAPI_ENOEVNT);
+      }
+   } else return(PAPI_ENOEVNT);
+
+   bits->event[0] = native_table[index].encoding[0];
+   bits->event[1] = native_table[index].encoding[1];
+   return(PAPI_OK);
+}
+
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    ptr->counter_cmd.flags = 0x0;
