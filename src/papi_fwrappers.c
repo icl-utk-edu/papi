@@ -232,6 +232,11 @@ PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (long_long * time))
    *time = PAPI_get_virt_usec();
 }
 
+PAPI_FCALL(papif_is_initialized, PAPIF_IS_INITIALIZED, (int *level))
+{
+   *level = PAPI_is_initialized();
+}
+
 PAPI_FCALL(papif_library_init, PAPIF_LIBRARY_INIT, (int *check))
 {
    *check = PAPI_library_init(*check);
