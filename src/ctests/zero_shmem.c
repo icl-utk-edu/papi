@@ -37,10 +37,7 @@ Master pthread:
 #ifdef _CRAYT3E
 #include <intrinsics.h>
 #endif
-#include "papiStdEventDefs.h"
-#include "papi.h"
-#include "papi_internal.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 void Thread(int n)
 {

@@ -17,8 +17,7 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
 
 #define NUM 100
 #define SUCCESS 1

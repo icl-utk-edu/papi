@@ -5,10 +5,12 @@ MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4"
 LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
+PMAPI	= /usr/pmapi
+SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 
 # Default source is for pmtoolkit 1.4.x.
 
-FLAGS  = -I/usr/pmapi/include -qmaxmem=-1 -qarch=pwr4
+FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4
 CFLAGS	= $(FLAGS) -D_POWER4
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
@@ -17,7 +19,7 @@ FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
-LDFLAGS = -L/usr/pmapi/lib -lpmapi
+LDFLAGS = -L$(PMAPI)/lib -lpmapi
 CC_R	= xlc_r
 CC	= xlc
 CC_SHR	= xlc -G
