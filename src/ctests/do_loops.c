@@ -17,7 +17,9 @@ void do_flops(int n)
 
   for (i=0; i < n; i++) {
     c += a * b;
-  dummy((void*) &c);
+#ifndef _CRAYT3E
+    dummy((void*) &c);
+#endif
   }
 }
 

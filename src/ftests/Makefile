@@ -11,7 +11,8 @@ FTEST_DEPENDENCE=$(PAPILIB)
 default: $(TESTS)
 
 ftests_util.o: ftests_util.F
-	$(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;
+	@if [ $(SUBSTR) = unicos-t3e ]; then $(F77) $(FOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
+	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
 
 addAIXevents.o: addAIXevents.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c addAIXevents.c

@@ -1,4 +1,6 @@
-Machine specific notes for the Cray T3E
+Overflow tests occasionally fail on the Cray T3E for unknown reasons.
+
+Machine specific notes for the Cray T3E:
 
 The T3E has 3 counters. The following can be counted, courtesy of
 SGI/Cray of Course.
