@@ -107,7 +107,8 @@ void mainloop(int arg)
    if (values == NULL)
       test_fail(__FILE__, __LINE__, "malloc", 0);
 
-   if (PAPI_start(EventSet) != PAPI_OK)
+   retval = PAPI_start(EventSet);
+   if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    do_both(arg);
