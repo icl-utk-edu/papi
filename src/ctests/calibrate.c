@@ -67,7 +67,8 @@ static void resultline(int i, int j)
 	papi = (int)(flpins);
 	diff = papi - theory;
 	errord = abs(1000000 * diff / theory)%100;
-	error = 100 * diff / theory;
+	if (diff < 1000000) error = (100 * diff) / theory;
+	else error = 100 * (diff / theory);
 	printf("%8d %12d %12d %8d %5d.%.4d\n", i, papi, theory, diff, error,errord);
 }
 
