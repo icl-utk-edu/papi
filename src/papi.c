@@ -1098,6 +1098,9 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
     }
 
   /* Zero the EventInfoArray. */
+  ESI->NumberOfEvents--;
+  for(;thisindex<ESI->NumberOfEvents;thisindex++)
+    ESI->EventInfoArray[thisindex] = ESI->EventInfoArray[thisindex+1];
 
   ESI->EventInfoArray[thisindex].code = PAPI_NULL;
   ESI->EventInfoArray[thisindex].command = NOT_DERIVED;
@@ -1107,7 +1110,6 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
   /* ESI->sw_stop[hwindex]           = 0; */
   /* ESI->hw_start[hwindex]         = 0; */
 
-  ESI->NumberOfEvents--;
 
   return(retval);
 }

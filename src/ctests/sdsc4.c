@@ -44,14 +44,14 @@ int main(int argc, char **argv) {
   int eventmap[MAXEVENTS];
 
   events[0]=PAPI_FP_INS;
-  events[1]=PAPI_TOT_INS;
-  events[2]=PAPI_INT_INS;
-  events[3]=PAPI_TOT_CYC;
-  events[4]=PAPI_STL_CCY;
-  events[5]=PAPI_BR_INS;
-  events[6]=PAPI_SR_INS;
-  events[7]=PAPI_LD_INS;
-  events[8]=PAPI_TOT_IIS;
+  events[1]=PAPI_TOT_CYC;
+  events[2]=PAPI_TOT_INS;
+  events[3]=PAPI_TOT_IIS;
+  events[4]=PAPI_INT_INS;
+  events[5]=PAPI_STL_CCY;
+  events[6]=PAPI_BR_INS;
+  events[7]=PAPI_SR_INS;
+  events[8]=PAPI_LD_INS;
 
   for(i=0;i<MAXEVENTS;i++) {
     values[i]=0.;
