@@ -156,7 +156,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
 };
 
 static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
-  {PAPI_L1_DCM,DERIVED_ADD,{"PM_LD_MISS_L1","PM_ST_MISS_L1",0,0,0,0,0,0}}, /*Level 1 data cache misses*/
+  {PAPI_L1_DCM,DERIVED_ADD,{"PM_LD_MISS_L1",PM_ST_MISS_L1,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{"PM_IC_MISS",0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
   {PAPI_L1_TCM,DERIVED_ADD,{"PM_IC_MISS","PM_LD_MISS_L1",PM_ST_MISS_L1,0,0,0,0,0}}, /*Level 1 total cache misses*/
   {PAPI_CA_SNP,0,{PM_SNOOP,0,0,0,0,0,0,0}}, /*Snoops*/
