@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_library_init 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_library_init 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_library_init, PAPI_is_initialized \- initialize the PAPI library; check for initialization
@@ -107,10 +107,6 @@ if (retval != PAPI_LOW_LEVEL_INITED)
   handle_error(retval);
 .if t .ft P
 .fi
-
-.SH AUTHORS
-The PAPI Team. See them at the PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 If you don't call this before using any of the low level PAPI calls,

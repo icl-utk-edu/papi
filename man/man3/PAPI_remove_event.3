@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_remove_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_remove_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_remove_event, PAPI_remove_events \- remove PAPI preset or native hardware event from an EventSet
@@ -108,11 +108,6 @@ if (PAPI_remove_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
   handle_error(1);
 .if t .ft P
 .fi
-
-.SH AUTHORS
-The PAPI Team. See them at the PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
-
 
 .SH BUGS
 The vector function should take a pointer to a length argument so a proper return value can

@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_native 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_native 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_native \- Accessing PAPI native events
@@ -18,10 +18,6 @@ Since native events are
 specific to each platform, the names for these events are unique to each platform.
 Native events for a given platform can be discovered by combining the
 .BR PAPI_enum_event "(3) and " PAPI_event_code_to_name "(3) or " PAPI_get_event_info "(3) functions."
-
-.SH AUTHORS
-The PAPI Team. See them at the PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
 
 .SH BUGS
 Not every native event on every platform can be represented 
