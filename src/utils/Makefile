@@ -38,8 +38,8 @@ dummy.o: ../ctests/dummy.c
 clean:
 	rm -f *.o *.stderr *.stdout core *~
 
-clobber:
-	rm -f $(TARGETS)
+clobber: clean
+	rm -f $(TARGETS) 
 
 install: $(TARGETS)
 	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
