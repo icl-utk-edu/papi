@@ -373,7 +373,7 @@ static preset_info_t papi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
 
 int PAPI_describe_event(char *name, int *EventCode, char *description)
 {
-  if (*name)
+  if (name)
     {
       int i;
       
