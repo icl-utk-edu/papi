@@ -12,7 +12,7 @@ SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 # Default source is for pmtoolkit 1.4.x.
 
 FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -q64 -qlanglvl=extended
-CFLAGS	= $(FLAGS) -D_POWER4 -DNO_VARARG_MACRO -D_P64
+CFLAGS	= $(FLAGS) -qenum=4 -D_POWER4 -DNO_VARARG_MACRO -D_P64
 
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS= -qnostdinc
