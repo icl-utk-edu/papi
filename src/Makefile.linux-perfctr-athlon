@@ -1,8 +1,5 @@
-CPU	= p3
-VERSION ?= 2.6.x
-OPTFLAGS= -O3 -Wall -march=athlon
-TOPTFLAGS= -O -Wall -march=athlon
-F77	= g77
-CC      = gcc
-CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-include Rules.perfctr-$(VERSION)
+VERSION 	?= 2.6.x
+CPU		= p3
+OPTFLAGS	= -march=athlon-mp -msse -msse2
+
+include Rules.perfctr

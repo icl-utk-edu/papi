@@ -1,7 +1,6 @@
-CPU	= p3
-OPTFLAGS= -Wall -O3
-TOPTFLAGS= -Wall -O -D__x86_64__
-F77	= g77 gcc
-CC      = gcc
-CC_SHR  = $(CC) -shared -fPIC -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
-include Rules.perfctr-2.6.x
+VERSION 	?= 2.6.x
+CPU		= p3
+OPTFLAGS	= -march=athlon-mp -msse -msse2
+TOPTFLAGS	= -D__x86_64__
+
+include Rules.perfctr

@@ -1,9 +1,6 @@
-CPU	= p4
-VERSION ?= 2.6.x
-OPTFLAGS= -Wall -O3 -march=pentiumpro
-TOPTFLAGS= -O -march=pentiumpro -DPENTIUM4
-F77	= g77
-CC	= gcc
-CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-include Rules.perfctr-$(VERSION)
+VERSION 	?= 2.6.x
+CPU		= p4
+OPTFLAGS	= -march=pentium4 -msse -msse2
+
+include Rules.perfctr
 

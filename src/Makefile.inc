@@ -17,7 +17,7 @@ showconf:
 		@echo "Host architecture: $(DESCR)"; 
 		@echo "Host substrate   : $(SUBSTR).c"; 
 		@echo "Host examples    : $(TARGETS)";
-		@if [ \"$(PREFIX)\" = \"\" ]; then echo "Installation root: <unset> (You should do a make PREFIX=/usr/local or equivalent)"; else echo "Installation root: $(PREFIX)"; fi 
+		@if [ \"$(PREFIX)\" = \"\" ]; then echo "Installation prefix: <unset> (You should do a make PREFIX=/usr/local or equivalent)"; else echo "Installation root: $(PREFIX)"; fi 
 		@echo
 
 static: $(LIBRARY)

@@ -213,7 +213,9 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_PII:
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
+#ifdef PERFCTR26
    case PERFCTR_X86_INTEL_PENTM:
+#endif
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
       for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
