@@ -221,3 +221,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    this_state->counter_cmd.events[0] = this_state->group_id;
    return PAPI_OK;
 }
+<<<<<<< power4.c
+
+=======
+>>>>>>> 1.25

@@ -111,7 +111,12 @@ typedef struct itanium_preset_search {
    char operation[MAX_COUNTERS*5];
 } itanium_preset_search_t;
 
-typedef int hwd_context_t;
+typedef struct Itanium_context {
+   int fd;  /* file descriptor */
+   pid_t tid;  /* thread id */
+} Itanium_context_t;
+
+typedef Itanium_context_t hwd_context_t;
 
 /* for _papi_hwi_context_t */
 #ifdef PFM30
@@ -129,9 +134,9 @@ typedef struct sigcontext hwd_ucontext_t;
 #define M_PMD(x)        (1UL<<(x))
 #define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
-
-
+/*
 extern char *basename(char *);
+*/
 extern caddr_t _init, _fini, _etext, _edata, __bss_start;
 
 #define MUTEX_OPEN 1

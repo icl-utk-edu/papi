@@ -60,7 +60,6 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_BR_MSP, DERIVED_ADD,
     {"BRANCH_PREDICTOR_ALL_WRONG_PATH", "BRANCH_PREDICTOR_ALL_WRONG_TARGET", 0, 0}},
    {PAPI_TOT_CYC, 0, {"CPU_CYCLES", 0, 0, 0}},
-   {PAPI_FP_INS, DERIVED_ADD, {"FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0, 0}},
    {PAPI_FP_OPS, DERIVED_ADD, {"FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0, 0}},
    {PAPI_TOT_INS, 0, {"IA64_INST_RETIRED", 0, 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
@@ -129,7 +128,6 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_BR_MSP, DERIVED_ADD,
     {"BR_MISPRED_DETAIL_ALL_WRONG_PATH", "BR_MISPRED_DETAIL_ALL_WRONG_TARGET", 0, 0}},
    {PAPI_TOT_CYC, 0, {"CPU_CYCLES", 0, 0, 0}},
-   {PAPI_FP_INS, 0, {"FP_OPS_RETIRED", 0, 0, 0}},
    {PAPI_FP_OPS, 0, {"FP_OPS_RETIRED", 0, 0, 0}},
    {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
@@ -207,7 +205,8 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
       preset_search_map[i].data.native[cnt] = PAPI_NULL;
    }
    if (NUM_OF_PRESET_EVENTS != pnum){
-      SUBDBG("NUM_OF_PRESET_EVENTS (%d) != pnum (%d)\n", NUM_OF_PRESET_EVENTS,pnum);
+     SUBDBG("NUM_OF_PRESET_EVENTS %d != pnum %d\n", 
+              (int)NUM_OF_PRESET_EVENTS,pnum);
       abort();
    }
    return (PAPI_OK);
@@ -448,7 +447,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
    struct tms buffer;
 
    times(&buffer);
-   retval = (long long) buffer.tms_utime * (long long) (1000000 / CLK_TCK);
+   retval = (long long) buffer.tms_utime * (long long)(1000000/CLOCKS_PER_SEC);
    return (retval);
 }
 
@@ -480,7 +479,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
       /* Writing doesn't matter, we're just zeroing the counter. */
       writeem[i].reg_num = MAX_COUNTERS + i;
    }
-   if (pfmw_perfmonctl(machdep->pid, PFM_WRITE_PMDS, writeem, MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(machdep->pid, ctx->fd, PFM_WRITE_PMDS, writeem, MAX_COUNTERS) == -1) {
       fprintf(stderr, "child: perfmonctl error PFM_WRITE_PMDS errno %d\n", errno);
       return PAPI_ESYS;
    }
@@ -493,8 +492,6 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
 {
    int i;
    pfarg_reg_t readem[MAX_COUNTERS];
-   pfmw_param_t *pevt= &(machdep->evt);
-   pfmw_arch_pmc_reg_t flop_hack;
 
    memset(readem, 0x0, sizeof readem);
 
@@ -505,7 +502,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
       readem[i].reg_num = MAX_COUNTERS + i;
    }
 
-   if (pfmw_perfmonctl(machdep->pid, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(machdep->pid, ctx->fd, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) {
       SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
       return PAPI_ESYS;
    }
@@ -515,29 +512,9 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
       SUBDBG("read counters is %ld\n", readem[i].reg_value);
    }
 
-#if 0
-   /* if pos is not null, then adjust by threshold */
-   if (pos != NULL) {
-      i = 0;
-      while (pos[i] != -1) {
-         machdep->counters[pos[i]] += threshold;
-         i++;
-      }
-      /* special case, We need to scale FP_OPS_HI */
-      for (i = 0; i < PFMW_PEVT_EVTCOUNT(pevt; i++) {
-         PFMW_ARCH_REG_PMCVAL(flop_hack) = 
-                         PFMW_PEVT_PFPPC_REG_VAL(pevt,i);
-         if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
-            machdep->counters[i] *= 4;
-      }
-
-      i = 0;
-      /*  guess why ? at this time just grab one native event, add the sum */
-      if (pos[i] != -1)
-         machdep->counters[pos[i]] += threshold * multiplier;
-
-   }
-#endif
+#ifdef ITANIUM
+   pfmw_param_t *pevt= &(machdep->evt);
+   pfmw_arch_pmc_reg_t flop_hack;
    /* special case, We need to scale FP_OPS_HI */
    for (i = 0; i < PFMW_PEVT_EVTCOUNT(pevt); i++) {
       PFMW_ARCH_REG_PMCVAL(flop_hack) = 
@@ -545,6 +522,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
       if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
          machdep->counters[i] *= 4;
    }
+#endif
 
    *events = machdep->counters;
    return PAPI_OK;
@@ -559,7 +537,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
    pfmw_stop(ctx);
 
 /* write PMCS */
-   if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMCS,
+   if (pfmw_perfmonctl(current_state->pid, ctx->fd, PFM_WRITE_PMCS,
         PFMW_PEVT_PFPPC(pevt), 
         PFMW_PEVT_PFPPC_COUNT(pevt)) == -1) {
       fprintf(stderr, "child: perfmonctl error WRITE_PMCS errno %d\n", errno);
@@ -572,8 +550,8 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
    for (i = 0; i < MAX_COUNTERS; i++)
       current_state->pd[i].reg_num = MAX_COUNTERS + i;
 
-   if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMDS, current_state->pd,
-                  MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(current_state->pid, ctx->fd, 
+           PFM_WRITE_PMDS, current_state->pd, MAX_COUNTERS) == -1) {
       fprintf(stderr, "child: perfmonctl error WRITE_PMDS errno %d\n", errno);
       return (PAPI_ESYS);
    }
@@ -982,35 +960,30 @@ static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
    ia64_process_profile_entry(&ctx);
-   if (pfmw_perfmonctl(getpid(), PFM_RESTART, NULL, 0) == -1) {
+   if (pfmw_perfmonctl(getpid(), 0, PFM_RESTART, NULL, 0) == -1) {
       fprintf(stderr, "PID %d: perfmonctl mmm error PFM_RESTART %d\n", getpid(), errno);
       return;
    }
 }
 
-static void ia64_dispatch_sigprof(int n, pfm_siginfo_t * info, struct sigcontext *context)
+static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *context)
 {
    _papi_hwi_context_t ctx;
 
    ctx.si = info;
    ctx.ucontext = context;
 
-/* by min zhou
-   pfm_stop();
-*/
    SUBDBG("pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]);
    if (info->sy_code != PROF_OVFL) {
       fprintf(stderr, "PAPI: received spurious SIGPROF si_code=%d\n", info->sy_code);
       return;
    }
-/*
-  _papi_hwi_dispatch_overflow_signal((void *)context); 
-*/
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
               _papi_hwi_system_info.supports_hw_overflow,
                      info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0);
-   if (pfmw_perfmonctl(info->sy_pid, PFM_RESTART, 0, 0) == -1) {
-      fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", getpid(), errno);
+   if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
+      fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", 
+                   getpid(), errno);
       return;
    }
 }
@@ -1028,22 +1001,23 @@ static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
 
    ia64_process_profile_entry(&ctx);
 
-   if (pfmw_perfmonctl(getpid(), PFM_RESTART, NULL, 0) == -1) {
+   if (pfmw_perfmonctl(0, info->si_fd, PFM_RESTART, NULL, 0) == -1) {
       fprintf(stderr, "PID %d: perfmonctl mmm error PFM_RESTART %d\n", getpid(), errno);
       return;
    }
 }
 
-static void ia64_dispatch_sigprof(int n, struct siginfo * info, struct sigcontext *sc)
+static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *sc)
 {
    _papi_hwi_context_t ctx;
    pfm_msg_t msg;
-   int *fd = NULL , ret;
+   int ret, fd;
 
    ctx.si = info;
    ctx.ucontext = sc;
-   _papi_hwi_get_thr_context((void **)&fd);
 /*
+   hwd_context_t *thr_ctx;
+   _papi_hwi_get_thr_context((void **)&thr_ctx);
    printf("Notified\n");
    printf("fd =%d  info->si_fd=%d \n", *fd, info->si_fd);
    if (*fd != info->si_fd) {
@@ -1051,7 +1025,8 @@ static void ia64_dispatch_sigprof(int n, struct siginfo * info, struct sigcontex
       abort();
    }
 */
-   ret = read(*fd, &msg, sizeof(msg));
+   fd = info->si_fd;
+   ret = read(fd, &msg, sizeof(msg));
    if (ret != sizeof(msg)) {
       fprintf(stderr,"cannot read overflow message: %s\n", strerror(errno));
       abort();
@@ -1063,7 +1038,7 @@ static void ia64_dispatch_sigprof(int n, struct siginfo * info, struct sigcontex
    _papi_hwi_dispatch_overflow_signal((void *) &ctx,
           _papi_hwi_system_info.supports_hw_overflow, 
           msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0);
-   if (pfmw_perfmonctl(getpid(), PFM_RESTART, 0, 0) == -1) {
+   if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
       fprintf(stderr, "PID %d: perfmonctl error PFM_RESTART %d\n", 
              getpid(), errno);
       return;

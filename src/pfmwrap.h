@@ -44,11 +44,11 @@
 
 
 
-   inline void pfmw_start(hwd_context_t *ctx_fd) {
+   inline void pfmw_start(hwd_context_t *ctx) {
       pfm_start();
    }
 
-   inline void pfmw_stop(hwd_context_t * ctx_fd) {
+   inline void pfmw_stop(hwd_context_t * ctx) {
       pfm_stop();
    }
 
@@ -59,8 +59,8 @@
       if (ret) return PAPI_ESYS;
       else return PAPI_OK;
    }
-
-   inline int pfmw_perfmonctl(pid_t pid, int cmd, void *arg, int narg) {
+   /* the parameter fd is useless in libpfm2.0 */
+   inline int pfmw_perfmonctl(pid_t pid, int fd, int cmd, void *arg, int narg) {
       return(perfmonctl(pid, cmd, arg, narg));
    }
 
@@ -135,7 +135,7 @@
          ctx[0].ctx_smpl_regs[0] = BTB_REGS_MASK;
 #endif
 
-      if (pfmw_perfmonctl(getpid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) {
+      if (pfmw_perfmonctl(getpid(), 0, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
          fprintf(stderr, "PID %d: perfmonctl error PFM_CREATE_CONTEXT %d\n",
                  getpid(), errno);
          return (PAPI_ESYS);
@@ -149,7 +149,7 @@
        * reset PMU (guarantee not active on return) and unfreeze
        * must be done before writing to any PMC/PMD
        */
-      if (pfmw_perfmonctl(getpid(), PFM_ENABLE, 0, 0) == -1) {
+      if (pfmw_perfmonctl(getpid(), 0, PFM_ENABLE, 0, 0) == -1) {
          if (errno == ENOSYS) {
             fprintf(stderr,
               "Your kernel does not have performance monitoring support !\n");
@@ -176,6 +176,10 @@
 #ifndef PFM30
 #warning Maybe you should set -DPFM30 in your Makefile?
 #endif
+/*
+#include <linux/unistd.h>
+_syscall0(pid_t,gettid)
+*/
 
 #if defined(__ECC) && defined(__INTEL_COMPILER)
 
@@ -229,22 +233,16 @@ hweight64 (unsigned long x)
       typedef pfm_ita_pmd_reg_t pfmw_arch_pmd_reg_t;
    #endif
 
-   inline void pfmw_start(hwd_context_t * ctx_fd) {
-      int fd;
-      fd = *(int *)ctx_fd;
-      pfm_self_start(fd);
+   inline void pfmw_start(hwd_context_t * ctx) {
+      pfm_self_start(ctx->fd);
    }
 
-   inline void pfmw_stop(hwd_context_t * ctx_fd) {
-      int fd;
-      fd = *(int *)ctx_fd;
-      pfm_self_stop(fd);
+   inline void pfmw_stop(hwd_context_t * ctx) {
+      pfm_self_stop(ctx->fd);
    }
 
-   inline int pfmw_perfmonctl(pid_t pid, int cmd, void *arg, int narg) {
-      int *fd;
-      _papi_hwi_get_thr_context((void **)&fd);
-      return(perfmonctl(*fd, cmd, arg, narg));
+   inline int pfmw_perfmonctl(pid_t pid, int fd , int cmd, void *arg, int narg) {
+      return(perfmonctl(fd, cmd, arg, narg));
    }
 
    inline int pfmw_destroy_context(void) {
@@ -277,7 +275,7 @@ hweight64 (unsigned long x)
       }
    }
 
-   inline int pfmw_create_ctx_common(int ctx_fd) 
+   inline int pfmw_create_ctx_common(hwd_context_t *ctx) 
    {
       pfarg_load_t load_args;
       int ret;
@@ -286,16 +284,19 @@ hweight64 (unsigned long x)
       /*
        * we want to monitor ourself
        */
+/*
       load_args.load_pid = getpid();
+*/
+      load_args.load_pid = ctx->tid;
 
-      if (perfmonctl(ctx_fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
+      if (perfmonctl(ctx->fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
          fprintf(stderr,"perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
          return(PAPI_ESYS);
       }
       /*
        * setup asynchronous notification on the file descriptor
        */
-      ret = fcntl(ctx_fd, F_SETFL, fcntl(ctx_fd, F_GETFL, 0) | O_ASYNC);
+      ret = fcntl(ctx->fd, F_SETFL, fcntl(ctx->fd, F_GETFL, 0) | O_ASYNC);
       if (ret == -1) {
          fprintf(stderr,"cannot set ASYNC: %s\n", strerror(errno));
          return(PAPI_ESYS);
@@ -304,11 +305,19 @@ hweight64 (unsigned long x)
       /*
        * get ownership of the descriptor
        */
-      ret = fcntl(ctx_fd, F_SETOWN, getpid());
+      ret = fcntl(ctx->fd, F_SETOWN, ctx->tid);
       if (ret == -1) {
          fprintf(stderr,"cannot setown: %s\n", strerror(errno));
          return(PAPI_ESYS);
       }
+
+      ret = fcntl(ctx->fd, F_SETSIG, SIGIO);
+      if (ret == -1) {
+        fprintf(stderr, "cannot setsig: %s\n", strerror(errno));
+        return(PAPI_ESYS);
+      }
+
+
       return(PAPI_OK);
 
    }
@@ -327,12 +336,10 @@ hweight64 (unsigned long x)
          return(PAPI_ESYS);
       }
       ctx_fd = ctx[0].ctx_fd;
-      *thr_ctx = ctx_fd;
-/*
-      printf("fd of the thread = %d\n", *thr_ctx);
-*/
+      thr_ctx->fd = ctx_fd;
+      thr_ctx->tid = getpid();
 
-      return(pfmw_create_ctx_common(ctx_fd)); 
+      return(pfmw_create_ctx_common(thr_ctx)); 
    }
 
    inline int set_pmds_to_write(EventSetInfo_t * ESI, int index, int value)
@@ -361,8 +368,9 @@ hweight64 (unsigned long x)
    {
       pfm_default_smpl_ctx_arg_t ctx[1];
       pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
-      int ctx_fd, *thr_fd;
+      int ctx_fd;
       int native_index, EventCode, pos;
+      hwd_context_t *thr_ctx;
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
@@ -397,8 +405,8 @@ hweight64 (unsigned long x)
        */
       ctx_fd = ctx[0].ctx_arg.ctx_fd;
       /* save the fd into the thread context struct */
-      _papi_hwi_get_thr_context((void **)&thr_fd);
-      *thr_fd=ctx_fd;
+      _papi_hwi_get_thr_context((void **)&thr_ctx);
+      thr_ctx->fd=ctx_fd;
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */
 #ifdef ITANIUM2
@@ -417,7 +425,7 @@ hweight64 (unsigned long x)
 
       *smpl_vaddr = ctx[0].ctx_arg.ctx_smpl_vaddr;
 
-      return(pfmw_create_ctx_common(ctx_fd)); 
+      return(pfmw_create_ctx_common(thr_ctx)); 
    }
 
    inline char* pfmw_get_event_name(unsigned int idx)

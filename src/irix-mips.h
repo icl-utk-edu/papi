@@ -70,8 +70,6 @@ typedef struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_pc
 
-#include "papi_internal.h"
-
 extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];
 extern int _fbss[], _end[];

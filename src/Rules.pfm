@@ -55,7 +55,7 @@ TARGETS = serial multiplex_and_pthreads
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) 
 
 CFLAGS-2.0 := -DPFM20
-CFLAGS-3.0 := -DPFM30
+CFLAGS-3.0 := -DPFM30 -D_GNU_SOURCE -g -DDEBUG 
 
 PFM_OBJS-2.0 := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 PFM_OBJS-3.0 := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
