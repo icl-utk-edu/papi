@@ -162,6 +162,7 @@ int init_hwinfo( struct wininfo * hwinfo) {
 	hwinfo->stepping=(val&((1<<3)|(1<<2)|(1<<1)|(1<<0)));
 	hwinfo->brand_id=(val2&((1<<7)|(1<<6)|(1<<5)|(1<<4)|(1<<3)|(1<<2)|(1<<1)|(1<<0)));
 	hwinfo->feature_flag = val3;
+        hwinfo->revision=(val&0xf);
 	
 	mytimer = timeSetEvent( 100, 0, my_timer, 0, TIME_PERIODIC );
 
@@ -191,6 +192,7 @@ int init_amd( struct wininfo * hwinfo ) {
   volatile unsigned long val,val2, val3,val4;
   
   hwinfo->processor_id = amd_proc( hwinfo );
+  hwinfo->nrctr = 4;
   // Setup model information
   if ( IS_AMDATHLON(hwinfo) )
 	  strcpy ( hwinfo->model_string, "Athlon");
@@ -523,6 +525,10 @@ int init_intel ( struct wininfo * hwinfo ) {
 	  }
   }
   hwinfo->processor_id = intel_proc( hwinfo );
+  if ( IS_P4(hwinfo) )
+	  hwinfo->nrctr = 18;
+  else
+  	hwinfo->nrctr = 2;
   // Setup Model String
   __asm{
 	  mov EAX, 80000000h

@@ -40,6 +40,8 @@ struct wininfo {
 	unsigned int ncpus;
 	unsigned int pagesize;
 	unsigned int mhz;
+	unsigned int revision;
+	unsigned int nrctr;
 	unsigned short int arch, proc_level, nnodes, total_cpus;
 	unsigned int L1datacache_size;
 	unsigned int L1datacache_assoc;
