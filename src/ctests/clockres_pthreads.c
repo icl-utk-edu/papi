@@ -76,7 +76,9 @@ int main(int argc, char **argv)
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
 #endif
 #ifdef PTHREAD_SCOPE_SYSTEM
-  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  retval = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  if (retval != 0)
+    test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);    
 #endif
 
   pthread_create(&t1,&attr,pthread_main,NULL); 

@@ -188,7 +188,7 @@ int case1_last_half(void)
 int main(int argc, char **argv)
 {
 
-  int i, rc;
+  int i, rc, retval;
   pthread_t id[NUM_THREADS];
   pthread_attr_t attr;
 
@@ -204,8 +204,11 @@ int main(int argc, char **argv)
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
 #endif
 #ifdef PTHREAD_SCOPE_SYSTEM
-  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  retval = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  if (retval != 0)
+    test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);    
 #endif
+
   for (i=0;i<NUM_THREADS;i++) {
     rc = pthread_create(&id[i], &attr, thread_fn, NULL);
     if (rc)
