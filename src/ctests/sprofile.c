@@ -10,6 +10,14 @@
 #define NUM 1000
 #define THR 100000
 
+#if defined(linux) && defined(__ia64__)
+#define DO_READS (unsigned long)(*(void **)do_reads)
+#define DO_FLOPS (unsigned long)(*(void **)do_flops)
+#else
+#define DO_READS (unsigned long)(do_reads)
+#define DO_FLOPS (unsigned long)(do_flops)
+#endif
+
 /* This file performs the following test: sprofile */
 
 #include <stdlib.h>
@@ -68,7 +76,7 @@ int main(int argc, char **argv)
   /* First half */
   sprof[0].pr_base = profbuf;
   sprof[0].pr_size = length/2;
-  sprof[0].pr_off = (unsigned long)do_flops;
+  sprof[0].pr_off = DO_FLOPS;
 #if defined(linux) && defined(__ia64__)
   fprintf(stderr,"do_flops is at %p %lx\n",&do_flops,sprof[0].pr_off);
 #endif
@@ -76,7 +84,7 @@ int main(int argc, char **argv)
   /* Second half */
   sprof[1].pr_base = profbuf2;
   sprof[1].pr_size = length/2;
-  sprof[1].pr_off = (unsigned long)do_reads;
+  sprof[1].pr_off = DO_READS;
 #if defined(linux) && defined(__ia64__)
   fprintf(stderr,"do_reads is at %p %lx\n",&do_reads,sprof[1].pr_off);
 #endif
@@ -117,13 +125,13 @@ int main(int argc, char **argv)
   for (i=0;i<length/2;i++)
     {
       if (profbuf[i])
-	printf("0x%x\t%d\n",(unsigned int)do_flops + 2*i,profbuf[i]);
+	printf("0x%lx\t%d\n",DO_FLOPS + 2*i,profbuf[i]);
     }
   printf("---------Buffer 2--------\n");
   for (i=0;i<length/2;i++)
     {
       if (profbuf2[i])
-	printf("0x%x\t%d\n",(unsigned int)do_reads + 2*i,profbuf2[i]);
+	printf("0x%lx\t%d\n",DO_READS + 2*i,profbuf2[i]);
     }
   printf("-------------------------\n");
   printf("%u samples that fell outside the regions.\n",*profbuf3);
