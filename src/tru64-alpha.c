@@ -1120,6 +1120,11 @@ void _papi_hwd_unlock(void)
 {
 }
 
+void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
+{
+  _papi_hwi_dispatch_overflow_signal((void *)info);
+}
+
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
 
 papi_mdi _papi_system_info = { "$Id$",
