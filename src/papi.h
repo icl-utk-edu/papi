@@ -10,7 +10,7 @@
 #ifndef _PAPI
 #define _PAPI
 
-#define PAPI_VER_CURRENT 1
+#define PAPI_VER_CURRENT 2
 
 #ifdef __cplusplus
 extern "C" {
