@@ -981,6 +981,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 	return(PAPI_EINVAL);
       tmp_cmd.pec_evt[0] = ev;
 #elif PFM20
+	  return(PAPI_ESBSTR);
       memset(&tmp_cmd, 0, sizeof tmp_cmd);
       tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
       tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
