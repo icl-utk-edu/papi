@@ -246,8 +246,9 @@ if ((retval = PAPI_start(EventSet)) != PAPI_OK)
 .fi
 
 .SH BUGS
-These functions have no known bugs.
-
+If you call PAPI_profil, PAPI allocates buffer space that will not be
+freed if you call PAPI_shutdown or PAPI_cleanup_eventset.  To clean all 
+memory, you must call PAPI_profil on the Events with a 0 threshold.
 
 .SH SEE ALSO
 .BR profil "(3), " PAPI_sprofil "(3), "
