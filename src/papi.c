@@ -1405,7 +1405,7 @@ int PAPI_write(int EventSet, long_long *values)
 
 static int cleanup_eventset(EventSetInfo *ESI)
 {
-  int retval, i, tmp = ESI->NumberOfEvents;
+  int retval, i, tmp = EventInfoArrayLength(ESI);
 
   if (ESI->state & PAPI_MULTIPLEXING)
     {
@@ -1416,9 +1416,12 @@ static int cleanup_eventset(EventSetInfo *ESI)
   
   for(i=0;i<tmp;i++) 
     {
-      retval = remove_event(ESI, ESI->EventInfoArray[i].code);
-      if (retval != PAPI_OK)
-	return(retval);
+      if (ESI->EventInfoArray[i].code != PAPI_NULL)
+	{
+	  retval = remove_event(ESI, ESI->EventInfoArray[i].code);
+	  if (retval != PAPI_OK)
+	    return(retval);
+	}
     }
 
   return(PAPI_OK);
