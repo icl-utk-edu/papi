@@ -138,10 +138,6 @@ int main(int argc, char **argv)
       }
    }
    
-/* ...old way
-   printf("L1 Cache Total size: %dKB\nL1 Cache Line size: %dB\n",hwinfo->L1_dcache_size,hwinfo->L1_dcache_linesize);
-   printf("L2 Cache Total size: %dKB\nL2 Cache Line size: %dB\n",hwinfo->L2_cache_size,hwinfo->L2_cache_linesize);
-*/
    for (i = 0; eventlist[i] != 0; i++) 
      {
        PAPI_event_code_to_name(eventlist[i], descr);
@@ -155,13 +151,6 @@ int main(int argc, char **argv)
 	      evinfo.symbol,
 	      evinfo.short_descr,
 	      evinfo.long_descr);
- /*      printf("\nEvent: %s\nShort: %s\nLong: %s\nName: %s\nVendor: %s\n\n",
-	      evinfo.symbol,
-	      evinfo.short_descr,
-	      evinfo.long_descr,
-	      evinfo.vendor_name,
-	      evinfo.vendor_descr);
- */
        printf("       Bytes\t\tCold\t\tWarm\tPercent\n");
        
        if ((retval = PAPI_start(EventSet)) != PAPI_OK)
@@ -187,8 +176,7 @@ int main(int argc, char **argv)
 	  if ((retval = PAPI_read(EventSet,&values[1])) != PAPI_OK)
 	    test_fail(__FILE__, __LINE__, "PAPI_read", retval);
 
-	  printf(OUT_FMT, j, values[0], values[1],
-        ((float)values[1]/(float)values[0])*100.0);
+	  printf(OUT_FMT, j, values[0], values[1], ((float)values[1]/(float)((values[0]!=0)?values[0]:1)*100.0));
 	}
       
       if ((retval = PAPI_stop(EventSet,NULL)) != PAPI_OK)

@@ -201,6 +201,8 @@ void do_flush(void)
   register int i;
   if (flush == NULL)
     flush = (int *)malloc((1024*1024*16)*sizeof(int));
+  if ( !flush ) return;
+
   dummy((void *)flush);
   for (i=0;i<(1024*1024*16);i++)
     {
