@@ -34,19 +34,24 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-extern hwi_preset_t _papi_hwd_p3_preset_map;
-extern hwi_preset_t _papi_hwd_p2_preset_map;
-extern hwi_preset_t _papi_hwd_amd_preset_map;
-extern hwi_preset_t _papi_hwd_opt_preset_map;
-extern hwi_preset_t *preset_search_map;
+extern hwi_search_t _papi_hwd_p3_preset_map;
+extern hwi_search_t _papi_hwd_p2_preset_map;
+extern hwi_search_t _papi_hwd_ath_preset_map;
+extern hwi_search_t _papi_hwd_opt_preset_map;
+extern hwi_search_t *preset_search_map;
 extern native_event_entry_t _papi_hwd_pentium3_native_map;
 extern native_event_entry_t _papi_hwd_p2_native_map;
 extern native_event_entry_t _papi_hwd_k7_native_map;
 extern native_event_entry_t _papi_hwd_opt_native_map;
 extern native_event_entry_t *native_table;
-extern hwi_preset_t _papi_hwd_preset_map[];
+extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
+#ifdef __x86_64__
+#include <linux/spinlock.h>
+spinlock_t lock[PAPI_MAX_LOCK];
+#else
 volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
+#endif
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
@@ -91,12 +96,12 @@ inline static int setup_p3_presets(int cputype) {
       break;
     case PERFCTR_X86_AMD_K7:
       native_table = &_papi_hwd_k7_native_map;
-      preset_search_map = &_papi_hwd_amd_preset_map;
+      preset_search_map = &_papi_hwd_ath_preset_map;
       break;
-    case PERFCTR_X86_AMD_K8:
+ /*   case PERFCTR_X86_AMD_K8:
       native_table = &_papi_hwd_opt_native_map;
       preset_search_map = &_papi_hwd_opt_preset_map;
-      break;
+      break;    */
     }
    return(_papi_hwi_setup_all_presets(preset_search_map));
 }
@@ -221,6 +226,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr) {
             ptr->control.cpu_control.pmc_map[i] = i;
          }
          break;
+ /*     case PERFCTR_X86_AMD_K8:       */
       case PERFCTR_X86_AMD_K7:
          for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
             ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
@@ -245,7 +251,11 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
 void _papi_hwd_lock_init(void) {
    int i;
    for(i = 0; i < PAPI_MAX_LOCK; i++) {
+#ifdef __x86_64__
+      spin_lock_init(&lock[i]);
+#else
       lock[i] = MUTEX_OPEN;
+#endif
    }
 }
 
@@ -462,7 +472,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
    _papi_hwd_init_control_state(this_state);
    for(i = 0; i < count; i++) {
       /* Add counter control command values to eventset */
-      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd[0];
+      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
    }
    this_state->control.cpu_control.nractrs = count;
    return(PAPI_OK);
@@ -541,39 +551,12 @@ int _papi_hwd_shutdown(hwd_context_t *ctx)
   return(PAPI_OK);
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
-{
-  ucontext_t *uc;
-  mcontext_t *mc;
-  gregset_t *gs;
+void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info) {
+   _papi_hwi_context_t ctx;
 
-  uc = (ucontext_t *) tmp;
-  mc = &uc->uc_mcontext;
-  gs = &mc->gregs;
-
-  DBG((stderr,"Start at 0x%lx\n",(unsigned long)(*gs)[15]));
-  _papi_hwi_dispatch_overflow_signal(mc);
-
-  /* We are done, resume interrupting counters */
-
-  if(_papi_hwi_system_info.supports_hw_overflow)
-    {
-      ThreadInfo_t *master;
-
-      master = _papi_hwi_lookup_in_thread_list();
-      if(master==NULL)
-        {
-          fprintf(stderr,"%s():%d: master event lookup failure! abort()\n",
-                  __FUNCTION__,__LINE__);
-          abort();
-        }
-      if (vperfctr_iresume(master->context.perfctr) < 0)
-        {
-          fprintf(stderr,"%s():%d: vperfctr_iresume %s\n",
-                  __FUNCTION__,__LINE__,strerror(errno));
-        }
-    }
-  DBG((stderr,"Finished, returning to address 0x%lx\n",(unsigned long)(*gs)[15]));
+   ctx.si=si;
+   ctx.ucontext=info;
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx, _papi_hwi_system_info.supports_hw_overflow, 0, 0);
 }
 
 static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
@@ -602,8 +585,7 @@ static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cnt
   contr->cpu_control.ireset[cntr2] = si;
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
-{
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold) {
 #ifdef PAPI_PERFCTR_INTR_SUPPORT
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -737,29 +719,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 #endif
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
-{
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold) {
   /* This function is not used and shouldn't be called. */
 
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
-{
-  /* This function is not used and shouldn't be called. */
-
-  return(PAPI_ESBSTR);
-}
-
-void *_papi_hwd_get_overflow_address(void *context)
-{
-  void *location;
-  struct sigcontext *info = (struct sigcontext *)context;
-#ifdef __x86_64__
-  location = (void *)info->rip;
-#else
-  location = (void *)info->eip;
-#endif
-
-  return(location);
+int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI) {
+   ESI->profile.overflowcount = 0;
+   return(PAPI_OK);
 }

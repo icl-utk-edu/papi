@@ -52,12 +52,33 @@
 #include "papi.h"
 #include "papi_preset.h"
 
+/* Locks */
+#ifdef __x86_64__
+#include <linux/spinlock.h>
+extern spinlock_t lock[PAPI_MAX_LOCK];
+#else
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
+#endif
+
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 #include <inttypes.h>
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
+#ifdef __x86_64__
+#define  _papi_hwd_lock(lck)                    \
+do                                              \
+{                                               \
+   spin_lock(&lock[lck]);                       \
+} while(0)
+
+#define  _papi_hwd_unlock(lck)                  \
+do                                              \
+{                                               \
+   spin_unlock(&lock[lck]);                             \
+} while(0)
+#else
 #define _papi_hwd_lock(lck)                                     \
 do                                                              \
 {                                                               \
@@ -73,15 +94,24 @@ do                                                             \
    unsigned long res = 0;                                      \
    __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                              \
 }while(0);
+#endif
 
 /* Overflow-related defines and declarations */
+typedef struct {
+   siginfo_t *si;
+   struct sigcontext *ucontext;
+} _papi_hwd_context_t;
 
 typedef siginfo_t  hwd_siginfo_t;
-typedef ucontext_t  hwd_ucontext_t;
+typedef struct sigcontext  hwd_ucontext_t;
 
-#define GET_OVERFLOW_ADDRESS(ctx) (void *)NULL
-#define GET_OVERFLOW_CTR_BITS(context) (1)
-#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) (1)
+#ifdef __x86_64__
+#define GET_OVERFLOW_ADDRESS(ctx) (void *)((_papi_hwd_context_t *)ctx)->ucontext->rip
+#else
+#define GET_OVERFLOW_ADDRESS(ctx) (void *)((_papi_hwd_context_t *)ctx)->ucontext->eip
+#endif
+#define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
+#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) _papi_hwi_event_index_map[bit]
 
 #ifdef _WIN32
   #define inline_static static __inline 
@@ -91,7 +121,7 @@ typedef ucontext_t  hwd_ucontext_t;
 
 typedef struct P3_register {
   unsigned int selector;           /* Mask for which counters in use */
-  int counter_cmd[MAX_COUNTERS];   /* Mask for which counters in use */
+  int counter_cmd;                 /* Mask for which counters in use */
 } P3_register_t;
 
 typedef struct P3_reg_alloc {
@@ -200,7 +230,6 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
 
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern char *basename(char *);

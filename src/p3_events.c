@@ -684,7 +684,7 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
    { PAPI_FPU_IDL,           {0, {0x01,0,0,0},{0,}}},
    { PAPI_TLB_DM,            {0, {0x46,0,0,0},{0,}}},
    { PAPI_TLB_IM,            {0, {0x85,0,0,0},{0,}}},
-/* { PAPI_TLB_TL,            {DERIVED_ADD, {0x46,0x85,0,0},{0,}}},
+/* { PAPI_TLB_TL,            {DERIVED_ADD, {0x46,0x85,0,0},{0,}}}, */
    { PAPI_MEM_SCY,           {0, {0xD8,0,0,0},{0,}}},
    { PAPI_STL_ICY,           {0, {0xD0,0,0,0},{0,}}},
    { PAPI_HW_INT,            {0, {0xCF,0,0,0},{0,}}},
@@ -1481,7 +1481,7 @@ o the processor.",
     { CNTR2|CNTR1, 0xd6}}
 };
 
-const native_event_entry_t _papi_hwd_ath_native_map[] = {
+const native_event_entry_t _papi_hwd_k7_native_map[] = {
   { "SEG_REG_LOADS",
     "Number of segment register loads.",
     { ALLCNTRS, 0x20}},
