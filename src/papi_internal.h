@@ -135,12 +135,6 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* DEFINES END HERE */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
 #include SUBSTRATE
 #include "papi_preset.h"
 

@@ -679,7 +679,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg,
     CONTEXT	context;	// processor specific context structure
     HANDLE	threadHandle;
     BOOL	error;
-    ThreadInfo *t = NULL;
+    ThreadInfo_t *t = NULL;
 
    ctx.ucontext = &context;
 
@@ -770,68 +770,6 @@ static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int
    contr->cpu_control.ireset[cntr2] = si;
 }
 
-#ifdef _WIN32
-
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
-   hwd_control_state_t *this_state = &ESI->machdep;
-   struct hwd_pmc_control *contr = &this_state->control;
-   int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
-
-   OVFDBG("EventIndex=%d\n", EventIndex);
-
-   /* The correct event to overflow is EventIndex */
-   ncntrs = _papi_hwi_system_info.num_cntrs;
-   i = ESI->EventInfoArray[EventIndex].pos[0];
-   if (i >= ncntrs) {
-      PAPIERROR("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
-      return PAPI_EBUG;
-   }
-   if (threshold != 0) {        /* Set an overflow threshold */
-      if ((ESI->EventInfoArray[EventIndex].derived) &&
-          (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
-         OVFDBG("Can't overflow on a derived event.\n");
-         return PAPI_EINVAL;
-      }
-
-      if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
-	      return(retval);
-
-      /* overflow interrupt occurs on the NEXT event after overflow occurs
-         thus we subtract 1 from the threshold. */
-      contr->cpu_control.ireset[i] = (-threshold + 1);
-      contr->cpu_control.nrictrs++;
-      contr->cpu_control.nractrs--;
-      nricntrs = contr->cpu_control.nrictrs;
-      nracntrs = contr->cpu_control.nractrs;
-
-      /* move this event to the bottom part of the list if needed */
-      if (i < nracntrs)
-         swap_events(ESI, contr, i, nracntrs);
-      OVFDBG("Modified event set\n");
-   } else {
-      if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
-         contr->cpu_control.ireset[i] = 0;
-         contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-         contr->cpu_control.nrictrs--;
-         contr->cpu_control.nractrs++;
-      }
-      nricntrs = contr->cpu_control.nrictrs;
-      nracntrs = contr->cpu_control.nractrs;
-
-      /* move this event to the top part of the list if needed */
-      if (i >= nracntrs)
-         swap_events(ESI, contr, i, nracntrs - 1);
-      if (!nricntrs)
-         contr->si_signo = 0;
-
-      OVFDBG("Modified event set\n");
-   }
-   OVFDBG("End of call. Exit code: %d\n", retval);
-   return (retval);
-}
-
-#else
-
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    hwd_control_state_t *this_state = &ESI->machdep;
    struct hwd_pmc_control *contr = &this_state->control;
@@ -894,8 +832,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
-
-#endif /* _WIN32 */
 
 
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {

@@ -183,7 +183,7 @@ int PAPI_library_init(int version)
    while (_in_papi_library_init_cnt > 1)
      {
        PAPIERROR("Multiple callers of PAPI_library_init");
-       sleep(1);
+      sleep(1);
      }
 
 #ifndef _WIN32
@@ -340,7 +340,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
                   }
                }
             }
-            for (j=0; j < info->count; j++) {
+            for (j=0; j < (int)info->count; j++) {
                info->code[j] = _papi_hwi_presets.data[i]->native[j];
                if (_papi_hwi_native_code_to_name(info->code[j]) == NULL) info->name[j][0] = 0;
                else strncpy(info->name[j], 
@@ -1281,11 +1281,7 @@ void PAPI_shutdown(void)
 #ifdef DEBUG
    if (j != 0) {
       PAPIERROR(PAPI_SHUTDOWN_SYNC_str);
-#ifdef _WIN32
-      Sleep(1);
-#else
       sleep(1);
-#endif
       j = 0;
       goto again;
    }

@@ -1,7 +1,6 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
-#define HAVE_FFSLL
 #define _GNU_SOURCE
 #define __USE_GNU
 #define __USE_UNIX98
@@ -19,12 +18,14 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
+#define NEED_FFSLL
 #define inline_static static __inline
 #include <errno.h>
 #include "cpuinfo.h"
 #include "pmclib.h"
 #else
 #define inline_static inline static
+#define HAVE_FFSLL
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
