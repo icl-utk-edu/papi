@@ -3,7 +3,7 @@ SHLIB     = libpapi.so
 SUBSTR  = aix-power
 MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4"
-LIBS	= static aix-shared
+LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
 
 # Default source is for pmtoolkit 1.4.x.
@@ -11,7 +11,7 @@ TARGETS	= serial multiplex_and_pthreads smp omp
 FLAGS  = -I/usr/pmapi/include -qmaxmem=-1 -qarch=pwr4
 CFLAGS	= $(FLAGS) -D_POWER4
 OPTFLAGS= -O3 -qstrict
-TOPTFLAGS=-qnostdinc
+TOPTFLAGS=
 FFLAGS	= $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
@@ -20,15 +20,12 @@ OMPCFLGS= -qsmp=omp
 LDFLAGS = -L/usr/pmapi/lib -lpmapi
 CC_R	= xlc_r
 CC	= xlc
-CC_SHR	= ld -G -r
+CC_SHR	= xlc -G
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
 
 include Makefile.inc
-
-aix-shared: $(SOURCES)
-	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 native_clean:
 
