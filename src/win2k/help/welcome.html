@@ -80,8 +80,7 @@ function MM_swapImage() { //v3.0
    if ((x=MM_findObj(a[i]))!=null){document.MM_sr[j++]=x; if(!x.oSrc) x.oSrc=x.src; x.src=a[i+2];}
 }
 //-->
-</script></head>
-<body bgcolor="#ffffff" text="#000000" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+</script></head><body bgcolor="#ffffff" text="#000000" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
          
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
        <tbody>
@@ -208,18 +207,16 @@ PAPI</a>
                                                                      
             </ul>
                                          
-            <h3>Caveats:</h3>
-   This is the first release of PAPI for Windows. Although the basic functionality 
- works, this implementation is still a work in progress. Some fundamental 
-limitations still exist. For example, this implementation will only run on 
-the UniProcessor Free Build. This is the version of Windows most commonly 
-distributed. If you have a MultiProcessor or Checked Build of Windows, PAPI 
-will not run correctly, because it initializes only one processor and cannot 
-distinguish between processors. In the same vein, PAPI for Windows measures 
-everything at the system level, not the process or thread level. Further, 
-some advanced areas such as multiplexing, overflow, and profiling have not 
-been exhaustively tested and may not perform as advertised. We hope to remove 
-these restrictions in future releases. Check <a href="http://icl.cs.utk.edu/papi/">
+            <h3>Caveats:</h3>    This is the first release of PAPI for Windows.
+Although the basic functionality   works, this implementation is still a
+work in progress. Some fundamental  limitations still exist. For example,
+this implementation measures  everything at the system level, not the process
+or thread level. Although PAPI properly binds itself to the processor on
+which it is called on a&nbsp; MultiProcessor Build of Windows, PAPI  will
+still measure all events on that processor at the system rather than process
+level. Further,  some advanced areas such as multiplexing, overflow, and
+profiling have not  been exhaustively tested and may not perform as advertised.
+We hope to remove  these restrictions in future releases. Check <a href="http://icl.cs.utk.edu/papi/">
   the PAPI website</a>
     for information on current releases.<br>
                                                                          
