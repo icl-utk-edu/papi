@@ -773,13 +773,14 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
    return (PAPI_OK);
 }
 
-
+/*
 void *_papi_hwd_get_overflow_address(void *context)
 {
    struct sigcontext *info = (struct sigcontext *) context;
 
    return ((void *) info->sc_pc);
 }
+*/
 
 volatile int lock[PAPI_MAX_LOCK] = { 0, };
 

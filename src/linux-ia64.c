@@ -1312,7 +1312,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
-
+/*
 void *_papi_hwd_get_overflow_address(void *context)
 {
    void *location;
@@ -1321,6 +1321,7 @@ void *_papi_hwd_get_overflow_address(void *context)
 
    return (location);
 }
+*/
 
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0

@@ -906,7 +906,7 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
    return (PAPI_OK);
 }
 
-
+/*
 void *_papi_hwd_get_overflow_address(void *context)
 {
    void *location;
@@ -915,6 +915,7 @@ void *_papi_hwd_get_overflow_address(void *context)
 
    return (location);
 }
+*/
 
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
