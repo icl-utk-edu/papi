@@ -74,7 +74,7 @@ int main(int argc, char **argv)
   }
 #endif
 #if !( defined(linux) && defined(__ia64__) )
-	  test_fail(__FILE__, __LINE__, "PAPI_profile_hw not support", PAPI_ESYS);
+	  test_fail(__FILE__, __LINE__, "PAPI_profile_hw not support", PAPI_ESBSTR);
 #endif
 
   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
