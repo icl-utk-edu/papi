@@ -100,9 +100,9 @@ int main(int argc, char **argv)
   printf("-----------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d\n",20*NUM_FLOPS,20*NUM_FLOPS);
+  printf("Row 1 approximately equals %d %d\n",10*NUM_FLOPS,10*NUM_FLOPS);
   printf("Column 1 approximately equals column 2\n");
-  printf("Row 3 approximate equals %d\n",(20*NUM_FLOPS)/THRESHOLD);
+  printf("Row 3 approximate equals %d\n",(10*NUM_FLOPS)/THRESHOLD);
 
   remove_test_events(&EventSet, mask);
 
