@@ -880,7 +880,11 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_shutdown(EventSetInfo *zero)
+int _papi_hwd_shutdown_global(EventSetInfo *zero)
+{
+  return(PAPI_OK);
+}
+
 {
   return(PAPI_OK);
 }
@@ -1029,7 +1033,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			        sizeof(hwd_control_state_t), 
 				{ 0, } };
 
-/* Thread hooks */
+/* Thread hooks 
 
 void __pdf_th_create(void)
 {
@@ -1040,3 +1044,5 @@ void __pdf_th_destroy(void)
 {
   extern PAPI_notify_handler_t thread_notifier;
 }
+
+*/
