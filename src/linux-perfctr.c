@@ -824,6 +824,18 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
+/* (NCSA change)
+   Reverted back to prior version 2/2/02
+*/
+#ifdef PERFCTR16
+
+  float usec, cyc;
+
+  usec = (float)_papi_hwd_get_virt_usec(zero);
+  cyc = usec * _papi_system_info.hw_info.mhz;
+  return((long long)cyc);
+
+#else
   unsigned long long lcyc;
   hwd_control_state_t *machdep = zero->machdep;
 /*  float usec, cyc; */
@@ -831,12 +843,7 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
   lcyc = vperfctr_read_tsc(machdep->self);
   DBG((stderr,"Read virt. cycles is %llu (%p -> %p)\n",lcyc,machdep,machdep->self));
   return(lcyc);
-
-  /*  
-  usec = (float)_papi_hwd_get_virt_usec(zero);
-  cyc = usec * _papi_system_info.hw_info.mhz;
-  return((long long)cyc);
-  */
+#endif
 }
 
 void _papi_hwd_error(int error, char *where)
