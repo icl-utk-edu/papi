@@ -1,6 +1,23 @@
+C  Strtest - Perform some basic tests of the functionality of the
+C  string passing to and from the PAPI Fortran interface. 
+C
+C    Test 1: Look up an event name from an event code. Use this name
+C    to try and locate the event code using the name received. Long,
+C    short and too short strings are used in the tests
+C
+C    Test 2: Look up a PAPI error string. Use long, short and too 
+C    short strings to store the result.
+C
+C    Comments:
+C    When using the Fortran interface it may not always be possible to
+C    use the PAPI predefined constants as actual arguments. Due to the
+C    values in these compilers might occasionally cast these into the
+C    wrong type. In the code below the line code=MSGCODE is used to make
+C    sure that the event code get the right type.
+C
 #include "fpapi.h"
 #define MSGLEN 11
-#define MSGCODE PAPI_L1_DCM
+#define MSGCODE PAPI_L1_DCM 
 #define ERRCODE PAPI_EINVAL
       
       program strtest
@@ -35,10 +52,13 @@
       print *,' On no occasion a NULL character should be found(+)'
       print *,' When too short strings are used, the lookup should fail'
       print *
+      code=MSGCODE
+      print *,' Tests use the event code ',code
+      print *
 
  100  format(t1,a,i4)
       print 100,"Testing string length ",len(papistr)
-      call checkstr(MSGCODE,papistr,retcode,check)
+      call checkstr(code,papistr,retcode,check)
       print *
       lastchar=getstrlen(papistr)
       
@@ -46,35 +66,35 @@
       if(len(invstr1).lt.lastchar)then
         print *,'This call should return an error code.'
       end if
-      call checkstr(MSGCODE,invstr1,retcode,check)
+      call checkstr(code,invstr1,retcode,check)
       print *
 
       print 100,"Testing string length ",len(invstr2)
       if(len(invstr2).lt.lastchar)then
         print *,'This call should return an error code.'
       end if
-      call checkstr(MSGCODE,invstr2,retcode,check)
+      call checkstr(code,invstr2,retcode,check)
       print *
 
       print 100,"Testing string length ",len(invstr3)
       if(len(invstr3).lt.lastchar)then
         print *,'This call should return an error code.'
       end if
-      call checkstr(MSGCODE,invstr3,retcode,check)
+      call checkstr(code,invstr3,retcode,check)
       print *
 
       print 100,"Testing string length ",len(invstr4)
       if(len(invstr4).lt.lastchar)then
         print *,'This call should return an error code.'
       end if
-      call checkstr(MSGCODE,invstr4,retcode,check)
+      call checkstr(code,invstr4,retcode,check)
       print *
 
       print 100,"Testing string length ",len(invstr5)
       if(len(invstr5).lt.lastchar)then
         print *,'This call should return an error code.'
       end if
-      call checkstr(MSGCODE,invstr5,retcode,check)
+      call checkstr(code,invstr5,retcode,check)
       print *
 
       print *,'---------------------------------------------------'
@@ -126,6 +146,8 @@
       if(i.gt.0)then
         print *,'NULL character found in string!!!'
       end if
+
+      print *,'The event name is: "'//string(1:getstrlen(string))//'"'
       
       call PAPIF_event_name_to_code(string,code,check)
       if(check.ne.PAPI_OK)then
