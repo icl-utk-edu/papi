@@ -1,0 +1,18 @@
+/* 
+* File:    README
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
+This directory contains:
+
+buglist		Bug handling and reports.
+man/ 		Unformatted manual pages and associated macros.
+src/ 		The library and test cases.
+spec/		The API specification.
+tools/		Sample tools using PAPI.
+perf/		The Linux 2.0-2.2 kernel patch for PAPI. (2.4 is 
+		at http://www.csd.uu.se/~mikpe/linux/perfctr)

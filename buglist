@@ -1,10 +1,35 @@
-This is a buglist for PAPI. If you add something here, you had better:
-1) Let the ptools-perfapi@ptools.org know.
-2) Post it on the Errata for the web site.
-3) Start fixing it (or get someone who can) ASAP!
+/* 
+* File:    buglist
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
 
--Philip Mucci, Nathan Garner, George Ho, Kevin London
+This document serves the following:
+1) To inform the user what to do if he or she should find a bug in PAPI.
+2) To maintain the history of reported and fixed bugs.
 
+IF YOU FIND A BUG
+-----------------
+
+If you add something to this document, it means the following:
+
+1) You have sent email to ptools-perfapi@ptools.org to request
+confirmation of the bug AND included information and/or an example
+sufficient to reproduce the bug.
+2) Upon confirmation the perfapi-devel@ptools.org people haved
+addressed the bug in a timely manner.
+3) Bug included in the Errata-FAQ on the web site.
+4) Credits given to the contributors on the web site.
+
+
+BUG HISTORY
+-----------
+
+7/1/00  - Fortran string handling is seriously inept. (fixed thanks
+	  to Nils Smeds, Anders Nilsson)
 5/31/00 - John May: expand_dynamic_array is broken. (fixed in 1.1)
 5/31/00 - John May: PAPI_cleanup_eventset is *still* broken. (fixed in 1.1)
 5/31/00 - Bug in kernel patch that only manifests itself if you add another
