@@ -76,18 +76,28 @@ How do I add external code (like perfctr) to the papi cvs project?
 ------------------------------------------------------------------
 The correct way to do it is:
 
-untar the new distribution
-cd <dir of new dist>
-cvs import -ko -m "Blah blah" papi/src/perfctr perfctr_dist
-perfctr_x_y_z
+Let's say we're adding a version of PerfCtr 2.6. PAPI keeps only
+release and major versions of the PerfCtr patch externally. Internally
+we track all PerfCtr versions as you will see from the CVS command line.
+The naming scheme is <release>.<major>.<minor>
 
-Here perfctr_dist is the "vendor tag" and perfctr_x_y_z is the release
-version like perfctr_2_4_1
+1) Untar the new distribution somewhere OUTSIDE of your CVS working dir and
+   change directory to there.
+
+	% cd /tmp; tar xfz perfctr-2.6.7.tar.gz
+	% cd perfctr-2.6.7
+
+2) Import the sources
+
+	% cvs import -ko -m "Import of perfctr 2.6.x" papi/src/perfctr-2.6.x perfctr perfctr-2-6-7
+
+Here perfctr_dist is the "vendor tag" and perfctr-2-6-7 is the release
+version.
 
 Then if we have locally modified our copy (made changes to the distro)
 CVS will warn us to merge in our changes. We do this by
 
-cvs checkout -jperfctr_dist:yesterday -jperfctr_dist papi/src/perfctr
+cvs checkout -jperfctr:yesterday -jperfctr papi/src/perfctr
 
 CVS will then do the merge for us. If there are any conflicts, we fix
 them, then cvs commit them.
@@ -97,5 +107,8 @@ Got it? Good.
 We should follow this model for all 3rd party sources in the source tree.
 
 This is all available in further detail in the CVS Manual, under 'import'.
+
+Good information is also available at:
+http://efault.net/npat/docs_and_postings/cvs-tracking/cvs-tracking.txt
 
 	

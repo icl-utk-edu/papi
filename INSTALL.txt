@@ -130,6 +130,11 @@ For AIX 5.1 - POWER3:
 3.	Follow the general instructions for installing PAPI, using 
 	Makefile.aix5-power3.
 
+Warning about XLC version 5. PAPI excepts xlc version 6 or greater. Your version
+can be determined by running 'lslpp -a -l | grep -i xlc'. If you have version
+5, you need to build with 'CC_SHR="-G -r"' on the make line, like this:
+	
+	> make -f Makefile.aix5-power3 CC_SHR="-G -r"
 
 Linux - Alpha
 *****************************************************************************
