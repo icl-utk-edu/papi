@@ -4,15 +4,13 @@
 .SH NAME
 PAPI_library_init, PAPI_is_initialized \- initialize the PAPI library; check for initialization
 
-*
-* This needs to be reworked to add initialization levels and discuss PAPI_is_initialized
-*
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int PAPI_library_init(int " version ");"
+.BI "int PAPI_is_initialized(void);"
 .fi
 .B Fortran Interface
 .nf
@@ -30,6 +28,11 @@ must also be called prior to making any calls to the library other
 than 
 .BR PAPI_library_init() .
 
+.B "PAPI_is_initialized()"
+return the status of PAPI library. The PAPI library belongs to one of
+the three status, not initialized, initialized by low level function,
+initialized by high level function.
+
 .SH ARGUMENTS
 .I "version"
 -- upon initialization, PAPI checks the argument against the internal value of
@@ -38,14 +41,20 @@ when the library was compiled. This guards against portability
 problems when updating the PAPI shared libraries on your system.
 
 .SH RETURN VALUES
+.TP
+.B "PAPI_library_init"
 On success, this function returns 
 .B "PAPI_VER_CURRENT" .
-.LP
 A positive return code other than 
 .B PAPI_VER_CURRENT 
 indicates a library version mis-match.
-.LP
 A negative error code indicates an initialization error.
+.TP
+.B "PAPI_is_initialized"
+PAPI_NOT_INITED---not initialized; 
+PAPI_LOW_LEVEL_INITED---low level has called library init;
+PAPI_HIGH_LEVEL_INITED---high level has called library init;
+
 
 .SH ERRORS
 .TP

@@ -182,13 +182,13 @@ which is in synch with the library used.
 typedef union {
   PAPI_preload_option_t preload;
   PAPI_debug_option_t debug;
-  PAPI_inherit_option_t inherit;
   PAPI_granularity_option_t granularity; 
   PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
   PAPI_domain_option_t defdomain; 
   PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
+  PAPI_shlib_info_t *shlib_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 .if t .ft P
 .fi

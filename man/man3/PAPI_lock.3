@@ -2,28 +2,28 @@
 .TH "PAPI_lock" 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_lock \- Lock the PAPI internal mutex variable
- PAPI_unlock \- Unlock the PAPI internal mutex variable
+PAPI_lock \- Lock one of the mutex variable defined in papi.h
+ PAPI_unlock \- Unlock one of the mutex variable defined in papi.h
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI void\ PAPI_lock(void);
-.BI void\ PAPI_unlock(void);
+.BI void\ PAPI_lock(int lck);
+.BI void\ PAPI_unlock(int lck);
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_lock()
-.BI PAPIF_unlock()
+.BI PAPIF_lock(int lck)
+.BI PAPIF_unlock(int lck)
 .fi
 
 .SH DESCRIPTION
 .B "PAPI_lock()"
-Grabs access to the PAPI mutex variable. This function is provided to the 
-user to have a platform independent call to an (hopefully) efficiently
-implemented mutex.
+Grabs access to the PAPI mutex variables. This function is provided to the 
+user to have a platform independent call to  (hopefully) efficiently
+implemented mutex variables.
 .LP
 .B "PAPI_unlock()"
 unlocks the mutex acquired by a call to
@@ -41,14 +41,13 @@ designed so as not to call any PAPI library functions until a call to
 .B PAPI_unlock
 has been made. Also, other threads that call PAPI library functions may
 be blocked until the thread that has grabbed the mutex has released it.
+PAPI provides two mutex variables to the user, one is PAPI_USR1_LOCK,
+the other is PAPI_USR2_LOCK.
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-Due to its possible interference with internal PAPI and that there is only
-one mutex available through this interface some care must be observed by
-the programmer using these calls.
 
 .SH SEE ALSO
  The PAPI Web Site: 

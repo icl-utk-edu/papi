@@ -50,12 +50,6 @@ One or more of the arguments is invalid.
   if (retval != PAPI_OK)
     handle_error("PAPI_multiplex_init",__LINE__,retval);
   
-  /* Turn on automatic error reporting */
-
-  retval = PAPI_set_debug(PAPI_VERB_ECONT);
-  if (retval != PAPI_OK)
-    handle_error("PAPI_set_debug",__LINE__,retval);
-
   /* Turn on thread support in PAPI */
 
   if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
