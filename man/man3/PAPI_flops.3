@@ -1,0 +1,57 @@
+.\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5
+.TH PAPI_flops 0 "27 October 2000"
+.SH NAME
+PAPI_flops \- Simple call to get mflops, real time, prcoessor time
+.SH SYNOPSIS
+.LP
+int PAPI_flops (float *rtime, float *ptime, float *flpins, float *mflops)
+.LP
+float *rtime -- total realtime since the first PAPI_flops call
+.LP
+float *ptime -- total process time since the first PAPI_flops call
+.LP
+float *flpins -- total floating point instructions since the first PAPI_flops call
+.LP
+float *mflops -- mflops achieved since the last PAPI_flops call
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_flops(\|)
+The first call to PAPI_flops will initialize PAPI, setup the counters
+to monitor PAPI_FP_INS and PAPI_TOT_CYC events and start the counters.
+Subsequent calls will read the counters and return total real time,
+total process time, total floating point instructions and current mflops.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_flops may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_flops contains calls to:
+.B  \t
+.B  \tPAPI_perror     
+.B  \tPAPI_library_init
+.B  \tPAPI_get_hardware_info
+.B  \tPAPI_create_eventset
+.B  \tPAPI_add_event
+.B  \tPAPI_start
+.B  \tPAPI_get_real_usec
+.B  \tPAPI_accum
+.B  \tPAPI_shutdown
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.
