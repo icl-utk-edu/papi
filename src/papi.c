@@ -1857,6 +1857,8 @@ again:
       fprintf(stderr,PAPI_SHUTDOWN_SYNC_str);
 #if _WIN32
       Sleep(1);
+#elif 
+      usleep(1000);
 #else
       usleep(1000);
 #endif
