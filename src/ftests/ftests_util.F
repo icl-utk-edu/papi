@@ -57,7 +57,7 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,100) test_str,':                PASSED'
       call PAPIF_shutdown()
-      stop ''
+      stop
  100  format(/,t1,a,a)
       end
 
