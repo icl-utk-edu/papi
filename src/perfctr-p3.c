@@ -205,7 +205,7 @@ extern int _papi_hwd_mdi_init() {
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) NULL;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) NULL;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) NULL;
-#else _WIN32
+#else /* _WIN32 */
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _init;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;

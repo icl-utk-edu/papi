@@ -30,6 +30,7 @@
 #include <asm/bitops.h>
 #endif
 #include <linux/unistd.h>
+#include <ctype.h>
 
 #ifndef CONFIG_SMP
 /* Assert that CONFIG_SMP is set before including asm/atomic.h to 
