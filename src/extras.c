@@ -396,8 +396,10 @@ int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr
 **********************************************************************/
 #ifdef _WIN32
 
-// This routine normally lives in <strings> on Unix.
-// Microsoft Visual C++ doesn't have this file.
+/*
+ This routine normally lives in <strings> on Unix.
+ Microsoft Visual C++ doesn't have this file.
+*/
 extern int ffs(int i)
 {
 	int c = 1;
