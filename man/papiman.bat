@@ -20,6 +20,7 @@ perl manServer_papi.pl -o html man3/PAPI_get_real_usec.3
 perl manServer_papi.pl -o html man3/PAPI_get_virt_cyc.3
 perl manServer_papi.pl -o html man3/PAPI_get_virt_usec.3
 perl manServer_papi.pl -o html man3/PAPI_help.3
+perl manServer_papi.pl -o html man3/PAPI_label_event.3
 perl manServer_papi.pl -o html man3/PAPI_library_init.3
 perl manServer_papi.pl -o html man3/PAPI_list_events.3
 perl manServer_papi.pl -o html man3/PAPI_lock.3
@@ -43,6 +44,7 @@ perl manServer_papi.pl -o html man3/PAPI_save.3
 perl manServer_papi.pl -o html man3/PAPI_set_debug.3
 perl manServer_papi.pl -o html man3/PAPI_set_domain.3
 perl manServer_papi.pl -o html man3/PAPI_set_granularity.3
+perl manServer_papi.pl -o html man3/PAPI_set_multiplex.3
 perl manServer_papi.pl -o html man3/PAPI_set_opt.3
 perl manServer_papi.pl -o html man3/PAPI_shutdown.3
 perl manServer_papi.pl -o html man3/PAPI_sprofil.3
@@ -57,3 +59,8 @@ perl manServer_papi.pl -o html man3/PAPI_thread_init.3
 perl manServer_papi.pl -o html man3/PAPI_unlock.3
 perl manServer_papi.pl -o html man3/PAPI_write.3
 perl manServer_papi.pl -o html man3/PAPIF.3
+perl manServer_papi.pl -o html man3/PAPIF_get_clockrate.3
+perl manServer_papi.pl -o html man3/PAPIF_get_domain.3
+perl manServer_papi.pl -o html man3/PAPIF_get_granularity.3
+perl manServer_papi.pl -o html man3/PAPIF_get_preload.3
+perl manServer_papi.pl -o html man3/PAPIF_set_event_domain.3
