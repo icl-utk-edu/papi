@@ -23,8 +23,8 @@ shared: $(SHLIB)
 $(LIBRARY): $(OBJECTS) 
 	ar ruv $(LIBRARY) $(OBJECTS) 
 
-$(SHLIB): $(SOURCES) 
-	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
+$(SHLIB): $(SOURCES) $(SHLIBOBJS)
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
