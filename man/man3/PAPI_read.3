@@ -1,0 +1,47 @@
+.\" @(#)PAPI_read    0.10 99/07/28 CHD; from S5
+.TH PAPI_read 0 "28 July 1999"
+.SH NAME
+PAPI_read \- start counting events contained in an EventSet
+.SH SYNOPSIS
+.LP
+int PAPI_read (int EventSet, unsigned long long *values)
+.LP
+int EventSet --  a reference to an EventSetInfo structure
+.LP
+unsigned long long *values -- array to contain counts
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_read(\|)
+This function copies the running or stopped counters in EventSet
+into the values array.  Internal counters will not be 
+re-initialized to zero.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_read may be called by:
+.B  \t
+.B  \tthe user application program
+.B  \tPAPI_read_counters
+.fi
+.nf
+.B  \t
+.B  PAPI_read contains calls to:
+.B  \t
+.B  \tlookup_EventSet 
+.B  \thandle_error
+.B  \t_papi_hwd_read ( a substrate function )
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

@@ -1,0 +1,47 @@
+.\" @(#)PAPI_rem_events    0.10 99/07/28 CHD; from S5
+.TH PAPI_rem_events 0 "28 July 1999"
+.SH NAME
+PAPI_rem_events \- remove one Event from an EventSet
+.SH SYNOPSIS
+.LP
+int PAPI_rem_events (int EventSet, *int Events, int *number)
+.LP
+int EventSet -- a reference to an EventSetInfo structure
+.LP
+int *Events -- an array of codes for events, such as PAPI_INT_INS
+.LP
+int number -- how many items in the *Events array
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_rem_events(\|)
+This function removes the hardware counters listed in the
+Events array from EventSet.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_rem_events may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_rem_events contains calls to:
+.B  \t
+.B  \tlookup_EventSet 
+.B  \thandle_error
+.B  \tPAPI_rem_event
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

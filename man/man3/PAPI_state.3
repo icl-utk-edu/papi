@@ -1,0 +1,43 @@
+.\" @(#)PAPI_state    0.10 99/07/28 CHD; from S5
+.TH PAPI_state 0 "28 July 1999"
+.SH NAME
+PAPI_state \- start counting events contained in an EventSet
+.SH SYNOPSIS
+.LP
+int PAPI_state (int EventSet, int *status)
+.LP
+int EventSet --  a reference to an EventSetInfo structure
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_state(\|)
+This function returns the state of the entire EventSet in status.
+If the call succeeds, then status is either PAPI_RUNNING or
+PAPI_STOPPED.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_state may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_state contains calls to:
+.B  \t
+.B  \tlookup_EventSet 
+.B  \thandle_error
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

@@ -1,0 +1,68 @@
+.\" @(#)PAPI_get_opt    0.10 99/07/28 CHD; from S5
+.TH PAPI_get_opt 0 "28 July 1999"
+.SH NAME
+PAPI_get_opt \- get option for multiplexing, debug, or overflow 
+.SH SYNOPSIS
+.LP
+int PAPI_get_opt (int option, PAPI_option_t *ptr)
+.LP
+int option -- integer code for multiplexing or debug or overflow
+.LP
+PAPI_option_t *ptr -- ptr to arguments for different options
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_get_opt(\|)
+.LP
+This funtions queries the status of tunable options in the 
+PerfAPI Library.  "option" is an input/output parameter.  The
+"ptr" structure is for input and output.  Not all options
+fill the  PAPI_option_t structure.  This function has a C binding
+only.
+.LP
+The reader is urged to carefully read the PerfAPI Draft for a
+complete discussion of PAPI_get_opt.  The file papi.h contains
+definitions for the structures unioned in the PAPI_option_t structure.  
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH DEFINITION OF CONSTANTS
+.nf 
+.B PAPI_GET_CLOCKRATE  \tClock rate MHz, this platform
+.B PAPI_GET_MAX_HWCTRS  Max hw ctrs, this platform
+.B PAPI_GET_DOMAIN     \tDomain for a single EventSet
+.B PAPI_GET_DEFDOM     \tDomain for all new EventsSets
+.B PAPI_GET_GRANU      \tGranularity for an eventset
+.B PAPI_GET_DEFGRN     \tGranularity for all new eventsets
+.B PAPI_GET_INHERIT    \tGet the setting for "inherit"  
+.B PAPI_GET_MPXRES     \tGet the current mpx interval in ms 
+.B PAPI_DEBUG          \t\tGet the state of DEBUG
+.B PAPI_GET_OVERFLO    \tGet status of overflow reporting
+.fi
+.LP 
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_get_opt may be called by:
+.B  \t
+.B  \tthe user application program
+.B  \tPAPI_num_events
+.B  \tPAPI_start_counters
+.fi
+.nf
+.B  \t
+.B  PAPI_get_opt contains calls to:
+.B  \t
+.B  \tPAPI_init
+.B  \thandle_error
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

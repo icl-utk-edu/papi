@@ -1,0 +1,68 @@
+.\" @(#)PAPI_set_opt    0.10 99/07/28 CHD; from S5
+.TH PAPI_set_opt 0 "28 July 1999"
+.SH NAME
+PAPI_set_opt \- set option for multiplexing, debug, or overflow 
+.SH SYNOPSIS
+.LP
+int PAPI_set_opt (int option, PAPI_option_t *ptr)
+.LP
+int option -- integer code for multiplexing or debug or overflow
+.LP
+PAPI_option_t *ptr -- ptr to arguments for different options
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_set_opt(\|)
+.LP
+This funtion sets specific options of the PerfAPI Library, its 
+substrate, or specific EventSets.  The PAPI_option_t structure
+represents a union of all the structures that can be 
+arguments to the different options.  In addition, there may 
+exist machine specific options so please check the header
+file for documentation.  This function has a C binding only.
+.LP
+The reader is urged to carefully read the PerfAPI Draft for a
+complete discussion of PAPI_set_opt.  The file papi.h contains
+definitions for the structures unioned in the PAPI_option_t structure.  
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH DEFINITION OF CONSTANTS
+.nf 
+.B PAPI_SET_DOMAIN \tDomain for a single EventSet
+.B PAPI_SET_DEFDOM \tDomain for all new EventsSets
+.B PAPI_SET_GRANU  \tGranularity for an EventSet
+.B PAPI_SET_DEFGRN \tGranularity for all new EventSets
+.B PAPI_SET_INHERIT\tSet "inherit" for child threads 
+.B PAPI_SET_MPXRES \tEnable, set resolution of mpx 
+.B PAPI_SET_DEBUG  \tTurn on debugging for PerfAPI
+.B PAPI_SET_OVERFLO\tTurn on overflow reporting 
+.fi
+.LP 
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_set_opt may be called by:
+.B  \t
+.B  \tthe user application program
+.B  \tPAPI_set_granularity 
+.B  \tPAPI_set_domain
+.fi
+.nf
+.B  \t
+.B  PAPI_set_opt contains calls to:
+.B  \t
+.B  \tlookup_EventSet
+.B  \thandle_error
+.B  \t_papi_hwd_cntl ( a substrate function )
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

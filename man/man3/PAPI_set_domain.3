@@ -1,0 +1,54 @@
+.\" @(#)PAPI_set_domain    0.10 99/07/28 CHD; from S5
+.TH PAPI_set_domain 0 "28 July 1999"
+.SH NAME
+PAPI_set_domain \- set the execution domain in which events are counted
+.SH SYNOPSIS
+.LP
+int PAPI_set_domain (int domain)
+.LP
+int domain -- an integer to select the domain
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_set_domain(\|)
+This function sets the execution domain in which events
+are counted. Here domain is one of the constants
+PAPI_DOM_USER, PAPI_DOM_MIN, PAPI_DOM_KERNEL, PAPI_DOM_OTHER,
+PAPI_DOM_ALL, PAPI_DOM_MAX, or PAPI_DOM_HWSPEC as defined in the header file.
+These constants are listed below and can also be found
+in the online PerfAPI Draft.
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH DEFINITION OF CONSTANTS
+.nf 
+.B PAPI_DOM_USR	\tUser context counted
+.B PAPI_DOM_MIN	\tMinimum Domain value 
+.B PAPI_DOM_KERNEL\tKernel/OS context counted
+.B PAPI_DOM_OTHER \tException/transiant mode 
+.B PAPI_DOM_ALL	\tAll contexts counted
+.B PAPI_DOM_MAX	\tMaximum Domain value, all contexts counted
+.B PAPI_DOM_HWSPEC\tFlag to indicate special substrate 
+.fi
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_set_domain may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_set_domain contains calls to:
+.B  \t
+.B  \tPAPI_set_opt    
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

@@ -1,0 +1,42 @@
+.\" @(#)PAPI_shutdown    0.10 99/07/28 CHD; from S5
+.TH PAPI_shutdown 0 "28 July 1999"
+.SH NAME
+PAPI_shutdown \- an exit function to free resources
+.SH SYNOPSIS
+.LP
+int PAPI_shutdown (void)
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_shutdown(\|)
+This is an exit function used by the PAPI Library to free resources
+and shut down when  certain error conditions arise.  This call is
+not necessary, but allows the user the capability to free memory 
+and resources used by the PAPI Library.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_shutdown may be called by:
+.B  \t
+.B  \tthe user application program
+.B  \thandle_error
+.fi
+.nf
+.B  \t
+.B  PAPI_shutdown contains calls to:
+.B  \t
+.B  \tfree_EventSet 
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

@@ -1,0 +1,44 @@
+.\" @(#)PAPI_reset    0.10 99/07/28 CHD; from S5
+.TH PAPI_reset 0 "28 July 1999"
+.SH NAME
+PAPI_reset \- start counting events contained in an EventSet
+.SH SYNOPSIS
+.LP
+int PAPI_reset (int EventSet)
+.LP
+int EventSet --  a reference to an EventSetInfo structure
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_reset(\|)
+This function initializes the internal counters of the hardware 
+Events contained in EventSet to zero.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_reset may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_reset contains calls to:
+.B  \t
+.B  \tlookup_EventSet 
+.B  \thandle_error
+.B  \t_papi_hwd_read ( a substrate function )
+.B  \t_papi_hwd_reset ( a substrate function )
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

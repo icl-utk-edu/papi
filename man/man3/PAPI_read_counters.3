@@ -1,0 +1,45 @@
+.\" @(#)PAPI_read_counters    0.10 99/07/28 CHD; from S5
+.TH PAPI_read_counters 0 "28 July 1999"
+.SH NAME
+PAPI_read_counters \- read the counters, copy the counts 
+.SH SYNOPSIS
+.LP
+int PAPI_read_counters (unsigned long long *values, int array_len)
+.LP
+unsigned long long *values -- an array to hold counts
+.LP
+int array_len -- the number of items in the *events array
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_read_counters(\|)
+Read the running counters into the values array.  This call 
+implicitly re-initializes the counters to zero and lets them
+continue to run upon return.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_read_counters may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_read_counters contains calls to:
+.B  \t
+.B  \tPAPI_read       
+.B  \tPAPI_perror
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

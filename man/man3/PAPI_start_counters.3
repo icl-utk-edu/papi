@@ -1,0 +1,50 @@
+.\" @(#)PAPI_start_counters    0.10 99/07/28 CHD; from S5
+.TH PAPI_start_counters 0 "28 July 1999"
+.SH NAME
+PAPI_start_counters \- get number of hardware counters available
+.SH SYNOPSIS
+.LP
+int PAPI_start_counters (int *events, int array_len)
+.LP
+int *events -- an array of codes for events, such as PAPI_INT_INS
+.LP
+int array_len -- the number of items in the *events array
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_start_counters(\|)
+Start counting the events named in the events array.  This function
+implicitly stops and initializes any counters running as a result of
+a previous call to PAPI_start_coutners().  It is the user's responsibility
+to choose events that can be counted simultaneously by reading the
+vendor's documentation.  The lenght of this array should be no longer
+than PAPI_MAX_EVENTS.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_start_counters may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_start_counters contains calls to:
+.B  \t
+.B  \tPAPI_perror     
+.B  \tPAPI_get_opt
+.B  \tPAPI_add_event                             
+.B  \tPAPI_start
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

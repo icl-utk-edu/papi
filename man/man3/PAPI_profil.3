@@ -1,0 +1,59 @@
+.\" @(#)PAPI_profil    0.10 99/07/28 CHD; from S5
+.TH PAPI_profil 0 "28 July 1999"
+.SH NAME
+PAPI_profil \- set values in the EventSetProfileInfo_t strct.
+.LP
+.SH SYNOPSIS
+.LP
+int PAPI_profil (void *buf, int bufsiz, int offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags) 
+.LP
+void *buf -- buf val of EventSetProfileInfo_t strct.
+.LP
+int bufsiz -- bufsiz val of EventSetProfileInfo_t strct.
+.LP
+int offset -- offset val of EventSetProfileInfo_t strct.
+.LP
+unsigned int scale -- scale val EventSetProfileInfo_t strct.
+.LP
+int EventSet -- a reference to an EventSetInfo structure
+.LP
+int EventCode -- the numeric value of the Event
+.LP
+int threshold -- threshold val EventSetProfileInfo_t strct.
+.LP
+int flags -- flags val of EventSetProfileInfo_t strct.
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_profil(\|)
+This function sets the values in the EventSetProfileInfo_t structure,
+if profiling is to be enabled for this EventSet.  The EventSet must be
+in the stopped state for this call to succeed.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_profil may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_profil contains calls to:
+.B  \t
+.B  \tlookup_EventSet 
+.B  \thandle_error
+.B  \t_papi_hwd_set_profile ( a substrate function )
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

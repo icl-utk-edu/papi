@@ -1,0 +1,56 @@
+.\" @(#)PAPI_overflow    0.10 99/07/28 CHD; from S5
+.TH PAPI_overflow 0 "28 July 1999"
+.LP
+.SH NAME
+PAPI_overflow \- start counting events contained in an EventSet
+.SH SYNOPSIS
+.LP
+int PAPI_overflow (int EventSet, int EventCode, int threshold, int flags, void *handler) 
+.LP
+int EventSet -- a reference to an EventSetInfo structure
+.LP
+int EventCode -- integer value for a PAPI Event
+.LP
+int threshold -- threshold value in the EventSetOverflowInfo_t structure
+.LP
+int flags -- flags value in the EventSetOverflowInfo_t structure
+.LP
+void *handler -- handler value in the EventSetOverflowInfo_t structure
+
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_overflow(\|)
+sets up an EventSet such that when it is PAPI_start()'ed, it begins to register overflows. 
+This EventSet may only have multiple events in it, but only 1 can be an overflow trigger.  
+Subsequent calls to PAPI_overflow replace earlier calls. To turn off overflow, set the 
+handler to NULL. 
+.LP 
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_overflow may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_overflow contains calls to:
+.B  \t
+.B  \tlookup_EventSet 
+.B  \thandle_error
+.B  \t_papi_hwd_set_overflow ( a substrate function )
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.
+

@@ -1,0 +1,44 @@
+.\" @(#)PAPI_stop_counters    0.10 99/07/28 CHD; from S5
+.TH PAPI_stop_counters 0 "28 July 1999"
+.SH NAME
+PAPI_stop_counters \- stop the counters, copy the counts 
+.SH SYNOPSIS
+.LP
+int PAPI_stop_counters (unsigned long long *values, int array_len)
+.LP
+unsigned long long *values -- an array to hold counts
+.LP
+int array_len -- the number of items in the *events array
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_stop_counters(\|)
+Stop the running counters and copy the counts into the values
+array.
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_stop_counters may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_stop_counters contains calls to:
+.B  \t
+.B  \tPAPI_perror     
+.B  \tPAPI_stop       
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

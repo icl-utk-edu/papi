@@ -1,0 +1,37 @@
+.\" @(#)PAPI_num_events    0.10 99/07/28 CHD; from S5
+.TH PAPI_num_events 0 "28 July 1999"
+.SH NAME
+PAPI_num_events \- get number of hardware counters available
+.SH SYNOPSIS
+.LP
+int PAPI_num_events (void)
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_num_events(\|)
+This function returns the optimal length of the values array for the
+high level functions.  This value corresponds to the number of hardware
+counters supported by the current substrate.
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_num_events may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_num_events contains calls to:
+.B  \t
+.B  \tPAPI_get_opt
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

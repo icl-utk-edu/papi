@@ -1,0 +1,41 @@
+.\" @(#)PAPI_query_event    0.10 99/07/28 CHD; from S5
+.TH PAPI_query_event 0 "28 July 1999"
+.SH NAME
+PAPI_query_event \- see if an Event is supported by the local substrate
+.LP
+.SH SYNOPSIS
+.LP
+int PAPI_query_event (int EventCode)
+.LP
+int EventCode -- the numeric value of a PerfAPI Event
+.LP
+.SH DESCRIPTION
+.B PAPI_query_event(\|)
+This function tests if the event designated by EventCode is supported by the current substrate. 
+.LP
+If the answer is yes, the function returns PAPI_OK. 
+If the answer is no, the function returns an error code. 
+
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_query_event may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_query_event contains calls to:
+.B  \t
+.B  \thandle_error
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.fi
+.SH BUGS
+.LP
+This function has no known bugs.

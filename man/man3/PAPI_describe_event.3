@@ -1,0 +1,50 @@
+.\" @(#)PAPI_describe_event    0.10 99/07/28 CHD; from S5
+.TH PAPI_describe_event 0 "28 July 1999"
+.SH NAME
+PAPI_describe_event \- identify an Event by name or number
+.LP
+.SH SYNOPSIS
+.LP
+int PAPI_describe_event (char *name, int *EventCode, char *description)
+.LP
+char *name -- the name of the Event in question
+.LP
+int *EventCode -- the numeric value of the Event in question  
+.LP
+char *description -- a description of the Event in question
+.LP
+.SH DESCRIPTION
+.LP
+.B PAPI_describe_event (\|)
+This function identifies a PAPI_Event in one of two ways. 
+.LP
+Given the name of the Event (i.e. "PAPI_INT_INS"), the function will write the corresponding value in EventCode (51) and a descriptive string ("Integer Instructions") to the description buffer. 
+.LP  
+Given the integer value of EventCode (51), the function will write the string value of the EventName ("PAPI_INT_INS") to the name buffer and a descriptive string ("Integer Instructions") to the description buffer. 
+.LP  
+Set *description to NULL if the description is not needed. 
+.LP
+The return value is an integer that indicates whether the call
+succeeded (PAPI_OK) or failed (not PAPI_OK).  
+.LP
+.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
+.nf
+.B  \t
+.B  PAPI_describe_event may be called by:
+.B  \t
+.B  \tthe user application program
+.fi
+.nf
+.B  \t
+.B  PAPI_describe_event contains calls to:
+.B  \t
+.B  \tno PerfAPI function
+.fi
+.LP
+.SH SEE ALSO
+.nf 
+.B The PerfAPI Draft: 
+.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.SH BUGS
+.LP
+This function has no known bugs.
