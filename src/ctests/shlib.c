@@ -111,20 +111,20 @@ RETRY:
 
      handle = dlopen (fullname, RTLD_NOW);
      if (!handle) {
+	 printf("dlopen: %s\n",dlerror());
           if ( !my_dlerror ){
              my_dlerror = 1;
+	     printf("Trying again.");
              goto RETRY;
           }
-          printf("error: %s \n", dlerror());
-          printf("Also tried opening: %s\n", libname);
-          printf(" Did you forget to set the environmental variable LIBPATH (in AIX) or LD_LIBRARY_PATH (in linux) ?\n");
+          printf("Did you forget to set the environmental variable LIBPATH (in AIX) or LD_LIBRARY_PATH (in linux) ?\n");
           test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
      
      printf("Looking up PAPI_num_counters() \n");
      num_hwctrs = ( int (*) (void)) dlsym(handle, "PAPI_num_counters");
      if (num_hwctrs == NULL)  {
-       printf("error: %s \n", dlerror());
+       printf("dlsym: %s \n", dlerror());
        test_fail(__FILE__, __LINE__, "dlsym", 1);
      }
      
