@@ -1119,13 +1119,11 @@ static int remove_event(EventSetInfo_t *ESI, int EventCode)
 
   ESI->EventInfoArray[thisindex].code = PAPI_NULL;
   ESI->EventInfoArray[thisindex].command = NOT_DERIVED;
-  ESI->EventInfoArray[thisindex].selector = 0;
-  ESI->EventInfoArray[thisindex].operand_index = -1;
+  ESI->EventInfoArray[thisindex].selector = PAPI_NULL;
+  ESI->EventInfoArray[thisindex].operand_index = PAPI_NULL;
 
   /* ESI->sw_stop[hwindex]           = 0; */
   /* ESI->hw_start[hwindex]         = 0; */
-
-  ESI->NumberOfEvents--;
 
   return(retval);
 }
@@ -1524,7 +1522,7 @@ static int cleanup_eventset(EventSetInfo_t *ESI)
 	return(retval);
     }
   
-  for(i=0;i<tmp;i++) 
+  for(i=(tmp-1);i>=0;i--) 
     {
       if (ESI->EventInfoArray[i].code != PAPI_NULL)
 	{

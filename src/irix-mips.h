@@ -1,10 +1,13 @@
-#include <sys/hwperftypes.h>
-#include <sys/hwperfmacros.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <invent.h>
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <malloc.h>
+#include <task.h>
+#include <assert.h>
+#include <unistd.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,8 +16,8 @@
 #include <sys/cpu.h>
 #include <sys/sysmp.h>
 #include <sys/sbd.h>
-#include <task.h>
-#include <assert.h>
+#include <sys/hwperftypes.h>
+#include <sys/hwperfmacros.h>
 
 #include "papi.h"
 typedef struct hwd_control_state {
@@ -64,12 +67,19 @@ typedef struct hwd_preset {
 } hwd_preset_t;
 
 typedef struct hwd_search {
+  /* PAPI preset code */
+  int preset;
   /* Derived code */
   int derived;
   /* Events to encode */
   int findme[2];
 } hwd_search_t;
 
+int get_memory_info(PAPI_mem_info_t* mem_info);
 extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];
 extern int _fbss[], _end[];
+
+#ifdef DEBUG
+extern int papi_debug;
+#endif

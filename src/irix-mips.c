@@ -3,305 +3,64 @@
 
 #include "irix-mips.h"
 
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
+static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0, };
 
-static hwd_search_t findem_r10k[PAPI_MAX_PRESET_EVENTS] = {
-                {  0,{-1,25}},			/* L1 D-Cache misses */
-                {  0,{ 9,-1}},		        /* L1 I-Cache misses */
-		{  0,{-1,26}},		        /* L2 D-Cache misses */
-		{  0,{10,-1}},		        /* L2 I-Cache misses */
-		{  0,{-1,-1}},			/* L3 D-Cache misses */
-		{  0,{-1,-1}},			/* L3 I-Cache misses */
-		{ DERIVED_ADD,{ 9,25}},		/* L1 total */
-		{ DERIVED_ADD,{10,26}},		/* L2 total */
-		{ -1,{-1,-1}},			/* L3 total */
-		{ -1,{-1,-1}},			/* Snoops*/
-		{  0,{-1,31}}, 			/* Req. access to shared cache line*/
-		{  0,{-1,30}}, 			/* Req. access to clean cache line*/
-		{  0,{-1,13}}, 			/* Cache Line Invalidation*/
-                {  0,{-1,12}},			/* Cache Line Intervention*/
-                { -1,{-1,-1}},			/* 14*/
-                { -1,{-1,-1}},			/* 15*/
-                { -1,{-1,-1}},			/* Cycles branch units are idle*/
-                { -1,{-1,-1}},			/* Cycles integer units are idle*/
-                { -1,{-1,-1}},			/* Cycles floating point units are idle*/
-                { -1,{-1,-1}},			/* Cycles load/store units are idle*/
-		{ -1,{-1,-1}}, 			/* D-TLB misses*/
-		{ -1,{-1,-1}},		        /* I-TLB misses*/
-                {  0,{-1,23}},			/* Total TLB misses*/
-                { -1,{-1,-1}},			/* L1 load misses*/
-                { -1,{-1,-1}},			/* L1 store misses*/
-                { -1,{-1,-1}},			/* L2 load misses*/
-                { -1,{-1,-1}},			/* L2 store misses*/
-                { -1,{-1,-1}},			/* 27*/
-                { -1,{-1,-1}},			/* 28*/
-                { -1,{-1,-1}},			/* 29*/
-		{ -1,{-1,-1}},			/* TLB shootdowns*/
-                {  0,{ 5,-1}},			/* Failed store conditional*/
-                { DERIVED_SUB,{20,5}},		/* Successful store conditional*/
-                {  0,{-1,20}},			/* Total store conditional*/
-                { -1,{-1,-1}},			/* cycles stalled for memory*/
-                { -1,{-1,-1}},			/* cycles stalled for memory read*/
-                { -1,{-1,-1}},			/* cycles stalled for memory write*/
-                { -1,{-1,-1}},			/* cycles no instructions issued*/
-                { -1,{-1,-1}},			/* cycles max instructions issued*/
-                { -1,{-1,-1}},			/* cycles no instructions exe*/
-		{ -1,{-1,-1}},			/* cycles max instructions exe*/
-		{ -1,{-1,-1}},			/* 41*/
-		{ -1,{-1,-1}},			/* Uncond. branches executed */
-		{ -1,{-1,-1}},			/* Cond. branch inst. exe*/
-		{ -1,{-1,-1}},			/* Cond. branch inst. taken*/
-		{ -1,{-1,-1}},			/* Cond. branch inst. not taken*/
-                {  0,{-1,24}},			/* Cond. branch inst. mispred*/
-                { -1,{-1,-1}},			/* Cond. branch inst. correctly pred*/
-                { -1,{-1,-1}},			/* FMA*/
-                {  0,{ 1,-1}},			/* Total inst. issued*/
-		{  0,{15,17}},			/* Total inst. executed*/
-		{ -1,{-1,-1}},		        /* Integer inst. executed*/
-		{  0,{-1,21}},			/* Floating Pt. inst. executed*/
-		{  0,{-1,18}},			/* Loads executed*/
-		{  0,{-1,19}},			/* Stores executed*/
-		{  0,{ 6,-1}},			/* Branch inst. executed*/
-		{ -1,{-1,-1}},			/* Vector/SIMD inst. executed */
-		{ DERIVED_PS,{0,21}},		/* FLOPS */
-                { -1,{-1,-1}},			/* Any stalls */
-                { -1,{-1,-1}},			/* FP units are stalled */
-		{  0,{ 0,16}},			/* Total cycles */
-		{ DERIVED_PS,{0,15}},		/* IPS */
-                { -1,{-1,-1}},			/* Total load/store inst. exec */
-                { -1,{-1,-1}},			/* Sync exec. */
-		/* L1 data cache hits */
-		{ -1,{-1,-1}},
-		/* L2 data cache hits */
-		{ -1,{-1,-1}},
-		/* L1 data cache accesses */
-		{ -1,{-1,-1}},
-		/* L2 data cache accesses */
-		{ -1,{-1,-1}},
-		/* L3 data cache accesses */
-		{ -1,{-1,-1}},
-		/* L1 data cache reads */
-		{ -1,{-1,-1}},
-		/* L2 data cache reads */
-		{ -1,{-1,-1}},
-		/* L3 data cache reads */
-		{ -1,{-1,-1}},
-		/* L1 data cache writes */
-		{ -1,{-1,-1}},
-		/* L2 data cache writes */
-		{ -1,{-1,-1}},
-		/* L3 data cache writes */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache hits */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache hits */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache hits */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache accesses */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache accesses */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache accesses */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache reads */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache reads */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache reads */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache writes */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache writes */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache writes */
-		{ -1,{-1,-1}},
-		/* L1 total cache hits */
-		{ -1,{-1,-1}},
-		/* L2 total cache hits */
-		{ -1,{-1,-1}},
-		/* L3 total cache hits */
-		{ -1,{-1,-1}},
-		/* L1 total cache accesses */
-		{ -1,{-1,-1}},
-		/* L2 total cache accesses */
-		{ -1,{-1,-1}},
-		/* L3 total cache accesses */
-		{ -1,{-1,-1}},
-		/* L1 total cache reads */
-		{ -1,{-1,-1}},
-		/* L2 total cache reads */
-		{ -1,{-1,-1}},
-		/* L3 total cache reads */
-		{ -1,{-1,-1}},
-		/* L1 total cache writes */
-		{ -1,{-1,-1}},
-		/* L2 total cache writes */
-		{ -1,{-1,-1}},
-		/* L3 total cache writes */
-		{ -1,{-1,-1}},
-		/* FP mult */
-		{ -1,{-1,-1}},
-		/* FP add */
-		{ -1,{-1,-1}},
-		/* FP Div */
-		{ -1,{-1,-1}},
-		/* FP Sqrt */
-		{ -1,{-1,-1}},
-		/* FP inv */
-		{ -1,{-1,-1}}
+static hwd_search_t findem_r10k[] = {
+                { PAPI_L1_DCM,0,{25,-1}},       /* L1 D-Cache misses */
+                { PAPI_L1_ICM,0,{ 9,-1}},       /* L1 I-Cache misses */
+                { PAPI_L2_DCM,0,{26,-1}},       /* L2 D-Cache misses */
+                { PAPI_L2_ICM,0,{10,-1}},       /* L2 I-Cache misses */
+                { PAPI_L1_TCM,DERIVED_ADD,{ 9,25}},             /* L1 total */
+                { PAPI_L2_TCM,DERIVED_ADD,{10,26}},             /* L2 total */
+                { PAPI_CA_INV,0,{13,-1}},                       /* Cache Line Invalidation*/
+                { PAPI_CA_ITV,0,{12,-1}},                       /* Cache Line Intervention*/
+                { PAPI_TLB_TL,0,{23,-1}},                       /* Total TLB misses*/
+                { PAPI_CSR_FAL,0,{ 5, -1}},                     /* Failed store conditional*/
+                { PAPI_CSR_SUC,DERIVED_SUB,{20,5}},             /* Successful store conditional*/
+                { PAPI_CSR_TOT,0,{20,-1}},                      /* Total store conditional*/
+                { PAPI_BR_MSP,0,{24,-1}},                       /* Cond. branch inst. mispred*/
+                { PAPI_TOT_IIS,0,{ 1,-1}},                      /* Total inst. issued*/
+                { PAPI_TOT_INS,0,{15,17}},                      /* Total inst. executed*/
+                { PAPI_FP_INS,0,{21,-1}},                       /* Floating Pt. inst. executed*/
+                { PAPI_LD_INS,0,{18,-1}},                       /* Loads executed*/
+                { PAPI_SR_INS,0,{19,-1}},                       /* Stores executed*/
+                { PAPI_BR_INS,0,{ 6,-1}},                       /* Branch inst. executed*/
+                { PAPI_FLOPS,DERIVED_PS,{0,21}},                /* FLOPS */
+                { PAPI_TOT_CYC,0,{ 0,16}},                      /* Total cycles */
+                { PAPI_IPS,DERIVED_PS,{0,15}},                  /* IPS */
+                { -1, 0, {-1, -1}}                              /* The END */
 };
 
-static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = { /* Shared with R14K */
-                {  0,{-1,25}},			/* L1 D-Cache misses */
-                {  0,{ 9,-1}},		        /* L1 I-Cache misses */
-		{  0,{-1,26}},		        /* L2 D-Cache misses */
-		{  0,{10,-1}},		        /* L2 I-Cache misses */
-		{  0,{-1,-1}},			/* L3 D-Cache misses */
-		{  0,{-1,-1}},			/* L3 I-Cache misses */
-		{ DERIVED_ADD,{ 9,25}},		/* L1 total */
-		{ DERIVED_ADD,{10,26}},		/* L2 total */
-		{ -1,{-1,-1}},			/* L3 total */
-		{ -1,{-1,-1}},			/* Snoops*/
-		{  0,{-1,31}}, 			/* Req. access to shared cache line*/
-		{ -1,{-1,-1}}, 			/* Req. access to clean cache line*/
-		{  0,{-1,13}}, 			/* Cache Line Invalidation*/
-                {  0,{-1,12}},			/* Cache Line Intervention*/
-                { -1,{-1,-1}},			/* 14*/
-                { -1,{-1,-1}},			/* 15*/
-                { -1,{-1,-1}},			/* Cycles branch units are idle*/
-                { -1,{-1,-1}},			/* Cycles integer units are idle*/
-                { -1,{-1,-1}},			/* Cycles floating point units are idle*/
-                { -1,{-1,-1}},			/* Cycles load/store units are idle*/
-		{ -1,{-1,-1}}, 			/* D-TLB misses*/
-		{ -1,{-1,-1}},		        /* I-TLB misses*/
-                {  0,{-1,23}},			/* Total TLB misses*/
-                { -1,{-1,-1}},			/* L1 load misses*/
-                { -1,{-1,-1}},			/* L1 store misses*/
-                { -1,{-1,-1}},			/* L2 load misses*/
-                { -1,{-1,-1}},			/* L2 store misses*/
-                { -1,{-1,-1}},			/* BTAC miss */
-                {  0,{17,-1}},			/* Prefetch miss */
-                { -1,{-1,-1}},			/* 29*/
-		{ -1,{-1,-1}},			/* TLB shootdowns*/
-                {  0,{ 5,-1}},			/* Failed store conditional*/
-                { DERIVED_SUB,{20,5}},		/* Successful store conditional*/
-                {  0,{-1,20}},			/* Total store conditional*/
-/* According to the man page, event 14 ALU/FPU progress cycles is always 0
- * on current R12K processors, taking this out till I can verify -KSL 
-                { DERIVED_SUB,{0,14}},*/	/* cycles stalled for memory*/
-                { -1,{-1,-1}},			/* cycles stalled for memory*/
 
-                { -1,{-1,-1}},			/* cycles stalled for memory read*/
-                { -1,{-1,-1}},			/* cycles stalled for memory write*/
-                { -1,{-1,-1}},			/* cycles no instructions issued*/
-                { -1,{-1,-1}},			/* cycles max instructions issued*/
-                { -1,{-1,-1}},			/* cycles no instructions exe*/
-		{ -1,{-1,-1}},			/* cycles max instructions exe*/
-		{ -1,{-1,-1}},			/* hardware interrupts*/
-		{ -1,{-1,-1}},			/* Uncond. branches executed */
-		{ 0,{6,-1}},			/* Cond. branch inst. exe*/
-		{ -1,{-1,-1}},			/* Cond. branch inst. taken*/
-		{ -1,{-1,-1}},			/* Cond. branch inst. not taken*/
-                {  0,{-1,24}},			/* Cond. branch inst. mispred*/
-                { DERIVED_SUB,{6,24}},			/* Cond. branch inst. correctly pred*/
-                { -1,{-1,-1}},			/* FMA*/
-                {  0,{ 1,-1}},			/* Total inst. issued*/
-		{  0,{15,-1}},			/* Total inst. executed*/
-		{ -1,{-1,-1}},		        /* Integer inst. executed*/
-		{  0,{-1,21}},			/* Floating Pt. inst. executed*/
-		{  0,{-1,18}},			/* Loads executed*/
-		{  0,{-1,19}},			/* Stores executed*/
-		{  -1,{-1,-1}},			/* Branch inst. executed*/
-		{ -1,{-1,-1}},			/* Vector/SIMD inst. executed */
-		{ DERIVED_PS,{0,21}},		/* FLOPS */
-                { -1,{-1,-1}},			/* Any res stalled */
-                { -1,{-1,-1}},			/* FP units are stalled */
-		{  0,{0,-1}},			/* Total cycles */
-		{ DERIVED_PS,{0,15}},		/* IPS */
-                { DERIVED_ADD,{18,19}},		/* Total load/store inst. exec */
-                { -1,{-1,-1}},			/* Sync exec. */
-		/* L1 data cache hits */
-		{ -1,{-1,-1}},
-		/* L2 data cache hits */
-		{ -1,{-1,-1}},
-		/* L1 data cache accesses */
-		{ -1,{-1,-1}},
-		/* L2 data cache accesses */
-		{ -1,{-1,-1}},
-		/* L3 data cache accesses */
-		{ -1,{-1,-1}},
-		/* L1 data cache reads */
-		{ -1,{-1,-1}},
-		/* L2 data cache reads */
-		{ -1,{-1,-1}},
-		/* L3 data cache reads */
-		{ -1,{-1,-1}},
-		/* L1 data cache writes */
-		{ -1,{-1,-1}},
-		/* L2 data cache writes */
-		{ -1,{-1,-1}},
-		/* L3 data cache writes */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache hits */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache hits */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache hits */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache accesses */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache accesses */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache accesses */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache reads */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache reads */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache reads */
-		{ -1,{-1,-1}},
-		/* L1 instruction cache writes */
-		{ -1,{-1,-1}},
-		/* L2 instruction cache writes */
-		{ -1,{-1,-1}},
-		/* L3 instruction cache writes */
-		{ -1,{-1,-1}},
-		/* L1 total cache hits */
-		{ -1,{-1,-1}},
-		/* L2 total cache hits */
-		{ -1,{-1,-1}},
-		/* L3 total cache hits */
-		{ -1,{-1,-1}},
-		/* L1 total cache accesses */
-		{ -1,{-1,-1}},
-		/* L2 total cache accesses */
-		{ -1,{-1,-1}},
-		/* L3 total cache accesses */
-		{ -1,{-1,-1}},
-		/* L1 total cache reads */
-		{ -1,{-1,-1}},
-		/* L2 total cache reads */
-		{ -1,{-1,-1}},
-		/* L3 total cache reads */
-		{ -1,{-1,-1}},
-		/* L1 total cache writes */
-		{ -1,{-1,-1}},
-		/* L2 total cache writes */
-		{ -1,{-1,-1}},
-		/* L3 total cache writes */
-		{ -1,{-1,-1}},
-		/* FP mult */
-		{ -1,{-1,-1}},
-		/* FP add */
-		{ -1,{-1,-1}},
-		/* FP Div */
-		{ -1,{-1,-1}},
-		/* FP Sqrt */
-		{ -1,{-1,-1}},
-		/* FP inv */
-		{ -1,{-1,-1}},
+static hwd_search_t findem_r12k[] = { /* Shared with R14K */
+                { PAPI_L1_DCM,0,{25,-1}},       /* L1 D-Cache misses */
+                { PAPI_L1_ICM,0,{ 9,-1}},       /* L1 I-Cache misses */
+                { PAPI_L2_DCM,0,{26,-1}},       /* L2 D-Cache misses */
+                { PAPI_L2_ICM,0,{10,-1}},       /* L2 I-Cache misses */
+                { PAPI_L1_TCM,DERIVED_ADD,{ 9,25}},             /* L1 total */
+                { PAPI_L2_TCM,DERIVED_ADD,{10,26}},             /* L2 total */
+                { PAPI_CA_INV,0,{13,-1}},                       /* Cache Line Invalidation*/
+                { PAPI_CA_ITV,0,{12,-1}},                       /* Cache Line Intervention*/
+                { PAPI_TLB_TL,0,{23,-1}},                       /* Total TLB misses*/
+                { PAPI_PRF_DM,0,{17,-1}},                       /* Prefetch miss */
+                { PAPI_CSR_FAL,0,{ 5, -1}},                     /* Failed store conditional*/
+                { PAPI_CSR_SUC,DERIVED_SUB,{20,5}},             /* Successful store conditional*/
+                { PAPI_CSR_TOT,0,{20,-1}},                      /* Total store conditional*/
+                { PAPI_BR_CN,0,{ 6,-1}},                        /* Cond. branch inst. exe*/
+                { PAPI_BR_MSP,0,{24,-1}},                       /* Cond. branch inst. mispred*/
+                { PAPI_BR_PRC,DERIVED_SUB,{6,24}},              /* Cond. branch inst. correctly pred*/
+                { PAPI_TOT_IIS,0,{ 1, -1}},                     /* Total inst. issued*/
+                { PAPI_TOT_INS,0,{15, -1}},                     /* Total inst. executed*/
+                { PAPI_FP_INS,0,{21,-1}},                       /* Floating Pt. inst. executed*/
+                { PAPI_LD_INS,0,{18,-1}},                       /* Loads executed*/
+                { PAPI_SR_INS,0,{19,-1}},                       /* Stores executed*/
+                { PAPI_FLOPS,DERIVED_PS,{0,21}},                /* FLOPS */
+                { PAPI_TOT_CYC,0,{ 0, -1}},                     /* Total cycles */
+                { PAPI_IPS,DERIVED_PS,{0,15}},                  /* IPS */
+                { PAPI_LST_INS,DERIVED_ADD,{18,19}},            /* Total load/store inst. exec */
+                { -1, 0, {-1, -1}}                              /* The END */
 };
+
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -975,8 +734,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
 	    {
 	      /* Pick the one most available */
 
-	      if (this_state->num_on_counter[0] < 
-		  this_state->num_on_counter[1])
+	      if (this_state->num_on_counter[0] < this_state->num_on_counter[1])
 		avail = avail & 0xffff;
 	      else
 		avail = avail & 0xffff0000;
@@ -1005,27 +763,33 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
   else
     {
       int hwcntr_num;
+      unsigned event;
 
       /* Support for native events here, only 1 counter at a time. */
 
-      hwcntr_num = EventCode & 0xff;  /* 0 through 31 */ 
-      if ((hwcntr_num > _papi_system_info.num_cntrs) ||
-	  (hwcntr_num < 0))
+      event = EventCode & 0xff; /* 0 through 32 */
+  
+      if(event > HWPERF_EVENTMAX)
 	return(PAPI_EINVAL);
 
-      selector = 1 << hwcntr_num;
+      selector = 1 << event;
 
       /* Check if the counter is available */
       
       if (this_state->selector & selector)
 	return(PAPI_ECNFLCT);	    
 
+      if(event>HWPERF_MAXEVENT)
+	hwcntr_num=1;
+      else
+	hwcntr_num=0;
+
       /* Set up the native encoding */
 
-      if (hwcntr_num < HWPERF_CNT1BASE)
-	tmp_cmd[hwcntr_num] = hwcntr_num;
+      if(event<HWPERF_CNT1BASE)
+	tmp_cmd[event]=hwcntr_num;
       else
-	tmp_cmd[hwcntr_num] = hwcntr_num - HWPERF_CNT1BASE;
+	tmp_cmd[event] = hwcntr_num-HWPERF_CNT1BASE;
 
       codes = tmp_cmd;
     }
@@ -1474,6 +1238,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
   int selector, hwcntr, retval = PAPI_OK;
+
+  if((this_state->num_on_counter[0]>1)||
+     (this_state->num_on_counter[1]>1))
+     return(PAPI_ECNFLCT);
 
   if (overflow_option->threshold == 0)
     {
