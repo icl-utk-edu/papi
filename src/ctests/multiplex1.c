@@ -12,13 +12,7 @@
 
 #include "papi_test.h"
 
-#define FLOPS 4000000
-#define READS 4000
-#define NUM 10
 #define SUCCESS 1
-
-extern void do_flops(int);
-extern void do_reads(int);
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
@@ -116,13 +110,7 @@ int case1()
   if (PAPI_start(EventSet) != PAPI_OK)
     CPP_TEST_FAIL("PAPI_start",retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(FLOPS);
-#ifndef _CRAYT3E
-      do_reads(READS);
-#endif
-    }
+  do_both(NUM_ITERS);
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
@@ -177,14 +165,8 @@ int case2()
   if (PAPI_start(EventSet) != PAPI_OK)
     CPP_TEST_FAIL("PAPI_start",retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(FLOPS);
-#ifndef _CRAYT3E
-      do_reads(READS);
-#endif
-    }
-
+  do_both(NUM_ITERS);
+  
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_stop",retval);
@@ -239,13 +221,7 @@ int case3()
   if (PAPI_start(EventSet) != PAPI_OK)
     CPP_TEST_FAIL("PAPI_start",retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(FLOPS);
-#ifndef _CRAYT3E
-      do_reads(READS);
-#endif
-    }
+  do_both(NUM_ITERS);
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
@@ -336,13 +312,7 @@ int case4()
   if (PAPI_start(EventSet) != PAPI_OK)
     CPP_TEST_FAIL("PAPI_start",retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(FLOPS);
-#ifndef _CRAYT3E
-      do_reads(READS);
-#endif
-    }
+  do_both(NUM_ITERS);
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
@@ -371,7 +341,7 @@ int main(int argc, char **argv)
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   if ( !TESTS_QUIET ) {
-    printf("%s: Using %d iterations\n\n",argv[0],NUM);
+    printf("%s: Using %d iterations\n\n",argv[0],NUM_ITERS);
 
     printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");
   }

@@ -14,8 +14,6 @@
 #define CPP_TEST_SKIP() { fprintf(stderr,"$Id$\n%s:\tSKIPPED\n",__FILE__); exit(0); }
 #endif
 
-#define NUM_ITERS 5000
-
 #define QUIETPRINTF if (!TESTS_QUIET) printf
 const static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L2_DCM, 0 };
 const static int PAPI_events_len = 1;
@@ -66,9 +64,9 @@ int main(int argc, char **argv)
   retval = PAPI_start(EventSet);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-  QUIETPRINTF("Running %d iterations of do_reads().\n",NUM_ITERS);
+  QUIETPRINTF("Running %d iterations of do_reads().\n",NUM_READS);
   
-  do_reads(NUM_ITERS);
+  do_reads(NUM_READS);
   
   retval = PAPI_stop(EventSet, &values);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

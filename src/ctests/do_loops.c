@@ -25,7 +25,7 @@ void do_flops(int n)
 
 void do_reads(int n)
 {
-#ifndef _WIN32
+#if !defined(_WIN32)
   int i, j;
   static int fd = -1;
   char buf;
@@ -33,10 +33,10 @@ void do_reads(int n)
 
   if (fd == -1)
     {
-      fd = open("/dev/zero",O_RDONLY);
+      fd = open("/dev/null",O_RDONLY);
       if (fd == -1)
         {
-          perror("open(/dev/zero)");
+          perror("open(/dev/null)");
           exit(1);
         }
     }
@@ -63,12 +63,12 @@ void do_both(int n)
 {
   int i,j;
   double c = 0.11;
+  const int flops = NUM_FLOPS / n;
+  const int reads = NUM_READS / n;
 
   for (i=0;i<n;i++)
     {
-      for (j=0; j < n; j++)
-        c += a*b;
-      for (j=0;j<L1_MISS_BUFFER_SIZE_INTS;j++)
-        buf[j] = buf[L1_MISS_BUFFER_SIZE_INTS-j-1] + 1;
+    	do_flops(flops);
+	do_reads(reads);
     }
 }
