@@ -1,20 +1,21 @@
 ===============================================================================
-PAPI 3.0 beta 4 RELEASE NOTES                                      29 July 2004
+PAPI 3.0.7 RELEASE NOTES                                            03 Dec 2004
 ===============================================================================
 
-This file documents issues associated with the PAPI 3.0 beta 3 release.
+This file documents the changes since the PAPI 3.0.6 release.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP303.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP307.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
+
 
 GENERAL NOTES
 ===============================================================================
-This release is primarily a maintenance release for PAPI 3 beta development.
-As such, there have been a large number of bug fixes and revisions to the PAPI
-system, but a much smaller number of changes that will be visible to the user.
+This release is a maintenance release for PAPI 3.
+It contains a small but significant number of Bug fixes and feature
+enhancements, as documented below.
 
 As always, if you identify strange behavior or demonstrable bugs, please
 contact the PAPI team or one of the PAPI development lists.
@@ -22,35 +23,63 @@ contact the PAPI team or one of the PAPI development lists.
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
 
-NEW, MODIFIED OR DEPRECATED FEATURES
-===============================================================================
-* PAPI_get_overflow_event_index() - added to provide better support for overflow
-and profiling functions.
-* memory information - the structures containing static memory information 
-(cache and TLB sizes, etc.) have been reworked. For details see papi.h or
-ctests/mem_info.c
-* Shared library support has been added where possible. See ctests/shlib.c for 
-more information.
-* PAPI_get_dmem_info() has been temporarily deprecated, pending a redesign of
-the supporting data structures.
 
-PLATFORM NOTES
+CHANGES IN PAPI 3.0.7 SINCE PAPI 3.0.6
 ===============================================================================
-* Pentium M support - a native event table was added to explicitly support this 
-processor from Intel.
-* Opteron is supported in this release, but has not been recently tested, due to
-unavailability of our test system.
-* Itanium 1 is still supported but has not been recently tested, due to
-unavailability of our test systems.
-* Make files have been renamed and reworked for Itanium. pfmlib versions are now
-automatically identified.
-* Make files for linux-perfctr have been reworked. They now support a VERSION
-command line parameter to specify the perfctr library version to link to.
-The default in both cases is perfctr 2.6.x
-* AIX 5.2 is now supported, but a bug in the OS prevents properly clearing the 
-counters. This should only affect PAPI_reset. A patch is available from IBM.
-Contact the PAPI team for details.
-* Cray X1 support - Cray X1 is now supported
-* A bug in Solaris prevents the support of shared library information. We are
-investigating a work-around, and will commit it to the cvs tree when available.
-Contact the PAPI team for details.
+
+Major Issues:
+-------------	
+* src/multiplex.c:
+  - fixed an assert error that caused gcc to segfault.
+
+* src/p3_events.c:
+  - added / updated lots of Opteron event definitions.
+    Thanks to Anoop Iyer at AMD!
+
+* src/aix.c: 
+  - fixed a static variable declaration in _papi_hwd_read 
+    that caused events to be attributed to the wrong threads.
+
+* src/threads.h: 
+  - Added NO_TLS definition to allow us to turn off TLS storage.
+    This prevented compilation on some platforms.
+
+
+Bug Fixes:
+----------
+* src/Matlab/{PAPI_Matlab.readme, flops.readme, PAPI_flops.c}:
+  - fixed some Matlab mex file and comment syntax problems.
+
+* src/ftests/fmultiplex2.F:
+  - fixed an annoying and long-standing warning message.
+
+* src/solaris-ultra.c:
+  - fixed some event definitions.
+
+* src/jni/{EventSet.java, Papi.c, PapiJ.java}:
+  - various fixes.
+
+* src/{p4_events.c, perfctr-p4.c, perfctr-p3.c}:
+  - fixes in P4 event definitions and in event set handling 
+    to make domain settings behave as documented.
+
+
+Enhancements:
+-------------
+* src/ctests/shlib.c:
+  - Added error message to print out a library loading failure.
+
+* src/Rules.perfctr:
+  - test for lib64 installation of PerfCtr on x86_64.
+
+* src/ctests/val_omp.c:
+  - added new test to catch aix threading problem.
+
+* src/ctests/second.c:
+  - updated with more domain tests and better explanations.
+
+* src/{papi.h, linux-memory.c}:
+  - modified definitions for cache description structure.
+
+* src/ctests/memory.c: 
+  - enhancements for above changes.
