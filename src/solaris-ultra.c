@@ -8,6 +8,11 @@
 */  
 
 #include SUBSTRATE
+#ifdef CPC_ULTRA3_I
+#define LASTULTRA3 CPC_ULTRA3_I
+#else
+#define LASTULTRA3 CPC_ULTRA3_PLUS
+#endif
 
 /* Globals used to access the counter registers. */
 
@@ -274,10 +279,10 @@ static int setup_all_presets(PAPI_hw_info_t *info)
 
   if (info->model <= CPC_ULTRA2)
     findem = usii_preset_search_map;
-  else if (info->model == CPC_ULTRA3)
+  else if (info->model <= LASTULTRA3)
     findem = usiii_preset_search_map;
-  else
-    abort();
+  else 
+    return(PAPI_ESBSTR);
 
   memset(preset_map,0x0,sizeof(preset_map));
 
@@ -465,7 +470,7 @@ static int get_system_info(void)
       pcr_inv_mask[0] = ~(pcr_event_mask[0]);
       pcr_inv_mask[1] = ~(pcr_event_mask[1]);
     }
-  else if (cpuver == CPC_ULTRA3)
+  else if (cpuver <= LASTULTRA3)
     {
       DBG((stderr,"cpuver (==%d) == CPC_ULTRA3 (==%d)\n",cpuver,CPC_ULTRA3));
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
