@@ -55,7 +55,7 @@ int main(int argc, char **argv)
    events[8] = PAPI_LD_INS;
 
    for (i = 0; i < MAXEVENTS; i++) {
-      values[i] = 0.;
+      values[i] = 0;
       valsqsum[i] = 0;
       valsum[i] = 0;
       nsamples[i] = 0;
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
    t1 = PAPI_get_real_usec() - t1;
 
    if (t2 > t1)                 /* Scale up execution time to match t2 */
-      iters = iters * t2 / t1;
+      iters = iters * (int)(t2 / t1);
    else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
       test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
 
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
       spread[j] = sqrt(spread[j] / (nsamples[j] - 1));
       if (valsum[j] > 0.9)
          spread[j] = nsamples[j] * spread[j] / valsum[j];
-      values[j] = valsum[j] / nsamples[j];
+      values[j] = (long_long)(valsum[j] / nsamples[j]);
       if (!TESTS_QUIET)
          printf("%9.2g  ", spread[j]);
       /* Make sure that NaN get counted as errors */

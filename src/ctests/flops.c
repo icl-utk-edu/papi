@@ -50,8 +50,11 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_flips", retval);
    dummy((void *) mresult);
 
-   if (!TESTS_QUIET)
-      printf(format_string, real_time, proc_time, flpins, mflops);
+   if (!TESTS_QUIET) {
+      printf("Real_time: %f Proc_time: %f Total flpins: ", real_time, proc_time);
+      printf(LLDFMT, flpins);
+      printf(" MFLOPS: %f\n", mflops);
+   }
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }

@@ -25,10 +25,10 @@
 #include "papi_test.h"
 
 #ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
+#define OVER_FMT	"handler(%d) Overflow at %x! vector=0x%llx\n"
 #define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
 #elif defined(_WIN32)
-#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
+#define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
 #define OUT_FMT		"%-12s : %16I64d%16I64d%16I64d\n"
 #else
 #define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"

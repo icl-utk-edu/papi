@@ -38,28 +38,33 @@ int wait_exit(int);
 */
 
 #define ONEHDR  " %12s"
+#define TAB2HDR	"%s %12s %12s\n"
+#define TAB3HDR	"%s %12s %12s %12s\n"
+#define TAB4HDR	"%s %12s %12s %12s %12s\n"
 #ifdef _WIN32
 #define ONENUM  " %12I64d"
 #define TAB1	"%s %12I64d\n"
-#define TAB2HDR	"%s %12s %12s\n"
 #define TAB2	"%s %12I64d %12I64d\n"
-#define TAB3HDR	"%s %12s %12s %12s\n"
 #define TAB3	"%s %12I64d %12I64d %12I64d\n"
-#define TAB4HDR	"%s %12s %12s %12s %12s\n"
 #define TAB4	"%s %12I64d %12I64d %12I64d %12I64d\n"
 #define TAB5	"%s %12I64d %12I64d %12I64d %12I64d %12I64d\n"
 #define TWO12	"%12I64d %12I64d  %s"
+#define LLDFMT  "%I64d"
+#define LLDFMT10 "%10I64d"
+#define LLDFMT12 "%12I64d"
+#define LLDFMT15 "%15I64d"
 #else
 #define ONENUM  " %12lld"
 #define TAB1	"%s %12lld\n"
-#define TAB2HDR	"%s %12s %12s\n"
 #define TAB2	"%s %12lld %12lld\n"
-#define TAB3HDR	"%s %12s %12s %12s\n"
 #define TAB3	"%s %12lld %12lld %12lld\n"
-#define TAB4HDR	"%s %12s %12s %12s %12s\n"
 #define TAB4	"%s %12lld %12lld %12lld %12lld\n"
 #define TAB5	"%s %12lld %12lld %12lld %12lld %12lld\n"
 #define TWO12	"%12lld %12lld  %s"
+#define LLDFMT  "%lld"
+#define LLDFMT10 "%10lld"
+#define LLDFMT12 "%12lld"
+#define LLDFMT15 "%15lld"
 #endif
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */

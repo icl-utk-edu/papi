@@ -172,7 +172,7 @@ int case2()
       printf(TAB2, "case2:", values[0], values[1]);
    }
 
-   retval = PAPI_cleanup_eventset(EventSet);    /* JT */
+   retval = PAPI_cleanup_eventset(EventSet);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_cleanup_eventset", retval);
 
@@ -358,14 +358,14 @@ int main(int argc, char **argv)
    case1();
 
    if (!TESTS_QUIET)
-      printf("case2: Does setmpx/add work?\n");
+      printf("\ncase2: Does setmpx/add work?\n");
    case2();
 
    if (!TESTS_QUIET)
-      printf("case3: Does add/setmpx work?\n");
+      printf("\ncase3: Does add/setmpx work?\n");
    case3();
    if (!TESTS_QUIET)
-      printf("case4: Does add/setmpx/add work?\n");
+      printf("\ncase4: Does add/setmpx/add work?\n");
    case4();
    PAPI_library_init(PAPI_VER_CURRENT);
    test_pass(__FILE__, NULL, 0);

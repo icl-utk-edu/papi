@@ -21,12 +21,6 @@
 
 #include "papi_test.h"
 
-#ifdef _WIN32
-#define FORMAT	"min: %I64d max: %I64d  1st: %I64d  2nd: %I64d  3rd:  %I64d 4th: %I64d 5th: %I64d\n"
-#else
-#define FORMAT	"min: %lld max: %lld  1st: %lld  2nd: %lld  3rd:  %lld 4th: %lld 5th: %lld\n"
-#endif
-
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
@@ -154,9 +148,23 @@ int main(int argc, char **argv)
           || values[2][0] < (2 * min) || values[3][0] > (3 * max)
           || values[3][0] < (3 * min)
           || values[3][0] != values[4][0]) {
-         printf(FORMAT, min, max, values[0][0], values[1][0], values[2][0], values[3][0],
-                values[4][0]);
-         test_fail(__FILE__, __LINE__, event_name, 1);
+/*
+         printf("min: ");
+         printf(LLDFMT, min);
+         printf("max: ");
+         printf(LLDFMT, max);
+         printf("1st: ");
+         printf(LLDFMT, values[0][0]);
+         printf("2nd: ");
+         printf(LLDFMT, values[1][0]);
+         printf("3rd: ");
+         printf(LLDFMT, values[2][0]);
+         printf("4th: ");
+         printf(LLDFMT, values[3][0]);
+         printf("5th: ");
+         printf(LLDFMT, values[4][0]);
+         printf("\n");
+*/         test_fail(__FILE__, __LINE__, event_name, 1);
       }
 
       min = (long_long) (values[1][1] * .8);

@@ -99,7 +99,8 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    for (i = 0; i < num_tests; i++) {
-      values[i][0] = -1ll;
+      values[i][0] = -1L;
+/*      values[i][0] = -1ll; */
 
       PAPI_event_code_to_name(eventlist[i], descr);
       if (PAPI_add_event(EventSet, eventlist[i]) != PAPI_OK) {
@@ -120,8 +121,11 @@ int main(int argc, char **argv)
       if ((retval = PAPI_stop(EventSet, values[i])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-      if (!TESTS_QUIET)
-         printf("%3d: Test 0x%08x %-12s %12lld\n", i, eventlist[i], descr, values[i][0]);
+      if (!TESTS_QUIET) {
+         printf("%3d: Test 0x%08x %-12s ", i, eventlist[i], descr);
+         printf(LLDFMT12, values[i][0]);
+         printf("\n");
+      }
       if ((retval = PAPI_remove_event(EventSet, eventlist[i])) != PAPI_OK) {
          abort();
          test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
@@ -131,6 +135,6 @@ int main(int argc, char **argv)
    if ((retval = PAPI_destroy_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
 
-   test_pass(TEST_NAME, values, num_tests);
+   test_pass(__FILE__, values, num_tests);
    exit(1);
 }

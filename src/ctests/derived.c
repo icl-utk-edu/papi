@@ -6,8 +6,8 @@
 
 #ifdef OLD_TEST_DRIVER
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval);
-#define CPP_TEST_PASS() { test_pass(__FILE__, NULL, 0); }
-#define CPP_TEST_SKIP() { test_skip(__FILE__,__LINE__,NULL,0); }
+#define CPP_TEST_PASS() { test_pass(__FILE__, NULL, 0); exit(0); }
+#define CPP_TEST_SKIP() { test_skip(__FILE__,__LINE__,NULL,0); exit(0); }
 #else
 #define CPP_TEST_FAIL(function, retval) { fprintf(stderr,"%s:%d:%s:%d:%s:%s\n",__FILE__,__LINE__,function,retval,PAPI_strerror(retval),"$Id$\n"); test_fail(__FILE__, __LINE__, function, retval); }
 #define CPP_TEST_PASS() { fprintf(stderr,"$Id$\n%s:\tPASSED\n",__FILE__); exit(0); }
@@ -110,7 +110,9 @@ int main(int argc, char **argv)
    if (values == 0)
       CPP_TEST_FAIL("Zero count returned", 0)
    else {
-      QUIETPRINTF("Yes: %lld\n", values);
+      QUIETPRINTF("Yes: ");
+      QUIETPRINTF(LLDFMT, values);
+      QUIETPRINTF("\n");
    }
 
    CPP_TEST_PASS();

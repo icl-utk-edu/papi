@@ -117,22 +117,22 @@ char *argv[];
    if (!TESTS_QUIET) {
       printf("values1 is:\n");
       for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(" %15lld", PAPI_values1[i]);
+         printf(LLDFMT15, PAPI_values1[i]);
 
       printf("\nvalues2 is:\n");
       for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(" %15lld", PAPI_values2[i]);
+         printf(LLDFMT15, PAPI_values2[i]);
       printf("\nvalues3 is:\n");
       for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(" %15lld", PAPI_values3[i]);
+         printf(LLDFMT15, PAPI_values3[i]);
 
 #ifndef RESET
       printf("\nPAPI value (2-1) is : \n");
       for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(" %15lld", PAPI_values2[i] - PAPI_values1[i]);
+         printf(LLDFMT15, PAPI_values2[i] - PAPI_values1[i]);
       printf("\nPAPI value (3-2) is : \n");
       for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(" %15lld", PAPI_values3[i] - PAPI_values2[i]);
+         printf(LLDFMT15, PAPI_values3[i] - PAPI_values2[i]);
 #endif
 
       printf("\n\nVerification:\n");

@@ -1,13 +1,5 @@
 #include "papi_test.h"
 
-#ifdef _WIN32
-char format_string1[] = { "%I64d total cyc,\n%I64d total ins,\n%f %s,\n%f %s\n" };
-char format_string2[] = { "%I64d total cyc,\n%f %s\n" };
-#else
-char format_string1[] = { "%lld total cyc,\n%lld total ins,\n%f %s,\n%f %s\n" };
-char format_string2[] = { "%lld total cyc,\n%f %s\n" };
-#endif
-
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
@@ -65,7 +57,8 @@ int main(int argc, char **argv)
       printf("\n");
 
       printf("\nTotal cost for PAPI_start/stop(2 counters) over 50000 iterations\n");
-      printf(format_string2, totcyc, ((float) totcyc) / 50001.0, "cyc/call pair");
+      printf(LLDFMT, totcyc);
+      printf("total cyc,\n%f cyc/call pair\n",((float) totcyc) / 50001.0);
 
       /* Start the read eval */
       printf("\n\nPerforming read test...\n");
@@ -82,7 +75,8 @@ int main(int argc, char **argv)
 
    if (!TESTS_QUIET) {
       printf("\nTotal cost for PAPI_read(2 counters) over 50000 iterations\n");
-      printf(format_string2, totcyc, ((float) totcyc) / 50001.0, "cyc/call");
+      printf(LLDFMT, totcyc);
+      printf("total cyc,\n%f cyc/call\n",((float) totcyc) / 50001.0);
    }
    test_pass(__FILE__, NULL, 0);
    exit(1);

@@ -46,7 +46,7 @@ int main(int argc, char **argv)
    events[8] = PAPI_TOT_IIS;
 
    for (i = 0; i < MAXEVENTS; i++) {
-      values[i] = 0.;
+      values[i] = 0;
       valsqsum[i] = 0;
       valsum[i] = 0;
    }
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
    t1 = PAPI_get_real_usec() - t1;
 
    if (t2 > t1)                 /* Scale up execution time to match t2 */
-      iters = iters * t2 / t1;
+      iters = iters * ((int)(t2 / t1));
    else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
       test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
 
@@ -128,8 +128,11 @@ int main(int argc, char **argv)
    }
    for (j = 0; j < nevents; j++) {
       PAPI_get_event_info(events[j], &info);
-      if (!TESTS_QUIET)
-         printf("%20s = %lld\n", info.short_descr, values[j]);
+      if (!TESTS_QUIET) {
+         printf("%20s = ", info.short_descr);
+         printf(LLDFMT, values[j]);
+         printf("\n");
+      }
    }
    if (!TESTS_QUIET)
       printf("\n");
@@ -168,8 +171,11 @@ int main(int argc, char **argv)
          printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
       }
       PAPI_get_event_info(events[j], &info);
-      if (!TESTS_QUIET)
-         printf("PAPI results:\n%20s = %lld\n", info.short_descr, refvalues[i]);
+      if (!TESTS_QUIET) {
+         printf("PAPI results:\n%20s = ", info.short_descr);
+         printf(LLDFMT, refvalues[i]);
+         printf("\n");
+      }
    }
    if (!TESTS_QUIET)
       printf("\n");
@@ -183,7 +189,7 @@ int main(int argc, char **argv)
    }
 
    for (j = 0; j < nevents; j++) {
-      spread[j] = abs(refvalues[j] - values[j]);
+      spread[j] = abs((int)(refvalues[j] - values[j]));
       if (values[j])
          spread[j] /= (double) values[j];
       if (!TESTS_QUIET)
@@ -198,8 +204,10 @@ int main(int argc, char **argv)
       printf("\n\n");
       for (j = 0; j < nevents; j++) {
          PAPI_get_event_info(events[j], &info);
-         printf("Event %.2d: ref=%10lld, diff/ref=%7.2g  -- %s\n",
-                j, refvalues[j], spread[j], info.short_descr);
+         printf("Event %.2d: ref=", j);
+         printf(LLDFMT10, refvalues[j]);
+         printf(", diff/ref=%7.2g  -- %s\n", spread[j], info.short_descr);
+         printf("\n");
       }
       printf("\n");
    }

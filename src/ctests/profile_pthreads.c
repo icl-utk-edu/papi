@@ -90,7 +90,7 @@ void *Thread(void *arg)
    remove_test_events(&EventSet1, mask1);
 
    if (!TESTS_QUIET) {
-      if(mask1 = 0x3) {
+      if(mask1 == 0x3) {
          printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
       }
       else {

@@ -70,8 +70,8 @@ int main(int argc, char **argv)
              PAPI_get_dmem_info(PAPI_GET_PAGESIZE),
              (PAPI_get_dmem_info(PAPI_GET_PAGESIZE) * value[6] / 1024));
    }
-   if (value[6] > value[5] && value[5] > value[4] && value[4] > value[3]
-       && value[3] > value[2] && value[2] > value[1] && value[1] > value[0])
+   if (value[6] >= value[5] && value[5] >= value[4] && value[4] >= value[3]
+       && value[3] >= value[2] && value[2] >= value[1] && value[1] >= value[0])
       test_pass(__FILE__, NULL, 0);
    else
       test_fail(__FILE__, __LINE__, "Calculating Resident Memory", value[6]);

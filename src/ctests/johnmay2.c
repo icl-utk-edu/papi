@@ -4,7 +4,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int FPEventSet;
-   long long int values;
+   long_long values;
    int PAPI_event, retval;
    char event_name[PAPI_MAX_STR_LEN];
 
@@ -65,7 +65,9 @@ int main(int argc, char **argv)
       printf("Test case John May 2: cleanup / destroy eventset.\n");
       printf("-------------------------------------------------\n");
       printf("Test run    : \t1\n");
-      printf("%s : \t%lld\n", event_name, values);
+      printf("%s : \t", event_name);
+      printf(LLDFMT, values);
+      printf("\n");
       printf("-------------------------------------------------\n");
       printf("Verification:\n");
       printf("These error messages:\n");

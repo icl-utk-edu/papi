@@ -38,7 +38,7 @@ long get_cyc()
 
 static int point = 0;
 static int EventSet = PAPI_NULL;
-static long long us;
+static long_long us;
 static const PAPI_hw_info_t *hwinfo;
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
@@ -134,6 +134,7 @@ void papimon_start(void)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 #elif ((defined(_AIX)) || \
        (defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )) || \
+       (defined(_WIN32)) || \
        (defined(linux) && defined(__ia64__)) || \
        (defined(mips) && defined(sgi) && defined(unix)) || \
        (defined(sun) && defined(sparc)) || \
@@ -162,7 +163,7 @@ void papimon_start(void)
 void papimon_stop(void)
 {
    int i, retval;
-   long long values[8];
+   long_long values[8];
    float rsec;
 #if defined(_AIX)
    float csec;
@@ -174,7 +175,7 @@ void papimon_stop(void)
 
    if (!TESTS_QUIET) {
       fprintf(stderr, "-------------Monitor Point %d-------------\n", point);
-      rsec = (float) us / 1000000.0;
+      rsec = (float)(us / 1000000.0);
       fprintf(stderr, "Real Elapsed Time in sec.  : %f\n", rsec);
 #if defined(_AIX)
 #if defined(_POWER4)
@@ -219,12 +220,15 @@ void papimon_stop(void)
               100.0 * (float) values[6] / ((float) values[1] + (float) values[4]));
 #endif
 #elif ((defined(linux) && ( defined(__i386__) || defined(__x86_64__) )) || \
+       (defined(_WIN32)) || \
        (defined(linux) && defined(__ia64__)) || \
        (defined(mips) && defined(sgi)) || \
        (defined(sun) && defined(sparc)) || \
        (defined(__ALPHA) && defined(__osf__)))
       for (i = 0; native_name[i] != NULL; i++) {
-         fprintf(stderr, "%-40s: %lld\n", native_name[i], values[i]);
+         fprintf(stderr, "%-40s: ", native_name[i]);
+         fprintf(stderr, LLDFMT, values[i]);
+         fprintf(stderr, "\n");
       }
 #elif defined(_CRAYT3E)
       fprintf(stderr, "Machine Cycles                    : %lld\n", values[0]);

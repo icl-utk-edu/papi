@@ -5,12 +5,13 @@
 
 #include "papi_test.h"
 
-#define INDEX 500
 
 #ifdef _WIN32
-char format_string[] = { "Real_time: %f Proc_time: %f Total ins: %I64d IPC: %f\n" };
+#define INDEX 275 /* This fixes stack overflow on Windows.
+		     It shouldn't be needed using the Windows /F switch
+		     but I can't seem to make that switch work */
 #else
-char format_string[] = { "Real_time: %f Proc_time: %f Total ins: %lld IPC: %f\n" };
+#define INDEX 500
 #endif
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
@@ -48,8 +49,11 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_ipc", retval);
    dummy((void *) mresult);
 
-   if (!TESTS_QUIET)
-      printf(format_string, real_time, proc_time, ins, ipc);
+   if (!TESTS_QUIET) {
+      printf("Real_time: %f Proc_time: %f Total ins: ", real_time, proc_time);
+      printf(LLDFMT, ins);
+      printf(" IPC: %f\n", ipc);
+   }
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }

@@ -50,7 +50,7 @@ int main(int argc, char **argv)
    events[8] = PAPI_TOT_IIS;
 
    for (i = 0; i < MAXEVENTS; i++) {
-      values[i] = 0.;
+      values[i] = 0;
       valsqsum[i] = 0;
       valsum[i] = 0;
    }
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
    t1 = PAPI_get_real_usec() - t1;
 
    if (t2 > t1)                 /* Scale up execution time to match t2 */
-      iters = iters * t2 / t1;
+      iters = iters * (int)(t2 / t1);
    else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
       test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
 
@@ -143,8 +143,11 @@ int main(int argc, char **argv)
       }
       for (j = 0; j < nevents; j++) {
          PAPI_get_event_info(events[j], &info);
-         if (!TESTS_QUIET)
-            printf("%20s = %lld\n", info.short_descr, values[j]);
+         if (!TESTS_QUIET) {
+            printf("%20s = ", info.short_descr);
+            printf(LLDFMT, values[j]);
+            printf("\n");
+	 }
          dtmp = (double) values[j];
          valsum[j] += dtmp;
          valsqsum[j] += dtmp * dtmp;
