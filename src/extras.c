@@ -215,26 +215,6 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
 */
 }
 
-/* find the first set bit in long long */
-int _papi_hwi_ffsll(long_long lli)
-{
-   int i, num, t, tmpint, len;
-
-   num=sizeof(long_long)/sizeof(int);
-   len = sizeof(int)*CHAR_BIT;
-
-   for(i=0; i< num; i++ ) {
-      tmpint = (int)( ( (lli>>len)<<len) ^ lli );
- 
-      t=ffs(tmpint);
-      if ( t ) {
-         return(t+i*len);
-      }
-      lli = lli>>len;
-   }
-   return PAPI_OK;
-}
-
 /* if isHardware is true, then the processor is using hardware overflow,
    else it is using software overflow. Use this parameter instead of 
    _papi_hwi_system_info.supports_hw_overflow is in CRAY some processors

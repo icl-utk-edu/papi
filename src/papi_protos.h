@@ -69,7 +69,6 @@ extern int _papi_hwi_initialize(DynamicArray_t **);
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
 */
 extern void _papi_hwi_dispatch_overflow_signal(void *context, int, long_long, int);
-extern int _papi_hwi_ffsll(long_long lli);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
@@ -210,6 +209,31 @@ extern int _papi_hwd_get_memory_info(PAPI_hw_info_t *, int);
 #ifdef linux
 extern int sighold(int);
 extern int sigrelse(int);
+#endif
+
+/* find the first set bit in long long */
+
+#ifndef HAVE_FFSLL
+inline_static int _papi_hwi_ffsll(long_long lli)
+{
+   int i, num, t, tmpint, len;
+
+   num = sizeof(long_long)/sizeof(int);
+   len = sizeof(int)*CHAR_BIT;
+
+   for(i=0; i< num; i++ ) {
+      tmpint = (int)( ( (lli>>len)<<len) ^ lli );
+ 
+      t=ffs(tmpint);
+      if ( t ) {
+         return(t+i*len);
+      }
+      lli = lli>>len;
+   }
+   return PAPI_OK;
+}
+#else
+#define _papi_hwi_ffsll ffsll
 #endif
 
 #endif                          /* PAPI_PROTOS_H */

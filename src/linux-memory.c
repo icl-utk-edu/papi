@@ -74,9 +74,9 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 
    /* This works only because an empty cache element is initialized to 0 */
    DBG((stderr, "Detected L1: %d L2: %d  L3: %d\n",
-        hw_info->level[0].cache[0].size + hw_info->level[0].cache[1].size, 
-        hw_info->level[1].cache[0].size + hw_info->level[1].cache[1].size, 
-        hw_info->level[2].cache[0].size + hw_info->level[2].cache[1].size));
+        hw_info->mem_hierarchy.level[0].cache[0].size + hw_info->mem_hierarchy.level[0].cache[1].size, 
+        hw_info->mem_hierarchy.level[1].cache[0].size + hw_info->mem_hierarchy.level[1].cache[1].size, 
+        hw_info->mem_hierarchy.level[2].cache[0].size + hw_info->mem_hierarchy.level[2].cache[1].size));
    return retval;
 }
 

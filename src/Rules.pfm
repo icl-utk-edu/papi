@@ -31,7 +31,11 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 
 ifeq (,$(PFM_PREFIX))
 PFM ?= ./libpfm-$(VERSION)
+ifeq (2.0,$(VERSION))
 PFM_LIB_PATH ?= $(PFM)/libpfm
+else
+PFM_LIB_PATH ?= $(PFM)/lib
+endif
 PFM_INC_PATH ?= $(PFM)/include
 else
 PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
@@ -46,7 +50,7 @@ MEMSUBSTR= linux-ia64
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU)
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) -D__USE_GNU -DHAVE_FFSLL
 
 CFLAGS-2.0 := -DPFM20
 CFLAGS-3.0 := -DPFM30
