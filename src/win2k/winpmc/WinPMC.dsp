@@ -2,7 +2,7 @@
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
-# TARGTYPE "Win32 (x86) Generic Project" 0x010a
+# TARGTYPE "Win32 (x86) External Target" 0x0106
 
 CFG=WinPMC - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
@@ -17,15 +17,14 @@ CFG=WinPMC - Win32 Debug
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "WinPMC - Win32 Release" (based on "Win32 (x86) Generic Project")
-!MESSAGE "WinPMC - Win32 Debug" (based on "Win32 (x86) Generic Project")
+!MESSAGE "WinPMC - Win32 Release" (based on "Win32 (x86) External Target")
+!MESSAGE "WinPMC - Win32 Debug" (based on "Win32 (x86) External Target")
 !MESSAGE 
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-MTL=midl.exe
 
 !IF  "$(CFG)" == "WinPMC - Win32 Release"
 
@@ -33,24 +32,40 @@ MTL=midl.exe
 # PROP BASE Use_Debug_Libraries 0
 # PROP BASE Output_Dir "Release"
 # PROP BASE Intermediate_Dir "Release"
+# PROP BASE Cmd_Line "NMAKE /f WinPMC.mak"
+# PROP BASE Rebuild_Opt "/a"
+# PROP BASE Target_File "WinPMC.exe"
+# PROP BASE Bsc_Name "WinPMC.bsc"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
+# PROP Cmd_Line "ddkbuild -W2k free ."
+# PROP Rebuild_Opt "/a"
+# PROP Target_File "WinPMC.exe"
+# PROP Bsc_Name "WinPMC.bsc"
 # PROP Target_Dir ""
 
 !ELSEIF  "$(CFG)" == "WinPMC - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "Debug"
-# PROP BASE Intermediate_Dir "Debug"
+# PROP BASE Output_Dir "WinPMC___Win32_Debug"
+# PROP BASE Intermediate_Dir "WinPMC___Win32_Debug"
+# PROP BASE Cmd_Line "NMAKE /f WinPMC.mak"
+# PROP BASE Rebuild_Opt "/a"
+# PROP BASE Target_File "WinPMC.exe"
+# PROP BASE Bsc_Name "WinPMC.bsc"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
-# PROP Intermediate_Dir "Debug"
+# PROP Output_Dir "WinPMC___Win32_Debug"
+# PROP Intermediate_Dir "WinPMC___Win32_Debug"
+# PROP Cmd_Line "ddkbuild -W2k checked ."
+# PROP Rebuild_Opt "/a"
+# PROP Target_File "WinPMC.exe"
+# PROP Bsc_Name "WinPMC.bsc"
 # PROP Target_Dir ""
 
 !ENDIF 
@@ -59,28 +74,35 @@ MTL=midl.exe
 
 # Name "WinPMC - Win32 Release"
 # Name "WinPMC - Win32 Debug"
+
+!IF  "$(CFG)" == "WinPMC - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "WinPMC - Win32 Debug"
+
+!ENDIF 
+
 # Begin Group "Source Files"
 
-# PROP Default_Filter "c"
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\sys\pmc_x86.c
+SOURCE=.\pmc_x86.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys\WinPMC.c
+SOURCE=.\WinPMC.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
-# PROP Default_Filter "h"
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\sys\pmc_kernel.h
+SOURCE=.\pmc_kernel.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys\pmc_x86.h
+SOURCE=.\pmc_x86.h
 # End Source File
 # Begin Source File
 
@@ -92,19 +114,19 @@ SOURCE=.\WinPMC.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\bldpmc.bat
+SOURCE=.\instpmcchk.bat
 # End Source File
 # Begin Source File
 
-SOURCE=.\buildchk.wrn
+SOURCE=.\instpmcfre.bat
 # End Source File
 # Begin Source File
 
-SOURCE=.\dirs
+SOURCE=.\MAKEFILE
 # End Source File
 # Begin Source File
 
-SOURCE=.\sys\SOURCES
+SOURCE=.\SOURCES
 # End Source File
 # End Group
 # End Target
