@@ -356,26 +356,28 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
 #if defined(__ALPHA) && defined(__osf__)
     papi_return(PAPI_ESBSTR);
 #endif
-  if ((id_fn == NULL) || (flag != 0) || (default_master_eventset == NULL))
+  if (default_master_eventset == NULL)
     papi_return(PAPI_EINVAL);
     
+#if 0
   if (thread_id_fn != NULL)
     {
       fprintf(stderr, PAPI_THREAD_INIT_str);
       exit(1);
     }
+#endif
 
   thread_id_fn = id_fn;
   
-  /* Now change the master event's thread id from 0 to the
+  /* Now change the master event's thread id from getpid() to the
      real thread id */
 
   /* By default, the initial master eventset has TID of -1. This will
      get changed if the user enables threads with PAPI_thread_init(). */
 
-  default_master_eventset->tid = (*thread_id_fn)();
-
-  _papi_hwi_insert_in_master_list(default_master_eventset);
+  if (thread_id_fn)
+	{ default_master_eventset->tid = (*thread_id_fn)();
+  _papi_hwi_insert_in_master_list(default_master_eventset); }
   
   papi_return(PAPI_OK);
 }
@@ -407,7 +409,9 @@ static int initialize_master_eventset(EventSetInfo **master)
 
   if (thread_id_fn)
     (*master)->tid = (*thread_id_fn)();
-
+  else
+    (*master)->tid = getpid();
+	
   papi_return(PAPI_OK);
 }
 
@@ -1851,11 +1855,12 @@ again:
 
   /* Here call shutdown on the other threads */
 
+  _papi_hwi_shutdown_the_thread_list();
   _papi_hwi_cleanup_master_list();
 
   /* Clean up thread stuff */
 
-  thread_id_fn = NULL;
+  PAPI_thread_init(NULL,0);
 
   /* Free up some memory */
 

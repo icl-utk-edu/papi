@@ -146,6 +146,20 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }
 
+void _papi_hwi_shutdown_the_thread_list(void)
+{
+  EventSetInfoList *tmp;
+
+  _papi_hwd_lock();
+  while (head)
+    {
+      tmp = head;
+      head = head->next;
+      DBG((stderr,"Shutting down master thread %x at %p\n",tmp->master->tid,tmp));
+      _papi_hwd_shutdown(tmp->master);
+    }
+  _papi_hwd_unlock();
+}
 void _papi_hwi_cleanup_master_list(void)
 {
   EventSetInfoList *tmp;
@@ -155,7 +169,6 @@ void _papi_hwi_cleanup_master_list(void)
     {
       tmp = head;
       head = head->next;
-      _papi_hwd_shutdown(tmp->master);
       DBG((stderr,"Freeing master thread %ld at %p\n",tmp->master->tid,tmp));
       free(tmp);
     }

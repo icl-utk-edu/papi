@@ -1222,13 +1222,18 @@ void _papi_hwi_lookup_thread_symbols(void)
       assert(retval == 0);
     }
 #if defined(sun)
-  thread_kill_fn = (int (*)(int, int))dlsym(handle,"thr_kill");
-  if (thread_kill_fn == NULL)
-    thread_kill_fn = (int (*)(int, int))dlsym(handle,"pthread_kill");
+  symbol = dlsym(handle,"thr_kill");
+  if (symbol == NULL)
+    symbol = dlsym(handle,"pthread_kill");
 #elif defined(_AIX)
-  thread_kill_fn = (int (*)(int, int))dlsym(handle,"pthread_kill");
+  symbol = dlsym(handle,"pthread_kill");
 #endif
-  assert(thread_kill_fn != NULL);
+    error = dlerror();
+  if ((error == NULL) && (symbol))
+    {
+      thread_kill_fn = (int (*)(int, int))symbol;
+    }
+  assert(((thread_id_fn == NULL) && (thread_kill_fn == NULL)) || ((thread_id_fn) && (thread_kill_fn)));
   dlclose(handle);
 }
 #endif

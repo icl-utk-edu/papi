@@ -288,7 +288,8 @@ extern int MPX_start(MPX_EventSet * mpx_events);
 
 /* The following functions are defined by the extras.c file. */
 
-void _papi_hwi_cleanup_master_list(void);
+extern void _papi_hwi_shutdown_the_thread_list(void);
+extern void _papi_hwi_cleanup_master_list(void);
 extern int _papi_hwi_insert_in_master_list(EventSetInfo *ptr);
 extern EventSetInfo *_papi_hwi_lookup_in_master_list();
 extern int _papi_hwi_stop_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
