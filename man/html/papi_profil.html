@@ -312,8 +312,7 @@ The profiling routines have no Fortran interface.
 </A>
 <BLOCKQUOTE>
 <!-- .B PAPI_profil()  -->
-<B>PAPI_profil()</B> uses its first four parameters to create the data structures needed by PAPI_sprofil
-and then calls PAPI_sprofil to do the work.
+<B>PAPI_profil()</B> uses its first four parameters to create the data structures needed by PAPI_sprofil and then calls PAPI_sprofil to do the work. The user can use more than one event to generate more than one histogram in one eventset. For example, if you want to use two events to generate two histograms while running your program once, then you just call PAPI_profil twice.
 <P>
 <!-- .B PAPI_sprofil() -->
 <B>PAPI_sprofil()</B> assumes a preinitialized sprofil structure, and initiates profiling based on its values.

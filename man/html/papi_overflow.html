@@ -313,8 +313,9 @@ to begin registering overflows;
 <!-- .I threshold -->
 <I>threshold</I> events are counted. More than one event in an event set can be used as
 an overflow trigger.
-<!-- .B To turn off overflow, set the threshold to 0. -->
-<B>To turn off overflow, set the threshold to 0.</B> <P>
+<!-- .B To turn off overflow, set the threshold to 0. If you see negative number -->
+<B>To turn off overflow, set the threshold to 0. If you see negative number</B> or small number for the result of the overflow events, don&#146;t be surprised.  To reduce the overhead of PAPI_read, we don&#146;t adjust the number. If the platform use hardware overflow, then you can based on the threshold and how many times it overflowed, you can get an approximate number.
+<P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
