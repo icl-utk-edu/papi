@@ -6,7 +6,7 @@ MEMSUBSTR= solaris
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
 TARGETS	= multiplex_and_pthreads serial
-SHLIBDEPS = /usr/lib/libcpc.so
+SHLIBDEPS = -lcpc
 #
 # Sun Workshop compilers: V5.0 and V6.0 R2
 #

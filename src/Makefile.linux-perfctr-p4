@@ -1,5 +1,6 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	= ./perfctr-2.3.12
+PERFCTR = ./perfctr
+PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -g -Wall -DDEBUG
 TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS -DPENTIUM4
 #
@@ -46,7 +47,7 @@ CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPER
 MISCSRCS= linux.c p4_events.c
 MISCOBJS= libperfctr.o linux.o p4_events.o
 MISCHDRS= perfctr-p4.h
-SHLIBDEPS = $(PERFCTR)/usr.lib/libperfctr.so
+SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 
 include Makefile.inc
 
