@@ -90,19 +90,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\tests\do_loops.c
+SOURCE=..\..\ctests\do_loops.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\tests\dummy.c
+SOURCE=..\..\ctests\dummy.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\tests\test_utils.c
+SOURCE=..\..\ctests\test_utils.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\tests\zero.c
+SOURCE=..\..\ctests\zero.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -110,11 +110,11 @@ SOURCE=..\..\tests\zero.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\..\tests\papi_test.h
+SOURCE=..\..\ctests\papi_test.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\tests\test_utils.h
+SOURCE=..\..\ctests\test_utils.h
 # End Source File
 # End Group
 # End Target
