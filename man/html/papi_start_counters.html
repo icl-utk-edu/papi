@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_start_counters 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_start_counters 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,7 +268,7 @@ PAPI_start_counters - PAPI High Level: start counting hardware events
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -307,8 +307,9 @@ PAPI_start_counters - PAPI High Level: start counting hardware events
 <BLOCKQUOTE>
 <!-- .B PAPI_start_counters(\|) -->
 <B>PAPI_start_counters()</B> starts counting the events named in the events array.  This function
-implicitly stops and initializes any counters running as a result of
-a previous call to PAPI_start_counters().  It is the user&#146;s responsibility
+can&#146;t be called if the events array is already running. The user must
+call PAPI_stop_counters to stop the events explicitly if you want to
+call this function again.  It is the user&#146;s responsibility
 to choose events that can be counted simultaneously by reading the
 vendor&#146;s documentation.  The length of the event array should be no longer
 than the value returned by
@@ -357,6 +358,13 @@ On success, this function returns
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 One or more of the arguments is invalid.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EISRUN" -->
+<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Counters already been started, you must call PAPI_stop_counters before
+you call this function again.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -414,16 +422,17 @@ The PAPI preset is not available on the underlying hardware.
 </TT><TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 <!-- resetStyles [FTT] -->
 </TT></BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -447,14 +456,11 @@ This function has no known bugs.
 <A HREF="papi_num_counters.html">PAPI_num_counters (3)</A>,
 <!-- .BR PAPI_read_counters "(3)," -->
 <A HREF="papi_read_counters.html">PAPI_read_counters (3)</A>,
-<!-- .BR PAPI_stop_counters "(3)," -->
-<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A>,
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .BR PAPI_stop_counters "(3)" -->
+<A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_start_counters (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_start_counters (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

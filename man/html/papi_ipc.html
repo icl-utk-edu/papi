@@ -1,9 +1,9 @@
-<!-- .\" $Id$ -->
-<!-- .TH PAPI_query_event 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5 -->
+<!-- .TH PAPI_ipc 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_query_event(3)</TITLE>
+Manual Page - PAPI_ipc(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,12 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_query_event - query if PAPI event exists
-<BR>
- PAPI_query_event_verbose - query details of a PAPI event
-<BR>
- PAPI_query_all_events_verbose - acquire details of all PAPI events
-<P>
+PAPI_ipc - PAPI High level: Simplified call to get instructions per cycle, real and processor time
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -273,7 +268,7 @@ PAPI_query_event - query if PAPI event exists
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -288,12 +283,8 @@ PAPI_query_event - query if PAPI event exists
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int PAPI_query_event(int " EventCode ");" -->
-<B>int PAPI_query_event(int </B><I>EventCode</I><B>);</B> 
-<!-- .BI "int PAPI_query_event_verbose(int " EventCode ", PAPI_preset_info_t *" info ");" -->
-<B>int PAPI_query_event_verbose(int </B><I>EventCode</I><B>, PAPI_preset_info_t *</B><I>info</I><B>);</B> 
-<!-- .BI "const PAPI_preset_info_t* PAPI_query_all_events_verbose(\|);" -->
-<B>const PAPI_preset_info_t* PAPI_query_all_events_verbose();</B> 
+<!-- .BI "int PAPI_ipc (float *" rtime ", float *" ptime ", long_long *" ins ", float *" ipc ");" -->
+<B>int PAPI_ipc (float *</B><I>rtime</I><B>, float *</B><I>ptime</I><B>, long_long *</B><I>ins</I><B>, float *</B><I>ipc</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -301,12 +292,8 @@ PAPI_query_event - query if PAPI event exists
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check ) -->
-<B>PAPIF_query_event(C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\ \  -->
-<B>PAPIF_query_event_verbose(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventName, </I> 
-           C_STRING EventDescr,  C_STRING EventLabel,  C_INT  avail, 
-           C_STRING EventNote,  C_INT  flags,  C_INT  check )
+<!-- .BI PAPIF_ipc(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  ins,\  C_FLOAT\  ipc,\  C_INT\  check ) -->
+<B>PAPIF_ipc(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>ins, </I><B>C_FLOAT </B><I>ipc, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -318,26 +305,17 @@ PAPI_query_event - query if PAPI event exists
 
 </A>
 <BLOCKQUOTE>
-<!-- .B "PAPI_query_event()" -->
-<B>PAPI_query_event()</B> asks the PAPI library if the PAPI Preset event can be counted on this
-architecture. If the event CAN be counted, the function returns
-PAPI_OK.  If the event CANNOT be counted, the function returns an
-error code.  On some platforms, this function also can be used to
-check the syntax of a native event.
+<!-- .LP -->
 <P>
-<!-- .B "PAPI_query_event_verbose()" -->
-<B>PAPI_query_event_verbose()</B> asks the PAPI library for a copy of an event descriptor. This
-descriptor can then be used to investigate the details about the
-event. In Fortran, the individual fields in the descriptor are
-returned as parameters.
-<P>
-<!-- .B "PAPI_query_all_events_verbose()" -->
-<B>PAPI_query_all_events_verbose()</B> is implemented only in C. It asks the PAPI library to return a pointer
-to an array of event descriptors. The number of objects in the array is
-<!-- .B PAPI_MAX_PRESET_EVENTS -->
-<B>PAPI_MAX_PRESET_EVENTS</B> and each object is a descriptor as returned by
-<!-- .B PAPI_query_event_verbose(\|). -->
-<B>PAPI_query_event_verbose().</B> <P>
+The first call to
+<!-- .B PAPI_ipc(\|) -->
+<B>PAPI_ipc()</B> will initialize the PAPI High Level interface, set up the counters
+to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters.
+Subsequent calls will read the counters and return total real time,
+total process time, total instructions since the start
+of the measurement and the instructions per cycle rate since latest call to
+<!-- .B PAPI_ipc(\|). -->
+<B>PAPI_ipc().</B> <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -346,37 +324,20 @@ to an array of event descriptors. The number of objects in the array is
 
 </A>
 <BLOCKQUOTE>
-<!-- .I EventCode -->
-<I>EventCode</I> -- a defined event such as PAPI_TOT_INS.
+<!-- .I *rtime  -->
+<I>*rtime</I> -- total realtime since the first PAPI_ipc() call
 <!-- .LP -->
 <P>
-<!-- .I EventName -->
-<I>EventName</I> -- the event name as described in
-<!-- .BR PAPI_presets(3) . -->
-<A HREF="papi_presets.html">PAPI_presets (3)</A> .
+<!-- .I *ptime  -->
+<I>*ptime</I> -- total process time since the first PAPI_ipc() call
 <!-- .LP -->
 <P>
-<!-- .I EventDescr -->
-<I>EventDescr</I> -- a descriptive string for the event of length less than
-<!-- .BR PAPI_MAX_STR_LEN . -->
-<B>PAPI_MAX_STR_LEN</B>. <!-- .LP -->
-<P>
-<!-- .I EventLabel -->
-<I>EventLabel</I> -- a short descriptive label for the event of length less than 18 characters.
+<!-- .I *flpins, flpops  -->
+<I>*flpins, flpops</I> -- total instructions since the first call
 <!-- .LP -->
 <P>
-<!-- .I avail -->
-<I>avail</I> -- zero if the event CANNOT be counted.
-<!-- .LP -->
-<P>
-<!-- .I EventNote -->
-<I>EventNote</I> -- additional text information about an event if available.
-<!-- .LP -->
-<P>
-<!-- .I flags -->
-<I>flags</I> -- provides additional information about an event, e.g.,
-<!-- .B "PAPI_DERIVED"  -->
-<B>PAPI_DERIVED</B> for an event derived from 2 or more other events.
+<!-- .I *ipc  -->
+<I>*ipc</I> -- instructions per cycle achieved since the previous call
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -386,16 +347,10 @@ to an array of event descriptors. The number of objects in the array is
 
 </A>
 <BLOCKQUOTE>
-On success,
-<!-- .BR PAPI_query_event " and " PAPI_query_event_verbose " return" -->
-<B>PAPI_query_event</B> and <B>PAPI_query_event_verbose</B> return <!-- .B "PAPI_OK" , -->
-<B>PAPI_OK ,</B> and on error, a non-zero error code is returned.
-<P>
-<!-- .B PAPI_query_all_events_verbose -->
-<B>PAPI_query_all_events_verbose</B> returns a pointer to an array of
-<!-- .I PAPI_preset_info_t  -->
-<I>PAPI_preset_info_t</I> structures on success, and a NULL pointer on error.
-<P>
+On success, this function returns
+<!-- .B "PAPI_OK." -->
+<B>PAPI_OK.</B> <BR>
+ On error, a non-zero error code is returned.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -405,87 +360,26 @@ On success,
 
 </A>
 <BLOCKQUOTE>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EINVAL" -->
-<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOTPRESET" -->
-<B>PAPI_ENOTPRESET</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The hardware event specified is not a valid PAPI preset.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVNT" -->
-<B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The PAPI preset is not available on the underlying hardware.
 <P>
 <!-- .SH EXAMPLES -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
+</BLOCKQUOTE>
 <A name=6>
 
      <H3>EXAMPLES</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .nf -->
-<PRE>
-<!-- .if t .ft CW -->
-<TT>int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-int retval,i;
-PAPI_preset_info_t info;
-PAPI_preset_info_t *infostructs;
 <P>
-/* Initialize the library */
-<P>
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-<P>
-if (retval != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library init error!\n");
-  exit(1); }
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
-  fprintf(stderr,"No instruction counter? How lame.\n");
-  exit(1);
-  }
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if (PAPI_query_event_verbose(PAPI_TOT_INS,&info) != PAPI_OK) {
-  fprintf(stderr,"No instruction counter? How lame.\n");
-  exit(1);
-  }
-<P>
-if(info.avail)
-  printf("This event is available on this hardware.\n");
-<P>
-if(info.flags & PAPI_DERIVED)
-  printf("This event is a derived event on this hardware.\n");
-<P>
-retval=0;
-infostructs=PAPI_query_all_events_verbose();
-if(infostructs)
-  for(i=0;i&lt;PAPI_MAX_PRESET_EVENTS;i++)
-    if(infostructs[i].avail)
-      retval += 1;
-<P>
-<!-- .if t .ft P -->
-</TT><!-- .fi -->
-</PRE>
-<P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -495,7 +389,7 @@ Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
@@ -505,26 +399,13 @@ These functions have no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_preset "(3), " PAPI_native "(3), " -->
-<A HREF="papi_preset.html">PAPI_preset (3)</A>, 
-<A HREF="papi_native.html">PAPI_native (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
-<!-- .BR PAPI_rem_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_rem_events.html">PAPI_rem_events (3)</A>, 
-<A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
+<!-- .BR "PAPI_accum (3)", "PAPI_flips (3)", "PAPI_flops (3)" -->
+<A HREF="papi_accum.html">PAPI_accum (3)</A> ,
+<A HREF="papi_flips.html">PAPI_flips (3)</A> ,
+<A HREF="papi_flops.html">PAPI_flops (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_query_event (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_ipc (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

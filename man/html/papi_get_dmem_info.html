@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_read 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_dmem_info 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_read(3)</TITLE>
+Manual Page - PAPI_get_dmem_info(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,8 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_read, PAPI_accum - read hardware events, accumulate and reset hardware
-events from an event set
+PAPI_get_dmem_info - get information about the dynamic memory usage of the current program
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -265,15 +264,16 @@ events from an event set
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Arguments</A><BR>
-<A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#3>Note</A><BR>
+<A HREF=#4>Arguments</A><BR>
+<A HREF=#5>Return Values</A><BR>
+<A HREF=#6>Errors</A><BR>
+<A HREF=#7>Example</A><BR>
+<A HREF=#8>Authors</A><BR>
+<A HREF=#9>Bugs</A><BR>
+<A HREF=#10>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=11>
 
      <H3>SYNOPSIS</H3>
 
@@ -284,21 +284,8 @@ events from an event set
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_read(int " EventSet ", long_long *" values ");" -->
-<B>int PAPI_read(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
-<!-- .BI "int\ PAPI_accum(int " EventSet ", long_long *" values ");" -->
-<B>int PAPI_accum(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
-<!-- .fi -->
-</PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
-<PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
-<!-- .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
-<B>PAPIF_read(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
-<B>PAPIF_accum(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI " long PAPI_get_dmem_info(int option);" -->
+<B> long PAPI_get_dmem_info(int option);</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -310,52 +297,52 @@ events from an event set
 
 </A>
 <BLOCKQUOTE>
-<!-- .B PAPI_read() -->
-<B>PAPI_read()</B> copies the counters of the indicated event set into
-the array
-<!-- .IR values . -->
-<I>values</I>. The counters continue counting after the read.
-<!-- .LP -->
+In C, this function returns a pointer to a structure containing information
+about the memory hardware on which the program runs. There is no Fortran equivalent call.
 <P>
-<!-- .B PAPI_accum() -->
-<B>PAPI_accum()</B> adds the counters of the indicated event set into the array
-<!-- .IR values . -->
-<I>values</I>. The counters are zeroed and continue counting after the operation.
-<!-- .B NOTE: -->
-<B>NOTE:</B> <P>
-<!-- .SH ARGUMENTS -->
+<!-- .SH NOTE -->
 </BLOCKQUOTE>
 <A name=3>
+
+     <H3>NOTE</H3>
+
+</A>
+<BLOCKQUOTE>
+The exact calling syntax and returned information for this function is likely to change.
+<P>
+<!-- .SH ARGUMENTS -->
+</BLOCKQUOTE>
+<A name=4>
 
      <H3>ARGUMENTS</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .I EventSet -->
-<I>EventSet</I> --  an integer handle for a PAPI Event Set as created by
-<!-- .BR "PAPI_create_eventset" (3) -->
-<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
 <!-- .LP -->
 <P>
-<!-- .I *values -->
-<I>*values</I> -- an array to hold the counter values of the counting events
+<!-- .I option -->
+<I>option</I> --  Can currently be one of the following:
+<!-- .B PAPI_GET_SIZE  -->
+<B>PAPI_GET_SIZE</B> (Size of process image in pages),
+<!-- .B PAPI_GET_RESSIZE  -->
+<B>PAPI_GET_RESSIZE</B> (Resident set size in pages),
+<!-- .B PAPI_GET_PAGESIZE  -->
+<B>PAPI_GET_PAGESIZE</B> (Pagesize in bytes).
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
-<A name=4>
+<A name=5>
 
      <H3>RETURN VALUES</H3>
 
 </A>
 <BLOCKQUOTE>
-On success, these functions return
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
+On success, this function returns the positive value of the specified option.
+On error a negative error value is returned.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=6>
 
      <H3>ERRORS</H3>
 
@@ -366,71 +353,50 @@ On success, these functions return
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
+The value of
+<!-- .I option  -->
+<I>option</I> is invalid.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ESYS" -->
-<B>PAPI_ESYS</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-A system or C library call failed inside PAPI, see the
-<!-- .I "errno" -->
-<I>errno</I> variable.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVST" -->
-<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The event set specified does not exist.
+<!-- .B "PAPI_SYS" -->
+<B>PAPI_SYS</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+A system error occured.
 <P>
-<!-- .SH EXAMPLES -->
+<!-- .SH EXAMPLE -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
+<A name=7>
 
-     <H3>EXAMPLES</H3>
+     <H3>EXAMPLE</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .LP -->
+<P>
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-  long_long values[1] = (long_long) 0;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
+<TT>   int retval;
 <P>
-  /* Add Total Instructions Executed to our EventSet */
+   if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+   exit(1);
 <P>
-  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+      handle_error(retval);
 <P>
-  /* Start counting */
-<P>
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  poorly_tuned_function();
-<P>
-  if (PAPI_accum(EventSet, values) != PAPI_OK)
-    handle_error(1);
-<P>
-  printf("%lld\n",values[0]);
-<P>
-  poorly_tuned_function();
-<P>
-  if (PAPI_stop(EventSet, values) != PAPI_OK)
-    handle_error(1);
-<P>
-  printf("%lld\n",values[0]);
+   printf("Resident Size in Pages: %ld  Size in Pages: %ld  Pagesize in bytes: %ld0,
+           PAPI_get_dmem_info(PAPI_GET_RESSIZE),
+           PAPI_get_dmem_info(PAPI_GET_SIZE),
+           PAPI_get_dmem_info(PAPI_GET_PAGESIZE));
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
 <!-- .SH AUTHORS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
      <H3>AUTHORS</H3>
 
@@ -441,34 +407,35 @@ The PAPI Team. See them at the PAPI Web Site:
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+If called before
+<!-- .B PAPI_library_init() -->
+<B>PAPI_library_init()</B> the behavior of the routine is undefined.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=10>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_add_event "(3), " PAPI_reset "(3), " -->
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<A HREF="papi_reset.html">PAPI_reset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
+<!-- .BR PAPI_library_init "(3), " -->
+<A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
+<!-- .BR PAPI_get_opt "(3), "  -->
+<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>, 
+<!-- .BR PAPI_get_hardware_info "(3), " -->
+<A HREF="papi_get_hardware_info.html">PAPI_get_hardware_info (3)</A>, 
+<!-- .BR PAPI_get_executable_info "(3)" -->
+<A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_read (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_dmem_info (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

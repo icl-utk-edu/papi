@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_hardware_info 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_hardware_info 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_get_hardware_info - get the info about the system hardware
+PAPI_get_hardware_info - get information about the system hardware
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -264,15 +264,17 @@ PAPI_get_hardware_info - get the info about the system hardware
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Arguments</A><BR>
-<A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Example</A><BR>
-<A HREF=#7>Author</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#3>Note</A><BR>
+<A HREF=#4>Arguments</A><BR>
+<A HREF=#5>Return Values</A><BR>
+<A HREF=#6>Errors</A><BR>
+<A HREF=#7>Example</A><BR>
+<A HREF=#8>Data Structure</A><BR>
+<A HREF=#9>Authors</A><BR>
+<A HREF=#10>Bugs</A><BR>
+<A HREF=#11>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=12>
 
      <H3>SYNOPSIS</H3>
 
@@ -313,9 +315,20 @@ In C, this function returns a pointer to a structure containing information
 about the hardware on which the program runs. In Fortran, the values
 of the structure are returned explicitly.
 <P>
-<!-- .SH ARGUMENTS -->
+<!-- .SH NOTE -->
 </BLOCKQUOTE>
 <A name=3>
+
+     <H3>NOTE</H3>
+
+</A>
+<BLOCKQUOTE>
+The C structure contains detailed information about cache and TLB sizes.
+This information is not available from Fortran.
+<P>
+<!-- .SH ARGUMENTS -->
+</BLOCKQUOTE>
+<A name=4>
 
      <H3>ARGUMENTS</H3>
 
@@ -363,7 +376,7 @@ generated at init time with a quick timing routine
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
-<A name=4>
+<A name=5>
 
      <H3>RETURN VALUES</H3>
 
@@ -378,7 +391,7 @@ and a non-zero error code is returned by the Fortran function.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=6>
 
      <H3>ERRORS</H3>
 
@@ -394,7 +407,7 @@ One or more of the arguments is invalid.
 <!-- .SH EXAMPLE -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
+<A name=7>
 
      <H3>EXAMPLE</H3>
 
@@ -418,19 +431,85 @@ printf("%d CPU&#146;s at %f Mhz.&#92;n",hwinfo-&gt;totalcpus,hwinfo-&gt;mhz);
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH DATA STRUCTURE -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
-     <H3>AUTHOR</H3>
+     <H3>DATA STRUCTURE</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The C data structure returned by this function is found in
+<!-- .B papi.h and reproduced below: -->
+<B>papi.h and reproduced below:</B> <!-- .LP -->
+<P>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>   typedef struct _papi_hw_info {
+      int ncpu;                 /* Number of CPU&#146;s in an SMP Node */
+      int nnodes;               /* Number of Nodes in the entire system */
+      int totalcpus;            /* Total number of CPU&#146;s in the entire system */
+      int vendor;               /* Vendor number of CPU */
+      char vendor_string[PAPI_MAX_STR_LEN];     /* Vendor string of CPU */
+      int model;                /* Model number of CPU */
+      char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
+      float revision;           /* Revision of CPU */
+      float mhz;                /* Cycle time of this CPU, *may* be estimated at
+                                   init time with a quick timing routine */
+<P>
+      /* Memory Information */
+      int L1_tlb_size;          /*Data + Instruction Size */
+      int L1_itlb_size;         /*Instruction TLB size in KB */
+      short int L1_itlb_assoc;  /*Instruction TLB associtivity */
+      int L1_dtlb_size;         /*Data TLB size in KB */
+      short L1_dtlb_assoc;      /*Data TLB associtivity */
+<P>
+      int L2_tlb_size;          /*Data + Instruction Size */
+      int L2_itlb_size;         /*Instruction TLB size in KB */
+      short int L2_itlb_assoc;  /*Instruction TLB associtivity */
+      int L2_dtlb_size;         /*Data TLB size in KB */
+      short L2_dtlb_assoc;      /*Data TLB associtivity */
+<P>
+      int L1_size;              /* I+D */
+      int L1_icache_size;       /*Level 1 instruction cache size in KB */
+      short int L1_icache_assoc; /*Level 1 instruction cache associtivity */
+      int L1_icache_lines;      /*Number of lines in Level 1 instruction cache */
+      int L1_icache_linesize;   /*Line size in KB of Level 1 instruction cache */
+<P>
+      int L1_dcache_size;       /*Level 1 data cache size in KB */
+      short int L1_dcache_assoc; /*Level 1 data cache associtivity */
+      int L1_dcache_lines;      /*Number of lines in Level 1 data cache */
+      int L1_dcache_linesize;   /*Line size in KB of Level 1 data cache */
+<P>
+      int L2_cache_size;        /*Level 2 cache size in KB */
+      short int L2_cache_assoc; /*Level 2 cache associtivity */
+      int L2_cache_lines;       /*Number of lines in Level 2 cache */
+      int L2_cache_linesize;    /*Line size in KB of Level 2 cache */
+<P>
+      int L3_cache_size;        /*Level 3 cache size in KB */
+      short int L3_cache_assoc; /*Level 3 cache associtivity */
+      int L3_cache_lines;       /*Number of lines in Level 3 cache */
+      int L3_cache_linesize;    /*Line size of Level 3 cache */
+   } PAPI_hw_info_t;
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
+<!-- .SH AUTHORS -->
+</BLOCKQUOTE>
+<A name=9>
+
+     <H3>AUTHORS</H3>
+
+</A>
+<BLOCKQUOTE>
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=10>
 
      <H3>BUGS</H3>
 
@@ -442,7 +521,7 @@ If called before
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=11>
 
      <H3>SEE ALSO</H3>
 
@@ -452,12 +531,13 @@ If called before
 <A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
 <!-- .BR PAPI_get_opt "(3), "  -->
 <A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .BR PAPI_get_dmem_info "(3), " -->
+<A HREF="papi_get_dmem_info.html">PAPI_get_dmem_info (3)</A>, 
+<!-- .BR PAPI_get_executable_info "(3)" -->
+<A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_hardware_info (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_hardware_info (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

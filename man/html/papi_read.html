@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_read 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_read 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -269,7 +269,7 @@ events from an event set
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -314,14 +314,15 @@ events from an event set
 <B>PAPI_read()</B> copies the counters of the indicated event set into
 the array
 <!-- .IR values . -->
-<I>values</I>. The counters are left counting after the read.
+<I>values</I>. The counters continue counting after the read.
 <!-- .LP -->
 <P>
 <!-- .B PAPI_accum() -->
 <B>PAPI_accum()</B> adds the counters of the indicated event set into the array
 <!-- .IR values . -->
-<I>values</I>. The counters are zeroed and left counting after the operation.
-<P>
+<I>values</I>. The counters are zeroed and continue counting after the operation.
+<!-- .B NOTE: -->
+<B>NOTE:</B> <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -402,7 +403,7 @@ The event set specified does not exist.
 <P>
   /* Add Total Instructions Executed to our EventSet */
 <P>
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 <P>
   /* Start counting */
@@ -427,15 +428,16 @@ The event set specified does not exist.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -458,18 +460,15 @@ These functions have no known bugs.
 <!-- .BR PAPI_add_event "(3), " PAPI_reset "(3), " -->
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
 <A HREF="papi_reset.html">PAPI_reset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_rem_event "(3), "  -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_remove_event "(3), "  -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
+<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
 <!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_read (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_read (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

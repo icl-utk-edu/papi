@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_overflow 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_overflow 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,8 +256,8 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_overflow, PAPI_get_overflow_address - set up an event set
-to begin registering overflows; return the address at which an overflow occured
+PAPI_overflow - set up an event set
+to begin registering overflows;
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -269,7 +269,7 @@ to begin registering overflows; return the address at which an overflow occured
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -286,8 +286,6 @@ to begin registering overflows; return the address at which an overflow occured
 <B>#include &lt;papi.h&gt;</B> 
 <!-- .BI "int\ PAPI_overflow (int " EventSet ", int " EventCode ", int " threshold ", int " flags ", PAPI_overflow_handler_t " handler ");" -->
 <B>int PAPI_overflow (int </B><I>EventSet</I><B>, int </B><I>EventCode</I><B>, int </B><I>threshold</I><B>, int </B><I>flags</I><B>, PAPI_overflow_handler_t </B><I>handler</I><B>);</B> 
-<!-- .BI "void\ *PAPI_get_overflow_address (void *" context ); -->
-<B>void *PAPI_get_overflow_address (void *</B><I>context</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -313,15 +311,10 @@ to begin registering overflows; return the address at which an overflow occured
 <!-- .I EventSet  -->
 <I>EventSet</I> to generate an overflow signal after every
 <!-- .I threshold -->
-<I>threshold</I> events are counted. Only one event in an event set can be used as
-an overflow trigger.  Subsequent calls to
-<!-- .B PAPI_overflow()  -->
-<B>PAPI_overflow()</B> replace earlier calls. To turn off overflow, set the handler to NULL.
-<P>
-<!-- .B PAPI_get_overflow_address() -->
-<B>PAPI_get_overflow_address()</B> returns the instruction pointer where overflow occured. This routine is often used
-as part of the overflow handler routine.
-<P>
+<I>threshold</I> events are counted. More than one event in an event set can be used as
+an overflow trigger.
+<!-- .B To turn off overflow, set the threshold to 0. -->
+<B>To turn off overflow, set the threshold to 0.</B> <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -367,14 +360,6 @@ On success, PAPI_overflow returns
 <!-- .B "PAPI_OK." -->
 <B>PAPI_OK.</B> <BR>
  On error, a non-zero error code is returned.
-<BR>
- PAPI_get_overflow_address returns the instruction pointer where the
-overflow occured. PAPI_get_overflow_address always returns the value
-at the offset in the
-<!-- .I context -->
-<I>context</I> structure where the instruction pointer should be. No validity testing of
-this structure is done. If an invalid context pointer is passed to this function,
-the results will be undefined.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -434,12 +419,10 @@ The PAPI preset is not available on the underlying hardware.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
+<TT>void handler(int EventSet, void *address, long_long overflow_vector)
 {
-  fprintf(stderr,"Value %lld at %p&#92;n",
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  values[EventIndex],PAPI_get_overflow_address(context));
-#endif
-  total++;
+  fprintf(stderr,"Overflow at %p! bit=0x%llx &#92;n",
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  address,overflow_vector);
 }
 <P>
   int EventSet = PAPI_NULL;
@@ -449,7 +432,7 @@ The PAPI preset is not available on the underlying hardware.
 <P>
   /* Add Total Instructions Executed to our EventSet */
 <P>
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 <P>
   /* Call handler every 100000 instructions */
@@ -467,15 +450,16 @@ The PAPI preset is not available on the underlying hardware.
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -497,22 +481,19 @@ These functions have no known bugs.
 <BLOCKQUOTE>
 <!-- .BR PAPI_preset "(3), " -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), "  -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
 <A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
-<!-- .BR PAPI_rem_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_rem_events.html">PAPI_rem_events (3)</A>, 
+<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
+<!-- .BR PAPI_remove_events "(3), " PAPI_query "(3), " -->
+<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
 <A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
+<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3)" -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_overflow (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_overflow (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_read 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_native 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_read(3)</TITLE>
+Manual Page - PAPI_native(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,8 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_read, PAPI_accum - read hardware events, accumulate and reset hardware
-events from an event set
+PAPI_native - Accessing PAPI native events
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -265,43 +264,18 @@ events from an event set
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Arguments</A><BR>
-<A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Authors</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#3>Authors</A><BR>
+<A HREF=#4>Bugs</A><BR>
+<A HREF=#5>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=6>
 
      <H3>SYNOPSIS</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .B C Interface -->
-<B>C Interface</B> <!-- .nf -->
-<PRE>
 <!-- .B #include <papi.h> -->
-<B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_read(int " EventSet ", long_long *" values ");" -->
-<B>int PAPI_read(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
-<!-- .BI "int\ PAPI_accum(int " EventSet ", long_long *" values ");" -->
-<B>int PAPI_accum(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
-<!-- .fi -->
-</PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
-<PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
-<!-- .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
-<B>PAPIF_read(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
-<B>PAPIF_accum(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .fi -->
-</PRE>
-<P>
+<B>#include &lt;papi.h&gt;</B> <P>
 <!-- .SH DESCRIPTION -->
 </BLOCKQUOTE>
 <A name=2>
@@ -310,127 +284,24 @@ events from an event set
 
 </A>
 <BLOCKQUOTE>
-<!-- .B PAPI_read() -->
-<B>PAPI_read()</B> copies the counters of the indicated event set into
-the array
-<!-- .IR values . -->
-<I>values</I>. The counters continue counting after the read.
+In addition to the predefined PAPI preset events, the PAPI library also
+exposes a majority of the events native to each platform.
+Native events form the basic building blocks for PAPI presets. They can also
+be used directly to access functions specific to a given platform.
 <!-- .LP -->
 <P>
-<!-- .B PAPI_accum() -->
-<B>PAPI_accum()</B> adds the counters of the indicated event set into the array
-<!-- .IR values . -->
-<I>values</I>. The counters are zeroed and continue counting after the operation.
-<!-- .B NOTE: -->
-<B>NOTE:</B> <P>
-<!-- .SH ARGUMENTS -->
-</BLOCKQUOTE>
-<A name=3>
-
-     <H3>ARGUMENTS</H3>
-
-</A>
-<BLOCKQUOTE>
-<!-- .I EventSet -->
-<I>EventSet</I> --  an integer handle for a PAPI Event Set as created by
-<!-- .BR "PAPI_create_eventset" (3) -->
-<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
-<!-- .LP -->
-<P>
-<!-- .I *values -->
-<I>*values</I> -- an array to hold the counter values of the counting events
-<P>
-<!-- .SH RETURN VALUES -->
-</BLOCKQUOTE>
-<A name=4>
-
-     <H3>RETURN VALUES</H3>
-
-</A>
-<BLOCKQUOTE>
-On success, these functions return
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
-<P>
-<!-- .SH ERRORS -->
-</BLOCKQUOTE>
-<A name=5>
-
-     <H3>ERRORS</H3>
-
-</A>
-<BLOCKQUOTE>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EINVAL" -->
-<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ESYS" -->
-<B>PAPI_ESYS</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-A system or C library call failed inside PAPI, see the
-<!-- .I "errno" -->
-<I>errno</I> variable.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVST" -->
-<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The event set specified does not exist.
-<P>
-<!-- .SH EXAMPLES -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
-
-     <H3>EXAMPLES</H3>
-
-</A>
-<BLOCKQUOTE>
-<!-- .nf -->
-<PRE>
-<!-- .if t .ft CW -->
-<TT>  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-  long_long values[1] = (long_long) 0;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Add Total Instructions Executed to our EventSet */
-<P>
-  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
-<P>
-  /* Start counting */
-<P>
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
-<P>
-  poorly_tuned_function();
-<P>
-  if (PAPI_accum(EventSet, values) != PAPI_OK)
-    handle_error(1);
-<P>
-  printf("%lld\n",values[0]);
-<P>
-  poorly_tuned_function();
-<P>
-  if (PAPI_stop(EventSet, values) != PAPI_OK)
-    handle_error(1);
-<P>
-  printf("%lld\n",values[0]);
-<!-- .if t .ft P -->
-</TT><!-- .fi -->
-</PRE>
+Since native events are
+<!-- .I by definition -->
+<I>by definition</I> specific to each platform, the names for these events are unique to each platform.
+Native events for a given platform can be discovered by combining the
+<!-- .BR PAPI_enum_event "(3) and " PAPI_event_code_to_name "(3) or " PAPI_get_event_info "(3) functions." -->
+<A HREF="papi_enum_event.html">PAPI_enum_event (3)</A> and 
+<A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A> or 
+<A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A> functions.
 <P>
 <!-- .SH AUTHORS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=3>
 
      <H3>AUTHORS</H3>
 
@@ -441,34 +312,36 @@ The PAPI Team. See them at the PAPI Web Site:
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=4>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+Not every native event on every platform can be represented
+through the native event interface. Occasionally, exotic but
+valuable events are not represented. There is presently no method
+for representing these events in a PAPI event set.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=5>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_add_event "(3), " PAPI_reset "(3), " -->
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<A HREF="papi_reset.html">PAPI_reset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_remove_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
+<!-- .BR PAPI "(3), " PAPI_presets "(3), " PAPI_enum_event "(3), " PAPI_get_event_info "(3), " -->
+<A HREF="papi.html">PAPI (3)</A>, 
+<A HREF="papi_presets.html">PAPI_presets (3)</A>, 
+<A HREF="papi_enum_event.html">PAPI_enum_event (3)</A>, 
+<A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>, 
+<!-- .BR PAPI_event_code_to_name "(3), " PAPI_event_name_to_code "(3)" -->
+<A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>, 
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_read (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_native (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

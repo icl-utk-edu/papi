@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_rem_event 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_thr_specific 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_rem_event(3)</TITLE>
+Manual Page - PAPI_get_thr_specific(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent - remove PAPI preset or native hardware event from an EventSet
+PAPI_get_thr_specific - Store or retrieve a pointer to a thread specific data structure
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -267,8 +267,8 @@ PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent - remove PAPI preset or native 
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#6>Example</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -278,28 +278,14 @@ PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent - remove PAPI preset or native 
 
 </A>
 <BLOCKQUOTE>
-<!-- .B C Interface -->
-<B>C Interface</B> <!-- .nf -->
+<!-- .nf -->
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_rem_event(int *" EventSet ", int " EventCode ");" -->
-<B>int PAPI_rem_event(int *</B><I>EventSet</I><B>, int </B><I>EventCode</I><B>);</B> 
-<!-- .BI "int\ PAPI_rem_events(int *" EventSet ", int *" EventCode ", int " number ");" -->
-<B>int PAPI_rem_events(int *</B><I>EventSet</I><B>, int *</B><I>EventCode</I><B>, int </B><I>number</I><B>);</B> 
-<!-- .BI "int\ PAPI_rem_pevent(int *" EventSet ", int " code ", void * " misc ");" -->
-<B>int PAPI_rem_pevent(int *</B><I>EventSet</I><B>, int </B><I>code</I><B>, void * </B><I>misc</I><B>);</B> 
-<!-- .fi -->
-</PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
-<PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
-<!-- .BI PAPIF_rem_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check ) -->
-<B>PAPIF_rem_event(C_INT </B><I>EventSet, </I><B>C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_rem_events(C_INT\  EventSet,\  C_INT(*)\  EventCode,\  C_INT\  number,\  C_INT\  check ) -->
-<B>PAPIF_rem_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>EventCode, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI "int PAPI_get_thr_specific(int tag, void **ptr);" -->
+<B>int PAPI_get_thr_specific(int tag, void **ptr);</B> 
+<!-- .BI "int PAPI_set_thr_specific(int tag, void *ptr);" -->
+<B>int PAPI_set_thr_specific(int tag, void *ptr);</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -311,10 +297,9 @@ PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent - remove PAPI preset or native 
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR "PAPI_rem_event(\|) " "removes a hardware event to a PAPI event set." -->
-<B>PAPI_rem_event() </B>removes a hardware event to a PAPI event set. <!-- .BR "PAPI_rem_events(\|) " "does the same, but for an array of hardware event codes." -->
-<B>PAPI_rem_events() </B>does the same, but for an array of hardware event codes. <!-- .BR "PAPI_rem_pevent(\|) " "is reserved for future use." -->
-<B>PAPI_rem_pevent() </B>is reserved for future use. <P>
+In C, this function returns a pointer to a structure containing information
+about the memory hardware on which the program runs. There are no Fortran equivalent functions.
+<P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -323,35 +308,18 @@ PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent - remove PAPI preset or native 
 
 </A>
 <BLOCKQUOTE>
-<!-- .I "EventSet" -->
-<I>EventSet</I> --  an integer handle for a PAPI event set as created by
-<!-- .BR "PAPI_create_eventset" (3) -->
-<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
 <!-- .LP -->
 <P>
-<!-- .I EventCode -->
-<I>EventCode</I> -- a defined event such as PAPI_TOT_INS or a native event.
+<!-- .I tag -->
+<I>tag</I> --  An identifier, the value of which is between 0 and PAPI_MAX_THREAD_STORAGE
+(currently 4). This identifier indicates which of several data structures
+associated with this thread is to be accessed.
 <!-- .LP -->
 <P>
-<!-- .I *EventCode -->
-<I>*EventCode</I> -- an array of defined events
-<!-- .LP -->
-<P>
-<!-- .I number -->
-<I>number</I> -- an integer indicating the number of events in the array
-<!-- .I *EventCode -->
-<I>*EventCode</I> <P>
-A hardware event can be either a PAPI Preset or a native hardware event code.
-For a list of PAPI preset events, see
-<!-- .BR "PAPI_presets" "(3) or run the" -->
-<A HREF="papi_presets.html">PAPI_presets (3)</A> or run the
-<!-- .I avail -->
-<I>avail</I> test case in the PAPI distribution. PAPI Presets can be passed to
-<!-- .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture." -->
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A> to see if they exist on the underlying architecture.
-For the encoding of native events, see the &lt;arch&gt;.README file
-also included the distribution.
-<P>
+<!-- .I ptr -->
+<I>ptr</I> --  A pointer to the memory containing the data structure referenced by
+<!-- .I tag. -->
+<I>tag.</I> <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
 <A name=4>
@@ -361,9 +329,9 @@ also included the distribution.
 </A>
 <BLOCKQUOTE>
 On success, this function returns
-<!-- .B "PAPI_OK." -->
+<!-- .B PAPI_OK. -->
 <B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
+ On error, a negative error value is returned.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -378,83 +346,66 @@ On success, this function returns
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVST" -->
-<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The EventSet specified does not exist.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EISRUN" -->
-<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The EventSet is currently counting events.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ECNFLCT" -->
-<B>PAPI_ECNFLCT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVNT" -->
-<B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The PAPI preset is not available on the underlying hardware.
+The
+<!-- .I tag  -->
+<I>tag</I> argument is out of range.
 <P>
-<!-- .SH EXAMPLES -->
+<!-- .SH EXAMPLE -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=6>
 
-     <H3>EXAMPLES</H3>
+     <H3>EXAMPLE</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .LP -->
+<P>
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-  handle_error(1);
+<TT>   unsigned long int tid;
+   HighLevelInfo *state = NULL;
 <P>
-/* Add Total Instructions Executed to our EventSet */
+   if (retval = PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+      handle_error(retval);
 <P>
-if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-  handle_error(1);
+   if (retval = PAPI_thread_init(pthread_self) != PAPI_OK)
+      handle_error(retval);
 <P>
-/* Start counting */
+   /*
+    * Do we have the thread specific data setup yet?
+    */
+   if ((retval = PAPI_get_thr_specific(1, (void *) &state))
+       != PAPI_OK || state == NULL) {
+      state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+      if (state == NULL)
+         return (PAPI_ESYS);
 <P>
-if (PAPI_start(EventSet) != PAPI_OK)
-  handle_error(1);
+      memset(state, 0, sizeof(HighLevelInfo));
+      state-&gt;EventSet = -1;
 <P>
-/* Stop counting, ignore values */
+      if ((retval = PAPI_create_eventset(&state-&gt;EventSet)) != PAPI_OK)
+         return (PAPI_ESYS);
 <P>
-if (PAPI_stop(EventSet, NULL) != PAPI_OK)
-  handle_error(1);
+      if ((retval = PAPI_set_thr_specific(1, state)) != PAPI_OK)
+         return (retval);
+   }
 <P>
-/* Remove event */
-<P>
-if (PAPI_rem_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-  handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -464,7 +415,7 @@ Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
 
 </A>
 <BLOCKQUOTE>
-These functions have no known bugs.
+There are no known bugs in these functions.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
@@ -474,25 +425,15 @@ These functions have no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_preset "(3), " -->
-<A HREF="papi_preset.html">PAPI_preset (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_add_event "(3), "  -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<!-- .BR PAPI_add_events "(3), " PAPI_add_pevents "(3), " PAPI_query "(3), " -->
-<A HREF="papi_add_events.html">PAPI_add_events (3)</A>, 
-<A HREF="papi_add_pevents.html">PAPI_add_pevents (3)</A>, 
-<A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
-<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .BR PAPI_thread_init "(3), " -->
+<A HREF="papi_thread_init.html">PAPI_thread_init (3)</A>, 
+<!-- .BR PAPI_thread_id "(3), " -->
+<A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>, 
+<!-- .BR PAPI_register_thread "(3)"  -->
+<A HREF="papi_register_thread.html">PAPI_register_thread (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_rem_event (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_thr_specific (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

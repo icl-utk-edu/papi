@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_add_event 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_add_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_add_event, PAPI_add_events, PAPI_add_pevent - add PAPI preset or native hardware event to an event set
+PAPI_add_event, PAPI_add_events - add PAPI preset or native hardware event to an event set
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,7 +268,7 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent - add PAPI preset or native har
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -283,12 +283,10 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent - add PAPI preset or native har
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode ");" -->
-<B>int PAPI_add_event(int *</B><I>EventSet</I><B>, int </B><I>EventCode</I><B>);</B> 
-<!-- .BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int " number ");" -->
-<B>int PAPI_add_events(int *</B><I>EventSet</I><B>, int *</B><I>EventCode</I><B>, int </B><I>number</I><B>);</B> 
-<!-- .BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc ");" -->
-<B>int PAPI_add_pevent(int *</B><I>EventSet</I><B>, int </B><I>code</I><B>, void * </B><I>misc</I><B>);</B> 
+<!-- .BI "int\ PAPI_add_event(int " EventSet ", int " EventCode ");" -->
+<B>int PAPI_add_event(int </B><I>EventSet</I><B>, int </B><I>EventCode</I><B>);</B> 
+<!-- .BI "int\ PAPI_add_events(int " EventSet ", int *" EventCodes ", int " number ");" -->
+<B>int PAPI_add_events(int </B><I>EventSet</I><B>, int *</B><I>EventCodes</I><B>, int </B><I>number</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -296,10 +294,10 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent - add PAPI preset or native har
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventSet,\  C_INT\  check ) -->
-<B>PAPIF_add_event(C_INT </B><I>EventSet, </I><B>C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventSet,\  C_INT\  number,\  C_INT\  check ) -->
-<B>PAPIF_add_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>EventSet, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check ) -->
+<B>PAPIF_add_event(C_INT </B><I>EventSet, </I><B>C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventCodes,\  C_INT\  number,\  C_INT\  check ) -->
+<B>PAPIF_add_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>EventCodes, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -311,10 +309,15 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent - add PAPI preset or native har
 
 </A>
 <BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
 <!-- .BR "PAPI_add_event() " "adds a hardware event to a PAPI Event Set." -->
-<B>PAPI_add_event() </B>adds a hardware event to a PAPI Event Set. <!-- .BR "PAPI_add_events() " "does the same, but for an array of hardware event codes." -->
-<B>PAPI_add_events() </B>does the same, but for an array of hardware event codes. <!-- .BR "PAPI_add_pevent() " "is reserved for future use." -->
-<B>PAPI_add_pevent() </B>is reserved for future use. <P>
+<B>PAPI_add_event() </B>adds a hardware event to a PAPI Event Set. 
+<!-- .BR "PAPI_add_events() " "does the same, but for an array of hardware event codes." -->
+<B>PAPI_add_events() </B>does the same, but for an array of hardware event codes. 
+<!-- .fi -->
+</PRE>
+<P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -323,8 +326,8 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent - add PAPI preset or native har
 
 </A>
 <BLOCKQUOTE>
-<!-- .I *EventSet -->
-<I>*EventSet</I> --  an integer handle for a PAPI Event Set as created by
+<!-- .I EventSet -->
+<I>EventSet</I> --  an integer handle for a PAPI Event Set as created by
 <!-- .BR "PAPI_create_eventset" (3) -->
 <A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
 <!-- .LP -->
@@ -350,8 +353,11 @@ For a list of PAPI preset events, see
 <I>avail</I> test case in the PAPI distribution. PAPI presets can be passed to
 <!-- .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture." -->
 <A HREF="papi_query_event.html">PAPI_query_event (3)</A> to see if they exist on the underlying architecture.
-For the encoding of native events, see the &lt;arch&gt;.README file
-also included the distribution.
+For a list of native events available on current platform, run
+native_avail
+test case in the PAPI distribution. For the encoding of native events, see
+<!-- .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture." -->
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A> to learn how to generate native code for the supported native event on the underlying architecture.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -363,8 +369,7 @@ also included the distribution.
 <BLOCKQUOTE>
 On success, these functions return
 <!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
+<B>PAPI_OK.</B> On error, a non-zero error code is returned.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -432,12 +437,14 @@ if (PAPI_create_eventset(&EventSet) != PAPI_OK)
 <P>
 /* Add Total Instructions Executed to our EventSet */
 <P>
-if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
   handle_error(1);
 <P>
 /* Add native event (0xc1 on hardware counter 1) */
 <P>
-native = (0xc1 &lt;&lt; 8) | 1;
+if (PAPI_event_name_to_code("PM_CYC",&native) != PAPI_OK)
+  handle_error(1);
+<P>
 if (PAPI_add_event(&EventSet, native) != PAPI_OK)
   handle_error(1);
 <P>
@@ -449,15 +456,17 @@ if (PAPI_start(EventSet) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<P>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -479,22 +488,20 @@ These functions have no known bugs.
 <BLOCKQUOTE>
 <!-- .BR PAPI_presets "(3), " -->
 <A HREF="papi_presets.html">PAPI_presets (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), "  -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
 <A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
-<!-- .BR PAPI_rem_events "(3), " PAPI_query_event "(3), " -->
-<A HREF="papi_rem_events.html">PAPI_rem_events (3)</A>, 
+<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
+<!-- .BR PAPI_remove_events "(3), " PAPI_query_event "(3), " -->
+<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
 <A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
+<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " PAPI_event_code_to_name "(3)"  -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_add_event (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_add_event (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

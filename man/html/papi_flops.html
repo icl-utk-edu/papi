@@ -1,5 +1,5 @@
 <!-- .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5 -->
-<!-- .TH PAPI_flops 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_flips 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -255,7 +255,9 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
+PAPI_flips - PAPI High level: Simplified call to get Mflips/s, real and processor time
 PAPI_flops - PAPI High level: Simplified call to get Mflops/s, real and processor time
+<P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
 <A name=contents></A><H3>CONTENTS</H3></A>
@@ -265,10 +267,11 @@ PAPI_flops - PAPI High level: Simplified call to get Mflops/s, real and processo
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Notes</A><BR>
-<A HREF=#6>Bugs</A><BR>
-<A HREF=#7>See Also</A><BR>
+<A HREF=#6>Authors</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -279,8 +282,10 @@ PAPI_flops - PAPI High level: Simplified call to get Mflops/s, real and processo
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflops ");" -->
-<B>int PAPI_flops (float *</B><I>rtime</I><B>, float *</B><I>ptime</I><B>, long_long *</B><I>flpins</I><B>, float *</B><I>mflops</I><B>);</B> 
+<!-- .BI "int PAPI_flips (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflips ");" -->
+<B>int PAPI_flips (float *</B><I>rtime</I><B>, float *</B><I>ptime</I><B>, long_long *</B><I>flpins</I><B>, float *</B><I>mflips</I><B>);</B> 
+<!-- .BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpops ", float *" mflops ");" -->
+<B>int PAPI_flops (float *</B><I>rtime</I><B>, float *</B><I>ptime</I><B>, long_long *</B><I>flpops</I><B>, float *</B><I>mflops</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -288,8 +293,10 @@ PAPI_flops - PAPI High level: Simplified call to get Mflops/s, real and processo
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check ) -->
-<B>PAPIF_flops(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>flpins, </I><B>C_FLOAT </B><I>mflops, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_flips(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflips,\  C_INT\  check ) -->
+<B>PAPIF_flips(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>flpins, </I><B>C_FLOAT </B><I>mflips, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpops,\  C_FLOAT\  mflops,\  C_INT\  check ) -->
+<B>PAPIF_flops(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>flpops, </I><B>C_FLOAT </B><I>mflops, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -304,17 +311,14 @@ PAPI_flops - PAPI High level: Simplified call to get Mflops/s, real and processo
 <!-- .LP -->
 <P>
 The first call to
-<!-- .B PAPI_flops(\|) -->
-<B>PAPI_flops()</B> will initialize PAPI, set up the counters
-to monitor PAPI_FP_INS and PAPI_TOT_CYC events and start the counters.
+<!-- .B PAPI_flips(\|) "or" PAPI_flops(\|) -->
+<B>PAPI_flips() or PAPI_flops()</B> will initialize the PAPI High Level interface, set up the counters
+to monitor PAPI_FP_INS or PAPI_FP_OPS and PAPI_TOT_CYC events and start the counters.
 Subsequent calls will read the counters and return total real time,
-total process time, total floating point instructions since the start
-of the measurement and Mflops/s rate since latest call to
-<!-- .B PAPI_flops(\|) -->
-<B>PAPI_flops()</B> &#46; Any call with
-<!-- .I flpins -->
-<I>flpins</I> = -1 will reinitialize all counters to 0.
-<P>
+total process time, total floating point instructions or operations since the start
+of the measurement and the Mflip/s or Mflop/s rate since latest call to
+<!-- .B PAPI_flops(\|) "or" PAPI_flops(\|). -->
+<B>PAPI_flops() or PAPI_flops().</B> <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -331,12 +335,12 @@ of the measurement and Mflops/s rate since latest call to
 <I>*ptime</I> -- total process time since the first PAPI_flops() call
 <!-- .LP -->
 <P>
-<!-- .I *flpins  -->
-<I>*flpins</I> -- total floating point instructions since the first PAPI_flops() call
+<!-- .I *flpins, flpops  -->
+<I>*flpins, flpops</I> -- total floating point instructions or operations since the first call
 <!-- .LP -->
 <P>
-<!-- .I *mflops  -->
-<I>*mflops</I> -- Mflops/s achieved since the latest PAPI_flops() call
+<!-- .I *mflips, *mflops  -->
+<I>*mflips, *mflops</I> -- Mflip/s or Mflop/s achieved since the previous call
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -361,11 +365,17 @@ On success, this function returns
 <BLOCKQUOTE>
 <!-- .LP -->
 <P>
-Most platforms are only capable of counting the number of floating
-point instructions completed. This may or may not translate to your
-definition of floating point operations. The measured rate is thus
-Mflips/s, and will in some circumstances count FMA instructions as one
-operation. Consult the hardware documentation for your system for specifics.
+Mflip/s, or millions of floating point instructions per second, is defined
+in this context as the number of instructions issued to the floating point
+unit per second. It is usually calculated directly from a counter measurement
+and may be different from platform to platform.
+Mflop/s, or millions of floating point operations per second, is intended to
+represent the number of floating point arithmetic operations per second.
+Attempts are made to massage the counter values to produce the theoreticallly
+expected value by, for instance, doubling FMA counts or subtracting floating point
+loads and stores if necessary.
+<!-- .I CAVEAT EMPTOR -->
+<I>CAVEAT EMPTOR</I> <P>
 <!-- .LP -->
 <P>
 <!-- .nf -->
@@ -409,32 +419,41 @@ operation. Consult the hardware documentation for your system for specifics.
 <!-- .fi -->
 </PRE>
 <P>
-<!-- .SH BUGS -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=6>
+
+     <H3>AUTHORS</H3>
+
+</A>
+<BLOCKQUOTE>
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-This function has no known bugs.
+These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_accum (3), -->
-<A HREF="papi_accum.html">PAPI_accum (3)</A>,
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .BR "PAPI_accum (3)", "PAPI_ipc (3)" -->
+<A HREF="papi_accum.html">PAPI_accum (3)</A> ,
+<A HREF="papi_ipc.html">PAPI_ipc (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_flops (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_flips (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

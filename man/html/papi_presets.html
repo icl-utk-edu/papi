@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_presets 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_presets 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -264,7 +264,7 @@ PAPI_presets - PAPI predefined named events
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Author</A><BR>
+<A HREF=#3>Authors</A><BR>
 <A HREF=#4>Bugs</A><BR>
 <A HREF=#5>See Also</A><BR>
 </BLOCKQUOTE>
@@ -287,7 +287,7 @@ PAPI_presets - PAPI predefined named events
 The PAPI library names a number of predefined events. This set
 is a collection of events typically found in many
 CPUs that provide performance counters. A PAPI preset event name is
-mapped onto one or more of the countable events on each hardware platform.
+mapped onto one or more of the countable native events on each hardware platform.
 On any particular platform, the preset can either be directly available
 as a single counter, derived using a combination of counters or unavailable.
 <!-- .LP -->
@@ -392,10 +392,6 @@ as shown in the table below:
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
-<TD><B>PAPI_FLOPS</B></TD><TD>Floating point instructions per second
-</TD></TR>
-<TR></TR><TR></TR>
-<TR valign=top>
 <TD><B>PAPI_FMA_INS</B></TD><TD>FMA instructions completed
 </TD></TR>
 <TR></TR><TR></TR>
@@ -409,6 +405,10 @@ as shown in the table below:
 <TR></TR><TR></TR>
 <TR valign=top>
 <TD><B>PAPI_FP_INS</B></TD><TD>Floating point instructions
+</TD></TR>
+<TR></TR><TR></TR>
+<TR valign=top>
+<TD><B>PAPI_FP_OPS</B></TD><TD>Floating point operations
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -444,10 +444,6 @@ as shown in the table below:
 <TR></TR><TR></TR>
 <TR valign=top>
 <TD><B>PAPI_INT_INS</B></TD><TD>Integer instructions
-</TD></TR>
-<TR></TR><TR></TR>
-<TR valign=top>
-<TD><B>PAPI_IPS</B></TD><TD>Instructions per second
 </TD></TR>
 <TR></TR><TR></TR>
 <TR valign=top>
@@ -746,15 +742,19 @@ as shown in the table below:
 <!-- .LP -->
 <P>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=3>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
 Nils Smeds &lt;<A HREF="mailto:smeds@cs.utk.edu">smeds@cs.utk.edu</A>&gt;
+<!-- .LP -->
+<P>
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -779,14 +779,17 @@ PAPI event obtained on different hardware platforms.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI "(3), " PAPI_query_event "(3)" -->
+<!-- .BR PAPI "(3), " PAPI_native "(3), " PAPI_enum_event "(3), " PAPI_get_event_info "(3), " -->
 <A HREF="papi.html">PAPI (3)</A>, 
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A>
-The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<A HREF="papi_native.html">PAPI_native (3)</A>, 
+<A HREF="papi_enum_event.html">PAPI_enum_event (3)</A>, 
+<A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>, 
+<!-- .BR PAPI_event_code_to_name "(3), " PAPI_event_name_to_code "(3)" -->
+<A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>, 
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_presets (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_presets (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

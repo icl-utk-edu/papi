@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_create_eventset 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_create_eventset 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,7 +268,7 @@ PAPI_create_eventset - create an EventSet
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -335,11 +335,12 @@ or similar routines.
 
 </A>
 <BLOCKQUOTE>
-On success, this function returns
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
-<P>
+<!-- .nf -->
+<PRE>
+On success, this function returns PAPI_OK.
+On error, a non-zero error code is returned.
+<!-- .fi -->
+</PRE>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
 <A name=5>
@@ -385,21 +386,22 @@ Insufficient memory to complete the operation.
 <P>
   /* Add Total Instructions Executed to our EventSet */
 <P>
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -419,22 +421,17 @@ This function has no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), "  -->
+<!-- .BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), " PAPI_remove_event "(3), "   -->
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<!-- .BR PAPI_rem_event "(3), " PAPI_rem_events "(3), " PAPI_add_event "(3), "  -->
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
-<A HREF="papi_rem_events.html">PAPI_rem_events (3)</A>, 
+<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
+<!-- .BR PAPI_remove_events "(3), " PAPI_add_event "(3), " PAPI_add_events "(3)"  -->
+<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<!-- .BR PAPI_add_events "(3), " PAPI_add_pevent "(3), "  -->
-<A HREF="papi_add_events.html">PAPI_add_events (3)</A>, 
-<A HREF="papi_add_pevent.html">PAPI_add_pevent (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<A HREF="papi_add_events.html">PAPI_add_events (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_create_eventset (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_create_eventset (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

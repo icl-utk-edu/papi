@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_query_event 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_query_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,12 +256,13 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
 PAPI_query_event - query if PAPI event exists
-<BR>
- PAPI_query_event_verbose - query details of a PAPI event
-<BR>
- PAPI_query_all_events_verbose - acquire details of all PAPI events
-<P>
+PAPI_query_event_verbose - query details of a PAPI event
+PAPI_query_all_events_verbose - acquire details of all PAPI events
+<!-- .fi -->
+</PRE>
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -273,7 +274,7 @@ PAPI_query_event - query if PAPI event exists
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -303,9 +304,9 @@ PAPI_query_event - query if PAPI event exists
 <B>#include fpapi.h</B> 
 <!-- .BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check ) -->
 <B>PAPIF_query_event(C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\ \  -->
+<!-- .BI PAPIF_query_event_verbose(C_INT\  EventCode,\  C_STRING\  EventName,\   -->
 <B>PAPIF_query_event_verbose(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventName, </I> 
-           C_STRING EventDescr,  C_STRING EventLabel,  C_INT  avail, 
+           C_STRING EventDescr,  C_STRING EventLabel,  C_INT  avail,
            C_STRING EventNote,  C_INT  flags,  C_INT  check )
 <!-- .fi -->
 </PRE>
@@ -322,7 +323,7 @@ PAPI_query_event - query if PAPI event exists
 <B>PAPI_query_event()</B> asks the PAPI library if the PAPI Preset event can be counted on this
 architecture. If the event CAN be counted, the function returns
 PAPI_OK.  If the event CANNOT be counted, the function returns an
-error code.  On some platforms, this function also can be used to
+error code.  This function also can be used to
 check the syntax of a native event.
 <P>
 <!-- .B "PAPI_query_event_verbose()" -->
@@ -477,15 +478,16 @@ if(infostructs)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -508,23 +510,19 @@ These functions have no known bugs.
 <!-- .BR PAPI_preset "(3), " PAPI_native "(3), " -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
 <A HREF="papi_native.html">PAPI_native (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), "  -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
 <A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
-<!-- .BR PAPI_rem_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_rem_events.html">PAPI_rem_events (3)</A>, 
-<A HREF="papi_query.html">PAPI_query (3)</A>, 
+<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
+<!-- .BR PAPI_remove_events "(3), " -->
+<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
 <!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_query_event (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_query_event (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_describe_eventset 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_remove_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_describe_event(3)</TITLE>
+Manual Page - PAPI_remove_event(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_label_event - convert a hardware event to a description, label, number or string symbol.
+PAPI_remove_event, PAPI_remove_events - remove PAPI preset or native hardware event from an EventSet
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,7 +268,7 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -283,14 +283,10 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_describe_event(char *" EventName ", int *" EventCode ", char *" EventDescr ");" -->
-<B>int PAPI_describe_event(char *</B><I>EventName</I><B>, int *</B><I>EventCode</I><B>, char *</B><I>EventDescr</I><B>);</B> 
-<!-- .BI "int\ PAPI_event_code_to_name(int " EventCode ", char *" EventName ");" -->
-<B>int PAPI_event_code_to_name(int </B><I>EventCode</I><B>, char *</B><I>EventName</I><B>);</B> 
-<!-- .BI "int\ PAPI_event_name_to_code(char *" EventName ", int *" EventCode ");" -->
-<B>int PAPI_event_name_to_code(char *</B><I>EventName</I><B>, int *</B><I>EventCode</I><B>);</B> 
-<!-- .BI "int\ PAPI_label_event(int " EventCode ", char *" EventLabel ");" -->
-<B>int PAPI_label_event(int </B><I>EventCode</I><B>, char *</B><I>EventLabel</I><B>);</B> 
+<!-- .BI "int\ PAPI_remove_event(int " EventSet ", int " EventCode ");" -->
+<B>int PAPI_remove_event(int </B><I>EventSet</I><B>, int </B><I>EventCode</I><B>);</B> 
+<!-- .BI "int\ PAPI_remove_events(int " EventSet ", int *" EventCode ", int " number ");" -->
+<B>int PAPI_remove_events(int </B><I>EventSet</I><B>, int *</B><I>EventCode</I><B>, int </B><I>number</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -298,14 +294,10 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check ) -->
-<B>PAPIF_describe_event(C_STRING </B><I>EventName, </I><B>C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventDescr, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  EventName,\  C_INT\  check ) -->
-<B>PAPIF_event_code_to_name(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventName, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_event_name_to_code(C_STRING\  EventName,\  C_INT\  EventCode,\  C_INT\  check ) -->
-<B>PAPIF_event_name_to_code(C_STRING </B><I>EventName, </I><B>C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_label_event(C_INT\  EventCode,\  C_STRING\  EventLabel,\  C_INT\  check ) -->
-<B>PAPIF_label_event(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventLabel, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_remove_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check ) -->
+<B>PAPIF_remove_event(C_INT </B><I>EventSet, </I><B>C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_remove_events(C_INT\  EventSet,\  C_INT(*)\  EventCode,\  C_INT\  number,\  C_INT\  check ) -->
+<B>PAPIF_remove_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>EventCode, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -317,38 +309,9 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 
 </A>
 <BLOCKQUOTE>
-<!-- .B PAPI_describe_event(\|) -->
-<B>PAPI_describe_event()</B> is used to translate either an ASCII PAPI preset name or an integer
-PAPI preset event code into the corresponding event code or name as
-well as an ASCII description of that event. If the
-<!-- .I EventName  -->
-<I>EventName</I> argument is a string of length &gt;0 it is assumed to contain the name
-to look up and the corresponding event code is returned in the
-argument
-<!-- .IR EventCode . -->
-<I>EventCode</I>. Otherwise the
-<!-- .I EventCode -->
-<I>EventCode</I> argument is used to look up the event name which is stored in the
-<!-- .I EventName -->
-<I>EventName</I> argument. Finally a descriptive string of length less than
-<!-- .B PAPI_MAX_STR_LEN -->
-<B>PAPI_MAX_STR_LEN</B> is copied to the argument
-<!-- .I EventDescr. -->
-<I>EventDescr.</I> <P>
-The functionality of this call is a superset of the following two
-calls.
-<P>
-<!-- .B PAPI_event_name_to_code(\|) -->
-<B>PAPI_event_name_to_code()</B> is used to translate an ASCII PAPI preset name into an integer PAPI event code.
-<P>
-<!-- .B PAPI_event_code_to_name(\|) -->
-<B>PAPI_event_code_to_name()</B> is used to translate an integer PAPI event code into an ASCII PAPI preset name.
-<P>
-<!-- .B PAPI_label_event(\|) -->
-<B>PAPI_label_event()</B> is used to translate an integer PAPI event code into a short (&lt;=18 character)
-ASCII label that is more descriptive than the preset name but shorter than the description.
-These labels can be used as event identifiers in third party tools.
-<P>
+<!-- .BR "PAPI_remove_event(\|) " "removes a hardware event to a PAPI event set." -->
+<B>PAPI_remove_event() </B>removes a hardware event to a PAPI event set. <!-- .BR "PAPI_remove_events(\|) " "does the same, but for an array of hardware event codes." -->
+<B>PAPI_remove_events() </B>does the same, but for an array of hardware event codes. <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
@@ -357,25 +320,36 @@ These labels can be used as event identifiers in third party tools.
 
 </A>
 <BLOCKQUOTE>
-<!-- .I EventName -->
-<I>EventName</I> -- a string containing the event name as listed in
-<!-- .BR PAPI_presets(3) -->
-<A HREF="papi_presets.html">PAPI_presets (3)</A> 
+<!-- .I "EventSet" -->
+<I>EventSet</I> --  an integer handle for a PAPI event set as created by
+<!-- .BR "PAPI_create_eventset" (3) -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
 <!-- .LP -->
 <P>
 <!-- .I EventCode -->
-<I>EventCode</I> -- the numeric code for the event
+<I>EventCode</I> -- a defined event such as PAPI_TOT_INS or a native event.
 <!-- .LP -->
 <P>
-<!-- .I EventDescr -->
-<I>EventDescr</I> -- a descriptive string for the event of length less than
-<!-- .BR PAPI_MAX_STR_LEN . -->
-<B>PAPI_MAX_STR_LEN</B>. <!-- .LP -->
-<P>
-<!-- .I EventLabel -->
-<I>EventLabel</I> -- a short descriptive label for the event of length less than 18 characters.
+<!-- .I *EventCode -->
+<I>*EventCode</I> -- an array of defined events
 <!-- .LP -->
 <P>
+<!-- .I number -->
+<I>number</I> -- an integer indicating the number of events in the array
+<!-- .I *EventCode -->
+<I>*EventCode</I> <P>
+A hardware event can be either a PAPI Preset or a native hardware event code.
+For a list of PAPI preset events, see
+<!-- .BR "PAPI_presets" "(3) or run the" -->
+<A HREF="papi_presets.html">PAPI_presets (3)</A> or run the
+<!-- .I avail -->
+<I>avail</I> test case in the PAPI distribution. PAPI Presets can be passed to
+<!-- .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture." -->
+<A HREF="papi_query_event.html">PAPI_query_event (3)</A> to see if they exist on the underlying architecture.
+For a list of native events available on current platform, run native_avail
+test case in the PAPI distribution. For the encoding of native events, see
+<!-- .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture." -->
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A> to learn how to generate native code for the supported native event on the underlying architecture.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -385,10 +359,12 @@ These labels can be used as event identifiers in third party tools.
 
 </A>
 <BLOCKQUOTE>
-On success, these functions return
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
+<!-- .nf -->
+<PRE>
+On success, this function returns PAPI_OK.
+On error, a non-zero error code is returned.
+<!-- .fi -->
+</PRE>
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
@@ -407,9 +383,28 @@ One or more of the arguments is invalid.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOTPRESET" -->
-<B>PAPI_ENOTPRESET</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The hardware event specified is not a valid PAPI preset.
+<!-- .B "PAPI_ENOEVST" -->
+<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The EventSet specified does not exist.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EISRUN" -->
+<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The EventSet is currently counting events.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ECNFLCT" -->
+<B>PAPI_ECNFLCT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOEVNT" -->
+<B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The PAPI preset is not available on the underlying hardware.
 <P>
 <!-- .SH EXAMPLES -->
 </TD></TR>
@@ -423,50 +418,46 @@ The hardware event specified is not a valid PAPI preset.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int EventCode, EventSet = PAPI_NULL;
-char EventCodeStr[PAPI_MAX_STR_LEN];
-char EventDescr[PAPI_MAX_STR_LEN];
-char EventLabel[20];
+<TT>int EventSet = PAPI_NULL;
+unsigned int native = 0x0;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-/* Convert to integer */
-<P>
-if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Describe event from EventCode */
-*EventCodeStr=&#146;&nbsp;&#146;; /* Erase the name argument to look up the code */
-if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Label event from EventCode */
-if (PAPI_label_event(EventCode,EventLabel) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Print the differing text strings */
-printf("Name: %s0abel: %s0escription: %s0,EventCodeStr,EventLabel,EventDescr);
-<P>
-/* Create the EventSet */
-<P>
 if (PAPI_create_eventset(&EventSet) != PAPI_OK)
   handle_error(1);
 <P>
 /* Add Total Instructions Executed to our EventSet */
 <P>
-if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
+if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Start counting */
+<P>
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Stop counting, ignore values */
+<P>
+if (PAPI_stop(EventSet, NULL) != PAPI_OK)
+  handle_error(1);
+<P>
+/* Remove event */
+<P>
+if (PAPI_remove_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
   handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<P>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -486,19 +477,23 @@ These functions have no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_presets "(3), " PAPI_add_event "(3), "  -->
-<A HREF="papi_presets.html">PAPI_presets (3)</A>, 
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_query_event "(3), " -->
+<!-- .BR PAPI_preset "(3), " -->
+<A HREF="papi_preset.html">PAPI_preset (3)</A>, 
+<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_add_event "(3), "  -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
+<A HREF="papi_start.html">PAPI_start (3)</A>, 
+<A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
+<!-- .BR PAPI_add_events "(3), " PAPI_add_pevents "(3), " PAPI_query_event "(3), " -->
+<A HREF="papi_add_events.html">PAPI_add_events (3)</A>, 
+<A HREF="papi_add_pevents.html">PAPI_add_pevents (3)</A>, 
 <A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
+<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " PAPI_event_name_to_code "(3) "  -->
+<A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
+<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
+<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_describe_eventset (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_remove_event (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

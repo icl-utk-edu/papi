@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_describe_eventset 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_event_code_to_name 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_describe_event(3)</TITLE>
+Manual Page - PAPI_event_code_to_name(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_label_event - convert a hardware event to a description, label, number or string symbol.
+PAPI_event_code_to_name, PAPI_event_name_to_code - convert a numeric hardware event to a name, or vice versa.
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,7 +268,7 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -283,14 +283,10 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int\ PAPI_describe_event(char *" EventName ", int *" EventCode ", char *" EventDescr ");" -->
-<B>int PAPI_describe_event(char *</B><I>EventName</I><B>, int *</B><I>EventCode</I><B>, char *</B><I>EventDescr</I><B>);</B> 
 <!-- .BI "int\ PAPI_event_code_to_name(int " EventCode ", char *" EventName ");" -->
 <B>int PAPI_event_code_to_name(int </B><I>EventCode</I><B>, char *</B><I>EventName</I><B>);</B> 
 <!-- .BI "int\ PAPI_event_name_to_code(char *" EventName ", int *" EventCode ");" -->
 <B>int PAPI_event_name_to_code(char *</B><I>EventName</I><B>, int *</B><I>EventCode</I><B>);</B> 
-<!-- .BI "int\ PAPI_label_event(int " EventCode ", char *" EventLabel ");" -->
-<B>int PAPI_label_event(int </B><I>EventCode</I><B>, char *</B><I>EventLabel</I><B>);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -298,14 +294,10 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check ) -->
-<B>PAPIF_describe_event(C_STRING </B><I>EventName, </I><B>C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventDescr, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  EventName,\  C_INT\  check ) -->
 <B>PAPIF_event_code_to_name(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventName, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .BI PAPIF_event_name_to_code(C_STRING\  EventName,\  C_INT\  EventCode,\  C_INT\  check ) -->
 <B>PAPIF_event_name_to_code(C_STRING </B><I>EventName, </I><B>C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_label_event(C_INT\  EventCode,\  C_STRING\  EventLabel,\  C_INT\  check ) -->
-<B>PAPIF_label_event(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventLabel, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -317,37 +309,13 @@ PAPI_describe_event, PAPI_event_code_to_name, PAPI_event_name_to_code, PAPI_labe
 
 </A>
 <BLOCKQUOTE>
-<!-- .B PAPI_describe_event(\|) -->
-<B>PAPI_describe_event()</B> is used to translate either an ASCII PAPI preset name or an integer
-PAPI preset event code into the corresponding event code or name as
-well as an ASCII description of that event. If the
-<!-- .I EventName  -->
-<I>EventName</I> argument is a string of length &gt;0 it is assumed to contain the name
-to look up and the corresponding event code is returned in the
-argument
-<!-- .IR EventCode . -->
-<I>EventCode</I>. Otherwise the
-<!-- .I EventCode -->
-<I>EventCode</I> argument is used to look up the event name which is stored in the
-<!-- .I EventName -->
-<I>EventName</I> argument. Finally a descriptive string of length less than
-<!-- .B PAPI_MAX_STR_LEN -->
-<B>PAPI_MAX_STR_LEN</B> is copied to the argument
-<!-- .I EventDescr. -->
-<I>EventDescr.</I> <P>
-The functionality of this call is a superset of the following two
-calls.
+<!-- .B PAPI_event_code_to_name(\|) -->
+<B>PAPI_event_code_to_name()</B> is used to translate a 32-bit integer PAPI event code into an ASCII PAPI event name.
+Either Preset event codes or Native event codes can be passed to this routine.
+Native event codes and names differ from platform to platform.
 <P>
 <!-- .B PAPI_event_name_to_code(\|) -->
-<B>PAPI_event_name_to_code()</B> is used to translate an ASCII PAPI preset name into an integer PAPI event code.
-<P>
-<!-- .B PAPI_event_code_to_name(\|) -->
-<B>PAPI_event_code_to_name()</B> is used to translate an integer PAPI event code into an ASCII PAPI preset name.
-<P>
-<!-- .B PAPI_label_event(\|) -->
-<B>PAPI_label_event()</B> is used to translate an integer PAPI event code into a short (&lt;=18 character)
-ASCII label that is more descriptive than the preset name but shorter than the description.
-These labels can be used as event identifiers in third party tools.
+<B>PAPI_event_name_to_code()</B> is used to translate an ASCII PAPI event name into an integer PAPI event code.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -361,21 +329,19 @@ These labels can be used as event identifiers in third party tools.
 <I>EventName</I> -- a string containing the event name as listed in
 <!-- .BR PAPI_presets(3) -->
 <A HREF="papi_presets.html">PAPI_presets (3)</A> 
+or discussed in
+<!-- .BR PAPI_native(3) -->
+<A HREF="papi_native.html">PAPI_native (3)</A> 
 <!-- .LP -->
 <P>
 <!-- .I EventCode -->
 <I>EventCode</I> -- the numeric code for the event
 <!-- .LP -->
 <P>
-<!-- .I EventDescr -->
-<I>EventDescr</I> -- a descriptive string for the event of length less than
-<!-- .BR PAPI_MAX_STR_LEN . -->
-<B>PAPI_MAX_STR_LEN</B>. <!-- .LP -->
 <P>
-<!-- .I EventLabel -->
-<I>EventLabel</I> -- a short descriptive label for the event of length less than 18 characters.
-<!-- .LP -->
-<P>
+*
+* Check the return values and example code.
+*
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -433,18 +399,6 @@ char EventLabel[20];
 if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
   handle_error(1);
 <P>
-/* Describe event from EventCode */
-*EventCodeStr=&#146;&nbsp;&#146;; /* Erase the name argument to look up the code */
-if (PAPI_describe_event(EventCodeStr,&EventCode,EventDescr) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Label event from EventCode */
-if (PAPI_label_event(EventCode,EventLabel) != PAPI_OK)
-  handle_error(1);
-<P>
-/* Print the differing text strings */
-printf("Name: %s0abel: %s0escription: %s0,EventCodeStr,EventLabel,EventDescr);
-<P>
 /* Create the EventSet */
 <P>
 if (PAPI_create_eventset(&EventSet) != PAPI_OK)
@@ -458,15 +412,16 @@ if (PAPI_add_event(&EventSet, EventCode) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -486,19 +441,19 @@ These functions have no known bugs.
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_presets "(3), " PAPI_add_event "(3), "  -->
+<!-- .BR PAPI_presets "(3), " PAPI_native "(3), "  -->
 <A HREF="papi_presets.html">PAPI_presets (3)</A>, 
+<A HREF="papi_native.html">PAPI_native (3)</A>, 
+<!-- .BR PAPI_enum_events "(3), " PAPI_add_event "(3), "  -->
+<A HREF="papi_enum_events.html">PAPI_enum_events (3)</A>, 
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_query_event "(3), " -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_get_event_info "(3)" -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_query_event.html">PAPI_query_event (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_describe_eventset (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_event_code_to_name (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

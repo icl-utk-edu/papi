@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_num_counters 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_num_counters 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -267,7 +267,7 @@ PAPI_num_counters - PAPI High Level: get the number of hardware counters availab
 <A HREF=#3>Return Values</A><BR>
 <A HREF=#4>Errors</A><BR>
 <A HREF=#5>Examples</A><BR>
-<A HREF=#6>Author</A><BR>
+<A HREF=#6>Authors</A><BR>
 <A HREF=#7>Bugs</A><BR>
 <A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
@@ -311,9 +311,9 @@ PAPI_num_counters - PAPI High Level: get the number of hardware counters availab
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
 <!-- .B PAPI_num_counters() -->
-<B>PAPI_num_counters()</B> initialises the library using
-<!-- .B PAPI_library_init -->
-<B>PAPI_library_init</B> if necessary.
+<B>PAPI_num_counters()</B> initialises the library to
+<!-- .B PAPI_HIGH_LEVEL_INITED -->
+<B>PAPI_HIGH_LEVEL_INITED</B> if necessary.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -374,8 +374,13 @@ A system or C library call failed inside PAPI, see the
 <TT>  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
   int num_hwcntrs = 0;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
+  /*  The installation does not support PAPI */
+  if ((num_hwcntrs = PAPI_num_counters()) &lt; 0 )
     handle_error(1);
+<P>
+  /*  The installation supports PAPI, but has no counters */
+  if ((num_hwcntrs = PAPI_num_counters()) == 0 )
+    fprintf(stderr,"Info:: This machine does not provide hardware counters.0);
 <P>
   if (num_hwcntrs &gt; 2)
     num_hwcntrs = 2;
@@ -388,15 +393,16 @@ A system or C library call failed inside PAPI, see the
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=6>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -422,11 +428,15 @@ If you don&#146;t call this function, your application could core dump.
 <A HREF="papi_read_counters.html">PAPI_read_counters (3)</A>,
 <!-- .BR PAPI_stop_counters "(3)," -->
 <A HREF="papi_stop_counters.html">PAPI_stop_counters (3)</A>,
-<BR>
- The PAPI Web Site: <A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .BR PAPI_init_library "(3)," -->
+<A HREF="papi_init_library.html">PAPI_init_library (3)</A>,
+<!-- .BR PAPI_num_hwctrs "(3)," -->
+<A HREF="papi_num_hwctrs.html">PAPI_num_hwctrs (3)</A>,
+<!-- .BR PAPI "(3)" -->
+<A HREF="papi.html">PAPI (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_counters (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_counters (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

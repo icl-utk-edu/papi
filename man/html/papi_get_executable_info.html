@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_executable_info 3 "September, 2002" "PAPI Programmer's Reference" PAPI -->
+<!-- .TH PAPI_get_executable_info 3 "November, 2003" "PAPI Programmer's Reference" PAPI -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,11 +268,12 @@ PAPI_get_executable_info - get the executable&#146;s address space info
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Example</A><BR>
-<A HREF=#7>Author</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Data Structures</A><BR>
+<A HREF=#8>Authors</A><BR>
+<A HREF=#9>Bugs</A><BR>
+<A HREF=#10>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=11>
 
      <H3>SYNOPSIS</H3>
 
@@ -314,7 +315,7 @@ PAPI_get_executable_info - get the executable&#146;s address space info
 </A>
 <BLOCKQUOTE>
 In C, this function returns a pointer to a structure containing information about
-the current program. In Fortran, the fields of the structure are returned explicitly.
+the current program. In Fortran, some fields of the structure are returned explicitly.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -409,19 +410,62 @@ printf("End of user program is at %p&#92;n",prginfo-&gt;text_end);
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH DATA STRUCTURES -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>DATA STRUCTURES</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+<!-- .LP -->
+<P>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>   typedef struct _papi_preload_option {
+      char lib_preload_env[PAPI_MAX_STR_LEN];   /* Model string of CPU */
+      char lib_preload_sep;
+      char lib_dir_env[PAPI_MAX_STR_LEN];
+      char lib_dir_sep;
+   } PAPI_preload_option_t;
+<P>
+   typedef int (*PAPI_debug_handler_t) (int code);
+<P>
+   typedef struct _papi_address_map {
+      char mapname[PAPI_MAX_STR_LEN];
+      caddr_t text_start;       /* Start address of program text segment */
+      caddr_t text_end;         /* End address of program text segment */
+      caddr_t data_start;       /* Start address of program data segment */
+      caddr_t data_end;         /* End address of program data segment */
+      caddr_t bss_start;        /* Start address of program bss segment */
+      caddr_t bss_end;          /* End address of program bss segment */
+   } PAPI_address_map_t;
+<P>
+   typedef struct _papi_program_info {
+      char fullname[PAPI_MAX_STR_LEN];  /* path+name */
+      char name[PAPI_MAX_STR_LEN];      /* name */
+      PAPI_address_map_t address_info;
+      PAPI_preload_option_t preload_info;
+   } PAPI_exe_info_t;
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
+<!-- .SH AUTHORS -->
+</BLOCKQUOTE>
+<A name=8>
+
+     <H3>AUTHORS</H3>
+
+</A>
+<BLOCKQUOTE>
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>BUGS</H3>
 
@@ -435,7 +479,7 @@ Only the
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=10>
 
      <H3>SEE ALSO</H3>
 
@@ -443,14 +487,13 @@ Only the
 <BLOCKQUOTE>
 <!-- .BR PAPI_library_init "(3), " -->
 <A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
-<!-- .BR PAPI_get_opt "(3), "  -->
-<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<!-- .BR PAPI_get_hardware_info "(3), " -->
+<A HREF="papi_get_hardware_info.html">PAPI_get_hardware_info (3)</A>, 
+<!-- .BR PAPI_get_opt "(3)"  -->
+<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_executable_info (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_executable_info (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

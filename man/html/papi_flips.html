@@ -1,9 +1,9 @@
-<!-- .\" $Id$ -->
-<!-- .TH "PAPI_save" 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .\" @(#)PAPI_flops    0.10 00/05/18 CHD; from S5 -->
+<!-- .TH PAPI_flips 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_save(3)</TITLE>
+Manual Page - PAPI_flops(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -248,7 +248,6 @@ PAPI HOME
 
 <TD CLASS="STYLE">
 
-<P>
 <!-- .SH NAME -->
 <A name=0>
 
@@ -256,9 +255,8 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_save - Save the current state of the PAPI library
-<BR>
- PAPI_restore - Restore the saved state of the PAPI library
+PAPI_flips - PAPI High level: Simplified call to get Mflips/s, real and processor time
+PAPI_flops - PAPI High level: Simplified call to get Mflops/s, real and processor time
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -266,10 +264,10 @@ PAPI_save - Save the current state of the PAPI library
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Return Values</A><BR>
-<A HREF=#4>Errors</A><BR>
-<A HREF=#5>Examples</A><BR>
-<A HREF=#6>Author</A><BR>
+<A HREF=#3>Arguments</A><BR>
+<A HREF=#4>Return Values</A><BR>
+<A HREF=#5>Notes</A><BR>
+<A HREF=#6>Authors</A><BR>
 <A HREF=#7>Bugs</A><BR>
 <A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
@@ -284,10 +282,21 @@ PAPI_save - Save the current state of the PAPI library
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI int\ PAPI_save(" void ");" -->
-<B>int PAPI_save(</B><I> void </I><B>);</B> 
-<!-- .BI int\ PAPI_restore(" void ");" -->
-<B>int PAPI_restore(</B><I> void </I><B>);</B> 
+<!-- .BI "int PAPI_flips (float *" rtime ", float *" ptime ", long_long *" flpins ", float *" mflips ");" -->
+<B>int PAPI_flips (float *</B><I>rtime</I><B>, float *</B><I>ptime</I><B>, long_long *</B><I>flpins</I><B>, float *</B><I>mflips</I><B>);</B> 
+<!-- .BI "int PAPI_flops (float *" rtime ", float *" ptime ", long_long *" flpops ", float *" mflops ");" -->
+<B>int PAPI_flops (float *</B><I>rtime</I><B>, float *</B><I>ptime</I><B>, long_long *</B><I>flpops</I><B>, float *</B><I>mflops</I><B>);</B> 
+<!-- .fi -->
+</PRE>
+<!-- .B Fortran Interface -->
+<B>Fortran Interface</B> <!-- .nf -->
+<PRE>
+<!-- .B #include "fpapi.h" -->
+<B>#include fpapi.h</B> 
+<!-- .BI PAPIF_flips(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflips,\  C_INT\  check ) -->
+<B>PAPIF_flips(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>flpins, </I><B>C_FLOAT </B><I>mflips, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpops,\  C_FLOAT\  mflops,\  C_INT\  check ) -->
+<B>PAPIF_flops(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>flpops, </I><B>C_FLOAT </B><I>mflops, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -299,21 +308,43 @@ PAPI_save - Save the current state of the PAPI library
 
 </A>
 <BLOCKQUOTE>
-<!-- .B "PAPI_save()" -->
-<B>PAPI_save()</B> "freezes" the current state of the PAPI_library. Among tasks done is
-to register the current values of any running virtual counters to be able to
-restore these at the time of a subsequent
-<!-- .BR PAPI_restore . -->
-<B>PAPI_restore</B>. <!-- .LP -->
+<!-- .LP -->
 <P>
-<!-- .B "PAPI_restore()" -->
-<B>PAPI_restore()</B> restores the current state of the PAPI_library to a state that has previously
-been saved using
-<!-- .BR PAPI_save . -->
-<B>PAPI_save</B>. <P>
-<!-- .SH RETURN VALUES -->
+The first call to
+<!-- .B PAPI_flips(\|) "or" PAPI_flops(\|) -->
+<B>PAPI_flips() or PAPI_flops()</B> will initialize the PAPI High Level interface, set up the counters
+to monitor PAPI_FP_INS or PAPI_FP_OPS and PAPI_TOT_CYC events and start the counters.
+Subsequent calls will read the counters and return total real time,
+total process time, total floating point instructions or operations since the start
+of the measurement and the Mflip/s or Mflop/s rate since latest call to
+<!-- .B PAPI_flops(\|) "or" PAPI_flops(\|). -->
+<B>PAPI_flops() or PAPI_flops().</B> <P>
+<!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
+
+     <H3>ARGUMENTS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .I *rtime  -->
+<I>*rtime</I> -- total realtime since the first PAPI_flops() call
+<!-- .LP -->
+<P>
+<!-- .I *ptime  -->
+<I>*ptime</I> -- total process time since the first PAPI_flops() call
+<!-- .LP -->
+<P>
+<!-- .I *flpins, flpops  -->
+<I>*flpins, flpops</I> -- total floating point instructions or operations since the first call
+<!-- .LP -->
+<P>
+<!-- .I *mflips, *mflops  -->
+<I>*mflips, *mflops</I> -- Mflip/s or Mflop/s achieved since the previous call
+<P>
+<!-- .SH RETURN VALUES -->
+</BLOCKQUOTE>
+<A name=4>
 
      <H3>RETURN VALUES</H3>
 
@@ -324,62 +355,80 @@ On success, this function returns
 <B>PAPI_OK.</B> <BR>
  On error, a non-zero error code is returned.
 <P>
-<!-- .SH ERRORS -->
+<!-- .SH NOTES -->
 </BLOCKQUOTE>
-<A name=4>
-
-     <H3>ERRORS</H3>
-
-</A>
-<BLOCKQUOTE>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ESBSTR" -->
-<B>PAPI_ESBSTR</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The substrate does not provide the save/restore functionality.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EINVAL" -->
-<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-A
-<!-- .B PAPI_restore  -->
-<B>PAPI_restore</B> was attempted, but there is no saved state to restore.
-<P>
-<!-- .SH EXAMPLES -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
 <A name=5>
 
-     <H3>EXAMPLES</H3>
+     <H3>NOTES</H3>
 
 </A>
 <BLOCKQUOTE>
 <!-- .LP -->
 <P>
+Mflip/s, or millions of floating point instructions per second, is defined
+in this context as the number of instructions issued to the floating point
+unit per second. It is usually calculated directly from a counter measurement
+and may be different from platform to platform.
+Mflop/s, or millions of floating point operations per second, is intended to
+represent the number of floating point arithmetic operations per second.
+Attempts are made to massage the counter values to produce the theoreticallly
+expected value by, for instance, doubling FMA counts or subtracting floating point
+loads and stores if necessary.
+<!-- .I CAVEAT EMPTOR -->
+<I>CAVEAT EMPTOR</I> <P>
+<!-- .LP -->
+<P>
 <!-- .nf -->
 <PRE>
-<!-- .if t .ft CW -->
-<TT>int retval;
+<!-- .BR  PAPI_flops() " may be called by:" -->
+<B>PAPI_flops()</B> may be called by: 
+<!-- .B  \t -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> 
+<!-- .B  \tthe user application program -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the user application program</B> 
+<!-- .fi -->
+</PRE>
+<!-- .LP -->
 <P>
-retval = PAPI_save();
-THIRD_PARTY_TOOL_update_gui_counters();
-retval = PAPI_restore();
-<P>
-<!-- .if t .ft P -->
-</TT><!-- .fi -->
+<!-- .nf -->
+<PRE>
+<!-- .B  \t -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> 
+<!-- .BR  PAPI_flops() " contains calls to:" -->
+<B>PAPI_flops()</B> contains calls to: 
+<!-- .B  \t -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B> 
+<!-- .B  \tPAPI_perror() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_perror()</B> 
+<!-- .B  \tPAPI_library_init() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_library_init()</B> 
+<!-- .B  \tPAPI_get_hardware_info() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_get_hardware_info()</B> 
+<!-- .B  \tPAPI_create_eventset() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_create_eventset()</B> 
+<!-- .B  \tPAPI_add_event() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_add_event()</B> 
+<!-- .B  \tPAPI_start() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_start()</B> 
+<!-- .B  \tPAPI_get_real_usec() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_get_real_usec()</B> 
+<!-- .B  \tPAPI_accum() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_accum()</B> 
+<!-- .B  \tPAPI_shutdown() -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAPI_shutdown()</B> 
+<!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=6>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -389,13 +438,7 @@ Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
 
 </A>
 <BLOCKQUOTE>
-These functions are not yet implemented.
-<BR>
- NOTE: As currently defined, these functions are not necessarily nestable or
-thread safe.
-To become so, PAPI_save should return a void pointer to a platform specific
-structure that can be used by PAPI_restore to restore data on a per thread
-or per EventSet basis.
+These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
@@ -405,12 +448,12 @@ or per EventSet basis.
 
 </A>
 <BLOCKQUOTE>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
-<P>
+<!-- .BR "PAPI_accum (3)", "PAPI_ipc (3)" -->
+<A HREF="papi_accum.html">PAPI_accum (3)</A> ,
+<A HREF="papi_ipc.html">PAPI_ipc (3)</A> 
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_save (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_flips (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

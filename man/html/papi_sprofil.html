@@ -1,5 +1,5 @@
 <!-- .\" @(#)$Id$ -->
-<!-- .TH PAPI_profil 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_profil 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,7 +268,7 @@ PAPI_profil, PAPI_sprofil - generate PC histogram data where hardware counter ov
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -283,8 +283,8 @@ PAPI_profil, PAPI_sprofil - generate PC histogram data where hardware counter ov
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\   -->
-<B>int PAPI_profil(unsigned short * </B><I>buf, </I><B>unsigned </B><I>bufsiz, </I><B>unsigned long </B><I>offset, </I> 
+<!-- .BI int\ PAPI_profil(void\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\   -->
+<B>int PAPI_profil(void * </B><I>buf, </I><B>unsigned </B><I>bufsiz, </I><B>unsigned long </B><I>offset, </I> 
 <!-- .BI \tunsigned\  scale, \ int \ EventSet, \ -->
 <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned </B><B> int</B><I> EventSet,</I> 
              int  EventCode,  int  threshold,  int  flags );
@@ -387,6 +387,15 @@ and then calls PAPI_sprofil to do the work.
 <TR valign=top>
 <TD><B>PAPI_PROFIL_COMPRESS</B></TD><TD>Ignore samples if hash buckets get big.
 </TD></TR>
+<TR valign=top>
+<TD><B>PAPI_PROFIL_BUCKET_16</B></TD><TD>use unsigned short(16bit) as bucket, This is the default bucket.
+</TD></TR>
+<TR valign=top>
+<TD><B>PAPI_PROFIL_BUCKET_32</B></TD><TD>use unsigned int(32bit) as bucket.
+</TD></TR>
+<TR valign=top>
+<TD><B>PAPI_PROFIL_BUCKET_64</B></TD><TD>use unsigned long(64bit) as bucket.
+</TD></TR>
 </TABLE></BLOCKQUOTE>
 <P>
 <!-- .SH RETURN VALUES -->
@@ -480,19 +489,19 @@ if ((prginfo = PAPI_get_executable_info()) == NULL)
 <P>
 start = (unsigned long)prginfo-&gt;text_start;
 end = (unsigned long)prginfo-&gt;text_end;
-length = end - start;
+length = (end - start)/sizeof(unsigned short) *sizeof(unsigned short);
 <P>
-profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
+profbuf = (unsigned short *)malloc(length);
 if (profbuf == NULL)
   handle_error(1);
-memset(profbuf,0x00,length*sizeof(unsigned short));
+memset(profbuf,0x00,length);
 <P>
 if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
   handle_error(retval);
 <P>
 /* Add Total FP Instructions Executed to our EventSet */
 <P>
-if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS)) != PAPI_OK)
+if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
   handle_error(retval);
 <P>
 if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
@@ -507,15 +516,16 @@ if ((retval = PAPI_start(EventSet)) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -539,23 +549,20 @@ These functions have no known bugs.
 <!-- .BR PAPI_preset "(3), " PAPI_get_executable_info "(3), " -->
 <A HREF="papi_preset.html">PAPI_preset (3)</A>, 
 <A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>, 
-<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), "  -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_remove_event "(3), "  -->
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
 <A HREF="papi_start.html">PAPI_start (3)</A>, 
-<A HREF="papi_rem_event.html">PAPI_rem_event (3)</A>, 
-<!-- .BR PAPI_rem_events "(3), " PAPI_query "(3), " -->
-<A HREF="papi_rem_events.html">PAPI_rem_events (3)</A>, 
+<A HREF="papi_remove_event.html">PAPI_remove_event (3)</A>, 
+<!-- .BR PAPI_remove_events "(3), " PAPI_query "(3), " -->
+<A HREF="papi_remove_events.html">PAPI_remove_events (3)</A>, 
 <A HREF="papi_query.html">PAPI_query (3)</A>, 
-<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), "  -->
+<!-- .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3) "  -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>, 
-<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
+<A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A> 
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_profil (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_profil (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

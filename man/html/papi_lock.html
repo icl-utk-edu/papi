@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH "PAPI_lock" 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH "PAPI_lock" 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -256,9 +256,9 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_lock - Lock the PAPI internal mutex variable
+PAPI_lock - Lock one of two mutex variables defined in papi.h
 <BR>
- PAPI_unlock - Unlock the PAPI internal mutex variable
+ PAPI_unlock - Unlock one of the mutex variables defined in papi.h
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -266,9 +266,9 @@ PAPI_lock - Lock the PAPI internal mutex variable
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Return Values</A><BR>
-<A HREF=#4>Notes</A><BR>
-<A HREF=#5>Author</A><BR>
+<A HREF=#3>Argument</A><BR>
+<A HREF=#4>Return Values</A><BR>
+<A HREF=#5>Authors</A><BR>
 <A HREF=#6>Bugs</A><BR>
 <A HREF=#7>See Also</A><BR>
 </BLOCKQUOTE>
@@ -283,10 +283,10 @@ PAPI_lock - Lock the PAPI internal mutex variable
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI void\ PAPI_lock(void); -->
-<B>void PAPI_lock(void);</B> 
-<!-- .BI void\ PAPI_unlock(void); -->
-<B>void PAPI_unlock(void);</B> 
+<!-- .BI void\ PAPI_lock(int lock); -->
+<B>void PAPI_lock(int</B><I>lock);</I> 
+<!-- .BI void\ PAPI_unlock(int lock); -->
+<B>void PAPI_unlock(int</B><I>lock);</I> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -294,10 +294,10 @@ PAPI_lock - Lock the PAPI internal mutex variable
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_lock() -->
-<B>PAPIF_lock()</B> 
-<!-- .BI PAPIF_unlock() -->
-<B>PAPIF_unlock()</B> 
+<!-- .BI PAPIF_lock(C_INT\  lock) -->
+<B>PAPIF_lock(C_INT </B><I>lock)</I> 
+<!-- .BI PAPIF_unlock(C_INT\  lock) -->
+<B>PAPIF_unlock(C_INT </B><I>lock)</I> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -310,18 +310,30 @@ PAPI_lock - Lock the PAPI internal mutex variable
 </A>
 <BLOCKQUOTE>
 <!-- .B "PAPI_lock()" -->
-<B>PAPI_lock()</B> Grabs access to the PAPI mutex variable. This function is provided to the
-user to have a platform independent call to an (hopefully) efficiently
-implemented mutex.
+<B>PAPI_lock()</B> Grabs access to one of two PAPI mutex variables. This function is provided to the
+user to have a platform independent call to  (hopefully) efficiently
+implemented mutex variables.
 <!-- .LP -->
 <P>
 <!-- .B "PAPI_unlock()" -->
 <B>PAPI_unlock()</B> unlocks the mutex acquired by a call to
 <!-- .BR PAPI_lock . -->
 <B>PAPI_lock</B>. <P>
-<!-- .SH RETURN VALUES -->
+<!-- .SH ARGUMENT -->
 </BLOCKQUOTE>
 <A name=3>
+
+     <H3>ARGUMENT</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .I lock -->
+<I>lock</I> --  an integer value specifying one of two user locks:
+<!-- .B "PAPI_USR1_LOCK" or "PAPI_USR2_LOCK" -->
+<B>PAPI_USR1_LOCK or PAPI_USR2_LOCK</B> <P>
+<!-- .SH RETURN VALUES -->
+</BLOCKQUOTE>
+<A name=4>
 
      <H3>RETURN VALUES</H3>
 
@@ -329,32 +341,18 @@ implemented mutex.
 <BLOCKQUOTE>
 There are no return values for these calls. Upon return from
 <!-- .B PAPI_lock -->
-<B>PAPI_lock</B> the current thread has acquired exclusive access to the PAPI mutex.
+<B>PAPI_lock</B> the current thread has acquired exclusive access to the specified PAPI mutex.
 <P>
-<!-- .SH NOTES -->
-</BLOCKQUOTE>
-<A name=4>
-
-     <H3>NOTES</H3>
-
-</A>
-<BLOCKQUOTE>
-Care must be taken since the mutex variable used is the internal PAPI
-mutex variable. The thread that has acquired the mutex should be
-designed so as not to call any PAPI library functions until a call to
-<!-- .B PAPI_unlock -->
-<B>PAPI_unlock</B> has been made. Also, other threads that call PAPI library functions may
-be blocked until the thread that has grabbed the mutex has released it.
-<P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=5>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -364,9 +362,7 @@ Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
 
 </A>
 <BLOCKQUOTE>
-Due to its possible interference with internal PAPI and that there is only
-one mutex available through this interface some care must be observed by
-the programmer using these calls.
+These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
@@ -376,12 +372,10 @@ the programmer using these calls.
 
 </A>
 <BLOCKQUOTE>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_lock (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_lock (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

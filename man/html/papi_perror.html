@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_perror 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_perror 3 "November, 2003" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -268,7 +268,7 @@ PAPI_perror, PAPI_strerror - convert PAPI error codes to strings
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Example</A><BR>
-<A HREF=#7>Author</A><BR>
+<A HREF=#7>Authors</A><BR>
 <A HREF=#8>Bugs</A><BR>
 <A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
@@ -402,23 +402,13 @@ if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
 <P>
 /* Add Total Instructions Executed to our EventSet */
 <P>
-if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS)) != PAPI_OK)
+if ((retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
   {
      PAPI_perror(retval,error_str,PAPI_MAX_STR_LEN);
      fprintf(stderr,"PAPI_error %d: %s\n",retval,error_str);
      exit(1);
   }
 <P>
-/* Add native event (0xc1 on hardware counter 1) */
-<P>
-native = (0xc1 &lt;&lt; 8) | 1;
-if ((retval = PAPI_add_event(&EventSet, native)) != PAPI_OK)
-  {
-     /* Dump error string directly to stderr. */
-<P>
-      PAPI_perror(retval,NULL,NULL);
-     exit(1);
-  }
 <P>
 /* Start counting */
 <P>
@@ -428,15 +418,16 @@ if ((retval = PAPI_start(EventSet)) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH AUTHOR -->
+<!-- .SH AUTHORS -->
 </BLOCKQUOTE>
 <A name=7>
 
-     <H3>AUTHOR</H3>
+     <H3>AUTHORS</H3>
 
 </A>
 <BLOCKQUOTE>
-Philip J. Mucci &lt;<A HREF="mailto:mucci@cs.utk.edu">mucci@cs.utk.edu</A>&gt;
+The PAPI Team. See them at the PAPI Web Site:
+<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
@@ -462,12 +453,9 @@ These functions have no known bugs.
 <A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
 <A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>, 
 <A HREF="papi_shutdown.html">PAPI_shutdown (3)</A>, 
-<BR>
- The PAPI Web Site:
-<A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_perror (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_perror (3)</TD> <TD align=right width=33%><I>November, 2003</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
