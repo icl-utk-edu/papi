@@ -18,16 +18,27 @@
 
 #define EV_MAX_COUNTERS 3
 
+/* This comes from the kernel when we get the overflow counts. */
+
+struct pfcntrs_ev6
+{
+  ulong pr_cycle;    /* process cycle counter */
+  ulong pf_cntr0;    /* driver's counter 1 */
+  ulong pf_cntr1;    /* driver's counter 2 */
+};
+
+/* This comes from the kernel when we get the overflow counts. */
+
 typedef union {
   struct pfcntrs ev4;
   struct pfcntrs_ev5 ev5;
-  struct pfcntrs ev6;
+  struct pfcntrs_ev6 ev6;
 } ev_values_t;
 
 typedef union {
   struct iccsr ev4;
-  long ev5;
-  long ev6;
+  union pmctrs_ev5 ev5;
+  union pmctrs_ev6 ev6;
 } ev_control_t;
 
 typedef struct hwd_control_state {

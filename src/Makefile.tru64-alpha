@@ -1,16 +1,18 @@
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21xxx"
 LIBS	= static shared
-TARGETS	= serial omp
-FOR_USED=
+TARGETS	= serial pthreads omp smp
+
+FOR_USED= -DFORTRANUNDERSCORE
 CFLAGS 	= -g -DDEBUG 
-OPTFLAGS=
+FFLAGS	= -g
+OPTFLAGS= 
 SMPCFLGS= -mp
 OMPCFLGS= -omp
 CC_SHR	= cc -shared
 CC_R	= cc
 CC	= cc
-F77	= f77
+F77	= f90
 MISCOBJS= cpu_version.o read_cycle_counter.o
 
 include Makefile.inc

@@ -1,7 +1,7 @@
 #ifdef DEBUG
 #if (defined(sgi) && defined(mips)) || defined(_CRAYT3E) || defined(__digital__) || (defined(sun) && defined(sparc))
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
-#else
+#else /* SV2,SV1 ? */
 #define DBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
 #endif
 extern PAPI_debug_handler_t PAPI_ERR_HANDLER;
