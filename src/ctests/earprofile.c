@@ -18,7 +18,7 @@
    thread context (PAPI_GRN_THR).
 
      The Eventset contains:
-     + PAPI_FP_INS (to profile)
+     + DATA_EAR_CACHE_LAT4 (to profile)
      + PAPI_TOT_CYC
 
    - Set up profile

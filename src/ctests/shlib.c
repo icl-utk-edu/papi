@@ -77,7 +77,6 @@ int main(int argc, char **argv)
 #endif     
      void *handle = dlopen("libm.so", RTLD_LAZY);
      double (*cosine)(double);
-     char *error;
      int oldcount;
 
      printf("\nLoading %s with dlopen().\n",libname);
@@ -89,7 +88,7 @@ int main(int argc, char **argv)
      
      printf("Looking up cos() function with dlsym().\n");
 
-     cosine = dlsym(handle, "cos");
+     cosine = ( double (*) (double)) dlsym(handle, "cos");
      if (cosine == NULL)  {
        test_fail(__FILE__, __LINE__, "dlsym", 1);
      }
