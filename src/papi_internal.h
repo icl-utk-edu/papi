@@ -23,6 +23,8 @@
 /* Windows has it's own way of declaring inline static routines */
 #ifdef _WIN32
    #define inline_static static __inline
+#elif defined(_AIX) /* don't know how to declare inline for xlc */
+   #define inline_static __inline
 #else
    #define inline_static inline static
 #endif
