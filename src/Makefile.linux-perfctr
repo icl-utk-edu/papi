@@ -1,5 +1,5 @@
 KERNINC	= /usr/src/linux-2.4/include
-PERFCTR	:= ./perfctr
+PERFCTR	?= ./perfctr
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -g -Wall -O3 -march=pentiumpro
 TOPTFLAGS= -g -Wall -O0 -march=pentiumpro
