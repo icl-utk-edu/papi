@@ -61,8 +61,7 @@ Cache Information:
 Currently this is no supported, but will be added in future releases.
 
 Timer latencies:
-The PAPI_get_real_usec uses the highest resolution timer available on the Cray X1 which
-is currently 10 ms.
+The PAPI_get_real_usec uses the highest resolution timer available on the Cray X1.
 
 Other Issues:
 The user should be aware that we do not stop the counters when reading the hardware 
@@ -75,4 +74,8 @@ array.  Each is a long long and thus this will effect the instruction count.
 The E and M chip are already aggregated from the hardware and so the PAPI interface
 only has to copy the results.
 hardware and thus PAPI only has to cop
+
+BUGS:
+The test pthreads_zero can possibly crash the X1 system if it is not running the
+most recent kernel.
 
