@@ -6,7 +6,7 @@ LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
 
 #CFLAGS	=
-CFLAGS  = -xarch=v8plusa -g
+CFLAGS  = -xarch=v8plusa
 #OPTFLAGS= -fpic -O3
 OPTFLAGS= 
 #-xO3

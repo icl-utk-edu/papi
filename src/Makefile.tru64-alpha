@@ -5,12 +5,12 @@ DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads omp
 
-CFLAGS 	= -DDEBUG -Zp8 
+CFLAGS 	= -Zp8 
 FFLAGS	= 
 OPTFLAGS= 
 TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(FOPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
 MISCLIBS= 
