@@ -36,6 +36,13 @@ C      OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
 C   Open matrix file number 2 for reading
 C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
+      retval = PAPI_VER_CURRENT
+      call PAPIf_library_init(retval)
+      if ( retval.NE.PAPI_VER_CURRENT) then
+        call ftest_fail(__FILE__, __LINE__,
+     .   'PAPI_library_init', retval)
+      end if
+
 C   Total floating point operations
 	call PAPIf_query_event(PAPI_FP_INS, retval)
 	if (retval .NE. PAPI_OK) then
