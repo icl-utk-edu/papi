@@ -4,8 +4,10 @@ SUBSTR  = power3
 MSUBSTR = power3
 MEMSUBSTR=aix
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
-LIBS	= static aix-shared
+LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
+PMAPI	= /usr/lpp/pmtoolkit
+SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 
 # Default source is for pmtoolkit 1.3.x and above.
 # For version 1.2.x add -DPMTOOLKIT_1_2
@@ -22,10 +24,10 @@ FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
-LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi
+LDFLAGS = -L$(PMAPI)/lib -lpmapi
 CC_R	= xlc_r
 CC	= xlc
-CC_SHR	= ld -r
+CC_SHR	= xlc -G -berok
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
@@ -40,9 +42,6 @@ power3_events.o: power3_events.c  $(HEADERS)
 
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
-
-aix-shared: $(SOURCES)
-	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 native_install:
 
