@@ -58,7 +58,7 @@ int TESTS_QUIET=0; /* Tests in Verbose mode? */
 
 void Thread(int n)
 {
-  int retval, num_tests = 1, tmp;
+  int retval, num_tests = 1;
   int EventSet1;
   int mask1 = MASK;
   int num_events1;
@@ -104,12 +104,13 @@ void Thread(int n)
 	 elapsed_cyc);
   }
 
-  test_pass(__FILE__,values,num_tests);
+  /* It is illegal for the threads to exit in OpenMP */
+  /* test_pass(__FILE__,0,0); */
 }
 
 int main(int argc, char **argv) 
 {
-  int i, maxthr, retval;
+  int maxthr, retval;
   long_long elapsed_us, elapsed_cyc;
 
   if ( argc > 1 ) {
@@ -125,26 +126,22 @@ int main(int argc, char **argv)
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+  elapsed_us = PAPI_get_real_usec();
+
+  elapsed_cyc = PAPI_get_real_cyc();
+
+
   retval = PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num),0);
   if ( retval == PAPI_ESBSTR )
 	test_pass(__FILE__, NULL, 0 );
   else if (retval != PAPI_OK) 
 	test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 
-  elapsed_us = PAPI_get_real_usec();
-
-  elapsed_cyc = PAPI_get_real_cyc();
-
-  maxthr = omp_get_num_procs();
-
-#if defined(sgi)
-#pragma omp parallel for private(i) schedule(static)
-  for (i=1;i<3;i++)
-#else
-#pragma omp parallel for
-  for (i=1;i<maxthr+1;i++)
-#endif
-    Thread(1000000*i);
+#pragma omp parallel private(maxthr,retval)
+{
+  maxthr = omp_get_num_threads();
+  Thread(1000000*omp_get_thread_num());
+}
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
@@ -155,5 +152,6 @@ int main(int argc, char **argv)
   printf("Master real cycles : \t%lld\n",
 	 elapsed_cyc);
 
+  test_pass(__FILE__,0,0);
   exit(0);
 }
