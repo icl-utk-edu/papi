@@ -5,7 +5,7 @@ TARGETS = serial pthreads
 
 FOR_USED= -DFORTRANDOUBLEUNDERSCORE
 CFLAGS  = 
-OPTFLAGS= -O3 -DNDEBUG
+OPTFLAGS= -O3
 CC	= cc
 CC_SHR  = $(CC) -shared
 CC_R	= $(CC)

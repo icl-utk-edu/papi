@@ -5,7 +5,7 @@ TARGETS	= serial pthreads smp omp
 #FOR_USED= -DFORTRANUNDERSCORE
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com
 CFLAGS	= $(FLAGS)
-OPTFLAGS= -O3 -qstrict -DNDEBUG
+OPTFLAGS= -O3 -qstrict
 FFLAGS	= $(FLAGS)
 NOOPT	= 
 SMPCFLGS= -qsmp

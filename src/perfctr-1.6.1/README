@@ -4,6 +4,10 @@
 ========================================================================
 
 
+- Rewrote the `command' example application to use perfctr inheritance
+  instead of the recently removed "remote control" facility.
+- WinChip documentation updates and corrections.
+
 Latest Updates
 --------------
 Version 1.5, 2000-09-03
@@ -36,7 +40,7 @@ x86-class processors. Supported processors are:
   Pentium Pro, Pentium II, Celeron, and Pentium III.
 - AMD K7 Athlon.
 - Cyrix 6x86MX, MII, and III.
-- WinChip C6, 2, 2A, and 3.
+- WinChip C6, 2, 2A, 2B, and 3.
 
 PMCs are "event counters" capable of recording any of a large
 number of performance-related events during execution.

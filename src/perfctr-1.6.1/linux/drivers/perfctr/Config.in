@@ -4,6 +4,7 @@
 
 tristate 'Performance-monitoring counters support' CONFIG_PERFCTR
 if [ "$CONFIG_PERFCTR" != "n" ]; then
+   define_bool CONFIG_KPERFCTR y
    bool '  Init-time hardware tests' CONFIG_PERFCTR_INIT_TESTS
    if [ "$CONFIG_X86" = "y" -a "$CONFIG_X86_TSC" != "y" ]; then
       bool '  Support WinChip processors' CONFIG_PERFCTR_WINCHIP

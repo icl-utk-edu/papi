@@ -252,7 +252,7 @@ const char *perfctr_cpu_name(const struct perfctr_dev *dev)
       case PERFCTR_X86_WINCHIP_C6:
 	return "WinChip C6";
       case PERFCTR_X86_WINCHIP_2:
-	return "WinChip 2";
+	return "WinChip 2/3";
       case PERFCTR_X86_AMD_K7:
 	return "AMD K7 Athlon";
       default:

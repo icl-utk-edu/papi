@@ -21,7 +21,7 @@ static union {	/* Support for lazy evntsel MSR updates. */
 	char __align[SMP_CACHE_BYTES];	/* 32 bytes */
 } per_cpu_control[NR_CPUS] __cacheline_aligned;
 
-/* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/2A/3 */
+/* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/3 */
 #define MSR_P5_CESR		0x11
 #define MSR_P5_CTR0		0x12
 #define MSR_P5_CTR1		0x13
@@ -366,8 +366,8 @@ static int __init centaur_init(void)
 		case 4: /* WinChip C6 */
 			perfctr_cpu_type = PERFCTR_X86_WINCHIP_C6;
 			break;
-		case 8: /* WinChip 2 or 2A */
-		case 9: /* WinChip 3, a 2A with 128KB L1 cache */
+		case 8: /* WinChip 2, 2A, or 2B */
+		case 9: /* WinChip 3, a 2A with larger cache and lower voltage */
 			perfctr_cpu_type = PERFCTR_X86_WINCHIP_2;
 			break;
 		default:
@@ -411,7 +411,7 @@ char *perfctr_cpu_name[] __initdata = {
 	"Intel Pentium III",
 	"Cyrix 6x86MX/MII/III",
 	"WinChip C6",
-	"WinChip 2",
+	"WinChip 2/3",
 	"AMD K7",
 };
 

@@ -14,6 +14,7 @@
 #
 # [WinChip C6] "WinChip C6 Processor Data Sheet".
 # [WinChip 2A] "WinChip 2 Processor Version A Data Sheet".
+# [WinChip 3] "WinChip 3 Processor Data Sheet".
 #
 # [K7] "AMD Athlon Processor x86 Code Optimization Guide",
 # Appendix F: "Performance Monitoring Counters".
@@ -310,7 +311,7 @@ begin:WCC6
 4A:DATA_WRITE_CACHE_MISSES
 63:INSTRUCTION_FETCH_CACHE_MISSES
 
-# Centaur WinChip 2 and 2A
+# Centaur WinChip 2 and 3
 begin:WC2
 # Events
 # Note: The manual lists the codes in decimal, not hex as done here.
@@ -321,11 +322,12 @@ begin:WC2
 04:DATA_WRITE_CACHE_MISS
 06:DATA_CACHE_WRITEBACKS
 08:DATA_CACHE_SNOOP_HITS
+09:PUSH_PUSH_POP_POP_PAIRING
 0B:MISALIGNED_DATA_MEMORY_NOT_IO
 0C:CODE_READ
 0D:CODE_TLB_MISS
 0E:INSTRUCTION_FETCH_CACHE_MISS
-13:BHT_MISS
+13:BHT_HITS
 14:BHT_CANDIDATE
 16:INSTRUCTIONS_EXECUTED
 17:INSTRUCTIONS_IN_PIPE_2

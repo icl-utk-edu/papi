@@ -3,8 +3,16 @@ $Id$
 RELEASE NOTES
 =============
 
-- Updates for 2.4.0-test8: repaired patch for new parameter in
-  do_fork, and fixed CLONE_PERFCTR conflict with CLONE_THREAD.
+- Updates for 2.4.0-test9. Fixed x86_compat.h for cpu_khz change.
+  Since drivers/Makefile was converted to the new list style,
+  it became more difficult to handle CONFIG_PERFCTR=m. Changed
+  Config.in to set CONFIG_KPERFCTR=y when CONFIG_PERFCTR != n,
+  resulting in a much cleaner kernel patch for 2.4.0-test9.
+- Removed d_alloc_root wrapper since 2.2 doesn't need it any more.
+- When building for 2.2.18pre, use some of its 2.4 compatibility
+  features (module_init, module_exit and DECLARE_MUTEX).
+- Updates for 2.4.0-test8: repaired kernel patch for new parameter
+  in do_fork, and fixed CLONE_PERFCTR conflict with CLONE_THREAD.
 
 Version 1.5, 2000-09-03
 - Dropped support for intermediate 2.3 and early 2.4.0-test kernels.

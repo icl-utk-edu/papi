@@ -454,7 +454,7 @@ static struct inode_operations vperfctr_inode_ops = {
 #define set_inode_vperfctr_ops(inode)	((inode)->i_op = &vperfctr_inode_ops)
 #define set_inode_vperfctr_sb(inode)	do { } while( 0 )
 #define set_filp_vperfctr_vfsmnt(filp)	do { } while( 0 )
-#define d_alloc_vperfctr_root(inode)	d_alloc_root((inode))
+#define d_alloc_vperfctr_root(inode)	d_alloc_root((inode), NULL)
 
 #endif
 

@@ -17,6 +17,17 @@
 
 #else	/* 2.4 simulation for 2.2 */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,2,18)
+#ifdef MODULE
+#define module_init(x)	int init_module(void) { return x(); }
+#define module_exit(x)	void cleanup_module(void) { x(); }
+#else
+#define module_init(x)	/* explicit call is needed */
+#define module_exit(x)	/* empty */
+#endif /* MODULE */
+#define DECLARE_MUTEX(name)	struct semaphore name = MUTEX
+#endif /* < 2.2.18 */
+
 #define virt_to_page(kaddr)	(mem_map + MAP_NR(kaddr))
 
 #define fops_get(fops)		(fops)
@@ -36,12 +47,8 @@
 #ifdef MODULE
 #define __cacheline_aligned __attribute__((__aligned__(SMP_CACHE_BYTES)))
 #define __exit		/* empty */
-#define module_init(x)	int init_module(void) { return x(); }
-#define module_exit(x)	void cleanup_module(void) { x(); }
 #else
 #define __exit		__attribute__((unused, __section__("text.init")))
-#define module_init(x)	/* explicit call is needed */
-#define module_exit(x)	/* empty */
 #endif
 
 #define X86_CR4_TSD	0x0004
@@ -51,14 +58,5 @@
 
 #define get_file(x)	((x)->f_count++)
 #define file_count(x)	((x)->f_count)
-
-static __inline__ struct dentry *my_d_alloc_root(struct inode *inode)
-{
-	return d_alloc_root(inode, NULL);
-}
-#undef d_alloc_root	/* in case CONFIG_MODVERSIONS renamed it */
-#define d_alloc_root(inode)	my_d_alloc_root((inode))
-
-#define DECLARE_MUTEX(name)	struct semaphore name = MUTEX
 
 #endif	/* 2.4 simulation for 2.2 */

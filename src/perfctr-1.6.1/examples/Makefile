@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-SUBDIRS=self global inherit
+SUBDIRS=self global inherit command
 
 default:
 	$(MAKE) MAKETARGET=default all-subdirs

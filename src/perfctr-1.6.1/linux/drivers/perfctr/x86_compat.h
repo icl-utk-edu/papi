@@ -1,6 +1,6 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * x86-specific compatibility definitions for 2.2.x/2.3.x kernels.
+ * x86-specific compatibility definitions for 2.2/2.4 kernels.
  *
  * Copyright (C) 2000  Mikael Pettersson
  */
@@ -9,11 +9,12 @@
 
 /*
  * Access and export CPU speed.
- * 2.2.16 defines cpu_khz, all(?) other kernels define cpu_hz.
+ * 2.2.xx: cpu_khz when xx >= 16, otherwise cpu_hz
+ * 2.4.xx: cpu_khz when xx >= test9-pre, otherwise cpu_hz
  * fast_gettimeoffset_quotient has the same meaning in all
  * kernels, but is local to arch/i386/kernel/time.c in <= 2.2.14.
  */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,16) && LINUX_VERSION_CODE <= KERNEL_VERSION(2,3,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,16)
 extern unsigned long cpu_khz;
 #define EXPORT_cpu_khz	EXPORT_SYMBOL(cpu_khz)
 #define get_cpu_khz()	(cpu_khz)
