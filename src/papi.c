@@ -189,13 +189,11 @@ int PAPI_library_init(int version)
 
   _papi_hwi_system_info.total_events = 0 ;
   tmp = 0;  /* Count number of derived events */
-  DBG((stderr,"Counting number of derived events.\n"));
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++){
     if(_papi_hwi_presets[i].avail>0) _papi_hwi_system_info.total_presets += 1;
     if(_papi_hwi_presets[i].flags & PAPI_DERIVED) tmp += 1;
   }
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
-  DBG((stderr,"Exiting...\n"));
 
   return(init_retval = PAPI_VER_CURRENT);
 }
@@ -384,6 +382,8 @@ int PAPI_add_pevent(int EventSet, int code, void *inout)
 int PAPI_add_event(int EventSet, int EventCode)
 { 
   EventSetInfo_t *ESI;
+
+  DBG((stderr,"PAPI_add_event(%d, %d)\n",EventSet, EventCode));
 
   /* Is the EventSet already in existence? */
   

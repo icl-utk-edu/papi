@@ -47,9 +47,10 @@ int init_retval = DEADBEEF;
 int _papi_hwi_debug = 0;
 #endif
 
+/* Machine dependent info structure */
+papi_mdi_t _papi_hwi_system_info;
 
 /* Our informative table */
-
 #define PAPI_PRESET(function)\
 	function##_nm, function, function##_dsc, function##_lbl, 0, NULL, 0
 

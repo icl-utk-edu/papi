@@ -39,33 +39,10 @@
 /********************/
 
 /* Defined in this file */
-
 static int default_error_handler(int errorCode);
 
-/* Defined by the substrate */
+extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
-extern hwd_preset_t _papi_hwd_preset_map[];
-
-/* Defined by the PAPI in api.c */
-
-extern PAPI_preset_info_t _papi_hwi_presets[];
-
-//#define PAPI_EVENTSET_MAP (&_papi_system_info.global_eventset_map)
-
-/* Utility functions */
-
-//static int expand_dynamic_array(DynamicArray *);
-
-/* EventSet handling functions */
-
-//static int add_EventSet(DynamicArray *map, EventSetInfo_t *created, EventSetInfo_t *master);
-//static EventSetInfo_t *lookup_EventSet(const DynamicArray *map, int eventset);
-//static int remove_EventSet(DynamicArray *map, EventSetInfo_t *);
-//static void free_EventSet(EventSetInfo_t *);
-
-/* Event handling functions */
-
-//static int get_free_EventCodeIndex(const EventSetInfo_t *ESI, int EventCode);
 
 /********************/
 /*  END PROTOTYPES  */
@@ -75,13 +52,17 @@ extern PAPI_preset_info_t _papi_hwi_presets[];
 /*  BEGIN GLOBALS   */ 
 /********************/
 
-extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
+/* Defined by the substrate */
+extern hwd_preset_t _papi_hwd_preset_map[];
+
+/* Defined in papi_data.c */
+extern PAPI_preset_info_t _papi_hwi_presets[];
 extern int _papi_hwi_debug;
+
 ThreadInfo_t *default_master_thread = NULL; 
 
-/* Machine info structure */
-
-papi_mdi_t _papi_hwi_system_info;
+/* Machine dependent info structure */
+extern papi_mdi_t _papi_hwi_system_info;
 
 /********************/
 /*  BEGIN LOCALS    */ 
@@ -403,7 +384,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t *handle)
   
   *EventSet = ESI->EventSetIndex;
   DBG((stderr,"_papi_hwi_create_eventset(%p,%p): new EventSet in slot %d\n",(void *)EventSet,handle,*EventSet));
-
+if (*EventSet > 100) exit(0);
   return(retval);
 }
 
