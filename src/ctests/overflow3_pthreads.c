@@ -36,7 +36,7 @@ void mainloop(int arg)
 {
    int retval, num_tests = 1;
    int EventSet1;
-#if defined(__ATHLON__) || defined(POWER3)
+#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
    int mask1 = 0x3;
 #else
    int mask1 = 0x5;
@@ -55,7 +55,7 @@ void mainloop(int arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-#if defined(__ATHLON__) || defined(POWER3)
+#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
    if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, THRESHOLD, 0, handler)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 #else
@@ -75,7 +75,7 @@ void mainloop(int arg)
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
-#if defined(__ATHLON__) || defined(POWER3)
+#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
    /* clear the papi_overflow event */
    if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, 0, 0, NULL)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
@@ -88,7 +88,7 @@ void mainloop(int arg)
    remove_test_events(&EventSet1, mask1);
 
    if (!TESTS_QUIET) {
-#if defined(__ATHLON__) || defined(POWER3)
+#if defined(__ATHLON__) || defined(POWER3) ||  (defined(sparc) && defined(sun))
       printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
 #else
       printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);

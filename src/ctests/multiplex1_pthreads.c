@@ -35,7 +35,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 #if defined(sparc) && defined(sun)
 const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
-   PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_LD_INS, PAPI_SR_INS, 0,
+   PAPI_TOT_INS, PAPI_TOT_CYC, PAPI_L1_ICM, PAPI_L2_TCM, 0,
 };
 #elif defined (PENTIUM4) || defined(_POWER4)
 const static unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {

@@ -15,7 +15,7 @@ void *Thread(void *arg)
 {
    int retval, num_tests = 1, i;
    int EventSet1;
-#if defined(POWER3) || defined(__ATHLON__)
+#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun)) 
    int mask1 = 0x3;
 #else
    int mask1 = 0x5;
@@ -42,7 +42,7 @@ void *Thread(void *arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-#if defined(POWER3) || defined(__ATHLON__)
+#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun))
    retval = PAPI_profil(profbuf, length, my_start, 65536,
                         EventSet1, PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX);
    if (retval)
@@ -67,7 +67,7 @@ void *Thread(void *arg)
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
    /* to remove the profile flag */
-#if defined(POWER3) || defined(__ATHLON__)
+#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun))
    retval = PAPI_profil(profbuf, length, my_start, 65536,
                         EventSet1, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX);
    if (retval)
@@ -83,7 +83,7 @@ void *Thread(void *arg)
    remove_test_events(&EventSet1, mask1);
 
    if (!TESTS_QUIET) {
-#if defined(POWER3) || defined(__ATHLON__)
+#if defined(POWER3) || defined(__ATHLON__) ||  (defined(sparc) && defined(sun))
       printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
 #else
       printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);

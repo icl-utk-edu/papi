@@ -100,7 +100,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 
 #if defined(sun) && defined(sparc)
-   static char *native_name[] = { "retinst", "DC_wr_hit", NULL };
+   static char *native_name[] = { "Cycle_cnt", "Instr_cnt", NULL };
 #endif
 
 #if defined(__ALPHA) && defined(__osf__)
