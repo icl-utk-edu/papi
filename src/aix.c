@@ -515,15 +515,6 @@ int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long 
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
-  int retval;
-  
-  retval = pm_delete_program_mythread();
-  if (retval > 0)
-    {
-      if (_papi_hwi_error_level != PAPI_QUIET)
-	pm_error("PAPI Error: pm_delete_program_mythread",retval);
-      return(retval);
-    }
   return (PAPI_OK);
 }
 
@@ -651,7 +642,7 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * cntrl)
    retval = pm_stop_mythread();
    if (retval > 0)
       { 
-	if (_papi_hwi_error_level != PAPI_QUIET)
+if (_papi_hwi_error_level != PAPI_QUIET)
 	  pm_error("pm_stop_mythread()",retval);
 	return(retval);
       }
