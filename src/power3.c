@@ -209,28 +209,6 @@ preset_search_t *preset_search_map=preset_name_map_630;
   }
 }
 */
-static int get_avail_hwcntr_num(int cntr_avail_bits)
-{
-  int tmp = 0, i = MAX_COUNTERS - 1;
- 
-  while (i)
-    {
-      tmp = (1 << i) & cntr_avail_bits;
-      if (tmp)
-	return(i);
-      i--;
-    }
-  return(0);
-}
-
-static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
-{
-  if (a->counter_cmd.events[cntr] == b->counter_cmd.events[cntr])
-    return(1);
-
-  return(0);
-}
-
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
@@ -238,89 +216,89 @@ static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cn
 */
 static int do_counter_allocation(PWR3_reg_alloc_t *event_list, int size)
 {
-	int i,j;
-	PWR3_reg_alloc_t *queue[MAX_COUNTERS];
-	int head, tail;
-	
-	/* if the event competes 1 counter only, it has priority, map it */
-	head=0;
-	tail=0;
-	for(i=0;i<size;i++){ /* push rank=1 into queue */
-		event_list[i].ra_mod=-1;
-		if(event_list[i].ra_rank==1){
-			queue[tail]=&event_list[i];
-			event_list[i].ra_mod=i;
-			tail++;
-		}
+    int i,j;
+    PWR3_reg_alloc_t *queue[MAX_COUNTERS];
+    int head, tail;
+    
+    /* if the event competes 1 counter only, it has priority, map it */
+    head=0;
+    tail=0;
+    for(i=0;i<size;i++){ /* push rank=1 into queue */
+	event_list[i].ra_mod=-1;
+	if(event_list[i].ra_rank==1){
+	    queue[tail]=&event_list[i];
+	    event_list[i].ra_mod=i;
+	    tail++;
 	}
-	
-	while(head<tail){
-		for(i=0;i<size;i++){
-			if(i!=(*queue[head]).ra_mod){
-				if(event_list[i].ra_selector & (*queue[head]).ra_selector){
-					if(event_list[i].ra_rank==1){
-						return 0; /* mapping fail, 2 events compete 1 counter only */
-					}
-					else{
-						event_list[i].ra_selector ^= (*queue[head]).ra_selector;
-						event_list[i].ra_rank--;
-						if(event_list[i].ra_rank==1){
-							queue[tail]=&event_list[i];
-							event_list[i].ra_mod=i;
-							tail++;
-						}
-					}
-				}
+    }
+    
+    while(head<tail){
+	for(i=0;i<size;i++){
+	    if(i!=(*queue[head]).ra_mod){
+		if(event_list[i].ra_selector & (*queue[head]).ra_selector){
+		    if(event_list[i].ra_rank==1){
+			return 0; /* mapping fail, 2 events compete 1 counter only */
+		    }
+		    else{
+			event_list[i].ra_selector ^= (*queue[head]).ra_selector;
+			event_list[i].ra_rank--;
+			if(event_list[i].ra_rank==1){
+			    queue[tail]=&event_list[i];
+			    event_list[i].ra_mod=i;
+			    tail++;
 			}
+		    }
 		}
-		head++;
+	    }
 	}
-	if(tail==size){
-		return 1; /* successfully mapped */
+	head++;
+    }
+    if(tail==size){
+	return 1; /* successfully mapped */
+    }
+    else{
+	PWR3_reg_alloc_t rest_event_list[MAX_COUNTERS];
+	PWR3_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
+	
+	j=0;
+	for(i=0;i<size;i++){
+	    if(event_list[i].ra_mod<0){
+		memcpy(copy_rest_event_list+j, event_list+i, sizeof(PWR3_reg_alloc_t));
+		copy_rest_event_list[j].ra_mod=i;
+		j++;
+	    }
 	}
-	else{
-		PWR3_reg_alloc_t rest_event_list[MAX_COUNTERS];
-		PWR3_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
-		
-		j=0;
-		for(i=0;i<size;i++){
-			if(event_list[i].ra_mod<0){
-				memcpy(copy_rest_event_list+j, event_list+i, sizeof(PWR3_reg_alloc_t));
-				copy_rest_event_list[j].ra_mod=i;
-				j++;
+	
+	memcpy(rest_event_list, copy_rest_event_list, sizeof(PWR3_reg_alloc_t)*(size-tail));
+	
+	for(i=0;i<MAX_COUNTERS;i++){
+	    if(rest_event_list[0].ra_selector & (1<<i)){ /* pick first event on the list, set 1 to 0, to see whether there is an answer */
+		for(j=0;j<size-tail;j++){
+		    if(j==0){
+			    rest_event_list[j].ra_selector = 1<<i;
+			    rest_event_list[j].ra_rank = 1;
+		    }
+		    else{
+			if(rest_event_list[j].ra_selector & (1<<i)){
+			    rest_event_list[j].ra_selector ^= 1<<i;
+			    rest_event_list[j].ra_rank--;
 			}
+		    }
 		}
+		if(do_counter_allocation(rest_event_list, size-tail))
+		    break;
 		
 		memcpy(rest_event_list, copy_rest_event_list, sizeof(PWR3_reg_alloc_t)*(size-tail));
-		
-		for(i=0;i<MAX_COUNTERS;i++){
-			if(rest_event_list[0].ra_selector & (1<<i)){ /* pick first event on the list, set 1 to 0, to see whether there is an answer */
-				for(j=0;j<size-tail;j++){
-					if(j==0){
-						rest_event_list[j].ra_selector = 1<<i;
-						rest_event_list[j].ra_rank = 1;
-					}
-					else{
-						if(rest_event_list[j].ra_selector & (1<<i)){
-							rest_event_list[j].ra_selector ^= 1<<i;
-							rest_event_list[j].ra_rank--;
-						}
-					}
-				}
-				if(do_counter_allocation(rest_event_list, size-tail))
-					break;
-				
-				memcpy(rest_event_list, copy_rest_event_list, sizeof(PWR3_reg_alloc_t)*(size-tail));
-			}
-		}
-		if(i==MAX_COUNTERS){
-			return 0; /* fail to find mapping */
-		}
-		for(i=0;i<size-tail;i++){
-			event_list[copy_rest_event_list[i].ra_mod].ra_selector=rest_event_list[i].ra_selector;
-		}
-		return 1;		
+	    }
 	}
+	if(i==MAX_COUNTERS){
+	    return 0; /* fail to find mapping */
+	}
+	for(i=0;i<size-tail;i++){
+	    event_list[copy_rest_event_list[i].ra_mod].ra_selector=rest_event_list[i].ra_selector;
+	}
+	return 1;		
+    }
 }	
 	
 
@@ -355,7 +333,10 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   }
 
   if(do_counter_allocation(event_list, natNum)){ /* successfully mapped */
-
+      /* copy counter allocations info back into NativeInfoArray */
+      for(i=0;i<natNum;i++)
+	  ESI->NativeInfoArray[i].ni_position = ffs(event_list[i].ra_selector);
+      /* update the control structure based on the NativeInfoArray */
       _papi_hwd_update_control_state(this_state, ESI->NativeInfoArray, natNum);
       return 1;
   }
