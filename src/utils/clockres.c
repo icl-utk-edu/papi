@@ -12,7 +12,8 @@
 int main() 
 {
   long long elapsed_usec[ITERS], elapsed_cyc[ITERS];
-  long long total_usec = 0, total_cyc = 0, nodup_usec = 1, nodup_cyc = 1, diff_usec = 0, diff_cyc = 0;
+  long long total_usec = 0, uniq_usec = 0, diff_usec = 0, 
+    total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
   int i;
 
   if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
@@ -35,9 +36,21 @@ int main()
 	abort();
       diff_cyc = elapsed_cyc[i] - elapsed_cyc[i-1];
       if (diff_cyc != 0)
-	nodup_cyc++;
+	uniq_cyc++;
       total_cyc += diff_cyc;
     }
+  if(uniq_cyc==ITERS-1)
+    printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
+	   (double)total_cyc/(double)(ITERS),
+	   (double)total_cyc/(double)uniq_cyc);
+  else if(uniq_cyc)
+    printf("PAPI_get_real_cyc : %7.3f    %7.3f\n",
+	   (double)total_cyc/(double)(ITERS),
+	   (double)total_cyc/(double)uniq_cyc);
+  else
+    printf("PAPI_get_real_cyc : %7.3f   >%7.3f\n",
+	   (double)total_cyc/(double)(ITERS),
+	   (double)total_cyc);
 
   for (i=0;i<ITERS;i++)
     elapsed_usec[i] = PAPI_get_real_usec();
@@ -48,15 +61,26 @@ int main()
 	abort();
       diff_usec = elapsed_usec[i] - elapsed_usec[i-1];
       if (diff_usec != 0)
-	nodup_usec++;
+	uniq_usec++;
       total_usec += diff_usec;
     }
-  printf("PAPI_get_real_cyc : %f %f\n",(double)total_cyc/(double)(ITERS),(double)total_cyc/(double)nodup_cyc);
-  printf("PAPI_get_real_usec: %f %f\n",(double)total_usec/(double)(ITERS),(double)total_usec/(double)nodup_usec);
+  if(uniq_usec==ITERS-1)
+    printf("PAPI_get_real_usec: %7.3f   <%7.3f\n",
+	   (double)total_usec/(double)(ITERS),
+	   (double)total_usec/(double)uniq_usec);
+  else if(uniq_usec)
+    printf("PAPI_get_real_usec: %7.3f    %7.3f\n",
+	   (double)total_usec/(double)(ITERS),
+	   (double)total_usec/(double)uniq_usec);
+  else
+    printf("PAPI_get_real_usec: %7.3f   >%7.3f\n",
+	   (double)total_usec/(double)(ITERS),
+	   (double)total_usec);
 
   /* Virtual */
 
-  nodup_cyc = 1;
+  total_cyc=0;
+  uniq_cyc = 0;
   if (PAPI_get_virt_cyc() != -1)
     {
       for (i=0;i<ITERS;i++)
@@ -68,15 +92,27 @@ int main()
 	    abort();
 	  diff_cyc = elapsed_cyc[i] - elapsed_cyc[i-1];
 	  if (diff_cyc != 0)
-	    nodup_cyc++;
+	    uniq_cyc++;
 	  total_cyc += diff_cyc;
 	}
-      printf("PAPI_get_virt_cyc : %f %f\n",(double)total_cyc/(double)(ITERS),(double)total_cyc/(double)nodup_cyc);
+      if(uniq_cyc==ITERS-1)
+	printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
+	       (double)total_cyc/(double)(ITERS),
+	       (double)total_cyc/(double)uniq_cyc);
+      else if(uniq_cyc)
+	printf("PAPI_get_virt_cyc : %7.3f    %7.3f\n",
+	       (double)total_cyc/(double)(ITERS),
+	       (double)total_cyc/(double)uniq_cyc);
+      else
+	printf("PAPI_get_virt_cyc : %7.3f   >%7.3f\n",
+	       (double)total_cyc/(double)(ITERS),
+	       (double)total_cyc);
     }
   else
     printf("PAPI_get_virt_cyc : Not supported\n");
 
-  nodup_usec = 1;
+  total_usec=0;
+  uniq_usec = 0;
   if (PAPI_get_virt_usec() != -1)
     {
       for (i=0;i<ITERS;i++)
@@ -88,10 +124,21 @@ int main()
 	    abort();
 	  diff_usec = elapsed_usec[i] - elapsed_usec[i-1];
 	  if (diff_usec != 0)
-	    nodup_usec++;
+	    uniq_usec++;
 	  total_usec += diff_usec;
 	}
-      printf("PAPI_get_virt_usec: %f %f\n",(double)total_usec/(double)(ITERS),(double)total_usec/(double)nodup_usec);
+      if(uniq_usec==ITERS-1)
+	printf("PAPI_get_virt_usec: %7.3f   <%7.3f\n",
+	       (double)total_usec/(double)(ITERS),
+	       (double)total_usec/(double)uniq_usec);
+      else if(uniq_usec)
+	printf("PAPI_get_virt_usec: %7.3f    %7.3f\n",
+	       (double)total_usec/(double)(ITERS),
+	       (double)total_usec/(double)uniq_usec);
+      else
+	printf("PAPI_get_virt_usec: %7.3f   >%7.3f\n",
+	       (double)total_usec/(double)(ITERS),
+	       (double)total_usec);
     }
   else
     {
