@@ -26,6 +26,7 @@ CFG=clockres - Win32 Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "clockres - Win32 Release"
@@ -85,6 +86,10 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=..\..\tests\clockcore.c
+# End Source File
 # Begin Source File
 
 SOURCE=..\..\tests\clockres.c
