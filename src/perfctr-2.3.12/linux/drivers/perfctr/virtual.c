@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -57,22 +57,22 @@ do { \
 #define debug_suspend(perfctr) \
 do { \
 	if( (perfctr)->suspended ) \
-		printk(KERN_ERR __FUNCTION__ ": BUG! suspending non-running perfctr (pid %d, comm %s)\n", \
-		       current->pid, current->comm); \
+		printk(KERN_ERR "%s: BUG! suspending non-running perfctr (pid %d, comm %s)\n", \
+		       __FUNCTION__, current->pid, current->comm); \
 	(perfctr)->suspended = 1; \
 } while( 0 )
 #define debug_resume(perfctr) \
 do { \
 	if( !(perfctr)->suspended ) \
-		printk(KERN_ERR __FUNCTION__ ": BUG! resuming non-suspended perfctr (pid %d, comm %s)\n", \
-		       current->pid, current->comm); \
+		printk(KERN_ERR "%s: BUG! resuming non-suspended perfctr (pid %d, comm %s)\n", \
+		       __FUNCTION__, current->pid, current->comm); \
 	(perfctr)->suspended = 0; \
 } while( 0 )
 #define debug_check_smp_id(perfctr) \
 do { \
 	if( (perfctr)->start_smp_id != smp_processor_id() ) { \
-		printk(KERN_ERR __FUNCTION__ ": BUG! current cpu %u differs from start cpu %u (pid %d, comm %s)\n", \
-		       smp_processor_id(), (perfctr)->start_smp_id, \
+		printk(KERN_ERR "%s: BUG! current cpu %u differs from start cpu %u (pid %d, comm %s)\n", \
+		       __FUNCTION__, smp_processor_id(), (perfctr)->start_smp_id, \
 		       current->pid, current->comm); \
 		return; \
 	} \
@@ -231,23 +231,20 @@ static void vperfctr_ihandler(unsigned long pc)
 
 	perfctr = _vperfctr_get_thread(task_thread(tsk));
 	if( !perfctr ) {
-		printk(KERN_ERR __FUNCTION__
-		       ": BUG! pid %d has no vperfctr\n",
-		       tsk->pid);
+		printk(KERN_ERR "%s: BUG! pid %d has no vperfctr\n",
+		       __FUNCTION__, tsk->pid);
 		return;
 	}
 	if( !IS_IMODE(perfctr) ) {
-		printk(KERN_ERR __FUNCTION__
-		       ": BUG! vperfctr has cstatus %#x (pid %d, comm %s)\n",
-		       perfctr->state.cpu_state.cstatus, tsk->pid, tsk->comm);
+		printk(KERN_ERR "%s: BUG! vperfctr has cstatus %#x (pid %d, comm %s)\n",
+		       __FUNCTION__, perfctr->state.cpu_state.cstatus, tsk->pid, tsk->comm);
 		return;
 	}
 	vperfctr_suspend(perfctr);
 	pmc_mask = perfctr_cpu_identify_overflow(&perfctr->state.cpu_state);
 	if( !pmc_mask ) {
-		printk(KERN_ERR __FUNCTION__
-		       ": BUG! pid %d has unidentifiable overflow source\n",
-		       tsk->pid);
+		printk(KERN_ERR "%s: BUG! pid %d has unidentifiable overflow source\n",
+		       __FUNCTION__, tsk->pid);
 		return;
 	}
 	/* suspend a-mode and i-mode PMCs, leaving only TSC on */
@@ -456,7 +453,7 @@ static int vperfctr_mmap(struct file *filp, struct vm_area_struct *vma)
 	perfctr = filp->private_data;
 	if( !perfctr )
 		return -EPERM;
-	return remap_page_range(vma->vm_start, virt_to_phys(perfctr),
+	return remap_page_range(vma, vma->vm_start, virt_to_phys(perfctr),
 				PAGE_SIZE, vma->vm_page_prot);
 }
 

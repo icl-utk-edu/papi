@@ -6,6 +6,12 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.3.4, 2002-01-23
+- More detailed installation instructions in INSTALL.
+- Experimental support for at-retirement counting on Pentium 4.
+  Updated examples/global/ to count FLOPS on Pentium 4.
+- Fixed uses of __FUNCTION__ to comply with changes in GCC 3.0.3.
+
 Version 2.3.3, 2001-12-31
 - Added support for the 2.4.16 and 2.4.17 kernels.
 - SMP bug fixed: if a process using interrupt-mode counters migrates

@@ -3,6 +3,15 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.3.4, 2002-01-23
+- Updated virtual.c for remap_page_range() change in 2.5.3-pre1.
+  Added emulation for older kernels to compat.h.
+- Permit use of tagging on P4 for at-retirement counting. This may
+  not yet work as expected, since up-stream (tag producing) counters
+  aren't disabled at context switches: a process may therefore see
+  more tagged uops than expected.
+- Fixed uses of __FUNCTION__ to comply with changes in GCC 3.0.3.
+
 Version 2.3.3, 2001-12-31
 - Minor x86.c cleanup: reordered function definitions so that
   write_control comes after isuspend/iresume: this makes it easier

@@ -2,7 +2,7 @@
  * Kernel stub used to support virtual perfctrs when the
  * perfctr driver is built as a module.
  *
- * Copyright (C) 2000-2001  Mikael Pettersson
+ * Copyright (C) 2000-2002  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>

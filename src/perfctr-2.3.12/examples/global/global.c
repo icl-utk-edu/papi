@@ -7,7 +7,7 @@
  * Linux x86 Performance-Monitoring Counters interface to
  * do system-wide performance monitoring.
  *
- * Copyright (C) 2000-2001  Mikael Pettersson
+ * Copyright (C) 2000-2002  Mikael Pettersson
  */
 #include <errno.h>
 #include <setjmp.h>
@@ -101,7 +101,7 @@ int do_read(void)
 	for(ctr = 0; ctr < state->cpu_state[cpu].cpu_control.nractrs; ++ctr)
 	    printf("\tpmc[%d]\t%lld\n",
 		   ctr, state->cpu_state[cpu].sum.pmc[ctr]);
-	if( ctr == 1 ) {	/* compute and display MFLOP/s or MIP/s */
+	if( ctr >= 1 ) {	/* compute and display MFLOP/s or MIP/s */
 	    unsigned long long tsc = state->cpu_state[cpu].sum.tsc;
 	    unsigned long long prev_tsc = prev_state->cpu_state[cpu].sum.tsc;
 	    unsigned long long ticks = tsc - prev_tsc;
@@ -122,6 +122,24 @@ int do_read(void)
 	}
     }
     return 0;
+}
+
+void print_control(const struct perfctr_cpu_control *control)
+{
+    unsigned int i;
+
+    printf("\nControl used:\n");
+    printf("tsc_on\t\t\t%u\n", control->tsc_on);
+    printf("nractrs\t\t\t%u\n", control->nractrs);
+    for(i = 0; i < control->nractrs; ++i) {
+	if( control->pmc_map[i] >= 18 )
+	    printf("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+	else
+	    printf("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+	printf("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+	if( control->evntsel_aux[i] )
+	    printf("evntsel_aux[%u]\t\t0x%08X\n", i, control->evntsel_aux[i]);
+    }
 }
 
 void setup_control(struct perfctr_cpu_control *control)
@@ -173,12 +191,15 @@ void setup_control(struct perfctr_cpu_control *control)
 	evntsel0 = 0xC0;	/* INSTRUCTIONS_EXECUTED */
 	break;
       case PERFCTR_X86_INTEL_P4:
-	/* XXX: FLOPS requires tagging and an upstream ESCR.
-	   For now, count MIPS instead. */
-	counting_mips = 1;
-	pmc_map0 = 0x0C | (1 << 31);
-	evntsel0 = (0x3 << 16) | (4 << 13) | (1 << 12);
-	evntsel_aux0 = (2 << 25) | (1 << 9) | (1 << 2);
+	nractrs = 2;
+	/* set up PMC(1) to produce tagged x87_FP_uop:s */
+	control->pmc_map[1] = 0x8 | (1 << 31);
+	control->evntsel[1] = (0x3 << 16) | (1 << 13) | (1 << 12);
+	control->evntsel_aux[1] = (4 << 25) | (1 << 24) | (1 << 5) | (1 << 4) | (1 << 2);
+	/* set up PMC(0) to count execution_event(X87_FP_retired) */
+	pmc_map0 = 0xC | (1 << 31);
+	evntsel0 = (0x3 << 16) | (5 << 13) | (1 << 12);
+	evntsel_aux0 = (0xC << 25) | (1 << 9) | (1 << 2);
 	break;
       default:
 	fprintf(stderr, "cpu_type %u (%s) not supported\n",
@@ -191,18 +212,7 @@ void setup_control(struct perfctr_cpu_control *control)
     control->evntsel[0] = evntsel0;
     control->evntsel_aux[0] = evntsel_aux0;
 
-    printf("\nControl used:\n");
-    printf("tsc_on\t\t\t%u\n", tsc_on);
-    printf("nractrs\t\t\t%u\n", nractrs);
-    if( nractrs ) {
-	if( pmc_map0 >= 18 )
-	    printf("pmc_map[0]\t\t0x%08X\n", pmc_map0);
-	else
-	    printf("pmc_map[0]\t\t%u\n", pmc_map0);
-	printf("evntsel[0]\t\t0x%08X\n", evntsel0);
-	if( evntsel_aux0 )
-	    printf("evntsel_aux[0]\t\t0x%08X\n", evntsel_aux0);
-    }
+    print_control(control);
 }
 
 void do_enable(unsigned long sampling_interval)

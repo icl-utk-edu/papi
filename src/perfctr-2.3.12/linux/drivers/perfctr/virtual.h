@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 
 #ifdef CONFIG_PERFCTR_VIRTUAL

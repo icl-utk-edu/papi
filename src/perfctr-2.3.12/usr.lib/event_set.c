@@ -1,7 +1,7 @@
 /* $Id$
  * Descriptions of the events available for different processor types.
  *
- * Copyright (C) 2001  Mikael Pettersson
+ * Copyright (C) 2001-2002  Mikael Pettersson
  */
 #include "event_codes.h"
 #include "libperfctr.h"

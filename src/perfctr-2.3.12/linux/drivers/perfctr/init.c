@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>

@@ -1,7 +1,7 @@
 /* $Id$
  * Global-mode performance-monitoring counters via /dev/perfctr.
  *
- * Copyright (C) 2000-2001  Mikael Pettersson
+ * Copyright (C) 2000-2002  Mikael Pettersson
  *
  * XXX: Doesn't do any authentication yet. Should we limit control
  * to root, or base it on having write access to /dev/perfctr?
@@ -41,9 +41,8 @@ static int reserve_hardware(void)
 		return 0;
 	other = perfctr_cpu_reserve(this_service);
 	if( other ) {
-		printk(KERN_ERR __FILE__ ": " __FUNCTION__
-		       ": failed because hardware is taken by '%s'\n",
-		       other);
+		printk(KERN_ERR __FILE__ ":%s: failed because hardware is taken by '%s'\n",
+		       __FUNCTION__, other);
 		return -EBUSY;
 	}
 	hardware_is_ours = 1;

@@ -8,7 +8,7 @@
  * - Requires a 2.4 kernel with UP-APIC support.
  * - Requires an Intel P6 or AMD K7 CPU.
  *
- * Copyright (C) 2001  Mikael Pettersson
+ * Copyright (C) 2001-2002  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,15 +55,15 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
     unsigned int pmc_mask;
 
     if( sig != SIGIO ) {
-	printf(__FUNCTION__ ": unexpected signal %d\n", sig);
+	printf("%s: unexpected signal %d\n", __FUNCTION__, sig);
 	return;
     }
     if( si->si_code != SI_PMC_OVF ) {
-	printf(__FUNCTION__ ": unexpected si_code #%x\n", si->si_code);
+	printf("%s: unexpected si_code #%x\n", __FUNCTION__, si->si_code);
 	return;
     }
     if( (pmc_mask = si->si_pmc_ovf_mask) == 0 ) {
-	printf(__FUNCTION__ ": overflow PMCs not identified\n");
+	printf("%s: overflow PMCs not identified\n", __FUNCTION__);
 	return;
     }
     uc = puc;
@@ -80,11 +80,11 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
 	 * This can be triggered by counting e.g. BRANCHES and setting
 	 * the overflow limit ridiculously low.
 	 */
-	printf(__FUNCTION__ ": unexpected overflow from PMC set %#x at pc %#lx (cstatus %#x)\n",
-	       pmc_mask, pc, kstate->cpu_state.cstatus);
+	printf("%s: unexpected overflow from PMC set %#x at pc %#lx (cstatus %#x)\n",
+	       __FUNCTION__, pmc_mask, pc, kstate->cpu_state.cstatus);
 	return;
     }
-    printf(__FUNCTION__ ": PMC overflow set %#x at pc %#lx\n", pmc_mask, pc);
+    printf("%s: PMC overflow set %#x at pc %#lx\n", __FUNCTION__, pmc_mask, pc);
     if( ioctl(fd, VPERFCTR_IRESUME, 0) < 0 ) {
 	perror("vperfctr_iresume");
 	abort();
@@ -124,7 +124,7 @@ static void do_control(void)
 	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
 	break;
       default:
-	printf(__FUNCTION__ ": unsupported cpu type %u\n", info.cpu_type);
+	printf("%s: unsupported cpu type %u\n", __FUNCTION__, info.cpu_type);
 	exit(1);
     }	
     control.cpu_control.tsc_on = 1;

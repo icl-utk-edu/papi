@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to Linux x86 Performance-Monitoring Counters.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 
 #include <stdio.h>
@@ -51,9 +51,8 @@ struct vperfctr *vperfctr_open(void)
     if( perfctr->kstate != MAP_FAILED ) {
 	if( perfctr->kstate->magic == VPERFCTR_MAGIC )
 	    return perfctr;
-	fprintf(stderr, __FILE__ ":" __FUNCTION__
-		": kstate version mismatch, kernel %#x, expected %#x\n",
-		perfctr->kstate->magic, VPERFCTR_MAGIC);
+	fprintf(stderr, __FILE__ ":%s: kstate version mismatch, kernel %#x, expected %#x\n",
+		__FUNCTION__, perfctr->kstate->magic, VPERFCTR_MAGIC);
 	munmap((void*)perfctr->kstate, PAGE_SIZE);
     }
  out_fd:

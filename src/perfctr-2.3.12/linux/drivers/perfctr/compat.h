@@ -1,11 +1,22 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * Compatibility definitions for 2.2/2.4 kernels.
+ * Compatibility definitions for 2.2/2.4/2.5 kernels.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #include <linux/fs.h>
 #include <linux/version.h>
+
+/* remap_page_range() changed in 2.5.3-pre1 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,3)
+#include <linux/mm.h>
+static inline int perfctr_remap_page_range(struct vm_area_struct *vma, unsigned long from, unsigned long to, unsigned long size, pgprot_t prot)
+{
+	return remap_page_range(from, to, size, prot);
+}
+#undef remap_page_range
+#define remap_page_range(vma,from,to,size,prot) perfctr_remap_page_range((vma),(from),(to),(size),(prot))
+#endif
 
 /* added in 2.4.9-ac */
 #if !defined(MODULE_LICENSE)

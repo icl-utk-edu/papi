@@ -54,7 +54,7 @@
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 
 /*

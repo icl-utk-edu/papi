@@ -1,7 +1,7 @@
 /* $Id$
  * x86 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -702,8 +702,6 @@ static int p4_check_control(struct perfctr_cpu_state *state)
 			return -EPERM;
 		if( !(escr_val & P4_ESCR_CPL) )
 			return -EINVAL;
-		if( escr_val & P4_ESCR_TAG_ENABLE )	/* XXX: NYI */
-			return -EPERM;
 		/* compute and cache ESCR address */
 		escr_addr = p4_escr_addr(pmc, cccr_val);
 		if( !escr_addr )
@@ -808,14 +806,12 @@ static void redirect_call(void *ra, void *to)
 {
 	/* XXX: make this function __init later */
 	if( redirect_call_disable )
-		printk(KERN_ERR __FILE__ ":" __FUNCTION__
-		       ": unresolved call to %p at %p\n",
-		       to, ra);
+		printk(KERN_ERR __FILE__ ":%s: unresolved call to %p at %p\n",
+		       __FUNCTION__, to, ra);
 	/* we can only redirect `call near relative' instructions */
 	if( *((unsigned char*)ra - 5) != 0xE8 ) {
-		printk(KERN_WARNING __FILE__ ":" __FUNCTION__
-		       ": unable to redirect caller %p to %p\n",
-		       ra, to);
+		printk(KERN_WARNING __FILE__ ":%s: unable to redirect caller %p to %p\n",
+		       __FUNCTION__, ra, to);
 		return;
 	}
 	*(int*)((char*)ra - 4) = (char*)to - (char*)ra;
@@ -1393,9 +1389,8 @@ const char *perfctr_cpu_reserve(const char *service)
 void perfctr_cpu_release(const char *service)
 {
 	if( service != current_service ) {
-		printk(KERN_ERR __FUNCTION__
-		       ": attempt by %s to release while reserved by %s\n",
-		       service, current_service);
+		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
+		       __FUNCTION__, service, current_service);
 	} else {
 		perfctr_cpu_set_ihandler(NULL);
 		current_service = 0;

@@ -1,7 +1,7 @@
 /* $Id$
  * Global-mode performance-monitoring counters.
  *
- * Copyright (C) 2000-2001  Mikael Pettersson
+ * Copyright (C) 2000-2002  Mikael Pettersson
  */
 
 #ifdef CONFIG_PERFCTR_GLOBAL

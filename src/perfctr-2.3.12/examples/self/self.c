@@ -12,7 +12,7 @@
  * these with (sum,start) values found in the mapped-in kernel state.
  * The resulting counts are then delivered to the application.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +52,24 @@ void do_read(struct perfctr_sum_ctrs *sum)
     vperfctr_read_ctrs(self, sum);
 }
 
+void print_control(const struct perfctr_cpu_control *control)
+{
+    unsigned int i;
+
+    printf("\nControl used:\n");
+    printf("tsc_on\t\t\t%u\n", control->tsc_on);
+    printf("nractrs\t\t\t%u\n", control->nractrs);
+    for(i = 0; i < control->nractrs; ++i) {
+	if( control->pmc_map[i] >= 18 )
+	    printf("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+	else
+	    printf("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+	printf("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+	if( control->evntsel_aux[i] )
+	    printf("evntsel_aux[%u]\t\t0x%08X\n", i, control->evntsel_aux[i]);
+    }
+}
+
 void do_setup(void)
 {
     unsigned int tsc_on = 1;
@@ -59,6 +77,8 @@ void do_setup(void)
     unsigned int pmc_map0 = 0;
     unsigned int evntsel0 = 0;
     unsigned int evntsel_aux0 = 0;
+
+    memset(&control, 0, sizeof control);
 
     /* Attempt to set up control to count clocks via the TSC
        and retired instructions via PMC0. */
@@ -104,25 +124,13 @@ void do_setup(void)
 		info.cpu_type, perfctr_cpu_name(&info));
 	exit(1);
     }
-    memset(&control, 0, sizeof control);
     control.cpu_control.tsc_on = tsc_on;
     control.cpu_control.nractrs = nractrs;
     control.cpu_control.pmc_map[0] = pmc_map0;
     control.cpu_control.evntsel[0] = evntsel0;
     control.cpu_control.evntsel_aux[0] = evntsel_aux0;
 
-    printf("\nControl used:\n");
-    printf("tsc_on\t\t\t%u\n", tsc_on);
-    printf("nractrs\t\t\t%u\n", nractrs);
-    if( nractrs ) {
-	if( pmc_map0 >= 18 )
-	    printf("pmc_map[0]\t\t0x%08X\n", pmc_map0);
-	else
-	    printf("pmc_map[0]\t\t%u\n", pmc_map0);
-	printf("evntsel[0]\t\t0x%08X\n", evntsel0);
-	if( evntsel_aux0 )
-	    printf("evntsel_aux[0]\t\t0x%08X\n", evntsel_aux0);
-    }
+    print_control(&control.cpu_control);
 }
 
 void do_enable(void)

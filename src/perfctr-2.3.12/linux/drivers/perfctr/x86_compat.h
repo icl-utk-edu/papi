@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * x86-specific compatibility definitions for 2.2/2.4 kernels.
  *
- * Copyright (C) 2000-2001  Mikael Pettersson
+ * Copyright (C) 2000-2002  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/version.h>

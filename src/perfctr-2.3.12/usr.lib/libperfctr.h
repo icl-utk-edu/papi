@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to Linux x86 Performance-Monitoring Counters.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 
 #ifndef __LIB_PERFCTR_H

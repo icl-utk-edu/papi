@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Optional x86-specific init-time tests.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 
 #ifdef CONFIG_PERFCTR_INIT_TESTS

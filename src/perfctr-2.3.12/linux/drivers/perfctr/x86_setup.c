@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * x86-specific kernel-resident code.
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
