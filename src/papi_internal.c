@@ -85,8 +85,8 @@ static int default_debug_handler(int errorCode)
       return (errorCode);
    if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
      {
-       PAPIERROR("%s %d,%s,Bug! Unknown error code",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-PAPI_EBUG]);
-       abort(); return(PAPI_EBUG);
+       PAPIERROR("%s %d,%s,Bug! Unknown error code",PAPI_ERROR_CODE_str,errorCode,"");
+       return(PAPI_EBUG);
      }
 
    switch (_papi_hwi_error_level) {
