@@ -377,7 +377,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp) {
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
    vperfctr_read_ctrs(ctx->perfctr, &spc->state);
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG

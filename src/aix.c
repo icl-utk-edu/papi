@@ -490,7 +490,7 @@ int _papi_hwd_reset(hwd_context_t * ESI, hwd_control_state_t * zero)
 }
 
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long ** val)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long ** val, int flags)
 {
    int retval;
    int i;

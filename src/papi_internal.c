@@ -871,7 +871,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
    long_long *dp;
    int i, j = 0, index;
 
-   retval = _papi_hwd_read(context, &ESI->machdep, &dp);
+   retval = _papi_hwd_read(context, &ESI->machdep, &dp, ESI->state);
    if (retval != PAPI_OK)
      papi_return (retval);
 

@@ -237,7 +237,7 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Read the hardware counters
  */
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
 {
    int i,j;
    if ( ctrl->has_p ){

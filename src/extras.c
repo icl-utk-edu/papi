@@ -249,8 +249,10 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
 	 }
 
       if ( isHardware ) {
-         if ( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE )
+         if ( ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE ){
+             ESI->state |= PAPI_PAUSED;
              *isHardware = 1;
+         }
          else
              *isHardware = 0;
       }
@@ -334,6 +336,7 @@ foundit:
                   GET_OVERFLOW_ADDRESS(ctx), overflow_vector,ctx->ucontext);
          }
       }
+       ESI->state &= ~(PAPI_PAUSED);
    }
 #ifdef ANY_THREAD_GETS_SIGNAL
    else {

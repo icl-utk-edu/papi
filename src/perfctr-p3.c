@@ -581,7 +581,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp) {
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
    pmc_read_state(_papi_hwi_system_info.num_cntrs, &spc->state);
    *dp = (long_long *) spc->state.sum.pmc;
 #ifdef DEBUG
@@ -618,9 +618,20 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp) {
-   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
-   *dp = (long_long *) spc->state.pmc;
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
+   if ( flags & PAPI_PAUSED ) {
+     int i,j=0;
+     for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
+       spc->state.pmc[j] = 0;
+       if ( (spc->control.cpu_control.evntsel[i] & PERF_INT_ENABLE) ) continue;
+       spc->state.pmc[j] = vperfctr_read_pmc(ctx->perfctr, i);
+       j++;
+     }
+   }
+   else {
+      vperfctr_read_ctrs(ctx->perfctr, &spc->state);
+   }
+      *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
       if (ISLEVEL(DEBUG_SUBSTRATE)) {

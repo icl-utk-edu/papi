@@ -315,7 +315,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events, int flags)
 {
    pmctr_t *pmctr;
    long_long pc_data[4];

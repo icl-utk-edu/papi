@@ -497,7 +497,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
-                   long_long ** events)
+                   long_long ** events, int flags)
 {
    int i;
    pfarg_reg_t readem[MAX_COUNTERS];

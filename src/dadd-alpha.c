@@ -298,7 +298,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
-                   long_long **events)
+                   long_long **events, int flags)
 {
    int i;
    unsigned long count;

@@ -677,7 +677,7 @@ static long_long handle_derived(EventInfo_t * cmd, long_long *from)
    }
 }
 
-int _papi_hwd_read(EventSetInfo_t * ESI, EventSetInfo_t * zero, long_long *events)
+int _papi_hwd_read(EventSetInfo_t * ESI, EventSetInfo_t * zero, long_long *events, int flags)
 {
    int shift_cnt = 0;
    int retval, selector, j = 0, i;
