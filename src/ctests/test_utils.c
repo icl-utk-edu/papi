@@ -375,7 +375,7 @@ void test_fail(char *file, int line, char *call, int retval)
            if ( !TESTS_QUIET )
 	       printf("%-40s SKIPPED\nLine # %d\n",file,line );
 	   else
-	       printf("%-40s SKIPPED\n",file,line );
+	       printf("%-40s SKIPPED\n",file );
         }
 	if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
