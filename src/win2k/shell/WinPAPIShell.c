@@ -21,11 +21,17 @@ TCHAR helpDir[256];		// help file directory
 // Foward declarations of functions included in this code module:
 BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK	Diagnostics(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	getFileHook(HWND, UINT, WPARAM, LPARAM);
 static BOOL		UniProcessorBuild(void);
 static void		exerciseDriver(void);
 static void		getDriverVersion(void);
 static void		centerDialog(HWND hdlg);
+static void		centerDiagnostics(HWND hdlg);
+static void		DiagRDPMC(void);
+static void		TaskSwitchTest(void);
+static void		HelloNumTest(void);
+static void		HelloTest(void);
 
 
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -311,60 +317,116 @@ static void smokeTest(void)
 // Message handler for about box, which serves as the main interface
 LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
-	{
-		int wmId, wmEvent;
+    switch (message)
+    {
+	int wmId, wmEvent;
 
-		case WM_INITDIALOG:
-			centerDialog(hDlg);
-			enableButtons(hDlg);
-			return TRUE;
+	case WM_INITDIALOG:
+	    centerDialog(hDlg);
+	    enableButtons(hDlg);
+	    return TRUE;
 
-		case WM_COMMAND:
-			wmId    = LOWORD(wParam); 
-			wmEvent = HIWORD(wParam); 
-			// Parse the menu selections:
-			switch (wmId)
-			{
- 				case IDCEX:
-					openExamples("PAPI C Example", CDir);
-					return TRUE;
+	case WM_COMMAND:
+	    wmId    = LOWORD(wParam); 
+	    wmEvent = HIWORD(wParam); 
+	    // Parse the menu selections:
+	    switch (wmId)
+	    {
+ 		case IDCEX:
+		    openExamples("PAPI C Example", CDir);
+		    return TRUE;
 
- 				case IDFORTRANEX:
-					openExamples("PAPI Fortran Example", FortranDir);
-					return TRUE;
+ 		case IDFORTRANEX:
+		    openExamples("PAPI Fortran Example", FortranDir);
+		    return TRUE;
 
- 				case IDPERFOMETER:
-					openPerfometer();
-					return TRUE;
+ 		case IDPERFOMETER:
+		    openPerfometer();
+		    return TRUE;
 
- 				case IDPERFOMETEREX:
-					openExamples("Perfometer Example", PerfDir);
-					return TRUE;
+ 		case IDPERFOMETEREX:
+		    openExamples("Perfometer Example", PerfDir);
+		    return TRUE;
 
-				case IDSMOKE:
-					smokeTest();
-					return TRUE;
+		case IDDIAGNOSTIC:
+		    DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX2, NULL, (DLGPROC)Diagnostics);
+		    return TRUE;
 
-				case IDVERSION:
-					getDriverVersion();
-					return TRUE;
+		case IDHELP:
+		    ShellExecute(NULL,"open", helpDir, NULL, NULL, SW_SHOWNORMAL);
+		    return TRUE;
 
-				case IDHELP:
-					ShellExecute(NULL,"open", helpDir, NULL, NULL, SW_SHOWNORMAL);
-					return TRUE;
+		case IDWEB:
+		    ShellExecute(NULL,"open","http://icl.cs.utk.edu/projects/papi", NULL, NULL, SW_MAXIMIZE);
+		    return TRUE;
 
-				case IDWEB:
-					ShellExecute(NULL,"open","http://icl.cs.utk.edu/projects/papi", NULL, NULL, SW_MAXIMIZE);
-					return TRUE;
+		case IDOK:
+		case IDCANCEL:
+		    EndDialog(hDlg, LOWORD(wParam));
+		    return TRUE;
+	    }
+	    break;
+    }
+    return FALSE;
+}
 
-				case IDOK:
-				case IDCANCEL:
-					EndDialog(hDlg, LOWORD(wParam));
-					return TRUE;
-			}
-			break;
-	}
+
+// Message handler for the diagnostics box, which chains from the main about box
+LRESULT CALLBACK Diagnostics(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+	int wmId, wmEvent;
+
+	case WM_INITDIALOG:
+	    centerDiagnostics(hDlg);
+	    return TRUE;
+
+	case WM_COMMAND:
+	    wmId    = LOWORD(wParam); 
+	    wmEvent = HIWORD(wParam); 
+	    // Parse the menu selections:
+	    switch (wmId)
+	    {
+ 		case IDRDPMC:
+		  DiagRDPMC();
+		  return TRUE;
+
+		case IDSMOKE:
+		  smokeTest();
+		  return TRUE;
+
+		case IDVERSION:
+		  getDriverVersion();
+		  return TRUE;
+
+		case IDTASKSWITCH:
+		  TaskSwitchTest();
+		  return TRUE;
+
+		case IDHELLO:
+		  HelloTest();
+		  return TRUE;
+
+		case IDHELLONUM:
+		  HelloNumTest();
+		  return TRUE;
+
+		case IDHELP:
+		  ShellExecute(NULL,"open", helpDir, NULL, NULL, SW_SHOWNORMAL);
+		  return TRUE;
+
+		case IDWEB:
+		  ShellExecute(NULL,"open","http://icl.cs.utk.edu/projects/papi", NULL, NULL, SW_MAXIMIZE);
+		  return TRUE;
+
+		case IDOK:
+		case IDCANCEL:
+		  EndDialog(hDlg, LOWORD(wParam));
+		  return TRUE;
+	    }
+	    break;
+    }
     return FALSE;
 }
 
@@ -412,38 +474,149 @@ static BOOL UniProcessorBuild(void)
 }
 
 
+// put the driver through its paces to make sure it's there and active
+static HANDLE LoadDriver(void)
+{    
+    HANDLE hDriver = INVALID_HANDLE_VALUE;
+
+    // Try opening a static device driver. 
+    hDriver = CreateFile("\\\\.\\WinPMC",
+		     GENERIC_READ | GENERIC_WRITE, 
+		     FILE_SHARE_READ | FILE_SHARE_WRITE,
+		     0,                     // Default security
+		     OPEN_EXISTING,
+		     0,						// Don't Perform asynchronous I/O
+		     0);                    // No template
+
+    if (hDriver == INVALID_HANDLE_VALUE)
+		    MessageBox(NULL,"Bummer","Driver Load Failed.",MB_OK);
+    return (hDriver);
+}
+
+
 // get the driver version string; also makes sure it's there and active
 static void getDriverVersion(void)
 {    
-	HANDLE hDriver = INVALID_HANDLE_VALUE;
-	DWORD dwBytesReturned;
-	BOOL  bReturnCode = FALSE;
-	int iobuf[256];     // I/O buffer
+    HANDLE hDriver;
+    DWORD dwBytesReturned;
+    BOOL  bReturnCode = FALSE;
+    int iobuf[256];     // I/O buffer
 
-	// Try opening a static device driver. 
-	hDriver = CreateFile("\\\\.\\WinPMC",
-			 GENERIC_READ | GENERIC_WRITE, 
-			 FILE_SHARE_READ | FILE_SHARE_WRITE,
-			 0,                     // Default security
-			 OPEN_EXISTING,
-			 0,						// Don't Perform asynchronous I/O
-			 0);                    // No template
+    // Try opening a static device driver. 
+    hDriver = LoadDriver();
 
-	if (hDriver == INVALID_HANDLE_VALUE)
-			MessageBox(NULL,"Bummer","Driver Load Failed.",MB_OK);
-	else {
+    if (hDriver != INVALID_HANDLE_VALUE) {
 
-		// Dispatch the PMC_VERSION_STRING IOCTL to our NT driver.
-		bReturnCode = DeviceIoControl(hDriver,
-					  IOCTL_PMC_VERSION_STRING,
-					  NULL, 0, iobuf, sizeof(iobuf),
-					  &dwBytesReturned, NULL);
+	// Dispatch the PMC_VERSION_STRING IOCTL to our NT driver.
+	bReturnCode = DeviceIoControl(hDriver,
+				  IOCTL_PMC_VERSION_STRING,
+				  NULL, 0, iobuf, sizeof(iobuf),
+				  &dwBytesReturned, NULL);
 
-		// Display the results!
-		MessageBox(NULL,(const char *)iobuf,"WinPMC Version",MB_OK);
+	// Display the results!
+	MessageBox(NULL,(const char *)iobuf,"WinPMC Version",MB_OK);
 
-		CloseHandle(hDriver);
+	CloseHandle(hDriver);
+    }
+}
+
+
+// put the driver through its paces to make sure it's there and active
+static void DiagRDPMC(void)
+{    
+    HANDLE hDriver;
+
+    // Try opening a static device driver. 
+    hDriver = LoadDriver();
+    if (hDriver != (INVALID_HANDLE_VALUE)) {
+	MessageBox(NULL,"Ready to execute RDPMC from user space!","RDPMC Test...",MB_OK);
+	__asm mov ecx, 0x00000000
+	__asm rdpmc
+	MessageBox(NULL,"We have successfully executed RDPMC from user space!","RDPMC Test...",MB_OK);
+	CloseHandle(hDriver);
+    }
+}
+
+
+// put the driver through its paces to make sure it's there and active
+static void HelloTest(void)
+{    
+    HANDLE hDriver;
+    DWORD dwBytesReturned;
+    BOOL  bReturnCode = FALSE;
+    char szString[256]; // character buffer
+    int iobuf[256];     // I/O buffer
+
+    // Try opening a static device driver. 
+    hDriver = LoadDriver();
+
+    if (hDriver != INVALID_HANDLE_VALUE) {
+	// Send a request to the driver. The request code is HELLO, no parameters
+	bReturnCode = DeviceIoControl(hDriver, HELLO, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
+	if (bReturnCode) {
+	  sprintf(szString, "HELLO RETURNED %d bytes: >%s<\n", dwBytesReturned, iobuf);
+		MessageBox(NULL, szString, "HELLO Test",MB_OK);
 	}
+	else 	MessageBox(NULL,"HELLO failed.","HELLO Test",MB_OK);
+	CloseHandle(hDriver);
+    }
+}
+
+
+// put the driver through its paces to make sure it's there and active
+static void HelloNumTest(void)
+{    
+    HANDLE hDriver;
+    DWORD dwBytesReturned;
+    BOOL  bReturnCode = FALSE;
+    char szString[256]; // character buffer
+    int iobuf[256];     // I/O buffer
+
+    // Try opening a static device driver. 
+    hDriver = LoadDriver();
+
+    if (hDriver != INVALID_HANDLE_VALUE) {
+	// Send a request to the driver. The request code is HELLONUM, one integer parameter
+	iobuf[0] = 319;    // my favorite number :-)
+	bReturnCode = DeviceIoControl(hDriver, HELLONUM, iobuf, sizeof(int), iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
+	if (bReturnCode) {
+	  sprintf(szString, "HELLONUM RETURNED %d bytes: >%s<\n", dwBytesReturned, iobuf);
+		MessageBox(NULL,szString, "HELLONUM Test",MB_OK);
+	}
+	else 	MessageBox(NULL,"HELLONUM failed.","HELLONUM Test",MB_OK);
+	CloseHandle(hDriver);
+    }
+}
+
+
+// put the driver through its paces to make sure it's there and active
+static void TaskSwitchTest(void)
+{    
+    HANDLE hDriver;
+    DWORD dwBytesReturned;
+    BOOL  bReturnCode = FALSE;
+    char szString[256]; // character buffer
+    int iobuf[256];     // I/O buffer
+
+    // Try opening a static device driver. 
+    hDriver = LoadDriver();
+
+    if (hDriver != INVALID_HANDLE_VALUE) {
+	bReturnCode = DeviceIoControl(hDriver, TASKSWITCH, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
+	if (bReturnCode) {
+	    if (iobuf[0] == 0) {
+		MessageBox(NULL, "This machine is running the Uniprocessor Free Build.\nTask Switching is not enabled.","TASKSWITCH Test",MB_OK);
+	    }
+	    else {
+		strcpy(szString, "This machine is running the Multiprocessor or Checked Build.");
+		strcat(szString, "\n It cannot currently support PAPI.");
+		sprintf(&szString[strlen(szString)], "\nThere have been %d task switches since the driver was opened.", iobuf[0]);
+		MessageBox(NULL, szString, "TASKSWITCH Test",MB_OK);
+	    }
+	}
+	else MessageBox(NULL,"TASKSWITCH failed.","TASKSWITCH Test",MB_OK);
+	CloseHandle(hDriver);
+    }
 }
 
 
@@ -527,10 +700,11 @@ LRESULT CALLBACK getFileHook(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 }
 
 //______________________________________________________________________________________
+static short bottom, left;
 static void centerDialog(HWND hdlg)
 {
 	RECT r;
-	short left, top, screenWd, screenHt;
+	short top, screenWd, screenHt;
 
 	// center a dialog on the screen
 	GetWindowRect(hdlg, &r);
@@ -538,6 +712,17 @@ static void centerDialog(HWND hdlg)
 	screenHt = GetSystemMetrics(SM_CYSCREEN);
 	left = (screenWd - (r.right  - r.left)) / 2;
 	top  = (screenHt - (r.bottom - r.top)) / 3;
+	bottom = top + (short)(r.bottom - r.top);
 	SetWindowPos(hdlg, NULL, left, top, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
+}
+
+//______________________________________________________________________________________
+static void centerDiagnostics(HWND hdlg)
+{
+	RECT r;
+
+	// center a dialog on the screen
+	GetWindowRect(hdlg, &r);
+	SetWindowPos(hdlg, NULL, left, bottom - (r.bottom - r.top), 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
