@@ -178,6 +178,10 @@ C     TLB
 
 #if defined(linux) && defined(__i386__)
 C     Data mem refs
+#if defined(PENTIUM4)
+      call ftest_skip(__FILE__, __LINE__, 'No Native Support', 
+     .                PAPI_ESBSTR)
+#endif
       nativees = 43 * 2**8 + 0
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
