@@ -1,5 +1,5 @@
 <HTML><HEAD>
-<TITLE>Manual Page - papif(3)</TITLE>
+<TITLE>Manual Page - PAPIF(3)</TITLE>
 <BODY background="fader-orange.gif" bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"><A NAME=top></A>
 <!-- .\" $Id$ -->
 <!-- .TH PAPIF 3 "October, 2000" "PAPI Programmer's Manual" "PAPI" -->
@@ -69,13 +69,209 @@ listed and Fortran variable types.
 <P>
 <!-- .TS -->
 <P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
-<!-- box, tab($); -->
+<!-- box, tab(!); -->
 <!-- c  | c  | c -->
 <!-- lt | lt | lt. -->
+<TR valign=top>
+<TD align=center>Pseuodo-type</TD><TD align=center>Fortran type</TD><TD align=center>Description</TD></TR>
+<TR valign=top>
+<TD>C_INT</TD><TD>INTEGER</TD><TD>Default Integer type</TD></TR>
+<TR valign=top>
+<TD>C_FLOAT</TD><TD>REAL</TD><TD>Default Real type</TD></TR>
+<TR valign=top>
+<TD>C_LONG_LONG</TD><TD>INTEGER*8</TD><TD>Extended size integer</TD></TR>
+<TR valign=top>
+<TD>C_STRING</TD><TD>CHARACTER*(PAPI_MAX_STR_LEN)</TD><TD>Fortran string</TD></TR>
+<TR valign=top>
+<TD>C_INT FUNCTION</TD><TD>EXTERNAL INTEGER FUNCTION</TD><TD>Fortran function returning integer result
+</TD></TR>
+<TR valign=top>
+<TD>C_INT(*)</TD><TD rowspan=3>Array of corresponding type
+</TD><TD rowspan=3>C_TYPE(*) refers to an array of the corresponding Fortan type.
+The length of the array needed is context dependent. It may be
+e.g. PAPI_MAX_HWCTRS or PAPIF_num_counters.
+</TD></TR>
+<TR valign=top>
+<TD>C_FLOAT(*)</TD></TR>
+<TR valign=top>
+<TD>C_LONG_LONG(*)</TD></TR>
+</TABLE></BLOCKQUOTE>
+<P>
+<P>
+Array arguments must be of sufficent size to hold the input/output
+from/to the subroutine for predictabe behaviour. The array length is
+indicated either by the accompanying argument or by internal PAPI
+definitions. For details on this see the corresponding C routine.
+<P>
+Subroutines accepting
+<!-- .B C_STRING  -->
+<B>C_STRING</B> as an argument are on most implementations capable of reading the
+character string length as provided by Fortran. In these implementations
+the string is truncated or space padded as necessary. For other
+implementations the length of the character array is assumed to be
+of sufficient size. No character string longer than
+<!-- .B PAPI_MAX_STR_LEN -->
+<B>PAPI_MAX_STR_LEN</B> is returned by the PAPIF interface. In these cases the string will be
+a C type string terminated by a new-line.
+<P>
+<P>
+<P>
+<P>
+<!-- .SH PAPI High Level Functions -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>PAPI High Level Functions</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
+<!-- .BI PAPIF_num_counters(C_INT\  numevents ) -->
+<B>PAPIF_num_counters(C_INT </B><I>numevents</I><B>)</B> 
+<!-- .BI PAPIF_read_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check ) -->
+<B>PAPIF_read_counters(C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>array_len, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_accum_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check ) -->
+<B>PAPIF_accum_counters(C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>array_len, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_start_counters(C_INT(*)\  events,\  C_INT\  array_len,\  C_INT\  check ) -->
+<B>PAPIF_start_counters(C_INT(*) </B><I>events, </I><B>C_INT </B><I>array_len, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_stop_counters(C_LONG_LONG(*)\  values,\  C_INT\  array_len,\  C_INT\  check ) -->
+<B>PAPIF_stop_counters(C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>array_len, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .SH PAPI Low Level Functions -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>PAPI Low Level Functions</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .nf  -->
+<PRE>
+<!-- .BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
+<B>PAPIF_accum(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  Event,\  C_INT\  check ) -->
+<B>PAPIF_add_event(C_INT </B><I>EventSet, </I><B>C_INT </B><I>Event, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check ) -->
+<B>PAPIF_add_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>Events, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_cleanup_eventset(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_cleanup_eventset(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_library_init(C_INT\  check ) -->
+<B>PAPIF_library_init(C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_multiplex_init(C_INT\  check ) -->
+<B>PAPIF_multiplex_init(C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  flag,\  C_INT\  check ) -->
+<B>PAPIF_thread_init(C_INT FUNCTION </B><I>handle, </I><B>C_INT </B><I>flag, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_list_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check ) -->
+<B>PAPIF_list_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>Events, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_perror(C_INT\  code,\  C_STRING\  destination,\  C_INT\  check ) -->
+<B>PAPIF_perror(C_INT </B><I>code, </I><B>C_STRING </B><I>destination, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check ) -->
+<B>PAPIF_query_event(C_INT </B><I>EventCode, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check ) -->
+<B>PAPIF_describe_event(C_STRING </B><I>EventName, </I><B>C_INT </B><I>EventCode, </I><B>C_STRING </B><I>EventDescr, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  out,\  C_INT\  check ) -->
+<B>PAPIF_event_code_to_name(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>out, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_event_name_to_code(C_STRING\  in,\  C_INT\  out,\  C_INT\  check ) -->
+<B>PAPIF_event_name_to_code(C_STRING </B><I>in, </I><B>C_INT </B><I>out, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
+<B>PAPIF_read(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_rem_event(C_INT\  EventSet,\  C_INT\  Event,\  C_INT\  check ) -->
+<B>PAPIF_rem_event(C_INT </B><I>EventSet, </I><B>C_INT </B><I>Event, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_rem_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check ) -->
+<B>PAPIF_rem_events(C_INT </B><I>EventSet, </I><B>C_INT(*) </B><I>Events, </I><B>C_INT </B><I>number, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_reset(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_reset(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_set_debug(C_INT\  debug,\  C_INT\  check ) -->
+<B>PAPIF_set_debug(C_INT </B><I>debug, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_set_domain(C_INT\  domain,\  C_INT\  check ) -->
+<B>PAPIF_set_domain(C_INT </B><I>domain, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_set_granularity(C_INT\  granularity,\  C_INT\  check ) -->
+<B>PAPIF_set_granularity(C_INT </B><I>granularity, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_start(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_start(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_state(C_INT\  EventSet,\  C_INT\  status,\  C_INT\  check ) -->
+<B>PAPIF_state(C_INT </B><I>EventSet, </I><B>C_INT </B><I>status, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_stop(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
+<B>PAPIF_stop(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_write(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
+<B>PAPIF_write(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_shutdown() -->
+<B>PAPIF_shutdown()</B> 
+<!-- .BI PAPIF_get_hardware_info(C_INT\  ncpu,\  C_INT\  nnodes,\ \ -->
+<B>PAPIF_get_hardware_info(C_INT </B><I>ncpu, </I><B>C_INT </B><I>nnodes, </I> 
+           C_INT  totalcpus,  C_INT  vendor, 
+           C_STRING  vendor_string,   C_INT  model, 
+           C_STRING  model_string,
+           C_FLOAT  revision,  C_FLOAT  mhz)
+<!-- .BI PAPIF_create_eventset(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_create_eventset(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_destroy_eventset(C_INT\  EventSet,\  C_INT\  check ) -->
+<B>PAPIF_destroy_eventset(C_INT </B><I>EventSet, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_flops(C_FLOAT\  real_time,\  C_FLOAT\  proc_time,\  C_LONG_LONG\  flpins,\  C_FLOAT\  mflops,\  C_INT\  check )  -->
+<B>PAPIF_flops(C_FLOAT </B><I>real_time, </I><B>C_FLOAT </B><I>proc_time, </I><B>C_LONG_LONG </B><I>flpins, </I><B>C_FLOAT </B><I>mflops, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_get_real_usec(C_LONG_LONG\  time) -->
+<B>PAPIF_get_real_usec(C_LONG_LONG </B><I>time)</I> 
+<!-- .BI PAPIF_get_real_cyc(C_LONG_LONG\  real_cyc) -->
+<B>PAPIF_get_real_cyc(C_LONG_LONG </B><I>real_cyc)</I> 
+<!-- .BI PAPIF_get_virt_usec(C_LONG_LONG\  time) -->
+<B>PAPIF_get_virt_usec(C_LONG_LONG </B><I>time)</I> 
+<!-- .BI PAPIF_get_virt_cyc(C_LONG_LONG\  virt_cyc) -->
+<B>PAPIF_get_virt_cyc(C_LONG_LONG </B><I>virt_cyc)</I> 
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .LP -->
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=5>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .nf  -->
+<PRE>
+<!-- .B The PerfAPI Draft: http://icl.cs.utk.edu/projects/papi/api/  -->
+<B>The PerfAPI Draft: <A HREF="http://icl.cs.utk.edu/projects/papi/api">http://icl.cs.utk.edu/projects/papi/api</A>/</B> 
+<!-- .fi -->
+</PRE>
+<P>
+<!-- .SH DIAGNOSTICS -->
+</BLOCKQUOTE>
+<A name=6>
+
+     <H3>DIAGNOSTICS</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+The return code of the corresponding C routine is returned in the argument
+<!-- .B check -->
+<B>check</B> in the Fortran interface.
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=7>
+
+     <H3>BUGS</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .LP -->
+<P>
+Please contact us if this list is in error or if anything on
+any PerfAPI Manpage is in error or unclear.
+<!-- .LP -->
+<P>
+The PerfAPI email address is: <A HREF="mailto:ptools-perfapi@ptools.org">ptools-perfapi@ptools.org</A>
 </BLOCKQUOTE>
 <P><HR>
 <TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Manual</I></TD> <TD width=33% align=center>PAPIF (3)</TD> <TD align=right width=33%><I>October, 2000</I></TD> </TR></TABLE>
-<FONT SIZE=-1>Generated on Thursday, 21 Jun 2001 21:11:03 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/papif.3 using man macros with tbl support.
+<FONT SIZE=-1>Generated on Wednesday, 27 Jun 2001 22:54:01 by a derivative of <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer</A> 1.06 from man3/PAPIF.3 using man macros with tbl support.
 <ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>
 </FONT>
 </BODY></HTML>
