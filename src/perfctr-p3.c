@@ -46,6 +46,8 @@ extern native_event_entry_t _papi_hwd_opt_native_map;
 extern native_event_entry_t *native_table;
 extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
+int NATIVE_TABLE_SIZE;
+
 #ifdef __x86_64__
 #include <linux/spinlock.h>
 spinlock_t lock[PAPI_MAX_LOCK];
@@ -86,19 +88,23 @@ inline static int setup_p3_presets(int cputype) {
     case PERFCTR_X86_INTEL_P5:
     case PERFCTR_X86_INTEL_P5MMX:
     case PERFCTR_X86_INTEL_PII:
+      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_p2_native_map) / sizeof(native_event_entry_t);
       native_table = &_papi_hwd_p2_native_map;
       preset_search_map = &_papi_hwd_p2_preset_map;
       break;
     case PERFCTR_X86_INTEL_P6:
     case PERFCTR_X86_INTEL_PIII:
+      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_pentium3_native_map) / sizeof(native_event_entry_t);
       native_table = &_papi_hwd_pentium3_native_map;
       preset_search_map = &_papi_hwd_p3_preset_map;
       break;
     case PERFCTR_X86_AMD_K7:
+      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_k7_native_map) / sizeof(native_event_entry_t);
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
  /*   case PERFCTR_X86_AMD_K8:
+      NATIVE_TABLE_SIZE = sizeof(_papi_hwd_opt_native_map) / sizeof(native_event_entry_t);
       native_table = &_papi_hwd_opt_native_map;
       preset_search_map = &_papi_hwd_opt_preset_map;
       break;    */
@@ -721,7 +727,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold) {
 
 int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold) {
   /* This function is not used and shouldn't be called. */
-
   return(PAPI_ESBSTR);
 }
 

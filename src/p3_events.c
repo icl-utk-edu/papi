@@ -22,6 +22,7 @@
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
+extern int NATIVE_TABLE_SIZE;
 
 /* Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example. */
@@ -105,7 +106,7 @@ enum {
    PNE_P3_BUS_TRAN_ANY_ANY,
    PNE_P3_BUS_TRAN_MEM_SELF,
    PNE_P3_BUS_TRAN_MEM_ANY,
-   PNE_P3_BUS_TRAN_RCV,
+   PNE_P3_BUS_DATA_RCV,
    PNE_P3_BUS_BNR_DRV,
    PNE_P3_BUS_HIT_DRV,
    PNE_P3_BUS_HITM_DRV,
@@ -1105,7 +1106,8 @@ const native_event_entry_t _papi_hwd_pentium3_native_map[] = {
     { CNTR2|CNTR1, 0xfd5}},
   { "RET_SEG_RENAMES",
     "Number of segment register rename events retired.",
-    { CNTR2|CNTR1, 0xd6}}
+    { CNTR2|CNTR1, 0xd6}},
+  { "", "", {0, 0}}
 };
 
 const native_event_entry_t _papi_hwd_p2_native_map[] = {
@@ -1478,7 +1480,8 @@ o the processor.",
     { CNTR2|CNTR1, 0xfd5}},
   { "RET_SEG_RENAMES",
     "Number of segment register rename events retired.",
-    { CNTR2|CNTR1, 0xd6}}
+    { CNTR2|CNTR1, 0xd6}},
+  { "", "", {0, 0}}
 };
 
 const native_event_entry_t _papi_hwd_k7_native_map[] = {
@@ -1697,7 +1700,8 @@ const native_event_entry_t _papi_hwd_k7_native_map[] = {
     { ALLCNTRS, 0xde}},
   { "BP_DR3",
     "Number of breakpoint matches for DR3.",
-    { ALLCNTRS, 0xdf}}
+    { ALLCNTRS, 0xdf}},
+  { "", "", {0, 0}}
 };
 
 /* The first two letters in each entry indicate to which unit
@@ -2156,7 +2160,8 @@ const native_event_entry_t _papi_hwd_opt_native_map[] = {
     { ALLCNTRS, 0x2F8}},
   { "NB_HT_BUS2_NOP",
     "HyperTransport bus 2 bandwidth - Nop sent.",
-    { ALLCNTRS, 0x3F8}}
+    { ALLCNTRS, 0x3F8}},
+  { "", "", {0, 0}}
 };
 
 /*************************************/
@@ -2172,13 +2177,15 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode) {
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits) {
-   if(EventCode > sizeof(*native_table)) return(PAPI_ENOEVNT);
+   if((EventCode & NATIVE_AND_MASK) >= NATIVE_TABLE_SIZE) {
+      return(PAPI_ENOEVNT);
+   }
    bits = &native_table[EventCode & NATIVE_AND_MASK].resources;
    return(PAPI_OK);
 }
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier) {
-   if(native_table[*EventCode & NATIVE_AND_MASK].resources.selector) {
+   if((*EventCode & NATIVE_AND_MASK) < NATIVE_TABLE_SIZE) {
       *EventCode = *EventCode + 1;
       return(PAPI_OK);
    }
