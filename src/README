@@ -32,3 +32,14 @@ PAPI Debugging
  
   (SUBSTRATE|API|INTERNAL|THREADS|MULTIPLEX|OVERFLOW|PROFILE|ALL)
 
+PAPI Configure
+--------------
+
+configure script is the utility to help user pick the right native Makefile.
+
+1)  with specify --prefix=<path>, "make install" can install the library into the
+    right place
+
+2)  with specify --with-bitmode=64 on a platform which can support both 32 and 64
+    bit mode to build a 64 bit mode library. the default is 32 bit mode or the only 
+    bit mode the platform can support.
