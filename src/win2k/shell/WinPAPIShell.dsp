@@ -132,27 +132,5 @@ SOURCE=.\splash.bmp
 SOURCE=.\WinPAPIShell.ico
 # End Source File
 # End Group
-# Begin Group "Libraries"
-
-# PROP Default_Filter "*.lib"
-# Begin Source File
-
-SOURCE=..\substrate\Release\WinPAPI.lib
-# PROP Exclude_From_Build 1
-# End Source File
-# Begin Source File
-
-SOURCE=..\substrate\Debug\WinPAPI.lib
-
-!IF  "$(CFG)" == "WinPAPIShell - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "WinPAPIShell - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# End Group
 # End Target
 # End Project

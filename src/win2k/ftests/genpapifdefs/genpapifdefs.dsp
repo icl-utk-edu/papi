@@ -98,26 +98,6 @@ LINK32=link.exe
 SOURCE=..\..\..\genpapifdef.c
 # SUBTRACT CPP /YX
 # End Source File
-# Begin Source File
-
-SOURCE=..\..\..\tests\test_utils.c
-# End Source File
-# End Group
-# Begin Group "Header Files"
-
-# PROP Default_Filter "h;hpp;hxx;hm;inl;fi;fd"
-# Begin Source File
-
-SOURCE=..\..\..\tests\papi_test.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\tests\test_utils.h
-# End Source File
-# End Group
-# Begin Group "Resource Files"
-
-# PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
 # Begin Source File
 
