@@ -64,6 +64,12 @@ static hwd_search_t usii_preset_search_map[] = {
   {0,0,{0,0}}};
 
 static hwd_search_t usiii_preset_search_map[] = {
+  /* Floating point instructions */
+  {PAPI_FP_INS,DERIVED_ADD,{0x18,0x27}}, /* pic0 FA_pipe_completion and pic1 FM_pipe_completion */
+  /* Floating point add instructions */
+  {PAPI_FAD_INS,0,{0x18,-1}},          /* pic0 FA_pipe_completion */
+  /* Floating point multiply instructions */
+  {PAPI_FML_INS,0,{-1,0x27}},          /* pic1 FM_pipe_completion */
   /* ITLB */
   {PAPI_TLB_IM,0,{-1,0x11}},           /* pic1 ITLB_miss */
   /* DITLB */
