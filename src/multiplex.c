@@ -61,12 +61,8 @@
   #include "win32.h"
 #endif
 
-#define MPX_SIGNAL SIGPROF
-#if defined(sun)
-#define MPX_ITIMER ITIMER_REALPROF
-#else
-#define MPX_ITIMER ITIMER_PROF
-#endif
+#define MPX_SIGNAL PAPI_SIGNAL
+#define MPX_ITIMER PAPI_ITIMER
 
 /* Globals for this file. */
 
@@ -214,6 +210,8 @@ static int mpx_startup_itimer(void)
 	assert(retval == 0);
 
 	retval = setitimer(MPX_ITIMER, &itime, NULL);
+	if (retval != 0)
+	  perror("setitimer(MPX_ITIMER)");
 	assert(retval == 0);
 	return(retval);
 }
@@ -1212,6 +1210,8 @@ void _papi_hwi_lookup_thread_symbols(void)
   assert(handle != NULL);
 #if defined(sun)
   symbol = dlsym(handle,"thr_self");
+  if (symbol == NULL)
+    symbol = dlsym(handle,"pthread_self");
 #elif defined(_AIX)
   symbol = dlsym(handle,"pthread_self");
 #endif
@@ -1223,6 +1223,8 @@ void _papi_hwi_lookup_thread_symbols(void)
     }
 #if defined(sun)
   thread_kill_fn = (int (*)(int, int))dlsym(handle,"thr_kill");
+  if (thread_kill_fn == NULL)
+    thread_kill_fn = (int (*)(int, int))dlsym(handle,"pthread_kill");
 #elif defined(_AIX)
   thread_kill_fn = (int (*)(int, int))dlsym(handle,"pthread_kill");
 #endif

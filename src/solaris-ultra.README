@@ -4,6 +4,13 @@ Bugs
 1) Only the Ultra I/II are currently supported. Where's my Ultra 3?
 2) Some of the cache events have documented bugs, see the Sun UltraSparc
 hardware reference manual.
+3) WARNING FOR PEOPLE USING MULTITHREADED LIBRARIES ON SOLARIS 2.8
+
+There is a bug that prevents setitimer() from being called after
+the process has called pthread() create at any point in time. Therefore
+if you suspect your communication library is multithreaded, you had better
+start the instrumentation before initializing it. See multiplex3_pthreads for
+details.
 
 Comments
 --------

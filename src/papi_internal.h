@@ -29,11 +29,7 @@
 
 /* Signal used for overflow delivery */
 
-#ifdef ITIMER_REALPROF
-#define PAPI_ITIMER ITIMER_REALPROF
-#else
 #define PAPI_ITIMER ITIMER_PROF
-#endif
 #define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
 

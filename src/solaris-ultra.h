@@ -17,9 +17,6 @@
 #include <sys/procset.h>
 #include <sys/ucontext.h>
 
-#define ANY_THREAD_GETS_SIGNAL
-#include <dlfcn.h>
-
 #include "papi.h"
 
 #define US_MAX_COUNTERS 2
