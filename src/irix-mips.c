@@ -142,16 +142,15 @@ hwi_search_t findem_r12k[] = {  /* Shared with R14K */
    /* Cond. branch inst. correctly pred */
    {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
    {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
-   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
-   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
    {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},   /* Loads executed */
    {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
+   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
+   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
    {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},   /* Total cycles */
    {PAPI_LST_INS, {DERIVED_ADD, {PAPI_NATIVE_MASK | 18, PAPI_NATIVE_MASK | 19, PAPI_NULL}}},
    /* Total load/store inst. exec */
    {0, {0, {0, 0}}}             /* The END */
 };
-
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -722,12 +721,40 @@ int _papi_hwd_shutdown_global(void)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
+   EventSetInfo_t *ESI;
+   ThreadInfo_t *thread;
+   int overflow_vector=0, generation2,i;
+   hwperf_cntr_t cnts;
+   hwd_context_t *hwd_ctx;
+   hwd_control_state_t *machdep;
+   
+
+   thread = _papi_hwi_lookup_in_thread_list();
+   ESI = (EventSetInfo_t *) thread->event_set_overflowing;
+   hwd_ctx = &thread->context;
+   machdep = &ESI->machdep;
 
    ctx.si = si;
    ctx.ucontext = info;
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx,
-                                      _papi_hwi_system_info.supports_hw_overflow, 0, 1);
+   if ((generation2 = ioctl(hwd_ctx->fd, PIOCGETEVCTRS, (void *)&cnts)) < 0) {
+       perror("PIOCGETEVCTRS returns error");
+       exit(-1);
+   }
+
+   for (i=0; i < HWPERF_EVENTMAX; i++) {
+      if (machdep->counter_cmd.hwp_ovflw_freq[i] &&
+      machdep->counter_cmd.hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie)
+      {
+         if (cnts.hwp_evctr[i]/ machdep->counter_cmd.hwp_ovflw_freq[i] >
+             machdep->cntrs_last_read.hwp_evctr[i]/ machdep->counter_cmd.hwp_ovflw_freq[i])
+            overflow_vector ^= 1<< i;
+      }
+   }
+   machdep->cntrs_last_read = cnts;
+   if (overflow_vector)
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx,
+              _papi_hwi_system_info.supports_hw_overflow, overflow_vector, 0);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -740,11 +767,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
   if ((this_state->num_on_counter[0] > 1) || 
       (this_state->num_on_counter[1] > 1))
     return(PAPI_ECNFLCT);
-*/
    if (ESI->overflow.event_counter >1) return(PAPI_ECNFLCT);
+*/
    if (threshold == 0) {
-      this_state->overflow_flag = 0;
-      arg->hwp_ovflw_sig = 0;
+      this_state->overflow_event_count--;
+      if (this_state->overflow_event_count==0)
+         arg->hwp_ovflw_sig = 0;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
       arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 0;
       arg->hwp_ovflw_freq[hwcntr] = 0;
@@ -772,11 +800,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       arg->hwp_ovflw_sig = PAPI_SIGNAL;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
-      this_state->overflow_flag = 1;
+      this_state->overflow_event_count++;
+/*
       this_state->overflow_index = hwcntr;
       this_state->overflow_threshold = threshold;
+*/
       /* set the threshold and interrupt flag */
       arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 1;
+      arg->hwp_ovflw_freq[hwcntr] = (int) threshold;
       if (hwcntr > HWPERF_MAXEVENT) {
          arg->hwp_ovflw_freq[hwcntr] = (int) threshold
                                       /this_state->num_on_counter[1];
@@ -860,7 +891,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
               NativeInfo_t * native, int count,  hwd_context_t * ctx)
 {
-   int index, i, selector = 0, mode = 0, hwcntr, threshold;
+   int index, i, selector = 0, mode = 0, threshold;
    hwperf_eventctrl_t *to = &this_state->counter_cmd.hwp_evctrargs;
 
    memset(to, 0, sizeof(hwperf_eventctrl_t));
@@ -895,15 +926,25 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
    }
    this_state->selector = selector;
-   if (this_state->overflow_flag) {  // * adjust the threshold for overflow
+   if (this_state->overflow_event_count) {
+      /* adjust the overflow threshold because of the bug in IRIX */
+/*
       hwcntr = this_state->overflow_index;
       threshold = this_state->overflow_threshold;
-      if (hwcntr > HWPERF_MAXEVENT) {
-         this_state->counter_cmd.hwp_ovflw_freq[hwcntr] = (int) threshold
+*/
+      for (i=0; i < HWPERF_EVENTMAX; i++) {
+         if (this_state->counter_cmd.hwp_ovflw_freq[i] && 
+      this_state->counter_cmd.hwp_evctrargs.hwp_evctrl[i].hwperf_creg.hwp_ie) 
+         {
+           threshold=this_state->counter_cmd.hwp_ovflw_freq[i];
+           if (i > HWPERF_MAXEVENT) {
+              this_state->counter_cmd.hwp_ovflw_freq[i] = (int) threshold
                                       /this_state->num_on_counter[1];
-      } else {
-         this_state->counter_cmd.hwp_ovflw_freq[hwcntr] = (int) threshold
+           } else {
+              this_state->counter_cmd.hwp_ovflw_freq[i] = (int) threshold
                                      /this_state->num_on_counter[0];
+           }
+         }
       }
    }
 

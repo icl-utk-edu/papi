@@ -45,11 +45,11 @@ typedef struct hwd_control_state {
    hwperf_profevctrarg_t counter_cmd;
    /* Number on each hwcounter */
    unsigned num_on_counter[2];
-   int overflow_flag; 
-   int overflow_index;
-   int overflow_threshold;
+   int overflow_event_count;
    /* Buffer for reading counters */
    hwperf_cntr_t cntrs_read;
+   /* Buffer for generating overflow vector */
+   hwperf_cntr_t cntrs_last_read;
 } hwd_control_state_t;
 
 typedef struct _Context {
