@@ -77,7 +77,7 @@ int case1_first_half(void)
   
   pset = PAPI_query_all_events_verbose();
   if (pset == NULL)
-    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",pset);
+    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",0);
 
   retval = PAPI_create_eventset(&EventSet);
   if (retval != PAPI_OK)
