@@ -1597,7 +1597,7 @@ long_long PAPI_get_real_usec(void)
    return (_papi_hwd_get_real_usec());
 }
 
-u_long_long PAPI_get_virt_cyc(void)
+long_long PAPI_get_virt_cyc(void)
 {
    ThreadInfo_t *master = _papi_hwi_lookup_in_thread_list();
 
@@ -1611,12 +1611,12 @@ u_long_long PAPI_get_virt_cyc(void)
          papi_return(retval);
 
       _papi_hwi_insert_in_thread_list(master);
-      return (_papi_hwd_get_virt_cycles(&master->context));
+      return ((long_long)_papi_hwd_get_virt_cycles(&master->context));
    }
    return PAPI_ECNFLCT;
 }
 
-u_long_long PAPI_get_virt_usec(void)
+long_long PAPI_get_virt_usec(void)
 {
    ThreadInfo_t *master = _papi_hwi_lookup_in_thread_list();
 
@@ -1629,7 +1629,7 @@ u_long_long PAPI_get_virt_usec(void)
       if (retval)
          papi_return(retval);
       _papi_hwi_insert_in_thread_list(master);
-      return (_papi_hwd_get_virt_usec(&master->context));
+      return ((long_long)_papi_hwd_get_virt_usec(&master->context));
    } else
       return PAPI_ECNFLCT;
 }

@@ -421,8 +421,10 @@ read the documentation carefully.  */
    void *PAPI_get_overflow_address(void *context);
    long_long PAPI_get_real_cyc(void);
    long_long PAPI_get_real_usec(void);
-   u_long_long PAPI_get_virt_cyc(void);
-   u_long_long PAPI_get_virt_usec(void);
+   long_long PAPI_get_virt_cyc(void);
+   long_long PAPI_get_virt_usec(void);
+//   u_long_long PAPI_get_virt_cyc(void);
+//   u_long_long PAPI_get_virt_usec(void);
    int PAPI_library_init(int version);
    unsigned long int PAPI_thread_id(void);
    int PAPI_register_thread(void);
