@@ -58,7 +58,7 @@ static int lookup_and_set_thread_symbols(void)
    handle = dlopen(NULL, RTLD_LAZY);
    if (handle == NULL)
      {
-       PAPIERROR("Error from dlopen(NULL, RTLD_LAZY): %s\n",dlerror());
+       PAPIERROR("Error from dlopen(NULL, RTLD_LAZY): %s",dlerror());
        return(PAPI_ESYS);
      }
 
@@ -66,21 +66,21 @@ static int lookup_and_set_thread_symbols(void)
    if (symbol_ptc == NULL)
      {
        error_ptc = dlerror();
-       PAPIERROR("dlsym(%p,pthread_self) returned NULL: %s\n",(error_ptc ? error_ptc : "No error, NULL symbol!"));
-       dlclose(handle);
-       return(PAPI_EMISC);
+       THRDBG("dlsym(%p,pthread_self) returned NULL: %s\n",(error_ptc ? error_ptc : "No error, NULL symbol!"));
      }
    
    symbol_ptk = dlsym(handle, "pthread_kill");
    if (symbol_ptk == NULL)
      {
        error_ptk = dlerror();
-       PAPIERROR("dlsym(%p,pthread_kill) returned NULL: %s\n",(error_ptk ? error_ptk : "No error, NULL symbol!"));
-       dlclose(handle);
-       return(PAPI_EMISC);
+       THRDBG("dlsym(%p,pthread_kill) returned NULL: %s\n",(error_ptk ? error_ptk : "No error, NULL symbol!"));
      }
 	  
    dlclose(handle);
+
+   if (!((_papi_hwi_thread_kill_fn && _papi_hwi_thread_id_fn) ||
+	 (!_papi_hwi_thread_kill_fn && !_papi_hwi_thread_id_fn)))
+     return(PAPI_EMISC);
 
    _papi_hwi_thread_kill_fn = (int (*)(int,int))symbol_ptk;
    _papi_hwi_thread_id_fn = (unsigned long (*)(void))symbol_ptc;

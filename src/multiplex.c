@@ -106,14 +106,23 @@
 
 /* Globals for this file. */
 
-extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
-
 /* List of threads that are multiplexing. */
 
 static Threadlist *tlist = NULL;
-
-
 static unsigned int randomseed;
+
+/* Timer stuff */
+
+#ifndef _WIN32
+static struct itimerval itime;
+static struct itimerval itimestop;
+static struct sigaction oaction;
+#else
+static MMRESULT mpxTimerID;     /* unique ID for referencing this timer */
+static int mpx_time;
+#endif
+
+/* END Globals */
 
 #ifdef PTHREADS
 /* Number of threads that have been signaled */
@@ -136,14 +145,7 @@ static int mpx_insert_events(MPX_EventSet *, int *event_list, int num_events,
                              int domain, int granularity);
 static void mpx_handler(int signal);
 
-#if defined(ANY_THREAD_GETS_SIGNAL)
-extern int (*_papi_hwi_thread_kill_fn) (int, int);
-#endif
-
 #ifdef _WIN32
-
-static MMRESULT mpxTimerID;     /* unique ID for referencing this timer */
-static int mpx_time;
 
 static void mpx_init_timers(int interval)
 {
@@ -211,12 +213,6 @@ static void mpx_hold(void)
 }
 
 #else
-
-/* Timer stuff */
-
-static struct itimerval itime;
-static struct itimerval itimestop;
-struct sigaction oaction;
 
 static void mpx_init_timers(int interval)
 {
@@ -351,10 +347,10 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
        * use getpid() as a placeholder. */
 
       if (_papi_hwi_thread_id_fn) {
-         MPXDBG("New thread %lx at %p\n", _papi_hwi_thread_id_fn(), t);
+         MPXDBG("New thread at %p\n", t);
          t->tid = _papi_hwi_thread_id_fn();
       } else {
-         MPXDBG("New process %x at %p\n", getpid(), t);
+         MPXDBG("New process at %p\n", t);
          t->tid = getpid();
       }
 
@@ -467,10 +463,7 @@ static void mpx_handler(int signal)
 
    signal = signal;             /* unused */
 
-   if (_papi_hwi_thread_id_fn)
-     {
-       MPXDBG("Handler in thread %lx\n", _papi_hwi_thread_id_fn());
-     }
+   MPXDBG("Handler in thread\n");
 
    /* This handler can be invoked either when a timer expires
     * or when another thread in this handler responding to the
@@ -635,18 +628,17 @@ static void mpx_handler(int signal)
    else {
       Threadlist *t;
 #ifdef MPX_DEBUG_TIMER
-      MPXDBG("nothing to do in thread %x\n", (*_papi_hwi_thread_id_fn) ());
+      MPXDBG("nothing to do in thread\n");
 #endif
       for (t = tlist; t != NULL; t = t->next) {
 #ifdef MPX_DEBUG_TIMER
-         MPXDBG("%lx forwarding signal to thread %lx\n",
-                 (*_papi_hwi_thread_id_fn) (), t->tid);
+         MPXDBG("forwarding signal to thread %lx\n", t->tid);
 #endif
          retval = (*_papi_hwi_thread_kill_fn) (t->tid, MPX_SIGNAL);
          if (retval != 0) {
 #ifdef MPX_DEBUG_SIGNAL
-            MPXDBG("%lx forwarding signal to thread %lx returned %d\n",
-                    (*_papi_hwi_thread_id_fn) (), t->tid, retval);
+            MPXDBG("forwarding signal to thread %lx returned %d\n",
+                   t->tid, retval);
 #endif
             perror("_papi_hwi_thread_kill_fn");
          }
@@ -814,9 +806,7 @@ int MPX_start(MPX_EventSet * mpx_events)
 
    retval = mpx_startup_itimer();
 
-   assert(retval == 0);
-
-   return PAPI_OK;
+   return retval;
 }
 
 int MPX_read(MPX_EventSet * mpx_events, long_long * values)
@@ -956,7 +946,7 @@ int MPX_reset(MPX_EventSet * mpx_events)
 int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 {
    int i, cur_mpx_event;
-   int retval;
+   int retval = PAPI_OK;
    long_long dummy_value[2];
    /* long_long cycles_this_slice, total_cycles; */
    MasterEvent *cur_event, *head;
@@ -1037,7 +1027,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
    /* Restore the timer (for other event sets that may be running) */
    mpx_release();
 
-   return PAPI_OK;
+   return retval;
 }
 
 int MPX_cleanup(MPX_EventSet ** mpx_events)
@@ -1157,54 +1147,6 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 #endif
 }
 
-#ifdef ANY_THREAD_GETS_SIGNAL
-void _papi_hwi_lookup_thread_symbols(void)
-{
-   int retval;
-   char *error;
-   void *symbol = NULL, *handle = NULL;
-
-   handle = dlopen(NULL, RTLD_LAZY);
-   assert(handle != NULL);
-
-   if (_papi_hwi_thread_id_fn == NULL) {
-#if defined(sun)
-      symbol = dlsym(handle, "thr_self");
-      if (symbol == NULL)
-         symbol = dlsym(handle, "pthread_self");
-#elif defined(_AIX)
-      symbol = dlsym(handle, "pthread_self");
-#else
-#error "You had better edit _papi_hwi_lookup_thread_symbols in multiplex.c"
-#endif
-      error = dlerror();
-      if ((error == NULL) && (symbol)) {
-         retval = PAPI_thread_init((unsigned long (*)(void)) symbol);
-         assert(retval == 0);
-      } else
-         _papi_hwi_thread_id_fn = (unsigned long (*)(void)) symbol;
-   }
-
-   if (_papi_hwi_thread_kill_fn == NULL) {
-#if defined(sun)
-      symbol = dlsym(handle, "thr_kill");
-      if (symbol == NULL)
-         symbol = dlsym(handle, "pthread_kill");
-#elif defined(_AIX)
-      symbol = dlsym(handle, "pthread_kill");
-#endif
-      error = dlerror();
-      if ((error == NULL) && (symbol)) {
-         _papi_hwi_thread_kill_fn = (int (*)(int, int)) symbol;
-      }
-   }
-
-   assert(((_papi_hwi_thread_id_fn == NULL) && (_papi_hwi_thread_kill_fn == NULL))
-          || ((_papi_hwi_thread_id_fn) && (_papi_hwi_thread_kill_fn)));
-   dlclose(handle);
-}
-#endif
-
 int mpx_init(int interval)
 {
 #ifdef PTHREADS
@@ -1242,9 +1184,7 @@ int mpx_init(int interval)
    retval = pthread_mutex_init(&tlistlock, NULL);
    assert(retval == 0);
 #endif
-#if defined(ANY_THREAD_GETS_SIGNAL)
-   _papi_hwi_lookup_thread_symbols();
-#endif
+
    return (PAPI_OK);
 }
 
