@@ -10,8 +10,6 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
-//#include "test_utils.h"
 #include "WinPAPI_protos.h"
 
 #ifndef _WIN32
@@ -48,8 +46,10 @@ int PAPI_StringsAndLabels(void)
 			errorStr = PAPI_strerror(errorCode);
 			printf("%s\n", errorStr);
 		}
-		errorCode = PAPI_label_event(EventCode, label);
-		printf("%-20s %-20s %s\n", name, label, descr);
+/*		errorCode = PAPI_label_event(EventCode, label);
+*/
+		strcpy(label, "PAPI_label_event not implemented yet...");
+		printf("%-20s %-40s %s\n", name, label, descr);
 		if (i && i%20 == 0) waitConsole();
 	}
 	printf("\n");

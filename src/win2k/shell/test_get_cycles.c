@@ -10,8 +10,6 @@
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
-//#include "test_utils.h"
 #include "WinPAPI_protos.h"
 
 #ifndef _WIN32

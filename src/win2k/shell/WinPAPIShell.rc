@@ -36,83 +36,20 @@ IDI_SMALL               ICON    DISCARDABLE     "Papismall.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDC_WINPAPISHELL MENU DISCARDABLE 
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM "E&xit",                       IDM_EXIT
-    END
-    MENUITEM "&Kernel",                     IDM_TEST_KERNEL
-    POPUP "&Info"
-    BEGIN
-        MENUITEM "avail",                       IDM_AVAIL
-        MENUITEM "clock resolution",            IDM_CLOCKRES
-        MENUITEM "cost",                        IDM_COST
-        MENUITEM "get_cycles",                  IDM_GET_CYCLES
-        MENUITEM "&Int'l Strings",              IDM_STRINGS
-        MENUITEM "Int'l &Errors",               IDM_ERRORS
-        MENUITEM "Nils' System Info",           IDM_NILS
-    END
-    POPUP "&Low Tests"
-    BEGIN
-        MENUITEM "zero",                        IDM_ZERO
-        MENUITEM "first",                       IDM_FIRST
-        MENUITEM "second",                      IDM_SECOND
-        MENUITEM "third",                       IDM_THIRD
-        MENUITEM "fourth",                      IDM_FOURTH
-        MENUITEM "fifth",                       IDM_FIFTH
-        MENUITEM "ninth",                       IDM_NINETH
-        MENUITEM "tenth",                       IDM_TENTH
-    END
-    POPUP "Hi&gh Tests"
-    BEGIN
-        MENUITEM "FLOPS",                       IDM_FLOPS
-        MENUITEM "High Level",                  IDM_HILEVEL
-        MENUITEM "DGEMM",                       IDM_DGEMM
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&About ...",                  IDM_ABOUT
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Accelerator
-//
-
-IDC_WINPAPISHELL ACCELERATORS MOVEABLE PURE 
-BEGIN
-    "?",            IDM_ABOUT,              ASCII,  ALT
-    "/",            IDM_ABOUT,              ASCII,  ALT
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 22, 17, 184, 125
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_RTLREADING
-CAPTION "About"
-FONT 8, "System"
+IDD_ABOUTBOX1 DIALOG DISCARDABLE  0, 0, 384, 266
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "WinPAPI"
+FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         132,IDC_STATIC,"Static",SS_BITMAP,0,0,184,125
-    DEFPUSHBUTTON   "OK",IDOK,149,109,30,11,WS_GROUP
-    CTEXT           "",IDC_STATIC,6,61,172,45,SS_CENTERIMAGE,
-                    WS_EX_CLIENTEDGE
-    LTEXT           "WinPAPI Shell Application Version 1.0",IDC_STATIC,30,66,
-                    124,8,SS_NOPREFIX
-    LTEXT           "Shell and Windows 2000 Driver by Dan Terpstra",
-                    IDC_STATIC,13,75,158,8
-    LTEXT           "PAPI library by Phil Mucci",IDC_STATIC,50,83,85,8
-    LTEXT           "Copyright (C) 2001",IDC_STATIC,62,93,60,8
+    CONTROL         136,IDC_STATIC,"Static",SS_BITMAP,0,0,384,266
+    DEFPUSHBUTTON   "Exit",IDOK,323,242,50,14
+    PUSHBUTTON      "PAPI Tests",IDTEST,265,242,50,14
+    PUSHBUTTON      "Driver Test",IDDRIVER,207,242,50,14
+    PUSHBUTTON      "Help",IDHELP,149,242,50,14
+    PUSHBUTTON      "Web",IDWEB,91,242,50,14
 END
 
 
@@ -151,40 +88,24 @@ END
 //
 
 IDB_BITMAP3             BITMAP  DISCARDABLE     "bitmap3.bmp"
+IDB_BITMAP1             BITMAP  DISCARDABLE     "splash.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// String Table
+// DESIGNINFO
 //
 
-STRINGTABLE DISCARDABLE 
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
 BEGIN
-    IDS_APP_TITLE           "WinPAPIShell"
-    IDS_ZERO                "This is test zero..."
-    IDS_FIRST               "This is the first test..."
-    IDS_HELLO               "Hello World!"
-    IDS_SECOND              "This is the second test..."
-    IDS_THIRD               "This is the third test..."
-    IDC_WINPAPISHELL        "WINPAPISHELL"
-    IDS_NILS                "Nils Smed's System Information"
-    IDS_STRINGS             "International String and Label Test"
+    IDD_ABOUTBOX1, DIALOG
+    BEGIN
+        RIGHTMARGIN, 377
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 259
+    END
 END
-
-STRINGTABLE DISCARDABLE 
-BEGIN
-    IDS_ERRORS              "International Error String Test"
-    IDS_GET_CYCLES          "Test the get_cycles() timing routine..."
-    IDS_AVAIL               "This runs the avail() test..."
-    IDS_FOURTH              "This is the fourth test..."
-    IDS_FIFTH               "This is the fifth test..."
-    IDS_NINETH              "This is the ninth test..."
-    IDS_TENTH               "This is the tenth test..."
-    IDS_COST                "This is the cost analysis test..."
-    IDS_CLOCKRES            "This test examines clock resolution..."
-    IDS_FLOPS               "This test computes floating point operations per second."
-    IDS_HILEVEL             "This test exercises the High Level PAPI interface."
-    IDS_DGEMM               "Test the ATLAS DGEMM computation."
-END
+#endif    // APSTUDIO_INVOKED
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

@@ -23,7 +23,6 @@
 #include <tchar.h>
 
 // Local Header Files
-#include "WinPAPI_protos.h"
 
 // TODO: reference additional headers your program requires here
 
