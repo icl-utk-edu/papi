@@ -45,3 +45,14 @@ Multiplexing work:
   concept of the maximum number of events. (This will mean a realloc for
   the eventset, which is why SET_MULTIPLEX is an EventSet option.)
 
+* Make multiplexing monotonically increasing
+
+* Put in check for too short of reads while multiplexing
+
+* All thread signal group function to MPX layer
+
+* Test new MPX layer.
+
+* Remove use of Virtual Timer in MPX layer
+
+
