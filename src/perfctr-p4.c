@@ -475,10 +475,23 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 */
 int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
+   int retval1, retval2;
    /* Pentium 4 needs to check for conflict of both counters and esc registers */
-   return ((dst->ra_selector & src->ra_selector)
-           || ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1))
-           || ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)));
+             /* selectors must share bits */
+   retval1 = ((dst->ra_selector & src->ra_selector) ||
+             /* or escrs must equal each other and not be set to -1 */
+             ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1)) ||
+             ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)));
+   /* Pentium 4 also needs to check for conflict on pebs registers */
+               /* pebs enables must both be non-zero */
+   retval2 = (((dst->ra_bits.pebs_enable && src->ra_bits.pebs_enable) &&
+               /* and not equal to each other */
+               (dst->ra_bits.pebs_enable != src->ra_bits.pebs_enable)) ||
+               /* same for pebs_matrix_vert */
+              ((dst->ra_bits.pebs_matrix_vert && src->ra_bits.pebs_matrix_vert) &&
+               (dst->ra_bits.pebs_matrix_vert != src->ra_bits.pebs_matrix_vert)));
+   if (retval2) SUBDBG("pebs conflict!\n");
+   return(retval1 | retval2);
 }
 
 /* This function removes shared resources available to the src event
@@ -492,28 +505,44 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
    int i;
    unsigned shared;
 
-   /* On Pentium 4, shared resources include both escrs and counters */
+   /* On Pentium 4, shared resources include escrs, counters, and pebs registers
+      There is only one pair of pebs registers, so if two events use them differently
+      there is an immediate conflict, and the dst rank is forced to 0.
+   */
 #ifdef DEBUG
    SUBDBG("src, dst\n");
    print_alloc(src);
    print_alloc(dst);
 #endif
 
-   /* remove counters referenced by any shared escrs */
-   if ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1)) {
-      dst->ra_selector &= ~dst->ra_bits.counter[0];
-      dst->ra_escr[0] = -1;
-   }
-   if ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)) {
-      dst->ra_selector &= ~dst->ra_bits.counter[1];
-      dst->ra_escr[1] = -1;
-   }
+   /* check for a pebs conflict */
+       /* pebs enables must both be non-zero */
+   i = (((dst->ra_bits.pebs_enable && src->ra_bits.pebs_enable) &&
+         /* and not equal to each other */
+         (dst->ra_bits.pebs_enable != src->ra_bits.pebs_enable)) ||
+         /* same for pebs_matrix_vert */
+        ((dst->ra_bits.pebs_matrix_vert && src->ra_bits.pebs_matrix_vert) &&
+         (dst->ra_bits.pebs_matrix_vert != src->ra_bits.pebs_matrix_vert)));
+   if (i) {
+      SUBDBG("pebs conflict! clearing selector\n");
+      dst->ra_selector = 0;
+      return;
+   } else {
+      /* remove counters referenced by any shared escrs */
+      if ((dst->ra_escr[0] == src->ra_escr[0]) && (dst->ra_escr[0] != -1)) {
+         dst->ra_selector &= ~dst->ra_bits.counter[0];
+         dst->ra_escr[0] = -1;
+      }
+      if ((dst->ra_escr[1] == src->ra_escr[1]) && (dst->ra_escr[1] != -1)) {
+         dst->ra_selector &= ~dst->ra_bits.counter[1];
+         dst->ra_escr[1] = -1;
+      }
 
-   /* remove any remaining shared counters */
-   shared = (dst->ra_selector & src->ra_selector);
-   if (shared)
-      dst->ra_selector ^= shared;
-
+      /* remove any remaining shared counters */
+      shared = (dst->ra_selector & src->ra_selector);
+      if (shared)
+         dst->ra_selector ^= shared;
+   }
    /* recompute rank */
    for (i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
       if (dst->ra_selector & (1 << i))
@@ -654,26 +683,33 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
       cpu_control->pmc_map[i] |= FAST_RDPMC;
       cpu_control->evntsel_aux[i] |= bits->event;
 
-      /* pebs_enable and pebs_matrix_vert are shared registers used for replay_events.
-	 Replay_events count L1 and L2 cache events. There is only one of each for 
-	 the entire eventset. Therefore, there can be only one unique replay_event 
-	 per eventset. This means L1 and L2 can't be counted together. Which stinks. */
+    /* pebs_enable and pebs_matrix_vert are shared registers used for replay_events.
+      Replay_events count L1 and L2 cache events. There is only one of each for 
+	   the entire eventset. Therefore, there can be only one unique replay_event 
+	   per eventset. This means L1 and L2 can't be counted together. Which stinks.
+      This conflict should be trapped in the allocation scheme, but we'll test for it
+      here too, just in case.
+    */
       if (bits->pebs_enable) {
 	 /* if pebs_enable isn't set, just copy */
-	 if (cpu_control->p4.pebs_enable == 0)
+         if (cpu_control->p4.pebs_enable == 0) {
             cpu_control->p4.pebs_enable = bits->pebs_enable;
 	 /* if pebs_enable conflicts, flag an error */
-	 else if (cpu_control->p4.pebs_enable != bits->pebs_enable)
-	    retval = PAPI_ECNFLCT;
+         } else if (cpu_control->p4.pebs_enable != bits->pebs_enable) {
+            SUBDBG("WARNING: _papi_hwd_update_control_state -- pebs_enable conflict!");
+	         retval = PAPI_ECNFLCT;
+         }
 	 /* if pebs_enable == bits->pebs_enable, do nothing */
       }
       if (bits->pebs_matrix_vert) {
 	 /* if pebs_matrix_vert isn't set, just copy */
-	 if (cpu_control->p4.pebs_matrix_vert == 0)
-	    cpu_control->p4.pebs_matrix_vert = bits->pebs_matrix_vert;
+         if (cpu_control->p4.pebs_matrix_vert == 0) {
+	         cpu_control->p4.pebs_matrix_vert = bits->pebs_matrix_vert;
 	 /* if pebs_matrix_vert conflicts, flag an error */
-	 else if (cpu_control->p4.pebs_matrix_vert != bits->pebs_matrix_vert)
- 	    retval = PAPI_ECNFLCT;
+         } else if (cpu_control->p4.pebs_matrix_vert != bits->pebs_matrix_vert) {
+            SUBDBG("WARNING: _papi_hwd_update_control_state -- pebs_matrix_vert conflict!");
+ 	         retval = PAPI_ECNFLCT;
+         }
 	 /* if pebs_matrix_vert == bits->pebs_matrix_vert, do nothing */
      }
    }
