@@ -71,6 +71,8 @@ typedef union {
 		} pme_codes;				/* event code divided in 2 parts */
 	} pme_entry_code_t;				
 
+#define EVENT_CONFIG_T pfm_event_config_t
+#define MAX_COUNTERS 4
 
 typedef struct hwd_control_state {
   /* Arg to perfmonctl */
@@ -97,13 +99,13 @@ typedef struct hwd_control_state {
 #endif
   pfmlib_param_t evt;
 #endif
+  int overflowcount[MAX_COUNTERS];
+  void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
   /* Is this event derived? */
   int derived; 
 } hwd_control_state_t;
 
-#define EVENT_CONFIG_T pfm_event_config_t
-#define MAX_COUNTERS 4
 
 typedef struct preset_search {
   /* Preset code */
