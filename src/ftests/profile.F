@@ -124,10 +124,10 @@ C      print *, "length=", length
 
 #if defined(NO_FLOPS)
       write (*, 400) "PAPI_TOT_INS", values(1)
- 400  format (A12, ":  ", I11)
 #else
       write (*, 400) "PAPI_FP_INS", values(1)
 #endif
+ 400  format (A12, ":  ", I11)
       write (*, 400) "PAPI_TOT_CYC", values(2)
       print *, ""
 
