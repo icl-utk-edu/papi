@@ -167,10 +167,13 @@ static pmapi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_FPU_IDL,0,{"PM_FPU_IDLE",0,0,0,0,0,0,0}}, /*Cycles floating point units are idle*/
   {PAPI_LSU_IDL,0,{"PM_LSU_IDLE",0,0,0,0,0,0,0}}, /*Cycles load/store units are idle*/
   {PAPI_TLB_TL,0,{"PM_TLB_MISS",0,0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/
-  {PAPI_L1_LDM,0,{"PM_LD_MISS_L1",0,0,0,0,0,0,0}}, /*Level 1 load misses */
+  {PAPI_L1_LDM,0,{"PM_LD_MISS_L2HIT",0,0,0,0,0,0,0}}, /*Level 1 load misses */
   {PAPI_L1_STM,0,{PM_ST_MISS_L1,0,0,0,0,0,0,0}}, /*Level 1 store misses */
-  {PAPI_L2_LDM,0,{"PM_LD_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 load misses */		
+  {PAPI_L2_LDM,0,{"PM_BIU_LD_NORTRY",0,0,0,0,0,0,0}}, /*Level 2 load misses */		
+#if 0
+  /* This event does not work */
   {PAPI_L2_STM,0,{"PM_ST_MISS_EXCEED_L2",0,0,0,0,0,0,0}}, /*Level 2 store misses */		
+#endif
   {PAPI_BTAC_M,0,{"PM_BTAC_MISS",0,0,0,0,0,0,0}}, /*BTAC miss*/
   {PAPI_PRF_DM,0,{"PM_PREF_MATCH_DEM_MISS",0,0,0,0,0,0,0}}, /*Prefetch data instruction caused a miss */
   {PAPI_TLB_SD,0,{"PM_TLBSYNC_RERUN",0,0,0,0,0,0,0}}, /*Xlation lookaside buffer shootdowns (SMP)*/
@@ -1932,16 +1935,16 @@ dump_state(current_state);
 
   /* Set up the new merged control structure */
   
+  retval = pm_set_program_mythread(&current_state->counter_cmd);
+  if (retval > 0) 
+    return(retval);
+
 #if 0
   dump_state(this_state);
   dump_state(current_state);
   dump_cmd(&current_state->counter_cmd);
 #endif
-      
-  retval = pm_set_program_mythread(&current_state->counter_cmd);
-  if (retval > 0) 
-    return(retval);
-
+     
   /* (Re)start the counters */
   
   retval = pm_start_mythread();
