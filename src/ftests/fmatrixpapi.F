@@ -33,25 +33,8 @@ C     OPEN(UNIT=1,FILE='fmt1',STATUS='OLD')
 C     Open matrix file number 2 for reading
 C     OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
-      retval = PAPI_VER_CURRENT
-      call PAPIf_library_init(retval)
-      if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftest_fail(__FILE__, __LINE__,
-     .   'PAPI_library_init', retval)
-      end if
-
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
-        event(1) = PAPI_TOT_INS
-	else
-C   Total floating point operations
-        event(1) = PAPI_FP_INS
-	end if
-
-C  Time used
-      event(2) = PAPI_TOT_CYC
-
 C     See how many hardware events at one time are supported
+C     This also initializes the PAPI library
       call PAPIf_num_counters( num_events )
       if ( num_events .LT. 2 ) then
         print *,'This example program requries the architecture to ',
