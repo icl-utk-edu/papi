@@ -504,6 +504,7 @@ void test_skip(char *file, int line, char *call, int retval)
 		exit(retval);
 	}
 #define exit wait_exit
+#define __FUNCTION__ ""
 #endif
 
 void test_print_event_header(char *call, int evset)
