@@ -298,6 +298,26 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
 */
 }
 
+/* find the first set bit in long long */
+static int ffsll(long long lli)
+{
+   int i, num, t, tmpint, len;
+
+   num=sizeof(long long)/sizeof(int);
+   len = sizeof(int)*CHAR_BIT;
+
+   for(i=0; i< num; i++ ) {
+      tmpint = (int)( ( (lli>>len)<<len) ^ lli );
+ 
+      t=ffs(tmpint);
+      if ( t ) {
+         return(t+i*len);
+      }
+      lli = lli>>len;
+   }
+   return 0;
+}
+
 /* if isHardware is true, then the processor is using hardware overflow,
    else it is using software overflow. Use this parameter instead of 
    _papi_hwi_system_info.supports_hw_overflow is in CRAY some processors
@@ -323,11 +343,8 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
    int profile_index = 0;
-#ifdef _AIX   
-   int overflow_vector;
-#else
    long_long overflow_vector;
-#endif
+
    long_long temp[MAX_COUNTERS], over;
    u_long_long latest = 0;
    ThreadInfo_t *thread;
@@ -405,7 +422,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
          if (ESI->state & PAPI_PROFILING) {
             int k = 0;
             while (overflow_vector) {
-               i = ffs(overflow_vector) - 1;
+               i = ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
                   /* This loop is here ONLY because Pentium 4 can have tagged events

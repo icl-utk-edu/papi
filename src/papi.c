@@ -438,7 +438,6 @@ int PAPI_add_event(int EventSet, int EventCode)
 int PAPI_remove_event(int EventSet, int EventCode)
 {
    EventSetInfo_t *ESI;
-   int i;
 
    /* check for pre-existing ESI */
 
@@ -830,7 +829,7 @@ int PAPI_cleanup_eventset(int EventSet)
           _papi_hwi_system_info.supports_hw_profile) {
       total=ESI->profile.event_counter;
       for (i = 0; i < total; i++) {
-         retval = PAPI_profil(NULL, 0, NULL, 65536, EventSet, 
+         retval = PAPI_profil(NULL, 0, 0, 65536, EventSet, 
                  ESI->profile.EventCode[0], 0, PAPI_PROFIL_POSIX);
          if (retval != PAPI_OK)
             papi_return(retval);
