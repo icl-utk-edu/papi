@@ -19,46 +19,27 @@ PAPI_multiplex_init \- initialize multiplex support in the PAPI library
 .SH DESCRIPTION
 .B "PAPI_multiplex_init"
 enables and initializes multiplex support in the PAPI library.
-This allows a user to count more events than total physical counters
+Multiplexing allows a user to count more events than total physical counters
 by time sharing the existing counters at some loss in precision.
 Applications that make no use of multiplexing do not need to call
 this routine.
 
 .SH RETURN VALUES
-On success, this function returns
+This function always returns
 .B "PAPI_OK."
- On error, a non-zero error code is returned.
 
 .SH ERRORS
-.TP
-.B "PAPI_EINVAL"
-One or more of the arguments is invalid.
-.fi
+.I No errors are reported.
 
 .SH EXAMPLES
 .nf         
 .if t .ft CW
-  /* Initialize the library */
-
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    handle_error("PAPI_library_init",__LINE__,retval);
-
-  /* Enable multiplexing support */
-
-  retval = PAPI_multiplex_init();
-  if (retval != PAPI_OK)
-    handle_error("PAPI_multiplex_init",__LINE__,retval);
-  
-  /* Turn on thread support in PAPI */
-
-  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
-    handle_error("PAPI_thread_init",__LINE__,retval);
+retval = PAPI_multiplex_init();
 .if t .ft P
 .fi
 
 .SH BUGS
-This function causes the application to exit if it is called more than once.
+This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_set_multiplex "(3)"
+.BR PAPI_set_multiplex "(3), "PAPI_get_multiplex "(3)"
