@@ -10,7 +10,9 @@ static hwi_search_t preset_name_map_x1[PAPI_MAX_PRESET_EVENTS] = {
    {PAPI_TLB_TL, {0, {X1_P_EV_TLB_MISS, -1, -1, -1, -1, -1, -1, -1}, 0}},       /* Total translation lookaside buffer misses */
    {PAPI_BR_CN, {0, {X1_P_EV_BRANCH_TAKEN, -1, -1, -1, -1, -1, -1, -1}, 0}},        /* Conditional branch instructions taken */
    {PAPI_BR_PRC, {0, {X1_P_EV_BHT_CORRECT, -1, -1, -1, -1, -1, -1, -1}, 0}}, /* Conditional branch instructions correctly predicted */
-   {PAPI_TOT_IIS, {0, {X1_P_EV_INST_DISPATCH, -1, -1, -1, -1, -1, -1, -1}, 0}},    /* Instructions issued */
+/* This event gives random counts that are either 0, a very small number, or a very large number when running sdsc.c
+   I suspect it doesn't count what we think it counts. It should be deprecated pending further study. --dkt */
+   /*   {PAPI_TOT_IIS, {0, {X1_P_EV_INST_DISPATCH, -1, -1, -1, -1, -1, -1, -1}, 0}}, */   /* Instructions issued */
    {PAPI_TOT_INS, {0, {X1_P_EV_INST_GRAD, -1, -1, -1, -1, -1, -1, -1}, 0}},    /* Instructions completed */
    {PAPI_INT_INS, {0, {X1_P_EV_INST_S_INT, -1, -1, -1, -1, -1, -1, -1}, 0}},  /* Integer instructions */
    {PAPI_FP_INS, {0, {X1_P_EV_INST_S_FP, -1, -1, -1, -1, -1, -1, -1}, 0}},     /* Floating point instructions */
