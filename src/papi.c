@@ -180,7 +180,6 @@ int PAPI_library_init(int version)
       return(init_retval); 
     }
 
-  DBG((stderr,"Above for block.\n"));
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
     if (_papi_hwi_presets[i].event_name) /* If the preset is part of the API */
       _papi_hwi_presets[i].avail = 

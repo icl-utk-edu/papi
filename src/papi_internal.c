@@ -827,10 +827,9 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t *ESI)
 
 int _papi_hwi_query(int preset_index, int *flags, char **note)
 { 
-  DBG((stderr,"preset_index: %d\n", preset_index));
   if (_papi_hwd_preset_map[preset_index].number == 0)
     return(0);
-  DBG((stderr,"derived: %d\n", _papi_hwd_preset_map[preset_index].derived));
+  DBG((stderr,"preset_index: %d derived: %d\n", preset_index, _papi_hwd_preset_map[preset_index].derived));
   if (_papi_hwd_preset_map[preset_index].derived)
     *flags = PAPI_DERIVED;
   DBG((stderr,"note: %s\n", _papi_hwd_preset_map[preset_index].note));

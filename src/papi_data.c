@@ -53,7 +53,7 @@ int _papi_hwi_debug = 0;
 #define PAPI_PRESET(function)\
 	function##_nm, function, function##_dsc, function##_lbl, 0, NULL, 0
 
-const PAPI_preset_info_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = { 
+PAPI_preset_info_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = { 
   { PAPI_PRESET(PAPI_L1_DCM) },
   { PAPI_PRESET(PAPI_L1_ICM) },
   { PAPI_PRESET(PAPI_L2_DCM) },
