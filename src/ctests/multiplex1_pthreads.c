@@ -85,7 +85,7 @@ void init_papi_pthreads(void)
 
 int do_pthreads(void *(*fn)(void *))
 {
-  int i, rc;
+  int i, rc, retval;
   pthread_attr_t attr;
   pthread_t id[NUM_THREADS];
 
@@ -94,7 +94,9 @@ int do_pthreads(void *(*fn)(void *))
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
 #endif
 #ifdef PTHREAD_SCOPE_SYSTEM
-  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  retval = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  if (retval != 0)
+    test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);    
 #endif
 
   for (i=0;i<NUM_THREADS;i++)

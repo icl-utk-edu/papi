@@ -2,10 +2,10 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads
-MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx branches-mpx
+MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc3-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = dmem_info all_events derived high-level2 describe mem_info zero \
+SERIAL  = branches dmem_info all_events derived high-level2 describe mem_info zero \
 	zero_flip low-level high-level sprofile eventname case1 case2 \
 	calibrate flops avail first second cost johnmay2 clockres nineth \
 	overflow_single_event overflow profile tenth native memory \
@@ -39,7 +39,7 @@ sdsc2: sdsc2.c $(PAPILIB) $(UTILOBJS)
 sdsc2-mpx: sdsc2.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-branches-mpx: branches.c $(PAPILIB) $(UTILOBJS)
+branches: branches.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) branches.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
 sdsc2-mpx-noreset: sdsc2.c $(PAPILIB) $(UTILOBJS)

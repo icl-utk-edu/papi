@@ -7,9 +7,6 @@
 *          <your email address>
 */  
 
-#define NUM 500
-#define THR 10000
-
 /* This file performs the following test: profiling and program info option call
 
    - This tests the SVR4 profiling interface of PAPI. These are counted 
@@ -133,7 +130,7 @@ int main(int argc, char **argv)
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  do_both(NUM);
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[0])) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
@@ -159,13 +156,13 @@ int main(int argc, char **argv)
     printf("Test type   : \tPAPI_PROFIL_POSIX\n");
    }
 	if ((retval=PAPI_profil_hw(profbuf, length, start, 65536, 
-		 EventSet, PAPI_event, THR, PAPI_PROFIL_POSIX)) != PAPI_OK){
+		 EventSet, PAPI_event, THRESHOLD, PAPI_PROFIL_POSIX)) != PAPI_OK){
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 	}
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  do_both(NUM);
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[1])) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
@@ -182,14 +179,14 @@ int main(int argc, char **argv)
       printf("Test type   : \tPAPI_PROFIL_RANDOM\n");
 
   if ((retval=PAPI_profil_hw(profbuf2, length, start, 65536, 
-		     EventSet, PAPI_event, THR, 
+		     EventSet, PAPI_event, THRESHOLD, 
 		     PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  do_both(NUM);
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[2])) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
@@ -205,14 +202,14 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET )
      printf("Test type   : \tPAPI_PROFIL_WEIGHTED\n");
   if ((retval=PAPI_profil_hw(profbuf3, length, start, 65536, 
-        EventSet, PAPI_event, THR, PAPI_PROFIL_POSIX|PAPI_PROFIL_WEIGHTED))
+        EventSet, PAPI_event, THRESHOLD, PAPI_PROFIL_POSIX|PAPI_PROFIL_WEIGHTED))
 	 != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  do_both(NUM);
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[3])) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
@@ -228,13 +225,13 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET )
       printf("Test type   : \tPAPI_PROFIL_COMPRESS\n");
   if ((retval=PAPI_profil_hw(profbuf4, length, start, 65536, 
-	EventSet, PAPI_event,THR,PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
+	EventSet, PAPI_event,THRESHOLD,PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  do_both(NUM);
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[4])) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
@@ -250,7 +247,7 @@ int main(int argc, char **argv)
   if ( !TESTS_QUIET )
      printf("Test type   : \tPAPI_PROFIL_<all>\n");
   if ((retval=PAPI_profil_hw(profbuf5, length, start, 65536, 
-		     EventSet, PAPI_event, THR, 
+		     EventSet, PAPI_event, THRESHOLD, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 
 		     PAPI_PROFIL_RANDOM |
@@ -259,7 +256,7 @@ int main(int argc, char **argv)
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
-  do_both(NUM);
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[5])) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);

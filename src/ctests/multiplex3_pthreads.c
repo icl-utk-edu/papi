@@ -17,28 +17,13 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-#define FLOPS 4000000
-#define READS 4000
-#define NUM 10
-#define NUM_THREADS 1
-#define SUCCESS 1
-#define FAILURE 0
-
-extern void do_flops(int);
-extern void do_reads(int);
-
-extern int TESTS_QUIET; /* Declared in test_utils.c */
-
 /* A thread function that does nothing forever, while the other
  * tests are running.
  */
 void * thread_fn( void * dummy )
 {
 	while(1)
-	  {
-	    do_flops(FLOPS);
-	    do_reads(READS);
-	  }
+	  do_both(NUM_ITERS);
 }
 
 void init_papi(void)
@@ -149,11 +134,7 @@ int case1_last_half(void)
 {
   int i, retval;
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(FLOPS);
-      do_reads(READS);
-    }
+  do_both(NUM_ITERS);
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
@@ -188,7 +169,7 @@ int case1_last_half(void)
 int main(int argc, char **argv)
 {
 
-  int i, rc;
+  int i, rc, retval;
   pthread_t id[NUM_THREADS];
   pthread_attr_t attr;
 
@@ -204,8 +185,11 @@ int main(int argc, char **argv)
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
 #endif
 #ifdef PTHREAD_SCOPE_SYSTEM
-  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  retval = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  if (retval != 0)
+    test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);    
 #endif
+
   for (i=0;i<NUM_THREADS;i++) {
     rc = pthread_create(&id[i], &attr, thread_fn, NULL);
     if (rc)
@@ -213,7 +197,7 @@ int main(int argc, char **argv)
   }
 
   if ( !TESTS_QUIET ) {
-    printf("%s: Using %d iterations\n\n",argv[0],NUM);
+    printf("%s: Using %d iterations\n\n",argv[0],NUM_ITERS);
 
     printf("case1: Does multiplexing work with extraneous threads present?\n");
   }

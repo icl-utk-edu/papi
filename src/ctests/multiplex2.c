@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include "papi_test.h"
 
-#define NUM 100
 #define SUCCESS 1
 
 extern void do_flops(int);
@@ -101,13 +100,7 @@ int case1(void)
   if (PAPI_start(EventSet) != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(1000000);
-#ifndef _CRAYT3E
-      do_reads(1000);
-#endif
-    }
+  do_both(NUM_ITERS);
 
   retval = PAPI_stop(EventSet, values);
   if (retval != PAPI_OK)
@@ -133,7 +126,7 @@ int main(int argc, char **argv)
   }
 
   if ( !TESTS_QUIET ) {
-    printf("%s: Using %d iterations\n\n",argv[0],NUM);
+    printf("%s: Using %d iterations\n\n",argv[0],NUM_ITERS);
 
     printf("case1: Does PAPI_multiplex_init() handle lots of events?\n");
   }

@@ -15,17 +15,16 @@
 
 #define REPEATS 5
 #define MAXEVENTS 9
-#define RELTOLERANCE 0.08
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[128];
+  char des[PAPI_MAX_STR_LEN];
   int i, j, retval;
-  int iters=10000000;
-  double x,y,dtmp;
+  int iters=NUM_FLOPS;
+  double x = 1.1,y,dtmp;
   long_long t1,t2;  
   long_long values[MAXEVENTS];
   int sleep_time = SLEEPTIME; 
@@ -171,7 +170,7 @@ int main(int argc, char **argv) {
     if ( !TESTS_QUIET )
       printf("%9.2g  ",spread[j]);
     /* Make sure that NaN get counted as errors */
-    if(spread[j]<RELTOLERANCE) 
+    if(spread[j]<MPX_TOLERANCE) 
       i--;
     else if(valsum[j]<MINCOUNTS) /* Neglect inprecise results with low counts */
       i--;

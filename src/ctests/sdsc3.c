@@ -16,16 +16,15 @@
 #define REPEATS 5
 #define MAXEVENTS 9
 #define MINCOUNTS 100000
-#define RELTOLERANCE 0.08
 #define SLEEPTIME 100
 
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[128];
+  char des[PAPI_MAX_STR_LEN];
   int i, j, retval;
-  int iters=10000000;
-  double x,y,dtmp;
+  int iters=NUM_FLOPS;
+  double x=1.1,y,dtmp;
   long_long t1,t2;  
   long_long values[2*MAXEVENTS],refvals[MAXEVENTS];
 #ifdef STARTSTOP
@@ -226,7 +225,7 @@ int main(int argc, char **argv) {
     if ( !TESTS_QUIET )
       printf("%9.2g  ",spread[j]);
     /* Make sure that NaN get counted as errors */
-    if(spread[j]<RELTOLERANCE) i--;
+    if(spread[j]<MPX_TOLERANCE) i--;
   }
   if ( !TESTS_QUIET )
     printf("Event set 1\n");
@@ -241,7 +240,7 @@ int main(int argc, char **argv) {
     if ( !TESTS_QUIET )
       printf("%9.2g  ",spread2[j]);
     /* Make sure that NaN get counted as errors */
-    if(spread2[j]<RELTOLERANCE) i--;
+    if(spread2[j]<MPX_TOLERANCE) i--;
   }
   if ( !TESTS_QUIET )
     printf("Event set 2\n\n");
@@ -287,7 +286,7 @@ int main(int argc, char **argv) {
     if(refvals[j])
       dtmp/=refvals[j];
     /* Make sure that NaN get counted as errors */
-    if(dtmp<RELTOLERANCE)
+    if(dtmp<MPX_TOLERANCE)
       i--;
     else if(refvals[j]<MINCOUNTS) /* Neglect inprecise results with low counts */
       i--;
@@ -301,7 +300,7 @@ int main(int argc, char **argv) {
     if(refvals[nevents-j-1])
       dtmp/=refvals[nevents-j-1];
     /* Make sure that NaN get counted as errors */
-    if(dtmp<RELTOLERANCE)
+    if(dtmp<MPX_TOLERANCE)
       i--;
     else if(val2[j]<MINCOUNTS) /* Neglect inprecise results with low counts */
       i--;

@@ -7,10 +7,9 @@
 *          <your email address>
 */  
 
-#define NUM 1000
-#define THR 100000
+/* These architectures use Function Descriptors as Function Pointers */
 
-#if defined(linux) && defined(__ia64__)
+#if (defined(linux) && defined(__ia64__)) || (defined(_AIX))
 #define DO_READS (unsigned long)(*(void **)do_reads)
 #define DO_FLOPS (unsigned long)(*(void **)do_flops)
 #else
@@ -24,8 +23,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "papi_test.h"
-
-extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
 {
@@ -108,20 +105,14 @@ int main(int argc, char **argv)
 
   values = allocate_test_space(num_tests, num_events);
 
-  if ((retval=PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THR, 
+  if ((retval=PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THRESHOLD, 
 	PAPI_PROFIL_POSIX)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_sprofil",retval);
 
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(100000);
-#ifndef _CRAYT3E
-      do_reads(1000);
-#endif
-    }
+  do_both(NUM_ITERS);
 
   if ((retval=PAPI_stop(EventSet, values[1])) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);

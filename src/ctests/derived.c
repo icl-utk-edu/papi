@@ -2,6 +2,8 @@
 
 #include "papi_test.h"
 
+#define OLD_TEST_DRIVER
+
 #ifdef OLD_TEST_DRIVER
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
 #define CPP_TEST_PASS() { test_pass(__FILE__, NULL, 0); }
@@ -11,8 +13,6 @@
 #define CPP_TEST_PASS() { fprintf(stderr,"$Id$\n%s:\tPASSED\n",__FILE__); exit(0); }
 #define CPP_TEST_SKIP() { fprintf(stderr,"$Id$\n%s:\tSKIPPED\n",__FILE__); exit(0); }
 #endif
-
-#define NUM_ITERS 5000
 
 #define QUIETPRINTF if (!TESTS_QUIET) printf
 const static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { PAPI_L2_DCM, 0 };
@@ -64,9 +64,9 @@ int main(int argc, char **argv)
   retval = PAPI_start(EventSet);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-  QUIETPRINTF("Running %d iterations of do_reads().\n",NUM_ITERS);
+  QUIETPRINTF("Running %d iterations of do_reads().\n",NUM_READS);
   
-  do_reads(NUM_ITERS);
+  do_reads(NUM_READS);
   
   retval = PAPI_stop(EventSet, &values);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

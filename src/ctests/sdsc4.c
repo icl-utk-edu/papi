@@ -16,20 +16,19 @@
 
 #define REPEATS 5
 #define MAXEVENTS 9
-#define RELTOLERANCE 0.08
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[128];
+  char des[PAPI_MAX_STR_LEN],name1[PAPI_MAX_STR_LEN],name2[PAPI_MAX_STR_LEN];
   int i, j, retval, idx, repeats;
-  int iters=10000000;
-  double x,y,dtmp;
+  int iters=NUM_FLOPS;
+  double x = 1.1,y,dtmp;
   long_long t1,t2;  
   long_long values[MAXEVENTS],refvals[MAXEVENTS];
-  int nsamples[MAXEVENTS];
+  int nsamples[MAXEVENTS], truelist[MAXEVENTS], ntrue;
 #ifdef STARTSTOP
   long_long dummies[MAXEVENTS];
 #endif
@@ -44,14 +43,14 @@ int main(int argc, char **argv) {
   int eventmap[MAXEVENTS];
 
   events[0]=PAPI_FP_INS;
-  events[1]=PAPI_TOT_INS;
-  events[2]=PAPI_INT_INS;
-  events[3]=PAPI_TOT_CYC;
-  events[4]=PAPI_STL_CCY;
-  events[5]=PAPI_BR_INS;
-  events[6]=PAPI_SR_INS;
-  events[7]=PAPI_LD_INS;
-  events[8]=PAPI_TOT_IIS;
+  events[1]=PAPI_TOT_CYC;
+  events[2]=PAPI_TOT_INS;
+  events[3]=PAPI_TOT_IIS;
+  events[4]=PAPI_INT_INS;
+  events[5]=PAPI_STL_CCY;
+  events[6]=PAPI_BR_INS;
+  events[7]=PAPI_SR_INS;
+  events[8]=PAPI_LD_INS;
 
   for(i=0;i<MAXEVENTS;i++) {
     values[i]=0.;
@@ -137,36 +136,38 @@ int main(int argc, char **argv) {
     }
   }
 
-  
-  if((retval=PAPI_start(eventset)))
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
-
   x=1.0;
-  
-#ifndef STARTSTOP
-  if((retval=PAPI_reset(eventset)))
-    test_fail(__FILE__,__LINE__,"PAPI_reset",retval);
-#else
-  if((retval=PAPI_stop(eventset,dummies)))
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
-  if((retval=PAPI_start(eventset)))
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
-#endif
 
   if ( !TESTS_QUIET )
     printf("\nReference run:\n");
+
   t1=PAPI_get_real_usec();
+  if((retval=PAPI_start(eventset)))
+    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
   y=dummy3(x,iters);  
   PAPI_read(eventset,refvals);
   t2=PAPI_get_real_usec();
 
+  ntrue=nevents;
+  PAPI_list_events(eventset,truelist,&ntrue);
   if ( !TESTS_QUIET ) {
-    printf("\n(calculated independent of PAPI)\n");
     printf("\tOperations= %.1f Mflop",y*1e-6);  
     printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
-    printf("PAPI measurements:\n");
+    printf("%20s   %16s   %-15s %-15s\n","PAPI measurement:",
+	   "Acquired count","Expected event","PAPI_list_events");
   }
 
+  if ( !TESTS_QUIET ) {
+    for (j=0; j<nevents; j++) {
+      PAPI_label_event(events[j],des);
+      PAPI_event_code_to_name(events[j],name1);
+      PAPI_event_code_to_name(truelist[j],name2);
+      if ( !TESTS_QUIET )
+	printf("%20s = %16lld   %-15s %-15s %s\n", des, refvals[j],
+	       name1, name2, strcmp(name1,name2) ? "*** MISMATCH ***" : "");
+    }
+    printf("\n");
+  }
 
   nev1=nevents;
   repeats=nevents*4;
@@ -224,14 +225,21 @@ int main(int argc, char **argv) {
       printf("\n(calculated independent of PAPI)\n");
       printf("\tOperations= %.1f Mflop",y*1e-6);  
       printf("\t(%g Mflop/s)\n\n",((float)y/(t2-t1)));
-      printf("PAPI measurement:\n");
+      printf("%20s   %16s   %-15s %-15s\n","PAPI measurement:",
+	     "Acquired count","Expected event","PAPI_list_events");
     }
+
+    ntrue=nev1;
+    PAPI_list_events(eventset,truelist,&ntrue);
     for (j=0; j<nev1; j++) {
       idx=eventmap[j];
       /* printf("Mapping: Counter %d -> slot %d.\n",j,idx); */
       PAPI_label_event(events[idx],des);
+      PAPI_event_code_to_name(events[idx],name1);
+      PAPI_event_code_to_name(truelist[j],name2);
       if ( !TESTS_QUIET )
-	printf("%20s = %lld\n", des, values[j]);
+	printf("%20s = %16lld   %-15s %-15s %s\n", des, values[j],
+	       name1, name2, strcmp(name1,name2) ? "*** MISMATCH ***" : "");
       dtmp = (double) values[j];
       valsum[idx] += dtmp;
       valsqsum[idx] += dtmp * dtmp;
@@ -260,7 +268,7 @@ int main(int argc, char **argv) {
     if ( !TESTS_QUIET )
       printf("%9.2g  ",spread[j]);
     /* Make sure that NaN get counted as errors */
-    if(spread[j]<RELTOLERANCE) 
+    if(spread[j]<MPX_TOLERANCE) 
       i--;
     else if(values[j]<MINCOUNTS) /* Neglect inprecise results with low counts */
       i--;
