@@ -11,6 +11,17 @@ For threaded programs, you had better:
 
 setenv AIXTHREAD_SCOPE S
 
+Installation notes:
+
+The current source is for pmtoolkit 1.3. If you have pmtoolkit 1.2 the
+test cases will fail. For example:
+
+      ./tests/avail
+      IOT trap
+
+This can be remdied by recompiling the PAPI library with the option
+-DPMTOOLKIT_1_2 set.
+
 Test case notes:
 
 The Power3 has a FMADD instruction. Because of this, in some situations 
