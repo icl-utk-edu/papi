@@ -156,7 +156,7 @@ int _papi_hwd_add_event(void *machdep, int event)
         if(this_state->number >= 4) return(PAPI_ECNFLCT);
         this_state->counter_code1 = preset_map[preset].counter_code1;
         this_state->number += 4;
-        return 0;
+        return (PAPI_OK);
       case 2 :
         if((this_state->number == 2) ||
            (this_state->number == 3) ||
@@ -164,32 +164,32 @@ int _papi_hwd_add_event(void *machdep, int event)
            (this_state->number == 7)) return(PAPI_ECNFLCT);
         this_state->counter_code2 = preset_map[preset].counter_code2;
         this_state->number += 2;
-        return 0;
+        return (PAPI_OK);
       case 3 :
         if(this_state->number <= 3) 
         { this_state->counter_code1 = preset_map[preset].counter_code1;
           this_state->number += 4;
-          return 0;
+          return (PAPI_OK);
         }
         if(this_state->number >= 6) return(PAPI_ECNFLCT);
         else
         { this_state->counter_code2 = preset_map[preset].counter_code1;
           this_state->number += 2;
-          return 0;
+          return (PAPI_OK);
         }
       case 4 :
         if(this_state->number > 1) return(PAPI_ECNFLCT);
         this_state->counter_code1 = preset_map[preset].counter_code1;
         this_state->counter_code2 = preset_map[preset].counter_code2;
         this_state->number += 6;
-        return 0;
+        return (PAPI_OK);
       case 5 :
         if((this_state->number == 0) ||
            (this_state->number == 2)) 
         { this_state->counter_code1 = preset_map[preset].counter_code1;
           this_state->sp_code = 1;
           this_state->number += 5;
-          return 0;
+          return (PAPI_OK);
         }
         else return(PAPI_ECNFLCT);
       case 6 :
@@ -198,7 +198,7 @@ int _papi_hwd_add_event(void *machdep, int event)
         { this_state->counter_code2 = preset_map[preset].counter_code2;
           this_state->sp_code = 1;
           this_state->number += 3;
-          return 0;
+          return (PAPI_OK);
         }
         else return(PAPI_ECNFLCT);
       case 7 :
@@ -207,7 +207,7 @@ int _papi_hwd_add_event(void *machdep, int event)
           this_state->counter_code2 = preset_map[preset].counter_code2;
           this_state->sp_code = 1;
           this_state->number += 7;
-          return 0;
+          return (PAPI_OK);
         }
         else return(PAPI_ECNFLCT);
       case 8 :
@@ -216,20 +216,20 @@ int _papi_hwd_add_event(void *machdep, int event)
         { this_state->counter_code1 = preset_map[preset].counter_code1;
           this_state->sp_code = 1;
           this_state->number += 5;
-          return 0;
+          return (PAPI_OK);
         }
         if(this_state->number == 4) 
         { this_state->counter_code2 = preset_map[preset].counter_code2;
           this_state->sp_code = 1;
           this_state->number += 3;
-          return 0;
+          return (PAPI_OK);
         }
         else return(PAPI_ECNFLCT);
       case 9 :
         if(this_state->number % 2) return(PAPI_ECNFLCT);
         this_state->sp_code = 1;
         this_state->number += 1;
-        return 0; 
+        return (PAPI_OK); 
      }
   }
   else
@@ -237,11 +237,11 @@ int _papi_hwd_add_event(void *machdep, int event)
     if(this_state->number >= 4) 
     { this_state->counter_code2 = foo;
       this_state->number += 2;
-      return 0;
+      return (PAPI_OK);
     }
     this_state->counter_code1 = foo;
     this_state->number += 4;
-    return 0;
+    return (PAPI_OK);
   }
 
   return(PAPI_OK);
@@ -264,7 +264,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
         if(this_state->counter_code1 == preset_map[preset].counter_code1)
         { this_state->counter_code1 = -1; 	//because value 0 may be an event 
           this_state->number -= 4;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN); 		//user tried to remove wrong event
 
@@ -272,7 +272,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
         if(this_state->counter_code2 == preset_map[preset].counter_code2) 
         { this_state->counter_code2 = -1; 
           this_state->number -= 2;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN);
 
@@ -280,12 +280,12 @@ int _papi_hwd_rem_event(void *machdep, int event)
         if(this_state->counter_code1 == preset_map[preset].counter_code1);
         { this_state->counter_code1 = -1;
           this_state->number -= 4;
-          return 0;
+          return (PAPI_OK);
         }
         if(this_state->counter_code2 == preset_map[preset].counter_code2)
         { this_state->counter_code2 = -1;
           this_state->number -= 2;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN);
 
@@ -295,7 +295,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
           { this_state->counter_code1 = -1;
             this_state->counter_code2 = -1;
             this_state->number -= 6;
-            return 0;
+            return (PAPI_OK);
           }
           return(PAPI_ENOTRUN);
         }
@@ -306,7 +306,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
         { this_state->counter_code1 = -1;
           this_state->sp_code = -1;
           this_state->number -= 5;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN);
 
@@ -315,7 +315,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
         { this_state->counter_code2 = -1;
           this_state->sp_code = -1;
           this_state->number -= 3;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN);
 
@@ -326,7 +326,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
             this_state->counter_code2 = -1;
             this_state->sp_code = -1;
             this_state->number -= 7;
-            return 0;
+            return (PAPI_OK);
           }
           return(PAPI_ENOTRUN);
         }
@@ -337,13 +337,13 @@ int _papi_hwd_rem_event(void *machdep, int event)
         { this_state->counter_code1 = -1;
           this_state->sp_code = -1;
           this_state->number -= 5;
-          return 0;
+          return (PAPI_OK);
         }
         if(this_state->counter_code2 == preset_map[preset].counter_code2)
         { this_state->counter_code2 = -1;
           this_state->sp_code = -1;
           this_state->number -= 3;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN);
 
@@ -351,7 +351,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
         if(this_state->number % 2) 
         { this_state->number -= 1;
           this_state->sp_code = -1;
-          return 0;
+          return (PAPI_OK);
         }
         return(PAPI_ENOTRUN); 
     }
@@ -359,12 +359,12 @@ int _papi_hwd_rem_event(void *machdep, int event)
   if(this_state->counter_code1 == foo)
   { this_state->counter_code1 = -1;
     this_state->number -= 4;
-    return 0;
+    return (PAPI_OK);
   }
   if(this_state->counter_code2 == foo)
   { this_state->counter_code2 = -1;
     this_state->number -= 2;
-    return 0;
+    return (PAPI_OK);
   }
   return(PAPI_ENOTRUN);
 }
@@ -432,13 +432,14 @@ int _papi_hwd_read(void *machdep, long long events[], int *machnum)
 
   (int)machnum = this_state->number;
 
+
   retval = perf(PERF_READ, 0, (int)&events[0]);
   if(retval) return(PAPI_EBUG);
   retval = perf(PERF_READ, 1, (int)&events[1]);
   if(retval) return(PAPI_EBUG);
   retval = perf(PERF_READ, 2, (int)&events[2]);
   if(retval) return(PAPI_EBUG);
-  return 0;
+  return (PAPI_OK);
 }
 
 int _papi_hwd_write(void *machdep, long long events[])
@@ -451,31 +452,31 @@ int _papi_hwd_write(void *machdep, long long events[])
       if(retval) return(PAPI_EBUG);
       retval = perf(PERF_WRITE, 1, events[1]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 4 :
       retval = perf(PERF_WRITE, 0, events[0]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 2 :
       retval = perf(PERF_WRITE, 1, events[1]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 5 :
       retval = perf(PERF_WRITE, 0, events[0]);
       if(retval) return(PAPI_EBUG);
       retval = perf(PERF_WRITE, 2, events[2]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 3 :
       retval = perf(PERF_WRITE, 1, events[1]);
       if(retval) return(PAPI_EBUG);
       retval = perf(PERF_WRITE, 2, events[2]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 7 :
       retval = perf(PERF_WRITE, 0, events[0]);
@@ -484,12 +485,12 @@ int _papi_hwd_write(void *machdep, long long events[])
       if(retval) return(PAPI_EBUG);
       retval = perf(PERF_WRITE, 2, events[2]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 1 :
       retval = perf(PERF_WRITE, 2, events[2]);
       if(retval) return(PAPI_EBUG);
-      break;
+      return (PAPI_OK);
 
     case 0 :
       return(PAPI_ENOTRUN);
@@ -516,8 +517,6 @@ int _papi_hwd_write(void *machdep, long long events[])
      user defined values for overflow and multiplexing.
   */
 
-
-// changed args to code, value ,... to match proto in internal.h
 
 int _papi_hwd_setopt(int code, int value, PAPI_option_t *option)
 {
