@@ -32,28 +32,21 @@ or similar routines.
 -- Address of an integer location to store the new EventSet handle
 
 .SH RETURN VALUES
-.nf
-On success, this function returns PAPI_OK.
-On error, a non-zero error code is returned.
-.fi
+ On success, this function returns
+.B "PAPI_OK."
+ On error, a non-zero error code is returned.
+
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
 The argument
 .I handle
 has not been initialized to 
-.I PAPI_NULL.
+.I PAPI_NULL
+or the argument is a NULL pointer.
 .TP
 .B "PAPI_ENOMEM"
 Insufficient memory to complete the operation.
-.TP
-.B "PAPI_ESYS"
-A system or C library call failed inside PAPI, see the 
-.I "errno"
-variable.
-.TP
-.B "PAPI_ESBSTR"
-Hardware counters for this thread could not be initialized.
 
 .SH EXAMPLES
 .LP
@@ -75,5 +68,5 @@ Hardware counters for this thread could not be initialized.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), " PAPI_remove_event "(3), "  
-.BR PAPI_remove_events "(3), " PAPI_add_event "(3), " PAPI_add_events "(3)" 
+.BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), "  
+.BR PAPI_add_event "(3) " 
