@@ -49,14 +49,14 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
+  if (retval = PAPI_query_event(PAPI_FP_INS) != PAPI_OK)
+	test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
+
   retval = PAPI_event_code_to_name(PAPI_FP_INS, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
 
-#ifdef NO_FLOPS
-  test_pass(__FILE__,0,0);
-#endif
   memset(&options,0x0,sizeof(options));
 
   EventSet1 = add_test_events(&num_events1,&mask1);

@@ -42,11 +42,9 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
 {
-#ifndef NO_FLOPS
-  int i, num_events, num_tests = 6, mask = MASK_FP_INS|MASK_TOT_CYC;
-#else
-  int i, num_events, num_tests = 6, mask = MASK_TOT_INS|MASK_TOT_CYC;
-#endif
+  int i, num_events, num_tests = 6;
+  int PAPI_event, mask;
+  char event_name[PAPI_MAX_STR_LEN];
   int EventSet = PAPI_NULL;
   unsigned short *profbuf;
   unsigned short *profbuf2;
@@ -68,7 +66,19 @@ int main(int argc, char **argv)
     if ((retval=PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval );
 
-  if ((prginfo = PAPI_get_executable_info()) == NULL){
+   /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+	  PAPI_event = PAPI_FP_INS;
+	  mask1 = MASK_FP_INS | MASK_TOT_CYC;
+  }
+  else {
+	  PAPI_event = PAPI_TOT_INS;
+	  mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+  }
+  if (retval = PAPI_event_code_to_name(PAPI_event, event_name) != PAPI_OK)
+	  test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+
+ if ((prginfo = PAPI_get_executable_info()) == NULL){
 	retval=1;
 	test_fail(__FILE__,__LINE__,"PAPI_get_executable_info",retval);
   }
@@ -141,27 +151,17 @@ int main(int argc, char **argv)
     printf("-----------------------------------------\n");
 
     printf("Test type   : \tNo profiling\n");
-#ifdef NO_FLOPS
-    printf("PAPI_TOT_INS : \t%lld\n",
-#else
-    printf("PAPI_FP_INS : \t%lld\n",
-#endif
+    printf("%s : \t%lld\n", event_name,
 	 (values[0])[0]);
     printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[0])[1]);
 
     printf("Test type   : \tPAPI_PROFIL_POSIX\n");
    }
-#ifdef NO_FLOPS
-    if ((retval=PAPI_profil(profbuf, length, start, 65536, 
-	     EventSet, PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX)) != PAPI_OK){
+	if ((retval=PAPI_profil(profbuf, length, start, 65536, 
+		 EventSet, PAPI_event, THR, PAPI_PROFIL_POSIX)) != PAPI_OK){
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
-    }
-#else
-    if ((retval=PAPI_profil(profbuf, length, start, 65536, 
-	     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX)) != PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
-#endif
+	}
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
@@ -171,32 +171,20 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ){
-#ifdef NO_FLOPS
-    printf("PAPI_TOT_INS : \t%lld\n",
-#else
-    printf("PAPI_FP_INS : \t%lld\n",
-#endif
+    printf("%s : \t%lld\n", event_name,
 	 (values[1])[0]);
     printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[1])[1]);
   }
   if ((retval=PAPI_profil(profbuf, length, start, 65536, 
-#ifdef NO_FLOPS
-	     EventSet, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
-#else
-	     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
-#endif
+	     EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
   if ( !TESTS_QUIET )
       printf("Test type   : \tPAPI_PROFIL_RANDOM\n");
 
   if ((retval=PAPI_profil(profbuf2, length, start, 65536, 
-#ifdef NO_FLOPS
-		     EventSet, PAPI_TOT_INS, THR, 
-#else
-		     EventSet, PAPI_FP_INS, THR, 
-#endif
+		     EventSet, PAPI_event, THR, 
 		     PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM)) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
@@ -208,32 +196,20 @@ int main(int argc, char **argv)
   if ((retval=PAPI_stop(EventSet, values[2])) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
   if ( !TESTS_QUIET ) {
-#ifdef NO_FLOPS
-    printf("PAPI_TOT_INS : \t%lld\n",
-#else
-    printf("PAPI_FP_INS : \t%lld\n",
-#endif
+    printf("%s : \t%lld\n", event_name,
 	 (values[2])[0]);
     printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[2])[1]);
   }
   if ((retval=PAPI_profil(profbuf2, length, start, 65536, 
-#ifdef NO_FLOPS
-	  EventSet, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM))
-#else
-	  EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM))
-#endif
+	  EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM))
 	 != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
  
   if ( !TESTS_QUIET )
      printf("Test type   : \tPAPI_PROFIL_WEIGHTED\n");
   if ((retval=PAPI_profil(profbuf3, length, start, 65536, 
-#ifdef NO_FLOPS
-        EventSet, PAPI_TOT_INS, THR, PAPI_PROFIL_POSIX|PAPI_PROFIL_WEIGHTED))
-#else
-        EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED))
-#endif
+        EventSet, PAPI_event, THR, PAPI_PROFIL_POSIX|PAPI_PROFIL_WEIGHTED))
 	 != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
@@ -246,31 +222,19 @@ int main(int argc, char **argv)
         test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) {
-#ifdef NO_FLOPS
-    printf("PAPI_TOT_INS : \t%lld\n",
-#else
-    printf("PAPI_FP_INS : \t%lld\n",
-#endif
+    printf("%s : \t%lld\n", event_name,
 	 (values[3])[0]);
     printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[3])[1]);
   }
   if ((retval=PAPI_profil(profbuf3, length, start, 65536, 
-#ifdef NO_FLOPS
-	EventSet, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED))
-#else
-	EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED))
-#endif
+	EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
   if ( !TESTS_QUIET )
       printf("Test type   : \tPAPI_PROFIL_COMPRESS\n");
   if ((retval=PAPI_profil(profbuf4, length, start, 65536, 
-#ifdef NO_FLOPS
-	EventSet, PAPI_TOT_INS,THR,PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
-#else
-	EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
-#endif
+	EventSet, PAPI_event,THR,PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
   if ((retval=PAPI_start(EventSet)) != PAPI_OK)
@@ -282,31 +246,19 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ){
-#ifdef NO_FLOPS
-    printf("PAPI_TOT_INS : \t%lld\n",
-#else
-    printf("PAPI_FP_INS : \t%lld\n",
-#endif
+    printf("%s : \t%lld\n", event_name,
 	 (values[4])[0]);
     printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[4])[1]);
   }
   if ((retval=PAPI_profil(profbuf4, length, start, 65536, 
-#ifdef NO_FLOPS
-	EventSet, PAPI_TOT_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
-#else
-	EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
-#endif
+	EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS))
 	 != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
   if ( !TESTS_QUIET )
      printf("Test type   : \tPAPI_PROFIL_<all>\n");
   if ((retval=PAPI_profil(profbuf5, length, start, 65536, 
-#ifdef NO_FLOPS
-		     EventSet, PAPI_TOT_INS, THR, 
-#else
-		     EventSet, PAPI_FP_INS, THR, 
-#endif
+		     EventSet, PAPI_event, THR, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 
 		     PAPI_PROFIL_RANDOM |
@@ -321,21 +273,13 @@ int main(int argc, char **argv)
 	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   if ( !TESTS_QUIET ) {
-#ifdef NO_FLOPS
-    printf("PAPI_TOT_INS : \t%lld\n",
-#else
-    printf("PAPI_FP_INS : \t%lld\n",
-#endif
+    printf("PAPI_event : \t%lld\n",
 	 (values[5])[0]);
     printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[5])[1]);
   }
   if ((retval=PAPI_profil(profbuf5, length, start, 65536, 
-#ifdef NO_FLOPS
-		     EventSet, PAPI_TOT_INS, 0, 
-#else
-		     EventSet, PAPI_FP_INS, 0, 
-#endif
+		     EventSet, PAPI_event, 0, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 
 		     PAPI_PROFIL_RANDOM |

@@ -32,21 +32,13 @@ Master pthread:
 
 #include "papi_test.h"
 
-#ifdef NO_FLOPS
-  #define PAPI_EVENT 		PAPI_TOT_INS
-  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
-#else
-  #define PAPI_EVENT 		PAPI_FP_INS
-  #define MASK				MASK_FP_INS | MASK_TOT_CYC
-#endif
-
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void *Thread(void *arg)
 {
   int retval, num_tests = 1;
   int EventSet1;
-  int mask1 = MASK;
+  int PAPI_events, mask1;
   int num_events1;
   long_long **values;
   long_long elapsed_us, elapsed_cyc;
@@ -57,7 +49,17 @@ void *Thread(void *arg)
   else
      num_events1 = (int) pthread_self();     	
 
-  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
+	  PAPI_event = PAPI_FP_INS;
+	  mask1 = MASK_FP_INS | MASK_TOT_CYC;
+  }
+  else {
+	  PAPI_event = PAPI_TOT_INS;
+	  mask1 = MASK_TOT_INS | MASK_TOT_CYC;
+  }
+
+  retval = PAPI_event_code_to_name(PAPI_event, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
   EventSet1 = add_test_events(&num_events1,&mask1);

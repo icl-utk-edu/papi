@@ -28,22 +28,6 @@
 
 #define NUM_FLOPS 10000000
 #define THRESHOLD  5000000
-#define EVENT_NAME_1 PAPI_TOT_CYC
-#define EVENT_STRING_1 "PAPI_TOT_CYC"
-
-#if defined(__ALPHA) && defined(__osf__)
-  #ifndef NO_FLOPS
-    #define NO_FLOPS
-  #endif
-#endif
-
-#ifdef NO_FLOPS
-  #define EVENT_NAME_2 PAPI_TOT_INS
-  #define EVENT_STRING_2 "PAPI_TOT_INS"
-#else
-  #define EVENT_NAME_2 PAPI_FP_INS
-  #define EVENT_STRING_2 "PAPI_FP_INS"
-#endif
 
 #ifdef _CRAYT3E
 	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
@@ -75,6 +59,8 @@ int main(int argc, char **argv)
   long_long (values[2])[2];
   long_long min, max;
   int num_flops, retval;
+  int PAPI_event;
+  char event_name[PAPI_MAX_STR_LEN];
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
@@ -86,14 +72,17 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
+  /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) PAPI_event = PAPI_FP_INS;
+  else PAPI_event = PAPI_TOT_INS;
 
   retval = PAPI_create_eventset(&EventSet);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-  retval = PAPI_add_event(&EventSet, EVENT_NAME_1);
+  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-  retval = PAPI_add_event(&EventSet, EVENT_NAME_2);
+  retval = PAPI_add_event(&EventSet, PAPI_event);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
   retval = PAPI_start(EventSet);
@@ -104,7 +93,7 @@ int main(int argc, char **argv)
   retval = PAPI_stop(EventSet, values[0]);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  retval = PAPI_overflow(EventSet, EVENT_NAME_2, THRESHOLD, 0, handler);
+  retval = PAPI_overflow(EventSet, PAPI_event, THRESHOLD, 0, handler);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
   retval = PAPI_start(EventSet);
@@ -121,6 +110,9 @@ int main(int argc, char **argv)
 #endif
 
   if ( !TESTS_QUIET ) {
+	if (retval=PAPI_event_code_to_name(PAPI_event, event_name) != PAPI_OK)
+		test_fail(__FILE__,__LINE__,"PAPI_event_code_to_name",retval);
+
 	printf("Test case: Overflow dispatch of 2nd event in set with 2 events.\n");
 	printf("---------------------------------------------------------------\n");
 	printf("Threshold for overflow is: %d\n",THRESHOLD);
@@ -130,25 +122,24 @@ int main(int argc, char **argv)
 	printf("Test type    : %16d%16d\n",1,2);
 	printf(OUT_FMT, "PAPI_TOT_CYC",
 	 (values[0])[0],(values[1])[0]);
-	printf(OUT_FMT, EVENT_STRING_2,
+	printf(OUT_FMT, event_name,
 	 (values[0])[1],(values[1])[1]);
 	printf("Overflows    : %16d\n",total);
 	printf("-----------------------------------------------\n");
 
 	printf("Verification:\n");
-#ifndef NO_FLOPS
-	printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
-#endif
+	if (PAPI_event == PAPI_FP_INS)
+		printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
 	printf("Column 1 approximately equals column 2\n");
 	printf(TAB1, "Row 3 approximately equals",(values[0])[1]/THRESHOLD);
   }
 
-#ifndef NO_FLOPS
-  min = (long_long)(num_flops*.9);
-  max = (long_long)(num_flops*1.1);
-  if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
-	test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
-#endif
+  if (PAPI_event == PAPI_FP_INS) {
+	  min = (long_long)(num_flops*.9);
+	  max = (long_long)(num_flops*1.1);
+	  if ( values[0][1] > max || values[0][1] < min || values[1][1] < min || values[1][1]>max)
+		test_fail(__FILE__, __LINE__, event_name, 1);
+  }
 #ifndef _CRAYT3E
   min = (long_long)(values[0][0]*.9);
   max = (long_long)(values[0][0]*1.1);
@@ -159,7 +150,7 @@ int main(int argc, char **argv)
   min = (long_long)(values[0][1]*.9);
   max = (long_long)(values[0][1]*1.1);
   if ( values[1][1] > max || values[1][1] < min )
-  	test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
+  	test_fail(__FILE__, __LINE__, event_name, 1);
 
   min = (long_long)((values[0][1]*.85)/THRESHOLD);
   max = (long_long)((values[0][1]*1.15)/THRESHOLD);

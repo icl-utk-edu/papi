@@ -41,10 +41,10 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
+  /* gotta count flops to run this test */
+  if (retval = PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
+	test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
-#ifdef NO_FLOPS
-  test_pass(__FILE__,NULL,0 );
-#endif
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
 

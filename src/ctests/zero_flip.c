@@ -15,18 +15,13 @@
 
 #include "papi_test.h"
 
-#ifdef NO_FLOPS
-  #define PAPI_EVENT 		PAPI_TOT_CYC
-#else
-  #define PAPI_EVENT 		PAPI_FP_INS
-#endif
-
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
 {
   int retval, num_tests = 2, eventcnt, events[2], i, tmp;
   int EventSet1 = PAPI_NULL, EventSet2 = PAPI_NULL;
+  int PAPI_event;
   long_long values1[2], values2[2];
   long_long elapsed_us, elapsed_cyc;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
@@ -41,7 +36,11 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  /* query and set up the right instruction to monitor */
+  if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) PAPI_event = PAPI_FP_INS;
+  else PAPI_event = PAPI_TOT_INS;
+
+  retval = PAPI_event_code_to_name(PAPI_event, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
@@ -50,7 +49,7 @@ int main(int argc, char **argv)
 
   /* Add the events */ 
 
-  retval = PAPI_add_event(&EventSet1,PAPI_EVENT);
+  retval = PAPI_add_event(&EventSet1,PAPI_event);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
   retval = PAPI_add_event(&EventSet1,PAPI_TOT_INS);
