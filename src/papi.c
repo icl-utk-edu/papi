@@ -1530,28 +1530,20 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
       papi_return(PAPI_EINVAL);
 #endif
 
-   if ( ESI->state & PAPI_MULTIPLEXING ){
-     for ( i=0; i<ESI->multiplex->num_events; i++ ){
-        Events[i] = ESI->multiplex->mev[i]->pi.event_type;
-        *number = ESI->multiplex->num_events;
-     }
-   }
-   else {
-     if (*number < ESI->NumberOfEvents)
-       num = *number;
-     else
-       num = ESI->NumberOfEvents;
+  if (*number < ESI->NumberOfEvents)
+    num = *number;
+  else
+    num = ESI->NumberOfEvents;
 
-     for (i=0,j=0; j < num; i++)
-      if ( ESI->EventInfoArray[i].event_code != PAPI_NULL ){
-         Events[j] = ESI->EventInfoArray[i].event_code;
-         j++;
-      }
-	 
-       *number = ESI->NumberOfEvents;
+  for (i=0,j=0; j < num; i++)
+   if ( ESI->EventInfoArray[i].event_code != PAPI_NULL ){
+      Events[j] = ESI->EventInfoArray[i].event_code;
+      j++;
    }
 
-   papi_return(PAPI_OK);
+  *number = ESI->NumberOfEvents;
+
+  papi_return(PAPI_OK);
 }
 
 long PAPI_get_dmem_info(int option)
