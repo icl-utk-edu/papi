@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 {
   int i, num_events, num_tests = 6;
   int PAPI_event, mask;
+  int mask1;
   char event_name[PAPI_MAX_STR_LEN];
   int EventSet = PAPI_NULL;
   unsigned short *profbuf;
@@ -75,7 +76,7 @@ int main(int argc, char **argv)
 	  PAPI_event = PAPI_TOT_INS;
 	  mask1 = MASK_TOT_INS | MASK_TOT_CYC;
   }
-  if (retval = PAPI_event_code_to_name(PAPI_event, event_name) != PAPI_OK)
+  if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
 	  test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
  if ((prginfo = PAPI_get_executable_info()) == NULL){

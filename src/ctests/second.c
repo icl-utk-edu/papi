@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-  if (retval = PAPI_query_event(PAPI_FP_INS) != PAPI_OK)
+  if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
 	test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
   retval = PAPI_event_code_to_name(PAPI_FP_INS, event_name);
