@@ -73,6 +73,14 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+   retval = PAPI_thread_init((unsigned long (*)(void)) (pthread_self));
+   if (retval != PAPI_OK) {
+      if (retval == PAPI_ESBSTR)
+         test_skip(__FILE__, __LINE__, "PAPI_thread_init", retval);
+      else
+         test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+   }
+
    if (!TESTS_QUIET)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
@@ -90,13 +98,13 @@ int main(int argc, char **argv)
    }
    pthread_join(master, NULL);
    if (!TESTS_QUIET)
-      printf("Master: Expected: %d  Recieved: %d\n", result_m, count);
+      printf("Master: Expected: %d  Received: %d\n", result_m, count);
    if (result_m != count)
       test_fail(__FILE__, __LINE__, "Thread Locks", 1);
    PAPI_unlock(PAPI_USR2_LOCK);
    pthread_join(slave1, NULL);
    if (!TESTS_QUIET)
-      printf("Slave: Expected: %d  Recieved: %d\n", result_s, count);
+      printf("Slave: Expected: %d  Received: %d\n", result_s, count);
    if (result_s != count)
       test_fail(__FILE__, __LINE__, "Thread Locks", 1);
 

@@ -125,13 +125,15 @@ dist:
 	gzip ./papi-$(SUBSTR).tar
 	rm -rf ./papi-$(SUBSTR)
 
-install-all: install-tree install install-man install-tests
+install-all: install install-tests
 
-install: install-tree native_install
-	cp $(LIBRARY) $(SHLIB) $(PREFIX)/lib
-	chmod go+r $(PREFIX)/lib/$(LIBRARY) $(PREFIX)/lib/$(SHLIB)
+install: install-tree install-man install-lib
+
+install-lib: install-tree
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(PREFIX)/include
 	cd $(PREFIX)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h 
+	cp $(LIBRARY) $(SHLIB) $(PREFIX)/lib
+	chmod go+r $(PREFIX)/lib/$(LIBRARY) $(PREFIX)/lib/$(SHLIB)
 
 install-man: install-tree
 	cd ../man; $(MAKE) PREFIX=$(PREFIX) install

@@ -27,10 +27,11 @@ all:
 	@echo "<none>		- Compiles the library and tests";
 	@echo "test		- Runs the simplest test case";
 	@echo "fulltest		- Runs the all the test cases";
-	@echo "install PREFIX=<dir> - Installs PAPI in PREFIX/..."; 
-	@echo "install-man PREFIX=<dir> - Installs man pages in PREFIX/..."; 
-	@echo "install-tests PREFIX=<dir> - Installs tests in PREFIX/..."; 
+	@echo "install PREFIX=<dir> - Installs PAPI (libs,headers,man) in PREFIX/..."; 
 	@echo "install-all PREFIX=<dir> - Installs everything in PREFIX/..."; 
+	@echo "install-tests PREFIX=<dir> - Installs only tests in PREFIX/..."; 
+	@echo "install-lib PREFIX=<dir> - Installs libs & headers in PREFIX/..."; 
+	@echo "install-man PREFIX=<dir> - Installs only man pages in PREFIX/..."; 
 	@echo "clean		- Removes object files and temporary files";
 	@echo "clobber		- Removes libraries, executables and generated header files";
 	@echo "dist		- Prepares a binary tarball in the curent directory";

@@ -28,5 +28,7 @@ PAPI Debugging
 1) To compile with debugging, define CFLAGS to include -DDEBUG in the Makefile.
 
 2) To enable debugging messages at run time, set the PAPI_DEBUG environment
-   variable to non-nil.
-   
+   variable to one or more of the following.
+ 
+  (SUBSTRATE|API|INTERNAL|THREADS|MULTIPLEX|OVERFLOW|PROFILE|ALL)
+

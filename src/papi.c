@@ -426,6 +426,12 @@ int PAPI_add_event(int EventSet, int EventCode)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
+   /* Check argument for validity */
+
+   if (((EventCode & PAPI_PRESET_MASK) == 0) && 
+       (EventCode & PAPI_NATIVE_MASK) == 0)
+     papi_return(PAPI_EINVAL);
+
    /* Of course, it must be stopped in order to modify it. */
 
    if (ESI->state & PAPI_RUNNING)
@@ -446,6 +452,12 @@ int PAPI_remove_event(int EventSet, int EventCode)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
+   /* Check argument for validity */
+
+   if (((EventCode & PAPI_PRESET_MASK) == 0) && 
+       (EventCode & PAPI_NATIVE_MASK) == 0)
+     papi_return(PAPI_EINVAL);
+
    /* Of course, it must be stopped in order to modify it. */
 
    if (!(ESI->state & PAPI_STOPPED))
@@ -461,7 +473,6 @@ int PAPI_remove_event(int EventSet, int EventCode)
    if (ESI->state & PAPI_PROFILING)  
       if (_papi_hwi_system_info.supports_hw_profile)
           papi_return(PAPI_ECNFLCT);
-
 
    /* Now do the magic. */
 

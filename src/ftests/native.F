@@ -90,17 +90,17 @@
       eventname(4) = 'instr_retired_BOGUSNTAG_BOGUSTAG'
       eventname(5) = 'BSQ_cache_reference_RD_2ndL_HITS'
       n = 5
-#elif defined(__athlon__)
-      eventname(1) = 'TOT_CYC'
-      eventname(2) = 'IC_MISSES'
-      eventname(3) = 'DC_ACCESSES'
-      eventname(4) = 'DC_MISSES'
-      n = 4
 #elif defined(__x86_64__)
       eventname(1) = 'FP_ADD_PIPE'
       eventname(2) = 'FP_MULT_PIPE'
       eventname(3) = 'FP_ST_PIPE'
       eventname(4) = 'FP_NONE_RET'
+      n = 4
+#elif defined(__athlon__)
+      eventname(1) = 'TOT_CYC'
+      eventname(2) = 'IC_MISSES'
+      eventname(3) = 'DC_ACCESSES'
+      eventname(4) = 'DC_MISSES'
       n = 4
 #else
       eventname(1) = 'DATA_MEM_REFS'
@@ -145,6 +145,9 @@
 
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+          call ftest_fail(__FILE__, __LINE__, 'PAPIf_event_name_to_code', retval)
+      end if
       call PAPIf_add_event( es, nativees, retval )
         if ( retval .NE. PAPI_OK ) then
           call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
