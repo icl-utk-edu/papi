@@ -6,8 +6,6 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-extern hwi_preset_data_t _papi_hwd_preset_map[];
-
 /* These defines smooth out the differences between versions of pmtoolkit */
 #if defined(PMTOOLKIT_1_2_1)
 #define PMTOOLKIT_1_2
@@ -39,8 +37,6 @@ extern hwi_preset_data_t _papi_hwd_preset_map[];
 #define PNE_PM_MPRED_BR	  PNE_PM_MPRED_BR_CAUSED_GC
 #endif   /*_AIXVERSION_510*/
 #endif                          /*PMTOOLKIT_1_2 */
-
-extern hwi_preset_data_t _papi_hwd_preset_map[];
 
 static hwi_search_t _papi_hwd_604_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */

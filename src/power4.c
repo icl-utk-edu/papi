@@ -6,8 +6,6 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
-extern hwi_preset_data_t _papi_hwd_preset_map[];
-
 extern hwd_groups_t group_map[];
 
 static hwi_search_t _papi_hwd_PWR4_preset_map[] = {
