@@ -321,7 +321,7 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
      the substrate don't know how to get the overflow bit from the
      kernel directly, so we generate the overflow bit in this function 
     since this function can access the ESI->overflow struct;
-   (The substrate can only set genOverflowBit pararemter to ture if the
+   (The substrate can only set genOverflowBit pararemter to true if the
      hardware doesn't support multiple hardware overflow. If the
      substrate support multiple hardware overflow and you don't know how 
      to get the overflow bit, then I don't know how to deal with this 
@@ -331,7 +331,8 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_long overflow_bit, int genOverflowBit)
 {
   int retval, event_counter, i, overflow_flag, pos;
-  int papi_index, profile_index, j;
+  int papi_index, j;
+  int profile_index = 0;
   long_long overflow_vector, temp[MAX_COUNTERS], over;
   u_long_long latest=0 ;
   ThreadInfo_t *thread;
