@@ -6,18 +6,18 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 void clockcore(void)
 {
-  u_long_long *elapsed_usec, *elapsed_cyc,
+  long_long *elapsed_usec, *elapsed_cyc,
     total_usec = 0, uniq_usec = 0, diff_usec = 0, 
     total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
   int i;
 
-  elapsed_usec = (u_long_long *)malloc(ITERS*sizeof(u_long_long));
-  elapsed_cyc = (u_long_long *)malloc(ITERS*sizeof(u_long_long));
+  elapsed_usec = (long_long *)malloc(ITERS*sizeof(u_long_long));
+  elapsed_cyc = (long_long *)malloc(ITERS*sizeof(u_long_long));
   
  /* Real */
 
  for (i=0;i<ITERS;i++)
-    elapsed_cyc[i] = PAPI_get_real_cyc();
+    elapsed_cyc[i] = (long_long)PAPI_get_real_cyc();
 
   for (i=1;i<ITERS;i++)
     {
@@ -44,7 +44,7 @@ void clockcore(void)
   }
 
   for (i=0;i<ITERS;i++)
-    elapsed_usec[i] = PAPI_get_real_usec();
+    elapsed_usec[i] = (long_long)PAPI_get_real_usec();
 
   for (i=1;i<ITERS;i++)
     {
@@ -78,7 +78,7 @@ void clockcore(void)
   if (PAPI_get_virt_cyc() != -1)
     {
       for (i=0;i<ITERS;i++)
-	elapsed_cyc[i] = PAPI_get_virt_cyc();
+	elapsed_cyc[i] = (long_long)PAPI_get_virt_cyc();
 
       for (i=1;i<ITERS;i++)
 	{
@@ -113,7 +113,7 @@ void clockcore(void)
   if (PAPI_get_virt_usec() != -1)
     {
       for (i=0;i<ITERS;i++)
-	elapsed_usec[i] = PAPI_get_virt_usec();
+	elapsed_usec[i] = (long_long)PAPI_get_virt_usec();
 
       for (i=1;i<ITERS;i++)
 	{
