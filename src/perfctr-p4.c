@@ -217,6 +217,7 @@ inline static float calc_mhz(void)
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
 extern int _papi_hwd_mdi_init() {
+   strcpy(_papi_hwi_system_info.substrate, "$Id$");     /* Name of the substrate we're using */
    _papi_hwi_system_info.supports_hw_overflow           = 1;
    _papi_hwi_system_info.supports_64bit_counters        = 1;
    _papi_hwi_system_info.supports_inheritance           = 1;

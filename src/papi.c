@@ -138,9 +138,9 @@ void PAPI_unlock(void)
 /* Machine info struct initialization using defaults */
 /* See _papi_mdi definition in papi_internal.h       */
 int _papi_hwi_mdi_init() {
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");     /* Name of the substrate we're using */
-   _papi_hwi_system_info.version                 = 1.0; /* version */
-   _papi_hwi_system_info.pid                     = 0;   /* Process identifier */
+   _papi_hwi_system_info.substrate[0]           = '\0'; /* Name of the substrate we're using */
+   _papi_hwi_system_info.version                = 1.0; /* version */
+   _papi_hwi_system_info.pid                    = 0;   /* Process identifier */
 
   /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu               = -1;    /* ncpu */
