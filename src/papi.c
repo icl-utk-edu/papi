@@ -1005,48 +1005,60 @@ int PAPI_get_opt(int option, int *value, PAPI_option_t *ptr)
 int PAPI_start(int EventSet)
 { 
   int retval;
-  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+  EventSetInfo *ESI;
 
-  retval = _papi_hwd_start(this_machdep);
-  if(retval) return(PAPI_EBUG);
-  return 0;
+  ESI = lookup_EventSet(EventSet);
+  if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
+
+  retval = _papi_hwd_start(ESI->machdep);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
 }
 
 /*========================================================================*/
 int PAPI_stop(int EventSet, long long *values)
-{ int retval, i;
-  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+{ int retval, i, bound;
+  EventSetInfo *ESI;
 
-  retval = _papi_hwd_stop(this_machdep, values);
-  if(retval) return(PAPI_EBUG);
+  ESI = lookup_EventSet(EventSet);
+  if(ESI==NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  for(i=0; i<(_papi_system_info.num_gp_cntrs +
-              _papi_system_info.num_sp_cntrs); i++)
+  retval = _papi_hwd_stop(ESI->machdep, values);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  bound = num_counters(ESI);
+
+  for(i=0; i<bound; i++)
   { if(values[i] >= 0)
     { printf("\tCounter %d : %lld\n", i, values[i]);
     }
   }
 
-  retval = _papi_hwd_reset(this_machdep);
-  if(retval) return(PAPI_EBUG);
-  return 0;
+  retval = _papi_hwd_reset(ESI->machdep);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
 }
 
 /*========================================================================*/
 int PAPI_read(int EventSet, long long *values)
-{ int retval, i;
-  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+{ int retval, i, bound;
+  EventSetInfo *ESI;
 
-  retval = _papi_hwd_read(this_machdep, values);
-  if(retval) return(PAPI_EBUG);
+  ESI = lookup_EventSet(EventSet);
+  if ( ESI == NULL )
+    return(handle_error(PAPI_EINVAL,NULL));
 
-  for(i=0; i<(_papi_system_info.num_gp_cntrs + 
-              _papi_system_info.num_sp_cntrs); i++)
+  retval = _papi_hwd_read(ESI->machdep, values);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+
+  bound = num_counters(ESI);
+
+  for(i=0; i<bound; i++)
   { if(values[i] >= 0) 
     { printf("\tCounter %d : %lld\n", i, values[i]);
     }
   }
-  return 0;
+  return(retval);
 }
 
 /*========================================================================*/
@@ -1085,11 +1097,15 @@ int PAPI_accum(int EventSet, long long *values)
 /*========================================================================*/
 int PAPI_write(int EventSet, long long *values)
 { int retval;
-  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+  EventSetInfo *ESI; 
 
-  retval = _papi_hwd_write(this_machdep, values);
-  if(retval) return(PAPI_EBUG);
-  return 0;
+  ESI = lookup_EventSet(EventSet);
+  if ( ESI == NULL )
+    return(handle_error(PAPI_EINVAL,NULL));
+
+  retval = _papi_hwd_write(ESI->machdep, values);
+  if(retval<PAPI_OK) return(handle_error(retval, NULL));
+  return(retval);
 }
 
 /*========================================================================*/
@@ -1099,6 +1115,6 @@ int PAPI_reset(int EventSet)
 
   retval = _papi_hwd_reset(this_machdep);
   if(retval) return(PAPI_EBUG);
-  return 0;
+  return(retval);
 }
 
