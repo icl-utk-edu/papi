@@ -1356,7 +1356,10 @@ int PAPI_accum(int EventSet, long_long *values)
 
   if (ESI->state & PAPI_RUNNING)
     {
-      retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);
+      if (ESI->state & PAPI_MULTIPLEXING)
+        retval = MPX_read(ESI->multiplex, ESI->sw_stop);
+      else
+        retval = _papi_hwd_read(ESI, thread_master_eventset, ESI->sw_stop);
       if (retval != PAPI_OK)
         papi_return(retval);
     }
