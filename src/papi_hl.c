@@ -66,6 +66,9 @@ static int hl_max_counters = 0;
 #elif (defined(sparc) && defined(sun))
   #define SLOPE 0
   #define FMA 1
+#else
+  #define SLOPE 0
+  #define FMA 0
 #endif
 
 int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops)

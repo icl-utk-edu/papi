@@ -343,6 +343,13 @@ static EventSetInfo *allocate_master_eventset(void)
 
 int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
 {
+/* Thread support not implemented on Alpha because the Alpha only
+ * supports 1 process monitoring the counters at one time
+ * When this is updated, we can remove this ifdef -KSL
+ */
+#if defined(__ALPHA)
+    papi_return(PAPI_ESBSTR);
+#endif
   if ((id_fn == NULL) || (flag != 0) || (default_master_eventset == NULL))
     papi_return(PAPI_EINVAL);
     
