@@ -87,7 +87,7 @@
          avail_flag=0
          do while ((avail_flag.EQ.0).AND.
      *        (EventCode.LT.PAPI_MAX_PRESET_EVENTS))
-            call papif_query_event_verbose(EventCode+z'80000000', 
+            call papif_query_event_verbose(EventCode+z'8000000', 
      *      event_name, event_descr, event_label, avail_flag, 
      *      event_note, flags, check)
             EventCode = EventCode + 1
@@ -98,7 +98,7 @@
  200        FORMAT(A15, A11)
          end if
 
-         call PAPIf_add_event( EventSet, EventCode+z'80000000'-1,
+         call PAPIf_add_event( EventSet, EventCode+z'8000000'-1,
      * retval )
          if ( retval .NE. PAPI_OK ) then
             call ftest_fail(__FILE__, __LINE__,
