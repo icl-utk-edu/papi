@@ -17,6 +17,7 @@ thread context (PAPI_GRN_THR).
      + PAPI_TOT_CYC
 
 Each thread inside the Thread routine:
+   - Do prework (MAX_FLOPS - flops)
    - Get cyc.
    - Get us.
    - Start counters
@@ -34,6 +35,8 @@ Each thread inside the Thread routine:
 #else
 #error "This compiler does not understand OPENMP"
 #endif
+
+const int MAX_FLOPS = NUM_FLOPS;
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 const PAPI_hw_info_t *hw_info = NULL;
@@ -62,6 +65,8 @@ long_long Thread(int n)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
    values = allocate_test_space(num_tests, num_events1);
+
+   do_flops(MAX_FLOPS - n); /* prework for balance */
 
    elapsed_us = PAPI_get_real_usec();
 
@@ -148,7 +153,7 @@ int main(int argc, char **argv)
    {
       tid = omp_get_thread_num();
       flopi[tid] = rand()*3;
-      flops[tid] = Thread(flopi[tid]/flopper);
+      flops[tid] = Thread((flopi[tid]/flopper)%MAX_FLOPS);
 #pragma omp barrier
 #pragma omp master
       if (flops[tid] < flopi[tid]) {
