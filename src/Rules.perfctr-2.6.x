@@ -1,8 +1,6 @@
-KERNINC	= /usr/src/linux-2.4/include
+KERNINC = /usr/src/linux-2.4/include
 PERFCTR ?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -O3 -g -Wall -mpentiumpro
-TOPTFLAGS= -O -g -Wall -mpentiumpro
 
 #
 # GNU G77 section
@@ -33,16 +31,14 @@ FTOPTFLAGS= $(TOPTFLAGS)
 
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
-SUBSTR	= perfctr-p3
-MSUBSTR	= linux-perfctr-p3
+SUBSTR  = perfctr-p3
+MSUBSTR = linux-perfctr-p3
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr 2.6.x patch for all Pentium IIIs"
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads 
+DESCR   = "Linux with PerfCtr 2.6.x patch for all Pentium IIIs and AMDs"
+LIBS    = static shared
+TARGETS = serial multiplex_and_pthreads
 
-CC	= gcc
-CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-CC_R	= $(CC) -pthread
+CC_R    = $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR26 -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c p3_events.c
@@ -71,6 +67,6 @@ native_clean:
 	$(MAKE) -C $(PERFCTR) clean
 
 native_install:
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib
-	-cp -p $(PERFCTR)/usr.lib/perfctr_event_codes.h $(PREFIX)/include
-	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
+	-cp -p $(PERFCTR)/usr.lib/perfctr_event_codes.h $(DESTDIR)/include
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
