@@ -120,9 +120,12 @@
       end if
 
       test_flops = tvalues(1)*clockrate*1000000.0
-      test_flops = test_flops / tvalues(2)
+      if ( tvalues(2) .NE. 0) then
+          test_flops = test_flops / tvalues(2)
+      else
+          test_flops = 0.0
+      end if
     
-
       if (tests_quiet .EQ. 0) then
       print *, "Test case 9: start, stop for derived event PAPI_FLOPS"
       print *, "---------------------------------------------"
