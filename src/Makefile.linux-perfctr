@@ -98,5 +98,5 @@ native_clean:
 	-$(MAKE) -C $(PERFCTR)/usr.lib -f Makefile.shared clean
 
 native_install:
-	cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
-	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.so $(DESTDIR)/lib
+	-cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(DESTDIR)/include
