@@ -1492,24 +1492,48 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
-       if test "${bitmode}" = "64"; then
-          echo "The bitmode "$with_bitmode" you specified is not supported"
-          exit -1
-       fi
        case "$CPU" in
             alpha)
+                 if test "${bitmode}" = "64"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-"$CPU" ;;
             itanium)
+                 if test "${bitmode}" = "32"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-pfm-"$CPU" ;;
             itanium2)
+                 if test "${bitmode}" = "32"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-pfm-"$CPU" ;;
             athlon)
+                 if test "${bitmode}" = "64"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             opteron)
+                 if test "${bitmode}" = "32"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             p4)
+                 if test "${bitmode}" = "64"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
             p3)
+                 if test "${bitmode}" = "64"; then
+                   echo "The bitmode "$with_bitmode" you specified is not supported"
+                   exit -1
+                 fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
        esac
        ;;
