@@ -6,21 +6,35 @@
   #define ITERS 10000
 #endif
 
-int main()
+int TESTS_QUIET=0; /* Tests in Verbose mode? */
+
+int main(int argc, char **argv)
 {
   long_long elapsed_usec[ITERS], elapsed_cyc[ITERS];
   long_long total_usec = 0, uniq_usec = 0, diff_usec = 0, 
     total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
-  int i;
+  int i,retval;
+  char *tmp,buf[128];
 
-  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-    exit(1);
 
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+  if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
+        tmp = strdup("PAPI_library_init");
+        goto FAILED;
+  }
 
+  if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK){
+        tmp = strdup("PAPI_set_debug");
+        goto FAILED;
+  }
+
+  if ( !TESTS_QUIET ) {
   printf("Test case: Clock latency and resolution.\n");
   printf("-----------------------------------------------\n");
+  }
 
   /* Real */
 
@@ -36,6 +50,7 @@ int main()
 	uniq_cyc++;
       total_cyc += diff_cyc;
     }
+  if ( !TESTS_QUIET ) {
   if(uniq_cyc==ITERS-1)
     printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
 	   (double)total_cyc/(double)(ITERS),
@@ -48,6 +63,7 @@ int main()
     printf("PAPI_get_real_cyc : %7.3f   >%7.3f\n",
 	   (double)total_cyc/(double)(ITERS),
 	   (double)total_cyc);
+  }
 
   for (i=0;i<ITERS;i++)
     elapsed_usec[i] = PAPI_get_real_usec();
@@ -61,6 +77,7 @@ int main()
 	uniq_usec++;
       total_usec += diff_usec;
     }
+  if ( !TESTS_QUIET ) {
   if(uniq_usec==ITERS-1)
     printf("PAPI_get_real_usec: %7.3f   <%7.3f\n",
 	   (double)total_usec/(double)(ITERS),
@@ -73,6 +90,7 @@ int main()
     printf("PAPI_get_real_usec: %7.3f   >%7.3f\n",
 	   (double)total_usec/(double)(ITERS),
 	   (double)total_usec);
+  }
 
   /* Virtual */
 
@@ -92,6 +110,7 @@ int main()
 	    uniq_cyc++;
 	  total_cyc += diff_cyc;
 	}
+      if ( !TESTS_QUIET ) {
       if(uniq_cyc==ITERS-1)
 	printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
 	       (double)total_cyc/(double)(ITERS),
@@ -104,8 +123,9 @@ int main()
 	printf("PAPI_get_virt_cyc : %7.3f   >%7.3f\n",
 	       (double)total_cyc/(double)(ITERS),
 	       (double)total_cyc);
+      }
     }
-  else
+  else if ( !TESTS_QUIET ) 
     printf("PAPI_get_virt_cyc : Not supported\n");
 
   total_usec=0;
@@ -124,6 +144,7 @@ int main()
 	    uniq_usec++;
 	  total_usec += diff_usec;
 	}
+      if ( !TESTS_QUIET ) {
       if(uniq_usec==ITERS-1)
 	printf("PAPI_get_virt_usec: %7.3f   <%7.3f\n",
 	       (double)total_usec/(double)(ITERS),
@@ -136,13 +157,27 @@ int main()
 	printf("PAPI_get_virt_usec: %7.3f   >%7.3f\n",
 	       (double)total_usec/(double)(ITERS),
 	       (double)total_usec);
+      }
     }
-  else
+  else if ( !TESTS_QUIET )
     {
       printf("PAPI_get_virt_usec: Not supported\n");
     }
 
   PAPI_shutdown();
-  
+  printf("clockres:		PASSED\n");
   exit(0);
+FAILED:
+  printf("clockres:                FAILED\n");
+  if ( retval == PAPI_ESYS ) {
+        sprintf(buf, "System error in %s:", tmp );
+        perror(buf);
+  }
+  else {
+        char errstring[PAPI_MAX_STR_LEN];
+        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
+        printf("Error in %s: %s\n", tmp, errstring );
+  }
+  free(tmp);
+  exit(1);
 }

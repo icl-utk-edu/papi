@@ -12,7 +12,9 @@ and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 
 #include "papi_test.h"
 
-int main()
+int TESTS_QUIET=0; /* Tests in Verbose mode? */
+
+int main(int argc, char **argv)
 {
    double c,a = 0.999,b = 1.001;
    int n = 1000;
@@ -20,34 +22,80 @@ int main()
    int retval;
    int j = 0,i;
    long_long g1[3];
+   char *tmp,buf[128];
 
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if (retval != PAPI_VER_CURRENT)
-     exit(1);
-   
-   if (PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
+
+  if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
+        tmp = strdup("PAPI_library_init");
+        goto FAILED;
+  }
+
+   if ( (retval = PAPI_create_eventset(&EventSet) ) != PAPI_OK ) {
+        tmp = strdup("PAPI_create_eventset");
+        goto FAILED;
+   }
+
+   if (PAPI_query_event(PAPI_BR_CN) == PAPI_OK)
      j++;
-   retval = PAPI_add_event(&EventSet, PAPI_L2_TCM);
-   if ( retval != PAPI_OK ) printf("Error adding L2 TCM (OK)\n");
 
+  if(j==1&&(retval = PAPI_add_event(&EventSet, PAPI_BR_CN)) != PAPI_OK) {
+        if ( retval != PAPI_ECNFLCT ){
+          tmp = strdup("PAPI_add_event[PAPI_BR_CN]");
+          goto FAILED;
+	}
+   }
+
+   i = j;
    if (PAPI_query_event(PAPI_TOT_CYC) == PAPI_OK)
      j++;
-   retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
-   if ( retval != PAPI_OK ) printf("Error adding TOT_CYC (OK)\n");
 
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
+   if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC)) != PAPI_OK){
+        if ( retval != PAPI_ECNFLCT ){
+        tmp = strdup("PAPI_add_event[PAPI_TOT_CYC]");
+        goto FAILED;
+	}
+   }
+
+   i = j;
+   if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK)           
      j++;
-   retval = PAPI_add_event(&EventSet, PAPI_FP_INS);
-   if ( retval != PAPI_OK ) printf("Error adding FP_INS (OK)\n");
+
+   if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_TOT_INS)) != PAPI_OK){
+        if ( retval != PAPI_ECNFLCT ){
+           tmp = strdup("PAPI_add_event[PAPI_TOT_INS]");
+           goto FAILED;
+        }
+   }
 
    if (j)
      {
-       PAPI_start(EventSet);
+       if ( (retval = PAPI_start(EventSet) ) != PAPI_OK ) {
+            tmp = strdup("PAPI_start");
+            goto FAILED;
+        }
        for ( i = 0; i < n; i++ )
 	 {
 	   c = a * b;
 	 }
-       PAPI_stop(EventSet, g1);
+       if ( (retval = PAPI_stop(EventSet, g1) ) != PAPI_OK ) {
+            tmp = strdup("PAPI_stop");
+            goto FAILED;
+        }
      }
-   exit(0);
+  printf("case2:                PASSED\n");
+  exit(0);
+FAILED:
+  printf("case2:                FAILED\n");
+  if ( retval == PAPI_ESYS ) {
+        sprintf(buf, "System error in %s:", tmp );
+        perror(buf);
+  }
+  else {
+        char errstring[PAPI_MAX_STR_LEN];
+        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
+        printf("Error in %s: %s\n", tmp, errstring );
+  }
+  free(tmp);
+  exit(1);
+
 }
