@@ -1373,13 +1373,25 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
          if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW))
             papi_return(PAPI_ECNFLCT);
       }
-      ESI->overflow.event_counter++;
-      event_counter = ESI->overflow.event_counter;
-      ESI->overflow.deadline[event_counter - 1] = threshold;
-      ESI->overflow.threshold[event_counter - 1] = threshold;
-      ESI->overflow.EventIndex[event_counter - 1] = index;
-      ESI->overflow.EventCode[event_counter - 1] = EventCode;
-      ESI->overflow.flags = flags;
+      for (i = 0; i < ESI->overflow.event_counter; i++) {
+         if (ESI->overflow.EventCode[i] == EventCode)
+            break;
+      }
+      if (i == ESI->overflow.event_counter){
+         ESI->overflow.event_counter++;
+         event_counter = ESI->overflow.event_counter;
+         ESI->overflow.deadline[event_counter - 1] = threshold;
+         ESI->overflow.threshold[event_counter - 1] = threshold;
+         ESI->overflow.EventIndex[event_counter - 1] = index;
+         ESI->overflow.EventCode[event_counter - 1] = EventCode;
+         ESI->overflow.flags = flags;
+      }
+      else {
+         ESI->overflow.deadline[i] = threshold;
+         ESI->overflow.threshold[i] = threshold;
+         ESI->overflow.EventIndex[i] = index;
+         ESI->overflow.flags = flags;
+      }
    }
    ESI->overflow.handler = handler;
    ESI->overflow.count = 0;
@@ -1439,6 +1451,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
        !(flags&PAPI_PROFIL_FORCE_SW) ) 
       papi_return(PAPI_EINVAL);
 
+   if ( prof == NULL )
+     profcnt = 0;
+
    /* check all profile regions for valid scale factors of:
       2 (131072/65536),
       1 (65536/65536),
@@ -1497,13 +1512,21 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
         if ( !(flags&PAPI_PROFIL_FORCE_SW) && (ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
           papi_return(PAPI_ECNFLCT);
       }
-      i = ESI->profile.event_counter;
+
+      for (i = 0; i < ESI->profile.event_counter; i++) {
+         if (ESI->profile.EventCode[i] == EventCode)
+            break;
+      }
+
+      if (i == ESI->profile.event_counter){
+         i = ESI->profile.event_counter;
+         ESI->profile.event_counter++;
+         ESI->profile.EventCode[i] = EventCode;
+      }
       ESI->profile.prof[i] = prof;
       ESI->profile.count[i] = profcnt;
       ESI->profile.threshold[i] = threshold;
       ESI->profile.EventIndex[i] = index;
-      ESI->profile.EventCode[i] = EventCode;
-      ESI->profile.event_counter++;
    }
 
    /* make sure no invalid flags are set */
@@ -1550,22 +1573,59 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
                 unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
+   EventSetInfo_t *ESI;
+   int i;
+   int retval;
+
+   ESI = _papi_hwi_lookup_EventSet(EventSet);
+   if (ESI == NULL)
+      papi_return(PAPI_ENOEVST);
+
    /* scale factors are checked for validity in PAPI_sprofil */
 
    if (threshold > 0) {
       PAPI_sprofil_t *prof;
 
-      prof = (PAPI_sprofil_t *) malloc(sizeof(PAPI_sprofil_t));
-      memset(prof, 0x0, sizeof(PAPI_sprofil_t));
-      prof->pr_base = buf;
-      prof->pr_size = bufsiz;
-      prof->pr_off = offset;
-      prof->pr_scale = scale;
+      for (i = 0; i < ESI->profile.event_counter; i++) {
+         if (ESI->profile.EventCode[i] == EventCode)
+            break;
+      }
 
-      papi_return(PAPI_sprofil(prof, 1, EventSet, EventCode, threshold, flags));
+      if (i == ESI->profile.event_counter){
+        prof = (PAPI_sprofil_t *) malloc(sizeof(PAPI_sprofil_t));
+        memset(prof, 0x0, sizeof(PAPI_sprofil_t));
+        prof->pr_base = buf;
+        prof->pr_size = bufsiz;
+        prof->pr_off = offset;
+        prof->pr_scale = scale;
+
+        retval = PAPI_sprofil(prof, 1, EventSet, EventCode, threshold, flags);
+        if ( retval != PAPI_OK )
+           free(prof);
+      }
+      else{
+        prof = ESI->profile.prof[i];
+        prof->pr_base = buf;
+        prof->pr_size = bufsiz;
+        prof->pr_off = offset;
+        prof->pr_scale = scale;
+        retval = PAPI_sprofil(prof, 1, EventSet, EventCode, threshold, flags);
+      }
+      papi_return(retval);
    }
-   papi_return(PAPI_sprofil(NULL, 0, EventSet, EventCode, 0, flags));
 
+   for (i = 0; i < ESI->profile.event_counter; i++) {
+      if (ESI->profile.EventCode[i] == EventCode)
+         break;
+   }
+   /* EventCode not found */
+   if (i == ESI->profile.event_counter)
+      papi_return(PAPI_EINVAL);
+
+   free(ESI->profile.prof[i]);
+   ESI->profile.prof[i] = NULL;
+
+   papi_return(PAPI_sprofil(NULL, 0, EventSet, EventCode, 0, flags));
 }
 
 int PAPI_set_granularity(int granularity)
