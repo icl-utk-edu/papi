@@ -1,0 +1,121 @@
+.\" $Id$
+.TH PAPI_remove_event 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
+
+.SH NAME
+PAPI_remove_event, PAPI_remove_events \- remove PAPI preset or native hardware event from an EventSet
+
+.SH SYNOPSIS
+.B C Interface
+.nf
+.B #include <papi.h>
+.BI "int\ PAPI_rem_event(int " EventSet ", int " EventCode ");"
+.BI "int\ PAPI_rem_events(int " EventSet ", int *" EventCode ", int " number ");"
+.fi
+.B Fortran Interface
+.nf
+.B #include "fpapi.h"
+.BI PAPIF_rem_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_rem_events(C_INT\  EventSet,\  C_INT(*)\  EventCode,\  C_INT\  number,\  C_INT\  check )
+.fi
+
+.SH DESCRIPTION
+.BR "PAPI_remove_event(\|) " "removes a hardware event to a PAPI event set."
+.BR "PAPI_remove_events(\|) " "does the same, but for an array of hardware event codes."
+
+.SH ARGUMENTS
+.I "EventSet"
+--  an integer handle for a PAPI event set as created by
+.BR "PAPI_create_eventset" (3)
+.LP
+.I EventCode
+-- a defined event such as PAPI_TOT_INS or a native event.
+.LP
+.I *EventCode
+-- an array of defined events
+.LP
+.I number
+-- an integer indicating the number of events in the array
+.I *EventCode
+
+A hardware event can be either a PAPI Preset or a native hardware event code. 
+For a list of PAPI preset events, see
+.BR "PAPI_presets" "(3) or run the"
+.I avail
+test case in the PAPI distribution. PAPI Presets can be passed to
+.BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
+For a list of native events available on current platform, run native_avail
+test case in the PAPI distribution. For the encoding of native events, see
+.BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
+
+.SH RETURN VALUES
+.nf
+On success, this function returns PAPI_OK.
+On error, a non-zero error code is returned.
+.fi
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+One or more of the arguments is invalid.
+.TP
+.B "PAPI_ENOEVST"
+The EventSet specified does not exist.
+.TP
+.B "PAPI_EISRUN"
+The EventSet is currently counting events.
+.TP
+.B "PAPI_ECNFLCT"
+The underlying counter hardware can not count this event and other events
+in the EventSet simultaneously.
+.TP
+.B "PAPI_ENOEVNT"
+The PAPI preset is not available on the underlying hardware. 
+
+.SH EXAMPLES
+.nf
+.if t .ft CW
+int EventSet = PAPI_NULL;
+unsigned int native = 0x0;
+	
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
+
+/* Add Total Instructions Executed to our EventSet */
+
+if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
+
+/* Start counting */
+
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
+
+/* Stop counting, ignore values */
+
+if (PAPI_stop(EventSet, NULL) != PAPI_OK)
+  handle_error(1);
+
+/* Remove event */
+
+if (PAPI_remove_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
+.if t .ft P
+.fi
+
+.SH AUTHOR
+.nf
+Philip J. Mucci <mucci@cs.utk.edu>
+Haihang You <you@cs.utk.edu>
+.fi
+
+.SH BUGS
+These functions have no known bugs.
+
+.SH SEE ALSO
+.BR PAPI_preset "(3), "
+.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_add_event "(3), " 
+.BR PAPI_add_events "(3), " PAPI_add_pevents "(3), " PAPI_query_event "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " PAPI_event_name_to_code "(3) " 
+
+.SH The PAPI Web Site: 
+http://icl.cs.utk.edu/projects/papi
