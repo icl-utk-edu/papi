@@ -15,11 +15,12 @@ Intel Pentium on Linux 2.0,2.2,2.4 and Windows 2000/XP
 MIPS R10K, R12K on Irix
 Power 3,604,604e on AIX 4.3
 UltraSparc I,II,III on Solaris 2.8 
+Intel/HP Itanium on Linux 2.4
 
 On some of these systems, you can compile PAPI right out of the box 
 without any additional setup. Others require drivers or patches to be 
 installed first.  The general installation steps are below, but first find 
-your particular Operating System's section for any additional Steps 
+your particular Operating System's section for any additional steps 
 that may be necessary.
 
 General Installation
@@ -59,28 +60,26 @@ OS Specific installation steps - Alphabetical by OS
 
 AIX  - IBM Power
 ----------------
-The only requirement for IBM is that you must install pmtoolkit before 
+For IBM you must first install pmtoolkit before 
 compiling PAPI.  Pmtoolkit must be installed by root.  The file can
 be downloaded from the following URL:
 http://www.alphaworks.ibm.com/aw.nsf/download/pmapi
 
-Currently the only supported OS is AIX 4.3.3 for pmtoolkit.  The installation
-of pmtoolkit is described below, and as indicated earlier, it must be installed
-by root.
+Currently the only OS supported by pmtoolkit is AIX 4.3.3.  
 
-Installations instructions for the PMTOOLKIT.
+Installations instructions for the PMTOOLKIT:
 
-1. make sure you have AIX 4.3.3 installed. This is the only supported level 
-   for this package 
-2. store pmtoolkit.latest in /usr/sys/inst.images 
+1. Make sure you have AIX 4.3.3 installed. This is the only supported OS
+   version for this package.
+2. Store pmtoolkit.latest in /usr/sys/inst.images 
 3. type "installp -X -acd /usr/sys/inst.images/pmtoolkit.obj all" to install.
-    This file goes in /usr/lpp/pmtoolkit/doc/pmapi.toolkit.guide.html.
-4. After the installation it is necessary to run pmloadsvcs to load the 
-   kernel extension. 
+   This file goes in /usr/lpp/pmtoolkit/doc/pmapi.toolkit.guide.html.
+4. After the installation it is necessary to run pmloadsvcs as root to load 
+   the kernel extension.  
 5. A simple way of testing the installation and load is by running pmcycles.
-    It should return: This machine runs at xxx MHz
+   It should return: This machine runs at xxx MHz
 
-Notice that whenever the machine is rebooted, one needs to reload the 
+Whenever the machine is rebooted, one needs to reload the 
 pmtoolkit. This step can be done automatically at boot time by putting the
 line: /usr/lpp/pmtoolkit/bin/pmloadsvcs at the end of the /etc/rc.net file.
 
@@ -91,9 +90,9 @@ After, the installation of pmtoolkit, follow the general installation
 to install PAPI.
 
 
-Linux - Intel and AMD
----------------------
-Linux requires that the kernel be patched and recomipiled.  The patches
+Linux/x86 - Intel and AMD
+-------------------------
+Linux/x86 requires that the kernel be patched and recomipiled.  The patches
 needed are provided by perfctr.  
 
 Installation of Perfctr
@@ -103,7 +102,7 @@ Installation of Perfctr
 
 2. Copy the patch file into your kernel source directory. This can
    usually be located in /usr/src/kernel-version, where 
-   kernel-version will most likeley be named something like:
+   kernel-version will most likeley be named something like
    linux-2.4  (If your system does not provide kernel source code
    you can download a new kernel at: ftp.kernel.org )
 
@@ -126,12 +125,12 @@ Installation of Perfctr
    directory and issue the following command:
    make xconfig 
 
-7. You will see a window pop-up and you need to check the following:
+7. You will see a window pop up and you need to check the following:
      <*>y <>m <>n  Performance-monitoring counters support
      <*>y <>- <>n  Virtual performance counters support
      <*>y <>- <>n  Global performance counters support
    Also, don't forget to do any setup necessary for that particular system
-   such as the correct ethernet card support, etc...
+   such as the correct ethernet card support, etc.
 
 8. Make the kernel:
 	make dep
@@ -149,30 +148,30 @@ Installation of Perfctr
 	read-only
 	root=/dev/hda1 
    Where vmlinuz-2.4.2 should be the bzImage you made in step 8 (if you
-   are unsure, ls -lag /boot and look for the newest vmlinuz* )
+   are unsure, ls -lag /boot and look for the newest vmlinuz* ).
    label is just whatever you want listed as the name of that kernel, and
-   change /dev/hda1 to the linux boot partition if it isn't /dev/hda1
+   change /dev/hda1 to the linux boot partition if it isn't /dev/hda1.
    If you want this to be the default OS to load, change the default=
    line to whatever you use for the label, for example in the above it would
    be:  default=papi-linux
 
-10. After the lilo.conf file is edited use the following to update your
+10. After the lilo.conf file is edited, run the following to update your
    Master boot record:
 	/sbin/lilo
 
-11. Reboot, and if all goes well you have perfctr installed, now just follow
-   the general installation instructions and use: Makefile.linux-perfctr-2.3
+11. Reboot, and if all goes well you have perfctr installed. Now just follow
+   the general installation instructions and using Makefile.linux-perfctr-2.3
    for the Makefile.
 
 
-MIPS - Irix
------------
-No additonal steps are required to get PAPI working on Unicos.
+MIPS - IRIX 6.5
+---------------
+No additonal steps are required to get PAPI working on IRIX.
 Follow the general installation guide, and everything should work.
 
 
-Solaris - Ultrasparc
---------------------
+Solaris 8 - Ultrasparc
+----------------------
 The only requirement for Solaris is that you must be running version 2.8
 or newer.  As long as that requirement is met, no additional steps are
 required to get PAPI working and you can follow the general installation
@@ -180,7 +179,7 @@ guide.
 
 *NOTE: The Ultrasparc III mapping and code is here, but we have
 *not tested this implementation, as we don't have access to a Ultrasparc III
-*So consider it beta ;)
+*So consider it beta. 
 *If you have access to an Ultrsparc III on which you would like to run PAPI,
 *run the test suite and let us know the results.
 
