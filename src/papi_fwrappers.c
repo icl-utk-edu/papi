@@ -241,6 +241,16 @@ PAPI_FCALL(papif_thread_id, PAPIF_THREAD_ID, (unsigned long *id))
    *id = PAPI_thread_id();
 }
 
+PAPI_FCALL(papif_register_thread, PAPIF_REGISTER_THREAD, (int *check))
+{
+  *check = PAPI_register_thread();
+}
+
+PAPI_FCALL(papif_unregster_thread, PAPIF_UNREGSTER_THREAD, (int *check))
+{
+  *check = PAPI_unregister_thread();
+}
+
 /* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
 
 PAPI_FCALL(papif_thread_init, PAPIF_THREAD_INIT,
