@@ -42,15 +42,13 @@ int            flag;
 /* All memory for this structure should be allocated outside of the 
    substrate. */
 
-
-
 typedef struct _EventSetInfo {
-  int EventSet;       /* Index of the EventSet in the array  */
-  int number;         /* Number of counters used- usu. the number of 
-                         events added */
-  int *events;        /* PAPI/Native codes for events in this set from 
-                         AddEvent */
-  int state;          /* Current EventSet state, either RUNNING or STOPPED */
+  int EventSetIndex;       /* Index of the EventSet in the array  */
+
+  int NumberOfCounters;    /* Number of counters used- usu. the number of 
+                              events added */
+  int *EventCodeArray;     /* PAPI/Native codes for events in this set from 
+                              AddEvent */
   void *machdep;      /* A pointer to memory of size 
                          _papi_system_info.size_machdep bytes. This 
                          will contain the encoding necessary for the 
@@ -65,7 +63,6 @@ typedef struct _EventSetInfo {
   long long *latest;  /* Array of the same length as above, containing 
                          the values of the counters when last read */ 
 } EventSetInfo;
-
 
 
 typedef struct _papi_mdi {
