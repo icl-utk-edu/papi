@@ -89,6 +89,7 @@ void PAPIDEBUG(int, char *, ...);
 #define DERIVED_ADD_PS   0x4  /* Add 2 counters then divide by the cycle counter and xl8 to secs. */
 #define DERIVED_CMPD     0x8  /* Event lives in operand index but takes 2 or more codes */
 #define DERIVED_SUB      0x10 /* Sub all counters from counter with operand_index */
+#define DERIVED_POSTFIX  0x20 /* postfix */
 
 typedef struct _EventSetMultistartInfo {
   int num_runners;
