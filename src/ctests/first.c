@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <memory.h>
+#include <malloc.h>
 #include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
@@ -12,7 +13,7 @@
 
 #define TESTNUM 10000000
 
-void main() 
+int main() 
 {
   int r, i, n = 0;
   double a, b, c;

@@ -1,5 +1,12 @@
 /* $Id$ */
 
+#include <mpp/globals.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "papi.h"
+#include "papi_internal.h"
+#include "papiStdEventDefs.h"
+
 /* This code comes from Cray, originally in perfctr.h
    I assume they own the copyright, so be careful */
 
@@ -72,7 +79,7 @@ typedef struct {
 typedef struct hwd_control_state {
   int mask;             /* Counter select mask */
   pmctr_t pmctr;        /* Counter control register to activate this EventSet */ 
-  long last_read[4];    /* Latest hardware read from _rdperf() */ } hwd_control_state_t;
+} hwd_control_state_t;
 
 /* Preset structure */
 

@@ -3,13 +3,16 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <memory.h>
+#include <sys/types.h>
+#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
 
-void main() 
+#define TESTNUM 10000000
+
+int main(int argc, char **argv) 
 {
   int r, i;
   double a, b, c;
@@ -36,57 +39,72 @@ void main()
   r=PAPI_add_event(&EventSet3, PAPI_TOT_INS);
   r=PAPI_add_event(&EventSet3, PAPI_TOT_CYC);
 
-  options.domain.eventset=1;
-  options.domain.domain=PAPI_DOM_DEFAULT;
-  r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  memset(&options,0x0,sizeof(options));
 
-  options.domain.eventset=2;
-  options.domain.domain=PAPI_DOM_KERNEL;
-  r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  r=PAPI_get_opt(PAPI_GET_DEFDOM, NULL);
+  assert(r>=0);
+  fprintf(stderr,"Default domain is %x.\n",r);
 
-  options.domain.eventset=3;
+  options.domain.eventset=EventSet1;
   options.domain.domain=PAPI_DOM_ALL;
   r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  assert(r>=PAPI_OK);
 
-/*  Start EventSet1  */
+  options.domain.eventset=EventSet3;
+  options.domain.domain=PAPI_DOM_USER;
+  r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  assert(r>=PAPI_OK);
 
-  r=PAPI_reset(EventSet1);
+  options.domain.eventset=EventSet2;
+  options.domain.domain=PAPI_DOM_KERNEL;
+  r=PAPI_set_opt(PAPI_SET_DOMAIN, &options);
+  assert(r>=PAPI_OK);
+
+  /*  Start EventSet1  */
+
+  fprintf(stderr,"PAPI_DOM_ALL counts\n");
   r=PAPI_start(EventSet1);
+  assert(r>=PAPI_OK);
 
   a = 0.5;
   b = 6.2;
-  for (i=0; i < 50000000; i++) {
+  for (i=0; i < TESTNUM; i++) {
     c = a*b;
   }
   r=PAPI_stop(EventSet1, ct);
+  assert(r>=PAPI_OK);
 
-/*  Stop EventSet1  */
+  /*  Stop EventSet1  */
 
-/*  Start EventSet2  */
+  /*  Start EventSet2  */
 
-  r=PAPI_reset(EventSet2);
+  fprintf(stderr,"PAPI_DOM_KERNEL counts\n");
   r=PAPI_start(EventSet2);
+  assert(r>=PAPI_OK);
 
   a = 0.5;
   b = 6.2;
-  for (i=0; i < 50000000; i++) {
+  for (i=0; i < TESTNUM; i++) {
     c = a*b;
   }
   r=PAPI_stop(EventSet2, ct);
+  assert(r>=PAPI_OK);
 
-/*  Stop EventSet2  */
+  /*  Start EventSet3  */
 
-/*  Start EventSet3  */
-
-  r=PAPI_reset(EventSet3);
+  fprintf(stderr,"PAPI_DOM_USER counts\n");
   r=PAPI_start(EventSet3);
+  assert(r>=PAPI_OK);
 
   a = 0.5;
   b = 6.2;
-  for (i=0; i < 50000000; i++) {
+  for (i=0; i < TESTNUM; i++) {
     c = a*b;
   }
   r=PAPI_stop(EventSet3, ct);
+  assert(r>=PAPI_OK);
 
-/*  Stop EventSet3  */
+  /*  Stop EventSet3  */
+
+  exit(0);
 }

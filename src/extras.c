@@ -11,6 +11,7 @@ the following:
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <signal.h>
@@ -20,62 +21,39 @@ the following:
 #include "papi.h"
 #include "papi_internal.h"
 
-extern DynamicArray PAPI_EVENTSET_MAP;    
+#define PAPI_ITIMER ITIMER_REAL
+#define PAPI_SIGNAL SIGALRM
 
-static void dispatch_eventset(EventSetInfo *ESI, void *context)
+extern EventSetInfo *event_set_overflowing;
+extern EventSetInfo *event_set_zero;
+
+static void dispatch_overflow_signal(EventSetInfo *ESI, void *context)
 {
-  long long latest;
   int retval;
+  unsigned long long latest;
 
-  if (ESI->state & PAPI_ACCUMULATING) /* Not implemented */
-    return;
-  if (ESI->state & PAPI_MULTIPLEXING) /* Not implemented */
-    return;
-  if (ESI->state & PAPI_OVERFLOWING)
-    ;
+  assert(ESI->state & PAPI_OVERFLOWING);
 
-  /* First get the latest counters */
-
-  /* This doesn't work until George fixes the substrate */
-
-  retval = _papi_hwd_read(ESI->machdep, ESI->latest); 
-
+  retval = _papi_hwd_read(ESI, event_set_zero, ESI->latest); 
   if (retval < PAPI_OK)
     return;
 
   /* Get the latest counter value */
-  latest = ESI->latest[ESI->overflow.eventindex];
+  latest = ESI->latest[ESI->overflow.EventIndex];
 
   /* Is it bigger than the deadline? */
   if (latest > ESI->overflow.deadline)
     {
-      ESI->overflow.option.handler(ESI,context);
-      ESI->overflow.deadline = latest + ESI->overflow.option.threshold;
+      ESI->overflow.count++;
+      ESI->overflow.handler(ESI->overflow.count, ESI->overflow.EventCode, ESI->overflow.EventIndex, ESI->latest, ESI->NumberOfCounters, context);
+      ESI->overflow.deadline = latest + ESI->overflow.threshold;
     }
 }
 
 static void dispatch_timer(int signal, struct sigcontext_struct info)
 {
-  int i;
-  int total = 0;
-  EventSetInfo *t;
-
-  /* for each running eventset */
-  for (i=1;i<=PAPI_EVENTSET_MAP.totalSlots-PAPI_EVENTSET_MAP.availSlots;i++)
-    {
-      /* If we exist */
-      if ((t = PAPI_EVENTSET_MAP.dataSlotArray[i])) {
-	  /* and if we're running and doing something funny */
-	if ((t->state & PAPI_RUNNING) &&
-	    ((t->state & PAPI_ACCUMULATING) ||
-	     (t->state & PAPI_OVERFLOWING) || 
-	     (t->state & PAPI_MULTIPLEXING)))
-	  dispatch_eventset(t,&info); 
-	/* Short circuit */
-	if ((++total) == PAPI_EVENTSET_MAP.fullSlots)
-	  return;
-      }
-    }
+  DBG((stderr,"dispatch_timer() at 0x%lx\n",info.eip));
+  dispatch_overflow_signal(event_set_overflowing, (void *)&info); 
 }
 
 static int start_timer(int milliseconds)
@@ -84,33 +62,36 @@ static int start_timer(int milliseconds)
   struct itimerval value;
   struct sigaction action;
 
+  /* If the user has installed a SIGPROF, don't do anything */
+
+  if (signal(PAPI_SIGNAL, SIG_IGN) != SIG_DFL)
+    return(PAPI_ESYS);
+
   value.it_interval.tv_sec = 0;
   value.it_interval.tv_usec = milliseconds * 1000;
   value.it_value.tv_sec = 0;
   value.it_value.tv_usec = milliseconds * 1000;
+
+  memset(&action,0x00,sizeof(struct sigaction));
   action.sa_handler = (void *)dispatch_timer;
-  sigemptyset(&action.sa_mask);
-#ifdef SA_ONSTACK
-  action.sa_flags |= SA_ONSTACK;
-#endif
-#ifdef SA_SIGINFO
-  action.sa_flags |= SA_SIGINFO;
-#endif
-  action.sa_flags |= SA_RESTART;
   
-#ifdef ITIMER_REALPROF
-  retval = setitimer(ITIMER_REALPROF, &value, NULL);
-#else
-  retval = setitimer(ITIMER_PROF, &value, NULL);
-#endif
+  if (sigaction(PAPI_SIGNAL, &action, NULL) < 0)
+    return(PAPI_ESYS);
 
+  retval = setitimer(PAPI_ITIMER, &value, NULL);
   if (retval == -1)
-    return(PAPI_ESYS);
-
-  if (sigaction(SIGPROF, &action, NULL) < 0)
-    return(PAPI_ESYS);
+    {
+      signal(PAPI_SIGNAL, SIG_DFL);
+      return(PAPI_ESYS);
+    }
   
   return(PAPI_OK);
+}
+
+int start_overflow_timer(EventSetInfo *ESI)
+{
+  event_set_overflowing = ESI;
+  return(start_timer(ESI->overflow.timer_ms));
 }
 
 static int stop_timer(void)
@@ -123,22 +104,24 @@ static int stop_timer(void)
   value.it_value.tv_sec = 0;
   value.it_value.tv_usec = 0;
   
-#ifdef ITIMER_REALPROF
-  retval = setitimer(ITIMER_REALPROF, &value, NULL);
-#else
-  retval = setitimer(ITIMER_PROF, &value, NULL);
-#endif
+  retval = setitimer(PAPI_ITIMER, &value, NULL);
 
   if (retval == -1)
     return(PAPI_ESYS);
 
-  if (signal(SIGPROF,SIG_DFL) == SIG_ERR)
+  if (signal(PAPI_SIGNAL,SIG_DFL) == SIG_ERR)
     return(PAPI_ESYS);
 
   return(PAPI_OK);
 }
 
-int _papi_portable_set_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)
+int stop_overflow_timer(EventSetInfo *ESI)
+{
+  event_set_overflowing = NULL;
+  return(stop_timer());
+}
+
+/* int _papi_portable_set_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)
 {
   return(PAPI_ESBSTR);
 }
@@ -159,3 +142,4 @@ int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr
   memcpy(ptr,&ESI->multiplex.option,sizeof(*ptr));
   return(PAPI_ESBSTR);
 }
+*/

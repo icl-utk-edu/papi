@@ -71,20 +71,23 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEF_MPXRES  1000 /*Default resolution in microseconds of the 
 				multiplexing software*/
 
-#define PAPI_STOPPED     0x00    /* EventSet stopped */ 
-#define PAPI_RUNNING     0x01    /* EventSet running */
-#define PAPI_PAUSED      0x02    /* EventSet temp. disabled by the library */
-#define PAPI_NOT_INIT    0x04    /* EventSet defined, but not initialized */
-#define PAPI_OVERFLOWING 0x10    /* EventSet has overflowing enabled */
-#define PAPI_MULTIPLEXING 0x20   /* EventSet has multiplexing enabled */
-#define PAPI_ACCUMULATING 0x40   /* EventSet has accumulating enabled */
-#define PAPI_NUM_ERRORS  11     /* Number of error messages spec'd */
-#define PAPI_QUIET       0     /* Option to not do any automatic error reporting 
-				to stderr*/
-#define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes <0 
-				to stderr [error-continue]*/ 
-#define PAPI_VERB_ESTOP  2     /* Option to automatically report any error codes < 0 
-				to stderr and call exit(PAPI_ERROR) [error-stop]*/
+/* States of an EventSet */
+
+#define PAPI_STOPPED      0x01   /* EventSet stopped */ 
+#define PAPI_RUNNING      0x02   /* EventSet running */
+#define PAPI_PAUSED       0x04   /* EventSet temp. disabled by the library */
+#define PAPI_NOT_INIT     0x08   /* EventSet defined, but not initialized */
+#define PAPI_OVERFLOWING  0x10   /* EventSet has overflowing enabled */
+#define PAPI_PROFILING    0x20   /* EventSet has profiling enabled */
+#define PAPI_MULTIPLEXING 0x40   /* EventSet has multiplexing enabled */
+#define PAPI_ACCUMULATING 0x80   /* EventSet has accumulating enabled */
+
+/* Error predefines */
+
+#define PAPI_NUM_ERRORS  11    /* Number of error messages specified in this API. */
+#define PAPI_QUIET       0     /* Option to turn off automatic reporting of return codes < 0 to stderr. */
+#define PAPI_VERB_ECONT  1     /* Option to automatically report any return codes < 0 to stderr and continue. */ 
+#define PAPI_VERB_ESTOP  2     /* Option to automatically report any return codes < 0 to stderr and exit. */
 
 #define PAPI_SET_MPXRES  1     /* Option to enable and set the resolution of the multiplexing hardware*/
 #define PAPI_GET_MPXRES  2     /* Option to query the status of the multiplexing software*/
@@ -94,8 +97,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_SET_OVRFLO  4     /* Option to turn on the overflow reporting software */
 #define PAPI_GET_OVRFLO  5     /* Option to query the status of the overflow reporting software */
 
-#define PAPI_SET_DEFDOM  6     /* Domain for all new eventsets */    
-#define PAPI_GET_DEFDOM  7     /* Domain for all new eventsets */    
+#define PAPI_SET_DEFDOM  6     /* Domain for all new eventsets. Takes non-NULL option pointer. */    
+#define PAPI_GET_DEFDOM  7     /* Domain for all new eventsets. Takes NULL as option pointer. */    
 
 #define PAPI_SET_DOMAIN  8     /* Domain for an eventset */    
 #define PAPI_GET_DOMAIN  9     /* Domain for an eventset */    
@@ -106,8 +109,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_SET_GRANUL  12    /* Granularity for an eventset */    
 #define PAPI_GET_GRANUL  13    /* Granularity for an eventset */    
 
-#define PAPI_SET_WAIT    15    /* Do we wait for threads/processes to exit before summing their values? */
-#define PAPI_GET_WAIT    16    /* Do we wait for threads/processes to exit before summing their values? */
+#define PAPI_SET_INHERIT 15    /* Child threads/processes inherit counter config and progate values up upon exit. */
+#define PAPI_GET_INHERIT 16    /* Child threads/processes inherit counter config and progate values up upon exit. */
 				   
 #define PAPI_SET_BIND    17    /* Set the function that binds our thread to the CPU it's on */
 #define PAPI_GET_BIND    18    /* Get the function that binds our thread to the CPU it's on */
@@ -116,12 +119,16 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GET_THRID   20    /* Get the function that returns an int of the current thread */
 
 #define PAPI_GET_CPUS    21    /* Return the maximum number of CPU's usable/detected */
-#define PAPI_SET_CPUS    21    /* Set the maximum number of CPU's usable/detected */
+#define PAPI_SET_CPUS    22    /* Set the maximum number of CPU's usable/detected */
 
 #define PAPI_GET_THREADS 23    /* Return the number of threads usable/detected by PAPI */
-#define PAPI_SET_THREADS 22    /* Set the maximum number of threads usable by PAPI */
+#define PAPI_SET_THREADS 24    /* Set the maximum number of threads usable by PAPI */
 
-#define PAPI_GET_NUMCTRS 24    /* The number of counters returned by reading this eventset */
+#define PAPI_GET_NUMCTRS 25    /* The number of counters returned by reading this eventset */
+#define PAPI_SET_NUMCTRS 26    /* The number of counters returned by reading this eventset */
+
+#define PAPI_SET_PROFIL  27     /* Option to turn on the overflow/profil reporting software */
+#define PAPI_GET_PROFIL  28     /* Option to query the status of the overflow/profil reporting software */
 
 
 #define PAPI_MAX_EVNTS   16   /*The maximum number of spontaneous events 
@@ -168,66 +175,52 @@ typedef struct _papi_multiplex_option {
   int eventset;
   int milliseconds; } PAPI_multiplex_option_t;
 
+typedef struct _papi_inherit_option {
+  int inherit; } PAPI_inherit_option_t;
+
 typedef struct _papi_domain_option {
   int eventset;
   int domain; } PAPI_domain_option_t;
-
-typedef struct _papi_defdomain_option {
-  int domain; } PAPI_defdomain_option_t;
 
 typedef struct _papi_granularity_option {
   int eventset;
   int granularity; } PAPI_granularity_option_t;
 
-typedef struct _papi_defgranularity_option {
-  int granularity; } PAPI_defgranularity_option_t;
-
-typedef struct _papi_multistart_option {
-  int resolution;
-  int num_runners;
-  int num_events;
-  int **SharedDepth;
-  int **EvSetArray; 
-  void *virtual_machdep; } PAPI_multistart_option_t;
-
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
 typedef union {
-  PAPI_overflow_option_t overflow;
-  PAPI_multiplex_option_t multiplex;
-  PAPI_defgranularity_option_t defgranularity; 
+  PAPI_inherit_option_t inherit;
   PAPI_granularity_option_t granularity; 
-  PAPI_defdomain_option_t defdomain; 
   PAPI_domain_option_t domain; 
-  int num_substrate_counters;
   int debug; } PAPI_option_t;
 
-int PAPI_init(void);
-
-int PAPI_set_granularity(int granularity);
-int PAPI_set_domain(int domain);
-int PAPI_perror(int code, char *destination, int length);
+int PAPI_accum(int EventSet, unsigned long long *values);
 int PAPI_add_event(int *EventSet, int Event);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
+int PAPI_cleanup(int *EventSet);
+int PAPI_cleanup(int *EventSet); 
+int PAPI_describe_event(char *name, int *EventCode, char *description);
+int PAPI_get_opt(int option, PAPI_option_t *ptr);
+int PAPI_init(void);
+int PAPI_list_events(int EventSet, int *Events, int *number);
+int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, void *handler);
+int PAPI_perror(int code, char *destination, int length);
+int PAPI_profil(void *buf, int bufsiz, int offset, unsigned int scale, int EventSet, int EventCode, int threshold, int flags);
+int PAPI_query_event(int EventCode);
+int PAPI_read(int EventSet, unsigned long long *values);
 int PAPI_rem_event(int *EventSet, int Event); 
 int PAPI_rem_events(int *EventSet, int *Events, int number); 
-int PAPI_list_events(int EventSet, int *Events, int *number);
-int PAPI_start(int EventSet);
-int PAPI_stop(int EventSet, unsigned long long *values);
-int PAPI_read(int EventSet, unsigned long long *values);
-int PAPI_accum(int EventSet, unsigned long long *values);
-int PAPI_write(int EventSet, unsigned long long *values);
-int PAPI_cleanup(int *EventSet); 
-int PAPI_state(int EventSetIndex, int *status);
 int PAPI_reset(int EventSet);
-int PAPI_cleanup(int *EventSet);
-void PAPI_shutdown(void);
-int PAPI_state(int EventSet, int *status);
+int PAPI_set_domain(int domain);
+int PAPI_set_granularity(int granularity);
 int PAPI_set_opt(int option, PAPI_option_t *ptr); 
-int PAPI_get_opt(int option, PAPI_option_t *ptr);
-int PAPI_query_event(int EventCode);
-int PAPI_describe_event(char *name, int *EventCode, char *description);
+int PAPI_start(int EventSet);
+int PAPI_state(int EventSet, int *status);
+int PAPI_state(int EventSetIndex, int *status);
+int PAPI_stop(int EventSet, unsigned long long *values);
+int PAPI_write(int EventSet, unsigned long long *values);
+void PAPI_shutdown(void);
 
 /*
 The High Level API

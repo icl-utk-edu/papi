@@ -1,5 +1,5 @@
-EXAMPLES = first third x y f
-EXOBS    = first.o third.o x.o y.o f.o
+EXAMPLES = first second third fourth overflow
+EXOBS    = first.o second.o third.o fourth.o overflow.o
 
 all: $(EXAMPLES)
 
