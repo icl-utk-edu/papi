@@ -16,6 +16,10 @@
 #include <asm/param.h>
 #include <linux/unistd.h>	
 
+#ifdef PERFCTR24
+#include "asm/atomic.h"
+#endif
+
 #include "libperfctr.h"
 #include "x86-events.h"
 #include "papi.h"

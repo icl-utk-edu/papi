@@ -115,6 +115,9 @@ typedef struct _masterevent {
         long_long count;
         long_long cycles;
 	long_long handler_count;
+ 	long_long prev_total_c;
+ 	long_long count_estimate;
+ 	double rate_estimate;
 	struct _threadlist * mythr;
         struct _masterevent * next;
 } MasterEvent;
@@ -155,6 +158,7 @@ typedef struct _MPX_EventSet {
 	long_long stop_values[PAPI_MPX_DEF_DEG];
 	long_long stop_cycles[PAPI_MPX_DEF_DEG];
 	long_long start_hc[PAPI_MPX_DEF_DEG];
+	long_long stop_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
 typedef MPX_EventSet * EventSetMultiplexInfo_t;

@@ -2,7 +2,7 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads
-MPX	= multiplex1 multiplex2
+MPX	= multiplex1 multiplex2 mendes-alt
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SERIAL  = mem_info zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
@@ -37,6 +37,9 @@ calibrate: calibrate.c dummy.o $(PAPILIB)
 
 timer_overflow: timer_overflow.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) timer_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
+
+mendes-alt: mendes-alt.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) mendes-alt.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1: multiplex1.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
