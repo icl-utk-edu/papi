@@ -106,6 +106,7 @@ void Thread(int n)
 
   /* It is illegal for the threads to exit in OpenMP */
   /* test_pass(__FILE__,0,0); */
+  free_test_space(values, num_tests);
 }
 
 int main(int argc, char **argv) 
@@ -152,6 +153,6 @@ int main(int argc, char **argv)
   printf("Master real cycles : \t%lld\n",
 	 elapsed_cyc);
 
-  test_pass(__FILE__,0,0);
+  test_pass(__FILE__,NULL,0);
   exit(0);
 }
