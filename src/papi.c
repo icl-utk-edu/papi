@@ -1388,12 +1388,15 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 
 void PAPI_shutdown(void) 
 {
-  int i;
+  int i, status;
 
   for (i=0;i<PAPI_EVENTSET_MAP->totalSlots;i++) 
     {
       if (PAPI_EVENTSET_MAP->dataSlotArray[i]) 
 	{
+	  PAPI_state(i,&status);
+	  if (status & PAPI_RUNNING)
+	    PAPI_stop(i,NULL);
 	  free_EventSet(PAPI_EVENTSET_MAP->dataSlotArray[i]);
 	  PAPI_EVENTSET_MAP->dataSlotArray[i] = NULL;
 	}
