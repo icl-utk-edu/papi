@@ -1,75 +1,64 @@
-/* 
-* File:    README
-* CVS:     $Id$
-* Author:  Philip Mucci
-*          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
-*/  
+            ------------------------------------------------------
+                                    pfmon-2.0:
+	                 a package to monitor performance 
+                                  on Linux/ia64
+            ------------------------------------------------------
+	  Copyright (c) 2001-2002 Hewlett-Packard Company
+	                Stephane Eranian <eranian@hpl.hp.com>
+	
 
-This directory contains:
+This package provides a tool, called pfmon, which monitors performance
+on unmodified binaries or for the entire system. It is using the IA-64 
+Performance Monitoring Unit (PMU). This package uses the Linux/ia64 
+kernel support for the PMU (perfmon) and the libpfm library.
 
-README		This file.
-LICENSE.txt	The text of the PAPI license.	
-INSTALL.txt	Instructions for installing on all supported platforms.
-HISTORY.txt	A brief history of features and platforms added to PAPI.
-doc/ 		User documentation and support files.
-		See doc/README for details.
-man/ 		Stuff related to PAPI man pages. See man/README for details.
-spec/		Old versions of the PAPI specification.
-		See doc/ for current version.
-src/ 		The PAPI library source files and support files.
-		See src/README for more details.
-tools/		A growing collection of sample tools for use with PAPI.
-		See README files for individual tools for more information.
+This version of pfmon supports BOTH the Itanium (Merced) and Itanium2 (McKinley) processors.
 
+REQUIREMENTS
+------------
 
-Getting Started
----------------
+         - YOU MUST at least HAVE kernel v2.4.18 or v2.5.3
 
-If this is the first file you've opened in the PAPI tree, we'll try to give you
-a few tips on where to go from here.
+	 - As of version 2.0 of the pfmon package, the library, include files, and examples
+	   are in a separate package called libpfm-X.Y. This package can be found at the
+	   HPLabs FTP site:
+			ftp://ftp.hpl.hp.com/pub/linux-ia64/libpfm-X.Y.tar.gz
 
-- Read the license found in LICENSE.txt. It's pretty short, and not very 
-  restrictive, but it'll give you an idea of what you can and can't do with the
-  PAPI sources.
-- Visit the website at: <http://icl.cs.utk.edu/papi>
-  There you can find late-breaking news that may be more current than in these
-  files. You can also find documentation in a greater variety of formats than
-  in the papi/doc/ directory.
-- Sign up for the PAPI mailing list(s). Instructions are on our home page.
-- Read the HISTORY.txt file to get an idea of what's new in the current release.
+	 - you need libpfm-2.0
 
+	 - to recompile pfmon you need the libelf development package
 
-Installing PAPI
----------------
+WHAT'S THERE
+-------------
 
-To install PAPI on your system:
-- Find the section in INSTALL.txt that pertains to your hardware and operating
-  system.
-- Follow the directions to install required components and build the PAPI
-  libraries.
-- Run the test suite when you are finished to verify that everything went ok.
+	- the pfmon tool (pfmon directory) which collects performance data on unmodified
+	  binaries or for the entire system (UP & SMP).
 
+	- a small set of test programs (tests directory) including pfdbg to turn on/off 
+	  kernel perfmon debugging. 
 
-Using PAPI
-----------
+	- a simple script (scripts directory) to collect a cycle breakdown using pfmon 
+	  on Itanium.
 
-To use PAPI in your own programs:
-- Read the User's Guide. Versions in a variety of formats can be found in the 
-  doc/ directory and online.
-- Try a test program. Source for a number of tests in both C and FORTRAN is
-  available in the src/tests/ and src/ftests/ directories. Find a program
-  that's similar to what you want to do. Make sure you can build it and run it.
-- Write a test program of your own, exercising the PAPI events and features of
-  interest to you.
-- Go for broke. Fold PAPI calls into your sources and see what you can learn.
+	- a user's guide (docs directory) for pfmon for both Itanium and Itanium2.
 
+INSTALLATION
+------------
 
-Bugs and Questions
-------------------
-- Visit our FAQ (such as it is) at: <http://icl.cs.utk.edu/papi/faq/>
-- Subscribe to the PAPI mailing list at:
-  <http://www.nacse.org/mailman/listinfo/ptools-perfapi>
-- Read historical postings to the list.
-- Post questions or bugs to the list.
+	- you must have the libpfm package already installed.
+
+	- edit config.mk to :
+		- update some variables, such as where to find libpfm and the header files.
+		- make your compiler options
+		- select which PMU you want to support. Multiple PMU can be supported by a single
+		  binary
+
+	- type make
+	- type make install
+	- you're done, type pfmon --help for a list of options
+
+DOCUMENTATION
+-------------
+
+	- extensive documentation with examples is available in the docs subdirectory
+	- More up to date information can be found on pfmon web site: http://www.hpl.hp.com/research/linux/perfmon
