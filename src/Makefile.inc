@@ -98,7 +98,7 @@ clobber: clean
 null:
 
 dist: 
-	$(MAKE) -f Makefile.$(SUBSTR) install DESTDIR=`pwd`/papi-$(SUBSTR)
+	$(MAKE) -f Makefile.$(MSUBSTR) install DESTDIR=`pwd`/papi-$(SUBSTR)
 	tar cfv ./papi-$(SUBSTR).tar ./papi-$(SUBSTR)
 	gzip ./papi-$(SUBSTR).tar
 	rm -rf ./papi-$(SUBSTR)
@@ -115,6 +115,6 @@ install: all
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
 	chmod go+r $(DESTDIR)/include/*
 	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
-	cd tests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install
-	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) TARGETS="$(TARGETS)" install
+	cd tests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" OPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" install
+	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" install
 	cp $(SUBSTR).README $(DESTDIR)

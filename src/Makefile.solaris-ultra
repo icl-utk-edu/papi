@@ -1,6 +1,7 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = solaris-ultra
+MSUBSTR  = solaris-ultra
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
 TARGETS	= serial multiplex_and_pthreads smp omp

@@ -1,6 +1,7 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = any-null
+MSUBSTR = any-null
 DESCR	= "Sample substrate: Any hardware platform with GNU compilers"
 LIBS	= static
 TARGETS = serial multiplex
