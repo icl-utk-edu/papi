@@ -48,17 +48,28 @@
      . 'PAPI_library_init', retval)
       end if
 
-#if (defined(__alpha) && defined(__osf__))
-      call ftests_pass(__FILE__)
-#endif
-
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_set_debug', retval)
       end if
       
-#ifndef _CRAYT3E
+      call PAPIf_query_event(mask1, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_skip(__FILE__, __LINE__,
+     .'PAPIf_query_event', retval)
+      end if
+      call PAPIf_query_event(mask2, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_skip(__FILE__, __LINE__,
+     .'PAPIf_query_event', retval)
+      end if
+      call PAPIf_query_event(mask3, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_skip(__FILE__, __LINE__,
+     .'PAPIf_query_event', retval)
+      end if
+
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -72,7 +83,6 @@
      . 'PAPIf_add_event', retval)
       end if
 
-#endif      
       call PAPIf_create_eventset(es2, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -101,7 +111,6 @@
 
       call do_l1misses(ITERS)
 
-#ifndef _CRAYT3E
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -116,9 +125,6 @@
      . 'PAPIf_stop', retval)
       end if
 
-#else
-      values(1)=0
-#endif
 
       call PAPIf_start(es2, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -147,14 +153,12 @@
      . 'PAPIf_stop', retval)
       end if
 
-#ifndef _CRAYT3E
       call PAPIf_rem_event( es1, mask1, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_rem_event', retval)
       end if
 
-#endif
       call PAPIf_rem_event( es2, mask2, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
