@@ -14,10 +14,11 @@ PAPI_get_executable_info \- get the executable's address space info
 .nf
 .B #include "fpapi.h"
 .BI PAPIF_get_exe_info(C_STRING\  fullname,\  C_STRING\  name,\ \
-           C_INT\  text_start,\  C_INT\  text_end,\ \
-           C_INT\  data_start,\  C_INT\  data_end,\ \
-           C_INT\  bss_start,\  C_INT\  bss_end,\ \
-           C_STRING\  lib_preload_env,\ C_INT\  check)
+           C_LONG_LONG\  text_start,\  
+.BI \tC_LONG_LONG\  text_end,\  C_LONG_LONG\  data_start,\ \
+           C_LONG_LONG\  data_end,\ 
+.BI \tC_LONG_LONG\  bss_start,\  C_LONG_LONG\  bss_end,\ 
+.BI \tC_STRING\  lib_preload_env,\ C_INT\  check)
 .fi
 
 .SH DESCRIPTION
