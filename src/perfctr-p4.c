@@ -97,7 +97,7 @@ papi_mdi_t _papi_system_info = { "$Id$",
 			        PAPI_GRN_THR,  /* default granularity */
 			        0,  /* We can use add_prog_event */
 			        0,  /* We can write the counters */
-			        0,  /* supports HW overflow */
+			        1,  /* supports HW overflow */
 			        0,  /* supports HW profile */
 			        1,  /* supports 64 bit virtual counters */
 			        1,  /* supports child inheritance */
@@ -445,7 +445,8 @@ void print_control(const struct perfctr_cpu_control *control)
     SUBDBG("Control used:\n");
     SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
     SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-    for(i = 0; i < control->nractrs; ++i) {
+    SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
+    for(i = 0; i < (control->nractrs+control->nrictrs); ++i) {
 	if( control->pmc_map[i] >= 18 )
 	  {
 	    SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
@@ -457,6 +458,8 @@ void print_control(const struct perfctr_cpu_control *control)
 	SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
 	if( control->evntsel_aux[i] )
 	    SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
+	if (control->ireset[i]) 
+	  SUBDBG("ireset[%u]\t%d\n",i,control->ireset[i]);
     }
     if( control->p4.pebs_enable )
       SUBDBG("pebs_enable\t0x%08X\n", 
@@ -1006,11 +1009,6 @@ int _papi3_hwd_write(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl, lon
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
-{
-  return(PAPI_ESBSTR);
-}
-
 int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
@@ -1018,7 +1016,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
 {
   /* This function is not used and shouldn't be called. */
 
@@ -1027,16 +1025,161 @@ int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 
 
 #ifndef PAPI3
-int _papi_hwd_reset(EventSetInfo_t *mine, EventSetInfo_t *zero) 
+static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
 {
-  hwd_control_state_t *machdep = zero->machdep;
+  unsigned int ui; int si;
 
-  _papi_hwd_unmerge(mine, zero);
-  _papi_hwd_merge(mine, zero);
+  /* In the case a user wants to interrupt on a counter in an evntsel
+     that is not among the last events, we need to move the perfctr 
+     virtual events around to make it last. This function swaps two
+     perfctr events */
 
+  ui=contr->cpu_control.pmc_map[cntr1];
+  contr->cpu_control.pmc_map[cntr1]=contr->cpu_control.pmc_map[cntr2];
+  contr->cpu_control.pmc_map[cntr2] = ui;
+
+  ui=contr->cpu_control.evntsel[cntr1];
+  contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
+  contr->cpu_control.evntsel[cntr2] = ui;
+
+  ui=contr->cpu_control.evntsel_aux[cntr1];
+  contr->cpu_control.evntsel_aux[cntr1]=contr->cpu_control.evntsel_aux[cntr2];
+  contr->cpu_control.evntsel_aux[cntr2] = ui;
+
+  si=contr->cpu_control.ireset[cntr1];
+  contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
+  contr->cpu_control.ireset[cntr2] = si;
 }
 
-int _papi_hwd_write(EventSetInfo_t *mine, EventSetInfo_t *zero, long_long events[])
+int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
+{
+  const int PERF_INT_ENABLE = CCCR_OVF_PMI_T0;
+  /* | CCCR_OVF_PMI_T1 (1 << 27) */
+
+  extern int _papi_hwi_using_signal;
+  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  struct vperfctr_control *contr = &this_state->control.control;
+  int i, ncntrs, nricntrs = 0, nracntrs, cntr, cntr2, retval=0;
+  unsigned int selector;
+
+  SUBDBG("overflow_option->EventIndex=%d\n",overflow_option->EventIndex);
+  if( overflow_option->threshold != 0)  /* Set an overflow threshold */
+    {
+      struct sigaction sa;
+      int err;
+
+      if (ESI->NumberOfEvents > 1)
+	{
+	  fprintf(stderr,"Must have one counter in event set.\n");
+	  return PAPI_EINVAL;
+	}
+
+      /* The correct event to overflow is overflow_option->EventIndex */
+
+      ncntrs = _papi_system_info.num_cntrs;
+      selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
+      SUBDBG("selector id is %d.\n",selector);
+      i = ffs(selector) - 1;
+      if (i >= ncntrs)
+	{
+	  fprintf(stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs);
+	  return PAPI_EINVAL;
+	}
+      if (contr->cpu_control.nrictrs)
+	{
+	  fprintf(stderr,"Only one interrupting counter in event set.\n");
+	  return PAPI_EINVAL;
+	}
+      if (contr->cpu_control.nractrs < 1)
+	{
+	  fprintf(stderr,"Must have one counter in event set.\n");
+	  return PAPI_EINVAL;
+	}
+      if ((contr->cpu_control.nractrs > 1) && (ESI->EventInfoArray[i].code != PAPI_FP_INS))
+	{
+	  fprintf(stderr,"Only PAPI events with single events are supported.\n");
+	  return PAPI_EINVAL;
+	}
+
+      contr->cpu_control.ireset[i] = -overflow_option->threshold;
+      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+      nricntrs = ++contr->cpu_control.nrictrs;
+      nracntrs = --contr->cpu_control.nractrs;
+      contr->si_signo = PAPI_SIGNAL;
+
+      /* perfctr 2.x requires the interrupting counters to be placed last
+	 in evntsel, swap events that do not fulfill this criterion. This
+	 will yield a non-monotonic pmc_map array */
+
+      if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
+	swap_pmc_map_events(contr,0,1);	
+
+      memset(&sa, 0, sizeof sa);
+      sa.sa_sigaction = _papi_hwd_dispatch_timer;
+      sa.sa_flags = SA_SIGINFO;
+      if((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0)
+	{
+	  SUBDBG("Setting sigaction failed: SYSERR %d: %s",errno,strerror(errno));
+	  return(PAPI_ESYS);
+	}
+
+      PAPI_lock();
+      _papi_hwi_using_signal++;
+      PAPI_unlock();
+
+      SUBDBG("Modified event set\n");
+    }
+  else   
+    {
+      /* The correct event to overflow is overflow_option->EventIndex */
+      ncntrs=_papi_system_info.num_cntrs;
+      for(i=0;i<ncntrs;i++) 
+	if(contr->cpu_control.evntsel[i] & PERF_INT_ENABLE)
+	  {
+	    contr->cpu_control.ireset[i] = 0;
+	    contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
+	    nricntrs=--contr->cpu_control.nrictrs;
+	    nracntrs=++contr->cpu_control.nractrs;
+	    contr->si_signo = 0;
+	  }
+
+      /* perfctr 2.x requires the interrupting counters to be placed last
+	 in evntsel, swap events that do not fulfill this criterion. This
+	 will yield a non-monotonic pmc_map array */
+
+      if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
+	swap_pmc_map_events(contr,1,0);	
+
+      SUBDBG("Modified event set\n");
+
+      PAPI_lock();
+      _papi_hwi_using_signal--;
+      if (_papi_hwi_using_signal == 0)
+	{
+	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+	    retval = PAPI_ESYS;
+	}
+      PAPI_unlock();
+    }
+
+  SUBDBG("%s (%s): Hardware overflow is still experimental.\n",
+	  __FILE__,__FUNCTION__);
+  SUBDBG("End of call. Exit code: %d\n",retval);
+  return(retval);
+}
+
+int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
+{
+  hwd_control_state_t *machdep = zero->machdep;
+  struct vperfctr *ctx = machdep->context.perfctr;
+  struct vperfctr_control *ctl = &machdep->control.control;
+  if (vperfctr_control(ctx, ctl) == 0)
+    return(PAPI_OK);
+  else
+    error_return(PAPI_ESYS,VCNTRL_ERROR);
+}
+
+int _papi_hwd_write(EventSetInfo *mine, EventSetInfo *zero, long_long events[])
 {
   hwd_control_state_t *machdep = zero->machdep;
   return(_papi3_hwd_write(&machdep->context,&machdep->control,events));
