@@ -140,7 +140,7 @@ install-lib: install-tree native_install
 	chmod go+r $(PREFIX)/lib/$(LIBRARY) $(PREFIX)/lib/$(SHLIB)
 
 install-man: install-tree
-	cd ../man; $(MAKE) PREFIX=$(PREFIX) install
+	cd ../man && $(MAKE) PREFIX=$(PREFIX) install
 
 install-utils: install-tree
 	cd utils; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
