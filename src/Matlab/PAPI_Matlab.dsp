@@ -109,11 +109,19 @@ SOURCE=PAPI_Matlab.c
 # PROP Default_Filter ".m"
 # Begin Source File
 
-SOURCE=.\FlopsSampler.m
+SOURCE=.\PAPI.m
 # End Source File
 # Begin Source File
 
-SOURCE=..\PAPI_Matlab.m
+SOURCE=.\PAPIInnerProduct.m
+# End Source File
+# Begin Source File
+
+SOURCE=.\PAPIMatrixMatrix.m
+# End Source File
+# Begin Source File
+
+SOURCE=.\PAPIMatrixVector.m
 # End Source File
 # End Group
 # Begin Source File

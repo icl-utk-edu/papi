@@ -55,7 +55,7 @@ directory (you'll have a different compile string on a
 different architecture):
 
 1. Compile the wrapper:
-mex -I/usr/local/include PAPI_flops.c -L/usr/local/lib/libpapi.a
+mex -I/usr/local/include PAPI_flops.c -L/usr/local/lib/libpapi.a -output flops
 
 2.  Start Matlab:
 matlab
