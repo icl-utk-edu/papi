@@ -48,10 +48,12 @@
      . 'PAPI_library_init', retval)
       end if
 
-      call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_set_debug', retval)
+      if ( tests_quiet.EQ.0 ) then
+         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
+         if ( retval.NE.PAPI_OK) then
+            call ftest_fail(__FILE__, __LINE__,
+     .          'PAPIf_set_debug', retval)
+         end if
       end if
       
       call PAPIf_query_event(mask1, retval)
