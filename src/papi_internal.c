@@ -775,37 +775,6 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 	    }
 	}
     }
-#if 0
-	/* scan the native event list for this event set */
-	for(i=0;i<ESI->NativeCount;i++){
-		if(native[i].ni_index==-1)
-			continue;
-		if(native[i].ni_owners==0){
-			int copy=0;
-	    		/* if no more owners, mark for removal */
-			zero++;
-			_papi_hwd_remove_native(this_state, &native[i]);
-			for(j=ESI->NativeCount-1;j>i;j--){
-				if(native[j].ni_index==-1)
-					continue;
-				else{
-					memcpy(native+i, native+j, sizeof(NativeInfo_t));
-					memset(native+j, 0, sizeof(NativeInfo_t));
-					native[j].ni_index=-1;
-					copy++;
-					break;
-				}
-			}
-			if(copy==0){
-				memset(native+i, 0, sizeof(NativeInfo_t));
-				native[j].ni_index=-1;
-			}
-		}
-	}
-
-	/* to reset hwd_control_state values */
-	ESI->NativeCount-=zero;
-#endif
 
     /* Remove any native events from the array if owners dropped to zero.
 	The NativeInfoArray must be dense, with no empty slots, so if we
@@ -813,9 +782,10 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
     count = ESI->NativeCount;
     for(i=0;i<count;i++){
 	if(native[i].ni_owners==0){
-	    /* if no more owners, decrement the count and shift remaining elements */
+	    /* if no more owners, decrement the count and shift any remaining elements */
 	    count--;
-	    memcpy(&native[i], &native[i+1], sizeof(NativeInfo_t) * (count-i));
+	    if (i < count)
+		memcpy(&native[i], &native[i+1], sizeof(NativeInfo_t) * (count-i));
 	}
     }
 
@@ -834,8 +804,8 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 
 int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 {
-  int j = 0, retval, thisindex;
-
+  int j = 0, retval, thisindex, count;
+  EventInfo_t *array;
 
   thisindex = _papi_hwi_lookup_EventCodeIndex(ESI,EventCode);
   if (thisindex < PAPI_OK)
@@ -845,59 +815,58 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
      this threads multiplex list */
 
   if (ESI->state & PAPI_MULTIPLEXING)
-    {
+  {
       retval = mpx_remove_event(&ESI->multiplex,EventCode); 
       if (retval < PAPI_OK)
-	return(retval);
-   }
+  	  return(retval);
+  }
   else    
-    /* Remove the events hardware dependant stuff from the EventSet */
-    {
-        /* Make sure the event is preset. */
-		if (EventCode & PRESET_MASK)
-		{
-			int preset_index = EventCode & PRESET_AND_MASK;
-			
-			/* Check if it's within the valid range */
-			
-			if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
-				return(PAPI_EINVAL);
-			
-			/* Check if event exists */
-			
-			if (!_papi_hwi_presets[preset_index].avail)
-				return(PAPI_ENOEVNT);
-			
-			/* Try to remove the preset. */
-			
-			remove_native_events(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
-		}
-		else if(EventCode & NATIVE_MASK)
-		{
-			int native_index = EventCode & NATIVE_AND_MASK;
+  /* Remove the events hardware dependent stuff from the EventSet */
+  {
+      if (EventCode & PRESET_MASK)
+      {
+	  int preset_index = EventCode & PRESET_AND_MASK;
+	  
+	  /* Check if it's within the valid range */	  
+	  if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
+		  return(PAPI_EINVAL);
+	  
+	  /* Check if event exists */
+	  if (!_papi_hwi_presets[preset_index].avail)
+		  return(PAPI_ENOEVNT);
+	  
+	  /* Remove the preset event. */
+	  remove_native_events(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
+      }
+      else if(EventCode & NATIVE_MASK)
+      {
+	  int native_index = EventCode & NATIVE_AND_MASK;
 
-			/* Check if it's within the valid range */
-			
-			if ((native_index < 0) || (native_index >= PAPI_MAX_NATIVE_EVENTS))
-				return(PAPI_EINVAL);
+	  /* Check if it's within the valid range */
+	  if ((native_index < 0) || (native_index >= PAPI_MAX_NATIVE_EVENTS))
+		  return(PAPI_EINVAL);
 
-			/* Try to remove the native. */
-			
-			remove_native_events(ESI, &native_index, 1);
-		}
-		else
-			return(PAPI_ENOEVNT);
+	  /* Remove the native event. */
+	  remove_native_events(ESI, &native_index, 1);
+      }
+      else
+	  return(PAPI_ENOEVNT);
 
-		/* clean the EventCode (machine independent) information */
+      /* dereference a couple values for cleaner code */
+      count = ESI->NumberOfEvents;
+      array = ESI->EventInfoArray;
 
-		ESI->EventInfoArray[thisindex].event_code = PAPI_NULL;
-		for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
-     		ESI->EventInfoArray[thisindex].pos[j] = -1;
-		ESI->EventInfoArray[thisindex].ops = NULL;
-		ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
-	
-    }
+     /* Compact the Event Info Array list if it's not the last event */
+      if (thisindex < (count - 1))
+	  memcpy(&array[thisindex], &array[thisindex+1], sizeof(EventInfo_t) * (count - thisindex - 1));
 
+      /* clear the newly empty slot in the array */
+      array[count].event_code = PAPI_NULL;
+      for(j=0;j<_papi_hwi_system_info.num_cntrs;j++)
+      array[count].pos[j] = -1;
+      array[count].ops = NULL;
+      array[count].derived = NOT_DERIVED;
+  }
   ESI->NumberOfEvents--;
 
   return(PAPI_OK);
