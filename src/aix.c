@@ -729,7 +729,7 @@ int _papi_hwd_update_shlib_info(void)
          int cc=0;
          retval=fseek(map_f, tmp1[i].pr_pathoff, SEEK_SET); 
          if (retval != 0) return(PAPI_ESYS);
-         while((retval=fread(&c, 1, 1, map_f)) > 0 ) {
+         while(fscanf(map_f, "%c", &c) != EOF ) {
              name[cc]=c;
              cc++;
              if(c=='\0') break;
