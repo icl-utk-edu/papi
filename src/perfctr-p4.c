@@ -725,10 +725,18 @@ spinlock_t lock[PAPI_MAX_LOCK];
 volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
 #endif
 /* volatile uint32_t lock; */
-void _papi_hwd_lock_init(void){
-int i;
-for(i=0;i<PAPI_MAX_LOCK;i++)
-  lock[i] = MUTEX_OPEN;
+                                                                                
+#include <inttypes.h>
+                                                                                
+void _papi_hwd_lock_init()
+{
+  int lck;
+  for (lck=0;lck<PAPI_MAX_LOCK;lck++)
+#ifdef __x86_64__
+    spin_lock_init(&lock[lck]);
+#else
+    lock[lck] = MUTEX_OPEN;
+#endif
 }
                                                                                 
                                                                                 
