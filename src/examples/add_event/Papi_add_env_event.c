@@ -24,7 +24,7 @@
  *
  * To use only add_event you would change the calls to 
  * PAPI_add_env_event(int *EventSet, int *Event, char *env_variable);
- * to PAPI_add_event(int EventSet, int Event);
+ * to PAPI_add_event(int *EventSet, int Event);
  *
  * We will also use PAPI_event_code_to_name since the event may have
  * changed.
@@ -32,13 +32,14 @@
  * email:  london@cs.utk.edu
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include "papi.h" /* This needs to be included anytime you use PAPI */
 
 int PAPI_add_env_event(int *EventSet, int *Event, char *env_variable);
 
 
 int main(){
-  int retval;
+  int retval,i;
   int EventSet=PAPI_NULL;
   int event_code=PAPI_TOT_INS; /* By default monitor total instructions */
   char errstring[PAPI_MAX_STR_LEN];
@@ -102,7 +103,7 @@ int main(){
         exit(-1);
   }
 
-  printf(Ending values for %s: %lld\n", event_name,values);
+  printf("Ending values for %s: %lld\n", event_name,values);
   /* Remove PAPI instrumentation, this is necessary on platforms
    * that need to release shared memory segments and is always
    * good practice.
@@ -132,9 +133,9 @@ int PAPI_add_env_event(int *EventSet, int *EventCode, char *env_variable){
         }
     }
   }
-  if ( (retval = PAPI_add_event(*EventSet, real_event))!= PAPI_OK ){
+  if ( (retval = PAPI_add_event( EventSet, real_event))!= PAPI_OK ){
         if ( real_event != *EventCode ) {
-                if ( (retval = PAPI_add_event(*EventSet, *EventCode)) == PAPI_OK
+                if ( (retval = PAPI_add_event( EventSet, *EventCode)) == PAPI_OK
 ){
                         real_event = *EventCode;
                 }
