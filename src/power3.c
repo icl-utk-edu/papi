@@ -72,6 +72,7 @@ static hwi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
    {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions executed */
    {PAPI_INT_INS, {0, {PNE_PM_FXU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Integer instructions executed */
    {PAPI_FP_INS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
+   {PAPI_FP_OPS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
    {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Load instructions executed */
    {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
    {PAPI_FLOPS, {DERIVED_PS, {PNE_PM_CYC, PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Floating Point instructions per second */
@@ -115,6 +116,7 @@ static hwi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
    {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions executed */
    {PAPI_INT_INS, {0, {PNE_PM_FXU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Integer instructions executed */
    {PAPI_FP_INS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
+   {PAPI_FP_OPS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
    {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Load instructions executed */
    {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
    {PAPI_FLOPS, {DERIVED_PS, {PNE_PM_CYC, PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Floating Point instructions per second */
@@ -160,10 +162,11 @@ static hwi_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
    {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions executed */
    {PAPI_INT_INS, {DERIVED_ADD, {PNE_PM_FXU0_PROD_RESULT, PNE_PM_FXU1_PROD_RESULT, PNE_PM_FXU2_PROD_RESULT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Integer instructions executed */
    {PAPI_FP_INS, {DERIVED_ADD, {PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Floating point instructions executed */
+   {PAPI_FP_OPS, {DERIVED_ADD, {PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PNE_PM_EXEC_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Floating point instructions executed */
    {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Load instructions executed */
    {PAPI_SR_INS, {0, {PNE_PM_ST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Store instructions executed */
    {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
-   {PAPI_FLOPS, {DERIVED_ADD_PS, {PNE_PM_CYC, PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Floating Point instructions per second */
+   {PAPI_FLOPS, {DERIVED_ADD_PS, {PNE_PM_CYC, PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PNE_PM_EXEC_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Floating Point instructions per second */
    {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Total cycles */
    {PAPI_IPS, {DERIVED_PS, {PNE_PM_CYC, PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Instructions executed per second */
    {PAPI_LST_INS, {DERIVED_ADD, {PNE_PM_LD_CMPL, PNE_PM_ST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total load/store inst. executed */
