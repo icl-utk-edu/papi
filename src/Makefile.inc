@@ -1,11 +1,11 @@
 PAPI_SRCDIR = $(PWD)	
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
-    papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c
+    papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c preset.c
 OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
+    papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o preset.o
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h preset.h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
 
@@ -78,6 +78,9 @@ $(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
 
 extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
+
+preset.o: preset.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c preset.c -o preset.o 
 
 multiplex.o: multiplex.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o 
