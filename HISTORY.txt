@@ -12,7 +12,7 @@ It was created after the fact to try to capture PAPI's evolution.
 Early details may be sketchy; we hope to keep more recent information
 more complete.
 
-PAPI Release 2.3.4: March 2003
+PAPI Release 2.3.4: April 2003
 ------------------------------
 (oops, we let a few minor releases slip in)
 
