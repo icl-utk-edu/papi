@@ -38,7 +38,7 @@ void *Thread(void *arg)
 {
   int retval, num_tests = 1;
   int EventSet1;
-  int PAPI_events, mask1;
+  int PAPI_event, mask1;
   int num_events1;
   long_long **values;
   long_long elapsed_us, elapsed_cyc;
