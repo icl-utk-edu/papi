@@ -35,6 +35,24 @@ extern _data;
 /* globals */
 pm_info_t pminfo;
 
+/* Locks */
+extern atomic_p lock;
+#define _papi_hwd_lock_init()                   \
+{                                               \
+}
+
+#define _papi_hwd_lock(lck)                     \
+while(_check_lock(&lock[lck],0,1 == TRUE)       \ 
+{                                               \
+      usleep(1000);                             \
+}
+
+#define _papi_hwd_unlock(lck)                   \
+do                                              \
+{                                               \
+  _clear_lock(&lock[lck], 0);                   \
+}
+
 /* prototypes */
 
 #endif  /* _PAPI_AIX */

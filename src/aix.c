@@ -16,6 +16,8 @@
 /* Machine dependent info structure */
 extern papi_mdi_t _papi_hwi_system_info;
 
+/* Locking variables */
+atomic_p lock[PAPI_MAX_LOCK];
 
 /* 
  some heap information, start_of_text, start_of_data .....
@@ -566,24 +568,6 @@ void *_papi_hwd_get_overflow_address(void *context)
   location = (void *)info->sc_jmpbuf.jmp_context.iar;
 
   return(location);
-}
-
-static atomic_p lock[PAPI_MAX_LOCK];
-
-void _papi_hwd_lock_init(void)
-{
-}
-
-#define _papi_hwd_lock(lck)			\
-while(_check_lock(&lock[lck],0,1 == TRUE)	\
-{						\
-      usleep(1000);				\
-}
-
-#define _papi_hwd_unlock(lck)			\
-do						\
-{						\
-  _clear_lock(&lock[lck], 0);			\
 }
 
 
