@@ -21,9 +21,9 @@ void print_control(pmctr_t *control) {
    SUBDBG("   CTR0 value:%d\n", control->CTR0);
    SUBDBG("   CTR1 value:%d\n", control->CTR1);
    SUBDBG("   CTR2 value:%d\n", control->CTR2);
-   SUBDBG("   SEL0 value:%d\n", control->CTR0);
-   SUBDBG("   SEL1 value:%d\n", control->CTR1);
-   SUBDBG("   SEL2 value:%d\n", control->CTR2);
+   SUBDBG("   SEL0 value:%d\n", control->SEL0);
+   SUBDBG("   SEL1 value:%d\n", control->SEL1);
+   SUBDBG("   SEL2 value:%d\n", control->SEL2);
    SUBDBG("   Ku   value:%d\n", control->Ku);
    SUBDBG("   Kp   value:%d\n", control->Kp);
    SUBDBG("   Kk   value:%d\n", control->Kk);
@@ -306,8 +306,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
       return(PAPI_ESBSTR);
 
    pmctr = (pmctr_t *) & pc_data[0];
-   ctrl->values[0] = (pc_data[3] << 16) + (long_long)pmctr->CTR0;
-   ctrl->values[1] = (pc_data[3] << 16) + (long_long)pmctr->CTR1;
+   ctrl->values[0] = (pc_data[1] << 16) + (long_long)pmctr->CTR0;
+   ctrl->values[1] = (pc_data[2] << 16) + (long_long)pmctr->CTR1;
    ctrl->values[2] = (pc_data[3] << 14) + (long_long)pmctr->CTR2;
    *events = ctrl->values;
 #ifdef DEBUG
