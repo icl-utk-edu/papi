@@ -72,9 +72,9 @@ C Skip Alpha till multiplex is fixed. -KSL
       end
 
 C     Print the content of an event set
-      subroutine PrintEventSet(tests_quiet,ES)
+      subroutine PrintEventSet(ES)
       IMPLICIT NONE
-      integer tests_quiet,ES
+      integer ES
       integer MAXEVENT
       parameter(MAXEVENT=64)
       integer n,i,codes(MAXEVENT),retval
@@ -90,16 +90,15 @@ C     Print the content of an event set
         name = ' '
         call PAPIf_event_code_to_name(codes(i),name,retval)
         if(retval .EQ. PAPI_OK)then
-          if (tests_quiet .EQ. 0) then
-            write(*,200) i,codes(i),name
-          end if
+          write(*,200) i,name
         else
           write(*,210) i,codes(i),'**Error looking up the event name**'
         end if
       end do
-  200 format(T1,i4,i12,': ',a40)
-  210 format(T1,i4,i12,': ',a40)
+  200 format(T1,i4,': ',a40)
+  210 format(T1,i4,' (',i12.11,'): ',a40)
 
+      write(*,*)
       end
 
 C     Tests that PAPI_multiplex_init does not mess with normal operation. 
@@ -142,7 +141,10 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
         end if
       end if
 
-      call PrintEventSet(tests_quiet,EventSet)
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Event set list'
+        call PrintEventSet(EventSet)
+      end if
 
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -225,7 +227,10 @@ C     Tests that PAPI_set_multiplex() works before adding events
         end if
       end if
 
-      call PrintEventSet(tests_quiet,EventSet)
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Event set list'
+        call PrintEventSet(EventSet)
+      endif
 
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -305,13 +310,21 @@ C     Tests that PAPI_set_multiplex() works after adding events
      *retval)
       end if
 
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Event set before call to PAPIf_set_multiplex:'
+        call PrintEventSet(EventSet)
+      endif
+
       call PAPIf_set_multiplex(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .   'papif_set_multiplex', retval)
       end if
 
-      call PrintEventSet(tests_quiet,EventSet)
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Event set after call to PAPIf_set_multiplex:'
+        call PrintEventSet(EventSet)
+      endif
 
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -394,13 +407,23 @@ C     PAPI_add_event()/PAPI_set_multiplex()
         end if
       end if
 
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Event set before call to PAPIf_set_multiplex:'
+        call PrintEventSet(EventSet)
+      endif
+
       call PAPIf_set_multiplex(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
      .   'papif_set_multiplex', retval)
       end if
 
-#if (defined(i386)&&defined(linux))||defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux))
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Event set after call to PAPIf_set_multiplex:'
+        call PrintEventSet(EventSet)
+      endif
+
+#if (defined(i386)&&defined(linux))||defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || (SUBSTR==aix-power)
       call PAPIf_add_event( EventSet, PAPI_L1_DCM, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
@@ -443,7 +466,10 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       print *,'*** Did not match in event selection ***'
 #endif
 
-      call PrintEventSet(tests_quiet,EventSet)
+      if(tests_quiet .EQ. 0) then
+        write(*,*) 'Updated event set list:'
+        call PrintEventSet(EventSet)
+      endif
 
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
