@@ -31,7 +31,7 @@ C count the first event?
       j = 0
       i = 0
 
-      print *, 'Run in quiet mode (enter 0 for yes, 1 for no)?'
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
       read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT

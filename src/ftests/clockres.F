@@ -15,7 +15,7 @@
       ITERS=10000.0
       handle=0
 
-      print *, 'Run in quiet mode (enter 0 for yes, 1 for no)?'
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
       read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
@@ -25,7 +25,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *, 'Test case: Clock resolution.'
       print *,'-----------------------------------------------'
       end if
@@ -48,7 +48,7 @@
         total_usec=total_usec+(elapsed_usec(i) - elapsed_usec(i-1))
       end do
  
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *,'PAPIf_get_real_cyc : ',(total_cyc/(ITERS-1))
       print *,'PAPIf_get_real_usec: ',(total_usec/(ITERS-1))
       end if

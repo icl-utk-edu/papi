@@ -17,8 +17,7 @@ C Hardware info
       CHARACTER*(10) avail_str, flags_str
       integer tests_quiet
 
-      tests_quiet = 0
-      print *, 'Run in quiet mode (enter 0 for yes, 1 for no)?'
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
       read(5,*) tests_quiet
       handle=0 
       check = PAPI_VER_CURRENT
@@ -30,7 +29,7 @@ C         call ftests_fail(__FILE__'PAPI_library_init',check)
       call PAPIf_get_hardware_info( ncpu,nnodes,totalcpus,vendor,
      .     vstring, model, mstring, revision, mhz )
 
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *, 'Hardware information and available events'
       print *, '------------------------------------------------'
       n=len_trim(vstring)
@@ -62,14 +61,14 @@ C         call ftests_fail(__FILE__'PAPI_library_init',check)
             flags_str = 'No'
          end if
 
-         if (check.EQ.PAPI_OK .and. tests_quiet .NE. 0) then
+         if (check.EQ.PAPI_OK .and. tests_quiet .EQ. 0) then
             write (*, 100) event_name, z'80000000'+i, avail_str, 
      *       flags_str, event_descr, event_note
  100  format(A20, '\t', Z8, '\t', A5, '\t',  A5, '\t', A50, 
      *'(', A30, ')') 
          end if
       end do
-      if (tests_quiet .NE. 0) then 
+      if (tests_quiet .EQ. 0) then 
       print *, '------------------------------------------------'
       end if
 

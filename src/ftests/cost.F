@@ -14,10 +14,10 @@
       External len_trim
       integer tests_quiet
 
-      print *, 'Run in quiet mode (enter 0 for yes, 1 for no)?'
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
       read(5,*) tests_quiet
 
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *, "Cost of execution for PAPI start/stop",
      *" and PAPI read."
       print *, "This test takes a while. Please be patient..."
@@ -57,7 +57,7 @@
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .NE. 0) then
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
         end if
@@ -66,7 +66,7 @@
       call PAPIf_add_event( es, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .NE. 0) then
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
         end if
@@ -81,7 +81,7 @@
       call PAPIf_add_event( costes, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .NE. 0) then
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
         end if
@@ -90,13 +90,13 @@
       call PAPIf_add_event( costes, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .NE. 0) then
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
         end if
       end if
 
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *, "Performing start/stop test..."
       end if
 
@@ -140,7 +140,7 @@
       call PAPIf_get_real_cyc(ntotcyc)
       ntotcyc=ntotcyc-ototcyc
 
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *, "User level cost for PAPI_start/stop(2 counters) over",
      *" 50000 iterations:"
       print *, " ", values(1), " total cyc\n", "  ", values(2), 
@@ -196,7 +196,7 @@ C     Start the read val
 
       ntotcyc=ntotcyc-ototcyc
 
-      if (tests_quiet .NE. 0) then
+      if (tests_quiet .EQ. 0) then
       print *, "User level cost for PAPI_read(2 counters) over",
      *" 50000 iterations:"
       print *, " ", values(1), " total cyc\n", values(2), "  ",
