@@ -70,8 +70,6 @@ typedef struct dadd_alpha_control_state {
    long_long start_value[MAX_COUNTERS];
    /* latest counter numbers */
    long_long latest[MAX_COUNTERS];
-   /* Interrupt interval */
-   int timer_ms;
    /* latest value for cycles */
    long_long latestcycles;
 } dadd_alpha_control_state_t;

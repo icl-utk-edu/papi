@@ -123,8 +123,6 @@ typedef struct hwd_control_state {
    int derived;
    /* Buffer to pass to the PAL code to control the counters */
    pmctr_t counter_cmd;
-   /* Milliseconds between timer interrupts for various things */
-   int timer_ms;
    /* Counter values */
    long_long values[3];
 } hwd_control_state_t;

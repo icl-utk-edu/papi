@@ -51,8 +51,6 @@ typedef struct hwd_control_state {
    int derived;
    /* Buffer to pass to the kernel to control the counters */
    ev_control_t counter_cmd;
-   /* Interrupt interval */
-   int timer_ms;
 } hwd_control_state_t;
 
 /* Preset structure */

@@ -60,8 +60,6 @@ typedef struct hwd_control_state {
    ev_control_t counter_cmd;
    /* Buffer to save the counter number read from the driver */
    ulong cntrs[MAX_COUNTERS];
-   /* Interrupt interval */
-   int timer_ms;
 } hwd_control_state_t;
 
 typedef struct _Context {

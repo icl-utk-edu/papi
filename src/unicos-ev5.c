@@ -389,10 +389,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    hwd_control_state_t *this_state = (hwd_control_state_t *) &ESI->machdep;
 
    if (!threshold) {
-      this_state->timer_ms = 0;
       ESI->overflow.timer_ms = 0;
    } else {
-      this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
       ESI->overflow.timer_ms = 1;
    }
 
