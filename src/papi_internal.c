@@ -765,7 +765,7 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 {
     hwd_control_state_t *this_state= &ESI->machdep;
     NativeInfo_t *native = ESI->NativeInfoArray;
-    int i, j, count, zero=0;
+    int i, j, zero=0;
 
     /* Remove the references to this event from the native events:
        for all the metrics in this event,
@@ -827,7 +827,7 @@ int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
 
 int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 {
-  int j = 0, retval, thisindex, count;
+  int j = 0, retval, thisindex;
   EventInfo_t *array;
 
   thisindex = _papi_hwi_lookup_EventCodeIndex(ESI,EventCode);
