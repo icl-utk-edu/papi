@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program nineth
-      implicit none
+      implicit integer (p)
 
       integer es1, es2
       integer*8 values(10),tvalues(10)

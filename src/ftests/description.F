@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program description
-      implicit none
+      implicit integer (p)
 
       integer es1, number
       integer*8 values(10)

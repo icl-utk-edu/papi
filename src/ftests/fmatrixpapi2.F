@@ -12,7 +12,7 @@ C ****************************************************************************
 #include "fpapi_test.h"
 
       program fmatrixpapi
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
@@ -175,7 +175,7 @@ C  Stop the counters and put the results in the array values
       end
 
       subroutine Adding_MatMult(p,q,r,ni,nk,nj)
-      implicit none
+      implicit integer (p)
       integer ni,nk,nj
       real*8 p(ni,*),q(nk,*),r(ni,nj)
 

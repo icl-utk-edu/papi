@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program highlevel
-      implicit none
+      implicit integer (p)
 
       integer*8 values(10)
       integer events(2)

@@ -22,7 +22,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 #define ERRCODE PAPI_EINVAL
        
       program strtest
-      implicit none
+      implicit integer (p)
       
       CHARACTER*(PAPI_MAX_STR_LEN) papistr,papierr
       CHARACTER*(PAPI_MAX_STR_LEN/2) papihalfstr
@@ -199,7 +199,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine checkstr(incode,string,outcode,check,lastchar,quiet)
-      implicit none
+      implicit integer (P)
       integer incode
       integer outcode,check,lastchar, quiet
       character*(*) string
@@ -263,7 +263,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine test_papif_perror(incode,string,check,quiet)
-      implicit none
+      implicit integer (P)
       integer incode,check,quiet
       character*(*) string
       integer code,i
@@ -292,7 +292,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine test_papif_descr(name,code,string,check,quiet)
-      implicit none
+      implicit integer (P)
       integer code
       integer check,quiet
       character*(*) name,string
@@ -328,7 +328,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       integer function getstrlen(string)
-      implicit none
+      implicit integer (P)
       character*(*) string
       integer i
 
@@ -346,7 +346,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine findnull(string,quiet)
-      implicit none
+      implicit integer (P)
       integer quiet,i
       character*(*) string
 
@@ -365,7 +365,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
 
       subroutine checkcode(code,check,quiet)
-      implicit none
+      implicit integer (P)
       integer code
       integer check,quiet
 
@@ -383,7 +383,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine checkname(name,check,quiet)
-      implicit none
+      implicit integer (P)
       character*(*) name
       character*(*) check
       integer i,quiet

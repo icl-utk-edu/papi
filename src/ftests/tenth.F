@@ -30,7 +30,7 @@
 #endif
 
       program tenth
-      implicit none
+      implicit integer (p)
 
       integer*8 values(10)
       integer es1, es2, es3

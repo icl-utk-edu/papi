@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program multiplex1
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       integer retval
       integer tests_quiet, get_quiet
@@ -40,7 +40,7 @@
       end
 
       subroutine init_papi(tests_quiet, event)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer retval
       integer tests_quiet, event
 
@@ -67,7 +67,7 @@
 
 C     Tests that PAPI_multiplex_init does not mess with normal operation. 
       subroutine case1(ret, tests_quiet)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ret, tests_quiet, event
       integer retval, EventSet
       INTEGER*8 values(4)
@@ -137,7 +137,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
 
 C     Tests that PAPI_set_multiplex() works before adding events
       subroutine case2(ret, tests_quiet)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ret, tests_quiet, event
       integer retval, EventSet
       INTEGER*8 values(4)
@@ -215,7 +215,7 @@ C  for multiplexed event sets (change -4711 to 0 when it is working)
 
 C     Tests that PAPI_set_multiplex() works after adding events
       subroutine case3(ret, tests_quiet)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ret, tests_quiet, event
       integer retval, EventSet
       INTEGER*8 values(4)
@@ -299,7 +299,7 @@ C     Tests that PAPI_set_multiplex() works before adding events
 C     Tests that PAPI_add_event() works after
 C     PAPI_add_event()/PAPI_set_multiplex()
       subroutine case4(ret, tests_quiet)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ret, tests_quiet, event
       integer retval, EventSet
       INTEGER*8 values(4)

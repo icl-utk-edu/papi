@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program multiplex2
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       integer retval
       integer tests_quiet, get_quiet
@@ -20,7 +20,7 @@
       end
 
       subroutine init_papi(tests_quiet)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer retval
       integer tests_quiet
 
@@ -40,7 +40,7 @@
       end
 
       subroutine case1(tests_quiet, ret)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer tests_quiet
       integer retval
       integer i, ret, fd

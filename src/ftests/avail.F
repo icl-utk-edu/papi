@@ -3,7 +3,7 @@ C Hardware info
 #include "fpapi_test.h"
 
       program avail
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       INTEGER ncpu,nnodes,totalcpus,vendor,model, check, handle, n
       CHARACTER*(PAPI_MAX_STR_LEN) vstring, mstring

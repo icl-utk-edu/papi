@@ -11,7 +11,7 @@ C count the first event?
 #include  "fpapi_test.h"
 
       program case1
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       INTEGER EventSet
       INTEGER retval

@@ -13,7 +13,7 @@ C 2 counters.
 #include "fpapi_test.h"
 
       program case2
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       REAL c,a,b
       INTEGER n

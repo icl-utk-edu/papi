@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program accum
-      implicit none
+      implicit integer (p)
 
       integer es1, number, i
       integer*8 values(10)

@@ -2,7 +2,7 @@
 
 
       program native
-      implicit none
+      implicit integer (p)
 
       integer*8 values(10)
       integer i, n

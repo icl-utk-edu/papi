@@ -9,7 +9,7 @@ C****************************************************************************
 #include "fpapi_test.h"
 
       program fmatrixpapi
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)

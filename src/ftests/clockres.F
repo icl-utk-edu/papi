@@ -2,7 +2,7 @@
 #define ITERS 100000
 
       program clockres
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       INTEGER*8 elapsed_usec(ITERS), elapsed_cyc(ITERS)
       INTEGER*8 total_usec, total_cyc

@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program second
-      implicit none
+      implicit integer (p)
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer*8 values(10), max, min

@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program cost
-      implicit none
+      implicit integer (p)
       
       integer es
       integer*8 values(10)

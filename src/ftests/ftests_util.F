@@ -4,10 +4,9 @@
 #if _WIN32
       use dflib
 #endif
-      implicit none
+      implicit integer (p)
       character*25 chbuf
-      common quiet
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1)
       integer ilen,ierror
 #endif
       integer quiet
@@ -19,7 +18,7 @@ C     The routine was placed her to hide the ugly
 C     Windows #if stuff from normal view
 C     And also to make the test code read cleaner
       get_quiet=0
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1)
       call pxfgetarg(1,chbuf,ilen,ierror)
 #else 
       call getarg(1,chbuf)
@@ -33,7 +32,7 @@ C     And also to make the test code read cleaner
 
 
       integer function len_trim(string)
-      implicit none
+      implicit integer (p)
       character*(*) string
 
       do len_trim=len(string),1,-1
@@ -43,7 +42,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_warning(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -52,7 +51,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_fatal_error(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -62,7 +61,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_perror(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -73,7 +72,7 @@ C     And also to make the test code read cleaner
       end
       
       subroutine ftests_pass(test_str)
-      implicit none
+      implicit integer (p)
       character*(*) test_str
 
       write(*,100) test_str,' PASSED'
@@ -84,7 +83,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_skip(test_str,papiretval)
-      implicit none
+      implicit integer (p)
       character*(*) test_str
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer papiretval,iret
@@ -106,7 +105,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftest_fail(file, line, callstr, retval)
-      implicit none
+      implicit integer (p)
       character*(*) file
       integer line
       character*(*) callstr
@@ -148,7 +147,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftest_skip(file, line, callstr, retval)
-      implicit none
+      implicit integer (p)
       character*(*) file
       integer line
       character*(*) callstr
@@ -180,7 +179,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine stringify_domain(domain, str)
-      implicit none      
+      implicit integer (p)      
       integer domain
       character*(PAPI_MAX_STR_LEN) str
 
@@ -200,7 +199,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine stringify_granularity(granularity, str)
-      implicit none      
+      implicit integer (p)      
       integer granularity
       character*(PAPI_MAX_STR_LEN) str
 
@@ -227,7 +226,7 @@ C     For Windows, it links to a simple C routine
 C     that prompts the user for a keypress
 C     For every other platform it is a nop.
       subroutine pause()
-      implicit none      
+      implicit integer (p)      
       integer quiet
       common quiet
 
@@ -240,7 +239,7 @@ C     For every other platform it is a nop.
 
 C     Print the content of an event set
       subroutine PrintEventSet(ES)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ES
       integer MAXEVENT
       parameter(MAXEVENT=64)

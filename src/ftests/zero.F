@@ -1,7 +1,6 @@
 #include "fpapi_test.h"
       
       program zero
-      implicit none
 
       integer*8 values(10)
       integer es, event

@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program first
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       
       integer event1
       INTEGER retval
