@@ -3,24 +3,24 @@ To Do List for PAPI Documentation
 
 - Re do the PAPI API Specification/User Manual
 
-- Make PAPI_preset man page that lists all the presets
-
 - Make PAPI_native man page that shows how to encode native events on all supported platforms
-
-- Make PAPI_query_event check the syntax of native events (will require adding new decoder call to substrate)
-
-- Make PAPI_low_level man page that lists the low level API calls and all references
-
-- Make PAPI_high_level man page that lists the high level API calls and all references
 
 - Make PAPI_multiplex_init man page
 
 - Make PAPI_set_opt man page for multiplexing
 
+- Make PAPI_get_overflow_address, PAPI_lock, PAPI_unlock man pages
+
+- Make PAPI_set_debug, PAPI_write man pages
+
 Comments: Man pages should use the PAPI_query_event page as a template for full markup.
 
 To Do List for PAPI Source Code
 -------------------------------
+
+- Make PAPI_query_event check the syntax of native events (will require adding new decoder call to substrate)
+
+- Make PAPI_restore/PAPI_save
 
 1) Revise the list of options, remove SET & GET from the names. That should be
 handled by the appropriate code.
