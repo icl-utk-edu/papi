@@ -188,7 +188,7 @@ native_event_entry_t native_table[] = {
    {"SCACHE_MISSES_CBOX2",
     "Count Scache misses, CBOX input 2.",
     {-1, -1, 0xF}},
-   {"", "", {-1, -1, -1}}
+   {"", "", {0, 0, 0}}
 };
 
 /*************************************/
@@ -212,7 +212,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    information to a given pointer. */
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector == 0)
+   if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector[0] == 0)
 {
       return (PAPI_ENOEVNT);
    }
@@ -224,8 +224,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector)
- {
+   if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector[0]) {
       *EventCode = *EventCode + 1;
       return (PAPI_OK);
    } else {
