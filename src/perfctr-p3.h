@@ -57,7 +57,6 @@ extern volatile unsigned int lock[PAPI_MAX_LOCK];
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
-#ifdef __x86_64__
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
 {                                               \
@@ -73,23 +72,6 @@ do                                              \
    unsigned int res = 0;                       \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
-#else
-#define _papi_hwd_lock(lck)                                     \
-do                                                              \
-{                                                               \
-   unsigned int res = 0;                                       \
-   do {                                                         \
-   __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");               \
-   } while(res != (unsigned int)MUTEX_OPEN);                   \
-} while(0);
-
-#define  _papi_hwd_unlock(lck)                                 \
-do                                                             \
-{                                                              \
-   unsigned int res = 0;                                      \
-   __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                              \
-}while(0);
-#endif
 
 /* Overflow-related defines and declarations */
 typedef struct {
