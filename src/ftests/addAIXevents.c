@@ -134,9 +134,9 @@ void addaixevents__(int *EventSet, int *retval)
 void pmtoolkit12(int *retval)
 {
 #ifdef PMTOOLKIT_1_2
-  *retval = 1;
-#else
   *retval = 0;
+#else
+  *retval = 1;
 #endif
 }
 
