@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 /*
 #if (defined(sun) && defined(sparc)) || (defined(mips) && defined(sgi) && defined(unix))
 */
-#if (defined(sun) && defined(sparc)) || defined(POWER3)
+#if (defined(sun) && defined(sparc)) || defined(POWER3) || defined(__ATHLON__)
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK)
       PAPI_event = PAPI_TOT_INS;

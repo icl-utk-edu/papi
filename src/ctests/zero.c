@@ -38,7 +38,7 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
-#if defined(sparc) && defined(sun)
+#if (defined(sparc) && defined(sun)) || defined(__ATHLON__)
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
       PAPI_event = PAPI_TOT_INS;

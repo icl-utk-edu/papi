@@ -67,7 +67,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-#if defined(POWER3)
+#if defined(POWER3) || defined(__ATHLON__)
    PAPI_event = PAPI_TOT_INS;
 #else
    /* query and set up the right instruction to monitor */
