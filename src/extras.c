@@ -216,7 +216,7 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
 }
 
 /* find the first set bit in long long */
-static int ffsll(long_long lli)
+int _papi_hwi_ffsll(long_long lli)
 {
    int i, num, t, tmpint, len;
 
@@ -232,7 +232,7 @@ static int ffsll(long_long lli)
       }
       lli = lli>>len;
    }
-   return 0;
+   return PAPI_OK;
 }
 
 /* if isHardware is true, then the processor is using hardware overflow,
@@ -312,7 +312,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
                     "dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",
                     latest, ESI->overflow.deadline[i], ESI->overflow.threshold[i]));
                pos = ESI->EventInfoArray[papi_index].pos[0];
-               overflow_vector ^= 1 << pos;
+               overflow_vector ^= (long long )1 << pos;
                temp[i] = latest - ESI->overflow.threshold[i];
                overflow_flag = 1;
                /* adjust the deadline */
@@ -330,7 +330,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
           * need us to generate the overflow bit
           */
          pos = ESI->EventInfoArray[papi_index].pos[0];
-         overflow_vector = 1 << pos;
+         overflow_vector = (long long )1 << pos;
       } else if (isHardware)
          overflow_vector = overflow_bit;
       if (isHardware || overflow_flag) {
@@ -338,7 +338,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
          if (ESI->state & PAPI_PROFILING) {
             int k = 0;
             while (overflow_vector) {
-               i = ffsll(overflow_vector) - 1;
+               i = _papi_hwi_ffsll(overflow_vector) - 1;
                for (j = 0; j < event_counter; j++) {
                   papi_index = ESI->overflow.EventIndex[j];
                  /* This loop is here ONLY because Pentium 4 can have tagged *
@@ -361,7 +361,7 @@ foundit:
                else
                   over = temp[profile_index];
                dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
-               overflow_vector ^= 1 << i;
+               overflow_vector ^= (long long )1 << i;
             }
             /* do not use overflow_vector after this place */
          } else {
