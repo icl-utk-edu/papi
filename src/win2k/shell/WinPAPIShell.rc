@@ -1,0 +1,203 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_WINPAPISHELL        ICON    DISCARDABLE     "WinPAPIShell.ICO"
+IDI_SMALL               ICON    DISCARDABLE     "Papismall.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDC_WINPAPISHELL MENU DISCARDABLE 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    MENUITEM "&Kernel",                     IDM_TEST_KERNEL
+    POPUP "&Info"
+    BEGIN
+        MENUITEM "avail",                       IDM_AVAIL
+        MENUITEM "clock resolution",            IDM_CLOCKRES
+        MENUITEM "cost",                        IDM_COST
+        MENUITEM "get_cycles",                  IDM_GET_CYCLES
+        MENUITEM "&Int'l Strings",              IDM_STRINGS
+        MENUITEM "Int'l &Errors",               IDM_ERRORS
+        MENUITEM "Nils' System Info",           IDM_NILS
+    END
+    POPUP "&Low Tests"
+    BEGIN
+        MENUITEM "zero",                        IDM_ZERO
+        MENUITEM "first",                       IDM_FIRST
+        MENUITEM "second",                      IDM_SECOND
+        MENUITEM "third",                       IDM_THIRD
+        MENUITEM "fourth",                      IDM_FOURTH
+        MENUITEM "fifth",                       IDM_FIFTH
+        MENUITEM "ninth",                       IDM_NINETH
+        MENUITEM "tenth",                       IDM_TENTH
+    END
+    POPUP "Hi&gh Tests"
+    BEGIN
+        MENUITEM "FLOPS",                       IDM_FLOPS
+        MENUITEM "High Level",                  IDM_HILEVEL
+        MENUITEM "DGEMM",                       IDM_DGEMM
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About ...",                  IDM_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_WINPAPISHELL ACCELERATORS MOVEABLE PURE 
+BEGIN
+    "?",            IDM_ABOUT,              ASCII,  ALT
+    "/",            IDM_ABOUT,              ASCII,  ALT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 22, 17, 184, 125
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_RTLREADING
+CAPTION "About"
+FONT 8, "System"
+BEGIN
+    CONTROL         132,IDC_STATIC,"Static",SS_BITMAP,0,0,184,125
+    DEFPUSHBUTTON   "OK",IDOK,149,109,30,11,WS_GROUP
+    CTEXT           "",IDC_STATIC,6,61,172,45,SS_CENTERIMAGE,
+                    WS_EX_CLIENTEDGE
+    LTEXT           "WinPAPI Shell Application Version 1.0",IDC_STATIC,30,66,
+                    124,8,SS_NOPREFIX
+    LTEXT           "Shell and Windows 2000 Driver by Dan Terpstra",
+                    IDC_STATIC,13,75,158,8
+    LTEXT           "PAPI library by Phil Mucci",IDC_STATIC,50,83,85,8
+    LTEXT           "Copyright (C) 2001",IDC_STATIC,62,93,60,8
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""resource.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP3             BITMAP  DISCARDABLE     "bitmap3.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_APP_TITLE           "WinPAPIShell"
+    IDS_ZERO                "This is test zero..."
+    IDS_FIRST               "This is the first test..."
+    IDS_HELLO               "Hello World!"
+    IDS_SECOND              "This is the second test..."
+    IDS_THIRD               "This is the third test..."
+    IDC_WINPAPISHELL        "WINPAPISHELL"
+    IDS_NILS                "Nils Smed's System Information"
+    IDS_STRINGS             "International String and Label Test"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ERRORS              "International Error String Test"
+    IDS_GET_CYCLES          "Test the get_cycles() timing routine..."
+    IDS_AVAIL               "This runs the avail() test..."
+    IDS_FOURTH              "This is the fourth test..."
+    IDS_FIFTH               "This is the fifth test..."
+    IDS_NINETH              "This is the ninth test..."
+    IDS_TENTH               "This is the tenth test..."
+    IDS_COST                "This is the cost analysis test..."
+    IDS_CLOCKRES            "This test examines clock resolution..."
+    IDS_FLOPS               "This test computes floating point operations per second."
+    IDS_HILEVEL             "This test exercises the High Level PAPI interface."
+    IDS_DGEMM               "Test the ATLAS DGEMM computation."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
