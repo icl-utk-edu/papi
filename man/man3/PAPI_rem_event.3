@@ -7,14 +7,18 @@ PAPI_rem_event, PAPI_rem_events, PAPI_rem_pevent \- add PAPI preset or native ha
 .SH SYNOPSIS
 .B #include <papi.h>
 
-.BI "int\ PAPI_rem_event(int *" EventSet ", int " EventCode);
-.BI "int\ PAPI_rem_events(int *" EventSet ", int *" EventCode ", int "num);
+.nf
+.BI "int\ PAPI_rem_event(int *" EventSet ", int " EventCode ");"
+.BI "int\ PAPI_rem_events(int *" EventSet ", int *" EventCode ", int " num ");"
+.BI "int\ PAPI_rem_pevent(int *" EventSet ", int " code ", void * " misc ");"
+.if
 
 .SH DESCRIPTION
-.B PAPI_rem_event()
-adds a hardware event to a PAPI Event Set. 
-.B PAPI_rem_events()
-does the same, but for an array of hardware event codes.
+.nf
+.BR "PAPI_rem_event() " "adds a hardware event to a PAPI Event Set."
+.BR "PAPI_rem_events() " "does the same, but for an array of hardware event codes."
+.BR "PAPI_rem_pevents() " "is reserved for future use."
+.if
 
 Each of these functions takes the following as its first argument:
 .LP
@@ -24,13 +28,12 @@ Each of these functions takes the following as its first argument:
 
 A hardware event can be either a PAPI Preset or a native hardware event code. 
 For a list of PAPI preset events, see
-.BR PAPI_preset "(3)"
-or run the
+.BR "PAPI_preset" "(3) or run the"
 .I avail
 test case in the PAPI distribution. PAPI Presets can be passed to
-.BR PAPI_query "(3)"
-to see if they exist on the underlying architecture. For the encoding
-of native events, see the <arch>.README file also included the distribution. 
+.BR "PAPI_query" "(3) to see if they exist on the underlying architecture."
+For the encoding of native events, see the <arch>.README file 
+also included the distribution. 
 
 .SH RETURN VALUES
 On success, this function returns
@@ -57,33 +60,35 @@ The PAPI preset is not available on the underlying hardware.
 
 .SH EXAMPLES
 .LP
-
-  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-.LP
+.nf
+.if t .ft CW
+int EventSet = PAPI_NULL;
+unsigned int native = 0x0;
 	
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  handle_error(1);
 
-  /* Add Total Instructions Executed to our EventSet */
+/* Add Total Instructions Executed to our EventSet */
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
+if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
 
-  /* Start counting */
+/* Start counting */
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
+if (PAPI_start(EventSet) != PAPI_OK)
+  handle_error(1);
 
-  /* Stop counting, ignore values */
+/* Stop counting, ignore values */
 
-  if (PAPI_stop(EventSet, NULL) != PAPI_OK)
-    handle_error(1);
+if (PAPI_stop(EventSet, NULL) != PAPI_OK)
+  handle_error(1);
 
-  /* Remove event */
+/* Remove event */
 
-  if (PAPI_rem_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
+if (PAPI_rem_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  handle_error(1);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
@@ -96,5 +101,5 @@ This function has no known bugs.
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_rem_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
+The\ PAPI\ Web\ Site: 
 .B http://icl.cs.utk.edu/projects/papi

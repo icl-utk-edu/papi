@@ -2,73 +2,70 @@
 .TH PAPI 3 "October, 2000" "" "PAPI"
 
 .SH NAME
-PAPI \- Performance Application Programming Interface Library
+PAPI \- Performance Application Programming Interface
 
-.SH PAPI Low Level Functions
-.nf 
-.B PAPI_accum
-.B PAPI_add_event
-.B PAPI_add_events
-.B PAPI_add_pevent
-.B PAPI_cleanup_eventset
-.B PAPI_create_eventset
-.B PAPI_describe_event
-.B PAPI_destroy_eventset
-.B PAPI_event_code_to_name
-.B PAPI_event_name_to_code
-.B PAPI_get_executable_info
-.B PAPI_get_hardware_info
-.B PAPI_get_opt
-.B PAPI_get_overflow_address
-.B PAPI_get_real_cyc
-.B PAPI_get_real_usec
-.B PAPI_get_real_virt_cyc
-.B PAPI_get_real_virt_usec
-.B PAPI_library_init
-.B PAPI_list_events
-.B PAPI_lock
-.B PAPI_overflow
-.B PAPI_perror
-.B PAPI_profil
-.B PAPI_query_all_events_verbose
-.B PAPI_query_event
-.B PAPI_query_event_verbose
-.B PAPI_read
-.B PAPI_rem_event
-.B PAPI_rem_events
-.B PAPI_reset
-.B PAPI_restore
-.B PAPI_save
-.B PAPI_set_debug
-.B PAPI_set_domain
-.B PAPI_set_granularity
-.B PAPI_set_opt
-.B PAPI_shutdown
-.B PAPI_start
-.B PAPI_state
-.B PAPI_stop
-.B PAPI_thread_init
-.B PAPI_unlock
-.B PAPI_write
-
-.SH PAPI High Level Functions
-.B PAPI_num_counters
-.B PAPI_read_counters
-.B PAPI_stop_counters
-.B PAPI_start_counters
-
-.fi
+.SH SYNOPSIS
+High Level Functions \- Simple interface for single thread applications
 .LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: http://icl.cs.utk.edu/projects/papi/api/ 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
-.fi
+.BR "PAPI_num_counters" (3), 
+.BR "PAPI_read_counters" (3), 
+.BR "PAPI_stop_counters" (3),
+.BR "PAPI_start_counters" (3),
+
+Low Level Functions \- Advanced interface for all applications and performance tools
+
+.BR "PAPI_accum" (3),
+.BR "PAPI_add_event" (3),
+.BR "PAPI_add_events" (3),
+.BR "PAPI_add_pevent" (3),
+.BR "PAPI_cleanup_eventset" (3),
+.BR "PAPI_create_eventset" (3),
+.BR "PAPI_describe_event" (3),
+.BR "PAPI_destroy_eventset" (3),
+.BR "PAPI_event_code_to_name" (3),
+.BR "PAPI_event_name_to_code" (3),
+.BR "PAPI_get_executable_info" (3),
+.BR "PAPI_get_hardware_info" (3),
+.BR "PAPI_get_opt" (3),
+.BR "PAPI_get_overflow_address" (3),
+.BR "PAPI_get_real_cyc" (3),
+.BR "PAPI_get_real_usec" (3),
+.BR "PAPI_get_real_virt_cyc" (3),
+.BR "PAPI_get_real_virt_usec" (3),
+.BR "PAPI_library_init" (3),
+.BR "PAPI_list_events" (3),
+.BR "PAPI_lock" (3),
+.BR "PAPI_overflow" (3),
+.BR "PAPI_perror" (3),
+.BR "PAPI_profil" (3),
+.BR "PAPI_query_all_events_verbose" (3),
+.BR "PAPI_query_event" (3),
+.BR "PAPI_query_event_verbose" (3),
+.BR "PAPI_read" (3),
+.BR "PAPI_rem_event" (3),
+.BR "PAPI_rem_events" (3),
+.BR "PAPI_reset" (3),
+.BR "PAPI_restore" (3),
+.BR "PAPI_save" (3),
+.BR "PAPI_set_debug" (3),
+.BR "PAPI_set_domain" (3),
+.BR "PAPI_set_granularity" (3),
+.BR "PAPI_set_opt" (3),
+.BR "PAPI_shutdown" (3),
+.BR "PAPI_start" (3),
+.BR "PAPI_state" (3),
+.BR "PAPI_stop" (3),
+.BR "PAPI_thread_init" (3), 
+.BR "PAPI_unlock" (3),
+.BR "PAPI_write" (3),
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
-Please contact us if this list is in error or if anything on
-any PerfAPI Manpage is in error or unclear.
-.LP
-The PerfAPI email address is: ptools-perfapi@ptools.org
+This woeful excuse for a man page.
+
+.SH SEE ALSO
+The\ PAPI\ Web\ Site: 
+.B http://icl.cs.utk.edu/projects/papi
 

@@ -3,10 +3,20 @@
 
 .SH NAME
 PAPI_profil, PAPI_sprofil \- generate PC histogram data where hardware counter overflow occurs
-.LP
+
 .SH SYNOPSIS
+.B #include <papi.h>
+
+.BI "int PAPI_sprofil(PAPI_sprofil_t *" prof ", int " profcnt 
+.BI ", int " EventSet ", int " EventNum ", int " threshold
+.BI ", int " flags ");"
 .LP
-int PAPI_sprofil (prof, profcnt, EventSet, EventNum, threshold, flags)
+.BI "int PAPI_profil(unsigned short *" buf ", unsigned " bufsiz
+.BI ", unsigned long " offset ", unsigned " scale ", int " EventSet 
+.BI ", int " EventCode ", int " threshold 
+.BI ", int " flags ");"
+
+.SH DESCRIPTION
 .LP
 PAPI_sprofil_t *prof -- pointer to array of profile buffers.
 .LP
@@ -20,7 +30,6 @@ int threshold -- threshold value for the Event triggers the handler.
 .LP
 int flags -- flags to control the behavior of PAPI_sprofil(). 
 .LP
-.SH DESCRIPTION
 
 .SH RETURN VALUES
 On success, this function returns
@@ -49,42 +58,64 @@ in the EventSet simultaneously.
 The PAPI preset is not available on the underlying hardware. 
 
 .SH EXAMPLES
-.LP
+.nf
+.if t .ft CW
+int retval;
+int EventSet = PAPI_NULL;
+unsigned long start, end, length;
+PAPI_exe_info_t *prginfo;
+unsigned short *profbuf;
 
-  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-.LP
-	
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
+retval = PAPI_library_init(PAPI_VER_CURRENT);
 
-  /* Add Total Instructions Executed to our EventSet */
+if (retval > 0) {
+  fprintf(stderr,"PAPI library version mismatch!\n");
+  exit(1); }
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
+if (retval < 0) 
+  handle_error(retval);
 
-  /* Add native event (0xc1 on hardware counter 1) */
+if ((prginfo = PAPI_get_executable_info()) == NULL)
+  handle_error(1);
 
-  native = (0xc1 << 8) | 1;
-  if (PAPI_add_event(&EventSet, native) != PAPI_OK)
-    handle_error(1);
+start = (unsigned long)prginfo->text_start;
+end = (unsigned long)prginfo->text_end;
+length = end - start;
 
-  /* Start counting */
+profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
+if (profbuf == NULL)
+  handle_error(1);
+memset(profbuf,0x00,length*sizeof(unsigned short));
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
+if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
+  handle_error(retval);
+
+/* Add Total FP Instructions Executed to our EventSet */
+
+if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS)) != PAPI_OK)
+  handle_error(retval);
+
+if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet, PAPI_FP_INS, 1000000, PAPI_PROFIL_POSIX)) != PAPI_OK)
+  handle_error(retval);
+
+/* Start counting */
+
+if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+  handle_error(1);
+.if t .ft P
+.fi
 
 .SH AUTHOR
 Philip J. Mucci <mucci@cs.utk.edu>
 
 .SH BUGS
-This function has no known bugs.
+This woeful man page.
 
 .SH SEE ALSO
-.BR PAPI_preset "(3), "
+.BR PAPI_preset "(3), " PAPI_get_executable_info "(3), "
 .BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
 .BR PAPI_rem_events "(3), " PAPI_query "(3), "
 .BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
-The PAPI Web Site: 
+The\ PAPI\ Web\ Site: 
 .B http://icl.cs.utk.edu/projects/papi
 
