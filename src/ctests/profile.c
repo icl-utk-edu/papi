@@ -81,38 +81,38 @@ int main(int argc, char **argv)
    }
    start = (unsigned long) prginfo->address_info.text_start;
    end = (unsigned long) prginfo->address_info.text_end;
-   length = end - start;
+   length = (end - start)/sizeof(unsigned short) * sizeof(unsigned short);
 
-   profbuf = (unsigned short *) malloc(length * sizeof(unsigned short));
+   profbuf = (unsigned short *) malloc(length );
    if (profbuf == NULL) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "malloc", retval);
    }
-   memset(profbuf, 0x00, length * sizeof(unsigned short));
-   profbuf2 = (unsigned short *) malloc(length * sizeof(unsigned short));
+   memset(profbuf, 0x00, length );
+   profbuf2 = (unsigned short *) malloc(length );
    if (profbuf2 == NULL) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "malloc", retval);
    }
-   memset(profbuf2, 0x00, length * sizeof(unsigned short));
-   profbuf3 = (unsigned short *) malloc(length * sizeof(unsigned short));
+   memset(profbuf2, 0x00, length );
+   profbuf3 = (unsigned short *) malloc(length );
    if (profbuf3 == NULL) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "malloc", retval);
    }
-   memset(profbuf3, 0x00, length * sizeof(unsigned short));
-   profbuf4 = (unsigned short *) malloc(length * sizeof(unsigned short));
+   memset(profbuf3, 0x00, length );
+   profbuf4 = (unsigned short *) malloc(length );
    if (profbuf4 == NULL) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "malloc", retval);
    }
-   memset(profbuf4, 0x00, length * sizeof(unsigned short));
-   profbuf5 = (unsigned short *) malloc(length * sizeof(unsigned short));
+   memset(profbuf4, 0x00, length );
+   profbuf5 = (unsigned short *) malloc(length );
    if (profbuf5 == NULL) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "malloc", retval);
    }
-   memset(profbuf5, 0x00, length * sizeof(unsigned short));
+   memset(profbuf5, 0x00, length );
 
    EventSet = add_test_events(&num_events, &mask);
 
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
       printf("-----------------------------------------\n");
       printf("PAPI_profil() hash table.\n");
       printf("address\t\tflat\trandom\tweight\tcomprs\tall\n");
-      for (i = 0; i < (int) length; i++) {
+      for (i = 0; i < (int) length/2; i++) {
          if ((profbuf[i]) || (profbuf2[i]) || (profbuf3[i]) || (profbuf4[i])
              || (profbuf5[i]))
             printf("0x%lx\t%d\t%d\t%d\t%d\t%d\n",
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
    remove_test_events(&EventSet, mask);
 
    retval = 0;
-   for (i = 0; i < (int) length; i++)
+   for (i = 0; i < (int) length/2; i++)
       retval = retval || (profbuf[i]) || (profbuf2[i]) ||
           (profbuf3[i]) || (profbuf4[i]) || (profbuf5[i]);
    if (retval)
