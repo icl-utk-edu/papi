@@ -71,12 +71,13 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 
 #if defined (_CRAYT3E)
-  static char *native_name[] = {"MACHINE_CYCLES", "DCACHE_ISSUED", "CPU_CYC", NULL,NULL,NULL};
+  static char *native_name[] = {"MACHINE_CYCLES", "DCACHE_ACCESSES", "CPU_CYC", NULL};
 #endif
 
 #if defined(linux) && defined(__ia64__)
 #ifdef ITANIUM2
-   static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",        "IA64_INST_RETIRED", NULL
+   static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",
+      "IA64_INST_RETIRED", NULL
    };
 #else
    static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE",

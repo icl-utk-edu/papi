@@ -1,9 +1,7 @@
 #ifndef _PAPI_UNICOS_H
 #define _PAPI_UNICOS_H
 
-#define HAVE_FFSLL
 #define UMK
-
 #include <stdio.h>
 #include <signal.h>
 #include <assert.h>
@@ -21,8 +19,8 @@
 #include <sys/unistd.h>
 #include <mpp/globals.h>
 
-#define MAX_COUNTER_TERMS  4
-#define MAX_COUNTERS  4
+#define MAX_COUNTER_TERMS  3
+#define MAX_COUNTERS  3
 #define inline_static static
 
 #include "papi.h"
@@ -132,6 +130,8 @@ typedef struct hwd_control_state {
    pmctr_t counter_cmd;
    /* Milliseconds between timer interrupts for various things */
    int timer_ms;
+   /* Counter values */
+   long_long values[3];
 } hwd_control_state_t;
 
 typedef struct hwd_register { /* The entries != -1 imply which mask to use. */
@@ -147,20 +147,15 @@ typedef struct native_event_entry {
    hwd_register_t resources;
 } native_event_entry_t;
 
-typedef struct t3e_context {
-   struct pmctr_t *pmctr;
-} t3e_context_t;
+typedef struct hwd_context {
+   pmctr_t *pmctr;
+} hwd_context_t;
 
-typedef struct t3e_register {
-   unsigned int selector;       /* Mask for which counters in use */
-   int counter_cmd;             /* The event code */
-} t3e_register_t;
-
-typedef struct t3e_reg_alloc {
-   t3e_register_t ra_bits;      /* Info about this native event mapping */
+typedef struct hwd_reg_alloc {
+   hwd_register_t ra_bits;      /* Info about this native event mapping */
    unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
    unsigned ra_rank;            /* How many counters can carry this metric */
-} t3e_reg_alloc_t;
+} hwd_reg_alloc_t;
 
 #pragma _CRI soft $MULTION
 extern $MULTION(void);
@@ -177,9 +172,11 @@ do {                                    \
 
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
-typedef t3e_context_t hwd_context_t;
-typedef t3e_reg_alloc_t hwd_reg_alloc_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext->uc_mcontext.gregs[31])
+
+extern native_event_entry_t *native_table;
+extern hwi_search_t *preset_search_map;
+extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #endif

@@ -11,10 +11,12 @@
 
 extern hwi_search_t *preset_search_map;
 extern native_event_entry_t *native_table;
+extern hwi_search_t _papi_hwd_t3e_preset_map;
+extern native_event_entry_t _papi_hwd_t3e_native_table;
 extern papi_mdi_t _papi_hwi_system_info;
 
 #ifdef DEBUG
-void print_control(const struct pmctr_t *control) {
+void print_control(pmctr_t *control) {
    SUBDBG("Command block at %p:\n", control);
    SUBDBG("   CTR0 value:%d\n", control->CTR0);
    SUBDBG("   CTR1 value:%d\n", control->CTR1);
@@ -67,7 +69,6 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    default:
       abort();
    }
-
    ptr->counter_cmd.Kp = kill_pal;
    ptr->counter_cmd.Ku = kill_user;
    ptr->counter_cmd.Kk = kill_kernel;
@@ -81,16 +82,21 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t *ctx) {
-   int i;
+   int i, index;
 
    /* fill the counters we're using */
    _papi_hwd_init_control_state(this_state);
-   for (i = 0; i < count; i++) {
+   for(i = 0; i < count; i++) {
+      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+      native[i].ni_bits.selector[0] = native_table[index].resources.selector[0];
+      native[i].ni_bits.selector[1] = native_table[index].resources.selector[1];
+      native[i].ni_bits.selector[2] = native_table[index].resources.selector[2];
       /* Add counter control command values to eventset */
       if(native[i].ni_bits.selector[0] != -1) {
          if(this_state->counter_cmd.CTL0) {
             return (PAPI_ECNFLCT);
          }
+         this_state->selector |= CNTR1;
          this_state->counter_cmd.SEL0 = native[i].ni_bits.selector[0];
          this_state->counter_cmd.CTL0 = CTL_ON;
       }
@@ -98,6 +104,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
          if(this_state->counter_cmd.CTL1) {
             return (PAPI_ECNFLCT);
          }
+         this_state->selector |= CNTR2;
          this_state->counter_cmd.SEL1 = native[i].ni_bits.selector[1];
          this_state->counter_cmd.CTL1 = CTL_ON;
       }
@@ -105,15 +112,20 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
          if(this_state->counter_cmd.CTL2) {
             return (PAPI_ECNFLCT);
          }
+         this_state->selector |= CNTR3;
          this_state->counter_cmd.SEL2 = native[i].ni_bits.selector[2];
          this_state->counter_cmd.CTL2 = CTL_ON;
       }
+      native[i].ni_position = i;
    }
+#ifdef DEBUG
+   print_control(&this_state->counter_cmd);
+#endif
    return(PAPI_OK);
 }
 
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-   return 1;
+   return(1);
 }
 
 int _papi_hwd_set_domain(hwd_control_state_t * this_state, int domain)
@@ -234,7 +246,9 @@ int _papi_hwd_init_global(void) {
       return (retval);
 
    /* Setup presets */
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+   native_table = &_papi_hwd_t3e_native_table;
+   preset_search_map = &_papi_hwd_t3e_preset_map;
+   retval = _papi_hwi_setup_all_presets(&_papi_hwd_t3e_preset_map);
    if (retval)
       return (retval);
 
@@ -265,13 +279,13 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    state->counter_cmd.CTR0 = 0;
    state->counter_cmd.CTR1 = 0;
    state->counter_cmd.CTR2 = 0;
+#ifdef DEBUG
+   print_control(&state->counter_cmd);
+#endif
    if((error = _wrperf(state->counter_cmd, 0, 0, 0)) < 0) {
       SUBDBG("_wrperf returns: %d\n", error);
       return(PAPI_ESYS);
    }
-#ifdef DEBUG
-   print_control(&state->counter_cmd);
-#endif
    return (PAPI_OK);
 }
 
@@ -286,24 +300,25 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events)
 {
    pmctr_t *pmctr;
-   long_long *pc_data[4];
+   long_long pc_data[4];
 
    if(_rdperf(pc_data))
       return(PAPI_ESBSTR);
 
    pmctr = (pmctr_t *) & pc_data[0];
-   *events[0] = (*pc_data[1] << 16) + pmctr->CTR0;
-   *events[1] = (*pc_data[2] << 16) + pmctr->CTR1;
-   *events[2] = (*pc_data[3] << 14) + pmctr->CTR2;
+   ctrl->values[0] = (pc_data[3] << 16) + (long_long)pmctr->CTR0;
+   ctrl->values[1] = (pc_data[3] << 16) + (long_long)pmctr->CTR1;
+   ctrl->values[2] = (pc_data[3] << 14) + (long_long)pmctr->CTR2;
+   *events = ctrl->values;
 #ifdef DEBUG
    {
       if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
          SUBDBG("raw val hardware index 0 is %lld\n",
-               (long_long *) *events[0]);
+               (long_long) ctrl->values[0]);
          SUBDBG("raw val hardware index 1 is %lld\n",
-               (long_long *) *events[1]);
+               (long_long) ctrl->values[1]);
          SUBDBG("raw val hardware index 2 is %lld\n",
-               (long_long *) *events[2]);
+               (long_long) ctrl->values[2]);
       }
    }
 #endif
@@ -312,7 +327,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
 
 int _papi_hwd_setmaxmem()
 {
-   return (PAPI_OK);
+   return(PAPI_OK);
 }
 
 int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
@@ -389,7 +404,7 @@ void _papi_hwd_lock_init(void)
 /* Initialize the system-specific settings */
 extern int _papi_hwd_mdi_init()
 {
-     /* Name of the substrate we're using */
+    /* Name of the substrate we're using */
     strcpy(_papi_hwi_system_info.substrate, "$Id$");
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
@@ -416,6 +431,7 @@ void __pdf_th_destroy(void)
 
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 {
+   return(1);
 }
 
 void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
@@ -424,12 +440,12 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
 
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 {
-   return (PAPI_OK);
+   return(1);
 }
 
 int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
-   return (PAPI_OK);
+   return(1);
 }
 
 void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)

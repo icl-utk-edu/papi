@@ -13,27 +13,28 @@
 #include "papi_protos.h"
 
 hwi_search_t *preset_search_map;
+native_event_entry_t *native_table;
 
 enum {
-   PNE_T3E_MACHINE_CYC = 0x40000000,
-   PNE_T3E_INS,
-   PNE_T3E_NON_ISSUE_CYC,
-   PNE_T3E_SPLIT_ISSUE_CYC,
-   PNE_T3E_ISSUE_PIPE_DRY_CYC,
-   PNE_T3E_REPLAY_TRAP_CYC,
-   PNE_T3E_SINGLE_ISSUE_CYC,
-   PNE_T3E_DUAL_ISSUE_CYC,
-   PNE_T3E_TRIPLE_ISSUE_CYC,
-   PNE_T3E_QUAD_ISSUE_CYC,
+   PNE_T3E_MACHINE_CYCLES = 0x40000000,
+   PNE_T3E_INSTRUCTIONS,
+   PNE_T3E_NON_ISSUE_CYCLES,
+   PNE_T3E_SPLIT_ISSUE_CYCLES,
+   PNE_T3E_ISSUE_PIPE_DRY_CYCLES,
+   PNE_T3E_REPLAY_TRAP_CYCLES,
+   PNE_T3E_SINGLE_ISSUE_CYCLES,
+   PNE_T3E_DUAL_ISSUE_CYCLES,
+   PNE_T3E_TRIPLE_ISSUE_CYCLES,
+   PNE_T3E_QUAD_ISSUE_CYCLES,
    PNE_T3E_JSR_RET_FC,
    PNE_T3E_COND_BR_FC,
    PNE_T3E_ALL_FC,
-   PNE_T3E_INT_INS,
-   PNE_T3E_FP_INS,
-   PNE_T3E_LOADS,
-   PNE_T3E_STORES,
-   PNE_T3E_ICACHE,
-   PNE_T3E_DCACHE,
+   PNE_T3E_INTEGER_INSTRUCTIONS,
+   PNE_T3E_FP_INSTRUCTIONS,
+   PNE_T3E_LOADS_ISSUED,
+   PNE_T3E_STORES_ISSUED,
+   PNE_T3E_ICACHE_ISSUED,
+   PNE_T3E_DCACHE_ACCESSES,
    PNE_T3E_SCACHE_ACCESSES_CBOX1,
    PNE_T3E_15_CYC_STALLS,
    PNE_T3E_PC_MISPREDICTS,
@@ -57,32 +58,32 @@ enum {
    Notes:
    Resource stalls only count long(>15 cycle) stalls and not MB stall cycles
 */
-const hwi_search_t _papi_hwd_preset_map[] = {
-   {PAPI_L1_DCM, {0, {PNE_T3E_DCACHE, PAPI_NULL, PAPI_NULL}, {0,}}},
+const hwi_search_t _papi_hwd_t3e_preset_map[] = {
+   {PAPI_L1_DCM, {0, {PNE_T3E_DCACHE_ACCESSES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_ICM, {0, {PNE_T3E_ICACHE_RFB_MISSES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_TLB_DM, {0, {PNE_T3E_DTB_MISSES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_TLB_IM, {0, {PNE_T3E_ITB_MISSES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_MEM_SCY, {0, {PNE_T3E_MB_STALL_CYC, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_STL_ICY, {0, {PNE_T3E_NON_ISSUE_CYC, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_FUL_ICY, {0, {PNE_T3E_QUAD_ISSUE_CYC, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_STL_CCY, {0, {PNE_T3E_NON_ISSUE_CYC, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_FUL_CCY, {0, {PNE_T3E_QUAD_ISSUE_CYC, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_STL_ICY, {0, {PNE_T3E_NON_ISSUE_CYCLES, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_FUL_ICY, {0, {PNE_T3E_QUAD_ISSUE_CYCLES, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_STL_CCY, {0, {PNE_T3E_NON_ISSUE_CYCLES, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_FUL_CCY, {0, {PNE_T3E_QUAD_ISSUE_CYCLES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_BR_UCN, {DERIVED_ADD, {PNE_T3E_JSR_RET_FC, PNE_T3E_PC_MISPREDICTS, PAPI_NULL}, {0,}}},
    {PAPI_BR_CN, {DERIVED_ADD, {PNE_T3E_JSR_RET_FC, PNE_T3E_BR_MISPREDICTS, PAPI_NULL}, {0,}}},
    {PAPI_BR_MSP, {0, {PNE_T3E_BR_MISPREDICTS, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_IIS, {0, {PNE_T3E_ICACHE, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_INS, {0, {PNE_T3E_INS, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_INT_INS, {0, {PNE_T3E_INT_INS, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_FP_INS, {0, {PNE_T3E_FP_INS, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_LD_INS, {0, {PNE_T3E_LOADS, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_SR_INS, {0, {PNE_T3E_STORES, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_IIS, {0, {PNE_T3E_ICACHE_ISSUED, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_INS, {0, {PNE_T3E_INSTRUCTIONS, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_INT_INS, {0, {PNE_T3E_INTEGER_INSTRUCTIONS, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_FP_INS, {0, {PNE_T3E_FP_INSTRUCTIONS, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_LD_INS, {0, {PNE_T3E_LOADS_ISSUED, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_SR_INS, {0, {PNE_T3E_STORES_ISSUED, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_T3E_JSR_RET_FC, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_RES_STL, {0, {PNE_T3E_15_CYC_STALLS, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_CYC, {0, {PNE_T3E_MACHINE_CYC, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_CYC, {0, {PNE_T3E_MACHINE_CYCLES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
-native_event_entry_t native_table[] = {
+const native_event_entry_t _papi_hwd_t3e_native_table[] = {
    {"MACHINE_CYCLES",
     "Count machine cycles.",
     {0x0, -1, -1}},
@@ -212,8 +213,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    information to a given pointer. */
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector[0] == 0)
-{
+   if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector[0] == 0) {
       return (PAPI_ENOEVNT);
    }
    bits = &native_table[EventCode & PAPI_NATIVE_AND_MASK].resources;
@@ -224,7 +224,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector[0]) {
+   if(native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector[0]) {
       *EventCode = *EventCode + 1;
       return (PAPI_OK);
    } else {
