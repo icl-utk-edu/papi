@@ -134,11 +134,15 @@ C    used in the program. See eg. fmatrixpapi.F
       integer papiretval
       integer len_trim
       external len_trim
+      integer quiet
+	common quiet
 
       write(*,100) test_str,' SKIPPED'
-      if(papiretval.lt.0)then
-        call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
-        write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
+	if (quiet .eq. 0) then
+        if(papiretval.lt.0)then
+          call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
+          write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
+        end if
       end if
        call pause()
       stop
@@ -164,11 +168,10 @@ C    used in the program. See eg. fmatrixpapi.F
 
       if ( retval.ne.0 )then
           write(*,100) file,' FAILED'
-          write(*,*) 'Line # ', line
       else
 		write(*,100) file,' SKIPPED'
-          write(*,*) 'Line #', line
       end if
+      write(*,*) 'Line #', line
 
       if (retval.eq.PAPI_ESYS) then
          write(*,*) "System error in ", callstr
@@ -192,6 +195,8 @@ C    used in the program. See eg. fmatrixpapi.F
       integer line
       character*(*) callstr
       integer retval
+      integer quiet
+	common quiet
 
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer len_trim
@@ -199,14 +204,16 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,100) file, ': SKIPPED'
       write(*,*) 'Line #', line
-      if(retval.eq.PAPI_ESYS) then
-         write(*,*) "System error in ", callstr
-      else if (retval.gt.0) then
-         write(*,*) "Error calculating: ", callstr
-      else
-        call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
-        write(*,*) 'Error in ', callstr, ' : ', 
+	if (quiet .eq. 0) then
+		if(retval.eq.PAPI_ESYS) then
+		   write(*,*) "System error in ", callstr
+		else if (retval.gt.0) then
+		   write(*,*) "Error calculating: ", callstr
+		else
+		  call PAPIF_perror(retval,papi_errstr,len(papi_errstr))
+		  write(*,*) 'Error in ', callstr, ' : ', 
      *       papi_errstr(1:len_trim(papi_errstr))
+		end if
       end if
        call pause()
       stop
