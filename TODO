@@ -1,0 +1,7 @@
+- Make PAPI_preset man page that lists all the presets
+- Make PAPI_native man page that shows how to encode native events on all supported platforms
+- Make PAPI_query_event check the syntax of native events (will require adding new decoder call to substrate)
+- Make PAPI_low_level man page that lists the low level API calls and all references
+- Make PAPI_high_level man page that lists the high level API calls and all references
+
+Comments: Man pages should use the PAPI_query_event page as a template for full markup.
