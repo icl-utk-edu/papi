@@ -109,6 +109,12 @@ inline static int setup_all_presets(int cpu_type)
       abort();
     }
 
+  if (cpu_type == PERFCTR_X86_GENERIC)
+    {
+      fprintf(stderr,"This processor is not properly identified. Only TSC available.\n");
+      return PAPI_ESBSTR;
+    }
+
   if (cpu_type == PERFCTR_X86_AMD_K7)
     preset_map = k7_preset_map;
   else
@@ -203,11 +209,43 @@ inline static void init_config(hwd_control_state_t *ptr)
 
   ptr->selector = 0;
 #ifdef PERFCTR20
-  ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
-  ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode;
-  ptr->counter_cmd.cpu_control.tsc_on=1;
-  ptr->counter_cmd.cpu_control.nractrs=2;
-  ptr->counter_cmd.cpu_control.nrictrs=0;
+  switch(_papi_system_info.hw_info.model)
+    {
+    case PERFCTR_X86_GENERIC:
+    case PERFCTR_X86_CYRIX_MII:
+    case PERFCTR_X86_WINCHIP_C6: 
+    case PERFCTR_X86_WINCHIP_2:
+    case PERFCTR_X86_VIA_C3:    
+      ptr->counter_cmd.cpu_control.tsc_on=1;
+      ptr->counter_cmd.cpu_control.nractrs=0;
+      ptr->counter_cmd.cpu_control.nrictrs=0;
+      break;
+    case PERFCTR_X86_INTEL_P5:
+    case PERFCTR_X86_INTEL_P5MMX:
+    case PERFCTR_X86_INTEL_P6:
+    case PERFCTR_X86_INTEL_PII:  
+    case PERFCTR_X86_INTEL_PIII: 
+      ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode;
+      ptr->counter_cmd.cpu_control.tsc_on=1;
+      ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
+      ptr->counter_cmd.cpu_control.nrictrs=0;
+      break;
+    case PERFCTR_X86_INTEL_P4:   /* This needs to be set to the right values */
+      ptr->counter_cmd.cpu_control.tsc_on=1;
+      ptr->counter_cmd.cpu_control.nractrs=0;
+      ptr->counter_cmd.cpu_control.nrictrs=0;
+      break;
+    case PERFCTR_X86_AMD_K7:
+      ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.cpu_control.evntsel[2] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.cpu_control.evntsel[3] |= def_mode | PERF_ENABLE;
+      ptr->counter_cmd.cpu_control.tsc_on=1;
+      ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
+      ptr->counter_cmd.cpu_control.nrictrs=0;
+      break;
+    }
   /* Identity counter map for starters */
   for(i=0;i<_papi_system_info.num_cntrs;i++) 
     ptr->counter_cmd.cpu_control.pmc_map[i]=i;
