@@ -25,9 +25,9 @@
      . 'PAPI_library_init', retval)
       end if
 
-      call PAPIf_query_event(PAPI_FP_INS, retval)
+      call PAPIf_query_event(PAPI_FP_OPS, retval)
       if (retval.NE.PAPI_OK) then
-        call ftest_skip(__FILE__, __LINE__, 'PAPI_FP_INS', PAPI_ENOEVNT)
+        call ftest_skip(__FILE__, __LINE__, 'PAPI_FP_OPS', PAPI_ENOEVNT)
       end if
 
       if ( tests_quiet.EQ.0 ) then
@@ -45,7 +45,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es1, PAPI_FP_OPS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -109,7 +109,7 @@
      . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_remove_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es1, PAPI_FP_OPS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
@@ -161,7 +161,7 @@
       print *, "---------------------------------------------"
  
       write (*,810) "Test type   :", 1, 2
-      write (*,810) "PAPI_FP_INS :", tvalues(1), 0
+      write (*,810) "PAPI_FP_OPS :", tvalues(1), 0
       write (*,810) "PAPI_TOT_CYC:", tvalues(2), 0
       write (*,810) "PAPI_FLOPS  :", 0, values(1)
       print *, "---------------------------------------------"      
