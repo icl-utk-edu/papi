@@ -42,7 +42,7 @@
 
 /* Many Unix systems passes Fortran string lengths as extra arguments */
 /* Compaq Visual Fortran on Windows also supports this convention */
-#if defined(__i386__) || defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(__x86_64__) || (defined(linux) && defined(__ia64__)) || ( defined(__ALPHA) && defined(__osf__)) 
+#if defined ( __crayx1 ) || defined(__i386__) || defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(__x86_64__) || (defined(linux) && defined(__ia64__)) || ( defined(__ALPHA) && defined(__osf__)) 
 #define _FORTRAN_STRLEN_AT_END
 #endif
 /* The Low Level Wrappers */
