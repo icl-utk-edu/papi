@@ -53,7 +53,7 @@ C Hardware info
  200  format(A8, A12, A9, A6, A20, A24)
       end if
       do i=0, PAPI_MAX_PRESET_EVENTS-1
-         call papif_query_all_events_verbose(z'80000000'+i, event_name, 
+         call papif_query_event_verbose(z'80000000'+i, event_name, 
      *   event_descr, event_label, avail_flag, event_note, flags, check)
          if (avail_flag.EQ.1) then
             avail_str = 'Yes'
