@@ -12,7 +12,7 @@ TARGETS = serial multiplex_and_pthreads
 CFLAGS  = -g -Wall -I. -I$(LIBPFMHOME)/include -DPFM20 -D_ASM_IA64_PAL_H
 # -DDEBUG
 OPTFLAGS= -O3
-TOPTFLAGS = -OO
+TOPTFLAGS = -O0
 FFLAGS	=
 #  -Vaxlib
 LDFLAGS = 
