@@ -15,7 +15,7 @@ C count the first event?
 
       INTEGER EventSet
       INTEGER retval
-      INTEGER i,errorcode
+      INTEGER i,j, errorcode
       CHARACTER*(PAPI_MAX_STR_LEN) errorstring
       INTEGER*8 gl(2)
       INTEGER n
@@ -27,6 +27,8 @@ C count the first event?
       n = 1000
       a = 0.999
       b = 1.001
+      j = 0
+      i = 0
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
@@ -41,28 +43,43 @@ C count the first event?
         call ftests_fail(__FILE__,retval)
       end if
 
-      call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call PAPIf_perror( retval, errorstring, errorcode)
-         print *, 'Can not add PAPI_L2_TCM: '//
-     $       errorstring(1:len_trim(errorstring))
-      else
-        print *,'Added PAPI_L2_TCM'
+      call PAPIf_query_event(PAPI_L2_TCM, retval)
+      if (retval .EQ. PAPI_OK) then
+        j = j + 1
+      end if
+      if (j .NE. 0) then
+        call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
+        if (retval .NE. PAPI_OK) then
+            if (retval .NE. PAPI_ECNFLCT) then
+              call ftests_fail(__FILE__,retval)
+            else
+              j = j - 1
+            end if
+        end if
+      end if
+      i = j
+
+      call PAPIf_query_event(PAPI_L2_DCM, retval)
+      if (retval .EQ. PAPI_OK) then
+        j = j + 1
+      end if
+      if (j .EQ. i+1) then
+        call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
+        if (retval .NE. PAPI_OK) then
+            if (retval .NE. PAPI_ECNFLCT) then
+              call ftests_fail(__FILE__,retval)
+            else
+              j = j - 1
+            end if
+        end if
       end if
 
-      call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
-      if ( retval .NE. PAPI_OK )then
-         call PAPIf_perror( retval, errorstring, errorcode)
-         print *, 'Can not add PAPI_L2_DCM: '//
-     $       errorstring(1:len_trim(errorstring))
-      else
-         print *,'Added PAPI_L2_DCM'
-      end if
-  
-      call PAPIf_start( EventSet, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error starting counter')
-        call ftests_fail(__FILE__,retval)
+      if (J .GT. 0) then
+        call PAPIf_start( EventSet, retval )
+        if ( retval .NE. PAPI_OK ) then
+          call ftests_perror(__LINE__,'error starting counter')
+          call ftests_fail(__FILE__,retval)
+        end if
       end if
 
 
@@ -70,10 +87,12 @@ C count the first event?
        c = a * b
       end do
 
-      call PAPIf_stop( EventSet, gl, retval ) 
-      if ( retval .NE. PAPI_OK ) then
-        call ftests_perror(__LINE__,'error stopping counter')
-        call ftests_fail(__FILE__,retval)
+      if (j .GT. 0) then
+        call PAPIf_stop( EventSet, gl, retval ) 
+        if ( retval .NE. PAPI_OK ) then
+          call ftests_perror(__LINE__,'error stopping counter')
+          call ftests_fail(__FILE__,retval)
+        end if
       end if
       
       call ftests_pass(__FILE__)
