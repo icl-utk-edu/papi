@@ -3,14 +3,14 @@
       program accum
       implicit none
 
-      integer es1, number
+      integer es1, number, i
       integer*8 values(10)
       integer events(2)
       integer retval
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -45,6 +45,10 @@
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_add_events', retval)
       end if
+
+      do i=1,10
+        values(i)=0
+      end do
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -123,7 +127,7 @@
      *values(6), values(8), values(10)
       print *, "------------------------------------------",
      *"------------------------"
- 100  format(a15, ":", i12, i12, i12, i12, i12)
+ 100  format(a15, ":", i10, i10, i10, i10, i10)
       print *
       print *, "Verification:"
       print *, "Column 2 approximately equals to 0;"
