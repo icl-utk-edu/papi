@@ -107,7 +107,7 @@ C     CPU cyc
       eventname(4) = 'instr_retired_BOGUSNTAG_BOGUSTAG'
       eventname(5) = 'BSQ_cache_reference_RD_2ndL_HITS'
       n = 5
-#elif defined(__ATHLON__)
+#elif defined(__athlon__)
       eventname(1) = 'TOT_CYC'
       eventname(2) = 'IC_MISSES'
       eventname(3) = 'DC_ACCESSES'
