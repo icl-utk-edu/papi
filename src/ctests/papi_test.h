@@ -53,6 +53,8 @@ long_long **allocate_test_space(int num_tests, int num_events);
 int add_test_events(int *number, int *mask);
 int add_test_events_r(int *number, int *mask, void *handle);
 int remove_test_events(int *EventSet, int mask);
+void do_flush(void);
+void do_misses(int n, int size);
 void do_flops(int n);
 void do_reads(int n);
 void do_both(int n);

@@ -1,5 +1,3 @@
-#define ITERS 100
-
 /* This file performs the following test: start, stop and 
    timer functionality for L1 related events
 
@@ -13,36 +11,39 @@
 */
 
 #include "papi_test.h"
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
-
-#define NUMTESTS 41
-#define TEST_NAME "memory"
 
 int main(int argc, char **argv)
 {
-   int retval, num_tests = NUMTESTS, i;
+   int retval, i,j;
    int EventSet;
-   long_long **values;
+   long_long values[2];
    const PAPI_hw_info_t *hwinfo = NULL;
    char descr[PAPI_MAX_STR_LEN];
+   PAPI_event_info_t evinfo;
 
-   const unsigned int eventlist[NUMTESTS] = {
+   const unsigned int eventlist[] = {
+      PAPI_L1_DCA,
+      PAPI_L1_DCM,
+      PAPI_L1_DCH,
+      PAPI_L2_DCA,
+      PAPI_L2_DCM,
+      PAPI_L2_DCH,
+#if 0
+      PAPI_L1_LDM,
+      PAPI_L1_STM,
+      PAPI_L1_DCR,
+      PAPI_L1_DCW,
+      PAPI_L1_ICM,
+      PAPI_L1_TCM,
+      PAPI_LD_INS,
+      PAPI_SR_INS,
+      PAPI_LST_INS,
+      PAPI_L2_DCR,
+      PAPI_L2_DCW,
       PAPI_CSR_TOT,
       PAPI_MEM_SCY,
       PAPI_MEM_RCY,
       PAPI_MEM_WCY,
-      PAPI_LD_INS,
-      PAPI_SR_INS,
-      PAPI_LST_INS,
-      PAPI_L1_DCM,
-      PAPI_L1_ICM,
-      PAPI_L1_TCM,
-      PAPI_L1_LDM,
-      PAPI_L1_STM,
-      PAPI_L1_DCH,
-      PAPI_L1_DCA,
-      PAPI_L1_DCR,
-      PAPI_L1_DCW,
       PAPI_L1_ICH,
       PAPI_L1_ICA,
       PAPI_L1_ICR,
@@ -67,7 +68,9 @@ int main(int argc, char **argv)
       PAPI_L2_TCH,
       PAPI_L2_TCA,
       PAPI_L2_TCR,
-      PAPI_L2_TCW
+      PAPI_L2_TCW,
+#endif
+      0
    };
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -75,66 +78,70 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   values = allocate_test_space(num_tests, 1);
    if ((hwinfo = PAPI_get_hardware_info()) == NULL) {
-      retval = PAPI_ESBSTR;
-      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", retval);
-   }
-
-   if (!TESTS_QUIET) {
-      printf("Available hardware information.\n");
-      printf("-------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n",
-             hwinfo->vendor_string, hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU's in an SMP node     : %d\n", hwinfo->ncpu);
-      printf("Nodes in the system      : %d\n", hwinfo->nnodes);
-      printf("Total CPU's in the system: %d\n", hwinfo->totalcpus);
-      printf("-------------------------------------------------------------\n");
+      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
    }
 
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   for (i = 0; i < num_tests; i++) {
-      values[i][0] = -1L;
-/*      values[i][0] = -1ll; */
+   printf("L1 Cache Total size: %dKB\nL1 Cache Line size: %dB\n",hwinfo->L1_dcache_size,hwinfo->L1_dcache_linesize);
+   printf("L2 Cache Total size: %dKB\nL2 Cache Line size: %dB\n",hwinfo->L2_cache_size,hwinfo->L2_cache_linesize);
+   for (i = 0; eventlist[i] != 0; i++) 
+     {
+       PAPI_event_code_to_name(eventlist[i], descr);
+       if (PAPI_add_event(EventSet, eventlist[i]) != PAPI_OK) 
+         continue;
 
-      PAPI_event_code_to_name(eventlist[i], descr);
-      if (PAPI_add_event(EventSet, eventlist[i]) != PAPI_OK) {
-         if (!TESTS_QUIET)
-            printf("%3d: Test 0x%08x %-12s %14s\n", i, eventlist[i], descr,
-                   "Not available");
-         continue;              /* All events may not be available */
-      }
+       if (PAPI_get_event_info(eventlist[i], &evinfo) != PAPI_OK)
+	 test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
+       
+       printf("\nEvent: %s\nShort: %s\nLong: %s\nName: %s\nVendor: %s\n\n",
+	      evinfo.symbol,
+	      evinfo.short_descr,
+	      evinfo.long_descr,
+	      evinfo.vendor_name,
+	      evinfo.vendor_descr);
+       printf("       Bytes\t\tCold\t\tWarm\tPercent\n");
+       
+       if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+	 test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-      /* Warm me up */
-      do_l1misses(ITERS);
+      for (j = 512; j <= 16*(1024*1024); j = j *2)
+	{
+	  do_misses(1,j);
+	  do_flush();
 
-      if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+	  if ((retval = PAPI_reset(EventSet)) != PAPI_OK)
+	    test_fail(__FILE__, __LINE__, "PAPI_reset", retval);
 
-      do_l1misses(ITERS);
+	  do_misses(1,j);
 
-      if ((retval = PAPI_stop(EventSet, values[i])) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+	  if ((retval = PAPI_read(EventSet,&values[0])) != PAPI_OK)
+	    test_fail(__FILE__, __LINE__, "PAPI_read", retval);
+	  if ((retval = PAPI_reset(EventSet)) != PAPI_OK)
+	    test_fail(__FILE__, __LINE__, "PAPI_reset", retval);
 
-      if (!TESTS_QUIET) {
-         printf("%3d: Test 0x%08x %-12s ", i, eventlist[i], descr);
-         printf(LLDFMT12, values[i][0]);
-         printf("\n");
-      }
-      if ((retval = PAPI_remove_event(EventSet, eventlist[i])) != PAPI_OK) {
-         abort();
-         test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
-      }
-   }
+	  do_misses(1,j);
+
+	  if ((retval = PAPI_read(EventSet,&values[1])) != PAPI_OK)
+	    test_fail(__FILE__, __LINE__, "PAPI_read", retval);
+
+	  printf("%12d\t%12lld\t%12lld\t%.2f\n",
+		 j,values[0],values[1],((float)values[1]/(float)values[0])*100.0);
+	}
+      
+      if ((retval = PAPI_stop(EventSet,NULL)) != PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+      if ((retval = PAPI_remove_event(EventSet, eventlist[i])) != PAPI_OK) 
+	test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
+     }
 
    if ((retval = PAPI_destroy_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
 
-   test_pass(__FILE__, values, num_tests);
+   test_pass(__FILE__, NULL, 0);
+
    exit(1);
 }

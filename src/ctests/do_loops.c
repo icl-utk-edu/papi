@@ -2,7 +2,11 @@
 
 #include "papi_test.h"
 
-static int buf[L1_MISS_BUFFER_SIZE_INTS];
+int buf[CACHE_FLUSH_BUFFER_SIZE_INTS];
+int buf_dummy = 0;
+int *flush = NULL;
+int flush_dummy = 0;
+
 volatile double a = 0.5, b = 2.2;
 
 void do_reads(int n)
@@ -48,14 +52,19 @@ void do_flops(int n)
    }
 }
 
-
-void do_l1misses(int n)
+void do_misses(int n, int size)
 {
-   int i, j;
-
-   for (j = 0; j < n; j++)
-      for (i = 0; i < L1_MISS_BUFFER_SIZE_INTS; i++)
-         buf[i] = buf[L1_MISS_BUFFER_SIZE_INTS - i - 1] + 1;
+  int j;
+  register int i, len = size / sizeof(int), dummy = buf_dummy;
+  for (j = 0; j < n; j++)
+    {
+      for (i = 0; i < len; i++)
+	{
+	  buf[i] = dummy;
+	}
+      dummy += j;
+    }
+  buf_dummy = dummy;
 }
 
 void do_both(int n)
@@ -68,4 +77,21 @@ void do_both(int n)
       do_flops(flops);
       do_reads(reads);
    }
+}
+
+void do_flush(void)
+{
+  register int i;
+  if (flush == NULL)
+    flush = (int *)malloc((1024*1024*16)*sizeof(int));
+  for (i=0;i<(1024*1024*16);i++)
+    {
+      flush[i] += flush_dummy;
+    }
+  flush_dummy++;
+}
+
+void do_l1misses(int n)
+{
+  do_misses(n,L1_MISS_BUFFER_SIZE_INTS);
 }

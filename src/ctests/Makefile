@@ -5,11 +5,11 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads ove
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
-SERIAL  = exeinfo shlib zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info  \
+SERIAL  = memory exeinfo shlib zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops first second cost johnmay2 clockres \
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
-	matrix-hl tenth memory \
+	matrix-hl tenth \
 	profile  sprofile profile_32 profile_64 profile_twoevents earprofile branchprofile \
 	ipc native native_avail
 BROKEN	= inherit pernode

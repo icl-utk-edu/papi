@@ -44,12 +44,16 @@ void init_papi_pthreads(void)
    int retval;
    const unsigned int *inev;
    unsigned int *outev;
-   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+   const PAPI_hw_info_t *hw_info;
 
    /* Initialize the library */
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if(!(strncmp(hw_info->model_string, "AMD K7", 6))) {
       preset_PAPI_events[0] = PAPI_TOT_INS;

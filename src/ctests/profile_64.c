@@ -43,7 +43,7 @@ int main(int argc, char **argv)
    unsigned long start, end;
    long_long **values;
    const PAPI_exe_info_t *prginfo = NULL;
-   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+   const PAPI_hw_info_t *hw_info;
    int retval;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -54,6 +54,10 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    /* query and set up the right instruction to monitor */
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&

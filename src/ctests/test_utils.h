@@ -1,4 +1,3 @@
-
 #define SUCCESS 1
 #define FAILURE 0
 #define NUM_THREADS 4
@@ -7,6 +6,7 @@
 #define NUM_READS  1
 #define THRESHOLD   1000000
 #define L1_MISS_BUFFER_SIZE_INTS 128*1024
+#define CACHE_FLUSH_BUFFER_SIZE_INTS 4*1024*1024
 #define TOLERANCE   .1
 #define OVR_TOLERANCE .75
 #define MPX_TOLERANCE .20

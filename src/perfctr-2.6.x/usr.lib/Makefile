@@ -3,7 +3,7 @@
 SHELL=/bin/sh
 ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 CC=gcc
-CFLAGS=-O2 -fomit-frame-pointer -Wall
+CFLAGS=-O -g -Wall
 BUILD_INCLDIR=../linux/include
 CPPFLAGS=-I$(BUILD_INCLDIR)
 AR=ar
@@ -30,7 +30,7 @@ AR_OBJS=global.o misc.o virtual.o marshal.o $(EVENT_SET_OBJS) $(ARCH_OBJS)
 
 SO_OBJS=$(AR_OBJS:.o=.os)
 SO_ABIVER=5
-SO_LIBVER=2.6.5
+SO_LIBVER=2.6.6
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 

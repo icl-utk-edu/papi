@@ -26,7 +26,7 @@ int main(int argc, char **argv)
    long_long **values;
    long_long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+   const PAPI_hw_info_t *hw_info;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -39,6 +39,11 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
        !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
       (!strncmp(hw_info->model_string, "AMD K7", 6))) {
