@@ -55,9 +55,9 @@ int main(int argc, char **argv)
    do {
       if (PAPI_get_event_info(i, &info) == PAPI_OK){
          if (info.count>1){
-	    PAPI_events[0]=info.event_code;
-	    break;
-	 }
+            PAPI_events[0]=info.event_code;
+            break;
+         }
       }
    } while (PAPI_enum_event(&i, 0) == PAPI_OK);
 

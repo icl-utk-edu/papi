@@ -1,3 +1,13 @@
+/*
+   This test needs to be reworked for all platforms.
+   Now that each substrate contains a native event table,
+   the custom code in this file can be constrained to the 
+   native event name arrays.
+   Also, we can no longer add raw native bit patterns.
+   Further, the output can be driven from the native name array
+   by either printing the names directly, or printing the descriptions.
+   See Pentium4 code for examples.
+*/
 #include "papi_test.h"
 
 /*
@@ -43,32 +53,37 @@ static long long us;
 static const PAPI_hw_info_t *hwinfo;
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-void papimon_start(void)
-{
-   int retval;
-   int native, i;
-
 #if defined(_AIX)
-#if defined(HAS_NATIVE_MAP)
 #if defined(_POWER4)
    /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
-   char *native_name[] =
+   static char *native_name[] =
        { "PM_FPU0_FDIV", "PM_FPU1_FDIV", "PM_FPU0_FRSP_FCONV", "PM_FPU1_FRSP_FCONV",
-      "PM_FPU0_FMA", "PM_FPU1_FMA", "PM_INST_CMPL", "PM_CYC"
+      "PM_FPU0_FMA", "PM_FPU1_FMA", "PM_INST_CMPL", "PM_CYC", NULL
    };
 #else
 #ifdef PMTOOLKIT_1_2
-   char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
-      "PM_FPU0_CMPL", "PM_CYC", "PM_FPU_FMA", "PM_TLB_MISS"
+   static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
+      "PM_FPU0_CMPL", "PM_CYC", "PM_FPU_FMA", "PM_TLB_MISS", NULL
    };
 #else
-   char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
-      "PM_FPU0_CMPL", "PM_CYC", "PM_EXEC_FMA", "PM_TLB_MISS"
+   static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
+      "PM_FPU0_CMPL", "PM_CYC", "PM_EXEC_FMA", "PM_TLB_MISS", NULL
    };
 #endif
 #endif
 #endif
+
+#ifdef PENTIUM4
+   static char *native_name[] = { "retired_mispred_branch_type_CONDITIONAL", "resource_stall_SBFULL",
+      "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL
+   };
 #endif
+
+void papimon_start(void)
+{
+   int retval;
+   int native;
+   int i;
 
    if (EventSet == PAPI_NULL) {
       if ((hwinfo = PAPI_get_hardware_info()) == NULL)
@@ -77,8 +92,7 @@ void papimon_start(void)
          test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
 #if defined(_AIX)
-#if defined(HAS_NATIVE_MAP)
-      for (i = 0; i < 8; i++) {
+      for (i = 0; native_name[i] != NULL; i++) {
          /* printf("native_name[%d] = %s\n", i, native_name[i]); */
          retval = PAPI_event_name_to_code(native_name[i], &native);
          /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
@@ -87,61 +101,6 @@ void papimon_start(void)
          if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       }
-#else
-#if defined(_POWER4)
-      /* defined in Makefile.aix.power4 */
-      /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
-      native = 0 | 10 << 8 | 0; /* PM_FPU0_DIV */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 19 << 8 | 1; /* PM_FPU1_DIV */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 25 << 8 | 2; /* PM_FPU0_FRSP_FCONV */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 29 << 8 | 3; /* PM_FPU1_FRSP_FCONV */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 11 << 8 | 4; /* PM_FPU0_FMA */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 20 << 8 | 5; /* PM_FPU1_FMA */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 78 << 8 | 6; /* PM_INST_CMPL */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 74 << 8 | 7; /* PM_CYC */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#else
-      native = 0 | 5 << 8 | 0;  /* ICM */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 35 << 8 | 1; /* FPU1CMPL */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 5 << 8 | 2;  /* LDCM */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 5 << 8 | 3;  /* LDCMPL */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 5 << 8 | 4;  /* FPU0CMPL */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 12 << 8 | 5; /* CYC */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 9 << 8 | 6;  /* FMA */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 0 << 8 | 7;  /* TLB */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#endif
-#endif
 #elif defined(linux) && defined(__i386__)
       if (strncmp("AuthenticAMD", hwinfo->vendor_string, (size_t) 3) == 0) {
          native = 0 | 0x40 << 8 | 0;    /* DCU refs */
@@ -151,7 +110,14 @@ void papimon_start(void)
          if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       } else if (hwinfo->model >= 11) { /* Pentium 4 */
-         test_skip(__FILE__, __LINE__, "PAPI_add_event", PAPI_ESBSTR);
+         for (i = 0; native_name[i] != NULL; i++) {
+            retval = PAPI_event_name_to_code(native_name[i], &native);
+            /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
+            if (retval != PAPI_OK)
+               test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+            if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
+               test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+         }
       } else {
          native = 0 | 0x43 << 8 | 0;    /* Data mem refs */
          if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
@@ -226,10 +192,10 @@ void papimon_start(void)
 #elif defined(__ALPHA) && defined(__osf__)
       PAPI_event_name_to_code("retinst", &native);
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-	     test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       PAPI_event_name_to_code("cycles", &native);
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-	     test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 #elif defined(__LINUX__)
       native = 0x28;
       if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
@@ -247,7 +213,7 @@ void papimon_start(void)
 
 void papimon_stop(void)
 {
-   int retval;
+   int i, retval;
    long long values[8];
    float rsec;
 #if defined(_AIX)
@@ -304,6 +270,10 @@ void papimon_stop(void)
       if (strncmp("AuthenticAMD", hwinfo->vendor_string, (size_t) 3) == 0) {
          fprintf(stderr, "DCU cache accesses         : %lld\n", values[0]);
          fprintf(stderr, "DCU cache misses           : %lld\n", values[1]);
+      } else if (hwinfo->model >= 11) { /* Pentium 4 */
+         for (i = 0; native_name[i] != NULL; i++) {
+            fprintf(stderr, "%-40s: %lld\n", native_name[i], values[i]);
+         }
       } else {
          fprintf(stderr, "DCU Memory references      : %lld\n", values[0]);
          fprintf(stderr, "DCU Lines out              : %lld\n", values[1]);

@@ -117,10 +117,11 @@ int main(int argc, char **argv)
    } while (PAPI_enum_event(&i, 0) == PAPI_OK);
 #endif
 
-   if (!TESTS_QUIET)
+   if (!TESTS_QUIET) {
       printf
           ("-------------------------------------------------------------------------\n");
-   printf("Total events reported: %d\n", j);
+      printf("Total events reported: %d\n", j);
+   }
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
