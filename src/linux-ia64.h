@@ -7,8 +7,8 @@
 *          Kevin London
 *	   london@cs.utk.edu
 *
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    Per Eckman
+*          pek@pdc.kth.se
 */  
 
 #include <stdio.h>
@@ -19,8 +19,8 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <time.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
@@ -40,6 +40,21 @@
 #else
 #define PMU_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
 #endif
+
+typedef union {
+		unsigned int  pme_vcode;		/* virtual code: code+umask combined */
+		struct		{
+			unsigned int pme_mcode:8;	/* major event code */
+			unsigned int pme_ear:1;		/* is EAR event */
+			unsigned int pme_dear:1;	/* 1=Data 0=Instr */
+			unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
+			unsigned int pme_ig1:5;		/* ignored */
+			unsigned int pme_umask:16;	/* unit mask*/
+		} pme_codes;				/* event code divided in 2 parts */
+	} pme_entry_code_t;				
+
+#define EVENT_CONFIG_T pfm_event_config_t
+#define MAX_COUNTERS 4
 
 typedef struct hwd_control_state {
   /* Arg to perfmonctl */
@@ -62,6 +77,7 @@ typedef struct hwd_control_state {
   int overflowcount[PMU_MAX_COUNTERS];
 #endif
   pfmlib_param_t evt;
+  int overflowcount[MAX_COUNTERS];
 /* sampling buffer address */
   void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
@@ -69,8 +85,6 @@ typedef struct hwd_control_state {
   int derived; 
 } hwd_control_state_t;
 
-#define EVENT_CONFIG_T pfm_event_config_t
-#define MAX_COUNTERS 4
 
 typedef struct preset_search {
   /* Preset code */
