@@ -22,6 +22,7 @@ $root = "";
 $cgiMode = 0;
 $Background = 'background="fader-orange.gif"';
 $bodyTag = 'BODY '. $Background . ' bgcolor="#FFFFFF" text="#000000" link="#660000" vlink="#003399" alink="#999933"';
+$ICL_Footer = "<ADDRESS> Copyright &copy 2001 <a href='http://icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>\n";
 
 	*LOG = *STDOUT;
 
@@ -31,6 +32,7 @@ $bodyTag = 'BODY '. $Background . ' bgcolor="#FFFFFF" text="#000000" link="#6600
 
 	if ($request =~ m/^-d(\d)/)
 	{
+		print LOG "debug: $1\n";
 		$debug = $1;
 		$request = shift @ARGV;
 	}
@@ -162,11 +164,11 @@ sub outputPageFooter
 			plainOutput( "<FORM>\n" );
 		}
 		endBlockquote();
-		outputLine("<P><HR>\n<TABLE width=100%><TR> <TD width=33%><I>$left</I></TD> <TD width=33% align=center>$pageName</TD> <TD align=right width=33%><I>$right</I></TD> </TR></TABLE>");
+		outputLine("<P><HR>\n<TABLE width=100%><TR> <TD width=33%><I>$left</I></TD> <TD width=33% align=center>$pageName</TD> <TD align=right width=33%><I>$right</I></TD> </TR></TABLE>\n");
 	}
 	$date = &fmtTime(time);
 	plainOutput("<FONT SIZE=-1>Generated on $date by a derivative of $manServerUrl from $zfile $macroPackage.\n");
-	plainOutput("<ADDRESS> Copyright &copy 2001 <a href='http://www.icl.cs.utk.edu/'>Innovative Computing Laboratory</a>.</ADDRESS>\n");
+	plainOutput($ICL_Footer);
 	plainOutput("</FONT>\n</BODY></HTML>\n");
 }
 
@@ -763,7 +765,12 @@ sub processMacro
 #					{ outputLine( "\\fB$1\\fR($2)$3\n" ); }
 #				else 
 				{
-					outputLine( "<A HREF=\"$root$1.html\">$1 ($2)</A>$3\n" );
+					$name = $1;
+					$lowname = $name;
+					$level = $2;
+					$extra = $3;
+					$lowname =~ s/PAPI/papi/;
+					outputLine( "<A HREF=\"$root$lowname.html\">$name ($level)</A>$extra\n" );
 				}
 			}
 			else
@@ -1504,6 +1511,7 @@ sub processTable
 	s/$troffSeparator/\t/g;
 	if ($_ eq ".TE")
 	{
+	print LOG "found .TE\n";
 		endTblRow();
 		flushTable();
 		$troffTable = 0;
@@ -1630,10 +1638,12 @@ sub endTblRow
 	{
 		$rowref->[$troffCol] = "<TD>&nbsp;</TD>";
 		#print $OUT "<TD>&nbsp;</TD>";
+		print $OUT "<TD>&nbsp;</TD>";
 		++$troffCol;
 	}
 	$troffCol = 0;
 	#print $OUT "</TR>\n"
+	print $OUT "</TR>\n"
 }
 
 sub flushTable
