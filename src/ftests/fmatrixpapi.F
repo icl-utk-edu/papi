@@ -13,8 +13,7 @@ C ****************************************************************************
 
       INTEGER ncols1,nrows1,ncols2,nrows2
       PARAMETER(nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150)
-      INTEGER i,j,k,num_events,retval,errorcode
-      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
+      INTEGER i,j,k,num_events,retval
 C   PAPI standardized event to be monitored
       INTEGER event(2)
 C   PAPI values of the counters
