@@ -1,17 +1,21 @@
 #include <signal.h>
-#include <asm/ucontext.h>    /* sys/ucontext.h  apparently broken */
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <malloc.h>
 #include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <sys/types.h>
+
+#ifdef _WIN32
+  #include <errno.h>
+#else
+#include <asm/ucontext.h>    /* sys/ucontext.h  apparently broken */
+#include <unistd.h>
 #include <time.h>
 #include <sys/times.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <asm/system.h>
 #include <asm/param.h>
 #include <linux/unistd.h>	
@@ -23,23 +27,40 @@
 #define CONFIG_SMP
 #endif
 #include "asm/atomic.h"
-
 #include "libperfctr.h"
+#endif
+
 #include "papi.h"
+
+#ifdef _WIN32
+  #define inline_static static __inline 
+//  #include "cpuinfo.h"
+  #include "pmclib.h"
+#else
+  #define inline_static inline static  
+#endif
 
 typedef struct hwd_control_state {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   int selector;  
   /* Is this event derived? */
-  int derived;   
+  int derived;
+#ifdef _WIN32
   /* Buffer to pass to the kernel to control the counters */
-#ifdef PERFCTR20
-  struct vperfctr_control counter_cmd;
+  struct pmc_control counter_cmd;
+  /* Handle to the open kernel driver */
+  HANDLE self;
 #else
-  struct perfctr_control counter_cmd;
+  #ifdef PERFCTR20
+    /* Buffer to pass to the kernel to control the counters */
+    struct vperfctr_control counter_cmd;
+  #else
+    /* Buffer to pass to the kernel to control the counters */
+    struct perfctr_control counter_cmd;
+  #endif
+    /* Buffer to control the kernel state of the counters */
+    struct vperfctr *self;
 #endif
-  /* Buffer to control the kernel state of the counters */
-  struct vperfctr *self;
 } hwd_control_state_t;
 
 #include "papi_internal.h"
@@ -49,6 +70,7 @@ typedef struct hwd_control_state {
 #define CNTR3 0x4
 #define CNTR4 0x8
 
+#define CNTRS12 (CNTR1|CNTR2)
 #define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
 #define PERF_MAX_COUNTERS 4
@@ -78,7 +100,9 @@ typedef struct hwd_preset {
   /* If the derived event is not associative, this index is the lead operand */
   unsigned char operand_index;
   /* Buffer to pass to the kernel to control the counters */
-#ifdef PERFCTR20
+#ifdef _WIN32
+  struct pmc_control counter_cmd;
+#elif defined(PERFCTR20)
   struct papi_perfctr_counter_cmd counter_cmd;
 #else
   struct perfctr_control counter_cmd;
