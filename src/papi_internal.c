@@ -1430,4 +1430,102 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count)
     }
 }	
 
+/*
+ * Debug functions for platforms without vararg macro support
+ */
 
+#ifdef NO_VARARG_MACRO
+#define ISLEVEL(a) (_papi_hwi_debug&level)
+
+void PAPIDEBUG(int level, char * format, ...){
+#ifdef DEBUG
+  va_list args;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
+}
+
+inline void SUBDBG(char * format, ...){
+#ifdef DEBUG
+  va_list args;
+  int level = DEBUG_SUBSTRATE;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
+}
+
+inline void APIDBG(char * format, ...){
+#ifdef DEBUG
+  va_list args;
+  int level = DEBUG_API;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
+}
+inline void INTDBG(char * format, ...){
+#ifdef DEBUG
+  va_list args;
+  int level = DEBUG_INTERNAL;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
+}
+inline void THRDBG(char * format, ...){
+#ifdef DEBUG
+  va_list args;
+  int level = DEBUG_THREADS;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
+}
+inline void MPXDBG(char * format, ...){
+#ifdef DEBUG
+  va_list args;
+  int level = DEBUG_MULTIPLEX;
+
+  if ( ISLEVEL(level) ){
+     va_start( args, format);
+     DEBUGLABEL(DEBUGLEVEL(level));
+     vfprintf(stderr, format, args);
+     va_end( args );
+  }
+  else
+#endif
+     return;
+}
+#endif
