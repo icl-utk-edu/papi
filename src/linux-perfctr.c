@@ -1491,8 +1491,8 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
       PAPI_unlock();
     }
 
-  fprintf(stderr,"%s (%s): Hardware overflow is experimental still.\n",
-	  __FILE__,__FUNCTION__);
+  DBG((stderr,"%s (%s): Hardware overflow is still experimental.\n",
+	  __FILE__,__FUNCTION__));
   DBG((stderr,"End of call. Exit code: %d\n",retval));
   return(retval);
 #else
