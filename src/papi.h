@@ -82,6 +82,12 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_MAX_EVNTS   16   /*The maximum number of spontaneous events 
 				countable by the platform specific hardware 
 				without multiplexing*/
+#define PAPI_MAX_PRESET_EVENTS 64 /*The maximum number of preset events
+				defined*/
+
+#define PAPI_INIT_SLOTS  16     /*Number of initialized slots in
+                                DynamicArray of EventSets */
+
 #define PAPI_ERROR	 123  /*Exit code for PerfAPI executables that have 
 				PAPI_VERB_ESTOP option set*/
 
