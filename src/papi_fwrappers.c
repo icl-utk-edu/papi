@@ -368,7 +368,7 @@ PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (int *EventCode
   int i;
 #endif
 
-#if defined( _CRAYT3E ) || defined(_FOTRAN_STRLEN_AT_END)
+#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
   if ((*check = PAPI_query_event_verbose(*EventCode, &info))==PAPI_OK){
     strncpy(event_name, info.event_name, event_name_len);
     for(i=strlen(info.event_name);i<event_name_len;event_name[i++]=' ');
