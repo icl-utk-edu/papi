@@ -1,3 +1,14 @@
+/* 
+* File:    zero_omp.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    Nils Smeds
+*          smeds@pdc.kth.se
+*          Anders Nilsson
+*          anni@pdc.kth.se
+*/  
+
 /* This file performs the following test: start, stop and timer
 functionality for 2 slave OMP threads
 
@@ -53,6 +64,7 @@ void Thread(int n)
   int num_events1;
   long long **values;
   long long elapsed_us, elapsed_cyc;
+  char errstring[PAPI_MAX_STR_LEN];
   
   EventSet1 = add_test_events(&num_events1,&mask1);
 
@@ -65,14 +77,22 @@ void Thread(int n)
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_start(EventSet1);
-  if (retval >= PAPI_OK)
+  if (retval != PAPI_OK) {
+    tmp=PAPI_MAX_STR_LEN;
+    PAPI_perror(retval,errstring,tmp);
+    printf("PAPI_start failed. %s\n",errstring);
     exit(1);
+    }
 
   do_flops(n);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval >= PAPI_OK)
+  if (retval != PAPI_OK){
+    tmp=PAPI_MAX_STR_LEN;
+    PAPI_perror(retval,errstring,tmp);
+    printf("PAPI_stop failed. %s\n",errstring);
     exit(1);
+    }
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -94,14 +114,23 @@ void Thread(int n)
 
 int main()
 {
-  int i, rc, maxthr;
+  int i, rc, maxthr, retval;
   long long elapsed_us, elapsed_cyc;
+  char errstring[PAPI_MAX_STR_LEN];
 
-  if (PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT)
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if (retval != PAPI_VER_CURRENT){
+    PAPI_perror(retval,errstring,PAPI_MAX_STR_LEN);
+    printf("%s:%d::PAPI_library_init failed. %s\n",__FILE__,__LINE__,errstring);
     exit(1);
+  }
 
-  if (PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num), 0) == PAPI_OK)
+  retval = PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num),0);
+  if (retval != PAPI_OK){
+    PAPI_perror(retval,errstring,PAPI_MAX_STR_LEN);
+    printf("%s:%d::PAPI_thread_init failed. %s\n",__FILE__,__LINE__,errstring);
     exit(1);
+  }
 
   elapsed_us = PAPI_get_real_usec();
 

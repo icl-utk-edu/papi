@@ -650,7 +650,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
       if ((EventCode >= PAPI_MAX_PRESET_EVENTS) || (papi_presets[EventCode].event_name == NULL))
 	papi_return(PAPI_ENOTPRESET);
 	
-      strcpy(out,papi_presets[EventCode].event_name,PAPI_MAX_STR_LEN);
+      strncpy(out,papi_presets[EventCode].event_name,PAPI_MAX_STR_LEN);
       papi_return(PAPI_OK);
     }
   papi_return(PAPI_ENOTPRESET);
@@ -1433,10 +1433,12 @@ char *PAPI_strerror(int errorCode)
 
 int PAPI_perror(int code, char *destination, int length)
 {
+  char *bar = "No such PAPI error code";
   char *foo;
 
   foo = PAPI_strerror(code);
-
+  if (foo == NULL)
+    foo = bar;
   if (destination && (length >= 0))
     strncpy(destination,foo,length);
   else
