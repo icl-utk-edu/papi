@@ -1491,7 +1491,6 @@ int PAPI_remove_events(int EventSet, int *Events, int number)
 int PAPI_list_events(int EventSet, int *Events, int *number)
 {
    EventSetInfo_t *ESI;
-   int num;
    int i,j;
 
    if ((!Events) || (!number))
