@@ -1,14 +1,22 @@
 #
 # GNU G77/GCC section
 #
-F77   		= g77
-CC		= gcc
+F77   		= g77 -Wall
+CC		= gcc -Wall
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-OPTFLAGS	= -O3 -Wall 
+GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
+ifeq (,$(GCCVER3))
+OPTFLAGS	+= -O3 
+# -O -g -DDEBUG
+else
+OPTFLAGS	+= $(GCC3ARGS) -O3
+# -O -g -DDEBUG
+endif
+
 # Flags for test programs
-FFLAGS        	= -Dlinux -ffixed-line-length-132
-TOPTFLAGS	+= -O -g -Wall 
+FFLAGS        	+= -Dlinux -ffixed-line-length-132
+TOPTFLAGS	+= -O -g 
 FTOPTFLAGS	= $(TOPTFLAGS)
 # 
 # #  Portland Group PGF77 section

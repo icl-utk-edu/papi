@@ -1,7 +1,7 @@
 VERSION 	= 2.6.x
 CPU		= p3
 SHRFLAGS	= -fPIC
-OPTFLAGS	= -march=athlon-mp -msse -msse2
+GCC3ARGS	= -march=athlon-mp -msse -msse2
 TOPTFLAGS	= -D__x86_64__
 
 include Rules.perfctr
