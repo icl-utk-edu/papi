@@ -1,4 +1,25 @@
+How do I use remote CVS anonymously?
+------------------------------------
+
+The first time, the Checkout phase:
+
+> setenv CVSROOT :pserver:anonymous@hera.cs.utk.edu:/cvs/homes/papi
+> cvs login
+> Password: <cr>
+> cvs co all|papi|src|man|spec|tools
+
+The next time, the Update phase:
+
+> cd <directory>
+> cvs update
+
+The last time: :-(
+
+> cd <directory>
+> cvs logout
+
 How do I add a user 'username' to CVS?
+--------------------------------------
 
 0) You must be in the group papi. 
 1) Login to nala.cs.utk.edu.
