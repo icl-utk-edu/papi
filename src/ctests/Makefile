@@ -29,7 +29,7 @@ zero_shmem: zero_shmem.c $(UTILOBJS) ../libpapi.a
 	$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_smp.c $(UTILOBJS) -L.. -lpapi_smp $(LDFLAGS) -o zero_smp $(SMPLIBS)
 
 zero_omp: zero_omp.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(OMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_omp.c $(UTILOBJS) -L.. $(LDFLAGS) -o zero_omp $(OMPLIBS)
+	$(CC_R) $(OMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_omp.c $(UTILOBJS) -L.. -lpapi_smp $(LDFLAGS) -o zero_omp $(OMPLIBS)
 
 zero: zero.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) zero.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o zero
