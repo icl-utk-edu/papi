@@ -1,0 +1,693 @@
+
+DADD engineering model
+P.J. Drongowski and J. Panella
+25 June 2002
+
+This file contains notes on the concept of operation, installation,
+operation and programming of DADD -- Dynamic Access to DCPI Data.
+
+
+--------------
+Key components
+--------------
+
+The DADD engineering model is a supplement to an existing DCPI installation.
+The relevant components are:
+
+  pcount.mod   DCPI device driver
+  dcpid        DCPI Daemon
+  dadd.a       DADD interface archive/library
+
+  expcli.c     Client that runs load and prints virtual counters
+  timcli.c     Client that polls for changes to cycles virtual counter
+  runcli.c     Client that runs and monitors app program in child process
+
+  dadd.h              Include file for client/server communications
+  virtual_counters.h  Include file that defines the virtual_counters struct
+
+The device driver, pcount.mod, is contained in the existing DCPI installation.
+
+
+-------------------------------------
+Architecture and concept of operation
+-------------------------------------
+
+The diagram below shows the flow of performance information.
+
+   --------        --------        --------        --------
+  | Device |      |        |      | Shared |      |  DADD  |
+  |        | ---> | Daemon | ---> | Memory | ---> |        |
+  | Driver |      |        |      | Region |      | Client |
+   --------        --------        --------        --------
+
+A DADD client is a program that is interested in receiveing
+performance information about a particular process. A DADD client
+may even request performance information about itself. A DADD client
+registers interest in a particular process by sending a DADD start
+message to the DCPI Daemon. The message contains the process ID (PID)
+of the process to be monitored.
+
+The Daemon receives this request. It obtains information about
+the process to be monitored, in particular, the group ID and user ID
+of the process. The Daemon creates a shared memory region to convey
+performance data to the DADD client. The owner group ID and user ID
+of the shared memory region is set to that of the process to be
+monitored. The region ID is returned to the requesting DADD client
+in a reply message. The Daemon adds the PID to a list of processes
+to be monitored, i.e., processes of interest.
+
+The DADD client receives the reply message and attaches to the
+shared memory region. Once attached, the DADD client can read
+performance information directly from the shared memory region.
+
+Performance information is delivered in the form of virtual
+performance counters that correspond to PAPI-like events. The
+base address of the shared memory region can be cast to a pointer
+to a virtual_counters C struct, allowing access to individual
+counter values.
+
+When the DADD client is finished, it detaches from the shared memory
+region and sends a DADD stop request to the DCPI Daemon. The request
+indicates the PID of the process for which monitoring will be
+terminated. If no other process is interested in the PID, the Daemon
+removes the PID from its list of "PIDs of interest" and it deallocates
+the shared memory region.
+
+Data is collected and distributed in the following way.
+The DCPI device driver takes interrupts from the performance counter
+hardware and buffers this information. The DCPI Daemon periodically
+transfers the performance data (samples) from the device driver. The
+Daemon associates and organizes the samples with CPU ID, process ID
+and image. It also aggregates the samples by program counter within
+a particular image. Periodically, the Daemon computes a new set of
+virtual counter values for each process of interest. These new values
+are copied into the shared memory region associated with the process
+of interest.
+
+Other notable features of DCPI DADD mode are:
+
+  * No on-disk profile database files are generated.
+  * Samples collected for a specific program image are aggregated
+    in the Daemon's memory space and remain there until the image
+    is no longer referenced by any active process.
+  * No samples for the "vmunix" image are collected. This restriction
+    was implemented to keep the Daemon's memory footprint from growing
+    at an unsustainable rate when executing in DADD mode.
+
+-------------------------
+DCPI "database" directory
+-------------------------
+
+The DCPI Daemon still needs a centralized "database" directory to
+store the log file, PALcode image, etc. The directory must be created
+before running the Daemon and is specified as a command line argument
+to the Daemon when starting the Daemon. Defining the environment
+variable DCPIDB is recommended, e.g.,
+
+  setenv DCPIDB /dsk0h/dcpidb
+
+where the value of DCPIDB is the path to the DCPI database directory.
+
+The Daemon does *not* write profile files to the database directory.
+This functionality has been disabled in the Daemon.
+
+
+------------------
+Event multiplexing
+------------------
+
+The DCPI device driver uses event multiplexing to produce the most
+useful, full set of event data. The device driver multiplexes between:
+  cycles            Processor cycles
+  pm                ProfileMe events
+  bmiss+retires     B-cache (L2) misses and instruction retires
+Multiplexing is specified in the command that launches the DCPI Daemon
+via -slot options.
+
+Counting instruction retires with B-cache misses is a work around to
+a known issue in the DCPI device driver. Each slot must take at least
+one occurence of the specified event(s) in order to switch to the next
+multiplexing slot. CPU centric applications may not take any B-cache
+events, so adding instruction retires guarantees a frequent stream
+of events (instruction retires) and proper switching.
+
+
+------------
+Installation
+------------
+
+Care should be taken when installing the components belonging to the
+engineering model. They have been modified to support DADD functionality
+and in some cases, normal DCPI functionality has been disabled. Thus,
+they should not be installed over the normal DCPI distribution.
+
+Only two new/modified runtime components are needed for DCPI DADD:
+
+  dcpid        DCPI Daemon (modified for DADD)
+  dadd.a       DADD interface archive/library (new for DADD)
+
+These two components can be installed where ever it is convenient. However,
+the DADD version of dcpid should not be installed in place of /usr/bin/dcpid.
+Important features of regular DCPI have been disabled in the engineering
+model and lack of those features will interfere with regular DCPI users.
+We are looking at ways to resolve these issues in the final version of
+DCPI with DADD.
+
+DADD capability was added without modification to the DCPI device driver.
+We have assumed that an earlier version of v3 DCPI has been downloaded
+and installed, and thus, we are not sending pcount.mod (the DCPI device
+driver) with the engineering model.
+
+The archive/library dadd.a is needed to build a DADD client. We have
+not chosen a particular directory for this library as yet.
+
+Source code for three experimental DADD clients is provided:
+
+  expcli.c     Client that runs load and prints virtual counters
+  timcli.c     Client that polls for changes to cycles virtual counter
+  runcli.c     Client that runs and monitors app program in child process
+
+  dadd.h              Include file for client/server communications
+  virtual_counters.h  Include file that defines the virtual_counters struct
+
+We recommend putting dadd.a and the source for the clients into the
+same build directory. We are open to suggestions regarding the client
+build process.
+
+
+------------------------------------
+Running the DCPI Daemon in DADD mode
+------------------------------------
+
+The -dyn option must be specified to start the DCPI daemon in DADD
+mode.
+
+The Daemon attempts to read samples from the performance counter
+device driver at a default interval of every 10 milliseconds (or
+100 times per second.) This default interval may be overriden through
+the -DF option:
+
+  -DF <milliseonds>
+
+Most internal testing of the DADD engineering model has been performed
+with the -DF option value set to 1. This forces the Daemon to attempt to
+read samples drom the driver at the maximum rate of 1000 times per
+second. The actual rates achieved during testing have varied dramatically,
+and are primarilyy affected by the number of CPUs active, whether
+ProfileMe samples are being collected, and the overall load on the
+system. The highest *read* rate observed so far (without ProfileMe
+sampling active) has been on the order of 500 reads per second. The
+average rate achieved with ProfileMe sampling active has been on the
+order of 200 reads per second.
+
+The scheduling priority of the DCPI Daemon can be adjusted using the
+-nice option. This is purely optional.
+Do not use the nice command to change the scheduling priority of the
+Daemon. The Daemon adjusts its priority when it initializes and will
+just reset the priority to zero (the default nice value.)
+
+Testing performed so far indicates that there are several possible
+ways to improve the Daemon's performance:
+
+  * When running on a multi-CPU system, it is suggested that the
+    Daemon be assigned to a single CPU. This can be done by launching
+    dcpid using the Tru64 UNIX runon command. Daemon performance
+    suffers when the Daemon is allowed to migrate to other CPUs.
+
+  * Preliminary experiments show a pattern of more regular updates
+    when setting the nice level to -10. This will not increase the
+    update rate, however.
+
+
+-------------------------------------
+Conservation of shared memory regions
+-------------------------------------
+
+Shared memory regions are a limited resource. The number of shared
+memory regions can be configured at boot time.
+
+Shared memory regions persist as "zombies" if they are not properly
+deallocated. We have tried to anticipate as many situations as possible
+as in order to properly release shared memory regions used by DADD.
+However, there may be some failure conditions when shared memory regions
+are not released. The Tru64 UNIX ipcs command shows the status of
+shared memory regions. Zombie shared memory regions can be removed
+using the ipcrm command.
+
+
+------------------
+DADD API functions
+------------------
+
+As mentioned above, the DADD API consists of the three functions:
+
+  void dadd_terminate_cleanup(int ignore)
+  unsigned char *dadd_start_monitoring(pid_t pid)
+  int dadd_stop_monitoring(pid_t pid, unsigned char *region_address)
+
+The function dadd_terminate_cleanup is a signal handler that can
+be registered in order to close the server connection and clean up
+on SIGTERM, SIGINT, etc.
+
+The function dadd_start_monitoring is called to start DADD monitoring
+for a particular process. It takes one argument, which is the process ID
+of the process to be monitored. The function returns the base address
+of the shared memory region that holds the virtual counters. The
+owner of the shared memory region is set to the group ID and user ID of
+the process to be monitored. Thus, any process can monitor any another
+process as long as the permissions of the shared memory region allow
+read access. Currently, the following permissions are set:
+  read permission: owner
+  write permission: owner
+  read permission: group
+  write permission: group
+  read permission: other
+Clearly, read permission by others needs to be eliminated, but we
+started with this set of permissions to have flexibility during debugging.
+These permissions can be tightened up and we welcome suggestions.
+
+The function dadd_stop_monitoring is called to stop DADD monitoring
+for a particular process. It takes two arguments: the process ID of
+the process for which monitoring is to be terminated and the base
+address of the shared memory region. Monitoring will be fully terminated
+if no other client is monitoring the process.
+
+The include file virtual_counters.h defines the C struct virtual_counters.
+The base address of the shared memory region can be cast to a pointer to
+a virtual_counters struct in order to directly read the virtual counters:
+
+    virtual_counters *ptr_vc ;  /* Pointer to virtual counters */
+    ...
+    ptr_vc = (virtual_counters *)region_address ;
+
+The order of the virtual counters in the struct is likely to change. (We
+may want to rearrange the struct members in order to get better D-cache
+behavior, for example.) The struct may also include a few extra members
+at the end that are for debugging purposes only. Please do not use those
+struct members as they will be deleted in the future.
+
+The include file also defines a utility function, print_virtual_counters,
+that can be used to display the current state of the virtual counters on
+the standard output. The function takes two arguments: a pointer to a set
+of virtual counters and a verbose flag. If the verbose flag is non-zero
+(TRUE), then some additional internal Alpha EV67/EV7 event counts are
+displayed.
+
+
+--------------
+Sample clients
+--------------
+
+Source code is provided for three sample clients.
+
+  expcli is a very simple client that registers interest in itself when
+  it starts DADD, runs a simple dummy load, prints the final state of
+  the virtual counters in the shared memory region, and unregisters interest
+  in itself when it stops DADD. This client can be used for initial
+  check out.
+
+  timcli is another simple client that can be used for check out and
+  testing. It also registers interest in itself. It continuously reads
+  the cycle virtual counter and detects changes in the count, which
+  indicates that an update was made by the Daemon. It takes a snapshop
+  certain statistics at that time including the time between updates.
+  This time is a rough measure of the update rate as seen by the client.
+  The snapshots are dumped at the end of the test run to the file
+  "timcli.dat" in the working directory. The snapshot file will not be
+  written when the -n option is specified in the command line.
+
+  runcli is a relatively useful client. runcli performs a fork to create
+  a child process. The child process runs an application program while the
+  parent process monitors the child. The parent process uses a realtime
+  timer to periodically awake (currently every 10 milliseconds) and read
+  the virtual counters. If the -s option is specified on the command line,
+  the parent writes a subset of the counter information
+  to a file, "runcli.dat," in the process working directory. When the child
+  completes, the parent displays the final state of the virtual counters
+  and some run statistics.
+
+The sample clients can be built using the following commands:
+
+  cc -o expcli expcli.c dadd.a
+  cc -o timcli timcli.c dadd.a
+  cc -o runcli runcli.c dadd.a -lrt
+
+The commands assume that the source files (virtual_counters.h, dadd.h,
+expcli.c, timcli.c, runcli.c and dadd.a) are in the same working directory.
+
+
+----------------------------
+Internal programming details
+----------------------------
+
+The Daemon and the client use a "well known" socket to communicate
+requests. The following idiom opens a connection to the Daemon:
+
+  static pcd_server *server = NULL;
+
+  ...
+
+  if ((server = pcd_server_connect(PCD_MSG_PATHNAME)) == NULL)
+    if ((server = pcd_server_connect(PCD_MSG_PATHNAME_COMPAT)) == NULL) {
+      fprintf(stderr, "%s: Unable to open server connection\n", prog) ;
+      exit(EXIT_FAILURE) ;
+      }
+
+The client must send a start DADD request to the Daemon to set up monitoring
+for a particular process. The following idiom sends a DADD start request:
+
+  int region_id ;
+
+  ...
+
+  region_id = -1 ;
+  region_id = pcd_server_DADD_start(server, pid) ;
+  if (region_id == -1) {
+    fprintf(stderr, "%s: DADD start failed\n", prog) ;
+    exit(EXIT_FAILURE) ;
+  }
+
+The process to be monitored is identified by its process ID, which is sent
+in the request. If the request is successful, the Daemon retures the ID of
+the shared memory region to be used for communication. If the region ID is -1,
+then the request failed.
+
+If the DADD start request is successful, then the client must attach to
+the shared memory region. Here is a code idiom to do that:
+
+
+  unsigned char *region_address ;
+
+  ...
+
+  region_address = shmat(region_id, (void *)0, SHM_RDONLY) ;
+  if ((int)region_address == -1) {
+    fprintf(stderr, "%s: Unable to attach (shmat) region\n", prog) ;
+    perror(prog) ;
+    return( 0 ) ;
+  }
+
+When the client is finished, it must tell the Daemon to stop monitoring.
+First, the client must detach from the shared memory region:
+
+  if (region_address == NULL) {
+    fprintf(stderr, "%s: Region address is NULL\n", prog) ;
+  } else if (shmdt(region_address) < 0) {
+    fprintf(stderr, "%s: Unable to detach (shmdt) for PID %d", prog, pid);
+    perror(prog) ;
+  }
+
+Then, the client sends a DADD stop request to the Daemon:
+
+  result = PCD_FAILURE ;
+  result = pcd_server_DADD_stop(server, pid) ;
+  if (result != PCD_SUCCESS) {
+    fprintf(stderr, "%s: DADD stop failed\n", prog) ;
+    return( -1 ) ;
+  }
+
+Finally, the client closes the connection to the DCPI Daemon:
+
+  pcd_server_close(server) ;
+  free(server) ;
+
+The section on "communication code" below puts all of these operations
+together into two functions: start_monitoring and stop_monitoring.
+
+
+------------------
+Communication code
+------------------
+
+This section shows the actual code for dadd_terminate_cleanup,
+dadd_start_monitoring and dadd_stop_monitoring. The functions show
+how they connect to the DCPI Daemon, send DADD requests and
+receive replies. These functions are contained in the dadd.a archive.
+Feedback is requested and thanks!
+
+
+/*
+ * Function: dadd_terminate_cleanup
+ * Purpose: Closes down server connection and terminates program.
+ * Arguments:
+ *   ignore:
+ * Returns: Nothing; Modifies server as a side-effect.
+ */
+
+void dadd_terminate_cleanup(int ignore)
+{
+  /* shutdown server connection, if any */
+  if (server != NULL) {
+    pcd_server_close(server) ;
+    free(server) ;
+  }
+
+  /* terminate */
+  exit( EXIT_FAILURE ) ;
+}
+
+
+/*
+ * Function: dadd_start_monitoring
+ * Purpose: Set-up DADD monitoring for a particular PID
+ * Arguments:
+ *   pid: The process to be monitored
+ * Returns: Pointer to the shared memory region, 0 on failure
+ *
+ * This function could be split out and put into pcdlib.c. It might be
+ * necessary to return the server handle using a call by reference argument.
+ */
+
+unsigned char *dadd_start_monitoring(pid_t pid)
+{
+  int result ;                        /* Working var to hold result */
+  int region_id ;                     /* ID of shared memory */
+  unsigned char *region_address ;     /* Shared memory base address */
+  struct shmid_ds region_ds ;         /* Shared memory status structure */
+  int region_flags ;                  /* Access flags for shared memory */
+
+  /* Open connection to server */
+  TRACE("Opening connection to server\n") ;
+  if ((server = pcd_server_connect(PCD_MSG_PATHNAME)) == NULL)
+    if ((server = pcd_server_connect(PCD_MSG_PATHNAME_COMPAT)) == NULL) {
+      fprintf(stderr, "%s: Unable to open server connection\n", prog) ;
+      exit(EXIT_FAILURE) ;
+      }
+  TRACE("Connection open to server\n") ;
+
+  /* Send start DADD command to server */
+  TRACEV("Starting DADD with PID: %d\n", pid) ;
+  region_id = -1 ;
+  region_id = pcd_server_DADD_start(server, pid) ;
+  if (region_id == -1) {
+    fprintf(stderr, "%s: DADD start failed\n", prog) ;
+    exit(EXIT_FAILURE) ;
+  }
+  TRACEV("Rec'd segment ID: %d\n", region_id) ;
+
+  /* Attach to shared memory region */
+  TRACE("Attaching to shared memory region\n") ;
+  region_address = shmat(region_id, (void *)0, SHM_RDONLY) ;
+  if ((int)region_address == -1) {
+    fprintf(stderr, "%s: Unable to attach (shmat) region\n", prog) ;
+    perror(prog) ;
+    return( 0 ) ;
+  }
+  TRACEV("Attached at: %016lx\n", region_address) ;
+
+  /* Get shared memory status, if debug_flag is TRUE */
+  if (debug_flag) {
+    if (shmctl(region_id, IPC_STAT, &region_ds) < 0) {
+      fprintf(stderr, "%s: Unable to get region status (shmctl)\n", prog) ;
+      perror(prog) ;
+      return( region_address ) ;
+    }
+    printf("Shared memory status\n") ;
+    printf("  Segment size:    %d\n", region_ds.shm_segsz) ;
+    printf("  Owner UID:       %d\n", region_ds.shm_perm.uid) ;
+    printf("  Owner GID:       %d\n", region_ds.shm_perm.gid) ;
+    printf("  Creator UID:     %d\n", region_ds.shm_perm.cuid) ;
+    printf("  Creator GID:     %d\n", region_ds.shm_perm.cgid) ;
+    printf("  Permissions:     %o\n", (region_ds.shm_perm.mode & 0777)) ;
+    printf("  PID of creator:  %d\n", region_ds.shm_cpid) ;
+    printf("  Number attached: %d\n", region_ds.shm_nattch) ;
+  }
+
+  return( region_address ) ;
+}
+
+
+/*
+ * Function: dadd_stop_monitoring
+ * Purpose: Terminate DADD monitoring for a particular PID
+ * Arguments:
+ *   pid: The process being monitored
+ *   region_address: Pointer to the shared memory region
+ * Returns: -1 on failure, 0 on success
+ *
+ * This function could be split out and put into pcdlib.c. It might be
+ * necessary to pass the server handle as an argument.
+ */
+
+int stop_monitoring(pid_t pid, unsigned char *region_address)
+{
+  int result ;
+
+  /* Detach from shared memory region */
+  TRACE("Detaching from shared memory region\n") ;
+  if (region_address == NULL) {
+    fprintf(stderr, "%s: Region address is NULL\n", prog) ;
+  } else if (shmdt(region_address) < 0) {
+    fprintf(stderr, "%s: Unable to detach (shmdt) for PID %d", prog, pid);
+    perror(prog) ;
+  }
+
+  /* Send stop DADD command to server */
+  TRACEV("Stopping DADD with PID: %d\n", pid) ;
+  result = PCD_FAILURE ;
+  result = pcd_server_DADD_stop(server, pid) ;
+  if (result != PCD_SUCCESS) {
+    fprintf(stderr, "%s: DADD stop failed\n", prog) ;
+    return( -1 ) ;
+  }
+  TRACEV("Stop reply rec'd: %d\n", result) ;
+
+  /* Clean up */
+  TRACE("Closing connection to server\n") ;
+  pcd_server_close(server) ;
+  free(server) ;
+
+  /* Return success */
+  return( 0 ) ;
+}
+
+
+----------------------------------------
+Smoke testing the DADD engineering model
+----------------------------------------
+
+The best way to smoke test the DCPI DADD engineering model is
+to compile and run the simple expcli.c program.
+
+What the program does
+---------------------
+
+The program expcli.c is a simple DADD client. It performs the
+following steps:
+  * Open a connection to the DCPI Daemon ("the server")
+  * Request DADD monitoring for itself
+  * Attach to the shared memory region that is created by the Daemon
+  * Run a simple load (matrix/vector multiplication)
+  * Print the final state of the virtual counters
+  * Stop DADD monitoring
+  * Close the connection to the DCPI Daemon
+These steps are enough to exercise the basic DADD mechanisms.
+
+Building the program
+--------------------
+
+The build process is so simple that we didn't include a makefile,
+but you could put the following command into a makefile.
+
+  cc -o expcli expcli.c dadd.a
+
+The archive, dadd.a, contains the necessary infrastructure routines
+to communicate with the Daemon. We've been keeping expcli.c and dadd.a
+in the same working directory during our debugging and testing.
+
+Running the program
+-------------------
+
+The client programs assume a running DCPI with DADD daemon, i.e.,
+the so-called "engineering model." As noted in the README_DADD file,
+the DCPI with DADD daemon can be installed pretty much anywhere, but
+should not be installed over the regular dcpid in, say, /usr/bin.
+This also means taking care when launching the engineering model
+such that the regular Daemon is not run from /usr/bin.
+
+We usually put all of the commands needed to run (and stop) the
+Daemon and client in a shell script like:
+
+  # Run the experimental client in DADD mode
+
+  /home/pjd/DCPI/dcpi/src/dcpid -dyn -DF 1 -slot cycles -slot bmiss+retires -slot pm $DCPIDB
+  sleep 5
+  /home/pjd/DCPI/dcpi/src/expcli
+  dcpiquit
+
+Here, we used absolute path names to run both the Daemon with DADD
+and to run the experimental client, expcli. The "sleep 5" lets the
+Daemon get set up before starting the experimental client. The
+"dcpiquit" command stops the Daemon.
+
+The shell script uses the environment variable DCPIDB. This variable
+should be set to the path leading to the DCPI database directory.
+The database directory must be created before running the Daemon.
+The database directory can be anywhere, even a subdirectory in /usr/tmp.
+
+The DCPI Daemon must be started by the superuser. Unfortunately, the
+Daemon does so many OS-like things that it occasionally needs superuser
+privileges. (The Daemon actually adjusts its privilege level up and
+down as needed.) The experimental clients, however, can be run by
+any ordinary user.
+
+
+Sample output
+-------------
+
+Here is sample output from the smoke test. The shell script, run_expcli,
+contains the commands shown above. By the way, if you get lost in big
+numbers like us, the LC_NUMERIC locale environment variable can be set
+to something like:
+  setenv LC_NUMERIC en_US.ISO8859-1
+which enables the thousands separator when printing big integers. (The
+print_virtual_counters function responds to the locale, when set by the
+client.)
+
+1 > run_expcli
+dcpid: load   : loaded pcount driver
+dcpid: monitoring cycles
+dcpid: monitoring bmiss
+dcpid: monitoring pm
+dcpid: logging to /dsk0h/dcpidb/dcpid-positron.log
+Time stamp:             20020423151512.469957
+Total cycles:           29213177856
+L2 total cache misses:  0
+DTB misses:             0
+ITB misses:             0
+L1 I-cache misses:      0
+Total instr issued:     44651808768
+Total instr exec'd:     44635238400
+Integer instr exec'd:   993873377
+Synch instr exec'd:     12697
+Noop instr exec'd:      993577731
+Prefetches exec'd:      0
+Load instr exec'd:      20824563816
+Store instr exec'd:     2975341476
+Total LD/ST exec'd:     23799905292
+FA instr exec'd:        8924724018
+FM instr exec'd:        8924724018
+FD instr exec'd:        0
+Fsq instr exec'd:       0
+FP instr exec'd:        53548344108
+Uncond BR exec'd:       107932
+Cond BR exec'd:         991861100
+Branches taken:         985841664
+Branches not taken:     571392
+Cond BR mispredicted:   190464
+Cond BR predicted:      986222592
+dcpictl: quit successful
+
+
+The DCPI Daemon log file
+------------------------
+
+The DCPI daemon writes a log file to the database directory. This
+file is easy to recognize as it has a ".log" extension. The log file
+produced by this run was:
+
+    $DCPIDB/dcpid-positron.log
+
+where "positron" is the name of the platform that ran the test.
+The log file will show successful DADD starts and stops among other
+things.
