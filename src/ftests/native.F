@@ -161,8 +161,8 @@ C     CPU cyc
 #endif
 
 #if (defined(sun) && defined(sparc))
-      eventname(1) = 'Load_use'
-      eventname(2) = 'DC_wr_hit'
+      eventname(1) = 'Cycle_cnt'
+      eventname(2) = 'Instr_cnt'
       n = 2
 #endif
 
