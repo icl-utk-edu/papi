@@ -53,27 +53,10 @@
       end if
 
 #if defined(_CRAYT3E)
-C     Machine cyc
-      nativees = 0 * 2**8 + 0
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     Dcache acc
-      nativees = 0 * 2**8 + 1
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     CPU cyc
-      nativees = 0 * 2**8 + 2
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
+      eventname(1) = 'MACHINE_CYCLES'
+      eventname(2) = 'DCACHE_ACCESSES'
+      eventname(3) = 'CPU_CYC'
+      n = 3
 #endif
 
 #if defined(_POWER4)
