@@ -13,14 +13,6 @@
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
-static inline unsigned long get_cycles (void)
-{
-	unsigned long eax, edx;
-
-	__asm__ __volatile__("rdtsc":"=a" (eax), "=d" (edx));
-	return eax;
-}
-
 typedef struct hwd_control_state {
   int mask;                                      /* Counter select mask */
   unsigned int start_conf[PERF_COUNTERS];        /* This array gets passed to kernel perf(PERF_FASTCONFIG) call */

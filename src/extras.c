@@ -50,11 +50,20 @@ static void dispatch_overflow_signal(EventSetInfo *ESI, void *context)
     }
 }
 
-static void dispatch_timer(int signal, struct sigcontext_struct info)
+#ifdef __linux__
+static void dispatch_timer(int signal, struct sigcontext info)
 {
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info.eip));
   dispatch_overflow_signal(event_set_overflowing, (void *)&info); 
 }
+#else
+#include <ucontext.h>
+static void dispatch_timer(int signal, siginfo_t *info, ucontext_t *context)
+{
+  DBG((stderr,"dispatch_timer() at %p\n",info->_data._prof._faddr));
+  dispatch_overflow_signal(event_set_overflowing, (void *)&info); 
+}
+#endif
 
 static int start_timer(int milliseconds)
 {

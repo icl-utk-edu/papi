@@ -1303,3 +1303,13 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
   return(PAPI_OK);
 }
 
+int PAPI_save(void)
+{
+  return(PAPI_OK);
+}
+
+int PAPI_restore(void)
+{
+  return(PAPI_OK);
+}
+

@@ -130,6 +130,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_SET_PROFIL  27     /* Option to turn on the overflow/profil reporting software */
 #define PAPI_GET_PROFIL  28     /* Option to query the status of the overflow/profil reporting software */
 
+#define PAPI_SET_ATTACH  29     /* Option to attach to another process */
+#define PAPI_GET_ATTACH  30     /* Option to query which process I'm attached */
 
 #define PAPI_MAX_EVNTS   16   /*The maximum number of spontaneous events 
 				countable by the platform specific hardware 
@@ -214,6 +216,8 @@ int PAPI_read(int EventSet, unsigned long long *values);
 int PAPI_rem_event(int *EventSet, int Event); 
 int PAPI_rem_events(int *EventSet, int *Events, int number); 
 int PAPI_reset(int EventSet);
+int PAPI_restore(void);
+int PAPI_save(void);
 int PAPI_set_domain(int domain);
 int PAPI_set_granularity(int granularity);
 int PAPI_set_opt(int option, PAPI_option_t *ptr); 
