@@ -126,8 +126,8 @@ install: all install_tree native_install
 	cp $(SUBSTR).README $(DESTDIR)
 
 install_tree:
-	mkdir -p $(DESTDIR)/lib
-	mkdir -p $(DESTDIR)/include
-	mkdir -p $(DESTDIR)/man
-	mkdir -p $(DESTDIR)/ctests
-	mkdir -p $(DESTDIR)/ftests
+	-mkdir -p $(DESTDIR)/lib
+	-mkdir -p $(DESTDIR)/include
+	-mkdir -p $(DESTDIR)/man
+	-mkdir -p $(DESTDIR)/ctests
+	-mkdir -p $(DESTDIR)/ftests
