@@ -217,7 +217,7 @@ extern int _papi_hwd_mdi_init() {
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode;
 
-   switch (_papi_hwi_system_info.default_domain) {
+   switch(_papi_hwi_system_info.default_domain) {
    case PAPI_DOM_USER:
       def_mode = PERF_USR;
       break;
@@ -243,7 +243,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-      for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -268,7 +268,30 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, voi
 }
 
 int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
-   return (PAPI_ESBSTR);
+   int i, did = 0;
+    
+     /* Clear the current domain set for this event set */
+     /* We don't touch the Enable bit in this code but  */
+     /* leave it as it is */
+   for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+      cntrl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
+   }
+   if(domain & PAPI_DOM_USER) {
+      did = 1;
+      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+         cntrl->control.cpu_control.evntsel[i] |= PERF_USR;
+      }
+   }
+   if(domain & PAPI_DOM_KERNEL) {
+      did = 1;
+      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+         cntrl->control.cpu_control.evntsel[i] |= PERF_OS;
+      }
+   }
+   if(!did)
+      return(PAPI_EINVAL);
+   else
+      return(PAPI_OK);
 }
 
 void _papi_hwd_lock_init(void) {
@@ -473,7 +496,7 @@ static void clear_control_state(hwd_control_state_t *this_state) {
    for(i = 0; i < this_state->control.cpu_control.nractrs; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
       this_state->control.cpu_control.pmc_map[i] = 0;
-      this_state->control.cpu_control.evntsel[i] = 0;
+      this_state->control.cpu_control.evntsel[i] = this_state->control.cpu_control.evntsel[i] & (PERF_OS|PERF_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
    this_state->control.cpu_control.nractrs = 0;
