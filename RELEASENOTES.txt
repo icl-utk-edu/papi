@@ -88,6 +88,7 @@ Bug Fixes:
   - Fixes for forced overflow, first we had no default for a sigaction so in some
     cases a sigaction wasn't getting setup, and ia64 didn't have dispatch_timer
     routine implemented at all. Added better debugging messages.
+
 * src/genpapifdef.c:
   - Modifications to work around Cray Fortran bug with maximum negative integer values.
 
@@ -98,9 +99,6 @@ Bug Fixes:
   - Fixed build for ALTIX. This was building with PFM in our directory,
     but there should be always building with the pfm in /usr.
 
-* src/configure, src/configure.in:
-  - Allowed configure to detect the altix.
-
 * src/Makefile.solaris-ultra, src/Makefile.solaris-ultra-64bit:
   - Removed -R argument to shared link, which was putting the wrong path
     in to the run-time loader.
@@ -109,9 +107,9 @@ Bug Fixes:
     Neither is required.
 
 * src/Makefile.linux-perfctr-{athlon, p3}, src/papi_internal.c:
-  - Created a work-around for a situation found on Athlon and PIII in which
+  - Created a work-around for a situation found on PIII in which
     DERIVED_SUB events would occasionally generate small negative results.
-    Now, for these platforms only, small negatives (>= -3) are trapped and 
+    Now, for PIII only, small negatives (>= -3) are trapped and 
     forced to zero. This bug was causing occasional failures in ctests/memory.c
 
 * src/ctests/overflow.c, src/ctests/overflow2.c:
@@ -155,6 +153,9 @@ Enhancements:
 
 *src/libpfm-3.x:
   - Updated (Itanium) libpfm to 3.1, current as of 2004-12-21.
+
+* src/configure, src/configure.in:
+  - Allowed configure to detect the Altix.
 
 * src/linux-ia64.{c,h}:
   - Added MMTIMER support on Altix for good global timing.
@@ -208,12 +209,24 @@ Known Bugs:
 
 * src/linux-ia64.c:
   - On many Redhat IA64 systems, and this includes SGI's Propack 3 and 4,
-  there is a bug in the pfmon code (the kernel counter subsystem) that
-  causes interrupts to stop being delivered to the user code. This can
-  be seen by repeatedly running the profile_pthreads test case. You will
-  either get an error message from PFM_RESTART or you will see that the
-  PAPI_FP_OPS counter has gone to 0 or a positive value. This does not
-  happen on stock 2.4 kernels that have been properly patched with Bjorn's
-  IA64 update. 2.6 kernels do not have this issue. If you have a kernel
-  that exhibits this problem, please send the name to us.
+    there is a bug in the pfmon code (the kernel counter subsystem) that
+    causes interrupts to stop being delivered to the user code. This can
+    be seen by repeatedly running the profile_pthreads test case. You will
+    either get an error message from PFM_RESTART or you will see that the
+    PAPI_FP_OPS counter has gone to 0 or a positive value. This does not
+    happen on stock 2.4 kernels that have been properly patched with Bjorn's
+    IA64 update. 2.6 kernels do not have this issue. If you have a kernel
+    that exhibits this problem, please send the name to us.
+
+* src/ctests/profile_pthreads.c:
+  - On Athlon only, this test fails to generate any profile data about 40% 
+    of the time. We haven't yet been able to figure out why.
+
+* src/ctests/kufrin.c
+  - Unexplained failures on some POWER3 machines. Please contact us if you
+    experience this.
+
+* src/ctests/multiplex3_pthreads.c
+  - Unexplained failures on some POWER4 machines. Please contact us if you
+    experience this.
 
