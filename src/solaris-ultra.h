@@ -17,6 +17,8 @@
 #include <sys/procset.h>
 #include <sys/ucontext.h>
 #include <syms.h>
+#include <dlfcn.h>
+#include <sys/stat.h>
 
 #include "papi.h"
 

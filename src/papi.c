@@ -498,13 +498,20 @@ int PAPI_start(int EventSet)
    ThreadInfo_t *thread;
 
    DBG((stderr, "PAPI_start\n"));
+
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
    thread = ESI->master;
 
+   /* only one event set can be running at any time, so if another event
+      set is running, the user must stop that event set explicitly */
+   if ( thread->running_eventset != PAPI_NULL )
+      papi_return(PAPI_EISRUN);
+/*
    if (!(ESI->state & PAPI_STOPPED))
       papi_return(PAPI_EISRUN);
+*/
 
    if (ESI->NumberOfEvents < 1)
       papi_return(PAPI_EINVAL);
@@ -560,7 +567,8 @@ int PAPI_start(int EventSet)
    ESI->state ^= PAPI_STOPPED;
    ESI->state |= PAPI_RUNNING;
 
-   /* Update the number of active EventSets for this thread */
+   /* Update the running event set  for this thread */
+   thread->running_eventset = EventSet;
 
 /* commented out in Phil's papiv3
   thread->multistart.num_runners++;
@@ -639,7 +647,8 @@ int PAPI_stop(int EventSet, long_long * values)
    ESI->state ^= PAPI_RUNNING;
    ESI->state |= PAPI_STOPPED;
 
-   /* Update the number of active EventSets for this thread */
+   /* Update the running event set  for this thread */
+   thread->running_eventset = PAPI_NULL ;
 
 /* commented out in Phil's papiv3
   thread->multistart.num_runners --;
@@ -1248,8 +1257,8 @@ int PAPI_perror(int code, char *destination, int length)
 
 /* This function sets up an EventSet such that when it is PAPI_start()'ed, it
    begins to register overflows. This EventSet may only have multiple events
-   in it, but only 1 can be an overflow trigger. Subsequent calls to PAPI_overflow
-   replace earlier calls. To turn off overflow, set the threshold to 0 */
+   in it and can set multiple events to register overflow, but need to call 
+   this function multiple times. To turn off overflow, set the threshold to 0 */
 
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
                   PAPI_overflow_handler_t handler)

@@ -178,8 +178,11 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** master)
    if (_papi_hwi_thread_id_fn)
       (*master)->tid = (*_papi_hwi_thread_id_fn) ();
 
-   /* Call the substrate to fill in anything special. */
 
+   /* set the running eventset to -1 */
+   (*master)->running_eventset = PAPI_NULL;
+
+   /* Call the substrate to fill in anything special. */
    retval = _papi_hwd_init(&((*master)->context));
    if (retval) {
       free_thread(master);

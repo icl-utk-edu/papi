@@ -265,6 +265,7 @@ typedef struct _ThreadInfo {
    hwd_context_t context;
    void *event_set_overflowing;
    void *event_set_profiling;
+   int running_eventset;  /* -1 means no eventset is running */
    int domain;
    void *thread_storage[PAPI_MAX_THREAD_STORAGE];
 } ThreadInfo_t;

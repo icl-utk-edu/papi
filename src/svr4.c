@@ -1,0 +1,90 @@
+
+#include "papi.h"
+#include SUBSTRATE
+#include "papi_internal.h"
+#include "papi_protos.h"
+
+extern papi_mdi_t _papi_hwi_system_info;
+
+int _papi_hwd_update_shlib_info(void)
+{
+   char fname[80], name[PATH_MAX];
+   prmap_t newp;
+   int count, t_index;
+   FILE * map_f;
+   void * vaddr;
+   Dl_info dlip;
+   PAPI_address_map_t *tmp = NULL;
+
+   sprintf(fname, "/proc/%d/map", getpid());
+   map_f = fopen(fname, "r");
+
+   /* count the entries we need */
+   count =0;
+   t_index=0;
+   while ( fread(&newp, sizeof(prmap_t), 1, map_f) > 0 ) {
+      vaddr = (void*)(1+(newp.pr_vaddr)); // map base address 
+      if (dladdr(vaddr, &dlip) > 0) {
+         count++;
+         if ((newp.pr_mflags & MA_EXEC) && (newp.pr_mflags & MA_READ) ) {
+            if ( !(newp.pr_mflags & MA_WRITE)) 
+               t_index++;
+         }
+         strcpy(name,dlip.dli_fname);
+         if (strcmp(_papi_hwi_system_info.exe_info.address_info.name, 
+                          basename(name))== 0 ) {
+            if ((newp.pr_mflags & MA_EXEC) && (newp.pr_mflags & MA_READ) ) {
+               if ( !(newp.pr_mflags & MA_WRITE)) {
+                  _papi_hwi_system_info.exe_info.address_info.text_start = 
+                                      (caddr_t) newp.pr_vaddr;
+                  _papi_hwi_system_info.exe_info.address_info.text_end =
+                                      (caddr_t) (newp.pr_vaddr+newp.pr_size);
+               } else {
+                  _papi_hwi_system_info.exe_info.address_info.data_start = 
+                                      (caddr_t) newp.pr_vaddr;
+                  _papi_hwi_system_info.exe_info.address_info.data_end =
+                                      (caddr_t) (newp.pr_vaddr+newp.pr_size);
+               }  
+            }
+         }
+      } 
+
+   }
+   printf("t_index=%d \n", t_index);
+   rewind(map_f);
+   tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+
+   if (tmp == NULL)
+      error_return(PAPI_ENOMEM, "Error allocating shared library address map");
+   t_index=-1;
+   while ( fread(&newp, sizeof(prmap_t), 1, map_f) > 0 ) {
+      vaddr = (void*)(1+(newp.pr_vaddr)); // map base address
+      if (dladdr(vaddr, &dlip) > 0) {  // valid name
+         strcpy(name,dlip.dli_fname);
+         if (strcmp(_papi_hwi_system_info.exe_info.address_info.name, 
+                          basename(name))== 0 ) 
+            continue;
+         if ((newp.pr_mflags & MA_EXEC) && (newp.pr_mflags & MA_READ) ) {
+            if ( !(newp.pr_mflags & MA_WRITE)) {
+               t_index++;
+               tmp[t_index].text_start = (caddr_t) newp.pr_vaddr;
+               tmp[t_index].text_end =(caddr_t) (newp.pr_vaddr+newp.pr_size);
+               strncpy(tmp[t_index].name, dlip.dli_fname, PAPI_MAX_STR_LEN);
+            } else {
+               tmp[t_index].data_start = (caddr_t) newp.pr_vaddr;
+               tmp[t_index].data_end = (caddr_t) (newp.pr_vaddr+newp.pr_size);
+            }
+         }
+      }
+   }
+
+   fclose(map_f);
+
+   if (_papi_hwi_system_info.shlib_info.map)
+         free(_papi_hwi_system_info.shlib_info.map);
+   _papi_hwi_system_info.shlib_info.map = tmp;
+   _papi_hwi_system_info.shlib_info.count = t_index+1;
+
+   return(PAPI_OK);
+}
+

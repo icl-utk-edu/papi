@@ -667,6 +667,10 @@ static int get_system_info(void)
 
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
+   /* Executable regions, reading /proc/pid/maps file */
+   retval = _papi_hwd_update_shlib_info();
+
+
    /* Hardware info */
 
    _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
@@ -696,12 +700,14 @@ static int get_system_info(void)
    SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.num_cntrs);
 
    /* program text segment, data segment  address info */
+/*
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _start;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _edata + 1;
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
+*/
 
    /* Setup presets */
 
@@ -1210,11 +1216,12 @@ int _papi_hwd_remove_event(hwd_register_map_t * chosen, unsigned int hardware_in
 {
    return PAPI_OK;
 }
-
+/*
 int _papi_hwd_update_shlib_info(void)
 {
-   return (PAPI_ESBSTR);
+   return (PAPI_OK);
 }
+*/
 
 int _papi_hwd_encode_native(char *name, int *code)
 {
