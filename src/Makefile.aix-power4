@@ -31,3 +31,6 @@ aix-shared: $(SOURCES)
 	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 native_clean:
+
+native_install:
+
