@@ -42,7 +42,7 @@ PAPI_FCALL(papif_library_init,(int *check))
   if (tmp != PAPI_VER_CURRENT)
     *check = PAPI_EBUG;
   else
-    *check = PAPI_OK;
+    *check = PAPI_VER_CURRENT;
 }
 
 /* Rule for Fortran is, if *handle == 0, then no threads. */
@@ -151,15 +151,17 @@ PAPI_FCALL(papif_get_hardware_info,(int *ncpu, int *nnodes, int *totalcpus, int 
   if ( hwinfo == NULL ){
     *ncpu = 0;
   }
-  *ncpu = hwinfo->ncpu;
-  *nnodes = hwinfo->nnodes;
-  *totalcpus = hwinfo->totalcpus;
-  *vendor = hwinfo->vendor;
-  strcpy( vendor_string, hwinfo->vendor_string );
-  *model = hwinfo->model;
-  strcpy( model_string, hwinfo->model_string );
-  *revision = hwinfo->revision;
-  *mhz = hwinfo->mhz;
+  else {
+    *ncpu = hwinfo->ncpu;
+    *nnodes = hwinfo->nnodes;
+    *totalcpus = hwinfo->totalcpus;
+    *vendor = hwinfo->vendor;
+    strcpy( vendor_string, hwinfo->vendor_string );
+    *model = hwinfo->model;
+    strcpy( model_string, hwinfo->model_string );
+    *revision = hwinfo->revision;
+    *mhz = hwinfo->mhz;
+  }
   return;
 }
 

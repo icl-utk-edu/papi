@@ -39,6 +39,8 @@ fpapi.h: genpapifdef
 
 examples: 
 	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS) -I.." LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" $(TARGETS)
+	cd ftests; $(MAKE) F77="$(F77)" OPTFLAGS="$(OPTFLAGS)" FFLAGS="$(FFLAGS) -I.." LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" 
+
 
 libclean:
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~
@@ -46,6 +48,7 @@ libclean:
 clean: libclean
 	rm -rf $(LIBRARY) $(SHLIB) $(SHLIB).1 $(SHLIB).1.0 genpapifdef
 	cd tests; $(MAKE) clean
+	cd ftests; $(MAKE) clean
 
 dist:
 	chmod -R 644 *

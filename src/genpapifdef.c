@@ -19,6 +19,7 @@ int main(int argc, char **argv)
 
   assert(info = PAPI_query_all_events_verbose());
 
+  printf("#define %s %d\n","PAPI_OK", PAPI_OK);
   printf("#define %s %d\n","PAPI_VER_CURRENT",PAPI_VER_CURRENT);
   printf("#define %s %d\n","PAPI_NUM_ERRORS",PAPI_NUM_ERRORS);
   printf("#define %s %d\n","PAPI_EINVAL",PAPI_EINVAL);

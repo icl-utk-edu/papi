@@ -1,3 +1,4 @@
+#define PAPI_OK 0
 #define PAPI_VER_CURRENT 1
 #define PAPI_NUM_ERRORS 11
 #define PAPI_EINVAL -1
