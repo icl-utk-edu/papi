@@ -6,7 +6,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int i;
+   int i,j;
    int retval;
    int print_avail_only = 0;
    PAPI_event_info_t info;
@@ -51,21 +51,23 @@ int main(int argc, char **argv)
 
       printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
       
-      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Vendor Name|\n |Vendor Description|\n");
+      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Deeveloper's Notes|\n Derived|\n |PostFix|\n");
       printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
 
       i = PAPI_PRESET_MASK;
       do {
          if (PAPI_get_event_info(i, &info) == PAPI_OK) 
 	   {
-	     printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n",
+	     printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
 		    info.symbol,
 		    info.event_code,
 		    info.count,
 		    info.short_descr,
 		    info.long_descr,
-		    info.vendor_name,
-		    info.vendor_descr);
+		    info.note,
+          info.derived,
+          info.postfix);
+        for (j=0;j<info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
 	   }
       } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
       printf

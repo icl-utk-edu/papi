@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
       printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
       
-      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Vendor Name|\n |Vendor Description|\n");
+      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Derived|\n |PostFix|\n");
       printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
 
    }
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
 		info.count,
 		info.short_descr,
 		info.long_descr,
-		info.vendor_name,
-		info.vendor_descr);
+		info.derived,
+		info.postfix);
 #ifdef _POWER4
          if (!TESTS_QUIET)
             printf("Groups: ");

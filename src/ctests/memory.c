@@ -122,12 +122,17 @@ int main(int argc, char **argv)
        if (PAPI_get_event_info(eventlist[i], &evinfo) != PAPI_OK)
 	 test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
        
-       printf("\nEvent: %s\nShort: %s\nLong: %s\nName: %s\nVendor: %s\n\n",
+       printf("\nEvent: %s\nShort: %s\nLong: %s\n\n",
+	      evinfo.symbol,
+	      evinfo.short_descr,
+	      evinfo.long_descr);
+ /*      printf("\nEvent: %s\nShort: %s\nLong: %s\nName: %s\nVendor: %s\n\n",
 	      evinfo.symbol,
 	      evinfo.short_descr,
 	      evinfo.long_descr,
 	      evinfo.vendor_name,
 	      evinfo.vendor_descr);
+ */
        printf("       Bytes\t\tCold\t\tWarm\tPercent\n");
        
        if ((retval = PAPI_start(EventSet)) != PAPI_OK)
