@@ -616,3 +616,40 @@ PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check)
 {
   *check = PAPI_set_multiplex(EventSet);
 }
+
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, _fcd out_fcd, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)  
+PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, char *out_str, int *check,
+							      int out_len))
+#else
+PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, char *out, int *check))
+#endif
+{
+#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
+#if defined( _CRAYT3E )
+  char *out_str=_fcdtocp(out_fcd);
+  int  out_len=_fcdlen(out_fcd);
+#endif
+  char tmp[PAPI_MAX_STR_LEN];
+  int i;
+  *check = PAPI_label_event(EventCode, tmp);
+  /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
+  strncpy(out_str,tmp,out_len);
+  /* overwrite any NULLs and trailing garbage in out_str */
+  for(i=strlen(tmp);i<out_len;out_str[i++]=' ');
+#else
+  /* The array "out" passed by the user must be sufficiently long */
+  *check = PAPI_label_event(EventCode, out);
+#endif
+}
+
+PAPI_FCALL(papif_lock,PAPIF_LOCK,(void))
+{
+  PAPI_lock();
+}
+
+PAPI_FCALL(papif_unlock,PAPIF_UNLOCK,(void))
+{
+  PAPI_unlock();
+}
