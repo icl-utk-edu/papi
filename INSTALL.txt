@@ -134,14 +134,38 @@ Linux/x86 - Intel and AMD
 Linux/x86 requires that the kernel be patched and recompiled with the PerfCtr
 patch. The required patches and complete installation instructions are 
 provided in the papi/src/perfctr-x.y directory. Please see the INSTALL file
-in that directory.
+in that directory. 
+
+Do not forget, you also need to build your kernel with APIC support in order
+for hardware overflow to work. This is very important for accurate statistical
+profiling ala gprof via the hardware counters.
+
+So, when you configure your kernel to build with PERFCTR as above, make
+sure you turn on APIC support in the "Processor type and features" section.
+This should be enabled by default if you are on an SMP, but it is disabled
+by default on a UP. 
+
+In our 2.4.x kernels:
+> grep PIC /usr/src/linux/.config
+/usr/src/linux/.config:CONFIG_X86_GOOD_APIC=y
+/usr/src/linux/.config:CONFIG_X86_UP_APIC=y
+/usr/src/linux/.config:CONFIG_X86_UP_IOAPIC=y
+/usr/src/linux/.config:CONFIG_X86_LOCAL_APIC=y
+/usr/src/linux/.config:CONFIG_X86_IO_APIC=y
+
+You can verify the APIC is working after rebooting with the new kernel
+and running the 'perfex -i' command found in the perfctr/examples/perfex
+directory.
 
 *- IF YOU HAVE ALREADY PATCHED YOUR KERNEL WITH PERFCTR -*
 
 WARNING: You should always use a PerfCtr distribution that has been distributed
 with a version of PAPI or your build will fail. The reason for this is that
 PAPI builds a shared library of the Perfctr runtime, on which libpapi.so
-depends.
+depends. PAPI also depends on the .a file, which it decomposes into component
+objects files and includes in the libpapi.a file for convenience. If you
+install a new perfctr, even a shared library, YOU MUST REBUILD PAPI to get
+a proper, working libpapi.a. 
 
 Edit the top of the papi/src/Makefile.linux-perfctr-x.y file and change
 the following two variables:
