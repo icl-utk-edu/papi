@@ -37,15 +37,13 @@
 extern preset_search_t _papi_hwd_p3_preset_map;
 extern preset_search_t _papi_hwd_amd_preset_map;
 extern preset_search_t *preset_search_map;
-
 extern native_event_entry_t _papi_hwd_pentium3_native_map;
 extern native_event_entry_t _papi_hwd_p2_native_map;
 extern native_event_entry_t _papi_hwd_k7_native_map;
 extern native_event_entry_t *native_table;
-
 extern hwi_preset_t _papi_hwd_preset_map[];
-
 extern papi_mdi_t _papi_hwi_system_info;
+volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control)
@@ -267,55 +265,12 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
   return(PAPI_ESBSTR);
 }
 
-#ifdef __x86_64__
-#include <linux/spinlock.h>
-static spinlock_t lock[PAPI_MAX_LOCK];
-#else
-static volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
-#endif
-/* volatile uint32_t lock; */
-
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-#include <inttypes.h>
-
-
-#ifdef __x86_64__
-#define _papi_hwd_lock_init(lck)                \
-   spin_lock_init(&lock[lck]);
-#else
-#define _papi_hwd_lock_init(lck)                \
-   &lock[lck] = MUTEX_OPEN;
-#endif
-
-#ifdef __x86_64__
-#define  _papi_hwd_lock(lck)                    \
-do                                              \
-{                                               \
-   spin_lock(&lock[lck]);                       \
-} while(0)
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   spin_unlock(&lock[lck]);                             \
-} while(0)
-
-#else
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-#define  _papi_hwd_lock(lck)                                            \
-do                                                                      \
-{                                                                       \
-   unsigned long res = 0;                                               \
-   __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                               \
-} while(res != (unsigned long)MUTEX_OPEN);
-
-#define  _papi_hwd_unlock(lck)                                          \
-do                                                                      \
-{                                                                       \
-   unsigned long res = 0;                                               \   __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                                               \
-}while(0)
-#endif
+void _papi_hwd_lock_init(void) {
+   int i;
+   for(i = 0; i < PAPI_MAX_LOCK; i++) {
+      lock[i] = MUTEX_OPEN;
+   }
+}
 
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
@@ -446,7 +401,7 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
 */
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
 {
-printf("\n\n%d\n\n", dst->ra_rank);
+printf("\ndst->rank = %d\n", dst->ra_rank);
    return(dst->ra_rank==1);
 }
 
@@ -492,10 +447,6 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum=ESI->NativeCount;
-
-printf("\n\nHALLLO!!!!!\n\n");
-
-
    for(i = 0; i < natNum; i++){
       index=ESI->NativeInfoArray[i].ni_index;
       event_list[i].ra_selector = native_table[index].resources.selector; 
@@ -552,12 +503,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
    clear_control_state(this_state);
 
    /* fill the counters we're using */
-
-
-printf("\n\nWe're updating!!!!!!\n\n");
-
 print_control(&this_state->control.cpu_control);
-
    for(i = 0; i < count; i++){
       /* dereference the mapping information about this native event */
       bits = &native[i].ni_bits;

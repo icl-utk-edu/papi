@@ -52,6 +52,28 @@
 #include "papi.h"
 #include "papi_preset.h"
 
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+#define _papi_hwd_lock(lck)                                     \
+do                                                              \
+{                                                               \
+   unsigned long res = 0;                                       \
+   do {                                                         \
+   __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");               \
+   } while(res != (unsigned long)MUTEX_OPEN);                   \
+} while(0);
+
+#define  _papi_hwd_unlock(lck)                                 \
+do                                                             \
+{                                                              \
+   unsigned long res = 0;                                      \
+   __asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                              \
+}while(0);
+
 #ifdef _WIN32
   #define inline_static static __inline 
 #else
@@ -196,8 +218,9 @@ typedef struct _thread_list {
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
 
-native_event_entry_t *native_table;
-preset_search_t *preset_search_map;
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
+extern native_event_entry_t *native_table;
+extern preset_search_t *preset_search_map;
 
 extern char *basename(char *);
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __data_start, __bss_start;
