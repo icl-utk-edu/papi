@@ -1,0 +1,29 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
+SUBSTR  = unicos-x1
+MSUBSTR  = unicos-x1
+MEMSUBSTR= unicosmp
+DESCR	= "Unicos/MP Cray X1"
+LIBS	= static shared 
+TARGETS	= serial multiplex_and_pthreads smp omp 
+FLAGS  	= 
+CFLAGS  = $(FLAGS) 
+TOPTFLAGS= -O0
+OPTFLAGS= -g
+FOPTFLAGS= $(OPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS) 
+FFLAGS	= $(FLAGS) 
+SMPCFLGS= -mp
+OMPCFLGS= -mp
+CC_SHR  = cc -shared -all -check_registry /usr/lib32/so_locations -soname $(SHLIB)
+CC_R	= cc
+CC	= cc
+CPP	= cc -E
+F77	= f77
+
+include ./Makefile.inc
+
+native_clean:
+
+native_install:
+
