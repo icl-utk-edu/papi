@@ -47,7 +47,7 @@ extras.o: extras.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o
 genpapifdef: genpapifdef.c $(LIBRARY)
-	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef -L. -lpapi $(LDFLAGS)
+	(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef libpapi.a $(LDFLAGS)
 fpapi.h: genpapifdef
 	./genpapifdef > fpapi.h
 

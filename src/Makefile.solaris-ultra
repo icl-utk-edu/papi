@@ -21,6 +21,7 @@ CC	= cc -mt
 #CC_SHR	= gcc -shared -fpic
 CC_SHR	= cc -ztext -xs -G -Kpic -R $(PWD) -h libpapi.so -lcpc
 F77	= f77
+CPP     = cc -E
 MISCOBJS= get_tick.o
 
 include Makefile.inc
