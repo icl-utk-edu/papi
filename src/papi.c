@@ -53,15 +53,15 @@ PAPI_notify_handler_t thread_notifier = NULL;
 #else
 DynamicArray *PAPI_EVENTSET_MAP; /* Integer to EventSetInfo * mapping */
 #endif
-static int initialize_process_retval = 0xdeadbeef;
+static int initialize_process_retval = 0xdedbeef;
 
 /* Behavior of handle_error() */
 
-#ifdef DEBUG
+/* #ifdef DEBUG
 static int PAPI_ERR_LEVEL = PAPI_VERB_ECONT; 
 #else
 static int PAPI_ERR_LEVEL = PAPI_QUIET;
-#endif
+#endif */
 
 /* Our informative table */
 
@@ -95,41 +95,81 @@ static PAPI_preset_info_t papi_presets[PAPI_MAX_PRESET_EVENTS] = {
   { "PAPI_L2_STM", PAPI_L2_STM, "Level 2 store misses", 0, NULL, 0 },
   { "PAPI_BTAC_M", PAPI_BTAC_M, "Branch target address cache misses", 0, NULL, 0 },
   { "PAPI_PRF_DM", PAPI_PRF_DM, "Data prefetch cache misses", 0, NULL, 0 },
-  { NULL, PAPI_NULL, "unused", 0, NULL, 0 },
+  { "PAPI_L3_DCH", PAPI_L3_DCH, "Level 3 Data Cache Hits", 0, NULL, 0 },
   { "PAPI_TLB_SD", PAPI_TLB_SD, "Translation lookaside buffer shootdowns", 0, NULL, 0 },
   { "PAPI_CSR_FAL", PAPI_CSR_FAL, "Failed store conditional instructions", 0, NULL, 0 },
   { "PAPI_CSR_SUC", PAPI_CSR_SUC, "Successful store conditional instructions", 0, NULL, 0 },
   { "PAPI_CSR_TOT", PAPI_CSR_TOT, "Total store conditional instructions", 0, NULL, 0 },
-  { "PAPI_MEM_SCY", PAPI_MEM_SCY, "Cycles Stalled Waiting for Memory Access", 0, NULL, 0 },
-  { "PAPI_MEM_RCY", PAPI_MEM_RCY, "Cycles Stalled Waiting for Memory Read", 0, NULL, 0 },
-  { "PAPI_MEM_WCY", PAPI_MEM_WCY, "Cycles Stalled Waiting for Memory Write", 0, NULL, 0 },
-  { "PAPI_STL_ICY", PAPI_STL_ICY, "Cycles with no Instruction Issue", 0, NULL, 0 },
-  { "PAPI_FUL_ICY", PAPI_FUL_ICY, "Cycles with maximum Instruction Issue", 0, NULL, 0 },
+  { "PAPI_MEM_SCY", PAPI_MEM_SCY, "Cycles Stalled Waiting for memory accesses", 0, NULL, 0 },
+  { "PAPI_MEM_RCY", PAPI_MEM_RCY, "Cycles Stalled Waiting for memory Reads", 0, NULL, 0 },
+  { "PAPI_MEM_WCY", PAPI_MEM_WCY, "Cycles Stalled Waiting for memory writes", 0, NULL, 0 },
+  { "PAPI_STL_ICY", PAPI_STL_ICY, "Cycles with no instruction issue", 0, NULL, 0 },
+  { "PAPI_FUL_ICY", PAPI_FUL_ICY, "Cycles with maximum instruction issue", 0, NULL, 0 },
   { "PAPI_STL_CCY", PAPI_STL_CCY, "Cycles with no instructions completed", 0, NULL, 0 },
   { "PAPI_FUL_CCY", PAPI_FUL_CCY, "Cycles with maximum instructions completed", 0, NULL, 0 },
-  { NULL, 0, NULL, 0, NULL, 0 },
-  { "PAPI_BR_UCN", PAPI_BR_UCN, "Unconditional Branch Instructions", 0, NULL, 0 },
-  { "PAPI_BR_CN", PAPI_BR_CN, "Conditional Branch Instructions", 0, NULL, 0 },
-  { "PAPI_BR_TKN", PAPI_BR_TKN, "Conditional Branch Instructions Taken", 0, NULL, 0 }, 
-  { "PAPI_BR_NTK", PAPI_BR_NTK, "Conditional Branch Instructions Not Taken", 0, NULL, 0 }, 
-  { "PAPI_BR_MSP", PAPI_BR_MSP, "Conditional Branch Instructions Mispredicted", 0, NULL, 0 },
+  { "PAPI_HW_INT", PAPI_HW_INT, "Hardware interrupts", 0, NULL, 0 },
+  { "PAPI_BR_UCN", PAPI_BR_UCN, "Unconditional branch instructions", 0, NULL, 0 },
+  { "PAPI_BR_CN", PAPI_BR_CN, "Conditional branch instructions", 0, NULL, 0 },
+  { "PAPI_BR_TKN", PAPI_BR_TKN, "Conditional branch instructions taken", 0, NULL, 0 }, 
+  { "PAPI_BR_NTK", PAPI_BR_NTK, "Conditional branch instructions not taken", 0, NULL, 0 }, 
+  { "PAPI_BR_MSP", PAPI_BR_MSP, "Conditional branch instructions mispredicted", 0, NULL, 0 },
   { "PAPI_BR_PRC", PAPI_BR_PRC, "Conditional branch instructions correctly predicted", 0, NULL, 0 },
   { "PAPI_FMA_INS", PAPI_FMA_INS, "FMA instructions completed", 0, NULL, 0 },
   { "PAPI_TOT_IIS", PAPI_TOT_IIS, "Instructions issued", 0, NULL, 0 },
   { "PAPI_TOT_INS", PAPI_TOT_INS, "Instructions completed", 0, NULL, 0 },
-  { "PAPI_INT_INS", PAPI_INT_INS, "Integer Instructions", 0, NULL, 0 },
-  { "PAPI_FP_INS", PAPI_FP_INS, "Floating Point Instructions", 0, NULL, 0 },
-  { "PAPI_LD_INS", PAPI_LD_INS, "Load Instructions", 0, NULL, 0 },
-  { "PAPI_SR_INS", PAPI_SR_INS, "Store Instructions", 0, NULL, 0 },
-  { "PAPI_BR_INS", PAPI_BR_INS, "Branch Instructions", 0, NULL, 0 },
-  { "PAPI_VEC_INS", PAPI_VEC_INS, "Vector Instructions", 0, NULL, 0 },
+  { "PAPI_INT_INS", PAPI_INT_INS, "Integer instructions", 0, NULL, 0 },
+  { "PAPI_FP_INS", PAPI_FP_INS, "Floating point instructions", 0, NULL, 0 },
+  { "PAPI_LD_INS", PAPI_LD_INS, "Load instructions", 0, NULL, 0 },
+  { "PAPI_SR_INS", PAPI_SR_INS, "Store instructions", 0, NULL, 0 },
+  { "PAPI_BR_INS", PAPI_BR_INS, "Branch instructions", 0, NULL, 0 },
+  { "PAPI_VEC_INS", PAPI_VEC_INS, "Vector instructions", 0, NULL, 0 },
   { "PAPI_FLOPS", PAPI_FLOPS, "Floating point instructions per second", 0, NULL, 0 },
   { "PAPI_RES_STL", PAPI_RES_STL, "Cycles stalled on any resource", 0, NULL, 0 },
   { "PAPI_FP_STAL", PAPI_FP_STAL, "Cycles the FP unit(s) are stalled", 0, NULL, 0 },
   { "PAPI_TOT_CYC", PAPI_TOT_CYC, "Total cycles", 0, NULL, 0 },
   { "PAPI_IPS", PAPI_IPS, "Instructions per second", 0, NULL, 0 },
   { "PAPI_LST_INS", PAPI_LST_INS, "Load/store instructions completed", 0, NULL, 0 },
-  { "PAPI_SYC_INS", PAPI_SYC_INS, "Synchronization instructions completed", 0, NULL, 0 }
+  { "PAPI_SYC_INS", PAPI_SYC_INS, "Synchronization instructions completed", 0, NULL, 0 },
+  { "PAPI_L1_DCH", PAPI_L1_DCH, "L1 data cache hits", 0, NULL, 0 },
+  { "PAPI_L2_DCH", PAPI_L2_DCH, "L2 data cache hits", 0, NULL, 0 },
+  { "PAPI_L1_DCA", PAPI_L1_DCA, "L1 data cache accesses", 0, NULL, 0 },
+  { "PAPI_L2_DCA", PAPI_L2_DCA, "L2 data cache accesses", 0, NULL, 0 },
+  { "PAPI_L3_DCA", PAPI_L3_DCA, "L3 data cache accesses", 0, NULL, 0 },
+  { "PAPI_L1_DCR", PAPI_L1_DCR, "L1 data cache reads", 0, NULL, 0 },
+  { "PAPI_L2_DCR", PAPI_L2_DCR, "L2 data cache reads", 0, NULL, 0 },
+  { "PAPI_L3_DCR", PAPI_L3_DCR, "L3 data cache reads", 0, NULL, 0 },
+  { "PAPI_L1_DCW", PAPI_L1_DCW, "L1 data cache writes", 0, NULL, 0 },
+  { "PAPI_L2_DCW", PAPI_L2_DCW, "L2 data cache writes", 0, NULL, 0 },
+  { "PAPI_L3_DCW", PAPI_L3_DCW, "L3 data cache writes", 0, NULL, 0 },
+  { "PAPI_L1_ICH", PAPI_L1_ICH, "L1 instruction cache hits", 0, NULL, 0 },
+  { "PAPI_L2_ICH", PAPI_L2_ICH, "L2 instruction cache hits", 0, NULL, 0 },
+  { "PAPI_L3_ICH", PAPI_L3_ICH, "L3 instruction cache hits", 0, NULL, 0 },
+  { "PAPI_L1_ICA", PAPI_L1_ICA, "L1 instruction cache accesses", 0, NULL, 0 },
+  { "PAPI_L2_ICA", PAPI_L2_ICA, "L2 instruction cache accesses", 0, NULL, 0 },
+  { "PAPI_L3_ICA", PAPI_L3_ICA, "L3 instruction cache accesses", 0, NULL, 0 },
+  { "PAPI_L1_ICR", PAPI_L1_ICR, "L1 instruction cache reads", 0, NULL, 0 },
+  { "PAPI_L2_ICR", PAPI_L2_ICR, "L2 instruction cache reads", 0, NULL, 0 },
+  { "PAPI_L3_ICR", PAPI_L3_ICR, "L3 instruction cache reads", 0, NULL, 0 },
+  { "PAPI_L1_ICW", PAPI_L1_ICW, "L1 instruction cache writes", 0, NULL, 0 },
+  { "PAPI_L2_ICW", PAPI_L2_ICW, "L2 instruction cache writes", 0, NULL, 0 },
+  { "PAPI_L3_ICW", PAPI_L3_ICW, "L3 instruction cache writes", 0, NULL, 0 },
+  { "PAPI_L1_TCH", PAPI_L1_TCH, "L1 total cache hits", 0, NULL, 0 },
+  { "PAPI_L2_TCH", PAPI_L2_TCH, "L2 total cache hits", 0, NULL, 0 },
+  { "PAPI_L3_TCH", PAPI_L3_TCH, "L3 total cache hits", 0, NULL, 0 },
+  { "PAPI_L1_TCA", PAPI_L1_TCA, "L1 total cache accesses", 0, NULL, 0 },
+  { "PAPI_L2_TCA", PAPI_L2_TCA, "L2 total cache accesses", 0, NULL, 0 },
+  { "PAPI_L3_TCA", PAPI_L3_TCA, "L3 total cache accesses", 0, NULL, 0 },
+  { "PAPI_L1_TCR", PAPI_L1_TCR, "L1 total cache reads", 0, NULL, 0 },
+  { "PAPI_L2_TCR", PAPI_L2_TCR, "L2 total cache reads", 0, NULL, 0 },
+  { "PAPI_L3_TCR", PAPI_L3_TCR, "L3 total cache reads", 0, NULL, 0 },
+  { "PAPI_L1_TCW", PAPI_L1_TCW, "L1 total cache writes", 0, NULL, 0 },
+  { "PAPI_L2_TCW", PAPI_L2_TCW, "L2 total cache writes", 0, NULL, 0 },
+  { "PAPI_L3_TCW", PAPI_L3_TCW, "L3 total cache writes", 0, NULL, 0 },
+  { "PAPI_FML_INS", PAPI_FML_INS, "Floating point multiply instructions", 0, NULL, 0 },
+  { "PAPI_FAD_INS", PAPI_FAD_INS, "Floating point add instructions", 0, NULL, 0 },
+  { "PAPI_FDV_INS", PAPI_FDV_INS, "Floating point divide instructions", 0, NULL, 0 },
+  { "PAPI_FSQ_INS", PAPI_FSQ_INS, "Floating point square root instructions", 0, NULL, 0 },
+  { "PAPI_FNV_INS", PAPI_FNV_INS, "Floating point inverse instructions", 0, NULL, 0 },
 };
 
 /* Utility functions */
@@ -361,7 +401,7 @@ int _papi_hwi_initialize(DynamicArray **map)
       *map = PAPI_EVENTSET_MAP;
       return(PAPI_OK);
     }
-  if (initialize_process_retval == 0xdeadbeef)
+  if (initialize_process_retval == 0xdedbeef)
     {
       initialize_process();
       if (initialize_process_retval == PAPI_OK)
@@ -378,7 +418,7 @@ int _papi_hwi_initialize(DynamicArray **map)
   return(initialize_process_retval);
 }
 
-int internal_PAPI_init(void)
+int PAPI_init(void)
 { 
   DynamicArray *map;
   return(_papi_hwi_initialize(&map)); 
@@ -534,10 +574,10 @@ static int get_granularity(DynamicArray *map, PAPI_granularity_option_t *opt)
   return(PAPI_OK);
 }
 
-int internal_PAPI_query_event(int EventCode)
+int PAPI_query_event(int EventCode)
 { 
   int retval;
-  if ((retval = internal_PAPI_init()) < PAPI_OK)
+  if ((retval = PAPI_init()) < PAPI_OK)
     return retval;
 
   if (EventCode & PRESET_MASK)
@@ -554,10 +594,10 @@ int internal_PAPI_query_event(int EventCode)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-int internal_PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
+int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
 { 
   int retval;
-  if ((retval = internal_PAPI_init()) < PAPI_OK)
+  if ((retval = PAPI_init()) < PAPI_OK)
     return retval;
 
   if (info == NULL)
@@ -580,15 +620,15 @@ int internal_PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-const PAPI_preset_info_t *internal_PAPI_query_all_events_verbose(void)
+const PAPI_preset_info_t *PAPI_query_all_events_verbose(void)
 {
-  if (internal_PAPI_init() < PAPI_OK)
+  if (PAPI_init() < PAPI_OK)
     return NULL;
 
   return(papi_presets);
 }
 
-int internal_PAPI_event_code_to_name(int EventCode, char *out)
+int PAPI_event_code_to_name(int EventCode, char *out)
 {
   if (out == NULL)
     return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
@@ -605,7 +645,7 @@ int internal_PAPI_event_code_to_name(int EventCode, char *out)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-int internal_PAPI_event_name_to_code(char *in, int *out)
+int PAPI_event_name_to_code(char *in, int *out)
 {
   int i;
   
@@ -623,12 +663,12 @@ int internal_PAPI_event_name_to_code(char *in, int *out)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-int internal_PAPI_add_pevent(int *EventSet, int code, void *inout)
+int PAPI_add_pevent(int *EventSet, int code, void *inout)
 { 
   EventSetInfo *ESI, *n = NULL;
   INIT_MAP;
 
-  retval = internal_PAPI_init();
+  retval = PAPI_init();
   if (retval < PAPI_OK) return retval;
 
   /* Is the EventSet already in existence? */
@@ -679,12 +719,12 @@ int internal_PAPI_add_pevent(int *EventSet, int code, void *inout)
   return(retval);
 }
 
-int internal_PAPI_create_eventset(int *EventSet)
+int PAPI_create_eventset(int *EventSet)
 {
   EventSetInfo *ESI;
   INIT_MAP;
 
-  retval = internal_PAPI_init();
+  retval = PAPI_init();
   if (retval < PAPI_OK) return retval;
   
   /* Is the EventSet already in existence? */
@@ -716,12 +756,12 @@ int internal_PAPI_create_eventset(int *EventSet)
   return(retval);
 }
 
-int internal_PAPI_add_event(int *EventSet, int EventCode) 
+int PAPI_add_event(int *EventSet, int EventCode) 
 { 
   EventSetInfo *ESI, *n = NULL;
   INIT_MAP;
 
-  retval = internal_PAPI_init();
+  retval = PAPI_init();
   if (retval < PAPI_OK) return retval;
   
   /* Is the EventSet already in existence? */
@@ -940,7 +980,7 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
   return(retval);
 }
 
-int internal_PAPI_rem_event(int *EventSet, int EventCode)
+int PAPI_rem_event(int *EventSet, int EventCode)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -964,7 +1004,7 @@ int internal_PAPI_rem_event(int *EventSet, int EventCode)
   return(retval);
 }
 
-int internal_PAPI_destroy_eventset(int *EventSet)
+int PAPI_destroy_eventset(int *EventSet)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -992,7 +1032,7 @@ int internal_PAPI_destroy_eventset(int *EventSet)
 
 /* simply checks for valid EventSet, calls substrate start() call */
 
-int internal_PAPI_start(int EventSet)
+int PAPI_start(int EventSet)
 { 
   int i;
   EventSetInfo *ESI;
@@ -1022,8 +1062,7 @@ int internal_PAPI_start(int EventSet)
     {
       retval = _papi_hwi_start_overflow_timer(ESI, master_event_set);
       if (retval < PAPI_OK)
-	return(PAPI_EBUG);
-      master_event_set->event_set_overflowing = ESI;
+	return(retval);
     }
 
   retval = _papi_hwd_merge(ESI, master_event_set);
@@ -1040,7 +1079,7 @@ int internal_PAPI_start(int EventSet)
 
 /* checks for valid EventSet, calls substrate stop() fxn. */
 
-int internal_PAPI_stop(int EventSet, long long *values)
+int PAPI_stop(int EventSet, long long *values)
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1062,8 +1101,7 @@ int internal_PAPI_stop(int EventSet, long long *values)
     {
       retval = _papi_hwi_stop_overflow_timer(ESI, master_event_set);
       if (retval < PAPI_OK)
-	return(PAPI_EBUG);
-      master_event_set->event_set_overflowing = NULL;
+	return(retval);
     }
   
   retval = _papi_hwd_unmerge(ESI, master_event_set);
@@ -1090,7 +1128,7 @@ int internal_PAPI_stop(int EventSet, long long *values)
   return(retval);
 }
 
-int internal_PAPI_reset(int EventSet)
+int PAPI_reset(int EventSet)
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1119,7 +1157,7 @@ int internal_PAPI_reset(int EventSet)
   return(retval);
 }
 
-int internal_PAPI_read(int EventSet, long long *values)
+int PAPI_read(int EventSet, long long *values)
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1154,7 +1192,7 @@ int internal_PAPI_read(int EventSet, long long *values)
   return(retval);
 }
 
-int internal_PAPI_accum(int EventSet, long long *values)
+int PAPI_accum(int EventSet, long long *values)
 { 
   EventSetInfo *ESI;
   int i;
@@ -1183,10 +1221,10 @@ int internal_PAPI_accum(int EventSet, long long *values)
       values[i] = c;
     } 
 
-  return(internal_PAPI_reset(EventSet));
+  return(PAPI_reset(EventSet));
 }
 
-int internal_PAPI_write(int EventSet, long long *values)
+int PAPI_write(int EventSet, long long *values)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1213,7 +1251,7 @@ int internal_PAPI_write(int EventSet, long long *values)
 /*  The function PAPI_cleanup removes a stopped 
     EventSet from existence. */
 
-int internal_PAPI_cleanup(int *EventSet) 
+int PAPI_cleanup(int *EventSet) 
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1236,7 +1274,7 @@ int internal_PAPI_cleanup(int *EventSet)
   return(retval);
 }
  
-int internal_PAPI_state(int EventSet, int *status)
+int PAPI_state(int EventSet, int *status)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1258,7 +1296,7 @@ int internal_PAPI_state(int EventSet, int *status)
 }
 
 
-int internal_PAPI_set_opt(int option, PAPI_option_t *ptr)
+int PAPI_set_opt(int option, PAPI_option_t *ptr)
 { 
   _papi_int_option_t internal;
   INIT_MAP;
@@ -1358,11 +1396,11 @@ int internal_PAPI_set_opt(int option, PAPI_option_t *ptr)
     }
 }
 
-int internal_PAPI_get_opt(int option, PAPI_option_t *ptr) 
+int PAPI_get_opt(int option, PAPI_option_t *ptr) 
 { 
   INIT_MAP;
 
-  retval = internal_PAPI_init();
+  retval = PAPI_init();
   if (retval < PAPI_OK)
     return retval;
 
@@ -1402,7 +1440,7 @@ int internal_PAPI_get_opt(int option, PAPI_option_t *ptr)
   return(PAPI_OK);
 } 
 
-void internal_PAPI_shutdown(void) 
+void PAPI_shutdown(void) 
 {
   int i;
   INIT_MAP_VOID;
@@ -1440,7 +1478,7 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
       fprintf(stderr,"\n");
 
       if (PAPI_ERR_LEVEL==PAPI_VERB_ESTOP)
-        internal_PAPI_shutdown();
+        PAPI_shutdown();
     }
 */
 #ifdef DEBUG
@@ -1475,7 +1513,7 @@ static char *get_error_string(int errorCode)
   return(papi_errStr[-errorCode]);
 }
 
-int internal_PAPI_perror(int code, char *destination, int length)
+int PAPI_perror(int code, char *destination, int length)
 {
   char *foo;
 
@@ -1494,7 +1532,7 @@ int internal_PAPI_perror(int code, char *destination, int length)
    in it, but only 1 can be an overflow trigger. Subsequent calls to PAPI_overflow
    replace earlier calls. To turn off overflow, set the handler to NULL. */
 
-int internal_PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
+int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
   int index;
   EventSetInfo *ESI;
@@ -1536,10 +1574,15 @@ int internal_PAPI_overflow(int EventSet, int EventCode, int threshold, int flags
   opt.flags = flags;
   opt.handler = handler;
 
-  retval = _papi_hwd_set_overflow(ESI, &opt);
-  if (retval < PAPI_OK)
-    return(retval);
-
+  if (_papi_system_info.supports_hw_overflow)
+    {
+      retval = _papi_hwd_set_overflow(ESI, &opt);
+      if (retval < PAPI_OK)
+	return(retval);
+    }
+  else
+    opt.timer_ms = PAPI_ITIMER_MS;
+    
   /* Toggle the overflow flag */
 
   ESI->state ^= PAPI_OVERFLOWING;
@@ -1559,7 +1602,7 @@ static void dummy_handler(int EventSet, int EventCode, int EventIndex,
   abort();
 }
 
-int internal_PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
+int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
                 int EventSet, int EventCode, int threshold, int flags)
 {
   EventSetInfo *ESI;
@@ -1590,7 +1633,7 @@ int internal_PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
         return(handle_error(PAPI_EINVAL, "Profiling is not enabled for this EventSet.\n"));
     }
 
-  if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED))
+  if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED | PAPI_PROFIL_COMPRESS))
     return(PAPI_EINVAL);
 
   /* Set up the option structure for the low level */
@@ -1600,13 +1643,12 @@ int internal_PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
   opt.offset = offset;
   opt.scale = scale;
   opt.flags = flags;
-
   
-  if (_papi_system_info.needs_profile_emul)
-    retval = internal_PAPI_overflow(EventSet, EventCode, threshold, 0, dummy_handler);
-  else
+  if (_papi_system_info.supports_hw_profile)
     retval = _papi_hwd_set_profile(ESI, &opt);
-
+  else 
+    retval = PAPI_overflow(EventSet, EventCode, threshold, 0, dummy_handler);
+  
   if (retval < PAPI_OK)
     return(retval);
 
@@ -1622,33 +1664,35 @@ int internal_PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
   return(PAPI_OK);
 }
 
-int internal_PAPI_set_granularity(int granularity)
-{ PAPI_option_t ptr;
+int PAPI_set_granularity(int granularity)
+{ 
+  PAPI_option_t ptr;
 
   ptr.defgranularity.granularity = granularity;
-  return(internal_PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
+  return(PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
 }
 
-int internal_PAPI_set_domain(int domain)
-{ PAPI_option_t ptr;
+int PAPI_set_domain(int domain)
+{ 
+  PAPI_option_t ptr;
 
   ptr.defdomain.domain = domain;
-  return(internal_PAPI_set_opt(PAPI_SET_DOMAIN, &ptr));
+  return(PAPI_set_opt(PAPI_SET_DOMAIN, &ptr));
 }
 
-int internal_PAPI_add_events(int *EventSet, int *Events, int number)
+int PAPI_add_events(int *EventSet, int *Events, int number)
 {
   int i, retval;
 
   for (i=0;i<number;i++)
     {
-      retval = internal_PAPI_add_event(EventSet, Events[i]);
+      retval = PAPI_add_event(EventSet, Events[i]);
       if (retval!=PAPI_OK) return(retval);
     }
   return(PAPI_OK);
 }
 
-int internal_PAPI_rem_events(int *EventSet, int *Events, int number)
+int PAPI_rem_events(int *EventSet, int *Events, int number)
 {
   int i;
   EventSetInfo *ESI;
@@ -1672,14 +1716,14 @@ int internal_PAPI_rem_events(int *EventSet, int *Events, int number)
 
   for (i=0; i<number; i++)
     {
-      retval=internal_PAPI_rem_event(EventSet, Events[i]);
+      retval=PAPI_rem_event(EventSet, Events[i]);
       if(retval!=PAPI_OK) return(retval);
     }
   return(PAPI_OK);
 }
 
 
-int internal_PAPI_list_events(int EventSet, int *Events, int *number)
+int PAPI_list_events(int EventSet, int *Events, int *number)
 {
   EventSetInfo *ESI;
   int num;
@@ -1712,57 +1756,63 @@ int internal_PAPI_list_events(int EventSet, int *Events, int *number)
   return(PAPI_OK);
 }
 
-int internal_PAPI_save(void)
+int PAPI_save(void)
 {
   return(PAPI_OK);
 }
 
-int internal_PAPI_restore(void)
+int PAPI_restore(void)
 {
   return(PAPI_OK);
 }
 
-void *internal_PAPI_get_overflow_address(void *context)
+void *PAPI_get_overflow_address(void *context)
 {
   return(_papi_hwd_get_overflow_address(context));
 }
 
-const PAPI_exe_info_t *internal_PAPI_get_executable_info(void)
+const PAPI_exe_info_t *PAPI_get_executable_info(void)
 {
   PAPI_option_t ptr;
   int retval;
 
-  retval = internal_PAPI_get_opt(PAPI_GET_EXEINFO,&ptr);
+  retval = PAPI_get_opt(PAPI_GET_EXEINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.exe_info);
   else
     return(NULL);
 }
 
-const PAPI_hw_info_t *internal_PAPI_get_hardware_info(void)
+const PAPI_hw_info_t *PAPI_get_hardware_info(void)
 {
   PAPI_option_t ptr;
   int retval;
 
-  retval = internal_PAPI_get_opt(PAPI_GET_HWINFO,&ptr);
+  retval = PAPI_get_opt(PAPI_GET_HWINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.hw_info);
   else
     return(NULL);
 }
 
-long long internal_PAPI_get_real_cyc(void)
+long long PAPI_get_real_cyc(void)
 {
-  INIT_MAP_QUICK_LL;
-
   return(_papi_hwd_get_real_cycles());
 }
 
-long long internal_PAPI_get_real_usec(void)
+long long PAPI_get_real_usec(void)
 {
-  INIT_MAP_QUICK_LL;
-
   return(_papi_hwd_get_real_usec());
+}
+
+long long PAPI_get_virt_cyc(void)
+{
+  return(_papi_hwd_get_virt_cycles());
+}
+
+long long PAPI_get_virt_usec(void)
+{
+  return(_papi_hwd_get_virt_usec());
 }
 
 int PAPI_notify(int what, int flags, PAPI_notify_handler_t handler)

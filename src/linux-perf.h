@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 #include <sys/types.h>
 #include <asm/system.h>
 #include <asm/atomic.h> 
@@ -15,7 +16,7 @@
 
 #define CNTR1 0x1
 #define CNTR2 0x2
-#define CNTR3 0x4
+#define MAX_COUNTERS PERF_COUNTERS
 
 typedef struct hwd_control_state {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
@@ -23,11 +24,7 @@ typedef struct hwd_control_state {
   /* Is this event derived? */
   int derived;   
   /* Buffer to pass to the kernel to control the counters */
-  int counter_cmd[PERF_COUNTERS];
-  /* Milliseconds between timer interrupts for various things */  
-  int timer_ms;  
-  /* The native encoding of the domain of this eventset */
-  int domain;    
+  int counter_cmd[MAX_COUNTERS];
 } hwd_control_state_t;
 
 typedef struct hwd_preset {
@@ -38,7 +35,7 @@ typedef struct hwd_preset {
   /* If the derived event is not associative, this index is the lead operand */
   unsigned char operand_index;
   /* Buffer to pass to the kernel to control the counters */
-  unsigned char counter_cmd[PERF_COUNTERS];
+  unsigned int counter_cmd[MAX_COUNTERS];
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;

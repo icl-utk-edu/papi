@@ -2,7 +2,7 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= zero_pthreads
-SERIAL  = avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2 case3
+SERIAL  = clockres avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2 case3
 ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
 
@@ -20,7 +20,7 @@ shmem: $(SHMEM)
 serial: $(SERIAL)
 
 zero_pthreads: zero_pthreads.c $(UTILOBJS) ../libpapi.a
-	$(CC_R) $(CFLAGS) $(OPTFLAGS) zero_pthreads.c $(UTILOBJS) -L.. -lpapi_r $(LDFLAGS) -o zero_pthreads $(PTHRLIBS)
+	$(CC_R) $(CFLAGS) $(OPTFLAGS) zero_pthreads.c $(UTILOBJS) -L.. -lpapi_r $(LDFLAGS) -o zero_pthreads -lpthread
 
 zero_smp: zero_smp.c $(UTILOBJS) ../libpapi.a
 	$(CC_R) $(SMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_smp.c $(UTILOBJS) -L.. -lpapi_smp $(LDFLAGS) -o zero_smp $(SMPLIBS)
@@ -30,6 +30,9 @@ zero_shmem: zero_shmem.c $(UTILOBJS) ../libpapi.a
 
 zero_omp: zero_omp.c $(UTILOBJS) ../libpapi.a
 	$(CC_R) $(OMPCFLGS) $(CFLAGS) $(OPTFLAGS) zero_omp.c $(UTILOBJS) -L.. -lpapi_smp $(LDFLAGS) -o zero_omp $(OMPLIBS)
+
+clockres: clockres.c $(UTILOBJS) ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) clockres.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o clockres
 
 zero: zero.c $(UTILOBJS) ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) zero.c $(UTILOBJS) -L.. -lpapi $(LDFLAGS) -o zero
@@ -80,7 +83,10 @@ case3: case3.c ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) case3.c -L.. -lpapi $(LDFLAGS) -o case3
 
 do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) -g -c do_loops.c
+	$(CC) $(CFLAGS) $(NOOPT) -c do_loops.c
+
+test_utils.o: test_utils.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c test_utils.c
 
 clean:
 	rm -f *.o $(ALL) core *~

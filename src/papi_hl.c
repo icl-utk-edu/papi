@@ -1,4 +1,6 @@
-/* file: papi_hl.c */
+#ifdef PTHREADS
+#include <pthread.h>
+#endif
 
 #include <stdio.h>
 #include <malloc.h>
@@ -25,9 +27,9 @@ static int PAPI_EVENTSET_INUSE=PAPI_EINVAL;
 /* array used in the high level routines.                                 */ 
 /*========================================================================*/
 
-int internal_PAPI_num_events(void) 
+int PAPI_num_events(void) 
 {
-  return(internal_PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 }
 
 /*========================================================================*/
@@ -41,24 +43,24 @@ int internal_PAPI_num_events(void)
 /* should be no longer than PAPI_MAX_EVNTS.                               */ 
 /*========================================================================*/
 
-int internal_PAPI_start_counters(int *events, int array_len) 
+int PAPI_start_counters(int *events, int array_len) 
 {
   int EventSet;
   int i,retval;
 
   int MAX_COUNTERS;
 
-  MAX_COUNTERS=internal_PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
+  MAX_COUNTERS=PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
 
 
   if(PAPI_EVENTSET_INUSE > PAPI_NULL ) {
-    internal_PAPI_perror(PAPI_EINVAL,"attempt to start new event set while prev one running",0);
+    PAPI_perror(PAPI_EINVAL,"attempt to start new event set while prev one running",0);
     return(PAPI_EINVAL);
   }/* end if*/
 
 
   if(array_len>MAX_COUNTERS) {
-    internal_PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed because array_len > MAX_COUNTERS",0);
+    PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed because array_len > MAX_COUNTERS",0);
     return(PAPI_EINVAL);
   }
 
@@ -70,7 +72,7 @@ int internal_PAPI_start_counters(int *events, int array_len)
 
   for (i=0;i<array_len;i++) 
     {
-      retval = internal_PAPI_add_event(&EventSet,events[i]);
+      retval = PAPI_add_event(&EventSet,events[i]);
       if (retval)
 	return(retval);
     }
@@ -85,7 +87,7 @@ int internal_PAPI_start_counters(int *events, int array_len)
   /* start the EventSet*/
 
 
-  retval = internal_PAPI_start(EventSet);
+  retval = PAPI_start(EventSet);
   if (retval) 
     return(retval);
 
@@ -102,16 +104,16 @@ int internal_PAPI_start_counters(int *events, int array_len)
 /* them continue to run upon return.                                      */
 /*========================================================================*/
 
-int internal_PAPI_read_counters(long long *values, int array_len) 
+int PAPI_read_counters(long long *values, int array_len) 
 {
   int retval;
 
   if (PAPI_EVENTSET_INUSE != PAPI_EINVAL) 
     {
-      retval = internal_PAPI_read(PAPI_EVENTSET_INUSE,values);
+      retval = PAPI_read(PAPI_EVENTSET_INUSE,values);
       if (retval)
 	return(retval);
-      return(internal_PAPI_reset(PAPI_EVENTSET_INUSE));
+      return(PAPI_reset(PAPI_EVENTSET_INUSE));
     }
   return(PAPI_EINVAL);
 }
@@ -124,9 +126,9 @@ int internal_PAPI_read_counters(long long *values, int array_len)
 /* Reset the counters to 0.                                               */       
 /*========================================================================*/
 
-int internal_PAPI_stop_counters(long long *values, int array_len) 
+int PAPI_stop_counters(long long *values, int array_len) 
 {
   if (PAPI_EVENTSET_INUSE != PAPI_EINVAL) 
-    return(internal_PAPI_stop(PAPI_EVENTSET_INUSE, values));
+    return(PAPI_stop(PAPI_EVENTSET_INUSE, values));
   return(PAPI_EINVAL);
 } 

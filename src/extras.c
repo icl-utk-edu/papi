@@ -18,6 +18,7 @@ the following:
 #include <signal.h>
 #include <string.h>
 #include <strings.h>
+#include <limits.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -60,6 +61,12 @@ void posix_profil(int flags, long long excess, long long threshold,
 
   if (flags & PAPI_PROFIL_RANDOM)
     {
+      if (random_ushort() <= (USHRT_MAX/4))
+	return;
+    }
+
+  if (flags & PAPI_PROFIL_COMPRESS)
+    {
       /* We're likely to ignore the sample if buf[address] gets big. */
 
        if (random_ushort() < buf[address]) 
@@ -80,7 +87,7 @@ void posix_profil(int flags, long long excess, long long threshold,
 	  increment = (int)(excess / threshold);
 	}	
     }
-      
+
   if (buf[address] + (unsigned short)1) /* Guard against overflow */
     {
       buf[address] += increment;
@@ -110,7 +117,7 @@ static void dispatch_profile(EventSetInfo *ESI, void *context,
   DBG((stderr,"dispatch_profile() bucket %lu out of range\n",pc));
 }
 
-static void dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_event_set, void *context)
+void _papi_hwi_dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_event_set, void *context)
 {
   int retval;
   long long latest;
@@ -128,8 +135,7 @@ static void dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_eve
 
   /* Is it bigger than the deadline? */
 
-  if ((_papi_system_info.needs_overflow_emul == 0) || 
-      (latest > ESI->overflow.deadline))
+  if ((_papi_system_info.supports_hw_overflow) || (latest > ESI->overflow.deadline))
     {
       ESI->overflow.count++;
       if (ESI->state & PAPI_PROFILING)
@@ -149,7 +155,18 @@ static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
   
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
+    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
+  return;
+}
+#elif defined(sun) && defined(sparc)
+#include <sys/ucontext.h>
+static void dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
+{
+  INIT_MAP_VOID;
+  DBG((stderr,"dispatch_timer() at 0x%lx\n",info->uc_mcontext.gregs[31]));
+  
+  if (event_set_overflowing->state & PAPI_OVERFLOWING)
+    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
   return;
 }
 #elif defined(linux)
@@ -159,7 +176,7 @@ static void dispatch_timer(int signal, struct sigcontext info)
   DBG((stderr,"dispatch_timer() at 0x%lx\n",info.eip));
 
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)&info); 
+    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)&info); 
   return;
 }
 #elif defined(_AIX)
@@ -175,7 +192,7 @@ static void dispatch_timer(int signal, siginfo_t *si, void *i)
 #endif
 
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    dispatch_overflow_signal(event_set_overflowing, master_event_set, i); 
+    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, i); 
 }
 #elif defined(sgi) && defined(mips)
 static void dispatch_timer(int signal, int code, struct sigcontext *info)
@@ -186,7 +203,7 @@ static void dispatch_timer(int signal, int code, struct sigcontext *info)
 #endif
 
   if (event_set_overflowing->state & PAPI_OVERFLOWING)
-    dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
+    _papi_hwi_dispatch_overflow_signal(event_set_overflowing, master_event_set, (void *)info); 
 }
 #endif
 
@@ -194,6 +211,7 @@ static int start_timer(int milliseconds)
 {
   int retval;
   struct sigaction action;
+  struct itimerval value;
 
   /* If the user has installed a SIGPROF, don't do anything */
 
@@ -202,71 +220,79 @@ static int start_timer(int milliseconds)
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_flags = SA_RESTART;
-#if defined(_AIX) || (defined(sgi) && defined(mips)) || defined(_CRAYT3E)
+#if defined(_AIX) 
   action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
+  action.sa_flags |= SA_SIGINFO;
+#elif defined(sgi) && defined(mips)
+  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
+#elif defined(_CRAYT3E)
+  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
+  action.sa_flags |= SA_SIGINFO;
+#elif defined(sun) && defined(sparc)
+  action.sa_sigaction = (void (*)(int, siginfo_t *, void *))dispatch_timer;
+  action.sa_flags |= SA_SIGINFO;
 #elif defined(linux)
   action.sa_handler = (void (*)(int))dispatch_timer;
-#elif defined(_CRAYT3E) || defined(_AIX) 
-  action.sa_flags |= SA_SIGINFO;
 #endif
 
   if (sigaction(PAPI_SIGNAL, &action, NULL) < 0)
     return(PAPI_ESYS);
 
-  if (_papi_system_info.needs_overflow_emul)
+  value.it_interval.tv_sec = 0;
+  value.it_interval.tv_usec = milliseconds * 1000;
+  value.it_value.tv_sec = 0;
+  value.it_value.tv_usec = milliseconds * 1000;
+  
+  retval = setitimer(PAPI_ITIMER, &value, NULL);
+  if (retval == -1)
     {
-      struct itimerval value;
-
-      value.it_interval.tv_sec = 0;
-      value.it_interval.tv_usec = milliseconds * 1000;
-      value.it_value.tv_sec = 0;
-      value.it_value.tv_usec = milliseconds * 1000;
-
-      retval = setitimer(PAPI_ITIMER, &value, NULL);
-      if (retval == -1)
-	{
-	  signal(PAPI_SIGNAL, SIG_DFL);
-	  return(PAPI_ESYS);
-	}
+      signal(PAPI_SIGNAL, SIG_DFL);
+      return(PAPI_ESYS);
     }
 
   return(PAPI_OK);
 }
 
-int _papi_hwi_start_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
-{
-  return(start_timer(ESI->overflow.timer_ms));
-}
-
 static int stop_timer(void)
 {
   int retval = PAPI_OK;
+  struct itimerval value;
 
   if (signal(PAPI_SIGNAL,SIG_DFL) == SIG_ERR)
     retval = PAPI_ESYS;
   
-  if (_papi_system_info.needs_overflow_emul)
-    {
-      struct itimerval value;
-
-      value.it_interval.tv_sec = 0;
-      value.it_interval.tv_usec = 0;
-      value.it_value.tv_sec = 0;
-      value.it_value.tv_usec = 0;
+  value.it_interval.tv_sec = 0;
+  value.it_interval.tv_usec = 0;
+  value.it_value.tv_sec = 0;
+  value.it_value.tv_usec = 0;
   
-      if (retval != PAPI_OK)
-	setitimer(PAPI_ITIMER, &value, NULL);
-      else
-	if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
-	  retval = PAPI_ESYS;
-    }
+  if (retval != PAPI_OK)
+    setitimer(PAPI_ITIMER, &value, NULL);
+  else
+    if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
+      retval = PAPI_ESYS;
 
+  return(retval);
+}
+
+int _papi_hwi_start_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
+{
+  int retval = PAPI_OK;
+
+  master->event_set_overflowing = ESI;
+  if (_papi_system_info.supports_hw_overflow == 0)
+    retval = start_timer(ESI->overflow.timer_ms);
   return(retval);
 }
 
 int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
 {
-  return(stop_timer());
+  int retval = PAPI_OK;
+
+  if (_papi_system_info.supports_hw_overflow == 0)
+    retval = stop_timer();
+  master->event_set_overflowing = NULL;
+  return(retval);
 }
 
 /* int _papi_portable_set_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)

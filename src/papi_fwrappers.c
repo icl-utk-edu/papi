@@ -3,211 +3,230 @@
 
 /* Lets use defines to rename all the files */
 #ifdef FORTRANUNDERSCORE
-#define PAPI_accum papi_accum_
-#define PAPI_add_event papi_add_event_
-#define PAPI_add_events papi_add_events_
-#define PAPI_cleanup papi_cleanup_
-#define PAPI_list_events papi_list_events_
-#define PAPI_perror papi_perror_
-#define PAPI_query_event papi_query_event_
-#define PAPI_event_name_to_code papi_event_name_to_code_
-#define PAPI_read papi_read_
-#define PAPI_rem_event papi_rem_event_
-#define PAPI_rem_events papi_rem_events_
-#define PAPI_reset papi_reset_
-#define PAPI_restore papi_restore_
-#define PAPI_save papi_save_
-#define PAPI_set_domain papi_set_domain_
-#define PAPI_set_granularity papi_set_granularity_
-#define PAPI_start papi_start_
-#define PAPI_state papi_state_
-#define PAPI_stop papi_stop_
-#define PAPI_write papi_write_
-#define PAPI_shutdown papi_shutdown_
-#define PAPI_get_hardware_info papi_get_hardware_info_
-#define PAPI_create_eventset papi_create_eventset_
-#define PAPI_destroy_eventset papi_destroy_eventset_
-#define PAPI_num_events papi_num_events_
-#define PAPI_start_counters papi_start_counters_
-#define PAPI_read_counters papi_read_counters_
-#define PAPI_stop_counters papi_stop_counters_
-#define PAPI_get_real_usec papi_get_real_usec_
-#define PAPI_get_real_cyc papi_get_real_cyc_
+#define PAPIf_accum papif_accum_
+#define PAPIf_add_event papif_add_event_
+#define PAPIf_add_events papif_add_events_
+#define PAPIf_cleanup papif_cleanup_
+#define PAPIf_list_events papif_list_events_
+#define PAPIf_perror papif_perror_
+#define PAPIf_query_event papif_query_event_
+#define PAPIf_event_name_to_code papif_event_name_to_code_
+#define PAPIf_read papif_read_
+#define PAPIf_rem_event papif_rem_event_
+#define PAPIf_rem_events papif_rem_events_
+#define PAPIf_reset papif_reset_
+#define PAPIf_restore papif_restore_
+#define PAPIf_save papif_save_
+#define PAPIf_set_domain papif_set_domain_
+#define PAPIf_set_granularity papif_set_granularity_
+#define PAPIf_start papif_start_
+#define PAPIf_state papif_state_
+#define PAPIf_stop papif_stop_
+#define PAPIf_write papif_write_
+#define PAPIf_shutdown papif_shutdown_
+#define PAPIf_get_hardware_info papif_get_hardware_info_
+#define PAPIf_create_eventset papif_create_eventset_
+#define PAPIf_destroy_eventset papif_destroy_eventset_
+#define PAPIf_num_events papif_num_events_
+#define PAPIf_start_counters papif_start_counters_
+#define PAPIf_read_counters papif_read_counters_
+#define PAPIf_stop_counters papif_stop_counters_
+#define PAPIf_get_real_usec papif_get_real_usec_
+#define PAPIf_get_real_cyc papif_get_real_cyc_
 
 #elif FORTRANDOUBLEUNDERSCORE
-#define PAPI_accum papi_accum__
-#define PAPI_add_event papi_add_event__
-#define PAPI_add_events papi_add_events__
-#define PAPI_cleanup papi_cleanup__
-#define PAPI_init papi_init__
-#define PAPI_list_events papi_list_events__
-#define PAPI_perror papi_perror__
-#define PAPI_query_event papi_query_event__
-#define PAPI_event_name_to_code papi_event_name_to_code__
-#define PAPI_read papi_read__
-#define PAPI_rem_event papi_rem_event__
-#define PAPI_rem_events papi_rem_events__
-#define PAPI_reset papi_reset__
-#define PAPI_restore papi_restore__
-#define PAPI_save papi_save__
-#define PAPI_set_domain papi_set_domain__
-#define PAPI_set_granularity papi_set_granularity__
-#define PAPI_start papi_start__
-#define PAPI_state papi_state__
-#define PAPI_stop papi_stop__
-#define PAPI_write papi_write__
-#define PAPI_shutdown papi_shutdown__
-#define PAPI_get_hardware_info papi_get_hardware_info__
-#define PAPI_create_eventset papi_create_eventset__
-#define PAPI_destroy_eventset papi_destroy_eventset__
-#define PAPI_num_events papi_num_events__
-#define PAPI_start_counters papi_start_counters__
-#define PAPI_read_counters papi_read_counters__
-#define PAPI_stop_counters papi_stop_counters__
-#define PAPI_get_real_usec papi_get_real_usec__
-#define PAPI_get_real_cyc papi_get_real_cyc__
+#define PAPIf_accum papif_accum__
+#define PAPIf_add_event papif_add_event__
+#define PAPIf_add_events papif_add_events__
+#define PAPIf_cleanup papif_cleanup__
+#define PAPIf_init papif_init__
+#define PAPIf_list_events papif_list_events__
+#define PAPIf_perror papif_perror__
+#define PAPIf_query_event papif_query_event__
+#define PAPIf_event_name_to_code papif_event_name_to_code__
+#define PAPIf_read papif_read__
+#define PAPIf_rem_event papif_rem_event__
+#define PAPIf_rem_events papif_rem_events__
+#define PAPIf_reset papif_reset__
+#define PAPIf_restore papif_restore__
+#define PAPIf_save papif_save__
+#define PAPIf_set_domain papif_set_domain__
+#define PAPIf_set_granularity papif_set_granularity__
+#define PAPIf_start papif_start__
+#define PAPIf_state papif_state__
+#define PAPIf_stop papif_stop__
+#define PAPIf_write papif_write__
+#define PAPIf_shutdown papif_shutdown__
+#define PAPIf_get_hardware_info papif_get_hardware_info__
+#define PAPIf_create_eventset papif_create_eventset__
+#define PAPIf_destroy_eventset papif_destroy_eventset__
+#define PAPIf_num_events papif_num_events__
+#define PAPIf_start_counters papif_start_counters__
+#define PAPIf_read_counters papif_read_counters__
+#define PAPIf_stop_counters papif_stop_counters__
+#define PAPIf_get_real_usec papif_get_real_usec__
+#define PAPIf_get_real_cyc papif_get_real_cyc__
 
 #elif FORTRANALLCAPS
-#define PAPI_accum PAPI_ACCUM
-#define PAPI_add_event PAPI_ADD_EVENT
-#define PAPI_add_events PAPI_ADD_EVENTS
-#define PAPI_cleanup PAPI_CLEANUP
-#define PAPI_init PAPI_INIT
-#define PAPI_list_events PAPI_LIST_EVENTS
-#define PAPI_perror PAPI_PERROR
-#define PAPI_query_event PAPI_QUERY_EVENT
-#define PAPI_event_name_to_code PAPI_EVENT_NAME_TO_CODE
-#define PAPI_read PAPI_READ
-#define PAPI_rem_event PAPI_REM_EVENT
-#define PAPI_rem_events PAPI_REM_EVENTS
-#define PAPI_reset PAPI_RESET
-#define PAPI_restore PAPI_RESTORE
-#define PAPI_save PAPI_SAVE
-#define PAPI_set_domain PAPI_SET_DOMAIN
-#define PAPI_set_granularity PAPI_SET_GRANULARITY
-#define PAPI_start PAPI_START
-#define PAPI_state PAPI_STATE
-#define PAPI_stop PAPI_STOP
-#define PAPI_write PAPI_WRITE
-#define PAPI_shutdown PAPI_SHUTDOWN
-#define PAPI_get_hardware_info PAPI_GET_HARDWARE_INFO
-#define PAPI_create_eventset PAPI_CREATE_EVENTSET
-#define PAPI_destroy_eventset PAPI_DESTROY_EVENTSET
-#define PAPI_num_events PAPI_NUM_EVENTS
-#define PAPI_start_counters PAPI_START_COUNTERS
-#define PAPI_read_counters PAPI_READ_COUNTERS
-#define PAPI_stop_counters PAPI_STOP_COUNTERS
-#define PAPI_get_real_usec PAPI_GET_REAL_USEC
-#define PAPI_get_real_cyc PAPI_GET_REAL_CYC
+#define PAPIf_accum PAPIf_ACCUM
+#define PAPIf_add_event PAPIf_ADD_EVENT
+#define PAPIf_add_events PAPIf_ADD_EVENTS
+#define PAPIf_cleanup PAPIf_CLEANUP
+#define PAPIf_init PAPIf_INIT
+#define PAPIf_list_events PAPIf_LIST_EVENTS
+#define PAPIf_perror PAPIf_PERROR
+#define PAPIf_query_event PAPIf_QUERY_EVENT
+#define PAPIf_event_name_to_code PAPIf_EVENT_NAME_TO_CODE
+#define PAPIf_read PAPIf_READ
+#define PAPIf_rem_event PAPIf_REM_EVENT
+#define PAPIf_rem_events PAPIf_REM_EVENTS
+#define PAPIf_reset PAPIf_RESET
+#define PAPIf_restore PAPIf_RESTORE
+#define PAPIf_save PAPIf_SAVE
+#define PAPIf_set_domain PAPIf_SET_DOMAIN
+#define PAPIf_set_granularity PAPIf_SET_GRANULARITY
+#define PAPIf_start PAPIf_START
+#define PAPIf_state PAPIf_STATE
+#define PAPIf_stop PAPIf_STOP
+#define PAPIf_write PAPIf_WRITE
+#define PAPIf_shutdown PAPIf_SHUTDOWN
+#define PAPIf_get_hardware_info PAPIf_GET_HARDWARE_INFO
+#define PAPIf_create_eventset PAPIf_CREATE_EVENTSET
+#define PAPIf_destroy_eventset PAPIf_DESTROY_EVENTSET
+#define PAPIf_num_events PAPIf_NUM_EVENTS
+#define PAPIf_start_counters PAPIf_START_COUNTERS
+#define PAPIf_read_counters PAPIf_READ_COUNTERS
+#define PAPIf_stop_counters PAPIf_STOP_COUNTERS
+#define PAPIf_get_real_usec PAPIf_GET_REAL_USEC
+#define PAPIf_get_real_cyc PAPIf_GET_REAL_CYC
+#endif
+
+
+/* Fortran wrapper stuff */
+#ifndef FOREVENTS
+#define FOREVENTS 1
+static int fortran_events[64] =  { 
+0x80000000, 0x80000001, 0x80000002, 0x80000003, 0x80000004, 0x80000005,
+0x80000006, 0x80000007, 0x80000008, 0x80000009, 0x8000000A, 0x8000000B,
+0x8000000C, 0x8000000D, 0x8000000E, 0x8000000F, 0x80000010, 0x80000011,
+0x80000012, 0x80000013, 0x80000014, 0x80000015, 0x80000016, 0x80000017,
+0x80000018, 0x80000019, 0x8000001A, 0x8000001B, 0x8000001C, 0x8000001D,
+0x8000001E, 0x8000001F, 0x80000020, 0x80000021, 0x80000022, 0x80000023,
+0x80000024, 0x80000025, 0x80000026, 0x80000027, 0x80000028, 0x80000029,
+0x8000002A, 0x8000002B, 0x8000002C, 0x8000002D, 0x8000002E, 0x8000002F,
+0x80000030, 0x80000031, 0x80000032, 0x80000033, 0x80000034, 0x80000035,
+0x80000036, 0x80000037, 0x80000038, 0x80000039, 0x8000003A, 0x8000003B,
+0x8000003C, 0x8000003D, 0x8000003E, 0x8000003F
+};
 #endif
 
 /* The Low Level Wrappers */
-PAPI_accum(int *EventSet, long long *values, int *check) {
-   *check = internal_PAPI_accum(*EventSet, values);
+PAPIf_accum(int *EventSet, long long *values, int *check) {
+   *check = PAPI_accum(*EventSet, values);
 }
 
-PAPI_add_event(int *EventSet, int *Event, int *check){
+PAPIf_add_event(int *EventSet, int *Event, int *check){
    *Event = convert_event( *Event );
-   *check = internal_PAPI_add_event(EventSet, *Event);
+   *check = PAPI_add_event(EventSet, *Event);
 }
 
-PAPI_add_events(int *EventSet, int *Events, int *number, int *check){
+PAPIf_add_events(int *EventSet, int *Events, int *number, int *check){
    int i;
    for ( i = 0; i < *number; i++ )
 	Events[i] = convert_event(Events[i]);
-   *check = internal_PAPI_add_events(EventSet, Events, *number);
+   *check = PAPI_add_events(EventSet, Events, *number);
 }
 
-PAPI_cleanup(int *EventSet, int *check){
-   *check = internal_PAPI_cleanup(EventSet);
+PAPIf_cleanup(int *EventSet, int *check){
+   *check = PAPI_cleanup(EventSet);
 }
 
-PAPI_init(int *check){
-   *check = internal_PAPI_init();
+PAPIf_init(int *check){
+   *check = PAPI_init();
 }
 
-PAPI_list_events(int *EventSet, int *Events, int *number, int *check){
-   *check = internal_PAPI_list_events(*EventSet, Events, number);
+PAPIf_list_events(int *EventSet, int *Events, int *number, int *check){
+   *check = PAPI_list_events(*EventSet, Events, number);
 }
 
-PAPI_perror(int *code, char *destination, int *length, int *check){
-   *check = internal_PAPI_perror(*code, destination, *length);
+PAPIf_perror(int *code, char *destination, int *length, int *check){
+   *check = PAPI_perror(*code, destination, *length);
 }
 
-PAPI_query_event(int *EventCode, int *check) {
-   *check = internal_PAPI_query_event(*EventCode);
+PAPIf_query_event(int *EventCode, int *check) {
+   *check = PAPI_query_event(*EventCode);
 }
  
-PAPI_event_code_to_name(int *EventCode, char *out, int *check){
-   *check = internal_PAPI_event_code_to_name(*EventCode, out);
+PAPIf_event_code_to_name(int *EventCode, char *out, int *check){
+   *check = PAPI_event_code_to_name(*EventCode, out);
 }
 
-PAPI_event_name_to_code(char *in, int *out, int *check){
-   *check= internal_PAPI_event_name_to_code(in, out);
+PAPIf_event_name_to_code(char *in, int *out, int *check){
+   *check= PAPI_event_name_to_code(in, out);
 }
 
-PAPI_read(int *EventSet, long long *values, int *check){
-   *check = internal_PAPI_read(*EventSet, values);
+PAPIf_read(int *EventSet, long long *values, int *check){
+   *check = PAPI_read(*EventSet, values);
 }
 
-PAPI_rem_event(int *EventSet, int *Event, int *check){
+PAPIf_rem_event(int *EventSet, int *Event, int *check){
    *Event = convert_event( *Event );
-   *check = internal_PAPI_rem_event(EventSet, *Event);
+   *check = PAPI_rem_event(EventSet, *Event);
 }
 
-PAPI_rem_events(int *EventSet, int *Events, int *number, int *check){
+PAPIf_rem_events(int *EventSet, int *Events, int *number, int *check){
    int i;
    for ( i = 0; i < *number; i++ ) 
 	Events[i] = convert_event(Events[i]);
 
-   *check = internal_PAPI_rem_events(EventSet, Events, *number);
+   *check = PAPI_rem_events(EventSet, Events, *number);
 }
 
-PAPI_reset(int *EventSet, int *check){
-   *check = internal_PAPI_reset(*EventSet);
+PAPIf_reset(int *EventSet, int *check){
+   *check = PAPI_reset(*EventSet);
 }
 
-PAPI_restore(int *check){
-   *check = internal_PAPI_restore();
+PAPIf_restore(int *check){
+   *check = PAPI_restore();
 }
 
-PAPI_save(int *check){
-   *check = internal_PAPI_save();
+PAPIf_save(int *check){
+   *check = PAPI_save();
 }
 
-PAPI_set_domain(int *domain, int *check){
-   *check = internal_PAPI_set_domain(*domain);
+PAPIf_set_domain(int *domain, int *check){
+   *check = PAPI_set_domain(*domain);
 }
 
-PAPI_set_granularity(int *granularity, int *check){
-   *check = internal_PAPI_set_granularity(*granularity);
+PAPIf_set_granularity(int *granularity, int *check){
+   *check = PAPI_set_granularity(*granularity);
 }
 
-PAPI_start(int *EventSet, int *check){
-   *check = internal_PAPI_start(*EventSet);
+PAPIf_start(int *EventSet, int *check){
+   *check = PAPI_start(*EventSet);
 }
 
-PAPI_state(int *EventSet, int *status, int *check){
-   *check = internal_PAPI_state(*EventSet, status);
+PAPIf_state(int *EventSet, int *status, int *check){
+   *check = PAPI_state(*EventSet, status);
 }
 
-PAPI_stop(int *EventSet, long long *values, int *check){
-   *check = internal_PAPI_stop(*EventSet, values);
+PAPIf_stop(int *EventSet, long long *values, int *check){
+   *check = PAPI_stop(*EventSet, values);
 }
 
-PAPI_write(int *EventSet, long long *values, int *check){
-   *check = internal_PAPI_write(*EventSet, values);
+PAPIf_write(int *EventSet, long long *values, int *check){
+   *check = PAPI_write(*EventSet, values);
 }
 
-PAPI_shutdown(){
-   internal_PAPI_shutdown();
+PAPIf_shutdown(){
+   PAPI_shutdown();
 }
 
-PAPI_get_hardware_info(int *ncpu, int *nnodes, int *totalcpus, int *vendor,
+PAPIf_get_hardware_info(int *ncpu, int *nnodes, int *totalcpus, int *vendor,
     char *vendor_string, int *model, char *model_string, float *revision,
     float *mhz){
    const PAPI_hw_info_t *hwinfo;
-   hwinfo = internal_PAPI_get_hardware_info();
+   hwinfo = PAPI_get_hardware_info();
    if ( hwinfo == NULL ){
 	*ncpu = 0;
    }
@@ -223,41 +242,41 @@ PAPI_get_hardware_info(int *ncpu, int *nnodes, int *totalcpus, int *vendor,
    return;
 }
 
-PAPI_create_eventset(int *EventSet, int *check){
-   *check = internal_PAPI_create_eventset(EventSet);
+PAPIf_create_eventset(int *EventSet, int *check){
+   *check = PAPI_create_eventset(EventSet);
 }
 
-PAPI_destroy_eventset(int *EventSet, int *check){
-   *check = internal_PAPI_destroy_eventset(EventSet);
+PAPIf_destroy_eventset(int *EventSet, int *check){
+   *check = PAPI_destroy_eventset(EventSet);
 }
 
 
 /* The High Level API Wrappers */
-PAPI_num_events(int *numevents){
-   *numevents = internal_PAPI_num_events();
+PAPIf_num_events(int *numevents){
+   *numevents = PAPI_num_events();
 }
 
-PAPI_start_counters(int *events, int *array_len, int *check){
+PAPIf_start_counters(int *events, int *array_len, int *check){
    int i;
    for ( i=0; i<*array_len;i++ ) 
 	events[i] = convert_event(events[i]);
-   *check = internal_PAPI_start_counters(events, *array_len);
+   *check = PAPI_start_counters(events, *array_len);
 }
 
-PAPI_read_counters(long long *values, int *array_len, int *check){
-   *check = internal_PAPI_read_counters(values, *array_len);
+PAPIf_read_counters(long long *values, int *array_len, int *check){
+   *check = PAPI_read_counters(values, *array_len);
 }
 
-PAPI_stop_counters(long long *values, int *array_len, int *check){
-   *check = internal_PAPI_stop_counters(values, *array_len);
+PAPIf_stop_counters(long long *values, int *array_len, int *check){
+   *check = PAPI_stop_counters(values, *array_len);
 }
 
-PAPI_get_real_usec( long long *time){
-   *time = internal_PAPI_get_real_usec();
+PAPIf_get_real_usec( long long *time){
+   *time = PAPI_get_real_usec();
 }
 
-PAPI_get_real_cyc(long long *real_cyc){
-   *real_cyc = internal_PAPI_get_real_cyc();
+PAPIf_get_real_cyc(long long *real_cyc){
+   *real_cyc = PAPI_get_real_cyc();
 }
 
 

@@ -1,16 +1,19 @@
 SUBSTR  = solaris-ultra
-DESCR	= "Solaris 5.8 or greater with UltraSPARC I,II or III"
-TARGET	= libpapi.a 
-TESTS	= serial
+DESCR	= "Solaris 5.8 or greater with UltraSPARC I or II"
+TARGETS	= serial
 
-CFLAGS  = -Wall -DDEBUG
-OPTFLAGS= -g -O3
+CFLAGS  = -xarch=v8plusa -g
+OPTFLAGS= -xO3
+NOOPT 	= -xO0
 SMPCFLGS= 
 OMPCFLGS= 
 LDFLAGS = -lcpc
 CC_R	= 
-CC	= gcc
+CC	= cc
 F77	= 
+MISCOBJS= get_tick.o
 
-include ./Makefile.inc
+include Makefile.inc
 
+get_tick.o: solaris-ultra/get_tick.S
+	$(CC) -c -O -D_ASM -xarch=v8plusa solaris-ultra/get_tick.S

@@ -12,6 +12,7 @@
 
 #define PAPI_ITIMER ITIMER_REAL
 #define PAPI_SIGNAL SIGALRM
+#define PAPI_ITIMER_MS 1
 
 /* Number of preset events - more than we will probably ever need, 
    currently the draft has only 25 */
@@ -166,6 +167,7 @@ typedef union _papi_int_option_t {
 extern int _papi_hwi_stop_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
 extern int _papi_hwi_start_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
 extern int _papi_hwi_initialize(DynamicArray **);
+void _papi_hwi_dispatch_overflow_signal(EventSetInfo *ESI, EventSetInfo *master_event_set, void *context);
 
 /* The following functions are defined by the substrate file. */
 
@@ -187,6 +189,8 @@ extern int _papi_hwd_write(EventSetInfo *, long long events[]);
 extern void *_papi_hwd_get_overflow_address(void *context);
 extern long long _papi_hwd_get_real_cycles (void);
 extern long long _papi_hwd_get_real_usec (void);
+extern long long _papi_hwd_get_virt_cycles (void);
+extern long long _papi_hwd_get_virt_usec (void);
 extern void _papi_hwd_error(int error, char *);
 
 #ifdef THREADS
@@ -217,18 +221,30 @@ typedef struct _papi_mdi {
   int total_presets;  /* Number of preset events supported */
   int total_events;   /* Number of native events supported. */
 
-  /* Begin feature flags */
-
-  const int needs_overflow_emul; /* Needs overflow to be emulated */
-  const int needs_profile_emul; /* Needs profile to be emulated */
-  const int needs_64bit_counters; /* Only limited precision is available from hardware */
-  const int supports_child_inheritance; /* We can pass on and inherit child counters/values */
-  const int can_attach; /* We can attach PAPI to another process */
-  const int read_also_resets; /* The read call from the kernel resets the counters */
   const int default_domain; /* The default domain when this substrate is used */
   const int default_granularity; /* The default granularity when this substrate is used */
 
-  /* End feature flags */
+  /* Begin public feature flags */
+
+  const int supports_program;        /* We can use programmable events */
+  const int supports_write;          /* We can write the counters */
+  const int supports_hw_overflow;    /* Needs overflow to be emulated */
+  const int supports_hw_profile;     /* Needs profile to be emulated */
+  const int supports_64bit_counters; /* Only limited precision is available from hardware */
+  const int supports_inheritance;    /* We can pass on and inherit child counters/values */
+  const int supports_attach;         /* We can attach PAPI to another process */
+  const int supports_real_usec;      /* We can use the real_usec call */
+  const int supports_real_cyc;       /* We can use the real_cyc call */
+  const int supports_virt_usec;      /* We can use the virt_usec call */
+  const int supports_virt_cyc;       /* We can use the virt_cyc call */
+
+  /* End public feature flags */
+
+  /* Begin private feature flags */
+
+  const int supports_read_reset;     /* The read call from the kernel resets the counters */
+
+  /* End private feature flags */
 
   const int size_machdep;   /* Size of the substrate's control structure in 
                          bytes */

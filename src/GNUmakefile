@@ -1,10 +1,10 @@
 SUBSTR  = linux-x86
 DESCR	= "Patched linux 2.x with Intel Pentium Pro, II or III"
-TARGET	= libraries
-TESTS	= serial
+TARGETS	= serial pthreads
 
-CFLAGS  = -Wall
-OPTFLAGS= -g -O3
+CFLAGS  = -Wall -g
+OPTFLAGS= -O3 -mpentiumpro
+NOOPT 	= 
 SMPCFLGS= 
 OMPCFLGS= 
 LDFLAGS = 

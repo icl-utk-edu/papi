@@ -134,6 +134,7 @@ void papimon_stop(void)
   fprintf(stderr,"Machine Cycles                    : %lld\n",values[0]);
   fprintf(stderr,"DCache accesses                   : %lld\n",values[1]);
   fprintf(stderr,"CPU Cycles                        : %lld\n",values[2]);
+#elif defined(sun) && defined(__SVR4) && defined(sparc)
 #elif defined(tru64)
 #endif
 }
