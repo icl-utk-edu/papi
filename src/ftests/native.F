@@ -10,7 +10,7 @@
       integer ncpu, nnodes, totalcpus, vendor
       integer model
       character*20 vendor_string, model_string
-      real*4 revision, mhz, rsec, csec
+      real*4 revision, mhz, rsec
       integer*8 uso, usn 
       integer retval
 
@@ -19,6 +19,10 @@
       integer tests_quiet
       character*25 chbuf
       character*50 eventname(10)
+
+#if defined(POWER3) || defined (_POWER4)
+      real*4 csec
+#endif
 
 #if defined(_CRAYT3E)
       integer ilen, ierror
