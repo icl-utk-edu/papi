@@ -21,7 +21,7 @@
 static double dummy3(double x,int iters);
 
 int main(int argc, char **argv) {
-  char des[128];
+  char des[PAPI_MAX_STR_LEN];
   int i, j, retval;
   int iters=10000000;
   double x = 1.1,y;
