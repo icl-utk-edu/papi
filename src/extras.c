@@ -739,6 +739,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t *i
       strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode), PAPI_HUGE_STR_LEN);
       info->short_descr[0] = '0';
       info->count = 1;	/* if we found it, it's available */
+      info->event_code=EventCode;
       return(PAPI_OK);
     }
   }
