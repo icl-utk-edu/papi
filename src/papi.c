@@ -1301,9 +1301,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 {
   int retval, index, event_counter;
   EventSetInfo_t *ESI;
-/*
-  EventSetOverflowInfo_t opt = { 0, };
-*/
+  EventSetOverflowInfo_t opt = {{0},};
   ThreadInfo_t *thread;
 
   ESI = _papi_hwi_lookup_EventSet(EventSet);
