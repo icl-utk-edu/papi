@@ -2508,13 +2508,13 @@ const native_event_entry_t _papi_hwd_k7_native_map[] = {
 
 const native_event_entry_t _papi_hwd_k8_native_map[] = {
    {"FP_ADD_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Add pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later revisions - Speculative add pipe ops excluding junk ops",
     {ALLCNTRS, 0x0100}},
    {"FP_MULT_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Multiply pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later revisions - Speculative multiply pipe ops excluding junk ops",
     {ALLCNTRS, 0x0200}},
    {"FP_MULT_AND_ADD_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Multiply and add pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later revisions - Speculative multiply and add pipe ops excluding junk ops",
     {ALLCNTRS, 0x0300}},
    {"FP_ST_PIPE",
     "Dispatched FPU ops - Revision B and later revisions - Store pipe ops excluding junk ops",
