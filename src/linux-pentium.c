@@ -152,9 +152,9 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_event(void *machdep, int event)
+int _papi_hwd_add_event(EventSetInfo *ESI, unsigned int event)
 {
-  hwd_control_state *this_state = (hwd_control_state *)machdep;
+  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
   unsigned int foo = event;
   unsigned int preset;
 
@@ -259,9 +259,9 @@ int _papi_hwd_add_event(void *machdep, int event)
 
 
 
-int _papi_hwd_rem_event(void *machdep, int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
-  hwd_control_state *this_state = (hwd_control_state *)machdep;
+  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
   unsigned int foo = event;
   unsigned int preset;
 
@@ -379,7 +379,7 @@ int _papi_hwd_rem_event(void *machdep, int event)
   return(PAPI_ENOTRUN);
 }
 
-int _papi_hwd_add_prog_event(void *machdep, int event, void *extra)
+int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
 {
   return(PAPI_ESBSTR);
 }
@@ -393,12 +393,12 @@ int _papi_hwd_start(EventSetInfo *EventSet)
   code2 = this_state->counter_code2;
   code3 = 1; 
 
-  if(EventSet->domain == 2)
+  if (EventSet->all_options.domain.domain.domain == 2)
   { code1 = code1 | 0x00020000;
     code2 = code2 | 0x00020000;
     code3 = code3 | 0x00020000;
   }
-  if(EventSet->domain == 3)
+  if(EventSet->all_options.domain.domain.domain == 3)
   { code1 = code1 | 0x00020000 | 0x00010000;
     code2 = code2 | 0x00020000 | 0x00010000;
     code3 = code3 | 0x00020000 | 0x00010000;
@@ -423,29 +423,34 @@ int _papi_hwd_start(EventSetInfo *EventSet)
 }
 
 
-int _papi_hwd_stop(void *machdep, long long events[])
-{ hwd_control_state *this_state = (hwd_control_state *)machdep;
+int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
+{ 
   int retval;
 
   retval = perf(PERF_STOP, 0, 0);
-  if(retval) return(PAPI_EBUG); 
-  return (_papi_hwd_read(this_state, events));
+  if (retval) 
+    return(PAPI_EBUG); 
+
+  if (events)
+    return (_papi_hwd_read(ESI, events));
+  else
+    return (PAPI_OK);
 }
 
 
-int _papi_hwd_reset(void *machdep)
+int _papi_hwd_reset(EventSetInfo *ESI)
 {
-  hwd_control_state *this_state = (hwd_control_state *)machdep;
+  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
 
   if(this_state->number == 0) return(PAPI_ENOTRUN);
 
   return perf(PERF_RESET, 0, 0); /*from perf.c */
 }
 
-int _papi_hwd_read(void *machdep, long long events[])
+int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
 {
+  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
   int retval, machnum, i;
-  hwd_control_state *this_state = (hwd_control_state *)machdep;
 
   for(i=0; i<3; i++) events[i] = -1;
 
@@ -472,8 +477,9 @@ int _papi_hwd_read(void *machdep, long long events[])
   return 0;
 }
 
-int _papi_hwd_write(void *machdep, long long events[])
-{ hwd_control_state *this_state = (hwd_control_state *)machdep;
+int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
+{ 
+  hwd_control_state *this_state = (hwd_control_state *)ESI->machdep;
   int retval;
 
   switch (this_state->number)
@@ -531,60 +537,47 @@ int _papi_hwd_write(void *machdep, long long events[])
   return(retval);
 }
 
-int _papi_hwd_set_gran(int code, EventSetInfo *value)
-{  
-  return(PAPI_ESBSTR);
-}
-
-int _papi_hwd_set_domain(int code, EventSetInfo *value)
-{  
-  if((code < 1) || (code > 4)) return(PAPI_EINVAL);
-  if(code == 4) return(PAPI_ESBSTR);
-  return(PAPI_OK);
-}
-
-int _papi_hwd_setopt(int code, EventSetInfo *value, PAPI_option_t *option)
+int _papi_hwd_ctl(int code, _papi_int_option_t *option)
 {
   switch (code)
     {
     case PAPI_SET_MPXRES:
-      return(_papi_portable_set_multiplex((EventSetInfo *)value,&option->multiplex));
+      return(_papi_portable_set_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex));
     case PAPI_SET_OVRFLO:
-      return(_papi_portable_set_overflow((EventSetInfo *)value,&option->overflow));
-    default:
-      return(PAPI_EINVAL);	//changed NULL to 0
-    }
-}
-
-int _papi_hwd_getopt(int code, EventSetInfo *value, PAPI_option_t *option)
-{
-  switch (code)
-    {
+      return(_papi_portable_set_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow));
     case PAPI_GET_MPXRES:
-      return(_papi_portable_get_multiplex((EventSetInfo *)value,&option->multiplex));
+      return(_papi_portable_get_multiplex((EventSetInfo *)option->multiplex.ESI,&option->multiplex));
     case PAPI_GET_OVRFLO:
-      return(_papi_portable_get_overflow((EventSetInfo *)value,&option->overflow));
+      return(_papi_portable_get_overflow((EventSetInfo *)option->multiplex.ESI,&option->overflow));
+    case PAPI_SET_DEFDOM:
+    case PAPI_SET_DEFGRN:
+    case PAPI_SET_DOMAIN:
+    case PAPI_SET_GRANUL:
+    case PAPI_GET_DEFDOM:
+    case PAPI_GET_DEFGRN:
+    case PAPI_GET_DOMAIN:
+    case PAPI_GET_GRANUL:
     default:
       return(PAPI_EINVAL);
     }
 }
 
-
 /* Machine info structure. -1 is unused. */
 
 papi_mdi _papi_system_info = { "$Id$",
-			        -1,
+			        0.00,
 			        -1, 
 			        -1,
 			        -1,
 			        -1,
-			        3,
-			        2,
-			        0,
-			        1,
+			        -1,
+			         3,
+			         2,
+			         0,
+			         1,
 			        -1, 
 			        -1,
-			       sizeof(hwd_control_state), 
-			       NULL };
+			        sizeof(hwd_control_state), 
+			        NULL };
 #endif
 #endif

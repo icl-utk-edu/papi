@@ -12,23 +12,10 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/procfs.h>
-#include <sys/hwperftypes.h>
-#include <sys/hwperfmacros.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
-
-/* A superset of the machine dependent structure passed bewteen us and the kernel */
-
-typedef struct hwd_control_state {
-  int number_of_events;
-  hwperf_profevctrarg_t on; } hwd_control_state_t;
-
-/* Preset structure */
-
-typedef struct hwd_preset {
-  int counter_code1; /* 0 through 15 */
-  int counter_code2; /* 0 through 15 */ } hwd_preset_t;
+#include "irix-mips.h"
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { -1,9  },			/* L1 D-Cache misses */
@@ -111,7 +98,7 @@ static int cpu(inventory_t *item, void *bar)
   if ((item->inv_class == INV_PROCESSOR) && (item->inv_type == INV_CPUBOARD))
     {
       _papi_system_info.ncpu++;
-      _papi_system_info.mhz = item->inv_controller;
+      _papi_system_info.mhz = (int)item->inv_controller;
     }
   return(0);
 }

@@ -13,6 +13,8 @@
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
 
+#define DEBUG
+
 /* Static prototypes */
 
 static int check_initialize(void);
@@ -474,13 +476,8 @@ static void free_EventSet(EventSetInfo *ESI)
 /*========================================================================*/
 static int add_event(EventSetInfo *ESI, int EventCode) 
 {
-  int k,A,B,counterArrayLength;
-  
-  A=_papi_system_info.num_gp_cntrs;
-  B=_papi_system_info.num_sp_cntrs;
-  counterArrayLength=A+B;
+  int k;
 
-  /*use phil's handy phunction*/  
   /*set EventCode value to 0 because this is value in open slot*/
   k=lookup_EventCodeIndex(ESI,0);
 
@@ -1491,8 +1488,7 @@ int PAPI_stop(int EventSet, unsigned long long *values)
 
     for(i=0; i<bound; i++)
       { 
-	if (values[i] >= 0) 
-	  printf("DEBUG: Counter %d : %lld\n", i, values[i]);
+	printf("DEBUG: Counter %d : %lld\n", i, values[i]);
       }
   }
 #endif
@@ -1526,8 +1522,7 @@ int PAPI_read(int EventSet, unsigned long long *values)
 
     for(i=0; i<bound; i++)
       { 
-	if (values[i] >= 0) 
-	  printf("DEBUG: Counter %d : %lld\n", i, values[i]);
+	printf("DEBUG: Counter %d : %lld\n", i, values[i]);
       }
   }
 #endif
