@@ -57,12 +57,6 @@ extern papi_mdi_t _papi_hwi_system_info;
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 
-#ifdef DEBUG
-#define papi_return(a) return(_papi_hwi_debug_handler(a))
-#else
-#define papi_return(a) return(a)
-#endif
-
 /********************/
 /*    END LOCALS    */
 /********************/
@@ -89,11 +83,10 @@ static int default_debug_handler(int errorCode)
 
    if (errorCode == PAPI_OK)
       return (errorCode);
-
    if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
      {
        PAPIERROR("%s %d,%s,Bug! Unknown error code",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-PAPI_EBUG]);
-       return(PAPI_EBUG);
+       abort(); return(PAPI_EBUG);
      }
 
    switch (_papi_hwi_error_level) {
@@ -138,7 +131,6 @@ static int allocate_eventset_map(DynamicArray_t *map)
    map->totalSlots = PAPI_INIT_SLOTS;
    map->availSlots = PAPI_INIT_SLOTS;
    map->fullSlots = 0;
-   map->lowestEmptySlot = 0;
 
    return (PAPI_OK);
 }
@@ -159,7 +151,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
    number = DA->totalSlots * 2;
    n = (EventSetInfo_t **) realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t *));
    if (n == NULL)
-      papi_return(PAPI_ENOMEM);
+      return(PAPI_ENOMEM);
 
    /* Need to assign this value, what if realloc moved it? */
 
@@ -170,7 +162,6 @@ static int expand_dynamic_array(DynamicArray_t * DA)
 
    DA->totalSlots = number;
    DA->availSlots = number - DA->fullSlots;
-   DA->lowestEmptySlot = DA->totalSlots / 2;
 
    return (PAPI_OK);
 }
@@ -296,30 +287,31 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
 
    _papi_hwi_lock(INTERNAL_LOCK);
 
-   /* Update the values for lowestEmptySlot, num of availSlots */
-
-   ESI->master = master;
-   ESI->EventSetIndex = map->lowestEmptySlot;
-   map->dataSlotArray[ESI->EventSetIndex] = ESI;
-   map->availSlots--;
-   map->fullSlots++;
-
    if (map->availSlots == 0) {
       errorCode = expand_dynamic_array(map);
-      if (errorCode != PAPI_OK) {
+      if (errorCode < PAPI_OK) {
          _papi_hwi_unlock(INTERNAL_LOCK);
          return (errorCode);
       }
    }
 
-   i = ESI->EventSetIndex + 1;
-   while (map->dataSlotArray[i])
-      i++;
-   INTDBG("Empty slot for lowest available EventSet is at %d\n", i);
-   map->lowestEmptySlot = i;
+   i = 0;
+   for (i=0;i<map->totalSlots;i++)
+     {
+       if (map->dataSlotArray[i] == NULL)
+	 {
+	   ESI->master = master;
+	   ESI->EventSetIndex = i;
+	   map->fullSlots++;
+	   map->availSlots--;
+	   map->dataSlotArray[i] = ESI;
+	   _papi_hwi_unlock(INTERNAL_LOCK);
+	   return(PAPI_OK);
+	 }
+     }
 
    _papi_hwi_unlock(INTERNAL_LOCK);
-   papi_return(PAPI_OK);
+   return(PAPI_EBUG);
 }
 
 int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
@@ -349,7 +341,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
    }
 
    *EventSet = ESI->EventSetIndex;
-   INTDBG("_papi_hwi_create_eventset(%p,%p): new EventSet in slot %d\n",
+   INTDBG("(%p,%p): new EventSet in slot %d\n",
           (void *) EventSet, handle, *EventSet);
 
    return (retval);
@@ -361,7 +353,7 @@ int _papi_hwi_get_domain(PAPI_domain_option_t * opt)
 
    ESI = _papi_hwi_lookup_EventSet(opt->eventset);
    if (ESI == NULL)
-      papi_return(PAPI_ENOEVST);
+      return(PAPI_ENOEVST);
 
    opt->domain = ESI->domain.domain;
    return (PAPI_OK);
@@ -373,10 +365,10 @@ int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt)
 
    ESI = _papi_hwi_lookup_EventSet(opt->eventset);
    if (ESI == NULL)
-      papi_return(PAPI_ENOEVST);
+      return(PAPI_ENOEVST);
 
    opt->granularity = ESI->granularity.granularity;
-   papi_return(PAPI_OK);
+   return(PAPI_OK);
 }
 
 /* This function returns the index of the the next free slot
@@ -393,7 +385,7 @@ static int get_free_EventCodeIndex(const EventSetInfo_t * ESI, unsigned int Even
 
    for (k = 0; k < limit; k++) {
       if (ESI->EventInfoArray[k].event_code == EventCode)
-         papi_return(PAPI_ECNFLCT);
+         return(PAPI_ECNFLCT);
       /*if ((ESI->EventInfoArray[k].event_code == PAPI_NULL) && (lowslot == PAPI_ECNFLCT)) */
       if (ESI->EventInfoArray[k].event_code == PAPI_NULL) {
          lowslot = k;
@@ -436,8 +428,6 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
    _papi_hwi_lock(INTERNAL_LOCK);
 
    map->dataSlotArray[i] = NULL;
-   if (i < map->lowestEmptySlot)
-      map->lowestEmptySlot = i;
    map->availSlots++;
    map->fullSlots--;
 
@@ -876,7 +866,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 
    retval = _papi_hwd_read(context, &ESI->machdep, &dp, ESI->state);
    if (retval != PAPI_OK)
-     papi_return (retval);
+     return (retval);
 
 
    /* This routine distributes hardware counters to software counters in the
@@ -906,7 +896,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 	{ 
          values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
 	 if (values[j] < (long_long)0)
-	   papi_return(PAPI_EBUG);
+	   return(PAPI_EBUG);
 
 	}
 	   
@@ -916,7 +906,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
          break;
      }
 
-   papi_return (PAPI_OK);
+   return (PAPI_OK);
 }
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
