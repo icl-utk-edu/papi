@@ -28,6 +28,7 @@ static hwd_search_t findem_r10k[] = {
 		{ PAPI_FLOPS,DERIVED_PS,{0,21}},		/* FLOPS */
 		{ PAPI_TOT_CYC,0,{ 0,16}},			/* Total cycles */
 		{ PAPI_IPS,DERIVED_PS,{0,15}},		        /* IPS */
+		{ -1, 0, {-1, -1}}                              /* The END */
 };
 
 
@@ -615,8 +616,7 @@ int _papi_hwd_init(EventSetInfo *global)
   return(PAPI_OK);
 }
 
-/* Go from highest counter to lowest counter. Why? Because there are usually
-   more counters on #1, so we try the least probable first. */
+/* Go from lowest to highest */
 
 static int get_avail_hwcntr_bits(int cntr_avail_bits)
 {
@@ -690,8 +690,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
 	    {
 	      /* Pick the one most available */
 
-	      if (this_state->num_on_counter[0] < 
-		  this_state->num_on_counter[1])
+	      if (this_state->num_on_counter[0] < this_state->num_on_counter[1])
 		avail = avail & 0xffff;
 	      else
 		avail = avail & 0xffff0000;
@@ -720,27 +719,31 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state,
   else
     {
       int hwcntr_num;
-
+      unsigned event; 
       /* Support for native events here, only 1 counter at a time. */
 
-      hwcntr_num = EventCode & 0xff;  /* 0 through 31 */ 
-      if ((hwcntr_num > _papi_system_info.num_cntrs) ||
-	  (hwcntr_num < 0))
+      event = EventCode & 0xff;  /* 0 through 32 */ 
+      if (event > HWPERF_EVENTMAX) 
 	return(PAPI_EINVAL);
 
-      selector = 1 << hwcntr_num;
+      selector = 1 << event;
 
       /* Check if the counter is available */
-      
+
       if (this_state->selector & selector)
 	return(PAPI_ECNFLCT);	    
 
+      if (event > HWPERF_MAXEVENT)
+	hwcntr_num = 1;
+      else
+	hwcntr_num = 0;
+
       /* Set up the native encoding */
 
-      if (hwcntr_num < HWPERF_CNT1BASE)
-	tmp_cmd[hwcntr_num] = hwcntr_num;
+      if (event < HWPERF_CNT1BASE)
+	tmp_cmd[event] = hwcntr_num;
       else
-	tmp_cmd[hwcntr_num] = hwcntr_num - HWPERF_CNT1BASE;
+	tmp_cmd[event] = hwcntr_num - HWPERF_CNT1BASE;
 
       codes = tmp_cmd;
     }
@@ -833,7 +836,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 
   /* Update the counts on the 'physical' registers. */
 
-  while ((hwcntr = ffs(selector)))
+  while ((hwcntr = ffs(used)))
     {
       hwcntr = hwcntr - 1;
       DBG((stderr,"Clearing hardware counter event: %d\n",hwcntr));
@@ -842,7 +845,7 @@ int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 	this_state->num_on_counter[0]--;
       else
 	this_state->num_on_counter[1]--;
-      selector ^= 1 << hwcntr;
+      used ^= 1 << hwcntr;
   }
 
   /* Don't use selector after here */
@@ -1199,6 +1202,10 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
   int selector, hwcntr, retval = PAPI_OK;
+
+  if ((this_state->num_on_counter[0] > 1) || 
+      (this_state->num_on_counter[1] > 1))
+      return(PAPI_ECNFLCT);
 
   if (overflow_option->threshold == 0)
     {
