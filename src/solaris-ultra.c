@@ -761,16 +761,7 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  long long retval;
-  float usec, cyc;
-  struct tms buffer;
-
-  times(&buffer);
-  retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
-
-  usec = (float)retval;
-  cyc = usec * _papi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return(_papi_hwd_get_virt_usec() * (long long)_papi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -1384,7 +1375,7 @@ papi_mdi _papi_system_info = { "$Id$",
 			        1,  /* We can use the real_usec call */
 			        1,  /* We can use the real_cyc call */
 			        1,  /* We can use the virt_usec call */
-			        0,  /* We can use the virt_cyc call */
+			        1,  /* We can use the virt_cyc call */
 			        0,  /* HW Read also resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        NULL };
