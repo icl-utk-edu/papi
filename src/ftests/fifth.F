@@ -26,6 +26,11 @@
      . 'PAPI_library_init', retval)
       end if
 
+#ifdef NO_SIMULT_EVENTSETS
+      call ftest_skip(__FILE__, __LINE__, 'No Simultaneous EventSets', 
+     .                PAPI_ESBSTR)
+#endif
+
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,

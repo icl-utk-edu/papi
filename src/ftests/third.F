@@ -25,6 +25,11 @@
      . 'PAPI_library_init', retval)
       end if
 
+#ifdef NO_SIMULT_EVENTSETS
+      call ftest_skip(__FILE__, __LINE__, 'No Simultaneous EventSets', 
+     .                PAPI_ESBSTR)
+#endif
+
       call PAPIf_query_event(PAPI_FP_INS, retval)
       if (retval .NE. PAPI_OK) then
         event = PAPI_TOT_INS
