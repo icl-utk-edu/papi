@@ -858,7 +858,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    deleting events from the eventset
 */
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
-                                   NativeInfo_t * native, int count)
+              NativeInfo_t * native, int count,  hwd_context_t * ctx)
 {
    int index, i, selector = 0, mode = 0, hwcntr, threshold;
    hwperf_eventctrl_t *to = &this_state->counter_cmd.hwp_evctrargs;

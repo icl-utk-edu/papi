@@ -13,6 +13,8 @@
 #include <invent.h>
 #include <sys/systeminfo.h>
 #include SUBSTRATE
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 #define TLB_R4  96
 #define TLB_R5  96
@@ -96,7 +98,7 @@ long _papi_hwd_get_dmem_info(int option)
 
    sprintf(pfile, "/proc/%05d", (int) pid);
    if ((fd = open(pfile, O_RDONLY)) < 0) {
-      DBG((stderr, "PAPI_get_dmem_info can't open /proc/%d\n", (int) pid));
+      SUBDBG("PAPI_get_dmem_info can't open /proc/%d\n", (int) pid);
       return (PAPI_ESYS);
    }
    if (ioctl(fd, PIOCPSINFO, &info) < 0) {

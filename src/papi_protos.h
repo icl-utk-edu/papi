@@ -213,4 +213,8 @@ extern int sighold(int);
 extern int sigrelse(int);
 #endif
 
+#ifdef NEED_FFSLL
+int ffsll(long_long lli);
+#endif
+
 #endif                          /* PAPI_PROTOS_H */
