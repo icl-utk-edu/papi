@@ -13,7 +13,7 @@ SERIAL  = dmem_info all_events derived high-level2 describe mem_info zero \
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
-INCLUDE = -I..
+INCLUDE = -I.. -I$(TOOLPATH)/libpfm
 PAPILIB	= ../$(LIBRARY)
 
 mpi: $(MPI)

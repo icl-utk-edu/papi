@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 	  mask = MASK_TOT_INS | MASK_TOT_CYC;
   }
 #endif
-#if !( defined(linux) && defined(__ia64__) ) || defined(ITANIUM2)
+#if !( defined(linux) && defined(__ia64__) ) 
 	  test_fail(__FILE__, __LINE__, "PAPI_profile_hw not support", PAPI_ESBSTR);
 #endif
 

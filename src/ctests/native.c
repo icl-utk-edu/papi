@@ -1,5 +1,15 @@
 #include "papi_test.h"
 
+#if defined(linux) && defined(__ia64__)
+	#ifdef ITANIUM2
+	  #include "pfmlib_itanium2_priv.h"
+      #include "itanium2_events.h"
+    #else
+	  #include "pfmlib_itanium_priv.h"
+	  #include "itanium_events.h"
+	#endif
+#endif
+
 #if defined(__ALPHA) && defined(__osf__)
 #include <machine/hal/cpuconf.h>
 #include <sys/pfcntr.h>
@@ -118,49 +128,39 @@ void papimon_start(void)
 	  if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	}
-#elif defined(linux) && defined(__ia64__) && defined(ITANIUM2)
-      test_fail(__FILE__,__LINE__,"Native Events not supported",PAPI_ESBSTR);
 #elif defined(linux) && defined(__ia64__)
       {
-	typedef union {
-	  unsigned int  papi_native_all;	/* integer encoding */
-	  struct	{
-	    unsigned int register_no:8;	/* 4, 5, 6 or 7 */
-	    unsigned int pme_mcode:8;	/* major event code */
-	    unsigned int pme_ear:1;		/* is EAR event */
-	    unsigned int pme_dear:1;	/* 1=Data 0=Instr */
-	    unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
-	    unsigned int pme_umask:13;	/* unit mask */
-	  } papi_native_bits;
-	} papi_native_code_t;
 
 	/* Execution latency stall cycles */
-	papi_native_code_t real_native;
-	real_native.papi_native_all = 0;
-	real_native.papi_native_bits.register_no = 4;
-	real_native.papi_native_bits.pme_mcode = 0x02; 
-	native = real_native.papi_native_all;
+#ifdef ITANIUM2
+	native = PME_ITA2_CPU_CYCLES;
+#else
+	native = PME_ITA_DEPENDENCY_SCOREBOARD_CYCLE;
+#endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined execution stall cycles */
-	real_native.papi_native_all = 0;
-	real_native.papi_native_bits.register_no = 5;
-	real_native.papi_native_bits.pme_mcode = 0x06;
-	native = real_native.papi_native_all;
+#ifdef ITANIUM2
+	native = PME_ITA2_L1I_READS;
+#else
+	native = PME_ITA_DEPENDENCY_ALL_CYCLE;
+#endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined instruction fetch stall cycles */
-	real_native.papi_native_all = 0;
-	real_native.papi_native_bits.register_no = 6;
-	real_native.papi_native_bits.pme_mcode = 0x05;
-	native = real_native.papi_native_all;
+#ifdef ITANIUM2
+	native = PME_ITA2_L1D_READS_SET0;
+#else
+	native = PME_ITA_UNSTALLED_BACKEND_CYCLE;
+#endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined memory stall cycles */
-	real_native.papi_native_all = 0;
-	real_native.papi_native_bits.register_no = 7;
-	real_native.papi_native_bits.pme_mcode = 0x07;
-	native = real_native.papi_native_all;
+#ifdef ITANIUM2
+	native = PME_ITA2_IA64_INST_RETIRED;
+#else
+	native = PME_ITA_MEMORY_CYCLE;
+#endif
         if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       }
@@ -303,10 +303,17 @@ void papimon_stop(void)
 	  fprintf(stderr,"DCU Lines out              : %lld\n",values[1]);
 	}
 #elif defined(linux) && defined(__ia64__)
+ #ifdef ITANIUM2
+     fprintf(stderr,"cpu cycles         : %lld\n",values[0]);
+     fprintf(stderr,"L1 Inst cache reads     : %lld\n",values[1]);
+     fprintf(stderr,"L1 data cache reads  : %lld\n",values[2]);
+     fprintf(stderr,"ia64 instructions retired        : %lld\n",values[3]);
+ #else
      fprintf(stderr,"Execution latency stall cyc         : %lld\n",values[0]);
      fprintf(stderr,"Combined execution stall cycles     : %lld\n",values[1]);
      fprintf(stderr,"Combined instr. fetch stall cycles  : %lld\n",values[2]);
      fprintf(stderr,"Combined memory stall cycles        : %lld\n",values[3]);
+ #endif
 #elif defined(mips) && defined(sgi)
      fprintf(stderr,"L1 Instruction cache misses       : %lld\n",values[0]);
      fprintf(stderr,"L1 Data cache misses              : %lld\n",values[1]);

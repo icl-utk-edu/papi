@@ -33,6 +33,8 @@ extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int *array;
 
+int do_test(unsigned long );
+
 int main(int argc, char **argv) 
 {
   int i, num_events, num_tests = 6;
@@ -72,30 +74,18 @@ int main(int argc, char **argv)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
 
-#if defined(linux) && defined(__ia64__) && !defined(ITANIUM2)
+#if defined(linux) && defined(__ia64__) 
 	sprintf(event_name, "data_ear_cache_lat4");
   {
-    typedef union {
-      unsigned int  papi_native_all;    /* integer encoding */
-      struct    {
-        unsigned int register_no:8; /* 4, 5, 6 or 7 */
-        unsigned int pme_mcode:8;   /* major event code */
-        unsigned int pme_ear:1;     /* is EAR event */
-        unsigned int pme_dear:1;    /* 1=Data 0=Instr */
-        unsigned int pme_tlb:1;     /* 1=TLB 0=Cache */
-        unsigned int pme_umask:13;  /* unit mask */
-      } papi_native_bits;
-    } papi_native_code_t;
 
     /* Execution latency stall cycles */
-    papi_native_code_t real_native;
-    real_native.papi_native_all = 0;
-    real_native.papi_native_bits.register_no = 4;
-    real_native.papi_native_bits.pme_mcode = 0x67;
-    real_native.papi_native_bits.pme_ear = 1;
-    real_native.papi_native_bits.pme_dear = 1;
-    real_native.papi_native_bits.pme_tlb = 0;
-    native = real_native.papi_native_all;
+#ifdef ITANIUM2
+/* index for DATA_EAR_CACHE_LAT4 in itanium2*/ 
+    native = 189;
+#else
+/* index for DATA_EAR_CACHE_LAT4 in itanium*/ 
+    native = 121;
+#endif
     if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
     if((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC))!=PAPI_OK)
