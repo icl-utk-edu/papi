@@ -1,0 +1,5 @@
+CFLAGS	= -DITANIUM2
+FFLAGS	= -DITANIUM2
+DESCR	= "Stock Linux 2.4.18 + for the Intel Itanium 2"
+
+include Makefile.linux-ia64-libpfm3.0
