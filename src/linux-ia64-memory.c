@@ -14,9 +14,28 @@
 #include SUBSTRATE
 #include <stdio.h>
 
+inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev);
+
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
 {
+   unsigned int rev,model,family,archrev;
    int retval = 0;
+
+   get_cpu_info(&rev,&model,&family,&archrev);
+
+   if ( family == 6 ) {  /* Itanium */
+       mem_info->L1_size = 32;
+   }
+   else if ( family == 31 ) {  /* Itanium 2 */
+       mem_info->L1_size = 64;
+       mem_info->L1_icache_size = 32;
+       mem_info->L1_dcache_size = 32;
+       mem_info->L2_cache_size = 256;
+   }
+   else{
+	SUBDBG("Family %d not found\n", family);
+	return -1;
+   }
    return retval;
 }
 
@@ -51,3 +70,16 @@ long _papi_hwd_get_dmem_info(int option)
       return (PAPI_EINVAL);
    }
 }
+
+
+inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev)
+{
+        unsigned long r;
+
+        asm ("mov %0=cpuid[%r1]" : "=r"(r) : "rO"(3));
+        *rev = (r>>8)&0xff;
+        *model = (r>>16)&0xff;
+        *family = (r>>24)&0xff;
+        *archrev = (r>>32)&0xff;
+}
+
