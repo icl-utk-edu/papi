@@ -162,6 +162,7 @@ static int lock_init(void)
 	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
 	 }
      }
+   return(PAPI_OK);
 }
 
 /* At init time, the higher level library should always allocate and 
@@ -207,9 +208,7 @@ int _papi_hwd_init_global(void)
    cntr[0] = 222LL;
    cntr[1] = 333LL;
 
-   lock_init();
-
-    return (PAPI_OK);
+   return (lock_init());
 }
 
 int _papi_hwd_init(hwd_context_t * ctx) 
@@ -327,18 +326,23 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 }
 
 static void clear_cs_events(hwd_control_state_t *this_state) {
-   unsigned int i;
+   int i,j;
+
+   /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
+   j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
 
    /* Remove all counter control command values from eventset. */
-   for(i = 0; i < this_state->control.cpu_control.nractrs; i++) {
+   for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
-
       this_state->control.cpu_control.pmc_map[i] = i;
       this_state->control.cpu_control.evntsel[i] 
          = this_state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
+
+   /* clear both a and i counter counts */
    this_state->control.cpu_control.nractrs = 0;
+   this_state->control.cpu_control.nrictrs = 0;
 }
 
 /* This function clears the current contents of the control structure and 
@@ -349,7 +353,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
    int i;
 
    /* clear out the events from the control state */
-   clear_control_state(this_state);
+   clear_cs_events(this_state);
 
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {

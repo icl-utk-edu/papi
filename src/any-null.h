@@ -14,14 +14,14 @@
 #ifndef _PAPI_ANY_NULL_H
 #define _PAPI_ANY_NULL_H
 
-#ifdef __GNUC__
-#define HAVE_FFSLL
 #define _GNU_SOURCE
 #define __USE_GNU
-#endif
+#define __USE_UNIX98
+#define __USE_XOPEN_EXTENDED
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <signal.h>
 #include <malloc.h>
 #include <assert.h>
@@ -42,6 +42,11 @@
 #include <sys/sem.h>
 #include <linux/unistd.h>
 #include "libperfctr.h"
+
+#define PERF_MAX_COUNTERS 4
+#define MAX_COUNTERS PERF_MAX_COUNTERS
+#define MAX_COUNTER_TERMS  MAX_COUNTERS
+#define P3_MAX_REGS_PER_EVENT 2
 
 #define gettid() syscall(SYS_gettid)
 #define inline_static inline static
@@ -67,7 +72,18 @@
 #define CNTR2 0x2
 #define CNTR3 0x4
 #define CNTR4 0x8
+#define CNTRS12 (CNTR1|CNTR2)
 #define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
+
+#define HAS_MESI  0x100 /* indicates this event supports MESI modifiers */ 
+#define HAS_MOESI 0x200 /* indicates this event supports MOESI modifiers */
+#define MOESI_M   0x1000 /* Modified bit */
+#define MOESI_O   0x0800 /* Owner bit */
+#define MOESI_E   0x0400 /* Exclusive bit */
+#define MOESI_S   0x0200 /* Shared bit */
+#define MOESI_I   0x0100 /* Invalid bit */
+#define MOESI_M_INTEL   MOESI_O /* Modified bit on Intel processors */
+#define MOESI_ALL 0x1F00 /* mask for MOESI bits in event code or counter_cmd */
 
 /* Masks to craft an eventcode to perfctr's liking */
 #define PERF_ENABLE            0x00400000
@@ -102,12 +118,14 @@ extern int sem_set;
 
 #define  _papi_hwd_lock(lck)                    \
 {                                               \
+extern void PAPIERROR(char *format, ...); \
 struct sembuf sem_lock = { lck, -1, 0 }; \
 if (semop(sem_set, &sem_lock, 1) == -1 ) {      \
 PAPIERROR("semop errno %d",errno); abort(); } }
 
 #define  _papi_hwd_unlock(lck)                   \
 {                                                \
+extern void PAPIERROR(char *format, ...);\
 struct sembuf sem_unlock = { lck, 1, 0 }; \
 if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
 PAPIERROR("semop errno %d",errno); abort(); } }
