@@ -422,6 +422,7 @@ int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
 int PAPI_event_name_to_code(char *in, int *out);
+int PAPI_enum_event(int *EventCode, int modifier);
 int PAPI_read(int EventSet, long_long *values);
 int PAPI_remove_event(int EventSet, int EventCode);
 int PAPI_remove_events(int EventSet, int *Events, int number);

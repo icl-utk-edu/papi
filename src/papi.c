@@ -201,7 +201,7 @@ int PAPI_library_init(int version)
 
 int PAPI_describe_event(char *name, int *EventCode, char *description)
 {
-  int retval;
+  int retval = PAPI_OK;
 
   if (name == NULL)
    papi_return(PAPI_EINVAL);
@@ -209,9 +209,9 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
   if (((int)strlen(name) == 0) && *EventCode == 0)
     papi_return(PAPI_EINVAL);
 
-  if ((int)strlen(name) == 0)
+  if ((int)strlen(name) == 0) /* if no name, get it from the code */
     retval = PAPI_event_code_to_name(*EventCode, name);
-  else
+  else if (*EventCode == 0)  /* if no code, get it from the name */
     retval = PAPI_event_name_to_code(name, EventCode);
 
   if (retval != PAPI_OK)
@@ -319,15 +319,39 @@ int PAPI_event_name_to_code(char *in, int *out)
   if ((in == NULL) || (out == NULL))
     papi_return(PAPI_EINVAL);
 
-  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-    {
-      if ((_papi_hwi_presets[i].event_name) && (strcasecmp(_papi_hwi_presets[i].event_name,in) == 0))
-	{ 
-	  *out = _papi_hwi_presets[i].event_code;
-	  papi_return(PAPI_OK);
-	}
-    }
+  if (strncmp(in, "PAPI",4) == 0) {
+    for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
+      {
+	if ((_papi_hwi_presets[i].event_name) && (strcasecmp(_papi_hwi_presets[i].event_name,in) == 0))
+	  { 
+	    *out = _papi_hwi_presets[i].event_code;
+	    papi_return(PAPI_OK);
+	  }
+      }
+  }
   papi_return(_papi_hwi_native_name_to_code(in, out));
+}
+
+/* Updates EventCode to next valid value, or returns error; 
+  modifer can specify {all / available} for presets, or other values for native tables 
+  and may be platform specific (Major groups / all mask bits; P / M / E chip, etc) */
+int PAPI_enum_event(int *EventCode, int modifier)
+{
+  int i = *EventCode;
+
+  if (i & PRESET_MASK) {
+    i &= PRESET_AND_MASK;
+    while (++i < PAPI_MAX_PRESET_EVENTS) {
+      if ((!modifier) || (_papi_hwi_presets[i].avail)) {
+	*EventCode = i | PRESET_MASK;
+	return(PAPI_OK);
+      }
+    }
+  }
+  else if (i & NATIVE_MASK){
+    return(_papi_hwd_ntv_enum_events(EventCode, modifier));
+  }
+  return(PAPI_ENOEVNT);
 }
 
 int PAPI_create_eventset(int *EventSet)

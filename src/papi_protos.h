@@ -115,12 +115,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp);
    See extras.c or substrates for details... */
 
 extern int _papi_hwi_query_native_event(unsigned int EventCode);
-/*extern int _papi_hwi_native_code_to_name(unsigned int EventCode, char *out);
-extern int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *description);*/
 extern int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_info_t *info);
 extern int _papi_hwi_native_name_to_code(char *in, int *out);
-/*extern int _papi_hwi_native_code_to_idx(unsigned int EventCode);
-extern unsigned int _papi_hwi_native_idx_to_code(unsigned int EventCode);*/
 extern char *_papi_hwi_native_code_to_name(unsigned int EventCode);
 extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
 
@@ -128,7 +124,7 @@ extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
    The first four routines are required. The next two are optional.
    All six must at least be stubbed in the substrate file. */
 
-extern int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifer);
+extern int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
 extern char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
 extern char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
 extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);

@@ -479,7 +479,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 #ifdef HAS_NATIVE_MAP
   char *name;
 
-  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+  if (EventCode & NATIVE_MASK){
     name = _papi_hwi_native_code_to_name(EventCode);
     if (name) return(PAPI_OK);
   }
@@ -494,12 +494,12 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 {
 #ifdef HAS_NATIVE_MAP
   char *name;
-  int i;
-  for(i=0;i<PAPI_MAX_NATIVE_EVENTS;i++){
-    name = _papi_hwd_ntv_code_to_name(i | NATIVE_MASK);
+  int i = 0 | NATIVE_MASK;
+  do {
+    name = _papi_hwd_ntv_code_to_name(i);
     if (name != NULL) {
       if (strcasecmp(name,in) == 0) {
-	*out = i | NATIVE_MASK;
+	*out = i;
 	return(PAPI_OK);
       }
     }
@@ -507,7 +507,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
       *out = 0;
       return(PAPI_OK);
     }
-  }
+  } while (_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK);
 #endif
   return(PAPI_ENOEVNT);
 }
@@ -518,7 +518,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 char *_papi_hwi_native_code_to_name(unsigned int EventCode)
 {
 #ifdef HAS_NATIVE_MAP
-  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+  if (EventCode & NATIVE_MASK) {
     return(_papi_hwd_ntv_code_to_name(EventCode));
   }
 #endif
@@ -532,7 +532,7 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 {
 #ifdef HAS_NATIVE_MAP
   
-  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+  if (EventCode & NATIVE_MASK){
     return(_papi_hwd_ntv_code_to_descr(EventCode));
   }
 #endif
@@ -545,7 +545,7 @@ int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_inf
 {
 #ifdef HAS_NATIVE_MAP
 
-  if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
+  if (EventCode & NATIVE_MASK) {
     info->event_name = _papi_hwd_ntv_code_to_name(EventCode);
     if (info->event_name != NULL) {
       /* Fill in the info structure */
@@ -560,34 +560,6 @@ int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_inf
   }
 #endif
   return(PAPI_ENOEVNT);
-}
-
-/* Reverse lookup of event code to index */
-int _papi_hwi_native_code_to_idx(unsigned int EventCode)
-{
-  int index;
-  
-  if (EventCode & NATIVE_MASK) {
-  	index=EventCode ^ NATIVE_MASK;
-  
-  	if(index<PAPI_MAX_NATIVE_EVENTS){
-  		return(index);
-  	}
-  }
-  return (PAPI_ENOEVNT);
-}
-
-/* Returns event code based on index. NATIVE_MASK bit must be set if not predefined */
-unsigned int _papi_hwi_native_idx_to_code(unsigned int idx)
-{
-  unsigned int EventCode;
-  
-  EventCode =idx | NATIVE_MASK;
-  
-  if(idx<PAPI_MAX_NATIVE_EVENTS){
-  	return(EventCode);
-  }
-  return (PAPI_ENOEVNT);
 }
 
 

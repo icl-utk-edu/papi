@@ -732,7 +732,7 @@ hwd_p4_mask_t _memory_complete_mask[] = {
 };
 
 hwd_p4_mask_t _load_port_replay_mask[] = {
-  { SPLIT_ST, "SPLIT_LD", "Split load" },
+  { SPLIT_LD, "SPLIT_LD", "Split load" },
   { -1, NULL, NULL }
 };
 
@@ -916,7 +916,7 @@ hwd_p4_mask_t _replay_event_mask[] = {
   { PEBS_L2_MISS_BIT, "PEBS_L2_MISS_BIT", "Count L2 cache misses" },
   { PEBS_DTLB_MISS_BIT, "PEBS_DTLB_MISS_BIT", "Count DTLB misses" },
   { PEBS_MOB_BIT, "PEBS_MOB_BIT", "Count MOB replay events" },
-  { PEBS_SPLIT, "PEBS_SPLIT", "Count split replay events" },
+  { PEBS_SPLIT_BIT, "PEBS_SPLIT_BIT", "Count split replay events" },
   { -1, NULL, NULL }
 };
 
@@ -969,7 +969,7 @@ hwd_p4_mask_t *mask_array[] = {
     _IOQ_allocation_mask,
     _IOQ_allocation_mask,
     _FSB_data_activity_mask,
-    _FSB_data_activity_mask,
+    _BSQ_allocation_mask,
     _BSQ_allocation_mask,
     _SSE_input_assist_mask,
     _replay_tag_mask,
@@ -987,7 +987,7 @@ hwd_p4_mask_t *mask_array[] = {
     _retired_branch_mask,
     _resource_stall_mask,
     _WC_Buffer_mask,
-    _b2b_cycles_mask,
+    NULL, // b2b_cycles
     NULL, // bnr
     NULL, // snoop
     NULL, // response
@@ -1003,6 +1003,12 @@ hwd_p4_mask_t *mask_array[] = {
     _machine_clear_mask
 };
 
+enum {
+  PAPI_P4_ENUM_ALL = 0,	// all 83,000+ native events
+  PAPI_P4_ENUM_GROUPS,	// 45 groups + custom + user
+  PAPI_P4_ENUM_COMBOS,	// all combinations of mask bits for given group
+  PAPI_P4_ENUM_BITS	// all individual bits for given group
+};
 
 /*************************************/
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
@@ -1020,7 +1026,7 @@ static inline void internal_decode_event(unsigned int EventCode, int *event, int
   *mask = (EventCode & 0xffff);			// mask bits are in the first two bytes
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifier)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
   /* returns the next valid native event code following the one passed in
      modifier can have different meaning on different platforms 
@@ -1031,31 +1037,54 @@ int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifier)
 
   int event, mask, this_mask;
 
-  internal_decode_event(EventCode, &event, &mask);
+  internal_decode_event(*EventCode, &event, &mask);
 
   if (event <= P4_machine_clear) {
-    if (modifier & 1) { // look only at major event groups
-      if(++event > P4_machine_clear) event = P4_custom_event;
-    }
-    else {
-      this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
-      while (((++mask) & this_mask) != mask) {
-	if (mask > this_mask) {
-	  mask = 0;
-	  if(++event > P4_machine_clear) {
-	    event = P4_custom_event;
+    switch (modifier) {
+      case PAPI_P4_ENUM_ALL:
+	this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
+	while (((++mask) & this_mask) != mask) {
+	  if (mask > this_mask) {
+	    mask = 0;
+	    if(++event > P4_machine_clear) {
+	      event = P4_custom_event;
+	      mask = -1;
+	    }
 	    break;
 	  }
-	  this_mask = _papi_hwd_pentium4_native_map[event].mask;
 	}
-      }
+	break;
+
+      case PAPI_P4_ENUM_GROUPS:
+	if(++event > P4_machine_clear) {
+	  event = P4_custom_event;
+	  mask = -1;
+	} else mask = 0;
+	break;
+
+      case PAPI_P4_ENUM_COMBOS:
+	this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
+	while (((++mask) & this_mask) != mask) {
+	  if (mask > this_mask) return(PAPI_ENOEVNT);
+	}
+	break;
+
+      case PAPI_P4_ENUM_BITS:
+	this_mask = _papi_hwd_pentium4_native_map[event].mask; // valid bits for this mask
+	if (mask == 0) mask = 1;
+	else mask = mask << 1;
+	while ((mask & this_mask) != mask) {
+	  mask = mask << 1;
+	  if (mask > this_mask) return(PAPI_ENOEVNT);
+	}
+	break;
     }
   }
 
   if (event == P4_custom_event) {
     if (++mask >= _papi_hwd_pentium4_custom_count) {
       event = P4_user_event;
-      mask = 0;
+      mask = -1;
     }
   }
   
@@ -1063,7 +1092,8 @@ int _papi_hwd_ntv_enum_events(unsigned int EventCode, int modifier)
     if (++mask >= _papi_hwd_pentium4_user_count) return(PAPI_ENOEVNT);
   }
 
-  return((event<<16) + mask + NATIVE_MASK);
+  *EventCode = (event<<16) + mask + NATIVE_MASK;
+  return(PAPI_OK);
 }
 
 /* Called by _papi_hwd_ntv_code_to_{name,descr}() to build the return string */
@@ -1081,7 +1111,7 @@ static char *internal_translate_code(int event, int mask, char *str, char *separ
   if ((_papi_hwd_pentium4_native_map[event].mask & mask) != mask) return(NULL);
 
   if (*separator != '_') // implied flag for name
-    strcat(str, " Mask bits: ");
+    strcat(str, " Mask bits");
 
   for (i=0;i<16 && mask != 0;i++) {
     if (mask & (1 << i)) {
