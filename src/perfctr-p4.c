@@ -669,16 +669,16 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
   for (i=0;i<preset->number;i++)
     {
       need_one = ev_info->hardware_event[i].selector;
-      SUBDBG("Needed one of counters: need_one %d %08x\n",i,need_one);
+      SUBDBG("Subevent %d lives on counters: %08x\n",i,need_one);
 
       avail = need_one & (~already_used);
-      SUBDBG("Available counters: avail %08x\n",avail);
+      SUBDBG("Available counters: %08x\n",avail);
 
       if (avail == 0)
 	return(PAPI_ECNFLCT);
 
       allocated[i] = ffs(avail) - 1;
-      SUBDBG("Allocated counter: allocated %d %08x\n",i,allocated[i]);
+      SUBDBG("Allocated counter: %d\n",allocated[i]);
 
       /* If we're adding to an event set with something in it ... */
 
@@ -688,28 +688,55 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
 
 	  /* If any of the counters is sharing our ESCR and our masks are different, we're in trouble */
 
+	  SUBDBG("Preset subitem %d, Counters 0x%08x, ESCR %d, EVENT 0x%x, EVENTMASKTAG 0x%x\n",i,
+		 need_one,
+		 ESCR_OF(preset->info->data[i].evntsel),
+		 EVENT_OF(preset->info->data[i].evntsel_aux),
+		 EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux));
+
 	  for (j=0;j<evset_info->control.cpu_control.nractrs+evset_info->control.cpu_control.nrictrs;j++)
 	    {
+	      SUBDBG("Current set item %d, Counter 0x%08x, ESCR %d, EVENT 0x%x, EVENTMASKTAG 0x%x\n",j,
+		     1 << (evset_info->control.cpu_control.pmc_map[j] ^ FAST_RDPMC),
+		     ESCR_OF(evset_info->control.cpu_control.evntsel[j]),
+		     EVENT_OF(evset_info->control.cpu_control.evntsel_aux[j]),
+		     EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel[j]));
+
+	      if ((ESCR_OF(evset_info->control.cpu_control.evntsel[j]) ==
+		   ESCR_OF(preset->info->data[i].evntsel)) &&
+		  (EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel[j]) !=
+		   EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux)) &&
+		  ((1 << (evset_info->control.cpu_control.pmc_map[j] ^ FAST_RDPMC)) &
+		   (need_one)))
+		return(PAPI_ECNFLCT);
+	    }
+	}
+#if 0
+		     ESCR_OF(preset->info->data[i].evntsel),j,
+	      SUBDBG("Subevent %d ESCR %d, set %d ESCR %d\n",i,
+		     ESCR_OF(preset->info->data[i].evntsel),j,
+		     ESCR_OF(evset_info->control.cpu_control.evntsel[j]));
 	      if (ESCR_OF(preset->info->data[i].evntsel) == 
 		  ESCR_OF(evset_info->control.cpu_control.evntsel[j]))
 		{
-		  SUBDBG("event esrc %x, set escr %x\n",
-			 ESCR_OF(preset->info->data[i].evntsel),
-			 ESCR_OF(evset_info->control.cpu_control.evntsel[j]));
+		  SUBDBG("Subevent %d EVENT %d, set %d EVENT %d\n",i,
+		     EVENT_OF(preset->info->data[i].evntsel),j,
+		     EVENT_OF(evset_info->control.cpu_control.evntsel[j]));
 		  if (EVENT_OF(preset->info->data[i].evntsel_aux) ==
 		      EVENT_OF(evset_info->control.cpu_control.evntsel_aux[j]))
 		    {
-		      SUBDBG("event %x, set event %x\n",EVENT_OF(preset->info->data[i].evntsel_aux),ESCR_OF(evset_info->control.cpu_control.evntsel_aux[j]));
+		      SUBDBG("Subevent %d EVENTMASKTAG %d, set %d EVENTMASKTAG %d\n",i,
+			     EVENTMASKTAG_OF(preset->info->data[i].evntsel),j,
+		     EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel[j]));
 		      if (EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux) != 
 			  EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel_aux[j]))
 			  {
-			    SUBDBG("eventmasktag %x, set eventmasktag %x\n",EVENTMASKTAG_OF(preset->info->data[i].evntsel_aux),EVENTMASKTAG_OF(evset_info->control.cpu_control.evntsel_aux[j]));
 			    return(PAPI_ECNFLCT);
 			  }
 		    }
 		}
 	    }
-	}
+#endif	    
     }
     
   /* Should move counters here if some are overflowing. */
@@ -1017,7 +1044,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 
       if (ESI->NumberOfEvents > 1)
 	{
-	  fprintf(stderr,"Must have one counter in event set.\n");
+	  SUBDBG(stderr,"Must have one counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
 
@@ -1029,17 +1056,17 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
       i = ffs(selector) - 1;
       if (i >= ncntrs)
 	{
-	  fprintf(stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs);
+	  SUBDBG(stderr,"Selector id (0x%x) larger than ncntrs (%d)\n",selector,ncntrs);
 	  return PAPI_EINVAL;
 	}
       if (contr->cpu_control.nrictrs)
 	{
-	  fprintf(stderr,"Only one interrupting counter in event set.\n");
+	  SUBDBG(stderr,"Only one interrupting counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
       if (contr->cpu_control.nractrs != 1)
 	{
-	  fprintf(stderr,"Must have only one counter in event set.\n");
+	  SUBDBG(stderr,"Must have only one counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
 
