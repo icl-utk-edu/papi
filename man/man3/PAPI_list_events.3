@@ -19,6 +19,9 @@ PAPI_list_events \- list the events in an event set
 .LP
 .B PAPI_list_events(\|)
 decomposes an event set into the hardware events it contains.
+.LP
+This call assumes an initialized PAPI library and a properly
+added event set.
 
 .SH ARGUMENTS
 .I EventSet 
@@ -54,53 +57,27 @@ One or more of the arguments is invalid.
 .TP
 .B "PAPI_ENOEVST"
 The EventSet specified does not exist.
-.TP
-.B "PAPI_ENOTPRESET"
-The hardware event specified is not a PAPI preset for this architecture. 
 
 .SH EXAMPLES
 .nf
 .if t .ft CW
-  int EventCode, EventSet = PAPI_NULL;
-  int Events[4], number = 4;
-	
-  /* Create an EventSet */
-
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-
   /* Convert an event name to an event code */
-
   if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
     handle_error(1);
 
-  /* Query if Total Instructions Executed exists */
-
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-
   /* Add Total Instructions Executed to our EventSet */
-
   if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
     handle_error(1);
 
   /* Convert a second event name to an event code */
-
   if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
     handle_error(1);
 
-  /* Query if L1 Load Misses exists */
-
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-
   /* Add L1 Load Misses to our EventSet */
-
   if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
     handle_error(1);
 
   /* List the events in our EventSet */
-
   number = 4;
   if(PAPI_list_events(EventSet, Events, &number);
     handle_error(1);
@@ -114,4 +91,5 @@ The hardware event specified is not a PAPI preset for this architecture.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_event_name_to_code "(3), " PAPI_query_event "(3), " PAPI_add_event "(3)" 
+.BR PAPI_event_name_to_code "(3), " PAPI_add_event "(3)" PAPI_create_eventset "(3),"
+.BR PAPI_event_code_to_name "(3), " PAPI "(3), " PAPIF "(3)" 

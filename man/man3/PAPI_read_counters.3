@@ -2,8 +2,9 @@
 .TH PAPI_read_counters 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_read_counters, PAPI_accum_counters \- PAPI High Level: read counting 
-hardware events
+PAPI_read_counters \- PAPI High Level: read and reset counters
+.LP
+PAPI_accum_counters \- PAPI High Level: accumulate and reset counters
 
 .SH SYNOPSIS
 .B C Interface
@@ -32,6 +33,8 @@ adds the event counters into the array
 .I values
 \.
  The counters are reset and left running after the call.
+.LP
+These calls assume an initialized PAPI library and a properly added event set.
 
 .SH ARGUMENTS
 .I *values
@@ -59,27 +62,19 @@ variable.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
-  long_long values[2];
-  int num_hwcntrs = 0;
-	
-  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
-    handle_error(1);
-
-  if (num_hwcntrs > 2)
-    num_hwcntrs = 2;
-
-  /* Start counting events */
-
-  if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
-    handle_error(1);
-
-  your_slow_code();
-
-  /* Start counting events */
-
+  do_100events();
   if (PAPI_read_counters(values, num_hwcntrs) != PAPI_OK)
     handle_error(1);
+  /* values[0] now equals 100 */
+  do_100events();
+  if (PAPI_accum_counters(values, num_hwcntrs) != PAPI_OK)
+    handle_error(1);
+  /* values[0] now equals 200 */
+  values[0] = -100;
+  do_100events();
+  if (PAPI_accum_counters(values, num_hwcntrs) != PAPI_OK)
+    handle_error(1);
+  /* values[0] now equals 0 */
 .if t .ft P
 .fi
 
@@ -87,6 +82,6 @@ variable.
 These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_num_counters "(3),"
 .BR PAPI_start_counters "(3),"
-.BR PAPI_stop_counters "(3)"
+.BR PAPI_set_opt "(3),"
+.BR PAPI "(3)," PAPIF "(3)"

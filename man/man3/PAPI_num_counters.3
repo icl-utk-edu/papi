@@ -2,7 +2,7 @@
 .TH PAPI_num_counters 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_num_counters \- PAPI High Level: get the number of hardware counters available on the system
+PAPI_num_counters \- PAPI High Level: return the number of hardware counters available on the system
 
 .SH SYNOPSIS
 .B C Interface
@@ -23,7 +23,7 @@ returns the optimal length of the values array for the
 high level functions.  This value corresponds to the number of hardware
 counters supported by the current substrate.
 .B PAPI_num_counters()
-initialises the library to
+initializes the library to
 .B PAPI_HIGH_LEVEL_INITED
 if necessary.
 
@@ -50,9 +50,7 @@ variable.
 
 .nf
 .if t .ft CW
-  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
-  int num_hwcntrs = 0;
-	
+  int num_hwcntrs;
   /*  The installation does not support PAPI */
   if ((num_hwcntrs = PAPI_num_counters()) < 0 )
     handle_error(1);
@@ -60,14 +58,6 @@ variable.
   /*  The installation supports PAPI, but has no counters */
   if ((num_hwcntrs = PAPI_num_counters()) == 0 )
     fprintf(stderr,"Info:: This machine does not provide hardware counters.\n");
-
-  if (num_hwcntrs > 2)
-    num_hwcntrs = 2;
-
-  /* Start counting events */
-
-  if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
-    handle_error(1);
 .if t .ft P
 .fi
 
@@ -75,9 +65,4 @@ variable.
 If you don't call this function, your application could core dump.
 
 .SH SEE ALSO
-.BR PAPI_start_counters "(3),"
-.BR PAPI_read_counters "(3),"
-.BR PAPI_stop_counters "(3),"
-.BR PAPI_init_library "(3),"
-.BR PAPI_num_hwctrs "(3),"
-.BR PAPI "(3)"
+.BR PAPI "(3)," PAPIF "(3)"

@@ -2,7 +2,7 @@
 .TH PAPI_reset 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_reset \- reset the hardware event counts in an EventSet
+PAPI_reset \- reset the hardware event counts in an event set
 
 .SH SYNOPSIS
 .B C Interface
@@ -20,6 +20,8 @@ PAPI_reset \- reset the hardware event counts in an EventSet
 .B PAPI_reset()
 zeroes the values of the counters contained in 
 .IR EventSet "."
+This call assumes an initialized PAPI library and
+a properly added event set.
 
 .SH ARGUMENTS
 .I "EventSet"
@@ -44,30 +46,6 @@ The EventSet specified does not exist.
 .SH EXAMPLES
 .nf         
 .if t .ft CW
-int EventSet = PAPI_NULL;
-unsigned int native = 0x0;
-long_long values[1];
- 	
-if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-  handle_error(1);
-
-/* Add Total Instructions Executed to our EventSet */
-
-if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
-  handle_error(1);
-
-/* Start counting */
-
-if (PAPI_start(EventSet) != PAPI_OK)
-  handle_error(1);
-
-poorly_tuned_function();
-
-if (PAPI_stop(EventSet, values) != PAPI_OK)
-  handle_error(1);
-
-printf("%lld\en",values[0]);
-
 if (PAPI_reset(EventSet) != PAPI_OK)
   handle_error(1);
 .if t .ft P
@@ -77,6 +55,4 @@ if (PAPI_reset(EventSet) != PAPI_OK)
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_add_event "(3), " PAPI_reset "(3), " PAPI_read "(3), "
-.BR PAPI_set_opt "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3)" 
+.BR PAPI_create_eventset "(3), " PAPI "(3)," PAPIF "(3)"

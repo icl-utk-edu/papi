@@ -19,7 +19,7 @@ PAPI_start_counters \- PAPI High Level: start counting hardware events
 .SH DESCRIPTION
 .B PAPI_start_counters(\|)
 starts counting the events named in the events array.  This function
-can't be called if the events array is already running. The user must
+cannot be called if the events array is already running. The user must
 call PAPI_stop_counters to stop the events explicitly if he/she wants to 
 call this function again.  It is the user's responsibility
 to choose events that can be counted simultaneously by reading the
@@ -66,17 +66,7 @@ The PAPI preset is not available on the underlying hardware.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-  int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
-  int num_hwcntrs = 0;
-	
-  if ((num_hwcntrs = PAPI_num_counters()) != PAPI_OK)
-    handle_error(1);
-
-  if (num_hwcntrs > 2)
-    num_hwcntrs = 2;
-
   /* Start counting events */
-
   if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
     handle_error(1);
 .if t .ft CW
@@ -86,6 +76,8 @@ The PAPI preset is not available on the underlying hardware.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_num_counters "(3),"
-.BR PAPI_read_counters "(3),"
-.BR PAPI_stop_counters "(3)"
+.BR PAPI_create_eventset "(3),"
+.BR PAPI_add_event "(3),"
+.BR PAPI_stop_counters "(3),"
+.BR PAPI "(3),"
+.BR PAPIF "(3)"

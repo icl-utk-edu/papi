@@ -27,6 +27,9 @@ All counters are implicitly set to zero before counting.
 .B PAPI_stop
 halts the counting of a previously defined event set and the counter values
 contained in that EventSet are copied into the values array
+.LP
+These calls assume an initialized PAPI library and a properly
+added event set.
 
 .SH ARGUMENTS
 .I "EventSet"
@@ -64,7 +67,7 @@ The EventSet is currently not running.
 .TP
 .B "PAPI_ECNFLCT"
 The underlying counter hardware can not count this event and other events
-in the EventSet simultaneously.
+in the EventSet simultaneously. (PAPI_start() only)
 .TP
 .B "PAPI_ENOEVNT"
 The PAPI preset is not available on the underlying hardware. 
@@ -72,20 +75,14 @@ The PAPI preset is not available on the underlying hardware.
 .SH EXAMPLES
 .nf         
 .if t .ft CW
-  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-  long_long values[1];
-	
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
 
   /* Add Total Instructions Executed to our EventSet */
-
   if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 
   /* Start counting */
-
   if (PAPI_start(EventSet) != PAPI_OK)
     handle_error(1);
 
@@ -102,6 +99,5 @@ The PAPI preset is not available on the underlying hardware.
 These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_create_eventset "(3), " PAPI_destroy_eventset "(3), " 
-.BR PAPI_add_event "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_reset "(3), " PAPI_set_opt "(3), " 
+.BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " 
+.BR PAPI "(3), " PAPIF "(3)"

@@ -19,6 +19,8 @@ PAPI_num_events \- return the number of events in an event set
 .LP
 .B PAPI_num_events(\|)
 returns the number of preset events contained in an event set.
+The event set should be created by
+.BR "PAPI_create_eventset" (3).
 
 .SH ARGUMENTS
 .I EventSet 
@@ -46,47 +48,9 @@ The EventSet specified does not exist.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-  int EventCode, EventSet = PAPI_NULL;
-	
-  /* Create an EventSet */
-
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    handle_error(1);
-
-  /* Convert an event name to an event code */
-
-  if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Query if Total Instructions Executed exists */
-
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Add Total Instructions Executed to our EventSet */
-
-  if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Convert a second event name to an event code */
-
-  if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Query if L1 Load Misses exists */
-
-  if (PAPI_query_event(EventCode) != PAPI_OK)
-    handle_error(1);
-
-  /* Add L1 Load Misses to our EventSet */
-
-  if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
-    handle_error(1);
-
   /* Count the events in our EventSet */
+  printf("%d events found in EventSet.\n", PAPI_num_events(EventSet));
 
-  if (PAPI_num_events(EventSet) != 2)
-    handle_error(1);
 .if t .ft P
 .fi
 
@@ -94,4 +58,4 @@ The EventSet specified does not exist.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_event_name_to_code "(3), " PAPI_query_event "(3), " PAPI_add_event "(3)" 
+.BR PAPI_add_event "(3)," PAPI_create_eventset "(3)," PAPI "(3)," PAPIF "(3)"

@@ -48,6 +48,8 @@ On success, this function returns
 The EventSet specified does not exist.
 .TP
 .B "PAPI_ESBSTR"
+PAPI_write() is not implemented for this architecture.
+.B "PAPI_ESYS"
 The EventSet is currently counting events and the substrate could
 not change the values of the running counters.
 
@@ -64,5 +66,4 @@ not change the values of the running counters.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_accum "(3)"
-
+.BR PAPI_read "(3), " PAPI "(3), " PAPIF "(3), "

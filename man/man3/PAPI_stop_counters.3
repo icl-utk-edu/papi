@@ -2,7 +2,7 @@
 .TH PAPI_stop_counters 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_stop_counters \- PAPI High Level: stop counting hardware events
+PAPI_stop_counters \- PAPI High Level: stop counting hardware events and reset values to zero
 
 .SH SYNOPSIS
 .B C Interface
@@ -19,9 +19,11 @@ PAPI_stop_counters \- PAPI High Level: stop counting hardware events
 .SH DESCRIPTION
 .B PAPI_stop_counters(\|)
 .LP
-This function stops the counters and returns their values. The
-counters must have been started by a previous call to
-PAPI_start_counters().
+This function stops the counters and copies the counts
+into the values array. The counters must have been
+started by a previous call to PAPI_start_counters().
+After this function is called, the values are reset to
+zero.
 .SH ARGUMENTS
 .I *values
 -- an array where to put the counter values
@@ -42,30 +44,21 @@ One or more of the arguments is invalid.
 .TP
 .B "PAPI_ENOTRUN"
 The eventset is not started yet.
+.TP
+.B "PAPI_ENOEVST"
+The eventset has not been added yet.
 
 .SH EXAMPLES
 .nf
 .if t .ft CW
   int Events[2] = { PAPI_TOT_CYC, PAPI_TOT_INS };
   long_long values[2];
-  int num_hwcntrs = 0;
-	
-  if ((num_hwcntrs = PAPI_num_counters()) < PAPI_OK)
-    handle_error(1);
-
-  if (num_hwcntrs > 2)
-    num_hwcntrs = 2;
-
   /* Start counting events */
-
-  if (PAPI_start_counters(Events, num_hwcntrs) != PAPI_OK)
+  if (PAPI_start_counters(Events, 2) != PAPI_OK)
     handle_error(1);
-
   your_slow_code();
-
   /* Stop counting events */
-
-  if (PAPI_stop_counters(values, num_hwcntrs) != PAPI_OK)
+  if (PAPI_stop_counters(values, 2) != PAPI_OK)
     handle_error(1);
 .if t .ft P
 .fi
@@ -74,6 +67,5 @@ The eventset is not started yet.
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_num_counters "(3),"
-.BR PAPI_start_counters "(3),"
-.BR PAPI_read_counters "(3)"
+.BR PAPI_start_counters "(3)," PAPI_set_opt "(3),"
+.BR PAPI_read_counters "(3)," PAPI"(3)," PAPIF "(3)"

@@ -2,8 +2,8 @@
 .TH PAPI_read 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_read, PAPI_accum \- read hardware events, accumulate and reset hardware
-events from an event set
+PAPI_read \- read hardware counters from an event set
+PAPI_accum \- accumulate and reset counters in an event set
 
 .SH SYNOPSIS
 .B C Interface
@@ -20,6 +20,10 @@ events from an event set
 .fi
 
 .SH DESCRIPTION
+
+These calls assume an initialized PAPI library and a properly added
+event set.
+
 .B PAPI_read()
 copies the counters of the indicated event set into 
 the array
@@ -30,6 +34,9 @@ The counters continue counting after the read.
 adds the counters of the indicated event set into the array
 .IR values .
 The counters are zeroed and continue counting after the operation.
+.LP
+Note the differences between PAPI_read() and PAPI_accum(), 
+specifically that PAPI_accum() resets the values array to zero.
 
 
 .SH ARGUMENTS
@@ -61,36 +68,19 @@ The event set specified does not exist.
 .SH EXAMPLES
 .nf
 .if t .ft CW
-  int EventSet = PAPI_NULL;
-  unsigned int native = 0x0;
-  long_long values[1] = (long_long) 0;
-	
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  do_100events();
+  if (PAPI_read(EventSet, values) != PAPI_OK)
     handle_error(1);
-
-  /* Add Total Instructions Executed to our EventSet */
-
-  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
-    handle_error(1);
-
-  /* Start counting */
-
-  if (PAPI_start(EventSet) != PAPI_OK)
-    handle_error(1);
-
-  poorly_tuned_function();
-
+  /* values[0] now equals 100 */
+  do_100events();
   if (PAPI_accum(EventSet, values) != PAPI_OK)
     handle_error(1);
-
-  printf("%lld\\n",values[0]);
-
-  poorly_tuned_function();
-
-  if (PAPI_stop(EventSet, values) != PAPI_OK)
+  /* values[0] now equals 200 */
+  values[0] = -100;
+  do_100events();
+  if (PAPI_accum(EventSet, values) != PAPI_OK)
     handle_error(1);
-
-  printf("%lld\\n",values[0]);
+  /* values[0] now equals 0 */
 .if t .ft P
 .fi
 
@@ -98,6 +88,5 @@ The event set specified does not exist.
 These functions have no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_add_event "(3), " PAPI_reset "(3), "
-.BR PAPI_set_opt "(3), " PAPI_remove_event "(3), " 
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
+.BR PAPI_set_opt "(3), " PAPI_reset "(3), " 
+.BR PAPI_start "(3), " PAPI "(3), " PAPIF "(3)"

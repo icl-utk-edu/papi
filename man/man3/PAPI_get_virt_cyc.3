@@ -2,7 +2,9 @@
 .TH PAPI_get_virt_cyc 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_get_virt_cyc, PAPI_get_virt_usec \- get virtual time counter values
+PAPI_get_virt_cyc \- get virtual time counter value in clock cycles
+.LP
+PAPI_get_virt_usec \- get virtual time counter values in microseconds
 
 .SH SYNOPSIS
 .B C Interface
@@ -16,7 +18,6 @@ PAPI_get_virt_cyc, PAPI_get_virt_usec \- get virtual time counter values
 .B #include "fpapi.h"
 .BI PAPIF_get_virt_usec(C_LONG_LONG\  time)
 .BI PAPIF_get_virt_cyc(C_LONG_LONG\  virt_cyc)
-.BR PAPI_get_virt_cyc(3)
 .fi
 
 .SH DESCRIPTION
@@ -44,15 +45,8 @@ allocation of such an event set fails, the call will return
 .LP
 .nf
 .if t .ft CW
-long_long s, e;
-	
-if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  exit(1);
-
 s = PAPI_get_virt_cyc();
-
 your_slow_code();
-
 e = PAPI_get_virt_cyc();
 printf("Process has run for cycles: %lld\en",e-s);
 .if t .fr P
@@ -64,4 +58,6 @@ These functions have no known bugs.
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
 .BR PAPI_get_real_usec "(3), " 
-.BR PAPI_get_real_cyc "(3)" 
+.BR PAPI_get_real_cyc "(3), "
+.BR PAPI "(3), " 
+.BR PAPIF "(3)" 

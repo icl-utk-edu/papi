@@ -17,7 +17,8 @@ PAPI_num_hwctrs \- return the number of hardware counters
 .fi
 
 .SH DESCRIPTION
-.B "PAPI_num_hwctrs()" returns the number of physical hardware
+.B "PAPI_num_hwctrs()" 
+returns the number of physical hardware
 counters present in the processor. This count does not include any
 special purpose registers or performance hardware. 
 .BR "PAPI_library_init" "(3) must be called"
@@ -35,19 +36,8 @@ A zero result usually means the library has not been initialized.
 .LP
 .nf
 .if t .ft CW
-int retval, num;
-
-/* Initialize the library */
-
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-
-if (retval != PAPI_VER_CURRENT) 
-  exit(1);
-
 /* Query the substrate for our resources. */
-
-num = PAPI_num_hwctrs();
-printf("%d hardware counters found.\n",num);
+printf("%d hardware counters found.\n", PAPI_num_hwctrs());
 .if t .ft P
 .fi
 
@@ -55,8 +45,5 @@ printf("%d hardware counters found.\n",num);
 None.
 
 .SH SEE ALSO
-.BR PAPI_get_opt "(3),"
 .BR PAPI_init_library "(3),"
-.BR PAPI_num_counters "(3),"
-.BR PAPI "(3)"
-
+.BR PAPI "(3)," PAPI_F "(3)"
