@@ -3,7 +3,7 @@
 
 #include "tru64-alpha.h"
 
-extern EventSetInfo *default_master_eventset;
+extern EventSetInfo_t *default_master_eventset;
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
@@ -168,7 +168,7 @@ static int counter_event_shared(const ev_control_t *a, const ev_control_t *b, in
     }
 }
 
-static int update_global_hwcounters(EventSetInfo *global)
+static int update_global_hwcounters(EventSetInfo_t *global)
 {
   int i, retval;
   hwd_control_state_t *current_state = (hwd_control_state_t *)global->machdep;
@@ -235,7 +235,7 @@ static int update_global_hwcounters(EventSetInfo *global)
   return(0);
 }
 
-static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, long long *correct)
+static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long long *correct)
 {
   int i;
 
@@ -259,19 +259,19 @@ static int set_granularity(hwd_control_state_t *this_state, int domain)
   return(PAPI_ESBSTR);
 }
 
-static int set_default_domain(EventSetInfo *zero, int domain)
+static int set_default_domain(EventSetInfo_t *zero, int domain)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_domain(current_state,domain));
 }
 
-static int set_default_granularity(EventSetInfo *zero, int granularity)
+static int set_default_granularity(EventSetInfo_t *zero, int granularity)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_granularity(current_state,granularity));
 }
 
-static int set_inherit(EventSetInfo *zero, int arg)
+static int set_inherit(EventSetInfo_t *zero, int arg)
 {
   return(PAPI_ESBSTR);
 }
@@ -466,7 +466,7 @@ long long _papi_hwd_get_real_cycles (void)
  return((long long) _papi_hwd_get_real_usec() * _papi_system_info.hw_info.mhz);
 }
 
-long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
+long long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
 {
 #if 0
   if (virt_then)
@@ -487,7 +487,7 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
   return ( (res.ru_utime.tv_sec*1000000)+res.ru_utime.tv_usec);
 }
 
-long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
+long long _papi_hwd_get_virt_cycles (EventSetInfo_t *zero)
 {
 #if 0
   if (virt_then)
@@ -527,7 +527,7 @@ int _papi_hwd_init_global(void)
   return(PAPI_OK);
 }
 
-int _papi_hwd_init(EventSetInfo *zero)
+int _papi_hwd_init(EventSetInfo_t *zero)
 {
   long arg;
   int fd;
@@ -757,7 +757,7 @@ void dump_cmd(ev_control_t *t)
 
 /* EventSet zero contains the 'current' state of the counting hardware */
 
-int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
+int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 { 
   int i, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -878,7 +878,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   return(PAPI_OK);
 } 
 
-int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
+int _papi_hwd_unmerge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 { 
   int i, tmp, hwcntr, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -905,7 +905,7 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
     }
 }
 
-int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
+int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 {
   int i, retval;
 
@@ -987,7 +987,7 @@ static long long handle_derived(EventInfo_t *cmd, long long *from)
     }
 }
 
-int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
+int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long *events)
 {
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
@@ -1044,7 +1044,7 @@ int _papi_hwd_setmaxmem(){
   return(PAPI_OK);
 }
 
-int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
+int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option)
 {
   switch (code)
     {
@@ -1065,12 +1065,12 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
+int _papi_hwd_write(EventSetInfo_t *master, EventSetInfo_t *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_shutdown(EventSetInfo *zero)
+int _papi_hwd_shutdown(EventSetInfo_t *zero)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   int retval;
@@ -1109,21 +1109,21 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
 {
   /* This function is not used and shouldn't be called. */
 
   return(PAPI_EMISC);
 }
 
-int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
 {
   /* This function is not used and shouldn't be called. */
 
   return(PAPI_EMISC);
 }
 
-int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
   /* This function is not used and shouldn't be called. */
 

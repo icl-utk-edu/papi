@@ -387,7 +387,7 @@ int _papi3_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
 }
 
 #ifndef PAPI3
-int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option) 
+int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option) 
 {
   return(_papi3_hwd_ctl(zero->machdep, code, option));
 }

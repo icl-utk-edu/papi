@@ -205,10 +205,10 @@ typedef struct _EventSetInfo {
   struct _EventSetInfo *event_set_profiling; /* EventSets that are profiling */
 
   struct _EventSetInfo *master;
-} EventSetInfo;
+} EventSetInfo_t;
 
 typedef struct _dynamic_array{
-	EventSetInfo   **dataSlotArray; /* array of ptrs to EventSets */
+	EventSetInfo_t   **dataSlotArray; /* array of ptrs to EventSets */
 	int    totalSlots;      /* number of slots in dataSlotArrays      */
 	int    availSlots;      /* number of open slots in dataSlotArrays */
 	int    fullSlots;       /* number of full slots in dataSlotArray    */
@@ -223,24 +223,24 @@ typedef struct _papi_int_defdomain {
 typedef struct _papi_int_domain {
     int domain;
     int eventset;
-    EventSetInfo *ESI; } _papi_int_domain_t;
+    EventSetInfo_t *ESI; } _papi_int_domain_t;
 
 typedef struct _papi_int_granularity {
     int granularity;
     int eventset;
-    EventSetInfo *ESI; } _papi_int_granularity_t;
+    EventSetInfo_t *ESI; } _papi_int_granularity_t;
 
 typedef struct _papi_int_overflow {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
   EventSetOverflowInfo_t overflow; } _papi_int_overflow_t;
 
 typedef struct _papi_int_profile {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
   EventSetProfileInfo_t profile; } _papi_int_profile_t;
 
 #if 0
 typedef struct _papi_int_inherit {
-  EventSetInfo *master;
+  EventSetInfo_t *master;
   int inherit; } _papi_int_inherit_t;
 #endif
 
@@ -258,7 +258,7 @@ typedef union _papi_int_option_t {
 /* The following functions are defined by the papi.c file. */
 
 extern unsigned long int (*thread_id_fn)(void);
-extern EventSetInfo *get_my_EventSetInfo(EventInfo_t *);
+extern EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *);
 
 /* The following functions are defined by the multiplex.c file. */
 
@@ -282,10 +282,10 @@ extern int MPX_start(MPX_EventSet * mpx_events);
 
 extern void _papi_hwi_shutdown_the_thread_list(void);
 extern void _papi_hwi_cleanup_master_list(void);
-extern int _papi_hwi_insert_in_master_list(EventSetInfo *ptr);
-extern EventSetInfo *_papi_hwi_lookup_in_master_list();
-extern int _papi_hwi_stop_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
-extern int _papi_hwi_start_overflow_timer(EventSetInfo *master, EventSetInfo *ESI);
+extern int _papi_hwi_insert_in_master_list(EventSetInfo_t *ptr);
+extern EventSetInfo_t *_papi_hwi_lookup_in_master_list();
+extern int _papi_hwi_stop_overflow_timer(EventSetInfo_t *master, EventSetInfo_t *ESI);
+extern int _papi_hwi_start_overflow_timer(EventSetInfo_t *master, EventSetInfo_t *ESI);
 extern int _papi_hwi_initialize(DynamicArray **);
 extern void _papi_hwi_dispatch_overflow_signal(void *context);
 
@@ -306,25 +306,25 @@ extern int _papi_hwd_rem_event(hwd_control_state_t *, EventInfo_t *);
 extern int _papi_hwd_setmaxmem();
 
 /* Old syntax! */
-extern int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option);
+extern int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option);
 extern void _papi_hwd_dispatch_timer();
-extern int _papi_hwd_init(EventSetInfo *zero);
+extern int _papi_hwd_init(EventSetInfo_t *zero);
 extern int _papi_hwd_init_global(void);
-extern int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero);
+extern int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero);
 extern int _papi_hwd_query(int preset, int *flags, char **note_loc);
-extern int _papi_hwd_read(EventSetInfo *, EventSetInfo *, long_long events[]);
-extern int _papi_hwd_reset(EventSetInfo *, EventSetInfo *zero);
-extern int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option);
-extern int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option);
-extern int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master);
-extern int _papi_hwd_shutdown(EventSetInfo *zero);
-extern int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero);
-extern int _papi_hwd_write(EventSetInfo *, EventSetInfo *, long_long events[]);
+extern int _papi_hwd_read(EventSetInfo_t *, EventSetInfo_t *, long_long events[]);
+extern int _papi_hwd_reset(EventSetInfo_t *, EventSetInfo_t *zero);
+extern int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option);
+extern int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option);
+extern int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master);
+extern int _papi_hwd_shutdown(EventSetInfo_t *zero);
+extern int _papi_hwd_unmerge(EventSetInfo_t *ESI, EventSetInfo_t *zero);
+extern int _papi_hwd_write(EventSetInfo_t *, EventSetInfo_t *, long_long events[]);
 extern void *_papi_hwd_get_overflow_address(void *context);
 extern long_long _papi_hwd_get_real_cycles (void);
 extern long_long _papi_hwd_get_real_usec (void);
-extern long_long _papi_hwd_get_virt_cycles (EventSetInfo *zero);
-extern long_long _papi_hwd_get_virt_usec (EventSetInfo *zero);
+extern long_long _papi_hwd_get_virt_cycles (EventSetInfo_t *zero);
+extern long_long _papi_hwd_get_virt_usec (EventSetInfo_t *zero);
 extern void _papi_hwd_error(int error, char *);
 extern void _papi_hwd_lock_init(void);
 extern void _papi_hwd_lock(void);
@@ -340,7 +340,7 @@ typedef struct _papi_mdi {
   PAPI_mem_info_t mem_info;  /* See definition in papi.h */
 
   /* The following variables define the length of the arrays in the 
-     EventSetInfo structure. Each array is of length num_gp_cntrs + 
+     EventSetInfo_t structure. Each array is of length num_gp_cntrs + 
      num_sp_cntrs * sizeof(long_long) */
 
   int num_cntrs;   /* Number of counters returned by a substrate read/write */

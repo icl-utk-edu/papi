@@ -629,7 +629,7 @@ static int getmhz(void)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-int _papi_hwd_init(EventSetInfo *zero)
+int _papi_hwd_init(EventSetInfo_t *zero)
 {
   _papi_system_info.ncpu = _system_configuration.ncpus;
   _papi_system_info.type = _system_configuration.architecture;
@@ -639,7 +639,7 @@ int _papi_hwd_init(EventSetInfo *zero)
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
+int _papi_hwd_add_event(EventSetInfo_t *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int group, number, unit, multimask;
@@ -716,7 +716,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
     }
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo_t *ESI, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int group, number, unit, multimask;
@@ -748,7 +748,7 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
     }
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(EventSetInfo_t *ESI, unsigned int event, void *extra)
 {
   return(PAPI_ESBSTR);
 }
@@ -771,7 +771,7 @@ static void update_counters(unsigned long long events[])
   DBG((stderr,"update_counters() events[6] = %lld\n",events[6]));
 }
 
-int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
+int _papi_hwd_read(EventSetInfo_t *ESI, unsigned long long events[])
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int hwsel,i,j = 0, k = 0,retval = PAPI_OK;
@@ -813,7 +813,7 @@ int _papi_hwd_read(EventSetInfo *ESI, unsigned long long events[])
   return(retval);
 }
 
-int _papi_hwd_write(EventSetInfo *ESI, unsigned long long events[])
+int _papi_hwd_write(EventSetInfo_t *ESI, unsigned long long events[])
 { 
   return(PAPI_ESBSTR);
 }
@@ -835,7 +835,7 @@ void dump_mmcr(int mmcr)
 }
 #endif
 
-int _papi_hwd_start(EventSetInfo *ESI)
+int _papi_hwd_start(EventSetInfo_t *ESI)
 {
   hwd_control_state_t *arg = (hwd_control_state_t *)ESI->machdep;
 
@@ -847,7 +847,7 @@ int _papi_hwd_start(EventSetInfo *ESI)
   return(PAPI_OK);
 }
 
-int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
+int _papi_hwd_stop(EventSetInfo_t *ESI, unsigned long long events[])
 { 
   int retval = PAPI_OK;
 
@@ -865,7 +865,7 @@ int _papi_hwd_stop(EventSetInfo *ESI, unsigned long long events[])
 
 /* No explicit reset on the IBM. */
 
-int _papi_hwd_reset(EventSetInfo *ESI)
+int _papi_hwd_reset(EventSetInfo_t *ESI)
 {
   hwd_control_state_t *arg = (hwd_control_state_t *)ESI->machdep;
   int retval = PAPI_OK;
@@ -900,7 +900,7 @@ int _papi_hwd_ctl(int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_shutdown(EventSetInfo *zero)
+int _papi_hwd_shutdown(EventSetInfo_t *zero)
 {
   memset(&_papi_system_info,0x00,sizeof(_papi_system_info));
   return(PAPI_OK);

@@ -394,7 +394,7 @@ int _papi3_hwd_init(P4_perfctr_context_t *ctx)
 }
 
 #ifndef PAPI3
-int _papi_hwd_init(EventSetInfo *zero)
+int _papi_hwd_init(EventSetInfo_t *zero)
 {
   hwd_control_state_t *machdep = zero->machdep;
   int retval;
@@ -484,7 +484,7 @@ int _papi_hwd_start(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 }
 
 #ifndef PAPI3
-int _papi_hwd_merge(EventSetInfo *this_evset, EventSetInfo *context_evset)
+int _papi_hwd_merge(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset)
 {
   hwd_control_state_t *machdep = this_evset->machdep;
   hwd_control_state_t *context_machdep = context_evset->machdep;
@@ -505,7 +505,7 @@ int _papi_hwd_stop(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 }
 
 #ifndef PAPI3
-int _papi_hwd_unmerge(EventSetInfo *this_evset, EventSetInfo *context_evset)
+int _papi_hwd_unmerge(EventSetInfo_t *this_evset, EventSetInfo_t *context_evset)
 {
   hwd_control_state_t *machdep = this_evset->machdep;
   hwd_control_state_t *context_machdep = context_evset->machdep;
@@ -530,7 +530,7 @@ int _papi3_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, unsign
 }
 
 #ifndef PAPI3
-int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
+int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long events[])
 {
   unsigned long long *dp;
   int shift_cnt, selector, i, j = 0;
@@ -592,7 +592,7 @@ int _papi3_hwd_shutdown(P4_perfctr_context_t *ctx)
 }
 
 #ifndef PAPI3
-int _papi_hwd_shutdown(EventSetInfo *zero)
+int _papi_hwd_shutdown(EventSetInfo_t *zero)
 {
   hwd_control_state_t *machdep = zero->machdep;
   return(_papi3_hwd_shutdown(&machdep->context));
@@ -637,12 +637,12 @@ long_long _papi_hwd_get_real_usec ()
 {
   return(_papi3_hwd_get_real_usec());
 }
-long_long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
+long_long _papi_hwd_get_virt_cycles (EventSetInfo_t *zero)
 {
   hwd_control_state_t *machdep = zero->machdep;
   return(_papi3_hwd_get_virt_cycles(&machdep->context));
 }
-long_long _papi_hwd_get_virt_usec (EventSetInfo *zero)
+long_long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
 {
   hwd_control_state_t *machdep = zero->machdep;
   return(_papi3_hwd_get_virt_usec(&machdep->context));
@@ -1018,7 +1018,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_op
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
   /* This function is not used and shouldn't be called. */
 
@@ -1027,7 +1027,7 @@ int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
 
 
 #ifndef PAPI3
-int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
+int _papi_hwd_reset(EventSetInfo_t *mine, EventSetInfo_t *zero) 
 {
   hwd_control_state_t *machdep = zero->machdep;
 
@@ -1036,7 +1036,7 @@ int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero)
 
 }
 
-int _papi_hwd_write(EventSetInfo *mine, EventSetInfo *zero, long_long events[])
+int _papi_hwd_write(EventSetInfo_t *mine, EventSetInfo_t *zero, long_long events[])
 {
   hwd_control_state_t *machdep = zero->machdep;
   return(_papi3_hwd_write(&machdep->context,&machdep->control,events));

@@ -95,7 +95,7 @@ typedef P4_perfctr_control_t hwd_control_state_t;
 #ifndef PAPI3
 #include "papi_internal.h"
 extern caddr_t _init, _fini, _etext, _edata;
-typedef EventSetInfo EventSetInfo_t;
+/* typedef EventSetInfo EventSetInfo_t; */
 typedef papi_mdi papi_mdi_t;
 #endif
 

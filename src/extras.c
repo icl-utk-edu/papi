@@ -33,7 +33,7 @@ extern void _papi_hwi_lookup_thread_symbols(void);
 static unsigned int rnum = 0xdeadbeef;
 
 typedef struct _thread_list {
-  EventSetInfo *master;
+  EventSetInfo_t *master;
   struct _thread_list *next; 
 } EventSetInfoList;
 
@@ -107,10 +107,10 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t *prof, unsigned short *
 }
 
 /*
-static void dispatch_profile(EventSetInfo *ESI, void *context,
+static void dispatch_profile(EventSetInfo_t *ESI, void *context,
 			     long_long over, long_long threshold)
 */
-void dispatch_profile(EventSetInfo *ESI, void *context,
+void dispatch_profile(EventSetInfo_t *ESI, void *context,
 			     long_long over, long_long threshold)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
@@ -188,7 +188,7 @@ void _papi_hwi_cleanup_master_list(void)
   _papi_hwd_unlock();
 }
 
-int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)
+int _papi_hwi_insert_in_master_list(EventSetInfo_t *ptr)
 {
   EventSetInfoList *entry = (EventSetInfoList *)malloc(sizeof(EventSetInfoList));
   if (entry == NULL)
@@ -210,9 +210,9 @@ int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)
   return(PAPI_OK);
 }
 
-EventSetInfo *_papi_hwi_lookup_in_master_list(void)
+EventSetInfo_t *_papi_hwi_lookup_in_master_list(void)
 {
-  extern EventSetInfo *default_master_eventset;
+  extern EventSetInfo_t *default_master_eventset;
   if (thread_id_fn == NULL)
     return(default_master_eventset);
   else
@@ -275,8 +275,8 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
 {
   int retval;
   long_long latest;
-  EventSetInfo *master_event_set;
-  EventSetInfo *ESI;
+  EventSetInfo_t *master_event_set;
+  EventSetInfo_t *ESI;
 
 #ifdef OVERFLOW_DEBUG_TIMER
   if (thread_id_fn)
@@ -499,7 +499,7 @@ static int stop_timer(void)
 
 #endif /* _WIN32 */
 
-int _papi_hwi_start_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwi_start_overflow_timer(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
   int retval = PAPI_OK;
 
@@ -513,7 +513,7 @@ int _papi_hwi_start_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
   return(retval);
 }
 
-int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwi_stop_overflow_timer(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
   int retval = PAPI_OK;
 
@@ -523,23 +523,23 @@ int _papi_hwi_stop_overflow_timer(EventSetInfo *ESI, EventSetInfo *master)
   return(retval);
 }
 
-/* int _papi_portable_set_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)
+/* int _papi_portable_set_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *ptr)
 {
   return(PAPI_ESBSTR);
 }
 
-int _papi_portable_set_overflow(EventSetInfo *ESI, papi_overflow_option_t *ptr)
+int _papi_portable_set_overflow(EventSetInfo_t *ESI, papi_overflow_option_t *ptr)
 {
   return(PAPI_ESBSTR);
 }
 
-int _papi_portable_get_overflow(EventSetInfo *ESI, papi_overflow_option_t *ptr)
+int _papi_portable_get_overflow(EventSetInfo_t *ESI, papi_overflow_option_t *ptr)
 {
   memcpy(ptr,&ESI->overflow.option,sizeof(*ptr));
   return(PAPI_OK);
 }
 
-int _papi_portable_get_multiplex(EventSetInfo *ESI, papi_multiplex_option_t *ptr)
+int _papi_portable_get_multiplex(EventSetInfo_t *ESI, papi_multiplex_option_t *ptr)
 {
   memcpy(ptr,&ESI->multiplex.option,sizeof(*ptr));
   return(PAPI_ESBSTR);

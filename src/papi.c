@@ -45,19 +45,19 @@ static int expand_dynamic_array(DynamicArray *);
 
 /* EventSet handling functions */
 
-static EventSetInfo *allocate_EventSet(void);
-static int add_EventSet(DynamicArray *map, EventSetInfo *created, EventSetInfo *master);
-static EventSetInfo *lookup_EventSet(const DynamicArray *map, int eventset);
-static int remove_EventSet(DynamicArray *map, EventSetInfo *);
-static void free_EventSet(EventSetInfo *);
+static EventSetInfo_t *allocate_EventSet(void);
+static int add_EventSet(DynamicArray *map, EventSetInfo_t *created, EventSetInfo_t *master);
+static EventSetInfo_t *lookup_EventSet(const DynamicArray *map, int eventset);
+static int remove_EventSet(DynamicArray *map, EventSetInfo_t *);
+static void free_EventSet(EventSetInfo_t *);
 
 /* Event handling functions */
 
-static int add_event(EventSetInfo *ESI, int EventCode);
-static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout);
-static int get_free_EventCodeIndex(const EventSetInfo *ESI, int EventCode);
-static int lookup_EventCodeIndex(const EventSetInfo *ESI,int EventCode);
-static int remove_event(EventSetInfo *ESI, int EventCode);
+static int add_event(EventSetInfo_t *ESI, int EventCode);
+static int add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout);
+static int get_free_EventCodeIndex(const EventSetInfo_t *ESI, int EventCode);
+static int lookup_EventCodeIndex(const EventSetInfo_t *ESI,int EventCode);
+static int remove_event(EventSetInfo_t *ESI, int EventCode);
 static int default_error_handler(int errorCode);
 
 /********************/
@@ -68,7 +68,7 @@ static int default_error_handler(int errorCode);
 /*  BEGIN GLOBALS   */ 
 /********************/
 
-EventSetInfo *default_master_eventset = NULL; 
+EventSetInfo_t *default_master_eventset = NULL; 
 #if defined(ANY_THREAD_GETS_SIGNAL)
 int (*thread_kill_fn)(int, int) = NULL;
 #endif
@@ -284,17 +284,17 @@ static int allocate_eventset_map(DynamicArray *map)
   
   memset(map,0x00,sizeof(DynamicArray));
 
-  /* Allocate space for the EventSetInfo pointers */
+  /* Allocate space for the EventSetInfo_t pointers */
 
   map->dataSlotArray = 
-    (EventSetInfo **)malloc(PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
+    (EventSetInfo_t **)malloc(PAPI_INIT_SLOTS*sizeof(EventSetInfo_t *));
   if(map->dataSlotArray == NULL) 
     {
       free(map);
       return(1);
     }
   memset(map->dataSlotArray,0x00, 
-	 PAPI_INIT_SLOTS*sizeof(EventSetInfo *));
+	 PAPI_INIT_SLOTS*sizeof(EventSetInfo_t *));
 
   map->totalSlots = PAPI_INIT_SLOTS;
   map->availSlots = PAPI_INIT_SLOTS;
@@ -304,22 +304,22 @@ static int allocate_eventset_map(DynamicArray *map)
   return(0);
 }
 
-static void free_master_eventset(EventSetInfo *master)
+static void free_master_eventset(EventSetInfo_t *master)
 {
   free_EventSet(master);
 }
 
-static EventSetInfo *allocate_master_eventset(void)
+static EventSetInfo_t *allocate_master_eventset(void)
 {
-  EventSetInfo *master;
+  EventSetInfo_t *master;
   
   /* The Master EventSet is special. It is not in the EventSet list, but is pointed
      to by each EventSet of that particular thread. */
   
-  master = (EventSetInfo *)malloc(sizeof(EventSetInfo));
+  master = (EventSetInfo_t *)malloc(sizeof(EventSetInfo_t));
   if (master == NULL)
     return(NULL);
-  memset(master,0x00,sizeof(EventSetInfo));
+  memset(master,0x00,sizeof(EventSetInfo_t));
   
   /* Allocate the machine dependent control block for EventSet zero. */
   
@@ -408,7 +408,7 @@ unsigned long int PAPI_thread_id(void)
     return(PAPI_EINVAL);
 }
 
-static int initialize_master_eventset(EventSetInfo **master)
+static int initialize_master_eventset(EventSetInfo_t **master)
 {
   int retval;
 
@@ -508,12 +508,12 @@ int PAPI_library_init(int version)
 static int expand_dynamic_array(DynamicArray *DA)
 {
   int number;	
-  EventSetInfo **n;
+  EventSetInfo_t **n;
 
   /*realloc existing PAPI_EVENTSET_MAP.dataSlotArray*/
     
   number = DA->totalSlots*2;
-  n = (EventSetInfo **)realloc(DA->dataSlotArray,number*sizeof(EventSetInfo *));
+  n = (EventSetInfo_t **)realloc(DA->dataSlotArray,number*sizeof(EventSetInfo_t *));
   if (n==NULL)
     papi_return(PAPI_ENOMEM);
 
@@ -521,7 +521,7 @@ static int expand_dynamic_array(DynamicArray *DA)
 
   DA->dataSlotArray = n;
 
-  memset(DA->dataSlotArray+DA->totalSlots,0x00,DA->totalSlots*sizeof(EventSetInfo *));
+  memset(DA->dataSlotArray+DA->totalSlots,0x00,DA->totalSlots*sizeof(EventSetInfo_t *));
 
   DA->totalSlots = number;
   DA->availSlots = number - DA->fullSlots;
@@ -531,14 +531,14 @@ static int expand_dynamic_array(DynamicArray *DA)
 }
 
 /*========================================================================*/
-/* This function allocates space for one EventSetInfo structure and for   */
+/* This function allocates space for one EventSetInfo_t structure and for */
 /* all of the pointers in this structure.  If any malloc in this function */
 /* fails, all memory malloced to the point of failure is freed, and NULL  */
-/* is returned.  Upon success, a pointer to the EventSetInfo data         */
+/* is returned.  Upon success, a pointer to the EventSetInfo_t data       */
 /* structure is returned.                                                 */
 /*========================================================================*/
 
-static int EventInfoArrayLength(const EventSetInfo *ESI)
+static int EventInfoArrayLength(const EventSetInfo_t *ESI)
 {
   if (ESI->state & PAPI_MULTIPLEXING)
     return(PAPI_MPX_DEF_DEG);
@@ -546,7 +546,7 @@ static int EventInfoArrayLength(const EventSetInfo *ESI)
     return(_papi_system_info.num_cntrs);
 }
  
-static void initialize_EventInfoArray(EventSetInfo *ESI)
+static void initialize_EventInfoArray(EventSetInfo_t *ESI)
 {
   int i, limit = EventInfoArrayLength(ESI);
 
@@ -560,15 +560,15 @@ static void initialize_EventInfoArray(EventSetInfo *ESI)
     }
 }
 
-static EventSetInfo *allocate_EventSet(void) 
+static EventSetInfo_t *allocate_EventSet(void) 
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
   int max_counters;
   
-  ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo));
+  ESI=(EventSetInfo_t *)malloc(sizeof(EventSetInfo_t));
   if (ESI==NULL) 
     return(NULL); 
-  memset(ESI,0x00,sizeof(EventSetInfo));
+  memset(ESI,0x00,sizeof(EventSetInfo_t));
 
   max_counters = _papi_system_info.num_cntrs;
   ESI->machdep = (void *)malloc(_papi_system_info.size_machdep);
@@ -607,13 +607,13 @@ static EventSetInfo *allocate_EventSet(void)
 }
 
 /*========================================================================*/
-/* This function should free memory for one EventSetInfo structure.       */
-/* The argument list consists of a pointer to the EventSetInfo            */
+/* This function should free memory for one EventSetInfo_t structure.     */
+/* The argument list consists of a pointer to the EventSetInfo_t          */
 /* structure, *ESI.                                                       */
 /* The calling function should check  for ESI==NULL.                      */
 /*========================================================================*/
 
-static void free_EventSet(EventSetInfo *ESI) 
+static void free_EventSet(EventSetInfo_t *ESI) 
 {
   if (ESI->EventInfoArray) free(ESI->EventInfoArray);
   if (ESI->machdep)        free(ESI->machdep);
@@ -621,12 +621,12 @@ static void free_EventSet(EventSetInfo *ESI)
   if (ESI->hw_start)       free(ESI->hw_start);
   if (ESI->latest)       free(ESI->latest);
 #ifdef DEBUG
-  memset(ESI,0x00,sizeof(EventSetInfo));
+  memset(ESI,0x00,sizeof(EventSetInfo_t));
 #endif
   free(ESI);
 }
 
-static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *master)
+static int add_EventSet(DynamicArray *map, EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
   int i, errorCode;
 
@@ -661,7 +661,7 @@ static int add_EventSet(DynamicArray *map, EventSetInfo *ESI, EventSetInfo *mast
 
 static int get_domain(DynamicArray *map, PAPI_domain_option_t *opt)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, opt->eventset);
   if(ESI == NULL)
@@ -674,7 +674,7 @@ static int get_domain(DynamicArray *map, PAPI_domain_option_t *opt)
 #if 0
 static int get_granularity(DynamicArray *map, PAPI_granularity_option_t *opt)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, opt->eventset);
   if(ESI == NULL)
@@ -809,8 +809,8 @@ int PAPI_event_name_to_code(char *in, int *out)
 
 int create_eventset(int *EventSet, void *handle)
 {
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset = (EventSetInfo *)handle;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset = (EventSetInfo_t *)handle;
   int retval;
 
   /* Is the EventSet already in existence? */
@@ -841,7 +841,7 @@ int create_eventset(int *EventSet, void *handle)
 
 int PAPI_create_eventset(int *EventSet)
 {
-  EventSetInfo *master = _papi_hwi_lookup_in_master_list();
+  EventSetInfo_t *master = _papi_hwi_lookup_in_master_list();
   int retval;
   if (master == NULL)
     {
@@ -857,7 +857,7 @@ int PAPI_create_eventset(int *EventSet)
 
 int PAPI_add_pevent(int EventSet, int code, void *inout)    /* JT */
 { 
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   /* Is the EventSet already in existence? */
 
@@ -882,7 +882,7 @@ int PAPI_add_pevent(int EventSet, int code, void *inout)    /* JT */
 
 int PAPI_add_event(int EventSet, int EventCode)      /* JT */
 { 
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   /* Is the EventSet already in existence? */
   
@@ -904,7 +904,7 @@ int PAPI_add_event(int EventSet, int EventCode)      /* JT */
    in the EventInfoArray. If EventCode is already in the list,
    it returns PAPI_ECNFLCT. */
 
-static int get_free_EventCodeIndex(const EventSetInfo *ESI, int EventCode)
+static int get_free_EventCodeIndex(const EventSetInfo_t *ESI, int EventCode)
 {
   int k;
   int lowslot = PAPI_ECNFLCT;
@@ -927,7 +927,7 @@ static int get_free_EventCodeIndex(const EventSetInfo *ESI, int EventCode)
 /* Index to what? The index to everything stored EventCode in the */
 /* EventSet. */  
 
-static int lookup_EventCodeIndex(const EventSetInfo *ESI, int EventCode)
+static int lookup_EventCodeIndex(const EventSetInfo_t *ESI, int EventCode)
 {
   int i;
   int limit = EventInfoArrayLength(ESI);
@@ -941,16 +941,16 @@ static int lookup_EventCodeIndex(const EventSetInfo *ESI, int EventCode)
   return(PAPI_EINVAL);
 } 
 
-static EventSetInfo *lookup_EventSet(const DynamicArray *map, int eventset)
+static EventSetInfo_t *lookup_EventSet(const DynamicArray *map, int eventset)
 {
   if ((eventset < 0) || (eventset >= map->totalSlots))
     return(NULL);
   return(map->dataSlotArray[eventset]);
 }
 
-/* Return the EventSetInfo to which this EventInfo belongs */
-EventSetInfo *get_my_EventSetInfo(EventInfo_t *me) {
-    EventSetInfo *ESI;
+/* Return the EventSetInfo_t to which this EventInfo belongs */
+EventSetInfo_t *get_my_EventSetInfo(EventInfo_t *me) {
+    EventSetInfo_t *ESI;
     int ei, i;
     
     for (ei = 0; ei < PAPI_EVENTSET_MAP->totalSlots; ei++) {
@@ -968,7 +968,7 @@ EventSetInfo *get_my_EventSetInfo(EventInfo_t *me) {
 
 /* This function only removes empty EventSets */
 
-static int remove_EventSet(DynamicArray *map, EventSetInfo *ESI)
+static int remove_EventSet(DynamicArray *map, EventSetInfo_t *ESI)
 {
   int i;
 
@@ -989,7 +989,7 @@ static int remove_EventSet(DynamicArray *map, EventSetInfo *ESI)
   papi_return(PAPI_OK);
 }
 
-static int add_event(EventSetInfo *ESI, int EventCode)
+static int add_event(EventSetInfo_t *ESI, int EventCode)
 {
   int thisindex, retval;
 
@@ -1010,7 +1010,7 @@ static int add_event(EventSetInfo *ESI, int EventCode)
       if (retval < PAPI_OK)
 	return(retval);
 
-      /* just fill in the EventSetInfo array
+      /* just fill in the EventSetInfo_t array
 	 with the relevant information. */
 
       ESI->EventInfoArray[thisindex].code = EventCode;      /* Relevant */
@@ -1040,7 +1040,7 @@ static int add_event(EventSetInfo *ESI, int EventCode)
   return(retval);
 }
 
-static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout)
+static int add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout)
 {
   int thisindex, retval;
 
@@ -1066,7 +1066,7 @@ static int add_pevent(EventSetInfo *ESI, int EventCode, void *inout)
   return(retval);
 }
 
-static int remove_event(EventSetInfo *ESI, int EventCode)
+static int remove_event(EventSetInfo_t *ESI, int EventCode)
 {
   int retval, thisindex;
 
@@ -1111,7 +1111,7 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
 
 int PAPI_rem_event(int *EventSet, int EventCode)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   /* check for pre-existing ESI */
 
@@ -1161,7 +1161,7 @@ int PAPI_remove_event(int EventSet, int EventCode)       /* JT */
 
 int PAPI_destroy_eventset(int *EventSet)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   /* check for pre-existing ESI */
 
@@ -1189,8 +1189,8 @@ int PAPI_destroy_eventset(int *EventSet)
 int PAPI_start(int EventSet)
 { 
   int i, retval;
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
 
   DBG((stderr,"PAPI_start\n"));
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
@@ -1267,8 +1267,8 @@ int PAPI_start(int EventSet)
 
 int PAPI_stop(int EventSet, long_long *values)
 { 
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
   int retval;
 
   DBG((stderr,"PAPI_stop\n"));
@@ -1353,8 +1353,8 @@ int PAPI_stop(int EventSet, long_long *values)
 int PAPI_reset(int EventSet)
 { 
   int retval = PAPI_OK;
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
  
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if(ESI == NULL)
@@ -1388,8 +1388,8 @@ int PAPI_reset(int EventSet)
 
 int PAPI_read(int EventSet, long_long *values)
 { 
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
   int retval = PAPI_OK;
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
@@ -1428,8 +1428,8 @@ int PAPI_read(int EventSet, long_long *values)
 
 int PAPI_accum(int EventSet, long_long *values)
 { 
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
   int i, retval;
   long_long a,b,c;
 
@@ -1465,8 +1465,8 @@ int PAPI_accum(int EventSet, long_long *values)
 int PAPI_write(int EventSet, long_long *values)
 {
   int retval = PAPI_OK;
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if (ESI == NULL)
@@ -1488,7 +1488,7 @@ int PAPI_write(int EventSet, long_long *values)
   return(retval);
 }
 
-static int cleanup_eventset(EventSetInfo *ESI)
+static int cleanup_eventset(EventSetInfo_t *ESI)
 {
   int retval, i, tmp = EventInfoArrayLength(ESI);
 
@@ -1516,8 +1516,8 @@ static int cleanup_eventset(EventSetInfo *ESI)
 
 int PAPI_cleanup_eventset(int EventSet)       /* JT */
 { 
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
 
   /* Is the EventSet already in existence? */
 
@@ -1546,7 +1546,7 @@ int PAPI_multiplex_init(void)
 
 int PAPI_state(int EventSet, int *status)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   if (status == NULL)
     papi_return(PAPI_EINVAL);
@@ -1592,7 +1592,7 @@ int PAPI_set_multiplex(int *EventSet)
   return(PAPI_set_opt(PAPI_SET_MULTIPLEX,&mpx));
 }
 
-static int convert_eventset_to_multiplex(EventSetInfo *ESI)
+static int convert_eventset_to_multiplex(EventSetInfo_t *ESI)
 {
   int i, j = 0, *mpxlist = NULL, retval;
   EventInfo_t *tmp;
@@ -1663,7 +1663,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
 { 
   _papi_int_option_t internal;
   int retval;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *thread_master_eventset;
 
   if (ptr == NULL)
     papi_return(PAPI_EINVAL);
@@ -1678,7 +1678,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
     }
     case PAPI_SET_MULTIPLEX:
       {
-	EventSetInfo *ESI;
+	EventSetInfo_t *ESI;
 
 	if (ptr->multiplex.us < 1)
 	  papi_return(PAPI_EINVAL);
@@ -1778,7 +1778,7 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
       }
     case PAPI_SET_INHERIT:
       {
-	EventSetInfo *tmp = _papi_hwi_lookup_in_master_list();
+	EventSetInfo_t *tmp = _papi_hwi_lookup_in_master_list();
 	if (tmp == NULL)
 	  return(PAPI_EINVAL);
 
@@ -1820,7 +1820,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
     {
     case PAPI_GET_MULTIPLEX:
       {
-	EventSetInfo *ESI;
+	EventSetInfo_t *ESI;
 
         ESI = lookup_EventSet(PAPI_EVENTSET_MAP, ptr->multiplex.eventset);
 	if (ESI == NULL)
@@ -1849,7 +1849,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
 #if 0
     case PAPI_GET_INHERIT:
       {
-	EventSetInfo *tmp;
+	EventSetInfo_t *tmp;
 	tmp = _papi_hwi_lookup_in_master_list();
 	if (tmp == NULL)
 	  return(PAPI_EINVAL);
@@ -1913,7 +1913,7 @@ int PAPI_num_events(int EventSet)                            /* JT */
 void PAPI_shutdown(void) 
 {
   int i, j = 0, status;
-  EventSetInfo *master;
+  EventSetInfo_t *master;
 
   if(init_retval == DEADBEEF) {
     fprintf(stderr, PAPI_SHUTDOWN_str);
@@ -1930,7 +1930,7 @@ void PAPI_shutdown(void)
 again:
   for (i=0;i<PAPI_EVENTSET_MAP->totalSlots;i++) 
     {
-      EventSetInfo *ESI = PAPI_EVENTSET_MAP->dataSlotArray[i];
+      EventSetInfo_t *ESI = PAPI_EVENTSET_MAP->dataSlotArray[i];
       if (ESI) 
 	{
 	  PAPI_state(i,&status);        /* JT */
@@ -2019,9 +2019,9 @@ int PAPI_perror(int code, char *destination, int length)
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
   int retval, index;
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
   EventSetOverflowInfo_t opt = { 0, };
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *thread_master_eventset;
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if(ESI == NULL)
@@ -2089,7 +2089,7 @@ static void dummy_handler(int EventSet, int EventCode, int EventIndex,
 
 int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode, int threshold, int flags)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
   EventSetProfileInfo_t opt = { 0, };
   int retval,index;
 
@@ -2172,7 +2172,7 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsi
 
 int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
 
   if ( _papi_system_info.supports_hw_profile==0) 
   	return(PAPI_ESBSTR);
@@ -2272,8 +2272,8 @@ int PAPI_remove_events(int EventSet, int *Events, int number)       /* JT */
 int PAPI_rem_events(int *EventSet, int *Events, int number)
 {
   int i, retval;
-  EventSetInfo *ESI;
-  EventSetInfo *thread_master_eventset;
+  EventSetInfo_t *ESI;
+  EventSetInfo_t *thread_master_eventset;
 
   if ((!EventSet) || (!Events))
     papi_return(PAPI_EINVAL);
@@ -2303,7 +2303,7 @@ int PAPI_rem_events(int *EventSet, int *Events, int number)
 
 int PAPI_list_events(int EventSet, int *Events, int *number)
 {
-  EventSetInfo *ESI;
+  EventSetInfo_t *ESI;
   int num;
   int i;
 
@@ -2405,7 +2405,7 @@ long_long PAPI_get_real_usec(void)
 
 u_long_long PAPI_get_virt_cyc(void)       /* JT */
 {
-  EventSetInfo *master = _papi_hwi_lookup_in_master_list();
+  EventSetInfo_t *master = _papi_hwi_lookup_in_master_list();
   if (master)
     return(_papi_hwd_get_virt_cycles(master));
   else if (thread_id_fn != NULL)
@@ -2423,7 +2423,7 @@ u_long_long PAPI_get_virt_cyc(void)       /* JT */
 
 u_long_long PAPI_get_virt_usec(void)     /* JT */
 {
-  EventSetInfo *master = _papi_hwi_lookup_in_master_list();
+  EventSetInfo_t *master = _papi_hwi_lookup_in_master_list();
   if (master)
     return(_papi_hwd_get_virt_usec(master));
   else if (thread_id_fn != NULL)

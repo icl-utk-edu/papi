@@ -130,7 +130,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
 static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
 #endif
 
-extern void dispatch_profile(EventSetInfo *ESI, void *context,
+extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
                  long_long over, long_long threshold);
 
 /* This function set the parameters which needed by DATA EAR */
@@ -540,7 +540,7 @@ inline static void counter_event_copy(const pfmw_param_t *a, pfmw_param_t *b, in
   PFMW_PEVT_EVTCOUNT(b)++;
 }
 
-inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *global)
+inline static int update_global_hwcounters(EventSetInfo_t *local, EventSetInfo_t *global)
 {
   hwd_control_state_t *machdep = global->machdep;
   hwd_control_state_t *local_machdep = local->machdep;
@@ -659,7 +659,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
   return(PAPI_OK);
 }
 
-inline static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, long long *correct)
+inline static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long long *correct)
 {
   int i;
 
@@ -694,13 +694,13 @@ inline static int set_inherit(int arg)
   return(PAPI_ESBSTR);
 }
 
-inline static int set_default_domain(EventSetInfo *zero, int domain)
+inline static int set_default_domain(EventSetInfo_t *zero, int domain)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_domain(current_state,domain));
 }
 
-inline static int set_default_granularity(EventSetInfo *zero, int granularity)
+inline static int set_default_granularity(EventSetInfo_t *zero, int granularity)
 {
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   return(set_granularity(current_state,granularity));
@@ -764,7 +764,7 @@ int _papi_hwd_shutdown_global(void)
   return(PAPI_OK);
 }
 
-int _papi_hwd_init(EventSetInfo *zero)
+int _papi_hwd_init(EventSetInfo_t *zero)
 {
   pfmw_context_t ctx[1];
   hwd_control_state_t *machdep = zero->machdep;
@@ -810,7 +810,7 @@ long long _papi_hwd_get_real_cycles (void)
   return(get_cycles());
 }
 
-long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
+long long _papi_hwd_get_virt_usec (EventSetInfo_t *zero)
 {
   long long retval;
   struct tms buffer;
@@ -820,7 +820,7 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
   return(retval);
 }
 
-long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
+long long _papi_hwd_get_virt_cycles (EventSetInfo_t *zero)
 {
   float usec, cyc;
 
@@ -835,7 +835,7 @@ void _papi_hwd_error(int error, char *where)
 }
 
 int _papi_recalc_selectors(hwd_control_state_t *this_state, EventInfo_t *eventinfo) {
-    EventSetInfo *ESI = get_my_EventSetInfo(eventinfo);
+    EventSetInfo_t *ESI = get_my_EventSetInfo(eventinfo);
     int i, j, k;
     unsigned int EventCode, preset_index;
     pfmlib_param_t *old_evt, *cur_evt = &this_state->evt;
@@ -1011,7 +1011,7 @@ tart(); return(PAPI_ESYS);
 */
 
 
-int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
+int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 { 
   int i, retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -1320,7 +1320,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
   goto restart_pm_hardware;
 } 
 
-int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
+int _papi_hwd_unmerge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 { 
   int i, hwcntr, tmp;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -1350,7 +1350,7 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
     }
 }
 
-int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
+int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 {
   int i, retval;
   
@@ -1438,7 +1438,7 @@ static long long handle_derived(EventInfo_t *cmd, long long *from)
     }
 }
 
-int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long events[])
+int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long events[])
 {
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
@@ -1494,7 +1494,7 @@ int _papi_hwd_setmaxmem(){
   return(PAPI_OK);
 }
 
-int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
+int _papi_hwd_ctl(EventSetInfo_t *zero, int code, _papi_int_option_t *option)
 {
   switch (code)
     {
@@ -1515,12 +1515,12 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
+int _papi_hwd_write(EventSetInfo_t *master, EventSetInfo_t *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_shutdown(EventSetInfo *zero)
+int _papi_hwd_shutdown(EventSetInfo_t *zero)
 {
   // hwd_control_state_t *machdep = zero->machdep;
   // vperfctr_unlink(machdep->self);
@@ -1559,8 +1559,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
 
 int ia64_process_profile_entry()
 {
-    EventSetInfo *master_event_set;
-    EventSetInfo *ESI;
+    EventSetInfo_t *master_event_set;
+    EventSetInfo_t *ESI;
     perfmon_smpl_hdr_t *hdr ;
     perfmon_smpl_entry_t *ent;
     unsigned long pos;
@@ -1667,7 +1667,7 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
   pfm_start();
 }
 
-int set_notify(EventSetInfo *ESI, int index, int value)
+int set_notify(EventSetInfo_t *ESI, int index, int value)
 {
 	int selector, hwcntr, i;
     hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
@@ -1691,7 +1691,7 @@ int set_notify(EventSetInfo *ESI, int index, int value)
 	return(PAPI_OK);
 }
 
-int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+int _papi_hwd_stop_profiling(EventSetInfo_t *ESI, EventSetInfo_t *master)
 {
    ia64_process_profile_entry();
    master->event_set_profiling=NULL;
@@ -1699,7 +1699,7 @@ int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
 }
 
 
-int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
+int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *profile_option)
 {
     struct sigaction act;
     void *tmp;
@@ -1779,7 +1779,7 @@ int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_opti
   return(PAPI_OK);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
 {
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
