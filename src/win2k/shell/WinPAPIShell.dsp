@@ -120,10 +120,6 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=.\bitmap3.bmp
-# End Source File
-# Begin Source File
-
 SOURCE=.\Papismall.ico
 # End Source File
 # Begin Source File
