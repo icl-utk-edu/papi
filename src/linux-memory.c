@@ -63,7 +63,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
                hw_info->mem_hierarchy.level[i].cache[j].size <<= 10;
             /* if line_size was reported without num_lines, compute it */
              if ((hw_info->mem_hierarchy.level[i].cache[j].line_size != 0) &&
-                 (hw_info->mem_hierarchy.level[i].cache[j].num_lines == 0))
+                 (hw_info->mem_hierarchy.level[i].cache[j].size != 0))
                hw_info->mem_hierarchy.level[i].cache[j].num_lines = 
                   hw_info->mem_hierarchy.level[i].cache[j].size / hw_info->mem_hierarchy.level[i].cache[j].line_size;
         }
@@ -140,7 +140,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
 
    /* L1 D-cache/I-cache info */
 
-   L[0].cache[1].type = PAPI_MH_TYPE_DATA;
+   L[0].cache[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WB | PAPI_MH_TYPE_PSEUDO_LRU;
    L[0].cache[1].size = ((reg_ecx & 0xff000000) >> 24);
    L[0].cache[1].associativity = ((reg_ecx & 0x00ff0000) >> 16);
    switch (L[0].cache[1].associativity) {
@@ -152,7 +152,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
       break;
    }
    /* Bit 15-8 is "Lines per tag" */
-   L[0].cache[1].num_lines = ((reg_ecx & 0x0000ff00) >> 8);
+   /* L[0].cache[1].num_lines = ((reg_ecx & 0x0000ff00) >> 8); */
    L[0].cache[1].line_size = ((reg_ecx & 0x000000ff));
 
    L[0].cache[0].type = PAPI_MH_TYPE_INST;
@@ -167,7 +167,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
       break;
    }
    /* Bit 15-8 is "Lines per tag" */
-   L[0].cache[0].num_lines = ((reg_edx & 0x0000ff00) >> 8);
+   /* L[0].cache[0].num_lines = ((reg_edx & 0x0000ff00) >> 8); */
    L[0].cache[0].line_size = ((reg_edx & 0x000000ff));
 
    reg_eax = 0x80000006;
@@ -177,11 +177,11 @@ static int init_amd(PAPI_mh_info_t * mh_info)
         reg_eax, reg_ebx, reg_ecx, reg_edx);
 
    /* AMD level 2 cache info */
-   L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+   L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
    L[1].cache[0].size = ((reg_ecx & 0xffff0000) >> 16);
    pattern = ((reg_ecx & 0x0000f000) >> 12);
    L[1].cache[0].associativity = init_amd_L2_assoc_inf(pattern);
-   L[1].cache[0].num_lines = ((reg_ecx & 0x00000f00) >> 8);
+   /*   L[1].cache[0].num_lines = ((reg_ecx & 0x00000f00) >> 8); */
    L[1].cache[0].line_size = ((reg_ecx & 0x000000ff));
 
    /* L2 cache TLB information. This over-writes the L1 cache TLB info */

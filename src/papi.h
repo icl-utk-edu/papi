@@ -388,14 +388,15 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_INST     0x1
 #define PAPI_MH_TYPE_DATA     0x2
 #define PAPI_MH_TYPE_VECTOR   0x4
-#define PAPI_MH_TYPE_UNIFIED  PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA
+#define PAPI_MH_TYPE_UNIFIED  (PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA)
 #define PAPI_MH_CACHE_TYPE(a) (a & 0xf)
 #define PAPI_MH_TYPE_WT       0x00  /* write-through cache */
 #define PAPI_MH_TYPE_WB       0x10  /* write-back cache */
 #define PAPI_MH_CACHE_WRITE_POLICY(a) (a & 0xf0)
-#define PAPI_MH_TYPE_LRU      0x000
-#define PAPI_MH_TYPE_PSEUDO_LRU 0x100
-#define PAPI_MH_REPLACEMENT_POLICY(a) (a & 0xf00)
+#define PAPI_MH_TYPE_UNKNOWN  0x000
+#define PAPI_MH_TYPE_LRU      0x100
+#define PAPI_MH_TYPE_PSEUDO_LRU 0x200
+#define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
 
    typedef struct _papi_mh_tlb_info {
       int type; /* Empty, instr, data, vector, unified */

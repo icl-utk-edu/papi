@@ -173,6 +173,7 @@ static int mdi_init()
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode;
 
+   SUBDBG("\n");
    switch(_papi_hwi_system_info.default_domain) {
    case PAPI_DOM_USER:
       def_mode = PERF_USR;
@@ -515,6 +516,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 static void clear_control_state(hwd_control_state_t *this_state) {
    int i,j;
 
+   SUBDBG("\n");
    /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
    j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
 
@@ -537,6 +539,8 @@ static void clear_control_state(hwd_control_state_t *this_state) {
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i;
+
+   SUBDBG("\n");
 
    /* clear out everything currently coded */
    clear_control_state(this_state);
