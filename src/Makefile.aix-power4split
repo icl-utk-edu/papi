@@ -11,7 +11,8 @@ SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 # Default source is for pmtoolkit 1.4.x.
 
 FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 
-CFLAGS	= $(FLAGS) -D_POWER4
+CFLAGS	= $(FLAGS) -D_POWER4 
+# -DHAS_NATIVE_MAP
 
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
@@ -32,8 +33,8 @@ MISCOBJS= aix.o
 
 include Makefile.inc
 
-aix.o: aix.c
-	$(CC) $(CFLAGS) -c aix.c -o $@
+aix.o: aix.c  $(HEADERS)
+	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 
 

@@ -7,11 +7,12 @@
   Other routines also include minor conditionally compiled differences.
 */
 
-#ifdef _POWER4
-  #include "power4.h"
-#else
-  #include "power3.h"
-#endif
+#include "papi.h"
+#include SUBSTRATE
+/*
+#include "papi_internal.h"
+#include "papi_protos.h"
+*/
 
 /* 
  some heap information, start_of_text, start_of_data .....
@@ -30,6 +31,84 @@
 #endif
 
 static int maxgroups = 0;
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/* The following is for any POWER hardware */
+
+/**********************************************************************************/
+/* The next four functions implement the native event interface */
+/* On POWER, native events take the form:
+    0x4000EECC, where 4 is NATIVE_MASK, EE is the event code, and CC is the counter.
+    The same event can often be found on multiple counters, so there can be a
+    one-to-many relationship between event names and native codes.
+    In these cases the first instance found will be the one reported.
+*/
+
+#ifdef HAS_NATIVE_MAP
+
+/* Reverse lookup of event code to index */
+unsigned int _papi_hwd_native_code_to_idx(unsigned int event_code)
+{
+  unsigned int idx, counter, pmc;
+
+  idx = (event_code >> 8) & 0xff;
+  counter = event_code & 0xff;
+  if ((counter < pminfo.maxpmcs) && (idx < pminfo.maxevents[counter])) {
+    for (pmc = 1; pmc <= counter; pmc++) {
+      idx += pminfo.maxevents[pmc-1];
+    }
+    return (idx);
+  }
+  return (PAPI_ENOEVNT);
+}
+
+/* Returns event code based on index. NATIVE_MASK bit must be set if not predefined */
+unsigned int _papi_hwd_native_idx_to_code(unsigned int idx)
+{
+  unsigned int pmc;
+
+  for (pmc = 0; pmc < pminfo.maxpmcs; pmc++) {
+    if (idx < pminfo.maxevents[pmc]) break;
+    idx -= pminfo.maxevents[pmc];
+  }
+  if (pmc < pminfo.maxpmcs) {
+    return (NATIVE_MASK | (idx << 8) | pmc);
+  }
+  return(PAPI_ENOEVNT);
+}
+
+/* Returns event name based on index. */
+char *_papi_hwd_native_idx_to_name(unsigned int idx)
+{
+  unsigned int pmc;
+
+  for (pmc = 0; pmc < pminfo.maxpmcs; pmc++) {
+    if (idx < pminfo.maxevents[pmc]) break;
+    idx -= pminfo.maxevents[pmc];
+  }
+  if (pmc < pminfo.maxpmcs) {
+    return (pminfo.list_events[pmc][idx].short_name);
+  }
+  return(NULL);
+}
+
+/* Returns event description based on index. */
+char *_papi_hwd_native_idx_to_descr(unsigned int idx)
+{
+  unsigned int pmc;
+
+  for (pmc = 0; pmc < pminfo.maxpmcs; pmc++) {
+    if (idx < pminfo.maxevents[pmc]) break;
+    idx -= pminfo.maxevents[pmc];
+  }
+  if (pmc < pminfo.maxpmcs) {
+    return (pminfo.list_events[pmc][idx].description);
+  }
+  return(NULL);
+}
+
+#endif /* HAS_NATIVE_MAP */
+/**********************************************************************************/
 
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
@@ -217,10 +296,10 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-long long _papi_hwd_get_real_usec (void)
+long_long _papi_hwd_get_real_usec (void)
 {
   timebasestruct_t t;
-  long long retval;
+  long_long retval;
 
   read_real_time(&t,TIMEBASE_SZ);
   time_base_to_time(&t,TIMEBASE_SZ);
@@ -228,13 +307,13 @@ long long _papi_hwd_get_real_usec (void)
   return(retval);
 }
 
-long long _papi_hwd_get_real_cycles (void)
+long_long _papi_hwd_get_real_cycles (void)
 {
-  float usec, cyc;
+  long_long usec, cyc;
 
-  usec = (float)_papi_hwd_get_real_usec();
+  usec = _papi_hwd_get_real_usec();
   cyc = usec * _papi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return((long_long)cyc);
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
@@ -586,14 +665,14 @@ int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_opti
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  return(PAPI_ESBSTR);
 }
 
 int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
 {
   /* This function is not used and shouldn't be called. */
 
-  abort();
+  return(PAPI_ESBSTR);
 }
 
 void *_papi_hwd_get_overflow_address(void *context)

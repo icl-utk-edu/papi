@@ -16,7 +16,12 @@
   Other routines also include minor conditionally compiled differences.
 */
 
+#include "papi.h"
 #include SUBSTRATE
+/*
+#include "papi_internal.h"
+#include "papi_protos.h"
+*/
 
 static int maxgroups = 0;
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
@@ -317,7 +322,11 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 	  int native_gps[2] = {0, 0};
 
 	  hwcntr_num = event_code & 0xff;
+#ifdef HAS_NATIVE_MAP
+	  metric = (event_code & NATIVE_AND_MASK) >> 8;
+#else
 	  metric = event_code >> 8;
+#endif
 	  for (g = 0; g < MAX_GROUPS; g++)
 	    {
 	      /* scan all groups for this metric in this counter */

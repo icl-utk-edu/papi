@@ -2,7 +2,7 @@
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
 
-typedef struct hwd_control_state {
+typedef struct PWR4_pmapi_control {
   /* Indices into preset map for event in order of addition */
   /* if !PRESET_MASK then native event and counter # */
   /* only those events will not overlap*/
@@ -18,8 +18,20 @@ typedef struct hwd_control_state {
   /* Interrupt interval */
   
   int timer_ms;
-} hwd_control_state_t;
+} PWR4_pmapi_control_t;
 
+
+typedef PWR4_pmapi_control_t hwd_control_state_t;
+
+/* ... for PAPI3
+typedef PWR4_regmap_t hwd_register_map_t;
+
+typedef PWR4_register_t hwd_register_t;
+
+typedef PWR4_pmapi_context_t hwd_context_t;
+
+typedef PWR4_pmapi_event_t hwd_event_t;
+*/
 
 #include "papi_internal.h"
 
