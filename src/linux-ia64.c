@@ -376,7 +376,7 @@ inline static int set_domain(hwd_control_state_t *this_state, int domain)
 #else
       if (this_state->pc[i].reg_num)
 	{
-	  DBG((stderr,"slot %d, register %ld active, config value 0x%lx\n",i,this_state->pc[i].reg_num,this_state->pc[i].reg_value));
+	  DBG((stderr,"slot %d, register %d active, config value 0x%lx\n",i,this_state->pc[i].reg_num,this_state->pc[i].reg_value));
 	  DBG((stderr,"new config value 0x%lx\n",this_state->pc[i].reg_value));
 #endif
 	}
@@ -501,7 +501,7 @@ inline static int counter_event_compat(const pfmlib_param_t *a, const pfmlib_par
   DBG((stderr,"%d %d vs. %d\n",cntr,a->pec_plm,b->pec_plm));
   if (a->pec_plm == b->pec_plm)
 #else
-  DBG((stderr,"%d %d vs. %d\n",cntr,a->pfp_plm,b->pfp_plm));
+  DBG((stderr,"%d %d vs. %d\n",cntr,a->pfp_dfl_plm,b->pfp_dfl_plm));
   if (a->pfp_plm == b->pfp_plm)
 #endif
     return(1);
@@ -867,7 +867,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       extern int pfm_findeventbyvcode(int code);
 #else
       pme_ita_code_t tmp;
-      extern int pfm_find_event_byvcode(int code);
+      extern int pfm_find_event_byvcode(int code, int *idx);
 #endif
 
       tmp.pme_vcode = 0;
@@ -892,24 +892,20 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
       tmp.pme_codes.pme_tlb = (EventCode >> 18) & 0x1; 
       tmp.pme_codes.pme_umask = (EventCode >> 19) & 0x1fff; 
       ev = pfm_findeventbyvcode(tmp.pme_vcode);
+      if (ev == -1)
+	return(PAPI_EINVAL);
+      tmp_cmd.pec_count = 1;
+      tmp_cmd.pec_evt[0] = ev;
 #else
       tmp.pme_ita_code.pme_code = (EventCode >> 8) & 0xff; /* bits 8 through 15 */
       tmp.pme_ita_code.pme_ear = (EventCode >> 16) & 0x1; 
       tmp.pme_ita_code.pme_dear = (EventCode >> 17) & 0x1; 
       tmp.pme_ita_code.pme_tlb = (EventCode >> 18) & 0x1; 
       tmp.pme_ita_code.pme_umask = (EventCode >> 19) & 0x1fff; 
-      ev = pfm_find_event_byvcode(tmp.pme_vcode);
-#endif
-
-      if (ev == -1)
+      ev = pfm_find_event_byvcode(tmp.pme_vcode, &(tmp_cmd.pfp_evt[0]));
+      if (ev != PFMLIB_SUCCESS )
 	return(PAPI_EINVAL);
-
-#ifdef PFM06A
-      tmp_cmd.pec_count = 1;
-      tmp_cmd.pec_evt[0] = ev;
-#else
       tmp_cmd.pfp_count = 1;
-      tmp_cmd.pfp_evt[0] = ev;
 #endif
       codes = &tmp_cmd;
     }
@@ -941,7 +937,6 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   /* Update the new counter select field */
 
   this_state->selector = nselector;
-
   return(PAPI_OK);
 }
 
@@ -1015,7 +1010,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       memcpy(current_state->pc,this_state->pc,sizeof(perfmon_req_t)*PMU_MAX_COUNTERS);
 #else
       memcpy(&current_state->evt,&this_state->evt,sizeof(pfmlib_param_t));
-      memcpy(current_state->pc,this_state->pc,sizeof(pfarg_context_t)*PMU_MAX_COUNTERS);
+      memcpy(current_state->pc,this_state->pc,sizeof(pfarg_reg_t)*PMU_MAX_COUNTERS);
 #endif
 
     restart_pm_hardware:
@@ -1531,7 +1526,7 @@ static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext 
 #ifdef PFM06A
   DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
 #else
-  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl));
+  DBG((stderr,"pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]));
 #endif
   _papi_hwi_dispatch_overflow_signal((void *)context); 
 #ifdef PFM06A
