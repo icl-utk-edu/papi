@@ -7,7 +7,6 @@
  *         london@cs.utk.edu
  */
 #include "papi_test.h"
-extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {

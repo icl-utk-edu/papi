@@ -461,6 +461,8 @@ void test_fail(char *file, int line, char *call, int retval)
 		printf("Error in %s: %s\n", call, errstring );
 	}
         printf("\n");
+	PAPI_set_debug( PAPI_QUIET ); /* Prevent error messages on Alpha */
+	PAPI_shutdown();
 	exit(1);
 }
 
@@ -488,6 +490,8 @@ void test_skip(char *file, int line, char *call, int retval)
 	  }
           printf("\n");
          }
+	PAPI_set_debug( PAPI_QUIET ); /* Prevent error messages on Alpha */
+	PAPI_shutdown();
 	exit(0);
 }
 
