@@ -459,7 +459,9 @@ long long _papi_hwd_get_real_cycles (void)
   else
     start_overflow_timer();
 #endif
-  return((long long)read_cycle_counter());
+/*  return((long long)read_cycle_counter());
+*/
+ return((long long) _papi_hwd_get_real_usec() * _papi_system_info.hw_info.mhz);
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
@@ -494,7 +496,9 @@ long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
   else
     start_overflow_timer();
 #endif
-  return((long long)read_virt_cycle_counter());
+/*  return((long long)read_virt_cycle_counter());
+*/
+ return((long long) _papi_hwd_get_virt_usec(zero) * _papi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
