@@ -36,6 +36,7 @@ C 2 counters.
       n=1000
       i=0
       j=0
+      EventSet = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )

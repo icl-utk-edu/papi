@@ -28,6 +28,7 @@ C   PAPI values of the counters
       external get_quiet
 
       tests_quiet = get_quiet()
+      EventSet = PAPI_NULL
 
 C   Setup default values
       numevents=0

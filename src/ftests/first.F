@@ -18,6 +18,7 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+      EventSet = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)

@@ -29,6 +29,7 @@
 #endif
 
       tests_quiet = get_quiet()
+      es = PAPI_NULL
 
       point = 0
 

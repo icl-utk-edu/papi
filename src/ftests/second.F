@@ -22,6 +22,9 @@
 #endif
 
       tests_quiet = get_quiet()
+      es1 = PAPI_NULL
+      es2 = PAPI_NULL
+      es3 = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)

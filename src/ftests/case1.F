@@ -32,6 +32,7 @@ C count the first event?
       b = 1.001
       j = 0
       i = 0
+      EventSet = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )

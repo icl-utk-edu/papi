@@ -14,6 +14,7 @@
       external len_trim
 
       tests_quiet = get_quiet()
+      es1 = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)

@@ -15,6 +15,7 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+      es = PAPI_NULL
 
       if (tests_quiet .EQ. 0) then
       print *, "Cost of execution for PAPI start/stop",

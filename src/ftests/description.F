@@ -18,6 +18,7 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+      es1 = PAPI_NULL
 
       if (tests_quiet .EQ. 0) then
       print *, "Test case descriptions: Test of functions:"
