@@ -1,4 +1,5 @@
-#ifdef LINUX_PENTIUM
+#if defined(i386) || defined(i486) || defined(i586) || defined(i686)
+#if defined(linux)
 
 /* $Id$ */
 
@@ -585,5 +586,5 @@ papi_mdi _papi_system_info = { "$Id$",
 			        -1,
 			       sizeof(hwd_control_state), 
 			       NULL };
-
+#endif
 #endif
