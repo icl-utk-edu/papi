@@ -275,7 +275,7 @@ static void resultline(int i, int j, int TESTS_QUIET)
 	if (!TESTS_QUIET)
 		printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
 
-	if (TESTS_QUIET && ferror > 10 && diff > 8)
+	if (ferror > 10 && diff > 8)
 		test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 }
 
