@@ -80,9 +80,9 @@ int PAPI_start_counters(int *events, int array_len)
 
   for (i=0;i<array_len;i++) 
     {
-      retval = PAPI_query_event(events[i]);
+      /* retval = PAPI_query_event(events[i]);
       if (retval)
-	return(retval);
+	return(retval); */
 
       retval = PAPI_add_event(&PAPI_EVENTSET_INUSE,events[i]);
       if (retval)

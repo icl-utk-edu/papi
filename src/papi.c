@@ -333,6 +333,12 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
   if ((id_fn == NULL) || (flag != 0) || (default_master_eventset == NULL))
     papi_return(PAPI_EINVAL);
     
+  if (thread_id_fn != NULL)
+    {
+      fprintf(stderr,"PAPI_thread_init() should only be called once.\n");
+      exit(1);
+    }
+
   thread_id_fn = id_fn;
   
   /* Now change the master event's thread id from 0 to the
@@ -593,6 +599,33 @@ static int get_granularity(DynamicArray *map, PAPI_granularity_option_t *opt)
     papi_return(PAPI_ENOEVST);
 
   opt->granularity = ESI->granularity.granularity;
+  papi_return(PAPI_OK);
+}
+
+/* From Anders Nilsson's (anni@pdc.kth.se) */
+
+int PAPI_describe_event(char *name, int *EventCode, char *description)
+{
+  int retval;
+
+  if (name == NULL)
+   papi_return(PAPI_EINVAL);
+
+  if ((strlen(name) == 0) && *EventCode == 0)
+    papi_return(PAPI_EINVAL);
+
+  if (strlen(name) == 0)
+    retval = PAPI_event_code_to_name(*EventCode, name);
+  else
+    retval = PAPI_event_name_to_code(name, EventCode);
+
+  if (retval != PAPI_OK)
+    papi_return(retval);
+
+  if (description != NULL)
+    {
+      strncpy(description, papi_presets[*EventCode].event_descr, PAPI_MAX_STR_LEN);
+    }
   papi_return(PAPI_OK);
 }
 

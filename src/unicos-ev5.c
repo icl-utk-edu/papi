@@ -880,7 +880,7 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_shutdown_global(EventSetInfo *zero)
+int _papi_hwd_shutdown_global(void)
 {
   return(PAPI_OK);
 }

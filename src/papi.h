@@ -286,6 +286,7 @@ int PAPI_perror(int code, char *destination, int length);
 int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
 		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
+int PAPI_describe_event(char *name, int *EventCode, char *description);
 int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);
