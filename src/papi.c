@@ -1303,13 +1303,11 @@ int PAPI_stop(int EventSet, long_long *values)
       return(PAPI_OK);
     }
       
-  if (ESI->state & PAPI_PROFILING) 
+  if (ESI->state & PAPI_HWPROFILING) 
     {
-	  if (_papi_system_info.supports_hw_profile) {
       	retval = _papi_hwd_stop_profiling(ESI, thread_master_eventset);
       	if (retval < PAPI_OK)
 		papi_return(retval);
-	  }
     }
 
   /* Read the current counter values into the EventSet */
@@ -1363,7 +1361,7 @@ int PAPI_reset(int EventSet)
   int retval = PAPI_OK;
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
-
+ 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if(ESI == NULL)
     papi_return(PAPI_ENOEVST);
@@ -2137,12 +2135,11 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
   opt.count = profcnt;
   opt.flags = flags;
   opt.threshold = threshold;
-  opt.overflowcount = 0;
   opt.EventIndex = index;
   opt.EventCode = EventCode;
 
   
-  if (_papi_system_info.supports_hw_profile)
+  if (ESI->state & PAPI_HWPROFILING)
     retval = _papi_hwd_set_profile(ESI, &opt);
   else 
     retval = PAPI_overflow(EventSet, EventCode, threshold, 0, dummy_handler);
@@ -2164,9 +2161,6 @@ int PAPI_sprofil(PAPI_sprofil_t *prof, int profcnt, int EventSet, int EventCode,
 
 int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
-/* disable hardware profile */
-  if ( _papi_system_info.supports_hw_profile==1)
-     _papi_system_info.supports_hw_profile=0;
 
   if (threshold > 0)
     {
@@ -2187,6 +2181,34 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsi
 
 int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
+  EventSetInfo *ESI;
+
+  if ( _papi_system_info.supports_hw_profile==0) 
+  	return(PAPI_ESBSTR);
+
+  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
+  if(ESI == NULL)
+     papi_return(PAPI_ENOEVST);
+  if (ESI->state & PAPI_HWPROFILING)
+    {
+      if (threshold)
+        papi_return(PAPI_EINVAL);
+    }
+  else
+    {
+      if (threshold == 0)
+        papi_return(PAPI_EINVAL);
+    }
+  ESI->state ^= PAPI_HWPROFILING;
+
+  if (ESI->state & PAPI_HWPROFILING )
+     return(PAPI_profil(buf, bufsiz, offset,scale,EventSet, EventCode, threshold, flags));
+  else {
+  /* Toggle profiling flag */
+     ESI->state ^= PAPI_PROFILING;
+     return(PAPI_OK);
+  }
+/*
   if (threshold > 0)
     {
       PAPI_sprofil_t *prof;
@@ -2202,6 +2224,7 @@ int PAPI_profil_hw(unsigned short *buf, unsigned bufsiz, unsigned long offset, u
       papi_return(PAPI_sprofil(prof,1,EventSet,EventCode,threshold,flags));
     }
   papi_return(PAPI_sprofil(NULL,0,EventSet,EventCode,0,flags));
+*/
 }
 
 int PAPI_set_granularity(int granularity)

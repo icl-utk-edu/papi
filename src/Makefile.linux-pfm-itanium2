@@ -1,5 +1,5 @@
-LIBPFMHOME = ./libpfm-2.0
-LIBPFM  = $(LIBPFMHOME)/libpfm
+LIBPFMHOME = libpfm-2.0
+LIBPFM  = ./$(LIBPFMHOME)/libpfm
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
@@ -9,7 +9,8 @@ DESCR	= "Stock Linux 2.4.18 for the Intel Itanium 2"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -I$(LIBPFMHOME)/include -I. -DITANIUM2 -DPFM20
+CFLAGS  = -I./$(LIBPFMHOME)/include -I. -DITANIUM2 -DPFM20 -g 
+TOOLPATH = ../$(LIBPFMHOME)
 # -DDEBUG -Wall
 OPTFLAGS= -g -DITANIUM2
 TOPTFLAGS = -DITANIUM2 -O0

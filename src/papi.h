@@ -124,6 +124,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFILING    0x20   /* EventSet has profiling enabled */
 #define PAPI_MULTIPLEXING 0x40   /* EventSet has multiplexing enabled */
 #define PAPI_ACCUMULATING 0x80   /* EventSet has accumulating enabled */
+#define PAPI_HWPROFILING  0x100  /* EventSet has hardware profiling enabled */
 
 /* Error predefines */
 

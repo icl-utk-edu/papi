@@ -42,6 +42,15 @@
 #include "linux-ia64-memory.h"
 
 #ifndef PFM06A
+ #ifdef ITANIUM2
+   typedef struct {
+    unsigned long pme_code:8;   /* major event code */
+    unsigned long pme_type:3;   /* see definitions above */
+    unsigned long pme_ig1:5;    /* ignored */
+    unsigned long pme_umask:16; /* unit mask*/
+    unsigned long pme_ig:32;    /* ignored */
+  } pme_ita_entry_code_t;
+ #else 
 typedef struct {
         unsigned long pme_code:8;       /* major event code */
         unsigned long pme_ear:1;        /* is EAR event */
@@ -52,6 +61,7 @@ typedef struct {
         unsigned long pme_umask:16;     /* unit mask*/
         unsigned long pme_ig:32;        /* ignored */
 } pme_ita_entry_code_t;
+ #endif
 
 typedef union {
         unsigned long        pme_vcode;
@@ -90,14 +100,22 @@ typedef struct hwd_control_state {
    #define PMU_ITA2_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
   #endif
   pfarg_reg_t pc[PMU_ITA2_MAX_COUNTERS];
+/* specific parameters for the library */
+  pfmlib_ita2_param_t ita_lib_param;
+  int overflowcount[PMU_ITA2_MAX_COUNTERS];
 #else
   #ifndef PMU_ITA_MAX_COUNTERS
    #define PMU_ITA_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
   #endif
   pfarg_reg_t pc[PMU_ITA_MAX_COUNTERS];
+/* specific parameters for the library */
+  pfmlib_ita_param_t ita_lib_param;
+  int overflowcount[PMU_ITA_MAX_COUNTERS];
 #endif
   pfmlib_param_t evt;
 #endif
+/* sampling buffer address */
+  void *smpl_vaddr;
   /* Buffer to pass to library to control the counters */
   /* Is this event derived? */
   int derived; 

@@ -85,7 +85,6 @@ typedef struct _EventSetProfileInfo {
   int threshold;
   int EventIndex;
   int EventCode;
-  int overflowcount; /* Number of overflows occurred */
   int flags;
 } EventSetProfileInfo_t;
 

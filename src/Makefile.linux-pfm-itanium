@@ -1,5 +1,5 @@
-LIBPFMHOME = ./libpfm-2.0
-LIBPFM  = $(LIBPFMHOME)/libpfm
+LIBPFMHOME = libpfm-2.0
+LIBPFM  = ./$(LIBPFMHOME)/libpfm
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
@@ -9,7 +9,8 @@ DESCR	= "Stock Linux 2.4.18 for the Intel IA64"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -I$(LIBPFMHOME)/include -I. -Wall -g -DPFM20 
+CFLAGS  = -I./$(LIBPFMHOME)/include  -I. -Wall -g -DPFM20 
+TOOLPATH = ../$(LIBPFMHOME)
 # -DDEBUG
 OPTFLAGS= -g
 TOPTFLAGS = $(OPTFLAGS)
