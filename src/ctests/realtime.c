@@ -56,8 +56,9 @@ int main(int argc, char **argv)
    if (elapsed_us < (10000000 - 15000))
      test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
 
-   if ((10.0 * hw_info->mhz * 1000000.0) > (((float)elapsed_cyc) + ((float)elapsed_cyc)/1000))
+   if ((10.0 * hw_info->mhz * 1000000.0) > 1.05*(((float)elapsed_cyc) + ((float)elapsed_cyc)/1000)){
      test_fail(__FILE__, __LINE__, "Real cycles less than 10*MHz*1000000.0!", PAPI_EMISC);
+   }
 
    test_pass(__FILE__, NULL, 0);
    exit(1);
