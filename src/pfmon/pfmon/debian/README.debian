@@ -1,9 +1,0 @@
-The Debian Package pfmon
-----------------------------
-
-This package contains pfmon, a tool to monitor performance using
-the IA-64 Performance Monitor Unit (PMU). Pfmon can monitor
-standalone programs or the entire system on both UP and SMP Linux/ia64 systems.
-This version supports both the Itanium and Itanium 2 processor families.
-
- <eranian@hpl.hp.com>, Tue, 12 Nov 2002 10:07:14 -0800
