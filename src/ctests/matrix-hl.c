@@ -13,12 +13,12 @@
 main(int argc, char **argv) {
 
       int nrows1=175,ncols1=225,nrows2=ncols1,ncols2=150;
+      double p[175][225],q[2][1], r[175][225],tmp;
       int i,j,k,num_events,retval;
       /*     PAPI standardized event to be monitored */
       int event[2];
       /*     PAPI values of the counters */
       long_long values[2];
-      double p[nrows1][ncols1],q[nrows2][ncols2], r[nrows1][ncols2],tmp;
       extern int TESTS_QUIET;
 
       tests_quiet(argc,argv);
