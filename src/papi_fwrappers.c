@@ -208,15 +208,16 @@ PAPI_get_hardware_info(int *ncpu, int *nnodes, int *totalcpus, int *vendor,
     float *mhz){
    const PAPI_hw_info_t *hwinfo;
    hwinfo = internal_PAPI_get_hardware_info();
+   if ( hwinfo == NULL ){
+	*ncpu = 0;
+   }
    *ncpu = hwinfo->ncpu;
    *nnodes = hwinfo->nnodes;
    *totalcpus = hwinfo->totalcpus;
    *vendor = hwinfo->vendor;
    strcpy( vendor_string, hwinfo->vendor_string );
-   printf("vendor_string: %s %s\n", vendor_string, hwinfo->vendor_string);
    *model = hwinfo->model;
    strcpy( model_string, hwinfo->model_string );
-   printf("model_string: %s %s\n", model_string, hwinfo->model_string);
    *revision = hwinfo->revision;
    *mhz = hwinfo->mhz;
    return;
