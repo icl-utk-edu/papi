@@ -1,33 +1,44 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
-SUBSTR  = aix-power
+SUBSTR  = power3
 MEMSUBSTR=aix
-DESCR	= "AIX 5.1.0 or greater with 604, 60[B4e or 630"
-LIBS	= static shared
-TARGETS	= serial multiplex_and_pthreads smp omp
-PMAPI	= /usr/pmapi
+DESCR   = "AIX 5.1.0 or greater with 604, 604e or 630"
+LIBS    = static aix-shared
+TARGETS = serial multiplex_and_pthreads smp omp
+PMAPI   = /usr/pmapi
 SHLIBDEPS = $(PMAPI)/lib -lpmapi
 
 # Default source is for pmapi 1.5.x and above.
 
 FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3
-CFLAGS	= $(FLAGS) -DHAS_NATIVE_MAP
+CFLAGS  = $(FLAGS) -DDEBUG -DHAS_NATIVE_MAP
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS= -qnostdinc
-FFLAGS	= $(FLAGS)
+FFLAGS  = $(FLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L$(PMAPI)/lib -lpmapi
-CC_R	= xlc_r
-CC	= xlc
-CC_SHR	= xlc -G 
-MPICC	= mpcc
-F77	= xlf
-CPP	= xlc -E
+CC_R    = xlc_r
+CC      = xlc
+CC_SHR  = xlc -G
+MPICC   = mpcc
+F77     = xlf
+CPP     = xlc -E
+MISCSRCS= aix.c allocate.c
+MISCOBJS= aix.o allocate.o
 
 include Makefile.inc
+
+aix.o: aix.c  $(HEADERS)
+	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+
+allocate.o: allocate.c
+	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c allocate.c -o allocate.o
+
+aix-shared: $(SOURCES)
+	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
 
 # Required targets for all platforms.
 

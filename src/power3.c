@@ -50,7 +50,7 @@ hwd_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
     #undef  PM_RESRV_RQ
     #undef  PM_MPRED_BR
     #undef  PM_EXEC_FMA
-    #undef  PM_BR_FINISHF
+    #undef  PM_BR_FINISH
     #define PM_LSU_EXEC   "PM_LSU_CMPL"
     #define PM_ST_MISS_L1 "PM_ST_MISS_L1"
     #define PM_RESRV_CMPL "PM_STCX_SUCCESS"

@@ -6,7 +6,6 @@ MEMSUBSTR=aix
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
 LIBS	= static aix-shared
 TARGETS	= serial multiplex_and_pthreads smp omp
-ALLOCATE = allocate
 
 # Default source is for pmtoolkit 1.3.x and above.
 # For version 1.2.x add -DPMTOOLKIT_1_2
@@ -30,14 +29,16 @@ CC_SHR	= ld -G -r
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
-MISCSRCS= aix.c
-MISCOBJS= aix.o 
-
+MISCSRCS= aix.c allocate.c
+MISCOBJS= aix.o allocate.o
 
 include Makefile.inc
 
 aix.o: aix.c  $(HEADERS)
-	$(CC) $(CFLAGS)  -DDEBUG -DHAS_NATIVE_MAP -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+
+allocate.o: allocate.c
+	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c allocate.c -o allocate.o
 
 aix-shared: $(SOURCES)
 	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
