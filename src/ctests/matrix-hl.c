@@ -88,7 +88,8 @@ int main(int argc, char **argv) {
               "PAPI_stop_counters", retval);
 
   /*     Make sure the compiler does not optimize away the multiplication
-         call dummy(r) */
+   *  dummy(r);
+   */
 
   if (!TESTS_QUIET) {
     if (event[0] == PAPI_TOT_INS) 
