@@ -1,0 +1,22 @@
+[data from a 1.25 GHz MPC7447A]
+
+PERFCTR INIT: PVR 0x80020101, CPU clock 1248015 kHz, TB clock 41600 kHz
+PERFCTR INIT: NITER == 256
+PERFCTR INIT: loop overhead is 102 cycles
+PERFCTR INIT: mftbl cost is 7.4 cycles (2015 total)
+PERFCTR INIT: mfspr (pmc1) cost is 4.4 cycles (1235 total)
+PERFCTR INIT: mfspr (pmc2) cost is 4.2 cycles (1181 total)
+PERFCTR INIT: mfspr (pmc3) cost is 4.3 cycles (1204 total)
+PERFCTR INIT: mfspr (pmc4) cost is 3.7 cycles (1064 total)
+PERFCTR INIT: mfspr (mmcr0) cost is 4.3 cycles (1210 total)
+PERFCTR INIT: mfspr (mmcr1) cost is 4.2 cycles (1182 total)
+PERFCTR INIT: mtspr (pmc2) cost is 4.1 cycles (1165 total)
+PERFCTR INIT: mtspr (pmc3) cost is 3.7 cycles (1064 total)
+PERFCTR INIT: mtspr (pmc4) cost is 4.3 cycles (1215 total)
+PERFCTR INIT: mtspr (mmcr1) cost is 4.1 cycles (1175 total)
+PERFCTR INIT: mtspr (mmcr0) cost is 3.7 cycles (1064 total)
+PERFCTR INIT: check_fcece(0): MMCR0[FC] is 0, PMC1 is 0x80000111
+PERFCTR INIT: check_fcece(1): MMCR0[FC] is 1, PMC1 is 0x80000000
+PERFCTR INIT: check_trigger(0): MMCR0[TRIGGER] is 0, PMC1 is 0x80000108, PMC2 is 0x10c
+PERFCTR INIT: check_trigger(1): MMCR0[TRIGGER] is 0, PMC1 is 0x800000d9, PMC2 is 0xdd
+perfctr: driver 2.6.11, cpu type PowerPC 60x/7xx/74xx at 1248015 kHz
