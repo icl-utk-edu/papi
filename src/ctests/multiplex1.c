@@ -46,7 +46,7 @@ void init_papi(void)
 
   /* query and set up the right instruction to monitor */
   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) PAPI_event = PAPI_FP_INS;
-  else PAPI_event = PAPI_TOT_INS;
+  else PAPI_event = PAPI_TOT_CYC;
 }
 
 /* Tests that PAPI_multiplex_init does not mess with normal operation. */
