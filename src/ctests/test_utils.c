@@ -399,11 +399,6 @@ void test_fail(char *file, int line, char *call, int retval)
 
    if (retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT || retval == PAPI_ECNFLCT)
       test_skip(file, line, call, retval);
-#ifdef PENTIUM4
-   /* This can be removed when the P4 substrate is finished */
-   if (retval == PAPI_EINVAL)
-      test_skip(file, line, call, retval);
-#endif
    memset(buf, '\0', sizeof(buf));
    if (retval != 0)
       fprintf(stdout,"%-40s FAILED\nLine # %d\n", file, line);
