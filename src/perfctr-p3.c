@@ -528,7 +528,7 @@ static void clear_control_state(hwd_control_state_t *this_state) {
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
-                                   NativeInfo_t *native, int count) {
+                                   NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i;
 
    /* clear out everything currently coded */
