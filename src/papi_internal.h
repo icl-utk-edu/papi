@@ -15,6 +15,8 @@
 
 #define PRESET_MASK 0x80000000
 
+extern int _papi_err_level;
+
 typedef struct _dynamic_array {
 	void   **dataSlotArray; /* ptr to array of ptrs to EventSets      */
 	int    totalSlots;      /* number of slots in dataSlotArrays      */
@@ -24,6 +26,8 @@ typedef struct _dynamic_array {
 
 /*function prototype*/
 static int _papi_expandDA(DynamicArray *DA); 
+
+extern DynamicArray evmap;
 
 /* this is not the final version of this data structure*/
 typedef struct _papi_option_t  {

@@ -100,3 +100,34 @@ return(0);
 /*end function: _papi_expandDA                                            */
 /*========================================================================*/
 /*========================================================================*/
+
+/*========================================================================*/
+/* Low-level machine-independent routines                                 */
+/*========================================================================*/
+/*========================================================================*/
+
+int PAPI_state(int EventSet, int *status)
+{
+    if (EventSet < 0 || EventSet >= evmap->totalSlots || 
+                          evmap->dataSlotArray[EventSet] == NULL) {
+        /* invalid argument */
+        if (_papi_err_level == PAPI_VERB_ECONT ||
+                     _papi_err_level == PAPI_VERB_ESTOP) 
+            PAPI_perror(PAPI_EINVAL, NULL, 0);
+        if (_papi_err_level == PAPI_VERB_ESTOP) 
+            exit(PAPI_ERROR);
+        return(PAPI_EINVAL);
+    }
+    *status = (evmap->dataSlotArray[EventSet])->state;
+    if (*status != PAPI_RUNNING && *status != PAPI_STOPPED) {
+        /* internal error */
+        if (_papi_err_level == PAPI_VERB_ECONT ||
+                     _papi_err_level == PAPI_VERB_ESTOP) 
+            PAPI_perror(PAPI_EBUG, NULL, 0);
+        if (_papi_err_level == PAPI_VERB_ESTOP)
+            exit(PAPI_ERROR);
+        return(PAPI_EBUG);
+    }
+    return(PAPI_OK);
+}
+
