@@ -242,31 +242,6 @@ static inline unsigned long get_cycles(void)
    return tmp;
 }
 
-/* Dumb hack to make sure I get the cycle time correct. */
-
-inline static float calc_mhz(void)
-{
-   u_long_long ostamp;
-   u_long_long stamp;
-   float correction = 4000.0, mhz;
-
-   /* Warm the cache */
-
-   ostamp = get_cycles();
-   usleep(1);
-   stamp = get_cycles();
-   stamp = stamp - ostamp;
-   mhz = (float) stamp / (float) (1000000.0 + correction);
-
-   ostamp = get_cycles();
-   sleep(1);
-   stamp = get_cycles();
-   stamp = stamp - ostamp;
-   mhz = (float) stamp / (float) (1000000.0 + correction);
-
-   return (mhz);
-}
-
 inline static int set_domain(hwd_control_state_t * this_state, int domain)
 {
    int mode = 0, did = 0, i;
@@ -429,10 +404,10 @@ static int get_system_info(void)
    sprintf(maxargs, "/proc/%d/exe", (int) getpid());
    if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) == -1)
       return (PAPI_ESYS);
-   sprintf(_papi_hwi_system_info.exe_info.name, "%s",
-           basename(_papi_hwi_system_info.exe_info.fullname));
+   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
 
-   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.name);
+   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
@@ -471,18 +446,8 @@ static int get_system_info(void)
       sscanf(s + 1, "%f", &mhz);
    _papi_hwi_system_info.hw_info.mhz = mhz;
 
-   SUBDBG("Detected MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
-#if 0
-   mhz = calc_mhz();
-   SUBDBG("Calculated MHZ is %f\n", mhz);
-   if (_papi_hwi_system_info.hw_info.mhz < mhz)
-      _papi_hwi_system_info.hw_info.mhz = mhz;
-   {
-      int tmp = (int) _papi_hwi_system_info.hw_info.mhz;
-      _papi_hwi_system_info.hw_info.mhz = (float) tmp;
-   }
    SUBDBG("Actual MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
-#endif
+
    _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;

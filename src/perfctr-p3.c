@@ -169,30 +169,6 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    }
 }
 
-/* Dumb hack to make sure I get the cycle time correct. */
-#ifndef _WIN32
-static float calc_mhz(void) {
-   u_long_long ostamp;
-   u_long_long stamp;
-   float correction = 4000.0, mhz;
-
-   /* Warm the cache */
-   ostamp = get_cycles();
-   usleep(1);
-   stamp = get_cycles();
-   stamp = stamp - ostamp;
-   mhz = (float) stamp / (float) (1000000.0 + correction);
-
-   ostamp = get_cycles();
-   sleep(1);
-   stamp = get_cycles();
-   stamp = stamp - ostamp;
-   mhz = (float) stamp / (float) (1000000.0 + correction);
-
-   return (mhz);
-}
-#endif
-
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
 extern int _papi_hwd_mdi_init() {
@@ -425,14 +401,6 @@ int _papi_hwd_init_global(void) {
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
    _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0;
 
-   SUBDBG("Detected MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
-   mhz = calc_mhz();
-   SUBDBG("Calculated MHZ is %f\n", mhz);
-   /* If difference is larger than 5% (e.g. system info is 0) use
-      calculated value. (If CPU value seems reasonable use it) */
-   if (abs(mhz - _papi_hwi_system_info.hw_info.mhz) >
-       0.95 * _papi_hwi_system_info.hw_info.mhz)
-      _papi_hwi_system_info.hw_info.mhz = mhz;
    SUBDBG("Actual MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
 
    /* Fill in what we can of the papi_system_info. */

@@ -1060,14 +1060,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       }
       break;
    case PAPI_PRELOAD:
-      strncpy(ptr->preload.lib_preload_env,
-              _papi_hwi_system_info.exe_info.preload_info.lib_preload_env,
-              PAPI_MAX_STR_LEN);
-      ptr->preload.lib_preload_sep =
-          _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep;
-      strncpy(ptr->preload.lib_dir_env,
-              _papi_hwi_system_info.exe_info.preload_info.lib_dir_env, PAPI_MAX_STR_LEN);
-      ptr->preload.lib_dir_sep = _papi_hwi_system_info.exe_info.preload_info.lib_dir_sep;
+     memcpy(&ptr->preload,&_papi_hwi_system_info.preload_info,sizeof(PAPI_preload_info_t));
       break;
    case PAPI_DEBUG:
       ptr->debug.level = _papi_hwi_error_level;

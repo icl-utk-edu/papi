@@ -398,7 +398,8 @@ typedef struct _papi_mdi {
    pid_t pid;                   /* Process identifier */
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
-   PAPI_shlib_info_t shlib_info;        /* See definition in papi.h */
+   PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
+   PAPI_preload_info_t preload_info; /* See definition in papi.h */ 
 
    /* The following variables define the length of the arrays in the 
       EventSetInfo_t structure. Each array is of length num_gp_cntrs + 

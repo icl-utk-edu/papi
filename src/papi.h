@@ -266,11 +266,11 @@ read the documentation carefully.  */
    } PAPI_granularity_option_t;
 
    typedef struct _papi_preload_option {
-      char lib_preload_env[PAPI_MAX_STR_LEN];   /* Model string of CPU */
+      char lib_preload_env[PAPI_MAX_STR_LEN];   
       char lib_preload_sep;
       char lib_dir_env[PAPI_MAX_STR_LEN];
       char lib_dir_sep;
-   } PAPI_preload_option_t;
+   } PAPI_preload_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -280,7 +280,7 @@ read the documentation carefully.  */
    } PAPI_debug_option_t;
 
    typedef struct _papi_address_map {
-      char mapname[PAPI_MAX_STR_LEN];
+      char name[PAPI_MAX_STR_LEN];
       caddr_t text_start;       /* Start address of program text segment */
       caddr_t text_end;         /* End address of program text segment */
       caddr_t data_start;       /* Start address of program data segment */
@@ -291,9 +291,7 @@ read the documentation carefully.  */
 
    typedef struct _papi_program_info {
       char fullname[PAPI_MAX_STR_LEN];  /* path+name */
-      char name[PAPI_MAX_STR_LEN];      /* name */
       PAPI_address_map_t address_info;
-      PAPI_preload_option_t preload_info;
    } PAPI_exe_info_t;
 
    typedef struct _papi_shared_lib_info {
@@ -358,7 +356,7 @@ read the documentation carefully.  */
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
    typedef union {
-      PAPI_preload_option_t preload;
+      PAPI_preload_info_t preload;
       PAPI_debug_option_t debug;
 #if 0
       PAPI_inherit_option_t inherit;

@@ -131,10 +131,10 @@ int _papi_hwd_get_system_info(void)
 
 #else
 
-inline int _papi_hwd_update_shlib_info(void)
+int _papi_hwd_update_shlib_info(void)
 {
    char fname[PATH_MAX];
-   unsigned long writable = 0, total = 0, shared = 0, l_index = 0, counting = 1;
+   unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
    PAPI_address_map_t *tmp = NULL;
    FILE *f;
 
@@ -155,56 +155,77 @@ inline int _papi_hwd_update_shlib_info(void)
       sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
              &foo, dev, &inode, mapname);
       size = end - begin;
-      total += size;
+
       /* the permission string looks like "rwxp", where each character can
        * be either the letter, or a hyphen.  The final character is either
-       * p for private or s for shared.  We want to add up private writable
-       * mappings, to get a feel for how much private memory this process
-       * is taking.
-       *
-       * Also, we add up the shared mappings, to see how much this process
-       * is sharing with others.
-       */
-      if (perm[3] == 'p') {
-         if (perm[1] == 'w')
-            writable += size;
-      } else if (perm[3] == 's')
-         shared += size;
-      else
-         error_return(PAPI_EBUG, "Unable to parse permission string: '%s'\n", perm);
+       * p for private or s for shared. */
 
-#ifdef DEBUG
-      SUBDBG("%08lx (%ld KB) %s (%s %ld) %s\n", begin, (end - begin) / 1024, perm, dev,
-             inode, mapname);
-#endif
-      if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0)) {
-         if ((l_index == 0) && (counting)) {
-            _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
-            _papi_hwi_system_info.exe_info.address_info.text_end =
+      if (counting)
+	{
+	  if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+	    {
+	      if (t_index == 0)	
+		{
+		  _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
+		  _papi_hwi_system_info.exe_info.address_info.text_end =
+		    (caddr_t) (begin + size);
+		}
+	      t_index++;
+	    }
+	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (d_index == 0) && (t_index == 1)) 
+	    {
+	      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) begin;
+	      _papi_hwi_system_info.exe_info.address_info.data_end =
                 (caddr_t) (begin + size);
-            strcpy(_papi_hwi_system_info.exe_info.address_info.mapname,
-                   _papi_hwi_system_info.exe_info.name);
-         }
-         if ((!counting) && (l_index > 0)) {
-            tmp[l_index - 1].text_start = (caddr_t) begin;
-            tmp[l_index - 1].text_end = (caddr_t) (begin + size);
-            strncpy(tmp[l_index - 1].mapname, mapname, PAPI_MAX_STR_LEN);
-         }
-         l_index++;
-      }
+	      d_index++;
+	    }
+	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (b_index == 0) && (t_index == 1))
+	    {
+	      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) begin;
+	      _papi_hwi_system_info.exe_info.address_info.bss_end =
+                (caddr_t) (begin + size);
+	      b_index++;
+	    }
+	}
+      else if (!counting)
+	{
+	  if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0)) 
+	    {
+	      t_index++;
+	      if (t_index > 1)
+		{
+		  tmp[t_index - 2].text_start = (caddr_t) begin;
+		  tmp[t_index - 2].text_end = (caddr_t) (begin + size);
+		  strncpy(tmp[t_index - 2].name, mapname, PAPI_MAX_STR_LEN);
+		}
+	    }
+	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0))
+	    {
+	      if ((t_index > 1) && (tmp[t_index - 2].data_start == 0))
+		{
+		  tmp[t_index - 2].data_start = (caddr_t) begin;
+		  tmp[t_index - 2].data_end = (caddr_t) (begin + size);
+		}
+	    }
+	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0))
+	    {
+	      if ((t_index > 1) && (tmp[t_index - 2].bss_start == 0))
+		{
+		  tmp[t_index - 2].bss_start = (caddr_t) begin;
+		  tmp[t_index - 2].bss_end = (caddr_t) (begin + size);
+		}
+	    }
+	}
    }
-#ifdef DEBUG
-   SUBDBG("mapped:   %ld KB writable/private: %ld KB shared: %ld KB\n",
-          total / 1024, writable / 1024, shared / 1024);
-#endif
+
    if (counting) {
       /* When we get here, we have counted the number of entries in the map
          for us to allocate */
 
-      tmp = (PAPI_address_map_t *) calloc(l_index, sizeof(PAPI_address_map_t));
+      tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
          error_return(PAPI_ENOMEM, "Error allocating shared library address map");
-      l_index = 0;
+      t_index = 0;
       rewind(f);
       counting = 0;
       goto again;
@@ -212,7 +233,7 @@ inline int _papi_hwd_update_shlib_info(void)
       if (_papi_hwi_system_info.shlib_info.map)
          free(_papi_hwi_system_info.shlib_info.map);
       _papi_hwi_system_info.shlib_info.map = tmp;
-      _papi_hwi_system_info.shlib_info.count = l_index;
+      _papi_hwi_system_info.shlib_info.count = t_index-1;
 
       fclose(f);
    }
@@ -262,31 +283,27 @@ int _papi_hwd_get_system_info(void)
    sprintf(maxargs, "/proc/%d/exe", (int) pid);
    if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_MAX_STR_LEN) < 0)
       error_return(PAPI_ESYS, "readlink(%s) returned < 0", maxargs);
-   sprintf(_papi_hwi_system_info.exe_info.name, "%s",
-           basename(_papi_hwi_system_info.exe_info.fullname));
+   
+   /* basename can modify it's argument */
+   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
 
    /* Executable regions, may require reading /proc/pid/maps file */
 
    retval = _papi_hwd_update_shlib_info();
-   if (retval == 0) {
-      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) NULL;
-
-      _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
-      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & __bss_start;
-      _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
-   } else if (retval < 0) {
+   if (retval < 0) {
       memset(&_papi_hwi_system_info.exe_info.address_info, 0x0,
              sizeof(_papi_hwi_system_info.exe_info.address_info));
    }
 
    /* PAPI_preload_option information */
 
-   strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_preload_env, "LD_PRELOAD");
-   _papi_hwi_system_info.exe_info.preload_info.lib_preload_sep = ' ';
-   strcpy(_papi_hwi_system_info.exe_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
-   _papi_hwi_system_info.exe_info.preload_info.lib_dir_sep = ':';
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD");
+   _papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
+   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
 
-   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.name);
+   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
    SUBDBG("Text: Start %p, End %p, length %d\n",
           _papi_hwi_system_info.exe_info.address_info.text_start,

@@ -60,27 +60,9 @@ papi_mdi_t _papi_hwi_system_info =
     0.0,                        /*  mhz */
     0,                          /* All the cache information */
     },
-   {
-    "",
-    "",
-    {
-     "",
-     (caddr_t) NULL,            /* Start address of program text segment */
-     (caddr_t) NULL,            /* End address of program text segment */
-     (caddr_t) NULL,            /* Start address of program data segment */
-     (caddr_t) NULL,            /* End address of program data segment */
-     (caddr_t) NULL,            /* Start address of program bss segment */
-     (caddr_t) NULL             /* End address of program bss segment */
-     },
-    {
-     "LD_PRELOAD",              /* How to preload libs */
-     0,
-     "",
-     0}
-    },
-   {
-    NULL,
-    0},
+      { "", { "", 0, 0, 0, 0, 0, 0 }},
+      { NULL, 0},
+      { "", 0, "", 0},
    -1,                          /*  num_cntrs */
    -1,                          /*  num_gp_cntrs */
    -1,                          /*  grouped_counters */
