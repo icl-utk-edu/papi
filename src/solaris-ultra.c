@@ -457,13 +457,12 @@ static int scan_prtconf(char *cpuname, int len_cpuname, int *hz, int *ver)
    /* ignore all lines until we reach something with a sparc line */
    matched = 0x0;
    ihz = -1;
-   sleep(3);
    while (fgets(line, 256, f) != NULL) {
-      printf(">>> %s",line); 
+      /*SUBDBG(">>> %s",line);*/ 
       if ((sscanf(line, "%s", cmd) == 1)
           && strstr(line, "Node 0x")) {
          matched = 0x0;
-         SUBDBG("Found 'Node' -- search reset. (0x%2.2x)\n",matched); 
+         /*SUBDBG("Found 'Node' -- search reset. (0x%2.2x)\n",matched);*/ 
       } else {
          if (strstr(cmd, "device_type:") && strstr(line, "'cpu'")) {
             matched |= 0x1;
