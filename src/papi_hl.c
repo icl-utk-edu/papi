@@ -165,7 +165,7 @@ void _internal_cleanup_hl_info( HighLevelInfo *state )
   return;
 }
 
-int PAPI_flops(float *rtime, float *ptime, long_long *flpins, float *mflops)
+int PAPI_flips(float *rtime, float *ptime, long_long *flpins, float *mflops)
 {
    HighLevelInfo *state=NULL;
    int retval;
