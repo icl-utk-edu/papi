@@ -3,7 +3,11 @@
 
 /* PAPI stuff */
 
+#include "papi.h"
 #include SUBSTRATE
+#include "papi_preset.h"
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 extern hwi_search_t *preset_search_map;
 extern native_event_entry_t *native_table;

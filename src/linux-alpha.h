@@ -1,18 +1,33 @@
+#ifndef _LINUX_ALPHA_H
+#define _LINUX_ALPHA_H
+
 #include <stdio.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <stropts.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <time.h>
+#include <assert.h>
 #include <sys/times.h>
 #include <sys/sysinfo.h>
 #include <sys/procfs.h>
+#include <sys/time.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/ucontext.h>
+
+#include <ipr_api_ext_defs.h>
+#include <ipr_base_masks.h>
+#include <ipr_events.h>
+#include <iprobe_struct.h>
 
 typedef unsigned long ulong_t;
 
-#include <assert.h>
-#include <sys/ucontext.h>
 
 /* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
 #include <sys/resource.h>
@@ -79,3 +94,5 @@ extern unsigned long _etext, _ftext;
 #define EV68CB_CPU              12      /* EV6.8CB (21264C)     */
 #define EV68AL_CPU              13      /* EV6.8AL (21264B)     */
 #define EV68CX_CPU              14      /* EV6.8CX (21264D)     */
+
+#endif

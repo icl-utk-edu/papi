@@ -2,21 +2,11 @@
  Mods for alpha-linux by Glenn Laguna, Sandia National Lab, galagun@sandia.gov
 */
 
-#include "linux-alpha.h"
-#include <sys/time.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <sys/sysinfo.h>
-#include <signal.h>
-#include <time.h>
-
-#include <ipr_api_ext_defs.h>
-#include <ipr_base_masks.h>
-#include <ipr_events.h>
-#include <iprobe_struct.h>
-
+#include "papi.h"
+#include SUBSTRATE
+#include "papi_preset.h"
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 #define PF5_SEL_COUNTER_0	1       /* Op applies to counter 0 */
 #define PF5_SEL_COUNTER_1	2       /* Op applies to counter 1 */

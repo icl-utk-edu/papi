@@ -6,11 +6,11 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-#include "irix-mips.h"
+#include "papi.h"
+#include SUBSTRATE
+#include "papi_preset.h"
+#include "papi_internal.h"
 #include "papi_protos.h"
-int papi_debug;
-
-extern papi_mdi_t _papi_hwi_system_info;
 
 char *(r10k_native_events_table[]) = {
    /* 0  */ "Cycles",

@@ -1,5 +1,5 @@
-#ifndef _PAPI_AIX               /* _PAPI_AIX */
-#define _PAPI_AIX
+#ifndef _PAPI_AIX_H               /* _PAPI_AIX */
+#define _PAPI_AIX_H
 
 #include <stdio.h>
 #include <unistd.h>

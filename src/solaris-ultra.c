@@ -14,9 +14,11 @@
    about cpc_take_sample(cpc_event_t *event)
 */
 
+#include "papi.h"
 #include SUBSTRATE
-#include "papi_protos.h"
 #include "papi_preset.h"
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 #ifdef CPC_ULTRA3_I
 #define LASTULTRA3 CPC_ULTRA3_I

@@ -11,12 +11,14 @@
 *          min@cs.utk.edu
 */
 
-#include "papi.h"
+
+
 #include SUBSTRATE
-#include "papi_preset.h"
-#include "papi_internal.h"
 #include "papi_protos.h"
 #include "pfmwrap.h"
+#include "papi_internal.h"
+#include "papi_preset.h"
+int papi_debug;
 
 #ifndef ITANIUM2
 static itanium_preset_search_t ia_preset_search_map[] = {
@@ -371,7 +373,7 @@ int _papi_hwd_init_global(void)
 
    memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
-   if (_papi_hwi_debug & DEBUG_SUBSTRATE) {
+   if (papi_debug) {
       pfmlib_options.pfm_debug = 1;
       pfmlib_options.pfm_verbose = 1;
    }

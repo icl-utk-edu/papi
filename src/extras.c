@@ -46,7 +46,7 @@ extern int (*_papi_hwi_thread_kill_fn) (int, int);
 /* BEGIN LOCALS */
 /****************/
 
-static unsigned int rnum = DEADBEEF;
+unsigned int _rnum = DEADBEEF;
 
 /**************/
 /* END LOCALS */
@@ -54,9 +54,9 @@ static unsigned int rnum = DEADBEEF;
 
 extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 
-static unsigned short random_ushort(void)
+inline_static unsigned short random_ushort(void)
 {
-   return (unsigned short) (rnum = 1664525 * rnum + 1013904223);
+   return (unsigned short) (_rnum = 1664525 * _rnum + 1013904223);
 }
 
 /* compute the address index into the buffer array.

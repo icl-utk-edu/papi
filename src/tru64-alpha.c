@@ -1,8 +1,11 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-#include "tru64-alpha.h"
+#include "papi.h"
+#include SUBSTRATE
 #include "papi_preset.h"
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 extern EventSetInfo_t *default_master_eventset;
 int papi_debug;

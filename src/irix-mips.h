@@ -1,3 +1,6 @@
+#ifndef _IRIX_MIPS_H
+#define _IRIX_MIPS_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -47,8 +50,6 @@ typedef struct hwd_control_state {
    hwperf_cntr_t cntrs_read;
 } hwd_control_state_t;
 
-typedef int hwd_register_map_t;
-
 typedef struct _Context {
    /* File descriptor controlling the counters; */
    int fd;
@@ -73,10 +74,6 @@ extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];
 extern int _fbss[], _end[];
 
-#ifdef DEBUG
-extern int papi_debug;
-#endif
-
 extern volatile int lock[PAPI_MAX_LOCK];
 
 #define _papi_hwd_lock(lck)         \
@@ -86,3 +83,5 @@ while (__lock_test_and_set(&lock[lck],1) != 0)  \
 }
 
 #define _papi_hwd_unlock(lck) {__lock_release(&lock[lck]);}
+
+#endif

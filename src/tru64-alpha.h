@@ -1,3 +1,6 @@
+#ifndef _TRU64_ALPHA_H
+#define _TRU64_ALPHA_H
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -103,3 +106,5 @@ typedef struct native_info_t {
 } native_info_t;
 
 extern unsigned long _etext, _ftext, _edata, _fdata, _fbss, _ebss;
+
+#endif
