@@ -6,6 +6,7 @@ MEMSUBSTR=aix
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
 LIBS	= static aix-shared
 TARGETS	= serial multiplex_and_pthreads smp omp
+ALLOCATE = allocate.o
 
 # Default source is for pmtoolkit 1.3.x and above.
 # For version 1.2.x add -DPMTOOLKIT_1_2

@@ -4,7 +4,7 @@ SOURCES	  = $(MISCSRCS) papi.c papi_hl.c extras.c multiplex.c \
     $(MEMSUBSTR)-memory.c $(SUBSTR).c
 OBJECTS   = $(MISCOBJS) papi.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    $(MEMSUBSTR)-memory.o $(SUBSTR).o allocate.o
+    $(MEMSUBSTR)-memory.o $(SUBSTR).o $(ALLOCATE)
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
