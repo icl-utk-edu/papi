@@ -1353,12 +1353,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 #ifdef MPX_DEBUG
           fprintf(stderr,"Event %d could not be counted.\n",event_list[i]);
 #endif
-        bail:
-          PAPI_cleanup_eventset(&(mev->papi_event));
-          PAPI_destroy_eventset(&(mev->papi_event));
-          free(mev);
-          mev = NULL;
-          break;
+	  goto bail;
         }
 
       retval = PAPI_add_event(&(mev->papi_event),event_list[i]);
@@ -1417,6 +1412,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 
       mev->next = *head;
       *head = mev;
+      
     }
 
     /* If we created a new event set, or we found a matching
@@ -1427,6 +1423,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
     mpx_events->mev[mpx_events->num_events+num_events_success] = mev;
     mpx_events->mev[mpx_events->num_events+num_events_success]->uses++;
     num_events_success++;
+
   }
 
   /* Always be sure the head master event points to the thread */
@@ -1437,10 +1434,33 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
   fprintf(stderr,"%d of %d events were added.\n",num_events_success,num_events);
 #endif
   mpx_events->num_events += num_events_success;
+  return(PAPI_OK);
+
+ bail:
+  /* If there is a current mev, it is currently not linked into the list
+   * of multiplexing events, so we can just delete that
+   */
+  if(mev && mev->papi_event) {
+    PAPI_cleanup_eventset(&(mev->papi_event));
+    PAPI_destroy_eventset(&(mev->papi_event));
+  }
+  if(mev)
+    free(mev);
+  mev = NULL;
+
+  /* Decrease the usage count of events */
+  for(i=0;i<num_events_success;i++) {
+    mpx_events->mev[mpx_events->num_events+i]->uses--;
+  }
+
+  /* Run the garbage collector to remove unused events */
+  if(num_events_success)
+    mpx_remove_unused(head);
+      
   return(retval);
 }
 
-/* Remove revove master events from an mpx event set (and from the
+/* Remove events from an mpx event set (and from the
  * master event set for this thread, if the events are unused).
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */
@@ -1464,7 +1484,7 @@ static void mpx_delete_events(MPX_EventSet * mpx_events)
   mpx_remove_unused(&mpx_events->mythr->head);
 }
 
-/* Remove revove master events from an mpx event set (and from the
+/* Remove one event from an mpx event set (and from the
  * master event set for this thread, if the events are unused).
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */
@@ -1505,8 +1525,8 @@ static void mpx_delete_one_event(MPX_EventSet * mpx_events,int Event)
 
 }
 
-/* Remove revove master events from an mpx event set (and from the
- * master event set for this thread, if the events are unused).
+/* Remove events that are not used any longer from the run 
+ * list of events to multiplex by the handler
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */
 static void mpx_remove_unused(MasterEvent **head)
