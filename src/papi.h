@@ -1,7 +1,7 @@
 /* file: papi.h */
 
 /*platform specific defintions*/
-#include "StdEventDefs.h" 
+#include "papiStdEventDefs.h" 
 
 /*
 Return Codes
