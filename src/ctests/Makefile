@@ -6,8 +6,7 @@ MPX	= multiplex1 multiplex1_pthreads
 SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third third-inv fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
-	overflow_single_event overflow profile tenth native \
-	memory
+	overflow_single_event overflow profile tenth native memory
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -29,10 +28,10 @@ serial: $(SERIAL)
 calibrate: calibrate.c dummy.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
 
-multiplex1: multiplex1.c do_loops.o $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c do_loops.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
+multiplex1: multiplex1.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
-multiplex1_pthreads: multiplex1_pthreads.c do_loops.o $(PAPILIB)
+multiplex1_pthreads: multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
@@ -76,6 +75,9 @@ zero: zero.c $(UTILOBJS) $(PAPILIB)
 
 first: first.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) first.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first
+
+first-twice: first-twice.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) first-twice.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first-twice
 
 second: second.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) second.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o second
