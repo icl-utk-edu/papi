@@ -30,13 +30,16 @@ CC_R	= gcc -pthread
 CC	= gcc
 #F77	= /usr/local/intel/compiler50/ia64/bin/efc
 F77     = g77
-MISCOBJS= pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic_ia64.o pfmlib_os.o 
+MISCOBJS= linux.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic_ia64.o pfmlib_os.o 
 MISCHDRS= 
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 
 include Makefile.inc
 
-$(MISCOBJS):
+linux.o: linux.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+
+pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic_ia64.o pfmlib_os.o:
 	-cd $(PFM_LIB_PATH); $(MAKE)
 	ar xv $(PFM_LIB_PATH)/libpfm.a
 

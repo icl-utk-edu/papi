@@ -41,16 +41,20 @@ CC	= gcc
 #F77	= /usr/local/intel/compiler50/ia64/bin/efc
 F77     = g77
 MISCHDRS= 
+MISCOBJS = linux.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 
 include Makefile.inc
+
+linux.o: linux.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o pfmlib_generic.o:
 	-cd $(PFM_LIB_PATH); $(MAKE)
 	ar xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-	$(NATIVE_CLEAN)
+	rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
 
 native_install:
 	-cp -p $(PFM_LIB_PATH)/libpfm.so.2 $(DESTDIR)/lib
