@@ -31,11 +31,7 @@ int main(int argc, char **argv)
    long_long **values;
    int EventSet1, EventSet2, EventSet3;
    int num_events1, num_events2, num_events3;
-#if defined(PENTIUM4)
-   int mask1 = 0x6, mask2 = 0x6, mask3 = 0x6;
-#else
    int mask1 = 0x5, mask2 = 0x5, mask3 = 0x5;
-#endif
    PAPI_option_t options;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 #if defined(sgi) && defined(host_mips)

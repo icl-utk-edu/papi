@@ -55,12 +55,8 @@
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
       end if
-
-#if defined(PENTIUM4)
-      call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
-#else
+      
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
-#endif
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -79,11 +75,7 @@
      . 'PAPIf_add_event', retval)
       end if
       
-#if defined(PENTIUM4)
-      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
-#else
-      call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
-#endif
+      call PAPIf_add_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -102,11 +94,7 @@
      . 'PAPIf_add_event', retval)
       end if
       
-#if defined(PENTIUM4)
-      call PAPIf_add_event( es3, PAPI_TOT_INS, retval )
-#else
-      call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
-#endif
+      call PAPIf_add_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -174,11 +162,7 @@
      . 'PAPIf_remove_event', retval)
       end if
 
-#if defined (PENTIUM4)
-      call PAPIf_remove_event( es1, PAPI_TOT_INS, retval )
-#else
       call PAPIf_remove_event( es1, PAPI_TOT_CYC, retval )
-#endif
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
@@ -190,11 +174,7 @@
      . 'PAPIf_remove_event', retval)
       end if
 
-#if defined (PENTIUM4)
-      call PAPIf_remove_event( es2, PAPI_TOT_INS, retval )
-#else
-      call PAPIf_remove_event( es1, PAPI_TOT_CYC, retval )
-#endif
+      call PAPIf_remove_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
@@ -205,11 +185,7 @@
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
       end if
-#if defined (PENTIUM4)
-      call PAPIf_remove_event( es3, PAPI_TOT_INS, retval )
-#else
-      call PAPIf_remove_event( es1, PAPI_TOT_CYC, retval )
-#endif
+      call PAPIf_remove_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
