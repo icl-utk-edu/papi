@@ -82,7 +82,7 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 /********************/
 
 
-int PAPI_thread_init(unsigned long int (*id_fn) (void), int flag)
+int PAPI_thread_init(unsigned long int (*id_fn) (void))
 {
    int changed_id_fn = 0;
 /* Thread support not implemented on Alpha/OSF because the OSF pfm
@@ -1207,7 +1207,7 @@ void PAPI_shutdown(void)
 
    /* Clean up thread stuff */
 
-   PAPI_thread_init(NULL, 0);
+   PAPI_thread_init(NULL);
 
    /* Free up some memory */
 

@@ -250,9 +250,9 @@ PAPI_FCALL(papif_thread_id, PAPIF_THREAD_ID, (unsigned long *id))
 /* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
 
 PAPI_FCALL(papif_thread_init, PAPIF_THREAD_INIT,
-           (unsigned long int (*handle) (void), int *flag, int *check))
+           (unsigned long int (*handle) (void), int *check))
 {
-   *check = PAPI_thread_init(handle, *flag);
+   *check = PAPI_thread_init(handle);
 }
 
 PAPI_FCALL(papif_list_events, PAPIF_LIST_EVENTS,

@@ -1035,6 +1035,8 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
                return (PAPI_ENOEVNT);
          }
          break;
+      default:
+	return (PAPI_EINVAL);
       }
    }
 

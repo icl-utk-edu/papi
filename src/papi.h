@@ -457,7 +457,7 @@ read the documentation carefully.  */
    int   PAPI_stop(int EventSet, long_long * values);
    char *PAPI_strerror(int);
    unsigned long PAPI_thread_id(void);
-   int   PAPI_thread_init(unsigned long int (*id_fn) (void), int flag);
+   int   PAPI_thread_init(unsigned long int (*id_fn) (void));
    void  PAPI_unlock(int);
    int   PAPI_write(int EventSet, long_long * values);
 

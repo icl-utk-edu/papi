@@ -1227,7 +1227,7 @@ void _papi_hwi_lookup_thread_symbols(void)
 #endif
       error = dlerror();
       if ((error == NULL) && (symbol)) {
-         retval = PAPI_thread_init((unsigned long (*)(void)) symbol, 0);
+         retval = PAPI_thread_init((unsigned long (*)(void)) symbol);
          assert(retval == 0);
       } else
          _papi_hwi_thread_id_fn = (unsigned long (*)(void)) symbol;
@@ -1273,7 +1273,7 @@ int mpx_init(int interval)
       retval = PAPI_library_init(PAPI_VER_CURRENT);
       assert(retval == PAPI_VER_CURRENT);
 #ifdef PTHREADS
-      retval = PAPI_thread_init((unsigned long (*)(void)) pthread_self, 0);
+      retval = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
       assert(retval == PAPI_OK);
 #endif
    }
