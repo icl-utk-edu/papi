@@ -21,15 +21,26 @@
 #include "papi_internal.h"
 #include "papi_protos.h"
 
+#ifdef PERFCTR25
+#define PERFCTR_CPU_NAME   perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
+#else
+#define PERFCTR_CPU_NAME perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS perfctr_cpu_nrctrs
+#endif
+
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
+#ifdef __i386__
 /* CPUID model < 2 */
 extern P4_search_t _papi_hwd_pentium4_mlt2_preset_map[];
-
 /* CPUID model >= 2 */
 extern P4_search_t _papi_hwd_pentium4_mge2_preset_map[];
+#elif defined(__x86_64__)
+extern P4_search_t _papi_hwd_x86_64_opteron_map[];
+#endif
 
 extern papi_mdi_t _papi_hwi_system_info;
 
@@ -77,14 +88,22 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 	  tmp->selector = tmp2->pmc_map;
 	  SUBDBG("selector[%d] %#08x\n",unum,tmp->selector);
+#ifdef __i386__
 	  tmp->uses_pebs = (tmp2->pebs_enable ? 1 : 0);
 	  SUBDBG("uses_pebs[%d] %#08x\n",unum,tmp->uses_pebs);
 	  tmp->uses_pebs_matrix_vert = (tmp2->pebs_matrix_vert ? 1 : 0);
 	  SUBDBG("uses_pebs_matrix_vert[%d] %#08x\n",unum,tmp->uses_pebs_matrix_vert);
+#endif
 
+#ifdef __i386__
 	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x",
 		  (unum >= 1) ? " " : "",
 		  tmp2->evntsel,tmp2->evntsel_aux,(ffs(tmp2->pmc_map)-1)|FAST_RDPMC);
+#elif defined(__x86_64__)
+	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x",
+		  (unum >= 1) ? " " : "",
+		  tmp2->evntsel,tmp2->evntsel_aux,(ffs(tmp2->pmc_map)-1));
+#endif
 	  if ((strlen(note) + strlen(tmpnote)) < (PAPI_MAX_STR_LEN-1))
 	    strcat(note,tmpnote);
 	}
@@ -108,13 +127,19 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 inline static int setup_all_presets(int cputype)
 {
+#ifdef __i386__
   if (cputype == PERFCTR_X86_INTEL_P4)
     return(setup_presets(_papi_hwd_pentium4_mlt2_preset_map, _papi_hwd_preset_map));
   else if (cputype == PERFCTR_X86_INTEL_P4M2)
     return(setup_presets(_papi_hwd_pentium4_mge2_preset_map, _papi_hwd_preset_map));
   else
     error_return(PAPI_ESBSTR,MODEL_ERROR);
- 
+#elif defined(__x86_64__)
+  if (PERFCTR_X86_AMD_K8)
+    return(setup_presets(_papi_hwd_x86_64_opteron_map, _papi_hwd_preset_map));
+  else
+    error_return(PAPI_ESBSTR,MODEL_ERROR);
+#endif
   return(PAPI_OK);
 }
 
@@ -236,14 +261,14 @@ int _papi_hwd_init_global(void)
   if(_papi_hwd_mdi_init() != PAPI_OK) {
     return(PAPI_EINVAL);
   }
-  strcpy(_papi_hwi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
+  strcpy(_papi_hwi_system_info.hw_info.model_string,PERFCTR_CPU_NAME(&info));
   _papi_hwi_system_info.supports_hw_overflow = 
     (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
        _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
 
-  _papi_hwi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info);
-  _papi_hwi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info);
+  _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+  _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
 
   _papi_hwi_system_info.hw_info.model = info.cpu_type;
   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
@@ -277,6 +302,10 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
 
+#ifdef PERFCTR25
+  SUBDBG("perfctr ABI compile time version: %x\n",PERFCTR_ABI_VERSION);
+#endif
+
   vperfctr_close(dev);
   SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n",dev);
 
@@ -288,6 +317,7 @@ int _papi_hwd_init_global(void)
 int _papi_hwd_init(P4_perfctr_context_t *ctx)
 {
   struct vperfctr_control tmp;
+  int retval;
 
   /* Malloc the space for our controls */
   
@@ -303,6 +333,7 @@ int _papi_hwd_init(P4_perfctr_context_t *ctx)
   if ((ctx->perfctr = vperfctr_open()) == NULL) 
     error_return(PAPI_ESYS,VOPEN_ERROR);
   SUBDBG("_papi_hwd_init vperfctr_open() = %p\n",ctx->perfctr);
+
 #if 0
   if ((ctx->perfctr = gperfctr_open()) == NULL) 
     error_return(PAPI_ESYS,GOPEN_ERROR);
@@ -378,17 +409,21 @@ void print_control(const struct perfctr_cpu_control *control)
 	    SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
 	  }
 	SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+#ifdef __i386__
 	if( control->evntsel_aux[i] )
 	    SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
+#endif
 	if (control->ireset[i]) 
 	  SUBDBG("ireset[%u]\t%d\n",i,control->ireset[i]);
     }
+#ifdef __i386__
     if( control->p4.pebs_enable )
       SUBDBG("pebs_enable\t0x%08X\n", 
 	     control->p4.pebs_enable);
     if( control->p4.pebs_matrix_vert )
       SUBDBG("pebs_matrix_vert\t0x%08X\n", 
 	     control->p4.pebs_matrix_vert);
+#endif
 }
 #endif
 
@@ -429,7 +464,7 @@ int _papi_hwd_stop(P4_perfctr_context_t *ctx, P4_perfctr_control_t *state)
 int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_long **dp)
 {
   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
-  *dp = spc->state.pmc;
+  *dp = (u_long_long*) spc->state.pmc;
 #ifdef DEBUG
  {
    extern int _papi_hwi_debug;
@@ -438,7 +473,7 @@ int _papi_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, u_long_
        int i;
        for (i=0;i<spc->control.cpu_control.nractrs;i++)
 	 {
-	   SUBDBG("raw val hardware index %d is %lld\n",i,spc->state.pmc[i]);
+	   SUBDBG("raw val hardware index %d is %lld\n",i,(long_long)spc->state.pmc[i]);
 	 }
      }
  }
@@ -462,6 +497,19 @@ int _papi_hwd_shutdown(P4_perfctr_context_t *ctx)
     return(PAPI_ESYS);
   return(PAPI_OK);
 }
+
+int _papi_hwd_query(int preset_index, int *flags, char **note)
+{
+  P4_preset_t *preset_map = _papi_hwd_preset_map;
+
+  if (preset_map[preset_index].number < 1)
+    return(0);
+  if (preset_map[preset_index].derived)
+    *flags = PAPI_DERIVED;
+  if (preset_map[preset_index].note)
+    *note = preset_map[preset_index].note;
+  return(1);
+} 
 
 /* Called once per process. */
 
@@ -508,7 +556,8 @@ int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *
    as quickly as possible. This returns the position in the array output by _papi_hwd_read that
    this register lives in. */
 
-int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_control_t *evset_info)
+//int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_control_t *evset_info)
+int _papi_hwd_add_event(EventInfo_t * ev_info, hwd_preset_t *preset, hwd_control_state_t *evset_info)
 {
   int i, index, mask = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
@@ -520,7 +569,7 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
 
   for (i=0;i<preset->number;i++)
     {
-      need_one = ev_info->hardware_event[i].selector;
+      need_one = preset->possible_registers.hardware_event[i].selector;
       SUBDBG("Needed one of counters: need_one %d %08x\n",i,need_one);
 
       avail = need_one & (~already_used);
@@ -533,9 +582,11 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
       SUBDBG("Allocated counter: allocated %d %08x\n",i,allocated[i]);
 
      /* this line maps the selected register back into the event structure */
-     ev_info->hardware_event[i].selector = 1 << allocated[i];
+     ev_info->bits.hardware_event[i].selector = 1 << allocated[i];
+     /* This shouldn't be necessary, should it? */
+     ev_info->hwd_selector = ev_info->bits.hardware_event[i].selector;
 
-     if (ev_info->hardware_event[i].uses_pebs)
+     if (ev_info->bits.hardware_event[i].uses_pebs)
 	{
 #if 0
 	  if (bits->uses_pebs)
@@ -543,7 +594,7 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
 #endif
 	  bits->uses_pebs = 1;
 	}
-      if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
+      if (ev_info->bits.hardware_event[i].uses_pebs_matrix_vert)
 	{
 #if 0
 	  if (bits->uses_pebs_matrix_vert)
@@ -559,14 +610,27 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
   for (i=0;i<preset->number;i++)
     {
       evset_info->allocated_registers.selector |= 1 << allocated[i];
-      evset_info->control.cpu_control.pmc_map[index] = allocated[i] | FAST_RDPMC;
+      evset_info->control.cpu_control.pmc_map[index] = allocated[i];
+#ifdef __i386__
+      evset_info->control.cpu_control.pmc_map[index] |= FAST_RDPMC;
+#endif
       evset_info->control.cpu_control.evntsel[index] = preset->info->data[i].evntsel;
+#ifdef __x86_64__
+      /* This sets Enable, USR-mode and SYS-mode. The latter two should really 
+	 be taken from the current event set scope though
+      */
+      evset_info->control.cpu_control.evntsel[index] |= (1<<22)|(1<<16)|(1<<17);
+#endif
+#ifdef __i386__
       evset_info->control.cpu_control.evntsel_aux[index] = preset->info->data[i].evntsel_aux;
+#endif
       evset_info->control.cpu_control.ireset[index] = 0;
+#ifdef __i386__
       if (preset->info->data[i].pebs_enable)
 	evset_info->control.cpu_control.p4.pebs_enable = preset->info->data[i].pebs_enable;
       if (preset->info->data[i].pebs_matrix_vert)
 	evset_info->control.cpu_control.p4.pebs_matrix_vert = preset->info->data[i].pebs_matrix_vert;
+#endif
       mask |= 1 << index;
       index++;
     }
@@ -634,16 +698,20 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perf
       SUBDBG("Clearing pmc event entry %d\n",j);
       evset_info->control.cpu_control.pmc_map[j] = 0;
       evset_info->control.cpu_control.evntsel[j] = 0;
+#ifdef __i386__
       evset_info->control.cpu_control.evntsel_aux[j] = 0;
+#endif
       evset_info->control.cpu_control.ireset[j] = 0;
     }
 
   /* Clear pebs stuff if we used it */
 
+#ifdef __i386__
   if (clear_pebs)
     evset_info->control.cpu_control.p4.pebs_enable = 0;
   if (clear_pebs_matrix_vert)
     evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
+#endif
 
   /* Shift the perfctr buffer's entries if necessary, i.e. if we removed
      counter(s) in the middle of the buffer. 
@@ -658,8 +726,10 @@ int _papi_hwd_remove_event(P4_regmap_t *ev_info, unsigned perfctr_index, P4_perf
 	evset_info->control.cpu_control.pmc_map[j+ev_info->num_hardware_events];
       evset_info->control.cpu_control.evntsel[j] = 
 	evset_info->control.cpu_control.evntsel[j+ev_info->num_hardware_events];
+#ifdef __i386__
       evset_info->control.cpu_control.evntsel_aux[j] = 
 	evset_info->control.cpu_control.evntsel_aux[j+ev_info->num_hardware_events];
+#endif
       evset_info->control.cpu_control.ireset[j] = 
 	evset_info->control.cpu_control.ireset[j+ev_info->num_hardware_events];
     }
@@ -747,11 +817,11 @@ static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cnt
   ui=contr->cpu_control.evntsel[cntr1];
   contr->cpu_control.evntsel[cntr1]=contr->cpu_control.evntsel[cntr2];
   contr->cpu_control.evntsel[cntr2] = ui;
-
+#ifdef __i386__
   ui=contr->cpu_control.evntsel_aux[cntr1];
   contr->cpu_control.evntsel_aux[cntr1]=contr->cpu_control.evntsel_aux[cntr2];
   contr->cpu_control.evntsel_aux[cntr2] = ui;
-
+#endif
   si=contr->cpu_control.ireset[cntr1];
   contr->cpu_control.ireset[cntr1]=contr->cpu_control.ireset[cntr2];
   contr->cpu_control.ireset[cntr2] = si;
@@ -883,7 +953,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
   mc = &uc->uc_mcontext;
   gs = &mc->gregs;
 
-  DBG((stderr,"Start at 0x%x\n",(*gs)[15]));
+  DBG((stderr,"Start at 0x%lx\n",(*gs)[15]));
   _papi_hwi_dispatch_overflow_signal(mc); 
 
   /* We are done, resume interrupting counters */
@@ -905,14 +975,18 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 		  __FUNCTION__,__LINE__,strerror(errno));
 	}
     }
-  DBG((stderr,"Finished, returning to address 0x%x\n",(*gs)[15]));
+  DBG((stderr,"Finished, returning to address 0x%lx\n",(*gs)[15]));
 }
 
 void *_papi_hwd_get_overflow_address(void *context)
 {
   void *location;
   struct sigcontext *info = (struct sigcontext *)context;
+#ifdef __x86_64__
+  location = (void *)info->rip;
+#else
   location = (void *)info->eip;
+#endif
 
   return(location);
 }

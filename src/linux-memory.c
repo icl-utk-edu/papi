@@ -52,6 +52,9 @@ int _papi_hwd_get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
 #endif
     retval = init_amd(mem_info);
     break;
+  case PERFCTR_X86_AMD_K8:
+    retval = init_amd(mem_info);
+    break;
   default:
     retval = init_intel(mem_info);
     break;
@@ -596,6 +599,23 @@ static int  check_cpuid(){
 		mov val, 0
 	END:
 	}
+#elif defined(__x86_64__)
+  __asm__ __volatile__("pushf;"
+		       "pop %%eax;"
+		       "mov %%eax, %%ebx;"
+		       "xor $0x00200000,%%eax;"
+		       "push %%eax;"
+		       "popf;"
+		       "pushf;"
+		       "pop %%eax;"
+		       "cmp %%eax, %%ebx;"
+		       "jz NO_CPUID;"
+		       "mov $1, %0;"
+		       "jmp END;"
+		       "NO_CPUID:"
+		       "mov $0, %0;"
+		       "END:"
+		       :"=r"(val));
 #else
   __asm__ __volatile__("pushfl;"
 		       "pop %%eax;"
@@ -636,6 +656,15 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
   *b = tmp2;
   *c = tmp3;
   *d = tmp4;
+}
+#elif defined(__x86_64__)
+inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
+			 unsigned int *ecx, unsigned int *edx)
+{
+  __asm__ ("cpuid"
+	   : "+a" (*eax),"=b" (*ebx), "=c" (*ecx), "=d" (*edx)
+	   :
+	   );
 }
 #else
 inline_static void cpuid(unsigned int *eax, unsigned int *ebx,

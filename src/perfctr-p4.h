@@ -18,13 +18,18 @@
 #include <sys/ucontext.h>
 
 #include <linux/unistd.h>	
-#include <asm/system.h>
 #include <asm/bitops.h>
+#include <asm/system.h>
 
 #include "libperfctr.h"
 
+#ifdef __i386__
 #include "p4_events.h"
-
+#elif defined(__x86_64__)
+#include "x86-64_events.h"
+#elif
+#error No defined substrate events
+#endif
 
 #ifdef _WIN32
   #define inline_static static __inline
@@ -36,6 +41,7 @@
 
 /* Per event data structure for each event */
 
+#ifdef __i386__
 typedef struct P4_perfctr_event {
   unsigned pmc_map;
   unsigned evntsel;
@@ -44,6 +50,17 @@ typedef struct P4_perfctr_event {
   unsigned pebs_matrix_vert;
   unsigned ireset;
 } P4_perfctr_event_t;
+#endif
+
+#ifdef __x86_64__
+typedef struct P4_perfctr_event {
+  unsigned pmc_map;
+  unsigned evntsel;
+  unsigned evntsel_aux;
+  unsigned ireset;
+} P4_perfctr_event_t;
+#endif
+
 
 #define P4_MAX_REGS_PER_EVENT 4
 
@@ -86,21 +103,6 @@ typedef P4_register_t hwd_register_t;
 typedef P4_perfctr_context_t hwd_context_t;
 
 typedef P4_perfctr_event_t hwd_event_t;
-
-typedef struct _ThreadInfo {
-  unsigned pid;
-  unsigned tid;
-  hwd_context_t context;
-  void *event_set_overflowing;
-  int domain;
-} ThreadInfo_t;
-
-extern ThreadInfo_t *default_master_thread;
-
-typedef struct _thread_list {
-  ThreadInfo_t *master;
-  struct _thread_list *next; 
-} ThreadInfoList_t;
 
 #if 0
 #include "papi_internal.h"
@@ -145,6 +147,22 @@ typedef struct P4_preset {
 } P4_preset_t;
 
 typedef P4_preset_t hwd_preset_t;
+
+typedef struct _ThreadInfo {
+  unsigned pid;
+  unsigned tid;
+  hwd_context_t context;
+  void *event_set_overflowing;
+  void *event_set_profiling;
+  int domain;
+} ThreadInfo_t;
+
+extern ThreadInfo_t *default_master_thread;
+
+typedef struct _thread_list {
+  ThreadInfo_t *master;
+  struct _thread_list *next; 
+} ThreadInfoList_t;
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
