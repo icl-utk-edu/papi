@@ -628,20 +628,14 @@ static void mpx_handler(int signal)
 #ifdef ANY_THREAD_GETS_SIGNAL
    else {
       Threadlist *t;
-#ifdef MPX_DEBUG_TIMER
-      MPXDBG("nothing to do in thread\n");
-#endif
       for (t = tlist; t != NULL; t = t->next) {
-#ifdef MPX_DEBUG_TIMER
+	if ((t->tid == _papi_hwi_thread_id_fn()) || (t->head == NULL))
+	  continue;
          MPXDBG("forwarding signal to thread %lx\n", t->tid);
-#endif
          retval = (*_papi_hwi_thread_kill_fn) (t->tid, MPX_SIGNAL);
          if (retval != 0) {
-#ifdef MPX_DEBUG_SIGNAL
             MPXDBG("forwarding signal to thread %lx returned %d\n",
                    t->tid, retval);
-#endif
-            perror("_papi_hwi_thread_kill_fn");
          }
       }
    }
