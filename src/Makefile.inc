@@ -4,7 +4,7 @@ SOURCES	  = $(MISCSRCS) papi.c papi_hl.c extras.c multiplex.c \
     $(MEMSUBSTR)-memory.c $(SUBSTR).c
 OBJECTS   = $(MISCOBJS) papi.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    $(MEMSUBSTR)-memory.o $(SUBSTR).o 
+    $(MEMSUBSTR)-memory.o $(SUBSTR).o allocate.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
@@ -60,6 +60,9 @@ papi_hl.o: papi_hl.c $(HEADERS)
 $(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(MEMSUBSTR)-memory.c -o $(MEMSUBSTR)-memory.o
 
+allocate.o: allocate.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c allocate.c -o allocate.o
+
 extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
 
@@ -81,7 +84,7 @@ f77papi.h: genpapifdef
 f90papi.h: genpapifdef
 	./genpapifdef -f90 > f90papi.h
 
-examples: tests ftests
+examples: tests
 
 test: examples
 	tests/zero
