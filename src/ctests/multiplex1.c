@@ -109,7 +109,7 @@ int case1()
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
       if ( !TESTS_QUIET )
-      printf("Added %s\n",out);
+      	printf("Added %s\n",out);
     }
 
   if (PAPI_start(EventSet) != PAPI_OK)
@@ -168,7 +168,8 @@ int case2()
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
-      printf("Added %s\n",out);
+      if ( !TESTS_QUIET )
+      	printf("Added %s\n",out);
     }
 
   if (PAPI_start(EventSet) != PAPI_OK)
@@ -223,7 +224,8 @@ int case3()
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
-      printf("Added %s\n",out);
+      if ( !TESTS_QUIET )
+      	printf("Added %s\n",out);
     }
 
   retval = PAPI_set_multiplex(&EventSet);
@@ -288,7 +290,8 @@ int case4()
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
-      printf("Added %s\n",out);
+      if ( !TESTS_QUIET )
+      	printf("Added %s\n",out);
     }
 
 #if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || defined(WIN32)
