@@ -282,10 +282,12 @@ typedef union {
   PAPI_hw_info_t *hw_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 
+/* dkt - added a label field to this structure */
 typedef struct pre_info {
   const char *event_name;
   const unsigned int event_code;
   const char *event_descr;
+  const char *event_label;
   int avail;
   char *event_note;
   int flags;
@@ -322,6 +324,7 @@ int PAPI_profil(unsigned short *buf, unsigned bufsiz, unsigned long offset, \
 		unsigned scale, int EventSet, int EventCode, int threshold, int flags);
 const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
 int PAPI_describe_event(char *name, int *EventCode, char *description);
+int PAPI_label_event(int EventCode, char *label);
 int PAPI_query_event(int EventCode);
 int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
 int PAPI_event_code_to_name(int EventCode, char *out);

@@ -18,6 +18,8 @@
   #include "win32.h"
 #endif
 
+#include "papiStrings.h" /* for language independent string support. */
+
 /********************/
 /* BEGIN PROTOTYPES */
 /********************/
@@ -69,11 +71,7 @@ int papi_debug = 0;
 /*  BEGIN LOCALS    */ 
 /********************/
 
-#ifdef _WIN32	/* Let's be verbose during testing. */
-static int PAPI_ERR_LEVEL = PAPI_VERB_ECONT;
-#else
 static int PAPI_ERR_LEVEL = PAPI_QUIET; /* Behavior of handle_error() */
-#endif
 static PAPI_debug_handler_t PAPI_ERR_HANDLER = default_error_handler;
 #ifdef DEBUG
 #define papi_return(a) return(PAPI_ERR_HANDLER(a))
@@ -83,147 +81,150 @@ static PAPI_debug_handler_t PAPI_ERR_HANDLER = default_error_handler;
 
 /* Our informative table */
 
+#define PAPI_PRESET(function)\
+	function##_nm, function, function##_dsc, function##_lbl, 0, NULL, 0
+
 static PAPI_preset_info_t papi_presets[PAPI_MAX_PRESET_EVENTS] = { 
-  { "PAPI_L1_DCM", PAPI_L1_DCM, "Level 1 data cache misses", 0, NULL, 0 },
-  { "PAPI_L1_ICM", PAPI_L1_ICM, "Level 1 instruction cache misses", 0, NULL, 0 },
-  { "PAPI_L2_DCM", PAPI_L2_DCM, "Level 2 data cache misses", 0, NULL, 0 },
-  { "PAPI_L2_ICM", PAPI_L2_ICM, "Level 2 instruction cache misses", 0, NULL, 0 },
-  { "PAPI_L3_DCM", PAPI_L3_DCM, "Level 3 data cache misses", 0, NULL, 0 },
-  { "PAPI_L3_ICM", PAPI_L3_ICM, "Level 3 instruction cache misses", 0, NULL, 0 },
-  { "PAPI_L1_TCM", PAPI_L1_TCM, "Level 1 cache misses", 0, NULL, 0 },
-  { "PAPI_L2_TCM", PAPI_L2_TCM, "Level 2 cache misses", 0, NULL, 0 },
-  { "PAPI_L3_TCM", PAPI_L3_TCM, "Level 3 cache misses", 0, NULL, 0 },
-  { "PAPI_CA_SNP", PAPI_CA_SNP, "Requests for a snoop", 0, NULL, 0 },
-  { "PAPI_CA_SHR", PAPI_CA_SHR, "Requests for exclusive access to shared cache line", 0, NULL, 0 },
-  { "PAPI_CA_CLN", PAPI_CA_CLN, "Requests for exclusive access to clean cache line", 0, NULL, 0 },
-  { "PAPI_CA_INV", PAPI_CA_INV, "Requests for cache line invalidation", 0, NULL, 0 },
-  { "PAPI_CA_ITV", PAPI_CA_ITV, "Requests for cache line intervention", 0, NULL, 0 },
-  { "PAPI_L3_LDM", PAPI_L3_LDM, "Level 3 load misses", 0, NULL, 0 },
-  { "PAPI_L3_STM", PAPI_L3_STM, "Level 3 store misses", 0, NULL, 0 },
-  { "PAPI_BRU_IDL", PAPI_BRU_IDL, "Cycles branch units are idle", 0, NULL, 0 },
-  { "PAPI_FXU_IDL", PAPI_FXU_IDL, "Cycles integer units are idle", 0, NULL, 0 },
-  { "PAPI_FPU_IDL", PAPI_FPU_IDL, "Cycles floating point units are idle", 0, NULL, 0 },
-  { "PAPI_LSU_IDL", PAPI_LSU_IDL, "Cycles load/store units are idle", 0, NULL, 0 },
-  { "PAPI_TLB_DM", PAPI_TLB_DM, "Data translation lookaside buffer misses", 0, NULL, 0 },
-  { "PAPI_TLB_IM", PAPI_TLB_IM, "Instruction translation lookaside buffer misses", 0, NULL, 0 },
-  { "PAPI_TLB_TL", PAPI_TLB_TL, "Total translation lookaside buffer misses", 0, NULL, 0 },
-  { "PAPI_L1_LDM", PAPI_L1_LDM, "Level 1 load misses", 0, NULL, 0 },
-  { "PAPI_L1_STM", PAPI_L1_STM, "Level 1 store misses", 0, NULL, 0 },
-  { "PAPI_L2_LDM", PAPI_L2_LDM, "Level 2 load misses", 0, NULL, 0 },
-  { "PAPI_L2_STM", PAPI_L2_STM, "Level 2 store misses", 0, NULL, 0 },
-  { "PAPI_BTAC_M", PAPI_BTAC_M, "Branch target address cache misses", 0, NULL, 0 },
-  { "PAPI_PRF_DM", PAPI_PRF_DM, "Data prefetch cache misses", 0, NULL, 0 },
-  { "PAPI_L3_DCH", PAPI_L3_DCH, "Level 3 Data Cache Hits", 0, NULL, 0 },
-  { "PAPI_TLB_SD", PAPI_TLB_SD, "Translation lookaside buffer shootdowns", 0, NULL, 0 },
-  { "PAPI_CSR_FAL", PAPI_CSR_FAL, "Failed store conditional instructions", 0, NULL, 0 },
-  { "PAPI_CSR_SUC", PAPI_CSR_SUC, "Successful store conditional instructions", 0, NULL, 0 },
-  { "PAPI_CSR_TOT", PAPI_CSR_TOT, "Total store conditional instructions", 0, NULL, 0 },
-  { "PAPI_MEM_SCY", PAPI_MEM_SCY, "Cycles Stalled Waiting for memory accesses", 0, NULL, 0 },
-  { "PAPI_MEM_RCY", PAPI_MEM_RCY, "Cycles Stalled Waiting for memory Reads", 0, NULL, 0 },
-  { "PAPI_MEM_WCY", PAPI_MEM_WCY, "Cycles Stalled Waiting for memory writes", 0, NULL, 0 },
-  { "PAPI_STL_ICY", PAPI_STL_ICY, "Cycles with no instruction issue", 0, NULL, 0 },
-  { "PAPI_FUL_ICY", PAPI_FUL_ICY, "Cycles with maximum instruction issue", 0, NULL, 0 },
-  { "PAPI_STL_CCY", PAPI_STL_CCY, "Cycles with no instructions completed", 0, NULL, 0 },
-  { "PAPI_FUL_CCY", PAPI_FUL_CCY, "Cycles with maximum instructions completed", 0, NULL, 0 },
-  { "PAPI_HW_INT", PAPI_HW_INT, "Hardware interrupts", 0, NULL, 0 },
-  { "PAPI_BR_UCN", PAPI_BR_UCN, "Unconditional branch instructions", 0, NULL, 0 },
-  { "PAPI_BR_CN", PAPI_BR_CN, "Conditional branch instructions", 0, NULL, 0 },
-  { "PAPI_BR_TKN", PAPI_BR_TKN, "Conditional branch instructions taken", 0, NULL, 0 }, 
-  { "PAPI_BR_NTK", PAPI_BR_NTK, "Conditional branch instructions not taken", 0, NULL, 0 }, 
-  { "PAPI_BR_MSP", PAPI_BR_MSP, "Conditional branch instructions mispredicted", 0, NULL, 0 },
-  { "PAPI_BR_PRC", PAPI_BR_PRC, "Conditional branch instructions correctly predicted", 0, NULL, 0 },
-  { "PAPI_FMA_INS", PAPI_FMA_INS, "FMA instructions completed", 0, NULL, 0 },
-  { "PAPI_TOT_IIS", PAPI_TOT_IIS, "Instructions issued", 0, NULL, 0 },
-  { "PAPI_TOT_INS", PAPI_TOT_INS, "Instructions completed", 0, NULL, 0 },
-  { "PAPI_INT_INS", PAPI_INT_INS, "Integer instructions", 0, NULL, 0 },
-  { "PAPI_FP_INS", PAPI_FP_INS, "Floating point instructions", 0, NULL, 0 },
-  { "PAPI_LD_INS", PAPI_LD_INS, "Load instructions", 0, NULL, 0 },
-  { "PAPI_SR_INS", PAPI_SR_INS, "Store instructions", 0, NULL, 0 },
-  { "PAPI_BR_INS", PAPI_BR_INS, "Branch instructions", 0, NULL, 0 },
-  { "PAPI_VEC_INS", PAPI_VEC_INS, "Vector/SIMD instructions", 0, NULL, 0 },
-  { "PAPI_FLOPS", PAPI_FLOPS, "Floating point instructions per second", 0, NULL, 0 },
-  { "PAPI_RES_STL", PAPI_RES_STL, "Cycles stalled on any resource", 0, NULL, 0 },
-  { "PAPI_FP_STAL", PAPI_FP_STAL, "Cycles the FP unit(s) are stalled", 0, NULL, 0 },
-  { "PAPI_TOT_CYC", PAPI_TOT_CYC, "Total cycles", 0, NULL, 0 },
-  { "PAPI_IPS", PAPI_IPS, "Instructions per second", 0, NULL, 0 },
-  { "PAPI_LST_INS", PAPI_LST_INS, "Load/store instructions completed", 0, NULL, 0 },
-  { "PAPI_SYC_INS", PAPI_SYC_INS, "Synchronization instructions completed", 0, NULL, 0 },
-  { "PAPI_L1_DCH", PAPI_L1_DCH, "L1 data cache hits", 0, NULL, 0 },
-  { "PAPI_L2_DCH", PAPI_L2_DCH, "L2 data cache hits", 0, NULL, 0 },
-  { "PAPI_L1_DCA", PAPI_L1_DCA, "L1 data cache accesses", 0, NULL, 0 },
-  { "PAPI_L2_DCA", PAPI_L2_DCA, "L2 data cache accesses", 0, NULL, 0 },
-  { "PAPI_L3_DCA", PAPI_L3_DCA, "L3 data cache accesses", 0, NULL, 0 },
-  { "PAPI_L1_DCR", PAPI_L1_DCR, "L1 data cache reads", 0, NULL, 0 },
-  { "PAPI_L2_DCR", PAPI_L2_DCR, "L2 data cache reads", 0, NULL, 0 },
-  { "PAPI_L3_DCR", PAPI_L3_DCR, "L3 data cache reads", 0, NULL, 0 },
-  { "PAPI_L1_DCW", PAPI_L1_DCW, "L1 data cache writes", 0, NULL, 0 },
-  { "PAPI_L2_DCW", PAPI_L2_DCW, "L2 data cache writes", 0, NULL, 0 },
-  { "PAPI_L3_DCW", PAPI_L3_DCW, "L3 data cache writes", 0, NULL, 0 },
-  { "PAPI_L1_ICH", PAPI_L1_ICH, "L1 instruction cache hits", 0, NULL, 0 },
-  { "PAPI_L2_ICH", PAPI_L2_ICH, "L2 instruction cache hits", 0, NULL, 0 },
-  { "PAPI_L3_ICH", PAPI_L3_ICH, "L3 instruction cache hits", 0, NULL, 0 },
-  { "PAPI_L1_ICA", PAPI_L1_ICA, "L1 instruction cache accesses", 0, NULL, 0 },
-  { "PAPI_L2_ICA", PAPI_L2_ICA, "L2 instruction cache accesses", 0, NULL, 0 },
-  { "PAPI_L3_ICA", PAPI_L3_ICA, "L3 instruction cache accesses", 0, NULL, 0 },
-  { "PAPI_L1_ICR", PAPI_L1_ICR, "L1 instruction cache reads", 0, NULL, 0 },
-  { "PAPI_L2_ICR", PAPI_L2_ICR, "L2 instruction cache reads", 0, NULL, 0 },
-  { "PAPI_L3_ICR", PAPI_L3_ICR, "L3 instruction cache reads", 0, NULL, 0 },
-  { "PAPI_L1_ICW", PAPI_L1_ICW, "L1 instruction cache writes", 0, NULL, 0 },
-  { "PAPI_L2_ICW", PAPI_L2_ICW, "L2 instruction cache writes", 0, NULL, 0 },
-  { "PAPI_L3_ICW", PAPI_L3_ICW, "L3 instruction cache writes", 0, NULL, 0 },
-  { "PAPI_L1_TCH", PAPI_L1_TCH, "L1 total cache hits", 0, NULL, 0 },
-  { "PAPI_L2_TCH", PAPI_L2_TCH, "L2 total cache hits", 0, NULL, 0 },
-  { "PAPI_L3_TCH", PAPI_L3_TCH, "L3 total cache hits", 0, NULL, 0 },
-  { "PAPI_L1_TCA", PAPI_L1_TCA, "L1 total cache accesses", 0, NULL, 0 },
-  { "PAPI_L2_TCA", PAPI_L2_TCA, "L2 total cache accesses", 0, NULL, 0 },
-  { "PAPI_L3_TCA", PAPI_L3_TCA, "L3 total cache accesses", 0, NULL, 0 },
-  { "PAPI_L1_TCR", PAPI_L1_TCR, "L1 total cache reads", 0, NULL, 0 },
-  { "PAPI_L2_TCR", PAPI_L2_TCR, "L2 total cache reads", 0, NULL, 0 },
-  { "PAPI_L3_TCR", PAPI_L3_TCR, "L3 total cache reads", 0, NULL, 0 },
-  { "PAPI_L1_TCW", PAPI_L1_TCW, "L1 total cache writes", 0, NULL, 0 },
-  { "PAPI_L2_TCW", PAPI_L2_TCW, "L2 total cache writes", 0, NULL, 0 },
-  { "PAPI_L3_TCW", PAPI_L3_TCW, "L3 total cache writes", 0, NULL, 0 },
-  { "PAPI_FML_INS", PAPI_FML_INS, "Floating point multiply instructions", 0, NULL, 0 },
-  { "PAPI_FAD_INS", PAPI_FAD_INS, "Floating point add instructions", 0, NULL, 0 },
-  { "PAPI_FDV_INS", PAPI_FDV_INS, "Floating point divide instructions", 0, NULL, 0 },
-  { "PAPI_FSQ_INS", PAPI_FSQ_INS, "Floating point square root instructions", 0, NULL, 0 },
-  { "PAPI_FNV_INS", PAPI_FNV_INS, "Floating point inverse instructions", 0, NULL, 0 },
+  { PAPI_PRESET(PAPI_L1_DCM) },
+  { PAPI_PRESET(PAPI_L1_ICM) },
+  { PAPI_PRESET(PAPI_L2_DCM) },
+  { PAPI_PRESET(PAPI_L2_ICM) },
+  { PAPI_PRESET(PAPI_L3_DCM) },
+  { PAPI_PRESET(PAPI_L3_ICM) },
+  { PAPI_PRESET(PAPI_L1_TCM) },
+  { PAPI_PRESET(PAPI_L2_TCM) },
+  { PAPI_PRESET(PAPI_L3_TCM) },
+  { PAPI_PRESET(PAPI_CA_SNP) },
+  { PAPI_PRESET(PAPI_CA_SHR) },
+  { PAPI_PRESET(PAPI_CA_CLN) },
+  { PAPI_PRESET(PAPI_CA_INV) },
+  { PAPI_PRESET(PAPI_CA_ITV) },
+  { PAPI_PRESET(PAPI_L3_LDM) },
+  { PAPI_PRESET(PAPI_L3_STM) },
+  { PAPI_PRESET(PAPI_BRU_IDL) },
+  { PAPI_PRESET(PAPI_FXU_IDL) },
+  { PAPI_PRESET(PAPI_FPU_IDL) },
+  { PAPI_PRESET(PAPI_LSU_IDL) },
+  { PAPI_PRESET(PAPI_TLB_DM) },
+  { PAPI_PRESET(PAPI_TLB_IM) },
+  { PAPI_PRESET(PAPI_TLB_TL) },
+  { PAPI_PRESET(PAPI_L1_LDM) },
+  { PAPI_PRESET(PAPI_L1_STM) },
+  { PAPI_PRESET(PAPI_L2_LDM) },
+  { PAPI_PRESET(PAPI_L2_STM) },
+  { PAPI_PRESET(PAPI_BTAC_M) },
+  { PAPI_PRESET(PAPI_PRF_DM) },
+  { PAPI_PRESET(PAPI_L3_DCH) },
+  { PAPI_PRESET(PAPI_TLB_SD) },
+  { PAPI_PRESET(PAPI_CSR_FAL) },
+  { PAPI_PRESET(PAPI_CSR_SUC) },
+  { PAPI_PRESET(PAPI_CSR_TOT) },
+  { PAPI_PRESET(PAPI_MEM_SCY) },
+  { PAPI_PRESET(PAPI_MEM_RCY) },
+  { PAPI_PRESET(PAPI_MEM_WCY) },
+  { PAPI_PRESET(PAPI_STL_ICY) },
+  { PAPI_PRESET(PAPI_FUL_ICY) },
+  { PAPI_PRESET(PAPI_STL_CCY) },
+  { PAPI_PRESET(PAPI_FUL_CCY) },
+  { PAPI_PRESET(PAPI_HW_INT) },
+  { PAPI_PRESET(PAPI_BR_UCN) },
+  { PAPI_PRESET(PAPI_BR_CN) },
+  { PAPI_PRESET(PAPI_BR_TKN) },
+  { PAPI_PRESET(PAPI_BR_NTK) },
+  { PAPI_PRESET(PAPI_BR_MSP) },
+  { PAPI_PRESET(PAPI_BR_PRC) },
+  { PAPI_PRESET(PAPI_FMA_INS) },
+  { PAPI_PRESET(PAPI_TOT_IIS) },
+  { PAPI_PRESET(PAPI_TOT_INS) },
+  { PAPI_PRESET(PAPI_INT_INS) },
+  { PAPI_PRESET(PAPI_FP_INS) },
+  { PAPI_PRESET(PAPI_LD_INS) },
+  { PAPI_PRESET(PAPI_SR_INS) },
+  { PAPI_PRESET(PAPI_BR_INS) },
+  { PAPI_PRESET(PAPI_VEC_INS) },
+  { PAPI_PRESET(PAPI_FLOPS) },
+  { PAPI_PRESET(PAPI_RES_STL) },
+  { PAPI_PRESET(PAPI_FP_STAL) },
+  { PAPI_PRESET(PAPI_TOT_CYC) },
+  { PAPI_PRESET(PAPI_IPS) },
+  { PAPI_PRESET(PAPI_LST_INS) },
+  { PAPI_PRESET(PAPI_SYC_INS) },
+  { PAPI_PRESET(PAPI_L1_DCH) },
+  { PAPI_PRESET(PAPI_L2_DCH) },
+  { PAPI_PRESET(PAPI_L1_DCA) },
+  { PAPI_PRESET(PAPI_L2_DCA) },
+  { PAPI_PRESET(PAPI_L3_DCA) },
+  { PAPI_PRESET(PAPI_L1_DCR) },
+  { PAPI_PRESET(PAPI_L2_DCR) },
+  { PAPI_PRESET(PAPI_L3_DCR) },
+  { PAPI_PRESET(PAPI_L1_DCW) },
+  { PAPI_PRESET(PAPI_L2_DCW) },
+  { PAPI_PRESET(PAPI_L3_DCW) },
+  { PAPI_PRESET(PAPI_L1_ICH) },
+  { PAPI_PRESET(PAPI_L2_ICH) },
+  { PAPI_PRESET(PAPI_L3_ICH) },
+  { PAPI_PRESET(PAPI_L1_ICA) },
+  { PAPI_PRESET(PAPI_L2_ICA) },
+  { PAPI_PRESET(PAPI_L3_ICA) },
+  { PAPI_PRESET(PAPI_L1_ICR) },
+  { PAPI_PRESET(PAPI_L2_ICR) },
+  { PAPI_PRESET(PAPI_L3_ICR) },
+  { PAPI_PRESET(PAPI_L1_ICW) },
+  { PAPI_PRESET(PAPI_L2_ICW) },
+  { PAPI_PRESET(PAPI_L3_ICW) },
+  { PAPI_PRESET(PAPI_L1_TCH) },
+  { PAPI_PRESET(PAPI_L2_TCH) },
+  { PAPI_PRESET(PAPI_L3_TCH) },
+  { PAPI_PRESET(PAPI_L1_TCA) },
+  { PAPI_PRESET(PAPI_L2_TCA) },
+  { PAPI_PRESET(PAPI_L3_TCA) },
+  { PAPI_PRESET(PAPI_L1_TCR) },
+  { PAPI_PRESET(PAPI_L2_TCR) },
+  { PAPI_PRESET(PAPI_L3_TCR) },
+  { PAPI_PRESET(PAPI_L1_TCW) },
+  { PAPI_PRESET(PAPI_L2_TCW) },
+  { PAPI_PRESET(PAPI_L3_TCW) },
+  { PAPI_PRESET(PAPI_FML_INS) },
+  { PAPI_PRESET(PAPI_FAD_INS) },
+  { PAPI_PRESET(PAPI_FDV_INS) },
+  { PAPI_PRESET(PAPI_FSQ_INS) },
+  { PAPI_PRESET(PAPI_FNV_INS) },
 };
 
 const char *papi_errNam[PAPI_NUM_ERRORS] = {
-  "PAPI_OK",
-  "PAPI_EINVAL",
-  "PAPI_ENOMEM",
-  "PAPI_ESYS",
-  "PAPI_ESBSTR",
-  "PAPI_ECLOST",
-  "PAPI_EBUG",
-  "PAPI_ENOEVNT",
-  "PAPI_ECNFLCT",
-  "PAPI_ENOTRUN",
-  "PAPI_EISRUN",
-  "PAPI_ENOEVST",
-  "PAPI_ENOTPRESET",
-  "PAPI_ENOCNTR",
-  "PAPI_EMISC" 
+  PAPI_OK_nm,
+  PAPI_EINVAL_nm,
+  PAPI_ENOMEM_nm,
+  PAPI_ESYS_nm,
+  PAPI_ESBSTR_nm,
+  PAPI_ECLOST_nm,
+  PAPI_EBUG_nm,
+  PAPI_ENOEVNT_nm,
+  PAPI_ECNFLCT_nm,
+  PAPI_ENOTRUN_nm,
+  PAPI_EISRUN_nm,
+  PAPI_ENOEVST_nm,
+  PAPI_ENOTPRESET_nm,
+  PAPI_ENOCNTR_nm,
+  PAPI_EMISC_nm 
 };
 
 const char *papi_errStr[PAPI_NUM_ERRORS] = {
-  "No error",
-  "Invalid argument",
-  "Insufficient memory",
-  "A System/C library call failed",
-  "Not supported by substrate",
-  "Access to the counters was lost or interrupted",
-  "Internal error, please send mail to the developers",
-  "Event does not exist",
-  "Event exists, but cannot be counted due to hardware resource limits",
-  "EventSet is currently not running",
-  "EventSet is currently counting",
-  "No such EventSet available",
-  "Event in argument is not a valid preset",
-  "Hardware does not support performance counters",
-  "Unknown error code"
+  PAPI_OK_dsc,
+  PAPI_EINVAL_dsc,
+  PAPI_ENOMEM_dsc,
+  PAPI_ESYS_dsc,
+  PAPI_ESBSTR_dsc,
+  PAPI_ECLOST_dsc,
+  PAPI_EBUG_dsc,
+  PAPI_ENOEVNT_dsc,
+  PAPI_ECNFLCT_dsc,
+  PAPI_ENOTRUN_dsc,
+  PAPI_EISRUN_dsc,
+  PAPI_ENOEVST_dsc,
+  PAPI_ENOTPRESET_dsc,
+  PAPI_ENOCNTR_dsc,
+  PAPI_EMISC_dsc
 };
 
 /********************/
@@ -243,13 +244,13 @@ static int default_error_handler(int errorCode)
   switch (PAPI_ERR_LEVEL)
     {
     case PAPI_VERB_ECONT:
-      fprintf(stderr,"PAPI Error Code %d: %s: %s\n",errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
+      fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
       if (errorCode == PAPI_ESYS)
 	perror("");
       return errorCode;
       break;
     case PAPI_VERB_ESTOP:
-      fprintf(stderr,"PAPI Error Code %d: %s: %s\n",errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
+      fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,papi_errNam[-errorCode],papi_errStr[-errorCode]);
       if (errorCode == PAPI_ESYS)
 	perror("");
       exit(-errorCode);
@@ -355,7 +356,7 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
     
   if (thread_id_fn != NULL)
     {
-      fprintf(stderr,"PAPI_thread_init() should only be called once.\n");
+      fprintf(stderr, PAPI_THREAD_INIT_str);
       exit(1);
     }
 
@@ -675,6 +676,15 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
     {
       strncpy(description, papi_presets[*EventCode].event_descr, PAPI_MAX_STR_LEN);
     }
+  papi_return(PAPI_OK);
+}
+
+int PAPI_label_event(int EventCode, char *label)
+{
+  if (EventCode == 0 || label == NULL)
+    papi_return(PAPI_EINVAL);
+
+  strncpy(label, papi_presets[EventCode].event_label, PAPI_MAX_STR_LEN);
   papi_return(PAPI_OK);
 }
 
@@ -1703,7 +1713,7 @@ void PAPI_shutdown(void)
   int i, status;
 
   if(init_retval == DEADBEEF) {
-    fprintf(stderr,"PAPI ERROR: PAPI_shutdown error. PAPI currently not initialized\n");
+    fprintf(stderr, PAPI_SHUTDOWN_str);
     return;
   }
 
