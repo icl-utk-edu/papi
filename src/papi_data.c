@@ -44,55 +44,7 @@ int _papi_hwi_debug = 0;
 
 
 /* Machine dependent info structure */
-papi_mdi_t _papi_hwi_system_info =
-    { "$Id$",
-   1.0,                         /*  version */
-   -1,                          /*  cpunum */
-   {
-    -1,                         /*  ncpu */
-    1,                          /*  nnodes */
-    -1,                         /*  totalcpus */
-    -1,                         /*  vendor */
-    "",                         /*  vendor string */
-    -1,                         /*  model */
-    "",                         /*  model string */
-    0.0,                        /*  revision */
-    0.0,                        /*  mhz */
-      {
-         0,                      /* levels */
-         {
-            {{{0},},{{0},}},    /* level 1 cache and tlb structures */
-            {{{0},},{{0},}},    /* level 2 cache and tlb structures */
-            {{{0},},{{0},}},    /* level 3 cache and tlb structures */
-         }
-      },
-    },
-      { "", { "", 0, 0, 0, 0, 0, 0 }},
-      { NULL, 0},
-      { "", 0, "", 0},
-   -1,                          /*  num_cntrs */
-   -1,                          /*  num_gp_cntrs */
-   -1,                          /*  grouped_counters */
-   -1,                          /*  num_sp_cntrs */
-   PAPI_DOM_USER,               /* default domain */
-   PAPI_GRN_THR,                /* default granularity */
-   0,                           /* We can use add_prog_event */
-   0,                           /* We can write the counters */
-   1,                           /* supports HW overflow */
-   0,                           /* supports HW profile */
-   1,                           /* counters support multiple threads */
-   1,                           /* supports 64 bit virtual counters */
-   1,                           /* supports child inheritance */
-   0,                           /* supports attaching to another process */
-   1,                           /* We can use the real_usec call */
-   1,                           /* We can use the real_cyc call */
-   1,                           /* We can use the virt_usec call */
-   1,                           /* We can use the virt_cyc call */
-   0,                           /* HW read resets the counters */
-   sizeof(hwd_control_state_t),
-   {0,}
-};
-
+papi_mdi_t _papi_hwi_system_info ;
 
 /* Our informative table */
 
