@@ -199,8 +199,11 @@ int PAPI_start_counters(int *events, int array_len)
 	return(retval); */
 
       retval = PAPI_add_event(&PAPI_EVENTSET_INUSE,events[i]);
-      if (retval)
+      if (retval) {
+	/* remove any prior events that may have been added */
+        PAPI_cleanup_eventset(&PAPI_EVENTSET_INUSE);
 	return(retval);
+      }
     }
 
   /* start the EventSet*/
