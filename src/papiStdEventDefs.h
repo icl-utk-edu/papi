@@ -147,7 +147,7 @@ enum {
    PAPI_FDV_INS, /*FD ins */
    PAPI_FSQ_INS, /*FSq ins */
    PAPI_FNV_INS, /*Finv ins */
-   PAPI_FP_OPS,  /*Floating point operations executed */
+   PAPI_FP_OPS  /*Floating point operations executed */
 };
 
 #endif
