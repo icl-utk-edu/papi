@@ -15,7 +15,8 @@
 
 /* high level papi functions*/
 
-static int PAPI_EVENTSET_INUSE;
+/* do NOT set this to PAPI_NULL=0 */
+static int PAPI_EVENTSET_INUSE=PAPI_EINVAL;
 
 /*========================================================================*/
 /* int PAPI_num_events()                                                  */
@@ -42,59 +43,58 @@ return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
 int PAPI_start_counters(int *events, int array_len) {
 
 int EventSet;
-int status;
 int i,r;
+
 int MAX_COUNTERS;
-unsigned long long *ct;
 
 MAX_COUNTERS=PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
-ct=(unsigned long long *)malloc(MAX_COUNTERS*sizeof(unsigned long long));
 
-/* turn off the running EventSet */
-i=1;
-while(i) {
-	r=PAPI_state(i,&status);
-	if(r==PAPI_EMISC)break;/* no running counters found*/
-        if(r==PAPI_OK) {
-        if(status==PAPI_RUNNING) {
-            /* cp hwd_ctrs to ct, turn off EventSet, 
-               set ctrs to zero, status to PAPI_STOPPED*/
-	    PAPI_stop(i,ct);
-	    /* cp ct to hwd_ctrs so preserved*/
-            PAPI_write(i,ct);
-            break;
-            } 
-	}
-        i++; 
-}
+
+if(PAPI_EVENTSET_INUSE > PAPI_NULL ) {
+PAPI_perror(PAPI_EINVAL,"attempt to start new event set while prev one running",0);
+return(PAPI_EINVAL);
+}/* end if*/
+
 
 if(array_len>MAX_COUNTERS) {
 PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed because array_len > MAX_COUNTERS",0);
 return(PAPI_EINVAL);
 }
 
+/*initialize value for EventSet integer*/
+
+EventSet=PAPI_EINVAL;
+
 /* load *events to the new EventSet */   
-EventSet=PAPI_NULL;
+
 for(i=0;i<array_len;i++) {
 r=PAPI_add_event(&EventSet,events[i]);
-if(r<PAPI_OK) {
-  fprintf(stderr,"PAPI warning: PAPI_start_counters failed to load events[%d] (%x) ", i,events[i]);
+if( r < PAPI_OK ) {
+  fprintf(stderr,
+   "PAPI warning: PAPI_start_counters failed to load events[%d]",i);
    }
 }
 
-if (EventSet==PAPI_NULL) {
-PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed to create the EventSet",0);
-return(PAPI_EINVAL);
+
+
+if ( EventSet == PAPI_EINVAL ) {
+    PAPI_perror(PAPI_EINVAL,
+     "PAPI_start_counters failed to create the EventSet",0);
+     return(PAPI_EINVAL);
 }
+
+/* start the EventSet*/
+
+
+r=PAPI_start(EventSet);
+if( r < PAPI_OK ) {
+  fprintf(stderr,"PAPI warning: PAPI_start failed ");
+  return(PAPI_EINVAL);
+}
+
 
 PAPI_EVENTSET_INUSE=EventSet;
 
-/* start the EventSet*/
-r=PAPI_start(PAPI_EVENTSET_INUSE);
-if(r<PAPI_OK) {
-PAPI_perror(PAPI_EINVAL,"PAPI_start_counters failed to start the EventSet",0);
-return(PAPI_EINVAL);
-}
 return(PAPI_OK);
 }
 /*  */
@@ -107,29 +107,14 @@ return(PAPI_OK);
 /*========================================================================*/
 int PAPI_read_counters(unsigned long long *values, int array_len) {
 
-int status;
-int i,r;
+if(PAPI_EVENTSET_INUSE != PAPI_EINVAL) {
+PAPI_read(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
+return(PAPI_OK);
+}
 
-/* locate the EventSet with running counters and read it*/
-
-i=1;
-while(i) {
-	r=PAPI_state(i,&status);
-	if(r==PAPI_EMISC)break;/* no running counters found*/
-        if(r==PAPI_OK) {
-          if(status==PAPI_RUNNING) {
-		PAPI_EVENTSET_INUSE=i;
-		PAPI_read(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
-                PAPI_reset(PAPI_EVENTSET_INUSE); /* reset cntrs to zero*/
-		printf("\n PAPI_read_counters:");
-		printf("\n ct[0]=%lld ct[2]=%lld",values[0],values[2]);
-		PAPI_start(PAPI_EVENTSET_INUSE);
-		return(PAPI_OK);
-		}
-          }
-	}	
-
+else {
 PAPI_perror(PAPI_EINVAL,"PAPI_read_counters failed to locate active EventSet",0);
+}
 return(PAPI_EINVAL);
 
 }
@@ -143,26 +128,14 @@ return(PAPI_EINVAL);
 /*========================================================================*/
 int PAPI_stop_counters(unsigned long long *values, int array_len) {
 
-int status;
-int i,r;
+if( PAPI_EVENTSET_INUSE != PAPI_EINVAL ) {
+PAPI_stop(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
+return(PAPI_OK);
+}
 
-/* locate the EventSet with running counters and stop it*/
-i=1;
-while(i) {
-	r=PAPI_state(i,&status);
-	if(r==PAPI_EMISC)break;/* no running counters found*/
-        if(r==PAPI_OK) {
-          if(status==PAPI_RUNNING) {
-		PAPI_EVENTSET_INUSE=i;
-		PAPI_stop(PAPI_EVENTSET_INUSE,values);/* cp cntrs to values*/
-                PAPI_reset(PAPI_EVENTSET_INUSE);/* reset cntrs to zero*/
-                return(PAPI_OK);
-		}
-          }
-	}	
-
-
+else {
 PAPI_perror(PAPI_EINVAL,"PAPI_stop_counters failed to locate active EventSet",0);
+}
 return(PAPI_EINVAL);
 
 } 

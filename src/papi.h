@@ -209,6 +209,7 @@ int PAPI_stop(int EventSet, unsigned long long *values);
 int PAPI_read(int EventSet, unsigned long long *values);
 int PAPI_accum(int EventSet, unsigned long long *values);
 int PAPI_write(int EventSet, unsigned long long *values);
+int PAPI_cleanup(int *EventSet); 
 int PAPI_state(int EventSetIndex, int *status);
 int PAPI_reset(int EventSet);
 int PAPI_cleanup(int *EventSet);

@@ -259,7 +259,6 @@ static int add_event(EventSetInfo *ESI, int EventCode)
   /* Take the lowest empty slot */
 
   for (k=0;k<_papi_system_info.num_cntrs;k++) {
-  /*if (EventCodeArray[k] == -1)  fix line 248*/
     if (ESI->EventCodeArray[k] == -1)
       break;
   } 
@@ -321,6 +320,7 @@ int PAPI_add_event(int *EventSet, int EventCode)
 	goto heck;
 
       *EventSet = ESI->EventSetIndex;
+      DBG((stderr,"\n in  PAPI_add_event: new eventset at EventSet=%d\n",*EventSet));
     }
   return(retval);
 }
@@ -349,6 +349,13 @@ static EventSetInfo *lookup_EventSet(int eventset)
 static int remove_EventSet(EventSetInfo *ESI)
 {
   int i;
+
+  /* first remove all of the Events from this EventSet*/
+  /* ignore return vals */
+
+  for(i=0;i<_papi_system_info.num_cntrs;i++) {
+      remove_event(ESI,ESI->EventCodeArray[i]);
+      }
 
   /* get value of Index I for this ESI in 
      PAPI_EVENTSET_MAP.dataSlotArray[I]    */
@@ -430,7 +437,7 @@ int PAPI_start(int EventSet)
 /* checks for valid EventSet, calls substrate stop() fxn. */
 int PAPI_stop(int EventSet, unsigned long long *values)
 { 
-  int retval,MAX_COUNTERS;
+  int retval;
   EventSetInfo *ESI;
 
   ESI = lookup_EventSet(EventSet);
@@ -442,13 +449,12 @@ int PAPI_stop(int EventSet, unsigned long long *values)
   retval = _papi_hwd_reset(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
 
-  MAX_COUNTERS=PAPI_get_opt(PAPI_GET_MAX_HWCTRS, NULL); 
 
 #if defined(DEBUG)
   if (values)
     { 
       int i;
-      for (i=0;i<MAX_COUNTERS;i++)
+      for (i=0;i<_papi_system_info.num_cntrs;i++)
 	DBG((stderr,"PAPI_stop values[%d]:\t\t%lld\n",i,values[i]));
     }
 #endif
@@ -528,6 +534,33 @@ int PAPI_write(int EventSet, unsigned long long *values)
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
   return(retval);
 }
+
+/*  The function PAPI_cleanup removes a stopped 
+    EventSet from existence. */
+
+int PAPI_cleanup(int *EventSet) 
+{ 
+    int retval,status;
+    EventSetInfo *ESI;
+
+    retval=PAPI_state(*EventSet,&status);
+
+    if( (retval<0) || (status==PAPI_RUNNING) ) {
+       return(handle_error(PAPI_NULL,"attempt to perform cleanup on RUNNING eventset"));
+       }
+
+    /* check for good EventSetIndex value*/
+    ESI = lookup_EventSet(*EventSet);
+
+    /* good remove_EventSet returns PAPI_OK */
+    /* remove_EventSet removes each event
+       by calling remove_event, 
+       then calls free_EventSet. */ 
+  
+    retval=remove_EventSet(ESI);
+
+    return(retval);
+}
  
 int PAPI_state(int EventSet, int *status)
 {
@@ -579,21 +612,21 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
     }
 }
 
+
 int PAPI_get_opt(int option, PAPI_option_t *ptr) 
-{ int retval;
+{ 
 
   PAPI_init();
 
   switch(option)
   {
     case PAPI_GET_CLOCKRATE:
-	{ retval=_papi_system_info.mhz;
-          return( retval ); 
+	{ 
+          return( _papi_system_info.mhz ); 
         }
     case PAPI_GET_MAX_HWCTRS: 
-	{ retval =  _papi_system_info.num_gp_cntrs 
-                   +_papi_system_info.num_sp_cntrs;
-          return( retval ); 
+	{ 
+          return( _papi_system_info.num_cntrs  ); 
         }
     }
 
