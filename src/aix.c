@@ -7,7 +7,11 @@
   Other routines also include minor conditionally compiled differences.
 */
 
-#include "aix.h"
+#ifdef _POWER4
+  #include "power4.h"
+#else
+  #include "power3.h"
+#endif
 
 /* 
  some heap information, start_of_text, start_of_data .....
@@ -26,8 +30,6 @@
 #endif
 
 static int maxgroups = 0;
-static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
-static pm_info_t pminfo;
 
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)
@@ -40,15 +42,7 @@ static void unset_config(hwd_control_state_t *ptr, int arg1)
   ptr->counter_cmd.events[arg1] = 0;
 }
 
-static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
-{
-  if (a->counter_cmd.events[cntr] == b->counter_cmd.events[cntr])
-    return(1);
-
-  return(0);
-}
-
-static int update_global_hwcounters(EventSetInfo *global)
+int update_global_hwcounters(EventSetInfo *global)
 {
   int i, retval;
   pm_data_t data;
@@ -89,7 +83,7 @@ static int correct_local_hwcounters(EventSetInfo *global, EventSetInfo *local, l
   return(0);
 }
 
-static int set_domain(hwd_control_state_t *this_state, int domain)
+int set_domain(hwd_control_state_t *this_state, int domain)
 {
   pm_mode_t *mode = &(this_state->counter_cmd.mode);
 
@@ -113,7 +107,7 @@ static int set_domain(hwd_control_state_t *this_state, int domain)
   return(PAPI_OK);
 }
 
-static int set_granularity(hwd_control_state_t *this_state, int domain)
+int set_granularity(hwd_control_state_t *this_state, int domain)
 {
   pm_mode_t *mode = &(this_state->counter_cmd.mode);
 
@@ -165,12 +159,6 @@ static int get_system_info(void)
 
 #ifdef _AIXVERSION_510
   pm_groups_info_t pmgroups;
-#endif
-
-#ifdef _POWER4
-  #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
-#else
-  #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
 #endif
 
   pid = getpid();
@@ -323,20 +311,6 @@ static int get_avail_hwcntr_bits(int cntr_avail_bits)
   return(0);
 }
 
-static int get_avail_hwcntr_num(int cntr_avail_bits)
-{
-  int tmp = 0, i = POWER_MAX_COUNTERS - 1;
- 
-  while (i)
-    {
-      tmp = (1 << i) & cntr_avail_bits;
-      if (tmp)
-	return(i);
-      i--;
-    }
-  return(0);
-}
-
 static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
 {
   int useme, i;
@@ -409,6 +383,75 @@ int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
   return(PAPI_OK);
 }
 
+/****************************************************************************/
+static long long handle_derived_add(int selector, long long *from)
+{
+  int pos;
+  long long retval = 0;
+
+  while ((pos = ffs(selector)))
+    {
+      DBG((stderr,"Compound event, adding %lld to %lld\n",from[pos-1],retval));
+      retval += from[pos-1];
+      selector ^= 1 << pos-1;
+    }
+  return(retval);
+}
+
+static long long handle_derived_subtract(int operand_index, int selector, long long *from)
+{
+  int pos;
+  long long retval = from[operand_index];
+
+  selector = selector ^ (1 << operand_index);
+  while (pos = ffs(selector))
+    {
+      DBG((stderr,"Compound event, subtracting %lld to %lld\n",from[pos-1],retval));
+      retval -= from[pos-1];
+      selector ^= 1 << pos-1;
+    }
+  return(retval);
+}
+
+static long long units_per_second(long long units, long long cycles)
+{
+  return((long long)((float)units * _papi_system_info.hw_info.mhz * 1000000.0 / (float)cycles));
+}
+
+static long long handle_derived_ps(int operand_index, int selector, long long *from)
+{
+  int pos;
+
+  pos = ffs(selector ^ (1 << operand_index)) - 1;
+  assert(pos >= 0);
+
+  return(units_per_second(from[pos],from[operand_index]));
+}
+
+static long long handle_derived_add_ps(int operand_index, int selector, long long *from)
+{
+  int add_selector = selector ^ (1 << operand_index);
+  long long tmp = handle_derived_add(add_selector, from);
+  return(units_per_second(tmp, from[operand_index]));
+}
+
+static long long handle_derived(EventInfo_t *cmd, long long *from)
+{
+  switch (cmd->command)
+    {
+    case DERIVED_ADD: 
+      return(handle_derived_add(cmd->selector, from));
+    case DERIVED_ADD_PS:
+      return(handle_derived_add_ps(cmd->operand_index, cmd->selector, from));
+    case DERIVED_SUB:
+      return(handle_derived_subtract(cmd->operand_index, cmd->selector, from));
+    case DERIVED_PS:
+      return(handle_derived_ps(cmd->operand_index, cmd->selector, from));
+    default:
+      abort();
+    }
+}
+/****************************************************************************/
 
 int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
 {
@@ -583,6 +626,8 @@ void _papi_hwd_unlock(void)
 {
   _clear_lock(lock, 0);
 }
+
+
 
 /* Machine info structure. -1 is initialized by _papi_hwd_init. */
 

@@ -1,5 +1,6 @@
-
 #include "aix.h"
+
+#define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
 
 typedef struct hwd_native {
   /* Which counters can be used? Bits encode counters available
@@ -78,3 +79,10 @@ typedef struct pmapi_search {
 } pmapi_search_t;
 
 #include "allocate.h"
+
+/* prototypes */
+extern int setup_all_presets(pm_info_t *info);
+extern int set_domain(hwd_control_state_t *this_state, int domain);
+extern int set_granularity(hwd_control_state_t *this_state, int domain);
+extern int update_global_hwcounters(EventSetInfo *global);
+extern void init_config(hwd_control_state_t *ptr);

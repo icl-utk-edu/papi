@@ -16,28 +16,10 @@
 
 #include "power3.h"
 
-/* 
- some heap information, start_of_text, start_of_data .....
- ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV 
-*/
-#ifndef _P64
-  #define START_OF_TEXT 0x10000000
-  #define END_OF_TEXT   &_etext
-  #define START_OF_DATA 0x20000000
-  #define END_OF_DATA   &_end
-#else
-  #define START_OF_TEXT 0x100000000
-  #define END_OF_TEXT   &_etext
-  #define START_OF_DATA 0x110000000
-  #define END_OF_DATA   &_end
-#endif
 
 static int maxgroups = 0;
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
-static pm_info_t pminfo;
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-#ifndef _POWER4
 
 /* These defines smooth out the differences between versions of pmtoolkit */
 
@@ -244,7 +226,7 @@ static int find_hwcounter(pm_info_t *info, char *name, hwd_preset_t *preset, int
 
  #define DEBUG_SETUP 
 
-static int setup_all_presets(pm_info_t *info)
+int setup_all_presets(pm_info_t *info)
 {
   pmapi_search_t *findem;
   int pnum,did_something = 0,pmc,derived;
@@ -369,7 +351,7 @@ static int setup_all_presets(pm_info_t *info)
 }
 
 
-static void init_config(hwd_control_state_t *ptr)
+void init_config(hwd_control_state_t *ptr)
 {
   int i, j;
 
@@ -480,6 +462,31 @@ static void print_state(hwd_control_state_t *s)
   	fprintf(stderr,"event_codes %x\n",s->allevent[i]);
   }
 }
+
+static int get_avail_hwcntr_num(int cntr_avail_bits)
+{
+  int tmp = 0, i = POWER_MAX_COUNTERS - 1;
+ 
+  while (i)
+    {
+      tmp = (1 << i) & cntr_avail_bits;
+      if (tmp)
+	return(i);
+      i--;
+    }
+  return(0);
+}
+
+static int counter_shared(hwd_control_state_t *a, hwd_control_state_t *b, int cntr)
+{
+  if (a->counter_cmd.events[cntr] == b->counter_cmd.events[cntr])
+    return(1);
+
+  return(0);
+}
+
+
+
 
 /* this function try to find out whether native events contained by this preset have already been mapped. If it is, mapping is done */
 int _papi_hwd_event_precheck(hwd_control_state_t *tmp_state, unsigned int EventCode, EventInfo_t *out, void *v)

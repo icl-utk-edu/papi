@@ -1,0 +1,47 @@
+LIBRARY   = libpapi.a
+SHLIB     = libpapi.so
+SUBSTR  = power3
+MSUBSTR = power3
+MEMSUBSTR=aix
+DESCR	= "AIX 4.3.3 with 604, 604e or 630"
+LIBS	= static aix-shared
+TARGETS	= serial multiplex_and_pthreads smp omp
+
+# Default source is for pmtoolkit 1.3.x and above.
+# For version 1.2.x add -DPMTOOLKIT_1_2
+# For version 1.2.1 add -DPMTOOLKIT_1_2_1
+
+FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
+CFLAGS	= $(FLAGS) 
+#-DMPX_DEBUG_TIMER -DMPX_DEBUG
+OPTFLAGS= -O3 -qstrict
+NOOPT	= -g
+TOPTFLAGS= -g 
+FFLAGS	= $(FLAGS)
+FOPTFLAGS= $(OPTFLAGS)
+FTOPTFLAGS= $(FOPTFLAGS)
+SMPCFLGS= -qsmp
+OMPCFLGS= -qsmp=omp
+LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi
+CC_R	= xlc_r
+CC	= xlc
+CC_SHR	= ld -G -r
+MPICC	= mpcc
+F77	= xlf
+CPP	= xlc -E
+MISCSRCS= aix.c
+MISCOBJS= aix.o
+
+
+include Makefile.inc
+
+aix.o: aix.c  $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c aix.c -o aix.o
+
+aix-shared: $(SOURCES)
+	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
+
+native_install:
+
+native_clean:
+

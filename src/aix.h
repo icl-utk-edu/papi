@@ -32,5 +32,6 @@ extern int (*thread_kill_fn)(int, int);
 
 /* globals */
 pm_info_t pminfo;
-hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
+
+/* prototypes */
 

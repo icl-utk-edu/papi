@@ -16,27 +16,10 @@
   Other routines also include minor conditionally compiled differences.
 */
 
-#include "power4.h"
-
-/* 
- some heap information, start_of_text, start_of_data .....
- ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV 
-*/
-#ifndef _P64
-  #define START_OF_TEXT 0x10000000
-  #define END_OF_TEXT   &_etext
-  #define START_OF_DATA 0x20000000
-  #define END_OF_DATA   &_end
-#else
-  #define START_OF_TEXT 0x100000000
-  #define END_OF_TEXT   &_etext
-  #define START_OF_DATA 0x110000000
-  #define END_OF_DATA   &_end
-#endif
+#include SUBSTRATE
 
 static int maxgroups = 0;
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
-static pm_info_t pminfo;
 
 
 static hwd_groups_t group_map[MAX_GROUPS] = { 0 };
@@ -131,7 +114,7 @@ static int find_hwcounter_gps(pm_info_t *pminfo, char *name, hwd_preset_t *prese
   return(did_something);
 }
 
-static int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
+int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
 {
   pmapi_search_t *findem;
   pm_groups_t    *eg;
@@ -230,7 +213,7 @@ static int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups)
 
 
 
-static void init_config(hwd_control_state_t *ptr)
+void init_config(hwd_control_state_t *ptr)
 {
   int i, j;
 

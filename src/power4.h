@@ -1,5 +1,7 @@
 #include "aix.h"
 
+#define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
+
 typedef struct hwd_control_state {
   /* Indices into preset map for event in order of addition */
   /* if !PRESET_MASK then native event and counter # */
@@ -52,4 +54,11 @@ typedef struct pmapi_search {
   /* Strings to look for */
   char *(findme[POWER_MAX_COUNTERS]);
 } pmapi_search_t;
+
+/* prototypes */
+extern int setup_p4_presets(pm_info_t *pminfo, pm_groups_info_t *pmgroups);
+extern int set_domain(hwd_control_state_t *this_state, int domain);
+extern int set_granularity(hwd_control_state_t *this_state, int domain);
+extern int update_global_hwcounters(EventSetInfo *global);
+extern void init_config(hwd_control_state_t *ptr);
 
