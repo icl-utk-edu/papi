@@ -151,7 +151,7 @@ C     CPU cyc
 #endif
 
 #if (defined(mips) && defined(sgi) && defined(unix))
-      eventname(1) = 'Primary_instruction_cache_misse'
+      eventname(1) = 'Primary_instruction_cache_misses'
       eventname(2) = 'Primary_data_cache_misses'
       n = 2
 #endif
@@ -168,6 +168,10 @@ C     CPU cyc
       n = 2
 #endif
 
+      print *, eventname(1)
+      print *, eventname(2)
+      print *, eventname(3)
+      print *, eventname(4)
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
