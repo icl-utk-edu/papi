@@ -10,6 +10,7 @@
       integer retval
       integer tests_quiet, get_quiet
 	external get_quiet
+      character*PAPI_MAX_STR_LEN name
 
 	tests_quiet = get_quiet()
 
@@ -20,11 +21,19 @@
          stop
       end if
 
-#if defined(NO_FLOPS)
-      events(1)=PAPI_TOT_INS
-#else
-      events(1)=PAPI_FP_INS
-#endif
+      retval = PAPI_VER_CURRENT
+      call PAPIf_library_init(retval)
+      if ( retval.NE.PAPI_VER_CURRENT) then
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPI_library_init', retval)
+      end if
+
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        events(1)=PAPI_TOT_INS
+	else
+        events(1)=PAPI_FP_INS
+	end if
       events(2)=PAPI_TOT_CYC
 
       call PAPIf_start_counters(events, eventnum, retval)
@@ -53,19 +62,20 @@
       end if
       
       if (tests_quiet .EQ. 0) then
-      print *, "Test case highlevel: Test of high-level APIs."
-      print *, "---------------------------------------------",
-     *"---------------------"
-      write (*,100) "Test type", 1, 2
-#if defined(NO_FLOPS)
-      write (*,100) "PAPI_TOT_INS", values(1), values(3)
-#else
-      write (*,100) "PAPI_FP_INS", values(1), values(3)
-#endif
-      write (*,100) "PAPI_TOT_CYC", values(2), values(4)
- 100  format(a15, ":", i12, i12)
-      print *, "---------------------------------------------",
-     *"---------------------"
+        call PAPIf_event_code_to_name (events(1), name, retval)
+        if ( retval.NE.PAPI_OK) then
+          call ftest_fail(__FILE__, __LINE__, 
+     *		'PAPIf_event_code_to_name', retval)
+        end if
+        print *, "Test case highlevel: Test of high-level APIs."
+        print *, "---------------------------------------------",
+     *    "---------------------"
+        write (*,100) "Test type", 1, 2
+        write (*,100) name, values(1), values(3)
+        write (*,100) "PAPI_TOT_CYC", values(2), values(4)
+ 100    format(a15, ":", i12, i12)
+        print *, "---------------------------------------------",
+     *	"---------------------"
       end if
 
       call ftests_pass(__FILE__)

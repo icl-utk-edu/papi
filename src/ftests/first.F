@@ -3,12 +3,14 @@
       program first
       IMPLICIT NONE
       
+      integer event1
       INTEGER retval
       INTEGER*8 values(10)
       INTEGER*8 max, min
       INTEGER EventSet
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
+      character*(PAPI_MAX_STR_LEN) name
 
       Integer len_trim
       External len_trim
@@ -33,6 +35,13 @@
          end if
       end if
       
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        event1 = PAPI_TOT_INS 
+	else
+        event1 = PAPI_FP_INS 
+	end if
+
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -40,21 +49,12 @@
      *retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( EventSet, event1, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_add_event', 
      *retval)
       end if
-#else
-      call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_event', 
-     *retval)
-      end if
-#endif
  
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -141,6 +141,11 @@
 
       call stringify_granularity(granularity, grnstr)
       if (tests_quiet .EQ. 0) then
+         call PAPIf_event_code_to_name (event1, name, retval)
+         if ( retval.NE.PAPI_OK) then
+            call ftest_fail(__FILE__, __LINE__, 
+     *		'PAPIf_event_code_to_name', retval)
+         end if
       write (*,800) "Default granularity is:", granularity, grnstr
  800  format(a25, i3, " ", a20)
 
@@ -149,13 +154,8 @@
      *--------------------"
  
       write (*,100) "Test type", 1, 2, 3, 4, 5
-#if defined(NO_FLOPS)
-      write (*,100) "PAPI_TOT_INS", values(1), values(3), 
+      write (*,100) name, values(1), values(3), 
      *          values(5), values(7), values(9)
-#else
-      write (*,100) "PAPI_FP_INS", values(1), values(3), 
-     *          values(5), values(7), values(9)
-#endif
 
       write (*,100) "PAPI_TOT_CYC", values(2), values(4), 
      *          values(6), values(8), values(10)
@@ -178,13 +178,8 @@
      *(values(5).gt.(max*2)) .OR. (values(5).lt.(min*2)) .OR.
      *(values(7).gt.(max*3)) .OR. (values(7).lt.(min*3)) .OR.
      *(values(7).NE.values(9))) then
-#if defined(NO_FLOPS)
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_TOT_INS', 1)
-#else
-        call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_FP_INS', 1)
-#endif
+     .	 name, 1)
       end if
 
       min = values(4)*0.9

@@ -4,10 +4,11 @@
       implicit none
 
       integer*8 values(10)
-      integer es
+      integer es, event
       integer*8 uso, usn, cyco, cycn
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
+      character*(PAPI_MAX_STR_LEN) name
       integer retval
 
       Integer len_trim
@@ -24,6 +25,13 @@
      .	 'PAPI_library_init', retval)
       end if
 
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        event = PAPI_TOT_INS
+	else
+        event = PAPI_FP_INS
+	end if
+
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -37,19 +45,11 @@
      *retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( es, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( es, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_add_event', retval)
       end if
-#else
-      call PAPIf_add_event( es, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_event', retval)
-      end if
-#endif
  
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -104,6 +104,11 @@
 
       call stringify_granularity(granularity, grnstr)
       if (tests_quiet .EQ. 0) then
+        call PAPIf_event_code_to_name (event, name, retval)
+        if ( retval.NE.PAPI_OK) then
+          call ftest_fail(__FILE__, __LINE__, 
+     *		'PAPIf_event_code_to_name', retval)
+        end if
       write (*,800) "Default granularity is:", granularity, grnstr
  800  format(a25, i3, " (", a13, ")")
 	write (*,810) "Using", NUM_FLOPS, " iterations of c = c + a * b"
@@ -113,11 +118,7 @@
      *"--------------------------"
  
       write (*,100) "Test type", 1
-#ifdef NO_FLOPS
-      write (*,100) "PAPI_TOT_INS", values(1)
-#else
-      write (*,100) "PAPI_FP_INS", values(1)
-#endif
+      write (*,100) name, values(1)
       write (*,100) "PAPI_TOT_CYC", values(2)
       write (*,100) "Real usec", usn-uso
       write (*,100) "Real cycles", cycn-cyco

@@ -18,9 +18,17 @@ C -Kevin London
 	tests_quiet = get_quiet()
 
 
-#ifdef NO_FLOPS
-      call ftest_skip(__FILE__, __LINE__, 'NO_FLOPS check', PAPI_ENOEVNT)
-#endif
+      retval = PAPI_VER_CURRENT
+      call PAPIf_library_init(retval)
+      if ( retval.NE.PAPI_VER_CURRENT) then
+        call ftest_fail(__FILE__, __LINE__,
+     .	 'PAPI_library_init', retval)
+      end if
+
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        call ftest_skip(__FILE__, __LINE__, 'PAPI_FP_INS', PAPI_ENOEVNT)
+	end if
 
 C Initialize the Matrix arrays
       do i=1,index

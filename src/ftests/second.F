@@ -30,9 +30,10 @@
      .	 'PAPI_library_init', retval)
       end if
 
-#ifdef NO_FLOPS
-      call ftests_pass(__FILE__)
-#endif
+      call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval.NE.PAPI_OK) then
+        call ftest_skip(__FILE__, __LINE__, 'PAPI_FP_INS', PAPI_ENOEVNT)
+	end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then

@@ -16,6 +16,7 @@ C ****************************************************************************
       INTEGER i,j,k,retval,nchr,numevents,EventSet
       CHARACTER*(PAPI_MAX_STR_LEN)  vstring,mstring
 C   PAPI values of the counters
+      INTEGER event
       INTEGER*8 values(2)
       INTEGER*8 starttime,stoptime
       DOUBLE PRECISION finaltime
@@ -54,20 +55,19 @@ C   Total cycles
      *'PAPIf_add_event PAPI_TOT_CYC', retval)
       end if
 
-C   Total floating point instructions
-#if defined (NO_FLOPS)
-      call PAPIf_add_event(EventSet,PAPI_TOT_INS,retval)
+C   Total [floating point] instructions
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        event = PAPI_TOT_INS 
+	else
+        event = PAPI_FP_INS 
+	end if
+
+      call PAPIf_add_event(EventSet,event,retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 
      *'PAPIf_add_event PAPI_TOT_INS', retval)
       end if
-#else
-      call PAPIf_add_event(EventSet,PAPI_FP_INS,retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 
-     *'PAPIf_add_event PAPI_FP_INS', retval)
-      end if
-#endif
 
 C   Grab the hardware info
       call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
@@ -155,16 +155,16 @@ C  Make sure the compiler does not optimize away the multiplication
       call dummy(r)
 
       if (tests_quiet .EQ. 0) then
-      print *, 'Time: ', finaltime, 'seconds'
-      print *, 'Cycles: ', values(1)
+        print *, 'Time: ', finaltime, 'seconds'
+        print *, 'Cycles: ', values(1)
 
-#if defined (NO_FLOPS)
-      print *, 'Total Instructions: ', values(2)
-#else
-      print *, 'FP Instructions: ', values(2)
-      write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
+	  if (event .EQ. PAPI_TOT_INS) then
+          print *, 'Total Instructions: ', values(2)
+	  else
+          print *, 'FP Instructions: ', values(2)
+          write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
-#endif
+	  end if
       end if
 
       call ftests_pass(__FILE__)

@@ -37,11 +37,13 @@ C   Open matrix file number 2 for reading
 C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
 
 C   Total floating point operations
-#if defined (NO_FLOPS)
-      event(1) = PAPI_TOT_INS
-#else
-      event(1) = PAPI_FP_INS
-#endif
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        event(1) = PAPI_TOT_INS
+	else
+C   Total floating point operations
+        event(1) = PAPI_FP_INS
+	end if
 
 C  Time used
       event(2) = PAPI_TOT_CYC
@@ -98,17 +100,19 @@ C  Read and clear the counter values
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *
-#if defined (NO_FLOPS)
-      print *, 'TOT Instructions:  ',values(1)
-#else
-      print *, 'FP Instructions:  ',values(1)
-#endif
-      print *, 'Cycles: ',values(2)
-#ifndef NO_FLOPS
-      write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
+        print *
+	  if (event(1) .EQ. PAPI_TOT_INS) then
+		print *, 'TOT Instructions:  ',values(1)
+	  else
+		print *, 'FP Instructions:  ',values(1)
+	  end if
+
+        print *, 'Cycles: ',values(2)
+
+	  if (event(1) .EQ. PAPI_FP_INS) then
+		write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
-#endif
+	  end if
       end if
 
 C  We don't wish to count the events for this call
@@ -139,23 +143,25 @@ C  Stop the counters and put the results in the array values
       end if
 
       if (tests_quiet .EQ. 0) then
-      print *
-#if defined (NO_FLOPS)
-      print *, 'TOT Instructions:  ',values(1)
-#else
-      print *, 'FP Instructions:  ',values(1)
-#endif
-      print *, 'Cycles: ',values(2)
-#ifndef NO_FLOPS
-      write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
-     &                         real(values(1))/real(values(2))
-#endif
+        print *
+	  if (event(1) .EQ. PAPI_TOT_INS) then
+		print *, 'TOT Instructions:  ',values(1)
+	  else
+		print *, 'FP Instructions:  ',values(1)
+	  end if
 
-      print *
-      print *,'----------------------------------------------------'
-      print *,'The second instruction and cycle counts should be'
-      print *,'approximately twice the first ones. The efficiency'
-      print *,'metric should be fairly equal between the cases.'
+        print *, 'Cycles: ',values(2)
+
+	  if (event(1) .EQ. PAPI_FP_INS) then
+		write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
+     &                         real(values(1))/real(values(2))
+	  end if
+
+        print *
+        print *,'----------------------------------------------------'
+        print *,'The second instruction and cycle counts should be'
+        print *,'approximately twice the first ones. The efficiency'
+        print *,'metric should be fairly equal between the cases.'
       end if
 
       call ftests_pass(__FILE__)

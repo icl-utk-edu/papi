@@ -5,9 +5,10 @@
 
       integer*8 values(10), min, max
       character*8 zero
-      integer es1, es2
+      integer es1, es2, event
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
+      character*(PAPI_MAX_STR_LEN) name
       integer retval
 
       Integer len_trim
@@ -23,6 +24,13 @@
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPI_library_init', retval)
       end if
+
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        event = PAPI_TOT_INS
+	else
+        event = PAPI_FP_INS
+	end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
@@ -50,19 +58,11 @@
      *retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
+      call PAPIf_add_event( es2, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_add_event', retval)
       end if
-#else
-      call PAPIf_add_event( es2, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_event', retval)
-      end if
-#endif
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -134,19 +134,11 @@
      .	 'PAPIf_rem_event', retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_rem_event( es2, PAPI_TOT_INS, retval )
+      call PAPIf_rem_event( es2, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_rem_event', retval)
       end if
-#else
-      call PAPIf_rem_event( es2, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_rem_event', retval)
-      end if
-#endif
 
       zero="  0     "
       if (tests_quiet .EQ. 0) then
@@ -183,17 +175,18 @@
  800  format(a25, i3, " ", a20)
 
       if (tests_quiet. EQ. 0) then
+        call PAPIf_event_code_to_name (event, name, retval)
+        if ( retval.NE.PAPI_OK) then
+          call ftest_fail(__FILE__, __LINE__, 
+     *		'PAPIf_event_code_to_name', retval)
+        end if
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "--------------------------------------------------------------
      *---------------------"
 
       write (*,100) "Test type", 1, 2, 3, 4, 5
-#if defined(NO_FLOPS)
-      write (*,100) "PAPI_TOT_INS", 0, 0, values(5), 0, values(9)
-#else
-      write (*,100) "PAPI_FP_INS", 0, 0, values(5), 0, values(9)
-#endif
+      write (*,100) name, 0, 0, values(5), 0, values(9)
       write (*,100) "PAPI_TOT_CYC", values(1), values(3), 0,
      *values(7), 0
       print *, "----------------------------------------------------------
@@ -211,13 +204,8 @@
       max = values(5)*1.1
       if ((values(5) .EQ. 0) .OR. (values(9) .EQ. 0) .OR. 
      *    (values(9) .gt. max) .OR. (values(9) .lt. min)) then
-#if defined(NO_FLOPS)
          call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_TOT_INS', 1)
-#else
-         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_FP_INS', 1)
-#endif
+     .	 name, 1)
       end if            
 
       min = values(1)*0.9

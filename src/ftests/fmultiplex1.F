@@ -40,10 +40,10 @@
 
       end
 
-      subroutine init_papi(tests_quiet)
+      subroutine init_papi(tests_quiet, event)
       IMPLICIT NONE
       integer retval
-      integer tests_quiet
+      integer tests_quiet, event
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -58,18 +58,24 @@
      .   'PAPIf_set_debug', retval)
          end if
       end if
+	call PAPIf_query_event(PAPI_FP_INS, retval)
+	if (retval .NE. PAPI_OK) then
+        event = PAPI_TOT_CYC 
+	else
+        event = PAPI_FP_INS 
+	end if
       end
 
 C     Tests that PAPI_multiplex_init does not mess with normal operation. 
       subroutine case1(ret, tests_quiet)
       IMPLICIT NONE
-      integer ret, tests_quiet
+      integer ret, tests_quiet, event
       integer retval, i, EventSet
       INTEGER*8 values(4)
       integer fd
 
       EventSet = PAPI_NULL
-      call init_papi(tests_quiet)
+      call init_papi(tests_quiet, event)
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -83,21 +89,12 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
      *retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
+      call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .   'PAPIf_add_event',
      *retval)
       end if
-#else
-      call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
-      end if
-#endif
 
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -142,13 +139,13 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
 C     Tests that PAPI_set_multiplex() works before adding events
       subroutine case2(ret, tests_quiet)
       IMPLICIT NONE
-      integer ret, tests_quiet
+      integer ret, tests_quiet, event
       integer retval, i, EventSet
       INTEGER*8 values(4)
       integer fd
 
       EventSet = PAPI_NULL
-      call init_papi(tests_quiet)
+      call init_papi(tests_quiet, event)
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -168,22 +165,12 @@ C     Tests that PAPI_set_multiplex() works before adding events
      .   'papif_set_multiplex', retval)
       end if
 
-
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
+      call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .   'PAPIf_add_event',
      *retval)
       end if
-#else
-      call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
-      end if
-#endif
 
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -230,13 +217,13 @@ C     Tests that PAPI_set_multiplex() works before adding events
 C     Tests that PAPI_set_multiplex() works after adding events
       subroutine case3(ret, tests_quiet)
       IMPLICIT NONE
-      integer ret, tests_quiet
+      integer ret, tests_quiet, event
       integer retval, i, EventSet
       INTEGER*8 values(4)
       integer fd
 
       EventSet = PAPI_NULL
-      call init_papi(tests_quiet)
+      call init_papi(tests_quiet, event)
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -250,21 +237,12 @@ C     Tests that PAPI_set_multiplex() works after adding events
      *retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
+      call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .   'PAPIf_add_event',
      *retval)
       end if
-#else
-      call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
-      end if
-#endif
 
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -317,13 +295,13 @@ C     Tests that PAPI_add_event() works after
 C     PAPI_add_event()/PAPI_set_multiplex()
       subroutine case4(ret, tests_quiet)
       IMPLICIT NONE
-      integer ret, tests_quiet
+      integer ret, tests_quiet, event
       integer retval, i, EventSet
       INTEGER*8 values(4)
       integer fd
 
       EventSet = PAPI_NULL
-      call init_papi(tests_quiet)
+      call init_papi(tests_quiet, event)
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -337,22 +315,12 @@ C     PAPI_add_event()/PAPI_set_multiplex()
      *retval)
       end if
 
-#if defined(NO_FLOPS)
-      call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
+      call PAPIf_add_event( EventSet, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .   'PAPIf_add_event',
      *retval)
       end if
-#else
-
-      call PAPIf_add_event( EventSet, PAPI_FP_INS, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
-     .   'PAPIf_add_event',
-     *retval)
-      end if
-#endif
 
       call PAPIf_add_event( EventSet, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
