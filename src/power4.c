@@ -41,11 +41,11 @@ static hwi_search_t preset_name_map_P4[PAPI_MAX_PRESET_EVENTS] = {
 /*  {PAPI_FP_INS,DERIVED_ADD,{"PM_FPU0_ALL","PM_FPU1_ALL","PM_FPU0_FIN",
     "PM_FPU1_FIN","PM_FPU0_FMA","PM_FPU1_FMA",0,0}},*/ /*Floating point instructions executed*/	
   /*{PAPI_FLOPS,{DERIVED_PS,{PNE_PM_CYC,PNE_PM_FPU_FIN,0,0,0,0,0,0},0}},*/ /*Floating Point instructions per second*/ 
-  {PAPI_FLOPS,{DERIVED_POSTFIX,{PNE_PM_CYC,PNE_PM_FPU_FIN,0,0,0,0,0,0},"N1|#|*|$|*|N0|/|"}}, /*Floating Point instructions per second*/ 
+  {PAPI_FLOPS,{DERIVED_POSTFIX,{PNE_PM_CYC,PNE_PM_FPU_FIN,0,0,0,0,0,0},"N1|#|*|N0|/|"}}, /*Floating Point instructions per second*/ 
  /* {PAPI_FLOPS,DERIVED_ADD_PS,{"PM_CYC","PM_FPU0_ALL","PM_FPU1_ALL","PM_FPU0_FIN",
     "PM_FPU1_FIN","PM_FPU0_FMA","PM_FPU1_FMA",0}},*/ /*Floating Point instructions per second*/ 
   {PAPI_TOT_CYC,{0,{PNE_PM_CYC,0,0,0,0,0,0,0},0}}, /*Total cycles*/
-  {PAPI_IPS,{DERIVED_POSTFIX,{PNE_PM_CYC,PNE_PM_INST_CMPL,0,0,0,0,0,0},"N1|#|*|$|*|N0|/|"}}, /*Instructions executed per second*/
+  {PAPI_IPS,{DERIVED_POSTFIX,{PNE_PM_CYC,PNE_PM_INST_CMPL,0,0,0,0,0,0},"N1|#|*|N0|/|"}}, /*Instructions executed per second*/
   {PAPI_FDV_INS,{0,{PNE_PM_FPU_FDIV,0,0,0,0,0,0,0},0}}, /*FD ins */
   {PAPI_FSQ_INS,{0,{PNE_PM_FPU_FSQRT,0,0,0,0,0,0,0},0}}, /*FSq ins */
   {PAPI_TLB_DM,{0,{PNE_PM_DTLB_MISS,0,0,0,0,0,0,0},0}}, /*Data translation lookaside buffer misses*/

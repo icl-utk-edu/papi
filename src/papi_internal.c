@@ -1237,6 +1237,14 @@ static long_long handle_derived_add_ps(int *position, long_long *from)
   return(units_per_second(tmp, from[position[0]]));
 }
 
+/* this function implement postfix calculation, it reads in a string where I use:
+      |      as delimiter
+	  N2     indicate No. 2 native event in the derived preset
+	  +, -, *, /, %  as operator
+	  #      as MHZ(millioin hz) got from  _papi_hwi_system_info.hw_info.mhz*1000000.0
+	  
+	  Haihang (you@cs.utk.edu)
+*/
 long_long _papi_hwi_postfix_calc(EventInfo_t *evi, long_long *hw_counter)
 {
   char *point=evi->ops, operand[16];
@@ -1244,86 +1252,77 @@ long_long _papi_hwi_postfix_calc(EventInfo_t *evi, long_long *hw_counter)
   int i, top=0;
   
   while(*point!='\0'){
-     if(*point=='N'){  /* to get count for each native event */
-        i=0;
-	point++;
-	do{
-	   operand[i]=*point;
-	   point++;
-	   i++;
-	}while(*point!='|');
-	operand[i]='\0';
-	stack[top]=hw_counter[evi->pos[atoi(operand)]];
-	top++;
-	point++;
+    if(*point=='N'){  /* to get count for each native event */
+       i=0;
+       point++;
+	   do{
+	     operand[i]=*point;
+         point++;
+         i++;
+	   }while(*point!='|');
+       operand[i]='\0';
+       stack[top]=hw_counter[evi->pos[atoi(operand)]];
+       top++;
+       point++;
      }
      else if(*point=='#'){ /* to get mhz, ignore the rest char's */
-        stack[top]=_papi_hwi_system_info.hw_info.mhz;
-	top++;
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
-     }
-     else if(*point=='$'){ /* to get 1 million, ignore the rest char's */
-        stack[top]=1000000.0;
-	top++;
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
+        stack[top]=_papi_hwi_system_info.hw_info.mhz*1000000.0;
+        top++;
+        do{
+	      point++;
+        }while(*point!='|');
+        point++;
      }
      else if(isdigit(*point)){  /* to get integer, I suppose only integer will be used, 
                                    no error check here, please only use integer */
         i=0;
-	point++;
-	do{
-	   operand[i]=*point;
-	   point++;
-	   i++;
-	}while(*point!='|');
-	operand[i]='\0';
-	stack[top]=atoi(operand);
-	top++;
-	point++;
+        do{
+          operand[i]=*point;
+          point++;
+		  i++;
+	    }while(*point!='|');
+	    operand[i]='\0';
+	    stack[top]=atoi(operand);
+	    top++;
+	    point++;
      }
-      else if(*point=='+'){ /* + calculation */
+     else if(*point=='+'){ /* + calculation */
         stack[top-2]+=stack[top-1];
-	top--;
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
+	    top--;
+	    do{
+	      point++;
+	    }while(*point!='|');
+	    point++;
      }
-      else if(*point=='-'){ /* - calculation */
+     else if(*point=='-'){ /* - calculation */
         stack[top-2]-=stack[top-1];
-	top--;
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
+	    top--;
+	    do{
+	      point++;
+	    }while(*point!='|');
+	    point++;
      }
-      else if(*point=='*'){ /* * calculation */
+     else if(*point=='*'){ /* * calculation */
         stack[top-2]*=stack[top-1];
-	top--;
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
+    	top--;
+	    do{
+	      point++;
+	    }while(*point!='|');
+	    point++;
      }
-      else if(*point=='/'){ /* / calculation */
+     else if(*point=='/'){ /* / calculation */
         stack[top-2]/=stack[top-1];
-	top--;
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
+	    top--;
+	    do{
+	      point++;
+	    }while(*point!='|');
+	    point++;
      }
-       else{ /* do nothing */
-	do{
-	   point++;
-	}while(*point!='|');
-	point++;
+     else{ /* do nothing */
+	    do{
+	      point++;
+	    }while(*point!='|');
+	    point++;
      }
   }
   return (u_long_long)stack[0];
