@@ -68,19 +68,31 @@ int main(int argc, char **argv)
    {
      char *libname = 
      "libpapi.so";
+     char *libname2 = 
+     "libpapi64.so";
+     char *_libname;
      void *handle ;
 /*
      void *handle = dlopen("libm.so", RTLD_LAZY);
 */
      int (*num_hwctrs)(void);
      int oldcount;
+     int my_dlerror = 0;
 
-     printf("\nLoading %s with dlopen().\n",libname);
+RETRY:
+     if ( !my_dlerror ){
+        printf("\nLoading %s with dlopen().\n",libname);
+        _libname = libname;
+     }
+     else{
+        printf("\nLoading %s with dlopen().\n",libname2);
+        _libname = libname2;
+     }
 
      /* get current directory */
      if ( getcwd(fullname, PAPI_HUGE_STR_LEN) == NULL ) 
           test_skip(__FILE__, __LINE__, "getcwd", 1);
-     if ( (f = fopen(libname, "r")) == NULL ) 
+     if ( (f = fopen(_libname, "r")) == NULL ) 
      {  /* assume you are in ctests directory */
         temp = strrchr(fullname, '/');
         if( temp == NULL) 
@@ -88,18 +100,23 @@ int main(int argc, char **argv)
         else {
            index=(int)(temp-fullname);
            fullname[index+1]='\0'; /* get the absolute path of libpapi.so */
-           strcat(fullname, libname);  
+           strcat(fullname, _libname);  
         }
      } else {  /* assume you are in the src directory */
         strcat(fullname, "/");  
-        strcat(fullname, libname);  
+        strcat(fullname, _libname);  
         fclose(f);
      }
      printf("fullname = %s \n", fullname);
 
      handle = dlopen (fullname, RTLD_NOW);
      if (!handle) {
+          if ( !my_dlerror ){
+             my_dlerror = 1;
+             goto RETRY;
+          }
           printf("error: %s \n", dlerror());
+          printf("Also tried opening: %s\n", libname);
           printf(" Did you forget to set the environmental variable LIBPATH (in AIX) or LD_LIBRARY_PATH (in linux) ?\n");
           test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
