@@ -1010,4 +1010,3 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        { 0, } };
-
