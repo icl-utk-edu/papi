@@ -9,7 +9,7 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h pa
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) genpapifdef $(FHEADERS) tests
+all: showconf $(LIBS) genpapifdef $(FHEADERS) utils tests
 
 showconf:
 		@echo; 
@@ -102,6 +102,9 @@ fulltest: tests
 
 tests: ctests ftests
 
+utils: null
+	cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" util TOOLPATH="$(TOOLPATH)"
+
 ctests: null
 	cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS) TOOLPATH="$(TOOLPATH)"
 
@@ -113,6 +116,7 @@ clean: native_clean
 	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
 	cd ctests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
+	cd utils;  $(MAKE) clean
 
 clobber: clean
 	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS) $(SPECIAL_REMOVE)
@@ -126,7 +130,7 @@ dist:
 
 install-all: install install-tests
 
-install: install-tree install-man install-lib
+install: install-tree install-man install-lib install-utils
 
 install-lib: install-tree native_install
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(PREFIX)/include
@@ -136,6 +140,9 @@ install-lib: install-tree native_install
 
 install-man: install-tree
 	cd ../man; $(MAKE) PREFIX=$(PREFIX) install
+
+install-utils: install-tree
+	cd utils; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
 
 install-tests: install-tree
 	cd ctests; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
