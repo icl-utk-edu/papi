@@ -1,0 +1,14 @@
+Source: pfmon
+Section: devel
+Priority: optional
+Maintainer:  <eranian@hpl.hp.com>
+Standards-Version: 3.2.1
+Build-Depends: debmake,libpfm-dev(=2.0)
+
+Package: pfmon
+Architecture: ia64
+Depends: ${shlibs:Depends}
+Description: This package contains pfmon, a tool to monitor performance using
+ the IA-64 Performance Monitor Unit (PMU). Pfmon can monitor
+ standalone programs or the entire system on both UP and SMP Linux/ia64 systems.
+ This version supports both the Itanium and Itanium 2 processors.

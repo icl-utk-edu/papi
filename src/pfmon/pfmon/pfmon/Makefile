@@ -1,0 +1,132 @@
+#
+# Copyright (C) 2001-2002 Hewlett-Packard Co
+# Contributed by Stephane Eranian <eranian@hpl.hp.com>
+#
+# This file is part of pfmon, a sample tool to measure performance 
+# of applications on Linux/ia64.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307 USA
+#
+
+TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
+
+include $(TOPDIR)/config.mk
+include $(TOPDIR)/rules.mk
+
+LDFLAGS += -static
+
+# pfmon needs libelf
+# using -lpfm will pick up the static or shared library depending on how we link
+#
+LIBS += -L$(PFMLIBDIR) -lpfm -lpthread -lelf
+#
+# This is kind of broken because it assumes that if the static library
+# has changed then the shared library must have also changed. But this 
+# should cover our needs.
+#
+PFMLIB=$(PFMLIBDIR)/libpfm.a
+
+SRCS=pfmon.c pfmon_smpl.c pfmon_util.c pfmon_system.c pfmon_task.c pfmon_symbols.c pfmon_conf.c
+OBJS=pfmon.o pfmon_util.o pfmon_smpl.o pfmon_system.o pfmon_task.o pfmon_symbols.o pfmon_conf.o
+
+ALL_SUPPORT=pfmon_gen.o pfmon_itanium.o pfmon_itanium2.o
+
+CFLAGS += -DDESTROOT=\"$(DESTROOT)\"
+
+ifeq ($(CONFIG_PFMON_GENERIC),y)
+OBJS   += pfmon_generic.o
+CFLAGS += -DCONFIG_PFMON_GENERIC
+endif
+
+ifeq ($(CONFIG_PFMON_ITANIUM),y)
+OBJS   += pfmon_itanium.o
+CFLAGS += -DCONFIG_PFMON_ITANIUM
+endif
+
+ifeq ($(CONFIG_PFMON_ITANIUM2),y)
+OBJS   += pfmon_itanium2.o
+CFLAGS += -DCONFIG_PFMON_ITANIUM2
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_RAW),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_RAW
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_COMPACT),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_COMPACT
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_EXAMPLE),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_EXAMPLE
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_BTB),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_BTB
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_DET_ITA),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_DET_ITA
+endif
+
+ifeq ($(CONFIG_PFMON_SMPL_FMT_DET_ITA2),y)
+CFLAGS += -DCONFIG_PFMON_SMPL_FMT_DET_ITA2
+endif
+
+ifeq ($(CONFIG_PFMON_DEBUG),y)
+CFLAGS += -DPFMON_DEBUG
+endif
+
+DIRS=smpl_fmt
+SMPL_FMT_LIB=smpl_fmt/libsmplfmt.a
+
+INCDIR=-I$(PFMINCDIR) -I.
+
+TARGET=pfmon
+
+all: subdirs check_support $(TARGET)
+
+$(TARGET):  $(PFMLIB) $(OBJS) $(SMPL_FMT_LIB)
+	$(CC) $(OBJS) -o $@ $(CFLAGS) $(LDFLAGS) $(LIBS) $(SMPL_FMT_LIB)
+
+$(OBJS) : $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile
+
+clean: clean_subdirs
+	rm -f $(OBJS) $(TARGET) 
+
+distclean: clean clean_subdirs
+	rm -f $(ALL_SUPPORT)
+depend:
+	$(MKDEP) $(SRCS)
+
+pfmon : $(OBJS) $(SUPPORT)
+
+check_support:
+ifeq ($(CONFIG_PFMON_GENERIC)$(CONFIG_PFMON_ITANIUM)$(CONFIG_PFMON_ITANIUM2),nnn)
+	@echo " missing CPU specific support in pfmon Makefile"
+	@exit 1
+endif
+
+install: subdirs check_support $(TARGET)
+	-mkdir -p $(DESTDIR)/bin
+	$(INSTALL) -m 755 pfmon $(DESTDIR)/bin/pfmon
+	-ln -s $(DESTDIR)/bin/pfmon $(DESTDIR)/bin/pfmon_gen
+
+subdirs: 
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d all; done
+
+clean_subdirs: 
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d clean; done
+

@@ -1,0 +1,5 @@
+TODO list:
+----------
+- add support for multi-threaded (multiple tasks) processes
+- add some more tests programs
+- develop a validation suite

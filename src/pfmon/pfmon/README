@@ -1,0 +1,64 @@
+            ------------------------------------------------------
+                                    pfmon-2.0:
+	                 a package to monitor performance 
+                                  on Linux/ia64
+            ------------------------------------------------------
+	  Copyright (c) 2001-2002 Hewlett-Packard Company
+	                Stephane Eranian <eranian@hpl.hp.com>
+	
+
+This package provides a tool, called pfmon, which monitors performance
+on unmodified binaries or for the entire system. It is using the IA-64 
+Performance Monitoring Unit (PMU). This package uses the Linux/ia64 
+kernel support for the PMU (perfmon) and the libpfm library.
+
+This version of pfmon supports BOTH the Itanium (Merced) and Itanium2 (McKinley) processors.
+
+REQUIREMENTS
+------------
+
+         - YOU MUST at least HAVE kernel v2.4.18 or v2.5.3
+
+	 - As of version 2.0 of the pfmon package, the library, include files, and examples
+	   are in a separate package called libpfm-X.Y. This package can be found at the
+	   HPLabs FTP site:
+			ftp://ftp.hpl.hp.com/pub/linux-ia64/libpfm-X.Y.tar.gz
+
+	 - you need libpfm-2.0
+
+	 - to recompile pfmon you need the libelf development package
+
+WHAT'S THERE
+-------------
+
+	- the pfmon tool (pfmon directory) which collects performance data on unmodified
+	  binaries or for the entire system (UP & SMP).
+
+	- a small set of test programs (tests directory) including pfdbg to turn on/off 
+	  kernel perfmon debugging. 
+
+	- a simple script (scripts directory) to collect a cycle breakdown using pfmon 
+	  on Itanium.
+
+	- a user's guide (docs directory) for pfmon for both Itanium and Itanium2.
+
+INSTALLATION
+------------
+
+	- you must have the libpfm package already installed.
+
+	- edit config.mk to :
+		- update some variables, such as where to find libpfm and the header files.
+		- make your compiler options
+		- select which PMU you want to support. Multiple PMU can be supported by a single
+		  binary
+
+	- type make
+	- type make install
+	- you're done, type pfmon --help for a list of options
+
+DOCUMENTATION
+-------------
+
+	- extensive documentation with examples is available in the docs subdirectory
+	- More up to date information can be found on pfmon web site: http://www.hpl.hp.com/research/linux/perfmon
