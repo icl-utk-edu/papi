@@ -12,7 +12,7 @@ F77		= g77
 CC		= gcc
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-CFLAGS  	= -Wall -g -DDEBUG 
+CFLAGS  	= -Wall -g -DDEBUG -Iperfctr-2.6.x/usr.lib -Iperfctr-2.6.x/linux/include
 FFLAGS		= -Wall -g
 
 CPU		= p3
