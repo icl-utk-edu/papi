@@ -29,7 +29,7 @@ double loop(long n)
 void *thread(void *arg)
 {
     int eventset, ret;
-    unsigned long long values[PAPI_MPX_DEF_DEG];
+    long long values[PAPI_MPX_DEF_DEG];
 
     eventset = PAPI_NULL;
     ret = PAPI_create_eventset(&eventset);
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
      if ((ret = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
        test_fail(__FILE__, __LINE__, "PAPI_set_debug", ret);
 
-    ret = PAPI_thread_init(pthread_self);
+    ret = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
     if ( ret != PAPI_OK ) {
       test_fail(__FILE__, __LINE__, "PAPI_thread_init", ret);
     }

@@ -61,6 +61,7 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    long_long values[3] = { 0, 0, 0 };
    long_long min, max;
+   int save_debug_setting;
    int num_flops, retval;
    int PAPI_event=0, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
@@ -164,7 +165,7 @@ int main(int argc, char **argv)
 
    /* expecting error code, so let's suppress printout of error message */
    PAPI_get_opt(PAPI_DEBUG, &opt);
-   int save_debug_setting = opt.debug.level;
+   save_debug_setting = opt.debug.level;
    opt.debug.level = PAPI_QUIET;
    PAPI_set_opt(PAPI_DEBUG, &opt);
    retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, 0, handler);
