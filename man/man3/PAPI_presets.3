@@ -5,10 +5,12 @@
 PAPI_presets \- PAPI predefined named events
 
 .SH SYNOPSIS
+.nf
 .B #include <papi.h>
+.fi
 
 .SH DESCRIPTION
-The PAPI library names a number of predefined events. This set
+The PAPI library names a number of predefined, or preset events. This set
 is a collection of events typically found in many
 CPUs that provide performance counters. A PAPI preset event name is
 mapped onto one or more of the countable native events on each hardware platform.
@@ -18,7 +20,7 @@ as a single counter, derived using a combination of counters or unavailable.
 The PAPI preset events can be broken loosely into several categories, 
 as shown in the table below:
 
-.B Conditional Branching: 
+.B PAPI Preset Event Definitions by Category: 
 .TS H
 allbox, tab($);
 cB cB
@@ -195,7 +197,7 @@ L1 data cache hits
 T}
 _
 PAPI_L1_DCM$T{
-Level 1 data cache misses 
+L1 data cache misses 
 T}
 _
 PAPI_L1_DCR$T{
@@ -215,7 +217,7 @@ L1 instruction cache hits
 T}
 _
 PAPI_L1_ICM$T{
-Level 1 instruction cache misses 
+L1 instruction cache misses 
 T}
 _
 PAPI_L1_ICR$T{
@@ -227,11 +229,11 @@ L1 instruction cache writes
 T}
 _
 PAPI_L1_LDM$T{
-Level 1 load misses 
+L1 load misses 
 T}
 _
 PAPI_L1_STM$T{
-Level 1 store misses 
+L1 store misses 
 T}
 _
 PAPI_L1_TCA$T{
@@ -243,7 +245,7 @@ L1 total cache hits
 T}
 _
 PAPI_L1_TCM$T{
-Level 1 cache misses 
+L1 total cache misses 
 T}
 _
 PAPI_L1_TCR$T{
@@ -263,7 +265,7 @@ L2 data cache hits
 T}
 _
 PAPI_L2_DCM$T{
-Level 2 data cache misses 
+L2 data cache misses 
 T}
 _
 PAPI_L2_DCR$T{
@@ -283,7 +285,7 @@ L2 instruction cache hits
 T}
 _
 PAPI_L2_ICM$T{
-Level 2 instruction cache misses 
+L2 instruction cache misses 
 T}
 _
 PAPI_L2_ICR$T{
@@ -295,11 +297,11 @@ L2 instruction cache writes
 T}
 _
 PAPI_L2_LDM$T{
-Level 2 load misses 
+L2 load misses 
 T}
 _
 PAPI_L2_STM$T{
-Level 2 store misses 
+L2 store misses 
 T}
 _
 PAPI_L2_TCA$T{
@@ -311,7 +313,7 @@ L2 total cache hits
 T}
 _
 PAPI_L2_TCM$T{
-Level 2 cache misses 
+L2 total cache misses 
 T}
 _
 PAPI_L2_TCR$T{
@@ -327,11 +329,11 @@ L3 data cache accesses
 T}
 _
 PAPI_L3_DCH$T{
-Level 3 Data Cache Hits 
+L3 Data Cache Hits 
 T}
 _
 PAPI_L3_DCM$T{
-Level 3 data cache misses 
+L3 data cache misses 
 T}
 _
 PAPI_L3_DCR$T{
@@ -351,7 +353,7 @@ L3 instruction cache hits
 T}
 _
 PAPI_L3_ICM$T{
-Level 3 instruction cache misses 
+L3 instruction cache misses 
 T}
 _
 PAPI_L3_ICR$T{
@@ -363,11 +365,11 @@ L3 instruction cache writes
 T}
 _
 PAPI_L3_LDM$T{
-Level 3 load misses 
+L3 load misses 
 T}
 _
 PAPI_L3_STM$T{
-Level 3 store misses 
+L3 store misses 
 T}
 _
 PAPI_L3_TCA$T{
@@ -379,7 +381,7 @@ L3 total cache hits
 T}
 _
 PAPI_L3_TCM$T{
-Level 3 cache misses 
+L3 cache misses 
 T}
 _
 PAPI_L3_TCR$T{
@@ -461,6 +463,9 @@ Total translation lookaside buffer misses
 T}
 .TE
 .LP
+
+.SH AUTHORS
+Nils Smeds <smeds@cs.utk.edu>
 
 .SH BUGS
 The exact semantics of an event counter are platform dependent.  PAPI

@@ -5,12 +5,14 @@
 PAPIF \- Performance Application Programming Interface (Fortran)
 
 .SH SYNOPSIS
+.nf
 .B #include "fpapi.h"
+.BI call PAPIF_function_name(\arg1,arg2,...,check\)
+.fi
 
-.B call PAPIF_function_name(arg1,arg2,...,check)
 
-
-.SH Fortran Calling Interface
+.SH DESCRIPTION
+.B Fortran Calling Interface
 The PAPI library comes with a specific Fortran library interface. The
 Fortran interface covers the complete library with a few minor
 exceptions. Functions returning C pointers to structures, such as
@@ -28,8 +30,7 @@ are covered in the
 .BR PAPI_accum(3)
 man page.
 
-For most
-architectures the following relation holds between the pseudo-types
+For most architectures the following relation holds between the pseudo-types
 listed and Fortran variable types.
 
 .TS
@@ -71,7 +72,7 @@ of sufficient size. No character string longer than
 .B PAPI_MAX_STR_LEN
 is returned by the PAPIF interface.
 
-.SH DIAGNOSTICS
+.SH RETURN VALUES
 The return code of the corresponding C routine is returned in the argument 
 .B check
 in the Fortran interface.
