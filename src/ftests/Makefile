@@ -1,7 +1,6 @@
 CC = gcc
 FOR_USED = -DFORTRANUNDERSCORE
 CFLAGS = -O -DONT_WRAP -g $(FOR_USED)
-
 F77 = f77
 
 INCLUDE = -I..
@@ -12,7 +11,7 @@ TESTS 	= zero first \
 	  fmatrixpapi fmatrixpapi2 flops strtest
 
 FTEST_DEPENDENCE=ftests_wrappers.o ftests_util.o
-PAPILIB=ftests_wrappers.o ftests_util.o ../libpapi.a -lcpc
+PAPILIB=ftests_wrappers.o ftests_util.o ../libpapi.a
 
 default: $(TESTS)
 
@@ -53,52 +52,52 @@ flops: flops.F $(FTEST_DEPENDENCE)
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
 
 description: description.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) description.F $(PAPILIB) -o description
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) description.F $(PAPILIB) $(LDFLAGS) -o description
 
 accum: accum.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) accum.F $(PAPILIB) -o accum
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) accum.F $(PAPILIB) -o accum $(LDFLAGS)
 
 highlevel: highlevel.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) highlevel.F $(PAPILIB) -o highlevel
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) highlevel.F $(PAPILIB) -o highlevel $(LDFLAGS)
 
 zero: zero.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) zero.F $(PAPILIB) -o zero
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) zero.F $(PAPILIB) -o zero $(LDFLAGS)
 
 first: first.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) first.F $(PAPILIB) -o first
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) first.F $(PAPILIB) -o first $(LDFLAGS)
 
 second: second.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) second.F $(PAPILIB) -o second
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(PAPILIB) -o second $(LDFLAGS)
 
 third: third.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) third.F $(PAPILIB) -o third
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) third.F $(PAPILIB) -o third $(LDFLAGS)
 
 fourth: fourth.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) fourth.F $(PAPILIB) -o fourth
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fourth.F $(PAPILIB) -o fourth $(LDFLAGS)
 
 fifth: fifth.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) fifth.F $(PAPILIB) -o fifth
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fifth.F $(PAPILIB) -o fifth $(LDFLAGS)
 
 nineth: nineth.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) nineth.F $(PAPILIB) -o nineth
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) nineth.F $(PAPILIB) -o nineth $(LDFLAGS)
 
 tenth: tenth.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) tenth.F $(PAPILIB) -o tenth
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) tenth.F $(PAPILIB) -o tenth $(LDFLAGS)
 
 cost: cost.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) cost.F $(PAPILIB) -o cost
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) cost.F $(PAPILIB) -o cost $(LDFLAGS)
 
 johnmay: johnmay.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) johnmay.F $(PAPILIB) -o johnmay
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay.F $(PAPILIB) -o johnmay $(LDFLAGS)
 
 johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
 
 native: native.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) native.F $(PAPILIB) -o native
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) -o native $(LDFLAGS)
 
 profile: profile.F $(FTEST_DEPENDENCE)
-	$(F77) $(INCLUDE) profile.F $(PAPILIB) -o profile
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) profile.F $(PAPILIB) -o profile $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TESTS) core *~

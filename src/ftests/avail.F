@@ -11,7 +11,7 @@ C Hardware info
       REAL revision, mhz
       integer len_trim
       external len_trim
-      integer i, avail, flags
+      integer i, avail_flag, flags
       CHARACTER*(PAPI_MAX_STR_LEN) event_name, event_descr, 
      *event_label, event_note
       CHARACTER*(10) avail_str, flags_str
@@ -43,8 +43,8 @@ C         call ftests_fail(__FILE__'PAPI_library_init',check)
       print *, 'Name\t\tCode\t\tAvail\tDeriv\tDescription(note)'
       do i=0, PAPI_MAX_PRESET_EVENTS-1
          call papif_query_all_event_verbose(z'80000000'+i, event_name, 
-     *   event_descr, event_label, avail, event_note, flags, check)
-         if (avail.EQ.1) then
+     *   event_descr, event_label, avail_flag, event_note, flags, check)
+         if (avail_flag.EQ.1) then
             avail_str = 'Yes'
          else 
             avail_str = 'No'

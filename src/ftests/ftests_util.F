@@ -84,8 +84,8 @@ C
 C  TEST UTILITIES
 C
       subroutine do_flops(n)
-      integer n
       implicit none      
+      integer n
       double precision a, b, c
       integer i
       a = 0.5
@@ -97,8 +97,8 @@ C
       end
 
       subroutine do_l1misses(n)
-      integer n
       implicit none      
+      integer n
       integer i, j
       integer buf(L1_MISS_BUFFER_SIZE_INTS)      
       do i = 1, n
@@ -109,8 +109,8 @@ C
       end
 
       subroutine do_both(n)
-      integer n
       implicit none      
+      integer n
       double precision a, b, c
       integer i, j
       integer buf(L1_MISS_BUFFER_SIZE_INTS)      
@@ -128,6 +128,7 @@ C
       end
 
       subroutine stringify_domain(domain, str)
+      implicit none      
       integer domain
       character*(PAPI_MAX_STR_LEN) str
 
@@ -146,6 +147,7 @@ C
       end
 
       subroutine stringify_granularity(granularity, str)
+      implicit none      
       integer granularity
       character*(PAPI_MAX_STR_LEN) str
 

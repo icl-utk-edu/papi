@@ -5,7 +5,7 @@
       implicit none
 
       integer*8 values(10)
-      integer native, es, point
+      integer nativees, es, point
       integer ncpu, nnodes, totalcpus, vendor
       integer model
       character*20 vendor_string, model_string
@@ -41,64 +41,64 @@
 #ifdef _AIX
       print *, "AIX"
 C     ICM      
-      native = 5 * 2**8
-      call PAPIf_add_event( es, native, retval )
+      nativees = 5 * 2**8
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     FPU1CMPL   
-      native = 35 * 2**8 + 1
-      call PAPIf_add_event( es, native, retval )
+      nativees = 35 * 2**8 + 1
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     LDCM     
-      native = 5 * 2**8 + 2
-      call PAPIf_add_event( es, native, retval )
+      nativees = 5 * 2**8 + 2
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     LDCMPL
-      native = 5 * 2**8 + 3
-      call PAPIf_add_event( es, native, retval )
+      nativees = 5 * 2**8 + 3
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     FPU0CMPL
-      native = 5 * 2**8 + 4
-      call PAPIf_add_event( es, native, retval )
+      nativees = 5 * 2**8 + 4
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     CYC 
-      native = 12 * 2**8 + 5
-      call PAPIf_add_event( es, native, retval )
+      nativees = 12 * 2**8 + 5
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     FMA
-      native = 9 * 2**8 + 6
-      call PAPIf_add_event( es, native, retval )
+      nativees = 9 * 2**8 + 6
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     TLB
-      native = 0 * 2**8 + 7
-      call PAPIf_add_event( es, native, retval )
+      nativees = 0 * 2**8 + 7
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
@@ -108,16 +108,16 @@ C     TLB
 
 #if defined(linux)
 C     Data mem refs
-      native = 43 * 2**8 + 0
-      call PAPIf_add_event( es, native, retval )
+      nativees = 43 * 2**8 + 0
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     Lines out
-      native = 47 * 2**8 + 1
-      call PAPIf_add_event( es, native, retval )
+      nativees = 47 * 2**8 + 1
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
@@ -126,16 +126,16 @@ C     Lines out
 
 #if defined(mips) .AND. defined(sgi) .AND. defined(unix)
 C     L1 I Miss
-      native = 9 * 2**8
-      call PAPIf_add_event( es, native, retval )
+      nativees = 9 * 2**8
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     L1 D Miss
-      native = 9 * 2**8 + 1
-      call PAPIf_add_event( es, native, retval )
+      nativees = 9 * 2**8 + 1
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
@@ -144,24 +144,24 @@ C     L1 D Miss
 
 #if defined(_CRAYT3E)
 C     Machine cyc
-      native = 0 * 2**8 + 0
-      call PAPIf_add_event( es, native, retval )
+      nativees = 0 * 2**8 + 0
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     Dcache acc
-      native = 0 * 2**8 + 1
-      call PAPIf_add_event( es, native, retval )
+      nativees = 0 * 2**8 + 1
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
 
 C     CPU cyc
-      native = 0 * 2**8 + 2
-      call PAPIf_add_event( es, native, retval )
+      nativees = 0 * 2**8 + 2
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
@@ -172,16 +172,16 @@ C     CPU cyc
 #if defined(sun) .AND. defined(sparc)
       print *, "Sun Sparc"
 C     Load_use
-      native = z'B' * 2**8
-      call PAPIf_add_event( es, native, retval )
+      nativees = z'B' * 2**8
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
       end if
       
 C     DC_wr_hit
-      native = z'A' * 2**8 + 1
-      call PAPIf_add_event( es, native, retval )
+      nativees = z'A' * 2**8 + 1
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
         print *, errorstring(1:len_trim(errorstring))
@@ -190,18 +190,18 @@ C     DC_wr_hit
 #endif
 
 #if defined(__ALPHA) .AND. defined(__osf__)
-      call get_instr(native)
-      if (native .NE. -1) then
-         call PAPIf_add_event( es, native, retval )
+      call get_instr(nativees)
+      if (nativees .NE. -1) then
+         call PAPIf_add_event( es, nativees, retval )
          if ( retval .NE. PAPI_OK ) then
             call PAPIf_perror( retval, errorstring, errorcode)
             print *, errorstring(1:len_trim(errorstring))
          end if
       end if
 
-      call get_cyc(native)
-      if (native .NE. -1) then
-         call PAPIf_add_event( es, native, retval )
+      call get_cyc(nativees)
+      if (nativees .NE. -1) then
+         call PAPIf_add_event( es, nativees, retval )
          if ( retval .NE. PAPI_OK ) then
             call PAPIf_perror( retval, errorstring, errorcode)
             print *, errorstring(1:len_trim(errorstring))
@@ -284,17 +284,17 @@ C     DC_wr_hit
 
 #if defined(__ALPHA) .AND. defined(__osf__)
 C     NOT TESTED YET
-      subroutine get_instr(integer native)
+      subroutine get_instr(integer nativees)
       integer cpu
       GET_CPU_FAMILY(cpu)
-      if (cpu .EQ. EV6_CPU) native = PF6_MUX0_RET_INSTRUCTIONS *
+      if (cpu .EQ. EV6_CPU) nativees = PF6_MUX0_RET_INSTRUCTIONS *
      *                               2**8 + 0
       end
 
-      subroutine get_cyc(integer native)
+      subroutine get_cyc(integer nativees)
       integer cpu
       GET_CPU_FAMILY(cpu)
-      if (cpu .EQ. EV6_CPU) native = PF6_MUX1_CYCLES
+      if (cpu .EQ. EV6_CPU) nativees = PF6_MUX1_CYCLES
      *                               2**8 + 1
       end
 #endif
