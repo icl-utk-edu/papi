@@ -35,7 +35,8 @@ int main(int argc, char **argv)
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
-   printf("%lldus. %lldcyc.\n",elapsed_us,elapsed_cyc);
+   printf("%lld us. %lld cyc.\n",elapsed_us,elapsed_cyc);
+   printf("%f Computed MHz.\n",(float)elapsed_cyc/(float)elapsed_us);
 
    if ((elapsed_us / (long_long)1000000) < 10)
      test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
