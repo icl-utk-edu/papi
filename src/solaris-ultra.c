@@ -35,7 +35,7 @@ int papi_debug;
    native event code. 
 */
 /* UltraSparc II preset search table */
-preset_search_t usii_preset_search_map[] = {
+hwi_preset_t usii_preset_search_map[] = {
   /* L1 Cache Imisses */
   {PAPI_L1_ICM,DERIVED_SUB,{NATIVE_MASK|4,NATIVE_MASK|14}},		
   /* L2 Total Cache misses*/
@@ -80,7 +80,7 @@ preset_search_t usii_preset_search_map[] = {
   {0,0,{0,0}}};
 
 /* UltraSparc III preset search table */
-preset_search_t usiii_preset_search_map[] = {
+hwi_preset_t usiii_preset_search_map[] = {
   /* Floating point instructions */
   {PAPI_FP_INS,DERIVED_ADD,{NATIVE_MASK|22,NATIVE_MASK|68}}, 
                     /* pic0 FA_pipe_completion and pic1 FM_pipe_completion */
@@ -242,7 +242,7 @@ native_info_t  usiii_native_table[]= {
 extern papi_mdi_t _papi_hwi_system_info;
 int _papi_hwi_event_index_map[MAX_COUNTERS];
 
-preset_search_t *preset_search_map;
+hwi_preset_t *preset_search_map;
 static native_info_t *native_table;
 
 #ifdef DEBUG
@@ -293,11 +293,9 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       t = 0;
     else
       t = 1;
-    /* save the overflow mask for overflow */
-    ctx.overflow_vector = 1 << t;
       
     /* Call the regular overflow function in extras.c */
-    _papi_hwi_dispatch_overflow_signal(&ctx);
+    _papi_hwi_dispatch_overflow_signal(&ctx,  _papi_hwi_system_info.supports_hw_overflow, 0, 1);
 
     /* Reset the threshold */
       
@@ -796,7 +794,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info)
 /*
   _papi_hwi_dispatch_overflow_signal((void *)info); 
 */
-  _papi_hwi_dispatch_overflow_signal((void *)&ctx); 
+  _papi_hwi_dispatch_overflow_signal((void *)&ctx, _papi_hwi_system_info.supports_hw_overflow, 0, 0); 
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)

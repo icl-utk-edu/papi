@@ -174,17 +174,25 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
   posix_profil(pc, &profile->prof[best_index], overflow_bin, profile->flags, over, threshold);
 }
 
-/* if isHardwareSupport is true, then the processor is using hardware overflow,
-   else it is using software overflow. 
-   overflow_bit: if the substrate can get the overflow bit when overflow occurs,     then this should be passed by the substrate;  
-   If both genOverflowBit and isHardwareSupport are true, that means 
-     we don't know how to get the overflow bit from the kernel directly,
-      , so we generate the overflow bit in this function; 
-   (The substrate can only set genOverflowBit pararemter to ture if the 
-     hardware doesn't support multiple hardware overflow. If the substrate
-     support multiple hardware overflow and you don't know how to get the
-     overflow bit, then I don't know how to deal with this situation).
+/* if isHardware is true, then the processor is using hardware overflow,
+   else it is using software overflow. Use this parameter instead of 
+   _papi_hwi_system_info.supports_hw_overflow is in CRAY some processors
+   may use hardware overflow, some may use software overflow.
+
+   overflow_bit: if the substrate can get the overflow bit when overflow
+                 occurs, then this should be passed by the substrate;
+
+   If both genOverflowBit and isHardwareSupport are true, that means
+     the substrate don't know how to get the overflow bit from the
+     kernel directly, so we generate the overflow bit in this function 
+    since this function can access the ESI->overflow struct;
+   (The substrate can only set genOverflowBit pararemter to ture if the
+     hardware doesn't support multiple hardware overflow. If the
+     substrate support multiple hardware overflow and you don't know how 
+     to get the overflow bit, then I don't know how to deal with this 
+     situation).
 */
+
 void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_long overflow_bit, int genOverflowBit)
 {
   int retval, event_counter, i, overflow_flag, pos;
@@ -239,7 +247,6 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware, long_
         {
     DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline[i],ESI->overflow.threshold[i]));
           pos=ESI->EventInfoArray[papi_index].pos[0];
-          printf("pos=%d  ", pos);
           overflow_vector ^= 1<<pos; 
           temp[i] = latest - ESI->overflow.threshold[i];
           overflow_flag=1;
