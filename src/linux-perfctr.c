@@ -24,6 +24,8 @@
 
 #include SUBSTRATE
 
+#include "ia32_presets.h"
+
 /* First entry is mask, counter code 1, counter code 2, and TSC. 
 A high bit in the mask entry means it is an OR mask, not an
 and mask. This means that the same even is available on either
@@ -37,8 +39,6 @@ static hwd_preset_t *preset_map = NULL;
   NOTE: The obsolete linux-perf substrate is not supported by
   this scheme, although it could be.
 */
-#include "ia32_presets.h"
-
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -142,7 +142,7 @@ inline static int setup_all_presets(int cpu_type)
 
     case PERFCTR_X86_INTEL_P4:
     case PERFCTR_X86_INTEL_P4M2:
-      fprintf(stderr,"Intel P4 (and Xeon) is not supported by this PAPI substrate.\n");
+      fprintf(stderr,"Intel Pentium 4 is not supported by this substrate.\n");
       break;
 
     default:
@@ -275,11 +275,6 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
-    case PERFCTR_X86_INTEL_P4:   /* This needs to be set to the right values */
-      ptr->counter_cmd.cpu_control.tsc_on=1;
-      ptr->counter_cmd.cpu_control.nractrs=0;
-      ptr->counter_cmd.cpu_control.nrictrs=0;
-      break;
     case PERFCTR_X86_AMD_K7:
       ptr->counter_cmd.cpu_control.evntsel[0] |= def_mode | PERF_ENABLE;
       ptr->counter_cmd.cpu_control.evntsel[1] |= def_mode | PERF_ENABLE;
@@ -289,6 +284,8 @@ inline static void init_config(hwd_control_state_t *ptr)
       ptr->counter_cmd.cpu_control.nractrs=_papi_system_info.num_cntrs;
       ptr->counter_cmd.cpu_control.nrictrs=0;
       break;
+    default:
+      abort();
     }
   /* Identity counter map for starters */
   for(i=0;i<_papi_system_info.num_cntrs;i++) 
@@ -352,9 +349,15 @@ static int get_system_info(struct perfctr_dev *dev)
 
   fclose(cpuinfo);
 
-#ifdef PERFCTR18  /* And PERFCTR20 */
+#if defined(PERFCTR18) || defined(PERFCTR20) 
   if (vperfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
+  if (strstr(info.version,"2.4") != info.version)
+    {
+      fprintf(stderr,"Version mismatch of perfctr: compiled 2.4 or higher vs. installed %s\n",info.version);
+      return(PAPI_ESBSTR);
+    }
+
   strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
   _papi_system_info.supports_hw_overflow = 
     (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
@@ -1539,38 +1542,29 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static atomic_t lock;
+static volatile unsigned int lock = 0;
+static volatile unsigned int *lock_addr = &lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,1);
 }
 
 void _papi_hwd_lock(void)
 {
-  DBG((stderr,"%lld lock %d\n",get_cycles(),atomic_read(&lock)));
-  if (atomic_dec_and_test(&lock))
-    return;
-  else
+  while (1)
     {
-#ifdef DEBUG
-      volatile int waitcyc = 0;
-#endif
-      while (atomic_dec_and_test(&lock))
+      if (test_and_set_bit(0,lock_addr)) /* from asm/bitops.h */
 	{
-	  DBG((stderr,"Waiting..."));
-#ifdef DEBUG
-	  waitcyc++;
-#endif
-	  atomic_inc(&lock);
+	  mb(); /* memory barrier/flush from asm/bitops.h */
+	  return;
 	}
     }
 }
 
 void _papi_hwd_unlock(void)
 {
-  DBG((stderr,"%lld unlock %d\n",get_cycles(),atomic_read(&lock)));
-  atomic_set(&lock, 1);
+  clear_bit(0, lock_addr); /* from asm/bitops.h */
+  mb(); /* memory barrier/flush from asm/bitops.h */
 }
 
 /* Machine info structure. -1 is unused. */
