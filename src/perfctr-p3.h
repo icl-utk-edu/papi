@@ -60,7 +60,7 @@ extern volatile unsigned int lock[PAPI_MAX_LOCK];
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
 {                                               \
-   unsigned long res = 0;                       \
+   unsigned int res = 0;                        \
    do {                                         \
       __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
    } while(res != (unsigned int)MUTEX_OPEN);   \
