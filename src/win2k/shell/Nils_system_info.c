@@ -9,14 +9,18 @@
 #undef NDEBUG
 #include <malloc.h>
 #include "papiStdEventDefs.h"
-#include "papi.h"
-#include "papi_internal.h"
+
 
 #ifndef _WIN32
+  #include "papi.h"
+  #include "papi_internal.h"
+
   int main(int argc, char **argv)
   {
     exit(Nils_System_Info());
   }
+#else
+  #include "win32.h"
 #endif
 
 int Nils_System_Info(void) 
