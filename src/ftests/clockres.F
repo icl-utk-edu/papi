@@ -1,4 +1,4 @@
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program clockres
       IMPLICIT NONE

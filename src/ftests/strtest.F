@@ -15,7 +15,7 @@ C    values in these compilers might occasionally cast these into the
 C    wrong type. In the code below the line code=MSGCODE is used to make
 C    sure that the event code get the right type.
 C
-#include "fpapi.h"
+#include "fpapi_test.h"
 C Set MSGLEN to the number of characters in the named event in MSGCODE
 #define MSGLEN 11
 #define MSGCODE PAPI_L1_DCM 

@@ -3,7 +3,7 @@ C get is about INDEX^3  on machines that consider add and multiply one flop
 C such as SGI, and 2*(INDEX^3) that don't consider it 1 flop such as INTEL
 C -Kevin London
 
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program flops
 

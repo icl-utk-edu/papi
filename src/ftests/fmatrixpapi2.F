@@ -9,7 +9,7 @@ C
 C Derived from an example written by Kevin London March 2000
 C ****************************************************************************
 
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program fmatrixpapi
       IMPLICIT NONE

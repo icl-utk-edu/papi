@@ -10,7 +10,7 @@ C events. I still have a problem if someone adds Level 2 cache misses
 C and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 C 2 counters. 
 
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program case2
       IMPLICIT NONE

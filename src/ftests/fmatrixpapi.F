@@ -6,7 +6,7 @@ C     look at the performance. written by Kevin London
 C     March 2000
 C****************************************************************************
 
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program fmatrixpapi
       IMPLICIT NONE
