@@ -5,7 +5,7 @@ TESTS 	= zero first \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
-FTEST_DEPENDENCE=ftests_util.o
+FTEST_DEPENDENCE=ftests_util.o do_loops.o
 PAPILIB=ftests_util.o ../libpapi.a
 
 default: $(TESTS)
@@ -14,6 +14,9 @@ ftests_util.o: ftests_util.F
 	@if [ $(SUBSTR) = tru64-alpha ]; then $(F77) -g2 $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
 	else if [ $(SUBSTR) = solaris-ultra ]; then $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
 	else $(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi; fi
+
+do_loops.o: do_loops.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c do_loops.c
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
@@ -94,11 +97,11 @@ profile: profile.F $(FTEST_DEPENDENCE)
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) profile.F $(PAPILIB) -o profile $(LDFLAGS)
 
 fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) -o fmultiplex1 $(LDFLAGS)
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) $(FTEST_DEPENDENCE) -o fmultiplex1 $(LDFLAGS)
 
 
 fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
+	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) $(FTEST_DEPENDENCE) -o fmultiplex2 $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TESTS) core *~

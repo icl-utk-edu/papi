@@ -1,7 +1,9 @@
 #include "fpapi.h"
 #define SUCCESS 1
 #define NUM 100
-#define MAX_TO_ADD 6
+
+#define MAX_TO_ADD 9
+
 #define PAPI_MAX_PRESET_EVENTS 128
 
       program multiplex2
@@ -18,7 +20,7 @@
          write (*,*) "case1: Does PAPI_multiplex_init() handle", 
      *" lots of events?"
       end if
-      call case1(retval, tests_quiet)
+      call case1(tests_quiet, retval)
       call ftests_pass(__FILE__)
       end
 
@@ -76,6 +78,10 @@
      .   'papif_set_multiplex', retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
+         print *, "Checking for available events..."
+      end if
+
       EventCode = 0
       do i=1, MAX_TO_ADD, 1
          avail_flag=0
@@ -88,7 +94,7 @@
          end do
 
          if (tests_quiet .EQ. 0) then
-            write (*, 200) "Adding Event ", event_name 
+            write (*, 200) "  Adding Event ", event_name 
  200        FORMAT(A13, A11)
          end if
 
@@ -97,10 +103,11 @@
          if ( retval .NE. PAPI_OK ) then
             call ftest_fail(__FILE__, __LINE__,
      *           'PAPIf_add_event', retval)
+            stop
          end if
 
          if (tests_quiet .EQ. 0) then
-            write (*, 200) "Added Event ", event_name 
+            write (*, 200) "  Added Event ", event_name 
          end if
       end do
       
@@ -111,14 +118,10 @@
       end if
 
       fd = 1
-      call do_open(fd)
-
       do i=0, NUM, 1
          call do_flops(1000000)
-         call do_reads(1000, fd)
+         call do_reads(1000)
       end do
-
-      call do_close (fd)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then

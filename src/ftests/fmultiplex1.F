@@ -112,12 +112,10 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
       end if
 
       fd = 1
-      call do_open(fd)
       do i=0, NUM, 1
          call do_flops(1000000)
-         call do_reads(1000, fd)
+         call do_reads(1000)
       end do
-      call do_close (fd)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -200,13 +198,10 @@ C     Tests that PAPI_set_multiplex() works before adding events
       end if
 
       fd = 1
-      call do_open(fd)
-
       do i=0, NUM, 1
          call do_flops(1000000)
-         call do_reads(1000, fd)
+         call do_reads(1000)
       end do
-      call do_close (fd)
 
 
 
@@ -290,12 +285,10 @@ C     Tests that PAPI_set_multiplex() works after adding events
       end if
 
       fd = 1
-      call do_open(fd)
       do i=0, NUM, 1
          call do_flops(1000000)
-         call do_reads(1000, fd)
+         call do_reads(1000)
       end do
-      call do_close (fd)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -421,12 +414,10 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       end if
 
       fd = 1
-      call do_open(fd)
       do i=0, NUM, 1
          call do_flops(1000000)
-         call do_reads(1000, fd)
+         call do_reads(1000)
       end do
-      call do_close (fd)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
