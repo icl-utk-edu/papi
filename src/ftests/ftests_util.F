@@ -79,6 +79,22 @@ C    used in the program. See eg. fmatrixpapi.F
       stop
       end
 
+      subroutine ftests_skip(test_str,papiretval)
+      implicit none
+      character*(*) test_str
+      character*(PAPI_MAX_STR_LEN) papi_errstr
+      integer papiretval
+      integer len_trim
+      external len_trim
+
+      write(*,*) test_str,':               SKIPPED' 
+      if(papiretval.lt.0)then
+        call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
+        write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
+      end if
+      stop
+      end
+
 
 C
 C  TEST UTILITIES

@@ -11,11 +11,15 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
 
 #if (defined(sgi) && defined(host_mips))
       integer id, getuid 
       id = getuid()
 #endif
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -40,15 +44,19 @@
       call PAPIf_add_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        print *, 'Can not add PAPI_FP_INS: '//
+        if (tests_quiet .EQ. 0) then
+        print *, 'Cannot add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #else
       call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #endif
 
@@ -56,8 +64,10 @@
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_create_eventset(es2, retval)
@@ -70,23 +80,29 @@
       call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #else
       call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #endif
       
       call PAPIf_add_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_create_eventset(es3, retval)
@@ -99,23 +115,29 @@
       call PAPIf_add_event( es3, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #else
       call PAPIf_add_event( es3, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #endif
       
       call PAPIf_add_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_set_domain1(es1, PAPI_DOM_ALL, retval)
@@ -211,10 +233,12 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case 2: Non-overlapping start, stop, read",
      *" for all 3 domains."
       print *, "----------------------------------------------------------
      *---------------------"
+      end if
 
       call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -223,7 +247,9 @@
       end if
 
       call stringify_domain(domain, domainstr)
+      if (tests_quiet .EQ. 0) then
       write (*,900) "Default domain is:", domain, domainstr
+      end if
  900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
@@ -234,9 +260,12 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
+      if (tests_quiet .EQ. 0) then
       write (*,800) "Default granularity is:", granularity, grnstr
+      end if
  800  format(a25, i3, " ", a20)
 
+      if (tests_quiet .EQ. 0) then
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "----------------------------------------------------------
@@ -254,10 +283,13 @@
       print *, "Verification:"
       print *, "Row 1 approximately equals N 0 N"
       print *, "Column 1 approximately equals column 2 plus column 3"
+      end if
 
 #if (defined(sgi) && defined(host_mips))
+      if (tests_quiet .EQ. 0) then
       print *, "* Irix requires root for PAPI_DOM_KERNEL and PAPI_DOM_ALL."
       print *, "* The first two rows will be -3 if not run as root for IRIX."
+      end if
       if (id.NE.0) then
          min = NUM_FLOPS*0.9
          max = NUM_FLOPS*1.1

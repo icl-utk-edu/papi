@@ -9,7 +9,7 @@
       integer ncpu, nnodes, totalcpus, vendor
       integer model
       character*20 vendor_string, model_string
-      real*4 revision, mhz, rsec
+      real*4 revision, mhz, rsec, csec
       integer*8 uso, usn 
       integer retval, errorcode
       character*(PAPI_MAX_STR_LEN) errorstring
@@ -38,7 +38,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
-#ifdef _AIX
+#if defined(_AIX)
       print *, "AIX"
 C     ICM      
       nativees = 5 * 2**8
@@ -221,7 +221,7 @@ C     DC_wr_hit
       end if
 
       point = point +1
-      call sleep(1)
+C     call sleep(1)
       call do_both(1000)
 
       call PAPIf_stop(es, values(1), retval)
@@ -240,28 +240,28 @@ C     DC_wr_hit
 #if defined(_AIX)
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
-      print *, "L1 Instruction Cache Misses: ", values(0)
-      printf(stderr,"FPU1 Instructions          : ",values(1)
-      print *, "L1 Data Cache Load Misses  : ", values(2)
-      print *, "Load Instructions          : ", values(3)
-      print *, "FPU0 Instructions          : ", values(4)
-      print *, "CPU Cycles                 : ", values(5)
-      print *, "FMA Instructions           : ", values(6)
-      print *, "TLB Misses                 : ", values(7)
+      print *, "L1 Instruction Cache Misses: ", values(1)
+      print *, "FPU1 Instructions          : ", values(2)
+      print *, "L1 Data Cache Load Misses  : ", values(3)
+      print *, "Load Instructions          : ", values(4)
+      print *, "FPU0 Instructions          : ", values(5)
+      print *, "CPU Cycles                 : ", values(6)
+      print *, "FMA Instructions           : ", values(7)
+      print *, "TLB Misses                 : ", values(8)
       print *, "------------------------------------------"
       print *, "CPU MFLOPS                 : ",
-     *((values(4)+values(1))/1000000.0)/csec
+     *((values(5)+values(2))/1000000.0)/csec
       print *, "Real MFLOPS                : ",
-     *((values(4)+values(1))/1000000.0)/rsec
+     *((values(5)+values(2))/1000000.0)/rsec
       print *, "%% L1 Load Hit Rate         : ",
-     *100.0*(1.0 - (values(2)/values(3)))
+     *100.0*(1.0 - (values(3)/values(4)))
       print *, "%% FMA Instructions         : ",
-     *100.0*values(6)/(values(1)+values(4))
+     *100.0*values(6)/(values(2)+values(5))
 #endif
 
 #if defined(linux)
-      print *, "DCU Memory references      : ", values(0)
-      print *, "DCU Lines out              : ", values(1)
+      print *, "DCU Memory references      : ", values(1)
+      print *, "DCU Lines out              : ", values(2)
 #endif
 
 #if (defined(mips) && defined(sgi))
@@ -270,9 +270,9 @@ C     DC_wr_hit
 #endif
 
 #if defined(_CRAYT3E)
-      print *, "Machine Cycles                    : ",values(0)
-      print *, "DCache accesses                   : ",values(1)
-      print *, "CPU Cycles                        : ",values(2)      
+      print *, "Machine Cycles                    : ",values(1)
+      print *, "DCache accesses                   : ",values(2)
+      print *, "CPU Cycles                        : ",values(3)      
 #endif
 
 #if (defined(sun) && defined(sparc))

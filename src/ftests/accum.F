@@ -7,6 +7,10 @@
       integer*8 values(10)
       integer events(2)
       integer retval
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -101,6 +105,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case accum: Test of PAPI_add_events, ",
      *"PAPI_rem_events, PAPI_accum"
       print *, "------------------------------------------",
@@ -123,6 +128,7 @@
       print *, "Column 3 approximately equals 2 * Column 1;"
       print *, "Column 4 approximately equals 3 * Column 1;"
       print *, "Column 5 approximately equals Column 1."
+      end if
  
       call ftests_pass(__FILE__)
       end

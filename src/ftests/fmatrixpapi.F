@@ -20,6 +20,10 @@ C   PAPI values of the counters
       INTEGER*8 values(2)
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
 C   Setup default values
       num_events=0
@@ -39,10 +43,12 @@ C   See how many hardware events at one time are supported
       if ( num_events .LT. 2 ) then
           print *,'This example program requries the architecture ',
      .    'to support 2 simultaneous hardware events...shutting down.'
-      stop
+      call ftests_skip(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, 'Number of hardware counters supported: ', num_events
+      end if
 
 C   matrix 1: read in the matrix values
       do i=1, nrows1
@@ -104,10 +110,12 @@ C  Stop the counters and put the results in the array values
 C  Make sure the compiler does not optimize away the multiplication
       call dummy(r)
 
+      if (tests_quiet .EQ. 0) then
       print *, 'FP Instructions:  ',values(1)
       print *, 'Cycles: ',values(2)
       write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
+      end if
 
       call ftests_pass(__FILE__)
       end

@@ -23,6 +23,10 @@ C   PAPI values of the counters
       REAL revision, mhz
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
 C   Setup default values
       numevents=0
@@ -71,6 +75,7 @@ C   Grab the hardware info
         nchr=i
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *
       print 100, totalcpus,mstring(1:nchr), mhz
       print *
@@ -79,6 +84,7 @@ C   Grab the hardware info
       print 103,'vendor',vendor,'vstring',vstring
       print 104,'model',model,'mstring',mstring
       print *
+      end if
  100  format(i5,' CPU(s) ',a,' at ',f7.2,' MHz')
  101  format(a9,' =',i6,7x,a9,' =',i5,5x,a9,'=',i5)
  102  format(a9,' =',f7.2,6x,a9,' =',f7.2)
@@ -142,11 +148,13 @@ C  Stop the counters and put the results in the array values
 C  Make sure the compiler does not optimize away the multiplication
       call dummy(r)
 
+      if (tests_quiet .EQ. 0) then
       print *, 'Time: ', finaltime, 'seconds'
       print *, 'Cycles: ', values(1)
       print *, 'FP Instructions: ', values(2)
       write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
+      end if
 
       call ftests_pass(__FILE__)
       end

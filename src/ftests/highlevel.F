@@ -9,6 +9,10 @@
       integer availcounters
       integer retval, errorcode
       character*(PAPI_MAX_STR_LEN) errorstring
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       eventnum = 2
       call PAPIf_num_counters(availcounters)
@@ -26,32 +30,27 @@
 
       call PAPIf_start_counters(events, eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        print *, 'error in PAPIf_start_counters'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
-        print *, errorstring
-        stop
+        call ftests_perror(__LINE__, 'error in PAPIf_start_counters')
+        call ftests_fail(__FILE__,retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_read_counters(values(1), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        print *, 'error in PAPIf_read_counters'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
-        print *, errorstring
-        stop
+        call ftests_perror(__LINE__, 'error in PAPIf_read_counters')
+        call ftests_fail(__FILE__,retval)
       end if
 
       call do_flops(NUM_FLOPS)
 
       call PAPIf_stop_counters(values(3), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
-        print *, 'error in PAPIf_stop_counters'
-        call PAPIf_perror( retval, errorstring, length, errorcode)
-        print *, errorstring
-        stop
+        call ftests_perror(__LINE__, 'error in PAPIf_stop_counters')
+        call ftests_fail(__FILE__,retval)
       end if
       
+      if (tests_quiet .EQ. 0) then
       print *, "Test case highlevel: Test of high-level APIs."
       print *, "---------------------------------------------",
      *"---------------------"
@@ -65,6 +64,7 @@
  100  format(a15, ":", i12, i12)
       print *, "---------------------------------------------",
      *"---------------------"
+      end if
 
       call ftests_pass(__FILE__)
       End
