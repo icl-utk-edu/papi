@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 	  tmp = strdup("PAPI_add_event[PAPI_L2_TCM]");
 	  goto FAILED;
 	}
+	j--;  /* The event was not added */
    }
 
    i = j;
@@ -59,12 +60,12 @@ int main(int argc, char **argv)
 	  tmp = strdup("PAPI_add_event[PAPI_L2_DCM]");
 	  goto FAILED;
 	}
+	j--;  /* The event was not added */
    }
 
    if (j)
      {
        printf("starting EventSet\n");
-       PAPI_start(EventSet);
        if ( (retval = PAPI_start(EventSet) ) != PAPI_OK ) {
 	    tmp = strdup("PAPI_start");
 	    goto FAILED;
