@@ -3,8 +3,8 @@ EXOBS    = first.o
 
 all: $(EXAMPLES)
 
-$(EXAMPLES): %: %.o ../libpapi.a
-	$(CC) $(LDFLAGS) $< -o $@ -lpapi
+first: first.o ../libpapi.a
+	$(CC) $(LDFLAGS) first.o -o $@ -lpapi -bI:kex.exp
 
 clean:
 	rm -f $(EXOBS) $(EXAMPLES)
