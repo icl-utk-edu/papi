@@ -227,7 +227,7 @@ C
       subroutine do_flops(n)
       implicit none      
       integer n
-      double precision a, b, c
+      real*8 a, b, c
       integer i
       a = 0.5
       b = 6.2
@@ -252,7 +252,7 @@ C
       subroutine do_both(n)
       implicit none      
       integer n
-      double precision a, b, c
+      real*8 a, b, c
       integer i, j
       integer buf(L1_MISS_BUFFER_SIZE_INTS)      
       a = 0.5

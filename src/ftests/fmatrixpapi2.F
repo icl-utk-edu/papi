@@ -177,7 +177,7 @@ C  Stop the counters and put the results in the array values
       subroutine Adding_MatMult(p,q,r,ni,nk,nj)
       implicit none
       integer ni,nk,nj
-      double precision p(ni,*),q(nk,*),r(ni,nj)
+      real*8 p(ni,*),q(nk,*),r(ni,nj)
 
       integer i,j,k
 C  Compute the matrix-matrix multiplication
