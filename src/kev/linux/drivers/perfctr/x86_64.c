@@ -18,8 +18,8 @@ struct hw_interrupt_type;
 #include <asm/hw_irq.h>
 
 #include "compat.h"
-#include "x86_64_compat.h"
-#include "x86_64_tests.h"
+#include "x86_compat.h"
+#include "x86_tests.h"
 
 /* Support for lazy evntsel and perfctr MSR updates. */
 struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
@@ -470,7 +470,6 @@ static int __init amd_init(void)
 	clear_counters = k8_clear_counters;
 	if( cpu_has_apic )
 		perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
-	perfctr_k8_init_tests();
 	return 0;
 }
 
@@ -485,7 +484,6 @@ static int __init generic_init(void)
 	perfctr_cpu_name = generic_name;
 	check_control = generic_check_control;
 	clear_counters = generic_clear_counters;
-	perfctr_generic_init_tests();
 	return 0;
 }
 
@@ -555,12 +553,12 @@ static struct sys_device device_perfctr = {
 static void __init x86_pm_init(void)
 {
 	if( sysdev_class_register(&perfctr_sysclass) == 0 )
-		sys_device_register(&device_perfctr);
+		sysdev_register(&device_perfctr);
 }
 
 static void __exit x86_pm_exit(void)
 {
-	sys_device_unregister(&device_perfctr);
+	sysdev_unregister(&device_perfctr);
 	sysdev_class_unregister(&perfctr_sysclass);
 }
 
@@ -658,6 +656,7 @@ int __init perfctr_cpu_init(void)
 		if( err )
 			goto out;
 	}
+	perfctr_x86_init_tests();
 	/*
 	 * Put the hardware in a sane state:
 	 * - clear perfctr MSRs

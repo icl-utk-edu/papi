@@ -1,6 +1,6 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * Optional x86-specific init-time tests.
+ * Optional x86/x86_64-specific init-time tests.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson
  */
@@ -17,7 +17,6 @@
 #undef MSR_P4_CRU_ESCR0
 #include <asm/fixmap.h>
 #include <asm/apic.h>
-#include "compat.h"
 #include "x86_compat.h"
 #include "x86_tests.h"
 
@@ -40,6 +39,12 @@
 #define NITER	64
 #define X2(S)	S";"S
 #define X8(S)	X2(X2(X2(S)))
+
+#ifdef __x86_64__
+#define CR4MOV	"movq"
+#else
+#define CR4MOV	"movl"
+#endif
 
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
 {
@@ -65,16 +70,16 @@ static void __init do_wrmsr(unsigned msr, unsigned data)
 static void __init do_rdcr4(unsigned unused1, unsigned unused2)
 {
 	unsigned i;
-	unsigned dummy;
+	unsigned long dummy;
 	for(i = 0; i < NITER/8; ++i)
-		__asm__ __volatile__(X8("movl %%cr4,%0") : "=r"(dummy));
+		__asm__ __volatile__(X8(CR4MOV" %%cr4,%0") : "=r"(dummy));
 }
 
 static void __init do_wrcr4(unsigned cr4, unsigned unused2)
 {
 	unsigned i;
 	for(i = 0; i < NITER/8; ++i)
-		__asm__ __volatile__(X8("movl %0,%%cr4") : : "r"(cr4));
+		__asm__ __volatile__(X8(CR4MOV" %0,%%cr4") : : "r"((long)cr4));
 }
 
 static void __init do_rdtsc(unsigned unused1, unsigned unused2)
@@ -190,23 +195,19 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	}
 }
 
-void __init perfctr_p5_init_tests(void)
+#ifndef __x86_64__
+static inline void perfctr_p5_init_tests(void)
 {
 	measure_overheads(MSR_P5_CESR, P5_CESR_VAL, MSR_P5_CTR0, 0, 0);
 }
 
-void __init perfctr_p6_init_tests(void)
+static inline void perfctr_p6_init_tests(void)
 {
 	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
 }
 
-void __init perfctr_k7_init_tests(void)
-{
-	measure_overheads(MSR_K7_EVNTSEL0, K7_EVNTSEL0_VAL, MSR_K7_PERFCTR0, 0, 0);
-}
-
 #if !defined(CONFIG_X86_TSC)
-void __init perfctr_c6_init_tests(void)
+static inline void perfctr_c6_init_tests(void)
 {
 	unsigned int cesr, dummy;
 
@@ -216,18 +217,69 @@ void __init perfctr_c6_init_tests(void)
 }
 #endif
 
-void __init perfctr_vc3_init_tests(void)
+static inline void perfctr_vc3_init_tests(void)
 {
 	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0);
 }
 
-void __init perfctr_p4_init_tests(void)
+static inline void perfctr_p4_init_tests(void)
 {
 	measure_overheads(MSR_P4_CRU_ESCR0, P4_CRU_ESCR0_VAL, MSR_P4_IQ_COUNTER0,
 			  MSR_P4_IQ_CCCR0, P4_IQ_CCCR0_VAL);
 }
+#endif /* !__x86_64__ */
 
-void __init perfctr_generic_init_tests(void)
+static inline void perfctr_k7_init_tests(void)
+{
+	measure_overheads(MSR_K7_EVNTSEL0, K7_EVNTSEL0_VAL, MSR_K7_PERFCTR0, 0, 0);
+}
+
+static inline void perfctr_generic_init_tests(void)
 {
 	measure_overheads(0, 0, 0, 0, 0);
+}
+
+void __init perfctr_x86_init_tests(void)
+{
+	switch( perfctr_info.cpu_type ) {
+#ifndef __x86_64__
+	case PERFCTR_X86_INTEL_P5:
+	case PERFCTR_X86_INTEL_P5MMX:
+	case PERFCTR_X86_CYRIX_MII:
+		perfctr_p5_init_tests();
+		break;
+	case PERFCTR_X86_INTEL_P6:
+	case PERFCTR_X86_INTEL_PII:
+	case PERFCTR_X86_INTEL_PIII:
+	case PERFCTR_X86_INTEL_PENTM:
+		perfctr_p6_init_tests();
+		break;
+#if !defined(CONFIG_X86_TSC)
+	case PERFCTR_X86_WINCHIP_C6:
+	case PERFCTR_X86_WINCHIP_2:
+		perfctr_c6_init_tests();
+		break;
+#endif
+	case PERFCTR_X86_VIA_C3:
+		perfctr_vc3_init_tests();
+		break;
+	case PERFCTR_X86_INTEL_P4:
+	case PERFCTR_X86_INTEL_P4M2:
+	case PERFCTR_X86_INTEL_P4M3:
+		perfctr_p4_init_tests();
+		break;
+#endif /* !__x86_64__ */
+	case PERFCTR_X86_AMD_K7:
+	case PERFCTR_X86_AMD_K8:
+	case PERFCTR_X86_AMD_K8C:
+		perfctr_k7_init_tests();
+		break;
+	case PERFCTR_X86_GENERIC:
+		perfctr_generic_init_tests();
+		break;
+	default:
+		printk(KERN_INFO "%s: unknown CPU type %u\n",
+		       __FUNCTION__, perfctr_info.cpu_type);
+		break;
+	}
 }

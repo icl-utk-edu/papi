@@ -49,8 +49,8 @@ void do_setup(const struct perfctr_info *info,
 	evntsel1 = 0xC9 | (1 << 16) | (1 << 20);
 	break;
       case PERFCTR_X86_AMD_K7:
-	/* K7 can't count FLOPS. Count RETIRED_OPS instead. */
-	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
+	/* K7 can't count FLOPS. Count RETIRED_INSTRUCTIONS instead. */
+	evntsel0 = 0xC0 | (1 << 16) | (1 << 22) | (1 << 20);
 	/* RETIRED_TAKEN_BRANCHES, USR, INT */
 	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
 	break;

@@ -6,6 +6,17 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.7, 2004-05-04
+- Merged several x86_64-specific driver files with their x86
+  counterparts, reducing the amount of duplicated code.
+- Added textual descriptions to the library's P6 event sets.
+  From Bryan O'Sullivan.
+- Changed examples/signal/signal to count retired instructions
+  instead of retired micro-operations on AMD K7. Needed to avoid
+  a loop with the same instruction overflowing indefinitely.
+- Updated kernel support: 2.6.6-rc3, 2.4.27-pre1, 2.4.22-1.2188.nptl
+  (FC1), 2.4.21-9.0.1 (RHEL3), 2.4.20-31.9 (RH9).
+
 Version 2.6.6, 2004-02-21
 - Pentium-M has an undocumented local APIC quirk which can stop
   perfctr interrupt delivery. Added workaround to prevent this.

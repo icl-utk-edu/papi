@@ -3,6 +3,18 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.7, 2004-05-04
+- Replaced x86_64_tests.{c,h} with x86_tests.{c,h}.
+- sys_device_{,un}register() was renamed as sysdev_{,un}register()
+  in 2.6.4-rc2. Updated x86.c and x86_64.c accordingly, and
+  added a compatibility definition in compat.h.
+- Removed unnecessary '#include "compat.h"' from x86_tests.c.
+- Replaced x86_64_setup.c with x86_setup.c.
+- Replaced x86_64_compat.h with x86_compat.h.
+- Moved perfctr_interrupt entry point from x86_setup.c to patch kit,
+  for kernels older than 2.4.21. Cleanup to facilitate future merge
+  of x86_setup.c and x86_64_setup.c.
+
 Version 2.6.6, 2004-02-21
 - Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels,
   causing it to pass the wrong value for "struct pt_regs*". This

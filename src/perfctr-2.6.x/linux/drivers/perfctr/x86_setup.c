@@ -1,6 +1,6 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * x86-specific kernel-resident code.
+ * x86/x86_64-specific kernel-resident code.
  *
  * Copyright (C) 1999-2004  Mikael Pettersson
  */
@@ -73,29 +73,9 @@ asmlinkage void smp_perfctr_interrupt(struct pt_regs *regs)
 	/* XXX: recursive interrupts? delay the ACK, mask LVTPC, or queue? */
 	ack_APIC_irq();
 	irq_enter();
-	(*perfctr_ihandler)(regs->eip);
+	(*perfctr_ihandler)(instruction_pointer(regs));
 	irq_exit();
 }
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21)
-#define BUILD_PERFCTR_INTERRUPT(x,v) XBUILD_PERFCTR_INTERRUPT(x,v)
-#define XBUILD_PERFCTR_INTERRUPT(x,v) \
-__asm__( \
-	"\n.text\n\t" \
-	__ALIGN_STR "\n\t" \
-	".type " SYMBOL_NAME_STR(x) ",@function\n" \
-	".globl " SYMBOL_NAME_STR(x) "\n" \
-SYMBOL_NAME_STR(x) ":\n\t" \
-	"pushl $" #v "-256\n\t" \
-	SAVE_ALL \
-	"pushl %esp\n\t" \
-	"call " SYMBOL_NAME_STR(smp_ ## x) "\n\t" \
-	"addl $4,%esp\n\t" \
-	"jmp ret_from_intr\n\t" \
-	".size " SYMBOL_NAME_STR(x) ",.-" SYMBOL_NAME_STR(x) "\n" \
-	".previous\n");
-BUILD_PERFCTR_INTERRUPT(perfctr_interrupt,LOCAL_PERFCTR_VECTOR)
-#endif	/* < 2.4.21 */
 
 void perfctr_cpu_set_ihandler(perfctr_ihandler_t ihandler)
 {
@@ -103,7 +83,11 @@ void perfctr_cpu_set_ihandler(perfctr_ihandler_t ihandler)
 }
 #endif
 
+#ifdef __x86_64__
+extern unsigned int cpu_khz;
+#else
 extern unsigned long cpu_khz;
+#endif
 
 /* Wrapper to avoid namespace clash in RedHat 8.0's 2.4.18-14 kernel. */
 unsigned int perfctr_cpu_khz(void)

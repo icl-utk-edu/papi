@@ -59,10 +59,10 @@ The recommended kernel build and installation procedure is as follows:
 	$PDIR/update-kernel --test --patch=$V2
 
    This applies the patch in testing mode, without actually altering
-   any files. If the patch applies cleanly without any rejects, then
-   you can force the use of this patch simply by removing the --test
-   option to update-kernel. This usage mode is intended for experienced
-   kernel builders only.
+   any files. If the patch applies cleanly without any rejects or large
+   offsets, then you can force the use of this patch simply by removing
+   the --test option to update-kernel. This usage mode is intended for
+   experienced kernel builders only.
 
    Finally, edit $KDIR/Makefile and change EXTRAVERSION to include
    something unique for THIS kernel, for example by appending "-perfctr"

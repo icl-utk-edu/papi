@@ -1261,7 +1261,6 @@ static int __init intel_init(void)
 		write_control = p5_write_control;
 		check_control = p5_check_control;
 		clear_counters = p5_clear_counters;
-		perfctr_p5_init_tests();
 		return 0;
 	case 6:
 		if( current_cpu_data.x86_model == 9 ) {	/* Pentium M */
@@ -1301,7 +1300,6 @@ static int __init intel_init(void)
 				lvtpc_reinit_needed = 1;
 		}
 #endif
-		perfctr_p6_init_tests();
 		return 0;
 	case 15:	/* Pentium 4 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
@@ -1336,7 +1334,6 @@ static int __init intel_init(void)
 			lvtpc_reinit_needed = 1;
 		}
 #endif
-		perfctr_p4_init_tests();
 		return 0;
 	}
 	return -ENODEV;
@@ -1381,7 +1378,6 @@ static int __init amd_init(void)
 		cpu_iresume = k7_iresume;
 	}
 #endif
-	perfctr_k7_init_tests();
 	return 0;
 }
 
@@ -1398,7 +1394,6 @@ static int __init cyrix_init(void)
 		write_control = p5_write_control;
 		check_control = mii_check_control;
 		clear_counters = p5_clear_counters;
-		perfctr_mii_init_tests();
 		return 0;
 	}
 	return -ENODEV;
@@ -1437,7 +1432,6 @@ static int __init centaur_init(void)
 		write_control = c6_write_control;
 		check_control = c6_check_control;
 		clear_counters = p5_clear_counters;
-		perfctr_c6_init_tests();
 		return 0;
 #endif
 	case 6: /* VIA C3 */
@@ -1458,7 +1452,6 @@ static int __init centaur_init(void)
 		write_control = p6_write_control;
 		check_control = vc3_check_control;
 		clear_counters = vc3_clear_counters;
-		perfctr_vc3_init_tests();
 		return 0;
 	}
 	return -ENODEV;
@@ -1476,7 +1469,6 @@ static int __init generic_init(void)
 	write_control = p6_write_control;
 	read_counters = rdpmc_read_counters;
 	clear_counters = generic_clear_counters;
-	perfctr_generic_init_tests();
 	return 0;
 }
 
@@ -1546,12 +1538,12 @@ static struct sys_device device_perfctr = {
 static void __init x86_pm_init(void)
 {
 	if( sysdev_class_register(&perfctr_sysclass) == 0 )
-		sys_device_register(&device_perfctr);
+		sysdev_register(&device_perfctr);
 }
 
 static void __exit x86_pm_exit(void)
 {
-	sys_device_unregister(&device_perfctr);
+	sysdev_unregister(&device_perfctr);
 	sysdev_class_unregister(&perfctr_sysclass);
 }
 
@@ -1667,6 +1659,7 @@ int __init perfctr_cpu_init(void)
 		if( err )
 			goto out;
 	}
+	perfctr_x86_init_tests();
 	/*
 	 * Put the hardware in a sane state:
 	 * - finalise resolution of backpatchable call sites

@@ -1,8 +1,8 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * x86-specific compatibility definitions for 2.4/2.6 kernels.
+ * x86/x86_64-specific compatibility definitions for 2.4/2.6 kernels.
  *
- * Copyright (C) 2000-2003  Mikael Pettersson
+ * Copyright (C) 2000-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/version.h>

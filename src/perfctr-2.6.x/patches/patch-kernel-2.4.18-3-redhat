@@ -135,8 +135,8 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.18-3-perfctr/arch/i386/kernel/i8259.c.~1~	2002-04-18 12:50:15.000000000 +0200
-+++ linux-2.4.18-3-perfctr/arch/i386/kernel/i8259.c	2003-09-07 18:32:27.000000000 +0200
+--- linux-2.4.18-3-redhat/arch/i386/kernel/i8259.c.~1~	2002-04-18 12:50:15.000000000 +0200
++++ linux-2.4.18-3-redhat/arch/i386/kernel/i8259.c	2004-02-29 12:52:50.000000000 +0100
 @@ -21,6 +21,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -145,7 +145,17 @@
  
  #include <linux/irq.h>
  
-@@ -493,6 +494,8 @@
+@@ -96,6 +97,9 @@
+ BUILD_SMP_TIMER_INTERRUPT(apic_timer_interrupt,LOCAL_TIMER_VECTOR)
+ BUILD_SMP_INTERRUPT(error_interrupt,ERROR_APIC_VECTOR)
+ BUILD_SMP_INTERRUPT(spurious_interrupt,SPURIOUS_APIC_VECTOR)
++#ifdef CONFIG_KPERFCTR
++BUILD_SMP_TIMER_INTERRUPT(perfctr_interrupt,LOCAL_PERFCTR_VECTOR)
++#endif
+ #endif
+ 
+ #define IRQ(x,y) \
+@@ -493,6 +497,8 @@
  	set_intr_gate(ERROR_APIC_VECTOR, error_interrupt);
  #endif
  
