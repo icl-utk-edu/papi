@@ -6,11 +6,12 @@
  *	   london@cs.utk.edu
  */
 #include "papi_test.h"
-extern int TESTS_QUIET;         /*Declared in test_utils.c */
+
 #define ALLOCMEM 200000
 
 int main(int argc, char **argv)
 {
+#ifdef PAPI_MEM_INFO
    long value[7];
    int retval, i;
    double *a, *b, *c, *d, *e, *f;
@@ -76,4 +77,8 @@ int main(int argc, char **argv)
    else
       test_fail(__FILE__, __LINE__, "Calculating Resident Memory", value[6]);
    exit(1);
+#else
+   test_skip(__FILE__, __LINE__, "PAPI_dmem_info has been deprecated pending a redesign", 0);
+   exit(1);
+#endif
 }
