@@ -1,33 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
-#ifndef _WIN32
-  #include <unistd.h>
-#endif
 #include <malloc.h>
 #include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <limits.h>
 #include <sys/types.h>
-#ifndef _WIN32
-  #include <sys/time.h>
-  #include <sys/times.h>
-  #include <asm/system.h>
-  #include <linux/unistd.h>	
-  // #include <linux/smp.h>
-  #include "libperfctr.h"
-#endif
+#include <signal.h>
+#include <errno.h>
 
 #include "x86-events.h"
 #include "papi.h"
 
-#ifdef _WIN32
-  #define inline_static static __inline 
-  #include "cpuinfo.h"
-  #include "pmclib.h"
-#else
-  #define inline_static inline static
-#endif
+#define inline_static static __inline 
+#include "cpuinfo.h"
+#include "pmclib.h"
 
 #define CNTR1 0x1
 #define CNTR2 0x2
