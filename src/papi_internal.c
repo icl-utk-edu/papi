@@ -1161,15 +1161,17 @@ void _papi_hwi_dummy_handler(int EventSet, void *address, long_long * overflow_v
    /* This function is not used and shouldn't be called. */
 
    abort();
-} static long_long handle_derived_add(int *position, long_long * from)
+}
+
+static long_long handle_derived_add(int *position, long_long * from)
 {
    int pos, i;
    long_long retval = 0;
 
    i = 0;
-   while (i < MAX_COUNTERS) {
+   while (i < MAX_COUNTER_TERMS) {
       pos = position[i++];
-      if (pos == -1)
+      if (pos == PAPI_NULL)
          break;
       INTDBG("Compound event, adding %lld to %lld\n", from[pos], retval);
       retval += from[pos];
@@ -1183,9 +1185,9 @@ static long_long handle_derived_subtract(int *position, long_long * from)
    long_long retval = from[position[0]];
 
    i = 1;
-   while (i < MAX_COUNTERS) {
+   while (i < MAX_COUNTER_TERMS) {
       pos = position[i++];
-      if (pos == -1)
+      if (pos == PAPI_NULL)
          break;
       INTDBG("Compound event, subtracting pos=%d  %lld to %lld\n", pos, from[pos],
              retval);
@@ -1215,11 +1217,11 @@ static long_long handle_derived_add_ps(int *position, long_long * from)
 
 /* this function implement postfix calculation, it reads in a string where I use:
       |      as delimiter
-	  N2     indicate No. 2 native event in the derived preset
-	  +, -, *, /, %  as operator
-	  #      as MHZ(millioin hz) got from  _papi_hwi_system_info.hw_info.mhz*1000000.0
-	  
-	  Haihang (you@cs.utk.edu)
+      N2     indicate No. 2 native event in the derived preset
+      +, -, *, /, %  as operator
+      #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.mhz*1000000.0
+
+  Haihang (you@cs.utk.edu)
 */ long_long _papi_hwi_postfix_calc(EventInfo_t * evi, long_long * hw_counter)
 {
    char *point = evi->ops, operand[16];
