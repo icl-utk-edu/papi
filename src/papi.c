@@ -626,7 +626,6 @@ int PAPI_stop(int EventSet, long_long *values)
   retval = _papi_hwd_stop(&thread->context, &ESI->machdep);
   if (retval != PAPI_OK)
     papi_return(retval);
-
   if (values)
     memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long_long)); 
 

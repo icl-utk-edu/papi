@@ -1468,7 +1468,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
   for(i=0; i<evt->pfp_event_count; i++)
   {
     native[i].ni_position = evt->pfp_pc[i].reg_num -PMU_FIRST_COUNTER;
-    DBG((stderr, "event_code is %d, reg_num is %d\n", index, native[i].ni_position));
+    DBG((stderr, "event_code is %d, reg_num is %d\n", native[i].ni_event& NATIVE_AND_MASK, native[i].ni_position));
   }
 
   return(PAPI_OK);
