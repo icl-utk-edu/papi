@@ -58,15 +58,53 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   return(PAPI_OK);
 }
 
+/* this function would return the next native event code.
+    modifer=0    it simply returns next native event code
+    modifer=1    it would return information of groups this native event lives
+                 0x400000ed is the native code of PM_FXLS_FULL_CYC,
+		 before it returns 0x400000ee which is the next native event's
+		 code, it would return *EventCode=0x400400ed, the digits 16-23
+		 indicate group number
+   function return value:
+     PAPI_OK successful, next event is valid
+     PAPI_ENOEVNT  fail, next event is invalid
+*/
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-  int index=*EventCode & NATIVE_AND_MASK;
-  if(native_table[index].resources.selector){
-  	*EventCode=*EventCode+1;
+  if(modifer==0){
+  	int index=*EventCode & NATIVE_AND_MASK;
+  	
+	if(native_table[index+1].resources.selector){
+  		*EventCode=*EventCode+1;
+		return(PAPI_OK);
+  	}
+  	else
+  		return(PAPI_ENOEVNT);
+  }
+  else{
+  	unsigned int group=(*EventCode & 0x00FF0000)>>16;
+	int index=*EventCode & 0x000000FF;
+	int i;
+	unsigned int tmpg;
+	
+	*EventCode=*EventCode & 0xFF00FFFF;
+	for(i=0;i<GROUP_INTS;i++){
+		tmpg=native_table[index].resources.group[i];
+		if(group!=0){
+		   while((ffs(tmpg)+i*32)<=group && tmpg!=0)
+		       tmpg=tmpg^(1<<(ffs(tmpg)-1));
+		}
+		if(tmpg!=0){
+		    group=ffs(tmpg)+i*32;
+		    *EventCode=*EventCode | (group<<16);
+		    return(PAPI_OK);
+		}
+	}
+	if(native_table[index+1].resources.selector==0)
+  		return(PAPI_ENOEVNT);
+	*EventCode=*EventCode+1;
 	return(PAPI_OK);
   }
-  else
-  	return(PAPI_ENOEVNT);
 }
 
 static void set_config(hwd_control_state_t *ptr, int arg1, int arg2)

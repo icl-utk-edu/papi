@@ -21,6 +21,9 @@ int main(int argc, char **argv)
   char name[PAPI_MAX_STR_LEN] = {0}, descr[1024] = {0};
   PAPI_preset_info_t info;
   const PAPI_hw_info_t *hwinfo = NULL;
+#ifdef _POWER4
+  int group=0;
+#endif
   
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
   for(i=0;i<argc;i++)
@@ -67,6 +70,13 @@ int main(int argc, char **argv)
   info.event_descr = descr;
   info.event_note = NULL;
   do {
+#ifdef _POWER4
+    group=(i&0x00FF0000)>>16;
+    if(group)
+    	printf("%10d", group-1);
+    else{
+    printf("\n\n");
+#endif
     j++;
     if (print_by_name) {
       info.event_code = i;
@@ -85,10 +95,19 @@ int main(int argc, char **argv)
     else {
       retval = PAPI_query_event_verbose(i, &info);
     }
+#ifndef _POWER4
     if ( !TESTS_QUIET && retval == PAPI_OK) {
 		printf("%-30s 0x%-10x\n%s\n", \
 	       info.event_name, info.event_code, info.event_descr);
     }
+#else
+    if ( !TESTS_QUIET && retval == PAPI_OK) {
+		printf("%-30s 0x%-10x\n%s", \
+	       info.event_name, info.event_code, info.event_descr);
+    }
+    printf("Groups: ");
+    }
+#endif
 #ifdef PENTIUM4
     k = i;
     if (PAPI_enum_event(&k, PAPI_P4_ENUM_BITS) == PAPI_OK) {
@@ -120,6 +139,19 @@ int main(int argc, char **argv)
     }
     if ( !TESTS_QUIET && retval == PAPI_OK) printf("\n");
   } while (PAPI_enum_event(&i, PAPI_P4_ENUM_GROUPS) == PAPI_OK);
+#elif defined(_POWER4)
+/* this function would return the next native event code.
+    modifer=0    it simply returns next native event code
+    modifer=1    it would return information of groups this native event lives
+                 0x400000ed is the native code of PM_FXLS_FULL_CYC,
+		 before it returns 0x400000ee which is the next native event's
+		 code, it would return *EventCode=0x400400ed, the digits 16-23
+		 indicate group number
+   function return value:
+     PAPI_OK successful, next event is valid
+     PAPI_ENOEVNT  fail, next event is invalid
+*/
+  } while (PAPI_enum_event(&i, 1) == PAPI_OK);
 #else
   } while (PAPI_enum_event(&i, 0) == PAPI_OK);
 #endif
