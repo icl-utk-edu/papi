@@ -125,23 +125,28 @@ inline static int setup_all_presets(int cpu_type)
       if ((s = preset_map[pnum].selector))
 	{
 	  if (_papi_system_info.num_cntrs == 2)
-	    {
-	      sprintf(note,"0x%x,0x%x",
-		      preset_map[pnum].counter_cmd.evntsel[0],
-		      preset_map[pnum].counter_cmd.evntsel[1]);
-	      strcat(preset_map[pnum].note,note);
-	    }
+	    snprintf(note,sizeof note,"0x%x,0x%x",
+		     preset_map[pnum].counter_cmd.evntsel[0],
+		     preset_map[pnum].counter_cmd.evntsel[1]);
 	  else if (_papi_system_info.num_cntrs == 4)
-	    {
-	      sprintf(note,"0x%x,0x%x,0x%x,0x%x",
-		      preset_map[pnum].counter_cmd.evntsel[0],
-		      preset_map[pnum].counter_cmd.evntsel[1],
-		      preset_map[pnum].counter_cmd.evntsel[2],
-		      preset_map[pnum].counter_cmd.evntsel[3]);
-	      strcat(preset_map[pnum].note,note);
-	    }
+	    snprintf(note,sizeof note,"0x%x,0x%x,0x%x,0x%x",
+		     preset_map[pnum].counter_cmd.evntsel[0],
+		     preset_map[pnum].counter_cmd.evntsel[1],
+		     preset_map[pnum].counter_cmd.evntsel[2],
+		     preset_map[pnum].counter_cmd.evntsel[3]);
 	  else
-	    abort();
+	    {
+	      abort(); /* We shouldn't be here */
+	      break;   /* We could of course just break out instead */
+	    }
+
+	  /* If there is a string, add a space before the information here */
+	  if(preset_map[pnum].note && 
+	     ((sizeof preset_map[pnum].note) - strlen(preset_map[pnum].note) > 2))
+	    strcat(preset_map[pnum].note," ");
+	  /* Be careful with string sizes... */
+	  strncat(preset_map[pnum].note,note,
+		  (sizeof preset_map[pnum].note)-(strlen(preset_map[pnum].note)+1));
 	}
     }
   return(PAPI_OK);
