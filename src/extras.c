@@ -236,7 +236,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
 	 {
 	   OVFDBG("Either no eventset or eventset not set to overflow.\n");
 #ifdef ANY_THREAD_GETS_SIGNAL
-	   _papi_hwi_broadcast_overflow_signal(thread->tid);
+	   _papi_hwi_broadcast_signal(thread->tid);
 #endif
 	   return(PAPI_OK);
 	 }
@@ -331,7 +331,7 @@ foundit:
 #ifdef ANY_THREAD_GETS_SIGNAL
    else {
       OVFDBG("I haven't been noticed by PAPI before\n");
-      _papi_hwi_broadcast_overflow_signal((*_papi_hwi_thread_id_fn) ());
+      _papi_hwi_broadcast_signal((*_papi_hwi_thread_id_fn) ());
    }
 #endif
    return(PAPI_OK);
