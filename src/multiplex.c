@@ -1335,6 +1335,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          mev->handler_count = 0;
          mev->rate_estimate = 0.0;
          mev->count_estimate = 0;
+         mev->is_a_rate = 0;
          mev->papi_event = PAPI_NULL;
          retval = PAPI_create_eventset(&(mev->papi_event));
          if (retval != PAPI_OK) {
