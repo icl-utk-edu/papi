@@ -31,7 +31,7 @@ typedef struct hwd_control_state {
   /* Interrupt interval */
   int timer_ms;
   /* Number on each hwcounter */
-  int num_on_counter[2];
+  unsigned num_on_counter[2];
 } hwd_control_state_t;
 
 #include "papi_internal.h"
@@ -64,6 +64,8 @@ typedef struct hwd_preset {
 } hwd_preset_t;
 
 typedef struct hwd_search {
+  /* PAPI preset code */
+  int preset;
   /* Derived code */
   int derived;
   /* Events to encode */
