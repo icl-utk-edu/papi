@@ -17,7 +17,7 @@ _syscall3(int, perf, int, op, int, counter, int, event);
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "extras.h"
+//#include "extras.c"
 #include "papiStdEventDefs.h"
 
 /* The following structure holds preset values for that defined in the 
@@ -402,7 +402,7 @@ int _papi_hwd_stop(void *machdep, long long events[])
 
   retval = perf(PERF_STOP, 0, 0);
   if(retval) return(PAPI_EBUG); 
-  return (_papi_hwd_read(this_state, events, &machnum));
+  return (_papi_hwd_read(this_state, events));
 }
 
 
@@ -415,27 +415,33 @@ int _papi_hwd_reset(void *machdep)
   return perf(PERF_RESET, 0, 0); /*from perf.c */
 }
 
-int _papi_hwd_read(void *machdep, long long events[], int *machnum)
+int _papi_hwd_read(void *machdep, long long events[])
 {
-  /* copy appropriate events from machdep into events */
-
-  int retval;
+  int retval, machnum, i;
   hwd_control_state *this_state = (hwd_control_state *)machdep;
 
-  /* I couldn't think of a good reason to go through the number of steps 
-	required to read only the counter(s) used, when it's so much shorter
-	to read all three values into events, as long as the higher level
-	knows which elements of events to return to the user
-     won't be hard to change if we need to, might be slower 
-  */
+  for(i=0; i<3; i++) events[i] = -1;
 
-  (int)machnum = this_state->number;
-  retval = perf(PERF_READ, 0, events[0]);
-  if(retval) return(PAPI_EBUG);
-  retval = perf(PERF_READ, 1, events[1]);
-  if(retval) return(PAPI_EBUG);
-  retval = perf(PERF_READ, 2, events[2]);
-  if(retval) return(PAPI_EBUG);
+  machnum = this_state->number;
+  if(machnum == 0) return(PAPI_ENOTRUN);
+  if(machnum >= 4)
+  { retval = perf(PERF_READ, 0, events[0]);
+    if(retval) return(PAPI_EBUG);
+  }
+  if((machnum == 3) || (machnum == 7))
+  { retval = perf(PERF_READ, 1, events[1]);
+    if(retval) return(PAPI_EBUG);
+    retval = perf(PERF_READ, 2, events[2]);
+    if(retval) return(PAPI_EBUG);
+  }
+  if((machnum == 2) || (machnum == 6))
+  { retval = perf(PERF_READ, 1, events[1]);
+    if(retval) return(PAPI_EBUG);
+  }
+  else 
+  { retval = perf(PERF_READ, 2, events[2]);
+    if(retval) return(PAPI_EBUG);
+  }
   return 0;
 }
 
