@@ -1563,6 +1563,8 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
   if (ptr == NULL)
     papi_return(PAPI_EINVAL);
 
+  memset(&internal,0x0,sizeof(_papi_int_option_t));
+
   switch(option)
     { 
     case PAPI_SET_MULTIPLEX:
@@ -1586,10 +1588,39 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
       }
     case PAPI_SET_DEBUG:
       papi_return(PAPI_set_debug(ptr->debug.level));
-    case PAPI_SET_DOMAIN:
+    case PAPI_SET_DEFDOM:
       { 
 	int dom = ptr->defdomain.domain;
+	if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
+	  papi_return(PAPI_EINVAL);
+
+	thread_master_eventset = _papi_hwi_lookup_in_master_list();
+	if (thread_master_eventset->multistart.num_runners)
+          papi_return(PAPI_EISRUN);
+
+	/* Try to change the domain of the eventset in the hardware */
+
+        internal.defdomain.defdomain = dom;
+	retval = _papi_hwd_ctl(thread_master_eventset, PAPI_SET_DEFDOM, &internal);
+        if (retval < PAPI_OK)
+          papi_return(retval);
+
+	/* Change the domain of the master eventset in this thread */
+
+	thread_master_eventset->domain.domain = dom;
+
+	/* Change the global structure. This should be removed but is
+	   necessary since the init_config function in the substrates
+	   gets information from the global structure instead of
+	   per-thread information. */
 	
+	_papi_system_info.default_domain = dom;
+	
+        return(retval);
+      }	
+    case PAPI_SET_DOMAIN:
+      { 
+	int dom = ptr->domain.domain;
 	if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
 	  papi_return(PAPI_EINVAL);
 
@@ -1601,13 +1632,18 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
         if (!(internal.domain.ESI->state & PAPI_STOPPED))
           papi_return(PAPI_EISRUN);
 
+	/* Try to change the domain of the eventset in the hardware */
+
         internal.domain.domain = dom;
         internal.domain.eventset = ptr->domain.eventset;
         retval = _papi_hwd_ctl(thread_master_eventset, PAPI_SET_DOMAIN, &internal);
         if (retval < PAPI_OK)
-          return(retval);
+          papi_return(retval);
+
+	/* Change the domain of the eventset in the library */
 
         internal.domain.ESI->domain.domain = dom;
+
         return(retval);
       }
 #if 0
@@ -1935,12 +1971,15 @@ int PAPI_set_granularity(int granularity)
   papi_return(PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
 }
 
+/* This function sets the low level default counting domain
+   for all newly manufactured eventsets */
+
 int PAPI_set_domain(int domain)
 { 
   PAPI_option_t ptr;
 
   ptr.defdomain.domain = domain;
-  papi_return(PAPI_set_opt(PAPI_SET_DOMAIN, &ptr));
+  papi_return(PAPI_set_opt(PAPI_SET_DEFDOM, &ptr));
 }
 
 int PAPI_add_events(int *EventSet, int *Events, int number)

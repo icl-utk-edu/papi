@@ -557,6 +557,11 @@ static int set_domain(hwd_control_state_t *this_state, int domain)
   cpc_event_t *event = &command->cmd;
   uint64_t pcr = event->ce_pcr;
 
+  /* This doesn't exist on this platform */
+
+  if (domain == PAPI_DOM_OTHER)
+    return(PAPI_EINVAL);
+
   pcr = pcr | 0x7;
   pcr = pcr ^ 0x7;
   if (domain & PAPI_DOM_USER)
@@ -608,8 +613,15 @@ static int set_inherit(EventSetInfo *global, int arg)
 
 static int set_default_domain(EventSetInfo *zero, int domain)
 {
-  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
-  return(set_domain(current_state,domain));
+  /* This doesn't exist on this platform */
+
+  if (domain == PAPI_DOM_OTHER)
+    return(PAPI_EINVAL);
+
+  return(PAPI_OK);
+
+/*  hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
+  return(set_domain(current_state,domain)); */
 }
 
 static int set_default_granularity(EventSetInfo *zero, int granularity)

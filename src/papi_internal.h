@@ -219,6 +219,9 @@ typedef struct _dynamic_array{
 
 /* Substrate option types for _papi_hwd_ctl. */
 
+typedef struct _papi_int_defdomain {
+    int defdomain; } _papi_int_defdomain_t;
+
 typedef struct _papi_int_domain {
     int domain;
     int eventset;
@@ -247,6 +250,7 @@ typedef union _papi_int_option_t {
   _papi_int_overflow_t overflow;
   _papi_int_profile_t profile;
   _papi_int_domain_t domain;
+  _papi_int_defdomain_t defdomain;
 #if 0
   _papi_int_inherit_t inherit;
 #endif
@@ -345,9 +349,9 @@ typedef struct _papi_mdi {
   int total_presets;  /* Number of preset events supported */
   int total_events;   /* Number of native events supported. */
 
-  const int default_domain; /* The default domain when this substrate is used */
+  int default_domain; /* The default domain when this substrate is used */
 
-  const int default_granularity; /* The default granularity when this substrate is used */
+  int default_granularity; /* The default granularity when this substrate is used */
 
   /* Begin public feature flags */
 
