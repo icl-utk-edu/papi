@@ -5,6 +5,7 @@
       implicit none
 
       integer*8 values(10)
+      integer i, n
       integer nativees, es, point
       integer ncpu, nnodes, totalcpus, vendor
       integer model
@@ -17,6 +18,8 @@
       External len_trim
       integer tests_quiet
       character*25 chbuf
+      character*50 eventname(10)
+
 #if defined(_CRAYT3E)
       integer ilen, ierror
 #endif
@@ -53,301 +56,6 @@
      *retval)
       end if
 
-C Don't know how to make the following #if defined() be TRUE
-C So we'll just do AIX initialization in a C subroutine...
-      call addAIXevents(es, retval)
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'addAIXevents', retval)
-      end if
-#if defined(_AIX)
-#if defined(_AIXVERSION_510)
-      print *, "AIX POWER4"
-C     PM_FPU0_DIV      
-      nativees = 10 * 2**8
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_FPU1_DIV   
-      nativees = 19 * 2**8 + 1
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_FPU0_FRSP_FCONV     
-      nativees = 25 * 2**8 + 2
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_FPU1_FRSP_FCONV
-      nativees = 29 * 2**8 + 3
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_FPU0_FMA
-      nativees = 11 * 2**8 + 4
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_FPU1_FMA 
-      nativees = 20 * 2**8 + 5
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_INST_CMPL
-      nativees = 78 * 2**8 + 6
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     PM_CYC
-      nativees = 74 * 2**8 + 7
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-#else
-      print *, "AIX POWER3"
-C     ICM      
-      nativees = 5 * 2**8
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     FPU1CMPL   
-      nativees = 35 * 2**8 + 1
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     LDCM     
-      nativees = 5 * 2**8 + 2
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     LDCMPL
-      nativees = 5 * 2**8 + 3
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     FPU0CMPL
-      nativees = 5 * 2**8 + 4
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     CYC 
-      nativees = 12 * 2**8 + 5
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     FMA
-      nativees = 9 * 2**8 + 6
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     TLB
-      nativees = 0 * 2**8 + 7
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-#endif
-#endif
-
-#if defined(linux) && defined(__i386__) || defined(__x86_64__)
-#if defined(PENTIUM4)
-      call PAPIf_event_name_to_code(                                    &
-     & 'retired_mispred_branch_type_CONDITIONAL', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('resource_stall_SBFULL',            &
-     &  nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('tc_ms_xfer_CISC', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('instr_retired_BOGUSNTAG_BOGUSTAG', &
-     & nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('BSQ_cache_reference_RD_2ndL_HITS', &
-     & nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-#endif
-#ifdef PENTIUM3
-      call PAPIf_event_name_to_code('DATA_MEM_REFS', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('DCU_LINES_IN', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-#endif
-#ifdef __ATHLON__
-      call PAPIf_event_name_to_code('TOT_CYC', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('IC_MISSES', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('DC_ACCESSES', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('DC_MISSES', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-#endif
-#ifdef __x86_64__
-      call PAPIf_event_name_to_code('FP_ADD_PIPE', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('FP_MULT_PIPE', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('FP_ST_PIPE', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-      call PAPIf_event_name_to_code('FP_NONE_RET', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-#endif
-#endif
-
-#if defined(linux) && defined(__ia64__)
-C     Execution latency stall cycles
-#if defined(ITANIUM2)
-      call PAPIf_event_name_to_code('CPU_CYCLES', nativees, retval )
-#else
-      call PAPIf_event_name_to_code('DEPENDENCY_SCOREBOARD_CYCLE',      &
-     &    nativees, retval )
-#endif
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     Combined execution stall cycles
-#if defined(ITANIUM2)
-      call PAPIf_event_name_to_code('L1I_READS', nativees, retval )
-#else
-      call PAPIf_event_name_to_code('DEPENDENCY_ALL_CYCLE',             &
-     &       nativees, retval )
-#endif
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     Combined instruction fetch stall cycles
-#if defined(ITANIUM2)
-      call PAPIf_event_name_to_code('L1D_READS_SET0', nativees, retval)
-#else
-      call PAPIf_event_name_to_code('UNSTALLED_BACKEND_CYCLE',          &
-     &  nativees, retval )
-#endif
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     Combined memory stall cycles
-#if defined(ITANIUM2)
-      call PAPIf_event_name_to_code('IA64_INST_RETIRED',nativees,retval)
-#else
-      call PAPIf_event_name_to_code('MEMORY_CYCLE', nativees, retval )
-#endif
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-#endif
-#if (defined(mips) && defined(sgi) && defined(unix))
-C     L1 I Miss
-C      nativees = 9*2**8
-      call PAPIf_event_name_to_code('Primary_instruction_cache_misse',  &
-     &  nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-
-C     L1 D Miss
-C      nativees = 9 * 2**8 + 1
-      call PAPIf_event_name_to_code('Primary_data_cache_misses',        &
-     &  nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-#endif
-
 #if defined(_CRAYT3E)
 C     Machine cyc
       nativees = 0 * 2**8 + 0
@@ -372,37 +80,101 @@ C     CPU cyc
 
 #endif
 
+#if defined(_POWER4)
+      eventname(1) = 'PM_FPU0_FDIV'
+      eventname(2) = 'PM_FPU1_FDIV'
+      eventname(3) = 'PM_FPU0_FRSP_FCONV'
+      eventname(4) = 'PM_FPU1_FRSP_FCONV'
+      eventname(5) = 'PM_FPU0_FMA'
+      eventname(6) = 'PM_FPU1_FMA'
+      eventname(7) = 'PM_INST_CMPL'
+      eventname(8) = 'PM_CYC'
+      n = 8
+#endif
+#if defined(POWER3)
+      eventname(1) = 'PM_IC_MISS'
+      eventname(2) = 'PM_FPU1_CMPL'
+      eventname(3) = 'PM_LD_MISS_L1'
+      eventname(4) = 'PM_LD_CMPL'
+      eventname(5) = 'PM_FPU0_CMPL'
+      eventname(6) = 'PM_CYC'
+      eventname(7) = 'PM_TLB_MISS'
+      eventname(8) = 'PM_FPU_FMA'
+      call pmtoolkit12(retval)
+      n = 8 - retval
+#endif
+
+#if defined(linux) && defined(__i386__) || defined(__x86_64__)
+#if defined(PENTIUM4)
+      eventname(1) = 'retired_mispred_branch_type_CONDITIONAL'
+      eventname(2) = 'resource_stall_SBFULL'
+      eventname(3) = 'tc_ms_xfer_CISC'
+      eventname(4) = 'instr_retired_BOGUSNTAG_BOGUSTAG'
+      eventname(5) = 'BSQ_cache_reference_RD_2ndL_HITS'
+      n = 5
+#endif
+#ifdef PENTIUM3
+      eventname(1) = 'DATA_MEM_REFS'
+      eventname(2) = 'DCU_LINES_IN'
+      n = 2
+#endif
+#ifdef __ATHLON__
+      eventname(1) = 'TOT_CYC'
+      eventname(2) = 'IC_MISSES'
+      eventname(3) = 'DC_ACCESSES'
+      eventname(4) = 'DC_MISSES'
+      n = 4
+#endif
+#ifdef __x86_64__
+      eventname(1) = 'FP_ADD_PIPE'
+      eventname(2) = 'FP_MULT_PIPE'
+      eventname(3) = 'FP_ST_PIPE'
+      eventname(4) = 'FP_NONE_RET'
+      n = 4
+#endif
+#endif
+
+#if defined(linux) && defined(__ia64__)
+#if defined(ITANIUM2)
+      eventname(1) = 'CPU_CYCLES'
+      eventname(2) = 'L1I_READS'
+      eventname(3) = 'L1D_READS_SET0'
+      eventname(4) = 'IA64_INST_RETIRED'
+      n = 4
+#else
+      eventname(1) = 'DEPENDENCY_SCOREBOARD_CYCLE'
+      eventname(2) = 'DEPENDENCY_ALL_CYCLE'
+      eventname(3) = 'UNSTALLED_BACKEND_CYCLE'
+      eventname(4) = 'MEMORY_CYCLE'
+      n = 4
+#endif
+#endif
+
+#if (defined(mips) && defined(sgi) && defined(unix))
+      eventname(1) = 'Primary_instruction_cache_misse'
+      eventname(2) = 'Primary_data_cache_misses'
+      n = 2
+#endif
+
 #if (defined(sun) && defined(sparc))
-C     Load_use
-C      nativees = z'B' * 2**8
-      call PAPIf_event_name_to_code('Load_use', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-      
-C     DC_wr_hit
-C      nativees = z'A' * 2**8 + 1
-      call PAPIf_event_name_to_code('DC_wr_hit', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-      
+      eventname(1) = 'Load_use'
+      eventname(2) = 'DC_wr_hit'
+      n = 2
 #endif
 
 #if (defined(__alpha) && defined(__osf__))
-      call PAPIf_event_name_to_code('retinst', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-            call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
-      call PAPIf_event_name_to_code('cycles', nativees, retval )
-      call PAPIf_add_event( es, nativees, retval )
-      if ( retval .NE. PAPI_OK ) then
-            call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-      end if
+      eventname(1) = 'retinst'
+      eventname(2) = 'cycles'
+      n = 2
 #endif
+
+      do i = 1, n
+      call PAPIf_event_name_to_code(eventname(i), nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+        if ( retval .NE. PAPI_OK ) then
+          call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+        end if
+      end do
 
       call PAPIF_GET_HARDWARE_INFO (ncpu, nnodes, totalcpus, 
      *vendor, vendor_string, model, model_string, revision, mhz)
@@ -433,7 +205,13 @@ C     call sleep(1)
       rsec = usn/1000000.0
       if (tests_quiet .EQ. 0) then
       print *, "Real Elapsed Time in sec.  : ", rsec
-#if defined(_POWER4)
+
+#if defined(_CRAYT3E)
+      print *, "Machine Cycles                    : ",values(1)
+      print *, "DCache accesses                   : ",values(2)
+      print *, "CPU Cycles                        : ",values(3)
+
+#elif defined(_POWER4)
       csec = values(8)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "FPU0 DIV Instructions      : ", values(1)
@@ -449,8 +227,7 @@ C     call sleep(1)
      *((values(5)+values(6))/1000000.0)/csec
       print *, "%% FMA Instructions         : ",
      *100.0*(values(5) + values(6))/values(7)
-#endif
-#if defined(POWER3)
+#elif defined(POWER3)
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "L1 Instruction Cache Misses: ", values(1)
@@ -470,65 +247,10 @@ C     call sleep(1)
      *100.0*(1.0 - (values(3)/values(4)))
       print *, "%% FMA Instructions         : ",
      *100.0*values(7)/(values(2)+values(5))
-#endif
-
-#if defined(linux) && defined(__i386__) || defined(__x86_64__)
-#ifdef PENTIUM4
-      print *, "retired_mispred_branch_type_CONDITIONAL      : ", values(1)
-      print *, "resource_stall_SBFULL                        : ", values(2)
-      print *, "tc_ms_xfer_CISC                              : ", values(3)
-      print *, "instr_retired_BOGUSNTAG_BOGUSTAG             : ", values(4)
-      print *, "BSQ_cache_reference_RD_2ndL_HITS             : ", values(5)
-#endif
-#ifdef PENTIUM3
-      print *, "DATA_MEM_REFS      : ", values(1)
-      print *, "DCU_LINES_IN       : ", values(2)
-#endif
-#ifdef __ATHLON__
-      print *, "TOT_CYC            : ", values(1)
-      print *, "IC_MISSES          : ", values(2)
-      print *, "DC_ACCESSES        : ", values(3)
-      print *, "DC_MISSES          : ", values(4)
-#endif
-#ifdef __x86_64__
-      print *, "FP_ADD_PIPE          : ", values(1)
-      print *, "FP_MULT_PIPE         : ", values(2)
-      print *, "FP_ST_PIPE           : ", values(3)
-      print *, "FP_NONE_RET          : ", values(4)
-#endif
-#endif
-#if defined(linux) && defined(__ia64__)
-#if defined(ITANIUM2)
-      print *, "cpu cycles                  : ", values(1)
-      print *, "L1 Inst cache reads         : ", values(2)
-      print *, "L1 data cache reads         : ", values(3)
-      print *, "ia64 instructions retired   : ", values(4)
 #else
-      print *, "Execution latency stall cyc        : ", values(1)
-      print *, "Combined execution stall cycles    : ", values(2)
-      print *, "Combined instr. fetch stall cycles : ", values(3)
-      print *, "Combined memory stall cycles       : ", values(4)
-#endif
-#endif
-
-#if (defined(mips) && defined(sgi))
-      print *, "L1 Instruction cache misses       : ", values(1)
-      print *, "L1 Data cache misses              : ", values(2)      
-#endif
-
-#if defined(_CRAYT3E)
-      print *, "Machine Cycles                    : ",values(1)
-      print *, "DCache accesses                   : ",values(2)
-      print *, "CPU Cycles                        : ",values(3)      
-#endif
-
-#if (defined(__alpha) && defined(__osf__))
-      print *, "Retired instructions              : ", values(1)
-      print *, "Cycles                            : ", values(2)
-#endif
-#if (defined(sun) && defined(sparc))
-      print *, "Load_use                   : ", values(1)
-      print *, "DC_wr_hit                  : ", values(2)
+      do i = 1, n
+        print *, eventname(i)," : ", values(i)
+      end do
 #endif
       end if
       call ftests_pass(__FILE__)
