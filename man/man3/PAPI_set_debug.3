@@ -28,7 +28,9 @@ The current debug level is used by both the internal error and debug message
 handler subroutines. The debug handler is only used if the library was compiled
 with -DDEBUG. The debug handler is called when there is an error upon a call 
 to the PAPI API. The error handler is always active and it's behavior cannot
-be modified except for whether or not it prints anything.
+be modified except for whether or not it prints anything. NOTE: This is
+the ONLY function that may be called BEFORE
+.B PAPI_library_init().
 
 The PAPI error handler prints out messages in the following form:
 
@@ -74,4 +76,6 @@ This function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_set_opt "(3), "
-.BR PAPI_get_opt "(3) "
+.BR PAPI_get_opt "(3), "
+.BR PAPI_library_init "(3) "
+
