@@ -179,7 +179,7 @@ C     TLB
 #endif
 #endif
 
-#if defined(linux) && defined(__i386__)
+#if defined(linux) && defined(__i386__) || defined(__x86_64__)
 #if defined(PENTIUM4)
       call PAPIf_event_name_to_code(                                    &
      & 'retired_mispred_branch_type_CONDITIONAL', nativees, retval )
@@ -459,8 +459,8 @@ C     call sleep(1)
       print *, "Load Instructions          : ", values(4)
       print *, "FPU0 Instructions          : ", values(5)
       print *, "CPU Cycles                 : ", values(6)
-      print *, "FMA Instructions           : ", values(7)
-      print *, "TLB Misses                 : ", values(8)
+      print *, "TLB Misses                 : ", values(7)
+      print *, "FMA Instructions           : ", values(8)
       print *, "------------------------------------------"
       print *, "CPU MFLOPS                 : ",
      *((values(5)+values(2))/1000000.0)/csec
@@ -472,7 +472,7 @@ C     call sleep(1)
      *100.0*values(7)/(values(2)+values(5))
 #endif
 
-#if defined(linux) && defined(__i386__)
+#if defined(linux) && defined(__i386__) || defined(__x86_64__)
 #ifdef PENTIUM4
       print *, "retired_mispred_branch_type_CONDITIONAL      : ", values(1)
       print *, "resource_stall_SBFULL                        : ", values(2)
