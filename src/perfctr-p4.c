@@ -739,7 +739,7 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 /* Perfctr requires that interrupting counters appear at the end of the pmc list.
    In the case a user wants to interrupt on a counter in an evntset that is not 
    among the last events, we need to move the perfctr virtual events around to 
-   make it last. This function swaps two perfctr events, and then adjust the
+   make it last. This function swaps two perfctr events, and then adjusts the
    position entries in both the NativeInfoArray and the EventInfoArray to keep
    everything consistent.
 */
@@ -753,7 +753,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
    for (i = 0; i < ESI->NativeCount; i++) {
       if (ESI->NativeInfoArray[i].ni_position == cntr1)
          ESI->NativeInfoArray[i].ni_position = cntr2;
-      if (ESI->NativeInfoArray[i].ni_position == cntr2)
+      else if (ESI->NativeInfoArray[i].ni_position == cntr2)
          ESI->NativeInfoArray[i].ni_position = cntr1;
    }
 
@@ -761,7 +761,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
       for (j = 0; ESI->EventInfoArray[i].pos[j] >= 0; j++) {
          if (ESI->EventInfoArray[i].pos[j] == cntr1)
             ESI->EventInfoArray[i].pos[j] = cntr2;
-         if (ESI->EventInfoArray[i].pos[j] == cntr2)
+         else if (ESI->EventInfoArray[i].pos[j] == cntr2)
             ESI->EventInfoArray[i].pos[j] = cntr1;
       }
    }
