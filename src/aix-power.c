@@ -18,21 +18,12 @@
 
 #include "aix-power.h"
 
-/* 
- some heap information, start_of_text, start_of_data .....
- ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV 
-*/
-#ifndef _P64
-  #define START_OF_TEXT 0x10000000
-  #define END_OF_TEXT   &_etext
-  #define START_OF_DATA 0x20000000
-  #define END_OF_DATA   &_end
-#else
-  #define START_OF_TEXT 0x100000000
-  #define END_OF_TEXT   &_etext
-  #define START_OF_DATA 0x110000000
-  #define END_OF_DATA   &_end
-#endif
+#define START_OF_TEXT &_text
+#define END_OF_TEXT   &_etext
+#define START_OF_DATA &_data
+#define END_OF_DATA   &_edata
+#define START_OF_BSS  &_edata
+#define END_OF_BSS    &_end
 
 static int maxgroups = 0;
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };

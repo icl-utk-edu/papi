@@ -117,14 +117,9 @@ typedef struct pmapi_search {
   char *(findme[POWER_MAX_COUNTERS]);
 } pmapi_search_t;
 
+extern _text;
 extern _etext;
 extern _edata;
 extern _end;
 extern _data;
 extern int (*thread_kill_fn)(int, int);
-
-/* globals */
-pm_info_t pminfo;
-hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
-
-#include "allocate.h"
