@@ -1,7 +1,20 @@
 /* This file generates the #defines needed for Fortran examples of PAPI.
 Its output is usually directed to fpapi.h. See Makefile.inc for details. */
 
-#include "papi_test.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+  /* Windows doesn't have a unistd.h */
+#ifndef _WIN32
+  #include <unistd.h>
+#endif
+
+#include <errno.h>
+#include <sys/types.h>
+#include <memory.h>
+#include <malloc.h>
+#include "papiStdEventDefs.h"
+#include "papi.h"
 #include "papiStrings.h"
 #undef NDEBUG
 #include <assert.h>
@@ -17,28 +30,66 @@ Its output is usually directed to fpapi.h. See Makefile.inc for details. */
 const char *papi_defNam[] = {
   "PAPI_NULL",
   "PAPI_VER_CURRENT",
+
   "PAPI_DOM_USER",
   "PAPI_DOM_KERNEL",
   "PAPI_DOM_OTHER",
   "PAPI_DOM_ALL",
+  "PAPI_DOM_MIN",
+  "PAPI_DOM_MAX",
+  "PAPI_DOM_HWSPEC", 
+
   "PAPI_STOPPED",
   "PAPI_RUNNING",
   "PAPI_OVERFLOWING",
   "PAPI_PROFILING",
+
   "PAPI_QUIET",
   "PAPI_VERB_ECONT",
   "PAPI_VERB_ESTOP",
+
   "PAPI_MAX_STR_LEN",
-  "PAPI_NUM_ERRORS"
+  "PAPI_NUM_ERRORS",
+
+  "PAPI_SET_DEBUG",
+  "PAPI_GET_DEBUG",
+  "PAPI_SET_DEFDOM",
+  "PAPI_GET_DEFDOM",
+  "PAPI_SET_DOMAIN",
+  "PAPI_GET_DOMAIN",
+  "PAPI_SET_DEFGRN",
+  "PAPI_GET_DEFGRN",
+  "PAPI_SET_GRANUL",
+  "PAPI_GET_GRANUL",
+  "PAPI_SET_INHERIT",
+  "PAPI_GET_INHERIT",
+
+  "PAPI_GRN_THR",
+  "PAPI_GRN_MIN",
+  "PAPI_GRN_PROC",
+  "PAPI_GRN_PROCG ",
+  "PAPI_GRN_SYS",
+  "PAPI_GRN_SYS_CPU",
+  "PAPI_GRN_MAX",
+
+  "PAPI_PROFIL_POSIX",
+  "PAPI_PROFIL_RANDOM",
+  "PAPI_PROFIL_WEIGHTED",
+  "PAPI_PROFIL_COMPRESS"
 };
 
 const int papi_defNum[] = {
   PAPI_NULL,
   PAPI_VER_CURRENT,
+
   PAPI_DOM_USER,
   PAPI_DOM_KERNEL,
   PAPI_DOM_OTHER,
   PAPI_DOM_ALL,
+  PAPI_DOM_MIN,
+  PAPI_DOM_MAX,
+  PAPI_DOM_HWSPEC, 
+
   PAPI_STOPPED,
   PAPI_RUNNING,
   PAPI_OVERFLOWING,
@@ -46,8 +97,35 @@ const int papi_defNum[] = {
   PAPI_QUIET,
   PAPI_VERB_ECONT,
   PAPI_VERB_ESTOP,
+
   PAPI_MAX_STR_LEN,
-  PAPI_NUM_ERRORS
+  PAPI_NUM_ERRORS,
+
+  PAPI_SET_DEBUG,
+  PAPI_GET_DEBUG,
+  PAPI_SET_DEFDOM,
+  PAPI_GET_DEFDOM,
+  PAPI_SET_DOMAIN,
+  PAPI_GET_DOMAIN,
+  PAPI_SET_DEFGRN,
+  PAPI_GET_DEFGRN,
+  PAPI_SET_GRANUL,
+  PAPI_GET_GRANUL,
+  PAPI_SET_INHERIT,
+  PAPI_GET_INHERIT,
+
+  PAPI_GRN_THR,
+  PAPI_GRN_MIN,
+  PAPI_GRN_PROC,
+  PAPI_GRN_PROCG ,
+  PAPI_GRN_SYS,
+  PAPI_GRN_SYS_CPU,
+  PAPI_GRN_MAX,
+
+  PAPI_PROFIL_POSIX,
+  PAPI_PROFIL_RANDOM,
+  PAPI_PROFIL_WEIGHTED,
+  PAPI_PROFIL_COMPRESS
 };
 
 const char *papi_errNam[] = {
@@ -107,7 +185,7 @@ int main(int argc, char **argv)
   /* compute the size of the predefined general purpose arrays */
   j = sizeof(papi_defNum)/sizeof(int);
 
-  /* create defines for each line in the arrays */
+  /* create defines for each line in the general arrays */
   printf("\nC\nC\tGeneral purpose defines.\nC\n\n");
   for (i=0;i<j;i++)
       define_val(papi_defNam[i],papi_defNum[i]);
@@ -115,7 +193,7 @@ int main(int argc, char **argv)
   /* compute the size of the predefined error arrays */
   j = sizeof(papi_errNum)/sizeof(int);
 
-  /* create defines for each line in the arrays */
+  /* create defines for each line in the error arrays */
   printf("\nC\nC\tError defines.\nC\n\n");
   for (i=0;i<j;i++)
       define_val(papi_errNam[i],papi_errNum[i]);
@@ -126,9 +204,6 @@ int main(int argc, char **argv)
     if (info[i].event_name)
       define_val(info[i].event_name,info[i].event_code);
 
-/* on Windows, the exit generates an unwanted prompt line */
-#ifndef _WIN32
   exit(0);
-#endif
 }
 
