@@ -36,13 +36,14 @@ int main(int argc, char **argv)
            TESTS_QUIET=1;
   }
 
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
   if ( !TESTS_QUIET ) {
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
 #ifdef NO_FLOPS
   test_pass(__FILE__,NULL,0 );

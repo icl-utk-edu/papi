@@ -16,13 +16,14 @@ int main(int argc, char **argv)
            TESTS_QUIET=1;
   }
 
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
   if ( !TESTS_QUIET ) {
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
   if ((info = PAPI_query_all_events_verbose()) == NULL)
 	test_fail(__FILE__, __LINE__, "PAPI_query_all_events_verbose", 1);
