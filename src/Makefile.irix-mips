@@ -1,10 +1,16 @@
 SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
-TARGET	= libpapi_smp.a libpapi.a 
+TARGET	= libpapi_smp.a libpapi.a libfpapi.a
 TESTS	= serial smp
 
+# Which Fortran to use
+# FOR_USED can be blank, FORTRANUNDERSCORE, FORTRANDOUBLEUNDERSCORE or
+# FORTRANALLCAPS
+FOR_USED  = -DFORTRANUNDERSCORE
+
+
 CFLAGS  = 
-OPTFLAGS= -g -O3
+OPTFLAGS= -g -O3 -woff 1552,1174,1116,15
 SMPCFLGS= -mp
 OMPCFLGS= 
 LDFLAGS = 

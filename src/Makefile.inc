@@ -1,10 +1,12 @@
 LIBRARY   = libpapi.a
+FLIBRARY  = libfpapi.a
 PTHRLIB   = libpapi_r.a
 SMPTHRLIB = libpapi_smp.a
 SHLIB     = libpapi.so
-OBJECTS   = papi.o papi_hl.o $(SUBSTR).o extras.o
+OBJECTS   = papi.o papi_hl.o $(SUBSTR).o extras.o papi_wrappers.o
+FOBJECTS   = papi.o papi_hl.o $(SUBSTR).o extras.o papi_fwrappers.o
 PTHROBS   = papi_r.o papi_hl_r.o $(SUBSTR)_r.o extras_r.o
-SMPTHROBS = papi_smp.o papi_hl_smp.o $(SUBSTR)_smp.o extras_smp.o
+SMPTHROBS = papi_smp.o papi_hl_smp.o $(SUBSTR)_smp.o extras_smp.o papi_wrappers.o
 HEADERS   = papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
 all: showconf $(TARGET) examples
@@ -18,6 +20,9 @@ libraries: $(LIBRARY) $(PTHRLIB) $(SMPTHRLIB)
 $(LIBRARY): $(OBJECTS) $(MISCOBJS)
 	ar ruv $(LIBRARY) $(OBJECTS) $(MISCOBJS)
 
+$(FLIBRARY): $(FOBJECTS) $(MISCOBJS) 
+	ar ruv $(FLIBRARY) $(FOBJECTS) $(MISCOBJS)
+
 $(PTHRLIB): $(PTHROBS) $(MISCOBJS)
 	ar ruv $(PTHRLIB) $(PTHROBS) $(MISCOBJS)
 
@@ -26,6 +31,10 @@ $(SMPTHRLIB): $(SMPTHROBS) $(MISCOBJS)
 
 # No Threads
 
+papi_wrappers.o: papi_wrappers.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_wrappers.c -o papi_wrappers.o
+papi_fwrappers.o: papi_fwrappers.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(FOR_USED) -c papi_fwrappers.c -o papi_fwrappers.o
 papi.o: papi.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi.c -o papi.o
 papi_hl.o: papi_hl.c $(HEADERS)

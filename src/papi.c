@@ -378,7 +378,7 @@ int _papi_hwi_initialize(DynamicArray **map)
   return(initialize_process_retval);
 }
 
-int PAPI_init(void)
+int internal_PAPI_init(void)
 { 
   DynamicArray *map;
   return(_papi_hwi_initialize(&map)); 
@@ -534,10 +534,10 @@ static int get_granularity(DynamicArray *map, PAPI_granularity_option_t *opt)
   return(PAPI_OK);
 }
 
-int PAPI_query_event(int EventCode)
+int internal_PAPI_query_event(int EventCode)
 { 
   int retval;
-  if ((retval = PAPI_init()) < PAPI_OK)
+  if ((retval = internal_PAPI_init()) < PAPI_OK)
     return retval;
 
   if (EventCode & PRESET_MASK)
@@ -554,10 +554,10 @@ int PAPI_query_event(int EventCode)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
+int internal_PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
 { 
   int retval;
-  if ((retval = PAPI_init()) < PAPI_OK)
+  if ((retval = internal_PAPI_init()) < PAPI_OK)
     return retval;
 
   if (info == NULL)
@@ -580,15 +580,15 @@ int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-const PAPI_preset_info_t *PAPI_query_all_events_verbose(void)
+const PAPI_preset_info_t *internal_PAPI_query_all_events_verbose(void)
 {
-  if (PAPI_init() < PAPI_OK)
+  if (internal_PAPI_init() < PAPI_OK)
     return NULL;
 
   return(papi_presets);
 }
 
-int PAPI_event_code_to_name(int EventCode, char *out)
+int internal_PAPI_event_code_to_name(int EventCode, char *out)
 {
   if (out == NULL)
     return(handle_error(PAPI_EINVAL, "Null pointer is an invalid argument"));
@@ -605,7 +605,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-int PAPI_event_name_to_code(char *in, int *out)
+int internal_PAPI_event_name_to_code(char *in, int *out)
 {
   int i;
   
@@ -623,12 +623,12 @@ int PAPI_event_name_to_code(char *in, int *out)
   return(handle_error(PAPI_EINVAL,"Event is not a valid preset"));
 }
 
-int PAPI_add_pevent(int *EventSet, int code, void *inout)
+int internal_PAPI_add_pevent(int *EventSet, int code, void *inout)
 { 
   EventSetInfo *ESI, *n = NULL;
   INIT_MAP;
 
-  retval = PAPI_init();
+  retval = internal_PAPI_init();
   if (retval < PAPI_OK) return retval;
 
   /* Is the EventSet already in existence? */
@@ -679,12 +679,12 @@ int PAPI_add_pevent(int *EventSet, int code, void *inout)
   return(retval);
 }
 
-int PAPI_create_eventset(int *EventSet)
+int internal_PAPI_create_eventset(int *EventSet)
 {
   EventSetInfo *ESI;
   INIT_MAP;
 
-  retval = PAPI_init();
+  retval = internal_PAPI_init();
   if (retval < PAPI_OK) return retval;
   
   /* Is the EventSet already in existence? */
@@ -716,12 +716,12 @@ int PAPI_create_eventset(int *EventSet)
   return(retval);
 }
 
-int PAPI_add_event(int *EventSet, int EventCode) 
+int internal_PAPI_add_event(int *EventSet, int EventCode) 
 { 
   EventSetInfo *ESI, *n = NULL;
   INIT_MAP;
 
-  retval = PAPI_init();
+  retval = internal_PAPI_init();
   if (retval < PAPI_OK) return retval;
   
   /* Is the EventSet already in existence? */
@@ -940,7 +940,7 @@ static int remove_event(EventSetInfo *ESI, int EventCode)
   return(retval);
 }
 
-int PAPI_rem_event(int *EventSet, int EventCode)
+int internal_PAPI_rem_event(int *EventSet, int EventCode)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -964,7 +964,7 @@ int PAPI_rem_event(int *EventSet, int EventCode)
   return(retval);
 }
 
-int PAPI_destroy_eventset(int *EventSet)
+int internal_PAPI_destroy_eventset(int *EventSet)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -992,7 +992,7 @@ int PAPI_destroy_eventset(int *EventSet)
 
 /* simply checks for valid EventSet, calls substrate start() call */
 
-int PAPI_start(int EventSet)
+int internal_PAPI_start(int EventSet)
 { 
   int i;
   EventSetInfo *ESI;
@@ -1040,7 +1040,7 @@ int PAPI_start(int EventSet)
 
 /* checks for valid EventSet, calls substrate stop() fxn. */
 
-int PAPI_stop(int EventSet, long long *values)
+int internal_PAPI_stop(int EventSet, long long *values)
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1090,7 +1090,7 @@ int PAPI_stop(int EventSet, long long *values)
   return(retval);
 }
 
-int PAPI_reset(int EventSet)
+int internal_PAPI_reset(int EventSet)
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1119,7 +1119,7 @@ int PAPI_reset(int EventSet)
   return(retval);
 }
 
-int PAPI_read(int EventSet, long long *values)
+int internal_PAPI_read(int EventSet, long long *values)
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1154,7 +1154,7 @@ int PAPI_read(int EventSet, long long *values)
   return(retval);
 }
 
-int PAPI_accum(int EventSet, long long *values)
+int internal_PAPI_accum(int EventSet, long long *values)
 { 
   EventSetInfo *ESI;
   int i;
@@ -1183,10 +1183,10 @@ int PAPI_accum(int EventSet, long long *values)
       values[i] = c;
     } 
 
-  return(PAPI_reset(EventSet));
+  return(internal_PAPI_reset(EventSet));
 }
 
-int PAPI_write(int EventSet, long long *values)
+int internal_PAPI_write(int EventSet, long long *values)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1213,7 +1213,7 @@ int PAPI_write(int EventSet, long long *values)
 /*  The function PAPI_cleanup removes a stopped 
     EventSet from existence. */
 
-int PAPI_cleanup(int *EventSet) 
+int internal_PAPI_cleanup(int *EventSet) 
 { 
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1236,7 +1236,7 @@ int PAPI_cleanup(int *EventSet)
   return(retval);
 }
  
-int PAPI_state(int EventSet, int *status)
+int internal_PAPI_state(int EventSet, int *status)
 {
   EventSetInfo *ESI;
   INIT_MAP;
@@ -1258,7 +1258,7 @@ int PAPI_state(int EventSet, int *status)
 }
 
 
-int PAPI_set_opt(int option, PAPI_option_t *ptr)
+int internal_PAPI_set_opt(int option, PAPI_option_t *ptr)
 { 
   _papi_int_option_t internal;
   INIT_MAP;
@@ -1358,11 +1358,11 @@ int PAPI_set_opt(int option, PAPI_option_t *ptr)
     }
 }
 
-int PAPI_get_opt(int option, PAPI_option_t *ptr) 
+int internal_PAPI_get_opt(int option, PAPI_option_t *ptr) 
 { 
   INIT_MAP;
 
-  retval = PAPI_init();
+  retval = internal_PAPI_init();
   if (retval < PAPI_OK)
     return retval;
 
@@ -1402,7 +1402,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
   return(PAPI_OK);
 } 
 
-void PAPI_shutdown(void) 
+void internal_PAPI_shutdown(void) 
 {
   int i;
   INIT_MAP_VOID;
@@ -1440,7 +1440,7 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
       fprintf(stderr,"\n");
 
       if (PAPI_ERR_LEVEL==PAPI_VERB_ESTOP)
-        PAPI_shutdown();
+        internal_PAPI_shutdown();
     }
 */
 #ifdef DEBUG
@@ -1475,7 +1475,7 @@ static char *get_error_string(int errorCode)
   return(papi_errStr[-errorCode]);
 }
 
-int PAPI_perror(int code, char *destination, int length)
+int internal_PAPI_perror(int code, char *destination, int length)
 {
   char *foo;
 
@@ -1494,7 +1494,7 @@ int PAPI_perror(int code, char *destination, int length)
    in it, but only 1 can be an overflow trigger. Subsequent calls to PAPI_overflow
    replace earlier calls. To turn off overflow, set the handler to NULL. */
 
-int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
+int internal_PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
   int index;
   EventSetInfo *ESI;
@@ -1559,7 +1559,7 @@ static void dummy_handler(int EventSet, int EventCode, int EventIndex,
   abort();
 }
 
-int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
+int internal_PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
                 int EventSet, int EventCode, int threshold, int flags)
 {
   EventSetInfo *ESI;
@@ -1603,7 +1603,7 @@ int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
 
   
   if (_papi_system_info.needs_profile_emul)
-    retval = PAPI_overflow(EventSet, EventCode, threshold, 0, dummy_handler);
+    retval = internal_PAPI_overflow(EventSet, EventCode, threshold, 0, dummy_handler);
   else
     retval = _papi_hwd_set_profile(ESI, &opt);
 
@@ -1622,33 +1622,33 @@ int PAPI_profil(void *buf, int bufsiz, caddr_t offset, int scale,
   return(PAPI_OK);
 }
 
-int PAPI_set_granularity(int granularity)
+int internal_PAPI_set_granularity(int granularity)
 { PAPI_option_t ptr;
 
   ptr.defgranularity.granularity = granularity;
-  return(PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
+  return(internal_PAPI_set_opt(PAPI_SET_GRANUL, &ptr));
 }
 
-int PAPI_set_domain(int domain)
+int internal_PAPI_set_domain(int domain)
 { PAPI_option_t ptr;
 
   ptr.defdomain.domain = domain;
-  return(PAPI_set_opt(PAPI_SET_DOMAIN, &ptr));
+  return(internal_PAPI_set_opt(PAPI_SET_DOMAIN, &ptr));
 }
 
-int PAPI_add_events(int *EventSet, int *Events, int number)
+int internal_PAPI_add_events(int *EventSet, int *Events, int number)
 {
   int i, retval;
 
   for (i=0;i<number;i++)
     {
-      retval = PAPI_add_event(EventSet, Events[i]);
+      retval = internal_PAPI_add_event(EventSet, Events[i]);
       if (retval!=PAPI_OK) return(retval);
     }
   return(PAPI_OK);
 }
 
-int PAPI_rem_events(int *EventSet, int *Events, int number)
+int internal_PAPI_rem_events(int *EventSet, int *Events, int number)
 {
   int i;
   EventSetInfo *ESI;
@@ -1672,14 +1672,14 @@ int PAPI_rem_events(int *EventSet, int *Events, int number)
 
   for (i=0; i<number; i++)
     {
-      retval=PAPI_rem_event(EventSet, Events[i]);
+      retval=internal_PAPI_rem_event(EventSet, Events[i]);
       if(retval!=PAPI_OK) return(retval);
     }
   return(PAPI_OK);
 }
 
 
-int PAPI_list_events(int EventSet, int *Events, int *number)
+int internal_PAPI_list_events(int EventSet, int *Events, int *number)
 {
   EventSetInfo *ESI;
   int num;
@@ -1712,53 +1712,53 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
   return(PAPI_OK);
 }
 
-int PAPI_save(void)
+int internal_PAPI_save(void)
 {
   return(PAPI_OK);
 }
 
-int PAPI_restore(void)
+int internal_PAPI_restore(void)
 {
   return(PAPI_OK);
 }
 
-void *PAPI_get_overflow_address(void *context)
+void *internal_PAPI_get_overflow_address(void *context)
 {
   return(_papi_hwd_get_overflow_address(context));
 }
 
-const PAPI_exe_info_t *PAPI_get_executable_info(void)
+const PAPI_exe_info_t *internal_PAPI_get_executable_info(void)
 {
   PAPI_option_t ptr;
   int retval;
 
-  retval = PAPI_get_opt(PAPI_GET_EXEINFO,&ptr);
+  retval = internal_PAPI_get_opt(PAPI_GET_EXEINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.exe_info);
   else
     return(NULL);
 }
 
-const PAPI_hw_info_t *PAPI_get_hardware_info(void)
+const PAPI_hw_info_t *internal_PAPI_get_hardware_info(void)
 {
   PAPI_option_t ptr;
   int retval;
 
-  retval = PAPI_get_opt(PAPI_GET_HWINFO,&ptr);
+  retval = internal_PAPI_get_opt(PAPI_GET_HWINFO,&ptr);
   if (retval == PAPI_OK)
     return(ptr.hw_info);
   else
     return(NULL);
 }
 
-long long PAPI_get_real_cyc(void)
+long long internal_PAPI_get_real_cyc(void)
 {
   INIT_MAP_QUICK_LL;
 
   return(_papi_hwd_get_real_cycles());
 }
 
-long long PAPI_get_real_usec(void)
+long long internal_PAPI_get_real_usec(void)
 {
   INIT_MAP_QUICK_LL;
 
