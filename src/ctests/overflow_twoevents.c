@@ -25,20 +25,20 @@
 #include "papi_test.h"
 
 #ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d) Overflow at %x! vector=0x%llx\n"
-#define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
+#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"
+#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #elif defined(_WIN32)
-#define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
-#define OUT_FMT		"%-12s : %16I64d%16I64d%16I64d\n"
+#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
+#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
 #define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
-#define OUT_FMT		"%-12s : %16lld%16lld%16lld\n"
+#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
 int total = 0;                  /* total overflows */
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-void handler(int EventSet, void *address, long_long overflow_vector)
+void handler(int EventSet, void *address, long_long overflow_vector, void *context)
 {
 
    if (!TESTS_QUIET) {
@@ -166,18 +166,20 @@ int main(int argc, char **argv)
       printf("-----------------------------------------------\n");
 
       printf("Test type    : %16d%16d\n", 1, 2);
-      printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0], (values[2])[0]);
-      printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1], (values[2])[1]);
+      printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[0], (values[1])[0]);
+      printf(OUT_FMT, event_name, (values[0])[1], (values[1])[1]);
       printf("Overflows    : %16s%16d\n", "", total);
       printf("-----------------------------------------------\n");
-
+/*
       printf("Verification:\n");
       if (PAPI_event == PAPI_FP_INS)
          printf("Row 2 approximately equals %d %d\n", num_flops, num_flops);
+
       printf("Column 1 approximately equals column 2\n");
       printf("Row 3 approximately equals %u +- %u %%\n",
              (unsigned) ((values[0])[1] / (long_long) THRESHOLD),
              (unsigned) (OVR_TOLERANCE * 100.0));
+*/
    }
 
 /*

@@ -21,7 +21,7 @@
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int total = 0;
-void handler(int EventSet, void *address, long_long overflow_vector)
+void handler(int EventSet, void *address, long_long overflow_vector, void * context)
 {
    if (!TESTS_QUIET) {
 #ifdef _CRAYT3E
