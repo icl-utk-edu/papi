@@ -61,9 +61,153 @@ PAPI_FCALL(papif_cleanup_eventset,PAPIF_CLEANUP_EVENTSET,(int *EventSet, int *ch
   *check = PAPI_cleanup_eventset(EventSet);
 }
 
+PAPI_FCALL(papif_create_eventset,PAPIF_CREATE_EVENTSET,(int *EventSet, int *check))
+{
+  *check = PAPI_create_eventset(EventSet);
+}
+
+PAPI_FCALL(papif_destroy_eventset,PAPIF_DESTROY_EVENTSET,(int *EventSet, int *check))
+{
+  *check = PAPI_destroy_eventset(EventSet);
+}
+
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (_fcd fullname_fcd, _fcd name_fcd, int *text_start, int *text_end, 
+           int *data_start, int *data_end, int *bss_start, int *bss_end, _fcd lib_preload_env_fcd, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, int *text_start, int *text_end, 
+           int *data_start, int *data_end, int *bss_start, int *bss_end, char *lib_preload_env, int *check,
+	   int fullname_len, int name_len, int lib_preload_env_len))
+#else
+PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, int *text_start, int *text_end, 
+           int *data_start, int *data_end, int *bss_start, int *bss_end, char *lib_preload_env, int *check))
+#endif
+{
+  PAPI_option_t e;
+
+#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
+#if defined( _CRAYT3E )
+  int fullname_len=_fcdlen(fullname_fcd);
+  char *fullname=_fcdtocp(fullname_fcd);
+  int name_len=_fcdlen(name_fcd);
+  char *name=_fcdtocp(name_fcd);
+  int lib_preload_env_len=_fcdlen(lib_preload_env_fcd);
+  char *lib_preload_env=_fcdtocp(lib_preload_env_fcd);
+#endif
+  int i;
+  if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
+    strncpy(fullname, e.exe_info->fullname, fullname_len);
+    for(i=strlen(e.exe_info->fullname);i<fullname_len;fullname[i++]=' ');
+    strncpy(name, e.exe_info->name, name_len);
+    for(i=strlen(e.exe_info->name);i<name_len;name[i++]=' ');
+    *text_start = (int)e.exe_info->text_start;
+    *text_end = (int)e.exe_info->text_end;
+    *data_start = (int)e.exe_info->data_start;
+    *data_end = (int)e.exe_info->data_end;
+    *bss_start = (int)e.exe_info->bss_start;
+    *bss_end = (int)e.exe_info->bss_end;
+    strncpy(lib_preload_env, e.exe_info->lib_preload_env, lib_preload_env_len);
+    for(i=strlen(e.exe_info->lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
+  }
+#else
+  if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
+    strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
+    strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
+    *text_start = (int)e.exe_info->text_start;
+    *text_end = (int)e.exe_info->text_end;
+    *data_start = (int)e.exe_info->data_start;
+    *data_end = (int)e.exe_info->data_end;
+    *bss_start = (int)e.exe_info->bss_start;
+    *bss_end = (int)e.exe_info->bss_end;
+    strncpy(lib_preload_env, e.exe_info->lib_preload_env, PAPI_MAX_STR_LEN);
+  }
+#endif
+}
+
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+	   int *nnodes, int *totalcpus, int *vendor, _fcd vendor_fcd, 
+	   int *model, _fcd model_fcd, double *revision, double *mhz))
+#elif defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+	   int *nnodes, int *totalcpus, int *vendor, char *vendor_str, 
+	   int *model, char *model_str, float *revision, float *mhz,
+	   int vendor_len, int model_len))
+#else
+PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
+	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
+	   int *model, char *model_string, float *revision, float *mhz))
+#endif
+{
+  const PAPI_hw_info_t *hwinfo;
+#if defined(_FORTRAN_STRLEN_AT_END)
+  int i;
+#elif defined(_CRAYT3E)
+  int i;
+  char *vendor_str=_fcdtocp(vendor_fcd), *model_str=_fcdtocp(model_fcd);
+  int vendor_len=_fcdlen(vendor_fcd), model_len=_fcdlen(model_fcd);
+#endif
+  hwinfo = PAPI_get_hardware_info();
+  if ( hwinfo == NULL ){
+    *ncpu = 0;
+    *nnodes = 0;
+    *totalcpus = 0;
+    *vendor = 0;
+    *model = 0;
+    *revision=0;
+    *mhz=0;
+  }
+  else {
+    *ncpu = hwinfo->ncpu;
+    *nnodes = hwinfo->nnodes;
+    *totalcpus = hwinfo->totalcpus;
+    *vendor = hwinfo->vendor;
+    *model = hwinfo->model;
+    *revision = hwinfo->revision;
+    *mhz = hwinfo->mhz;
+#if defined ( _CRAYT3E ) ||  defined(_FORTRAN_STRLEN_AT_END)
+    strncpy( vendor_str, hwinfo->vendor_string,vendor_len);
+    for(i=strlen(hwinfo->vendor_string);i<vendor_len;vendor_str[i++]=' ') ;
+    strncpy( model_str, hwinfo->model_string, model_len);
+    for(i=strlen(hwinfo->model_string);i<model_len;model_str[i++]=' ') ;
+#else
+    /* This case needs the passed strings to be of sufficient size *
+     * and will include the NULL character in the target string    */
+    strcpy( vendor_string, hwinfo->vendor_string );
+    strcpy( model_string, hwinfo->model_string );
+#endif    
+  }
+  return;
+}
+
+PAPI_FCALL(papif_get_real_cyc,PAPIF_GET_REAL_CYC,(long_long *real_cyc))
+{
+  *real_cyc = PAPI_get_real_cyc();
+}
+
+PAPI_FCALL(papif_get_real_usec,PAPIF_GET_REAL_USEC,( long_long *time))
+{
+  *time = PAPI_get_real_usec();
+}
+
+PAPI_FCALL(papif_get_virt_cyc,PAPIF_GET_VIRT_CYC,(long_long *virt_cyc))
+{
+  *virt_cyc = PAPI_get_virt_cyc();
+}
+
+PAPI_FCALL(papif_get_virt_usec,PAPIF_GET_VIRT_USEC,( long_long *time))
+{
+  *time = PAPI_get_virt_usec();
+}
+
 PAPI_FCALL(papif_library_init,PAPIF_LIBRARY_INIT,(int *check))
 {
   *check = PAPI_library_init(*check);
+}
+
+PAPI_FCALL(papif_thread_id,PAPIF_THREAD_ID,(unsigned long int *id))
+{
+  *id = PAPI_thread_id();
 }
 
 /* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
@@ -73,14 +217,24 @@ PAPI_FCALL(papif_thread_init,PAPIF_THREAD_INIT,(unsigned long int (*handle)(void
   *check = PAPI_thread_init(handle, *flag);
 }
 
-PAPI_FCALL(papif_thread_id,PAPIF_THREAD_ID,(unsigned long int *id))
-{
-  *id = PAPI_thread_id();
-}
-
 PAPI_FCALL(papif_list_events,PAPIF_LIST_EVENTS,(int *EventSet, int *Events, int *number, int *check))
 {
   *check = PAPI_list_events(*EventSet, Events, number);
+}
+
+PAPI_FCALL(papif_lock,PAPIF_LOCK,(void))
+{
+  PAPI_lock();
+}
+
+PAPI_FCALL(papif_multiplex_init, PAPIF_MULTIPLEX_INIT, (int *check))
+{
+  *check = PAPI_multiplex_init();
+}
+ 
+PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check))
+{
+  *check = PAPI_set_multiplex(EventSet);
 }
 
 #if defined ( _CRAYT3E )
@@ -113,11 +267,132 @@ PAPI_FCALL(papif_perror,PAPIF_PERROR,(int *code, char *destination, int *check))
 #endif
 }
 
+PAPI_FCALL(papif_profil, PAPIF_PROFIL, (unsigned short *buf, unsigned *bufsiz, unsigned long *offset, unsigned *scale, unsigned *eventset, 
+           unsigned *eventcode, unsigned *threshold, unsigned *flags, unsigned *check))
+{
+  *check = PAPI_profil(buf, *bufsiz, *offset, *scale, *eventset, *eventcode, *threshold, *flags);
+}
+
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check, int name_len))
+#elif defined(_FORTRAN_STRLEN_AT_END)  
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name_str, int *EventCode, char *descr_str, int *check,
+		                int name_len, int descr_len))
+#else
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name, int *EventCode, char *descr, int *check))
+#endif
+{
+#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
+#if defined( _CRAYT3E )
+  char *name_str=_fcdtocp(name_fcd), *descr_str=_fcdtocp(descr_fcd);
+  int   out_len=_fcdlen(descr_fcd), descr_len=_fcdlen(descr_fcd);
+#endif
+  char tmpname[PAPI_MAX_STR_LEN], tmpdescr[PAPI_MAX_STR_LEN];
+  int i,slen;
+
+  /* What is the maximum number of chars to copy ? */
+  slen = name_len < PAPI_MAX_STR_LEN ? name_len : PAPI_MAX_STR_LEN ;
+  strncpy( tmpname, name_str, slen );
+  /* Remove trailing blanks from initial Fortran string */
+  for(i=slen-1;i>-1 && tmpname[i]==' ';tmpname[i--]='\0');
+  /* Make sure string is NULL terminated before call*/
+  tmpname[PAPI_MAX_STR_LEN-1]='\0';   
+  if(slen<PAPI_MAX_STR_LEN) tmpname[slen]='\0';
+
+  *check = PAPI_describe_event(tmpname,EventCode,tmpdescr);
+  /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
+  strncpy(name_str,tmpname,name_len);
+  strncpy(descr_str,tmpdescr,descr_len);
+  /* overwrite any NULLs and trailing garbage in out_str */
+  for(i=strlen(tmpname);i<name_len;name_str[i++]=' ');
+  for(i=strlen(tmpdescr);i<descr_len;descr_str[i++]=' ');
+#else
+  /* The arrays passed by the user must be sufficiently long */
+  *check = PAPI_describe_event(name,EventCode,descr);
+#endif
+}
+
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, _fcd out_fcd, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)  
+PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, char *out_str, int *check,
+							      int out_len))
+#else
+PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, char *out, int *check))
+#endif
+{
+#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
+#if defined( _CRAYT3E )
+  char *out_str=_fcdtocp(out_fcd);
+  int  out_len=_fcdlen(out_fcd);
+#endif
+  char tmp[PAPI_MAX_STR_LEN];
+  int i;
+  *check = PAPI_label_event(EventCode, tmp);
+  /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
+  strncpy(out_str,tmp,out_len);
+  /* overwrite any NULLs and trailing garbage in out_str */
+  for(i=strlen(tmp);i<out_len;out_str[i++]=' ');
+#else
+  /* The array "out" passed by the user must be sufficiently long */
+  *check = PAPI_label_event(EventCode, out);
+#endif
+}
+
 PAPI_FCALL(papif_query_event,PAPIF_QUERY_EVENT,(int *EventCode, int *check))
 {
   *check = PAPI_query_event(*EventCode);
 }
  
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *EventCode, _fcd event_name_fcd, _fcd event_descr_fcd, _fcd event_label_fcd, int *avail, _fcd event_note_fcd, int *flags, unsigned *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check, int event_name_len, int event_descr_len, int event_label_len, int event_note_len))
+#else
+PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check))
+#endif
+{
+  PAPI_preset_info_t info;
+  
+#if defined( _CRAYT3E )
+  int event_name_len=_fcdlen(event_name_fcd);
+  char *event_name=_fcdtocp(event_name_fcd);
+  int event_descr_len=_fcdlen(event_descr_fcd);
+  char *event_descr=_fcdtocp(event_descr_fcd);
+  int event_label_len=_fcdlen(event_label_fcd);
+  char *event_label=_fcdtocp(event_label_fcd);
+  int event_note_len=_fcdlen(event_note_fcd);
+  char *event_note =_fcdtocp(event_note_fcd);
+#endif
+#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
+  int i;
+#endif
+
+#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
+  if ((*check = PAPI_query_event_verbose(*EventCode, &info))==PAPI_OK){
+    strncpy(event_name, info.event_name, event_name_len);
+    for(i=strlen(info.event_name);i<event_name_len;event_name[i++]=' ');
+    strncpy(event_descr, info.event_descr, event_descr_len);
+    for(i=strlen(info.event_descr);i<event_descr_len;event_descr[i++]=' ');
+    strncpy(event_label, info.event_label, event_label_len);
+    for(i=strlen(info.event_label);i<event_label_len;event_label[i++]=' ');
+    *avail = info.avail;
+    strncpy(event_note, info.event_note, event_note_len);
+    for(i=strlen(info.event_note);i<event_note_len;event_note[i++]=' ');
+    *flags = info.flags;
+  }
+#else
+  if ((*check = PAPI_query_event_verbose(*EventCode, &info))==PAPI_OK){
+    strncpy(event_name, info.event_name, PAPI_MAX_STR_LEN);
+    strncpy(event_descr, info.event_descr, PAPI_MAX_STR_LEN);
+    strncpy(event_label, info.event_label, PAPI_MAX_STR_LEN);
+    *avail = info.avail;
+    strncpy(event_note, info.event_note, PAPI_MAX_STR_LEN);
+    *flags = info.flags;
+  }
+#endif
+}
+
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_event_code_to_name,PAPIF_EVENT_CODE_TO_NAME,(int *EventCode, _fcd out_fcd, int *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)  
@@ -180,45 +455,6 @@ PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out
 #endif
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check, int name_len))
-#elif defined(_FORTRAN_STRLEN_AT_END)  
-PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name_str, int *EventCode, char *descr_str, int *check,
-		                int name_len, int descr_len))
-#else
-PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name, int *EventCode, char *descr, int *check))
-#endif
-{
-#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
-#if defined( _CRAYT3E )
-  char *name_str=_fcdtocp(name_fcd), *descr_str=_fcdtocp(descr_fcd);
-  int   out_len=_fcdlen(descr_fcd), descr_len=_fcdlen(descr_fcd);
-#endif
-  char tmpname[PAPI_MAX_STR_LEN], tmpdescr[PAPI_MAX_STR_LEN];
-  int i,slen;
-
-  /* What is the maximum number of chars to copy ? */
-  slen = name_len < PAPI_MAX_STR_LEN ? name_len : PAPI_MAX_STR_LEN ;
-  strncpy( tmpname, name_str, slen );
-  /* Remove trailing blanks from initial Fortran string */
-  for(i=slen-1;i>-1 && tmpname[i]==' ';tmpname[i--]='\0');
-  /* Make sure string is NULL terminated before call*/
-  tmpname[PAPI_MAX_STR_LEN-1]='\0';   
-  if(slen<PAPI_MAX_STR_LEN) tmpname[slen]='\0';
-
-  *check = PAPI_describe_event(tmpname,EventCode,tmpdescr);
-  /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-  strncpy(name_str,tmpname,name_len);
-  strncpy(descr_str,tmpdescr,descr_len);
-  /* overwrite any NULLs and trailing garbage in out_str */
-  for(i=strlen(tmpname);i<name_len;name_str[i++]=' ');
-  for(i=strlen(tmpdescr);i<descr_len;descr_str[i++]=' ');
-#else
-  /* The arrays passed by the user must be sufficiently long */
-  *check = PAPI_describe_event(name,EventCode,descr);
-#endif
-}
-
 PAPI_FCALL(papif_read,PAPIF_READ,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_read(*EventSet, values);
@@ -254,6 +490,11 @@ PAPI_FCALL(papif_set_granularity,PAPIF_SET_GRANULARITY,(int *granularity, int *c
   *check = PAPI_set_granularity(*granularity);
 }
 
+PAPI_FCALL(papif_shutdown,PAPIF_SHUTDOWN,(void))
+{
+  PAPI_shutdown();
+}
+
 PAPI_FCALL(papif_start,PAPIF_START,(int *EventSet, int *check))
 {
   *check = PAPI_start(*EventSet);
@@ -269,93 +510,17 @@ PAPI_FCALL(papif_stop,PAPIF_STOP,(int *EventSet, long_long *values, int *check))
   *check = PAPI_stop(*EventSet, values);
 }
 
+PAPI_FCALL(papif_unlock,PAPIF_UNLOCK,(void))
+{
+  PAPI_unlock();
+}
+
 PAPI_FCALL(papif_write,PAPIF_WRITE,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_write(*EventSet, values);
 }
 
-PAPI_FCALL(papif_shutdown,PAPIF_SHUTDOWN,(void))
-{
-  PAPI_shutdown();
-}
-
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
-	   int *nnodes, int *totalcpus, int *vendor, _fcd vendor_fcd, 
-	   int *model, _fcd model_fcd, double *revision, double *mhz))
-#elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
-	   int *nnodes, int *totalcpus, int *vendor, char *vendor_str, 
-	   int *model, char *model_str, float *revision, float *mhz,
-	   int vendor_len, int model_len))
-#else
-PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu, 
-	   int *nnodes, int *totalcpus, int *vendor, char *vendor_string, 
-	   int *model, char *model_string, float *revision, float *mhz))
-#endif
-{
-  const PAPI_hw_info_t *hwinfo;
-#if defined(_FORTRAN_STRLEN_AT_END)
-  int i;
-#elif defined(_CRAYT3E)
-  int i;
-  char *vendor_str=_fcdtocp(vendor_fcd), *model_str=_fcdtocp(model_fcd);
-  int vendor_len=_fcdlen(vendor_fcd), model_len=_fcdlen(model_fcd);
-#endif
-  hwinfo = PAPI_get_hardware_info();
-  if ( hwinfo == NULL ){
-    *ncpu = 0;
-    *nnodes = 0;
-    *totalcpus = 0;
-    *vendor = 0;
-    *model = 0;
-    *revision=0;
-    *mhz=0;
-  }
-  else {
-    *ncpu = hwinfo->ncpu;
-    *nnodes = hwinfo->nnodes;
-    *totalcpus = hwinfo->totalcpus;
-    *vendor = hwinfo->vendor;
-    *model = hwinfo->model;
-    *revision = hwinfo->revision;
-    *mhz = hwinfo->mhz;
-#if defined ( _CRAYT3E ) ||  defined(_FORTRAN_STRLEN_AT_END)
-    strncpy( vendor_str, hwinfo->vendor_string,vendor_len);
-    for(i=strlen(hwinfo->vendor_string);i<vendor_len;vendor_str[i++]=' ') ;
-    strncpy( model_str, hwinfo->model_string, model_len);
-    for(i=strlen(hwinfo->model_string);i<model_len;model_str[i++]=' ') ;
-#else
-    /* This case needs the passed strings to be of sufficient size *
-     * and will include the NULL character in the target string    */
-    strcpy( vendor_string, hwinfo->vendor_string );
-    strcpy( model_string, hwinfo->model_string );
-#endif    
-  }
-  return;
-}
-
-PAPI_FCALL(papif_create_eventset,PAPIF_CREATE_EVENTSET,(int *EventSet, int *check))
-{
-  *check = PAPI_create_eventset(EventSet);
-}
-
-PAPI_FCALL(papif_destroy_eventset,PAPIF_DESTROY_EVENTSET,(int *EventSet, int *check))
-{
-  *check = PAPI_destroy_eventset(EventSet);
-}
-
 /* The High Level API Wrappers */
-
-PAPI_FCALL(papif_num_counters,PAPIF_NUM_COUNTERS,(int *numevents))
-{
-  *numevents = PAPI_num_counters();
-}
- 
-PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long_long *flpins, float *mflops, int *check )) 
-{
-  *check = PAPI_flops( real_time, proc_time, flpins, mflops);
-}
 
 PAPI_FCALL(papif_start_counters,PAPIF_START_COUNTERS,(int *events, int *array_len, int *check))
 {
@@ -367,36 +532,33 @@ PAPI_FCALL(papif_read_counters,PAPIF_READ_COUNTERS,(long_long *values, int *arra
   *check = PAPI_read_counters(values, *array_len);
 }
 
-PAPI_FCALL(papif_accum_counters,PAPIF_ACCUM_COUNTERS,(long_long *values, int *array_len, int *check))
-{
-  *check = PAPI_accum_counters(values, *array_len);
-}
-
 PAPI_FCALL(papif_stop_counters,PAPIF_STOP_COUNTERS,(long_long *values, int *array_len, int *check))
 {
   *check = PAPI_stop_counters(values, *array_len);
 }
 
-PAPI_FCALL(papif_get_real_usec,PAPIF_GET_REAL_USEC,( long_long *time))
+PAPI_FCALL(papif_accum_counters,PAPIF_ACCUM_COUNTERS,(long_long *values, int *array_len, int *check))
 {
-  *time = PAPI_get_real_usec();
+  *check = PAPI_accum_counters(values, *array_len);
 }
 
-PAPI_FCALL(papif_get_real_cyc,PAPIF_GET_REAL_CYC,(long_long *real_cyc))
+PAPI_FCALL(papif_num_counters,PAPIF_NUM_COUNTERS,(int *numevents))
 {
-  *real_cyc = PAPI_get_real_cyc();
+  *numevents = PAPI_num_counters();
+}
+ 
+PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long_long *flpins, float *mflops, int *check )) 
+{
+  *check = PAPI_flops( real_time, proc_time, flpins, mflops);
 }
 
-PAPI_FCALL(papif_get_virt_usec,PAPIF_GET_VIRT_USEC,( long_long *time))
-{
-  *time = PAPI_get_virt_usec();
-}
 
-PAPI_FCALL(papif_get_virt_cyc,PAPIF_GET_VIRT_CYC,(long_long *virt_cyc))
-{
-  *virt_cyc = PAPI_get_virt_cyc();
-}
+/* Fortran only APIs for get_opt and set_opt functionality */
 
+PAPI_FCALL(papif_get_clockrate, PAPIF_GET_CLOCKRATE, (int *cr))
+{
+  *cr = PAPI_get_opt(PAPI_GET_CLOCKRATE, NULL);
+}
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD, (_fcd lib_preload_env_fcd, int *check))
@@ -424,17 +586,6 @@ PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD, (char *lib_preload_env, int *ch
   }
 #endif
 }
-
-#if 0
-PAPI_FCALL(papif_get_inherit, PAPIF_GET_INHERIT, (int *inherit, int *check))
-{
-  PAPI_option_t i;
-
-  if ((*check = PAPI_get_opt(PAPI_GET_INHERIT, &i))==PAPI_OK){
-    *inherit = i.inherit.inherit;
-  }
-}
-#endif
 
 PAPI_FCALL(papif_get_granularity, PAPIF_GET_GRANULARITY, 
            (int *eventset, int *granularity, int *mode, int *check))
@@ -475,66 +626,14 @@ PAPI_FCALL(papif_get_domain, PAPIF_GET_DOMAIN, (int *eventset, int *domain, int 
   }
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (_fcd fullname_fcd, _fcd name_fcd, int *text_start, int *text_end, 
-           int *data_start, int *data_end, int *bss_start, int *bss_end, _fcd lib_preload_env_fcd, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, int *text_start, int *text_end, 
-           int *data_start, int *data_end, int *bss_start, int *bss_end, char *lib_preload_env, int *check,
-	   int fullname_len, int name_len, int lib_preload_env_len))
-#else
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO, (char *fullname, char *name, int *text_start, int *text_end, 
-           int *data_start, int *data_end, int *bss_start, int *bss_end, char *lib_preload_env, int *check))
-#endif
-{
-  PAPI_option_t e;
-
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
-#if defined( _CRAYT3E )
-  int fullname_len=_fcdlen(fullname_fcd);
-  char *fullname=_fcdtocp(fullname_fcd);
-  int name_len=_fcdlen(name_fcd);
-  char *name=_fcdtocp(name_fcd);
-  int lib_preload_env_len=_fcdlen(lib_preload_env_fcd);
-  char *lib_preload_env=_fcdtocp(lib_preload_env_fcd);
-#endif
-  int i;
-  if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
-    strncpy(fullname, e.exe_info->fullname, fullname_len);
-    for(i=strlen(e.exe_info->fullname);i<fullname_len;fullname[i++]=' ');
-    strncpy(name, e.exe_info->name, name_len);
-    for(i=strlen(e.exe_info->name);i<name_len;name[i++]=' ');
-    *text_start = (int)e.exe_info->text_start;
-    *text_end = (int)e.exe_info->text_end;
-    *data_start = (int)e.exe_info->data_start;
-    *data_end = (int)e.exe_info->data_end;
-    *bss_start = (int)e.exe_info->bss_start;
-    *bss_end = (int)e.exe_info->bss_end;
-    strncpy(lib_preload_env, e.exe_info->lib_preload_env, lib_preload_env_len);
-    for(i=strlen(e.exe_info->lib_preload_env);i<lib_preload_env_len;lib_preload_env[i++]=' ');
-  }
-#else
-  if ((*check = PAPI_get_opt(PAPI_GET_EXEINFO, &e))==PAPI_OK){
-    strncpy(fullname, e.exe_info->fullname, PAPI_MAX_STR_LEN);
-    strncpy(name, e.exe_info->name, PAPI_MAX_STR_LEN);
-    *text_start = (int)e.exe_info->text_start;
-    *text_end = (int)e.exe_info->text_end;
-    *data_start = (int)e.exe_info->data_start;
-    *data_end = (int)e.exe_info->data_end;
-    *bss_start = (int)e.exe_info->bss_start;
-    *bss_end = (int)e.exe_info->bss_end;
-    strncpy(lib_preload_env, e.exe_info->lib_preload_env, PAPI_MAX_STR_LEN);
-  }
-#endif
-}
-
 #if 0
-PAPI_FCALL(papif_set_inherit, PAPIF_SET_INHERIT, (int *inherit, int *check))
+PAPI_FCALL(papif_get_inherit, PAPIF_GET_INHERIT, (int *inherit, int *check))
 {
   PAPI_option_t i;
 
-  i.inherit.inherit = *inherit;
-  *check = PAPI_set_opt(PAPI_SET_INHERIT, &i);
+  if ((*check = PAPI_get_opt(PAPI_GET_INHERIT, &i))==PAPI_OK){
+    *inherit = i.inherit.inherit;
+  }
 }
 #endif
 
@@ -547,109 +646,13 @@ PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN, (int *es, int *domain
   *check = PAPI_set_opt(PAPI_SET_DOMAIN, &d);
 }
 
-PAPI_FCALL(papif_profil, PAPIF_PROFIL, (unsigned short *buf, unsigned *bufsiz, unsigned long *offset, unsigned *scale, unsigned *eventset, 
-           unsigned *eventcode, unsigned *threshold, unsigned *flags, unsigned *check))
+#if 0
+PAPI_FCALL(papif_set_inherit, PAPIF_SET_INHERIT, (int *inherit, int *check))
 {
-  *check = PAPI_profil(buf, *bufsiz, *offset, *scale, *eventset, *eventcode, *threshold, *flags);
-}
+  PAPI_option_t i;
 
-PAPI_FCALL(papif_get_clockrate, PAPIF_GET_CLOCKRATE, (int *cr))
-{
-  *cr = PAPI_get_opt(PAPI_GET_CLOCKRATE, NULL);
+  i.inherit.inherit = *inherit;
+  *check = PAPI_set_opt(PAPI_SET_INHERIT, &i);
 }
-
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *EventCode, _fcd event_name_fcd, _fcd event_descr_fcd, _fcd event_label_fcd, int *avail, _fcd event_note_fcd, int *flags, unsigned *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check, int event_name_len, int event_descr_len, int event_label_len, int event_note_len))
-#else
-PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check))
-#endif
-{
-  PAPI_preset_info_t info;
-  
-#if defined( _CRAYT3E )
-  int event_name_len=_fcdlen(event_name_fcd);
-  char *event_name=_fcdtocp(event_name_fcd);
-  int event_descr_len=_fcdlen(event_descr_fcd);
-  char *event_descr=_fcdtocp(event_descr_fcd);
-  int event_label_len=_fcdlen(event_label_fcd);
-  char *event_label=_fcdtocp(event_label_fcd);
-  int event_note_len=_fcdlen(event_note_fcd);
-  char *event_note =_fcdtocp(event_note_fcd);
-#endif
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
-  int i;
 #endif
 
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
-  if ((*check = PAPI_query_event_verbose(*EventCode, &info))==PAPI_OK){
-    strncpy(event_name, info.event_name, event_name_len);
-    for(i=strlen(info.event_name);i<event_name_len;event_name[i++]=' ');
-    strncpy(event_descr, info.event_descr, event_descr_len);
-    for(i=strlen(info.event_descr);i<event_descr_len;event_descr[i++]=' ');
-    strncpy(event_label, info.event_label, event_label_len);
-    for(i=strlen(info.event_label);i<event_label_len;event_label[i++]=' ');
-    *avail = info.avail;
-    strncpy(event_note, info.event_note, event_note_len);
-    for(i=strlen(info.event_note);i<event_note_len;event_note[i++]=' ');
-    *flags = info.flags;
-  }
-#else
-  if ((*check = PAPI_query_event_verbose(*EventCode, &info))==PAPI_OK){
-    strncpy(event_name, info.event_name, PAPI_MAX_STR_LEN);
-    strncpy(event_descr, info.event_descr, PAPI_MAX_STR_LEN);
-    strncpy(event_label, info.event_label, PAPI_MAX_STR_LEN);
-    *avail = info.avail;
-    strncpy(event_note, info.event_note, PAPI_MAX_STR_LEN);
-    *flags = info.flags;
-  }
-#endif
-}
-
-PAPI_FCALL(papif_multiplex_init, PAPIF_MULTIPLEX_INIT, (int *check))
-{
-  *check = PAPI_multiplex_init();
-}
- 
-PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check))
-{
-  *check = PAPI_set_multiplex(EventSet);
-}
-
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, _fcd out_fcd, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)  
-PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, char *out_str, int *check,
-							      int out_len))
-#else
-PAPI_FCALL(papif_label_event,PAPIF_LABEL_EVENT,(int EventCode, char *out, int *check))
-#endif
-{
-#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
-#if defined( _CRAYT3E )
-  char *out_str=_fcdtocp(out_fcd);
-  int  out_len=_fcdlen(out_fcd);
-#endif
-  char tmp[PAPI_MAX_STR_LEN];
-  int i;
-  *check = PAPI_label_event(EventCode, tmp);
-  /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-  strncpy(out_str,tmp,out_len);
-  /* overwrite any NULLs and trailing garbage in out_str */
-  for(i=strlen(tmp);i<out_len;out_str[i++]=' ');
-#else
-  /* The array "out" passed by the user must be sufficiently long */
-  *check = PAPI_label_event(EventCode, out);
-#endif
-}
-
-PAPI_FCALL(papif_lock,PAPIF_LOCK,(void))
-{
-  PAPI_lock();
-}
-
-PAPI_FCALL(papif_unlock,PAPIF_UNLOCK,(void))
-{
-  PAPI_unlock();
-}
