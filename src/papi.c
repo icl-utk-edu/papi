@@ -1299,7 +1299,9 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       papi_return(PAPI_EINVAL);
 
    /* We do not support derived events in overflow */
-   if (ESI->EventInfoArray[index].derived)
+   /* Unless it's DERIVED_CMPD in which no calculations are done */
+   if ((ESI->EventInfoArray[index].derived) && 
+       (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
 
 /* the first time to call PAPI_overflow function */
@@ -1384,7 +1386,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       papi_return(PAPI_ENOEVNT);
 
    /* We do not support derived events in overflow */
-   if (ESI->EventInfoArray[index].derived)
+   /* Unless it's DERIVED_CMPD in which no calculations are done */
+   if ((ESI->EventInfoArray[index].derived) && 
+       (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
 
    if (threshold < 0)
@@ -1726,7 +1730,9 @@ int PAPI_get_overflow_event_index(int EventSet, long_long overflow_vector, int *
 	      for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) 
 		  {
 		     pos = ESI->EventInfoArray[j].pos[k];
-		     if ((set_bit == pos) && (ESI->EventInfoArray[j].derived==0) ) 
+		     if ((set_bit == pos) && 
+               ((ESI->EventInfoArray[j].derived == NOT_DERIVED) || 
+                (ESI->EventInfoArray[j].derived == DERIVED_CMPD))) 
 		     { 
 		        array[count++] = j;
                 if (count == *number) 

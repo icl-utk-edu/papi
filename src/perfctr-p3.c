@@ -780,7 +780,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       struct sigaction sa;
       int err;
 *******/
-      if (ESI->EventInfoArray[EventIndex].derived) {
+      if ((ESI->EventInfoArray[EventIndex].derived) &&
+          (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
          OVFDBG("Can't overflow on a derived event.\n");
          return PAPI_EINVAL;
       }
@@ -863,7 +864,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    if (threshold != 0) {        /* Set an overflow threshold */
       struct sigaction sa;
       int err;
-      if (ESI->EventInfoArray[EventIndex].derived) {
+      if ((ESI->EventInfoArray[EventIndex].derived) &&
+          (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
          OVFDBG("Can't overflow on a derived event.\n");
          return PAPI_EINVAL;
       }
