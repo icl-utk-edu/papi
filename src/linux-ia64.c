@@ -594,7 +594,7 @@ int _papi_hwd_init_global(void)
    * fakining it here with hw_info.model which is not set by this
    * substrate 
    */
-  retval = get_memory_info(&_papi_hwi_system_info.mem_info,
+  retval = get_memory_info(&_papi_hwi_system_info.hw_info,
 			   _papi_hwi_system_info.hw_info.model);
   if (retval)
     return(retval);

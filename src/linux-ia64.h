@@ -33,7 +33,6 @@
 #endif
 
 #include "papi.h"
-#include "linux-ia64-memory.h"
 
 #define MAX_COUNTER_TERMS 4
 #ifdef ITANIUM2
