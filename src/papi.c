@@ -1352,6 +1352,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 {
    EventSetInfo_t *ESI;
    int retval, index, i, buckets;
+   int forceSW=0;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
@@ -1416,8 +1417,13 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    /* make sure no invalid flags are set */
    if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
-               | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS))
+               | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW))
       papi_return(PAPI_EINVAL);
+
+   if ( (flags&PAPI_PROFIL_FORCE_SW) ) {
+      flags &= ~(PAPI_PROFIL_FORCE_SW);
+      forceSW = PAPI_OVERFLOW_FORCE_SW;
+   }
 
    /* make sure one and only one bucket size is set */
    buckets = flags & PAPI_PROFIL_BUCKETS;
@@ -1433,10 +1439,10 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    ESI->profile.flags = flags;
 
-   if (_papi_hwi_system_info.supports_hw_profile)
+   if (_papi_hwi_system_info.supports_hw_profile && !forceSW)
       retval = _papi_hwd_set_profile(ESI, index, threshold);
    else
-      retval = PAPI_overflow(EventSet, EventCode, threshold, 0, _papi_hwi_dummy_handler);
+      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
 
    if (retval < PAPI_OK)
       return (retval);
