@@ -136,8 +136,6 @@ static itanium_preset_search_t ia_preset_search_map[] = {
 extern papi_mdi_t _papi_hwi_system_info; 
 extern hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS];
 
-int _papi_hwi_event_index_map[MAX_COUNTERS];
-
 extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
                  long_long over, long_long threshold);
 
@@ -1067,7 +1065,7 @@ static void ia64_process_sigprof(int n, pfm_siginfo_t *info, struct sigcontext
 
 static void ia64_dispatch_sigprof(int n, pfm_siginfo_t *info, struct sigcontext *context)
 {
-  papi_hwd_context_t ctx;
+  _papi_hwi_context_t ctx;
 
   ctx.si = info;
   ctx.ucontext = context;

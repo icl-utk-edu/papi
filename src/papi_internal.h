@@ -355,6 +355,12 @@ typedef union _papi_int_option_t {
 } _papi_int_option_t;
 
 
+typedef struct {
+  hwd_siginfo_t *si;
+  hwd_ucontext_t *ucontext;
+  int overflow_vector;
+} _papi_hwi_context_t;
+
 typedef struct _papi_mdi {
   char substrate[81]; /* Name of the substrate we're using */
   float version;      /* Version of this substrate */

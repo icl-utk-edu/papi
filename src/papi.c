@@ -40,8 +40,8 @@
 
 /* papi_internal.c */
 
-extern int _papi_hwi_debug;
 #ifdef DEBUG
+extern int _papi_hwi_debug;
 #define papi_return(a) return(_papi_hwi_debug_handler(a))
 #else
 #define papi_return(a) return(a)
@@ -55,7 +55,6 @@ extern int (*_papi_hwi_thread_kill_fn)(int, int);
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 extern int _papi_hwi_error_level;
 extern char *_papi_hwi_errStr[];
-extern int _papi_hwi_debug;
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern PAPI_overflow_handler_t _papi_hwi_dummy_handler;
 extern papi_mdi_t _papi_hwi_system_info;
@@ -154,7 +153,7 @@ int PAPI_register_thread(void)
 /*
  * Return a pointer to the stored thread information.
  */
-inline int PAPI_get_thr_specific(int tag, void **ptr)
+ int PAPI_get_thr_specific(int tag, void **ptr)
 {
   ThreadInfo_t *thread;
   if ( tag < 0 || tag > PAPI_MAX_THREAD_STORAGE )
@@ -167,7 +166,7 @@ inline int PAPI_get_thr_specific(int tag, void **ptr)
 /*
  * Store a pointer to memory provided by the thread
  */
-inline int PAPI_set_thr_specific(int tag, void *ptr)
+ int PAPI_set_thr_specific(int tag, void *ptr)
 {
   ThreadInfo_t *thread;
   if ( tag < 0 || tag > PAPI_MAX_THREAD_STORAGE )
@@ -1300,9 +1299,11 @@ int PAPI_perror(int code, char *destination, int length)
 
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_overflow_handler_t handler)
 {
-  int retval, index;
+  int retval, index, event_counter;
   EventSetInfo_t *ESI;
+/*
   EventSetOverflowInfo_t opt = { 0, };
+*/
   ThreadInfo_t *thread;
 
   ESI = _papi_hwi_lookup_EventSet(EventSet);
@@ -1338,23 +1339,23 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 
   /* Set up the option structure for the low level */
 
-  opt.event_counter = ESI->overflow.event_counter;
-  opt.deadline[opt.event_counter-1] = threshold;
-  opt.threshold[opt.event_counter-1] = threshold;
-  opt.EventIndex[opt.event_counter-1] = index;
-  opt.EventCode[opt.event_counter-1] = EventCode;
-  opt.flags = flags;
-  opt.handler = handler;
-  opt.count = 0;
+  event_counter=ESI->overflow.event_counter;
+  ESI->overflow.deadline[event_counter-1] = threshold;
+  ESI->overflow.threshold[event_counter-1] = threshold;
+  ESI->overflow.EventIndex[event_counter-1] = index;
+  ESI->overflow.EventCode[event_counter-1] = EventCode;
+  ESI->overflow.flags = flags;
+  ESI->overflow.handler = handler;
+  ESI->overflow.count = 0;
 
   if (_papi_hwi_system_info.supports_hw_overflow)
   {
-    retval = _papi_hwd_set_overflow(ESI, &opt);
+    retval = _papi_hwd_set_overflow(ESI, &ESI->overflow);
     if (retval < PAPI_OK)
 	  papi_return(retval);
   }
   else
-    opt.timer_ms = PAPI_ITIMER_MS;
+    ESI->overflow.timer_ms = PAPI_ITIMER_MS;
 
     
   /* Toggle the overflow flag */
@@ -1363,8 +1364,9 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
     ESI->state ^= PAPI_OVERFLOWING;
 
   /* Copy the machine independent options into the ESI */
-
+/*
   memcpy(&ESI->overflow, &opt, sizeof(EventSetOverflowInfo_t));
+*/
 
   papi_return(PAPI_OK);
 }

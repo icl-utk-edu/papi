@@ -48,7 +48,7 @@ void handler(int EventSet, void *address, void *context)
 
   if ( !TESTS_QUIET ) {
     fprintf(stderr,OVER_FMT,EventSet,
-	  context,PAPI_get_overflow_address(context));
+	  context,address);
     i=0;
     while(event_indices[i]!=-1 && i<8)
       printf("event_index=%d ",event_indices[i++]);

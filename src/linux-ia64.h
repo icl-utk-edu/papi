@@ -88,14 +88,13 @@ typedef struct itanium_preset_search {
 
 typedef int  hwd_context_t;
 
-typedef struct { 
-  pfm_siginfo_t *si; 
-  struct sigcontext *ucontext;
-} papi_hwd_context_t;
+/* for _papi_hwi_context_t */
+typedef  pfm_siginfo_t     hwd_siginfo_t;
+typedef  struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip
 #define GET_OVERFLOW_CTR_BITS(context) \
-  (((papi_hwd_context_t *)context)->si->sy_pfm_ovfl[0])
+  (((_papi_hwi_context_t *)context)->si->sy_pfm_ovfl[0])
 
 #define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
   (_papi_hwi_event_index_map[bit-PMU_FIRST_COUNTER])

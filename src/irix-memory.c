@@ -71,7 +71,10 @@ int get_memory_info( PAPI_hw_info_t * mem_info ){
 			mem_info->L1_tlb_size = TLB_R12/1024;
 			break;
 		default:
+            break;
+/*
 			mem_info->total_tlb_size = TLB_R4/1024;
+*/
 	}
     return PAPI_OK;
 }

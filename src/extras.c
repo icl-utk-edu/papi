@@ -176,11 +176,13 @@ void dispatch_profile(EventSetInfo_t *ESI, void *context,
 
 void _papi_hwi_dispatch_overflow_signal(void *context)
 {
-  int retval, event_counter, i, overflow_flag;
+  int retval, event_counter, i, overflow_flag, pos;
+  int papi_index;
   u_long_long latest=0, temp[MAX_COUNTERS];
   ThreadInfo_t *thread;
   EventSetInfo_t *ESI;
-  papi_hwd_context_t *ctx = (papi_hwd_context_t*)context;
+  _papi_hwi_context_t *ctx = (_papi_hwi_context_t*)context;
+  void *address;
 
 #ifdef OVERFLOW_DEBUG_TIMER
   if (_papi_hwi_thread_id_fn)
@@ -207,6 +209,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
       
     /* Get the latest counter value */
    event_counter = ESI->overflow.event_counter;
+   printf("event_counter=%d\n", event_counter);
       
   /* if you want to change this, please discuss with me .  -- Min */
     overflow_flag = 0;
@@ -215,33 +218,43 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
       retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop); 
       if (retval < PAPI_OK)
 	    return;
-      for(i=0; i<event_counter; i++) {
-        latest = ESI->sw_stop[ESI->overflow.EventIndex[i]];
+      ctx->overflow_vector=0;
+      for(i=0; i<event_counter; i++) 
+      {
+        papi_index=ESI->overflow.EventIndex[i];
+        latest = ESI->sw_stop[papi_index];
+        
         if (latest >= ESI->overflow.deadline[i])
         {
+    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline[i],ESI->overflow.threshold[i]));
+          pos=ESI->EventInfoArray[papi_index].pos[0];
+          printf("pos=%d  ", pos);
+          ctx->overflow_vector ^= 1<<pos; 
           temp[i] = latest - ESI->overflow.threshold[i];
           overflow_flag=1;
       /* adjust the deadline */
           ESI->overflow.deadline[i] = latest + ESI->overflow.threshold[i];
         }
       }
-    DBG((stderr,"dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",latest,ESI->overflow.deadline[i],ESI->overflow.threshold[i]));
     }
       
-  /* Is it bigger than the deadline? */
+  /* Is it larger than the deadline? */
   
     if ((_papi_hwi_system_info.supports_hw_overflow) || overflow_flag )
     {
       ESI->overflow.count++;
+      address=_papi_hwd_get_overflow_address(ctx->ucontext);
       if (ESI->state & PAPI_PROFILING)
+      {
 /*
 	    dispatch_profile(ESI, (caddr_t)context, 
              latest - ESI->overflow.deadline[event_counter-1], ESI->overflow.threshold[event_counter-1]); 
 */
-      for(i=0; i<event_counter; i++) {
-        if (temp[i] > 0)
-	      dispatch_profile(ESI, (caddr_t)context, 
+        for(i=0; i<event_counter; i++) {
+          if (temp[i] > 0)
+	        dispatch_profile(ESI, (caddr_t)context, 
              temp[i], ESI->overflow.threshold[i]); 
+        }
       }
       else
 	    ESI->overflow.handler(ESI->EventSetIndex,  

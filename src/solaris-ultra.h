@@ -51,6 +51,17 @@ typedef struct _native_info {
   int encoding[MAX_COUNTERS];
 } native_info_t;
 
+typedef siginfo_t  hwd_siginfo_t;
+typedef ucontext_t  hwd_ucontext_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->uc_mcontext.gregs[REG_PC])
+#define GET_OVERFLOW_CTR_BITS(context) \
+  (((_papi_hwi_context_t *)context)->overflow_vector)
+
+#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
+  (_papi_hwi_event_index_map[bit])
+
+
 typedef int hwd_context_t;
 
 #include "papi_internal.h"

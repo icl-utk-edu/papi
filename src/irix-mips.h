@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <invent.h>
 #include <time.h>
 #include <unistd.h>
@@ -50,7 +51,6 @@ typedef struct _Context {
   int fd;
 }  hwd_context_t;
 
-#include "papi_internal.h"
 
 typedef struct {
   unsigned int     ri_fill:16,
@@ -59,6 +59,18 @@ typedef struct {
     ri_minrev:4;	/* minor revision */
 } papi_rev_id_t;
 
+
+typedef siginfo_t  hwd_siginfo_t;
+typedef struct sigcontext hwd_ucontext_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_pc
+#define GET_OVERFLOW_CTR_BITS(context) \
+  (((_papi_hwi_context_t *)context)->overflow_vector)
+
+#define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) \
+  (_papi_hwi_event_index_map[bit])
+
+#include "papi_internal.h"
 
 extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];

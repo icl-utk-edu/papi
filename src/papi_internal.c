@@ -61,7 +61,11 @@ extern hwi_preset_t _papi_hwi_preset_map[];
 
 /* Defined in papi_data.c */
 extern PAPI_preset_info_t _papi_hwi_presets[];
+#ifdef DEBUG
 extern int _papi_hwi_debug;
+#endif
+
+int _papi_hwi_event_index_map[MAX_COUNTERS];
 
 ThreadInfo_t *default_master_thread = NULL; 
 
@@ -1452,7 +1456,7 @@ void PAPIDEBUG(int level, char * format, ...){
      return;
 }
 
-inline void SUBDBG(char * format, ...){
+ void SUBDBG(char * format, ...){
 #ifdef DEBUG
   va_list args;
   int level = DEBUG_SUBSTRATE;
@@ -1468,7 +1472,7 @@ inline void SUBDBG(char * format, ...){
      return;
 }
 
-inline void APIDBG(char * format, ...){
+ void APIDBG(char * format, ...){
 #ifdef DEBUG
   va_list args;
   int level = DEBUG_API;
@@ -1483,7 +1487,7 @@ inline void APIDBG(char * format, ...){
 #endif
      return;
 }
-inline void INTDBG(char * format, ...){
+ void INTDBG(char * format, ...){
 #ifdef DEBUG
   va_list args;
   int level = DEBUG_INTERNAL;
@@ -1498,7 +1502,7 @@ inline void INTDBG(char * format, ...){
 #endif
      return;
 }
-inline void THRDBG(char * format, ...){
+ void THRDBG(char * format, ...){
 #ifdef DEBUG
   va_list args;
   int level = DEBUG_THREADS;
@@ -1513,7 +1517,7 @@ inline void THRDBG(char * format, ...){
 #endif
      return;
 }
-inline void MPXDBG(char * format, ...){
+ void MPXDBG(char * format, ...){
 #ifdef DEBUG
   va_list args;
   int level = DEBUG_MULTIPLEX;

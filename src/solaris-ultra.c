@@ -239,6 +239,8 @@ native_info_t  usiii_native_table[]= {
 };
 
 extern papi_mdi_t _papi_hwi_system_info;
+int _papi_hwi_event_index_map[MAX_COUNTERS];
+
 preset_search_t *preset_search_map;
 static native_info_t *native_table;
 
@@ -256,6 +258,11 @@ static void dump_cmd(papi_cpc_event_t *t)
 static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
 {
   int event_counter;
+  _papi_hwi_context_t ctx;
+
+  ctx.si = sip;
+  ctx.ucontext = arg;
+
 #ifdef DEBUG
   if (papi_debug)
     psignal(signal, "dispatch_emt");
@@ -285,22 +292,11 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       t = 0;
     else
       t = 1;
+    /* save the overflow mask for overflow */
+    ctx.overflow_vector = 1 << t;
       
-#if 0
-    /* Push the correct value */
-    sample->cmd.ce_pic[t] = ESI->overflow.threshold;
-#if DEBUG
-    dump_cmd(sample);
-#endif
-    if (cpc_bind_event(&sample->cmd,0) == -1)
-      return;
-    ESI->overflow.count++;
-    ESI->overflow.handler(ESI->EventSetIndex, ESI->overflow.EventCode,
-                ESI->overflow.EventIndex, ESI->sw_stop,
-                &ESI->overflow.threshold, arg);
-#endif
     /* Call the regular overflow function in extras.c */
-    _papi_hwi_dispatch_overflow_signal(arg);
+    _papi_hwi_dispatch_overflow_signal(&ctx);
 
     /* Reset the threshold */
       
@@ -792,7 +788,14 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info)
   DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n", 
         info->uc_mcontext.gregs[REG_PC]));
 */
+  _papi_hwi_context_t ctx;
+
+  ctx.si=si;
+  ctx.ucontext=info;
+/*
   _papi_hwi_dispatch_overflow_signal((void *)info); 
+*/
+  _papi_hwi_dispatch_overflow_signal((void *)&ctx); 
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
@@ -817,9 +820,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
     if (sigaction(SIGEMT, &act, NULL) == -1)
 	  return(PAPI_ESYS);
 
-    /* check whether the event is derived event or not */
-    if (ESI->EventInfoArray[overflow_option->EventIndex[0]].derived !=NOT_DERIVED)
-      return(PAPI_ECNFLCT);
 
     arg->flags |= CPC_BIND_EMT_OVF;
     hwcntr = ESI->EventInfoArray[overflow_option->EventIndex[0]].pos[0];

@@ -146,7 +146,7 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t *ptr)
   return(PAPI_OK);
 }
 
-inline ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
+ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
 {
   if (_papi_hwi_thread_id_fn == NULL)
     return(default_master_thread);

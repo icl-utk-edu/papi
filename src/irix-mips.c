@@ -540,7 +540,7 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
 
-  retval = get_memory_info(&_papi_hwi_system_info.mem_info);
+  retval = get_memory_info(&_papi_hwi_system_info.hw_info);
   if (retval)
     return(retval);
 
@@ -703,7 +703,15 @@ int _papi_hwd_shutdown_global(void)
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *info)
 {
+  _papi_hwi_context_t ctx;
+  EventSetInfo_t *ESI;
+
+  ctx.si=si;
+  ctx.ucontext=info;
+/*
   _papi_hwi_dispatch_overflow_signal((void *)info); 
+*/
+  _papi_hwi_dispatch_overflow_signal((void *)&ctx); 
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
@@ -719,12 +727,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
     return(PAPI_ECNFLCT);
 */
   if (ESI->overflow.event_counter >1) return(PAPI_ECNFLCT);
-  if ( ESI->EventInfoArray[overflow_option->EventIndex].derived != NOT_DERIVED)
-    return(PAPI_ECNFLCT);
-  if (overflow_option->threshold == 0)
+  if (overflow_option->threshold[0] == 0)
   {
     arg->hwp_ovflw_sig = 0;
-    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex].pos[0];
+    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex[0]].pos[0];
 	arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 0;
 	arg->hwp_ovflw_freq[hwcntr] = 0;
 
@@ -753,10 +759,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow
 	  return(PAPI_ESYS);
 
     arg->hwp_ovflw_sig = PAPI_SIGNAL;
-    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex].pos[0];
+    hwcntr = ESI->EventInfoArray[overflow_option->EventIndex[0]].pos[0];
     /* set the threshold and interrupt flag */
 	arg->hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_creg.hwp_ie = 1;
-	arg->hwp_ovflw_freq[hwcntr] = (int)overflow_option->threshold;
+	arg->hwp_ovflw_freq[hwcntr] = (int)overflow_option->threshold[0];
     _papi_hwd_lock(PAPI_INTERNAL_LOCK);
     _papi_hwi_using_signal++;
     _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
