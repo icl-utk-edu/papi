@@ -3,157 +3,270 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    Kevin London
+*          london@cs.utk.edu
 */
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
+
+/* Prototypes */
+static int mdi_init();
+extern int setup_p4_presets(int cputype);
+extern int setup_p4_vector_table(papi_vectors_t *);
+extern int setup_p3_presets(int cputype);
+extern int setup_p3_vector_table(papi_vectors_t *);
+
 
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 
-/****************************/
-/* BEGIN LOCAL DECLARATIONS */
-/****************************/
+#if defined(PERFCTR26)
+#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
+#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
+#elif defined(PERFCTR25)
+#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
+#else
+#define PERFCTR_CPU_NAME        perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
+#endif
 
-/**************************/
-/* END LOCAL DECLARATIONS */
-/**************************/
-
-/******************************/
-/* BEGIN STOLEN/MODIFIED CODE */
-/******************************/
-
-#ifdef _WIN32
-
-int _papi_hwd_update_shlib_info(void)
-{
-   return PAPI_ESBSTR;
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
+   switch (perfctr_cpu_type) {
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+   case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      return (PAPI_VENDOR_AMD);
+   case PERFCTR_X86_CYRIX_MII:
+      return (PAPI_VENDOR_CYRIX);
+   default:
+      return (PAPI_VENDOR_UNKNOWN);
+   }
 }
 
+/* volatile uint32_t lock; */
 
-// split the filename from a full path
-// roughly equivalent to unix basename()
-static void splitpath(const char *path, char *name)
-{
-	short i = 0, last = 0;
-	
-	while (path[i]) {
-		if (path[i] == '\\') last = i;
-		i++;
-	}
-	name[0] = 0;
-	i = i - last;
-	if (last > 0) {
-		last++;
-		i--;
-	}
-	strncpy(name, &path[last], i);
-	name[i] = 0;
+#include <inttypes.h>
+
+volatile unsigned int lock[PAPI_MAX_LOCK];
+
+
+static void lock_init(void) {
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++) {
+      lock[i] = MUTEX_OPEN;
+   }
 }
 
-int _papi_hwd_get_system_info(void)
-{
-  struct wininfo win_hwinfo;
-  HMODULE hModule;
-  DWORD len;
-  long i = 0;
-
-  /* Path and args */
-  _papi_hwi_system_info.pid = getpid();
-
-  hModule = GetModuleHandle(NULL); // current process
-  len = GetModuleFileName(hModule,_papi_hwi_system_info.exe_info.fullname,PAPI_MAX_STR_LEN);
-  if (len) splitpath(_papi_hwi_system_info.exe_info.fullname, _papi_hwi_system_info.exe_info.address_info.name);
-  else return(PAPI_ESYS);
-
-  SUBDBG("Executable is %s\n",_papi_hwi_system_info.exe_info.address_info.name);
-  SUBDBG("Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname);
-
-  /* Hardware info */
-  if (!init_hwinfo(&win_hwinfo))
-    return(PAPI_ESYS);
-
-  _papi_hwi_system_info.hw_info.ncpu = win_hwinfo.ncpus;
-  _papi_hwi_system_info.hw_info.nnodes = win_hwinfo.nnodes;
-  _papi_hwi_system_info.hw_info.totalcpus = win_hwinfo.total_cpus;
-
-  _papi_hwi_system_info.hw_info.vendor = win_hwinfo.vendor;
-  _papi_hwi_system_info.hw_info.revision = (float)win_hwinfo.revision;
-  strcpy(_papi_hwi_system_info.hw_info.vendor_string,win_hwinfo.vendor_string);
-
-  /* initialize the model to something */
-  _papi_hwi_system_info.hw_info.model = PERFCTR_X86_GENERIC;
-
-  if (IS_P3(&win_hwinfo) || IS_P3_XEON(&win_hwinfo) || IS_CELERON(&win_hwinfo))
-    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_PIII;
-
-  if (IS_MOBILE(&win_hwinfo))
-    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_PENTM;
-
-  if (IS_P4(&win_hwinfo)) {
-    if (win_hwinfo.model >= 2)
-      /* this is a guess for Pentium 4 Model 2 */
-      _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_P4M2;
-    else
-      _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_P4;
+/* 
+ * 1 if the processor is a P4, 0 otherwise
+ */
+int check_p4(int cputype){
+  switch(cputype) {
+     case PERFCTR_X86_INTEL_P4:
+     case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+     case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+     case PERFCTR_X86_INTEL_PENTM:
+#endif
+        return(1);
+     default:
+	return(0);
   }
-
-  if (IS_AMDDURON(&win_hwinfo) || IS_AMDATHLON(&win_hwinfo))
-    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_AMD_K7;
-
-  strcpy(_papi_hwi_system_info.hw_info.model_string,win_hwinfo.model_string);
-
-  _papi_hwi_system_info.num_cntrs = win_hwinfo.nrctr;
-  _papi_hwi_system_info.num_gp_cntrs = _papi_hwi_system_info.num_cntrs;
-
-  _papi_hwi_system_info.hw_info.mhz = (float)win_hwinfo.mhz; 
-
-  return(PAPI_OK);
+  return(0);
 }
 
-#else
-#ifdef __CATAMOUNT__
+papi_svector_t _linux_os_table[] = {
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ { NULL, VEC_PAPI_END}
+};
 
-int _papi_hwd_update_shlib_info(void)
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-   /* Catamount doesn't support shared libraries */
-   return PAPI_ESBSTR;
+  int retval;
+  struct perfctr_info info;
+  struct vperfctr *dev;
+  int is_p4=0;
+
+  /* Setup the vector entries that the OS knows about */
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _linux_os_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
+
+  
+   /* Opened once for all threads. */
+
+   if ((dev = vperfctr_open()) == NULL)
+     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
+
+   /* Get info from the kernel */
+
+   if (vperfctr_info(dev, &info) < 0)
+     { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
+
+   retval = mdi_init();
+   if ( retval ) 
+     return(retval);
+
+  /* Fill in what we can of the papi_system_info. */
+  retval = _papi_hwd_get_system_info();
+  if (retval != PAPI_OK)
+     return (retval);
+
+   /* Setup memory info */
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
+   if (retval)
+      return (retval);
+
+   is_p4 = check_p4(info.cpu_type);
+
+   /* Setup presets */
+   if ( is_p4 ){
+     strcpy(_papi_hwi_system_info.substrate, "$Id$");
+     retval = setup_p4_presets(info.cpu_type);
+     if ( retval ) 
+       return(retval);
+     retval = setup_p4_vector_table(vtable);
+   }
+   else{
+     strcpy(_papi_hwi_system_info.substrate, "$Id$");
+     retval = setup_p3_presets(_papi_hwi_system_info.hw_info.model);
+     if ( retval ) 
+       return(retval);
+     retval = setup_p3_vector_table(vtable);
+   }
+
+   if ( retval ) 
+     return(retval);
+
+   /* Fixup stuff from linux.c */
+
+   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
+
+   _papi_hwi_system_info.supports_hw_overflow =
+       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
+   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
+          _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
+
+   _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   _papi_hwi_system_info.hw_info.model = info.cpu_type;
+   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
+
+    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
+    vperfctr_close(dev);
+
+   lock_init();
+
+   return (PAPI_OK);
 }
 
-int _papi_hwd_get_system_info(void)
+static int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-   pid_t pid;
-
-   /* Software info */
-
-   /* Path and args */
-
-   pid = getpid();
-   if (pid < 0)
-     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
-   _papi_hwi_system_info.pid = pid;
-
-   /* executable name is hardcoded for Catamount */
-   sprintf(_papi_hwi_system_info.exe_info.fullname,"/home/a.out");
-	sprintf(_papi_hwi_system_info.exe_info.address_info.name,"%s",
-                  basename(_papi_hwi_system_info.exe_info.fullname));
-
-   /* Hardware info */
-
-  _papi_hwi_system_info.hw_info.ncpu = 1;
-  _papi_hwi_system_info.hw_info.nnodes = 1;
-  _papi_hwi_system_info.hw_info.totalcpus = 1;
-  _papi_hwi_system_info.hw_info.vendor = 2;
-
-	sprintf(_papi_hwi_system_info.hw_info.vendor_string,"AuthenticAMD");
-	_papi_hwi_system_info.hw_info.revision = 1;
-
-  return(PAPI_OK);
+   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
+   switch (code) {
+   case PAPI_DOMAIN:
+   case PAPI_DEFDOM:
+      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+   case PAPI_GRANUL:
+   case PAPI_DEFGRN:
+      return(PAPI_ESBSTR);
+   default:
+      return (PAPI_EINVAL);
+   }
 }
 
-#else
+
+static
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
+{
+   _papi_hwi_context_t ctx;
+   ThreadInfo_t *master = NULL;
+   int isHardware=0;
+
+   ctx.si = si;
+   ctx.ucontext = (ucontext_t *)context;
+
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware,
+                                      si->si_pmc_ovf_mask, 0, &master);
+
+   /* We are done, resume interrupting counters */
+
+   if (isHardware) {
+      if (vperfctr_iresume(master->context.perfctr) < 0) {
+         PAPIERROR("vperfctr_iresume errno %d",errno);
+      }
+   }
+}
+
+static
+int _papi_hwd_init(hwd_context_t * ctx) {
+   struct vperfctr_control tmp;
+
+   /* Initialize our thread/process pointer. */
+   if ((ctx->perfctr = vperfctr_open()) == NULL)
+     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
+
+   /* Initialize the per thread/process virtualized TSC */
+   memset(&tmp, 0x0, sizeof(tmp));
+   tmp.cpu_control.tsc_on = 1;
+
+   /* Start the per thread/process virtualized TSC */
+   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
+     { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+
+   return (PAPI_OK);
+}
+
+
+/* Initialize the system-specific settings */
+/* Machine info structure. -1 is unused. */
+static int mdi_init() {
+     /* Name of the substrate we're using */
+    strcpy(_papi_hwi_system_info.substrate, "$Id$");
+
+   _papi_hwi_system_info.supports_hw_overflow = 1;
+   _papi_hwi_system_info.supports_64bit_counters = 1;
+   _papi_hwi_system_info.supports_inheritance = 1;
+   _papi_hwi_system_info.supports_real_usec = 1;
+   _papi_hwi_system_info.supports_real_cyc = 1;
+   _papi_hwi_system_info.supports_virt_usec = 1;
+   _papi_hwi_system_info.supports_virt_cyc = 1;
+
+   return (PAPI_OK);
+}
 
 int _papi_hwd_update_shlib_info(void)
 {
@@ -272,10 +385,6 @@ int _papi_hwd_update_shlib_info(void)
    return (PAPI_OK);
 }
 
-/****************************/
-/* END STOLEN/MODIFIED CODE */
-/****************************/
-
 static char *search_cpu_info(FILE * f, char *search_str, char *line)
 {
    /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
@@ -295,6 +404,7 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
 
    /* End stolen code */
 }
+
 /* Pentium III
  * processor  : 1
  * vendor     : GenuineIntel
@@ -491,5 +601,43 @@ int _papi_hwd_get_system_info(void)
 
    return (PAPI_OK);
 }
-#endif /* __CATAMOUNT__ */
-#endif /* _WIN32 */
+
+/* Low level functions, should not handle errors, just return codes. */
+
+inline_static long_long get_cycles(void) {
+   long_long ret;
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
+   } while(0);
+#else
+   __asm__ __volatile__("rdtsc"
+                       : "=A" (ret)
+                       : /* no inputs */);
+#endif
+   return ret;
+}
+
+static
+long_long _papi_hwd_get_real_usec(void) {
+   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
+static
+long_long _papi_hwd_get_real_cycles(void) {
+   return((long_long)get_cycles());
+}
+
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+{
+   return ((long_long)vperfctr_read_tsc(ctx->perfctr));
+}
+
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+{
+   return ((long_long)vperfctr_read_tsc(ctx->perfctr) /
+           (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+

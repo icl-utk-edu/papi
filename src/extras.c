@@ -23,6 +23,8 @@ vendors did in the kernel extensions or performance libraries. */
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
+#include "papi_vector_redefine.h"
 
 /*******************/
 /* BEGIN EXTERNALS */
@@ -650,8 +652,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
          */
          retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
          if (retval == PAPI_OK)
-            retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)info->name, info->code,
-                                      PAPI_MIN_STR_LEN, PAPI_MAX_INFO_TERMS);
+            retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)info->name, info->code, PAPI_MIN_STR_LEN, PAPI_MAX_INFO_TERMS);
          if (retval < 0) info->count = 0;
          else info->count = retval;
          return (PAPI_OK);

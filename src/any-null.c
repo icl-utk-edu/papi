@@ -13,6 +13,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 
 extern hwi_search_t _papi_hwd_p3_preset_map;
 extern hwi_search_t _papi_hwd_pm_preset_map;
@@ -168,11 +169,56 @@ static int lock_init(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
+papi_svector_t _any_null_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
+ {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+ {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+ {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
+ {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
+ {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
+ {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
+ {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
+ {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
+ {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
+ {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
+ {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
+ {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+ {(void (*)())_papi_hwd_add_prog_event, VEC_PAPI_HWD_ADD_PROG_EVENT},
+ {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void (*)())_papi_stop_profiling, VEC_PAPI_STOP_PROFILING},
+ {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+ {NULL, VEC_PAPI_END}
+};
+
 int _papi_hwd_init_global(void) 
 {
    int retval;
    struct perfctr_info info;
    struct vperfctr *dev;
+
+
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _any_null_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
 
    /* Opened once for all threads. */
 

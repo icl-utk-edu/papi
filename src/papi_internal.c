@@ -25,6 +25,8 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
+#include "papi_vector_redefine.h"
 
 /********************/
 /* BEGIN PROTOTYPES */
@@ -611,17 +613,18 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          int count;
          int preset_index = EventCode & PAPI_PRESET_AND_MASK;
 
-         /* count the number of native events in this preset */
-         count = _papi_hwi_presets.count[preset_index];
 
          /* Check if it's within the valid range */
          if ((preset_index < 0) || (preset_index >= PAPI_MAX_PRESET_EVENTS))
             return (PAPI_EINVAL);
 
-         /* Check if event exists */
+         /* count the number of native events in this preset */
+         count = _papi_hwi_presets.count[preset_index];
 
-         if (!_papi_hwi_presets.count[preset_index])
+         /* Check if event exists */
+         if (!count)
             return (PAPI_ENOEVNT);
+
          /* check if the native events have been used as overflow events */
          if (ESI->state & PAPI_OVERFLOWING) {
             for (i = 0; i < count; i++) {
@@ -1009,6 +1012,25 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
    return (1);
 }
 #endif
+
+/*
+ * Routine that initializes the substrates
+ * Currently, only one substrate is initialized, eventually
+ * this will be many substrates
+ */
+int _papi_hwi_init_global(void)
+{
+   int retval;
+
+#ifdef PAPI_NO_VECTOR
+   retval = _papi_hwd_init_substrate(NULL);
+#else
+   retval = _papi_hwi_initialize_vector_table(&_papi_vector_table);
+   if (retval != PAPI_OK ) return(retval);
+   retval = _papi_hwd_init_substrate(&_papi_vector_table);
+#endif
+   return(retval);
+}
 
 /* Machine info struct initialization using defaults */
 /* See _papi_mdi definition in papi_internal.h       */

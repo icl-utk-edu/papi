@@ -9,6 +9,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 
 /* Machine dependent info structure */
 extern papi_mdi_t _papi_hwi_system_info;
@@ -330,12 +331,6 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * context)
    return (_papi_hwd_get_virt_usec(context) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-void _papi_hwd_error(int error, char *where)
-{
-   sprintf(where, "Substrate error");
-   pm_error(where, error);
-}
-
 static void _papi_lock_init(void)
 {
    int i;
@@ -343,12 +338,41 @@ static void _papi_lock_init(void)
       lock[i] = (int *) (lock_var + i);
 }
 
-int _papi_hwd_init_global(void)
+papi_svector_t _aix_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address, VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ { (void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ { (void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+ { (void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ { (void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ { (void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ { (void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ { (void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ { (void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ { (void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ { (void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ { NULL, VEC_PAPI_END}
+};
+
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
    int retval=PAPI_OK;
 
-   /* Fill in what we can of the papi_system_info. */
 
+  /* Setup the vector entries that the OS knows about */
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _aix_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
+
+   /* Fill in what we can of the papi_system_info. */
    retval = get_system_info();
    if (retval)
       return (retval);
@@ -362,7 +386,17 @@ int _papi_hwd_init_global(void)
         _papi_hwi_system_info.hw_info.vendor_string,
         _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
-   setup_native_table();
+/* This ifndef should be removed and switched to a cpu check for Power 3 or
+ * power 4 when we merge substrates.
+ */
+#ifndef _POWER4
+   power3_setup_native_table(vtable);
+   if ((retval = power3_setup_vector_table(vtable))!= 0 )  return retval;
+#else
+   power4_setup_native_table(vtable);
+   if ((retval = power4_setup_vector_table(vtable))!= 0 )  return retval;
+#endif
+
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
 
@@ -410,12 +444,6 @@ static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
 }
 
 
-int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
-                             unsigned int event, void *extra, EventInfo_t * out)
-{
-   return (PAPI_ESBSTR);
-}
-
 #ifdef DEBUG
 void dump_cmd(pm_prog_t * t)
 {
@@ -447,7 +475,6 @@ void dump_data(long long *vals)
 }
 #endif
 
-/*int _papi_hwd_reset(EventSetInfo_t *ESI, EventSetInfo_t *zero)*/
 int _papi_hwd_reset(hwd_context_t * ESI, hwd_control_state_t * zero)
 {
   int retval = pm_reset_data_mythread();
@@ -508,22 +535,6 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long events[])
-{
-   return (PAPI_ESBSTR);
-}
-
-int _papi_hwd_shutdown(hwd_context_t * ctx)
-{
-  return (PAPI_OK);
-}
-
-int _papi_hwd_shutdown_global(void)
-{
-   return (PAPI_OK);
-}
-
-
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *i)
 {
    _papi_hwi_context_t ctx;
@@ -547,28 +558,14 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (PAPI_OK);
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
-{
-   /* This function is not used and shouldn't be called. */
-
-   return (PAPI_ESBSTR);
-}
-
-int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
-{
-   /* This function is not used and shouldn't be called. */
-
-   return (PAPI_ESBSTR);
-}
-
-/*void *_papi_hwd_get_overflow_address(void *context)
+void *_papi_hwd_get_overflow_address(void *context)
 {
   void *location;
   struct sigcontext *info = (struct sigcontext *)context;
   location = (void *)info->sc_jmpbuf.jmp_context.iar;
 
   return(location);
-}*/
+}
 
 
 /* Copy the current control_state into the new thread context */

@@ -101,6 +101,8 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
+#include "papi_vector_redefine.h"
 
 #define MPX_SIGNAL PAPI_SIGNAL
 #define MPX_ITIMER PAPI_ITIMER

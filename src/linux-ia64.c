@@ -14,6 +14,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 #include "pfmwrap.h"
 #include "threads.h"
 
@@ -348,14 +349,43 @@ static void lock_init(void)
 }
 
 /* this function is called by PAPI_library_init */
-int _papi_hwd_init_global(void)
+papi_svector_t _linux_ia64_table[] = {
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+ {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+ {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+ {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+ {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ {NULL, VEC_PAPI_END}
+};
+
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
    int retval, type;
    unsigned int version;
    pfmlib_options_t pfmlib_options;
 
-   /* Opened once for all threads. */
+  /* Setup the vector entries that the OS knows about */
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _linux_ia64_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
 
+   /* Opened once for all threads. */
    if (pfm_initialize() != PFMLIB_SUCCESS)
       return (PAPI_ESYS);
 
@@ -458,24 +488,19 @@ int _papi_hwd_init_global(void)
    return (PAPI_OK);
 }
 
-int _papi_hwd_shutdown_global(void)
-{
-  return(PAPI_OK);
-}
-
 int _papi_hwd_init(hwd_context_t * zero)
 {
   return(pfmw_create_context(zero));
 }
 
-long_long _papi_hwd_get_real_usec(void)
-{
-  return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+static
+long_long _papi_hwd_get_real_usec(void) {
+   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
-
-long_long _papi_hwd_get_real_cycles(void)
-{
-   return ((long_long)get_cycles());
+                                                                                
+static
+long_long _papi_hwd_get_real_cycles(void) {
+   return((long_long)get_cycles());
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
@@ -494,17 +519,6 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
    return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
-
-void _papi_hwd_error(int error, char *where)
-{
-   sprintf(where, "Substrate error: %s", strerror(error));
-}
-
-int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
-                             unsigned int event, void *extra, EventInfo_t * out)
-{
-   return (PAPI_ESBSTR);
 }
 
 /* reset the hardware counters */
@@ -607,11 +621,6 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
    return PAPI_OK;
 }
 
-int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
-{
-   return 1;
-}
-
 int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 {
    switch (code) {
@@ -632,11 +641,6 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
    default:
       return (PAPI_EINVAL);
    }
-}
-
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long events[])
-{
-   return (PAPI_ESBSTR);
 }
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
@@ -971,9 +975,9 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
  {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
-   hwd_siginfo_t *tmp = info;
+   hwd_siginfo_t *tmp = (hwd_siginfo_t *) info;
 
-   ctx.si = info;
+   ctx.si = (hwd_siginfo_t *) info;
    ctx.ucontext = (hwd_ucontext_t *) context;
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
@@ -1247,15 +1251,6 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
-{
-   return(PAPI_ESBSTR);
-}
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
-   return(PAPI_ESBSTR);
-}
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
@@ -1349,52 +1344,273 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
+int _papi_hwd_update_shlib_info(void)
 {
+   char fname[PATH_MAX];
+   unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
+   PAPI_address_map_t *tmp = NULL;
+   FILE *f;
+                                                                                
+   sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
+   f = fopen(fname, "r");
+                                                                                
+   if (!f)
+     {
+         PAPIERROR("fopen(%s) returned < 0", fname);
+         return(PAPI_OK);
+     }
+                                                                                
+ again:
+   while (!feof(f)) {
+      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PATH_MAX];
+      unsigned long begin, end, size, inode, foo;
+                                                                                
+      if (fgets(buf, sizeof(buf), f) == 0)
+         break;
+      if (strlen(mapname))
+        strcpy(lastmapname,mapname);
+      else
+        lastmapname[0] = '\0';
+      mapname[0] = '\0';
+      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
+             &foo, dev, &inode, mapname);
+      size = end - begin;
+                                                                                
+      /* the permission string looks like "rwxp", where each character can
+       * be either the letter, or a hyphen.  The final character is either
+       * p for private or s for shared. */
+                                                                                
+      if (counting)
+        {
+          if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+            {
+              if  (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0)                {
+                  _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
+                  _papi_hwi_system_info.exe_info.address_info.text_end =
+                    (caddr_t) (begin + size);
+                }
+              t_index++;
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0))
+            {
+              _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) begin;
+              _papi_hwi_system_info.exe_info.address_info.data_end =
+                (caddr_t) (begin + size);
+              d_index++;
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,lastmapname) == 0))
+            {
+              _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) begin;
+              _papi_hwi_system_info.exe_info.address_info.bss_end =
+                (caddr_t) (begin + size);
+              b_index++;
+            }
+        }
+      else if (!counting)
+        {
+          if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+            {
+              if (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0)
+                {
+              t_index++;
+                  tmp[t_index-1 ].text_start = (caddr_t) begin;
+                  tmp[t_index-1 ].text_end = (caddr_t) (begin + size);
+                  strncpy(tmp[t_index-1 ].name, mapname, PAPI_MAX_STR_LEN);
+                }
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0))
+            {
+              if ( (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0)
+               && (t_index >0 ) && (tmp[t_index-1 ].data_start == 0))
+                {
+                  tmp[t_index-1 ].data_start = (caddr_t) begin;
+                  tmp[t_index-1 ].data_end = (caddr_t) (begin + size);
+                }
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0))
+            {
+              if ((t_index > 0 ) && (tmp[t_index-1].bss_start == 0))
+                {
+                  tmp[t_index-1].bss_start = (caddr_t) begin;
+                  tmp[t_index-1].bss_end = (caddr_t) (begin + size);
+                }
+            }
+        }
+   }
+                                                                                
+   if (counting) {
+      /* When we get here, we have counted the number of entries in the map
+         for us to allocate */
+                                                                                
+      tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+      if (tmp == NULL)
+        { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
+      t_index = 0;
+      rewind(f);
+      counting = 0;
+      goto again;
+   } else {
+      if (_papi_hwi_system_info.shlib_info.map)
+         free(_papi_hwi_system_info.shlib_info.map);
+      _papi_hwi_system_info.shlib_info.map = tmp;
+      _papi_hwi_system_info.shlib_info.count = t_index;
+                                                                                
+      fclose(f);
+   }
+   return (PAPI_OK);
+}
+                                                                                
+
+int _papi_hwd_get_system_info(void)
+{
+   int tmp, retval;
+   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+   pid_t pid;
+   float mhz = 0.0;
+   FILE *f;
+                                                                                
+   /* Software info */
+                                                                                
+   /* Path and args */
+                                                                                
+   pid = getpid();
+   if (pid < 0)
+     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
+   _papi_hwi_system_info.pid = pid;
+                                                                                
+   sprintf(maxargs, "/proc/%d/exe", (int) pid);
+   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
+     { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
+                                                                                
+   /* basename can modify it's argument */
+   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
+                                                                                
+   /* Executable regions, may require reading /proc/pid/maps file */
+                                                                                
+   retval = _papi_hwd_update_shlib_info();
+                                                                                
+   /* PAPI_preload_option information */
+                                                                                
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD");
+   _papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
+   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
+                                                                                
+   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
+   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
+   SUBDBG("Text: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.text_start,
+          _papi_hwi_system_info.exe_info.address_info.text_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.text_end -
+          _papi_hwi_system_info.exe_info.address_info.text_start));
+   SUBDBG("Data: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.data_start,
+          _papi_hwi_system_info.exe_info.address_info.data_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.data_end -
+          _papi_hwi_system_info.exe_info.address_info.data_start));
+   SUBDBG("Bss: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.bss_start,
+          _papi_hwi_system_info.exe_info.address_info.bss_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
+          _papi_hwi_system_info.exe_info.address_info.bss_start));
+                                                                                
+   /* Hardware info */
+                                                                                
+   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+   _papi_hwi_system_info.hw_info.nnodes = 1;
+   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+   _papi_hwi_system_info.hw_info.vendor = -1;
+                                                                                
+   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
+     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
+                                                                                
+   /* All of this information maybe overwritten by the substrate */
+                                                                                
+   /* MHZ */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "cpu MHz", maxargs);
+   if (s)
+      sscanf(s + 1, "%f", &mhz);
+   _papi_hwi_system_info.hw_info.mhz = mhz;
+                                                                                
+   /* Vendor Name */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "vendor_id", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+      *t = '\0';
+      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n'))) {
+         *t = '\0';
+         strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+       }
+     }
+                                                                                
+   /* Revision */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "stepping", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        _papi_hwi_system_info.hw_info.revision = (float) tmp;
+      }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "revision", maxargs);
+       if (s)
+         {
+           sscanf(s + 1, "%d", &tmp);
+           _papi_hwi_system_info.hw_info.revision = (float) tmp;
+         }
+     }
+                                                                                
+   /* Model Name */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "family", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+       *t = '\0';
+       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n')))
+         {
+           *t = '\0';
+           strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+         }
+     }
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "model", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        _papi_hwi_system_info.hw_info.model = tmp;
+      }
+                                                                                
+   fclose(f);
+                                                                                
+   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
+          _papi_hwi_system_info.hw_info.totalcpus,
+          _papi_hwi_system_info.hw_info.vendor_string,
+          _papi_hwi_system_info.hw_info.vendor,
+          _papi_hwi_system_info.hw_info.model_string,
+          _papi_hwi_system_info.hw_info.model, _papi_hwi_system_info.hw_info.mhz);
+                                                                                
    return (PAPI_OK);
 }
 
-/* This function forces the event to
-    be mapped to only counter ctr.
-    Returns nothing.
-*/
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
-{
-}
-
-/* This function examines the event to determine
-    if it has a single exclusive mapping.
-    Returns true if exlusive, false if non-exclusive.
-*/
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
-{
-   return (PAPI_OK);
-}
-
-/* This function compares the dst and src events
-    to determine if any counters are shared. Typically the src event
-    is exclusive, so this detects a conflict if true.
-    Returns true if conflict, false if no conflict.
-*/
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-   return (PAPI_OK);
-}
-
-/* This function removes the counters available to the src event
-    from the counters available to the dst event,
-    and reduces the rank of the dst event accordingly. Typically,
-    the src event will be exclusive, but the code shouldn't assume it.
-    Returns nothing.
-*/
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-}
-
-/* This function updates the selection status of
-    the dst event based on information in the src event.
-    Returns nothing.
-*/
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-}

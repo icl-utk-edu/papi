@@ -544,7 +544,7 @@ static void PWR4_setup_gps(int total)
 }
 
 /* to setup native_table values, and return number of entries */
-void setup_native_table()
+void power4_setup_native_table()
 {
    pm_events_t *wevp;
    pm_info_t *info;

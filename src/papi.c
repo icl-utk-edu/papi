@@ -21,6 +21,8 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
+#include "papi_vector_redefine.h"
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -265,7 +267,7 @@ int PAPI_library_init(int version)
 
    /* Initialize substrate globals */
 
-   tmp = _papi_hwd_init_global();
+   tmp = _papi_hwi_init_global();
    if (tmp) {
       init_retval = tmp;
       _papi_hwi_shutdown_global_internal();

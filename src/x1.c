@@ -1,5 +1,15 @@
+/* 
+* File:    x1.c
+* CVS:     $Id: 
+* Author:  Kevin London
+*          london@cs.utk.edu
+* Mods:    <your name here> 
+*          <your email here>
+*/
+
 #include "x1.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 
 /*
  * This function has to set the bits needed to count different domains
@@ -189,11 +199,6 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
  * This function should return the highest resolution processor timer available
  * in cycles.
  */
-
-void _papi_hwd_error(int error, char *where)
-{
-   sprintf(where, "Substrate error: %s", strerror(error));
-}
 
 /*
  * Start the hardware counters
@@ -481,15 +486,6 @@ int _papi_hwd_shutdown(hwd_context_t *ctx)
 }
 
 /*
- * Shutdown anything that needs it
- * Called once per process.
- */
-int _papi_hwd_shutdown_global(void)
-{
-  return (PAPI_OK);
-}
-
-/*
  * Set an event to overflow
  */
 int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
@@ -572,15 +568,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 }
 
 /*
- * Set an event to profile
- */
-int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threshold)
-{
-  /* This function is not used and shouldn't be called. */
-  return(PAPI_ESBSTR);
-}
-
-/*
  * Stop an event from being profiled
  */
 int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
@@ -604,11 +591,6 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
       _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
    }
 }
-
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
-{
-  return 1;
-};
 
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
@@ -664,62 +646,6 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
     return(PAPI_EINVAL);
 }
 
-/*
- * Bipartite scheduling scheme, only needed if using bipartite
- * scheduling.
- */
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
-{
-  return(0);
-}
-
-/*
- * This function forces the event to be mapped to only counter ctr.
- */
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
-{
-  return;
-}
-
-/*
- * This function examines the event to determine if it has
- * a single exclusive mapping.  Returns true if exclusive,
- * false if non-exclusive.
- */
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
-{
- return(0);
-}
-
-/*
- * This function compares the dst and src events to determine
- * if any counters are shared.  Typically the src event is 
- * exclusive, so this detects a conflict if true. Returns
- * true if conflict, false if no conflict.
- */
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
-  return(0);
-}
-
-/*
- * This function removes the counters available to the src event
- * from the counters available to the dst event, and reduces
- * the rank of the dst event accordingly.  Typically, the
- * src event will be exclusive, the the code shouldn't assume it.
- */
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
-  return;
-} 
-
-/* This function updates the selection status of the dst
- * event based on information in the src event.
- */
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
-}
- 
 void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
   int i;
@@ -814,11 +740,6 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, unsigned int event, void *extra,
-	EventInfo_t *out)
-{
-}
-
 static mutexlock_t lck[PAPI_MAX_LOCK];
 
 static void lock_init(void)
@@ -828,15 +749,49 @@ static void lock_init(void)
       init_lock(&lck[i]);
 }
 
+papi_svector_t _unicosmp_x1_table[] = {
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
+ {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+ {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+ {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
+ {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void (*)())_papi_stop_profiling, VEC_PAPI_STOP_PROFILING},
+ {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+ {NULL, VEC_PAPI_END}
+};
+
+
 /* Initialize hardware counters and get information, this is called
  * when the PAPI/process is initialized
  */
-int _papi_hwd_init_global(void)
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
    int retval;
 
-   /* Fill in what we can of the papi_system_info. */
+  /* Setup the vector entries that the OS knows about */
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _unicosmp_x1_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
 
+   /* Fill in what we can of the papi_system_info. */
    retval = _internal_get_system_info();
    if (retval)
       return (retval);

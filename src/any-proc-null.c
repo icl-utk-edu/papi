@@ -152,14 +152,6 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 }
 
 
-/*
- * Sprintf the error codes
- */
-void _papi_hwd_error(int error, char *where)
-{
-   sprintf(where, "Substrate error: %s", strerror(error));
-}
-
 /* Initialize hardware counters and get hardware information, this
  * routine is called when the PAPI process is initialized
  * (IE PAPI_library_init)

@@ -472,8 +472,9 @@ void initialize_native_table()
    }
 }
 
+
 /* to setup native_table values, and return number of entries */
-int setup_native_table()
+int power3_setup_native_table()
 {
    pm_events_t *wevp;
    pm_info_t *info;

@@ -3,6 +3,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_vector.h"
 
 extern hwi_search_t *preset_search_map;
 extern native_event_entry_t *native_table;
@@ -167,11 +168,6 @@ int _papi_hwd_set_domain(hwd_control_state_t * this_state, int domain)
    return (PAPI_OK);
 }
 
-int _papi_hwd_update_shlib_info(void)
-{
-   return PAPI_ESBSTR;
-}
-
 static float getmhz(void)
 {
    long sysconf(int request);
@@ -252,13 +248,46 @@ int _papi_hwd_get_system_info(void)
 
 /* At init time, the higher level library should always allocate and
    reserve EventSet zero. */
-int _papi_hwd_init_global(void) {
+
+papi_svector_t _unicos_ev5_table[] = {
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
+ {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+ {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
+ {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void (*)())_papi_stop_profiling, VEC_PAPI_STOP_PROFILING},
+ {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+ {NULL, VEC_PAPI_END}
+};
+
+int _papi_hwd_init_substrate(void) {
    int retval;
+
 
    /* Initialize outstanding values in machine info structure */
    if (_papi_hwd_mdi_init() != PAPI_OK) {
       return (PAPI_ESBSTR);
    }
+
+  /* Setup the vector entries that the OS knows about */
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _unicos_ev5_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
 
    /* Fill in what we can of the papi_system_info. */
    retval = _papi_hwd_get_system_info();
@@ -277,17 +306,6 @@ int _papi_hwd_init_global(void) {
       return (retval);
 
    return(PAPI_OK);
-}
-
-int _papi_hwd_init(hwd_context_t *ctx)
-{
-   return(PAPI_OK);
-}
-
-int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
-                             unsigned int event, void *extra, EventInfo_t * out)
-{
-   return (PAPI_ESBSTR);
 }
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
@@ -359,20 +377,6 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
    }
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long
-*from) {
-   return(PAPI_ESBSTR);
-}
-
-int _papi_hwd_shutdown_global(void)
-{
-   return (PAPI_OK);
-}
-
-int _papi_hwd_shutdown(hwd_context_t * ctx) {
-   return (PAPI_OK);
-}
-
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
 {
    _papi_hwi_context_t ctx;
@@ -397,12 +401,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (PAPI_OK);
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
-   /* This function is not used and shouldn't be called. */
-
-   return (PAPI_ESBSTR);
-}
-
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
    ESI->profile.overflowcount = 0;
    return (PAPI_OK);
@@ -420,47 +418,6 @@ extern int _papi_hwd_mdi_init()
    _papi_hwi_system_info.num_gp_cntrs = 3;
 
    return (PAPI_OK);
-}
-
-/* Thread hooks
-
-void __pdf_th_create(void)
-{
-  extern PAPI_notify_handler_t thread_notifier;
-}
-
-void __pdf_th_destroy(void)
-{
-  extern PAPI_notify_handler_t thread_notifier;
-}
-
-*/
-
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
-{
-   return(1);
-}
-
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
-{
-}
-
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
-{
-   return(1);
-}
-
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-   return(1);
-}
-
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-}
-
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
 }
 
 /* 75 Mhz sys. clock */
