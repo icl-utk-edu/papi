@@ -205,6 +205,7 @@ int PAPI_library_init(int version)
    if (getenv("PAPI_DEBUG_OVERFLOW"))
       _papi_hwi_debug |= DEBUG_OVERFLOW;
 #endif
+   DBG((stderr, "Initialize master thread, PID %d, old PID %d\n", getpid(), _papi_hwi_system_info.pid));
 
 #ifndef _WIN32
    if (_papi_hwi_system_info.pid == getpid())
@@ -240,7 +241,6 @@ int PAPI_library_init(int version)
       papi_return(init_retval);
    }
 
-   DBG((stderr, "Initialize master thread.\n"));
    tmp = _papi_hwi_initialize_thread(&default_master_thread);
    if (tmp) {
       _papi_hwd_shutdown_global();
