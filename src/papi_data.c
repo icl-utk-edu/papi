@@ -43,6 +43,7 @@ int (*_papi_hwi_thread_kill_fn)(int, int) = NULL;
 #endif
 unsigned long int (*_papi_hwi_thread_id_fn)(void) = NULL;
 int init_retval = DEADBEEF;
+int init_level  = 0;
 #ifdef DEBUG
 int _papi_hwi_debug = 0;
 #endif

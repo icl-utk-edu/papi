@@ -54,6 +54,9 @@ failure.
 #define PAPI_ENOCNTR -13 /* Hardware does not support counters */
 #define PAPI_EMISC   -14 /* No clue as to what this error code means */
 
+#define PAPI_LOW_LEVEL_INITED -1 /* Low level has called library init */
+#define PAPI_HIGH_LEVEL_INITED -2 /* High level has called library init */
+
 /*
 Constants
 
@@ -376,8 +379,6 @@ typedef struct pre_info {
 #define PAPI_USR1_LOCK          2
 #define PAPI_USR2_LOCK          3
 #define PAPI_MAX_LOCK           4  /* Always 1 more than previous lock */
-#define PAPI_lock(lck) (_papi_hwd_lock(lck) );
-#define PAPI_unlock(lck)(_papi_hwd_unlock(lck) );
 
 
 int PAPI_accum(int EventSet, long_long *values);
@@ -387,6 +388,8 @@ int PAPI_add_pevent(int EventSet, int code, void *inout);
 int PAPI_cleanup_eventset(int EventSet);
 int PAPI_create_eventset(int *EventSet);
 int PAPI_destroy_eventset(int *EventSet);
+void PAPI_lock(int);
+void PAPI_unlock(int);
 const PAPI_exe_info_t *PAPI_get_executable_info(void);
 const PAPI_hw_info_t *PAPI_get_hardware_info(void);
 const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);

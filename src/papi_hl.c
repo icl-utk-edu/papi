@@ -31,6 +31,8 @@
 
 /* high level papi functions*/
 
+extern int init_level;
+
 static int PAPI_EVENTSET_INUSE = PAPI_NULL;
 static int initialized = 0; /* 1 = Library initialized
 			     * 2 = Start/read/stop counters
@@ -173,6 +175,9 @@ int PAPI_num_counters(void)
          retval = PAPI_library_init(PAPI_VER_CURRENT);
          if (retval != PAPI_VER_CURRENT)
 	    return(PAPI_EINVAL);
+	 else 
+	    init_level = PAPI_HIGH_LEVEL_INITED; 
+
       retval = PAPI_create_eventset(&PAPI_EVENTSET_INUSE);
       if (retval)
 	return(retval);

@@ -61,14 +61,14 @@ inline static int setup_p4_presets(int cputype)
 {
 #ifdef __i386__
   if (cputype == PERFCTR_X86_INTEL_P4)
-    return(setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map));
+    return(_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mlt2_preset_map));
   else if (cputype == PERFCTR_X86_INTEL_P4M2)
-    return(setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
+    return(_papi_hwi_setup_all_presets(_papi_hwd_pentium4_mge2_preset_map));
   else
     error_return(PAPI_ESBSTR,MODEL_ERROR);
 #elif defined(__x86_64__)
   if (PERFCTR_X86_AMD_K8)
-    return(setup_all_presets(_papi_hwd_x86_64_opteron_map));
+    return(_papi_hwi_setup_all_presets(_papi_hwd_x86_64_opteron_map));
   else
     error_return(PAPI_ESBSTR,MODEL_ERROR);
 #endif
@@ -720,57 +720,18 @@ int _papi_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain)
 
 #ifdef __x86_64__
 #include <linux/spinlock.h>
-static spinlock_t lock[PAPI_MAX_LOCK];
+spinlock_t lock[PAPI_MAX_LOCK];
 #else
-static volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
+volatile unsigned int lock[PAPI_MAX_LOCK] = {0,};
 #endif
 /* volatile uint32_t lock; */
+void _papi_hwd_lock_init(void){
+int i;
+for(i=0;i<PAPI_MAX_LOCK;i++)
+  lock[i] = MUTEX_OPEN;
+}
                                                                                 
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-#include <inttypes.h>
                                                                                 
-                                                                                
-#ifdef __x86_64__
-#define _papi_hwd_lock_init(lck)                \
-   spin_lock_init(&lock[lck]);
-#else
-#define _papi_hwd_lock_init(lck)                \
-   &lock[lck] = MUTEX_OPEN;
-#endif
-                                                                                
-#ifdef __x86_64__
-#define  _papi_hwd_lock(lck)                    \
-do                                              \
-{                                               \
-   spin_lock(&lock[lck]);                       \
-} while(0)
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   spin_unlock(&lock[lck]);                             \
-} while(0)
-                                                                                
-#else
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-#define  _papi_hwd_lock(lck)                                            \
-do                                                                      \
-{                                                                       \
-   unsigned long res = 0;                                               \
-   do{									\
-   __asm__ __volatile__ ("lock ; " "cmpxchgl %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory"); \
-   } while(res != (unsigned long)MUTEX_OPEN);				\
-}while(0)
-                                                                                
-#define  _papi_hwd_unlock(lck)                                          \
-do                                                                      \
-{                                                                       \
-   unsigned long res = 0;                                               \
-__asm__ __volatile__ ("xchgl %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");   \
-}while(0)
-#endif
-
 int _papi_hwd_reset(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl)
 {
   /* this is what I gleaned from PAPI 2.3.4... is it right??? dkt */
