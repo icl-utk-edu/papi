@@ -204,7 +204,7 @@ int main(int argc, char **argv)
       tmax = (long_long) (sum[1] + sum[2]);
 #endif
 
-      printf ("percent error: %f\n", (float)(abs(tmax - sum[0])*100)/sum[0]);
+      printf ("percent error: %f\n", (float)(abs((int)(tmax - sum[0]))*100)/sum[0]);
       tmin = (long_long) (tmax * 0.8);
       tmax = (long_long) (tmax * 1.2);
       if (sum[0] > tmax || sum[0] < tmin)

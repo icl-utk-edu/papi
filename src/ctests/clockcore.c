@@ -39,15 +39,15 @@ void clock_res_check(int flag)
          
    }
 
-   min = max = elapsed_cyc[1]-elapsed_cyc[0];
+   min = max = (double)(elapsed_cyc[1]-elapsed_cyc[0]);
    for (i = 1; i < NUM_ITERS; i++) {
       if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0){
 	 fprintf(stderr,"Negative elapsed time, bailing\n");
          abort();
       }
       diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
-      if (min > diff_cyc) min= diff_cyc;
-      if (max < diff_cyc) max= diff_cyc;
+      if (min > diff_cyc) min = (double)diff_cyc;
+      if (max < diff_cyc) max = (double)diff_cyc;
       if (diff_cyc != 0)
          uniq_cyc++;
       total_cyc += diff_cyc;
@@ -55,7 +55,7 @@ void clock_res_check(int flag)
    average = (double)total_cyc/(NUM_ITERS-1);
    std = 0;
    for(i=1; i< NUM_ITERS; i++) {
-      tmp = elapsed_cyc[i]-elapsed_cyc[i-1];
+      tmp = (double)(elapsed_cyc[i]-elapsed_cyc[i-1]);
       tmp  = tmp -average;
       std += tmp * tmp; 
    }

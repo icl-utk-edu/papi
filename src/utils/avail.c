@@ -89,11 +89,11 @@ int main(int argc, char **argv)
 		               info.short_descr, info.long_descr, info.note);
                      printf("Derived Type:\t\t\t|%s|\nPostfix Processing String:\t|%s|\n",
                      info.derived, info.postfix);
-                  for (j=0;j<info.count;j++) {
+                  for (j=0;j<(int)info.count;j++) {
                      printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
                      PAPI_get_event_info(info.code[j], &n_info);
                      printf(" |Number of Register Values: %d|\n", n_info.count);
-                     for (k=0;k<n_info.count;k++)
+                     for (k=0;k<(int)n_info.count;k++)
                         printf(" |Register[%d]: 0x%-10x  %s|\n",k, n_info.code[k], n_info.name[k]);
                      printf(" |Native Event Description: |%s|\n\n", n_info.long_descr);
                  }
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 		               info.symbol,
 		               info.event_code,
 		               info.long_descr);
-                  for (k=0;k<info.count;k++)
+                  for (k=0;k<(int)info.count;k++)
                      printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
                }
 	         }
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 		               info.note,
                      info.derived,
                      info.postfix);
-                  for (j=0;j<info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+                  for (j=0;j<(int)info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
                }
 	         }
          } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);

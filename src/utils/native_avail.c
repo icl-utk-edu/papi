@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		info.event_code,
 		info.long_descr);
 
-   for (k=0;k<info.count;k++)
+   for (k=0;k<(int)info.count;k++)
       printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
    printf("\n");
 

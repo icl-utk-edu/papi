@@ -58,7 +58,7 @@ static void do_std_dev(long_long *a, int *s, double std, double ave) {
 static void do_dist(long_long *a, long_long min, long_long max, int bins, int *d) {
    int i, j;
    int dmax = 0;
-   int range = max - min;
+   int range = (int)(max - min);
 
    /* clear the distribution array */
    for(i=0;i<bins;i++) {
@@ -67,7 +67,7 @@ static void do_dist(long_long *a, long_long min, long_long max, int bins, int *d
 
    /* scan the array to distribute cost per bin */
    for(i=0; i < num_iters; i++ ) {
-      j = ((a[i] - min)*bins)/range;
+      j = ((int)(a[i] - min)*bins)/range;
       d[j]++;
       if (j && (dmax < d[j])) dmax = d[j];
    }
@@ -80,7 +80,7 @@ static void do_dist(long_long *a, long_long min, long_long max, int bins, int *d
 
 static void print_dist(long_long min, long_long max, int bins, int *d) {
    int i,j;
-   int step = (max - min) / bins;
+   int step = (int)(max - min) / bins;
 
    printf("\nCost distribution profile\n\n");
    for (i=0;i<bins;i++) {
