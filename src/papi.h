@@ -384,13 +384,18 @@ read the documentation carefully.  */
    /* Except tlb size, which is in entries */
 
 #define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  3
-#define PAPI_MH_TYPE_EMPTY    0x00
-#define PAPI_MH_TYPE_INST	   0x01
-#define PAPI_MH_TYPE_DATA     0x02
-#define PAPI_MH_TYPE_VECTOR   0x04
+#define PAPI_MH_TYPE_EMPTY    0x0
+#define PAPI_MH_TYPE_INST     0x1
+#define PAPI_MH_TYPE_DATA     0x2
+#define PAPI_MH_TYPE_VECTOR   0x4
 #define PAPI_MH_TYPE_UNIFIED  PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA
-#define PAPI_MH_TYPE_WT       0x10  /* write-through cache */
-#define PAPI_MH_TYPE_WB       0x20  /* write-back cache */
+#define PAPI_MH_CACHE_TYPE(a) (a & 0xf)
+#define PAPI_MH_TYPE_WT       0x00  /* write-through cache */
+#define PAPI_MH_TYPE_WB       0x10  /* write-back cache */
+#define PAPI_MH_CACHE_WRITE_POLICY(a) (a & 0xf0)
+#define PAPI_MH_TYPE_LRU      0x000
+#define PAPI_MH_TYPE_PSEUDO_LRU 0x100
+#define PAPI_MH_REPLACEMENT_POLICY(a) (a & 0xf00)
 
    typedef struct _papi_mh_tlb_info {
       int type; /* Empty, instr, data, vector, unified */
