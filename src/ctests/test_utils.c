@@ -41,11 +41,10 @@ int add_test_events(int *number, int *mask)
   *number = 0;
 
   retval = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL);
-  if (retval < 1)
-    exit(1);
+  if (retval < 1) test_fail(__FILE__, __LINE__, "PAPI_get_opt", retval);
  
-  if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-    exit(1);
+  retval = PAPI_create_eventset(&EventSet);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
   if (*mask & MASK_L2_TCH)
     {

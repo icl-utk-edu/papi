@@ -30,15 +30,9 @@ Master pthread:
    - Get cyc.
 */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
 
-#include "papi.h"
-#include "test_utils.h"
+#include "papi_test.h"
+
 #if defined(sun) && defined(sparc)
 #include <thread.h>
 #elif defined(mips) && defined(sgi) && defined(unix)
@@ -47,15 +41,29 @@ Master pthread:
 #include <pthread.h>
 #endif
 
+#ifdef NO_FLOPS
+  #define PAPI_EVENT 		PAPI_TOT_INS
+  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
+#else
+  #define PAPI_EVENT 		PAPI_FP_INS
+  #define MASK				MASK_FP_INS | MASK_TOT_CYC
+#endif
+
+int TESTS_QUIET=0; /* Tests in Verbose mode? */
+
 void Thread(int t, int n)
 {
   int retval, num_tests = 1;
   int EventSet1;
-  int mask1 = 0x5;
+  int mask1 = MASK;
   int num_events1;
-  long long **values;
-  long long elapsed_us, elapsed_cyc;
-  
+  long_long **values;
+  long_long elapsed_us, elapsed_cyc;
+  char event_name[PAPI_MAX_STR_LEN];
+
+  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+
   EventSet1 = add_test_events(&num_events1,&mask1);
 
   /* num_events1 is greater than num_events2 so don't worry. */
@@ -63,8 +71,7 @@ void Thread(int t, int n)
   values = allocate_test_space(num_tests, num_events1);
 
   retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
   elapsed_us = PAPI_get_real_usec();
 
@@ -77,49 +84,57 @@ void Thread(int t, int n)
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",t,
+  printf("Thread 0x%x %-12s : \t%lld\n",t, event_name,
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",t,
+  printf("Thread 0x%x PAPI_TOT_CYC : \t%lld\n",t,
 	 (values[0])[1]);
 
   free_test_space(values, num_tests);
-  printf("Thread 0x%x Real usec   : \t%lld\n",t,
+  printf("Thread 0x%x Real usec    : \t%lld\n",t,
 	 elapsed_us);
-  printf("Thread 0x%x Real cycles : \t%lld\n",t,
+  printf("Thread 0x%x Real cycles  : \t%lld\n",t,
 	 elapsed_cyc);
 }
 
-int main()
+int main(int argc, char **argv) 
 {
   int i, retval;
   long long elapsed_us, elapsed_cyc;
 
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+
+  if ( !TESTS_QUIET ) {
+	retval = PAPI_set_debug(PAPI_VERB_ECONT);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+  }
+
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    exit(-retval);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
   elapsed_us = PAPI_get_real_usec();
 
   elapsed_cyc = PAPI_get_real_cyc();
 
 #if defined(_AIX)
-  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
-    exit(1);
+  retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
-  if (PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0) != PAPI_OK)
-    exit(1);
+  retval = PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 #pragma parallel
 #pragma local(i)
 #pragma pfor
 #elif defined(sun) && defined(sparc)
-  if (PAPI_thread_init((unsigned long (*)(void))(thr_self), 0) != PAPI_OK)
-    exit(1);
+  retval = PAPI_thread_init((unsigned long (*)(void))(thr_self), 0);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 #pragma MP taskloop private(i)
 #elif defined(__ALPHA) && defined(__osf__)
 #else
