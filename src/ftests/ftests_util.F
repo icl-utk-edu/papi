@@ -197,7 +197,7 @@ C    used in the program. See eg. fmatrixpapi.F
       integer len_trim
       external len_trim
 
-      write(*,*) file, ': SKIPPED'
+      write(*,100) file, ': SKIPPED'
       write(*,*) 'Line #', line
       if(retval.eq.PAPI_ESYS) then
          write(*,*) "System error in ", callstr
@@ -210,6 +210,7 @@ C    used in the program. See eg. fmatrixpapi.F
       end if
        call pause()
       stop
+ 100  format(a,t41,a)
       end
 
 
