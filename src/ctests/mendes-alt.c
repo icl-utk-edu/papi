@@ -61,7 +61,7 @@ char *argv[];
       test_fail(__FILE__, __LINE__, "PAPI set event fail\n", retval);
 
 #ifdef MULTIPLEX
-   retval = PAPI_set_multiplex(&EventSet);
+   retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex fails \n", retval);
 #endif

@@ -75,7 +75,7 @@ int main(int argc, char **argv)
    if ((retval = PAPI_multiplex_init()))
       test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
 
-   if ((retval = PAPI_set_multiplex(&eventset)))
+   if ((retval = PAPI_set_multiplex(eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 #endif
 

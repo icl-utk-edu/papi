@@ -65,7 +65,7 @@ int case1_first_half(void)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   retval = PAPI_set_multiplex(&EventSet);
+   retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 

@@ -172,7 +172,7 @@ void *case2_pthreads(void *arg)
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   if ((retval = PAPI_set_multiplex(&EventSet)) != PAPI_OK)
+   if ((retval = PAPI_set_multiplex(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
    for (i = 0; i < 2; i++) {
@@ -219,7 +219,7 @@ void *case3_pthreads(void *arg)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
    }
 
-   if ((retval = PAPI_set_multiplex(&EventSet)) != PAPI_OK)
+   if ((retval = PAPI_set_multiplex(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
@@ -261,7 +261,7 @@ void *case4_pthreads(void *arg)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
    }
 
-   if ((retval = PAPI_set_multiplex(&EventSet)) != PAPI_OK)
+   if ((retval = PAPI_set_multiplex(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
    for (i = 2; i < 4; i++) {

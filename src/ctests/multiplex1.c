@@ -143,7 +143,7 @@ int case2()
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_create_eventset", retval);
 
-   retval = PAPI_set_multiplex(&EventSet);
+   retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_set_multiplex", retval);
 
@@ -209,7 +209,7 @@ int case3()
          printf("Added %s\n", out);
    }
 
-   retval = PAPI_set_multiplex(&EventSet);
+   retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_set_multiplex", retval);
 
@@ -269,7 +269,7 @@ int case4()
          printf("Added %s\n", out);
    }
 
-   retval = PAPI_set_multiplex(&EventSet);
+   retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_set_multiplex", retval);
 
