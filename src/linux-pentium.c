@@ -50,70 +50,70 @@ if number == 9, then only the special purpose counter is needed.
 /*example values for now */
 
 static hwd_control_state_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 
-                { 0,-1,-1,-1},			// L1 D-Cache misses 
-                { 4, 0x28, 0xC0,},		// L1 I-Cache misses 
-		{ 4, 0x24, 0x2E,},		// L2 Cache misses
-		{ 4, 0x24, 0x2E,},		// ditto
-		{ 0,-1,-1,-1},			// L3 misses
-		{ 0,-1,-1,-1},			// ditto
-		{0,-1,-1,-1},			// 6	**unused preset map elements**
-		{0,-1,-1,-1},			// 7
-		{0,-1,-1,-1},			// 8
-		{0,-1,-1,-1},			// 9
-		{0,-1,-1,-1 }, 			// Req. access to shared cache line
-		{0,-1,-1,-1 }, 			// Req. access to clean cache line
-		{ 0,-1,-1,-1}, 			// Cache Line Invalidation
-                {0,-1,-1,-1},			// 13
-                {0,-1,-1,-1},			// 14
-                {0,-1,-1,-1},			// 15
-                {0,-1,-1,-1},			// 16
-                {0,-1,-1,-1},			// 17
-                {0,-1,-1,-1},			// 18
-                {0,-1,-1,-1},			// 19
-		{0,-1,-1,-1 }, 			// D-TLB misses
-		{ 3, 0x81, },			// I-TLB misses
-                {0,-1,-1,-1},			// 22
-                {0,-1,-1,-1},			// 23
-                {0,-1,-1,-1},			// 24
-                {0,-1,-1,-1},			// 25
-                {0,-1,-1,-1},			// 26
-                {0,-1,-1,-1},			// 27
-                {0,-1,-1,-1},			// 28
-                {0,-1,-1,-1},			// 29
-		{0,-1,-1,-1 },			// TLB shootdowns
-                {0,-1,-1,-1},			// 31
-                {0,-1,-1,-1},			// 32
-                {0,-1,-1,-1},			// 33
-                {0,-1,-1,-1},			// 34
-                {0,-1,-1,-1},			// 35
-                {0,-1,-1,-1},			// 36
-                {0,-1,-1,-1},			// 37
-                {0,-1,-1,-1},			// 38
-                {0,-1,-1,-1},			// 39
-                {0,-1,-1,-1},			// 40
-                {0,-1,-1,-1},			// 41
-		{ 3, 0xC9, },			// Uncond. branches executed
-		{ 3, 0xC5, },			// Cond. Branch inst. mispred.
-		{ 3, 0xC9, },			// Cond. Branch inst. taken
-		{ 3, 0xE4, },			// Cond. Branch inst. not taken
-                {0,-1,-1,-1},			// 46
-                {0,-1,-1,-1},			// 47
-                {0,-1,-1,-1},			// 48
-                {0,-1,-1,-1},			// 49
-		{ 3, 0xC0, },			// Total inst. executed
-		{ 3, 0xC0, 0x10, },		// Integer inst. executed
-		{ 1, 0x10, },			// Floating Pt. inst. executed
-		{0,-1,-1,-1 },			// Loads executed
-		{0,-1,-1,-1 },			// Stores executed
-		{ 3, 0xC4, },			// Branch inst. executed
-		{ 0,-1,-1,-1 },			// Vector/SIMD inst. executed 
-		{ 5, 0x10, },			// FLOPS
-                {0,-1,-1,-1},			// 58
-                {0,-1,-1,-1},			// 59
-		{ 9, },				// Total cycles
-		{ 8, 0xC0, },			// MIPS
-                {0,-1,-1,-1},			// 62
-                {0,-1,-1,-1},			// 63
+                { 0,-1,-1,-1},			/* L1 D-Cache misses */ 
+                { 4, 0x28, 0xC0,},		/* L1 I-Cache misses  */
+		{ 4, 0x24, 0x2E,},		/* L2 Cache misses */
+		{ 4, 0x24, 0x2E,},		/* ditto */
+		{ 0,-1,-1,-1},			/* L3 misses */
+		{ 0,-1,-1,-1},			/* ditto */
+		{0,-1,-1,-1},			/* 6  **unused preset map elements** */
+		{0,-1,-1,-1},			/* 7 */
+		{0,-1,-1,-1},			/* 8 */
+		{0,-1,-1,-1},			/* 9 */
+		{0,-1,-1,-1 }, 			/* Req. access to shared cache line */
+		{0,-1,-1,-1 }, 			/* Req. access to clean cache line */
+		{ 0,-1,-1,-1}, 			/* Cache Line Invalidation */
+                {0,-1,-1,-1},			/* 13 */
+                {0,-1,-1,-1},			/* 14 */
+                {0,-1,-1,-1},			/* 15 */
+                {0,-1,-1,-1},			/* 16 */
+                {0,-1,-1,-1},			/* 17 */
+                {0,-1,-1,-1},			/* 18 */
+                {0,-1,-1,-1},			/* 19 */
+		{0,-1,-1,-1 }, 			/* D-TLB misses */
+		{ 3, 0x81, },			/* I-TLB misses */
+                {0,-1,-1,-1},			/* Total TLB misses */
+                {0,-1,-1,-1},			/* 23 */
+                {0,-1,-1,-1},			/* 24 */
+                {0,-1,-1,-1},			/* 25 */
+                {0,-1,-1,-1},			/* 26 */
+                {0,-1,-1,-1},			/* 27 */
+                {0,-1,-1,-1},			/* 28 */
+                {0,-1,-1,-1},			/* 29 */
+		{0,-1,-1,-1 },			/* TLB shootdowns */
+                {0,-1,-1,-1},			/* 31 */
+                {0,-1,-1,-1},			/* 32 */
+                {0,-1,-1,-1},			/* 33 */
+                {0,-1,-1,-1},			/* Cycles stalled waiting for memory */
+                {0,-1,-1,-1},			/* Cycles stalled waiting for memory read */
+                {0,-1,-1,-1},			/* Cycles stalled waiting for memory write */
+                {0,-1,-1,-1},			/* Cycles no instructions issued */
+                {0,-1,-1,-1},			/* Cycles max instructions issued */
+                {0,-1,-1,-1},			/* 39 */
+                {0,-1,-1,-1},			/* 40 */
+                {0,-1,-1,-1},			/* 41 */
+		{ 3, 0xC9, },			/* Uncond. branches executed */
+		{0,-1,-1,-1},			/* Cond. Branch inst. executed */
+		{ 3, 0xC9, },			/* Cond. Branch inst. taken */
+		{ 3, 0xE4, },			/* Cond. Branch inst. not taken */
+		{ 3, 0xC5, },			/* Cond. Branch inst. mispred. */
+                {0,-1,-1,-1},			/* 47 */
+                {0,-1,-1,-1},			/* 48 */
+                {0,-1,-1,-1},			/* 49 */
+		{ 3, 0xC0, },			/* Total inst. executed */
+		{ 3, 0xC0, 0x10, },		/* Integer inst. executed */
+		{ 1, 0x10, },			/* Floating Pt. inst. executed */
+		{0,-1,-1,-1 },			/* Loads executed */
+		{0,-1,-1,-1 },			/* Stores executed */
+		{ 3, 0xC4, },			/* Branch inst. executed */
+		{ 0,-1,-1,-1 },			/* Vector/SIMD inst. executed */ 
+		{ 5, 0x10, },			/* FLOPS */
+                {0,-1,-1,-1},			/* 58 */
+                {0,-1,-1,-1},			/* 59 */
+		{ 9, },				/* Total cycles */
+		{ 8, 0xC0, },			/* MIPS */
+                {0,-1,-1,-1},			/* 62 */
+                {0,-1,-1,-1},			/* 63 */
              };
 
 static hwd_control_state_t current;
