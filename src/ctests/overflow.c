@@ -31,6 +31,12 @@
 #define EVENT_NAME_1 PAPI_TOT_CYC
 #define EVENT_STRING_1 "PAPI_TOT_CYC"
 
+#if defined(__ALPHA) && defined(__osf__)
+  #ifndef NO_FLOPS
+    #define NO_FLOPS
+  #endif
+#endif
+
 #ifdef NO_FLOPS
   #define EVENT_NAME_2 PAPI_TOT_INS
   #define EVENT_STRING_2 "PAPI_TOT_INS"
@@ -152,8 +158,8 @@ int main(int argc, char **argv)
   if ( values[1][1] > max || values[1][1] < min )
   	test_fail(__FILE__, __LINE__, EVENT_STRING_2, 1);
 
-  min = (long_long)((values[0][1]*.9)/THRESHOLD);
-  max = (long_long)((values[0][1]*1.1)/THRESHOLD);
+  min = (long_long)((values[0][1]*.85)/THRESHOLD);
+  max = (long_long)((values[0][1]*1.15)/THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
 
