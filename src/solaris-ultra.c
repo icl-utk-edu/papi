@@ -181,19 +181,26 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
     }
 }
 
-static int getmhz(void)
+static int scan_prtconf(char *cpuname,int len_cpuname,int *hz, int *ver)
 {
   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
   /* See the PCL home page for the German version of PAPI. */
-
-  int mhz;
-  char line[256], cmd[80];
+  /* Modified by Nils Smeds, all new bugs are my fault */
+  /*    The routine now looks for the first "Node" with the following: */
+  /*           "device_type"     = 'cpu'                    */
+  /*           "name"            = (Any value)              */
+  /*           "sparc-version"   = (Any value)              */
+  /*           "clock-frequency" = (Any value)              */
+  int ihz;
+  char line[256], cmd[80], name[256];
   FILE *f;
   char cmd_line[80], fname[L_tmpnam];
+  unsigned int matched;
   
   /*??? system call takes very long */
   /* get system configuration and put output into file */
   sprintf(cmd_line, "/usr/sbin/prtconf -vp >%s", tmpnam(fname));
+  DBG((stderr,"/usr/sbin/prtconf -vp > %s \n", fname));
   if(system(cmd_line) == -1)
     {
       remove(fname);
@@ -207,30 +214,48 @@ static int getmhz(void)
       return -1;
     }
   
+  DBG((stderr,"Parsing %s...\n", fname));
   /* ignore all lines until we reach something with a sparc line */
+  matched = 0x0; ihz = -1;
   while(fgets(line, 256, f) != NULL)
     {
+      /* DBG((stderr,">>> %s",line)); */
       if((sscanf(line, "%s", cmd) == 1)
-	 && !strcmp(cmd, "sparc-version:"))
-	break;
+	 && !strcmp(cmd, "Node 0x")) {
+        /* DBG((stderr,"Found 'Node' -- search reset.\n")); */
+	matched = 0x0;
+        }
+      else {
+	 if (strstr(cmd, "device_type:") &&
+             strstr(line, "'cpu'" )) {
+            /* DBG((stderr,"Found 'cpu'\n")); */
+            matched |= 0x1;
+            }
+	 else if (!strcmp(cmd, "sparc-version:") &&
+               (sscanf(line, "%s %x", cmd, ver) == 2) ) {
+            /* DBG((stderr,"Found version=%d\n", ihz)); */
+            matched |= 0x2;
+            }
+	 else if (!strcmp(cmd, "clock-frequency:") &&
+               (sscanf(line, "%s %x", cmd, &ihz) == 2) ) {
+            /* DBG((stderr,"Found ihz=%d\n", ihz)); */
+            matched |= 0x4;
+            }
+	 else if (!strcmp(cmd, "name:") &&
+               (sscanf(line, "%s %s", cmd, name) == 2) ) {
+            /* DBG((stderr,"Found name: %s\n", name)); */
+            matched |= 0x8;
+            }
+      }
+     if(matched & 0xF == 0xF ) break;
     }
+  DBG((stderr,"Parsing gave name=%s, speed=%dHz, version=%d\n", name, ihz,*ver));
   
-  /* then read until we find clock frequency */
-  while(fgets(line, 256, f) != NULL)
-    {
-      if((sscanf(line, "%s %x", cmd, &mhz) == 2)
-	 && !strcmp(cmd, "clock-frequency:"))
-	break;
+  if(matched & 0x7 == 0x7 )  {
+    *hz = (float) ihz;
+    strncpy(cpuname,name,len_cpuname);
     }
-  
-  /* remove temporary file */
-  remove(fname);
-  
-  /* if everything went ok, return mhz */
-  if(strcmp(cmd, "clock-frequency:"))
-    return -1;
-  else
-    return mhz / 1000000;
+  return ihz;
 
   /* End stolen code */
 }
@@ -340,6 +365,12 @@ static void init_config(hwd_control_state_t *ptr)
 
 /* Utility functions */
 
+/* This is a wrapper arount fprintf(stderr,...) for cpc_walk_events() */
+void print_walk_names(void  *arg,  int regno,  const char *name, uint8_t bits)
+  {
+    fprintf(stderr,arg,regno,name,bits);
+  }
+
 static int get_system_info(void)
 {
   int retval;
@@ -347,11 +378,15 @@ static int get_system_info(void)
   char maxargs[PAPI_MAX_STR_LEN] = "<none>";
   psinfo_t psi;
   int fd;
+  int i,hz,version;
+  char cpuname[PAPI_MAX_STR_LEN];
+  const char *name;
 
   /* Check counter access */
 
   if (cpc_version(CPC_VER_CURRENT) != CPC_VER_CURRENT)
     return(PAPI_ESBSTR);
+  DBG((stderr,"CPC version %d successfully opened\n",CPC_VER_CURRENT));
 
   if (cpc_access() == -1)
     return(PAPI_ESBSTR);
@@ -359,13 +394,40 @@ static int get_system_info(void)
   /* Global variable cpuver */
 
   cpuver = cpc_getcpuver();
+  DBG((stderr,"Got %d from cpc_getcpuver()\n",cpuver))
   if (cpuver == -1)
     return(PAPI_ESBSTR);
+  name = cpc_getcciname(cpuver);
+  if (name)
+    DBG((stderr,"Got %s from cpc_getcciname\n",name))
+  else
+    DBG((stderr,"Got no name from cpc_getcciname\n"));
+
+#ifdef DEBUG
+  {
+  extern int papi_debug;
+  if (papi_debug) {
+    name = cpc_getcpuref(cpuver);
+    if(name)
+      fprintf(stderr,"CPC CPU reference: %s\n",name);
+    else
+      fprintf(stderr,"Could not get a CPC CPU reference.\n");
+  
+    for(i=0;i<cpc_getnpic(cpuver);i++) {
+      fprintf(stderr,"\n%6s %-40s %8s\n","Reg","Symbolic name","Code");
+      cpc_walk_names(cpuver, i, "%6d %-40s %02x\n",print_walk_names);
+      }
+      fprintf(stderr,"\n");
+    }
+  }
+#endif
+
 
   /* Initialize other globals */
 
   if (cpuver <= CPC_ULTRA2)
     {
+      DBG((stderr,"cpuver (==%d) <= CPC_ULTRA2 (==%d)\n",cpuver,CPC_ULTRA2));
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
       pcr_event_mask[0] = (CPC_ULTRA2_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
@@ -375,6 +437,7 @@ static int get_system_info(void)
     }
   else if (cpuver == CPC_ULTRA3)
     {
+      DBG((stderr,"cpuver (==%d) == CPC_ULTRA3 (==%d)\n",cpuver,CPC_ULTRA3));
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT; 
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT; 
       pcr_event_mask[0] = (CPC_ULTRA3_PCR_PIC0_MASK<<CPC_ULTRA_PCR_PIC0_SHIFT);
@@ -433,26 +496,34 @@ static int get_system_info(void)
   _papi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
   _papi_system_info.hw_info.nnodes = 1;
   _papi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-  _papi_system_info.hw_info.vendor = -1;
 
-  _papi_system_info.hw_info.model = cpuver;
-  strcpy(_papi_system_info.hw_info.model_string,"UltraSPARC");
+  /* Default strings until we know better... */
+  _papi_system_info.hw_info.model = -1;
+  strcpy(_papi_system_info.hw_info.model_string,"UltraSPARC???");
   sprintf(maxargs," %d",cpuver - 999);
   strcat(_papi_system_info.hw_info.model_string,maxargs);
-    
-  strcpy(_papi_system_info.hw_info.vendor_string,"SUN");
+  _papi_system_info.hw_info.vendor = cpuver;
+  strcpy(_papi_system_info.hw_info.vendor_string,"SUN unknown");
   _papi_system_info.hw_info.revision = 0;
 
-  retval = getmhz();
+  retval = scan_prtconf(cpuname,PAPI_MAX_STR_LEN,&hz,&version);
   if (retval == -1)
     return(PAPI_ESBSTR);
-  _papi_system_info.hw_info.mhz = (float)retval;
+  _papi_system_info.hw_info.mhz = ( (float) hz / 1.0e6 );
+  DBG((stderr,"hw_info.mhz = %f\n",_papi_system_info.hw_info.mhz));
+  /* Fill in the strings we got */
+  strcpy(_papi_system_info.hw_info.model_string,cpuname);
+  _papi_system_info.hw_info.model=version;
+
+  strcpy(_papi_system_info.hw_info.vendor_string,cpc_getcciname(cpuver));
+  _papi_system_info.hw_info.vendor=cpuver;
 
   retval = cpc_getnpic(cpuver);
   if (retval < 1)
     return(PAPI_ESBSTR);
   _papi_system_info.num_gp_cntrs = retval;
   _papi_system_info.num_cntrs = retval;
+  DBG((stderr,"num_cntrs = %d\n",_papi_system_info.num_cntrs));
 
   /* Software info */
 
@@ -893,10 +964,15 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       hwcntrs_in_both = this_state->selector & current_state->selector;
       hwcntrs_in_all  = this_state->selector | current_state->selector;
 #if DEBUG
+      {
+        extern int papi_debug;
+        if (papi_debug) {
 	  fprintf(stderr,"this selector:    %x\n", this_state->selector);
 	  fprintf(stderr,"current selector: %x\n", current_state->selector);
 	  fprintf(stderr,"both:             %x\n", hwcntrs_in_both);
 	  fprintf(stderr,"all:              %x\n", hwcntrs_in_all);
+        }
+      }
 #endif
       /* Check for events that are shared between eventsets and 
 	 therefore require no modification to the control state. */
