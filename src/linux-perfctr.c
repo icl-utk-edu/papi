@@ -261,7 +261,7 @@ inline static void init_config(hwd_control_state_t *ptr)
   ptr->counter_cmd.evntsel[1] |= def_mode;
 }
 
-static int get_system_info(void)
+static int get_system_info(struct perfctr_dev *dev)
 {
   struct perfctr_info info;
   pid_t pid;
@@ -308,10 +308,10 @@ static int get_system_info(void)
     sscanf(s+1, "%d", &tmp);
   _papi_system_info.hw_info.revision = (float)tmp;
 
-  if (perfctr_info(&info) < 0)
+  if (perfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
 
-  strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name());
+  strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(dev));
   _papi_system_info.hw_info.model = info.cpu_type;
   _papi_system_info.hw_info.mhz = info.cpu_khz / 1000; 
   DBG((stderr,"Detected MHZ is %f\n",_papi_system_info.hw_info.mhz));
@@ -324,8 +324,8 @@ static int get_system_info(void)
     _papi_system_info.hw_info.mhz = (float)tmp;
   }
   DBG((stderr,"Actual MHZ is %f\n",_papi_system_info.hw_info.mhz));
-  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs() - 1;
-  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs() - 1;
+  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(dev) - 1;
+  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(dev) - 1;
 
   /* Setup presets */
 
@@ -375,7 +375,7 @@ inline static int update_global_hwcounters(EventSetInfo *global)
   struct vperfctr_state state;
   int i;
 
-  if (perfctr_read_self(machdep->self, &state) < 0) 
+  if (vperfctr_read_state(machdep->self, &state) < 0) 
     return(PAPI_ESYS);
   
   for (i=0;i<_papi_system_info.num_cntrs;i++)
@@ -386,7 +386,7 @@ inline static int update_global_hwcounters(EventSetInfo *global)
       global->hw_start[i] = global->hw_start[i] + state.sum.ctr[i+1];
     }
 
-  if (perfctr_control_self(machdep->self, &machdep->counter_cmd) < 0) 
+  if (vperfctr_control(machdep->self, &machdep->counter_cmd) < 0) 
     return(PAPI_ESYS);
 
   return(PAPI_OK);
@@ -470,13 +470,20 @@ inline static int set_default_granularity(EventSetInfo *zero, int granularity)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
+struct perfctr_dev *dev;
 int _papi_hwd_init_global(void)
 {
   int retval;
 
+  /* Opened once for all threads. */
+
+  dev = perfctr_dev_open();
+  if (!dev)
+    return(PAPI_ESYS);
+
   /* Fill in what we can of the papi_system_info. */
   
-  retval = get_system_info();
+  retval = get_system_info(dev);
   if (retval)
     return(retval);
   
@@ -489,13 +496,19 @@ int _papi_hwd_init_global(void)
   return(PAPI_OK);
 }
 
+int _papi_hwd_shutdown_global(void)
+{
+  perfctr_dev_close(dev);
+  return(PAPI_OK);
+}
+
 int _papi_hwd_init(EventSetInfo *zero)
 {
   hwd_control_state_t *machdep = zero->machdep;
   
   /* Initialize our global machdep. */
 
-  if ((machdep->self = perfctr_attach_rdwr_self()) == NULL) 
+  if ((machdep->self = vperfctr_attach(dev)) == NULL) 
     return(PAPI_ESYS);
 
   /* Initialize the event fields */
@@ -719,7 +732,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 #ifdef DEBUG
       dump_cmd(&current_state->counter_cmd);
 #endif
-      if (perfctr_control_self(current_state->self, &current_state->counter_cmd) < 0) 
+      if (vperfctr_control(current_state->self, &current_state->counter_cmd) < 0) 
 	return(PAPI_ESYS);
       
       return(PAPI_OK);
@@ -803,7 +816,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   /* (Re)start the counters */
   
-  if (perfctr_control_self(current_state->self, &current_state->counter_cmd) < 0)
+  if (vperfctr_control(current_state->self, &current_state->counter_cmd) < 0)
     return(PAPI_ESYS);
 
   return(PAPI_OK);
@@ -1004,12 +1017,7 @@ int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 int _papi_hwd_shutdown(EventSetInfo *zero)
 {
   hwd_control_state_t *machdep = zero->machdep;
-  perfctr_close_self(machdep->self);
-  return(PAPI_OK);
-}
-
-int _papi_hwd_shutdown_global(void)
-{
+  vperfctr_unlink(machdep->self);
   return(PAPI_OK);
 }
 

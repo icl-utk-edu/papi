@@ -1,6 +1,6 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
-OBJECTS   = papi_fwrappers.o papi.o papi_hl.o $(SUBSTR).o extras.o $(MISCOBJS)
+OBJECTS   = $(MISCOBJS) papi_fwrappers.o papi.o papi_hl.o $(SUBSTR).o extras.o
 HEADERS   = papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
 all: showconf $(LIBS) fpapi.h examples
@@ -39,6 +39,12 @@ fpapi.h: genpapifdef
 
 examples: ftests tests
 
+test: examples
+	tests/zero
+
+fulltest: examples
+	sh run_tests.sh
+
 tests: null
 	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" NOOPT="$(NOOPT)" $(TARGETS)
 
@@ -56,7 +62,7 @@ clean: libclean
 
 null:
 
-dist:
+dist: 
 	chmod -R 644 *
 	chgrp -R papi *
 	cd ..; tar cvf papisrc.tar src; gzip papisrc.tar

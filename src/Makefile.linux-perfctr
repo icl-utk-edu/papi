@@ -4,7 +4,7 @@ LIBS	= static shared
 TARGETS = serial pthreads
 
 FOR_USED= -DFORTRANDOUBLEUNDERSCORE
-CFLAGS  = -Wall -Ilibperfctr 
+CFLAGS  = -Wall -I../perfctr/usr.lib
 FFLAGS	= -Wall
 OPTFLAGS= -O6 -mpentiumpro 
 CC_SHR  = gcc -shared
@@ -15,5 +15,11 @@ MISCOBJS= libperfctr.o
 
 include Makefile.inc
 
-libperfctr.o: libperfctr/libperfctr.c libperfctr/libperfctr.h
-	$(CC) $(CFLAGS) $(OPTFLAGS) -c libperfctr/libperfctr.c -o libperfctr.o
+x86-events.h: ../perfctr/etc/mk-events-h.awk ../perfctr/etc/perfctr-events.tab
+	awk -f ../perfctr/etc/mk-events-h.awk ../perfctr/etc/perfctr-events.tab > $@
+
+libperfctr.o: ../perfctr/usr.lib/libperfctr.o x86-events.h
+	cp ../perfctr/usr.lib/libperfctr.o .
+
+../perfctr/usr.lib/libperfctr.o: 
+	$(MAKE) -C ../perfctr

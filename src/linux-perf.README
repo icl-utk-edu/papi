@@ -19,7 +19,8 @@ the perf distribution available on our web site.
 Linux 2.0-2.2 Native Event Notes
 --------------------------------
 
-For *all* the native event codes, see the website at
+For *all* the native event codes, see the x86-events.h header file and
+the website at
 
 		http://www.sandpile.org
 

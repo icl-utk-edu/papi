@@ -13,6 +13,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papiStdEventDefs.h"
+#include "x86-events.h"
 
 #define CNTR1 0x1
 #define CNTR2 0x2
