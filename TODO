@@ -1,6 +1,8 @@
 To Do List for PAPI
 -------------------
 
+- find out why profile_pthreads returns empty buffers on POWER4/AIX 5.1
+
 - Docs for trapper, tperfex example
 
 - Make PAPI_query_event check the syntax of native events 
