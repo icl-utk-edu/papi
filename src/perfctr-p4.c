@@ -136,6 +136,11 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
 }
 #endif
 
+void _papi_hwd_error(int error, char *where)
+{
+  sprintf(where,"Substrate error: %s",strerror(error));
+}
+
 static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
 {
   int pnum, unum, preset_index, did_something = 0;
