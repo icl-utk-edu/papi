@@ -1362,7 +1362,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 
 static void mpx_delete_events(MPX_EventSet * mpx_events)
 {
-	int i, retval;
+	int i;
 	MasterEvent * mev, * lastmev = NULL, * nextmev;
 	MasterEvent ** head = &mpx_events->mythr->head;
 	Threadlist * thr = (*head == NULL) ? NULL : (*head)->mythr;
