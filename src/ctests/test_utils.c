@@ -486,23 +486,26 @@ void test_skip(char *file, int line, char *call, int retval)
 
 #ifdef _WIN32
 #undef exit
-	int wait_exit(int retval)
-	{
-		HANDLE hStdIn;
-		BOOL bSuccess;
-		INPUT_RECORD inputBuffer;
-		DWORD dwInputEvents; /* number of events actually read */
-		
-		if (!TESTS_QUIET) {
-			printf("Press any key to continue...\n");
-			hStdIn = GetStdHandle(STD_INPUT_HANDLE);
-			do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
-				1, &dwInputEvents);
-			} while (!(inputBuffer.EventType == KEY_EVENT &&
- 				inputBuffer.Event.KeyEvent.bKeyDown));
-		}
-		exit(retval);
-	}
+  void wait(char *prompt)
+  {
+    HANDLE hStdIn;
+    BOOL bSuccess;
+    INPUT_RECORD inputBuffer;
+    DWORD dwInputEvents; /* number of events actually read */
+  
+    printf(prompt);
+    hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+    do { bSuccess = ReadConsoleInput(hStdIn, &inputBuffer, 
+	    1, &dwInputEvents);
+    } while (!(inputBuffer.EventType == KEY_EVENT &&
+ 	    inputBuffer.Event.KeyEvent.bKeyDown));
+  }
+
+  int wait_exit(int retval)
+  {
+    if (!TESTS_QUIET) wait("Press any key to continue...\n");
+    exit(retval);
+  }
 #define exit wait_exit
 #endif
 
