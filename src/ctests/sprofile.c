@@ -31,6 +31,8 @@
 #include "papi.h"
 #include "test_utils.h"
 
+int TESTS_QUIET=0;
+
 int main(int argc, char **argv) 
 {
   int i, num_events, num_tests = 6, mask = 0x1;
@@ -45,32 +47,46 @@ int main(int argc, char **argv)
   PAPI_sprofil_t sprof[3];
   int retval;
 
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    exit(1);
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
 
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
-  if ((prginfo = PAPI_get_executable_info()) == NULL)
-    exit(1);
+  if ( !TESTS_QUIET ) 
+     if ((retval=PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
+
+  if ((prginfo = PAPI_get_executable_info()) == NULL){
+	retval=1;
+	test_fail(__FILE__,__LINE__,"PAPI_get_executable_info",retval);
+  }
+	
   start = prginfo->text_start;
   end =  prginfo->text_end;
   length = end - start;
 
   profbuf = (unsigned short *)malloc(length/2*sizeof(unsigned short));
-  if (profbuf == NULL)
-    exit(1);
+  if (profbuf == NULL){
+        retval=PAPI_ESYS;
+        test_fail(__FILE__,__LINE__,"malloc",retval);
+  }
   memset(profbuf,0x00,length/2*sizeof(unsigned short));
 
   profbuf2 = (unsigned short *)malloc(length/2*sizeof(unsigned short));
-  if (profbuf2 == NULL)
-    exit(1);
+  if (profbuf2 == NULL){
+        retval=PAPI_ESYS;
+        test_fail(__FILE__,__LINE__,"malloc",retval);
+  }
   memset(profbuf2,0x00,length/2*sizeof(unsigned short));
 
   profbuf3 = (unsigned short *)malloc(1*sizeof(unsigned short));
-  if (profbuf3 == NULL)
-    exit(1);
+  if (profbuf3 == NULL){
+        retval=PAPI_ESYS;
+        test_fail(__FILE__,__LINE__,"malloc",retval);
+  }
   memset(profbuf3,0x00,1*sizeof(unsigned short));
 
   /* First half */
@@ -78,7 +94,8 @@ int main(int argc, char **argv)
   sprof[0].pr_size = length/2;
   sprof[0].pr_off = DO_FLOPS;
 #if defined(linux) && defined(__ia64__)
-  fprintf(stderr,"do_flops is at %p %lx\n",&do_flops,sprof[0].pr_off);
+  if ( !TESTS_QUIET )
+     fprintf(stderr,"do_flops is at %p %lx\n",&do_flops,sprof[0].pr_off);
 #endif
   sprof[0].pr_scale = 65536;
   /* Second half */
@@ -86,7 +103,8 @@ int main(int argc, char **argv)
   sprof[1].pr_size = length/2;
   sprof[1].pr_off = DO_READS;
 #if defined(linux) && defined(__ia64__)
-  fprintf(stderr,"do_reads is at %p %lx\n",&do_reads,sprof[1].pr_off);
+  if ( !TESTS_QUIET )
+      fprintf(stderr,"do_reads is at %p %lx\n",&do_reads,sprof[1].pr_off);
 #endif
   sprof[1].pr_scale = 65536;
   /* Overflow bin */
@@ -99,11 +117,12 @@ int main(int argc, char **argv)
 
   values = allocate_test_space(num_tests, num_events);
 
-  if (PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THR, PAPI_PROFIL_POSIX) != PAPI_OK)
-    exit(1);
+  if ((retval=PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THR, 
+	PAPI_PROFIL_POSIX)) != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_sprofil",retval);
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    exit(1);
+  if ((retval=PAPI_start(EventSet)) != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
   for (i=0;i<NUM;i++)
     {
@@ -111,30 +130,30 @@ int main(int argc, char **argv)
       do_reads(1000);
     }
 
-  if (PAPI_stop(EventSet, values[1]) != PAPI_OK)
-    exit(1);
+  if ((retval=PAPI_stop(EventSet, values[1])) != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   remove_test_events(&EventSet, mask);
 
-  free_test_space(values, num_tests);
 
-  PAPI_shutdown();
 
-  printf("Test case: PAPI_sprofil()\n");
-  printf("---------Buffer 1--------\n");
-  for (i=0;i<length/2;i++)
+  if ( !TESTS_QUIET ) {
+    printf("Test case: PAPI_sprofil()\n");
+    printf("---------Buffer 1--------\n");
+    for (i=0;i<length/2;i++)
     {
       if (profbuf[i])
 	printf("0x%lx\t%d\n",DO_FLOPS + 2*i,profbuf[i]);
     }
-  printf("---------Buffer 2--------\n");
-  for (i=0;i<length/2;i++)
+    printf("---------Buffer 2--------\n");
+    for (i=0;i<length/2;i++)
     {
       if (profbuf2[i])
 	printf("0x%lx\t%d\n",DO_READS + 2*i,profbuf2[i]);
     }
-  printf("-------------------------\n");
-  printf("%u samples that fell outside the regions.\n",*profbuf3);
-  exit(0);
+    printf("-------------------------\n");
+    printf("%u samples that fell outside the regions.\n",*profbuf3);
+  }
+  test_pass(__FILE__,values,num_events );
 }
 

@@ -29,7 +29,10 @@ int main(int argc, char **argv)
   int mask1 = 0x5, mask2 = 0x5, mask3 = 0x5;
   PAPI_option_t options;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-
+#if defined(sgi) && defined(host_mips)
+  uid_t id;
+  id = getuid();
+#endif
 
   if ( argc > 1 ) {
         if ( !strcmp( argv[1], "TESTS_QUIET" ) )
@@ -142,16 +145,39 @@ int main(int argc, char **argv)
 #endif
   }
   {
+#if defined(sgi) && defined(host_mips)
+    long_long min, max;
+    if ( id != 0 ) {
+      min = NUM_FLOPS*.9;
+      max = NUM_FLOPS*1.1;   
+      if ( values[2][0] < min || values[2][0] > max )
+	test_fail(__FILE__, __LINE__, event_name, 1);
+    }
+    else {
+       min = (long_long)(values[2][0]*.9);
+       max = (long_long)(values[2][0]*1.1);
+       if ( values[0][0] > max || values[0][0] < min )
+	   test_fail(__FILE__, __LINE__, event_name, 1);
+
+       min = (long_long)(values[0][1]*.9);
+       max = (long_long)(values[0][1]*1.1);
+       if ( (values[1][1] + values[2][1]) > max || 
+	   (values[1][1] + values[2][1]) < min )
+  	   test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+    }
+#else
     long_long min, max;
     min = (long_long)(values[2][0]*.9);
     max = (long_long)(values[2][0]*1.1);
     if ( values[0][0] > max || values[0][0] < min )
-		test_fail(__FILE__, __LINE__, event_name, 1);
+	test_fail(__FILE__, __LINE__, event_name, 1);
 
     min = (long_long)(values[0][1]*.9);
     max = (long_long)(values[0][1]*1.1);
-    if ( (values[1][1] + values[2][1]) > max || (values[1][1] + values[2][1]) < min )
-  		test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+    if ( (values[1][1] + values[2][1]) > max || 
+	(values[1][1] + values[2][1]) < min )
+  	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);
+#endif
   }
   test_pass(__FILE__, values, num_tests);
 }

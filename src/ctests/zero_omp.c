@@ -93,16 +93,18 @@ void Thread(int n)
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x %-12s : \t%lld\n", omp_get_thread_num(), event_name,
+  if ( !TESTS_QUIET ) {
+    printf("Thread 0x%x %-12s : \t%lld\n", omp_get_thread_num(), event_name,
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",omp_get_thread_num(),
+    printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",omp_get_thread_num(),
 	 (values[0])[1]);
-  printf("Thread 0x%x Real usec   : \t%lld\n",omp_get_thread_num(),
+    printf("Thread 0x%x Real usec   : \t%lld\n",omp_get_thread_num(),
 	 elapsed_us);
-  printf("Thread 0x%x Real cycles : \t%lld\n",omp_get_thread_num(),
+    printf("Thread 0x%x Real cycles : \t%lld\n",omp_get_thread_num(),
 	 elapsed_cyc);
+  }
 
-  free_test_space(values, num_tests);
+  test_pass(__FILE__,values,num_tests);
 }
 
 int main(int argc, char **argv) 

@@ -287,7 +287,7 @@ char *stringify_granularity(int granularity)
 
 void test_pass(char *file, long_long **values, int num_tests)
 {
-	printf("%s:  PASSED\n", file);
+	printf("%-24s: PASSED\n", file);
 	if (values) free_test_space(values, num_tests);
 	PAPI_set_debug( PAPI_QUIET ); /* Prevent error messages on Alpha */
 	PAPI_shutdown();
@@ -299,7 +299,7 @@ void test_fail(char *file, int line, char *call, int retval)
 	char buf[128];
 
 	memset( buf, '\0', sizeof(buf) );
-	printf("%s:  FAILED\nLine # %d\n", file, line);
+	printf("%-24s: FAILED\nLine # %d\n", file, line);
 	if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
 		perror(buf);
@@ -316,6 +316,7 @@ void test_fail(char *file, int line, char *call, int retval)
 		*/
 		if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ) exit(0);
 	}
+        printf("\n");
 	exit(1);
 }
 
