@@ -21,7 +21,7 @@
 #include "papi_protos.h"
 
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 /*
     Native event index structure:
 

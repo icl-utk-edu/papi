@@ -69,15 +69,6 @@ int main(int argc, char **argv)
    retval = PAPI_stop(EventSet1, values[0]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-   retval = PAPI_start(EventSet1);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-
-   do_flops(NUM_FLOPS);
-
-   retval = PAPI_stop(EventSet1, values[0]);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    elapsed_us = PAPI_get_real_usec() - elapsed_us;
 

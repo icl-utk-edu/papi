@@ -8,11 +8,15 @@ CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
 ifeq (,$(GCCVER3))
-OPTFLAGS	+= -O -g -DDEBUG
+OPTFLAGS	+= -g -DDEBUG
 # -O -g -DDEBUG
 else
-OPTFLAGS	+= $(GCC3ARGS) -O3
-# -O -g -DDEBUG
+GCCVER33	= $(shell gcc -v 2>&1 | tail -n 1 | grep version | cut -f3 -d" " | cut -f2 -d"." | grep "^3")
+ifeq (,$(GCCVER33))
+OPTFLAGS	+= $(GCC3ARGS) -g -DDEBUG
+else
+OPTFLAGS	+= $(GCC3ARGS) -g -DDEBUG
+endif
 endif
 
 # Flags for test programs
@@ -58,6 +62,9 @@ MEMSUBSTR= linux
 LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads shared
 
+# This is a terrible idea
+# Lines like this are a hack and should never be included.
+#
 POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.5
 SPECIAL_REMOVE = rm -f libperfctr.so libperfctr.so.5
 

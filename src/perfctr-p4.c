@@ -141,8 +141,16 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 inline static long_long get_cycles(void)
 {
    long_long ret;
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
+   } while(0);
+#else
    __asm__ __volatile__("rdtsc":"=A"(ret)
                         : /* no inputs */ );
+#endif
    return ret;
 }
 
@@ -290,14 +298,14 @@ void print_control(const struct perfctr_cpu_control *control)
          SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
       }
       SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
       if (control->evntsel_aux[i])
          SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
 #endif
       if (control->ireset[i])
          SUBDBG("ireset[%u]\t%d\n", i, control->ireset[i]);
    }
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
    if (control->p4.pebs_enable)
       SUBDBG("pebs_enable\t0x%08X\n", control->p4.pebs_enable);
    if (control->p4.pebs_matrix_vert)

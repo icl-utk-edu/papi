@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = realtime first memory exeinfo zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info  \
+SERIAL  = realtime first exeinfo zero zero_fork avail branches dmem_info all_events derived high-level2 describe mem_info memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second cost johnmay2 clockres \
 	overflow overflow_single_event overflow_twoevents timer_overflow overflow2 \
