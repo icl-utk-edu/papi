@@ -3,7 +3,7 @@ DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
 LIBS	= static shared
 TARGETS	= serial pthreads smp omp
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com
-CFLAGS	= $(FLAGS)
+CFLAGS	= $(FLAGS) -DDEBUG -g
 OPTFLAGS= -O3 -qstrict
 FFLAGS	= $(FLAGS)
 NOOPT	= 

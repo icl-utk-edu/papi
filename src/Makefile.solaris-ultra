@@ -3,7 +3,7 @@ DESCR	= "Solaris 5.8 or greater with UltraSPARC I or II"
 LIBS	= static shared
 TARGETS	= pthreads serial smp omp
 #CFLAGS	=
-CFLAGS  = -xarch=v8plusa
+CFLAGS  = -xarch=v8plusa -g -DDEBUG
 #OPTFLAGS= -fpic -O3
 OPTFLAGS= -xO3
 #NOOPT	= 

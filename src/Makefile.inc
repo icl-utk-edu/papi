@@ -1,9 +1,9 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SOURCES	  = $(MISCSRCS) papi.c papi_hl.c $(SUBSTR).c extras.c \
-	    papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
+	    papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
 OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o \
-	    papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
+	    papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
 all: showconf $(LIBS) fpapi.h examples
@@ -32,6 +32,8 @@ papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
 PAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANCAPS papi_fwrappers.c > PAPI_FWRAPPERS.c
 
+papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
 papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o
 papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)

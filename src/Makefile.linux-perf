@@ -3,12 +3,13 @@ DESCR	= "Linux with Perf Kernel Patch for the Pentium Pro, II, III"
 LIBS	= static shared
 TARGETS = serial pthreads
 
-CFLAGS  = 
+CFLAGS  = -Wall -mpentiumpro -g -DDEBUG
+FFLAGS	= -Wall -g
 OPTFLAGS= -O3
-CC	= cc
-CC_SHR  = $(CC) -shared
+CC	= gcc
+F77	= g77
+CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
 CC_R	= $(CC)
-F77	= f77
 
 include Makefile.inc
 
