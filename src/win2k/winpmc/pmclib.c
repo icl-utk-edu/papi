@@ -17,8 +17,31 @@
 
 HANDLE pmc_open(void)
 {
-	HANDLE	kd;
+	HANDLE	process, kd;
+	DWORD processAffinityMask, systemAffinityMask;
 	DWORD lastError;
+
+	/* force this process to run only on the lowest available processor */
+	process = GetCurrentProcess();
+	if (GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask)) {
+		/* set the mask to the lowest possible processor
+			(I think this one should ALWAYS be here...) */
+		processAffinityMask = 0x00000001;
+		/* scan for the lowest bit in the system mask */
+		while (!processAffinityMask & systemAffinityMask)
+			processAffinityMask <<= 1;
+		/* set affinity to lowest processor only */
+		if (!SetProcessAffinityMask(process, processAffinityMask)) {
+			lastError = GetLastError();
+			DBG((stderr, "Error setting affinity: %d \n", lastError));
+			return NULL;
+		}
+	}
+	else {
+		lastError = GetLastError();
+		DBG((stderr, "Error getting affinity: %d \n", lastError));
+		return NULL;
+    }
 
 	kd = CreateFile(
 		PMC_DEVICE,							// pointer to name of the file 
@@ -31,7 +54,7 @@ HANDLE pmc_open(void)
 
     if(kd == INVALID_HANDLE_VALUE) {
 		lastError = GetLastError();
-		DBG((stderr, "/proc/self/perfctr\n"));	/* XXX: temporary */
+		DBG((stderr, "Error opening pmc: %d \n", lastError));
 		return NULL;
     }
 	return kd;
@@ -161,6 +184,26 @@ int pmc_control(HANDLE kd, struct pmc_control *control)
 
 void pmc_close(HANDLE kd)
 {
+	HANDLE	process;
+	DWORD processAffinityMask, systemAffinityMask;
+	DWORD lastError;
+
     if( kd > 0 ) CloseHandle(kd);
+
+	/* restore this process to run on all available processors */
+	process = GetCurrentProcess();
+	if (GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask)) {
+		/* set affinity to all processors */
+		if (!SetProcessAffinityMask(process, systemAffinityMask)) {
+			lastError = GetLastError();
+			DBG((stderr, "Error restoring affinity: %d \n", lastError));
+			return;
+		}
+	}
+	else {
+		lastError = GetLastError();
+		DBG((stderr, "Error getting affinity: %d \n", lastError));
+		return;
+    }
 }
 
