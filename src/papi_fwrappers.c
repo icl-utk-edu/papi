@@ -7,8 +7,10 @@
 *          smeds@pdc.kth.se
 *          Anders Nilsson
 *          anni@pdc.kth.se
-*	   Kevin London
-*	   london@cs.utk.edu
+*	       Kevin London
+*	       london@cs.utk.edu
+*	       dan terpstra
+*	       terpstra@cs.utk.edu
 */  
 
 #include <stdio.h>
@@ -38,7 +40,7 @@
 #endif
 /* The Low Level Wrappers */
 
-PAPI_FCALL(papif_accum,PAPIF_ACCUM,(int *EventSet, long long *values, int *check))
+PAPI_FCALL(papif_accum,PAPIF_ACCUM,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_accum(*EventSet, values);
 }
@@ -65,7 +67,7 @@ PAPI_FCALL(papif_library_init,PAPIF_LIBRARY_INIT,(int *check))
 
 /* This must be passed an EXTERNAL or INTRINISIC FUNCTION not a SUBROUTINE */
 
-PAPI_FCALL(papif_thread_init,PAPIF_THREAD_INIT,(unsigned long int (*handle)(), int *flag, int *check))
+PAPI_FCALL(papif_thread_init,PAPIF_THREAD_INIT,(unsigned long int (*handle)(void), int *flag, int *check))
 {
   *check = PAPI_thread_init(handle, *flag);
 }
@@ -211,7 +213,7 @@ PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name, int *EventCode
 #endif
 }
 
-PAPI_FCALL(papif_read,PAPIF_READ,(int *EventSet, long long *values, int *check))
+PAPI_FCALL(papif_read,PAPIF_READ,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_read(*EventSet, values);
 }
@@ -256,12 +258,12 @@ PAPI_FCALL(papif_state,PAPIF_STATE,(int *EventSet, int *status, int *check))
   *check = PAPI_state(*EventSet, status);
 }
 
-PAPI_FCALL(papif_stop,PAPIF_STOP,(int *EventSet, long long *values, int *check))
+PAPI_FCALL(papif_stop,PAPIF_STOP,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_stop(*EventSet, values);
 }
 
-PAPI_FCALL(papif_write,PAPIF_WRITE,(int *EventSet, long long *values, int *check))
+PAPI_FCALL(papif_write,PAPIF_WRITE,(int *EventSet, long_long *values, int *check))
 {
   *check = PAPI_write(*EventSet, values);
 }
@@ -344,7 +346,7 @@ PAPI_FCALL(papif_num_counters,PAPIF_NUM_COUNTERS,(int *numevents))
   *numevents = PAPI_num_counters();
 }
  
-PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long long *flpins, float *mflops, int *check )) 
+PAPI_FCALL(papif_flops, PAPIF_FLOPS, ( float *real_time, float *proc_time, long_long *flpins, float *mflops, int *check )) 
 {
   *check = PAPI_flops( real_time, proc_time, flpins, mflops);
 }
@@ -354,37 +356,37 @@ PAPI_FCALL(papif_start_counters,PAPIF_START_COUNTERS,(int *events, int *array_le
   *check = PAPI_start_counters(events, *array_len);
 }
 
-PAPI_FCALL(papif_read_counters,PAPIF_READ_COUNTERS,(long long *values, int *array_len, int *check))
+PAPI_FCALL(papif_read_counters,PAPIF_READ_COUNTERS,(long_long *values, int *array_len, int *check))
 {
   *check = PAPI_read_counters(values, *array_len);
 }
 
-PAPI_FCALL(papif_accum_counters,PAPIF_ACCUM_COUNTERS,(long long *values, int *array_len, int *check))
+PAPI_FCALL(papif_accum_counters,PAPIF_ACCUM_COUNTERS,(long_long *values, int *array_len, int *check))
 {
   *check = PAPI_accum_counters(values, *array_len);
 }
 
-PAPI_FCALL(papif_stop_counters,PAPIF_STOP_COUNTERS,(long long *values, int *array_len, int *check))
+PAPI_FCALL(papif_stop_counters,PAPIF_STOP_COUNTERS,(long_long *values, int *array_len, int *check))
 {
   *check = PAPI_stop_counters(values, *array_len);
 }
 
-PAPI_FCALL(papif_get_real_usec,PAPIF_GET_REAL_USEC,( long long *time))
+PAPI_FCALL(papif_get_real_usec,PAPIF_GET_REAL_USEC,( long_long *time))
 {
   *time = PAPI_get_real_usec();
 }
 
-PAPI_FCALL(papif_get_real_cyc,PAPIF_GET_REAL_CYC,(long long *real_cyc))
+PAPI_FCALL(papif_get_real_cyc,PAPIF_GET_REAL_CYC,(long_long *real_cyc))
 {
   *real_cyc = PAPI_get_real_cyc();
 }
 
-PAPI_FCALL(papif_get_virt_usec,PAPIF_GET_VIRT_USEC,( long long *time))
+PAPI_FCALL(papif_get_virt_usec,PAPIF_GET_VIRT_USEC,( long_long *time))
 {
   *time = PAPI_get_virt_usec();
 }
 
-PAPI_FCALL(papif_get_virt_cyc,PAPIF_GET_VIRT_CYC,(long long *virt_cyc))
+PAPI_FCALL(papif_get_virt_cyc,PAPIF_GET_VIRT_CYC,(long_long *virt_cyc))
 {
   *virt_cyc = PAPI_get_virt_cyc();
 }

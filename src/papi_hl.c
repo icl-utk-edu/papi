@@ -3,16 +3,22 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:	   Kevin London
+* 	       london@cs.utk.edu
+* Mods:    dan terpstra
+*          terpstra@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
-* Mods:	   Kevin London
-* 	   london@cs.utk.edu
 */  
 
 /* This file contains the 'high level' interface to PAPI. 
    BASIC is a high level language. ;-) */
 
-#include SUBSTRATE
+#ifndef _WIN32
+  #include SUBSTRATE
+#else
+  #include "win32.h"
+#endif
 
 /* high level papi functions*/
 
@@ -20,14 +26,14 @@ static int PAPI_EVENTSET_INUSE = PAPI_NULL;
 static int initialized = 0;
 static int hl_max_counters = 0;
 
-int PAPI_flops(float *real_time, float *proc_time, long long *flpins, float *mflops)
+int PAPI_flops(float *real_time, float *proc_time, long_long *flpins, float *mflops)
 {
    static float total_proc_time=0.0; 
    static int EventSet = PAPI_NULL;
    static float mhz;
-   static long long start_us=0, total_flpins=-4;
+   static long_long start_us=0, total_flpins=-4;
    const PAPI_hw_info_t *hwinfo = NULL;
-   long long values[2] = {0,0};
+   long_long values[2] = {0,0};
    char buf[500];
    int retval;
 
@@ -68,7 +74,7 @@ int PAPI_flops(float *real_time, float *proc_time, long long *flpins, float *mfl
 	initialized = 1;
    }
    else {
-	*real_time = (PAPI_get_real_usec()-start_us)/1000000.0;
+	*real_time = (float)((PAPI_get_real_usec()-start_us)/1000000.0);
 	retval = PAPI_accum( EventSet, values );
 	PAPI_perror( retval, buf, 500);
 	if ( retval < PAPI_OK ) {
@@ -164,7 +170,7 @@ int PAPI_start_counters(int *events, int array_len)
 /* them continue to run upon return.                                      */
 /*========================================================================*/
 
-int PAPI_read_counters(long long *values, int array_len) 
+int PAPI_read_counters(long_long *values, int array_len) 
 {
   int retval;
 
@@ -181,7 +187,7 @@ int PAPI_read_counters(long long *values, int array_len)
   return(PAPI_reset(PAPI_EVENTSET_INUSE));
 }
 
-int PAPI_accum_counters(long long *values, int array_len) 
+int PAPI_accum_counters(long_long *values, int array_len) 
 {
   int retval;
 
@@ -203,7 +209,7 @@ int PAPI_accum_counters(long long *values, int array_len)
 /* Reset the counters to 0.                                               */       
 /*========================================================================*/
 
-int PAPI_stop_counters(long long *values, int array_len) 
+int PAPI_stop_counters(long_long *values, int array_len) 
 {
   int retval;
 

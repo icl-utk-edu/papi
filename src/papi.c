@@ -3,11 +3,20 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    dan terpstra
+*          terpstra@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */  
 
-#include SUBSTRATE
+#ifndef _WIN32	/* for Linux/Unix systems */
+  #include SUBSTRATE
+#else			
+  /* I couldn't figure out how to assign a string value 
+	to a preprocessor directive in Windows, so we just
+	include what we need... */
+  #include "win32.h"
+#endif
 
 /********************/
 /* BEGIN PROTOTYPES */
@@ -60,7 +69,11 @@ int papi_debug = 0;
 /*  BEGIN LOCALS    */ 
 /********************/
 
+#ifdef _WIN32	/* Let's be verbose during testing. */
+static int PAPI_ERR_LEVEL = PAPI_VERB_ECONT;
+#else
 static int PAPI_ERR_LEVEL = PAPI_QUIET; /* Behavior of handle_error() */
+#endif
 static PAPI_debug_handler_t PAPI_ERR_HANDLER = default_error_handler;
 #ifdef DEBUG
 #define papi_return(a) return(PAPI_ERR_HANDLER(a))
@@ -304,14 +317,14 @@ static EventSetInfo *allocate_master_eventset(void)
   
   /* Allocate the holding area for the global counter values */
   
-  master->hw_start = (long long *)malloc(_papi_system_info.num_cntrs*sizeof(long long));
+  master->hw_start = (long_long *)malloc(_papi_system_info.num_cntrs*sizeof(long_long));
   if (master->hw_start == NULL)
     {
       free(master->machdep);
       free(master);
       return(NULL);
     }
-  memset(master->hw_start,0x00,_papi_system_info.num_cntrs*sizeof(long long));
+  memset(master->hw_start,0x00,_papi_system_info.num_cntrs*sizeof(long_long));
    
   /* Here we initialize the goodies that help us keep track of multiple
      running eventsets. We don't need much... */
@@ -400,8 +413,12 @@ int PAPI_library_init(int version)
   int i, tmp;
 
 #ifdef DEBUG
-  if (getenv("PAPI_DEBUG"))
-    papi_debug = 1;
+  #ifdef _WIN32	/* don't want to define an environment variable... */
+	papi_debug = 1;
+  #else
+	if (getenv("PAPI_DEBUG"))
+	  papi_debug = 1;
+  #endif
 #endif
 
   if (init_retval != 0xdedbeef)
@@ -519,8 +536,8 @@ static EventSetInfo *allocate_EventSet(void)
 
   max_counters = _papi_system_info.num_cntrs;
   ESI->machdep = (void *)malloc(_papi_system_info.size_machdep);
-  ESI->sw_stop = (long long *)malloc(max_counters*sizeof(long long)); 
-  ESI->hw_start = (long long *)malloc(max_counters*sizeof(long long));
+  ESI->sw_stop = (long_long *)malloc(max_counters*sizeof(long_long)); 
+  ESI->hw_start = (long_long *)malloc(max_counters*sizeof(long_long));
   ESI->EventInfoArray = (EventInfo_t *)malloc(max_counters*sizeof(EventInfo_t));
 
   if ((ESI->machdep        == NULL )  || 
@@ -536,8 +553,8 @@ static EventSetInfo *allocate_EventSet(void)
       return(NULL);
     }
   memset(ESI->machdep,       0x00,_papi_system_info.size_machdep);
-  memset(ESI->sw_stop,          0x00,max_counters*sizeof(long long)); 
-  memset(ESI->hw_start,        0x00,max_counters*sizeof(long long));
+  memset(ESI->sw_stop,          0x00,max_counters*sizeof(long_long)); 
+  memset(ESI->hw_start,        0x00,max_counters*sizeof(long_long));
 
   initialize_EventInfoArray(ESI);
 
@@ -1152,7 +1169,7 @@ int PAPI_start(int EventSet)
 
 /* checks for valid EventSet, calls substrate stop() fxn. */
 
-int PAPI_stop(int EventSet, long long *values)
+int PAPI_stop(int EventSet, long_long *values)
 { 
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
@@ -1205,7 +1222,7 @@ int PAPI_stop(int EventSet, long long *values)
     papi_return(retval);
 
   if (values)
-    memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long long)); 
+    memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long_long)); 
 
   /* Update the state of this EventSet */
 
@@ -1258,14 +1275,14 @@ int PAPI_reset(int EventSet)
     }
   else
     {
-      memset(ESI->sw_stop,0x00,ESI->NumberOfEvents*sizeof(long long)); 
+      memset(ESI->sw_stop,0x00,ESI->NumberOfEvents*sizeof(long_long)); 
     }
 
   DBG((stderr,"PAPI_reset returns %d\n",retval));
   return(retval);
 }
 
-int PAPI_read(int EventSet, long long *values)
+int PAPI_read(int EventSet, long_long *values)
 { 
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
@@ -1290,7 +1307,7 @@ int PAPI_read(int EventSet, long long *values)
     }
   else
     {
-      memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long long)); 
+      memcpy(values,ESI->sw_stop,ESI->NumberOfEvents*sizeof(long_long)); 
     }
 
 #if defined(DEBUG)
@@ -1305,12 +1322,12 @@ int PAPI_read(int EventSet, long long *values)
   return(retval);
 }
 
-int PAPI_accum(int EventSet, long long *values)
+int PAPI_accum(int EventSet, long_long *values)
 { 
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
   int i, retval;
-  long long a,b,c;
+  long_long a,b,c;
 
   ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);
   if (ESI == NULL)
@@ -1338,7 +1355,7 @@ int PAPI_accum(int EventSet, long long *values)
   papi_return(PAPI_reset(EventSet));
 }
 
-int PAPI_write(int EventSet, long long *values)
+int PAPI_write(int EventSet, long_long *values)
 {
   int retval = PAPI_OK;
   EventSetInfo *ESI;
@@ -1359,7 +1376,7 @@ int PAPI_write(int EventSet, long long *values)
         return(retval);
     }
 
-  memcpy(ESI->hw_start,values,_papi_system_info.num_cntrs*sizeof(long long));
+  memcpy(ESI->hw_start,values,_papi_system_info.num_cntrs*sizeof(long_long));
 
   return(retval);
 }
@@ -1629,7 +1646,7 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
       ptr->debug.handler = PAPI_ERR_HANDLER;
       break;
     case PAPI_GET_CLOCKRATE:
-      return(_papi_system_info.hw_info.mhz);
+      return((int)_papi_system_info.hw_info.mhz);
     case PAPI_GET_MAX_CPUS:
       return(_papi_system_info.hw_info.ncpu);
     case PAPI_GET_MAX_HWCTRS:
@@ -1797,7 +1814,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
 }
 
 static void dummy_handler(int EventSet, int EventCode, int EventIndex,
-                          long long *values, int *threshold, void *context)
+                          long_long *values, int *threshold, void *context)
 {
   /* This function is not used and shouldn't be called. */
 
@@ -2006,17 +2023,17 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
     return(NULL);
 }
 
-long long PAPI_get_real_cyc(void)
+long_long PAPI_get_real_cyc(void)
 {
   return(_papi_hwd_get_real_cycles());
 }
 
-long long PAPI_get_real_usec(void)
+long_long PAPI_get_real_usec(void)
 {
   return(_papi_hwd_get_real_usec());
 }
 
-long long PAPI_get_virt_cyc(void)
+long_long PAPI_get_virt_cyc(void)
 {
   EventSetInfo *master = _papi_hwi_lookup_in_master_list();
   if (master)
@@ -2024,7 +2041,7 @@ long long PAPI_get_virt_cyc(void)
   return(-1);
 }
 
-long long PAPI_get_virt_usec(void)
+long_long PAPI_get_virt_usec(void)
 {
   EventSetInfo *master = _papi_hwi_lookup_in_master_list();
   if (master)
