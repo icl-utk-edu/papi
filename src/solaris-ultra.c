@@ -1500,9 +1500,9 @@ int _papi_hwd_update_shlib_info(void)
 
             SUBDBG("%s\n", objname);
 
-            if ( strstr(flags, "read") && strstr(flags, "exec") )
+            if ( (strstr(flags, "read") && strstr(flags, "exec")) || (strstr(flags, "r") && strstr(flags, "x")) )
             {
-              if ( !strstr(flags, "write") )  /* text segment */
+              if ( !(strstr(flags, "write")||strstr(flags, "w")) )  /* text segment */
                { 
                   t_index++;
                   tmpr->flags =1;
