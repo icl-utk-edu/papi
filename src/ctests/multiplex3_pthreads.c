@@ -1,5 +1,5 @@
 /* 
-* File:    multiplex1_pthreads.c
+* File:    multiplex3_pthreads.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -7,11 +7,9 @@
 *          johnmay@llnl.gov
 */
 
-/* This file tests the multiplex pthread functionality when there are
+/* This file tests the multiplex functionality when there are
  * threads in which the application isn't calling PAPI (and only
  * one thread that is calling PAPI.)
- *
- * This test will fail on most, if not all platforms due to signal handling.
  */
 
 #include <pthread.h>
@@ -27,9 +25,16 @@ void *thread_fn(void *dummy)
    }
 }
 
-void init_papi(void)
+/* Runs a bunch of multiplexed events */
+
+void mainloop(int arg)
 {
-   int retval;
+  int allvalid = 1;
+  long long *values;
+  int EventSet = PAPI_NULL;
+  int retval, i, j = 2;
+  PAPI_event_info_t pset;
+  const PAPI_hw_info_t *hw_info;
 
    /* Initialize the library */
 
@@ -39,23 +44,13 @@ void init_papi(void)
 
    /* Turn on automatic error reporting */
 
-   retval = PAPI_set_debug(PAPI_VERB_ECONT);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-}
+   if (!TESTS_QUIET)
+     if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
-/* Runs a bunch of multiplexed events */
-
-int allvalid = 1;
-long long *values;
-int EventSet = PAPI_NULL;
-
-int case1_first_half(void)
-{
-   int retval, i, j = 2;
-   PAPI_event_info_t pset;
-
-   init_papi();
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    retval = PAPI_multiplex_init();
    if (retval != PAPI_OK)
@@ -122,14 +117,7 @@ int case1_first_half(void)
    if (PAPI_start(EventSet) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   return 0;
-}
-
-int case1_last_half(void)
-{
-   int i, retval;
-
-   do_both(NUM_ITERS);
+   do_both(arg);
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)
@@ -151,7 +139,6 @@ int case1_last_half(void)
    if (!allvalid)
       test_fail(__FILE__, __LINE__, "case1 (one or more counter registered no counts)",
                 1);
-
    retval = PAPI_cleanup_eventset(EventSet);    /* JT */
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
@@ -160,19 +147,20 @@ int case1_last_half(void)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
 
-   return (SUCCESS);
+   free(values);
+   PAPI_shutdown();
 }
 
 int main(int argc, char **argv)
 {
-
    int i, rc, retval;
    pthread_t id[NUM_THREADS];
    pthread_attr_t attr;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-   case1_first_half();
+   printf("%s: Using %d threads\n\n", argv[0], NUM_THREADS);
+   printf("Does non-threaded multiplexing work with extraneous threads present?\n");
 
    /* Create a bunch of unused pthreads, to simulate threads created
     * by the system that the user doesn't know about.
@@ -192,16 +180,10 @@ int main(int argc, char **argv)
       if (rc)
          test_fail(__FILE__, __LINE__, "pthread_create", rc);
    }
-
-   if (!TESTS_QUIET) {
-      printf("%s: Using %d iterations\n\n", argv[0], NUM_ITERS);
-
-      printf("case1: Does multiplexing work with extraneous threads present?\n");
-   }
-   do_l1misses(NUM_ITERS/10);
-   case1_last_half();
-   test_pass(__FILE__, NULL, 0);
-
    pthread_attr_destroy(&attr);
+
+   mainloop(NUM_ITERS);
+
+   test_pass(__FILE__, NULL, 0);
    exit(0);
 }

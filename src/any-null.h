@@ -1,58 +1,183 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+/* 
+* File:    any-null.h
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/
+
+#ifndef _PAPI_ANY_NULL_H
+#define _PAPI_ANY_NULL_H
+
+#ifdef __GNUC__
+#define HAVE_FFSLL
+#define _GNU_SOURCE
+#define __USE_GNU
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/times.h>
-#include <sys/time.h>
+#include <signal.h>
 #include <malloc.h>
 #include <assert.h>
+#include <string.h>
+#include <math.h>
 #include <limits.h>
-#include "papi.h"
+#include <unistd.h>
+#include <time.h>
+#include <errno.h>
+#include <ctype.h>
+#include <inttypes.h>
+#include <sys/ucontext.h>
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <linux/unistd.h>
+#include "libperfctr.h"
 
+#define gettid() syscall(SYS_gettid)
+#define inline_static inline static
+
+#define vperfctr_open() ((struct vperfctr *)gettid())
+#define vperfctr_info(a,b) (assert(a==(struct vperfctr *)gettid()),0)
+#define vperfctr_control(a,b) (assert(a==(struct vperfctr *)gettid()),0)
+#define vperfctr_unlink(a) (assert(a==(struct vperfctr *)gettid()),0)
+#define vperfctr_stop(a) (assert(a==(struct vperfctr *)gettid()),0)
+#define vperfctr_read_ctrs(a,b) { struct perfctr_sum_ctrs *c = b; assert(a==(struct vperfctr *)gettid()); c->pmc[0] = ++cntr[0]; c->pmc[1] = ++cntr[1]; }
+#define vperfctr_read_tsc(a) (assert(a==(struct vperfctr *)gettid()),++virt_tsc)
+#define vperfctr_close(a) (assert(a==(struct vperfctr *)gettid()))
+
+#define PERF_MAX_COUNTERS 4
+#define MAX_COUNTERS PERF_MAX_COUNTERS
+#define MAX_COUNTER_TERMS  MAX_COUNTERS
+#define P3_MAX_REGS_PER_EVENT 2
+#define PERFCTR_CPU_NAME(a)   "null"
+#define PERFCTR_CPU_NRCTRS(a) 2
+
+/* Used in determining on which counters an event can live. */
 #define CNTR1 0x1
 #define CNTR2 0x2
-#define MAX_COUNTERS 2
-#define PERF_USR       0x300
-#define PERF_OS        0x400
-#define PERF_ENABLE    0x800
-#define PERF_EVNT_MASK 0xff
+#define CNTR3 0x4
+#define CNTR4 0x8
+#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
-typedef struct _any_command {
-   unsigned int cmd[MAX_COUNTERS];
-} any_command_t;
+/* Masks to craft an eventcode to perfctr's liking */
+#define PERF_ENABLE            0x00400000
+#define PERF_INT_ENABLE        0x00100000
+#define PERF_OS                0x00020000
+#define PERF_USR               0x00010000
 
-typedef struct hwd_control_state {
-   /* Which counters to use? Bits encode counters to use, may be duplicates */
-   int selector;
-   /* Is this event derived? */
-   int derived;
-   /* Buffer to pass to the kernel to control the counters */
-   any_command_t counter_cmd;
-} hwd_control_state_t;
+#define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
+#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define GOPEN_ERROR "gperfctr_open() returned NULL"
+#define VINFO_ERROR "vperfctr_info() returned < 0"
+#define VCNTRL_ERROR "vperfctr_control() returned < 0"
+#define GCNTRL_ERROR "gperfctr_control() returned < 0"
+#define FOPEN_ERROR "fopen(%s) returned NULL"
+#define STATE_MAL_ERROR "Error allocating perfctr structures"
+#define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
 
-#include "papi_internal.h"
+/* Lock macros. */
+extern volatile unsigned int _papi_hwd_lock[PAPI_MAX_LOCK];
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
 
-typedef struct hwd_search {
-   /* PAPI preset code */
-   unsigned int papi_code;
-   /* Is this derived */
-   int derived_op;
-   /* If so, what is the index of the operand */
-   int operand_index;
-   /* Events to encode */
-   unsigned int findme[MAX_COUNTERS];
-} hwd_search_t;
+/* Overflow macros */
+#ifdef __x86_64__
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+#else
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+#endif
+#define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
 
-typedef struct hwd_preset {
-   /* Which counters to use? Bits encode counters to use, may be duplicates */
-   unsigned char selector;
-   /* Is this event derived? */
-   unsigned char derived;
-   /* If the derived event is not associative, this index is the lead operand */
-   unsigned char operand_index;
-   /* Buffer to pass to the kernel to control the counters */
-   any_command_t counter_cmd;
+#define  _papi_hwd_lock(lck)                    \
+do                                              \
+{                                               \
+   unsigned int res = 0;                        \
+   do {                                         \
+      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(_papi_hwd_lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
+   } while(res != (unsigned int)MUTEX_OPEN);   \
+} while(0)
+
+#define  _papi_hwd_unlock(lck)                  \
+do                                              \
+{                                               \
+   unsigned int res = 0;                       \
+   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
+} while(0)
+
+/* Overflow-related defines and declarations */
+typedef struct {
+   siginfo_t *si;
+   struct sigcontext *ucontext;
+} _papi_hwd_context_t;
+
+typedef siginfo_t hwd_siginfo_t;
+typedef ucontext_t hwd_ucontext_t;
+
+typedef struct P3_register {
+   unsigned int selector;       /* Mask for which counters in use */
+   int counter_cmd;             /* The event code */
+} P3_register_t;
+
+typedef struct P3_reg_alloc {
+   P3_register_t ra_bits;       /* Info about this native event mapping */
+   unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
+   unsigned ra_rank;            /* How many counters can carry this metric */
+} P3_reg_alloc_t;
+
+/* Per eventset data structure for thread level counters */
+
+typedef struct hwd_native {
+   /* index in the native table, required */
+   int index;
+   /* Which counters can be used?  */
+   unsigned int selector;
+   /* Rank determines how many counters carry each metric */
+   unsigned char rank;
+   /* which counter this native event stays */
+   int position;
+   int mod;
+   int link;
+} hwd_native_t;
+
+typedef struct native_event_entry {
+   /* If it exists, then this is the name of this event */
+   char name[PAPI_MAX_STR_LEN];
    /* If it exists, then this is the description of this event */
-   char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
+   char *description;
+   /* description of the resources required by this native event */
+   P3_register_t resources;
+} native_event_entry_t;
+
+/* typedefs to conform to hardware independent PAPI code. */
+typedef P3_reg_alloc_t hwd_reg_alloc_t;
+typedef P3_register_t hwd_register_t;
+
+typedef struct P3_perfctr_control {
+   hwd_native_t native[MAX_COUNTERS];
+   int native_idx;
+   unsigned char master_selector;
+   P3_register_t allocated_registers;
+   struct vperfctr_control control;
+   struct perfctr_sum_ctrs state;
+} P3_perfctr_control_t;
+
+typedef struct P3_perfctr_context {
+   struct vperfctr *perfctr;
+/*  P3_perfctr_control_t start; */
+} P3_perfctr_context_t;
+
+/* typedefs to conform to hardware independent PAPI code. */
+typedef P3_perfctr_control_t hwd_control_state_t;
+typedef P3_perfctr_context_t hwd_context_t;
+
+#endif /* _PAPI_ANY_NULL_H */

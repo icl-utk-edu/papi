@@ -1,14 +1,28 @@
-/* This file performs the following test: overflow dispatch with 1 extraneous pthread
-
+/* 
+* File:    overflow3_pthreads.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:    
+*          
 */
+
+/* This file tests the overflow functionality when there are
+ * threads in which the application isn't calling PAPI (and only
+ * one thread that is calling PAPI.)
+ */
 
 #include <pthread.h>
 #include "papi_test.h"
 
-#define FLOPS 10000000
-#define READS 4000
-
 int total = 0;
+
+void *thread_fn(void *dummy)
+{
+   while (1){
+      do_both(NUM_ITERS);
+   }
+}
 
 void handler(int EventSet, void *address, long_long overflow_vector, void *context)
 {
@@ -24,14 +38,6 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
    total++;
 }
 
-void *thread_fn(void *dummy)
-{
-   while (1) {
-      do_flops(FLOPS);
-      do_reads(READS);
-   }
-}
-
 void mainloop(int arg)
 {
    int retval, num_tests = 1;
@@ -39,8 +45,18 @@ void mainloop(int arg)
    int mask1 = 0x5;
    int num_events1;
    long long **values;
-   long long elapsed_us, elapsed_cyc;
-   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+   const PAPI_hw_info_t *hw_info;
+
+   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+   if (!TESTS_QUIET)
+      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
        !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
@@ -54,11 +70,7 @@ void mainloop(int arg)
 
    values = allocate_test_space(num_tests, num_events1);
 
-   elapsed_us = PAPI_get_real_usec();
-
-   elapsed_cyc = PAPI_get_real_cyc();
-
-   if(mask1 == 0x3) {
+   if (mask1 == 0x3) {
       if ((retval = PAPI_overflow(EventSet1, PAPI_TOT_INS, THRESHOLD, 0, handler)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
    }
@@ -66,18 +78,14 @@ void mainloop(int arg)
       if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
    }
-  /* start_timer(1); */
+
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(arg);
+   do_both(arg);
 
    if ((retval = PAPI_stop(EventSet1, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
-   elapsed_us = PAPI_get_real_usec() - elapsed_us;
-
-   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
    if(mask1 == 0x3) {
    /* clear the papi_overflow event */
@@ -89,36 +97,36 @@ void mainloop(int arg)
       if ((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, 0, 0, NULL)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
    }
-   remove_test_events(&EventSet1, mask1);
-
-   if (!TESTS_QUIET) {
-      if(mask1 == 0x3) {
-         printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-      }
-      else {
-         printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
-      }
-      printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", (int) pthread_self(), (values[0])[1]);
-      printf("Thread 0x%x Real usec   : \t%lld\n", (int) pthread_self(), elapsed_us);
-      printf("Thread 0x%x Real cycles : \t%lld\n", (int) pthread_self(), elapsed_cyc);
+   if(mask1 == 0x3) {
+     printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
    }
+   else {
+     printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", (int) pthread_self(), (values[0])[0]);
+   }
+   printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", (int) pthread_self(), (values[0])[1]);
+
+   retval = PAPI_cleanup_eventset(EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet1);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
    free_test_space(values, num_tests);
+   PAPI_shutdown();
 }
 
 int main(int argc, char **argv)
 {
-   pthread_t e_th;
-   int rc, retval;
+   int i, rc, retval;
+   pthread_t id[NUM_THREADS];
    pthread_attr_t attr;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-   if (!TESTS_QUIET)
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+   printf("%s: Using %d threads\n\n", argv[0], NUM_THREADS);
+   printf("Does non-threaded overflow work with extraneous threads present?\n");
 
    pthread_attr_init(&attr);
 #ifdef PTHREAD_CREATE_UNDETACHED
@@ -130,15 +138,14 @@ int main(int argc, char **argv)
       test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);
 #endif
 
-   rc = pthread_create(&e_th, &attr, thread_fn, NULL);
-   if (rc) {
-      retval = PAPI_ESYS;
-      test_fail(__FILE__, __LINE__, "pthread_create", retval);
+   for (i = 0; i < NUM_THREADS; i++) {
+      rc = pthread_create(&id[i], &attr, thread_fn, NULL);
+      if (rc)
+         test_fail(__FILE__, __LINE__, "pthread_create", rc);
    }
-
-   mainloop(FLOPS);
-
    pthread_attr_destroy(&attr);
+
+   mainloop(NUM_ITERS);
 
    test_pass(__FILE__, NULL, 0);
    exit(1);
