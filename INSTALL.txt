@@ -179,7 +179,13 @@ You can verify the APIC is working after rebooting with the new kernel
 and running the 'perfex -i' command found in the perfctr/examples/perfex
 directory.
 
-*- IF YOU HAVE ALREADY PATCHED YOUR KERNEL WITH PERFCTR -*
+PAPI supports 2 versions of PerfCtr. The 2.4.x series and the 2.6.x series.
+By default, PAPI assumes 2.6.x. You can change this by setting the
+VERSION flag on the make line to either 2.4.x or 2.6.x.
+
+make -f Makefile.linux-<processor> VERSION=2.4.x
+
+*- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
 
 WARNING: You should always use a PerfCtr distribution that has been distributed
 with a version of PAPI or your build will fail. The reason for this is that
@@ -189,22 +195,14 @@ objects files and includes in the libpapi.a file for convenience. If you
 install a new perfctr, even a shared library, YOU MUST REBUILD PAPI to get
 a proper, working libpapi.a. 
 
-Edit the top of the papi/src/Makefile.linux-perfctr-x.y file and change
-the following two variables:
+If you have already installed PerfCtr under <prefix> then:
 
-PERFCTR	      - should be the absolute path to your PerfCtr build directory
-KERNINC	      - should be the absolute path to your Kernel include files
-	        (thanks to Redhat for breaking the /usr/src/linux convention)
+make -f Makefile.linux-<processor> PERFCTR_PREFIX=<prefix>
 
-Opteron
-*******
+If you have a different PerfCtr source tree other than the ones in papi/src
+AND you have not performed a 'make install' in that directory:
 
-On the Opteron, you should go ahead and use PerfCtr 2.6.x and use the
-'make install' target as specified in the PerfCtr INSTALL file. If you have
-installed it into anywhere other than the standard /usr directory, you
-should set the PERFCTR_PREFIX directory on the make line.
-
-make -f Makefile.linux-opteron PERFCTR_PREFIX=/usr/local
+make -f Makefile.linux-<processor> PERFCTR=<PerfCtr source tree location>
 
 MIPS - IRIX 6.5
 *****************************************************************************
