@@ -1,0 +1,31 @@
+How do I add a user 'username' to CVS?
+
+0) You must be in the group papi. 
+1) Login to nala.cs.utk.edu.
+2) Make a temporary directory called foo.
+3) Do the following:
+
+> cd foo;
+> cvs -d /cvs/homes/papi co CVSROOT
+.
+.
+.
+> cd CVSROOT
+>
+
+4) Add 'username' to the 'writers' file.
+5) Add a password to the 'passwd' file with htpasswd program.
+
+> /usr/local/apache/bin/htpasswd ~/tmp/CVSROOT/passwd 'username'
+New password: <enter password>
+Re-type new password: <again>
+Added password for user 'username'
+>
+
+6) Commit the changes back to CVS.
+
+> cvs commit -m "Added user 'username' to the cvs list"
+.
+.
+.
+cvs commit: Rebuilding administrative file database
