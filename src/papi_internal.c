@@ -342,7 +342,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
    *EventSet = ESI->EventSetIndex;
    INTDBG("_papi_hwi_create_eventset(%p,%p): new EventSet in slot %d\n",
           (void *) EventSet, handle, *EventSet);
-   assert (*EventSet < 100);
+
    return (retval);
 }
 
@@ -437,8 +437,6 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 {
    DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
    int i;
-
-   assert(ESI->NumberOfEvents == 0);
 
    i = ESI->EventSetIndex;
 
