@@ -1,0 +1,14 @@
+#! /bin/csh -f
+
+#	Aliases for all shells (interactive or not).
+
+alias RM '/bin/rm -f'	# Force a removal.
+alias rm ~/bin/safe_rm	# Safe remove, stashes the file for a few days.
+alias mv '/bin/mv -i'	# Query to warn you if clobbering something.
+alias cp '/bin/cp -i'	# Query to warn you if clobbering something.
+
+alias sh  csh		# This helps you always get the same (C) shell
+
+alias ll 'ls -l \!* | more'	# A long listing, a page at a time.
+
+alias backspace 'stty erase ^H' #set the backspace key

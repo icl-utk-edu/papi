@@ -1,0 +1,32 @@
+.TH LIBPFM 3  "November, 2003" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_self_start, pfm_self_stop \- start and stop monitoring for a self-monitoring process
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_self_start(int " fd ");"
+.BI "int pfm_self_stop(int " fd ");"
+.sp
+.SH DESCRIPTION
+These two functions can only be used by self-monitoring processes.
+They have no effect on system wide sessions.
+.sp
+The \fBpfm_self_start\fR function activates monitoring. This function 
+is equivalent to calling \fBperfmonctl()\fR with the \fBPFM_START\fR 
+command and may end up calling it. On Linux/ia64 it is implemented
+as a lightweight call to set the \fBpsr.up\fR bit.
+.sp
+The \fBpfm_self_stop\fR function deactivates monitoring This function is 
+equivalent to calling \fBperfmonctl()\fR with the \fBPFM_STOP\fR command
+and may end up calling it.On Linux/ia64 it is implemented as a lightweight 
+call to clear the \fBpsr.up\fR bit.
+
+.SH RETURN
+The function returns 0 if successful, otherwise -1 and the error code
+is set in errno.
+.SH ERRORS
+0 is always returned on Linux/ia64.
+.SH AUTHOR
+Stephane Eranian <eranian@hpl.hp.com>
+.PP

@@ -1,0 +1,57 @@
+#!/bin/sh
+
+userresources=$HOME/.Xresources
+usermodmap=$HOME/.Xmodmap
+
+# merge in defaults and keymaps
+
+if [ -f $userresources ]; then
+    xrdb -merge $userresources
+fi
+
+############################################################
+#
+#  Console window.
+#  If this is a .xsession file, it SHOULD NOT have a 
+#  xterm -C in it, the console window
+#
+#WINDNAME=console
+#export WINDNAME 
+#
+#/usr/local/X11R5/bin/xterm -C -j -sb -geometry 41x8+700+5 \#+800+10  -fn 6x13\
+#      -name $WINDNAME &
+#
+############################################################
+#
+#  Three handy windows; all emulate terminals.
+#  One is big (with normal-size print) on the left.
+#  The other two are smaller (with smaller print) and on the right.
+
+WINDNAME=left-window
+xterm -j -sb -vb -geometry 75x58+1+5   \#+700+30  -fn 9x15\
+     -name $WINDNAME &
+
+WINDNAME=middle-right-window
+xterm -j -sb -vb -geometry 72x27-3+137 \#+800+40  -fn 6x13\
+     -name $WINDNAME &
+
+WINDNAME=lower-right-window
+xterm -j -sb -vb -bw 2 -geometry 72x27-3+520 \#+800+70\
+  -fn 6x13 -name $WINDNAME &
+
+WINDNAME=`hostname`
+
+############################################################
+#
+#  A clock and a mail-notifier.
+
+xclock -geometry 90x90+975+5 -analog -update 60 &
+xbiff -geometry 75x90+1075+5 &
+
+
+############################################################
+#
+#  Window manager.
+
+exec twm
+

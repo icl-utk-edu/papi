@@ -1,0 +1,30 @@
+pwd 
+pwd 
+cd papi/src 
+ls Make* 
+mkia64-3 clean 
+mkia64-3 
+pwd 
+ls *.sh 
+run_tests.sh 
+which gcc 
+exit 
+pwd 
+echo $LD_LIBRARY_PATH 
+pwd 
+cd papi/src/ftests 
+ldd zero 
+pwd 
+zero 
+pwd 
+exit 
+pwd 
+cd /usr/include 
+grep prpsinfo_t * 
+cd sys 
+grep prpsinfo_t * 
+vi procfs.h 
+pwd 
+ls 
+pwd 
+exit 

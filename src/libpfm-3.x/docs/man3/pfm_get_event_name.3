@@ -1,0 +1,89 @@
+.TH LIBPFM 3  "November, 2003" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_event_name, pfm_get_event_code, pfm_get_event_counters, pfm_get_num_events, pfm_get_max_event_name_len \- get event information
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_get_event_name(unsigned int " e ", char *"name ", int " maxlen);
+.BI "int pfm_get_event_code(unsigned int " e ", int *"code);
+.BI "int pfm_get_event_counters(int " e ", pfmlib_regmask_t "counters ");"
+.BI "int pfm_get_num_events(unsigned int *" count);
+.BI "int pfm_get_max_event_name_len(unsigned int *" len);
+.sp
+.SH DESCRIPTION
+The PMU counters can be programmed to measure the number of occurrences
+of certain events. The number of events varies from one PMU implementation
+to the other. Each event has a name and a code which is used to program
+the actual PMU register. Not all events can necessarily be programmed on
+any of the available counters due to hardware constraints.
+.sp
+The library does not directly expose the event code to user applications
+because it is not necessary. Instead applications use names to
+query the library for particular information about events. Given
+a name, the library returns an opaque descriptor to applications. 
+Each descriptor is unique and has no relationship to the event code.
+All functions require the library to be properly initialized.
+.sp
+The \fBpfm_get_event_name\fR function returns in \fBname\fR the event 
+name given its opaque descriptor \fBe\fR. The \fBmaxlen\fR argument 
+indicates the maximum length of the buffer provided for \fBname\fR.
+Up to \fBmaxlen-1\fR characters will be returned, not including the
+termination character.
+.sp
+The \fBpfm_get_event_code\fR function returns the event code in \fBcode\fR
+given its opaque descriptor \fBe\fR.
+.sp
+Given an opaque event descriptor \fBe\fR, the \fBpfm_get_event_counters\fR 
+function returns \fBcounters\fR a bitmask of type \fBpfmlib_regmask_t where 
+each bit set represents a PMU counter which can be used to program this 
+event. The bitmask must be accessed accessor macros defined by the library.
+.sp
+It is possible to list all existing events for the detected host PMU
+using accessor functions as the full table of events is not accessible
+to the applications. The index of the first event is always zero,
+then using \fBpfm_get_num_events\fR you get the total number of events.
+Event descriptors are contiguous therefore a simple loop will allow
+complete scanning. The typical scan loop is constructed as 
+follows:
+.sp
+.nf
+unsigned int i, count;
+char name[256];
+pfm_get_num_events(&count);
+for(i=0;i < count; i++)
+{
+   pfm_get_event_name(i, name, 256);
+   printf("%s\\n", name);
+}
+.fi
+
+.so
+The \fBpfm_get_num_events\fR function returns in \fBcount\fR the
+total number of events supported by the host PMU.
+.sp
+The former \fBpfm_get_first_event\fR has been deprecated. You can simply
+initialize your variable to 0 to point to the first event.
+.sp
+The former \fBpfm_get_next_event\fR has been deprecated. You need
+to retrieve the total number of events for the host PMU
+and then increment your loop variable until you reach that count.
+.sp
+The \fBpfm_get_max_event_name_len\fR function returns in \fBlen\fR 
+the maximum length in bytes for the name of the events available on one PMU 
+implementation. The value excludes the string termination character ('\0').
+
+.SH RETURN
+All functions return whether or not the call was successful.  A return value of 
+\fBPFMLIB_SUCCESS\fR indicates success, otherwise the value is the error code.
+.SH ERRORS
+.B PFMLIB_ERR_NOINIT
+the library has not been initialized properly.
+.TP
+.B PFMLIB_ERR_INVAL
+the event descriptor is invalid, or the pointer argument is NULL.
+.SH SEE ALSO
+pfm_get_impl_counters(3)
+.SH AUTHOR
+Stephane Eranian <eranian@hpl.hp.com>
+.PP

@@ -1,0 +1,35 @@
+#! /bin/csh -f
+
+#	Aliases for interactive shells.
+
+alias help man -k
+
+alias h 'history -r \!* | more'
+alias j 'jobs -l'
+
+alias p pushd
+alias P popd
+
+alias f finger -s
+
+alias bye	logout
+
+alias mroe more		# For clumsy fingers.
+alias m    more		# For lazy fingers.
+alias c    clear	# For lazy fingers.
+
+alias open          'chmod go+r'
+alias shut          'chmod go-r'
+alias x             'chmod +x'
+
+alias ls /bin/ls -F     # Show file-types in ordinary listings.
+alias sl /bin/ls -F     # For clumsy fingers.
+alias la /bin/ls -laF   # Show everything.
+
+alias :w  'echo You are not in vi anymore\!'
+alias :wq 'echo You are not in vi anymore\!'
+alias :q  'echo You are not in vi anymore\!'
+alias :q! 'echo You are not in vi anymore\!'
+
+alias vt100 "tset -sQ '?vt100' >! /tmp/tset.$$ ; source /tmp/tset.$$ ; \
+		/bin/rm -f /tmp/tset.$$"

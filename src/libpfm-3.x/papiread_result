@@ -1,0 +1,27 @@
+Cost of execution for PAPI start/stop and PAPI read.
+This test takes a while. Please be patient...
+Performing start/stop test...
+
+User level cost for PAPI_start/stop(2 counters) over 50000 iterations
+53803092 total cyc,
+53800182 total ins,
+1076.061840 cyc/call pair,
+1076.003680 ins/call pair
+
+Total cost for PAPI_start/stop(2 counters) over 50000 iterations
+748469356 total cyc,
+14969.088138 cyc/call pair
+
+
+Performing read test...
+
+User level cost for PAPI_read(2 counters) over 50000 iterations
+25294856 total cyc,
+30300084 total ins,
+505.897120 cyc/call,
+606.001680 ins/call
+
+Total cost for PAPI_read(2 counters) over 50000 iterations
+230150243 total cyc,
+4602.912742 cyc/call
+cost.c                                   PASSED

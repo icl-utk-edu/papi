@@ -1,0 +1,105 @@
+
+
+ospf message types:
+  1. Hello: Used to discover who the neighbors are;
+  2. Link state update: Provide the sender's costs to its neighbors;
+  3. Link State Ack: Acknowledges link state update;
+  4. Database Description: Announces which updates the sender has;
+  5. Link state request: requests information from the partner;
+
+Contents of a link state update:
+  Link State Advertisement:
+    1. router Links: the state of each of the interfaces on a router,
+                     each router provides this information;
+    2. network links: the list of routers connected to a multiaccess net,
+                      this is provided by DR on the net;
+    3. summary link to a network:  indicates a route to a network outside 
+                      the local area but in the autonomous system, this is
+                      provided by a border router;
+    4. summary link to a boundary router: indicates a route through the 
+                      AS to boundary of the autonomous system, this is 
+                      provided by a border router;
+    5. AS external Link: indicates a route to a destination in another AS.
+                         This is provide by a boundary router;
+
+
+ If an OSPF network is comprised of Normal areas only, then all External routes will be flooded throughout the whole network.   
+
+
+
+Stub areas handle externals in the following manner:
+
+ 
+
+The ABR will not flood Externals coming from Area 0 into the Stub Area 
+ 
+
+Instead, the ABR will generate a default route into the stub area (as a Type 3 Summary LSA). 
+ 
+
+ASBRs are NOT permitted in the STUB area (no router can redistribute externals into OSPF within the Stub area).  
+ 
+TSA differ from Stub areas in that there are not even summary routes injected into the TSA
+
+NSSA is defined in RFC 1587, and allows for a Externals to be injected directly into the NSSA.   However the NSSA still will not accept Externals originated in any other area.   This is accomplished by introducing a new LSA type, Type 7 LSA.  An ASBR in the NSSA will inject Externals using Type 7 LSA.  When crossing the ABR, those Type 7 LSAs will be translated into regular Type 5 LSAs, and will be handled like regular Externals throughout the rest of the network.  
+
+ 
+
+some permanent multicast groups:
+   224.0.0.1:   All systems in a LAN;
+   224.0.0.2:   All routers in a LAN;
+   224.0.0.5:   All OSPF routers in a LAN;
+   224.0.0.6:   All OSPF DR in a LAN;
+
+OSPF routers:
+    backbone routers;
+    area border routers;
+    internal routers;
+    Autonamous System boundary routers;
+
+each router build 3 databases:
+   1. adjacent-neighbors table;
+   2. link-state database;----topology map for area;
+   3. forwarding table;---routing table;
+
+advantages OSPF over RIP:
+  1. support a variety of distance metrics, including delay, traffic, bandwidth,etc,
+  2. support routing based on type of service;
+  3. can do load balance, it can split the load over multiple lines ;
+  4. support hierarchical systems,thus suit for large network; RIP is flat;
+  5. provide some secure methods;
+  6. fast convergence
+
+
+
+  
+Interior Gateway Routing Protocol (IGRP) is a proprietary network protocol, developed by Cisco Systems, designed to work on autonomous systems. IGRP is a distance-vector routing protocol, which means that each router sends all or a portion of its routing table in a routing message update at regular intervals to each of its neighboring routers. A router chooses the best path between a source and a destination. Since each path can comprise many links, the system needs a way to compare the links in order to find the best path. A system such as RIP uses only one criteria -- hops -- to determine the best path. IGRP uses five criteria to determine the best path: the link's speed, delay, packet size, loading and reliability. Network administrators can set the weighting factors for each of these metrics.
+
+
+
+  
+Enhanced Interior Gateway Routing Protocol (EIGRP) is an evolved version of IGRP that addresses the demands of large-scale internetworks and the changes in network technology that have been developed since the implementation of IGRP. Routers that already use IGRP can use EIGRP because the metrics for both protocols are directly translatable, i.e., they are as easily comparable as if they were routes that originated in their own autonomous systems. 
+A router running EIGRP stores copies of all its neighbors' routing tables so that it can quickly adapt to alternate routes. If no appropriate route exists, EIGRP queries its neighbors to discover an alternate route. These queries propagate until an alternate route is found. Unlike some earlier routing protocols that would send an entire table to neighboring routers when one routing table entry changed, EIGRP notifies the neighbors of only the specific change in the table. 
+
+Unlike IGRP, EIGRP uses the Diffusing-Update Algorithm (DUAL) developed at SRI International. 
+ 
+
+IS-IS, originally designed for Open System Interconnection (OSI) routing, uses TLV parameters to carry information in Link State Packets (LSPs). The TLVs make IS-IS extendable
+In IS-IS, the network is partitioned into "routing domains". The
+   boundaries of routing domains are defined by network management, by
+   setting some links to be "exterior links". If a link is marked as
+   "exterior", no IS-IS routing messages are sent on that link.
+OSI IS-IS routing makes use of two-level hierarchical routing. A
+   routing domain is partitioned into areas. Level 1 routers know the
+   topology in their area, including all routers and end systems in
+   their area. However, level 1 routers do not know the identity of
+   routers or destinations outside of their area. Level 1 routers
+   forward all traffic for destinations outside of their area to a level
+   2 router in their area. Similarly, level 2 routers know the level 2
+   topology, and know which addresses are reachable via each level 2
+   router. However, level 2 routers do not need to know the topology
+   within any level 1 area, except to the extent that a level 2 router
+   may also be a level 1 router within a single area. Only level 2
+   routers can exchange data packets or routing information directly
+   with external routers located outside of the routing domains.
+ 

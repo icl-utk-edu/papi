@@ -1,0 +1,16 @@
+
+counting sort:
+  the idea is to compare each pair of keys, counting how many are less
+than each particular one;
+
+  ((compare Kj with Ki) for 1<=j<=i) for 1<i <=N
+
+Shell sort:
+
+ An in-place sort algorithm which repeatedly reorders different, small subsets
+ of the input until the entire array is ordered. On each pass it sorts i sets
+ of n/i items, where n is the total number of items to sort. Each set is every
+ ith item, e.g. set 1 is item 1, 1+i, 1+2i, etc., set 2 is item 2, 2+i, etc. 
+Typically each set is sorted with an insertion sort. On each succeeding pass,
+ the increment, i, is reduced until it is 1 for the last pass. 
+

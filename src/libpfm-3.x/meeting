@@ -1,0 +1,46 @@
+From mucci@cs.utk.edu Fri Nov  1 10:29:47 2002
+Date: 31 Oct 2002 04:58:46 -0800
+From: Philip J. Mucci <mucci@cs.utk.edu>
+To: Dan Terpstra <terpstra@cs.utk.edu>
+Cc: Zhou Min <min@cs.utk.edu>, Shirley Moore <shirley@cs.utk.edu>,
+     Kevin London <london@cs.utk.edu>, Haihang You <you@cs.utk.edu>
+Subject: Re: Meeting tomorrow material
+
+SC2002 Dynaprof SW TODO
+
+1.Java GUI modifications 
+1.Make it handle command line input into the console window. Use 'input'
+executable to test.
+2.Make the output to the console window asynchronous. Use 'fspx'
+executable to test.
+2.Run fspx under dynaprof on an Intel PIII
+1.On the top 4 functions (found in SC2002 Slides) with metrics
+PAPI_TOT_CYC and PAPI_TOT_INS and compute IPC.
+2.Integrate results into SC2002 Supplement Slides
+3.Get top 4 functions by running ex19 from PetSC under gprof on a Power
+3 with 4 processors.
+4.Run ex19 from PetSC under dynaprof on a Power 3 with 4 processors.
+1.On the top 4 functions with metrics PAPI_TOT_CYC and PAPI_TOT_INS and
+compute IPC. 
+2.Integrate results into SC2002 Supplement Slides
+5.Document trapper and check in documentation into source tree.
+6.Test that mpiload command does what it says it should. 
+7.Test and document in Dynaprof User's Guide mpich script command
+8.Test and document in Dynaprof User's Guide mpi shell script command
+9.In dynaprof, make delete point work
+1.Just delete the instrumentation. Any data will be preserved.
+10.Make Instr/Run/Instr add point work
+1.This means we need a probe-reallocate/probe-reinit
+11.Test perfometer for serial case
+12. Make mpiperfometerprobe work with MPI executables
+13. Make Vprof probe
+14. Adapt perfometer probe for discovery of threads using trapper
+15. Adapt vprof probe for discovery of threads using trapper
+
+On Thu, 2002-10-31 at 11:10, Dan Terpstra wrote:
+> Let's get together at 2 tomorrow for a PAPI meeting in 233.
+> We'll call Phil and do a status check for SC.
+> (Can we get some beer and celebrate PAPI 2.3?)
+> - d
+
+

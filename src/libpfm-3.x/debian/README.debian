@@ -1,0 +1,9 @@
+The Debian Package libpfm
+-------------------------
+
+This package contains a library to develop performance monitoring 
+applications using the IA-64 Performance Monitor Unit (PMU). 
+This version supports both the Itanium and Itanium 2 processors.
+It is meant to be used with a kernel perfmon-2.x subsystem.
+
+ <eranian@hpl.hp.com>, Tue, 12 Nov 2002 10:07:14 -0800

@@ -1,0 +1,264 @@
+.No error is returned on Linux/ia64.TH LIBPFM 3  "July , 2003" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_dispatch_events \- setup PMC arguments
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_dispatch_events(pfmlib_input_param_t *"p ", void *" mod_in ", pfmlib_output_param_t *" q, "void *" mod_out ");"
+.sp
+.SH DESCRIPTION
+This function is the central piece of the library. It is important to understand
+that the library does not effectively program the PMU. On Linux/ia64, that
+means that, the function  does not make any kernel \fBperfmonctl()\fR call. The PMU is never actually accessed by the 
+library. Instead, the library helps applications prepare the arguments to pass to
+the kernel, in particular, it sets up the values to program into the PMC registers.
+The interface splits the input arguments from the output from the call, making
+the distinction very explicit. The input argument are divided into two categories: 
+the generic arguments in \fBp_in\fR and the optional PMU model specific arguments in 
+\fBmod_in\fR. The same applies for the output arguments: \fBp_out\fR contains the generic
+output arguments and \fBmod_out\fR the optional PMU model specific arguments. The 
+application describes what it wants to measure in the \fBp_in\fR and if it uses some model
+specific features, such as opcode matching on Itanium2 it must pass a pointer to the 
+relevant model-specific input parameters. In the case of Itanium2 that would be a pointer
+to a structure of type \fBpfmlib_ita2_input_param_t\fR. The generic output parameters
+contains the register number and values for the PMC registers needed to make the measurement.
+.sp
+The typical sequence of calls first starts by initializing the library, then
+each event to be monitored is searched using variations of the \fBpfm_find_event\fR
+function. The results are stored into the \fBpfmlib_input_param_t\fR structure. Other
+adjustments are made in this structure and optionally a model-specific structure is also
+initialized. Then \fBpfm_dispatch_events\fR is called. Upon successful return from this 
+function, the register numbers and values for the PMC registers are contained in the
+\fBpfp_pmcs\fR table of the \fBpfmlib_output_param_t\fR structure passed as argument to
+the call. The number of PMC registers in that table is contained in the 
+\fBpfp_pmc_count\fR field of that structure. On Linux/ia64, the table does not have the 
+format required to program the PMC via the \fBperfmonctl\fR system call, therefore the 
+relevant values must first be copied into the right data structure.
+.sp
+The current implementation of the \fBpfm_dispatch_events\fR will completely overwrite
+the \fBpfmlib_output_param\fR structure. In other words, results do not accumulate
+into the \fBpfp_pmcs\fR table across multiple calls. This will be implemented in 
+a future version.
+
+.sp
+The \fBpfmlib_input_param_t\fR structure is defined as follows:
+.sp
+.nf
+typedef struct 
+	int          event;
+	unsigned int plm;
+} pfmlib_event_t;
+
+typedef struct {
+	unsigned int    pfp_event_count;
+	unsigned int    pfp_dfl_plm;
+	unsigned int    pfp_flags;
+	pfmlib_event_t  pfp_events[PFMLIB_MAX_PMCS];
+} pfmlib_input_param_t;
+.fi
+.sp
+The structure mostly contains one table, called \fBpfp_events\fR which describes
+the events to be measured. The number of submitted events is indicated by 
+\fBpfp_event_count\fR, i.e., the number of valid entries in \fBpfp_events\fR. 
+
+Each event is described by an entry of type \fBpfmlib_event_t\fR, which contains its opaque descriptor in
+\fBevent\fR obtained with \fBpfm_find_event()\fR or derivatives, and a privilege level mask in \fBplm\fR. 
+The \fBplm\fR field is a bitmask where each bit indicates a set of privilege levels at which to monitor. 
+The IA-64 architecture support four different levels, 0 being the most privileged level used by the 
+kernel and 3 being the least privileged level used by all applications. It is possible to monitor 
+at more than one level at a time. The library defines a set of constant to designate privilege levels:
+.TP
+.B PFM_PLM0
+monitor at the privilege level 0, i.e., kernel level on Linux/ia64
+.TP 
+.B PFM_PLM1
+monitor at privilege level 1
+.TP 
+.B PFM_PLM2
+monitor at privilege level 2
+.TP 
+.B PFM_PLM3
+monitor at the privilege level 3, i.e., user level on Linux/ia64
+.sp
+.LP
+To monitor at both level and kernel levels for the first event, the application
+can simply use:
+.sp
+.nf
+event[0].plm = PFM_PLM0|PFM_PLM3;
+.fi
+.sp
+.sp
+Events with a \fBplm\fR value of 0 will use the default privilege level mask
+as indicated by \fBpfp_dfl_plm\fR which must be set to any combinations of
+values described above. It is illegal to have a value of 0 for this field.
+.sp
+The \fBpfp_flags\fR field contains a set of flags that affect the whole
+set of events to be monitored. The currently defined flags are:
+.TP
+.B PFMLIB_PFP_SYSTEMWIDE
+indicates that the monitors are to be used in a system-wide monitoring session.
+This could influence the way the library sets up some register values.
+.sp
+.LP
+Refer to the PMU specific manual for a description of the model-specific 
+input parameters to be passed in \fBmod_in\fR.
+
+The generic output parameters are contained in the fBpfmlib_output_param_t\fR
+structure which is defined as:
+.sp
+.nf
+typedef struct {
+    unsigned int  reg_num;
+    unsigned int  reg_reserved;
+    unsigned long reg_value;
+} pfmlib_pmc_t;
+
+typedef struct {
+    unsigned int pfp_pmc_count;
+    pfmlib_pmc_t pfp_pmcs[PFMLIB_MAX_PMCS];
+} pfmlib_output_param_t;
+.fi
+.sp
+The number of valid entries  in the \fBpfp_pmcs\fR table is indicated by \fBpfp_pmc_count\fR.
+Each entry in the table is of type \fBpfmlib_pmc_t\fR and contains the PMC register index
+in \fBreg_num\fR and its value in \fBreg_value\fR. Those two fields must be copied to the
+appropriate OS dependent data structure and passed to the kernel.
+
+Refer to the PMU specific manual for a description of the model-specific 
+output parameters to be returned in \fBmod_out\fR.
+
+.SH EXAMPLE
+On Linux/ia64, a typical sequence of operations to monitor 
+\fBCPU_CYCLES\fR for a per-process session at the user level privilege level is as follows:
+.nf
+	#include <perfmon/pfmlib.h>
+	...
+	pfmlib_input_param_t inp;
+	pfmlib_output_param_t outp;
+	pfarg_context_t ctx[1];
+	pfarg_reg_t pd[1];
+	pfarg_reg_t pc[1];
+	pfarg_load_t load_arg;
+	int fd;
+	int ret;
+
+	if (pfm_initialize() != PFMLIB_SUCCESS) {
+		fprintf(stderr, "can't initialize library\\n");
+		exit(1);
+	}
+	memset(&inp,0, sizeof(inp));
+	memset(&outp,0, sizeof(outp));
+	memset(pd, 0, sizeof(pd));
+	memset(pc, 0, sizeof(pc));
+	memset(&load_arg, 0, sizeof(load_arg));
+
+	ret = pfm_find_event("cpu_cycles", &inp.pfp_events[0].event);
+	if (ret != PFMLIB_SUCCESS) {
+		fprintf(stderr, "cannot find cpu_cycles event\\n");
+		exit(1);
+	}
+	inp.pfp_dfl_plm     = PFM_PLM3; 
+	inp.pfp_event_count = 1;
+
+	ret = pfm_dispatch_events(&inp, NULL, &outp, NULL);
+	if (ret != PFMLIB_SUCCESS) {
+		fprintf(stderr, "cannot dispatch: %s\\n", pfm_strerror(ret));
+		exit(1);
+	}
+	/* propagate results of library to system call argument */
+	pc[0].reg_num   = outp.pfp_pmcs[0].reg_num;
+	pc[0].reg_value = outp.pfp_pmcs[0].reg_value;
+
+	/* match the PMD register with the PMC controlling it (for counters) */
+	pd[0].reg_num = pc[0].reg_num;
+	...
+	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+		...
+	}
+	fd = ctx.ctx_fd;
+
+	if (perfmonctl(fd, PFM_WRITE_PMCS, pc, evt.pfp_pmc_count) == -1) {
+		...
+	}
+	if (perfmonctl(fd, PFM_WRITE_PMDS, pd, evt.pfp_event_count) == -1) {
+		...
+	}
+
+	load_arg.load_pid = getpid();
+	if (perfmonctl(fd, PFM_LOAD_CONTEXT, &load_arg, 1) == -1) {
+		...
+	}
+
+	pfm_self_start(fd);
+	/* code to monitor */
+	pfm_self_stop(fd);
+
+	if (perfmonctl(fd, PFM_READ_PMDS, pd, evt.pfp_event_count) == -1) {
+		...
+	}
+	printf("results: %lu\n", pd[0].reg_value);
+	...
+	close(fd);
+	...
+.fi
+
+.SH RETURN
+The function returns whether or not the call was successful.
+A return value of \fBPFMLIB_SUCCESS\fR indicates sucess, 
+otherwise the value is the error code.
+.SH ERRORS
+.B PFMLIB_ERR_NOINIT
+The library has not been initialized properly.
+.TP
+.B PFMLIB_ERR_INVAL
+Some arguments were invalid. For instance the value of *count is zero.
+This can also be due to he content of the \fBpfmlib_param_t\fR structure.
+.TP
+.B PFMLIB_ERR_NOTFOUND
+No matching event was found.
+.TP
+.B PFMLIB_ERR_TOOMANY
+The number of events to monitor exceed the number of implemented counters.
+.TP
+.B PFMLIB_ERR_NOASSIGN
+The events cannot be dispatched to the PMC because events have conflicting constraints.
+.TP
+.B PFMLIB_ERR_MAGIC
+The model specific extension does not have the right magic number.
+.TP
+.B PFMLIB_ERR_FEATCOMB
+The set of events and features cannot be combined.
+.TP
+.B PFMLIB_ERR_EVTMANY
+An event has been supplied more than once and is causing resource (PMC) conflicts.
+.TP
+.B PFMLIB_ERR_IRRINVAL
+Invalid code range restriction (Itanium, Itanium 2).
+.TP
+.B PFMLIB_ERR_IRRALIGN
+Code range has invalid alignment (Itanium, Itanium 2).
+.TP
+.B PFMLIB_ERR_IRRTOOMANY
+Cannot satisfy all the code ranges (Itanium, Itanium 2).
+.TP
+.B PFMLIB_ERR_DRRTOOMANY
+Cannot satisfy all the data ranges (Itanium, Itanium 2).
+.TP
+.B PFMLIB_ERR_DRRINVAL
+Invalid data range restriction (Itanium, Itanium 2).
+.TP
+.B PFMLIB_ERR_EVTSET
+Some events belong to incompatible sets (Itanium 2).
+.TP
+.B PFMLIB_ERR_EVTINCOMP
+Some events cannot be measured at the same time (Itanium 2).
+.TP
+.B PFMLIB_ERR_IRRTOOBIG
+Code range is too big (Itanium 2).
+.SH SEE ALSO
+libpfm_itanium(3), libpfm_itanium2(3)
+.SH AUTHOR
+Stephane Eranian <eranian@hpl.hp.com>
+.PP

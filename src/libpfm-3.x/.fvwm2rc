@@ -1,0 +1,731 @@
+##############################
+# Default .fvwm2rc file
+# 1/4/01
+##############################
+
+# Paths 
+#	Paths are given as a list of directories, seperated by colons 
+#
+# IconPath 	A list of directories where bitmap icons can be found
+#
+# PixmapPath	A list of directories where pixmap (color) icons can be found
+#
+# ModulePath	A list of directories where fvwm2 modules are stored
+#			(you probably will not need to change this)
+#
+IconPath	/usr/local/X11/include/X11/bitmaps/:/usr/openwin/include/X11/bitmaps/
+PixmapPath	/usr/local/X11/include/X11/pixmaps/:/usr/openwin/include/X11/pixmaps/
+ModulePath	/usr/local/X11R6.4/lib/X11/fvwm/2.2.2/:/usr/local/sfw/libexec/fvwm/2.2.2/
+
+# set XORvalue to something visible.  This sets the coloration of the 
+# 'rubber-band' window-borders when moving and resizing windows.
+XORvalue 208
+
+# Make our windows snap-up against other windows and make icons snap
+# up against other icons
+#SnapAttraction 20 SameType
+
+# Font configuration
+#
+# WindowFont 		Sets the font to be used in window title-bars
+#
+# IconFont		Sets the font that will be used for icon labels.
+#
+WindowFont	-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*
+IconFont	-adobe-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
+
+# HighlightColor
+#
+# This sets the textcolor and background color for the active window
+# Format: HilightColor textcolor backgroundcolor
+HilightColor white slategray
+
+
+# BorderStyle
+# 
+# This sets how the border of windows will be displayed.
+# Format:  BorderStyle [state] [style] [ -- [!flag] ... ]
+# State is either Active or Inactive 
+# The commands below set the borders to solid colors 
+#
+BorderStyle Active Solid slategray -- NoInset HiddenHandles
+BorderStyle Inactive Solid #444444 -- NoInset HiddenHandles
+
+# TitleStyle 
+#
+# This option sets the style of the window title-bar 
+# We set the Active style to a Green vertical gradient,
+# the Active (pushed down) style to the reverse of the green gradient
+# and the Inactive style to a blue vertical gradient
+#
+# Format: TitleStyle [state] [style] [ -- [!flag] ... ]
+#
+TitleStyle RightJustified height 18
+TitleStyle ActiveUp Solid slategray
+TitleStyle ActiveDown Solid slategray
+TitleStyle Inactive Solid #444444
+
+# Button Styles
+#
+# Now we are going to set up the buttons
+#
+# The two commands we use are:
+#
+# ButtonStyle button [ state ] [ style ] [ -- [!]flag ... ]
+#
+# AddButtonStyle button [ state ] [ style ] [-- [!]flag ...]
+#
+# the 'button' is the number of the button you are defining, it can be
+# a number from 0-9 or the word 'all' which means apply the style to all
+# buttons.  
+# Even button numbers are on the right, while odd button numbers are on the
+# left. The lower numbers are on the outside:  13579	title	86420
+#		
+# First, we set all buttons to start with the same style we are using for
+# the title.  Then we define the pixmaps we use as our buttons using 
+# AddButtonStyle.
+ButtonStyle All -- UseTitleStyle
+AddButtonStyle 1  5 40x40@1 60x40@1 60x60@0 40x60@0 40x40@1
+AddButtonStyle 6  4 50x65@1 35x35@1 65x35@1 50x65@0
+AddButtonStyle 4  4 50x35@1 65x65@0 35x65@0 50x35@1
+AddButtonStyle 2 17 20x20@1 30x20@1 50x40@1 70x20@1 80x20@1 80x30@0 60x50@0 80x70@1 80x80@0 70x80@0 50x60@0 30x80@0 20x80@0 20x70@0 40x50@1 20x30@0 20x20@1
+
+# MenuStyle
+#
+# MenuStyle is perhaps the most complicated configuration option. For this
+# reason we suggest you read the fvwm2 man page.  However, using the 
+# MenuStyle definition below, we will attempt to give you an idea of how to 
+# use it.
+#
+# Format: MenuStyle stylename options 
+#
+# The StyleName is a name to indicate which menustyle you are defining.  All
+# of the menus get the '*' by default. (you can change the menu style a menu
+# uses with the 'changemenustyle' option)
+#
+# Here we set the default menu-style:
+#
+# Background sets the default menu background color
+#
+# ActiveFore sets the foreground color of the currently selected menu-item
+#
+# ForeGround sets the foreground color of non-selected menu-items
+# 
+# Popupoffset sets the offset of child-menus.  
+#   Format: Popupoffset pixels percent
+#	We set the percent to 100, making the child-menus pop-up to the right
+#	of the existing menus.
+#
+# MenuFace sets the background of the menu using the 'fancy' options.
+# 	Menuface is another complicated one so again, check the man-page,
+#	but I'll explain the one here:
+#	This menuface command sets the background of the menus to a 
+#	   Horizontal gradient using 64 colors, with one pair of colors,
+#	   from the color #758591 to the color #102030.
+#	
+# Animation turns menu animations on.  If you pop-up a submenu on the right
+# 	edge of the screen, the menu will move over so it is fully visible.
+#
+MenuStyle * Background slategray, ActiveFore black, ForeGround white
+MenuStyle * popupoffset 0 100
+MenuStyle * fvwm
+
+# Set up some desktop options
+# 
+# Desktop [Horizontal]x[vertical]  Defines the virtual desktop size, 
+#	1x1 = one physical screen size (no virtual desktop
+DesktopSize	2x2
+
+# EdgeResistance scrolling moving
+#   Sets how hard it is to change the desktop viewport
+#   scrolling is in milliseconds 
+#   moving is in pixels (how far a window's edge must move to move off-screen
+#
+# These values don't much matter in this configuration as our viewport
+# is only as big as our screen anyway.
+EdgeResistance	575 575
+
+# EdgeScroll horizontal vertical
+#   Sets the percentage of a page to scroll when the cursor is on the edge
+#   of the screen.   Again, not useful in this configuration since we only
+#   have a viewport as big as our screen.
+EdgeScroll	100 100
+
+# OpaqueMoveSize percentage
+#   This option tells fvwm the maximum size window that it should move
+#   with contents intact (ie, not 'rubber-banding')  You should keep this
+#   low if you don't have good video hardware.
+OpaqueMoveSize 50
+
+
+
+# Style related options
+#
+# Styles are used to set-up how windows are treated by the window manager.
+# They allow you to change the way windows are placed, decorated and treated
+# in general.  You can give different options to different windows, so that
+# your xterms may be decorated differently than, say, your netscape window.
+# 
+# The format of the style commands are:
+# 	Style windowname options
+#
+# The windowname is the window's name class or resource string that you want
+# this option to affect.  You can use wildcards (such as * or ?), thus 
+# "*" specifies options for all windows.
+# The options that you can specify with the Style command are many and varied
+# and really warrant a look at the fvwm2 man page.
+#
+#  We set up some global defaults here for all windows.
+Style "*" ForeColor white
+Style "*" BackColor #444444
+Style "*" RandomPlacement
+Style "*" StickyIcon
+Style "*" IconBox	5 -50 -134 -5
+Style "*" BorderWidth 5, HandleWidth 5
+Style "*" NoPPosition
+Style "*" NakedTransient
+
+# Some Fvwm-Related Styles
+Style "Fvwm*"		NoTitle, NoHandles, Sticky, WindowListSkip
+Style "FvwmPager"	BorderWidth 0
+
+# My own settings
+Style "console" 	BorderWidth 0, NoTitle, WindowListSkip, Sticky
+style "Netscape" 	BorderWidth 3, Handlewidth 3
+Style "*clock"		BorderWidth 0,NoTitle,NoHandles,WindowListSkip,Sticky
+Style "*Dialog_popup"	WindowListSkip
+Style "*Download"	WindowListSkip,NoTitle
+Style "xbiff"		BorderWidth 0,NoTitle, Sticky, WindowListSkip, NoHandles
+
+# Resources for Modules
+# 
+# Resources are usually of the form
+# *ModulenameOption value
+# 
+# Resources are used to configure fvwm modules. See the man page for each
+# module to find out what resources you can set
+#
+# FvwmPager
+
+*FvwmPagerBack black
+*FvwmPagerFore white
+*FvwmPagerFont -adobe-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
+*FvwmPagerHilight slategrey
+*FvwmPagerDeskTopScale 32 
+*FvwmPagerGeometry 80x100+575+1 
+*FvwmPagerLabel 0 pager
+*FvwmPagerSmallFont 5x8
+*FvwmPagerColumns 1
+*FvwmPagerBalloons Pager
+*FvwmPagerBalloonfore white
+
+
+# Function definitions
+# 
+# Functions let you define more complex events than fvwm provides
+#  in it's default configuration.  It allows you to do multiple things
+#  when something happens... for example.  The following function
+#  can be used on the titlebar of a window, and will allow you to move,
+#  raise or windowshade a window when you move, click, or doubleclick 
+#  the titlebar, respectively. 
+
+AddToFunc Iconify-and-Raise     "I" Iconify
++                               "I" Raise
+
+AddToFunc InitFunction          "I" Module FvwmPager 0 0
++                               "I" Exec   xsetroot -solid slategrey
+
+
+AddToFunc MailFunction     "I" Next [$0] Iconify -1
++                          "I" Next [$0] focus
++                          "I" None [$0] Exec $0 $1
+
+AddToFunc Maximize-Function     "M" Maximize     0 100
++                               "C" Maximize     0 80
++                               "D" Maximize     100 100
+
+AddToFunc Move-or-Raise         "I" Raise
++                               "M" Move
++                               "D" Lower
+
+AddToFunc Move-or-Raise2        "M" Raise
++                               "M" Move
++                               "D" Lower
+
+AddToFunc Move-or-Iconify       "I" Raise
++                               "M" Move
++                               "D" Iconify
+
+AddToFunc Resize-or-Raise       "I" Raise
++                               "M" Resize
++                               "D" Lower
+
+AddToFunc Resize-or-Raise2      "M" Raise
++                               "M" Resize
++                               "D" Lower
+
+AddToFunc RestartFunction       "I" Module FvwmPager 0 0
+
+
+# Popup menus
+# 
+# Now we start defining menus.  The Window-popups are used for 
+# window-operations.
+# 
+# Application and root-menu definitions come later
+
+# Main-Menus
+
+# Bound to Mouse Button 1
+AddToMenu System-Ops    "System Ops"        Title
++  ""               Nop
++  "Window Ops"     Popup Window-Ops
++  ""               Nop
++  "Terminal Windows" 	Popup Terminal-Windows
++  ""				Nop
++  "Fvwm-Restart"   Popup Fvwm-Restart
++  ""               Nop
++  "Logout"         Popup Logout
+
+# Bound to Mouse Button 2
+AddToMenu Applications  "Applications"      Title
++  ""               Nop
++  "Netscape"       Exec netscape -install \
+                                  -geometry +0+0 \
+                                  -no-about-splash & 
++  ""               Nop
++  "Work Apps"      Popup WorkApps
++  ""               Nop
++  "Modules"        Popup Modules
++  ""               Nop
++  "Screenlock"     Popup Screenlock
+
+
+# Sub-Menus
+
+## Referenced in System-Ops
+AddToMenu Window-Ops    "Window Ops"            Title
++  ""                           Nop
++  "Identify"					Module FvwmIdent
++  "Scroll Bar"					Module FvwmScroll 2 2
++  ""							Nop
++  "Refresh Screen"             Refresh
++  ""                           Nop
++  "Move"                       Function Move-or-Raise
++  "Resize"                     Function Resize-or-Raise
++  "Raise"                      Raise
++  "Lower"                      Lower
++  ""                           Nop
++  "(De)Iconify"                Iconify
++  "(Un)Maximize"               Function Maximize-Function
++  "(Un)Stick"                  Stick
++  ""                           Nop
++  "Destroy"                    Destroy
++  "Close"                      Close
+
+AddToMenu Terminal-Windows	"Open a Terminal Window"	Title
++  ""				Nop
++  "Xterms Local"	Popup Xterms-Local
++  ""				Nop
++  "New Desktops"	Popup NewDesktops
++  ""				Nop
++  "Secure Shell (SSH)" 	Popup SSH
+
+AddToMenu Fvwm-Restart  "Restart Fvwm?"     Title
++  ""               Nop
++  "No, Don't Restart"      Nop
++  ""               Nop
++  ""               Nop
++  "&Restart Fvwm2"     Restart fvwm2
+
+AddToMenu Logout    "LOGOUT?"       Title
++  ""               Nop
++  "No!"            Nop
++  ""               Nop
++  ""               Nop
++  "Yes!"           Quit
+
+
+#### Referenced in Applications
+
+##
+AddToMenu WorkApps  "Work Apps"     Title
++  ""               Nop
++  "Debugger (xxgdb)	Exec xxgdb &
++  ""               Nop
++  "Emacs-Xemacs"       Popup   Emacs-Xemacs
++  ""               Nop
++  "Calculator (xcalc)"	Exec xcalc &
++  ""               Nop
++  "Man Pages (xman)"  	Exec xman -rv -fg black -bg lightyellow \
+                                     -bd darkgreen &
++  ""               Nop
++  "Image Editor (xv)" 	Exec xv &
+
+##
+AddToMenu Modules   "Modules"       Title
++  ""               Nop
++  "Identify"           Module  FvwmIdent
++  "&Scrollbars"        Module  FvwmScroll
++  "Auto&Raise"         Module  FvwmAuto 0
++  "&WinList"           Module  FvwmWinList
+
+##
+AddToMenu Screenlock    "Lock Screen"       Title
++  "Qix"            Exec xlock -delay 1000 -nice 0 -mode qix &
++  "Swarm"          Exec xlock -delay 1000 -mode swarm &
++  "Pyro"           Exec xlock -delay 900 -nice 0 -mode pyro &
++  "Image"          Exec xlock -delay 20000 -mode image &
++  "Flame"          Exec xlock -nice 0 -mode flame &
++  "Rotor"          Exec xlock -delay 10000 -mode rotor &
+
+
+#### Referenced in Terminal-Windows
+
+##
+AddToMenu Xterms-Local  "Xterms Local"      Title
++  ""               	Nop
++  "Large-Left"         Local-Xterm-Large-Left
++  ""               	Nop
++  "Medium-Right-Top"  	Local-Xterm-Medium-Right-Top
++  ""               	Nop
++  "Medium-Right-Bottom"    Local-Xterm-Medium-Right-Bottom
+
+## 
+AddToMenu NewDesktops	"New Desktops"		Title
++  ""               Nop
++  "New Local Desktop"      New-Local-Desktop
+
+##
+AddToMenu SSH       "Secure Shell (SSH)"           Title
++  ""               Nop
++  "Hydra"          Popup   Hydra
++  ""               Nop
++  "Cetus"          Popup   Cetus
+
+
+#### Referenced in WorkApps
+
+##
+AddToMenu Emacs-Xemacs	"Emacs or Xemacs"
++	""				Nop
++  	"Emacs Editor"	Exec emacs &
++  	""				Nop
++	"Xemacs Editor"	Exec xemacs &
+
+
+#### Referenced in SSH
+
+##
+AddToMenu Hydra     "Hydra:"        Title
++  ""               Nop
++  "Hydra5"         Popup   Hydra5
++  ""               Nop
++  "Hydra4"         Popup   Hydra4
++  ""               Nop
++  "Hydra3"         Popup   Hydra3
++  ""               Nop
++  "Hydra2"         Popup   Hydra2
++  ""               Nop
++  "Hydra1"         Popup   Hydra1
+
+##
+AddToMenu Cetus     "Cetus:"        Title
++  ""               Nop
++  "Cetus6"         Popup   Cetus6
++  ""               Nop
++  "Cetus5"         Popup   Cetus5
++  ""               Nop
++  "Cetus4"         Popup   Cetus4
++  ""               Nop
++  "Cetus3"         Popup   Cetus3
++  ""               Nop
++  "Cetus2"         Popup   Cetus2
++  ""               Nop
++  "Cetus1"         Popup   Cetus1
+
+
+#### Referenced in Hydra
+
+##
+AddToMenu Hydra5    "Hydra5:"       Title
++  ""               Nop
++  "hydra5a"            SSH-Xterm-Large-Left hydra5a
++  ""               Nop
++  "hydra5b"            SSH-Xterm-Large-Left hydra5b
++  ""               Nop
++  "hydra5c"            SSH-Xterm-Large-Left hydra5c
++  ""               Nop
++  "hydra5d"            SSH-Xterm-Large-Left hydra5d
++  ""               Nop
++  "hydra5e"            SSH-Xterm-Large-Left hydra5e
++  ""               Nop
++  "hydra5f"            SSH-Xterm-Large-Left hydra5f
+
+##
+AddToMenu Hydra4    "Hydra4:"       Title
++  ""               Nop
++  "hydra4a"            SSH-Xterm-Large-Left hydra4a
++  ""               Nop
++  "hydra4b"            SSH-Xterm-Large-Left hydra4b
++  ""               Nop
++  "hydra4c"            SSH-Xterm-Large-Left hydra4c
++  ""               Nop
++  "hydra4d"            SSH-Xterm-Large-Left hydra4d
++  ""               Nop
++  "hydra4e"            SSH-Xterm-Large-Left hydra4e
++  ""               Nop
++  "hydra4f"            SSH-Xterm-Large-Left hydra4f
+
+##
+AddToMenu Hydra3    "Hydra3:"       Title
++  ""               Nop
++  "hydra3a"            SSH-Xterm-Large-Left hydra3a
++  ""               Nop
++  "hydra3b"            SSH-Xterm-Large-Left hydra3b
++  ""               Nop
++  "hydra3c"            SSH-Xterm-Large-Left hydra3c
++  ""               Nop
++  "hydra3d"            SSH-Xterm-Large-Left hydra3d
++  ""               Nop
++  "hydra3e"            SSH-Xterm-Large-Left hydra3e
++  ""                           Nop
++  "hydra3f"                    SSH-Xterm-Large-Left hydra3f
+
+##
+AddToMenu Hydra2    "Hydra2:"       Title
++  ""               Nop
++  "hydra2a"            SSH-Xterm-Large-Left hydra2a
++  ""               Nop
++  "hydra2b"            SSH-Xterm-Large-Left hydra2b
++  ""               Nop
++  "hydra2c"            SSH-Xterm-Large-Left hydra2c
++  ""               Nop
++  "hydra2d"            SSH-Xterm-Large-Left hydra2d
++  ""               Nop
++  "hydra2e"            SSH-Xterm-Large-Left hydra2e
++  ""               Nop
++  "hydra2f"            SSH-Xterm-Large-Left hydra2f
+
+##
+AddToMenu Hydra1    "Hydra1:"       Title
++  ""               Nop
++  "hydra1a"            SSH-Xterm-Large-Left hydra1a
++  ""               Nop
++  "hydra1b"            SSH-Xterm-Large-Left hydra1b
++  ""               Nop
++  "hydra1c"            SSH-Xterm-Large-Left hydra1c
++  ""               Nop
++  "hydra1d"            SSH-Xterm-Large-Left hydra1d
++  ""               Nop
++  "hydra1e"            SSH-Xterm-Large-Left hydra1e
++  ""               Nop
++  "hydra1f"            SSH-Xterm-Large-Left hydra1f
+
+
+#### Referenced in Cetus
+
+##
+AddToMenu Cetus6    "Cetus6:"       Title
++  ""               Nop
++  "cetus6a"            SSH-Xterm-Large-Left cetus6a
+
+##
+AddToMenu Cetus5    "Cetus5:"       Title
++  ""               Nop
++  "cetus5a"            SSH-Xterm-Large-Left cetus5a
++  ""               Nop
++  "cetus5b"            SSH-Xterm-Large-Left cetus5b
++  ""               Nop
++  "cetus5c"            SSH-Xterm-Large-Left cetus5c
++  ""               Nop
++  "cetus5d"            SSH-Xterm-Large-Left cetus5d
++  ""               Nop
++  "cetus5e"            SSH-Xterm-Large-Left cetus5e
++  ""               Nop
++  "cetus5f"            SSH-Xterm-Large-Left cetus5f
+
+##
+AddToMenu Cetus4    "Cetus4:"       Title
++  ""               Nop
++  "cetus4a"            SSH-Xterm-Large-Left cetus4a
++  ""               Nop
++  "cetus4b"            SSH-Xterm-Large-Left cetus4b
++  ""               Nop
++  "cetus4c"            SSH-Xterm-Large-Left cetus4c
++  ""               Nop
++  "cetus4d"            SSH-Xterm-Large-Left cetus4d
++  ""               Nop
++  "cetus4e"            SSH-Xterm-Large-Left cetus4e
++  ""               Nop
++  "cetus4f"            SSH-Xterm-Large-Left cetus4f
+
+##
+AddToMenu Cetus3    "Cetus3:"       Title
++  ""               Nop
++  "cetus3a"            SSH-Xterm-Large-Left cetus3a
++  ""               Nop
++  "cetus3b"            SSH-Xterm-Large-Left cetus3b
++  ""               Nop
++  "cetus3c"            SSH-Xterm-Large-Left cetus3c
++  ""               Nop
++  "cetus3d"            SSH-Xterm-Large-Left cetus3d
++  ""               Nop
++  "cetus3e"            SSH-Xterm-Large-Left cetus3e
++  ""               Nop
++  "cetus3f"            SSH-Xterm-Large-Left cetus3f
+
+##
+AddToMenu Cetus2    "Cetus2:"       Title
++  ""               Nop
++  "cetus2a"            SSH-Xterm-Large-Left cetus2a
++  ""               Nop
++  "cetus2b"            SSH-Xterm-Large-Left cetus2b
++  ""               Nop
++  "cetus2c"            SSH-Xterm-Large-Left cetus2c
++  ""               Nop
++  "cetus2d"            SSH-Xterm-Large-Left cetus2d
++  ""               Nop
++  "cetus2e"            SSH-Xterm-Large-Left cetus2e
++  ""               Nop
++  "cetus2f"            SSH-Xterm-Large-Left cetus2f
+
+##
+AddToMenu Cetus1    "Cetus1:"       Title
++  ""               Nop
++  "cetus1a"            SSH-Xterm-Large-Left cetus1a
++  ""               Nop
++  "cetus1b"            SSH-Xterm-Large-Left cetus1b
++  ""               Nop
++  "cetus1c"            SSH-Xterm-Large-Left cetus1c
++  ""               Nop
++  "cetus1d"            SSH-Xterm-Large-Left cetus1d
++  ""               Nop
++  "cetus1e"            SSH-Xterm-Large-Left cetus1e
++  ""               Nop
++  "cetus1f"            SSH-Xterm-Large-Left cetus1f
+
+
+#### My Additional Functions
+
+# Xterm Functions
+# xterm -j (jump scrolling)
+#       -sb(scroll bar) 
+#       -sl(save x scrolled lines)
+#       -vb(visual bell)
+#       -bg(background color) 
+#       -fg(foreground color)
+#       -fn(fontname)
+#	 	-name (window name)
+#       -geometry(window placement-- columnsxrows[actual location])
+
+### Local Xterms
+AddToFunc Local-Xterm-Large-Left
++ "I"   Exec exec xterm -j -sb -sl 200 -vb \
+                  -fn 9x15 \
+                  -name Xterm-Large-Left \
+                  -geometry 70x50+6+115 &
+
+AddToFunc Local-Xterm-Medium-Right-Top
++ "I"   Exec exec xterm -j -sb -sl 200 -vb \
+                  -fn 6x13 \
+                  -name Xterm-Medium-Right-Top \
+                  -geometry 72x27-20+115 &
+
+AddToFunc Local-Xterm-Medium-Right-Bottom
++ "I"   Exec exec xterm -j -sb -sl 200 -vb \
+                  -fn 6x13 \
+                  -name Xterm-Medium-Right-Bottom \
+                  -geometry 72x27-20+514 &
+
+### SSH Xterms
+AddToFunc SSH-Xterm-Large-Left
++ "I"   Exec exec xterm -j -sb -sl 200 -vb \
+                  -fn 9x15 \
+                  -name Xterm-Large-Left \
+                  -geometry 70x50+6+115 -e ssh -X $0 &
+
+AddToFunc SSH-Xterm-Medium-Right-Top
++ "I"   Exec exec xterm -j -sb -sl 200 -vb \
+                  -fn 6x13 \
+                  -name Xterm-Medium-Right-Top \
+                  -geometry 72x27-20+115 -e ssh -X $0 &
+
+AddToFunc SSH-Xterm-Medium-Right-Bottom
++ "I"   Exec exec xterm -j -sb -sl 200 -vb \
+                  -name Xterm-Medium-Right-Bottom \
+                  -geometry 72x27-20+514 -e ssh -X $0 &
+
+### New Desktops
+AddToFunc New-Local-Desktop
++ "I"   Local-Xterm-Large-Left
++ "I"   Local-Xterm-Medium-Right-Top
++ "I"   Local-Xterm-Medium-Right-Bottom
+
+
+# Key bindings
+
+#   
+#  Now we set-up some hot-keys.  
+#  The format for Key-bindings is:
+#
+#  Key keyname context modifier function
+#
+#  context describes where the binding applies, W for an application window,
+#     R for root window, A for anywhere, T for title, etc.
+#  modifier is keyboard meta-keys which should be pressed, N for none,
+#     S for Shift, M for Meta, C for Control, or A for any. You can combine
+#     these, so things like SM (shift-Meta) are valid.
+#
+Key F1 A M Desk 0 0
+Key F2 A M Desk 0 1
+Key F3 A M Desk 0 2
+Key F4 A M Desk 0 3
+
+# Familiar alt-tabbing
+Key Tab A M Next (CurrentDesk !Iconic) Focus
+Key Tab A SM Prev (CurrentDesk !Iconic) Focus
+
+
+# Mouse bindings
+# 
+# Mouse bindings work in very much the same way as key bindings
+#
+# Format:  Mouse Button Context Modifiers function
+# 
+Mouse 0 1       A       Menu System-Ops Nop
+Mouse 0 2       A       Delete
+Mouse 0 4       A       Maximize
+Mouse 0 6       A       Iconify
+Mouse 1 R       A       Menu System-Ops Nop
+Mouse 1 FS      A       Resize-or-Raise
+Mouse 1 T       A       Move-or-Raise
+Mouse 1 I       A       Move-or-Iconify
+Mouse 2 R 		A		Menu Applications Nop
+Mouse 2 I       A       Iconify
+Mouse 2 FST     A       Menu Window-Ops Nop
+Mouse 3 TSIF    A       RaiseLower
+Mouse 3 R       A       WindowList
+
+
+# Modules
+
+FvwmAuto 0
+
+# Window-Identifier
+# Just choose colors and a font
+*FvwmIdentBack slategrey
+*FvwmIdentFore white
+*FvwmIdentFont 9x15
+
+
+# Three handy windows; all emulate terminals.
+# One is big (with normal-size print) on the left.
+# The other two are smaller (with smaller print) and on the right.
+
+Exec xterm -j -sb -vb -geometry 70x50+6+115 -fn 9x15 &
+
+Exec xterm -j -sb -vb -geometry 72x27-20+115 -fn 6x13 &
+
+Exec xterm -j -sb -vb -geometry 72x27-20+514 -fn 6x13 &
+

@@ -1,0 +1,186 @@
+create database bank;
+
+create table Customer_Information 
+(	customer_number		integer,
+    ID_type				char(1), /* 1-drive license 2--passport 3-other*/
+    ID_number			varchar(30),
+	First_Name			varchar(50),
+	middle_name			varchar(50),
+	last_name			varchar(50),
+	birthday			date,
+	gender				char(1), /* 1-male, 2--female */
+    Social_security_number	char(9),
+    Work_phone_number	varchar(20),
+    Home_phone_number	varchar(20),
+    Billing_address		varchar(100),
+	current_address		varchar(100),
+    Permanent_address		varchar(100),
+    Password_question		varchar(100),
+    Password_question_answer		varchar(100),
+	mother's_maiden_name		varchar(30),
+    disclosure_permit		char(1),  /* Y--permit  N--not permit */
+	primary_flag			char(1),  /* 1--primary owner 0--not primary */
+	primary key (customer_number )
+);
+
+create table Checking_Saving_Account
+( 
+    account_number		integer,
+	customer_number		integer,
+	account_type		char(2),
+	available_balance	numeric(13,2),
+	current_balance		numeric(13,2),
+	product_of_balance_and_days		numeric(17,2),
+    open_date			date,
+	close_date			date,
+	recent_access_date	date,
+	total_deposit_amount	numeric(15,2),
+	total_withdrawl_amount	numeric(15,2),
+	open_teller				integer,
+	close_teller			integer,
+	transaction_order_number	integer,
+	max_check_number		integer,
+	primary key (account_number),
+	foreign key (customer_number) references Customer_Information, 
+	foreign key (account_type) references Account_Type_Info, 
+	foreign key (open_teller) references Bank_Teller,
+	foreign key (close_teller) references Bank_Teller,
+);
+
+
+create table Detail_Transaction 
+(
+	account_number			integer,
+	transaction_order		integer,
+	transaction_date		date,
+	transaction_time		time,
+	transaction_code		char(2),
+	teller_number			integer,
+	branch_number			integer,
+	transaction_amount		numeric(13,2),
+	available_balance		numeric(13,2),
+	reference_number		varchar(30),
+	payee					varchar(50),
+	primary key (account_number, transaction_order),
+	foreign key (account_number) references Checking_Saving_Account,
+	foreign key (transaction_code) references Transaction_Code_Info,
+	foreign key ( branch_number ) references Branch_Info,
+	foreign key ( teller_number ) references Bank_Teller
+);
+
+create table Atm_Debit_Card_Info
+(
+	card_number		integer,
+	card_type		char(1), /* 1--ATM card  2--Debit Card */
+	apply_date		date,
+	issue_date		date,
+	lost_date		date,
+	expiration_date	date,
+	password		char(8),
+	verify_number	char(3),
+	primary key ( card_number )
+);
+
+create table Card_Account_Mapping
+( 
+	card_number		integer,
+	account_number	integer,
+	default_flag	char(1),  /* 1-- default account  0--not default */
+	primary key ( card_number, account_number),
+	foreign key (account_number) references Checking_Saving_Account
+);
+
+
+create table Transaction_Code_Info  
+(
+	transcation_code	char(2),
+	code_description	varchar(50),
+	primary key ( transaction_code )
+);
+
+
+create table Branch_Info
+( 
+	branch_number		integer,
+	branch_name			varchar(50),
+	branch_address		varchar(100),
+	branch_type			char(1), /* 1--branch  2--ATM  3--POS 4--Internet*/
+	primary key (branch_number)
+);
+
+
+create table Bank_Teller
+(
+	teller_number		integer,
+	teller_name			varchar(50),
+	branch_number		integer,
+	primary key ( teller_number ),
+	foreign key ( branch_number ) references Branch_Info
+);
+
+	
+create table Interest_Rate_Desc
+(
+	interest_rate_code		char(3),
+	rate_desc				varchar(50),
+	primary key (interest_rate_code)
+);
+
+create table Interest_Rate_Info
+(
+	interest_rate_code		char(3),
+	effective_date			date,
+	rate					numeric(6,3),
+	primary key (Interest_rate_code, effective_date),
+	foreign key (interest_rate_code) references Interest_Rate_Desc
+);
+
+create table Account_Type_Info
+(
+	account_type 		char(2),
+	currency_code		char(3), 
+	interest_rate_code	char(3), 
+	minium_open_amount	numeric(6,2), 
+	max_account_number	integer, 
+	interest_calculate_cycle   integer, /* store number of days */ 
+	primary key (account_type), 
+	foreign key (interest_rate_code) references Interest_Rate_Desc
+ ); 
+
+create table Check_Order_Info 
+(  
+	account_number		integer, 
+	apply_date			date, 
+	number_of_books		integer, 
+	status				char(1), /* 1--disposed  0--pending */
+	primary key ( account_number,apply_date) 
+);
+
+create table Check_Utilization 
+(
+	account_number		integer,
+	start_number		integer,
+	check_usage			char(25), /* 1--used, 0--unused, 2--lost */
+	primary key  (account_number ,start_number)
+	foreign key (account_number) references Checking_Saving_Account
+/* each record in this table will reflect the utilization of one check book,
+   each check book has 25 checks */
+);
+
+create table Address_Change_Notice
+(
+	account_number		integer,
+	effective_date		date,
+	new_billing_address,		varchar(100),
+	new_current_address,		varchar(100),
+	new_permanent_address,		varchar(100),
+	primary key (account_number,effective_date),
+	foreign key (account_number) references Checking_Saving_Account
+);
+
+create table Control_Parameter
+/* This table has only one record */
+(
+	max_customer_number		integer;
+	max_card_number			integer;
+);

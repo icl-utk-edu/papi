@@ -1,0 +1,81 @@
+.TH LIBPFM 3  "July, 2003" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_impl_pmcs, pfm_get_impl_pmds, pfm_get_impl_counters, pfm_get_num_counters, pfm_get_num_pmcs, pfm_get_num_pmds \- return 
+bitmask of implemented PMU registers or number of PMU registers
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_get_impl_pmcs(pfmlib_regmask_t *" impl_pmcs ");"
+.BI "int pfm_get_impl_pmds(pfmlib_regmask_t *" impl_pmds ");"
+.BI "int pfm_get_impl_counters(pfmlib_regmask_t *" impl_counters ");"
+.BI "int pfm_get_num_counters(unsigned int " *num ");"
+.BI "int pfm_get_num_pmcs(unsigned int " *num ");"
+.BI "int pfm_get_num_pmds(unsigned int " *num ");"
+.BI "int pfm_get_num_counters(unsigned int " *num ");"
+.BI "int pfm_get_hw_counter_width(unsigned int " *width ");"
+.BI "unsigned int pfmlib_regmask_weight(pfmlib_regmask_t " *mask");"
+.BI "int pfmlib_regmask_eq(pfmlib_regmask_t " *mask1", pfmlib_regmask_t " *mask2");"
+.sp
+.SH DESCRIPTION
+The \fBpfm_get_impl_*\fR functions can be used to figure out which
+PMU registers are implemented on the host CPU. They all return a 
+bitmask of registers corresponding to the query. The number of 
+implemented PMU registers (PMDS, PMCS) can vary from one 
+implementation to another.  Similarly, the number of PMD register 
+which can be used as counters can vary. 
+.sp
+The \fBpfm_get_impl_pmcs\fR returns in \fBimpl_pmcs\fR the bitmask of implemented PMCS.
+
+The \fBpfm_get_impl_pmds\fR returns in \fBimpl_pmds\fR the bitmask of implemented PMDS.
+
+The \fBpfm_get_impl_counters\fR returns in \fBimpl_counters\fR a bitmask of the PMD/PMC pairs
+which can be used as counters. PMU registers can be used for very
+different purposes: control, counting, buffers. The counters are used
+to accumulate the number of occurrences of events and are typically the
+one used by monitoring tools.
+.sp
+The returned bitmask must be accessed using the following accessor macros and functions:
+.TP
+.B PFMLIB_REGMASK_ISSET(bmask, idx)
+A macro which returns true if register \fBidx\fR is set in the bitmask pointed by \fBbmask\fR.
+.TP
+.B PFMLIB_REGMASK_SET(bmask, idx)
+A macro which sets the bit corresponding to  register \fBidx\fR in the bitmask pointed by \fBbmask\fR.
+.TP
+.B PFMLIB_REGMASK_CLR(bmask, idx)
+A macro which clears the bit corresponding to  register \fBidx\fR in the bitmask pointed by \fBbmask\fR.
+.TP
+.B pfmlib_regmask_weight(mask)
+A function which returns the number of bits set in \fBmask\fR, i.e., the number of register implemented.
+.TP
+.B pfmlib_regmask_eq(mask1, mask2)
+A function which returns \fB1\fR if \fBmask1\fR and \fBmask2\fR are equal, otherwise it returns \fB0\fR.
+.PP
+.sp
+The \fBpfm_get_num_counters\fR function returns in \fBnum\fR the number of counters
+implemented by the host PMU. A counter is a PMD which is used to accumulate the
+number of occurences of an event.
+
+The \fBpfm_get_num_pmcs\fR function returns in \fBnum\fR the number of 
+implemented PMCs by the host PMU.
+
+The \fBpfm_get_num_pmds\fR function returns in \fBnum\fR the number of 
+implemented PMDs by the host PMU.
+
+The \fBpfm_get_hw_counter_width\fR function returns the width in bits of the 
+counters in \fBwidth\fR. PMU implementations can have different number of 
+bits implemented. For instance, Itanium has 32-bit counters, while Itanium 
+2 has 47-bits. Depending on the OS interface, you may not have to care about 
+the width and assume counters are 64 bits. This is the case for the Linux/ia64 
+perfmon subsystem where the interface exports all counters as 64-bit wide.
+.SH RETURN
+The function returns whether or not it was successful.
+A return value of \fBPFMLIB_SUCCESS\fR indicates success, 
+otherwise the value is the error code.
+.SH ERRORS
+.B PFMLIB_ERR_NOINIT
+the library has not been initialized properly.
+.SH AUTHOR
+Stephane Eranian <eranian@hpl.hp.com>
+.PP

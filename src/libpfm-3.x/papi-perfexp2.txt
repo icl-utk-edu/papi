@@ -1,0 +1,65 @@
+3.  
+a.  The target community for PAPI and related tools is Alliance users who are
+developing high performance applications and have need of a portable
+infrastructure for accessing data from hardware performance monitors.  
+Data from hardware performance monitors provides accurate and relevant
+information for application performance tuning.  Having a portable interface
+with a standardized set of events frees users and performance tool
+developers from having to deal with different hardware performance monitoring
+interfaces on different processors and shield these groups from changes
+in the underlying performance monitors and operating system support.
+Specific developers who are using or plan to make use of PAPI include
+developers of GenIDLEST (Danesh TAfti), NAMD, ENZO (Michael Norman),
+and CACTUS (Ed Seidel).  PAPI is also deployed, documented, and supported
+on the NCSA Linux clusters by the NCSA 
+
+b.  The PAPI team is collaborating with the Pablo group (Dan Reed,
+Celso Mendes) on incorporating support for PAPI into SvPablo and Autopilot.
+The PAPI team plans to collaborate with Rice University (Ken Kennedy,
+Rob Fowler) on hardware performance monitoring and profiling support
+for HPCView and for compiler feedback technology and with Valerie Taylor
+at Northwestern on use of PAPI with Prophesy.  When used in system-wide
+mode, PAPI may be useful for grid-level monitoring tools (Jennifer Schopf).
+
+c.  PAPI is deployed, documented, and supported on the NCSA Linux clusters
+by the NCSA Performance Engineering and Computational Methods group (PECM).
+See http://www.ncsa.uiuc.edu/UserInfo/Resources/Software/Tools/PAPI/.  
+PECM serves as a liason between the PAPI development team and application
+teams, transitioning performance tool technology to the user community
+and channeling feedback on problems encountered and on desired new tool 
+features and capabilities from the user community back to the developers.
+
+d.  Two minority summer REU students are currently working on the PAPI
+project.  One is from Jackson State University in Jackson, Mississippi, and
+the other is from Morehouse College in Atlana, Georgia.
+One is writing a PAPI User's Guide and another is working on
+installation and documentation of the TAU performance analysis tool that
+uses PAPI.  The summer students will also be working on documenting
+case studies of the use of PAPI with specific applications such as NAMD.
+We expect to continue these working relationships with Jackson State and
+Morehouse College into the coming academic year with further involvement
+of students on PAPI-related projects.
+
+e.  
+1Q03 Port of PAPI to the Intel Itanium2 (McKinley) processor
+1Q03 Completion of the PAPI User's Guide
+1Q03 Release of PAPI version 3
+
+2Q03 Multiprocess capability for the Dynaprof dynamic instrumentation
+tool for inserting performance instrumentation probes into executable
+images
+2Q03 Comparison of counting vs. sampling modes of using the Itanium
+processor performance monitoring unit, investigation of use of Event
+Address Registers and event qualification
+
+3Q03 Design and implementation of a papirun utility (similar to but
+with a subset of the capability of ssrun on SGI IRIX) (requested
+by Rob Fowler at Rice)
+3Q03 Prototype implementation of new PAPI features (event qualification,
+additional support for sampling and profiling)
+
+4Q03 Release of PAPI 3.5 with additional features
+4Q03 Documentation of use of PAPI and related tools with applications
+
+
+4. Budget estimate: $150,000

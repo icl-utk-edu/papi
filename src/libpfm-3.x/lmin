@@ -1,0 +1,20 @@
+#!/usr/bin/csh 
+# @ environment = COPY_ALL; MP_EUILIB=us; XLSMPOPTS=parthds=1:spins=0:yields=0:schedule=static;MP_CPU_USAGE=unique;AIXTHREAD_SCOPE=S;AIXTHREAD_MNRATIO=8:8;MP_SHARED_MEMORY=yes;MP_PULSE=0;MP_WAIT_MODE=poll;MP_POLLING_INTERVAL=100000
+# @ output = LL_out.$(jobid) 
+# @ error = LL_err.$(jobid) 
+# @ initialdir = /rmount/gpfs/lnett/Maps/New
+# @ job_type = parallel 
+# @ notify_user = lnett@floyd.sdsc.edu
+# @ network.MPI = css0,not_shared,US
+# @ node = 1
+# @ node_usage = not_shared 
+# @ tasks_per_node = 4
+# @ notification = error
+# @ notification = complete 
+# @ wall_clock_limit = 4:30:00 
+# @ class = high
+# @ queue
+setenv OMP_NUM_THREADS 1
+setenv MP_LABELIO yes
+#setenv LIBHPM_EVENT_SET 4
+Maps_mem.exe

@@ -1,0 +1,60 @@
+From min@cs.utk.edu Wed Mar 10 09:48:22 2004
+Newsgroups: 
+Date: Wed, 10 Mar 2004 09:48:22 -0500 (EST)
+From: Zhou Min <min@cs.utk.edu>
+To: Kevin London <london@cs.utk.edu>
+cc: 'Dan Terpstra' <terpstra@cs.utk.edu>, 'PAPI' <papi@cs.utk.edu>
+Subject: RE: [Papi] PAPI 3 beta 2
+Fcc: {imap.cs.utk.edu/ssl/novalidate-cert/user=min}INBOX.Sent
+In-Reply-To: <00f801c406ab$ebbf17c0$1f01000a@laptop24>
+Message-ID: <Pine.LNX.4.58.0403100948100.2014@torc1.cs.utk.edu>
+References: <00f801c406ab$ebbf17c0$1f01000a@laptop24>
+X-Reply-UID: (2 > )(1 1041875647 7281){yomega.cs.utk.edu:993/imap/ssl/novalidate-cert/user="min"}INBOX
+X-Reply-Mbox: {imap.cs.utk.edu/ssl/novalidate-cert/user=min}INBOX
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+
+On Wed, 10 Mar 2004, Kevin London wrote:
+
+> I will take a look at perfmon3, PAPI doesn't even build on Picasso at all.
+> 
+> Kevin
+> 
+> -----Original Message-----
+> From: papi-admin@cs.utk.edu [mailto:papi-admin@cs.utk.edu] On Behalf Of Dan
+> Terpstra
+> Sent: Wednesday, March 10, 2004 8:36 AM
+> To: PAPI
+> Subject: [Papi] PAPI 3 beta 2
+> 
+> Gang -
+> Time for the beta.
+> The regression tests are looking better.
+> We've got:
+> - a failure to build on Itanium/perfmon3;
+> - problems specifying makefiles for Athlon/Pentium III/4 and perfctr 2.4.x;
+> - known failures in shlib and exeinfo for alpha
+> 
+> Haihang assures me that all configurations of POWER are working.
+> Joe assures me that Pentium III/4 is working.
+> 
+> Do we have a MIPS machine to test on?
+> Min/Kevin, can you explain what's up with perfmon3?
+> 
+> Regardless of the answers to the above questions, I think it's time for the
+> beta.
+> Any objections? Let me know before 9:30.
+> - d
+> 
+> _______________________________________________
+> Papi mailing list
+> Papi@cs.utk.edu
+> http://lists.cs.utk.edu/listinfo/papi
+> 
+> _______________________________________________
+> Papi mailing list
+> Papi@cs.utk.edu
+> http://lists.cs.utk.edu/listinfo/papi
+> 

@@ -1,0 +1,481 @@
+Debug output of the Pine program (debug=2 debug_imap=0). Version 4.58 (LNX)
+Wed Mar 10 09:42:00 2004
+
+ 
+"pine" <no args>
+
+Setting home dir from $HOME: "/home/min"
+
+ -- init_pinerc --
+
+Global config "/usr/local/lib/pine.conf" is default
+Personal config "/home/min/.pinerc" is default
+Exceptions config not set on cmdline
+  checking for default "/home/min/.pinercex" in pinerc dir
+  no, there is no exceptions config
+
+  Global config:     /usr/local/lib/pine.conf
+  Personal config:   /home/min/.pinerc
+  Exceptions config: <none>
+  Fixed config:      /usr/local/lib/pine.conf.fixed
+
+reading_pinerc "/usr/local/lib/pine.conf"
+Read 12891 characters:
+reading_pinerc "/home/min/.pinerc"
+Read 16569 characters:
+reading_pinerc "/usr/local/lib/pine.conf.fixed"
+Open failed: No such file or directory
+======= Current_val options set =======
+          user-domain : cs.utk.edu
+          nntp-server : news.utk.edu
+           inbox-path : {imap.cs.utk.edu/ssl/novalidate-cert/user=min}INBOX
+ incoming-archive-fol : backup
+          default-fcc : {imap.cs.utk.edu/ssl/novalidate-cert/user=min}INBOX.Sent
+ default-saved-msg-fo : saved-messages
+     postponed-folder : postponed-msgs
+       signature-file : .signature
+         feature-list : allow-changing-from
+                      : signature-at-bottom
+                      : enable-full-header-cmd
+                      : enable-incoming-folders
+                      : enable-jump-shortcut
+                      : enable-aggregate-command-set
+                      : enable-tab-completion
+                      : enable-unix-pipe-cmd
+                      : expanded-view-of-folders
+                      : include-text-in-reply
+                      : quit-without-confirm
+                      : combined-folder-display
+                      : combined-subdirectory-display
+                      : enable-dot-folders
+                      : enable-lame-list-mode
+                      : vertical-folder-list
+                      : no-signature-at-bottom
+  saved-msg-name-rule : default-folder
+        fcc-name-rule : default-fcc
+             sort-key : arrival
+   addrbook-sort-rule : fullname-with-lists-last
+     folder-sort-rule : alphabetical
+    goto-default-rule : inbox-or-folder-in-recent-collection
+ incoming-startup-rul : first-unseen
+         pruning-rule : ask-ask
+   folder-reopen-rule : ask-no-n
+ threading-display-st : struct
+ threading-index-styl : exp
+ threading-indicator- : >
+ threading-expanded-c : .
+ threading-lastreply- : |
+ composer-wrap-column : 74
+  reply-indent-string : > 
+         reply-leadin : default
+ empty-header-message : undisclosed-recipients
+ use-only-domain-name : no
+        bugs-fullname : Pine Developers
+         bugs-address : pine-bugs@cac.washington.edu
+     suggest-fullname : Pine Developers
+      suggest-address : pine-suggestions@cac.washington.edu
+       local-fullname : Local Support
+        local-address : postmaster
+  kblock-passwd-count : 1
+       viewer-overlap : 2
+        scroll-margin : 0
+ status-message-delay : 0
+  mail-check-interval : 150
+ maildrop-check-minim : 60
+           nntp-range : 0
+       mail-directory : mail
+   folder-collections : "IMAP Folders"{imap.cs.utk.edu/user=min/ssl/novalidate-cert}INBOX.[]
+     news-collections : {news.utk.edu/nntp}#news.[]
+         address-book : .addressbook
+     standard-printer : lpr
+ last-time-prune-ques : 104.3
+    last-version-used : 4.58
+   user-input-timeout : 0
+         debug-memory : 500000
+ disable-these-driver : mbox
+ remote-abook-history : 3
+ remote-abook-validit : 5
+              printer : lpr
+       elm-style-save : no
+      header-in-reply : no
+        feature-level : sapling
+      old-style-reply : no
+       save-by-sender : no
+          color-style : no-color
+ current-indexline-st : flip-colors
+ titlebar-color-style : default
+ normal-foreground-co : black
+ normal-background-co : cyan
+ keylabel-foreground- : black
+ keylabel-background- : cyan
+ selectable-item-fore : black
+ selectable-item-back : cyan
+======= Command_line_val options set =======
+======= User_val options set (/home/min/.pinerc) =======
+           inbox-path : {imap.cs.utk.edu/ssl/novalidate-cert/user=min}INBOX
+ incoming-archive-fol : backup
+          default-fcc : {imap.cs.utk.edu/ssl/novalidate-cert/user=min}INBOX.Sent
+         feature-list : combined-folder-display
+                      : combined-subdirectory-display
+                      : enable-dot-folders
+                      : enable-lame-list-mode
+                      : vertical-folder-list
+                      : no-signature-at-bottom
+   folder-collections : "IMAP Folders"{imap.cs.utk.edu/user=min/ssl/novalidate-cert}INBOX.[]
+ last-time-prune-ques : 104.3
+    last-version-used : 4.58
+======= PostloadUser_val options set (postload) =======
+======= Global_val options set (/usr/local/lib/pine.conf) =======
+          user-domain : cs.utk.edu
+          nntp-server : news.utk.edu
+           inbox-path : inbox
+          default-fcc : sent-mail
+ default-saved-msg-fo : saved-messages
+     postponed-folder : postponed-msgs
+       signature-file : .signature
+         feature-list : signature-at-bottom
+                      : enable-full-header-cmd
+                      : enable-incoming-folders
+                      : enable-jump-shortcut
+                      : enable-aggregate-command-set
+                      : enable-tab-completion
+                      : enable-unix-pipe-cmd
+                      : expanded-view-of-folders
+                      : include-text-in-reply
+                      : quit-without-confirm
+  saved-msg-name-rule : default-folder
+        fcc-name-rule : default-fcc
+             sort-key : arrival
+   addrbook-sort-rule : fullname-with-lists-last
+     folder-sort-rule : alphabetical
+    goto-default-rule : inbox-or-folder-in-recent-collection
+ incoming-startup-rul : first-unseen
+         pruning-rule : ask-ask
+   folder-reopen-rule : ask-no-n
+ threading-display-st : struct
+ threading-index-styl : exp
+ threading-indicator- : >
+ threading-expanded-c : .
+ threading-lastreply- : |
+ composer-wrap-column : 74
+  reply-indent-string : > 
+         reply-leadin : default
+ empty-header-message : undisclosed-recipients
+ use-only-domain-name : no
+        bugs-fullname : Pine Developers
+         bugs-address : pine-bugs@cac.washington.edu
+     suggest-fullname : Pine Developers
+      suggest-address : pine-suggestions@cac.washington.edu
+       local-fullname : Local Support
+        local-address : postmaster
+  kblock-passwd-count : 1
+       viewer-overlap : 2
+        scroll-margin : 0
+ status-message-delay : 0
+  mail-check-interval : 150
+ maildrop-check-minim : 60
+           nntp-range : 0
+       mail-directory : mail
+   folder-collections : mail/[]
+         address-book : .addressbook
+     standard-printer : lpr
+   user-input-timeout : 0
+         debug-memory : 500000
+ disable-these-driver : mbox
+ remote-abook-history : 3
+ remote-abook-validit : 5
+              printer : lpr
+       elm-style-save : no
+      header-in-reply : no
+        feature-level : sapling
+      old-style-reply : no
+       save-by-sender : no
+          color-style : no-color
+ current-indexline-st : flip-colors
+ titlebar-color-style : default
+ normal-foreground-co : black
+ normal-background-co : cyan
+======= Fixed_val options set (NO pine.conf.fixed) =======
+========== Feature settings ==========
+  no-alternate-compose-menu
+  no-compose-cut-from-cursor
+  no-compose-maps-delete-key-to-ctrl-d
+  no-compose-rejects-unqualified-addrs
+  no-compose-send-offers-first-filter
+  no-enable-alternate-editor-cmd
+  no-enable-alternate-editor-implicitly
+  no-enable-search-and-replace
+  no-enable-sigdashes
+  no-quell-dead-letter-on-cancel
+  no-spell-check-before-sending
+  no-quell-user-lookup-in-passwd-file
+  no-enable-reply-indent-string-editing
+  no-include-attachments-in-reply
+  no-include-header-in-reply
+     include-text-in-reply
+  no-reply-always-uses-reply-to
+  no-signature-at-bottom
+  no-strip-from-sigdashes-on-reply
+  no-disable-sender
+  no-enable-8bit-esmtp-negotiation
+  no-enable-background-sending
+  no-enable-delivery-status-notification
+  no-enable-verbose-smtp-posting
+  no-fcc-on-bounce
+  no-fcc-only-without-confirm
+  no-fcc-without-attachments
+  no-mark-fcc-seen
+  no-send-without-confirm
+  no-use-sender-not-x-sender
+  no-warn-if-blank-to-and-cc-and-newsgroups
+  no-warn-if-blank-subject
+     combined-subdirectory-display
+     combined-folder-display
+     enable-dot-folders
+     enable-incoming-folders
+     enable-lame-list-mode
+     expanded-view-of-folders
+  no-quell-empty-directories
+  no-separate-folder-and-directory-entries
+  no-single-column-folder-list
+     vertical-folder-list
+  no-combined-addrbook-display
+  no-expanded-view-of-addressbooks
+  no-expanded-view-of-distribution-lists
+  no-auto-open-next-unread
+  no-thread-index-shows-important-color
+  no-continue-tab-without-confirm
+  no-delete-skips-deleted
+  no-enable-cruise-mode
+  no-enable-cruise-mode-delete
+  no-mark-for-cc
+  no-next-thread-without-confirm
+  no-return-to-inbox-without-confirm
+  no-tab-visits-next-new-message-only
+  no-enable-msg-view-attachments
+  no-enable-msg-view-urls
+  no-enable-msg-view-web-hostnames
+  no-enable-msg-view-addresses
+  no-enable-msg-view-forced-arrows
+  no-prefer-plain-text
+  no-pass-control-characters-as-is
+  no-compose-sets-newsgroup-without-confirm
+  no-enable-8bit-nntp-posting
+  no-enable-multiple-newsrcs
+  no-news-approximates-new-status
+  no-news-deletes-across-groups
+  no-news-offers-catchup-on-close
+  no-news-post-without-validation
+  no-news-read-in-newsrc-order
+  no-predict-nntp-server
+  no-quell-extra-post-prompt
+  no-enable-print-via-y-command
+  no-print-offers-custom-cmd-prompt
+  no-print-includes-from-line
+  no-print-index-enabled
+  no-print-formfeed-between-messages
+     enable-aggregate-command-set
+  no-enable-arrow-navigation
+  no-enable-arrow-navigation-relaxed
+  no-enable-bounce-cmd
+  no-enable-exit-via-lessthan-command
+  no-enable-flag-cmd
+  no-enable-flag-screen-implicitly
+     enable-full-header-cmd
+  no-enable-full-header-and-text
+  no-enable-goto-in-file-browser
+     enable-jump-shortcut
+  no-enable-partial-match-lists
+     enable-tab-completion
+     enable-unix-pipe-cmd
+  no-allow-talk
+  no-assume-slow-link
+  no-auto-move-read-msgs
+  no-auto-unzoom-after-apply
+  no-auto-zoom-after-select
+  no-check-newmail-when-quitting
+  no-confirm-role-even-for-default
+  no-disable-2022-jp-conversions
+  no-disable-charset-conversions
+  no-disable-keymenu
+  no-disable-take-last-comma-first
+  no-enable-dot-files
+  no-enable-fast-recent-test
+  no-enable-mail-check-cue
+  no-enable-mouse-in-xterm
+  no-enable-newmail-in-xterm-icon
+  no-enable-rules-under-take
+  no-enable-suspend
+  no-enable-take-export
+  no-expose-hidden-config
+  no-expunge-only-manually
+  no-expunge-without-confirm
+  no-expunge-without-confirm-everywhere
+  no-preserve-start-stop-characters
+  no-quell-attachment-extra-prompt
+  no-quell-content-id
+  no-quell-timezone-comment-when-sending
+  no-quell-folder-internal-msg
+  no-quell-lock-failure-warnings
+  no-quell-status-message-beeping
+     quit-without-confirm
+  no-save-will-advance
+  no-save-will-not-delete
+  no-save-will-quote-leading-froms
+  no-scramble-message-id
+  no-select-without-confirm
+  no-show-cursor
+  no-show-plain-text-internally
+  no-show-selected-in-boldface
+  no-slash-collapses-entire-thread
+  no-tab-checks-recent
+  no-try-alternative-authentication-driver-first
+  no-unselect-will-not-advance
+  no-use-current-dir
+  no-use-subshell-for-suspend
+  no-use-function-keys
+     allow-changing-from
+  no-cache-remote-pinerc
+  no-disable-busy-alarm
+  no-disable-config-cmd
+  no-disable-keyboard-lock-cmd
+  no-disable-password-caching
+  no-disable-password-cmd
+  no-disable-pipes-in-sigs
+  no-disable-pipes-in-templates
+  no-disable-roles-setup-cmd
+  no-disable-roles-sig-edit
+  no-disable-roles-template-edit
+  no-disable-setlocale-collate
+  no-disable-shared-namespaces
+  no-disable-signature-edit-cmd
+  no-enable-mailcap-param-substitution
+  no-enable-setlocale-ctype
+  no-quell-berkeley-format-timezone
+  no-quell-imap-envelope-update
+  no-quell-maildomain-warning
+  no-quell-news-envelope-update
+  no-quell-partial-fetching
+  no-quell-personal-name-prompt
+  no-quell-user-id-prompt
+  no-save-aggregates-copy-sequence
+  no-selectable-item-nobold
+  no-termdef-takes-precedence
+Disabled mail driver "mbox"
+Userid: min
+Fullname: "Zhou Min"
+User domain name being used "cs.utk.edu"
+Local Domain name being used "cs.utk.edu"
+Host name being used "torc1.cs.utk.edu"
+Mail Domain name being used (by c-client too)"cs.utk.edu"
+new win size -----<24 80>------
+Terminal type: vt100
+About to open folder "INBOX"    inbox: "INBOX"
+IMAP 09:42:00 3/10 mm_log babble: Trying IP address [160.36.56.70]
+Opened folder "{yomega.cs.utk.edu:993/imap/ssl/novalidate-cert/user="min"}INBOX" with 2099 messages
+Sorting by Arrival
+
+
+    ---- MAIN_MENU_SCREEN ----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+IMAP 09:43:41 3/10 mm_log babble: CHECK completed
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+Sorting by Arrival
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+
+
+ ---- MAIL INDEX ----
+
+
+ ---- INDEX MANAGER ----
+
+
+  -----  MAIL VIEW  -----
+Want_to read: y (121)
+- adrbk_open(/home/min/.addressbook) -
+Address book .addressbook (/home/min/.addressbook) opened with 0 items
+
+=== send called ===
+
+  ---- COMPOSER ----
+new win size -----<24 80>------
+new win size -----<24 80>------
+MAIL_CMD: quit
+
+
+    ---- QUIT SCREEN ----
+goodnight_gracey:
+- completely_done_with_adrbks -
+expunge and close mail stream "{yomega.cs.utk.edu:993/imap/ssl/novalidate-cert/user="min"}INBOX"
+IMAP 09:48:22 3/10 mm_notify bye: {yomega.cs.utk.edu:993/imap/ssl/novalidate-cert/user="min"}INBOX (inboxstream) : Courier-IMAP server shutting down
+about to end_tty_driver
+goodnight_gracey finished
