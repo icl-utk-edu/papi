@@ -14,6 +14,10 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
 #if (defined(sun) && defined(sparc))
       mask1 = PAPI_L2_TCM
@@ -144,6 +148,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
 #if (defined(sun) && defined(sparc))
       print *, "Test case 10: start, stop for derived event ",
      *"PAPI_L2_TCM."
@@ -153,6 +158,7 @@
 #endif
  
       print *, "------------------------------------------------------"
+      end if
       call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_get_domain')
@@ -160,7 +166,9 @@
       end if
 
       call stringify_domain(domain, domainstr)
+      if (tests_quiet .EQ. 0) then
       print *, "Default domain is:", domain, " ", domainstr
+      end if
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -170,6 +178,7 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
+      if (tests_quiet .EQ. 0) then
       print *, "Default granularity is:", granularity, " ", grnstr
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
       print *, "------------------------------------------------------"
@@ -194,6 +203,7 @@
       print *, "First number row 1 approximately equals (2,2) + (3,3) ",
      *"or ", (values(3)+values(5))
 #endif
+      end if
 
       call ftests_pass(__FILE__)
       end

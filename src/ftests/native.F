@@ -233,9 +233,12 @@ C     call sleep(1)
       call PAPIf_get_real_usec(usn)
       usn = usn - uso
 
+      if (tests_quiet .EQ. 0) then
       print *, "-------------Monitor Point ", point,
      *"-------------"
+      end if
       rsec = usn/1000000.0
+      if (tests_quiet .EQ. 0) then
       print *, "Real Elapsed Time in sec.  : ", rsec
 #if defined(_AIX)
       csec = values(5)/ (mhz*1000000.0)
@@ -279,6 +282,7 @@ C     call sleep(1)
       print *, "Load_use                   : ", values(1)
       print *, "DC_wr_hit                  : ", values(2)
 #endif
+      end if
       call ftests_pass(__FILE__)
       end
 

@@ -13,6 +13,10 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -36,8 +40,10 @@
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_create_eventset(es2, retval)
@@ -50,15 +56,19 @@
       call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #else
       call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 #endif
 
@@ -147,10 +157,12 @@
 #endif
 
       zero="  0     "
+      if (tests_quiet .EQ. 0) then
       print *, "Test case 3: Overlapping start and stop of 2 eventsets",
      *" with different counters."
       print *, "----------------------------------------------------------
      *---------------------"
+      end if
 
       call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -159,7 +171,9 @@
       end if
 
       call stringify_domain(domain, domainstr)
+      if (tests_quiet .EQ. 0) then
       write (*,900) "Default domain is:", domain, domainstr
+      end if
  900  format(a20, i3, " ", a20)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
@@ -170,9 +184,12 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
+      if (tests_quiet .EQ. 0) then
       write (*,800) "Default granularity is:", granularity, grnstr
+      end if
  800  format(a25, i3, " ", a20)
 
+      if (tests_quiet. EQ. 0) then
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
 
       print *, "--------------------------------------------------------------
@@ -195,6 +212,7 @@
       print *, "Column 1 approximately equals column 2"
       print *, "Column 4 approximately equals three times column 1"
       print *, "Column 5 approximately equals column 3"
+      end if
 
       min = values(5)*0.9
       max = values(5)*1.1

@@ -6,7 +6,7 @@ TESTS 	= zero first \
 	  second third fourth fifth nineth tenth profile description \
           accum highlevel cost johnmay johnmay2 native profile \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
-	  fmatrixpapi fmatrixpapi2 flops strtest
+	  fmatrixpapi fmatrixpapi2 flops
 
 FTEST_DEPENDENCE=ftests_util.o
 PAPILIB=ftests_util.o ../libpapi.a

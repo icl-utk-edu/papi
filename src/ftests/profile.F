@@ -17,10 +17,14 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
 
       character*(PAPI_MAX_STR_LEN) fullname, name, lib_preload_env
       integer text_start, text_end, data_start, data_end, bss_start
       integer bss_end, check
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -64,15 +68,19 @@ C      print *, "length=", length
       call PAPIf_add_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
       
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_start(es, retval)
@@ -89,6 +97,7 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case 7: SVR4 compatible hardware profiling."
       print *, "------------------------------------------------"
  100  format(A12, Z8, A12, Z8, A12, Z8)
@@ -105,6 +114,7 @@ C      print *, "length=", length
       print *, "\n"
 
       print *, "Test type   : \tPAPI_PROFIL_POSIX"
+      end if
 
       call PAPIf_profil(profbuf1, length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX, retval)
@@ -127,9 +137,11 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "PAPI_FP_INS : \t ", values(3)
       print *, "PAPI_TOT_CYC: \t ", values(4)
       print *, "\n"
+      end if
 
       call PAPIf_profil(profbuf1(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX, retval)
@@ -138,7 +150,9 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test type   : \tPAPI_PROFIL_RANDOM"
+      end if
       call PAPIf_profil(profbuf2(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -160,9 +174,11 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "PAPI_FP_INS : \t ", values(5)
       print *, "PAPI_TOT_CYC: \t ", values(6)
       print *, "\n"
+      end if
 
       call PAPIf_profil(profbuf2(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_RANDOM, retval)
@@ -171,7 +187,9 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test type   : \tPAPI_PROFIL_WEIGHTED"
+      end if
       call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -193,9 +211,11 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "PAPI_FP_INS : \t ", values(7)
       print *, "PAPI_TOT_CYC: \t ", values(8)
       print *, "\n"
+      end if
       call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_WEIGHTED, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -203,7 +223,9 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test type   : \tPAPI_PROFIL_COMPRESS"
+      end if
 
       call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
@@ -225,9 +247,11 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "PAPI_FP_INS : \t ", values(9)
       print *, "PAPI_TOT_CYC: \t ", values(10)
       print *, "\n"
+      end if
       call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -235,7 +259,9 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test type   : \tPAPI_PROFIL_<all>"
+      end if
 
       call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
      *PAPI_FP_INS, THR, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS+
@@ -258,9 +284,11 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "PAPI_FP_INS : \t ", values(11)
       print *, "PAPI_TOT_CYC: \t ", values(12)
       print *, "\n"
+      end if
       call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
      *PAPI_FP_INS, 0, PAPI_PROFIL_POSIX+PAPI_PROFIL_COMPRESS+
      *PAPI_PROFIL_RANDOM+PAPI_PROFIL_WEIGHTED, retval)
@@ -269,6 +297,7 @@ C      print *, "length=", length
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "----------------------------------------------"
       print *, "PAPI_profil() hash table."
       print *, "address\tflat\trandom\tweight\tcompress\tall"
@@ -283,6 +312,7 @@ C      print *, "length=", length
       end do
 
       print *, "----------------------------------------------"
+      end if
 
       call PAPIf_rem_event( es, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then

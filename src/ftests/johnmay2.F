@@ -10,7 +10,11 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
       
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
+
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
@@ -105,6 +109,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case John May 2: cleanup / ",
      *"destroy eventset."
       print *, "--------------------------------",
@@ -126,6 +131,7 @@
      *"EventSet is currently counting"
       print *, "PAPI Error Code -1: PAPI_EINVAL: ",
      *"Invalid argument"
+      end if
       
       call ftests_pass(__FILE__)
       end

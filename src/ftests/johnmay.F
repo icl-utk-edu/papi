@@ -10,6 +10,10 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -137,6 +141,7 @@
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case John May: start & stop of overlapped",
      *" unshared counters."
       print *, "----------------------------------------------",
@@ -156,6 +161,7 @@
      *"---------------------------"
  
       print *, "Verification: None"
+      end if
 
       call ftests_pass(__FILE__)
       end

@@ -23,6 +23,10 @@ C   PAPI values of the counters
       INTEGER*8 values(2), dummies(2)
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
 C   Setup default values
       num_events=0
@@ -45,7 +49,9 @@ C   See how many hardware events at one time are supported
       stop
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *, 'Number of hardware counters supported: ', num_events
+      end if
 
 C   matrix 1: read in the matrix values
       do i=1, nrows1
@@ -86,11 +92,13 @@ C  Read and clear the counter values
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *
       print *, 'FP Instructions:  ',values(1)
       print *, 'Cycles: ',values(2)
       write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
+      end if
 
 C  We don't wish to count the events for this call
       call Adding_MatMult(p,q,r,nrows1,ncols1,ncols2)
@@ -119,6 +127,7 @@ C  Stop the counters and put the results in the array values
         call ftests_fail(__FILE__,retval)
       end if
 
+      if (tests_quiet .EQ. 0) then
       print *
       print *, 'FP Instructions:  ',values(1)
       print *, 'Cycles: ',values(2)
@@ -130,6 +139,7 @@ C  Stop the counters and put the results in the array values
       print *,'The second instruction and cycle counts should be'
       print *,'approximately twice the first ones. The efficiency'
       print *,'metric should be fairly equal between the cases.'
+      end if
 
       call ftests_pass(__FILE__)
       end

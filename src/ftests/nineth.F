@@ -14,6 +14,10 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
+
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -41,15 +45,19 @@
       call PAPIf_add_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
       
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_TOT_CYC: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_create_eventset(es2, retval)
@@ -61,8 +69,10 @@
       call PAPIf_add_event( es2, PAPI_FLOPS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
+        if (tests_quiet .EQ. 0) then
         print *, 'Can not add PAPI_FLOPS: '//
      *  errorstring(1:len_trim(errorstring))
+        end if
       end if
 
       call PAPIf_get_clockrate(clockrate)
@@ -117,8 +127,10 @@
       test_flops = test_flops / values(2)
     
 
+      if (tests_quiet .EQ. 0) then
       print *, "Test case 9: start, stop for derived event PAPI_FLOPS"
       print *, "---------------------------------------------"
+      end if
       call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftests_perror(__LINE__,'error in PAPIf_get_domain')
@@ -126,7 +138,9 @@
       end if
 
       call stringify_domain(domain, domainstr)
+      if (tests_quiet .EQ. 0) then
       print *, "Default domain is:", domain, " ", domainstr
+      end if
 
       call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
      *retval)
@@ -136,6 +150,7 @@
       end if
 
       call stringify_granularity(granularity, grnstr)
+      if (tests_quiet .EQ. 0) then
       print *, "Default granularity is:", granularity, " ", grnstr
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
       print *, "---------------------------------------------"
@@ -148,6 +163,7 @@
 
       print *, "Verification:"
       print *, "Last number in row 3 approximately equals", test_flops
+      end if
 
       min = values(3) * 0.9
       max = values(3) * 1.1
