@@ -60,7 +60,7 @@ static int lookup_and_set_thread_symbols(void)
    handle = dlopen(NULL, RTLD_LAZY);
    if (handle == NULL)
      {
-       PAPIERROR("Error from dlopen(NULL, RTLD_LAZY): %s",dlerror());
+       PAPIERROR("Error from dlopen(NULL, RTLD_LAZY): %d %s",errno,dlerror());
        return(PAPI_ESYS);
      }
 
