@@ -6,73 +6,6 @@ AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
-# Checks for programs.
-AC_PROG_AWK
-AC_PROG_CC
-AC_PROG_CPP
-#AC_PROG_INSTALL
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-AC_PROG_RANLIB
-
-# Checks for libraries.
-# FIXME: Replace `main' with a function in `-lcpc':
-AC_CHECK_LIB([cpc], [main])
-# FIXME: Replace `main' with a function in `-ldl':
-AC_CHECK_LIB([dl], [main])
-# FIXME: Replace `main' with a function in `-lm':
-AC_CHECK_LIB([m], [main])
-# FIXME: Replace `main' with a function in `-lpfm':
-AC_CHECK_LIB([pfm], [main])
-# FIXME: Replace `main' with a function in `-lpmapi':
-AC_CHECK_LIB([pmapi], [main])
-# FIXME: Replace `main' with a function in `-lpthread':
-AC_CHECK_LIB([pthread], [main])
-# FIXME: Replace `main' with a function in `-lrt':
-AC_CHECK_LIB([rt], [main])
-# FIXME: Replace `main' with a function in `-llipr':
-AC_CHECK_LIB([lipr], [main])
-
-# Checks for header files.
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-#AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h memory.h stddef.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/systeminfo.h sys/time.h unistd.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_TYPE_UID_T
-AC_C_INLINE
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_CHECK_DECLS([sys_siglist])
-AC_HEADER_TIME
-AC_C_VOLATILE
-
-# Checks for library functions.
-AC_FUNC_FORK
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-AC_FUNC_MMAP
-AC_FUNC_REALLOC
-AC_FUNC_SELECT_ARGTYPES
-AC_FUNC_SETVBUF_REVERSED
-AC_TYPE_SIGNAL
-AC_FUNC_STRCOLL
-AC_FUNC_STRERROR_R
-AC_FUNC_VPRINTF
-#AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
-
-AC_ARG_WITH(bitmode,
-            [  --with-bitmode=bitmode              32/64 bit mode library],
-            [bitmode="$with_bitmode";
-              ],
-            [bitmode="32"])
-#AC_MSG_RESULT($bitmode)
-AC_SUBST($bitmode)
-
 #checking for OS
 OS="`uname | tr '[A-Z]' '[a-z]'`"
 case "$OS" in
@@ -170,6 +103,152 @@ esac
 #echo $CPU
 #AC_SUBST($CPU)
 
+AC_ARG_WITH(bitmode,
+            [  --with-bitmode=64       Specify to build 64 bit mode library],
+            [bitmode="$with_bitmode"],
+            [bitmode=32]
+            )
+#echo $bitmode
+case "$bitmode" in
+   64)
+      BM="-64bit" ;;
+   32)
+      BM="" ;;
+    *)
+      echo "The bitmode "$with_bitmode" you specified is not supported"
+      exit -1
+      ;;
+esac
+
+#AC_MSG_RESULT($bitmode)
+AC_SUBST($bitmode)
+
+case "$OS" in
+   aix)
+      if test "${OSVER}" = "5"; then
+         if test "${CPU}" = "power3"; then 
+               MAKEVER="$OS""$OSVER"-"$CPU""$BM"
+         else
+               MAKEVER="$OS"-"$CPU""$BM"
+         fi
+      else
+         if test "${CPU}" = "power3"; then   
+            if test "${bitmode}" = "64"; then
+              echo "The bitmode "$with_bitmode" you specified is not supported"
+              exit -1
+            fi
+            MAKEVER="$OS"-"$CPU"
+         else
+               MAKEVER="$OS"-"$CPU""$BM"
+         fi
+       fi
+       ;;
+   solaris)
+       MAKEVER="$OS"-"$CPU""BM"
+       ;;
+   linux) 
+       if test "${bitmode}" = "64"; then
+          echo "The bitmode "$with_bitmode" you specified is not supported"
+          exit -1
+       fi
+       case "$CPU" in
+            alpha)
+                 MAKEVER="$OS"-"$CPU" ;;
+            itanium)
+                 MAKEVER="$OS"-pfm-"$CPU" ;;
+            itanium2)
+                 MAKEVER="$OS"-pfm-"$CPU" ;;
+            athlon)
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+            opteron)
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+            p4)
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+            p3)
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+       esac
+       ;;
+  irix)
+       MAKEVER="$OS"-"$CPU""BM"
+       ;;
+  osf1)
+       case "$CPU" in
+            alpha)
+                 MAKEVER=tru64-"$CPU" ;;
+       esac
+       ;;
+  unicos)
+       case "$CPU" in
+            x1-msp)
+                 MAKEVER="$OS"-"$CPU" ;;
+       esac
+       ;;
+esac
+#echo $MAKEVER
+AC_SUBST(MAKEVER)
+AC_SUBST(prefix)
+
+# Checks for programs.
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_CPP
+#AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+
+# Checks for libraries.
+# FIXME: Replace `main' with a function in `-lcpc':
+AC_CHECK_LIB([cpc], [main])
+# FIXME: Replace `main' with a function in `-ldl':
+AC_CHECK_LIB([dl], [main])
+# FIXME: Replace `main' with a function in `-lm':
+AC_CHECK_LIB([m], [main])
+# FIXME: Replace `main' with a function in `-lpfm':
+AC_CHECK_LIB([pfm], [main])
+# FIXME: Replace `main' with a function in `-lpmapi':
+AC_CHECK_LIB([pmapi], [main])
+# FIXME: Replace `main' with a function in `-lpthread':
+AC_CHECK_LIB([pthread], [main])
+# FIXME: Replace `main' with a function in `-lrt':
+AC_CHECK_LIB([rt], [main])
+# FIXME: Replace `main' with a function in `-llipr':
+AC_CHECK_LIB([lipr], [main])
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+#AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h memory.h stddef.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/systeminfo.h sys/time.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_UID_T
+AC_C_INLINE
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_CHECK_DECLS([sys_siglist])
+AC_HEADER_TIME
+AC_C_VOLATILE
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
+AC_FUNC_MMAP
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_FUNC_SETVBUF_REVERSED
+AC_TYPE_SIGNAL
+AC_FUNC_STRCOLL
+AC_FUNC_STRERROR_R
+AC_FUNC_VPRINTF
+#AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
+
+
+
 get_bitmode()
 {
  input="bad"
@@ -198,85 +277,6 @@ get_bitmode()
  done
 }
 
-case "$OS" in
-   aix)
-      if test "${OSVER}" = "5"; then
-         #get_bitmode
-         if test "${CPU}" = "power3"; then 
-            if test "${bitmode}" = "64"; then
-               MAKEVER="$OS""$OSVER"-"$CPU"-"$bitmode"bit
-            else 
-               MAKEVER="$OS""$OSVER"-"$CPU"
-            fi
-         else
-            if test "${bitmode}" = "64"; then
-               MAKEVER="$OS"-"$CPU"-"$bitmode"bit
-            else 
-               MAKEVER="$OS"-"$CPU"
-            fi
-         fi
-      else
-         if test "${CPU}" = "power3"; then   
-            MAKEVER="$OS"-"$CPU"
-         else
-            #get_bitmode
-            if test "${bitmode}" = "64"; then
-               MAKEVER="$OS"-"$CPU"-"$bitmode"bit
-            else 
-               MAKEVER="$OS"-"$CPU"
-            fi
-         fi
-       fi
-       ;;
-   solaris)
-       #get_bitmode
-       if test "${bitmode}" = "64"; then
-          MAKEVER="$OS"-"$CPU"-"$bitmode"bit
-       else 
-          MAKEVER="$OS"-"$CPU"
-       fi
-       ;;
-   linux) 
-       case "$CPU" in
-            alpha)
-                 MAKEVER="$OS"-"$CPU" ;;
-            itanium)
-                 MAKEVER="$OS"-pfm-"$CPU" ;;
-            itanium2)
-                 MAKEVER="$OS"-pfm-"$CPU" ;;
-            athlon)
-                 MAKEVER="$OS"-perfctr-"$CPU" ;;
-            opteron)
-                 MAKEVER="$OS"-perfctr-"$CPU" ;;
-            p4)
-                 MAKEVER="$OS"-perfctr-"$CPU" ;;
-            p3)
-                 MAKEVER="$OS"-perfctr-"$CPU" ;;
-       esac
-       ;;
-  irix)
-       #get_bitmode
-       if test "${bitmode}" = "64"; then
-          MAKEVER="$OS"-"$CPU"-"$bitmode"bit
-       else 
-          MAKEVER="$OS"-"$CPU"
-       fi
-       ;;
-  osf1)
-       case "$CPU" in
-            alpha)
-                 MAKEVER=tru64-"$CPU" ;;
-       esac
-       ;;
-  unicos)
-       case "$CPU" in
-            x1-msp)
-                 MAKEVER="$OS"-"$CPU" ;;
-       esac
-       ;;
-esac
-AC_SUBST(MAKEVER)
-AC_SUBST(prefix)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
