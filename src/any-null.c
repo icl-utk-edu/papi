@@ -416,13 +416,9 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, unsigned long long eve
 	{
 	case 0x1:
 	  events[j] = last_read[0];
-	  if (zero->multistart.SharedDepth[0] > 1)
-	    events[j] -= ESI->start[j]; 
 	  break;
 	case 0x2:
 	  events[j] = last_read[1];
-	  if (zero->multistart.SharedDepth[1] > 1)
-	    events[j] -= ESI->start[j]; 
 	  break;
 	  /* case 0x3: This should never happen */
 	  /* case 0x13: Here we could calculate derived metrics based on
