@@ -16,6 +16,7 @@
 
 void addaixevents(int *EventSet, int *retval)
 {
+#if defined(_AIX)
   int native;
 
   if (*EventSet == PAPI_NULL) {
@@ -23,7 +24,6 @@ void addaixevents(int *EventSet, int *retval)
 	  return;
   }
 
-#if defined(_AIX)
       native = 0 | 5 << 8  | 0; /* ICM */
       if ( (*retval = PAPI_add_event(EventSet, native))!=PAPI_OK) return;
       native = 0 | 35 << 8 | 1; /* FPU1CMPL */

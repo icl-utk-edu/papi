@@ -58,7 +58,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es2, event, retval )
+      call PAPIf_add_event( es2, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .	 'PAPIf_add_event', retval)

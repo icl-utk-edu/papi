@@ -241,7 +241,9 @@ void papimon_stop(void)
 #elif defined(sun) && defined(sparc)
      fprintf(stderr,"Load_use                   : %lld\n",values[0]);
      fprintf(stderr,"DC_wr_hit                  : %lld\n",values[1]);
-#elif defined(tru64)
+#elif defined(__ALPHA) && defined(__osf__)
+     fprintf(stderr,"Retired Instructions       : %lld\n",values[0]);
+     fprintf(stderr,"Cycles                     : %lld\n",values[1]);
 #endif
    }
    test_pass(__FILE__,NULL,0);

@@ -362,9 +362,12 @@ C     PAPI_add_event()/PAPI_set_multiplex()
 
       call PAPIf_add_event( EventSet, PAPI_L1_DCM, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__,
+        call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
+        if ( retval .NE. PAPI_OK ) then
+           call ftest_fail(__FILE__, __LINE__,
      .   'PAPIf_add_event',
      *retval)
+        end if
       end if
       call PAPIf_add_event( EventSet, PAPI_L1_ICM, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -390,7 +393,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
 
 #endif
 
-#if (defined(__ALPHA)&&defined(__osf__))
+#if (defined(__alpha)&&defined(__osf__))
       call PAPIf_add_event( EventSet, PAPI_RES_STL, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -420,7 +423,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
       end if
 
       if (tests_quiet .EQ. 0) then
-#if (defined(__ALPHA) && defined(__osf__))
+#if (defined(__alpha) && defined(__osf__))
       write (*, *) "case4: ", values(1), values(2), values(3)
 #else
       write (*, *) "case4: ", values(1), values(2), values(3), 

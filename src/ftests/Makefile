@@ -6,35 +6,35 @@ TESTS 	= zero first \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
 
 FTEST_DEPENDENCE=ftests_util.o
-PAPILIB=ftests_util.o ../libpapi.a
+PAPILIB=ftests_util.o ../$(LIBRARY)
 
 default: $(TESTS)
 
 ftests_util.o: ftests_util.F
-	@if [ $(SUBSTR) = tru64-alpha ]; then $(F77) -g2 $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
+	@if [ $(SUBSTR) = tru64-alpha ]; then $(F77) -g2 $(OPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
 	else if [ $(SUBSTR) = solaris-ultra ]; then $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F;  \
-	else $(F77) $(NOOPT) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi; fi
+	else $(F77) $(OPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi; fi
 
 addAIXevents.o: addAIXevents.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c addAIXevents.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c addAIXevents.c
 
 do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c do_loops.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c do_loops.c
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
 
 avail: avail.F $(FTEST_DEPENDENCE)  
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) avail.F  $(PAPILIB) $(LDFLAGS) -o avail
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) avail.F  $(PAPILIB) $(LDFLAGS) -o avail
 
 eventname: eventname.F $(FTEST_DEPENDENCE)  
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
 
 case1: case1.F $(FTEST_DEPENDENCE) 
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
 
 case2: case2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(NOOPT) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
 
 fmatrixlowpapi: fmatrixlowpapi.F $(FTEST_DEPENDENCE)  
 	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi

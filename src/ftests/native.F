@@ -204,21 +204,14 @@ C     DC_wr_hit
       
 #endif
 
-#if (defined(__ALPHA) && defined(__osf__))
-      call get_instr(nativees)
-      if (nativees .NE. -1) then
-         call PAPIf_add_event( es, nativees, retval )
-         if ( retval .NE. PAPI_OK ) then
+#if (defined(__alpha) && defined(__osf__))
+      call PAPIf_add_event( es, 4096, retval )
+      if ( retval .NE. PAPI_OK ) then
             call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-         end if
       end if
-
-      call get_cyc(nativees)
-      if (nativees .NE. -1) then
-         call PAPIf_add_event( es, nativees, retval )
-         if ( retval .NE. PAPI_OK ) then
+      call PAPIf_add_event( es, 1, retval )
+      if ( retval .NE. PAPI_OK ) then
             call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
-         end if
       end if
 #endif
 
@@ -293,6 +286,10 @@ C     call sleep(1)
       print *, "CPU Cycles                        : ",values(3)      
 #endif
 
+#if (defined(__alpha) && defined(__osf__))
+      print *, "Retired instructions              : ", values(1)
+      print *, "Cycles                            : ", values(2)
+#endif
 #if (defined(sun) && defined(sparc))
       print *, "Load_use                   : ", values(1)
       print *, "DC_wr_hit                  : ", values(2)
@@ -301,21 +298,3 @@ C     call sleep(1)
       call ftests_pass(__FILE__)
       end
 
-#if (defined(__ALPHA) && defined(__osf__))
-C     NOT TESTED YET
-      subroutine get_instr(integer nativees)
-      integer cpu
-      retval = PAPI_ESBSTR
-      call ftest_fail(__FILE__, __LINE__, 'get_instr', retval)
-c     call GET_CPU_FAMILY(cpu)
-c     if (cpu .EQ. EV6_CPU) nativees = PF6_MUX0_RET_INSTRUCTIONS *
-c    *                               2**8 + 0
-c     end
-
-c     subroutine get_cyc(integer nativees)
-c     integer cpu
-c     call GET_CPU_FAMILY(cpu)
-c     if (cpu .EQ. EV6_CPU) nativees = PF6_MUX1_CYCLES
-c    *                               2**8 + 1
-c     end
-#endif
