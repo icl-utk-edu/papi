@@ -18,7 +18,7 @@ void handler(int EventSet, int EventCode, int EventIndex, long long *values, int
   fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x, thread 0x%x!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context),PAPI_thread_id());
 #else
-  fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p, thread 0x%x!\n",
+  fprintf(stderr,"handler(%d, %x, %d, %lld, %d, %p) Overflow at %p, thread 0x%lux!\n",
 	  EventSet,EventCode,EventIndex,values[EventIndex],*threshold,context,PAPI_get_overflow_address(context),PAPI_thread_id());
 #endif
   }
