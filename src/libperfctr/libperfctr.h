@@ -33,13 +33,13 @@ extern void perfctr_close(struct vperfctr*);
  * Operations on the process' own virtual-mode perfctrs.
  */
 
-extern int perfctr_attach_rdonly_self(void);
-extern int perfctr_attach_rdwr_self(void);
-extern int perfctr_read_self(struct vperfctr_state*);
-extern int perfctr_control_self(struct perfctr_control*);
-extern int perfctr_stop_self(void);
+extern struct vperfctr *perfctr_attach_rdonly_self(void);
+extern struct vperfctr *perfctr_attach_rdwr_self(void);
+extern int perfctr_read_self(const struct vperfctr*, struct vperfctr_state*);
+extern int perfctr_control_self(const struct vperfctr*, struct perfctr_control*);
+extern int perfctr_stop_self(const struct vperfctr*);
 extern int perfctr_unlink_self(void);
-extern void perfctr_close_self(void);
+extern void perfctr_close_self(struct vperfctr*);
 
 /*
  * Operations on global-mode perfctrs.

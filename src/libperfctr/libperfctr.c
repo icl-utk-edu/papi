@@ -28,9 +28,8 @@ struct vperfctr {
     int fd;
     volatile const struct vperfctr_state *kstate;
 };
-static struct vperfctr self = { -1, NULL };
 
-static int check_init(void)
+static int check_init_unlocked(void)
 {
     if( dev_perfctr_fd < 0 ) {
 	struct perfctr_info info;
@@ -48,6 +47,19 @@ static int check_init(void)
     }
     return 1;
 }
+
+#include <asm/atomic.h>
+static int check_init_locked(void)
+{
+  int result;
+  volatile static atomic_t lock = ATOMIC_INIT(0);
+  while (atomic_inc_and_test(&lock) != 0)
+    ;
+  result = check_init_unlocked();
+  atomic_dec(&lock);
+  return result;
+}
+#define check_init()	check_init_locked()
 
 /*
  * Invokes the kernel driver directly.
@@ -161,36 +173,26 @@ void perfctr_close(struct vperfctr *perfctr)
 	perfctr->kstate = NULL;
 	perfctr->fd = -1;
     }
-    if( perfctr != &self )
-	free(perfctr);
+    free(perfctr);
 }
 
 /*
  * Operations on the process' own perfctrs.
  */
 
-static int perfctr_attach_self(int writable)
+static struct vperfctr *perfctr_attach_self(int writable)
 {
-    if( self.fd >= 0 ) {
-	errno = EBUSY;
-	return -1;
-    }
-    return perfctr_attach_simple(0, NULL, writable, &self);
+    return perfctr_attach_hairy(0, NULL, writable);
 }
 
-int perfctr_attach_rdonly_self(void)
+struct vperfctr *perfctr_attach_rdonly_self(void)
 {
     return perfctr_attach_self(0);
 }
 
-int perfctr_attach_rdwr_self(void)
+struct vperfctr *perfctr_attach_rdwr_self(void)
 {
     return perfctr_attach_self(1);
-}
-
-static __inline__ int check_self(void)
-{
-    return (self.fd < 0) ? perfctr_attach_rdwr_self() : 1;
 }
 
 #define rdtscl(low)	\
@@ -198,23 +200,21 @@ static __inline__ int check_self(void)
 #define rdpmcl(ctr,low)	\
 	__asm__ __volatile__("rdpmc" : "=a"(low) : "c"(ctr) : "edx")
 
-int perfctr_read_self(struct vperfctr_state *state)
+int perfctr_read_self(const struct vperfctr *self, struct vperfctr_state *state)
 {
     unsigned int start_tsc;
     unsigned int diff;
     struct perfctr_low_ctrs now;
     int i, nrctrs;
 
-    if( check_self() < 0 )
-	return -1;
     if( !have_rdpmc )		/* Intel pre-MMX P5 lossage */
 	perfctr_syscall(VPERFCTR_SAMPLE, 0);
     /* cannot use RDPMC unless the counters actually are running.. */
-    nrctrs = self.kstate->status;
+    nrctrs = self->kstate->status;
     if( !have_rdpmc || nrctrs <= 0 )
-	return perfctr_read(&self, state);
+	return perfctr_read(self, state);
     do {
-	start_tsc = self.kstate->start.ctr[0];
+	start_tsc = self->kstate->start.ctr[0];
 	/* read current register contents */
 	if( have_rdtsc )	/* WinChip lossage */
 	    rdtscl(now.ctr[0]);
@@ -223,26 +223,29 @@ int perfctr_read_self(struct vperfctr_state *state)
 	/* accumulate */
 	if( have_rdtsc ) {	/* WinChip lossage */
 	    diff = now.ctr[0] - start_tsc;
-	    state->sum.ctr[0] = self.kstate->sum.ctr[0] + diff;
+	    state->sum.ctr[0] = self->kstate->sum.ctr[0] + diff;
 	}
 	for(i = 1; i < nrctrs; ++i) {
-	    diff = now.ctr[i] - self.kstate->start.ctr[i];
-	    state->sum.ctr[i] = self.kstate->sum.ctr[i] + diff;
+	    diff = now.ctr[i] - self->kstate->start.ctr[i];
+	    state->sum.ctr[i] = self->kstate->sum.ctr[i] + diff;
 	}
-    } while( start_tsc != self.kstate->start.ctr[0] );
-    state->control = self.kstate->control;
-    state->status = self.kstate->status;
+    } while( start_tsc != self->kstate->start.ctr[0] );
+    state->control_id = self->kstate->control_id;
+    state->control = self->kstate->control;
+    state->children = self->kstate->children;
+    state->status = self->kstate->status;
     return 0;
 }
 
-int perfctr_control_self(struct perfctr_control *control)
+int perfctr_control_self(const struct vperfctr *self,
+			 struct perfctr_control *control)
 {
-    return perfctr_control(&self, control);
+    return perfctr_control(self, control);
 }
 
-int perfctr_stop_self(void)
+int perfctr_stop_self(const struct vperfctr *self)
 {
-    return perfctr_stop(&self);
+    return perfctr_stop(self);
 }
 
 int perfctr_unlink_self(void)
@@ -250,9 +253,9 @@ int perfctr_unlink_self(void)
     return perfctr_syscall(VPERFCTR_UNLINK, 0);
 }
 
-void perfctr_close_self(void)
+void perfctr_close_self(struct vperfctr *self)
 {
-    return perfctr_close(&self);
+    return perfctr_close(self);
 }
 
 /*
