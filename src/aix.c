@@ -51,7 +51,7 @@ char *_papi_hwd_native_code_to_descr(unsigned int EventCode)
 
 int _papi_hwd_native_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
-  bits = &native_table[EventCode & NATIVE_AND_MASK].resources;
+/*  bits = &native_table[EventCode & NATIVE_AND_MASK].resources;*/ /* it is not right, different type */
   return(PAPI_OK);
 }
 
@@ -271,11 +271,7 @@ static int get_system_info(void)
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
 
-#ifdef _POWER4
-  retval = setup_p4_presets(&pminfo, &pmgroups);
-#else
   retval = setup_all_presets(preset_search_map);
-#endif
 
   if (retval)
     return(retval);
