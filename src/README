@@ -1,5 +1,5 @@
 /* 
-* File:    README
+* File:    papi/src/README
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -7,14 +7,26 @@
 *          <your email address>
 */  
 
-PAPI Version 1.2 Release Notes
-October, 2000
+This directory contains:
 
-ptools-perfapi@ptools.org
-perfapi-devel@ptools.org
+Makefile.inc	  A general Makefile included by substrate-specific makes.
+Makefile.xxx-yyy  A collection of substrate specific Makefiles, where:
+		  xxx = operating system
+		  yyy = hardware platform
+xxx-yyy.README	  substrate specific notes, including info on native events.
+xxx-yyy.c
+xxx-yyy.h	  substrate specific source files
+xxx-yyy/	  folder containing substrate specific support files
+papi*.c
+papi*.h		  platform independent PAPI source code
+*.*		  various other source and documentation files
 
-1) To compile with debugging, set CFLAGS to have -DDEBUG.
 
-   To enable debugging messages, set the PAPI_DEBUG environment
+PAPI Debugging
+--------------
+
+1) To compile with debugging, define CFLAGS to include -DDEBUG in the Makefile.
+
+2) To enable debugging messages at run time, set the PAPI_DEBUG environment
    variable to non-nil.
    
