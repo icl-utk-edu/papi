@@ -572,22 +572,6 @@ int _papi_hwd_init_global(void)
    return (PAPI_OK);
 }
 
-/*
-static int translate_domain(int domain)
-{
-  int mode = 0;
-
-  if (domain & PAPI_DOM_USER)
-    mode |= HWPERF_CNTEN_U;
-  if (domain & PAPI_DOM_KERNEL)
-    mode |= HWPERF_CNTEN_K;
-  if (domain & PAPI_DOM_OTHER)
-    mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S;
-  assert(mode);
-  return(mode);
-}
-*/
-
 /* this function is called by _papi_hwi_initialize_thread in papi_internal.c
    this function will generate the file descriptor for hardware counter
    control
