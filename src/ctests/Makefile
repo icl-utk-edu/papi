@@ -7,7 +7,7 @@ default:
 
 tests: $(EXAMPLES)
 
-$(EXAMPLES): %: %.o 
+$(EXAMPLES): %: %.o ../libpapi.a
 	$(CC) $< -o $@ -L.. -lpapi
 
 clean:
