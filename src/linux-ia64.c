@@ -329,19 +329,20 @@ static inline int setup_all_presets()
 /* Utility functions */
 
 /* Return new counter mask */
-inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_param_t *from)
+inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_param_t *from, EventInfo_t *out)
 {
   pfmw_reg_t *pc = this_state->pc;
   pfmw_param_t *evt = &this_state->evt;
   int i, orig_cnt = PFMW_PEVT_EVTCOUNT(evt);  
   int cnt = PMU_MAX_PMCS;
   int selector = 0;
+  int pos;
 
   if (from)
     {
       /* Called from add_event */
       /* Merge the two evt structures into the old one */
-      
+      pos=PFMW_PEVT_EVTCOUNT(evt);
       for (i=0;i<PFMW_PEVT_EVTCOUNT(from);i++) {
 	PFMW_PEVT_EVENT(evt,PFMW_PEVT_EVTCOUNT(evt)) = PFMW_PEVT_EVENT(from,i);
 	PFMW_PEVT_EVTCOUNT(evt)++;
@@ -380,6 +381,8 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
    for (i=0;i<PFMW_PEVT_EVTCOUNT(evt);i++)
     {
       selector |= 1 << PFMW_REG_REGNUM(pc[i]);
+	  if(out && i==pos)
+	  out->operand_index=PFMW_REG_REGNUM(pc[i])-4;
 
       DBG((stderr,"Selector is now 0x%x\n",selector));
     }
@@ -967,7 +970,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   out->code = EventCode;
   /* Turn on the control codes and get the new bits required */
 
-  nselector = set_hwcntr_codes(this_state,codes);
+  nselector = set_hwcntr_codes(this_state,codes,out);
   if (nselector < 0)
     return retval;
   if (nselector == 0)
@@ -1295,7 +1298,7 @@ int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)
 	PFMW_EVT_EVTCOUNT(current_state->evt) += not_shared;
 
 	/* Re-encode the command structure, return the new selector */
-	nselector = set_hwcntr_codes(current_state,NULL);
+	nselector = set_hwcntr_codes(current_state,NULL, NULL);
 	if (nselector < 0)
 	  {
 	    pfm_start();
@@ -1410,10 +1413,11 @@ static long long handle_derived_subtract(int operand_index, int selector, long l
   int pos;
   long long retval = from[operand_index];
 
+  DBG((stderr,"operand_index: %d   selector: 0x%x\n",operand_index,selector));
   selector = selector ^ (1 << operand_index);
   while ((pos = ffs(selector)))
     {
-      DBG((stderr,"Compound event, subtracting %lld to %lld\n",from[pos-1],retval));
+      DBG((stderr,"Compound event, subtracting pos=%d  %lld to %lld\n",pos, from[pos-1],retval));
       retval -= from[pos-1];
       selector ^= 1 << (pos-1);
     }
@@ -1449,6 +1453,8 @@ static long long handle_derived_add_ps(int operand_index, int selector, long lon
 static long long handle_derived(EventInfo_t *cmd, long long *from)
 {
   int selector = cmd->selector >> 4;
+
+  DBG((stderr,"cmd->selector: 0x%x\n",cmd->selector));
 
   switch (cmd->command)
     {
