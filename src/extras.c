@@ -496,7 +496,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
   char *name;
   int i;
   for(i=0;i<PAPI_MAX_NATIVE_EVENTS;i++){
-    name = _papi_hwd_native_code_to_name(i | NATIVE_MASK);
+    name = _papi_ntv_code_to_name(i | NATIVE_MASK);
     if (name != NULL) {
       if (strcasecmp(name,in) == 0) {
 	*out = i | NATIVE_MASK;
@@ -519,7 +519,7 @@ char *_papi_hwi_native_code_to_name(unsigned int EventCode)
 {
 #ifdef HAS_NATIVE_MAP
   if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
-    return(_papi_hwd_native_code_to_name(EventCode));
+    return(_papi_ntv_code_to_name(EventCode));
   }
 #endif
   return(NULL);
@@ -533,7 +533,7 @@ char *_papi_hwi_native_code_to_descr(unsigned int EventCode)
 #ifdef HAS_NATIVE_MAP
   
   if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
-    return(_papi_hwd_native_code_to_descr(EventCode));
+    return(_papi_ntv_code_to_descr(EventCode));
   }
 #endif
   return(NULL);
@@ -546,11 +546,11 @@ int _papi_hwi_query_native_event_verbose(unsigned int EventCode, PAPI_preset_inf
 #ifdef HAS_NATIVE_MAP
 
   if ((EventCode & NATIVE_MASK) &&((EventCode ^ NATIVE_MASK)<PAPI_MAX_NATIVE_EVENTS)){
-    info->event_name = _papi_hwi_native_code_to_name(EventCode);
+    info->event_name = _papi_ntv_code_to_name(EventCode);
     if (info->event_name != NULL) {
       /* Fill in the info structure */
       info->event_code = EventCode;
-      info->event_descr = _papi_hwi_native_code_to_descr(EventCode);
+      info->event_descr = _papi_ntv_code_to_descr(EventCode);
       info->event_label = NULL;
       info->event_note = NULL;
       info->avail = 1;	/* if we found it, it's available */
