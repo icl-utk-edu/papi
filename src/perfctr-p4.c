@@ -707,7 +707,8 @@ int _papi_hwd_set_domain(P4_perfctr_control_t *cntrl, int domain)
 
 int _papi_hwd_reset(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl)
 {
-  return(PAPI_ESBSTR);
+  /* this is what I gleaned from PAPI 2.3.4... is it right??? dkt */
+  return(_papi_hwd_start(ctx, cntrl));
 }
 
 int _papi_hwd_write(P4_perfctr_context_t *ctx, P4_perfctr_control_t *cntrl, long long *from)
