@@ -283,21 +283,23 @@ PAPI_profil, PAPI_sprofil - generate PC histogram data where hardware counter ov
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\  unsigned\  scale, \ int \ EventSet, \ -->
-<B>int PAPI_profil(unsigned short * </B><I>buf, </I><B>unsigned </B><I>bufsiz, </I><B>unsigned long </B><I>offset, </I><B>unsigned </B><I>scale,</I><B> int</B><I> EventSet,</I> 
+<!-- .BI int\ PAPI_profil(unsigned\ short\ *\  buf,\  unsigned\  bufsiz,\  unsigned\ long\  offset,\   -->
+<B>int PAPI_profil(unsigned short * </B><I>buf, </I><B>unsigned </B><I>bufsiz, </I><B>unsigned long </B><I>offset, </I> 
+<!-- .BI \tunsigned\  scale, \ int \ EventSet, \ -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned </B><B> int</B><I> EventSet,</I> 
              int  EventCode,  int  threshold,  int  flags );
-<!-- .BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\  int\  EventCode,\  int\  threshold,\  int\  flags\  ); -->
-<B>int PAPI_sprofil(PAPI_sprofil_t * </B><I>prof, </I><B>int </B><I>profcnt, </I><B>int </B><I>EventSet, </I><B>int </B><I>EventCode, </I><B>int </B><I>threshold, </I><B>int </B><I>flags </I><B>);</B> 
+<!-- .BI int\ PAPI_sprofil(PAPI_sprofil_t\ *\  prof,\  int\  profcnt,\  int\  EventSet,\   -->
+<B>int PAPI_sprofil(PAPI_sprofil_t * </B><I>prof, </I><B>int </B><I>profcnt, </I><B>int </B><I>EventSet, </I> 
+<!-- .BI \tint\  EventCode,\  int\  threshold,\  int\  flags\  ); -->
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int </B><B>int </B><I>threshold, </I><B>int </B><I>flags </I><B>);</B> 
 <!-- .fi -->
 </PRE>
+<!-- .LP -->
+<P>
 <!-- .B Fortran Interface -->
 <B>Fortran Interface</B> <!-- .nf -->
 <PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
-<!-- .BI PAPIF_profil(C_INT(*)\  buf,\  C_INT\  bufsiz,\  C_INT\  offset,\  C_INT\  scale,\  C_INT\  EventSet,  -->
-<B>PAPIF_profil(C_INT(*) </B><I>buf, </I><B>C_INT </B><I>bufsiz, </I><B>C_INT </B><I>offset, </I><B>C_INT </B><I>scale, </I><B>C_INT </B><I>EventSet,</I> 
-             C_INT  EventCode,  C_INT  threshold,  C_INT  flags,  C_INT  check )
+The profiling routines have no Fortran interface.
 <!-- .fi -->
 </PRE>
 <P>
@@ -355,11 +357,21 @@ and then calls PAPI_sprofil to do the work.
 <!-- .I flags  -->
 <I>flags</I> -- bit pattern to control profiling behavior. Defined values are shown in the table below.
 <P>
+<!-- .LP -->
+<P>
+<!-- .I *prof -->
+<I>*prof</I> -- pointer to PAPI_sprofil_t structure.
+<!-- .LP -->
+<P>
+<!-- .I profcnt -->
+<I>profcnt</I> -- number of buffers for hardware profiling (*reserved*)
+<!-- .LP -->
+<P>
 <!-- .TS -->
 <P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
 <!-- allbox tab($); -->
-<!-- cI(40)  s -->
-<!-- lB lw(40). -->
+<!-- cI  s -->
+<!-- lB lw. -->
 <TR valign=top>
 <TD align=center colspan=2><I>Defined bits for the flags variable
 </I></TD></TR>
@@ -376,14 +388,6 @@ and then calls PAPI_sprofil to do the work.
 <TD><B>PAPI_PROFIL_COMPRESS</B></TD><TD>Ignore samples if hash buckets get big.
 </TD></TR>
 </TABLE></BLOCKQUOTE>
-<!-- .LP -->
-<P>
-<!-- .I *prof -->
-<I>*prof</I> -- pointer to PAPI_sprofil_t structure.
-<!-- .LP -->
-<P>
-<!-- .I profcnt -->
-<I>profcnt</I> -- number of buffers for hardware profiling (*reserved*)
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
