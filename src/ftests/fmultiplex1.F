@@ -10,10 +10,6 @@
       external get_quiet
 
       tests_quiet = get_quiet()
-C Skip Alpha till multiplex is fixed. -KSL 
-#if defined(__alpha) && defined(__osf__)
-      call ftest_skip(__FILE__, __LINE__, 'Broken', PAPI_ENOEVNT)
-#endif
 
       if (tests_quiet .EQ. 0) then
          write (*, 100) NUM
@@ -387,6 +383,9 @@ C Try alternative event if the above is not possible to use...
       if ( retval .EQ. PAPI_ECNFLCT .OR. retval .EQ. PAPI_ENOEVNT ) then
         call PAPIf_add_event( EventSet, PAPI_L2_DCM, retval )
       end if
+      if ( retval .EQ. PAPI_ECNFLCT .OR. retval .EQ. PAPI_ENOEVNT ) then
+        call PAPIf_add_event( EventSet, PAPI_L2_TCM, retval )
+      end if
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      &      'PAPIf_add_event', retval)
@@ -411,7 +410,7 @@ C Try alternative event if the above is not possible to use...
       end if
 
 #elif (defined(__alpha)&&defined(__osf__))
-      call PAPIf_add_event( EventSet, PAPI_RES_STL, retval )
+      call PAPIf_add_event( EventSet, PAPI_TLB_DM, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      &      'PAPIf_add_event', retval)
@@ -447,12 +446,8 @@ C Try alternative event if the above is not possible to use...
       end if
 
       if (tests_quiet .EQ. 0) then
-#if (defined(__alpha) && defined(__osf__))
-      write (*, *) "case4: ", values(1), values(2), values(3)
-#else
       write (*, *) "case4: ", values(1), values(2), values(3), 
      *    values(4)
-#endif
       end if
 
       call PAPIf_cleanup_eventset(EventSet, retval)

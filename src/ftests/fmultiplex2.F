@@ -2,11 +2,7 @@
 #define SUCCESS 1
 #define NUM 100
 
-#if (defined(__alpha) && defined(__osf__))
-#define MAX_TO_ADD 3
-#else
 #define MAX_TO_ADD 9
-#endif
 
 #define PAPI_MAX_PRESET_EVENTS 128
 
@@ -18,10 +14,6 @@
       external get_quiet
 
       tests_quiet = get_quiet()
-C Skip Alpha till multiplex is fixed. -KSL 
-#if defined(__alpha) && defined(__osf__)
-      call ftest_skip(__FILE__, __LINE__, 'Broken', PAPI_ENOEVNT)
-#endif
 
       if (tests_quiet .EQ. 0) then
         write (*, 100) NUM
@@ -76,6 +68,7 @@ C Skip Alpha till multiplex is fixed. -KSL
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
+
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPIf_create_eventset',
      *       retval)
