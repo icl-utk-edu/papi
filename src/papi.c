@@ -875,41 +875,6 @@ int PAPI_add_pevent(int *EventSet, int code, void *inout)
   return(add_pevent(ESI,code,inout));
 }
 
-int PAPI_add_env_event(int *EventSet, int *EventCode, char *env_variable){
-  int real_event=*EventCode;
-  char *eventname;
-  int retval;
-  
-  if ( env_variable != NULL ){
-    if ( (eventname=getenv(env_variable)) ) {
-	if ( eventname[0] == 'P' ) {  /* Use the PAPI name */
-	   retval=PAPI_event_name_to_code(eventname, &real_event );
-	   if ( retval != PAPI_OK ) real_event = *EventCode;
-	}
-        else{
-           if ( strlen(eventname)>1 && eventname[1]=='x'){
-		/* Need to convert 0x80000.... into an integer from
-		 * a string, but for some reason, I am drawing a blank
-		 * at the moment -KSL
-		 */
-	   }
-	   else {
-	       real_event = atoi(eventname);
-	   }
-	}
-    }
-  }
-  if ( (retval = PAPI_add_event( EventSet, real_event))!= PAPI_OK ){
-	if ( real_event != *EventCode ) {
-		if ( (retval = PAPI_add_event( EventSet, *EventCode)) == PAPI_OK){
-			real_event = *EventCode;
-		}
-	}
-  }
-  *EventCode = real_event;
-  return retval;
-}
-
 int PAPI_add_event(int *EventSet, int EventCode) 
 { 
   EventSetInfo *ESI;

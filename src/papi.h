@@ -332,7 +332,6 @@ typedef struct pre_info {
 
 int PAPI_accum(int EventSet, long_long *values);
 int PAPI_add_event(int *EventSet, int Event);
-int PAPI_add_env_event(int *EventSet, int *Event, char *env_variable);
 int PAPI_add_events(int *EventSet, int *Events, int number);
 int PAPI_add_pevent(int *EventSet, int code, void *inout);
 int PAPI_cleanup_eventset(int *EventSet);
