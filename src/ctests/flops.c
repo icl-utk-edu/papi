@@ -34,6 +34,7 @@ int main(){
 
   /* Collect the data into the variables passed in */
   PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
+  dummy((void*) mresult);
  
   printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n",
 	real_time, proc_time, flpins, mflops);

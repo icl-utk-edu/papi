@@ -41,6 +41,7 @@ C Collect the data into the Variables passed in
       call PAPIf_flops( real_time, proc_time, flpins, mflops, check )
       print *, 'Real_time: ', real_time, ' Proc_time: ', proc_time,
      & ' Total flpins: ', flpins, ' MFLOPS: ', mflops
+      call dummy(mres)
 
       stop
       end

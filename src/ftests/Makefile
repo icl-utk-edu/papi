@@ -32,8 +32,8 @@ fmatrixpapi: fmatrixpapi.F dummy.o $(PAPILIB)
 strtest: strtest.F $(PAPILIB)
 	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
 
-flops: flops.F $(PAPILIB)
-	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
+flops: flops.F dummy.o $(PAPILIB)
+	$(F77) $(OPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F dummy.o $(PAPILIB) $(LDFLAGS) -o flops
 
 clean:
 	rm -f *.o $(TESTS) core *~

@@ -5,7 +5,7 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads
 SERIAL  = sprofile eventname case1 case2 flops avail zero first second third third-inv fourth fourth-inv cost johnmay2 johnmay clockres fourth fifth nineth overflow_single_event overflow profile tenth native 
 BROKEN	= inherit pernode
 ALL 	= $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL)
-UTILOBJS= do_loops.o test_utils.o
+UTILOBJS= do_loops.o test_utils.o dummy.o
 INCLUDE = -I..
 PAPILIB	= ../libpapi.a
 
@@ -114,6 +114,9 @@ case1: case1.c $(PAPILIB)
 
 case2: case2.c $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) case2.c $(PAPILIB) $(LDFLAGS) -o case2
+
+dummy.o: dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c dummy.c
 
 do_loops.o: do_loops.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(NOOPT) -c do_loops.c
