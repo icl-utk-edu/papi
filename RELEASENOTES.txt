@@ -37,6 +37,8 @@ Major Issues:
   - Fixes for SGI Propack 3 on Altix...
     This happens because it's a Perfmon 2 platform + NPTL threads. Got
     rid of those pesky, pesky pids instead of nice little tids.
+  - Added code to use the MM timer on the Altix. This provides synchronized
+    RTC's across the system.
 
 * src/linux.c:
   - Fixed a bug that showed up on the Nocona. A string was being used
@@ -201,5 +203,26 @@ Known Bugs:
 * src/x1.c:
   - A subtle bug was uncovered in the use of hardware event overflow on the 
     X1 P-chip. It appears that once overflow is turned on, it cannot be turned
-    off without exiting the application. This affects the overflow_force_software()
-    test on X1.
+    off without exiting the application. This affects the 
+    overflow_force_software() test on X1.
+
+* src/linux-ia64.c:
+  - On many Redhat IA64 systems, and this includes SGI's Propack 3 and 4,
+  there is a bug in the pfmon code (the kernel counter subsystem) that
+  causes interrupts to stop being delivered to the user code. This can
+  be seen by repeatedly running the profile_pthreads test case. You will
+  either get an error message from PFM_RESTART or you will see that the
+  PAPI_FP_OPS counter has gone to 0 or a positive value. This does not
+  happen on stock 2.4 kernels that have been properly patched with Bjorn's
+  IA64 update. 2.6 kernels do not have this issue. If you have a kernel
+  that exhibits this problem, please send the name to us.
+
+* src/aix.c:
+  - On AIX/Power 4 systems, using highly threaded programs and multiplexing
+  occasionally fails. We believe this is due to a bug in the underlying PMAPI
+  subsystem that loses context. With low number of threads, this doesn't
+  happen. This can be seen by running the kufrin test case. This has been 
+  verified on a system with 5.2.0.50 of the Base Operating System and
+  5.2.0.40 of the Performance Monitor API Kernel.
+
+  
