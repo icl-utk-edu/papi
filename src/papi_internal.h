@@ -125,5 +125,5 @@ extern int _papi_hwd_write(void *machdep, long long events[]);
                          in the User's Low Level API, and also 
                          overflow thresholds and multiplexing */
 extern int _papi_hwd_setopt(int code, int value, void *option);
-extern int _papi_hwd_getopt(int code, int value, void *option);
+extern int _papi_hwd_getopt(int code, int *value, void *option);
 

@@ -1,8 +1,5 @@
 /* file: papi.h */
 
-/*platform specific defintions*/
-#include "papiStdEventDefs.h" 
-
 /*
 Return Codes
 
@@ -10,7 +7,6 @@ All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
 failure. 
 */
-
 
 #define PAPI_OK_MPX    1  /*No error, multiplexing has been enabled 
                             and is now active*/

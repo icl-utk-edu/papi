@@ -8,10 +8,15 @@
 
 /* PAPI stuff */
 
+#include <sys/types.h>
+#include <linux/unistd.h>	/* For syscall numbers */
+#include "perf.h"
+
+_syscall3(int, perf, int, op, int, counter, int, event);
+
 #include "papi_internal.h"
 #include "papi.h"
 #include "papiStdEventDefs.h"
-#include "perf.h" /* substrate */
 
 /* The following structure holds preset values for that defined in the 
    standard. Some presets may require the use
@@ -132,6 +137,7 @@ int _papi_hwd_init(EventSetInfo *zero)
 
   zero->machdep = (void *)&current;
 
+  return(PAPI_OK);
 }
 
 int _papi_hwd_add_event(void *machdep, int event)
@@ -235,6 +241,8 @@ int _papi_hwd_add_event(void *machdep, int event)
     this_state->number += 4;
     return 0;
   }
+
+  return(PAPI_OK);
 }
 
 
@@ -511,16 +519,14 @@ int _papi_hwd_write(void *machdep, long long events[])
 
 int _papi_hwd_setopt(int code, int value, void *option)
 {
-  int *ptr;		//added to avoid compile error
-
   switch (code)
     {
     case PAPI_SET_MPXRES:
-      return(PAPI_error(PAPI_ESBSTR,0));	//changed NULL to 0
+      return(PAPI_ESBSTR);	//changed NULL to 0
     case PAPI_SET_OVRFLO:
-      return(_papi_hwd_setopt(code,value,ptr));
+      return(PAPI_ESBSTR);	//changed NULL to 0
     default:
-      return(PAPI_error(PAPI_EINVAL,0));	//changed NULL to 0
+      return(PAPI_EINVAL);	//changed NULL to 0
     }
 }
 
@@ -529,18 +535,16 @@ int _papi_hwd_setopt(int code, int value, void *option)
 
   /* probably the same info as above */
 
-int _papi_hwd_getopt(int code, int value, void *option)
+int _papi_hwd_getopt(int code, int *value, void *option)
 {
-  int *ptr;
-
   switch (code)
     {
     case PAPI_GET_MPXRES:
-      return(PAPI_error(PAPI_ESBSTR,0));
+      return(PAPI_ESBSTR);
     case PAPI_GET_OVRFLO:
-      return(_papi_hwd_setopt(code,value,ptr));
+      return(PAPI_ESBSTR);	//changed NULL to 0
     default:
-      return(PAPI_error(PAPI_EINVAL,0));
+      return(PAPI_EINVAL);
     }
 }
 
