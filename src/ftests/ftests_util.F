@@ -206,6 +206,9 @@ C
       do i = 1, n
         c = c + a * b
       end do
+#if defined(__ALPHA) and defined(__osf__)
+      call dummy(c)
+#endif
       end
 
       subroutine do_l1misses(n)
