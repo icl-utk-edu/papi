@@ -468,7 +468,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 
 long_long _papi_hwd_get_real_cycles(void)
 {
-   return (((long_long)_rtc() * (long_long)_papi_hwi_system_info.hw_info.mhz) /a(long_long)75);
+   return (((long_long)_rtc() * (long_long)_papi_hwi_system_info.hw_info.mhz) / (long_long)75);
 }
 
 long_long _papi_hwd_get_real_usec(void)
