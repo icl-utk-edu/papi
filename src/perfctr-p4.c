@@ -69,6 +69,23 @@ inline static int setup_p4_presets(int cputype)
 */
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
+   int def_mode, i;
+   switch(_papi_hwi_system_info.default_domain) {
+   case PAPI_DOM_USER:
+      def_mode = ESCR_T0_USR;
+      break;
+   case PAPI_DOM_KERNEL:
+      def_mode = ESCR_T0_OS;
+      break;
+   case PAPI_DOM_ALL:
+      def_mode = ESCR_T0_OS | ESCR_T0_USR;
+      break;
+   default:
+      abort();
+   }
+   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
+   }
    ptr->control.cpu_control.tsc_on = 1;
    ptr->control.cpu_control.nractrs = 0;
    ptr->control.cpu_control.nrictrs = 0;
@@ -614,7 +631,7 @@ static void clear_control_state(hwd_control_state_t * this_state)
       SUBDBG("Clearing pmc event entry %d\n", i);
       this_state->control.cpu_control.pmc_map[i] = 0;
       this_state->control.cpu_control.evntsel[i] = 0;
-      this_state->control.cpu_control.evntsel_aux[i] = 0;
+      this_state->control.cpu_control.evntsel_aux[i] = this_state->control.cpu_control.evntsel_aux[i] & (ESCR_T0_OS | ESCR_T0_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
 
@@ -637,50 +654,33 @@ static void clear_control_state(hwd_control_state_t * this_state)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count)
 {
-   int i, nractrs, def_mode;
+   int i;
 
    P4_register_t *bits;
 
    /* clear out everything currently coded */
    clear_control_state(this_state);
 
-   /* determine the current domain setting */
-   switch(_papi_hwi_system_info.default_domain) {
-   case PAPI_DOM_USER:
-      def_mode = ESCR_T0_USR;
-      break;
-   case PAPI_DOM_KERNEL:
-      def_mode = ESCR_T0_OS;
-      break;
-   case PAPI_DOM_ALL:
-      def_mode = ESCR_T0_OS | ESCR_T0_USR;
-      break;
-   default:
-      return(PAPI_EINVAL);
-   }
-
    /* fill the counters we're using */
-   nractrs = this_state->control.cpu_control.nractrs;
    for (i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
       bits = &native[i].ni_bits;
 
       /* Add counter control command values to eventset */
 
-      this_state->control.cpu_control.pmc_map[nractrs] = bits->counter[0];
-      this_state->control.cpu_control.evntsel[nractrs] = bits->cccr;
-      this_state->control.cpu_control.ireset[nractrs] = bits->ireset;
-      this_state->control.cpu_control.pmc_map[nractrs] |= FAST_RDPMC;
-      this_state->control.cpu_control.evntsel_aux[nractrs] = bits->event | def_mode;
+      this_state->control.cpu_control.pmc_map[i] = bits->counter[0];
+      this_state->control.cpu_control.evntsel[i] = bits->cccr;
+      this_state->control.cpu_control.ireset[i] = bits->ireset;
+      this_state->control.cpu_control.pmc_map[i] |= FAST_RDPMC;
+      this_state->control.cpu_control.evntsel_aux[i] |= bits->event;
       /* What happens if more than one native event has pebs_enable or pebs_matrix_vert?
          Are these just binary enables or can they actually have conflicting values? */
       if (bits->pebs_enable)
          this_state->control.cpu_control.p4.pebs_enable = bits->pebs_enable;
       if (bits->pebs_matrix_vert)
          this_state->control.cpu_control.p4.pebs_matrix_vert = bits->pebs_matrix_vert;
-      nractrs++;
    }
-   this_state->control.cpu_control.nractrs = nractrs;
+   this_state->control.cpu_control.nractrs = count;
 
    /* Make sure the TSC is always on */
    this_state->control.cpu_control.tsc_on = 1;
@@ -706,18 +706,18 @@ int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel_aux[i] &= ~(ESCR_T0_OS|ESCR_T0_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < cntrl->control.cpu_control.nractrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_OS;
       }
    }
