@@ -173,7 +173,7 @@ PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out
 }
 
 #if defined ( _CRAYT3E )
-PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check))
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check, int name_len))
 #elif defined(_FORTRAN_STRLEN_AT_END)  
 PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name_str, int *EventCode, char *descr_str, int *check,
 		                int name_len, int descr_len))
@@ -184,7 +184,7 @@ PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name, int *EventCode
 #if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
 #if defined( _CRAYT3E )
   char *name_str=_fcdtocp(name_fcd), *descr_str=_fcdtocp(descr_fcd);
-  int   out_len=_fcdlen(descr_fcd); descr_len=_fcdlen(descr_fcd);
+  int   out_len=_fcdlen(descr_fcd), descr_len=_fcdlen(descr_fcd);
 #endif
   char tmpname[PAPI_MAX_STR_LEN], tmpdescr[PAPI_MAX_STR_LEN];
   int i,slen;

@@ -522,10 +522,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 }
 
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int selector, used, preset_index;
+  int used;
 
   /* Find out which counters used. */
   
@@ -833,8 +832,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(zero, option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }
