@@ -283,13 +283,27 @@ static void mpx_shutdown_itimer(void)
 static void mpx_hold(void)
 {
   MPXDBG("sighold\n");
+#ifdef __BSD__ 
+	sigset_t set;
+	sigemptyset( &set );
+	sigaddset( &set, MPX_SIGNAL );
+	sigprocmask( SIG_BLOCK, &set, NULL );
+#else
   sighold(MPX_SIGNAL);
+#endif
 }
 
 static void mpx_release(void)
 {
   MPXDBG("sigrelse\n");
+#ifdef __BSD__
+	sigset_t set;
+	sigemptyset( &set );
+	sigaddset( &set, MPX_SIGNAL );
+	sigprocmask( SIG_UNBLOCK, &set, NULL );
+#else
   sigrelse(MPX_SIGNAL);
+#endif
 }
 
 #endif                          /* _WIN32 */

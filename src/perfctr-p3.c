@@ -21,7 +21,18 @@
 
 /* PAPI stuff */
 
-#ifdef PERFCTR26
+#ifdef __CATAMOUNT__
+#ifndef PERFCTR25
+#define PERFCTR25
+#endif
+#include <asm/cpufunc.h>
+#endif
+
+#if defined(PERFCTR26)
+#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
+#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
+
+#elif defined(PERFCTR25)
 #define PERFCTR_CPU_NAME   perfctr_info_cpu_name
 #define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
 #else
@@ -128,23 +139,30 @@ inline_static int setup_p3_presets(int cputype) {
       native_table = &_papi_hwd_p3_native_map;
       preset_search_map = &_papi_hwd_p3_preset_map;
       break;
-#ifdef PERFCTR26
+#ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
-#endif
       native_table = &_papi_hwd_pm_native_map;
       preset_search_map = &_papi_hwd_pm_preset_map;
       break;
+#endif
    case PERFCTR_X86_AMD_K7:
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
-#ifdef PERFCTR26
+
+#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
    case PERFCTR_X86_AMD_K8:
+      native_table = &_papi_hwd_k8_native_map;
+      preset_search_map = &_papi_hwd_opt_preset_map;
+      break;
+#endif
+#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
    case PERFCTR_X86_AMD_K8C:
       native_table = &_papi_hwd_k8_native_map;
       preset_search_map = &_papi_hwd_opt_preset_map;
       break;
 #endif
+
    default:
      PAPIERROR(MODEL_ERROR);
      return(PAPI_ESBSTR);
@@ -200,7 +218,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_PII:
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
-#ifdef PERFCTR26
+#ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
 #endif
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
@@ -209,8 +227,10 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
          ptr->control.cpu_control.pmc_map[i] = i;
       }
       break;
-#ifdef PERFCTR26
+#ifdef PERFCTR_X86_AMD_K8
    case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
    case PERFCTR_X86_AMD_K8C:
 #endif
    case PERFCTR_X86_AMD_K7:
@@ -383,6 +403,16 @@ int _papi_hwd_init_global(void)
    _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
+
+#ifdef __CATAMOUNT__
+   if (strstr(info.driver_version,"2.5") != info.driver_version) {
+      fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
+      return(PAPI_ESBSTR);
+    }
+  _papi_hwi_system_info.supports_hw_profile = 0;
+  _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
+  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
+#endif
 
    /* Setup presets */
    retval = setup_p3_presets(info.cpu_type);
@@ -721,10 +751,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
-
+#ifdef __CATAMOUNT__
+   isHardware = 1;
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 0, 1, &master);
+#else
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
                                       si->si_pmc_ovf_mask, 0, &master);
-
+#endif
    /* We are done, resume interrupting counters */
    if (isHardware) {
       if (vperfctr_iresume(master->context.perfctr) < 0) {
@@ -777,6 +810,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    hwd_control_state_t *this_state = &ESI->machdep;
    struct hwd_pmc_control *contr = &this_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
+
+#ifdef __CATAMOUNT__
+   if(contr->cpu_control.nrictrs) { 
+      OVFDBG("Catamount can't overflow on more than one event.\n");
+      return PAPI_EINVAL;
+   }
+#endif
 
    OVFDBG("EventIndex=%d\n", EventIndex);
 
@@ -872,22 +912,25 @@ inline_static long_long get_cycles (void)
    // Which is exactly where it needs to be for a 64-bit return value...
 }
 #else
-inline_static long_long get_cycles(void) {
-   long_long ret;
 #ifdef __x86_64__
-   do {
-      unsigned int a,d;
-      asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
-   } while(0);
+static __inline__ long_long get_cycles(void)
+{
+	unsigned int low, high;
+	__asm __volatile("rdtsc" : "=a" (low), "=d" (high));
+	return (low | ((long_long)high << 32));
+}
+
 #else
+inline_static long_long get_cycles(void)
+{
+	long_long ret;
    __asm__ __volatile__("rdtsc"
-                       : "=A" (ret)
-                       : /* no inputs */);
-#endif
+			    : "=A" (ret)
+			    : /* no inputs */);
    return ret;
 }
-#endif
+#endif /* __x86_64__ */
+#endif /* _WIN32 */
 
 long_long _papi_hwd_get_real_usec(void) {
    return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);

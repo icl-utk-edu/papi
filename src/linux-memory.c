@@ -41,7 +41,9 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
       break;
 #ifdef __x86_64__
    case PERFCTR_X86_AMD_K8:
+#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
    case PERFCTR_X86_AMD_K8C:
+#endif
       retval = init_amd(&hw_info->mem_hierarchy);
       break;
 #endif
@@ -839,6 +841,12 @@ long _papi_hwd_get_dmem_info(int option)
    }
 }
 #else
+#ifdef __CATAMOUNT__
+long _papi_hwd_get_dmem_info(int option)
+{
+	return( PAPI_EINVAL );
+}
+#else
 long _papi_hwd_get_dmem_info(int option)
 {
    pid_t pid = getpid();
@@ -872,5 +880,6 @@ long _papi_hwd_get_dmem_info(int option)
       return (PAPI_EINVAL);
    }
 }
+#endif /* __CATAMOUNT__ */
 #endif /* _WIN32 */
 

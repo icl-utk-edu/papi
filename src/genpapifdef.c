@@ -19,7 +19,11 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <memory.h>
+
+#ifndef __BSD__ /* for Cray Red Storm */ 
 #include <malloc.h>
+#endif
+
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #undef NDEBUG

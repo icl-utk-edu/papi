@@ -10,7 +10,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <signal.h>
+
+#ifndef __BSD__ /* #include <malloc.h> */
 #include <malloc.h>
+#endif
+
 #include <assert.h>
 #include <string.h>
 #include <math.h>
@@ -30,10 +34,21 @@
 #include <time.h>
 #include <errno.h>
 #include <ctype.h>
+
+#ifdef __BSD__
+#include <ucontext.h>
+#else
 #include <sys/ucontext.h>
+#endif
+
 #include <sys/times.h>
 #include <sys/time.h>
-#include <linux/unistd.h>
+
+#ifndef __BSD__ /* #include <linux/unistd.h> */
+  #ifndef __CATAMOUNT__
+    #include <linux/unistd.h>	
+  #endif
+#endif
 
 #ifndef CONFIG_SMP
 /* Assert that CONFIG_SMP is set before including asm/atomic.h to 
@@ -124,10 +139,15 @@ typedef ucontext_t hwd_ucontext_t;
 
 /* Overflow macros */
 #ifdef __x86_64__
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+  #ifdef __CATAMOUNT__
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext))->sc_rip)
+  #else
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+  #endif
 #else
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
+
 #define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1

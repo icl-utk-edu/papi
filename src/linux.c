@@ -114,6 +114,46 @@ int _papi_hwd_get_system_info(void)
 }
 
 #else
+#ifdef __CATAMOUNT__
+
+int _papi_hwd_update_shlib_info(void)
+{
+   /* Catamount doesn't support shared libraries */
+   return PAPI_ESBSTR;
+}
+
+int _papi_hwd_get_system_info(void)
+{
+   pid_t pid;
+
+   /* Software info */
+
+   /* Path and args */
+
+   pid = getpid();
+   if (pid < 0)
+     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
+   _papi_hwi_system_info.pid = pid;
+
+   /* executable name is hardcoded for Catamount */
+   sprintf(_papi_hwi_system_info.exe_info.fullname,"/home/a.out");
+	sprintf(_papi_hwi_system_info.exe_info.address_info.name,"%s",
+                  basename(_papi_hwi_system_info.exe_info.fullname));
+
+   /* Hardware info */
+
+  _papi_hwi_system_info.hw_info.ncpu = 1;
+  _papi_hwi_system_info.hw_info.nnodes = 1;
+  _papi_hwi_system_info.hw_info.totalcpus = 1;
+  _papi_hwi_system_info.hw_info.vendor = 2;
+
+	sprintf(_papi_hwi_system_info.hw_info.vendor_string,"AuthenticAMD");
+	_papi_hwi_system_info.hw_info.revision = 1;
+
+  return(PAPI_OK);
+}
+
+#else
 
 int _papi_hwd_update_shlib_info(void)
 {
@@ -451,5 +491,5 @@ int _papi_hwd_get_system_info(void)
 
    return (PAPI_OK);
 }
-
+#endif /* __CATAMOUNT__ */
 #endif /* _WIN32 */
