@@ -12,23 +12,11 @@
 #include <sys/procfs.h>
 #include <machine/hal_sysinfo.h>
 #include <assert.h>
+
 #include "papi.h"
-#include "papi_internal.h"
-#include "papiStdEventDefs.h"
 
 #define EV_MAX_COUNTERS 3
-
-/* This comes from the kernel when we get the overflow counts. */
-
-struct pfcntrs_ev6
-{
-        ulong pr_cycle; /* process cycle counter */
-        ulong pf_cntr0; /* driver's counter 1 */
-        ulong pf_cntr1; /* driver's counter 2 */
-        ulong padding;  /* work around driver bug */
-};
-
-/* This comes from the kernel when we get the overflow counts. */
+#define EV_MAX_CPUS 32
 
 typedef union {
   struct pfcntrs_ev6 ev6;
@@ -54,6 +42,8 @@ typedef struct hwd_control_state {
   /* Interrupt interval */
   int timer_ms;  
 } hwd_control_state_t;
+
+#include "papi_internal.h"
 
 /* Preset structure */
 

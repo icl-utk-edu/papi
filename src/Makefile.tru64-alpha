@@ -15,11 +15,12 @@ CC	= cc
 CPP	= cc -E
 F77	= f90
 MISCOBJS= cpu_version.o read_cycle_counter.o
+MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
 
 include Makefile.inc
 
 cpu_version.o: alpha/cpu_version.s
-	cc -O -c alpha/cpu_version.s
+	cc -O -c alpha/cpu_version.s 
 
 read_cycle_counter.o: alpha/read_cycle_counter.s
 	cc -O -c alpha/read_cycle_counter.s

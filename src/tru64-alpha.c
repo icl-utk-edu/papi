@@ -176,49 +176,38 @@ static int update_global_hwcounters(EventSetInfo *global)
   int i, retval;
   hwd_control_state_t *current_state = (hwd_control_state_t *)global->machdep;
   struct pfcntrs_ev6 tev6;
-  struct pfcntrs_ev6 *interrupts_ev6 = &tev6;
+  struct pfcntrs_ev6 cntrs[EV_MAX_CPUS];
+  struct pfcntrs_ev6 *ev6 = cntrs;
   union pmctrs_ev6 values_ev6;
   long counter_values[EV_MAX_COUNTERS] = { 0, 0, 0 };
 
-  /* Get interrupt vals for the driver */
+  /* Whoa boy...*/
 
-  retval = ioctl(current_state->fd, PCNT6GETCNT, &interrupts_ev6);
+  retval = ioctl(current_state->fd, PCNTRDISABLE);
   if (retval == -1)
     return(PAPI_ESYS);
 
-  DBG((stderr,"PCNT6GETCNT returns C0 0x%lx C1 0x%lx CYCLES 0x%lx\n",
-       interrupts_ev6->pf_cntr0,interrupts_ev6->pf_cntr1,interrupts_ev6->pr_cycle));
+  /* Get vals for the driver, thanks to Bill Gray! */
+
+  retval = ioctl(current_state->fd, PCNT6READCNTRS, &ev6);
+  if (retval == -1)
+    return(PAPI_ESYS);
 
   /* Get CPU vals. */
 
   for (i=0;i<_papi_system_info.hw_info.ncpu;i++)
     {
-      values_ev6.pmctrs_ev6_long = 0;
-      values_ev6.pmctrs_ev6_cpu = i;
-
-      retval = ioctl(current_state->fd, PCNT6GETCNTRS, &values_ev6.pmctrs_ev6_long);
-      if (retval == -1)
-	{
-	  perror("");
-	  return PAPI_ESYS;
-	}
-
-      DBG((stderr,"PCNT6GETCNTRS %d returns 0x%lx\n",i,values_ev6.pmctrs_ev6_long));
-      DBG((stderr,"PCNT6GETCNTRS %d C0: %ld C1: %ld\n",i,values_ev6.pmctrs_ev6_cntr0,values_ev6.pmctrs_ev6_cntr1));
-
       /* Do the math */
 
-      counter_values[0] += values_ev6.pmctrs_ev6_cntr0;
-      counter_values[1] += values_ev6.pmctrs_ev6_cntr1; 
+      counter_values[0] += cntrs[i].pf_cntr0;
+      counter_values[1] += cntrs[i].pf_cntr1; 
       
       DBG((stderr,"Actual values %d %ld %ld \n",i,counter_values[0],counter_values[1]));
     }
 
-  counter_values[0] += (interrupts_ev6->pf_cntr0 << 20);
-  counter_values[1] += (interrupts_ev6->pf_cntr1 << 20);
-
   DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
        global->hw_start[0]+counter_values[0],global->hw_start[0],counter_values[0]));
+
   if (current_state->selector & 0x1)
     global->hw_start[0] = global->hw_start[0] + counter_values[0];
 
@@ -509,13 +498,11 @@ static void set_hwcntr_codes(int selector, long *from, ev_control_t *to)
     }
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
-  long tmp_cmd[EV_MAX_COUNTERS];
-  long *codes;
+  long tmp_cmd[EV_MAX_COUNTERS], *codes;
 
   if (EventCode & PRESET_MASK)
     { 
@@ -555,8 +542,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = preset_map[preset_index].counter_cmd;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
+      out->command = derived;
+      out->operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
@@ -603,61 +590,29 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector, used, preset_index;
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
- 
-  if (EventCode & PRESET_MASK)
-    { 
-      preset_index = EventCode ^ PRESET_MASK; 
-
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-	return(PAPI_ENOEVNT);
-    }
-  else
-    {
-      int hwcntr_num, code;
-      
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0xff;  /* 0 through 7 */ 
-      if (hwcntr_num > _papi_system_info.num_gp_cntrs)
-	return(PAPI_EINVAL);
-
-      code = EventCode >> 8; /* 0 through 50 */
-      if (code > 50)
-	return(PAPI_EINVAL); 
-
-      selector = 1 << hwcntr_num;
-    }
-
-  /* Check if these counters aren't used. */
-
-  if ((used & selector) != used)
-    return(PAPI_EINVAL);
+  used = in->selector;
 
   /* Clear out counters that are part of this event. */
-  /* Remember, that selector might encode duplicate events
-     so we need to know only the ones that are used. */
-  
-  this_state->selector = this_state->selector ^ (selector & used);
+
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
 {
   return(PAPI_ESBSTR);
 }
@@ -984,8 +939,10 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
     case PAPI_SET_INHERIT:
       return(set_inherit(zero, option->inherit.inherit));
+#endif
     default:
       return(PAPI_EINVAL);
     }
