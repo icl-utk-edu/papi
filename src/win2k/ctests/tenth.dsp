@@ -92,6 +92,10 @@ SOURCE=..\..\tests\do_loops.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\tests\dummy.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\tests\tenth.c
 # End Source File
 # Begin Source File

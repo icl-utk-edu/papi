@@ -96,6 +96,10 @@ SOURCE=..\..\tests\do_loops.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\tests\dummy.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\tests\test_utils.c
 # End Source File
 # End Group
