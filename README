@@ -9,13 +9,67 @@
 
 This directory contains:
 
-README		
-COPYRIGHT	
-INSTALL		
-buglist		Fixed bug list, bug handling and reporting.
-man/ 		Unformatted manual pages and associated macros.
-src/ 		The PAPI library, test cases and Linux kernel patches.
-src/perf	The 'old' perf kernel patch for 2.0 and 2.2.
-src/perfctr	The 'new' Linux kernel patch for 2.2 and 2.4.
-spec/		The retired API specification.
-tools/		Sample tools using PAPI.
+README		This file.
+LICENSE.txt	The text of the PAPI license.	
+INSTALL.txt	Instructions for installing on all supported platforms.
+HISTORY.txt	A brief history of features and platforms added to PAPI.
+doc/ 		User documentation and support files.
+		See doc/README for details.
+man/ 		Stuff related to PAPI man pages. See man/README for details.
+spec/		Old versions of the PAPI specification.
+		See doc/ for current version.
+src/ 		The PAPI library source files and support files.
+		See src/README for more details.
+tools/		A growing collection of sample tools for use with PAPI.
+		See README files for individual tools for more information.
+
+
+Getting Started
+---------------
+
+If this is the first file you've opened in the PAPI tree, we'll try to give you
+a few tips on where to go from here.
+
+- Read the license found in LICENSE.txt. It's pretty short, and not very 
+  restrictive, but it'll give you an idea of what you can and can't do with the
+  PAPI sources.
+- Visit the website at: <http://icl.cs.utk.edu/papi>
+  There you can find late-breaking news that may be more current than in these
+  files. You can also find documentation in a greater variety of formats than
+  in the papi/doc/ directory.
+- Sign up for the PAPI mailing list(s). Instructions are on our home page.
+- Read the HISTORY.txt file to get an idea of what's new in the current release.
+
+
+Installing PAPI
+---------------
+
+To install PAPI on your system:
+- Find the section in INSTALL.txt that pertains to your hardware and operating
+  system.
+- Follow the directions to install required components and build the PAPI
+  libraries.
+- Run the test suite when you are finished to verify that everything went ok.
+
+
+Using PAPI
+----------
+
+To use PAPI in your own programs:
+- Read the User's Guide. Versions in a variety of formats can be found in the 
+  doc/ directory and online.
+- Try a test program. Source for a number of tests in both C and FORTRAN is
+  available in the src/tests/ and src/ftests/ directories. Find a program
+  that's similar to what you want to do. Make sure you can build it and run it.
+- Write a test program of your own, exercising the PAPI events and features of
+  interest to you.
+- Go for broke. Fold PAPI calls into your sources and see what you can learn.
+
+
+Bugs and Questions
+------------------
+- Visit our FAQ (such as it is) at: <http://icl.cs.utk.edu/papi/faq/>
+- Subscribe to the PAPI mailing list at:
+  <http://www.nacse.org/mailman/listinfo/ptools-perfapi>
+- Read historical postings to the list.
+- Post questions or bugs to the list.
