@@ -1,42 +1,59 @@
-.\" @(#)PAPI_library_init    0.10 00/05/17 CHD; from S5
-.TH PAPI_library_init 0 "17 May 2000"
+.\" $Id$
+.TH PAPI_library_init 3 "October, 2000" "" "PAPI"
+
 .SH NAME
-PAPI_library_init \- Initializes the PAPI library 
-.LP
+PAPI_library_init \- initialize the PAPI library 
+
 .SH SYNOPSIS
-.LP
-int PAPI_library_init (int *EventSet)
-.LP
+.B #include <papi.h>
+
+.BI "int PAPI_library_init(int " version ");"
+
 .SH DESCRIPTION
-.LP
-.B PAPI_library_init(\|)
-This function initializes the PAPI library and has to be called
-before PAPI can be used.  Also PAPI_thread_init has to be called
-before PAPI calls can be used in a user application.
-.LP
-.SH CROSS-REFERENCE WITH OTHER PerfAPI FUNCTIONS
-.nf
-.B  \t
-.B  PAPI_library_init may be called by:
-.B  \t
-.B  \tthe user application program
-.B  \tPAPI_start_counters
-.B  \tPAPI_read_counters
-.B  \tPAPI_stop_counters
-.fi
-.nf
-.B  \t
-.B  PAPI_library_init contains calls to:
-.B  \t
-.B  \t_papi_hwd_init_globabl 
-.B  \t_papi_hwd_query
-.B  \tallocate_eventset_map
-.fi
-.LP
-.SH SEE ALSO
-.nf 
-.B The PerfAPI Draft: 
-.B \thttp://icl.cs.utk.edu/projects/papi/api/ 
+.B "PAPI_library_init()"
+initializes the PAPI library. It must be called
+before any PAPI functions can be used. If your application
+is making use of threads, 
+.BR "PAPI_thread_init" (3),
+must also be called prior to making any calls to the library.
+
+Upon initialization, PAPI checks the
+.I "version"
+argument against the value of
+.I "PAPI_VER_CURRENT"
+when the library was
+compiled. This guards against portability problems when updating the
+PAPI shared libraries on your system.
+
+.SH RETURN VALUES
+On success, this function returns 
+.I "PAPI_VER_CURRENT."
+\.
+On error, a non-zero non-zero error code is returned.
+
+.SH ERRORS
+.TP
+.B "PAPI_EINVAL"
+.I "papi.h"
+is different from the version used to 
+compile the PAPI library.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+.TP
+.B "PAPI_ESYS"
+A system or C library call failed inside PAPI, see the 
+.I "errno"
+variable.
+
+.SH AUTHOR
+Philip J. Mucci <mucci@cs.utk.edu>
+
 .SH BUGS
-.LP
-This function has no known bugs.
+If you don't call this, you're application could core dump.
+
+.SH SEE ALSO
+.BR PAPI_thread_init "(3),"
+The PAPI Web Site: 
+.B http://icl.cs.utk.edu/projects/papi
+
