@@ -15,7 +15,7 @@
 int main(int argc, char **argv)
 {
    int retval, i,j;
-   int EventSet;
+   int EventSet=PAPI_NULL;
    long_long values[2];
    const PAPI_hw_info_t *hwinfo = NULL;
    char descr[PAPI_MAX_STR_LEN];

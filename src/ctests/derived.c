@@ -22,7 +22,7 @@ extern int TESTS_QUIET;
 int main(int argc, char **argv)
 {
    int retval, tmp;
-   int EventSet;
+   int EventSet=PAPI_NULL;
    int i;
    PAPI_event_info_t info;
    long_long values;

@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
    double c, a = 0.999, b = 1.001;
    int n = 1000;
-   int EventSet;
+   int EventSet=PAPI_NULL;
    int retval;
    int i, j = 0;
    long_long g1[2];

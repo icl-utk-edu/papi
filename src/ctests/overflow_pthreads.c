@@ -38,7 +38,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void * cont
 void *Thread(void *arg)
 {
    int retval, num_tests = 1;
-   int EventSet1;
+   int EventSet1=PAPI_NULL;
    int mask1, papi_event;
    int num_events1;
    long long **values;

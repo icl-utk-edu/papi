@@ -17,7 +17,7 @@ int err_exit(int code, char *str)
 
 int main()
 {
-   int retval, pid, status, EventSet;
+   int retval, pid, status, EventSet=PAPI_NULL;
    long long int values[2];
    PAPI_option_t opt;
 

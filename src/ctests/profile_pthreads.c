@@ -14,7 +14,7 @@ caddr_t my_start, my_end;
 void *Thread(void *arg)
 {
    int retval, num_tests = 1, i;
-   int EventSet1, mask1, PAPI_event;
+   int EventSet1=PAPI_NULL, mask1, PAPI_event;
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc;

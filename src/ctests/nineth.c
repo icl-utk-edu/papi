@@ -22,8 +22,8 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval, num_tests = 2, tmp;
-   int EventSet1;
-   int EventSet2;
+   int EventSet1=PAPI_NULL;
+   int EventSet2=PAPI_NULL;
    int mask1 = 0x80001;             /* FP_OPS and TOT_CYC */
    int mask2 = 0x8;             /* FLOPS */
    int num_events1;

@@ -13,7 +13,7 @@ functionality for a parent and a forked child. */
 #include "papi_test.h"
 #include <sys/wait.h>
 
-int EventSet1;
+int EventSet1=PAPI_NULL;
 int PAPI_event, mask1;
 int num_events1 = 2;
 long_long elapsed_us, elapsed_cyc;

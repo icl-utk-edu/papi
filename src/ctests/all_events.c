@@ -12,7 +12,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval, i;
-   int EventSet, count = 0;
+   int EventSet=PAPI_NULL, count = 0;
    long_long values;
    PAPI_event_info_t info;
 

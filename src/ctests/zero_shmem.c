@@ -42,7 +42,7 @@ Master pthread:
 void Thread(int n)
 {
    int retval, num_tests = 1, tmp;
-   int EventSet1;
+   int EventSet1=PAPI_NULL;
    int mask1 = 0x5;
    int num_events1;
    long long **values;

@@ -3,7 +3,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int FPEventSet;
+   int FPEventSet=PAPI_NULL;
    long_long values;
    int PAPI_event, retval;
    char event_name[PAPI_MAX_STR_LEN];

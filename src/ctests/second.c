@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 {
    int retval, num_tests = 3, tmp;
    long_long **values;
-   int EventSet1, EventSet2, EventSet3;
+   int EventSet1=PAPI_NULL, EventSet2=PAPI_NULL, EventSet3=PAPI_NULL;
    int num_events1, num_events2, num_events3;
    int mask1 = 0x3, mask2 = 0x3, mask3 = 0x3;
    PAPI_option_t options;

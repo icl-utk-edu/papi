@@ -20,7 +20,7 @@ int main()
 {
    int ncpu, nctr, i, actual_domain;
    int retval;
-   int EventSet;
+   int EventSet=PAPI_NULL;
    long long *values;
    long long elapsed_us, elapsed_cyc;
    PAPI_option_t options;

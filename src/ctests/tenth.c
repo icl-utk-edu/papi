@@ -58,9 +58,9 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval, num_tests = 30, tmp;
-   int EventSet1;
-   int EventSet2;
-   int EventSet3;
+   int EventSet1=PAPI_NULL;
+   int EventSet2=PAPI_NULL;
+   int EventSet3=PAPI_NULL;
    int mask1 = MASK1;
    int mask2 = MASK2;
    int mask3 = MASK3;

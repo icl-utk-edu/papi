@@ -37,7 +37,7 @@ static const PAPI_hw_info_t *hw_info = NULL;
 void *Thread(void *arg)
 {
    int retval, num_tests = 1;
-   int EventSet1;
+   int EventSet1=PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
    long_long **values;

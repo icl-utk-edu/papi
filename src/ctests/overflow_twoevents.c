@@ -72,7 +72,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 
 int main(int argc, char **argv)
 {
-   int EventSet;
+   int EventSet=PAPI_NULL;
    long_long(values[3])[2];
    int retval;
    int PAPI_event,k ;

@@ -41,7 +41,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 void mainloop(int arg)
 {
    int retval, num_tests = 1;
-   int EventSet1;
+   int EventSet1=PAPI_NULL;
    int mask1 = 0x0;
    int num_events1;
    long long **values;

@@ -20,7 +20,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int EventSet;
+   int EventSet=PAPI_NULL;
    int retval;
    long_long g1[2];
    unsigned int eventcode = PAPI_TOT_INS;

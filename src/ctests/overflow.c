@@ -48,7 +48,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 
 int main(int argc, char **argv)
 {
-   int EventSet;
+   int EventSet=PAPI_NULL;
    long_long(values[2])[2];
    long_long min, max;
    int num_flops, retval;

@@ -18,7 +18,7 @@
 int main(int argc, char **argv)
 {
    int retval, num_tests = 1, tmp;
-   int EventSet1;
+   int EventSet1=PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
    long_long **values;
