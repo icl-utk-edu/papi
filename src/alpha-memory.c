@@ -12,7 +12,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include SUBSTRATE
-
+#include "papi_internal.h"
+#include "papi_protos.h"
 
 int get_memory_info(PAPI_hw_info_t * mem_info)
 {
@@ -29,7 +30,7 @@ long _papi_hwd_get_dmem_info(int option)
 
    sprintf(pfile, "/proc/%05d", pid);
    if ((fd = open(pfile, O_RDONLY)) < 0) {
-      DBG((stderr, "PAPI_get_dmem_info can't open /proc/%d\n", pid));
+      SUBDBG("PAPI_get_dmem_info can't open /proc/%d\n", pid);
       return (PAPI_ESYS);
    }
    if (ioctl(fd, PIOCPSINFO, &info) < 0) {
