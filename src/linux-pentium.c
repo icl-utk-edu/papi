@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <linux/unistd.h>	/* For syscall numbers */
 #include <perf.h>
+#include <asm/system.h>
+#include <unistd.h>
 
 _syscall3(int, perf, int, op, int, counter, int, event);
 
@@ -134,6 +136,13 @@ int _papi_hwd_init(EventSetInfo *zero)
   
   /* At init time, the higher level library should always allocate and 
      reserve EventSet zero. */
+
+  unsigned long long stamp;
+
+  stamp = rdtsc();
+  sleep (1);
+  stamp = (rdtsc() - stamp)/1000000;
+  _papi_system_info.mhz = stamp;
 
   zero->machdep = (void *)&current;
 
@@ -398,7 +407,7 @@ int _papi_hwd_start(void *machdep)
 
 int _papi_hwd_stop(void *machdep, long long events[])
 { hwd_control_state *this_state = (hwd_control_state *)machdep;
-  int retval, machnum;
+  int retval;
 
   retval = perf(PERF_STOP, 0, 0);
   if(retval) return(PAPI_EBUG); 
