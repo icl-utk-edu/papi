@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_create_eventset 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_create_eventset 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_create_eventset \- create an EventSet 
@@ -32,10 +32,10 @@ or similar routines.
 -- Address of an integer location to store the new EventSet handle
 
 .SH RETURN VALUES
-On success, this function returns
-.B "PAPI_OK."
- On error, a non-zero error code is returned.
-
+.nf
+On success, this function returns PAPI_OK.
+On error, a non-zero error code is returned.
+.fi
 .SH ERRORS
 .TP
 .B "PAPI_EINVAL"
@@ -58,7 +58,7 @@ Insufficient memory to complete the operation.
 
   /* Add Total Instructions Executed to our EventSet */
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     handle_error(1);
 .if t .ft P
 .fi
@@ -73,5 +73,6 @@ This function has no known bugs.
 .BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), " 
 .BR PAPI_rem_event "(3), " PAPI_rem_events "(3), " PAPI_add_event "(3), " 
 .BR PAPI_add_events "(3), " PAPI_add_pevent "(3), " 
- The PAPI Web Site: 
+
+.SH The PAPI Web Site: 
 http://icl.cs.utk.edu/projects/papi
