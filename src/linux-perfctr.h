@@ -9,11 +9,13 @@
 #include <math.h>
 #include <limits.h>
 #include <time.h>
+#include <errno.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <asm/system.h>
 #include <asm/param.h>
+#include <asm/bitops.h>
 #include <linux/unistd.h>	
 
 #ifndef CONFIG_SMP

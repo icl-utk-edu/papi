@@ -4,10 +4,10 @@ PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 #
 # GNU GCC section
 #
-#OPTFLAGS= -Wall -O3 -fomit-frame-pointer -march=pentiumpro
-#TOPTFLAGS= -g -Wall -O0 -march=pentiumpro
-OPTFLAGS= -Wall -g
-TOPTFLAGS= -g -Wall
+OPTFLAGS= -g -Wall -O3 -march=pentiumpro
+TOPTFLAGS= -g -Wall -O0 -march=pentiumpro
+#OPTFLAGS= -g -Wall -DDEBUG
+#TOPTFLAGS= -g -Wall
 #
 # GNU G77 section
 #

@@ -24,6 +24,8 @@
 
 #include SUBSTRATE
 
+#include "ia32_presets.h"
+
 /* First entry is mask, counter code 1, counter code 2, and TSC. 
 A high bit in the mask entry means it is an OR mask, not an
 and mask. This means that the same even is available on either
@@ -37,11 +39,6 @@ static hwd_preset_t *preset_map = NULL;
   NOTE: The obsolete linux-perf substrate is not supported by
   this scheme, although it could be.
 */
-#include "ia32_presets.h"
-
-#ifdef DEBUG
-#include <errno.h>
-#endif
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -1545,38 +1542,29 @@ void *_papi_hwd_get_overflow_address(void *context)
   return(location);
 }
 
-static atomic_t lock;
+static volatile unsigned int lock = 0;
+static volatile unsigned int *lock_addr = &lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,1);
 }
 
 void _papi_hwd_lock(void)
 {
-  DBG((stderr,"%lld lock %d\n",get_cycles(),atomic_read(&lock)));
-  if (atomic_dec_and_test(&lock))
-    return;
-  else
+  while (1)
     {
-#ifdef DEBUG
-      volatile int waitcyc = 0;
-#endif
-      while (atomic_dec_and_test(&lock))
+      if (test_and_set_bit(0,lock_addr)) /* from asm/bitops.h */
 	{
-	  DBG((stderr,"Waiting..."));
-#ifdef DEBUG
-	  waitcyc++;
-#endif
-	  atomic_inc(&lock);
+	  mb(); /* memory barrier/flush from asm/bitops.h */
+	  return;
 	}
     }
 }
 
 void _papi_hwd_unlock(void)
 {
-  DBG((stderr,"%lld unlock %d\n",get_cycles(),atomic_read(&lock)));
-  atomic_set(&lock, 1);
+  clear_bit(0, lock_addr); /* from asm/bitops.h */
+  mb(); /* memory barrier/flush from asm/bitops.h */
 }
 
 /* Machine info structure. -1 is unused. */
