@@ -52,9 +52,8 @@ Master serial thread:
 #ifdef _OPENMP
 #include <omp.h>
 #else
-#warning "This compiler does not understand OPENMP"
+#error "This compiler does not understand OPENMP"
 #endif
-
 
 void Thread(int n)
 {
