@@ -1181,7 +1181,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
    int j, retval = PAPI_OK, *pos;
 
