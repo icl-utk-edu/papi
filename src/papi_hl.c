@@ -18,13 +18,6 @@
 /* This file contains the 'high level' interface to PAPI. 
    BASIC is a high level language. ;-) */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
@@ -259,14 +252,14 @@ int _hl_rate_calls(float *real_time, float *proc_time, long_long * ins, float *r
       if ((retval = PAPI_stop(state->EventSet, values)) != PAPI_OK)
          return (retval);
       /* Use Multiplication because it is much faster */
-      *real_time = (float) ((PAPI_get_real_usec() - state->initial_time) * .000001);
+      *real_time = (float) ((long_long)(PAPI_get_real_usec() - state->initial_time) * .000001);
       *proc_time = (float) (values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
       if (*proc_time > 0)
          *rate = (float) ((float) values[0]*(EVENT==PAPI_FP_INS?_papi_hwi_system_info.hw_info.mhz:1)/(values[1]==0?1:values[1]));
       state->total_proc_time += *proc_time;
       state->total_ins += values[0];
       *proc_time = state->total_proc_time;
-      *ins = state->total_ins;
+      *ins = (long_long)state->total_ins;
       if ((retval = PAPI_start(state->EventSet)) != PAPI_OK) {
          state->running = 0;
          return (retval);

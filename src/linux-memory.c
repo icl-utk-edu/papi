@@ -15,13 +15,6 @@
 #include <limits.h>
 #endif
 
-#ifdef _WIN32
-/* Define SUBSTRATE to map to linux-perfctr.h
- * since we haven't figured out how to assign a value 
- * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
@@ -624,9 +617,20 @@ static int check_cpuid()
    volatile unsigned long val;
 #ifdef _WIN32
    __asm {
-   pushfd pop eax mov ebx, eax xor eax,
-          00200000 h push eax popfd pushfd pop eax cmp eax, ebx jz NO_CPUID mov val,
-          1 jmp END NO_CPUID: mov val, 0 END:}
+	   pushfd
+	   pop eax
+	   mov ebx, eax
+	   xor eax, 0x00200000
+	   push eax 
+	   popfd 
+	   pushfd 
+	   pop eax 
+	   cmp eax, ebx 
+	   jz NO_CPUID 
+	   mov val, 1 
+	   jmp END 
+NO_CPUID:  mov val, 0 
+END:	  }
 #elif defined(__x86_64__)
    __asm__ __volatile__("pushf;"
                         "pop %%eax;"

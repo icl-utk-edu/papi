@@ -19,13 +19,6 @@
 *          <your email address>
 */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_preset.h"
@@ -185,12 +178,9 @@ int PAPI_set_thr_specific(int tag, void *ptr)
 int PAPI_library_init(int version)
 {
    int i, j, tmp = 0;
-   char *var;
 
 #ifdef DEBUG
-#ifdef _WIN32                   /* don't want to define an environment variable... */
-   _papi_hwi_debug = 1;
-#else
+   char *var;
    _papi_hwi_debug = 0;
    if ((var = getenv("PAPI_DEBUG")) && var != NULL) {
       _papi_hwi_debug |= DEBUG_ON;
@@ -212,7 +202,6 @@ int PAPI_library_init(int version)
       _papi_hwi_debug |= DEBUG_MULTIPLEX;
    if (getenv("PAPI_DEBUG_OVERFLOW"))
       _papi_hwi_debug |= DEBUG_OVERFLOW;
-#endif
 #endif
 
    if ( init_level != PAPI_NOT_INITED )

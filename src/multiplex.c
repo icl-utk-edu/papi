@@ -102,13 +102,6 @@
 #include <pthread.h>
 #endif
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
@@ -819,12 +812,12 @@ int MPX_start(MPX_EventSet * mpx_events)
    }
 
 #ifdef MPX_DEBUG
-   fprintf(stderr, "%s:: start_c=%lld  thread->total_c=%lld\n", __FUNCTION__,
+   fprintf(stderr, "%s:%d:: start_c=%lld  thread->total_c=%lld\n", __FILE__, __LINE__,
            mpx_events->start_c, t->total_c);
    for (i = 0; i < mpx_events->num_events; i++) {
       fprintf(stderr,
-              "%s:: start_values[%d]=%lld  estimate=%lld rate=%g last active=%lld\n",
-              __FUNCTION__, i, mpx_events->start_values[i],
+              "%s:%d:: start_values[%d]=%lld  estimate=%lld rate=%g last active=%lld\n",
+              __FILE__, __LINE__, i, mpx_events->start_values[i],
               mpx_events->mev[i]->count_estimate, mpx_events->mev[i]->rate_estimate,
               mpx_events->mev[i]->prev_total_c);
    }
@@ -887,8 +880,8 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
                                  mev->prev_total_c));
 #ifdef MPX_DEBUG
                fprintf(stderr,
-                       "%s:: Inactive %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
-                       __FUNCTION__, i, mpx_events->stop_values[i], mev->count_estimate,
+                       "%s:%d:: Inactive %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
+                       __FILE__, __LINE__, i, mpx_events->stop_values[i], mev->count_estimate,
                        mev->rate_estimate,
                        cycles_this_slice + thread_data->total_c - mev->prev_total_c);
 #endif
@@ -898,8 +891,8 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
                                 (thread_data->total_c - mev->prev_total_c));
 #ifdef MPX_DEBUG
                fprintf(stderr,
-                       "%s:: -Active- %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
-                       __FUNCTION__, i, mpx_events->stop_values[i], mev->count_estimate,
+                       "%s:%d:: -Active- %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
+                       __FILE__, __LINE__, i, mpx_events->stop_values[i], mev->count_estimate,
                        mev->rate_estimate, thread_data->total_c - mev->prev_total_c);
 #endif
             }
@@ -932,8 +925,8 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
          values[i] = elapsed_slices ? (elapsed_values / elapsed_slices) : 0;
       }
 #ifdef MPX_DEBUG
-      fprintf(stderr, "%s:: event %d, values=%lld ( %lld - %lld), cycles %lld\n",
-              __FUNCTION__, i,
+      fprintf(stderr, "%s:%d:: event %d, values=%lld ( %lld - %lld), cycles %lld\n",
+              __FILE__, __LINE__, i,
               elapsed_values,
               mpx_events->stop_values[i], mpx_events->start_values[i],
               mev->is_a_rate ? elapsed_slices : 0);
@@ -995,7 +988,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
 
    /* Read the counter values, this updates mpx_events->stop_values[] */
 #ifdef MPX_DEBUG
-   fprintf(stderr, "%s:: Start\n", __FUNCTION__);
+   fprintf(stderr, "%s:%d:: Start\n", __FILE__, __LINE__);
 #endif
    retval = MPX_read(mpx_events, values);
    if (retval != PAPI_OK)
@@ -1061,7 +1054,7 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
    mpx_events->status = MPX_STOPPED;
 
 #ifdef MPX_DEBUG
-   fprintf(stderr, "%s:: End\n", __FUNCTION__);
+   fprintf(stderr, "%s:%d:: End\n", __FILE__, __LINE__);
 #endif
 
    /* Restore the timer (for other event sets that may be running) */
@@ -1114,7 +1107,7 @@ void MPX_shutdown(void)
 #endif
          nextthr = t->next;
 #ifdef MPX_DEBUG
-         fprintf(stderr, "%s:: Freeing thread %x\n", __FUNCTION__, t->pid);
+         fprintf(stderr, "%s:%d:: Freeing thread %x\n", __FILE__, __LINE__, t->pid);
 #endif
          free(t);
       }
