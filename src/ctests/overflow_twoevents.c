@@ -12,14 +12,17 @@
 #include "papi_test.h"
 
 #ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d ) Overflow at %x! overflow_vector=0x%x!\n"
+#define OVER_FMT	"handler(%d) Overflow at %x! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
+#define VEC_FMT	"Overflows at vector 0x%x: %d\n"
 #elif defined(_WIN32)
-#define OVER_FMT	"handler(%d ) Overflow at %p! overflow_vector=0x%x!\n"
+#define OVER_FMT	"handler(%d) Overflow at %p! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16I64d%16I64d\n"
+#define VEC_FMT	"Overflows at vector %I64d: %d\n"
 #else
 #define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
 #define OUT_FMT		"%-12s : %16lld%16lld\n"
+#define VEC_FMT	"Overflows at vector 0x%llx: %d\n"
 #endif
 
 typedef struct {
@@ -45,25 +48,25 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
    /* Look for the overflow_vector entry */
 
    for (i=0;i<3;i++)
-     {
-       if (overflow_counts[i].mask == overflow_vector)
-	 {
-	   overflow_counts[i].count++;
-	   return;
-	 }
-     }
+   {
+      if (overflow_counts[i].mask == overflow_vector)
+      {
+	      overflow_counts[i].count++;
+	      return;
+      }
+   }
 
    /* Didn't find it so add it. */
 
    for (i=0;i<3;i++)
-     {
-       if (overflow_counts[i].mask == (long_long)0)
-	 {
-	   overflow_counts[i].mask = overflow_vector;
-	   overflow_counts[i].count = 1;
-	   return;
-	 }
-     }
+   {
+      if (overflow_counts[i].mask == (long_long)0)
+      {
+         overflow_counts[i].mask = overflow_vector;
+         overflow_counts[i].count = 1;
+         return;
+      }
+   }
 
    /* Unknown entry!?! */
 
@@ -149,9 +152,8 @@ int main(int argc, char **argv)
 
    for(k=0; k<3; k++ )
    {
-      if (overflow_counts[k].mask) 
-         printf("Overflows vector 0x%llx: %d\n", (long_long)overflow_counts[k].mask,
-            overflow_counts[k].count);
+     if (overflow_counts[k].mask) 
+         printf(VEC_FMT, (long_long)overflow_counts[k].mask, overflow_counts[k].count);
    }
    printf("Case 2 %s Overflows: %d\n", "Unknown", total_unknown);
    printf("-----------------------------------------------\n");
