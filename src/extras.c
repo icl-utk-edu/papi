@@ -13,12 +13,14 @@ vendors did in the kernel extensions or performance libraries. */
 /* It also contains a new section at the end with Windows routines
  to emulate standard stuff found in Unix/Linux, but not Windows. */
 
-#ifndef _WIN32
-  #include SUBSTRATE
-#else
-  #include "win32.h"
-//  #include <winbase.h>
+#ifdef _WIN32
+  /* Define SUBSTRATE to map to linux-perfctr.h
+   * since we haven't figured out how to assign a value 
+   * to a label at make inside the Windows IDE */
+  #define SUBSTRATE "linux-perfctr.h"
 #endif
+
+#include SUBSTRATE
 
 #ifdef __LINUX__
 #include <limits.h>
@@ -581,6 +583,18 @@ extern int ffs(int i)
 extern int rand_r (unsigned int *Seed)
 {
 	return (1);
+}
+
+/*
+  Another Unix routine that doesn't exist in Windows.
+  Kevin uses it in the memory stuff, specifically in PAPI_get_dmem_info().
+*/
+extern int getpagesize(void)
+{
+  SYSTEM_INFO SystemInfo; 	// system information structure  
+
+  GetSystemInfo(&SystemInfo);	
+	return((int)SystemInfo.dwPageSize);
 }
 
 #endif /* _WIN32 */
