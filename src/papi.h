@@ -182,6 +182,13 @@ typedef struct _papi_granularity_option {
 typedef struct _papi_defgranularity_option {
   int granularity; } PAPI_defgranularity_option_t;
 
+typedef struct _papi_multistart_option {
+  int resolution;
+  int num_runners;
+  int num_events;
+  int **EvSetArray; 
+  void *virtual_machdep; } PAPI_multistart_option_t;
+
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
 typedef union {

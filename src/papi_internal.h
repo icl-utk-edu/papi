@@ -52,13 +52,17 @@ typedef struct {
 typedef struct {
   PAPI_defgranularity_option_t defgranularity; } _papi_int_defgranularity_t;
 
+typedef struct {
+  PAPI_multistart_option_t multistart; } _papi_int_multistart_t;
+
 /* The following is stored in each EventSetInfo */
 
 typedef struct {
   _papi_int_overflow_t overflow;
   _papi_int_multiplex_t multiplex;
   _papi_int_domain_t domain; 
-  _papi_int_granularity_t granularity; } _papi_int_alloptions_t;
+  _papi_int_granularity_t granularity; 
+  _papi_int_multistart_t multistart;   } _papi_int_alloptions_t;
 
 /* A pointer to the following is passed to _papi_hwd_ctl() */
 
@@ -68,7 +72,8 @@ typedef union {
   _papi_int_defdomain_t defdomain; 
   _papi_int_domain_t domain; 
   _papi_int_defgranularity_t defgranularity; 
-  _papi_int_granularity_t granularity; } _papi_int_option_t;
+  _papi_int_granularity_t granularity; 
+  _papi_int_multistart_t multistart;   } _papi_int_option_t;
 
 typedef struct _EventSetInfo {
   int EventSetIndex;       /* Index of the EventSet in the array  */
@@ -105,15 +110,6 @@ typedef struct _dynamic_array{
 	int    fullSlots;       /* number of full slots in dataSlotArray    */
 	int    lowestEmptySlot; /* index of lowest empty dataSlotArray    */
 } DynamicArray;
-
-typedef struct _papi_shared_info_t
-{ int **EvSetArray;
-  int **EventsArray;
-  void **MachdepArray;
-  int resolution;
-  int num_events;
-} PAPI_shared_info_t;
-
 
 typedef struct _papi_mdi {
   char substrate[81]; /* Name of the substrate we're using */
@@ -180,8 +176,8 @@ extern int _papi_hwd_ctl(int code, _papi_int_option_t *option);
 extern int _papi_set_domain(EventSetInfo *ESI, _papi_int_domain_t *domain);
 extern int _papi_hwd_shutdown(EventSetInfo *zero);
 extern int _papi_hwd_query(int preset);
-extern int _papi_hwd_check_runners(PAPI_shared_info_t *, DynamicArray *);
-extern int _papi_hwd_gather_events(PAPI_shared_info_t *);
+extern int _papi_hwd_gather_events(_papi_int_option_t *ptr);
+extern int _papi_hwd_setup_multistart(_papi_int_option_t *ptr);
 
 /* Portable overflow routines */
 

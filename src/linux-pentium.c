@@ -390,33 +390,9 @@ int _papi_hwd_add_prog_event(EventSetInfo *ESI, unsigned int event, void *extra)
   return(PAPI_ESBSTR);
 }
 
-int _papi_hwd_check_runners(PAPI_shared_info_t *PAPI_SHARED_INFO, DynamicArray *PAPI_EVENTSET_MAP)
-{ 
-/*int retval;
-  int state;
-  int i, j=0;
-
-  for(i=1; i<PAPI_EVENTSET_MAP->totalSlots; i++)
-  { if(lookup_EventSet(i)!=NULL)
-    { retval=PAPI_state(i, &state);
-      if(retval<PAPI_OK) return retval;
-      if(state==PAPI_RUNNING)
-      { PAPI_SHARED_INFO->EvSetArray[j]=i;
-        j++;
-      }
-    }
-  }
-  if(PAPI_SHARED_INFO->EvSetArray[j]<-1)
-  { retval=_papi_hwd_gather_events(PAPI_SHARED_INFO);
-  }
-*/
-  return(PAPI_OK);
-}
-
-int _papi_hwd_gather_events(PAPI_shared_info_t *PAPI_SHARED_INFO)
-{ int retval;
+int _papi_hwd_gather_events(_papi_int_option_t *ptr)
+{ /* int retval;
   int i=0,j,k,flag=0;
-/*
   unsigned int event;
   EventSetInfo *ESI;
 
@@ -453,12 +429,6 @@ int _papi_hwd_start(EventSetInfo *EventSet)
 
   retval=_papi_set_domain(EventSet, &EventSet->all_options.domain);
   if(retval) return(PAPI_EBUG);
-/*
-  if(PAPI_SHARED_INFO.EvSetArray[0]!=-1) // if runner exists
-  { retval=_papi_hwd_multistart();
-    if(retval) return(PAPI_EBUG); 
-  }
-*/
 
   if(this_state->counter_code1 >= 0)
   { retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);

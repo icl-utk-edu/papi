@@ -21,7 +21,6 @@ void main()
 
   n = PAPI_num_events();
   assert(n>0);
-
   ct = (unsigned long long *)malloc(n*sizeof(unsigned long long));
   assert(ct!=NULL);
   memset(ct,0x00,n*sizeof(unsigned long long));

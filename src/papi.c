@@ -30,6 +30,7 @@ static int handle_error(int, char *);
 static char *get_error_string(int);
 static EventSetInfo *lookup_EventSet(int eventset);
 static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode);
+static int check_runners(PAPI_multistart_option_t *ptr);
 
 /* Global variables */
 /* These will eventually be encapsulated into per thread structures. */ 
@@ -37,10 +38,6 @@ static int lookup_EventCodeIndex(EventSetInfo *ESI,int EventCode);
 /* Our integer to EventSetInfo * mapping */
 
 static DynamicArray PAPI_EVENTSET_MAP;    
-
-/* info struct for multiple running EventSets */
-
-static PAPI_shared_info_t PAPI_SHARED_INFO;
 
 /* Behavior of handle_error(). 
    Changed to the default behavior of PAPI_QUIET in PAPI_init
@@ -69,13 +66,12 @@ static int check_initialize(void)
 
 static int initialize(void)
 {
-  int retval, i;
+  int retval;
   EventSetInfo *zero;
 
-  /* Clear the Dynamic Array and Shared Info structures */
+  /* Clear the Dynamic Array structure */
 
   memset(&PAPI_EVENTSET_MAP,0x00,sizeof(PAPI_EVENTSET_MAP));
-  memset(&PAPI_SHARED_INFO,0x00,sizeof(PAPI_SHARED_INFO));
    
   /* Allocate space for the EventSetInfo pointers */
 
@@ -90,18 +86,7 @@ static int initialize(void)
    PAPI_EVENTSET_MAP.availSlots = PAPI_INIT_SLOTS - 1;
    PAPI_EVENTSET_MAP.fullSlots  = 1;
    PAPI_EVENTSET_MAP.lowestEmptySlot = 1;
-/*
-  PAPI_SHARED_INFO.EvSetArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
-  PAPI_SHARED_INFO.EventsArray=(int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
-  PAPI_SHARED_INFO.MachdepArray=(void **)malloc
-        (_papi_system_info.total_events*sizeof(int *));
-  memset(PAPI_SHARED_INFO.MachdepArray, 0x00,
-        _papi_system_info.total_events*sizeof(int *));
-  for(i=0;i<PAPI_INIT_SLOTS;i++) 
-  { *PAPI_SHARED_INFO.EvSetArray[i]=-1;
-    *PAPI_SHARED_INFO.EventsArray[i]=-1;
-  }
-*/
+
    /* Remember that EventSet zero is reserved */
 
    PAPI_ERR_LEVEL = PAPI_QUIET;
@@ -115,6 +100,8 @@ heck:
        return(PAPI_ENOMEM);
      }
    memset(zero,0x00,sizeof(EventSetInfo));
+
+   PAPI_EVENTSET_MAP.dataSlotArray[0] = zero;
 
    retval = _papi_hwd_init(zero);
    if (retval < PAPI_OK)
@@ -173,6 +160,11 @@ static EventSetInfo *allocate_EventSet(void)
   if (ESI==NULL) 
     return(NULL); 
   memset(ESI,0x00,sizeof(EventSetInfo));
+  ESI->all_options.multistart.multistart.EvSetArray =
+    (int **)malloc(PAPI_INIT_SLOTS*sizeof(int *));
+  ESI->all_options.multistart.multistart.virtual_machdep = 
+    (void *)malloc(_papi_system_info.size_machdep);
+
 
   max_counters = _papi_system_info.num_cntrs;
   ESI->machdep = (void *)malloc(_papi_system_info.size_machdep);
@@ -211,6 +203,7 @@ static EventSetInfo *allocate_EventSet(void)
 
   ESI->state = PAPI_STOPPED; 
   ESI->all_options.domain.domain.domain = _papi_system_info.default_domain;
+  ESI->all_options.multiplex.multiplex.milliseconds=0;
 
   return(ESI);
 }
@@ -572,19 +565,40 @@ int PAPI_rem_event(int *EventSet, int EventCode)
   return(retval);
 }
 
+static int check_runners(PAPI_multistart_option_t *ptr)
+{ int retval, state, i, j=0;
+  EventSetInfo *ESI;
+  int reset=0;
+
+  ptr->num_runners = 0;
+  for(i=0; i<PAPI_EVENTSET_MAP.totalSlots; i++)
+    ptr->EvSetArray[i]=&reset;
+  for(i=1; i<PAPI_EVENTSET_MAP.totalSlots; i++)
+  { ESI=lookup_EventSet(i); 
+    if(ESI!=NULL)
+    { retval=PAPI_state(i, &state);
+      if(retval) return retval;
+      if(state==PAPI_RUNNING)
+      { ptr->EvSetArray[j]=&ESI->EventSetIndex;
+        ptr->num_runners ++;
+      }
+    }
+  }
+  return(PAPI_OK);
+}
+
 /* simply checks for valid EventSet, calls substrate start() call */
 
 int PAPI_start(int EventSet)
 { 
   int retval;
-  EventSetInfo *ESI;
+  EventSetInfo *ESI, *zero;
 
   ESI = lookup_EventSet(EventSet);
   if(ESI == NULL) return(handle_error(PAPI_EINVAL, NULL));
 
-  retval=_papi_hwd_check_runners(&PAPI_SHARED_INFO, &PAPI_EVENTSET_MAP);  
-         // get list of running evsets
-  if(retval<PAPI_OK) return retval;
+  zero = lookup_EventSet(0);
+  retval=check_runners(&ESI->all_options.multistart.multistart);
 
   retval = _papi_hwd_start(ESI);
   if(retval<PAPI_OK) return(handle_error(retval, NULL));
