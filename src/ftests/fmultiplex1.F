@@ -391,6 +391,10 @@ C Try alternative event if the above is not possible to use...
       end if
 
       call PAPIf_add_event( EventSet, PAPI_L1_ICM, retval )
+C Try alternative event if the above is not possible to use...
+      if ( retval .EQ. PAPI_ECNFLCT .OR. retval .EQ. PAPI_ENOEVNT ) then
+        call PAPIf_add_event( EventSet, PAPI_L1_LDM, retval )
+      end if
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      &      'PAPIf_add_event', retval)
