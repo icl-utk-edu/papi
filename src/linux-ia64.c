@@ -683,7 +683,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 		  break;
         }
     }
-	printf("profile overflowcount=%d\n", local->profile.overflowcount);
+	DBG((stderr,"profile overflowcount=%d\n", local->profile.overflowcount));
 	 local->profile.overflowcount=0;
   }
 
