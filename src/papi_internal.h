@@ -111,7 +111,7 @@ typedef struct _NativeInfo {
   int ni_index;		    /* index into the native table; -1 == empty */
   int ni_position;	    /* counter array position where this native event lives */
   int ni_owners;	    /* specifies how many owners share this native event */
-  hwd_register_map_t regs;  /* Substrate defined resources used by this native event */
+  hwd_register_t regs;	    /* Substrate defined resources used by this native event */
 } NativeInfo_t;
 
 
