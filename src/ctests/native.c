@@ -37,6 +37,8 @@ void papimon_start(void)
 
   if (EventSet == PAPI_NULL)
     {
+      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+	  test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",retval);
       if( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
 	test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
@@ -66,12 +68,24 @@ void papimon_start(void)
       if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(linux) && defined(__i386__)
-      native = 0 | 0x43 << 8 | 0; /* Data mem refs */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-      native = 0 | 0x47 << 8 | 1; /* Lines out */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
-	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+      if(strncmp("AuthenticAMD",hwinfo->vendor_string,(size_t) 3) == 0)
+	{
+	  native = 0 | 0x40 << 8 | 0; /* DCU refs */
+	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+	  native = 0 | 0x41 << 8 | 1; /* DCU miss */
+	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+	}
+      else
+	{
+	  native = 0 | 0x43 << 8 | 0; /* Data mem refs */
+	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+	  native = 0 | 0x47 << 8 | 1; /* Lines out */
+	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+	}
 #elif defined(linux) && defined(__ia64__)
       {
 	typedef union {
@@ -176,8 +190,6 @@ void papimon_start(void)
 #else
 #error "Architecture not included in this test file yet."
 #endif
-      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-	  test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",retval);
     }
 
   us = PAPI_get_real_usec();
@@ -224,8 +236,16 @@ void papimon_stop(void)
      fprintf(stderr,"%% FMA Instructions         : %.2f\n",
 	  100.0*(float)values[6]/((float)values[1]+(float)values[4]));
 #elif defined(linux) && defined(__i386__)
-     fprintf(stderr,"DCU Memory references      : %lld\n",values[0]);
-     fprintf(stderr,"DCU Lines out              : %lld\n",values[1]);
+     if(strncmp("AuthenticAMD",hwinfo->vendor_string,(size_t) 3) == 0)
+	{
+	  fprintf(stderr,"DCU cache accesses         : %lld\n",values[0]);
+	  fprintf(stderr,"DCU cache misses           : %lld\n",values[1]);
+	}
+      else
+	{
+	  fprintf(stderr,"DCU Memory references      : %lld\n",values[0]);
+	  fprintf(stderr,"DCU Lines out              : %lld\n",values[1]);
+	}
 #elif defined(linux) && defined(__ia64__)
      fprintf(stderr,"Execution latency stall cyc         : %lld\n",values[0]);
      fprintf(stderr,"Combined execution stall cycles     : %lld\n",values[1]);
