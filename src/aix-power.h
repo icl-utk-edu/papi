@@ -127,4 +127,6 @@ extern int (*thread_kill_fn)(int, int);
 pm_info_t pminfo;
 hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
-#include "allocate.h"
+#ifndef _POWER4
+  #include "allocate.h"
+#endif
