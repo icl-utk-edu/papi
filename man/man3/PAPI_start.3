@@ -20,10 +20,16 @@ PAPI_start, PAPI_stop \- start/stop counting hardware events in an event set
 
 .SH DESCRIPTION
 .B PAPI_start
-starts the counting of a previously defined event set
+starts counting all of the hardware events contained in the previously
+defined EventSet.
+All counters are implicitly set to zero.
+.B PAPI_start()
+will not start the hardware counters if a conflicting EventSet is already running
+and the counters are already in use.
 .LP
 .B PAPI_stop
-halts the counting of a previously defined event set
+halts the counting of a previously defined event set and the counter values
+contained in that EventSet are copied into the values array
 
 .SH ARGUMENTS
 .I "EventSet"
