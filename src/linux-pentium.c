@@ -179,8 +179,78 @@ int _papi_hwd_add_prog_event(void *machdep, int event, void *extra)
 }
 
 int _papi_hwd_start(void *machdep)
- {
+{
   hwd_control_state *this_state = (hwd_control_state *)machdep;
+  int retval;
+
+/* to explain the value for machdep->number briefly:
+	I used the same values for counter 1, counter 2, and TSC 
+	being used as for UNIX permissions read, write, execute
+	(4, 2, 1).
+*/
+
+  switch (machdep->number)
+  { case 6 :
+      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      if(retval) = return(PAPI_EBUG); 
+      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);  
+      if(retval) = return(PAPI_EBUG);
+      retval = perf(PERF_START, 0, 0);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 4 :
+      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      if(retval) = return(PAPI_EBUG);
+      retval = perf(PERF_START, 0, 0);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 2 :
+      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);
+      if(retval) = return(PAPI_EBUG);
+      retval = perf(PERF_START, 0, 0);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 5 :
+      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      if(retval) = return(PAPI_EBUG);
+      // start TSC;
+      retval = perf(PERF_START, 0, 0);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 3 :
+      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);
+      if(retval) = return(PAPI_EBUG);
+      // start TSC;
+      retval = perf(PERF_START, 0, 0);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 7 :
+      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      if(retval) = return(PAPI_EBUG);
+      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);
+      if(retval) = return(PAPI_EBUG);
+      // start TSC;
+      retval = perf(PERF_START, 0, 0);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 1 :
+      // start TSC;
+      break;
+
+    case 0 :
+      return(PAPI_ENOTRUN);
+
+    default:
+      return(PAPI_EBUG);
+  }
+  return(retval);
+}
 
   return perf(PERF_START, 0, 0);  /* from perf.c */
 
