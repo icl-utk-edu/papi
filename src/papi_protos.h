@@ -208,10 +208,6 @@ extern int _papi_hwd_get_system_info(void);
 /* Defined in a memory file, could be processor or OS specific */
 extern int _papi_hwd_get_memory_info(PAPI_hw_info_t *, int);
 
-/* PAPI Internal Error message logger */
-
-extern void PAPIERROR(char *, ...);
-
 #ifdef NEED_FFSLL
 extern int ffsll(long_long lli);
 #endif

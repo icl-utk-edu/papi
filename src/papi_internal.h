@@ -65,7 +65,6 @@ extern int _papi_hwi_debug;
 #endif
 
 #else
-#define DBG(a)
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
 #define SUBDBG(format, args...) { ; }
 #define APIDBG(format, args...) { ; }
@@ -73,21 +72,10 @@ extern int _papi_hwi_debug;
 #define THRDBG(format, args...) { ; }
 #define MPXDBG(format, args...) { ; }
 #define OVFDBG(format, args...) { ; }
+#define PRFDBG(format, args...) { ; }
 #define PAPIDEBUG(level, format, args...) { ; }
 #endif
 #endif
-
-#ifdef NO_VARARG_MACRO          /* Prototypes */
-  void SUBDBG(char *, ...);
-  void APIDBG(char *, ...);
-  void INTDBG(char *, ...);
-  void THRDBG(char *, ...);
-  void MPXDBG(char *, ...);
-  void OVFDBG(char *, ...);
-  void PRFDBG(char *, ...);
-  void PAPIDEBUG(int, char *, ...);
-#endif
-
 
 #define DEADBEEF 0xdedbeef
 
@@ -457,9 +445,6 @@ extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern int _papi_hwi_using_signal;
 
-#include "threads.h"
-#include "papi_protos.h"
-
 inline_static void PAPIERROR(char *format, ...)
 {
    va_list args;
@@ -602,5 +587,8 @@ inline_static void PRFDBG(char *format, ...)
       return;
 }
 #endif
+
+#include "threads.h"
+#include "papi_protos.h"
 
 #endif                          /* PAPI_INTERNAL_H */
