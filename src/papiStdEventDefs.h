@@ -9,6 +9,7 @@ are not guaranteed to be present on all platforms.  Please check your
 platform's documentation carefully.
 
 */
+#define PRESET_MASK 0x80000000
 
 #define PAPI_MAX_PRESET_EVENTS 128	  /*The maxmimum number of preset events */
 
