@@ -559,7 +559,11 @@ static int start_timer(int milliseconds)
 #endif
 
    if (sigaction(PAPI_SIGNAL, &action, NULL) < 0)
+#if defined(sun)&&defined(sparc)
+      return (PAPI_ESBSTR);
+#else
       return (PAPI_ESYS);
+#endif
 
    value.it_interval.tv_sec = 0;
    value.it_interval.tv_usec = milliseconds * 1000;
@@ -567,7 +571,11 @@ static int start_timer(int milliseconds)
    value.it_value.tv_usec = milliseconds * 1000;
 
    if (setitimer(PAPI_ITIMER, &value, NULL) < 0)
+#if defined(sun)&&defined(sparc)
+      return (PAPI_ESBSTR);
+#else
       return (PAPI_ESYS);
+#endif
 
 #ifndef ANY_THREAD_GETS_SIGNAL
    _papi_hwd_lock(PAPI_INTERNAL_LOCK);
