@@ -305,12 +305,28 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    return (PAPI_OK);
 }
 
+static char * getbasename(char *fname) 
+{
+   char *temp;
+
+   temp = strrchr(fname, '/');
+   if( temp == NULL) return fname;
+      else return temp+1;
+}
+
 inline int _papi_hwd_update_shlib_info(void)
 {
    char fname[PATH_MAX];
    unsigned long writable = 0, total = 0, shared = 0, l_index = 0, counting = 1;
    PAPI_address_map_t *tmp = NULL;
    FILE *f;
+   char cmdname[80], *pname1, *pname2;
+
+   sprintf(fname, "/proc/%ld/cmdline", (long) _papi_hwi_system_info.pid);
+   f = fopen(fname, "r");
+   fscanf(f,"%s",cmdname);
+   pname1=getbasename(cmdname);
+   fclose(f);
 
    sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
    f = fopen(fname, "r");
@@ -348,7 +364,8 @@ inline int _papi_hwd_update_shlib_info(void)
          return (PAPI_EBUG);
 
       if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0)) {
-         if ((l_index == 0) && (counting)) {
+         pname2=getbasename(mapname);
+         if ( strcmp(pname1, pname2)==0 ) {
             _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
             _papi_hwi_system_info.exe_info.address_info.text_end =
                 (caddr_t) (begin + size);
@@ -395,13 +412,13 @@ static int get_system_info(void)
 
    /* Path and args */
 
-   _papi_hwd_update_shlib_info();
    pid = getpid();
    if (pid == -1)
       return (PAPI_ESYS);
+   _papi_hwi_system_info.pid = pid;
+   if(_papi_hwd_update_shlib_info()== PAPI_ESYS) return(PAPI_ESYS);
 
    strcpy(_papi_hwi_system_info.substrate, "$Id$");          /* Name of the substrate we're using */
-   _papi_hwi_system_info.pid = pid;
    _papi_hwi_system_info.supports_hw_overflow = 1;
    _papi_hwi_system_info.supports_hw_profile = 1;
    _papi_hwi_system_info.supports_64bit_counters = 1;
@@ -468,9 +485,6 @@ static int get_system_info(void)
 #endif
    _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
-
-   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) _init;
-   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & __bss_start;
