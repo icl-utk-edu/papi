@@ -8,8 +8,8 @@
  *          Compaq Computer Corporation
  *          110 Spit Brook Road
  *          Nashua, NH
- * Date:    20 March 2002
- * Version: 1.6
+ * Date:    9 October 2002
+ * Version: 1.7
  *
  * Copyright (c) 2002 Compaq Computer Corporation
  */
@@ -25,6 +25,7 @@
  */
 
 typedef struct {
+  unsigned long  vc_DADD_signature ;            /* Should be "DCPIDADD" */
   struct timeval vc_time_stamp ;
 
   unsigned long vc_total_cycles ;               /* EV67/EV7 aggregate counts */
@@ -77,9 +78,10 @@ typedef struct {
   unsigned long vc_mt_fpcr_traps ;
   unsigned long vc_iacv_traps ;
 
-  unsigned long vc_did_not_retire ;            /* Debugging purposes only */
-  unsigned long vc_early_kill ;
+  unsigned long vc_did_not_retire ;     /* Debugging purposes only. These    */
+  unsigned long vc_early_kill ;         /* Fields may disappear at any time. */
   unsigned long vc_update_count ;
+  unsigned long vc_pdb_sample_count_sum ;
 } virtual_counters ;
 
 

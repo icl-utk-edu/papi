@@ -193,7 +193,7 @@ Most internal testing of the DADD engineering model has been performed
 with the -DF option value set to 1. This forces the Daemon to attempt to
 read samples drom the driver at the maximum rate of 1000 times per
 second. The actual rates achieved during testing have varied dramatically,
-and are primarilyy affected by the number of CPUs active, whether
+and are primarily affected by the number of CPUs active, whether
 ProfileMe samples are being collected, and the overall load on the
 system. The highest *read* rate observed so far (without ProfileMe
 sampling active) has been on the order of 500 reads per second. The
