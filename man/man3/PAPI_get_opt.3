@@ -121,6 +121,15 @@ T}
 .TE
 
 .LP
+The 
+.BI option_t\ *  ptr
+structure is defined in 
+.B papi.h
+and looks something like the following example from the source tree.
+Users should use the definition in 
+.B papi.h
+which is in synch with the library used.
+.LP
 .nf
 .if t .ft CW
 typedef union {
@@ -131,6 +140,7 @@ typedef union {
   PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
   PAPI_domain_option_t defdomain; 
+  PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
   PAPI_exe_info_t *exe_info; } PAPI_option_t;
 .if t .ft P
