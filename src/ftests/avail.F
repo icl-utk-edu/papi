@@ -11,7 +11,7 @@ C Hardware info
       REAL revision, mhz
       integer len_trim
       external len_trim
-      integer i, avail_flag, flags
+      integer i, avail_flag, flags,k,l
       CHARACTER*(PAPI_MAX_STR_LEN) event_name, event_descr, 
      *event_label, event_note
       CHARACTER*(10) avail_str, flags_str
@@ -33,25 +33,26 @@ C Hardware info
 
       if (tests_quiet .EQ. 0) then
       print *, 'Hardware information and available events'
-      print *, '--------------------------------------
-     .---------------------------------------'
+      print *, '--------------------------------------'//
+     .'---------------------------------------'
       n=len_trim(vstring)
       print *, 'Vendor string and code   : ',vstring(1:n),
      &' (',vendor,')'
       n=len_trim(mstring)
       print *, 'Model string and code    : ',mstring(1:n),' (',model,')'
-      print *, 'CPU revision               : ',revision 
+      print *, 'CPU revision             : ',revision 
       print *, 'CPU Megahertz            : ',mhz
       print *, 'CPUs in an SMP node      : ',ncpu
       print *, 'Nodes in the system      : ',nnodes
       print *, 'Total CPUs in the system : ',totalcpus
-      print *, '--------------------------------------
-     .---------------------------------------'
+      print *, '--------------------------------------'//
+     .'---------------------------------------'
 
       write (*,200) 'Name', 'Code', 'Avail', 'Deriv', 
-     *'Description', '(  note  )'
- 200  format(A8, A12, A9, A6, A20, A24)
+     *'Description', '(note)'
+ 200  format(A8, A12, A9, A6, A25, A30)
       end if
+      event_name=''
       do i=0, PAPI_MAX_PRESET_EVENTS-1
          call papif_query_event_verbose(z'80000000'+i, event_name, 
      *   event_descr, event_label, avail_flag, event_note, flags, check)
@@ -68,14 +69,18 @@ C Hardware info
          end if
 
          if (check.EQ.PAPI_OK .and. tests_quiet .EQ. 0) then
-            write (*, 100) event_name, z'80000000'+i, avail_str, 
-     *       flags_str, event_descr, event_note
- 100  format(A12, ' 0x', Z8, '  ', A5, ' ', A5, A33, '(', A8, ')') 
+            l=1
+            do k=len(event_note),1,-1
+              if(l.EQ.1.AND.event_note(k:k).NE.' ') l=k
+            end do
+            write (6, 100) event_name, z'80000000'+i, avail_str, 
+     *       flags_str, event_descr, event_note(1:l)
+ 100  format(A12, '0x', z8, 2x, A5, 1x, A5, A45, x,'(', A, ')') 
          end if
       end do
       if (tests_quiet .EQ. 0) then 
-      print *, '--------------------------------------
-     .---------------------------------------'
+      print *, '--------------------------------------'//
+     .'---------------------------------------'
       end if
 
       call ftests_pass(__FILE__)      
