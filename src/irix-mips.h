@@ -81,6 +81,26 @@ extern int _etext[], _ftext[];
 extern int _edata[], _fdata[];
 extern int _fbss[], _end[];
 
+/* Locks */
+extern volatile int lock[PAPI_MAX_LOCK];
+
+#define  _papi_hwd_lock_init()			\
+{						\
+}
+
+#define _papi_hwd_lock(lck)                     \
+while (__lock_test_and_set(&lock[lck],1) != 0)  \
+{                                               \
+    usleep(1000);                               \
+}
+
+#define _papi_hwd_unlock(lck)                   \
+do                                              \
+{                                               \
+  __lock_release(&lock[lck]);                   \
+} while(0)
+
+
 #ifdef DEBUG
 extern int papi_debug;
 #endif

@@ -784,23 +784,7 @@ void *_papi_hwd_get_overflow_address(void *context)
   return((void *)info->sc_pc);
 }
 
-static volatile int lock[PAPI_MAX_LOCK] = {0,};
-
-void _papi_hwd_lock_init(void)
-{
-}
-
-#define _papi_hwd_lock(lck)			\
-while (__lock_test_and_set(&lock[lck],1) != 0)	\
-{						\
-    usleep(1000);				\
-}
-
-#define _papi_hwd_unlock(lck)			\
-do						\
-{						\
-  __lock_release(&lock[lck]);			\
-} while(0)
+volatile int lock[PAPI_MAX_LOCK] = {0,};
 
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
