@@ -1,7 +1,7 @@
 /* $Id$
  * x86 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #ifndef _ASM_I386_PERFCTR_H
 #define _ASM_I386_PERFCTR_H
@@ -37,7 +37,7 @@ struct perfctr_cpu_state {
 	struct perfctr_cpu_control control;
 	struct {
 		unsigned int p4_escr_map[18];
-		void *isuspend_cpu;
+		const void *isuspend_cpu;
 	} k2;
 };
 

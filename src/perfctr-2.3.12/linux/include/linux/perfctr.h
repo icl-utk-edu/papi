@@ -1,7 +1,7 @@
 /* $Id$
  * Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2001  Mikael Pettersson
+ * Copyright (C) 1999-2002  Mikael Pettersson
  */
 #ifndef _LINUX_PERFCTR_H
 #define _LINUX_PERFCTR_H
