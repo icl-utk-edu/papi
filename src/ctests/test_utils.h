@@ -14,7 +14,7 @@
 /* Masks to select operations for add_test_events() and remove_test_events()
 	Mask value tells us what events to select.
 */
-
+#define MASK_FP_OPS  0x80000
 #define MASK_L1_DCA  0x40000    /* three new events for POWER4 */
 #define MASK_L1_DCW  0x20000
 #define MASK_L1_DCR  0x10000

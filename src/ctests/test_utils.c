@@ -200,6 +200,17 @@ int add_test_events(int *number, int *mask)
       }
    }
 
+   if (*mask & MASK_FP_OPS) {
+      retval = PAPI_add_event(EventSet, PAPI_FP_OPS);
+      if (retval == PAPI_OK)
+         (*number)++;
+      else {
+         if (!TESTS_QUIET)
+            fprintf(stderr, "PAPI_FP_OPS is not available.\n");
+         *mask = *mask ^ MASK_FP_OPS;
+      }
+   }
+
    if (*mask & MASK_FP_INS) {
       retval = PAPI_add_event(EventSet, PAPI_FP_INS);
       if (retval == PAPI_OK)
@@ -307,6 +318,12 @@ int remove_test_events(int *EventSet, int mask)
 
    if (mask & MASK_FLOPS) {
       retval = PAPI_remove_event(*EventSet, PAPI_FLOPS);
+      if (retval < PAPI_OK)
+         return (retval);
+   }
+
+   if (mask & MASK_FP_OPS) {
+      retval = PAPI_remove_event(*EventSet, PAPI_FP_OPS);
       if (retval < PAPI_OK)
          return (retval);
    }
