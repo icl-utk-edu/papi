@@ -1,6 +1,7 @@
 LIBRARY   = libpapi64.a
 SHLIB     = libpapi64.so
-SUBSTR  = aix-power
+SUBSTR  = power4
+MSUBSTR = power4
 MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4"
 LIBS	= static shared
@@ -11,11 +12,11 @@ SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 # Default source is for pmtoolkit 1.4.x.
 
 FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -q64 -qlanglvl=extended
-CFLAGS	= $(FLAGS) -D_POWER4  -D_P64
+CFLAGS	= $(FLAGS) -D_POWER4 -DNO_VARARG_MACRO -D_P64
 
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS= -qnostdinc
-FFLAGS	= $(FLAGS)
+FFLAGS	= $(FLAGS) -WF,-D_POWER4
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(FOPTFLAGS)
 SMPCFLGS= -qsmp
@@ -28,8 +29,18 @@ CC_SHR	= xlc -G
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
+MISCHDRS= aix.h power4_events.h
+MISCSRCS= aix.c power4_events.c
+MISCOBJS= aix.o power4_events.o
 
 include Makefile.inc
+
+power4_events.o: power4_events.c  $(HEADERS)
+	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power4_events.c -o power4_events.o
+
+aix.o: aix.c  $(HEADERS)
+	$(CC) $(CFLAGS)  -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+
 
 native_clean:
 
