@@ -2,12 +2,11 @@ Both n32-bit and 64-bit libraries are built.  To use the shared libraries,
 you will need to set LD_LIBRARYN32_PATH (LD_LIBRARY64_PATH) to the location of
 the n32-bit libpapi.so (64-bit libpapi64.so).
 
-Native Encoding for IRIX v6.x on MIPS R10K and R12K processors
+Native Events for IRIX v6.x on MIPS R10K and R12K processors
+ 
 
-
-The encoding for native (NON-PAPI) events is:
-	
-		Low 8 bits indicate which event number: 0 - 31
+For *all* the native event names, run native_avail under ctests
+subdirectory.for how to use the native event name, see native.c
 
 Hardware multiplexing is in use, you can count all 32 events.
 
