@@ -68,3 +68,6 @@ int wait_exit(int);
 #endif
 
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
+
+#define printf if (!TESTS_QUIET) printf
+
