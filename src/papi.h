@@ -307,7 +307,8 @@ read the documentation carefully.  */
       caddr_t pr_off;         /* pc start address (offset) */
       unsigned pr_scale;      /* pc scaling factor: 
                                  fixed point fraction
-                                 0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc. */
+                                 0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc.
+                                 also, two extensions 0x1000 == 1, 0x2000 == 2 */
    } PAPI_sprofil_t;
 
    typedef struct _papi_overflow_option {
