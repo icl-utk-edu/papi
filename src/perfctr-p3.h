@@ -61,6 +61,12 @@
 #define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
 #define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
 #define PERFCTR_X86_INTEL_P4M2	12	/* model 2 and above */
+#define PERFCTR_X86_AMD_K8	13
+#define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
+#define PERFCTR_X86_AMD_K8C	15	/* Revision C */
+#define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
+
+#define PERFCTR26 /* make it look like a recent Perfctr */
 
 /* Lock macros. */
 extern CRITICAL_SECTION lock[PAPI_MAX_LOCK];
