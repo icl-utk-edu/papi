@@ -181,6 +181,12 @@ hwi_search_t _papi_hwd_pentium4_base_preset_map[] = {
    {PAPI_L2_LDM, {0, {PNE_BSQ_cache_reference_L2_RD_miss, PAPI_NULL,}, {0,}}},
    {PAPI_L2_STM, {0, {PNE_BSQ_cache_reference_L2_WR_miss, PAPI_NULL,},{0,}}},
    {PAPI_L2_TCM, {0, {PNE_BSQ_cache_reference_L2_RD_WR_miss, PAPI_NULL,}, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* L3 cache events for machines (Xeon) that have L3 cache */
+hwi_search_t _papi_hwd_pentium4_L3_cache_map[] = {
+/* preset, derived, native index array */
    {PAPI_L3_LDM, {0, {PNE_BSQ_cache_reference_L3_RD_miss, PAPI_NULL,}, {0,}}},
    {PAPI_L2_DCR, {0, {PNE_BSQ_cache_reference_L2_RD_hit, PAPI_NULL,}, {0,}}},
    {PAPI_L3_DCR, {0, {PNE_BSQ_cache_reference_L3_RD_hit, PAPI_NULL,}, {0,}}},

@@ -31,6 +31,7 @@
 
 extern hwi_search_t _papi_hwd_pentium4_base_preset_map[];
 extern hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[];
+extern hwi_search_t _papi_hwd_pentium4_L3_cache_map[];
 extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
 
 /*****************************/
@@ -93,6 +94,10 @@ inline static int setup_p4_presets(int cputype)
    _papi_hwi_setup_all_presets(s,n);
    _papi_hwd_fixup_vec(&s, &n);
    _papi_hwi_setup_all_presets(s,n);
+
+   /* install L3 cache events iff 3 levels of cache exist */
+   if (_papi_hwi_system_info.hw_info.mem_hierarchy.levels == 3)
+      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_L3_cache_map, NULL);
 
    /* overload with any model dependent events */
    if (cputype == PERFCTR_X86_INTEL_P4) {
@@ -235,18 +240,18 @@ int _papi_hwd_init_global(void)
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
 
-   /* Setup presets */
-   retval = setup_p4_presets(info.cpu_type);
-   if (retval)
-      return (retval);
-
    /* Setup memory info */
    retval =
        _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
    if (retval)
       return (retval);
 
-    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
+    /* Setup presets */
+   retval = setup_p4_presets(info.cpu_type);
+   if (retval)
+      return (retval);
+
+   SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
     vperfctr_close(dev);
 
     lock_init();
