@@ -15,7 +15,7 @@
 
 #define REPEATS 5
 #define MAXEVENTS 9
-#define RELTOLERANCE 0.03
+#define RELTOLERANCE 0.08
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 

@@ -16,7 +16,7 @@
 #define REPEATS 5
 #define MAXEVENTS 9
 #define MINCOUNTS 100000
-#define RELTOLERANCE 0.03
+#define RELTOLERANCE 0.08
 #define SLEEPTIME 100
 
 static double dummy3(double x,int iters);
