@@ -435,6 +435,26 @@ PWR3_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
    {"PM_CMPLU_WT_UNF_INST", -1}
    ,
    {"PM_FPU_WT", -1}
+   ,
+   {"PM_SNOOP_RECV", -1}
+   ,
+   {"PM_LS_EXEC", -1}
+   ,
+   {"PM_ST_MISS", -1}
+   ,
+   {"PM_LSU_CMPL", -1}
+   ,
+   {"PM_STCX_SUCCESS", -1}
+   ,
+   {"PM_LARX", -1}
+   ,
+   {"PM_BR_MPRED_GC", -1}
+   ,
+   {"PM_FPU_FMA", -1}
+   ,
+   {"PM_BRU_FIN", -1}
+   ,
+   {"PM_ST_MISS_L1", -1}
 };
 
 pm_info_t pminfo;
@@ -459,22 +479,6 @@ int setup_native_table()
    pm_info_t *info;
    int pmc, ev, i, j, index, retval;
 
-/*#ifdef _AIXVERSION_510
-  pm_groups_info_t pmgroups;
-#endif
-  
-#ifdef _AIXVERSION_510
-  retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
-#else
-  retval = pm_init(PM_INIT_FLAGS,&pminfo);
-#endif
-
-  if (retval){ 
-	  printf("----------------pm_init error retval=%d\n", retval);
-    return(PAPI_ESBSTR);
-  }
-  printf("+++++++++++++++pm_init retval=%d\n", retval);
-*/
    info = &pminfo;
    index = 0;
    initialize_native_table();
