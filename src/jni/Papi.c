@@ -499,7 +499,7 @@ JNIEXPORT jobject JNICALL Java_PapiJ_query_1all_1events_1verbose
   (JNIEnv *env, jobject obj)
 {
   int num;
-  PAPI_preset_info_t *preset, *(*query_all)(void);
+  PAPI_event_info_t *preset, *(*query_all)(void);
   jmethodID mid;
   jclass class;
   jobject preset_obj = NULL;
@@ -537,8 +537,8 @@ JNIEXPORT jint JNICALL Java_PapiJ_query_1event
 JNIEXPORT jint JNICALL Java_PapiJ_query_1event_1verbose
   (JNIEnv *env, jobject obj, jint eventCode, jobject p)
 {
-  int ret, (*query_event_verbose)(int, PAPI_preset_info_t *);
-  PAPI_preset_info_t *pinfo;
+  int ret, (*query_event_verbose)(int, PAPI_event_info_t *);
+  PAPI_event_info_t *pinfo;
   jclass class;
   jfieldID fid;
 
