@@ -52,7 +52,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */
 /****************************/
-
+static int local_dbg = 0;
 /**************************/
 /* END LOCAL DECLARATIONS */
 /**************************/
@@ -441,11 +441,12 @@ static void print_bits(P4_register_t *b) {
 
 static void print_alloc(P4_reg_alloc_t *a){
     SUBDBG("P4_reg_alloc:\n");
-    print_bits(&(a->ra_bits));
+//    print_bits(&(a->ra_bits));
     SUBDBG("  selector: 0x%x\n", a->ra_selector);
     SUBDBG("  rank: 0x%x\n", a->ra_rank);
     SUBDBG("  escr: 0x%x 0x%x\n", a->ra_escr[0], a->ra_escr[1]);
 }
+
 #endif
 
 /* This function examines the event to determine
@@ -468,9 +469,9 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
     /* Pentium 4 requires that both an escr and a counter are selected.
        Find which counter mask contains this counter and set its escr */
     if (dst->ra_bits.counter[0] & dst->ra_selector)
-	dst->ra_escr[dst->ra_bits.escr[0] >> 5] = (1 << (dst->ra_bits.escr[0] & 31));
+	dst->ra_escr[0] = dst->ra_bits.escr[0];
     else
-	dst->ra_escr[dst->ra_bits.escr[0] >> 5] = (1 << (dst->ra_bits.escr[1] & 31));
+	dst->ra_escr[1] = dst->ra_bits.escr[1];
 }
 
 /* This function examines the event to determine
@@ -491,7 +492,7 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
   /* Pentium 4 needs to check for conflict of both counters and esc registers */
     return((dst->ra_selector & src->ra_selector) 
-      || (dst->ra_escr[0] & src->ra_escr[0]) || (dst->ra_escr[1] & src->ra_escr[1]));
+      || (dst->ra_escr[0] == src->ra_escr[0]) || (dst->ra_escr[1] == src->ra_escr[1]));
 }
 
 /* This function removes shared resources available to the src event
@@ -502,47 +503,32 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 */
 void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
-    int i, j;
+    int i;
     unsigned shared;
     
     /* On Pentium 4, shared resources include both escrs and counters */
 #ifdef DEBUG
-	  SUBDBG("src, dst\n");
-	  print_alloc(src);
-	  print_alloc(dst);
+      SUBDBG("src, dst\n");
+      print_alloc(src);
+      print_alloc(dst);
 #endif
 
     /* remove counters referenced by any shared escrs */
-    for (i=0;i<2;i++) {
-      shared = dst->ra_escr[i] & src->ra_escr[i];
-      while (shared) {
-	  j = ffs(shared) - 1;
-	  shared ^= 1<<j;
-	  if (dst->ra_bits.escr[0] == j)
-	      dst->ra_selector ^= dst->ra_bits.counter[0];
-	  else
-	      dst->ra_selector ^= dst->ra_bits.counter[1];
-	  dst->ra_escr[i] ^= 1<<j;
-      }
-    }
-#ifdef DEBUG
-	  SUBDBG("new dst\n");
-	  print_alloc(dst);
-#endif
+      if (dst->ra_escr[0] == src->ra_escr[0])
+	dst->ra_selector ^= dst->ra_bits.counter[0];
+      if (dst->ra_escr[1] == src->ra_escr[1])
+	dst->ra_selector ^= dst->ra_bits.counter[1];
+
     /* remove any remaining shared counters */
     shared = dst->ra_selector & src->ra_selector;
     if (shared) dst->ra_selector ^= shared;
-#ifdef DEBUG
-	  SUBDBG("new dst\n");
-	  print_alloc(dst);
-#endif
 
     /* recompute rank */
     for (i=0,dst->ra_rank=0;i<MAX_COUNTERS;i++)
       if(dst->ra_selector & (1<<i)) dst->ra_rank++;
 #ifdef DEBUG
-	  SUBDBG("new dst\n");
-	  print_alloc(dst);
+      SUBDBG("new dst\n");
+      print_alloc(dst);
 #endif
 }
 
@@ -588,10 +574,9 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
       }
     }
     /* set the bits for the two esc registers this event can live on */
-    e->ra_escr[0] = e->ra_escr[1] = 0;
-    for(j=0;j<2;j++) {
-      e->ra_escr[e->ra_bits.escr[j] >> 5] |= (1 << (e->ra_bits.escr[j] & 31));
-    }
+    e->ra_escr[0] = e->ra_bits.escr[0];
+    e->ra_escr[1] = e->ra_bits.escr[1];
+
 #ifdef DEBUG
     SUBDBG("i: %d\n",i);
     print_alloc(e);
@@ -601,8 +586,8 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
   if(_papi_hwi_bipartite_alloc(event_list, natNum)){ /* successfully mapped */
     for(i=0;i<natNum;i++) {
 #ifdef DEBUG
-	  SUBDBG("i: %d\n",i);
-	  print_alloc(&event_list[i]);
+	SUBDBG("i: %d\n",i);
+	print_alloc(&event_list[i]);
 #endif
 	  /* Copy all the info about this native event to the NativeInfo struct */
 	  ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
