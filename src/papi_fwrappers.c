@@ -603,11 +603,11 @@ PAPI_FCALL(papif_query_event_verbose, PAPIF_QUERY_EVENT_VERBOSE, (unsigned int *
 }
 
 #if defined ( _CRAYT3E )
-PAPI_FCALL(papif_query_all_event_verbose, PAPIF_QUERY_ALL_EVENT_VERBOSE, (unsigned int *EventCode, _fcd event_name_fcd, _fcd event_descr_fcd, _fcd event_label_fcd, int *avail, _fcd event_note_fcd, int *flags, unsigned *check))
+PAPI_FCALL(papif_query_all_events_verbose, PAPIF_QUERY_ALL_EVENTS_VERBOSE, (unsigned int *EventCode, _fcd event_name_fcd, _fcd event_descr_fcd, _fcd event_label_fcd, int *avail, _fcd event_note_fcd, int *flags, unsigned *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_query_all_event_verbose, PAPIF_QUERY_ALL_EVENT_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check, int event_name_len, int event_descr_len, int event_label_len, int event_note_len))
+PAPI_FCALL(papif_query_all_events_verbose, PAPIF_QUERY_ALL_EVENTS_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check, int event_name_len, int event_descr_len, int event_label_len, int event_note_len))
 #else
-PAPI_FCALL(papif_query_all_event_verbose, PAPIF_QUERY_ALL_EVENT_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check))
+PAPI_FCALL(papif_query_all_events_verbose, PAPIF_QUERY_ALL_EVENTS_VERBOSE, (unsigned int *EventCode, char* event_name, char *event_descr, char *event_label, int *avail, char *event_note, int *flags, unsigned *check))
 #endif
 {
   const PAPI_preset_info_t *info;
