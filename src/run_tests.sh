@@ -7,7 +7,7 @@
 # Mods:    Kevin London
 #          london@cs.utk.edu
 
-if [ "$1" = "-v" ]; then
+if [ "X$1" = "X-v" ]; then
   shift ; TESTS_QUIET=""
 else
   TESTS_QUIET="TESTS_QUIET"
@@ -31,7 +31,7 @@ if [ "$i" = "tests/timer_overflow" ]; then
   echo Skipping test $i, it takes too long...
 else
 echo -n "Running $i: ";
-$CWD/$i TESTS_QUIET
+$CWD/$i $TESTS_QUIET
 fi;
 fi;
 done
@@ -41,6 +41,6 @@ for i in $FTESTS;
 do
 if [ -x $i ]; then
 echo -n "Running $i: ";
-$CWD/$i TESTS_QUIET
+$CWD/$i $TESTS_QUIET
 fi;
 done
