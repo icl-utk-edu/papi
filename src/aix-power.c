@@ -601,6 +601,7 @@ char *_papi_hwd_native_idx_to_name(unsigned int idx)
   if (pmc < pminfo.maxpmcs) {
     return (pminfo.list_events[pmc][idx].short_name);
   }
+  return(NULL);
 }
 
 /* Returns event description based on index. */
@@ -615,6 +616,7 @@ char *_papi_hwd_native_idx_to_descr(unsigned int idx)
   if (pmc < pminfo.maxpmcs) {
     return (pminfo.list_events[pmc][idx].description);
   }
+  return(NULL);
 }
 
 /**********************************************************************************/
