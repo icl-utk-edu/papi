@@ -73,5 +73,5 @@ int main()
   printf("Verification:\n");
   printf("Row 1 approximately equals %d\n",1000000);
   
-  exit(0);
+  exit(1);
 }

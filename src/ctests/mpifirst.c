@@ -147,4 +147,5 @@ int main(int argc, char **argv)
   test_pass(__FILE__, values, num_tests);
 
   MPI_Finalize();
+  exit(1);
 }

@@ -201,6 +201,7 @@ int main(int argc, char *argv[]) {
   if (retval == PAPI_ENOMEM)
 	  test_fail(__FILE__, __LINE__, "malloc", retval);
   else test_pass(__FILE__,NULL,0);
+  exit(1);
 }
 
 /*
@@ -276,6 +277,7 @@ static void resultline(int i, int j, int TESTS_QUIET)
 
 	if (TESTS_QUIET && ferror > 10 && diff > 8)
 		test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
+ exit(1);
 }
 
 

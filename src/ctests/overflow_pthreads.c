@@ -201,5 +201,6 @@ int main(int argc, char **argv)
 
   test_pass(__FILE__,NULL,0);
   pthread_exit(NULL);
+  exit(1);
 }
 

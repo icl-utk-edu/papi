@@ -8,7 +8,8 @@ MPI	= mpifirst
 SERIAL  = zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
-	overflow_single_event overflow profile tenth native memory
+	overflow_single_event overflow profile tenth native memory \
+	timer_overflow
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -33,6 +34,9 @@ serial: $(SERIAL)
 
 calibrate: calibrate.c dummy.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
+
+timer_overflow: timer_overflow.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) timer_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1: multiplex1.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 

@@ -163,4 +163,5 @@ int main(int argc, char **argv)
 	 elapsed_cyc);
   }
   test_pass(__FILE__,NULL,0);
+  exit(1);
 }

@@ -118,4 +118,5 @@ int main(int argc, char **argv)
    printf(format_string2,totcyc,((float)totcyc)/50001.0,"cyc/call");
    }
    test_pass(__FILE__,NULL,0);
+   exit(1);
 }

@@ -119,12 +119,15 @@ int main(int argc, char **argv)
 
     if ( !TESTS_QUIET )
        printf("%3d: Test 0x%08x %s %12lld\n",i,eventlist[i],descr,values[i][0]);
-    if( (retval = PAPI_rem_event(&EventSet, eventlist[i]))!=PAPI_OK)
+    if( (retval = PAPI_rem_event(&EventSet, eventlist[i]))!=PAPI_OK){
+      abort();
       test_fail(__FILE__,__LINE__,"PAPI_rem_event",retval);
+    }
   }
 
   if((retval=PAPI_destroy_eventset(&EventSet))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_destroy_eventset",retval);
 
   test_pass(TEST_NAME,values,num_tests);
+  exit(1);
 }

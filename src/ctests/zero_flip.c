@@ -137,4 +137,5 @@ int main(int argc, char **argv)
 	printf("Verification: none\n");
   }
   test_pass(__FILE__, NULL, num_tests);
+  exit(1);
 }

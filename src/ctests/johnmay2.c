@@ -74,4 +74,5 @@ int main(int argc, char **argv)
   printf("PAPI Error Code -1: PAPI_EINVAL: Invalid argument\n");
   }
   test_pass(__FILE__,NULL,0);
+  exit(1);
 }

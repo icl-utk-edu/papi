@@ -148,5 +148,6 @@ int main(int argc, char **argv)
 		}
   }
   test_pass(__FILE__, values, num_tests);
+  exit(1);
 }
 

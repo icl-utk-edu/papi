@@ -152,5 +152,6 @@ int main(int argc, char **argv)
     printf("%u samples that fell outside the regions.\n",*profbuf3);
   }
   test_pass(__FILE__,values,num_events );
+  exit(1);
 }
 

@@ -360,4 +360,5 @@ int main(int argc, char **argv)
   remove_test_events(&EventSet, mask);
 
   test_pass(__FILE__,values, num_tests );
+  exit(1);
 }

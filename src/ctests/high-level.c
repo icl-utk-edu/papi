@@ -105,5 +105,5 @@ int main(int argc, char **argv)
   /* The values array is not allocated through allocate_test_space 
    * so we need to pass NULL here */
   test_pass(__FILE__,NULL,NUM_EVENTS);
-  exit(0);
+  exit(1);
 }

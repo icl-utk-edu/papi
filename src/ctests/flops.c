@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
   if ( !TESTS_QUIET )
     printf(format_string, real_time, proc_time, flpins, mflops);
   test_pass(__FILE__,NULL,0);
+  exit(1);
 }
 
 
