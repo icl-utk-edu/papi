@@ -311,10 +311,10 @@ void test_fail(char *test_str, char *err_str, int retval)
 		char errstring[PAPI_MAX_STR_LEN];
 		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN );
 		printf("Error in %s: %s\n", err_str, errstring );
-		/* if the error is because it's not supported
+		/* if the error is because it's not supported or doesn't exist
 			log the error message, but return with no error condition
 		*/
-		if ( retval == PAPI_ESBSTR ) exit(0);
+		if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ) exit(0);
 	}
 	exit(1);
 }
