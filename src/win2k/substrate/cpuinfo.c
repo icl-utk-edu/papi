@@ -64,8 +64,7 @@ int init_hwinfo( struct wininfo * hwinfo) {
     volatile unsigned long val,val2, val3;
     SYSTEM_INFO sys_info;
     char vendor[13];
-    int tmpmhz,retval,dowork=0;
-    ULARGE_INTEGER t1, t2;
+    int retval,dowork=0;
 
 
 
