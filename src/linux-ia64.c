@@ -612,7 +612,7 @@ inline static int update_global_hwcounters(EventSetInfo *local, EventSetInfo *gl
 	}
     }
 
-  /* We need to scale FP_OPS_HI, dammit */ 
+  /* We need to scale FP_OPS_HI */ 
 
   for(i=0; i < PMU_MAX_COUNTERS; i++)
     {
