@@ -1363,12 +1363,13 @@ void *_papi_hwd_get_overflow_address(void *context)
 
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
-#define MAX_PAPI_LOCK 4
 #include <inttypes.h>
-volatile uint32_t lock[MAX_PAPI_LOCK] = {MUTEX_OPEN,MUTEX_OPEN, MUTEX_OPEN, MUTEX_OPEN};
+volatile uint32_t lock[PAPI_MAX_LOCK];
 
 void _papi_hwd_lock_init(void)
 {
+  int i;
+  for(i=0; i< PAPI_MAX_LOCK; i++) lock[i]=MUTEX_OPEN;
 }
 
 char * _papi_hwd_ntv_code_to_name(unsigned int EventCode)

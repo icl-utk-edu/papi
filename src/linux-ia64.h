@@ -112,9 +112,8 @@ extern caddr_t _init, _fini, _etext, _edata, __bss_start;
 
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
-#define MAX_PAPI_LOCK 4
 #include <inttypes.h>
-extern volatile uint32_t lock[MAX_PAPI_LOCK] ;
+extern volatile uint32_t lock[PAPI_MAX_LOCK] ;
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
