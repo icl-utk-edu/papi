@@ -146,7 +146,8 @@
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
       if ( retval .NE. PAPI_OK ) then
-          call ftest_fail(__FILE__, __LINE__, 'PAPIf_event_name_to_code', retval)
+          call ftest_fail(__FILE__, __LINE__, 
+     &    'PAPIf_event_name_to_code', retval)
       end if
       call PAPIf_add_event( es, nativees, retval )
         if ( retval .NE. PAPI_OK ) then
