@@ -1,0 +1,12 @@
+[data from a 300MHz Mobile Pentium II]
+
+PERFCTR INIT: vendor 0, family 6, model 5
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: rdpmc ticks == 2035
+PERFCTR INIT: rdmsr (counter) ticks == 5290
+PERFCTR INIT: rdmsr (evntsel) ticks == 4547
+PERFCTR INIT: wrmsr (counter) ticks == 5972
+PERFCTR INIT: wrmsr (evntsel) ticks == 5384
+PERFCTR INIT: read %cr4 ticks == 213
+PERFCTR INIT: write %cr4 ticks == 2763
+PERFCTR INIT: loop overhead ticks == 89
