@@ -370,7 +370,7 @@ int PAPI_stop_counters(long_long * values, int array_len)
       return (PAPI_ENOTRUN);
 
    if (state->running == HL_FLIPS || state->running == HL_IPC) {
-      long_long tmp_values[array_len];
+      long_long tmp_values[2];
       retval = PAPI_stop(state->EventSet, tmp_values);
    } else if(state->running != HL_START_COUNTERS || array_len < state->num_evts)
       return (PAPI_EINVAL);
