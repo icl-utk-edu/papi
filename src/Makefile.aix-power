@@ -8,7 +8,7 @@ CFLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qtune=pwr3 -qarch=pwr3
 OPTFLAGS= -O3 -qstrict -DNDEBUG
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
-LDFLAGS = -bI:/usr/lpp/pmtoolkit/lib/pmsvcs.exp -L/usr/lpp/pmtoolkit/lib -lpmapi
+LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi
 CC_R	= xlc_r -qnolm
 CC	= xlc -qnolm
 CC_SHR	= ld -G -r

@@ -220,7 +220,7 @@ void _papi_hwi_dispatch_overflow_signal(void *context)
     }
 }
 
-static int timer_running = 0;
+int _papi_hwi_using_signal = 0;
 
 static int start_timer(int milliseconds)
 {
@@ -228,10 +228,6 @@ static int start_timer(int milliseconds)
   struct sigaction action;
   struct itimerval value;
   void *tmp;
-
-  PAPI_lock();
-  timer_running++;
-  PAPI_unlock();
 
   /* If the user has installed a signal, don't do anything */
 
@@ -263,6 +259,10 @@ static int start_timer(int milliseconds)
       return(PAPI_ESYS);
     }
 
+  PAPI_lock();
+  _papi_hwi_using_signal++;
+  PAPI_unlock();
+
   return(PAPI_OK);
 }
 
@@ -283,8 +283,8 @@ static int stop_timer(void)
       retval = PAPI_ESYS;
 
   PAPI_lock();
-  timer_running--;
-  if (timer_running == 0)
+  _papi_hwi_using_signal--;
+  if (_papi_hwi_using_signal == 0)
     {
       if (signal(PAPI_SIGNAL,SIG_DFL) == SIG_ERR)
 	retval = PAPI_ESYS;

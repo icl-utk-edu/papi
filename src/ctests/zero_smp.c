@@ -44,6 +44,10 @@ Master pthread:
 #include "test_utils.h"
 #if defined(sun) && defined(sparc)
 #include <thread.h>
+#elif defined(mips) && defined(sgi) && defined(unix)
+#include <mpc.h>
+#elif defined(_AIX)
+#include <pthread.h>
 #endif
 
 void Thread(int t, int n)

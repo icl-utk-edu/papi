@@ -1281,23 +1281,18 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
-static void dispatch_timer(int signal, int code, struct sigcontext *info)
+void _papi_hwd_dispatch_timer(int signal, int code, struct sigcontext *info)
 {
-  extern EventSetInfo *default_master_eventset;
-  EventSetInfo *eventset_overflowing = default_master_eventset->event_set_overflowing;
-#ifdef DEBUG
   DBG((stderr,"dispatch_timer() at %p\n",(void *)info->sc_pc));
-#endif
-
-  if (eventset_overflowing->state & PAPI_OVERFLOWING)
-    _papi_hwi_dispatch_overflow_signal(eventset_overflowing, default_master_eventset, (void *)info); 
+  _papi_hwi_dispatch_overflow_signal((void *)info); 
 }
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
+  extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
-  int selector, hwcntr;
+  int selector, hwcntr, retval = PAPI_OK;
 
   if (overflow_option->threshold == 0)
     {
@@ -1310,15 +1305,26 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  arg->hwp_ovflw_freq[hwcntr] = 0;
 	  selector ^= 1 << hwcntr;
 	}
-      if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
-	return(PAPI_ESYS);
+      PAPI_lock();
+      _papi_hwi_using_signal--;
+      if (_papi_hwi_using_signal == 0)
+	{
+	  if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+	    retval = PAPI_ESYS;
+	}
+      PAPI_unlock();
     }
   else
     {
       struct sigaction act;
+      void *tmp;
+
+      tmp = (void *)signal(PAPI_SIGNAL, SIG_IGN);
+      if ((tmp != (void *)SIG_DFL) && (tmp != (void *)_papi_hwd_dispatch_timer))
+	return(PAPI_EMISC);
 
       memset(&act,0x0,sizeof(struct sigaction));
-      act.sa_handler = dispatch_timer;
+      act.sa_handler = _papi_hwd_dispatch_timer;
       act.sa_flags = SA_RESTART;
       if (sigaction(PAPI_SIGNAL, &act, NULL) == -1)
 	return(PAPI_ESYS);
@@ -1332,9 +1338,12 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  arg->hwp_ovflw_freq[hwcntr] = (int)overflow_option->threshold;
 	  selector ^= 1 << hwcntr;
 	}
+      PAPI_lock();
+      _papi_hwi_using_signal++;
+      PAPI_unlock();
     }
 
-  return(PAPI_OK);
+  return(retval);
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)

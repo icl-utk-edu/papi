@@ -1608,7 +1608,7 @@ void *_papi_hwd_get_overflow_address(void *context)
 }
 
 static volatile int lock_var = 0;
-static atomic_p lock;
+static volatile atomic_p lock;
 
 void _papi_hwd_lock_init(void)
 {

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
-#include <wait.h>
 #include "papi.h"
 #include "test_utils.h"
 

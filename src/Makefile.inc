@@ -43,7 +43,7 @@ examples:
 
 
 libclean:
-	rm -rf $(OBJECTS) core rii_files genpapifdef *~
+	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations
 
 clean: libclean
 	rm -rf $(LIBRARY) $(SHLIB) $(SHLIB).1 $(SHLIB).1.0 genpapifdef
