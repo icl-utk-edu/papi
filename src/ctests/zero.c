@@ -15,21 +15,44 @@
 
 #include "papi_test.h"
 
-int main() 
+#define TEST_NAME "zero"
+
+#ifdef NO_FLOPS
+  #define PAPI_EVENT 		PAPI_TOT_INS
+  #define MASK				0x3
+#else
+  #define PAPI_EVENT 		PAPI_FP_INS
+  #define MASK				0x5
+#endif
+
+int TESTS_QUIET=0; /* Tests in Verbose mode? */
+
+int main(int argc, char **argv) 
 {
   int retval, num_tests = 1, tmp;
   int EventSet1;
-  int mask1 = 0x5;
+  int mask1 = MASK;
   int num_events1;
   long_long **values;
   long_long elapsed_us, elapsed_cyc;
+  char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+
+  if ( !TESTS_QUIET ) {
+	retval = PAPI_set_debug(PAPI_VERB_ECONT);
+	if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_set_debug", retval);
+  }
+
+  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_event_code_to_name", retval);
+  sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    exit(1);
-
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  if ( retval != PAPI_VER_CURRENT)  test_fail(TEST_NAME, "PAPI_library_init", retval);
 
   EventSet1 = add_test_events(&num_events1,&mask1);
 
@@ -42,14 +65,12 @@ int main()
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_start", retval);
 
   do_flops(NUM_FLOPS);
-  
+ 
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK)
-    exit(1);
+  if (retval != PAPI_OK) test_fail(TEST_NAME, "PAPI_stop", retval);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -57,33 +78,31 @@ int main()
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Test case 0: start, stop.\n");
-  printf("-----------------------------------------------\n");
-  tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
-  printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
-  tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
-  printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
-  printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
-  printf("-------------------------------------------------------------------------\n");
+  if ( !TESTS_QUIET ) {
+	printf("Test case 0: start, stop.\n");
+	printf("-----------------------------------------------\n");
+	tmp = PAPI_get_opt(PAPI_GET_DEFDOM,NULL);
+	printf("Default domain is: %d (%s)\n",tmp,stringify_domain(tmp));
+	tmp = PAPI_get_opt(PAPI_GET_DEFGRN,NULL);
+	printf("Default granularity is: %d (%s)\n",tmp,stringify_granularity(tmp));
+	printf("Using %d iterations of c += a*b\n",NUM_FLOPS);
+	printf("-------------------------------------------------------------------------\n");
 
-  printf("Test type   : \t1\n");
+	printf("Test type   : \t1\n");
 
-  printf("PAPI_FP_INS : \t%lld\n",
+	sprintf(add_event_str, "%s : \t", event_name);
+	printf(TAB1, event_name,
 	 (values[0])[0]);
-  printf("PAPI_TOT_CYC: \t%lld\n",
+	printf(TAB1, "PAPI_TOT_CYC: \t",
 	 (values[0])[1]);
-  printf("Real usec   : \t%lld\n",
+	printf(TAB1, "Real usec   : \t",
 	 elapsed_us);
-  printf("Real cycles : \t%lld\n",
+	printf(TAB1, "Real cycles : \t",
 	 elapsed_cyc);
 
-  printf("-------------------------------------------------------------------------\n");
+	printf("-------------------------------------------------------------------------\n");
 
-  printf("Verification:\n");
-
-  free_test_space(values, num_tests);
-
-  PAPI_shutdown();
-
-  exit(0);
+	printf("Verification: none\n");
+  }
+  test_pass(TEST_NAME, values, num_tests);
 }
