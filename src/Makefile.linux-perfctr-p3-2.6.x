@@ -2,7 +2,7 @@ KERNINC	= /usr/src/linux-2.4/include
 PERFCTR ?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -O3 -g -Wall
-TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS
+TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS -D__x86_64__
 #
 # GNU G77 section
 #
@@ -42,7 +42,7 @@ TARGETS = serial multiplex_and_pthreads
 CC	= gcc
 CC_SHR  = $(CC) -shared -fPIC -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(DESTDIR)/lib"
 CC_R	= $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DPERFCTR25 -D__x86_64__ -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR20 -DPERFCTR24 -DPERFCTR25 -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c p3_events.c
 MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o event_set.o event_set_amd.o
