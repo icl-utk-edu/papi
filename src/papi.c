@@ -380,7 +380,7 @@ unsigned long int PAPI_thread_id(void)
   if (thread_id_fn != NULL)
     return((*thread_id_fn)());
   else
-    return(-1);
+    return(PAPI_EINVAL);
 }
 
 static int initialize_master_eventset(EventSetInfo **master)
