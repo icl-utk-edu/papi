@@ -460,4 +460,147 @@ extern int _papi_hwi_using_signal;
 #include "threads.h"
 #include "papi_protos.h"
 
+inline_static void PAPIERROR(char *format, ...)
+{
+   va_list args;
+   va_start(args, format); 
+   fprintf(stderr, "PAPI Error: ");
+   vfprintf(stderr, format, args);
+   fprintf(stderr,".\n");
+   va_end(args);
+}
+
+/*
+ * Debug functions for platforms without vararg macro support
+ */
+
+#ifdef NO_VARARG_MACRO
+inline_static void PAPIDEBUG(int level, char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void SUBDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_SUBSTRATE;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void APIDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_API;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void INTDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_INTERNAL;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void THRDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_THREADS;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void MPXDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_MULTIPLEX;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void OVFDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_OVERFLOW;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void PRFDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_PROFILE;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+#endif
+
 #endif                          /* PAPI_INTERNAL_H */
