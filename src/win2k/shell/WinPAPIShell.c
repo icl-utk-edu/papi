@@ -8,19 +8,23 @@
 #include "resource.h"
 #include "winpmc.h"
 
+
 // Global Variables:
-HINSTANCE hInst;								// current instance
-TCHAR appDir[256];								// application directory
-TCHAR helpDir[256];								// help file directory
+HINSTANCE hInst;		// current instance
+TCHAR appDir[256];		// application directory
+TCHAR CDir[256];		// C example directory
+TCHAR FortranDir[256];	// Fortran example directory
+TCHAR PerfDir[256];		// Perfometer example directory
+TCHAR jarDir[256];		// Perfometer jar application directory
+TCHAR helpDir[256];		// help file directory
 
 // Foward declarations of functions included in this code module:
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	getFileHook(HWND, UINT, WPARAM, LPARAM);
-static void			openPAPItest(void);
+static BOOL			UniProcessorBuild(void);
 static void			exerciseDriver(void);
 static void			centerDialog(HWND hdlg);
-static void			doHelp(void);
 
 
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -72,6 +76,9 @@ static BOOL findPath(char *path) {
 	return(FALSE);
 }
 
+// strip the last directory from a path
+// up to and including the backslash
+// return the resulting string length
 static int stripDir(char *dir) {
 	int i;
 	for (i=strlen(dir)-1; i>1; i--)
@@ -80,57 +87,221 @@ static int stripDir(char *dir) {
 	return (i);
 }
 
-
-static void enableHelp(HWND hDlg) {
-	HWND itemHndl;
-	int i = 2;
-	char help[] = "\\help\\welcome.html";
-	char man[]  = "\\man\\html\\papi.html";
-
-	itemHndl = GetDlgItem(hDlg, IDHELP);
-
-	strcpy(helpDir, appDir);
-	strcat(helpDir, help);
-
-	// look for \help inside default directory
-	if (!findPath(helpDir)) {
-		// look for /help up one level
-		strcpy(helpDir, appDir);
-		i = stripDir(helpDir);
-		if (i > 1) {
-			strcat(helpDir, help);
-			if (!findPath(helpDir)) {
-				// look for help in /man/html
-				strcpy(helpDir, appDir);
-				i = stripDir(helpDir);
-				i = stripDir(helpDir);
-				i = stripDir(helpDir);
-				if (i > 1) {
-					strcat(helpDir, man);
-					if (!findPath(helpDir)) i = 0;
-				}
-			}
-		}	
+// strip the last 'count' directories from a path
+// by calling stripDir()
+static int stripDirs(char *dir, int count) {
+	int i, j;
+	for (i=0; i<count; i++) {
+		j = stripDir(dir);
+		if (j == 0) break;
 	}
-	if (i < 2) EnableWindow(itemHndl, 0);
+	return (j);
 }
 
 
-static void enableDriver(HWND hDlg) {
-	HWND itemHndl;
+// looks for the example executables where we expect them to live
+// pass in a default install directory path and a development path
+// the default is relative to the application
+// the development path is assumed to be 'stripCnt' directories above the app
+static void initPath(char *defPath, char *devPath, char *destPath, int stripCnt) {
+	int i = 2;
+
+	strcpy(destPath, appDir);
+	strcat(destPath, defPath);
+	// look inside default install directory
+	if (!findPath(destPath)) {
+		// look in the development directory
+		strcpy(destPath, appDir);
+		i = stripDirs(destPath, stripCnt);
+		if (i > 1) {
+			strcat(destPath, devPath);
+			if (!findPath(destPath)) i = 0;
+		}
+	}
+	// if we can't find it, clear the directory entry
+	// let the user look the first time he asks
+	if (i < 2) destPath[0] = 0;
+}
+
+
+// search for the existence of PMC Driver
+// in the \system32\drivers directory
+static BOOL findDriver() {
 	char fname[256];
 
 	GetSystemDirectory(fname, sizeof(fname));
 	strcat(fname, "\\drivers\\winpmc.sys");
 
-	itemHndl = GetDlgItem(hDlg, IDDRIVER);
-
 	// look for driver file
-	if (!findPath(fname)) EnableWindow(itemHndl, 0);
+	return(findPath(fname));
 }
 
 
-// Mesage handler for about box, which serves as the main interface
+// initialize paths for all buttons
+// disable help button if path not found
+// disable example buttons if driver not found
+static void enableButtons(HWND hDlg) {
+	HWND itemHndl;
+
+	// enable the help button iff we find a path
+	initPath("\\help\\welcome.html", "\\man\\html\\papi.html", helpDir, 3);
+	if (!strlen(helpDir)) {
+		itemHndl = GetDlgItem(hDlg, IDHELP);
+		EnableWindow(itemHndl, 0);
+	}
+	// if we don't have the driver, we shouldn't run any examples
+	if (!findDriver()) {
+		itemHndl = GetDlgItem(hDlg, IDSMOKE);
+		EnableWindow(itemHndl, 0);
+		itemHndl = GetDlgItem(hDlg, IDCEX);
+		EnableWindow(itemHndl, 0);
+		itemHndl = GetDlgItem(hDlg, IDFORTRANEX);
+		EnableWindow(itemHndl, 0);
+		itemHndl = GetDlgItem(hDlg, IDPERFOMETEREX);
+		EnableWindow(itemHndl, 0);
+	}
+	// initialize the example directory paths
+	else {
+		initPath("\\tests", "\\tests\\Release", CDir, 1);
+		initPath("\\ftests", "\\ftests\\Release", FortranDir, 1);
+		initPath("\\perfometer", "\\tools\\perfometer\\tests\\Release", PerfDir, 3);
+	}
+	// initialize the path to the perfometer app
+	initPath("\\perfometer.jar", "\\tools\\perfGUI\\perfometer.jar", jarDir, 3);
+}
+
+
+// find and open a PAPI example application in a console window
+// if the preinitialized directory is empty
+// open the application directory and ask for help
+static void openShell(char *filter, char *title, char *ext, char *defDir)
+{
+	HINSTANCE myInst;
+	OPENFILENAME ofn;
+	BOOL gotFile;
+	char filename[256] = "\0";
+
+	memset(&ofn,0,sizeof(OPENFILENAME));
+
+	ofn.lpstrInitialDir = defDir;
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lpstrFilter = filter; 
+	ofn.lpstrFile = filename; 
+	ofn.nMaxFile = sizeof(filename); 
+	ofn.lpstrTitle = title;
+	ofn.lpstrDefExt = ext;
+	ofn.Flags = OFN_FILEMUSTEXIST |	OFN_PATHMUSTEXIST 
+			  | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_EXPLORER;
+	ofn.lpfnHook = getFileHook;
+	gotFile = GetOpenFileName(&ofn);
+	if (gotFile)
+		myInst = ShellExecute(NULL,"open",filename, NULL, NULL, SW_MAXIMIZE);
+}
+
+
+// find and open the PAPI Perfometer GUI application
+static void openPerfometer(void)
+{
+	char *filter = "Perfometer GUI (*.jar)\0*.jar\0\0";
+	char *title  = "Please help me find the Perfometer GUI";
+	char *defExt = "jar";
+
+	if (jarDir) ShellExecute(NULL,"open", jarDir, NULL, NULL, SW_SHOWNORMAL);
+	else openShell(filter, title, defExt, appDir);
+}
+	
+
+// find and open a PAPI example application in a console window
+// if the preinitialized directory is empty
+// open the application directory and ask for help
+static void openExamples(char *title, char *dir)
+{
+	int i,j;
+	char fullFilter[128];
+	char fullTitle[128];
+	char *filterStub = "\0*.exe\0\0";
+	char *titleStub = " Selection";
+	char *defExt = "exe";
+	char *defDir;
+
+	// build filter and title strings
+	strcpy(fullTitle, title);
+	strcat(fullTitle, titleStub);
+
+	strcpy(fullFilter, title);
+	strcat(fullFilter, " Executables (*.exe)");
+	j = strlen(fullFilter);
+	for (i=0;i<8;i++) fullFilter[i+j] = filterStub[i];
+
+	// set up default directory
+	if (strlen(dir)) defDir = dir;
+	else {
+		strcpy(fullTitle, "Please help me find ");
+		strcat(fullTitle, title);
+		if (fullTitle[strlen(fullTitle)-1] != 's');
+			strcat(fullTitle, "s");
+		defDir = appDir;
+	}
+	openShell(fullFilter, fullTitle, defExt, defDir);
+}
+
+// really should add error checking to the file operations...
+static void addline(const char *dir, const char *name, FILE *file)
+{
+	char line[256];
+	int NumWritten;
+
+	strcpy(line, dir);
+	strcat(line, "\\");
+	strcat(line, name);
+	strcat(line, " TESTS_QUIET\n");
+	NumWritten = fwrite(line, sizeof(char), strlen(line), file);
+}
+
+// really should add error checking to the file operations...
+static void make_smoke(const char *dir, FILE *out)
+{
+	HANDLE findFile;
+    WIN32_FIND_DATA FindFileData; 	// pointer to returned information 
+	char wildcard[] = "\\*.exe";
+	char findname[256];
+
+	strcpy(findname, dir);
+	strcat(findname, wildcard);
+	findFile = FindFirstFile(findname, &FindFileData);
+	if (findFile != INVALID_HANDLE_VALUE) {
+		addline(dir, FindFileData.cFileName, out);
+		while (FindNextFile(findFile, &FindFileData))
+			addline(dir, FindFileData.cFileName, out);
+		FindClose(findFile);
+	}
+}
+				
+// test for the uniprocessor build & fail if not present
+// otherwise, build .bat files dynamically to execute all tests
+// really should add error checking to the file operations...
+static void smokeTest(void)
+{
+	FILE *batfile;
+	TCHAR smokebat[] = "smoke_test.bat";	// file name for batch file
+
+	if (UniProcessorBuild()) {
+		// find and run all the C and Fortran tests
+		if (strlen(FortranDir) || strlen(CDir)) {
+			batfile = fopen(smokebat, "w");
+			fwrite("ECHO OFF\n", sizeof(char), 9, batfile);
+			if (strlen(FortranDir)) make_smoke(FortranDir, batfile);
+			if (strlen(CDir)) make_smoke(CDir, batfile);
+			fwrite("PAUSE\n", sizeof(char), 6, batfile);
+			fclose(batfile);
+			ShellExecute(NULL, NULL, smokebat, NULL, NULL, SW_MAXIMIZE);
+		}
+		else MessageBox(NULL, "The low-level driver looks ok, \nbut I couldn't find any test directories.", "Smoke Test",MB_OK);
+	}
+}
+	
+
+// Message handler for about box, which serves as the main interface
 LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -139,8 +310,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_INITDIALOG:
 			centerDialog(hDlg);
-			enableHelp(hDlg);
-			enableDriver(hDlg);
+			enableButtons(hDlg);
 			return TRUE;
 
 		case WM_COMMAND:
@@ -149,18 +319,28 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			// Parse the menu selections:
 			switch (wmId)
 			{
- 				case IDM_PAPI_TESTS:
- 				case IDTEST:
-					openPAPItest();
+ 				case IDCEX:
+					openExamples("PAPI C Example", CDir);
 					return TRUE;
 
-                case IDM_TEST_KERNEL:
-                case IDDRIVER:
-					exerciseDriver();
+ 				case IDFORTRANEX:
+					openExamples("PAPI Fortran Example", FortranDir);
+					return TRUE;
+
+ 				case IDPERFOMETER:
+					openPerfometer();
+					return TRUE;
+
+ 				case IDPERFOMETEREX:
+					openExamples("Perfometer Example", PerfDir);
+					return TRUE;
+
+                case IDSMOKE:
+					smokeTest();
 					return TRUE;
 
 				case IDHELP:
-					doHelp();
+					ShellExecute(NULL,"open", helpDir, NULL, NULL, SW_SHOWNORMAL);
 					return TRUE;
 
 				case IDWEB:
@@ -177,51 +357,49 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-// find and open a PAPI test application in a console window
-static void openPAPItest(void)
-{
-	HINSTANCE myInst;
-	OPENFILENAME ofn;
-	BOOL gotFile;
-	char testDir[256];
-	char *filter = "PAPI Test Executables\0*.exe\0\0";
-	char filename[256] = "\0";
-	char *defExt = "exe";
-	char *Title = "PAPI Test Application Selection";
 
-	memset(&ofn,0,sizeof(OPENFILENAME));
+// put the driver through its paces to make sure it's there and active
+// check the task switch stuff to make sure we're using UniProcessor Build
+// return TRUE if UniProcessor and everything worked
+// return FALSE with a dialog box if anything fails
+static BOOL UniProcessorBuild(void)
+{    
+	HANDLE hDriver = INVALID_HANDLE_VALUE;
+	DWORD dwBytesReturned;
+	BOOL  bReturnCode = FALSE;
+	char szString[256]; // character buffer
+	int iobuf[256];     // I/O buffer
 
-	// default to application directory
-	ofn.lpstrInitialDir = appDir;
+	// Try opening a static device driver. 
+	hDriver = CreateFile("\\\\.\\WinPMC",
+			 GENERIC_READ | GENERIC_WRITE, 
+			 FILE_SHARE_READ | FILE_SHARE_WRITE,
+			 0,                     // Default security
+			 OPEN_EXISTING,
+			 0,						// Don't Perform asynchronous I/O
+			 0);                    // No template
 
-	strcpy(testDir, appDir);
-	strcat(testDir, "\\tests");
-	// look for /tests inside default directory
-	if (findPath(testDir)) ofn.lpstrInitialDir = testDir;
+	if (hDriver == INVALID_HANDLE_VALUE)
+		MessageBox(NULL,"Bummer","Driver Load Failed.",MB_OK);
 	else {
-		int i;
-		// look for /tests up one level
-		strcpy(testDir, appDir);
-		i = stripDir(helpDir);
-		if (i > 1) {
-			strcat(testDir, "\\tests");
-			if (findPath(testDir)) ofn.lpstrInitialDir = testDir;
-		}	
-	}
+		// Send a request to the driver. The request code is TASKSWITCH, no parameters
+		bReturnCode = DeviceIoControl(hDriver, TASKSWITCH, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
+		if (bReturnCode) {
+			if (iobuf[0] != 0) {
+				strcpy(szString, "This machine is running the Multiprocessor or Checked Build.");
+				strcat(szString, "\n It cannot currently support PAPI.");
+				sprintf(&szString[strlen(szString)], "\nThere have been %d task switches since the driver was opened.", iobuf[0]);
+		  		MessageBox(NULL, szString, "TASKSWITCH Test",MB_OK);
+			}
+			bReturnCode = TRUE;
+		}
+		else MessageBox(NULL,"TASKSWITCH failed.","TASKSWITCH Test",MB_OK);
 
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.lpstrFilter = filter; 
-	ofn.lpstrFile = filename; 
-	ofn.nMaxFile = sizeof(filename); 
-	ofn.lpstrTitle = Title;
-	ofn.lpstrDefExt = defExt;
-	ofn.Flags = OFN_FILEMUSTEXIST |	OFN_PATHMUSTEXIST 
-			  | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_EXPLORER;
-	ofn.lpfnHook = getFileHook;
-	gotFile = GetOpenFileName(&ofn);
-	if (gotFile)
-		myInst = ShellExecute(NULL,"open",filename, NULL, NULL, SW_MAXIMIZE);
+		CloseHandle(hDriver);
+	}
+	return(bReturnCode);
 }
+
 
 // put the driver through its paces to make sure it's there and active
 static void exerciseDriver(void)
@@ -293,14 +471,6 @@ static void exerciseDriver(void)
 
 		CloseHandle(hDriver);
 	}
-}
-
-
-
-static void doHelp(void)
-{
-	HINSTANCE myInst;
-	myInst = ShellExecute(NULL,"open", helpDir, NULL, NULL, SW_SHOWNORMAL);
 }
 
 
