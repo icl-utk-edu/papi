@@ -6,6 +6,367 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.9, 2004-07-27
+- Updated kernel support: 2.4.27-rc3, 2.6.7, 2.6.8-rc2,
+  2.4.21-15.0.3 (RHEL3), 2.6.5-7.95 (SuSE).
+- x86: enforce -fno-unit-at-a-time with gcc-3.4, to prevent
+  kernel crashes due to stack overflow in 2.6 kernels < 2.6.6.
+- x86: do sync_core() before rdtsc() in the internal micro-
+  benchmarking code, to avoid bogus data on K8 processors.
+- x86: prevent stray WRMSR at driver init time, which could
+  disable the NMI watchdog or Oprofile.
+- x86: prevent inlining from breaking code backpatching mechanism.
+- x86: fix CONFIG_X86_LOCAL_APIC=n linkage error in init tests.
+- PPC32: fix to allow 7400/7410 to specify MMCR2[THRESHMULT].
+- PPC32: add support for generic processors using only the
+  timebase register for high-resolution time measurements.
+
+Version 2.6.8, 2004-05-29
+- Added support for the IBM PowerPC 750GX processor.
+- Updated kernel support: 2.4.27-pre3, 2.6.7-rc1, 2.6.7-rc1-mm1,
+  2.4.21-15.EL (RHEL3), 2.6.5-1.358 (FC2).
+- Fixed an error in the 2.4.21-193 SuSE kernel patch file which
+  broke compilation on x86-64.
+- Perfctr and Oprofile can now coexist safely in newer kernels,
+  thanks to changes in kernel 2.6.6. Backported support for
+  those changes from perfctr-2.7.1.
+
+Version 2.6.7, 2004-05-04
+- Merged several x86_64-specific driver files with their x86
+  counterparts, reducing the amount of duplicated code.
+- Added textual descriptions to the library's P6 event sets.
+  From Bryan O'Sullivan.
+- Changed examples/signal/signal to count retired instructions
+  instead of retired micro-operations on AMD K7. Needed to avoid
+  a loop with the same instruction overflowing indefinitely.
+- Updated kernel support: 2.6.6-rc3, 2.4.27-pre1, 2.4.22-1.2188.nptl
+  (FC1), 2.4.21-9.0.1 (RHEL3), 2.4.20-31.9 (RH9).
+
+Version 2.6.6, 2004-02-21
+- Pentium-M has an undocumented local APIC quirk which can stop
+  perfctr interrupt delivery. Added workaround to prevent this.
+- Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels.
+  Luckily, the bug turned out to be harmless (a bogus "rip" value was
+  retrieved, but never used by the higher-level interrupt handler).
+- Added support for Pentium 4 Model 3 processors, which have slight
+  event set changes from earlier models.
+- Updated kernel support: 2.6.3, 2.4.25, 2.4.22-1.2174.nptl (FC1),
+  2.4.20-30.9 (RH9), and 2.4.21-193 (SuSE). Removed support for some
+  obsolete FC1 and RH update kernels.
+
+Version 2.6.5, 2004-01-26
+- Relaxed and corrected control checks on Pentium 4:
+  * Allow ESCR.CPL_T1 to be non-zero when using global-mode
+    counters on HT processors.
+  * Don't require ESCR.CPL_T0 to be non-zero. CPL_T0==0b00
+    is safe and potentially useful (global counters on HT).
+  * Require CCCR.ACTIVE_THREAD==0b11 on non-HT processors, as
+    documented in the IA32 Volume 3 manual. Old non-HT P4s
+    seem to work Ok for all four values, but this is neither
+    guaranteed nor useful.
+- Per-process counters driver updated for filp->f_mapping
+  change in 2.6.2-rc kernels.
+- Support 2.4.21-9.EL (RHEL3) and 2.4.22-1.2149.nptl (FC1) kernels.
+- Library updates for PowerPC:
+  * Added cpu_type constants for struct perfctr_info.
+  * Decode PVR and define perfctr_info.cpu_type accordingly.
+  * Added event set descriptions for 604/604e/750.
+
+Version 2.6.4, 2004-01-12
+- Added support for PowerPC 604/7xx/74xx processors.
+  * Overflow interrupts are not yet supported due to a hardware
+    erratum affecting many 7xx and early 74xx processors.
+  * The user-space components support PowerPC, but CPU detection
+    and event set descriptions are not yet implemented.
+  * Supported in 2.6.1 and 2.4.23 and newer 2.4 kernels.
+- Updated kernel support: 2.6.1, 2.4.25-pre4, 2.4.22-1.2140.nptl
+  (FC1 update), 2.4.21-4.0.2.EL (RHEL update), and 2.4.20-28.x
+  (RH 7.x/8.0/9 update).
+
+Version 2.6.3-pl1, 2004-01-01
+- Updated kernel support: 2.6.1-rc1, 2.4.24-pre3,
+  2.4.22-1.2135.nptl (FC1 update), 2.4.21-6.EL (RHEL Taroon
+  beta update), and 2.4.20-27.x (RH 7.x/8.0/9 update).
+- Moved the x86 performance counter interrupt handler code
+  from the driver source to the kernel, via the patch kit.
+  Needed to cope with changes in RedHat's 2.4.21-6.EL kernel.
+  This change only affects 2.4.21 and later 2.4 kernels.
+
+Version 2.6.3, 2003-12-21
+- Fixed a bug where a read of the global-mode counters could
+  fail with EOVERFLOW due to an incorrect structure descriptor.
+  The bug only existed in perfctr-2.6.2.
+  (Thanks to Pavel Machek for reporting this problem.)
+- AMD64 IA32 emulation code cleaned up for kernel 2.4.23.
+- Updated kernel support: 2.6.0, 2.4.24-pre1, 2.4.23,
+  2.4.22-1.2129.nptl (FC1 update), 2.4.21-1.1931.2.393.ent
+  (RHEL Taroon beta), and 2.4.20-24 (RH 7.x/8/9 update).
+- User-space package rpm spec file fixes:
+  * Don't remove /dev/perfctr on package uninstall.
+  * Don't add alias to /etc/modules.conf if it's already there.
+
+Version 2.6.2, 2003-11-23
+- libperfctr.so is now installed with proper versioning.
+- ABI control and info structures padded to accommodate some
+  extensions without breaking application/library binary
+  compatibility. ABI version incremented to '5'.
+- Driver checks that only P4 models <= 2 use IQ_ESCR0/1.
+- Added support for Fedora Core 1's 2.4.22-1.2115.nptl kernel.
+- Driver compile fix for AMD64 in SMP 2.6 kernels.
+
+Version 2.6.1, 2003-10-05
+- Opening a process' virtual perfctrs is now done via
+  /dev/perfctr instead of /proc/<pid>/perfctr. This is needed
+  due to the changed semantics for /proc/self and /proc/<pid>/
+  in kernel 2.6.0-test6. User-space is not affected since the
+  perfctr-2.6 API and user-space library was prepared for
+  this access method change.
+  User-space code monitoring other processes should use
+  gettid() to identify tasks in 2.6 kernels, since getpid()
+  does the wrong thing for process threads.
+- Driver cleanups from obsoleting 2.4.15 and older kernels.
+- Made examples/global/global.c more robust.
+- Simplified usage with 2.6 kernels: it's no longer necessary
+  to add an 'alias' declaration in /etc/modprobe.conf.
+- Added support for AMD K8 Revision C processors.
+
+Version 2.6.0, 2003-09-08
+- The driver now kills a process' performance counters if the
+  process migrates to a forbidden CPU. This ensures that unsafe
+  changes to a process' CPU affinity mask don't break the driver,
+  the hardware state, or other processes. (This is an issue on
+  hyper-threaded P4s only.)
+- A bug fix in perfctr-2.6.0-pre3 broke compiling the driver
+  non-modular in modular 2.4 kernels. Corrected that problem.
+
+Version 2.6.0-pre5, 2003-08-31
+- Disabled driver debug code which could printk() in the kernel's
+  context-switch path, as that is disallowed.
+- 2.4.16 is now the oldest supported kernel.
+- Compilation fixes for driver's ia32 emulation code on x86-64.
+
+Version 2.6.0-pre4, 2003-08-19
+- Kernel/user-space API switched to a new "sparse marshalling"
+  mechanism, which supports x86 application code on x86-64,
+  and API struct extensions w/o breaking binary compatibility.
+- Prepared the library for the future non-/proc/pid/perfctr API.
+- Fixed a bug in the per-process perfctr creation code. The
+  remote-control interface was racy in preemptible kernels.
+- Fixed a bug in the process exit code for preemptible kernels.
+- Changes to handle 2.6 kernels with the cpumask_t patch (-mm, -osdl):
+  * Driver converted to use cpumask_t API, with compatibility wrapper
+    for cpumask_t-free kernels.
+  * API change: removed the cpus and cpus_forbidden sets from the
+    perfctr_info struct, added new data type and commands for retrieving
+    these sets. (cpumask_t values cannot be exported as-is since their
+    sizes depend on kernel configuration, and the type definition uses
+    'long' which breaks 32/64-bit binary compatibility.)
+  * Updated library and example programs for the API change.
+- Fixed a dependency bug in the library Makefile.
+- Added support for VIA C3 Antaur/Nehemiah processors.
+
+Version 2.6.0-pre3, 2003-08-03
+- Replaced 'long' by 'int' in the API structures to eliminate
+  unnecessary ABI incompatibilities between x86 and x86-64.
+- Simplified global-mode perfctrs API: the write-control and
+  read-state commands now operate on a single CPU instead of on
+  a set of CPUs. Added a new start command to start the counters.
+- Added thin library wrappers for per-process perfctr kernel calls.
+  Cleaned up examples/perfex and the library itself.
+- Removed the requirement that CCCR.ACTIVE_THREAD == 3 on P4.
+- Extended cascading should now work on Pentium 4 Model 2 processors.
+- Fixed a bug where the perfctr module's refcount could be zero with
+  code still running in the module. This could race with rmmod in
+  preemptive kernels, and in theory also in SMP kernels.
+
+Version 2.6.0-pre2, 2003-07-13
+- Per-process perfctrs API fixes: control data is retrieved using
+  new READ_CONTROL operation, mmap()ed state no longer exposes the
+  control data, the SAMPLE operation is renamed to READ_SUM and
+  now updates a given user-space buffer, non-write operations are
+  permitted on dead perfctrs.
+  Retrieving control explicitly makes the user-visible mmap()ed
+  state binary compatible between x86 and x86-64. The other changes
+  simplify the user-space library and allow perfex to replace raw
+  mmap() accesses with higher-level operations.
+- Driver cleanups, including eliminating many #ifdefs and
+  removing some unnecessary P4-specific driver procedures.
+- Fixes for macro redefinition warnings in the 2.4.22-pre3 kernel.
+- Perfctr library RPM spec file updates from Bryan O'Sullivan.
+
+Version 2.6.0-pre1, 2003-07-02
+- Rearranged the data structure holding the counter state to
+  reduce the number of caches lines needed to be touched at key
+  operations. The new representation is also binary compatible
+  between x86 and x86-64, which matters since user-space mmaps() it.
+- Added RPM spec file for the library. (From Bryan O'Sullivan).
+- Patch kit updated for kernels 2.4.22-pre2 and 2.5.73.
+
+Version 2.5.5, 2003-06-15
+- Updates for driver model changes in kernel 2.5.71.
+- Minor updates to the library's event descriptions for Pentium 4.
+- Now supports SuSE's 2.4.19.SuSE-206 kernel for SLES 8 users.
+  Autodetection of SuSE kernel versions is not yet implemented:
+  pass "--patch=2.4.19.SuSE-206" to perfctr's update-kernel script
+  to ensure that the correct patch is applied.
+- Patch kit updates for 2.4.21 final and 2.4.20-18 RH kernels.
+
+Version 2.5.4, 2003-06-01
+- Corrected the driver's handling of OVF_PMI+FORCE_OVF counters
+  on Pentium 4. This configuration didn't work at all, and
+  lead to various BUG messages from the driver.
+  These restrictions apply to OVF_PMI+FORCE_OVF counters:
+  * The ireset value must be -1.
+  * Once the counter has interrupted once, it will continue
+    to interrupt when the faulting instruction is restarted,
+    causing it to never complete. This problem also occurs
+    for non-FORCE_OVF interrupt-mode counters if the ireset
+    value is of too small magnitude, like -1.
+    This appears to be a P4 hardware quirk. Don't restart
+    FORCE_OVF interrupt-mode counters, and don't use ireset
+    values too small to allow instructions to complete.
+- Updated library's K8 event descriptions to match current
+  documentation. Corrected several omissions and errors.
+- Patch kit updated for kernels 2.5.70 and 2.4.21-rc6.
+
+Version 2.5.3.1, 2003-05-21
+- Patch kit updated for recent RedHat 6.2/7.x/8.0/9 update kernels
+  (2.2.24-{6.2.3,7.0.3} and 2.4.20-13.{7,8,9}).
+- Fixed a driver compile warning which occurred when the driver
+  is built as a module in 2.4 SMP kernels using module versions.
+- x86-64 now uses 'long long' for 64-bit sums, like x86. This
+  reduces x86 and x86-64 user-space source code incompatibility.
+
+Version 2.5.3, 2003-05-16
+- Added support for the Pentium M processor. It is mostly like
+  a Pentium III with some more events, except that six old
+  Pentium III / Pentium Pro events have been redefined.
+- Added support for K8 in 64-bit mode (the x86_64 kernel arch).
+  Updated driver, user-space library, and example programs.
+  The shared library libperfctr.so is now compiled with -fPIC.
+- K8 bug fix in examples/signal/signal.c: a missing INT flag
+  caused the driver to reject the control setup.
+- P4 event descriptions updated from recent documentation changes.
+
+Version 2.5.2, 2003-04-13
+- Updated power management code for the local APIC and NMI
+  watchdog driver model changes in kernel 2.5.67.
+- Timer-based sampling of per-process performance counters is
+  now always enabled: previously it was only done on SMP.
+  Needed to avoid counter inaccuracies on high core-clock CPUs.
+- Fixes to user-space library implementation of remote-control
+  virtual performance counters: open() failed due to a missing
+  return; avoid potential buffer overflow error; fix the "read
+  counters" procedure for the case where the remote process is
+  sampling the time-stamp counter but no performance counters.
+- Added support for RedHat 9's 2.4.20-8 and 2.4.20-9 kernels.
+
+Version 2.5.1, 2003-03-23
+- Fixed initialisation on hyper-threading capable P4s in
+  SMP kernels older than 2.4.15 to not signal an error if
+  hyper-threading is disabled: in this case the absence of
+  working set_cpus_allowed() support is not a problem.
+- Fixed two compilation errors in the set_cpus_allowed()
+  emulation affecting old 2.4 kernels configured for SMP.
+- INSTALL file updates.
+
+Version 2.5.0, 2003-03-10
+- Added a simple user-space library API for accessing other
+  processes' virtual performance counters. This uses a new
+  type and a new set of operations since remote access has
+  different requirements than accessing one's own counters.
+  Following Mike Marty's suggestion, I left out the process
+  control calls needed around these operations (ptrace() and
+  wait()), so applications must handle that themselves.
+- Added 'make install' support for the user-space components.
+- Driver API cleanups. The 'eventsel_aux[]' array in 'struct
+  perfctr_cpu_control' has been renamed as 'escr[]' and has been
+  moved into the 'p4' sub-structure. (The change highlights the
+  fact that this field was and is P4-only.) The 'version[]' string
+  in 'struct perfctr_info' has been renamed to 'driver_version[]',
+  since perfctr_info now also contains an 'abi_version' field.
+  Some changes in the driver ABI: while not strictly necessary,
+  they clean things up and make room for future changes. The ABI
+  changed anyway from perfctr-2.4, so this shouldn't be a problem.
+- Added a perfctr_cpu_control_print() procedure to the library,
+  and updated the example programs to use it.
+- Updated the perfex example program's help text to describe the
+  syntax and meaning of event specifiers.
+- Patch kit updates for 2.2.24/2.4.18-26(RedHat)/2.5.64 kernels.
+
+Version 2.5.0-pre2, 2003-03-03
+- Added a way for user-space to query the driver's ABI version,
+  and updated the library to check it.
+- Fixed <linux/perfctr.h> to not include <asm/perfctr.h> when
+  perfctr hasn't been configured. This allows the patched kernel
+  source to compile cleanly also in archs not supported by perfctr.
+- Major patch kit overhaul. Updated configuration help texts.
+  Removed unnecessary features and patches. Some cleanups. Added
+  aliasing support to the 'update-kernel' script, which allows a
+  patch to serve several kernels (when applicable).
+- The perfctr configuration option was poorly placed. It is now
+  at the end of the "Processor type and features" menu.
+- Removed "notsc" kernel option support from the 2.2 kernel patches.
+  To use the driver with an IDT WinChip (Centaur C6/2/3) CPU now
+  requires a newer kernel with native "notsc" support.
+- Driver fixes for changes in the 2.4.21-pre5 and 2.5.63 kernels.
+
+Version 2.5.0-pre1, 2003-02-19
+- Fixed the driver's API to support global-mode perfctrs on 2.5
+  SMP kernels and asymmetric hyper-threaded P4 multiprocessors.
+  Updated examples/global/global.c for the new API.
+- Minor library cleanups. Updated example programs accordingly.
+- API cleanup: Removed obsolete STOP command from the driver
+  for virtual perfctrs. The library now uses CONTROL instead.
+- Proper detection and support for AMD K8 processors. They are
+  similar to the K7s, but the event sets are not identical.
+- The library's event set descriptions have been redesigned and
+  expanded to include unit mask descriptions and descriptions of
+  Intel P4 and AMD K8 events. The etc/perfctr-events.tab text file
+  has been removed since event_codes.h now is generated from the
+  library's data structures.
+
+Version 2.4.5, 2003-02-09
+- Corrected the unit mask definition for the K7 SYSTEM_REQUEST_TYPE
+  event in etc/perfctr-events.tab: WC is 0x02 not 0x04.
+- Fixed two compile warnings which could be triggered in 2.5 kernels.
+- Patch kit updates for 2.4.21-pre4/2.4.18-24(RedHat)/2.5.59-osdl2 kernels.
+
+Version 2.4.4, 2003-01-18
+- Fixed a context-switch bug where an interrupt-mode counter could
+  increment unexpectedly, and also miss the overflow interrupt.
+- Fixed some ugly log messages the new HT P4 support code added
+  in perfctr-2.4.3 could generate at driver initialisation time.
+- Added preliminary support for AMD K8 processors with the
+  regular 32-bit x86 kernel. The K8 performance counters appear
+  to be identical or very similar to the K7 performance counters.
+
+Version 2.4.3, 2002-12-11
+- Support for hyper-threaded Pentium 4s added. In a HT P4, the
+  two logical processors share the performance counter state.
+  HT P4s are therefore _asymmetric_ multi-processors, and the
+  driver enforces CPU affinity masks on users of per-process
+  performance counters to avoid resource conflicts. (Users are
+  restricted to logical processor #0 in each physical CPU.)
+  Limitations:
+  * The kernel mechanism for updating a process' CPU affinity
+    mask uses no or very weak locking, which makes certain race
+    conditions possible that can break the driver's CPU affinity
+    mask restrictions. For now, users should NOT use the
+    sched_setaffinity() system call on processes using per-process
+    performance counters.
+  * Global-mode performance counters don't work on HT P4s due to
+    limitations in the API. This will be fixed in perfctr-2.5.
+  * 2.2 kernels don't have CPU affinity masks, and therefore can't
+    support HT P4s.
+
+Version 2.4.2, 2002-11-25
+- Fixed a driver bug where it could fail to prevent simultaneous
+  use of global-mode and per-process performance counters.
+- Made the driver safe for preemptible 2.5 kernels.
+- New patches for RedHat update kernels 2.2.22-6.2.2, 2.2.22-7.0.2,
+  2.4.18-18.7.x, and 2.4.18-18.8.0.
+
 Version 2.4.1, 2002-10-12
 - Support RedHat 8.0's 2.4.18-14 kernel. Building perfctr as
   a module caused a namespace clash in this kernel. The fix

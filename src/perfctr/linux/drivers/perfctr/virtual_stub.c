@@ -2,99 +2,67 @@
  * Kernel stub used to support virtual perfctrs when the
  * perfctr driver is built as a module.
  *
- * Copyright (C) 2000-2002  Mikael Pettersson
+ * Copyright (C) 2000-2003  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/perfctr.h>
-#include <linux/kmod.h>
 #include "compat.h"
 
-static void bug(const char *func, void *callee)
+static void bug_void_perfctr(struct vperfctr *perfctr)
 {
-	printk(KERN_ERR __FILE__ ": BUG! call to __vperfctr_%s "
-	       "from %p, pid %u, '%s' when perfctr module is not loaded\n",
-	       func, callee, current->pid, current->comm);
-	task_thread(current)->perfctr = NULL;
+	current->thread.perfctr = NULL;
+	BUG();
 }
 
-static void bug_exit(struct vperfctr *perfctr)
+#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+static void bug_set_cpus_allowed(struct task_struct *owner, struct vperfctr *perfctr, cpumask_t new_mask)
 {
-	bug("exit", __builtin_return_address(0));
+	owner->thread.perfctr = NULL;
+	BUG();
 }
-
-static void bug_suspend(struct vperfctr *perfctr)
-{
-	bug("suspend", __builtin_return_address(0));
-}
-
-static void bug_resume(struct vperfctr *perfctr)
-{
-	bug("resume", __builtin_return_address(0));
-}
-
-#ifdef CONFIG_SMP
-static void bug_sample(struct vperfctr *perfctr)
-{
-	bug("sample", __builtin_return_address(0));
-}
-#endif
-
-static int vperfctr_stub_open(struct inode *inode, struct file *filp)
-{
-	struct file_operations *fops;
-
-	read_lock(&vperfctr_stub_lock);
-	fops = fops_get(vperfctr_stub.file_ops);
-	read_unlock(&vperfctr_stub_lock);
-	if( !fops && request_module("perfctr") == 0 ) {
-		read_lock(&vperfctr_stub_lock);
-		fops = fops_get(vperfctr_stub.file_ops);
-		read_unlock(&vperfctr_stub_lock);
-	}
-	if( !fops )
-		return -ENOSYS;
-	filp->f_op = fops;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
-	inode->i_fop = fops; /* no fops_get since only filp->f_op counts */
-#endif
-	return fops->open(inode, filp);
-}
-
-static struct file_operations vperfctr_stub_file_ops = {
-	.open = vperfctr_stub_open,
-};
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
-void perfctr_set_proc_pid_ops(struct inode *inode)
-{
-	inode->i_fop = &vperfctr_stub_file_ops;
-}
-#else
-#include <linux/proc_fs.h>
-struct inode_operations perfctr_proc_pid_inode_operations = {
-	.default_file_ops = &vperfctr_stub_file_ops,
-	.permission = proc_permission,
-};
 #endif
 
 struct vperfctr_stub vperfctr_stub = {
-	.exit = bug_exit,
-	.suspend = bug_suspend,
-	.resume = bug_resume,
-#ifdef CONFIG_SMP
-	.sample = bug_sample,
+	.exit = bug_void_perfctr,
+	.suspend = bug_void_perfctr,
+	.resume = bug_void_perfctr,
+	.sample = bug_void_perfctr,
+#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+	.set_cpus_allowed = bug_set_cpus_allowed,
 #endif
-	.file_ops = NULL,
 };
-rwlock_t vperfctr_stub_lock = RW_LOCK_UNLOCKED;
+
+/*
+ * exit_thread() calls __vperfctr_exit() via vperfctr_stub.exit().
+ * If the process' reference was the last reference to this
+ * vperfctr object, and this was the last live vperfctr object,
+ * then the perfctr module's use count will drop to zero.
+ * This is Ok, except for the fact that code is still running
+ * in the module (pending returns back to exit_thread()). This
+ * could race with rmmod in a preemptive UP kernel, leading to
+ * code running in freed memory. The race also exists in SMP
+ * kernels, but the time window is extremely small.
+ *
+ * Since exit() isn't performance-critical, we wrap the call to
+ * vperfctr_stub.exit() with code to increment the module's use
+ * count before the call, and decrement it again afterwards. Thus,
+ * the final drop to zero occurs here and not in the module itself.
+ * (All other code paths that drop the use count do so via a file
+ * object, and VFS in 2.4+ kernels also refcount the module.)
+ */
+void _vperfctr_exit(struct vperfctr *perfctr)
+{
+	__module_get(vperfctr_stub.owner);
+	vperfctr_stub.exit(perfctr);
+	module_put(vperfctr_stub.owner);
+}
 
 EXPORT_SYMBOL(vperfctr_stub);
-EXPORT_SYMBOL(vperfctr_stub_lock);
-EXPORT_SYMBOL_pidhash;
 EXPORT_SYMBOL___put_task_struct;
-#ifdef CONFIG_SMP
-EXPORT_SYMBOL_tasklist_lock;
-#endif
+
+#include <linux/mm.h> /* for 2.4.15 and up, except 2.4.20-8-redhat */
+#include <linux/ptrace.h> /* for 2.5.32 and up, and 2.4.20-8-redhat */
+EXPORT_SYMBOL(ptrace_check_attach);

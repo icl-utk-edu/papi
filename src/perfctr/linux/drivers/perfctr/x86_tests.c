@@ -1,18 +1,22 @@
 /* $Id$
  * Performance-monitoring counters driver.
- * Optional x86-specific init-time tests.
+ * Optional x86/x86_64-specific init-time tests.
  *
- * Copyright (C) 1999-2002  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/sched.h>
+#include <linux/fs.h>
 #include <linux/perfctr.h>
 #include <asm/msr.h>
 #undef MSR_P6_PERFCTR0
-#include "compat.h"
+#undef MSR_P4_IQ_CCCR0
+#undef MSR_P4_CRU_ESCR0
+#include <asm/fixmap.h>
+#include <asm/apic.h>
 #include "x86_compat.h"
 #include "x86_tests.h"
 
@@ -35,6 +39,26 @@
 #define NITER	64
 #define X2(S)	S";"S
 #define X8(S)	X2(X2(X2(S)))
+
+#ifdef __x86_64__
+#define CR4MOV	"movq"
+#else
+#define CR4MOV	"movl"
+#endif
+
+#ifndef PERFCTR_INTERRUPT_SUPPORT
+#undef apic_write
+#define apic_write(reg,vector)			do{}while(0)
+#endif
+
+#if !defined(__x86_64__)
+/* Avoid speculative execution by the CPU */
+extern inline void sync_core(void)
+{ 
+	int tmp;
+	asm volatile("cpuid" : "=a" (tmp) : "0" (1) : "ebx","ecx","edx","memory");
+} 
+#endif
 
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
 {
@@ -60,16 +84,16 @@ static void __init do_wrmsr(unsigned msr, unsigned data)
 static void __init do_rdcr4(unsigned unused1, unsigned unused2)
 {
 	unsigned i;
-	unsigned dummy;
+	unsigned long dummy;
 	for(i = 0; i < NITER/8; ++i)
-		__asm__ __volatile__(X8("movl %%cr4,%0") : "=r"(dummy));
+		__asm__ __volatile__(X8(CR4MOV" %%cr4,%0") : "=r"(dummy));
 }
 
 static void __init do_wrcr4(unsigned cr4, unsigned unused2)
 {
 	unsigned i;
 	for(i = 0; i < NITER/8; ++i)
-		__asm__ __volatile__(X8("movl %0,%%cr4") : : "r"(cr4));
+		__asm__ __volatile__(X8(CR4MOV" %0,%%cr4") : : "r"((long)cr4));
 }
 
 static void __init do_rdtsc(unsigned unused1, unsigned unused2)
@@ -77,6 +101,36 @@ static void __init do_rdtsc(unsigned unused1, unsigned unused2)
 	unsigned i;
 	for(i = 0; i < NITER/8; ++i)
 		__asm__ __volatile__(X8("rdtsc") : : : "eax", "edx");
+}
+
+static void __init do_wrlvtpc(unsigned val, unsigned unused2)
+{
+	unsigned i;
+	for(i = 0; i < NITER/8; ++i) {
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+		apic_write(APIC_LVTPC, val);
+	}
+}
+
+static void __init do_sync_core(unsigned unused1, unsigned unused2)
+{
+	unsigned i;
+	for(i = 0; i < NITER/8; ++i) {
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+		sync_core();
+	}
 }
 
 static void __init do_empty_loop(unsigned unused1, unsigned unused2)
@@ -90,8 +144,10 @@ static unsigned __init run(void (*doit)(unsigned, unsigned),
 			   unsigned arg1, unsigned arg2)
 {
 	unsigned start, dummy, stop;
+	sync_core();
 	rdtsc(start, dummy);
 	(*doit)(arg1, arg2);	/* should take < 2^32 cycles to complete */
+	sync_core();
 	rdtsc(stop, dummy);
 	return stop - start;
 }
@@ -102,7 +158,7 @@ static void __init init_tests_message(void)
 	       "to mikpe@csd.uu.se\n"
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
-	printk(KERN_INFO "PERFCTR INIT: vendor %u, family %u, model %u, stepping %u, clock %lu kHz\n",
+	printk(KERN_INFO "PERFCTR INIT: vendor %u, family %u, model %u, stepping %u, clock %u kHz\n",
 	       current_cpu_data.x86_vendor,
 	       current_cpu_data.x86,
 	       current_cpu_data.x86_model,
@@ -115,8 +171,8 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 		  unsigned msr_cccr, unsigned cccr_val)
 {
 	int i;
-	unsigned int loop, ticks[11];
-	const char *name[11];
+	unsigned int loop, ticks[13];
+	const char *name[13];
 
 	if( msr_evntsel0 )
 		wrmsr(msr_evntsel0, 0, 0);
@@ -146,6 +202,11 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	ticks[9] = msr_cccr ? run(do_rdmsr, msr_cccr, 0) : 0;
 	name[10] = "wrmsr (cccr)";
 	ticks[10] = msr_cccr ? run(do_wrmsr, msr_cccr, cccr_val) : 0;
+	name[11] = "write LVTPC";
+	ticks[11] = (perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
+		? run(do_wrlvtpc, APIC_DM_NMI|APIC_LVT_MASKED, 0) : 0;
+	name[12] = "sync_core";
+	ticks[12] = run(do_sync_core, 0, 0);
 
 	loop = run(do_empty_loop, 0, 0);
 
@@ -167,23 +228,19 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 	}
 }
 
-void __init perfctr_p5_init_tests(void)
+#ifndef __x86_64__
+static inline void perfctr_p5_init_tests(void)
 {
 	measure_overheads(MSR_P5_CESR, P5_CESR_VAL, MSR_P5_CTR0, 0, 0);
 }
 
-void __init perfctr_p6_init_tests(void)
+static inline void perfctr_p6_init_tests(void)
 {
 	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
 }
 
-void __init perfctr_k7_init_tests(void)
-{
-	measure_overheads(MSR_K7_EVNTSEL0, K7_EVNTSEL0_VAL, MSR_K7_PERFCTR0, 0, 0);
-}
-
 #if !defined(CONFIG_X86_TSC)
-void __init perfctr_c6_init_tests(void)
+static inline void perfctr_c6_init_tests(void)
 {
 	unsigned int cesr, dummy;
 
@@ -193,18 +250,69 @@ void __init perfctr_c6_init_tests(void)
 }
 #endif
 
-void __init perfctr_vc3_init_tests(void)
+static inline void perfctr_vc3_init_tests(void)
 {
 	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0);
 }
 
-void __init perfctr_p4_init_tests(void)
+static inline void perfctr_p4_init_tests(void)
 {
 	measure_overheads(MSR_P4_CRU_ESCR0, P4_CRU_ESCR0_VAL, MSR_P4_IQ_COUNTER0,
 			  MSR_P4_IQ_CCCR0, P4_IQ_CCCR0_VAL);
 }
+#endif /* !__x86_64__ */
 
-void __init perfctr_generic_init_tests(void)
+static inline void perfctr_k7_init_tests(void)
+{
+	measure_overheads(MSR_K7_EVNTSEL0, K7_EVNTSEL0_VAL, MSR_K7_PERFCTR0, 0, 0);
+}
+
+static inline void perfctr_generic_init_tests(void)
 {
 	measure_overheads(0, 0, 0, 0, 0);
+}
+
+void __init perfctr_x86_init_tests(void)
+{
+	switch( perfctr_info.cpu_type ) {
+#ifndef __x86_64__
+	case PERFCTR_X86_INTEL_P5:
+	case PERFCTR_X86_INTEL_P5MMX:
+	case PERFCTR_X86_CYRIX_MII:
+		perfctr_p5_init_tests();
+		break;
+	case PERFCTR_X86_INTEL_P6:
+	case PERFCTR_X86_INTEL_PII:
+	case PERFCTR_X86_INTEL_PIII:
+	case PERFCTR_X86_INTEL_PENTM:
+		perfctr_p6_init_tests();
+		break;
+#if !defined(CONFIG_X86_TSC)
+	case PERFCTR_X86_WINCHIP_C6:
+	case PERFCTR_X86_WINCHIP_2:
+		perfctr_c6_init_tests();
+		break;
+#endif
+	case PERFCTR_X86_VIA_C3:
+		perfctr_vc3_init_tests();
+		break;
+	case PERFCTR_X86_INTEL_P4:
+	case PERFCTR_X86_INTEL_P4M2:
+	case PERFCTR_X86_INTEL_P4M3:
+		perfctr_p4_init_tests();
+		break;
+#endif /* !__x86_64__ */
+	case PERFCTR_X86_AMD_K7:
+	case PERFCTR_X86_AMD_K8:
+	case PERFCTR_X86_AMD_K8C:
+		perfctr_k7_init_tests();
+		break;
+	case PERFCTR_X86_GENERIC:
+		perfctr_generic_init_tests();
+		break;
+	default:
+		printk(KERN_INFO "%s: unknown CPU type %u\n",
+		       __FUNCTION__, perfctr_info.cpu_type);
+		break;
+	}
 }

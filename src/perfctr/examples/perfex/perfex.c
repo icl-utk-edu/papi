@@ -1,5 +1,4 @@
 /* $Id$
- * perfex.c
  *
  * NAME
  *	perfex - a command-line interface to x86 performance counters
@@ -18,17 +17,17 @@
  *		Multiple event specifiers may be given, limited by the
  *		number of available performance counters in the processor.
  *
- *		The full syntax of an event specifier is "evntsel/aux@pmc".
+ *		The full syntax of an event specifier is "evntsel/escr@pmc".
  *		All three components are 32-bit processor-specific numbers,
  *		written in decimal or hexadecimal notation.
  *
  *		"evntsel" is the primary processor-specific event selection
  *		code to use for this event. This field is mandatory.
  *
- *		"/aux" is used when additional event selection data is
- *		needed. For the Pentium 4, "evntsel" is put in the counter's
- *		CCCR register, and "aux" is put in the associated ESCR
- *		register. No other processor currently needs this field.
+ *		"/escr" is used to specify additional event selection data
+ *		for Pentium 4 processors. "evntsel" is put in the counter's
+ *		CCCR register, and "escr" is put in the associated ESCR
+ *		register.
  *
  *		"@pmc" describes which CPU counter number to assign this
  *		event to. When omitted, the events are assigned in the
@@ -95,44 +94,37 @@
  *	to include the perfctr driver. This driver is available at
  *	http://www.csd.uu.se/~mikpe/linux/perfctr/.
  *
- * BUGS
- *	The -l and -L options do not work on the Pentium 4.
- *
  * NOTES
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2002  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 
 /*
  * Theory of operation:
  * - Parent creates a socketpair().
  * - Parent forks.
- * - Child opens /proc/self/perfctr and sets up its perfctrs.
+ * - Child creates and sets up its perfctrs.
  * - Child sends its perfctr fd to parent via the socketpair().
  * - Child exec:s the command.
  * - Parent waits for child to exit.
  * - Parent receives child's perfctr fd via the socketpair().
- * - Parent mmap():s child's perfctr fd and reads the final counts.
+ * - Parent retrieves child's final control and counts via the fd.
  */
 
-#include <sys/mman.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <getopt.h>
+#include <stddef.h>	/* for offsetof() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>	/* for strerror() */
 #include <unistd.h>
 #include "libperfctr.h"
-#define PAGE_SIZE	4096
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
+#include "arch.h"
 
 /*
  * Our child-to-parent protocol is the following:
@@ -147,7 +139,12 @@
 struct cmsg_fd {
     struct cmsghdr hdr;
     int fd;
+    /* 64-bit machines pad here, which causes problems since
+       the kernel derives the number of fds from the size.
+       The CMSG_FD_TRUE_SIZE macro gives the true payload size. */
 };
+#define CMSG_FD_TRUE_SIZE	(offsetof(struct cmsg_fd, fd) + sizeof(int))
+#define CMSG_FD_PADDED_SIZE	sizeof(struct cmsg_fd)
 
 static int my_send(int sock, int fd, int status)
 {
@@ -170,12 +167,12 @@ static int my_send(int sock, int fd, int status)
 	msg.msg_control = 0;
 	msg.msg_controllen = 0;
     } else {
-	cmsg_fd.hdr.cmsg_len = sizeof cmsg_fd;
+	cmsg_fd.hdr.cmsg_len = CMSG_FD_TRUE_SIZE;
 	cmsg_fd.hdr.cmsg_level = SOL_SOCKET;
 	cmsg_fd.hdr.cmsg_type = SCM_RIGHTS;
 	cmsg_fd.fd = fd;
 	msg.msg_control = &cmsg_fd;
-	msg.msg_controllen = sizeof cmsg_fd;
+	msg.msg_controllen = CMSG_FD_TRUE_SIZE;
     }
     return sendmsg(sock, &msg, 0) == sizeof buf ? 0 : -1;
 }
@@ -209,17 +206,17 @@ static int my_receive(int sock, int *fd)
 
     memset(&cmsg_fd, ~0, sizeof cmsg_fd);
     msg.msg_control = &cmsg_fd;
-    msg.msg_controllen = sizeof cmsg_fd;
+    msg.msg_controllen = CMSG_FD_TRUE_SIZE;
 
     if( recvmsg(sock, &msg, 0) != sizeof buf )
 	return -1;
 
     if( buf[0] == 0 &&
 	msg.msg_control == &cmsg_fd &&
-	msg.msg_controllen == sizeof cmsg_fd &&
+	msg.msg_controllen == CMSG_FD_PADDED_SIZE &&
 	cmsg_fd.hdr.cmsg_type == SCM_RIGHTS &&
 	cmsg_fd.hdr.cmsg_level == SOL_SOCKET &&
-	cmsg_fd.hdr.cmsg_len == sizeof cmsg_fd &&
+	cmsg_fd.hdr.cmsg_len == CMSG_FD_TRUE_SIZE &&
 	cmsg_fd.fd >= 0 ) {
 	*fd = cmsg_fd.fd;
 	return 0;
@@ -232,16 +229,28 @@ static int my_receive(int sock, int *fd)
     return -1;
 }
 
+static int do_open_self(int creat)
+{
+    int fd;
+
+    fd = _vperfctr_open(creat);
+    if( fd >= 0 && perfctr_abi_check_fd(fd) < 0 ) {
+	close(fd);
+	return -1;
+    }
+    return fd;
+}
+
 static int do_child(int sock, const struct vperfctr_control *control, char **argv)
 {
     int fd;
 
-    fd = open("/proc/self/perfctr", O_RDONLY|O_CREAT);
+    fd = do_open_self(1);
     if( fd < 0 ) {
 	my_send_err(sock);
 	return 1;
     }
-    if( ioctl(fd, VPERFCTR_CONTROL, control) < 0 ) {
+    if( _vperfctr_control(fd, control) < 0 ) {
 	my_send_err(sock);
 	return 1;
     }
@@ -259,9 +268,9 @@ static int do_child(int sock, const struct vperfctr_control *control, char **arg
 static int do_parent(int sock, int child_pid, FILE *resfile)
 {
     int child_status;
-    int fd, i;
-    int nrctrs;
-    volatile const struct vperfctr_state *kstate;
+    int fd;
+    struct perfctr_sum_ctrs sum;
+    struct vperfctr_control control;
 
     /* this can be done before or after the recvmsg() */
     if( waitpid(child_pid, &child_status, 0) < 0 ) {
@@ -277,37 +286,19 @@ static int do_parent(int sock, int child_pid, FILE *resfile)
 	return 1;
     }
     close(sock);
-    kstate = mmap(NULL, PAGE_SIZE, PROT_READ, MAP_SHARED, fd, 0);
-    if( kstate == MAP_FAILED ) {
-	perror("perfex: mmap");
+    /* XXX: surely we don't need to repeat the ABI check here? */
+    if( _vperfctr_read_sum(fd, &sum) < 0 ) {
+	perror("perfex: read_sum");
 	return 1;
     }
-    if( kstate->magic != VPERFCTR_MAGIC ) {
-	fprintf(stderr, "perfex: kstate version mismatch, kernel %#x, expected %#x\n",
-		kstate->magic, VPERFCTR_MAGIC);
+    if( _vperfctr_read_control(fd, &control) < 0 ) {
+	perror("perfex: read_control");
 	return 1;
     }
     close(fd);
 
-    if( kstate->cpu_state.control.tsc_on )
-	fprintf(resfile, "tsc\t\t\t%19lld\n", kstate->cpu_state.sum.tsc);
-    nrctrs = kstate->cpu_state.control.nractrs;
-    for(i = 0; i < nrctrs; ++i) {
-	fprintf(resfile, "event 0x%08X",
-		kstate->cpu_state.control.evntsel[i]);
-	if( kstate->cpu_state.control.evntsel_aux[i] )
-	    fprintf(resfile, "/0x%08X",
-		    kstate->cpu_state.control.evntsel_aux[i]);
-	fprintf(resfile, "\t%19lld\n", kstate->cpu_state.sum.pmc[i]);
-    }
-    if( kstate->cpu_state.control.p4.pebs_enable )
-	fprintf(resfile, "PEBS_ENABLE 0x%08X\n",
-		kstate->cpu_state.control.p4.pebs_enable);
-    if( kstate->cpu_state.control.p4.pebs_matrix_vert )
-	fprintf(resfile, "PEBS_MATRIX_VERT 0x%08X\n",
-		kstate->cpu_state.control.p4.pebs_matrix_vert);
+    do_print(resfile, &control.cpu_control, &sum);
 
-    munmap((void*)kstate, PAGE_SIZE);
     return WEXITSTATUS(child_status);
 }
 
@@ -338,13 +329,13 @@ static int get_info(struct perfctr_info *info)
 {
     int fd;
 
-    fd = open("/proc/self/perfctr", O_RDONLY);
+    fd = do_open_self(0);
     if( fd < 0 ) {
-	perror("perfex: open /proc/self/perfctr");
+	perror("perfex: open perfctrs");
 	return -1;
     }
-    if( ioctl(fd, PERFCTR_INFO, info) != 0 ) {
-	perror("perfex: PERFCTR_INFO");
+    if( perfctr_info(fd, info) < 0 ) {
+	perror("perfex: perfctr_info");
 	close(fd);
 	return -1;
     }
@@ -352,14 +343,46 @@ static int get_info(struct perfctr_info *info)
     return 0;
 }
 
-static void do_print_event(const struct perfctr_event *event, int long_format)
+static struct perfctr_cpus_info *get_cpus_info(void)
 {
-    printf("%s", event->name);
+    int fd;
+    struct perfctr_cpus_info *cpus_info;
+
+    fd = do_open_self(0);
+    if( fd < 0 ) {
+	perror("perfex: open perfctrs");
+	return NULL;
+    }
+    cpus_info = perfctr_cpus_info(fd);
+    if( !cpus_info )
+	perror("perfex: perfctr_cpus_info");
+    close(fd);
+    return cpus_info;
+}
+
+static int do_info(const struct perfctr_info *info)
+{
+    struct perfctr_cpus_info *cpus_info;
+
+    cpus_info = get_cpus_info();
+    printf("PerfCtr Info:\n");
+    perfctr_info_print(info);
+    if( cpus_info ) {
+	perfctr_cpus_info_print(cpus_info);
+	free(cpus_info);
+    }
+    return 0;
+}
+
+static void do_print_event(const struct perfctr_event *event, int long_format,
+			   const char *event_prefix)
+{
+    printf("%s%s", event_prefix, event->name);
     if( long_format )
 	printf(":0x%02X:0x%X:0x%X",
-	       event->code,
-	       event->counters_mask,
-	       event->default_qualifier);
+	       event->evntsel,
+	       event->counters_set,
+	       event->unit_mask ? event->unit_mask->default_value : 0);
     printf("\n");
 }
 
@@ -371,7 +394,7 @@ static void do_print_event_set(const struct perfctr_event_set *event_set,
     if( event_set->include )
 	do_print_event_set(event_set->include, long_format);
     for(i = 0; i < event_set->nevents; ++i)
-	do_print_event(&event_set->events[i], long_format);
+	do_print_event(&event_set->events[i], long_format, event_set->event_prefix);
 }
 
 static int do_list(const struct perfctr_info *info, int long_format)
@@ -379,35 +402,38 @@ static int do_list(const struct perfctr_info *info, int long_format)
     const struct perfctr_event_set *event_set;
     unsigned int nrctrs;
 
+    printf("CPU type %s\n", perfctr_info_cpu_name(info));
+    printf("%s time-stamp counter available\n",
+	   (info->cpu_features & PERFCTR_FEATURE_RDTSC) ? "One" : "No");
+    nrctrs = perfctr_info_nrctrs(info);
+    printf("%u performance counter%s available\n",
+	   nrctrs, (nrctrs == 1) ? "" : "s");
+    printf("Overflow interrupts%s available\n",
+	   (info->cpu_features & PERFCTR_FEATURE_PCINT) ? "" : " not");
+
     event_set = perfctr_cpu_event_set(info->cpu_type);
     if( !event_set ) {
 	fprintf(stderr, "perfex: perfctr_cpu_event_set(%u) failed\n",
 		info->cpu_type);
 	return 1;
     }
-    printf("CPU type %s\n", perfctr_cpu_name(info));
-    printf("%s time-stamp counter available\n",
-	   (info->cpu_features & PERFCTR_FEATURE_RDTSC) ? "One" : "No");
-    nrctrs = perfctr_cpu_nrctrs(info);
-    printf("%u performance counter%s available\n",
-	   nrctrs, (nrctrs == 1) ? "" : "s");
     if( !event_set->nevents ) /* the 'generic' CPU type */
 	return 0;
-    printf("\nAvailable Events:\n");
+    printf("\nEvents Available:\n");
     if( long_format )
-	printf("Name:Code:CounterMask:DefaultQualifier\n");
+	printf("Name:EvntSel:CounterSet:DefaultUnitMask\n");
     do_print_event_set(event_set, long_format);
     return 0;
 }
 
 static const struct option long_options[] = {
     { "event", 1, NULL, 'e' },
-    { "p4pe", 1, NULL, 1 }, { "p4_pebs_enable", 1, NULL, 1 },
-    { "p4pmv", 1, NULL, 2 }, { "p4_pebs_matrix_vert", 1, NULL, 2 },
+    { "help", 0, NULL, 'h' },
     { "info", 0, NULL, 'i' },
     { "list", 0, NULL, 'l' },
     { "long-list", 0, NULL, 'L' },
     { "output", 1, NULL, 'o' },
+    ARCH_LONG_OPTIONS
     { 0 }
 };
 
@@ -415,46 +441,16 @@ static void do_usage(void)
 {
     fprintf(stderr, "Usage:  perfex [options] <command> [<command arg>] ...\n");
     fprintf(stderr, "\tperfex -i\n");
+    fprintf(stderr, "\tperfex -h\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "\t-e <event> | --event=<event>\tEvent to be counted\n");
+    fprintf(stderr, "\t-h | --help\t\t\tPrint this help text\n");
     fprintf(stderr, "\t-o <file> | --output=<file>\tWrite output to file (default is stderr)\n");
     fprintf(stderr, "\t-i | --info\t\t\tPrint PerfCtr driver information\n");
     fprintf(stderr, "\t-l | --list\t\t\tList available events\n");
     fprintf(stderr, "\t-L | --long-list\t\tList available events in long format\n");
-    fprintf(stderr, "\t--p4pe=<value>\t\t\tValue for PEBS_ENABLE (P4 only)\n");
-    fprintf(stderr, "\t--p4_pebs_enable=<value>\tSame as --p4pe=<value>\n");
-    fprintf(stderr, "\t--p4pmv=<value>\t\t\tValue for PEBS_MATRIX_VERT (P4 only)\n");
-    fprintf(stderr, "\t--p4_pebs_matrix_vert=<value>\tSame as --p4pmv=<value>\n");
-}
-
-static int parse_event_spec(const char *arg, unsigned int *evntsel,
-			    unsigned int *aux, unsigned int *pmc)
-{
-    char *endp;
-
-    *evntsel = strtoul(arg, &endp, 16);
-    if( endp[0] != '/' ) {
-	*aux = 0;
-    } else {
-	arg = endp + 1;
-	*aux = strtoul(arg, &endp, 16);
-    }
-    if( endp[0] != '@' ) {
-	*pmc = (unsigned int)-1;
-    } else {
-	arg = endp + 1;
-	*pmc = strtoul(arg, &endp, 16);
-    }
-    return endp[0] != '\0';
-}
-
-static int parse_value(const char *arg, unsigned int *value)
-{
-    char *endp;
-
-    *value = strtoul(arg, &endp, 16);
-    return endp[0] != '\0';
+    do_arch_usage();
 }
 
 int main(int argc, char **argv)
@@ -462,8 +458,6 @@ int main(int argc, char **argv)
     struct perfctr_info info;
     struct vperfctr_control control;
     int n;
-    unsigned int spec_evntsel, spec_aux, spec_pmc;
-    unsigned int spec_value;
     FILE *resfile;
 
     /* prime info, as we'll need it in most cases */
@@ -478,7 +472,8 @@ int main(int argc, char **argv)
 
     for(;;) {
 	/* the '+' is there to prevent permutation of argv[] */
-	switch( getopt_long(argc, argv, "+e:ilLo:", long_options, NULL) ) {
+	int ch = getopt_long(argc, argv, "+e:hilLo:", long_options, NULL);
+	switch( ch ) {
 	  case -1:	/* no more options */
 	    if( optind >= argc ) {
 		fprintf(stderr, "perfex: command missing\n");
@@ -486,10 +481,11 @@ int main(int argc, char **argv)
 	    }
 	    argv += optind;
 	    break;
-	  case 'i':
-	    printf("PerfCtr Info:\n");
-	    perfctr_print_info(&info);
+	  case 'h':
+	    do_usage();
 	    return 0;
+	  case 'i':
+	    return do_info(&info);
 	  case 'l':
 	    return do_list(&info, 0);
 	  case 'L':
@@ -501,38 +497,14 @@ int main(int argc, char **argv)
 	    }
 	    continue;
 	  case 'e':
-	    if( parse_event_spec(optarg, &spec_evntsel, &spec_aux, &spec_pmc) ) {
-		fprintf(stderr, "perfex: invalid event specifier: '%s'\n", optarg);
-		return 1;
-	    }
-	    if( n >= ARRAY_SIZE(control.cpu_control.evntsel) ) {
-		fprintf(stderr, "perfex: too many event specifiers\n");
-		return 1;
-	    }
-	    if( spec_pmc == (unsigned int)-1 )
-		spec_pmc = n;
-	    control.cpu_control.evntsel[n] = spec_evntsel;
-	    control.cpu_control.evntsel_aux[n] = spec_aux;
-	    control.cpu_control.pmc_map[n] = spec_pmc;
-	    control.cpu_control.nractrs = ++n;
-	    continue;
-	  case 1:
-	    if( parse_value(optarg, &spec_value) ) {
-		fprintf(stderr, "perfex: invalid value: '%s'\n", optarg);
-		return 1;
-	    }
-	    control.cpu_control.p4.pebs_enable = spec_value;
-	    continue;
-	  case 2:
-	    if( parse_value(optarg, &spec_value) ) {
-		fprintf(stderr, "perfex: invalid value: '%s'\n", optarg);
-		return 1;
-	    }
-	    control.cpu_control.p4.pebs_matrix_vert = spec_value;
+	    n = do_event_spec(n, optarg, &control.cpu_control);
 	    continue;
 	  default:
-	    do_usage();
-	    return 1;
+	    if( do_arch_option(ch, optarg, &control.cpu_control) < 0 ) {
+		do_usage();
+		return 1;
+	    }
+	    continue;
 	}
 	break;
     }

@@ -11,20 +11,22 @@ versions of the kernel.
 
 The recommended kernel build and installation procedure is as follows:
 
-1. Get the source code for the kernel of your choice, and unpack it
-   in some directory.
+0. Get the source code for a supported Linux kernel version.
 
-   Let KDIR be the root directory of the kernel source, and PDIR be
-   the root directory of the unpacked perfctr package.
+   Let PDIR be the root directory of the unpacked perfctr package.
 
-   Supported kernel versions are those that have a corresponding patch
-   file in $PDIR/patches/. Currently, supported kernels include
-   standard kernels from www.kernel.org and some RedHat update kernels.
-   The naming convention is that patches for RedHat kernels include a
-   "-redhat" suffix in their names.
+   A given kernel version, KVER say, is supported if and only if one
+   of the following statements is true:
 
-   ** Using this package with a kernel not listed in $PDIR/patches is
-   ** UNSUPPORTED. You are strongly advised to choose a supported kernel.
+   a) $PDIR/patches/ contains a file "patch-kernel-$KVER"
+   b) $PDIR/patches/aliases contains a line starting with $KVER
+
+   Supported kernels include many standard www.kernel.org kernels and
+   some RedHat kernels. RedHat kernels are identified by the "-redhat"
+   suffix appended to their kernel versions.
+
+   ** Any kernel version which fails the above test is by definition
+   ** UNSUPPORTED.
 
    ** RedHat users: Please note that RedHat kernels are extensively
    ** modified compared to their baseline standard kernels, and that
@@ -32,6 +34,8 @@ The recommended kernel build and installation procedure is as follows:
    ** even if the version numbers are similar. If your current kernel
    ** is unsupported, then upgrading to a newer RedHat "update" kernel
    ** may be required.
+
+1. Unpack the kernel source code. Let KDIR be its root directory.
 
    In your shell, `cd' to $KDIR.
 
@@ -55,10 +59,10 @@ The recommended kernel build and installation procedure is as follows:
 	$PDIR/update-kernel --test --patch=$V2
 
    This applies the patch in testing mode, without actually altering
-   any files. If the patch applies cleanly without any rejects, then
-   you can force the use of this patch simply by removing the --test
-   option to update-kernel. This usage mode is intended for experienced
-   kernel builders only.
+   any files. If the patch applies cleanly without any rejects or large
+   offsets, then you can force the use of this patch simply by removing
+   the --test option to update-kernel. This usage mode is intended for
+   experienced kernel builders only.
 
    Finally, edit $KDIR/Makefile and change EXTRAVERSION to include
    something unique for THIS kernel, for example by appending "-perfctr"
@@ -79,7 +83,7 @@ The recommended kernel build and installation procedure is as follows:
    and CONFIG_PERFCTR_GLOBAL.
 
    You may also select CONFIG_PERFCTR=m to build the bulk of the driver
-   as a loadable kernel module; the module will be named `perfctr.o'.
+   as a loadable kernel module; the module will be named `perfctr'.
 
    Note: The perfctr kernel patch adds one word to the `thread_struct'
    type, which makes the patched kernel binary incompatible with an
@@ -104,7 +108,7 @@ The recommended kernel build and installation procedure is as follows:
 
 DEVICE FILE
 -----------
-The global-mode perfctr facility is implemented as a character device
+The kernel-side of this package is implemented as a character device
 driver, which has been assigned major number 10 and minor number 182.
 The first time you install the package, a special file representing
 this device must be created. As root, execute:
@@ -115,7 +119,8 @@ this device must be created. As root, execute:
 If the driver was built as a module, it will be have to be loaded
 into the kernel before it can be used. This will happen automatically
 if the kernel was built with support for the kernel module loader
-(CONFIG_KMOD=y), and you add the following to /etc/modules.conf:
+(CONFIG_KMOD=y). For 2.6 kernels no further action is needed. For
+2.4 kernels, the following should be added to /etc/modules.conf:
 
 	alias char-major-10-182 perfctr
 
@@ -128,3 +133,14 @@ To build the user-space library and the example programs, simply run
 
 The source code directory of the patched kernel you built and installed
 above does not have to be available when you build the library.
+
+To install the user-space library, the include files, and the 'perfex'
+application program, run
+
+	make PREFIX=$PREFIX install
+
+This will install binaries in $PREFIX/bin, libraries in $PREFIX/lib,
+and include files in $PREFIX/include. Each of these destinations can
+also be overridden individually:
+
+	make BINDIR=$BINDIR LIBDIR=$LIBDIR INCLDIR=$INCLDIR install

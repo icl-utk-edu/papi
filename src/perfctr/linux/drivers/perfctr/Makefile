@@ -1,56 +1,51 @@
 # $Id$
 # Makefile for the Performance-monitoring counters driver.
 
+ifeq ($(VERSION)$(PATCHLEVEL),24)
+include Makefile24
+else
+
+# We need -fno-unit-at-a-time with gcc-3.4 on x86 to avoid stack overflow.
+# Kernels >= 2.6.6 do that automatically but older ones do not, so we
+# unconditionally add that option here just in case.
+my_check_gcc = $(shell if $(CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+EXTRA_CFLAGS_$(CONFIG_X86) := $(call my_check_gcc,-fno-unit-at-a-time,)
+EXTRA_CFLAGS_$(CONFIG_X86_64) :=
+EXTRA_CFLAGS_$(CONFIG_PPC32) :=
+EXTRA_CFLAGS := $(EXTRA_CFLAGS_y)
+
 # construct various object file lists:
-# kernel-objs-y		kernel objects exporting symbols
-# y-objs-y		kernel objects not exporting symbols
+# kernel-objs-y		kernel objects
 # m-objs-m		perfctr.o if driver is module, empty otherwise
 # driver-objs-y		objects for perfctr.o module, or empty
-driver-objs-y := init.o
-driver-objs-$(CONFIG_X86) += x86.o
+
+driver-objs-$(CONFIG_X86) := x86.o
 tests-objs-$(CONFIG_X86) := x86_tests.o
 kernel-objs-$(CONFIG_X86) := x86_setup.o
+
+# Braindamage alert! x86_64 defines _both_ CONFIG_X86_64 and CONFIG_X86.
+# These assignments need to override those above.
+driver-objs-$(CONFIG_X86_64) := x86_64.o
+tests-objs-$(CONFIG_X86_64) := x86_tests.o
+kernel-objs-$(CONFIG_X86_64) := x86_setup.o
+
+driver-objs-$(CONFIG_PPC32) := ppc.o
+tests-objs-$(CONFIG_PPC32) := ppc_tests.o
+kernel-objs-$(CONFIG_PPC32) := ppc_setup.o
+
+driver-objs-y += init.o marshal.o
 driver-objs-$(CONFIG_PERFCTR_INIT_TESTS) += $(tests-objs-y)
 driver-objs-$(CONFIG_PERFCTR_VIRTUAL) += virtual.o
 stub-objs-$(CONFIG_PERFCTR)-$(CONFIG_PERFCTR_VIRTUAL) := virtual_stub.o
 driver-objs-$(CONFIG_PERFCTR_GLOBAL) += global.o
 m-objs-$(CONFIG_PERFCTR) := perfctr.o
-y-objs-$(CONFIG_PERFCTR) := $(driver-objs-y)
+kernel-objs-$(CONFIG_PERFCTR) += $(driver-objs-y)
 kernel-objs-y += $(stub-objs-m-y)
 
-export-objs		:= $(kernel-objs-y)
 perfctr-objs		:= $(driver-objs-y)
 obj-m			+= $(m-objs-m)
 
-ifeq ($(VERSION).$(PATCHLEVEL),2.5)
-# for 2.5.19 or later
 obj-$(CONFIG_KPERFCTR)	+= kperfctr.o
-kperfctr-objs		:= $(kernel-objs-y) $(y-objs-y)
-else
-# for 2.4 and 2.2
-O_TARGET		:= kperfctr.o
-obj-y			:= $(kernel-objs-y) $(y-objs-y)
-list-multi		:= perfctr.o
-endif
+kperfctr-objs		:= $(kernel-objs-y)
 
-ifeq ($(VERSION).$(PATCHLEVEL),2.2)
-multi-y		:= $(filter $(list-multi), $(obj-y))
-multi-m		:= $(filter $(list-multi), $(obj-m))
-int-y		:= $(sort $(foreach m, $(multi-y), $($(basename $(m))-objs)))
-int-m		:= $(sort $(foreach m, $(multi-m), $($(basename $(m))-objs)))
-obj-m		:= $(filter-out $(obj-y), $(obj-m))
-int-m		:= $(filter-out $(int-y), $(int-m))
-O_OBJS		:= $(sort $(filter-out $(export-objs), $(obj-y)))
-OX_OBJS		:= $(sort $(filter     $(export-objs), $(obj-y)))
-M_OBJS		:= $(sort $(filter-out $(export-objs), $(obj-m)))
-MX_OBJS		:= $(sort $(filter     $(export-objs), $(obj-m)))
-MI_OBJS		:= $(sort $(filter-out $(export-objs), $(int-m)))
-MIX_OBJS	:= $(sort $(filter     $(export-objs), $(int-m)))
-endif
-
-include $(TOPDIR)/Rules.make
-
-ifneq ($(VERSION).$(PATCHLEVEL),2.5)
-perfctr.o:	$(perfctr-objs)
-	$(LD) -r -o $@ $(perfctr-objs)
-endif
+endif	# ifeq 24

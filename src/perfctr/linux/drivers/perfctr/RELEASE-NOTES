@@ -3,6 +3,551 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.9, 2004-07-27
+- Fix ppc_check_control() to allow 7400/7410 processors to
+  specify MMCR2[THRESHMULT].
+- PPC32 cleanups: make get_cpu_cache() return pointer not lvalue,
+  eliminate duplicated initialisation/cleanup code.
+- Makefile: enforce -fno-unit-at-a-time with gcc-3.4 on x86,
+  to prevent stack overflow in 2.6 kernels < 2.6.6.
+- Do sync_core() before rdtsc() in x86_tests, to avoid bogus
+  benchmarking data on K8. Add sync_core() implementation for
+  the 32-bit kernel. Add sync_core() benchmark.
+- Added __perfctr_mk_cstatus() to allow x86.c:finalise_backpatching()
+  to create a cstatus with i-mode counters marked as present, but
+  with zero actual counters. This prevents perfctr_cpu_isuspend()
+  from clearing the control register for counter #0 at init-time,
+  when the hardware doesn't belong to this driver. On AMD and P6
+  this would accidentally disable the NMI watchdog.
+- x86: Marked initial targets of backpatchable calls
+  'noinline' to prevent gcc from inlining them, which
+  completely breaks the backpatching mechanism.
+- x86_tests: fix CONFIG_X86_LOCAL_APIC=n linkage error.
+- 2.6.8-rc1 no longer makes cpu_online_map a #define on UP,
+  breaking modules. Reintroduce the macro.
+- 2.6.8-rc1 changed cpus_complement() calling convention.
+  Replace cpus_complement();cpus_and() with cpus_andnot(),
+  and provide cpus_andnot() compat macro.
+- PPC32: support generic CPUs using only the TB.
+- PPC32: query OF for CPU/TB frequencies, drop /proc/cpuinfo
+  parsing code.
+- PPC32: avoid CPU re-detection in tests code.
+- PPC32: clean up and sync with current perfctr-2.7 code.
+
+Version 2.6.8, 2004-05-29
+- Added recognition of PowerPC 750GX.
+- Changes for the {reserve,release}_lapic_nmi() API added in
+  kernel 2.6.6 backported from perfctr-2.7.1:
+  * Starting with kernel 2.6.6 we no longer need access to
+    nmi_perfctr_msr, so removed EXPORT_SYMBOL() and <asm/apic.h>
+    patches related to this variable (except for older kernels).
+  * Updated x86.c to use the new API. Added simulation (without
+    the non-conflict guarantees) for older kernels.
+  * Moved hardware reservation to x86.c's "reserve" procedure.
+    The init code now only does read-only hardware detection.
+  * Added a mutex to the reserve/release procedures, eliminating
+  * a long-standing race possibility.
+  * Changed x86.c to reserve and release the hardware around its
+    call to perfctr_x86_init_tests().
+  * Similarly updated x86_64.c for the new API.
+
+Version 2.6.7, 2004-05-04
+- Replaced x86_64_tests.{c,h} with x86_tests.{c,h}.
+- sys_device_{,un}register() was renamed as sysdev_{,un}register()
+  in 2.6.4-rc2. Updated x86.c and x86_64.c accordingly, and
+  added a compatibility definition in compat.h.
+- Removed unnecessary '#include "compat.h"' from x86_tests.c.
+- Replaced x86_64_setup.c with x86_setup.c.
+- Replaced x86_64_compat.h with x86_compat.h.
+- Moved perfctr_interrupt entry point from x86_setup.c to patch kit,
+  for kernels older than 2.4.21. Cleanup to facilitate future merge
+  of x86_setup.c and x86_64_setup.c.
+
+Version 2.6.6, 2004-02-21
+- Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels,
+  causing it to pass the wrong value for "struct pt_regs*". This
+  was harmless since the retrieved "rip" was unused, but still wrong.
+  Renamed do_perfctr_interrupt to smp_perfctr_interrupt to allow
+  using the 2.4 kernel's standard BUILD_SMP_INTERRUPT macro.
+- Unmask LVTPC after interrupt on Pentium-M. An oprofile user
+  reports that P-M auto-masks LVTPC just like P4. Preliminary
+  measurements indicate a 40 to 60 cycle cost for the apic write
+  on P4s and P6s, so the unmask is not done unconditionally.
+- Measure LVTPC write overhead in x86{,_64}_tests.c.
+- Add Pentium 4 Model 3 detection.
+- The 2.4.21-193 SuSE kernel does EXPORT_SYMBOL(mmu_cr4_features).
+  Add compat24.h workaround for this.
+
+Version 2.6.5, 2004-01-26
+- Added perfctr_info.cpu_type constants to <asm-ppc/perfctr.h>.
+- Init filp->f_mapping in virtual.c for 2.6.2-rc1+ kernels.
+- Updated p4_check_control():
+  * Allow ESCR.CPL_T1 to be non-zero when using global-mode
+    counters on HT processors.
+  * Don't require ESCR.CPL_T0 to be non-zero. CPL_T0==0b00
+    is safe and potentially useful (global counters on HT).
+  * Require CCCR.ACTIVE_THREAD==0b11 on non-HT processors, as
+    documented in the IA32 Volume 3 manual. Old non-HT P4s
+    seem to work Ok for all four values (see perfctr-2.6.0-pre3
+    notes), but this is neither guaranteed nor useful.
+- x86.c now detects & records P4 HT-ness also in UP kernels.
+- Added 'is_global' parameter to perfctr_cpu_update_control().
+  This flag is ignored on everything except P4 (sigh).
+
+Version 2.6.4, 2004-01-12
+- Added 'tsc_to_cpu_mult' field to struct perfctr_info, replacing
+  '_reserved1'. This is needed on PowerPC to map time-base ticks
+  to actual time. On x86/AMD64, tsc_to_cpu_mult == 1.
+- Added support for PowerPC 604/7xx/74xx processors. Overflow
+  interrupts are currently not allowed due to the PMI/DECR erratum.
+- Replaced perfctr_cpus_mask() with cpus_addr(). Updated cpumask.h
+  to define cpus_addr() for kernels older than 2.6.1.
+
+Version 2.6.3-pl1, 2004-01-01
+- Moved the x86 interrupt handler definition from x86_setup.c to
+  the patch kit for 2.4.21 and later 2.4 kernels, like it already
+  is done for 2.6 kernels. This change is needed due to extensive
+  interrupt handler changes in RedHat's 2.4.21-6.EL kernel.
+- Simplified <asm-i386/perfctr.h>: now that early 2.4 kernels no
+  longer are supported, LOCAL_PERFCTR_VECTOR is known to be defined,
+  so CONFIG_X86_LOCAL_APIC implies PERFCTR_INTERRUPT_SUPPORT.
+
+Version 2.6.3, 2003-12-21
+- Removed gperfctr_cpu_state_only_cpu_sdesc's total_sizeof
+  optimisation. The ABI change in 2.6.2 broke it, leading to
+  the new fields not being cleared and later causing EOVERFLOW.
+- The perfctr_ioctl32_handler() workaround is now only applied
+  to kernels older than 2.4.23, since 2.4.23 added the "NULL
+  handler == sys_ioctl" logic.
+
+Version 2.6.2, 2003-11-23
+- Added 16 bytes (four fields) of reserved data to perfctr_info,
+  perfctr_cpu_control, vperfctr_control, gperfctr_cpu_control,
+  and gperfctr_cpu_state. Renumbered marshalling tags for
+  generic structures. Bumped ABI versions.
+- Only allow use of IQ_ESCR{0,1} on P4 models <= 2. These ESCRs
+  were removed from later models, according to a recent Intel
+  documentation update (252046-006).
+- Fixes for Fedora Core 1's 2.4.22-1.2115.nptl kernel:
+  * Work around their incomplete and broken cpumask_t backport.
+  * Avoid name conflict due to their on_each_cpu() backport.
+  * Handle their preempt_disable()/enable() macros.
+- Added new perfctr_cpu_is_forbidden() macro to fix a
+  compilation error affecting AMD64 in SMP 2.6 kernels.
+  SMP cpu_isset() requires that mask is an lvalue, but
+  for AMD64 the mask is a constant.
+
+Version 2.6.1, 2003-10-05
+- Kernel 2.6.0-test6 changed /proc/self and the /proc/<pid>/
+  namespace to refer to "processes" (groups of CLONE tasks)
+  instead of actual kernel tasks. This forced the planned
+  transition of the vperfctr API from /proc/<pid>/perfctr
+  to /dev/perfctr to occur immediately. Changes:
+  * Moved /dev/perfctr implementation from global.c to init.c.
+  * Implemented VPERFCTR_{CREAT,OPEN}, vperfctr_attach(), and
+    the vperfctrfs pseudo-fs needed to support the magic files.
+    The fs code was ported from perfctr-1.6/3.1, but updated
+    for 2.6 and fixed to permit module unloading in 2.4.
+  * Fixed VPERFCTR_OPEN to accept tsk->thread.perfctr == NULL.
+    (Needed to info querying commands.)
+  * Removed /proc/<pid>/perfctr code. Simplified vperfctr_stub code.
+  * Updated vperfctr_attach() to mimic the old /proc vperfctr_open().
+    This fixes some synchronisation issues.
+- Cleanups:
+  * Removed #if checks and code for kernels older than 2.4.16.
+  * Eliminated compat macros that are identical in 2.6 and 2.4.
+  * Moved ptrace_check_attach EXPORT_SYMBOL from x86{,_64}_setup.c
+    to virtual_stub.c.
+  * get_task_by_proc_pid_inode() is now trivial. Eliminated it.
+  * p4_ht_finalise() is now trivial. Eliminated it.
+- Added MODULE_ALIAS() declaration, eliminating the need for
+  an alias in /etc/modprobe.conf with 2.6 kernels. Added
+  MODULE_ALIAS() compatibility #define in compat24.h.
+- Added detection of AMD K8 Revision C processors.
+- Updated K8C detection for Revision C Athlon64s.
+
+Version 2.6.0, 2003-09-08
+- Handle set_cpus_allowed() when PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED:
+  * Add bad_cpus_allowed flag to struct vperfctr.
+  * Check bad_cpus_allowed in __vperfctr_resume: if resuming
+    with PMCs on forbidden CPU, kill counters and SIGILL current.
+  * __vperfctr_set_cpus_allowed() callback: set bad_cpus_allowed
+    and print warning if mask allows forbidden CPUs.
+  * Use task_lock/unlock instead of preempt_disable/enable to
+    synchronise task_struct accesses.
+  * Ensure sampling_timer and bad_cpus_allowed share cache line.
+  * #include <linux/compiler.h> explicitly for 2.4.18 and older
+    kernels; newer kernels include it from <linux/kernel.h>.
+  * Hook in virtual_stub.c.
+  * Hook and cpumask_t typedef in <linux/perfctr.h>.
+- Simplify #if test for set_cpus_allowed() emulation code.
+  Also don't define it if CONFIG_PERFCTR_VIRTUAL isn't set.
+- cpumask.h only typedefs cpumask_t if <linux/perfctr.h> hasn't.
+- Don't hide #include <linux/kernel.h> in compat24.h.
+- Fixed compat24.h to test for MODULE not CONFIG_MODULES at the
+  __module_get/module_put macros.
+
+Version 2.6.0-pre5, 2003-08-31
+- printk() is not allowed in switch_to(). Disabled debug code
+  which could violate that rule. Changed virtual_stub.c to BUG()
+  instead of printk() if the driver is invoked when not loaded.
+- Renamed vperfctr_exit2() to vperfctr_unlink() for clarity.
+- gcc-3.3.1 issued several "dereferencing type-punned pointer will
+  break strict-aliasing rules" warnings for marshal.c. Used explicit
+  unions to fix the warnings and clean up the code.
+- Removed compat22.h.
+- cpumask_t was included in standard 2.6.0-test4; replace #ifndef
+  test in cpumask.h with normal kernel version test.
+- x86-64 fix: sys_ioctl() isn't exported to modules, so call
+  filp->f_op->ioctl() instead in perfctr_ioctl32_handler().
+- x86-64 fix: init.c must include <asm/ioctl32.h> not <linux/ioctl32.h>
+  for compatibility with 2.4 kernels.
+
+Version 2.6.0-pre4, 2003-08-19
+- Fix x86-64 register_ioctl32_conversion() usage for 2.4 kernels:
+  * Supply dummy handler since a NULL handler oopses the kernel.
+  * Test CONFIG_IA32_EMULATION since CONFIG_COMPAT is post-2.4.
+- Fixed and merged the new API struct marshalling code:
+  * New files marshal.c and marshal.h contain the marshalling code
+    and high-level helper functions (source shared with the library).
+  * User-space structs are struct perfctr_struct_buf and accessed using
+    perfctr_copy_{from,to}_user() with ptr to appropriate descriptor.
+    The cpumask stuff isn't changed.
+  * All ioctls registered as trivially 32-bit compatible on x86-64.
+  * Changed perfctr_info cpu_type/cpu_features from short to int:
+    this avoids the need for UINT16 marshalling support, and cpumask_t
+    caused perfctr_info to change binary representation anyway.
+- Declared VPERFCTR_{CREAT,OPEN} ioctls, but left them unimplemented.
+- Fixed vperfctr_open() preemption bug. The O_CREAT check+install
+  code could be preempted, leading to remote-control races.
+- Fixed perfctr_exit_thread() preemption bug. It detached the vperfctr
+  before calling __vperfctr_exit(). If current was preempted before
+  __vperfctr_exit() called vperfctr_suspend(), perfctr_suspend_thread()
+  would fail to suspend the counters. The suspend+detach is now done
+  atomically within __vperfctr_exit().
+- Changes to handle 2.6 kernels with the cpumask_t patch (-mm, -osdl):
+  * Convert perfctr_cpus_forbidden_mask accesses to cpumask_t API.
+    Based in part on a patch for the -osdl kernel by Stephen Hemminger.
+  * Remove cpus and cpus_forbidden from struct perfctr_info,
+    since their sizes depend on the kernel configuration.
+  * Add struct perfctr_cpu_mask to export cpumask_t objects
+    sanely (i.e., using ints not longs) to user-space.
+  * Add CPUS and CPUS_FORBIDDEN commands to retrieve these sets.
+  * Add cpumask.h to emulate cpumask_t API in cpumask_t-free kernels.
+  * Move perfctr_cpus_forbidden_mask declaration/#define from
+    <asm/perfctr.h> to cpumask.h -- necessary since <asm/perfctr.h>
+    doesn't have access to the driver's compatibility definitions.
+- Cleaned up perfctr_cpu_ireload().
+- Removed struct field offset check from init.c.
+- 2.4.22-rc1 does EXPORT_SYMBOL(mmu_cr4_features). Added
+  new compat #define to handle this.
+- Rename x86.c's rdmsrl() to rdmsr_low() to work around msr.h
+  changes in 2.6.0-test3. Also rename rdpmcl() to rdpmc_low().
+- Replaced __attribute__((__aligned__(SMP_CACHE_BYTES))) usage
+  with the official ____cacheline_aligned macro.
+- Detect cpuid 0x69x VIA C3s (Antaur/Nehemiah).
+
+Version 2.6.0-pre3, 2003-08-03
+- Changed perfctr_info.cpus and cpus_forbidden to be int instead of
+  long, to make x86-32 and x86-64 compatible. This is a temporary
+  solution, as there are patches for >32 CPUs on x86-32. The real
+  solution is to make these sets variable-sized, and have user-space
+  retrieve them with a new command.
+- Simplified GPERFCTR_CONTROL to update a single CPU instead of
+  a set of CPUs. Moved cstatus clearing to release_hardware().
+- Moved gperfctr start to new GPERFCTR_START command.
+- Simplified GPERFCTR_READ to access a single CPU instead of a
+  set of CPUs.
+- Removed the requirement that CCCR.ACTIVE_THREAD == 3 on P4.
+  HT processors define behaviour for all four possible values,
+  and non-HT processors behave sanely for all four values.
+- Moved struct perfctr_low_ctrs definition from <asm/perfctr.h> to
+  the corresponding low-level driver, since it's only used there.
+- Changed perfctr_info.cpu_khz and vperfctr_control.preserve to be
+  int instead of long. This corrects x86-64 and makes it compatible
+  with x86-32.
+- Updated x86.c to permit extended cascading on P4M2.
+- Fixed a bug where the perfctr module's refcount could be zero with
+  code still running in the module (pending returns to exit_thread()).
+  This could race with rmmod in preemptive kernels, and in theory
+  also in SMP kernels.
+  * module owner field added to vperfctr_stub
+  * _vperfctr_exit() in the modular case is now a function in
+    vperfctr_stub.c, which brackets the vperfctr_stub.exit() call
+    with __module_get() and module_put() on vperfctr_stub.owner
+  * updated 2.4 and 2.2 compat definitions of __module_get() and
+    module_put() to work for modules != THIS_MODULE  
+- Replaced uses of (void)try_module_get() with __module_get() as the
+  latter is more appropriate for 2.6 kernels. Updated compat stuff.
+
+Version 2.6.0-pre2, 2003-07-13
+- vperfctr API fixes:
+  * The new VPERFCTR_READ_CONTROL command retrieves a vperfctr's
+    control data.
+  * Renamed VPERFCTR_SAMPLE to VPERFCTR_READ_SUM, and made it
+    write the sums to a perfctr_sum_ctrs user-space buffer.
+  * Non-write commands are now always permitted on unlinked perfctrs.
+  The first change was needed since the control data no longer is
+  accessible via the mmap()ed state. The other changes clean up and
+  simplify perfex and the library's slow-path read_ctrs() operation.
+- sys_vperfctr_ functions now mark the tsk parameter as "const" if
+  they don't need write access to it. Typically they only need to
+  compare it with current to detect self-access cases.
+- perfctr_cpu_state no longer makes the perfctr_cpu_control part
+  accessible to user-space (via mmap() of vperfctrs).
+- Simplified {set,is}_isuspend_cpu() in x86_64.c by having callers
+  pass the CPU number instead of the cache pointer (which was only
+  used to derive the CPU number).
+- Eliminated NMI_LOCAL_APIC #ifs from x86-64 code since x86-64
+  always defines it.
+- x86.c cleanups: the non-PERFCTR_INTERRUPT_SUPPORT case now uses
+  dummy stub functions, eliminated six #ifdefs.
+- x86_64_setup.c needs <asm/fixmap.h>.
+- Protected cpu_has_mmx and cpu_has_ht #defines in x86_compat.h
+  with #ifndef since 2.4.22-pre3 added those #defines.
+- Eliminated PERFCTR_INTERRUPT_SUPPORT #ifs from x86-64 code
+  since x86-64 always defines CONFIG_X86_LOCAL_APIC.
+- Removed the P4-specific versions of isuspend() and iresume().
+  P4 now uses p6_like_{isuspend,iresume}(), just like P6/K7/K8.
+- Long overdue cleanup in x86.c/x86_64.c: renamed per_cpu_cache
+  pointer variables from 'cpu' to 'cache'.
+- Added inline functions in virtual.c for registering the overflow
+  handler and for clearing iresume_cstatus. Cleaned out several
+  #if PERFCTR_INTERRUPT_SUPPORT occurrences from the main code.
+  (Partial backport from the abandoned perfctr-3.1 branch.)
+- Inlined now useless 'struct vperfctr_state' in 'struct vperfctr'.
+
+Version 2.6.0-pre1, 2003-07-02
+- Rearranged 'struct perfctr_cpu_state' to reduce the number of
+  cache lines needed to be touched by key operations (suspend,
+  resume, sample). Switched from struct-of-arrays to array-of-struct
+  for perfctr counts, and copied pmc_map into the PMC data array.
+  The old representation touched at least 3 cache lines at key
+  operations, the new one only needs one cache line in most cases.
+  The user-space mmap() view of the new representation is binary
+  compatible between x86 and x86-64.
+- Changed 'isuspend_cpu' in perfctr_cpu_state on x86-64 to be a
+  32-bit CPU number, to maintain binary compatibility with x86.
+- Removed the union of p5_cesr and id; use id throughout.
+- Removed _filler and si_signo from 'struct vperfctr_state', making
+  the user-space view of it identical to 'struct perfctr_cpu_state'.
+
+Version 2.5.5, 2003-06-15
+- Updated x86 driver for 2.5.71 local APIC driver model changes.
+- Updated x86-64 driver for 2.5.71 NMI watchdog enable/disable API.
+- x86-64 is broken in 2.5.71 since x86-64 updated to driver model
+  for local APIC and NMI watchdog, at the same time as x86 moved
+  to a newer version of the "system device" driver model. Updated
+  the x86-64 driver for the new model, which is expected to be in
+  x86-64 by 2.5.72 (patch exists for 2.5.71).
+
+Version 2.5.4, 2003-06-01
+- The generic-x86-with-TSC driver now uses rdpmc_read_counters
+  and p6_write_control instead of its own procedures.
+- K8 docs are now available. Updated comment in x86.c accordingly.
+- P4 OVF_PMI+FORCE_OVF counters didn't work at all, resulting in
+  BUG messages from the driver since identify_overflow failed to
+  detect which counters had overflowed, and vperfctr_ihandler
+  left the vperfctr in an inconsistent state. This works now.
+  However, hardware quirks makes this configuration only useful
+  for one-shot counters, since resuming generates a new interrupt
+  and the faulting instruction again doesn't complete. The same
+  problem can occur with regular OVF_PMI counters if ireset is
+  a small-magnitude value, like -5.
+  This is a user-space problem; the driver survives.
+- On P4, OVF_PMI+FORCE_OVF counters must have an ireset value of -1.
+  This allows the regular overflow check to also handle FORCE_OVF
+  counters. Not having this restriction would lead to MAJOR
+  complications in the driver's "detect overflow counters" code.
+  There is no loss of functionality since the ireset value doesn't
+  affect the counter's PMI rate for FORCE_OVF counters.
+- Moved P4 APIC_LVTPC reinit from p4_isuspend() to identify_overflow().
+  Reduces context-switch overheads when i-mode counters are active.
+- Corrected vperfctr_suspend()'s precondition.
+- Corrected comment in <asm/perfctr.h> to state that ireset[]
+  values must be negative rather than non-positive.
+- Made 'perfctr_cpu_name' __initdata, like its predecessor.
+
+Version 2.5.3.1, 2003-05-21
+- Replaced 'char *perfctr_cpu_name[]' by 'char *perfctr_cpu_name'.
+  This is needed for x86-64 and other non-x86 architectures.
+- Changed <asm-x86_64/perfctr.h> to use 'long long' for 64-bit sums.
+  This doesn't change the ABI, but improves user-space source code
+  compatibility with 32-bit x86.
+- Removed the !defined(set_cpus_allowed) check added to compat24.h
+  in 2.5.3. It's wrong for SMP builds with modules and MODVERSIONS,
+  since the set_cpus_allowed() emulation function becomes a #define
+  from include/linux/modules/x86_setup.ver. Instead add the already
+  used HAVE_SET_CPUS_ALLOWED #define to include/linux/config.h in
+  the kernel patch, but make it conditional on CONFIG_X86_64.
+
+Version 2.5.3, 2003-05-16
+- Added detection code for Pentium M. MISC_ENABLE_PERF_AVAIL is
+  now checked on both P4 and Pentium M.
+- Added x86_64 driver code. Both x86_64.c and asm-x86_64/perfctr.h
+  are basically simplified versions of corresponding x86 files,
+  with P5 and P4 support removed, 2.2 kernel support removed, and
+  'long long' for sums replaced by 'long'. The last change is
+  painful for user-space and may be reverted.
+- compat24.h: don't define set_cpus_allowed() if already #defined,
+  workaround for RawHide's 2.4.20-9.2 x86_64 kernel.
+- Removed list of supported CPUs from Kconfig. That information
+  belongs elsewhere (and it's a pain to maintain for 2.2/2.4).
+
+Version 2.5.2, 2003-04-13
+- Minor cleanup: use PROC_I() unconditionally in virtual.c,
+  implement trivial compat macro in compat24.h.
+- Updated power management code for the local APIC and NMI
+  watchdog driver model changes in kernel 2.5.67.
+  The suspend/resume procedures are still no-ops, however.
+  This revealed a bug in the lapic_nmi_watchdog resume code:
+  it resumes the lapic_nmi_watchdog even when it was disabled
+  before suspend. Perfctr's 2.5.67 kernel patch includes a fix.
+- perfctr_sample_thread() is now used also on UP. Anton Ertl's
+  2.26GHz UP P4 managed to execute a process for more than 2^32
+  cycles before suspending it, causing TSC inaccuracies.
+- RH9's 2.4.20-8 kernel changed cpu_online(), put_task_struct() and
+  remap_page_range() to be more like in 2.5 kernels, and moved the
+  declaration of ptrace_check_attach() from mm.h to ptrace.h, also
+  like in 2.5 kernels, requiring fixes to compat24.h and x86_setup.c.
+- Added note in x86.c about the new Pentium M processor.
+
+Version 2.5.1, 2003-03-23
+- Fix P4 HT initialisation. I've seen several boot logs from
+  people running MP P4 Xeons with HT disabled: this produces
+  an ugly "restricting access for CPUs 0x0" message, and would
+  cause P4 HT init to unnecessarily return error in older kernels
+  lacking set_cpus_allowed(). Now only print the message or
+  signal error if non-zero siblings actually are found.
+- The set_cpus_allowed() emulation doesn't compile in 2.4
+  kernels older than 2.4.15 due to the p->cpus_running field.
+  Updated version checks to skip it in 2.4.x when x<15.
+- Fix set_cpus_allowed() emulation compile error on BUG_ON()
+  in 2.4 kernels older than 2.4.19.
+- Added Nehemiah note/reminder in x86.c:centaur_init().
+
+Version 2.5.0, 2003-03-10
+- Reverted the 2.5.0-pre2 change that replaced the PERFCTR_INFO
+  ioctl by read(): it made the API look too weird.
+  Added a PERFCTR_ABI ioctl which only retrieves 'abi_version'.
+- Cleaned up struct perfctr_info: renamed abi_magic to abi_version,
+  and version to driver_version. Renamed PERFCTR_*_MAGIC too.
+- Cleaned up struct perfctr_cpu_control: moved evntsel_aux[]
+  into the p4 sub-struct and renamed it as escr[]. Only P4 needs
+  it anyway, and the new name clarifies its purpose.
+- Renumbered the vperfctr ioctls to the 8-15 range (8-11 are used)
+  and reserved 0-7 (0-1 are used) for generic ioctls.
+- Added 'use_nmi' field to struct gperfctr_control, reserved for
+  future use if/when support for i-mode gperfctrs is implemented.
+- Replaced some preempt/smp_call_function combinations with 2.5.64's
+  new on_each_cpu() construct. Added compatibility definitions to
+  compat24.h and compat22.h.
+
+Version 2.5.0-pre2, 2003-03-03
+- Added ABI version to perfctr_info. Replaced PERFCTR_INFO ioctl
+  by read() on the fd, since that allows reading the ABI version
+  even in the case of a version mismatch. Removed binary layout
+  magic number from vperfctr_state. Rearranged perfctr_info to
+  make the 'long' fields 8-byte aligned.
+- Added #ifdef CONFIG_KPERFCTR to <linux/perfctr.h> to ensure
+  that <asm/perfctr.h> isn't included unless CONFIG_KPERFCTR=y.
+  This allows the patched kernel source to compile cleanly also
+  in archs not yet supported by perfctr.
+- Removed PERFCTR_PROC_PID_MODE #define and replaced it with
+  /*notype*/S_IRUSR in the patch files.
+- Added perfctr_vector_init() to <asm-i386/perfctr.h>. Cleaned
+  up arch/i386/kernel/i8259.c patch.
+- Removed apic_lvtpc_irqs[] array. Removed irq.c patch.
+- Updated CONFIG_PERFCTR_INIT_TESTS help text to match reality.
+- Kernel 2.4.21-pre5 added set_cpus_allowed(), which required
+  fixing compat24.h and x86_setup.c.
+- Fixed init.c for kernel 2.5.63 removing EXPORT_NO_SYMBOLS.
+- Cleaned up compat.h by moving 2.2/2.4 stuff to separate files.
+
+Version 2.5.0-pre1, 2003-02-19
+- Repair global perfctr API: the target CPUs are now explicit
+  in the calls to write control and read state. Global perfctrs
+  now work on 2.5 SMP kernels (which no longer have smp_num_cpus
+  or cpu_logical_map()), and HT P4s (asymmetric MPs).
+- struct perfctr_info has new bitmask fields for the set of CPUs
+  (cpu_online_map) and forbidden CPUs; dropped the nrcpus field.
+- add cpu_online() compat macro to compat.h
+- VPERFCTR_STOP is subsumed by VPERFCTR_CONTROL. Removed it.
+- Detect K8 as K8 not K7. They are not identical.
+- Makefile cleanup: moved 2.4/2.2 kernel stuff to Makefile24.
+- Makefile fix: removed export-objs for 2.5 kernels.
+- Kconfig fix: don't mention obsolete .o module suffix.
+
+Version 2.4.5, 2003-02-09
+- Fixed two minor compile warnings in x86_tests.c for 2.5 kernels.
+
+Version 2.4.4, 2003-01-18
+- Fixed a bug in iresume() where an interrupt-mode counter could
+  increment unexpectedly, and also miss the overflow interrupt.
+  The following setup would cause the problem:
+      P1 has EVNTSELn in non-interrupt mode, counting some high-
+  frequency event (e.g. INST_RETIRED) in kernel-mode. P2 has
+  EVNTSELn in interrupt-mode, counting some low-frequency event
+  (e.g. MMX_ASSIST) in user-mode. P1 suspends. Since EVNTSELn is
+  in non-interrupt mode, it is not disabled. P2 resumes. First
+  iresume() finds that the CPU cache ID is not P2's, so it reloads
+  PERFCTRn with P2's restart value. Then write_control() reloads
+  EVNTSELn with P2's EVNTSEL. At this point, P2's PERFCTRn has been
+  counting with P1's EVNTSELn since iresume(), so it will no longer
+  equal P2's restart value. And if PERFCTRn overflowed, the overflow
+  will go undetected since P1's EVNTSELn was in non-interrupt mode.
+      To avoid this problem, iresume() now ensures that a counter's
+  control register is disabled before reloading the counter.
+- Fixed some ugly log messages from the new HT P4 init code:
+  * forbidden_mask would be printed as "0X<mask>" (capital X)
+  * finalise_backpatching() could trigger a BUG! printk from
+    p4_write_control() if the CPU the init code runs on was
+    in the forbidden set. At init-time this is not an error.
+    Avoided this by temporarily resetting the forbidden_mask.
+- Added preliminary support for AMD K8 processors with the
+  regular 32-bit x86 kernel. The K8 performance counters appear
+  to be identical or very similar to the K7 performance counters.
+
+Version 2.4.3, 2002-12-11
+- Added x86.c:perfctr_cpus_forbidden_mask. This bitmask describes
+  the set of CPUs that must not access the perfctrs. On HT P4 MPs,
+  only logical CPU #0 in each package is allowed access -- this
+  avoids the resource conflict that would occur if both logical
+  processors were to access the perfctrs. In other cases (UP or
+  non-HT-P4 MPs) the mask is zero.
+- vperfctr_control() now calls set_cpus_allowed() to ensure that
+  the task stays away from CPUs in perfctr_cpus_forbidden_mask.
+  This is racy with sys_sched_setaffinity(), and possibly some
+  of the kernel's internal set_cpus_allowed() calls, but the race
+  is unlikely to occur in current 2.4 kernels.
+- Cleaned up the parameter passing protocol between vperfctr_ioctl()
+  and the individual vperfctr "system call" procedures.
+- Added safety check in global.c to disallow global-mode perfctrs
+  on asymmetric MPs until the API has been fixed.
+- Added set_cpus_allowed() implementation for 2.4 kernels, except
+  those that already have it as indicated by HAVE_SET_CPUS_ALLOWED:
+  this symbol is added to <linux/config.h> by the kernel patch.
+- 2.2 kernels can't enforce CPU affinity masks, so x86.c warns if
+  a HT P4 MP runs a 2.2 kernel, and falls back to generic x86 mode.
+  Added dummy set_cpus_allowed() macro for 2.2 kernels.
+- x86_compat.h now implements cpuid_ebx() and cpu_has_ht for old kernels.
+- Makefile cleanup: Rules.make is obsolete in 2.5.
+- Compile fixes in x86.c and virtual_stub.c: <linux/fs.h> needs to
+  be included explicitly for the 2.5.50 kernel.
+
+Version 2.4.2, 2002-11-25
+- Fixed virtual.c:inc_nrctrs() to handle the -EBUSY case correctly.
+  If the HW was busy (e.g. global running), then the first attempt
+  to open a vperfctr would fail but further attempts would succeed.
+  Updated error propagation to distinguish -EBUSY from -ENOMEM.
+- Updated global.c for preempt-safety.
+- Made the driver safe for preemptible kernels. This required a lot
+  of analysis, but resulted in relatively few actual code changes.
+  (Backport from the perfctr-3.1 branch.)
+- Ported to 2.5.48: Replaced MOD_INC_USE_COUNT by try_module_get()
+  and MOD_DEC_USE_COUNT by module_put(). Updated compat.h.
+- Ported to 2.5.45: added Kconfig, removed Config.help.
+
 Version 2.4.1, 2002-10-12
 - RedHat 8.0's 2.4.18-14 kernel does EXPORT_SYMBOL(cpu_khz) while
   the vanilla 2.4.18 does not. This clashes with x86_setup.c's

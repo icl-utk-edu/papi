@@ -9,7 +9,8 @@ patch=
 patchtype=
 nopatch=
 dryrun=
-devel=
+sym=
+backup=
 maybe_redhat=
 VERSION=
 PATCHLEVEL=
@@ -34,6 +35,12 @@ get_perfctr_srcdir() {
     perfctr=`echo $0 | sed 's+/update-kernel$++'`
 }
 
+get_arch() {
+    if [ -z "$ARCH" ]; then
+	ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+    fi
+}
+
 get_options() {
     while [ $# -gt 0 ]; do
 	case "$1" in
@@ -54,9 +61,13 @@ get_options() {
 	  --test|-t)
 	    dryrun="--dry-run"
 	    ;;
-	  --devel)
+	  --sym)
 	    # not for general use
-	    devel=1
+	    sym=1
+	    ;;
+	  --backup)
+	    # not for general use
+	    backup=1
 	    ;;
 	  *)
 	    echo Error: unknown option "$1"
@@ -68,7 +79,7 @@ get_options() {
 }
 
 check_pwd_is_kernel_srcdir() {
-    if [ ! -f drivers/Makefile -o ! -f arch/i386/config.in ]; then
+    if [ ! -f drivers/Makefile -o ! -f "arch/$ARCH/kernel/Makefile" ]; then
 	echo "Error: `pwd` does not appear to be the top-level kernel source directory"
 	usage
     fi
@@ -101,9 +112,15 @@ get_kernel_version() {
 
 check_given_patch() {
     if [ ! -f "$perfctr/patches/patch-kernel-$patch" ]; then
-	echo Error: no patch for user-specified version "$patch" found
-	echo See "$perfctr/patches/" for supported kernel versions
-	exit 1
+	alias=`grep ^$patch/ $perfctr/patches/aliases | awk -F/ '{ print $2 }'`
+	if [ -n "$alias" -a -f "$perfctr/patches/patch-kernel-$alias" ]; then
+	    patch="$alias"
+	    echo Using patch "$alias" for kernel "$kernel"
+	else
+	    echo Error: no patch for user-specified version "$patch" found
+	    echo See "$perfctr/patches/" for supported kernel versions
+	    exit 1
+	fi
     fi
     patchtype="(forced, kernel is $kernel)"
 }
@@ -112,6 +129,12 @@ try_standard() {
     if [ -f "$perfctr/patches/patch-kernel-$kernel" ]; then
 	patch="$kernel"
 	echo Found patch for kernel "$kernel"
+    else
+	alias=`grep ^$kernel/ $perfctr/patches/aliases | awk -F/ '{ print $2 }'`
+	if [ -n "$alias" -a -f "$perfctr/patches/patch-kernel-$alias" ]; then
+	    patch="$alias"
+	    echo Using patch "$alias" for kernel "$kernel"
+	fi
     fi
 }
 
@@ -119,9 +142,17 @@ try_redhat() {
     if [ -f /etc/redhat-release ]; then
 	maybe_redhat=1
     fi
-    if [ -n "$EXTRAVERSION" -a -n "$maybe_redhat" -a -f "$perfctr/patches/patch-kernel-$kernel-redhat" ]; then
-	patch="$kernel-redhat"
-	echo Found patch for RedHat kernel "$kernel"
+    if [ -n "$EXTRAVERSION" -a -n "$maybe_redhat" ]; then
+	if [ -f "$perfctr/patches/patch-kernel-$kernel-redhat" ]; then
+	    patch="$kernel-redhat"
+	    echo Found patch for RedHat kernel "$kernel"
+	else
+	    alias=`grep ^$kernel-redhat $perfctr/patches/aliases | awk -F/ '{ print $2 }'`
+	    if [ -n "$alias" -a -f "$perfctr/patches/patch-kernel-$alias" ]; then
+		patch="$alias"
+		echo Using patch "$alias" for RedHat kernel "$kernel"
+	    fi
+	fi
     fi
 }
 
@@ -148,18 +179,18 @@ identify_patch() {
 
 apply_patch() {
     echo
-    echo Appying kernel source patch for "$patch" "$patchtype"
+    echo Applying kernel source patch for "$patch" "$patchtype"
     echo
     bVt=
-    if [ "$devel" ]; then
+    if [ "$backup" ]; then
 	bVt="-bVt"
     fi
     patch $dryrun $bVt -p1 < "$perfctr/patches/patch-kernel-$patch"
 }
 
 install_files_by_symlinks() {
-    echo ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
-    ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
+    echo ln -sf ${perfctr}/linux/include/asm-$ARCH/perfctr.h include/asm-$ARCH/
+    ln -sf ${perfctr}/linux/include/asm-$ARCH/perfctr.h include/asm-$ARCH/
     echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     echo ln -sf ${perfctr}/linux/drivers/perfctr drivers/
@@ -168,13 +199,14 @@ install_files_by_symlinks() {
 
 install_files_by_tar() {
     tar -C "$perfctr/linux" --exclude CVS -cf - . | tar -xf -
+    rm -f include/asm
 }
 
 install_files() {
     echo
     echo Installing new kernel source files
     echo
-    if [ -n "$devel" ]; then
+    if [ -n "$sym" ]; then
 	install_files_by_symlinks
     else
 	install_files_by_tar
@@ -182,6 +214,7 @@ install_files() {
 }
 
 get_perfctr_srcdir
+get_arch
 get_options "$@"
 check_pwd_is_kernel_srcdir
 check_kernel_srcdir_is_clean

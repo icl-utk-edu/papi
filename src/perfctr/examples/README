@@ -17,6 +17,5 @@ self/
 	monitor the execution in parts of its own code.
 
 signal/
-	[CURRENTLY DISABLED, DOES NOT WORK]
 	Illustrates how performance counter overflow can be caught
 	and sent to the process as a user-specified signal.

@@ -1,39 +1,101 @@
 # $Id$
 
 SHELL=/bin/sh
+ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 CC=gcc
 CFLAGS=-O2 -fomit-frame-pointer -Wall
-INCLDIR=../linux/include
-CPPFLAGS=-I$(INCLDIR)
+BUILD_INCLDIR=../linux/include
+CPPFLAGS=-I$(BUILD_INCLDIR)
 AR=ar
 ARFLAGS=ruv
 RANLIB=ranlib
-OBJS=libperfctr.o event_set.o
+
+i386_ESOBJS=event_set_x86.o event_set_amd.o event_set_centaur.o\
+	event_set_p4.o event_set_p5.o event_set_p6.o
+x86_64_ESOBJS=event_set_x86.o event_set_amd.o
+ppc_ESOBJS=event_set_ppc.o
+EVENT_SET_OBJS=$($(ARCH)_ESOBJS)
+
+i386_OBJS=x86.o
+x86_64_OBJS=x86.o
+ppc_OBJS=ppc.o
+ARCH_OBJS=$($(ARCH)_OBJS)
+
+i386_H=x86.h
+x86_64_H=x86.h
+ppc_H=ppc.h
+ARCH_H=$($(ARCH)_H)
+
+AR_OBJS=global.o misc.o virtual.o marshal.o $(EVENT_SET_OBJS) $(ARCH_OBJS)
+
+SO_OBJS=$(AR_OBJS:.o=.os)
+SO_ABIVER=5
+SO_LIBVER=2.6.9
+SO_NAME=libperfctr.so.$(SO_ABIVER)
+SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
+
+HDEP=libperfctr.h $(BUILD_INCLDIR)/linux/perfctr.h $(BUILD_INCLDIR)/asm/perfctr.h
+INSTALL_FILES=$(BUILD_INCLDIR)/asm/perfctr.h $(BUILD_INCLDIR)/linux/perfctr.h\
+	libperfctr.h libperfctr.a libperfctr.so perfctr_event_codes.h
+CLEAN_FILES=$(AR_OBJS) $(SO_OBJS) libperfctr.a libperfctr.so gen-event-codes perfctr_event_codes.h marshal.c marshal.h libperfctr.o
 
 # Prevent 16-byte stack alignment crap in gcc-2.95.
 CFLAGS += $(shell if $(CC) -mpreferred-stack-boundary=2 -S -o /dev/null -x c /dev/null > /dev/null 2>&1; then echo "-mpreferred-stack-boundary=2"; fi)
 
+.SUFFIXES: .os
+
+%.os: %.c
+	$(COMPILE.c) -fPIC $(OUTPUT_OPTION) $<
+
 # this code does not need -fno-strict-aliasing
 
-default:	libperfctr.a
+default:	$(INSTALL_FILES) libperfctr.o
 
-libperfctr.a:	$(OBJS)
-	$(AR) $(ARFLAGS) libperfctr.a $(OBJS)
+libperfctr.a:	$(AR_OBJS)
+	$(AR) $(ARFLAGS) libperfctr.a $(AR_OBJS)
 	$(RANLIB) libperfctr.a
 
-libperfctr.so:	$(OBJS)
-	$(CC) -shared $(OBJS) -o $@
+# not installed, only built as a workaround for PAPI's broken Makefiles
+libperfctr.o:	$(AR_OBJS)
+	ld -r -o $@ $(AR_OBJS)
 
-$(OBJS):	libperfctr.h $(INCLDIR)/linux/perfctr.h $(INCLDIR)/asm/perfctr.h
-event_set.o:	event_codes.h
+libperfctr.so:	$(SO_OBJS)
+	$(CC) -shared -o $@ -Wl,-soname,$(SO_NAME) $(SO_OBJS)
 
-$(INCLDIR)/asm/perfctr.h:
+$(AR_OBJS):	$(HDEP)
+$(SO_OBJS):	$(HDEP)
+$(EVENT_SET_OBJS):	event_set.h
+
+$(BUILD_INCLDIR)/asm/perfctr.h:
 	cd ..; make configure
 
-event_codes.h:	../etc/perfctr-events.tab ../etc/mk-events-h.awk
-	awk -f ../etc/mk-events-h.awk < ../etc/perfctr-events.tab > event_codes.h
+misc.o virtual.o global.o:	marshal.h
+misc.o virtual.o:	arch.h $(ARCH_H)
+marshal.o:	marshal.c marshal.h
+marshal.c:
+	ln -s ../linux/drivers/perfctr/marshal.c .
+marshal.h:
+	ln -s ../linux/drivers/perfctr/marshal.h .
+
+perfctr_event_codes.h:	gen-event-codes
+	./gen-event-codes > $@
+
+gen-event-codes:	gen-event-codes.c $(EVENT_SET_OBJS)
+	$(LINK.c) $^ -o $@
+
+install:	$(INSTALL_FILES)
+	-mkdir -p $(INCLDIR) $(INCLDIR)/asm $(INCLDIR)/linux
+	cp -f libperfctr.h $(INCLDIR)/
+	cp perfctr_event_codes.h $(INCLDIR)/
+	cp -f ../linux/include/asm/perfctr.h $(INCLDIR)/asm/
+	cp -f ../linux/include/linux/perfctr.h $(INCLDIR)/linux/
+	-mkdir -p $(LIBDIR)
+	cp libperfctr.a $(LIBDIR)/
+	cp libperfctr.so $(LIBDIR)/$(SO_LIB)
+	ln -s $(SO_LIB) $(LIBDIR)/$(SO_NAME)
+	ln -s $(SO_NAME) $(LIBDIR)/libperfctr.so
 
 distclean realclean:	clean
 
 clean:
-	rm -f libperfctr.a libperfctr.so $(OBJS) event_codes.h
+	rm -f $(CLEAN_FILES)

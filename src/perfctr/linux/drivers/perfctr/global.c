@@ -1,7 +1,7 @@
 /* $Id$
  * Global-mode performance-monitoring counters via /dev/perfctr.
  *
- * Copyright (C) 2000-2002  Mikael Pettersson
+ * Copyright (C) 2000-2003  Mikael Pettersson
  *
  * XXX: Doesn't do any authentication yet. Should we limit control
  * to root, or base it on having write access to /dev/perfctr?
@@ -12,30 +12,24 @@
 #include <linux/sched.h>
 #include <linux/init.h>
 #include <linux/fs.h>
-#include <linux/miscdevice.h>
 #include <linux/perfctr.h>
 
 #include <asm/uaccess.h>
 
 #include "compat.h"
 #include "global.h"
-
-/* XXX: broken in 2.5.23+, solution TDB */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,23)
-#define smp_num_cpus		1
-#define cpu_logical_map(i)	(i)
-#endif
+#include "marshal.h"
 
 static const char this_service[] = __FILE__;
 static int hardware_is_ours = 0;
 static struct timer_list sampling_timer;
-
+static DECLARE_MUTEX(control_mutex);
 static unsigned int nr_active_cpus = 0;
 
 struct gperfctr {
 	struct perfctr_cpu_state cpu_state;
 	spinlock_t lock;
-} __attribute__((__aligned__(SMP_CACHE_BYTES)));
+} ____cacheline_aligned;
 
 static struct gperfctr per_cpu_gperfctr[NR_CPUS] __cacheline_aligned;
 
@@ -52,24 +46,30 @@ static int reserve_hardware(void)
 		return -EBUSY;
 	}
 	hardware_is_ours = 1;
-	MOD_INC_USE_COUNT;
+	__module_get(THIS_MODULE);
 	return 0;
 }
 
 static void release_hardware(void)
 {
+	int i;
+
 	nr_active_cpus = 0;
 	if( hardware_is_ours ) {
 		hardware_is_ours = 0;
 		del_timer(&sampling_timer);
 		sampling_timer.data = 0;
 		perfctr_cpu_release(this_service);
-		MOD_DEC_USE_COUNT;
+		module_put(THIS_MODULE);
+		for(i = 0; i < NR_CPUS; ++i)
+			per_cpu_gperfctr[i].cpu_state.cstatus = 0;
 	}
 }
 
 static void sample_this_cpu(void *unused)
 {
+	/* PREEMPT note: when called via smp_call_function(),
+	   this is in IRQ context with preemption disabled. */
 	struct gperfctr *perfctr;
 
 	perfctr = &per_cpu_gperfctr[smp_processor_id()];
@@ -82,8 +82,7 @@ static void sample_this_cpu(void *unused)
 
 static void sample_all_cpus(void)
 {
-	smp_call_function(sample_this_cpu, NULL, 1, 1);
-	sample_this_cpu(NULL);
+	on_each_cpu(sample_this_cpu, NULL, 1, 1);
 }
 
 static void sampling_timer_function(unsigned long interval)
@@ -95,7 +94,6 @@ static void sampling_timer_function(unsigned long interval)
 
 static unsigned long usectojiffies(unsigned long usec)
 {
-	/* based on kernel/itimer.c:tvtojiffies() */
 	usec += 1000000 / HZ - 1;
 	usec /= 1000000 / HZ;
 	return usec;
@@ -115,6 +113,8 @@ static void start_sampling_timer(unsigned long interval_usec)
 
 static void start_this_cpu(void *unused)
 {
+	/* PREEMPT note: when called via smp_call_function(),
+	   this is in IRQ context with preemption disabled. */
 	struct gperfctr *perfctr;
 
 	perfctr = &per_cpu_gperfctr[smp_processor_id()];
@@ -124,159 +124,121 @@ static void start_this_cpu(void *unused)
 
 static void start_all_cpus(void)
 {
-	smp_call_function(start_this_cpu, NULL, 1, 1);
-	start_this_cpu(NULL);
+	on_each_cpu(start_this_cpu, NULL, 1, 1);
 }
 
-static int gperfctr_control(struct gperfctr_control *argp)
+static int gperfctr_control(struct perfctr_struct_buf *argp)
 {
-	unsigned long interval_usec;
-	unsigned int nrcpus, i;
-	int last_active, ret;
+	int ret;
 	struct gperfctr *perfctr;
-	struct perfctr_cpu_control cpu_control;
-	static DECLARE_MUTEX(control_mutex);
+	struct gperfctr_cpu_control cpu_control;
 
-	if( nr_active_cpus > 0 )
-		return -EBUSY;	/* you have to stop them first */
-	if( get_user(interval_usec, &argp->interval_usec) )
-		return -EFAULT;
-	if( get_user(nrcpus, &argp->nrcpus) )
-		return -EFAULT;
-	if( nrcpus > smp_num_cpus )
+	ret = perfctr_copy_from_user(&cpu_control, argp, &gperfctr_cpu_control_sdesc);
+	if( ret )
+		return ret;
+	if( cpu_control.cpu >= NR_CPUS ||
+	    !cpu_online(cpu_control.cpu) ||
+	    perfctr_cpu_is_forbidden(cpu_control.cpu) )
+		return -EINVAL;
+	/* we don't permit i-mode counters */
+	if( cpu_control.cpu_control.nrictrs != 0 )
+		return -EPERM;
+	down(&control_mutex);
+	ret = -EBUSY;
+	if( hardware_is_ours )
+		goto out_up;	/* you have to stop them first */
+	perfctr = &per_cpu_gperfctr[cpu_control.cpu];
+	spin_lock(&perfctr->lock);
+	perfctr->cpu_state.tsc_start = 0;
+	perfctr->cpu_state.tsc_sum = 0;
+	memset(&perfctr->cpu_state.pmc, 0, sizeof perfctr->cpu_state.pmc);
+	perfctr->cpu_state.control = cpu_control.cpu_control;
+	ret = perfctr_cpu_update_control(&perfctr->cpu_state, 1);
+	spin_unlock(&perfctr->lock);
+	if( ret < 0 )
+		goto out_up;
+	if( perfctr_cstatus_enabled(perfctr->cpu_state.cstatus) )
+		++nr_active_cpus;
+	ret = nr_active_cpus;
+ out_up:
+	up(&control_mutex);
+	return ret;
+}
+
+static int gperfctr_start(unsigned int interval_usec)
+{
+	int ret;
+
+	if( interval_usec < 10000 )
 		return -EINVAL;
 	down(&control_mutex);
-	last_active = -1;
-	for(i = 0; i < nrcpus; ++i) {
-		ret = -EFAULT;
-		if( copy_from_user(&cpu_control,
-				   &argp->cpu_control[i],
-				   sizeof cpu_control) )
-			goto out_up;
-		/* we don't permit i-mode counters */
-		ret = -EPERM;
-		if( cpu_control.nrictrs != 0 )
-			goto out_up;
-		perfctr = &per_cpu_gperfctr[cpu_logical_map(i)];
-		spin_lock(&perfctr->lock);
-		memset(&perfctr->cpu_state.sum, 0, sizeof perfctr->cpu_state.sum);
-		perfctr->cpu_state.control = cpu_control;
-		ret = perfctr_cpu_update_control(&perfctr->cpu_state);
-		spin_unlock(&perfctr->lock);
-		if( ret < 0 )
-			goto out_up;
-		if( perfctr_cstatus_enabled(perfctr->cpu_state.cstatus) )
-			last_active = i;
-	}
-	for(; i < smp_num_cpus; ++i) {
-		perfctr = &per_cpu_gperfctr[cpu_logical_map(i)];
-		memset(&perfctr->cpu_state, 0, sizeof perfctr->cpu_state);
-	}
-	nr_active_cpus = ret = last_active + 1;
+	ret = nr_active_cpus;
 	if( ret > 0 ) {
 		if( reserve_hardware() < 0 ) {
-			nr_active_cpus = 0;
 			ret = -EBUSY;
 		} else {
 			start_all_cpus();
 			start_sampling_timer(interval_usec);
 		}
 	}
- out_up:
 	up(&control_mutex);
 	return ret;
 }
 
-static int gperfctr_read(struct gperfctr_state *arg)
-{
-	unsigned nrcpus, i;
-	struct gperfctr *perfctr;
-	struct gperfctr_cpu_state state;
-
-	if( get_user(nrcpus, &arg->nrcpus) )
-		return -EFAULT;
-	if( nrcpus > smp_num_cpus )
-		nrcpus = smp_num_cpus;
-	if( sampling_timer.data == 0 )	/* no timer; sample now */
-		sample_all_cpus();
-	for(i = 0; i < nrcpus; ++i) {
-		perfctr = &per_cpu_gperfctr[cpu_logical_map(i)];
-		spin_lock(&perfctr->lock);
-		state.cpu_control = perfctr->cpu_state.control;
-		state.sum = perfctr->cpu_state.sum;
-		spin_unlock(&perfctr->lock);
-		if( copy_to_user(&arg->cpu_state[i], &state, sizeof state) )
-			return -EFAULT;
-	}
-	return nr_active_cpus;
-}
-
 static int gperfctr_stop(void)
 {
+	down(&control_mutex);
 	release_hardware();
+	up(&control_mutex);
 	return 0;
 }
 
-static int dev_perfctr_ioctl(struct inode *inode, struct file *filp,
-			     unsigned int cmd, unsigned long arg)
+static int gperfctr_read(struct perfctr_struct_buf *argp)
+{
+	struct gperfctr *perfctr;
+	struct gperfctr_cpu_state state;
+	int err;
+
+	// XXX: sample_all_cpus() ???
+	err = perfctr_copy_from_user(&state, argp, &gperfctr_cpu_state_only_cpu_sdesc);
+	if( err )
+		return err;
+	if( state.cpu >= NR_CPUS || !cpu_online(state.cpu) )
+		return -EINVAL;
+	perfctr = &per_cpu_gperfctr[state.cpu];
+	spin_lock(&perfctr->lock);
+	state.cpu_control = perfctr->cpu_state.control;
+	//state.sum = perfctr->cpu_state.sum;
+	{
+		int j;
+		state.sum.tsc = perfctr->cpu_state.tsc_sum;
+		for(j = 0; j < ARRAY_SIZE(state.sum.pmc); ++j)
+			state.sum.pmc[j] = perfctr->cpu_state.pmc[j].sum;
+	}
+	spin_unlock(&perfctr->lock);
+	return perfctr_copy_to_user(argp, &state, &gperfctr_cpu_state_sdesc);
+}
+
+int gperfctr_ioctl(struct inode *inode, struct file *filp,
+		   unsigned int cmd, unsigned long arg)
 {
 	switch( cmd ) {
-	case PERFCTR_INFO:
-		return sys_perfctr_info((struct perfctr_info*)arg);
 	case GPERFCTR_CONTROL:
-		return gperfctr_control((struct gperfctr_control*)arg);
+		return gperfctr_control((struct perfctr_struct_buf*)arg);
 	case GPERFCTR_READ:
-		return gperfctr_read((struct gperfctr_state*)arg);
+		return gperfctr_read((struct perfctr_struct_buf*)arg);
 	case GPERFCTR_STOP:
 		return gperfctr_stop();
+	case GPERFCTR_START:
+		return gperfctr_start(arg);
 	}
 	return -EINVAL;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
-static struct file_operations dev_perfctr_file_ops = {
-	.owner = THIS_MODULE,
-	.ioctl = dev_perfctr_ioctl,
-};
-#else
-static int dev_perfctr_open(struct inode *inode, struct file *filp)
+void __init gperfctr_init(void)
 {
-	MOD_INC_USE_COUNT;
-	return 0;
-}
-static int dev_perfctr_release(struct inode *inode, struct file *filp)
-{
-	MOD_DEC_USE_COUNT;
-	return 0;
-}
-static struct file_operations dev_perfctr_file_ops = {
-	.open = dev_perfctr_open,
-	.release = dev_perfctr_release,
-	.ioctl = dev_perfctr_ioctl,
-};
-#endif
+	int i;
 
-static struct miscdevice dev_perfctr = {
-	.minor = 182,
-	.name = "perfctr",
-	.fops = &dev_perfctr_file_ops,
-};
-
-int __init gperfctr_init(void)
-{
-	int i, err;
-
-	if( (err = misc_register(&dev_perfctr)) != 0 ) {
-		printk(KERN_ERR "/dev/perfctr: failed to register, errno %d\n",
-		       -err);
-		return err;
-	}
 	for(i = 0; i < NR_CPUS; ++i)
 		per_cpu_gperfctr[i].lock = SPIN_LOCK_UNLOCKED;
-	return 0;
-}
-
-void gperfctr_exit(void)
-{
-	misc_deregister(&dev_perfctr);
 }

@@ -1,22 +1,22 @@
 /* $Id$
- * signal.c
  *
  * This test program illustrates how performance counter overflow
  * can be caught and sent to the process as a user-specified signal.
  *
  * Limitations:
- * - Requires a 2.4 kernel with UP-APIC support.
- * - Requires an Intel P4, Intel P6, or AMD K7 CPU.
+ * - Requires a 2.4 or newer kernel with local APIC support.
+ * - Requires a CPU with a local APIC (P4, P6, K8, K7).
  *
- * Copyright (C) 2001-2002  Mikael Pettersson
+ * Copyright (C) 2001-2004  Mikael Pettersson
  */
+#define __USE_GNU /* enable symbolic names for gregset_t[] indices */
+#include <sys/ucontext.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <asm/sigcontext.h>
-#include <asm/ucontext.h>	/* _not_ the broken <sys/ucontext.h> */
 #include "libperfctr.h"
+#include "arch.h"
 
 static const struct vperfctr *vperfctr;
 static struct perfctr_info info;
@@ -28,7 +28,7 @@ static void do_open(void)
 	perror("vperfctr_open");
 	exit(1);
     }
-    if( vperfctr_info(vperfctr, &info) != 0 ) {
+    if( vperfctr_info(vperfctr, &info) < 0 ) {
 	perror("vperfctr_info");
 	exit(1);
     }
@@ -39,7 +39,7 @@ static void do_open(void)
 static void on_sigio(int sig, siginfo_t *si, void *puc)
 {
     struct ucontext *uc;
-    struct sigcontext *mc;
+    mcontext_t *mc;
     unsigned long pc;
     unsigned int pmc_mask;
 
@@ -57,7 +57,7 @@ static void on_sigio(int sig, siginfo_t *si, void *puc)
     }
     uc = puc;
     mc = &uc->uc_mcontext;
-    pc = mc->eip;	/* clearly more readable than glibc's mc->gregs[14] */
+    pc = mcontext_pc(mc);
     if( !vperfctr_is_running(vperfctr) ) {
 	/*
 	 * My theory is that this happens if a perfctr overflowed
@@ -94,61 +94,16 @@ static void do_sigaction(void)
 
 static void do_control(void)
 {
-    unsigned int nractrs = 0;
-    unsigned int pmc_map0 = 0, pmc_map1 = 1;
-    unsigned int evntsel0, evntsel1;
-    unsigned int evntsel0_aux = 0, evntsel1_aux = 0;
     struct vperfctr_control control;
 
     memset(&control, 0, sizeof control);
-
-    switch( info.cpu_type ) {
-      case PERFCTR_X86_INTEL_P6:
-      case PERFCTR_X86_INTEL_PII:
-      case PERFCTR_X86_INTEL_PIII:
-	/* FLOPS, USR, ENable, INT */
-	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
-	/* BR_TAKEN_RETIRED, USR, INT */
-	evntsel1 = 0xC9 | (1 << 16) | (1 << 20);
-	break;
-      case PERFCTR_X86_AMD_K7:
-	/* K7 can't count FLOPS. Count RETIRED_OPS instead. */
-	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
-	/* RETIRED_TAKEN_BRANCHES, USR, INT */
-	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
-	break;
-      case PERFCTR_X86_INTEL_P4:
-      case PERFCTR_X86_INTEL_P4M2:
-	nractrs = 1;
-	/* PMC(0) produces tagged x87_FP_uop:s (FLAME_CCCR0, FIRM_ESCR0) */
-	control.cpu_control.pmc_map[0] = 0x8 | (1 << 31);
-	control.cpu_control.evntsel[0] = (0x3 << 16) | (1 << 13) | (1 << 12);
-	control.cpu_control.evntsel_aux[0] = (4 << 25) | (1 << 24) | (1 << 5) | (1 << 4) | (1 << 2);
-	/* PMC(1) counts execution_event(X87_FP_retired) (IQ_CCCR0, CRU_ESCR2) */
-	pmc_map0 = 0xC | (1 << 31);
-	evntsel0 = (1 << 26) | (0x3 << 16) | (5 << 13) | (1 << 12);
-	evntsel0_aux = (0xC << 25) | (1 << 9) | (1 << 2);
-	/* PMC(2) counts branch_retired(TP,TM) (IQ_CCCR2, CRU_ESCR3) */
-	pmc_map1 = 0xE | (1 << 31);
-	evntsel1 = (1 << 26) | (0x3 << 16) | (5 << 13) | (1 << 12);
-	evntsel1_aux = (6 << 25) | (((1 << 3)|(1 << 2)) << 9) | (1 << 2);
-	break;
-      default:
-	printf("%s: unsupported cpu type %u\n", __FUNCTION__, info.cpu_type);
-	exit(1);
-    }	
-    control.cpu_control.tsc_on = 1;
-    control.cpu_control.nractrs = nractrs;
-    control.cpu_control.nrictrs = 2;
-    control.cpu_control.pmc_map[nractrs+0] = pmc_map0;
-    control.cpu_control.evntsel[nractrs+0] = evntsel0;
-    control.cpu_control.evntsel_aux[nractrs+0] = evntsel0_aux;
-    control.cpu_control.ireset[nractrs+0] = -25;
-    control.cpu_control.pmc_map[nractrs+1] = pmc_map1;
-    control.cpu_control.evntsel[nractrs+1] = evntsel1;
-    control.cpu_control.evntsel_aux[nractrs+1] = evntsel1_aux;
-    control.cpu_control.ireset[nractrs+1] = -25;
+    do_setup(&info, &control.cpu_control);
     control.si_signo = SIGIO;
+
+    printf("Control used:\n");
+    perfctr_cpu_control_print(&control.cpu_control);
+    printf("\n");
+
     if( vperfctr_control(vperfctr, &control) < 0 ) {
 	perror("vperfctr_control");
 	exit(1);

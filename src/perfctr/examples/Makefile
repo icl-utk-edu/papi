@@ -6,8 +6,11 @@ default:
 
 all-subdirs:
 	-for dir in $(SUBDIRS); do \
-		(cd $$dir; $(MAKE) $(MAKETARGET); cd ..); \
+		(cd $$dir; $(MAKE) $(MAKEARGS) $(MAKETARGET); cd ..); \
 	done
+
+install:
+	$(MAKE) MAKEARGS="BINDIR=$(BINDIR)" MAKETARGET=install all-subdirs
 
 distclean realclean:
 	$(MAKE) MAKETARGET=distclean all-subdirs

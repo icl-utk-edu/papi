@@ -1,5 +1,5 @@
---- linux-2.4.19-perfctr/CREDITS.~1~	Sat Aug  3 22:04:41 2002
-+++ linux-2.4.19-perfctr/CREDITS	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/CREDITS.~1~	2003-03-02 19:32:06.000000000 +0100
++++ linux-2.4.19-perfctr/CREDITS	2003-03-02 19:33:37.000000000 +0100
 @@ -2348,6 +2348,7 @@
  E: mikpe@csd.uu.se
  W: http://www.csd.uu.se/~mikpe/
@@ -8,9 +8,9 @@
  
  N: Reed H. Petty
  E: rhp@draper.net
---- linux-2.4.19-perfctr/Documentation/Configure.help.~1~	Sat Aug  3 22:04:41 2002
-+++ linux-2.4.19-perfctr/Documentation/Configure.help	Sat Aug  3 22:25:36 2002
-@@ -4002,6 +4002,72 @@
+--- linux-2.4.19-perfctr/Documentation/Configure.help.~1~	2003-03-02 19:32:06.000000000 +0100
++++ linux-2.4.19-perfctr/Documentation/Configure.help	2003-03-02 19:34:25.000000000 +0100
+@@ -4002,6 +4002,77 @@
  
    If unsure, say N.
  
@@ -23,8 +23,8 @@
 +  such as cache misses, pipeline stalls, etc.
 +
 +  The driver supports most x86-class processors known to have
-+  performance-monitoring counters: Intel Pentium to Pentium III,
-+  AMD K7, Cyrix 6x86MX/MII/III, VIA C3, and WinChip C6/2/3.
++  performance-monitoring counters: Intel Pentium to Pentium 4,
++  AMD K7 and K8, Cyrix 6x86MX/MII/III, VIA C3, and WinChip C6/2/3.
 +
 +  On processors which have a time-stamp counter but no performance-
 +  monitoring counters, such as the AMD K6 family, the driver supports
@@ -51,9 +51,14 @@
 +
 +Init-time hardware tests
 +CONFIG_PERFCTR_INIT_TESTS
-+  This option makes the driver run additional hardware tests
-+  during initialisation. This is not necessary for normal
-+  operation, but it can be useful during driver development.
++  This option makes the driver perform additional hardware tests
++  during initialisation, and log their results in the kernel's
++  message buffer. For most supported processors, these tests simply
++  measure the runtime overheads of performance counter operations.
++
++  If you have a less well-known processor (one not listed in the
++  etc/costs/ directory in the user-space package), you should enable
++  this option and email the results to the perfctr developers.
 +
 +  If unsure, say N.
 +
@@ -83,8 +88,8 @@
  VGA text console
  CONFIG_VGA_CONSOLE
    Saying Y here will allow you to use Linux in text mode through a
---- linux-2.4.19-perfctr/Documentation/ioctl-number.txt.~1~	Sat Jul 21 11:47:30 2001
-+++ linux-2.4.19-perfctr/Documentation/ioctl-number.txt	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/Documentation/ioctl-number.txt.~1~	2001-07-21 11:47:30.000000000 +0200
++++ linux-2.4.19-perfctr/Documentation/ioctl-number.txt	2003-03-02 19:33:37.000000000 +0100
 @@ -187,5 +187,7 @@
  0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
  0xCB	00-1F	CBM serial IEC bus	in development:
@@ -93,8 +98,8 @@
 +					<mailto:mikpe@csd.uu.se>
  
  0xFE	00-9F	Logical Volume Manager	<mailto:linux-lvm@sistina.com>
---- linux-2.4.19-perfctr/MAINTAINERS.~1~	Sat Aug  3 22:04:41 2002
-+++ linux-2.4.19-perfctr/MAINTAINERS	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/MAINTAINERS.~1~	2003-03-02 19:32:06.000000000 +0100
++++ linux-2.4.19-perfctr/MAINTAINERS	2003-03-02 19:33:37.000000000 +0100
 @@ -1261,6 +1261,12 @@
  W:	http://www.realitydiluted.com/projects/nino
  S:	Maintained
@@ -108,8 +113,8 @@
  PNP SUPPORT
  P:	Tom Lees
  M:	tom@lpsg.demon.co.uk
---- linux-2.4.19-perfctr/Makefile.~1~	Sat Aug  3 22:05:17 2002
-+++ linux-2.4.19-perfctr/Makefile	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/Makefile.~1~	2003-03-02 19:32:06.000000000 +0100
++++ linux-2.4.19-perfctr/Makefile	2003-03-02 19:33:37.000000000 +0100
 @@ -188,6 +188,7 @@
  DRIVERS-$(CONFIG_BLUEZ) += drivers/bluetooth/bluetooth.o
  DRIVERS-$(CONFIG_HOTPLUG_PCI) += drivers/hotplug/vmlinux-obj.o
@@ -118,18 +123,20 @@
  
  DRIVERS := $(DRIVERS-y)
  
---- linux-2.4.19-perfctr/arch/i386/config.in.~1~	Sat Aug  3 22:04:41 2002
-+++ linux-2.4.19-perfctr/arch/i386/config.in	Sat Aug  3 22:25:36 2002
-@@ -239,6 +239,7 @@
+--- linux-2.4.19-perfctr/arch/i386/config.in.~1~	2003-03-02 19:32:06.000000000 +0100
++++ linux-2.4.19-perfctr/arch/i386/config.in	2003-03-02 19:33:43.000000000 +0100
+@@ -204,6 +204,9 @@
+ if [ "$CONFIG_SMP" = "y" -a "$CONFIG_X86_CMPXCHG" = "y" ]; then
+    define_bool CONFIG_HAVE_DEC_LOCK y
  fi
- 
- source drivers/pci/Config.in
++
 +source drivers/perfctr/Config.in
++
+ endmenu
  
- bool 'EISA support' CONFIG_EISA
- 
---- linux-2.4.19-perfctr/arch/i386/kernel/i8259.c.~1~	Sun Sep 23 21:06:30 2001
-+++ linux-2.4.19-perfctr/arch/i386/kernel/i8259.c	Sat Aug  3 22:25:36 2002
+ mainmenu_option next_comment
+--- linux-2.4.19-perfctr/arch/i386/kernel/i8259.c.~1~	2001-09-23 21:06:30.000000000 +0200
++++ linux-2.4.19-perfctr/arch/i386/kernel/i8259.c	2004-02-29 00:38:24.000000000 +0100
 @@ -21,6 +21,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -138,43 +145,27 @@
  
  #include <linux/irq.h>
  
-@@ -489,6 +490,10 @@
+@@ -95,6 +96,9 @@
+ BUILD_SMP_TIMER_INTERRUPT(apic_timer_interrupt,LOCAL_TIMER_VECTOR)
+ BUILD_SMP_INTERRUPT(error_interrupt,ERROR_APIC_VECTOR)
+ BUILD_SMP_INTERRUPT(spurious_interrupt,SPURIOUS_APIC_VECTOR)
++#ifdef CONFIG_KPERFCTR
++BUILD_SMP_TIMER_INTERRUPT(perfctr_interrupt,LOCAL_PERFCTR_VECTOR)
++#endif
+ #endif
+ 
+ #define IRQ(x,y) \
+@@ -489,6 +493,8 @@
  	set_intr_gate(ERROR_APIC_VECTOR, error_interrupt);
  #endif
  
-+#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_KPERFCTR)
-+	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt);
-+#endif
++	perfctr_vector_init();
 +
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
---- linux-2.4.19-perfctr/arch/i386/kernel/irq.c.~1~	Tue Nov  6 12:12:06 2001
-+++ linux-2.4.19-perfctr/arch/i386/kernel/irq.c	Sat Aug  3 22:25:36 2002
-@@ -43,6 +43,7 @@
- #include <asm/delay.h>
- #include <asm/desc.h>
- #include <asm/irq.h>
-+#include <asm/perfctr.h>
- 
- 
- 
-@@ -173,6 +174,13 @@
- 			apic_timer_irqs[cpu_logical_map(j)]);
- 	p += sprintf(p, "\n");
- #endif
-+#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_KPERFCTR)
-+	p += sprintf(p, "PMC: ");
-+	for (j = 0; j < smp_num_cpus; j++)
-+		p += sprintf(p, "%10u ",
-+			     apic_lvtpc_irqs[cpu_logical_map(j)]);
-+	p += sprintf(p, "\n");
-+#endif
- 	p += sprintf(p, "ERR: %10u\n", atomic_read(&irq_err_count));
- #ifdef CONFIG_X86_IO_APIC
- #ifdef APIC_MISMATCH_DEBUG
---- linux-2.4.19-perfctr/arch/i386/kernel/process.c.~1~	Sat Aug  3 22:04:41 2002
-+++ linux-2.4.19-perfctr/arch/i386/kernel/process.c	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/arch/i386/kernel/process.c.~1~	2002-08-07 00:52:18.000000000 +0200
++++ linux-2.4.19-perfctr/arch/i386/kernel/process.c	2003-03-02 19:33:37.000000000 +0100
 @@ -32,6 +32,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
@@ -219,8 +210,8 @@
  }
  
  asmlinkage int sys_fork(struct pt_regs regs)
---- linux-2.4.19-perfctr/drivers/Makefile.~1~	Sat Aug  3 22:04:43 2002
-+++ linux-2.4.19-perfctr/drivers/Makefile	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/drivers/Makefile.~1~	2003-03-02 19:32:08.000000000 +0100
++++ linux-2.4.19-perfctr/drivers/Makefile	2003-03-02 19:33:38.000000000 +0100
 @@ -47,4 +47,7 @@
  
  subdir-$(CONFIG_BLUEZ)		+= bluetooth
@@ -229,48 +220,8 @@
 +subdir-$(CONFIG_KPERFCTR)	+= perfctr
 +
  include $(TOPDIR)/Rules.make
---- linux-2.4.19-perfctr/fs/proc/base.c.~1~	Sat Aug  3 22:04:49 2002
-+++ linux-2.4.19-perfctr/fs/proc/base.c	Sat Aug  3 22:25:36 2002
-@@ -25,6 +25,7 @@
- #include <linux/string.h>
- #include <linux/seq_file.h>
- #include <linux/namespace.h>
-+#include <linux/perfctr.h>
- 
- /*
-  * For hysterical raisins we keep the same inumbers as in the old procfs.
-@@ -540,6 +541,7 @@
- 	PROC_PID_MAPS,
- 	PROC_PID_CPU,
- 	PROC_PID_MOUNTS,
-+	PROC_PID_PERFCTR,
- 	PROC_PID_FD_DIR = 0x8000,	/* 0x8000-0xffff */
- };
- 
-@@ -560,6 +562,9 @@
-   E(PROC_PID_ROOT,	"root",		S_IFLNK|S_IRWXUGO),
-   E(PROC_PID_EXE,	"exe",		S_IFLNK|S_IRWXUGO),
-   E(PROC_PID_MOUNTS,	"mounts",	S_IFREG|S_IRUGO),
-+#ifdef CONFIG_PERFCTR_VIRTUAL
-+  E(PROC_PID_PERFCTR,	"perfctr",	PERFCTR_PROC_PID_MODE),
-+#endif
-   {0,0,NULL,0}
- };
- #undef E
-@@ -928,6 +933,11 @@
- 		case PROC_PID_MOUNTS:
- 			inode->i_fop = &proc_mounts_operations;
- 			break;
-+#ifdef CONFIG_PERFCTR_VIRTUAL
-+		case PROC_PID_PERFCTR:
-+			perfctr_set_proc_pid_ops(inode);
-+			break;
-+#endif
- 		default:
- 			printk("procfs: impossible type (%d)",p->type);
- 			iput(inode);
---- linux-2.4.19-perfctr/include/asm-i386/apic.h.~1~	Sat Aug  3 22:04:50 2002
-+++ linux-2.4.19-perfctr/include/asm-i386/apic.h	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/include/asm-i386/apic.h.~1~	2002-08-07 00:52:24.000000000 +0200
++++ linux-2.4.19-perfctr/include/asm-i386/apic.h	2003-03-02 19:33:38.000000000 +0100
 @@ -94,6 +94,9 @@
  #define NMI_LOCAL_APIC	2
  #define NMI_INVALID	3
@@ -281,8 +232,8 @@
  #endif /* CONFIG_X86_LOCAL_APIC */
  
  #endif /* __ASM_APIC_H */
---- linux-2.4.19-perfctr/include/asm-i386/hw_irq.h.~1~	Sun Sep 23 21:06:37 2001
-+++ linux-2.4.19-perfctr/include/asm-i386/hw_irq.h	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/include/asm-i386/hw_irq.h.~1~	2001-09-23 21:06:37.000000000 +0200
++++ linux-2.4.19-perfctr/include/asm-i386/hw_irq.h	2003-03-02 19:33:38.000000000 +0100
 @@ -49,14 +49,15 @@
   * sources per level' errata.
   */
@@ -301,21 +252,9 @@
  
  extern int irq_vector[NR_IRQS];
  #define IO_APIC_VECTOR(irq)	irq_vector[irq]
---- linux-2.4.19-perfctr/include/asm-i386/processor.h.~1~	Sat Aug  3 22:04:50 2002
-+++ linux-2.4.19-perfctr/include/asm-i386/processor.h	Sat Aug  3 22:25:36 2002
-@@ -366,6 +366,11 @@
- 	unsigned long __cacheline_filler[5];
- };
- 
-+/*
-+ * Virtual per-process performance-monitoring counters.
-+ */
-+struct vperfctr;	/* opaque; no need to depend on <linux/perfctr.h> */
-+
- struct thread_struct {
- 	unsigned long	esp0;
- 	unsigned long	eip;
-@@ -385,6 +390,8 @@
+--- linux-2.4.19-perfctr/include/asm-i386/processor.h.~1~	2002-08-07 00:52:24.000000000 +0200
++++ linux-2.4.19-perfctr/include/asm-i386/processor.h	2003-03-02 19:37:29.000000000 +0100
+@@ -385,6 +385,8 @@
  /* IO permissions */
  	int		ioperm;
  	unsigned long	io_bitmap[IO_BITMAP_SIZE+1];
@@ -324,18 +263,8 @@
  };
  
  #define INIT_THREAD  {						\
-@@ -394,7 +401,8 @@
- 	0, 0, 0,						\
- 	{ { 0, }, },		/* 387 state */			\
- 	0,0,0,0,0,						\
--	0,{~0,}			/* io permissions */		\
-+	0,{~0,},		/* io permissions */		\
-+	NULL,			/* performance counters */	\
- }
- 
- #define INIT_TSS  {						\
---- linux-2.4.19-perfctr/kernel/timer.c.~1~	Sat Aug  3 22:04:52 2002
-+++ linux-2.4.19-perfctr/kernel/timer.c	Sat Aug  3 22:25:36 2002
+--- linux-2.4.19-perfctr/kernel/timer.c.~1~	2003-03-02 19:32:14.000000000 +0100
++++ linux-2.4.19-perfctr/kernel/timer.c	2003-03-02 19:33:38.000000000 +0100
 @@ -22,6 +22,7 @@
  #include <linux/smp_lock.h>
  #include <linux/interrupt.h>

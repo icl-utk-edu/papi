@@ -1,5 +1,5 @@
-/*
- * p4.c
+/* $Id$
+ *
  * pipe stdout through 'sort -u' to see:
  * - which ESCRs are usable, and the events they support
  * - which COUNTERs/CCCRs are usable, and the usable ESCRs they support
@@ -32,12 +32,12 @@ static const struct counter counters[18] = {
     [ 9] { "FLAME_COUNTER1" },	/* {DAC,FIRM,SAAT}_ESCR0 */
     [10] { "FLAME_COUNTER2" },	/* {DAC,FIRM,SAAT}_ESCR1 */
     [11] { "FLAME_COUNTER3" },	/* {DAC,FIRM,SAAT}_ESCR1 */
-    [12] { "IQ_COUNTER0" },	/* CRU_ESCR0, CRU_ESCR2, RAT_ESCR0 */
-    [13] { "IQ_COUNTER1" },	/* CRU_ESCR0, CRU_ESCR2, RAT_ESCR0 */
-    [14] { "IQ_COUNTER2" },	/* CRU_ESCR1, CRU_ESCR3, RAT_ESCR1 */
-    [15] { "IQ_COUNTER3" },	/* CRU_ESCR1, CRU_ESCR3, RAT_ESCR1 */
-    [16] { "IQ_COUNTER4" },	/* CRU_ESCR0, CRU_ESCR2, RAT_ESCR0 */
-    [17] { "IQ_COUNTER5" },	/* CRU_ESCR1, CRU_ESCR3, RAT_ESCR1 */
+    [12] { "IQ_COUNTER0" },	/* ALF_ESCR0, CRU_ESCR0, CRU_ESCR2, RAT_ESCR0 */
+    [13] { "IQ_COUNTER1" },	/* ALF_ESCR0, CRU_ESCR0, CRU_ESCR2, RAT_ESCR0 */
+    [14] { "IQ_COUNTER2" },	/* ALF_ESCR1, CRU_ESCR1, CRU_ESCR3, RAT_ESCR1 */
+    [15] { "IQ_COUNTER3" },	/* ALF_ESCR1, CRU_ESCR1, CRU_ESCR3, RAT_ESCR1 */
+    [16] { "IQ_COUNTER4" },	/* ALF_ESCR0, CRU_ESCR0, CRU_ESCR2, RAT_ESCR0 */
+    [17] { "IQ_COUNTER5" },	/* ALF_ESCR0, CRU_ESCR1, CRU_ESCR3, RAT_ESCR1 */
 };
 
 static unsigned int counter_msr(unsigned int counter_num)
@@ -101,14 +101,14 @@ static const char *cccr_name(unsigned int cccr_num)
 enum escr_num {
     BSU_ESCR0,	/* BSQ_allocation, BSQ_cache_reference */
     BSU_ESCR1,	/* bsq_active_entries, BSQ_cache_reference */
-    FSB_ESCR0,	/* FSB_data_activity, global_power_events, IOQ_allocation */
-    FSB_ESCR1,	/* FSB_data_activity, global_power_events, IOQ_active_entries */
+    FSB_ESCR0,	/* FSB_data_activity, IOQ_allocation, b2b_cycles, bnr, global_power_events, response, snoopt */
+    FSB_ESCR1,	/* FSB_data_activity, IOQ_active_entries, IOQ_allocation, b2b_cycles, bnr, global_power_events, response, snoop */
     FIRM_ESCR0,	/* 128bit_MMX_uop, 64bit_MMX_uop, SSE_input_assist, packed_DP_uop, packed_SP_uop, scalar_DP_uop, scalar_SP_uop, x87_FP_uop, x86_SIMD_moves_uop */
     FIRM_ESCR1,	/* 128bit_MMX_uop, 64bit_MMX_uop, SSE_input_assist, packed_DP_uop, packed_SP_uop, scalar_DP_uop, scalar_SP_uop, x87_FP_uop, x86_SIMD_moves_uop */
     FLAME_ESCR0,/* UNUSED */
     FLAME_ESCR1,/* UNUSED */
-    DAC_ESCR0,	/* memory_cancel */
-    DAC_ESCR1,	/* memory_cancel */
+    DAC_ESCR0,	/* WC_Buffer, memory_cancel */
+    DAC_ESCR1,	/* WC_Buffer, memory_cancel */
     MOB_ESCR0,	/* MOB_load_replay */
     MOB_ESCR1,	/* MOB_load_replay */
     PMH_ESCR0,	/* page_walk_type */
@@ -123,10 +123,10 @@ enum escr_num {
     IS_ESCR1,	/* UNUSED */
     ITLB_ESCR0,	/* ITLB_reference */
     ITLB_ESCR1,	/* ITLB_reference */
-    CRU_ESCR0,	/* instr_retired, mispred_branch_retired, uops_retired */
-    CRU_ESCR1,	/* instr_retired, mispred_branch_retired, uops_retired */
-    IQ_ESCR0,	/* UNUSED */
-    IQ_ESCR1,	/* UNUSED */
+    CRU_ESCR0,	/* instr_retired, mispred_branch_retired, uops_retired, instr_completed */
+    CRU_ESCR1,	/* instr_retired, mispred_branch_retired, uops_retired, instr_completed */
+    IQ_ESCR0,	/* UNUSED; available in family 0x0F models 1 and 2, removed from later models */
+    IQ_ESCR1,	/* UNUSED; available in family 0x0F models 1 and 2, removed from later models */
     RAT_ESCR0,	/* uop_type */
     RAT_ESCR1,	/* uop_type */
     SSU_ESCR0,	/* UNUSED */
@@ -134,12 +134,12 @@ enum escr_num {
     MS_ESCR1,	/* tc_ms_xfer, uop_queue_writes */
     TBPU_ESCR0,	/* retired_branch_type, retired_mispred_branch_type */
     TBPU_ESCR1,	/* retired_branch_type, retired_mispred_branch_type */
-    TC_ESCR0,	/* TC_deliver_mode */
-    TC_ESCR1,	/* TC_deliver_mode */
+    TC_ESCR0,	/* TC_deliver_mode, TC_misc */
+    TC_ESCR1,	/* TC_deliver_mode, TC_misc */
     IX_ESCR0,	/* UNUSED */
     IX_ESCR1,	/* UNUSED */
-    ALF_ESCR0,	/* UNUSED */
-    ALF_ESCR1,	/* UNUSED */
+    ALF_ESCR0,	/* resource_stall */
+    ALF_ESCR1,	/* resource_stall */
     CRU_ESCR2,	/* branch_retired, execution_event, front_end_event, machine_clear, replay_event, x87_assist */
     CRU_ESCR3,	/* branch_retired, execution_event, front_end_event, machine_clear, replay_event, x87_assist */
     CRU_ESCR4,	/* UNUSED */
@@ -412,8 +412,7 @@ struct event {
 };
 
 static const struct event events[] = {
-    { "branch_retired", 0x06, CRU_ESCR2, CRU_ESCR3 },
-    { "mispred_branch_retired", 0x03, CRU_ESCR0, CRU_ESCR1 },
+    /* Non-Retirement Events: */
     { "TC_deliver_mode", 0x01, TC_ESCR0, TC_ESCR1 },
     { "BPU_fetch_request", 0x03, BPU_ESCR0, BPU_ESCR1 },
     { "ITLB_reference", 0x18, ITLB_ESCR0, ITLB_ESCR1 },
@@ -424,12 +423,11 @@ static const struct event events[] = {
     { "MOB_load_replay", 0x03, MOB_ESCR0, MOB_ESCR1 },
     { "page_walk_type", 0x01, PMH_ESCR0, PMH_ESCR1 },
     { "BSQ_cache_reference", 0x0C, BSU_ESCR0, BSU_ESCR1 },
-    { "IOQ_allocation", 0x03, FSB_ESCR0, -1 },
+    { "IOQ_allocation", 0x03, FSB_ESCR0, FSB_ESCR1 }, /* ESCR1 unavailable if CPUID < 0xF27 */
     { "IOQ_active_entries", 0x1A, FSB_ESCR1, -1 },
     { "FSB_data_activity", 0x17, FSB_ESCR0, FSB_ESCR1 },
     { "BSQ_allocation", 0x05, BSU_ESCR0, -1 },
-    { "bsq_active_entries", 0x06, BSU_ESCR1, -1 },	/* NOTE: typo in manual */
-    { "x87_assist", 0x03, CRU_ESCR2, CRU_ESCR3 },
+    { "bsq_active_entries", 0x06, BSU_ESCR1, -1 },
     { "SSE_input_assist", 0x34, FIRM_ESCR0, FIRM_ESCR1 },
     { "packed_SP_uop", 0x08, FIRM_ESCR0, FIRM_ESCR1 },
     { "packed_DP_uop", 0x0C, FIRM_ESCR0, FIRM_ESCR1 },
@@ -439,18 +437,31 @@ static const struct event events[] = {
     { "128bit_MMX_uop", 0x1A, FIRM_ESCR0, FIRM_ESCR1 },
     { "x87_FP_uop", 0x04, FIRM_ESCR0, FIRM_ESCR1 },
     { "x87_SIMD_moves_uop", 0x2E, FIRM_ESCR0, FIRM_ESCR1 },
-    { "machine_clear", 0x02, CRU_ESCR2, CRU_ESCR3 },
-    { "global_power_events", 0x05, FSB_ESCR0, FSB_ESCR1 },
+    { "TC_misc", 0x06, TC_ESCR0, TC_ESCR1 },
+    { "global_power_events", 0x13, FSB_ESCR0, FSB_ESCR1 },
     { "tc_ms_xfer", 0x05, MS_ESCR0, MS_ESCR1 },
     { "uop_queue_writes", 0x09, MS_ESCR0, MS_ESCR1 },
+    { "retired_mispred_branch_type", 0x05, TBPU_ESCR0, TBPU_ESCR1 },
+    { "retired_branch_type", 0x04, TBPU_ESCR0, TBPU_ESCR1 },
+    { "resource_stall", 0x01, ALF_ESCR0, ALF_ESCR1 },
+    { "WC_Buffer", 0x05, DAC_ESCR0, DAC_ESCR1 },
+    { "b2b_cycles", 0x16, FSB_ESCR0, FSB_ESCR1 },
+    { "bnr", 0x08, FSB_ESCR0, FSB_ESCR1 },
+    { "snoop", 0x06, FSB_ESCR0, FSB_ESCR1 },
+    { "response", 0x04, FSB_ESCR0, FSB_ESCR1 },
+    /* At-Retirement Events: */
     { "front_end_event", 0x08, CRU_ESCR2, CRU_ESCR3 }, /* filters uop_type */
     { "execution_event", 0x0C, CRU_ESCR2, CRU_ESCR3 }, /* filters packed_SP_uop, packed_DP_uop, scalar_SP_uop, scalar_DP_uop, 128bit_MMX_uop, 64bit_MMX_uop, x87_FP_uop, x86_SIMD_moves_uop */
     { "replay_event", 0x09, CRU_ESCR2, CRU_ESCR3 }, /* filters MOB_load_replay, load_port_replay(SAAT_ESCR1), store_port_replay(SAAT_ESCR0), MSR_IA32_PEBS_ENABLE, MSR_PEBS_MATRIX_VERT */
     { "instr_retired", 0x02, CRU_ESCR0, CRU_ESCR1 }, /* seems to be sensitive to tagged uops */
     { "uops_retired", 0x01, CRU_ESCR0, CRU_ESCR1 },
     { "uop_type", 0x02, RAT_ESCR0, RAT_ESCR1 }, /* can tag uops for front_end_event */
-    { "retired_mispred_branch_type", 0x05, TBPU_ESCR0, TBPU_ESCR1 },
-    { "retired_branch_type", 0x04, TBPU_ESCR0, TBPU_ESCR1 },
+    { "branch_retired", 0x06, CRU_ESCR2, CRU_ESCR3 },
+    { "mispred_branch_retired", 0x03, CRU_ESCR0, CRU_ESCR1 },
+    { "x87_assist", 0x03, CRU_ESCR2, CRU_ESCR3 },
+    { "machine_clear", 0x02, CRU_ESCR2, CRU_ESCR3 },
+    /* Model 3 only */
+    { "instr_completed", 0x07, CRU_ESCR0, CRU_ESCR1 },
 };
 
 static void do_escr(unsigned int escr_num)
