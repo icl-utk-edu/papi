@@ -31,28 +31,20 @@
 	#define OVER_FMT	"handler(%d, %x, %d, %I64d, %d, %p) Overflow at %p!\n"
 	#define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
-	#define OVER_FMT	"handler(%d, %p) Overflow at %p!\n"
+	#define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
 	#define OUT_FMT		"%-12s : %16lld%16lld\n"
 #endif
 
 int total = 0;		/* total overflows */
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
-void handler(int EventSet, void *address, void *context)
+void handler(int EventSet, void *address, long_long overflow_vector)
 {
-  int i, event_indices[8];
-
-  for(i=0;i<8;i++)
-    event_indices[i]=-1;
-  PAPI_get_overflow_ctrs(EventSet, context, event_indices);
+  int i;
 
   if ( !TESTS_QUIET ) {
     fprintf(stderr,OVER_FMT,EventSet,
-	  context,address);
-    i=0;
-    while(event_indices[i]!=-1 && i<8)
-      printf("event_index=%d ",event_indices[i++]);
-    printf("\n");   
+	  address, overflow_vector);
   }
 
   total++;
