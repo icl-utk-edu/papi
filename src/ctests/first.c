@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 	printf("-------------------------------------------------------------------------\n");
 
 	printf("Test type   :        1           2           3           4           5\n");
-	sprintf(add_event_str, "%s :", event_name);
+	sprintf(add_event_str, "%s:", event_name);
 	printf(TAB5, add_event_str,
 	 (values[0])[0],(values[1])[0],(values[2])[0],(values[3])[0],(values[4])[0]);
 	printf(TAB5, "PAPI_TOT_CYC:",
