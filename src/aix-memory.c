@@ -1,5 +1,7 @@
 #include "papi.h"
 #include <sys/systemcfg.h>
+#include <procinfo.h>
+#include <sys/types.h>
 
 
 int get_memory_info( PAPI_mem_info_t * mem_info ) {
@@ -34,4 +36,30 @@ int get_memory_info( PAPI_mem_info_t * mem_info ) {
 }
 
 long _papi_hwd_get_dmem_info(int option){
+ struct procsinfo   pi;
+ pid_t              mypid = getpid();
+ pid_t              pid;
+ int 		    found=0;
+
+ pid = 0;
+ while(1) {
+  if (getprocs(&pi, sizeof(pi),0,0,&pid,1) != 1)
+	break;
+  if( mypid == pi.pi_pid ){
+	found=1;
+	break;
+  }
+ }
+ if ( !found )
+	return(PAPI_ESYS);
+
+ switch(option){
+   case PAPI_GET_RESSIZE:
+        return(pi.pi_drss+pi.pi_trss);
+   case PAPI_GET_SIZE:
+        return(pi.pi_size);
+   default:
+        return(PAPI_EINVAL);
+  }
 }
+
