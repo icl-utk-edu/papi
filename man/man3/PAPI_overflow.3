@@ -27,10 +27,7 @@ to generate an overflow signal after every
 events are counted. More than one event in an event set can be used as 
 an overflow trigger.
 .B To turn off overflow, set the threshold to 0. If you see negative number
-   or small number for the result of the overflow events, don't be surprised.
-   To reduce the overhead of PAPI_read, we don't adjust the number. If the
-   platfor use hardware overflow, then you can based on the threshold and 
-   how many times it overflowed, you can get an approximate number. 
+or small number for the result of the overflow events, don't be surprised.  To reduce the overhead of PAPI_read, we don't adjust the number. If the platform use hardware overflow, then you can based on the threshold and how many times it overflowed, you can get an approximate number. 
 
 .SH ARGUMENTS
 .I EventSet 
