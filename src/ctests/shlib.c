@@ -90,9 +90,11 @@ int main(int argc, char **argv)
      printf("Looking up cos() function with dlsym().\n");
 
      cosine = dlsym(handle, "cos");
+#if ( !(defined(sun) && defined(sparc)))
      if ((error = dlerror()) != NULL)  {
        test_fail(__FILE__, __LINE__, "dlsym", 1);
      }
+#endif
      
      printf ("cos(2.0) = %f\n\n", (*cosine)(2.0));
  
