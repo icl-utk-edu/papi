@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 	 elapsed_cyc);
   }
 
-  pthread_exit(NULL);
   test_pass(__FILE__,NULL,0);
+  pthread_exit(NULL);
 }
 

@@ -52,6 +52,8 @@ void *Thread(void *arg)
   long_long elapsed_us, elapsed_cyc;
   char event_name[PAPI_MAX_STR_LEN];
 
+  printf("Thread 0x%x \n",(int)pthread_self());
+
   retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
@@ -167,6 +169,6 @@ int main(int argc, char **argv)
 	 elapsed_cyc);
   }
 
-  pthread_exit(NULL);
   test_pass(__FILE__,NULL,0);
+  pthread_exit(NULL);
 }
