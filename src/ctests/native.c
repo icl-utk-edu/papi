@@ -93,7 +93,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 
 #if defined(__ALPHA) && defined(__osf__)
-   static char *native_name[] = { "cycles", "retinst", NULL };
+   static char *native_name[] = { "cycles", "retinst", NULL, NULL, NULL, NULL };
 #endif
 
 void papimon_start(void)
