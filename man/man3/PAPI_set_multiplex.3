@@ -2,21 +2,28 @@
 .TH PAPI_set_multiplex 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
+PAPI_get_multiplex \- get the multiplexing status of specified event set
 PAPI_set_multiplex \- convert a standard event set to a multiplexed event set
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int PAPI_set_multiplex(int " *EventSet ");"
+.BI "int PAPI_get_multiplex(int " EventSet ");"
+.BI "int PAPI_set_multiplex(int " EventSet ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
+.BI PAPIF_get_multiplex(C_INT\  EventSet )
 .BI PAPIF_set_multiplex(C_INT\  EventSet )
 .fi
 
 .SH DESCRIPTION
+.B "PAPI_get_multiplex" 
+Returns 
+.I TRUE "if a PAPI event set is multiplexed, or" FALSE "if not."
+.LP
 .B "PAPI_set_multiplex" 
 Converts a standard PAPI event set created by a call to 
 .B PAPI_create_eventset()
@@ -30,13 +37,16 @@ a multiplexed set, but the conversion must be done prior to using it as a
 multiplexed set.
 
 .SH ARGUMENTS
-.I "*EventSet"
---  a pointer to an integer handle for a PAPI event set as created by
+.I "EventSet"
+--  an integer handle for a PAPI event set as created by
 .BR "PAPI_create_eventset" (3)
 
 .SH RETURN VALUES
-On success, this function returns
-.B "PAPI_OK."
+.B PAPI_get_multiplex "returns either
+.I TRUE "(non-zero) or" FALSE "(zero)."
+.LP
+On success, 
+.B PAPI_get_multiplex "returns" PAPI_OK"."
  On error, a non-zero error code is returned.
 
 .SH ERRORS
@@ -70,7 +80,13 @@ The EventSet is currently counting events.
   if (PAPI_create_eventset(&EventSet) != PAPI_OK)
     handle_error(1);
 
-  if (PAPI_set_multiplex(&EventSet) != PAPI_OK)
+  if (PAPI_get_multiplex(EventSet) != 0)
+    handle_error(1);
+
+  if (PAPI_set_multiplex(EventSet) != PAPI_OK)
+    handle_error(1);
+
+  if (PAPI_get_multiplex(EventSet) == 0)
     handle_error(1);
 
      for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {

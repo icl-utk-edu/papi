@@ -8,14 +8,14 @@ PAPI_remove_event, PAPI_remove_events \- remove PAPI preset or native hardware e
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int\ PAPI_rem_event(int " EventSet ", int " EventCode ");"
-.BI "int\ PAPI_rem_events(int " EventSet ", int *" EventCode ", int " number ");"
+.BI "int\ PAPI_remove_event(int " EventSet ", int " EventCode ");"
+.BI "int\ PAPI_remove_events(int " EventSet ", int *" EventCode ", int " number ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_rem_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check )
-.BI PAPIF_rem_events(C_INT\  EventSet,\  C_INT(*)\  EventCode,\  C_INT\  number,\  C_INT\  check )
+.BI PAPIF_remove_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_remove_events(C_INT\  EventSet,\  C_INT(*)\  EventCode,\  C_INT\  number,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
