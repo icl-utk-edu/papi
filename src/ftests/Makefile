@@ -33,6 +33,6 @@ install: default
 	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
 	mkdir -p $(DESTDIR)/ftests
 	chmod go+rx $(DESTDIR)/ftests
-	find . -perm -1 -type f -exec cp {} $(DESTDIR)/ftests \;
+	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
 	cp fmt1 fmt2 $(DESTDIR)/ftests
 	chmod go+rx $(DESTDIR)/ftests/*
