@@ -9,6 +9,8 @@ int main(int argc, char **argv)
   int i;
   int retval;
   int print_avail_only = 0;
+  int use_enum = 0;
+  PAPI_preset_info_t enum_info;
   const PAPI_preset_info_t *info = NULL;
   const PAPI_hw_info_t *hwinfo = NULL;
   
@@ -18,6 +20,8 @@ int main(int argc, char **argv)
       {
 	if (strstr(argv[i],"-a"))
 	  print_avail_only = 1;
+	if (strstr(argv[i],"-e"))
+	  use_enum = 1;
       }
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -27,10 +31,6 @@ int main(int argc, char **argv)
 	retval = PAPI_set_debug(PAPI_VERB_ECONT);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
-
-
-  if ((info = PAPI_query_all_events_verbose()) == NULL)
-	test_fail(__FILE__, __LINE__, "PAPI_query_all_events_verbose", 1);
 
   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
 	test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
@@ -49,39 +49,57 @@ int main(int argc, char **argv)
 	printf("Max Multiplex Counters   : %d\n",PAPI_MPX_DEF_DEG);
 	printf("-------------------------------------------------------------------------\n");
 
-	if (print_avail_only == 0)
-	  {
-	printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
+    if (use_enum && print_avail_only) {
+      printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
+      i = PRESET_MASK;
+      do {
+	if (PAPI_query_event_verbose(i, &enum_info) == PAPI_OK) {
+ 	   printf("%s\t%s\t%s (%s)\n",
+	       enum_info.event_name,
+	       (enum_info.flags & PAPI_DERIVED ? "Yes" : "No"),
+	       enum_info.event_descr,
+	       (enum_info.event_note ? enum_info.event_note : ""));
+	} else test_fail(__FILE__, __LINE__, "PAPI_query_event_verbose", 1);
+      } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
+      printf("-------------------------------------------------------------------------\n");
+    } else {
+      if ((info = PAPI_query_all_events_verbose()) == NULL)
+	    test_fail(__FILE__, __LINE__, "PAPI_query_all_events_verbose", 1);
 
-	for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-	  if (info[i].event_name)
+      if (print_avail_only == 0)
 	    {
-	      printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
-		     info[i].event_name,
-		     info[i].event_code,
-		     (info[i].avail ? "Yes" : "No"),
-		     (info[i].flags & PAPI_DERIVED ? "Yes" : "No"),
-		     info[i].event_descr,
-		     (info[i].event_note ? info[i].event_note : ""));
-	    }
-	printf("-------------------------------------------------------------------------\n");
-	  }
-	else
-	  {
-	printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
+	  printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
 
-	for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-	  if ((info[i].event_name) && (info[i].avail))
-	    {
-	      printf("%s\t%s\t%s (%s)\n",
-		     info[i].event_name,
-		     (info[i].flags & PAPI_DERIVED ? "Yes" : "No"),
-		     info[i].event_descr,
-		     (info[i].event_note ? info[i].event_note : ""));
+	  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
+	    if (info[i].event_name)
+	      {
+		printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
+		       info[i].event_name,
+		       info[i].event_code,
+		       (info[i].avail ? "Yes" : "No"),
+		       (info[i].flags & PAPI_DERIVED ? "Yes" : "No"),
+		       info[i].event_descr,
+		       (info[i].event_note ? info[i].event_note : ""));
+	      }
+	  printf("-------------------------------------------------------------------------\n");
 	    }
-	exit(0);
-	  }
-  }
+	  else
+	    {
+	  printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
+
+	  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
+	    if ((info[i].event_name) && (info[i].avail))
+	      {
+		printf("%s\t%s\t%s (%s)\n",
+		       info[i].event_name,
+		       (info[i].flags & PAPI_DERIVED ? "Yes" : "No"),
+		       info[i].event_descr,
+		       (info[i].event_note ? info[i].event_note : ""));
+	      }
+	  exit(0);
+	    }
+      }
+    }
   test_pass(__FILE__, NULL, 0);
   exit(1);
 }
