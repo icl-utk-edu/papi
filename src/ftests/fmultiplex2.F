@@ -132,7 +132,7 @@
       end if
 
       fd = 1
-      call do_both(NUM_ITERS)
+      call fdo_both(NUM_ITERS)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
