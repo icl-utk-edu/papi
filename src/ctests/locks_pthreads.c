@@ -51,6 +51,9 @@ int main(int argc, char **argv)
    int result_m, result_s, rc, i;
    int retval;
 
+#if defined(__ALPHA) && defined(__osf__)
+   test_fail(__FILE__, __LINE__, "thread support not available on this platform!", PAPI_ESBSTR);
+#endif
    /* Setup a random number so compilers can't optimize it out */
    count = rand();
    result_m = count;

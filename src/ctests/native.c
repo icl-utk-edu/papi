@@ -104,7 +104,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 
 #if defined(__ALPHA) && defined(__osf__)
-   static char *native_name[] = { "cycles", "DC_wr_hit", NULL };
+   static char *native_name[] = { "cycles", "retinst", NULL };
 #endif
 
 void papimon_start(void)
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
 
    papimon_start();
 
-   sleep(1);
+   /*sleep(1); */
    do_both(1000);
 
    papimon_stop();
