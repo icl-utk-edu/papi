@@ -28,7 +28,9 @@ typedef struct hwd_preset {
   unsigned char selector;  
   /* Is this event derived? */
   unsigned char derived;   
-xu  /* Buffer to pass to the kernel to control the counters */
+  /* If the derived event is not associative, this index is the lead operand */
+  unsigned char operand_index;
+  /* Buffer to pass to the kernel to control the counters */
   unsigned char counter_cmd[MAX_COUNTERS];
   /* If it exists, then this is the description of this event */
   char note[PAPI_MAX_STR_LEN];

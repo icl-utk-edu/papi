@@ -590,15 +590,6 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
     }
 
-  /* If overflowing is enabled, turn it on */
-  
-  if (ESI->state & PAPI_OVERFLOWING)
-    {
-      retval = _papi_hwi_start_overflow_timer(ESI, zero);
-      if (retval < PAPI_OK)
-	return(PAPI_EBUG);
-    }
-
   /* Set up the new merged control structure */
   
 #ifdef DEBUG

@@ -688,7 +688,7 @@ static int get_system_info(void)
   strcat(_papi_system_info.exe_info.fullname,maxargs);
   strncpy(_papi_system_info.exe_info.name,basename(maxargs),PAPI_MAX_STR_LEN);
 
-  retval = pm_init(0,&tmp);
+  retval = pm_init(PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT,&tmp);
   if (retval > 0)
     return(retval);
 
@@ -1058,15 +1058,6 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       current_state->selector = this_state->selector;
       memcpy(&current_state->counter_cmd,&this_state->counter_cmd,sizeof(pm_prog_t));
 
-    }
-
-  /* If overflowing is enabled, turn it on */
-  
-  if (ESI->state & PAPI_OVERFLOWING)
-    {
-      retval = _papi_hwi_start_overflow_timer(ESI, zero);
-      if (retval < PAPI_OK)
-	return(PAPI_EBUG);
     }
 
   /* Set up the new merged control structure */

@@ -1,8 +1,9 @@
 SUBSTR  = aix-power
 DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
 TARGET	= libraries
+TESTS	= serial
 
-CFLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1
+CFLAGS  = -g -I/usr/lpp/pmtoolkit/include -qmaxmem=-1
 OPTFLAGS= -O3 -qstrict -qtune=pwr3 -qarch=pwr3
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
@@ -11,4 +12,4 @@ CC_R	= xlc_r -qnolm
 CC	= xlc -qnolm
 F77	= xlf -qnolm
 
-include "Makefile.inc"
+include Makefile.inc
