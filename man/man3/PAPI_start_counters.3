@@ -19,8 +19,9 @@ PAPI_start_counters \- PAPI High Level: start counting hardware events
 .SH DESCRIPTION
 .B PAPI_start_counters(\|)
 starts counting the events named in the events array.  This function
-implicitly stops and initializes any counters running as a result of
-a previous call to PAPI_start_counters().  It is the user's responsibility
+can't be called if the events array is already running. The user must
+call PAPI_stop_counters to stop the events explicitly if you want to 
+call this function again.  It is the user's responsibility
 to choose events that can be counted simultaneously by reading the
 vendor's documentation.  The length of the event array should be no longer
 than the value returned by
@@ -42,6 +43,10 @@ On success, this function returns
 .TP
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
+.TP
+.B "PAPI_EISRUN"
+Counters already been started, you must call PAPI_stop_counters before
+you call this function again.
 .TP
 .B "PAPI_ESYS"
 A system or C library call failed inside PAPI, see the 

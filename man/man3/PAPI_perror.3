@@ -78,23 +78,13 @@ if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
 
 /* Add Total Instructions Executed to our EventSet */
 
-if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_INS)) != PAPI_OK)
+if ((retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
   {
      PAPI_perror(retval,error_str,PAPI_MAX_STR_LEN);
      fprintf(stderr,"PAPI_error %d: %s\\n",retval,error_str);
      exit(1);
   }
 
-/* Add native event (0xc1 on hardware counter 1) */
-
-native = (0xc1 << 8) | 1;
-if ((retval = PAPI_add_event(&EventSet, native)) != PAPI_OK)
-  {
-     /* Dump error string directly to stderr. */
-
-      PAPI_perror(retval,NULL,NULL);
-     exit(1);
-  }
 
 /* Start counting */
 
