@@ -117,7 +117,9 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
          - subtracting the profiling base address from the pc address
          - multiplying by the scaling factor
          - dividing by max scale (65536, or 2^^16) 
-         - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses */
+         - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
+         NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
+      */
       lloffset = ((u_long_long)(address - prof->pr_off)) * prof->pr_scale;
       indx = (unsigned long)(lloffset >> 17);
    }

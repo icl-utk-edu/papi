@@ -1370,6 +1370,22 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
        (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
 
+   /* check all profile regions for valid scale factors of:
+      2 (131072/65536),
+      1 (65536/65536),
+      or < 1 (65535 -> 2) as defined in unix profil()
+      2/65536 is reserved for single bucket profiling
+      {0,1}/65536 are traditionally used to terminate profiling
+      but are unused here since PAPI uses threshold instead
+   */
+   for(i=0;i<profcnt;i++) {
+      if (!((prof[i].pr_scale == 131072) ||
+           ((prof[i].pr_scale <= 65536 && prof[i].pr_scale > 2)))) {
+         APIDBG("Improper scale factor: %d\n", prof[i].pr_scale);
+         papi_return(PAPI_EINVAL);
+      }
+   }
+
    if (threshold < 0)
       papi_return(PAPI_EINVAL);
 
@@ -1458,8 +1474,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
                 unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
-   if (scale > 65536 || scale < 0x0002)
-      papi_return(PAPI_EINVAL);
+   /* scale factors are checked for validity in PAPI_sprofil */
 
    if (threshold > 0) {
       PAPI_sprofil_t *prof;
