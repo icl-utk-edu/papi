@@ -31,7 +31,7 @@ static int PAPI_EVENTSET_INUSE = PAPI_NULL;
 static int initialized = 0;
 static int MAX_COUNTERS = 0;
 
-int PAPI_simple(float *real_time, float *proc_time, float *flpins, float *mflops)
+int PAPI_flops(float *real_time, float *proc_time, float *flpins, float *mflops)
 {
    static float total_proc_time=0.0, total_flpins=-6.0; 
    static int EventSet = PAPI_NULL;
