@@ -1,7 +1,7 @@
 VERSION 	= 2.6.x
 CPU		= p3
 SHRFLAGS	= -fPIC
-GCC3ARGS	= -march=athlon-mp -msse -msse2
+GCC3ARGS	= -march=k8 -msse -msse2
 TOPTFLAGS	= -D__x86_64__
 LIB_SUFFIX	= 64
 
