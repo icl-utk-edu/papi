@@ -172,7 +172,7 @@ int main(int argc, char **argv)
          printf("\tOperations= %.1f Mflop", y * 1e-6);
          printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
       }
-      PAPI_get_event_info(events[j], &info);
+      PAPI_get_event_info(events[i], &info);
       if (!TESTS_QUIET) {
          printf("PAPI results:\n%20s = ", info.short_descr);
          printf(LLDFMT, refvalues[i]);
