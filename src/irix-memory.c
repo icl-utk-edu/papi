@@ -12,6 +12,8 @@
 #include "papi.h"
 #include <invent.h>
 #include <sys/systeminfo.h>
+#include SUBSTRATE
+
 
 #define TLB_R4  96*32
 #define TLB_R5  96*32
