@@ -3,7 +3,8 @@ DESCR	= "Patched linux 2.x with Intel Pentium Pro, II or III"
 TARGET	= libraries
 
 CFLAGS  = -g -Wall
-OPTFLAGS= -O6 -mpentiumpro
+OPTFLAGS= 
+#-O6 -mpentiumpro
 SMPCFLGS= 
 OMPCFLGS= 
 LDFLAGS = 
@@ -17,8 +18,8 @@ SHLIB   = libpapi.so
 OBJECTS = papi.o papi_hl.o $(SUBSTR).o extras.o
 PTHROBS = papi_r.o papi_hl_r.o $(SUBSTR)_r.o extras_r.o
 HEADERS = papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
-TESTS	= serial pthreads
-# smp omp 
+TESTS	= serial
+# pthreads smp omp 
 
 all: showconf $(TARGET) examples
 

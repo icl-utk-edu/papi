@@ -58,7 +58,11 @@ static int initialize_process_retval = 0xdeadbeef;
 
 /* Behavior of handle_error() */
 
-static int PAPI_ERR_LEVEL = PAPI_VERB_ESTOP; 
+#ifdef DEBUG
+static int PAPI_ERR_LEVEL = PAPI_VERB_ECONT; 
+#else
+static int PAPI_ERR_LEVEL = PAPI_QUIET;
+#endif
 
 /* Our informative table */
 
@@ -1421,7 +1425,7 @@ void PAPI_shutdown(void)
 
 static int handle_error(int PAPI_errorCode, char *errorMessage)
 {
-#if 0
+/* Fix this later...
   if (PAPI_ERR_LEVEL)
     {
       char tmp[80];
@@ -1440,13 +1444,14 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
       if (PAPI_ERR_LEVEL==PAPI_VERB_ESTOP)
         PAPI_shutdown();
     }
-#endif
+*/
+#ifdef DEBUG
   char *s;
-
   s = get_error_string(PAPI_errorCode);
   fprintf(stderr,"PAPI Error Code %d: %s\n",PAPI_errorCode,s);
   if (PAPI_errorCode == PAPI_ESYS)
     fprintf(stderr,"System Error Code %d: %s\n",errno,strerror(errno));
+#endif
   return(PAPI_errorCode);
 }
 
@@ -1475,7 +1480,6 @@ static char *get_error_string(int errorCode)
 int PAPI_perror(int code, char *destination, int length)
 {
   char *foo;
-  char tmp[80];
 
   foo = get_error_string(code);
 

@@ -1,7 +1,7 @@
 OMP	= zero_omp
 SMP	= zero_smp
 PTHREADS= zero_pthreads
-SERIAL  = avail zero first second third fourth fifth overflow profile nineth tenth native eventname
+SERIAL  = avail zero first second third fourth fifth overflow profile nineth tenth native eventname case1 case2 case3
 ALL 	= $(OMP) $(SMP) $(PTHREADS) $(SERIAL)
 UTILOBJS= do_loops.o test_utils.o
 
@@ -62,6 +62,15 @@ native: native.o do_loops.o ../libpapi.a
 
 eventname: eventname.o do_loops.o ../libpapi.a
 	$(CC) $(CFLAGS) $(OPTFLAGS) eventname.o do_loops.o -L.. -lpapi $(LDFLAGS) -o eventname
+
+case1: case1.o ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) case1.o -L.. -lpapi $(LDFLAGS) -o case1
+
+case2: case2.o ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) case2.o -L.. -lpapi $(LDFLAGS) -o case2
+
+case3: case3.o ../libpapi.a
+	$(CC) $(CFLAGS) $(OPTFLAGS) case3.o -L.. -lpapi $(LDFLAGS) -o case3
 
 do_loops.o: do_loops.c
 	$(CC) $(CFLAGS) -g -c do_loops.c

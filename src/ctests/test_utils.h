@@ -7,6 +7,6 @@ int add_test_events(int *number, int *mask);
 void remove_test_events(int *EventSet, int mask);
 void do_flops(int n);
 void do_both(int n);
-void do_l1misses(int n, int m, int s);
+void do_l1misses(int n);
 char *stringify_domain(int domain);
 char *stringify_granularity(int granularity);

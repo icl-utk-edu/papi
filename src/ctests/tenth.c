@@ -1,6 +1,4 @@
 #define ITERS 1000
-#define INTLEN 100000 /* check vs. do_loops.c */
-#define STRIDE 33
 
 /* This file performs the following test: start, stop and timer functionality for 
    PAPI_L1_TCM derived event
@@ -49,12 +47,12 @@ int main()
 
   /* Warm me up */
 
-  do_l1misses(ITERS,INTLEN,STRIDE);
+  do_l1misses(ITERS);
 
   retval = PAPI_start(EventSet1);
   assert(retval >= PAPI_OK);
 
-  do_l1misses(ITERS,INTLEN,STRIDE);
+  do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet1, values[0]);
   assert(retval >= PAPI_OK);
@@ -62,7 +60,7 @@ int main()
   retval = PAPI_start(EventSet2);
   assert(retval >= PAPI_OK);
 
-  do_l1misses(ITERS,INTLEN,STRIDE);
+  do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet2, values[1]);
   assert(retval >= PAPI_OK);
@@ -70,7 +68,7 @@ int main()
   retval = PAPI_start(EventSet3);
   assert(retval >= PAPI_OK);
 
-  do_l1misses(ITERS,INTLEN,STRIDE);
+  do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet3, values[2]);
   assert(retval >= PAPI_OK);
