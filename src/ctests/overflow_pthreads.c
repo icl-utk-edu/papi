@@ -52,7 +52,8 @@ void *Thread(void *arg)
 
    if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
        !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6))) {
+      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
+      (strstr(hw_info->model_string, "POWER3"))) {
    /* query and set up the right instruction to monitor */
       if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
          mask1 = MASK_TOT_INS | MASK_TOT_CYC;
