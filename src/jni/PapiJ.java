@@ -516,148 +516,142 @@ public class PapiJ {
   /** Vector/SIMD instructions executed **/
   public static final int PAPI_VEC_INS = 0x80000038;
 
-  /** Floating Point instructions per second **/ 
-  public static final int PAPI_FLOPS   = 0x80000039;
-
   /** Cycles processor is stalled on resource **/
-  public static final int PAPI_RES_STL = 0x8000003A;
+  public static final int PAPI_RES_STL = 0x80000039;
 
   /** Cycles any FP units are stalled  **/
-  public static final int PAPI_FP_STAL = 0x8000003B;
+  public static final int PAPI_FP_STAL = 0x8000003A;
 
   /** Total cycles **/
-  public static final int PAPI_TOT_CYC = 0x8000003C;
-
-  /** Instructions executed per second **/
-  public static final int PAPI_IPS     = 0x8000003D;
+  public static final int PAPI_TOT_CYC = 0x8000003B;
 
   /** Total load/store inst. executed **/
-  public static final int PAPI_LST_INS = 0x8000003E;
+  public static final int PAPI_LST_INS = 0x8000003C;
 
   /** Sync. inst. executed  **/
-  public static final int PAPI_SYC_INS = 0x8000003F;
+  public static final int PAPI_SYC_INS = 0x8000003D;
 
   /** L1 D Cache Hit **/
-  public static final int PAPI_L1_DCH  = 0x80000040;
+  public static final int PAPI_L1_DCH  = 0x8000003E;
 
   /** L2 D Cache Hit **/
-  public static final int PAPI_L2_DCH  = 0x80000041;
+  public static final int PAPI_L2_DCH  = 0x8000003F;
 
   /** L1 D Cache Access **/
-  public static final int PAPI_L1_DCA  = 0x80000042;
+  public static final int PAPI_L1_DCA  = 0x80000040;
 
   /** L2 D Cache Access **/
-  public static final int PAPI_L2_DCA  = 0x80000043;
+  public static final int PAPI_L2_DCA  = 0x80000041;
 
   /** L3 D Cache Access **/
-  public static final int PAPI_L3_DCA  = 0x80000044;
+  public static final int PAPI_L3_DCA  = 0x80000042;
 
   /** L1 D Cache Read **/
-  public static final int PAPI_L1_DCR  = 0x80000045;
+  public static final int PAPI_L1_DCR  = 0x80000043;
 
   /** L2 D Cache Read **/
-  public static final int PAPI_L2_DCR  = 0x80000046;
+  public static final int PAPI_L2_DCR  = 0x80000044;
 
   /** L3 D Cache Read **/
-  public static final int PAPI_L3_DCR  = 0x80000047;
+  public static final int PAPI_L3_DCR  = 0x80000045;
 
   /** L1 D Cache Write **/
-  public static final int PAPI_L1_DCW  = 0x80000048;
+  public static final int PAPI_L1_DCW  = 0x80000046;
 
   /** L2 D Cache Write **/
-  public static final int PAPI_L2_DCW  = 0x80000049;
+  public static final int PAPI_L2_DCW  = 0x80000047;
 
   /** L3 D Cache Write **/
-  public static final int PAPI_L3_DCW  = 0x8000004A;
+  public static final int PAPI_L3_DCW  = 0x80000048;
 
   /** L1 instruction cache hits **/
-  public static final int PAPI_L1_ICH  = 0x8000004B;
+  public static final int PAPI_L1_ICH  = 0x80000049;
 
   /** L2 instruction cache hits **/
-  public static final int PAPI_L2_ICH  = 0x8000004C;
+  public static final int PAPI_L2_ICH  = 0x8000004A;
 
   /** L3 instruction cache hits **/
-  public static final int PAPI_L3_ICH  = 0x8000004D;
+  public static final int PAPI_L3_ICH  = 0x8000004B;
 
   /** L1 instruction cache accesses **/
-  public static final int PAPI_L1_ICA  = 0x8000004E;
+  public static final int PAPI_L1_ICA  = 0x8000004C;
 
   /** L2 instruction cache accesses **/
-  public static final int PAPI_L2_ICA  = 0x8000004F;
+  public static final int PAPI_L2_ICA  = 0x8000004D;
 
   /** L3 instruction cache accesses **/
-  public static final int PAPI_L3_ICA  = 0x80000050;
+  public static final int PAPI_L3_ICA  = 0x8000004E;
 
   /** L1 instruction cache reads **/
-  public static final int PAPI_L1_ICR  = 0x80000051;
+  public static final int PAPI_L1_ICR  = 0x8000004F;
 
   /** L2 instruction cache reads **/
-  public static final int PAPI_L2_ICR  = 0x80000052;
+  public static final int PAPI_L2_ICR  = 0x80000050;
 
   /** L3 instruction cache reads **/
-  public static final int PAPI_L3_ICR  = 0x80000053;
+  public static final int PAPI_L3_ICR  = 0x80000051;
 
   /** L1 instruction cache writes **/
-  public static final int PAPI_L1_ICW  = 0x80000054;
+  public static final int PAPI_L1_ICW  = 0x80000052;
 
   /** L2 instruction cache writes **/
-  public static final int PAPI_L2_ICW  = 0x80000055;
+  public static final int PAPI_L2_ICW  = 0x80000053;
 
   /** L3 instruction cache writes **/
-  public static final int PAPI_L3_ICW  = 0x80000056;
+  public static final int PAPI_L3_ICW  = 0x80000054;
 
   /** L1 total cache hits **/
-  public static final int PAPI_L1_TCH  = 0x80000057;
+  public static final int PAPI_L1_TCH  = 0x80000055;
 
   /** L2 total cache hits **/
-  public static final int PAPI_L2_TCH  = 0x80000058;
+  public static final int PAPI_L2_TCH  = 0x80000056;
 
   /** L3 total cache hits **/
-  public static final int PAPI_L3_TCH  = 0x80000059;
+  public static final int PAPI_L3_TCH  = 0x80000057;
 
   /** L1 total cache accesses **/
-  public static final int PAPI_L1_TCA  = 0x8000005A;
+  public static final int PAPI_L1_TCA  = 0x80000058;
 
   /** L2 total cache accesses **/
-  public static final int PAPI_L2_TCA  = 0x8000005B;
+  public static final int PAPI_L2_TCA  = 0x80000059;
 
   /** L3 total cache accesses **/
-  public static final int PAPI_L3_TCA  = 0x8000005C;
+  public static final int PAPI_L3_TCA  = 0x8000005A;
 
   /** L1 total cache reads **/
-  public static final int PAPI_L1_TCR  = 0x8000005D;
+  public static final int PAPI_L1_TCR  = 0x8000005B;
 
   /** L2 total cache reads **/
-  public static final int PAPI_L2_TCR  = 0x8000005E;
+  public static final int PAPI_L2_TCR  = 0x8000005C;
 
   /** L3 total cache reads **/
-  public static final int PAPI_L3_TCR  = 0x8000005F;
+  public static final int PAPI_L3_TCR  = 0x8000005D;
 
   /** L1 total cache writes **/
-  public static final int PAPI_L1_TCW  = 0x80000060;
+  public static final int PAPI_L1_TCW  = 0x8000005E;
 
   /** L2 total cache writes **/
-  public static final int PAPI_L2_TCW  = 0x80000061;
+  public static final int PAPI_L2_TCW  = 0x8000005F;
 
   /** L3 total cache writes **/
-  public static final int PAPI_L3_TCW  = 0x80000062;
+  public static final int PAPI_L3_TCW  = 0x80000060;
 
   /** FM ins  **/
-  public static final int PAPI_FML_INS = 0x80000063;
+  public static final int PAPI_FML_INS = 0x80000061;
 
   /** FA ins  **/
-  public static final int PAPI_FAD_INS = 0x80000064;
+  public static final int PAPI_FAD_INS = 0x80000062;
 
   /** FD ins  **/
-  public static final int PAPI_FDV_INS = 0x80000065;
+  public static final int PAPI_FDV_INS = 0x80000063;
 
   /** FSq ins  **/
-  public static final int PAPI_FSQ_INS = 0x80000066;
+  public static final int PAPI_FSQ_INS = 0x80000064;
 
   /** Finv ins  **/
-  public static final int PAPI_FNV_INS = 0x80000067;
+  public static final int PAPI_FNV_INS = 0x80000065;
 
   /** Floating point operations executed **/
-  public static final int PAPI_FP_OPS = 0x80000068;
+  public static final int PAPI_FP_OPS = 0x80000066;
 
 }
