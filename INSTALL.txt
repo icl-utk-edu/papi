@@ -279,8 +279,6 @@ Follow the general installation guide, and everything should work.
 
 Windows XP/2000 - Intel
 *****************************************************************************
-**NOTE:  A driver bug currently prevents PAPI from running successfully on 
-AMD processors.**
 
 Download the self-installing executable from the PAPI site.
 Double-click it and follow the prompts.
