@@ -305,6 +305,13 @@ int case4()
   retval = PAPI_add_event(EventSet, PAPI_TLB_DM);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
+#elif defined(__x86_64__)
+  retval = PAPI_add_event(EventSet, PAPI_TLB_DM);
+  if (retval != PAPI_OK)
+    CPP_TEST_FAIL("PAPI_add_event",retval);
+  retval = PAPI_add_event(EventSet, PAPI_TLB_IM);
+  if (retval != PAPI_OK)
+    CPP_TEST_FAIL("PAPI_add_event",retval);
 #else
 #error "Architecture not ported yet"
 #endif
