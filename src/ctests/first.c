@@ -134,10 +134,10 @@ int main(int argc, char **argv)
              (values[4])[0]);
       printf(TAB5, "PAPI_TOT_CYC:", (values[0])[1], (values[1])[1], (values[2])[1],
              (values[3])[1], (values[4])[1]);
-      printf
-          ("-------------------------------------------------------------------------\n");
-
+      printf ("-------------------------------------------------------------------------\n"); 
       printf("Verification:\n");
+      printf("%% difference between %s 1 & 2: %.2f\n",add_event_str,100.0*(float)(values[0])[0]/(float)(values[1])[0]);
+      printf("%% difference between %s 1 & 2: %.2f\n","PAPI_TOT_CYC",100.0*(float)(values[0])[1]/(float)(values[1])[1]);
       printf("Column 1 approximately equals column 2\n");
       printf("Column 3 approximately equals 2 * column 2\n");
       printf("Column 4 approximately equals 3 * column 2\n");
