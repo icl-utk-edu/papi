@@ -1,6 +1,5 @@
 C This file performs the following tests:
 C Hardware info
-#include "ftests.h"
 #include "fpapi.h"
 
       program avail
@@ -16,7 +15,7 @@ C Hardware info
       check = PAPI_VER_CURRENT
       call PAPIf_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
-         FATAL_ERROR('Error in PAPI_library_init')
+         call ftests_fail(__FILE__,'PAPI_library_init',check)
       end if
       call PAPIf_get_hardware_info( ncpu,nnodes,totalcpus,vendor,
      .     vstring, model, mstring, revision, mhz )
