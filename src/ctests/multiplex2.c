@@ -33,10 +33,10 @@ void init_papi(void)
 
 int case1(void)
 {
-   int retval, i, EventSet = PAPI_NULL, j = 0;
+   int retval, i, EventSet = PAPI_NULL, j = 0, allvalid = 1;
    long long *values;
    PAPI_event_info_t pset;
-
+   
    init_papi();
 
    retval = PAPI_multiplex_init();
@@ -56,22 +56,19 @@ int case1(void)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
 
-      if ((pset.count) && (pset.event_code != PAPI_TOT_CYC)) {
-         if (!TESTS_QUIET)
+      if (pset.count) {
             printf("Adding %s\n", pset.symbol);
 
          retval = PAPI_add_event(EventSet, pset.event_code);
          if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-         if (!TESTS_QUIET) {
-	   if (retval == PAPI_OK) {
+    if (retval == PAPI_OK) {
                printf("Added %s\n", pset.symbol);
 	   } else {
                printf("Could not add %s\n", pset.symbol);
 	   }
-         }
-
+ 
          if (retval == PAPI_OK) {
             if (++j >= MAX_TO_ADD)
                break;
@@ -91,6 +88,16 @@ int case1(void)
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   test_print_event_header("multiplex2:", EventSet);
+   for (i = 0; i < MAX_TO_ADD; i++) {
+     printf(ONENUM, values[i]);
+     if (values[i] == 0)
+       allvalid = 0;
+   }
+   printf("\n");
+   if (!allvalid)
+      test_fail(__FILE__, __LINE__, "one or more counter registered no counts",1);
 
    retval = PAPI_cleanup_eventset(EventSet);    /* JT */
    if (retval != PAPI_OK)

@@ -44,7 +44,7 @@ void *Thread(void *arg)
    long_long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
-   printf("Thread 0x%x \n", (int) pthread_self());
+   printf("Thread 0x%x started\n", (int) pthread_self());
 
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depending on the availability of the event on the
@@ -87,15 +87,19 @@ void *Thread(void *arg)
 
    free_test_space(values, num_tests);
 
-   pthread_exit(NULL);
+#ifdef TEST_UNREGISTER
+   retval = PAPI_unregister_thread();
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+#endif
+
    return (NULL);
 }
 
 int main(int argc, char **argv)
 {
-   pthread_t e_th;
-   pthread_t f_th;
-   int flops1, flops2;
+   pthread_t e_th, f_th, g_th, h_th;
+   int flops1;
    int retval, rc;
    pthread_attr_t attr;
    long long elapsed_us, elapsed_cyc;
@@ -144,15 +148,32 @@ int main(int argc, char **argv)
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "pthread_create", retval);
    }
+   flops1 = 2000000;
+   rc = pthread_create(&f_th, &attr, Thread, (void *) &flops1);
+   if (rc) {
+      retval = PAPI_ESYS;
+      test_fail(__FILE__, __LINE__, "pthread_create", retval);
+   }
 
-   flops2 = 2000000;
-   rc = pthread_create(&f_th, &attr, Thread, (void *) &flops2);
+   flops1 = 4000000;
+   rc = pthread_create(&g_th, &attr, Thread, (void *) &flops1);
+   if (rc) {
+      retval = PAPI_ESYS;
+      test_fail(__FILE__, __LINE__, "pthread_create", retval);
+   }
+
+   flops1 = 8000000;
+   rc = pthread_create(&h_th, &attr, Thread, (void *) &flops1);
    if (rc) {
       retval = PAPI_ESYS;
       test_fail(__FILE__, __LINE__, "pthread_create", retval);
    }
 
    pthread_attr_destroy(&attr);
+   flops1 = 500000;
+   Thread(&flops1);
+   pthread_join(h_th, NULL);
+   pthread_join(g_th, NULL);
    pthread_join(f_th, NULL);
    pthread_join(e_th, NULL);
 

@@ -30,9 +30,9 @@ int main(int argc, char **argv)
       test_skip(__FILE__, __LINE__, "No FP or Total Ins. event", 1);
    }
 
+   if (start > end)
+      test_fail(__FILE__, __LINE__, "Profile length < 0!", 0);
    length = end - start;
-   if (length < 0)
-      test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
    prof_print_address(start, end,
                "Test case profile: POSIX compatible profiling with two events.\n");
    prof_print_prof_info();

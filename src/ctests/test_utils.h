@@ -10,5 +10,5 @@
 #define TOLERANCE   .2
 #define OVR_TOLERANCE .75
 #define MPX_TOLERANCE .20
-#define MAX_TO_ADD 9
+#define MAX_TO_ADD 5
 

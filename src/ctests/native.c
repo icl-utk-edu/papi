@@ -67,7 +67,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
   static char *native_name[] = {"X1_P_EV_INST_S_FP", "X1_E_EV_REQUESTS", "X1_M_EV_REQUESTS", NULL,NULL,NULL};
 #endif
 #if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
-   static char *native_name[6] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
+   static char *native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL, NULL, NULL, NULL };
 #endif
 
 #if defined (_CRAYT3E)
@@ -77,7 +77,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #if defined(linux) && defined(__ia64__)
 #ifdef ITANIUM2
    static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",
-      "IA64_INST_RETIRED", NULL
+				  "IA64_INST_RETIRED", NULL, NULL
    };
 #else
    static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE",

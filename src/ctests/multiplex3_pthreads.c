@@ -83,31 +83,24 @@ void mainloop(int arg)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
 
-      /* skip total cycles and some cache events */
-      if ((pset.count)
-          && (pset.event_code != PAPI_TOT_CYC)
-          && (pset.event_code != PAPI_TOT_INS)
-          && (pset.event_code != PAPI_CA_SHR)) {
-         if (!TESTS_QUIET)
-            printf("Adding %s\n", pset.symbol);
+      if (pset.count) {
+      printf("Adding %s\n", pset.symbol);
 
-         retval = PAPI_add_event(EventSet, pset.event_code);
-         if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-
-         if (!TESTS_QUIET) {
-            if (retval == PAPI_OK) {
-               printf("Added %s\n", pset.symbol);
-            } else {
-               printf("Could not add %s\n", pset.symbol);
-	    }
-         }
-
-         if (retval == PAPI_OK) {
-            if (++j >= MAX_TO_ADD)
-               break;
-         }
+      retval = PAPI_add_event(EventSet, pset.event_code);
+      if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
+	test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+      
+      if (retval == PAPI_OK) {
+	printf("Added %s\n", pset.symbol);
+      } else {
+	printf("Could not add %s\n", pset.symbol);
       }
+
+      if (retval == PAPI_OK) {
+	if (++j >= MAX_TO_ADD)
+	  break;
+      }
+   }
    }
 
    values = (long long *) malloc(MAX_TO_ADD * sizeof(long long));
@@ -123,22 +116,16 @@ void mainloop(int arg)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   if (!TESTS_QUIET) {
-      test_print_event_header("case1:", EventSet);
-      printf("case1:");
-      for (i = 0; i < MAX_TO_ADD; i++) {
-         printf(ONENUM, values[i]);
-
-         /* There should be some sort of value for all events */
-         if (values[i] == 0)
-            allvalid = 0;
-      }
-      printf("\n");
+   test_print_event_header("multiplex3_pthreads:", EventSet);
+   for (i = 0; i < MAX_TO_ADD; i++) {
+     printf(ONENUM, values[i]);
+     if (values[i] == 0)
+       allvalid = 0;
    }
-
+   printf("\n");
    if (!allvalid)
-      test_fail(__FILE__, __LINE__, "case1 (one or more counter registered no counts)",
-                1);
+      test_fail(__FILE__, __LINE__, "one or more counter registered no counts",1);
+
    retval = PAPI_cleanup_eventset(EventSet);    /* JT */
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);

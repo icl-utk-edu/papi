@@ -59,10 +59,8 @@ void Thread(int n)
    long_long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
-   if (!TESTS_QUIET)
-      printf("Thread 0x%x\n", omp_get_thread_num());
-   else
-      num_events1 = (int) omp_get_thread_num();
+   printf("Thread 0x%x started\n", omp_get_thread_num());
+   num_events1 = 2;
 
     /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depending on the availability of the event on the
@@ -106,6 +104,9 @@ void Thread(int n)
    /* It is illegal for the threads to exit in OpenMP */
    /* test_pass(__FILE__,0,0); */
    free_test_space(values, num_tests);
+
+   PAPI_unregister_thread();
+   printf("Thread 0x%x finished\n", omp_get_thread_num());
 }
 
 int main(int argc, char **argv)
@@ -140,11 +141,21 @@ int main(int argc, char **argv)
       else
          test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 
-#pragma omp parallel private(maxthr,retval)
+#pragma omp parallel private(maxthr)
    {
       maxthr = omp_get_num_threads();
-      Thread(1000000 * omp_get_thread_num());
+      Thread(1000000 * (omp_get_thread_num()+1));
    }
+#pragma parallel end
+   omp_set_num_threads(1);
+   Thread(1000000 * (omp_get_thread_num()+1));
+   omp_set_num_threads(omp_get_max_threads());
+#pragma omp parallel private(maxthr)
+   {
+      maxthr = omp_get_num_threads();
+      Thread(1000000 * (omp_get_thread_num()+1));
+   }
+#pragma parallel end
 
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 

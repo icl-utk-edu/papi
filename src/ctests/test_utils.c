@@ -412,7 +412,7 @@ void test_fail(char *file, int line, char *call, int retval)
       sprintf(buf, "System error in %s:", call);
       perror(buf);
    } else if (retval > 0) {
-      fprintf(stdout,"Error calculating: %s\n", call);
+      fprintf(stdout,"Error: %s\n", call);
    } else if (retval == 0) {
       fprintf(stdout,"SGI requires root permissions for this test\n");
    } else {
