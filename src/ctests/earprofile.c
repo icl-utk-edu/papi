@@ -38,7 +38,7 @@ int do_test(unsigned long);
 int main(int argc, char **argv)
 {
    int i, num_events, num_tests = 6;
-   int PAPI_event, native;
+   int PAPI_event, native=0;
    char event_name[PAPI_MAX_STR_LEN];
    int EventSet = PAPI_NULL;
    unsigned short *profbuf;

@@ -28,7 +28,7 @@ int main(int argc, char **argv)
    int retval, num_tests = 5, num_events, tmp;
    long_long **values;
    int EventSet;
-   int PAPI_event, mask;
+   int PAPI_event=PAPI_FP_INS, mask;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
 

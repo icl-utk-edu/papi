@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 {
    int retval, num_tests = 1, tmp;
    int EventSet1;
-   int PAPI_event, mask1;
+   int PAPI_event=PAPI_FP_INS, mask1;
    int num_events1;
    long_long **values;
    long_long elapsed_us, elapsed_cyc;

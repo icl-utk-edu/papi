@@ -44,10 +44,11 @@ void *Thread(void *arg)
    long_long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
-   if (!TESTS_QUIET)
+   if (!TESTS_QUIET) {
       printf("Thread 0x%x \n", (int) pthread_self());
-   else
+   } else {
       num_events1 = (int) pthread_self();
+   }
 
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {

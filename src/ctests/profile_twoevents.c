@@ -31,7 +31,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int i, num_events, num_tests = 6;
-   int PAPI_event, mask;
+   int PAPI_event=PAPI_FP_INS, mask;
    char event_name[PAPI_MAX_STR_LEN];
    int EventSet = PAPI_NULL;
    unsigned short *profbuf;

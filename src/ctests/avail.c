@@ -49,10 +49,11 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      if (print_avail_only)
+      if (print_avail_only) {
          printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
-      else
+      } else {
          printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
+      }
       i = PRESET_MASK;
       do {
          if (PAPI_get_event_info(i, &info) == PAPI_OK) 

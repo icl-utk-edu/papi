@@ -93,10 +93,11 @@ int main(int argc, char **argv)
 #endif
 
    if (!TESTS_QUIET) {
-      if (event[0] == PAPI_TOT_INS)
+      if (event[0] == PAPI_TOT_INS) {
          printf(TAB1, "TOT Instructions:", values[0]);
-      else
+      } else {
          printf(TAB1, "FP Instructions:", values[0]);
+      }
       printf(TAB1, "Cycles:", values[1]);
    }
 

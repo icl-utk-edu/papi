@@ -75,10 +75,11 @@ int case1(void)
             test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
          if (!TESTS_QUIET) {
-            if (retval == PAPI_OK)
+	   if (retval == PAPI_OK) {
                printf("Added %s\n", pset.symbol);
-            else
+	   } else {
                printf("Could not add %s\n", pset.symbol);
+	   }
          }
 
          if (retval == PAPI_OK) {

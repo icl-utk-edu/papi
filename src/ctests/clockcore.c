@@ -30,17 +30,18 @@ void clockcore(void)
       total_cyc += diff_cyc;
    }
    if (!TESTS_QUIET) {
-      if (uniq_cyc == ITERS - 1)
+      if (uniq_cyc == ITERS - 1) {
          printf("PAPI_get_real_cyc : %7.3f   <%7.3f\n",
                 (double) total_cyc / (double) (ITERS),
                 (double) total_cyc / (double) uniq_cyc);
-      else if (uniq_cyc)
+      } else if (uniq_cyc) {
          printf("PAPI_get_real_cyc : %7.3f    %7.3f\n",
                 (double) total_cyc / (double) (ITERS),
                 (double) total_cyc / (double) uniq_cyc);
-      else
+      } else {
          printf("PAPI_get_real_cyc : %7.3f   >%7.3f\n",
                 (double) total_cyc / (double) (ITERS), (double) total_cyc);
+      }
    }
 
    for (i = 0; i < ITERS; i++)
@@ -57,17 +58,18 @@ void clockcore(void)
       total_usec += diff_usec;
    }
    if (!TESTS_QUIET) {
-      if (uniq_usec == ITERS - 1)
+      if (uniq_usec == ITERS - 1) {
          printf("PAPI_get_real_usec: %7.3f   <%7.3f\n",
                 (double) total_usec / (double) (ITERS),
                 (double) total_usec / (double) uniq_usec);
-      else if (uniq_usec)
+      } else if (uniq_usec) {
          printf("PAPI_get_real_usec: %7.3f    %7.3f\n",
                 (double) total_usec / (double) (ITERS),
                 (double) total_usec / (double) uniq_usec);
-      else
+      } else {
          printf("PAPI_get_real_usec: %7.3f   >%7.3f\n",
                 (double) total_usec / (double) (ITERS), (double) total_usec);
+      }
    }
 
    /* Virtual */
@@ -90,17 +92,18 @@ void clockcore(void)
          total_cyc += diff_cyc;
       }
       if (!TESTS_QUIET) {
-         if (uniq_cyc == ITERS - 1)
+         if (uniq_cyc == ITERS - 1) {
             printf("PAPI_get_virt_cyc : %7.3f   <%7.3f\n",
                    (double) total_cyc / (double) (ITERS),
                    (double) total_cyc / (double) uniq_cyc);
-         else if (uniq_cyc)
+         } else if (uniq_cyc) {
             printf("PAPI_get_virt_cyc : %7.3f    %7.3f\n",
                    (double) total_cyc / (double) (ITERS),
                    (double) total_cyc / (double) uniq_cyc);
-         else
+         } else {
             printf("PAPI_get_virt_cyc : %7.3f   >%7.3f\n",
                    (double) total_cyc / (double) (ITERS), (double) total_cyc);
+	 }
       }
    } else
       test_fail(__FILE__, __LINE__, "PAPI_get_virt_cyc", -1);
@@ -122,17 +125,18 @@ void clockcore(void)
          total_usec += diff_usec;
       }
       if (!TESTS_QUIET) {
-         if (uniq_usec == ITERS - 1)
+         if (uniq_usec == ITERS - 1) {
             printf("PAPI_get_virt_usec: %7.3f   <%7.3f\n",
                    (double) total_usec / (double) (ITERS),
                    (double) total_usec / (double) uniq_usec);
-         else if (uniq_usec)
+         } else if (uniq_usec) {
             printf("PAPI_get_virt_usec: %7.3f    %7.3f\n",
                    (double) total_usec / (double) (ITERS),
                    (double) total_usec / (double) uniq_usec);
-         else
+         } else {
             printf("PAPI_get_virt_usec: %7.3f   >%7.3f\n",
                    (double) total_usec / (double) (ITERS), (double) total_usec);
+	 }
       }
    } else
       test_fail(__FILE__, __LINE__, "PAPI_get_virt_usec", -1);
