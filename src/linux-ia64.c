@@ -2050,7 +2050,11 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* We can use add_prog_event */
 			        0,  /* We can write the counters */
 			        1,  /* supports HW overflow */
+#ifdef PFM20                 /* Only Libpfm 2.0+ supports hardware profiling */
 			        1,  /* supports HW profile */
+#else
+			        0,  /* supports HW profile */
+#endif
 			        1,  /* supports 64 bit virtual counters */
 			        1,  /* supports child inheritance */
 			        0,  /* supports attaching to another process */
