@@ -29,9 +29,9 @@ int main(int argc, char **argv)
 #define NUM_EVENTS 2
   long_long values[NUM_EVENTS],dummyvalues[NUM_EVENTS];
 #ifndef NO_FLOPS
-  int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_INS};
+  unsigned int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_INS};
 #else
-  int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
+  unsigned int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
 #endif
   int EventSet=PAPI_NULL;
 
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   if( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-  if( (retval = PAPI_add_events(&EventSet,Events,NUM_EVENTS))!=PAPI_OK)
+  if( (retval = PAPI_add_events(&EventSet,(int *)Events,NUM_EVENTS))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_add_events",retval);
 
   if ( !TESTS_QUIET ) {

@@ -27,7 +27,7 @@ int main(int argc, char **argv)
   const PAPI_hw_info_t *hwinfo = NULL;
   char descr[PAPI_MAX_STR_LEN];
 
-  const int eventlist[NUMTESTS]={
+  const unsigned int eventlist[NUMTESTS]={
     PAPI_CSR_TOT ,
     PAPI_MEM_SCY ,
     PAPI_MEM_RCY ,

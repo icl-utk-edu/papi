@@ -18,9 +18,9 @@ int main(int argc, char **argv)
   long_long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
   long_long myvalues[NUM_EVENTS];
 #ifndef NO_FLOPS
-  int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_CYC};
+  unsigned int Events[NUM_EVENTS]={PAPI_FP_INS,PAPI_TOT_CYC};
 #else
-  int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
+  unsigned int Events[NUM_EVENTS]={PAPI_TOT_INS,PAPI_TOT_CYC};
 #endif
 
 
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
-  retval = PAPI_start_counters(Events,NUM_EVENTS);
+  retval = PAPI_start_counters((int *)Events,NUM_EVENTS);
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_start_counters",retval);
 
