@@ -191,30 +191,30 @@ int _papi_hwd_start(void *machdep)
 
   switch (machdep->number)
   { case 6 :
-      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
       if(retval) = return(PAPI_EBUG); 
-      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);  
+      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);  
       if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_START, 0, 0);
       if(retval) = return(PAPI_EBUG);
       break;
 
     case 4 :
-      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
       if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_START, 0, 0);
       if(retval) = return(PAPI_EBUG);
       break;
 
     case 2 :
-      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);
+      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
       if(retval) = return(PAPI_EBUG);
       retval = perf(PERF_START, 0, 0);
       if(retval) = return(PAPI_EBUG);
       break;
 
     case 5 :
-      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
       if(retval) = return(PAPI_EBUG);
       // start TSC;
       retval = perf(PERF_START, 0, 0);
@@ -222,7 +222,7 @@ int _papi_hwd_start(void *machdep)
       break;
 
     case 3 :
-      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);
+      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
       if(retval) = return(PAPI_EBUG);
       // start TSC;
       retval = perf(PERF_START, 0, 0);
@@ -230,9 +230,9 @@ int _papi_hwd_start(void *machdep)
       break;
 
     case 7 :
-      retval = perf(PERF_SET_CONFIG, 0, machdep->counter_code1);
+      retval = perf(PERF_SET_CONFIG, 0, this_state->counter_code1);
       if(retval) = return(PAPI_EBUG);
-      retval = perf(PERF_SET_CONFIG, 1, machdep->counter_code2);
+      retval = perf(PERF_SET_CONFIG, 1, this_state->counter_code2);
       if(retval) = return(PAPI_EBUG);
       // start TSC;
       retval = perf(PERF_START, 0, 0);
@@ -252,12 +252,8 @@ int _papi_hwd_start(void *machdep)
   return(retval);
 }
 
-  return perf(PERF_START, 0, 0);  /* from perf.c */
 
-  /* set control registers and start counting */
-}
-
-int _papi_hwd_stop(void *machdep, long long *events)
+int _papi_hwd_stop(void *machdep, long long events[])
  {
   hwd_control_state *this_state = (hwd_control_state *)machdep;
 
@@ -274,34 +270,93 @@ int _papi_hwd_stop(void *machdep, long long *events)
 
 int _papi_hwd_reset(void *machdep)
 {
-  /* reset the hardware counters if necessary */
-
   hwd_control_state *this_state = (hwd_control_state *)machdep;
+
+  if(this_state->number == 0) return(PAPI_ENOTRUN);
 
   return perf(PERF_RESET, 0, 0); /*from perf.c */
 }
 
-int _papi_hwd_read(void *machdep, long long *events)
+int _papi_hwd_read(void *machdep, long long events[])
 {
-  /* copy appropriate events from machdep into *events */
+  /* copy appropriate events from machdep into events */
 
   hwd_control_state *this_state = (hwd_control_state *)machdep;
+  int retval;
 
-  /*figure out which counter to read from this_state->number */
+  /* I couldn't think of a good reason to go through the number of steps 
+	required to read only the counter(s) used, when it's so much shorter
+	to read all three values into events, as long as the higher level
+	knows which elements of events to return to the user
+     won't be hard to change if we need to, might be slower 
+  */
 
-  return perf(PERF_READ, appropriate_counter, (int) events);
-    /* from perf.c */
+  retval = perf(PERF_READ, 0, events[0]);
+  if(retval) = return(PAPI_EBUG);
+  retval = perf(PERF_READ, 1, events[1]);
+  if(retval) = return(PAPI_EBUG);
+  //read TSC value into events[2];
 }
 
-int _papi_hwd_write(void *machdep, long long *events)
+int _papi_hwd_write(void *machdep, long long events[])
 {
   /* copy appropriate events from *events into kernel */
 
   hwd_control_state *this_state = (hwd_control_state *)machdep;
+  int retval;
 
-  return perf(PERF_WRITE, appropriate_counter, (int) events);
-    /* from perf.c */
+  switch (machdep->number)
+  { case 6 :
+      retval = perf(PERF_WRITE, 0, events[0]);
+      if(retval) = return(PAPI_EBUG);
+      retval = perf(PERF_WRITE, 1, events[1]);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 4 :
+      retval = perf(PERF_WRITE, 0, events[0]);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 2 :
+      retval = perf(PERF_WRITE, 1, events[1]);
+      if(retval) = return(PAPI_EBUG);
+      break;
+
+    case 5 :
+      retval = perf(PERF_WRITE, 0, events[0]);
+      if(retval) = return(PAPI_EBUG);
+      // set TSC to events[2];
+      break;
+
+    case 3 :
+      retval = perf(PERF_WRITE, 1, events[1]);
+      if(retval) = return(PAPI_EBUG);
+      // set TSC to events[2];
+      break;
+
+    case 7 :
+      retval = perf(PERF_WRITE, 0, events[0]);
+      if(retval) = return(PAPI_EBUG);
+      retval = perf(PERF_WRITE, 1, events[1]);
+      if(retval) = return(PAPI_EBUG);
+      // set TSC to events[2];
+      break;
+
+    case 1 :
+      // set TSC to events[2];
+      break;
+
+    case 0 :
+      return(PAPI_ENOTRUN);
+
+    default:
+      return(PAPI_EBUG);
+  }
+  return(retval);
 }
+
+
 
 int _papi_hwd_setopt(int code, void *option)
 {
