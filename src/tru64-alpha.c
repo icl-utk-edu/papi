@@ -164,6 +164,7 @@ static int get_system_info(void)
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _ebss;
 
    _papi_hwi_system_info.supports_multiple_threads = 0;
+   _papi_hwi_system_info.supports_hw_overflow = 0;
 
    if (family == 0) {
       strcat(_papi_hwi_system_info.hw_info.model_string, "21064");
