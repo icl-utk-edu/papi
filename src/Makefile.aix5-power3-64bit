@@ -1,17 +1,17 @@
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
+LIBRARY   = libpapi64.a
+SHLIB     = libpapi64.so
 SUBSTR  = aix-power
 MEMSUBSTR=aix
-DESCR	= "AIX 5.1.0 or greater with 604, 60[B4e or 630"
+DESCR	= "AIX 5.1.0 or greater with 604, 604e or 630"
 LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads smp omp
 PMAPI	= /usr/pmapi
 SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 
-# Default source is for pmapi 1.5.x and above.
+# Default source is for pmtoolkit 1.4.x.
 
-FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3
-CFLAGS	= $(FLAGS) 
+FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -q64 -qlanglvl=extended
+CFLAGS	= $(FLAGS) -D_P64
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
 FFLAGS	= $(FLAGS)
@@ -20,15 +20,17 @@ FTOPTFLAGS= $(FOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
 LDFLAGS = -L$(PMAPI)/lib -lpmapi
+ARG64= -X64  
 CC_R	= xlc_r
 CC	= xlc
-CC_SHR	= xlc -G 
+CC_SHR	= xlc -G
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
 
 include Makefile.inc
 
+native_clean:
+
 native_install:
 
-native_clean:
