@@ -85,7 +85,7 @@
 
 const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 /* preset, derived, native index array */
-   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
+//   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
    {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
    {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
@@ -112,7 +112,7 @@ const hwi_search_t _papi_hwd_pentium4_mlt2_preset_map[] = {
 
 const hwi_search_t _papi_hwd_pentium4_mge2_preset_map[] = {
 /* preset, derived, native index array */
-   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
+//   {PAPI_RES_STL, {0, {PNE_replay_event, PAPI_NULL,}, {0,}}},
    {PAPI_BR_INS, {0, {PNE_branch_retired_all, PAPI_NULL,}, {0,}}},
    {PAPI_BR_TKN, {0, {PNE_branch_retired_taken, PAPI_NULL,}, {0,}}},
    {PAPI_BR_NTK, {0, {PNE_branch_retired_not_taken, PAPI_NULL,}, {0,}}},
