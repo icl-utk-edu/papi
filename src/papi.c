@@ -1,5 +1,4 @@
 /* file: papi.c */ 
-/*file: PAPI_expandDA.c*/
 
 #include <stdio.h>
 #include <malloc.h>
@@ -12,88 +11,260 @@
 #include "papi_internal.h"
 #include "papi.h"
 
+/* There are two global variables.    */ 
+/* Their values are set in PAPI_init. */  
+DynamicArray PAPI_EVENT_MAP;    
+int          PAPI_ERR_LEVEL; 
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function:                                                        */    
+/* static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE );      */
+/*                                                                        */
+/* This function must be called at the beginning of the program.          */
+/* This function performs all initializations to set up PAPI environment. */
+/* The user selects the level of error handling here.                     */
+/* Failure of this function should shutdown the program.                  */
+/*                                                                        */
+/* Initialize EM.                                                         */
+/* Set pointer to GLOBAL variable PAPI_EVENT_MAP.                         */
+/* Since PAPI_EVENT_MAP is declared at the top of the program             */
+/* no malloc for EM is needed.                                            */
+/* But the pointer EM->dataSlotArray must be malloced here.               */
+/*                                                                        */
+/* Initialize PAPI_ERR_LEVEL.                                             */
+/* The user selects error handling with ERROR_LEVEL_CHOICE.               */  
+/* ERROR_LEVEL_CHOICE may have one of two values:                         */
+/*   a. PAPI_VERB_ECONT [print error message, then continue processing ]  */
+/*   b. PAPI_VERB_ESTOP [print error message, then shutdown ]             */
+/*========================================================================*/
+static void PAPI_init(DynamicArray *EM, int ERROR_LEVEL_CHOICE) {
+
+   EM=&PAPI_EVENT_MAP;
+   bzero(EM,sizeof(PAPI_EVENT_MAP));
+
+/* initialize values in PAPI_EVENT_MAP */ 
+
+   EM->dataSlotArray=(void **)malloc(EM->totalSlots*sizeof(void *));
+   if(!EM->dataSlotArray) PAPI_shutdown();
+   bzero(EM->dataSlotArray,sizeof(EM->dataSlotArray));
+
+   EM->totalSlots = PAPI_INIT_SLOTS;
+   EM->availSlots = PAPI_INIT_SLOTS - 1;
+   EM->lowestEmptySlot = 1;
+
+/* initialize PAPI_ERR_LEVEL */
+
+   if(    (ERROR_LEVEL_CHOICE!=PAPI_VERB_ECONT)
+	&&(ERROR_LEVEL_CHOICE!=PAPI_VERB_ESTOP) ) PAPI_shutdown(); 
+
+   PAPI_ERR_LEVEL=ERROR_LEVEL_CHOICE;
+
+   return;
+   }/***/
+/*========================================================================*/
+/*end function: PAPI_init                                                 */
+/*========================================================================*/
+/*========================================================================*/
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function:                                                        */    
+/* static void PAPI_shutdown (void);                                      */
+/*                                                                        */
+/* This function provides a graceful exit to the program.                 */
+/*  a. all FILES are checked for being open, then are closed.             */
+/*  b. all memory is freed.                                               */
+/*  c. a shutdown message is written to stderr.                           */
+/*  d. a call to the c library function exit terminates the process.      */ 
+/*========================================================================*/
+static void PAPI_shutdown(void) {
+
+    DynamicArray *xEM;
+    xEM=&GLOBAL_EVENT_MAP;
+    /* close all memory pointed to by xEM */
+
+    /* close all files */
+    /* code.           */
+
+    /* shutdown message*/
+    fprintf(stderr,"\n\n PAPI SHUTDOWN MESSAGE \n\n");
+   
+    /* call exit */
+    exit(0);
+
+    return;
+}/***/
+/*========================================================================*/
+/*end function: PAPI_shutdown                                             */
+/*========================================================================*/
+/*========================================================================*/
 
 
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static int _papi_expandDA(DynamicArray *DA);           */
+/* begin function: static int PAPI_perror(int, char *, int );             */
+/*                                                                        */
+/* The function PAPI_perror (int, char *, int) is similar to the unix     */
+/* function perror(const char *msg).                                      */
+/* The function PAPI_perror gets the error description string by calling  */
+/* PAPI_strerror(int code), which returns a null terminated string.       */
+/*                                                                        */
+/* If the calling function specifies int length greater than zero,        */
+/* "length" number of characters from "code" are copied to the buffer     */
+/* named "destination".  If int length equals zero, the "code" string     */
+/* is both printed to stderr and copied to "destination.                  */ 
+/*                                                                        */
+/* The global value PAPI_ERR_LEVEL determines whether this error will     */
+/* shutdown the program.                                                  */
 /*========================================================================*/
 
-/*----------------------------------------------------------------------------
-//the _dynamic_array struct defined in papi_internal.h
-//typedef struct _dynamic_array {
-	void   **dataSlotArray; ** ptr to array of ptrs to EventSets      **
-	int    totalSlots;      ** number of slots in dataSlotArrays      **
-	int    availSlots;      ** number of open slots in dataSlotArrays **
-	int    lowestEmptySlot; ** index of lowest empty dataSlotArray    **
-} DynamicArray;
-----------------------------------------------------------------------------
-The function _papi_expandDA initializes or expands the global 
-data structure DA, which is type DynamicArray defined above.
+int PAPI_perror (int code, char *destination, int length) {
 
-The function _papi_expandDA takes one argument:
-	DynamicArray *DA
+int icode;
+char buff[100];
 
-If the initialization case is detected [ if(DA->totalSlots==0) ],
-the DA structure is initialized.
+strcpy(buff, PAPI_strerror(code));
 
-If the expansion case is detected [ if (DA->totalSlots!=0) ],
-the DA->dataSlotArray is expanded. 
+if(length==0) {
+fprintf(stderr, " %s\n", PAPI_strerror(code));
+strcpy(destination,PAPI_strerror(code));
+}/**/
 
-The DA structure holds the dataSlotArray.  Each element of dataSlotArray  
-is a pointer to an EventSetInfo structure.  The zero element of the
-dataSlotArray is reserved and is set during initilization [see below].
+else
+strncpy(destination,PAPI_strerror(code),length);
 
-DA->dataSlotArray[1] holds ptr to EventSetInfo number 1 
-DA->dataSlotArray[2] holds ptr to EventSetInfo number 2 
-DA->dataSlotArray[3] holds ptr to EventSetInfo number 3 
-  ...
-  ...
-DA->dataSlotArray[N] holds ptr to EventSetInfo number N,
-where 
-	N<DA->totalSlots
+if (PAPI_ERR_LEVEL==PAPI_VERB_STOP) {
+	PAPI_shutdown();
+	exit(0);
+	}
+return(code);
 
-The function _papi_expandDA is only called when one of
-the following is detected by a function seeking to
-add an EventSet to the list:
+return(1);
 
-	1. initialization condition 
-	2. N==DA->totalSlots
-
-The function _papi_expandDA returns a pointer to the
-expanded DA structure.
-
-	return (1) indicates failure
-	return (0) indicates success
-----------------------------------------------------------------------------
-*/
+}/***/
+/*========================================================================*/
+/*end function: PAPI_error                                                */
+/*========================================================================*/
+/*========================================================================*/
 
 
-static int _papi_expandDA(DynamicArray *DA) {
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function: char *PAPI_strerror (int errnum)                       */
+/*========================================================================*/
+/* The function PAPI_strerror(int errnum) is analogous to the unix        */
+/* function strerror(int errnum).  Here, the errnum maps to a PAPI error  */
+/* code defined in papi.h.  The function PAPI_strerror returns a char *   */
+/* pointer to the appropriate PAPI error code.                            */
+/*                                                                        */
+/* This function is meant to be called by PAPI_perror(), but can also be  */
+/* called directly by the user for specialized error handling.            */
+/*========================================================================*/
+char *PAPI_strerror (int errnum) {
+
+int   ecode;
+char *retStr;
+
+char *errStr[11] = {
+" Call to PAPI_strerror made with no error ",
+" Invalid argument ",
+" Insufficient memory ",
+" A System C library call failed: \n\t\t",
+" Substrate returned an error ",
+" Access to the counters was lost or interrupted ",
+" Internal error, please send mail to the developers ",
+" Hardware Event does not exist ",
+" Hardware Event exists, but cannot be counted due to counter resource limits ",
+" No Events or EventSets are currently counting " 
+" Invalid Error Code ",
+};
+
+
+retStr=(char *)malloc(120*sizeof(char));
+
+/* check for valid error code */
+if (ecode==1)  ecode=0;
+ecode=errnum*(-1);
+if (ecode>9)  ecode=10;
+
+
+strcpy(retStr,errStr[ecode]);
+
+/* check for failed C library call*/
+if ( ecode==3 ) {
+	strcat(retStr,strerror(errno));
+	}
+
+return(retStr);
+
+}/* end PAPI_strerror */
+/*========================================================================*/
+/*end function: PAPI_strerror                                             */
+/*========================================================================*/
+/*========================================================================*/
+
+
+
+
+/*========================================================================*/
+/*========================================================================*/
+/*========================================================================*/
+/* begin function: static int _papi_expandDA(DynamicArray *EM);           */
+/*                                                                        */
+/* The function _papi_expandDA expands EM->dataSlotArray when the array   */
+/* has become full. The function also does all of the bookkeeping chores  */
+/* [reset EM->totalSlots, EM->availSlots, EM->lowestEmptySlot].           */
+/* This enables the user to load as many events as needed.                */
+/*                                                                        */
+/* The DynamicArray data structure is defined in papi_internal.h.         */
+/* typedef struct _dynamic_array {                                        */
+/*	void   **dataSlotArray; ** ptr to array of ptrs to EventSets      */
+/*	int    totalSlots;      ** number of slots in dataSlotArrays      */
+/*	int    availSlots;      ** number of open slots in dataSlotArrays */
+/*	int    lowestEmptySlot; ** index of lowest empty dataSlotArray    */
+/* } DynamicArray;                                                        */
+/*                                                                        */
+/* The EM structure holds the dataSlotArray. Each element of the          */ 
+/* EM->dataSlotArray is a pointer to an EventSetInfo structure.           */
+/* The zero element of the EM->dataSlotArray is reserved and is set       */
+/* during initilization, [see papi_init]                                  */
+/*                                                                        */
+/* EM->dataSlotArray[1] holds ptr to EventSetInfo number 1                */
+/* EM->dataSlotArray[2] holds ptr to EventSetInfo number 2                */
+/* EM->dataSlotArray[3] holds ptr to EventSetInfo number 3                */ 
+/*  ...                                                                   */
+/*  ...                                                                   */
+/* EM->dataSlotArray[N] holds ptr to EventSetInfo number N,               */
+/* where                                                                  */     
+/*	N < EM->totalSlots                                                */
+/*                                                                        */
+/* The function _papi_expandDA returns PAPI_OK upon success               */
+/* or PAPI_ENOMEM on failure.                                             */
+/* Error handling should be done in the calling function.                 */  
+/*========================================================================*/
+
+
+
+static int _papi_expandDA(DynamicArray *EM) {
 
 int          prevTotal;	
 
-if(DA->totalSlots==0) { /*initialization of first DA structure*/
-	
-	DA->dataSlotArray=(void **)malloc(DA->totalSlots*sizeof(void *));
-	if(!DA->dataSlotArray)return(PAPI_ENOMEM);
-	bzero(DA->dataSlotArray,sizeof(DA->dataSlotArray));
-
-	DA->totalSlots = PAPI_INIT_SLOTS;
-	DA->availSlots = PAPI_INIT_SLOTS - 1;
-	DA->lowestEmptySlot = 1;
-	}/***/
-
-else	{/* expansion of existing DA structure */
-	prevTotal           = DA->totalSlots; 
-	DA->totalSlots     += prevTotal;
-	DA->availSlots      = prevTotal;
-	DA->lowestEmptySlot = prevTotal;
-
-	/*realloc existing array*/
-        if( (void **)realloc(DA->dataSlotArray,DA->totalSlots*sizeof(void *))
+	/*realloc existing EM->dataSlotArray*/
+        if( (void **)realloc(EM->dataSlotArray,EM->totalSlots*sizeof(void *))
         ==NULL) return(PAPI_ENOMEM);   
+
+       
+        /* bookkeeping to accomodate successful realloc operation*/
+	prevTotal           = EM->totalSlots; 
+	EM->totalSlots     += prevTotal;
+	EM->availSlots      = prevTotal;
+	EM->lowestEmptySlot = prevTotal;
+
 
 	}/***/
 /* 
@@ -101,7 +272,6 @@ PAPI_OK denotes no error;
 PAPI_OK_MPX denotes no error, multiplexing enabled.
 */
 return(PAPI_OK);
-
 
 }
 /*========================================================================*/
@@ -162,7 +332,7 @@ counterArrayLength=_papi_system_info.num_gp_cntrs+_papi_system_info.num_sp_cntrs
 if(!ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo))) return(NULL); 
 bzero(ESI,sizeof(ESI));
 
-ESI->EventSetIndex=0;     /*this is N index from DA->dataSlotArray[N] */
+ESI->EventSetIndex=0;     /*this is N index from EM->dataSlotArray[N] */
 ESI->NumberOfCounters=0;  /*number of counters*/
 
 /*this ptr needs more work ******************************************************/
