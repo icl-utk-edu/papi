@@ -56,12 +56,9 @@ typedef struct P4_perfctr_codes {
 } P4_perfctr_preset_t;
 
 typedef struct P4_perfctr_avail {
-  unsigned cccr_bits;           /* What we write for control, read for data */
-  unsigned cccr_num;            /* Only filled when registers are allocated. */
-  unsigned escr_low_bits;       /* What we write for control 0-31 */
-  unsigned escr_low_num;        /* Only filled when registers are allocated. */
-  unsigned uses_pebs;           /* What we write for control 0-31 */
-  unsigned uses_pebs_matrix_vert;  /* Only filled when registers are allocated. */
+  unsigned selector;               /* Mask for which counters in use */
+  unsigned uses_pebs;              /* Binary flag for PEBS */
+  unsigned uses_pebs_matrix_vert;  /* Binary flag for PEBS_MATRIX_VERT */
 } P4_register_t;
 
 typedef struct P4_regmap {
@@ -147,8 +144,6 @@ typedef struct P4_global_control {
 typedef struct P4_search {
   unsigned preset;
   char *note;
-  unsigned control_selector;
-  unsigned read_selector;
   unsigned number;
   P4_perfctr_preset_t info;
 } P4_search_t;
@@ -157,10 +152,6 @@ typedef struct P4_search {
    from array of P4_search_t's. */
 
 typedef struct P4_preset {
-  /* Which counters to use? */
-  unsigned control_selector;  
-  /* Which counters to read from? */
-  unsigned read_selector;  
   /* Is this event derived? */
   unsigned derived;   
   /* Number of counters in the following */

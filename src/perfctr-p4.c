@@ -126,7 +126,7 @@ P4_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
 #ifndef PAPI3
 int _papi_hwd_query(int preset_index, int *flags, char **note)
 { 
-  if (_papi_hwd_preset_map[preset_index].read_selector == 0)
+  if (_papi_hwd_preset_map[preset_index].number == 0)
     return(0);
   if (_papi_hwd_preset_map[preset_index].derived)
     *flags = PAPI_DERIVED;
@@ -148,8 +148,6 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 	break;
       preset_index = preset_search_map[pnum].preset ^ PRESET_MASK; 
 
-      preset_map[preset_index].control_selector = preset_search_map[pnum].control_selector;
-      preset_map[preset_index].read_selector = preset_search_map[pnum].read_selector;
       preset_map[preset_index].derived = NOT_DERIVED;
 
       /* Number of hardware events in this event */
@@ -159,10 +157,6 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
       /* Fill in the preset's register map of which registers this
 	 preset can use. */
 
-#define COUNTER_BITS_FROM_PMC_MAP(a) (1 << (a ^ FAST_RDPMC))
-#define ESCR_LOW_BITS_FROM_EVNTSEL(a) (1 << ((a >> 13) & (0x7)))
-#define ESCR_HIGH_BITS_FROM_EVNTSEL(a) (0)
-
       note = preset_map[preset_index].note;
       for (unum = 0; unum < preset_map[preset_index].number; unum++)
 	{
@@ -170,10 +164,8 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 	  P4_register_t *tmp = &preset_map[preset_index].possible_registers.hardware_event[unum];
 	  const P4_perfctr_event_t *tmp2 = &preset_search_map[pnum].info.data[unum];
 
-	  tmp->cccr_bits = COUNTER_BITS_FROM_PMC_MAP(tmp2->pmc_map);
-	  SUBDBG("cccr_bits[%d] %#08x\n",unum,tmp->cccr_bits);
-	  tmp->escr_low_bits = ESCR_LOW_BITS_FROM_EVNTSEL(tmp2->evntsel);
-	  SUBDBG("escr_low_bits[%d] %#08x\n",unum,tmp->escr_low_bits);
+	  tmp->selector = tmp2->pmc_map;
+	  SUBDBG("selector[%d] %#08x\n",unum,tmp->selector);
 	  tmp->uses_pebs = (tmp2->pebs_enable ? 1 : 0);
 	  SUBDBG("uses_pebs[%d] %#08x\n",unum,tmp->uses_pebs);
 	  tmp->uses_pebs_matrix_vert = (tmp2->pebs_matrix_vert ? 1 : 0);
@@ -181,7 +173,7 @@ static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map
 
 	  sprintf(tmpnote,"%s0x%08x/0x%08x@0x%08x",
 		  (unum >= 1) ? " " : "",
-		  tmp2->evntsel,tmp2->evntsel_aux,tmp2->pmc_map);
+		  tmp2->evntsel,tmp2->evntsel_aux,(ffs(tmp2->pmc_map)-1)|FAST_RDPMC);
 	  if ((strlen(note) + strlen(tmpnote)) < (PAPI_MAX_STR_LEN-1))
 	    strcat(note,tmpnote);
 	}
@@ -518,13 +510,17 @@ int _papi3_hwd_read(P4_perfctr_context_t *ctx, P4_perfctr_control_t *spc, unsign
   vperfctr_read_ctrs(ctx->perfctr, &spc->state);
   *dp = spc->state.pmc;
 #ifdef DEBUG
-  {
-    int i;
-    for (i=0;i<spc->control.cpu_control.nractrs;i++)
-      {
-	SUBDBG("raw val hardware index %d is %lld\n",i,spc->state.pmc[i]);
-      }
-  }
+ {
+   extern int papi_debug;
+   if (papi_debug)
+     {
+       int i;
+       for (i=0;i<spc->control.cpu_control.nractrs;i++)
+	 {
+	   SUBDBG("raw val hardware index %d is %lld\n",i,spc->state.pmc[i]);
+	 }
+     }
+ }
 #endif
   return(PAPI_OK);
 }
@@ -649,73 +645,6 @@ long_long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 }
 #endif
 
-/* Register allocation */
-
-int _papi_hwd_allocate_registers(P4_perfctr_control_t *evset_info, P4_preset_t *from, P4_regmap_t *out)
-{
-  int i, num;
-  unsigned tmp_u = 0x0;
-//  unsigned tmp_u_high = 0x0;
-  P4_register_t *needed_tmp;
-  P4_regmap_t *needed;
-  P4_register_t *already_taken;
-
-  /* See comments in papi.c under add_preset_event */
-
-  /* get the already allocated counters for this eventset */
-
-  already_taken = &evset_info->allocated_registers;
-
-  /* get the needed counters and number of them from preset */
-
-  needed = &from->possible_registers;
-  num = from->number;
-
-  for (i=0;i<num;i++)
-    {
-      /* First the CCCR's */
-
-      needed_tmp = &needed->hardware_event[i];
-      tmp_u = needed_tmp->cccr_bits & already_taken->cccr_bits;
-      if (!tmp_u)
-	{
-	  out->hardware_event[i].cccr_bits = 1 << (ffs(needed_tmp->cccr_bits) - 1);
-	}
-      else
-	error_return(PAPI_ECNFLCT,"needed %#08x vs. already_taken %#08x",
-		     needed_tmp->cccr_bits, already_taken->cccr_bits);
-
-      /* Now the ESCR's */
-
-      tmp_u = needed_tmp->escr_low_bits & already_taken->escr_low_bits;
-      if (!tmp_u)
-	{
-	  out->hardware_event[i].escr_low_bits = 1 << (ffs(needed_tmp->escr_low_bits) - 1);
-	}
-//      tmp_u_high = needed_tmp->escr_high_bits & already_taken->escr_high_bits;
-/*      else if (!tmp_u_high)
-	{
-	  out->hardware_event[i].escr_high_bits = 1 << (ffs(needed_tmp->escr_high_bits) - 1);
-	} */
-      else
-	error_return(PAPI_ECNFLCT,"needed %#08x vs. already_taken %#08x",
-		     needed_tmp->escr_low_bits, already_taken->escr_low_bits);
-
-      /* Now the PEBS goodies */
-
-      if (!(needed_tmp->uses_pebs & already_taken->uses_pebs))
-	out->hardware_event[i].uses_pebs = 1;
-      else
-	error_return(PAPI_ECNFLCT,"PEBS already in use");
-
-      if (!(needed_tmp->uses_pebs_matrix_vert & already_taken->uses_pebs_matrix_vert))
-	out->hardware_event[i].uses_pebs_matrix_vert = 1;
-      else
-	error_return(PAPI_ECNFLCT,"PEBS MATRIX VERT already in use");
-    }
-  return(PAPI_OK);
-}
-
 /* After this function is called, ESI->machdep has everything it needs to do a start/read/stop 
    as quickly as possible. This returns the position in the array output by _papi_hwd_read that
    this register lives in. */
@@ -725,36 +654,42 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
 {
   int i, index, mask = 0;
   P4_register_t *bits = &evset_info->allocated_registers;
+  unsigned avail, already_used = bits->selector, need_one, allocated[P4_MAX_REGS_PER_EVENT];
   
+  SUBDBG("Allocated counters: already_used %08x\n",already_used);
+
   /* Add allocated register bits to this events bits */
 
   for (i=0;i<preset->number;i++)
     {
-      if (ev_info->hardware_event[i].cccr_bits)
-	{
-	  bits->cccr_bits |= ev_info->hardware_event[i].cccr_bits;
-	  bits->cccr_num += 1;
-	}
-      if (ev_info->hardware_event[i].escr_low_bits)
-	{
-	  bits->escr_low_bits |= ev_info->hardware_event[i].escr_low_bits;
-	  bits->escr_low_num += 1;
-	}
+      need_one = ev_info->hardware_event[i].selector;
+      SUBDBG("Needed one of counters: need_one %d %08x\n",i,need_one);
+
+      avail = need_one & (~already_used);
+      SUBDBG("Available counters: avail %08x\n",avail);
+
+      if (avail == 0)
+	return(PAPI_ECNFLCT);
+
+      allocated[i] = ffs(avail) - 1;
+      SUBDBG("Allocated counter: allocated %d %08x\n",i,allocated[i]);
+
       if (ev_info->hardware_event[i].uses_pebs)
 	{
+#if 0
+	  if (bits->uses_pebs)
+	    return(PAPI_ECNFLCT);
+#endif
 	  bits->uses_pebs = 1;
 	}
       if (ev_info->hardware_event[i].uses_pebs_matrix_vert)
 	{
+#if 0
+	  if (bits->uses_pebs_matrix_vert)
+	    return(PAPI_ECNFLCT);
+#endif
 	  bits->uses_pebs_matrix_vert = 1;
 	}
-#if 0      
-      if (ev_info->hardware_event[i].escr_high_bits)
-	{
-	  bits->escr_high_bits |= ev_info->hardware_event[i].escr_high_bits;
-	  bits->escr_high_num += 1;
-	} 
-#endif
     }
 
   /* Add counter control command values to eventset */
@@ -762,7 +697,8 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
   index = evset_info->control.cpu_control.nractrs;
   for (i=0;i<preset->number;i++)
     {
-      evset_info->control.cpu_control.pmc_map[index] = preset->info->data[i].pmc_map;
+      evset_info->allocated_registers.selector = 1 << allocated[i];
+      evset_info->control.cpu_control.pmc_map[index] = allocated[i] | FAST_RDPMC;
       evset_info->control.cpu_control.evntsel[index] = preset->info->data[i].evntsel;
       evset_info->control.cpu_control.evntsel_aux[index] = preset->info->data[i].evntsel_aux;
       evset_info->control.cpu_control.ireset[index] = 0;
@@ -807,25 +743,22 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
 int _papi_hwd_add_event(hwd_control_state_t *this_state, 
 			unsigned int EventCode, EventInfo_t *out)
 {
-  int preset_index = EventCode & PRESET_AND_MASK; 
-  /* should be num presets check here */
-  int selector = ffs(_papi_hwd_preset_map[preset_index].read_selector) - 1;
-  P4_regmap_t *regmap = &_papi_hwd_preset_map[EventCode ^ PRESET_MASK].possible_registers;
-  P4_preset_t *preset = &_papi_hwd_preset_map[EventCode ^ PRESET_MASK];
-  int hwindex;
+  int hwindex, preset_index = EventCode & PRESET_AND_MASK; 
+  P4_regmap_t *regmap;
+  P4_preset_t *preset;
 
-  /* For each event in the preset */
-  /*   get registers that that event requires */
-  /*   if selector = ffs(avail & registers) 
-         this_state->selector |= 1 << selector;
-	 out->selector = selector;
-         stuff next pmc slot with data at preset
-  */
+  if (preset_index >= PAPI_MAX_PRESET_EVENTS)
+    return(PAPI_EINVAL);
 
-  if (selector <= 0)
+  if (_papi_hwd_preset_map[preset_index].number <= 0)
     return(PAPI_ENOEVNT);
 
+  regmap = &_papi_hwd_preset_map[EventCode ^ PRESET_MASK].possible_registers;
+  preset = &_papi_hwd_preset_map[EventCode ^ PRESET_MASK];
+
   hwindex = _papi3_hwd_add_event(regmap,preset,&this_state->control);
+  if (hwindex < PAPI_OK)
+    return(hwindex);
 
   out->code = EventCode;
   out->selector = hwindex;
@@ -843,21 +776,6 @@ int _papi3_hwd_remove_event(P4_regmap_t *ev_info, int perfctr_index, P4_perfctr_
 
   for (i=0;i<ev_info->num_hardware_events;i++)
     {
-      if (ev_info->hardware_event[i].cccr_bits)
-	{
-	  bits->cccr_bits ^= ev_info->hardware_event[i].cccr_bits;
-	  bits->cccr_num -= 1;
-	}
-      if (ev_info->hardware_event[i].escr_low_bits)
-	{
-	  bits->escr_low_bits ^= ev_info->hardware_event[i].escr_low_bits;
-	  bits->escr_low_num -= 1;
-	}
-/*      if (ev_info->hardware_event[i].escr_high_bits)
-	{
-	  bits->escr_high_bits ^= ev_info->hardware_event[i].escr_high_bits;
-	  bits->escr_high_num -= 1;
-	} */
       if (ev_info->hardware_event[i].uses_pebs)
 	{
 	  clear_pebs = 1;
@@ -1056,7 +974,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   struct vperfctr_control *contr = &this_state->control.control;
-  int i, ncntrs, nricntrs = 0, nracntrs, cntr, cntr2, retval=0;
+  int i, ncntrs, nricntrs = 0, nracntrs, retval=0;
   unsigned int selector;
 
   SUBDBG("overflow_option->EventIndex=%d\n",overflow_option->EventIndex);
@@ -1165,15 +1083,11 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   return(retval);
 }
 
-int _papi_hwd_reset(EventSetInfo *mine, EventSetInfo *zero) 
+int _papi_hwd_reset(EventSetInfo *this_evset, EventSetInfo *context_evset) 
 {
-  hwd_control_state_t *machdep = zero->machdep;
-  struct vperfctr *ctx = machdep->context.perfctr;
-  struct vperfctr_control *ctl = &machdep->control.control;
-  if (vperfctr_control(ctx, ctl) == 0)
-    return(PAPI_OK);
-  else
-    error_return(PAPI_ESYS,VCNTRL_ERROR);
+  hwd_control_state_t *machdep = this_evset->machdep;
+  hwd_control_state_t *context_machdep = context_evset->machdep;
+  return(_papi_hwd_start(&context_machdep->context, &machdep->control));
 }
 
 int _papi_hwd_write(EventSetInfo *mine, EventSetInfo *zero, long_long events[])
@@ -1215,7 +1129,6 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *info, void *tmp)
 	{
 	  fprintf(stderr,"%s():%d: vperfctr_iresume %s\n",
 		  __FUNCTION__,__LINE__,strerror(errno));
-	  abort();
 	}
     }
   DBG((stderr,"Finished, returning to address 0x%x\n",(*gs)[15]));
