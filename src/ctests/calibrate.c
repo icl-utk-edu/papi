@@ -252,14 +252,16 @@ static void resultline(int i, int j, int TESTS_QUIET)
 	retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "resultline: PAPI_flops", retval);
 
-	i++;						/* convert to 1s base  */
-	theory = 2;
-	while (j--) theory *= i;	/* theoretical ops   */
-	papi = (int)(flpins);
-	diff = papi - theory;
+	if (!TESTS_QUIET) {
+		i++;						/* convert to 1s base  */
+		theory = 2;
+		while (j--) theory *= i;	/* theoretical ops   */
+		papi = (int)(flpins);
+		diff = papi - theory;
 
-	ferror = ((float)abs(diff)) / ((float)theory) * 100;
-	printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
+		ferror = ((float)abs(diff)) / ((float)theory) * 100;
+		printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
+	}
 
 	if (TESTS_QUIET && ferror > 10 && diff > 8)
 		test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
