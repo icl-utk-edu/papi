@@ -635,6 +635,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	    {
 	      current_state->selector |= hwcntr;
 	      ESI->hw_start[i] = 0;
+	      zero->hw_start[i] = 0;
 	      if (hwcntr == 0x1)
 		{
 		  current_state->counter_cmd.CTL0 = this_state->counter_cmd.CTL0;

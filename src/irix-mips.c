@@ -976,7 +976,7 @@ void dump_cmd(hwperf_profevctrarg_t *t)
 
 int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 { 
-  int i, retval;
+  int retval;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   hwd_control_state_t *current_state = (hwd_control_state_t *)zero->machdep;
   hwd_control_state_t previous_state;
@@ -1030,7 +1030,8 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	  current_state->selector |= 1 << hwcntr;
 	  current_state->counter_cmd.hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_spec = 
 	    this_state->counter_cmd.hwp_evctrargs.hwp_evctrl[hwcntr].hwperf_spec;
-	  ESI->hw_start[i] = 0;
+	  ESI->hw_start[hwcntr-1] = 0;
+	  zero->hw_start[hwcntr-1] = 0;
 	  if (hwcntr >= HWPERF_CNT1BASE)
 	    current_state->num_on_counter[1]++;
 	  else

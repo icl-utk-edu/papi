@@ -1,3 +1,6 @@
+#ifndef _PAPI
+#define _PAPI
+
 #define PAPI_VER_CURRENT 1
 
 /* Include files */
@@ -328,3 +331,6 @@ int PAPI_num_counters(void);
 int PAPI_start_counters(int *events, int array_len);
 int PAPI_read_counters(long long *values, int array_len);
 int PAPI_stop_counters(long long *values, int array_len);
+
+#endif
+

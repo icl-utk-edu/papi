@@ -968,6 +968,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	      current_state->selector |= hwcntr;
 	      counter_event_copy(&this_state->counter_cmd, &current_state->counter_cmd, i-1);
 	      ESI->hw_start[i-1] = 0;
+	      zero->hw_start[i-1] = 0;
 	    }
 	}
     }

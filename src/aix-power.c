@@ -1297,6 +1297,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 	      current_state->counter_cmd.mode.w = this_state->counter_cmd.mode.w;
 	      current_state->counter_cmd.events[i] = this_state->counter_cmd.events[i];
 	      ESI->hw_start[i] = 0;
+	      zero->hw_start[i] = 0;
 	    }
 	}
     }
