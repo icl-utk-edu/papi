@@ -1,5 +1,7 @@
 CC=gcc
 
+PAPI_INCLUDE=..
+
 PAPIJ_JAVA_SRC=EventSet.java PAPI_hw_info.java \
   FlopInfo.java PAPI_inherit_option.java \
   PAPI_debug_option.java PAPI_option.java \
@@ -11,7 +13,7 @@ libpapij.so: Papi.o
 	$(CC) -shared -o $@ $<
 
 Papi.o: Papi.c PapiJ.h
-	$(CC) $(CFLAGS) -fPIC -c -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(OSTYPE) $< -o $@
+	$(CC) $(CFLAGS) -fPIC -c -I$(PAPI_INCLUDE) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(OSTYPE) $< -o $@
 
 PapiJ.h: PapiJ.class
 	javah PapiJ

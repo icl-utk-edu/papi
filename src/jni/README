@@ -1,0 +1,17 @@
+
+Java Native Wrappers for PAPI
+-----------------------------
+
+This code is unfinished, untested, undocumented, and probably doesn't work.  
+
+PapiJ.java contains the method declarations and mentions which PAPI
+function wrappers are not implemented.
+
+Papi.c contains the JNI wrappers.
+
+To build, type "make" and if things go well, you should have the
+shared library libpapij.so, which the Java code will attempt to load
+at run time.  The compilation is known to succeed on Solaris 8 and
+Red Hat 7.1, but hasn't been tried on others.
+
+To try a simple example, see the README in the examples subdirectory.
