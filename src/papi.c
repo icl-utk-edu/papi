@@ -1137,11 +1137,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
    papi_return(PAPI_OK);
 }
 
-int PAPI_num_hw_counters(void)
-{
-   return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-}
-
 int PAPI_num_events(int EventSet)
 {
    EventSetInfo_t *ESI;

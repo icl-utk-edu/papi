@@ -209,7 +209,7 @@ PAPI_FCALL(papif_get_hardware_info, PAPIF_HARDWARE_INFO, (int *ncpu,
 
 PAPI_FCALL(papif_num_hwctrs, PAPIF_num_hwctrs, (int *num))
 {
-   *num = PAPI_num_hw_counters();
+   *num = PAPI_num_hwctrs();
 }
 
 PAPI_FCALL(papif_get_real_cyc, PAPIF_GET_REAL_CYC, (long_long * real_cyc))

@@ -431,7 +431,6 @@ read the documentation carefully.  */
    int PAPI_thread_init(unsigned long int (*id_fn) (void), int flag);
    int PAPI_list_events(int EventSet, int *Events, int *number);
    int PAPI_multiplex_init(void);
-   int PAPI_num_hw_counters(void);
    int PAPI_num_hwctrs(void);
    int PAPI_num_events(int EventSet);
    int PAPI_set_multiplex(int *);
@@ -441,12 +440,6 @@ read the documentation carefully.  */
    int PAPI_perror(int code, char *destination, int length);
    int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
                    unsigned scale, int EventSet, int EventCode, int threshold, int flags);
-/*
-const PAPI_preset_info_t *PAPI_query_all_events_verbose(void);
-int PAPI_describe_event(char *name, int *EventCode, char *description);
-int PAPI_label_event(int EventCode, char *label);
-int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
-*/
    int PAPI_query_event(int EventCode);
    int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
    int PAPI_event_code_to_name(int EventCode, char *out);
@@ -470,7 +463,7 @@ int PAPI_query_event_verbose(int EventCode, PAPI_preset_info_t *info);
    int PAPI_stop(int EventSet, long_long * values);
    char *PAPI_strerror(int);
    int PAPI_write(int EventSet, long_long * values);
-   int PAPI_initialized(void);
+   int PAPI_is_initialized(void);
 
 /* The High Level API
 
