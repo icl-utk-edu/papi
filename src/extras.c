@@ -246,7 +246,7 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
 
    EventSetProfileInfo_t *profile = &ESI->profile;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx->ucontext);
+   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
 
 /*
   caddr_t offset = (caddr_t)0;
