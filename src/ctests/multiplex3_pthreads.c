@@ -128,14 +128,16 @@ int case1(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
-  printf("case1:");
-  for( i = 0; i < max_to_add; i++ ) {
-	  printf(" %lld", values[i]);
+  if ( !TESTS_QUIET ) {
+    printf("case1:");
+    for( i = 0; i < max_to_add; i++ ) {
+      printf(" %lld", values[i]);
 
-	  /* There should be some sort of value for all events */
-	  if( values[i] == 0 ) allvalid = 0;
+    /* There should be some sort of value for all events */
+    if( values[i] == 0 ) allvalid = 0;
+	}
+    printf("\n");
   }
-  printf("\n");
 
   if( !allvalid )
     test_fail(__FILE__,__LINE__,"case1",-1);
