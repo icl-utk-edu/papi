@@ -1,8 +1,6 @@
 all:
 	@echo "Please use one of the following commands:";
 	@echo "";
-	@echo "make -f Makefile.linux-ia64-libpfm2.0 (see ./pfmon-2.0)";
-	@echo "make -f Makefile.linux-ia64-itanium2-libpfm2.0 (see ./pfmon-2.0)";
 	@echo "make -f Makefile.unicos-t3e";
 	@echo "make -f Makefile.aix5-power3";
 	@echo "make -f Makefile.aix5-power3-64bit";
@@ -13,10 +11,12 @@ all:
 	@echo "make -f Makefile.solaris-ultra-64bit";
 	@echo "make -f Makefile.irix-mips";
 	@echo "make -f Makefile.irix-mips-64bit";
+	@echo "make -f Makefile.linux-pfm-itanium (see ./pfmon-2.0/3.0)";
+	@echo "make -f Makefile.linux-pfm-itanium2 (see ./pfmon-2.0/3.0)";
 	@echo "make -f Makefile.linux-perfctr-p3 (see ./perfctr-2.4/6.x)";
 	@echo "make -f Makefile.linux-perfctr-p4 (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-althon (see ./perfctr-2.4/6.x)";
-	@echo "make -f Makefile.linux-opteron (see ./perfctr-2.4/6.x)";
+	@echo "make -f Makefile.linux-perfctr-athlon (see ./perfctr-2.4/6.x)";
+	@echo "make -f Makefile.linux-perfctr-opteron (see ./perfctr-2.4/6.x)";
 	@echo "make -f Makefile.dadd-alpha (EV6/67/7 only)";
 	@echo "make -f Makefile.tru64-alpha (EV6/67 only)";
 	@echo "make -f Makefile.linux-alpha (with patched iprobe)";
