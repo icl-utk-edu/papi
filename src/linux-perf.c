@@ -1081,12 +1081,12 @@ papi_mdi _papi_system_info = { "$Id$",
 			       {
 				 "",
 				 "",
-				 (caddr_t)&_start,
+				 (caddr_t)&_init,
 				 (caddr_t)&_etext,
-				 (caddr_t)&data_start,
+				 (caddr_t)&_etext+1,
 				 (caddr_t)&_edata,
-				 (caddr_t)&_edata+1,
-				 (caddr_t)&_fini,
+				 (caddr_t)NULL,
+				 (caddr_t)NULL,
 				 "LD_PRELOAD", /* How to preload libs */
 			       },
 			       -1,  /*  num_cntrs */

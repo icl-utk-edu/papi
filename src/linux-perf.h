@@ -41,4 +41,4 @@ typedef struct hwd_preset {
 } hwd_preset_t;
 
 extern char *basename(char *);
-extern caddr_t _start, _fini, _etext, _edata, data_start;
+extern caddr_t _init, _fini, _etext, _edata;
