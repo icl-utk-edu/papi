@@ -494,6 +494,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, ucontext_t *info)
  return(PAPI_ESBSTR); 
 }
 
+int _papi_hwd_stop_profiling(EventSetInfo *ESI, EventSetInfo *master)
+{
+  /* This function is not used and shouldn't be called. */
+
+  return(PAPI_EMISC);
+}
+
 papi_mdi _papi_system_info = { "dadd-alpha.c 2002/05/28 shirley",
                               1.0, /*  version */
                                -1,  /*  cpunum */
