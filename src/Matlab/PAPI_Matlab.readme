@@ -13,9 +13,9 @@ This section of the PAPI user guide covers C and FORTRAN
 calls, but at the moment, you can only make C calls
 from the MATLAB environment.
 
-There is one overall function to all from Matlab; from there,
-you specify which of the 6 functions you want to call, and then
-the arguments to each.  Here are some examples:
+There is one overall function to call from Matlab; from there,
+you specify which of the 6 specific functions you want to call, 
+and then the arguments to each.  Here are some examples:
 
 PAPI_num_counters - Returns the number of available
   hardware counters on the system.
@@ -23,16 +23,28 @@ PAPI_num_counters - Returns the number of available
 Ex:  num_counters = PAPI_Matlab('num')
 
 
-PAPI_flops - Has 3 possibilities:
-  Initialize FLOP counting with:
-    PAPI_Matlab('flops', 0)
-  Record the number of floating point operations since
+PAPI_flips - Has 3 possibilities:
+  Initialize FLIP counting with:
+    PAPI_Matlab('flips', 0)
+  Record the number of floating point instructions since
   initialization:
-    ops = PAPI_Matlab('flops')
-  Record the number of floating point operations and
+    ops = PAPI_Matlab('flips')
+  Record the number of floating point instructions and
   the incremental rate of floating point execution
   since initialization:
-    [ops, mflops] = PAPI_Matlab('flops')
+    [ops, mflips] = PAPI_Matlab('flips')
+
+
+PAPI_ipc - Has 3 possibilities:
+  Initialize instruction per cycle counting with:
+    PAPI_Matlab('ipc', 0)
+  Record the number of instructions since
+  initialization:
+    ins = PAPI_Matlab('ipc')
+  Record the number of instructions and
+  the incremental rate of instructions per cycle
+  since initialization:
+    [ins, ipc] = PAPI_Matlab('ipc')
   
 
 PAPI_start_counters - Specify the events to count
@@ -87,7 +99,7 @@ All the other rules for compiling PAPI are the same.  mex
 compilations can de done inside or outside of the Matlab
 environment, but in this case, it is recommended that you
 compile outside of Matlab.  For some reason, compiling 
-inside does not work.
+inside does not work on some systems.
 
 So far, only the Linux environment has been tested, but
 _in theory_ this code should work anywhere PAPI and Matlab
@@ -104,7 +116,7 @@ machine assuming PAPI_Matlab.c is in your current working
 directory (you'll have a different compile string on a 
 different architecture):
 
-1. Compile the wrapper
+1. Compile the wrapper:
 mex -I/usr/local/include PAPI_Matlab.c -L/usr/local/lib/libpapi.a
 
 2.  Start Matlab:
@@ -115,26 +127,35 @@ a.  Find the number of hardware counters on your system:
 num_counters = PAPI_Matlab('num')
 
 
-b.  Play with flops - the first initializes the counting
-    the second returns the number of floating point operations
-    since the first call and the third line does the same as the
-    first and ALSO reports the incremental rate of floating point
+b.  Play with flips - the first initializes the counting;
+    the second returns the number of floating point instructions
+    since the first call, and the third line does the same as the
+    first AND reports the incremental rate of floating point
     execution since the last call:
-PAPI_Matlab('flops', 0)
-ops = PAPI_Matlab('flops')
-[ops, mflops] = PAPI_Matlab('flops')
+PAPI_Matlab('flips', 0)
+ins = PAPI_Matlab('flips')
+[ins, mflips] = PAPI_Matlab('flips')
 
-c.  Start counting:
+c.  Play with instructions per cycle - the first initializes counting;
+    the second returns the number of instructions
+    since the first call, and the third line does the same as the
+    first AND reports the incremental rate of instructions per
+    cycle since the last call:
+PAPI_Matlab('ipc', 0)
+ins = PAPI_Matlab('ipc')
+[ins, ipc] = PAPI_Matlab('ipc')
+
+d.  Start counting:
 PAPI_Matlab('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS')
 
-d.  Read the counters and reset:
+e.  Read the counters and reset:
 [cycles, instr] = PAPI_Matlab('read')
 
-e.  Add the current value of the counters to a previous read
+f.  Add the current value of the counters to a previous read
     and reset:
 [cycles, instr] = PAPI_Matlab('accum', cycles, instr)
 
-f.  Read the counters and stop them:
+g.  Read the counters and stop them:
 [cycles, instr] = PAPI_Matlab('stop')
 
 You can pass as many events as you like to be counted or
