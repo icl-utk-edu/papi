@@ -331,7 +331,7 @@ static int ffsll(long_long lli)
 */
 
 void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
-                                        long_long overflow_bit, int genOverflowBit)
+                           long_long overflow_bit, int genOverflowBit)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
@@ -442,8 +442,8 @@ foundit:
             /* do not use overflow_vector after this place */
          } else {
             ESI->overflow.handler(ESI->EventSetIndex,
-                                  GET_OVERFLOW_ADDRESS(ctx), overflow_vector);
-	 }
+                  GET_OVERFLOW_ADDRESS(ctx), overflow_vector,ctx->ucontext);
+         }
       }
    }
 #ifdef ANY_THREAD_GETS_SIGNAL

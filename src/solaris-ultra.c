@@ -18,6 +18,82 @@
 #include "papi_protos.h"
 #include "papi_preset.h"
 
+#ifdef CPC_ULTRA3_I
+#define LASTULTRA3 CPC_ULTRA3_I
+#else
+#define LASTULTRA3 CPC_ULTRA3_PLUS
+#endif
+
+#define MAX_ENAME 40
+
+static void action(void *arg, int regno, const char *name, uint8_t bits);
+
+/* Probably could dispense with this and just use native_table */
+typedef struct ctr_info {
+    char *name;	/* Counter name */
+    int bits[2];	/* bits for register */
+    int bitmask; /* 1 = pic0; 2 = pic1; 3 = both */
+} ctr_info_t;
+
+typedef struct einfo {
+    unsigned int papi_event;
+    char *event_str;
+} einfo_t;
+static einfo_t us3info[] = {
+   {PAPI_FP_INS, "FA_pipe_completion+FM_pipe_completion"},
+   {PAPI_FAD_INS, "FA_pipe_completion"},
+   {PAPI_FML_INS, "FM_pipe_completion"},
+   {PAPI_TLB_IM, "ITLB_miss"},
+   {PAPI_TLB_DM, "DTLB_miss"},
+   {PAPI_TOT_CYC, "Cycle_cnt"},
+   {PAPI_TOT_IIS, "Instr_cnt"},
+   {PAPI_TOT_INS, "Instr_cnt"},
+   {PAPI_L2_TCM, "EC_misses"},
+   {PAPI_L2_ICM, "EC_ic_miss"},
+   {PAPI_L1_ICM, "IC_miss"},
+   {PAPI_L1_LDM, "DC_rd_miss"},
+   {PAPI_L1_STM, "DC_wr_miss"},
+   {PAPI_BR_MSP, "IU_Stat_Br_miss_taken+IU_Stat_Br_miss_untaken"},
+   {PAPI_L1_DCR, "DC_rd"},
+   {PAPI_L1_DCW, "DC_wr"},
+   {PAPI_L1_ICH, "IC_ref"},	/* Is this really hits only? */
+   {PAPI_L1_ICA, "IC_ref+IC_miss"},	/* Ditto? */
+   {PAPI_L2_TCH, "EC_ref-EC_misses"},
+   {PAPI_L2_TCA, "EC_ref"},
+};
+
+static einfo_t us2info[] = {
+   {PAPI_L1_ICM, "IC_ref-IC_hit"},
+   {PAPI_L2_TCM, "EC_ref-EC_hit"},
+   {PAPI_CA_SNP, "EC_snoop_cb"},
+   {PAPI_CA_INV, "EC_snoop_inv"},
+   {PAPI_L1_LDM, "DC_rd-DC_rd_hit"},
+   {PAPI_L1_STM, "DC_wr-DC_wr_hit"},
+   {PAPI_BR_MSP, "Dispatch0_mispred"},
+   {PAPI_TOT_IIS, "Instr_cnt"},
+   {PAPI_TOT_INS, "Instr_cnt"},
+   {PAPI_LD_INS, "DC_rd"},
+   {PAPI_SR_INS, "DC_wr"},
+   {PAPI_TOT_CYC, "Cycle_cnt"},
+   {PAPI_L1_DCR, "DC_rd"},
+   {PAPI_L1_DCW, "DC_wr"},
+   {PAPI_L1_ICH, "IC_hit"},
+   {PAPI_L2_ICH, "EC_ic_hit"},
+   {PAPI_L1_ICA, "IC_ref"},
+   {PAPI_L2_TCH, "EC_hit"},
+   {PAPI_L2_TCA, "EC_ref"},
+};
+
+static native_info_t *native_table;
+static hwi_search_t *preset_table;
+
+static struct ctr_info *ctrs;
+static int ctr_size;
+static int nctrs;
+
+static int build_tables(void);
+static void add_preset(hwi_search_t *tab, int *np, einfo_t e);
+
 /* Globals used to access the counter registers. */
 
 static int cpuver;
@@ -27,8 +103,10 @@ static uint64_t pcr_inv_mask[2];
 
 int papi_debug;
 
+#if 0
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
+   /* Phil says this is false */
 
 /* the number in this preset_search map table is the native event index 
    in the native event table, when it ORs the NATIVE_MASK, it becomes the
@@ -236,11 +314,12 @@ native_info_t usiii_native_table[] = {
 /* 69 */ {"EC_miss_mtag_remote", {-1, 0x28}},
 /* 70 */ {"EC_miss_remote", {-1, 0x29}}
 };
+#endif
 
 extern papi_mdi_t _papi_hwi_system_info;
 
 hwi_search_t *preset_search_map;
-static native_info_t *native_table;
+/*static native_info_t *native_table;*/
 
 #ifdef DEBUG
 static void dump_cmd(papi_cpc_event_t * t)
@@ -504,6 +583,10 @@ static int get_system_info(void)
 
    /* Initialize other globals */
 
+   if ((retval = build_tables()) != PAPI_OK)
+      return retval;
+
+   preset_search_map = preset_table;
    if (cpuver <= CPC_ULTRA2) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
@@ -512,10 +595,8 @@ static int get_system_info(void)
       pcr_event_mask[1] = (CPC_ULTRA2_PCR_PIC1_MASK << CPC_ULTRA_PCR_PIC1_SHIFT);
       pcr_inv_mask[0] = ~(pcr_event_mask[0]);
       pcr_inv_mask[1] = ~(pcr_event_mask[1]);
-      preset_search_map = usii_preset_search_map;
-      native_table = usii_native_table;
-   } else if (cpuver == CPC_ULTRA3) {
-      SUBDBG("cpuver (==%d) == CPC_ULTRA3 (==%d)\n", cpuver, CPC_ULTRA3);
+   } else if (cpuver <= LASTULTRA3) {
+      SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
       pcr_event_mask[0] = (CPC_ULTRA3_PCR_PIC0_MASK << CPC_ULTRA_PCR_PIC0_SHIFT);
@@ -523,8 +604,6 @@ static int get_system_info(void)
       pcr_inv_mask[0] = ~(pcr_event_mask[0]);
       pcr_inv_mask[1] = ~(pcr_event_mask[1]);
       _papi_hwi_system_info.supports_hw_overflow = 1;
-      preset_search_map = usiii_preset_search_map;
-      native_table = usiii_native_table;
    } else
       return (PAPI_ESBSTR);
 
@@ -617,6 +696,208 @@ static int get_system_info(void)
       return (retval);
 
    return (PAPI_OK);
+}
+
+
+static int
+build_tables(void)
+{
+    int i;
+    int regno;
+    int npic;
+    einfo_t *ep;
+    int n;
+    int npresets;
+
+    npic = cpc_getnpic(cpuver);
+    nctrs = 0;
+    for (regno = 0; regno < npic; ++regno) {
+	cpc_walk_names(cpuver, regno, 0, action);
+    }
+    SUBDBG("%d counters\n", nctrs);
+    if ((ctrs = malloc(nctrs*sizeof(struct ctr_info))) == 0) {
+	return PAPI_ENOMEM;
+    }
+    nctrs = 0;
+    for (regno = 0; regno < npic; ++regno) {
+	cpc_walk_names(cpuver, regno, (void *)1, action);
+    }
+    SUBDBG("%d counters\n", nctrs);
+#if DEBUG
+    for (i = 0; i < nctrs; ++i) {
+	fprintf(stderr,
+	    "%s: bits (%x,%x) pics %x\n", ctrs[i].name, ctrs[i].bits[0],
+	    ctrs[i].bits[1],
+	    ctrs[i].bitmask);
+    }
+#endif
+    /* Build the native event table */
+    if ((native_table = malloc(nctrs*sizeof(native_info_t))) == 0) {
+	free(ctrs);
+	return PAPI_ENOMEM;
+    }
+    for (i = 0; i < nctrs; ++i) {
+	native_table[i].name[39] = 0;
+	strncpy(native_table[i].name, ctrs[i].name, 39);
+	if (ctrs[i].bitmask&1)
+	    native_table[i].encoding[0] = ctrs[i].bits[0];
+	else
+	    native_table[i].encoding[0] = -1;
+	if (ctrs[i].bitmask&2)
+	    native_table[i].encoding[1] = ctrs[i].bits[1];
+	else
+	    native_table[i].encoding[1] = -1;
+    }
+    free(ctrs);
+
+    /* Build the preset table */
+    if (cpuver <= CPC_ULTRA2) {
+	n = sizeof(us2info) / sizeof(einfo_t);
+	ep = us2info;
+    }
+    else if (cpuver <= LASTULTRA3) {
+	n = sizeof(us3info) / sizeof(einfo_t);
+	ep = us3info;
+    }
+    else
+	return PAPI_ESBSTR;
+    preset_table = malloc((n+1)*sizeof(hwi_search_t));
+    npresets = 0;
+    for (i = 0; i < n; ++i) {
+	add_preset(preset_table, &npresets, ep[i]);
+    }
+    memset(&preset_table[npresets], 0, sizeof(hwi_search_t));
+
+#ifdef DEBUG
+    fprintf(stderr, "Native table: %d\n", nctrs);
+    for (i = 0; i < nctrs; ++i) {
+	fprintf(stderr, "%40s: %8x %8x\n", native_table[i].name,
+	    native_table[i].encoding[0], native_table[i].encoding[1]);
+    }
+    fprintf(stderr, "\nPreset table: %d\n", npresets);
+    for (i = 0; preset_table[i].event_code != 0; ++i) {
+	fprintf(stderr, "%8x: op %2d e0 %8x e1 %8x\n",
+		preset_table[i].event_code,
+		preset_table[i].data.derived,
+		preset_table[i].data.native[0],
+		preset_table[i].data.native[1]);
+    }
+#endif
+    return PAPI_OK;
+}
+
+static int
+srch_event(char *e1)
+{
+    int i;
+
+    for (i = 0; i < nctrs; ++i) {
+	if (strcmp(e1, native_table[i].name) == 0)
+	    break;
+    }
+    if (i >= nctrs)
+	return -1;
+    return i;
+}
+
+static void
+add_preset(hwi_search_t *tab, int *np, einfo_t e)
+{
+    /* Parse the event info string and build the PAPI preset.
+     * If parse fails, just return, otherwise increment the table
+     * size. We assume that the table is big enough.
+     */
+    char *p;
+    char *q;
+    char op;
+    char e1[MAX_ENAME], e2[MAX_ENAME];
+    int i;
+    int ne;
+    int ne2;
+
+    p = e.event_str;
+    /* Assume p is the name of a native event, the sum of two
+     * native events, or the difference of two native events.
+     * This could be extended with a real parser (hint).
+     */
+    while (isspace(*p)) ++p;
+    q = p;
+    i = 0;
+    while (isalnum(*p) || (*p == '_')) {
+	if (i >= MAX_ENAME-1)
+	    break;
+	e1[i] = *p++;
+	++i;
+    }
+    e1[i] = 0;
+    if (*p == '+' || *p == '-')
+	op = *p++;
+    else
+	op = 0;
+    while (isspace(*p)) ++p;
+    q = p;
+    i = 0;
+    while (isalnum(*p) || (*p == '_')) {
+	if (i >= MAX_ENAME-1)
+	    break;
+	e2[i] = *p++;
+	++i;
+    }
+    e2[i] = 0;
+
+    if (e2[0] == 0 && e1[0] == 0) {
+	return;
+    }
+    if (e2[0] == 0 || op == 0) {
+	ne = srch_event(e1);
+	if (ne == -1)
+	    return;
+	tab[*np].event_code = e.papi_event;
+	tab[*np].data.derived = 0;
+	tab[*np].data.native[0] = NATIVE_MASK | ne;
+	tab[*np].data.native[1] = PAPI_NULL;
+	memset(tab[*np].data.operation, 0, OPS);
+	++*np;
+	return;
+    }
+    ne = srch_event(e1);
+    ne2 = srch_event(e2);
+    if (ne == -1 || ne2 == -1)
+	return;
+    tab[*np].event_code = e.papi_event;
+    tab[*np].data.derived = (op == '-') ? DERIVED_SUB : DERIVED_ADD;
+    tab[*np].data.native[0] = NATIVE_MASK | ne;
+    tab[*np].data.native[1] = NATIVE_MASK | ne2;
+    memset(tab[*np].data.operation, 0, OPS);
+    ++*np;
+}
+
+void
+action(void *arg, int regno, const char *name, uint8_t bits)
+{
+    int i;
+
+    if (arg == 0) {
+	++nctrs;
+	return;
+    }
+    assert(regno == 0 || regno == 1);
+    for (i = 0; i < nctrs; ++i) {
+	if (strcmp(ctrs[i].name, name) == 0) {
+	    ctrs[i].bits[regno] = bits;
+	    ctrs[i].bitmask |=  (1 << regno);
+	    return;
+	}
+    }
+    memset(&ctrs[i], 0, sizeof(ctrs[i]));
+    ctrs[i].name = strdup(name);
+    if (ctrs[i].name == 0) {
+	perror("strdup");
+	exit(1);
+    }
+    ctrs[i].bits[regno] = bits;
+    ctrs[i].bitmask = (1 << regno);
+    ++nctrs;
 }
 
 /* This function should tell your kernel extension that your children
@@ -751,7 +1032,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    ctrl->counter_cmd.cmd.ce_pic[0] -= (u_long_long) ctrl->values[0];
    ctrl->counter_cmd.cmd.ce_pic[1] -= (u_long_long) ctrl->values[1];
 
-   *events = ctrl->counter_cmd.cmd.ce_pic;
+   *events = (long_long *)ctrl->counter_cmd.cmd.ce_pic;
 
    return PAPI_OK;
 }
@@ -941,7 +1222,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
          return (PAPI_OK);
       } else
          return (PAPI_ENOEVNT);
-   } else if (cpuver == CPC_ULTRA3) {
+   } else if (cpuver <= LASTULTRA3) {
       if (index < MAX_NATIVE_EVENT - 1) {
          *EventCode = *EventCode + 1;
          return (PAPI_OK);
