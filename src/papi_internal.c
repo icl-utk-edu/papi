@@ -1,4 +1,4 @@
-/****************************/
+G/****************************/
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
@@ -43,6 +43,7 @@
 
 /* Defined in this file */
 static int default_error_handler(int errorCode);
+static int counter_read(EventSetInfo_t *ESI, long_long *hw_counter, long_long *values);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
@@ -533,7 +534,7 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t *ESI, int nix)
 	for(i=0; i<ESI->NativeCount;i++){
 		if(nix==ESI->NativeInfoArray[i].ni_index){
 			ESI->NativeInfoArray[i].ni_owners++;
-			DBG((stderr,"found native event already mapped: %s\n", _papi_hwd_native_code_to_name(nix & NATIVE_MASK)));
+			DBG((stderr,"found native event already mapped: %s\n", _papi_ntv_code_to_name(nix & NATIVE_MASK)));
 			return i;
 		}
 	}
@@ -609,7 +610,7 @@ static int add_native_fail_clean(EventSetInfo_t *ESI, int nix)
 				ESI->NativeInfoArray[i].ni_position = -1;
 				ESI->NativeCount --;
 			}
-			DBG((stderr,"add_events fail, and remove added native events of the event: %s\n", _papi_hwd_native_code_to_name(nix & NATIVE_MASK)));
+			DBG((stderr,"add_events fail, and remove added native events of the event: %s\n", _papi_ntv_code_to_name(nix & NATIVE_MASK)));
 			return i;
 		}
 	}
@@ -659,23 +660,23 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 	
 	/* if remap!=0, we need reallocate counters */
 	if(remap){
-		if(_papi_hwd_allocate_registers(ESI)){
-			retval=_papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
+	  if(_papi_hwd_allocate_registers(ESI)){
+	    retval=_papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray, ESI->NativeCount);
             if (retval != PAPI_OK)
               return(retval);
-
-		    return 1;
-		}
-		else{
-			for(i=0;i<size;i++){
-				if((nidx=add_native_fail_clean(ESI, nix[i]))>=0){
-					out->pos[j]=-1;
-					continue;
-				}
-				DBG((stderr,"should not happen!\n"));
-			}
-			return -1;
-		}
+	    
+	    return 1;
+	  }
+	  else{
+	    for(i=0;i<size;i++){
+	      if((nidx=add_native_fail_clean(ESI, nix[i]))>=0){
+		out->pos[i]=-1;
+		continue;
+	      }
+	      DBG((stderr,"should not happen!\n"));
+	    }
+	    return -1;
+	  }
 	}
 	
 	return 0;
@@ -1288,12 +1289,7 @@ void print_state(EventSetInfo_t *ESI)
 
   fprintf(stderr,"\nnative_event_name       ");
   for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15s",native_table[ESI->NativeInfoArray[i].ni_index].name);
-  fprintf(stderr,"\n");
-
-  fprintf(stderr,"native_event_selectors    ");
-  for(i=0;i<MAX_COUNTERS;i++)
-	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
+	  fprintf(stderr,"%15s",_papi_ntv_code_to_name(ESI->NativeInfoArray[i].ni_index));
   fprintf(stderr,"\n");
 
   fprintf(stderr,"native_event_position     ");
@@ -1301,10 +1297,17 @@ void print_state(EventSetInfo_t *ESI)
 	  fprintf(stderr,"%15d",ESI->NativeInfoArray[i].ni_position);
   fprintf(stderr,"\n");
 
+#if 0 /* This code is specific to POWER */
+  fprintf(stderr,"native_event_selectors    ");
+  for(i=0;i<MAX_COUNTERS;i++)
+	  fprintf(stderr,"%15d",native_table[ESI->NativeInfoArray[i].ni_index].resources.selector);
+  fprintf(stderr,"\n");
+
   fprintf(stderr,"counter_cmd               ");
   for(i=0;i<MAX_COUNTERS;i++)
 	  fprintf(stderr,"%15d",(&(ESI->machdep))->counter_cmd.events[i]);
   fprintf(stderr,"\n");
+#endif
 
   fprintf(stderr,"native links              ");
   for(i=0;i<MAX_COUNTERS;i++)
@@ -1317,7 +1320,7 @@ void print_state(EventSetInfo_t *ESI)
     success  return 1
     fail     return 0
 */
-int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
+int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t *event_list, int count)
 {
     int i,j;
     int idx_q[MAX_COUNTERS];  /* queue of indexes of lowest rank events */
@@ -1329,8 +1332,8 @@ int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
     head=0; /* points to top of queue */
     tail=0; /* points to bottom of queue */
     for(i=0;i<count;i++){
-	map_q[i] = FALSE;
-	if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
+	map_q[i] = 0;
+	if(_papi_bpt_map_exclusive(&event_list[i])) idx_q[tail++]=i;
     }
     
     /* scan the single counter queue looking for events that share counters.
@@ -1341,17 +1344,17 @@ int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
     while(head<tail){
 	for(i=0;i<count;i++){
 	    if(i!=idx_q[head]){
-		if(map_shared(&event_list[i], &event_list[idx_q[head]])) {
+		if(_papi_bpt_map_shared(&event_list[i], &event_list[idx_q[head]])) {
 		    /* both share a counter; if second is exclusive, mapping fails */
-		    if(map_exclusive(&event_list[i])) return 0;
+		    if(_papi_bpt_map_exclusive(&event_list[i])) return 0;
 		    else{
-			map_preempt(&event_list[i], &event_list[idx_q[head]]);
-			if(map_exclusive(&event_list[i])) idx_q[tail++]=i;
+			_papi_bpt_map_preempt(&event_list[i], &event_list[idx_q[head]]);
+			if(_papi_bpt_map_exclusive(&event_list[i])) idx_q[tail++]=i;
 		    }
 		}
 	    }
 	}
-	map_q[idx_q[head]] = TRUE;	/* mark this event as mapped */
+	map_q[idx_q[head]] = 1;	/* mark this event as mapped */
 	head++;
     }
     if(tail==count){
@@ -1364,7 +1367,7 @@ int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
 	
 	/* copy all unmapped events to a second list and make a backup */
 	for(i=0,j=0;i<count;i++) {
-	    if(map_q[i] == FALSE) {
+	    if(map_q[i] == 0) {
 		memcpy(&copy_rest_event_list[j++], &event_list[i], sizeof(hwd_reg_alloc_t));
 	    }
 	}
@@ -1375,15 +1378,15 @@ int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
 	/* try each possible mapping until you fail or find one that works */
 	for(i=0;i<MAX_COUNTERS;i++){
 	    /* for the first unmapped event, try every possible counter */
-	    if(map_avail(rest_event_list, i)){
-		map_set(rest_event_list, i);
+	    if(_papi_bpt_map_avail(rest_event_list, i)){
+		_papi_bpt_map_set(rest_event_list, i);
 		/* remove selected counter from all other unmapped events */
 		for(j=1;j<remainder;j++){
-  		    if(map_shared(&rest_event_list[j], rest_event_list))
-			map_preempt(&rest_event_list[j], rest_event_list);
+  		    if(_papi_bpt_map_shared(&rest_event_list[j], rest_event_list))
+			_papi_bpt_map_preempt(&rest_event_list[j], rest_event_list);
 		}
 		/* if recursive call to allocation works, break out of the loop */
-		if(bipartite_counter_allocation(rest_event_list, remainder))
+		if(_papi_hwi_bipartite_alloc(rest_event_list, remainder))
 		    break;
 
 		/* recursive mapping failed; copy the backup list and try the next combination */
@@ -1394,8 +1397,8 @@ int bipartite_counter_allocation(hwd_reg_alloc_t *event_list, int count)
 	    return 0; /* fail to find mapping */
 	}
 	for(i=0,j=0;i<count;i++) {
-	    if(map_q[i] == FALSE)
-		map_update(&event_list[i], &rest_event_list[j++]);
+	    if(map_q[i] == 0)
+		_papi_bpt_map_update(&event_list[i], &rest_event_list[j++]);
 	}
 	return 1;		
     }
