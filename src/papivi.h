@@ -30,6 +30,15 @@
 ****************************************************************************/
 #ifndef PAPI_VERSION
 
+
+#define PAPI_VERSION_NUMBER(maj,min,rev) (((maj)<<16) | ((min)<<8) | (rev))
+#define PAPI_VERSION_MAJOR(x)   	(((x)>>16)    & 0xffff)
+#define PAPI_VERSION_MINOR(x)		(((x)>>8)     & 0xff)
+#define PAPI_VERSION_REVISION(x)	((x)          & 0xff)
+
+/* This is the PAPI version with which we are compatible */
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,3)
+
 /*
 * These are defined in papi_internal.h for PAPI 2.
 * They need to be exposed for version independent PAPI code to work.
@@ -109,6 +118,51 @@ typedef struct _papi_address_map {
 } PAPI_address_map_t;
 
 /*
+ * PAPI 3 beta 3 introduces new structures for static memory description.
+ * These include structures for tlb and cache description, a structure
+ * to describe a level in the memory hierarchy, and a structure 
+ * to describe all levels of the hierarchy.
+ * These structures, and the requisite data types are defined below.
+ */
+
+#if (PAPI_VERSION_REVISION(PAPI_VERSION)) > 2
+
+   /* All sizes are in BYTES */
+   /* Except tlb size, which is in entries */
+
+#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  3
+#define PAPI_MH_TYPE_EMPTY    0x0
+#define PAPI_MH_TYPE_INST	   0x1
+#define PAPI_MH_TYPE_DATA     0x2
+#define PAPI_MH_TYPE_UNIFIED  PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA
+
+typedef struct _papi_mh_tlb_info {
+   int type; /* Empty, unified, data, instr */
+   int num_entries;
+   int associativity;
+} PAPI_mh_tlb_info_t;
+
+typedef struct _papi_mh_cache_info {
+   int type; /* Empty, unified, data, instr */
+   int size;
+   int line_size;
+   int num_lines;
+   int associativity;
+} PAPI_mh_cache_info_t;
+
+typedef struct _papi_mh_level_info {
+   PAPI_mh_tlb_info_t   tlb[2];
+   PAPI_mh_cache_info_t cache[2];
+} PAPI_mh_level_t;
+
+typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
+   int levels;
+   PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+} PAPI_mh_info_t;
+
+#endif
+
+/*
 * Three data structures are modified in PAPI 3
 * These modifications are 
 * required to support the functionality of:
@@ -131,6 +185,7 @@ typedef struct _papi3_hw_info {
    float mhz;                /* Cycle time of this CPU, *may* be estimated at 
                                 init time with a quick timing routine */
 
+#if (PAPI_VERSION_REVISION(PAPI_VERSION)) < 3
    /* Memory Information */
    int L1_tlb_size;          /*Data + Instruction Size */
    int L1_itlb_size;         /*Instruction TLB size in KB */
@@ -164,6 +219,9 @@ typedef struct _papi3_hw_info {
    short int L3_cache_assoc; /*Level 3 cache associtivity */
    int L3_cache_lines;       /*Number of lines in Level 3 cache */
    int L3_cache_linesize;    /*Line size of Level 3 cache */
+#else
+   PAPI_mh_info_t mem_hierarchy;
+#endif
 } PAPIvi_hw_info_t;
 
 typedef struct _papi3_preload_option {
@@ -271,19 +329,77 @@ static const PAPIvi_hw_info_t *PAPIvi_get_hardware_info(void)
    /* Copy the basic hardware info (same in both structures */
    memcpy(&papi3_hw_info, papi2_hw_info, sizeof(PAPI_hw_info_t));
 
+#if (PAPI_VERSION_REVISION(PAPI_VERSION)) > 2
+   memset(&papi3_hw_info.mem_hierarchy, 0, sizeof(PAPI_mh_info_t));
+   /* check for a unified tlb */
+   if (papi2_mem_info->total_tlb_size && 
+      papi2_mem_info->itlb_size == 0 &&
+      papi2_mem_info->dtlb_size == 0) {
+      papi3_hw_info.mem_hierarchy.level[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+      papi3_hw_info.mem_hierarchy.level[0].tlb[0].num_entries = papi2_mem_info->total_tlb_size;
+   } else {
+      if (papi2_mem_info->itlb_size) {
+         papi3_hw_info.mem_hierarchy.level[0].tlb[0].type = PAPI_MH_TYPE_INST;
+         papi3_hw_info.mem_hierarchy.level[0].tlb[0].num_entries = papi2_mem_info->itlb_size;
+         papi3_hw_info.mem_hierarchy.level[0].tlb[0].associativity = papi2_mem_info->itlb_assoc;
+      }
+      if (papi2_mem_info->dtlb_size) {
+         papi3_hw_info.mem_hierarchy.level[0].tlb[1].type = PAPI_MH_TYPE_DATA;
+         papi3_hw_info.mem_hierarchy.level[0].tlb[1].num_entries = papi2_mem_info->dtlb_size;
+         papi3_hw_info.mem_hierarchy.level[0].tlb[1].associativity = papi2_mem_info->dtlb_assoc;
+      }
+   }
+   /* check for a unified level 1 cache */
+   if (papi2_mem_info->total_L1_size) papi3_hw_info.mem_hierarchy.levels = 1;
+   if (papi2_mem_info->total_L1_size && 
+      papi2_mem_info->L1_icache_size == 0 &&
+      papi2_mem_info->L1_dcache_size == 0) {
+      papi3_hw_info.mem_hierarchy.level[0].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+      papi3_hw_info.mem_hierarchy.level[0].cache[0].size = papi2_mem_info->total_L1_size << 10;
+   } else {
+      if (papi2_mem_info->L1_icache_size) {
+         papi3_hw_info.mem_hierarchy.level[0].cache[0].type = PAPI_MH_TYPE_INST;
+         papi3_hw_info.mem_hierarchy.level[0].cache[0].size = papi2_mem_info->L1_icache_size << 10;
+         papi3_hw_info.mem_hierarchy.level[0].cache[0].associativity = papi2_mem_info->L1_icache_assoc;
+         papi3_hw_info.mem_hierarchy.level[0].cache[0].num_lines = papi2_mem_info->L1_icache_lines;
+         papi3_hw_info.mem_hierarchy.level[0].cache[0].line_size = papi2_mem_info->L1_icache_linesize;
+      }
+      if (papi2_mem_info->L1_dcache_size) {
+         papi3_hw_info.mem_hierarchy.level[0].cache[1].type = PAPI_MH_TYPE_DATA;
+         papi3_hw_info.mem_hierarchy.level[0].cache[1].size = papi2_mem_info->L1_dcache_size << 10;
+         papi3_hw_info.mem_hierarchy.level[0].cache[1].associativity = papi2_mem_info->L1_dcache_assoc;
+         papi3_hw_info.mem_hierarchy.level[0].cache[1].num_lines = papi2_mem_info->L1_dcache_lines;
+         papi3_hw_info.mem_hierarchy.level[0].cache[1].line_size = papi2_mem_info->L1_dcache_linesize;
+      }
+   }
+
+   /* check for level 2 cache info */
+   if (papi2_mem_info->L2_cache_size) {
+      papi3_hw_info.mem_hierarchy.levels = 2;
+      papi3_hw_info.mem_hierarchy.level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+      papi3_hw_info.mem_hierarchy.level[1].cache[0].size = papi2_mem_info->L2_cache_size << 10;
+      papi3_hw_info.mem_hierarchy.level[1].cache[0].associativity = papi2_mem_info->L2_cache_assoc;
+      papi3_hw_info.mem_hierarchy.level[1].cache[0].num_lines = papi2_mem_info->L2_cache_lines;
+      papi3_hw_info.mem_hierarchy.level[1].cache[0].line_size = papi2_mem_info->L2_cache_linesize;
+   }
+
+   /* check for level 3 cache info */
+   if (papi2_mem_info->L3_cache_size) {
+      papi3_hw_info.mem_hierarchy.levels = 3;
+      papi3_hw_info.mem_hierarchy.level[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+      papi3_hw_info.mem_hierarchy.level[2].cache[0].size = papi2_mem_info->L3_cache_size << 10;
+      papi3_hw_info.mem_hierarchy.level[2].cache[0].associativity = papi2_mem_info->L3_cache_assoc;
+      papi3_hw_info.mem_hierarchy.level[2].cache[0].num_lines = papi2_mem_info->L3_cache_lines;
+      papi3_hw_info.mem_hierarchy.level[2].cache[0].line_size = papi2_mem_info->L3_cache_linesize;
+   }
+
+#else
    /* Copy the Memory Information */
    papi3_hw_info.L1_tlb_size = papi2_mem_info->total_tlb_size;
    papi3_hw_info.L1_itlb_size = papi2_mem_info->itlb_size;
    papi3_hw_info.L1_itlb_assoc = papi2_mem_info->itlb_assoc;
    papi3_hw_info.L1_dtlb_size = papi2_mem_info->dtlb_size;
    papi3_hw_info.L1_dtlb_assoc = papi2_mem_info->dtlb_assoc;
-
-   /* This block doesn't exist in PAPI 2 */
-   papi3_hw_info.L2_tlb_size = 0;
-   papi3_hw_info.L2_itlb_size = 0;
-   papi3_hw_info.L2_itlb_assoc = 0;
-   papi3_hw_info.L2_dtlb_size = 0;
-   papi3_hw_info.L2_dtlb_assoc = 0;
 
    papi3_hw_info.L1_size = papi2_mem_info->total_L1_size;
    papi3_hw_info.L1_icache_size = papi2_mem_info->L1_icache_size;
@@ -305,6 +421,7 @@ static const PAPIvi_hw_info_t *PAPIvi_get_hardware_info(void)
    papi3_hw_info.L3_cache_assoc = papi2_mem_info->L3_cache_assoc;
    papi3_hw_info.L3_cache_lines = papi2_mem_info->L3_cache_lines;
    papi3_hw_info.L3_cache_linesize = papi2_mem_info->L3_cache_linesize;
+#endif
    return(&papi3_hw_info);
 }
 
