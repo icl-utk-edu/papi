@@ -15,6 +15,7 @@
 #define THR 1000000
 unsigned long length;
 unsigned long my_start, my_end;
+int TESTS_QUIET=0; /* Tests in verbose mode? */
 
 void *Thread(void *arg)
 {
@@ -44,17 +45,15 @@ void *Thread(void *arg)
   retval = PAPI_profil(profbuf, length, my_start, 65536, 
 		       EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX);
   if (retval)
-    exit(retval);
+	test_fail(__FILE__,__LINE__,"PAPI_profil",retval);
 
-  retval = PAPI_start(EventSet1);
-  if (retval)
-    exit(retval);
+  if((retval = PAPI_start(EventSet1))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
   do_flops(*(int *)arg);
   
-  retval = PAPI_stop(EventSet1, values[0]);
-  if (retval)
-    exit(retval);
+  if((retval = PAPI_stop(EventSet1, values[0]))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -62,22 +61,24 @@ void *Thread(void *arg)
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",(int)pthread_self(),
+  if ( !TESTS_QUIET ){
+    printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",(int)pthread_self(),
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",(int)pthread_self(),
 	 (values[0])[1]);
-  printf("Thread 0x%x Real usec   : \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x Real usec   : \t%lld\n",(int)pthread_self(),
 	 elapsed_us);
-  printf("Thread 0x%x Real cycles : \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x Real cycles : \t%lld\n",(int)pthread_self(),
 	 elapsed_cyc);
 
-  printf("Test case: PAPI_profil() for pthreads\n");
-  printf("----Profile buffer for Thread 0x%x---\n",(int)pthread_self());
-  for (i=0;i<length;i++)
+    printf("Test case: PAPI_profil() for pthreads\n");
+    printf("----Profile buffer for Thread 0x%x---\n",(int)pthread_self());
+    for (i=0;i<length;i++)
     {
       if (profbuf[i])
 	printf("0x%x\t%d\n",(unsigned int)my_start + 2*i,profbuf[i]);
     }
+  }
 
   free_test_space(values, num_tests);
 
@@ -86,27 +87,36 @@ void *Thread(void *arg)
   return(NULL);
 }
 
-int main()
+int main(int argc, char **argv)
 {
   pthread_t e_th;
   pthread_t f_th;
   int flops1, flops2;
-  int rc;
+  int rc,retval;
   pthread_attr_t attr;
   long long elapsed_us, elapsed_cyc;
   const PAPI_exe_info_t *prginfo = NULL;
 
-  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-    exit(1);
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
 
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
-
-  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
-    exit(1);
-
-  if ((prginfo = PAPI_get_executable_info()) == NULL)
-    exit(1);
+  if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
+  if ( !TESTS_QUIET )
+    if ((retval=PAPI_set_debug(PAPI_VERB_ECONT))!= PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
+  if ((retval=PAPI_thread_init((unsigned long(*)(void))(pthread_self),0))!=PAPI_OK){
+    if ( retval == PAPI_ESBSTR )
+	test_pass(__FILE__,NULL,0);
+    else
+	test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
+  }
+  if ((prginfo = PAPI_get_executable_info()) == NULL){
+	retval=1;
+	test_fail(__FILE__,__LINE__,"PAPI_get_executable_info",retval);
+  }
   my_start = (unsigned long)prginfo->text_start;
   my_end =  (unsigned long)prginfo->text_end;
   length = my_end - my_start;
@@ -125,13 +135,16 @@ int main()
 
   flops1 = 10000000;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
-  if (rc)
-    exit(1);
-
+  if (rc){
+	retval=PAPI_ESYS;
+	test_fail(__FILE__,__LINE__,"pthread_create",retval);
+  }
   flops2 = 20000000;
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
-  if (rc)
-    exit(1);
+  if (rc){
+	retval=PAPI_ESYS;
+	test_fail(__FILE__,__LINE__,"pthread_create",retval);
+  }
 
   pthread_attr_destroy(&attr);
   pthread_join(f_th, NULL); 
@@ -141,12 +154,14 @@ int main()
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
-  printf("Master real usec   : \t%lld\n",
+  if (!TESTS_QUIET ){
+    printf("Master real usec   : \t%lld\n",
 	 elapsed_us);
-  printf("Master real cycles : \t%lld\n",
+    printf("Master real cycles : \t%lld\n",
 	 elapsed_cyc);
+  }
 
   pthread_exit(NULL);
-  exit(0);
+  test_pass(__FILE__,NULL,0);
 }
 

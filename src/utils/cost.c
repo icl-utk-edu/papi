@@ -120,5 +120,5 @@ int main(int argc, char **argv)
    printf("\nTotal cost for PAPI_read(2 counters) over 50000 iterations\n");
    printf(format_string2,totcyc,((float)totcyc)/50001.0,"cyc/call");
    }
-   test_pass(__FILE__,0,0);
+   test_pass(__FILE__,NULL,0);
 }

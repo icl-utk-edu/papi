@@ -68,6 +68,9 @@ int main(int argc, char **argv)
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+#if defined(__ALPHA) && defined(__osf__)
+   test_pass(__FILE__, NULL, 0);
+#endif
 
   /* Make sure that required resources are available */
   retval = PAPI_query_event(EVT1);

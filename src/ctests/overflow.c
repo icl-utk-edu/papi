@@ -61,7 +61,8 @@ int TESTS_QUIET=0;	/* Tests in Verbose mode? */
 
 void handler(int EventSet, int EventCode, int EventIndex, long_long *values, int *threshold, void *context)
 {
-  fprintf(stderr,OVER_FMT,EventSet,EventCode,EventIndex,
+  if ( !TESTS_QUIET )
+    fprintf(stderr,OVER_FMT,EventSet,EventCode,EventIndex,
 	  values[EventIndex],*threshold,context,PAPI_get_overflow_address(context));
   total++;
 }
@@ -162,8 +163,5 @@ int main(int argc, char **argv)
   max = (long_long)((values[0][1]*1.15)/THRESHOLD);
   if ( total > max || total < min )
   	test_fail(__FILE__, __LINE__, "Overflows", 1);
-
-  printf("\n%s:  PASSED\n\n", __FILE__);
-  PAPI_shutdown();
-  exit(0);
+  test_pass(__FILE__,NULL,0);
 }

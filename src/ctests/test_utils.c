@@ -287,8 +287,9 @@ char *stringify_granularity(int granularity)
 
 void test_pass(char *file, long_long **values, int num_tests)
 {
-	printf("\n%s:  PASSED\n\n", file);
+	printf("%s:  PASSED\n", file);
 	if (values) free_test_space(values, num_tests);
+	PAPI_set_debug( PAPI_QUIET ); /* Prevent error messages on Alpha */
 	PAPI_shutdown();
 	exit(0);
 }

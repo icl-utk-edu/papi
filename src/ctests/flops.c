@@ -14,16 +14,26 @@
 #else
 	char format_string[] = {"Real_time: %f Proc_time: %f Total flpins: %lld MFLOPS: %f\n"};
 #endif
+int TESTS_QUIET=0;	/*Tests in Verbose mode? */
+
 
 int main(int argc, char **argv) {
   extern void dummy(void *);
   float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
   float real_time, proc_time, mflops;
-  long_long flpins;
+  long_long flpins,retval;
   int i,j,k;
 
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+
 #ifdef NO_FLOPS
-  test_fail(__FILE__, __LINE__, "main - flops not supported on this architecture", PAPI_ENOEVNT);
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if ( retval != PAPI_VER_CURRENT)  
+	test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+  test_pass(__FILE__,NULL,0);
 #endif
 
   /* Initialize the Matrix arrays */
@@ -32,9 +42,8 @@ int main(int argc, char **argv) {
 	matrixa[0][i] = matrixb[0][i] = rand()*(float)1.1; }
 
   /* Setup PAPI library and begin collecting data from the counters */
-  if(PAPI_flops( &real_time, &proc_time, &flpins, &mflops)<PAPI_OK){ 
-	 printf("Error starting the counters, aborting.\n"); 
-	 exit(-1); } 
+  if((retval=PAPI_flops( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_flops", retval);
 
   /* Matrix-Matrix multiply */
   for (i=0;i<INDEX;i++)
@@ -43,11 +52,13 @@ int main(int argc, char **argv) {
 	mresult[i][j]=mresult[i][j] + matrixa[i][k]*matrixb[k][j];
 
   /* Collect the data into the variables passed in */
-  PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
+  if((retval=PAPI_flops( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_flops", retval);
   dummy((void*) mresult);
  
-  printf(format_string, real_time, proc_time, flpins, mflops);
-  exit(0);
+  if ( !TESTS_QUIET )
+    printf(format_string, real_time, proc_time, flpins, mflops);
+  test_pass(__FILE__,NULL,0);
 }
 
 

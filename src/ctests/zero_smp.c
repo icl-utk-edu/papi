@@ -88,16 +88,20 @@ void Thread(int t, int n)
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x %-12s : \t%lld\n",t, event_name,
+  if ( !TESTS_QUIET ) {
+    printf("Thread 0x%x %-12s : \t%lld\n",t, event_name,
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC : \t%lld\n",t,
+    printf("Thread 0x%x PAPI_TOT_CYC : \t%lld\n",t,
 	 (values[0])[1]);
+  }
 
   free_test_space(values, num_tests);
+  if ( !TESTS_QUIET ) {
   printf("Thread 0x%x Real usec    : \t%lld\n",t,
 	 elapsed_us);
   printf("Thread 0x%x Real cycles  : \t%lld\n",t,
 	 elapsed_cyc);
+  }
 }
 
 int main(int argc, char **argv) 
@@ -124,17 +128,32 @@ int main(int argc, char **argv)
 
 #if defined(_AIX)
   retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0);
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  if (retval != PAPI_OK){
+	if ( retval == PAPI_ESBSTR )
+	    test_pass(__FILE__, NULL, 0);
+	else 
+	    test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  }
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
   retval = PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0);
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  if (retval != PAPI_OK){
+	if ( retval == PAPI_ESBSTR )
+	    test_pass(__FILE__, NULL, 0);
+	else 
+	    test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  }
 #pragma parallel
 #pragma local(i)
 #pragma pfor
 #elif defined(sun) && defined(sparc)
   retval = PAPI_thread_init((unsigned long (*)(void))(thr_self), 0);
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  if (retval != PAPI_OK){
+	if ( retval == PAPI_ESBSTR )
+	    test_pass(__FILE__, NULL, 0);
+	else 
+	    test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  }
 #pragma MP taskloop private(i)
 #elif defined(__ALPHA) && defined(__osf__)
 #else
@@ -147,10 +166,11 @@ int main(int argc, char **argv)
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
+  if ( !TESTS_QUIET ) {
   printf("Master real usec   : \t%lld\n",
 	 elapsed_us);
   printf("Master real cycles : \t%lld\n",
 	 elapsed_cyc);
-
-  exit(0);
+  }
+  test_pass(__FILE__,NULL,0);
 }

@@ -53,5 +53,5 @@ int main(int argc, char **argv)
 		 (info[i].event_note ? info[i].event_note : ""));
 	printf("-------------------------------------------------------------------------\n");
   }
-  test_pass(__FILE__, 0, 0);
+  test_pass(__FILE__, NULL, 0);
 }

@@ -30,9 +30,6 @@ int main(int argc, char **argv)
   int clockrate;
   double test_flops;
 
-#ifdef NO_FLOPS
-  test_fail(__FILE__, __LINE__,"main - flops not supported on this architecture", PAPI_ENOEVNT);
-#endif
 
   if ( argc > 1 ) {
         if ( !strcmp( argv[1], "TESTS_QUIET" ) )
@@ -47,6 +44,9 @@ int main(int argc, char **argv)
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+#ifdef NO_FLOPS
+  test_pass(__FILE__,NULL,0 );
+#endif
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
 

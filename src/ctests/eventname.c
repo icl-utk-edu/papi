@@ -20,5 +20,5 @@ int main()
   if (preset != PAPI_TOT_CYC)
 	test_fail(__FILE__,__LINE__,"*preset returned did not equal PAPI_TOT_CYC",retval);
 
-  test_pass(__FILE__,0,0);
+  test_pass(__FILE__,NULL,0);
 }

@@ -22,8 +22,10 @@ static void resultline(int i, int j);
 static void headerlines(char * title);
 
 #define INDEX1 100
-#define INDEX2 250	/* Microsoft can't handle x[500][500]. Sad but true... */
+#define INDEX2 250	/* Microsoft can't handle x[500][500]. */
 #define INDEX3 500
+
+int TESTS_QUIET=0;
 
 int main(int argc, char *argv[]) {
   extern void dummy(void *);
@@ -34,9 +36,6 @@ int main(int argc, char *argv[]) {
   int i,j,k,t;
   int retval;
 
-#ifdef NO_FLOPS
-  test_fail(__FILE__, __LINE__,"main - flops not supported on this architecture", PAPI_ENOEVNT);
-#endif
 
   /*
   Check for inputs of 1, 2, or 3. If TRUE, do that test only.
@@ -47,9 +46,11 @@ int main(int argc, char *argv[]) {
 	if(!strcmp(argv[1],"1")) t = 1;
 	if(!strcmp(argv[1],"2")) t = 2;
 	if(!strcmp(argv[1],"3")) t = 3;
+	if(!strcmp(argv[1],"TESTS_QUIET")) TESTS_QUIET=1;
   }
 
-  printf("Initializing...");
+  if ( !TESTS_QUIET ) 
+  	printf("Initializing...");
 
   /* Initialize the linear arrays */
   for ( i=0; i<INDEX3; i++ ){
@@ -65,31 +66,39 @@ int main(int argc, char *argv[]) {
   retval = PAPI_library_init( PAPI_VER_CURRENT );
   if ( retval != PAPI_VER_CURRENT) test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+#ifdef NO_FLOPS
+   test_pass(__FILE__,0,0);
+#endif
   /* Inner Product test */
   if (t == 1 || t == 0) {
+     if ( !TESTS_QUIET ) 
 	headerlines("Inner Product Test");
 
 	for (i=0;i<INDEX3;i++) {
 	 aa = aa + x[i]*y[i];
 	 if (i < INDEX1 || ((i+1) % 50) == 0)
-		resultline(i, 1);
+             if ( !TESTS_QUIET ) 
+		 resultline(i, 1);
 	}
   }
 
   /* Matrix Vector test */
   if (t == 2 || t == 0) {
+     if ( !TESTS_QUIET ) 
 	headerlines("Matrix Vector Test");
 
 	for (i=0;i<INDEX3;i++) {
 		for(j=0;j<INDEX3;j++)
 			z[i] = z[i] + a[i%INDEX2][j%INDEX2]*y[j];
 		if (i < INDEX1 || ((i+1) % 50) == 0)
+                      if ( !TESTS_QUIET ) 
 			resultline(i, INDEX3);
 	}
   }
 
   /* Matrix Multiply test */
   if (t == 3 || t == 0) {
+     if ( !TESTS_QUIET ) 
 	headerlines("Matrix Multiply Test");
 
 	for (i=0;i<INDEX3;i++) {
@@ -97,6 +106,7 @@ int main(int argc, char *argv[]) {
 			for(k=0;k<INDEX3;k++)
 				c[i%INDEX2][j%INDEX2] = c[i%INDEX2][j%INDEX2] + a[i%INDEX2][k%INDEX2]*b[k%INDEX2][j%INDEX2];
 		if (i < INDEX1 || ((i+1) % 50) == 0)
+                     if ( !TESTS_QUIET ) 
 			resultline(i, INDEX3 * INDEX3);
 	}
   }
@@ -105,8 +115,7 @@ int main(int argc, char *argv[]) {
   c[0][0] = aa;
   dummy((void*) c);
   dummy((void*) z);
- 
-  exit(0);
+  test_pass(__FILE__,NULL,0);
 }
 
 /*

@@ -35,6 +35,7 @@ static int point = 0;
 static int EventSet = PAPI_NULL;
 static long long us;
 static const PAPI_hw_info_t *hwinfo;
+int TESTS_QUIET=0; /* Tests in verbose mode? */
 
 void papimon_start(void)
 {
@@ -43,56 +44,41 @@ void papimon_start(void)
 
   if (EventSet == PAPI_NULL)
     {
-      retval = PAPI_create_eventset(&EventSet);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK )
+	test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
 #if defined(_AIX)
       native = 0 | 5 << 8  | 0; /* ICM */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if ( (retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 35 << 8 | 1; /* FPU1CMPL */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 5 << 8  | 2; /* LDCM */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 5 << 8  | 3; /* LDCMPL */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 5 << 8  | 4; /* FPU0CMPL */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 12 << 8 | 5; /* CYC */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 9 << 8  | 6; /* FMA */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0 << 8  | 7; /* TLB */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(linux) && defined(__i386__)
       native = 0 | 0x43 << 8 | 0; /* Data mem refs */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0x47 << 8 | 1; /* Lines out */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
-      /* native = 0 | 1 << 8 | 2;  Virtual TSC 
-	 retval = PAPI_add_event(&EventSet, native);
-	 if  (retval != PAPI_OK)
-      exit(1);*/
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(linux) && defined(__ia64__)
       {
 	typedef union {
@@ -113,56 +99,47 @@ void papimon_start(void)
 	real_native.papi_native_bits.register_no = 4;
 	real_native.papi_native_bits.pme_mcode = 0x02;
 	native = real_native.papi_native_all;
-	retval = PAPI_add_event(&EventSet, native);
-	if  (retval != PAPI_OK)
-	  exit(1);
+        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined execution stall cycles */
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 5;
 	real_native.papi_native_bits.pme_mcode = 0x06;
 	native = real_native.papi_native_all;
-	retval = PAPI_add_event(&EventSet, native);
-	if  (retval != PAPI_OK)
-	  exit(1);
+        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined instruction fetch stall cycles */
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 6;
 	real_native.papi_native_bits.pme_mcode = 0x05;
 	native = real_native.papi_native_all;
-	retval = PAPI_add_event(&EventSet, native);
-	if  (retval != PAPI_OK)
-	  exit(1);
+        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined memory stall cycles */
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 7;
 	real_native.papi_native_bits.pme_mcode = 0x07;
 	native = real_native.papi_native_all;
-	retval = PAPI_add_event(&EventSet, native);
-	if  (retval != PAPI_OK)
-	  exit(1);
+        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       }
 #elif defined(mips) && defined(sgi) && defined(unix)
       native = 0 | 0x9 << 8 | 0; /* L1 I Miss */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0x9 << 8 | 1; /* L1 D Miss */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(_CRAYT3E)
       native = 0 | 0x0 << 8 | 0; /* Machine cyc */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0xe << 8 | 1; /* Dcache acc. */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0xC << 8 | 2; /* CPU cyc */
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(sun) && defined(sparc)
 /* 
 0,0,Cycle_cnt,0x0
@@ -191,33 +168,28 @@ void papimon_start(void)
 0,1,EC_ic_hit,0xf
 */
       native = 0 | (0xb << 8); /* Load_use */  
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 1 | (0xa << 8); /* DC_wr_hit */  
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)
       native = get_instr();
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = get_cyc();
-      retval = PAPI_add_event(&EventSet, native);
-      if  (retval != PAPI_OK)
-	exit(1);
+      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #else
 #error "Architecture not included in this test file yet."
 #endif
       if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-	exit(1);
+	  test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",retval);
     }
 
   us = PAPI_get_real_usec();
-  retval = PAPI_start(EventSet);
-  if (retval != PAPI_OK)
-    exit(1);
+  if ((retval = PAPI_start(EventSet))!=PAPI_OK)
+     test_fail(__FILE__,__LINE__,"PAPI_start",retval);
   point++;
 }
 
@@ -230,68 +202,73 @@ void papimon_stop(void)
   float csec;
 #endif
 
-  retval = PAPI_stop(EventSet,values);
-  if (retval != PAPI_OK)
-    exit(1);
+  if((retval = PAPI_stop(EventSet,values))!=PAPI_OK)
+     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
   us = PAPI_get_real_usec() - us;
   
-  fprintf(stderr,"-------------Monitor Point %d-------------\n",point);
-  rsec = (float)us/1000000.0;
-  fprintf(stderr,"Real Elapsed Time in sec.  : %f\n",rsec);
+  if ( !TESTS_QUIET ){
+     fprintf(stderr,"-------------Monitor Point %d-------------\n",point);
+     rsec = (float)us/1000000.0;
+     fprintf(stderr,"Real Elapsed Time in sec.  : %f\n",rsec);
 #if defined(_AIX)
-  csec = (float)values[5]/(hwinfo->mhz*1000000.0);
-  fprintf(stderr,"CPU Elapsed Time in sec.   : %f\n",csec);
-  fprintf(stderr,"L1 Instruction Cache Misses: %lld\n",values[0]);
-  fprintf(stderr,"FPU1 Instructions          : %lld\n",values[1]);
-  fprintf(stderr,"L1 Data Cache Load Misses  : %lld\n",values[2]);
-  fprintf(stderr,"Load Instructions          : %lld\n",values[3]);
-  fprintf(stderr,"FPU0 Instructions          : %lld\n",values[4]);
-  fprintf(stderr,"CPU Cycles                 : %lld\n",values[5]);
-  fprintf(stderr,"FMA Instructions           : %lld\n",values[6]);
-  fprintf(stderr,"TLB Misses                 : %lld\n",values[7]);
-  fprintf(stderr,"------------------------------------------\n");
-  fprintf(stderr,"CPU MFLOPS                 : %.2f\n",
+     csec = (float)values[5]/(hwinfo->mhz*1000000.0);
+     fprintf(stderr,"CPU Elapsed Time in sec.   : %f\n",csec);
+     fprintf(stderr,"L1 Instruction Cache Misses: %lld\n",values[0]);
+     fprintf(stderr,"FPU1 Instructions          : %lld\n",values[1]);
+     fprintf(stderr,"L1 Data Cache Load Misses  : %lld\n",values[2]);
+     fprintf(stderr,"Load Instructions          : %lld\n",values[3]);
+     fprintf(stderr,"FPU0 Instructions          : %lld\n",values[4]);
+     fprintf(stderr,"CPU Cycles                 : %lld\n",values[5]);
+     fprintf(stderr,"FMA Instructions           : %lld\n",values[6]);
+     fprintf(stderr,"TLB Misses                 : %lld\n",values[7]);
+     fprintf(stderr,"------------------------------------------\n");
+     fprintf(stderr,"CPU MFLOPS                 : %.2f\n",
 	  (((float)values[4]+(float)values[1])/1000000.0)/csec);
-  fprintf(stderr,"Real MFLOPS                : %.2f\n",
+     fprintf(stderr,"Real MFLOPS                : %.2f\n",
 	  (((float)values[4]+(float)values[1])/1000000.0)/rsec);
-  fprintf(stderr,"%% L1 Load Hit Rate         : %.2f\n",
+     fprintf(stderr,"%% L1 Load Hit Rate         : %.2f\n",
 	  100.0*(1.0 - ((float)values[2]/(float)values[3])));
-  fprintf(stderr,"%% FMA Instructions         : %.2f\n",
+     fprintf(stderr,"%% FMA Instructions         : %.2f\n",
 	  100.0*(float)values[6]/((float)values[1]+(float)values[4]));
 #elif defined(linux) && defined(__i386__)
-  /* csec = (float)values[2]/(hwinfo->mhz*1000000.0); */
-  /* fprintf(stderr,"Virtual TSC Time in sec.   : %f\n",csec); */
-  fprintf(stderr,"DCU Memory references      : %lld\n",values[0]);
-  fprintf(stderr,"DCU Lines out              : %lld\n",values[1]);
+     fprintf(stderr,"DCU Memory references      : %lld\n",values[0]);
+     fprintf(stderr,"DCU Lines out              : %lld\n",values[1]);
 #elif defined(linux) && defined(__ia64__)
-  fprintf(stderr,"Execution latency stall cyc         : %lld\n",values[0]);
-  fprintf(stderr,"Combined execution stall cycles     : %lld\n",values[1]);
-  fprintf(stderr,"Combined instr. fetch stall cycles  : %lld\n",values[2]);
-  fprintf(stderr,"Combined memory stall cycles        : %lld\n",values[3]);
+     fprintf(stderr,"Execution latency stall cyc         : %lld\n",values[0]);
+     fprintf(stderr,"Combined execution stall cycles     : %lld\n",values[1]);
+     fprintf(stderr,"Combined instr. fetch stall cycles  : %lld\n",values[2]);
+     fprintf(stderr,"Combined memory stall cycles        : %lld\n",values[3]);
 #elif defined(mips) && defined(sgi)
-  fprintf(stderr,"L1 Instruction cache misses       : %lld\n",values[0]);
-  fprintf(stderr,"L1 Data cache misses              : %lld\n",values[1]);
+     fprintf(stderr,"L1 Instruction cache misses       : %lld\n",values[0]);
+     fprintf(stderr,"L1 Data cache misses              : %lld\n",values[1]);
 #elif defined(_CRAYT3E)
-  fprintf(stderr,"Machine Cycles                    : %lld\n",values[0]);
-  fprintf(stderr,"DCache accesses                   : %lld\n",values[1]);
-  fprintf(stderr,"CPU Cycles                        : %lld\n",values[2]);
+     fprintf(stderr,"Machine Cycles                    : %lld\n",values[0]);
+     fprintf(stderr,"DCache accesses                   : %lld\n",values[1]);
+     fprintf(stderr,"CPU Cycles                        : %lld\n",values[2]);
 #elif defined(sun) && defined(sparc)
-  fprintf(stderr,"Load_use                   : %lld\n",values[0]);
-  fprintf(stderr,"DC_wr_hit                  : %lld\n",values[1]);
+     fprintf(stderr,"Load_use                   : %lld\n",values[0]);
+     fprintf(stderr,"DC_wr_hit                  : %lld\n",values[1]);
 #elif defined(tru64)
 #endif
+   }
+   test_pass(__FILE__,NULL,0);
 }
 
-int main()
+int main(int argc, char **argv)
 {
   int retval;
 
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    exit(1);
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
+
+  if ( (retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
   
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  if ( !TESTS_QUIET )
+    if ((retval=PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
 
   papimon_start();
 

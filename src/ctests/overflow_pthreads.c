@@ -29,6 +29,7 @@
 #define THRESHOLD 100000
 
 int total = 0;
+int TESTS_QUIET=0; /*Run tests in verbose mode?*/
 
 static void sigprof_handler(int sig)
 {
@@ -39,24 +40,30 @@ static void sigprof_handler(int sig)
 static void start_sig(void)
 {
   struct sigaction action;
+  int retval;
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_handler = (void(*)(int))sigprof_handler;
-  if (sigaction(SIGPROF, &action, NULL) == -1)
-    exit(1);
+  if (sigaction(SIGPROF, &action, NULL) == -1){
+     retval=PAPI_ESYS;
+     test_fail(__FILE__,__LINE__,"sigaction",retval);
+  }
 }
 
 void start_timer(int milliseconds)
 {
   struct itimerval value;
+  int retval;
 
   start_sig();
   value.it_interval.tv_sec = 0;
   value.it_interval.tv_usec = milliseconds * 1000;
   value.it_value.tv_sec = 0;
   value.it_value.tv_usec = milliseconds * 1000;
-  if (setitimer(ITIMER_PROF, &value, NULL) == -1)
-    exit(1);
+  if (setitimer(ITIMER_PROF, &value, NULL) == -1){
+     retval=PAPI_ESYS;
+     test_fail(__FILE__,__LINE__,"setitimer",retval);
+  }
 }
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
@@ -90,20 +97,16 @@ void *Thread(void *arg)
 
   elapsed_cyc = PAPI_get_real_cyc();
 
-  retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler);
-  if (retval != PAPI_OK)
-    exit(1);
-
+  if((retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_overflow",retval);
   /* start_timer(1); */
-  retval = PAPI_start(EventSet1);
-  if (retval != PAPI_OK)
-    exit(1);
+  if((retval = PAPI_start(EventSet1))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
   do_flops(*(int *)arg);
   
-  retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK)
-    exit(1);
+  if((retval = PAPI_stop(EventSet1, values[0]))!=PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -111,39 +114,48 @@ void *Thread(void *arg)
 
   remove_test_events(&EventSet1, mask1);
 
-  printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",(int)pthread_self(),
+  if ( !TESTS_QUIET ){
+    printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",(int)pthread_self(),
 	 (values[0])[0]);
-  printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",(int)pthread_self(),
 	 (values[0])[1]);
-  printf("Thread 0x%x Real usec   : \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x Real usec   : \t%lld\n",(int)pthread_self(),
 	 elapsed_us);
-  printf("Thread 0x%x Real cycles : \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x Real cycles : \t%lld\n",(int)pthread_self(),
 	 elapsed_cyc);
-
+  }
   free_test_space(values, num_tests);
-
   pthread_exit(NULL);
-
   return(NULL);
 }
 
-int main()
+int main(int argc, char **argv)
 {
   pthread_t e_th;
   pthread_t f_th;
   int flops1, flops2;
-  int rc;
+  int rc,retval;
   pthread_attr_t attr;
   long long elapsed_us, elapsed_cyc;
 
-  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-    exit(1);
+  if ( argc > 1 ) {
+        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
+           TESTS_QUIET=1;
+  }
 
-  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
-    exit(1);
+  if ((retval=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+	test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
 
-  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
-    exit(1);
+  if ( !TESTS_QUIET )
+    if ((retval=PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
+	test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
+
+  if((retval=PAPI_thread_init((unsigned long(*)(void))(pthread_self),0))!=PAPI_OK){
+    if ( retval == PAPI_ESBSTR )
+	test_pass(__FILE__,NULL,0);
+    else
+	test_fail(__FILE__,__LINE__,"PAPI_thread_init",retval);
+  }
 
   elapsed_us = PAPI_get_real_usec();
 
@@ -159,13 +171,17 @@ int main()
 
   flops1 = 10000000;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
-  if (rc)
-    exit(1);
+  if (rc){
+	retval=PAPI_ESYS;
+	test_fail(__FILE__,__LINE__,"pthread_create",retval);
+  }
 
   flops2 = 20000000;
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
-  if (rc)
-    exit(1);
+  if (rc){
+	retval=PAPI_ESYS;
+	test_fail(__FILE__,__LINE__,"pthread_create",retval);
+  }
 
   pthread_attr_destroy(&attr);
   pthread_join(f_th, NULL); 
@@ -175,12 +191,14 @@ int main()
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
-  printf("Master real usec   : \t%lld\n",
+  if ( !TESTS_QUIET ) {
+    printf("Master real usec   : \t%lld\n",
 	 elapsed_us);
-  printf("Master real cycles : \t%lld\n",
+    printf("Master real cycles : \t%lld\n",
 	 elapsed_cyc);
+  }
 
   pthread_exit(NULL);
-  exit(0);
+  test_pass(__FILE__,NULL,0);
 }
 

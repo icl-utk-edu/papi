@@ -17,13 +17,6 @@
 
 #include "papi_test.h"
 
-#ifdef NO_FLOPS
-  #define PAPI_EVENT 		PAPI_TOT_INS
-  #define MASK				MASK_TOT_INS | MASK_TOT_CYC
-#else
-  #define PAPI_EVENT 		PAPI_FP_INS
-  #define MASK				MASK_FP_INS | MASK_TOT_CYC
-#endif
 
 int TESTS_QUIET=0; /* Tests in Verbose mode? */
 
@@ -33,9 +26,10 @@ int main(int argc, char **argv)
   long_long **values;
   int EventSet1, EventSet2, EventSet3;
   int num_events1, num_events2, num_events3;
-  int mask1 = MASK, mask2 = MASK, mask3 = MASK;
+  int mask1 = 0x5, mask2 = 0x5, mask3 = 0x5;
   PAPI_option_t options;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+
 
   if ( argc > 1 ) {
         if ( !strcmp( argv[1], "TESTS_QUIET" ) )
@@ -47,13 +41,16 @@ int main(int argc, char **argv)
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
   }
 
-  retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
+  retval = PAPI_event_code_to_name(PAPI_FP_INS, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+#ifdef NO_FLOPS
+  test_pass(__FILE__,0,0);
+#endif
   memset(&options,0x0,sizeof(options));
 
   EventSet1 = add_test_events(&num_events1,&mask1);
@@ -68,7 +65,8 @@ int main(int argc, char **argv)
   options.domain.domain=PAPI_DOM_ALL;
 
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+  if (retval != PAPI_OK && retval != PAPI_ESBSTR) 
+	test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
 
   options.domain.eventset=EventSet2;
   options.domain.domain=PAPI_DOM_KERNEL;

@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK) {
 	/* if there's a conflict, we can't complete this test */
 	if(retval == PAPI_ECNFLCT ) test_fail(__FILE__, __LINE__, 0, PAPI_OK);
-	else test_pass(__FILE__, 0, num_tests);
+	else test_pass(__FILE__, NULL, 0);
   }
   /* num_events1 is greater than num_events2 so don't worry. */
 

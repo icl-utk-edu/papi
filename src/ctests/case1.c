@@ -64,5 +64,5 @@ int main(int argc, char **argv)
        if ( (retval = PAPI_stop(EventSet, g1) ) != PAPI_OK ) 
 	    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);	   
      }
-   test_pass(__FILE__, 0, 0 );
+   test_pass(__FILE__, NULL, 0 );
 }

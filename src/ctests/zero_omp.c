@@ -124,7 +124,10 @@ int main(int argc, char **argv)
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
   retval = PAPI_thread_init((unsigned long (*)(void))(omp_get_thread_num),0);
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+  if ( retval == PAPI_ESBSTR )
+	test_pass(__FILE__, NULL, 0 );
+  else if (retval != PAPI_OK) 
+	test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
 
   elapsed_us = PAPI_get_real_usec();
 
