@@ -6,9 +6,9 @@ MEMSUBSTR= unicosmp
 LIBS	= static  
 TARGETS	= serial multiplex_and_pthreads 
 
-TOPTFLAGS= -g
-OPTFLAGS= -g
-#OPTFLAGS= -O2
+TOPTFLAGS= -O0
+OPTFLAGS= 
+OPTFLAGS= -O2
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS) 
 FFLAGS	= $(FLAGS) 

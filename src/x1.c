@@ -728,7 +728,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
   int i;
   unsigned long enable=0;
-  unsigned long enable_reg;
+  unsigned long enable_reg=0;
 
   if ( _papi_hwi_system_info.default_domain & PAPI_DOM_KERNEL )
      enable_reg |= HWPERF_ENABLE_KERNEL;
