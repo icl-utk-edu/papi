@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <string.h>
+#include <strings.h>
 
 #include "papi_internal.h"
 #include "papi.h"
@@ -74,11 +76,13 @@ int          prevTotal;
 
 if(DA->totalSlots==0) { /*initialization of first DA structure*/
 	
-	DA->totalSlots = 64;
-	DA->availSlots = 63;
-	DA->lowestEmptySlot = 1;
 	DA->dataSlotArray=(void **)malloc(DA->totalSlots*sizeof(void *));
+	if(!DA->dataSlotArray)return(PAPI_ENOMEM);
+	bzero(DA->dataSlotArray,sizeof(DA->dataSlotArray));
 
+	DA->totalSlots = PAPI_INIT_SLOTS;
+	DA->availSlots = PAPI_INIT_SLOTS - 1;
+	DA->lowestEmptySlot = 1;
 	}/***/
 
 else	{/* expansion of existing DA structure */
@@ -89,15 +93,15 @@ else	{/* expansion of existing DA structure */
 
 	/*realloc existing array*/
         if( (void **)realloc(DA->dataSlotArray,DA->totalSlots*sizeof(void *))
-        ==NULL) return(1);   
-
-        /* would anyone prefer:  return(PAPI_ENOMEM);
-           instead of:           return(1);
-         */  
+        ==NULL) return(PAPI_ENOMEM);   
 
 	}/***/
+/* 
+PAPI_OK denotes no error; 
+PAPI_OK_MPX denotes no error, multiplexing enabled.
+*/
+return(PAPI_OK);
 
-return(0);
 
 }
 /*========================================================================*/
@@ -139,15 +143,16 @@ int PAPI_state(int EventSet, int *status)
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/
-/* begin function: static EventSetInfo *_papi_allocate_EventSet(void);    */
+/* begin function: static EventSetInfo *papi_allocate_EventSet(void);     */
 /*                                                                        */
 /* This function allocates space for one EventSetInfo structure and for   */
 /* all of the pointers in this structure.  If any malloc in this function */
-/* fails, NULL is returned.  Upon success, a pointer to the EventSetInfo  */
-/* data structure is returned.                                            */
+/* fails, all memory malloced to the point of failure is freed, and NULL  */
+/* is returned.  Upon success, a pointer to the EventSetInfo data         */
+/* structure is returned.                                                 */
 /*========================================================================*/
 
-static EventSetInfo *_papi_allocate_EventSet(void) {
+static EventSetInfo *papi_allocate_EventSet(void) {
 
 EventSetInfo *ESI;
 int counterArrayLength;
@@ -155,24 +160,48 @@ int counterArrayLength;
 counterArrayLength=_papi_system_info.num_gp_cntrs+_papi_system_info.num_sp_cntrs;
 
 if(!ESI=(EventSetInfo *)malloc(sizeof(EventSetInfo))) return(NULL); 
+bzero(ESI,sizeof(ESI));
 
 ESI->EventSetIndex=0;     /*this is N index from DA->dataSlotArray[N] */
 ESI->NumberOfCounters=0;  /*number of counters*/
+
+/*this ptr needs more work ******************************************************/
 ESI->EventCodeArray=NULL; /* array of codes for events in this set from AddEvent*/
 
-if(!ESI->machdep)=(void *)malloc(_papi_system_info.size_machdep)) return(NULL);
+if(!ESI->machdep)=(void *)malloc(_papi_system_info.size_machdep)) {
+	free (ESI);
+	return(NULL);
+	}
+bzero(ESI->machdep,sizeof(ESI->machdep));
 
-if(!ESI->start =(long long *)malloc(counterArrayLength*sizeof(long long)))
+if(!ESI->start =(long long *)malloc(counterArrayLength*sizeof(long long))){
+	free (ESI->machdep);
+	free (ESI);
 	return(NULL);
-if(!ESI->stop  =(long long *)malloc(counterArrayLength*sizeof(long long)))
+	}
+bzero(ESI->start,sizeof(ESI->start));
+
+if(!ESI->stop  =(long long *)malloc(counterArrayLength*sizeof(long long))){
+	free (ESI->machdep);
+	free (ESI->start);
+	free (ESI);
 	return(NULL);
-if(!ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long)))
+	}
+bzero(ESI->stop,sizeof(ESI->stop));
+
+if(!ESI->latest=(long long *)malloc(counterArrayLength*sizeof(long long))){
+	free (ESI->machdep);
+	free (ESI->start);
+	free (ESI->stop);
+	free (ESI);
 	return(NULL);
+	}
+bzero(ESI->latest,sizeof(ESI->latest));
 
 return(ESI);
 }
 /*========================================================================*/
-/*end function: _papi_allocate_EventSet                                   */
+/*end function: papi_allocate_EventSet                                    */
 /*========================================================================*/
 /*========================================================================*/
 
@@ -186,13 +215,11 @@ return(ESI);
 /* This function should free memory for one EventSetInfo structure.       */
 /* The argument list consists of a pointer to the EventSetInfo            */
 /* structure, *ESI.                                                       */
-/* If ESI==NULL	before free operation, return 0.                          */
-/* Else, return 1.                                                        */
+/* The calling function should check  for ESI==NULL.                      */
 /*========================================================================*/
 
-static int free_EventSet(EventSetInfo *ESI) {
+static void free_EventSet(EventSetInfo *ESI) {
 
-if(!ESI) return 0; /*ESI not exist*/
 
 if(ESI->EventCodeArray) free(ESI->EventCodeArray);
 if(ESI->machdep)        free(ESI->machdep);
@@ -202,7 +229,7 @@ if(ESI->latest)         free(ESI->latest);
 
 free(ESI);
 
-return(1); /* normal return */
+return; /* normal return */
 }
 /*========================================================================*/
 /*end function: _papi_free_EventSet                                       */
