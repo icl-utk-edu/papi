@@ -50,8 +50,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       print *,'   Testing PAPIF_name_to_code/PAPIF_code_to_name   '
       print *,'---------------------------------------------------'
       print *,' These tests look up an event name and event code'
-      print *,' On no occasion a NULL character should be found(+)'
-      print *,' When too short strings are used, the lookup should fail'
+      print *,' On no occasion should a NULL character be found(+)'
+      print *,' When strings are too short, the lookup should fail'
       print *
       code=MSGCODE
       print *,' Tests use the event code ',code
@@ -103,7 +103,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       print *,'---------------------------------------------------'
       print 100,' These tests should return a PAPI error string for'//
      $    ' error',ERRCODE
-      print *,' On no occasion a NULL character should be found(+)'
+      print *,' On no occasion should a NULL character be found(+)'
       print *
 
       call test_papif_perror(ERRCODE,papistr,check)
@@ -124,7 +124,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       print *,'---------------------------------------------------'
       print *,' These tests should return a PAPI description for'
       print *,' various event names and argument shapes.'
-      print *,' On no occasion a NULL character should be found(+)'
+      print *,' On no occasion should a NULL character be found(+)'
       print *
 
       print 200,'Test 1'
