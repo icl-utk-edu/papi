@@ -9,6 +9,7 @@ OPTFLAGS= -O3
 NOOPT	= -O0
 CC_R	= cc
 CC	= cc
+CPP	= $(CC) -E
 F77	= f90
 MISCOBJS= perfctrl.o
 
