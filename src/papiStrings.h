@@ -153,6 +153,7 @@ To create a version of PAPI in your native language, do the following:
 #define PAPI_FDV_INS_nm "PAPI_FDV_INS"  /*FD ins */
 #define PAPI_FSQ_INS_nm "PAPI_FSQ_INS"  /*FSq ins */
 #define PAPI_FNV_INS_nm "PAPI_FNV_INS"  /*Finv ins */
+#define PAPI_FP_OPS_nm "PAPI_FP_OPS"  /*Floating point operations executed */
 
 /*****************************************************/
 /* This block provides names for of each PAPI return */

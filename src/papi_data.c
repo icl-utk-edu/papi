@@ -332,6 +332,8 @@ PAPI_event_info_t _papi_hwi_presets[PAPI_MAX_PRESET_EVENTS] = {
    ,
    {PAPI_PRESET(PAPI_FNV_INS)}
    ,
+   {PAPI_PRESET(PAPI_FP_OPS)}
+   ,
 };
 
 const char *_papi_hwi_errNam[PAPI_NUM_ERRORS] = {

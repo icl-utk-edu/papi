@@ -126,6 +126,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_FDV_INS_dsc "Floating point divide instructions"
 #define PAPI_FSQ_INS_dsc "Floating point square root instructions"
 #define PAPI_FNV_INS_dsc "Floating point inverse instructions"
+#define PAPI_FP_OPS_dsc  "Floating point operations"
 
 /*************************************************************/
 /* This block provides short descriptions of each PAPI event */
@@ -238,6 +239,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_FDV_INS_lbl "FPU divide"
 #define PAPI_FSQ_INS_lbl "FPU square root"
 #define PAPI_FNV_INS_lbl "FPU inverse"
+#define PAPI_FP_OPS_lbl  "FP operations"
 
 /********************************************************/
 /* This block provides descriptions of each PAPI return */

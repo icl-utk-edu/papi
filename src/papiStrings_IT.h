@@ -132,6 +132,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_FDV_INS_dsc "la virgola mobile divide le istruzioni"
 #define PAPI_FSQ_INS_dsc "istruzioni della radice quadrata della virgola mobile"
 #define PAPI_FNV_INS_dsc "istruzioni inverse della virgola mobile"
+#define PAPI_FP_OPS_dsc  "istruzioni della virgola mobile"
 
 /*************************************************************/
 /* This block provides short descriptions of each PAPI event */
@@ -244,6 +245,7 @@ in "papiStdEventDefs.h" and the return codes defined in "papi.h".
 #define PAPI_FDV_INS_lbl "FPU divide"
 #define PAPI_FSQ_INS_lbl "FPU square root"
 #define PAPI_FNV_INS_lbl "FPU inverse"
+#define PAPI_FP_OPS_lbl  "FP operations"
 
 /********************************************************/
 /* This block provides descriptions of each PAPI return */
