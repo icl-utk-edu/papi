@@ -1,0 +1,104 @@
+/* $Id */
+
+/* some members of structs and/or function parameters may or may not be
+   necessary, but at this point, we have included anything that might 
+   possibly be useful later, and will remove them as we progress */
+
+/* Number of preset events - more than we will probably ever need, 
+   currently the draft has only 25*/
+
+#define PAPI_MAX_PRESET_EVENTS 64
+
+/* Mask which indicates the event is a preset- the presets will have 
+   the high bit set to one, as the vendors probably won't use the 
+   higher numbers for the native events */
+
+#define PRESET_MASK 0x80000000
+
+/* All memory for this structure should be allocated outside of the 
+   substrate. */
+
+
+
+typedef struct _EventSetInfo {
+  int EventSet;       /* Index of the EventSet in the array  */
+  int number;         /* Number of counters used- usu. the number of 
+                         events added */
+  int *events;        /* PAPI/Native codes for events in this set from 
+                         AddEvent */
+  int state;          /* Current EventSet state, either RUNNING or STOPPED */
+  void *machdep;      /* A pointer to memory of size 
+                         _papi_system_info.size_machdep bytes. This 
+                         will contain the encoding necessary for the 
+                         hardware to set the counters to the appropriate
+                         conditions*/
+  long long *start;   /* Array of length _papi_system_info.num_gp_cntrs
+                         + _papi_system_info.num_sp_cntrs 
+                         This will most likely be zero for most cases*/
+  long long *stop;    /* Array of the same length as above, but 
+                         containing the values of the counters when 
+                         stopped */
+  long long *latest;  /* Array of the same length as above, containing 
+                         the values of the counters when last read */ 
+} EventSetInfo;
+
+
+extern papi_mdi _papi_system_info;
+
+typedef struct _papi_mdi {
+  char substrate[81]; /* Name of the substrate we're using */
+  float version;      /* Version of this substrate */
+  int ncpu;           /* Number of CPU's on an SMP */
+  int type;           /* Vendor number of CPU */
+  int cpu;            /* Model number of CPU */
+  int mhz;            /* Cycle time of this CPU, to be estimated at 
+                         init time with a quick timing routine */
+  
+/* The following variables define the length of the arrays in the 
+   EventSetInfo structure. Each array is of length num_gp_cntrs + 
+   num_sp_cntrs * sizeof(long long) */
+
+  int num_gp_cntrs;   /* Number of general purpose counters or counters
+                         per group */
+  int total_groups;   /* Number of counter groups, zero for no groups */
+  int num_sp_cntrs;   /* Number of special purpose counters, like 
+                         Time Stamp Counter on IBM or Pentium */
+
+  int total_presets;  /* Number of preset events supported */
+  int total_events;   /* Number of native events supported. */
+  int size_machdep;   /* Size of the substrate's control structure in 
+                         bytes */
+  EventSetInfo *zero; /* First element in EventSet array of higher 
+                         level, to be maintained for internal use, 
+                         such as keeping track of multiple running 
+                         EventSets with overlapping events. Will not 
+                         have elements start, stop, and latest 
+                         defined */
+} papi_mdi;
+
+/* The following functions are defined by the substrate file. */
+
+extern int _papi_hwd_init(EventSetInfo *zero);   /* members start, 
+                         stop, and latest not defined. 
+                         For use in keeping track of overlapping 
+                         multiple running EventSets */
+extern int _papi_hwd_add_event(void *machdep, int event);
+extern int _papi_hwd_rem_event(void *machdep, int event);
+extern int _papi_hwd_add_prog_event(void *machdep, int event, void *extra); 
+                      /* the extra will be for programmable events 
+                         such as the threshold setting on IBM cache 
+                         misses */
+extern int _papi_hwd_start(void *machdep);
+extern int _papi_hwd_stop(void *machdep, long long *events); 
+                      /* counters will be read in stop call */
+extern int _papi_hwd_reset(void *machdep);
+extern int _papi_hwd_read(void *machdep, long long *events);
+extern int _papi_hwd_write(void *machdep, long long *events);
+                      /* the following two functions will be used to
+                         set machine dependent options such as the 
+                         context and granularity functions available
+                         in the User's Low Level API, and also 
+                         overflow thresholds and multiplexing */
+extern int _papi_hwd_setopt(int code, void *option);
+extern int _papi_hwd_getopt(int code, void *option);
+extern int _papi_err_level(int level); /* get/set error level */

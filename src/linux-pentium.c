@@ -1,0 +1,220 @@
+/* $Id */
+
+/* This substrate should never malloc anything. All allocation should be
+   done by the high level API. */
+
+/* The values defined in this file may be X86-specific (2 general 
+   purpose counters, 1 special purpose counter, etc.*/
+
+/* PAPI stuff */
+
+#include "papi.h"
+#include "papi_internal.h"
+#include "perf.h" /* substrate */
+
+/* The following structure holds preset values for that defined in the 
+   standard. Some presets may require the use
+   of more than 1 hardware event in order to calculate that metric. 
+   For example, if there is no miss counter, but there are counters for
+   hits and total accesses, then we would need to measure the two and 
+   take the difference. IN convention is the following:
+
+if number == 0, then not supported
+if number == 1, then only 1 counter is needed and it is in counter 1.
+if number == 2, then only 1 counter is needed and it is in counter 2.
+if number == 3, then both counters are needed. 
+if number == 4, then counter 1 is needed in conjunction with the special 
+                purpose counter.
+if number == 5, then counter 2 is needed in conjunction with the special 
+                purpose counter.
+if number == 6, then both counters are needed in conjunction with the 
+                special purpose counter.
+*/
+
+#ifdef LINUX_PENTIUM
+
+/* For PII/PPRO Linux, we need to compute a couple of presets (Like L2 
+   cache misses) */
+
+typedef struct _hwd_preset {
+  int number;                
+  int counter_code1;
+  int counter_code2;
+  int sp_sode;   /* possibly needed for setting certain registers to 
+                    enable special purpose counters */
+  int pad;
+} hwd_control_state;
+
+
+/*example values for now */
+static hwd_control_state preset_map[PAPI_PRESET_EVENTS] = { 
+                { 1, 0x42, -1,, }, 
+                { 2, -1, 0x23,, }, 
+                ... };
+
+static hwd_control_state current; /* not yet used. */
+
+/* Low level functions, should not handle errors, just return codes. */
+
+int _papi_hwd_init(EventSet *zero)
+{
+  /* Fill in papi_mdi */
+  
+  /* At init time, the higher level library should always allocate and 
+     reserve EventSet zero. */
+
+  zero.machdep = (void *)&current;
+
+}
+
+int _papi_hwd_add_event(void *machdep, int event)
+{
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+  unsigned int foo = event;
+  unsigned int preset;
+
+  if (foo & PRESET_MASK)
+    {
+      preset = foo ^= PRESET_MASK; 
+      /* lookup preset_map[preset] */
+      /* check if it can be integrated into this state */
+      /* do it */
+    }
+  else
+    {
+      /* check if it can be integrated into this state */
+      /* do it */
+    }
+}
+
+int _papi_hwd_rem_event(void *machdep, int event)
+{
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+  unsigned int foo = event;
+  unsigned int preset;
+
+  if (foo & PRESET_MASK)
+    {
+      preset = foo ^= PRESET_MASK; 
+      /* lookup preset_map[preset] */
+      /* check if it exists in this state */
+      /* remove it */
+    }
+  else
+    {
+      /* check if it exists in this state */
+      /* remove it */
+    }
+}
+
+int _papi_hwd_add_prog_event(void *machdep, int event, void *extra)
+{
+  return(PAPI_NOT_IMPLEM);
+}
+
+int _papi_hwd_start(void *machdep)
+ {
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+
+  return perf(PERF_START, 0, 0);  /* from perf.c */
+
+  /* set control registers and start counting */
+}
+
+int _papi_hwd_stop(void *machdep, long long *events)
+ {
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+
+  /* leave control registers and stop counting */
+
+  if (events)
+    /* copy appropriate events from machdep into *events */
+    /* i.e. if machdep->number == 2, then you only copy counter2 into */
+    /* events[1]... */
+
+  return perf(PERF_STOP, 0, 0); /* from perf.c */
+
+}
+
+int _papi_hwd_reset(void *machdep)
+{
+  /* reset the hardware counters if necessary */
+
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+
+  return perf(PERF_RESET, 0, 0); /*from perf.c */
+}
+
+int _papi_hwd_read(void *machdep, long long *events)
+{
+  /* copy appropriate events from machdep into *events */
+
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+
+  /*figure out which counter to read from this_state->number */
+
+  return perf(PERF_READ, appropriate_counter, (int) events);
+    /* from perf.c */
+}
+
+int _papi_hwd_write(void *machdep, long long *events)
+{
+  /* copy appropriate events from *events into kernel */
+
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
+
+  return perf(PERF_WRITE, appropriate_counter, (int) events);
+    /* from perf.c */
+}
+
+int _papi_hwd_setopt(int code, void *option)
+{
+  /* used for native options like counting level, etc...*/
+
+  /* probably from User Low Level API functions 
+     int PAPI_set_granularity(int granularity) 
+     and int PAPI_set_context(int context) 
+
+     we can probably use code=1 for granularity, 
+                         code=2 for context, 
+                         code=3 for overflow threshold,
+                         code=4 multiplexing,
+     and void *option for either (PAPI_PER_THR, PAPI_PER_PROC,
+     PAPI_PER_CPU or PAPI_PER_NODE), or (PAPI_USER, PAPI_KERNEL, 
+     PAPI_SYSTEM), for granularity and context, respectively, and
+     user defined values for overflow and multiplexing.
+  */
+}
+
+int _papi_hwd_getopt(int code, void *option)
+{
+  /* may require use of a global static structure that records calls
+     to setopt iff substrate doesn't support it. */
+
+  /* probably the same info as above */
+}
+
+int papi_err_level(int level)
+{
+  /* if the level = 0, return current value of error level, make no changes
+            level = 1, set error level to PAPI_QUIET, return 1
+            level = 2, set error level to PAPI_VERB_ECONT, return 2
+            level = 3, set error level to PAPI_VERB_ESTOP, return 3
+  */
+}
+
+/* For linux/x86 sample fields */
+
+papi_mdi _papi_system_info = { "Curtis Jansens Perf library + GLUE",
+			        1.0,
+			        2, /* 2 way SMP */
+			        PAPI_CHIP_PENTIUM_II,
+			        PAPI_VENDOR_INTEL,
+			        450,
+			        2,
+			        0,
+			        1,
+			        16, /* Approx */
+			        68, /* Approx */
+			        sizeof(hwd_control_state)  };
+
