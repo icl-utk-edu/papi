@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	/* Skip the test in TESTS_QUIET so that the main script doesn't
 	 * run this as it takes a long time to check for overflow
  	 */
-        printf("%-24s: SKIPPED\nLine # %d\n", __FILE__, __LINE__);
+        printf("%-40s SKIPPED\nLine # %d\n", __FILE__, __LINE__);
         printf("timer_overflow takes a long time to run, run separately.\n");
 	exit(0);
    }
