@@ -26,7 +26,7 @@ int main(int argc, char **argv)
       printf
           ("------------------------------------------------------------------------\n");
       /* Extract and report the tlb and cache information */
-      L = &(meminfo->mem_hierarchy.level[0]);
+      L = (PAPI_mh_level_t *)&(meminfo->mem_hierarchy.level[0]);
       /* Scan the TLB structures */
      for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
          for (j=0; j<2; j++) {

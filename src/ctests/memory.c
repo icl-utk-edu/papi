@@ -88,7 +88,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    /* Extract and report the cache information */
-   L = &(hwinfo->mem_hierarchy.level[0]);
+   L = (PAPI_mh_level_t *) &(hwinfo->mem_hierarchy.level[0]);
    for (i=0; i<hwinfo->mem_hierarchy.levels; i++) {
       for (j=0; j<2; j++) {
          switch (L[i].cache[j].type) {
