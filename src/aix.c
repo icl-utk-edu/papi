@@ -116,43 +116,6 @@ static void unset_config(hwd_control_state_t * ptr, int arg1)
    ptr->counter_cmd.events[arg1] = 0;
 }
 
-int update_global_hwcounters(EventSetInfo_t * global)
-{
-   int i, retval;
-   pm_data_t data;
-
-   retval = pm_get_data_mythread(&data);
-   if (retval > 0)
-      return (retval);
-
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      SUBDBG("update_global_hwcounters() %d: G%lld = G%lld + C%lld\n", i,
-           global->hw_start[i] + data.accu[i], global->hw_start[i], data.accu[i]);
-      global->hw_start[i] = global->hw_start[i] + data.accu[i];
-   }
-
-   retval = pm_reset_data_mythread();
-   if (retval > 0)
-      return (retval);
-
-   return (0);
-}
-
-static int correct_local_hwcounters(EventSetInfo_t * global, EventSetInfo_t * local,
-                                    long long *correct)
-{
-   int i;
-
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      SUBDBG("%d: L%lld = G%lld - L%lld\n", i,
-           global->hw_start[i] - local->hw_start[i], global->hw_start[i],
-           local->hw_start[i]);
-      correct[i] = global->hw_start[i] - local->hw_start[i];
-   }
-
-   return (0);
-}
-
 int set_domain(hwd_control_state_t * this_state, int domain)
 {
    pm_mode_t *mode = &(this_state->counter_cmd.mode);
@@ -453,7 +416,7 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
    return (PAPI_ESBSTR);
 }
 
-#if 1
+#ifdef DEBUG
 void dump_cmd(pm_prog_t * t)
 {
    SUBDBG("mode.b.threshold %d\n", t->mode.b.threshold);
@@ -474,12 +437,12 @@ void dump_cmd(pm_prog_t * t)
    SUBDBG("reserved %d\n", t->reserved);
 }
 
-void dump_data(pm_data_t * d)
+void dump_data(long long *vals)
 {
    int i;
 
    for (i = 0; i < MAX_COUNTERS; i++) {
-      SUBDBG("accu[%d] = %lld\n", i, d->accu[i]);
+      SUBDBG("counter[%d] = %lld\n", i, vals[i]);
    }
 }
 #endif
@@ -492,22 +455,20 @@ int _papi_hwd_reset(hwd_context_t * ESI, hwd_control_state_t * zero)
 }
 
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long ** val, int flags)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t *spc, long_long **vals, int flags)
 {
    int retval;
-   int i;
-   pm_data_t data;
 
-   retval = pm_get_data_mythread(&data);
+   retval = pm_get_data_mythread(&spc->state);
    if (retval > 0)
       return (retval);
 
-#ifdef DEBUG
-	if (ISLEVEL(DEBUG_SUBSTRATE))
-   		dump_data(&data);
-#endif
+  *vals = spc->state.accu;
 
-   *val = data.accu;
+#ifdef DEBUG
+   if (ISLEVEL(DEBUG_SUBSTRATE))
+     dump_data(*vals);
+#endif
 
    return (PAPI_OK);
 }
@@ -569,10 +530,8 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    hwd_control_state_t *this_state = &ESI->machdep;
 
    if (threshold == 0) {
-      this_state->timer_ms = 0;
       ESI->overflow.timer_ms = 0;
    } else {
-      this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
       ESI->overflow.timer_ms = 1;
    }
 
