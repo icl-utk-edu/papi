@@ -59,6 +59,12 @@ static unsigned short random_ushort(void)
    return (unsigned short) (rnum = 1664525 * rnum + 1013904223);
 }
 
+/* compute the address index into the buffer array.
+   size determines sizeof(bucket)
+   the multiplication by pr_scale is done in 64-bit mode to avoid truncation
+   this routine is used by all three profiling cases
+   it is inlined for speed
+*/
 inline_static unsigned long profil_addr(caddr_t address, PAPI_sprofil_t * prof, unsigned long size)
 {
    unsigned long addr;
@@ -71,6 +77,11 @@ inline_static unsigned long profil_addr(caddr_t address, PAPI_sprofil_t * prof, 
    return(addr);
 }
 
+/* compute the amount by which to increment the bucket.
+   value is the current value of the bucket
+   this routine is used by all three profiling cases
+   it is inlined for speed
+*/
 inline_static int profil_increment(u_long_long value,
                             int flags, long_long excess,
                             long_long threshold)
@@ -106,202 +117,6 @@ inline_static int profil_increment(u_long_long value,
    return(increment);
 }
 
-//static void n_posix_profil_16(caddr_t address, PAPI_sprofil_t * prof,
-//                            int flags, long_long excess,
-//                            long_long threshold)
-//{
-//   unsigned short *buf = prof->pr_base;
-//   unsigned long addr;
-//
-//   addr = profil_addr(address, prof, sizeof(unsigned short);
-//   buf[addr] += profil_increment(buf[addr], flags, excess, threshold);
-//   DBG((stderr, "posix_profil_16() bucket %lu = %u\n", addr, buf[addr]));
-//}
-//
-//static void n_posix_profil_32(caddr_t address, PAPI_sprofil_t * prof,
-//                            int flags, long_long excess,
-//                            long_long threshold)
-//{
-//   unsigned int *buf = prof->pr_base;
-//   unsigned long addr;
-//
-//   addr = profil_addr(address, prof, sizeof(unsigned int);
-//   buf[addr] += profil_increment(buf[addr], flags, excess, threshold);
-//   DBG((stderr, "posix_profil_32() bucket %lu = %u\n", addr, buf[addr]));
-//}
-//
-//static void n_posix_profil_64(caddr_t address, PAPI_sprofil_t * prof,
-//                            int flags, long_long excess,
-//                            long_long threshold)
-//{
-//   u_long_long *buf = prof->pr_base;
-//   unsigned long addr;
-//
-//   addr = profil_addr(address, prof, sizeof(u_long_long);
-//   buf[addr] += profil_increment(buf[addr], flags, excess, threshold);
-//   DBG((stderr, "posix_profil_64() bucket %lu = %u\n", addr, buf[addr]));
-//}
-//
-//static void posix_profil_16(caddr_t address, PAPI_sprofil_t * prof,
-//                            unsigned short *outside_bin, int flags, long_long excess,
-//                            long_long threshold)
-//{
-//   int increment = 1;
-//   unsigned short *buf = prof->pr_base;
-//   unsigned long addr;
-//   u_long_long laddr;
-//
-//   addr = (unsigned long) (address - prof->pr_off);
-//
-//   if (addr >= prof->pr_size) {
-//      *outside_bin = *outside_bin + 1;
-//      DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
-//      return;
-//   }
-//   addr = addr / sizeof(unsigned short);        /* get the index */
-//   laddr = ((u_long_long)addr) * prof->pr_scale;
-//   addr = (unsigned long) (laddr >> 16);
-//
-//
-//   if (flags == PAPI_PROFIL_POSIX) {
-//      buf[addr]++;
-//      DBG((stderr, "bucket %lu = %u\n", addr, buf[addr]));
-//      return;
-//   }
-//
-//   if (flags & PAPI_PROFIL_RANDOM) {
-//      if (random_ushort() <= (USHRT_MAX / 4))
-//         return;
-//   }
-//
-//   if (flags & PAPI_PROFIL_COMPRESS) {
-//      /* We're likely to ignore the sample if buf[address] gets big. */
-//
-//      if (random_ushort() < buf[addr]) {
-//         return;
-//      }
-//   }
-//
-//   if (flags & PAPI_PROFIL_WEIGHTED) {  /* Increment is between 1 and 255 */
-//      if (excess <= (long_long) 1)
-//         increment = 1;
-//      else if (excess > threshold)
-//         increment = 255;
-//      else {
-//         threshold = threshold / (long_long) 255;
-//         increment = (int) (excess / threshold);
-//      }
-//   }
-//
-//   buf[addr] += increment;
-//   DBG((stderr, "posix_profile() bucket %lu = %u\n", addr, buf[addr]));
-//}
-//
-//static void posix_profil_32(caddr_t address, PAPI_sprofil_t * prof,
-//                            unsigned short *outside_bin, int flags, long_long excess,
-//                            long_long threshold)
-//{
-//   int increment = 1;
-//   unsigned int *buf = prof->pr_base;
-//   unsigned long addr;
-//   u_long_long laddr;
-//
-//   addr = (unsigned long) (address - prof->pr_off);
-//
-//   if (addr >= prof->pr_size) {
-//      *outside_bin = *outside_bin + 1;
-//      DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
-//      return;
-//   }
-//   addr = addr / sizeof(unsigned int);  /* get the index */
-//   laddr = ((u_long_long)addr) * prof->pr_scale;
-//   addr = (unsigned long) (laddr >> 16);
-//   if (flags == PAPI_PROFIL_POSIX) {
-//      buf[addr]++;
-//      DBG((stderr, "bucket %lu = %u\n", addr, buf[addr]));
-//      return;
-//   }
-//
-//   if (flags & PAPI_PROFIL_RANDOM) {
-//      if (random_ushort() <= (USHRT_MAX / 4))
-//         return;
-//   }
-//
-//   if (flags & PAPI_PROFIL_COMPRESS) {
-//      /* We're likely to ignore the sample if buf[address] gets big. */
-//
-//      if (random_ushort() < buf[addr]) {
-//         return;
-//      }
-//   }
-//
-//   if (flags & PAPI_PROFIL_WEIGHTED) {  /* Increment is between 1 and 255 */
-//      if (excess <= (long_long) 1)
-//         increment = 1;
-//      else if (excess > threshold)
-//         increment = 255;
-//      else {
-//         threshold = threshold / (long_long) 255;
-//         increment = (int) (excess / threshold);
-//      }
-//   }
-//
-//   buf[addr] += increment;
-//   DBG((stderr, "posix_profile() bucket %lu = %u\n", addr, buf[addr]));
-//}
-//
-//static void posix_profil_64(caddr_t address, PAPI_sprofil_t * prof,
-//                            unsigned short *outside_bin, int flags, long_long excess,
-//                            long_long threshold)
-//{
-//   int increment = 1;
-//   u_long_long *buf = prof->pr_base;
-//   unsigned long addr;
-//   u_long_long laddr;
-//
-//   addr = (unsigned long) (address - prof->pr_off);
-//
-//   if (addr >= prof->pr_size) {
-//      *outside_bin = *outside_bin + 1;
-//      DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
-//      return;
-//   }
-//   addr = addr / sizeof(long_long);     /* get the index */
-//   laddr = ((u_long_long)addr) * prof->pr_scale;
-//   addr = (unsigned long) (laddr >> 16);
-//   if (flags == PAPI_PROFIL_POSIX) {
-//      buf[addr]++;
-//      DBG((stderr, "bucket %lu = %lld\n", addr, buf[addr]));
-//      return;
-//   }
-//
-//   if (flags & PAPI_PROFIL_RANDOM) {
-//      if (random_ushort() <= (USHRT_MAX / 4))
-//         return;
-//   }
-//
-//   if (flags & PAPI_PROFIL_COMPRESS) {
-//      /* We're likely to ignore the sample if buf[address] gets big. */
-//
-//      if (random_ushort() < buf[addr]) {
-//         return;
-//      }
-//   }
-//
-//   if (flags & PAPI_PROFIL_WEIGHTED) {  /* Increment is between 1 and 255 */
-//      if (excess <= (long_long) 1)
-//         increment = 1;
-//      else if (excess > threshold)
-//         increment = 255;
-//      else {
-//         threshold = threshold / (long_long) 255;
-//         increment = (int) (excess / threshold);
-//      }
-//   }
-//
-//   buf[addr] += increment;
-//   DBG((stderr, "posix_profile() bucket %lu = %lld\n", addr, buf[addr]));
-//}
 
 static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
                          unsigned short *outside_bin, int flags, long_long excess,
@@ -318,23 +133,22 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
       DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
       return;
    }
-   
+   /* test first for 16-bit buckets; this should be the fast case */
    if (!(flags & (PAPI_PROFIL_BUCKET_32+PAPI_PROFIL_BUCKET_64))) {
-//      n_posix_profil_16(address, prof, flags, excess, threshold);
       buf16 = prof->pr_base;
       addr = profil_addr(address, prof, sizeof(short));
       buf16[addr] += profil_increment(buf16[addr], flags, excess, threshold);
       DBG((stderr, "posix_profil_16() bucket %lu = %u\n", addr, buf16[addr]));
    }
+   /* next, look for the 32-bit case */
    else if (flags & PAPI_PROFIL_BUCKET_32) {
-//      n_posix_profil_32(address, prof, flags, excess, threshold);
       buf32 = prof->pr_base;
       addr = profil_addr(address, prof, sizeof(int));
       buf32[addr] += profil_increment(buf32[addr], flags, excess, threshold);
       DBG((stderr, "posix_profil_32() bucket %lu = %u\n", addr, buf32[addr]));
    }
+   /* finally, fall through to the 64-bit case */
    else {
-//      n_posix_profil_64(address, prof, flags, excess, threshold);
       buf64 = prof->pr_base;
       addr = profil_addr(address, prof, sizeof(long_long));
       buf64[addr] += profil_increment(buf64[addr], flags, excess, threshold);
