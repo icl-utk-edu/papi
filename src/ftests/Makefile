@@ -20,6 +20,8 @@ pthreads:
 
 shmem:
 
+multiplex_and_pthreads: 
+
 serial:  $(TESTS)
 
 
