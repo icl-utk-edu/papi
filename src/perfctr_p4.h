@@ -28,6 +28,8 @@ typedef struct P4_perfctr_event {
   unsigned int pmc_map;
   unsigned int evntsel;
   unsigned int evntsel_aux;
+  unsigned int pebs_enable;
+  unsigned int pebs_matrix_vert;
   int ireset;
 } P4_perfctr_event_t;
 
@@ -170,13 +172,19 @@ typedef P4_preset_t hwd_preset_t;
 #define COUNTER(a) (a)
 #define ESCR(a) (a << 13)
 #define ENABLE (1 << 12)
-#define REQUIRED (0x3 << 16)
+#define HYPERTHREAD_ANY (0x3 << 16)
 #define NBOGUSNTAG (1 << 9)
 #define CPL(a) (a << 2)
 #define EVENT(a) (a << 25)
+#define EVENTMASK(a) (a << 9)
 #define COMPARE (1 << 18)
 #define COMPLEMENT (1 << 19)
 #define THRESHOLD(a) (a << 20)
+#define PEBS_TAG (1 << 24)
+#define PEBS_L1_MISS (1)
+#define PEBS_L2_MISS (1)
+#define PEBS_MV_LOAD (1)
+#define PEBS_MV_STORE (1 << 1)
 
 /* Stupid linux basename prototype! */
 

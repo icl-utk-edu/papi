@@ -25,7 +25,7 @@
 
 extern papi_mdi_t _papi_hwi_system_info;
 
-extern const P4_search_t _papi_hwd_pentium4_preset_map[];
+extern P4_search_t _papi_hwd_pentium4_preset_map[];
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -41,7 +41,7 @@ P4_preset_t _papi_hwd_preset_map[PAPI_MAX_PRESET_EVENTS];
 /* END LOCAL DECLARATIONS */
 /**************************/
 
-static int setup_presets(const P4_search_t *preset_search_map, P4_preset_t *preset_map)
+static int setup_presets(P4_search_t *preset_search_map, P4_preset_t *preset_map)
 {
   int pnum, unum, preset_index, did_something = 0;
   char *note;
@@ -270,6 +270,7 @@ int _papi_hwd_init(P4_perfctr_context_t *ctx)
 
   /* Initialize the per thread/process virtualized TSC */
 
+  memset(&tmp,0x0,sizeof(tmp));
   init_config(&tmp);
  
   /* Start the per thread/process virtualized TSC */
@@ -472,6 +473,12 @@ void print_control(const struct perfctr_cpu_control *control)
 	if( control->evntsel_aux[i] )
 	    SUBDBG("evntsel_aux[%u]\t0x%08X\n", i, control->evntsel_aux[i]);
     }
+    if( control->p4.pebs_enable )
+      SUBDBG("pebs_enable[%u]\t0x%08X\n", i, 
+	     control->p4.pebs_enable);
+    if( control->p4.pebs_matrix_vert )
+      SUBDBG("pebs_matrix_vert[%u]\t0x%08X\n", i, 
+	     control->p4.pebs_matrix_vert);
 }
 #endif
 
@@ -507,6 +514,9 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
 
   /* Add counter control command values to eventset */
 
+  evset_info->control.cpu_control.p4.pebs_enable = 0;
+  evset_info->control.cpu_control.p4.pebs_matrix_vert = 0;
+
   index = evset_info->control.cpu_control.nractrs;
   for (i=0;i<preset->number;i++)
     {
@@ -514,6 +524,10 @@ int _papi_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset, P4_perfctr_co
       evset_info->control.cpu_control.evntsel[index] = preset->info->data[i].evntsel;
       evset_info->control.cpu_control.evntsel_aux[index] = preset->info->data[i].evntsel_aux;
       evset_info->control.cpu_control.ireset[index] = 0;
+      if (preset->info->data[i].pebs_enable)
+	evset_info->control.cpu_control.p4.pebs_enable = preset->info->data[i].pebs_enable;
+      if (preset->info->data[i].pebs_matrix_vert)
+	evset_info->control.cpu_control.p4.pebs_matrix_vert = preset->info->data[i].pebs_matrix_vert;
       index++;
     }
   evset_info->control.cpu_control.nractrs = index;

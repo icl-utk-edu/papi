@@ -19,6 +19,7 @@ extern "C" {
 /* Include files */
 
 #include <sys/types.h>
+#include <limits.h>
 #include "papiStdEventDefs.h"
 
 /*
@@ -175,7 +176,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_GET_SHLIBINFO  	75 /* Executable information */  
 
-#define PAPI_MAX_STR_LEN        81 /* Guess what */
+#define PAPI_MAX_STR_LEN        PATH_MAX /* Guess what */
 
 #define PAPI_DERIVED            0x1 /* Flag to indicate that the event is derived */
 
