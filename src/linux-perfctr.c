@@ -17,12 +17,11 @@ and mask. This means that the same even is available on either
 counter. */
 
 static hwd_preset_t *preset_map;
-
 static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = { 
   {CNTR2|CNTR1,0,0,{{0x45,0x45,0x0,0x0}},""},	// L1 Cache Dmisses 
-  {CNTR2|CNTR1,0,0,{{0x81,0x81,0x0,0x0}},""},	// L1 Cache Imisses 
+  {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L1 Cache Imisses 
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Cache Dmisses
-  {0,0,0,{{0,0,0x0,0x0}},""}, 			// L2 Cache Imisses
+  {CNTR2|CNTR1,0,0,{{0x81,0x81,0x0,0x0}},""},	// L2 Cache Imisses 
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Dmisses
   {0,0,0,{{0,0,0x0,0x0}},""}, 			// L3 Cache Imisses
   {CNTR2|CNTR1,0,0,{{0xf2e,0xf2e,0x0,0x0}},""},	// L1 Total Cache misses 
@@ -84,7 +83,7 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {0,0,0,{{0,0,0,0}},""},			// Total load/store inst. exec
   {0,0,0,{{0,0,0x0,0x0}},""},			// SYnc exec.
   {CNTR2|CNTR1,DERIVED_SUB,0,{{0x43,0x45,0x0,0x0}},""}, // L1_DCH
-  {CNTR2|CNTR1,DERIVED_SUB,0,{{0xf2e,0xf24,0x0,0x0}},""}, // L2_DCH
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_DCH
   {CNTR2|CNTR1,0,0,{{0x43,0x43,0x0,0x0}},""},	// L1_DCA
   {CNTR2|CNTR1,DERIVED_ADD,0,{{0xf29,0xf2a,0x0,0x0}},""}, // L2_DCA
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCA
@@ -94,8 +93,8 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {0,0,0,{{0,0,0x0,0x0}},""},			// L1_DCW
   {CNTR2|CNTR1,0,0,{{0xf2a,0xf2a,0x0,0x0}},""},	// L2_DCW
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_DCW
-  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x80,0x81,0x0,0x0}},""}, // L1_ICH
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICH
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0x80,0xf28,0x0,0x0}},""}, // L1_ICH
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0xf28,0x81,0x0,0x0}},""}, // L2_ICH
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICH
   {CNTR2|CNTR1,0,0,{{0x80,0x80,0x0,0x0}},""},	// L1_ICA
   {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L2_ICA
@@ -103,11 +102,11 @@ static hwd_preset_t p6_preset_map[PAPI_MAX_PRESET_EVENTS] = {
   {CNTR2|CNTR1,0,0,{{0x80,0x80,0x0,0x0}},""},	// L1_ICR
   {CNTR2|CNTR1,0,0,{{0xf28,0xf28,0x0,0x0}},""},	// L2_ICR
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICR
-  {CNTR2|CNTR1,0,0,{{0x81,0x81,0x0,0x0}},""},	// L1_ICW
+  {0,0,0,{{0,0,0x0,0x0}},""},			// L1_ICW
   {0,0,0,{{0,0,0x0,0x0}},""},			// L2_ICW
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_ICW
   {0,0,0,{{0,0,0x0,0x0}},""},			// L1_TCH
-  {0,0,0,{{0,0,0x0,0x0}},""},			// L2_TCH
+  {CNTR2|CNTR1,DERIVED_SUB,0,{{0xf2e,0x24,0x0,0x0}},""}, // L2_TCH
   {0,0,0,{{0,0,0x0,0x0}},""},			// L3_TCH
   {CNTR2|CNTR1,DERIVED_ADD,0,{{0x43,0x80,0x0,0x0}},""},	// L1_TCA
   {CNTR2|CNTR1,0,0,{{0xf2e,0xf2e,0x0,0x0}},""},	// L2_TCA
