@@ -36,6 +36,7 @@
 const char *papi_defNam[] = {
   "PAPI_NULL",
   "PAPI_VER_CURRENT",
+  "PAPI_MAX_PRESET_EVENTS",
 
   "PAPI_DOM_USER",
   "PAPI_DOM_KERNEL",
@@ -87,6 +88,7 @@ const char *papi_defNam[] = {
 const int papi_defNum[] = {
   PAPI_NULL,
   PAPI_VER_CURRENT,
+  PAPI_MAX_PRESET_EVENTS,
 
   PAPI_DOM_USER,
   PAPI_DOM_KERNEL,

@@ -14,10 +14,12 @@
 #include <asm/ucontext.h>    /* sys/ucontext.h  apparently broken */
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <asm/system.h>
 #include <asm/param.h>
+#include <asm/bitops.h>
 #include <linux/unistd.h>	
 
 #ifndef CONFIG_SMP

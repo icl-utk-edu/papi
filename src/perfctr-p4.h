@@ -18,7 +18,8 @@
 #include <sys/ucontext.h>
 
 #include <linux/unistd.h>	
-#include <asm/atomic.h>
+#include <asm/system.h>
+#include <asm/bitops.h>
 
 #include "libperfctr.h"
 
@@ -210,5 +211,5 @@ extern int sigrelse(int);
 /* Undefined identifiers in executable */
 
 extern caddr_t _start, _fini, _end, _edata, __data_start, __bss_start;
-
-int _papi_hwd_get_system_info(void);
+extern int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type );
+extern int _papi_hwd_get_system_info(void);

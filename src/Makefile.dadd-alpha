@@ -7,7 +7,7 @@ DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial multiplex
 
-CFLAGS 	= -Zp8 
+CFLAGS 	= -I/usr/include/dcpi -Zp8 
 FFLAGS	= 
 OPTFLAGS= -O 
 TOPTFLAGS=$(OPTFLAGS)
@@ -16,7 +16,7 @@ FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
 MISCLIBS= 
-LDFLAGS = -lrt -lclu /usr/local/dadd/dadd.a
+LDFLAGS = -lrt -lclu /usr/lib/dcpi/dadd.a
 CC_SHR	= cc -shared -all -rpath . -lrt -lclu
 CC_R	= cc -pthread
 CC	= cc
