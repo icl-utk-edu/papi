@@ -83,33 +83,45 @@
       end if
 
       EventCode = 0
-      do i=1, MAX_TO_ADD, 1
+	i = 1
+      do while (i .LE. MAX_TO_ADD)
          avail_flag=0
          do while ((avail_flag.EQ.0).AND.
      *        (EventCode.LT.PAPI_MAX_PRESET_EVENTS))
-            call papif_query_event_verbose(PAPI_L1_DCM+EventCode, 
-     *      event_name, event_descr, event_label, avail_flag, 
-     *      event_note, flags, check)
-            EventCode = EventCode + 1
+		  if ((PAPI_L1_DCM+EventCode).NE.PAPI_TOT_CYC) then
+              call papif_query_event_verbose(PAPI_L1_DCM+EventCode, 
+     *          event_name, event_descr, event_label, avail_flag, 
+     *          event_note, flags, check)
+		  end if
+	      EventCode = EventCode + 1
          end do
 
          if (tests_quiet .EQ. 0) then
             write (*, 200) "  Adding Event ", event_name 
- 200        FORMAT(A15, A11)
+ 200        FORMAT(A22, A12)
          end if
 
          call PAPIf_add_event( EventSet, PAPI_L1_DCM+(EventCode-1),
      * retval )
-         if ( retval .NE. PAPI_OK ) then
+         if ( retval .NE. PAPI_OK .AND. retval .NE. PAPI_ECNFLCT) then
             call ftest_fail(__FILE__, __LINE__,
      *           'PAPIf_add_event', retval)
             stop
          end if
 
          if (tests_quiet .EQ. 0) then
-            write (*, 200) "  Added Event ", event_name 
+	     if (retval .EQ. PAPI_OK) then
+             write (*, 200) "  Added Event ", event_name
+	     else
+             write (*, 200) "  Could not add Event ", event_name
+           end if
          end if
-      end do
+      
+	   if (retval .EQ. PAPI_OK) then
+	     i = i + 1
+	   end if
+
+	end do
       
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
