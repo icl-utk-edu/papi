@@ -242,6 +242,17 @@ static void headerlines(char * title, int TESTS_QUIET)
   Format and display results.
   Compute error without using floating ops.
 */
+#if defined(mips)
+  #define SLOPE 9
+  #define FMA 1
+#elif (defined(sparc) && defined(sun))
+  #define SLOPE 0
+  #define FMA 1
+#else
+  #define SLOPE 0
+  #define FMA 1
+#endif
+
 static void resultline(int i, int j, int TESTS_QUIET)
 {
 	float real_time, proc_time, mflops, ferror;
@@ -256,7 +267,7 @@ static void resultline(int i, int j, int TESTS_QUIET)
 		i++;						/* convert to 1s base  */
 		theory = 2;
 		while (j--) theory *= i;	/* theoretical ops   */
-		papi = (int)(flpins);
+		papi = (int)(flpins) << FMA;
 		diff = papi - theory;
 
 		ferror = ((float)abs(diff)) / ((float)theory) * 100;
