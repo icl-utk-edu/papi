@@ -36,7 +36,7 @@ The Fortran interface is a series of calls implementing various subsets of
 the C interface. Not all options in C are available in Fortran.
 .LP
 .B NOTE:
-/  Some options, such as PAPI_SET_DOMAIN and PAPI_SET_MULTIPLEX, are also 
+Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, are also 
 available as separate entry points in both C and Fortran.
 .LP
 The reader is urged to see the example code in the PAPI distribution
@@ -90,75 +90,63 @@ lB lw(45).
 .TH
 Predefined name$Explanation
 General information requests
-PAPI_GET_CLOCKRATE$T{
-Return clockrate in MHz.
+PAPI_MAXMEM$T{
+ not implemented yet.
 T}
-PAPI_GET_MAX_CPUS$T{
-Return number of CPUs.
+PAPI_CLOCKRATE$T{
+Get clockrate in MHz.
 T}
-PAPI_GET_MAX_HWCTRS$T{
-Return number of counters.
+PAPI_MAX_CPUS$T{
+Get number of CPUs.
 T}
-PAPI_GET_EXEINFO$T{
-Addresses for text/data/bss.
+PAPI_MAX_HWCTRS$T{
+Get number of counters.
 T}
-PAPI_GET_HWINFO$T{
-Info. about hardware.
+PAPI_EXEINFO$T{
+Get Addresses for text/data/bss.
 T}
-PAPI_GET_PRELOAD$T{
+PAPI_HWINFO$T{
+Get Info. about hardware.
+T}
+PAPI_SHLIBINFO$T{
+Get shared library Info. used by the program.
+T}
+PAPI_PRELOAD$T{
 Get ``LD_PRELOAD'' environment equivalent.
 T}
 .T&
 cI s
 lB lw(45).
 Defaults for the global library
-PAPI_GET_DEFDOM$T{
-Return default counting domain for newly created event sets.
+PAPI_DEFDOM$T{
+Get/Set default counting domain for newly created event sets.
 T}
-PAPI_SET_DEFDOM$T{
-Set default counting domain.
+PAPI_DEFGRN$T{
+Get/Set default counting granularity.
 T}
-PAPI_GET_DEFGRN$T{
-Return default counting granularity.
-T}
-PAPI_SET_DEFGRN$T{
-Set default counting granularity.
-T}
-PAPI_GET_DEBUG$T{
-Get the PAPI debug state. The available debug states are
+PAPI_DEBUG$T{
+Get/Set the PAPI debug state. The available debug states are
 defined in papi.h. 
-The debug state is available in ptr->debug.
-T}
-PAPI_SET_DEBUG$T{
-Set the PAPI debug state
+The debug state is available in ptr->debug.level.
 T}
 .T&
 cI s
 lB lw(45).
 Multiplexing control
-PAPI_GET_MULTIPLEX$T{
-Get options for multiplexing. Currently not implemented.
-T}
-PAPI_SET_MULTIPLEX$T{
-Set options for multiplexing
+PAPI_MULTIPLEX$T{
+Get/Set options for multiplexing. 
 T}
 .T&
 cI s
 lB lw(45).
 Manipulating individual event sets
-PAPI_GET_DOMAIN$T{
-Get domain for a single event set. The event set is specified 
+PAPI_DOMAIN$T{
+Get/Set domain for a single event set. The event set is specified 
 in ptr->domain.eventset
 T}
-PAPI_SET_DOMAIN$T{
-Set the domain for a single event set.
-T}
-PAPI_GET_GRANUL$T{
-Get granularity for a single event set. The event set is specified 
-in ptr->granularity.eventset
-T}
-PAPI_SET_GRANUL$T{
-Set the granularity for a single event set.
+PAPI_GRANUL$T{
+Get/Set granularity for a single event set. The event set is specified 
+in ptr->granularity.eventset. Not implemented yet.
 T}
 .TE
 
@@ -212,7 +200,7 @@ The event set is currently counting events.
 int num, EventSet = PAPI_NULL;
 PAPI_option_t options;
 
-if ((num = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL)) <= 0)
+if ((num = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL)) <= 0)
   handle_error();
 
 printf("This machine has %d counters.\n",num);
@@ -228,7 +216,7 @@ memset(&options,0x0,sizeof(options));
 
 options.domain.eventset = EventSet;
 options.domain.domain = PAPI_DOM_ALL;
-if (PAPI_set_opt(PAPI_SET_DOMAIN, &options) != PAPI_OK)
+if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
   handle_error();
 .if t .ft P
 .fi

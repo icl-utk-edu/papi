@@ -8,7 +8,7 @@ PAPI_thread_id \- get the thread identifier of the current thread
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "unsigned long int PAPI_thread_id(void);"
+.BI "unsigned long PAPI_thread_id(void);"
 .fi
 .B Fortran Interface
 .nf
@@ -30,7 +30,7 @@ None.
 .SH EXAMPLE
 .nf
 .if t .ft CW
-unsigned long int tid;
+unsigned long tid;
 
 if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
   exit(1);

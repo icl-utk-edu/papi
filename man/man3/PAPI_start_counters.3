@@ -20,7 +20,7 @@ PAPI_start_counters \- PAPI High Level: start counting hardware events
 .B PAPI_start_counters(\|)
 starts counting the events named in the events array.  This function
 can't be called if the events array is already running. The user must
-call PAPI_stop_counters to stop the events explicitly if you want to 
+call PAPI_stop_counters to stop the events explicitly if he/she wants to 
 call this function again.  It is the user's responsibility
 to choose events that can be counted simultaneously by reading the
 vendor's documentation.  The length of the event array should be no longer

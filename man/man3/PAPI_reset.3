@@ -68,7 +68,7 @@ if (PAPI_stop(EventSet, values) != PAPI_OK)
 
 printf("%lld\en",values[0]);
 
-if (PAPI_reset(EventSet, values) != PAPI_OK)
+if (PAPI_reset(EventSet) != PAPI_OK)
   handle_error(1);
 .if t .ft P
 .fi
