@@ -10,6 +10,7 @@ OMPCFLGS=
 CC_R	= cc
 CC	= cc
 F77	= f77
+MISCOBJS= cpu_version.o read_cycle_counter.o
 
 include Makefile.inc
 

@@ -102,7 +102,7 @@ static int setup_all_presets(int model)
 	  preset_map[pnum].counter_cmd[hwnum] = event;
 
 	  sprintf(str,"%d",event);
-	  if (strlen(preset_map[pnum].note))
+	  if ((strlen(preset_map[pnum].note) != (size_t)0))
 	    strcat(preset_map[pnum].note,",");
 	  strcat(preset_map[pnum].note,str);
 	  
@@ -250,7 +250,7 @@ static int get_system_info(void)
   if (retval > 0)
     return(retval); */
 
-  if (getsysinfo(GSI_CPU_INFO, &cpuinfo, sizeof(cpuinfo), NULL, NULL, NULL) == -1)
+  if (getsysinfo(GSI_CPU_INFO, (char *)&cpuinfo, sizeof(cpuinfo), NULL, NULL, NULL) == -1)
     return PAPI_ESYS;
 
   _papi_system_info.cpunum = cpuinfo.current_cpu;
@@ -317,6 +317,20 @@ long long _papi_hwd_get_real_cycles (void)
   usec = (float)_papi_hwd_get_real_usec();
   cyc = usec * _papi_system_info.hw_info.mhz;
   return((long long)cyc);
+}
+
+long long _papi_hwd_get_virt_usec (void)
+{
+  struct rusage usage;
+  if (getrusage(RUSAGE_SELF, &usage) != -1)
+    return((long long)usage.ru_utime.tv_usec + ((long long)usage.ru_utime.tv_sec * (long long)1000000));
+  else
+    return(-1);
+}
+
+long long _papi_hwd_get_virt_cycles (void)
+{
+  return(_papi_hwd_get_virt_usec() * (long long)_papi_system_info.hw_info.mhz);
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -868,7 +882,7 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
     }
 }
 
-int _papi_hwd_write(EventSetInfo *ESI, long long events[])
+int _papi_hwd_write(EventSetInfo *master, EventSetInfo *ESI, long long events[])
 { 
   return(PAPI_ESBSTR);
 }
@@ -896,20 +910,9 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+  /* This function is not used and shouldn't be called. */
 
-  if (overflow_option->threshold == 0)
-    {
-      this_state->timer_ms = 0;
-      overflow_option->timer_ms = 0;
-    }
-  else
-    {
-      this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
-      overflow_option->timer_ms = 1;
-    }
-
-  return(PAPI_OK);
+  abort();
 }
 
 int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_option)
@@ -959,10 +962,10 @@ papi_mdi _papi_system_info = { "$Id$",
 			       {
 				 "",
 				 "",
-				 (caddr_t)&_init,
-				 (caddr_t)&_etext,
-				 (caddr_t)&_etext+1,
-				 (caddr_t)&_edata,
+				 (caddr_t)NULL,
+				 (caddr_t)NULL,
+				 (caddr_t)NULL,
+				 (caddr_t)NULL,
 				 (caddr_t)NULL,
 				 (caddr_t)NULL,
 				 "_RLD_LIST", /* How to preload libs */
