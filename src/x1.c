@@ -537,13 +537,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
          SUBDBG("Error resetting overflow to 0 for event on counter %d. Error: %d\n",counter,oserror());
          return(PAPI_ESYS);
       }
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0) {
          if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
             retval = PAPI_ESYS;
       }
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_unlock(INTERNAL_LOCK);
   }
   else {
       struct sigaction act;
@@ -568,9 +568,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
          return(PAPI_ESYS);
       }
 
-      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal++;
-      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_unlock(INTERNAL_LOCK);
       _papi_hwi_system_info.using_hw_overflow = 1;
   }
   return(retval);
