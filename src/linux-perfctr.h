@@ -6,15 +6,13 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/times.h>
-#include <asm/system.h>
-#include <linux/unistd.h>	
-// #include <linux/smp.h>
-#ifdef PERFCTR20
 #include <time.h>
-#endif
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <asm/system.h>
+#include <asm/param.h>
+#include <linux/unistd.h>	
 
 #include "libperfctr.h"
 #include "x86-events.h"

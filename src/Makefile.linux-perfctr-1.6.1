@@ -1,12 +1,14 @@
 SUBSTR  = linux-perfctr
 DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
 LIBS	= static shared
-TARGETS = multiplex serial pthreads 
+TARGETS = serial multiplex pthreads 
 
-CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR16 -I. -g
+KERNINC	= /usr/src/linux-2.4.2-perfctr-1.6/include
+PERFCTR	= ./perfctr
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -Wall -g -DPERFCTR16
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 FFLAGS	= -Wall -g -Dlinux
-OPTFLAGS= 
+OPTFLAGS= -O3 -mpentiumpro
 FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc
 F77	= g77
@@ -16,14 +18,17 @@ MISCOBJS= libperfctr.o
 
 include Makefile.inc
 
-x86-events.h: ./perfctr/etc/mk-events-h.awk ./perfctr/etc/perfctr-events.tab
-	awk -f ./perfctr/etc/mk-events-h.awk ./perfctr/etc/perfctr-events.tab > $@
+x86-events.h: $(PERFCTR)/etc/mk-events-h.awk $(PERFCTR)/etc/perfctr-events.tab
+	awk -f $(PERFCTR)/etc/mk-events-h.awk $(PERFCTR)/etc/perfctr-events.tab > $@
 
-libperfctr.o: ./perfctr/usr.lib/libperfctr.o x86-events.h
-	cp ./perfctr/usr.lib/libperfctr.o .
+libperfctr.o: $(PERFCTR)/usr.lib/libperfctr.o x86-events.h
+	cp $(PERFCTR)/usr.lib/libperfctr.o .
 
-./perfctr/usr.lib/libperfctr.o: ./perfctr/config.out
-	$(MAKE) -C perfctr
+$(PERFCTR)/usr.lib/libperfctr.o: $(PERFCTR)/config.out
+	$(MAKE) -C $(PERFCTR)
 
-./perfctr/config.out:
-	-cd perfctr; ./configure
+$(PERFCTR)/config.out:
+	-cd $(PERFCTR); ./configure
+
+clean-perfctr:
+	$(MAKE) -C $(PERFCTR)

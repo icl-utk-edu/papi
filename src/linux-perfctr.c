@@ -470,12 +470,12 @@ static int get_system_info(struct perfctr_dev *dev)
   _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info) - 1;
   _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info) - 1;
 #endif
-#else
+#elif defined(PERFCTR16) 
   if (perfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
-  strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(dev));
-  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(dev) - 1;
-  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(dev) - 1;
+  strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
+  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info) - 1;
+  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info) - 1;
 #endif
 
   _papi_system_info.hw_info.model = (int)info.cpu_type;

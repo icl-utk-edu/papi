@@ -10,9 +10,11 @@
 Linux 2.4 Kernel Notes
 ----------------------
 
-If using Linux 2.4, patch your kernel with the appropriate patch from perfctr/
-directory above or get the latest distribution from Mikael Petterson's 
-web site.
+If using Linux 2.4, patch your kernel with the appropriate patch 
+either Perfctr 1.6 from perfctr/ or Perfctr 2.3 from perfctr-2.3/.
+
+The latest distribution can always be obtained from Mikael Petterson's
+web site although it is not guaranteed to work. 
 
 		http://www.csd.uu.se/~mikpe/linux/perfctr/
 
@@ -24,8 +26,13 @@ kernel, check the Linux HOWTO's on the web.
 Before you compile
 ------------------
 
-cd ../perfctr
+cd perfctr or perfctr-2.3
 more INSTALL
+
+If your getting compilation errors regarding not being able to find
+include files, then your probably running a broken redhat installation.
+Edit the path to your kernel include files at the top of either
+Makefile.linux-perfctr or Makefile.linux-perfctr-2.3
 
 Linux 2.4 Native Event Notes
 ----------------------------

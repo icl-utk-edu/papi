@@ -21,21 +21,17 @@
   #define PAPI_EVENT 		PAPI_FP_INS
 #endif
 
-int TESTS_QUIET=0; /* Tests in Verbose mode? */
+extern int TESTS_QUIET; /* Declared in test_utils.c */
 
 int main(int argc, char **argv) 
 {
   int retval, num_tests = 2, eventcnt, events[2], i, tmp;
   int EventSet1 = PAPI_NULL, EventSet2 = PAPI_NULL;
-  int num_events1;
   long_long values1[2], values2[2];
   long_long elapsed_us, elapsed_cyc;
   char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
   if ( retval != PAPI_VER_CURRENT)  test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);

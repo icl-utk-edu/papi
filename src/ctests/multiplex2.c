@@ -26,7 +26,7 @@
 extern void do_flops(int);
 extern void do_reads(int);
 
-int TESTS_QUIET=0;
+extern int TESTS_QUIET;
 
 void init_papi(void)
 {

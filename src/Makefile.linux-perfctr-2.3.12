@@ -1,9 +1,11 @@
 SUBSTR  = linux-perfctr
 DESCR	= "Linux with PerfCtr patch for all Pentiums and the AMD K7"
 LIBS	= static shared
-TARGETS = multiplex serial pthreads 
+TARGETS = serial multiplex pthreads 
 
-CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR20 -I. -g
+KERNINC	= /usr/src/linux-2.4.13/include
+PERFCTR	= ./perfctr-2.3
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -Wall -g -DPERFCTR20
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 FFLAGS	= -Wall -g -Dlinux
 OPTFLAGS= -O3 -mpentiumpro
@@ -13,18 +15,20 @@ F77	= g77
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PWD)"
 CC_R	= $(CC) -pthread
 MISCOBJS= libperfctr.o
-PERFCTR	= perfctr-2.3
+
 
 include Makefile.inc
 
-x86-events.h: perfctr
+x86-events.h: $(PERFCTR)
 	cp ./$(PERFCTR)/etc/perfctr-events.tab > $@
 
-libperfctr.o: perfctr
+libperfctr.o: $(PERFCTR)
 	cp ./$(PERFCTR)/usr.lib/libperfctr.o .
 
-perfctr:
-	$(MAKE) -C perfctr
+$(PERFCTR): null
+	$(MAKE) -C $(PERFCTR)
 
 clean-perfctr:
-	$(MAKE) -C perfctr clean
+	$(MAKE) -C $(PERFCTR) clean
+
+null:
