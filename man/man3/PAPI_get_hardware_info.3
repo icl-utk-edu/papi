@@ -99,13 +99,13 @@ The C data structure returned by this function is found in
 .nf
 .if t .ft CW
    typedef struct _papi_mh_tlb_info {
-      int type; /* Empty, instr, data, vector, unified */
+      int type; /* See papi.h for PAPI_MH definitions. */
       int num_entries;
       int associativity;
    } PAPI_mh_tlb_info_t;
 
    typedef struct _papi_mh_cache_info {
-      int type; /* Empty, instr, data, vector, unified */
+      int type; /* See papi.h for PAPI_MH definitions. */
       int size;
       int line_size;
       int num_lines;
