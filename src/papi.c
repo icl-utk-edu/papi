@@ -1667,7 +1667,6 @@ int PAPI_get_overflow_ctrs(int EventSet, void *context, int *papi_event_indices)
 {
   int i;
   unsigned bits, papi_index, total = 0;
-  /* All CAPITALIZED functions are implemented as Macros! */
 
   bits = GET_OVERFLOW_CTR_BITS(context); 
   do {

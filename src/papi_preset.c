@@ -15,22 +15,17 @@
 
 hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS] = {{ 0 }};
 
-int _papi_hwi_setup_all_presets(preset_search_t *findem)
+int _papi_hwi_setup_all_presets(hwi_preset_t *findem)
 {
   int pnum,did_something = 0,pmc;
   int preset_index;
   char *name;
 
-  for (pnum = 0; pnum < PAPI_MAX_PRESET_EVENTS; pnum++){
+  /* dense array of events is terminated with a 0 preset */
+  for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0); pnum++){
 
-      /* dense array of events is terminated with a 0 preset */
-    if (findem[pnum].preset == 0)
-	  break;
-
-    preset_index = findem[pnum].preset & PRESET_AND_MASK; 
-      
-      /* will change for derived event in near future */
-      /* _papi_hwi_preset_map[preset_index].operation=NULL;*/
+    preset_index = (findem[pnum].event_code & PRESET_AND_MASK); 
+    _papi_hwi_preset_map[preset_index] = findem[pnum];
 
       /* The same block (below) is executed for derived and non-derived events.
 	 Typically non-derived events will only have a single term and 
@@ -40,11 +35,8 @@ int _papi_hwi_setup_all_presets(preset_search_t *findem)
 	 as a preconditioner for the term that's actually counted.
       */
     pmc=0;
-    _papi_hwi_preset_map[preset_index].derived=findem[pnum].derived;
-    while((findem[pnum].natEvent[pmc] > 0) && (pmc < MAX_COUNTER_TERMS)){
-	  _papi_hwi_preset_map[preset_index].metric_count++;
-	  _papi_hwi_preset_map[preset_index].natIndex[pmc]=findem[pnum].natEvent[pmc] ^ NATIVE_MASK;
-	  name = _papi_hwd_ntv_code_to_name(findem[pnum].natEvent[pmc]);
+    while((findem[pnum].nativeEvent[pmc]) && (pmc < MAX_COUNTER_TERMS)){
+	  name = _papi_hwd_ntv_code_to_name(findem[pnum].nativeEvent[pmc]);
 	  if (strlen(_papi_hwi_preset_map[preset_index].note)+strlen(name)+1 < PAPI_MAX_STR_LEN){
 	    if (pmc) strcat(_papi_hwi_preset_map[preset_index].note,", ");
 	    strcat(_papi_hwi_preset_map[preset_index].note,name);
@@ -58,17 +50,12 @@ int _papi_hwi_setup_all_presets(preset_search_t *findem)
 
 int _papi_hwi_preset_query(int preset_index, int *flags, char **note)
 {
-  int events;
-
-  events = _papi_hwi_preset_map[preset_index].metric_count;
-
-  if (events == 0)
-    return(0);
-  if (_papi_hwi_preset_map[preset_index].derived)
-    *flags = PAPI_DERIVED;
-  if (_papi_hwi_preset_map[preset_index].note)
-    *note = _papi_hwi_preset_map[preset_index].note;
-  return(1);
+  if (_papi_hwi_preset_map[preset_index].nativeEvent[0]) {
+    if (_papi_hwi_preset_map[preset_index].derived) *flags = PAPI_DERIVED;
+    if (_papi_hwi_preset_map[preset_index].note) *note = _papi_hwi_preset_map[preset_index].note;
+    return(1);
+  }
+  return(0);
 }
 
 

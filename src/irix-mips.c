@@ -858,7 +858,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
  
   for (i=0; i< count; i++) 
   {
-    index = native[i].ni_index;
+    index = native[i].ni_event & NATIVE_AND_MASK;
     selector |= 1<<index;
     DBG((stderr,"update_control_state index = %d mode=0x%x\n",index, mode));
     if (index > HWPERF_MAXEVENT)

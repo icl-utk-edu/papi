@@ -179,12 +179,12 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     event_list[i].ra_position = -1;
     /* calculate native event rank, which is number of counters it can live on, this is power3 specific */
 	for(j=0;j<MAX_COUNTERS;j++) {
-		if((index=native_name_map[ESI->NativeInfoArray[i].ni_index].index)<0)
+		if((index=native_name_map[ESI->NativeInfoArray[i].ni_event & NATIVE_AND_MASK].index)<0)
 			return 0;
       event_list[i].ra_counter_cmd[j] = native_table[index].resources.counter_cmd[j];
     }
 	for(j=0;j<GROUP_INTS;j++) {
-		if((index=native_name_map[ESI->NativeInfoArray[i].ni_index].index)<0)
+		if((index=native_name_map[ESI->NativeInfoArray[i].ni_event & NATIVE_AND_MASK].index)<0)
 			return 0;
       event_list[i].ra_group[j] = native_table[index].resources.group[j];
     }

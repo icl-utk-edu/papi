@@ -958,7 +958,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 /* one native event */
   if (count == 1) 
   {
-    nidx1 = native[0].ni_index;
+    nidx1 = native[0].ni_event & NATIVE_AND_MASK;
     hwcntr=0;
     cmd0 = native_table[nidx1].encoding[0];
     native[0].ni_position = 0;
@@ -977,8 +977,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 
     avail1=0;
     avail2=0;
-    nidx1 = native[0].ni_index;
-    nidx2 = native[1].ni_index;
+    nidx1 = native[0].ni_event & NATIVE_AND_MASK;
+    nidx2 = native[1].ni_event & NATIVE_AND_MASK;
     if ( native_table[nidx1].encoding[0] != -1 )
       avail1= 0x1;
     if ( native_table[nidx1].encoding[1] != -1 )

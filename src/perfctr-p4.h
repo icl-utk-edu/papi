@@ -65,7 +65,6 @@ typedef struct P4_perfctr_event {
 #define MAX_COUNTERS	       18
 #define MAX_COUNTER_TERMS	8
 #define P4_MAX_REGS_PER_EVENT	4
-#define PAPI_MAX_NATIVE_EVENTS 40
 
 
 /*

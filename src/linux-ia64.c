@@ -1372,6 +1372,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
   int i,org_cnt;
   pfmlib_param_t *evt = &this_state->evt;
   int events[MAX_COUNTERS];
+  int index;
 
   if (count == 0 ) 
   {
@@ -1397,13 +1398,14 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
 /* add new native events to the evt structure */
   for(i=0; i< count; i++ )
   {
+    index = native[i].ni_event & NATIVE_AND_MASK;
   #ifdef ITANIUM2
-    if ( pfm_ita2_is_dear( native[i].ni_index ) )
+    if ( pfm_ita2_is_dear( index ) )
   #else
-    if ( pfm_ita_is_dear( native[i].ni_index ) )
+    if ( pfm_ita_is_dear( index ) )
   #endif
-      set_dear_ita_param(&this_state->ita_lib_param, native[i].ni_index);
-    evt->pfp_events[i].event= native[i].ni_index;
+      set_dear_ita_param(&this_state->ita_lib_param, index);
+    evt->pfp_events[i].event = index;
   }
   evt->pfp_event_count = count;
   /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
@@ -1420,7 +1422,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t
   for(i=0; i<evt->pfp_event_count; i++)
   {
     native[i].ni_position = evt->pfp_pc[i].reg_num -PMU_FIRST_COUNTER;
-    DBG((stderr, "event_code is %d, reg_num is %d\n", native[i].ni_index, native[i].ni_position));
+    DBG((stderr, "event_code is %d, reg_num is %d\n", index, native[i].ni_position));
   }
 
   return(PAPI_OK);

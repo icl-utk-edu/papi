@@ -36,11 +36,11 @@
 
 #ifdef __i386__
 /* CPUID model < 2 */
-extern preset_search_t _papi_hwd_pentium4_mlt2_preset_map[];
+extern hwi_preset_t _papi_hwd_pentium4_mlt2_preset_map[];
 /* CPUID model >= 2 */
-extern preset_search_t _papi_hwd_pentium4_mge2_preset_map[];
+extern hwi_preset_t _papi_hwd_pentium4_mge2_preset_map[];
 #elif defined(__x86_64__)
-extern P4_search_t _papi_hwd_x86_64_opteron_map[];
+extern hwi_preset_t _papi_hwd_x86_64_opteron_map[];
 #endif
 
 extern papi_mdi_t _papi_hwi_system_info;
@@ -562,7 +562,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     e = &event_list[i];
 
     /* retrieve the mapping information about this native event */
-    _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_index, &e->ra_bits);
+    _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &e->ra_bits);
 
     /* combine counter bit masks for both esc registers into selector */
     e->ra_selector = e->ra_bits.counter[0] | e->ra_bits.counter[1];

@@ -406,7 +406,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       for counter allocation and optimization. */
    natNum=ESI->NativeCount;
    for(i = 0; i < natNum; i++) {
-      index=ESI->NativeInfoArray[i].ni_index;
+      index=ESI->NativeInfoArray[i].ni_event & NATIVE_AND_MASK;
       event_list[i].ra_bits = native_table[index].resources;
       event_list[i].ra_selector = event_list[i].ra_bits.selector; 
       /* calculate native event rank, which is no. of counters it can live on */

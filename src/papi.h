@@ -300,7 +300,6 @@ typedef struct _papi_hw_info {
   float revision;           /* Revision of CPU */ 
   float mhz;                  /* Cycle time of this CPU, *may* be estimated at 
                                init time with a quick timing routine */
-  int max_native_events;    /* maximum # of native events for this platform */
 
   /* Memory Information */
   int L1_tlb_size;		/*Data + Instruction Size */
