@@ -262,8 +262,8 @@ static void initialize_NativeInfoArray(EventSetInfo_t *ESI)
   memset(ESI->NativeInfoArray, 0, sizeof(NativeInfo_t)*MAX_COUNTERS);
 
   for (i = 0; i < MAX_COUNTERS; i++) {
- 	ESI->NativeInfoArray[i].index = COUNT_NOTHING;
- 	ESI->NativeInfoArray[i].position = COUNT_NOTHING;
+ 	ESI->NativeInfoArray[i].ni_index = COUNT_NOTHING;
+ 	ESI->NativeInfoArray[i].ni_position = COUNT_NOTHING;
   }
   ESI->NativeCount = 0;
 }
@@ -521,18 +521,38 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t *ESI)
   return(PAPI_OK);
 }
 
+
+/* this function try to find out whether native event has already been mapped. 
+     Success, return hwd_native_t array index
+     Fail,    return -1;                                                             
+*/
+int _papi_hwi_add_native_precheck(EventSetInfo_t *ESI, int nix)
+{
+	int i;
+
+	/* to find the native event from the native events list */
+	for(i=0; i<ESI->NativeCount;i++){
+		if(nix==ESI->NativeInfoArray[i].ni_index){
+			ESI->NativeInfoArray[i].ni_owners++;
+			DBG((stderr,"found native event already mapped: %s\n", _papi_hwd_native_code_to_name(nix & NATIVE_MASK)));
+			return i;
+		}
+	}
+	return -1;
+}	  
+
+
 /* this function is called after mapping is done
     if(remap) refill info for every added events
 	else     fill current EventInfo_t *out
  */
-void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, int remap)
+void _papi_hwi_allocate_after(EventSetInfo_t *ESI, int thisindex, int remap)
 {
-	EventSetInfo_t *ESI;
-	EventInfo_t *head;
+	EventInfo_t *out, *head;
 	int i, j, k, n, preset_index, nix, total_events;
 
-	ESI = out->ESIhead;
-	head=ESI->EventInfoArray;
+	head = ESI->EventInfoArray;
+	out  = &head[thisindex];
 	total_events=ESI->NumberOfEvents;
 
 	if(!remap){
@@ -556,9 +576,9 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 			for(k=0;k<_papi_hwi_preset_map[preset_index].metric_count;k++){
 				nix=_papi_hwi_preset_map[preset_index].natIndex[k];
 				for(n=0;n<ESI->NativeCount;n++){
-					if(nix==ESI->NativeInfoArray[n].index){
-						head[j].pos[k]=ESI->NativeInfoArray[n].position;
-						head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].position;
+					if(nix==ESI->NativeInfoArray[n].ni_index){
+						head[j].pos[k]=ESI->NativeInfoArray[n].ni_position;
+						head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].ni_position;
 						break;
 					}
 				}
@@ -568,10 +588,10 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 		else{
 			nix = head[j].event_code & NATIVE_AND_MASK;
 			for(n=0;n<ESI->NativeCount;n++){
-				if(nix==ESI->NativeInfoArray[n].index){
-					head[j].pos[0]=ESI->NativeInfoArray[n].position;
-					head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].position;
-					head[j].counter_index=ESI->NativeInfoArray[n].position;
+				if(nix==ESI->NativeInfoArray[n].ni_index){
+					head[j].pos[0]=ESI->NativeInfoArray[n].ni_position;
+					head[j].hwd_selector |= 1<<ESI->NativeInfoArray[n].ni_position;
+					head[j].counter_index=ESI->NativeInfoArray[n].ni_position;
 					break;
 				}
 				
@@ -580,6 +600,63 @@ void _papi_hwi_allocate_after(hwd_control_state_t *tmp_state, EventInfo_t *out, 
 		j++;
 	}
 }
+
+/* this function is called by _papi_hwi_add_event when adding native events 
+nix: array of native event index in the native_table
+size: number of native events to add
+*/
+static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_t *out)
+{
+	int nidx, ntop, i, j, remap=0;
+	NativeInfo_t *native;
+	
+	/* Need to decide what needs to be preserved so we can roll back state
+	   if the add event fails...
+	*/
+	
+	/* if the native event is already mapped, fill in */
+	for(i=0;i<size;i++){
+		if((nidx=_papi_hwi_add_native_precheck(ESI, nix[i]))>=0){
+			/* CAUTION: regs is hardware dependent. */
+			out->regs.pos[i]=ESI->NativeInfoArray[nidx].ni_position;
+		}
+		else{
+			/* all counters have been used, add_native fail */
+			if(ESI->NativeCount==MAX_COUNTERS){
+				DBG((stderr,"counters are full!\n"));
+				return -1;
+			}
+			/* there is an empty slot for the native event;
+			   dereference and initialize the empty slot for the new added event */
+			native = &ESI->NativeInfoArray[ESI->NativeCount];
+			native->ni_index=nix[i];
+			/* CAUTION: We really shouldn't be accessing native_table directly */
+			native->ni_selector=native_table[nix[i]].resources.selector;
+			
+			/* calculate native event rank, which is number of counters it can live on, this is power3 specific */
+			j=0;
+			while(j<MAX_COUNTERS){
+				if(native->ni_selector & (1<<j))
+					native->ni_rank++;
+				j++;
+			}
+			ESI->NativeCount++;
+			remap++; 
+		}
+	}
+	
+	/* if remap!=0, we need reallocate counters */
+	if(remap){
+		if(_papi_hwd_allocate_registers(ESI)){
+			return 1;
+		}
+		else
+			return -1;
+	}
+	
+	return 0;
+}
+
 
 int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 {
@@ -614,7 +691,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			
 			/* Try to add the preset. */
 			
-			remap = _papi_hwd_add_event(&ESI->machdep, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count, &ESI->EventInfoArray[thisindex]);
+			remap = add_native_events(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count, &ESI->EventInfoArray[thisindex]);
 			if (remap < 0)
 				return(PAPI_ECNFLCT);
 			else{
@@ -623,7 +700,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
 				ESI->EventInfoArray[thisindex].derived = _papi_hwi_preset_map[preset_index].derived; 
 				ESI->EventInfoArray[thisindex].ops = _papi_hwi_preset_map[preset_index].operation; 
-				_papi_hwi_allocate_after(&ESI->machdep, &ESI->EventInfoArray[thisindex], remap);
+				_papi_hwi_allocate_after(ESI, thisindex, remap);
 			}
 		}
 		else if(EventCode & NATIVE_MASK)
@@ -635,16 +712,21 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			if ((native_index < 0) || (native_index >= PAPI_MAX_NATIVE_EVENTS))
 				return(PAPI_EINVAL);
 
+			/* Check if native event exists */
+
+			if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
+				return(PAPI_ENOEVNT);
+
 			/* Try to add the native. */
 			
-			remap = _papi_hwd_add_event(&ESI->machdep, &native_index, 1, &ESI->EventInfoArray[thisindex]);
+			remap = add_native_events(ESI, &native_index, 1, &ESI->EventInfoArray[thisindex]);
 			if (remap < 0)
 				return(PAPI_ECNFLCT);
 			else{
 				/* Fill in the EventCode (machine independent) information */
 			
 				ESI->EventInfoArray[thisindex].event_code = EventCode; 
-				_papi_hwi_allocate_after(&ESI->machdep, &ESI->EventInfoArray[thisindex], remap);
+				_papi_hwi_allocate_after(ESI, thisindex, remap);
 			}
 		}
 		else
@@ -669,6 +751,7 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 	return(retval);
 }
 
+
 int _papi_hwi_add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout)
 {
   int thisindex, retval;
@@ -692,6 +775,56 @@ int _papi_hwi_add_pevent(EventSetInfo_t *ESI, int EventCode, void *inout)
 
   ESI->NumberOfEvents++;
   return(retval);
+}
+
+
+int remove_native_events(EventSetInfo_t *ESI, int *nix, int size)
+{
+	hwd_control_state_t *this_state= &ESI->machdep;
+	NativeInfo_t *native = ESI->NativeInfoArray;
+	int i, j, zero=0;
+
+	for(i=0;i<size;i++){
+		for(j=0;j<ESI->NativeCount;j++){
+			if(native[j].ni_index==nix[i]){
+				native[j].ni_owners--;
+				if(native[j].ni_owners==0){
+					zero++;
+				}
+				break;
+			}
+		}
+	}
+
+	for(i=0;i<ESI->NativeCount;i++){
+		if(native[i].ni_index==COUNT_NOTHING)
+			continue;
+		if(native[i].ni_owners==0){
+			int copy=0;
+			_papi_hwd_remove_native(this_state, &native[i]);
+			for(j=ESI->NativeCount-1;j>i;j--){
+				if(native[j].ni_index==COUNT_NOTHING)
+					continue;
+				else{
+					memcpy(native+i, native+j, sizeof(NativeInfo_t));
+					memset(native+j, 0, sizeof(NativeInfo_t));
+					native[j].ni_index=COUNT_NOTHING;
+					native[j].ni_position=COUNT_NOTHING;
+					copy++;
+					break;
+				}
+			}
+			if(copy==0){
+				memset(native+i, 0, sizeof(NativeInfo_t));
+				native[j].ni_index=COUNT_NOTHING;
+				native[i].ni_position=COUNT_NOTHING;
+			}
+		}
+	}
+
+	/* to reset hwd_control_state values */
+	ESI->NativeCount-=zero;
+	return(PAPI_OK);
 }
 
 int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
@@ -732,7 +865,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 			
 			/* Try to remove the preset. */
 			
-			_papi_hwd_remove_event(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
+			remove_native_events(ESI, _papi_hwi_preset_map[preset_index].natIndex, _papi_hwi_preset_map[preset_index].metric_count);
 		}
 		else if(EventCode & NATIVE_MASK)
 		{
@@ -745,7 +878,7 @@ int _papi_hwi_remove_event(EventSetInfo_t *ESI, int EventCode)
 
 			/* Try to add the native. */
 			
-			_papi_hwd_remove_event(ESI, &native_index, 1);
+			remove_native_events(ESI, &native_index, 1);
 		}
 		else
 			return(PAPI_ENOEVNT);

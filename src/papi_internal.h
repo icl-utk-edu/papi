@@ -114,13 +114,13 @@ typedef struct _EventInfo {
  */
 
 typedef struct _NativeInfo {
-  int index;		  /* index into the native table */
-  unsigned int selector;  /* Which counters are used?*/
-  unsigned char rank;	  /* Rank determines how many counters carry each metric */
-			  /* More generally, which event is most resource restrictive */
-  int position;		  /* on which counter this native event stays */
-  int mod;		  /* don't exactly know what this field does */
-  int owners;		  /* specifies how many owners share this native event */
+  int ni_index;		    /* index into the native table */
+  unsigned int ni_selector; /* Which counters are used?*/
+  unsigned char ni_rank;    /* Rank determines how many counters carry each metric */
+			    /* More generally, which event is most resource restrictive */
+  int ni_position;	    /* on which counter this native event stays */
+  int ni_mod;		    /* don't exactly know what this field does */
+  int ni_owners;	    /* specifies how many owners share this native event */
 } NativeInfo_t;
 
 

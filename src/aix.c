@@ -636,24 +636,11 @@ dump_state(current_state);*/
 
 int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *cntrl)
 { 
-  int i, hwcntr, retval;
-  hwd_control_state_t *current_state = &ctx->cntrl;
+  int retval;
 
   retval = pm_stop_mythread();
   if (retval > 0) 
-    return(retval); 
-  
-  for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++)
-    {
-      /* Check for events that are NOT shared between eventsets and 
-	 therefore require modification to the control state. */
-      
-      hwcntr = 1 << i;
-      if (hwcntr & cntrl->master_selector)
-	{
-	    current_state->master_selector ^= hwcntr;
-	}
-    }
+    return(retval);
 
   retval = pm_delete_program_mythread();
   if (retval > 0) 

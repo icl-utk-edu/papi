@@ -6,13 +6,10 @@
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT
 
 typedef struct PWR3_pmapi_control {
-  /* bitmap with all counters currently used */
-  unsigned char master_selector;  
-
   /* Buffer to pass to the kernel to control the counters */
   pm_prog_t counter_cmd;
+
   /* Interrupt interval */
-  
   int timer_ms;
 } PWR3_pmapi_control_t;
 
