@@ -196,9 +196,11 @@ static int update_global_hwcounters(EventSetInfo *global)
 
       counter_values[0] += cntrs[0].pf_cntr0;
       counter_values[1] += cntrs[0].pf_cntr1; 
+      DBG((stderr,"Actual values %ld %ld \n",counter_values[0],counter_values[1]));
       
+/*
       DBG((stderr,"Actual values %d %ld %ld \n",i,counter_values[0],counter_values[1]));
-    /*}*/
+    }*/
 
   DBG((stderr,"update_global_hwcounters() %d: G%lld = G%lld + C%lld\n",0,
        global->hw_start[0]+counter_values[0],global->hw_start[0],counter_values[0]));
