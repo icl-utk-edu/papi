@@ -15,6 +15,9 @@
 
 #define PRESET_MASK 0x80000000
 
+typedef PAPI_option_t  void;
+
+
 /* All memory for this structure should be allocated outside of the 
    substrate. */
 
