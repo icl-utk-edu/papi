@@ -672,8 +672,10 @@ static int get_system_info(void)
    SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
 
    /* Executable regions, reading /proc/pid/maps file */
+/* comment it out until the bug in dladdr is fixed */
+/*
    retval = _papi_hwd_update_shlib_info();
-
+*/
 
    /* Hardware info */
 
@@ -704,14 +706,12 @@ static int get_system_info(void)
    SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.num_cntrs);
 
    /* program text segment, data segment  address info */
-/*
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _start;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _edata + 1;
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
-*/
 
    /* Setup presets */
 

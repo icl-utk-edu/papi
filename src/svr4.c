@@ -18,6 +18,8 @@ int _papi_hwd_update_shlib_info(void)
    Dl_info dlip;
    PAPI_address_map_t *tmp = NULL;
 
+   return(PAPI_ESBSTR); /* temporary solution for beta 3.0.3 */
+
    sprintf(fname, "/proc/%d/map", getpid());
    map_f = fopen(fname, "r");
 
@@ -70,8 +72,10 @@ int _papi_hwd_update_shlib_info(void)
                t_index++;
                tmp[t_index].text_start = (caddr_t) newp.pr_vaddr;
                tmp[t_index].text_end =(caddr_t) (newp.pr_vaddr+newp.pr_size);
-               strncpy(tmp[t_index].name, dlip.dli_fname, PAPI_MAX_STR_LEN);
+               strncpy(tmp[t_index].name, dlip.dli_fname,PAPI_HUGE_STR_LEN-1 );
+               tmp[t_index].name[PAPI_HUGE_STR_LEN-1]='\0';
             } else {
+               if (t_index <0 )  continue;
                tmp[t_index].data_start = (caddr_t) newp.pr_vaddr;
                tmp[t_index].data_end = (caddr_t) (newp.pr_vaddr+newp.pr_size);
             }
@@ -81,8 +85,8 @@ int _papi_hwd_update_shlib_info(void)
 
    fclose(map_f);
 
-   if (_papi_hwi_system_info.shlib_info.map)
-         free(_papi_hwi_system_info.shlib_info.map);
+   if (_papi_hwi_system_info.shlib_info.map) 
+      free(_papi_hwi_system_info.shlib_info.map);
    _papi_hwi_system_info.shlib_info.map = tmp;
    _papi_hwi_system_info.shlib_info.count = t_index+1;
 
