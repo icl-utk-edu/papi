@@ -106,7 +106,7 @@ int PAPI_num_counters(void)
     {
       retval = PAPI_library_init(PAPI_VER_CURRENT);
       if (retval != PAPI_VER_CURRENT)
-	return(retval);
+	return(PAPI_EINVAL);
 
       retval = PAPI_create_eventset(&PAPI_EVENTSET_INUSE);
       if (retval)
