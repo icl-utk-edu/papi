@@ -11,68 +11,68 @@
       Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_library_init', retval)
+     . 'PAPI_library_init', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
-		call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-		if ( retval.NE.PAPI_OK) then
-		  call ftest_fail(__FILE__, __LINE__,
-     .		'PAPIf_set_debug', retval)
-		end if
+         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
+         if ( retval.NE.PAPI_OK) then
+           call ftest_fail(__FILE__, __LINE__,
+     . 'PAPIf_set_debug', retval)
+         end if
       end if
 
       call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval.EQ.PAPI_OK) then
-	  event = PAPI_FP_INS
-	else
+      if (retval.EQ.PAPI_OK) then
+        event = PAPI_FP_INS
+      else
         call PAPIf_query_event(PAPI_TOT_INS, retval)
         if ( retval.EQ.PAPI_OK) then
-		  event = PAPI_TOT_INS
-	  else
-		call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_query_event', retval)
+          event = PAPI_TOT_INS
+        else
+          call ftest_fail(__FILE__, __LINE__,
+     . 'PAPIf_query_event', retval)
         end if
       end if
 
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset', 
      *retval)
       end if
 
       call PAPIf_add_event( es, event, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_event', retval)
+     . 'PAPIf_add_event', retval)
       end if
 
       call PAPIf_start(es, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_start', retval)
+     . 'PAPIf_start', retval)
       end if
 
       call PAPIf_cleanup_eventset(es, retval)
       if (retval .NE. PAPI_EISRUN) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_cleanup_eventset', 
+     . 'PAPIf_cleanup_eventset', 
      *retval)
       end if
 
       call PAPIf_destroy_eventset(es, retval)
       if (retval .NE. PAPI_EISRUN) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_destroy_eventset', 
+     . 'PAPIf_destroy_eventset', 
      *retval)
       end if
 
@@ -81,33 +81,33 @@
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_stop', retval)
+     . 'PAPIf_stop', retval)
       end if
 
       call PAPIf_destroy_eventset(es, retval)
       if (retval .NE. PAPI_EINVAL) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_destroy_eventset', 
+     . 'PAPIf_destroy_eventset', 
      *retval)
       end if
 
       call PAPIf_cleanup_eventset(es, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_cleanup_eventset', 
+     . 'PAPIf_cleanup_eventset', 
      *retval)
       end if
 
       call PAPIf_destroy_eventset(es, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_destroy_eventset', 
+     . 'PAPIf_destroy_eventset', 
      *retval)
       end if
 
       if (es .NE. PAPI_NULL) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_destroy_eventset', 
+     . 'PAPIf_destroy_eventset', 
      *retval)
       end if
 
@@ -115,26 +115,26 @@
         call PAPIf_event_code_to_name (event, name, retval)
         if ( retval.NE.PAPI_OK) then
           call ftest_fail(__FILE__, __LINE__, 
-     *		'PAPIf_event_code_to_name', retval)
+     * 'PAPIf_event_code_to_name', retval)
         end if
         n=len_trim(name)
         print *, "Test case John May 2: cleanup / ",
-     *	"destroy eventset."
+     * "destroy eventset."
         print *, "--------------------------------",
-     *	"-----------------"
+     * "-----------------"
         print *, "Test run    : 1"
         print *, name(1:n), " : ", values(1)
         print *, "----------------------------------",
-     *	"---------------"
+     * "---------------"
  
         print *, "Verification:"
         print *, "These error messages:"
         print *, "PAPI Error Code -10: PAPI_EISRUN: ", 
-     *	"EventSet is currently counting"
+     * "EventSet is currently counting"
         print *, "PAPI Error Code -10: PAPI_EISRUN: ",
-     *	"EventSet is currently counting"
+     * "EventSet is currently counting"
         print *, "PAPI Error Code -1: PAPI_EINVAL: ",
-     *	"Invalid argument"
+     * "Invalid argument"
       end if
       
       call ftests_pass(__FILE__)

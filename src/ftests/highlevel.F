@@ -9,12 +9,12 @@
       integer availcounters
       integer retval
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
       character*PAPI_MAX_STR_LEN name
       integer len_trim, n
       external len_trim
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       eventnum = 2
       call PAPIf_num_counters(availcounters)
@@ -27,21 +27,21 @@
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_library_init', retval)
+     . 'PAPI_library_init', retval)
       end if
 
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+      call PAPIf_query_event(PAPI_FP_INS, retval)
+      if (retval .NE. PAPI_OK) then
         events(1)=PAPI_TOT_INS
-	else
+      else
         events(1)=PAPI_FP_INS
-	end if
+      end if
       events(2)=PAPI_TOT_CYC
 
       call PAPIf_start_counters(events, eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_start_counters', 
+     . 'PAPIf_start_counters', 
      *retval)
       end if
 
@@ -50,7 +50,7 @@
       call PAPIf_read_counters(values(1), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_read_counters', 
+     . 'PAPIf_read_counters', 
      *retval)
       end if
 
@@ -59,7 +59,7 @@
       call PAPIf_stop_counters(values(3), eventnum, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_stop_counters', 
+     . 'PAPIf_stop_counters', 
      *retval)
       end if
       
@@ -67,7 +67,7 @@
         call PAPIf_event_code_to_name (events(1), name, retval)
         if ( retval.NE.PAPI_OK) then
           call ftest_fail(__FILE__, __LINE__, 
-     *		'PAPIf_event_code_to_name', retval)
+     * 'PAPIf_event_code_to_name', retval)
         end if
         n=len_trim(name)
         print *, "Test case highlevel: Test of high-level APIs."
@@ -78,7 +78,7 @@
         write (*,100) "PAPI_TOT_CYC", values(2), values(4)
  100    format(a15, ":", i12, i12)
         print *, "---------------------------------------------",
-     *	"---------------------"
+     * "---------------------"
       end if
 
       call ftests_pass(__FILE__)

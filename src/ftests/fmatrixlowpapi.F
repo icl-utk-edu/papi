@@ -25,9 +25,9 @@ C   PAPI values of the counters
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
 C   Setup default values
       numevents=0
@@ -56,12 +56,12 @@ C   Total cycles
       end if
 
 C   Total [floating point] instructions
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+        call PAPIf_query_event(PAPI_FP_INS, retval)
+        if (retval .NE. PAPI_OK) then
         event = PAPI_TOT_INS 
-	else
+        else
         event = PAPI_FP_INS 
-	end if
+        end if
 
       call PAPIf_add_event(EventSet,event,retval)
       if ( retval .NE. PAPI_OK ) then
@@ -129,14 +129,14 @@ C  Start the event counters
       call PAPIf_start( EventSet, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_start', retval)
+     . 'PAPIf_start', retval)
       end if
 
 C  Compute the matrix-matrix multiplication
       do i=1,nrows1 
        do j=1,ncols2 
          do k=1,ncols1 
-	   r(i,j)=r(i,j) + p(i,k)*q(k,j)
+          r(i,j)=r(i,j) + p(i,k)*q(k,j)
          end do
        end do
       end do
@@ -145,7 +145,7 @@ C  Stop the counters and put the results in the array values
       call PAPIf_stop(EventSet,values,retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_stop', retval)
+     . 'PAPIf_stop', retval)
       end if
 
       call PAPIf_get_real_usec( stoptime )
@@ -158,13 +158,13 @@ C  Make sure the compiler does not optimize away the multiplication
         print *, 'Time: ', finaltime, 'seconds'
         print *, 'Cycles: ', values(1)
 
-	  if (event .EQ. PAPI_TOT_INS) then
+          if (event .EQ. PAPI_TOT_INS) then
           print *, 'Total Instructions: ', values(2)
-	  else
+          else
           print *, 'FP Instructions: ', values(2)
           write(*,'(a,f9.6)') ' Efficiency (fp/cycle):',
      &                         real(values(2))/real(values(1))
-	  end if
+          end if
       end if
 
       call ftests_pass(__FILE__)

@@ -19,36 +19,36 @@
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_library_init', retval)
+     .     'PAPI_library_init', retval)
       end if
 
       call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_set_debug', retval)
+     .     'PAPIf_set_debug', retval)
       end if
       
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_create_eventset', 
+     .     'PAPIf_create_eventset', 
      *retval)
       end if
 
       number=2
 
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+    call PAPIf_query_event(PAPI_FP_INS, retval)
+    if (retval .NE. PAPI_OK) then
         events(1) = PAPI_TOT_INS 
-	else
+    else
         events(1) = PAPI_FP_INS 
-	end if
+    end if
 
       events(2) = PAPI_TOT_CYC
       call PAPIf_add_events( es1, events, number, retval )
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_events', retval)
+     .     'PAPIf_add_events', retval)
       end if
 
       do i=1,10
@@ -58,7 +58,7 @@
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_start', retval)
+     .     'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
@@ -66,7 +66,7 @@
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_accum', retval)
+     .     'PAPIf_accum', retval)
       end if
 
       values(1)=values(7)
@@ -74,20 +74,20 @@
       call PAPIf_stop(es1, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_stop', retval)
+     .     'PAPIf_stop', retval)
       end if
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_start', retval)
+     .     'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_accum', retval)
+     .     'PAPIf_accum', retval)
       end if
 
       values(5)=values(7)
@@ -98,7 +98,7 @@
       call PAPIf_accum(es1, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_accum', retval)
+     .     'PAPIf_accum', retval)
       end if
 
       call do_flops(NUM_FLOPS)      
@@ -106,20 +106,20 @@
       call PAPIf_stop(es1, values(9), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_stop', retval)
+     .     'PAPIf_stop', retval)
       end if
 
       call PAPIf_rem_events( es1, events, number, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_rem_events', retval)
+     .     'PAPIf_rem_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
         call PAPIf_event_code_to_name (events(1), name, retval)
         if ( retval.NE.PAPI_OK) then
             call ftest_fail(__FILE__, __LINE__, 
-     *		'PAPIf_event_code_to_name', retval)
+     *        'PAPIf_event_code_to_name', retval)
         end if
         n=len_trim(name)
         print *, "Test case accum: Test of PAPI_add_events, ",

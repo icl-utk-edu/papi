@@ -39,30 +39,30 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       integer getstrlen
       external getstrlen
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       check=PAPI_VER_CURRENT
       call PAPIF_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .	'PAPI_library_init', check)
+     . 'PAPI_library_init', check)
       end if
 
-	code=MSGCODE
+      code=MSGCODE
 
       if (tests_quiet .EQ. 0) then
-		print *,'---------------------------------------------------'
-		print *,'   Testing PAPIF_name_to_code/PAPIF_code_to_name   '
-		print *,'---------------------------------------------------'
-		print *,' These tests look up an event name and event code'
-		print *,' On no occasion should a NULL character be found(+)'
-		print *,' When strings are too short, the lookup should fail'
-		print *
-		print *,' Tests use the event code ',code
-		print *
-	end if
+         print *,'---------------------------------------------------'
+         print *,'   Testing PAPIF_name_to_code/PAPIF_code_to_name   '
+         print *,'---------------------------------------------------'
+         print *,' These tests look up an event name and event code'
+         print *,' On no occasion should a NULL character be found(+)'
+         print *,' When strings are too short, the lookup should fail'
+         print *
+         print *,' Tests use the event code ',code
+         print *
+       end if
 
       lastchar=PAPI_MAX_STR_LEN
       call checkstr(code,papistr,retcode,check,lastchar,tests_quiet)
@@ -81,13 +81,13 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
  100  format(t1,a,i4)
 
       if (tests_quiet .EQ. 0) then
-		print *,'---------------------------------------------------'
-		print *,'          Testing PAPIF_perror                     '
-		print *,'---------------------------------------------------'
-		print 100,' These tests should return a PAPI error string for'//
+         print *,'---------------------------------------------------'
+         print *,'          Testing PAPIF_perror                     '
+         print *,'---------------------------------------------------'
+         print 100,' These tests should return a PAPI error string for'//
      $    ' error',ERRCODE
-		print *,' On no occasion should a NULL character be found(+)'
-		print *
+         print *,' On no occasion should a NULL character be found(+)'
+         print *
       end if
 
       call test_papif_perror(ERRCODE,papistr,check,tests_quiet)
@@ -97,110 +97,110 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
 
       if (tests_quiet .EQ. 0) then
-		print *,'---------------------------------------------------'
-		print *,'          Testing PAPIF_descr_event                '
-		print *,'---------------------------------------------------'
-		print *,' These tests should return a PAPI description for'
-		print *,' various event names and argument shapes.'
-		print *,' On no occasion should a NULL character be found(+)'
-		print *
+         print *,'---------------------------------------------------'
+         print *,'          Testing PAPIF_descr_event                '
+         print *,'---------------------------------------------------'
+         print *,' These tests should return a PAPI description for'
+         print *,' various event names and argument shapes.'
+         print *,' On no occasion should a NULL character be found(+)'
+         print *
 
-		print 200,'Test 1'
+         print 200,'Test 1'
       end if
 
       papistr="PAPI_L1_DCM"
       papicode=-1
       call test_papif_descr(papistr,papicode,papidblstr,
      .  check,tests_quiet)
-	call checkcode(papicode,PAPI_L1_DCM,tests_quiet)
+      call checkcode(papicode,PAPI_L1_DCM,tests_quiet)
 
       if (tests_quiet .EQ. 0) then
-		print *
-		print 200,'Test 2'
+         print *
+         print 200,'Test 2'
       end if
 
       papistr="  "
       papicode=PAPI_L2_DCM
       call test_papif_descr(papistr,papicode,papidblstr,
      .  check,tests_quiet)
-	call checkname(papistr,"PAPI_L2_DCM",tests_quiet)
+      call checkname(papistr,"PAPI_L2_DCM",tests_quiet)
 
       if (tests_quiet .EQ. 0) then
-		print *
-		print 200,'Test 3'
+         print *
+         print 200,'Test 3'
       end if
 
       invstr1="PAPI_L1_ICM"
       papicode=-1
       call test_papif_descr(invstr1,papicode,papidblstr,
      .  check,tests_quiet)
-	call checkcode(papicode,PAPI_L1_ICM,tests_quiet)
+      call checkcode(papicode,PAPI_L1_ICM,tests_quiet)
 
       if (tests_quiet .EQ. 0) then
-		print *
-		print 200,'Test 4'
+          print *
+          print 200,'Test 4'
       end if
 
       invstr1="  "
       papicode=PAPI_L2_ICM
       call test_papif_descr(invstr1,papicode,papidblstr,
      .  check,tests_quiet)
-	call checkname(invstr1,"PAPI_L2_ICM",tests_quiet)
+      call checkname(invstr1,"PAPI_L2_ICM",tests_quiet)
 
       if (tests_quiet .EQ. 0) then
-		print *
-		print 200,'Test 5  (This test should get a truncated description)'
+         print *
+         print 200,'Test 5  (This test should get a truncated description)'
       end if
 
       invstr2="PAPI_L3_DCM"
       papicode=-1
       call test_papif_descr(invstr2,papicode,invstr1,
      .  check,tests_quiet)
-	call checkcode(papicode,PAPI_L3_DCM,tests_quiet)
+      call checkcode(papicode,PAPI_L3_DCM,tests_quiet)
 
       if (tests_quiet .EQ. 0) then
-		print *
-		print 200,'Test 6  (This test should get a truncated description)'
+         print *
+         print 200,'Test 6  (This test should get a truncated description)'
       end if
 
       invstr2="  "
       papicode=PAPI_L3_ICM
       call test_papif_descr(invstr2,papicode,invstr1,
      .  check,tests_quiet)
-	call checkname(invstr2,"PAPI_L3_ICM",tests_quiet)
+      call checkname(invstr2,"PAPI_L3_ICM",tests_quiet)
 
       if (tests_quiet .EQ. 0) then
-		print *
-		print 200,'Test 7  (This test should get a truncated name)'
+         print *
+         print 200,'Test 7  (This test should get a truncated name)'
       end if
 
       invstr4="  "
       papicode=PAPI_L1_DCM
       call test_papif_descr(invstr4,papicode,papistr,
      .  check,tests_quiet)
-	if (tests_quiet .EQ. 0) then
-	  call checkname(invstr4,"PAPI_L1_DCM",tests_quiet)
-	end if
+      if (tests_quiet .EQ. 0) then
+         call checkname(invstr4,"PAPI_L1_DCM",tests_quiet)
+      end if
 
  200  format(t1,a)
 
       if (tests_quiet .EQ. 0) then
-		print *,'---------------------------------------------------'
-		print *,'(+) Fortran implementations that do not provide the'
-		print *,'    string argument length might show NULL characters.'
-		print *,'    This may or may not be OK depending on the Fortran'
-		print *,'    compiler. See papi_fwrappers.c and your Fortran'
-		print *,'    compiler reference manual.'
-	end if
+         print *,'---------------------------------------------------'
+         print *,'(+) Fortran implementations that do not provide the'
+         print *,'    string argument length might show NULL characters.'
+         print *,'    This may or may not be OK depending on the Fortran'
+         print *,'    compiler. See papi_fwrappers.c and your Fortran'
+         print *,'    compiler reference manual.'
+      end if
 
       call ftests_pass(__FILE__)      
-	end
+      end
 
       subroutine checkstr(incode,string,outcode,check,lastchar,quiet)
       implicit none
       integer*8 incode
       integer outcode,check,lastchar, quiet
-	character*(*) string
+      character*(*) string
       character*(PAPI_MAX_STR_LEN) papierr
       integer code,i
       integer getstrlen
@@ -208,54 +208,54 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
  100  format(t1,a,i4)
 
-	if (quiet .EQ. 0) then
-		print 100,"Testing string length ",len(string)
-		if(len(string).lt.lastchar)then
-		  print *,'This call should return an error code.'
-		end if
-	end if
+      if (quiet .EQ. 0) then
+         print 100,"Testing string length ",len(string)
+         if(len(string).lt.lastchar)then
+            print *,'This call should return an error code.'
+         end if
+      end if
 
       code=incode
       call PAPIF_event_code_to_name(code,string,check)
       if(check.ne.PAPI_OK)then
-	  if (len(string).ge.lastchar)then
+        if (len(string).ge.lastchar)then
           call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIF_event_code_to_name', check)
-	  else
-		if (quiet .EQ. 0) then
-			call PAPIF_perror(check,papierr,code)
-			print *,'*ERROR* '//papierr(1:getstrlen(papierr))
-			print *,'******* '//'Error in checkstr using '//
-     $			'PAPIF_event_code_to_name'
-		end if
-	  end if
+     . 'PAPIF_event_code_to_name', check)
+        else
+        if (quiet .EQ. 0) then
+           call PAPIF_perror(check,papierr,code)
+           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+           print *,'******* '//'Error in checkstr using '//
+     $ 'PAPIF_event_code_to_name'
+        end if
+       end if
       end if
 
  200  format(t1,a,'"',a,'"')
- 	if (quiet .EQ. 0) then
-		print 200,'The event name is: ',string(1:getstrlen(string))
+      if (quiet .EQ. 0) then
+         print 200,'The event name is: ',string(1:getstrlen(string))
       end if
 
       call PAPIF_event_name_to_code(string,code,check)
       if(check.ne.PAPI_OK)then
- 	  if (len(string).ge.lastchar)then
+      if (len(string).ge.lastchar)then
           call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIF_event_name_to_code', check)
-	  else
-		if (quiet .EQ. 0) then
-			call PAPIF_perror(check,papierr,code)
-			print *,'*ERROR* '//papierr(1:getstrlen(papierr))
-			print *,'******* '//'Error in checkstr using '//
-     $			'PAPIF_event_name_to_code'
-		end if
-	  end if
-	end if
+     . 'PAPIF_event_name_to_code', check)
+      else
+      if (quiet .EQ. 0) then
+         call PAPIF_perror(check,papierr,code)
+         print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+         print *,'******* '//'Error in checkstr using '//
+     $   'PAPIF_event_name_to_code'
+      end if
+      end if
+      end if
       
-	call findnull(string,quiet)
+      call findnull(string,quiet)
 
-	if (quiet .EQ. 0) then
-	  print *
-	end if
+      if (quiet .EQ. 0) then
+         print *
+      end if
 
       return
       end
@@ -272,18 +272,18 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       call PAPIF_perror(code,string,check)
       i=getstrlen(string)
 
-	if (quiet .EQ. 0) then
+      if (quiet .EQ. 0) then
         print 100,'Testing string of length ',i
         print 200,
      .    '1234567890....5...20....5...30....5...40....5...50...'
         print 200,string(1:i)
       end if
 
-	call findnull(string,quiet)
+      call findnull(string,quiet)
 
-	if (quiet .EQ. 0) then
-	  print *
-	end if
+      if (quiet .EQ. 0) then
+          print *
+      end if
 
  100  format(t1,a,i4)
  200  format(t1,'"',a,'"')
@@ -302,25 +302,25 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       call PAPIF_describe_event(name,code,string,check)
  100  format(t1,a,'"',a,'"')
-	if (quiet .EQ. 0) then
+      if (quiet .EQ. 0) then
         print 100,'The event description is: ',
      $    string(1:getstrlen(string))
       end if
 
       if(check.ne.PAPI_OK)then
-	  if (quiet .EQ. 0) then
+      if (quiet .EQ. 0) then
           call PAPIF_perror(check,papierr,code)
           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
           print *,'******* '//'Error in test_papif_descr using '//
      $      'PAPIF_describe_event'
-	  else
+      else
           call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIF_describe_event', check)
+     . 'PAPIF_describe_event', check)
         end if
       end if
 
-	call findnull(string,quiet)
-	call findnull(name,quiet)
+      call findnull(string,quiet)
+      call findnull(name,quiet)
 
       return
       end
@@ -343,36 +343,36 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       return
       end
 
-	subroutine findnull(string,quiet)
+      subroutine findnull(string,quiet)
       implicit none
       integer quiet,i
-	character*(*) string
+      character*(*) string
 
       i=index(string,char(0))
       if(i.gt.0)then
-		if(quiet.EQ.0)then
-		  print *,'NULL character found in string!!!'
-		else
+        if(quiet.EQ.0)then
+           print *,'NULL character found in string!!!'
+        else
             call ftest_fail(__FILE__, __LINE__,
-     .	   'NULL character found in string!!!', 0)
-		end if
+     . 'NULL character found in string!!!', 0)
+        end if
       end if
 
       return
       end
 
 
-	subroutine checkcode(code,check,quiet)
+      subroutine checkcode(code,check,quiet)
       implicit none
       integer*8 code
       integer check,quiet
 
       if(code.ne.check)then
-	  if(quiet.EQ.0)then
-		print 100,'Code look up failed?'
-	  else
+      if(quiet.EQ.0)then
+         print 100,'Code look up failed?'
+      else
           call ftest_fail(__FILE__, __LINE__,
-     .	   'Code look up failed?', 0)
+     .   'Code look up failed?', 0)
         end if
       end if
  100  format(t2,a)
@@ -380,22 +380,22 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       return
       end
 
-	subroutine checkname(name,check,quiet)
+      subroutine checkname(name,check,quiet)
       implicit none
-	character*(*) name
-	character*(*) check
+      character*(*) name
+      character*(*) check
       integer i,quiet
       integer getstrlen
 
       i=getstrlen(name)
       if(name(1:i).ne.check)then
-	  if (quiet .eq. 0) then
-		print 100,'PAPI name incorrect?'
-		print 110,'Got:      ',name(1:i)
-		print 110,'Expected: ',check
-	  else
+        if (quiet .eq. 0) then
+           print 100,'PAPI name incorrect?'
+           print 110,'Got:      ',name(1:i)
+           print 110,'Expected: ',check
+        else
           call ftest_fail(__FILE__, __LINE__,
-     .	   'PAPI name incorrect?', 0)
+     .  'PAPI name incorrect?', 0)
         end if
       end if
 

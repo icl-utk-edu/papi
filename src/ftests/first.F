@@ -15,58 +15,58 @@
       Integer len_trim, n
       External len_trim
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_library_init', retval)
+     . 'PAPI_library_init', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
          call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
          if ( retval.NE.PAPI_OK) then
             call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_set_debug', 
+     . 'PAPIf_set_debug', 
      *retval)
          end if
       end if
       
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+      call PAPIf_query_event(PAPI_FP_INS, retval)
+       if (retval .NE. PAPI_OK) then
         event1 = PAPI_TOT_INS 
-	else
+       else
         event1 = PAPI_FP_INS 
-	end if
+       end if
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset', 
      *retval)
       end if
 
       call PAPIf_add_event( EventSet, event1, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_event', 
+     . 'PAPIf_add_event', 
      *retval)
       end if
  
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_add_event', 
+     . 'PAPIf_add_event', 
      *retval)
       end if
       
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_start', retval)
+     . 'PAPIf_start', retval)
       end if
 
       call do_flops(NUM_FLOPS)
@@ -74,13 +74,13 @@
       call PAPIf_read(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_read', retval)
+     . 'PAPIf_read', retval)
       end if
 
       call PAPIf_reset(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_reset', retval)
+     . 'PAPIf_reset', retval)
       end if
 
       call do_flops(NUM_FLOPS)
@@ -88,7 +88,7 @@
       call PAPIf_read(EventSet, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_read', retval)
+     . 'PAPIf_read', retval)
       end if
 
       call do_flops(NUM_FLOPS)
@@ -96,7 +96,7 @@
       call PAPIf_read(EventSet, values(5), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_read', retval)
+     . 'PAPIf_read', retval)
       end if
 
       call do_flops(NUM_FLOPS)
@@ -104,13 +104,13 @@
       call PAPIf_stop(EventSet, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_stop', retval)
+     . 'PAPIf_stop', retval)
       end if
 
       call PAPIf_read(EventSet, values(9), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_read', retval)
+     . 'PAPIf_read', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -122,7 +122,7 @@
       call PAPIf_get_domain(EventSet, domain, PAPI_GET_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_get_domain', retval)
+     . 'PAPIf_get_domain', retval)
       end if
 
       call stringify_domain(domain, domainstr)
@@ -135,7 +135,7 @@
      *retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPIf_get_granularity', 
+     . 'PAPIf_get_granularity', 
      *retval)
       end if
 
@@ -144,7 +144,7 @@
         call PAPIf_event_code_to_name (event1, name, retval)
         if ( retval.NE.PAPI_OK) then
             call ftest_fail(__FILE__, __LINE__, 
-     *		'PAPIf_event_code_to_name', retval)
+     * 'PAPIf_event_code_to_name', retval)
         end if
         n=len_trim(name)
         write (*,800) "Default granularity is:", granularity, grnstr
@@ -180,7 +180,7 @@
      *(values(7).gt.(max*3)) .OR. (values(7).lt.(min*3)) .OR.
      *(values(7).NE.values(9))) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 name, 1)
+     . name, 1)
       end if
 
       min = values(4)*0.9
@@ -190,7 +190,7 @@
      *(values(8).gt.(max*3)) .OR. (values(8).lt.(min*3)) .OR.
      *(values(8).NE.values(10))) then
         call ftest_fail(__FILE__, __LINE__,
-     .	 'PAPI_TOT_CYC', 1)
+     . 'PAPI_TOT_CYC', 1)
       end if
 
       call ftests_pass(__FILE__)

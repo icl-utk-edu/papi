@@ -23,9 +23,9 @@ C count the first event?
       INTEGER len_trim
       EXTERNAL len_trim
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       n = 1000
       a = 0.999
@@ -37,13 +37,13 @@ C count the first event?
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__, 
-     .	'PAPI_library_init', retval)
+     . 'PAPI_library_init', retval)
       end if
 
       call PAPIf_create_eventset( EventSet, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     .	'PAPIf_create_eventset', 
+     .  'PAPIf_create_eventset', 
      *retval)
       end if
 
@@ -56,7 +56,7 @@ C count the first event?
         if (retval .NE. PAPI_OK) then
             if (retval .NE. PAPI_ECNFLCT) then
                call ftest_fail(__FILE__, __LINE__,
-     .			'PAPIf_add_event', 
+     .         'PAPIf_add_event', 
      *retval)
             else
               j = j - 1
@@ -74,7 +74,7 @@ C count the first event?
         if (retval .NE. PAPI_OK) then
             if (retval .NE. PAPI_ECNFLCT) then
                call ftest_fail(__FILE__, __LINE__,
-     .			 'PAPIf_add_event', 
+     .              'PAPIf_add_event', 
      *retval)
             else
               j = j - 1
@@ -86,7 +86,7 @@ C count the first event?
         call PAPIf_start( EventSet, retval )
         if ( retval .NE. PAPI_OK ) then
            call ftest_fail(__FILE__, __LINE__,
-     .		'PAPIf_start', retval)
+     .        'PAPIf_start', retval)
         end if
       end if
 
@@ -99,7 +99,7 @@ C count the first event?
         call PAPIf_stop( EventSet, gl, retval ) 
         if ( retval .NE. PAPI_OK ) then
            call ftest_fail(__FILE__, __LINE__,
-     .		 'PAPIf_stop', retval)
+     .         'PAPIf_stop', retval)
         end if
       end if
       

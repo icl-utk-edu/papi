@@ -58,12 +58,12 @@
      .   'PAPIf_set_debug', retval)
          end if
       end if
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+        call PAPIf_query_event(PAPI_FP_INS, retval)
+        if (retval .NE. PAPI_OK) then
         event = PAPI_TOT_CYC 
-	else
+        else
         event = PAPI_FP_INS 
-	end if
+        end if
       end
 
 C     Tests that PAPI_multiplex_init does not mess with normal operation. 

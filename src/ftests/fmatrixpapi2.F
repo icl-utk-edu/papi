@@ -24,9 +24,9 @@ C   PAPI values of the counters
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
 C   Setup default values
       num_events=0
@@ -44,13 +44,13 @@ C      OPEN(UNIT=2,FILE='fmt2',STATUS='OLD')
       end if
 
 C   Total floating point operations
-	call PAPIf_query_event(PAPI_FP_INS, retval)
-	if (retval .NE. PAPI_OK) then
+        call PAPIf_query_event(PAPI_FP_INS, retval)
+        if (retval .NE. PAPI_OK) then
         event(1) = PAPI_TOT_INS
-	else
+        else
 C   Total floating point operations
         event(1) = PAPI_FP_INS
-	end if
+        end if
 
 C  Time used
       event(2) = PAPI_TOT_CYC
@@ -108,18 +108,18 @@ C  Read and clear the counter values
 
       if (tests_quiet .EQ. 0) then
         print *
-	  if (event(1) .EQ. PAPI_TOT_INS) then
-		print *, 'TOT Instructions:  ',values(1)
-	  else
-		print *, 'FP Instructions:  ',values(1)
-	  end if
+         if (event(1) .EQ. PAPI_TOT_INS) then
+          print *, 'TOT Instructions:  ',values(1)
+         else
+            print *, 'FP Instructions:  ',values(1)
+         end if
 
         print *, 'Cycles: ',values(2)
 
-	  if (event(1) .EQ. PAPI_FP_INS) then
-		write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
+           if (event(1) .EQ. PAPI_FP_INS) then
+             write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
-	  end if
+           end if
       end if
 
 C  We don't wish to count the events for this call
@@ -151,18 +151,18 @@ C  Stop the counters and put the results in the array values
 
       if (tests_quiet .EQ. 0) then
         print *
-	  if (event(1) .EQ. PAPI_TOT_INS) then
-		print *, 'TOT Instructions:  ',values(1)
-	  else
-		print *, 'FP Instructions:  ',values(1)
-	  end if
+          if (event(1) .EQ. PAPI_TOT_INS) then
+                print *, 'TOT Instructions:  ',values(1)
+          else
+                print *, 'FP Instructions:  ',values(1)
+          end if
 
         print *, 'Cycles: ',values(2)
 
-	  if (event(1) .EQ. PAPI_FP_INS) then
-		write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
+          if (event(1) .EQ. PAPI_FP_INS) then
+               write(*,'(a,f9.6)') ' Efficiency (flops/cycles):',
      &                         real(values(1))/real(values(2))
-	  end if
+          end if
 
         print *
         print *,'----------------------------------------------------'
@@ -184,7 +184,7 @@ C  Compute the matrix-matrix multiplication
       do i=1,ni
        do j=1,nj
          do k=1,nk
-	   r(i,j)=r(i,j) + p(i,k)*q(k,j)
+           r(i,j)=r(i,j) + p(i,k)*q(k,j)
          end do
        end do
       end do

@@ -16,16 +16,16 @@ C Hardware info
      *event_label, event_note
       CHARACTER*(10) avail_str, flags_str
       integer tests_quiet, get_quiet
-	external get_quiet
+      external get_quiet
 
-	tests_quiet = get_quiet()
+      tests_quiet = get_quiet()
 
       handle=0 
       check = PAPI_VER_CURRENT
       call PAPIf_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
         call ftest_fail(__FILE__, __LINE__,
-     .	'PAPI_library_init', check)
+     . 'PAPI_library_init', check)
       end if
 
       call PAPIf_get_hardware_info( ncpu,nnodes,totalcpus,vendor,
