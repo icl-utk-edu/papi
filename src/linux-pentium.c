@@ -265,7 +265,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 
 
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;

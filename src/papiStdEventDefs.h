@@ -29,7 +29,7 @@ platform.
 #define PAPI_TLB_TL  0x80000016 /*Total translation lookaside buffer misses*/
 #define PAPI_TLB_SD  0x8000001E /*Translation lookaside buffer shootdowns (SMP)*/
 
-#define PAPI_MEM_SCY 0x80000022 /*Cycles stalled waiting for memory*
+#define PAPI_MEM_SCY 0x80000022 /*Cycles stalled waiting for memory*/
 #define PAPI_MEM_RCY 0x80000023 /*Cycles stalled waiting for memory reads*/
 #define PAPI_MEM_WCY 0x80000024 /*Cycles stalled waiting for memory writes*/
 #define PAPI_STL_CYC 0x80000025 /*Cycles no instructions issued*/

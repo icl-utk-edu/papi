@@ -159,7 +159,7 @@ extern int _papi_hwd_init(EventSetInfo *zero);   /* members start,
                          For use in keeping track of overlapping 
                          multiple running EventSets */
 extern int _papi_hwd_add_event(EventSetInfo *machdep, int index, unsigned int event);
-extern int _papi_hwd_rem_event(EventSetInfo *machdep, int index, unsigned int event);
+extern int _papi_hwd_rem_event(EventSetInfo *machdep, unsigned int event);
 extern int _papi_hwd_add_prog_event(EventSetInfo *machdep, unsigned int event, void *extra); 
                       /* the extra will be for programmable events 
                          such as the threshold setting on IBM cache 

@@ -716,7 +716,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
     }
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int group, number, unit, multimask;
@@ -736,7 +736,6 @@ int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
 	return(PAPI_EINVAL);
 
       this_state->mask ^= (1 << number);
-      ESI->EventSelectArray[index] = PAPI_NULL;
 
       if (number > 1)                        
 	unstuff_mmcr(&this_state->mmcr,unit,group,number);

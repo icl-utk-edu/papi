@@ -967,7 +967,7 @@ static int handle_error(int PAPI_errorCode, char *errorMessage)
   return(PAPI_errorCode);
 }
 
-static const char *papi_errStr[PAPI_NUM_ERRORS] = {
+static char *papi_errStr[PAPI_NUM_ERRORS] = {
   "No error",
   "Invalid argument",
   "Insufficient memory",
