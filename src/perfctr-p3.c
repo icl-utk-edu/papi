@@ -113,8 +113,6 @@ inline static int setup_p3_presets(int cputype) {
       break;
   */
     }
-printf("%d\n", sizeof(&_papi_hwd_p3_native_map));
-printf("%d\n", sizeof(native_event_entry_t));
    return(_papi_hwi_setup_all_presets(preset_search_map));
 }
 
