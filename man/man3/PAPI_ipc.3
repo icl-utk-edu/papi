@@ -26,6 +26,12 @@ Subsequent calls will read the counters and return total real time,
 total process time, total instructions since the start
 of the measurement and the instructions per cycle rate since latest call to
 .B PAPI_ipc(\|).
+A call to
+.B PAPI_stop_counters(\|) "
+will stop the counters from running and then calls such as
+.B PAPI_start_counters(\|) "
+can safely be used.
+
 
 .SH ARGUMENTS
 .I *rtime 
@@ -46,11 +52,42 @@ On success, this function returns
  On error, a non-zero error code is returned. 
 
 .SH ERRORS
-
-.SH EXAMPLES
+ In addition to the possible errors returned by the various PAPI
+low level calls, the following errors could also be returned:
+.TP
+.B "PAPI_EINVAL"
+The counters were already started by something other than:
+.B PAPI_ipc(\|) 
+.TP
+.B "PAPI_ENOEVNT"
+The total instructions or total cycles event does not exist.
+.TP
+.B "PAPI_ENOMEM"
+Insufficient memory to complete the operation.
+                                                                                
+.BR  PAPI_ipc() " may be called by:"
+.B  \t
+.B  \tthe user application program
+.fi
+.LP
+.nf
+.B  \t
+.BR  PAPI_ipc() " contains calls to:"
+.B  \t
+.B  \tPAPI_perror()
+.B  \tPAPI_library_init()
+.B  \tPAPI_get_hardware_info()
+.B  \tPAPI_create_eventset()
+.B  \tPAPI_add_event()
+.B  \tPAPI_start()
+.B  \tPAPI_get_real_usec()
+.B  \tPAPI_accum()
+.B  \tPAPI_shutdown()
+.fi
 
 .SH BUGS
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR "PAPI_accum (3)", "PAPI_flips (3)", "PAPI_flops (3)"
+.BR "PAPI_stop_counters (3)", "PAPI_set_opt (3)", "PAPI_flips (3)",
+.BR "PAPI_flops (3)"
