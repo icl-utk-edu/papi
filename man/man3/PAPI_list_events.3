@@ -1,13 +1,18 @@
 .\" $Id$
-.TH PAPI_list_events 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_list_events 3 "November, 2003" "PAPI Programmer's Reference" "PAPI"
+
+*
+* This needs to be reworked to incorporate PAPI_num_events.
+*
 
 .SH NAME
-PAPI_list_events \- list the events defined in an event set
+PAPI_list_events, PAPI_num_events \- list or return the number of events in an event set
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int PAPI_list_events(int " EventSet ", int *" Events ", int *" number ");"
+.BI "int PAPI_num_events(int " EventSet ");"
 .fi
 .B Fortran Interface
 .nf
