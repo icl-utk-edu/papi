@@ -10,7 +10,7 @@ SERIAL  = dmem_info all_events derived high-level2 describe mem_info zero \
 	calibrate flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory \
-	timer_overflow overflow2 matrix-hl
+	timer_overflow overflow2 matrix-hl earprofile profilehw 
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
@@ -105,6 +105,9 @@ derived: derived.c $(UTILOBJS) $(PAPILIB)
 zero: zero.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero
 
+try: try.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) try.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o try
+
 zero_flip: zero_flip.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_flip.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_flip
 
@@ -146,6 +149,12 @@ overflow_single_event: overflow_single_event.c $(UTILOBJS) $(PAPILIB)
 
 profile: profile.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
+
+profilehw: profilehw.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profilehw.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profilehw
+
+earprofile: earprofile.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) earprofile.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o earprofile
 
 pernode: pernode.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
