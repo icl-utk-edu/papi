@@ -9,7 +9,7 @@
       integer ncpu, nnodes, totalcpus, vendor
       integer model
       character*20 vendor_string, model_string
-      real*4 revision, mhz, rsec
+      real*4 revision, mhz, rsec, csec
       integer*8 uso, usn 
       integer retval
 
@@ -180,42 +180,135 @@ C     TLB
 #endif
 
 #if defined(linux) && defined(__i386__)
-C     Data mem refs
 #if defined(PENTIUM4)
-      call ftest_skip(__FILE__, __LINE__, 'No Native Support', 
-     .                PAPI_ESBSTR)
-#endif
-      nativees = 43 * 2**8 + 0
+      call PAPIf_event_name_to_code('retired_mispred_branch_type_CONDITIONAL', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-C     Lines out
-      nativees = 47 * 2**8 + 1
+      call PAPIf_event_name_to_code('resource_stall_SBFULL', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
+
+      call PAPIf_event_name_to_code('tc_ms_xfer_CISC', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('instr_retired_BOGUSNTAG_BOGUSTAG', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('BSQ_cache_reference_RD_2ndL_HITS', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+#endif
+#ifdef PENTIUM3
+      call PAPIf_event_name_to_code('DATA_MEM_REFS', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('DCU_LINES_I', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+#endif
+#ifdef __ATHLON__
+      call PAPIf_event_name_to_code('SEG_REG_LOADS', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('ST_ACTIVE_IS', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('DC_ACCESSES', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+#endif
+#ifdef __x86_64__
+      call PAPIf_event_name_to_code('FP_ADD_PIPE', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('FP_MULT_PIPE', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('FP_ST_PIPE', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+      call PAPIf_event_name_to_code('FP_NONE_RET', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+#endif
 #endif
 
 #if defined(linux) && defined(__ia64__)
-C     Data mem refs
+C     Execution latency stall cycles
 #if defined(ITANIUM2)
-      nativees = 324
+      call PAPIf_event_name_to_code('CPU_CYCLES', nativees, retval )
 #else
-      nativees = 132 
+      call PAPIf_event_name_to_code('DEPENDENCY_SCOREBOARD_CYCLE', nativees, retval )
 #endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
-C     Lines out
+C     Combined execution stall cycles
 #if defined(ITANIUM2)
-      nativees = 291
+      call PAPIf_event_name_to_code('L1I_READS', nativees, retval )
 #else
-      nativees = 131
+      call PAPIf_event_name_to_code('DEPENDENCY_ALL_CYCLE', nativees, retval )
+#endif
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     Combined instruction fetch stall cycles
+#if defined(ITANIUM2)
+      call PAPIf_event_name_to_code('L1D_READS_SET0', nativees, retval )
+#else
+      call PAPIf_event_name_to_code('UNSTALLED_BACKEND_CYCLE', nativees, retval )
+#endif
+      call PAPIf_add_event( es, nativees, retval )
+      if ( retval .NE. PAPI_OK ) then
+        call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
+      end if
+
+C     Combined memory stall cycles
+#if defined(ITANIUM2)
+      call PAPIf_event_name_to_code('IA64_INST_RETIRED', nativees, retval )
+#else
+      call PAPIf_event_name_to_code('MEMORY_CYCLE', nativees, retval )
 #endif
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -224,14 +317,16 @@ C     Lines out
 #endif
 #if (defined(mips) && defined(sgi) && defined(unix))
 C     L1 I Miss
-      nativees = 9*2**8
+C      nativees = 9*2**8
+      call PAPIf_event_name_to_code('Primary_instruction_cache_misse', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
 
 C     L1 D Miss
-      nativees = 9 * 2**8 + 1
+C      nativees = 9 * 2**8 + 1
+      call PAPIf_event_name_to_code('Primary_data_cache_misses', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -264,14 +359,16 @@ C     CPU cyc
 
 #if (defined(sun) && defined(sparc))
 C     Load_use
-      nativees = z'B' * 2**8
+C      nativees = z'B' * 2**8
+      call PAPIf_event_name_to_code('Load_use', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
       
 C     DC_wr_hit
-      nativees = z'A' * 2**8 + 1
+C      nativees = z'A' * 2**8 + 1
+      call PAPIf_event_name_to_code('DC_wr_hit', nativees, retval )
       call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
@@ -280,11 +377,13 @@ C     DC_wr_hit
 #endif
 
 #if (defined(__alpha) && defined(__osf__))
-      call PAPIf_add_event( es, 4096, retval )
+      call PAPIf_event_name_to_code('retinst', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
             call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
-      call PAPIf_add_event( es, 1, retval )
+      call PAPIf_event_name_to_code('cycles', nativees, retval )
+      call PAPIf_add_event( es, nativees, retval )
       if ( retval .NE. PAPI_OK ) then
             call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
       end if
@@ -319,8 +418,7 @@ C     call sleep(1)
       rsec = usn/1000000.0
       if (tests_quiet .EQ. 0) then
       print *, "Real Elapsed Time in sec.  : ", rsec
-#if defined(_AIX)
-#if defined(_AIXVERSION_510)
+#if defined(_POWER4)
       csec = values(8)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "FPU0 DIV Instructions      : ", values(1)
@@ -336,7 +434,8 @@ C     call sleep(1)
      *((values(5)+values(6))/1000000.0)/csec
       print *, "%% FMA Instructions         : ",
      *100.0*(values(5) + values(6))/(values(7)
-#else
+#endif
+#if defined(POWER3)
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "L1 Instruction Cache Misses: ", values(1)
@@ -357,19 +456,43 @@ C     call sleep(1)
       print *, "%% FMA Instructions         : ",
      *100.0*values(7)/(values(2)+values(5))
 #endif
-#endif
 
 #if defined(linux) && defined(__i386__)
-      print *, "DCU Memory references      : ", values(1)
-      print *, "DCU Lines out              : ", values(2)
+#ifdef PENTIUM4
+      print *, "retired_mispred_branch_type_CONDITIONAL      : ", values(1)
+      print *, "resource_stall_SBFULL                        : ", values(2)
+      print *, "tc_ms_xfer_CISC                              : ", values(3)
+      print *, "instr_retired_BOGUSNTAG_BOGUSTAG             : ", values(4)
+      print *, "BSQ_cache_reference_RD_2ndL_HITS             : ", values(5)
+#endif
+#ifdef PENTIUM3
+      print *, "DATA_MEM_REFS      : ", values(1)
+      print *, "DCU_LINES_IN       : ", values(2)
+#endif
+#ifdef __ATHLON__
+      print *, "DCU_LINES_IN       : ", values(1)
+      print *, "ST_ACTIVE_IS       : ", values(2)
+      print *, "DC_ACCESSES        : ", values(3)
+      print *, "DC_MISSES          : ", values(4)
+#endif
+#ifdef __x86_64__
+      print *, "FP_ADD_PIPE          : ", values(1)
+      print *, "FP_MULT_PIPE         : ", values(2)
+      print *, "FP_ST_PIPE           : ", values(3)
+      print *, "FP_NONE_RET          : ", values(4)
+#endif
 #endif
 #if defined(linux) && defined(__ia64__)
 #if defined(ITANIUM2)
-      print *, "L1 Instruction Cache Reads  : ", values(1)
-      print *, "L1 Data Cache Reads         : ", values(2)
+      print *, "cpu cycles                  : ", values(1)
+      print *, "L1 Inst cache reads         : ", values(2)
+      print *, "L1 data cache reads         : ", values(3)
+      print *, "ia64 instructions retired   : ", values(4)
 #else
       print *, "Execution latency stall cyc        : ", values(1)
       print *, "Combined execution stall cycles    : ", values(2)
+      print *, "Combined instr. fetch stall cycles : ", values(3)
+      print *, "Combined memory stall cycles       : ", values(4)
 #endif
 #endif
 
