@@ -128,7 +128,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
    u_long_long *buf64;
 
    /* check for addresses outside specified range */
-   if ((address - prof->pr_off) >= prof->pr_size) {
+   if (((unsigned long )(address - prof->pr_off)) >= prof->pr_size) {
       *outside_bin = *outside_bin + 1;
       DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
       return;
