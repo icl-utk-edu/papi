@@ -76,7 +76,10 @@ static void
 sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 {
 	pfm_msg_t msg;
+/*
 	int fd = ctx_fd;
+*/
+	int fd = info->si_fd;
 	int r;
 
 	if (fd != ctx_fd) {
