@@ -23,7 +23,6 @@ contact the PAPI team or one of the PAPI development lists.
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
 
-
 CHANGES IN PAPI 3.0.7 SINCE PAPI 3.0.6
 ===============================================================================
 
@@ -66,6 +65,12 @@ Bug Fixes:
 
 Enhancements:
 -------------
+* src/perfctr-2.6.11:
+  - Added Perfctr-2.6.11 to the repository. Please, don't use perfctr-2.4
+    unless perfctr-2.6 doesn't work for you. There is NO linkage between 
+    perfctr versions and linux kernel versions. Perfctr 2.6 works just fine
+    with linux 2.4.
+
 * src/ctests/shlib.c:
   - Added error message to print out a library loading failure.
 
