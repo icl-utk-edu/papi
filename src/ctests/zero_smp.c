@@ -65,7 +65,7 @@ void Thread(int t, int n)
   values = allocate_test_space(num_tests, num_events1);
 
   retval = PAPI_start(EventSet1);
-  if (retval >= PAPI_OK)
+  if (retval != PAPI_OK)
     exit(1);
 
   elapsed_us = PAPI_get_real_usec();
@@ -79,7 +79,7 @@ void Thread(int t, int n)
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
   retval = PAPI_stop(EventSet1, values[0]);
-  if (retval >= PAPI_OK)
+  if (retval != PAPI_OK)
     exit(1);
 
   remove_test_events(&EventSet1, mask1);
@@ -98,28 +98,29 @@ void Thread(int t, int n)
 
 int main()
 {
-  int i;
+  int i, retval;
   long long elapsed_us, elapsed_cyc;
 
-  if (PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT)
-    exit(1);
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if (retval != PAPI_VER_CURRENT)
+    exit(-retval);
 
   elapsed_us = PAPI_get_real_usec();
 
   elapsed_cyc = PAPI_get_real_cyc();
 
 #if defined(_AIX)
-  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) == PAPI_OK)
+  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
     exit(1);
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
-  if (PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0) == PAPI_OK)
+  if (PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0) != PAPI_OK)
     exit(1);
 #pragma parallel
 #pragma local(i)
 #pragma pfor
 #elif defined(sun) && defined(sparc)
-  if (PAPI_thread_init((unsigned long (*)(void))(thr_self), 0) == PAPI_OK)
+  if (PAPI_thread_init((unsigned long (*)(void))(thr_self), 0) != PAPI_OK)
     exit(1);
 #pragma MP taskloop private(i)
 #elif defined(__ALPHA) && defined(__osf__)
