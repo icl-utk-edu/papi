@@ -13,7 +13,7 @@
 
 /*========================================================================*/
 /* int PAPI_num_counters(void)                                            */
-/*                                                                        */ 
+/*                                                                        */
 /* This function returns the optimal length of the values array           */
 /* for the high level functions. This value corresponds to the            */
 /* number of hardware counters supported by the current substrate.        */
