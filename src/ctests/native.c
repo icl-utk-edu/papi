@@ -1,7 +1,7 @@
 /*
    This test needs to be reworked for all platforms.
    Now that each substrate contains a native event table,
-   the custom code in this file can be constrained to the 
+   the custom code in this file can be constrained to the
    native event name arrays.
    Also, we can no longer add raw native bit patterns.
    Further, the output can be driven from the native name array
@@ -70,20 +70,23 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *native_name[6] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
 #endif
 
+#if defined (_CRAYT3E)
+  static char *native_name[] = {"MACHINE_CYCLES", "DCACHE_ISSUED", "CPU_CYC", NULL,NULL,NULL};
+#endif
+
 #if defined(linux) && defined(__ia64__)
 #ifdef ITANIUM2
-   static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",
-      "IA64_INST_RETIRED", NULL
+   static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",        "IA64_INST_RETIRED", NULL
    };
 #else
-   static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE", 
+   static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE",
       "UNSTALLED_BACKEND_CYCLE", "MEMORY_CYCLE", NULL
    };
 #endif
 #endif
 
 #if ( defined(mips) && defined(sgi) && defined(unix) )
-   static char *native_name[] = { "Primary_instruction_cache_misses", 
+   static char *native_name[] = { "Primary_instruction_cache_misses",
       "Primary_data_cache_misses", NULL
    };
 #endif
@@ -130,24 +133,14 @@ void papimon_start(void)
          native_name[3] = "FP_NONE_RET";
          native_name[4] = NULL;
       }
-#if defined(_CRAYT3E)
-      native = 0 | 0x0 << 8 | 0;        /* Machine cyc */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 0xe << 8 | 1;        /* Dcache acc. */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 0xC << 8 | 2;        /* CPU cyc */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#elif ((defined(_AIX)) || \
-       (defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )) || \
-       (defined(_WIN32)) || \
-       (defined(linux) && defined(__ia64__)) || \
-       (defined(mips) && defined(sgi) && defined(unix)) || \
-       (defined(sun) && defined(sparc)) || \
-       (defined(__crayx1)) ||\
-       (defined(__ALPHA) && defined(__osf__)))
+#if ((defined(_AIX)) || \
+     (defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )) || \
+     (defined(_WIN32)) || \
+     (defined(linux) && defined(__ia64__)) || \
+     (defined(mips) && defined(sgi) && defined(unix)) || \
+     (defined(sun) && defined(sparc)) || \
+     (defined(__crayx1)) || (defined(_CRAYT3E)) || \
+     (defined(__ALPHA) && defined(__osf__)))
 
       for (i = 0; native_name[i] != NULL; i++) {
          retval = PAPI_event_name_to_code(native_name[i], &native);
@@ -233,21 +226,13 @@ void papimon_stop(void)
        (defined(linux) && defined(__ia64__)) || \
        (defined(mips) && defined(sgi)) || \
        (defined(sun) && defined(sparc)) || \
-       (defined(__crayx1))|| \
+       (defined(__crayx1))|| (defined(_CRAYT3E)) || \
        (defined(__ALPHA) && defined(__osf__)))
       for (i = 0; native_name[i] != NULL; i++) {
          fprintf(stderr, "%-40s: ", native_name[i]);
          fprintf(stderr, LLDFMT, values[i]);
          fprintf(stderr, "\n");
       }
-#elif defined(_CRAYT3E)
-      fprintf(stderr, "Machine Cycles                    : %lld\n", values[0]);
-      fprintf(stderr, "DCache accesses                   : %lld\n", values[1]);
-      fprintf(stderr, "CPU Cycles                        : %lld\n", values[2]);
-      fprintf(stderr, "Load_use                   : %lld\n", values[0]);
-      fprintf(stderr, "DC_wr_hit                  : %lld\n", values[1]);
-      fprintf(stderr, "Retired Instructions       : %lld\n", values[0]);
-      fprintf(stderr, "Cycles                     : %lld\n", values[1]);
 #endif
    }
    test_pass(__FILE__, NULL, 0);
