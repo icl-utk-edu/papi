@@ -102,7 +102,7 @@ static preset_search_t preset_search_map[] = {
   {0,0,{0,0,0,0}}};
 #else
 static preset_search_t preset_search_map[] = {
-  {PAPI_L1_TCM,DERIVED_ADD,{"L1D_READ_MISSES_ALL","L2_INST_DEMAND_READS",0,0}},
+  {PAPI_L1_TCM,DERIVED_ADD,{"L2_INST_DEMAND_READS","L1D_READ_MISSES_ALL",0,0}},
   {PAPI_L1_ICM,0,{"L2_INST_DEMAND_READS",0,0,0}},
   {PAPI_L1_DCM,0,{"L1D_READ_MISSES_ALL",0,0,0}},
   {PAPI_L2_TCM,0,{"L2_MISSES",0,0,0}},
