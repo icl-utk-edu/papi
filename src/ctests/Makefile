@@ -10,7 +10,7 @@ SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
 	memory
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-ALL 	= (MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
+ALL 	= $(MPX) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 INCLUDE = -I..
 PAPILIB	= ../libpapi.a
 
