@@ -155,12 +155,14 @@ int _papi_hwi_insert_in_master_list(EventSetInfo *ptr)
     return(PAPI_ENOMEM);
   DBG((stderr,"(%p): New entry is at %p\n",ptr,entry));
   entry->master = ptr;
-  PAPI_lock();
+
+  _papi_hwd_lock();
   entry->next = head;
   DBG((stderr,"(%p): Old head is at %p\n",ptr,entry->next));
   head = entry;
   DBG((stderr,"(%p): New head is at %p\n",ptr,head));
-  PAPI_unlock();
+  _papi_hwd_unlock();
+  
   return(PAPI_OK);
 }
 
@@ -172,14 +174,21 @@ EventSetInfo *_papi_hwi_lookup_in_master_list(void)
   else
     {
       unsigned long int id_to_find = (*thread_id_fn)();
-      EventSetInfoList *tmp = head;
+      EventSetInfoList *tmp;
+
+      _papi_hwd_lock();
+      tmp = head;
       while (tmp != NULL)
 	{
 	  if (tmp->master->tid == id_to_find)
-	    return(tmp->master);
+	    {
+	      _papi_hwd_unlock();
+	      return(tmp->master);
+	    }
 	  tmp = tmp->next;
 	}
       DBG((stderr,"New thread %lu found, but not initialized.\n",id_to_find));
+      _papi_hwd_unlock();
       return(NULL);
     }
 }
@@ -315,9 +324,9 @@ static int start_timer(int milliseconds)
       return(PAPI_ESYS);
     }
 
-  PAPI_lock();
+  _papi_hwd_lock();
   _papi_hwi_using_signal++;
-  PAPI_unlock();
+  _papi_hwd_unlock();
 
   return(PAPI_OK);
 }
@@ -335,14 +344,14 @@ static int stop_timer(void)
   if (setitimer(PAPI_ITIMER, &value, NULL) == -1)
     retval = PAPI_ESYS;
 
-  PAPI_lock();
+  _papi_hwd_lock();
   _papi_hwi_using_signal--;
   if (_papi_hwi_using_signal == 0)
     {
       if (signal(PAPI_SIGNAL,SIG_DFL) == SIG_ERR)
 	retval = PAPI_ESYS;
     }
-  PAPI_unlock();
+  _papi_hwd_unlock();
   
   return(retval);
 }

@@ -1,7 +1,7 @@
 SUBSTR  = irix-mips
 DESCR	= "IRIX 6.x or greater with MIPS R10000 or R12000"
 LIBS	= static shared extra
-TARGETS	= multiplex serial pthreads smp omp 
+TARGETS	= serial multiplex_and_pthreads smp omp 
 FLAGS  	= -g3
 CFLAGS  = -woff 1116,1343,1552,3187,3348 $(FLAGS)
 NOOPT	= -O0

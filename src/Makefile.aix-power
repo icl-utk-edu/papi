@@ -1,7 +1,7 @@
 SUBSTR  = aix-power
 DESCR	= "AIX 4.3.3 or greater with 604, 604e or 630"
 LIBS	= static aix-shared
-TARGETS	= multiplex serial pthreads smp omp
+TARGETS	= multiplex_and_pthreads smp omp
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=com 
 CFLAGS	= $(FLAGS) -g -DDEBUG

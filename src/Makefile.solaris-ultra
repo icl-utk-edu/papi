@@ -1,7 +1,7 @@
 SUBSTR  = solaris-ultra
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
-TARGETS	= multiplex pthreads serial smp omp
+TARGETS	= serial multiplex_and_pthreads smp omp
 
 #CFLAGS	=
 CFLAGS  = -xarch=v8plusa
@@ -14,7 +14,7 @@ FOPTFLAGS= $(OPTFLAGS)
 #SMPCFLGS= 
 SMPCFLGS= -xexplicitpar
 #OMPCFLGS= 
-OMPCFLGS= -xexplicitpar
+OMPCFLGS= -xopenmp
 LDFLAGS = -lcpc
 #CC_R	= gcc
 CC_R	= cc -mt

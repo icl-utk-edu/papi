@@ -1,7 +1,7 @@
 SUBSTR  = tru64-alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial pthreads omp multiplex
+TARGETS	= serial multiplex_and_pthreads omp
 
 CFLAGS 	= -DDEBUG -Zp8 -DNO_FLOPS 
 FFLAGS	= -DNO_FLOPS

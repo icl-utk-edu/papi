@@ -1,11 +1,11 @@
 SUBSTR  = linux-perf
 DESCR	= "Linux with Perf Kernel Patch for the Pentium Pro, II, III"
 LIBS	= static shared
-TARGETS = serial pthreads
+TARGETS = serial multiplex_and_pthreads
 
-CFLAGS  = -Wall -mpentiumpro -g -DDEBUG
-FFLAGS	= -Wall -g
-OPTFLAGS= -O3
+CFLAGS  = -Wall
+FFLAGS	= -Wall
+OPTFLAGS= -O3 -fomit-frame-pointer -mpentiumpro 
 FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc
 F77	= g77

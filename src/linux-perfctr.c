@@ -824,12 +824,12 @@ long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  long long lcyc;
+  unsigned long long lcyc;
   hwd_control_state_t *machdep = zero->machdep;
 /*  float usec, cyc; */
 
   lcyc = vperfctr_read_tsc(machdep->self);
-  DBG((stderr,"Read virt. cycles is %lld (%p -> %p)\n",lcyc,machdep,machdep->self));
+  DBG((stderr,"Read virt. cycles is %llu (%p -> %p)\n",lcyc,machdep,machdep->self));
   return(lcyc);
 
   /*  
@@ -1342,27 +1342,36 @@ void *_papi_hwd_get_overflow_address(void *context)
 }
 
 #define __SMP__
+#define CONFIG_SMP
 #include <asm/atomic.h>
-static atomic_t lock;
+atomic_t lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,0);
+  atomic_set(&lock,1);
 }
 
 void _papi_hwd_lock(void)
 {
-  atomic_inc(&lock);
-  while (atomic_read(&lock) > 1)
+  DBG((stderr,"%lld lock %d\n",get_cycles(),atomic_read(&lock)));
+  if (atomic_dec_and_test(&lock))
+    return;
+  else
     {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
+      volatile int waitcyc = 0;
+      while (atomic_dec_and_test(&lock))
+	{
+	  DBG((stderr,"Waiting..."));
+	  waitcyc++;
+	  atomic_inc(&lock);
+	}
     }
 }
 
 void _papi_hwd_unlock(void)
 {
-  atomic_dec(&lock);
+  DBG((stderr,"%lld unlock %d\n",get_cycles(),atomic_read(&lock)));
+  atomic_set(&lock, 1);
 }
 
 /* Machine info structure. -1 is unused. */
@@ -1409,8 +1418,8 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* supports attaching to another process */
 			        1,  /* We can use the real_usec call */
 			        1,  /* We can use the real_cyc call */
-			        0,  /* We can use the virt_usec call */
-			        0,  /* We can use the virt_cyc call */
+			        1,  /* We can use the virt_usec call */
+			        1,  /* We can use the virt_cyc call */
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        { 0, } };

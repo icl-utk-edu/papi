@@ -2105,6 +2105,16 @@ long_long PAPI_get_virt_cyc(void)
   EventSetInfo *master = _papi_hwi_lookup_in_master_list();
   if (master)
     return(_papi_hwd_get_virt_cycles(master));
+  else if (thread_id_fn != NULL)
+    {
+      int retval;
+      DBG((stderr,"PAPI_get_virt_cyc(): new thread found\n"));
+      retval = initialize_master_eventset(&master);
+      if (retval)
+	papi_return(retval);
+      _papi_hwi_insert_in_master_list(master);
+      return(_papi_hwd_get_virt_cycles(master));
+    }
   return(-1);
 }
 
@@ -2113,7 +2123,18 @@ long_long PAPI_get_virt_usec(void)
   EventSetInfo *master = _papi_hwi_lookup_in_master_list();
   if (master)
     return(_papi_hwd_get_virt_usec(master));
-  return(-1);
+  else if (thread_id_fn != NULL)
+    {
+      int retval;
+      DBG((stderr,"PAPI_get_virt_usec(): new thread found\n"));
+      retval = initialize_master_eventset(&master);
+      if (retval)
+	papi_return(retval);
+      _papi_hwi_insert_in_master_list(master);
+      return(_papi_hwd_get_virt_usec(master));
+    }
+  else
+    return(-1);
 }
 
 int PAPI_restore(void)
