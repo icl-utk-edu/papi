@@ -75,10 +75,12 @@ int case1(void)
     {
       if ((pset->avail) && (pset->event_code != PAPI_TOT_CYC))
 	{
-	  printf("Adding %s\n",pset->event_name);
+  	 if ( !TESTS_QUIET ) 
+	     printf("Adding %s\n",pset->event_name);
 	  retval = PAPI_add_event(&EventSet, pset->event_code);
 	  if (retval != PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+  	 if ( !TESTS_QUIET ) 
 	  printf("Added %s\n",pset->event_name);
 	  if (++j >= max_to_add)
 	    break;
