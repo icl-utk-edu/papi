@@ -535,3 +535,111 @@ int PAPI_get_opt(int option, int *value, PAPI_option_t *ptr)
       return(PAPI_error(PAPI_EINVAL,NULL));
     }
 }
+
+int PAPI_start(int EventSet)
+{ int retval;
+  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+
+  retval = _papi_hwd_start(this_machdep);
+  if(retval) return(PAPI_EBUG);
+  return 0;
+}
+
+int PAPI_stop(int EventSet, long long *values)
+{ int retval, machnum;
+  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+
+  retval = _papi_hwd_stop(this_machdep, values);
+  if(retval) return(PAPI_EBUG);
+
+  if(machnum == 0) return(PAPI_ENOTRUN);
+
+  if(machnum >= 4)
+  { printf("\tCounter 0 : %lld\n", values[0]);
+  }
+  if((machnum == 3) || (machnum == 7))
+  { printf("\tCounter 1 : %lld\n", values[1]);
+    printf("\tCounter 2 : %lld\n", values[2]);
+  }
+  if((machnum == 2) || (machnum == 6))
+  { printf("\tCounter 1 : %lld\n", values[1]);
+  }
+  else printf("\tCounter 2 : %lld\n", values[2]);
+
+  retval = _papi_hwd_reset(this_machdep);
+  if(retval) return(PAPI_EBUG);
+  return 0;
+}
+
+int PAPI_read(int EventSet, long long *values)
+{ int retval, machnum;
+  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+
+  retval = _papi_hwd_read(this_machdep, values, &machnum);
+  if(retval) return(PAPI_EBUG);
+  if(machnum == 0) return(PAPI_ENOTRUN); 
+
+  if(machnum >= 4)
+  { printf("\tCounter 0 : %lld\n", values[0]);
+  }
+  if((machnum == 3) || (machnum == 7))
+  { printf("\tCounter 1 : %lld\n", values[1]);
+    printf("\tCounter 2 : %lld\n", values[2]);
+  }
+  if((machnum == 2) || (machnum == 6))
+  { printf("\tCounter 1 : %lld\n", values[1]);
+  }
+  else printf("\tCounter 2 : %lld\n", values[2]);
+  return 0;
+}
+
+
+int PAPI_accum(int EventSet, long long *values)
+{ int retval, machnum, i;
+  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+  long long increase[3];   //should be a variable known to library containing
+				//number of counters
+
+  retval = _papi_hwd_read(this_machdep, increase, &machnum);
+  if(retval) return(PAPI_EBUG);
+  if(machnum == 0) return(PAPI_ENOTRUN);
+
+  for(i=0; i<3; i++)
+  { values[i] += increase[i];
+  }
+
+  if(machnum >= 4)
+  { printf("\tCounter 0 : %lld\n", values[0]);
+  }
+  if((machnum == 3) || (machnum == 7))
+  { printf("\tCounter 1 : %lld\n", values[1]);
+    printf("\tCounter 2 : %lld\n", values[2]);
+  }
+  if((machnum == 2) || (machnum == 6))
+  { printf("\tCounter 1 : %lld\n", values[1]);
+  }
+  else printf("\tCounter 2 : %lld\n", values[2]);
+
+  retval = _papi_hwd_reset(this_machdep);
+  if(retval) return(PAPI_EBUG);
+  return 0;
+}
+
+int PAPI_write(int EventSet, long long *values)
+{ int retval;
+  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+
+  retval = _papi_hwd_write(this_machdep, values);
+  if(retval) return(PAPI_EBUG);
+  return 0;
+}
+
+int PAPI_reset(int EventSet)
+{ int retval;
+  void *this_machdep = PAPI_EVENTSET_MAP.dataSlotArray[EventSet]->machdep;
+
+  retval = _papi_hwd_reset(this_machdep);
+  if(retval) return(PAPI_EBUG);
+  return 0;
+}
+

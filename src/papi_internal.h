@@ -117,7 +117,7 @@ extern int _papi_hwd_start(void *machdep);
 extern int _papi_hwd_stop(void *machdep, long long events[]); 
                       /* counters will be read in stop call */
 extern int _papi_hwd_reset(void *machdep);
-extern int _papi_hwd_read(void *machdep, long long events[]);
+extern int _papi_hwd_read(void *machdep, long long events[], int *machnum);
 extern int _papi_hwd_write(void *machdep, long long events[]);
                       /* the following two functions will be used to
                          set machine dependent options such as the 

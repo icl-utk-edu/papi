@@ -47,7 +47,6 @@ typedef struct _hwd_preset {
   int counter_code2;
   int sp_code;   /* possibly needed for setting certain registers to 
                     enable special purpose counters */
-  int pad;
 } hwd_control_state;
 
 
@@ -57,8 +56,8 @@ static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = {
                 { 4, 0x28, 0xC0,},		// L1 I-Cache misses 
 		{ 4, 0x24, 0x2E,},		// L2 Cache misses
 		{ 4, 0x24, 0x2E,},		// ditto
-		{ 0,},				// L3 misses
-		{ 0,},				// ditto
+		{ 0,-1,-1,-1},			// L3 misses
+		{ 0,-1,-1,-1},			// ditto
 		{},				// 6	**unused preset map elements**
 		{},				// 7
 		{},				// 8
@@ -109,7 +108,7 @@ static hwd_control_state preset_map[PAPI_MAX_PRESET_EVENTS] = {
 		{ },				// Loads executed
 		{ },				// Stores executed
 		{ 3, 0xC4, },			// Branch inst. executed
-		{ 0, },				// Vector/SIMD inst. executed 
+		{ 0,-1,-1,-1 },			// Vector/SIMD inst. executed 
 		{ 5, 0x10, },			// FLOPS
                 {},				// 58
                 {},				// 59
@@ -391,11 +390,11 @@ int _papi_hwd_start(void *machdep)
 
 int _papi_hwd_stop(void *machdep, long long events[])
 { hwd_control_state *this_state = (hwd_control_state *)machdep;
-  int retval;
+  int retval, machnum;
 
   retval = perf(PERF_STOP, 0, 0);
   if(retval) return(PAPI_EBUG); 
-  return (_papi_hwd_read(this_state, events));
+  return (_papi_hwd_read(this_state, events, &machnum));
 }
 
 
@@ -408,11 +407,12 @@ int _papi_hwd_reset(void *machdep)
   return perf(PERF_RESET, 0, 0); /*from perf.c */
 }
 
-int _papi_hwd_read(void *machdep, long long events[])
+int _papi_hwd_read(void *machdep, long long events[], int *machnum)
 {
   /* copy appropriate events from machdep into events */
 
   int retval;
+  hwd_control_state *this_state = (hwd_control_state *)machdep;
 
   /* I couldn't think of a good reason to go through the number of steps 
 	required to read only the counter(s) used, when it's so much shorter
@@ -421,6 +421,7 @@ int _papi_hwd_read(void *machdep, long long events[])
      won't be hard to change if we need to, might be slower 
   */
 
+  (int)machnum = this_state->number;
   retval = perf(PERF_READ, 0, events[0]);
   if(retval) return(PAPI_EBUG);
   retval = perf(PERF_READ, 1, events[1]);
