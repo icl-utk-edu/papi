@@ -24,13 +24,15 @@ Given a preset or native event code,
 replaces the event code with the next available event in either the preset or native table. 
 The 
 .I modifier
-argument affects which events are returned. For preset events, a 
-TRUE (non-zero) value directs the function to return event codes only for 
-PAPI preset events available on this platform. Otherwise all events 
-in the preset table are returned. For native events, the effect of the
+argument affects which events are returned. For all platforms and event types, a value of 
+.B PAPI_ENUM_ALL
+(zero) directs the function to return all possible events. For preset events, a 
+TRUE (non-zero) value currently directs the function to return event codes only for 
+PAPI preset events available on this platform. This may change in the future. 
+For native events, the effect of the
 .I modifier 
-argument is different on each platform. See native_avail.c or your 
-platform-specific PAPI documentation for details.
+argument is different on each platform. See the discussion below for  
+platform-specific definitions.
 
 
 .SH ARGUMENTS
@@ -41,6 +43,20 @@ platform-specific PAPI documentation for details.
 -- modifies the search logic. For preset events, TRUE specifies available events only.
 For native events, each platform behaves differently. 
 See platform-specific documentation for details
+
+.SH PENTIUM 4
+The following values are implemented for 
+.I modifier
+on Pentium 4:
+.B "  PAPI_PENT4_ENUM_GROUPS" - 45 groups + custom + user event types
+.B "  PAPI_PENT4_ENUM_COMBOS" - all combinations of mask bits for given group
+.B "  PAPI_PENT4_ENUM_BITS"   - all individual bits for a given group
+
+.SH POWER 4
+The following values are implemented for 
+.I modifier
+on POWER 4:
+.B "  PAPI_PWR4_ENUM_GROUPS" - Enumerate groups to which an event belongs
 
 .SH RETURN VALUES
 On success, this function returns
@@ -80,7 +96,7 @@ if (retval != PAPI_VER_CURRENT) {
          if (retval == PAPI_OK) {
             printf("%-30s 0x%-10x\n%s\n", info.symbol, info.event_code, info.long_descr);
          }
-   } while (PAPI_enum_event(&i, 0) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
 
 .if t .ft P
 .fi
