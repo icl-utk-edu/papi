@@ -63,12 +63,12 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DW
 /* The following PAPI internal functions are defined by the substrate file. */
 
 extern int _papi_hwd_init(hwd_context_t *);
-extern int _papi_hwd_add_event(P4_regmap_t *chosen, P4_preset_t *preset, P4_perfctr_control_t *out);
+extern int _papi_hwd_add_event(hwd_register_map_t *chosen, hwd_preset_t *preset, hwd_control_state_t *out);
 extern int _papi_hwd_add_prog_event(hwd_control_state_t *, int, void *, EventInfo_t *); 
 extern int _papi_hwd_allocate_registers(hwd_control_state_t *, hwd_preset_t *, hwd_register_map_t *);
 extern int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, unsigned long long **);
 extern int _papi_hwd_shutdown(hwd_context_t *);
-extern int _papi_hwd_remove_event(P4_regmap_t *chosen, unsigned hardware_index, P4_perfctr_control_t *out);
+extern int _papi_hwd_remove_event(hwd_register_map_t *chosen, unsigned hardware_index, hwd_control_state_t *out);
 extern unsigned long_long _papi_hwd_get_real_cycles (void);
 extern unsigned long_long _papi_hwd_get_real_usec (void);
 extern unsigned long_long _papi_hwd_get_virt_cycles (const hwd_context_t *);
