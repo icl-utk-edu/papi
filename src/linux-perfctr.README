@@ -45,6 +45,17 @@ If you have a properly functioning Perfctr patch from a previous
 release of PAPI, you will obviously not want to repatch your kernel. PAPI
 is compatible with PerfCtr 2.4.x and Perfctr 2.6.x. 
 
+The x86 Makefiles:
+Makefile.linux-perfctr-p3
+Makefile.linux-perfctr-p4
+Makefile.linux-athlon
+Makefile.linux-opteron
+
+To recompile PAPI *not* using the included PerfCtr distribution, you simply
+pass the PERFCTR argument to the appropriate Makefile.
+
+make -f Makefile.linux-perfctr-p3 PERFCTR=/usr/src/perfctr-2.4.x
+
 To use Perfctr 2.6.x, simply type:
 make -f Makefile.linux-perfctr-p3
 
