@@ -70,7 +70,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 42
+#define NUM_OF_PRESET_EVENTS 41
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #else
@@ -138,7 +138,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 57
+#define NUM_OF_PRESET_EVENTS 56
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #endif
