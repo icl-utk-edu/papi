@@ -4,6 +4,8 @@
 #endif
 #include SUBSTRATE
 #include <stdio.h>
+int init_amd( PAPI_mem_info_t * mem_info );
+int init_intel( PAPI_mem_info_t * mem_info );
 
 int get_memory_info( PAPI_mem_info_t * mem_info, int cpu_type ){
    int retval = 0;

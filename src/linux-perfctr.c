@@ -396,6 +396,12 @@ static int get_system_info(struct perfctr_dev *dev)
 #endif
   DBG((stderr,"Actual MHZ is %f\n",_papi_system_info.hw_info.mhz));
 
+  /* Setup memory info */
+
+  tmp = get_memory_info(&_papi_system_info.mem_info, (int)info.cpu_type);
+  if (tmp)
+    return(tmp);
+
   /* Setup presets */
 
   tmp = setup_all_presets((int)info.cpu_type);
@@ -674,10 +680,6 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
-  retval = get_memory_info(&_papi_system_info.mem_info);
-  if (retval)
-    return(retval);
-
   DBG((stderr,"Found %d %s %s CPU's at %f Mhz.\n",
        _papi_system_info.hw_info.totalcpus,
        _papi_system_info.hw_info.vendor_string,
@@ -1328,7 +1330,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t* info, void * tmp)
   DBG((stderr,"Finished at 0x%lx\n",mc->eip));
 }
 
-int swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
+static void swap_pmc_map_events(struct vperfctr_control *contr,int cntr1,int cntr2)
 {
   unsigned int ui; int si;
 
@@ -1360,7 +1362,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
   extern int _papi_hwi_using_signal;
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   struct vperfctr_control *contr = &this_state->counter_cmd;
-  int i, ncntrs, nricntrs, nracntrs, cntr, cntr2, retval=0;
+  int i, ncntrs, nricntrs = 0, nracntrs, cntr, cntr2, retval=0;
   unsigned int selector;
 
 #ifdef DEBUG
