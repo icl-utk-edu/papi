@@ -22,7 +22,7 @@ OPTFLAGS	+= -O3
 
 # Flags for test programs
 FFLAGS        	+= -Dlinux -ffixed-line-length-132
-TOPTFLAGS	+= -O -g 
+TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
