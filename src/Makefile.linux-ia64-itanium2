@@ -8,7 +8,7 @@ LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads
 
 CFLAGS  = -Ipfmon-1.1/include -I. 
-OPTFLAGS= -O3 -DITANIUM2
+OPTFLAGS= -g -DITANIUM2
 TOPTFLAGS = -O0 -DITANIUM2
 FFLAGS	=
 #  -Vaxlib

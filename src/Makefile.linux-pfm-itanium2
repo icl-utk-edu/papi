@@ -11,7 +11,7 @@ TARGETS = serial multiplex_and_pthreads
 
 CFLAGS  = -I$(LIBPFMHOME)/include -I. -DITANIUM2 -DPFM20 
 # -DDEBUG
-OPTFLAGS= -O3 -DITANIUM2
+OPTFLAGS= -g -DITANIUM2
 TOPTFLAGS = -DITANIUM2 -O0
 FFLAGS	=
 #  -Vaxlib

@@ -9,8 +9,8 @@ TARGETS = serial multiplex_and_pthreads
 
 CFLAGS  = -Ipfmon-1.1/include -I. -Wall -DPFM11 -g
 # -DDEBUG
-OPTFLAGS= -O2
-TOPTFLAGS = $(OPTFLAGS)
+OPTFLAGS= -g
+TOPTFLAGS = $(OPTFLAGS) -g
 FFLAGS	=
 #  -Vaxlib
 LDFLAGS = 
