@@ -29,6 +29,12 @@ and E-Chip do not support hardware overflow.  Because of this, when overflowing
 on events, if only P-Chip events are being overflowed on then we use hardware
 overflow.  But if we are overflowing on M or E-Chip events (alone, together, or in
 combination with P-Chip events) then we use software overflowing.
+P-Chips: When in software mode the threshold being set is compared to the aggregate
+of all the SSP counters, but when in hardware the threshold is compared against
+each individual SSP.  This means if you have a MSP application and 4 streams and
+you want 100,000 threshold, you may want to set the threshold to 25,000 as you could
+possibly hit 399,997 before an overflow happens with a 100,000 overflow.  But this
+depends on your application.
 
 Profiling:
 Hardware profiling is not available on the Cray X-1 and so we use overflows and 
