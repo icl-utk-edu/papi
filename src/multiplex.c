@@ -951,18 +951,22 @@ int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
    int i, cur_mpx_event;
    int retval = PAPI_OK;
    long_long dummy_value[2];
+   long_long dummy_mpx_values[PAPI_MPX_DEF_DEG];
    /* long_long cycles_this_slice, total_cycles; */
    MasterEvent *cur_event, *head;
    Threadlist *thr;
 
-   if (mpx_events == NULL || values == NULL)
+   if (mpx_events == NULL)
       return PAPI_EINVAL;
    if (mpx_events->status != MPX_RUNNING)
       return PAPI_ENOTRUN;
 
    /* Read the counter values, this updates mpx_events->stop_values[] */
    MPXDBG("Start\n");
-   retval = MPX_read(mpx_events, values);
+   if (values == NULL)
+     retval = MPX_read(mpx_events, dummy_mpx_values);
+   else
+     retval = MPX_read(mpx_events, values);
 
    /* Block timer interrupts while modifying active events */
    mpx_hold();
