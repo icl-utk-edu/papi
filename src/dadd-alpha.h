@@ -10,6 +10,7 @@
 #include <sys/times.h>
 #include <sys/sysinfo.h>
 #include <sys/procfs.h>
+#include <sys/clu.h>
 #include <machine/hal_sysinfo.h>
 #include <machine/cpuconf.h>
 #include <assert.h>
@@ -48,6 +49,7 @@
 #define VC_COND_BR_NOT_TAKEN 24
 #define VC_COND_BR_MISPREDICTED 25
 #define VC_COND_BR_PREDICTED 26
+#define VC_ITBMISS_TRAPS 38
 
 typedef struct hwd_control_state {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
@@ -71,6 +73,7 @@ typedef struct hwd_preset {
   unsigned char operand_index;
   /* Buffer to pass to the kernel to control the counters */
   long counter_cmd;
+  long counter_cmd2;
   /* Footnote to append to the description of this event */
   char note[PAPI_MAX_STR_LEN];
 } hwd_preset_t;
@@ -78,8 +81,9 @@ typedef struct hwd_preset {
 typedef struct hwd_search {
   /* PAPI preset code */
   unsigned int papi_code;
-  /* DADD event code */
+  /* DADD event code(s) */
   long dadd_code;
+  long dadd_code2;
 } hwd_search_t;
 
 #include "papi_internal.h"

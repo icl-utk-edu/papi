@@ -5,30 +5,34 @@ extern EventSetInfo *default_master_eventset;
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 
 static hwd_search_t findem_dadd[] = {
-  { PAPI_TOT_CYC, VC_TOTAL_CYCLES},
-  { PAPI_L1_ICM, VC_NYP_EVENTS },
-  { PAPI_L2_TCM, VC_BCACHE_MISSES },
-  { PAPI_TLB_DM, VC_TOTAL_DTBMISS },
-  { PAPI_BR_UCN, VC_UNCOND_BR_EXECUTED },
-  { PAPI_BR_CN, VC_COND_BR_EXECUTED },
-  { PAPI_BR_NTK, VC_COND_BR_NOT_TAKEN },
-  { PAPI_BR_MSP, VC_COND_BR_MISPREDICTED },
-  { PAPI_BR_PRC, VC_COND_BR_PREDICTED },
-  { PAPI_TOT_INS, VC_TOTAL_INSTR_EXECUTED },
-  { PAPI_TOT_IIS, VC_TOTAL_INSTR_ISSUED },
-  { PAPI_FP_INS, VC_FP_INSTR_EXECUTED },
-  { PAPI_LD_INS, VC_LOAD_INSTR_EXECUTED },
-  { PAPI_SR_INS, VC_STORE_INSTR_EXECUTED },
-  { PAPI_LST_INS, VC_TOTAL_LOAD_STORE_EXECUTED },
-  { PAPI_SYC_INS, VC_SYNCH_INSTR_EXECUTED },
-  { PAPI_FML_INS, VC_FM_INSTR_EXECUTED },
-  { PAPI_FAD_INS, VC_FA_INSTR_EXECUTED },
-  { PAPI_FDV_INS, VC_FD_INSTR_EXECUTED },
-  { PAPI_FSQ_INS, VC_FSQ_INSTR_EXECUTED },
-  { PAPI_INT_INS, VC_INT_INSTR_EXECUTED },
-  { PAPI_FLOPS, VC_FP_INSTR_EXECUTED },
-  { PAPI_IPS, VC_TOTAL_INSTR_EXECUTED },
-  { -1, -1}};
+  { PAPI_TOT_CYC, VC_TOTAL_CYCLES, 0},
+  { PAPI_L1_ICM, VC_NYP_EVENTS, 0 },
+  { PAPI_L2_TCM, VC_BCACHE_MISSES, 0 },
+  { PAPI_TLB_DM, VC_TOTAL_DTBMISS, 0 },
+  { PAPI_BR_UCN, VC_UNCOND_BR_EXECUTED, 0 },
+  { PAPI_BR_CN, VC_COND_BR_EXECUTED, 0 },
+  { PAPI_BR_NTK, VC_COND_BR_NOT_TAKEN, 0 },
+  { PAPI_BR_MSP, VC_COND_BR_MISPREDICTED, 0 },
+  { PAPI_BR_PRC, VC_COND_BR_PREDICTED, 0 },
+  { PAPI_TOT_INS, VC_TOTAL_INSTR_EXECUTED, 0 },
+  { PAPI_TOT_IIS, VC_TOTAL_INSTR_ISSUED, 0 },
+  { PAPI_FP_INS, VC_FP_INSTR_EXECUTED, 0 },
+  { PAPI_LD_INS, VC_LOAD_INSTR_EXECUTED, 0 },
+  { PAPI_SR_INS, VC_STORE_INSTR_EXECUTED, 0 },
+  { PAPI_LST_INS, VC_TOTAL_LOAD_STORE_EXECUTED, 0 },
+  { PAPI_SYC_INS, VC_SYNCH_INSTR_EXECUTED, 0 },
+  { PAPI_FML_INS, VC_FM_INSTR_EXECUTED, 0 },
+  { PAPI_FAD_INS, VC_FA_INSTR_EXECUTED, 0 },
+  { PAPI_FDV_INS, VC_FD_INSTR_EXECUTED, 0 },
+  { PAPI_FSQ_INS, VC_FSQ_INSTR_EXECUTED, 0 },
+  { PAPI_INT_INS, VC_INT_INSTR_EXECUTED, 0 },
+  { PAPI_FLOPS, VC_FP_INSTR_EXECUTED, VC_TOTAL_CYCLES },
+  { PAPI_IPS, VC_TOTAL_INSTR_EXECUTED, VC_TOTAL_CYCLES },
+  { PAPI_TLB_IM, VC_ITBMISS_TRAPS, 0},
+  { PAPI_BR_TKN, VC_COND_BR_TAKEN, 0},
+  { PAPI_TLB_TL, VC_ITBMISS_TRAPS, VC_TOTAL_DTBMISS },
+  { PAPI_BR_INS, VC_UNCOND_BR_EXECUTED, VC_COND_BR_EXECUTED},
+  { -1, -1, -1}};
 
 static int setup_all_presets(void)
 {
@@ -47,15 +51,18 @@ static int setup_all_presets(void)
       preset_map[index].derived = NOT_DERIVED;
       if ((code == PAPI_FLOPS) || (code == PAPI_IPS))
           preset_map[index].derived = DERIVED_PS;
+      if ((code == PAPI_TLB_TL) || (code == PAPI_BR_INS))
+          preset_map[index].derived = DERIVED_ADD;
       preset_map[index].operand_index = 0;
       preset_map[index].counter_cmd = findem->dadd_code;
       sprintf(str,"0x%x",findem->dadd_code);
       if (strlen(preset_map[index].note))
         strcat(preset_map[index].note,",");
       strcat(preset_map[index].note,str);
-      if ((code == PAPI_FLOPS) || (code == PAPI_IPS)) {
+      if ((findem->dadd_code2) || (code == PAPI_FLOPS) || (code == PAPI_IPS)) {
         strcat(preset_map[index].note,",");
-        strcat(preset_map[index].note,"0x0");
+        sprintf(str,"0x%x",findem->dadd_code2);
+        strcat(preset_map[index].note,str);
       }
       findem++;
     }
@@ -70,6 +77,7 @@ static int get_system_info(void)
   long proc_type;
   pid_t pid;
   char pname[PAPI_MAX_STR_LEN], *ptr;
+  struct clu_gen_info *clugenptr;
 
   pid = getpid();
   if (pid == -1)
@@ -96,10 +104,31 @@ static int get_system_info(void)
     return PAPI_ESYS;
   proc_type &= 0xffffffff;
 
+  clugenptr = NULL;
+
+  retval = clu_get_info(&clugenptr);
+
+  switch (retval) {
+      case 0: break;
+      case CLU_NOT_MEMBER:
+      case CLU_NO_CLUSTER_NAME:
+      case CLU_NO_MEMBERID:
+      case CLU_CNX_ERROR:
+        _papi_system_info.hw_info.nnodes = 1;
+      default:
+        _papi_system_info.hw_info.nnodes = 1;
+      }
+
+  if (clugenptr == NULL)
+      _papi_system_info.hw_info.nnodes = 1;
+  else
+      _papi_system_info.hw_info.nnodes = clugenptr->clu_num_of_members;
+
+  clu_free_info(&clugenptr);
+
   _papi_system_info.cpunum = cpuinfo.current_cpu;
   _papi_system_info.hw_info.mhz = (float)cpuinfo.mhz;
   _papi_system_info.hw_info.ncpu = cpuinfo.cpus_in_box;
-  _papi_system_info.hw_info.nnodes = 1;
   _papi_system_info.hw_info.totalcpus =
     _papi_system_info.hw_info.ncpu * _papi_system_info.hw_info.nnodes;
   _papi_system_info.hw_info.vendor = -1;
@@ -257,19 +286,29 @@ int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
   unsigned long count;
   virtual_counters *ptr_vc;
   int dadd_code;
+  int papi_code;
   hwd_control_state_t *this_state;
 
   this_state = (hwd_control_state_t *) (ESI->master)->machdep;
   ptr_vc = this_state->ptr_vc;
   this_state->latestcycles = (long long)ptr_vc->vc_total_cycles;
   for (i=0; i<ESI->NumberOfEvents; i++) {
-    if (ESI->EventInfoArray[i].code != PAPI_NULL) {
+    papi_code = ESI->EventInfoArray[i].code;
+    if (papi_code != PAPI_NULL) {
       dadd_code = (ESI->EventInfoArray[i]).command;
       if (ptr_vc) {
         memcpy(&count,
-       (char *)ptr_vc+sizeof(struct timeval)+sizeof(unsigned long)*dadd_code,
+       (char *)ptr_vc+sizeof(unsigned long)+sizeof(struct timeval)+
+         sizeof(unsigned long)*dadd_code,
        sizeof(unsigned long));
 
+        switch (papi_code) {
+          case PAPI_TLB_TL:
+             count += ptr_vc->vc_total_dtbmiss;
+          case PAPI_BR_INS:
+             count += ptr_vc->vc_cond_br_executed;
+          }
+      }
 /*        switch (dadd_code) {
           case VC_TOTAL_CYCLES:
             count = ptr_vc->vc_total_cycles;
@@ -287,7 +326,6 @@ int _papi_hwd_reset(EventSetInfo *ESI, EventSetInfo *zero)
             return(PAPI_ENOEVNT);
           }
 */
-        }
       else
         return(PAPI_ESBSTR);
       ESI->latest[i] = (long long)(count);
@@ -302,20 +340,31 @@ int _papi_hwd_read(EventSetInfo *ESI, EventSetInfo *zero, long long *events)
   unsigned long count;
   virtual_counters *ptr_vc;
   int dadd_code;
+  int papi_code;
   hwd_control_state_t *this_state;
   long long cycles;
 
   this_state = (ESI->master)->machdep;
   ptr_vc = this_state->ptr_vc;
   for (i=0; i<ESI->NumberOfEvents; i++) {
-    if (ESI->EventInfoArray[i].code != PAPI_NULL) {
+    papi_code = ESI->EventInfoArray[i].code;
+    if (papi_code != PAPI_NULL) {
 
     dadd_code = (ESI->EventInfoArray[i]).command;
-    if (ptr_vc)
+    if (ptr_vc) {
         memcpy(&count,
-       (char *)ptr_vc+sizeof(struct timeval)+sizeof(unsigned long)*dadd_code,
-       sizeof(unsigned long));
+             (char *)ptr_vc+sizeof(unsigned long)+
+             sizeof(struct timeval)+sizeof(unsigned long)*dadd_code,
+             sizeof(unsigned long));
+        switch (papi_code) {
+          case PAPI_TLB_TL:
+             count += ptr_vc->vc_total_dtbmiss;
+          case PAPI_BR_INS:
+             count += ptr_vc->vc_cond_br_executed;
+          }
+    }
 
+     
 /*        switch (dadd_code) {
           case VC_TOTAL_CYCLES:
             count = ptr_vc->vc_total_cycles;
