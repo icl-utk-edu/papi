@@ -666,7 +666,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 }
 
 
-static void clear_control_state(hwd_control_state_t * this_state)
+static void clear_cs_events(hwd_control_state_t * this_state)
 {
    int i,j;
 
@@ -708,11 +708,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    P4_register_t *bits;
    struct perfctr_cpu_control *cpu_control = &this_state->control.cpu_control;
 
-   /* clear out everything currently coded */
-   clear_control_state(this_state);
-
-   /* and reinitialize to the default state */
-   _papi_hwd_init_control_state(this_state);
+   /* clear out the events from the control state */
+   clear_cs_events(this_state);
 
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {

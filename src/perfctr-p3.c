@@ -173,7 +173,6 @@ static int mdi_init()
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode;
 
-   SUBDBG("\n");
    switch(_papi_hwi_system_info.default_domain) {
    case PAPI_DOM_USER:
       def_mode = PERF_USR;
@@ -513,18 +512,18 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       return 0;
 }
 
-static void clear_control_state(hwd_control_state_t *this_state) {
+static void clear_cs_events(hwd_control_state_t *this_state) {
    int i,j;
 
-   SUBDBG("\n");
    /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
    j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
 
    /* Remove all counter control command values from eventset. */
    for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = 0;
-      this_state->control.cpu_control.evntsel[i] = this_state->control.cpu_control.evntsel[i] & (PERF_OS|PERF_USR);
+      this_state->control.cpu_control.pmc_map[i] = i;
+      this_state->control.cpu_control.evntsel[i] 
+         = this_state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
 
@@ -540,13 +539,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i;
 
-   SUBDBG("\n");
-
-   /* clear out everything currently coded */
-   clear_control_state(this_state);
-
-   /* and reinitialize to the default state */
-   _papi_hwd_init_control_state(this_state);
+   /* clear out the events from the control state */
+   clear_cs_events(this_state);
 
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
