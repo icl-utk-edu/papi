@@ -1257,6 +1257,10 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags, PAPI_ov
   if (threshold < 0)
     papi_return(PAPI_EINVAL);
 
+  /* We do not support derived events in overflow */
+  if ( ESI->EventInfoArray[index].derived )
+    papi_return(PAPI_EINVAL);
+
 /* the first time to call PAPI_overflow function */
   if ( !(ESI->state & PAPI_OVERFLOWING) )
   {
