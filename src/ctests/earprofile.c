@@ -10,6 +10,8 @@
 #define NUM 1000000
 #define THR 200
 
+int *array;
+
 int do_test(unsigned long loop)
 {
 
@@ -43,8 +45,6 @@ int do_test(unsigned long loop)
 #include "papi_test.h"
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
-
-int *array;
 
 int main(int argc, char **argv) 
 {
