@@ -34,7 +34,7 @@ int main(int argc, char **argv)
    if (PAPI_query_event(PAPI_BR_CN) == PAPI_OK)
      j++;
 
-  if(j==1&&(retval = PAPI_add_event(&EventSet, PAPI_BR_CN)) != PAPI_OK) {
+  if(j==1&&(retval = PAPI_add_event(EventSet, PAPI_BR_CN)) != PAPI_OK) {
         if ( retval != PAPI_ECNFLCT )
 	   test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
    }
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
    if (PAPI_query_event(PAPI_TOT_CYC) == PAPI_OK)
      j++;
 
-   if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC)) != PAPI_OK){
+   if (j==(i+1)&&(retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK){
         if ( retval != PAPI_ECNFLCT )
 	   test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
    }
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
    if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK)           
      j++;
 
-   if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_TOT_INS)) != PAPI_OK){
+   if (j==(i+1)&&(retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK){
         if ( retval != PAPI_ECNFLCT )
 	   test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
    }

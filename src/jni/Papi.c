@@ -186,7 +186,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_accum
 JNIEXPORT jint JNICALL Java_PapiJ_add_1event
   (JNIEnv *env, jobject obj, jobject set, jint event)
 {
-  int ret, eventSet, (*add_event)(int *, int);
+  int ret, eventSet, (*add_event)(int, int);   /* JT */
   jfieldID fid;
   jclass class;
 
@@ -199,7 +199,8 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1event
 
   eventSet = (*env)->GetIntField(env, set, fid);
 
-  ret = (*add_event)(&eventSet, event);
+  ret = (*add_event)(eventSet, event);     /* JT */
+
 
   (*env)->SetIntField(env, set, fid, eventSet);
 
@@ -209,7 +210,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1event
 JNIEXPORT jint JNICALL Java_PapiJ_add_1events
   (JNIEnv *env, jobject obj, jobject set, jintArray events)
 {
-  int num, ret, eventSet, (*add_events)(int *, int *, int);
+  int num, ret, eventSet, (*add_events)(int, int *, int);   /* JT */
   jint *e_arr;
   jfieldID fid;
   jclass class;
@@ -226,7 +227,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1events
   e_arr = (*env)->GetIntArrayElements(env, events, 0);
   num = (*env)->GetArrayLength(env, events);
 
-  ret = (*add_events)(&eventSet, (int*)e_arr, num);
+  ret = (*add_events)(eventSet, (int*)e_arr, num);    /* JT */
 
   (*env)->SetIntField(env, set, fid, eventSet);
   (*env)->ReleaseIntArrayElements(env, events, e_arr, 0);
@@ -237,7 +238,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1events
 JNIEXPORT jint JNICALL Java_PapiJ_cleanup_1eventset
   (JNIEnv *env, jobject obj, jobject set)
 {
-  int ret, eventSet, (*cleanup_eventset)(int *);
+  int ret, eventSet, (*cleanup_eventset)(int);   /* JT */
   jfieldID fid;
   jclass class;
 
@@ -250,7 +251,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_cleanup_1eventset
 
   eventSet = (*env)->GetIntField(env, set, fid);
 
-  ret = (*cleanup_eventset)(&eventSet);
+  ret = (*cleanup_eventset)(eventSet);     /* JT */
 
   (*env)->SetIntField(env, set, fid, eventSet);
 
@@ -396,7 +397,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1usec
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_virt_cyc)(void);
+  u_long_long (*get_virt_cyc)(void);    /* JT */
 
   if( ! (get_virt_cyc = getPapiFunction("PAPI_get_virt_cyc")) )
     return -1;
@@ -407,7 +408,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1usec
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_virt_usec)(void);
+  u_long_long (*get_virt_usec)(void);     /* JT */
 
   if( ! (get_virt_usec = getPapiFunction("PAPI_get_virt_usec")) )
     return -1;

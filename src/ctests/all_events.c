@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 
   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++){ 
 	if ( !(info[i].avail) ) continue;
-	retval = PAPI_add_event(&EventSet,info[i].event_code);
+	retval = PAPI_add_event(EventSet,info[i].event_code);    /* JT */
   	if (retval != PAPI_OK) {
 	    if ( !TESTS_QUIET ) 
 		printf("Error adding %s\n", info[i].event_name );

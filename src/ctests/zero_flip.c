@@ -49,10 +49,10 @@ int main(int argc, char **argv)
 
   /* Add the events */ 
 
-  retval = PAPI_add_event(&EventSet1,PAPI_event);
+  retval = PAPI_add_event(EventSet1,PAPI_event);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-  retval = PAPI_add_event(&EventSet1,PAPI_TOT_CYC);
+  retval = PAPI_add_event(EventSet1,PAPI_TOT_CYC);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
   /* Add them reversed to EventSet2 */
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
       retval = PAPI_event_code_to_name(events[i], event_name);
       if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
-      retval = PAPI_add_event(&EventSet2,events[i]);
+      retval = PAPI_add_event(EventSet2,events[i]);
       if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
     }
 
@@ -97,13 +97,13 @@ int main(int argc, char **argv)
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
-  retval = PAPI_cleanup_eventset(&EventSet1);
+  retval = PAPI_cleanup_eventset(EventSet1);    /* JT */
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
 
   retval = PAPI_destroy_eventset(&EventSet1);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
 
-  retval = PAPI_cleanup_eventset(&EventSet2);
+  retval = PAPI_cleanup_eventset(EventSet2);    /* JT */
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
 
   retval = PAPI_destroy_eventset(&EventSet2);

@@ -67,10 +67,10 @@ int main()
 
   /* Add the counters */
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_CYC) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_CYC) != PAPI_OK)
     exit(1);
 
-  if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+  if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
     exit(1);
 
   elapsed_us = PAPI_get_real_usec();

@@ -33,7 +33,7 @@ int main(int argc, char **argv)
    if ( ( retval = PAPI_query_event(eventcode) ) != PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_query_event(PAPI_TOT_INS)", retval );
 
-   if ( (retval = PAPI_add_event(&EventSet, eventcode) ) != PAPI_OK) 
+   if ( (retval = PAPI_add_event(EventSet, eventcode) ) != PAPI_OK) 
      test_fail(__FILE__,__LINE__,"PAPI_add_event(PAPI_TOT_INS)",retval);
 
    if ( (retval = PAPI_start(EventSet) ) != PAPI_OK ) 

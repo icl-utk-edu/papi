@@ -105,7 +105,7 @@ int case1()
     {
       char out[PAPI_MAX_STR_LEN];
 
-      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      retval = PAPI_add_event(EventSet, PAPI_events[i]);
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
@@ -132,7 +132,7 @@ int case1()
     test_print_event_header("case1:",EventSet);
     printf(TAB2,"case1:",values[0],values[1]);
   }
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);   /* JT */
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
@@ -166,7 +166,7 @@ int case2()
     {
       char out[PAPI_MAX_STR_LEN];
 
-      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      retval = PAPI_add_event(EventSet, PAPI_events[i]);
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
@@ -194,7 +194,7 @@ int case2()
     printf(TAB2,"case2:",values[0],values[1]);
   }
 
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);     /* JT */
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
@@ -224,7 +224,7 @@ int case3()
     {
       char out[PAPI_MAX_STR_LEN];
 
-      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      retval = PAPI_add_event(EventSet, PAPI_events[i]);
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
@@ -256,7 +256,7 @@ int case3()
     printf(TAB2,"case3:",values[0],values[1]);
   }
 
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);     /* JT */
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   
@@ -290,7 +290,7 @@ int case4()
     {
       char out[PAPI_MAX_STR_LEN];
 
-      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      retval = PAPI_add_event(EventSet, PAPI_events[i]);
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
       PAPI_event_code_to_name(PAPI_events[i],out);
@@ -303,30 +303,30 @@ int case4()
     CPP_TEST_FAIL("PAPI_set_multiplex",retval);
 
 #if (defined(i386) && defined(linux)) || (defined(_POWER) && defined(_AIX)) || defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || defined(WIN32)
-  retval = PAPI_add_event(&EventSet, PAPI_L1_DCM);
+  retval = PAPI_add_event(EventSet, PAPI_L1_DCM);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
 
  #if (defined(_POWER4))
-  retval = PAPI_add_event(&EventSet, PAPI_L1_DCA);
+  retval = PAPI_add_event(EventSet, PAPI_L1_DCA);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
  #else
-  retval = PAPI_add_event(&EventSet, PAPI_L1_ICM);
+  retval = PAPI_add_event(EventSet, PAPI_L1_ICM);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
  #endif
 
 #elif defined(sparc) && defined(sun)
-  retval = PAPI_add_event(&EventSet, PAPI_LD_INS);
+  retval = PAPI_add_event(EventSet, PAPI_LD_INS);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_SR_INS);
+  retval = PAPI_add_event(EventSet, PAPI_SR_INS);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)
-  retval = PAPI_add_event(&EventSet, PAPI_TLB_DM);
+  retval = PAPI_add_event(EventSet, PAPI_TLB_DM);
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_add_event",retval);
 #else
@@ -357,7 +357,7 @@ int case4()
      test_print_event_header("case4:",EventSet);
      printf(TAB4,"case4:",values[0],values[1],values[2],values[3]);
   }
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);     /* JT */
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
   

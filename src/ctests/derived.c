@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     {
       PAPI_event_code_to_name(PAPI_events[i],event_name);
       if (!TESTS_QUIET) QUIETPRINTF("Adding %s\n",event_name);
-      retval = PAPI_add_event(&EventSet, PAPI_events[i]);
+      retval = PAPI_add_event(EventSet, PAPI_events[i]);
       if (retval != PAPI_OK)
 	CPP_TEST_FAIL("PAPI_add_event",retval);
     }
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
   QUIETPRINTF(TAB1, add_event_str, values);
   QUIETPRINTF("------------------------------------------------\n");
 
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);      /* JT */
   if (retval != PAPI_OK)
     CPP_TEST_FAIL("PAPI_cleanup_eventset",retval);
 

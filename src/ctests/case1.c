@@ -33,7 +33,7 @@ int main(int argc, char **argv)
    if (PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
      j++;
 
-  if(j==1&&(retval = PAPI_add_event(&EventSet, PAPI_L2_TCM)) != PAPI_OK) {
+  if(j==1&&(retval = PAPI_add_event(EventSet, PAPI_L2_TCM)) != PAPI_OK) {
         if ( retval != PAPI_ECNFLCT )
 		test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	j--;  /* The event was not added */
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
    if (PAPI_query_event(PAPI_L2_DCM) == PAPI_OK)
      j++;
 
-   if (j==(i+1)&&(retval = PAPI_add_event(&EventSet, PAPI_L2_DCM)) != PAPI_OK){
+   if (j==(i+1)&&(retval = PAPI_add_event(EventSet, PAPI_L2_DCM)) != PAPI_OK){
         if ( retval != PAPI_ECNFLCT )
 		test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	j--;  /* The event was not added */

@@ -15,6 +15,12 @@
 *          <your email address>
 */  
 
+#ifdef PAPI3.0                           /* JT */
+#include "papi.h"                        /* JT */
+#include "papi_internal.h"               /* JT */
+#include "papi_protos.h"                 /* JT */
+#endif                                   /* JT */
+
 #ifndef _WIN32	/* for Linux/Unix systems */
   #include SUBSTRATE
 #else			
@@ -849,7 +855,7 @@ int PAPI_create_eventset(int *EventSet)
   return(create_eventset(EventSet, master));
 }
 
-int PAPI_add_pevent(int *EventSet, int code, void *inout)
+int PAPI_add_pevent(int EventSet, int code, void *inout)    /* JT */
 { 
   EventSetInfo *ESI;
 
@@ -858,7 +864,7 @@ int PAPI_add_pevent(int *EventSet, int code, void *inout)
   if (EventSet == NULL)
     papi_return(PAPI_EINVAL);
 
-  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, *EventSet);
+  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);      /* JT */
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
 
@@ -877,16 +883,16 @@ int PAPI_add_pevent(int *EventSet, int code, void *inout)
   return(add_pevent(ESI,code,inout));
 }
 
-int PAPI_add_event(int *EventSet, int EventCode) 
+int PAPI_add_event(int EventSet, int EventCode)      /* JT */
 { 
   EventSetInfo *ESI;
 
   /* Is the EventSet already in existence? */
   
-  if (EventSet == NULL)
+  if (&EventSet == NULL)                               /* JT */
     papi_return(PAPI_EINVAL);
 
-  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, *EventSet);
+  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);  /* JT */
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
 
@@ -1136,6 +1142,28 @@ int PAPI_rem_event(int *EventSet, int EventCode)
 
   papi_return(remove_event(ESI,EventCode));
 }
+
+#ifdef PAPI3.0
+int PAPI_remove_event(int EventSet, int EventCode)       /* JT */
+{
+  EventSetInfo_t *ESI;
+
+  /* check for pre-existing ESI */
+
+  ESI = _papi_hwi_lookup_EventSet(EventSet);
+  if (ESI == NULL)
+    papi_return(PAPI_ENOEVST);
+
+  /* Of course, it must be stopped in order to modify it. */
+
+  if (!(ESI->state & PAPI_STOPPED))
+    papi_return(PAPI_EISRUN);
+
+  /* Now do the magic. */
+
+  papi_return(_papi_hwi_remove_event(ESI,EventCode));
+}                                                        /* JT */
+#endif
 
 int PAPI_destroy_eventset(int *EventSet)
 {
@@ -1494,17 +1522,17 @@ static int cleanup_eventset(EventSetInfo *ESI)
 
 /*  The function PAPI_cleanup removes a stopped EventSet from existence. */
 
-int PAPI_cleanup_eventset(int *EventSet) 
+int PAPI_cleanup_eventset(int EventSet)       /* JT */
 { 
   EventSetInfo *ESI;
   EventSetInfo *thread_master_eventset;
 
   /* Is the EventSet already in existence? */
 
-  if (EventSet == NULL)
+  if (&EventSet == NULL)
     papi_return(PAPI_EINVAL);
 
-  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, *EventSet);
+  ESI = lookup_EventSet(PAPI_EVENTSET_MAP, EventSet);    /* JT */
   if (ESI == NULL)
     papi_return(PAPI_ENOEVST);
   thread_master_eventset = ESI->master;
@@ -1869,6 +1897,30 @@ int PAPI_get_opt(int option, PAPI_option_t *ptr)
   papi_return(PAPI_OK);
 } 
 
+int PAPI_num_hw_counters(void)                               /* JT */
+{
+  return(PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL));
+}
+
+#ifdef PAPI3.0
+int PAPI_num_events(int EventSet)                            /* JT */
+{
+  EventSetInfo_t *ESI;
+
+  ESI = _papi_hwi_lookup_EventSet(EventSet);
+  if (!ESI)
+    papi_return(PAPI_ENOEVST);
+
+#ifdef DEBUG
+  /* Not necessary */
+  if (ESI->NumberOfEvents == 0)
+    papi_return(PAPI_EINVAL);
+#endif
+
+  return(ESI->NumberOfEvents);
+}
+#endif
+
 void PAPI_shutdown(void) 
 {
   int i, j = 0, status;
@@ -1892,13 +1944,13 @@ again:
       EventSetInfo *ESI = PAPI_EVENTSET_MAP->dataSlotArray[i];
       if (ESI) 
 	{
-	  PAPI_state(i,&status);
+	  PAPI_state(i,&status);        /* JT */
 	  if (status & PAPI_RUNNING)
 	    {
 	      if (ESI->master == master)
 		{
 		  PAPI_stop(i,NULL);
-		  PAPI_cleanup_eventset(&i);
+		  PAPI_cleanup_eventset(i);
 		}
 	      else
 		j++;
@@ -2171,7 +2223,7 @@ int PAPI_set_domain(int domain)
   papi_return(PAPI_set_opt(PAPI_SET_DEFDOM, &ptr));
 }
 
-int PAPI_add_events(int *EventSet, int *Events, int number)
+int PAPI_add_events(int EventSet, int *Events, int number)    /* JT */
 {
   int i, retval;
 
@@ -2185,6 +2237,23 @@ int PAPI_add_events(int *EventSet, int *Events, int number)
     }
   papi_return(PAPI_OK);
 }
+
+#ifdef PAPI3.0
+int PAPI_remove_events(int EventSet, int *Events, int number)       /* JT */
+{
+  int i, retval;
+
+  if ((Events == NULL) || (number < 0))
+    papi_return(PAPI_EINVAL);
+
+  for (i=0; i<number; i++)
+    {
+      retval=PAPI_remove_event(EventSet, Events[i]);
+      if(retval!=PAPI_OK) return(retval);
+    }
+  return(PAPI_OK);
+}
+#endif
 
 int PAPI_rem_events(int *EventSet, int *Events, int number)
 {
@@ -2275,6 +2344,18 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void)
     return(NULL);
 }
 
+const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void)    /* JT */
+{
+  PAPI_option_t ptr;
+  int retval;
+
+  retval = PAPI_get_opt(PAPI_GET_SHLIBINFO,&ptr);
+  if (retval == PAPI_OK)
+    return(ptr.shlib_info);
+  else
+    return(NULL);
+}
+
 const PAPI_mem_info_t *PAPI_get_memory_info() {
   PAPI_option_t ptr;
   int retval;
@@ -2308,7 +2389,7 @@ long_long PAPI_get_real_usec(void)
   return(_papi_hwd_get_real_usec());
 }
 
-long_long PAPI_get_virt_cyc(void)
+u_long_long PAPI_get_virt_cyc(void)       /* JT */
 {
   EventSetInfo *master = _papi_hwi_lookup_in_master_list();
   if (master)
@@ -2326,7 +2407,7 @@ long_long PAPI_get_virt_cyc(void)
   return PAPI_ECNFLCT;
 }
 
-long_long PAPI_get_virt_usec(void)
+u_long_long PAPI_get_virt_usec(void)     /* JT */
 {
   EventSetInfo *master = _papi_hwi_lookup_in_master_list();
   if (master)

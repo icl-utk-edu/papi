@@ -64,10 +64,10 @@ int main(argc, argv)
     test_fail(__FILE__,__LINE__, "PAPI_set_multiplex fails \n",retval);
 #endif
   
-  retval = PAPI_add_event( &EventSet, PAPI_FP_INS );
+  retval = PAPI_add_event(EventSet, PAPI_FP_INS );
   if (retval < PAPI_OK )
     {
-      retval = PAPI_add_event( &EventSet, PAPI_TOT_INS );
+      retval = PAPI_add_event(EventSet, PAPI_TOT_INS );
       if (retval < PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI add PAPI_FP_INS or PAPI_TOT_INS fail\n",retval); 
       else
@@ -76,7 +76,7 @@ int main(argc, argv)
   else
     if (!TESTS_QUIET) { printf("PAPI_FP_INS\n"); }
 
-  retval = PAPI_add_event( &EventSet, PAPI_TOT_CYC );
+  retval = PAPI_add_event(EventSet, PAPI_TOT_CYC );
   if (retval < PAPI_OK )
     test_fail(__FILE__,__LINE__,"PAPI add PAPI_TOT_CYC  fail\n",retval); 
   if (!TESTS_QUIET) { printf("PAPI_TOT_CYC\n"); }

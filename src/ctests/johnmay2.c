@@ -27,13 +27,13 @@ int main(int argc, char **argv)
    if ((retval=PAPI_create_eventset(&FPEventSet)) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
-   if ((retval=PAPI_add_event(&FPEventSet, PAPI_event)) != PAPI_OK)
+   if ((retval=PAPI_add_event(FPEventSet, PAPI_event)) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
    if ((retval=PAPI_start(FPEventSet)) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_start",retval);
 
-   if ((retval=PAPI_cleanup_eventset(&FPEventSet)) != PAPI_EISRUN)
+   if ((retval=PAPI_cleanup_eventset(FPEventSet)) != PAPI_EISRUN)   /* JT */
         test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
 
    if ((retval=PAPI_destroy_eventset(&FPEventSet)) != PAPI_EISRUN)
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
    if ((retval=PAPI_destroy_eventset(&FPEventSet)) != PAPI_EINVAL)
         test_fail(__FILE__,__LINE__,"PAPI_destroy_eventset",retval);
 
-   if ((retval=PAPI_cleanup_eventset(&FPEventSet)) != PAPI_OK)
+   if ((retval=PAPI_cleanup_eventset(FPEventSet)) != PAPI_OK)    /* JT */
         test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
 
    if ((retval=PAPI_destroy_eventset(&FPEventSet)) != PAPI_OK)

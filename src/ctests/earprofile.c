@@ -96,9 +96,9 @@ int main(int argc, char **argv)
     real_native.papi_native_bits.pme_dear = 1;
     real_native.papi_native_bits.pme_tlb = 0;
     native = real_native.papi_native_all;
-    if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+    if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-    if((retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC))!=PAPI_OK)
+    if((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC))!=PAPI_OK)
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 #else

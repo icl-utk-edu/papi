@@ -34,14 +34,14 @@ int main()
    if ((retval = PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK)
      err_exit(retval,"PAPI_query_event(PAPI_TOT_CYC)");
 
-   if ((retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC)) != PAPI_OK)
-     err_exit(retval,"PAPI_add_event(&EventSet, PAPI_TOT_CYC)");
+   if ((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
+     err_exit(retval,"PAPI_add_event(EventSet, PAPI_TOT_CYC)");
 
    if ((retval = PAPI_query_event(PAPI_FP_INS)) != PAPI_OK)
      err_exit(retval,"PAPI_query_event(PAPI_FP_INS)");
 
-   if ((retval = PAPI_add_event(&EventSet, PAPI_FP_INS)) != PAPI_OK)
-     err_exit(retval,"PAPI_add_event(&EventSet, PAPI_FP_INS)");
+   if ((retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
+     err_exit(retval,"PAPI_add_event(EventSet, PAPI_FP_INS)");
 
    memset(&opt,0x0,sizeof(PAPI_option_t));
    opt.inherit.inherit = PAPI_INHERIT_ALL;

@@ -87,7 +87,7 @@ int case1_first_half(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_INS);
+  retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
   if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   if ( !TESTS_QUIET ) 
@@ -95,7 +95,7 @@ int case1_first_half(void)
       printf("Added %s\n","PAPI_TOT_INC");
     }
 
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+  retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
   if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
     test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   if ( !TESTS_QUIET ) 
@@ -114,7 +114,7 @@ int case1_first_half(void)
 	  if ( !TESTS_QUIET ) 
 	    printf("Adding %s\n",pset->event_name);
 
-	  retval = PAPI_add_event(&EventSet, pset->event_code);
+	  retval = PAPI_add_event(EventSet, pset->event_code);
 	  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -174,7 +174,7 @@ int case1_last_half(void)
   if( !allvalid )
     test_fail(__FILE__,__LINE__,"case1 (one or more counter registered no counts)",1);
 
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);     /* JT */
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
 

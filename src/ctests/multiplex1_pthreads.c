@@ -122,7 +122,7 @@ void *case1_pthreads(void *arg)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
   for(i=0;i<2;i++) {
-    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+    if ((retval = PAPI_add_event(EventSet, PAPI_events[i]))!=PAPI_OK )
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 
@@ -144,7 +144,7 @@ void *case1_pthreads(void *arg)
     printf("case1 thread %4x:",(unsigned)pthread_self());
     printf(TAB2,"",values[0],values[1]);
   }
-  if((retval = PAPI_cleanup_eventset(&EventSet)) !=PAPI_OK)
+  if((retval = PAPI_cleanup_eventset(EventSet)) !=PAPI_OK)    /* JT */
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
   return((void *)SUCCESS);
@@ -164,7 +164,7 @@ void *case2_pthreads(void *arg)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
   for(i=0;i<2;i++) {
-    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+    if ((retval = PAPI_add_event(EventSet, PAPI_events[i]))!=PAPI_OK )
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 
@@ -187,7 +187,7 @@ void *case2_pthreads(void *arg)
     printf(TAB2,"",values[0],values[1]);
   }
 
-  if((retval = PAPI_cleanup_eventset(&EventSet))!=PAPI_OK)
+  if((retval = PAPI_cleanup_eventset(EventSet))!=PAPI_OK)    /* JT */
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
   return((void *)SUCCESS);
@@ -204,7 +204,7 @@ void *case3_pthreads(void *arg)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
   for(i=0;i<2;i++) {
-    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+    if ((retval = PAPI_add_event(EventSet, PAPI_events[i]))!=PAPI_OK )
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 
@@ -230,7 +230,7 @@ void *case3_pthreads(void *arg)
     printf(TAB2,"",values[0],values[1]);
   }
 
-  if((retval = PAPI_cleanup_eventset(&EventSet))!=PAPI_OK)
+  if((retval = PAPI_cleanup_eventset(EventSet))!=PAPI_OK)    /* JT */
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
   return((void *)SUCCESS);
@@ -247,7 +247,7 @@ void *case4_pthreads(void *arg)
     test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
 
   for(i=0;i<2;i++) {
-    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+    if ((retval = PAPI_add_event(EventSet, PAPI_events[i]))!=PAPI_OK )
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 
@@ -255,7 +255,7 @@ void *case4_pthreads(void *arg)
     test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
 
   for(i=2;i<4;i++) {
-    if ((retval = PAPI_add_event(&EventSet, PAPI_events[i]))!=PAPI_OK )
+    if ((retval = PAPI_add_event(EventSet, PAPI_events[i]))!=PAPI_OK )
       test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   }
 
@@ -278,7 +278,7 @@ void *case4_pthreads(void *arg)
     printf(TAB4,"",values[0],values[1],values[2],values[3]);
   }
 
-  if((retval = PAPI_cleanup_eventset(&EventSet))!=PAPI_OK)
+  if((retval = PAPI_cleanup_eventset(EventSet))!=PAPI_OK)     /* JT */
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
   
   return((void *)SUCCESS);

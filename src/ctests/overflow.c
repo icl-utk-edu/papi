@@ -85,10 +85,10 @@ int main(int argc, char **argv)
   retval = PAPI_create_eventset(&EventSet);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_TOT_CYC);
+  retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-  retval = PAPI_add_event(&EventSet, PAPI_event);
+  retval = PAPI_add_event(EventSet, PAPI_event);
   if ( retval != PAPI_OK)  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
   retval = PAPI_start(EventSet);

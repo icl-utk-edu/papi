@@ -78,7 +78,7 @@ int case1(void)
 	  if ( !TESTS_QUIET ) 
 	    printf("Adding %s\n",pset->event_name);
 
-	  retval = PAPI_add_event(&EventSet, pset->event_code);
+	  retval = PAPI_add_event(EventSet, pset->event_code);
 	  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 
@@ -118,7 +118,7 @@ int case1(void)
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
 
-  retval = PAPI_cleanup_eventset(&EventSet);
+  retval = PAPI_cleanup_eventset(EventSet);      /* JT */
   if (retval != PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
 

@@ -47,63 +47,63 @@ void papimon_start(void)
       /* defined in Makefile.aix.power4 */
       /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
       native = 0 | 10 << 8  | 0; /* PM_FPU0_DIV */
-      if ( (retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if ( (retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 19 << 8 | 1; /* PM_FPU1_DIV */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 25 << 8  | 2; /* PM_FPU0_FRSP_FCONV */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 29 << 8  | 3; /* PM_FPU1_FRSP_FCONV */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 11 << 8  | 4; /* PM_FPU0_FMA */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 20 << 8 | 5; /* PM_FPU1_FMA */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 78 << 8  | 6; /* PM_INST_CMPL */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 74 << 8  | 7; /* PM_CYC */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   #else
       native = 0 | 5 << 8  | 0; /* ICM */
-      if ( (retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if ( (retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 35 << 8 | 1; /* FPU1CMPL */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 5 << 8  | 2; /* LDCM */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 5 << 8  | 3; /* LDCMPL */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 5 << 8  | 4; /* FPU0CMPL */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 12 << 8 | 5; /* CYC */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 9 << 8  | 6; /* FMA */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0 << 8  | 7; /* TLB */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
   #endif
 #elif defined(linux) && defined(__i386__)
       if(strncmp("AuthenticAMD",hwinfo->vendor_string,(size_t) 3) == 0)
 	{
 	  native = 0 | 0x40 << 8 | 0; /* DCU refs */
-	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	  native = 0 | 0x41 << 8 | 1; /* DCU miss */
-	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	}
       else if ( hwinfo->model>=11 ) /* Pentium 4 */{
@@ -112,10 +112,10 @@ void papimon_start(void)
       else
 	{
 	  native = 0 | 0x43 << 8 | 0; /* Data mem refs */
-	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	  native = 0 | 0x47 << 8 | 1; /* Lines out */
-	  if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+	  if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	}
 #elif defined(linux) && defined(__ia64__) && defined(ITANIUM2)
@@ -140,46 +140,46 @@ void papimon_start(void)
 	real_native.papi_native_bits.register_no = 4;
 	real_native.papi_native_bits.pme_mcode = 0x02; 
 	native = real_native.papi_native_all;
-        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+        if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined execution stall cycles */
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 5;
 	real_native.papi_native_bits.pme_mcode = 0x06;
 	native = real_native.papi_native_all;
-        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+        if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined instruction fetch stall cycles */
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 6;
 	real_native.papi_native_bits.pme_mcode = 0x05;
 	native = real_native.papi_native_all;
-        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+        if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 	/* Combined memory stall cycles */
 	real_native.papi_native_all = 0;
 	real_native.papi_native_bits.register_no = 7;
 	real_native.papi_native_bits.pme_mcode = 0x07;
 	native = real_native.papi_native_all;
-        if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+        if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       }
 #elif defined(mips) && defined(sgi) && defined(unix)
       native = 0 | 0x9 << 8 | 0; /* L1 I Miss */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0x9 << 8 | 1; /* L1 D Miss */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(_CRAYT3E)
       native = 0 | 0x0 << 8 | 0; /* Machine cyc */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0xe << 8 | 1; /* Dcache acc. */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 0 | 0xC << 8 | 2; /* CPU cyc */
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(sun) && defined(sparc)
 /* 
@@ -209,21 +209,21 @@ void papimon_start(void)
 0,1,EC_ic_hit,0xf
 */
       native = 0 | (0xb << 8); /* Load_use */  
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = 1 | (0xa << 8); /* DC_wr_hit */  
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(__ALPHA) && defined(__osf__)
       native = get_instr();
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
       native = get_cyc();
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #elif defined(__LINUX__)
       native = 0x28;
-      if((retval = PAPI_add_event(&EventSet, native))!=PAPI_OK)
+      if((retval = PAPI_add_event(EventSet, native))!=PAPI_OK)
 	  test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
 #else
 #error "Architecture not included in this test file yet."

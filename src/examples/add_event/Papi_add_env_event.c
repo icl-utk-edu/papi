@@ -24,7 +24,7 @@
  *
  * To use only add_event you would change the calls to 
  * PAPI_add_env_event(int *EventSet, int *Event, char *env_variable);
- * to PAPI_add_event(int *EventSet, int Event);
+ * to PAPI_add_event(int EventSet, int Event);
  *
  * We will also use PAPI_event_code_to_name since the event may have
  * changed.
@@ -132,9 +132,9 @@ int PAPI_add_env_event(int *EventSet, int *EventCode, char *env_variable){
         }
     }
   }
-  if ( (retval = PAPI_add_event( EventSet, real_event))!= PAPI_OK ){
+  if ( (retval = PAPI_add_event(*EventSet, real_event))!= PAPI_OK ){
         if ( real_event != *EventCode ) {
-                if ( (retval = PAPI_add_event( EventSet, *EventCode)) == PAPI_OK
+                if ( (retval = PAPI_add_event(*EventSet, *EventCode)) == PAPI_OK
 ){
                         real_event = *EventCode;
                 }

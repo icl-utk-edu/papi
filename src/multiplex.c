@@ -1333,14 +1333,14 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
           fprintf(stderr,"Event %d could not be counted.\n",event_list[i]);
 #endif
         bail:
-          PAPI_cleanup_eventset(&(mev->papi_event));
+          PAPI_cleanup_eventset(mev->papi_event);   /* JT */
           PAPI_destroy_eventset(&(mev->papi_event));
           free(mev);
           mev = NULL;
           break;
         }
 
-      retval = PAPI_add_event(&(mev->papi_event),event_list[i]);
+      retval = PAPI_add_event(mev->papi_event,event_list[i]);   /* JT */
       if (retval != PAPI_OK)
         {
 #ifdef MPX_DEBUG
@@ -1354,7 +1354,7 @@ static int mpx_insert_events(MPX_EventSet *mpx_events, int * event_list,
 
       if (event_list[i] != PAPI_TOT_CYC) 
         {
-          retval = PAPI_add_event(&(mev->papi_event), PAPI_TOT_CYC); 
+          retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC);    /* JT */
           if (retval != PAPI_OK)
             {
 #ifdef MPX_DEBUG
@@ -1452,7 +1452,7 @@ static void mpx_delete_events(MPX_EventSet * mpx_events)
       } else {
         lastmev->next = nextmev;
       }
-      PAPI_cleanup_eventset(&(mev->papi_event));
+      PAPI_cleanup_eventset(mev->papi_event);     /* JT */
       PAPI_destroy_eventset(&(mev->papi_event));
       free(mev);
     } else {

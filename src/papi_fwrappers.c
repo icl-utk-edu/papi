@@ -50,17 +50,17 @@ PAPI_FCALL(papif_accum,PAPIF_ACCUM,(int *EventSet, long_long *values, int *check
 
 PAPI_FCALL(papif_add_event,PAPIF_ADD_EVENT,(int *EventSet, int *Event, int *check))
 {
-  *check = PAPI_add_event(EventSet, *Event);
+  *check = PAPI_add_event(*EventSet, *Event);     /* JT */
 }
 
 PAPI_FCALL(papif_add_events,PAPIF_ADD_EVENTS,(int *EventSet, int *Events, int *number, int *check))
 {
-  *check = PAPI_add_events(EventSet, Events, *number);
+  *check = PAPI_add_events(*EventSet, Events, *number);    /* JT */
 }
 
 PAPI_FCALL(papif_cleanup_eventset,PAPIF_CLEANUP_EVENTSET,(int *EventSet, int *check))
 {
-  *check = PAPI_cleanup_eventset(EventSet);
+  *check = PAPI_cleanup_eventset(*EventSet);
 }
 
 PAPI_FCALL(papif_create_eventset,PAPIF_CREATE_EVENTSET,(int *EventSet, int *check))
@@ -184,7 +184,7 @@ PAPI_FCALL(papif_get_hardware_info,PAPIF_GET_HARDWARE_INFO,(int *ncpu,
 
 PAPI_FCALL(papif_num_hwctrs,PAPIF_num_hwctrs,(int *num))
 {
-  *num = PAPI_num_hwctrs();
+  *num = PAPI_num_hw_counters();     /* JT */
 }
 
 PAPI_FCALL(papif_get_real_cyc,PAPIF_GET_REAL_CYC,(long_long *real_cyc))
@@ -197,12 +197,12 @@ PAPI_FCALL(papif_get_real_usec,PAPIF_GET_REAL_USEC,( long_long *time))
   *time = PAPI_get_real_usec();
 }
 
-PAPI_FCALL(papif_get_virt_cyc,PAPIF_GET_VIRT_CYC,(long_long *virt_cyc))
+PAPI_FCALL(papif_get_virt_cyc,PAPIF_GET_VIRT_CYC,(u_long_long *virt_cyc)) /* JT */
 {
   *virt_cyc = PAPI_get_virt_cyc();
 }
 
-PAPI_FCALL(papif_get_virt_usec,PAPIF_GET_VIRT_USEC,( long_long *time))
+PAPI_FCALL(papif_get_virt_usec,PAPIF_GET_VIRT_USEC,(u_long_long *time))  /* JT */
 {
   *time = PAPI_get_virt_usec();
 }
