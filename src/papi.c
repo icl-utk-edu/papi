@@ -957,7 +957,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          _papi_hwi_system_info.default_domain = dom;
 
-         return (retval);
+         return (PAPI_OK);
       }
    case PAPI_DOMAIN:
       {
@@ -1476,7 +1476,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)
 {
    int i, retval;
 
-   if ((Events == NULL) || (number < 0))
+   if ((Events == NULL) || (number <= 0))
       papi_return(PAPI_EINVAL);
 
    for (i = 0; i < number; i++) {
