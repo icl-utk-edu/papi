@@ -61,6 +61,7 @@ enum {
    PAPI_CA_ITV_idx,  /*Request for cache line Intervention (SMP) */
    PAPI_L3_LDM_idx,  /*Level 3 load misses */
    PAPI_L3_STM_idx,  /*Level 3 store misses */
+/* 0x10 */
    PAPI_BRU_IDL_idx, /*Cycles branch units are idle */
    PAPI_FXU_IDL_idx, /*Cycles integer units are idle */
    PAPI_FPU_IDL_idx, /*Cycles floating point units are idle */
@@ -77,6 +78,7 @@ enum {
    PAPI_L3_DCH_idx,  /*Level 3 Data Cache Hit */
    PAPI_TLB_SD_idx,  /*Xlation lookaside buffer shootdowns (SMP) */
    PAPI_CSR_FAL_idx, /*Failed store conditional instructions */
+/* 0x20 */
    PAPI_CSR_SUC_idx, /*Successful store conditional instructions */
    PAPI_CSR_TOT_idx, /*Total store conditional instructions */
    PAPI_MEM_SCY_idx, /*Cycles Stalled Waiting for Memory Access */
@@ -93,6 +95,7 @@ enum {
    PAPI_BR_NTK_idx,  /*Conditional branch instructions not taken */
    PAPI_BR_MSP_idx,  /*Conditional branch instructions mispred */
    PAPI_BR_PRC_idx,  /*Conditional branch instructions corr. pred */
+/* 0x30 */
    PAPI_FMA_INS_idx, /*FMA instructions completed */
    PAPI_TOT_IIS_idx, /*Total instructions issued */
    PAPI_TOT_INS_idx, /*Total instructions executed */
@@ -109,6 +112,7 @@ enum {
    PAPI_SYC_INS_idx, /*Sync. inst. executed */
    PAPI_L1_DCH_idx,  /*L1 D Cache Hit */
    PAPI_L2_DCH_idx,  /*L2 D Cache Hit */
+ /* 0x40 */
    PAPI_L1_DCA_idx,  /*L1 D Cache Access */
    PAPI_L2_DCA_idx,  /*L2 D Cache Access */
    PAPI_L3_DCA_idx,  /*L3 D Cache Access */
@@ -125,6 +129,7 @@ enum {
    PAPI_L2_ICA_idx,  /*L2 instruction cache accesses */
    PAPI_L3_ICA_idx,  /*L3 instruction cache accesses */
    PAPI_L1_ICR_idx,  /*L1 instruction cache reads */
+ /* 0x50 */
    PAPI_L2_ICR_idx,  /*L2 instruction cache reads */
    PAPI_L3_ICR_idx,  /*L3 instruction cache reads */
    PAPI_L1_ICW_idx,  /*L1 instruction cache writes */
@@ -141,6 +146,7 @@ enum {
    PAPI_L3_TCR_idx,  /*L3 total cache reads */
    PAPI_L1_TCW_idx,  /*L1 total cache writes */
    PAPI_L2_TCW_idx,  /*L2 total cache writes */
+ /* 0x60 */
    PAPI_L3_TCW_idx,  /*L3 total cache writes */
    PAPI_FML_INS_idx, /*FM ins */
    PAPI_FAD_INS_idx, /*FA ins */
