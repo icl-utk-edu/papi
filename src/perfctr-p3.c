@@ -114,6 +114,7 @@ inline static int setup_p3_presets(int cputype) {
       break;
 #ifdef PERFCTR25
    case PERFCTR_X86_AMD_K8:
+   case PERFCTR_X86_AMD_K8C:
       NATIVE_TABLE_SIZE = opt_size;
       native_table = &_papi_hwd_k8_native_map;
       preset_search_map = &_papi_hwd_opt_preset_map;
@@ -151,6 +152,7 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
       return (PAPI_VENDOR_INTEL);
 #ifdef PERFCTR25
    case PERFCTR_X86_AMD_K8:
+   case PERFCTR_X86_AMD_K8C:
 #endif
    case PERFCTR_X86_AMD_K7:
       return (PAPI_VENDOR_AMD);
@@ -246,7 +248,10 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
          ptr->control.cpu_control.pmc_map[i] = i;
       }
       break;
-      /*   case PERFCTR_X86_AMD_K8:   */
+#ifdef PERFCTR25
+   case PERFCTR_X86_AMD_K8:
+   case PERFCTR_X86_AMD_K8C:
+#endif
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;

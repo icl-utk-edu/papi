@@ -1,8 +1,8 @@
 KERNINC	= /usr/src/linux-2.4/include
 PERFCTR ?= ./perfctr-2.6.x
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
-OPTFLAGS= -O3 -g -Wall
-TOPTFLAGS= -g -Wall -DNO_SIMULT_EVENTSETS -D__x86_64__
+OPTFLAGS= -g -Wall
+TOPTFLAGS= -g -Wall -D__x86_64__
 #
 # GNU G77 section
 #
