@@ -1,7 +1,8 @@
 VERSION 	?= 2.6.x
 CPU		= p4
-GCC3ARGS	= -march=pentium4 -msse -msse2
+GCC3ARGS	= -march=pentium4 -msse -msse2 
 TOPTFLAGS	= -DPENTIUM4
+# COMPILER	?= INTEL or PGROUP or PATHSCALE (for x86_64)
 
 include Rules.perfctr
 

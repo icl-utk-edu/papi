@@ -5,7 +5,7 @@ SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
 OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
     papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h papi_preset.h
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h papi_preset.h threads.h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 PREFIX    = /usr
