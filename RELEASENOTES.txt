@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.0 beta 3 RELEASE NOTES                                      11 June 2004
+PAPI 3.0 beta 4 RELEASE NOTES                                      29 July 2004
 ===============================================================================
 
 This file documents issues associated with the PAPI 3.0 beta 3 release.
@@ -50,6 +50,7 @@ The default in both cases is perfctr 2.6.x
 * AIX 5.2 is now supported, but a bug in the OS prevents properly clearing the 
 counters. This should only affect PAPI_reset. A patch is available from IBM.
 Contact the PAPI team for details.
+* Cray X1 support - Cray X1 is now supported
 * A bug in Solaris prevents the support of shared library information. We are
 investigating a work-around, and will commit it to the cvs tree when available.
 Contact the PAPI team for details.
