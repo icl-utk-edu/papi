@@ -189,7 +189,7 @@ preset_search_t *preset_search_map=preset_name_map_630;
     if it can be mapped to counter ctr. 
     Returns true if it can, false if it can't.
 */
-int map_avail(hwd_reg_alloc_t *dst, int ctr)
+int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr)
 {
     return(dst->ra_selector  & (1<<ctr));
 }
@@ -198,7 +198,7 @@ int map_avail(hwd_reg_alloc_t *dst, int ctr)
     be mapped to only counter ctr. 
     Returns nothing.
 */
-void map_set(hwd_reg_alloc_t *dst, int ctr)
+void _papi_hwd_bpt_map_set(hwd_reg_alloc_t *dst, int ctr)
 {
     dst->ra_selector = (1<<ctr);
     dst->ra_rank = 1;
@@ -208,7 +208,7 @@ void map_set(hwd_reg_alloc_t *dst, int ctr)
     if it has a single exclusive mapping. 
     Returns true if exlusive, false if non-exclusive.
 */
-int map_exclusive(hwd_reg_alloc_t *dst)
+int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t *dst)
 {
     return(dst->ra_rank==1);
 }
@@ -218,7 +218,7 @@ int map_exclusive(hwd_reg_alloc_t *dst)
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
     return(dst->ra_selector & src->ra_selector);
 }
@@ -229,7 +229,7 @@ int map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
-void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
     dst->ra_selector ^= src->ra_selector;
     dst->ra_rank -= src->ra_rank;
@@ -239,7 +239,7 @@ void map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
     the dst event based on information in the src event.
     Returns nothing.
 */
-void map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
+void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 {
     dst->ra_selector = src->ra_selector;
 }
@@ -277,7 +277,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
     /*event_list[i].ra_mod = -1;*/
   }
 
-  if(bipartite_counter_allocation(event_list, natNum)){ /* successfully mapped */
+  if(_papi_hwi_bipartite_alloc(event_list, natNum)){ /* successfully mapped */
       /* copy counter allocations info back into NativeInfoArray */
       for(i=0;i<natNum;i++)
 	  ESI->NativeInfoArray[i].ni_position = ffs(event_list[i].ra_selector)-1;

@@ -23,11 +23,11 @@ typedef struct PWR3_reg_alloc {
   int ra_mod;		    /* don't exactly know what this field does */
 } PWR3_reg_alloc_t;
 
-typedef struct PWR3_register {
+/*typedef struct PWR3_register {*/
   /* unsigned int event_code; */
   /* register number the corespondent native event in the event lives on */
-  unsigned char pos[MAX_COUNTERS];  
-} PWR3_register_t;
+/*  unsigned char pos[MAX_COUNTERS];  
+} PWR3_register_t;*/
 
 typedef struct PWR3_pmapi_context {
   /* this structure is a work in progress */
@@ -36,7 +36,7 @@ typedef struct PWR3_pmapi_context {
 
 typedef PWR3_pmapi_control_t hwd_control_state_t;
 
-typedef PWR3_register_t hwd_register_t;
+/*typedef PWR3_register_t hwd_register_t;*/
 
 typedef PWR3_reg_alloc_t hwd_reg_alloc_t;
 

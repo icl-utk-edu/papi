@@ -18,12 +18,14 @@
 /*#define MAX_COUNTERS 8*/
 #define NATIVE_MASK 0x40000000
 
-typedef struct PWR3_reg{
+typedef struct PWR3_register{
   /* indicate which counters this event can live on */
   unsigned int selector;
   /* Buffers containing counter cmds for each possible metric */
   int counter_cmd[MAX_COUNTERS];
-} hwd_reg_t;
+} PWR3_register_t;
+
+typedef PWR3_register_t hwd_register_t;
 
 typedef struct PWR3_native_map{
 	/* native event name */
@@ -34,7 +36,7 @@ typedef struct PWR3_native_map{
 
 typedef struct native_event_entry{
     /* description of the resources required by this native event */
-  hwd_reg_t resources;
+  hwd_register_t resources;
   /* If it exists, then this is the name of this event */
   char *name;
   /* If it exists, then this is the description of this event */
