@@ -272,6 +272,11 @@ int PAPI_query_event(int EventCode)
       else
 	papi_return(PAPI_ENOEVNT);
     }
+
+  if (EventCode & NATIVE_MASK) {
+  		papi_return(_papi_hwi_query_native_event(EventCode));
+  }
+
   papi_return(PAPI_ENOTPRESET);
 }
 
@@ -294,6 +299,11 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info)
       else
 	papi_return(PAPI_ENOEVNT);
     }
+
+  if (EventCode & NATIVE_MASK) {
+  		papi_return(_papi_hwi_get_native_event_info(EventCode, info));
+  }
+
   papi_return(PAPI_ENOTPRESET);
 }
 
@@ -1530,11 +1540,6 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
   *number = ESI->NumberOfEvents;
 
   papi_return(PAPI_OK);
-}
-
-void *PAPI_get_overflow_address(void *context)
-{
-  return(_papi_hwd_get_overflow_address(context));
 }
 
 long PAPI_get_dmem_info(int option){
