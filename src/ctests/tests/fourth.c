@@ -106,7 +106,7 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d\n",2*NUM_FLOPS,2*NUM_FLOPS);
+  printf("Row 1 approximately equals %d %d %d %d\n",NUM_FLOPS,NUM_FLOPS,3*NUM_FLOPS,NUM_FLOPS);
   printf("Column 1 approximately equals column 2\n");
   printf("Column 3 approximately equals three times column 2\n");
   printf("Column 4 approximately equals column 2\n");
