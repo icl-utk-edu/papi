@@ -1,7 +1,8 @@
 LIBRARY   = libpapi.a
-#SHLIB     = libpapi.so
-SOURCES	  = $(MISCSRCS) papi_fwrappers.c papi.c papi_hl.c $(SUBSTR).c extras.c
-OBJECTS   = $(MISCOBJS) papi_fwrappers.o papi.o papi_hl.o $(SUBSTR).o extras.o\
+SHLIB     = libpapi.so
+SOURCES	  = $(MISCSRCS) papi.c papi_hl.c $(SUBSTR).c extras.c \
+	    papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
+OBJECTS   = $(MISCOBJS) papi.o papi_hl.o $(SUBSTR).o extras.o \
 	    papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
 
@@ -22,19 +23,21 @@ $(LIBRARY): $(OBJECTS)
 shared: $(SHLIB)
 
 $(SHLIB): $(OBJECTS) 
-	-$(CC_SHR) $(CFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
+	-$(CC_SHR) $(CFLAGS) $(OPTFLAGS) $(SOURCES) $(MISCOBJS) $(MISCLIBS) -o $@
 
-papi_fwrappers_.o: papi_fwrappers.c $(HEADERS)
-	$(CC) $(CFLAGS) $(OPTFLAGS) -DFORTRANUNDERSCORE -c papi_fwrappers.c -o papi_fwrappers_.o
-papi_fwrappers__.o: papi_fwrappers.c $(HEADERS)
-	$(CC) $(CFLAGS) $(OPTFLAGS) -DFORTRANDOUBLEUNDERSCORE -c papi_fwrappers.c -o papi_fwrappers__.o
+papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
+papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.c
+PAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANCAPS papi_fwrappers.c > PAPI_FWRAPPERS.c
 
-PAPI_FWRAPPERS.o: papi_fwrappers.c $(HEADERS)
-	$(CC) $(CFLAGS) $(OPTFLAGS) -DFORTRANCAPS -c papi_fwrappers.c -o PAPI_FWRAPPERS.o
-
-papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
-	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
-
+papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o
+papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
+PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o
 papi.o: papi.c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c papi.c -o papi.o
 papi_hl.o: papi_hl.c $(HEADERS)
@@ -44,7 +47,7 @@ extras.o: extras.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(CFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o
 genpapifdef: genpapifdef.c $(LIBRARY)
-	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef -L. -lpapi $(LDFLAGS)
 fpapi.h: genpapifdef
 	./genpapifdef > fpapi.h
 
@@ -64,7 +67,7 @@ ftests: null
 
 
 libclean:
-	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations
+	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
 
 clean: libclean
 	rm -rf $(LIBRARY) $(SHLIB) $(SHLIB).1 $(SHLIB).1.0 genpapifdef

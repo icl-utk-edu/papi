@@ -286,7 +286,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       /* Push the correct value */
       
       sample->cmd.ce_pic[t] = ESI->overflow.threshold;
-#ifdef DEBUG
+#if 0
       dump_cmd(sample);
 #endif
       if (cpc_bind_event(&sample->cmd,0) == -1)
@@ -300,7 +300,7 @@ static void dispatch_emt(int signal, siginfo_t *sip, void *arg)
       
       sample->cmd.ce_pic[t] = UINT64_MAX - ESI->overflow.threshold;
       
-#ifdef DEBUG
+#if 0
       dump_cmd(sample);
 #endif
       if (cpc_bind_event(&sample->cmd,sample->flags) == -1)
@@ -603,7 +603,7 @@ static int update_global_hwcounters(EventSetInfo *global)
       readem->ce_pic[i] = 0;
     }
 
-#ifdef DEBUG
+#if 0
   dump_cmd(command);
 #endif
 
@@ -994,7 +994,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   /* (Re)start the counters */  
 
-#ifdef DEBUG
+#if 0
   dump_cmd(&current_state->counter_cmd);
 #endif
       

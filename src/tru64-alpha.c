@@ -53,7 +53,12 @@ static int setup_all_presets(int family, int model)
 
   DBG((stderr,"Family %d, model %d\n",family,model));
 
-  if ((family == 2) && (model < EV67_CPU))
+  if ((family == 2) && 
+#ifdef EV67_CPU
+      (model < EV67_CPU))
+#else
+      (1))
+#endif
     findem = findem_ev6;
   else
     {
@@ -374,44 +379,27 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
+extern u_int read_cycle_counter(void);
+extern u_int read_virt_cycle_counter(void);
+
 long long _papi_hwd_get_real_usec (void)
 {
-  struct timespec t;
-  long long retval;
-
-  if (getclock(CLOCK_REALTIME,&t) == -1)
-    return PAPI_ESYS;
-
-  retval = t.tv_sec * 1000000 + t.tv_nsec / 1000;
-  return(retval);
+  return((long long)((float)read_cycle_counter() / _papi_system_info.hw_info.mhz));
 }
 
 long long _papi_hwd_get_real_cycles (void)
 {
-  long long usec, cyc;
-
-  usec = _papi_hwd_get_real_usec();
-  cyc = usec * (long long)_papi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return((long long)read_cycle_counter());
 }
 
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
-  long long retval;
-  struct tms buffer;
-
-  times(&buffer);
-  retval = (long long)buffer.tms_utime*(long long)(1000000/CLK_TCK);
-  return(retval);
+  return((long long)((float)read_virt_cycle_counter() / _papi_system_info.hw_info.mhz));
 }
 
 long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
 {
-  float usec, cyc;
-
-  usec = (float)_papi_hwd_get_real_usec();
-  cyc = usec * _papi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return((long long)read_virt_cycle_counter());
 }
 
 void _papi_hwd_error(int error, char *where)
@@ -443,10 +431,18 @@ int _papi_hwd_init(EventSetInfo *zero)
   long arg;
   int fd;
   hwd_control_state_t *machdep = (hwd_control_state_t *)zero->machdep;
+  int cpu_num, cpu_mask = 0;
 
   /* Initialize our global machdep. */
 
-  fd = open("/dev/pfcntr",O_RDONLY | PCNTOPENALL);
+  if(getsysinfo(GSI_CURRENT_CPU, (caddr_t)&cpu_num, sizeof(cpu_num), NULL, NULL, NULL) < 1)
+    abort();
+  fprintf(stderr,"CPU %d\n",cpu_num);
+  cpu_mask = 1 << cpu_num;
+  if (bind_to_cpu(getpid(), cpu_mask, BIND_NO_INHERIT) == -1)
+    abort();
+
+  fd = open("/dev/pfcntr",O_RDONLY | PCNTOPENONE);
   if (fd == -1)
     return(PAPI_ESYS);
 
@@ -794,7 +790,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   /* Set up the new merged control structure */
   
-#ifdef DEBUG
+#if 0
   dump_cmd(&current_state->counter_cmd);
 #endif
       
@@ -1099,9 +1095,8 @@ papi_mdi _papi_system_info = { "$Id$",
 			        0,  /* supports attaching to another process */
 			        1,  /* We can use the real_usec call */
 			        1,  /* We can use the real_cyc call */
-			        0,  /* We can use the virt_usec call */
-			        0,  /* We can use the virt_cyc call */
+			        1,  /* We can use the virt_usec call */
+			        1,  /* We can use the virt_cyc call */
 			        0,  /* HW read resets the counters */
 			        sizeof(hwd_control_state_t), 
 			        { 0} };
-

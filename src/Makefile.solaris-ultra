@@ -13,13 +13,13 @@ FFLAGS	= $(CFLAGS)
 SMPCFLGS= -xexplicitpar
 #OMPCFLGS= 
 OMPCFLGS= -xexplicitpar
-LDFLAGS = -lcpc
+LDFLAGS = -R $(PWD)
 #CC_R	= gcc
 CC_R	= cc -mt
 #CC	= gcc
 CC	= cc -mt
 #CC_SHR	= gcc -shared -fpic
-CC_SHR	= cc -shared -dy -G
+CC_SHR	= cc -ztext -xs -G -Kpic -R $(PWD) -h libpapi.so -lcpc
 F77	= f77
 MISCOBJS= get_tick.o
 
@@ -27,3 +27,4 @@ include Makefile.inc
 
 get_tick.o: solaris-ultra/get_tick.S
 	cc -c -D_ASM -xarch=v8plusa solaris-ultra/get_tick.S
+

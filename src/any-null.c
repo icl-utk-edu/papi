@@ -602,7 +602,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
       
       /* (Re)start the counters */
       
-#ifdef DEBUG
+#if 0
       dump_cmd(&current_state->counter_cmd);
 #endif
       /* retval = perf(PERF_FASTCONFIG, (int)current_state->counter_cmd, (int)NULL);
@@ -678,7 +678,7 @@ int _papi_hwd_merge(EventSetInfo *ESI, EventSetInfo *zero)
 
   /* Set up the new merged control structure */
   
-#ifdef DEBUG
+#if 0
   dump_cmd(&current_state->counter_cmd);
 #endif
       
