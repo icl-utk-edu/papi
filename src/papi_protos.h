@@ -137,7 +137,9 @@ extern char *_papi_hwi_native_code_to_descr(unsigned int EventCode);
 extern int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
 extern char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
 extern char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
-extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
+extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+extern int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
+                                      int name_len, int count);
 /* not completely defined yet... I'm partial to using XML -- dkt
     _papi_hwd_ntv_encode();
     _papi_hwd_ntv_decode();

@@ -1273,5 +1273,31 @@ int _papi_hwd_ntv_decode(unsigned int EventCode, char *name, char *description,
    return (_papi_hwd_ntv_code_to_bits(EventCode, bits));
 }
 
+/* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
+   Maximum string length is name_len; Maximum number of values is count.
+*/
+static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
+{
+   *values = val;
+   strncpy(names, nam, len);
+   names[len-1] = 0;
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+   int i = 0;
+   copy_value(bits->cccr, "P4 CCCR", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->event, "P4 Event", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->pebs_enable, "P4 PEBS Enable", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->pebs_matrix_vert, "P4 PEBS Matrix Vertical", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->ireset, "P4 iReset", &names[i*name_len], &values[i], name_len);
+   return(++i);
+}
+
 
 #endif

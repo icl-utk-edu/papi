@@ -436,7 +436,7 @@ read the documentation carefully.  */
    The various fields and their usage is discussed below.
 */
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
-#define MAX_TERMS 8
+#define PAPI_MAX_INFO_TERMS 8
    typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
@@ -457,11 +457,11 @@ read the documentation carefully.  */
                                                    in papi_data.c that is currently not exposed to the user */
       char postfix[PAPI_MIN_STR_LEN];        /* string containing postfix operations; only defined for 
                                                 preset events of derived type DERIVED_POSTFIX */
-      unsigned int code[MAX_TERMS];          /* array of values that further describe the event:
+      unsigned int code[PAPI_MAX_INFO_TERMS];/* array of values that further describe the event:
                                                 - for presets, native event_code values
                                                 - for native events, register values for event programming */
-      char name[MAX_TERMS][PAPI_MIN_STR_LEN];/* names of code terms:
-                                                - for presets, native event names, as in symbol, above
+      char name[PAPI_MAX_INFO_TERMS]         /* names of code terms: */
+               [PAPI_MIN_STR_LEN];           /* - for presets, native event names, as in symbol, above
                                                    NOTE: these may be truncated to fit
                                                 - for native events, descriptive strings for each register
                                                    value presented in the code array */
