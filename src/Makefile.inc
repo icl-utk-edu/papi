@@ -25,7 +25,7 @@ shared: $(SHLIB)
 
 $(LIBRARY): $(OBJECTS) 
 	rm -f $(LIBRARY)
-	ar ruv $(LIBRARY) $(OBJECTS) 
+	ar $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
