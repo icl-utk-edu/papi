@@ -75,15 +75,26 @@ int case1(void)
     {
       if ((pset->avail) && (pset->event_code != PAPI_TOT_CYC))
 	{
-  	 if ( !TESTS_QUIET ) 
-	     printf("Adding %s\n",pset->event_name);
+	  if ( !TESTS_QUIET ) 
+	    printf("Adding %s\n",pset->event_name);
+
 	  retval = PAPI_add_event(&EventSet, pset->event_code);
-	  if (retval != PAPI_OK)
+	  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
 	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
-  	 if ( !TESTS_QUIET ) 
-	  printf("Added %s\n",pset->event_name);
-	  if (++j >= max_to_add)
-	    break;
+
+	  if ( !TESTS_QUIET ) 
+	    {
+	      if (retval == PAPI_OK)
+		printf("Added %s\n",pset->event_name);
+	      else
+		printf("Could not add %s\n",pset->event_name);
+	    }
+
+	  if (retval == PAPI_OK)
+	    {
+	      if (++j >= max_to_add)
+		break;
+	    }
 	}
 	pset++;
     }

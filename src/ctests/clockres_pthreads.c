@@ -8,7 +8,7 @@
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 extern void clockcore(void); /* Declared in clockcore.c */
 
-void pthread_main(void *arg)
+void *pthread_main(void *arg)
 {
 #if 0
   struct vperfctr *ptr = vperfctr_open();
@@ -25,13 +25,27 @@ void pthread_main(void *arg)
     if (lcyca[i] - lcyca[i-1] < 0)
       abort();
 #endif
-      
+#if 0
+  long long *lcyca;
+  int i, iters = atoi(getenv("ITERS"));
+  lcyca = (long long *)malloc(sizeof(long long)*iters);
+
+  for (i=0;i<iters;i++)
+    {
+      lcyca[i] = gethrvtime();
+    }
+
+  for (i=1;i<iters;i++)
+    if (lcyca[i] - lcyca[i-1] < 0)
+      abort();
+#endif
   clockcore();
 }
 
 int main(int argc, char **argv)
 {
   pthread_t t1, t2, t3, t4;
+  pthread_attr_t attr;
   int retval;
 
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
@@ -55,10 +69,18 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------\n");
   }
 
-  pthread_create(&t1,NULL,pthread_main,NULL); 
-  pthread_create(&t2,NULL,pthread_main,NULL); 
-  pthread_create(&t3,NULL,pthread_main,NULL); 
-  pthread_create(&t4,NULL,pthread_main,NULL); 
+  pthread_attr_init(&attr);
+#ifdef PTHREAD_CREATE_UNDETACHED
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
+#endif
+#ifdef PTHREAD_SCOPE_SYSTEM
+  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+#endif
+
+  pthread_create(&t1,&attr,pthread_main,NULL); 
+  pthread_create(&t2,&attr,pthread_main,NULL); 
+  pthread_create(&t3,&attr,pthread_main,NULL); 
+  pthread_create(&t4,&attr,pthread_main,NULL); 
   pthread_main(NULL);
 
   pthread_join(t1, NULL);

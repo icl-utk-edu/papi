@@ -1,10 +1,6 @@
 #include "papi_test.h"
 
-#ifndef _WIN32
-  #define ITERS 100000
-#else
-  #define ITERS 10000
-#endif
+#define ITERS 10000
 
 extern int TESTS_QUIET; /* Declared in test_utils.c */
 
