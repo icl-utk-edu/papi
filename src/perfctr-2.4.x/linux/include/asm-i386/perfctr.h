@@ -1,7 +1,7 @@
 /* $Id$
  * x86 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #ifndef _ASM_I386_PERFCTR_H
 #define _ASM_I386_PERFCTR_H
@@ -152,7 +152,7 @@ struct hw_interrupt_type;
 
 #if PERFCTR_INTERRUPT_SUPPORT
 extern unsigned int apic_lvtpc_irqs[];
-extern void perfctr_interrupt(void);
+asmlinkage void perfctr_interrupt(struct pt_regs*);
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);

@@ -6,6 +6,10 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.4.9pl2, 2004-05-29
+- 2.4.21-15.EL (RHEL3) kernel support added. This required
+  backporting interrupt handler changes from perfctr-2.6.3-pl1.
+
 Version 2.4.9pl1, 2003-08-31
 - Added support for RedHat kernels 2.4.20-19 and 2.4.20-20,
   and standard kernels 2.4.21 and 2.4.22.

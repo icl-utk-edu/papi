@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * x86-specific kernel-resident code.
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -106,7 +106,7 @@ static void perfctr_default_ihandler(unsigned long pc)
 
 static perfctr_ihandler_t perfctr_ihandler = perfctr_default_ihandler;
 
-void do_perfctr_interrupt(struct pt_regs *regs)
+asmlinkage void smp_perfctr_interrupt(struct pt_regs *regs)
 {
 	/* PREEMPT note: invoked via an interrupt gate, which
 	   masks interrupts. We're still on the originating CPU. */
@@ -118,9 +118,7 @@ void do_perfctr_interrupt(struct pt_regs *regs)
 	irq_exit();
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,8)
-extern asmlinkage void perfctr_interrupt(void);
-#else	/* < 2.5.8 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21)
 #define BUILD_PERFCTR_INTERRUPT(x,v) XBUILD_PERFCTR_INTERRUPT(x,v)
 #define XBUILD_PERFCTR_INTERRUPT(x,v) \
 asmlinkage void x(void); \
@@ -133,13 +131,13 @@ SYMBOL_NAME_STR(x) ":\n\t" \
 	"pushl $" #v "-256\n\t" \
 	SAVE_ALL \
 	"pushl %esp\n\t" \
-	"call " SYMBOL_NAME_STR(do_ ## x) "\n\t" \
+	"call " SYMBOL_NAME_STR(smp_ ## x) "\n\t" \
 	"addl $4,%esp\n\t" \
 	"jmp ret_from_intr\n\t" \
 	".size " SYMBOL_NAME_STR(x) ",.-" SYMBOL_NAME_STR(x) "\n" \
 	".previous\n");
 BUILD_PERFCTR_INTERRUPT(perfctr_interrupt,LOCAL_PERFCTR_VECTOR)
-#endif	/* < 2.5.8 */
+#endif	/* < 2.4.21 */
 
 void perfctr_cpu_set_ihandler(perfctr_ihandler_t ihandler)
 {

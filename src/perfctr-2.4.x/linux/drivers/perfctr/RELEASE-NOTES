@@ -3,6 +3,12 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.4.9pl2, 2004-05-29
+- 2.4.21-15.EL (RHEL3) kernel support added, which required
+  backporting changes from perfctr-2.6.3-pl1:
+  * moved x86 interrupt handler definition from x86_setup.c
+    to the patch kit for 2.4.21 and later 2.4 kernels
+
 Version 2.4.9pl1, 2003-08-31
 - 2.4.22 kernel support backported from perfctr-2.6.0-pre:
   * workaround for cpu_has_mmx and cpu_has_ht macro collisions
