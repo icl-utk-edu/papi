@@ -34,6 +34,7 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 #define PM_RESRV_RQ	"PM_RESRV_RQ"
 #define PM_MPRED_BR	"PM_MPRED_BR_CAUSED_GC"
 #define PM_EXEC_FMA	"PM_EXEC_FMA"
+#define PM_BR_FINISH	"PM_BR_FINISH"
 
 /* Put any modified metrics in the appropriate spot here */
 #ifdef PMTOOLKIT_1_2
@@ -44,18 +45,21 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS] = { 0 };
 #else                                  /* pmtoolkit 1.3 and later */
   #undef  PM_LSU_EXEC
   #undef  PM_ST_MISS_L1
-  #define PM_LSU_EXEC   "PM_LSU_EXEC"
   #ifdef _AIXVERSION_510	       /* AIX Version 5 */
     #undef  PM_RESRV_CMPL
     #undef  PM_RESRV_RQ
     #undef  PM_MPRED_BR
     #undef  PM_EXEC_FMA
+    #undef  PM_BR_FINISH
+    #define PM_LSU_EXEC   "PM_LSU_CMPL"
     #define PM_ST_MISS_L1 "PM_ST_MISS_L1"
     #define PM_RESRV_CMPL "PM_STCX_SUCCESS"
     #define PM_RESRV_RQ	  "PM_LARX"
     #define PM_MPRED_BR	  "PM_BR_MPRED_GC"
     #define PM_EXEC_FMA	  "PM_FPU_FMA"
+    #define PM_BR_FINISH  "PM_BRU_FIN"
   #else				       /* AIX Version 4 */
+    #define PM_LSU_EXEC   "PM_LSU_EXEC"
     #define PM_ST_MISS_L1 "PM_ST_L1MISS"
   #endif /*_AIXVERSION_510*/
 #endif /*PMTOOLKIT_1_2*/
@@ -74,7 +78,7 @@ static pmapi_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_CSR_FAL,DERIVED_SUB,{PM_RESRV_RQ,PM_RESRV_CMPL,0,0,0,0,0,0}}, /*Failed store conditional instructions*/	
   {PAPI_CSR_TOT,0,{PM_RESRV_RQ,0,0,0,0,0,0,0}}, /*Total store conditional instructions*/		
   {PAPI_MEM_RCY,0,{"PM_LD_MISS_CYC",0,0,0,0,0,0,0}}, /*Cycles Stalled Waiting for Memory Read*/
-  {PAPI_BR_CN,0,{"PM_BR_FINISH",0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
+  {PAPI_BR_CN,0,{PM_BR_FINISH,0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
   {PAPI_BR_MSP,0,{"PM_BR_MPRED",0,0,0,0,0,0,0}}, /*Conditional branch instructions mispred*/
   {PAPI_TOT_IIS,0,{"PM_INST_DISP",0,0,0,0,0,0,0}}, /*Total instructions issued*/
   {PAPI_TOT_INS,0,{"PM_INST_CMPL",0,0,0,0,0,0,0}}, /*Total instructions executed*/
@@ -117,7 +121,7 @@ static pmapi_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_FUL_ICY,0,{"PM_4INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with Maximum Instruction Issue*/
   {PAPI_STL_CCY,0,{"PM_1INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with No Instruction Completion*/
   {PAPI_FUL_CCY,0,{"PM_4INST_DISP",0,0,0,0,0,0,0}}, /*Cycles with Maximum Instruction Completion*/
-  {PAPI_BR_CN,0,{"PM_BR_FINISH",0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
+  {PAPI_BR_CN,0,{PM_BR_FINISH,0,0,0,0,0,0,0}}, /*Conditional branch instructions executed*/
   {PAPI_BR_MSP,0,{"PM_BR_MPRED",0,0,0,0,0,0,0}}, /*Conditional branch instructions mispred*/
   {PAPI_TOT_IIS,0,{"PM_INST_DISP",0,0,0,0,0,0,0}}, /*Total instructions issued*/
   {PAPI_TOT_INS,0,{"PM_INST_CMPL",0,0,0,0,0,0,0}}, /*Total instructions executed*/
