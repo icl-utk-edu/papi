@@ -128,6 +128,8 @@ static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
 
 #ifdef ITANIUM2
 static pfmlib_ita2_param_t ita2_param[PAPI_MAX_PRESET_EVENTS];
+#else
+static pfmlib_ita_param_t ita_param[PAPI_MAX_PRESET_EVENTS];
 #endif
 
 extern void dispatch_profile(EventSetInfo_t *ESI, void *context,
@@ -503,7 +505,7 @@ static int get_system_info(void)
   _papi_system_info.hw_info.revision = (float)tmp;
 
   rewind(f);
-  s = search_cpu_info(f,"model",maxargs);
+  s = search_cpu_info(f,"family",maxargs);
   if (s && (t = strchr(s+2,'\n')))
     {
       *t = '\0';
@@ -1637,7 +1639,9 @@ int ia64_process_profile_entry()
     perfmon_smpl_entry_t *ent;
     unsigned long pos;
 	pfmw_arch_reg_t *reg;
+/*
     unsigned long smpl_entry = 0;
+*/
     int i, ret, reg_num;
     struct sigcontext info;
     hwd_control_state_t *this_state ; 
@@ -1736,6 +1740,7 @@ check_btb(pfmw_arch_reg_t *btb, pfmw_arch_reg_t *pmd16)
     last = pmd16->pmd16_ita_reg.btbi_bbi;
 #endif
 
+	addr = 0;
     do {
         lastaddr=check_btb_reg(btb[i]);
 		if (lastaddr) addr=lastaddr;
@@ -2051,8 +2056,7 @@ void _papi_hwd_unlock(void)
 #else /* GCC */
     uint64_t res = 0;
 
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock), "r"(MUTEX
-_OPEN) : "memory");
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock), "r"(MUTEX_OPEN) : "memory");
 #endif /* __INTEL_COMPILER */
 }
 
