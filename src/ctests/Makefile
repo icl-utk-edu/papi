@@ -237,10 +237,10 @@ test_utils.o: test_utils.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c test_utils.c
 
 do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c do_loops.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c do_loops.c
 
 dummy.o: dummy.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)

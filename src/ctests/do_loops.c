@@ -3,31 +3,33 @@
 #include "papi_test.h"
 
 static int buf[L1_MISS_BUFFER_SIZE_INTS];
-
 volatile double a = 0.5, b = 2.2;
-volatile long_long z = -101010101;
 
 void do_reads(int n)
 {
 #if !defined(_WIN32)
-   int i, j;
+   int i, j, retval;
    static int fd = -1;
    char buf;
-   long_long c = 3;
 
    if (fd == -1) {
-      fd = open("/dev/null", O_RDONLY);
+      fd = open("/dev/zero", O_RDONLY);
       if (fd == -1) {
-         perror("open(/dev/null)");
+         perror("open(/dev/zero)");
          exit(1);
       }
    }
 
    for (i = 0; i < n; i++) {
-      for (j = 0; j < n; j++) {
-         c += z;
-      }
-      read(fd, &buf, sizeof(buf));
+      retval = read(fd, &buf, sizeof(buf));
+      if (retval != sizeof(buf))
+	{
+	  if (retval < 0)
+	    perror("/dev/zero cannot be read");
+	  else
+	    fprintf(stderr,"/dev/zero cannot be read: only got %d bytes.\n",retval);
+	  exit(1);
+	}
    }
 #endif                          /* _WIN32 */
 }
