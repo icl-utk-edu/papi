@@ -16,6 +16,7 @@ C    wrong type. In the code below the line code=MSGCODE is used to make
 C    sure that the event code get the right type.
 C
 #include "fpapi.h"
+C Set MSGLEN to the number of characters in the named event in MSGCODE
 #define MSGLEN 11
 #define MSGCODE PAPI_L1_DCM 
 #define ERRCODE PAPI_EINVAL
@@ -33,7 +34,7 @@ C
       CHARACTER*(MSGLEN-1) invstr4
       CHARACTER*(MSGLEN-2) invstr5
 
-      integer i,check,len,code,code2,retcode,lastchar
+      integer i,check,len,code,code2,retcode,lastchar,papicode
       integer getstrlen
       external getstrlen
 
@@ -117,6 +118,89 @@ C
       call test_papif_perror(ERRCODE,invstr1,check)
       print *
 
+
+      print *,'---------------------------------------------------'
+      print *,'          Testing PAPIF_descr_event                '
+      print *,'---------------------------------------------------'
+      print *,' These tests should return a PAPI description for'
+      print *,' various event names and argument shapes.'
+      print *,' On no occasion a NULL character should be found(+)'
+      print *
+
+      print *,'Test 1'
+      papistr="PAPI_L1_DCM"
+      papicode=-1
+      call test_papif_descr(papistr,papicode,papidblstr,check)
+      if(papicode.ne.PAPI_L1_DCM)then
+        print *,'Code look up failed?'
+      end if
+      print *
+
+      print *,'Test 2'
+      papistr="  "
+      papicode=PAPI_L2_DCM
+      call test_papif_descr(papistr,papicode,papidblstr,check)
+      i=getstrlen(papistr)
+      if(papistr(1:i).ne."PAPI_L2_DCM")then
+        print *,'Name look up failed?'
+        print *,'Got:      "'//papistr(1:i)//'"'
+        print *,'Expected: "'//'PAPI_L2_DCM'//'"'
+      end if
+      print *
+
+      print *,'Test 3'
+      invstr1="PAPI_L1_ICM"
+      papicode=-1
+      call test_papif_descr(invstr1,papicode,papidblstr,check)
+      if(papicode.ne.PAPI_L1_ICM)then
+        print *,'Code look up failed?'
+      end if
+      print *
+
+      print *,'Test 4'
+      invstr1="  "
+      papicode=PAPI_L2_ICM
+      call test_papif_descr(invstr1,papicode,papidblstr,check)
+      i=getstrlen(invstr1)
+      if(invstr1(1:i).ne."PAPI_L2_ICM")then
+        print *,'Name look up failed?'
+        print *,'Got:      "'//invstr1(1:i)//'"'
+        print *,'Expected: "'//'PAPI_L2_ICM'//'"'
+      end if
+      print *
+
+      print *,'Test 5  (This test should get a truncated description)'
+      invstr2="PAPI_L3_DCM"
+      papicode=-1
+      call test_papif_descr(invstr2,papicode,invstr1,check)
+      if(papicode.ne.PAPI_L3_DCM)then
+        print *,'Code look up failed?'
+      end if
+      print *
+
+      print *,'Test 6  (This test should get a truncated description)'
+      invstr2="  "
+      papicode=PAPI_L3_ICM
+      call test_papif_descr(invstr2,papicode,invstr1,check)
+      i=getstrlen(invstr2)
+      if(invstr2(1:i).ne."PAPI_L3_ICM")then
+        print *,'Name look up failed?'
+        print *,'Got:      "'//invstr2(1:i)//'"'
+        print *,'Expected: "'//'PAPI_L2_ICM'//'"'
+      end if
+      print *
+
+      print *,'Test 7  (This test should get a truncated name)'
+      invstr4="  "
+      papicode=PAPI_L1_DCM
+      call test_papif_descr(invstr4,papicode,papistr,check)
+      i=getstrlen(invstr4)
+      if(invstr4(1:i).ne."PAPI_L1_DCM")then
+        print *,'Name look up failed?'
+        print *,'Got:      "'//invstr4(1:i)//'"'
+        print *,'Expected: "'//'PAPI_L1_DCM'//'"'
+      end if
+
       print *,'---------------------------------------------------'
       print *,'(+) Fortran implementations that do not provide the'
       print *,'    string argument length might show NULL characters.'
@@ -180,6 +264,38 @@ C
       end if
       
  100  format(t1,a,i4)
+      end
+
+      subroutine test_papif_descr(name,code,string,check)
+      implicit none
+      integer code,check
+      character*(*) name,string
+
+      character*(PAPI_MAX_STR_LEN) papierr
+      integer i
+      integer getstrlen
+      external getstrlen
+
+      call PAPIF_describe_event(name,code,string,check)
+      print *,'The event description is: "'//
+     $    string(1:getstrlen(string))//'"'
+      
+      if(check.ne.PAPI_OK)then
+        call PAPIF_perror(check,papierr,code)
+        print *,'*ERROR* '//papierr(1:getstrlen(papierr))
+        print *,'******* '//'Error in test_papif_descr using '//
+     $      'PAPIF_describe_event'
+      end if
+      i=index(string,char(0))
+      if(i.gt.0)then
+        print *,'NULL character found in string!!!'
+      end if
+      i=index(name,char(0))
+      if(i.gt.0)then
+        print *,'NULL character found in name!!!'
+      end if
+
+      return
       end
 
       integer function getstrlen(string)

@@ -172,6 +172,45 @@ PAPI_FCALL(papif_event_name_to_code,PAPIF_EVENT_NAME_TO_CODE,(char *in, int *out
 #endif
 }
 
+#if defined ( _CRAYT3E )
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check))
+#elif defined(_FORTRAN_STRLEN_AT_END)  
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name_str, int *EventCode, char *descr_str, int *check,
+		                int name_len, int descr_len))
+#else
+PAPI_FCALL(papif_describe_event,PAPIF_DESCRIBE_EVENT,(char *name, int *EventCode, char *descr, int *check))
+#endif
+{
+#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
+#if defined( _CRAYT3E )
+  char *name_str=_fcdtocp(name_fcd), *descr_str=_fcdtocp(descr_fcd);
+  int   out_len=_fcdlen(descr_fcd); descr_len=_fcdlen(descr_fcd);
+#endif
+  char tmpname[PAPI_MAX_STR_LEN], tmpdescr[PAPI_MAX_STR_LEN];
+  int i,slen;
+
+  /* What is the maximum number of chars to copy ? */
+  slen = name_len < PAPI_MAX_STR_LEN ? name_len : PAPI_MAX_STR_LEN ;
+  strncpy( tmpname, name_str, slen );
+  /* Remove trailing blanks from initial Fortran string */
+  for(i=slen-1;i>-1 && tmpname[i]==' ';tmpname[i--]='\0');
+  /* Make sure string is NULL terminated before call*/
+  tmpname[PAPI_MAX_STR_LEN-1]='\0';   
+  if(slen<PAPI_MAX_STR_LEN) tmpname[slen]='\0';
+
+  *check = PAPI_describe_event(tmpname,EventCode,tmpdescr);
+  /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
+  strncpy(name_str,tmpname,name_len);
+  strncpy(descr_str,tmpdescr,descr_len);
+  /* overwrite any NULLs and trailing garbage in out_str */
+  for(i=strlen(tmpname);i<name_len;name_str[i++]=' ');
+  for(i=strlen(tmpdescr);i<descr_len;descr_str[i++]=' ');
+#else
+  /* The arrays passed by the user must be sufficiently long */
+  *check = PAPI_describe_event(name,EventCode,descr);
+#endif
+}
+
 PAPI_FCALL(papif_read,PAPIF_READ,(int *EventSet, long long *values, int *check))
 {
   *check = PAPI_read(*EventSet, values);

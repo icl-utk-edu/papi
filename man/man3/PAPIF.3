@@ -90,6 +90,7 @@ a C type string terminated by a new-line.
 .BI PAPIF_list_events(C_INT\  EventSet,\  C_INT(*)\  Events,\  C_INT\  number,\  C_INT\  check)
 .BI PAPIF_perror(C_INT\  code,\  C_STRING\  destination,\  C_INT\  check)
 .BI PAPIF_query_event(C_INT\  EventCode,\  C_INT\  check)
+.BI PAPIF_describe_event(C_STRING\  EventName,\  C_INT\  EventCode,\  C_STRING\  EventDescr,\  C_INT\  check)
 .BI PAPIF_event_code_to_name(C_INT\  EventCode,\  C_STRING\  out,\  C_INT\  check)
 .BI PAPIF_event_name_to_code(C_STRING\  in,\  C_INT\  out,\  C_INT\  check)
 .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check)
