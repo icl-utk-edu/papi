@@ -120,7 +120,7 @@ C      print *, "length=", length
 #endif
  400  format (A12, ":  ", I11)
       write (*, 400) "PAPI_TOT_CYC", values(2)
-      print *, ""
+      print *, " "
 
       print *, "Test type: PAPI_PROFIL_POSIX"
       end if
@@ -158,7 +158,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(3)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(4)
-      print *, ""
+      print *, " "
       end if
 
 #if defined(NO_FLOPS)
@@ -209,7 +209,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(5)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(6)
-      print *, ""
+      print *, " "
       end if
 
 #if defined(NO_FLOPS)
@@ -261,7 +261,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(7)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(8)
-      print *, ""
+      print *, " "
       end if
 #if defined(NO_FLOPS)
       call PAPIf_profil(profbuf3(1), length, start, 65536, es, 
@@ -311,7 +311,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(9)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(10)
-      print *, ""
+      print *, " "
       end if
 #if defined(NO_FLOPS)
       call PAPIf_profil(profbuf4(1), length, start, 65536, es, 
@@ -363,7 +363,7 @@ C      print *, "length=", length
       write (*, 400) "PAPI_FP_INS", values(11)
 #endif
       write (*, 400) "PAPI_TOT_CYC", values(12)
-      print *, ""
+      print *, " "
       end if
 #if defined(NO_FLOPS)
       call PAPIf_profil(profbuf5(1), length, start, 65536, es, 
