@@ -127,6 +127,9 @@ Installation of Perfctr
    make xconfig 
 
 7. You will see a window pop-up and you need to check the following:
+     <*>y <>m <>n  Performance-monitoring counters support
+     <*>y <>- <>n  Virtual performance counters support
+     <*>y <>- <>n  Global performance counters support
    Also, don't forget to do any setup necessary for that particular system
    such as the correct ethernet card support, etc...
 
