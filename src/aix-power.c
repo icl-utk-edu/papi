@@ -5,10 +5,14 @@
 
 /* These defines smooth out the differences between pmtoolkit v1.2 and v1.3 */
 #ifdef PMTOOLKIT_1_2
-#define PM_SNOOP      "PM_SNOOP_RECV"
+#ifdef PMTOOLKIT_1_2_1
+#define PM_SNOOP      "PM_SNOOP_RECV"  /* The name in pre pmtoolkit-1.2.2 */
+#else
+#define PM_SNOOP      "PM_SNOOP"       /* The name in pmtoolkit-1.2.2 */
+#endif /*PMTOOLKIT_1_2_1*/
 #define PM_LSU_EXEC   "PM_LS_EXEC"
 #define PM_ST_MISS_L1 "PM_ST_MISS"
-#else
+#else                                  /* pmtoolkit 1.3 */
 #define PM_SNOOP      "PM_SNOOP"
 #define PM_LSU_EXEC   "PM_LSU_EXEC"
 #define PM_ST_MISS_L1 "PM_ST_L1MISS"
