@@ -430,6 +430,13 @@ inline static void init_config(hwd_control_state_t *ptr)
 {
   ptr->pid = getpid();
   set_domain(ptr,_papi_system_info.default_domain);
+/* set library parameter pointer */
+#ifdef ITANIUM2
+  ptr->ita_lib_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+#else
+  ptr->ita_lib_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
+#endif
+  ptr->evt.pfp_model=&ptr->ita_lib_param;
 } 
 
 static int get_system_info(void)
@@ -904,18 +911,12 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
     }
   else
     {
-      pfmw_code_t tmp;
-
-      extern int pfm_find_event_byvcode(int code, int *idx);
-
-      tmp.pme_vcode = 0;
-
       /* Support for native events here, only 1 counter at a time. */
 
       memset(&tmp_cmd, 0, sizeof tmp_cmd);
-	  tmp.pme_vcode= EventCode; 
-      if (tmp.pme_vcode >0 && tmp.pme_vcode < 475 )
-      		tmp_cmd.pfp_events[0].event=tmp.pme_vcode;
+
+      if (EventCode >0 && EventCode < PME_EVENT_COUNT )
+      		tmp_cmd.pfp_events[0].event=EventCode;
 		else return(PAPI_EINVAL);
 
       PFMW_EVT_EVTCOUNT(tmp_cmd) = 1;
@@ -934,7 +935,9 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
    if ( pfm_ita_is_dear( EventCode) ) {
 #endif
 		set_dear_ita_param(&this_state->ita_lib_param, EventCode);
+/*
 		this_state->evt.pfp_model=&this_state->ita_lib_param;
+*/
 	}
 
   out->code = EventCode;
@@ -998,17 +1001,6 @@ int _papi_hwd_add_prog_event(hwd_control_state_t *this_state,
 {
   return(PAPI_ESBSTR);
 }
-
-/*
-int write_pmc_pmd()
-{
-      if (pfmw_perfmonctl(current_state->pid, PFM_WRITE_PMCS, current_state->pc,
- current_state->pc_count) == -1) {
-    fprintf(stderr,"child: perfmonctl error WRITE_PMCS errno %d\n",errno); pfm_s
-tart(); return(PAPI_ESYS);
-      }
-}
-*/
 
 
 int _papi_hwd_merge(EventSetInfo_t *ESI, EventSetInfo_t *zero)

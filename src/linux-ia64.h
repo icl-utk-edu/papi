@@ -35,45 +35,11 @@
 #include "papi.h"
 #include "linux-ia64-memory.h"
 
- #ifdef ITANIUM2
-   typedef struct {
-    unsigned long pme_code:8;   /* major event code */
-    unsigned long pme_type:3;   /* see definitions above */
-    unsigned long pme_ig1:5;    /* ignored */
-    unsigned long pme_umask:16; /* unit mask*/
-    unsigned long pme_ig:32;    /* ignored */
-  } pme_ita_entry_code_t;
- #else 
-typedef struct {
-        unsigned long pme_code:8;       /* major event code */
-        unsigned long pme_ear:1;        /* is EAR event */
-        unsigned long pme_dear:1;       /* 1=Data 0=Instr */
-        unsigned long pme_tlb:1;        /* 1=TLB 0=Cache */
-        unsigned long pme_btb:1;        /* 1=BTB */
-        unsigned long pme_ig1:4;        /* ignored */
-        unsigned long pme_umask:16;     /* unit mask*/
-        unsigned long pme_ig:32;        /* ignored */
-} pme_ita_entry_code_t;
- #endif
-
-typedef union {
-        unsigned long        pme_vcode;
-        pme_ita_entry_code_t pme_ita_code;      /* must not be larger than vco
-de */
-} pme_ita_code_t;
-
-typedef union {
-		unsigned int  pme_vcode;		/* virtual code: code+umask combined */
-		struct		{
-			unsigned int pme_mcode:8;	/* major event code */
-			unsigned int pme_ear:1;		/* is EAR event */
-			unsigned int pme_dear:1;	/* 1=Data 0=Instr */
-			unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
-			unsigned int pme_ig1:5;		/* ignored */
-			unsigned int pme_umask:16;	/* unit mask*/
-		} pme_codes;				/* event code divided in 2 parts */
-	} pme_entry_code_t;				
-
+#ifdef ITANIUM2
+#define PMU_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+#else
+#define PMU_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+#endif
 
 typedef struct hwd_control_state {
   /* Arg to perfmonctl */
@@ -85,21 +51,15 @@ typedef struct hwd_control_state {
   /* Buffer to pass to kernel to control the counters */
 
 #ifdef ITANIUM2
-  #ifndef PMU_ITA2_MAX_COUNTERS
-   #define PMU_ITA2_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-  #endif
-  pfarg_reg_t pc[PMU_ITA2_MAX_COUNTERS];
+  pfarg_reg_t pc[PMU_MAX_PMCS];
 /* specific parameters for the library */
   pfmlib_ita2_param_t ita_lib_param;
-  int overflowcount[PMU_ITA2_MAX_COUNTERS];
+  int overflowcount[PMU_MAX_COUNTERS];
 #else
-  #ifndef PMU_ITA_MAX_COUNTERS
-   #define PMU_ITA_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-  #endif
-  pfarg_reg_t pc[PMU_ITA_MAX_COUNTERS];
+  pfarg_reg_t pc[PMU_MAX_PMCS];
 /* specific parameters for the library */
   pfmlib_ita_param_t ita_lib_param;
-  int overflowcount[PMU_ITA_MAX_COUNTERS];
+  int overflowcount[PMU_MAX_COUNTERS];
 #endif
   pfmlib_param_t evt;
 /* sampling buffer address */
@@ -119,9 +79,9 @@ typedef struct preset_search {
   int derived;
   /* Strings to look for */
 #ifdef ITANIUM2
-  char *(findme[PMU_ITA2_MAX_COUNTERS]);
+  char *(findme[PMU_MAX_COUNTERS]);
 #else
-  char *(findme[PMU_ITA_MAX_COUNTERS]);
+  char *(findme[PMU_MAX_COUNTERS]);
 #endif
 } preset_search_t;
 
@@ -140,11 +100,6 @@ typedef struct hwd_preset {
 
 #include "papi_internal.h"
 
-#ifdef ITANIUM2
-#define PMU_MAX_COUNTERS PMU_ITA2_MAX_COUNTERS
-#else
-#define PMU_MAX_COUNTERS PMU_ITA_MAX_COUNTERS
-#endif
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))

@@ -188,7 +188,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_GET_SHLIBINFO      77 /* Executable information */   /* JT */
 
-#define PAPI_MAX_STR_LEN        81 /* Guess what */
+#define PAPI_MAX_STR_LEN        120 /* Guess what */
 
 #define PAPI_DERIVED            0x1 /* Flag to indicate that the event is derived */
 

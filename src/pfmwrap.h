@@ -1,16 +1,18 @@
 #ifndef _PFMWRAP_H
 #define _PFMWRAP_H
 
+/* copy from itanium_events.h */
+ #ifdef ITANIUM2
+  #define PME_EVENT_COUNT 475
+ #else
+  #define PME_EVENT_COUNT 230
+ #endif
 
  typedef pfmlib_param_t pfmw_param_t;
  typedef pfarg_reg_t pfmw_reg_t;
  typedef pfarg_context_t pfmw_context_t;
- typedef pme_ita_code_t pfmw_code_t;
 
  #ifdef ITANIUM2
-  #ifndef PMU_ITA2_MAX_COUNTERS
-   #define PMU_ITA2_MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-  #endif
   #ifndef PMU_ITA2_MAX_PMCS
    #define PMU_ITA2_MAX_PMCS PMU_ITA2_NUM_PMCS
   #endif
@@ -23,9 +25,6 @@
   typedef pfm_ita2_reg_t pfmw_arch_reg_t;
   typedef pfmlib_ita2_param_t pfmw_ita_param_t;
  #else /* Itanium */
-  #ifndef PMU_ITA_MAX_COUNTERS
-   #define PMU_ITA_MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-  #endif
   #ifndef PMU_ITA_MAX_PMCS
    #define PMU_ITA_MAX_PMCS PMU_ITA_NUM_PMCS
   #endif
