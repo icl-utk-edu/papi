@@ -32,8 +32,8 @@ endif
 
 ARCH		:= $(shell uname -m | grep x86_64)
 ifeq (x86_64,$(ARCH))
-SHRFLAGS	:= -fPIC
-LIB_SUFFIX	:= 64
+SHRFLAGS		:= -fPIC
+LIB_SUFFIX		:= 64
 endif
 
 # 
@@ -96,17 +96,21 @@ PERFCTR_LIB_PATH ?= $(PERFCTR)/usr.lib
 PERFCTR_INC_PATH ?= $(PERFCTR)/usr.lib
 PERFCTR_KINC_PATH ?= $(PERFCTR)/linux/include
 else
-PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib$(LIB_SUFFIX)
+ifeq (x86_64,$(ARCH))
+# Early perfctrs didn't put stuff into lib64
+DUMMY		:= $(shell ls $(PERFCTR_PREFIX)/lib64/libperfctr.so 2> /dev/null)
+ifeq (,${DUMMY})
+     PERFCTR_LIB_SUFFIX	:= 
+else
+     PERFCTR_LIB_SUFFIX := 64
+endif
+else
+     PERFCTR_LIB_SUFFIX := 
+endif
+PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib$(PERFCTR_LIB_SUFFIX)
 PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
 PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
-
-# This is a terrible idea
-# Lines like this are a hack and should never be included.
-#
-POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.5
-SPECIAL_REMOVE = rm -f libperfctr.so libperfctr.so.5
-
 
 CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH)
 
@@ -125,6 +129,9 @@ MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 MISCSRCS = linux.c $(CPU)_events.c
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
+
+POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.5
+SPECIAL_REMOVE = rm -f libperfctr.so*
 
 include Makefile.inc
 
