@@ -1180,7 +1180,7 @@ void PAPI_shutdown(void)
 
    if (j != 0) {
       fprintf(stderr, PAPI_SHUTDOWN_SYNC_str);
-#if _WIN32
+#ifdef _WIN32
       Sleep(1);
 #elif _CRAYT3E
       sleep(1);

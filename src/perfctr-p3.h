@@ -38,6 +38,7 @@
 #define CONFIG_SMP
 #endif
 #include "asm/atomic.h"
+#include <inttypes.h>
 #include "libperfctr.h"
 #endif
 
@@ -49,14 +50,50 @@
 #include "papi.h"
 #include "papi_preset.h"
 
+
+#ifdef _WIN32
+#define inline_static static __inline
+
+/* cpu_type values:: lifted from perfctr.h */
+#define PERFCTR_X86_GENERIC	0	/* any x86 with rdtsc */
+#define PERFCTR_X86_INTEL_P5	1	/* no rdpmc */
+#define PERFCTR_X86_INTEL_P5MMX	2
+#define PERFCTR_X86_INTEL_P6	3
+#define PERFCTR_X86_INTEL_PII	4
+#define PERFCTR_X86_INTEL_PIII	5
+#define PERFCTR_X86_CYRIX_MII	6
+#define PERFCTR_X86_WINCHIP_C6	7	/* no rdtsc */
+#define PERFCTR_X86_WINCHIP_2	8	/* no rdtsc */
+#define PERFCTR_X86_AMD_K7	9
+#define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
+#define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
+#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 and above */
+
+/* Lock macros. */
+extern CRITICAL_SECTION lock[PAPI_MAX_LOCK];
+
+#define  _papi_hwd_lock(lck) EnterCriticalSection(&lock[lck])
+#define  _papi_hwd_unlock(lck) LeaveCriticalSection(&lock[lck])
+
+//typedef siginfo_t hwd_siginfo_t;
+typedef int hwd_siginfo_t;
+//typedef ucontext_t hwd_ucontext_t;
+typedef CONTEXT hwd_ucontext_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)(ctx->ucontext->Eip))
+
+#else
+
+#define inline_static inline static
+
 /* Lock macros. */
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
-#include <inttypes.h>
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
+
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
 {                                               \
@@ -91,11 +128,9 @@ typedef ucontext_t hwd_ucontext_t;
 #define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
 #define HASH_OVERFLOW_CTR_BITS_TO_PAPI_INDEX(bit) _papi_hwi_event_index_map[bit]
 
-#ifdef _WIN32
-#define inline_static static __inline
-#else
 #define inline_static inline static
-#endif
+
+#endif /* _WIN32 */
 
 typedef struct P3_register {
    unsigned int selector;       /* Mask for which counters in use */
@@ -108,29 +143,6 @@ typedef struct P3_reg_alloc {
    unsigned ra_rank;            /* How many counters can carry this metric */
 } P3_reg_alloc_t;
 
-#ifdef _WIN32
-/* Per eventset data structure for thread level counters */
-
-typedef struct P3_WinPMC_control {
-   P3_register_t allocated_registers;
-   /* Buffer to pass to the kernel to control the counters */
-   struct pmc_control counter_cmd;
-   /* Handle to the open kernel driver */
-   HANDLE self;
-} P3_WinPMC_control_t;
-
-typedef P3_WinPMC_control_t hwd_control_state_t;
-
-/* Per thread data structure for thread level counters */
-
-typedef struct P3_WinPMC_context {
-   /* Handle to the open kernel driver */
-   HANDLE self;
-   P3_WinPMC_control_t start;
-} P3_WinPMC_context_t;
-
-typedef P3_WinPMC_context_t hwd_context_t;
-#else
 /* Per eventset data structure for thread level counters */
 
 typedef struct hwd_native {
@@ -155,6 +167,38 @@ typedef struct native_event_entry {
    P3_register_t resources;
 } native_event_entry_t;
 
+/* typedefs to conform to hardware independent PAPI code. */
+typedef P3_reg_alloc_t hwd_reg_alloc_t;
+typedef P3_register_t hwd_register_t;
+
+#ifdef _WIN32
+/* Per eventset data structure for thread level counters */
+
+typedef struct P3_WinPMC_control {
+   hwd_native_t native[MAX_COUNTERS];
+   int native_idx;
+   unsigned char master_selector;
+   P3_register_t allocated_registers;
+   /* Buffer to pass to the kernel to control the counters */
+   struct vpmc_control control;
+   struct pmc_state state;
+} P3_WinPMC_control_t;
+
+/* Per thread data structure for thread level counters */
+
+typedef struct P3_WinPMC_context {
+   /* Handle to the open kernel driver */
+   HANDLE self;
+/*   P3_WinPMC_control_t start; */
+} P3_WinPMC_context_t;
+
+/* typedefs to conform to hardware independent PAPI code. */
+typedef P3_WinPMC_control_t hwd_control_state_t;
+typedef P3_WinPMC_context_t hwd_context_t;
+#define hwd_pmc_control vpmc_control
+
+#else
+
 typedef struct P3_perfctr_control {
    hwd_native_t native[MAX_COUNTERS];
    int native_idx;
@@ -170,10 +214,10 @@ typedef struct P3_perfctr_context {
 } P3_perfctr_context_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
-typedef P3_reg_alloc_t hwd_reg_alloc_t;
 typedef P3_perfctr_control_t hwd_control_state_t;
-typedef P3_register_t hwd_register_t;
 typedef P3_perfctr_context_t hwd_context_t;
+#define hwd_pmc_control vperfctr_control
+
 #endif
 
 /* Used in determining on which counters an event can live. */
@@ -213,7 +257,8 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
-extern int p3_size, p2_size, ath_size, opt_size, NATIVE_TABLE_SIZE;
+extern unsigned int p3_size, p2_size, ath_size, opt_size, NATIVE_TABLE_SIZE;
 extern char *basename(char *);
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-#endif
+
+#endif /* _PAPI_PENTIUM3 */

@@ -50,12 +50,12 @@ void _papi_hwi_shutdown_the_thread_list(void)
    tmp = head->next;
    while (tmp != head) {
       nxt = tmp->next;
-      THRDBG("%llu:%s:%d:0x%x:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+      THRDBG("%llu:%s:%d:0x%lx:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
       _papi_hwd_shutdown(&tmp->master->context);
       tmp = nxt;
    }
    if (tmp) {
-      THRDBG("%lld:%s:%d:0x%x:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+      THRDBG("%lld:%s:%d:0x%lx:Shutting down master thread %x at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
       _papi_hwd_shutdown(&tmp->master->context);
    }
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -80,13 +80,13 @@ void _papi_hwi_cleanup_thread_list(void)
    tmp = head->next;
    while (tmp != head) {
       nxt = tmp->next;
-      THRDBG("%lld:%s:%d:0x%x:Freeing master thread %ld at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp); 
+      THRDBG("%lld:%s:%d:0x%lx:Freeing master thread %d at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp); 
       THRDBG( "%p->%p: %p->%p: %p->%p", prev, prev->next, tmp, tmp->next, nxt, nxt->next);
       free(tmp);
       prev->next = nxt;
       tmp = nxt;
    }
-   THRDBG( "%lld:%s:%d:0x%x:Freeing master thread %ld at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
+   THRDBG( "%lld:%s:%d:0x%lx:Freeing master thread %d at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master->tid, tmp);
    free(tmp);
    head = NULL;
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
@@ -99,7 +99,7 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t * ptr)
 
    if (entry == NULL)
       return (PAPI_ENOMEM);
-   THRDBG( "%lld:%s:%d:0x%x:(%p): New entry is at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), ptr, entry);
+   THRDBG( "%lld:%s:%d:0x%lx:(%p): New entry is at %p\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), ptr, entry);
    entry->master = ptr;
 
    /* Thread specific data */
@@ -118,8 +118,8 @@ int _papi_hwi_insert_in_thread_list(ThreadInfo_t * ptr)
       head->next = entry;
       head = entry;
    }
-   THRDBG("%lld:0x%x:(%p): Old head is at %p\n", _papi_hwd_get_real_usec(), (*_papi_hwi_thread_id_fn) (), ptr, entry->next);
-   THRDBG("%lld:0x%x:(%p): New head is at %p\n", _papi_hwd_get_real_usec(), (*_papi_hwi_thread_id_fn) (), ptr, head);
+   THRDBG("%lld:0x%lx:(%p): Old head is at %p\n", _papi_hwd_get_real_usec(), (*_papi_hwi_thread_id_fn) (), ptr, entry->next);
+   THRDBG("%lld:0x%lx:(%p): New head is at %p\n", _papi_hwd_get_real_usec(), (*_papi_hwi_thread_id_fn) (), ptr, head);
   _papi_hwd_unlock(PAPI_INTERNAL_LOCK); /* KSL */
 
    return (PAPI_OK);
@@ -136,7 +136,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
       _papi_hwd_lock(PAPI_INTERNAL_LOCK); /* KSL */
       tmp = head;
       while (tmp != NULL) {
-         THRDBG("%lld:%s:%d:0x%x:Examining master at %p,tid 0x%x.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
+         THRDBG("%lld:%s:%d:0x%lx:Examining master at %p,tid 0x%x.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), tmp->master, tmp->master->tid);
          if (tmp->master->tid == id_to_find) {
               _papi_hwd_unlock(PAPI_INTERNAL_LOCK); /* KSL */
             head = tmp;
@@ -146,7 +146,7 @@ ThreadInfo_t *_papi_hwi_lookup_in_thread_list(void)
          if (tmp == head)
             break;
       }
-      THRDBG("%lld:%s:%d:0x%x:I'm not in the list at %p.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), head);
+      THRDBG("%lld:%s:%d:0x%lx:I'm not in the list at %p.\n", _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), head);
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);/* KSL */
       return (NULL);
    }

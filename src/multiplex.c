@@ -202,7 +202,7 @@ static int mpx_startup_itimer(void)
 static void mpx_shutdown_itimer(void)
 {
    if (timeKillEvent(mpxTimerID) != TIMERR_NOERROR)
-      perror("setitimer(MPX_ITIMER) in mpx_shutdown_itimer");
+      DBG((stderr, "setitimer(MPX_ITIMER) in mpx_shutdown_itimer"));
 }
 
 static void mpx_release(void)

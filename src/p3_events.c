@@ -7,14 +7,6 @@
 *          <your email address>
 */
 
-
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
@@ -22,7 +14,7 @@
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
-extern int NATIVE_TABLE_SIZE;
+unsigned int NATIVE_TABLE_SIZE;
 
 /* Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example. */
@@ -2211,10 +2203,10 @@ const native_event_entry_t _papi_hwd_k8_native_map[] = {
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
-int p3_size = sizeof(_papi_hwd_p3_native_map) / sizeof(native_event_entry_t);
-int p2_size = sizeof(_papi_hwd_p2_native_map) / sizeof(native_event_entry_t);
-int ath_size = sizeof(_papi_hwd_k7_native_map) / sizeof(native_event_entry_t);
-int opt_size = sizeof(_papi_hwd_k8_native_map) / sizeof(native_event_entry_t);
+unsigned int p3_size = sizeof(_papi_hwd_p3_native_map) / sizeof(native_event_entry_t);
+unsigned int p2_size = sizeof(_papi_hwd_p2_native_map) / sizeof(native_event_entry_t);
+unsigned int ath_size = sizeof(_papi_hwd_k7_native_map) / sizeof(native_event_entry_t);
+unsigned int opt_size = sizeof(_papi_hwd_k8_native_map) / sizeof(native_event_entry_t);
 
 /* Given a native event code, returns the short text label. */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)

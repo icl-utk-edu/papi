@@ -17,13 +17,6 @@ vendors did in the kernel extensions or performance libraries. */
 /* It also contains a new section at the end with Windows routines
  to emulate standard stuff found in Unix/Linux, but not Windows. */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
@@ -73,7 +66,7 @@ static void posix_profil_16(caddr_t address, PAPI_sprofil_t * prof,
    int increment = 1;
    unsigned short *buf = prof->pr_base;
    unsigned long addr;
-   unsigned long_long laddr;
+   u_long_long laddr;
 
    addr = (unsigned long) (address - prof->pr_off);
 
@@ -84,7 +77,7 @@ static void posix_profil_16(caddr_t address, PAPI_sprofil_t * prof,
    }
    addr = addr / sizeof(unsigned short);        /* get the index */
    laddr = addr * prof->pr_scale;
-   addr = laddr >> 16;
+   addr = (unsigned long) (laddr >> 16);
 
 
    if (flags == PAPI_PROFIL_POSIX) {
@@ -128,7 +121,7 @@ static void posix_profil_32(caddr_t address, PAPI_sprofil_t * prof,
    int increment = 1;
    unsigned int *buf = prof->pr_base;
    unsigned long addr;
-   unsigned long_long laddr;
+   u_long_long laddr;
 
    addr = (unsigned long) (address - prof->pr_off);
 
@@ -139,7 +132,7 @@ static void posix_profil_32(caddr_t address, PAPI_sprofil_t * prof,
    }
    addr = addr / sizeof(unsigned int);  /* get the index */
    laddr = addr * prof->pr_scale;
-   addr = laddr >> 16;
+   addr = (unsigned long) (laddr >> 16);
    if (flags == PAPI_PROFIL_POSIX) {
       buf[addr]++;
       DBG((stderr, "bucket %lu = %u\n", addr, buf[addr]));
@@ -179,9 +172,9 @@ static void posix_profil_64(caddr_t address, PAPI_sprofil_t * prof,
                             long_long threshold)
 {
    int increment = 1;
-   unsigned long long *buf = prof->pr_base;
+   u_long_long *buf = prof->pr_base;
    unsigned long addr;
-   unsigned long_long laddr;
+   u_long_long laddr;
 
    addr = (unsigned long) (address - prof->pr_off);
 
@@ -190,9 +183,9 @@ static void posix_profil_64(caddr_t address, PAPI_sprofil_t * prof,
       DBG((stderr, "outside bucket at %p = %u\n", outside_bin, *outside_bin));
       return;
    }
-   addr = addr / sizeof(long long);     /* get the index */
+   addr = addr / sizeof(long_long);     /* get the index */
    laddr = addr * prof->pr_scale;
-   addr = laddr >> 16;
+   addr = (unsigned long) (laddr >> 16);
    if (flags == PAPI_PROFIL_POSIX) {
       buf[addr]++;
       DBG((stderr, "bucket %lu = %lld\n", addr, buf[addr]));
@@ -243,7 +236,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
 void dispatch_profile(EventSetInfo_t * ESI, void *context,
                       long_long over, int profile_index)
 {
-   _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
+  _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
 
    EventSetProfileInfo_t *profile = &ESI->profile;
    caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
@@ -259,8 +252,8 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
    unsigned short *overflow_bin = NULL;
 
 #ifdef PROFILE_DEBUG
-   fprintf(stderr, "%lld:%s:0x%x:handled at 0x%lx\n", _papi_hwd_get_real_usec(),
-           __FUNCTION__, (*_papi_hwi_thread_id_fn) (), pc);
+   fprintf(stderr, "%lld:%s:%d:0x%x:handled at 0x%lx\n", _papi_hwd_get_real_usec(),
+           __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (), pc);
 #endif
 
 /*
@@ -299,11 +292,11 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
 }
 
 /* find the first set bit in long long */
-static int ffsll(long long lli)
+static int ffsll(long_long lli)
 {
    int i, num, t, tmpint, len;
 
-   num=sizeof(long long)/sizeof(int);
+   num=sizeof(long_long)/sizeof(int);
    len = sizeof(int)*CHAR_BIT;
 
    for(i=0; i< num; i++ ) {
@@ -353,8 +346,8 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
 
 #ifdef OVERFLOW_DEBUG_TIMER
    if (_papi_hwi_thread_id_fn)
-      fprintf(stderr, "%lld:%s:0x%x:Thread %x in _papi_hwi_dispatch_overflow_signal\n",
-              _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+      fprintf(stderr, "%lld:%s:%d:0x%x:Thread %x in _papi_hwi_dispatch_overflow_signal\n",
+              _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
               (*_papi_hwi_thread_id_fn) ());
 #endif
 
@@ -363,8 +356,8 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
       ESI = thread->event_set_overflowing;
       if (ESI == NULL) {
 #ifdef OVERFLOW_DEBUG_TIMER
-         fprintf(stderr, "%lld:%s:0x%x:I'm using PAPI, but not overflowing.\n",
-                 _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) ());
+         fprintf(stderr, "%lld:%s:%d:0x%x:I'm using PAPI, but not overflowing.\n",
+                 _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) ());
 #endif
 #ifdef ANY_THREAD_GETS_SIGNAL
          _papi_hwi_broadcast_overflow_signal(thread->tid);
@@ -391,7 +384,7 @@ void _papi_hwi_dispatch_overflow_signal(void *papiContext, int isHardware,
             latest = ESI->sw_stop[papi_index];
             temp[i] = -1;
 
-            if (latest >= ESI->overflow.deadline[i]) {
+            if (latest >= (u_long_long)ESI->overflow.deadline[i]) {
                DBG((stderr,
                     "dispatch_overflow() latest %llu, deadline %llu, threshold %d\n",
                     latest, ESI->overflow.deadline[i], ESI->overflow.threshold[i]));
@@ -447,21 +440,24 @@ foundit:
                overflow_vector ^= 1 << i;
             }
             /* do not use overflow_vector after this place */
-         } else
+         } else {
             ESI->overflow.handler(ESI->EventSetIndex,
                                   GET_OVERFLOW_ADDRESS(ctx), overflow_vector);
+	 }
       }
    }
 #ifdef ANY_THREAD_GETS_SIGNAL
    else {
 #ifdef OVERFLOW_DEBUG
-      fprintf(stderr, "%lld:%s:0x%x:I haven't been noticed by PAPI before\n",
-              _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) ());
+      fprintf(stderr, "%lld:%s:%d:0x%x:I haven't been noticed by PAPI before\n",
+              _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) ());
 #endif
       _papi_hwi_broadcast_overflow_signal((*_papi_hwi_thread_id_fn) ());
    }
 #endif
 }
+
+int _papi_hwi_using_signal = 0;
 
 #ifdef _WIN32
 
@@ -511,8 +507,6 @@ static int stop_timer(void)
 
 #else
 
-int _papi_hwi_using_signal = 0;
-
 static int start_timer(int milliseconds)
 {
    struct sigaction action;
@@ -550,8 +544,8 @@ static int start_timer(int milliseconds)
    if (++_papi_hwi_using_signal > 1) {
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 #ifdef OVERFLOW_DEBUG
-      fprintf(stderr, "%lld:%s:0x%x:_papi_hwi_using_signal is now %d.\n",
-              _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+      fprintf(stderr, "%lld:%s:%d:0x%x:_papi_hwi_using_signal is now %d.\n",
+              _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
               _papi_hwi_using_signal);
 #endif
       return (PAPI_OK);
@@ -585,8 +579,8 @@ static int start_timer(int milliseconds)
 
    DBG((stderr, "Timer started.\n"));
 #ifdef OVERFLOW_DEBUG
-   fprintf(stderr, "%lld:%s:0x%x:_papi_hwi_using_signal is now %d.\n",
-           _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+   fprintf(stderr, "%lld:%s:%d:0x%x:_papi_hwi_using_signal is now %d.\n",
+           _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
            _papi_hwi_using_signal);
 #endif
    return (PAPI_OK);
@@ -608,8 +602,8 @@ static int stop_timer(void)
    if (--_papi_hwi_using_signal == 0) {
 #ifdef OVERFLOW_DEBUG
       if (_papi_hwi_thread_id_fn)
-         fprintf(stderr, "%lld:%s:0x%x:Thread 0x%x, turning off timer and signal.\n",
-                 _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+         fprintf(stderr, "%lld:%s:%d:0x%x:Thread 0x%x, turning off timer and signal.\n",
+                 _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
                  (*_papi_hwi_thread_id_fn) ());
 #endif
       retval = setitimer(PAPI_ITIMER, &value, NULL);
@@ -632,15 +626,15 @@ static int stop_timer(void)
 #endif
    _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
 #ifdef OVERFLOW_DEBUG
-   fprintf(stderr, "%lld:%s:0x%x:_papi_hwi_using_signal is now %d.\n",
-           _papi_hwd_get_real_usec(), __FUNCTION__, (*_papi_hwi_thread_id_fn) (),
+   fprintf(stderr, "%lld:%s:%d:0x%x:_papi_hwi_using_signal is now %d.\n",
+           _papi_hwd_get_real_usec(), __FILE__, __LINE__, (*_papi_hwi_thread_id_fn) (),
            _papi_hwi_using_signal);
 #endif
    DBG((stderr, "Timer stopped\n"));
    return (retval);
 }
 
-#endif                          /* _WIN32 */
+#endif /* _WIN32 */
 
 int _papi_hwi_start_overflow_timer(ThreadInfo_t * thread, EventSetInfo_t * ESI)
 {

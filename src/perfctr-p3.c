@@ -29,13 +29,6 @@
 #define PERFCTR_CPU_NRCTRS perfctr_cpu_nrctrs
 #endif
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_preset.h"
@@ -54,14 +47,22 @@ extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
 extern hwi_search_t _papi_hwd_preset_map[];
 extern papi_mdi_t _papi_hwi_system_info;
-extern int p3_size, p2_size, ath_size, opt_size;
-int NATIVE_TABLE_SIZE;
+extern unsigned int p3_size, p2_size, ath_size, opt_size;
+extern unsigned int NATIVE_TABLE_SIZE;
 
+#ifdef _WIN32
+CRITICAL_SECTION lock[PAPI_MAX_LOCK];
+#else
 volatile unsigned int lock[PAPI_MAX_LOCK] = { 0, };
+#endif
 
 #ifdef DEBUG
+#if _WIN32
+void print_control(const struct pmc_cpu_control *control) {
+#else
 void print_control(const struct perfctr_cpu_control *control) {
-   unsigned int i;
+#endif
+  unsigned int i;
 
    SUBDBG("Control used:\n");
    SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
@@ -82,7 +83,7 @@ void print_control(const struct perfctr_cpu_control *control) {
 
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
-inline static int setup_p3_presets(int cputype) {
+inline_static int setup_p3_presets(void) {
    switch (_papi_hwi_system_info.hw_info.model) {
    case PERFCTR_X86_GENERIC:
    case PERFCTR_X86_CYRIX_MII:
@@ -120,7 +121,16 @@ inline static int setup_p3_presets(int cputype) {
 }
 
 /* Low level functions, should not handle errors, just return codes. */
-static inline u_long_long get_cycles(void) {
+
+#ifdef _WIN32
+inline_static u_long_long get_cycles (void)
+{
+   __asm rdtsc		// Read Time Stamp Counter
+   // This assembly instruction places the 64-bit value in edx:eax
+   // Which is exactly where it needs to be for a 64-bit return value...
+}
+#else
+inline_static u_long_long get_cycles(void) {
    u_long_long ret;
 #ifdef __x86_64__
    do {
@@ -135,8 +145,9 @@ static inline u_long_long get_cycles(void) {
 #endif
    return ret;
 }
+#endif
 
-inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    switch (perfctr_cpu_type) {
    case PERFCTR_X86_INTEL_P5:
    case PERFCTR_X86_INTEL_P5MMX:
@@ -159,7 +170,7 @@ inline static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
 }
 
 /* Dumb hack to make sure I get the cycle time correct. */
-
+#ifndef _WIN32
 static float calc_mhz(void) {
    u_long_long ostamp;
    u_long_long stamp;
@@ -180,17 +191,32 @@ static float calc_mhz(void) {
 
    return (mhz);
 }
+#endif
 
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
 extern int _papi_hwd_mdi_init() {
    strcpy(_papi_hwi_system_info.substrate, "$Id$");       /* Name of the substrate we're using */
+#ifdef _WIN32
+   /*******
+      Until we can find Windows equivalents for these, we won't be able to do profiling.
+    *******/
+   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) NULL;
+   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) NULL;
+   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) NULL;
+   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) NULL;
+#else _WIN32
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _init;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
+#endif /* _WIN32 */
    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) NULL;
    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) NULL;
+
+   /* Initialize the shared library info map if it exists */
+   if (_papi_hwi_system_info.shlib_info.map)
+      *_papi_hwi_system_info.shlib_info.map = _papi_hwi_system_info.exe_info.address_info;
 
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
@@ -198,13 +224,6 @@ extern int _papi_hwd_mdi_init() {
    _papi_hwi_system_info.supports_real_cyc = 1;
    _papi_hwi_system_info.supports_virt_usec = 1;
    _papi_hwi_system_info.supports_virt_cyc = 1;
-
-   _papi_hwi_system_info.shlib_info.map->text_start = (caddr_t) & _init;
-   _papi_hwi_system_info.shlib_info.map->text_end = (caddr_t) & _etext;
-   _papi_hwi_system_info.shlib_info.map->data_start = (caddr_t) & _etext + 1;
-   _papi_hwi_system_info.shlib_info.map->data_end = (caddr_t) & _edata;
-   _papi_hwi_system_info.shlib_info.map->bss_start = (caddr_t) NULL;
-   _papi_hwi_system_info.shlib_info.map->bss_end = (caddr_t) NULL;
 
    return (PAPI_OK);
 }
@@ -289,6 +308,83 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
       return(PAPI_OK);
 }
 
+#ifdef _WIN32
+
+void _papi_hwd_lock_init(void)
+{
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++) {
+      InitializeCriticalSection(&lock[i]);
+   }
+}
+
+static void _papi_hwd_lock_release(void)
+{
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++) {
+      DeleteCriticalSection(&lock[i]);
+   }
+}
+
+HANDLE pmc_dev;	// device handle for kernel driver
+
+/* At init time, the higher level library should always allocate and 
+   reserve EventSet zero. */
+int _papi_hwd_init_global(void) {
+   int retval;
+
+   /* Initialize outstanding values in machine info structure */
+   if (_papi_hwd_mdi_init() != PAPI_OK) {
+      return (PAPI_EINVAL);
+   }
+
+   /* Fill in what we can of the papi_system_info. */
+   retval = _papi_hwd_get_system_info();
+   if (retval != PAPI_OK)
+      return (retval);
+
+   /* Setup presets */
+   retval = setup_p3_presets();
+   if (retval)
+      return (retval);
+
+   /* Setup memory info */
+   retval =
+       _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) _papi_hwi_system_info.hw_info.vendor);
+   if (retval)
+      return (retval);
+
+   return (PAPI_OK);
+}
+
+int _papi_hwd_init(hwd_context_t *ctx)
+{
+   /* Initialize our thread/process pointer. */
+   if ((ctx->self = pmc_dev = pmc_open()) == NULL) {
+      fprintf(stderr, "Error in %s,line %d: ", __FILE__,__LINE__);
+      fprintf(stderr, "pmc_open() returned NULL"); 
+      fprintf(stderr, "\n");
+      return(PAPI_ESYS);
+   }
+   SUBDBG("_papi_hwd_init pmc_open() = %p\n", ctx->self);
+
+   /* Linux makes sure that each thread has a virtualized TSC here.
+      This makes no sense on Windows, since the counters aren't
+      saved at context switch.
+   */
+
+   return(PAPI_OK);
+}
+
+/* Called once per process. */
+int _papi_hwd_shutdown_global(void) {
+  pmc_close(pmc_dev);
+  _papi_hwd_lock_release();
+   return (PAPI_OK);
+}
+
+#else
+
 void _papi_hwd_lock_init(void) {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++) {
@@ -339,14 +435,14 @@ int _papi_hwd_init_global(void) {
       _papi_hwi_system_info.hw_info.mhz = mhz;
    SUBDBG("Actual MHZ is %f\n", _papi_hwi_system_info.hw_info.mhz);
 
-   /* Setup presets */
-   retval = setup_p3_presets(info.cpu_type);
-   if (retval)
-      return (retval);
-
    /* Fill in what we can of the papi_system_info. */
    retval = _papi_hwd_get_system_info();
    if (retval != PAPI_OK)
+      return (retval);
+
+   /* Setup presets */
+   retval = setup_p3_presets();
+   if (retval)
       return (retval);
 
    /* Setup memory info */
@@ -380,6 +476,13 @@ int _papi_hwd_init(hwd_context_t * ctx) {
    return (PAPI_OK);
 }
 
+/* Called once per process. */
+int _papi_hwd_shutdown_global(void) {
+   return (PAPI_OK);
+}
+
+#endif /* _WIN32 */
+
 u_long_long _papi_hwd_get_real_usec(void) {
    return((u_long_long)get_cycles() / (u_long_long)_papi_hwi_system_info.hw_info.mhz);
 }
@@ -394,7 +497,11 @@ u_long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
 }
  
 u_long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
+#ifdef _WIN32
+   return(get_cycles()); // Windows can't read virtual cycles...
+#else
    return(vperfctr_read_tsc(ctx->perfctr));
+#endif /* _WIN32 */
 }
 
 /* This function examines the event to determine
@@ -481,7 +588,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 }
 
 static void clear_control_state(hwd_control_state_t *this_state) {
-   int i;
+   unsigned int i;
 
    /* Remove all counter control command values from eventset. */
    for(i = 0; i < this_state->control.cpu_control.nractrs; i++) {
@@ -513,6 +620,56 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
    return (PAPI_OK);
 }
 
+
+#ifdef _WIN32
+
+/* Collected wisdom indicates that each call to pmc_set_control will write 0's
+    into the hardware counters, effecting a reset operation.
+*/
+int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * spc) {
+   int error;
+   struct pmc_control *ctl = (struct pmc_control *)(spc->control.cpu_control.evntsel);
+
+   /* clear the accumulating counter values */
+   memset((void *)spc->state.sum.pmc, 0, _papi_hwi_system_info.num_cntrs * sizeof(long_long) );
+   if((error = pmc_set_control(ctx->self, ctl)) < 0) {
+      SUBDBG("pmc_set_control returns: %d\n", error);
+      error_return(PAPI_ESYS, "pmc_set_control() returned < 0");
+   }
+#ifdef DEBUG
+   print_control(&spc->control.cpu_control);
+#endif
+   return (PAPI_OK);
+}
+
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+  /* Since Windows counts system-wide (no counter saves at context switch)
+      and since PAPI 3 no longer merges event sets, this function doesn't
+      need to do anything in the Windows version.
+  */
+   return(PAPI_OK);
+}
+
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp) {
+   pmc_read_state(_papi_hwi_system_info.num_cntrs, &spc->state);
+   *dp = (long_long *) spc->state.sum.pmc;
+#ifdef DEBUG
+   {
+      extern int _papi_hwi_debug;
+      if(_papi_hwi_debug) {
+         unsigned int i;
+         for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
+            SUBDBG("raw val hardware index %d is %lld\n", i,
+                   (long_long) spc->state.sum.pmc[i]);
+         }
+      }
+   }
+#endif
+   return (PAPI_OK);
+}
+
+#else
+
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    int error;
    if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
@@ -529,10 +686,6 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    if(vperfctr_stop(ctx->perfctr) < 0)
       error_return(PAPI_ESYS, VCNTRL_ERROR);
    return(PAPI_OK);
-}
-
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
-   return(_papi_hwd_start(ctx, cntrl));
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp) {
@@ -553,6 +706,12 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
    return (PAPI_OK);
 }
 
+#endif /* _WIN32 */
+
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
+   return(_papi_hwd_start(ctx, cntrl));
+}
+
 int _papi_hwd_setmaxmem() {
    return (PAPI_OK);
 }
@@ -561,18 +720,53 @@ int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long 
    return(PAPI_ESBSTR);
 }
 
-/* Called once per process. */
-int _papi_hwd_shutdown_global(void) {
-   return (PAPI_OK);
+#ifdef _WIN32
+
+int _papi_hwd_shutdown(hwd_context_t * ctx) {
+   int retval = 0;
+//   retval = vperfctr_unlink(ctx->self);
+   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->self, retval);
+   pmc_close(ctx->self);
+   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->self);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
+
+   if(retval)
+      return(PAPI_ESYS);
+   return(PAPI_OK);
 }
+
+
+void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
+        DWORD dwUser, DWORD dw1, DWORD dw2) 
+{
+    _papi_hwi_context_t ctx;
+    CONTEXT	context;	// processor specific context structure
+    HANDLE	threadHandle;
+    BOOL	error;
+
+   ctx.ucontext = &context;
+
+   // dwUser is the threadID passed by timeSetEvent
+    // NOTE: This call requires W2000 or later
+    threadHandle = OpenThread(THREAD_GET_CONTEXT, FALSE, dwUser);
+
+    // retrieve the contents of the control registers only
+    context.ContextFlags = CONTEXT_CONTROL;
+    error = GetThreadContext(threadHandle, &context);
+    CloseHandle(threadHandle);
+
+    // pass a void pointer to cpu register data here
+    _papi_hwi_dispatch_overflow_signal((void *)(&ctx), 0, 0, 0); 
+}
+#else
 
 /* This routine is for shutting down threads, including the
    master thread. */
 int _papi_hwd_shutdown(hwd_context_t * ctx) {
    int retval = vperfctr_unlink(ctx->perfctr);
-   SUBDBG("_papi_hwd_init_global vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
    vperfctr_close(ctx->perfctr);
-   SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
    memset(ctx, 0x0, sizeof(hwd_context_t));
 
    if(retval)
@@ -596,16 +790,18 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
       master = _papi_hwi_lookup_in_thread_list();
       if (master == NULL) {
-         fprintf(stderr, "%s():%d: master event lookup failure! abort()\n",
-                 __FUNCTION__, __LINE__);
+         fprintf(stderr, "%s:%d: master event lookup failure! abort()\n",
+                 __FILE__, __LINE__);
          abort();
       }
       if (vperfctr_iresume(master->context.perfctr) < 0) {
-         fprintf(stderr, "%s():%d: vperfctr_iresume %s\n",
-                 __FUNCTION__, __LINE__, strerror(errno));
+         fprintf(stderr, "%s:%d: vperfctr_iresume %s\n",
+                 __FILE__, __LINE__, strerror(errno));
       }
    }
 }
+
+#endif /* _WIN32 */
 
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
    In the case a user wants to interrupt on a counter in an evntset that is not
@@ -614,7 +810,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
    position entries in both the NativeInfoArray and the EventInfoArray to keep
    everything consistent.
 */
-static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, int cntr1, int cntr2) {
+static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int cntr1, int cntr2) {
    unsigned int ui;
    int si, i, j;
 
@@ -645,10 +841,95 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
    contr->cpu_control.ireset[cntr2] = si;
 }
 
+#ifdef _WIN32
+
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    extern int _papi_hwi_using_signal;
    hwd_control_state_t *this_state = &ESI->machdep;
-   struct vperfctr_control *contr = &this_state->control;
+   struct hwd_pmc_control *contr = &this_state->control;
+   int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
+
+   OVFDBG("EventIndex=%d\n", EventIndex);
+
+   /* The correct event to overflow is EventIndex */
+   ncntrs = _papi_hwi_system_info.num_cntrs;
+   i = ESI->EventInfoArray[EventIndex].pos[0];
+   if (i >= ncntrs) {
+      OVFDBG("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
+      return PAPI_EINVAL;
+   }
+   if (threshold != 0) {        /* Set an overflow threshold */
+/*******
+      struct sigaction sa;
+      int err;
+*******/
+      if (ESI->EventInfoArray[EventIndex].derived) {
+         OVFDBG("Can't overflow on a derived event.\n");
+         return PAPI_EINVAL;
+      }
+      /* overflow interrupt occurs on the NEXT event after overflow occurs
+         thus we subtract 1 from the threshold. */
+      contr->cpu_control.ireset[i] = (-threshold + 1);
+      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
+      nricntrs = ++contr->cpu_control.nrictrs;
+      nracntrs = --contr->cpu_control.nractrs;
+/*******
+      contr->si_signo = PAPI_SIGNAL;
+*******/
+
+      /* move this event to the bottom part of the list if needed */
+      if (i < nracntrs)
+         swap_events(ESI, contr, i, nracntrs);
+/*******
+      memset(&sa, 0, sizeof sa);
+      sa.sa_sigaction = _papi_hwd_dispatch_timer;
+      sa.sa_flags = SA_SIGINFO;
+      if ((err = sigaction(PAPI_SIGNAL, &sa, NULL)) < 0) {
+         OVFDBG("Setting sigaction failed: SYSERR %d: %s", errno, strerror(errno));
+         return (PAPI_ESYS);
+      }
+*******/
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_using_signal++;
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+
+      OVFDBG("Modified event set\n");
+   } else {
+      if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
+         contr->cpu_control.ireset[i] = 0;
+         contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
+         nricntrs = --contr->cpu_control.nrictrs;
+         nracntrs = ++contr->cpu_control.nractrs;
+      }
+      /* move this event to the top part of the list if needed */
+      if (i >= nracntrs)
+         swap_events(ESI, contr, i, nracntrs - 1);
+      if (!nricntrs)
+         contr->si_signo = 0;
+
+      OVFDBG("Modified event set\n");
+
+      _papi_hwd_lock(PAPI_INTERNAL_LOCK);
+      _papi_hwi_using_signal--;
+      if (_papi_hwi_using_signal == 0) {
+/************
+         if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+            retval = PAPI_ESYS;
+*******/
+      }
+      _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
+   }
+   OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
+   OVFDBG("End of call. Exit code: %d\n", retval);
+   return (retval);
+}
+
+#else
+
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
+   extern int _papi_hwi_using_signal;
+   hwd_control_state_t *this_state = &ESI->machdep;
+   struct hwd_pmc_control *contr = &this_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
@@ -714,10 +995,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       }
       _papi_hwd_unlock(PAPI_INTERNAL_LOCK);
    }
-   OVFDBG("%s (%s): Hardware overflow is still experimental.\n", __FILE__, __FUNCTION__);
+   OVFDBG("%s:%d: Hardware overflow is still experimental.\n", __FILE__, __LINE__);
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
+
+#endif /* _WIN32 */
+
 
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    /* This function is not used and shouldn't be called. */

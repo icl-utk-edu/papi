@@ -699,6 +699,29 @@ inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
 }
 #endif
 
+#ifdef _WIN32
+#include <Psapi.h>
+long _papi_hwd_get_dmem_info(int option)
+{
+   int tmp;
+   HANDLE proc = GetCurrentProcess();
+   PROCESS_MEMORY_COUNTERS cntr;
+
+   GetProcessMemoryInfo(proc, &cntr, sizeof(cntr));
+
+   tmp = getpagesize();
+   if (tmp == 0) tmp = 1;
+
+   switch (option) {
+     case PAPI_GET_RESSIZE:
+	return ((cntr.WorkingSetSize-cntr.PagefileUsage) / tmp);
+     case PAPI_GET_SIZE:	    
+	return (cntr.WorkingSetSize / tmp);
+     default:
+	return (PAPI_EINVAL);
+   }
+}
+#else
 long _papi_hwd_get_dmem_info(int option)
 {
    pid_t pid = getpid();
@@ -732,3 +755,5 @@ long _papi_hwd_get_dmem_info(int option)
       return (PAPI_EINVAL);
    }
 }
+#endif /* _WIN32 */
+

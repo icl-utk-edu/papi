@@ -7,13 +7,6 @@
 *          <your email address>
 */
 
-#ifdef _WIN32
-  /* Define SUBSTRATE to map to linux-perfctr.h
-   * since we haven't figured out how to assign a value 
-   * to a label at make inside the Windows IDE */
-#define SUBSTRATE "linux-perfctr.h"
-#endif
-
 #include "papi.h"
 #include SUBSTRATE
 #include "papi_internal.h"
@@ -68,6 +61,75 @@ extern papi_mdi_t _papi_hwi_system_info;
  * Compile with something along the lines of
  * gcc -O pmap.c -o pmap
  */
+
+#ifdef _WIN32
+
+int _papi_hwd_update_shlib_info(void)
+{
+   return PAPI_ESBSTR;
+}
+
+
+// split the filename from a full path
+// roughly equivalent to unix basename()
+static void splitpath(const char *path, char *name)
+{
+	short i = 0, last = 0;
+	
+	while (path[i]) {
+		if (path[i] == '\\') last = i;
+		i++;
+	}
+	name[0] = 0;
+	i = i - last;
+	if (last > 0) {
+		last++;
+		i--;
+	}
+	strncpy(name, &path[last], i);
+	name[i] = 0;
+}
+
+int _papi_hwd_get_system_info(void)
+{
+  struct wininfo win_hwinfo;
+  HMODULE hModule;
+  DWORD len;
+  long i = 0;
+
+  /* Path and args */
+  hModule = GetModuleHandle(NULL); // current process
+  len = GetModuleFileName(hModule,_papi_hwi_system_info.exe_info.fullname,PAPI_MAX_STR_LEN);
+  if (len) splitpath(_papi_hwi_system_info.exe_info.fullname, _papi_hwi_system_info.exe_info.name);
+  else return(PAPI_ESYS);
+
+  DBG((stderr, "Executable is %s\n",_papi_hwi_system_info.exe_info.name));
+  DBG((stderr, "Full Executable is %s\n",_papi_hwi_system_info.exe_info.fullname));
+
+  /* Hardware info */
+  if (!init_hwinfo(&win_hwinfo))
+    return(PAPI_ESYS);
+
+  _papi_hwi_system_info.hw_info.ncpu = win_hwinfo.ncpus;
+  _papi_hwi_system_info.hw_info.nnodes = win_hwinfo.nnodes;
+  _papi_hwi_system_info.hw_info.totalcpus = win_hwinfo.total_cpus;
+
+  _papi_hwi_system_info.hw_info.vendor = win_hwinfo.vendor;
+  _papi_hwi_system_info.hw_info.revision = (float)win_hwinfo.revision;
+  strcpy(_papi_hwi_system_info.hw_info.vendor_string,win_hwinfo.vendor_string);
+
+  _papi_hwi_system_info.hw_info.model = win_hwinfo.model;
+  strcpy(_papi_hwi_system_info.hw_info.model_string,win_hwinfo.model_string);
+
+  _papi_hwi_system_info.num_cntrs = win_hwinfo.nrctr;
+  _papi_hwi_system_info.num_gp_cntrs = _papi_hwi_system_info.num_cntrs;
+
+  _papi_hwi_system_info.hw_info.mhz = (float)win_hwinfo.mhz; 
+
+  return(PAPI_OK);
+}
+
+#else
 
 inline int _papi_hwd_update_shlib_info(void)
 {
@@ -161,7 +223,7 @@ inline int _papi_hwd_update_shlib_info(void)
 /* END STOLEN/MODIFIED CODE */
 /****************************/
 
-inline static char *search_cpu_info(FILE * f, char *search_str, char *line)
+inline_static char *search_cpu_info(FILE * f, char *search_str, char *line)
 {
    /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
    /* See the PCL home page for the German version of PAPI. */
@@ -274,6 +336,8 @@ int _papi_hwd_get_system_info(void)
 
    return (PAPI_OK);
 }
+
+#endif /* _WIN32 */
 
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
