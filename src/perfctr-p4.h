@@ -1,3 +1,6 @@
+#ifndef _PAPI_PENTIUM4
+#define _PAPI_PENTIUM4
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -18,8 +21,6 @@
 #include <sys/ucontext.h>
 
 #include <linux/unistd.h>
-#include <asm/bitops.h>
-#include <asm/system.h>
 #include <errno.h>
 
 #include "libperfctr.h"
@@ -186,3 +187,5 @@ extern int sigrelse(int);
 
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 extern int _papi_hwd_get_system_info(void);
+
+#endif

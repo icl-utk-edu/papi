@@ -1,9 +1,6 @@
 #ifndef _PAPI_PENTIUM3
 #define _PAPI_PENTIUM3
 
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,24 +10,20 @@
 #include <math.h>
 #include <limits.h>
 #include <sys/types.h>
+
 #ifdef _WIN32
 #include <errno.h>
 #include "cpuinfo.h"
 #include "pmclib.h"
 #else
-#include <sys/ucontext.h>       /* sys/ucontext.h  apparently broken */
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
+#include <ctype.h>
+#include <sys/ucontext.h>
 #include <sys/times.h>
 #include <sys/time.h>
-#ifndef __x86_64__
-#include <asm/system.h>
-#include <asm/param.h>
-#include <asm/bitops.h>
-#endif
 #include <linux/unistd.h>
-#include <ctype.h>
 
 #ifndef CONFIG_SMP
 /* Assert that CONFIG_SMP is set before including asm/atomic.h to 
@@ -38,7 +31,6 @@
  */
 #define CONFIG_SMP
 #endif
-#include "asm/atomic.h"
 #include <inttypes.h>
 #include "libperfctr.h"
 #endif
@@ -255,7 +247,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
-#define MODEL_ERROR "This is not a Pentium 3"
+#define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;

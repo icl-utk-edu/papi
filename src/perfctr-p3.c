@@ -116,6 +116,10 @@ inline_static int setup_p3_presets(int cputype) {
       preset_search_map = &_papi_hwd_opt_preset_map;
       break;
 #endif
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+   default:
+     error_return(PAPI_ESBSTR, MODEL_ERROR);
    }
    return (_papi_hwi_setup_all_presets(preset_search_map));
 }
