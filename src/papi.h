@@ -347,13 +347,13 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_WB       0x20  /* write-back cache */
 
    typedef struct _papi_mh_tlb_info {
-      int type; /* Empty, unified, data, instr */
+      int type; /* Empty, instr, data, vector, unified */
       int num_entries;
       int associativity;
    } PAPI_mh_tlb_info_t;
 
    typedef struct _papi_mh_cache_info {
-      int type; /* Empty, unified, data, instr */
+      int type; /* Empty, instr, data, vector, unified */
       int size;
       int line_size;
       int num_lines;
@@ -420,69 +420,56 @@ read the documentation carefully.  */
    } PAPI_dmem_t;
 #endif
 
-#define NEW_PAPI_EVENT_INFO
-
-#ifndef NEW_PAPI_EVENT_INFO
-  /* If you change this, please update test *avail* test cases! */
-  /* Whatever you do, don't reorder the fields. All hell will break
-     loose due to static initializers in the substrates. */
-
-   typedef struct event_info {
-      unsigned int event_code;
-      unsigned int count;
-      char symbol[PAPI_MIN_STR_LEN];
-      char short_descr[PAPI_MIN_STR_LEN];
-      char long_descr[PAPI_MAX_STR_LEN];
-      char vendor_name[PAPI_MAX_STR_LEN];
-      char vendor_descr[PAPI_HUGE_STR_LEN];
-   } PAPI_event_info_t;
-#elif defined(PHILS_EVENT_INFO)
-   typedef struct event_info {
-      unsigned int event_code;
-      unsigned int count;
-      char symbol[PAPI_MIN_STR_LEN];
-      struct {
-         char short_descr[PAPI_MIN_STR_LEN];
-         char long_descr[PAPI_MAX_STR_LEN];
-      } papi;
-      struct {
-         char symbols[PAPI_MAX_STR_LEN];
-         char codes[PAPI_MAX_STR_LEN];
-         char long_descr[PAPI_HUGE_STR_LEN];
-         char qualifier_descr[PAPI_MAX_STR_LEN];
-      } vendor;
-      char note[PAPI_MAX_STR_LEN];
-   } PAPI_event_info_t;
-/* Explanation of the fields.
-   1-3, same as before. 
-   4,5 defined only for PAPI events, not NATIVE events. 
-   6, same as before EXCEPT it contains stringified derived information.
-      i.e. FP_OPS + INS * CYC. 
-   7, register codes of the above. No derived info, but comma separated. 
-      (could contain derived info)
-   8, same as vendor_descr before, except it doesn't contain MASK or subevent
-      information.
-   9, this contains subevent information, like masks or group info. 
-   10, special notes from us PAPI folks like "This event overcounts by 2!"
-
-   Comments welcome to mucci@cs.utk.edu.
+/*
+   This structure is the event information that is exposed to the user through the API.
+   The same structure is used to describe both preset and native events.
+   WARNING: This structure is very large. With current definitions, it is about 2660 bytes.
+   Unlike previous versions of PAPI, which allocated an array of these structures within
+   the library, this structure is carved from user space. It does not exist inside the library,
+   and only one copy need ever exist.
+   The basic philosophy is this:
+   - each preset consists of a code, some descriptors, and an array of native events;
+   - each native event consists of a code, and an array of register values;
+   - fields are shared between preset and native events, and unused where not applicable;
+   - To completely describe a preset event, the code must present all available
+      information for that preset, and then walk the list of native events, retrieving
+      and presenting information for each native event in turn.
+   The various fields and their usage is discussed below.
 */
-#else
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
 #define MAX_TERMS 8
    typedef struct event_info {
-      unsigned int event_code;
-      unsigned int count;
-      char symbol[PAPI_MAX_STR_LEN];
-      char short_descr[PAPI_MIN_STR_LEN];
-      char long_descr[PAPI_HUGE_STR_LEN];
-      char derived[PAPI_MIN_STR_LEN];
-      char postfix[PAPI_MIN_STR_LEN];
-      unsigned int code[MAX_TERMS];
-      char name[MAX_TERMS][PAPI_MIN_STR_LEN];
-      char note[PAPI_HUGE_STR_LEN];
+      unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+      unsigned int count;                    /* number of terms (usually 1) in the code and name fields
+                                                - for presets, these terms are native events
+                                                - for native events, these terms are register contents */
+      char symbol[PAPI_MAX_STR_LEN+3];       /* name of the event
+                                                - for presets, something like PAPI_TOT_INS
+                                                - for native events, something related to the vendor name */
+      char short_descr[PAPI_MIN_STR_LEN];    /* a description suitable for use as a label, typically only
+                                                implemented for preset events */
+      char long_descr[PAPI_HUGE_STR_LEN];    /* a longer description of the event
+                                                - typically a sentence for presets
+                                                - possibly a paragraph from vendor docs for native events */
+      char derived[PAPI_MIN_STR_LEN];        /* name of the derived type
+                                                - for presets, usually NOT_DERIVED
+                                                - for native events, empty string 
+                                                NOTE: a derived description string is available
+                                                   in papi_data.c that is currently not exposed to the user */
+      char postfix[PAPI_MIN_STR_LEN];        /* string containing postfix operations; only defined for 
+                                                preset events of derived type DERIVED_POSTFIX */
+      unsigned int code[MAX_TERMS];          /* array of values that further describe the event:
+                                                - for presets, native event_code values
+                                                - for native events, register values for event programming */
+      char name[MAX_TERMS][PAPI_MIN_STR_LEN];/* names of code terms:
+                                                - for presets, native event names, as in symbol, above
+                                                   NOTE: these may be truncated to fit
+                                                - for native events, descriptive strings for each register
+                                                   value presented in the code array */
+      char note[PAPI_HUGE_STR_LEN];          /* an optional developer note supplied with a preset event
+                                                to delineate platform specific anomalies or restrictions
+                                                NOTE: could also be implemented for native events. */
    } PAPI_event_info_t;
-#endif
 
 /* Locking Mechanisms defines 
  * This can never go over 31, because of the Cray T3E uses
