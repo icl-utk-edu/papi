@@ -712,7 +712,7 @@ static int add_native_events(EventSetInfo_t *ESI, int *nix, int size, EventInfo_
 
 int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 {
-	int thisindex, remap, retval=PAPI_OK;
+	int i, j, thisindex, remap, retval=PAPI_OK;
 	
 	/* Make sure the event is not present and get the next
 	free slot. */
@@ -740,6 +740,19 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			
 			if (!_papi_hwi_presets[preset_index].avail)
 				return(PAPI_ENOEVNT);
+            /* check if the native events are been used as overflow
+               events */
+            if (ESI->state & PAPI_OVERFLOWING ) {
+              for(i=0; i<_papi_hwi_preset_map[preset_index].metric_count;i++)
+              {
+                for(j=0; j<ESI->overflow.event_counter; j++)
+                {
+                  if ( ESI->overflow.EventCode[j] == \
+           (_papi_hwi_preset_map[preset_index].natIndex[i] | NATIVE_MASK) )
+                    return(PAPI_ECNFLCT);
+                }
+              }
+            }
 			
 			/* Try to add the preset. */
 			
@@ -771,6 +784,16 @@ int _papi_hwi_add_event(EventSetInfo_t *ESI, int EventCode)
 			if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
 				return(PAPI_ENOEVNT);
 
+            /* check if the native events are been used as overflow
+               events */
+            if (ESI->state & PAPI_OVERFLOWING ) {
+              for(j=0; j<ESI->overflow.event_counter; j++)
+              {
+                if (EventCode == ESI->overflow.EventCode[j] )
+                  return(PAPI_ECNFLCT);
+              }
+            }
+			
 			/* Try to add the native. */
 			
 			remap = add_native_events(ESI, &native_index, 1, &ESI->EventInfoArray[thisindex]);
