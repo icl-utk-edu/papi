@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_virt_cyc 3 "December, 2001" "PAPI Function Reference" "PAPI" -->
+<!-- .TH PAPI_get_virt_cyc 3 "September, 2002" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -324,8 +324,18 @@ as 1/Hz as defined by the operating system.
 
 </A>
 <BLOCKQUOTE>
-These functions always succeed.
-<P>
+The functions returns
+<!-- .B PAPI_ECNFLCT  -->
+<B>PAPI_ECNFLCT</B> if there is no master event set.
+This will happen if the library has not been initialized, or for threaded
+applications, if there has been no thread id function defined by the
+<!-- .BR PAPI_thread_init\  function. -->
+<B>PAPI_thread_init </B>function. <P>
+For threaded applications, if there has not yet been any thread
+specific master event created for the current thread, and if the
+allocation of such an event set fails, the call will return
+<!-- .BR PAPI_ENOMEM or PAPI_ESYS . -->
+<B>PAPI_ENOMEM</B>or<B>PAPI_ESYS</B>. <P>
 <!-- .SH EXAMPLE -->
 </BLOCKQUOTE>
 <A name=4>
@@ -395,7 +405,7 @@ This function has no known bugs.
 <A HREF="http://icl.cs.utk.edu/projects/papi">http://icl.cs.utk.edu/projects/papi</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Function Reference</I></TD> <TD width=33% align=center>PAPI_get_virt_cyc (3)</TD> <TD align=right width=33%><I>December, 2001</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_virt_cyc (3)</TD> <TD align=right width=33%><I>September, 2002</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
