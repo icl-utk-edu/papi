@@ -1,0 +1,283 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta http-equiv="Content-Language" content="en-us">
+   <meta name="GENERATOR" content="Mozilla/4.77 [en] (Windows NT 5.0; U) [Netscape]">
+   <meta name="ProgId" content="FrontPage.Editor.Document">
+   <meta name="Microsoft Theme" content="copy-of-straight-edge-mod-by-ng-2 001">
+   <meta name="Microsoft Border" content="none">
+   <meta name="Author" content="Dan Terpstra">
+   <title>Welcome to PAPI for Windows</title>
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#660000" vlink="#003399" alink="#999933" background="fader-blue.gif">
+&nbsp;
+<table BORDER=0 CELLPADDING=2 WIDTH="720" HEIGHT="75" >
+<tr>
+<td ROWSPAN="2" WIDTH="126" HEIGHT="119">
+<center><img SRC="papitrans2.gif" ALT="papitrans2.gif (3813 bytes)" height=117 width=102></center>
+</td>
+
+<td COLSPAN="2" ROWSPAN="2" WIDTH="284" HEIGHT="119">
+<center>
+<h1>
+PAPI For Windows</h1></center>
+<script LANGUAGE="JavaScript">
+
+   var date = new Date(document.lastModified);
+
+   document.write("Last Updated: "+(date.getMonth()+1)+ "/" 
+
+   + date.getDate()+ "/" + date.getFullYear() + ""); 
+
+</script>
+</td>
+
+<td WIDTH="200" HEIGHT="85">
+<center><a href="http://icl.cs.utk.edu"><img SRC="200x85white.jpg" ALT="icl_logo2.gif (1905 bytes)" BORDER=0 height=85 width=200></a></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<h2>
+Welcome to PAPI for Windows</h2>
+<b>PAPI</b>, or&nbsp; the <b>P</b>erformance <b>A</b>pplication <b>P</b>rogramming
+<b>I</b>nterface
+is a machine independent set of callable routines that provide access to
+the performance counters on most modern processors. This version of PAPI
+implements the&nbsp; interface for Windows NT, 2000 or XP running on Intel
+IA32 archtectures.
+<br>If you are reading this, you have successfully installed PAPI on your
+machine.
+<br>Below are some topics you may wish to learn more about:
+<ul>
+<li>
+<a href="#about">About this Installation</a></li>
+
+<li>
+<a href="#shell">The WinPAPI Shell Application</a></li>
+
+<li>
+<a href="#reference">The PAPI Programmer's Reference</a></li>
+
+<li>
+<a href="#test">The Test Suite and programming your own tests</a></li>
+
+<li>
+<a href="#results">Typical Results for the Test Suite</a></li>
+
+<li>
+<a href="#dll">The WinPAPI Dynamic Link Library</a></li>
+
+<li>
+<a href="#kernel">The WinPMC Kernel Driver</a></li>
+
+<li>
+<a href="#files">The structure of PAPI files and folders on your disk</a></li>
+
+<li>
+<a href="#cvs">CVS access to the complete sources for PAPI</a></li>
+
+<li>
+Further information about <a href="http://icl.cs.utk.edu/">ICL</a> and
+<a href="http://icl.cs.utk.edu/projects/papi/">PAPI</a></li>
+</ul>
+
+<h2>
+<a NAME="about"></a>About this Installation</h2>
+Three installation options were presented to you when you installed WinPAPI:
+<h3>
+Typical</h3>
+The typical installation contains the following components:
+<ul>
+<li>
+The <a href="#dll">WinPAPI DLL</a> to which you can link your instrumented
+programs.</li>
+
+<li>
+The <a href="#kernel">WinPMC kernel driver</a> which supports the WinPAPI
+DLL and provides access to the low level performance counter hardware.</li>
+
+<li>
+A collection of <a href="#test">tests</a> that exercise the WinPAPI DLL
+Library and provide a variety of metrics on your machine. These tests are
+provided both as precompiled console executables, and as source projects
+that can be modified and rebuilt using Microsoft Visual C++ 6.0 or higher.</li>
+
+<li>
+A <a href="#shell">WinPAPI Shell Application</a> that provides simple button
+access to a variety of functions.</li>
+</ul>
+
+<h3>
+Compact</h3>
+The compact installation includes only the linkable <a href="#dll">WinPAPI
+DLL</a> and <a href="#kernel">WinPMC kernel driver</a>. It assumes that
+you have access to the support and reference materials from another source,
+such as the <a href="#cvs">PAPI CVS repository</a>.
+<h3>
+Custom</h3>
+The custom installation allows you to select only those components (such
+as just the help files) that you wish to install or reinstall on your system.
+Note that for access to the full sources of the driver, dll, and shell
+application, you must use the <a href="#cvs">PAPI CVS repository</a>.
+<h2>
+<a NAME="shell"></a>The WinPAPI Shell Application</h2>
+The Shell provides a simple interface to the basic functions of PAPI on
+Windows. You can run the shell from the shortcut in the Start->Programs->WinPAPI
+path, or by double-clicking the icon in the directory where WinPAPI was
+installed. The Shell consists of a splash screen with five buttons, as
+described below:
+<center>
+<p><img SRC="imageUS2.JPG" height=457 width=582></center>
+
+<h3>
+Exit</h3>
+Exits the Shell application.
+<h3>
+PAPI Tests</h3>
+Presents an Open File dialog that allows you to select a precompiled test
+to exercise PAPI functionality. For more information on modifying existing
+tests or creating your own tests, see the <a href="#test">Test Suite</a>.
+<h3>
+Driver Test</h3>
+If enabled, the kernel driver appears to be properly installed. The driver
+test will call the driver and return a welcome string. The test will then
+issue a RDPMC instruction, which will fail if the driver is not properly
+installed and running. Finally, the test will examine the machine to determine
+if the Uniprocessor Free Build or the MultiProcessor or Checked Build is
+running. This has implication for future thread-level support of PAPI.
+<h3>
+Help</h3>
+If enabled, opens this page in your default browser.
+<br>NOTES:
+<ul>
+<li>
+If the help files are not found where expected, this button will be dimmed.</li>
+
+<li>
+If your browser is already open, the proper page may not be displayed.</li>
+</ul>
+
+<h3>
+Web</h3>
+Links to the PAPI home page on the World Wide Web.
+<h2>
+<a NAME="reference"></a>The PAPI Programmer's Reference</h2>
+The PAPI programming interface consists of a collection of 6 high-level
+calls, and around 40 low-level calls. Unix style man pages for each of
+these calls are available in html format <a href="html/papi.html">here</a>.
+<h2>
+<a NAME="test"></a>The Test Suite and programming your own tests</h2>
+A collection of precompiled tests is included in the /tests folder found
+at the same level as the WinPAPI Shell Application. These tests execute
+as Windows console applications.They provide a variety of measurements
+of operations on your system and print their results to the console window.
+If you run them from the Shell Application, they will dynamically open
+in a console window that is dismissed with a keystroke after the test completes.
+You can also run the tests directly by opening a console window and typing
+the name of the test as shown below:
+<ul>
+<li>
+Start->Run...</li>
+
+<li>
+Open: cmd OK</li>
+
+<li>
+>cd %root%\tests&nbsp; (where %root% is the root directory where WinPAPI
+was installed)</li>
+
+<li>
+>zero (or any other test.exe file)</li>
+</ul>
+If you want to modify any of the existing tests, or use them as templates
+to create your own tests, you must have a copy of Microsoft Visual C++
+Version 6.0 or higher installed on your computer. If you do, you can run
+the shortcut to PAPI_tests.dsw found in the Start->Programs->WinPAPI path.
+This shortcut will open a workspace in Visual C++ that contains projects
+for all the tests included with this installation. You can then open the
+source for any test to examine how things are done, or use any of the projects
+to pattern the development of a test of your own. Note that the files in
+all the projects are referenced by paths relative to the existing project.
+If you move anything, the builds are likely to break.
+<h2>
+<a NAME="results"></a>Typical <a href="results.html">Results</a> for the
+Test Suite</h2>
+The tests included with the Test Suite are intended to be examples of a
+variety of features of PAPI, or solutions to specific user problems. They
+also serve as examples of programming with PAPI. The best way to understand
+what the tests are doing is to browse the source code included in the "Typical"
+installation. If you do not have Microsoft Visual C++ installed, any other
+text editor will work. These source files can be found in:
+<br>%root%\src\tests&nbsp; (where %root% is the root directory where WinPAPI
+was installed).
+<br>The output obtained on an 850 MHz Pentium III for these tests can be
+viewed <a href="results.html">here</a>.
+<br>&nbsp;
+<h2>
+<a NAME="dll"></a>The WinPAPI Dynamic Link Library</h2>
+The WinPAPI DLL consists of two pieces:
+<ul>
+<li>
+WinPAPI.DLL, installed (typically) in C:\WINNT\system32\, and</li>
+
+<li>
+WinPAPI.lib, the linkable library, found in %root%\src\win2k\substrate\Release.
+The library is placed in this arcane location to make sure that the test
+projects can find it where they expect it to be in the development environment.
+You can copy it to your own projects as desired.</li>
+</ul>
+To incorporate PAPI calls into your codes, you must include WinPAPI.lib
+and papi.h or papi_test.h in your project. You can do this either by referencing
+the files in this directory tree, or by copying the files to your local
+project.
+<br>The source code for the PAPI library is not distributed with this installation.
+If you would like access to the source code and project to rebuild the
+library, you must use the <a href="#cvs">PAPI CVS repository</a>.
+<h2>
+<a NAME="kernel"></a>The WinPMC Kernel Driver</h2>
+The WinPMC Kernel Driver is a small (~3K) code that provides access to
+the normally restricted assembly instructions that allow programming of
+the hardware performance monitoring counters found on all Pentium class
+x86 cpus. If the driver has been installed successfully, the Driver Test
+button in the WinPAPI Shell will be enabled and the tests it performs will
+be successful.
+<br>The driver file, WinPMC.sys, requires administrator privileges to be
+installed in C:\WINNT\system32\drivers. Also, the registry must be modified
+for this service to be recognized by calling programs. DO NOT attempt to
+install this driver on a new machine by simply copying the file!
+<br>As with the PAPI library, The source code for the Kernel Driver&nbsp;
+is not distributed with this installation. If you would like access to
+the source code for the library, you must use the <a href="#cvs">PAPI CVS
+repository</a>. In addition to Microsoft Visual C++, you must also have
+a current version of the <a href="http://www.microsoft.com/ddk/">Microsoft
+NTDDK</a> installed on your computer to rebuild the driver.
+<h2>
+<a NAME="files"></a>The structure of PAPI files and folders on your disk</h2>
+The folder structure created on your disk to hold the PAPI installation
+may appear rather arcane and complex. This is because it must reproduce
+the folder structure of the development environment in order for the test
+applications to build successfully. The structure of the default install
+is shown graphically below:
+<center>
+<p><img SRC="imageJOB.JPG" height=295 width=425></center>
+
+<p><br>
+<h2>
+<a NAME="cvs"></a>CVS access to the complete sources for PAPI</h2>
+Access to all of the PAPI sources for Windows and all other supported platforms
+is available through the <a href="http://icl.cs.utk.edu/projects/papi/download.html#Anonymous CVS Access">PAPI
+CVS Repository</a>. <a href="http://www.loria.fr/~molli/cvs/doc/cvs_toc.html">CVS</a>
+is a sophisticated version control system used primarily in the Unix world
+to allow multiple developers to work on a project simultaneously. You can
+interactively browse the PAPI CVS Repository through the WWW by visiting
+the <a href="http://icl.cs.utk.edu/projects/papi/cvsweb.cgi/">PAPI CVS
+Web</a>, or you can download a branch of the PAPI CVS tree using a program
+for Windows such as <a href="http://www.cvsgui.org/">WinCVS</a> . Contact
+the <a href="mailto:papi@cs.utk.edu">PAPI development team</a> if you would
+like to participate in PAPI development.
+<br>&nbsp;
+</body>
+</html>
