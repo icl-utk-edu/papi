@@ -95,8 +95,8 @@ extern int _papi_hwd_set_profile(EventSetInfo_t *ESI, EventSetProfileInfo_t *pro
 extern void *_papi_hwd_get_overflow_address(void *context);
 extern void _papi_hwd_error(int error, char *);
 extern void _papi_hwd_lock_init(void);
-extern void _papi_hwd_lock(void);
-extern void _papi_hwd_unlock(void);
+extern void _papi_hwd_lock(int);
+extern void _papi_hwd_unlock(int);
 extern int _papi_hwd_shutdown_global(void);
 extern int _papi_hwd_set_domain(hwd_control_state_t *, int);
 extern int _papi_hwd_setmaxmem();
