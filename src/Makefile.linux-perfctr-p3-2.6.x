@@ -57,7 +57,7 @@ linux.o: linux.c
 p3_events.o: p3_events.c
 	$(CC) $(CFLAGS) -c p3_events.c -o $@
 
-marshal.o global.o misc.o virtual.o: $(PERFCTR)/usr.lib/libperfctr.a
+marshal.o global.o misc.o virtual.o x86.o: $(PERFCTR)/usr.lib/libperfctr.a
 	ar x $(PERFCTR)/usr.lib/libperfctr.a
 
 $(PERFCTR)/usr.lib/libperfctr.a:
