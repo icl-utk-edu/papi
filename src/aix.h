@@ -49,6 +49,12 @@ while(_check_lock(lock[lck],0,1) == TRUE)       \
   _clear_lock(lock[lck], 0);                   \
 }
 
+/* overflow */
+typedef siginfo_t hwd_siginfo_t;
+typedef struct sigcontext hwd_ucontext_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx)  (void *)(((hwd_ucontext_t *)ctx)->sc_jmpbuf.jmp_context.iar);
+
 /* prototypes */
 
 #endif  /* _PAPI_AIX */

@@ -388,7 +388,7 @@ int _papi_hwd_init_global(void)
   if (retval)
     return(retval);
   
-  retval = get_memory_info(&_papi_hwi_system_info.mem_info);
+  retval = get_memory_info(&_papi_hwi_system_info.hw_info);
   if (retval)
     return(retval);
 
@@ -571,27 +571,31 @@ int _papi_hwd_shutdown_global(void)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *i)
 {
 #ifdef DEBUG
-  ucontext_t *info;
-  info = (ucontext_t *)i;
+  hwd_ucontext_t *info;
+  info = (hwd_ucontext_t *)i;
   DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info->uc_mcontext.jmp_context.iar));
 #endif
-
-  _papi_hwi_dispatch_overflow_signal(i); 
+  _papi_hwi_context_t ctx;
+  
+  ctx.si=si;
+  ctx.ucontext=(hwd_ucontext_t *)i;
+  _papi_hwi_dispatch_overflow_signal(&ctx,_papi_hwi_system_info.supports_hw_overflow, 0, 0); 
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)
+/*int _papi_hwd_set_overflow(EventSetInfo_t *ESI, EventSetOverflowInfo_t *overflow_option)*/
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
   hwd_control_state_t *this_state = &ESI->machdep;
 
-  if (overflow_option->threshold == 0)
+  if (threshold == 0)
     {
       this_state->timer_ms = 0;
-      overflow_option->timer_ms = 0;
+      ESI->overflow.timer_ms = 0;
     }
   else
     {
       this_state->timer_ms = 1; /* Millisecond intervals are the only way to go */
-      overflow_option->timer_ms = 1;
+      ESI->overflow.timer_ms = 1;
     }
 
   return(PAPI_OK);
@@ -611,14 +615,14 @@ int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
   return(PAPI_ESBSTR);
 }
 
-void *_papi_hwd_get_overflow_address(void *context)
+/*void *_papi_hwd_get_overflow_address(void *context)
 {
   void *location;
   struct sigcontext *info = (struct sigcontext *)context;
   location = (void *)info->sc_jmpbuf.jmp_context.iar;
 
   return(location);
-}
+}*/
 
 
 /* Copy the current control_state into the new thread context */
