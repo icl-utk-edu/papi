@@ -6,7 +6,7 @@
 #include "WinPMC.h"
 
 #ifdef DEBUG
-  #define PMCDBG(a) { extern int papi_debug; if (papi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
+  #define PMCDBG(a) { extern int _papi_hwi_debug; if (papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else
   #define PMCDBG(a)
 #endif

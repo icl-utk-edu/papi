@@ -39,8 +39,8 @@ EXPORTS
 	PAPI_event_code_to_name			@131
 	PAPI_event_name_to_code			@132
 	PAPI_read						@133
-	PAPI_rem_event					@134
-	PAPI_rem_events					@135
+	PAPI_remove_event					@134
+	PAPI_remove_events					@135
 	PAPI_reset						@136
 	PAPI_restore					@137
 	PAPI_save						@138
@@ -99,8 +99,8 @@ EXPORTS
 	PAPIF_EVENT_CODE_TO_NAME		@331
 	PAPIF_EVENT_NAME_TO_CODE		@332
 	PAPIF_READ						@333
-	PAPIF_REM_EVENT					@334
-	PAPIF_REM_EVENTS				@335
+	PAPIF_REMOVE_EVENT					@334
+	PAPIF_REMOVE_EVENTS				@335
 	PAPIF_RESET						@336
 
 	PAPIF_SET_DEBUG					@339
@@ -136,8 +136,8 @@ EXPORTS
 
 
 ;
-; Miscellaneous exported functions
+; Miscellaneous exported structures
 ;
-	_papi_system_info				@601
+	_papi_hwi_system_info				@601
 
 

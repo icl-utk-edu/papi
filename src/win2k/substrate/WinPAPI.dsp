@@ -123,6 +123,11 @@ SOURCE=..\..\papi.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\papi_data.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\papi_fwrappers.c
 # End Source File
 # Begin Source File
@@ -131,7 +136,17 @@ SOURCE=..\..\papi_hl.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\papi_internal.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
 SOURCE=..\winpmc\pmclib.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\threads.c
+# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
@@ -156,6 +171,15 @@ SOURCE=..\..\hwperfmacros.h
 # Begin Source File
 
 SOURCE=..\..\ia32_native.h
+
+!IF  "$(CFG)" == "WinPAPI - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "WinPAPI - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -172,6 +196,11 @@ SOURCE=..\..\papi.h
 # Begin Source File
 
 SOURCE=..\..\papi_internal.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\papi_protos.h
+# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
