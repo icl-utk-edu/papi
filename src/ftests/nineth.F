@@ -69,7 +69,9 @@
       end if
 
       call PAPIf_get_clockrate(clockrate)
-      print *, 'Clockrate:', clockrate
+      if (tests_quiet .EQ. 0) then
+        print *, 'Clockrate:', clockrate
+      end if
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
@@ -150,21 +152,22 @@
       write (*,800) "Default granularity is:", granularity, grnstr
  800  format(a25, i3, " ", a20)
 
-      print *, "Using", NUM_FLOPS, " iterations of c += b*c"
+      print *, " Using", NUM_FLOPS, " iterations of c += b*c"
       print *, "---------------------------------------------"
  
-      print *, "Test type   : \t  1\t\t  2\n"
-      print *, "PAPI_FP_INS : \t", tvalues(1), "\t  0"
-      print *, "PAPI_TOT_CYC: \t", tvalues(2), "\t  0"
-      print *, "PAPI_FLOPS  : \t  0\t\t", values(1)
+      write (*,810) "Test type   :", 1, 2
+      write (*,810) "PAPI_FP_INS :", tvalues(1), 0
+      write (*,810) "PAPI_TOT_CYC:", tvalues(2), 0
+      write (*,810) "PAPI_FLOPS  :", 0, values(1)
       print *, "---------------------------------------------"      
+ 810  format(a15, i15, i15)
 
       print *, "Verification:"
       print *, "Last number in row 3 approximately equals", test_flops
       end if
 
-      min = tvalues(1) * 0.9
-      max = tvalues(1) * 1.1
+      min = values(1) * 0.9
+      max = values(1) * 1.1
       if ((test_flops.gt.max) .OR. (test_flops.lt.min)) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_FLOPS', 1)
