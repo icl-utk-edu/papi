@@ -257,8 +257,8 @@ int case4()
       CPP_TEST_FAIL("PAPI_stop", retval);
 
    if (!TESTS_QUIET) {
-      test_print_event_header("case3:", EventSet);
-      printf(TAB2, "case3:", values[0], values[1]);
+      test_print_event_header("case4:", EventSet);
+      printf(TAB2, "case4:", values[0], values[1]);
    }
 
    retval = PAPI_cleanup_eventset(EventSet);    /* JT */
