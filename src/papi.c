@@ -1333,7 +1333,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
                     int EventCode, int threshold, int flags)
 {
    EventSetInfo_t *ESI;
-   int retval, index, i;
+   int retval, index, i, buckets;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
@@ -1394,10 +1394,20 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       ESI->profile.event_counter++;
    }
 
+   /* make sure no invalid flags are set */
    if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
-                 | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKET_16 |
-                 PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64))
+               | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS))
       papi_return(PAPI_EINVAL);
+
+   /* make sure one and only one bucket size is set */
+   buckets = flags & PAPI_PROFIL_BUCKETS;
+   if (!buckets) flags |= PAPI_PROFIL_BUCKET_16; /* default to 16 bit if nothing set */
+   else { /* return error if more than one set */
+      if (!((buckets == PAPI_PROFIL_BUCKET_16) ||
+            (buckets == PAPI_PROFIL_BUCKET_32) || 
+            (buckets == PAPI_PROFIL_BUCKET_64)))
+         papi_return(PAPI_EINVAL);
+   }
 
    /* Set up the option structure for the low level */
 
@@ -1419,7 +1429,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    papi_return(PAPI_OK);
 }
 
-int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
+int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
                 unsigned scale, int EventSet, int EventCode, int threshold, int flags)
 {
    if (scale > 65536 || scale < 0x0002)
@@ -1432,7 +1442,7 @@ int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
       memset(prof, 0x0, sizeof(PAPI_sprofil_t));
       prof->pr_base = buf;
       prof->pr_size = bufsiz;
-      prof->pr_off = (caddr_t) offset;
+      prof->pr_off = offset;
       prof->pr_scale = scale;
 
       papi_return(PAPI_sprofil(prof, 1, EventSet, EventCode, threshold, flags));
