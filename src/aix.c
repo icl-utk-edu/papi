@@ -496,14 +496,15 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long *
 {
    int retval;
    int i;
-   static pm_data_t data;
+   pm_data_t data;
 
    retval = pm_get_data_mythread(&data);
    if (retval > 0)
       return (retval);
 
-#if 0
-   dump_data(&data);
+#ifdef DEBUG
+	if (ISLEVEL(DEBUG_SUBSTRATE))
+   		dump_data(&data);
 #endif
 
    *val = data.accu;
