@@ -41,7 +41,7 @@ General Installation
 	which will print PASSED, FAILED, or SKIPPED. Tests are SKIPPED if the
 	functionality being tested is not supported by that platform.
 
-	% make -f Makefile.<arch> test (This will run ./run_tests.sh)
+	% make -f Makefile.<arch> fulltest (This will run ./run_tests.sh)
 
 	To run the tests in verbose mode:
 
