@@ -97,7 +97,11 @@ int main(int argc, char **argv)
    if (PAPI_event == PAPI_FP_INS )
       mythreshold = THRESHOLD;
    else 
-      mythreshold = THRESHOLD * 2;
+#if defined(linux)
+      mythreshold = hw_info->mhz*10000*2;
+#else
+      mythreshold = THRESHOLD*2;
+#endif
 
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
