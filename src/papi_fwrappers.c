@@ -303,79 +303,6 @@ PAPI_FCALL(papif_perror, PAPIF_PERROR, (int *code, char *destination, int *check
  * *check = PAPI_profil(buf, *bufsiz, *offset, *scale, *eventset, *eventcode, *threshold, *flags);
  * }
  */
-#if 0
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_describe_event, PAPIF_DESCRIBE_EVENT,
-           (_fcd name_fcd, int *EventCode, _fcd descr_fcd, int *check, int name_len))
-#elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_describe_event, PAPIF_DESCRIBE_EVENT,
-           (char *name_str, int *EventCode, char *descr_str, int *check, int name_len,
-            int descr_len))
-#else
-PAPI_FCALL(papif_describe_event, PAPIF_DESCRIBE_EVENT,
-           (char *name, int *EventCode, char *descr, int *check))
-#endif
-{
-#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
-#if defined( _CRAYT3E )
-   char *name_str = _fcdtocp(name_fcd), *descr_str = _fcdtocp(descr_fcd);
-   int out_len = _fcdlen(descr_fcd), descr_len = _fcdlen(descr_fcd);
-#endif
-   char tmpname[PAPI_MAX_STR_LEN], tmpdescr[PAPI_MAX_STR_LEN];
-   int i, slen;
-
-   /* What is the maximum number of chars to copy ? */
-   slen = name_len < PAPI_MAX_STR_LEN ? name_len : PAPI_MAX_STR_LEN;
-   strncpy(tmpname, name_str, slen);
-   /* Remove trailing blanks from initial Fortran string */
-   for (i = slen - 1; i > -1 && tmpname[i] == ' '; tmpname[i--] = '\0');
-   /* Make sure string is NULL terminated before call */
-   tmpname[PAPI_MAX_STR_LEN - 1] = '\0';
-   if (slen < PAPI_MAX_STR_LEN)
-      tmpname[slen] = '\0';
-
-   *check = PAPI_describe_event(tmpname, EventCode, tmpdescr);
-   /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-   strncpy(name_str, tmpname, name_len);
-   strncpy(descr_str, tmpdescr, descr_len);
-   /* overwrite any NULLs and trailing garbage in out_str */
-   for (i = strlen(tmpname); i < name_len; name_str[i++] = ' ');
-   for (i = strlen(tmpdescr); i < descr_len; descr_str[i++] = ' ');
-#else
-   /* The arrays passed by the user must be sufficiently long */
-   *check = PAPI_describe_event(name, EventCode, descr);
-#endif
-}
-
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_label_event, PAPIF_LABEL_EVENT,
-           (int EventCode, _fcd out_fcd, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
-PAPI_FCALL(papif_label_event, PAPIF_LABEL_EVENT,
-           (int EventCode, char *out_str, int *check, int out_len))
-#else
-PAPI_FCALL(papif_label_event, PAPIF_LABEL_EVENT, (int EventCode, char *out, int *check))
-#endif
-{
-#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
-#if defined( _CRAYT3E )
-   char *out_str = _fcdtocp(out_fcd);
-   int out_len = _fcdlen(out_fcd);
-#endif
-   char tmp[PAPI_MAX_STR_LEN];
-   int i;
-   *check = PAPI_label_event(EventCode, tmp);
-   /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-   strncpy(out_str, tmp, out_len);
-   /* overwrite any NULLs and trailing garbage in out_str */
-   for (i = strlen(tmp); i < out_len; out_str[i++] = ' ');
-#else
-   /* The array "out" passed by the user must be sufficiently long */
-   *check = PAPI_label_event(EventCode, out);
-#endif
-}
-#endif
-
 
 PAPI_FCALL(papif_query_event, PAPIF_QUERY_EVENT, (int *EventCode, int *check))
 {
@@ -429,15 +356,13 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
    }
 #else
 /* printf("EventCode: %d\n", *EventCode ); -KSL */
-#if 0
-   if ((*check = PAPI_query_event_verbose(*EventCode, &info)) == PAPI_OK) {
+   if ((*check = PAPI_get_event_info(*EventCode, &info)) == PAPI_OK) {
       strncpy(symbol, info.symbol, PAPI_MAX_STR_LEN);
       strncpy(long_descr, info.long_descr, PAPI_MAX_STR_LEN);
       strncpy(short_descr, info.short_descr, PAPI_MAX_STR_LEN);
       *count = info.count;
 /*    strncpy(event_note, info.event_note, PAPI_MAX_STR_LEN); */
    }
-#endif
 /*  printf("Check: %d\n", *check); -KSL */
 #endif
 }
@@ -509,10 +434,10 @@ PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
 #endif
 }
 
-
-/* XXXXXXXX Gotta add an entry point for PAPI_enum_events() */
-
-
+PAPI_FCALL(papif_enum_event, PAPIF_ENUM_EVENT, (int *EventCode, int *modifier, int *check))
+{
+   *check = PAPI_enum_event(EventCode, *modifier);
+}
 
 PAPI_FCALL(papif_read, PAPIF_READ, (int *EventSet, long_long * values, int *check))
 {
@@ -614,10 +539,17 @@ PAPI_FCALL(papif_ipc, PAPIF_IPC,
 }
 
 PAPI_FCALL(papif_flips, PAPIF_FLIPS,
-           (float *real_time, float *proc_time, long_long * flpins, float *mflops,
+           (float *real_time, float *proc_time, long_long * flpins, float *mflips,
             int *check))
 {
-   *check = PAPI_flips(real_time, proc_time, flpins, mflops);
+   *check = PAPI_flips(real_time, proc_time, flpins, mflips);
+}
+
+PAPI_FCALL(papif_flops, PAPIF_FLOPS,
+           (float *real_time, float *proc_time, long_long * flpops, float *mflops,
+            int *check))
+{
+   *check = PAPI_flops(real_time, proc_time, flpops, mflops);
 }
 
 
