@@ -7,7 +7,7 @@ MPXPTHR	= multiplex1_pthreads multiplex3_pthreads
 MPI	= mpifirst
 SERIAL  = overflow_twoevents profile_twoevents earprofile branchprofile zero profile overflow avail branches dmem_info all_events derived high-level2 describe mem_info  \
 	zero_flip low-level high-level sprofile eventname case1 case2 \
-	calibrate flops first second cost johnmay2 clockres nineth \
+	calibrate ipc flops first second cost johnmay2 clockres nineth \
 	overflow_single_event  tenth native memory \
 	timer_overflow overflow2 matrix-hl  \
 	native_avail
@@ -143,6 +143,9 @@ second: second.c $(UTILOBJS) $(PAPILIB)
 
 flops: flops.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) flops.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o flops
+
+ipc: ipc.c dummy.o $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) ipc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o ipc
 
 overflow: overflow.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow
