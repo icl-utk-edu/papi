@@ -12,7 +12,6 @@
 
 int get_memory_info(PAPI_hw_info_t * mem_info)
 {
-   int retval = 0;
    return PAPI_OK;
 }
 

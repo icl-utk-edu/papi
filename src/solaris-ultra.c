@@ -89,7 +89,6 @@ static native_info_t *native_table;
 static hwi_search_t *preset_table;
 
 static struct ctr_info *ctrs;
-static int ctr_size;
 static int nctrs;
 
 static int build_tables(void);
@@ -566,15 +565,6 @@ void print_walk_names(void *arg, int regno, const char *name, uint8_t bits)
    SUBDBG(arg, regno, name, bits);
 }
 
-static char * getbasename(char *fname)
-{
-    char *temp;
- 
-    temp = strrchr(fname, '/');
-    if( temp == NULL) return fname;
-       else return temp+1;
-}
-
 static int get_system_info(void)
 {
    int retval;
@@ -582,9 +572,8 @@ static int get_system_info(void)
    char maxargs[PAPI_MAX_STR_LEN] = "<none>";
    psinfo_t psi;
    int fd;
-   int i, hz, version;
+   int hz, version;
    char cpuname[PAPI_MAX_STR_LEN], pname[PATH_MAX];
-   const char *name;
 
    /* Check counter access */
 
@@ -1296,7 +1285,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                     NativeInfo_t * native, int count, hwd_context_t * zero)
 {
-   int i, nidx1, nidx2, hwcntr;
+   int nidx1, nidx2, hwcntr;
    uint64_t tmp, cmd0, cmd1, pcr;
 
 /* save the last three bits */
@@ -1465,8 +1454,7 @@ int _papi_hwd_update_shlib_info(void)
    PAPI_address_map_t *tmp = NULL;
 
    FILE *f=NULL;
-   int t_index=0, length, i;
-   long addr;
+   int t_index=0, i;
    struct map_record {
       long address;
       int size;
@@ -1478,10 +1466,10 @@ int _papi_hwd_update_shlib_info(void)
    tmpnam(fname);
    SUBDBG("Temporary name %s\n",fname);
 
-   sprintf(cmd_line, "/bin/pmap %d > %s",getpid(), fname);
-   if (system(cmd_line) == -1) {
-      remove(fname);
-      exit(-1);
+   sprintf(cmd_line, "/bin/pmap %d > %s",(int)getpid(), fname);
+   if (system(cmd_line) != 0) {
+      PAPIERROR("Could not run %s to get shared library address map",cmd_line);
+      return(PAPI_ESBSTR);
    }
    f = fopen(fname, "r");   
    if (f == NULL ) {
@@ -1520,7 +1508,7 @@ int _papi_hwd_update_shlib_info(void)
                } else {
                   tmpr->flags =0;
                }
-               sscanf(address, "%x", &tmpr->address);
+               sscanf(address, "%lx", &tmpr->address);
                sscanf(size,"%d", &tmpr->size);
                tmpr->size *= 1024;
                strcpy(tmpr->objname, objname);
