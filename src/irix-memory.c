@@ -1,10 +1,21 @@
 #include "papi.h"
 #include <invent.h>
+#include <sys/systeminfo.h>
+
+#define TLB_R4  96*32
+#define TLB_R5  96*32
+#define TLB_R8  384*32
+#define TLB_R10  128*32
+#define TLB_R12  128*32
 
 inventory_t *getinvent (void);
 int get_memory_info( PAPI_mem_info_t * mem_info ){
 	inventory_t *curr;
+	long count;
+	int chiptype;
+	char ptype[80];
 
+	count = 80;
 	while ( (curr=getinvent())!= NULL ) {
 		if ((curr->inv_class == INV_MEMORY ) && (curr->inv_type==INV_DCACHE)) {	
 			mem_info->L1_dcache_size = curr->inv_state /1024;
@@ -17,18 +28,37 @@ int get_memory_info( PAPI_mem_info_t * mem_info ){
 	}
 	mem_info->total_L1_size = mem_info->L1_dcache_size + mem_info->L1_icache_size;
 
-/************** 
 	mem_info->L1_dcache_linesize = 32;
 	mem_info->L1_dcache_lines = mem_info->L1_dcache_size / mem_info->L1_dcache_linesize;
 	mem_info->L1_dcache_assoc = 2;
-	mem_info->L1_icache_linesize = 32;
+	mem_info->L1_icache_linesize = 64;
 	mem_info->L1_icache_lines = mem_info->L1_icache_size / mem_info->L1_icache_linesize;
 	mem_info->L1_icache_assoc = 2;
 
 	mem_info->L2_cache_assoc =2;
 	mem_info->L2_cache_linesize = 128;
 	mem_info->L2_cache_lines = mem_info->L2_cache_size / mem_info->L2_cache_linesize;
-***************/
 
+	sysinfo(_MIPS_SI_PROCESSORS, ptype, count);
+	sscanf(ptype+1,"%d", &chiptype);
+	switch (chiptype) {
+		case 4000:
+			mem_info->total_tlb_size = TLB_R4/1024;
+			break;
+		case 5000:
+			mem_info->total_tlb_size = TLB_R5/1024;
+			break;
+		case 8000:
+			mem_info->total_tlb_size = TLB_R8/1024;
+			break;
+		case 10000:
+			mem_info->total_tlb_size = TLB_R10/1024;
+			break;
+		case 12000:
+			mem_info->total_tlb_size = TLB_R12/1024;
+			break;
+		default:
+			mem_info->total_tlb_size = TLB_R4/1024;
+	}
     return PAPI_OK;
 }
