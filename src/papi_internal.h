@@ -44,7 +44,7 @@
 #define INTDBG(format, args...) (PAPIDEBUG(DEBUG_INTERNAL,format, ## args))
 #define THRDBG(format, args...) (PAPIDEBUG(DEBUG_THREADS,format, ## args))
 #define MPXDBG(format, args...) (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## args))
-#define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%s:%d: ",__FILE__,__FUNCTION__,__LINE__); fprintf a; } }
+#define DBG(a) { extern int _papi_hwi_debug; if (_papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
 #else
 #define DBG(a)
 #define SUBDBG(format, args...) { ; }
