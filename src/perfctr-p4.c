@@ -697,7 +697,7 @@ int _papi3_hwd_add_event(P4_regmap_t *ev_info, P4_preset_t *preset,
   index = evset_info->control.cpu_control.nractrs;
   for (i=0;i<preset->number;i++)
     {
-      evset_info->allocated_registers.selector = 1 << allocated[i];
+      evset_info->allocated_registers.selector |= 1 << allocated[i];
       evset_info->control.cpu_control.pmc_map[index] = allocated[i] | FAST_RDPMC;
       evset_info->control.cpu_control.evntsel[index] = preset->info->data[i].evntsel;
       evset_info->control.cpu_control.evntsel_aux[index] = preset->info->data[i].evntsel_aux;
