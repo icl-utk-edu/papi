@@ -1541,11 +1541,12 @@ static int convert_eventset_to_multiplex(EventSetInfo *ESI)
   
   free(ESI->EventInfoArray);
   ESI->EventInfoArray = tmp;
-  initialize_EventInfoArray(ESI);
+  ESI->state |= PAPI_MULTIPLEXING;
 
   /* Update the state */
-  
-  ESI->state |= PAPI_MULTIPLEXING;
+  /* Bug fix, state must be enabled, as ESI is an argument. */
+
+  initialize_EventInfoArray(ESI);
   
   return(PAPI_OK);
 }

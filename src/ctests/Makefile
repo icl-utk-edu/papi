@@ -2,7 +2,7 @@ OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= profile_pthreads overflow_pthreads zero_pthreads 
-MPX	= multiplex1 multiplex1_pthreads
+MPX	= multiplex1 multiplex1_pthreads multiplex2
 MPI	= mpifirst
 SERIAL  = zero zero_flip low-level high-level sprofile eventname case1 case2 calibrate \
 	flops avail first second third fourth fourth-inv cost \
@@ -33,6 +33,9 @@ calibrate: calibrate.c dummy.o $(PAPILIB)
 
 multiplex1: multiplex1.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
+
+multiplex2: multiplex2.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1_pthreads: multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread

@@ -1,7 +1,7 @@
 SUBSTR  = any-null
 DESCR	= "Sample substrate: Any hardware platform with GNU compilers"
-LIBS	= static shared
-TARGETS = serial pthreads
+LIBS	= static
+TARGETS = multiplex serial pthreads
 
 CFLAGS  = -Wall -g -DDEBUG
 OPTFLAGS=

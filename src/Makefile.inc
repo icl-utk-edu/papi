@@ -80,6 +80,7 @@ libclean:
 clean: libclean
 	cd tests; $(MAKE) clean
 	cd ftests; $(MAKE) clean
+	@if [ `uname -s` = "Linux" ]; then cd perfctr-2.3; $(MAKE) clean; fi;
 	@if [ `uname -s` = "Linux" ]; then cd perfctr; $(MAKE) clean; fi;
 	@if [ `uname -s` = "Linux" ]; then cd perf; $(MAKE) clean; fi;
 

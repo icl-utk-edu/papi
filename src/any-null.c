@@ -1,7 +1,7 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-#include "any-null.h"
+#include SUBSTRATE
 
 static hwd_preset_t preset_map[PAPI_MAX_PRESET_EVENTS];
 
@@ -197,16 +197,6 @@ static int get_system_info(void)
   return(PAPI_OK);
 } 
 
-#ifdef DEBUG
-static void dump_cmd(any_command_t *t)
-{
-  int i;
-
-  for (i=0;i<MAX_COUNTERS;i++)
-    DBG((stderr,"Event %d: 0x%x\n",i,t->cmd[i]));
-}
-#endif
-
 inline static int counter_event_shared(const int *a, const int *b, int cntr)
 {
   if (a[cntr] == b[cntr])
@@ -392,15 +382,6 @@ long long _papi_hwd_get_real_cycles (void)
   return((long long)cyc);
 }
 
-long long _papi_hwd_get_virt_cycles (EventSetInfo *zero)
-{
-  float usec, cyc;
-
-  usec = (float)_papi_hwd_get_virt_usec(zero);
-  cyc = usec * _papi_system_info.hw_info.mhz;
-  return((long long)cyc);
-}
-
 long long _papi_hwd_get_virt_usec (EventSetInfo *zero)
 {
   long long retval;
@@ -425,9 +406,8 @@ void _papi_hwd_error(int error, char *where)
   sprintf(where,"Substrate error: %s",strerror(error));
 }
 
-int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   int selector = 0;
   int avail = 0;
   any_command_t tmp_cmd;
@@ -471,8 +451,8 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
       /* Get the codes used for this event */
 
       codes = &preset_map[preset_index].counter_cmd;
-      ESI->EventInfoArray[index].command = derived;
-      ESI->EventInfoArray[index].operand_index = preset_map[preset_index].operand_index;
+      out->command = derived;
+      out->operand_index = preset_map[preset_index].operand_index;
     }
   else
     {
@@ -517,61 +497,29 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int EventCode)
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-  ESI->EventInfoArray[index].code = EventCode;
-  ESI->EventInfoArray[index].selector = selector;
+  out->code = EventCode;
+  out->selector = selector;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int EventCode)
+int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
-  int selector, used, preset_index;
+  int used;
 
   /* Find out which counters used. */
   
-  used = ESI->EventInfoArray[index].selector;
-
-  if (EventCode & PRESET_MASK)
-    { 
-      preset_index = EventCode ^ PRESET_MASK; 
-
-      selector = preset_map[preset_index].selector;
-      if (selector == 0)
-	return(PAPI_ENOEVNT);
-    }
-  else
-    {
-      int hwcntr_num, code, old_code;
-
-      /* Support for native events here, only 1 counter at a time. */
-
-      hwcntr_num = EventCode & 0x3; 
-      if ((hwcntr_num > _papi_system_info.num_gp_cntrs) || 
-	  (hwcntr_num < 0))
-	return(PAPI_EINVAL);
-
-      old_code = ESI->EventInfoArray[index].command;
-      code = EventCode >> 8; 
-      if (old_code != code)
-	return(PAPI_EINVAL);
-
-      selector = 1 << hwcntr_num;
-    }
-
-  /* Check if these counters aren't used. */
-
-  if ((used & selector) != used)
-    return(PAPI_EINVAL);
+  used = in->selector;
 
   /* Clear out counters that are part of this event. */
 
-  this_state->selector = this_state->selector ^ selector;
+  this_state->selector = this_state->selector ^ used;
 
   return(PAPI_OK);
 }
 
-int _papi_hwd_add_prog_event(EventSetInfo *ESI, int index, unsigned int event, void *extra)
+int _papi_hwd_add_prog_event(hwd_control_state_t *this_state, 
+			     unsigned int event, void *extra, EventInfo_t *out)
 {
   return(PAPI_ESBSTR);
 }
@@ -875,8 +823,6 @@ int _papi_hwd_ctl(EventSetInfo *zero, int code, _papi_int_option_t *option)
       return(set_default_granularity(zero, option->granularity.granularity));
     case PAPI_SET_GRANUL:
       return(set_granularity(option->granularity.ESI->machdep, option->granularity.granularity));
-    case PAPI_SET_INHERIT:
-      return(set_inherit(option->inherit.inherit));
     default:
       return(PAPI_EINVAL);
     }
@@ -908,10 +854,10 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
   return(1);
 }
 
-void _papi_hwd_dispatch_timer(int signal, struct sigcontext info)
+void _papi_hwd_dispatch_timer(int signal, void *info)
 {
-  DBG((stderr,"_papi_hwd_dispatch_timer() at 0x%lx\n",info.eip));
-  _papi_hwi_dispatch_overflow_signal((void *)&info); 
+  DBG((stderr,"_papi_hwd_dispatch_timer() with pointer %p\n",info));
+  _papi_hwi_dispatch_overflow_signal((void *)info); 
 }
 
 int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_option)
@@ -930,35 +876,20 @@ int _papi_hwd_set_profile(EventSetInfo *ESI, EventSetProfileInfo_t *profile_opti
 
 void *_papi_hwd_get_overflow_address(void *context)
 {
-  void *location;
-  struct sigcontext *info = (struct sigcontext *)context;
-  location = (void *)info->eip;
-
-  return(location);
+  return(context);
 }
 
-#define __SMP__
-#include <asm/atomic.h>
-static atomic_t lock;
 
 void _papi_hwd_lock_init(void)
 {
-  atomic_set(&lock,0);
 }
 
 void _papi_hwd_lock(void)
 {
-  atomic_inc(&lock);
-  while (atomic_read(&lock) > 1)
-    {
-      DBG((stderr,"Waiting..."));
-      usleep(1000);
-    }
 }
 
 void _papi_hwd_unlock(void)
 {
-  atomic_dec(&lock);
 }
 
 /* Machine info structure. -1 is unused. */
