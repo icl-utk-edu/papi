@@ -15,8 +15,7 @@ C count the first event?
 
       INTEGER EventSet
       INTEGER retval
-      INTEGER i,j, errorcode
-      CHARACTER*(PAPI_MAX_STR_LEN) errorstring
+      INTEGER i,j
       INTEGER*8 gl(2)
       INTEGER n
       REAL c,a,b
@@ -24,15 +23,20 @@ C count the first event?
       INTEGER len_trim
       EXTERNAL len_trim
       integer tests_quiet
+      character*25 chbuf
+
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
+
 
       n = 1000
       a = 0.999
       b = 1.001
       j = 0
       i = 0
-
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )

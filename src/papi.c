@@ -661,10 +661,10 @@ int PAPI_describe_event(char *name, int *EventCode, char *description)
   if (name == NULL)
    papi_return(PAPI_EINVAL);
 
-  if ((strlen(name) == 0) && *EventCode == 0)
+  if (((int)strlen(name) == 0) && *EventCode == 0)
     papi_return(PAPI_EINVAL);
 
-  if (strlen(name) == 0)
+  if ((int)strlen(name) == 0)
     retval = PAPI_event_code_to_name(*EventCode, name);
   else
     retval = PAPI_event_name_to_code(name, EventCode);

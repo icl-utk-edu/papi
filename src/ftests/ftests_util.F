@@ -36,9 +36,7 @@ C    used in the program. See eg. fmatrixpapi.F
       character*(*) msg
       integer line
 
-      write(*,*) '****  ERROR message  ****'
       call ftests_perror(line,msg)
-      write(*,*) '****  Test aborts  ****'
       stop
       end
 
@@ -49,7 +47,7 @@ C    used in the program. See eg. fmatrixpapi.F
 
       write(*,*) '****  Test error occurred  ****'
       write(*,100) line,msg
-  100 format(t3,'At source line',i5,':: ',a)
+  100 format(t3,'Line # ',i5,':: ',a)
 
       end
       
@@ -71,10 +69,24 @@ C    used in the program. See eg. fmatrixpapi.F
       integer len_trim
       external len_trim
 
-      write(*,*) test_str,':                FAILED'
+      if ( papiretval.eq.PAPI_ESBSTR ) then
+        call ftests_skip(test_str,papiretval)
+      end if
+      if ( papiretval.eq.PAPI_ENOEVNT ) then
+        call ftests_skip(test_str,papiretval)
+      end if
+
+      if ( papiretval.ne.0 )then
+          write(*,*) test_str,':                FAILED'
+      else
+          write(*,*) test_str,':                SKIPPED'
+      end if
       if(papiretval.lt.0)then
         call PAPIF_perror(papiretval,papi_errstr,len(papi_errstr))
         write(*,*) 'PAPI error: ',papi_errstr(1:len_trim(papi_errstr))
+      end if
+      if(papiretval.eq.0)then
+        write(*,*) 'SGI requires root permissions for this test\n'
       end if
       stop
       end

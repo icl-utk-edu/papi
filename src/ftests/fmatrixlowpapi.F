@@ -24,9 +24,13 @@ C   PAPI values of the counters
       DOUBLE PRECISION p(nrows1,ncols1),q(nrows2,ncols2),
      &                 r(nrows1,ncols2)
       integer tests_quiet
+      character*25 chbuf
 
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
 
 C   Setup default values
       numevents=0

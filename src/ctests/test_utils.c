@@ -301,13 +301,19 @@ void test_fail(char *file, int line, char *call, int retval)
 	if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ) 
             test_skip(file,line,call,retval);
 	memset( buf, '\0', sizeof(buf) );
-	printf("%-24s: FAILED\nLine # %d\n", file, line);
+	if ( retval != 0 )
+	   printf("%-24s: FAILED\nLine # %d\n", file, line);
+	else
+	   printf("%-24s: SKIPPED\nLine # %d\n",file,line );
 	if ( retval == PAPI_ESYS ) {
 		sprintf(buf, "System error in %s:", call );
 		perror(buf);
 	}
 	else if ( retval > 0 ) {
 		printf("Error calculating: %s\n", call );
+	}
+	else if ( retval == 0 ) {
+		printf("SGI requires root permissions for this test\n");
 	}
 	else {
 		char errstring[PAPI_MAX_STR_LEN];

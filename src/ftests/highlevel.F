@@ -5,14 +5,17 @@
 
       integer*8 values(10)
       integer events(2)
-      integer eventnum, length
+      integer eventnum
       integer availcounters
-      integer retval, errorcode
-      character*(PAPI_MAX_STR_LEN) errorstring
+      integer retval
       integer tests_quiet
+      character*25 chbuf
 
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
 
       eventnum = 2
       call PAPIf_num_counters(availcounters)

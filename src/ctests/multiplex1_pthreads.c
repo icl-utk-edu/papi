@@ -18,6 +18,7 @@
 #include <memory.h>
 #include <malloc.h>
 #include "papi.h"
+#include "test_utils.h"
 
 #define NUM 10
 #define NUM_THREADS 4

@@ -52,7 +52,10 @@ void *Thread(void *arg)
   long_long elapsed_us, elapsed_cyc;
   char event_name[PAPI_MAX_STR_LEN];
 
-  printf("Thread 0x%x \n",(int)pthread_self());
+  if ( !TESTS_QUIET ) 
+     printf("Thread 0x%x \n",(int)pthread_self());
+  else
+     num_events1 = (int) pthread_self();     	
 
   retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);

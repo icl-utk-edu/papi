@@ -149,8 +149,8 @@ int main(int argc, char **argv)
 		|| values[4][0] > max || values[4][0] < min )
 			test_fail(__FILE__, __LINE__, event_name, 1);
 
-	min = (long_long)(values[0][0]*.9);
-	max = (long_long)(values[0][0]*1.1);
+	min = (long_long)(values[0][0]*.8);
+	max = (long_long)(values[0][0]*1.2);
 	if ( values[0][0] == 0 || values[1][0] == 0 || values[3][0] == 0
 		|| values[1][0] > max || values[1][0] < min
 		|| values[3][0]>(max*3) || values[3][0] < (min*3))

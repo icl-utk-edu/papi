@@ -5,7 +5,7 @@ TARGETS = multiplex serial pthreads
 
 CFLAGS  = -Wall -I./perfctr/usr.lib -DPERFCTR18 -I. -g
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-FFLAGS	= -Wall -g
+FFLAGS	= -Wall -g -Dlinux
 OPTFLAGS= -O3 -mpentiumpro
 FOPTFLAGS= $(OPTFLAGS)
 CC	= gcc

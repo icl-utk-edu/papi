@@ -66,7 +66,10 @@ void Thread(int n)
   long_long elapsed_us, elapsed_cyc;
   char event_name[PAPI_MAX_STR_LEN];
 
-  printf("Thread 0x%x\n",omp_get_thread_num());
+  if ( !TESTS_QUIET )
+     printf("Thread 0x%x\n",omp_get_thread_num());
+  else
+     num_events1 = (int) omp_get_thread_num();
 
   retval = PAPI_event_code_to_name(PAPI_EVENT, event_name);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
@@ -152,10 +155,12 @@ int main(int argc, char **argv)
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
-  printf("Master real usec   : \t%lld\n",
+  if ( !TESTS_QUIET ) { 
+    printf("Master real usec   : \t%lld\n",
 	 elapsed_us);
-  printf("Master real cycles : \t%lld\n",
+    printf("Master real cycles : \t%lld\n",
 	 elapsed_cyc);
+  }
 
   test_pass(__FILE__,NULL,0);
   exit(0);

@@ -12,14 +12,20 @@
       Integer len_trim
       External len_trim
       integer tests_quiet
-
+      character*25 chbuf
 #if (defined(sgi) && defined(host_mips))
-      integer id, getuid 
-      id = getuid()
+      integer id 
+      integer*4 getuid
 #endif
 
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
+#if (defined(sgi) && defined(host_mips))
+      id = getuid()
+#endif
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -47,7 +53,7 @@
       call PAPIf_add_event( es1, PAPI_FP_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_perror( retval, errorstring, errorcode)
-        if (tests_quiet .EQ. 0) then
+        if (tests_quiet .NE. 0) then
         print *, 'Cannot add PAPI_FP_INS: '//
      *  errorstring(1:len_trim(errorstring))
         end if
@@ -130,6 +136,12 @@
 
       call PAPIf_start(es1, retval)
       if ( retval .NE. PAPI_OK ) then
+#if (defined(sgi) && defined(host_mips))
+        if ( id.NE.0 ) then
+           retval = 0
+           call ftests_fail(__FILE__,retval)
+        endif
+#endif
         call ftests_perror(__LINE__,'error in PAPIf_start')
         call ftests_fail(__FILE__,retval)
       end if

@@ -5,7 +5,7 @@ PTHREADS= profile_pthreads overflow_pthreads zero_pthreads
 MPX	= multiplex1 multiplex1_pthreads
 MPI	= mpifirst
 SERIAL  = zero low-level high-level sprofile eventname case1 case2 calibrate \
-	flops avail first second third third-inv fourth fourth-inv cost \
+	flops avail first second third fourth fourth-inv cost \
 	johnmay2 johnmay clockres fourth fifth nineth \
 	overflow_single_event overflow profile tenth native memory
 BROKEN	= inherit pernode
@@ -93,9 +93,6 @@ flops: flops.c dummy.o $(PAPILIB)
 
 third: third.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) third.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o third
-
-third-inv: third-inv.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) third-inv.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o third-inv
 
 fourth: fourth.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) fourth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fourth

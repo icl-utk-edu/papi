@@ -8,15 +8,25 @@
 #          london@cs.utk.edu
 
 CTESTS=`find tests -perm -u+x -type f`;
-#FTESTS=`find ftests -perm -u+x -type f`;
+FTESTS=`find ftests -perm -u+x -type f`;
 ALLTESTS="$FTESTS $CTESTS";
 x=0;
 
 echo "The following test cases will be run";
 echo $ALLTESTS;
-echo "";
+echo "\n";
 
-for i in $ALLTESTS;
+echo "Running C Tests\n";
+for i in $CTESTS;
+do
+if [ -x $i ]; then
+echo -n "Running $i: ";
+./$i TESTS_QUIET
+fi;
+done
+
+echo "\n\nRunning Fortran Tests\n";
+for i in $FTESTS;
 do
 if [ -x $i ]; then
 echo -n "Running $i: ";

@@ -9,7 +9,7 @@
       integer ncpu, nnodes, totalcpus, vendor
       integer model
       character*20 vendor_string, model_string
-      real*4 revision, mhz, rsec, csec
+      real*4 revision, mhz, rsec
       integer*8 uso, usn 
       integer retval, errorcode
       character*(PAPI_MAX_STR_LEN) errorstring
@@ -17,9 +17,13 @@
       Integer len_trim
       External len_trim
       integer tests_quiet
- 
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
+      character*25 chbuf
+
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
 
       point = 0
 
@@ -294,15 +298,17 @@ C     call sleep(1)
 C     NOT TESTED YET
       subroutine get_instr(integer nativees)
       integer cpu
-      GET_CPU_FAMILY(cpu)
-      if (cpu .EQ. EV6_CPU) nativees = PF6_MUX0_RET_INSTRUCTIONS *
-     *                               2**8 + 0
-      end
+      retval = PAPI_ESBSTR
+      call ftests_fail(__FILE__,retval)
+c     call GET_CPU_FAMILY(cpu)
+c     if (cpu .EQ. EV6_CPU) nativees = PF6_MUX0_RET_INSTRUCTIONS *
+c    *                               2**8 + 0
+c     end
 
-      subroutine get_cyc(integer nativees)
-      integer cpu
-      GET_CPU_FAMILY(cpu)
-      if (cpu .EQ. EV6_CPU) nativees = PF6_MUX1_CYCLES
-     *                               2**8 + 1
-      end
+c     subroutine get_cyc(integer nativees)
+c     integer cpu
+c     call GET_CPU_FAMILY(cpu)
+c     if (cpu .EQ. EV6_CPU) nativees = PF6_MUX1_CYCLES
+c    *                               2**8 + 1
+c     end
 #endif

@@ -981,12 +981,15 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 #ifdef PTHREADS
 	int retval;
 #endif
+#ifdef OLD
 	int i;
 	int granularity, domain;
 	int * event_list;
+#endif
 
 	return(PAPI_EINVAL);
 
+#ifdef OLD
 	if( ptr == NULL || mpx_events == NULL ) return PAPI_EINVAL;
 
 	switch(option) {
@@ -1053,6 +1056,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 			break;
 	}
 	return PAPI_OK;
+#endif
 }
 
 int mpx_init(int interval)

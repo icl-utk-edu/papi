@@ -15,9 +15,14 @@
       Integer len_trim
       External len_trim
       integer tests_quiet
+      character*25 chbuf
 
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
+
 
       if (tests_quiet .EQ. 0) then
       print *, "Test case descriptions: Test of functions:\n",

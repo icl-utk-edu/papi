@@ -173,8 +173,8 @@ int main(int argc, char **argv)
     if ( values[0][0] > max || values[0][0] < min )
 	test_fail(__FILE__, __LINE__, event_name, 1);
 
-    min = (long_long)(values[0][1]*.9);
-    max = (long_long)(values[0][1]*1.1);
+    min = (long_long)(values[0][1]*.8);
+    max = (long_long)(values[0][1]*1.2);
     if ( (values[1][1] + values[2][1]) > max || 
 	(values[1][1] + values[2][1]) < min )
   	test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);

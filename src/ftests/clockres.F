@@ -9,14 +9,19 @@
       INTEGER retval
       REAL ITERS
       integer tests_quiet
+      character*25 chbuf
+
+      tests_quiet=0
+      call getarg(1,chbuf)
+      if (LGE(chbuf, 'TESTS_QUIET')) then
+         tests_quiet=1
+      end if
+
 
       total_usec=0
       total_cyc=0
       ITERS=10000.0
       handle=0
-
-      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
-      read(5,*) tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
