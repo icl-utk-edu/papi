@@ -1,8 +1,10 @@
 public class PapiJ {
   /* The High Level API */
   public native int flops(FlopInfo f);
+  public native int flips(FlipInfo f);
+  public native int ipc(IpcInfo f);
   public native int num_counters();
-  public native int start_counters(int [] values);
+  public native int start_counters(long [] values);
   public native int stop_counters(long [] values);
   public native int read_counters(long [] values);
   public native int accum_counters(long [] values);
@@ -11,50 +13,58 @@ public class PapiJ {
   public native int accum(EventSet set, long [] values);
   public native int add_event(EventSet set, int event);
   public native int add_events(EventSet set, int [] events);
-  // not implemented: add_pevent();
   public native int cleanup_eventset(EventSet set);
   public native int create_eventset(EventSet set);
   public native int destroy_eventset(EventSet set);
+  public native int enum_event(int eventcode, int modifier);
+  public native int event_code_to_name(int eventcode, char [] out);
+  public native int event_name_to_code(char [] in, int [] out);
+  public native long get_dmem_info(int option);
+  public native int get_event_info(int eventcode, PAPI_event_info info);
   public native PAPI_exe_info get_executable_info();
   public native PAPI_hw_info get_hardware_info();
-  // not implemented: get_opt(int option, PAPI_option p);
-  // not implemented: get_overflow_address();
+  public native int get_multiplex(EventSet set);
+  public native int get_opt(int option, PAPI_option p);
   public native long get_real_cyc();
   public native long get_real_usec();
+  public native PAPI_shlib_info get_shared_lib_info();
+  // not implemented: int   PAPI_get_thr_specific(int tag, void **ptr);
+  public native int get_overflow_event_index(EventSet set, long overflow_vector, int [] array, int [] number);
   public native long get_virt_cyc();
   public native long get_virt_usec();
+  public native int is_initialized();
   public native int library_init(int version);
-  // not implemented: thread_id();
-  // not implemented: thread_init();
   public native int list_events(EventSet set, int [] events);
   // not implemented: lock();
+  public native int multiplex_init();
+  public native int num_hwctrs();
+  public native int num_events(EventSet set);
   // not implemented: overflow();
   public native int perror(int code, char [] dest);
   public native int profil(short [] buf, long offset, int scale, 
     EventSet set, int eventCode, int thresh, int flags);
-  public native PAPI_preset_info query_all_events_verbose();
-  // not implemented: describe_event();
   public native int query_event(int eventCode);
-  public native int query_event_verbose(int eventCode, PAPI_preset_info p);
-  // not implemented: event_code_to_name();
-  // not implemented: event_name_to_code();
   public native int read(EventSet set, long [] values);
-  // not implemented: rem_event()
-  // not implemented: rem_events()
+  // not implemented: int   PAPI_register_thread(void);
+  public native int remove_event(EventSet set, int eventcode);
+  public native int remove_events(EventSet set, int [] events);
   public native int reset(EventSet set);
-  public native int restore();
-  public native int save();
   public native int set_debug(int level);
   public native int set_domain(int domain);
   public native int set_granularity(int granularity);
-  // not implemented set_opt();
+  public native int set_multiplex(EventSet set);
+  public native int set_opt(int option, PAPI_option p);
+  // not implemented: int   PAPI_set_thr_specific(int tag, void *ptr);
   public native void shutdown();
   // not implemented sprofil();
   public native int start(EventSet set);
   // not implemented state();
   public native int stop(EventSet set, long [] values);
   public native String strerror(int code);
+  // not implemented: unsigned long PAPI_thread_id(void);
+  // not implemented:int   PAPI_thread_init(unsigned long int (*id_fn) (void));
   // not implemented unlock();
+  // not implemented: int   PAPI_unregister_thread(void);
   public native int write(EventSet set, long [] values);
 
   static {
@@ -113,6 +123,13 @@ public class PapiJ {
   /**  No clue as to what this error code means  **/
   public static final int PAPI_EMISC      = -14;
 
+  /** You lack the necessary permissions **/
+  public static final int PAPI_EPERM      = -15;    
+    
+  public static final int PAPI_NOT_INITED  =  0;
+  public static final int PAPI_LOW_LEVEL_INITED  =	1;       /* Low level has called library init */
+  public static final int PAPI_HIGH_LEVEL_INITED =  2;       /* High level has called library init */
+
   /* Constants */
 
   /** A nonexistent hardware event used as a placeholder **/ 
@@ -142,6 +159,13 @@ public class PapiJ {
     The lower 31 bits can be decoded by the substrate into something
     meaningful. i.e. SGI HUB counters **/
   public static final int PAPI_DOM_HWSPEC  = 0x80000000;
+
+/* Vendor definitions */
+
+  public static final int PAPI_VENDOR_UNKNOWN = -1;
+  public static final int PAPI_VENDOR_INTEL =  1;
+  public static final int PAPI_VENDOR_AMD  =   2;
+  public static final int PAPI_VENDOR_CYRIX  = 3;
 
   /* Granularity definitions */
 
@@ -189,7 +213,12 @@ public class PapiJ {
   public static final int PAPI_RANDOMIZE   = 2; 
 
   /** Default resolution in microseconds of the multiplexing software **/
-  public static final int PAPI_DEF_MPXRES  = 1000; 
+  //  public static final int PAPI_DEF_MPXRES  = 1000; 
+
+  /* Multiplex definitions */
+
+  public static final int PAPI_MPX_DEF_US = 10000;   /*Default resolution in us. of mpx handler */
+  public static final int PAPI_MPX_DEF_DEG = 32;     /* Maximum number of counters we can mpx */
 
   /*  States of an EventSet  */
 
@@ -215,12 +244,12 @@ public class PapiJ {
   public static final int PAPI_MULTIPLEXING = 0x40;
 
   /**  EventSet has accumulating enabled  **/
-  public static final int PAPI_ACCUMULATING = 0x80;
+  //  public static final int PAPI_ACCUMULATING = 0x80;
 
   /*  Error predefines  */
 
   /**  Number of error messages specified in this API.  **/
-  public static final int PAPI_NUM_ERRORS  = 15;
+  public static final int PAPI_NUM_ERRORS  = 16;
 
   /**  Option to turn off automatic reporting of 
        return codes < 0 to stderr.  **/
@@ -234,108 +263,87 @@ public class PapiJ {
        codes < 0 to stderr and exit.  **/
   public static final int PAPI_VERB_ESTOP  = 2;
 
-  /**  Option to turn on debugging features of the PAPI library **/
-  public static final int PAPI_SET_DEBUG   = 2;
+/* dmem_info definitions, these should change. */
+  public static final int PAPI_GET_SIZE     =   1;  /* Size of process image in pages */
+  public static final int PAPI_GET_RESSIZE  =   2;  /* Resident set size in pages */
+  public static final int PAPI_GET_PAGESIZE  =  3;  /* Pagesize in bytes */
 
-  /**  Option to query debugging features of the PAPI library **/
-  public static final int PAPI_GET_DEBUG   = 3;
+/* Profile definitions */
+  public static final int PAPI_PROFIL_POSIX   =  0x0;        /* Default type of profiling, similar to 'man profil'. */
+  public static final int PAPI_PROFIL_RANDOM   = 0x1;        /* Drop a random 25% of the samples. */
+  public static final int PAPI_PROFIL_WEIGHTED  = 0x2;        /* Weight the samples by their value. */
+  public static final int PAPI_PROFIL_COMPRESS  = 0x4;        /* Ignore samples if hash buckets get big. */
+  public static final int PAPI_PROFIL_BUCKET_16 = 0x8;        /* Use 16 bit buckets to accumulate profile info (default) */
+  public static final int PAPI_PROFIL_BUCKET_32 = 0x10;       /* Use 32 bit buckets to accumulate profile info */
+  public static final int PAPI_PROFIL_BUCKET_64 = 0x20;       /* Use 64 bit buckets to accumulate profile info */
+  public static final int PAPI_PROFIL_FORCE_SW  = 0x30;       /* Force Software overflow in profiling */
+  public static final int PAPI_PROFIL_BUCKETS  = (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64);
 
-  /**  Domain for all new eventsets. Takes non-NULL option pointer.  **/    
-  public static final int PAPI_SET_DEFDOM  = 6;
+/* Overflow definitions */
+  public static final int PAPI_OVERFLOW_FORCE_SW = 0x20;	/* Force using Software */
+  public static final int PAPI_OVERFLOW_HARDWARE = 0x30;	/* Using Hardware */
 
-  /**  Domain for all new eventsets. Takes NULL as option pointer.  **/    
-  public static final int PAPI_GET_DEFDOM  = 7;
+/* Option definitions */
 
-  /**  Domain for an eventset  **/    
-  public static final int PAPI_SET_DOMAIN  = 8;
+  public static final int PAPI_INHERIT_ALL = 1;     /* The flag to this to inherit all children's counters */
+  public static final int PAPI_INHERIT_NONE = 0;     /* The flag to this to inherit none of the children's counters */
 
-  /**  Domain for an eventset  **/    
-  public static final int PAPI_GET_DOMAIN  = 9;
+  public static final int PAPI_DEBUG       =  2;       /* Option to turn on  debugging features of the PAPI library */
+  public static final int PAPI_MULTIPLEX 	=	3;       /* Turn on/off or multiplexing for an eventset */
+  public static final int PAPI_DEFDOM  	=	4;       /* Domain for all new eventsets. Takes non-NULL option pointer. */
 
-  /**  Granularity for all new eventsets  **/    
-  public static final int PAPI_SET_DEFGRN  = 10;
+  public static final int PAPI_DOMAIN  	=	5;       /* Domain for an eventset */
+  public static final int PAPI_DEFGRN  	=	6;       /* Granularity for all new eventsets */
+  public static final int PAPI_GRANUL  	=	7;       /* Granularity for an eventset */
+  public static final int PAPI_INHERIT 	=	8;       /* Child threads/processes inherit counter config and progate values up upon exit. */
 
-  /**  Granularity for all new eventsets  **/
-  public static final int PAPI_GET_DEFGRN  = 11;
+  public static final int PAPI_CPUS    	=	9;       /* Return the maximum number of CPU's usable/detected */
+  public static final int PAPI_THREADS 	=	10;      /* Return the number of threads usable/detected by PAPI */
+  public static final int PAPI_NUMCTRS 	=	11;      /* The number of counters returned by reading this eventset */
+  public static final int PAPI_PROFIL  	=	12;      /* Option to turn on the overflow/profil reporting software */
+  public static final int PAPI_PRELOAD 	=	13;      /* Option to find out the environment variable that can preload libraries */
+  public static final int PAPI_CLOCKRATE  =	14;      /* Clock rate in MHz */
+  public static final int PAPI_MAX_HWCTRS  =	15;      /* Number of physical hardware counters */
+  public static final int PAPI_HWINFO  	=	16;      /* Hardware information */
+  public static final int PAPI_EXEINFO  	=	17;      /* Executable information */
+  public static final int PAPI_MAX_CPUS 	=	18;      /* Number of ncpus we can talk to from here */
+  public static final int PAPI_SHLIBINFO     =     20;      /* Shared Library information */
+  public static final int PAPI_LIB_VERSION    =    21;      /* Option to find out the complete version number of the PAPI library */
+  public static final int PAPI_SUBSTRATE_SUPPORT  = 22;      /* Find out what the substrate supports */
 
-  /**  Granularity for an eventset  **/    
-  public static final int PAPI_SET_GRANUL  = 12;
+  public static final int PAPI_INIT_SLOTS  =  64;     /*Number of initialized slots in
+                                   DynamicArray of EventSets */
 
-  /**  Granularity for an eventset  **/    
-  public static final int PAPI_GET_GRANUL  = 13;
+  public static final int PAPI_MIN_STR_LEN     =   40;      /* For small strings, like names & stuff */
+  public static final int PAPI_MAX_STR_LEN    =   129;      /* For average run-of-the-mill strings */
+  public static final int PAPI_HUGE_STR_LEN   =  1024;      /* This should be defined in terms of a system parameter */
 
-  /**  Child threads/processes inherit counter config
-       and progate values up upon exit.  **/
-  public static final int PAPI_SET_INHERIT = 15;
+  public static final int PAPI_DERIVED     =      0x1;      /* Flag to indicate that the event is derived */
 
-  /**  Child threads/processes inherit counter config
-       and progate values up upon exit.  **/
-  public static final int PAPI_GET_INHERIT = 16;
 
-  /**  The flag to this to inherit all children's counters  **/
-  public static final int PAPI_INHERIT_ALL  = 1;
+/* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
+   A value of 0 (PAPI_ENUM_ALL) is always assumed to enumerate ALL events on every platform.
+   PAPI PRESET events are broken into related event categories.
+   Each supported substrate can have optional values to determine how native events on that
+   substrate are enumerated.
+*/
+   public static final int PAPI_ENUM_ALL = 0;			/* Always enumerate all events */
+   public static final int PAPI_PRESET_ENUM_AVAIL = 1; 		/* Enumerate events that exist here */
 
-  /**  The flag to this to inherit none of the children's counters  **/
-  public static final int PAPI_INHERIT_NONE = 0;
-                                   
-  /**  Return the maximum number of CPU's usable/detected  **/
-  public static final int PAPI_GET_CPUS    = 21;
+   /* PAPI PRESET section */
+   public static final int PAPI_PRESET_ENUM_INS = 2;		/* Instruction related preset events */
+   public static final int PAPI_PRESET_ENUM_BR = 3;			/* branch related preset events */
+   public static final int PAPI_PRESET_ENUM_MEM = 4;		/* memory related preset events */
+   public static final int PAPI_PRESET_ENUM_TLB = 5;		/* Translation Lookaside Buffer events */
+   public static final int PAPI_PRESET_ENUM_FP = 6;			/* Floating Point related preset events */
 
-  /**  Return the number of threads usable/detected by PAPI  **/
-  public static final int PAPI_GET_THREADS = 23;
+   /* Pentium 4 specific section */
+   public static final int PAPI_PENT4_ENUM_GROUPS = 0x100;      /* 45 groups + custom + user */
+   public static final int PAPI_PENT4_ENUM_COMBOS = 0x101;		/* all combinations of mask bits for given group */
+   public static final int PAPI_PENT4_ENUM_BITS = 0x102;		/* all individual bits for given group */
 
-  /**  The number of counters returned by reading this eventset  **/
-  public static final int PAPI_GET_NUMCTRS = 25;
-
-  /**  The number of counters returned by reading this eventset  **/
-  public static final int PAPI_SET_NUMCTRS = 26;
-
-  /**  Option to turn on the overflow/profil reporting software  **/
-  public static final int PAPI_SET_PROFIL  = 27;
-
-  /**  Option to query the status of the overflow/profil reporting software  **/
-  public static final int PAPI_GET_PROFIL  = 28;
-
-  /**  Default type of profiling, similar to 'man profil'.  **/
-  public static final int PAPI_PROFIL_POSIX    = 0x0;
-
-  /**  Drop a random 25% of the samples.  **/
-  public static final int PAPI_PROFIL_RANDOM   = 0x1;
-
-  /**  Weight the samples by their value.  **/
-  public static final int PAPI_PROFIL_WEIGHTED = 0x2;
-
-  /**  Ignore samples if hash buckets get big.  **/
-  public static final int PAPI_PROFIL_COMPRESS = 0x4;
-
-  /**  Option to find out the environment variable that 
-       can preload libraries  **/
-  public static final int PAPI_GET_PRELOAD = 31;
-
-  /** Number of initialized slots in DynamicArray of EventSets  **/
-  public static final int PAPI_INIT_SLOTS  = 64;
-
-  /**  Clock rate in MHz  **/  
-  public static final int PAPI_GET_CLOCKRATE      = 70;
-
-  /**  Number of physical hardware counters  **/
-  public static final int PAPI_GET_MAX_HWCTRS     = 71;
-
-  /**  Hardware information  **/  
-  public static final int PAPI_GET_HWINFO         = 72;
-
-  /**  Executable information  **/  
-  public static final int PAPI_GET_EXEINFO        = 73;
-
-  /**  Number of ncpus we can talk to from here  **/
-  public static final int PAPI_GET_MAX_CPUS       = 74;
-
-  /**  Guess what  **/
-  public static final int PAPI_MAX_STR_LEN        = 81;
-
-  /**  Flag to indicate that the event is derived  **/
-  public static final int PAPI_DERIVED            = 0x1;
-
+   /* POWER 4 specific section */
+   public static final int PAPI_PWR4_ENUM_GROUPS = 0x200;	/* Enumerate groups an event belongs to */
 
   /** Level 1 data cache misses **/
   public static final int PAPI_L1_DCM  = 0x80000000;
@@ -648,5 +656,8 @@ public class PapiJ {
 
   /** Finv ins  **/
   public static final int PAPI_FNV_INS = 0x80000067;
+
+  /** Floating point operations executed **/
+  public static final int PAPI_FP_OPS = 0x80000068;
 
 }
