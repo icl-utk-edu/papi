@@ -95,7 +95,23 @@ int _papi_hwd_get_system_info(void)
   _papi_hwi_system_info.hw_info.revision = (float)win_hwinfo.revision;
   strcpy(_papi_hwi_system_info.hw_info.vendor_string,win_hwinfo.vendor_string);
 
-  _papi_hwi_system_info.hw_info.model = win_hwinfo.model;
+  /* initialize the model to something */
+  _papi_hwi_system_info.hw_info.model = PERFCTR_X86_GENERIC;
+
+  if (IS_P3(&win_hwinfo) || IS_P3_XEON(&win_hwinfo) || IS_CELERON(&win_hwinfo))
+    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_PIII;
+
+  if (IS_P4(&win_hwinfo)) {
+    if (win_hwinfo.model >= 2)
+      /* this is a guess for Pentium 4 Model 2 */
+      _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_P4M2;
+    else
+      _papi_hwi_system_info.hw_info.model = PERFCTR_X86_INTEL_P4;
+  }
+
+  if (IS_AMDDURON(&win_hwinfo) || IS_AMDATHLON(&win_hwinfo))
+    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_AMD_K7;
+
   strcpy(_papi_hwi_system_info.hw_info.model_string,win_hwinfo.model_string);
 
   _papi_hwi_system_info.num_cntrs = win_hwinfo.nrctr;
