@@ -206,8 +206,10 @@ static int get_system_info(void)
   pid_t pid;
   char maxargs[PAPI_MAX_STR_LEN];
 
+#ifndef _POWER4
 #ifdef _AIXVERSION_510
   pm_groups_info_t pmgroups;
+#endif
 #endif
 
   pid = getpid();
@@ -270,11 +272,6 @@ static int get_system_info(void)
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
-
-  retval = setup_all_presets(preset_search_map);
-
-  if (retval)
-    return(retval);
 
   return(PAPI_OK);
 } 
@@ -354,11 +351,16 @@ int _papi_hwd_init_global(void)
 
 int _papi_hwd_init(hwd_context_t *context)
 {
-  /* Initialize our global machdep. */
+  int retval;
+	/* Initialize our global machdep. */
 
   _papi_hwd_init_control_state(&context->cntrl);
+  retval=setup_native_table();
+  if(!_papi_hwd_init_preset_search_map(&pminfo))
+	  retval=PAPI_ESBSTR;
+  retval = _papi_hwi_setup_all_presets(preset_search_map);
 
-  return(PAPI_OK);
+  return(retval);
 }
 
 /* Go from highest counter to lowest counter. Why? Because there are usually

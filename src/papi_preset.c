@@ -15,7 +15,7 @@
 
 hwi_preset_t _papi_hwi_preset_map[PAPI_MAX_PRESET_EVENTS] = {{ 0 }};
 
-int setup_all_presets(preset_search_t *findem)
+int _papi_hwi_setup_all_presets(preset_search_t *findem)
 {
   int pnum,did_something = 0,pmc;
   int preset_index;

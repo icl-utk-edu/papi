@@ -9,7 +9,7 @@
 
 #include "power3_events.h"
 
-PWR3_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS] = {
+PWR3_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
 	{"PM_CYC", -1},
 	{"PM_INST_CMPL", -1},
 	{"PM_TB_BIT_TRANS", -1},
@@ -206,35 +206,63 @@ PWR3_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS] = {
 	{"PM_LD_DISP", -1},
 	{"PM_ALIGN_INT", -1},
 	{"PM_2WT_THRU_BUF_USED", -1},
-	{"PM_CHAIN_8_TO_7", -1}
+	{"PM_CHAIN_8_TO_7", -1},
+	{"PM_DC_MISS", -1},
+	{"PM_DTLB_MISS", -1},
+	{"PM_ITLB_MISS", -1},
+	{"PM_LD_MISS_CYC", -1},
+	{"PM_BR_FINISH", -1},
+	{"PM_BR_MPRED", -1},
+	{"PM_FXU_CMPL", -1},
+	{"PM_FPU_CMPL", -1},
+	{"PM_LSU_EXEC", -1},
+	{"PM_LD_MISS_DC_SHR", -1},
+	{"PM_WR_HIT_SHR_KILL_BRC", -1},
+	{"PM_MCI_IDLE", -1},
+	{"PM_DPU_WT_IC_MISS", -1},
+	{"PM_4INST_DISP", -1},
+	{"PM_CMPLU_WT_UNF_INST", -1},
+	{"PM_FPU_WT", -1}
 };
 
 pm_info_t pminfo;
-native_event_entry_t native_table[MAX_NATIVE_TABLE_INDEX];
+native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 
 /* to initialize the native_table */
 void initialize_native_table()
 {
   int i, j;
   
-  memset(native_table, 0, MAX_NATIVE_TABLE_INDEX*sizeof(native_event_entry_t));
-  for(i=0;i<MAX_NATIVE_TABLE_INDEX;i++){
+  memset(native_table, 0, PAPI_MAX_NATIVE_EVENTS*sizeof(native_event_entry_t));
+  for(i=0;i<PAPI_MAX_NATIVE_EVENTS;i++){
 	for(j=0;j<MAX_COUNTERS;j++)
 		native_table[i].resources.counter_cmd[j]=-1;
   }
 }
 
 /* to setup native_table values, and return number of entries */
-void setup_native_table()
+int setup_native_table()
 {
   pm_events_t *wevp;
   pm_info_t *info;
-  int pmc, ev, i, j, index;
+  int pmc, ev, i, j, index, retval;
+
+/*#ifdef _AIXVERSION_510
+  pm_groups_info_t pmgroups;
+#endif
   
-  if(pm_init(PM_INIT_FLAGS,&pminfo)>0){
-	  perror("pm_init");
-	  exit(1);
+#ifdef _AIXVERSION_510
+  retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
+#else
+  retval = pm_init(PM_INIT_FLAGS,&pminfo);
+#endif
+
+  if (retval){ 
+	  printf("----------------pm_init error retval=%d\n", retval);
+    return(PAPI_ESBSTR);
   }
+  printf("+++++++++++++++pm_init retval=%d\n", retval);
+*/
   info=&pminfo;
   index=0;
   initialize_native_table();
@@ -255,13 +283,14 @@ void setup_native_table()
 			native_table[i].name=wevp->short_name;
 			native_table[i].description=wevp->description;
 			index++;
-			for(j=0; j<PAPI_MAX_NATIVE_EVENTS; j++){
+			for(j=0; j<MAX_NATNAME_MAP_INDEX; j++){
 				if(strcmp(native_table[i].name, native_name_map[j].name)==0)
 					native_name_map[j].index=i;
 			}
 		}
 	}
   }
+  return(PAPI_OK);
 }  
 
 

@@ -1,3 +1,12 @@
+/* 
+* File:    papi_preset.h
+* CVS:     
+* Author:  Haihang You
+*          you@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/  
+
 #ifndef _PAPI_PRESET  /* _PAPI_PRESET */
 #define _PAPI_PRESET
 
@@ -29,6 +38,6 @@ typedef struct hwi_preset {
 extern preset_search_t *preset_search_map;
 
 extern int _papi_hwi_preset_query(int preset_index, int *flags, char **note);
-extern int setup_all_presets(preset_search_t *preset_search_map);
+extern int _papi_hwi_setup_all_presets(preset_search_t *preset_search_map);
 
 #endif /* _PAPI_PRESET */

@@ -12,11 +12,8 @@
 
 #include SUBSTRATE
 
-#define PAPI_MAX_NATIVE_EVENTS 197
-#define PAPI_POWER_630
-#define MAX_NATIVE_TABLE_INDEX 256
-/*#define MAX_COUNTERS 8*/
-#define NATIVE_MASK 0x40000000
+#define PAPI_MAX_NATIVE_EVENTS 256
+#define MAX_NATNAME_MAP_INDEX 213
 
 typedef struct PWR3_register{
   /* indicate which counters this event can live on */
@@ -240,11 +237,27 @@ enum native_name {
 	PNE_PM_LD_DISP,
 	PNE_PM_ALIGN_INT,
 	PNE_PM_2WT_THRU_BUF_USED,
-	PNE_PM_CHAIN_8_TO_7
+	PNE_PM_CHAIN_8_TO_7,
+	PNE_PM_DC_MISS,
+	PNE_PM_DTLB_MISS,
+	PNE_PM_ITLB_MISS,
+	PNE_PM_LD_MISS_CYC,
+	PNE_PM_BR_FINISH,
+	PNE_PM_BR_MPRED,
+	PNE_PM_FXU_CMPL,
+	PNE_PM_FPU_CMPL,
+	PNE_PM_LSU_EXEC,
+	PNE_PM_LD_MISS_DC_SHR,
+	PNE_PM_WR_HIT_SHR_KILL_BRC,
+	PNE_PM_MCI_IDLE,
+	PNE_PM_DPU_WT_IC_MISS,
+	PNE_PM_4INST_DISP,
+	PNE_PM_CMPLU_WT_UNF_INST,
+	PNE_PM_FPU_WT
 };
 
-extern native_event_entry_t native_table[MAX_NATIVE_TABLE_INDEX];
+extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 extern pm_info_t pminfo;
-extern PWR3_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS];
+extern PWR3_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX];
 
 #endif

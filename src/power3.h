@@ -65,10 +65,10 @@ typedef struct _thread_list {
   struct _thread_list *next; 
 } ThreadInfoList_t;
 
-
 /* prototypes */
 extern int set_domain(hwd_control_state_t *this_state, int domain);
 extern int set_granularity(hwd_control_state_t *this_state, int domain);
+extern int _papi_hwd_init_preset_search_map(pm_info_t *info);
 /*void dump_state(hwd_control_state_t *s);*/
 
 #endif /* _PAPI_POWER3 */

@@ -50,7 +50,6 @@ extern hwi_preset_t _papi_hwd_preset_map[];
   #endif /*_AIXVERSION_510*/
 #endif /*PMTOOLKIT_1_2*/
 
-#ifdef PAPI_POWER_604
 static preset_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_L1_DCM,0,{PNE_PM_DC_MISS,0,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{PNE_PM_IC_MISS,0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
@@ -80,10 +79,7 @@ static preset_search_t preset_name_map_604[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_SYC_INS,0,{PNE_PM_SYNC,0,0,0,0,0,0,0}}, /*Sync. inst. executed */
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
-preset_search_t *preset_search_map=preset_name_map_604;
-#endif
 
-#ifdef PAPI_POWER_604e
 static preset_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_L1_DCM,0,{PNE_PM_DC_MISS,0,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{PNE_PM_IC_MISS,0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
@@ -127,10 +123,7 @@ static preset_search_t preset_name_map_604e[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_SYC_INS,0,{PNE_PM_SYNC,0,0,0,0,0,0,0}}, /*Sync. inst. executed */
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
-preset_search_t *preset_search_map=preset_name_map_604e;
-#endif
 
-#ifdef PAPI_POWER_630
 static preset_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = { 
   {PAPI_L1_DCM,DERIVED_ADD,{PNE_PM_LD_MISS_L1,PNE_PM_ST_MISS_L1,0,0,0,0,0,0}}, /*Level 1 data cache misses*/
   {PAPI_L1_ICM,0,{PNE_PM_IC_MISS,0,0,0,0,0,0,0}}, /*Level 1 instruction cache misses*/ 
@@ -178,9 +171,8 @@ static preset_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_FSQ_INS,0,{PNE_PM_FPU_FSQRT,0,0,0,0,0,0,0}}, /*FSq ins */
   {0,0,{0,0,0,0,0,0,0,0}} /* end of list */
 };
-preset_search_t *preset_search_map=preset_name_map_630;
-#endif
 
+preset_search_t *preset_search_map;
 
  #define DEBUG_SETUP 
 
@@ -244,6 +236,28 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
     dst->ra_selector = src->ra_selector;
 }
 
+/* initialize preset_search_map table by type of CPU */
+int _papi_hwd_init_preset_search_map(pm_info_t *info)
+{
+  info=&pminfo;
+
+  if (__power_630()){
+      preset_search_map = preset_name_map_630;
+  }
+  else if (__power_604())
+    {
+      if (strstr(info->proc_name,"604e")){
+			preset_search_map = preset_name_map_604e;
+	  }
+      else{
+			preset_search_map = preset_name_map_604;
+	  }
+    }
+  else{
+	  return 0; 
+  }
+  return 1;
+}
 
 /* this function will be called when there are counters available 
      success  return 1
@@ -303,7 +317,6 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
   }
   set_domain(ptr,_papi_hwi_system_info.default_domain);
   set_granularity(ptr,_papi_hwi_system_info.default_granularity);
-  setup_native_table();
 }
 
 
