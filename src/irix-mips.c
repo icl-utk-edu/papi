@@ -112,6 +112,7 @@ hwi_search_t findem_r10k[] = {
    {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
    {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
    {PAPI_FP_INS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
+   {PAPI_FP_OPS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
    {PAPI_LD_INS, {0, {NATIVE_MASK | 8, PAPI_NULL}}},    /* Loads executed */
    {PAPI_SR_INS, {0, {NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
    {PAPI_BR_INS, {0, {NATIVE_MASK | 6, PAPI_NULL}}},    /* Branch inst. executed */
@@ -144,6 +145,7 @@ hwi_search_t findem_r12k[] = {  /* Shared with R14K */
    {PAPI_TOT_IIS, {0, {NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
    {PAPI_TOT_INS, {0, {NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
    {PAPI_FP_INS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
+   {PAPI_FP_OPS, {0, {NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
    {PAPI_LD_INS, {0, {NATIVE_MASK | 18, PAPI_NULL}}},   /* Loads executed */
    {PAPI_SR_INS, {0, {NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
    {PAPI_FLOPS, {DERIVED_PS, {NATIVE_MASK | 0, NATIVE_MASK | 21, PAPI_NULL}}},  /* FLOPS */

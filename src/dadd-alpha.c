@@ -539,6 +539,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 
 void _debug_virtual_counters(hwd_context_t * ctx)
 {
+#if 0
    printf("vc_total_cycles=%ld \n", ctx->ptr_vc->vc_total_cycles);
    printf("vc_bcache_misses=%ld \n", ctx->ptr_vc->vc_bcache_misses);
    printf("vc_total_dtbmiss=%ld \n", ctx->ptr_vc->vc_total_dtbmiss);
@@ -607,5 +608,6 @@ void _debug_virtual_counters(hwd_context_t * ctx)
    printf("vc_update_count=%ld \n", ctx->ptr_vc->vc_update_count);
    printf("vc_pdb_sample_count_sum=%ld \n",
           ctx->ptr_vc->vc_pdb_sample_count_sum);
+#endif
 
 }

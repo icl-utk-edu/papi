@@ -63,6 +63,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
     {"BRANCH_PREDICTOR_ALL_WRONG_PATH", "BRANCH_PREDICTOR_ALL_WRONG_TARGET", 0, 0}},
    {PAPI_TOT_CYC, 0, {"CPU_CYCLES", 0, 0, 0}},
    {PAPI_FP_INS, DERIVED_ADD, {"FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0, 0}},
+   {PAPI_FP_OPS, DERIVED_ADD, {"FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0, 0}},
    {PAPI_TOT_INS, 0, {"IA64_INST_RETIRED", 0, 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
@@ -71,7 +72,7 @@ static itanium_preset_search_t ia_preset_search_map[] = {
     {"CPU_CYCLES", "FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 41
+#define NUM_OF_PRESET_EVENTS 42
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #else
@@ -133,13 +134,14 @@ static itanium_preset_search_t ia_preset_search_map[] = {
     {"BR_MISPRED_DETAIL_ALL_WRONG_PATH", "BR_MISPRED_DETAIL_ALL_WRONG_TARGET", 0, 0}},
    {PAPI_TOT_CYC, 0, {"CPU_CYCLES", 0, 0, 0}},
    {PAPI_FP_INS, 0, {"FP_OPS_RETIRED", 0, 0, 0}},
+   {PAPI_FP_OPS, 0, {"FP_OPS_RETIRED", 0, 0, 0}},
    {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
    {PAPI_FLOPS, DERIVED_PS, {"CPU_CYCLES", "FP_OPS_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define NUM_OF_PRESET_EVENTS 56
+#define NUM_OF_PRESET_EVENTS 57
 hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
 hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
 #endif
