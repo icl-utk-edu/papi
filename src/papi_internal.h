@@ -86,7 +86,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 /* it should be placed in this file and referenced by   */
 /* label.                                               */
 /********************************************************/
-#define PAPI_ERROR_CODE_str      "PAPI Error Code"
+#define PAPI_ERROR_CODE_str      "Error Code"
 #define PAPI_SHUTDOWN_str	      "PAPI_shutdown: PAPI is not initialized"
 #define PAPI_SHUTDOWN_SYNC_str	"PAPI_shutdown: other threads still have running EventSets"
 

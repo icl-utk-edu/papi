@@ -28,7 +28,7 @@
 /* BEGIN PROTOTYPES */
 /********************/
 
-static int default_error_handler(int errorCode);
+static int default_debug_handler(int errorCode);
 static long_long handle_derived(EventInfo_t * evi, long_long * from);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
@@ -53,7 +53,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 /********************/
 
 int _papi_hwi_error_level = PAPI_QUIET;
-PAPI_debug_handler_t _papi_hwi_debug_handler = default_error_handler;
+PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 
 #ifdef DEBUG
 #define papi_return(a) return(_papi_hwi_debug_handler(a))
@@ -67,43 +67,56 @@ PAPI_debug_handler_t _papi_hwi_debug_handler = default_error_handler;
 
 /* Utility functions */
 
-int default_error_handler(int errorCode)
+void PAPIERROR(char *format, ...)
+{
+  va_list args;
+   if (_papi_hwi_error_level != PAPI_QUIET)
+     {
+       va_start(args, format); 
+       fprintf(stderr, "PAPI Error: ");
+       vfprintf(stderr, format, args);
+       fprintf(stderr,".\n");
+       va_end(args);
+     }
+}
+
+static int default_debug_handler(int errorCode)
 {
    extern char *_papi_hwi_errNam[], *_papi_hwi_errStr[];
+   char str[PAPI_HUGE_STR_LEN];
 
    if (errorCode == PAPI_OK)
       return (errorCode);
 
    if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
      {
-       PAPIERROR("BUG! Unknown error code set by library %d",errorCode);
-       return(errorCode);
+       PAPIERROR("%s %d,%s,Bug! Unknown error code",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-PAPI_EBUG]);
+       return(PAPI_EBUG);
      }
 
    switch (_papi_hwi_error_level) {
    case PAPI_VERB_ECONT:
    case PAPI_VERB_ESTOP:
-      fprintf(stderr, "%s %d: ", PAPI_ERROR_CODE_str, errorCode);
       /* gcc 2.96 bug fix, do not change */
       /* fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-errorCode],_papi_hwi_errStr[-errorCode]); */
-      fputs(_papi_hwi_errNam[-errorCode], stderr);
-      fputs(", ", stderr);
-      fputs(_papi_hwi_errStr[-errorCode], stderr);
-      if (errorCode == PAPI_ESYS) {
-         fprintf(stderr, ": ");
-         perror("");
-      } else
-         fprintf(stderr, "\n");
+
+      sprintf(str,"%s %d,%s,%s",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-errorCode],_papi_hwi_errStr[-errorCode]);
+      if (errorCode == PAPI_ESYS) 
+         sprintf(str+strlen(str), ": %s", strerror(errno));
+
+      PAPIERROR(str);
+
       if (_papi_hwi_error_level == PAPI_VERB_ESTOP)
          exit(-errorCode);
       else
          return errorCode;
       break;
+
    case PAPI_QUIET:
    default:
-      return errorCode;
+     return errorCode;
    }
-  return(PAPI_EBUG); /* Never get here */
+   return(PAPI_EBUG); /* Never get here */
 }
 
 static int allocate_eventset_map(DynamicArray_t *map)
@@ -1357,14 +1370,3 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
       return 1;
    }
 }
-
-void PAPIERROR(char *format, ...)
-{
-   va_list args;
-   va_start(args, format); 
-   fprintf(stderr, "PAPI Error: ");
-   vfprintf(stderr, format, args);
-   fprintf(stderr,".\n");
-   va_end(args);
-}
-

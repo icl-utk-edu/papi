@@ -27,11 +27,10 @@
 /*******************************/
 
 #ifdef DEBUG
-#define papi_return(a) return(_papi_hwi_debug_handler(a))
+#define papi_return(a) return((_papi_hwi_debug_handler ? _papi_hwi_debug_handler(a) : a))
 #else
 #define papi_return(a) return(a)
 #endif
-
 
 #ifdef ANY_THREAD_GETS_SIGNAL
 extern int (*_papi_hwi_thread_kill_fn) (int, int);
@@ -176,7 +175,7 @@ int PAPI_library_init(int version)
    ++_in_papi_library_init_cnt;
    while (_in_papi_library_init_cnt > 1)
      {
-       APIDBG("Waiting for other thread to exit from PAPI_library_init\n");
+       PAPIERROR("Multiple callers of PAPI_library_init");
        sleep(1);
      }
 
@@ -947,15 +946,12 @@ int PAPI_state(int EventSet, int *status)
 
 int PAPI_set_debug(int level)
 {
-   switch (level) {
-   case PAPI_QUIET:
-   case PAPI_VERB_ESTOP:
-   case PAPI_VERB_ECONT:
-      _papi_hwi_error_level = level;
-      return(PAPI_OK);
-   default:
-      papi_return(PAPI_EINVAL);
-   }
+  PAPI_option_t option;
+
+  memset(&option,0x0,sizeof(option));
+  option.debug.level = level;
+  option.debug.handler = _papi_hwi_debug_handler;
+  papi_return(PAPI_set_opt(PAPI_DEBUG,&option));
 }
 
 int PAPI_set_multiplex(int EventSet)
@@ -1003,7 +999,17 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
       }
    case PAPI_DEBUG: 
       {
-        papi_return(PAPI_set_debug(ptr->debug.level));
+	int level = ptr->debug.level;
+	switch (level) {
+	case PAPI_QUIET:
+	case PAPI_VERB_ESTOP:
+	case PAPI_VERB_ECONT:
+	  _papi_hwi_error_level = level;
+	  break;
+	default:
+	  papi_return(PAPI_EINVAL); }
+	_papi_hwi_debug_handler = ptr->debug.handler;
+	return(PAPI_OK);
       }
    case PAPI_DEFDOM:
       {
