@@ -294,7 +294,7 @@ static int get_system_info(void)
       return (PAPI_ESYS);
    strcat(_papi_hwi_system_info.exe_info.fullname, "/");
    strcat(_papi_hwi_system_info.exe_info.fullname, maxargs);
-   strncpy(_papi_hwi_system_info.exe_info.name, basename(maxargs), PAPI_MAX_STR_LEN);
+   strncpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs), PAPI_MAX_STR_LEN);
 
 #ifdef _AIXVERSION_510
    DBG((stderr, "Calling AIX 5 version of pm_init...\n"));
