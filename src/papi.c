@@ -1448,10 +1448,8 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
                | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW))
       papi_return(PAPI_EINVAL);
 
-   if ( (flags&PAPI_PROFIL_FORCE_SW) ) {
-      flags &= ~(PAPI_PROFIL_FORCE_SW);
+   if ( (flags&PAPI_PROFIL_FORCE_SW) ) 
       forceSW = PAPI_OVERFLOW_FORCE_SW;
-   }
 
    /* make sure one and only one bucket size is set */
    buckets = flags & PAPI_PROFIL_BUCKETS;
