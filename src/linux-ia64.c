@@ -290,14 +290,14 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    return (PAPI_OK);
 }
 
-int _papi_hwd_mdi_init() 
+inline static int mdi_init() 
 {
   /* Name of the substrate we're using */
   strcpy(_papi_hwi_system_info.substrate, "$Id$");          
   
   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
   _papi_hwi_system_info.supports_hw_overflow = 1;
-  _papi_hwi_system_info.supports_hw_profile = 1;
+  _papi_hwi_system_info.supports_hw_profile = 0;
   _papi_hwi_system_info.supports_64bit_counters = 1;
   _papi_hwi_system_info.supports_inheritance = 1;
   _papi_hwi_system_info.supports_real_usec = 1;
@@ -384,7 +384,7 @@ int _papi_hwd_init_global(void)
       return (PAPI_ESYS);
 
    /* Initialize outstanding values in machine info structure */
-   if (_papi_hwd_mdi_init() != PAPI_OK) {
+   if (mdi_init() != PAPI_OK) {
       return (PAPI_ESBSTR);
    }
 
