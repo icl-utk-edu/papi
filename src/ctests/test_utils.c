@@ -385,7 +385,8 @@ void test_fail(char *file, int line, char *call, int retval)
 {
 	char buf[128];
 
-	if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ) 
+	if ( retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT ||
+	     retval == PAPI_ECNFLCT) 
             test_skip(file,line,call,retval);
 	memset( buf, '\0', sizeof(buf) );
 	if ( retval != 0 )

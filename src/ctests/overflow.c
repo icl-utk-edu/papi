@@ -27,7 +27,7 @@
 #undef NUM_FLOPS
 
 #define NUM_FLOPS 10000000
-#define THRESHOLD  5000000
+#define THRESHOLD 10000000 
 
 #ifdef _CRAYT3E
 	#define OVER_FMT	"handler(%d, %x, %d, %lld, %d, %x) Overflow at %x!\n"

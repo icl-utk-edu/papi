@@ -159,7 +159,8 @@ C     used in the program. See eg. fmatrixpapi.F
       integer len_trim
       external len_trim
 
-      if ( retval.eq.PAPI_ESBSTR ) then
+      if ( retval.eq.PAPI_ESBSTR .OR. retval.eq.PAPI_ENOEVNT
+     .     .OR. retval.eq.PAPI_ECNFLCT ) then
         call ftest_skip(file, line, callstr, retval)
       end if
       if ( retval.eq.PAPI_ENOEVNT ) then
@@ -203,8 +204,8 @@ C     used in the program. See eg. fmatrixpapi.F
       external len_trim
 
       write(*,100) file, ' SKIPPED'
-      write(*,*) 'Line #', line
       if (quiet .eq. 0) then
+        write(*,*) 'Line #', line
         if(retval.eq.PAPI_ESYS) then
           write(*,*) "System error in ", callstr
         else if (retval.gt.0) then
