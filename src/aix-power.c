@@ -1642,13 +1642,6 @@ int _papi_hwd_unmerge(EventSetInfo *ESI, EventSetInfo *zero)
 	}
     }
 
-  if (ESI->state & PAPI_OVERFLOWING)
-    {
-      retval = _papi_hwi_stop_overflow_timer(ESI, zero);
-      if (retval < PAPI_OK)
-	return(PAPI_EBUG);
-    }
-  
   /* If we're not the outermost EventSet, then we need to start again 
      because someone is still running. */
 

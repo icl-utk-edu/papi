@@ -359,25 +359,34 @@ int PAPI_thread_init(unsigned long int (*id_fn)(void), int flag)
   if (default_master_eventset == NULL)
     papi_return(PAPI_EINVAL);
     
-#if 0
-  if (thread_id_fn != NULL)
+  /* If the user tries to change the thread pointer function twice, we bark at him. */
+
+  if ((thread_id_fn != NULL) && (id_fn != NULL))
     {
       fprintf(stderr, PAPI_THREAD_INIT_str);
       exit(1);
     }
-#endif
 
   thread_id_fn = id_fn;
+
+  /* When we shutdown threading, let's clear both function pointers. */
+
+#if defined(ANY_THREAD_GETS_SIGNAL)
+  if (id_fn == NULL)
+    thread_kill_fn = NULL;
+#endif
   
   /* Now change the master event's thread id from getpid() to the
      real thread id */
 
-  /* By default, the initial master eventset has TID of -1. This will
+  /* By default, the initial master eventset has TID of getpid(). This will
      get changed if the user enables threads with PAPI_thread_init(). */
 
   if (thread_id_fn)
-	{ default_master_eventset->tid = (*thread_id_fn)();
-  _papi_hwi_insert_in_master_list(default_master_eventset); }
+    { 
+      default_master_eventset->tid = (*thread_id_fn)();
+      _papi_hwi_insert_in_master_list(default_master_eventset); 
+    }
   
   papi_return(PAPI_OK);
 }

@@ -1213,33 +1213,46 @@ void _papi_hwi_lookup_thread_symbols(void)
 {
   int retval;
   char *error;
-  void *symbol = NULL, *handle = dlopen(NULL,RTLD_LAZY);
+  void *symbol = NULL, *handle = NULL;
+
+  handle = dlopen(NULL,RTLD_LAZY);
   assert(handle != NULL);
-#if defined(sun)
-  symbol = dlsym(handle,"thr_self");
-  if (symbol == NULL)
-    symbol = dlsym(handle,"pthread_self");
-#elif defined(_AIX)
-  symbol = dlsym(handle,"pthread_self");
-#endif
-  error = dlerror();
-  if ((error == NULL) && (symbol))
+
+  if (thread_id_fn == NULL)
     {
-      retval = PAPI_thread_init((unsigned long (*)(void))symbol, 0);
-      assert(retval == 0);
-    }
 #if defined(sun)
-  symbol = dlsym(handle,"thr_kill");
-  if (symbol == NULL)
-    symbol = dlsym(handle,"pthread_kill");
+      symbol = dlsym(handle,"thr_self");
+      if (symbol == NULL)
+	symbol = dlsym(handle,"pthread_self");
 #elif defined(_AIX)
-  symbol = dlsym(handle,"pthread_kill");
+      symbol = dlsym(handle,"pthread_self");
+#else
+#error "You had better edit _papi_hwi_lookup_thread_symbols in multiplex.c"
 #endif
-    error = dlerror();
-  if ((error == NULL) && (symbol))
-    {
-      thread_kill_fn = (int (*)(int, int))symbol;
+      error = dlerror();
+      if ((error == NULL) && (symbol))
+	{
+	  retval = PAPI_thread_init((unsigned long (*)(void))symbol, 0);
+	  assert(retval == 0);
+	}
     }
+
+  if (thread_kill_fn == NULL)
+    {
+#if defined(sun)
+      symbol = dlsym(handle,"thr_kill");
+      if (symbol == NULL)
+	symbol = dlsym(handle,"pthread_kill");
+#elif defined(_AIX)
+      symbol = dlsym(handle,"pthread_kill");
+#endif
+      error = dlerror();
+      if ((error == NULL) && (symbol))
+	{
+	  thread_kill_fn = (int (*)(int, int))symbol;
+	}
+    }
+  
   assert(((thread_id_fn == NULL) && (thread_kill_fn == NULL)) || ((thread_id_fn) && (thread_kill_fn)));
   dlclose(handle);
 }
