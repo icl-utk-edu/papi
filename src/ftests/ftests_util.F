@@ -36,7 +36,7 @@ C     And also to make the test code read cleaner
 
       subroutine dummy(array)
       implicit none
-      real array
+      real*8 array
       
 C     This is a dummy routine that can be used to make the
 C     compiler believe that the result of a loop is actually
@@ -191,22 +191,20 @@ C     used in the program. See eg. fmatrixpapi.F
  100  format(a,t41,a)
       end
 
-
 C     
 C     TEST UTILITIES
 C     
       subroutine do_flops(n)
       implicit none      
       integer n
-      real*8 a, b, c
+      real*8 a,b,c
+      common a, b
       integer i
-      a = 0.5
-      b = 6.2
       c = 0.11
       do i = 1, n
         c = c + a * b
       end do
-#if defined(__ALPHA) && defined(__osf__)
+#ifndef _CRAYT3E
       call dummy(c)
 #endif
       end
