@@ -152,7 +152,7 @@ static hwd_search_t findem_r10k[PAPI_MAX_PRESET_EVENTS] = {
 		{ -1,{-1,-1}}
 };
 
-static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = {
+static hwd_search_t findem_r12k[PAPI_MAX_PRESET_EVENTS] = { /* Shared with R14K */
                 {  0,{-1,25}},			/* L1 D-Cache misses */
                 {  0,{ 9,-1}},		        /* L1 I-Cache misses */
 		{  0,{-1,26}},		        /* L2 D-Cache misses */
@@ -443,6 +443,12 @@ static int scan_cpu_info(inventory_t *item, void *foo)
 	   strncpy(_papi_system_info.hw_info.model_string,"R12000",IPSTRPOS);
 	   _papi_system_info.num_gp_cntrs = 4;
 	   break;
+#ifdef C0_IMP_R14000
+       case C0_IMP_R14000:
+         strncpy(_papi_system_info.hw_info.model_string,"R14000",IPSTRPOS);
+         _papi_system_info.num_gp_cntrs = 4;
+         break;
+#endif
 	 default:
 	   return(PAPI_ESBSTR);
 	 }
@@ -482,6 +488,10 @@ static int setup_all_presets(PAPI_hw_info_t *info)
     findem = findem_r10k;
   else if ((info->model & 0xff) == C0_IMP_R12000)
     findem = findem_r12k;
+#ifdef C0_IMP_R14000
+  else if ((info->model & 0xff) == C0_IMP_R14000)
+    findem = findem_r12k;
+#endif
   else
     return(PAPI_ESBSTR);
 
