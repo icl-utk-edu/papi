@@ -686,6 +686,7 @@ int ffsll(long_long lli)
    int i, num, t, tmpint, len;
 
    num = sizeof(long_long)/sizeof(int);
+   if(num == 1) return(ffs(lli));
    len = sizeof(int)*CHAR_BIT;
 
    for(i=0; i< num; i++ ) {
