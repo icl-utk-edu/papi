@@ -993,7 +993,7 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 
       ncntrs = _papi_system_info.num_cntrs;
       selector = ESI->EventInfoArray[overflow_option->EventIndex].selector;
-      SUBDBG("selector id is %d.\n",selector);
+      SUBDBG("selector id is 0x%x.\n",selector);
       i = ffs(selector) - 1;
       if (i >= ncntrs)
 	{
@@ -1005,14 +1005,9 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	  fprintf(stderr,"Only one interrupting counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
-      if (contr->cpu_control.nractrs < 1)
+      if (contr->cpu_control.nractrs != 1)
 	{
-	  fprintf(stderr,"Must have one counter in event set.\n");
-	  return PAPI_EINVAL;
-	}
-      if ((contr->cpu_control.nractrs > 1) && (ESI->EventInfoArray[i].code != PAPI_FP_INS))
-	{
-	  fprintf(stderr,"Only PAPI events with single events are supported.\n");
+	  fprintf(stderr,"Must have only one counter in event set.\n");
 	  return PAPI_EINVAL;
 	}
 
@@ -1026,8 +1021,10 @@ int _papi_hwd_set_overflow(EventSetInfo *ESI, EventSetOverflowInfo_t *overflow_o
 	 in evntsel, swap events that do not fulfill this criterion. This
 	 will yield a non-monotonic pmc_map array */
 
-      if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
+#if 0
+     if (ESI->EventInfoArray[i].code == PAPI_FP_INS)
 	swap_pmc_map_events(contr,0,1);	
+#endif
 
       memset(&sa, 0, sizeof sa);
       sa.sa_sigaction = _papi_hwd_dispatch_timer;
