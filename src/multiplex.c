@@ -8,6 +8,8 @@
  *          johnmay@llnl.gov
  *          Nils Smeds
  *          smeds@pdc.kth.se
+ *          Haihang You
+ *          you@cs.utk.edu 
  */  
 
 #define MPX_NONDECR
@@ -1244,6 +1246,8 @@ void _papi_hwi_lookup_thread_symbols(void)
           retval = PAPI_thread_init((unsigned long (*)(void))symbol, 0);
           assert(retval == 0);
         }
+      else
+          thread_id_fn = (unsigned long (*)(void))symbol;
     }
 
   if (thread_kill_fn == NULL)
