@@ -80,4 +80,5 @@ int main()
    */
    PAPI_shutdown (); 
 
+   exit(0);
 }

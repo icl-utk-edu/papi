@@ -44,6 +44,9 @@ main()
   printf("Real_time: %f Proc_time: %f Total instructions: %lld IPC: %f\n", 
          real_time, proc_time,ins,ipc);
 
+  /* clean up */
+  PAPI_shutdown();
+  exit(0);
 }
 
 int your_slow_code()

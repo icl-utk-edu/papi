@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "papi.h" /* This needs to be included every time you use PAPI */
 
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 int poorly_tuned_function()
 {  
@@ -84,6 +84,8 @@ int main()
    
    /* free the resources used by PAPI */
    PAPI_shutdown();
+
+   exit(0);
 }
 
 

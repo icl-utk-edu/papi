@@ -56,6 +56,10 @@ int main()
 
    printf("Wallclock cycles  : %lld\nWallclock time(ms): %lld\n",e-s,e1-s1);
 
+   /* clean up */
+   PAPI_shutdown();
+
+   exit(0);
 }
 
  

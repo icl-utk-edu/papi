@@ -9,8 +9,7 @@
 
 #define OVER_FMT    "handler(%d ) Overflow at %p! bit=0x%llx \n"
 #define THRESHOLD 100000 
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
-
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 int total = 0;	/* we use total to track the amount of overflows that occured */
 
@@ -53,17 +52,17 @@ int main ()
    if ((retval=PAPI_create_eventset (&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   PAPI_event = PAPI_FP_INS;
+   PAPI_event = PAPI_TOT_INS;
 
    /* Here we are querying for the existence of the PAPI presets  */
-   if (PAPI_query_event (PAPI_FP_INS) != PAPI_OK)
+   if (PAPI_query_event (PAPI_TOT_INS) != PAPI_OK)
    {
       PAPI_event = PAPI_TOT_CYC;
 
       if ((retval=PAPI_query_event (PAPI_TOT_INS)) != PAPI_OK)
          ERROR_RETURN(retval);
 
-      printf ("PAPI_FP_INS not available on this platform.");
+      printf ("PAPI_TOT_INS not available on this platform.");
       printf (" so subst PAPI_event with PAPI_TOT_CYC !\n\n");
 
    }
@@ -125,4 +124,5 @@ int main ()
    /* free the resources used by PAPI */ 
    PAPI_shutdown();
 
+   exit(0);
 }

@@ -38,6 +38,12 @@ int main()
 
 
    printf("%d CPU  at %f Mhz.\n",hwinfo->totalcpus,hwinfo->mhz);
+   printf(" model string is %s \n", hwinfo->model_string);
+
+   /* clean up */ 
+   PAPI_shutdown();
+
+   exit(0);
 
 }
 

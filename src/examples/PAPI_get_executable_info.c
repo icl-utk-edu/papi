@@ -45,4 +45,5 @@ int main()
    printf("End text address of user program is at %p\n",
               prginfo->address_info.text_end);
 
+   exit(0);
 }

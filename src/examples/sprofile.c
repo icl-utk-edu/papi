@@ -10,63 +10,39 @@
 #include "papi.h" /* This needs to be included every time you use PAPI */
 
 #define NUM_FLOPS  20000000
-#define NUM_READS 2000000
 #define NUM_ITERS 100000
 #define THRESHOLD 100000
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
-/*
-Warning: some platforms must define the macros like below
-#define DO_READS (unsigned long)(do_reads)
-#define DO_FLOPS (unsigned long)(do_flops)
-*/
-/* this works in itanium with linux */
-#define DO_READS (unsigned long)(*(void **)do_reads)
-#define DO_FLOPS (unsigned long)(*(void **)do_flops)
+#if (defined(linux) && defined(__ia64__)) || (defined(_AIX))
+#define DO_FLOPS1 (unsigned long)(*(void **)do_flops1)
+#define DO_FLOPS2 (unsigned long)(*(void **)do_flops2)
+#else
+#define DO_FLOPS1 (unsigned long)(do_flops1)
+#define DO_FLOPS2 (unsigned long)(do_flops2)
+#endif
 
-void do_flops(int);
-
-void do_reads(int n)
+void do_flops2(int);
+volatile double t1 = 0.8, t2 = 0.9;
+void do_flops1(int n)
 {
-   int i, retval;
-   static int fd = -1;
-   char buf;
+   int i;
+   double c = 22222.11;
 
-   if (fd == -1) 
-   {
-      fd = open("/dev/zero", O_RDONLY);
-      if (fd == -1) 
-      {
-         perror("open(/dev/zero)");
-         exit(1);
-      }
-   }
-
-   for (i = 0; i < n; i++) 
-   {
-      retval = read(fd, &buf, sizeof(buf));
-      if (retval != sizeof(buf))
-      {
-         if (retval < 0)
-            perror("/dev/zero cannot be read");
-         else
-            fprintf(stderr,"/dev/zero cannot be read: only got %d bytes.\n"
-                     ,retval);
-         exit(1);
-      }
-   }
+   for (i = 0; i < n; i++)
+      c -= t1 * t2;
 }
 
 void do_both(int n)
 {
    int i;
-   const int flops = NUM_FLOPS / n;
-   const int reads = NUM_READS / n;
+   const int flops2 = NUM_FLOPS / n;
+   const int flops1 = NUM_FLOPS / n;
 
    for (i = 0; i < n; i++) 
    {
-      do_flops(flops);
-      do_reads(reads);
+      do_flops1(flops1);
+      do_flops2(flops2);
    }
 }
 
@@ -120,15 +96,15 @@ int main(int argc, char **argv)
    /* First half */
    sprof[0].pr_base = profbuf;
    sprof[0].pr_size = length / 2;
-   sprof[0].pr_off = (caddr_t) DO_FLOPS;
-      fprintf(stderr, "do_flops is at %p %lx\n", &do_flops, sprof[0].pr_off);
+   sprof[0].pr_off = (caddr_t) DO_FLOPS2;
+      fprintf(stderr, "do_flops is at %p %lx\n", &do_flops2, sprof[0].pr_off);
 
    sprof[0].pr_scale = 65536;  /* constant needed by PAPI_sprofil */
    /* Second half */
    sprof[1].pr_base = profbuf2;
    sprof[1].pr_size = length / 2;
-   sprof[1].pr_off = (caddr_t) DO_READS;
-      fprintf(stderr, "do_reads is at %p %lx\n", &do_reads, sprof[1].pr_off);
+   sprof[1].pr_off = (caddr_t) DO_FLOPS1;
+      fprintf(stderr, "do_flops1 is at %p %lx\n", &do_flops1, sprof[1].pr_off);
    sprof[1].pr_scale = 65536; /* constant needed by PAPI_sprofil */
 
    /* Overflow bin */
@@ -147,7 +123,7 @@ int main(int argc, char **argv)
       ERROR_RETURN(retval);
 
    /* Add Total Instructions Executed to our EventSet */
-   if ( (retval = PAPI_add_event(EventSet, PAPI_FP_INS)) != PAPI_OK)
+   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    /* set profile flag */
@@ -176,23 +152,24 @@ int main(int argc, char **argv)
    for (i = 0; i < length / 2; i++) 
    {
       if (profbuf[i])
-         printf("0x%lx\t%d\n", DO_FLOPS + 2 * i, profbuf[i]);
+         printf("0x%lx\t%d\n", DO_FLOPS2 + 2 * i, profbuf[i]);
    }
    printf("---------Buffer 2--------\n");
    for (i = 0; i < length / 2; i++) 
    {
       if (profbuf2[i])
-         printf("0x%lx\t%d\n", DO_READS + 2 * i, profbuf2[i]);
+         printf("0x%lx\t%d\n", DO_FLOPS1 + 2 * i, profbuf2[i]);
    }
    printf("-------------------------\n");
    printf("%u samples that fell outside the regions.\n", *profbuf3);
-   exit(1);
+
+   exit(0);
 }
 
 /* here declare a and b to be volatile is to try to let the
    compiler not to optimize the loop */
 volatile double a = 0.5, b = 2.2;
-void do_flops(int n)
+void do_flops2(int n)
 {
    int i;
    double c = 0.11;

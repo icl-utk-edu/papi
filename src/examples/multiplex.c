@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include "papi.h"
 
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:line %d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 #define NUM_ITERS 10000000
 #define MAX_TO_ADD 6
@@ -60,11 +60,12 @@ int multiplex(void)
    retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       ERROR_RETURN(retval);
-
+/*
    retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
    if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
       ERROR_RETURN(retval);
    printf("Adding %s\n", "PAPI_TOT_INS");
+*/
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) 
    {
@@ -73,21 +74,24 @@ int multiplex(void)
          ERROR_RETURN(retval);
 
       if ((pset.count) && (pset.event_code != PAPI_TOT_CYC)) 
+      {
          printf("Adding %s\n", pset.symbol);
 
-      retval = PAPI_add_event(EventSet, pset.event_code);
-      if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-         ERROR_RETURN(retval);
+         retval = PAPI_add_event(EventSet, pset.event_code);
+         if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
+            ERROR_RETURN(retval);
 
-	  if (retval == PAPI_OK) 
-         printf("Added %s\n", pset.symbol);
-	  else 
-         printf("Could not add %s due to resource limitation.\n", pset.symbol);
+	     if (retval == PAPI_OK) 
+            printf("Added %s\n", pset.symbol);
+	     else 
+            printf("Could not add %s due to resource limitation.\n", 
+                  pset.symbol);
 
-      if (retval == PAPI_OK) 
-      {
-         if (++j >= MAX_TO_ADD-1)
-             break;
+         if (retval == PAPI_OK) 
+         {
+            if (++j >= MAX_TO_ADD)
+                break;
+         }
       }
    }
 
@@ -141,4 +145,5 @@ int main(int argc, char **argv)
    printf("Using %d iterations\n\n", NUM_ITERS);
    printf("Does PAPI_multiplex_init() handle lots of events?\n");
    multiplex();
+   exit(0);
 }

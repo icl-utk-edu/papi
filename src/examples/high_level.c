@@ -11,8 +11,7 @@
 
 #define NUM_EVENTS 2
 #define THRESHOLD 10000
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
-
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 /* stupid codes to be monitored */ 
 void computation_mult()
@@ -112,7 +111,7 @@ int main()
    printf("The total instructions executed for addition are %lld \n",values[0]);
    printf("The total cycles used are %lld \n", values[1] );
 	
-   printf("\nNow we will try to use the PAPI_accum to accumulate values\n"); 
+   printf("\nNow we try to use PAPI_accum to accumulate values\n"); 
 
    /* Do some computation here */
    computation_add();
@@ -136,7 +135,7 @@ int main()
     * Stop counting events(this reads the counters as well as stops them  *
     ***********************************************************************/
 
-   printf("\nNow we will try doing some multiplications\n");
+   printf("\nNow we try to do some multiplications\n");
    computation_mult();
 
    /******************* PAPI_stop_counters **********************************/
@@ -146,5 +145,5 @@ int main()
    printf("The total instruction executed for multiplication are %lld \n",
                values[0] );
    printf("The total cycles used are %lld \n", values[1] );
-	
+   exit(0);	
 }

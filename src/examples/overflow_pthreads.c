@@ -6,7 +6,7 @@
     (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
 
      The Eventset contains:
-     + PAPI_FP_INS (overflow monitor)
+     + PAPI_TOT_INS (overflow monitor)
      + PAPI_TOT_CYC
    
    Each thread will do the followings :
@@ -22,7 +22,7 @@
 
 #define THRESHOLD 200000
 #define OVER_FMT    "handler(%d ) Overflow at %p! bit=0x%llx \n"
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:line %d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 
 int total = 0;
@@ -60,13 +60,13 @@ void *Thread(void *arg)
     	ERROR_RETURN(retval);
 
  	/* query whether the event exists */
-	if ((retval=PAPI_query_event(PAPI_FP_INS)) != PAPI_OK) 
+	if ((retval=PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK) 
     	ERROR_RETURN(retval);
 	if ((retval=PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK) 
     	ERROR_RETURN(retval);
 
 	/* add events to the event set */
-	if ( (retval = PAPI_add_event(EventSet1, PAPI_FP_INS))!= PAPI_OK)
+	if ( (retval = PAPI_add_event(EventSet1, PAPI_TOT_INS))!= PAPI_OK)
     	ERROR_RETURN(retval);
 
 	if ( (retval = PAPI_add_event(EventSet1, PAPI_TOT_CYC)) != PAPI_OK)
@@ -76,7 +76,7 @@ void *Thread(void *arg)
 
 	elapsed_cyc = PAPI_get_real_cyc();
 
-	retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler);
+	retval = PAPI_overflow(EventSet1, PAPI_TOT_CYC, THRESHOLD, 0, handler);
 	if(retval !=PAPI_OK)
     	ERROR_RETURN(retval);
 
@@ -94,12 +94,12 @@ void *Thread(void *arg)
     elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
     /* disable overflowing */
-	retval = PAPI_overflow(EventSet1, PAPI_FP_INS, 0, 0, handler);
+	retval = PAPI_overflow(EventSet1, PAPI_TOT_CYC, 0, 0, handler);
 	if(retval !=PAPI_OK)
     	ERROR_RETURN(retval);
 
 	/* remove the event from the eventset */
-	retval = PAPI_remove_event(EventSet1, PAPI_FP_INS);
+	retval = PAPI_remove_event(EventSet1, PAPI_TOT_INS);
     if (retval != PAPI_OK)
     	ERROR_RETURN(retval);
 
@@ -107,13 +107,13 @@ void *Thread(void *arg)
     if (retval != PAPI_OK)
     	ERROR_RETURN(retval);
 
-    printf("Thread 0x%x PAPI_FP_INS : \t%lld\n",(int)PAPI_thread_id(),
+    printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n",(int)PAPI_thread_id(),
 	 values[0]);
-    printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",pthread_self(),
 	 (values[1]));
-    printf("Thread 0x%x Real usec   : \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x Real usec   : \t%lld\n",pthread_self(),
 	 elapsed_us);
-    printf("Thread 0x%x Real cycles : \t%lld\n",(int)pthread_self(),
+    printf("Thread 0x%x Real cycles : \t%lld\n",pthread_self(),
 	 elapsed_cyc);
 
     pthread_exit(NULL);
@@ -178,5 +178,6 @@ int main(int argc, char **argv)
 
     /* clean up */
     PAPI_shutdown();
+    exit(0);
 }
 

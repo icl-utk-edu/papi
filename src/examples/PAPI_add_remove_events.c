@@ -14,8 +14,7 @@
 
 #define NUM_EVENT 2
 #define THRESHOLD 100000
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
-
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 
 int main(){
@@ -66,7 +65,7 @@ int main(){
     if ( (retval=PAPI_stop(EventSet,values)) != PAPI_OK)
 		ERROR_RETURN(retval);
 
-	printf("\nThe total instructions executed are %i, total cycles %i\n",
+	printf("\nThe total instructions executed are %lld, total cycles %lld\n",
             values[0],values[1]);
 
     
@@ -79,4 +78,6 @@ int main(){
 
     /* free the resources used by PAPI */
     PAPI_shutdown();
+   
+    exit(0);
 }

@@ -27,6 +27,15 @@ main()
   long_long iflpins;
   int retval;
 
+  /***********************************************************************
+   * if PAPI_FP_INS is a derived event in your platform, then your       * 
+   * platform must have at least three counters to support PAPI_flips,   *
+   * because PAPI needs one counter to cycles. So in UltraSparcIII, even *
+   * the platform supports PAPI_FP_INS, but UltraSparcIII only have two  *
+   * available hardware counters and PAPI_FP_INS is a derived event in   *
+   * this platform, so PAPI_flops returns an error.                      *
+   ***********************************************************************/
+
   if((retval=PAPI_flips(&ireal_time,&iproc_time,&iflpins,&imflips)) < PAPI_OK)
   { 
     printf("Could not initialise PAPI_flips \n");
@@ -47,6 +56,7 @@ main()
   printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLIPS: %f\n", 
          real_time, proc_time,flpins,mflips);
 
+  exit(0);
 }
 
 int your_slow_code()

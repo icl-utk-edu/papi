@@ -8,8 +8,7 @@
 
 #define FLOPS 1000000
 #define THRESHOLD 100000
-#define ERROR_RETURN(retval) { fprintf(stderr, "Error %s:%s:%d: \n", __FILE__,__func__,__LINE__);  exit(retval); }
-
+#define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 int code_to_monitor()
 {
@@ -80,7 +79,7 @@ int main()
    if ( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   PAPI_event = PAPI_FP_INS;
+   PAPI_event = PAPI_TOT_INS;
    /* Add Total Instructions Executed to our EventSet */
    if ( (retval = PAPI_add_event(EventSet, PAPI_event)) != PAPI_OK)
       ERROR_RETURN(retval);
@@ -140,9 +139,10 @@ int main()
       printf("Test succeeds! \n");
    else
       printf( "No information in buffers\n");
-
+   /* clean up */
    PAPI_shutdown();
 
+   exit(0);
 }
 
 

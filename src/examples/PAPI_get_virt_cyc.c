@@ -13,7 +13,7 @@ double tmp;
 int your_slow_code()
 {
 
-   for(i=1; i<20000; i++)
+   for(i=1; i<200000; i++)
    {
       tmp= (tmp+i)/2;
    }
@@ -58,7 +58,9 @@ int main()
 
    printf("Virtual cycles  : %lld\nVirtual time(ms): %lld\n",e-s,e1-s1);
 
-}
+   /* clean up */
+   PAPI_shutdown();
 
- 
+   exit(0);
+}
 
