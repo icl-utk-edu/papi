@@ -93,10 +93,18 @@ inline pid_t mygettid(void)
       ctx[0].ctx_notify_pid = thr_ctx->tid;
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
+      SUBDBG("PFM_CREATE_CONTEXT");
       if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-         PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
-         return(PAPI_ESYS);
-      }
+	  if (errno == EBUSY)
+	    {
+	      SUBDBG("Context is busy!\n");
+	    }
+	  else
+	    {
+	      PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
+	      return(PAPI_ESYS);
+	    }
+	}
 
       /*
        * reset PMU (guarantee not active on return) and unfreeze
@@ -326,8 +334,15 @@ hweight64 (unsigned long x)
       memset(&load_args, 0, sizeof(load_args));
 
       if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-         PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
-         return(PAPI_ESYS);
+	  if (errno == EBUSY)
+	    {
+	      SUBDBG("Context is busy!\n");
+	    }
+	  else
+	    {
+	      PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
+	      return(PAPI_ESYS);
+	    }
       }
       ctx_fd = ctx[0].ctx_fd;
       thr_ctx->fd = ctx_fd;
