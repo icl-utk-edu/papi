@@ -136,10 +136,9 @@ static preset_search_t preset_name_map_630[PAPI_MAX_PRESET_EVENTS] = {
   {PAPI_FPU_IDL,0,{PNE_PM_FPU_IDLE,0,0,0,0,0,0,0}}, /*Cycles floating point units are idle*/
   {PAPI_LSU_IDL,0,{PNE_PM_LSU_IDLE,0,0,0,0,0,0,0}}, /*Cycles load/store units are idle*/
   {PAPI_TLB_TL,0,{PNE_PM_TLB_MISS,0,0,0,0,0,0,0}}, /*Total translation lookaside buffer misses*/
-  {PAPI_L1_LDM,0,{PNE_PM_LD_MISS_L1,0,0,0,0,0,0,0}}, /*Level 1 load misses */
+  {PAPI_L1_LDM,0,{PNE_PM_LD_MISS_L2HIT,0,0,0,0,0,0,0}}, /*Level 1 load misses */
   {PAPI_L1_STM,0,{PNE_PM_ST_MISS_L1,0,0,0,0,0,0,0}}, /*Level 1 store misses */
-  {PAPI_L2_LDM,0,{PNE_PM_LD_MISS_EXCEED_L2,0,0,0,0,0,0,0}}, /*Level 2 load misses */		
-  {PAPI_L2_STM,0,{PNE_PM_ST_MISS_EXCEED_L2,0,0,0,0,0,0,0}}, /*Level 2 store misses */		
+  {PAPI_L2_LDM,0,{PNE_PM_BIU_LD_NORTRY,0,0,0,0,0,0,0}}, /*Level 2 load misses */		
   {PAPI_BTAC_M,0,{PNE_PM_BTAC_MISS,0,0,0,0,0,0,0}}, /*BTAC miss*/
   {PAPI_PRF_DM,0,{PNE_PM_PREF_MATCH_DEM_MISS,0,0,0,0,0,0,0}}, /*Prefetch data instruction caused a miss */
   {PAPI_TLB_SD,0,{PNE_PM_TLBSYNC_RERUN,0,0,0,0,0,0,0}}, /*Xlation lookaside buffer shootdowns (SMP)*/
