@@ -9,7 +9,7 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h pa
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS= fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) genpapifdef $(FHEADERS) examples
+all: showconf $(LIBS) genpapifdef $(FHEADERS) tests
 
 showconf:
 		@echo; 
@@ -93,8 +93,10 @@ f77papi.h: genpapifdef
 f90papi.h: genpapifdef
 	./genpapifdef -f90 > f90papi.h
 
-fulltest: examples
+fulltest: tests
 	sh run_tests.sh
+
+tests: ctests ftests
 
 ctests: null
 	cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS) TOOLPATH="$(TOOLPATH)"
