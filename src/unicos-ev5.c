@@ -96,6 +96,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
          if(this_state->counter_cmd.CTL0) {
             return (PAPI_ECNFLCT);
          }
+         native[i].ni_position = 0;
          this_state->selector |= CNTR1;
          this_state->counter_cmd.SEL0 = native[i].ni_bits.selector[0];
          this_state->counter_cmd.CTL0 = CTL_ON;
@@ -104,6 +105,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
          if(this_state->counter_cmd.CTL1) {
             return (PAPI_ECNFLCT);
          }
+         native[i].ni_position = 1;
          this_state->selector |= CNTR2;
          this_state->counter_cmd.SEL1 = native[i].ni_bits.selector[1];
          this_state->counter_cmd.CTL1 = CTL_ON;
@@ -112,11 +114,11 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
          if(this_state->counter_cmd.CTL2) {
             return (PAPI_ECNFLCT);
          }
+         native[i].ni_position = 2;
          this_state->selector |= CNTR3;
          this_state->counter_cmd.SEL2 = native[i].ni_bits.selector[2];
          this_state->counter_cmd.CTL2 = CTL_ON;
       }
-      native[i].ni_position = i;
    }
 #ifdef DEBUG
    print_control(&this_state->counter_cmd);

@@ -182,7 +182,7 @@ int PAPI_library_init(int version)
 #ifdef DEBUG
    char *var;
    _papi_hwi_debug = 0;
-   if ((var = getenv("PAPI_DEBUG")) && var != NULL ) {
+   if ((var = (char *)getenv("PAPI_DEBUG")) && var != NULL ) {
       _papi_hwi_debug |= DEBUG_ON;
       if (strlen(var) > 1 && var[1] == 'x')
          sscanf(var, "%x", &tmp);
