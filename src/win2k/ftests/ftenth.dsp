@@ -45,7 +45,7 @@ RSC=rc.exe
 # ADD BASE F90 /compile_only /nologo /warn:nofileopt
 # ADD F90 /compile_only /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"c:\papi\src" /include:"..\.." /include:"..\..\ctests" /nologo /warn:nofileopt /fpp:"/m"
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "..\..\\" /I "..\substrate" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -72,7 +72,7 @@ LINK32=link.exe
 # ADD F90 /check:bounds /compile_only /debug:full /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"..\.." /include:"..\..\ctests" /nologo /traceback /warn:argument_checking /warn:nofileopt /fpp:"/m"
 # SUBTRACT F90 /assume:underscore
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "..\..\\" /I "..\substrate" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -98,11 +98,11 @@ SOURCE=..\..\ftests\cpause.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\ftests\do_loops.F
+SOURCE=..\..\ctests\do_loops.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\ftests\dummy.F
+SOURCE=..\..\ctests\dummy.c
 # End Source File
 # Begin Source File
 

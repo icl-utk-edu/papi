@@ -45,7 +45,7 @@ RSC=rc.exe
 # ADD BASE F90 /compile_only /nologo /warn:nofileopt
 # ADD F90 /compile_only /extend_source:132 /iface:nomixed_str_len_arg /iface:cref /include:"c:\papi\src" /include:"..\.." /include:"..\..\ctests" /nologo /warn:nofileopt /fpp:"/m"
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "..\..\\" /I "..\substrate" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -112,11 +112,11 @@ SOURCE=..\..\ftests\description.F
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\ftests\do_loops.F
+SOURCE=..\..\ctests\do_loops.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\ftests\dummy.F
+SOURCE=..\..\ctests\dummy.c
 # End Source File
 # Begin Source File
 
