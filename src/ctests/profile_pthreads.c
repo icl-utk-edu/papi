@@ -1,32 +1,4 @@
-/* This file performs the following test: start, stop and timer
-functionality for 2 slave pthreads
-
-   - It attempts to use the following two counters. It may use less
-depending on hardware counter resource limitations. These are counted
-in the default counting domain and default granularity, depending on
-the platform. Usually this is the user domain (PAPI_DOM_USER) and
-thread context (PAPI_GRN_THR).
-
-     + PAPI_FP_INS
-     + PAPI_TOT_CYC
-
-Each of 2 slave pthreads:
-   - Get cyc.
-   - Get us.
-   - Start counters
-   - Do flops
-   - Stop and read counters
-   - Get us.
-   - Get cyc.
-
-Master pthread:
-   - Get us.
-   - Get cyc.
-   - Fork threads
-   - Wait for threads to exit
-   - Get us.
-   - Get cyc.
-*/
+/* This file performs the following test: profile for pthreads */
 
 #include <pthread.h>
 #include <stdio.h>
@@ -36,19 +8,18 @@ Master pthread:
 #include <memory.h>
 #include <malloc.h>
 #undef NDEBUG
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
 #include "test_utils.h"
 
-#define THR 10000
+#define THR 1000000
 unsigned long length;
 unsigned long start, end;
 
 void *Thread(void *arg)
 {
-  int retval, num_tests = 1;
+  int retval, num_tests = 1, i;
   int EventSet1;
   int mask1 = 0x5;
   int num_events1;
@@ -57,7 +28,8 @@ void *Thread(void *arg)
   unsigned short *profbuf;
   
   profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
-  assert(profbuf != NULL);
+  if (profbuf == NULL)
+    exit(1);
   memset(profbuf,0x00,length*sizeof(unsigned short));
 
   EventSet1 = add_test_events(&num_events1,&mask1);
@@ -70,16 +42,20 @@ void *Thread(void *arg)
 
   elapsed_cyc = PAPI_get_real_cyc();
 
-  assert(PAPI_profil(profbuf, length, start, 65536, 
-		     EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX) >= PAPI_OK);
+  retval = PAPI_profil(profbuf, length, start, 65536, 
+		       EventSet1, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX);
+  if (retval)
+    exit(retval);
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval)
+    exit(retval);
 
   do_flops(*(int *)arg);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval)
+    exit(retval);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -96,9 +72,18 @@ void *Thread(void *arg)
   printf("Thread 0x%x Real cycles : \t%lld\n",(int)pthread_self(),
 	 elapsed_cyc);
 
+  printf("Test case: PAPI_profil() for pthreads\n");
+  printf("----Profile buffer for Thread 0x%x---\n",(int)pthread_self());
+  for (i=0;i<length;i++)
+    {
+      if (profbuf[i])
+	printf("0x%x\t%d\n",(unsigned int)start + 2*i,profbuf[i]);
+    }
+
   free_test_space(values, num_tests);
 
   pthread_exit(NULL);
+
   return(NULL);
 }
 
@@ -112,13 +97,19 @@ int main()
   long long elapsed_us, elapsed_cyc;
   const PAPI_exe_info_t *prginfo = NULL;
 
-  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+    exit(1);
 
-  assert(PAPI_thread_init(pthread_self, 0) == PAPI_OK);
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
-  assert(prginfo = PAPI_get_executable_info());
+  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
+    exit(1);
+
+  if ((prginfo = PAPI_get_executable_info()) == NULL)
+    exit(1);
   start = (unsigned long)prginfo->text_start;
-  end = (unsigned long)prginfo->text_end;
+  end =  (unsigned long)prginfo->text_end;
   length = end - start;
 
   elapsed_us = PAPI_get_real_usec();
@@ -133,18 +124,18 @@ int main()
   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-  flops1 = 1000000;
+  flops1 = 10000000;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
   if (rc)
-    exit(-1);
+    exit(1);
 
-  flops2 = 2000000;
+  flops2 = 20000000;
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
   if (rc)
-    exit(-1);
+    exit(1);
 
   pthread_attr_destroy(&attr);
-  pthread_join(f_th, NULL);
+  pthread_join(f_th, NULL); 
   pthread_join(e_th, NULL);
 
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
@@ -159,3 +150,4 @@ int main()
   pthread_exit(NULL);
   exit(0);
 }
+

@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -35,7 +34,11 @@ int main()
   long long elapsed_us, elapsed_cyc;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   EventSet1 = add_test_events(&num_events1,&mask1);
 
@@ -48,12 +51,14 @@ int main()
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -82,7 +87,6 @@ int main()
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d\n",2*NUM_FLOPS);
 
   free_test_space(values, num_tests);
 

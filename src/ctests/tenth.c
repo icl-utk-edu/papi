@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -46,7 +45,11 @@ int main()
   long long **values;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
 #ifndef _CRAYT3E
   EventSet1 = add_test_events(&num_events1,&mask1);
@@ -62,31 +65,37 @@ int main()
 
 #ifndef _CRAYT3E 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 #else
   (values[0])[0] = 0LL;
 #endif
 
   retval = PAPI_start(EventSet2);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet2, values[1]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_start(EventSet3);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_l1misses(ITERS);
   
   retval = PAPI_stop(EventSet3, values[2]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
 #ifndef _CRAYT3E
   remove_test_events(&EventSet1, mask1);

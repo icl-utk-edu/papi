@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "test_utils.h"
@@ -44,60 +43,77 @@ void papimon_start(void)
   if (EventSet == PAPI_NULL)
     {
       retval = PAPI_create_eventset(&EventSet);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
 
 #if defined(_AIX)
       native = 0 | 5 << 8  | 0; /* ICM */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 35 << 8 | 1; /* FPU1CMPL */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 5 << 8  | 2; /* LDCM */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 5 << 8  | 3; /* LDCMPL */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 5 << 8  | 4; /* FPU0CMPL */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 12 << 8 | 5; /* CYC */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 9 << 8  | 6; /* FMA */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 0 << 8  | 7; /* TLB */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
 #elif defined(linux)
       native = 0 | 0x43 << 8 | 0; /* Data mem refs */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 0x47 << 8 | 1; /* Lines out */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       /* native = 0 | 1 << 8 | 2;  Virtual TSC 
 	 retval = PAPI_add_event(&EventSet, native);
-	 assert (retval == PAPI_OK); */
+	 if  (retval != PAPI_OK)
+      exit(1);*/
 #elif defined(mips) && defined(sgi) && defined(unix)
       native = 0 | 0x9 << 8 | 0; /* L1 I Miss */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 0x9 << 8 | 1; /* L1 D Miss */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
 #elif defined(_CRAYT3E)
       native = 0 | 0x0 << 8 | 0; /* Machine cyc */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 0xe << 8 | 1; /* Dcache acc. */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 0 | 0xC << 8 | 2; /* CPU cyc */
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
 #elif defined(sun) && defined(sparc)
 /* 
 0,0,Cycle_cnt,0x0
@@ -127,26 +143,32 @@ void papimon_start(void)
 */
       native = 0 | (0xb << 8); /* Load_use */  
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = 1 | (0xa << 8); /* DC_wr_hit */  
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
 #elif defined(__ALPHA) && defined(__osf__)
       native = get_instr();
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
       native = get_cyc();
       retval = PAPI_add_event(&EventSet, native);
-      assert (retval == PAPI_OK);
+      if  (retval != PAPI_OK)
+	exit(1);
 #else
 #error "Architecture not included in this test file yet."
 #endif
-      assert(hwinfo = PAPI_get_hardware_info());
+      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+	exit(1);
     }
 
   us = PAPI_get_real_usec();
   retval = PAPI_start(EventSet);
-  assert(retval == PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
   point++;
 }
 
@@ -160,7 +182,8 @@ void papimon_stop(void)
 #endif
 
   retval = PAPI_stop(EventSet,values);
-  assert(retval == PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
   us = PAPI_get_real_usec() - us;
   
   fprintf(stderr,"-------------Monitor Point %d-------------\n",point);
@@ -210,8 +233,12 @@ int main()
   int retval;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
   
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
+
   papimon_start();
 
   sleep(1);

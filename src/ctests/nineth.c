@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -39,7 +38,11 @@ int main()
   double test_flops;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
@@ -49,23 +52,28 @@ int main()
   values = allocate_test_space(num_tests, num_events1);
 
   clockrate = PAPI_get_opt(PAPI_GET_CLOCKRATE,NULL);
-  assert(clockrate > 0);
+  if (clockrate < 1)
+    exit(1);
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_start(EventSet2);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_stop(EventSet2, values[1]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);

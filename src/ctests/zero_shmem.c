@@ -34,7 +34,6 @@ Master pthread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #ifdef _CRAYT3E
 #include <intrinsics.h>
 #endif
@@ -63,12 +62,14 @@ void Thread(int n)
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval >= PAPI_OK)
+    exit(1);
 
   do_flops(n);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval >= PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 

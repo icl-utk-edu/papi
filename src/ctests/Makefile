@@ -30,7 +30,7 @@ zero_smp: zero_smp.c $(UTILOBJS) ../libpapi.a
 	-$(CC_R) $(SMPCFLGS) $(CFLAGS) $(INCLUDE) zero_smp.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_smp $(SMPLIBS)
 
 zero_shmem: zero_shmem.c $(UTILOBJS) ../libpapi.a
-	-$(CC_R) $(SMPCFLGS) $(CFLAGS) $(INCLUDE) zero_shmem.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_smp $(SMPLIBS)
+	-$(CC_R) $(SMPCFLGS) $(CFLAGS) $(INCLUDE) zero_shmem.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_shmem $(SMPLIBS)
 
 zero_omp: zero_omp.c $(UTILOBJS) ../libpapi.a
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) zero_omp.c $(UTILOBJS) ../libpapi.a $(LDFLAGS) -o zero_omp $(OMPLIBS)
@@ -106,4 +106,15 @@ test_utils.o: test_utils.c
 
 clean:
 	rm -f *.o $(ALL) core *~
-	rm -rf rii_files
+	rm -rf rii_files *.stderr *.stdout
+
+run: 
+	sh ./run_tests.sh
+
+install: $(TARGETS)
+	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
+	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
+	mkdir -p $(DESTDIR)/ctests
+	chmod go+rx $(DESTDIR)/ctests
+	find . -perm +1 -type f -exec cp {} $(DESTDIR)/ctests \;
+	chmod go+rx $(DESTDIR)/ctests/*

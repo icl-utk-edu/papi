@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -15,8 +14,16 @@ int main()
   int preset;
 
   retval = PAPI_event_name_to_code( "PAPI_FP_INS", &preset );
-  assert(retval == PAPI_OK);
-  assert(preset == PAPI_FP_INS);
+  if (retval != PAPI_OK)
+    exit(1);
+  if (preset != PAPI_FP_INS)
+    exit(1);
+
+  retval = PAPI_event_name_to_code( "PAPI_TOT_CYC", &preset );
+  if (retval != PAPI_OK)
+    exit(1);
+  if (preset != PAPI_TOT_CYC)
+    exit(1);
 
   exit(0);
 }

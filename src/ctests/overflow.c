@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -50,27 +49,37 @@ int main(int argc, char **argv)
   int retval;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   EventSet = add_test_events(&num_events,&mask);
 
   values = allocate_test_space(num_tests, num_events);
 
-  assert(mask & 0x4);
+  if ((mask & 0x4) == 0x0)
+    exit(1);
 
-  assert(PAPI_start(EventSet) == PAPI_OK);
-
-  do_flops(NUM_FLOPS*10);
-
-  assert(PAPI_stop(EventSet, values[0]) == PAPI_OK);
-
-  assert(PAPI_overflow(EventSet, PAPI_FP_INS, THRESHOLD, 0, handler) == PAPI_OK);
-
-  assert(PAPI_start(EventSet) == PAPI_OK);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS*10);
 
-  assert(PAPI_stop(EventSet, values[1]) == PAPI_OK);
+  if (PAPI_stop(EventSet, values[0]) != PAPI_OK)
+    exit(1);
+
+  if (PAPI_overflow(EventSet, PAPI_FP_INS, THRESHOLD, 0, handler) != PAPI_OK)
+    exit(1);
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
+
+  do_flops(NUM_FLOPS*10);
+
+  if (PAPI_stop(EventSet, values[1]) != PAPI_OK)
+    exit(1);
 
   printf("Test case 6: Overflow dispatch.\n");
   printf("-----------------------------------------\n");

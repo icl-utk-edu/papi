@@ -11,7 +11,6 @@ and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
 2 counters. */
 
 #include <stdio.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 
@@ -25,7 +24,8 @@ int main()
    long long int g1[3];
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
-   assert(retval >= PAPI_OK);
+   if (retval != PAPI_VER_CURRENT)
+     exit(1);
    
    if (PAPI_query_event(PAPI_L2_TCM) == PAPI_OK)
      j++;

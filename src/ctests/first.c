@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -38,40 +37,51 @@ int main()
   int EventSet;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   EventSet = add_test_events(&num_events,&mask);
 
   values = allocate_test_space(num_tests, num_events);
 
   retval = PAPI_start(EventSet);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_read(EventSet, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_reset(EventSet);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_read(EventSet, values[1]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_read(EventSet, values[2]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet, values[3]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_read(EventSet, values[4]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   remove_test_events(&EventSet, mask);
 
@@ -92,8 +102,6 @@ int main()
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d %d %d %d\n",
-	 2*NUM_FLOPS,2*NUM_FLOPS,4*NUM_FLOPS,6*NUM_FLOPS,6*NUM_FLOPS);
   printf("Column 1 approximately equals column 2\n");
   printf("Column 3 approximately equals 2 * column 2\n");
   printf("Column 4 approximately equals 3 * column 2\n");

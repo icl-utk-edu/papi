@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
+#include <sys/time.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "test_utils.h"
@@ -31,7 +31,6 @@
 
 int total = 0;
 
-#if 0
 static void sigprof_handler(int sig)
 {
   fprintf(stderr,"sigprof_handler(), PID %d TID %d\n",
@@ -44,7 +43,8 @@ static void start_sig(void)
 
   memset(&action,0x00,sizeof(struct sigaction));
   action.sa_handler = (void(*)(int))sigprof_handler;
-  assert(sigaction(SIGPROF, &action, NULL) != -1);
+  if (sigaction(SIGPROF, &action, NULL) == -1)
+    exit(1);
 }
 
 void start_timer(int milliseconds)
@@ -56,9 +56,9 @@ void start_timer(int milliseconds)
   value.it_interval.tv_usec = milliseconds * 1000;
   value.it_value.tv_sec = 0;
   value.it_value.tv_usec = milliseconds * 1000;
-  assert(setitimer(ITIMER_PROF, &value, NULL) != -1);
+  if (setitimer(ITIMER_PROF, &value, NULL) == -1)
+    exit(1);
 }
-#endif
 
 void handler(int EventSet, int EventCode, int EventIndex, long long *values, int *threshold, void *context)
 {
@@ -92,18 +92,19 @@ void *Thread(void *arg)
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_overflow(EventSet1, PAPI_FP_INS, THRESHOLD, 0, handler);
-  if (retval)
-    exit(1); 
+  if (retval != PAPI_OK)
+    exit(1);
 
   /* start_timer(1); */
   retval = PAPI_start(EventSet1);
-  if (retval)
+  if (retval != PAPI_OK)
     exit(1);
 
   do_flops(*(int *)arg);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -136,9 +137,14 @@ int main()
   pthread_attr_t attr;
   long long elapsed_us, elapsed_cyc;
 
-  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+    exit(1);
 
-  assert(PAPI_thread_init(pthread_self, 0) == PAPI_OK);
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
+
+  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec();
 
@@ -155,12 +161,12 @@ int main()
   flops1 = 10000000;
   rc = pthread_create(&e_th, &attr, Thread, (void *)&flops1);
   if (rc)
-    exit(-1);
+    exit(1);
 
   flops2 = 20000000;
   rc = pthread_create(&f_th, &attr, Thread, (void *)&flops2);
   if (rc)
-    exit(-1); 
+    exit(1);
 
   pthread_attr_destroy(&attr);
   pthread_join(f_th, NULL); 

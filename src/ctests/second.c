@@ -20,7 +20,6 @@
 #include <errno.h>
 #include <memory.h>
 #include <sys/types.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -38,7 +37,11 @@ int main(int argc, char **argv)
   memset(&options,0x0,sizeof(options));
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
@@ -51,17 +54,20 @@ int main(int argc, char **argv)
   options.domain.eventset=EventSet1;
   options.domain.domain=PAPI_DOM_ALL;
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   options.domain.eventset=EventSet2;
   options.domain.domain=PAPI_DOM_KERNEL;
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   options.domain.eventset=EventSet3;
   options.domain.domain=PAPI_DOM_USER;
   retval = PAPI_set_opt(PAPI_SET_DOMAIN, &options);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_start(EventSet1);
 
@@ -82,13 +88,14 @@ int main(int argc, char **argv)
     { values[1][0] = retval; values[1][1] = retval; }
 
   retval = PAPI_start(EventSet3);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
-  if (retval == PAPI_OK)
-    retval = PAPI_stop(EventSet3, values[2]);
-  else
-    { values[2][0] = retval; values[2][1] = retval; }
+  retval = PAPI_stop(EventSet3, values[2]);
+  if (retval != PAPI_OK)
+    exit(1);
 
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);
@@ -111,7 +118,7 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d %d\n",2*NUM_FLOPS,0,2*NUM_FLOPS);
+  printf("Row 1 approximately equals N %d N\n",0);
   printf("Column 1 approximately equals column 2 plus column 3\n");
 
   free_test_space(values, num_tests);

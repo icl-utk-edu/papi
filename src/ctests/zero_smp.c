@@ -37,7 +37,6 @@ Master pthread:
 #include <memory.h>
 #include <malloc.h>
 #undef NDEBUG
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -66,7 +65,8 @@ void Thread(int t, int n)
   values = allocate_test_space(num_tests, num_events1);
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval >= PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec();
 
@@ -79,7 +79,8 @@ void Thread(int t, int n)
   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval >= PAPI_OK)
+    exit(1);
 
   remove_test_events(&EventSet1, mask1);
 
@@ -100,21 +101,25 @@ int main()
   int i, rc;
   long long elapsed_us, elapsed_cyc;
 
-  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
+  if (PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec();
 
   elapsed_cyc = PAPI_get_real_cyc();
 
 #if defined(_AIX)
-  assert(PAPI_thread_init(pthread_self, 0) == PAPI_OK);
+  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) == PAPI_OK)
+    exit(1);
 #pragma ibm parallel_loop
 #elif defined(sgi) && defined(mips)
-  assert(PAPI_thread_init(mp_my_threadnum, 0) == PAPI_OK);
+  if (PAPI_thread_init((unsigned long (*)(void))(mp_my_threadnum), 0) == PAPI_OK)
+    exit(1);
 #pragma parallel
 #pragma pfor local(i)
 #elif defined(sun) && defined(sparc)
-  assert(PAPI_thread_init(thr_self, 0) == PAPI_OK);
+  if (PAPI_thread_init((unsigned long (*)(void))(thr_self), 0) == PAPI_OK)
+    exit(1);
 #pragma MP taskloop private(i)
 #elif defined(__ALPHA) && defined(__osf__)
 #else

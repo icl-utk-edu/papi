@@ -35,11 +35,7 @@ Master pthread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#undef NDEBUG
-#include <assert.h>
-#include "papiStdEventDefs.h"
 #include "papi.h"
-#include "papi_internal.h"
 #include "test_utils.h"
 
 void *Thread(void *arg)
@@ -62,12 +58,14 @@ void *Thread(void *arg)
   elapsed_cyc = PAPI_get_real_cyc();
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(*(int *)arg);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -99,9 +97,14 @@ int main()
   pthread_attr_t attr;
   long long elapsed_us, elapsed_cyc;
 
-  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+    exit(1);
 
-  assert(PAPI_thread_init(pthread_self, 0) == PAPI_OK);
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
+
+  if (PAPI_thread_init((unsigned long (*)(void))(pthread_self), 0) != PAPI_OK)
+    exit(1);
 
   elapsed_us = PAPI_get_real_usec();
 

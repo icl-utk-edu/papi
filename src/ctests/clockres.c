@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papi.h"
 #define ITERS 100000
 
@@ -14,8 +13,11 @@ int main()
   long long total_usec = 0, total_cyc = 0, nodup_usec = 0, nodup_cyc = 0, diff_usec = 0, diff_cyc = 0;
   int i;
 
-  if (PAPI_library_init(PAPI_VER_CURRENT) < PAPI_OK)
-    abort();
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   printf("Test case: Clock latency and resolution.\n");
   printf("-----------------------------------------------\n");

@@ -9,7 +9,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -30,23 +29,31 @@ int main(int argc, char **argv)
   int retval;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
 
-  assert(prginfo = PAPI_get_executable_info());
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
+
+  if ((prginfo = PAPI_get_executable_info()) == NULL)
+    exit(1);
   start = prginfo->text_start;
   end =  prginfo->text_end;
   length = end - start;
 
   profbuf = (unsigned short *)malloc(length/2*sizeof(unsigned short));
-  assert(profbuf != NULL);
+  if (profbuf == NULL)
+    exit(1);
   memset(profbuf,0x00,length/2*sizeof(unsigned short));
 
   profbuf2 = (unsigned short *)malloc(length/2*sizeof(unsigned short));
-  assert(profbuf2 != NULL);
+  if (profbuf2 == NULL)
+    exit(1);
   memset(profbuf2,0x00,length/2*sizeof(unsigned short));
 
   profbuf3 = (unsigned short *)malloc(1*sizeof(unsigned short));
-  assert(profbuf3 != NULL);
+  if (profbuf3 == NULL)
+    exit(1);
   memset(profbuf3,0x00,1*sizeof(unsigned short));
 
   /* First half */
@@ -69,9 +76,11 @@ int main(int argc, char **argv)
 
   values = allocate_test_space(num_tests, num_events);
 
-  assert(PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THR, PAPI_PROFIL_POSIX) >= PAPI_OK);
+  if (PAPI_sprofil(sprof, 3, EventSet, PAPI_TOT_CYC, THR, PAPI_PROFIL_POSIX) != PAPI_OK)
+    exit(1);
 
-  assert(PAPI_start(EventSet) >= PAPI_OK);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   for (i=0;i<NUM;i++)
     {
@@ -79,7 +88,8 @@ int main(int argc, char **argv)
       do_reads(1000);
     }
 
-  assert(PAPI_stop(EventSet, values[1]) >= PAPI_OK);
+  if (PAPI_stop(EventSet, values[1]) != PAPI_OK)
+    exit(1);
 
   remove_test_events(&EventSet, mask);
 

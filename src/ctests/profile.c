@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#include <assert.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "papi_internal.h"
@@ -46,40 +45,55 @@ int main(int argc, char **argv)
   int retval;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
 
-  assert(prginfo = PAPI_get_executable_info());
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
+
+  if ((prginfo = PAPI_get_executable_info()) == NULL)
+    exit(1);
   start = (unsigned long)prginfo->text_start;
   end =  (unsigned long)prginfo->text_end;
   length = end - start;
 
   profbuf = (unsigned short *)malloc(length*sizeof(unsigned short));
-  assert(profbuf != NULL);
+  if (profbuf == NULL)
+    exit(1);
   memset(profbuf,0x00,length*sizeof(unsigned short));
   profbuf2 = (unsigned short *)malloc(length*sizeof(unsigned short));
-  assert(profbuf2 != NULL);
+  if (profbuf2 == NULL)
+    exit(1);
   memset(profbuf2,0x00,length*sizeof(unsigned short));
   profbuf3 = (unsigned short *)malloc(length*sizeof(unsigned short));
-  assert(profbuf3 != NULL);
+  if (profbuf3 == NULL)
+    exit(1);
   memset(profbuf3,0x00,length*sizeof(unsigned short));
   profbuf4 = (unsigned short *)malloc(length*sizeof(unsigned short));
-  assert(profbuf4 != NULL);
+  if (profbuf4 == NULL)
+    exit(1);
   memset(profbuf4,0x00,length*sizeof(unsigned short));
   profbuf5 = (unsigned short *)malloc(length*sizeof(unsigned short));
-  assert(profbuf5 != NULL);
+  if (profbuf5 == NULL)
+    exit(1);
   memset(profbuf5,0x00,length*sizeof(unsigned short));
 
   EventSet = add_test_events(&num_events,&mask);
 
   values = allocate_test_space(num_tests, num_events);
 
-  assert(mask & 0x4);
+  /* Must have at least FP instr */
 
-  assert(PAPI_start(EventSet) == PAPI_OK);
+  if ((mask & 0x4) == 0)
+    exit(1);
+
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_both(NUM);
 
-  assert(PAPI_stop(EventSet, values[0]) == PAPI_OK);
+  if (PAPI_stop(EventSet, values[0]) != PAPI_OK)
+    exit(1);
 
   printf("Test case 7: SVR4 compatible hardware profiling.\n");
   printf("------------------------------------------------\n");
@@ -103,84 +117,104 @@ int main(int argc, char **argv)
 	 (values[0])[1]);
 
   printf("Test type   : \tPAPI_PROFIL_POSIX\n");
-  assert(PAPI_profil(profbuf, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX) >= PAPI_OK);
-  assert(PAPI_start(EventSet) >= PAPI_OK);
+  if (PAPI_profil(profbuf, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX) != PAPI_OK)
+    exit(1);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_both(NUM);
 
-  assert(PAPI_stop(EventSet, values[1]) >= PAPI_OK);
+  if (PAPI_stop(EventSet, values[1]) != PAPI_OK)
+    exit(1);
   printf("PAPI_FP_INS : \t%lld\n",
 	 (values[1])[0]);
   printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[1])[1]);
-  assert(PAPI_profil(profbuf, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX) >= PAPI_OK);
+  if (PAPI_profil(profbuf, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX) != PAPI_OK)
+    exit(1);
   printf("Test type   : \tPAPI_PROFIL_RANDOM\n");
-  assert(PAPI_profil(profbuf2, length, start, 65536, 
+  if (PAPI_profil(profbuf2, length, start, 65536, 
 		     EventSet, PAPI_FP_INS, THR, 
-		     PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM) >= PAPI_OK);
-  assert(PAPI_start(EventSet) >= PAPI_OK);
+		     PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM) != PAPI_OK)
+    exit(1);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_both(NUM);
 
-  assert(PAPI_stop(EventSet, values[2]) >= PAPI_OK);
+  if (PAPI_stop(EventSet, values[2]) != PAPI_OK)
+    exit(1);
   printf("PAPI_FP_INS : \t%lld\n",
 	 (values[2])[0]);
   printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[2])[1]);
-  assert(PAPI_profil(profbuf2, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM) >= PAPI_OK);
+  if (PAPI_profil(profbuf2, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM) != PAPI_OK)
+    exit(1);
   printf("Test type   : \tPAPI_PROFIL_WEIGHTED\n");
-  assert(PAPI_profil(profbuf3, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED) >= PAPI_OK);
-  assert(PAPI_start(EventSet) >= PAPI_OK);
+  if (PAPI_profil(profbuf3, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED) != PAPI_OK)
+    exit(1);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_both(NUM);
 
-  assert(PAPI_stop(EventSet, values[3]) >= PAPI_OK);
+  if (PAPI_stop(EventSet, values[3]) != PAPI_OK)
+    exit(1);
   printf("PAPI_FP_INS : \t%lld\n",
 	 (values[3])[0]);
   printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[3])[1]);
-  assert(PAPI_profil(profbuf3, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED) >= PAPI_OK);
+  if (PAPI_profil(profbuf3, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_WEIGHTED) != PAPI_OK)
+    exit(1);
   printf("Test type   : \tPAPI_PROFIL_COMPRESS\n");
-  assert(PAPI_profil(profbuf4, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS) >= PAPI_OK);
-  assert(PAPI_start(EventSet) >= PAPI_OK);
+  if (PAPI_profil(profbuf4, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, THR, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS) != PAPI_OK)
+    exit(1);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_both(NUM);
 
-  assert(PAPI_stop(EventSet, values[4]) >= PAPI_OK);
+  if (PAPI_stop(EventSet, values[4]) != PAPI_OK)
+    exit(1);
   printf("PAPI_FP_INS : \t%lld\n",
 	 (values[4])[0]);
   printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[4])[1]);
-  assert(PAPI_profil(profbuf4, length, start, 65536, 
-		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS) >= PAPI_OK); 
+  if (PAPI_profil(profbuf4, length, start, 65536, 
+		     EventSet, PAPI_FP_INS, 0, PAPI_PROFIL_POSIX | PAPI_PROFIL_COMPRESS) != PAPI_OK)
+    exit(1);
   printf("Test type   : \tPAPI_PROFIL_<all>\n");
-  assert(PAPI_profil(profbuf5, length, start, 65536, 
+  if (PAPI_profil(profbuf5, length, start, 65536, 
 		     EventSet, PAPI_FP_INS, THR, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 
 		     PAPI_PROFIL_RANDOM |
-		     PAPI_PROFIL_COMPRESS) >= PAPI_OK);
-  assert(PAPI_start(EventSet) >= PAPI_OK);
+		     PAPI_PROFIL_COMPRESS) != PAPI_OK)
+    exit(1);
+  if (PAPI_start(EventSet) != PAPI_OK)
+    exit(1);
 
   do_both(NUM);
 
-  assert(PAPI_stop(EventSet, values[5]) >= PAPI_OK);
+  if (PAPI_stop(EventSet, values[5]) != PAPI_OK)
+    exit(1);
   printf("PAPI_FP_INS : \t%lld\n",
 	 (values[5])[0]);
   printf("PAPI_TOT_CYC: \t%lld\n",
 	 (values[5])[1]);
-  assert(PAPI_profil(profbuf5, length, start, 65536, 
+  if (PAPI_profil(profbuf5, length, start, 65536, 
 		     EventSet, PAPI_FP_INS, 0, 
 		     PAPI_PROFIL_POSIX | 
 		     PAPI_PROFIL_WEIGHTED | 
 		     PAPI_PROFIL_RANDOM |
-		     PAPI_PROFIL_COMPRESS) >= PAPI_OK);
+		     PAPI_PROFIL_COMPRESS) != PAPI_OK)
+    exit(1);
 
   printf("-----------------------------------------\n");
   printf("PAPI_profil() hash table.\n");

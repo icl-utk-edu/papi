@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <memory.h>
 #undef NDEBUG
-#include <assert.h>
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
@@ -19,11 +18,17 @@ int main(int argc, char **argv)
   const PAPI_preset_info_t *info = NULL;
   const PAPI_hw_info_t *hwinfo = NULL;
 
-  assert(PAPI_library_init(PAPI_VER_CURRENT) == PAPI_VER_CURRENT);
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+    exit(1);
 
-  assert(info = PAPI_query_all_events_verbose());
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
-  assert(hwinfo = PAPI_get_hardware_info());
+  if ((info = PAPI_query_all_events_verbose()) == NULL)
+    exit(1);
+
+  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+    exit(1);
 
   printf("Test case 8: Available events and hardware information.\n");
   printf("-------------------------------------------------------------------------\n");

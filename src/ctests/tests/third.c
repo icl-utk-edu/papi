@@ -31,7 +31,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <memory.h>
-#include <assert.h>
 #include <malloc.h>
 #include "papiStdEventDefs.h"
 #include "papi.h"
@@ -47,7 +46,11 @@ int main(int argc, char **argv)
   int num_events1, num_events2;
 
   retval = PAPI_library_init(PAPI_VER_CURRENT);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_VER_CURRENT)
+    exit(1);
+
+  if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK)
+    exit(1);
 
   EventSet1 = add_test_events(&num_events1,&mask1);
   EventSet2 = add_test_events(&num_events2,&mask2);
@@ -57,41 +60,50 @@ int main(int argc, char **argv)
   values = allocate_test_space(num_tests, num_events1);
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_stop(EventSet1, values[0]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_start(EventSet1);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_start(EventSet2);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_read(EventSet1, values[1]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet2, values[2]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
 
   retval = PAPI_stop(EventSet1, values[3]);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   retval = PAPI_start(EventSet2);
-  assert(retval >= PAPI_OK);
+  if (retval != PAPI_OK)
+    exit(1);
 
   do_flops(NUM_FLOPS);
   
   retval = PAPI_stop(EventSet2, values[4]);
-  assert(retval >= PAPI_OK); 
+  if (retval != PAPI_OK)
+    exit(1);
 
   remove_test_events(&EventSet1, mask1);
   remove_test_events(&EventSet2, mask2);
@@ -113,7 +125,7 @@ int main(int argc, char **argv)
   printf("-------------------------------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d %d %d %d %d\n",0,0,2*NUM_FLOPS,0,2*NUM_FLOPS);
+  printf("Row 1 approximately equals %d %d N %d N\n",0,0,0);
   printf("Row 2 approximately equals X X %d X %d\n",0,0);
   printf("Column 1 approximately equals column 2\n");
   printf("Column 4 approximately equals three times column 1\n");

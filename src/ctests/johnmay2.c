@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <assert.h>
 #include <unistd.h>
 #include "papi.h"
 #include "test_utils.h"
@@ -57,7 +56,6 @@ int main()
   printf("-------------------------------------------------\n");
 
   printf("Verification:\n");
-  printf("Row 1 approximately equals %d\n",1000000);
   printf("These error messages:\n");
   printf("PAPI Error Code -10: PAPI_EISRUN: EventSet is currently counting\n");
   printf("PAPI Error Code -10: PAPI_EISRUN: EventSet is currently counting\n");
