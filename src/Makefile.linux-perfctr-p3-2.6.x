@@ -48,10 +48,13 @@ MISCSRCS= linux.c p3_events.c
 MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o x86.o
 MISCHDRS= perfctr-p3.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
 include Makefile.inc
 
 linux.o: linux.c
+	rm -f $(PERFCTR)/linux/include/asm
+	ln -s asm-${ARCH} $(PERFCTR)/linux/include/asm
 	$(CC) $(CFLAGS) -c linux.c -o $@
 
 p3_events.o: p3_events.c

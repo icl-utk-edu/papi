@@ -35,7 +35,7 @@ SHLIB   = libpapi.so
 SUBSTR	= perfctr-p3
 MSUBSTR	= linux-perfctr-p3
 MEMSUBSTR= linux
-DESCR	= "Linux with PerfCtr 2.6.x patch for all Pentium IIIs"
+DESCR	= "Linux with PerfCtr 2.6.x patch for Opteron"
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads 
 
@@ -45,19 +45,22 @@ CC_R	= $(CC) -pthread
 CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR26 -DSUBSTRATE=\"$(SUBSTR).h\" -DDEBUG
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c p3_events.c
-MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o
+MISCOBJS= linux.o p3_events.o marshal.o global.o misc.o virtual.o x86.o
 MISCHDRS= perfctr-p3.h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
 include Makefile.inc
 
 linux.o: linux.c
+	rm -f $(PERFCTR)/linux/include/asm
+	ln -s asm-${ARCH} $(PERFCTR)/linux/include/asm
 	$(CC) $(CFLAGS) -c linux.c -o $@
 
 p3_events.o: p3_events.c
 	$(CC) $(CFLAGS) -c p3_events.c -o $@
 
-marshal.o global.o misc.o virtual.o: $(PERFCTR)/usr.lib/libperfctr.a
+marshal.o global.o misc.o virtual.o x86.o: $(PERFCTR)/usr.lib/libperfctr.a
 	ar x $(PERFCTR)/usr.lib/libperfctr.a
 
 $(PERFCTR)/usr.lib/libperfctr.a:
