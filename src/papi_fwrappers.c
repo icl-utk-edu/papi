@@ -434,6 +434,11 @@ PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
 #endif
 }
 
+PAPI_FCALL(papif_num_events, PAPIF_NUM_EVENTS, (int *EventCode, int *count))
+{
+   *count = PAPI_num_events(EventCode);
+}
+
 PAPI_FCALL(papif_enum_event, PAPIF_ENUM_EVENT, (int *EventCode, int *modifier, int *check))
 {
    *check = PAPI_enum_event(EventCode, *modifier);
