@@ -225,8 +225,6 @@ void PAPI_shutdown(void);
 int PAPI_state(int EventSet, int *status);
 int PAPI_set_opt(int option, PAPI_option_t *ptr); 
 int PAPI_get_opt(int option, PAPI_option_t *ptr);
-int PAPI_query_event(int EventCode);
-int PAPI_describe_event(char *name, int *EventCode, char *description);
 
 /*
 The High Level API

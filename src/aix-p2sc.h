@@ -19,4 +19,3 @@ typedef struct hwd_preset {
   char number;         /* Counter number in group (0 and 1 are reserved)*/
   char unit;           /* UNIT_FXU,UNIT_SCU,UNIT_ICU,UNIT_DCU,UNIT_ALL */
   char multimask;      /* Multiple counter select mask */ } hwd_preset_t;
-

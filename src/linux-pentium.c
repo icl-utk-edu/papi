@@ -265,7 +265,7 @@ int _papi_hwd_add_event(EventSetInfo *ESI, int index, unsigned int event)
 
 
 
-int _papi_hwd_rem_event(EventSetInfo *ESI, unsigned int event)
+int _papi_hwd_rem_event(EventSetInfo *ESI, int index, unsigned int event)
 {
   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
   unsigned int foo = event;
@@ -470,6 +470,10 @@ int _papi_hwd_reset(EventSetInfo *ESI)
 
   if(this_state->number == 0) return(PAPI_ENOTRUN);
 
+  if(ESI->state==PAPI_RUNNING)
+  { perf(PERF_RESET, 0, 0); /*from perf.c */
+    return _papi_hwd_start(ESI);
+  }
   return perf(PERF_RESET, 0, 0); /*from perf.c */
 }
 
