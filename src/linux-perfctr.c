@@ -391,7 +391,11 @@ inline static void init_config(hwd_control_state_t *ptr)
   ptr->counter_cmd.evntsel[1] |= def_mode;
 }
 
+#ifdef PERFCTR18
+static int get_system_info(const struct vperfctr *dev)
+#else
 static int get_system_info(struct perfctr_dev *dev)
+#endif
 {
   struct perfctr_info info;
   pid_t pid;
@@ -438,10 +442,20 @@ static int get_system_info(struct perfctr_dev *dev)
     sscanf(s+1, "%d", &tmp);
   _papi_system_info.hw_info.revision = (float)tmp;
 
+#ifdef PERFCTR18
+  if (vperfctr_info(dev, &info) < 0)
+    return(PAPI_ESYS);
+  strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(&info));
+  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(&info) - 1;
+  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(&info) - 1;
+#else
   if (perfctr_info(dev, &info) < 0)
     return(PAPI_ESYS);
-
   strcpy(_papi_system_info.hw_info.model_string,perfctr_cpu_name(dev));
+  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(dev) - 1;
+  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(dev) - 1;
+#endif
+
   _papi_system_info.hw_info.model = (int)info.cpu_type;
   _papi_system_info.hw_info.mhz = info.cpu_khz / 1000; 
   DBG((stderr,"Detected MHZ is %f\n",_papi_system_info.hw_info.mhz));
@@ -454,8 +468,6 @@ static int get_system_info(struct perfctr_dev *dev)
     _papi_system_info.hw_info.mhz = (float)tmp;
   }
   DBG((stderr,"Actual MHZ is %f\n",_papi_system_info.hw_info.mhz));
-  _papi_system_info.num_cntrs = perfctr_cpu_nrctrs(dev) - 1;
-  _papi_system_info.num_gp_cntrs = perfctr_cpu_nrctrs(dev) - 1;
 
   /* Setup presets */
 
@@ -600,14 +612,21 @@ inline static int set_default_granularity(EventSetInfo *zero, int granularity)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
+#ifndef PERFCTR18
 struct perfctr_dev *dev;
+#endif
 int _papi_hwd_init_global(void)
 {
   int retval;
 
   /* Opened once for all threads. */
 
+#ifdef PERFCTR18
+  struct vperfctr *dev;
+  dev = vperfctr_open();
+#else
   dev = perfctr_dev_open();
+#endif
   if (!dev)
     return(PAPI_ESYS);
 
@@ -623,12 +642,17 @@ int _papi_hwd_init_global(void)
        _papi_system_info.hw_info.model_string,
        _papi_system_info.hw_info.mhz));
 
+#ifdef PERFCTR18
+  vperfctr_close(dev);
+#endif
   return(PAPI_OK);
 }
 
 int _papi_hwd_shutdown_global(void)
 {
+#ifndef PERFCTR18
   perfctr_dev_close(dev);
+#endif
   return(PAPI_OK);
 }
 
@@ -638,8 +662,13 @@ int _papi_hwd_init(EventSetInfo *zero)
   
   /* Initialize our global machdep. */
 
+#ifdef PERFCTR18
+  if ((machdep->self = vperfctr_open()) == NULL) 
+    return(PAPI_ESYS);
+#else
   if ((machdep->self = vperfctr_attach(dev)) == NULL) 
     return(PAPI_ESYS);
+#endif
 
   /* Initialize the event fields */
 

@@ -4,7 +4,8 @@ LIBS	= static shared
 TARGETS = serial pthreads
 
 FOR_USED= -DFORTRANDOUBLEUNDERSCORE
-CFLAGS  = -Wall -I../perfctr/usr.lib
+# Add -DPERFCTR18 for PerfCtr distributions > 1.6
+CFLAGS  = -Wall -I./perfctr/usr.lib
 FFLAGS	= -Wall
 OPTFLAGS= -O6 -mpentiumpro
 CC_SHR  = gcc -shared
@@ -25,4 +26,4 @@ libperfctr.o: ./perfctr/usr.lib/libperfctr.o x86-events.h
 	$(MAKE) -C perfctr
 
 ./perfctr/config.out:
-       cd perfctr; ./configure
+	-cd perfctr; ./configure
