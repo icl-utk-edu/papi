@@ -13,9 +13,11 @@ software systems.
 
 REDISTRIBUTION:
 
-Users are allowed to freely distribute the PAPI system in unmodified form. At 
-no time is a user to accept monetary or other compensation for redistributing 
-parts or all of the PAPI system.
+Users are allowed to distribute the PAPI system in any form as long as the
+attribution clause in adhered to. If modifications are made or the source code
+is not identical to those available from the PAPI web site, the distribution
+must be clearly marked as a modified and can NOT be redistributed as an
+original PAPI distribution. 
 
 MODIFICATION OF CODE:
 
