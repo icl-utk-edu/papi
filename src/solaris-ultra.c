@@ -1007,7 +1007,17 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * this_state,
 /* reset the hardware counter */
 int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-   return( _papi_hwd_start(ctx, ctrl));
+   int retval;
+
+   /* reset the hardware counter */
+   ctrl->counter_cmd.cmd.ce_pic[0] = 0;
+   ctrl->counter_cmd.cmd.ce_pic[1] = 0;
+   /* let's rock and roll */
+   retval = cpc_bind_event(&ctrl->counter_cmd.cmd, ctrl->counter_cmd.flags);
+   if (retval == -1)
+      return (PAPI_ESYS);
+
+   return (PAPI_OK);
 }
 
 
