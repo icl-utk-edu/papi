@@ -84,8 +84,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
          print *,'---------------------------------------------------'
          print *,'          Testing PAPIF_perror                     '
          print *,'---------------------------------------------------'
-         print 100,' These tests should return a PAPI error string for'//
-     $    ' error',ERRCODE
+         print 100,' These tests should return a PAPI error string'//
+     $    ' for error',ERRCODE
          print *,' On no occasion should a NULL character be found(+)'
          print *
       end if
@@ -149,7 +149,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       if (tests_quiet .EQ. 0) then
          print *
-         print 200,'Test 5  (This test should get a truncated description)'
+         print 200,'Test 5  (This should get a truncated description)'
       end if
 
       invstr2="PAPI_L3_DCM"
@@ -160,7 +160,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       if (tests_quiet .EQ. 0) then
          print *
-         print 200,'Test 6  (This test should get a truncated description)'
+         print 200,'Test 6  (This should get a truncated description)'
       end if
 
       invstr2="  "
@@ -171,7 +171,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       if (tests_quiet .EQ. 0) then
          print *
-         print 200,'Test 7  (This test should get a truncated name)'
+         print 200,'Test 7  (This should get a truncated name)'
       end if
 
       invstr4="  "
@@ -187,8 +187,10 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       if (tests_quiet .EQ. 0) then
          print *,'---------------------------------------------------'
          print *,'(+) Fortran implementations that do not provide the'
-         print *,'    string argument length might show NULL characters.'
-         print *,'    This may or may not be OK depending on the Fortran'
+         print *,'    string argument length might show NULL '//
+     .           'characters.'
+         print *,'    This may or may not be OK depending on the '//
+     .           'Fortran'
          print *,'    compiler. See papi_fwrappers.c and your Fortran'
          print *,'    compiler reference manual.'
       end if
