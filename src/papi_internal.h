@@ -434,7 +434,7 @@ typedef struct _papi_mdi {
 
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
-extern int _papi_hwi_using_signal;
+extern volatile int _papi_hwi_using_signal;
 
 /*
  * Debug functions for platforms without vararg macro support

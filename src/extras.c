@@ -347,7 +347,7 @@ foundit:
    return(PAPI_OK);
 }
 
-int _papi_hwi_using_signal = 0;
+volatile int _papi_hwi_using_signal = 0;
 
 #ifdef _WIN32
 
