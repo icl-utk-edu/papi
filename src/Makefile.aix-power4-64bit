@@ -1,5 +1,5 @@
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
+LIBRARY   = libpapi64.a
+SHLIB     = libpapi64.so
 SUBSTR  = aix-power
 MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4"
