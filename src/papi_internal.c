@@ -1308,6 +1308,11 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
       return (handle_derived_ps(evi->pos, from));
    case DERIVED_POSTFIX:
       return (_papi_hwi_postfix_calc(evi, from));
+   case DERIVED_CMPD: /* This type has existed for a long time, but was never implemented.
+                         Probably because its a no-op. However, if it's in a header, it
+                         should be supported. As I found out when I implemented it in 
+                         Pentium 4 for testing...dkt */
+      return (from[evi->pos[0]]);
    default:
       abort();
    }
