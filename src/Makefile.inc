@@ -26,15 +26,22 @@ $(SHLIB): $(SOURCES)
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) -o $@
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
-	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
-	$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.cPAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
+
+papi_fwrappers__.c: papi_fwrappers.c $(HEADERS)
+	$(CPP) -DFORTRANDOUBLEUNDERSCORE papi_fwrappers.c > papi_fwrappers__.c
+
+PAPI_FWRAPPERS.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANCAPS papi_fwrappers.c > PAPI_FWRAPPERS.c
 
 papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
 
 papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS) $(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o 
+
+papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS) 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
 
 PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c PAPI_FWRAPPERS.c -o PAPI_FWRAPPERS.o
@@ -44,7 +51,9 @@ papi.o: papi.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o multiplex.o: multiplex.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o genpapifdef: genpapifdef.c $(LIBRARY)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
+
+genpapifdef: genpapifdef.c $(LIBRARY)
 	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
 
 fpapi.h: genpapifdef
