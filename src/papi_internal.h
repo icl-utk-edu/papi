@@ -187,7 +187,7 @@ typedef struct _EventSetInfo {
   long_long *sw_stop;    /* Array of length ESI->NumberOfCounters that contains
 			    processed, in order, PAPI counter values when used or stopped */
 
-  /* long_long *latest;   Array of the same length as above, containing 
+  long_long *latest;     /* Array of the same length as above, containing 
 				  the values of the counters when last read */ 
 
   int state;          /* The state of this entire EventSet; can be
