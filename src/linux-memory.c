@@ -54,6 +54,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
       break;
 #ifdef __x86_64__
    case PERFCTR_X86_AMD_K8:
+   case PERFCTR_X86_AMD_K8C:
       retval = init_amd(mem_info);
       break;
 #endif
