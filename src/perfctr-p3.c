@@ -948,8 +948,6 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-#define inline_static inline static
-
 /* Low level functions, should not handle errors, just return codes. */
 
 #ifdef _WIN32
@@ -986,8 +984,12 @@ long_long _papi_hwd_get_real_cycles(void) {
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
+#ifdef _WIN32
+   return(PAPI_ESBSTR); // Windows can't read virtual cycles...
+#else
    return((long_long)vperfctr_read_tsc(ctx->perfctr) /
          (long_long)_papi_hwi_system_info.hw_info.mhz);
+#endif /* _WIN32 */
 }
  
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
