@@ -109,6 +109,8 @@ int main(int argc, char **argv)
 
    if (PAPI_event == PAPI_FP_INS )
       mythreshold = THRESHOLD;
+   else if ( PAPI_event == PAPI_TOT_INS )
+      mythreshold = THRESHOLD * 10;
    else 
       mythreshold = THRESHOLD * 2;
 
@@ -146,9 +148,13 @@ int main(int argc, char **argv)
 
    use_total = 1;
 
-   retval = PAPI_overflow(EventSet, PAPI_event, 0, 0, handler);
+   retval = PAPI_remove_event(EventSet, PAPI_event);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+      test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
+
+   retval = PAPI_add_event(EventSet, PAPI_event);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
    retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
    if (retval != PAPI_OK)
