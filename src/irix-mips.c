@@ -522,7 +522,9 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
    struct tms buffer;
 
    times(&buffer);
-   retval = (long_long) buffer.tms_utime * (long_long) (1000000 / CLK_TCK);
+   SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
+     (1000000/CLK_TCK));
    return (retval);
 }
 
