@@ -2,10 +2,8 @@ KERNINC	= /usr/src/linux-2.4/include
 PERFCTR = ./perfctr-2.4.5
 PERFCTR_LIB_PATH = $(PERFCTR)/usr.lib
 OPTFLAGS= -O3 -g -Wall -mpentiumpro
-TOPTFLAGS= -g -Wall -mpentiumpro -D__ATHLON__
+TOPTFLAGS= -g -Wall -mpentiumpro
 
-# Use the following flags on the appropriate systems:
-# -DPENTIUM3 -DPENTIUM2 -D__ATHLON__
 # GNU G77 section
 #
 F77   = g77
