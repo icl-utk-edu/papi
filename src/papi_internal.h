@@ -575,11 +575,18 @@ inline_static void PRFDBG(char *format, ...)
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
 {
    const DynamicArray_t *map = &_papi_hwi_system_info.global_eventset_map;
+   EventSetInfo_t *set;
 
    if ((eventset < 0) || (eventset > map->totalSlots))
       return (NULL);
    
-   return (map->dataSlotArray[eventset]);
+   set = map->dataSlotArray[eventset];
+#ifdef DEBUG
+   if ((ISLEVEL(DEBUG_THREADS)) && (_papi_hwi_thread_id_fn) && (set->master->tid != _papi_hwi_thread_id_fn()))
+     return(NULL);
+#endif
+
+   return (set);
 }
 
 #endif                          /* PAPI_INTERNAL_H */
