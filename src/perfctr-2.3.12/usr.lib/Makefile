@@ -17,12 +17,12 @@ CFLAGS += $(shell if $(CC) -mpreferred-stack-boundary=2 -S -o /dev/null -x c /de
 
 default:	libperfctr.a libperfctr.so
 
-libperfctr.so: libperfctr.a
-	$(CC) $(CFLAGS) $(CPPFLAGS) -shared -fPIC libperfctr.c event_set.c -o $@
-
 libperfctr.a:	$(OBJS)
 	$(AR) $(ARFLAGS) libperfctr.a $(OBJS)
 	$(RANLIB) libperfctr.a
+
+libperfctr.so:	libperfctr.a
+	$(CC) $(CFLAGS) -shared libperfctr.c event_set.c -o $@
 
 $(OBJS):	libperfctr.h $(INCLDIR)/linux/perfctr.h $(INCLDIR)/asm/perfctr.h
 event_set.o:	event_codes.h
