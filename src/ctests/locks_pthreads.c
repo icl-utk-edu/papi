@@ -17,13 +17,12 @@ int rank;
 
 void *Master(void *arg)
 {
-  int *result = (int *) arg;
   int i;
   usleep(SLEEP_VALUE);
   PAPI_lock(PAPI_USR1_LOCK); 
   /* Make sure Slaves are not sleeping */
   for(i=0;i<LOOPS;i++){
-	count= 2*count/3;
+	count= 2*count-i;
   }
   PAPI_unlock(PAPI_USR1_LOCK);
   pthread_exit(NULL);
@@ -45,7 +44,7 @@ void *Slave(void *arg)
 
 
 
-main(int argc, char **argv )
+int main(int argc, char **argv )
 {
   pthread_t master;
   pthread_t slave1;
@@ -60,7 +59,7 @@ main(int argc, char **argv )
   tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
                                                                                         
   for(i=0;i<LOOPS;i++){
-	result_m= 2*result_m/3;
+	result_m= 2*result_m-i;
   }
   result_s = result_m;
  
@@ -99,5 +98,6 @@ main(int argc, char **argv )
 	test_fail(__FILE__,__LINE__,"Thread Locks",1);
 
    test_pass(__FILE__,NULL,0);
+   exit(1);
 }
 

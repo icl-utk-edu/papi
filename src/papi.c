@@ -64,6 +64,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 
 extern PAPI_preset_info_t _papi_hwi_presets[];
 extern int init_retval;
+extern int init_level;
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -194,6 +195,7 @@ int PAPI_library_init(int version)
   }
   _papi_hwi_system_info.total_presets = _papi_hwi_system_info.total_events - tmp;
 
+  init_level = PAPI_LOW_LEVEL_INITED;
   return(init_retval = PAPI_VER_CURRENT);
 }
 
@@ -1586,9 +1588,17 @@ int PAPI_save(void)
   return(PAPI_ESBSTR);
 }
 
-int PAPI_initialized(void)
+inline void PAPI_lock(int lck) {
+_papi_hwd_lock(lck);
+}
+
+inline void PAPI_unlock(int lck){
+_papi_hwd_unlock(lck);
+}
+
+int PAPI_is_initialized(void)
 {
-  return (init_retval != DEADBEEF);
+  return (init_level);
 }
 
 int PAPI_encode_native(char *str, int *code)
