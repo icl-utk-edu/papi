@@ -34,12 +34,12 @@ SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
 MSUBSTR = linux-perfctr-$(CPU)
 MEMSUBSTR= linux
-DESCR   = "Linux with PerfCtr 2.6.x patch for all Pentium IIIs and AMDs"
+DESCR   = "Linux with PerfCtr 2.6.x patch"
 LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads
 
 CC_R    = $(CC) -pthread
-CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR26 -DDEBUG
+CFLAGS  = -I$(PERFCTR)/usr.lib -I$(PERFCTR)/linux/include -I$(KERNINC) -I. -DPERFCTR26
 #-DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCSRCS= linux.c $(CPU)_events.c
 MISCOBJS= linux.o $(CPU)_events.o marshal.o global.o misc.o virtual.o x86.o
