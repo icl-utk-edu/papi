@@ -16,7 +16,11 @@
 
       Integer len_trim
       External len_trim
+      integer tests_quiet
  
+      print *, 'Run in quiet mode (enter 1 for yes, 0 for no)?'
+      read(5,*) tests_quiet
+
       point = 0
 
       retval = PAPI_VER_CURRENT
