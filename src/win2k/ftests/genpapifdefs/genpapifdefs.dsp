@@ -105,6 +105,10 @@ SOURCE=..\..\..\tests\test_utils.c
 
 SOURCE=..\..\..\tests\papi_test.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\..\..\tests\test_utils.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
