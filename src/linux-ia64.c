@@ -402,8 +402,8 @@ inline static int set_hwcntr_codes(hwd_control_state_t *this_state, const pfmw_p
 	PFMW_PEVT_EVENT(evt,PFMW_PEVT_EVTCOUNT(evt)) = PFMW_PEVT_EVENT(from,i);
 	PFMW_PEVT_EVTCOUNT(evt)++;
       }
-      
-      if ((PFMW_PEVT_EVTCOUNT(evt)) > PMU_MAX_COUNTERS)
+
+      if ( (PFMW_PEVT_EVTCOUNT(evt)) > PMU_MAX_COUNTERS)
 	{
 	bail:
 	  PFMW_PEVT_EVTCOUNT(evt) = orig_cnt;
@@ -925,7 +925,7 @@ void _papi_hwd_error(int error, char *where)
 
 int _papi_recalc_selectors(hwd_control_state_t *this_state, EventInfo_t *eventinfo) {
     EventSetInfo *ESI = get_my_EventSetInfo(eventinfo);
-    int i, j, k;
+    int i, j, k, counter;
     unsigned int EventCode, preset_index;
     pfmlib_param_t *old_evt, *cur_evt = &this_state->evt;
     int selector;
@@ -933,31 +933,38 @@ int _papi_recalc_selectors(hwd_control_state_t *this_state, EventInfo_t *eventin
     if (ESI == NULL)
         return(PAPI_ESBSTR);
     
-/*
-    this_state->selector = 0;
-*/
-    for (i = 0; i < ESI->NumberOfEvents+1; i++) {
-        EventCode = ESI->EventInfoArray[i].code;
-        selector = 0;
-        if (EventCode & PRESET_MASK) {
-            preset_index = EventCode & PRESET_AND_MASK; 
-            old_evt = &preset_map[preset_index].evt;
-            for (j = 0; j < PFMW_PEVT_EVTCOUNT(old_evt); j++) {
-                for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) {
-                    if (PFMW_PEVT_EVENT(old_evt,j) == PFMW_PEVT_EVENT(cur_evt,k))
-                        selector |= (1 << PFMW_REG_REGNUM(this_state->pc[k]));
-                }
+
+   	if (ESI->NumberOfEvents) this_state->selector = 0;
+    for (i = 0; i < ESI->NumberOfEvents; i++) 
+    {
+      EventCode = ESI->EventInfoArray[i].code;
+
+      if (EventCode == eventinfo->code) continue; /* when remove events */
+
+      selector = 0;
+      if (EventCode & PRESET_MASK) 
+      {
+        preset_index = EventCode & PRESET_AND_MASK; 
+        old_evt = &preset_map[preset_index].evt;
+        counter = 0;
+        counter= PFMW_PEVT_EVTCOUNT(old_evt);
+        for (j = 0; j < PFMW_PEVT_EVTCOUNT(old_evt); j++) {
+          for (k = 0; k < PFMW_PEVT_EVTCOUNT(cur_evt); k++) {
+            if (PFMW_PEVT_EVENT(old_evt,j) == PFMW_PEVT_EVENT(cur_evt,k))
+            {
+              selector |= (1 << PFMW_REG_REGNUM(this_state->pc[k]));
+              break;
             }
-            ESI->EventInfoArray[i].selector = selector;
+          }
+        }
+        ESI->EventInfoArray[i].selector = selector;
 /*
-            ESI->EventInfoArray[i].operand_index = ffs(selector)-1-PMU_FIRST_COUNTER;
+      ESI->EventInfoArray[i].operand_index = ffs(selector)-1-PMU_FIRST_COUNTER;
 */
 
-/*
-            this_state->selector |= selector;
-*/
-        }
-        else {
+      this_state->selector |= selector;
+    }
+     else {
             /* SOL */    
         }
     }
@@ -967,7 +974,6 @@ int _papi_recalc_selectors(hwd_control_state_t *this_state, EventInfo_t *eventin
 int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode, EventInfo_t *out)
 {
   int nselector = 0;
-  int retval = 0;
   int selector = 0;
   pfmw_param_t tmp_cmd, *codes;
 
@@ -1066,7 +1072,7 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
   nselector = set_hwcntr_codes(this_state,codes, out);
   if (nselector < 0)
-    return retval;
+    return nselector;
   if (nselector == 0)
     abort();
 
@@ -1077,15 +1083,15 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
   /* Only the new fields */
 
   selector = this_state->selector ^ nselector;
+/*
+  selector = out->selector;
+*/
   DBG((stderr,"This new event has selector 0x%x of 0x%x\n",selector,nselector));
 
   /* Inform the upper level that the software event 'index' 
      consists of the following information. */
 
-/*for native event */
-  if (!(EventCode & PRESET_MASK) ) {
-      out->selector = selector;
-  }
+  out->selector = selector;
 
   /* Update the new counter select field */
 
@@ -1095,27 +1101,61 @@ int _papi_hwd_add_event(hwd_control_state_t *this_state, unsigned int EventCode,
 
 int _papi_hwd_rem_event(hwd_control_state_t *this_state, EventInfo_t *in)
 {
-  int used,i,j;
+  int selector,i, index, nevents;
   unsigned int preset_index;
+  int event[PMU_MAX_COUNTERS];
+  pfmw_reg_t *pc = this_state->pc;
+  int cnt = PMU_MAX_PMCS;
 
   /* Find out which counters used. */
   
-  used = in->selector;
+  selector = in->selector;
 
   /* Clear out counters that are part of this event. */
 
-  this_state->selector = this_state->selector ^ used;
+  this_state->selector = this_state->selector ^ selector;
+
   /* We need to remove the count from this event, do we need to
    * reset the index of values too? -KSL 
    * Apparently so. -KSL */
-  preset_index = in->code & PRESET_AND_MASK;
-  for(i=0;i<PMU_MAX_COUNTERS;i++){
-    if ( PFMW_EVT_EVENT(this_state->evt,i) & used ) {
-      for ( j=i;j<(PMU_MAX_COUNTERS-1);j++ )
-         PFMW_EVT_EVENT(this_state->evt,j) = PFMW_EVT_EVENT(this_state->evt,j+1);
-    }
-  } 
-  PFMW_EVT_EVTCOUNT(this_state->evt)-=PFMW_EVT_EVTCOUNT(preset_map[preset_index].evt);
+  while ((i = ffs(selector)))
+  {
+    index = (i-1)-PMU_FIRST_COUNTER;
+    PFMW_EVT_EVENT(this_state->evt,index) = -1;
+    selector ^= 1 << (i-1);
+  }
+
+  index=0;
+  for(i=0; i< PMU_MAX_COUNTERS; i++)
+  {
+    if (PFMW_EVT_EVENT(this_state->evt,i) != -1) 
+      event[index++]= PFMW_EVT_EVENT(this_state->evt, i);
+  }
+
+/* get the correct number of events */
+  if (in->code & PRESET_MASK)
+  {
+    preset_index = in->code & PRESET_AND_MASK;
+    PFMW_EVT_EVTCOUNT(this_state->evt)-=PFMW_EVT_EVTCOUNT(preset_map[preset_index].evt);
+  }
+  else PFMW_EVT_EVTCOUNT(this_state->evt) -= 1;
+  nevents = PFMW_EVT_EVTCOUNT(this_state->evt) ;
+
+/*
+  memset(&this_state->evt, 0, sizeof(pfmlib_param_t));
+*/
+  PFMW_EVT_EVTCOUNT(this_state->evt) = nevents;
+  for(i=0; i<nevents; i++) 
+    PFMW_EVT_EVENT(this_state->evt, i) = event[i];
+
+/* dispatch again */
+    if (pfmw_dispatch_events(&this_state->evt,pc,&cnt))
+      return(PAPI_ECNFLCT);
+  this_state->pc_count = cnt;
+
+
+/* recalculate the selector */
+   _papi_recalc_selectors(this_state, in);
 
   return(PAPI_OK);
 }
