@@ -1623,27 +1623,34 @@ void _papi_hwd_unlock(void)
 }
 
 #elif defined(__x86_64__)
-#include <linux/config.h>
-#include "/usr/src/linux/include/linux/autoconf.h"
-#include <linux/spinlock.h>
-static spinlock_t lock;
-
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+static volatile uint32_t lock;
+ 
 void _papi_hwd_lock_init(void)
 {
-  spin_lock_init(lock);
+    lock = MUTEX_OPEN;
 }
 
 void _papi_hwd_lock(void)
 {
-  spin_lock(&lock);
+    unsigned long res = 0;
+    /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+     * else val = MUTEX_CLOSED */
+    do {
+      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock), "0"(MUTEX_OPEN) : "memory");
+    } while (res != (unsigned long)MUTEX_OPEN);
+
     return;
 }
-
+ 
 void _papi_hwd_unlock(void)
 {
-  spin_unlock(&lock);
+    unsigned long res = 0;
+        
+    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock), "0"(MUTEX_OPEN) : "memory"); 
 }
-
 #endif
 /* Machine info structure. -1 is unused. */
 
