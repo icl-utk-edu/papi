@@ -12,7 +12,7 @@ POST_BUILD =
 SPECIAL_REMOVE =
 
 FLAGS  	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qtune=pwr3 -qlanglvl=extended -q64 
-CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 
+CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
 FFLAGS  = $(FLAGS) -WF,-DPOWER3
