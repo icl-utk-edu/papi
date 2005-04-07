@@ -10,7 +10,6 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "papi_vector_redefine.h"
 
 #ifndef PAPI_NO_VECTOR 
 papi_vectors_t _papi_vector_table;
@@ -41,7 +40,7 @@ u_long_long vec_dummy_get_real_cycles (void)
 {
   float usec, cyc;
 
-  usec = (float)_papi_hwd_get_real_usec();
+  usec = (float)vec_dummy_get_real_usec();
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
   return((long long)cyc);
 }
@@ -60,7 +59,7 @@ u_long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
 {
   float usec, cyc;
 
-  usec = (float)_papi_hwd_get_virt_usec(zero);
+  usec = (float)vec_dummy_get_virt_usec(zero);
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
   return((long long)cyc);
 }
@@ -331,8 +330,8 @@ void * find_dummy(void * func, char *buf){
 }
 
 void vector_print_routine( void*func, char *fname, int pfunc){
-  void * ptr;
-  char  *buf;
+  void * ptr=NULL;
+  char  *buf=NULL;
 
   ptr = find_dummy(func, buf);
   if ( ptr ){
