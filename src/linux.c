@@ -88,9 +88,6 @@ int check_p4(int cputype){
 #ifdef PERFCTR_X86_INTEL_P4M3
      case PERFCTR_X86_INTEL_P4M3:
 #endif
-#ifdef PERFCTR_X86_INTEL_PENTM
-     case PERFCTR_X86_INTEL_PENTM:
-#endif
         return(1);
      default:
 	return(0);
