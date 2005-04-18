@@ -272,7 +272,7 @@ print_results(void)
 {
 	unsigned int i, j;
 	event_set_t *e;
-	char tmp[32];
+	char tmp1[32], tmp2[32];
 	char mtotal_str[32], *mtotal;
 	char stotal_str[32], *stotal;
 
@@ -286,6 +286,7 @@ print_results(void)
  	*/
 	printf("%lu Hz period = %lu cycles @ %lu Mhz\n", options.smpl_freq, options.smpl_period, options.cpu_mhz);
 	printf("%lu full periods\n", options.full_periods);
+	printf("%lu event sets\n", N_SETS);
 	printf("set        measured total     #runs         scaled total event name\n");
 	printf("-------------------------------------------------------------------\n");
 
@@ -293,21 +294,21 @@ print_results(void)
 		e = events + i;
 		for(j=0; j < e->n_counters-1; j++) {
 
-			sprintf(tmp, "%"PRIu64, e->values[j]);
+			sprintf(tmp1, "%"PRIu64, e->values[j]);
 
 			if (options.opt_us_format) {
-				dec2sep(tmp, mtotal_str, ',');
+				dec2sep(tmp1, mtotal_str, ',');
 				mtotal = mtotal_str;
 			} else {
-				mtotal  = tmp;
+				mtotal  = tmp1;
 			}
-			sprintf(tmp, "%"PRIu64, (e->values[j]*options.full_periods)/e->n_runs);  /* stupid scaling */
+			sprintf(tmp2, "%"PRIu64, (e->values[j]*options.full_periods)/e->n_runs);  /* stupid scaling */
 
 			if (options.opt_us_format) {
-				dec2sep(tmp, stotal_str, ',');
+				dec2sep(tmp2, stotal_str, ',');
 				stotal = stotal_str;
 			} else {
-				stotal  = tmp;
+				stotal  = tmp2;
 			}
 
 			printf("%03d: %20s  %8"PRIu64" %20s %s\n",

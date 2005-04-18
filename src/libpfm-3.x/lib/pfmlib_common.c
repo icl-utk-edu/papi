@@ -396,7 +396,8 @@ pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...))
 
 	if (name == NULL || pf == NULL) return PFMLIB_ERR_INVAL;
 
-	pfm_current->get_num_counters(&n);
+	pfm_current->get_num_counters(&num_counters);
+	pfm_current->get_impl_counters(&impl_counters);
 
 	/* we can't quite use pfm_findevent() because we need to try
 	 * both ways systematically.
@@ -424,7 +425,6 @@ pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...))
 
 	if (ret != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTFOUND;
 
-	pfm_current->get_num_counters(&num_counters);
 start_loop:
 	do {
 		code  = pfm_current->get_event_code(idx);
