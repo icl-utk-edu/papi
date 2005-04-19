@@ -16,21 +16,23 @@
 #ifndef _PAPI
 #define _PAPI
 
-/* Definition of PAPI_VERSION format.  Note that the minor version and
- * revision numbers _must_ be less than 256.  Also, the PAPI_VER_CURRENT
- * masks out the revision.  Any revision change is supposed to be binary
- * compatible between the user application code and the run-time library.
- * Any modification that breaks this compatibility _should_ modify the
- * minor version number as to force user applications to re-compile
+/* Definition of PAPI_VERSION format.  Note that each of the four 
+ * components _must_ be less than 256.  Also, the PAPI_VER_CURRENT
+ * masks out the revision and increment.  Any revision change is supposed 
+ * to be binary compatible between the user application code and the 
+ * run-time library. Any modification that breaks this compatibility 
+ * _should_ modify the minor version number as to force user applications 
+ * to re-compile.
  */
-#define PAPI_VERSION_NUMBER(maj,min,rev) (((maj)<<16) | ((min)<<8) | (rev))
-#define PAPI_VERSION_MAJOR(x)   	(((x)>>16)    & 0xffff)
-#define PAPI_VERSION_MINOR(x)		(((x)>>8)     & 0xff)
-#define PAPI_VERSION_REVISION(x)	((x)          & 0xff)
+#define PAPI_VERSION_NUMBER(maj,min,rev,inc) (((maj)<<24) | ((min)<<16) | ((rev)<<8) | (inc))
+#define PAPI_VERSION_MAJOR(x)   	(((x)>>24)    & 0xff)
+#define PAPI_VERSION_MINOR(x)		(((x)>>16)    & 0xff)
+#define PAPI_VERSION_REVISION(x)	(((x)>>8)     & 0xff)
+#define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,8)
-#define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffffff00)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,0,8,2)
+#define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
 extern "C" {
