@@ -14,9 +14,9 @@
 #define OPS MAX_COUNTER_TERMS*5
 
 typedef struct hwi_preset_info { /* static descriptive text information for each preset */
-   char *symbol;                 /* name of the preset event; i.e. PAPI_TOT_INS, etc. */
-   char *short_descr;            /* short description of the event for labels, etc. */
-   char *long_descr;             /* long description (full sentence) */
+   char symbol[PAPI_MIN_STR_LEN];      /* name of the preset event; i.e. PAPI_TOT_INS, etc. */
+   char short_descr[PAPI_MAX_STR_LEN]; /* short description of the event for labels, etc. */
+   char long_descr[PAPI_MAX_STR_LEN];  /* long description (full sentence) */
 } hwi_preset_info_t;
 
 typedef struct hwi_preset_data {  /* preset event data for each defined preset */

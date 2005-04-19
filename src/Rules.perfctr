@@ -42,6 +42,10 @@ SHRFLAGS		:= -fPIC
 LIB_SUFFIX		:= 64
 endif
 endif
+ifneq (,$(XMLFLAG))
+LDFLAGS		= -lexpat
+OPTFLAGS	+= -DXML
+endif
 
 # 
 # Portland Group section

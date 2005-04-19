@@ -21,6 +21,10 @@
 #include <limits.h>
 #include <sys/types.h>
 
+#ifdef XML
+#include <expat.h>
+#endif
+
 #ifdef _WIN32
 #define NEED_FFSLL
 #define inline_static static __inline
