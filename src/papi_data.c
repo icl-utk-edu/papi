@@ -39,7 +39,7 @@ int _papi_hwi_debug = 0;
 papi_mdi_t _papi_hwi_system_info;
 
 /* Static preinitialized table of text information for all preset events */
-static hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
+hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
    /*  0*/ {"PAPI_L1_DCM",  "L1D cache misses", "Level 1 data cache misses"},
    /*  1*/ {"PAPI_L1_ICM",  "L1I cache misses", "Level 1 instruction cache misses"},
    /*  2*/ {"PAPI_L2_DCM",  "L2D cache misses", "Level 2 data cache misses"},
@@ -171,9 +171,9 @@ static hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
 };
 
 
-static unsigned int _papi_hwi_preset_count[PAPI_MAX_PRESET_EVENTS] = {0};
-static hwi_preset_data_t *_papi_hwi_preset_data[PAPI_MAX_PRESET_EVENTS] = {NULL};
-static char *_papi_hwi_dev_notes[PAPI_MAX_PRESET_EVENTS] = {0};
+unsigned int _papi_hwi_preset_count[PAPI_MAX_PRESET_EVENTS] = {0};
+hwi_preset_data_t *_papi_hwi_preset_data[PAPI_MAX_PRESET_EVENTS] = {NULL};
+char *_papi_hwi_dev_notes[PAPI_MAX_PRESET_EVENTS] = {0};
 hwi_presets_t _papi_hwi_presets = {
    _papi_hwi_preset_count,
    _papi_hwi_preset_info,
