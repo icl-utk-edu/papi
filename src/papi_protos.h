@@ -72,6 +72,8 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
+ int _papi_hwd_get_system_info(void);
+ int _papi_hwd_init_substrate(papi_vectors_t *vtable);
  int _papi_hwd_init(hwd_context_t *);
  void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
  int _papi_hwd_update_control_state(hwd_control_state_t * this_state,

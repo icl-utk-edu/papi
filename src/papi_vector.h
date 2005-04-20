@@ -8,6 +8,7 @@ typedef struct papi_svector {
 } papi_svector_t;
 
 #ifdef PAPI_NO_VECTOR
+#define papi_vectors_t void *
 #else
 enum {
    VEC_PAPI_END=0,

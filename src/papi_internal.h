@@ -570,6 +570,7 @@ inline_static void PRFDBG(char *format, ...)
 #endif
 
 #include "threads.h"
+#include "papi_vector.h"
 #include "papi_protos.h"
 
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)

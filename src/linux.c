@@ -188,7 +188,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    return (PAPI_OK);
 }
 
-static int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
    switch (code) {
@@ -203,8 +203,6 @@ static int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * opt
    }
 }
 
-
-static
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
 {
    _papi_hwi_context_t ctx;
@@ -226,7 +224,6 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
    }
 }
 
-static
 int _papi_hwd_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
 
@@ -616,12 +613,10 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 
-static
 long_long _papi_hwd_get_real_usec(void) {
    return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-static
 long_long _papi_hwd_get_real_cycles(void) {
    return((long_long)get_cycles());
 }

@@ -466,7 +466,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
 
 /* Register allocation */
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-   int index, i, j, natNum;
+   int i, j, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
 
    /* Initialize the local structure needed
@@ -755,8 +755,10 @@ int setup_p3_vector_table(papi_vectors_t * vtable){
 
 /* These should be removed when p3-p4 is merged */
 int setup_p4_vector_table(papi_vectors_t * vtable){
+  return ( PAPI_OK );
 }
 
 int setup_p4_presets(int cputype){
+  return ( PAPI_OK );
 }
 
