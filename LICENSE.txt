@@ -14,9 +14,9 @@ software systems.
 REDISTRIBUTION:
 
 Users are allowed to distribute the PAPI system in any form as long as the
-attribution clause in adhered to. If modifications are made or the source code
-is not identical to those available from the PAPI web site, the distribution
-must be clearly marked as a modified and can NOT be redistributed as an
+attribution clause is adhered to. If modifications are made or the source codes
+are not identical to those available from the PAPI web site, the distribution
+must be clearly marked as modified and CANNOT be redistributed as an
 original PAPI distribution. 
 
 MODIFICATION OF CODE:
@@ -28,7 +28,7 @@ modification.
 
 WARRANTY DISCLAIMER:
 
-USER ACKNOWLEDGES AND AGREES THAT: 
+USERS ACKNOWLEDGE AND AGREE THAT: 
 	(A) NEITHER THE PAPI TEAM NOR THE BOARD OF REGENTS OF THE UNIVERSITY OF 
 	    TENNESSEE SYSTEM (REGENTS) MAKE ANY REPRESENTATIONS OR WARRANTIES 
 	    WHATSOEVER ABOUT THE SUITABILITY OF PAPI FOR ANY PURPOSE; 
@@ -47,7 +47,7 @@ USER ACKNOWLEDGES AND AGREES THAT:
 
 DAMAGES DISCLAIMER:
 
-USER ACKNOWLEDGES AND AGREES THAT IN NO EVENT WILL THE PAPI TEAM OR THE REGENTS 
+USERS ACKNOWLEDGE AND AGREE THAT IN NO EVENT WILL THE PAPI TEAM OR THE REGENTS 
 BE LIABLE TO USER FOR ANY SPECIAL, CONSEQUENTIAL, INDIRECT OR SIMILAR DAMAGES, 
 INCLUDING ANY LOST PROFITS OR LOST DATA ARISING OUT OF THE USE OR INABILITY TO 
 USE PAPI EVEN IF THE PAPI TEAM OR THE REGENTS HAVE BEEN ADVISED OF THE 
@@ -55,7 +55,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 ATTRIBUTION REQUIREMENT:
 
-User agrees that any reports, publications, or other disclosure of results 
+Users agree that any reports, publications, or other disclosure of results 
 obtained with PAPI will attribute its use by an appropriate citation. The 
 appropriate reference for PAPI is "The PAPI Library (PAPI) was developed by 
 the PAPI Team at the Computer Science Department of the University of 
@@ -64,5 +64,5 @@ the PAPI Team."
 
 COMPLIANCE WITH APPLICABLE LAWS:
 
-User agrees to abide by copyright law and all other applicable laws of the 
+Users agree to abide by copyright law and all other applicable laws of the 
 United States including, but not limited to, export control laws.
