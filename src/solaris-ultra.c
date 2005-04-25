@@ -931,10 +931,6 @@ action(void *arg, int regno, const char *name, uint8_t bits)
     }
     memset(&ctrs[i], 0, sizeof(ctrs[i]));
     ctrs[i].name = strdup(name);
-    if (ctrs[i].name == 0) {
-	perror("strdup");
-	exit(1);
-    }
     ctrs[i].bits[regno] = bits;
     ctrs[i].bitmask = (1 << regno);
     ++nctrs;
@@ -1414,13 +1410,16 @@ int _papi_hwd_update_shlib_info(void)
    sprintf(cmd_line, "/bin/pmap %d > %s",(int)getpid(), fname);
    if (system(cmd_line) != 0) {
       PAPIERROR("Could not run %s to get shared library address map",cmd_line);
-      return(PAPI_ESBSTR);
+      return(PAPI_OK);
    }
+
    f = fopen(fname, "r");   
-   if (f == NULL ) {
-      remove(fname);
-      exit(-1);
+   if (f == NULL) {
+     PAPIERROR("fopen(%s) returned < 0", fname); 
+     remove(fname);
+     return(PAPI_OK);
    }
+
    /* ignore the first line */
    fgets(line, 256, f);
    head = curr = NULL;
@@ -1532,6 +1531,11 @@ int _papi_hwd_update_shlib_info(void)
 
    sprintf(fname, "/proc/%d/map", getpid());
    map_f = fopen(fname, "r");
+   if (!map_f)
+     { 
+	 PAPIERROR("fopen(%s) returned < 0", fname); 
+	 return(PAPI_OK); 
+     }
 
    /* count the entries we need */
    count =0;
