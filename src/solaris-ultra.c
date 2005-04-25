@@ -1475,6 +1475,7 @@ int _papi_hwd_update_shlib_info(void)
 
    f = fopen(fname, "r");   
    if (f == NULL ) {
+     PAPIERROR("fopen(%s) returned < 0", fname); 
       remove(fname);
       return(PAPI_OK);
    }
