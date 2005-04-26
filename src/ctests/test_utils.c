@@ -522,13 +522,13 @@ int add_two_events(int *num_events, int *papi_event,
       }
    } else {
    /* query and set up the right event to monitor */
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) { 
-         *mask = MASK_FP_INS | MASK_TOT_CYC;
-         *papi_event = PAPI_FP_INS;
-      } else { 
          if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK) { 
             *mask = MASK_FP_OPS | MASK_TOT_CYC;
             *papi_event = PAPI_FP_OPS;
+      } else { 
+      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) { 
+         *mask = MASK_FP_INS | MASK_TOT_CYC;
+         *papi_event = PAPI_FP_INS;
          } else {
             *mask = MASK_TOT_INS | MASK_TOT_CYC;
             *papi_event = PAPI_TOT_INS;
