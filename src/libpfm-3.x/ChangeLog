@@ -1,3 +1,9 @@
+2005-04-25 Stephane Eranian <eranian@hpl.hp.com>
+	* examples/multiplex.c: print correct scaled results (patch already posted)
+	* lib/pfmlib_common.c : fix pfm_print_event_info to avoid pfmon -i0x50 bug
+	* Makefile: switch CC to gcc and not icc
+	* lib/pfmlib_itanium2.c: fix code range restriction problem in pfm_dispatch_irange()
+
 2004-12-21 Stephane Eranian <eranian@hpl.hp.com>
 	* updated task_smpl.c for CLOEXEC
 

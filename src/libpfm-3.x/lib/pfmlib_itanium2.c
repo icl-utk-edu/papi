@@ -229,7 +229,16 @@ check_inst_retired_events(pfmlib_input_param_t *inp, unsigned long *retired_mask
 		pfm_get_event_code(inp->pfp_events[i].event, &c);
 		if (c == code)  {
 			pfm_ita2_get_event_umask(inp->pfp_events[i].event, &umask);
-			mask |= umask;
+			switch(umask) {
+				case 0: mask |= 1;
+					break;
+				case 1: mask |= 2;
+					break;
+				case 2: mask |= 4;
+					break;
+				case 3: mask |= 8;
+					break;
+			}
 			found++;
 		}
 	}
@@ -1449,15 +1458,14 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 	if (fine_mode) {
 		reg.pmc14_ita2_reg.iarc_fine = 1;
 	} else if (retired_only) {
-		unsigned long m;
 		/*
 		 * we need to check that the user provided all the events needed to cover
 		 * all the ibr pairs used to cover the range
 		 */
-		for(i=0; i < 4; i++) {
-			m = 1UL << i;
-			if ((reg.pmc_val & m) && (retired_mask & m) == 0) return PFMLIB_ERR_IRRINVAL;
-		}
+		if ((retired_mask & 0x1) == 0 &&  reg.pmc14_ita2_reg.iarc_ibrp0 == 0) return PFMLIB_ERR_IRRINVAL;
+		if ((retired_mask & 0x2) == 0 &&  reg.pmc14_ita2_reg.iarc_ibrp1 == 0) return PFMLIB_ERR_IRRINVAL;
+		if ((retired_mask & 0x4) == 0 &&  reg.pmc14_ita2_reg.iarc_ibrp2 == 0) return PFMLIB_ERR_IRRINVAL;
+		if ((retired_mask & 0x8) == 0 &&  reg.pmc14_ita2_reg.iarc_ibrp3 == 0) return PFMLIB_ERR_IRRINVAL;
 	}
 
 	/* initialize pmc request slot */
