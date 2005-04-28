@@ -263,12 +263,15 @@ static int mdi_init() {
 
 int _papi_hwd_update_shlib_info(void)
 {
-   char fname[PATH_MAX];
-   unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
-   PAPI_address_map_t *tmp = NULL;
+   char fname[PAPI_HUGE_STR_LEN];
+   PAPI_address_map_t *tmp, *tmp2;
    FILE *f;
+   char find_data_mapname[PAPI_HUGE_STR_LEN] = "";
+   int upper_bound = 0, i, index = 0, find_data_index = 0, count = 0;
+   char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PAPI_HUGE_STR_LEN];
+   unsigned long begin, end, size, inode, foo;
 
-   sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
+   sprintf(fname, "/proc/%ld/maps", (long)_papi_hwi_system_info.pid);
    f = fopen(fname, "r");
 
    if (!f)
@@ -277,104 +280,145 @@ int _papi_hwd_update_shlib_info(void)
 	 return(PAPI_OK); 
      }
 
- again:
-   while (!feof(f)) {
-      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PATH_MAX];
-      unsigned long begin, end, size, inode, foo;
+   /* First count up things that look kinda like text segments, this is an upper bound */
 
-      if (fgets(buf, sizeof(buf), f) == 0)
-         break;
-      if (strlen(mapname))
-	strcpy(lastmapname,mapname);
-      else
-	lastmapname[0] = '\0';
-      mapname[0] = '\0';
-      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
-             &foo, dev, &inode, mapname);
+   while (1)
+     {
+      if (fgets(buf, sizeof(buf), f) == NULL)
+	{
+	  if (ferror(f))
+	    {
+	      PAPIERROR("fgets(%s, %d) returned < 0", fname, sizeof(buf)); 
+	      fclose(f);
+	      return(PAPI_OK); 
+	    }
+	  else
+	    break;
+	}
+
+      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm, &foo, dev, &inode, mapname);
+
+      if (strlen(mapname) && (perm[0] == 'r') && (perm[1] != 'w') && (perm[2] == 'x') && (inode != 0))
+	{
+	  upper_bound++;
+	}
+     }
+   if (upper_bound == 0)
+     {
+       PAPIERROR("No segments found with r-x, inode != 0 and non-NULL mapname"); 
+       fclose(f);
+       return(PAPI_OK); 
+     }
+
+   /* Alloc our temporary space */
+
+   tmp = (PAPI_address_map_t *) calloc(upper_bound, sizeof(PAPI_address_map_t));
+   if (tmp == NULL)
+     {
+       PAPIERROR("calloc(%d) failed", upper_bound*sizeof(PAPI_address_map_t));
+       fclose(f);
+       return(PAPI_OK);
+     }
+      
+   rewind(f);
+   while (1)
+     {
+      if (fgets(buf, sizeof(buf), f) == NULL)
+	{
+	  if (ferror(f))
+	    {
+	      PAPIERROR("fgets(%s, %d) returned < 0", fname, sizeof(buf)); 
+	      fclose(f);
+	      free(tmp);
+	      return(PAPI_OK); 
+	    }
+	  else
+	    break;
+	}
+
+      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm, &foo, dev, &inode, mapname);
       size = end - begin;
 
-      /* the permission string looks like "rwxp", where each character can
-       * be either the letter, or a hyphen.  The final character is either
-       * p for private or s for shared. */
+      if (strlen(mapname) == 0)
+	continue;
 
-      if (counting)
+      if ((strcmp(find_data_mapname,mapname) == 0) && (perm[0] == 'r') && (perm[1] == 'w') && (inode != 0))
 	{
-	  if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
-	    {
-	      if  (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0)
-		{
-		  _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
-		  _papi_hwi_system_info.exe_info.address_info.text_end =
-		    (caddr_t) (begin + size);
-		}
-	      t_index++;
-	    }
-	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0))
-	    {
-	      _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) begin;
-	      _papi_hwi_system_info.exe_info.address_info.data_end =
-                (caddr_t) (begin + size);
-	      d_index++;
-	    }
-	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,lastmapname) == 0))
-	    {
-	      _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) begin;
-	      _papi_hwi_system_info.exe_info.address_info.bss_end =
-                (caddr_t) (begin + size);
-	      b_index++;
-	    }
+	  tmp[find_data_index].data_start = (caddr_t) begin;
+	  tmp[find_data_index].data_end = (caddr_t) (begin + size);
+	  find_data_mapname[0] = '\0';
 	}
-      else if (!counting)
+      else if ((perm[0] == 'r') && (perm[1] != 'w') && (perm[2] == 'x') && (inode != 0))
 	{
-	  if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0)) 
+	  /* Text segment, check if we've seen it before, if so, ignore it. Some entries
+	     have multiple r-xp entires. */
+
+	  for (i=0;i<upper_bound;i++)
 	    {
-	      if (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0)
+	      if (strlen(tmp[i].name))
 		{
-	      t_index++;
-		  tmp[t_index-1 ].text_start = (caddr_t) begin;
-		  tmp[t_index-1 ].text_end = (caddr_t) (begin + size);
-		  strncpy(tmp[t_index-1 ].name, mapname, PAPI_MAX_STR_LEN);
+		  if (strcmp(mapname,tmp[i].name) == 0)
+		    break;
 		}
-	    }
-	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0))
-	    {
-	      if ( (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0) 
-               && (t_index >0 ) && (tmp[t_index-1 ].data_start == 0))
+	      else
 		{
-		  tmp[t_index-1 ].data_start = (caddr_t) begin;
-		  tmp[t_index-1 ].data_end = (caddr_t) (begin + size);
-		}
-	    }
-	  else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0))
-	    {
-	      if ((t_index > 0 ) && (tmp[t_index-1].bss_start == 0))
-		{
-		  tmp[t_index-1].bss_start = (caddr_t) begin;
-		  tmp[t_index-1].bss_end = (caddr_t) (begin + size);
+		  /* Record the text, and indicate that we are to find the data segment, following this map */
+		  strcpy(tmp[i].name,mapname);
+		  tmp[i].text_start = (caddr_t) begin;
+		  tmp[i].text_end = (caddr_t) (begin + size);
+		  count++;
+		  strcpy(find_data_mapname,mapname);
+		  find_data_index = i;
+		  break;
 		}
 	    }
 	}
-   }
+     }
+   if (count == 0)
+     {
+       PAPIERROR("No segments found with r-x, inode != 0 and non-NULL mapname"); 
+       fclose(f);
+       free(tmp);
+       return(PAPI_OK); 
+     }
+   fclose(f);
 
-   if (counting) {
-      /* When we get here, we have counted the number of entries in the map
-         for us to allocate */
+   /* Now condense the list and update exe_info */
+   tmp2 = (PAPI_address_map_t *) calloc(count, sizeof(PAPI_address_map_t));
+   if (tmp2 == NULL)
+     {
+       PAPIERROR("calloc(%d) failed", count*sizeof(PAPI_address_map_t));
+       free(tmp);
+       fclose(f);
+       return(PAPI_OK);
+     }
 
-      tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
-      if (tmp == NULL)
-	{ PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
-      t_index = 0;
-      rewind(f);
-      counting = 0;
-      goto again;
-   } else {
-      if (_papi_hwi_system_info.shlib_info.map)
-         free(_papi_hwi_system_info.shlib_info.map);
-      _papi_hwi_system_info.shlib_info.map = tmp;
-      _papi_hwi_system_info.shlib_info.count = t_index;
+   for (i=0;i<count;i++)
+     {
+       if (strcmp(tmp[i].name,_papi_hwi_system_info.exe_info.fullname) == 0)
+	 {
+	   _papi_hwi_system_info.exe_info.address_info.text_start = tmp[i].text_start;
+	   _papi_hwi_system_info.exe_info.address_info.text_end = tmp[i].text_end;
+	   _papi_hwi_system_info.exe_info.address_info.data_start = tmp[i].data_start;
+	   _papi_hwi_system_info.exe_info.address_info.data_end = tmp[i].data_end;
+	 }
+       else
+	 {
+	   strcpy(tmp2[index].name,tmp[i].name);
+	   tmp2[index].text_start = tmp[i].text_start;
+	   tmp2[index].text_end = tmp[i].text_end;
+	   tmp2[index].data_start = tmp[i].data_start;
+	   tmp2[index].data_end = tmp[i].data_end;
+	   index++;
+	 }
+     }
+   free(tmp);
 
-      fclose(f);
-   }
+   if (_papi_hwi_system_info.shlib_info.map)
+     free(_papi_hwi_system_info.shlib_info.map);
+   _papi_hwi_system_info.shlib_info.map = tmp2;
+   _papi_hwi_system_info.shlib_info.count = index;
+
    return (PAPI_OK);
 }
 
