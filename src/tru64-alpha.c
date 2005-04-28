@@ -88,7 +88,7 @@ static int get_system_info(void)
    struct cpu_info cpuinfo;
    long proc_type;
    pid_t pid;
-   char pname[PATH_MAX], *ptr;
+   char pname[PAPI_HUGE_STR_LEN], *ptr;
 
    pid = getpid();
    if (pid == -1)

@@ -205,7 +205,7 @@ int PAPI_library_init(int version)
 
        if (getenv("PAPI_ALLOW_STOLEN"))
 	 {
-	   char buf[PATH_MAX];
+	   char buf[PAPI_HUGE_STR_LEN];
 	   if (init_level != PAPI_NOT_INITED)
 	     PAPI_shutdown();
 	   sprintf(buf,"%s=%s","PAPI_ALLOW_STOLEN","stolen");

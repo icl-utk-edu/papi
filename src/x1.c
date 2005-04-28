@@ -869,7 +869,7 @@ static int _internal_get_system_info(void)
    int fd, retval;
    pid_t pid;
    char pidstr[PAPI_MAX_STR_LEN];
-   char pname[PATH_MAX];
+   char pname[PAPI_HUGE_STR_LEN];
    prpsinfo_t psi;
 
    if ( scaninvent(_internal_scan_cpu_info, NULL) == -1 )

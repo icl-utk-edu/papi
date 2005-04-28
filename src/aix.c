@@ -233,8 +233,8 @@ static int get_system_info(void)
    /* pm_info_t pminfo; */
    struct procsinfo psi = { 0 };
    pid_t pid;
-   char maxargs[PATH_MAX];
-   char pname[PATH_MAX];
+   char maxargs[PAPI_HUGE_STR_LEN];
+   char pname[PAPI_HUGE_STR_LEN];
 
 #ifndef _POWER4
 #ifdef _AIXVERSION_510
@@ -247,7 +247,7 @@ static int get_system_info(void)
       return (PAPI_ESYS);
    _papi_hwi_system_info.pid = pid;
    psi.pi_pid = pid;
-   retval = getargs(&psi, sizeof(psi), maxargs, PATH_MAX);
+   retval = getargs(&psi, sizeof(psi), maxargs, PAPI_HUGE_STR_LEN);
    if (retval == -1)
       return (PAPI_ESYS);
 
@@ -672,7 +672,7 @@ int _papi_hwd_update_shlib_info(void)
           {MA_STACK,     "STACK"},
       };
 
-      char fname[80], name[PATH_MAX];
+      char fname[80], name[PAPI_HUGE_STR_LEN];
       prmap_t newp;
       int count, t_index, retval, i, j, not_first_flag_bit;
       FILE * map_f;

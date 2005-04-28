@@ -1345,7 +1345,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
 int _papi_hwd_update_shlib_info(void)
 {
-   char fname[PATH_MAX];
+   char fname[PAPI_HUGE_STR_LEN];
    unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
    PAPI_address_map_t *tmp = NULL;
    FILE *f;
@@ -1361,7 +1361,7 @@ int _papi_hwd_update_shlib_info(void)
                                                                                 
  again:
    while (!feof(f)) {
-      char buf[PATH_MAX + 100], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PATH_MAX];
+      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
       unsigned long begin, end, size, inode, foo;
                                                                                 
       if (fgets(buf, sizeof(buf), f) == 0)

@@ -450,7 +450,7 @@ static int scan_prtconf(char *cpuname, int len_cpuname, int *hz, int *ver)
    int ihz, version;
    char line[256], cmd[80], name[256];
    FILE *f = NULL;
-   char cmd_line[PATH_MAX+PATH_MAX], fname[L_tmpnam];
+   char cmd_line[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], fname[L_tmpnam];
    unsigned int matched;
 
    /*??? system call takes very long */
@@ -575,7 +575,7 @@ static int get_system_info(void)
    psinfo_t psi;
    int fd;
    int hz, version;
-   char cpuname[PAPI_MAX_STR_LEN], pname[PATH_MAX];
+   char cpuname[PAPI_MAX_STR_LEN], pname[PATH_HUGE_STR_LEN];
 
    /* Check counter access */
 
@@ -1389,7 +1389,7 @@ int _papi_hwd_update_shlib_info(void)
 {
    /*??? system call takes very long */
 
-   char cmd_line[PATH_MAX+PATH_MAX], fname[L_tmpnam];
+   char cmd_line[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], fname[L_tmpnam];
    char line[256];
    char address[16], size[10], flags[64], objname[256];
    PAPI_address_map_t *tmp = NULL;
@@ -1521,7 +1521,7 @@ int _papi_hwd_update_shlib_info(void)
    used with pthreads) this function can be used again */
 int _papi_hwd_update_shlib_info(void)
 {
-   char fname[80], name[PATH_MAX];
+   char fname[80], name[PAPI_HUGE_STR_LEN];
    prmap_t newp;
    int count, t_index;
    FILE * map_f;
