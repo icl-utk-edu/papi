@@ -7,9 +7,23 @@ typedef struct papi_svector {
   int  func_type;
 } papi_svector_t;
 
+/* If not vector code, or if not in the substrate, VECTOR_STATIC maps to a null string.
+	Thus, prototypes behave the same as always.
+	If inside the substrate (as defined by IN_SUBSTRATE at the top of a substrate file)
+	VECTOR_STATIC maps to static, which allows routines to be properly prototyped and
+	declared as static within the substrate file. This removes the warning messages,
+	while preserving prototype checking on both sides of the substrate boundary.
+*/
+
 #ifdef PAPI_NO_VECTOR
 #define papi_vectors_t void *
+#define VECTOR_STATIC	
 #else
+#ifndef IN_SUBSTRATE
+#define VECTOR_STATIC 
+#else
+#define VECTOR_STATIC static
+#endif
 enum {
    VEC_PAPI_END=0,
    VEC_PAPI_HWD_READ,

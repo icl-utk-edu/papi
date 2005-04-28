@@ -95,6 +95,7 @@ int check_p4(int cputype){
   return(0);
 }
 
+#ifndef PAPI_NO_VECTOR
 papi_svector_t _linux_os_table[] = {
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
@@ -106,6 +107,7 @@ papi_svector_t _linux_os_table[] = {
  {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
  { NULL, VEC_PAPI_END}
 };
+#endif
 
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {

@@ -9,6 +9,8 @@
 *          <your email address>
 */
 
+#define IN_SUBSTRATE
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -80,7 +82,7 @@ int setup_p4_presets(int cputype)
 /* This used to be init_config, static to the substrate.
    Now its exposed to the hwi layer and called when an EventSet is allocated.
 */
-static
+VECTOR_STATIC
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    int def_mode, i;
@@ -143,7 +145,7 @@ void print_control(const struct perfctr_cpu_control *control)
 }
 #endif
 
-static
+VECTOR_STATIC
 int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 {
    int error;
@@ -165,7 +167,7 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
    return (PAPI_OK);
 }
 
-static
+VECTOR_STATIC
 int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 {
    if (vperfctr_stop(ctx->perfctr) < 0)
@@ -179,7 +181,7 @@ int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 }
 
 
-static
+VECTOR_STATIC
 int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
                    long_long ** dp, int flags)
 {
@@ -215,7 +217,7 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
 /* This routine is for shutting down threads, including the
    master thread. */
 
-static
+VECTOR_STATIC
 int _papi_hwd_shutdown(P4_perfctr_context_t * ctx)
 {
    int retval = vperfctr_unlink(ctx->perfctr);
@@ -257,7 +259,7 @@ static void print_alloc(P4_reg_alloc_t * a)
     if it can be mapped to counter ctr. 
     Returns true if it can, false if it can't.
 */
-static
+VECTOR_STATIC
 int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 {
    return (dst->ra_selector & (1 << ctr));
@@ -267,7 +269,7 @@ int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
     be mapped to only counter ctr. 
     Returns nothing.
 */
-static
+VECTOR_STATIC
 void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
 {
    dst->ra_selector = (1 << ctr);
@@ -285,7 +287,7 @@ void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
     if it has a single exclusive mapping. 
     Returns true if exlusive, false if non-exclusive.
 */
-static
+VECTOR_STATIC
 int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 {
    return (dst->ra_rank == 1);
@@ -296,7 +298,7 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-static
+VECTOR_STATIC
 int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
    int retval1, retval2;
@@ -324,7 +326,7 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
-static
+VECTOR_STATIC
 void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
    int i;
@@ -382,7 +384,7 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
     the dst event based on information in the src event.
     Returns nothing.
 */
-static
+VECTOR_STATIC
 void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
    dst->ra_selector = src->ra_selector;
@@ -393,7 +395,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 
 /* Register allocation */
 
-static
+VECTOR_STATIC
 int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 {
    int i, j, natNum;
@@ -490,7 +492,7 @@ static void clear_cs_events(hwd_control_state_t * this_state)
 /* This function clears the current contents of the control structure and updates it 
    with whatever resources are allocated for all the native events 
    in the native info structure array. */
-static
+VECTOR_STATIC
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count, hwd_context_t *ctx)
 {
@@ -585,7 +587,7 @@ int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
       return(PAPI_OK);
 }
 
-static
+VECTOR_STATIC
 int _papi_hwd_reset(P4_perfctr_context_t * ctx, P4_perfctr_control_t * cntrl)
 {
    /* this is what I gleaned from PAPI 2.3.4... is it right??? dkt */
@@ -640,7 +642,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
    contr->cpu_control.ireset[cntr2] = si;
 }
 
-static
+VECTOR_STATIC
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    hwd_control_state_t *this_state = &ESI->machdep;
@@ -715,6 +717,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
+#ifndef PAPI_NO_VECTOR
 papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
   {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
@@ -739,6 +742,7 @@ papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
   {NULL, VEC_PAPI_END }
 };
+#endif
 
 int setup_p4_vector_table(papi_vectors_t * vtable){
   int retval=PAPI_OK;
@@ -752,7 +756,11 @@ int setup_p4_vector_table(papi_vectors_t * vtable){
 /* These should be removed when p3-p4 is merged */
                                                                                 
 int setup_p3_vector_table(papi_vectors_t * vtable){
+  int retval=PAPI_OK;
+  return ( retval ); 
 }
 
 int setup_p3_presets(int cputype){
+  int retval=PAPI_OK;
+  return ( retval ); 
 }

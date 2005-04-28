@@ -75,27 +75,27 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwd_get_system_info(void);
  int _papi_hwd_init_substrate(papi_vectors_t *vtable);
  int _papi_hwd_init(hwd_context_t *);
- void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
- int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+ VECTOR_STATIC void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
+ VECTOR_STATIC int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                           NativeInfo_t * native, int count, hwd_context_t *);
  int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *,
                                     EventInfo_t *);
- int _papi_hwd_allocate_registers(EventSetInfo_t * ESI);
- int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **, int);
- int _papi_hwd_shutdown(hwd_context_t *);
+ VECTOR_STATIC int _papi_hwd_allocate_registers(EventSetInfo_t * ESI);
+ VECTOR_STATIC int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **, int);
+ VECTOR_STATIC int _papi_hwd_shutdown(hwd_context_t *);
 /* The following functions are now defined in the substrate header files to be inline_static */
  long_long _papi_hwd_get_real_cycles(void);
  long_long _papi_hwd_get_real_usec(void);
  long_long _papi_hwd_get_virt_cycles(const hwd_context_t *);
  long_long _papi_hwd_get_virt_usec(const hwd_context_t *);
 /* End of above */
- int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
- int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
- int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);
+ VECTOR_STATIC int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
+ VECTOR_STATIC int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
+ VECTOR_STATIC int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);
  int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long_long events[]);
  int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
  int _papi_hwd_init_global(void);
- int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
+ VECTOR_STATIC int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
  int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold);
  void *_papi_hwd_get_overflow_address(void *context);
  int _papi_hwd_shutdown_global(void);
@@ -156,35 +156,35 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
     if it can be mapped to counter ctr. 
     Returns true if it can, false if it can't.
 */
- int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr);
+ VECTOR_STATIC int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr);
 /* This function forces the event to
     be mapped to only counter ctr. 
     Returns nothing.
 */
- void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr);
+ VECTOR_STATIC void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr);
 /* This function examines the event to determine
     if it has a single exclusive mapping. 
     Returns true if exlusive, false if non-exclusive.
 */
- int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst);
+ VECTOR_STATIC int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst);
 /* This function compares the dst and src events
     to determine if any counters are shared. Typically the src event
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
- int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
+ VECTOR_STATIC int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
 /* This function removes the counters available to the src event
     from the counters available to the dst event,
     and reduces the rank of the dst event accordingly. Typically,
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
- void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
+ VECTOR_STATIC void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
 /* This function updates the selection status of 
     the dst event based on information in the src event.
     Returns nothing.
 */
- void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
+ VECTOR_STATIC void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
 
 
 
