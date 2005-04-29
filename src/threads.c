@@ -17,6 +17,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_vector_redefine.h"
+#include "papi_memory.h"
 
 /*****************/
 /* BEGIN GLOBALS */
@@ -97,7 +98,7 @@ static ThreadInfo_t *allocate_thread(void)
    /* The Thread EventSet is special. It is not in the EventSet list, but is pointed
       to by each EventSet of that particular thread. */
 
-   thread = (ThreadInfo_t *) malloc(sizeof(ThreadInfo_t));
+   thread = (ThreadInfo_t *) papi_malloc(sizeof(ThreadInfo_t));
    if (thread == NULL)
       return (NULL);
    memset(thread, 0x00, sizeof(ThreadInfo_t));
@@ -117,7 +118,7 @@ static void free_thread(ThreadInfo_t ** thread)
    THRDBG("Freeing thread 0x%lx at %p\n",(*thread)->tid,*thread);
 
    memset(*thread, 0x00, sizeof(ThreadInfo_t));
-   free(*thread);
+   papi_free(*thread);
    *thread = NULL;
 }
 

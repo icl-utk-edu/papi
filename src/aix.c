@@ -10,6 +10,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_memory.h"
 
 /* Machine dependent info structure */
 extern papi_mdi_t _papi_hwi_system_info;
@@ -705,11 +706,11 @@ int _papi_hwd_update_shlib_info(void)
          }
       }
       rewind(map_f);
-      tmp1 = (prmap_t *) calloc((count+1), sizeof(prmap_t));
+      tmp1 = (prmap_t *) papi_calloc((count+1), sizeof(prmap_t));
       if (tmp1 == NULL)
          return(PAPI_ENOMEM);
 
-      tmp2 = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+      tmp2 = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
       if (tmp2 == NULL)
          return(PAPI_ENOMEM);
 
@@ -769,10 +770,10 @@ int _papi_hwd_update_shlib_info(void)
       fclose(map_f);
 
       if (_papi_hwi_system_info.shlib_info.map)
-         free(_papi_hwi_system_info.shlib_info.map);
+         papi_free(_papi_hwi_system_info.shlib_info.map);
       _papi_hwi_system_info.shlib_info.map = tmp2;
       _papi_hwi_system_info.shlib_info.count = t_index+1;
-      free(tmp1);
+      papi_free(tmp1);
       
       return(PAPI_OK);
 #else

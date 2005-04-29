@@ -17,6 +17,7 @@
 #include "papi_vector.h"
 #include "pfmwrap.h"
 #include "threads.h"
+#include "papi_memory.h"
 
 #ifndef ITANIUM2
 static const itanium_preset_search_t ia1_preset_search_map[] = {
@@ -1441,7 +1442,7 @@ int _papi_hwd_update_shlib_info(void)
       /* When we get here, we have counted the number of entries in the map
          for us to allocate */
                                                                                 
-      tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+      tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
         { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
       t_index = 0;
@@ -1450,7 +1451,7 @@ int _papi_hwd_update_shlib_info(void)
       goto again;
    } else {
       if (_papi_hwi_system_info.shlib_info.map)
-         free(_papi_hwi_system_info.shlib_info.map);
+         papi_free(_papi_hwi_system_info.shlib_info.map);
       _papi_hwi_system_info.shlib_info.map = tmp;
       _papi_hwi_system_info.shlib_info.count = t_index;
                                                                                 

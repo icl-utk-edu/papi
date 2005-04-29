@@ -23,6 +23,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_vector_redefine.h"
+#include "papi_memory.h"
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -1287,6 +1288,7 @@ void PAPI_shutdown(void)
 
    /* Shutdown the entire substrate */
 
+   _papi_hwi_shutdown_highlevel();
    _papi_hwi_shutdown_global_internal();
    _papi_hwi_shutdown_global_threads();
    _papi_hwd_shutdown_global();
@@ -1295,6 +1297,7 @@ void PAPI_shutdown(void)
 
    init_retval = DEADBEEF;
    init_level = PAPI_NOT_INITED;
+   _papi_cleanup_all_memory();
 }
 
 char *PAPI_strerror(int errorCode)
@@ -1612,7 +1615,7 @@ int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
       }
 
       if (i == ESI->profile.event_counter){
-        prof = (PAPI_sprofil_t *) malloc(sizeof(PAPI_sprofil_t));
+        prof = (PAPI_sprofil_t *) papi_malloc(sizeof(PAPI_sprofil_t));
         memset(prof, 0x0, sizeof(PAPI_sprofil_t));
         prof->pr_base = buf;
         prof->pr_size = bufsiz;
@@ -1621,7 +1624,7 @@ int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
 
         retval = PAPI_sprofil(prof, 1, EventSet, EventCode, threshold, flags);
         if ( retval != PAPI_OK )
-           free(prof);
+           papi_free(prof);
       }
       else{
         prof = ESI->profile.prof[i];
@@ -1642,7 +1645,7 @@ int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
    if (i == ESI->profile.event_counter)
       papi_return(PAPI_EINVAL);
 
-   free(ESI->profile.prof[i]);
+   papi_free(ESI->profile.prof[i]);
    ESI->profile.prof[i] = NULL;
 
    papi_return(PAPI_sprofil(NULL, 0, EventSet, EventCode, 0, flags));

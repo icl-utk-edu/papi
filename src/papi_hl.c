@@ -22,6 +22,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_vector_redefine.h"
+#include "papi_memory.h"
 
 /* high level papi functions*/
 
@@ -103,7 +104,6 @@ int _internal_check_state(HighLevelInfo ** outgoing)
 {
    int retval;
    HighLevelInfo *state = NULL;
-   state = NULL;
 
    /* Only allow one thread at a time in here */
    if (init_level == PAPI_NOT_INITED) {
@@ -122,7 +122,7 @@ int _internal_check_state(HighLevelInfo ** outgoing)
     */
    if ((retval = PAPI_get_thr_specific(PAPI_HIGH_LEVEL_TLS, (void *) &state))
        != PAPI_OK || state == NULL) {
-      state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+      state = (HighLevelInfo *) papi_malloc(sizeof(HighLevelInfo));
       if (state == NULL)
          return (PAPI_ENOMEM);
 
@@ -407,4 +407,12 @@ int PAPI_stop_counters(long_long * values, int array_len)
    }
    APIDBG("PAPI_stop_counters returns %d\n", retval);
    return (PAPI_OK);
+}
+
+void _papi_hwi_shutdown_highlevel(){
+   HighLevelInfo *state = NULL;
+
+   if ( PAPI_get_thr_specific(PAPI_HIGH_LEVEL_TLS, (void *) &state)==PAPI_OK){
+      if ( state ) papi_free(state);
+   }
 }

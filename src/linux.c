@@ -10,6 +10,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_memory.h"
 
 /* Prototypes */
 static int mdi_init();
@@ -314,7 +315,7 @@ int _papi_hwd_update_shlib_info(void)
 
    /* Alloc our temporary space */
 
-   tmp = (PAPI_address_map_t *) calloc(upper_bound, sizeof(PAPI_address_map_t));
+   tmp = (PAPI_address_map_t *) papi_calloc(upper_bound, sizeof(PAPI_address_map_t));
    if (tmp == NULL)
      {
        PAPIERROR("calloc(%d) failed", upper_bound*sizeof(PAPI_address_map_t));
@@ -331,7 +332,7 @@ int _papi_hwd_update_shlib_info(void)
 	    {
 	      PAPIERROR("fgets(%s, %d) returned < 0", fname, sizeof(buf)); 
 	      fclose(f);
-	      free(tmp);
+	      papi_free(tmp);
 	      return(PAPI_OK); 
 	    }
 	  else
@@ -380,17 +381,17 @@ int _papi_hwd_update_shlib_info(void)
      {
        PAPIERROR("No segments found with r-x, inode != 0 and non-NULL mapname"); 
        fclose(f);
-       free(tmp);
+       papi_free(tmp);
        return(PAPI_OK); 
      }
    fclose(f);
 
    /* Now condense the list and update exe_info */
-   tmp2 = (PAPI_address_map_t *) calloc(count, sizeof(PAPI_address_map_t));
+   tmp2 = (PAPI_address_map_t *) papi_calloc(count, sizeof(PAPI_address_map_t));
    if (tmp2 == NULL)
      {
        PAPIERROR("calloc(%d) failed", count*sizeof(PAPI_address_map_t));
-       free(tmp);
+       papi_free(tmp);
        fclose(f);
        return(PAPI_OK);
      }
@@ -414,10 +415,10 @@ int _papi_hwd_update_shlib_info(void)
 	   index++;
 	 }
      }
-   free(tmp);
+   papi_free(tmp);
 
    if (_papi_hwi_system_info.shlib_info.map)
-     free(_papi_hwi_system_info.shlib_info.map);
+     papi_free(_papi_hwi_system_info.shlib_info.map);
    _papi_hwi_system_info.shlib_info.map = tmp2;
    _papi_hwi_system_info.shlib_info.count = index;
 

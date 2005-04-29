@@ -9,6 +9,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_memory.h"
 
 char *(r10k_native_events_table[]) = {
    /* 0  */ "Cycles",
@@ -1060,7 +1061,7 @@ int _papi_hwd_update_shlib_info(void)
     * since PIOCNMAP can lie.
     */
    nmaps_allocd = 2 * nmaps + 10;
-   p = (prmap_t *) calloc(nmaps_allocd, sizeof(prmap_t));
+   p = (prmap_t *) papi_calloc(nmaps_allocd, sizeof(prmap_t));
    if (p == NULL)
       return(PAPI_ENOMEM);
    err = ioctl(fd, PIOCMAP, p);
@@ -1114,7 +1115,7 @@ int _papi_hwd_update_shlib_info(void)
 
       };
    }
-   tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+   tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
    if (tmp == NULL)
       return(PAPI_ENOMEM);
    t_index=-1;
@@ -1142,10 +1143,10 @@ int _papi_hwd_update_shlib_info(void)
       }
    }
    if (_papi_hwi_system_info.shlib_info.map)
-      free(_papi_hwi_system_info.shlib_info.map);
+      papi_free(_papi_hwi_system_info.shlib_info.map);
    _papi_hwi_system_info.shlib_info.map = tmp;
    _papi_hwi_system_info.shlib_info.count = t_index+1;
-   free(p);
+   papi_free(p);
 
    return(PAPI_OK);
 }

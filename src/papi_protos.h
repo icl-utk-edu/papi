@@ -186,6 +186,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
 */
  VECTOR_STATIC void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src);
 
+/* The following functions are defined by papi_hl.c */
+ void _papi_hwi_shutdown_highlevel();
 
 
 /* The following functions are defined by the memory file. */

@@ -19,6 +19,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_memory.h"
 
 #ifdef CPC_ULTRA3_I
 #define LASTULTRA3 CPC_ULTRA3_I
@@ -101,219 +102,6 @@ static void add_preset(hwi_search_t *tab, int *np, einfo_t e);
 
 static int cpuver;
 static int pcr_shift[2];
-
-#if 0
-/* This substrate should never malloc anything. All allocation should be
-   done by the high level API. */
-   /* Phil says this is false */
-
-/* the number in this preset_search map table is the native event index 
-   in the native event table, when it ORs the PAPI_NATIVE_MASK, it becomes the
-   native event code. 
-*/
-/* UltraSparc II preset search table */
-hwi_search_t usii_preset_search_map[] = {
-   /* L1 Cache Imisses */
-   {PAPI_L1_ICM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 4, PAPI_NATIVE_MASK | 14}}},
-   /* L2 Total Cache misses */
-   {PAPI_L2_TCM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 8, PAPI_NATIVE_MASK | 18}}},
-   /* Req. for snoop */
-   {PAPI_CA_SNP, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL}}},
-   /* Req. invalidate cache line */
-   {PAPI_CA_INV, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},
-   /* L1LM */
-   {PAPI_L1_LDM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 5, PAPI_NATIVE_MASK | 15}}},
-   /* L1SM */
-   {PAPI_L1_STM, {DERIVED_SUB, {PAPI_NATIVE_MASK | 6, PAPI_NATIVE_MASK | 16}}},
-   /* Cond. branch inst. mispred. */
-   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL}}},
-   /* Total inst. issued */
-   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
-   /* Total inst. executed */
-   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
-   /* Loads executed */
-   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL}}},
-   /* Stores executed */
-   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL}}},
-   /* Total cycles */
-   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
-   /* L1 data cache reads */
-   {PAPI_L1_DCR, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL}}},
-   /* L1 data cache writes */
-   {PAPI_L1_DCW, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL}}},
-   /* L1 instruction cache hits */
-   {PAPI_L1_ICH, {0, {PAPI_NATIVE_MASK | 14, PAPI_NULL}}},
-   /* L2 instruction cache hits */
-   {PAPI_L2_ICH, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},
-   /* L1 instruction cache accesses */
-   {PAPI_L1_ICA, {0, {PAPI_NATIVE_MASK | 4, PAPI_NULL}}},
-   /* L2 total cache hits */
-   {PAPI_L2_TCH, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},
-   /* L2 total cache accesses */
-   {PAPI_L2_TCA, {0, {PAPI_NATIVE_MASK | 8, PAPI_NULL}}},
-   /* Terminator */
-   {0, {0, {0, 0}}}
-};
-
-/* UltraSparc III preset search table */
-hwi_search_t usiii_preset_search_map[] = {
-   /* Floating point instructions */
-   {PAPI_FP_INS, {DERIVED_ADD, {PAPI_NATIVE_MASK | 22, PAPI_NATIVE_MASK | 68}}},
-   /* pic0 FA_pipe_completion and pic1 FM_pipe_completion */
-   /* Floating point add instructions */
-   {PAPI_FAD_INS, {0, {PAPI_NATIVE_MASK | 22, PAPI_NULL}}},  /* pic0 FA_pipe_completion */
-   /* Floating point multiply instructions */
-   {PAPI_FML_INS, {0, {PAPI_NATIVE_MASK | 68, PAPI_NULL}}},/* pic1 FM_pipe_completion */
-   /* ITLB */
-   {PAPI_TLB_IM, {0, {PAPI_NATIVE_MASK | 47, PAPI_NULL}}},/* pic1 ITLB_miss */
-   /* DITLB */
-   {PAPI_TLB_DM, {0, {PAPI_NATIVE_MASK | 48, PAPI_NULL}}},/* pic1 DTLB_miss */
-   /* Total cycles */
-   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},/* pic0 and pic1 Cycle_cnt */
-   /* Total inst. issued */
-   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* pic0 and pic1 Instr_cnt */
-   /* Total inst. executed */
-   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* pic0 and pic1 Instr_cnt */
-   /* L2 Total Cache misses */
-   {PAPI_L2_TCM, {0, {PAPI_NATIVE_MASK | 42, PAPI_NULL}}},   /* pic1 EC_misses */
-   /* L2 Total ICache misses */
-   {PAPI_L2_ICM, {0, {PAPI_NATIVE_MASK | 45, PAPI_NULL}}},   /* pic1 EC_ic_miss */
-   /* L1 Total ICache misses */
-   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 38, PAPI_NULL}}},   /* pic1 IC_miss (actually hits) */
-   /* L1 Load Misses */
-   {PAPI_L1_LDM, {0, {PAPI_NATIVE_MASK | 39, PAPI_NULL}}},   /* pic1 DC_rd_miss */
-   /* L1 Store Misses */
-   {PAPI_L1_STM, {0, {PAPI_NATIVE_MASK | 40, PAPI_NULL}}},   /* pic1 DC_wr_miss */
-   /* Cond. branch inst. mispred. */
-   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 32, PAPI_NULL}}},   /* pic1 Dispatch0_mispred */
-   /* pic0 Cycle_cnt, pic1 Instr_cnt */
-   /* L1 data cache reads */
-   {PAPI_L1_DCR, {0, {PAPI_NATIVE_MASK | 8, PAPI_NULL}}},    /* pic0 DC_rd */
-   /* L1 data cache writes */
-   {PAPI_L1_DCW, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL}}},    /* pic0 DC_wr */
-   /* L1 instruction cache hits */
-   {PAPI_L1_ICH, {0, {PAPI_NATIVE_MASK | 7, PAPI_NULL}}},    /* pic0 IC_ref (actually hits only) */
-   /* L1 instruction cache accesses */
-   {PAPI_L1_ICA, {DERIVED_ADD, {PAPI_NATIVE_MASK | 7, PAPI_NATIVE_MASK | 38}}},
-   /* pic0 IC_ref (actually hits only) + pic1 IC_miss */
-   /* L2 total cache hits */
-   {PAPI_L2_TCH, {DERIVED_SUB, {PAPI_NATIVE_MASK | 10, PAPI_NATIVE_MASK | 42}}},
-   /* pic0 EC_ref - pic1 EC_misses */
-   /* L2 total cache accesses */
-   {PAPI_L2_TCA, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},   /* pic0 EC_ref */
-   /* Terminator */
-   {0, {0, {0, 0}}}
-};
-
-/* the encoding array in native_info_t is the encodings for PCR.SL
-   and PCR.SU, encoding[0] is for PCR.SL and encoding[1] is for PCR.SU,
-   the value -1 means it is not supported by the corresponding Performance
-   Instrumentation Counter register. For example, Cycle_cnt can be counted
-   by PICL and PICU, but Dispatch0_IC_miss can be only counted by PICL.
-   These encoding information will be used to allocate register to events
-   and update the control structure.
-*/
-/* UltraSparc II native event table */
-native_info_t usii_native_table[] = {
-/* 0  */ {"Cycle_cnt", {0x0, 0x0}},
-/* 1  */ {"Instr_cnt", {0x1, 0x1}},
-/* 2  */ {"Dispatch0_IC_miss", {0x2, -1}},
-/* 3  */ {"Dispatch0_storeBuf", {0x3, -1}},
-/* 4  */ {"IC_ref", {0x8, -1}},
-/* 5  */ {"DC_rd", {0x9, -1}},
-/* 6  */ {"DC_wr", {0xa, -1}},
-/* 7  */ {"Load_use", {0xb, -1}},
-/* 8  */ {"EC_ref", {0xc, -1}},
-/* 9  */ {"EC_write_hit_RDO", {0xd, -1}},
-/* 10 */ {"EC_snoop_inv", {0xe, -1}},
-/* 11 */ {"EC_rd_hit", {0xf, -1}},
-/* 12 */ {"Dispatch0_mispred", {-1, 0x2}},
-/* 13 */ {"Dispatch0_FP_use", {-1, 0x3}},
-/* 14 */ {"IC_hit", {-1, 0x8}},
-/* 15 */ {"DC_rd_hit", {-1, 0x9}},
-/* 16 */ {"DC_wr_hit", {-1, 0xa}},
-/* 17 */ {"Load_use_RAW", {-1, 0xb}},
-/* 18 */ {"EC_hit", {-1, 0xc}},
-/* 19 */ {"EC_wb", {-1, 0xd}},
-/* 20 */ {"EC_snoop_cb", {-1, 0xe}},
-/* 21 */ {"EC_ic_hit", {-1, 0xf}}
-};
-
-/* UltraSparc III native event table */
-native_info_t usiii_native_table[] = {
-/* 0  */ {"Cycle_cnt", {0x0, 0x0}},
-/* 1  */ {"Instr_cnt", {0x1, 0x1}},
-/* 2  */ {"Dispatch0_IC_miss", {0x2, -1}},
-/* 3  */ {"Dispatch0_br_target", {0x3, -1}},
-/* 4  */ {"Dispatch0_2nd_br", {0x4, -1}},
-/* 5  */ {"Rstall_storeQ", {0x5, -1}},
-/* 6  */ {"Rstall_IU_use", {0x6, -1}},
-/* 7  */ {"IC_ref", {0x8, -1}},
-/* 8  */ {"DC_rd", {0x9, -1}},
-/* 9  */ {"DC_wr", {0xa, -1}},
-/* 10 */ {"EC_ref", {0xc, -1}},
-/* 11 */ {"EC_write_hit_RTO", {0xd, -1}},
-/* 12 */ {"EC_snoop_inv", {0xe, -1}},
-/* 13 */ {"EC_rd_miss", {0xf, -1}},
-/* 14 */ {"PC_port0_rd", {0x10, -1}},
-/* 15 */ {"SI_snoop", {0x11, -1}},
-/* 16 */ {"SI_ciq_flow", {0x12, -1}},
-/* 17 */ {"SI_owned", {0x13, -1}},
-/* 18 */ {"SW_count0", {0x14, -1}},
-/* 19 */ {"IU_Stat_Br_miss_taken", {0x15, -1}},
-/* 20 */ {"IU_Stat_Br_count_taken", {0x16, -1}},
-/* 21 */ {"Dispatch_rs_mispred", {0x17, -1}},
-/* 22 */ {"FA_pipe_completion", {0x18, -1}},
-/* 23 */ {"EC_wb_remote", {0x19, -1}},
-/* 24 */ {"EC_miss_local", {0x1a, -1}},
-/* 25 */ {"EC_miss_mtag_remote", {0x1b, -1}},
-/* 26 */ {"MC_reads_0", {0x20, -1}},
-/* 27 */ {"MC_reads_1", {0x21, -1}},
-/* 28 */ {"MC_reads_2", {0x22, -1}},
-/* 29 */ {"MC_reads_3", {0x23, -1}},
-/* 30 */ {"MC_stalls_0", {0x24, -1}},
-/* 31 */ {"MC_stalls_2", {0x25, -1}},
-/* 32 */ {"Dispatch0_mispred", {-1, 0x2}},
-/* 33 */ {"IC_miss_cancelled", {-1, 0x3}},
-/* 34 */ {"Re_DC_missovhd", {-1, 0x4}},
-/* 35 */ {"Re_FPU_bypass", {-1, 0x5}},
-/* 36 */ {"Re_DC_miss", {-1, 0x6}},
-/* 37 */ {"Re_EC_miss", {-1, 0x7}},
-/* 38 */ {"IC_miss", {-1, 0x8}},
-/* 39 */ {"DC_rd_miss", {-1, 0x9}},
-/* 40 */ {"DC_wr_miss", {-1, 0xa}},
-/* 41 */ {"Rstall_FP_use", {-1, 0xb}},
-/* 42 */ {"EC_misses", {-1, 0xc}},
-/* 43 */ {"EC_wb", {-1, 0xd}},
-/* 44 */ {"EC_snoop_cb", {-1, 0xe}},
-/* 45 */ {"EC_ic_miss", {-1, 0xf}},
-/* 46 */ {"Re_PC_miss", {-1, 0x10}},
-/* 47 */ {"ITLB_miss", {-1, 0x11}},
-/* 48 */ {"DTLB_miss", {-1, 0x12}},
-/* 49 */ {"WC_miss", {-1, 0x13}},
-/* 50 */ {"WC_snoop_cb", {-1, 0x14}},
-/* 51 */ {"WC_scrubbed", {-1, 0x15}},
-/* 52 */ {"WC_wb_wo_read", {-1, 0x16}},
-/* 53 */ {"PC_soft_hit", {-1, 0x18}},
-/* 54 */ {"PC_snoop_inv", {-1, 0x19}},
-/* 55 */ {"PC_hard_hit", {-1, 0x1a}},
-/* 56 */ {"PC_port1_rd", {-1, 0x1b}},
-/* 57 */ {"SW_count1", {-1, 0x1c}},
-/* 58 */ {"IU_Stat_Br_miss_untaken", {-1, 0x1d}},
-/* 59 */ {"IU_Stat_Br_count_untaken", {-1, 0x1e}},
-/* 60 */ {"PC_MS_miss", {-1, 0x1f}},
-/* 61 */ {"MC_writes_0", {-1, 0x20}},
-/* 62 */ {"MC_writes_1", {-1, 0x21}},
-/* 63 */ {"MC_writes_2", {-1, 0x22}},
-/* 64 */ {"MC_writes_3", {-1, 0x23}},
-/* 65 */ {"MC_stalls_1", {-1, 0x24}},
-/* 66 */ {"MC_stalls_3", {-1, 0x25}},
-/* 67 */ {"Re_RAW_miss", {-1, 0x26}},
-/* 68 */ {"FM_pipe_completion", {-1, 0x27}},
-/* 69 */ {"EC_miss_mtag_remote", {-1, 0x28}},
-/* 70 */ {"EC_miss_remote", {-1, 0x29}}
-};
-#endif
 
 extern papi_mdi_t _papi_hwi_system_info;
 
@@ -754,7 +542,7 @@ build_tables(void)
 	cpc_walk_names(cpuver, regno, 0, action);
     }
     SUBDBG("%d counters\n", nctrs);
-    if ((ctrs = malloc(nctrs*sizeof(struct ctr_info))) == 0) {
+    if ((ctrs = papi_malloc(nctrs*sizeof(struct ctr_info))) == 0) {
 	return PAPI_ENOMEM;
     }
     nctrs = 0;
@@ -771,8 +559,8 @@ build_tables(void)
     } }
 #endif
     /* Build the native event table */
-    if ((native_table = malloc(nctrs*sizeof(native_info_t))) == 0) {
-	free(ctrs);
+    if ((native_table = papi_malloc(nctrs*sizeof(native_info_t))) == 0) {
+	papi_free(ctrs);
 	return PAPI_ENOMEM;
     }
     for (i = 0; i < nctrs; ++i) {
@@ -787,7 +575,7 @@ build_tables(void)
 	else
 	    native_table[i].encoding[1] = -1;
     }
-    free(ctrs);
+    papi_free(ctrs);
 
     /* Build the preset table */
     if (cpuver <= CPC_ULTRA2) {
@@ -800,7 +588,7 @@ build_tables(void)
     }
     else
 	return PAPI_ESBSTR;
-    preset_table = malloc((n+1)*sizeof(hwi_search_t));
+    preset_table = papi_malloc((n+1)*sizeof(hwi_search_t));
     npresets = 0;
     for (i = 0; i < n; ++i) {
 	add_preset(preset_table, &npresets, ep[i]);
@@ -1430,7 +1218,7 @@ int _papi_hwd_update_shlib_info(void)
          sscanf(line, "%s %s %s %s", address, size, flags, objname);
          if (objname[0] == '/' )  
          {
-            tmpr = (struct map_record *)malloc(sizeof(struct map_record));
+            tmpr = (struct map_record *)papi_malloc(sizeof(struct map_record));
             if (tmpr==NULL) return(-1);
             tmpr->next = NULL;
             if (curr ) {
@@ -1462,7 +1250,7 @@ int _papi_hwd_update_shlib_info(void)
          
       }
    }
-   tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+   tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
 
    if (tmp == NULL)
      { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
@@ -1503,12 +1291,12 @@ int _papi_hwd_update_shlib_info(void)
       }
       tmpr = curr->next;
       /* free the temporary allocated memory */
-      free(curr);
+      papi_free(curr);
       curr = tmpr;
    }  /* end of while */ 
    fclose(f);
    if (_papi_hwi_system_info.shlib_info.map)
-      free(_papi_hwi_system_info.shlib_info.map);
+      papi_free(_papi_hwi_system_info.shlib_info.map);
    _papi_hwi_system_info.shlib_info.map = tmp;
    _papi_hwi_system_info.shlib_info.count = t_index+1;
 
@@ -1569,7 +1357,7 @@ int _papi_hwd_update_shlib_info(void)
 
    }
    rewind(map_f);
-   tmp = (PAPI_address_map_t *) calloc(t_index-1, sizeof(PAPI_address_map_t));
+   tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
 
    if (tmp == NULL)
      { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
@@ -1600,7 +1388,7 @@ int _papi_hwd_update_shlib_info(void)
    fclose(map_f);
 
    if (_papi_hwi_system_info.shlib_info.map) 
-      free(_papi_hwi_system_info.shlib_info.map);
+      papi_free(_papi_hwi_system_info.shlib_info.map);
    _papi_hwi_system_info.shlib_info.map = tmp;
    _papi_hwi_system_info.shlib_info.count = t_index+1;
 

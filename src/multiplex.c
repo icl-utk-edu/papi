@@ -103,6 +103,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_vector_redefine.h"
+#include "papi_memory.h"
 
 #define MPX_SIGNAL PAPI_SIGNAL
 #define MPX_ITIMER PAPI_ITIMER
@@ -334,7 +335,7 @@ static MasterEvent *get_my_threads_master_event_list(void)
 
 static MPX_EventSet *mpx_malloc(Threadlist * t)
 {
-   MPX_EventSet *newset = (MPX_EventSet *) malloc(sizeof(MPX_EventSet));
+   MPX_EventSet *newset = (MPX_EventSet *) papi_malloc(sizeof(MPX_EventSet));
    if (newset == NULL)
       return (NULL);
    memset(newset, 0, sizeof(MPX_EventSet));
@@ -358,7 +359,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 
    if (t == NULL) {
     new_thread:
-      t = (Threadlist *) malloc(sizeof(Threadlist));
+      t = (Threadlist *) papi_malloc(sizeof(Threadlist));
       if (t == NULL) {
          _papi_hwi_unlock(MULTIPLEX_LOCK);
          return (PAPI_ENOMEM);
@@ -439,7 +440,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
    retval = mpx_insert_events(newset, &EventCode, 1, def_dom, def_grn);
    if (retval != PAPI_OK) {
       if (alloced_newset) {
-         free(newset);
+         papi_free(newset);
          newset = NULL;
       }
    }
@@ -1075,7 +1076,7 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
    /* Free all the memory */
 
-   free(tmp);
+   papi_free(tmp);
 
    *mpx_events = NULL;
 
@@ -1143,7 +1144,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
          return PAPI_OK;
 
       /* Make a list of the events in the current set */
-      event_list = (int *) malloc(mpx_events->num_events * sizeof(int));
+      event_list = (int *) papi_malloc(mpx_events->num_events * sizeof(int));
       if (event_list == NULL)
 	return PAPI_ENOMEM;
 
@@ -1162,7 +1163,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 
       mpx_release();
 
-      free(event_list);
+      papi_free(event_list);
 
       break;
    }
@@ -1213,7 +1214,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
 
       /* No matching event in the list; add a new one */
       if (mev == NULL) {
-         mev = (MasterEvent *) malloc(sizeof(MasterEvent));
+         mev = (MasterEvent *) papi_malloc(sizeof(MasterEvent));
          if (mev == NULL)
 	   return(PAPI_ENOMEM);
 
@@ -1307,7 +1308,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
       PAPI_destroy_eventset(&(mev->papi_event));
    }
    if (mev)
-      free(mev);
+      papi_free(mev);
    mev = NULL;
 
    /* Decrease the usage count of events */
@@ -1407,7 +1408,7 @@ static void mpx_remove_unused(MasterEvent ** head)
          }
          PAPI_cleanup_eventset(mev->papi_event);
          PAPI_destroy_eventset(&(mev->papi_event));
-         free(mev);
+         papi_free(mev);
       } else {
          lastmev = mev;
       }

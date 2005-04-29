@@ -5,6 +5,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_memory.h"
 
 #define PF5_SEL_COUNTER_0	1       /* Op applies to counter 0 */
 #define PF5_SEL_COUNTER_1	2       /* Op applies to counter 1 */
@@ -159,7 +160,7 @@ static int update_global_hwcounters(EventSetInfo_t * global)
    hwd_control_state_t *current_state = (hwd_control_state_t *) global->machdep;
    long *counter_values;
 
-   counter_values = (long int *) calloc(EV_MAX_COUNTERS, sizeof(long int));
+   counter_values = (long int *) papi_calloc(EV_MAX_COUNTERS, sizeof(long int));
 
    retval = HW_driver_read(counter_values, _papi_system_info.hw_info.model);
    if (retval == -1)
@@ -189,7 +190,7 @@ static int update_global_hwcounters(EventSetInfo_t * global)
 
    HW_driver_clear();
 
-   free(counter_values);
+   papi_free(counter_values);
 
    return (0);
 }

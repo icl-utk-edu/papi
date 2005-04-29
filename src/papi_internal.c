@@ -27,6 +27,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_vector_redefine.h"
+#include "papi_memory.h"
 
 /********************/
 /* BEGIN PROTOTYPES */
@@ -119,13 +120,13 @@ static int default_debug_handler(int errorCode)
 static int allocate_eventset_map(DynamicArray_t *map)
 {
    /* Allocate and clear the Dynamic Array structure */
-   if(map->dataSlotArray!=NULL) free(map->dataSlotArray);
+   if(map->dataSlotArray!=NULL) papi_free(map->dataSlotArray);
    memset(map, 0x00, sizeof(DynamicArray_t));
 
    /* Allocate space for the EventSetInfo_t pointers */
 
    map->dataSlotArray =
-       (EventSetInfo_t **) malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
+       (EventSetInfo_t **) papi_malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
    if (map->dataSlotArray == NULL) {
       return (PAPI_ENOMEM);
    }
@@ -139,7 +140,7 @@ static int allocate_eventset_map(DynamicArray_t *map)
 
 static void free_eventset_map(DynamicArray_t *map)
 {
-   free(map->dataSlotArray);
+   papi_free(map->dataSlotArray);
    memset(map, 0x00, sizeof(DynamicArray_t));
 }
 
@@ -151,7 +152,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
    /*realloc existing PAPI_EVENTSET_MAP.dataSlotArray */
 
    number = DA->totalSlots * 2;
-   n = (EventSetInfo_t **) realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t *));
+   n = (EventSetInfo_t **) papi_realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t *));
    if (n == NULL)
       return(PAPI_ENOMEM);
 
@@ -216,29 +217,29 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
    EventSetInfo_t *ESI;
    int max_counters;
 
-   ESI = (EventSetInfo_t *) malloc(sizeof(EventSetInfo_t));
+   ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
    if (ESI == NULL)
       return (NULL);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
    max_counters = _papi_hwi_system_info.num_cntrs;
-/*  ESI->machdep = (hwd_control_state_t *)malloc(sizeof(hwd_control_state_t)); */
-   ESI->sw_stop = (long_long *) malloc(max_counters * sizeof(long_long));
-   ESI->hw_start = (long_long *) malloc(max_counters * sizeof(long_long));
-   ESI->EventInfoArray = (EventInfo_t *) malloc(max_counters * sizeof(EventInfo_t));
+/*  ESI->machdep = (hwd_control_state_t *)papi_malloc(sizeof(hwd_control_state_t)); */
+   ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
+   ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
+   ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
 
    if (
 /*    (ESI->machdep        == NULL )  || */
          (ESI->sw_stop == NULL) || (ESI->hw_start == NULL)
          || (ESI->EventInfoArray == NULL)) {
-/*      if (ESI->machdep)        free(ESI->machdep); */
+/*      if (ESI->machdep)        papi_free(ESI->machdep); */
       if (ESI->sw_stop)
-         free(ESI->sw_stop);
+         papi_free(ESI->sw_stop);
       if (ESI->hw_start)
-         free(ESI->hw_start);
+         papi_free(ESI->hw_start);
       if (ESI->EventInfoArray)
-         free(ESI->EventInfoArray);
-      free(ESI);
+         papi_free(ESI->EventInfoArray);
+      papi_free(ESI);
       return (NULL);
    }
 /*  memset(ESI->machdep,       0x00,_papi_system_info.size_machdep); */
@@ -267,19 +268,19 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
 static void free_EventSet(EventSetInfo_t * ESI)
 {
    if (ESI->EventInfoArray)
-      free(ESI->EventInfoArray);
-/*  if (ESI->machdep)        free(ESI->machdep); */
+      papi_free(ESI->EventInfoArray);
+/*  if (ESI->machdep)        papi_free(ESI->machdep); */
    if (ESI->sw_stop)
-      free(ESI->sw_stop);
+      papi_free(ESI->sw_stop);
    if (ESI->hw_start)
-      free(ESI->hw_start);
+      papi_free(ESI->hw_start);
    if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex)
-      free(ESI->multiplex);
+      papi_free(ESI->multiplex);
 
 #ifdef DEBUG
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 #endif
-   free(ESI);
+   papi_free(ESI);
 }
 
 static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
@@ -938,7 +939,7 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI)
    EventInfo_t *tmp;
    int retval, i, j = 0, *mpxlist = NULL;
 
-   tmp = (EventInfo_t *) malloc(PAPI_MPX_DEF_DEG * sizeof(EventInfo_t));
+   tmp = (EventInfo_t *) papi_malloc(PAPI_MPX_DEF_DEG * sizeof(EventInfo_t));
    if (tmp == NULL)
       return (PAPI_ENOMEM);
 
@@ -946,9 +947,9 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI)
       convert them to multiplex events */
 
    if (ESI->NumberOfEvents) {
-      mpxlist = (int *) malloc(sizeof(int) * ESI->NumberOfEvents);
+      mpxlist = (int *) papi_malloc(sizeof(int) * ESI->NumberOfEvents);
       if (mpxlist == NULL) {
-         free(tmp);
+         papi_free(tmp);
          return (PAPI_ENOMEM);
       }
 
@@ -963,15 +964,15 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI)
 
       retval = MPX_add_events(&ESI->multiplex, mpxlist, j);
       if (retval != PAPI_OK) {
-         free(mpxlist);
-         free(tmp);
+         papi_free(mpxlist);
+         papi_free(tmp);
          return (retval);
       }
    }
 
    /* Resize the EventInfo_t array */
 
-   free(ESI->EventInfoArray);
+   papi_free(ESI->EventInfoArray);
    ESI->EventInfoArray = tmp;
 
    /* Update the state before initialization! */
@@ -991,7 +992,7 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI)
    if (mpxlist != NULL) {
       for (i = 0; i < ESI->NumberOfEvents; i++)
          ESI->EventInfoArray[i].event_code = mpxlist[i];
-      free(mpxlist);
+      papi_free(mpxlist);
    }
 
    return (PAPI_OK);
@@ -1098,7 +1099,7 @@ void _papi_hwi_shutdown_global_internal(void)
 {
   free_eventset_map(&_papi_hwi_system_info.global_eventset_map);
   if (_papi_hwi_system_info.shlib_info.map){
-     free(_papi_hwi_system_info.shlib_info.map);
+     papi_free(_papi_hwi_system_info.shlib_info.map);
   }
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 }

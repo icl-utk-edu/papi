@@ -123,9 +123,10 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define MULTIPLEX_LOCK     	PAPI_NUM_LOCK+1       /* multiplex.c */
 #define THREADS_LOCK		PAPI_NUM_LOCK+2       /* threads.c */
 #define HIGHLEVEL_LOCK		PAPI_NUM_LOCK+3       /* papi_hl.c */
-#define SUBSTRATE_LOCK          PAPI_NUM_LOCK+4       /* <substrate.c> */
-#define GLOBAL_LOCK          	PAPI_NUM_LOCK+5       /* papi.c for global variable (static and non) initialization/shutdown */
-#define NUM_INNER_LOCK         	6
+#define MEMORY_LOCK		PAPI_NUM_LOCK+4       /* papi_memory.c*/
+#define SUBSTRATE_LOCK          PAPI_NUM_LOCK+5       /* <substrate.c> */
+#define GLOBAL_LOCK          	PAPI_NUM_LOCK+6       /* papi.c for global variable (static and non) initialization/shutdown */
+#define NUM_INNER_LOCK         	7
 #define PAPI_MAX_LOCK         	(NUM_INNER_LOCK+PAPI_NUM_LOCK)
 
 /* extras related */
