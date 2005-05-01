@@ -10,6 +10,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_memory.h"
 
 #ifndef PAPI_NO_VECTOR 
 papi_vectors_t _papi_vector_table;
@@ -275,56 +276,59 @@ int PAPI_user(int func_num, void * input, void * output){
   return (_papi_vector_table._vec_papi_hwd_user(func_num, input, output));
 }
 
-void * find_dummy(void * func, char *buf){
+char * find_dummy(void * func, char **buf){
   void * ptr=NULL;
 
   if ( vec_int_ok_dummy == func){
     ptr = vec_int_ok_dummy;
-    buf = strdup("vec_int_ok_dummy");
+    *buf = papi_strdup("vec_int_ok_dummy");
   }
   else if ( vec_int_one_dummy == func ){
     ptr = vec_int_one_dummy;
-    buf = strdup("vec_int_one_dummy");
+    *buf = papi_strdup("vec_int_one_dummy");
   }
   else if ( vec_int_dummy == func ){
     ptr = vec_int_dummy;
-    buf = strdup("vec_int_dummy");
+    *buf = papi_strdup("vec_int_dummy");
   }
   else if ( vec_void_dummy == func ){
     ptr = vec_void_dummy;
-    buf = strdup("vec_void_dummy");
+    *buf = papi_strdup("vec_void_dummy");
   }
   else if ( vec_void_star_dummy == func ){
     ptr = vec_void_star_dummy;
-    buf = strdup("vec_void_star_dummy");
+    *buf = papi_strdup("vec_void_star_dummy");
   }
   else if ( vec_long_long_dummy == func ){
     ptr = vec_long_long_dummy;
-    buf = strdup("vec_long_long_dummy");
+    *buf = papi_strdup("vec_long_long_dummy");
   }
   else if ( vec_char_star_dummy == func ){
     ptr = vec_char_star_dummy;
-    buf = strdup("vec_char_star_dummy");
+    *buf = papi_strdup("vec_char_star_dummy");
   }
   else if ( vec_long_dummy == func ){
     ptr = vec_long_dummy;  
-    buf = strdup("vec_long_dummy");
+    *buf = papi_strdup("vec_long_dummy");
   }
   else if ( vec_dummy_get_real_usec == func ) {
     ptr = vec_dummy_get_real_usec;
-    buf = strdup("vec_dummy_get_real_usec");
+    *buf = papi_strdup("vec_dummy_get_real_usec");
   }
   else if ( vec_dummy_get_real_cycles == func ) {
     ptr = vec_dummy_get_real_cycles;
-    buf = strdup("vec_dummy_get_real_cycles");
+    *buf = papi_strdup("vec_dummy_get_real_cycles");
   }
   else if ( vec_dummy_get_virt_usec == func ) {
     ptr = vec_dummy_get_virt_usec;
-    buf = strdup("vec_dummy_get_virt_usec");
+    *buf = papi_strdup("vec_dummy_get_virt_usec");
   }
   else if ( vec_dummy_get_virt_cycles == func ) {
     ptr = vec_dummy_get_virt_cycles;
-    buf = strdup("vec_dummy_get_virt_cycles");
+    *buf = papi_strdup("vec_dummy_get_virt_cycles");
+  }
+  else {
+    ptr = NULL;
   }
   return(ptr);
 }
@@ -333,10 +337,10 @@ void vector_print_routine( void*func, char *fname, int pfunc){
   void * ptr=NULL;
   char  *buf=NULL;
 
-  ptr = find_dummy(func, buf);
+  ptr = find_dummy(func, &buf);
   if ( ptr ){
     printf("%s: %s is mapped to %s.\n", (ptr?"DUMMY":"function"),fname, buf);
-    free(buf);
+    papi_free(buf);
   }
   else if ( (!ptr && pfunc) )
     printf("%s: %s is mapped to %p.\n", (ptr?"DUMMY":"function"),fname, func);

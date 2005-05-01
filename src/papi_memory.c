@@ -147,6 +147,22 @@ void *_papi_malloc(char *file, int line, int size){
   return(NULL);
 }
 
+char * _papi_strdup(char *file, int line, const char *s){
+  int size;
+  char *ptr;
+
+  if ( !s ) return(NULL);
+
+  /* String Length +1 for \0 */
+  size = strlen(s)+1;
+  ptr = (char *) _papi_malloc(file, line, size);
+
+  if ( !ptr ) return(NULL);
+
+  memcpy(ptr, s, size);
+  return(ptr);
+}
+
 /* Only frees the memory if PAPI malloced it */
 void _papi_valid_free(char *file, int line, void *ptr){
   pmem_t *tmp;

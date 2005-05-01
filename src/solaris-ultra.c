@@ -718,7 +718,7 @@ action(void *arg, int regno, const char *name, uint8_t bits)
 	}
     }
     memset(&ctrs[i], 0, sizeof(ctrs[i]));
-    ctrs[i].name = strdup(name);
+    ctrs[i].name = papi_strdup(name);
     ctrs[i].bits[regno] = bits;
     ctrs[i].bitmask = (1 << regno);
     ++nctrs;
