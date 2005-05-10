@@ -38,7 +38,7 @@ void remove_mem_ptr(pmem_t *);
 void insert_mem_ptr(pmem_t *);
 
 
-inline pmem_t * get_mem_ptr(void * ptr){
+pmem_t * get_mem_ptr(void * ptr){
   pmem_t **tmp_ptr = (pmem_t **) (ptr - sizeof(void *));
   pmem_t *mem_ptr;
 
