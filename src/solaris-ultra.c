@@ -363,7 +363,7 @@ static int get_system_info(void)
    psinfo_t psi;
    int fd;
    int hz, version;
-   char cpuname[PAPI_MAX_STR_LEN], pname[PATH_HUGE_STR_LEN];
+   char cpuname[PAPI_MAX_STR_LEN], pname[PAPI_HUGE_STR_LEN];
 
    /* Check counter access */
 
