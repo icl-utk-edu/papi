@@ -153,17 +153,17 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    /* Setup presets */
    if ( is_p4 ){
      strcpy(_papi_hwi_system_info.substrate, "$Id$");
+     retval = setup_p4_vector_table(vtable);
      retval = setup_p4_presets(info.cpu_type);
      if ( retval ) 
        return(retval);
-     retval = setup_p4_vector_table(vtable);
    }
    else{
      strcpy(_papi_hwi_system_info.substrate, "$Id$");
+     retval = setup_p3_vector_table(vtable);
      retval = setup_p3_presets(info.cpu_type);
      if ( retval ) 
        return(retval);
-     retval = setup_p3_vector_table(vtable);
    }
 
    if ( retval ) 
