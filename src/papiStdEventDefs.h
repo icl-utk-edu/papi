@@ -29,7 +29,8 @@ platform's documentation carefully.
 #define PAPI_PRESET_MASK 0x80000000
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
-#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF
+// #define PAPI_NATIVE_AND_MASK 0x3FFFFFFF /* this masks both native and preset bits */
+#define PAPI_NATIVE_AND_MASK 0xBFFFFFFF
 
 #define PAPI_MAX_PRESET_EVENTS 128      /*The maxmimum number of preset events */
 
@@ -153,7 +154,9 @@ enum {
    PAPI_FDV_INS_idx, /*FD ins */
    PAPI_FSQ_INS_idx, /*FSq ins */
    PAPI_FNV_INS_idx, /*Finv ins */
-   PAPI_FP_OPS_idx  /*Floating point operations executed */
+   PAPI_FP_OPS_idx,  /*Floating point operations executed */
+
+   PAPI_END_idx      /*This should always be last! */
 };
 
 #define PAPI_L1_DCM  (PAPI_L1_DCM_idx  | PAPI_PRESET_MASK) /*Level 1 data cache misses */
@@ -259,6 +262,8 @@ enum {
 #define PAPI_FSQ_INS (PAPI_FSQ_INS_idx | PAPI_PRESET_MASK) /*FSq ins */
 #define PAPI_FNV_INS (PAPI_FNV_INS_idx | PAPI_PRESET_MASK) /*Finv ins */
 #define PAPI_FP_OPS  (PAPI_FP_OPS_idx  | PAPI_PRESET_MASK) /*Floating point operations executed */
+
+#define PAPI_END     (PAPI_END_idx  | PAPI_PRESET_MASK)    /*This should always be last! */
 
 #endif
 
