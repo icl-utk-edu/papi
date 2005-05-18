@@ -669,178 +669,178 @@
 	</availevents>
 	<availevents arch='Pent II'>
 		<papievent  name='PAPI_L1_DCM'>
-			<native> <event name='P2_DCU_LINES_IN'/> </native>
+			<native> <event name='DCU_LINES_IN'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_ICM'>
-			<native> <event name='P2_L2_IFETCH_TOT'/> </native>
+			<native> <event name='L2_IFETCH_TOT'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_DCM' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_L2_LINES_IN'/>
-				<event name='P2_BUS_TRAN_IFETCH_SELF'/>
+				<event name='L2_LINES_IN'/>
+				<event name='BUS_TRAN_IFETCH_SELF'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_ICM'>
-			<native> <event name='P2_BUS_TRAN_IFETCH_SELF'/> </native>
+			<native> <event name='BUS_TRAN_IFETCH_SELF'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_TCM'>
-			<native> <event name='P2_L2_RQSTS_TOT'/> </native>
+			<native> <event name='L2_RQSTS_TOT'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_TCM'>
-			<native> <event name='P2_L2_LINES_IN'/> </native>
+			<native> <event name='L2_LINES_IN'/> </native>
 		</papievent>
 		<papievent  name='PAPI_CA_SHR'>
-			<native> <event name='P2_L2_RQSTS_SHD'/> </native>
+			<native> <event name='L2_RQSTS_SHD'/> </native>
 		</papievent>
 		<papievent  name='PAPI_CA_CLN'>
-			<native> <event name='P2_BUS_TRAN_RFO_SELF'/> </native>
+			<native> <event name='BUS_TRAN_RFO_SELF'/> </native>
 		</papievent>
 		<papievent  name='PAPI_CA_ITV'>
-			<native> <event name='P2_BUS_TRAN_INVAL_SELF'/> </native>
+			<native> <event name='BUS_TRAN_INVAL_SELF'/> </native>
 		</papievent>
 		<papievent  name='PAPI_TLB_IM'>
-			<native> <event name='P2_ITLB_MISS'/> </native>
+			<native> <event name='ITLB_MISS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_LDM'>
-			<native> <event name='P2_L2_LD_TOT'/> </native>
+			<native> <event name='L2_LD_TOT'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_STM'>
-			<native> <event name='P2_L2_ST_TOT'/> </native>
+			<native> <event name='L2_ST_TOT'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_LDM' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_L2_LINES_IN'/>
-				<event name='P2_L2_M_LINES_INM'/>
+				<event name='L2_LINES_IN'/>
+				<event name='L2_M_LINES_INM'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_STM'>
-			<native> <event name='P2_L2_M_LINES_INM'/> </native>
+			<native> <event name='L2_M_LINES_INM'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BTAC_M'>
-			<native> <event name='P2_BTB_MISSES'/> </native>
+			<native> <event name='BTB_MISSES'/> </native>
 		</papievent>
 		<papievent  name='PAPI_HW_INT'>
-			<native> <event name='P2_HW_INT_RX'/> </native>
+			<native> <event name='HW_INT_RX'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BR_CN'>
-			<native> <event name='P2_BR_INST_RETIRED'/> </native>
+			<native> <event name='BR_INST_RETIRED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BR_TKN'>
-			<native> <event name='P2_BR_TAKEN_RETIRED'/> </native>
+			<native> <event name='BR_TAKEN_RETIRED'/> </native>
 		</papievent>
 		<papievent name='PAPI_BR_NTK' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_BR_INST_RETIRED'/>
-				<event name='P2_BR_TAKEN_RETIRED'/>
+				<event name='BR_INST_RETIRED'/>
+				<event name='BR_TAKEN_RETIRED'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_BR_MSP'>
-			<native> <event name='P2_BR_MISS_PRED_RETIRED'/> </native>
+			<native> <event name='BR_MISS_PRED_RETIRED'/> </native>
 		</papievent>
 		<papievent name='PAPI_BR_PRC' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_BR_INST_RETIRED'/>
-				<event name='P2_BR_MISS_PRED_RETIRED'/>
+				<event name='BR_INST_RETIRED'/>
+				<event name='BR_MISS_PRED_RETIRED'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_TOT_IIS'>
-			<native> <event name='P2_INST_DECODED'/> </native>
+			<native> <event name='INST_DECODED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_TOT_INS'>
-			<native> <event name='P2_INST_RETIRED'/> </native>
+			<native> <event name='INST_RETIRED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FP_INS'>
-			<native> <event name='P2_FLOPS'/> </native>
+			<native> <event name='FLOPS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FP_OPS'>
-			<native> <event name='P2_FLOPS'/> </native>
+			<native> <event name='FLOPS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BR_INS'>
-			<native> <event name='P2_BR_INST_RETIRED'/> </native>
+			<native> <event name='BR_INST_RETIRED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_VEC_INS'>
-			<native> <event name='P2_MMX_INSTR_EXEC'/> </native>
+			<native> <event name='MMX_INSTR_EXEC'/> </native>
 		</papievent>
 		<papievent  name='PAPI_RES_STL'>
-			<native> <event name='P2_RESOURCE_STALLS'/> </native>
+			<native> <event name='RESOURCE_STALLS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_TOT_CYC'>
-			<native> <event name='P2_CPU_CLK_UNHALTED'/> </native>
+			<native> <event name='CPU_CLK_UNHALTED'/> </native>
 		</papievent>
 		<papievent name='PAPI_L1_DCH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_DATA_MEM_REFS'/>
-				<event name='P2_DCU_LINES_IN'/>
+				<event name='DATA_MEM_REFS'/>
+				<event name='DCU_LINES_IN'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L1_DCA'>
-			<native> <event name='P2_DATA_MEM_REFS'/> </native>
+			<native> <event name='DATA_MEM_REFS'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_DCA' derived='DERIVED_ADD' count='2'>
 			<native>
-				<event name='P2_L2_LD_TOT'/>
-				<event name='P2_L2_ST_TOT'/>
+				<event name='L2_LD_TOT'/>
+				<event name='L2_ST_TOT'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_DCR'>
-			<native> <event name='P2_L2_LD_TOT'/> </native>
+			<native> <event name='L2_LD_TOT'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_DCW'>
-			<native> <event name='P2_L2_ST_TOT'/> </native>
+			<native> <event name='L2_ST_TOT'/> </native>
 		</papievent>
 		<papievent name='PAPI_L1_ICH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_IFU_IFETCH'/>
-				<event name='P2_L2_IFETCH_TOT'/>
+				<event name='IFU_IFETCH'/>
+				<event name='L2_IFETCH_TOT'/>
 			</native>
 		</papievent>
 		<papievent name='PAPI_L2_ICH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_L2_IFETCH_TOT'/>
-				<event name='P2_BUS_TRAN_IFETCH_SELF'/>
+				<event name='L2_IFETCH_TOT'/>
+				<event name='BUS_TRAN_IFETCH_SELF'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L1_ICA'>
-			<native> <event name='P2_IFU_IFETCH'/> </native>
+			<native> <event name='IFU_IFETCH'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_ICA'>
-			<native> <event name='P2_L2_IFETCH_TOT'/> </native>
+			<native> <event name='L2_IFETCH_TOT'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_ICR'>
-			<native> <event name='P2_IFU_IFETCH'/> </native>
+			<native> <event name='IFU_IFETCH'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_ICR'>
-			<native> <event name='P2_L2_IFETCH_TOT'/> </native>
+			<native> <event name='L2_IFETCH_TOT'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_TCH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P2_L2_RQSTS_TOT'/>
-				<event name='P2_L2_LINES_IN'/>
+				<event name='L2_RQSTS_TOT'/>
+				<event name='L2_LINES_IN'/>
 			</native>
 		</papievent>
 		<papievent name='PAPI_L1_TCA' derived='DERIVED_ADD' count='2'>
 			<native>
-				<event name='P2_DATA_MEM_REFS'/>
-				<event name='P2_IFU_IFETCH'/>
+				<event name='DATA_MEM_REFS'/>
+				<event name='IFU_IFETCH'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_TCA'>
-			<native> <event name='P2_L2_RQSTS_TOT'/> </native>
+			<native> <event name='L2_RQSTS_TOT'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_TCR' derived='DERIVED_ADD' count='2'>
 			<native>
-				<event name='P2_L2_LD_TOT'/>
-				<event name='P2_L2_IFETCH_TOT'/>
+				<event name='L2_LD_TOT'/>
+				<event name='L2_IFETCH_TOT'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_TCW'>
-			<native> <event name='P2_L2_ST_TOT'/> </native>
+			<native> <event name='L2_ST_TOT'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FML_INS'>
-			<native> <event name='P2_MUL'/> </native>
+			<native> <event name='MUL'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FDV_INS'>
-			<native> <event name='P2_DIV'/> </native>
+			<native> <event name='DIV'/> </native>
 		</papievent>
 		<papievent  name='PAPI_NULL'>
 			<native> <event name='PAPI_NULL'/> </native>
@@ -848,175 +848,175 @@
 	</availevents>
 	<availevents arch='Pent III'>
 		<papievent  name='PAPI_L1_DCM'>
-			<native> <event name='P3_DCU_LINES_IN'/> </native>
+			<native> <event name='DCU_LINES_IN'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_ICM'>
-			<native> <event name='P3_L2_IFETCH_MESI'/> </native>
+			<native> <event name='L2_IFETCH_MESI'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_DCM' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_L2_LINES_IN'/>
-				<event name='P3_BUS_TRAN_IFETCH_SELF'/>
+				<event name='L2_LINES_IN'/>
+				<event name='BUS_TRAN_IFETCH_SELF'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_ICM'>
-			<native> <event name='P3_BUS_TRAN_IFETCH_SELF'/> </native>
+			<native> <event name='BUS_TRAN_IFETCH_SELF'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_TCM'>
-			<native> <event name='P3_L2_RQSTS_MESI'/> </native>
+			<native> <event name='L2_RQSTS_MESI'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_TCM'>
-			<native> <event name='P3_L2_LINES_IN'/> </native>
+			<native> <event name='L2_LINES_IN'/> </native>
 		</papievent>
 		<papievent  name='PAPI_CA_SHR'>
-			<native> <event name='P3_L2_RQSTS_S'/> </native>
+			<native> <event name='L2_RQSTS_S'/> </native>
 		</papievent>
 		<papievent  name='PAPI_CA_CLN'>
-			<native> <event name='P3_BUS_TRAN_RFO_SELF'/> </native>
+			<native> <event name='BUS_TRAN_RFO_SELF'/> </native>
 		</papievent>
 		<papievent  name='PAPI_CA_ITV'>
-			<native> <event name='P3_BUS_TRAN_INVAL_SELF'/> </native>
+			<native> <event name='BUS_TRAN_INVAL_SELF'/> </native>
 		</papievent>
 		<papievent  name='PAPI_TLB_IM'>
-			<native> <event name='P3_ITLB_MISS'/> </native>
+			<native> <event name='ITLB_MISS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_LDM'>
-			<native> <event name='P3_L2_LD_MESI'/> </native>
+			<native> <event name='L2_LD_MESI'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_STM'>
-			<native> <event name='P3_L2_ST_MESI'/> </native>
+			<native> <event name='L2_ST_MESI'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_LDM' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_L2_LINES_IN'/>
-				<event name='P3_L2_M_LINES_INM'/>
+				<event name='L2_LINES_IN'/>
+				<event name='L2_M_LINES_INM'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_STM'>
-			<native> <event name='P3_L2_M_LINES_INM'/> </native>
+			<native> <event name='L2_M_LINES_INM'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BTAC_M'>
-			<native> <event name='P3_BTB_MISSES'/> </native>
+			<native> <event name='BTB_MISSES'/> </native>
 		</papievent>
 		<papievent  name='PAPI_HW_INT'>
-			<native> <event name='P3_HW_INT_RX'/> </native>
+			<native> <event name='HW_INT_RX'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BR_CN'>
-			<native> <event name='P3_BR_INST_RETIRED'/> </native>
+			<native> <event name='BR_INST_RETIRED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BR_TKN'>
-			<native> <event name='P3_BR_TAKEN_RETIRED'/> </native>
+			<native> <event name='BR_TAKEN_RETIRED'/> </native>
 		</papievent>
 		<papievent name='PAPI_BR_NTK' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_BR_INST_RETIRED'/>
-				<event name='P3_BR_TAKEN_RETIRED'/>
+				<event name='BR_INST_RETIRED'/>
+				<event name='BR_TAKEN_RETIRED'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_BR_MSP'>
-			<native> <event name='P3_BR_MISS_PRED_RETIRED'/> </native>
+			<native> <event name='BR_MISS_PRED_RETIRED'/> </native>
 		</papievent>
 		<papievent name='PAPI_BR_PRC' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_BR_INST_RETIRED'/>
-				<event name='P3_BR_MISS_PRED_RETIRED'/>
+				<event name='BR_INST_RETIRED'/>
+				<event name='BR_MISS_PRED_RETIRED'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_TOT_IIS'>
-			<native> <event name='P3_INST_DECODED'/> </native>
+			<native> <event name='INST_DECODED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_TOT_INS'>
-			<native> <event name='P3_INST_RETIRED'/> </native>
+			<native> <event name='INST_RETIRED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FP_INS'>
-			<native> <event name='P3_FLOPS'/> </native>
+			<native> <event name='FLOPS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FP_OPS'>
-			<native> <event name='P3_FLOPS'/> </native>
+			<native> <event name='FLOPS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_BR_INS'>
-			<native> <event name='P3_BR_INST_RETIRED'/> </native>
+			<native> <event name='BR_INST_RETIRED'/> </native>
 		</papievent>
 		<papievent  name='PAPI_RES_STL'>
-			<native> <event name='P3_RESOURCE_STALLS'/> </native>
+			<native> <event name='RESOURCE_STALLS'/> </native>
 		</papievent>
 		<papievent  name='PAPI_TOT_CYC'>
-			<native> <event name='P3_CPU_CLK_UNHALTED'/> </native>
+			<native> <event name='CPU_CLK_UNHALTED'/> </native>
 		</papievent>
 		<papievent name='PAPI_L1_DCH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_DATA_MEM_REFS'/>
-				<event name='P3_DCU_LINES_IN'/>
+				<event name='DATA_MEM_REFS'/>
+				<event name='DCU_LINES_IN'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L1_DCA'>
-			<native> <event name='P3_DATA_MEM_REFS'/> </native>
+			<native> <event name='DATA_MEM_REFS'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_DCA' derived='DERIVED_ADD' count='2'>
 			<native>
-				<event name='P3_L2_LD_MESI'/>
-				<event name='P3_L2_ST_MESI'/>
+				<event name='L2_LD_MESI'/>
+				<event name='L2_ST_MESI'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_DCR'>
-			<native> <event name='P3_L2_LD_MESI'/> </native>
+			<native> <event name='L2_LD_MESI'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_DCW'>
-			<native> <event name='P3_L2_ST_MESI'/> </native>
+			<native> <event name='L2_ST_MESI'/> </native>
 		</papievent>
 		<papievent name='PAPI_L1_ICH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_IFU_IFETCH'/>
-				<event name='P3_L2_IFETCH_MESI'/>
+				<event name='IFU_IFETCH'/>
+				<event name='L2_IFETCH_MESI'/>
 			</native>
 		</papievent>
 		<papievent name='PAPI_L2_ICH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_L2_IFETCH_MESI'/>
-				<event name='P3_BUS_TRAN_IFETCH_SELF'/>
+				<event name='L2_IFETCH_MESI'/>
+				<event name='BUS_TRAN_IFETCH_SELF'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L1_ICA'>
-			<native> <event name='P3_IFU_IFETCH'/> </native>
+			<native> <event name='IFU_IFETCH'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_ICA'>
-			<native> <event name='P3_L2_IFETCH_MESI'/> </native>
+			<native> <event name='L2_IFETCH_MESI'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L1_ICR'>
-			<native> <event name='P3_IFU_IFETCH'/> </native>
+			<native> <event name='IFU_IFETCH'/> </native>
 		</papievent>
 		<papievent  name='PAPI_L2_ICR'>
-			<native> <event name='P3_L2_IFETCH_MESI'/> </native>
+			<native> <event name='L2_IFETCH_MESI'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_TCH' derived='DERIVED_SUB' count='2'>
 			<native>
-				<event name='P3_L2_RQSTS_MESI'/>
-				<event name='P3_L2_LINES_IN'/>
+				<event name='L2_RQSTS_MESI'/>
+				<event name='L2_LINES_IN'/>
 			</native>
 		</papievent>
 		<papievent name='PAPI_L1_TCA' derived='DERIVED_ADD' count='2'>
 			<native>
-				<event name='P3_DATA_MEM_REFS'/>
-				<event name='P3_IFU_IFETCH'/>
+				<event name='DATA_MEM_REFS'/>
+				<event name='IFU_IFETCH'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_TCA'>
-			<native> <event name='P3_L2_RQSTS_MESI'/> </native>
+			<native> <event name='L2_RQSTS_MESI'/> </native>
 		</papievent>
 		<papievent name='PAPI_L2_TCR' derived='DERIVED_ADD' count='2'>
 			<native>
-				<event name='P3_L2_LD_MESI'/>
-				<event name='P3_L2_IFETCH_MESI'/>
+				<event name='L2_LD_MESI'/>
+				<event name='L2_IFETCH_MESI'/>
 			</native>
 		</papievent>
 		<papievent  name='PAPI_L2_TCW'>
-			<native> <event name='P3_L2_ST_MESI'/> </native>
+			<native> <event name='L2_ST_MESI'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FML_INS'>
-			<native> <event name='P3_MUL'/> </native>
+			<native> <event name='MUL'/> </native>
 		</papievent>
 		<papievent  name='PAPI_FDV_INS'>
-			<native> <event name='P3_DIV'/> </native>
+			<native> <event name='DIV'/> </native>
 		</papievent>
 		<papievent  name='PAPI_NULL'>
 			<native> <event name='PAPI_NULL'/> </native>

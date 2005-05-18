@@ -678,10 +678,6 @@ enum {
    first event is the one that is read. See PAPI_FP_INS for an example.
 */
 
-#ifdef XML
-hwi_search_t _papi_hwd_xml_preset_map[PAPI_MAX_PRESET_EVENTS];
-#endif
-
 const hwi_search_t _papi_hwd_p3_preset_map[] = {
    {PAPI_L1_DCM,{0,{PNE_P3_DCU_LINES_IN,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L1_ICM,{0,{PNE_P3_L2_IFETCH_MESI,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},

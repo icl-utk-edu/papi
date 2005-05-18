@@ -143,31 +143,32 @@ hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
    /*100*/ {"PAPI_FSQ_INS", "FPU square root", "Floating point square root instructions"},
    /*101*/ {"PAPI_FNV_INS", "FPU inverse", "Floating point inverse instructions"},
    /*102*/ {"PAPI_FP_OPS",  "FP operations", "Floating point operations"},
-   /*103*/ {"", "", ""},
-   /*104*/ {"", "", ""},
-   /*105*/ {"", "", ""},
-   /*106*/ {"", "", ""},
-   /*107*/ {"", "", ""},
-   /*108*/ {"", "", ""},
-   /*109*/ {"", "", ""},
-   /*110*/ {"", "", ""},
-   /*111*/ {"", "", ""},
-   /*112*/ {"", "", ""},
-   /*113*/ {"", "", ""},
-   /*114*/ {"", "", ""},
-   /*115*/ {"", "", ""},
-   /*116*/ {"", "", ""},
-   /*117*/ {"", "", ""},
-   /*118*/ {"", "", ""},
-   /*119*/ {"", "", ""},
-   /*120*/ {"", "", ""},
-   /*121*/ {"", "", ""},
-   /*122*/ {"", "", ""},
-   /*123*/ {"", "", ""},
-   /*124*/ {"", "", ""},
-   /*125*/ {"", "", ""},
-   /*126*/ {"", "", ""},
-   /*127*/ {"", "", ""}
+   /* empty entries are now null pointers instead of pointers to empty strings */
+   /*103*/ {NULL, NULL, NULL},
+   /*104*/ {NULL, NULL, NULL},
+   /*105*/ {NULL, NULL, NULL},
+   /*106*/ {NULL, NULL, NULL},
+   /*107*/ {NULL, NULL, NULL},
+   /*108*/ {NULL, NULL, NULL},
+   /*109*/ {NULL, NULL, NULL},
+   /*110*/ {NULL, NULL, NULL},
+   /*111*/ {NULL, NULL, NULL},
+   /*112*/ {NULL, NULL, NULL},
+   /*113*/ {NULL, NULL, NULL},
+   /*114*/ {NULL, NULL, NULL},
+   /*115*/ {NULL, NULL, NULL},
+   /*116*/ {NULL, NULL, NULL},
+   /*117*/ {NULL, NULL, NULL},
+   /*118*/ {NULL, NULL, NULL},
+   /*119*/ {NULL, NULL, NULL},
+   /*120*/ {NULL, NULL, NULL},
+   /*121*/ {NULL, NULL, NULL},
+   /*122*/ {NULL, NULL, NULL},
+   /*123*/ {NULL, NULL, NULL},
+   /*124*/ {NULL, NULL, NULL},
+   /*125*/ {NULL, NULL, NULL},
+   /*126*/ {NULL, NULL, NULL},
+   /*127*/ {NULL, NULL, NULL}
 };
 
 
@@ -181,6 +182,9 @@ hwi_presets_t _papi_hwi_presets = {
    _papi_hwi_dev_notes
 };
 
+/* table matching derived types to derived strings.
+   used by get_info, encode_event, xml translator
+*/
 const hwi_derived_info_t _papi_hwi_derived[] = {
    {NOT_DERIVED,     "NOT_DERIVED",    "Do nothing"},
    {DERIVED_ADD,     "DERIVED_ADD",    "Add counters"},
@@ -191,6 +195,35 @@ const hwi_derived_info_t _papi_hwi_derived[] = {
    {DERIVED_POSTFIX, "DERIVED_POSTFIX", "Process counters based on specified postfix string"},
    {-1, "", ""}
 };
+
+/* _papi_hwi_derived_type:
+   Helper routine to extract a derived type from a derived string
+   returns type value if found, otherwise returns -1
+*/
+int _papi_hwi_derived_type(char *derived) {
+   int j;
+
+   for(j = 0; _papi_hwi_derived[j].type != -1; j++)
+      if (!strcmp (derived, _papi_hwi_derived[j].name)) break; /* match */
+   return(_papi_hwi_derived[j].type);
+}
+
+/* _papi_hwi_derived_string:
+   Helper routine to extract a derived string from a derived type
+   copies derived type string into derived if found,
+   otherwise returns PAPI_EINVAL
+*/
+int _papi_hwi_derived_string(int type, char *derived, int len) {
+   int j;
+
+   for(j = 0; _papi_hwi_derived[j].type != -1; j++) {
+      if (_papi_hwi_derived[j].type == type) {
+         strncpy(derived, _papi_hwi_derived[j].name, len);
+         return(PAPI_OK);
+      }
+   }
+   return(PAPI_EINVAL);
+}
 
 const char *_papi_hwi_errNam[PAPI_NUM_ERRORS] = {
    /* 0*/ "PAPI_OK",

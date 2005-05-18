@@ -25,19 +25,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "perfctr-p3.h"
-
-#ifdef XML
-#define BUFFSIZE 8192
-#define SPARSE_BEGIN 0
-#define SPARSE_EVENT_SEARCH 1
-#define SPARSE_EVENT 2
-#define SPARSE_DESC 3
-#define ARCH_SEARCH 4
-#define DENSE_EVENT_SEARCH 5
-#define DENSE_NATIVE_SEARCH 6
-#define DENSE_NATIVE_DESC 7
-#define FINISHED 8
-#endif
+#include "papi_memory.h"
 
 extern hwi_search_t _papi_hwd_p3_preset_map;
 extern hwi_search_t _papi_hwd_pm_preset_map;
@@ -52,12 +40,6 @@ extern native_event_entry_t _papi_hwd_k7_native_map;
 extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
 extern papi_mdi_t _papi_hwi_system_info;
-#ifdef XML
-extern hwi_search_t _papi_hwd_xml_preset_map;
-extern hwi_presets_t _papi_hwi_presets;
-char buffer[BUFFSIZE];
-int location=SPARSE_BEGIN, sparse_index=0, dense_index=0, native_index, error=0;
-#endif
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
@@ -80,199 +62,6 @@ void print_control(const struct perfctr_cpu_control *control) {
 }
 #endif
 
-#ifdef XML
-int _xml_native_name_to_code(char *in, int *out)
-{
-   char *name;
-   unsigned int i = 0 | PAPI_NATIVE_MASK;
-   int retval = PAPI_ENOEVNT;
-
-   do {
-      name = _papi_hwd_ntv_code_to_name(i);
-      if (name != NULL) {
-         if (strcasecmp(name, in) == 0) {
-            *out = i;
-            retval = PAPI_OK;
-         }
-      } else {
-         *out = 0;
-         retval = PAPI_OK;
-      }
-   } while ((_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
-   return (retval);
-}
-
-/* The function below, _xml_start(), is a hook into expat's XML
- * parser.  _xml_start() defines how the parser handles the
- * opening tags in PAPI's XML file.  This function can be understood
- * more easily if you follow along with its logic while looking at
- * papi_events.xml.  The location variable is a global telling us
- * where we are in the XML file.  Have we found our architecture's
- * events yet?  Are we looking at an event definition?...etc.
- */
-void _xml_start(void *data, const char *el, const char **attr) {
-   int native_encoding;
-   char *temp;
-
-   if(location==SPARSE_BEGIN && !strcmp("papistdevents", el)) {
-      location=SPARSE_EVENT_SEARCH;
-   }
-   else if(location==SPARSE_EVENT_SEARCH && !strcmp("papievent", el)) {
-      strcpy(_papi_hwi_presets.info[sparse_index].symbol, attr[1]);
-      location=SPARSE_EVENT;
-   }
-   else if(location==SPARSE_EVENT && !strcmp("desc", el)) {
-      location=SPARSE_DESC;
-   }
-   else if(location==ARCH_SEARCH && !strcmp("availevents", el) &&
-           !strcmp("Pent III", attr[1])) {
-      location=DENSE_EVENT_SEARCH;
-   }
-   else if(location==DENSE_EVENT_SEARCH && !strcmp("papievent", el)) {
-      if(!strcmp("PAPI_NULL", attr[1])) {
-         location=FINISHED;
-         return;
-      }
-      else if(PAPI_event_name_to_code((char *)attr[1], &sparse_index) != PAPI_OK) {
-         PAPIERROR("Improper Preset name given in XML file for %s.", attr[1]);
-         error=1;
-      }
-      sparse_index &= PAPI_PRESET_AND_MASK;
-      if(attr[2]) {                      /* derived event */
-         if(!strcmp(attr[3], "DERIVED_ADD"))
-            preset_search_map[dense_index].data.derived=DERIVED_ADD;
-         else if(!strcmp(attr[3], "DERIVED_PS"))
-            preset_search_map[dense_index].data.derived=DERIVED_PS;
-         else if(!strcmp(attr[3], "DERIVED_ADD_PS"))
-            preset_search_map[dense_index].data.derived=DERIVED_ADD_PS;
-         else if(!strcmp(attr[3], "DERIVED_CMPD"))
-            preset_search_map[dense_index].data.derived=DERIVED_CMPD;
-         else if(!strcmp(attr[3], "DERIVED_SUB"))
-            preset_search_map[dense_index].data.derived=DERIVED_SUB;
-         else if(!strcmp(attr[3], "DERIVED_POSTFIX"))
-            preset_search_map[dense_index].data.derived=DERIVED_POSTFIX;
-
-         if(attr[5]) {
-            _papi_hwi_presets.count[sparse_index] = atoi(attr[5]);
-         }
-         else {
-            PAPIERROR("No count given for %s in Preset XML file.", attr[1]);
-            error=1;
-         }
-      }
-      else {
-         preset_search_map[dense_index].data.derived=NOT_DERIVED;
-         _papi_hwi_presets.count[sparse_index] = 1;
-      }
-      location=DENSE_NATIVE_SEARCH;
-   }
-   else if(location==DENSE_NATIVE_SEARCH && !strcmp("native", el)) {
-      for(native_index=0; native_index<MAX_COUNTER_TERMS; native_index++) {
-         preset_search_map[dense_index].data.native[native_index]=PAPI_NULL;
-      }
-      native_index=0;
-      location=DENSE_NATIVE_DESC;
-   }
-   else if(location==DENSE_NATIVE_DESC && !strcmp("event", el)) {
-      temp=strchr(attr[1], '_');
-      temp=strchr(temp, temp[1]);
-      if(_xml_native_name_to_code(temp, &native_encoding)!=PAPI_OK) {
-         PAPIERROR("Improper Native name given in XML file for %s\n", attr[1]);
-         error=1;
-      }
-      preset_search_map[dense_index].data.native[native_index]=native_encoding;
-      native_index++;
-   }
-   else if(location && location!=ARCH_SEARCH && location!=FINISHED) {
-      PAPIERROR("Poorly-formed Preset XML document.");
-      error=1;
-   }
-}
-
-/* The function below, _xml_end(), is a hook into expat's XML
- * parser.  _xml_end() defines how the parser handles the
- * end tags in PAPI's XML file.
- */
-void _xml_end(void *data, const char *el) {
-   int i;
-
-   if(location==SPARSE_EVENT_SEARCH && !strcmp("papistdevents", el)) {
-      for(i=sparse_index; i<PAPI_MAX_PRESET_EVENTS; i++) {
-         _papi_hwi_presets.info[i].symbol[0]='\0';
-         _papi_hwi_presets.info[i].long_descr[0]='\0';
-         _papi_hwi_presets.info[i].short_descr[0]='\0';
-      }
-      location=ARCH_SEARCH;
-   }
-   else if(location==DENSE_NATIVE_DESC && !strcmp("native", el)) {
-      _papi_hwi_presets.data[sparse_index]=&preset_search_map[dense_index].data;
-      dense_index++;
-      location=DENSE_EVENT_SEARCH;
-   }
-   else if(location==DENSE_EVENT_SEARCH && !strcmp("availevents", el)) {
-      location=FINISHED;
-   }
-}
-
-/* The function below, _xml_content(), is a hook into expat's XML
- * parser.  _xml_content() defines how the parser handles the
- * text between tags in PAPI's XML file.  The information between
- * tags is usally text for event descriptions.
- */
-void _xml_content(void *data, const char *el, const int len) {
-   int i;
-   if(location==SPARSE_DESC) {
-      for(i=0; i<len; i++) _papi_hwi_presets.info[sparse_index].long_descr[i]=el[i];
-      _papi_hwi_presets.info[sparse_index].long_descr[len]='\0';
-      _papi_hwi_presets.info[sparse_index].short_descr[0]='\0';
-      sparse_index++;
-      _papi_hwi_presets.data[sparse_index]=NULL;
-      location=SPARSE_EVENT_SEARCH;
-   }
-}
-
-int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes) {
-   int done = 0;
-   FILE *fp = fopen("./papi_events.xml", "r");
-   XML_Parser p = XML_ParserCreate(NULL);
-
-   if(!p) {
-      PAPIERROR("Couldn't allocate memory for XML parser.");
-      return(PAPI_ESYS);
-   }
-   XML_SetElementHandler(p, _xml_start, _xml_end);
-   XML_SetCharacterDataHandler(p, _xml_content);
-   if(fp==NULL) {
-      PAPIERROR("Error opening Preset XML file.");
-      return(PAPI_ESYS);
-   }
-   do {
-      int len;
-      void *buffer = XML_GetBuffer(p, BUFFSIZE);
-
-      if(buffer==NULL) {
-         PAPIERROR("Couldn't allocate memory for XML buffer.");
-         return(PAPI_ESYS);
-      }
-      len = fread(buffer, 1, BUFFSIZE, fp);
-      if(ferror(fp)) {
-         PAPIERROR("XML read error.");
-         return(PAPI_ESYS);
-      }
-      done = feof(fp);
-      if(!XML_ParseBuffer(p, len, len == 0)) {
-         PAPIERROR("Parse error at line %d:\n%s\n",
-         XML_GetCurrentLineNumber(p),
-         XML_ErrorString(XML_GetErrorCode(p)));
-         return(PAPI_ESYS);
-      }
-      if(error) return(PAPI_ESYS);
-   } while(!done);
-   XML_ParserFree(p);
-   fclose(fp);
-   return(PAPI_OK);
-}
-#endif
 
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
@@ -293,7 +82,6 @@ int setup_p3_presets(int cputype) {
    case PERFCTR_X86_INTEL_PIII:
       native_table = &_papi_hwd_p3_native_map;
 #ifdef XML
-      preset_search_map = &_papi_hwd_xml_preset_map;
       return(_xml_papi_hwi_setup_all_presets("Pent III", NULL));
       break;
 #endif
