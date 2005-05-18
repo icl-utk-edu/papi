@@ -1097,6 +1097,7 @@ int _papi_hwi_init_global_internal(void)
 
 void _papi_hwi_shutdown_global_internal(void)
 {
+  _papi_hwi_cleanup_all_presets();
   free_eventset_map(&_papi_hwi_system_info.global_eventset_map);
   if (_papi_hwi_system_info.shlib_info.map){
      papi_free(_papi_hwi_system_info.shlib_info.map);
@@ -1394,4 +1395,106 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
       }
       return 1;
    }
+}
+
+/* _papi_hwi_get_event_info:
+   Assumes EventCode contains a valid preset code.
+   But defensive programming says check for NULL pointers.
+   Returns a filled in PAPI_event_info_t structure containing
+   descriptive strings and values for the specified preset event.
+*/
+int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
+{
+   int i = EventCode & PAPI_PRESET_AND_MASK;
+   int j;
+
+   if (_papi_hwi_presets.info[i].symbol) { /* if the event is in the preset table */
+      info->event_code = EventCode;
+      info->count = _papi_hwi_presets.count[i];
+      strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
+      if(_papi_hwi_presets.info[i].short_descr != NULL)
+         strncpy(info->short_descr, _papi_hwi_presets.info[i].short_descr, PAPI_MIN_STR_LEN);
+      if(_papi_hwi_presets.info[i].long_descr != NULL)
+         strncpy(info->long_descr, _papi_hwi_presets.info[i].long_descr, PAPI_HUGE_STR_LEN);
+      info->derived[0] = 0;
+      info->postfix[0] = 0;
+      if (_papi_hwi_presets.data[i]) { /* if the event exists on this platform */
+         strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, PAPI_MIN_STR_LEN);
+         _papi_hwi_derived_string(_papi_hwi_presets.data[i]->derived, info->derived, PAPI_MIN_STR_LEN);
+         for (j=0; j < (int)info->count; j++) {
+            info->code[j] = _papi_hwi_presets.data[i]->native[j];
+            _papi_hwi_native_code_to_name(info->code[j], info->name[j], PAPI_MAX_STR_LEN);
+         }
+      }
+      if (_papi_hwi_presets.dev_note[i]) { /* if a developer's note exists for this event */
+         strncpy(info->note, _papi_hwi_presets.dev_note[i], PAPI_HUGE_STR_LEN);
+      } else info->note[0] = 0;
+
+      return(PAPI_OK);
+   } else {
+      return(PAPI_ENOEVNT);
+   }
+}
+
+/* _papi_hwi_set_event_info:
+   This is the internal version of the set_event_info code.
+   Assumes that parameters are valid and that it is legal to
+   replace events if requested. Also assumes preset events.
+*/
+int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode)
+{
+   int i, j, retval;
+
+   /* search the preset table for the first name match or first empty slot */
+   for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++) {
+      if (_papi_hwi_presets.info[i].symbol == NULL) break;
+/*      printf("old: %s  new: %s\n",_papi_hwi_presets.info[i].symbol,info->symbol); */
+      if (!strcmp(_papi_hwi_presets.info[i].symbol, info->symbol)) break;
+   }
+
+   /* bail if the table's full */
+   if (i >= PAPI_MAX_PRESET_EVENTS)
+      return(PAPI_ENOTPRESET);
+
+   /* At this point, we know the following:
+      - i < PAPI_MAX_PRESET_EVENTS; AND
+      - event[i] is  empty;  OR
+      - event[i].symbol == info->symbol; 
+   */
+
+   *EventCode = i | PAPI_PRESET_MASK; /* set new EventCode (may not have changed) */
+   _papi_hwi_presets.count[i] = info->count;
+   if (_papi_hwi_presets.info[i].symbol) papi_valid_free(_papi_hwi_presets.info[i].symbol);
+   _papi_hwi_presets.info[i].symbol = papi_strdup(info->symbol);
+   if (_papi_hwi_presets.info[i].short_descr) papi_valid_free(_papi_hwi_presets.info[i].short_descr);
+   _papi_hwi_presets.info[i].short_descr = papi_strdup(info->short_descr);
+   if (_papi_hwi_presets.info[i].long_descr) papi_valid_free(_papi_hwi_presets.info[i].long_descr);
+   _papi_hwi_presets.info[i].long_descr = papi_strdup(info->long_descr);
+
+   if (_papi_hwi_presets.data[i] == NULL)
+      _papi_hwi_presets.data[i] = papi_malloc(sizeof(hwi_preset_data_t));
+
+   /* extract the derived type from the info->derived string */
+   _papi_hwi_presets.data[i]->derived = _papi_hwi_derived_type(info->derived);
+   if (_papi_hwi_presets.data[i]->derived == -1) 
+      _papi_hwi_presets.data[i]->derived = NOT_DERIVED;
+
+   /* only copy the postfix string if it's a DERIVED_POSTFIX event */
+   if (_papi_hwi_presets.data[i]->derived == DERIVED_POSTFIX)
+      strncpy(_papi_hwi_presets.data[i]->operation, info->postfix, OPS);
+
+	/* copy the native event terms into the preset structure */
+   /* names are passed in. check for validity and convert to codes */
+   for (j=0; j < (int)info->count; j++) {
+       retval = _papi_hwi_native_name_to_code(info->name[j],
+          &_papi_hwi_presets.data[i]->native[j]);
+       if(retval != PAPI_OK) {
+          return(retval);
+       }
+   }
+
+   if (info->note) { /* if a developer's note exists for this event */
+      _papi_hwi_presets.dev_note[i] = papi_strdup(info->note);
+   } else _papi_hwi_presets.dev_note[i] = NULL;
+   return(PAPI_OK);
 }

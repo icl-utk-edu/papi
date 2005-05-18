@@ -517,8 +517,7 @@ read the documentation carefully.  */
                                                 - for presets, native event_code values
                                                 - for native events, register values for event programming */
       char name[PAPI_MAX_INFO_TERMS]         /* names of code terms: */
-               [PAPI_MIN_STR_LEN];           /* - for presets, native event names, as in symbol, above
-                                                   NOTE: these may be truncated to fit
+               [PAPI_MAX_STR_LEN+3];           /* - for presets, native event names, as in symbol, above
                                                 - for native events, descriptive strings for each register
                                                    value presented in the code array */
       char note[PAPI_HUGE_STR_LEN];          /* an optional developer note supplied with a preset event
@@ -539,7 +538,9 @@ read the documentation carefully.  */
 #if PAPI_DMEM_INFO
    long  PAPI_get_dmem_info(int option);
 #endif
+   int   PAPI_encode_events(char * event_file, int replace);
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
+   int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
    int   PAPI_get_multiplex(int EventSet);

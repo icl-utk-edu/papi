@@ -38,6 +38,10 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_init_global_internal(void);
  int _papi_hwi_init_global(void);
  void _papi_hwi_shutdown_global_internal(void);
+ int _papi_hwi_cleanup_all_presets(void);
+ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info);
+ int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode);
+
 
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
@@ -69,6 +73,11 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_start_signal(int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
  int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master);
+
+ /* The following PAPI internal functions are defined by the papi_data.c file. */
+
+ int _papi_hwi_derived_type(char *derived);
+ int _papi_hwi_derived_string(int type, char *derived, int len);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 

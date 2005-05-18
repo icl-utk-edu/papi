@@ -60,6 +60,8 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
 /*****************************/
+int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info);
+int _papi_hwi_encode_preset_event(PAPI_event_info_t * info, int *EventCode);
 
 
 /********************/
@@ -313,10 +315,16 @@ int PAPI_query_event(int EventCode)
    papi_return(PAPI_ENOTPRESET);
 }
 
+/* PAPI_get_event_info:
+   tests input EventCode and returns a filled in PAPI_event_info_t 
+   structure containing descriptive strings and values for the 
+   specified event. Handles both preset and native events by 
+   calling either _papi_hwi_get_event_info or 
+   _papi_hwi_get_native_event_info.
+*/
 int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
 {
    int i = EventCode & PAPI_PRESET_AND_MASK;
-   int j, type;
 
    if (info == NULL)
       papi_return(PAPI_EINVAL);
@@ -324,37 +332,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
    if (EventCode & PAPI_PRESET_MASK) {
       if (i >= PAPI_MAX_PRESET_EVENTS)
          papi_return(PAPI_ENOTPRESET);
-
-     if (_papi_hwi_presets.info[i].symbol[0] != 0) { /* if the event is in the preset table */
-         info->event_code = EventCode;
-         info->count = _papi_hwi_presets.count[i];
-         strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
-         strncpy(info->short_descr, _papi_hwi_presets.info[i].short_descr, PAPI_MIN_STR_LEN);
-         strncpy(info->long_descr, _papi_hwi_presets.info[i].long_descr, PAPI_HUGE_STR_LEN);
-         info->derived[0] = 0;
-         info->postfix[0] = 0;
-         if (_papi_hwi_presets.data[i]) { /* if the event exists on this platform */
-            strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, PAPI_MIN_STR_LEN);
-            type = _papi_hwi_presets.data[i]->derived;
-            if(type) {
-               for(j = 1; _papi_hwi_derived[j].type != -1; j++) {
-                  if (_papi_hwi_derived[j].type == type) {
-                     strncpy(info->derived, _papi_hwi_derived[j].name, PAPI_MIN_STR_LEN);
-                  }
-               }
-            }
-            for (j=0; j < (int)info->count; j++) {
-               info->code[j] = _papi_hwi_presets.data[i]->native[j];
-               _papi_hwi_native_code_to_name(info->code[j], info->name[j], PAPI_MIN_STR_LEN);
-            }
-         }
-         if (_papi_hwi_presets.dev_note[i]) { /* if a developer's note exists for this event */
-            strncpy(info->note, _papi_hwi_presets.dev_note[i], PAPI_HUGE_STR_LEN);
-         } else info->note[0] = 0;
-
-         papi_return(PAPI_OK);
-      } else
-         papi_return(PAPI_ENOEVNT);
+      papi_return(_papi_hwi_get_event_info(EventCode, info));
    }
  
    if (EventCode & PAPI_NATIVE_MASK) {
@@ -362,6 +340,163 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
    }
 
    papi_return(PAPI_ENOTPRESET);
+}
+
+
+/* PAPI_set_event_info:
+   info -- input only
+      info->event_code can have the following bits set
+         - PAPI_PRESET_MASK for preset events
+         - PAPI_NATIVE_MASK for native events
+      the index portion of the event_code is ignored; 
+      matching occurs based on names only
+   EventCode -- output only: contains the new event code
+   replace -- true if existing events can be replaced
+
+   This function is symmetric with PAPI_get_event_info, except that it
+   doesn't yet support native events. It allows a user or tool to add
+   or override definitions of PAPI events on the fly. Bails if events 
+   to be modified have been added to existing EventSets.
+*/
+int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
+{
+   int i, type;
+   unsigned int code;
+   EventSetInfo_t *ESI;
+
+   if (info == NULL)
+      papi_return(PAPI_EINVAL);
+
+   if (PAPI_event_name_to_code(info->symbol, &code) == PAPI_OK) { /* event already exists */
+      if (!replace) papi_return(PAPI_EPERM); /* we don't have permission to modify it */
+
+      /* Are any EventSets already in existence? */
+      for (i=0; i<_papi_hwi_system_info.global_eventset_map.totalSlots; i++) {
+         ESI = _papi_hwi_lookup_EventSet(i);
+         if (ESI) { /* found an existing EventSet */
+            if(_papi_hwi_lookup_EventCodeIndex(ESI, code) != PAPI_EINVAL)
+               papi_return(PAPI_EISRUN); /* can't handle Events in use */
+         }
+      }
+   }
+
+   if (info->event_code & PAPI_PRESET_MASK) {
+      /* do some sanity checks */
+      if (info->derived) {
+         type = _papi_hwi_derived_type(info->derived);
+
+         if(type == -1)
+            papi_return(PAPI_EINVAL); /* not a valid Derived type string */
+         if(type != NOT_DERIVED && info->count < 2)
+            papi_return(PAPI_EINVAL); /* can't be derived with only one term */
+         if(type == NOT_DERIVED && info->count > 1)
+            papi_return(PAPI_EINVAL); /* must be derived if more than one term */
+      }
+      papi_return(_papi_hwi_set_event_info(info, EventCode));
+   }
+ 
+/* Someday we might also handle native events...
+   if (info->event_code & PAPI_NATIVE_MASK) {
+      papi_return(_papi_hwi_set_native_event(info, EventCode));
+}*/
+
+   papi_return(PAPI_ENOEVNT);
+}
+
+/* PAPI_encode_events:
+   event_file -- pathname for a csv file containing event definitions
+   replace -- true if existing events can be replaced
+
+   This function reads event definitions from a comma separated values file.
+   It allows a user or tool to add or override sets of PAPI events 
+   on the fly. Bails if events to be modified have been added to existing EventSets.
+*/
+
+/* copy the contents of a quoted string */
+static char *quotcpy(char *d, char *s) {
+   if (s && *s == '\"') {
+      s++;
+      s[strlen(s)-1]=0;
+      strcpy(d, s);
+   } else *d = 0;
+   return (d);
+}
+
+int PAPI_encode_events(char * event_file, int replace)
+{
+   int i, j, line, field;
+   int retval;
+   PAPI_event_info_t info;
+	FILE *file = NULL;
+   char buf[PAPI_HUGE_STR_LEN];
+   char *b, *token[20];
+   int quote;
+
+   if (!event_file) papi_return(PAPI_EINVAL);
+   file = fopen(event_file, "r");
+	if (file == NULL) papi_return(PAPI_EINVAL);
+
+   line = 0;
+   while (fgets(buf, sizeof(buf), file)) {
+      field = 0;
+      quote = 0;
+      b = buf;
+      token[field] = b;
+      do { /* split line into tokens (arbitrarily up to 20) */
+         switch (*b) {
+            case '\r':
+            case '\n':
+               /* strip line endings if not inside quotes */
+               if (!quote) *b = 0;
+               break;
+            case '\"':
+               /* toggle quoted state */
+               quote = !quote;
+               break;
+            case ',':
+               /* change fields on comma if not inside quotes */
+               if (!quote) {
+                  *b = 0;
+                  token[++field] = b+1;
+                  token[field+1] = NULL;
+               }
+               break;
+            default:
+               break;
+         }
+      } while (*(++b) && field < 20);
+
+      if (line == 0) {
+         /* line 0 contains field identifiers.
+            This info is currently ignored,
+            but could be used for location matching.
+            Line 1 is assumed blank.
+         */
+      }
+      else if (line > 1) {
+         /* tokens are currently assumed to appear mostly as they 
+            occur in the info structure. The exception is that the
+            native event names have been moved to the end, and the
+            postfix string has been moved after the derived string. */
+         strcpy(info.symbol, token[0]);
+         strcpy(info.derived, token[1]);
+         strcpy(info.postfix, token[2]);
+         quotcpy(info.short_descr, token[3]);
+         quotcpy(info.long_descr, token[4]);
+         quotcpy(info.note, token[5]);
+         info.event_code = PAPI_PRESET_MASK;
+         info.count = 0;
+         for (j = 0; j < PAPI_MAX_INFO_TERMS; j++) {
+            if (!token[j+6]) break;
+            strcpy(info.name[j], token[j+6]);
+            info.count++;
+         }
+         retval = PAPI_set_event_info(&info, &i, replace);
+      }
+      line++;
+   }
+	fclose(file);
+   papi_return(PAPI_OK);
 }
 
 int PAPI_event_code_to_name(int EventCode, char *out)
@@ -393,13 +528,15 @@ int PAPI_event_name_to_code(char *in, int *out)
    if ((in == NULL) || (out == NULL))
       papi_return(PAPI_EINVAL);
 
+   /* With user definable events, we can no longer assume
+      presets begin with "PAPI"...
    if (strncmp(in, "PAPI", 4) == 0) {
-      for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-         if ((_papi_hwi_presets.info[i].symbol)
-             && (strcasecmp(_papi_hwi_presets.info[i].symbol, in) == 0)) {
-            *out = (i | PAPI_PRESET_MASK);
-            papi_return(PAPI_OK);
-         }
+   */
+   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
+      if ((_papi_hwi_presets.info[i].symbol)
+            && (strcasecmp(_papi_hwi_presets.info[i].symbol, in) == 0)) {
+         *out = (i | PAPI_PRESET_MASK);
+         papi_return(PAPI_OK);
       }
    }
    papi_return(_papi_hwi_native_name_to_code(in, out));
@@ -417,10 +554,10 @@ int PAPI_enum_event(int *EventCode, int modifier)
       while (++i < PAPI_MAX_PRESET_EVENTS) {
          if ((!modifier) || (_papi_hwi_presets.count[i])) {
             *EventCode = i | PAPI_PRESET_MASK;
-            if (_papi_hwi_presets.info[i].symbol[0])
-               return (PAPI_OK);
-            else
-               return (PAPI_ENOEVNT);
+            if (_papi_hwi_presets.info[i].symbol == NULL)
+                return (PAPI_ENOEVNT); /* NULL pointer terminates list */
+             else
+                return (PAPI_OK);
          }
       }
    } else if (i & PAPI_NATIVE_MASK) {
