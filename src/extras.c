@@ -572,7 +572,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
     _papi_hwi_lock(INTERNAL_LOCK);
    do {
       name = _papi_hwd_ntv_code_to_name(i);
-/*    printf("name=%s,  input=%s\n", name, in); */
+/*      printf("name =|%s|\ninput=|%s|\n", name, in); */
       if (name != NULL) {
          if (strcasecmp(name, in) == 0) {
             *out = i;
