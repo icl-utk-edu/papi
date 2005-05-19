@@ -57,10 +57,10 @@ int main(int argc, char **argv)
    do {
       if (PAPI_get_event_info(i, &info) == PAPI_OK) {
 	      printf("%s,%s,%s,", info.symbol, info.derived, info.postfix);
-	      if (info.short_descr[0]) printf("\"%s\",", info.short_descr);
-         else printf(",");
-	      if (info.long_descr[0]) printf("\"%s\",", info.long_descr);
-         else printf(",");
+         if (info.short_descr[0]) { printf("\"%s\",", info.short_descr); }
+         else { printf(","); }
+         if (info.long_descr[0]) { printf("\"%s\",", info.long_descr); }
+         else { printf(","); }
 	      if (info.note[0]) printf("\"%s\"", info.note);
 
          for (j=0;j<(int)info.count;j++) printf(",%s",info.name[j]);
