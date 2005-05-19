@@ -10,8 +10,8 @@ SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_events de
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
-        overflow_twoevents timer_overflow overflow2 \
-	matrix-hl tenth \
+    overflow_twoevents timer_overflow overflow2 \
+	matrix-hl tenth encode encode2 \
 	profile sprofile profile_twoevents earprofile byte_profile\
 	ipc native overflow_index overflow_one_and_read
 BROKEN	= inherit pernode
@@ -214,6 +214,12 @@ native: native.c $(UTILSOBJS) $(PAPILIB)
 
 eventname: eventname.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
+
+encode: encode.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) encode.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o encode
+
+encode2: encode2.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) encode2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o encode2
 
 case1: case1.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) case1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1

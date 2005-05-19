@@ -58,7 +58,9 @@ int main(int argc, char **argv)
    const PAPI_hw_info_t *hwinfo = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
-   for (i = 0; i < argc; i++) {
+   if (TESTS_QUIET) test_skip(__FILE__, __LINE__, "test_skip", 1);
+
+   for (i = 1; i < argc; i++) {
       if (argv[i][0] == '-') {
          if (strstr(argv[i], "a")) {
             print_avail_only = PAPI_PRESET_ENUM_AVAIL;
@@ -83,10 +85,8 @@ int main(int argc, char **argv)
       else name = argv[i];
    }
 	
-   if (!name) {
-      printf("I need a file name to process!\n");
-      print_help();
-      exit(1);
+   if (name == NULL) {
+      test_skip(__FILE__, __LINE__, "fopen", PAPI_EINVAL);
    }
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
