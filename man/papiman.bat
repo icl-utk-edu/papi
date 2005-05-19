@@ -1,11 +1,12 @@
 REM PAPI Utility Pages
-perl manServer_papi.pl -o html man1/avail.1
-perl manServer_papi.pl -o html man1/clockres.1
-perl manServer_papi.pl -o html man1/cost.1
-perl manServer_papi.pl -o html man1/command_line.1
-perl manServer_papi.pl -o html man1/event_chooser.1
-perl manServer_papi.pl -o html man1/mem_info.1
-perl manServer_papi.pl -o html man1/native_avail.1
+perl manServer_papi.pl -o html man1/papi_avail.1
+perl manServer_papi.pl -o html man1/papi_clockres.1
+perl manServer_papi.pl -o html man1/papi_cost.1
+perl manServer_papi.pl -o html man1/papi_command_line.1
+perl manServer_papi.pl -o html man1/papi_decode.1
+perl manServer_papi.pl -o html man1/papi_event_chooser.1
+perl manServer_papi.pl -o html man1/papi_mem_info.1
+perl manServer_papi.pl -o html man1/papi_native_avail.1
 
 REM PAPI Miscellaneous Pages
 perl manServer_papi.pl -o html man3/PAPI.3
@@ -20,6 +21,7 @@ perl manServer_papi.pl -o html man3/PAPI_add_events.3
 perl manServer_papi.pl -o html man3/PAPI_cleanup_eventset.3
 perl manServer_papi.pl -o html man3/PAPI_create_eventset.3
 perl manServer_papi.pl -o html man3/PAPI_destroy_eventset.3
+perl manServer_papi.pl -o html man3/PAPI_encode_events.3
 perl manServer_papi.pl -o html man3/PAPI_enum_event.3
 perl manServer_papi.pl -o html man3/PAPI_event_code_to_name.3
 perl manServer_papi.pl -o html man3/PAPI_event_name_to_code.3
@@ -54,6 +56,7 @@ perl manServer_papi.pl -o html man3/PAPI_remove_events.3
 perl manServer_papi.pl -o html man3/PAPI_reset.3
 perl manServer_papi.pl -o html man3/PAPI_set_debug.3
 perl manServer_papi.pl -o html man3/PAPI_set_domain.3
+perl manServer_papi.pl -o html man3/PAPI_set_event_info.3
 perl manServer_papi.pl -o html man3/PAPI_set_granularity.3
 perl manServer_papi.pl -o html man3/PAPI_set_multiplex.3
 perl manServer_papi.pl -o html man3/PAPI_set_opt.3
