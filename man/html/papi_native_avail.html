@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH EVENT_CHOOSER 1 "March, 2005" -->
+<!-- .TH PAPI_NATIVE_AVAIL 1 "May, 2005" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - event_chooser(1)</TITLE>
+Manual Page - papi_native_avail(1)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -255,7 +255,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-event_chooser - given a list of named events, lists other events that can be counted with them.
+papi_native_avail - provides detailed information for PAPI native events.
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -274,7 +274,7 @@ event_chooser - given a list of named events, lists other events that can be cou
 </A>
 <BLOCKQUOTE>
 <P>
-<B>event_chooser</B> NATIVE | PRESET &lt;event&gt; &lt;event&gt; ...
+<B>papi_native_avail</B>
 <P>
 <P>
 <!-- .SH DESCRIPTION -->
@@ -285,7 +285,10 @@ event_chooser - given a list of named events, lists other events that can be cou
 
 </A>
 <BLOCKQUOTE>
-<B>event_chooser</B> is a PAPI utility program that reports information about the current PAPI installation and supported preset events. 
+<B>papi_native_avail</B> is a PAPI utility program that reports information about the native events available on the current platform.
+A native event is an event specific to a specific hardware platform. On many platforms, a specific native event may have a number of
+optional settings. In such cases, the native event and the valid settings are presented, rather than every possible combination of
+those settings. For each native event, a name, a description, and specific bit patterns are provided.
 <P>
 <P>
 <!-- .SH OPTIONS -->
@@ -297,7 +300,9 @@ event_chooser - given a list of named events, lists other events that can be cou
 </A>
 <BLOCKQUOTE>
 <P>
+<P>
 This utility has no command line options.
+<P>
 <P>
 <!-- .SH BUGS  -->
 </BLOCKQUOTE>
@@ -320,17 +325,19 @@ If you find a bug, it should be reported to the PAPI Mailing List at &lt;<A HREF
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI "(3), " avail "(1), " clockres "(1), " command_line "(1), " cost "(1), " mem_info "(1), " native_avail "(1)" -->
+<!-- .BR PAPI "(3), " papi_avail "(1), " papi_clockres "(1), " papi_command_line "(1), " papi_cost "(1), " -->
 <A HREF="papi.html">PAPI (3)</A>, 
-<A HREF="avail.html">avail (1)</A>, 
-<A HREF="clockres.html">clockres (1)</A>, 
-<A HREF="command_line.html">command_line (1)</A>, 
-<A HREF="cost.html">cost (1)</A>, 
-<A HREF="mem_info.html">mem_info (1)</A>, 
-<A HREF="native_avail.html">native_avail (1)</A>
+<A HREF="papi_avail.html">papi_avail (1)</A>, 
+<A HREF="papi_clockres.html">papi_clockres (1)</A>, 
+<A HREF="papi_command_line.html">papi_command_line (1)</A>, 
+<A HREF="papi_cost.html">papi_cost (1)</A>, 
+<!-- .BR papi_decode "(1), " papi_event_chooser "(1), " papi_mem_info "(1)" -->
+<A HREF="papi_decode.html">papi_decode (1)</A>, 
+<A HREF="papi_event_chooser.html">papi_event_chooser (1)</A>, 
+<A HREF="papi_mem_info.html">papi_mem_info (1)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>EVENT_CHOOSER (1)</TD> <TD align=right width=33%><I>March, 2005</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>PAPI_NATIVE_AVAIL (1)</TD> <TD align=right width=33%><I>May, 2005</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

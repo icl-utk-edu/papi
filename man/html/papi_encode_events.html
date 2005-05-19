@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_event_info 3 "September, 2004" "PAPI Programmer's Reference" PAPI -->
+<!-- .TH PAPI_encode_events 3 "May, 2005" "PAPI Programmer's Reference" PAPI -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_get_event_info(3)</TITLE>
+Manual Page - PAPI_encode_events(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_get_event_info - get the event&#146;s name and description info
+PAPI_encode_events - read event definitions from a file and modify the existing PAPI preset table.
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -264,14 +264,15 @@ PAPI_get_event_info - get the event&#146;s name and description info
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Arguments</A><BR>
-<A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Example</A><BR>
-<A HREF=#7>Bugs</A><BR>
-<A HREF=#8>See Also</A><BR>
+<A HREF=#3>File Format</A><BR>
+<A HREF=#4>Arguments</A><BR>
+<A HREF=#5>Return Values</A><BR>
+<A HREF=#6>Errors</A><BR>
+<A HREF=#7>Example</A><BR>
+<A HREF=#8>Bugs</A><BR>
+<A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=9>
+<A name=10>
 
      <H3>SYNOPSIS</H3>
 
@@ -282,21 +283,8 @@ PAPI_get_event_info - get the event&#146;s name and description info
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info);" -->
-<B>int PAPI_get_event_info(int EventCode, PAPI_event_info_t *info);</B> 
-<!-- .fi -->
-</PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
-<PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
-<!-- .BI PAPIF_get_event_info(C_INT\  EventCode,\  C_STRING\  symbol, -->
-<B>PAPIF_get_event_info(C_INT </B><I>EventCode, </I><B>C_STRING </B><I>symbol,</I> 
-<!-- .BI \tC_STRING\ long_descr,\ C_STRING\  short_descr,\  C_INT\  count, -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_STRING long_descr, C_STRING </B><B>C_INT </B><I>count,</I> 
-<!-- .BI \tC_STRING\ event_note,\ C_INT\  flags, ,\ C_INT\  check) -->
-<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_STRING event_note, C_INT </B><B>, C_INT </B><I>check)</I> 
+<!-- .BI "int PAPI_encode_events(char * event_file, int replace);" -->
+<B>int PAPI_encode_events(char * event_file, int replace);</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -308,62 +296,71 @@ PAPI_get_event_info - get the event&#146;s name and description info
 
 </A>
 <BLOCKQUOTE>
-In C, this function fills the event information into a structure.
-In Fortran, some fields of the structure are returned explicitly.
-This function works with existing PAPI preset and native event codes.
+This function reads event descriptions from a file where they are stored in comma separated value format
+and modifies or adds events to the PAPI preset event table. The file format is described below.
+This function presently works only to define or modify PAPI preset events.
+<P>
+<!-- .SH FILE FORMAT -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>FILE FORMAT</H3>
+
+</A>
+<BLOCKQUOTE>
+The comma separated value file format is one that can be easily edited in a standard text editor or
+a csv-aware spreadsheet application, and can be easily parsed. Text strings can contain commas, but only if
+the strings are enclosed in quotes. Each entry in the file is a separate line, and each field, including empty
+fields, is separated by a comma from its neighbor. The specific format used in this case consists of a title
+line for readability, a blank line, and a series of lines containing event definitions. A portion of such a
+file (for Pentium 4) is shown below:
+<P>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>name,derived,postfix,short_descr,long_descr,note,[native,...]
+<P>
+PAPI_L1_ICM,NOT_DERIVED,,"L1I cache misses","Level 1 instruction cache misses",,BPU_fetch_request_TCMISS
+PAPI_L2_TCM,NOT_DERIVED,,"L2 cache misses","Level 2 cache misses",,BSQ_cache_reference_RD_2ndL_MISS_WR_2ndL_MISS
+PAPI_TLB_DM,NOT_DERIVED,,"Data TLB misses","Data translation lookaside buffer misses",,page_walk_type_DTMISS
+MY_PAPI_TLB_DM,NOT_DERIVED,,"Data TLB misses","Data translation lookaside buffer misses","This is a note for my event",page_walk_type_DTMISS
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
-<A name=3>
+<A name=4>
 
      <H3>ARGUMENTS</H3>
 
 </A>
 <BLOCKQUOTE>
-The following arguments are implicit in the structure returned by the C function,
-or explicitly returned by Fortran.
 <!-- .LP -->
 <P>
-<!-- .I EventCode -->
-<I>EventCode</I> --  event code(preset or native)
+<!-- .I event_file -->
+<I>event_file</I> --  string containing the name of the csv event file to be read
 <!-- .LP -->
 <P>
-<!-- .I info -->
-<I>info</I> --  structure with the event information
-<!-- .LP -->
-<P>
-<!-- .I symbol -->
-<I>symbol</I> --  whether the preset is part of the API
-<!-- .LP -->
-<P>
-<!-- .I long_descr -->
-<I>long_descr</I> --  detail description about the event
-<!-- .LP -->
-<P>
-<!-- .I short_descr -->
-<I>short_descr</I> --  short description about the event
-<!-- .LP -->
-<P>
-<!-- .I event_note -->
-<I>event_note</I> --  notes about the event
+<!-- .I replace -->
+<I>replace</I> --  1 to replace existing events, or 0 to prevent accidental replacement
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
-<A name=4>
+<A name=5>
 
      <H3>RETURN VALUES</H3>
 
 </A>
 <BLOCKQUOTE>
-On success, the C function returns PAPI_OK,
-and the Fortran function returns
+On success, the function returns
 <!-- .B PAPI_OK. -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned by the function.
+<B>PAPI_OK.</B> On error, a non-zero error code is returned by the function.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=6>
 
      <H3>ERRORS</H3>
 
@@ -372,29 +369,39 @@ and the Fortran function returns
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EPERM" -->
+<B>PAPI_EPERM</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+You are trying to modify an existing event without specifying
+<!-- .I replace. -->
+<I>replace.</I> <!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EISRUN" -->
+<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+You are trying to modify an event that has been added to an EventSet.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
+One or more of the arguments or fields of the info structure is invalid.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ENOTPRESET" -->
 <B>PAPI_ENOTPRESET</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The PAPI preset mask was set, but the hardware event specified
-is not a valid PAPI preset.
+The PAPI preset table is full and there is no room for a new event.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_ENOEVNT" -->
 <B>PAPI_ENOEVNT</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The PAPI preset is not available on the underlying hardware.
-<P>
-<P>
+The event specified is not a PAPI preset. Usually because the PAPI_PRESET_MASK bit is not set.
 <P>
 <!-- .SH EXAMPLE -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
+<A name=7>
 
      <H3>EXAMPLE</H3>
 
@@ -405,9 +412,14 @@ The PAPI preset is not available on the underlying hardware.
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>/*Find the event code for PAPI_TOT_INS and its info*/
-PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode)
-if (PAPI_get_event_info(EventCode, &info) == PAPI_OK)
+<TT>/* Use the command line utility to create a csv copy of the currently defined events */
+&gt; /papi/utils/decode -a -&gt; current.csv
+/* View and modify the events in an editor */
+&gt; vi current.csv
+<!-- ... -->
+<!-- ignored unsupported tag ... -->
+/* Load the modified events into the preset table */
+if (PAPI_encode_events("./current.csv", 1) != PAPI_OK)
   handle_error(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
@@ -415,7 +427,7 @@ if (PAPI_get_event_info(EventCode, &info) == PAPI_OK)
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
      <H3>BUGS</H3>
 
@@ -425,24 +437,27 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .BR papi_decode "(1)", -->
+<A HREF="papi_decode.html">papi_decode (1)</A>
+, 
 <!-- .BR PAPI "(3),"  -->
 <A HREF="papi.html">PAPI (3)</A>,
 <!-- .BR PAPIF "(3),"  -->
 <A HREF="papif.html">PAPIF (3)</A>,
-<!-- .BR PAPI_set_event_info "(3)", -->
-<A HREF="papi_set_event_info.html">PAPI_set_event_info (3)</A>
+<!-- .BR PAPI_get_event_info "(3)", -->
+<A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>
 , 
-<!-- .BR PAPI_event_name_to_code "(3)"  -->
-<A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>
+<!-- .BR PAPI_set_event_info "(3)" -->
+<A HREF="papi_set_event_info.html">PAPI_set_event_info (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_event_info (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_encode_events (3)</TD> <TD align=right width=33%><I>May, 2005</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
