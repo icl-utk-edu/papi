@@ -129,7 +129,7 @@ clean: native_clean
 	-cd utils;  $(MAKE) clean
 
 clobber: clean native_clobber
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS) $(SPECIAL_REMOVE)
+	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE)
 	-cd utils;  $(MAKE) clobber
 null:
 
