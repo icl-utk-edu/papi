@@ -9,7 +9,7 @@ OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_vector.o papi_memory.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h papi_protos.h papi_vector.h papi_vector_redefine.h \
-    papi_memory.h
+    papi_memory.h papi_data.h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
@@ -92,16 +92,16 @@ multiplex.o: multiplex.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
 
-genpapifdef: genpapifdef.c $(LIBRARY)
-	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
+genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.h
+	$(CC)  genpapifdef.c -o genpapifdef
 
-fpapi.h: genpapifdef
+fpapi.h: papi.h
 	./genpapifdef -c > fpapi.h
 
-f77papi.h: genpapifdef
+f77papi.h: papi.h
 	./genpapifdef -f77 > f77papi.h
 
-f90papi.h: genpapifdef
+f90papi.h: papi.h
 	./genpapifdef -f90 > f90papi.h
 
 test: ctests
