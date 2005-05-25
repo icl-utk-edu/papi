@@ -81,7 +81,7 @@ void PAPIERROR(char *format, ...)
 
 static int default_debug_handler(int errorCode)
 {
-   extern char *_papi_hwi_errNam[], *_papi_hwi_errStr[];
+   extern hwi_describe_t _papi_hwi_err[];
    char str[PAPI_HUGE_STR_LEN];
 
    if (errorCode == PAPI_OK)
@@ -96,9 +96,9 @@ static int default_debug_handler(int errorCode)
    case PAPI_VERB_ECONT:
    case PAPI_VERB_ESTOP:
       /* gcc 2.96 bug fix, do not change */
-      /* fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-errorCode],_papi_hwi_errStr[-errorCode]); */
+      /* fprintf(stderr,"%s %d: %s: %s\n",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_err[-errorCode].name,_papi_hwi_err[-errorCode].descr); */
 
-      sprintf(str,"%s %d,%s,%s",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_errNam[-errorCode],_papi_hwi_errStr[-errorCode]);
+      sprintf(str,"%s %d,%s,%s",PAPI_ERROR_CODE_str,errorCode,_papi_hwi_err[-errorCode].name,_papi_hwi_err[-errorCode].descr);
       if (errorCode == PAPI_ESYS) 
          sprintf(str+strlen(str), ": %s", strerror(errno));
 

@@ -1,4 +1,6 @@
-/* This file generates the #defines needed for Fortran examples of PAPI. Its output is usually directed to fpapi.h. See Makefile.inc for details. */
+/* This file generates the #defines needed for Fortran examples of PAPI. 
+   Its output is usually directed to fpapi.h. See Makefile.inc for details. 
+*/
 
 /* Modified to produce any of cpp, f77, or f90-style include files.
    Accepts an optional command-line argument, one of -c, -f77, or -f90 
@@ -6,7 +8,12 @@
    The Fortran versions are fixed-format (source starts in column 7)
    Note: No check is made to ensure that lines don't extend past 72 columns.
    Date: 1/26/02 
-   Rick Kufrin, NCSA/Univ of Illinois <rkufrin@ncsa.uiuc.edu> */
+   Rick Kufrin, NCSA/Univ of Illinois <rkufrin@ncsa.uiuc.edu> 
+*/
+
+/* Modified to eliminate reliance on libpapi.a.
+   Now it relies only on a small collection of papi header files.
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,210 +31,112 @@
 #include <malloc.h>
 #endif
 
-#include "papiStdEventDefs.h"
 #include "papi.h"
+
+#define MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
+#include "papi_preset.h"
+#include "papi_data.h"
+
 #undef NDEBUG
 #include <assert.h>
 
+#define NO_LIBPAPI
+
 /*
-	The following arrays are used to create a series of defines
+	The following array is used to create a series of defines
 	for use with PAPI in Fortran programs.
-	The first, third and fifth contain the string names of the defines.
-	The second, fourth and sixth contain the integer values associated with the names.
-	These pairs of arrays MUST be kept synchonized. Sizes are computed automagically. */
+	The value/name pairs come straight from papi.h. 
+   They should be manually synchronized with papi.h when changes are made.
+   The definition of hwi_describe_t is in papi_preset.h
+*/
 
-const char *papi_defNam[] = {
-   "PAPI_NULL",
-   "PAPI_VER_CURRENT",
-   "PAPI_VERSION",
-   "PAPI_MAX_PRESET_EVENTS",
+const hwi_describe_t _papi_def[] = {
+   {PAPI_NULL, "PAPI_NULL", NULL},
+   {PAPI_VER_CURRENT, "PAPI_VER_CURRENT", NULL},
+   {PAPI_VERSION, "PAPI_VERSION", NULL},
+   {PAPI_MAX_PRESET_EVENTS, "PAPI_MAX_PRESET_EVENTS", NULL},
 
-   "PAPI_NOT_INITED",
-   "PAPI_LOW_LEVEL_INITED",
-   "PAPI_HIGH_LEVEL_INITED",
-   "PAPI_THREAD_LEVEL_INITED",
+   {PAPI_NOT_INITED, "PAPI_NOT_INITED", NULL},
+   {PAPI_LOW_LEVEL_INITED, "PAPI_LOW_LEVEL_INITED", NULL},
+   {PAPI_HIGH_LEVEL_INITED, "PAPI_HIGH_LEVEL_INITED", NULL},
+   {PAPI_THREAD_LEVEL_INITED, "PAPI_THREAD_LEVEL_INITED", NULL},
 
-   "PAPI_DOM_USER",
-   "PAPI_DOM_KERNEL",
-   "PAPI_DOM_OTHER",
-   "PAPI_DOM_ALL",
-   "PAPI_DOM_MIN",
-   "PAPI_DOM_MAX",
-   "PAPI_DOM_HWSPEC",
+   {PAPI_DOM_USER, "PAPI_DOM_USER", NULL},
+   {PAPI_DOM_KERNEL, "PAPI_DOM_KERNEL", NULL},
+   {PAPI_DOM_OTHER, "PAPI_DOM_OTHER", NULL},
+   {PAPI_DOM_ALL, "PAPI_DOM_ALL", NULL},
+   {PAPI_DOM_MIN, "PAPI_DOM_MIN", NULL},
+   {PAPI_DOM_MAX, "PAPI_DOM_MAX", NULL},
+   {PAPI_DOM_HWSPEC, "PAPI_DOM_HWSPEC", NULL},
 
-   "PAPI_STOPPED",
-   "PAPI_RUNNING",
-   "PAPI_PAUSED",
-   "PAPI_NOT_INIT",
-   "PAPI_OVERFLOWING",
-   "PAPI_PROFILING",
-   "PAPI_MULTIPLEXING",
+   {PAPI_STOPPED, "PAPI_STOPPED", NULL},
+   {PAPI_RUNNING, "PAPI_RUNNING", NULL},
+   {PAPI_PAUSED, "PAPI_PAUSED", NULL},
+   {PAPI_NOT_INIT, "PAPI_NOT_INIT", NULL},
+   {PAPI_OVERFLOWING, "PAPI_OVERFLOWING", NULL},
+   {PAPI_PROFILING, "PAPI_PROFILING", NULL},
+   {PAPI_MULTIPLEXING, "PAPI_MULTIPLEXING", NULL},
 
-   "PAPI_QUIET",
-   "PAPI_VERB_ECONT",
-   "PAPI_VERB_ESTOP",
+   {PAPI_QUIET, "PAPI_QUIET", NULL},
+   {PAPI_VERB_ECONT, "PAPI_VERB_ECONT", NULL},
+   {PAPI_VERB_ESTOP, "PAPI_VERB_ESTOP", NULL},
 
-   "PAPI_MIN_STR_LEN",
-   "PAPI_HUGE_STR_LEN",
-   "PAPI_MAX_STR_LEN",
-   "PAPI_NUM_ERRORS",
+   {PAPI_MIN_STR_LEN, "PAPI_MIN_STR_LEN", NULL},
+   {PAPI_HUGE_STR_LEN, "PAPI_HUGE_STR_LEN", NULL},
+   {PAPI_MAX_STR_LEN, "PAPI_MAX_STR_LEN", NULL},
+   {PAPI_NUM_ERRORS, "PAPI_NUM_ERRORS", NULL},
 
-   "PAPI_DEBUG",
-   "PAPI_DEFDOM",
-   "PAPI_DOMAIN",
-   "PAPI_DEFGRN",
-   "PAPI_GRANUL",
-   "PAPI_INHERIT",
+   {PAPI_DEBUG, "PAPI_DEBUG", NULL},
+   {PAPI_DEFDOM, "PAPI_DEFDOM", NULL},
+   {PAPI_DOMAIN, "PAPI_DOMAIN", NULL},
+   {PAPI_DEFGRN, "PAPI_DEFGRN", NULL},
+   {PAPI_GRANUL, "PAPI_GRANUL", NULL},
+   {PAPI_INHERIT, "PAPI_INHERIT", NULL},
 
-   "PAPI_GRN_THR",
-   "PAPI_GRN_MIN",
-   "PAPI_GRN_PROC",
-   "PAPI_GRN_PROCG ",
-   "PAPI_GRN_SYS",
-   "PAPI_GRN_SYS_CPU",
-   "PAPI_GRN_MAX",
+   {PAPI_GRN_THR, "PAPI_GRN_THR", NULL},
+   {PAPI_GRN_MIN, "PAPI_GRN_MIN", NULL},
+   {PAPI_GRN_PROC, "PAPI_GRN_PROC", NULL},
+   {PAPI_GRN_PROCG, "PAPI_GRN_PROCG", NULL},
+   {PAPI_GRN_SYS, "PAPI_GRN_SYS", NULL},
+   {PAPI_GRN_SYS_CPU, "PAPI_GRN_SYS_CPU", NULL},
+   {PAPI_GRN_MAX, "PAPI_GRN_MAX", NULL},
 
-   "PAPI_GET_SIZE",
-   "PAPI_GET_RESSIZE",
-   "PAPI_GET_PAGESIZE",   
+   {PAPI_GET_SIZE, "PAPI_GET_SIZE", NULL},
+   {PAPI_GET_RESSIZE, "PAPI_GET_RESSIZE", NULL},
+   {PAPI_GET_PAGESIZE, "PAPI_GET_PAGESIZE", NULL},
 
-   "PAPI_CPUS",
-   "PAPI_THREADS",
-   "PAPI_NUMCTRS", 
-   "PAPI_PROFIL",
-   "PAPI_CLOCKRATE",
-   "PAPI_MAX_HWCTRS",
-   "PAPI_HWINFO",
-   "PAPI_EXEINFO",
-   "PAPI_MAX_CPUS",
-   "PAPI_SHLIBINFO",
-   "PAPI_LIB_VERSION",
-   "PAPI_SUBSTRATE_SUPPORT",
-  
-   "PAPI_DERIVED",
+   {PAPI_CPUS, "PAPI_CPUS", NULL},
+   {PAPI_THREADS, "PAPI_THREADS", NULL},
+   {PAPI_NUMCTRS, "PAPI_NUMCTRS", NULL},
+   {PAPI_PROFIL, "PAPI_PROFIL", NULL},
+   {PAPI_CLOCKRATE, "PAPI_CLOCKRATE", NULL},
+   {PAPI_MAX_HWCTRS, "PAPI_MAX_HWCTRS", NULL},
+   {PAPI_HWINFO, "PAPI_HWINFO", NULL},
+   {PAPI_EXEINFO, "PAPI_EXEINFO", NULL},
+   {PAPI_MAX_CPUS, "PAPI_MAX_CPUS", NULL},
+   {PAPI_SHLIBINFO, "PAPI_SHLIBINFO", NULL},
+   {PAPI_LIB_VERSION, "PAPI_LIB_VERSION", NULL},
+   {PAPI_SUBSTRATE_SUPPORT, "PAPI_SUBSTRATE_SUPPORT", NULL},
 
-   "PAPI_PRELOAD",
+   {PAPI_DERIVED, "PAPI_DERIVED", NULL},
 
-   "PAPI_PROFIL_POSIX",
-   "PAPI_PROFIL_RANDOM",
-   "PAPI_PROFIL_WEIGHTED",
-   "PAPI_PROFIL_COMPRESS",
-   "PAPI_PROFIL_BUCKET_16",
-   "PAPI_PROFIL_BUCKET_32",
-   "PAPI_PROFIL_BUCKET_64",
+   {PAPI_PRELOAD, "PAPI_PRELOAD", NULL},
 
-   "PAPI_USR1_LOCK",
-   "PAPI_USR2_LOCK",
+   {PAPI_PROFIL_POSIX, "PAPI_PROFIL_POSIX", NULL},
+   {PAPI_PROFIL_RANDOM, "PAPI_PROFIL_RANDOM", NULL},
+   {PAPI_PROFIL_WEIGHTED, "PAPI_PROFIL_WEIGHTED", NULL},
+   {PAPI_PROFIL_COMPRESS, "PAPI_PROFIL_COMPRESS", NULL},
+   {PAPI_PROFIL_BUCKET_16, "PAPI_PROFIL_BUCKET_16", NULL},
+   {PAPI_PROFIL_BUCKET_32, "PAPI_PROFIL_BUCKET_32", NULL},
+   {PAPI_PROFIL_BUCKET_64, "PAPI_PROFIL_BUCKET_64", NULL},
 
-   "PAPI_TLS_USER_LEVEL1",
-   "PAPI_TLS_USER_LEVEL2"
+   {PAPI_USR1_LOCK, "PAPI_USR1_LOCK", NULL},
+   {PAPI_USR2_LOCK, "PAPI_USR2_LOCK", NULL},
+
+   {PAPI_USR1_TLS, "PAPI_USR1_TLS", NULL},
+   {PAPI_USR2_TLS, "PAPI_USR2_TLS", NULL}
 };
 
-const int papi_defNum[] = {
-   PAPI_NULL,
-   PAPI_VER_CURRENT,
-   PAPI_VERSION,
-   PAPI_MAX_PRESET_EVENTS,
-
-   PAPI_NOT_INITED,
-   PAPI_LOW_LEVEL_INITED,
-   PAPI_HIGH_LEVEL_INITED,
-   PAPI_THREAD_LEVEL_INITED, 
-
-   PAPI_DOM_USER,
-   PAPI_DOM_KERNEL,
-   PAPI_DOM_OTHER,
-   PAPI_DOM_ALL,
-   PAPI_DOM_MIN,
-   PAPI_DOM_MAX,
-   PAPI_DOM_HWSPEC,
-
-   PAPI_STOPPED,
-   PAPI_RUNNING,
-   PAPI_PAUSED,
-   PAPI_NOT_INIT,
-   PAPI_OVERFLOWING,
-   PAPI_PROFILING,
-   PAPI_MULTIPLEXING,
-
-   PAPI_QUIET,
-   PAPI_VERB_ECONT,
-   PAPI_VERB_ESTOP,
-
-   PAPI_MIN_STR_LEN,
-   PAPI_HUGE_STR_LEN,
-   PAPI_MAX_STR_LEN,
-   PAPI_NUM_ERRORS,
-
-   PAPI_DEBUG,
-   PAPI_DEFDOM,
-   PAPI_DOMAIN,
-   PAPI_DEFGRN,
-   PAPI_GRANUL,
-   PAPI_INHERIT,
-
-   PAPI_GRN_THR,
-   PAPI_GRN_MIN,
-   PAPI_GRN_PROC,
-   PAPI_GRN_PROCG,
-   PAPI_GRN_SYS,
-   PAPI_GRN_SYS_CPU,
-   PAPI_GRN_MAX,
-
-   PAPI_GET_SIZE,
-   PAPI_GET_RESSIZE,
-   PAPI_GET_PAGESIZE,   
-
-   PAPI_CPUS,
-   PAPI_THREADS,
-   PAPI_NUMCTRS, 
-   PAPI_PROFIL,
-   PAPI_CLOCKRATE,
-   PAPI_MAX_HWCTRS,
-   PAPI_HWINFO,
-   PAPI_EXEINFO,
-   PAPI_MAX_CPUS,
-   PAPI_SHLIBINFO,
-   PAPI_LIB_VERSION,
-   PAPI_SUBSTRATE_SUPPORT,
-  
-   PAPI_DERIVED,
-
-   PAPI_PRELOAD,
-
-   PAPI_PROFIL_POSIX,
-   PAPI_PROFIL_RANDOM,
-   PAPI_PROFIL_WEIGHTED,
-   PAPI_PROFIL_COMPRESS,
-   PAPI_PROFIL_BUCKET_16,
-   PAPI_PROFIL_BUCKET_32,
-   PAPI_PROFIL_BUCKET_64,
-
-   PAPI_USR1_LOCK,
-   PAPI_USR2_LOCK,
-
-   PAPI_USR1_TLS,
-   PAPI_USR2_TLS
-};
-
-const int papi_errorNum[] = {
-   PAPI_OK,
-   PAPI_EINVAL,
-   PAPI_ENOMEM,
-   PAPI_ESYS,
-   PAPI_ESBSTR,
-   PAPI_ECLOST,
-   PAPI_EBUG,
-   PAPI_ENOEVNT,
-   PAPI_ECNFLCT,
-   PAPI_ENOTRUN,
-   PAPI_EISRUN,
-   PAPI_ENOEVST,
-   PAPI_ENOTPRESET,
-   PAPI_ENOCNTR,
-   PAPI_EMISC,
-   PAPI_EPERM
-};
 
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';
@@ -276,26 +185,24 @@ static void define_val(const char *val_string, int val, enum deftype_t deftype)
          break;
    }
 }
-static void createDef(char *title, const char **names, const int *nums, int size,
-                      enum deftype_t deftype)
+
+static void createDef(char *title, const hwi_describe_t *descr, int size, enum deftype_t deftype)
 {
    int i, j;
-   /* compute the size of the predefined arrays */
-   j = size / sizeof(int);
+   /* compute the size of the predefined array */
+   j = size / sizeof(hwi_describe_t);
 
    /* create defines for each line in the general arrays */
    printf("\n%c\n%c\t%s\n%c\n\n", comment_char, comment_char, title, comment_char);
    for (i = 0; i < j; i++)
-      define_val(names[i], nums[i], deftype);
+      define_val(descr[i].name, descr[i].value, deftype);
 }
 
 
 int main(int argc, char **argv)
 {
    int i;
-   PAPI_event_info_t info;
    enum deftype_t deftype = CDEFINE;
-   extern const char *_papi_hwi_errNam[];
 
    if (argc > 1) {
       if (strcmp(argv[1], "-f77") == 0) {
@@ -323,18 +230,18 @@ int main(int argc, char **argv)
           comment_char);
 
    /* create defines for the internal array pairs */
-   createDef("General purpose defines.", papi_defNam, papi_defNum, sizeof(papi_defNum),
-             deftype);
-   createDef("Error defines.", _papi_hwi_errNam, papi_errorNum, sizeof(papi_errorNum),
-             deftype);
+   createDef("General purpose defines.", _papi_def, sizeof(_papi_def), deftype);
+   createDef("Error defines.", _papi_hwi_err, sizeof(_papi_hwi_err), deftype);
 
    /* create defines for each member of the PRESET array */
    printf("\n%c\n%c\tPAPI preset event values.\n%c\n\n", comment_char, comment_char,
           comment_char);
 
-   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
-      if (PAPI_get_event_info(i | PAPI_PRESET_MASK, &info) == PAPI_OK)
-         define_val(info.symbol, info.event_code, deftype);
+   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
+      if (_papi_hwi_preset_info[i].symbol) { /* if the event is in the preset table */
+         define_val(_papi_hwi_preset_info[i].symbol, (i | PAPI_PRESET_MASK), deftype);
+      }
+   }
    exit(0);
 }
 

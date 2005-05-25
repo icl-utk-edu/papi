@@ -525,6 +525,7 @@ read the documentation carefully.  */
                                                 NOTE: could also be implemented for native events. */
    } PAPI_event_info_t;
 
+
 /* The Low Level API (Alphabetical) */
    int   PAPI_accum(int EventSet, long_long * values);
    int   PAPI_add_event(int EventSet, int Event);

@@ -42,11 +42,12 @@ typedef struct hwi_presets {  /* collected text and data info for all preset eve
    char **dev_note;           /* sparse array of pointers to optional developer note strings */
 } hwi_presets_t;
 
-typedef struct hwi_derived_info {
-   int type;                  /* derived type (from papi.h) */
-   char *name;                /* name of the derived type */
-   char *descr;               /* description of the derived type */
-} hwi_derived_info_t;
+/* This is a general description structure definition for various parameter lists */   
+typedef struct hwi_describe {
+   int value;                 /* numeric value (from papi.h) */
+   char *name;                /* name of the element */
+   char *descr;               /* description of the element */
+} hwi_describe_t;
 
 extern hwi_search_t *preset_search_map;
 extern int _papi_hwi_setup_all_presets(hwi_search_t * preset_search_map, hwi_dev_notes_t *notes);

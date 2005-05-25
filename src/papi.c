@@ -41,7 +41,7 @@ extern int (*_papi_hwi_thread_kill_fn) (int, int);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 extern int _papi_hwi_error_level;
-extern char *_papi_hwi_errStr[];
+extern hwi_describe_t _papi_hwi_err[];
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
 extern void _papi_hwi_dummy_handler(int,void*,long_long,void*);
@@ -49,7 +49,7 @@ extern void _papi_hwi_dummy_handler(int,void*,long_long,void*);
 /* papi_data.c */
 
 extern hwi_presets_t _papi_hwi_presets;
-extern const hwi_derived_info_t _papi_hwi_derived[];
+extern const hwi_describe_t _papi_hwi_derived[];
 
 extern int init_retval;
 extern int init_level;
@@ -412,13 +412,13 @@ int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
    on the fly. Bails if events to be modified have been added to existing EventSets.
 */
 
-/* copy the contents of a quoted string */
+/* copy the contents of a potentially quoted string */
 static char *quotcpy(char *d, char *s) {
    if (s && *s == '\"') {
       s++;
       s[strlen(s)-1]=0;
-      strcpy(d, s);
-   } else *d = 0;
+   }
+   strcpy(d, s);
    return (d);
 }
 
@@ -478,9 +478,9 @@ int PAPI_encode_events(char * event_file, int replace)
             occur in the info structure. The exception is that the
             native event names have been moved to the end, and the
             postfix string has been moved after the derived string. */
-         strcpy(info.symbol, token[0]);
-         strcpy(info.derived, token[1]);
-         strcpy(info.postfix, token[2]);
+         quotcpy(info.symbol, token[0]);
+         quotcpy(info.derived, token[1]);
+         quotcpy(info.postfix, token[2]);
          quotcpy(info.short_descr, token[3]);
          quotcpy(info.long_descr, token[4]);
          quotcpy(info.note, token[5]);
@@ -488,7 +488,7 @@ int PAPI_encode_events(char * event_file, int replace)
          info.count = 0;
          for (j = 0; j < PAPI_MAX_INFO_TERMS; j++) {
             if (!token[j+6]) break;
-            strcpy(info.name[j], token[j+6]);
+            quotcpy(info.name[j], token[j+6]);
             info.count++;
          }
          retval = PAPI_set_event_info(&info, &i, replace);
@@ -1442,7 +1442,7 @@ char *PAPI_strerror(int errorCode)
    if ((errorCode > 0) || (-errorCode > PAPI_NUM_ERRORS))
       return (NULL);
 
-   return ((char *) _papi_hwi_errStr[-errorCode]);
+   return ((char *) _papi_hwi_err[-errorCode].name);
 }
 
 int PAPI_perror(int code, char *destination, int length)
