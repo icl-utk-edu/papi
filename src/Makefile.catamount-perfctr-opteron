@@ -1,0 +1,8 @@
+VERSION 	= 2.5.4
+CPU	        = p3
+GCC3ARGS	= -msse -msse2
+#GCC3ARGS	= -march=k8 -msse -msse2
+CFLAGS	    = -D__x86_64__ -D__CATAMOUNT__
+COMPILER	= CATAMOUNT
+
+include Rules.perfctr
