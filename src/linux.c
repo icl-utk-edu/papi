@@ -98,7 +98,9 @@ int check_p4(int cputype){
 
 #ifndef PAPI_NO_VECTOR
 papi_svector_t _linux_os_table[] = {
- {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ #ifndef __CATAMOUNT__
+   {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ #endif
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
  {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
@@ -183,6 +185,16 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
 
+#ifdef __CATAMOUNT__
+   if (strstr(info.driver_version,"2.5") != info.driver_version) {
+      fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
+      return(PAPI_ESBSTR);
+    }
+  _papi_hwi_system_info.supports_hw_profile = 0;
+  _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
+  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
+#endif
+
     SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
     vperfctr_close(dev);
 
@@ -206,20 +218,21 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
-{
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
-   int isHardware=0;
+   int isHardware = 0;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
-
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware,
+#ifdef __CATAMOUNT__
+   isHardware = 1;
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 0, 1, &master);
+#else
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
                                       si->si_pmc_ovf_mask, 0, &master);
-
+#endif
    /* We are done, resume interrupting counters */
-
    if (isHardware) {
       if (vperfctr_iresume(master->context.perfctr) < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
@@ -263,6 +276,41 @@ static int mdi_init() {
 
    return (PAPI_OK);
 }
+
+#ifdef __CATAMOUNT__
+
+int _papi_hwd_get_system_info(void)
+{
+   pid_t pid;
+
+   /* Software info */
+
+   /* Path and args */
+
+   pid = getpid();
+   if (pid < 0)
+     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
+   _papi_hwi_system_info.pid = pid;
+
+   /* executable name is hardcoded for Catamount */
+   sprintf(_papi_hwi_system_info.exe_info.fullname,"/home/a.out");
+	sprintf(_papi_hwi_system_info.exe_info.address_info.name,"%s",
+                  basename(_papi_hwi_system_info.exe_info.fullname));
+
+   /* Hardware info */
+
+  _papi_hwi_system_info.hw_info.ncpu = 1;
+  _papi_hwi_system_info.hw_info.nnodes = 1;
+  _papi_hwi_system_info.hw_info.totalcpus = 1;
+  _papi_hwi_system_info.hw_info.vendor = 2;
+
+	sprintf(_papi_hwi_system_info.hw_info.vendor_string,"AuthenticAMD");
+	_papi_hwi_system_info.hw_info.revision = 1;
+
+  return(PAPI_OK);
+}
+
+#else
 
 int _papi_hwd_update_shlib_info(void)
 {
@@ -641,6 +689,7 @@ int _papi_hwd_get_system_info(void)
 
    return (PAPI_OK);
 }
+#endif /* __CATAMOUNT__ */
 
 /* Low level functions, should not handle errors, just return codes. */
 
