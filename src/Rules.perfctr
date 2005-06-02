@@ -48,6 +48,17 @@ OPTFLAGS	+= -DXML
 endif
 
 # 
+# Catamount section
+# 
+
+ifeq (CATAMOUNT, $(COMPILER))
+F77		  = ftn
+CC		  = qk-gcc
+LIBS    = static
+TARGETS = serial
+endif
+
+# 
 # Portland Group section
 # 
 
@@ -129,11 +140,14 @@ endif
 
 CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS)
 
+CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 
 PERFCTR_OBJS-2.4.5 := libperfctr.o
 PERFCTR_OBJS-2.4.x := $(PERFCTR_OBJS-2.4.5)
+# 2.5.4 support is for Red Storm Catamount only
+PERFCTR_OBJS-2.5.4 := global.o misc.o virtual.o event_set.o event_set_amd.o catamount.o x86_64.o
 PERFCTR_OBJS-2.6.x := marshal.o global.o misc.o virtual.o x86.o
 PERFCTR_OBJS-2.7.x := $(PERFCTR_OBJS-2.6.x)
 
@@ -153,7 +167,11 @@ include Makefile.inc
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
 ifneq (32,${BITS})
+ifeq (CATAMOUNT, $(COMPILER))
+	$(MAKE) CC=$(CC) -C $(PERFCTR)
+else
 	$(MAKE) -C $(PERFCTR)
+endif
 else
 	$(MAKE) CC="gcc -m32 -U__i386__ -D__x86_64__" LD_FLAGS="-melf_i386" -C $(PERFCTR)
 endif
