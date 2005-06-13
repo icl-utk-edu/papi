@@ -567,14 +567,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
   return(retval);
 }
 
-/*
- * Stop an event from being profiled
- */
-int _papi_hwd_stop_profiling(ThreadInfo_t *master, EventSetInfo_t *ESI)
-{
-  return(PAPI_OK);
-}
-
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
@@ -767,7 +759,6 @@ papi_svector_t _unicosmp_x1_table[] = {
  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
  {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
  {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- {(void (*)())_papi_stop_profiling, VEC_PAPI_STOP_PROFILING},
  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
