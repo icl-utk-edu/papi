@@ -17,7 +17,7 @@ typedef struct pmem {
 #define papi_malloc(a) malloc(a)
 #define papi_free(a)   free(a)
 #define papi_realloc(a,b) realloc(a,b)
-#define papi_calloc(a,b) realloc(a,b)
+#define papi_calloc(a,b) calloc(a,b)
 #define papi_valid_free(a) ;
 #define papi_strdup(a) strdup(a)
 #else
