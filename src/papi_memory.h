@@ -20,6 +20,7 @@ typedef struct pmem {
 #define papi_calloc(a,b) calloc(a,b)
 #define papi_valid_free(a) ;
 #define papi_strdup(a) strdup(a)
+#define _papi_cleanup_all_memory() ;
 #else
 #define papi_malloc(a) _papi_malloc(__FILE__,__LINE__, a)
 #define papi_free(a) _papi_free(__FILE__,__LINE__, a)
@@ -27,11 +28,11 @@ typedef struct pmem {
 #define papi_calloc(a,b) _papi_calloc(__FILE__,__LINE__,a,b)
 #define papi_valid_free(a) _papi_valid_free(__FILE__,__LINE__,a)
 #define papi_strdup(a) _papi_strdup(__FILE__,__LINE__,a)
+void _papi_cleanup_all_memory();
 #endif
 
 char * _papi_strdup(char *, int, const char *s);
 void _papi_mem_print_info(void *ptr);
-void _papi_cleanup_all_memory();
 void *_papi_malloc(char *, int, int);
 void _papi_free(char *, int, void *);
 void _papi_valid_free(char *, int, void *);
