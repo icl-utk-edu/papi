@@ -29,7 +29,7 @@ platform's documentation carefully.
 #define PAPI_PRESET_MASK 0x80000000
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
-// #define PAPI_NATIVE_AND_MASK 0x3FFFFFFF /* this masks both native and preset bits */
+/*#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF*/ /* this masks both native and preset bits */
 #define PAPI_NATIVE_AND_MASK 0xBFFFFFFF
 
 #define PAPI_MAX_PRESET_EVENTS 128      /*The maxmimum number of preset events */
