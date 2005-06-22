@@ -49,8 +49,8 @@ static char *quotcpy(char *d, char *s) {
    if (s && *s == '\"') {
       s++;
       s[strlen(s)-1]=0;
-      strcpy(d, s);
-   } else *d = 0;
+   }
+   strcpy(d, s);
    return (d);
 }
 
@@ -152,9 +152,9 @@ int main(int argc, char **argv)
       if (line == 0) {
       }
       else if (line > 1) {
-         strcpy(info.symbol, arg[0]);
-         strcpy(info.derived, arg[1]);
-         strcpy(info.postfix, arg[2]);
+         quotcpy(info.symbol, arg[0]);
+         quotcpy(info.derived, arg[1]);
+         quotcpy(info.postfix, arg[2]);
          quotcpy(info.short_descr, arg[3]);
          quotcpy(info.long_descr, arg[4]);
          quotcpy(info.note, arg[5]);
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
          info.count = 0;
          for (j = 0; j < 8; j++) {
             if (!arg[j+6]) break;
-            strcpy(info.name[j], arg[j+6]);
+            quotcpy(info.name[j], arg[j+6]);
             info.count++;
          }
 //         print_this_event_info(&info);
