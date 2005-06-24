@@ -13,7 +13,7 @@ SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_events de
     overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile sprofile profile_twoevents earprofile byte_profile\
-	ipc native overflow_index overflow_one_and_read
+	ipc native overflow_index overflow_one_and_read acpi
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
@@ -58,6 +58,9 @@ sdsc4-mpx: sdsc4.c $(PAPILIB) $(UTILOBJS)
 
 calibrate: calibrate.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
+
+acpi: acpi.c dummy.o $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) acpi.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o acpi
 
 timer_overflow: timer_overflow.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) timer_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
