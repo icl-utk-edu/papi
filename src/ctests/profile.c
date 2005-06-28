@@ -5,6 +5,8 @@
 *          mucci@cs.utk.edu
 * Mods:    Dan Terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -49,10 +51,10 @@ int main(int argc, char **argv)
 /* use these lines to profile only do_flops address space */
    start = (caddr_t)do_flops;
    end = (caddr_t)fdo_flops;
-/* Itanium returns function descriptors instead of function addresses.
+/* Itanium and ppc64 processors return function descriptors instead of function addresses.
    You must dereference the descriptor to get the address.
 */
-#if (defined(ITANIUM1) || defined(ITANIUM2))
+#if defined(ITANIUM1) || defined(ITANIUM2) || defined(__powerpc64__)
    start = (caddr_t)(((struct fdesc *)start)->ip);
    end = (caddr_t)(((struct fdesc *)end)->ip);
 #endif

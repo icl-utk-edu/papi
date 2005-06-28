@@ -41,6 +41,7 @@
 #define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
 #endif
 
+extern int _papi_hwi_error_level;
 static int total[2] = {0,0};                  /* total overflows */
 static int use_total=0;
 

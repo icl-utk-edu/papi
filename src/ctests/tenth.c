@@ -1,3 +1,8 @@
+/* 
+* File:    	tenth.c
+* Mods: 	Maynard Johnson
+*			maynardj@us.ibm.com
+*/
 #define ITERS 100
 
 /* This file performs the following test: start, stop and timer functionality for 
@@ -26,7 +31,7 @@
 #define MASK2		  MASK_L2_TCA
 #define MASK3		  MASK_L2_TCH
 #else
-#if (_POWER4)
+#if defined(_POWER4) || defined(_POWER5) || defined(_PPPC970)
 #define CACHE_LEVEL "PAPI_L1_DCA"
 #define EVT1		  PAPI_L1_DCA
 #define EVT2		  PAPI_L1_DCW

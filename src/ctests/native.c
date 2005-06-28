@@ -1,4 +1,10 @@
 /*
+* File:    	native.c
+* Mods: 	Maynard Johnson
+*			maynardj@us.ibm.com
+*/
+
+/*
    This test needs to be reworked for all platforms.
    Now that each substrate contains a native event table,
    the custom code in this file can be constrained to the
@@ -59,6 +65,23 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
       "PM_FPU0_CMPL", "PM_CYC", "PM_TLB_MISS", NULL
    };
 #endif
+#endif
+#endif
+
+
+#if defined(linux)
+#if defined(_POWER4) || defined(_PPC970)
+   /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
+   static char *native_name[] =
+       { "PM_FPU0_FDIV", "PM_FPU1_FDIV", "PM_FPU0_FRSP_FCONV", "PM_FPU1_FRSP_FCONV",
+      "PM_FPU0_FMA", "PM_FPU1_FMA", "PM_INST_CMPL", "PM_CYC", NULL
+   };
+#elif defined (_POWER5)
+   /* arbitrarily code events from group 137: pm_1flop_with_fma - One flop instructions plus FMA */
+   static char *native_name[] =
+       { "PM_FPU_1FLOP", "PM_FPU_FMA", "PM_CYC", "PM_INST_CMPL",
+       "PM_RUN_CYC", NULL, NULL
+   };
 #endif
 #endif
 
@@ -141,7 +164,8 @@ void papimon_start(void)
      (defined(mips) && defined(sgi) && defined(unix)) || \
      (defined(sun) && defined(sparc)) || \
      (defined(__crayx1)) || (defined(_CRAYT3E)) || \
-     (defined(__ALPHA) && defined(__osf__)))
+     (defined(__ALPHA) && defined(__osf__)) || \
+     (defined(linux) && (defined(_POWER4) || defined(_PPC970) || defined(_POWER5))))
 
       for (i = 0; native_name[i] != NULL; i++) {
          retval = PAPI_event_name_to_code(native_name[i], &native);
@@ -168,7 +192,7 @@ void papimon_stop(void)
    int i, retval;
    long_long values[8];
    float rsec;
-#if defined(_AIX)
+#if defined(_AIX) || defined(linux)
    float csec;
 #endif
 
@@ -180,8 +204,8 @@ void papimon_stop(void)
       fprintf(stderr, "-------------Monitor Point %d-------------\n", point);
       rsec = (float)(us / 1000000.0);
       fprintf(stderr, "Real Elapsed Time in sec.  : %f\n", rsec);
-#if defined(_AIX)
-#if defined(_POWER4)
+#if defined(_AIX)  || defined(linux)
+#if defined(_POWER4) || defined(_PPC970)
       csec = (float) values[7] / (hwinfo->mhz * 1000000.0);
       fprintf(stderr, "CPU Elapsed Time in sec.   : %f\n", csec);
       fprintf(stderr, "FPU0 DIV Instructions      : %lld\n", values[0]);
@@ -197,6 +221,19 @@ void papimon_stop(void)
               (((float) values[4] + (float) values[5]) / 500000.0) / csec);
       fprintf(stderr, "%% FMA Instructions         : %.2f\n",
               100.0 * ((float) values[4] + (float) values[5]) / (float) values[6]);
+#elif defined (_POWER5)
+      csec = (float) values[4] / (hwinfo->mhz * 1000000.0);
+      fprintf(stderr, "CPU Elapsed Time in sec.   : %f\n", csec);
+      fprintf(stderr, "FPU 1FLOP Instructions      : %lld\n", values[0]);
+      fprintf(stderr, "FPU FMA Instructions      : %lld\n", values[1]);
+      fprintf(stderr, "CPU Cycles                 : %lld\n", values[2]);
+      fprintf(stderr, "Instructions Completed     : %lld\n", values[3]);
+      fprintf(stderr, "Run cycles (gated by runlatch) : %lld\n", values[4]);
+      fprintf(stderr, "------------------------------------------\n");
+      fprintf(stderr, "CPU MFLOPS                 : %.2f\n",
+              (((float) values[1]) / 500000.0) / csec);
+      fprintf(stderr, "%% FMA Instructions         : %.2f\n",
+              100.0 * ((float) values[1]) / (float) values[3]);
 #else
       csec = (float) values[5] / (hwinfo->mhz * 1000000.0);
       fprintf(stderr, "CPU Elapsed Time in sec.   : %f\n", csec);

@@ -3,6 +3,8 @@
 * CVS:     $Id$
 * Author:  Dan Terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -55,4 +57,10 @@ extern void *profbuf[5];
       void *ip;	/* entry point (code address) */
       void *gp;	/* global-pointer */
    };
+#elif defined(__powerpc64__)
+	struct fdesc {
+		void * ip;   // function entry point
+		void * toc;
+		void * env;
+	};
 #endif

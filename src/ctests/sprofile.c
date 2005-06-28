@@ -3,13 +3,15 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 */
 
 /* These architectures use Function Descriptors as Function Pointers */
 
-#if (defined(linux) && defined(__ia64__)) || (defined(_AIX))
+#if (defined(linux) && defined(__ia64__)) || (defined(_AIX)) ||(defined(__powerpc64__))
 #define DO_READS (unsigned long)(*(void **)do_reads)
 #define DO_FLOPS (unsigned long)(*(void **)do_flops)
 #else
