@@ -1,11 +1,22 @@
 # $Id$
 
+# File: Rules.perfctr
+# Mods: Maynard Johnson
+#       maynardj@us.ibm.com
+
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
 MSUBSTR = linux-perfctr-$(CPU)
-MEMSUBSTR= linux
+
+ifeq ($(CPU_TYPE),ppc64)
+MEMSUBSTR = linux-ppc64
+#LDFLAGS = -lpthread
+else
+MEMSUBSTR = linux
+endif
+
 LIBS    = static shared
 TARGETS = serial multiplex_and_pthreads shared
 
@@ -13,6 +24,10 @@ TARGETS = serial multiplex_and_pthreads shared
 # GNU G77/GCC section
 #
 
+# Ideally, the else clause should specify -m64, but
+# since most makefiles that need -m32 don't currently
+# specify 'BITS=32', we can't do this without also
+# changing those makefiles.
 ifeq (32,$(BITS))
 F77   		= g77 -m32 -Wall
 CC		= gcc -m32 -Wall
@@ -83,6 +98,33 @@ OPTFLAGS  =
 endif
 
 #
+#  Linux for PowerPC64 section
+#
+ARCH            := $(shell uname -m | grep ppc64)
+ifeq ($(ARCH),ppc64)
+ifeq (32,$(BITS))
+F77             = g77 -m32 -Wall
+CC              = gcc -m32 -Wall
+else
+ifeq (64,$(BITS))
+F77             = g77 -m64 -Wall
+CC              = gcc -m64 -Wall
+else
+F77             = g77 -Wall
+CC              = gcc -Wall
+endif
+endif
+CFLAGS 		+= -DPPC64
+LIB_SUFFIX	:= 64
+PLATFORM 	:= $(ARCH)
+ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
+else
+ARCH_SPEC_EVTS	:=
+PLATFORM 	:= x86
+endif
+
+
+#
 #  Intel compilers
 #
 
@@ -103,7 +145,13 @@ FFLAGS   = -132
 TARGETS	 += omp
 endif
 
+ifeq ($(ARCH),ppc64)
+#Workaround to gcc bug (see gcc bug #20611)
+OPTFLAGS        += -O2 $(EVENTFLAGS)
+else
 OPTFLAGS	+= -O3 $(EVENTFLAGS)
+endif
+
 FFLAGS        	+= -Dlinux $(FARGS)
 TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
@@ -149,23 +197,37 @@ PERFCTR_OBJS-2.4.x := $(PERFCTR_OBJS-2.4.5)
 # 2.5.4 support is for Red Storm Catamount only
 PERFCTR_OBJS-2.5.4 := global.o misc.o virtual.o event_set.o event_set_amd.o catamount.o x86_64.o
 PERFCTR_OBJS-2.6.x := marshal.o global.o misc.o virtual.o x86.o
-PERFCTR_OBJS-2.7.x := $(PERFCTR_OBJS-2.6.x)
+PERFCTR_OBJS-2.7.x := misc.o virtual.o $(PLATFORM).o
 
 CFLAGS	+= $(CFLAGS-$(VERSION))
 PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-MISCSRCS = linux.c $(CPU)_events.c
+MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
-POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.5
+#Dynamic linking loader needs correct version of libperfctr
+ifeq ($(VERSION),2.7.x)
+SO_ABIVER=6
+else
+ifeq ($(VERSION),2.6.x)
+i386_ABIVER=5
+x86_64_ABIVER=6
+ppc_ABIVER=5
+SO_ABIVER=$($(ARCH)_ABIVER)
+endif
+endif
+POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.$(SO_ABIVER)
 SPECIAL_REMOVE = rm -f libperfctr.so*
 
 include Makefile.inc
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
+ifeq ($(ARCH),ppc64)
+	$(MAKE) CC='$(CC)' -C $(PERFCTR)
+else
 ifneq (32,${BITS})
 ifeq (CATAMOUNT, $(COMPILER))
 	$(MAKE) CC=$(CC) -C $(PERFCTR)
@@ -175,6 +237,7 @@ endif
 else
 	$(MAKE) CC="gcc -m32 -U__i386__ -D__x86_64__" LD_FLAGS="-melf_i386" -C $(PERFCTR)
 endif
+endif
 else
 	@echo '$@ not installed!'; exit 1
 endif
@@ -182,10 +245,13 @@ endif
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 	ar xv $<
 
+#$(CPU)_events.o: $(CPU)_events.c $(CONFIG_HEADER)
 $(CPU)_events.o: $(CPU)_events.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
+linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
-linux.o: linux.c
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 native_clean:
@@ -193,15 +259,15 @@ ifeq (,${PERFCTR_PREFIX})
 	$(MAKE) -C $(PERFCTR) clean
 endif
 
-native_install:
+native_install: perfctr_install arch_specific_install
+
+perfctr_install:
 ifeq (,${PERFCTR_PREFIX})
 ifeq (${VERSION},2.4.x)
-native_install:
 	cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
 	cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
 	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
 else
-native_install:
 ifeq (32,${BITS})
 ifeq (p3,${CPU})
 	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) ARCH="i386" install
@@ -215,6 +281,12 @@ else
 	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
 endif
 endif
+endif
+
+arch_specific_install:
+ifeq ($(ARCH),ppc64)
+	mkdir -p $(PAPI_DATADIR)
+	cp -Rf ./event_data $(PAPI_DATADIR)
 endif
 
 native_clobber:

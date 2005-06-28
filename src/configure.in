@@ -1,5 +1,9 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
+# File: configure.in
+# Mods: Maynard Johnson
+#       maynardj@us.ibm.com
+
 
 AC_PREREQ(2.59)
 AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
@@ -87,6 +91,17 @@ case "$OS" in
                CPU=opteron
              fi
            fi
+         else
+           family=`uname -m`
+           if test "$family" = "ppc64"; then
+             echo "family = ppc64"
+             CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+             case "$CPU_info" in
+               PPC970*) CPU="PPC970";;
+               POWER4*) CPU="POWER4";;
+               POWER5*) CPU="POWER5";;
+            esac
+          fi
          fi
              
          ;;
@@ -266,6 +281,8 @@ case "$OS" in
                    exit -1
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
+            POWER4|POWER5|PPC970)
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
        esac
        ;;
   irix)
@@ -307,6 +324,7 @@ case "$MAKEVER" in
     unicos-t3e);;
     unicos-x1-msp);;
     unicos-x1-ssp);;
+    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-PPC970);;
     *)
     echo Platform $MAKEVER is not supported
     exit -1
@@ -364,6 +382,19 @@ AC_CHECK_LIB([pmapi], [pm_init], [], [
       exit -1
       ])
 fi
+
+if test "$prefix" = "NONE"; then
+        my_prefix="$ac_default_prefix"
+else
+        my_prefix="$prefix"
+fi
+if test "$datadir" = '${prefix}/share'; then
+        datadir="$my_prefix/share/papi"
+else 
+	datadir="$datadir/share/papi"
+fi
+PAPI_DATADIR=`eval echo "$datadir/"`
+AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
 
 AC_CHECK_LIB([pthread], [pthread_self])
 
