@@ -717,15 +717,9 @@ int _papi_hwd_get_system_info(void)
 }
 #endif /* __CATAMOUNT__ */
 
+/* Low level functions, should not handle errors, just return codes. */
 
-/* perfctr defines rdtscl as a platform independent mapping 
-   onto the following assembly construct. In addition, it provides
-   a scaling multiplier: info.tsc_to_cpu_mult, which can be used to
-   insure platform independence. I recommend that we eliminate the 
-   following crufty assembly and use what perfctr provides.
-*/
-
-/*
+#ifndef PPC64
 inline_static long_long get_cycles(void) {
    long_long ret = 0;
 #ifdef __x86_64__
@@ -741,16 +735,13 @@ inline_static long_long get_cycles(void) {
 #endif
    return ret;
 }
-*/
-
-/* Low level functions, should not handle errors, just return codes. */
-
+#else
 inline_static long_long get_cycles(void) {
    long_long ret = 0;
    rdtscl(ret);
    return ret * tb_scale_factor;
 }
-
+#endif //PPC64
 
 long_long _papi_hwd_get_real_usec(void) {
    return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
