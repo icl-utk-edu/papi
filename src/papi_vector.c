@@ -283,52 +283,52 @@ int PAPI_user(int func_num, void * input, void * output){
 char * find_dummy(void * func, char **buf){
   void * ptr=NULL;
 
-  if ( vec_int_ok_dummy == func){
-    ptr = vec_int_ok_dummy;
+  if ( vec_int_ok_dummy == (int (*)())func){
+    ptr = ( void *)vec_int_ok_dummy;
     *buf = papi_strdup("vec_int_ok_dummy");
   }
-  else if ( vec_int_one_dummy == func ){
-    ptr = vec_int_one_dummy;
+  else if ( vec_int_one_dummy == (int (*)())func ){
+    ptr = ( void *)vec_int_one_dummy;
     *buf = papi_strdup("vec_int_one_dummy");
   }
-  else if ( vec_int_dummy == func ){
-    ptr = vec_int_dummy;
+  else if ( vec_int_dummy == (int (*)())func ){
+    ptr = ( void *)vec_int_dummy;
     *buf = papi_strdup("vec_int_dummy");
   }
-  else if ( vec_void_dummy == func ){
-    ptr = vec_void_dummy;
+  else if ( vec_void_dummy == (void (*)())func ){
+    ptr = (void *)vec_void_dummy;
     *buf = papi_strdup("vec_void_dummy");
   }
-  else if ( vec_void_star_dummy == func ){
-    ptr = vec_void_star_dummy;
+  else if ( vec_void_star_dummy == (void *(*)())func ){
+    ptr = (void *)vec_void_star_dummy;
     *buf = papi_strdup("vec_void_star_dummy");
   }
-  else if ( vec_long_long_dummy == func ){
-    ptr = vec_long_long_dummy;
+  else if ( vec_long_long_dummy == (long_long (*)())func ){
+    ptr = (void *)vec_long_long_dummy;
     *buf = papi_strdup("vec_long_long_dummy");
   }
-  else if ( vec_char_star_dummy == func ){
-    ptr = vec_char_star_dummy;
+  else if ( vec_char_star_dummy == (unsigned char*(*)())func ){
+    ptr = (void *)vec_char_star_dummy;
     *buf = papi_strdup("vec_char_star_dummy");
   }
-  else if ( vec_long_dummy == func ){
-    ptr = vec_long_dummy;  
+  else if ( vec_long_dummy == (long (*)())func ){
+    ptr = (void *)vec_long_dummy;  
     *buf = papi_strdup("vec_long_dummy");
   }
-  else if ( vec_dummy_get_real_usec == func ) {
-    ptr = vec_dummy_get_real_usec;
+  else if ( vec_dummy_get_real_usec == (unsigned long_long(*)())func ) {
+    ptr = (void *)vec_dummy_get_real_usec;
     *buf = papi_strdup("vec_dummy_get_real_usec");
   }
-  else if ( vec_dummy_get_real_cycles == func ) {
-    ptr = vec_dummy_get_real_cycles;
+  else if ( vec_dummy_get_real_cycles == (unsigned long_long(*)())func ) {
+    ptr = (void *)vec_dummy_get_real_cycles;
     *buf = papi_strdup("vec_dummy_get_real_cycles");
   }
-  else if ( vec_dummy_get_virt_usec == func ) {
-    ptr = vec_dummy_get_virt_usec;
+  else if ( vec_dummy_get_virt_usec == (unsigned long_long(*)())func ) {
+    ptr = (void *)vec_dummy_get_virt_usec;
     *buf = papi_strdup("vec_dummy_get_virt_usec");
   }
-  else if ( vec_dummy_get_virt_cycles == func ) {
-    ptr = vec_dummy_get_virt_cycles;
+  else if ( vec_dummy_get_virt_cycles == (unsigned long_long(*)())func ) {
+    ptr = (void *)vec_dummy_get_virt_cycles;
     *buf = papi_strdup("vec_dummy_get_virt_cycles");
   }
   else {
@@ -354,39 +354,39 @@ void vector_print_table(papi_vectors_t *table, int print_func){
 
  if ( !table ) return;
 
- vector_print_routine(table->_vec_papi_hwd_read,"_papi_hwd_read",print_func);
- vector_print_routine(table->_vec_papi_hwd_dispatch_timer, "_papi_hwd_dispatch_timer",print_func);
- vector_print_routine(table->_vec_papi_hwd_get_overflow_address, "_papi_hwd_get_overflow_address",print_func);
- vector_print_routine(table->_vec_papi_hwd_start, "_papi_hwd_start",print_func);
- vector_print_routine(table->_vec_papi_hwd_stop, "_papi_hwd_stop",print_func);
- vector_print_routine(table->_vec_papi_hwd_get_real_cycles, "_papi_hwd_get_real_cycles",print_func);
- vector_print_routine(table->_vec_papi_hwd_get_real_usec, "_papi_hwd_get_real_usec",print_func);
- vector_print_routine(table->_vec_papi_hwd_get_virt_cycles, "_papi_hwd_get_virt_cycles",print_func);
- vector_print_routine(table->_vec_papi_hwd_get_virt_usec, "_papi_hwd_get_virt_usec",print_func);
- vector_print_routine(table->_vec_papi_hwd_reset, "_papi_hwd_reset",print_func);
- vector_print_routine(table->_vec_papi_hwd_write, "_papi_hwd_write",print_func);
- vector_print_routine(table->_vec_papi_hwd_stop_profiling, "_papi_hwd_stop_profiling",print_func);
- vector_print_routine(table->_vec_papi_hwd_init, "_papi_hwd_init",print_func);
- vector_print_routine(table->_vec_papi_hwd_init_control_state, "_papi_hwd_init_control_state",print_func);
- vector_print_routine(table->_vec_papi_hwd_ctl, "_papi_hwd_ctl",print_func);
- vector_print_routine(table->_vec_papi_hwd_set_overflow, "_papi_hwd_set_overflow",print_func);
- vector_print_routine(table->_vec_papi_hwd_set_profile, "_papi_hwd_set_profile",print_func);
- vector_print_routine(table->_vec_papi_hwd_add_prog_event, "_papi_hwd_add_prog_event",print_func);
- vector_print_routine(table->_vec_papi_hwd_set_domain, "_papi_hwd_set_domain",print_func);
- vector_print_routine(table->_vec_papi_hwd_ntv_enum_events, "_papi_hwd_ntv_enum_events",print_func);
- vector_print_routine(table->_vec_papi_hwd_ntv_code_to_name, "_papi_hwd_ntv_code_to_name",print_func);
- vector_print_routine(table->_vec_papi_hwd_ntv_code_to_descr, "_papi_hwd_ntv_code_to_descr",print_func);
- vector_print_routine(table->_vec_papi_hwd_ntv_code_to_bits, "_papi_hwd_ntv_code_to_bits",print_func);
- vector_print_routine(table->_vec_papi_hwd_ntv_bits_to_info, "_papi_hwd_ntv_bits_to_info",print_func);
- vector_print_routine(table->_vec_papi_hwd_allocate_registers, "_papi_hwd_allocate_registers",print_func);
- vector_print_routine(table->_vec_papi_hwd_bpt_map_avail, "_papi_hwd_bpt_map_avail",print_func);
- vector_print_routine(table->_vec_papi_hwd_bpt_map_set, "_papi_hwd_bpt_map_set",print_func);
- vector_print_routine(table->_vec_papi_hwd_bpt_map_exclusive, "_papi_hwd_bpt_map_exclusive",print_func);
- vector_print_routine(table->_vec_papi_hwd_bpt_map_shared, "_papi_hwd_bpt_shared",print_func);
- vector_print_routine(table->_vec_papi_hwd_bpt_map_update, "_papi_hwd_bpt_map_update",print_func);
- vector_print_routine(table->_vec_papi_hwd_get_dmem_info, "_papi_hwd_get_dmem_info",print_func);
- vector_print_routine(table->_vec_papi_hwd_shutdown, "_papi_hwd_shutdown",print_func);
- vector_print_routine(table->_vec_papi_hwd_shutdown_global, "_papi_hwd_shutdown_global",print_func);
- vector_print_routine(table->_vec_papi_hwd_user, "_papi_hwd_user",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_read,"_papi_hwd_read",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_dispatch_timer, "_papi_hwd_dispatch_timer",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_get_overflow_address, "_papi_hwd_get_overflow_address",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_start, "_papi_hwd_start",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_stop, "_papi_hwd_stop",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_get_real_cycles, "_papi_hwd_get_real_cycles",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_get_real_usec, "_papi_hwd_get_real_usec",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_get_virt_cycles, "_papi_hwd_get_virt_cycles",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_get_virt_usec, "_papi_hwd_get_virt_usec",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_reset, "_papi_hwd_reset",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_write, "_papi_hwd_write",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_stop_profiling, "_papi_hwd_stop_profiling",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_init, "_papi_hwd_init",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_init_control_state, "_papi_hwd_init_control_state",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_ctl, "_papi_hwd_ctl",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_set_overflow, "_papi_hwd_set_overflow",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_set_profile, "_papi_hwd_set_profile",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_add_prog_event, "_papi_hwd_add_prog_event",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_set_domain, "_papi_hwd_set_domain",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_ntv_enum_events, "_papi_hwd_ntv_enum_events",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_ntv_code_to_name, "_papi_hwd_ntv_code_to_name",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_ntv_code_to_descr, "_papi_hwd_ntv_code_to_descr",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_ntv_code_to_bits, "_papi_hwd_ntv_code_to_bits",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_ntv_bits_to_info, "_papi_hwd_ntv_bits_to_info",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_allocate_registers, "_papi_hwd_allocate_registers",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_bpt_map_avail, "_papi_hwd_bpt_map_avail",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_bpt_map_set, "_papi_hwd_bpt_map_set",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_bpt_map_exclusive, "_papi_hwd_bpt_map_exclusive",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_bpt_map_shared, "_papi_hwd_bpt_shared",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_bpt_map_update, "_papi_hwd_bpt_map_update",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_get_dmem_info, "_papi_hwd_get_dmem_info",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_shutdown, "_papi_hwd_shutdown",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_shutdown_global, "_papi_hwd_shutdown_global",print_func);
+ vector_print_routine((void *)table->_vec_papi_hwd_user, "_papi_hwd_user",print_func);
 }
 #endif
