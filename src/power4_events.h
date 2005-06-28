@@ -6,11 +6,9 @@
 * CVS:     
 * Author:  Haihang You
 *          you@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 */
-
-#include SUBSTRATE
 
 #define PAPI_MAX_NATIVE_EVENTS 256
 #define MAX_GROUPS (GROUP_INTS * 32)
@@ -28,8 +26,16 @@ typedef struct PWR4_register {
 typedef PWR4_register_t hwd_register_t;
 
 typedef struct PWR4_groups {
+#ifdef __perfctr__
+  unsigned int mmcr0;
+  unsigned int mmcr1L;
+  unsigned int mmcr1U;
+  unsigned int mmcra;
+  unsigned int counter_cmd[MAX_COUNTERS];
+#else
 /* Buffer containing counter cmds for this group */
    unsigned char counter_cmd[MAX_COUNTERS];
+#endif
 } PWR4_groups_t;
 
 typedef PWR4_groups_t hwd_groups_t;
@@ -297,8 +303,10 @@ enum native_name {
 };
 
 extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
+#ifndef __perfctr__
 extern pm_info_t pminfo;
 extern pm_groups_info_t pmgroups;
+#endif
 extern PWR4_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX];
 extern hwd_groups_t group_map[MAX_GROUPS];
 

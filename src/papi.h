@@ -11,6 +11,8 @@
 *          terpstra@cs.utk.edu
 * Mods:    Kevin London
 *	   london@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 */
 
 #ifndef _PAPI
@@ -123,6 +125,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
+#define PAPI_VENDOR_IBM     4
 
 /* Granularity definitions */
 
