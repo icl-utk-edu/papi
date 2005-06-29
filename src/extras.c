@@ -19,7 +19,7 @@
 vendors did in the kernel extensions or performance libraries. */
 
 /* It also contains a new section at the end with Windows routines
- to emulate standard stuff found in Unix/Linux, but not Windows. */
+ to emulate standard stuff found in Unix/Linux, but not Windows! */
 
 #include "papi.h"
 #include "papi_internal.h"
