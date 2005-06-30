@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    linux-acpi.h
+* File:    linux-mx.h
 * CVS:     $Id$
 * Author:  Haihang You
 *          you@cs.utk.edu
@@ -11,8 +11,8 @@
 *          <your email address>
 */
 
-#ifndef _PAPI_ACPI_H
-#define _PAPI_ACPI_H
+#ifndef _PAPI_GM_H
+#define _PAPI_GM_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +89,7 @@
 /*#include "libperfctr.h"*/
 #endif
 
-#define MAX_COUNTERS 8
+#define MAX_COUNTERS 100
 #define MAX_COUNTER_TERMS  MAX_COUNTERS
 
 #include "papi.h"
@@ -159,14 +159,17 @@ typedef ucontext_t hwd_ucontext_t;
 
 #endif /* _WIN32 */
 
-typedef struct ACPI_register {
+#define LINELEN 128
+/*#define GMPATH "/usr/gm/bin/gm_counters"*/
+
+typedef struct gm_register {
    /* indicate which counters this event can live on */
    unsigned int selector;
    /* Buffers containing counter cmds for each possible metric */
    char *counter_cmd[PAPI_MAX_STR_LEN];
-} ACPI_register_t;
+} GM_register_t;
 
-typedef ACPI_register_t hwd_register_t;
+typedef GM_register_t hwd_register_t;
 
 typedef struct native_event_entry {
    /* description of the resources required by this native event */
@@ -185,10 +188,10 @@ typedef struct hwd_control_state {
   long_long counts[MAX_COUNTERS];
 } hwd_control_state_t;
 
-
 typedef struct hwd_context {
   hwd_control_state_t state; 
 } hwd_context_t;
+
 /*
 #define _papi_hwd_lock_init() { ; }
 #define _papi_hwd_lock(a) { ; }
@@ -196,4 +199,4 @@ typedef struct hwd_context {
 #define GET_OVERFLOW_ADDRESS(ctx) (0x80000000)
 */
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-#endif /* _PAPI_ACPI_H */
+#endif /* _PAPI_MX_H */
