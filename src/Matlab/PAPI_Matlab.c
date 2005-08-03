@@ -3,6 +3,7 @@
 #include "papi.h"
 
 static long_long accum_error = 0;
+static long_long start_time = 0;
 
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]) {
@@ -10,7 +11,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
   int i;
   unsigned int mrows, nchars;
   unsigned int *events;
-  long_long ins = 0, *values;
+  unsigned int flop_events[2];
+  long_long ins = 0, *values, flop_values[2];
+  long_long elapsed_time;
   int result;
   char *input, *temp;
   char one_output[]	= "This function produces one output per running counter.";
@@ -52,16 +55,39 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if (input[2] == 'i') {
       if(result = PAPI_flips( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
         mexPrintf("Error code: %d\n", result);
-	mexErrMsgTxt("Error getting flips.");
+	     mexErrMsgTxt("Error getting flips.");
       }
     } else {
-      if(result = PAPI_flops( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
-        mexPrintf("Error code: %d\n", result);
-	mexErrMsgTxt("Error getting flops.");
-      }
+       if(result = PAPI_event_name_to_code("EMON_SSE_SSE2_COMP_INST_RETIRED_PACKED_DOUBLE", &(flop_events[0])) < PAPI_OK) {
+          if(result = PAPI_flops( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+             mexPrintf("Error code: %d\n", result);
+	          mexErrMsgTxt("Error getting flops.");
+          }
+       } else {
+         if(start_time == 0) {
+            flop_events[1] = PAPI_FP_OPS;
+            start_time = PAPI_get_real_usec();
+            if((result = PAPI_start_counters(flop_events, 2)) < PAPI_OK) {
+               mexPrintf("Error code: %d\n", result);
+               mexErrMsgTxt("Error getting flops.");
+            } else {
+               ins = 0;
+               rate = 0;
+            }
+         } else {
+            if((result = PAPI_read_counters(flop_values, 2)) < PAPI_OK) {
+               mexPrintf("%d\n", result);
+               mexErrMsgTxt(error_reading);
+            } else {
+               elapsed_time = PAPI_get_real_usec() - start_time;
+               ins = (2*flop_values[0])+flop_values[1];
+               rate = ((float)ins)/((float)elapsed_time);
+            }
+         }
+       }
     }
     if(nlhs > 0) {
-      plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
+     plhs[0] = mxCreateScalarDouble((double)(ins - accum_error));
       /* this call adds 7 fp instructions to the total */
       accum_error += 7;
       if(nlhs == 2) {
@@ -117,10 +143,16 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
     if (nlhs == 0) values = NULL;
     else values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
-    if((result = PAPI_stop_counters(values, nlhs)) < PAPI_OK) {
+    if (start_time == 0) {
+      result = PAPI_stop_counters(values, nlhs);
+    } else {
+      start_time = 0;
+      result = PAPI_stop_counters(flop_values, 2);
+    }
+    if(result < PAPI_OK) {
       if(result != PAPI_ENOTRUN) {
-	mexPrintf("Error code: %d\n", result);
-	mexErrMsgTxt("Error stopping the running counters.");
+         mexPrintf("Error code: %d\n", result);
+         mexErrMsgTxt("Error stopping the running counters.");
       }
     }
     accum_error = 0;
