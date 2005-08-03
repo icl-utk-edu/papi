@@ -72,7 +72,7 @@ public class PapiJ {
   }
 
   /** Current version number **/
-  public static final int PAPI_VER_CURRENT = 196608;
+  public static final int PAPI_VER_CURRENT = 50331648;
 
   /* Return Codes */
 
