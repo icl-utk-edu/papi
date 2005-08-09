@@ -408,7 +408,7 @@ AC_CHECK_LIB([lipr], [main])
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-#AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h memory.h stddef.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/systeminfo.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([assert.h ctype.h dirent.h dlfcn.h errno.h expat.h fcntl.h inttypes.h libgen.h limits.h malloc.h math.h memory.h signal.h stdarg.h stdio.h stdlib.h string.h stropts.h sys/ioctl.h sys/mman.h sys/processor.h sys/procfs.h sys/resource.h sys/stat.h sys/syscall.h sys/sysinfo.h sys/sysmp.h sys/time.h sys/timers.h sys/times.h sys/types.h ucontext.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
