@@ -157,15 +157,6 @@
 			Name="MATLAB C/C++ files"
 			Filter=".c, .rc">
 			<File
-				RelativePath="..\..\..\Program Files\Matlab704\extern\include\mexversion.rc">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="&quot;C:\Program Files\MATLAB704\extern&quot;"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\MATLAB6p1\extern\include\mexversion.rc">
 				<FileConfiguration
 					Name="Release|Win32"

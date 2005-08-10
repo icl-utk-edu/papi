@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="PAPI_flops"
+	ProjectGUID="{183BF4E6-6BFB-4537-BD44-363EF46ED707}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MFCProj">
@@ -91,7 +92,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..;\substrate;..;..\win2k\substrate;&quot;C:\Program Files\MATLAB704\extern\include&quot;;C:\MATLAB6p1\extern\include"
+				AdditionalIncludeDirectories="..;..\win2k\substrate;&quot;C:\Program Files\MATLAB704\extern\include&quot;;C:\MATLAB6p1\extern\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;IBMPC;MSVC;MSWIND;__STDC__;MATLAB_MEX_FILE"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
