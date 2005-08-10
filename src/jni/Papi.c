@@ -360,25 +360,126 @@ JNIEXPORT jobject JNICALL Java_PapiJ_get_1hardware_1info
   (JNIEnv *env, jobject obj)
 {
   PAPI_hw_info_t *hw, *(*get_hardware_info)(void);
-  jmethodID mid;
-  jclass class;
-  jobject hw_obj = NULL;
+  PAPI_mh_level_t *L;
+  jmethodID mid, mid1, mid2, mhlmid, itlbmid, dtlbmid, utlbmid, icmid, dcmid, ucmid;
+  jclass class, class1, mhlclass, itlbclass, dtlbclass, utlbclass, icclass, dcclass, ucclass;
+  jobject hw_obj = NULL, mh_obj = NULL, mhl_obj = NULL, itlb_obj = NULL, dtlb_obj = NULL, utlb_obj = NULL, ic_obj = NULL, dc_obj = NULL, uc_obj = NULL;
+  int levels, i, j, ti, td, tu, ci, cd, cu;
 
   if( ! (get_hardware_info = getPapiFunction("PAPI_get_hardware_info")) )
     return NULL;
 
   hw = (*get_hardware_info)();
+  L = (PAPI_mh_level_t *)&(hw->mem_hierarchy.level[0]);
+  levels = hw->mem_hierarchy.levels;
+
+  if( ! (class1 = (*env)->FindClass(env, "PAPI_mh_info")) ){
+    return NULL;
+  }
+  mid1 = (*env)->GetMethodID(env, class1, "<init>", "(I)V");
+  mid2 = (*env)->GetMethodID(env, class1, "mh_level_value", "(ILPAPI_mh_level_info;)V");
+  mh_obj = (*env)->NewObject(env, class1, mid1, levels);
+
+  for (i=0; i<levels; i++) {
+
+    if( ! (itlbclass = (*env)->FindClass(env, "PAPI_mh_itlb_info")) )
+      return NULL;
+    itlbmid = (*env)->GetMethodID(env, itlbclass, "<init>", "(III)V");
+
+    if( ! (dtlbclass = (*env)->FindClass(env, "PAPI_mh_dtlb_info")) )
+      return NULL;
+    dtlbmid = (*env)->GetMethodID(env, dtlbclass, "<init>", "(III)V");
+   
+    if( ! (utlbclass = (*env)->FindClass(env, "PAPI_mh_utlb_info")) )
+      return NULL;
+    utlbmid = (*env)->GetMethodID(env, utlbclass, "<init>", "(III)V");
+    
+    if( ! (icclass = (*env)->FindClass(env, "PAPI_mh_icache_info")) )
+      return NULL;
+    icmid = (*env)->GetMethodID(env, icclass, "<init>", "(IIIII)V");
+
+    if( ! (dcclass = (*env)->FindClass(env, "PAPI_mh_dcache_info")) )
+      return NULL;
+    dcmid = (*env)->GetMethodID(env, dcclass, "<init>", "(IIIII)V");
+    
+    if( ! (ucclass = (*env)->FindClass(env, "PAPI_mh_ucache_info")) )
+      return NULL;
+    ucmid = (*env)->GetMethodID(env, ucclass, "<init>", "(IIIII)V");
+    
+    ti=td=tu=0;
+    ci=cd=cu=0;
+    for(j=0;j<2;j++){
+      switch (L[i].tlb[j].type) {
+        case PAPI_MH_TYPE_UNIFIED:
+           utlb_obj = (*env)->NewObject(env, utlbclass, utlbmid, L[i].tlb[j].type,
+             L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+           tu=1;
+           break;
+        case PAPI_MH_TYPE_DATA:
+           dtlb_obj = (*env)->NewObject(env, dtlbclass, dtlbmid, L[i].tlb[j].type,
+             L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+           td=1;
+           break;
+        case PAPI_MH_TYPE_INST:
+           itlb_obj = (*env)->NewObject(env, itlbclass, itlbmid, L[i].tlb[j].type,
+             L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+           ti=1;
+           break;
+      }
+      switch (L[i].cache[j].type) {
+        case PAPI_MH_TYPE_UNIFIED:
+           uc_obj = (*env)->NewObject(env, ucclass, ucmid, L[i].cache[j].type,
+             (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, 
+             L[i].cache[j].associativity);
+           cu=1;
+           break;
+        case PAPI_MH_TYPE_DATA:
+           dc_obj = (*env)->NewObject(env, dcclass, dcmid, L[i].cache[j].type,
+             (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, 
+             L[i].cache[j].associativity);
+           cd=1; 
+           break;
+        case PAPI_MH_TYPE_INST:
+           ic_obj = (*env)->NewObject(env, icclass, icmid, L[i].cache[j].type,
+             (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, 
+             L[i].cache[j].associativity);
+           ci=1;
+           break;
+      }
+    }
+    if(!ti)
+      itlb_obj = (*env)->NewObject(env, itlbclass, itlbmid, 0, 0, 0);
+    if(!td)
+      dtlb_obj = (*env)->NewObject(env, dtlbclass, dtlbmid, 0, 0, 0);
+    if(!tu)
+      utlb_obj = (*env)->NewObject(env, utlbclass, utlbmid, 0, 0, 0);
+    if(!ci)
+      ic_obj = (*env)->NewObject(env, icclass, icmid, 0, 0, 0, 0, 0);
+    if(!cd)
+      dc_obj = (*env)->NewObject(env, dcclass, dcmid, 0, 0, 0, 0, 0);
+    if(!cu)
+      uc_obj = (*env)->NewObject(env, ucclass, ucmid, 0, 0, 0, 0, 0);
+
+    if( ! (mhlclass = (*env)->FindClass(env, "PAPI_mh_level_info")) ){
+      return NULL;
+    }
+    mhlmid = (*env)->GetMethodID(env, mhlclass, "<init>", "(LPAPI_mh_itlb_info;LPAPI_mh_dtlb_info;LPAPI_mh_utlb_info;LPAPI_mh_icache_info;LPAPI_mh_dcache_info;LPAPI_mh_ucache_info;)V");
+      mhl_obj = (*env)->NewObject(env, mhlclass, mhlmid, itlb_obj, dtlb_obj, utlb_obj, ic_obj, dc_obj, uc_obj);
+      (*env)->CallVoidMethod(env, mh_obj, mid2, i, mhl_obj);
+
+  }
 
   if( ! (class = (*env)->FindClass(env, "PAPI_hw_info")) )
     return NULL;
 
   mid = (*env)->GetMethodID(env, class, "<init>",
-    "(IIIILjava/lang/String;ILjava/lang/String;FF)V");
+    "(IIIILjava/lang/String;ILjava/lang/String;FFLPAPI_mh_info;)V");
+
 
   hw_obj = (*env)->NewObject(env, class, mid, hw->ncpu, hw->nnodes,
     hw->totalcpus, hw->vendor, (*env)->NewStringUTF(env,hw->vendor_string),
     hw->model, (*env)->NewStringUTF(env,hw->model_string), hw->revision,
-    hw->mhz);
+    hw->mhz, mh_obj);
 
   return hw_obj;
 }

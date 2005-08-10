@@ -9,13 +9,13 @@ public class PAPI_hw_info {
   public float revision;       /* Revision of CPU */ 
   public float mhz;            /* Cycle time of this CPU, *may* be estimated at
                                   init time with a quick timing routine */
-//  public PAPI_mh_info mem_hierarchy;  /* PAPI memory heirarchy description */
+  public PAPI_mh_info mem_hierarchy;  /* PAPI memory heirarchy description */
 
   public PAPI_hw_info() {
     // do nothing
   }
 
-  public PAPI_hw_info(int nc, int nn, int tot, int v, String vs, int m,
+/*  public PAPI_hw_info(int nc, int nn, int tot, int v, String vs, int m,
      String ms, float r, float z)
   {
     ncpu = nc;
@@ -28,8 +28,8 @@ public class PAPI_hw_info {
     revision = r;
     mhz = z;
   }
-
-/*  public PAPI_hw_info(int nc, int nn, int tot, int v, String vs, int m,
+*/
+  public PAPI_hw_info(int nc, int nn, int tot, int v, String vs, int m,
      String ms, float r, float z, PAPI_mh_info mh)
   {
     ncpu = nc;
@@ -42,5 +42,5 @@ public class PAPI_hw_info {
     revision = r;
     mhz = z;
     mem_hierarchy=mh;
-  }*/
+  }
 }

@@ -3,6 +3,7 @@ public class papilibtest {
     PapiJ p = new PapiJ();
     PAPI_exe_info exeInfo = null;
     PAPI_hw_info hwInfo = null;
+	System.out.println(PapiJ.PAPI_VER_CURRENT);
 
     int ret =  p.library_init(PapiJ.PAPI_VER_CURRENT);
 
@@ -39,6 +40,6 @@ public class papilibtest {
     System.out.println("Model string = " + hwInfo.model_string);
     System.out.println("Revision " + hwInfo.revision);
     System.out.println("Mhz = " + hwInfo.mhz);
-    
+    hwInfo.mem_hierarchy.print_mh_info();
   }
 }

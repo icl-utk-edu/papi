@@ -320,6 +320,16 @@ public class PapiJ {
 
   public static final int PAPI_DERIVED     =      0x1;      /* Flag to indicate that the event is derived */
 
+   /* The following defines and next for structures define the memory heirarchy */
+   /* All sizes are in BYTES */
+   /* Except tlb size, which is in entries */
+
+  public static final int PAPI_MAX_MEM_HIERARCHY_LEVELS = 3;
+  public static final int PAPI_MH_TYPE_EMPTY = 0;
+  public static final int PAPI_MH_TYPE_INST = 1;
+  public static final int PAPI_MH_TYPE_DATA = 2;
+  public static final int PAPI_MH_TYPE_VECTOR = 4;
+  public static final int PAPI_MH_TYPE_UNIFIED = 3;
 
 /* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
    A value of 0 (PAPI_ENUM_ALL) is always assumed to enumerate ALL events on every platform.
