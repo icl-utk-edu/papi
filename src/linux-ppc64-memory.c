@@ -44,7 +44,7 @@ PAPI_mh_info_t sys_mem_info[3] = {
 					{PAPI_MH_TYPE_EMPTY, -1, -1}
 				},
 				{	// caches begin
-					{PAPI_MH_TYPE_UNIFIED, 32768, 128, 64, 8}, 
+					{PAPI_MH_TYPE_UNIFIED, 33554432, 512, 65536, 8}, 
 					{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
 				}
 			},	
@@ -74,7 +74,40 @@ PAPI_mh_info_t sys_mem_info[3] = {
 			},	
 		}
 	},	// 970 end
-	{0}	// POWER5
+	{3,
+		{	 
+			{ 		// level 1 begins
+				{	// tlb's begin
+					{PAPI_MH_TYPE_UNIFIED, 1024, 4}, 
+					{PAPI_MH_TYPE_EMPTY, -1, -1}
+				},
+				{	// caches begin
+					{PAPI_MH_TYPE_INST, 65536, 128, 512, 2}, 
+					{PAPI_MH_TYPE_DATA, 32768, 128, 256, 4}
+				}
+			}, 
+			{	// level 2 begins
+				{	// tlb's begin
+					{PAPI_MH_TYPE_EMPTY, -1, -1},
+					{PAPI_MH_TYPE_EMPTY, -1, -1}
+				},
+				{	// caches begin
+					{PAPI_MH_TYPE_UNIFIED, 1966080, 128, 15360, 10}, 
+					{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+				}
+			},	
+			{	// level 3 begins
+				{	// tlb's begin
+					{PAPI_MH_TYPE_EMPTY, -1, -1},
+					{PAPI_MH_TYPE_EMPTY, -1, -1}
+				},
+				{	// caches begin
+					{PAPI_MH_TYPE_UNIFIED, 37748736, 256, 147456, 12}, 
+					{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+				}
+			},	
+		}
+	}	// POWER5 end
 };
 
 #define                 SPRN_PVR                0x11F           /* Processor Version Register */
