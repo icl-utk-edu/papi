@@ -1,0 +1,15 @@
+[data from a 700MHz Duron]
+
+PERFCTR INIT: vendor 2, family 6, model 3, stepping 1, clock 707080 kHz 
+PERFCTR INIT: NITER == 64 
+PERFCTR INIT: loop overhead is 109 cycles 
+PERFCTR INIT: rdtsc cost is 16.9 cycles (1193 total) 
+PERFCTR INIT: rdpmc cost is 13.2 cycles (954 total) 
+PERFCTR INIT: rdmsr (counter) cost is 51.5 cycles (3405 total) 
+PERFCTR INIT: rdmsr (evntsel) cost is 52.2 cycles (3454 total) 
+PERFCTR INIT: wrmsr (counter) cost is 83.1 cycles (5430 total) 
+PERFCTR INIT: wrmsr (evntsel) cost is 231.2 cycles (14908 total) 
+PERFCTR INIT: read cr4 cost is 1.8 cycles (229 total) 
+PERFCTR INIT: write cr4 cost is 62.6 cycles (4121 total) 
+PERFCTR INIT: write LVTPC cost is 5.0 cycles (431 total) 
+perfctr: driver 2.7.3, cpu type AMD K7/K8 at 707080 kHz 

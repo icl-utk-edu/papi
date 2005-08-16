@@ -1,0 +1,95 @@
+		RELATED PACKAGES
+		================
+
+[Note: this list is incomplete and not actively maintained.]
+
+tsprof (by John Reiser, jreiser@BitWagon.com)
+	http://www.BitWagon.com/tsprof/tsprof.html
+	A profiling application which uses the facilities provided
+	by the perfctr driver.
+
+lperfex (by Troy Baer, troy@osc.edu)
+	http://www.osc.edu/~troy/lperfex/
+	A hardware performance monitoring tool for Linux/IA32 systems,
+	using the interface provided by the perfctr driver and library.
+
+vprof (by Curtis Janssen, cljanss@ca.sandia.gov)
+	http://aros.ca.sandia.gov/~cljanss/perf/vprof/
+	An application that annotates source code lines with event
+	counts, using perfctr's overflow signal feature.
+
+msr (by Stephan.Meyer@pobox.com)
+	http://pobox.com/~smeyer/msr.html [page seems dead now]
+	Supports kernels up to 2.2.6. No longer actively developed.
+	Adds /dev/msr as a raw interface to the CPUs MSRs.
+	No virtual PMCs.
+
+proc_sr (by bosch@lri.fr)
+	Patch for kernel 2.0.27.
+	Adds a bunch of files under /proc/Intel/, which allow
+	global access to MSRs and control registers.
+	No virtual PMCs.
+
+vtimer (by dadkins@mit.edu and bsong@supertech.lcs.mit.edu)
+	Patch for kernel 2.3.6.
+	Adds per-process virtual TSC support.
+
+msr_patch-2.1.126 (by Harald Hoyer, HarryH@Royal.Net)
+	Patch for kernel 2.1.126.
+	Adds /proc/<pid>/msr text file with read/write
+	access to per-process PMC MSRs
+	Only supports the Intel P5MMX.
+	Does not handle counter overflow.
+
+hardcntr-2 (by David.Mentre@irisa.fr)
+	http://www.irisa.fr/prive/mentre/linux-counters/hardctr-2.patch
+	Patch for kernel 2.1.65.
+	Adds some text files under /proc/<pid>/hardcntr/, which
+	allow read/write access for per-process PMC MSRs.
+	Only supports the Intel P6.
+	Does not handle counter overflow.
+	Deprecated by author.
+
+perf-0.7 (by Erik Hendriks, hendriks@cesdis.gsfc.nasa.gov)
+	Patches for kernels 2.0.36, 2.2.2, and 2.2.9.
+	Does support both per-process and global PMCs.
+	Does handle counter overflow.
+	No virtual TSC.
+	Only supports Intel P6.
+
+msr-patch-2.3.1 (by Richard Gooch, http://www.atnf.csiro.au/~rgooch/linux/)
+	Adds /dev/<cpu>/perfmon with access to per-CPU PMCs.
+	Does not implement virtual-mode PMCs.
+	Does not handle counter overflow.
+	Part of bigger package (MSRs, requires devfs).
+
+pperf/libpperf (by M. Patrick Goda, http://qso.lanl.gov/~mpg/pperf.html)
+	Based on Stephan Meyer's msr patch, and shares its limitations.
+	Emphasis on user-space tools.
+
+pcl	(by Rudolf Berrendorf and Heinz Ziegler,
+	 http://www.fz-juelich.de/zam/PCL/)
+	User-space tools, based on libpperf.
+
+PAPI (http://icl.cs.utk.edu/projects/papi/)
+	"Portable Interface to Hardware Performance Counters"
+	Common interface to the perfctr facilities on several
+	operating systems and processor architectures.
+	On Linux, uses Hendriks' "perf" patch for Intel P6 processor.
+	User-space tools. Implements both overflow signals and
+	event multiplexing.
+
+pmc-1.02 (by Don Heller, dheller@scl.ameslab.gov)
+	http://www.scl.ameslab.gov/Projects/Rabbit/index.html
+	Derived from pperf by M. Patrick Goda and Michael S. Warren.
+	Global-mode counters access via /dev/pmc.
+	Supports Intel P5 and P6 via compiler option.
+	No virtual counters.
+	Emphasis on user-space tools.
+
+Using hardware performance counters with Linux (by David Mentré)
+	http://www.irisa.fr/prive/mentre/linux-counters/
+	A page with info and links.
+
+Compaq Continuous Profiling Infrastructure Project
+	http://www.research.digital.com/SRC/dcpi/

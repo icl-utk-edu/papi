@@ -1,0 +1,18 @@
+[data from a 2.66 GHz Pentium 4]
+
+PERFCTR INIT: vendor 0, family 15, model 2, stepping 7, clock 2673813 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 520 cycles
+PERFCTR INIT: rdtsc cost is 78.3 cycles (5532 total)
+PERFCTR INIT: rdpmc cost is 147.3 cycles (9948 total)
+PERFCTR INIT: rdmsr (counter) cost is 255.7 cycles (16888 total)
+PERFCTR INIT: rdmsr (escr) cost is 166.7 cycles (11192 total)
+PERFCTR INIT: wrmsr (counter) cost is 794.1 cycles (51344 total)
+PERFCTR INIT: wrmsr (escr) cost is 873.8 cycles (56448 total)
+PERFCTR INIT: read cr4 cost is 5.3 cycles (860 total)
+PERFCTR INIT: write cr4 cost is 254.8 cycles (16832 total)
+PERFCTR INIT: rdpmc (fast) cost is 61.4 cycles (4452 total)
+PERFCTR INIT: rdmsr (cccr) cost is 167.7 cycles (11256 total)
+PERFCTR INIT: wrmsr (cccr) cost is 833.8 cycles (53884 total)
+PERFCTR INIT: write LVTPC cost is 42.1 cycles (3220 total)
+PERFCTR INIT: sync_core cost is 264.2 cycles (17432 total)
