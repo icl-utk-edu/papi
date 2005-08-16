@@ -1,3 +1,44 @@
+2005-08-15  maynardj
+        * configure.in
+        * config.h.in
+        * ctests/multiplex3_pthreads.c
+        * ctests/byte_profile.c
+        * ctests/native.c
+        * ctests/overflow_force_software.c
+        * ctests/profile.c
+        * ctests/prof_utils.h
+        * ctests/sprofile.c
+        * ctests/tenth.c
+        * event_data/power4/events (new)
+        * event_data/power4/groups (new)
+        * event_data/power5/events (new)
+        * event_data/power5/groups (new)
+        * event_data/ppc970/events (new)
+        * event_data/ppc970/groups (new)
+        * linux.c
+        * linux-ppc64.h (new)
+        * linux-ppc64-memory.c (new)
+        * Makefile.linux-perfctr-POWER4 (new)
+        * Makefile.linux-perfctr-POWER4-64bit (new)
+        * Makefile.linux-perfctr-POWER5 (new)
+        * Makefile.linux-perfctr-POWER5-64bit (new)
+        * Makefile.linux-perfctr-PPC970 (new)
+        * Makefile.linux-perfctr-PPC970-64bit (new)
+        * papi.h
+        * perfctr-ppc64.c (new)
+        * perfctr-ppc64.h (new)
+        * power4_events.h
+        * power4_events_map.c (new)
+        * power5_events.h (new)
+        * power5_events_map.c (new)
+        * ppc64_events.c (new)
+        * ppc970_events.h (new)
+        * ppc970_events_map.c (new)
+        * Rules.perfctr
+                Add support for PPC64 processors (POWER4, POWER5, and PPC970).
+                The changed and new files listed above constitute a port of
+                PAPI to the Linux/PPC64 platform.
+
 2005-03-03  terpstra
 	* Makefile.linux-perfctr-athlon 1.13:
 	* Rules.perfctr 1.21:
