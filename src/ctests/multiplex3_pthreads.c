@@ -164,12 +164,23 @@ int main(int argc, char **argv)
       test_skip(__FILE__, __LINE__, "pthread_attr_setscope", retval);
 #endif
 
+   sigset_t sigprof;
+   sigemptyset(&sigprof);
+   sigaddset(&sigprof, SIGPROF);
+   retval = sigprocmask(SIG_BLOCK, &sigprof, NULL);
+   if (retval != 0)
+           test_fail(__FILE__, __LINE__, "sigprocmask SIG_BLOCK", retval);
+   
    for (i = 0; i < NUM_THREADS; i++) {
       rc = pthread_create(&id[i], &attr, thread_fn, NULL);
       if (rc)
          test_fail(__FILE__, __LINE__, "pthread_create", rc);
    }
    pthread_attr_destroy(&attr);
+
+   retval = sigprocmask(SIG_UNBLOCK, &sigprof, NULL);
+   if (retval != 0)
+           test_fail(__FILE__, __LINE__, "sigprocmask SIG_UNBLOCK", retval);
 
    mainloop(NUM_ITERS);
 
