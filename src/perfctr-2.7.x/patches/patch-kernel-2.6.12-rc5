@@ -1,0 +1,817 @@
+--- linux-2.6.12-rc5.perfctr27/CREDITS.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/CREDITS	2005-05-25 20:13:12.000000000 +0200
+@@ -2624,6 +2624,7 @@ N: Mikael Pettersson
+ E: mikpe@csd.uu.se
+ W: http://www.csd.uu.se/~mikpe/
+ D: Miscellaneous fixes
++D: Performance-monitoring counters driver
+ 
+ N: Reed H. Petty
+ E: rhp@draper.net
+--- linux-2.6.12-rc5.perfctr27/MAINTAINERS.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/MAINTAINERS	2005-05-25 20:13:12.000000000 +0200
+@@ -1780,6 +1780,12 @@ M:	tsbogend@alpha.franken.de
+ L:	netdev@oss.sgi.com
+ S:	Maintained
+ 
++PERFORMANCE-MONITORING COUNTERS DRIVER
++P:	Mikael Pettersson
++M:	mikpe@csd.uu.se
++W:	http://www.csd.uu.se/~mikpe/linux/perfctr/
++S:	Maintained
++
+ PHRAM MTD DRIVER
+ P:	Jörn Engel
+ M:	joern@wh.fh-wedel.de
+--- linux-2.6.12-rc5.perfctr27/arch/i386/Kconfig.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/i386/Kconfig	2005-05-25 20:13:12.000000000 +0200
+@@ -939,6 +939,8 @@ config SECCOMP
+ 
+ 	  If unsure, say Y. Only embedded should say N here.
+ 
++source "drivers/perfctr/Kconfig"
++
+ endmenu
+ 
+ 
+--- linux-2.6.12-rc5.perfctr27/arch/i386/kernel/entry.S.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/i386/kernel/entry.S	2005-05-25 20:13:12.000000000 +0200
+@@ -427,6 +427,16 @@ ENTRY(name)				\
+ /* The include is where all of the SMP etc. interrupts come from */
+ #include "entry_arch.h"
+ 
++#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_PERFCTR)
++ENTRY(perfctr_interrupt)
++	pushl $LOCAL_PERFCTR_VECTOR-256
++	SAVE_ALL
++	pushl %esp
++	call smp_perfctr_interrupt
++	addl $4, %esp
++	jmp ret_from_intr
++#endif
++
+ ENTRY(divide_error)
+ 	pushl $0			# no error code
+ 	pushl $do_divide_error
+--- linux-2.6.12-rc5.perfctr27/arch/i386/kernel/i8259.c.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/i386/kernel/i8259.c	2005-05-25 20:13:12.000000000 +0200
+@@ -24,6 +24,7 @@
+ #include <asm/apic.h>
+ #include <asm/arch_hooks.h>
+ #include <asm/i8259.h>
++#include <asm/perfctr.h>
+ 
+ #include <linux/irq.h>
+ 
+@@ -412,6 +413,8 @@ void __init init_IRQ(void)
+ 	 */
+ 	intr_init_hook();
+ 
++	perfctr_vector_init();
++
+ 	/*
+ 	 * Set the clock to HZ Hz, we already have a valid
+ 	 * vector now:
+--- linux-2.6.12-rc5.perfctr27/arch/i386/kernel/process.c.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/i386/kernel/process.c	2005-05-25 20:13:12.000000000 +0200
+@@ -32,6 +32,7 @@
+ #include <linux/delay.h>
+ #include <linux/reboot.h>
+ #include <linux/init.h>
++#include <linux/perfctr.h>
+ #include <linux/mc146818rtc.h>
+ #include <linux/module.h>
+ #include <linux/kallsyms.h>
+@@ -351,6 +352,7 @@ void exit_thread(void)
+ 		tss->io_bitmap_base = INVALID_IO_BITMAP_OFFSET;
+ 		put_cpu();
+ 	}
++	perfctr_exit_thread(&tsk->thread);
+ }
+ 
+ void flush_thread(void)
+@@ -423,6 +425,8 @@ int copy_thread(int nr, unsigned long cl
+ 	savesegment(fs,p->thread.fs);
+ 	savesegment(gs,p->thread.gs);
+ 
++	perfctr_copy_task(p, regs);
++
+ 	tsk = current;
+ 	if (unlikely(NULL != tsk->thread.io_bitmap_ptr)) {
+ 		p->thread.io_bitmap_ptr = kmalloc(IO_BITMAP_BYTES, GFP_KERNEL);
+@@ -639,6 +643,7 @@ struct task_struct fastcall * __switch_t
+ 	if (unlikely(prev->io_bitmap_ptr || next->io_bitmap_ptr))
+ 		handle_io_bitmap(next, tss);
+ 
++	perfctr_resume_thread(next);
+ 	return prev_p;
+ }
+ 
+--- linux-2.6.12-rc5.perfctr27/arch/i386/kernel/syscall_table.S.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/i386/kernel/syscall_table.S	2005-05-25 20:13:12.000000000 +0200
+@@ -289,3 +289,9 @@ ENTRY(sys_call_table)
+ 	.long sys_add_key
+ 	.long sys_request_key
+ 	.long sys_keyctl
++	.long sys_ni_syscall	/* reserved for sys_ioprio_set */
++	.long sys_ni_syscall	/* reserved for sys_ioprio_get */	/* 290 */
++	.long sys_vperfctr_open
++	.long sys_vperfctr_control
++	.long sys_vperfctr_write
++	.long sys_vperfctr_read
+--- linux-2.6.12-rc5.perfctr27/arch/ppc/Kconfig.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/ppc/Kconfig	2005-05-25 20:13:12.000000000 +0200
+@@ -257,6 +257,8 @@ config NOT_COHERENT_CACHE
+ 	depends on 4xx || 8xx
+ 	default y
+ 
++source "drivers/perfctr/Kconfig"
++
+ endmenu
+ 
+ menu "Platform options"
+--- linux-2.6.12-rc5.perfctr27/arch/ppc/kernel/head.S.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/ppc/kernel/head.S	2005-05-25 20:13:12.000000000 +0200
+@@ -502,7 +502,11 @@ SystemCall:
+ Trap_0f:
+ 	EXCEPTION_PROLOG
+ 	addi	r3,r1,STACK_FRAME_OVERHEAD
++#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
++	EXC_XFER_EE(0xf00, do_perfctr_interrupt)
++#else
+ 	EXC_XFER_EE(0xf00, UnknownException)
++#endif
+ 
+ /*
+  * Handle TLB miss for instruction on 603/603e.
+--- linux-2.6.12-rc5.perfctr27/arch/ppc/kernel/misc.S.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/ppc/kernel/misc.S	2005-05-25 20:13:12.000000000 +0200
+@@ -1441,3 +1441,9 @@ _GLOBAL(sys_call_table)
+ 	.long sys_request_key		/* 270 */
+ 	.long sys_keyctl
+ 	.long sys_waitid
++	.long sys_ni_syscall		/* 273 reserved for sys_ioprio_set */
++	.long sys_ni_syscall		/* 274 reserved for sys_ioprio_get */
++	.long sys_vperfctr_open		/* 275 */
++	.long sys_vperfctr_control
++	.long sys_vperfctr_write
++	.long sys_vperfctr_read
+--- linux-2.6.12-rc5.perfctr27/arch/ppc/kernel/process.c.~1~	2005-03-02 19:24:14.000000000 +0100
++++ linux-2.6.12-rc5.perfctr27/arch/ppc/kernel/process.c	2005-05-25 20:13:12.000000000 +0200
+@@ -35,6 +35,7 @@
+ #include <linux/init_task.h>
+ #include <linux/module.h>
+ #include <linux/kallsyms.h>
++#include <linux/perfctr.h>
+ #include <linux/mqueue.h>
+ #include <linux/hardirq.h>
+ 
+@@ -301,7 +302,9 @@ struct task_struct *__switch_to(struct t
+ #endif /* CONFIG_SPE */
+ 	new_thread = &new->thread;
+ 	old_thread = &current->thread;
++	perfctr_suspend_thread(&prev->thread);
+ 	last = _switch(old_thread, new_thread);
++	perfctr_resume_thread(&current->thread);
+ 	local_irq_restore(s);
+ 	return last;
+ }
+@@ -363,6 +366,7 @@ void exit_thread(void)
+ 	if (last_task_used_spe == current)
+ 		last_task_used_spe = NULL;
+ #endif
++	perfctr_exit_thread(&current->thread);
+ }
+ 
+ void flush_thread(void)
+@@ -455,6 +459,8 @@ copy_thread(int nr, unsigned long clone_
+ 
+ 	p->thread.last_syscall = -1;
+ 
++	perfctr_copy_task(p, regs);
++
+ 	return 0;
+ }
+ 
+--- linux-2.6.12-rc5.perfctr27/arch/ppc64/Kconfig.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/ppc64/Kconfig	2005-05-25 20:13:12.000000000 +0200
+@@ -253,7 +253,6 @@ config MSCHUNKS
+ 	depends on PPC_ISERIES
+ 	default y
+ 
+-
+ config PPC_RTAS
+ 	bool
+ 	depends on PPC_PSERIES
+@@ -302,6 +301,8 @@ config ISA_DMA_API
+ 	bool
+ 	default y
+ 
++source "drivers/perfctr/Kconfig"
++
+ menu "General setup"
+ 
+ config ISA
+--- linux-2.6.12-rc5.perfctr27/arch/ppc64/kernel/misc.S.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/ppc64/kernel/misc.S	2005-05-25 20:13:12.000000000 +0200
+@@ -956,6 +956,12 @@ _GLOBAL(sys_call_table32)
+ 	.llong .sys32_request_key
+ 	.llong .compat_sys_keyctl
+ 	.llong .compat_sys_waitid
++	.llong .sys_ni_syscall		/* 273 reserved for sys_ioprio_set */
++	.llong .sys_ni_syscall		/* 274 reserved for sys_ioprio_get */
++	.llong .sys_vperfctr_open	/* 275 */
++	.llong .sys_vperfctr_control
++	.llong .sys_vperfctr_write
++	.llong .sys_vperfctr_read
+ 
+ 	.balign 8
+ _GLOBAL(sys_call_table)
+@@ -1232,3 +1238,9 @@ _GLOBAL(sys_call_table)
+ 	.llong .sys_request_key		/* 270 */
+ 	.llong .sys_keyctl
+ 	.llong .sys_waitid
++	.llong .sys_ni_syscall		/* 273 reserved for sys_ioprio_set */
++	.llong .sys_ni_syscall		/* 274 reserved for sys_ioprio_get */
++	.llong .sys_vperfctr_open	/* 275 */
++	.llong .sys_vperfctr_control
++	.llong .sys_vperfctr_write
++	.llong .sys_vperfctr_read
+--- linux-2.6.12-rc5.perfctr27/arch/ppc64/kernel/process.c.~1~	2005-05-25 20:10:16.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/ppc64/kernel/process.c	2005-05-25 20:13:12.000000000 +0200
+@@ -36,6 +36,7 @@
+ #include <linux/kallsyms.h>
+ #include <linux/interrupt.h>
+ #include <linux/utsname.h>
++#include <linux/perfctr.h>
+ 
+ #include <asm/pgtable.h>
+ #include <asm/uaccess.h>
+@@ -225,7 +226,9 @@ struct task_struct *__switch_to(struct t
+ 
+ 
+ 	local_irq_save(flags);
++	perfctr_suspend_thread(&prev->thread);
+ 	last = _switch(old_thread, new_thread);
++	perfctr_resume_thread(&current->thread);
+ 
+ 	local_irq_restore(flags);
+ 
+@@ -323,6 +326,7 @@ void exit_thread(void)
+ 		last_task_used_altivec = NULL;
+ #endif /* CONFIG_ALTIVEC */
+ #endif /* CONFIG_SMP */
++	perfctr_exit_thread(&current->thread);
+ }
+ 
+ void flush_thread(void)
+@@ -425,6 +429,8 @@ copy_thread(int nr, unsigned long clone_
+  	 */
+ 	kregs->nip = *((unsigned long *)ret_from_fork);
+ 
++	perfctr_copy_task(p, regs);
++
+ 	return 0;
+ }
+ 
+--- linux-2.6.12-rc5.perfctr27/arch/x86_64/Kconfig.~1~	2005-05-25 20:10:17.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/x86_64/Kconfig	2005-05-25 20:13:12.000000000 +0200
+@@ -477,6 +477,8 @@ config UID16
+ 	depends on IA32_EMULATION
+ 	default y
+ 
++source "drivers/perfctr/Kconfig"
++
+ endmenu
+ 
+ source drivers/Kconfig
+--- linux-2.6.12-rc5.perfctr27/arch/x86_64/ia32/ia32entry.S.~1~	2005-05-25 20:10:17.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/x86_64/ia32/ia32entry.S	2005-05-25 20:13:12.000000000 +0200
+@@ -595,6 +595,12 @@ ia32_sys_call_table:
+ 	.quad sys_add_key
+ 	.quad sys_request_key
+ 	.quad sys_keyctl
++	.quad quiet_ni_syscall	/* reserved for sys_ioprio_set */
++	.quad quiet_ni_syscall	/* reserved for sys_ioprio_get */	/* 290 */
++	.quad sys_vperfctr_open
++	.quad sys_vperfctr_control
++	.quad sys_vperfctr_write
++	.quad sys_vperfctr_read
+ 	/* don't forget to change IA32_NR_syscalls */
+ ia32_syscall_end:		
+ 	.rept IA32_NR_syscalls-(ia32_syscall_end-ia32_sys_call_table)/8
+--- linux-2.6.12-rc5.perfctr27/arch/x86_64/kernel/entry.S.~1~	2005-05-25 20:10:19.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/x86_64/kernel/entry.S	2005-05-25 20:13:12.000000000 +0200
+@@ -554,6 +554,11 @@ ENTRY(spurious_interrupt)
+ 	apicinterrupt SPURIOUS_APIC_VECTOR,smp_spurious_interrupt
+ #endif
+ 				
++#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_PERFCTR)
++ENTRY(perfctr_interrupt)
++	apicinterrupt LOCAL_PERFCTR_VECTOR,smp_perfctr_interrupt
++#endif
++
+ /*
+  * Exception entry points.
+  */ 		
+--- linux-2.6.12-rc5.perfctr27/arch/x86_64/kernel/i8259.c.~1~	2005-05-25 20:10:19.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/x86_64/kernel/i8259.c	2005-05-25 20:13:12.000000000 +0200
+@@ -24,6 +24,7 @@
+ #include <asm/delay.h>
+ #include <asm/desc.h>
+ #include <asm/apic.h>
++#include <asm/perfctr.h>
+ 
+ #include <linux/irq.h>
+ 
+@@ -568,6 +569,8 @@ void __init init_IRQ(void)
+ 	set_intr_gate(ERROR_APIC_VECTOR, error_interrupt);
+ #endif
+ 
++	perfctr_vector_init();
++
+ 	/*
+ 	 * Set the clock to HZ Hz, we already have a valid
+ 	 * vector now:
+--- linux-2.6.12-rc5.perfctr27/arch/x86_64/kernel/process.c.~1~	2005-05-25 20:10:19.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/arch/x86_64/kernel/process.c	2005-05-25 20:13:12.000000000 +0200
+@@ -33,6 +33,7 @@
+ #include <linux/irq.h>
+ #include <linux/ptrace.h>
+ #include <linux/utsname.h>
++#include <linux/perfctr.h>
+ #include <linux/random.h>
+ 
+ #include <asm/uaccess.h>
+@@ -305,6 +306,7 @@ void exit_thread(void)
+ 		t->io_bitmap_max = 0;
+ 		put_cpu();
+ 	}
++	perfctr_exit_thread(&me->thread);
+ }
+ 
+ void flush_thread(void)
+@@ -407,6 +409,8 @@ int copy_thread(int nr, unsigned long cl
+ 	asm("mov %%es,%0" : "=m" (p->thread.es));
+ 	asm("mov %%ds,%0" : "=m" (p->thread.ds));
+ 
++	perfctr_copy_task(p, regs);
++
+ 	if (unlikely(me->thread.io_bitmap_ptr != NULL)) { 
+ 		p->thread.io_bitmap_ptr = kmalloc(IO_BITMAP_BYTES, GFP_KERNEL);
+ 		if (!p->thread.io_bitmap_ptr) {
+@@ -556,6 +560,8 @@ struct task_struct *__switch_to(struct t
+ 		}
+ 	}
+ 
++	perfctr_resume_thread(next);
++
+ 	return prev_p;
+ }
+ 
+--- linux-2.6.12-rc5.perfctr27/drivers/Makefile.~1~	2005-05-25 20:10:19.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/drivers/Makefile	2005-05-25 20:13:12.000000000 +0200
+@@ -62,5 +62,6 @@ obj-$(CONFIG_CPU_FREQ)		+= cpufreq/
+ obj-$(CONFIG_MMC)		+= mmc/
+ obj-$(CONFIG_INFINIBAND)	+= infiniband/
+ obj-$(CONFIG_BLK_DEV_SGIIOC4)	+= sn/
++obj-$(CONFIG_PERFCTR)		+= perfctr/
+ obj-y				+= firmware/
+ obj-$(CONFIG_CRYPTO)		+= crypto/
+--- linux-2.6.12-rc5.perfctr27/include/asm-i386/mach-default/irq_vectors.h.~1~	2004-05-10 11:14:37.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-i386/mach-default/irq_vectors.h	2005-05-25 20:13:12.000000000 +0200
+@@ -56,14 +56,15 @@
+  * sources per level' errata.
+  */
+ #define LOCAL_TIMER_VECTOR	0xef
++#define LOCAL_PERFCTR_VECTOR	0xee
+ 
+ /*
+- * First APIC vector available to drivers: (vectors 0x30-0xee)
++ * First APIC vector available to drivers: (vectors 0x30-0xed)
+  * we start at 0x31 to spread out vectors evenly between priority
+  * levels. (0x80 is the syscall vector)
+  */
+ #define FIRST_DEVICE_VECTOR	0x31
+-#define FIRST_SYSTEM_VECTOR	0xef
++#define FIRST_SYSTEM_VECTOR	0xee
+ 
+ #define TIMER_IRQ 0
+ 
+--- linux-2.6.12-rc5.perfctr27/include/asm-i386/mach-visws/irq_vectors.h.~1~	2004-01-09 13:19:11.000000000 +0100
++++ linux-2.6.12-rc5.perfctr27/include/asm-i386/mach-visws/irq_vectors.h	2005-05-25 20:13:12.000000000 +0200
+@@ -35,14 +35,15 @@
+  * sources per level' errata.
+  */
+ #define LOCAL_TIMER_VECTOR	0xef
++#define LOCAL_PERFCTR_VECTOR	0xee
+ 
+ /*
+- * First APIC vector available to drivers: (vectors 0x30-0xee)
++ * First APIC vector available to drivers: (vectors 0x30-0xed)
+  * we start at 0x31 to spread out vectors evenly between priority
+  * levels. (0x80 is the syscall vector)
+  */
+ #define FIRST_DEVICE_VECTOR	0x31
+-#define FIRST_SYSTEM_VECTOR	0xef
++#define FIRST_SYSTEM_VECTOR	0xee
+ 
+ #define TIMER_IRQ 0
+ 
+--- linux-2.6.12-rc5.perfctr27/include/asm-i386/processor.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-i386/processor.h	2005-05-25 20:13:12.000000000 +0200
+@@ -456,6 +456,8 @@ struct thread_struct {
+ 	unsigned long	*io_bitmap_ptr;
+ /* max allowed port in the bitmap, in bytes: */
+ 	unsigned long	io_bitmap_max;
++/* performance counters */
++	struct vperfctr *perfctr;
+ };
+ 
+ #define INIT_THREAD  {							\
+--- linux-2.6.12-rc5.perfctr27/include/asm-i386/system.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-i386/system.h	2005-05-25 20:13:12.000000000 +0200
+@@ -14,6 +14,7 @@ extern struct task_struct * FASTCALL(__s
+ 
+ #define switch_to(prev,next,last) do {					\
+ 	unsigned long esi,edi;						\
++	perfctr_suspend_thread(&(prev)->thread);			\
+ 	asm volatile("pushfl\n\t"					\
+ 		     "pushl %%ebp\n\t"					\
+ 		     "movl %%esp,%0\n\t"	/* save ESP */		\
+--- linux-2.6.12-rc5.perfctr27/include/asm-i386/unistd.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-i386/unistd.h	2005-05-25 20:13:12.000000000 +0200
+@@ -294,8 +294,12 @@
+ #define __NR_add_key		286
+ #define __NR_request_key	287
+ #define __NR_keyctl		288
++#define __NR_vperfctr_open	291
++#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
++#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
++#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
+ 
+-#define NR_syscalls 289
++#define NR_syscalls 295
+ 
+ /*
+  * user-visible error numbers are in the range -1 - -128: see
+--- linux-2.6.12-rc5.perfctr27/include/asm-ppc/processor.h.~1~	2005-03-02 19:24:19.000000000 +0100
++++ linux-2.6.12-rc5.perfctr27/include/asm-ppc/processor.h	2005-05-25 20:13:12.000000000 +0200
+@@ -122,6 +122,9 @@ struct thread_struct {
+ 	unsigned long	spefscr;	/* SPE & eFP status */
+ 	int		used_spe;	/* set if process has used spe */
+ #endif /* CONFIG_SPE */
++#ifdef CONFIG_PERFCTR_VIRTUAL
++	struct vperfctr *perfctr;	/* performance counters */
++#endif
+ };
+ 
+ #define ARCH_MIN_TASKALIGN 16
+--- linux-2.6.12-rc5.perfctr27/include/asm-ppc/reg.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-ppc/reg.h	2005-05-25 20:13:12.000000000 +0200
+@@ -274,22 +274,14 @@
+ #define SPRN_LDSTCR	0x3f8	/* Load/Store control register */
+ #define SPRN_LDSTDB	0x3f4	/* */
+ #define SPRN_LR		0x008	/* Link Register */
+-#define SPRN_MMCR0	0x3B8	/* Monitor Mode Control Register 0 */
+-#define SPRN_MMCR1	0x3BC	/* Monitor Mode Control Register 1 */
+ #ifndef SPRN_PIR
+ #define SPRN_PIR	0x3FF	/* Processor Identification Register */
+ #endif
+-#define SPRN_PMC1	0x3B9	/* Performance Counter Register 1 */
+-#define SPRN_PMC2	0x3BA	/* Performance Counter Register 2 */
+-#define SPRN_PMC3	0x3BD	/* Performance Counter Register 3 */
+-#define SPRN_PMC4	0x3BE	/* Performance Counter Register 4 */
+ #define SPRN_PTEHI	0x3D5	/* 981 7450 PTE HI word (S/W TLB load) */
+ #define SPRN_PTELO	0x3D6	/* 982 7450 PTE LO word (S/W TLB load) */
+ #define SPRN_PVR	0x11F	/* Processor Version Register */
+ #define SPRN_RPA	0x3D6	/* Required Physical Address Register */
+-#define SPRN_SDA	0x3BF	/* Sampled Data Address Register */
+ #define SPRN_SDR1	0x019	/* MMU Hash Base Register */
+-#define SPRN_SIA	0x3BB	/* Sampled Instruction Address Register */
+ #define SPRN_SPRG0	0x110	/* Special Purpose Register General 0 */
+ #define SPRN_SPRG1	0x111	/* Special Purpose Register General 1 */
+ #define SPRN_SPRG2	0x112	/* Special Purpose Register General 2 */
+@@ -316,16 +308,79 @@
+ #define SPRN_THRM3	0x3FE		/* Thermal Management Register 3 */
+ #define THRM3_E		(1<<0)
+ #define SPRN_TLBMISS	0x3D4		/* 980 7450 TLB Miss Register */
+-#define SPRN_UMMCR0	0x3A8	/* User Monitor Mode Control Register 0 */
+-#define SPRN_UMMCR1	0x3AC	/* User Monitor Mode Control Register 0 */
+-#define SPRN_UPMC1	0x3A9	/* User Performance Counter Register 1 */
+-#define SPRN_UPMC2	0x3AA	/* User Performance Counter Register 2 */
+-#define SPRN_UPMC3	0x3AD	/* User Performance Counter Register 3 */
+-#define SPRN_UPMC4	0x3AE	/* User Performance Counter Register 4 */
+-#define SPRN_USIA	0x3AB	/* User Sampled Instruction Address Register */
+ #define SPRN_VRSAVE	0x100	/* Vector Register Save Register */
+ #define SPRN_XER	0x001	/* Fixed Point Exception Register */
+ 
++/* Performance-monitoring control and counter registers */
++#define SPRN_MMCR0	0x3B8	/* Monitor Mode Control Register 0 (604 and up) */
++#define SPRN_MMCR1	0x3BC	/* Monitor Mode Control Register 1 (604e and up) */
++#define SPRN_MMCR2	0x3B0	/* Monitor Mode Control Register 2 (7400 and up) */
++#define SPRN_PMC1	0x3B9	/* Performance Counter Register 1 (604 and up) */
++#define SPRN_PMC2	0x3BA	/* Performance Counter Register 2 (604 and up) */
++#define SPRN_PMC3	0x3BD	/* Performance Counter Register 3 (604e and up) */
++#define SPRN_PMC4	0x3BE	/* Performance Counter Register 4 (604e and up) */
++#define SPRN_PMC5	0x3B1	/* Performance Counter Register 5 (7450 and up) */
++#define SPRN_PMC6	0x3B2	/* Performance Counter Register 6 (7450 and up) */
++#define SPRN_SIA	0x3BB	/* Sampled Instruction Address Register (604 and up) */
++#define SPRN_SDA	0x3BF	/* Sampled Data Address Register (604/604e only) */
++#define SPRN_BAMR	0x3B7	/* Breakpoint Address Mask Register (7400 and up) */
++
++#define SPRN_UMMCR0	0x3A8	/* User Monitor Mode Control Register 0 (750 and up) */
++#define SPRN_UMMCR1	0x3AC	/* User Monitor Mode Control Register 0 (750 and up) */
++#define SPRN_UMMCR2	0x3A0	/* User Monitor Mode Control Register 0 (7400 and up) */
++#define SPRN_UPMC1	0x3A9	/* User Performance Counter Register 1 (750 and up) */
++#define SPRN_UPMC2	0x3AA	/* User Performance Counter Register 2 (750 and up) */
++#define SPRN_UPMC3	0x3AD	/* User Performance Counter Register 3 (750 and up) */
++#define SPRN_UPMC4	0x3AE	/* User Performance Counter Register 4 (750 and up) */
++#define SPRN_UPMC5	0x3A1	/* User Performance Counter Register 5 (7450 and up) */
++#define SPRN_UPMC6	0x3A2	/* User Performance Counter Register 5 (7450 and up) */
++#define SPRN_USIA	0x3AB	/* User Sampled Instruction Address Register (750 and up) */
++#define SPRN_UBAMR	0x3A7	/* User Breakpoint Address Mask Register (7400 and up) */
++
++/* MMCR0 layout (74xx terminology) */
++#define MMCR0_FC		0x80000000 /* Freeze counters unconditionally. */
++#define MMCR0_FCS		0x40000000 /* Freeze counters while MSR[PR]=0 (supervisor mode). */
++#define MMCR0_FCP		0x20000000 /* Freeze counters while MSR[PR]=1 (user mode). */
++#define MMCR0_FCM1		0x10000000 /* Freeze counters while MSR[PM]=1. */
++#define MMCR0_FCM0		0x08000000 /* Freeze counters while MSR[PM]=0. */
++#define MMCR0_PMXE		0x04000000 /* Enable performance monitor exceptions.
++					    * Cleared by hardware when a PM exception occurs.
++					    * 604: PMXE is not cleared by hardware.
++					    */
++#define MMCR0_FCECE		0x02000000 /* Freeze counters on enabled condition or event.
++					    * FCECE is treated as 0 if TRIGGER is 1.
++					    * 74xx: FC is set when the event occurs.
++					    * 604/750: ineffective when PMXE=0.
++					    */
++#define MMCR0_TBSEL		0x01800000 /* Time base lower (TBL) bit selector.
++					    * 00: bit 31, 01: bit 23, 10: bit 19, 11: bit 15.
++					    */
++#define MMCR0_TBEE		0x00400000 /* Enable event on TBL bit transition from 0 to 1. */
++#define MMCR0_THRESHOLD		0x003F0000 /* Threshold value for certain events. */
++#define MMCR0_PMC1CE		0x00008000 /* Enable event on PMC1 overflow. */
++#define MMCR0_PMCjCE		0x00004000 /* Enable event on PMC2-PMC6 overflow.
++					    * 604/750: Overrides FCECE (DISCOUNT).
++					    */
++#define MMCR0_TRIGGER		0x00002000 /* Disable PMC2-PMC6 until PMC1 overflow or other event.
++					    * 74xx: cleared by hardware when the event occurs.
++					    */
++#define MMCR0_PMC1SEL		0x00001FB0 /* PMC1 event selector, 7 bits. */
++#define MMCR0_PMC2SEL		0x0000003F /* PMC2 event selector, 6 bits. */
++
++/* MMCR1 layout (604e-7457) */
++#define MMCR1_PMC3SEL		0xF8000000 /* PMC3 event selector, 5 bits. */
++#define MMCR1_PMC4SEL		0x07B00000 /* PMC4 event selector, 5 bits. */
++#define MMCR1_PMC5SEL		0x003E0000 /* PMC5 event selector, 5 bits. (745x only) */
++#define MMCR1_PMC6SEL		0x0001F800 /* PMC6 event selector, 6 bits. (745x only) */
++#define MMCR1__RESERVED		0x000007FF /* should be zero */
++
++/* MMCR2 layout (7400-7457) */
++#define MMCR2_THRESHMULT	0x80000000 /* MMCR0[THRESHOLD] multiplier. */
++#define MMCR2_SMCNTEN		0x40000000 /* 7400/7410 only, should be zero. */
++#define MMCR2_SMINTEN		0x20000000 /* 7400/7410 only, should be zero. */
++#define MMCR2__RESERVED		0x1FFFFFFF /* should be zero */
++#define MMCR2_RESERVED		(MMCR2_SMCNTEN | MMCR2_SMINTEN | MMCR2__RESERVED)
++
+ /* Bit definitions for MMCR0 and PMC1 / PMC2. */
+ #define MMCR0_PMC1_CYCLES	(1 << 7)
+ #define MMCR0_PMC1_ICACHEMISS	(5 << 7)
+@@ -334,7 +389,6 @@
+ #define MMCR0_PMC2_CYCLES	0x1
+ #define MMCR0_PMC2_ITLB		0x7
+ #define MMCR0_PMC2_LOADMISSTIME	0x5
+-#define MMCR0_PMXE	(1 << 26)
+ 
+ /* Processor Version Register */
+ 
+--- linux-2.6.12-rc5.perfctr27/include/asm-ppc/unistd.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-ppc/unistd.h	2005-05-25 20:13:12.000000000 +0200
+@@ -277,8 +277,12 @@
+ #define __NR_request_key	270
+ #define __NR_keyctl		271
+ #define __NR_waitid		272
++#define __NR_vperfctr_open	275
++#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
++#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
++#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
+ 
+-#define __NR_syscalls		273
++#define __NR_syscalls		279
+ 
+ #define __NR(n)	#n
+ 
+--- linux-2.6.12-rc5.perfctr27/include/asm-ppc64/processor.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-ppc64/processor.h	2005-05-25 20:13:12.000000000 +0200
+@@ -574,6 +574,8 @@ struct thread_struct {
+ 	unsigned long	vrsave;
+ 	int		used_vr;	/* set if process has used altivec */
+ #endif /* CONFIG_ALTIVEC */
++	/* performance counters */
++	struct vperfctr *perfctr;
+ };
+ 
+ #define ARCH_MIN_TASKALIGN 16
+--- linux-2.6.12-rc5.perfctr27/include/asm-ppc64/unistd.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-ppc64/unistd.h	2005-05-25 20:13:12.000000000 +0200
+@@ -283,8 +283,14 @@
+ #define __NR_request_key	270
+ #define __NR_keyctl		271
+ #define __NR_waitid		272
++/* 273 is reserved for ioprio_set */
++/* 274 is reserved for ioprio_get */
++#define __NR_vperfctr_open	275
++#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
++#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
++#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
+ 
+-#define __NR_syscalls		273
++#define __NR_syscalls		279
+ #ifdef __KERNEL__
+ #define NR_syscalls	__NR_syscalls
+ #endif
+--- linux-2.6.12-rc5.perfctr27/include/asm-x86_64/hw_irq.h.~1~	2005-03-02 19:24:19.000000000 +0100
++++ linux-2.6.12-rc5.perfctr27/include/asm-x86_64/hw_irq.h	2005-05-25 20:13:12.000000000 +0200
+@@ -65,14 +65,15 @@ struct hw_interrupt_type;
+  * sources per level' errata.
+  */
+ #define LOCAL_TIMER_VECTOR	0xef
++#define LOCAL_PERFCTR_VECTOR	0xee
+ 
+ /*
+- * First APIC vector available to drivers: (vectors 0x30-0xee)
++ * First APIC vector available to drivers: (vectors 0x30-0xed)
+  * we start at 0x31 to spread out vectors evenly between priority
+  * levels. (0x80 is the syscall vector)
+  */
+ #define FIRST_DEVICE_VECTOR	0x31
+-#define FIRST_SYSTEM_VECTOR	0xef   /* duplicated in irq.h */
++#define FIRST_SYSTEM_VECTOR	0xee   /* duplicated in irq.h */
+ 
+ 
+ #ifndef __ASSEMBLY__
+--- linux-2.6.12-rc5.perfctr27/include/asm-x86_64/ia32_unistd.h.~1~	2005-03-02 19:24:19.000000000 +0100
++++ linux-2.6.12-rc5.perfctr27/include/asm-x86_64/ia32_unistd.h	2005-05-25 20:13:12.000000000 +0200
+@@ -294,7 +294,11 @@
+ #define __NR_ia32_add_key		286
+ #define __NR_ia32_request_key	287
+ #define __NR_ia32_keyctl		288
++#define __NR_ia32_vperfctr_open		291
++#define __NR_ia32_vperfctr_control	(__NR_ia32_vperfctr_open+1)
++#define __NR_ia32_vperfctr_write	(__NR_ia32_vperfctr_open+2)
++#define __NR_ia32_vperfctr_read		(__NR_ia32_vperfctr_open+3)
+ 
+-#define IA32_NR_syscalls 290	/* must be > than biggest syscall! */
++#define IA32_NR_syscalls 295	/* must be > than biggest syscall! */
+ 
+ #endif /* _ASM_X86_64_IA32_UNISTD_H_ */
+--- linux-2.6.12-rc5.perfctr27/include/asm-x86_64/irq.h.~1~	2004-12-25 12:16:24.000000000 +0100
++++ linux-2.6.12-rc5.perfctr27/include/asm-x86_64/irq.h	2005-05-25 20:13:12.000000000 +0200
+@@ -29,7 +29,7 @@
+  */
+ #define NR_VECTORS 256
+ 
+-#define FIRST_SYSTEM_VECTOR	0xef   /* duplicated in hw_irq.h */
++#define FIRST_SYSTEM_VECTOR	0xee   /* duplicated in hw_irq.h */
+ 
+ #ifdef CONFIG_PCI_MSI
+ #define NR_IRQS FIRST_SYSTEM_VECTOR
+--- linux-2.6.12-rc5.perfctr27/include/asm-x86_64/processor.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-x86_64/processor.h	2005-05-25 20:13:12.000000000 +0200
+@@ -251,6 +251,8 @@ struct thread_struct {
+ 	unsigned io_bitmap_max;
+ /* cached TLS descriptors. */
+ 	u64 tls_array[GDT_ENTRY_TLS_ENTRIES];
++/* performance counters */
++	struct vperfctr *perfctr;
+ } __attribute__((aligned(16)));
+ 
+ #define INIT_THREAD  {}
+--- linux-2.6.12-rc5.perfctr27/include/asm-x86_64/system.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-x86_64/system.h	2005-05-25 20:13:12.000000000 +0200
+@@ -26,7 +26,8 @@
+ #define __EXTRA_CLOBBER  \
+ 	,"rcx","rbx","rdx","r8","r9","r10","r11","r12","r13","r14","r15"
+ 
+-#define switch_to(prev,next,last) \
++#define switch_to(prev,next,last) do { \
++	perfctr_suspend_thread(&(prev)->thread); \
+ 	asm volatile(SAVE_CONTEXT						    \
+ 		     "movq %%rsp,%P[threadrsp](%[prev])\n\t" /* save RSP */	  \
+ 		     "movq %P[threadrsp](%[next]),%%rsp\n\t" /* restore RSP */	  \
+@@ -46,7 +47,8 @@
+ 		       [tif_fork] "i" (TIF_FORK),			  \
+ 		       [thread_info] "i" (offsetof(struct task_struct, thread_info)), \
+ 		       [pda_pcurrent] "i" (offsetof(struct x8664_pda, pcurrent))   \
+-		     : "memory", "cc" __EXTRA_CLOBBER)
++		     : "memory", "cc" __EXTRA_CLOBBER); \
++} while (0)
+     
+ extern void load_gs_index(unsigned); 
+ 
+--- linux-2.6.12-rc5.perfctr27/include/asm-x86_64/unistd.h.~1~	2005-05-25 20:10:22.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/asm-x86_64/unistd.h	2005-05-25 20:13:12.000000000 +0200
+@@ -561,8 +561,20 @@ __SYSCALL(__NR_add_key, sys_add_key)
+ __SYSCALL(__NR_request_key, sys_request_key)
+ #define __NR_keyctl		250
+ __SYSCALL(__NR_keyctl, sys_keyctl)
++#define __NR_ioprio_set		251
++__SYSCALL(__NR_ioprio_set, sys_ni_syscall)
++#define __NR_ioprio_get		252
++__SYSCALL(__NR_ioprio_get, sys_ni_syscall)
++#define __NR_vperfctr_open	253
++__SYSCALL(__NR_vperfctr_open, sys_vperfctr_open)
++#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
++__SYSCALL(__NR_vperfctr_control, sys_vperfctr_control)
++#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
++__SYSCALL(__NR_vperfctr_write, sys_vperfctr_write)
++#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
++__SYSCALL(__NR_vperfctr_read, sys_vperfctr_read)
+ 
+-#define __NR_syscall_max __NR_keyctl
++#define __NR_syscall_max __NR_vperfctr_read
+ #ifndef __NO_STUBS
+ 
+ /* user-visible error numbers are in the range -1 - -4095 */
+--- linux-2.6.12-rc5.perfctr27/include/linux/sched.h.~1~	2005-05-25 20:10:23.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/include/linux/sched.h	2005-05-25 20:13:12.000000000 +0200
+@@ -1091,6 +1091,9 @@ extern void unhash_process(struct task_s
+  * Protects ->fs, ->files, ->mm, ->ptrace, ->group_info, ->comm, keyring
+  * subscriptions and synchronises with wait4().  Also used in procfs.
+  *
++ * Synchronises set_cpus_allowed(), unlink, and creat of ->thread.perfctr.
++ * [if CONFIG_PERFCTR_VIRTUAL]
++ *
+  * Nests both inside and outside of read_lock(&tasklist_lock).
+  * It must not be nested with write_lock_irq(&tasklist_lock),
+  * neither inside nor outside.
+--- linux-2.6.12-rc5.perfctr27/kernel/exit.c.~1~	2005-05-25 20:10:23.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/kernel/exit.c	2005-05-25 20:13:12.000000000 +0200
+@@ -26,6 +26,7 @@
+ #include <linux/proc_fs.h>
+ #include <linux/mempolicy.h>
+ #include <linux/cpuset.h>
++#include <linux/perfctr.h>
+ #include <linux/syscalls.h>
+ #include <linux/signal.h>
+ 
+@@ -95,6 +96,7 @@ repeat: 
+ 		zap_leader = (leader->exit_signal == -1);
+ 	}
+ 
++	perfctr_release_task(p);
+ 	sched_exit(p);
+ 	write_unlock_irq(&tasklist_lock);
+ 	spin_unlock(&p->proc_lock);
+--- linux-2.6.12-rc5.perfctr27/kernel/sched.c.~1~	2005-05-25 20:10:23.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/kernel/sched.c	2005-05-25 20:13:12.000000000 +0200
+@@ -42,6 +42,7 @@
+ #include <linux/cpu.h>
+ #include <linux/cpuset.h>
+ #include <linux/percpu.h>
++#include <linux/perfctr.h>
+ #include <linux/kthread.h>
+ #include <linux/seq_file.h>
+ #include <linux/syscalls.h>
+@@ -4080,6 +4081,8 @@ int set_cpus_allowed(task_t *p, cpumask_
+ 	migration_req_t req;
+ 	runqueue_t *rq;
+ 
++	perfctr_set_cpus_allowed(p, new_mask);
++
+ 	rq = task_rq_lock(p, &flags);
+ 	if (!cpus_intersects(new_mask, cpu_online_map)) {
+ 		ret = -EINVAL;
+--- linux-2.6.12-rc5.perfctr27/kernel/sys_ni.c.~1~	2005-05-25 20:10:23.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/kernel/sys_ni.c	2005-05-25 20:13:12.000000000 +0200
+@@ -66,6 +66,10 @@ cond_syscall(compat_sys_mq_timedsend);
+ cond_syscall(compat_sys_mq_timedreceive);
+ cond_syscall(compat_sys_mq_notify);
+ cond_syscall(compat_sys_mq_getsetattr);
++cond_syscall(sys_vperfctr_open);
++cond_syscall(sys_vperfctr_control);
++cond_syscall(sys_vperfctr_write);
++cond_syscall(sys_vperfctr_read);
+ cond_syscall(sys_mbind);
+ cond_syscall(sys_get_mempolicy);
+ cond_syscall(sys_set_mempolicy);
+--- linux-2.6.12-rc5.perfctr27/kernel/timer.c.~1~	2005-05-25 20:10:23.000000000 +0200
++++ linux-2.6.12-rc5.perfctr27/kernel/timer.c	2005-05-25 20:13:12.000000000 +0200
+@@ -32,6 +32,7 @@
+ #include <linux/jiffies.h>
+ #include <linux/posix-timers.h>
+ #include <linux/cpu.h>
++#include <linux/perfctr.h>
+ #include <linux/syscalls.h>
+ 
+ #include <asm/uaccess.h>
+@@ -822,6 +823,7 @@ void update_process_times(int user_tick)
+ 		account_user_time(p, jiffies_to_cputime(1));
+ 	else
+ 		account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
++	perfctr_sample_thread(&p->thread);
+ 	run_local_timers();
+ 	if (rcu_pending(cpu))
+ 		rcu_check_callbacks(cpu, user_tick);
