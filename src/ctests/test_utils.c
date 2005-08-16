@@ -506,35 +506,31 @@ void test_print_event_header(char *call, int evset)
 int add_two_events(int *num_events, int *papi_event, 
                const PAPI_hw_info_t *hw_info, int *mask)
 {
+  /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
-
    *mask = 0;
-   if((!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
-       !(strncmp(hw_info->vendor_string, "SUN", 3))) ||
-      (!strncmp(hw_info->model_string, "AMD K7", 6)) ||
-      (strstr(hw_info->model_string, "POWER3"))) {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         *mask = MASK_TOT_INS | MASK_TOT_CYC;
-         *papi_event = PAPI_TOT_INS;
+  PAPI_event_info_t info;
+  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS,MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  int i = 0;
+  int simple_event_found = 0;
+  while ((i < 3) && (!simple_event_found)) {
+    if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
+      PAPI_get_event_info(potential_evt_to_add[i][0], &info);
+      if (info.count == 1 || !strcmp(info.derived, "DERIVED_CMPD")) {
+	simple_event_found = 1;
       } else {
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this platform!", 0);
-      }
-   } else {
-   /* query and set up the right event to monitor */
-         if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK) { 
-            *mask = MASK_FP_OPS | MASK_TOT_CYC;
-            *papi_event = PAPI_FP_OPS;
-      } else { 
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) { 
-         *mask = MASK_FP_INS | MASK_TOT_CYC;
-         *papi_event = PAPI_FP_INS;
-         } else {
-            *mask = MASK_TOT_INS | MASK_TOT_CYC;
-            *papi_event = PAPI_TOT_INS;
+	i++;
          }
       }
    }
+  if (simple_event_found) {
+    *papi_event = potential_evt_to_add[i][0];
+    *mask =  potential_evt_to_add[i][1] | MASK_TOT_CYC;
    EventSet = add_test_events(num_events, mask);
+  } else {
+    test_fail(__FILE__, __LINE__, "Simple non-derived event not found!", 0);
+  }
+
+   
    return(EventSet);
 }
