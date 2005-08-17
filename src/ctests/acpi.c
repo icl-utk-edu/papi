@@ -16,6 +16,8 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
+   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+#ifdef ACPI
    double c, a = 0.999, b = 1.001;
    int n = 1000;
    int EventSet=PAPI_NULL;
@@ -66,4 +68,8 @@ int main(int argc, char **argv)
    printf("load: %lld   temprature: %lld\n", g1[0], g1[1]);
    test_pass(__FILE__, NULL, 0);
    exit(1);
+#else
+   test_skip(__FILE__, __LINE__, "not supported", 0);
+   exit(1);
+#endif
 }
