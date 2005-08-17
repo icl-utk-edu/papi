@@ -14,7 +14,7 @@ PAPIJ_JAVA_SRC= EventSet.java            PAPI_granularity_option.java  PAPI_mh_t
                 PAPI_exe_info.java       PAPI_mh_info.java             PAPI_substrate_info.java 
 
 libpapij.so: Papi.o
-	$(CC) -shared -o $@ $<
+	$(CC) -shared Papi.o -o $@
 
 Papi.o: Papi.c PapiJ.h
 	$(CC) $(CFLAGS) -fPIC -c -I$(PAPI_INCLUDE) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(OSTYPE) $< -o $@

@@ -1,7 +1,7 @@
 
 To run this example, first build the Java source using the Makefile
 included.  Then, make sure that the directories containing libpapi.so 
-and libpapij.so are in your LD_LIBRARY_PATH.  Finally run the
+and libpapij.so are in your LD_LIBRARY_PATH or LIBPATH.  Finally run the
 example as follows.
 
 cupid> java -classpath .:.. papilibtest
