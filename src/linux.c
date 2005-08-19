@@ -125,7 +125,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int retval;
   struct perfctr_info info;
-  struct vperfctr *dev;
+    int fd;
+
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
@@ -137,14 +138,19 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if ( retval ) 
      return(retval);
 
-   /* Opened once for all threads. */
-   if ((dev = vperfctr_open()) == NULL)
-     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
-
    /* Get info from the kernel */
-
-   if (vperfctr_info(dev, &info) < 0)
+   /* Use lower level calls per Mikael to get the perfctr info
+      without actually creating a new kernel-side state.
+      Also, close the fd immediately after retrieving the info.
+      This is much lighter weight and doesn't reserve the counter
+      resources. Also compatible with perfctr 2.6.14.
+   */
+   fd = _vperfctr_open(0);
+   if (fd < 0)
+     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   retval = perfctr_info(fd, &info);
+ 	close(fd);
+   if(retval < 0 )
      { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
 
     /* copy tsc multiplier to local variable */
@@ -213,9 +219,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
   SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
 #endif
-
-    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
-    vperfctr_close(dev);
 
    lock_init();
 
